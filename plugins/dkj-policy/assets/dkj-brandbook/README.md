@@ -93,9 +93,13 @@ already has, not a new colour:
 | **10%** | Text | `--fg-1` … `--fg-4` | what sits on the paper: every paragraph, label and quiet icon |
 
 **Everything in the 30% reads on all four paper steps**, as the 10% does (Maikel, November 1, 2026): `--primary`
-4.56:1 or better on `paper-4`, `--muted` 5.30:1 or better (WCAG, the worst of the twelve themes). `--muted-inverse`
-is deliberately **not** in it: it is the grey of an inverted surface, 7:1 on `--fg-1`, and on the paper it reads
-at only 2.1:1 to 2.3:1 on `paper-4` (2.9:1 at best, on `paper-1`), so it never sits on a paper step.
+4.56:1 or better on `paper-4`, `--muted` 5.30:1 or better (WCAG, the worst of the twelve themes). **And a theme has
+these three groups and no fourth**: a colour that fits none of them is not a theme colour. That retired
+`--muted-inverse` the same day. It was the grey of an inverted surface, 7:1 on `--fg-1`, and fitted no group: on the
+paper it read at 2.1:1 to 2.3:1 on `paper-4`, so not the 30; on `--primary` at 2.1:1 to 4.0:1, so not the 60; and
+no colour at all reaches 4.5:1 on both `paper-4` and `--fg-1` (the best grey reaches 3.9:1 to 4.05:1), so no
+change of value could have moved it into the 30. The quieter line on `.fill-inverse` takes `--paper-4` (15:1 or
+better on `--fg-1`), and the house-style gate reports `--muted-inverse` as a retired token.
 
 A repo layer keeps to the same shares: what it adds lands in one of the three groups, and a page whose
 primary outweighs its paper has spent the 30% as ground.
@@ -109,7 +113,7 @@ primary outweighs its paper has spent the 30% as ground.
 | Direction | `--positive-3` and `--negative-3` (also the gain and the loss in charts, so a direction chart can share a view with any series), `--positive-5`, `--negative-5` (numbers in text) | result and direction, never a category. `--positive-5`/`--negative-5` are the text versions of `--positive-3`/`--negative-3`, a step more contrast so a number reads as text: darker on light, lighter on dark |
 | Status | `--positive-3`, `--warning-3`, `--negative-3`, `--warning-5`, `--warning-1`, `--negative-1`, `--positive-1` | badges, meters, notices. `--warning-1`, `--negative-1` and `--positive-1` are the backgrounds of a warning, negative or positive message. The mark inside a status icon (check, cross, "!") is `--paper-1` |
 | Primary | `--primary` | the theme's colour, **one** step (owner, #3235, October 21, 2026): the most saturated colour of the theme's hue that reads on all four paper steps, so the paper reads on it too. **The highlight**: `h1`, the fill of `.btn--primary` (a filled main action, like the filled icon button; #109) and of `.fill-primary`, a state (hover, pressed, sorted, active, today), `strong`, list markers, links, a value meant to stand out, the accent dialog's title and the settings panel's title, and native controls through `accent-color` |
-| Greys | `--muted`, `--muted-inverse` | a grey of the theme's colour, for what may recede: `--muted` reads extra well (7:1) on the page, `--muted-inverse` on the far end (7:1 on `--fg-1`). `--muted` is the eyebrow, every sub line (`.sub`, `.dialog__sub`, a component's `-sub`), every note (`.note`, `.footer-note`, `.muted`, on a `<p>` too), the tile label, the pressed `.seg` button, `.badge--info`, `.meter--info`, focus rings, meters and the `--accent` modifiers ([below](#how-far-a-theme-reaches)); `--muted-inverse` the same roles on an inverted surface (`.fill-inverse`). Never a status or a number |
+| Grey | `--muted` | a grey of the theme's colour, for what may recede: it reads extra well (7:1) on the page. `--muted` is the eyebrow, every sub line (`.sub`, `.dialog__sub`, a component's `-sub`), every note (`.note`, `.footer-note`, `.muted`, on a `<p>` too), the tile label, the pressed `.seg` button, `.badge--info`, `.meter--info`, focus rings, meters and the `--accent` modifiers ([below](#how-far-a-theme-reaches)); on an inverted surface (`.fill-inverse`) those roles take `--paper-4` (`--muted-inverse` until November 1, 2026). Never a status or a number |
 | Text | `--fg-1` … `--fg-4` | what sits **on** the paper: four colours near black on light (near white on dark), in **very small** steps, so `fg-4` is still very dark, only a little less so than `fg-1` (owner, #3235). `fg-1` is **all text**, every paragraph and everything else: labels, table heads, legends, quiet icons, the text on a tinted surface, and the ground of an inverted surface; `fg-2` is `h2` and `.meta` on a span; `fg-3` is `h3`; `fg-4` has no role yet (the breadcrumb's current page took it until the bar turned `--primary`, #3235). On a fill the text switches to the paper ([Fills](#fills-the-text-switches-with-the-ground)) |
 | Elevation | `--shadow-pop` | tooltips |
 | Spacing | `--spacing-0-5` … `--spacing-96` | the spacing scale, same in both modes: `--spacing-N` is N × 4px, a half step (`-0-5`, `-1-5`, …) adds 2px. Every gap, margin and padding uses one, and a repo layer spaces its own components from the same scale |
@@ -249,7 +253,7 @@ matter:
 | (new) | `--muted-inverse`: the grey on an inverted surface, where `--muted` would not read |
 | (new) | `.fill-primary` and `.fill-inverse`: a block on the primary or on the far end, where the text switches to the paper |
 
-**On an inverted surface**, a grey that was `--ink-3` or `--ink-4` takes `--muted-inverse`, not `--muted`. The gate
+**On an inverted surface**, a grey that was `--ink-3` or `--ink-4` takes `--muted-inverse`, not `--muted` (and `--paper-4` since November 1, 2026, when `--muted-inverse` was retired). The gate
 reports every `--ink-*` left behind as a retired token, so nothing is missed silently.
 
 **An app still on the twelve `--primary-*` steps** (v5.26.0 and earlier) skips the ink names and maps straight
@@ -263,8 +267,8 @@ gate tells `--primary-9` from it.
 on the dark themes (the ground end) and `-5` the opposite (the text end). The theme's own colour has two numbered
 groups (#3235), and each counts from its own start: `--paper-1` … `--paper-4` from the page outward (page, cards,
 lines and tinted surfaces, a stronger border), and `--fg-1` … `--fg-4` from the strongest text outward (all text,
-`h2`, `h3`, and one step with no role yet), both in very small steps. `--primary`, `--muted` and
-`--muted-inverse` carry no number: there is one of each. There are no untinted neutrals: the
+`h2`, `h3`, and one step with no role yet), both in very small steps. `--primary` and `--muted` carry no
+number: there is one of each. There are no untinted neutrals: the
 greys are the theme's own, a greyed step of its colour. For the status families:
 `-1` is the background of a message, `-3` the fill (icon, badge, meter, a
 loss in a chart), `-5` the text.
@@ -274,7 +278,7 @@ section uses):
 
 | A switch … | Tokens | Why |
 |---|---|---|
-| to any other theme changes them | `--primary`, `--muted`, `--muted-inverse`, `--paper-1` … `--paper-4`, `--fg-1` … `--fg-4` | each theme sets all eleven as fixed values, computed from its own hue; the House style page lists the primary and the greys, the paper and the text as three groups |
+| to any other theme changes them | `--primary`, `--muted`, `--paper-1` … `--paper-4`, `--fg-1` … `--fg-4` | each theme sets all ten as fixed values, computed from its own hue; the House style page lists them as the three groups of the 60-30-10 rule |
 | changes them only between light and dark: categories | `--cat-1`, `--cat-2`, `--cat-3` | series slots, set once in the light block and once in the dark block, a shade apart |
 | changes them only between light and dark: status colours | `--negative-1`, `--negative-3`, `--negative-5`, `--positive-1`, `--positive-3`, `--positive-5`, `--warning-1`, `--warning-3`, `--warning-5` | set once in the light block and once in the dark block, a shade apart. One exception: `--warning-3` also moves in Roest and Geel ([below](#themes-the-user-picks-the-colour)) |
 
@@ -480,8 +484,8 @@ sliders turn the theme's colour. Links an app already styles through a class kee
 **The theme now colours the ground too** (owner's request: the themes were visible but did not stand
 out). Three more things follow it by default, in light and in dark (and a measurement):
 
-- **Every theme writes out its own eleven values**, computed rather than tuned (owner, #3235, October 21, 2026).
-  `--primary`, `--muted`, `--muted-inverse`, `--paper-1` … `--paper-4` and `--fg-1` … `--fg-4` are fixed hex values
+- **Every theme writes out its own ten values**, computed rather than tuned (owner, #3235, October 21, 2026).
+  `--primary`, `--muted`, `--paper-1` … `--paper-4` and `--fg-1` … `--fg-4` are fixed hex values
   in each theme's block, not mixes (owner's decision, October 14, 2026: the percentages were too hard to follow), and
   `scripts/build/build-house-palette.ps1` in the `dkj-solutions` plugin computes them from the theme's hue and mode, checks every
   contrast below and writes them in with `-Apply`. A theme is changed there, never by hand in the stylesheet.
@@ -497,9 +501,9 @@ out). Three more things follow it by default, in light and in dark (and a measur
     vivid even at 0.13 and has a cap of its own, 0.10, Hemelsblauw's (owner, the same day). The hue is the HSL hue of the owner's original theme colour
     (Blauw and Hemelsblauw 240), held in HSL because at a constant OKLCH hue a saturated blue turns violet; Lila takes
     270, the hue of its light counterpart Paars, because at its own 254 it read as blue (owner, October 19, 2026).
-  - **Two greys**: a grey of the colour that reads extra well on white (`--muted`) and one that reads extra well on
-    black (`--muted-inverse`). Both are OKLCH chroma 0.03 in the theme's hue, as close to their ground as 7.05:1
-    allows, so they recede by colour while they still read.
+  - **One grey**: a grey of the colour that reads extra well on white (`--muted`), OKLCH chroma 0.03 in the theme's
+    hue, as close to its ground as 7.05:1 allows, so it recedes by colour while it still reads. Its mirror for black,
+    `--muted-inverse`, was retired on November 1, 2026 ([above](#what-it-holds)).
   - **Four colours that read on the primary**: the paper, from white towards a little darker, OKLCH L 0.995, 0.975,
     0.945 and 0.905 on light (0.13, 0.155, 0.19 and 0.235 on dark), with the chroma rising from 0.006 to 0.045. The
     eye is most sensitive to the first tint off white or black, so the card is only just lifted off the page.
@@ -519,7 +523,7 @@ out). Three more things follow it by default, in light and in dark (and a measur
   11.2:1 on dark, the same both ways round. On dark the primary sits close to the text (1.4:1 to 1.8:1 against
   `fg-1`), so `h1` and links stand out from the text by colour rather than by lightness; `fg-1` on
   `paper-1` 19.5:1 to 20.1:1 and `fg-4` on `paper-4` 11.8:1 to 12.5:1; `--muted` on `paper-1` 7.05:1 to 7.13:1 and on
-  a card 6.6:1 to 6.9:1; `--muted-inverse` on `fg-1` 7.05:1 to 7.10:1. Nothing in the model is below 4.5:1, which
+  a card 6.6:1 to 6.9:1; `paper-4` on `fg-1` 15.1:1 to 16.4:1. Nothing in the model is below 4.5:1, which
   the paper-and-ink model of October 20 missed for `ink-1` on a card in Magenta, Roest and Lila. A `paper-3` line
   on a card is faint: 1.05:1 (Pink) to 1.10:1 (Blauw); a `paper-4` border on it 1.16:1 to 1.25:1.
 - **The page and the cards are tinted.** On light the page is the whitest layer and a card sits a shade off it;
@@ -545,7 +549,7 @@ primary fill.
 | Class | Ground | Text | A quieter line (`.sub`, `.muted`, `.note`, `.eyebrow`, `.card__sub`) |
 |---|---|---|---|
 | `.fill-primary` | `--primary` | `--paper-1`: headings, paragraphs, `.lead`, `.msg`, `.meta`, `.card__title` and links | `--paper-3` (all four paper steps read on the primary) |
-| `.fill-inverse` | `--fg-1` | `--paper-1`, the same elements | `--muted-inverse` (7:1 on `--fg-1`) |
+| `.fill-inverse` | `--fg-1` | `--paper-1`, the same elements | `--paper-4` (15:1 or better on `--fg-1`) |
 
 The switch is written with `:is()` and stands last in the stylesheet, so it beats `.sub`, `.muted`, `p.meta` and the
 zero-weight headings without an `!important`, and a quieter line on a `<p>` keeps its quieter colour. A link weighs

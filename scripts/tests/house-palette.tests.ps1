@@ -67,7 +67,7 @@ Assert-Equal 12 $themes.Count 'twelve themes'
 Assert-Equal 6 @($themes | Where-Object Mode -eq 'light').Count 'six light themes'
 foreach ($th in $themes) {
     $p = Get-HousePalette -Hue $th.Hue -Mode $th.Mode -ChromaMax ([double]$th.ChromaMax)
-    Assert-Equal 11 $p.Count "$($th.Id): eleven tokens"
+    Assert-Equal 10 $p.Count "$($th.Id): ten tokens"; Assert-True (-not $p.Contains('--muted-inverse')) "$($th.Id): no --muted-inverse (retired November 1, 2026)"
     $miss = @(Get-HousePaletteContrast $p | Where-Object { $_.Ratio -lt $_.Floor } | ForEach-Object { '{0} {1:N2}' -f $_.Pair, $_.Ratio })
     Assert-Equal '' ($miss -join '; ') "$($th.Id): every pairing reaches its floor"
     $l1 = (ConvertTo-OkLch $p['--fg-1']).L; $l4 = (ConvertTo-OkLch $p['--fg-4']).L
@@ -106,7 +106,7 @@ $css = [System.IO.File]::ReadAllText($Style)
 foreach ($th in $themes) {
     $expected = Format-HousePaletteDeclarations (Get-HousePalette -Hue $th.Hue -Mode $th.Mode -ChromaMax ([double]$th.ChromaMax))
     $line = ([regex]::Match($css, ":root\[data-theme=""$($th.Id)""\], \.theme-swatch\[data-id=""$($th.Id)""\] \{ ([^}]*)\}")).Groups[1].Value
-    Assert-True ($line.StartsWith($expected)) "$($th.Id): its theme line starts with the computed eleven"
+    Assert-True ($line.StartsWith($expected)) "$($th.Id): its theme line starts with the computed ten"
 }
 $blocks = @([regex]::Matches($css, '(?m)^\s+(--paper-1:[^\r\n]*)$') | ForEach-Object { $_.Groups[1].Value.Trim() })
 Assert-Equal 3 $blocks.Count 'three default token lines'
@@ -114,8 +114,8 @@ Assert-Equal (Format-HousePaletteDeclarations (Get-HousePalette -Hue 240 -Mode l
 Assert-Equal (Format-HousePaletteDeclarations (Get-HousePalette -Hue 185 -Mode dark -ChromaMax 0.10)) $blocks[1] 'the OS-followed dark default is Cyaan'
 Assert-Equal $blocks[1] $blocks[2] 'the two dark default blocks agree'
 Assert-True ($css -notmatch '--ink-[1-7]\b') 'no --ink-* is left in the stylesheet'
-Assert-True ($css -match 'data-id="rust"\] \{[^}]*--warning-3: #b88a00;') 'Roest keeps its own --warning-3 beside the eleven'
-Assert-True ($css -match 'data-id="yellow"\] \{[^}]*--warning-3: #f08a24;') 'Geel keeps its own --warning-3 beside the eleven'
+Assert-True ($css -match 'data-id="rust"\] \{[^}]*--warning-3: #b88a00;') 'Roest keeps its own --warning-3 beside the ten'
+Assert-True ($css -match 'data-id="yellow"\] \{[^}]*--warning-3: #f08a24;') 'Geel keeps its own --warning-3 beside the ten'
 
 Write-Host '-- group 4: the build script' -ForegroundColor Cyan
 

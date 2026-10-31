@@ -41,32 +41,42 @@
 
 Maikel asked to add a readability rule to the 30% group and doubted `--muted-inverse` on `paper-4`.
 Measured (WCAG, all twelve themes): `--primary` 4.56:1+ and `--muted` 5.30:1+ on `paper-4`;
-`--muted-inverse` 2.14:1 to 2.32:1. Decision (Maikel): the rule covers the 30%, and `--muted-inverse` is
-named as deliberately outside it.
+`--muted-inverse` 2.14:1 to 2.32:1. A first pass gave `--muted-inverse` an Inverse card of its own on the
+Color page; Maikel refused it (a theme has three groups, 60-30-10, and no invented fourth) and it was
+reverted. Of his three routes, two were measured impossible: as paper it reads 2.1:1 to 4.0:1 on
+`--primary` (floor 4.55), and no colour reaches 4.5:1 on both `paper-4` and `--fg-1` (best 3.9:1 to
+4.05:1). Decision (Maikel): retire it, and the quieter line on `.fill-inverse` takes `--paper-4`.
 
 ### CREATE
 
-- [x] The brand book README states that the 30% group reads on all four paper steps, and why `--muted-inverse` is not in it
+- [x] The brand book README states that the 30% group reads on all four paper steps, and that a theme has the three groups and no fourth
+- [x] The palette model (`house-palette-lib.ps1`) no longer computes `--muted-inverse`, and promises `paper-4 on fg-1` at 7:1 instead; `house-style.css` rebuilt with `build-house-palette.ps1 -Apply` (only that token left the theme lines)
+- [x] `.fill-inverse`'s quieter lines take `--paper-4`; the stylesheet comments, README, the `dkj-brandbook` skill page and `specimens.html` (the 30 card and the twelve theme dot rows) follow
+- [x] `--muted-inverse` joins `Get-HouseStyleRetiredTokens`, so a consumer still using it is told
 
 ### TEST
 
 - [x] The figures re-measured from the theme hex values in `house-style.css`
+- [x] `house-palette` (140), `check-house-style` (121) and `dev-pages` (543) suites green; `check-house-style.ps1` on this repo OK
+- [x] The Color page re-read on the restarted dev server: Theme holds 60, 30 and 10 and nothing else
 
 ### DEPLOY: docs/brandbook-30-group-reads-on-paper
 
 The brand book's 60-30-10 rule now says that everything in the 30% group (`--primary`, `--muted`) reads on
-all four paper steps, with the measured floor on `paper-4`, and that `--muted-inverse` stays out of that
-group because it reads only on an inverted surface (about 2.2:1 on `paper-4`).
+all four paper steps, and that a theme has these three groups and no fourth. That retired `--muted-inverse`:
+it fitted no group and no value could make it fit. Each theme now has ten colours instead of eleven, the
+quieter line on `.fill-inverse` takes `--paper-4`, and the brand book's Color page and theme swatches show
+the three groups alone.
 
-**Score:** 2
+**Score:** 3
 
 #### What makes this deploy extra special
 
-A consuming repo's designer now knows not to put `--muted-inverse` on a paper surface; no token changes.
+`--muted-inverse` no longer exists. A DKJ-Solutions repo whose own domain layer uses it must switch to
+`--paper-4` on an inverted surface; the house-style check now reports every use as a retired token.
 
-**Score:** 2
+**Score:** 5
 
 #### Pull Request
 
-The brand book says the 30% group reads on all four paper steps
-
+The brand book retires --muted-inverse: a theme has the 60-30-10 groups and no fourth

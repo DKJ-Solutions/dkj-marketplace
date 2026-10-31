@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    The colour model of the house style (#3235): eleven tokens per theme, computed from the theme's hue and
+    The colour model of the house style (#3235): ten tokens per theme, computed from the theme's hue and
     mode, so a theme is never tuned by hand again.
 
 .DESCRIPTION
@@ -10,7 +10,9 @@
       --paper-1..4     FOUR colours that read on the primary, from white towards a little darker: the page, the
                        card, the line, the stronger border -- and the text on a primary fill.
       --muted          a grey of the colour that reads extra well (7:1) on the page.
-      --muted-inverse  a grey of the colour that reads extra well (7:1) on the far end (an inverted surface).
+    There is no grey for the far end (--muted-inverse was retired, Maikel, November 1, 2026): a theme's colours are
+    the 60-30-10 groups and nothing else, and no colour reads at 4.5:1 on both paper-4 and fg-1, so it fitted none.
+    The quieter line on an inverted surface takes --paper-4.
       --fg-1..4        FOUR text colours that read on the page, near black, in very small steps: fg-4 is still
                        very dark, only a little less so than fg-1.
     A dark theme is the mirror: the paper runs from black towards a little lighter and the text is near white. Its
@@ -152,7 +154,7 @@ function Find-LightnessAtContrast {
 
 # ---- the palette ----------------------------------------------------------------------------------------------
 function Get-HousePalette {
-    <# The eleven tokens of one theme, as an ordered map of token name to #rrggbb. #>
+    <# The ten tokens of one theme, as an ordered map of token name to #rrggbb. #>
     param([Parameter(Mandatory)][double]$Hue, [Parameter(Mandatory)][ValidateSet('light', 'dark')][string]$Mode, [double]$ChromaMax = 0)
     $steps = Get-HousePaletteSteps -Mode $Mode
     if ($ChromaMax -gt 0) { $steps.PrimaryChromaMax = $ChromaMax }
@@ -171,28 +173,25 @@ function Get-HousePalette {
         $primary = Find-LightnessAtContrast $makeCapped $paper[3] $steps.PrimaryFloor 0 1 'low'
     }
 
-    # the greys: as close to their ground as 7:1 allows, so they recede by colour while still reading extra well
+    # the grey: as close to its ground as 7:1 allows, so it recedes by colour while still reading extra well
     $mc = $steps.MutedC
     $makeMuted = { param($l) ConvertFrom-OkLch $l $mc $okHue }.GetNewClosure()
     if ($Mode -eq 'light') {
         $muted   = Find-LightnessAtContrast $makeMuted $paper[0] 7.05 0 1 'high'
-        $inverse = Find-LightnessAtContrast $makeMuted $fg[0] 7.05 0 1 'low'
     } else {
         $muted   = Find-LightnessAtContrast $makeMuted $paper[0] 7.05 0 1 'low'
-        $inverse = Find-LightnessAtContrast $makeMuted $fg[0] 7.05 0 1 'high'
     }
 
     $p = [ordered]@{}
     for ($i = 0; $i -lt 4; $i++) { $p["--paper-$($i + 1)"] = $paper[$i] }
     $p['--primary'] = $primary
     $p['--muted'] = $muted
-    $p['--muted-inverse'] = $inverse
     for ($i = 0; $i -lt 4; $i++) { $p["--fg-$($i + 1)"] = $fg[$i] }
     $p
 }
 
 function Format-HousePaletteDeclarations {
-    <# The eleven tokens as one line of CSS declarations, in the stylesheet's order. #>
+    <# The ten tokens as one line of CSS declarations, in the stylesheet's order. #>
     param([Parameter(Mandatory)]$Palette)
     ($Palette.Keys | ForEach-Object { "$($_): $($Palette[$_]);" }) -join ' '
 }
@@ -206,7 +205,7 @@ function Get-HousePaletteContrast {
     $rows += @{ Pair = 'muted on paper-1'; Ratio = Get-ContrastRatio $Palette['--muted'] $Palette['--paper-1']; Floor = 7 }
     $rows += @{ Pair = 'muted on paper-2'; Ratio = Get-ContrastRatio $Palette['--muted'] $Palette['--paper-2']; Floor = 4.5 }
     $rows += @{ Pair = 'muted on paper-4'; Ratio = Get-ContrastRatio $Palette['--muted'] $Palette['--paper-4']; Floor = 4.5 }
-    $rows += @{ Pair = 'muted-inverse on fg-1'; Ratio = Get-ContrastRatio $Palette['--muted-inverse'] $Palette['--fg-1']; Floor = 7 }
+    $rows += @{ Pair = 'paper-4 on fg-1'; Ratio = Get-ContrastRatio $Palette['--paper-4'] $Palette['--fg-1']; Floor = 7 }
     $rows += @{ Pair = 'paper-1 on muted'; Ratio = Get-ContrastRatio $Palette['--paper-1'] $Palette['--muted']; Floor = 4.5 }
     $rows
 }

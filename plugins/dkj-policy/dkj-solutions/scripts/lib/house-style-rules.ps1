@@ -76,7 +76,7 @@ function Get-HouseStyleRetiredTokens {
     <# The token names the house style retired, as of the tag the skill pins (v0.4.0). #>
     return [string[]]@(
         '--axis', '--bad', '--border', '--border-base', '--down', '--gain', '--good', '--grid', '--grid-base',
-        '--ink', '--ink-1', '--ink-2', '--ink-3', '--ink-4', '--ink-5', '--ink-6', '--ink-7', '--loss', '--neutral-1', '--neutral-2', '--neutral-3', '--neutral-4',
+        '--ink', '--ink-1', '--ink-2', '--ink-3', '--ink-4', '--ink-5', '--ink-6', '--ink-7', '--loss', '--muted-inverse', '--neutral-1', '--neutral-2', '--neutral-3', '--neutral-4',
         '--neutral-5', '--on-primary', '--on-warn', '--page', '--page-base', '--primary-1', '--primary-2',
         '--primary-3', '--primary-4', '--primary-5', '--primary-6', '--primary-7', '--primary-8', '--primary-9',
         '--primary-10', '--primary-11', '--primary-12', '--primary-ink',

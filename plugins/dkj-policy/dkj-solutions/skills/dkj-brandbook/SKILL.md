@@ -214,8 +214,8 @@ house file never conflict on the cell. A change to a house file lands alone, or,
 with the new names in `Get-HouseStyleRetiredTokens` in `scripts/lib/house-style-rules.ps1`.
 
 **A theme's colours are computed, never typed**
-([#3235](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3235)). Each theme's eleven colours (one
-`--primary`, the greys `--muted` and `--muted-inverse`, `--paper-1` … `--paper-4` and `--fg-1` … `--fg-4`) come
+([#3235](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3235)). Each theme's ten colours (one
+`--primary`, the grey `--muted`, `--paper-1` … `--paper-4` and `--fg-1` … `--fg-4`) come
 from its hue and mode through
 [`scripts/build/build-house-palette.ps1`](../../scripts/build/build-house-palette.ps1), with the model in
 `scripts/lib/house-palette-lib.ps1` beside it. A change to a theme, a step or a contrast floor is made there:
