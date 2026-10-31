@@ -53,7 +53,7 @@ A visible result: the owner looks before the merge.
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: one assert on the Color page's headings and card order; 543 passed
-- [ ] The owner has looked at `localhost:4870/marketplace/dkj-policy/dkj-brandbook/tokens/color`
+- [x] The owner has looked at `localhost:4870/marketplace/dkj-policy/dkj-brandbook/tokens/color`
 
 ### DEPLOY: feat/brandbook-overview-theme-stats-status
 
