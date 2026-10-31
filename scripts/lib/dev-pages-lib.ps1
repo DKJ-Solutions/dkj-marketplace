@@ -460,8 +460,16 @@ function Resolve-ProductHouseStyleRequest {
 # The token groups the brand book's overview opens on, each a card under its Tokens heading (Maikel, October 31,
 # 2026): which of the Tokens section's specimen cards each one shows, by the card's own h3 title. A card of that
 # section named by no group is a defect the suite holds against the real specimens.
+# A group may set its cards under h2s of its own, -Headings, each naming its cards; its Cards are then those, in order.
+# Color does (Maikel, October 31, 2026): Theme holds the 60-30-10 rule's three shares, Stats the series slots, Status
+# the status and direction colours.
 $script:ProductBrandbookTokenGroups = @(
-    @{ Slug = 'color'; Label = 'Color'; Cards = @('Theme colours', 'Categories', 'Status and direction') }
+    @{ Slug = 'color'; Label = 'Color'; Cards = @('60', '30', '10', 'Categories', 'Status and direction')
+        Headings = @(
+            @{ Label = 'Theme'; Cards = @('60', '30', '10') }
+            @{ Label = 'Stats'; Cards = @('Categories') }
+            @{ Label = 'Status'; Cards = @('Status and direction') }
+        ) }
     @{ Slug = 'text'; Label = 'Text'; Cards = @('Type scale') }
     @{ Slug = 'radius'; Label = 'Radius'; Cards = @('Radius') }
     @{ Slug = 'spacing'; Label = 'Spacing'; Cards = @('Spacing scale') }
@@ -525,9 +533,18 @@ function Format-ProductHouseStylePageHtml {
         $all = Get-ProductBrandbookTokenCards -Inner $tokens.Inner
         $picked = @(foreach ($title in $group.Cards) { $all | Where-Object { $_.Title -ceq $title } | Select-Object -First 1 })
         if ($picked.Count -ne @($group.Cards).Count) { return $null }
-        $content = $split.Head + '<div class="spec-page">' + "`n" + '<div class="' + $tokens.Grid + '">' + "`n" + (($picked | ForEach-Object { $_.Html }) -join "`n`n") + "`n" + '</div>' + "`n" + '</div>' + "`n" + $split.Tail
+        $grids = if ($group.ContainsKey('Headings')) {
+            @(foreach ($h in $group.Headings) {
+                $html = @(foreach ($title in $h.Cards) { ($picked | Where-Object { $_.Title -ceq $title } | Select-Object -First 1).Html })
+                '<div class="' + $tokens.Grid + '">' + "`n" + '  <div class="grid__head"><h2>' + (ConvertTo-GeneralPageText $h.Label) + '</h2></div>' + "`n`n" + ($html -join "`n`n") + "`n" + '</div>'
+            }) -join "`n`n"
+        } else {
+            '<div class="' + $tokens.Grid + '">' + "`n" + (($picked | ForEach-Object { $_.Html }) -join "`n`n") + "`n" + '</div>'
+        }
+        $content = $split.Head + '<div class="spec-page">' + "`n" + $grids + "`n" + '</div>' + "`n" + $split.Tail
         $crumbs += @{ Label = 'dkj-brandbook'; Href = $base }, @{ Label = $tokens.Title; Href = $base + '/tokens' }
-        return Format-DevPageHtml -Title $group.Label -Lead ($group.Cards -join ', ') -Body $content -ParentCrumbs $crumbs -FooterNote $foot
+        $lead = if ($group.ContainsKey('Headings')) { @($group.Headings | ForEach-Object { $_.Label }) -join ', ' } else { $group.Cards -join ', ' }
+        return Format-DevPageHtml -Title $group.Label -Lead $lead -Body $content -ParentCrumbs $crumbs -FooterNote $foot
     }
 
     $parts = Get-HouseStyleSpecimensParts -Body $Body -ReadError $ReadError -Section $Section -BasePath $base
