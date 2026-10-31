@@ -401,12 +401,13 @@ function Format-HouseStyleSpecimensPageHtml {
 function Resolve-HouseStyleProductUrl {
     <#
         Where the toolbox sends its house-style pages instead of serving them (Maikel, October 31, 2026): in the
-        house style's SOURCE repo, whose product shows them at /marketplace/dkj-policy/house-style[/<section>]
-        beside the plugin they belong to. -IsSource is whether this checkout holds the canonical
+        house style's SOURCE repo, whose product shows them at /marketplace/dkj-policy/dkj-brandbook[/<section>]
+        beside the plugin they belong to (named after the brand book since October 31, 2026, Maikel; the product
+        redirects the older house-style address a released toolbox still sends). -IsSource is whether this checkout holds the canonical
         plugins/dkj-policy/assets/dkj-brandbook/specimens.html; -ProductUrl is the product the state file names.
         '' -- serve them here -- in every other repo, and where no plain loopback product is known.
     #>
     param([bool]$IsSource, [AllowEmptyString()][string]$ProductUrl = '', [AllowEmptyString()][string]$Section = '')
     if (-not $IsSource -or $ProductUrl -cnotmatch '^http://localhost:[0-9]{4,5}/?\z') { return '' }
-    return $ProductUrl.TrimEnd('/') + '/marketplace/dkj-policy/house-style' + $(if ($Section) { '/' + $Section })
+    return $ProductUrl.TrimEnd('/') + '/marketplace/dkj-policy/dkj-brandbook' + $(if ($Section) { '/' + $Section })
 }

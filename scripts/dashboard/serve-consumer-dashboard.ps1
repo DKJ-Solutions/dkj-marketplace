@@ -12,7 +12,8 @@
     the specialist teams (dkj-subagents-*) one card whose page is /marketplace/dkj-subagents; a team's own page shows
     its specialists and the context each one costs, read from this tree, and each has a page of its own under it
     (/specialists, their own pages until October 28, 2026, redirects there); and the house style's specimens
-    under dkj-policy, /marketplace/dkj-policy/house-style[/<section>] (Maikel, October 31, 2026). The rules of
+    under dkj-policy, /marketplace/dkj-policy/dkj-brandbook[/<section>] (Maikel, October 31, 2026; the older
+    /marketplace/dkj-policy/house-style redirects there). The rules of
     each page are in scripts/lib/dev-pages-lib.ps1. The server takes no POST but the banner's.
 
     EVERY REPO HAS A PRODUCT PORT (Maikel, October 26, 2026, #3540). This server was this repo's own hub
@@ -453,6 +454,13 @@ try {
                 # The Marketplace pages were /plugins until October 30, 2026; their url follows their h1 since
                 # (Maikel). An old link or bookmark lands there.
                 Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = $mpTo } -Method $method
+                continue
+            }
+            $hsTo = Resolve-ProductHouseStyleRedirect -Path $path
+            if ($hsTo) {
+                # The specimens' address until they took the brand book's name (Maikel, October 31, 2026), and the
+                # one a released toolbox still sends: it lands on the same page under its new name.
+                Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = $hsTo } -Method $method
                 continue
             }
             $hsAt = Resolve-ProductHouseStyleRequest -Path $path

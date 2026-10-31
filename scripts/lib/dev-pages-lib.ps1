@@ -444,13 +444,25 @@ function Resolve-MarketplaceAddress {
 
 function Resolve-ProductHouseStyleRequest {
     <#
-        The house style's specimens on the product (Maikel, October 31, 2026): /marketplace/dkj-policy/house-style is
-        @{ Section = '' }, /marketplace/dkj-policy/house-style/<section> @{ Section = '<section>' }, anything else
-        $null. Asked before Resolve-MarketplaceAddress, which would read 'house-style' as a plugin's name.
+        The house style's specimens on the product (Maikel, October 31, 2026), named after the brand book whose files
+        they document: /marketplace/dkj-policy/dkj-brandbook is @{ Section = '' },
+        /marketplace/dkj-policy/dkj-brandbook/<section> @{ Section = '<section>' }, anything else $null. Asked before
+        Resolve-MarketplaceAddress, which would read 'dkj-brandbook' as a plugin's name.
     #>
     param([AllowEmptyString()][string]$Path)
-    if ($Path -cnotmatch '^/marketplace/dkj-policy/house-style(?:/([a-z][a-z-]{0,39}))?/?\z') { return $null }
+    if ($Path -cnotmatch '^/marketplace/dkj-policy/dkj-brandbook(?:/([a-z][a-z-]{0,39}))?/?\z') { return $null }
     return @{ Section = [string]$Matches[1] }
+}
+
+function Resolve-ProductHouseStyleRedirect {
+    <#
+        Where the specimens' first product address now lives: /marketplace/dkj-policy/house-style[/<section>] until
+        the page took the brand book's name (Maikel, October 31, 2026), and the address a released toolbox still
+        sends them to. '' for any other path.
+    #>
+    param([AllowEmptyString()][string]$Path)
+    if ($Path -cnotmatch '^/marketplace/dkj-policy/house-style(?:/([a-z][a-z-]{0,39}))?/?\z') { return '' }
+    return '/marketplace/dkj-policy/dkj-brandbook' + $(if ($Matches[1]) { '/' + $Matches[1] })
 }
 
 function Format-ProductHouseStylePageHtml {
@@ -466,11 +478,13 @@ function Format-ProductHouseStylePageHtml {
         [AllowEmptyString()][string]$ReadError = '',
         [AllowEmptyString()][string]$Section = ''
     )
-    $base = '/marketplace/dkj-policy/house-style'
+    $base = '/marketplace/dkj-policy/dkj-brandbook'
     $parts = Get-HouseStyleSpecimensParts -Body $Body -ReadError $ReadError -Section $Section -BasePath $base
     if ($null -eq $parts) { return $null }
+    # The overview's h1 and crumb carry the brand book's name, as its card and its url do (Maikel, October 31, 2026).
+    if (-not $parts.Section) { $parts.Title = 'dkj-brandbook' }
     $crumbs = @(@{ Label = 'Marketplace'; Href = '/marketplace' }, @{ Label = 'dkj-policy'; Href = '/marketplace/dkj-policy' })
-    if ($parts.Section) { $crumbs += @{ Label = 'House style'; Href = $base } }
+    if ($parts.Section) { $crumbs += @{ Label = 'dkj-brandbook'; Href = $base } }
     return Format-DevPageHtml -Title $parts.Title -Lead $parts.Lead -Body $parts.Body -ParentCrumbs $crumbs `
         -FooterNote 'Read from this checkout''s <code>plugins/dkj-policy/assets/dkj-brandbook/specimens.html</code> on every request, so it is the tree, not the installed release.'
 }
@@ -635,8 +649,8 @@ function Format-MarketplacePluginsPageHtml {
     if ($p.Name -ceq $addOnParent) {
         # What dkj-policy ships that can be looked at: the house style's specimens (Maikel, October 31, 2026).
         # It opens the page, above the add-ons, under the heading Assets, its card named dkj-brandbook (Maikel, October 31, 2026).
-        [void]$body.AppendLine('<div class="grid-3" id="house-style"><div class="grid__head"><h2>Assets</h2></div>')
-        [void]$body.AppendLine((Format-HubCardLinkHtml -Href '/marketplace/dkj-policy/house-style' -Label 'dkj-brandbook' -Heading 3 `
+        [void]$body.AppendLine('<div class="grid-3" id="assets"><div class="grid__head"><h2>Assets</h2></div>')
+        [void]$body.AppendLine((Format-HubCardLinkHtml -Href '/marketplace/dkj-policy/dkj-brandbook' -Label 'dkj-brandbook' -Heading 3 `
             -Sub 'Every token, the twelve themes and every component, with their variants and states' -Icon 'house-style'))
         [void]$body.AppendLine('</div>')
     }
