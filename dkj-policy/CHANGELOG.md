@@ -2,7 +2,27 @@
 
 ## [Unreleased]
 
-**4 / 6 minor entries** <!-- pending-tally -->
+**4 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/house-style-css-gate-path · 20261031-191613Z
+
+The brand book's CSS gate reads the stylesheets from `plugins/dkj-policy/assets/dkj-brandbook/` again. #3706 renamed the folder but missed this reader, because it builds the path from separate segments, so the gate failed on every change to the stylesheet.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A -- the gate runs only in this repo's CI; nothing a consumer installs changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+The CSS gate reads the brand book from its renamed folder
+
+[PR #3708](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3708)
+
+---
 
 ### DEPLOY: feat/house-style-to-dkj-brandbook · 20261031-190353Z
 
