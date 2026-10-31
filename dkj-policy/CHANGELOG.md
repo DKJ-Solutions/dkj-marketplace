@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**5 / 9 minor entries** <!-- pending-tally -->
+**6 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/radius-scale-names · 20261031-203241Z
+
+The brand book's corner-radius tokens are named like its spacing scale: `--radius-N` is N × 4px and a half
+step adds 2px, so `--radius-xs`, `-sm`, `-md`, `-md-plus` and `-lg` are now `--radius-1`, `-1-5`, `-2`,
+`-2-5` and `-3`; `--radius-pill` stays. Every value is unchanged. The old names are retired, so
+`check-house-style` reports a use left behind, and the brand book's README carries the rename table.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+An app that takes the new stylesheet and uses a radius token in its own layer must rename it by the table in
+the brand book's README; a use that slips past renders with square corners, and the house-style gate names it.
+
+**Score:** 5
+
+#### Pull Request
+
+The radius tokens follow the spacing scale's names
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #3711](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3711)
+
+---
 
 ### DEPLOY: fix/house-style-above-add-ons · 20261031-200532Z
 
