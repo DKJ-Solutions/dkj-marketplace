@@ -39,19 +39,35 @@
 
 ### PLAN
 
+The owner found the radius names random (`xs`, `sm`, `md`, `md-plus`, `lg`). Name them like the spacing
+scale, which already has a predictable rule: `--radius-N` is N x 4px, a half step adds 2px. Values stay.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Rename the five size tokens in `house-style.css` and every use in it and in `specimens.html`
+- [x] Specimen labels and the stylesheet comment state the rule
+- [x] README: a Radius row in the token table, a rename table, the old "New tokens" line updated
+- [x] Retire the five old names in `Get-HouseStyleRetiredTokens`, so the gate reports a use left behind
 
 ### TEST
 
+- [x] `check-house-style.tests.ps1` green (121 passed), and `check-house-style.ps1` OK on this repo
+
 ### DEPLOY: feat/radius-scale-names
 
-**Score:**
+The brand book's corner-radius tokens are named like its spacing scale: `--radius-N` is N × 4px and a half
+step adds 2px, so `--radius-xs`, `-sm`, `-md`, `-md-plus` and `-lg` are now `--radius-1`, `-1-5`, `-2`,
+`-2-5` and `-3`; `--radius-pill` stays. Every value is unchanged. The old names are retired, so
+`check-house-style` reports a use left behind, and the brand book's README carries the rename table.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+An app that takes the new stylesheet and uses a radius token in its own layer must rename it by the table in
+the brand book's README; a use that slips past renders with square corners, and the house-style gate names it.
+
+**Score:** 5
 
 #### Pull Request
 

@@ -109,6 +109,7 @@ primary outweighs its paper has spent the 30% as ground.
 | Elevation | `--shadow-pop` | tooltips |
 | Spacing | `--spacing-0-5` … `--spacing-96` | the spacing scale, same in both modes: `--spacing-N` is N × 4px, a half step (`-0-5`, `-1-5`, …) adds 2px. Every gap, margin and padding uses one, and a repo layer spaces its own components from the same scale |
 | Type | `--text-h1` … `--text-h3`, `--text-lg`, `--text-base`, `--text-sm`, `--text-xs`, `--font-serif` | the type scale, same in both modes: 32/18/14 for the headings (`h3` at 14px, the body size, and no `h4` or `h5` since October 25, 2026, the owner: [below](#the-heading-cut-of-october-25-2026)) (`h2` 18px since October 25, 2026, the owner; it went from 32 at weight 600 to 24 at 700 on October 24, and keeps the 700), and `.lead` is `--text-base` since the same day (it was `--text-lg`), 18/14/12/11 for running text. `h1`–`h3` each take the token of their own level, body text is `--text-base`. No heading is larger than 32px (owner's decision, October 22, 2026: as much content as possible on a 900px-high screen, since October 27 one of about 1300 x 900), so `h1` stands apart by its size and colour (by its capitals too until October 24, 2026); it was 48px from October 20, when `--text-h0` was retired. The hero figure is set at `--text-h1`. There is no `h6` either: the 24px `h3` was retired the same day, because it stood too close to `h2`, and every level below moved up one ([below](#the-heading-shift-of-october-20-2026)). The one exception is a section label (`GroupHeading`): it stays a heading for the document outline, but every level renders at `--text-base`, uppercase and muted (owner's decision, October 15, 2026). `--font-serif` was the face of `h1` and `h2` until October 24, 2026, when the owner moved both to the sans; it stays for a title that keeps that face |
+| Radius | `--radius-1` … `--radius-3`, `--radius-pill` | the corner radii, same in both modes and named like the spacing scale: `--radius-N` is N × 4px, a half step adds 2px, so `--radius-1` 4px, `--radius-1-5` 6px, `--radius-2` 8px, `--radius-2-5` 10px, `--radius-3` 12px; `--radius-pill` rounds the ends fully. Named `xs` to `lg` with a `md-plus` until October 31, 2026 ([below](#the-radius-rename-of-october-31-2026)) |
 | App shell | `--control-h`, `--tap`, `--topbar-h`, `--column-narrow` | sizes for a mobile-first app, same in both modes: 38px for a value field and the button beside it, 44px as the smallest touch target, 56px for the top bar, 512px for the narrow app column |
 
 `--gain` was removed (October 14, 2026). A gain in a chart is `--positive-3` (owner's decision, October 15, 2026, #131); before that it was `--cat-1`.
@@ -324,6 +325,25 @@ large figure that borrowed `--text-h3` for its size (a tile value, a secondary h
 `--text-lg`, because a figure at the body size no longer stands out. `--text-h4` and `--text-h5` are retired tokens,
 so the gate reports a use left behind. The house rules for an `h4` and an `h5` are gone, so one left in markup
 renders at the browser's default size.
+
+### The radius rename of October 31, 2026
+
+**The radius tokens are named like the spacing scale** (owner, October 31, 2026): `--radius-N` is N × 4px and a
+half step adds 2px, so a name says its size and a new step has an obvious name. The T-shirt names had run out at
+10px, which became `md-plus`. Every value is unchanged, so nothing looks different:
+
+| Was | Now |
+|---|---|
+| `--radius-xs`, 4px | `--radius-1`, 4px |
+| `--radius-sm`, 6px | `--radius-1-5`, 6px |
+| `--radius-md`, 8px | `--radius-2`, 8px |
+| `--radius-md-plus`, 10px | `--radius-2-5`, 10px |
+| `--radius-lg`, 12px | `--radius-3`, 12px |
+| `--radius-pill` | `--radius-pill`, unchanged |
+
+**An app that takes this update renames each use in its own layer** by the table. The old names are retired
+tokens, so the gate reports a use left behind; one that slips past renders with square corners rather than an
+error.
 
 ## Themes: the user picks the colour
 
@@ -602,7 +622,7 @@ generic `.chip`, the stat rows and the stepper are house classes since the
 
 **Added to existing classes** (no existing rule changed): `.card--open`, `.card--invalid`, `.msg--error`, `.table-wrap:focus-visible`, `.table .row-negative`, `.row-positive`, `.row-warn`, `.col-start`, `.col-end`, `.facts__detail`, `.facts__total`, `.chart .bar--active`.
 
-- **New tokens.** `--radius-xs` 4px, `--radius-sm` 6px, `--radius-md` 8px, `--radius-md-plus` 10px, `--radius-lg` 12px, `--radius-pill` 999px; `--control-lg` 52px; `--datecol` 10ch; `--font-mono`. Everything else the Brandbook app defined maps onto an existing token (`--tap`, `--control-h`, `--topbar-h`, `--column-narrow`, the spacing and type scales) or onto a literal as in the older classes (weights, line heights, tracking, focus ring, motion).
+- **New tokens.** The corner radii, `--radius-1` 4px to `--radius-3` 12px and `--radius-pill` 999px (named `--radius-xs` to `--radius-lg` until [October 31, 2026](#the-radius-rename-of-october-31-2026)); `--control-lg` 52px; `--datecol` 10ch; `--font-mono`. Everything else the Brandbook app defined maps onto an existing token (`--tap`, `--control-h`, `--topbar-h`, `--column-narrow`, the spacing and type scales) or onto a literal as in the older classes (weights, line heights, tracking, focus ring, motion).
 - **Sizes and focus.** Interactive parts are at least `--tap` (44px) high, or grow their hit area to it (`::after`). The focus ring is `--muted`, 2px, offset 2px (inset where the part is clipped).
 - **Contrast.** Every pairing is a token pair already used in the brand book. A date row marked `--invalid` shows its date and reason in `--negative-5` (the Brandbook app used `--negative-3`, which is a fill step, not a text step). The native checkbox takes the theme through `accent-color`.
 - **Browser support.** `.calc` needs `subgrid`, `.more--structured` container queries, `.step-head__value` uses `text-box` (ignored where unsupported, the figure is only less tightly centred).
