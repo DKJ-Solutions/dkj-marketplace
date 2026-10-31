@@ -8,14 +8,14 @@
 .spec-item { display: grid; gap: var(--spacing-1); min-width: 0; align-content: start; }
 .spec-item > .note { margin: 0; }
 .spec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: var(--spacing-3); }
-.spec-sample { display: block; height: var(--spacing-10); border: 1px solid var(--muted); border-radius: var(--radius-md); }
+.spec-sample { display: block; height: var(--spacing-10); border: 1px solid var(--muted); border-radius: var(--radius-2); }
 .spec-dots { display: flex; flex-wrap: wrap; gap: var(--spacing-1); margin: var(--spacing-2) 0; }
-.spec-dot { display: block; width: var(--spacing-5); height: var(--spacing-5); border: 1px solid var(--muted); border-radius: var(--radius-xs); }
+.spec-dot { display: block; width: var(--spacing-5); height: var(--spacing-5); border: 1px solid var(--muted); border-radius: var(--radius-1); }
 .spec-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--spacing-3); }
-.spec-themes .theme-swatch { display: block; width: auto; height: auto; padding: var(--spacing-3); border-radius: var(--radius-lg); cursor: default; text-align: left; color: var(--fg-1); }
+.spec-themes .theme-swatch { display: block; width: auto; height: auto; padding: var(--spacing-3); border-radius: var(--radius-3); cursor: default; text-align: left; color: var(--fg-1); }
 .spec-themes .theme-swatch h3 { margin: 0; }
 .spec-space { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); align-items: center; gap: var(--spacing-2); }
-.spec-bar { display: block; width: var(--w); max-width: 100%; height: var(--spacing-2); border-radius: var(--radius-xs); background: var(--muted); }
+.spec-bar { display: block; width: var(--w); max-width: 100%; height: var(--spacing-2); border-radius: var(--radius-1); background: var(--muted); }
 .spec-radius { display: block; width: var(--spacing-12); height: var(--spacing-12); border: 2px solid var(--muted); background: var(--paper-3); }
 .spec-stage { position: relative; min-width: 0; overflow-x: auto; }
 .spec-stage--tall { height: 22rem; }
@@ -103,14 +103,14 @@
   </section>
 
   <section class="card">
-    <div class="card__head"><h3 class="card__title">Radius</h3><p class="card__sub">--radius-xs to --radius-pill</p></div>
+    <div class="card__head"><h3 class="card__title">Radius</h3><p class="card__sub">--radius-N is N x 4px, like the spacing scale; a half step adds 2px. --radius-pill rounds the ends fully.</p></div>
     <div class="spec-row">
-      <div class="spec-item"><span class="spec-radius" style="border-radius: var(--radius-xs)"></span><p class="note">xs 4</p></div>
-      <div class="spec-item"><span class="spec-radius" style="border-radius: var(--radius-sm)"></span><p class="note">sm 6</p></div>
-      <div class="spec-item"><span class="spec-radius" style="border-radius: var(--radius-md)"></span><p class="note">md 8</p></div>
-      <div class="spec-item"><span class="spec-radius" style="border-radius: var(--radius-md-plus)"></span><p class="note">md-plus 10</p></div>
-      <div class="spec-item"><span class="spec-radius" style="border-radius: var(--radius-lg)"></span><p class="note">lg 12</p></div>
-      <div class="spec-item"><span class="spec-radius" style="border-radius: var(--radius-pill)"></span><p class="note">pill</p></div>
+      <div class="spec-item"><span class="spec-radius" style="border-radius: var(--radius-1)"></span><p class="note">--radius-1 (4px)</p></div>
+      <div class="spec-item"><span class="spec-radius" style="border-radius: var(--radius-1-5)"></span><p class="note">--radius-1-5 (6px)</p></div>
+      <div class="spec-item"><span class="spec-radius" style="border-radius: var(--radius-2)"></span><p class="note">--radius-2 (8px)</p></div>
+      <div class="spec-item"><span class="spec-radius" style="border-radius: var(--radius-2-5)"></span><p class="note">--radius-2-5 (10px)</p></div>
+      <div class="spec-item"><span class="spec-radius" style="border-radius: var(--radius-3)"></span><p class="note">--radius-3 (12px)</p></div>
+      <div class="spec-item"><span class="spec-radius" style="border-radius: var(--radius-pill)"></span><p class="note">--radius-pill</p></div>
     </div>
   </section>
 
