@@ -468,6 +468,13 @@ $script:ProductBrandbookTokenGroups = @(
     @{ Slug = 'size'; Label = 'Size'; Cards = @('Sizes and elevation') }
 )
 
+# The 60-30-10 rule's three shares, the cards under the overview's Theme heading (Maikel, October 31, 2026).
+$script:ProductBrandbookThemeShares = @(
+    @{ Share = '60'; Group = 'Paper' }
+    @{ Share = '30'; Group = 'Primary' }
+    @{ Share = '10'; Group = 'Text' }
+)
+
 function Get-ProductBrandbookTokenCards {
     <#
         The Tokens section's specimen cards, cut at their column-2 <section class="card..."> / </section> lines:
@@ -505,7 +512,8 @@ function Format-ProductHouseStylePageHtml {
         THE OVERVIEW OPENS ON ITS TOKENS (Maikel, October 31, 2026): an h2 Tokens over one card per token group
         ($script:ProductBrandbookTokenGroups), then a card for every other section, as before. -Token names a group's
         own page, /tokens/<group>, holding only that group's specimen cards; a group none has, or whose cards the
-        file no longer holds, returns $null. /tokens itself still shows the whole section.
+        file no longer holds, returns $null. /tokens itself still shows the whole section. Under Tokens come the h2s
+        Theme (a card for each 60-30-10 share), Stats and Status, before the other sections' cards.
     #>
     param(
         [AllowEmptyString()][string]$Body = '',
@@ -547,6 +555,15 @@ function Format-ProductHouseStylePageHtml {
             [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ($base + '/tokens/' + $g.Slug) -Label $g.Label -Heading 3 -Sub $(if ($n -eq 1) { '1 specimen' } else { [string]$n + ' specimens' })))
         }
         [void]$sb.AppendLine('</div>')
+        # Theme, Stats and Status follow Tokens as headings of their own (Maikel, October 31, 2026): Theme holds one card
+        # per share of the 60-30-10 rule (assets/dkj-brandbook/README.md, "What it holds"); Stats and Status wait for theirs.
+        [void]$sb.AppendLine('<div class="grid-3" id="theme"><div class="grid__head"><h2>Theme</h2></div>')
+        foreach ($share in $script:ProductBrandbookThemeShares) {
+            [void]$sb.AppendLine('<section class="card"><div class="card__head"><h3 class="card__title">' + $share.Share + '</h3><p class="card__sub">' + $share.Group + '</p></div></section>')
+        }
+        [void]$sb.AppendLine('</div>')
+        [void]$sb.AppendLine('<div class="grid-3" id="stats"><div class="grid__head"><h2>Stats</h2></div></div>')
+        [void]$sb.AppendLine('<div class="grid-3" id="status"><div class="grid__head"><h2>Status</h2></div></div>')
         [void]$sb.AppendLine('<div class="grid-3">')
         foreach ($s in @($split.Sections | Where-Object { $_.Slug -cne 'tokens' })) {
             $count = if ($s.Cards -eq 1) { '1 specimen' } else { [string]$s.Cards + ' specimens' }

@@ -925,6 +925,11 @@ $tkAt = $bbOver.IndexOf('<div class="grid-3" id="tokens"><div class="grid__head"
 $tkLabels = @([regex]::Matches($bbOver.Substring([Math]::Max(0, $tkAt)), 'href="/marketplace/dkj-policy/dkj-brandbook/tokens/([a-z-]+)"[\s\S]*?<h3 class="menu-item__title">([^<]+)</h3>') | ForEach-Object { $_.Groups[2].Value })
 Assert-True ($tkAt -ge 0 -and ($tkLabels -join ',') -ceq 'Color,Text,Radius,Spacing,Size') 'the overview opens on an h2 Tokens over the cards Color, Text, Radius, Spacing and Size, in that order'
 Assert-True (-not $bbOver.Contains('href="/marketplace/dkj-policy/dkj-brandbook/tokens"') -and $bbOver.Contains('href="/marketplace/dkj-policy/dkj-brandbook/themes"') -and $bbOver.IndexOf('dkj-brandbook/themes"') -gt $tkAt) 'the Tokens section''s own card gives way to the group, and the other sections follow it'
+$thAt = $bbOver.IndexOf('<div class="grid-3" id="theme"><div class="grid__head"><h2>Theme</h2></div>')
+$stAt = $bbOver.IndexOf('<div class="grid-3" id="stats"><div class="grid__head"><h2>Stats</h2></div></div>')
+$suAt = $bbOver.IndexOf('<div class="grid-3" id="status"><div class="grid__head"><h2>Status</h2></div></div>')
+$thTitles = @([regex]::Matches($bbOver.Substring([Math]::Max(0, $thAt), [Math]::Max(0, $stAt - $thAt)), '<h3 class="card__title">([^<]+)</h3><p class="card__sub">([^<]+)</p>') | ForEach-Object { $_.Groups[1].Value + ' ' + $_.Groups[2].Value })
+Assert-True ($thAt -gt $tkAt -and $stAt -gt $thAt -and $suAt -gt $stAt -and $bbOver.IndexOf('dkj-brandbook/themes"') -gt $suAt -and ($thTitles -join ',') -ceq '60 Paper,30 Primary,10 Text') 'under Tokens come the h2s Theme (cards 60, 30, 10), Stats and Status, before the other sections (Maikel, October 31, 2026)'
 $tkCards = Get-ProductBrandbookTokenCards -Inner ((Split-HouseStyleSpecimens -Body $specimens).Sections | Where-Object { $_.Slug -ceq 'tokens' }).Inner
 $tkNamed = @($script:ProductBrandbookTokenGroups | ForEach-Object { $_.Cards })
 Assert-True ($tkCards.Count -gt 0 -and @($tkCards | Where-Object { $tkNamed -cnotcontains $_.Title }).Count -eq 0 -and @($tkNamed | Where-Object { @($tkCards.Title) -cnotcontains $_ }).Count -eq 0) 'every specimen card of the real Tokens section is in exactly the groups that name it, and every group names a card the file holds'

@@ -39,19 +39,32 @@
 
 ### PLAN
 
+Maikel asked for three h2 headings on the brand book's overview, Theme, Stats and Status, with three cards
+under Theme: 60, 30 and 10. They sit under Tokens, before the other sections' cards. Each Theme card names its
+60-30-10 group (Paper, Primary, Text) as its sub line; Stats and Status stay empty until their cards are named.
+A visible result: the owner looks before the merge.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Format-ProductHouseStylePageHtml` writes the three headings and the Theme cards (`$script:ProductBrandbookThemeShares`)
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: one assert on the order and the cards; 543 passed
+- [ ] The owner has looked at the overview on the product (`localhost:4870/marketplace/dkj-policy/dkj-brandbook`)
+
 ### DEPLOY: feat/brandbook-overview-theme-stats-status
 
-**Score:**
+The brand book's overview on the product gains three h2 headings under Tokens: Theme, holding a card for each
+share of the 60-30-10 rule (60 Paper, 30 Primary, 10 Text), then Stats and Status, which wait for their cards.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+The overview is this repo's own dev product page; nothing a consumer takes changes.
+
+**Score:** N/A
 
 #### Pull Request
 
