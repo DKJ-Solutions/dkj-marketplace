@@ -41,7 +41,7 @@
 
 ### CREATE
 
-- [x] `Format-MarketplacePluginsPageHtml` (`scripts/lib/dev-pages-lib.ps1`) renders the House style section before the Add-ons section on dkj-policy's page
+- [x] `Format-MarketplacePluginsPageHtml` (`scripts/lib/dev-pages-lib.ps1`) renders the house style's section before the Add-ons section on dkj-policy's page, and heads it Assets
 
 ### TEST
 
@@ -50,9 +50,9 @@
 
 ### DEPLOY: fix/house-style-above-add-ons
 
-dkj-policy's page on the product's Marketplace now opens on its House style card, with the Add-ons below
-it and the plugin's facts below those (Maikel, October 31, 2026). Only the order changed; both sections
-read as before.
+dkj-policy's page on the product's Marketplace now opens on the house style's Specimens card, under the
+heading Assets (it was House style), with the Add-ons below it and the plugin's facts below those (Maikel,
+October 31, 2026).
 
 **Score:** 2
 
