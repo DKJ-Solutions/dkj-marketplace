@@ -634,9 +634,9 @@ function Format-MarketplacePluginsPageHtml {
     }
     if ($p.Name -ceq $addOnParent) {
         # What dkj-policy ships that can be looked at: the house style's specimens (Maikel, October 31, 2026).
-        # It opens the page, above the add-ons, under the heading Assets (Maikel, October 31, 2026).
+        # It opens the page, above the add-ons, under the heading Assets, its card named dkj-brandbook (Maikel, October 31, 2026).
         [void]$body.AppendLine('<div class="grid-3" id="house-style"><div class="grid__head"><h2>Assets</h2></div>')
-        [void]$body.AppendLine((Format-HubCardLinkHtml -Href '/marketplace/dkj-policy/house-style' -Label 'Specimens' -Heading 3 `
+        [void]$body.AppendLine((Format-HubCardLinkHtml -Href '/marketplace/dkj-policy/house-style' -Label 'dkj-brandbook' -Heading 3 `
             -Sub 'Every token, the twelve themes and every component, with their variants and states' -Icon 'house-style'))
         [void]$body.AppendLine('</div>')
     }
