@@ -450,8 +450,37 @@ function Resolve-ProductHouseStyleRequest {
         Resolve-MarketplaceAddress, which would read 'dkj-brandbook' as a plugin's name.
     #>
     param([AllowEmptyString()][string]$Path)
+    # A token group is one slug below the Tokens section, /marketplace/dkj-policy/dkj-brandbook/tokens/<group>, and
+    # comes back as @{ Section = 'tokens'; Token = '<group>' }; every other address carries Token ''.
+    if ($Path -cmatch '^/marketplace/dkj-policy/dkj-brandbook/tokens/([a-z][a-z-]{0,39})/?\z') { return @{ Section = 'tokens'; Token = [string]$Matches[1] } }
     if ($Path -cnotmatch '^/marketplace/dkj-policy/dkj-brandbook(?:/([a-z][a-z-]{0,39}))?/?\z') { return $null }
-    return @{ Section = [string]$Matches[1] }
+    return @{ Section = [string]$Matches[1]; Token = '' }
+}
+
+# The token groups the brand book's overview opens on, each a card under its Tokens heading (Maikel, October 31,
+# 2026): which of the Tokens section's specimen cards each one shows, by the card's own h3 title. A card of that
+# section named by no group is a defect the suite holds against the real specimens.
+$script:ProductBrandbookTokenGroups = @(
+    @{ Slug = 'color'; Label = 'Color'; Cards = @('Theme colours', 'Categories', 'Status and direction') }
+    @{ Slug = 'text'; Label = 'Text'; Cards = @('Type scale') }
+    @{ Slug = 'radius'; Label = 'Radius'; Cards = @('Radius') }
+    @{ Slug = 'spacing'; Label = 'Spacing'; Cards = @('Spacing scale') }
+    @{ Slug = 'size'; Label = 'Size'; Cards = @('Sizes and elevation') }
+)
+
+function Get-ProductBrandbookTokenCards {
+    <#
+        The Tokens section's specimen cards, cut at their column-2 <section class="card..."> / </section> lines:
+        @( @{ Title; Html } ) in the file's order, Title as text. -Inner is that section's Inner from
+        Split-HouseStyleSpecimens. Read, never written: specimens.html stays the single source.
+    #>
+    param([AllowEmptyString()][string]$Inner = '')
+    $cards = @()
+    foreach ($m in [regex]::Matches($Inner, '(?ms)^  <section class="card[^"]*">.*?^  </section>\r?$')) {
+        $t = [regex]::Match($m.Value, '<h3 class="card__title">([^<]+)</h3>')
+        $cards += @{ Title = $(if ($t.Success) { [System.Net.WebUtility]::HtmlDecode($t.Groups[1].Value) } else { '' }); Html = $m.Value }
+    }
+    return $cards
 }
 
 function Resolve-ProductHouseStyleRedirect {
@@ -472,21 +501,61 @@ function Format-ProductHouseStylePageHtml {
         Get-HouseStyleSpecimensParts, which the toolbox in this repo now sends here. -Body is this checkout's
         plugins/dkj-policy/assets/dkj-brandbook/specimens.html, -ReadError why it could not be read. A -Section no
         section has returns $null, a 404.
+
+        THE OVERVIEW OPENS ON ITS TOKENS (Maikel, October 31, 2026): an h2 Tokens over one card per token group
+        ($script:ProductBrandbookTokenGroups), then a card for every other section, as before. -Token names a group's
+        own page, /tokens/<group>, holding only that group's specimen cards; a group none has, or whose cards the
+        file no longer holds, returns $null. /tokens itself still shows the whole section.
     #>
     param(
         [AllowEmptyString()][string]$Body = '',
         [AllowEmptyString()][string]$ReadError = '',
-        [AllowEmptyString()][string]$Section = ''
+        [AllowEmptyString()][string]$Section = '',
+        [AllowEmptyString()][string]$Token = ''
     )
     $base = '/marketplace/dkj-policy/dkj-brandbook'
+    $foot = 'Read from this checkout''s <code>plugins/dkj-policy/assets/dkj-brandbook/specimens.html</code> on every request, so it is the tree, not the installed release.'
+    $crumbs = @(@{ Label = 'Marketplace'; Href = '/marketplace' }, @{ Label = 'dkj-policy'; Href = '/marketplace/dkj-policy' })
+    $split = if ($ReadError) { $null } else { Split-HouseStyleSpecimens -Body $Body }
+    $tokens = if ($split) { @($split.Sections | Where-Object { $_.Slug -ceq 'tokens' }) | Select-Object -First 1 } else { $null }
+
+    if ($Token) {
+        $group = @($script:ProductBrandbookTokenGroups | Where-Object { $_.Slug -ceq $Token }) | Select-Object -First 1
+        if (-not $group -or -not $tokens) { return $null }
+        $all = Get-ProductBrandbookTokenCards -Inner $tokens.Inner
+        $picked = @(foreach ($title in $group.Cards) { $all | Where-Object { $_.Title -ceq $title } | Select-Object -First 1 })
+        if ($picked.Count -ne @($group.Cards).Count) { return $null }
+        $content = $split.Head + '<div class="spec-page">' + "`n" + '<div class="' + $tokens.Grid + '">' + "`n" + (($picked | ForEach-Object { $_.Html }) -join "`n`n") + "`n" + '</div>' + "`n" + '</div>' + "`n" + $split.Tail
+        $crumbs += @{ Label = 'dkj-brandbook'; Href = $base }, @{ Label = $tokens.Title; Href = $base + '/tokens' }
+        return Format-DevPageHtml -Title $group.Label -Lead ($group.Cards -join ', ') -Body $content -ParentCrumbs $crumbs -FooterNote $foot
+    }
+
     $parts = Get-HouseStyleSpecimensParts -Body $Body -ReadError $ReadError -Section $Section -BasePath $base
     if ($null -eq $parts) { return $null }
+    if ($parts.Section) {
+        $crumbs += @{ Label = 'dkj-brandbook'; Href = $base }
+        return Format-DevPageHtml -Title $parts.Title -Lead $parts.Lead -Body $parts.Body -ParentCrumbs $crumbs -FooterNote $foot
+    }
     # The overview's h1 and crumb carry the brand book's name, as its card and its url do (Maikel, October 31, 2026).
-    if (-not $parts.Section) { $parts.Title = 'dkj-brandbook' }
-    $crumbs = @(@{ Label = 'Marketplace'; Href = '/marketplace' }, @{ Label = 'dkj-policy'; Href = '/marketplace/dkj-policy' })
-    if ($parts.Section) { $crumbs += @{ Label = 'dkj-brandbook'; Href = $base } }
-    return Format-DevPageHtml -Title $parts.Title -Lead $parts.Lead -Body $parts.Body -ParentCrumbs $crumbs `
-        -FooterNote 'Read from this checkout''s <code>plugins/dkj-policy/assets/dkj-brandbook/specimens.html</code> on every request, so it is the tree, not the installed release.'
+    $overview = $parts.Body
+    if ($tokens) {
+        $all = Get-ProductBrandbookTokenCards -Inner $tokens.Inner
+        $sb = New-Object System.Text.StringBuilder
+        [void]$sb.AppendLine('<div class="grid-3" id="tokens"><div class="grid__head"><h2>' + (ConvertTo-GeneralPageText $tokens.Title) + '</h2></div>')
+        foreach ($g in $script:ProductBrandbookTokenGroups) {
+            $n = @($all | Where-Object { $g.Cards -ccontains $_.Title }).Count
+            [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ($base + '/tokens/' + $g.Slug) -Label $g.Label -Heading 3 -Sub $(if ($n -eq 1) { '1 specimen' } else { [string]$n + ' specimens' })))
+        }
+        [void]$sb.AppendLine('</div>')
+        [void]$sb.AppendLine('<div class="grid-3">')
+        foreach ($s in @($split.Sections | Where-Object { $_.Slug -cne 'tokens' })) {
+            $count = if ($s.Cards -eq 1) { '1 specimen' } else { [string]$s.Cards + ' specimens' }
+            [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ($base + '/' + $s.Slug) -Label $s.Title -Sub $count))
+        }
+        [void]$sb.AppendLine('</div>')
+        $overview = $sb.ToString()
+    }
+    return Format-DevPageHtml -Title 'dkj-brandbook' -Lead $parts.Lead -Body $overview -ParentCrumbs $crumbs -FooterNote $foot
 }
 
 function Resolve-MarketplaceAddOnRedirect {

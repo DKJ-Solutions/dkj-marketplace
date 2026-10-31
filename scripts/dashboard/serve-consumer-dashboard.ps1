@@ -469,7 +469,7 @@ try {
                 # request; the toolbox in this repo sends its own house-style pages here. A section none has is a 404.
                 $specError = ''; $spec = ''
                 try { $spec = [System.IO.File]::ReadAllText((Join-Path $styleDir 'specimens.html'), $utf8) } catch { $specError = $_.Exception.Message }
-                $html = Format-ProductHouseStylePageHtml -Body $spec -ReadError $specError -Section $hsAt.Section
+                $html = Format-ProductHouseStylePageHtml -Body $spec -ReadError $specError -Section $hsAt.Section -Token $hsAt.Token
                 if ($null -eq $html) {
                     Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('Not found: no house-style section of that name.')) -Method $method
                 } else {

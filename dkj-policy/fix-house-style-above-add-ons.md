@@ -43,6 +43,7 @@
 
 - [x] `Format-MarketplacePluginsPageHtml` (`scripts/lib/dev-pages-lib.ps1`) renders the house style's section before the Add-ons section on dkj-policy's page, heads it Assets and names its card dkj-brandbook
 - [x] The specimens page on the product takes the same name: `/marketplace/dkj-policy/dkj-brandbook[/<section>]`, its h1 and crumb `dkj-brandbook`; the older `house-style` address redirects (303), since a released toolbox still sends there; `Resolve-HouseStyleProductUrl` sends to the new one
+- [x] The brand book's overview on the product opens on an h2 Tokens over five cards -- Color, Text, Radius, Spacing, Size -- each opening `/dkj-brandbook/tokens/<group>` with only its own specimen cards, cut from `specimens.html` at read time; the owner chose a fifth card, Size, for "Sizes and elevation"
 
 ### TEST
 
@@ -55,6 +56,8 @@ dkj-policy's page on the product's Marketplace now opens on the house style's ca
 Specimens), under the heading Assets (it was House style), with the Add-ons below it and the plugin's facts below those (Maikel,
 October 31, 2026). The page that card opens carries the same name in its url and its h1:
 `/marketplace/dkj-policy/dkj-brandbook`, where `/marketplace/dkj-policy/house-style` now redirects.
+That page now opens on an h2 Tokens over five cards (Color, Text, Radius, Spacing and Size), each a page
+of its own holding only those specimens; the other sections follow as before.
 
 **Score:** 2
 
