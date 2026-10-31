@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**5 / 8 minor entries** <!-- pending-tally -->
+**5 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/house-style-above-add-ons · 20261031-200532Z
+
+dkj-policy's page on the product's Marketplace now opens on the house style's card, now named dkj-brandbook (it was
+Specimens), under the heading Assets (it was House style), with the Add-ons below it and the plugin's facts below those (Maikel,
+October 31, 2026). The page that card opens carries the same name in its url and its h1:
+`/marketplace/dkj-policy/dkj-brandbook`, where `/marketplace/dkj-policy/house-style` now redirects.
+That page now opens on an h2 Tokens over five cards (Color, Text, Radius, Spacing and Size), each a page
+of its own holding only those specimens; the other sections follow as before.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A -- the product's Marketplace pages are this repo's own dev server, which no consumer runs.
+
+**Score:** N/A
+
+#### Pull Request
+
+dkj-policy's marketplace page shows its house style above its add-ons
+
+Plugins: dkj-policy
+
+[PR #3710](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3710)
+
+---
 
 ### DEPLOY: fix/3703-specimens-tail-anchor · 20261031-193714Z
 
