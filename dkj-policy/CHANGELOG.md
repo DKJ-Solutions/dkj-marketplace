@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**4 / 7 minor entries** <!-- pending-tally -->
+**5 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3703-specimens-tail-anchor · 20261031-193714Z
+
+The hub's house-style specimens are cut into a page per section, and each page takes the file's tail: the closed modal specimens and their script. That tail began at the first `<dialog` anywhere, which since the Overlays section shows dialogs open in place was one of those, so every section page carried the rest of the Overlays section outside its `.spec-stage`, where the browser's own `dialog[open]` style centres it over the top of the page. The tail now begins at the first column-0 `<dialog`, which is the modals alone, and the suite holds the real tail to that.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Anybody browsing the house style in the toolbox saw an open dialog floating over every section page, and a duplicate of half the Overlays section below it; both are gone.
+
+**Score:** 2
+
+#### Pull Request
+
+House-style section pages no longer carry a stray open dialog over the page
+
+Plugins: dkj-policy
+
+[PR #3707](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3707)
+
+---
 
 ### DEPLOY: fix/house-style-css-gate-path · 20261031-191613Z
 
