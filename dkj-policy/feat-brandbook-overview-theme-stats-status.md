@@ -71,5 +71,5 @@ The specimens and the Color page are this repo's own pages; nothing a consumer t
 
 #### Pull Request
 
-The brand book's overview gains Theme, Stats and Status headings
+The brand book's Color page sets its swatches under Theme, Stats and Status
 
