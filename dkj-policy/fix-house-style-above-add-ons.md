@@ -41,17 +41,26 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Format-MarketplacePluginsPageHtml` (`scripts/lib/dev-pages-lib.ps1`) renders the House style section before the Add-ons section on dkj-policy's page
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1` asserts the house style stands above the add-ons; 528 passed, 0 failed
+- [ ] The owner has looked at /marketplace/dkj-policy on the product port
+
 ### DEPLOY: fix/house-style-above-add-ons
 
-**Score:**
+dkj-policy's page on the product's Marketplace now opens on its House style card, with the Add-ons below
+it and the plugin's facts below those (Maikel, October 31, 2026). Only the order changed; both sections
+read as before.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A -- the product's Marketplace pages are this repo's own dev server, which no consumer runs.
+
+**Score:** N/A
 
 #### Pull Request
 
