@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**6 / 10 minor entries** <!-- pending-tally -->
+**6 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/brandbook-overview-theme-stats-status · 20261031-210130Z
+
+The brand book's Color page sets its swatches under three h2 headings: Theme, where the theme colours are split
+into the 60-30-10 rule's shares (60 Paper, 30 Primary, 10 Text), Stats with the series colours, and Status with
+the status and direction colours. The specimens page shows the same three cards in place of "Theme colours".
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+The specimens and the Color page are this repo's own pages; nothing a consumer takes changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+The brand book's Color page sets its swatches under Theme, Stats and Status
+
+Plugins: dkj-policy
+
+[PR #3712](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3712)
+
+---
 
 ### DEPLOY: feat/radius-scale-names · 20261031-203241Z
 
