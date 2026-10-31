@@ -48,7 +48,7 @@
 ### TEST
 
 - [x] `dev-pages.tests.ps1` asserts the house style stands above the add-ons; 528 passed, 0 failed
-- [ ] The owner has looked at /marketplace/dkj-policy on the product port
+- [x] The owner has looked at /marketplace/dkj-policy on the product port
 
 ### DEPLOY: fix/house-style-above-add-ons
 
