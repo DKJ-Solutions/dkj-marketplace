@@ -460,19 +460,20 @@ function Resolve-ProductHouseStyleRequest {
 # The token groups the brand book's overview opens on, each a card under its Tokens heading (Maikel, October 31,
 # 2026): which of the Tokens section's specimen cards each one shows, by the card's own h3 title. A card of that
 # section named by no group is a defect the suite holds against the real specimens.
+# A group may set its cards under h2s of its own, -Headings, each naming its cards; its Cards are then those, in order.
+# Color does (Maikel, October 31, 2026): Theme holds the 60-30-10 rule's three shares, Stats the series slots, Status
+# the status and direction colours.
 $script:ProductBrandbookTokenGroups = @(
-    @{ Slug = 'color'; Label = 'Color'; Cards = @('Theme colours', 'Categories', 'Status and direction') }
+    @{ Slug = 'color'; Label = 'Color'; Cards = @('60', '30', '10', 'Categories', 'Status and direction')
+        Headings = @(
+            @{ Label = 'Theme'; Cards = @('60', '30', '10') }
+            @{ Label = 'Stats'; Cards = @('Categories') }
+            @{ Label = 'Status'; Cards = @('Status and direction') }
+        ) }
     @{ Slug = 'text'; Label = 'Text'; Cards = @('Type scale') }
     @{ Slug = 'radius'; Label = 'Radius'; Cards = @('Radius') }
     @{ Slug = 'spacing'; Label = 'Spacing'; Cards = @('Spacing scale') }
     @{ Slug = 'size'; Label = 'Size'; Cards = @('Sizes and elevation') }
-)
-
-# The 60-30-10 rule's three shares, the cards under the overview's Theme heading (Maikel, October 31, 2026).
-$script:ProductBrandbookThemeShares = @(
-    @{ Share = '60'; Group = 'Paper' }
-    @{ Share = '30'; Group = 'Primary' }
-    @{ Share = '10'; Group = 'Text' }
 )
 
 function Get-ProductBrandbookTokenCards {
@@ -512,8 +513,7 @@ function Format-ProductHouseStylePageHtml {
         THE OVERVIEW OPENS ON ITS TOKENS (Maikel, October 31, 2026): an h2 Tokens over one card per token group
         ($script:ProductBrandbookTokenGroups), then a card for every other section, as before. -Token names a group's
         own page, /tokens/<group>, holding only that group's specimen cards; a group none has, or whose cards the
-        file no longer holds, returns $null. /tokens itself still shows the whole section. Under Tokens come the h2s
-        Theme (a card for each 60-30-10 share), Stats and Status, before the other sections' cards.
+        file no longer holds, returns $null. /tokens itself still shows the whole section.
     #>
     param(
         [AllowEmptyString()][string]$Body = '',
@@ -533,9 +533,18 @@ function Format-ProductHouseStylePageHtml {
         $all = Get-ProductBrandbookTokenCards -Inner $tokens.Inner
         $picked = @(foreach ($title in $group.Cards) { $all | Where-Object { $_.Title -ceq $title } | Select-Object -First 1 })
         if ($picked.Count -ne @($group.Cards).Count) { return $null }
-        $content = $split.Head + '<div class="spec-page">' + "`n" + '<div class="' + $tokens.Grid + '">' + "`n" + (($picked | ForEach-Object { $_.Html }) -join "`n`n") + "`n" + '</div>' + "`n" + '</div>' + "`n" + $split.Tail
+        $grids = if ($group.ContainsKey('Headings')) {
+            @(foreach ($h in $group.Headings) {
+                $html = @(foreach ($title in $h.Cards) { ($picked | Where-Object { $_.Title -ceq $title } | Select-Object -First 1).Html })
+                '<div class="' + $tokens.Grid + '">' + "`n" + '  <div class="grid__head"><h2>' + (ConvertTo-GeneralPageText $h.Label) + '</h2></div>' + "`n`n" + ($html -join "`n`n") + "`n" + '</div>'
+            }) -join "`n`n"
+        } else {
+            '<div class="' + $tokens.Grid + '">' + "`n" + (($picked | ForEach-Object { $_.Html }) -join "`n`n") + "`n" + '</div>'
+        }
+        $content = $split.Head + '<div class="spec-page">' + "`n" + $grids + "`n" + '</div>' + "`n" + $split.Tail
         $crumbs += @{ Label = 'dkj-brandbook'; Href = $base }, @{ Label = $tokens.Title; Href = $base + '/tokens' }
-        return Format-DevPageHtml -Title $group.Label -Lead ($group.Cards -join ', ') -Body $content -ParentCrumbs $crumbs -FooterNote $foot
+        $lead = if ($group.ContainsKey('Headings')) { @($group.Headings | ForEach-Object { $_.Label }) -join ', ' } else { $group.Cards -join ', ' }
+        return Format-DevPageHtml -Title $group.Label -Lead $lead -Body $content -ParentCrumbs $crumbs -FooterNote $foot
     }
 
     $parts = Get-HouseStyleSpecimensParts -Body $Body -ReadError $ReadError -Section $Section -BasePath $base
@@ -555,15 +564,6 @@ function Format-ProductHouseStylePageHtml {
             [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ($base + '/tokens/' + $g.Slug) -Label $g.Label -Heading 3 -Sub $(if ($n -eq 1) { '1 specimen' } else { [string]$n + ' specimens' })))
         }
         [void]$sb.AppendLine('</div>')
-        # Theme, Stats and Status follow Tokens as headings of their own (Maikel, October 31, 2026): Theme holds one card
-        # per share of the 60-30-10 rule (assets/dkj-brandbook/README.md, "What it holds"); Stats and Status wait for theirs.
-        [void]$sb.AppendLine('<div class="grid-3" id="theme"><div class="grid__head"><h2>Theme</h2></div>')
-        foreach ($share in $script:ProductBrandbookThemeShares) {
-            [void]$sb.AppendLine('<section class="card"><div class="card__head"><h3 class="card__title">' + $share.Share + '</h3><p class="card__sub">' + $share.Group + '</p></div></section>')
-        }
-        [void]$sb.AppendLine('</div>')
-        [void]$sb.AppendLine('<div class="grid-3" id="stats"><div class="grid__head"><h2>Stats</h2></div></div>')
-        [void]$sb.AppendLine('<div class="grid-3" id="status"><div class="grid__head"><h2>Status</h2></div></div>')
         [void]$sb.AppendLine('<div class="grid-3">')
         foreach ($s in @($split.Sections | Where-Object { $_.Slug -cne 'tokens' })) {
             $count = if ($s.Cards -eq 1) { '1 specimen' } else { [string]$s.Cards + ' specimens' }

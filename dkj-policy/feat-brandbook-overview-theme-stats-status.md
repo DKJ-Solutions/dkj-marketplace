@@ -39,30 +39,33 @@
 
 ### PLAN
 
-Maikel asked for three h2 headings on the brand book's overview, Theme, Stats and Status, with three cards
-under Theme: 60, 30 and 10. They sit under Tokens, before the other sections' cards. Each Theme card names its
-60-30-10 group (Paper, Primary, Text) as its sub line; Stats and Status stay empty until their cards are named.
+Maikel asked for three h2 headings on the brand book's Color page (`/tokens/color`), Theme, Stats and Status,
+with three cards under Theme: 60, 30 and 10. The "Theme colours" specimen splits into those three, one per
+60-30-10 share (Paper, Primary, Text); Stats holds Categories, Status holds Status and direction. A first
+attempt put the headings on the overview, the wrong page, and was reverted inside this branch.
 A visible result: the owner looks before the merge.
 
 ### CREATE
 
-- [x] `Format-ProductHouseStylePageHtml` writes the three headings and the Theme cards (`$script:ProductBrandbookThemeShares`)
+- [x] `specimens.html`: "Theme colours" becomes the cards 60, 30 and 10
+- [x] `dev-pages-lib.ps1`: a token group may set its cards under h2s of its own (`Headings`); Color does
 
 ### TEST
 
-- [x] `dev-pages.tests.ps1`: one assert on the order and the cards; 543 passed
-- [ ] The owner has looked at the overview on the product (`localhost:4870/marketplace/dkj-policy/dkj-brandbook`)
+- [x] `dev-pages.tests.ps1`: one assert on the Color page's headings and card order; 543 passed
+- [ ] The owner has looked at `localhost:4870/marketplace/dkj-policy/dkj-brandbook/tokens/color`
 
 ### DEPLOY: feat/brandbook-overview-theme-stats-status
 
-The brand book's overview on the product gains three h2 headings under Tokens: Theme, holding a card for each
-share of the 60-30-10 rule (60 Paper, 30 Primary, 10 Text), then Stats and Status, which wait for their cards.
+The brand book's Color page sets its swatches under three h2 headings: Theme, where the theme colours are split
+into the 60-30-10 rule's shares (60 Paper, 30 Primary, 10 Text), Stats with the series colours, and Status with
+the status and direction colours. The specimens page shows the same three cards in place of "Theme colours".
 
 **Score:** 2
 
 #### What makes this deploy extra special
 
-The overview is this repo's own dev product page; nothing a consumer takes changes.
+The specimens and the Color page are this repo's own pages; nothing a consumer takes changes.
 
 **Score:** N/A
 
