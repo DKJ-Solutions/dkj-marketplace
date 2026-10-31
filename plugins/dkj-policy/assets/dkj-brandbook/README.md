@@ -92,6 +92,11 @@ already has, not a new colour:
 | **30%** | Primary | `--primary`, with `--muted` (its grey) | the theme's colour: `h1` and `h2`, links, the breadcrumb bar, `.btn--primary`, the states |
 | **10%** | Text | `--fg-1` … `--fg-4` | what sits on the paper: every paragraph, label and quiet icon |
 
+**Everything in the 30% reads on all four paper steps**, as the 10% does (Maikel, November 1, 2026): `--primary`
+4.56:1 or better on `paper-4`, `--muted` 5.30:1 or better (WCAG, the worst of the twelve themes). `--muted-inverse`
+is deliberately **not** in it: it is the grey of an inverted surface, 7:1 on `--fg-1`, and on the paper it reads
+at only 2.1:1 to 2.3:1 on `paper-4` (2.9:1 at best, on `paper-1`), so it never sits on a paper step.
+
 A repo layer keeps to the same shares: what it adds lands in one of the three groups, and a page whose
 primary outweighs its paper has spent the 30% as ground.
 

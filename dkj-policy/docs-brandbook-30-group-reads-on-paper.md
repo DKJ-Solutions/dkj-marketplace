@@ -39,19 +39,32 @@
 
 ### PLAN
 
+Maikel asked to add a readability rule to the 30% group and doubted `--muted-inverse` on `paper-4`.
+Measured (WCAG, all twelve themes): `--primary` 4.56:1+ and `--muted` 5.30:1+ on `paper-4`;
+`--muted-inverse` 2.14:1 to 2.32:1. Decision (Maikel): the rule covers the 30%, and `--muted-inverse` is
+named as deliberately outside it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The brand book README states that the 30% group reads on all four paper steps, and why `--muted-inverse` is not in it
 
 ### TEST
 
+- [x] The figures re-measured from the theme hex values in `house-style.css`
+
 ### DEPLOY: docs/brandbook-30-group-reads-on-paper
 
-**Score:**
+The brand book's 60-30-10 rule now says that everything in the 30% group (`--primary`, `--muted`) reads on
+all four paper steps, with the measured floor on `paper-4`, and that `--muted-inverse` stays out of that
+group because it reads only on an inverted surface (about 2.2:1 on `paper-4`).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A consuming repo's designer now knows not to put `--muted-inverse` on a paper surface; no token changes.
+
+**Score:** 2
 
 #### Pull Request
 
