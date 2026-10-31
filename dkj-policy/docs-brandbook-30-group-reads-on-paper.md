@@ -47,19 +47,16 @@ named as deliberately outside it.
 ### CREATE
 
 - [x] The brand book README states that the 30% group reads on all four paper steps, and why `--muted-inverse` is not in it
-- [x] The Color page (`/marketplace/dkj-policy/dkj-brandbook/tokens/color`): `--muted-inverse` leaves the 30 card for an Inverse card of its own under Theme (`specimens.html`, `dev-pages-lib.ps1`)
 
 ### TEST
 
 - [x] The figures re-measured from the theme hex values in `house-style.css`
-- [x] `dev-pages.tests.ps1` green (543), its Color-page order assert extended with Inverse
+
 ### DEPLOY: docs/brandbook-30-group-reads-on-paper
 
 The brand book's 60-30-10 rule now says that everything in the 30% group (`--primary`, `--muted`) reads on
 all four paper steps, with the measured floor on `paper-4`, and that `--muted-inverse` stays out of that
-group because it reads only on an inverted surface (about 2.2:1 on `paper-4`). The brand book's Color page
-follows: the 30 card shows `--primary` and `--muted` alone, and `--muted-inverse` has an Inverse card of its own
-under Theme.
+group because it reads only on an inverted surface (about 2.2:1 on `paper-4`).
 
 **Score:** 2
 

@@ -462,12 +462,11 @@ function Resolve-ProductHouseStyleRequest {
 # section named by no group is a defect the suite holds against the real specimens.
 # A group may set its cards under h2s of its own, -Headings, each naming its cards; its Cards are then those, in order.
 # Color does (Maikel, October 31, 2026): Theme holds the 60-30-10 rule's three shares, Stats the series slots, Status
-# the status and direction colours. Inverse, --muted-inverse, sits under Theme but outside the three shares: it
-# reads on --fg-1 and never on the paper (Maikel, November 1, 2026).
+# the status and direction colours.
 $script:ProductBrandbookTokenGroups = @(
-    @{ Slug = 'color'; Label = 'Color'; Cards = @('60', '30', '10', 'Inverse', 'Categories', 'Status and direction')
+    @{ Slug = 'color'; Label = 'Color'; Cards = @('60', '30', '10', 'Categories', 'Status and direction')
         Headings = @(
-            @{ Label = 'Theme'; Cards = @('60', '30', '10', 'Inverse') }
+            @{ Label = 'Theme'; Cards = @('60', '30', '10') }
             @{ Label = 'Stats'; Cards = @('Categories') }
             @{ Label = 'Status'; Cards = @('Status and direction') }
         ) }
