@@ -163,6 +163,20 @@ $classed = @(foreach ($hf in $headingFiles) {
 Assert-Equal '' ($classed -join '; ') 'no h1, h2 or h3 carries a class, in any page or generator'
 Assert-Equal '' (@([regex]::Matches($css, '(?m)\bh[1-3]\.[a-z][\w-]*') | ForEach-Object { $_.Value }) -join ', ') 'and the stylesheet styles no class on a heading'
 
+Write-Host '-- every token is on the brand book page' -ForegroundColor Cyan
+# Maikel, November 1, 2026: a token that is added is always seen on the product's brand book pages
+# (/marketplace/dkj-policy/dkj-brandbook/tokens/<group>), which read their cards from specimens.html. So every custom
+# property a token block declares -- :root and the theme lines; a component's own variable, such as --gutter, is not a
+# token -- is named on that page.
+$specimens = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'plugins\dkj-policy\assets\dkj-brandbook\specimens.html'))
+$bare = $css -replace '(?s)/\*.*?\*/', ''
+$tokens = @(foreach ($b in [regex]::Matches($bare, '(?s):root[^{]*\{([^}]*)\}')) {
+    foreach ($d in [regex]::Matches($b.Groups[1].Value, '(--[a-z][\w-]*)\s*:')) { $d.Groups[1].Value }
+}) | Sort-Object -Unique
+Assert-True ($tokens.Count -gt 50) "the token blocks are read ($($tokens.Count) tokens)"
+$unshown = @($tokens | Where-Object { $specimens -notmatch ([regex]::Escape($_) + '(?![\w-])') })
+Assert-Equal '' ($unshown -join ', ') 'every token the stylesheet declares is shown in specimens.html'
+
 Write-Host ''
 Write-Host "house-palette: $script:pass passed, $script:fail failed."
 if ($script:fail) { exit 1 }

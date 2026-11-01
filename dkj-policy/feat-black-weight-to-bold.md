@@ -57,6 +57,7 @@ itself stays defined, and the specimen still shows it.
 - [x] No `color-mix()` anywhere: two new palette tokens, `--primary-raised` and `--primary-hover`, computed by `house-palette-lib.ps1` and written by `build-house-palette.ps1 -Apply`; the settings cell and `.btn--primary:hover` read them
 - [x] `check-colour-literals.mjs` refuses a derived colour (`color-mix()`, relative colour, `oklch()` and the other colour functions) in a house stylesheet; probed red on a temporary sheet
 - [x] The brand book README states the rule and the two tokens
+- [x] Both tokens are on the Color page's 30 card (`specimens.html`), and `house-palette.tests.ps1` holds every token the stylesheet declares to appearing there; probed red with one removed
 
 ### TEST
 
@@ -81,7 +82,8 @@ Every theme carries two new tokens, `--primary-raised` and `--primary-hover`: th
 `--bg-1` and to `--fg-1`, computed by the palette model rather than mixed in a rule. The primary button's hover
 reads `--primary-hover` and looks exactly as before. A house stylesheet may no longer derive a colour at all:
 the colour gate now refuses `color-mix()`, the relative colour syntax and the other colour functions, so a
-shade a component needs becomes a token. `--font-weight-black` stays defined for an app that wants it, but no house
+shade a component needs becomes a token. Both tokens are on the brand book's Color page, and a test now holds
+every token the stylesheet declares to being shown there. `--font-weight-black` stays defined for an app that wants it, but no house
 rule uses it any more.
 
 **Score:** 3
