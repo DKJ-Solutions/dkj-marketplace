@@ -833,6 +833,8 @@ a.menu-item:hover { background: var(--bg-3); }
 .card--invalid { border-color: var(--negative-3); }
 /* A message line that reports an error, in the text colour of a negative (beside .msg--warn). */
 .msg--error { color: var(--negative-5); }
+/* A message line that reports something that went well, in the text colour of a positive (Maikel, November 1, 2026). */
+.msg--positive { color: var(--positive-5); }
 /* A scrolling .table-wrap is focusable (tabindex="0"), so a keyboard can scroll it, and shows the ring. */
 .table-wrap:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; border-radius: var(--radius-1); }
 /* A row tinted by its status, with the -1 background steps the notices use, and a column that sets its own alignment over

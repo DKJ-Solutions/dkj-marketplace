@@ -51,7 +51,8 @@ read as a plain `<p>`.
 - [x] `dev-pages-lib.ps1`: a token group's heading may name a `Section`, and then shows every card of that section in
   its own grid; the Text group gets Tokens (Font size, Font family, Font weight) and Components (the Text section)
 - [x] The overview's Text card counts both halves (7 specimens)
-- [x] The Messages and group headings card is Messages alone: `.group-heading` is gone, so the house has one h3
+- [x] The Messages and group headings card is Status alone, a positive, a warning and a negative line (`.msg--positive`
+  is new): `.group-heading` is gone, so the house has one h3
 - [x] `house-style.css`: four weight tokens, `--font-weight-light` 300 to `--font-weight-black` 900, and every rule (the
   body too) sets its weight through one: 300 light, 400 regular, 600 bold, 700 and 800 black; the hub's stopwatch,
   masthead and consumer-dashboard layers likewise
@@ -84,7 +85,7 @@ read as a plain `<p>`.
 ### DEPLOY: feat/text-tokens-page-components
 
 The brand book's Text token page sets its three token cards, Font size, Font family and Font weight, under an h2 Tokens, and the
-Text section's own specimens (headings, running text, numbers, messages) under an h2 Components, so the type tokens
+Text section's own specimens (headings, running text, numbers, status) under an h2 Components, so the type tokens
 and the type they produce read on one page. A token group's heading can now name a whole section to show, and that section leaves the overview's Preview, which
 now holds Themes alone. The Headings specimen shows h1, h2 and h3.
 
@@ -93,7 +94,8 @@ The house style gains four weight tokens, `--font-weight-light` (300), `--font-w
 `--font-weight-bold` (700) and `--font-weight-black` (900), and every rule now takes its weight from them, so all
 text is one step heavier: running text 500, card titles 700, h1 900. h2 is bold (700), and h3 turns light (300)
 and takes the theme's colour, `--primary`, instead of `--fg-3`. Its headings carry no class any more: a card's label and a dialog's title are styled by where they
-sit. A `<p>` has no margin of its own any more: its place sets the space around it. It drops eleven classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
+sit. A message line gains `.msg--positive`, in `--positive-5`, beside `.msg--warn` and `.msg--error`. A `<p>` has no
+margin of its own any more: its place sets the space around it. It drops eleven classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
 body size read as a plain `<p>`; and `.sub`, merged into `.note`, the one quiet-text class, which had the same colour
 and size; `.pos` and `.neg`, the colours of `.delta--up` and `.delta--down` without the weight; `.card__title`: a card's
 title is a plain `h3`, set like every other; `.amount`, gone into `.num`, which now sets a small icon beside its figure; `.verdict`, which read as a `<p>`
