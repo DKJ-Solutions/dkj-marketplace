@@ -474,7 +474,13 @@ $script:ProductBrandbookTokenGroups = @(
             @{ Label = 'Theme'; Cards = @('60', '30', '10') }
             @{ Label = 'Graphs & Status'; Cards = @('Graphs', 'Status') }
         ) }
-    @{ Slug = 'text'; Label = 'Text'; Cards = @('Type scale', 'Font family') }   # the sizes, and the one face token apart from them (Maikel, November 1, 2026)
+    # The sizes and the one face token apart from them (Maikel, November 1, 2026), under an h2 Tokens, and the Text
+    # section's own cards under an h2 Components: a heading with a Section shows all of that section's cards.
+    @{ Slug = 'text'; Label = 'Text'; Cards = @('Type scale', 'Font family')
+        Headings = @(
+            @{ Label = 'Tokens'; Cards = @('Type scale', 'Font family') }
+            @{ Label = 'Components'; Section = 'text' }
+        ) }
     @{ Slug = 'radius'; Label = 'Radius'; Cards = @('Radius') }
     @{ Slug = 'spacing'; Label = 'Spacing'; Cards = @('Spacing scale') }
     @{ Slug = 'size'; Label = 'Size'; Cards = @('Sizes and elevation') }
@@ -542,10 +548,22 @@ function Format-ProductHouseStylePageHtml {
         $picked = @(foreach ($title in $group.Cards) { $all | Where-Object { $_.Title -ceq $title } | Select-Object -First 1 })
         if ($picked.Count -ne @($group.Cards).Count) { return $null }
         $grids = if ($group.ContainsKey('Headings')) {
-            @(foreach ($h in $group.Headings) {
-                $html = @(foreach ($title in $h.Cards) { ($picked | Where-Object { $_.Title -ceq $title } | Select-Object -First 1).Html })
-                '<div class="' + $tokens.Grid + '">' + "`n" + '  <div class="grid__head"><h2>' + (ConvertTo-GeneralPageText $h.Label) + '</h2></div>' + "`n`n" + ($html -join "`n`n") + "`n" + '</div>'
-            }) -join "`n`n"
+            $missing = $false
+            $blocks = @(foreach ($h in $group.Headings) {
+                if ($h.ContainsKey('Section')) {
+                    # Another section's cards, all of them, in that section's own grid; gone from the file is a 404.
+                    $sec = @($split.Sections | Where-Object { $_.Slug -ceq $h.Section }) | Select-Object -First 1
+                    $html = if ($sec) { @(Get-ProductBrandbookTokenCards -Inner $sec.Inner | ForEach-Object { $_.Html }) } else { @() }
+                    if (-not $html.Count) { $missing = $true; continue }
+                    $grid = $sec.Grid
+                } else {
+                    $html = @(foreach ($title in $h.Cards) { ($picked | Where-Object { $_.Title -ceq $title } | Select-Object -First 1).Html })
+                    $grid = $tokens.Grid
+                }
+                '<div class="' + $grid + '">' + "`n" + '  <div class="grid__head"><h2>' + (ConvertTo-GeneralPageText $h.Label) + '</h2></div>' + "`n`n" + ($html -join "`n`n") + "`n" + '</div>'
+            })
+            if ($missing) { return $null }
+            $blocks -join "`n`n"
         } else {
             '<div class="' + $tokens.Grid + '">' + "`n" + (($picked | ForEach-Object { $_.Html }) -join "`n`n") + "`n" + '</div>'
         }
@@ -572,6 +590,10 @@ function Format-ProductHouseStylePageHtml {
         [void]$sb.AppendLine('<div class="grid-3" id="tokens"><div class="grid__head"><h2>' + (ConvertTo-GeneralPageText $tokens.Title) + '</h2></div>')
         foreach ($g in $script:ProductBrandbookTokenGroups) {
             $n = @($all | Where-Object { $g.Cards -ccontains $_.Title }).Count
+            # A heading that shows another section counts that section's cards too.
+            foreach ($h in @(if ($g.ContainsKey('Headings')) { $g.Headings | Where-Object { $_.ContainsKey('Section') } })) {
+                $n += [int](@($split.Sections | Where-Object { $_.Slug -ceq $h.Section }) | Select-Object -First 1).Cards
+            }
             [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ($base + '/tokens/' + $g.Slug) -Label $g.Label -Heading 3 -Sub $(if ($n -eq 1) { '1 specimen' } else { [string]$n + ' specimens' })))
         }
         [void]$sb.AppendLine('</div>')

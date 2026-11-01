@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Maikel asked for two h2s, Tokens and Components, on the brand book's Text token page
+(`/marketplace/dkj-policy/dkj-brandbook/tokens/text`), and chose to show the Text section's own cards under Components,
+with that section's card staying under Preview on the overview.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `dev-pages-lib.ps1`: a token group's heading may name a `Section`, and then shows every card of that section in
+  its own grid; the Text group gets Tokens (Type scale, Font family) and Components (the Text section)
+- [x] The overview's Text card counts both halves (6 specimens)
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the Text page's heading and card order, the overview's count, and a 404 when the Text
+  section is gone from the file
+- [x] Looked at the live page on the product server
+- [ ] The owner's look at `/marketplace/dkj-policy/dkj-brandbook/tokens/text`
+
 ### DEPLOY: feat/text-tokens-page-components
 
-**Score:**
+The brand book's Text token page sets its two token cards, Type scale and Font family, under an h2 Tokens, and the
+Text section's own specimens (headings, running text, numbers, messages) under an h2 Components, so the type tokens
+and the type they produce read on one page. A token group's heading can now name a whole section to show.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A -- the brand book's product pages run only in this source repo's own dev server; no consumer receives them.
+
+**Score:** N/A
 
 #### Pull Request
 
