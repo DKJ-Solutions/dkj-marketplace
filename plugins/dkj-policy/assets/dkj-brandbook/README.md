@@ -504,9 +504,10 @@ out). Three more things follow it by default, in light and in dark (and a measur
   - **One grey**: a grey of the colour that reads extra well on white (`--muted`), OKLCH chroma 0.03 in the theme's
     hue, as close to its ground as 7.05:1 allows, so it recedes by colour while it still reads. Its mirror for black,
     `--muted-inverse`, was retired on November 1, 2026 ([above](#what-it-holds)).
-  - **Four colours that read on the primary**: the paper, from white towards a little darker, OKLCH L 0.995, 0.975,
-    0.945 and 0.905 on light (0.13, 0.155, 0.19 and 0.235 on dark), with the chroma rising from 0.006 to 0.045. The
-    eye is most sensitive to the first tint off white or black, so the card is only just lifted off the page.
+  - **Four colours that read on the primary**: the paper, from white towards a little darker, OKLCH L 0.995, 0.965,
+    0.94 and 0.905 on light (0.13, 0.165, 0.195 and 0.235 on dark), with the chroma rising from 0.006 to 0.045. The
+    eye is most sensitive to the first tint off white or black, so the card is only a little lifted off the page;
+    since November 1, 2026 that step is wider than the rest (Maikel: paper-2 was barely visible in some themes).
   - **Four colours that read on the paper**: the text, near black, in very small steps, OKLCH L 0.12, 0.16, 0.20
     and 0.24 at chroma 0.03 on light (0.99, 0.955, 0.92 and 0.885 on dark), so `fg-4` is still very dark.
 
@@ -523,9 +524,10 @@ out). Three more things follow it by default, in light and in dark (and a measur
   11.2:1 on dark, the same both ways round. On dark the primary sits close to the text (1.4:1 to 1.8:1 against
   `fg-1`), so `h1` and links stand out from the text by colour rather than by lightness; `fg-1` on
   `paper-1` 19.5:1 to 20.1:1 and `fg-4` on `paper-4` 11.8:1 to 12.5:1; `--muted` on `paper-1` 7.05:1 to 7.13:1 and on
-  a card 6.6:1 to 6.9:1; `paper-4` on `fg-1` 15.1:1 to 16.4:1. Nothing in the model is below 4.5:1, which
+  a card 6.45:1 to 6.8:1 (measured again November 1, 2026); `paper-4` on `fg-1` 15.1:1 to 16.4:1. Nothing in the model is below 4.5:1, which
   the paper-and-ink model of October 20 missed for `ink-1` on a card in Magenta, Roest and Lila. A `paper-3` line
-  on a card is faint: 1.05:1 (Pink) to 1.10:1 (Blauw); a `paper-4` border on it 1.16:1 to 1.25:1.
+  on a card is faint: 1.05:1 (Pink) to 1.09:1 (Magenta); a `paper-4` border on it 1.14:1 to 1.22:1. The card on the
+  page, `paper-2` on `paper-1`: 1.04:1 to 1.05:1 on dark and 1.09:1 to 1.10:1 on light.
 - **The page and the cards are tinted.** On light the page is the whitest layer and a card sits a shade off it;
   on dark the card is a shade lighter than the page. Either way the page is the ground end (owner's decision,
   October 14, 2026: it used to be the other way round on light).

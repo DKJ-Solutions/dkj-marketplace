@@ -47,14 +47,16 @@ function Get-HousePaletteThemes {
 }
 
 # The steps, per mode: OKLCH lightness and chroma of the four paper and the four text colours. Paper-1 and fg-1
-# keep the anchors of October 20, 2026 (the edge of white and black); the steps after them are small by design.
+# keep the anchors of October 20, 2026 (the edge of white and black); the steps after them are small by design, but
+# paper-2 stands a clear step off the page (Maikel, November 1, 2026: it was barely visible in some themes), and
+# paper-3 moves along so the card in a group keeps its own step.
 function Get-HousePaletteSteps {
     param([ValidateSet('light', 'dark')][string]$Mode)
     if ($Mode -eq 'light') {
-        @{ PaperL = @(0.995, 0.975, 0.945, 0.905); PaperC = @(0.006, 0.014, 0.028, 0.045)
+        @{ PaperL = @(0.995, 0.965, 0.94, 0.905); PaperC = @(0.006, 0.014, 0.028, 0.045)
            FgL    = @(0.12, 0.16, 0.20, 0.24);     FgC    = @(0.030, 0.030, 0.028, 0.026); MutedC = 0.03; PrimaryFloor = 4.55 }
     } else {
-        @{ PaperL = @(0.13, 0.155, 0.19, 0.235);   PaperC = @(0.020, 0.024, 0.032, 0.045)
+        @{ PaperL = @(0.13, 0.165, 0.195, 0.235);   PaperC = @(0.020, 0.024, 0.032, 0.045)
            FgL    = @(0.99, 0.955, 0.92, 0.885);   FgC    = @(0.006, 0.010, 0.012, 0.014); MutedC = 0.03; PrimaryFloor = 9.0; PrimaryChromaMax = 0.13 }
     }
 }

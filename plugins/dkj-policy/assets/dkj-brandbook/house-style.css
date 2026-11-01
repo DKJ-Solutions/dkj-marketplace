@@ -59,8 +59,8 @@
        --fg-1..4         FOUR text colours that read on the paper, near black (on dark: near white), in very small
                          steps: fg-4 is still very dark, only a little less so than fg-1.
      The steps of each group run away from the page, so a higher number never means "darker" in both modes.
-     In OKLCH, in the hue of the theme's saturated colour: on light paper L 0.995 / 0.975 / 0.945 / 0.905 (C 0.006 to
-     0.045) and fg L 0.12 / 0.16 / 0.20 / 0.24 (C 0.03); on dark paper L 0.13 / 0.155 / 0.19 / 0.235 (C 0.02 to 0.045)
+     In OKLCH, in the hue of the theme's saturated colour: on light paper L 0.995 / 0.965 / 0.94 / 0.905 (C 0.006 to
+     0.045) and fg L 0.12 / 0.16 / 0.20 / 0.24 (C 0.03); on dark paper L 0.13 / 0.165 / 0.195 / 0.235 (C 0.02 to 0.045)
      and fg L 0.99 / 0.955 / 0.92 / 0.885. The grey is C 0.03, as close to its ground as 7.05:1 allows, so it
      recedes by colour while it still reads. The hue is the HSL hue of the owner's original theme colour (Blauw and
      Hemelsblauw 240), held in HSL because at a constant OKLCH hue a saturated blue turns violet; Lila takes Paars's 270.
@@ -77,9 +77,11 @@
      Measured (WCAG relative luminance, October 21, 2026), worst and best over the twelve themes: primary on paper-1
      5.9:1 to 8.5:1 on light and 10.7:1 to 13.6:1 on dark, on paper-4 4.56:1 to 6.5:1 on light and 9.0:1 to 11.2:1 on
      dark; on dark the primary sits close to the text (1.4:1 to 1.8:1 against fg-1), so it stands out by colour; fg-1 on paper-1 19.5:1 to 20.1:1, fg-4 on paper-4
-     11.8:1 to 12.5:1; muted on paper-1 7.05:1 to 7.13:1, on paper-2 6.6:1 to 6.9:1; paper-4 on fg-1 15.1:1 to
-     16.4:1; a paper-3 line on a paper-2 card 1.05:1 (Pink) to 1.10:1 (Blauw), a paper-4 border on it 1.16:1 to 1.25:1. */
-  --paper-1: #fdfdff; --paper-2: #f3f7ff; --paper-3: #e4edff; --paper-4: #d1e0ff; --primary: #0000ff; --muted: #4f5769; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c;
+     11.8:1 to 12.5:1; muted on paper-1 7.05:1 to 7.13:1, on paper-2 6.45:1 to 6.8:1; paper-4 on fg-1 15.1:1 to
+     16.4:1; a paper-3 line on a paper-2 card 1.05:1 (Pink) to 1.09:1 (Magenta), a paper-4 border on it 1.14:1 to 1.22:1.
+     Paper-2 stands a clearer step off the page since November 1, 2026 (Maikel): 1.04:1 to 1.05:1 on dark and 1.09:1
+     to 1.10:1 on light, the figures above for paper-2 measured again that day. */
+  --paper-1: #fdfdff; --paper-2: #eff4fd; --paper-3: #e2ecff; --paper-4: #d1e0ff; --primary: #0000ff; --muted: #4f5769; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c;
 
   /* categorical palette (series slots) */
   --graph-1: #2574d1;          /* dark enough for --paper-1 text on it at 4.5:1 in every light theme (4.51:1, worst Roest; #92) */
@@ -161,7 +163,7 @@
     color-scheme: dark;
     --graph-1: #3987e5; --graph-2: #d95926; --graph-3: #199e70;
     --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
-    --paper-1: #01090b; --paper-2: #010f11; --paper-3: #00181b; --paper-4: #002328; --primary: #63cfdc; --muted: #839ea1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
+    --paper-1: #01090b; --paper-2: #021113; --paper-3: #01191c; --paper-4: #002328; --primary: #63cfdc; --muted: #839ea1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
   }
 }
 
@@ -172,7 +174,7 @@
   color-scheme: dark;
   --graph-1: #3987e5; --graph-2: #d95926; --graph-3: #199e70;
   --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
-  --paper-1: #01090b; --paper-2: #010f11; --paper-3: #00181b; --paper-4: #002328; --primary: #63cfdc; --muted: #839ea1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
+  --paper-1: #01090b; --paper-2: #021113; --paper-3: #01191c; --paper-4: #002328; --primary: #63cfdc; --muted: #839ea1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
 }
 
 /* ---- Themes: the theme's colour --------------------------------------------- */
@@ -181,18 +183,18 @@
    two whose primary sits next to the warning colour move the warning away from it. No red and
    no green theme: those hues mean bad and good. Order: magenta, purple, blue, teal, ochre, rust (light);
    pink, lilac, sky, cyan, yellow, orange (dark). */
-:root[data-theme="magenta"], .theme-swatch[data-id="magenta"] { --paper-1: #fffdfe; --paper-2: #fef3f9; --paper-3: #fce6f1; --paper-4: #f7d4e6; --primary: #b90085; --muted: #66525d; --fg-1: #0d0208; --fg-2: #160810; --fg-3: #1f1119; --fg-4: #281a22; }
-:root[data-theme="purple"], .theme-swatch[data-id="purple"] { --paper-1: #fdfdff; --paper-2: #f7f5ff; --paper-3: #edeafe; --paper-4: #e1dbfb; --primary: #7f00ff; --muted: #595568; --fg-1: #060410; --fg-2: #0e0b19; --fg-3: #171422; --fg-4: #201d2b; }
-:root[data-theme="blue"], .theme-swatch[data-id="blue"] { --paper-1: #fdfdff; --paper-2: #f3f7ff; --paper-3: #e4edff; --paper-4: #d1e0ff; --primary: #0000ff; --muted: #4f5769; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c; }
-:root[data-theme="teal"], .theme-swatch[data-id="teal"] { --paper-1: #fafeff; --paper-2: #edfafb; --paper-3: #d8f3f6; --paper-4: #bee9ef; --primary: #006e79; --muted: #435b5f; --fg-1: #000809; --fg-2: #001113; --fg-3: #051a1c; --fg-4: #0f2325; }
-:root[data-theme="ochre"], .theme-swatch[data-id="ochre"] { --paper-1: #fefef9; --paper-2: #f9f7ed; --paper-3: #f1eed9; --paper-4: #e6e1bf; --primary: #716300; --muted: #5c5845; --fg-1: #080600; --fg-2: #100d01; --fg-3: #191607; --fg-4: #222011; }
-:root[data-theme="rust"], .theme-swatch[data-id="rust"] { --paper-1: #fffdfc; --paper-2: #fff4ef; --paper-3: #fde8dc; --paper-4: #f9d8c5; --primary: #9c4b00; --muted: #665449; --fg-1: #0e0300; --fg-2: #170903; --fg-3: #20120a; --fg-4: #291c14; --warning-3: #b88a00; }
-:root[data-theme="pink"], .theme-swatch[data-id="pink"] { --paper-1: #0e0507; --paper-2: #14080c; --paper-3: #1f0d13; --paper-4: #2f141e; --primary: #ff9fd4; --muted: #ab9399; --fg-1: #fffafc; --fg-2: #f6edf0; --fg-3: #ece1e4; --fg-4: #e2d5d9; }
-:root[data-theme="lilac"], .theme-swatch[data-id="lilac"] { --paper-1: #08060e; --paper-2: #0d0a15; --paper-3: #151121; --paper-4: #1f1a31; --primary: #d6adff; --muted: #9a97ab; --fg-1: #fcfbff; --fg-2: #f0eff6; --fg-3: #e5e3ec; --fg-4: #d9d7e2; }
-:root[data-theme="sky"], .theme-swatch[data-id="sky"] { --paper-1: #04070f; --paper-2: #070c16; --paper-3: #0c1322; --paper-4: #131d33; --primary: #b8b8ff; --muted: #909aac; --fg-1: #fafcff; --fg-2: #edf0f7; --fg-3: #e0e5ed; --fg-4: #d4d9e3; }
-:root[data-theme="cyan"], .theme-swatch[data-id="cyan"] { --paper-1: #01090b; --paper-2: #010f11; --paper-3: #00181b; --paper-4: #002328; --primary: #63cfdc; --muted: #839ea1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde; }
-:root[data-theme="yellow"], .theme-swatch[data-id="yellow"] { --paper-1: #0a0701; --paper-2: #100c02; --paper-3: #1a1303; --paper-4: #271d02; --primary: #e2ba51; --muted: #a19985; --fg-1: #fdfcf7; --fg-2: #f3f0e9; --fg-3: #e8e4dc; --fg-4: #ddd9cf; --warning-3: #f08a24; }
-:root[data-theme="orange"], .theme-swatch[data-id="orange"] { --paper-1: #0e0503; --paper-2: #150905; --paper-3: #200f08; --paper-4: #30160c; --primary: #ffaa74; --muted: #ab948c; --fg-1: #fffbf9; --fg-2: #f6eeeb; --fg-3: #ece2de; --fg-4: #e2d6d2; }
+:root[data-theme="magenta"], .theme-swatch[data-id="magenta"] { --paper-1: #fffdfe; --paper-2: #fbf0f5; --paper-3: #fae4ef; --paper-4: #f7d4e6; --primary: #b90085; --muted: #66525d; --fg-1: #0d0208; --fg-2: #160810; --fg-3: #1f1119; --fg-4: #281a22; }
+:root[data-theme="purple"], .theme-swatch[data-id="purple"] { --paper-1: #fdfdff; --paper-2: #f4f2fc; --paper-3: #ece8fd; --paper-4: #e1dbfb; --primary: #7f00ff; --muted: #595568; --fg-1: #060410; --fg-2: #0e0b19; --fg-3: #171422; --fg-4: #201d2b; }
+:root[data-theme="blue"], .theme-swatch[data-id="blue"] { --paper-1: #fdfdff; --paper-2: #eff4fd; --paper-3: #e2ecff; --paper-4: #d1e0ff; --primary: #0000ff; --muted: #4f5769; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c; }
+:root[data-theme="teal"], .theme-swatch[data-id="teal"] { --paper-1: #fafeff; --paper-2: #e9f6f8; --paper-3: #d7f1f4; --paper-4: #bee9ef; --primary: #006e79; --muted: #435b5f; --fg-1: #000809; --fg-2: #001113; --fg-3: #051a1c; --fg-4: #0f2325; }
+:root[data-theme="ochre"], .theme-swatch[data-id="ochre"] { --paper-1: #fefef9; --paper-2: #f5f4e9; --paper-3: #efecd7; --paper-4: #e6e1bf; --primary: #716300; --muted: #5c5845; --fg-1: #080600; --fg-2: #100d01; --fg-3: #191607; --fg-4: #222011; }
+:root[data-theme="rust"], .theme-swatch[data-id="rust"] { --paper-1: #fffdfc; --paper-2: #fcf1eb; --paper-3: #fce6db; --paper-4: #f9d8c5; --primary: #9c4b00; --muted: #665449; --fg-1: #0e0300; --fg-2: #170903; --fg-3: #20120a; --fg-4: #291c14; --warning-3: #b88a00; }
+:root[data-theme="pink"], .theme-swatch[data-id="pink"] { --paper-1: #0e0507; --paper-2: #170a0e; --paper-3: #200f15; --paper-4: #2f141e; --primary: #ff9fd4; --muted: #ab9399; --fg-1: #fffafc; --fg-2: #f6edf0; --fg-3: #ece1e4; --fg-4: #e2d5d9; }
+:root[data-theme="lilac"], .theme-swatch[data-id="lilac"] { --paper-1: #08060e; --paper-2: #0f0c18; --paper-3: #161222; --paper-4: #1f1a31; --primary: #d6adff; --muted: #9a97ab; --fg-1: #fcfbff; --fg-2: #f0eff6; --fg-3: #e5e3ec; --fg-4: #d9d7e2; }
+:root[data-theme="sky"], .theme-swatch[data-id="sky"] { --paper-1: #04070f; --paper-2: #090e19; --paper-3: #0d1523; --paper-4: #131d33; --primary: #b8b8ff; --muted: #909aac; --fg-1: #fafcff; --fg-2: #edf0f7; --fg-3: #e0e5ed; --fg-4: #d4d9e3; }
+:root[data-theme="cyan"], .theme-swatch[data-id="cyan"] { --paper-1: #01090b; --paper-2: #021113; --paper-3: #01191c; --paper-4: #002328; --primary: #63cfdc; --muted: #839ea1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde; }
+:root[data-theme="yellow"], .theme-swatch[data-id="yellow"] { --paper-1: #0a0701; --paper-2: #130e03; --paper-3: #1b1404; --paper-4: #271d02; --primary: #e2ba51; --muted: #a19985; --fg-1: #fdfcf7; --fg-2: #f3f0e9; --fg-3: #e8e4dc; --fg-4: #ddd9cf; --warning-3: #f08a24; }
+:root[data-theme="orange"], .theme-swatch[data-id="orange"] { --paper-1: #0e0503; --paper-2: #170b06; --paper-3: #211009; --paper-4: #30160c; --primary: #ffaa74; --muted: #ab948c; --fg-1: #fffbf9; --fg-2: #f6eeeb; --fg-3: #ece2de; --fg-4: #e2d6d2; }
 
 /* ---- Base ---------------------------------------------------------------- */
 * { box-sizing: border-box; }
