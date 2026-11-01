@@ -51,7 +51,10 @@ read as a plain `<p>`.
 - [x] `dev-pages-lib.ps1`: a token group's heading may name a `Section`, and then shows every card of that section in
   its own grid; the Text group gets Tokens (Font size, Font family, Font weight) and Components (the Text section)
 - [x] The overview's Text card counts both halves (7 specimens)
-- [x] `house-style.css`: four weight tokens, `--font-weight-light` 300 to `--font-weight-bold` 900
+- [x] `house-style.css`: four weight tokens, `--font-weight-light` 300 to `--font-weight-bold` 900, and every rule (the
+  body too) sets its weight through one: 300 light, 400 regular, 600 semibold, 700 and 800 bold; the hub's stopwatch,
+  masthead and consumer-dashboard layers likewise
+- [x] `house-palette.tests.ps1` refuses a font weight set as a number in the stylesheet or those hub layers
 - [x] A section a token group shows is left off the overview, so Preview holds Themes alone
 - [x] `house-style.css`: `.eyebrow`, `.lead`, `.pos` and `.neg` gone, `.sub` gone into `.note`, the fill switches and comments with them
 - [x] `specimens.html`: the Type scale card is Font size, a new Font weight card shows the four weight tokens, the Headings card shows h1, h2, h3, the Running text card drops its `.lead` row, the Numbers card its `.pos, .neg` row; the fill specimens' quieter line is a `.note`
@@ -75,7 +78,8 @@ and the type they produce read on one page. A token group's heading can now name
 now holds Themes alone. The Headings specimen shows h1, h2 and h3.
 
 The house style gains four weight tokens, `--font-weight-light` (300), `--font-weight-regular` (500),
-`--font-weight-semibold` (700) and `--font-weight-bold` (900), and drops five classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
+`--font-weight-semibold` (700) and `--font-weight-bold` (900), and every rule now takes its weight from them, so all
+text is one step heavier: running text 500, h3 and card titles 700, h1 and h2 900. It drops five classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
 body size read as a plain `<p>`; and `.sub`, merged into `.note`, the one quiet-text class, which had the same colour
 and size; and `.pos` and `.neg`, the colours of `.delta--up` and `.delta--down` without the weight.
 
@@ -87,7 +91,9 @@ and size; and `.pos` and `.neg`, the colours of `.delta--up` and `.delta--down` 
 that styling: replace `class="sub"` with `class="note"` (the same colour and size, with a small top margin instead of a
 16px bottom one), drop the eyebrow line or set it as a `.note`, and drop `class="lead"` (the paragraph keeps the body size and colour,
 and loses its 46rem measure and its 8px top margin). Replace `class="pos"` with `class="delta delta--up"` and
-`class="neg"` with `class="delta delta--down"`; the figure then turns semibold.
+`class="neg"` with `class="delta delta--down"`; the figure then turns semibold. Text set in the house style is one
+step heavier throughout (400 to 500, 600 to 700, 700 to 900); a domain layer that sets a weight should take one of
+the four `--font-weight-*` tokens rather than a number.
 
 **Score:** 5
 

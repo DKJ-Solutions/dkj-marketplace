@@ -306,7 +306,7 @@ Assert-True ($labs -match ('<span class="menu-item__label">' + [regex]::Escape((
 Assert-True ($page -notmatch '<section class="card[^"]*">(?:(?!</section>).)*<(h[13-6]|dt)' -and $labs -notmatch '<section class="card[^"]*">(?:(?!</section>).)*<(h[1-6]|dt)') 'a card holds no heading and no header above its lines: its header is its first line, set in a house text size and weight'
 Assert-True ((Format-StopwatchLabelPageHtml -Set @(Get-StopwatchLabelSets -Model (ConvertTo-StopwatchModel -Runs @((& $mk '<b>x</b>' 0 10))))[0] -StorePath '<i>') -notmatch '<b>x</b>|<i>') 'the label and the store path are escaped on the label page'
 Assert-True ($labs -notmatch 'run\(s\)|\d runs?,') 'a run card counts no runs: it is one'
-Assert-True ($page -match '\.sw-run \.menu-item__label \{ font-weight: 800; \}' -and $page -match '\.sw-change \{ [^}]*font-size: var\(--text-xs\); font-weight: 400;') 'the start is the card''s heaviest line (base, 800), the prompt label its least visible line, the time light (300), its change small and regular'
+Assert-True ($page -match '\.sw-run \.menu-item__label \{ font-weight: var\(--font-weight-bold\); \}' -and $page -match '\.sw-change \{ [^}]*font-size: var\(--text-xs\); font-weight: var\(--font-weight-regular\);') 'the start is the card''s heaviest line (base, bold), the prompt label its least visible line, the time light, its change small and regular'
 $cardCss = @([regex]::Matches($page, '\.sw-(stamp|instruction|time|change)[^{]*\{[^}]*\}') | ForEach-Object { $_.Value })
 Assert-True ($cardCss.Count -ge 4 -and -not @($cardCss | Where-Object { ([regex]::Matches($_, 'font-size: var\(--([a-z0-9-]+)\)') | Where-Object { $_.Groups[1].Value -notin 'text-base', 'text-sm', 'text-xs' }) -or ([regex]::Matches($_, 'font-weight: (\d+)') | Where-Object { $_.Groups[1].Value -notin '300', '400', '500', '600', '700', '800' }) }).Count) 'a card''s text takes only --text-base, -sm or -xs and only the weights 300 to 800'
 Assert-Equal ' <span class="sw-change">0%</span>' (Format-StopwatchChangePercent -Seconds 100.2 -DeltaSeconds 0.2) 'under half a second is 0%'
@@ -364,7 +364,7 @@ foreach ($pg in @(@{ N = 'the overview'; H = $page }, @{ N = 'an empty overview'
     Assert-Equal 'h1' $first.Groups[1].Value "$($pg.N) begins with an h1"
 }
 Assert-True ($flatNone -notmatch 'Ship PR') 'the Logbook''s flat overview carries no pinned card'
-Assert-True ($none -match '\.sw-steps \{ [^}]*font-size: var\(--text-sm\); font-weight: 400; color: var\(--primary-muted\); \}') 'the steps take the instruction line''s house size, weight and colour'
+Assert-True ($none -match '\.sw-steps \{ [^}]*font-size: var\(--text-sm\); font-weight: var\(--font-weight-regular\); color: var\(--primary-muted\); \}') 'the steps take the instruction line''s house size, weight and colour'
 $evil = Format-StopwatchPageHtml -Model (ConvertTo-StopwatchModel -Runs @((& $mk '<script>x</script>' 0 10))) -StorePath 's'
 Assert-True ($evil -notmatch '<script>x</script>' -and $evil -match '&lt;script&gt;x&lt;/script&gt;' -and $evil -match 'href="/stopwatch/script-x-script"' -and (ConvertTo-StopwatchModel -Runs @((& $mk '<script>x</script>' 0 10))).Groups[0].LabelSlug -eq 'script-x-script') 'a label is escaped wherever it is shown, and its slugs are URL-safe'
 $empty = Format-StopwatchPageHtml -Model (ConvertTo-StopwatchModel -Runs @()) -StorePath 's' -Shared
