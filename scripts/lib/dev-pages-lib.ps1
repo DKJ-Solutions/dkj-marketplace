@@ -460,6 +460,11 @@ function Resolve-ProductHouseStyleRequest {
 # The token groups the brand book's overview opens on, each a card under its Tokens heading (Maikel, October 31,
 # 2026): which of the Tokens section's specimen cards each one shows, by the card's own h3 title. A card of that
 # section named by no group is a defect the suite holds against the real specimens.
+# The overview's sections after Tokens fall under two h2s (Maikel, November 1, 2026): Preview holds the sections that
+# show the whole style at once, the themes and the type; every other section is a component and falls under Components,
+# so a section added to specimens.html lands there without an edit here.
+$script:ProductBrandbookPreviewSections = @('themes', 'text')
+
 # A group may set its cards under h2s of its own, -Headings, each naming its cards; its Cards are then those, in order.
 # Color does (Maikel, October 31, 2026): Theme holds the 60-30-10 rule's three shares, and Graphs & Status the series
 # slots and the status and direction colours, one heading since Maikel merged the two (November 1, 2026).
@@ -513,7 +518,7 @@ function Format-ProductHouseStylePageHtml {
         section has returns $null, a 404.
 
         THE OVERVIEW OPENS ON ITS TOKENS (Maikel, October 31, 2026): an h2 Tokens over one card per token group
-        ($script:ProductBrandbookTokenGroups), then a card for every other section, as before. -Token names a group's
+        ($script:ProductBrandbookTokenGroups), then a card for every other section, under an h2 Preview (themes, text) or Components (the rest, November 1, 2026). -Token names a group's
         own page, /tokens/<group>, holding only that group's specimen cards; a group none has, or whose cards the
         file no longer holds, returns $null. /tokens itself is no page since November 1, 2026 (Maikel): $null here, and
         the server redirects it to the overview (Resolve-ProductHouseStyleRedirect).
@@ -570,12 +575,21 @@ function Format-ProductHouseStylePageHtml {
             [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ($base + '/tokens/' + $g.Slug) -Label $g.Label -Heading 3 -Sub $(if ($n -eq 1) { '1 specimen' } else { [string]$n + ' specimens' })))
         }
         [void]$sb.AppendLine('</div>')
-        [void]$sb.AppendLine('<div class="grid-3">')
-        foreach ($s in @($split.Sections | Where-Object { $_.Slug -cne 'tokens' })) {
-            $count = if ($s.Cards -eq 1) { '1 specimen' } else { [string]$s.Cards + ' specimens' }
-            [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ($base + '/' + $s.Slug) -Label $s.Title -Sub $count))
+        # The other sections under two more h2s, Preview and Components, each card an h3 (Maikel, November 1, 2026).
+        $rest = @($split.Sections | Where-Object { $_.Slug -cne 'tokens' })
+        $groups = @(
+            @{ Id = 'preview'; Label = 'Preview'; Sections = @($rest | Where-Object { $script:ProductBrandbookPreviewSections -ccontains $_.Slug }) },
+            @{ Id = 'components'; Label = 'Components'; Sections = @($rest | Where-Object { $script:ProductBrandbookPreviewSections -cnotcontains $_.Slug }) }
+        )
+        foreach ($grp in $groups) {
+            if (-not $grp.Sections.Count) { continue }
+            [void]$sb.AppendLine('<div class="grid-3" id="' + $grp.Id + '"><div class="grid__head"><h2>' + $grp.Label + '</h2></div>')
+            foreach ($s in $grp.Sections) {
+                $count = if ($s.Cards -eq 1) { '1 specimen' } else { [string]$s.Cards + ' specimens' }
+                [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ($base + '/' + $s.Slug) -Label $s.Title -Heading 3 -Sub $count))
+            }
+            [void]$sb.AppendLine('</div>')
         }
-        [void]$sb.AppendLine('</div>')
         $overview = $sb.ToString()
     }
     return Format-DevPageHtml -Title 'dkj-brandbook' -Lead $parts.Lead -Body $overview -ParentCrumbs $crumbs -FooterNote $foot

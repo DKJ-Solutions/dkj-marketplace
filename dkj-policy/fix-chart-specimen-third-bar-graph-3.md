@@ -1,0 +1,70 @@
+## fix/chart-specimen-third-bar-graph-3
+
+> **How this file is read.** A step is `- [ ]` until it is resolved -- `- [x]` done, or
+> `- [~]` dropped with the reason, which exists so nobody ticks a box for work they did not do.
+> open-pr and ship-pr both refuse while one is still open, and there is no `-Force`.
+>
+> **FOUR `###` HEADINGS, AND NEVER A FIFTH** -- PLAN, CREATE, TEST, DEPLOY are the whole top
+> level. A section needing its own heading goes in as a `####` UNDER whichever of the four owns
+> it. No gate in YOUR repo reads a heading, so this half is on you -- only the repo that authors
+> this workflow refuses a fifth (Dave, August 26, 2026).
+>
+> **AND NOTHING BRANCH-SPECIFIC ABOVE THE FIRST OF THOSE FOUR HEADINGS** -- everything between the
+> title and it is this guidance, which is identical in every branch document. A status line, a note about
+> THIS branch or an instruction to a session belongs under one of the four, normally as a `####`
+> in PLAN. THIS half open-pr refuses, in every repo, before the push -- it reads the shape, so a
+> guidance block in your own language passes and your own paragraph here does not (Dave,
+> August 26, 2026; refused since #1650).
+>
+> **DEPLOY takes no steps of its own, and it is WRITTEN LAST** -- it is what the branch DID, once
+> TEST says so. Written while steps above it are still open it states an INTENTION, and no gate
+> holds it against what landed: the step gate splits this file at that heading and counts only
+> above it. The PR title is the one exception -- new-branch -Title writes it at creation, because
+> open-pr composes the PR title from it. It is the one part of this file that travels verbatim
+> into `CHANGELOG.md` at the merge. In each tier, write the reason
+> ABOVE the Score line -- anything below it is discarded.
+>
+> Relative links in that text resolve FROM THIS DIRECTORY -- `CHANGELOG.md` sits here too, so
+> write each path exactly as it reads in this file.
+>
+> For tier 2 audiences: the user who relies on what this repo ships, and decides whether to take the next version -- a subscriber of a service, or the user of a tool, its own maintainer included. That reader and nobody else -- what matters only
+> inside this repo belongs under the first `**Score:**`. If the change reaches that reader
+> not at all, N/A is a complete answer and the common one. **One hop and no further:** where that
+> reader is itself a business, ITS own customers sit one hop past this repo and are never the reader
+> here -- they take nothing this repo ships. Name the party that runs the upgrade, and score
+> against them.
+>
+> The phase arc, the marks and the whole form: `DEVELOPMENT-portable.md`, which ships
+> with this workflow.
+
+### PLAN
+
+### CREATE
+
+- [x] `specimens.html`, the Chart scope specimen: the third bar's fill `--positive-3` becomes `--graph-3`
+- [x] The legend and the swatch move from the Meters card, where they keyed nothing, to above the Chart scope chart: One/Two/Three in `--graph-1`..`--graph-3` name the bars, and the `--line` item names a new average line in `--fg-2` (the README names no colour for a reference line, and all three graph slots are taken)
+- [x] `dev-pages-lib.ps1`: the brand book overview sets every section but Tokens under a second h2, Preview, each card an h3; asserted in `dev-pages.tests.ps1`
+- [x] A third h2, Components: Preview keeps Themes and Text (`$script:ProductBrandbookPreviewSections`), every other section falls under Components, so a new section lands there without an edit; asserted in the same suite
+- [x] The Text section's two grab-bag cards become four, one subject each (Headings, Running text, Numbers, Messages and group headings), every sample on a labelled row (`.spec-rows`/`.spec-label`) with its class beside it and its own margins zeroed
+- [x] Every specimen card's `card__sub` goes (55). The one that stays is the Surfaces card that is `.card__sub`'s own specimen, now a plain sub line instead of a class list; the sections' subs stay, because the page split reads them as each page's lead
+
+### TEST
+
+- [x] The owner has looked at the brand book pages and approved the PR (Maikel, November 1, 2026)
+
+### DEPLOY: fix/chart-specimen-third-bar-graph-3
+
+The brand book's Chart scope specimen draws its three plain category bars in `--graph-1`, `--graph-2` and `--graph-3`. The third bar was `--positive-3`, a direction colour the README reserves for gain and never for a category, so the specimen taught the very mix the token table forbids. It came in with the static specimen page (#3493), carried over from the retired app's direction charts. The legend and the swatch beside text sat in the Meters card, keying `--graph` series that card does not draw; they now sit above the chart whose bars they name, with an average line in `--fg-2` to show the line item, and the card is called Meters. The brand book's overview now has three h2s: Tokens, Preview (Themes and Text, the whole style at once) and Components (Actions, Surfaces, Tables, Forms and every other section), each section card an h3. The Text page reads as four cards of one subject each, every sample on its own row with the class that draws it beside it, where two cards used to stack fifteen unlabelled samples on uneven margins. The specimen cards carry their title alone, without the class list under it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A reader building a chart from the brand book now sees the categorical slots used as the token table says, instead of a status colour standing in for a third series.
+
+**Score:** 2
+
+#### Pull Request
+
+The chart specimen keys its own bars, the brand book overview gets Preview and Components headings, and the Text page is labelled
+
