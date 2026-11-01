@@ -48,6 +48,7 @@ itself stays defined, and the specimen still shows it.
 - [x] The hub's own page CSS: the masthead `h1` (`general-pages-lib.ps1`) and the Stopwatch start line (`stopwatch-lib.ps1`)
 - [x] The brand book README: the `h1` weight and the token row say so
 - [x] `stopwatch.tests.ps1` pins the new weight
+- [x] The plain `h3` goes from light to bold (Maikel, asked after looking)
 
 ### TEST
 
@@ -59,7 +60,8 @@ itself stays defined, and the specimen still shows it.
 Every rule in the house stylesheet that was set at the black weight (900) is now set at bold (700): the
 `h1`, the primary button, the top bar and site header names, panel labels, totals, the answer and
 step-head values, the comparison table's head and foot, and the rest. The hub's masthead and the
-Stopwatch start line follow. `--font-weight-black` stays defined for an app that wants it, but no house
+Stopwatch start line follow. The plain `h3` turns from light (300) to bold (700), so a card's `h3` is
+bold as well. `--font-weight-black` stays defined for an app that wants it, but no house
 rule uses it any more.
 
 **Score:** 3
