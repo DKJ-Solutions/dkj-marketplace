@@ -41,17 +41,23 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `specimens.html`, the Chart scope specimen: the third bar's fill `--positive-3` becomes `--graph-3`
 
 ### TEST
 
+- [ ] The owner has looked at the Chart scope specimen on the brand book page
+
 ### DEPLOY: fix/chart-specimen-third-bar-graph-3
 
-**Score:**
+The brand book's Chart scope specimen draws its three plain category bars in `--graph-1`, `--graph-2` and `--graph-3`. The third bar was `--positive-3`, a direction colour the README reserves for gain and never for a category, so the specimen taught the very mix the token table forbids. It came in with the static specimen page (#3493), carried over from the retired app's direction charts.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A reader building a chart from the brand book now sees the categorical slots used as the token table says, instead of a status colour standing in for a third series.
+
+**Score:** 2
 
 #### Pull Request
 
