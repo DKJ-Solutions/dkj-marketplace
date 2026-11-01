@@ -47,6 +47,7 @@
 - [x] The suites that read `class="footer-note"` read `class="note"`: dev-pages, consumer-dashboard and dev-preview-sessionstart, all green
 - [x] `--font-serif` retired: no house class and no app on this machine reads it (measured in dkj-marketplace, dkj-lifehub, dkj-music-library); the token, its specimen and its README row go. `--font-mono` stays: `.prose` sets code in it and dkj-music-library reads it about 55 times
 - [x] `--font-mono` leaves the Type scale card, where it read as a size, for a card of its own, Font family, in the same Text token group (`$script:ProductBrandbookTokenGroups`), and gets its own row in the README's token table
+- [x] The Type scale and Font family cards set each sample on the left and its token on the right, on one baseline (`.spec-pairs`/`.spec-pair`)
 - [x] Filed #3716: the release-notes map still points `ink-faint` at the retired `--muted` token (a different subject, found here)
 
 ### TEST
@@ -55,7 +56,7 @@
 
 ### DEPLOY: feat/note-absorbs-muted-and-footer-note
 
-The house style has one class for quiet text, `.note`. `.muted` and `.footer-note` drew the same `--primary-muted` text at `--text-sm` under three names, told apart only by a top margin the page column already took away, so they are retired into `.note` (Maikel, November 1, 2026). The README carries the rename table, and every page the hub and the dashboards render uses `.note`, so nothing here looks different. `--font-serif`, kept after October 24 for a title that never came, is retired with them; `--font-mono` stays, and the brand book now shows it as what it is, a typeface: its own Font family card and table row instead of a line in the type scale.
+The house style has one class for quiet text, `.note`. `.muted` and `.footer-note` drew the same `--primary-muted` text at `--text-sm` under three names, told apart only by a top margin the page column already took away, so they are retired into `.note` (Maikel, November 1, 2026). The README carries the rename table, and every page the hub and the dashboards render uses `.note`, so nothing here looks different. `--font-serif`, kept after October 24 for a title that never came, is retired with them; `--font-mono` stays, and the brand book now shows it as what it is, a typeface: its own Font family card and table row instead of a line in the type scale. Both cards set each sample on the left and its token on the right.
 
 **Score:** 3
 

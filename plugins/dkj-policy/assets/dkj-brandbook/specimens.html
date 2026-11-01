@@ -23,6 +23,10 @@
 .spec-label > .note { margin: 0; overflow-wrap: anywhere; }
 .spec-label > :last-child { margin: 0; min-width: 0; }
 @media (max-width: 480px) { .spec-label { grid-template-columns: minmax(0, 1fr); gap: var(--spacing-1); } }
+/* A sample on the left and its token on the right, on one baseline: the type scale and the font family. */
+.spec-pairs { display: grid; gap: var(--spacing-3); }
+.spec-pair { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: var(--spacing-3); }
+.spec-pair > .note { margin: 0; text-align: right; white-space: nowrap; }
 .spec-space { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); align-items: center; gap: var(--spacing-2); }
 .spec-bar { display: block; width: var(--w); max-width: 100%; height: var(--spacing-2); border-radius: var(--radius-1); background: var(--primary-muted); }
 .spec-radius { display: block; width: var(--spacing-12); height: var(--spacing-12); border: 2px solid var(--primary-muted); background: var(--bg-3); }
@@ -109,21 +113,21 @@
 
   <section class="card">
     <div class="card__head"><h3 class="card__title">Type scale</h3></div>
-    <div class="spec-stack">
-      <div class="spec-item"><p class="note">--text-h1 (32px)</p><span style="font-size: var(--text-h1); font-weight: 700; color: var(--primary)">Aa Heading one</span></div>
-      <div class="spec-item"><p class="note">--text-h2 (18px)</p><span style="font-size: var(--text-h2); font-weight: 700">Heading two</span></div>
-      <div class="spec-item"><p class="note">--text-h3 (14px)</p><span style="font-size: var(--text-h3); font-weight: 600">Heading three</span></div>
-      <div class="spec-item"><p class="note">--text-lg (18px)</p><span style="font-size: var(--text-lg)">Large running text</span></div>
-      <div class="spec-item"><p class="note">--text-base (14px)</p><span style="font-size: var(--text-base)">Body text</span></div>
-      <div class="spec-item"><p class="note">--text-sm (12px)</p><span style="font-size: var(--text-sm)">Small text</span></div>
-      <div class="spec-item"><p class="note">--text-xs (11px)</p><span style="font-size: var(--text-xs)">Extra small text</span></div>
+    <div class="spec-pairs">
+      <div class="spec-pair"><span style="font-size: var(--text-h1); font-weight: 700; color: var(--primary)">Aa Heading one</span><p class="note">--text-h1 (32px)</p></div>
+      <div class="spec-pair"><span style="font-size: var(--text-h2); font-weight: 700">Heading two</span><p class="note">--text-h2 (18px)</p></div>
+      <div class="spec-pair"><span style="font-size: var(--text-h3); font-weight: 600">Heading three</span><p class="note">--text-h3 (14px)</p></div>
+      <div class="spec-pair"><span style="font-size: var(--text-lg)">Large running text</span><p class="note">--text-lg (18px)</p></div>
+      <div class="spec-pair"><span style="font-size: var(--text-base)">Body text</span><p class="note">--text-base (14px)</p></div>
+      <div class="spec-pair"><span style="font-size: var(--text-sm)">Small text</span><p class="note">--text-sm (12px)</p></div>
+      <div class="spec-pair"><span style="font-size: var(--text-xs)">Extra small text</span><p class="note">--text-xs (11px)</p></div>
     </div>
   </section>
 
   <section class="card">
     <div class="card__head"><h3 class="card__title">Font family</h3></div>
-    <div class="spec-stack">
-      <div class="spec-item"><p class="note">--font-mono</p><span style="font-family: var(--font-mono)">code 0123456789</span></div>
+    <div class="spec-pairs">
+      <div class="spec-pair"><span style="font-family: var(--font-mono)">code 0123456789</span><p class="note">--font-mono</p></div>
     </div>
   </section>
 
