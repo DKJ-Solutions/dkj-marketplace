@@ -292,8 +292,8 @@
   <section class="card">
     <div class="card__head"><h3>Group headings</h3></div>
     <div class="spec-rows">
-      <div class="spec-label"><span class="note">.group-heading</span><h3 class="group-heading"><span>Group heading</span><span class="group-heading__count">3 / 5</span></h3></div>
-      <div class="spec-label"><span class="note">.group-heading__count--over</span><h3 class="group-heading"><span>Over the limit</span><span class="group-heading__count group-heading__count--over">6 / 5</span></h3></div>
+      <div class="spec-label"><span class="note">.group-heading</span><div class="group-heading"><h3>Group heading</h3><span class="group-heading__count">3 / 5</span></div></div>
+      <div class="spec-label"><span class="note">.group-heading__count--over</span><div class="group-heading"><h3>Over the limit</h3><span class="group-heading__count group-heading__count--over">6 / 5</span></div></div>
     </div>
   </section>
 </div>
@@ -706,7 +706,7 @@
     <div class="card__head"><h3>Dialog</h3></div>
     <div class="spec-stage">
       <dialog class="dialog" open><div class="dialog__body">
-        <div class="dialog__head dialog__head--two"><div><h3 class="dialog__title">Dialog title</h3><p class="dialog__sub">A sub line</p></div></div>
+        <div class="dialog__head dialog__head--two"><div><h3>Dialog title</h3><p class="dialog__sub">A sub line</p></div></div>
         <button class="dialog__close dialog__close--cancel" type="button" aria-label="Cancel"><svg width="20" height="20"><use href="#hs-undo"/></svg></button>
         <button class="dialog__close dialog__close--save" type="button" aria-label="Save"><svg width="20" height="20"><use href="#hs-check"/></svg></button>
         <label class="field"><span>A field in the dialog</span><input type="text" value="Value"></label>
@@ -718,12 +718,12 @@
     <div class="card__head"><h3>Dialog, close and back</h3></div>
     <div class="spec-stage">
       <dialog class="dialog" open><div class="dialog__body">
-        <div class="dialog__head"><h3 class="dialog__title">With a close button</h3></div>
+        <div class="dialog__head"><h3>With a close button</h3></div>
         <button class="dialog__close" type="button" aria-label="Close"><svg width="20" height="20"><use href="#hs-x"/></svg></button>
         <p>Body text.</p>
       </div></dialog>
       <dialog class="dialog" open><div class="dialog__body">
-        <div class="dialog__head dialog__head--back"><h3 class="dialog__title">A second panel</h3></div>
+        <div class="dialog__head dialog__head--back"><h3>A second panel</h3></div>
         <button class="dialog__close dialog__close--back" type="button" aria-label="Back"><svg width="20" height="20"><use href="#hs-back"/></svg></button>
         <p>Body text.</p>
       </div></dialog>
@@ -734,7 +734,7 @@
     <div class="card__head"><h3>Drawer</h3></div>
     <div class="spec-stage spec-stage--tall">
       <dialog class="dialog dialog--drawer" open><div class="dialog__body">
-        <div class="dialog__head"><h3 class="dialog__title">Drawer title</h3></div>
+        <div class="dialog__head"><h3>Drawer title</h3></div>
         <button class="dialog__close" type="button" aria-label="Close"><svg width="20" height="20"><use href="#hs-x"/></svg></button>
         <nav class="menu-list" aria-label="Drawer specimen"><a class="menu-item" href="#hs-overlays"><span class="menu-item__label">Item</span><svg class="menu-item__chevron" width="20" height="20" aria-hidden="true"><use href="#hs-chev"/></svg></a><a class="menu-item" href="#hs-overlays"><span class="menu-item__label">Item</span><svg class="menu-item__chevron" width="20" height="20" aria-hidden="true"><use href="#hs-chev"/></svg></a></nav>
       </div></dialog>
@@ -792,13 +792,13 @@ console.log(x);</code></pre>
 
 <!-- Modal specimens, opened by the buttons in "Overlays" (outside .spec-stage, so they keep the real modal look) -->
 <dialog class="dialog" id="hs-modal"><div class="dialog__body">
-  <div class="dialog__head dialog__head--two"><div><h3 class="dialog__title">Modal dialog</h3><p class="dialog__sub">Escape or the buttons close it</p></div></div>
+  <div class="dialog__head dialog__head--two"><div><h3>Modal dialog</h3><p class="dialog__sub">Escape or the buttons close it</p></div></div>
   <button class="dialog__close dialog__close--cancel" type="button" aria-label="Cancel" data-hs-close><svg width="20" height="20"><use href="#hs-undo"/></svg></button>
   <button class="dialog__close dialog__close--save" type="button" aria-label="Save" data-hs-close><svg width="20" height="20"><use href="#hs-check"/></svg></button>
   <label class="field"><span>A field</span><input type="text" value="Value"></label>
 </div></dialog>
 <dialog class="dialog dialog--drawer" id="hs-modal-drawer"><div class="dialog__body">
-  <div class="dialog__head"><h3 class="dialog__title">Modal drawer</h3></div>
+  <div class="dialog__head"><h3>Modal drawer</h3></div>
   <button class="dialog__close" type="button" aria-label="Close" data-hs-close><svg width="20" height="20"><use href="#hs-x"/></svg></button>
   <p>Slides in from the right.</p>
 </div></dialog>

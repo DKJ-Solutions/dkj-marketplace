@@ -184,7 +184,7 @@ function Format-TestGatePageHtml {
         '.tg-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: var(--spacing-4); align-items: start; }' + "`n" +
         ':is(.tg-cards, .tg-cols) > .card { margin-top: 0; }' + "`n" +
         '.tg-card { padding: var(--spacing-3) var(--spacing-4); }' + "`n" +
-        '.tg-card .menu-item__title { font-size: var(--text-base); }' + "`n" +
+        '.tg-card .menu-item__label > :is(h2, h3) { font-size: var(--text-base); }' + "`n" +
         '.tg-card .dp-bar { margin-top: var(--spacing-2); }' + "`n" +
         '.tg-tips > h3 { margin-top: 0; }' + "`n" +
         '.tg-guards { margin: 0 0 var(--spacing-3); }' + "`n" +

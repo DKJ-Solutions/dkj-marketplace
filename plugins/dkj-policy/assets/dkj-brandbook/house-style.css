@@ -639,7 +639,9 @@ html:has(dialog:modal) { overflow: hidden; }
 /* The head keeps the right edge free for the close button and is at least as tall, so a
    one-line title sits level with it. */
 .dialog__head { display: flex; align-items: center; min-height: var(--tap); padding-right: calc(var(--tap) + var(--spacing-2)); margin-bottom: var(--spacing-4); }
-.dialog__title { margin: 0; min-width: 0; font-size: var(--text-h3); font-weight: var(--font-weight-bold); overflow-wrap: anywhere; }
+/* The title is the h3 in the head, or a <p class="dialog__title"> where it is no heading; a heading carries no class
+   (Maikel, November 1, 2026). */
+:is(.dialog__head h3, .dialog__title) { margin: 0; min-width: 0; font-size: var(--text-h3); font-weight: var(--font-weight-bold); overflow-wrap: anywhere; }
 .dialog__sub { margin: var(--spacing-0-5) 0 0; font-size: var(--text-sm); color: var(--primary-muted); }
 /* The close button, top right, with no visible border. Variants: --save (a filled plate, the
    check that saves), --cancel (an outlined plate to the left of save, the undo arrow), --back
@@ -671,7 +673,7 @@ html:has(dialog:modal) { overflow: hidden; }
   padding: 0 calc(var(--spacing-4) + var(--tap) + var(--spacing-2)) 0 var(--spacing-4); border-bottom: 1px solid var(--bg-3); }
 .dialog--drawer .dialog__head--two { padding-right: calc(var(--spacing-4) + 2 * var(--tap) + var(--spacing-4)); }
 .dialog--drawer .dialog__head--back { padding: 0 var(--spacing-4) 0 calc(var(--spacing-4) + var(--tap) + var(--spacing-2)); }
-.dialog--drawer .dialog__title { font-weight: var(--font-weight-black); }   /* as the name in the top bar */
+.dialog--drawer :is(.dialog__head h3, .dialog__title) { font-weight: var(--font-weight-black); }   /* as the name in the top bar */
 .dialog--drawer .dialog__close { top: calc((var(--topbar-h) - var(--tap)) / 2 + env(safe-area-inset-top)); }
 .dialog--drawer::backdrop { animation: house-backdrop-in 220ms ease-out; }
 @keyframes house-drawer-in { from { transform: translateX(100%); } }
@@ -775,9 +777,10 @@ a.menu-item:hover { background: var(--bg-3); }
 .card--link a.menu-item:hover { background: none; }
 /* The card's slots (#3566), so an overview never needs a card of its own: a headline figure on a line under the
    description (<span class="menu-item__value">), a status .badge in the icon's place, and the label as a heading
-   (<div class="menu-item__label"><h2 class="menu-item__title">) where the cards are a page's sections. */
+   (<div class="menu-item__label"><h2>, or an h3) where the cards are a page's sections. The heading carries no class:
+   no h1, h2 or h3 does (Maikel, November 1, 2026), so .menu-item__title is gone and its place in the label styles it. */
 .menu-item__value { display: block; margin-top: var(--spacing-1); font-size: var(--text-base); font-weight: var(--font-weight-light); color: var(--fg-1); }
-.menu-item__title { margin: 0; }
+.menu-item__label > :is(h2, h3) { margin: 0; }
 .menu-item > .badge { flex: none; }
 /* A card's title is ONE line, cut off with an ellipsis where it does not fit the card's width (owner, October 28,
    2026): the plain label's first line, or the h2. A mark after the h2's label (Format-HubCardLinkHtml -TitleBadgeHtml:
@@ -785,10 +788,10 @@ a.menu-item:hover { background: var(--bg-3); }
    description and the value under it still wrap. */
 .card--link .menu-item__label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .card--link .menu-item__label > :is(.menu-item__sub, .menu-item__value) { white-space: normal; }
-.card--link .menu-item__title { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.card--link .menu-item__title:has(> .badge) { display: flex; align-items: center; gap: var(--spacing-2); }
-.card--link .menu-item__title > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.card--link .menu-item__title > .badge { flex: none; }
+.card--link .menu-item__label > :is(h2, h3) { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.card--link .menu-item__label > :is(h2, h3):has(> .badge) { display: flex; align-items: center; gap: var(--spacing-2); }
+.card--link .menu-item__label > :is(h2, h3) > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.card--link .menu-item__label > :is(h2, h3) > .badge { flex: none; }
 
 /* ---- Screen readers only --------------------------------------------------------- */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
@@ -928,9 +931,11 @@ a.menu-item:hover { background: var(--bg-3); }
 
 /* ---- Headings and answers ------------------------------------------------------ */
 /* Group heading: a section label that stays a heading for the outline (any level) but is --text-base, uppercase and
-   tracked; __count is a figure at the right, --over when it is past its limit. */
+   tracked; __count is a figure at the right, --over when it is past its limit. The heading carries no class (Maikel,
+   November 1, 2026): <div class="group-heading"><h3>Label</h3><span class="group-heading__count">3 / 5</span></div>. */
 .group-heading { display: flex; justify-content: space-between; align-items: baseline; gap: var(--spacing-2); margin: 0 0 var(--spacing-1);
-  font-size: var(--text-base); font-weight: var(--font-weight-bold); letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-1); }
+  font-size: var(--text-base); font-weight: var(--font-weight-bold); color: var(--fg-1); }
+.group-heading > :is(h1, h2, h3) { margin: 0; font-size: inherit; font-weight: var(--font-weight-bold); color: inherit; letter-spacing: 0.04em; text-transform: uppercase; }
 .group-heading__count { font-variant-numeric: tabular-nums; letter-spacing: 0; text-transform: none; white-space: nowrap; }
 .group-heading__count--over { color: var(--negative-5); }
 /* A question: a title with its answer .chip at the right, then the answer line, a plain <p> (a <strong> in it where it

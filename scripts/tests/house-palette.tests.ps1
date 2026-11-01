@@ -150,6 +150,19 @@ foreach ($wf in $weightFiles) {
 }
 Assert-True ($css -match '--font-weight-light: 300; --font-weight-regular: 500; --font-weight-bold: 700; --font-weight-black: 900;') 'the four weight tokens are defined once, 300, 500, 700 and 900'
 
+Write-Host '-- a heading carries no class' -ForegroundColor Cyan
+# Maikel, November 1, 2026: no h1, h2 or h3 has a class name; its place (.card__head > h3, .menu-item__label > h2,
+# .group-heading > h3, .dialog__head h3) styles it. Held over every page, pattern and generator this repo ships, as
+# literal markup and as a heading a .ps1 builds with its level spliced in ('<h' + $n + ' class=...').
+$headingFiles = @(git -C $RepoRoot ls-files -- 'plugins/*.html' 'plugins/*.ps1' 'plugins/*.js' 'scripts/lib/*.ps1' 'scripts/dashboard/*.ps1') |
+    Where-Object { $_ -notmatch '/releases/' }
+$classed = @(foreach ($hf in $headingFiles) {
+    $hText = [System.IO.File]::ReadAllText((Join-Path $RepoRoot $hf))
+    foreach ($m in [regex]::Matches($hText, '<h[1-3]\s[^>]*\bclass=|<h''\s*\+[^+]+\+\s*''\s+class=')) { "$hf -> $($m.Value)" }
+})
+Assert-Equal '' ($classed -join '; ') 'no h1, h2 or h3 carries a class, in any page or generator'
+Assert-Equal '' (@([regex]::Matches($css, '(?m)\bh[1-3]\.[a-z][\w-]*') | ForEach-Object { $_.Value }) -join ', ') 'and the stylesheet styles no class on a heading'
+
 Write-Host ''
 Write-Host "house-palette: $script:pass passed, $script:fail failed."
 if ($script:fail) { exit 1 }

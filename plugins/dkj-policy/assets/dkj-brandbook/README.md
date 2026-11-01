@@ -663,7 +663,7 @@ and a side drawer, a top bar and a menu list. The group sits at the end of
   phone and, on a computer, the same width.
 - **Buttons.** `.btn--touch` and `.btn--block` are modifiers of `.btn`, so the `.btn` hover, focus and disabled states
   covers them too, `.btn--touch.btn--primary` included.
-- **Dialog.** A native `<dialog>` opened with `showModal`. Put `.dialog__title` on an `h3` or a `p`; in a
+- **Dialog.** A native `<dialog>` opened with `showModal`. Its title is the `h3` in `.dialog__head`, with no class, or a `p.dialog__title` where it is no heading; in a
   `.dialog--drawer` it is bold. The page stands still behind a modal
   (`html:has(dialog:modal)`), and `html:has(.topbar)` adds the scroll padding for the top bar.
   `.dialog--drawer` slides in from the side. A dialog on top of a dialog sets `--dialog-scale` (default
@@ -888,7 +888,7 @@ page code goes through it, since a suite in `dev-pages.tests.ps1` fails on one w
   budget, a run's time), on a line of its own under the description: `.menu-item__value`.
 - **A status badge** in the icon's place, where the card stands for something that has a state (a plugin):
   the house `.badge`.
-- **The label as an `h2`** (`.menu-item__title`, inside a `<div class="menu-item__label">`) where the cards
+- **The label as an `h2`** (a plain `h2` or `h3` inside a `<div class="menu-item__label">`; `.menu-item__title` is gone, Maikel, November 1, 2026) where the cards
   are a page's sections or groups, so the page's outline still names them.
 - **A status mark right after that label** (`-TitleBadgeHtml`: `<h2><span>label</span><span class="badge">`),
   where the state belongs to the name rather than in the icon's place.

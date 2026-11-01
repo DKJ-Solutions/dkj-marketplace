@@ -1037,7 +1037,7 @@ function Get-DkjRepoCardStyle {
         # row; the house style cuts it off where it still does not fit and keeps the status mark after it in its
         # place, and .dr-clip does the same for the facts and the checkout (Maikel, October 28, 2026).
         # The h2 cards only: an h3 card (the Consumers overview) keeps the house --text-h3 (Maikel, October 30, 2026).
-        '.dr-repos h2.menu-item__title { font-size: var(--text-h3); }',
+        '.dr-repos .menu-item__label > h2 { font-size: var(--text-h3); }',
         '.dr-clip { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: var(--text-sm); }',
         '.dr-clip code { font-size: var(--text-xs); }',
         # A grid-2 track is 1fr, which never shrinks below what its card holds -- and the session command is one nowrap

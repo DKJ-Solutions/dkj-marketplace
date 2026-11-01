@@ -606,7 +606,7 @@ function Format-HubCardLinkHtml {
     $v = if ($ValueHtml) { '<span class="menu-item__value">' + $ValueHtml + '</span>' } else { '' }
     $title = if ($TitleBadgeHtml) { '<span>' + (& $e $Label) + '</span>' + $TitleBadgeHtml } else { & $e $Label }
     # A heading may not sit in a <span>, so a card with one holds its label in a <div>.
-    $labelHtml = if ($Heading) { '<div class="menu-item__label"><h' + $Heading + ' class="menu-item__title">' + $title + '</h' + $Heading + '>' + $s + $v + '</div>' }
+    $labelHtml = if ($Heading) { '<div class="menu-item__label"><h' + $Heading + '>' + $title + '</h' + $Heading + '>' + $s + $v + '</div>' }
              else { '<span class="menu-item__label">' + $title + $s + $v + '</span>' }
     $mark = if ($BadgeHtml) { $BadgeHtml } else { Get-HubIconSvg -Name $Icon }
     return '<section class="card card--link' + $(if ($Class) { ' ' + (& $e $Class) } else { '' }) + '"' + $(if ($Id) { ' id="' + (& $e $Id) + '"' } else { '' }) +
