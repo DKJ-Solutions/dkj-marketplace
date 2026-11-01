@@ -552,7 +552,7 @@ p { margin: 0; }
 .theme-settings__toggle:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
 .theme-settings__close, .theme-settings__toggle[aria-expanded="true"] .theme-settings__open { display: none; }
 .theme-settings__toggle[aria-expanded="true"] .theme-settings__close { display: block; }
-.theme-settings__open { fill: currentColor; }   /* a filled gear, its centre an evenodd hole (Maikel, November 1, 2026; an outline until then) */
+.theme-settings__open { fill: currentColor; stroke-width: 1; }   /* a solid gear, its centre an evenodd hole; the thin round stroke only softens its corners (Maikel, November 1, 2026; an outline until then) */
 .theme-settings__panel { position: absolute; top: calc(100% + var(--spacing-2)); right: 0; z-index: 20; display: grid; gap: var(--spacing-4);
   width: max-content; max-width: calc(100vw - 2 * var(--spacing-4)); max-height: calc(100dvh - var(--tap) - 2 * var(--spacing-5));
   overflow-y: auto; padding: var(--spacing-4); text-align: left; background: var(--bg-2); border: 1px solid var(--bg-3);
