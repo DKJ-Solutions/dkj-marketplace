@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Maikel asked to move every element set at `--font-weight-black` to `--font-weight-bold`. The token
+itself stays defined, and the specimen still shows it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-style.css`: every `font-weight: var(--font-weight-black)` becomes `--font-weight-bold` (26 rules)
+- [x] The hub's own page CSS: the masthead `h1` (`general-pages-lib.ps1`) and the Stopwatch start line (`stopwatch-lib.ps1`)
+- [x] The brand book README: the `h1` weight and the token row say so
+- [x] `stopwatch.tests.ps1` pins the new weight
 
 ### TEST
 
+- [x] `stopwatch` and `house-palette` suites green
+- [ ] The owner has looked at the result (a visible change)
+
 ### DEPLOY: feat/black-weight-to-bold
 
-**Score:**
+Every rule in the house stylesheet that was set at the black weight (900) is now set at bold (700): the
+`h1`, the primary button, the top bar and site header names, panel labels, totals, the answer and
+step-head values, the comparison table's head and foot, and the rest. The hub's masthead and the
+Stopwatch start line follow. `--font-weight-black` stays defined for an app that wants it, but no house
+rule uses it any more.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Every DKJ-Solutions app that takes the next brand book copy renders its headings, primary buttons and
+emphasised values a step lighter.
+
+**Score:** 3
 
 #### Pull Request
 
