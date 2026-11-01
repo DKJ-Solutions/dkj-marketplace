@@ -40,9 +40,9 @@
 :root {
   color-scheme: light;
 
-  /* the theme's eleven colours (owner, issue #3235, October 21, 2026, replacing the paper and ink of October 20),
+  /* the theme's ten colours (owner, issue #3235, October 21, 2026, replacing the paper and ink of October 20),
      computed by scripts/build/build-house-palette.ps1 from the theme's hue and mode -- never tuned by hand. Blauw
-     here; each [data-theme] below sets its own eleven. In the owner's words, on a light theme (a dark one is the
+     here; each [data-theme] below sets its own ten. In the owner's words, on a light theme (a dark one is the
      mirror, with black and white swapped):
        --primary         ONE colour: the most saturated colour of the theme's HSL hue (saturation 100%) that reads at
                          4.55:1 on all four paper steps, so white, and every paper step, reads on it too. On a dark
@@ -54,14 +54,15 @@
        --paper-1..4      FOUR colours that read on the primary, from white towards a little darker: what sits BEHIND
                          the text (the page, the cards, the lines, the stronger border) and the text ON a primary fill.
        --muted           a grey of the colour that reads extra well (7:1) on the page: what may recede.
-       --muted-inverse   the same grey for the far end: 7:1 on --fg-1, for an inverted surface (.fill-inverse).
+       (no grey for the far end: --muted-inverse was retired on November 1, 2026 (Maikel), because a theme's colours
+       are the 60-30-10 groups alone and no colour reads at 4.5:1 on both paper-4 and fg-1; .fill-inverse takes paper-4)
        --fg-1..4         FOUR text colours that read on the paper, near black (on dark: near white), in very small
                          steps: fg-4 is still very dark, only a little less so than fg-1.
      The steps of each group run away from the page, so a higher number never means "darker" in both modes.
      In OKLCH, in the hue of the theme's saturated colour: on light paper L 0.995 / 0.975 / 0.945 / 0.905 (C 0.006 to
      0.045) and fg L 0.12 / 0.16 / 0.20 / 0.24 (C 0.03); on dark paper L 0.13 / 0.155 / 0.19 / 0.235 (C 0.02 to 0.045)
-     and fg L 0.99 / 0.955 / 0.92 / 0.885. The greys are C 0.03, as close to their ground as 7.05:1 allows, so they
-     recede by colour while they still read. The hue is the HSL hue of the owner's original theme colour (Blauw and
+     and fg L 0.99 / 0.955 / 0.92 / 0.885. The grey is C 0.03, as close to its ground as 7.05:1 allows, so it
+     recedes by colour while it still reads. The hue is the HSL hue of the owner's original theme colour (Blauw and
      Hemelsblauw 240), held in HSL because at a constant OKLCH hue a saturated blue turns violet; Lila takes Paars's 270.
      A role takes the same step in both modes, never light-dark() between two steps (owner's decision, October 15, 2026).
      paper-1 the page, and the text on a --primary or --muted fill; paper-2 the cards (tiles, tooltips); paper-3 every
@@ -76,9 +77,9 @@
      Measured (WCAG relative luminance, October 21, 2026), worst and best over the twelve themes: primary on paper-1
      5.9:1 to 8.5:1 on light and 10.7:1 to 13.6:1 on dark, on paper-4 4.56:1 to 6.5:1 on light and 9.0:1 to 11.2:1 on
      dark; on dark the primary sits close to the text (1.4:1 to 1.8:1 against fg-1), so it stands out by colour; fg-1 on paper-1 19.5:1 to 20.1:1, fg-4 on paper-4
-     11.8:1 to 12.5:1; muted on paper-1 7.05:1 to 7.13:1, on paper-2 6.6:1 to 6.9:1; muted-inverse on fg-1 7.05:1 to
-     7.10:1; a paper-3 line on a paper-2 card 1.05:1 (Pink) to 1.10:1 (Blauw), a paper-4 border on it 1.16:1 to 1.25:1. */
-  --paper-1: #fdfdff; --paper-2: #f3f7ff; --paper-3: #e4edff; --paper-4: #d1e0ff; --primary: #0000ff; --muted: #4f5769; --muted-inverse: #8f99ab; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c;
+     11.8:1 to 12.5:1; muted on paper-1 7.05:1 to 7.13:1, on paper-2 6.6:1 to 6.9:1; paper-4 on fg-1 15.1:1 to
+     16.4:1; a paper-3 line on a paper-2 card 1.05:1 (Pink) to 1.10:1 (Blauw), a paper-4 border on it 1.16:1 to 1.25:1. */
+  --paper-1: #fdfdff; --paper-2: #f3f7ff; --paper-3: #e4edff; --paper-4: #d1e0ff; --primary: #0000ff; --muted: #4f5769; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c;
 
   /* categorical palette (series slots) */
   --cat-1: #2574d1;          /* dark enough for --paper-1 text on it at 4.5:1 in every light theme (4.51:1, worst Roest; #92) */
@@ -160,7 +161,7 @@
     color-scheme: dark;
     --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70;
     --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
-    --paper-1: #01090b; --paper-2: #010f11; --paper-3: #00181b; --paper-4: #002328; --primary: #63cfdc; --muted: #839ea1; --muted-inverse: #435b5e; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
+    --paper-1: #01090b; --paper-2: #010f11; --paper-3: #00181b; --paper-4: #002328; --primary: #63cfdc; --muted: #839ea1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
   }
 }
 
@@ -171,27 +172,27 @@
   color-scheme: dark;
   --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70;
   --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
-  --paper-1: #01090b; --paper-2: #010f11; --paper-3: #00181b; --paper-4: #002328; --primary: #63cfdc; --muted: #839ea1; --muted-inverse: #435b5e; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
+  --paper-1: #01090b; --paper-2: #010f11; --paper-3: #00181b; --paper-4: #002328; --primary: #63cfdc; --muted: #839ea1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
 }
 
 /* ---- Themes: the theme's colour --------------------------------------------- */
 /* Twelve themes the user picks from (house-theme.js draws the picker). A light theme takes the
-   light tokens of :root, a dark theme the dark block above; each sets its own eleven colours, and the
+   light tokens of :root, a dark theme the dark block above; each sets its own ten colours, and the
    two whose primary sits next to the warning colour move the warning away from it. No red and
    no green theme: those hues mean bad and good. Order: magenta, purple, blue, teal, ochre, rust (light);
    pink, lilac, sky, cyan, yellow, orange (dark). */
-:root[data-theme="magenta"], .theme-swatch[data-id="magenta"] { --paper-1: #fffdfe; --paper-2: #fef3f9; --paper-3: #fce6f1; --paper-4: #f7d4e6; --primary: #b90085; --muted: #66525d; --muted-inverse: #a8929d; --fg-1: #0d0208; --fg-2: #160810; --fg-3: #1f1119; --fg-4: #281a22; }
-:root[data-theme="purple"], .theme-swatch[data-id="purple"] { --paper-1: #fdfdff; --paper-2: #f7f5ff; --paper-3: #edeafe; --paper-4: #e1dbfb; --primary: #7f00ff; --muted: #595568; --muted-inverse: #9996aa; --fg-1: #060410; --fg-2: #0e0b19; --fg-3: #171422; --fg-4: #201d2b; }
-:root[data-theme="blue"], .theme-swatch[data-id="blue"] { --paper-1: #fdfdff; --paper-2: #f3f7ff; --paper-3: #e4edff; --paper-4: #d1e0ff; --primary: #0000ff; --muted: #4f5769; --muted-inverse: #8f99ab; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c; }
-:root[data-theme="teal"], .theme-swatch[data-id="teal"] { --paper-1: #fafeff; --paper-2: #edfafb; --paper-3: #d8f3f6; --paper-4: #bee9ef; --primary: #006e79; --muted: #435b5f; --muted-inverse: #839ea1; --fg-1: #000809; --fg-2: #001113; --fg-3: #051a1c; --fg-4: #0f2325; }
-:root[data-theme="ochre"], .theme-swatch[data-id="ochre"] { --paper-1: #fefef9; --paper-2: #f9f7ed; --paper-3: #f1eed9; --paper-4: #e6e1bf; --primary: #716300; --muted: #5c5845; --muted-inverse: #9d9984; --fg-1: #080600; --fg-2: #100d01; --fg-3: #191607; --fg-4: #222011; }
-:root[data-theme="rust"], .theme-swatch[data-id="rust"] { --paper-1: #fffdfc; --paper-2: #fff4ef; --paper-3: #fde8dc; --paper-4: #f9d8c5; --primary: #9c4b00; --muted: #665449; --muted-inverse: #a99488; --fg-1: #0e0300; --fg-2: #170903; --fg-3: #20120a; --fg-4: #291c14; --warning-3: #b88a00; }
-:root[data-theme="pink"], .theme-swatch[data-id="pink"] { --paper-1: #0e0507; --paper-2: #14080c; --paper-3: #1f0d13; --paper-4: #2f141e; --primary: #ff9fd4; --muted: #ab9399; --muted-inverse: #665157; --fg-1: #fffafc; --fg-2: #f6edf0; --fg-3: #ece1e4; --fg-4: #e2d5d9; }
-:root[data-theme="lilac"], .theme-swatch[data-id="lilac"] { --paper-1: #08060e; --paper-2: #0d0a15; --paper-3: #151121; --paper-4: #1f1a31; --primary: #d6adff; --muted: #9a97ab; --muted-inverse: #585467; --fg-1: #fcfbff; --fg-2: #f0eff6; --fg-3: #e5e3ec; --fg-4: #d9d7e2; }
-:root[data-theme="sky"], .theme-swatch[data-id="sky"] { --paper-1: #04070f; --paper-2: #070c16; --paper-3: #0c1322; --paper-4: #131d33; --primary: #b8b8ff; --muted: #909aac; --muted-inverse: #4f5768; --fg-1: #fafcff; --fg-2: #edf0f7; --fg-3: #e0e5ed; --fg-4: #d4d9e3; }
-:root[data-theme="cyan"], .theme-swatch[data-id="cyan"] { --paper-1: #01090b; --paper-2: #010f11; --paper-3: #00181b; --paper-4: #002328; --primary: #63cfdc; --muted: #839ea1; --muted-inverse: #435b5e; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde; }
-:root[data-theme="yellow"], .theme-swatch[data-id="yellow"] { --paper-1: #0a0701; --paper-2: #100c02; --paper-3: #1a1303; --paper-4: #271d02; --primary: #e2ba51; --muted: #a19985; --muted-inverse: #5e5644; --fg-1: #fdfcf7; --fg-2: #f3f0e9; --fg-3: #e8e4dc; --fg-4: #ddd9cf; --warning-3: #f08a24; }
-:root[data-theme="orange"], .theme-swatch[data-id="orange"] { --paper-1: #0e0503; --paper-2: #150905; --paper-3: #200f08; --paper-4: #30160c; --primary: #ffaa74; --muted: #ab948c; --muted-inverse: #67524b; --fg-1: #fffbf9; --fg-2: #f6eeeb; --fg-3: #ece2de; --fg-4: #e2d6d2; }
+:root[data-theme="magenta"], .theme-swatch[data-id="magenta"] { --paper-1: #fffdfe; --paper-2: #fef3f9; --paper-3: #fce6f1; --paper-4: #f7d4e6; --primary: #b90085; --muted: #66525d; --fg-1: #0d0208; --fg-2: #160810; --fg-3: #1f1119; --fg-4: #281a22; }
+:root[data-theme="purple"], .theme-swatch[data-id="purple"] { --paper-1: #fdfdff; --paper-2: #f7f5ff; --paper-3: #edeafe; --paper-4: #e1dbfb; --primary: #7f00ff; --muted: #595568; --fg-1: #060410; --fg-2: #0e0b19; --fg-3: #171422; --fg-4: #201d2b; }
+:root[data-theme="blue"], .theme-swatch[data-id="blue"] { --paper-1: #fdfdff; --paper-2: #f3f7ff; --paper-3: #e4edff; --paper-4: #d1e0ff; --primary: #0000ff; --muted: #4f5769; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c; }
+:root[data-theme="teal"], .theme-swatch[data-id="teal"] { --paper-1: #fafeff; --paper-2: #edfafb; --paper-3: #d8f3f6; --paper-4: #bee9ef; --primary: #006e79; --muted: #435b5f; --fg-1: #000809; --fg-2: #001113; --fg-3: #051a1c; --fg-4: #0f2325; }
+:root[data-theme="ochre"], .theme-swatch[data-id="ochre"] { --paper-1: #fefef9; --paper-2: #f9f7ed; --paper-3: #f1eed9; --paper-4: #e6e1bf; --primary: #716300; --muted: #5c5845; --fg-1: #080600; --fg-2: #100d01; --fg-3: #191607; --fg-4: #222011; }
+:root[data-theme="rust"], .theme-swatch[data-id="rust"] { --paper-1: #fffdfc; --paper-2: #fff4ef; --paper-3: #fde8dc; --paper-4: #f9d8c5; --primary: #9c4b00; --muted: #665449; --fg-1: #0e0300; --fg-2: #170903; --fg-3: #20120a; --fg-4: #291c14; --warning-3: #b88a00; }
+:root[data-theme="pink"], .theme-swatch[data-id="pink"] { --paper-1: #0e0507; --paper-2: #14080c; --paper-3: #1f0d13; --paper-4: #2f141e; --primary: #ff9fd4; --muted: #ab9399; --fg-1: #fffafc; --fg-2: #f6edf0; --fg-3: #ece1e4; --fg-4: #e2d5d9; }
+:root[data-theme="lilac"], .theme-swatch[data-id="lilac"] { --paper-1: #08060e; --paper-2: #0d0a15; --paper-3: #151121; --paper-4: #1f1a31; --primary: #d6adff; --muted: #9a97ab; --fg-1: #fcfbff; --fg-2: #f0eff6; --fg-3: #e5e3ec; --fg-4: #d9d7e2; }
+:root[data-theme="sky"], .theme-swatch[data-id="sky"] { --paper-1: #04070f; --paper-2: #070c16; --paper-3: #0c1322; --paper-4: #131d33; --primary: #b8b8ff; --muted: #909aac; --fg-1: #fafcff; --fg-2: #edf0f7; --fg-3: #e0e5ed; --fg-4: #d4d9e3; }
+:root[data-theme="cyan"], .theme-swatch[data-id="cyan"] { --paper-1: #01090b; --paper-2: #010f11; --paper-3: #00181b; --paper-4: #002328; --primary: #63cfdc; --muted: #839ea1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde; }
+:root[data-theme="yellow"], .theme-swatch[data-id="yellow"] { --paper-1: #0a0701; --paper-2: #100c02; --paper-3: #1a1303; --paper-4: #271d02; --primary: #e2ba51; --muted: #a19985; --fg-1: #fdfcf7; --fg-2: #f3f0e9; --fg-3: #e8e4dc; --fg-4: #ddd9cf; --warning-3: #f08a24; }
+:root[data-theme="orange"], .theme-swatch[data-id="orange"] { --paper-1: #0e0503; --paper-2: #150905; --paper-3: #200f08; --paper-4: #30160c; --primary: #ffaa74; --muted: #ab948c; --fg-1: #fffbf9; --fg-2: #f6eeeb; --fg-3: #ece2de; --fg-4: #e2d6d2; }
 
 /* ---- Base ---------------------------------------------------------------- */
 * { box-sizing: border-box; }
@@ -524,7 +525,7 @@ p, p.meta { color: var(--fg-1); }
 .theme-picker__swatches { display: flex; gap: var(--spacing-2); flex-wrap: wrap; }
 .theme-swatch { width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 1px solid var(--paper-3); cursor: pointer; display: grid; place-items: center; }
 /* Each swatch previews its own theme, whichever theme is current: the theme blocks above also match
-   .theme-swatch[data-id="<id>"], so inside a swatch every one of its eleven colours is that theme's own. The swatch is its
+   .theme-swatch[data-id="<id>"], so inside a swatch every one of its ten colours is that theme's own. The swatch is its
    page (--paper-1) and the dot its colour (--primary). */
 .theme-swatch { background: var(--paper-1); }
 .theme-swatch i { display: block; width: 18px; height: 18px; border-radius: 50%; background: var(--primary); }
@@ -792,7 +793,7 @@ a.menu-item:hover { background: var(--paper-3); }
 /* A block on the theme's colour, or on the far end (#3235). The text switches with the ground. On .fill-primary the
    paper steps are the text, because all four read on the primary (4.55:1 or better): an h2 is --paper-1 there and
    --fg-2 on the page (the owner: an h2 does not always have the same colour), a quieter line --paper-3. On
-   .fill-inverse the ground is --fg-1, the paper is the text and --muted-inverse the quieter grey (7:1 on it).
+   .fill-inverse the ground is --fg-1, the paper is the text and --paper-4 the quieter line (15:1 or better on it).
    The text and the quieter lines weigh (0,2,0): :is() takes the weight of its strongest argument, a class, so they
    beat .sub, .muted, p.meta and the zero-weight headings, and the quieter line wins over the text because it comes
    after it. A link weighs (0,1,0), enough to beat the zero-weight house link and light enough that a .btn or an app's
@@ -803,7 +804,7 @@ a.menu-item:hover { background: var(--paper-3); }
 .fill-primary :is(h1, h2, h3, p, .lead, .msg, .meta, .card__title),
 .fill-inverse :is(h1, h2, h3, p, .lead, .msg, .meta, .card__title) { color: var(--paper-1); }
 .fill-primary :is(.sub, .muted, .note, .footer-note, .card__sub, .eyebrow) { color: var(--paper-3); }
-.fill-inverse :is(.sub, .muted, .note, .footer-note, .card__sub, .eyebrow) { color: var(--muted-inverse); }
+.fill-inverse :is(.sub, .muted, .note, .footer-note, .card__sub, .eyebrow) { color: var(--paper-4); }
 .fill-primary :where(a:any-link), .fill-inverse :where(a:any-link) { color: var(--paper-1); }
 .fill-primary :where(a:any-link:focus-visible), .fill-inverse :where(a:any-link:focus-visible) { outline-color: var(--paper-1); }
 
