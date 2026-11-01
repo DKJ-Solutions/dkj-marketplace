@@ -413,7 +413,7 @@ Assert-True ($grid -match 'href="/repository"' -and $grid -match 'href="/release
 Assert-True ($grid -match '(?s)href="/repository".*?M9 19c-5 1\.5-5-2\.5-7-3.*?<h2 class="menu-item__title">GitHub<' -and $grid -notmatch '>Repository<') 'the /repository card is called GitHub and carries the GitHub logo'
 Assert-True ($html -notmatch '<h2>General pages</h2>' -and $html -notmatch '<h2>Facts</h2>' -and $html -notmatch '<dl class="facts') 'no General pages section and no facts on the home page'
 Assert-True ($html.IndexOf('class="grid-3"') -lt $html.IndexOf('<h2>Set up a product</h2>')) 'the setup cards stand under the grid'
-Assert-True ($html -match '<p class="footer-note">[^<]*<code>hub/pages/serve-general-pages.ps1</code>' -and $html.IndexOf('class="footer-note"') -gt $html.IndexOf('<h2>Set up a product</h2>')) 'the footer names the serving script, last'
+Assert-True ($html -match '<p class="note">[^<]*<code>hub/pages/serve-general-pages.ps1</code>' -and $html.IndexOf('class="note"') -gt $html.IndexOf('<h2>Set up a product</h2>')) 'the footer names the serving script, last'
 Assert-True ($html -notmatch 'brandbook' -and $html -notmatch 'Brand ?book') 'and no Brand book card: the brand book is the source repo''s product, on no consumer hub (#3475)'
 Assert-True (([regex]::Matches($html, '<h2>')).Count -eq ([regex]::Matches($html, '<div class="grid__head"><h2>')).Count) 'and every h2 stands in a grid__head, above its cards'
 Assert-True ($html -match '<title>dkj-thumbnail-generator -- Tools</title>' -and $html -notmatch 'Name\s+=') 'its title says Tools, and its example states no Name (#3064)'

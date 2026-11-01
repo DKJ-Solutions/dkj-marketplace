@@ -69,8 +69,8 @@
      line (borders, row dividers, meter track, gridlines) and the tinted surfaces (an accent table head, a hover, a
      today row, the accent dialog); bg-4 a stronger border (an open card, a selected box). --primary the
      highlight: links (owner's decision, October 15, 2026), the primary button's fill (#109), the picker's dot, h1,
-     the states (hover, sorted) and native controls through accent-color. --primary-muted the eyebrow, sub lines, notes,
-     .muted, the tile label, the fills (switches, info badges, a pressed .seg), most focus
+     the states (hover, sorted) and native controls through accent-color. --primary-muted the eyebrow, sub lines, .note,
+     the tile label, the fills (switches, info badges, a pressed .seg), most focus
      rings and meters (a ring on a sort header, a .seg button, a chart bar or the read-more toggle is --primary). fg-1 every paragraph and an inverted surface (.fill-inverse, the showcase's panel); fg-2 h2 and .meta on a span; fg-3 h3;
      fg-4 no role yet. The breadcrumb bar stands on --primary, with the paper steps as its text. On a fill the text switches: on .fill-primary the paper is the text, so an h2
      is --bg-1 there and --fg-2 on the page (owner, #3235: "h2 heeft niet altijd dezelfde kleur", an h2 does not always have the same colour).
@@ -126,12 +126,11 @@
      2026 the owner cut the scale to three headings: h3 is 14px, the body size, set apart by weight and
      colour alone, and h4 and h5 were retired with their tokens.
      Headings take the heading token of their own level; body text is --text-base. Same in both modes. */
-  /* No heading above 32px (owner, October 22, 2026): a page shows as much content as it can on a 900px-high screen,
-     so h1 is the top step and stands apart by its size and the theme's colour. The hero figure takes it too. */
-  --text-h1: 32px; --text-h2: 18px; --text-h3: 14px;
-  --text-lg: 18px; --text-base: 14px; --text-sm: 12px; --text-xs: 11px;
-  /* the serif h1 and h2 were set in until October 24, 2026 (both are in the sans now); a component whose title keeps that face takes it from here */
-  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Noto Serif", serif;
+  /* No heading above 36px (owner, October 22, 2026, at 32px; 36/22/16 since November 1, 2026, Maikel): a page shows as
+     much content as it can on a 900px-high screen, so h1 is the top step and stands apart by its size and the theme's
+     colour. The hero figure takes it too. --text-lg went the same day: what was set in it takes --text-h3. */
+  --text-h1: 36px; --text-h2: 22px; --text-h3: 16px;
+  --text-base: 14px; --text-sm: 12px; --text-xs: 11px;
 
   /* app-shell sizes, same in both modes (built from the spacing scale; see "App components" at the end):
      the height of a value field and of the button beside it, the minimum touch target, the height of
@@ -209,11 +208,11 @@ body > header, main > header { display: flex; justify-content: space-between; al
 .controls .seg, .controls .btn { height: 30px; box-sizing: border-box; }
 .controls .btn { display: inline-flex; align-items: center; padding: 0 var(--spacing-2-5); }
 /* Page column (#141): put it on <main> and its blocks stack with one --spacing-3 gap between them (owner, October 28, 2026; it was --spacing-5), the hub's
-   rhythm. .card, .tiles, .notice and .footer-note carry a margin-top of their own, which would add to the gap, so a
+   rhythm. .card, .tiles, .notice and .note carry a margin-top of their own, which would add to the gap, so a
    direct child of the column gives it up. .page-cta is the spacing of a primary button under the lead (a <p> that holds
    the button). */
 .page-column { display: grid; gap: var(--spacing-3); align-content: start; padding: var(--spacing-4) var(--spacing-4) var(--spacing-12); }
-.page-column > .card, .page-column > .tiles, .page-column > .notice, .page-column > .footer-note { margin-top: 0; }
+.page-column > .card, .page-column > .tiles, .page-column > .notice, .page-column > .note { margin-top: 0; }
 /* An in-page anchor in the column lands with room above it, clear of the settings button (#156). */
 .page-column [id] { scroll-margin-top: 5rem; }
 .page-cta { margin: var(--spacing-4) 0 0; }
@@ -302,11 +301,11 @@ h3 { font-size: var(--text-h3); margin: 0 0 var(--spacing-2); font-weight: 600; 
    5.5px. A tenth of the h1's size (3.2px) puts the "?" between the two, and scales with the h1. */
 .page-title .page-info-button { transform: translateY(calc(var(--text-h1) * 0.1)); }
 .page-info-button:focus-visible { outline: 2px solid var(--primary); outline-offset: -4px; }
-.muted { color: var(--primary-muted); font-size: var(--text-sm); }
 .meta { font-size: var(--text-sm); color: var(--fg-2); white-space: nowrap; }
+/* The one quiet-text class (Maikel, November 1, 2026): a note under something, a quiet word in a line, the line that
+   closes a page. It absorbed .muted and .footer-note, which looked exactly like it. */
 .note { font-size: var(--text-sm); color: var(--primary-muted); margin-top: var(--spacing-1); }
-.footer-note { color: var(--primary-muted); font-size: var(--text-sm); margin-top: var(--spacing-6); }
-/* Sub lines (.sub, .dialog__sub) , notes (.note, .footer-note) and .muted are --primary-muted, on a <p> too (owner's decision,
+/* Sub lines (.sub, .dialog__sub) and .note are --primary-muted, on a <p> too (owner's decision,
    October 15, 2026). Any other paragraph is --fg-1, the far end (owner's decision, October 14, 2026): .meta on a <p> takes
    it too, while the same class on a span or a div stays --fg-2. A <p> in a status colour, or on an --fg-1 surface,
    sets its own. */
@@ -351,12 +350,12 @@ p, p.meta { color: var(--fg-1); }
 .hero { display: flex; flex-wrap: wrap; gap: var(--spacing-6) var(--spacing-12); align-items: flex-end; }   /* use with .card */
 .hero .value { font-size: var(--text-h1); font-weight: 600; line-height: 1.1; color: var(--fg-1); }
 .tile { background: var(--bg-2); border: 1px solid var(--bg-3); border-radius: var(--radius-3); padding: var(--spacing-3-5) var(--spacing-4); }
-.tile .label { color: var(--primary-muted); font-size: var(--text-sm); }   /* a muted grey, as .muted: the figure leads (owner, October 20, 2026) */
-.tile .v { font-size: var(--text-lg); font-weight: 600; margin-top: var(--spacing-0-5); }
+.tile .label { color: var(--primary-muted); font-size: var(--text-sm); }   /* a quiet grey, as .note: the figure leads (owner, October 20, 2026) */
+.tile .v { font-size: var(--text-h3); font-weight: 600; margin-top: var(--spacing-0-5); }
 .mini-card { border: 1px solid var(--bg-3); border-radius: var(--radius-2-5); padding: var(--spacing-3) var(--spacing-3-5); }
 .mini-card--highlight { border-color: var(--warning-3); }
 .mini-card__label { font-size: var(--text-sm); color: var(--fg-1); }
-.mini-card__value { font-size: var(--text-lg); font-weight: 600; margin: var(--spacing-0-5) 0 var(--spacing-2); font-variant-numeric: tabular-nums; }
+.mini-card__value { font-size: var(--text-h3); font-weight: 600; margin: var(--spacing-0-5) 0 var(--spacing-2); font-variant-numeric: tabular-nums; }
 .notice { background: var(--warning-1); border: 1px solid var(--bg-3); border-radius: var(--radius-3); padding: var(--spacing-3) var(--spacing-4); margin-top: var(--spacing-4); }
 /* Message line: one plain line for a state, a loading line or a warning that data could not be read (#141). A <p>,
    in the paragraph colour at the running size; --warn is the warning in text, --warning-5, semibold. A link in it is
@@ -555,7 +554,7 @@ p, p.meta { color: var(--fg-1); }
   overflow-y: auto; padding: var(--spacing-4); text-align: left; background: var(--bg-2); border: 1px solid var(--bg-3);
   border-radius: var(--radius-3); box-shadow: var(--shadow-pop); }
 .theme-settings__panel[hidden] { display: none; }
-.theme-settings__title { margin: 0; font-size: var(--text-lg); font-weight: 600; color: var(--primary); }   /* the highlight, as an h2 */
+.theme-settings__title { margin: 0; font-size: var(--text-h3); font-weight: 600; color: var(--primary); }   /* the highlight, as an h2 */
 .theme-settings__group { display: grid; gap: var(--spacing-2); padding-top: var(--spacing-4); border-top: 1px solid var(--bg-3); }
 .theme-settings__label { font-size: var(--text-sm); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-1); }
 .theme-settings__foot { display: flex; flex-wrap: wrap; align-items: end; gap: var(--spacing-4); }
@@ -684,7 +683,7 @@ html:has(dialog:modal) { overflow: hidden; }
 .topbar__inner { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: var(--column-narrow); height: var(--topbar-h);
   margin: 0 auto; padding: 0 var(--spacing-1) 0 var(--spacing-4); }
 .topbar__brand { display: flex; align-items: center; gap: var(--spacing-3); min-width: 0; }
-.topbar__name { flex: none; font-size: var(--text-lg); font-weight: 700; }
+.topbar__name { flex: none; font-size: var(--text-h3); font-weight: 700; }
 html:has(.topbar) { scroll-padding-top: var(--topbar-h); }
 
 /* ---- Breadcrumbs ---------------------------------------------------------------- */
@@ -731,7 +730,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .site-header__mark { display: inline-block; flex: none; padding: var(--spacing-1) var(--spacing-2);
   border-radius: var(--spacing-2); background: var(--bg-1); color: var(--primary); font-size: var(--text-h1); font-weight: 800;
   line-height: 1; letter-spacing: 0.02em; }
-.site-header__name { overflow: hidden; font-size: var(--text-lg); font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+.site-header__name { overflow: hidden; font-size: var(--text-h3); font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
 .site-header__tag { font-weight: 400; color: var(--bg-3); }
 .site-header + .breadcrumbs-bar { background: var(--bg-1); border-bottom: 1px solid var(--bg-3); }
 .site-header + .breadcrumbs-bar .breadcrumbs a { color: var(--fg-3); }
@@ -797,7 +796,7 @@ a.menu-item:hover { background: var(--bg-3); }
    --fg-2 on the page (the owner: an h2 does not always have the same colour), a quieter line --bg-3. On
    .fill-inverse the ground is --fg-1, the paper is the text and --bg-4 the quieter line (15:1 or better on it).
    The text and the quieter lines weigh (0,2,0): :is() takes the weight of its strongest argument, a class, so they
-   beat .sub, .muted, p.meta and the zero-weight headings, and the quieter line wins over the text because it comes
+   beat .sub, .note, p.meta and the zero-weight headings, and the quieter line wins over the text because it comes
    after it. A link weighs (0,1,0), enough to beat the zero-weight house link and light enough that a .btn or an app's
    own class on an <a> keeps its colours. A component inside a fill keeps its own colours, so a .btn--primary on
    .fill-primary does not show: use an outline button there. */
@@ -805,8 +804,8 @@ a.menu-item:hover { background: var(--bg-3); }
 .fill-inverse { background: var(--fg-1); color: var(--bg-1); }
 .fill-primary :is(h1, h2, h3, p, .lead, .msg, .meta, .card__title),
 .fill-inverse :is(h1, h2, h3, p, .lead, .msg, .meta, .card__title) { color: var(--bg-1); }
-.fill-primary :is(.sub, .muted, .note, .footer-note, .card__sub, .eyebrow) { color: var(--bg-3); }
-.fill-inverse :is(.sub, .muted, .note, .footer-note, .card__sub, .eyebrow) { color: var(--bg-4); }
+.fill-primary :is(.sub, .note, .card__sub, .eyebrow) { color: var(--bg-3); }
+.fill-inverse :is(.sub, .note, .card__sub, .eyebrow) { color: var(--bg-4); }
 .fill-primary :where(a:any-link), .fill-inverse :where(a:any-link) { color: var(--bg-1); }
 .fill-primary :where(a:any-link:focus-visible), .fill-inverse :where(a:any-link:focus-visible) { outline-color: var(--bg-1); }
 
@@ -850,7 +849,7 @@ a.menu-item:hover { background: var(--bg-3); }
 /* Banner: a bordered line or two of text; --accent is a centred statement on the tint, its <strong> the highlight.
    A boxed warning is the house .notice. */
 .banner { margin: 0; padding: var(--spacing-3) var(--spacing-4); line-height: 1.35; color: var(--fg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-3); }
-.banner--accent { font-size: var(--text-lg); text-align: center; background: var(--bg-3); border-color: var(--bg-4); }
+.banner--accent { font-size: var(--text-h3); text-align: center; background: var(--bg-3); border-color: var(--bg-4); }
 .banner--accent strong { color: var(--primary); white-space: nowrap; }
 .banner__lead { display: inline-flex; align-items: center; gap: var(--spacing-1-5); font-weight: 700; }
 /* Panel: a tinted box (--bg-3) with a --bg-4 border; --accent a --primary-muted border, --positive the green message
@@ -863,7 +862,7 @@ a.menu-item:hover { background: var(--bg-3); }
   padding: var(--spacing-2-5) var(--spacing-2); border-radius: var(--radius-2); font: inherit; font-weight: 600; cursor: pointer; }
 .panel--button:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
 .panel__label { font-size: var(--text-sm); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: var(--fg-1); }
-.panel__value { font-size: var(--text-lg); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.panel__value { font-size: var(--text-h3); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ---- Chip, tag, filter chips -------------------------------------------------- */
 /* Chip: a pill that states an answer: --yes filled, --no on the page, --todo dashed. */
@@ -942,7 +941,7 @@ a.menu-item:hover { background: var(--bg-3); }
 /* Answer box: the result of a calculation, a label and the figure in --primary on the tint. */
 .answer { display: flex; align-items: center; gap: var(--spacing-3); margin-top: var(--spacing-2); padding: var(--spacing-2) var(--spacing-3); border-radius: var(--radius-2-5); background: var(--bg-3); }
 .answer__label { flex: 1; font-weight: 600; }
-.answer__value { font-size: var(--text-lg); font-weight: 700; color: var(--primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.answer__value { font-size: var(--text-h3); font-weight: 700; color: var(--primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
 /* A value the app changed for you flashes once, in --primary-muted and fading out. */
 @keyframes house-flash { from { background: var(--primary-muted); color: var(--bg-1); } }
 .flash { animation: house-flash 1.2s ease-out; }
@@ -965,7 +964,7 @@ a.menu-item:hover { background: var(--bg-3); }
    one for a dialog. The number input shows no spin buttons. */
 .stepper { display: grid; grid-template-columns: var(--tap) 3.5rem var(--tap); gap: var(--spacing-1); }
 .stepper--lg { grid-template-columns: var(--control-lg) 5rem var(--control-lg); gap: var(--spacing-2); }
-.stepper :is(button, input) { height: var(--tap); margin: 0; padding: 0; font: inherit; font-size: var(--text-lg); color: var(--fg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); }
+.stepper :is(button, input) { height: var(--tap); margin: 0; padding: 0; font: inherit; font-size: var(--text-h3); color: var(--fg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); }
 .stepper button { line-height: 1; background: var(--bg-2); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .stepper input { display: block; padding: 0 var(--spacing-1); text-align: center; font-variant-numeric: tabular-nums; background: var(--bg-1); -moz-appearance: textfield; appearance: textfield; }
 .stepper input::-webkit-inner-spin-button, .stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -980,7 +979,7 @@ a.menu-item:hover { background: var(--bg-3); }
    bar at the left), --own the "add what I typed" option and --more a line that is not an option. */
 .combo { display: grid; grid-template-columns: minmax(0, 1fr); }
 .combo__input, .combo__picked { grid-row: 1; grid-column: 1; min-height: var(--tap); font: inherit; color: var(--fg-1); background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); }
-.combo__input { width: 100%; padding: var(--spacing-2-5) var(--spacing-3); font-size: var(--text-lg); }   /* 16px or more: iOS zooms in below it */
+.combo__input { width: 100%; padding: var(--spacing-2-5) var(--spacing-3); font-size: var(--text-h3); }   /* 16px or more: iOS zooms in below it */
 .combo__input:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; border-color: var(--primary-muted); }
 .combo__input--under { opacity: 0; pointer-events: none; }
 .combo__picked { z-index: 1; min-width: 0; padding: var(--spacing-1) var(--spacing-3); text-align: left; font-size: var(--text-base); font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; cursor: pointer; }
@@ -1008,7 +1007,7 @@ a.menu-item:hover { background: var(--bg-3); }
   border: 1px solid transparent; border-radius: var(--radius-2); font-variant-numeric: tabular-nums; }
 .value-box__num { display: flex; align-items: baseline; gap: var(--spacing-1); font-size: var(--text-base); font-weight: 600; line-height: 1.2; color: var(--fg-1); }
 .value-box__num--regular { font-weight: 400; }
-.value-box__num--lg { font-size: var(--text-lg); }
+.value-box__num--lg { font-size: var(--text-h3); }
 .value-box__num--negative { color: var(--negative-5); }
 .value-box__num--positive { color: var(--positive-5); }
 .value-box__was { font-size: var(--text-sm); font-weight: 400; color: var(--fg-1); }
@@ -1103,7 +1102,7 @@ a.menu-item:hover { background: var(--bg-3); }
 .compare thead th { padding: 0 0 var(--spacing-2) var(--spacing-2); font-size: var(--text-sm); font-weight: 700; line-height: 1.2; color: var(--fg-1); text-align: right; vertical-align: bottom; }
 .compare thead td { padding: 0; }
 .compare tbody tr:last-child > * { padding-bottom: var(--spacing-3); border-bottom: 0; }
-.compare tfoot th, .compare tfoot td { padding-top: var(--spacing-3-5); border-bottom: 0; border-top: 2px solid var(--primary-muted); font-weight: 700; font-size: var(--text-lg); text-align: left; }
+.compare tfoot th, .compare tfoot td { padding-top: var(--spacing-3-5); border-bottom: 0; border-top: 2px solid var(--primary-muted); font-weight: 700; font-size: var(--text-h3); text-align: left; }
 .compare tfoot td { text-align: right; }
 /* Calculation: a grid of rows (a subgrid, so the columns line up through every box), each a __what, an __op (+ - x =)
    and a __num; a __box rings a group of rows and nests; --boxed lets boxes span in from an edge column; a __result row
@@ -1125,7 +1124,7 @@ a.menu-item:hover { background: var(--bg-3); }
 .calc--boxed .calc__box > .calc__row, .calc--boxed .calc__box > .calc__box { grid-column: 2 / -2; }   /* boxes only exist in a boxed calculation */
 .calc__box > .calc__row:last-child { border-bottom: 0; }
 .calc__result { border-bottom: 0; }
-.calc__result .calc__num { font-size: var(--text-lg); font-weight: 700; color: var(--primary-muted); }
+.calc__result .calc__num { font-size: var(--text-h3); font-weight: 700; color: var(--primary-muted); }
 .calc-section + .calc-section { margin-top: var(--spacing-6); }
 .calc-section__question { margin: 0 0 var(--spacing-0-5); font-size: var(--text-h3); font-weight: 700; color: var(--fg-1); }
 
@@ -1180,7 +1179,7 @@ a.menu-item:hover { background: var(--bg-3); }
    classes. A 70ch measure at a 1.55 line height, headings one step down the scale (the page has its own h1; there is no
    h4), --primary on <strong> and list markers, code in --font-mono, tables left-aligned and wrapping. --sm is the
    smaller size, --fill lifts the measure. A scrolling pre or table needs tabindex="0" so a keyboard can reach it. */
-.prose { --prose-h1: var(--text-lg); --prose-h2: var(--text-h3); --prose-h3: var(--text-base); max-width: 70ch; font-size: var(--text-base); line-height: 1.55; color: var(--fg-1); }
+.prose { --prose-h1: var(--text-h2); --prose-h2: var(--text-h3); --prose-h3: var(--text-base); max-width: 70ch; font-size: var(--text-base); line-height: 1.55; color: var(--fg-1); }
 .prose--sm { --prose-h1: var(--text-base); --prose-h2: var(--text-sm); --prose-h3: var(--text-sm); font-size: var(--text-sm); }
 .prose--fill { max-width: none; }
 .prose > * { margin: 0; }

@@ -48,7 +48,7 @@ Assert-True ($shell -match '<li><a href="/">Home</a></li>') 'the trail starts at
 Assert-True ($shell -match 'breadcrumbs__sep" aria-hidden="true"><svg\ viewBox="0\ 0\ 24\ 24"><path\ fill="currentColor"\ fill-rule="evenodd"\ d="M9\.793\ 16\.707a1\ 1\ 0\ 0\ 1\ 0-1\.414L13\.086\ 12\ 9\.793\ 8\.707a1\ 1\ 0\ 0\ 1\ 1\.414-1\.414l4\ 4a1\ 1\ 0\ 0\ 1\ 0\ 1\.414l-4\ 4a1\ 1\ 0\ 0\ 1-1\.414\ 0"\ clip-rule="evenodd"/></svg></span><span aria-current="page">A &lt;b&gt;page</span>') 'and ends at the page, unlinked and escaped'
 Assert-True ($shell -match '<h1>A &lt;b&gt;page</h1>') 'the h1 is the page name, escaped'
 Assert-True ($shell -match 'data-theme-key="general-pages"') 'the theme key is the general pages'' own, so a theme picked on any page the hub serves holds on all of them (#3168)'
-Assert-True ($shell -match '<p class="footer-note">note</p>') 'the footer note closes the column'
+Assert-True ($shell -match '<p class="note">note</p>') 'the footer note closes the column'
 
 Write-Host '-- the general page shell (the plugin''s)' -ForegroundColor Cyan
 $gshell = Format-GeneralPageHtml -Title 'An <i>issue' -Lead 'lead' -Body '<p>body</p>' -Eyebrow 'Org/some<repo>' -SiteName 'Org/some<repo>'
@@ -85,7 +85,7 @@ Assert-True ($ph -match '<div class="grid-3">\r?\n<section class="card card--lin
 Assert-True ($ph.IndexOf('aria-label="Toolbox"') -lt $ph.IndexOf('href="/consumers"') -and $ph.IndexOf('href="/consumers"') -lt $ph.IndexOf('href="/marketplace"') -and $ph -notmatch 'href="/dkj-repos"' -and $ph -notmatch 'href="/specialists"') 'then Consumers and Plugins, in that order, and no DKJ repos (#3549) or Specialists card of its own'
 Assert-Equal 3 ([regex]::Matches($ph, '<section class="card card--link"><nav class="menu-list" aria-label="[^"]+"><a class="menu-item" href="[^"]+"><svg class="menu-item__icon"')).Count 'three cards, each a .card--link with its icon first'
 Assert-True ($ph -notmatch 'href="/(repository|test-gate|stopwatch|logbook|artifacts|issues|release-notes|sessionstart|brandbook)"') 'and no general page of its own: those are the plugin hub''s (#3540); its /plugins is its own, what the marketplace ships'
-Assert-True ($ph -match 'class="footer-note">[^\n]*serve-consumer-dashboard\.ps1</code>, from <code>abc1234</code>') 'the footer names the server and the commit it loaded'
+Assert-True ($ph -match 'class="note">[^\n]*serve-consumer-dashboard\.ps1</code>, from <code>abc1234</code>') 'the footer names the server and the commit it loaded'
 Assert-True ((Format-ProductHomeHtml) -notmatch ', from <code>') 'and leaves the commit out when it could not be read'
 $down = Format-ProductHomeHtml
 Assert-True ($down -match '<section class="card"><p class="msg" role="status">The toolbox is not running' -and $down -notmatch 'aria-label="Toolbox"' -and $down -match 'href="/consumers"') 'with no hub known one card says it is not running, and the product''s own pages stay linked'
@@ -153,7 +153,7 @@ Assert-True ($bannerJs -match '<span data-hub-owner hidden[^>]*> &middot; <span 
 Assert-True ($bannerJs -match '<div class="notice" id="hub-banner"[^>]* hidden>' -and $bannerJs -match 'slide\(s\.owed > 0\);' -and $bannerJs -match 'asked = Date\.now\(\); slide\(false\);' -and $bannerJs -match 'box\.animate\(' -and $bannerJs -match 'prefers-reduced-motion: reduce' -and $bannerJs -match 'if \(first \|\| still \|\| !box\.animate\)') 'the banner is hidden until something is due, slides down when it comes due and up once ticked, and opens without the slide on load or under reduced motion (Dave, October 27, 2026)'
 Assert-True ($bannerJs -match '<span class="msg--warn" data-hub-offline hidden> &middot; hub offline, this hour is not counted</span>' -and $bannerJs -match 'OFFLINE = 2' -and $bannerJs -match 'function \(\) \{ down\(\); return null; \}' -and $bannerJs -match 'function \(r\) \{ up\(\); return r\.ok') 'the banner opens on "hub offline" after two polls whose request fails outright, and the first answer clears it -- an hour the server never saw cannot be recovered (#3596)'
 Assert-True ($bannerJs -match 'due\.hidden = !\(s\.owed > 0\);') 'and a cleared "due" box is hidden again, so an offline strip never shows a stale count'
-$ix = @('id="hub-banner"', 'class="site-header"', 'id="settings"', 'class="breadcrumbs-bar"', 'class="grid-3"', 'class="footer-note"') | ForEach-Object { $ph.IndexOf($_) }
+$ix = @('id="hub-banner"', 'class="site-header"', 'id="settings"', 'class="breadcrumbs-bar"', 'class="grid-3"', 'class="note"') | ForEach-Object { $ph.IndexOf($_) }
 Assert-True ((@($ix | Where-Object { $_ -lt 0 }).Count -eq 0) -and ((($ix | Sort-Object) -join ',') -eq ($ix -join ','))) 'the blocks stand in the form''s order'
 $evil = Format-ProductHomeHtml -Pages @(@{ Href = '/x"><script>'; Label = '<b>'; Sub = '' })
 Assert-True ($evil -notmatch 'x"><script>' -and $evil -match 'href="/x&quot;&gt;&lt;script&gt;"' -and $evil -notmatch '<b>') 'every value is escaped'
@@ -179,7 +179,7 @@ Assert-True ($tg -match 'href="/test-gate/suites"><div class="menu-item__label">
 Assert-True ($tg -match 'id="recorded"><nav class="menu-list" aria-label="Where it was measured"><a class="menu-item" href="/test-gate/measured"><div class="menu-item__label"><h2 class="menu-item__title">Where it was measured</h2><span class="menu-item__value"><span class="num">2026-10-07 . 2 CI runs . 1 not recorded</span>') 'the measurement is a card of its own, with its date, its run count and the suites not recorded'
 Assert-True ($tg -notmatch 'Not recorded yet, so the gate charges' -and $tg -notmatch 'class="tiles"') 'the overview has no tiles (the owner, October 27, 2026), and names the unrecorded suites one level down'
 Assert-True ($tg -match '\.tg-cards \{ display: grid; grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);') 'its cards stand at most four to a row (the owner, October 27, 2026)'
-Assert-True ($tg -match 'class="footer-note">Read from the repo') 'the overview closes on where it reads from'
+Assert-True ($tg -match 'class="note">Read from the repo') 'the overview closes on where it reads from'
 $none = Format-TestGatePageHtml -Model (ConvertFrom-SuiteDurations -Durations $null -SuiteFiles @('a.tests.ps1')) -ReadError 'the file is not there'
 Assert-True ($none -match 'No test gate has been measured in this repo yet' -and $none -notmatch 'could not be read' -and $none -match 'No suite durations are recorded in this repo') 'a repo with no suite-durations.json gets the empty state, not a warning (#3470)'
 Assert-True ($tg -match '<li><a href="/hub">Tools</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/performance">Performance</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/clock">Clock</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><span aria-current="page">Test gate</span></li>') 'and its trail reads Tools > Performance > Clock > Test gate (the owner, October 27 and 30, 2026)'
@@ -197,7 +197,7 @@ Assert-True ($all -match '<code>b</code></a></td><td class="num">30.0</td><td cl
 Assert-True ($all -match '<code>gone</code></a> <span class="badge badge--sm badge--neutral">no longer on disk') 'a stale suite is marked'
 Assert-True ($all -match '<code>new</code></a> <span class="badge badge--sm badge--neutral">not recorded yet</span></td><td class="num">--</td>') 'an unrecorded suite closes the list, marked'
 Assert-True ($all -match '<header>' -and $all -match '<dt>Suites</dt><dd class="num">4</dd>' -and $all -match '<dt>Sum, one after another</dt><dd class="num">45.0s</dd>') 'its totals stand at the right of its h1'
-Assert-True ($all -notmatch 'class="footer-note"') 'and it spends no height on the source note'
+Assert-True ($all -notmatch 'class="note"') 'and it spends no height on the source note'
 $rows = 1..25 | ForEach-Object { 'r{0:00}.tests.ps1' -f $_ }
 $bigJson = ('{ "seconds": { ' + (($rows | ForEach-Object { '"' + $_ + '": 1' }) -join ', ') + ' } }') | ConvertFrom-Json
 $big = Format-TestGatePageHtml -Model (ConvertFrom-SuiteDurations -Durations $bigJson -SuiteFiles $rows) -Path 'suites'
@@ -763,7 +763,7 @@ Assert-True ((ConvertFrom-DkjRepoQuery -Json '').Error -and (ConvertFrom-DkjRepo
 Assert-True ((Get-DkjRepoQuery) -notmatch '"') 'the query holds no double quote, which Windows PowerShell 5.1 would split on its way to gh'
 $co = @(@{ Repo = 'DKJ-Solutions/dkj-lifehub'; Path = 'C:\x\dkj-lifehub'; Branch = 'main'; Dirty = 2 }, @{ Repo = 'DKJ-Solutions/unlisted'; Path = 'C:\x\unlisted'; Branch = 'dev'; Dirty = 0 })
 Write-Host '-- /consumers/dkj: a card per DKJ repo, each opening its own page (October 28, 2026)' -ForegroundColor Cyan
-Assert-True ((Get-DkjRepoCardStyle) -match '\.dr-repos h2\.menu-item__title \{ font-size' -and (Get-DkjRepoCardStyle) -notmatch '(h3|\.dr-repos \.menu-item__title)[^{]*\{[^}]*font-size') 'the DKJ cards'' smaller title reaches their h2 alone, so an h3 card keeps the house --text-h3 (Maikel, October 30, 2026)'
+Assert-True ((Get-DkjRepoCardStyle) -match '\.dr-repos h2\.menu-item__title \{ font-size' -and (Get-DkjRepoCardStyle) -notmatch '(?:^|[\r\n}])[^{}]*?(?:\bh3\b|\.dr-repos \.menu-item__title)[^{}]*\{[^}]*font-size') 'the DKJ cards'' smaller title reaches their h2 alone, so an h3 card keeps the house --text-h3 (Maikel, October 30, 2026)'
 $cdk = @(@{ Repo = 'DKJ-Solutions/dkj-lifehub'; Status = 'bad'; Visibility = 'private'; File = 'life-hub.json'; Checkout = @('../dkj-lifehub'); Plugins = @(@{ Id = 'dkj-policy'; Extensions = @() }); Signals = @(@{ Level = 'ERROR'; Plugin = 'dkj-policy'; Text = 'behind <x>' }); Present = $true; Git = $null; Notes = '' })
 $dp = Format-DkjReposPageHtml -Query $q -Checkouts $co -Consumers $cdk -Meta @{ GeneratedAt = '2026-10-20 12:00:00'; Seconds = 1.2 } -CheckMeta @{ GeneratedAt = '2026-10-20 12:00:01'; Seconds = 0.4 }
 Assert-True ($dp -match '<h1>DKJ repos</h1>' -and $dp.Contains('<a href="/consumers">Consumers</a>') -and $dp.Contains('<span aria-current="page">DKJ repos</span>') -and ([regex]::Matches($dp, '<h1')).Count -eq 1) 'the DKJ page is headed DKJ repos, under Home > Consumers'

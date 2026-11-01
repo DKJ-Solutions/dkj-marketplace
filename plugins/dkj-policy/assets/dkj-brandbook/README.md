@@ -113,11 +113,12 @@ primary outweighs its paper has spent the 30% as ground.
 | Direction | `--positive-3` and `--negative-3` (also the gain and the loss in charts, so a direction chart can share a view with any series), `--positive-5`, `--negative-5` (numbers in text) | result and direction, never a category. `--positive-5`/`--negative-5` are the text versions of `--positive-3`/`--negative-3`, a step more contrast so a number reads as text: darker on light, lighter on dark |
 | Status | `--positive-3`, `--warning-3`, `--negative-3`, `--warning-5`, `--warning-1`, `--negative-1`, `--positive-1` | badges, meters, notices. `--warning-1`, `--negative-1` and `--positive-1` are the backgrounds of a warning, negative or positive message. The mark inside a status icon (check, cross, "!") is `--bg-1` |
 | Primary | `--primary` | the theme's colour, **one** step (owner, #3235, October 21, 2026): the most saturated colour of the theme's hue that reads on all four paper steps, so the paper reads on it too. **The highlight**: `h1`, the fill of `.btn--primary` (a filled main action, like the filled icon button; #109) and of `.fill-primary`, a state (hover, pressed, sorted, active, today), `strong`, list markers, links, a value meant to stand out, the accent dialog's title and the settings panel's title, and native controls through `accent-color` |
-| Grey | `--primary-muted` | a grey of the theme's colour, for what may recede: it reads extra well (7:1) on the page. `--primary-muted` is the eyebrow, every sub line (`.sub`, `.dialog__sub`, a component's `-sub`), every note (`.note`, `.footer-note`, `.muted`, on a `<p>` too), the tile label, the pressed `.seg` button, `.badge--info`, `.meter--info`, focus rings, meters and the `--accent` modifiers ([below](#how-far-a-theme-reaches)); on an inverted surface (`.fill-inverse`) those roles take `--bg-4` (`--muted-inverse` until November 1, 2026). Never a status or a number |
+| Grey | `--primary-muted` | a grey of the theme's colour, for what may recede: it reads extra well (7:1) on the page. `--primary-muted` is the eyebrow, every sub line (`.sub`, `.dialog__sub`, a component's `-sub`), every note (`.note`, on a `<p>` too), the tile label, the pressed `.seg` button, `.badge--info`, `.meter--info`, focus rings, meters and the `--accent` modifiers ([below](#how-far-a-theme-reaches)); on an inverted surface (`.fill-inverse`) those roles take `--bg-4` (`--muted-inverse` until November 1, 2026). Never a status or a number |
 | Text | `--fg-1` … `--fg-4` | what sits **on** the paper: four colours near black on light (near white on dark), in **very small** steps, so `fg-4` is still very dark, only a little less so than `fg-1` (owner, #3235). `fg-1` is **all text**, every paragraph and everything else: labels, table heads, legends, quiet icons, the text on a tinted surface, and the ground of an inverted surface; `fg-2` is `h2` and `.meta` on a span; `fg-3` is `h3`; `fg-4` has no role yet (the breadcrumb's current page took it until the bar turned `--primary`, #3235). On a fill the text switches to the paper ([Fills](#fills-the-text-switches-with-the-ground)) |
 | Elevation | `--shadow-pop` | tooltips |
 | Spacing | `--spacing-0-5` … `--spacing-96` | the spacing scale, same in both modes: `--spacing-N` is N × 4px, a half step (`-0-5`, `-1-5`, …) adds 2px. Every gap, margin and padding uses one, and a repo layer spaces its own components from the same scale |
-| Type | `--text-h1` … `--text-h3`, `--text-lg`, `--text-base`, `--text-sm`, `--text-xs`, `--font-serif` | the type scale, same in both modes: 32/18/14 for the headings (`h3` at 14px, the body size, and no `h4` or `h5` since October 25, 2026, the owner: [below](#the-heading-cut-of-october-25-2026)) (`h2` 18px since October 25, 2026, the owner; it went from 32 at weight 600 to 24 at 700 on October 24, and keeps the 700), and `.lead` is `--text-base` since the same day (it was `--text-lg`), 18/14/12/11 for running text. `h1`–`h3` each take the token of their own level, body text is `--text-base`. No heading is larger than 32px (owner's decision, October 22, 2026: as much content as possible on a 900px-high screen, since October 27 one of about 1300 x 900), so `h1` stands apart by its size and colour (by its capitals too until October 24, 2026); it was 48px from October 20, when `--text-h0` was retired. The hero figure is set at `--text-h1`. There is no `h6` either: the 24px `h3` was retired the same day, because it stood too close to `h2`, and every level below moved up one ([below](#the-heading-shift-of-october-20-2026)). The one exception is a section label (`GroupHeading`): it stays a heading for the document outline, but every level renders at `--text-base`, uppercase and muted (owner's decision, October 15, 2026). `--font-serif` was the face of `h1` and `h2` until October 24, 2026, when the owner moved both to the sans; it stays for a title that keeps that face |
+| Type | `--text-h1` … `--text-h3`, `--text-base`, `--text-sm`, `--text-xs` | the type scale, same in both modes: 36/22/16 for the headings since November 1, 2026 (Maikel; [below](#the-type-scale-of-november-1-2026)), 32/18/14 before (`h3` at 14px, the body size, and no `h4` or `h5` since October 25, 2026, the owner: [below](#the-heading-cut-of-october-25-2026)) (`h2` 18px since October 25, 2026, the owner; it went from 32 at weight 600 to 24 at 700 on October 24, and keeps the 700), and `.lead` is `--text-base` since the same day (it was `--text-lg`), 14/12/11 for running text (`--text-lg`, 18px, was retired on November 1, 2026). `h1`–`h3` each take the token of their own level, body text is `--text-base`. No heading is larger than 32px (owner's decision, October 22, 2026: as much content as possible on a 900px-high screen, since October 27 one of about 1300 x 900), so `h1` stands apart by its size and colour (by its capitals too until October 24, 2026); it was 48px from October 20, when `--text-h0` was retired. The hero figure is set at `--text-h1`. There is no `h6` either: the 24px `h3` was retired the same day, because it stood too close to `h2`, and every level below moved up one ([below](#the-heading-shift-of-october-20-2026)). The one exception is a section label (`GroupHeading`): it stays a heading for the document outline, but every level renders at `--text-base`, uppercase and muted (owner's decision, October 15, 2026). `--font-serif` was the face of `h1` and `h2` until October 24, 2026, when the owner moved both to the sans; it stayed for a title that kept that face, none did, and it was retired on November 1, 2026 (Maikel) |
+| Font family | `--font-mono` | a typeface, not a size: the fixed-width face `.prose` sets its `code` and `pre` in, and an app takes for figures or ids that must line up by character. The body face is not a token; it is set on `body` |
 | Radius | `--radius-1` … `--radius-4`, `--radius-pill` | the corner radii, same in both modes and named like the spacing scale: `--radius-N` is N × 4px, a half step adds 2px, so `--radius-1` 4px, `--radius-1-5` 6px, `--radius-2` 8px, `--radius-2-5` 10px, `--radius-3` 12px; `--radius-pill` rounds the ends fully. Named `xs` to `lg` with a `md-plus` until October 31, 2026 ([below](#the-radius-rename-of-october-31-2026)) |
 | App shell | `--control-h`, `--tap`, `--topbar-h`, `--column-narrow` | sizes for a mobile-first app, same in both modes: 38px for a value field and the button beside it, 44px as the smallest touch target, 56px for the top bar, 512px for the narrow app column |
 
@@ -290,7 +291,7 @@ scale did not, so taking it over changed sizes: body 15 → 14, `h2` 29 → 32, 
 small text → 12, a mini-card value 20 → 18, the info button's mark 10 → 11 (Maikel, October 12, 2026).
 Two departures from the library followed on October 20, 2026: its `h0` was retired with `h1` taking the 48px,
 and its 24px `h3` was retired with every level below it moving up one.
-**No heading is larger than 32px** (owner's decision, October 22, 2026): every pixel of a 900px-high screen goes to content,
+**No heading is larger than 36px** (owner's decision, October 22, 2026, at 32px; 36px since November 1, 2026, Maikel): every pixel of a 900px-high screen goes to content,
 so `h1` came down from 48px to `h2`'s 32px, and the hero figure with it. The target screen is now about 1300 x 900 (the owner, October 27, 2026, after 1400 x 600 from October 26; rule 4 under [How to use it](#how-to-use-it)), which makes the reason stronger.
 **The `h1` is in the body sans and its own case, at weight 700** (owner's decision, October 24, 2026). From
 October 21, 2026 ([#3247](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3247)) it was set in
@@ -355,6 +356,24 @@ half step adds 2px, so a name says its size and a new step has an obvious name. 
 tokens, so the gate reports a use left behind; one that slips past renders with square corners rather than an
 error.
 
+### The type scale of November 1, 2026
+
+**The headings grow a step and `--text-lg` is retired** (Maikel, November 1, 2026). `h3` no longer shares the body
+size, and the three headings stand further apart:
+
+| Token | Was | Now |
+|---|---|---|
+| `--text-h1` | 32px | 36px |
+| `--text-h2` | 18px | 22px |
+| `--text-h3` | 14px | 16px |
+| `--text-lg` | 18px | retired: `--text-h3` |
+
+Every house rule that was set in `--text-lg` (a tile or panel value, the site name, the stepper, the combo input,
+which must stay at 16px or more or iOS zooms in) takes `--text-h3`, 2px smaller than before. `.prose` keeps its
+headings one step below the page: its `h1` is `--text-h2` now, where it was `--text-lg`. **An app that takes this
+update moves each use of `--text-lg` in its own layer to `--text-h3`.** It is a retired token, so the gate reports a
+use left behind; one that slips past renders at the inherited size rather than raising an error.
+
 ### The colour renames of November 1, 2026
 
 **The grey, the series slots and the backgrounds are named for what they are** (Maikel, November 1, 2026): the
@@ -369,7 +388,26 @@ backgrounds. Every value is unchanged, so nothing looks different:
 
 **An app that takes this update renames each use in its own layer** by the table. The old names are retired
 tokens, so the gate reports a use left behind; one that slips past loses its colour rather than raising an error.
-The class `.muted` keeps its name.
+
+### One quiet-text class: `.note` (November 1, 2026)
+
+**`.muted` and `.footer-note` are retired into `.note`** (Maikel, November 1, 2026). All three were `--primary-muted`
+at `--text-sm`, so on the page they were the same text under three names; only a top margin told them apart, and in a
+`.page-column`, where every footer note stands, the column already took that margin away. `.note` is now the one
+class for quiet text: a note under something, a quiet word in a line, and the line that closes a page.
+
+| Was | Now |
+|---|---|
+| `.muted` | `.note` |
+| `.footer-note` | `.note` |
+
+**An app that takes this update renames each use in its own markup** by the table. A use that slips past loses its
+grey and reads as plain text rather than raising an error. A footer note outside a `.page-column` loses its
+`--spacing-6` top margin with the class; the layout around it sets that space now.
+
+**`--font-serif` is retired the same day** (Maikel, November 1, 2026). It stayed after October 24 for a title that
+kept the serif face, and none did: no house class and no app on record read it. A use left behind falls back to the
+inherited sans. `--font-mono` stays, because `.prose` sets its code in it and apps read it.
 
 ## Themes: the user picks the colour
 
@@ -567,12 +605,12 @@ out). Three more things follow it by default, in light and in dark (and a measur
 reads on the page and on the primary alike, so it is not one colour: `--fg-2` on the page, `--bg-1` on a
 primary fill.
 
-| Class | Ground | Text | A quieter line (`.sub`, `.muted`, `.note`, `.eyebrow`, `.card__sub`) |
+| Class | Ground | Text | A quieter line (`.sub`, `.note`, `.eyebrow`, `.card__sub`) |
 |---|---|---|---|
 | `.fill-primary` | `--primary` | `--bg-1`: headings, paragraphs, `.lead`, `.msg`, `.meta`, `.card__title` and links | `--bg-3` (all four paper steps read on the primary) |
 | `.fill-inverse` | `--fg-1` | `--bg-1`, the same elements | `--bg-4` (15:1 or better on `--fg-1`) |
 
-The switch is written with `:is()` and stands last in the stylesheet, so it beats `.sub`, `.muted`, `p.meta` and the
+The switch is written with `:is()` and stands last in the stylesheet, so it beats `.sub`, `.note`, `p.meta` and the
 zero-weight headings without an `!important`, and a quieter line on a `<p>` keeps its quieter colour. A link weighs
 only one class, so a `.btn` or an app's own class on an `<a>` keeps its colours; its focus ring turns `--bg-1`. A
 component an app puts inside a fill (a button, a badge) keeps its own colours, so a `.btn--primary` on
@@ -589,12 +627,12 @@ the page header (`body > header`, `main > header`, with `.header--accent`) and i
 sortable headers via `.sort`/`.arrow` on `aria-sort`), `.seg` (a segmented switch), `.legend`/`.legend__item` (with
 `--line`), `.swatch`, `.badge` (with `--good`, `--warn`, `--bad`, `--info`, `--neutral`, `--sm`),
 `.badge-row`, `.badge-list` (a `<ul>` of `.badge-row` items), `.meter` (with `--good`, `--warn`, `--bad`, `--info`), `.mini-cards`/`.mini-card` (with
-`--highlight`), `.item-grid`/`.item`, `.notice`, `.note`, `.meta`, `.muted`, `.sub`, `.eyebrow`, `.lead`, `.msg` (with `--warn`), `.facts` (with `--row`: the facts as one row on the page, label over value, no card), `.fill-primary`, `.fill-inverse`, `.page-column`, `.page-title` (the `h1` with a `.page-info-button` right of it, a drawn "?" on a 24px ring with a 1px solid border, in a 44px button, whose `.tooltip--explain` says what the page is about on hover or focus), `.page-cta`, `.num` (tabular
+`--highlight`), `.item-grid`/`.item`, `.notice`, `.note`, `.meta`, `.sub`, `.eyebrow`, `.lead`, `.msg` (with `--warn`), `.facts` (with `--row`: the facts as one row on the page, label over value, no card), `.fill-primary`, `.fill-inverse`, `.page-column`, `.page-title` (the `h1` with a `.page-info-button` right of it, a drawn "?" on a 24px ring with a 1px solid border, in a 44px button, whose `.tooltip--explain` says what the page is about on hover or focus), `.page-cta`, `.num` (tabular
 numerals), `.delta` (with `--up`/`--down`, aliased `.pos`/`.neg`), `.btn` (with `--primary`, and a `:hover`, `:focus-visible` and `:disabled` state for both), `.info-button`, `.tooltip`
 (with `--explain`, and `--open` for one anchored to a trigger), `.more` (a disclosure), `.moretoggle` (a full-width read-more button), `.chart` (the SVG chart scope),
 `.theme-picker` (with `__row`, `__label`, `__swatches`), `.theme-swatch` (with `--light`, `--dark`) and
 `.theme-settings` (with `--floating`, `__toggle`, `__open`, `__close`, `__panel`, `__title`, `__group`,
-`__label`, `__picker`, `__width`, `__foot`, `__extra`, `__reset`), which `house-theme.js` draws, and `.footer-note`. The app components
+`__label`, `__picker`, `__width`, `__foot`, `__extra`, `__reset`), which `house-theme.js` draws. The app components
 ([below](#app-components-from-mesowise)) reserve these too: `.container--narrow`/`main.narrow`, `.field`
 (with `__error`), `.btn--touch`, `.btn--block`, `.icon-btn` (with `--ghost`), `.action-row`, `.dialog`
 (with `__body`, `__head` (with `--two`, `--back`), `__title`, `__sub`, `__close` (with `--save`,
@@ -812,7 +850,7 @@ the open issues and the pull requests moved to the **Repository** page on `/repo
 | 2 | The breadcrumb bar under it: the one crumb **Tools** ([above](#every-page-the-breadcrumb-bar)) | `.breadcrumbs-bar` / `.breadcrumbs` | fixed |
 | 3 | **The pages**, every one a card of its own, in this order: the repo's products, its own pages with **Repository** among them, and the general pages but Issues, those of a group behind its one card (below) | one `.grid-3`, **no** `.grid__head`, holding one `.card.card--link` per page or group | fixed form; the products and the repo's own pages are the repo's own |
 | 4 | Only where the plugin's hub serves a repo that states no product: the two **Set up a product** cards, under their own `h2` | a `.grid-2` with a `.grid__head`, then one `.card.grid__full` per step | the plugin's own text |
-| 5 | A footer note naming where the data comes from | `.footer-note` | the repo's own source |
+| 5 | A footer note naming where the data comes from | `.note` | the repo's own source |
 
 **The Repository page, on `/repository`, under the same site header, its trail Tools > Repository:**
 
@@ -822,7 +860,7 @@ the open issues and the pull requests moved to the **Repository** page on `/repo
 | 1 | **The facts**, as one row on the page rather than in a card: label over value | `.facts.facts--row` (a `<dl>`) | the facts are the repo's own |
 | 2 | **Its pages**, a card each: **Issues** first, then the repo's pages on GitHub (its pull requests, its CI runs) where it has a GitHub remote | one `.grid-3` of `.card.card--link` | Issues fixed; the GitHub cards the repo's own |
 | 3 | Where a repo keeps in-flight lists: one stat tile per list, the loading or warning line, and **In flight**, one data card per list under one `h2` | `.tiles` / `.tile`; `.msg` with `role="status"` / `.msg.msg--warn` with `role="alert"`; a `.grid-2` with a `.grid__head`, then one `.card.grid__full` per list around `.table-wrap` / `.table` | the repo's own lists. A count not read yet shows `--` |
-| 4 | A footer note naming where the data comes from | `.footer-note` | the repo's own source |
+| 4 | A footer note naming where the data comes from | `.note` | the repo's own source |
 
 A repo with no in-flight lists leaves block 3 out; this source repo's hub and the plugin's are both such
 repos. **An open issue is not listed twice**: where the **Issues** card is on the page, an in-flight issues
@@ -898,7 +936,7 @@ hit exactly this with an intro that was a `<header>`.
 
 **The form is complete from `house-style.css`** ([#141](https://github.com/DKJ-Solutions/dkj-brandbook/issues/141)).
 Every block above has a house class. The blocks stack in the page column, `.page-column` on `<main>`, which
-takes the top margin of its direct `.card`, `.tiles`, `.notice` and `.footer-note`, so they sit one
+takes the top margin of its direct `.card`, `.tiles`, `.notice` and `.note`, so they sit one
 `--spacing-5` apart; `.grid-2` does the same for a direct `.card`, `.tiles` or `.notice`, so its rows sit
 one `--spacing-4` apart ([#207](https://github.com/DKJ-Solutions/dkj-brandbook/issues/207)), and
 `.grid__head` and `.grid__full` span every column of it. An in-page anchor scrolls to `5rem` below the top,

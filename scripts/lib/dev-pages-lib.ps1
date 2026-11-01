@@ -115,7 +115,7 @@ function Format-ProductHomeHtml {
     foreach ($p in @($Pages)) { [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon)) }
     [void]$sb.AppendLine('</div>')
     $at = if ($SourceCommit) { ', from <code>' + (& $e $SourceCommit) + '</code>' } else { '' }
-    [void]$sb.AppendLine('<p class="footer-note">Each page names its own source. Served on 127.0.0.1 only, by <code>scripts/dashboard/serve-consumer-dashboard.ps1</code>' + $at + '.</p>')
+    [void]$sb.AppendLine('<p class="note">Each page names its own source. Served on 127.0.0.1 only, by <code>scripts/dashboard/serve-consumer-dashboard.ps1</code>' + $at + '.</p>')
     [void]$sb.AppendLine('</main>')
     [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", width: "Width", fluid: "Fluid", phone: "Phone", full: "Full" });</script>')
     # The fit alarm, as the plugin's page shell closes every hub page (#3558).
@@ -474,7 +474,7 @@ $script:ProductBrandbookTokenGroups = @(
             @{ Label = 'Theme'; Cards = @('60', '30', '10') }
             @{ Label = 'Graphs & Status'; Cards = @('Graphs', 'Status') }
         ) }
-    @{ Slug = 'text'; Label = 'Text'; Cards = @('Type scale') }
+    @{ Slug = 'text'; Label = 'Text'; Cards = @('Type scale', 'Font family') }   # the sizes, and the one face token apart from them (Maikel, November 1, 2026)
     @{ Slug = 'radius'; Label = 'Radius'; Cards = @('Radius') }
     @{ Slug = 'spacing'; Label = 'Spacing'; Cards = @('Spacing scale') }
     @{ Slug = 'size'; Label = 'Size'; Cards = @('Sizes and elevation') }
@@ -1013,7 +1013,7 @@ function Get-DkjRepoCardStyle {
         # row; the house style cuts it off where it still does not fit and keeps the status mark after it in its
         # place, and .dr-clip does the same for the facts and the checkout (Maikel, October 28, 2026).
         # The h2 cards only: an h3 card (the Consumers overview) keeps the house --text-h3 (Maikel, October 30, 2026).
-        '.dr-repos h2.menu-item__title { font-size: var(--text-lg); }',
+        '.dr-repos h2.menu-item__title { font-size: var(--text-h3); }',
         '.dr-clip { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: var(--text-sm); }',
         '.dr-clip code { font-size: var(--text-xs); }',
         # A grid-2 track is 1fr, which never shrinks below what its card holds -- and the session command is one nowrap

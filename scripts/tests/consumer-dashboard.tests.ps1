@@ -227,7 +227,7 @@ Assert-True ($html -match '(?s)<body>\s*<div class="notice" id="hub-banner".*?</
 Assert-True (([regex]::Matches($html, '<header')).Count -eq 1 -and $html -notmatch 'cd-band|cd-accent') 'and its intro is no <header> (the one is the site header), and no decoration the form does not carry'
 Assert-True ($html -notmatch 'About this repo</h2>' -and $html -match 'href="#overview">Back to overview') 'the facts card is the hub''s, and the card the overview links down to carries the way back'
 Assert-True ($html.Contains((Format-RepoHubBanner)) -and ([regex]::Matches($html, 'id="hub-banner"')).Count -eq 1) 'the page carries the hub''s general banner once, as every hub page does (#3356)'
-$ix = @('id="hub-banner"', 'class="site-header"', 'class="breadcrumbs-bar"', '<h1>', 'Connected repos</h2>', 'Issues</h2>', 'class="footer-note"') | ForEach-Object { $html.IndexOf($_) }
+$ix = @('id="hub-banner"', 'class="site-header"', 'class="breadcrumbs-bar"', '<h1>', 'Connected repos</h2>', 'Issues</h2>', 'class="note"') | ForEach-Object { $html.IndexOf($_) }
 Assert-True ((@($ix | Where-Object { $_ -lt 0 }).Count -eq 0) -and ((($ix | Sort-Object) -join ',') -eq ($ix -join ','))) 'and its blocks stand in the form''s order'
 Assert-True ($html -match '1\.3s|1\.2s') 'the run time is printed with an invariant decimal point'
 Assert-Equal 'bwj' (Get-ConsumerOwnerGroup 'BWJ-Development/shop') 'a BWJ-Development repo is in the BWJ group'
@@ -308,7 +308,7 @@ try {
     Assert-True ($null -eq (Get-CheckoutLenses -Path (Join-Path $lensTree 'missing')) -and $null -eq (Get-CheckoutLenses -Path '')) 'no folder, or no checkout, reads as $null'
 } finally { Remove-Item -LiteralPath $lensTree -Recurse -Force -ErrorAction SilentlyContinue }
 $framed = (Format-ConsumerPageStart -PageName 'a <b>' -Trail @(@{ Href = '/consumers'; Label = 'Consumers' }, @{ Href = '/consumers/dkj'; Label = 'DKJ repos' }) -Style '.x { }') + (Format-ConsumerPageEnd -FooterHtml 'Foot <code>x</code>')
-Assert-True ($framed.Contains('<title>dkj-marketplace -- a &lt;b&gt;</title>') -and $framed.Contains('<h1>a &lt;b&gt;</h1>') -and $framed.Contains('<a href="/consumers/dkj">DKJ repos</a>') -and $framed.Contains('.x { }') -and $framed.Contains('<p class="footer-note">Foot <code>x</code></p>') -and $framed.TrimEnd().EndsWith('</html>')) 'the page frame escapes its name, walks its trail, carries the caller''s style and footer, and closes the page'
+Assert-True ($framed.Contains('<title>dkj-marketplace -- a &lt;b&gt;</title>') -and $framed.Contains('<h1>a &lt;b&gt;</h1>') -and $framed.Contains('<a href="/consumers/dkj">DKJ repos</a>') -and $framed.Contains('.x { }') -and $framed.Contains('<p class="note">Foot <code>x</code></p>') -and $framed.TrimEnd().EndsWith('</html>')) 'the page frame escapes its name, walks its trail, carries the caller''s style and footer, and closes the page'
 Assert-True ($overview -notmatch 'id="lenses"' -and $dkj -notmatch 'id="lenses"') 'neither the overview nor a group''s page holds a Lenses card: that is a repo''s own page'
 
 Write-Host '-- group 1e: the skill pins a checksum for each canonical file' -ForegroundColor Cyan

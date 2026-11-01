@@ -465,7 +465,7 @@ function Format-ConsumerPageEnd {
     <# A consumer page's closing lines, after Format-ConsumerPageStart: -FooterHtml (the caller's own markup) as its footer note. #>
     param([AllowEmptyString()][string]$FooterHtml = '')
     $sb = New-Object System.Text.StringBuilder
-    [void]$sb.AppendLine('<p class="footer-note">' + $FooterHtml + '</p>')
+    [void]$sb.AppendLine('<p class="note">' + $FooterHtml + '</p>')
     [void]$sb.AppendLine('</main>')
     [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", width: "Width", fluid: "Fluid", phone: "Phone", full: "Full" });</script>')
     # The fit alarm, as the plugin's page shell closes every hub page (#3558).

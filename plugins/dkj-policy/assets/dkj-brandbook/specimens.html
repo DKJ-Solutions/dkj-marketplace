@@ -110,15 +110,19 @@
   <section class="card">
     <div class="card__head"><h3 class="card__title">Type scale</h3></div>
     <div class="spec-stack">
-      <div class="spec-item"><p class="note">--text-h1 (32px)</p><span style="font-size: var(--text-h1); font-weight: 700; color: var(--primary)">Aa Heading one</span></div>
-      <div class="spec-item"><p class="note">--text-h2 (18px)</p><span style="font-size: var(--text-h2); font-weight: 700">Heading two</span></div>
-      <div class="spec-item"><p class="note">--text-h3 (14px)</p><span style="font-size: var(--text-h3); font-weight: 600">Heading three</span></div>
-      <div class="spec-item"><p class="note">--text-lg (18px)</p><span style="font-size: var(--text-lg)">Large running text</span></div>
-      <div class="spec-item"><p class="note">--text-base (14px)</p><span style="font-size: var(--text-base)">Body text</span></div>
-      <div class="spec-item"><p class="note">--text-sm (12px)</p><span style="font-size: var(--text-sm)">Small text</span></div>
-      <div class="spec-item"><p class="note">--text-xs (11px)</p><span style="font-size: var(--text-xs)">Extra small text</span></div>
-      <div class="spec-item"><p class="note">--font-serif</p><span style="font-family: var(--font-serif); font-size: var(--text-lg)">Serif face for a title that keeps it</span></div>
-      <div class="spec-item"><p class="note">--font-mono</p><span style="font-family: var(--font-mono)">code 0123456789</span></div>
+      <span style="font-size: var(--text-h1)">--text-h1 (36px)</span>
+      <span style="font-size: var(--text-h2)">--text-h2 (22px)</span>
+      <span style="font-size: var(--text-h3)">--text-h3 (16px)</span>
+      <span style="font-size: var(--text-base)">--text-base (14px)</span>
+      <span style="font-size: var(--text-sm)">--text-sm (12px)</span>
+      <span style="font-size: var(--text-xs)">--text-xs (11px)</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h3 class="card__title">Font family</h3></div>
+    <div class="spec-stack">
+      <span style="font-family: var(--font-mono)">--font-mono</span>
     </div>
   </section>
 
@@ -255,9 +259,7 @@
       <div class="spec-label"><span class="note">.lead</span><p class="lead">A lead paragraph, held to a readable measure.</p></div>
       <div class="spec-label"><span class="note">p, a, strong</span><p>A plain paragraph with a <a href="#hs-text">link</a> and <strong>strong text</strong>.</p></div>
       <div class="spec-label"><span class="note">.meta</span><p><span class="meta">Meta on a span</span></p></div>
-      <div class="spec-label"><span class="note">.muted</span><p><span class="muted">Muted text</span></p></div>
-      <div class="spec-label"><span class="note">.note</span><p class="note">A note.</p></div>
-      <div class="spec-label"><span class="note">.footer-note</span><p class="footer-note">A footer note.</p></div>
+      <div class="spec-label"><span class="note">.note</span><p class="note">A note: quiet text, under something, in a line or closing a page.</p></div>
     </div>
   </section>
 
@@ -350,7 +352,7 @@
     <div class="card__head"><h3 class="card__title">Tiles and hero</h3></div>
     <div class="spec-stack">
       <div class="tiles"><div class="tile"><div class="label">Label</div><div class="v num">1,234</div></div><div class="tile"><div class="label">Another</div><div class="v num">56</div></div></div>
-      <div class="hero"><div><div class="label muted">Hero figure</div><div class="value num">12,34</div></div></div>
+      <div class="hero"><div><div class="label note">Hero figure</div><div class="value num">12,34</div></div></div>
       <div class="mini-cards"><div class="mini-card"><div class="mini-card__label">Plain</div><div class="mini-card__value">12</div><div class="meter meter--good"><span style="width: 60%"></span></div></div><div class="mini-card mini-card--highlight"><div class="mini-card__label">Highlight</div><div class="mini-card__value">34</div><div class="meter meter--warn"><span style="width: 40%"></span></div></div></div>
     </div>
   </section>
@@ -667,7 +669,7 @@
 
   <section class="card">
     <div class="card__head"><h3 class="card__title">Settings button</h3></div>
-    <p class="muted">Not repeated here: a second copy would fight the header's for the same panel.</p>
+    <p class="note">Not repeated here: a second copy would fight the header's for the same panel.</p>
   </section>
 </div>
 
