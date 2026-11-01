@@ -349,7 +349,7 @@ half step adds 2px, so a name says its size and a new step has an obvious name. 
 | `--radius-md-plus`, 10px | `--radius-2-5`, 10px |
 | `--radius-lg`, 12px | `--radius-3`, 12px |
 | `--radius-pill` | `--radius-pill`, unchanged |
-| (new, November 1, 2026) | `--radius-4`, 16px: the card groups (`.grid-2`, `.grid-3`, `.card-grid`), the dialog and the drawer, which had it hard-coded (Maikel) |
+| (new, November 1, 2026) | `--radius-4`, 16px: the dialog and the drawer, which had it hard-coded (Maikel). The card groups (`.grid-2`, `.grid-3`, `.card-grid`) had 16px too and take `--radius-3` since that day, because it looks better |
 
 **An app that takes this update renames each use in its own layer** by the table. The old names are retired
 tokens, so the gate reports a use left behind; one that slips past renders with square corners rather than an
