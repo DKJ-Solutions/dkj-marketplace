@@ -102,14 +102,14 @@ function Format-PluginRepoHubHtml {
         if ($product) {
             [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $product -Label 'Product' -Sub ($product + ' -- the server this repo states in Get-DevPreview') -Icon 'product'))
         } else {
-            [void]$sb.AppendLine('<section class="card"><p class="msg" role="status">This repo''s own server is not running. The session-start line says why, and it is started again at the next session start.</p></section>')
+            [void]$sb.AppendLine('<section class="card"><p role="status">This repo''s own server is not running. The session-start line says why, and it is started again at the next session start.</p></section>')
         }
     }
     [void]$sb.AppendLine((Format-HubCardLinkHtml -Href '/repository' -Label 'GitHub' -Sub 'This repo''s facts and its open issues' -Icon 'github'))
     if ($general) {
         foreach ($card in @(Format-HubPageCardsHtml -Pages @(Get-GeneralPages | Where-Object { $_.Href -ne '/issues' }))) { [void]$sb.AppendLine($card) }
     } else {
-        [void]$sb.AppendLine('<section class="card grid__full"><p class="msg" role="status">The general pages server is not running. It starts at the next session start, and its pages are linked here from then on.</p></section>')
+        [void]$sb.AppendLine('<section class="card grid__full"><p role="status">The general pages server is not running. It starts at the next session start, and its pages are linked here from then on.</p></section>')
     }
     [void]$sb.AppendLine('</div>')
 
@@ -189,7 +189,7 @@ function Format-PluginRepoRepositoryHtml {
     if ($PagesUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
         [void]$sb.AppendLine((Format-HubCardLinkHtml -Href '/issues' -Label 'Issues' -Sub 'The open issues, grouped by what they wait on' -Icon 'issues'))
     } else {
-        [void]$sb.AppendLine('<section class="card"><p class="msg" role="status">Issues is a general page, and the general pages server is not running. It starts at the next session start.</p></section>')
+        [void]$sb.AppendLine('<section class="card"><p role="status">Issues is a general page, and the general pages server is not running. It starts at the next session start.</p></section>')
     }
     if ($gh) {
         [void]$sb.AppendLine((Format-HubCardLinkHtml -Href "$gh/pulls" -Label 'Pull requests' -Sub 'On GitHub' -Icon 'pull-request'))

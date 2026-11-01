@@ -250,8 +250,8 @@ Assert-True ($overview.IndexOf('href="/consumers/dkj#repo-dkj-solutions-w"') -ge
 Assert-True ($overview.Contains('<span>w</span><span class="badge badge--sm badge--bad"') -and $overview -match 'href="/consumers/other#repo-someone-x"') 'the card names the repo without its owner, its status mark after the name'
 Assert-True ($overview -match '<h2>BWJ</h2></div>' -and $overview -match 'No repo owned by BWJ-Development is registered') 'an empty group keeps its section and says so'
 Assert-True ($overview -notmatch 'Connected repos</h2>' -and $overview -notmatch '<section class="mini-card' -and $overview -notmatch 'id="issues"') 'the overview holds no table and no details: those are the group pages'
-$withDkj = Format-ConsumerDashboardHtml -Consumers $three -Meta @{ GeneratedAt = 'now' } -DkjCardsHtml ((Format-HubCardLinkHtml -Href '/a' -Label 'a' -Heading 3) + (Format-HubCardLinkHtml -Href '/b' -Label 'b' -Heading 3)) -Style '.dr-x { }' -NoticeHtml '<p class="msg">n</p>'
-Assert-True ($withDkj -match '<div class="card-grid dr-repos" id="group-dkj">' -and $withDkj.Contains('<h2>DKJ</h2></div>') -and ([regex]::Matches($withDkj, 'menu-item__label"><h3>')).Count -eq 3 -and $withDkj -notmatch 'consumers/dkj#repo' -and $withDkj.Contains('.dr-x { }') -and $withDkj.Contains('<p class="msg">n</p>')) 'handed the DKJ page''s own cards, the DKJ section holds those in their grid, with their style and notice'
+$withDkj = Format-ConsumerDashboardHtml -Consumers $three -Meta @{ GeneratedAt = 'now' } -DkjCardsHtml ((Format-HubCardLinkHtml -Href '/a' -Label 'a' -Heading 3) + (Format-HubCardLinkHtml -Href '/b' -Label 'b' -Heading 3)) -Style '.dr-x { }' -NoticeHtml '<p>n</p>'
+Assert-True ($withDkj -match '<div class="card-grid dr-repos" id="group-dkj">' -and $withDkj.Contains('<h2>DKJ</h2></div>') -and ([regex]::Matches($withDkj, 'menu-item__label"><h3>')).Count -eq 3 -and $withDkj -notmatch 'consumers/dkj#repo' -and $withDkj.Contains('.dr-x { }') -and $withDkj.Contains('<p>n</p>')) 'handed the DKJ page''s own cards, the DKJ section holds those in their grid, with their style and notice'
 Assert-True ($overview -notmatch 'class="tiles"' -and $overview -notmatch 'class="lead"') 'the overview has no tiles and no lead: its h1, then its groups'' sections (owner, October 26, 2026)'
 Assert-True ($html -notmatch 'class="tiles"' -and $html -notmatch 'class="lead"') 'and neither has a group''s page'
 $dkj = Format-ConsumerDashboardHtml -Consumers $three -Meta @{ GeneratedAt = 'now' } -Group 'dkj'
@@ -272,7 +272,7 @@ Assert-True ($html -match '\.cd-repo__name \{ margin: 0; font-weight: var\(--fon
 Assert-True ($html -notmatch '<th>Errors</th>' -and $html -notmatch '<th>Notes</th>' -and ([regex]::Match($html, '<colgroup>.*?</colgroup>').Value -split '<col ').Count -eq 6) 'the overview has no Errors or Notes column: five columns, five widths'
 Assert-True ($html -notmatch '>Main</th>' -and $html -notmatch '>Checkout</th>' -and $html -notmatch 'behind') 'the overview has no Main or Checkout column, and nothing measures a trunk against origin'
 $failed = Format-ConsumerDashboardHtml -Consumers @() -Meta @{ GeneratedAt = 'now'; SourceCommit = ''; Seconds = $null; CheckFailed = 'boom <b>' }
-Assert-True ($failed -match 'class="msg msg--warn" role="alert"' -and $failed -match 'boom &lt;b&gt;') 'a check that could not run is the form''s warning line, escaped'
+Assert-True ($failed -match 'class="msg--warn" role="alert"' -and $failed -match 'boom &lt;b&gt;') 'a check that could not run is the form''s warning line, escaped'
 
 $noted = Format-ConsumerRepoMiniCardHtml -Consumer @{ Repo = 'Org/n'; Status = 'good'; Visibility = 'public'; File = 'n.json'; Checkout = @('../n'); Plugins = @(); Signals = @(); Present = $true; Git = $null; Notes = 'REGISTERED on 2026-08-20, a long log' }
 Assert-True ($noted -notmatch 'Register notes' -and $noted -notmatch 'a long log' -and $noted -notmatch 'cd-notes') 'the register''s notes are not shown: they are its keeper''s log, not something to read on a page (October 28, 2026)'
@@ -480,7 +480,7 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
             $overviewPage = if ($up) { Get-Raw 'GET' '/consumers' "localhost:$port3" '' $port3 } else { '' }
             Assert-True ($page -match 'HTTP/1.1 200') 'the page is served with a checkout that has no upstream'
             Assert-True ($page -match 'Last commit on (master|main) [^:]*: local only') 'and that checkout shows its trunk''s last commit'
-            Assert-True ($page -match 'class="msg msg--warn"') 'a check that could not run is reported, not fatal'
+            Assert-True ($page -match 'class="msg--warn"') 'a check that could not run is reported, not fatal'
             $at = $page.IndexOf('id="repo-org-far"')
             $far = if ($at -ge 0) { $page.Substring($at, $page.IndexOf('</section>', $at) - $at) } else { '' }
             Assert-True ($far -and $far -notmatch 'class="meta"') 'a checkout outside the scope root is not read'

@@ -608,7 +608,7 @@ primary fill.
 
 | Class | Ground | Text | A quieter line (`.note`, `.card__sub`) |
 |---|---|---|---|
-| `.fill-primary` | `--primary` | `--bg-1`: headings, paragraphs, `.msg`, `.meta` and links | `--bg-3` (all four paper steps read on the primary) |
+| `.fill-primary` | `--primary` | `--bg-1`: headings, paragraphs, `.meta` and links | `--bg-3` (all four paper steps read on the primary) |
 | `.fill-inverse` | `--fg-1` | `--bg-1`, the same elements | `--bg-4` (15:1 or better on `--fg-1`) |
 
 The switch is written with `:is()` and stands last in the stylesheet, so it beats `.note`, `p.meta` and the
@@ -628,7 +628,7 @@ the page header (`body > header`, `main > header`, with `.header--accent`) and i
 sortable headers via `.sort`/`.arrow` on `aria-sort`), `.seg` (a segmented switch), `.legend`/`.legend__item` (with
 `--line`), `.swatch`, `.badge` (with `--good`, `--warn`, `--bad`, `--info`, `--neutral`, `--sm`),
 `.badge-row`, `.badge-list` (a `<ul>` of `.badge-row` items), `.meter` (with `--good`, `--warn`, `--bad`, `--info`), `.mini-cards`/`.mini-card` (with
-`--highlight`), `.item-grid`/`.item`, `.notice`, `.note` (also the line under a heading: it absorbed `.sub`, and `.eyebrow` is gone, Maikel, November 1, 2026), `.meta` (`.lead` is gone too: it read as a plain `<p>`, Maikel, November 1, 2026), `.msg` (with `--warn`), `.facts` (with `--row`: the facts as one row on the page, label over value, no card), `.fill-primary`, `.fill-inverse`, `.page-column`, `.page-title` (the `h1` with a `.page-info-button` right of it, a drawn "?" on a 24px ring with a 1px solid border, in a 44px button, whose `.tooltip--explain` says what the page is about on hover or focus), `.page-cta`, `.num` (it absorbed `.amount`: an `svg` in it is a small icon beside the figure, Maikel, November 1, 2026) (tabular
+`--highlight`), `.item-grid`/`.item`, `.notice`, `.note` (also the line under a heading: it absorbed `.sub`, and `.eyebrow` is gone, Maikel, November 1, 2026), `.meta` (`.lead` is gone too: it read as a plain `<p>`, Maikel, November 1, 2026), `.msg--warn` and `.msg--error` on a plain `<p>` (`.msg` itself is gone, as every `<p>` has no margin, Maikel, November 1, 2026), `.facts` (with `--row`: the facts as one row on the page, label over value, no card), `.fill-primary`, `.fill-inverse`, `.page-column`, `.page-title` (the `h1` with a `.page-info-button` right of it, a drawn "?" on a 24px ring with a 1px solid border, in a 44px button, whose `.tooltip--explain` says what the page is about on hover or focus), `.page-cta`, `.num` (it absorbed `.amount`: an `svg` in it is a small icon beside the figure, Maikel, November 1, 2026) (tabular
 numerals), `.delta` (with `--up`/`--down`; its aliases `.pos`/`.neg` are gone, Maikel, November 1, 2026), `.btn` (with `--primary`, and a `:hover`, `:focus-visible` and `:disabled` state for both), `.info-button`, `.tooltip`
 (with `--explain`, and `--open` for one anchored to a trigger), `.more` (a disclosure), `.moretoggle` (a full-width read-more button), `.chart` (the SVG chart scope),
 `.theme-picker` (with `__row`, `__label`, `__swatches`), `.theme-swatch` (with `--light`, `--dark`) and
@@ -860,7 +860,7 @@ the open issues and the pull requests moved to the **Repository** page on `/repo
 | 0 | The intro: `h1` **Repository** alone, under the breadcrumb bar, as on every page below the hub; what the page is for goes in its `<meta name="description">`, not under the `h1` (#3585) | `h1` | fixed title; the description is the repo's own |
 | 1 | **The facts**, as one row on the page rather than in a card: label over value | `.facts.facts--row` (a `<dl>`) | the facts are the repo's own |
 | 2 | **Its pages**, a card each: **Issues** first, then the repo's pages on GitHub (its pull requests, its CI runs) where it has a GitHub remote | one `.grid-3` of `.card.card--link` | Issues fixed; the GitHub cards the repo's own |
-| 3 | Where a repo keeps in-flight lists: one stat tile per list, the loading or warning line, and **In flight**, one data card per list under one `h2` | `.tiles` / `.tile`; `.msg` with `role="status"` / `.msg.msg--warn` with `role="alert"`; a `.grid-2` with a `.grid__head`, then one `.card.grid__full` per list around `.table-wrap` / `.table` | the repo's own lists. A count not read yet shows `--` |
+| 3 | Where a repo keeps in-flight lists: one stat tile per list, the loading or warning line, and **In flight**, one data card per list under one `h2` | `.tiles` / `.tile`; a `<p>` with `role="status"` / `.msg--warn` with `role="alert"`; a `.grid-2` with a `.grid__head`, then one `.card.grid__full` per list around `.table-wrap` / `.table` | the repo's own lists. A count not read yet shows `--` |
 | 4 | A footer note naming where the data comes from | `.note` | the repo's own source |
 
 A repo with no in-flight lists leaves block 3 out; this source repo's hub and the plugin's are both such
@@ -876,7 +876,7 @@ stretches over the whole card, so a click anywhere on the card follows it, and t
 not respond, so the two cannot be mistaken for each other. Its label is the page's own name as its breadcrumb
 reads it, short, in the app's language; its description is one line or nothing. A card links a route on the
 same dev server; only the Repository page's GitHub cards leave it. A page that cannot be linked (a product
-whose server is not running, a general pages server that is not up) is a plain `.card` holding one `.msg`
+whose server is not running, a general pages server that is not up) is a plain `.card` holding one `<p>`
 saying so, in the place its card would take. `Format-HubCardLinkHtml` in `dkj-policy`'s
 `hub/lib/general-pages-lib.ps1` writes the card; both served hubs use it, and **every** card link in the hub's
 page code goes through it, since a suite in `dev-pages.tests.ps1` fails on one written by hand

@@ -402,7 +402,7 @@ try {
                     if ($null -eq $dkjCache -or ((Get-Date) - $dkjCache.At).TotalSeconds -ge $CacheSeconds) { $dkjCache = Get-DkjReposModel }
                     $dkjConsumers = @($cache.Consumers | Where-Object { (Get-ConsumerOwnerGroup ([string]$_.Repo)) -eq 'dkj' })
                     $cards = Format-DkjRepoCardsHtml -Query $dkjCache.Query -Checkouts $dkjCache.Checkouts -Consumers $dkjConsumers -Heading 3
-                    $notice = if ($dkjCache.Query.Error) { '<p class="msg msg--warn" role="alert">GitHub could not be read: ' + (ConvertTo-DashboardText $dkjCache.Query.Error) + '. The DKJ checkouts on this machine are shown without their issues.</p>' } else { '' }
+                    $notice = if ($dkjCache.Query.Error) { '<p class="msg--warn" role="alert">GitHub could not be read: ' + (ConvertTo-DashboardText $dkjCache.Query.Error) + '. The DKJ checkouts on this machine are shown without their issues.</p>' } else { '' }
                     $html = Format-ConsumerDashboardHtml -Consumers $cache.Consumers -Meta $cache.Meta -DkjCardsHtml $cards -Style (Get-DkjRepoCardStyle) -NoticeHtml $notice
                     if ($dkjCache.Query.Error) { $dkjCache = $null }
                 }

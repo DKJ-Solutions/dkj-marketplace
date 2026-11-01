@@ -316,6 +316,8 @@ h3 { font-size: var(--text-h3); margin: 0 0 var(--spacing-2); font-weight: var(-
    it too, while the same class on a span or a div stays --fg-2. A <p> in a status colour, or on an --fg-1 surface,
    sets its own. */
 p, p.meta { color: var(--fg-1); }
+/* A <p> has no margin of its own (Maikel, November 1, 2026): its place sets the space around it, as .msg did. */
+p { margin: 0; }
 /* .lead is gone (Maikel, November 1, 2026): since it went to --text-base it read as a plain <p>, and no page under
    an h1 carries an intro any more (#3585). */
 .num { font-variant-numeric: tabular-nums; }                        /* aligned digits */
@@ -360,10 +362,10 @@ p, p.meta { color: var(--fg-1); }
 .mini-card__label { font-size: var(--text-sm); color: var(--fg-1); }
 .mini-card__value { font-size: var(--text-h3); font-weight: var(--font-weight-bold); margin: var(--spacing-0-5) 0 var(--spacing-2); font-variant-numeric: tabular-nums; }
 .notice { background: var(--warning-1); border: 1px solid var(--bg-3); border-radius: var(--radius-3); padding: var(--spacing-3) var(--spacing-4); margin-top: var(--spacing-4); }
-/* Message line: one plain line for a state, a loading line or a warning that data could not be read (#141). A <p>,
-   in the paragraph colour at the running size; --warn is the warning in text, --warning-5, bold. A link in it is
-   an ordinary house link. For a boxed message use .notice. */
-.msg { margin: 0; font-size: var(--text-base); color: var(--fg-1); }
+/* Message line: one plain line for a state, a loading line or a warning that data could not be read (#141), is a plain
+   <p> (.msg, which was that <p> with no margin, is gone since every <p> has none: Maikel, November 1, 2026).
+   .msg--warn is the warning in text, --warning-5, bold, and .msg--error the error; a link in either is an ordinary
+   house link. For a boxed message use .notice. */
 .msg--warn { color: var(--warning-5); font-weight: var(--font-weight-bold); }
 .item { border-top: 1px solid var(--bg-3); padding: var(--spacing-2-5) 0; }
 .item b { display: block; font-size: var(--text-sm); margin-bottom: var(--spacing-0-5); }
@@ -808,8 +810,8 @@ a.menu-item:hover { background: var(--bg-3); }
    .fill-primary does not show: use an outline button there. */
 .fill-primary { background: var(--primary); color: var(--bg-1); }
 .fill-inverse { background: var(--fg-1); color: var(--bg-1); }
-.fill-primary :is(h1, h2, h3, p, .msg, .meta),
-.fill-inverse :is(h1, h2, h3, p, .msg, .meta) { color: var(--bg-1); }
+.fill-primary :is(h1, h2, h3, p, .meta),
+.fill-inverse :is(h1, h2, h3, p, .meta) { color: var(--bg-1); }
 .fill-primary :is(.note, .card__sub) { color: var(--bg-3); }
 .fill-inverse :is(.note, .card__sub) { color: var(--bg-4); }
 .fill-primary :where(a:any-link), .fill-inverse :where(a:any-link) { color: var(--bg-1); }
@@ -912,9 +914,9 @@ a.menu-item:hover { background: var(--bg-3); }
 .badge-toggle::after { content: ""; position: absolute; inset: calc(-1 * var(--spacing-2)); }
 .badge-toggle[aria-expanded="true"] { color: var(--primary-muted); border-color: var(--primary-muted); }
 .badge-toggle:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
-/* Help: a toggle at the right and, under it, the .msg it opens (full width). */
+/* Help: a toggle at the right and, under it, the <p> it opens (full width). */
 .help { display: flex; flex-direction: column; align-items: flex-end; }
-.help > .msg { align-self: stretch; margin-top: var(--spacing-2); }
+.help > p { align-self: stretch; margin-top: var(--spacing-2); }
 /* A .more whose summary is a row: <details class="more more--structured"><summary><span class="more__title">..</span>
    <span class="more__meta">..</span><span class="more__trailing">..</span></summary>..</details>. A wrapping row with the
    marker last; on a narrow row (under 24rem, of the .more itself) the meta and trailing drop under the title. The

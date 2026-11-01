@@ -63,6 +63,8 @@ read as a plain `<p>`.
   `.question-head + p` sets; the specimen shows it
 - [x] No h1, h2 or h3 carries a class: `.menu-item__title` (the hub's card labels), and the
   dialog's class move to their place (`.menu-item__label > h2`, `.dialog__head h3`)
+- [x] Every `<p>` has no margin, so `.msg` (a `<p>` with none) is gone; `.msg--warn` and `.msg--error` stand on a
+  plain `<p>`, across the specimens, the patterns and the hub
 - [x] `house-palette.tests.ps1` refuses a heading with a class in any page or generator, and a font weight set as a number in the stylesheet or those hub layers
 - [x] A section a token group shows is left off the overview, so Preview holds Themes alone
 - [x] `house-style.css`: `.eyebrow`, `.lead`, `.pos` and `.neg` gone, `.sub` gone into `.note`, the fill switches and comments with them
@@ -91,25 +93,28 @@ The house style gains four weight tokens, `--font-weight-light` (300), `--font-w
 `--font-weight-bold` (700) and `--font-weight-black` (900), and every rule now takes its weight from them, so all
 text is one step heavier: running text 500, card titles 700, h1 900. h2 is bold (700), and h3 turns light (300)
 and takes the theme's colour, `--primary`, instead of `--fg-3`. Its headings carry no class any more: a card's label and a dialog's title are styled by where they
-sit. It drops ten classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
+sit. A `<p>` has no margin of its own any more: its place sets the space around it. It drops eleven classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
 body size read as a plain `<p>`; and `.sub`, merged into `.note`, the one quiet-text class, which had the same colour
 and size; `.pos` and `.neg`, the colours of `.delta--up` and `.delta--down` without the weight; `.card__title`: a card's
 title is a plain `h3`, set like every other; `.amount`, gone into `.num`, which now sets a small icon beside its figure; `.verdict`, which read as a `<p>`
 with a `<strong>`; and `.menu-item__title`, the hub card's heading, now styled as the h2 or h3 in `.menu-item__label`; and `.group-heading`, the uppercase section label, so the house has
-one h3.
+one h3; and `.msg`, which was a `<p>` with no margin.
 
 **Score:** 2
 
 #### What makes this deploy extra special
 
-`house-style.css` no longer defines `.eyebrow`, `.lead`, `.sub`, `.pos`, `.neg`, `.card__title`, `.amount`, `.verdict`, `.menu-item__title` or `.group-heading`. A page that takes the new copy and still uses either loses
+`house-style.css` no longer defines `.eyebrow`, `.lead`, `.sub`, `.pos`, `.neg`, `.card__title`, `.amount`, `.verdict`, `.menu-item__title`, `.group-heading` or `.msg`, and a `<p>` has
+no margin. A page that takes the new copy and still uses either loses
 that styling: replace `class="sub"` with `class="note"` (the same colour and size, with a small top margin instead of a
 16px bottom one), drop the eyebrow line or set it as a `.note`, and drop `class="lead"` (the paragraph keeps the body size and colour,
 and loses its 46rem measure and its 8px top margin). Replace `class="pos"` with `class="delta delta--up"` and
 `class="neg"` with `class="delta delta--down"`; the figure then turns bold (700). Replace `<span class="amount"><span>12,50</span><svg…></span>` with
 `<span class="num">12,50<svg…></span>`. Replace `<p class="verdict">…</p>` with `<p><strong>…</strong></p>` (it keeps its margin under a
 `.question-head`). No heading takes a class: drop `class="menu-item__title"` from the `h2` or `h3` in a `.menu-item__label`;
-a `.group-heading` becomes a plain `h3` (its count, where it had one, a `.note` or a `.badge` beside it); and a dialog's title is the plain `h3`
+drop `class="msg"` (and the `msg` before `msg--warn` or
+`msg--error`), and give a run of plain paragraphs the space between them it relied on from the browser's 1em; a
+`.group-heading` becomes a plain `h3` (its count, where it had one, a `.note` or a `.badge` beside it); and a dialog's title is the plain `h3`
 in `.dialog__head` (`.dialog__title` stays for a `<p>`). Drop `class="card__title"` from a card's `h3`: it
 then takes the h3's light weight and the theme's colour instead of semibold `--fg-3`. Text set in the house style is one
 step heavier throughout (400 to 500, 600 to 700, 700 to 900); a domain layer that sets a weight should take one of
@@ -119,5 +124,5 @@ the four `--font-weight-*` tokens rather than a number.
 
 #### Pull Request
 
-the Text token page splits into Tokens and Components; the house style retires ten classes and no heading carries one
+the Text token page splits into Tokens and Components; the house style retires eleven classes and no heading carries one
 

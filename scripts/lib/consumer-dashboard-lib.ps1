@@ -578,7 +578,7 @@ function Format-ConsumerDashboardHtml {
 
     # The warning that the signals could not be read.
     if ($Meta.CheckFailed) {
-        [void]$sb.AppendLine('<p class="msg msg--warn" role="alert">check-consumers.ps1 could not be run: ' + (& $e $Meta.CheckFailed) + '. The register is shown without its signals.</p>')
+        [void]$sb.AppendLine('<p class="msg--warn" role="alert">check-consumers.ps1 could not be run: ' + (& $e $Meta.CheckFailed) + '. The register is shown without its signals.</p>')
     }
 
     # /consumers: a section per owner group headed by an h2 naming the group, and under

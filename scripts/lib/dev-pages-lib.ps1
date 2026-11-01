@@ -110,7 +110,7 @@ function Format-ProductHomeHtml {
     if ($HubUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
         [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $HubUrl -Label 'Toolbox' -Sub 'The dkj-policy toolbox: GitHub, Issues, Release notes, the Test gate and every other general page' -Icon 'repository'))
     } else {
-        [void]$sb.AppendLine('<section class="card"><p class="msg" role="status">The toolbox is not running. The dkj-policy dev-preview hook starts it at the next session start.</p></section>')
+        [void]$sb.AppendLine('<section class="card"><p role="status">The toolbox is not running. The dkj-policy dev-preview hook starts it at the next session start.</p></section>')
     }
     foreach ($p in @($Pages)) { [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon)) }
     [void]$sb.AppendLine('</div>')
@@ -266,10 +266,10 @@ function Format-SpecialistPageHtml {
         @{ L = 'Lens'; V = (& $tok $r.LensBytes) },
         @{ L = 'Full read'; V = (& $tok $r.TotalBytes) })))
     if ($ReadError) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">The specialists could not all be read: ' + (& $e $ReadError) + '.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">The specialists could not all be read: ' + (& $e $ReadError) + '.</p>')
     }
     if (-not $Pick.Enabled) {
-        [void]$body.AppendLine('<p class="msg" role="status">Its plugin is not enabled in this repo''s <code>.claude/settings.json</code>: no session here carries its listing, and it has no lens here.</p>')
+        [void]$body.AppendLine('<p role="status">Its plugin is not enabled in this repo''s <code>.claude/settings.json</code>: no session here carries its listing, and it has no lens here.</p>')
     }
     [void]$body.AppendLine('<div class="grid-2" id="about">')
     [void]$body.AppendLine('<section class="card"><div class="card__head"><h2>What it is</h2></div><dl class="facts">')
@@ -339,7 +339,7 @@ function Format-SpecialistTeamHtml {
     $max = if ($rows.Count) { [double]$rows[0].TotalBytes } else { 0 }
     $body = New-Object System.Text.StringBuilder
     if ($ReadError) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">The specialists could not all be read: ' + (& $e $ReadError) + '.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">The specialists could not all be read: ' + (& $e $ReadError) + '.</p>')
     }
     # Its own columns beside the house .card-grid, which gives the group its padding and surface (the house .grid-3
     # is never restyled here); the heading inside it, as a headed group's is, and so each card untitled (#206).
@@ -700,7 +700,7 @@ function Format-MarketplacePluginsPageHtml {
         -Id ('plugin-' + $p.Name) -Class ('pl-card' + $(if ($p.Enabled) { '' } else { ' pl-card--off' })) }
     $body = New-Object System.Text.StringBuilder
     if ($ReadError) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">The plugins could not all be read: ' + (& $e $ReadError) + '.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">The plugins could not all be read: ' + (& $e $ReadError) + '.</p>')
     }
     $footer = 'Read from this checkout''s <code>.claude-plugin/marketplace.json</code> and each plugin''s <code>.claude-plugin/plugin.json</code> on every request, so it is the tree, not the installed release; enabled or off is <code>.claude/settings.json</code>. What this checkout loads, and any problem with it, is on the toolbox''s Installed plugins page.'
     # An off plugin's card is muted, never hidden.
@@ -774,7 +774,7 @@ function Format-MarketplacePluginsPageHtml {
     # the page opens on its content (#3585). With no description the marketplace's line stands in; with neither, no "?".
     $info = if ($p.Description) { ConvertTo-PluginDescriptionHtml -Text $p.Description } elseif ($p.Summary) { '<p>' + (& $e $p.Summary) + '</p>' } else { '' }
     if (-not $p.Enabled) {
-        [void]$body.AppendLine('<p class="msg" role="status">Not enabled in this repo''s <code>.claude/settings.json</code>: no session here loads it.</p>')
+        [void]$body.AppendLine('<p role="status">Not enabled in this repo''s <code>.claude/settings.json</code>: no session here loads it.</p>')
     }
     if ($p.Name -ceq $addOnParent) {
         # What dkj-policy ships that can be looked at: the house style's specimens (Maikel, October 31, 2026).
@@ -1113,10 +1113,10 @@ function Format-DkjReposPageHtml {
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.Append((Format-ConsumerPageStart -PageName 'DKJ repos' -Trail @(@{ Href = '/consumers'; Label = 'Consumers' }) -Style (Get-DkjRepoCardStyle)))
     if ($Query.Error) {
-        [void]$sb.AppendLine('<p class="msg msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The checkouts on this machine are shown without their issues.</p>')
+        [void]$sb.AppendLine('<p class="msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The checkouts on this machine are shown without their issues.</p>')
     }
     if ($CheckMeta.CheckFailed) {
-        [void]$sb.AppendLine('<p class="msg msg--warn" role="alert">check-consumers.ps1 could not be run: ' + (& $e $CheckMeta.CheckFailed) + '. The cards are shown without their status.</p>')
+        [void]$sb.AppendLine('<p class="msg--warn" role="alert">check-consumers.ps1 could not be run: ' + (& $e $CheckMeta.CheckFailed) + '. The cards are shown without their status.</p>')
     }
     # Four to a row, each card three lines at most -- its name, its facts, its checkout -- a longer one cut off with
     # an ellipsis and whole in its tooltip (Maikel, October 28, 2026). The house grids stop at three, so the four

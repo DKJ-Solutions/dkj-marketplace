@@ -244,7 +244,7 @@ function Format-GeneralPageHtml {
     # so a page that breaks it now says so itself, at its top, rather than waiting for the owner to spot it.
     $sections = Get-PageSectionCount -Body $Body
     if ($sections -gt $script:LongPageSectionLimit) {
-        [void]$sb.AppendLine('<p class="msg msg--warn" role="alert">This page holds ' + $sections + ' sections in one column. A page with more than ' +
+        [void]$sb.AppendLine('<p class="msg--warn" role="alert">This page holds ' + $sections + ' sections in one column. A page with more than ' +
             $script:LongPageSectionLimit + ' becomes an overview of cards, each opening a page of its own: the house style''s page rule (#3563).</p>')
     }
     [void]$sb.Append($Body)
@@ -267,10 +267,10 @@ function Format-FitAlarmHtml {
 
         It stays quiet below 1000 px of width, where the page has stepped down to its narrow layout and a scroll is
         the expected shape, and re-judges on resize and whenever the page's own size changes (the banner filling in).
-        House classes only (.msg, .msg--warn) and an inline position, since the hub restyles nothing.
+        House classes only (.msg--warn) and an inline position, since the hub restyles nothing.
     #>
     return @'
-<p class="msg msg--warn" id="fit-alarm" role="alert" hidden style="position: fixed; right: 16px; bottom: 16px; margin: 0; z-index: 50; box-shadow: var(--shadow-pop)"></p>
+<p class="msg--warn" id="fit-alarm" role="alert" hidden style="position: fixed; right: 16px; bottom: 16px; margin: 0; z-index: 50; box-shadow: var(--shadow-pop)"></p>
 <script>
 (function () {
   var alarm = document.getElementById("fit-alarm");
@@ -308,10 +308,10 @@ function Format-RepoHubBanner {
         same banner wherever the visitor is. It is the first thing in <body>, ABOVE the site header (owner,
         October 24, 2026; it was the first block of <main>, under the breadcrumb bar), so every caller writes it
         straight after '<body>'. It stands there with no margin, border or radius of its own, a bare strip flush against the
-        header (owner, October 24, 2026), and otherwise uses house classes only (.notice, .msg, .num), because
+        header (owner, October 24, 2026), and otherwise uses house classes only (.notice, .num), because
         the hub restyles nothing.
 
-        ONE ROW, ALWAYS (Dave, October 24, 2026): the countdown and the box owed share a single .msg line,
+        ONE ROW, ALWAYS (Dave, October 24, 2026): the countdown and the box owed share a single <p> line,
         the box an inline span after the timer rather than a paragraph of its own, and its label is short
         ('30 due') so the line still fits a phone's column.
 
@@ -345,7 +345,7 @@ function Format-RepoHubBanner {
     #>
     return @'
 <div class="notice" id="hub-banner" role="region" aria-label="Airsquats" style="margin: 0; border: 0; border-radius: 0" hidden>
-<p class="msg">Next airsquats in <strong class="num" data-hub-timer>--:--</strong><span class="msg--warn" data-hub-due hidden> &middot; <label><input type="checkbox" data-hub-done> <span data-hub-count>10</span> due</label></span><span class="msg--warn" data-hub-offline hidden> &middot; hub offline, this hour is not counted</span><span data-hub-owner hidden title="The Windows account this toolbox runs under"> &middot; <span data-hub-account></span></span></p>
+<p>Next airsquats in <strong class="num" data-hub-timer>--:--</strong><span class="msg--warn" data-hub-due hidden> &middot; <label><input type="checkbox" data-hub-done> <span data-hub-count>10</span> due</label></span><span class="msg--warn" data-hub-offline hidden> &middot; hub offline, this hour is not counted</span><span data-hub-owner hidden title="The Windows account this toolbox runs under"> &middot; <span data-hub-account></span></span></p>
 </div>
 <script>
 (function () {
@@ -567,7 +567,7 @@ function Format-HubLensPageHtml {
         $text = [System.IO.File]::ReadAllText($lens.Path, (New-Object System.Text.UTF8Encoding($false)))
         [void]$body.AppendLine('<section class="card"><div class="prose prose--fill"><pre tabindex="0"><code>' + (& $e $text) + '</code></pre></div></section>')
     } catch {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">This lens could not be read: ' + (& $e $_.Exception.Message) + '</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">This lens could not be read: ' + (& $e $_.Exception.Message) + '</p>')
     }
     return Format-GeneralPageHtml -Title $lens.Label -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref `
         -ParentCrumbs @(@{ Label = 'AI'; Href = '/ai' }, @{ Label = 'Specialists'; Href = '/ai/claude/specialists' }) -FooterNote ('Read from <code>.claude/specialists/lenses/' + (& $e $lens.Label) + '.md</code> by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.')
@@ -664,7 +664,7 @@ function Format-HubGroupPageHtml {
     # The h1 stands on the page above the group, never inside its surface: the h1 is never framed (owner, October 28, 2026).
     [void]$body.AppendLine('<div><h1>' + (& $e $g.Label) + '</h1></div>')
     if ($members.Count -eq 0 -and $sections.Count -eq 0) {
-        [void]$body.AppendLine('<section class="card"><p class="msg" role="status">Nothing on this page yet.</p></section>')
+        [void]$body.AppendLine('<section class="card"><p role="status">Nothing on this page yet.</p></section>')
     }
     if ($members.Count -gt 0) {
         [void]$body.AppendLine('<div class="grid-3">')
@@ -682,7 +682,7 @@ function Format-HubGroupPageHtml {
             [void]$body.AppendLine((Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon -Heading 3))
         }
         if ($cards.Count -eq 0) {
-            [void]$body.AppendLine('<section class="card grid__full"><p class="msg" role="status">Nothing here yet.</p></section>')
+            [void]$body.AppendLine('<section class="card grid__full"><p role="status">Nothing here yet.</p></section>')
         }
         [void]$body.AppendLine('</div>')
     }
@@ -962,10 +962,10 @@ function Format-ArtifactsPageHtml {
         @{ L = 'Most recent'; V = $(if ($rows.Count -and $rows[0].Created) { $rows[0].Created } else { '--' }) },
         @{ L = 'Without a link'; V = $unlinked.Count })))
     if ($ReadError) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">scripts/dashboard/artifacts.json could not be read: ' + (& $e $ReadError) + '.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">scripts/dashboard/artifacts.json could not be read: ' + (& $e $ReadError) + '.</p>')
     }
     if ($unlinked.Count) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="status">Not a claude.ai Artifact link, so shown without one: ' +
+        [void]$body.AppendLine('<p class="msg--warn" role="status">Not a claude.ai Artifact link, so shown without one: ' +
             (($unlinked | ForEach-Object { '<code>' + (& $e $_.Title) + '</code>' }) -join ', ') + '.</p>')
     }
     [void]$body.AppendLine('<div class="grid-2" id="artifacts">')
@@ -1170,7 +1170,7 @@ function Format-IssuesPageHtml {
         @{ L = "Closed, last $days days"; V = $(if ($Model) { Format-DevNumber $Model.Closed } else { '--' }) },
         @{ L = 'Median time to close'; V = $(if ($Model) { Format-DevDuration $Model.MedianCloseHours } else { '--' }) })))
     if ($ReadError) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">The issues could not be read from GitHub: ' + (& $e $ReadError) + '.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">The issues could not be read from GitHub: ' + (& $e $ReadError) + '.</p>')
     }
 
     if ($Model) {
@@ -1201,7 +1201,7 @@ function Format-IssuesPageHtml {
             }
             [void]$body.AppendLine('</tbody></table></div>')
         } else {
-            [void]$body.AppendLine('<p class="msg" role="status">No open issue: everything filed has been closed.</p>')
+            [void]$body.AppendLine('<p role="status">No open issue: everything filed has been closed.</p>')
         }
         [void]$body.AppendLine('</section>')
         [void]$body.AppendLine('</div>')
@@ -1384,7 +1384,7 @@ function Get-SessionStartSnapshotSections {
         # The advice's conclusion follows its steps, never opens the section (#3591).
         if ($adv.lede) { [void]$sb.AppendLine('<p>' + (& $md $adv.lede) + '</p>') }
         if ($adv.dont -and $adv.dont.text) {
-            [void]$sb.AppendLine('<p class="msg" role="note"><strong>' + (& $e $(if ($adv.dont.label) { $adv.dont.label } else { 'Do not' })) + ':</strong> ' + (& $md $adv.dont.text) + '</p>')
+            [void]$sb.AppendLine('<p role="note"><strong>' + (& $e $(if ($adv.dont.label) { $adv.dont.label } else { 'Do not' })) + ':</strong> ' + (& $md $adv.dont.text) + '</p>')
         }
         $sections.Add(@{ Slug = 'advice'; Title = $(if ($adv.heading) { [string]$adv.heading } else { 'Advice' }); Sub = 'Advice'
             Value = ($steps.Count.ToString() + ' steps'); Body = $sb.ToString() })
@@ -1425,7 +1425,7 @@ function Get-SessionStartSections {
         @{ L = $(if ($null -ne $room -and $room -lt 0) { 'Over the budget (B)' } else { 'Headroom (B)' }); V = $(if ($null -ne $room) { Format-DevNumber ([Math]::Abs($room)) } else { '--' }) })))
     $unmeasured = @($docs | Where-Object { $_.Source -eq 'unmeasured' })
     if ($unmeasured.Count) {
-        [void]$body.AppendLine('<p class="msg" role="status">Not counted, because neither this machine nor the baseline has a size for it: ' +
+        [void]$body.AppendLine('<p role="status">Not counted, because neither this machine nor the baseline has a size for it: ' +
             (($unmeasured | ForEach-Object { '<code>' + (& $e $_.Display) + '</code>' }) -join ', ') + '.</p>')
     }
     $counted = @($docs | Where-Object { $_.Source -ne 'unmeasured' })
@@ -1476,9 +1476,9 @@ function Format-SessionStartPageHtml {
     $sections = @(Get-SessionStartSections -Model $Model -Snapshot $Snapshot)
     # A failed or over-budget measurement is said on the overview and on the documents' page, where its numbers are.
     $alert = if ($ReadError) {
-        '<p class="msg msg--warn" role="alert">The always-on path could not be measured: ' + (& $e $ReadError) + '.</p>'
+        '<p class="msg--warn" role="alert">The always-on path could not be measured: ' + (& $e $ReadError) + '.</p>'
     } elseif ($Model -and -not $Model.Ok) {
-        '<p class="msg msg--warn" role="alert">The always-on path is over its limit (' + (& $e $Model.State) + '): every session pays it, and the gate refuses a branch that grows it.</p>'
+        '<p class="msg--warn" role="alert">The always-on path is over its limit (' + (& $e $Model.State) + '): every session pays it, and the gate refuses a branch that grows it.</p>'
     } else { '' }
     $when = if ($Model -and $Model.GeneratedAt) {
         $secs = if ($null -ne $Model.Seconds) { ' in ' + ([double]$Model.Seconds).ToString('0.0', [Globalization.CultureInfo]::InvariantCulture) + 's' } else { '' }
@@ -1505,7 +1505,7 @@ function Format-SessionStartPageHtml {
 
     if ($alert) { [void]$body.AppendLine($alert) }
     if ($SnapshotError) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">scripts/dashboard/session-start-snapshot.json could not be read: ' + (& $e $SnapshotError) + '.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">scripts/dashboard/session-start-snapshot.json could not be read: ' + (& $e $SnapshotError) + '.</p>')
     }
     [void]$body.AppendLine('<div><h1>SessionStart</h1></div>')
     [void]$body.AppendLine('<div class="grid-3 ss-cards">')
@@ -1526,7 +1526,7 @@ function Format-ReleaseNotesEmptyPageHtml {
         nothing the repo could add to change that -- so the hub says so as an empty state, not as an error.
     #>
     param([AllowEmptyString()][string]$RepoName = '')
-    $body = '<p class="msg" role="status">No release has been cut yet. The release notes appear here with the first cut.</p>'
+    $body = '<p role="status">No release has been cut yet. The release notes appear here with the first cut.</p>'
     return Format-GeneralPageHtml -Title 'Release notes' -Lead '' -Body $body -SiteName $RepoName
 }
 

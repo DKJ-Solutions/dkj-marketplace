@@ -209,9 +209,9 @@ function Format-PluginsPageHtml {
     $body = New-Object System.Text.StringBuilder
     if ($ReadError -or $Model.Error) {
         $why = if ($ReadError) { $ReadError } else { $Model.Error }
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">The plugins could not be read: ' + (& $e $why) + '.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">The plugins could not be read: ' + (& $e $why) + '.</p>')
     } elseif (-not $rows.Count) {
-        [void]$body.AppendLine('<p class="msg" role="status">No plugin is enabled in this repo. Consulted: ' + (& $e $Model.Consulted) + '.</p>')
+        [void]$body.AppendLine('<p role="status">No plugin is enabled in this repo. Consulted: ' + (& $e $Model.Consulted) + '.</p>')
     }
     # Two sections, each an h2 over its cards' h3s (the owner, October 30, 2026): the plugins from dkj-marketplace,
     # and MCP for every other marketplace's (Figma's). A section with no card is not drawn.
@@ -266,7 +266,7 @@ function Format-PluginPageHtml {
     [void]$body.AppendLine('<section class="card' + $(if (-not $Row.Description) { ' grid__full' }) + '" id="facts"><h2>On this machine</h2>')
     # A healthy plugin gets no verdict line: the badge beside the h1 already says it (the owner, October 26, 2026).
     if ($Row.Status.Level -ne 'ok') {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="status">' + (& $e (Get-PluginProblemText $Row)) + '.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="status">' + (& $e (Get-PluginProblemText $Row)) + '.</p>')
         if ($Row.Action -and -not $Row.InstallPathMissing) { [void]$body.AppendLine('<p class="note">To close it: <code>' + (& $e $Row.Action) + '</code></p>') }
     }
     [void]$body.AppendLine('<dl class="facts">')
@@ -352,9 +352,9 @@ function Get-HouseStyleSpecimensParts {
 
     $out = New-Object System.Text.StringBuilder
     if ($ReadError) {
-        [void]$out.AppendLine('<section class="card"><p class="msg msg--warn" role="status">The specimens could not be read: ' + (& $e $ReadError) + '</p></section>')
+        [void]$out.AppendLine('<section class="card"><p class="msg--warn" role="status">The specimens could not be read: ' + (& $e $ReadError) + '</p></section>')
     } elseif (-not @($split.Sections).Count) {
-        [void]$out.AppendLine('<section class="card"><p class="msg msg--warn" role="status">The specimens were read, but no section was found in them.</p></section>')
+        [void]$out.AppendLine('<section class="card"><p class="msg--warn" role="status">The specimens were read, but no section was found in them.</p></section>')
     } else {
         [void]$out.AppendLine('<div class="grid-3">')
         foreach ($s in $split.Sections) {

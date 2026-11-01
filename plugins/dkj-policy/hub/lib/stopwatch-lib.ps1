@@ -1167,10 +1167,10 @@ function Format-StopwatchPageHtml {
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $body = New-Object System.Text.StringBuilder
     if ($ReadError) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">The store could not be read: ' + (& $e $ReadError) + '. Nothing is written over it until it reads again, so no new run is recorded.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">The store could not be read: ' + (& $e $ReadError) + '. Nothing is written over it until it reads again, so no new run is recorded.</p>')
     }
     if ($Skipped) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">' + $Skipped + ' run(s) in the store could not be read and are not shown. The next write by a hook drops them; the file as it was is kept beside the store as a .bak.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">' + $Skipped + ' run(s) in the store could not be read and are not shown. The next write by a hook drops them; the file as it was is kept beside the store as a .bak.</p>')
     }
 
     if ($Fetching) {
@@ -1178,7 +1178,7 @@ function Format-StopwatchPageHtml {
         # the page already shows what the last fetch brought, and this one may bring newer runs (#3403).
         $what = if ($SharedMachines -gt 0) { 'Checking origin for newer runs from the other machines. This page reloads in a few seconds to show any.' }
                 else { 'The other machines'' runs are being fetched from origin. This page reloads in a few seconds to show them.' }
-        [void]$body.AppendLine('<p class="msg" role="status">' + $what + '</p>')
+        [void]$body.AppendLine('<p role="status">' + $what + '</p>')
         [void]$body.AppendLine('<script>setTimeout(function () { location.reload(); }, 4000);</script>')
     }
     # One card per prompt label under the page's h1, each linking the label's page (the owner, October 24, 2026). -Flat

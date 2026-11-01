@@ -88,7 +88,7 @@ Assert-True ($ph -notmatch 'href="/(repository|test-gate|stopwatch|logbook|artif
 Assert-True ($ph -match 'class="note">[^\n]*serve-consumer-dashboard\.ps1</code>, from <code>abc1234</code>') 'the footer names the server and the commit it loaded'
 Assert-True ((Format-ProductHomeHtml) -notmatch ', from <code>') 'and leaves the commit out when it could not be read'
 $down = Format-ProductHomeHtml
-Assert-True ($down -match '<section class="card"><p class="msg" role="status">The toolbox is not running' -and $down -notmatch 'aria-label="Toolbox"' -and $down -match 'href="/consumers"') 'with no hub known one card says it is not running, and the product''s own pages stay linked'
+Assert-True ($down -match '<section class="card"><p role="status">The toolbox is not running' -and $down -notmatch 'aria-label="Toolbox"' -and $down -match 'href="/consumers"') 'with no hub known one card says it is not running, and the product''s own pages stay linked'
 Assert-True ((Format-ProductHomeHtml -HubUrl 'http://evil.example:4890') -match 'toolbox is not running' -and (Format-ProductHomeHtml -HubUrl 'javascript:alert(1)') -notmatch 'javascript:') 'a hub url that is not plain loopback is no hub at all'
 Assert-True (@(@($pages) + @(Get-GeneralPages) | Where-Object { -not (Get-HubIconSvg -Name $_.Icon) }).Count -eq 0) 'every page a hub or the product links names an icon the hub has'
 Assert-True (@(Get-HubGroups | Where-Object { -not (Get-HubIconSvg -Name $_.Icon) }).Count -eq 0) 'and every group page a hub card links names one too'
@@ -117,7 +117,7 @@ Assert-True (([regex]::Matches($aiPage, '<section class="card card--link">')).Co
 Assert-True ($null -eq (Format-HubGroupPageHtml -Href '/ai/claude')) 'Claude is a section of /ai, with no page of its own'
 Assert-True ($aiPage -notmatch 'Lenses') 'the Lenses are not on /ai'
 $specPage = Format-HubGroupPageHtml -Href '/ai/claude/specialists' -RepoName 'x'
-Assert-True ($specPage -match '<div class="grid-3"><div class="grid__head"><h2>Lenses</h2></div>' -and $specPage -notmatch 'Nothing on this page yet' -and $specPage -match '(?s)<h2>Lenses</h2></div>\s*<section class="card grid__full"><p class="msg" role="status">Nothing here yet\.') 'the Specialists page holds a Lenses section, which with no repo to read says it has nothing yet'
+Assert-True ($specPage -match '<div class="grid-3"><div class="grid__head"><h2>Lenses</h2></div>' -and $specPage -notmatch 'Nothing on this page yet' -and $specPage -match '(?s)<h2>Lenses</h2></div>\s*<section class="card grid__full"><p role="status">Nothing here yet\.') 'the Specialists page holds a Lenses section, which with no repo to read says it has nothing yet'
 $lensRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('hub-lenses-' + [guid]::NewGuid().ToString('N'))
 $lensDir = Join-Path $lensRoot '.claude\specialists\lenses'
 New-Item -ItemType Directory -Path $lensDir -Force | Out-Null
@@ -184,7 +184,7 @@ $none = Format-TestGatePageHtml -Model (ConvertFrom-SuiteDurations -Durations $n
 Assert-True ($none -match 'No test gate has been measured in this repo yet' -and $none -notmatch 'could not be read' -and $none -match 'No suite durations are recorded in this repo') 'a repo with no suite-durations.json gets the empty state, not a warning (#3470)'
 Assert-True ($tg -match '<li><a href="/hub">Tools</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/performance">Performance</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/clock">Clock</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><span aria-current="page">Test gate</span></li>') 'and its trail reads Tools > Performance > Clock > Test gate (the owner, October 27 and 30, 2026)'
 $bad = Format-TestGatePageHtml -Model $empty -ReadError 'it is not valid JSON'
-Assert-True ($bad -match 'msg msg--warn" role="alert">scripts/tests/suite-durations.json could not be read: it is not valid JSON') 'an unreadable file is a warning'
+Assert-True ($bad -match 'msg--warn" role="alert">scripts/tests/suite-durations.json could not be read: it is not valid JSON') 'an unreadable file is a warning'
 Assert-True ($bad -match 'No suite durations are recorded\.') 'and the cards say it is empty rather than vanishing'
 Assert-True ($null -eq (Format-TestGatePageHtml -Model $m -Path 'nope') -and $null -eq (Format-TestGatePageHtml -Model $m -Path 'suites/nope.tests.ps1') -and $null -eq (Format-TestGatePageHtml -Model $m -Path 'suites/a.tests.ps1/x')) 'a path no page has is $null, which the server answers with a 404'
 
@@ -324,7 +324,7 @@ Assert-True ($null -eq (Format-SessionStartPageHtml -Model $ssModel -Section 'no
 $ssModel.Total = 5000; $ssModel.Ok = $false; $ssModel.State = 'over-growing'
 $over = Format-SessionStartPageHtml -Model $ssModel -Section 'documents'
 Assert-True ($over -match 'Over the budget \(B\)</div><div class="v num">1,000') 'over the budget: by how much'
-Assert-True ($over -match 'msg msg--warn" role="alert">The always-on path is over its limit \(over-growing\)') 'and a warning naming the state'
+Assert-True ($over -match 'msg--warn" role="alert">The always-on path is over its limit \(over-growing\)') 'and a warning naming the state'
 Assert-True ((Format-SessionStartPageHtml -Model $ssModel) -match 'role="alert">The always-on path is over its limit') 'which the overview carries too'
 $failed = Format-SessionStartPageHtml -Model $null -ReadError 'boom <x>'
 Assert-True ($failed -match 'could not be measured: boom &lt;x&gt;') 'a failed measurement is a warning, escaped'
@@ -401,7 +401,7 @@ Assert-True ($ap -match 'Artifacts</div><div class="v num">3<') 'the tile counts
 Assert-True ($ap -match '<a class="dp-link" href="https://claude.ai/artifact/aaa" target="_blank" rel="noopener noreferrer">Old</a>') 'a recorded Artifact links to claude.ai, in a new tab'
 Assert-True ($ap -match 'New &lt;b&gt;</a>' -and $ap -notmatch 'New <b>') 'the title is escaped'
 Assert-True ($ap -notmatch 'href="javascript' -and $ap -match '<td class="dp-left">Bad</td>') 'an unlinked row shows its title without an href'
-Assert-True ($ap -match 'msg msg--warn" role="status">Not a claude.ai Artifact link.*<code>Bad</code>') 'and is named in a warning'
+Assert-True ($ap -match 'msg--warn" role="status">Not a claude.ai Artifact link.*<code>Bad</code>') 'and is named in a warning'
 Assert-True ($ap -match '<p class="note">first</p>') 'the one-line description sits under the title'
 Assert-True ($ap -match '<dt>Recorded</dt><dd>2026-10-18</dd>') 'where the list comes from is stated'
 $apFailed = Format-ArtifactsPageHtml -Model $empty -ReadError 'it is not valid JSON'
@@ -840,7 +840,7 @@ Assert-True ($pp.IndexOf('/plugins/alpha"') -lt $pp.IndexOf('/plugins/beta"') -a
 Assert-True ($pp.Contains('no longer on disk') -and $pp.Contains('Up to date: 1.0.0, project scope')) 'a card says what is wrong or which version is installed'
 Assert-True ($pp.Contains('the clone is &lt;b&gt;ahead&lt;/b&gt;') -and $pp -notmatch '<b>ahead') 'every value from the script is escaped'
 $ppOk = Format-PluginsPageHtml -Model (ConvertFrom-PluginVersionsJson -Text '{"Consulted":"c","Plugins":[{"Id":"a@m","Name":"a","Marketplace":"m","Code":"match"}],"Clones":[]}')
-Assert-True ($ppOk.Replace((Format-FitAlarmHtml), '').Substring($ppOk.IndexOf('<main')) -notmatch '<p class="msg' -and $ppOk -notmatch 'class="lead"' -and $ppOk -match 'card--link') 'the overview is its cards alone: no status line and no lead (the owner, October 25, 2026)'
+Assert-True ($ppOk.Replace((Format-FitAlarmHtml), '').Substring($ppOk.IndexOf('<main')) -notmatch '<p(?: role="[a-z]+")?>|class="msg--' -and $ppOk -notmatch 'class="lead"' -and $ppOk -match 'card--link') 'the overview is its cards alone: no status line and no lead (the owner, October 25, 2026)'
 Assert-True ((Format-PluginsPageHtml -Model (ConvertFrom-PluginVersionsJson -Text '{"Consulted":"c","Plugins":[],"Clones":[]}')) -match 'No plugin is enabled') 'no enabled plugin says so'
 $ppErr = Format-PluginsPageHtml -Model (ConvertFrom-PluginVersionsJson -Text '') -ReadError 'it <broke>'
 Assert-True ($ppErr -match 'msg--warn' -and $ppErr.Contains('it &lt;broke&gt;') -and $ppErr -notmatch 'card--link') 'a failed read is an escaped warning, with no cards'
@@ -984,7 +984,7 @@ Assert-Equal 4 (Get-PageSectionCount -Body (& $secs 4)) 'a section is a grid__he
 Assert-Equal 0 (Get-PageSectionCount -Body '<div class="grid__head"><h1>Page</h1></div><section class="card"><h2>A card</h2></section><h2>loose</h2>') 'a grid__head holding the page''s h1, a card''s h2 and a loose h2 are no sections'
 Assert-True ((Format-GeneralPageHtml -Title 't' -Lead '' -Body (& $secs 4)) -notmatch 'sections in one column') 'four sections is within the rule'
 $long = Format-GeneralPageHtml -Title 't' -Lead '' -Body (& $secs 5)
-Assert-True ($long -match '<p class="msg msg--warn" role="alert">This page holds 5 sections in one column\. A page with more than 4 becomes an overview of cards, each opening a page of its own: the house style''s page rule \(#3563\)\.</p>') 'five puts a warning on the page itself, naming the count and the rule'
+Assert-True ($long -match '<p class="msg--warn" role="alert">This page holds 5 sections in one column\. A page with more than 4 becomes an overview of cards, each opening a page of its own: the house style''s page rule \(#3563\)\.</p>') 'five puts a warning on the page itself, naming the count and the rule'
 Assert-True ($long.IndexOf('This page holds 5') -lt $long.IndexOf('<h2>S1</h2>')) 'above the first section, where it cannot be scrolled past'
 Assert-True ($one.Contains('<p class="badge-row"><span class="badge badge--sm badge--bad" aria-hidden="true">&#10007;</span>Behind</p>') -and $one -notmatch 'aria-hidden="true">Behind') 'the plugin page shows its state as the house badge row: the mark, then the word'
 Assert-Equal '<p>Intro. Two chapters.</p><h3>The house style</h3><p>tokens &lt;b&gt;.</p><h3>The tracker labels</h3><p>feature. Requires X.</p>' (ConvertTo-PluginDescriptionHtml 'Intro. Two chapters. THE HOUSE STYLE: tokens <b>. THE TRACKER LABELS: feature. Requires X.') 'a description is split into escaped paragraphs at each capitals lead-in, the lead-in an h3 in sentence case'
