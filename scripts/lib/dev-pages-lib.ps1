@@ -513,7 +513,7 @@ function Format-ProductHouseStylePageHtml {
         section has returns $null, a 404.
 
         THE OVERVIEW OPENS ON ITS TOKENS (Maikel, October 31, 2026): an h2 Tokens over one card per token group
-        ($script:ProductBrandbookTokenGroups), then a card for every other section, as before. -Token names a group's
+        ($script:ProductBrandbookTokenGroups), then an h2 Preview over a card for every other section (November 1, 2026). -Token names a group's
         own page, /tokens/<group>, holding only that group's specimen cards; a group none has, or whose cards the
         file no longer holds, returns $null. /tokens itself is no page since November 1, 2026 (Maikel): $null here, and
         the server redirects it to the overview (Resolve-ProductHouseStyleRedirect).
@@ -570,10 +570,11 @@ function Format-ProductHouseStylePageHtml {
             [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ($base + '/tokens/' + $g.Slug) -Label $g.Label -Heading 3 -Sub $(if ($n -eq 1) { '1 specimen' } else { [string]$n + ' specimens' })))
         }
         [void]$sb.AppendLine('</div>')
-        [void]$sb.AppendLine('<div class="grid-3">')
+        # The other sections under a second h2, Preview, each card an h3 beneath it (Maikel, November 1, 2026).
+        [void]$sb.AppendLine('<div class="grid-3" id="preview"><div class="grid__head"><h2>Preview</h2></div>')
         foreach ($s in @($split.Sections | Where-Object { $_.Slug -cne 'tokens' })) {
             $count = if ($s.Cards -eq 1) { '1 specimen' } else { [string]$s.Cards + ' specimens' }
-            [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ($base + '/' + $s.Slug) -Label $s.Title -Sub $count))
+            [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ($base + '/' + $s.Slug) -Label $s.Title -Heading 3 -Sub $count))
         }
         [void]$sb.AppendLine('</div>')
         $overview = $sb.ToString()

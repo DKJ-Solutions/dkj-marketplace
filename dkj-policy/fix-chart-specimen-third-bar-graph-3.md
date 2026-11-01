@@ -43,6 +43,7 @@
 
 - [x] `specimens.html`, the Chart scope specimen: the third bar's fill `--positive-3` becomes `--graph-3`
 - [x] The legend and the swatch move from the Meters card, where they keyed nothing, to above the Chart scope chart: One/Two/Three in `--graph-1`..`--graph-3` name the bars, and the `--line` item names a new average line in `--fg-2` (the README names no colour for a reference line, and all three graph slots are taken)
+- [x] `dev-pages-lib.ps1`: the brand book overview sets every section but Tokens under a second h2, Preview, each card an h3; asserted in `dev-pages.tests.ps1`
 
 ### TEST
 
@@ -50,7 +51,7 @@
 
 ### DEPLOY: fix/chart-specimen-third-bar-graph-3
 
-The brand book's Chart scope specimen draws its three plain category bars in `--graph-1`, `--graph-2` and `--graph-3`. The third bar was `--positive-3`, a direction colour the README reserves for gain and never for a category, so the specimen taught the very mix the token table forbids. It came in with the static specimen page (#3493), carried over from the retired app's direction charts. The legend and the swatch beside text sat in the Meters card, keying `--graph` series that card does not draw; they now sit above the chart whose bars they name, with an average line in `--fg-2` to show the line item, and the card is called Meters.
+The brand book's Chart scope specimen draws its three plain category bars in `--graph-1`, `--graph-2` and `--graph-3`. The third bar was `--positive-3`, a direction colour the README reserves for gain and never for a category, so the specimen taught the very mix the token table forbids. It came in with the static specimen page (#3493), carried over from the retired app's direction charts. The legend and the swatch beside text sat in the Meters card, keying `--graph` series that card does not draw; they now sit above the chart whose bars they name, with an average line in `--fg-2` to show the line item, and the card is called Meters. The brand book's overview now has two h2s, Tokens and Preview, and the section cards (Themes, Text, Actions and the rest) sit under Preview as h3s.
 
 **Score:** 2
 
@@ -62,5 +63,5 @@ A reader building a chart from the brand book now sees the categorical slots use
 
 #### Pull Request
 
-The chart specimen draws its bars in the graph slots and carries its own legend
+The chart specimen keys its own bars, and the brand book overview gets a Preview heading
 
