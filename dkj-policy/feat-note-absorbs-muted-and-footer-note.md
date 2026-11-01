@@ -55,7 +55,7 @@
 
 ### TEST
 
-- [ ] The owner has looked at the brand book's Text page and a hub page's footer note
+- [x] The owner has looked at the brand book pages and said ship it (Maikel, November 1, 2026)
 
 ### DEPLOY: feat/note-absorbs-muted-and-footer-note
 
