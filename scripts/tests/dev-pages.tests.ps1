@@ -927,8 +927,12 @@ $tkLabels = @([regex]::Matches($bbOver.Substring([Math]::Max(0, $tkAt)), 'href="
 Assert-True ($tkAt -ge 0 -and ($tkLabels -join ',') -ceq 'Color,Text,Radius,Spacing,Size') 'the overview opens on an h2 Tokens over the cards Color, Text, Radius, Spacing and Size, in that order'
 Assert-True (-not $bbOver.Contains('href="/marketplace/dkj-policy/dkj-brandbook/tokens"') -and $bbOver.Contains('href="/marketplace/dkj-policy/dkj-brandbook/themes"') -and $bbOver.IndexOf('dkj-brandbook/themes"') -gt $tkAt) 'the Tokens section''s own card gives way to the group, and the other sections follow it'
 $pvAt = $bbOver.IndexOf('<div class="grid-3" id="preview"><div class="grid__head"><h2>Preview</h2></div>')
-$pvLabels = @([regex]::Matches($bbOver.Substring([Math]::Max(0, $pvAt)), 'href="/marketplace/dkj-policy/dkj-brandbook/([a-z-]+)"[\s\S]*?<h3 class="menu-item__title">([^<]+)</h3>') | ForEach-Object { $_.Groups[2].Value })
-Assert-True ($pvAt -gt $tkAt -and $pvLabels.Count -gt 0 -and $pvLabels[0] -ceq 'Themes' -and $pvLabels -notcontains 'Tokens' -and $bbOver.Substring($pvAt) -notmatch '<h2 class="menu-item__title">') 'the other sections follow under a second h2, Preview, each card an h3 (Maikel, November 1, 2026)'
+$cmAt = $bbOver.IndexOf('<div class="grid-3" id="components"><div class="grid__head"><h2>Components</h2></div>')
+$pvOnly = if ($cmAt -gt $pvAt) { $bbOver.Substring($pvAt, $cmAt - $pvAt) } else { '' }
+$pvLabels = @([regex]::Matches($pvOnly, '<h3 class="menu-item__title">([^<]+)</h3>') | ForEach-Object { $_.Groups[1].Value })
+$cmLabels = @([regex]::Matches($bbOver.Substring([Math]::Max(0, $cmAt)), '<h3 class="menu-item__title">([^<]+)</h3>') | ForEach-Object { $_.Groups[1].Value })
+Assert-True ($pvAt -gt $tkAt -and ($pvLabels -join ',') -ceq 'Themes,Text' -and $bbOver.Substring($pvAt) -notmatch '<h2 class="menu-item__title">') 'the themes and the type follow under a second h2, Preview, each card an h3 (Maikel, November 1, 2026)'
+Assert-True ($cmAt -gt $pvAt -and $cmLabels.Count -gt 0 -and $cmLabels[0] -ceq 'Actions' -and $cmLabels -notcontains 'Themes' -and $cmLabels -notcontains 'Text') 'every other section follows under a third h2, Components'
 $tkCards = Get-ProductBrandbookTokenCards -Inner ((Split-HouseStyleSpecimens -Body $specimens).Sections | Where-Object { $_.Slug -ceq 'tokens' }).Inner
 $tkNamed = @($script:ProductBrandbookTokenGroups | ForEach-Object { $_.Cards })
 Assert-True ($tkCards.Count -gt 0 -and @($tkCards | Where-Object { $tkNamed -cnotcontains $_.Title }).Count -eq 0 -and @($tkNamed | Where-Object { @($tkCards.Title) -cnotcontains $_ }).Count -eq 0) 'every specimen card of the real Tokens section is in exactly the groups that name it, and every group names a card the file holds'
