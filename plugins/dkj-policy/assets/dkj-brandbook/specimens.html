@@ -7,8 +7,10 @@
 .spec-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--spacing-3); }
 .spec-item { display: grid; gap: var(--spacing-1); min-width: 0; align-content: start; }
 .spec-item > .note { margin: 0; }
+/* The token's name sits in its own swatch, in a colour that reads on it in every theme (Maikel, November 1, 2026). */
+.spec-sample > .note { margin: 0; color: inherit; overflow-wrap: anywhere; }
 .spec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: var(--spacing-3); }
-.spec-sample { display: block; height: var(--spacing-10); border: 1px solid var(--primary-muted); border-radius: var(--radius-2); }
+.spec-sample { display: flex; align-items: flex-end; box-sizing: border-box; height: var(--spacing-10); padding: var(--spacing-1) var(--spacing-2); border: 1px solid var(--primary-muted); border-radius: var(--radius-2); }
 .spec-dots { display: flex; flex-wrap: wrap; gap: var(--spacing-1); margin: var(--spacing-2) 0; }
 .spec-dot { display: block; width: var(--spacing-5); height: var(--spacing-5); border: 1px solid var(--primary-muted); border-radius: var(--radius-1); }
 .spec-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--spacing-3); }
@@ -49,52 +51,52 @@
   <section class="card">
     <div class="card__head"><h3 class="card__title">60</h3><p class="card__sub">Paper: the ground, the page, cards and lines</p></div>
     <div class="spec-grid">
-      <div class="spec-item"><span class="spec-sample" style="background: var(--bg-1)"></span><p class="note">--bg-1</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--bg-2)"></span><p class="note">--bg-2</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--bg-3)"></span><p class="note">--bg-3</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--bg-4)"></span><p class="note">--bg-4</p></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--bg-1); color: var(--fg-1)"><p class="note">--bg-1</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--bg-2); color: var(--fg-1)"><p class="note">--bg-2</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--bg-3); color: var(--fg-1)"><p class="note">--bg-3</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--bg-4); color: var(--fg-1)"><p class="note">--bg-4</p></div></div>
     </div>
   </section>
 
   <section class="card">
     <div class="card__head"><h3 class="card__title">30</h3><p class="card__sub">Primary: the theme's colour, with its grey; both read on all four paper steps</p></div>
     <div class="spec-grid">
-      <div class="spec-item"><span class="spec-sample" style="background: var(--primary)"></span><p class="note">--primary</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--primary-muted)"></span><p class="note">--primary-muted</p></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--primary); color: var(--bg-1)"><p class="note">--primary</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--primary-muted); color: var(--bg-1)"><p class="note">--primary-muted</p></div></div>
     </div>
   </section>
 
   <section class="card">
     <div class="card__head"><h3 class="card__title">10</h3><p class="card__sub">Text: what sits on the paper</p></div>
     <div class="spec-grid">
-      <div class="spec-item"><span class="spec-sample" style="background: var(--fg-1)"></span><p class="note">--fg-1</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--fg-2)"></span><p class="note">--fg-2</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--fg-3)"></span><p class="note">--fg-3</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--fg-4)"></span><p class="note">--fg-4</p></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--fg-1); color: var(--bg-1)"><p class="note">--fg-1</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--fg-2); color: var(--bg-1)"><p class="note">--fg-2</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--fg-3); color: var(--bg-1)"><p class="note">--fg-3</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--fg-4); color: var(--bg-1)"><p class="note">--fg-4</p></div></div>
     </div>
   </section>
 
   <section class="card">
     <div class="card__head"><h3 class="card__title">Graphs</h3><p class="card__sub">Series slots; change only between light and dark</p></div>
     <div class="spec-grid">
-      <div class="spec-item"><span class="spec-sample" style="background: var(--graph-1)"></span><p class="note">--graph-1</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--graph-2)"></span><p class="note">--graph-2</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--graph-3)"></span><p class="note">--graph-3</p></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--graph-1); color: var(--bg-1)"><p class="note">--graph-1</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--graph-2); color: #000"><p class="note">--graph-2</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--graph-3); color: #000"><p class="note">--graph-3</p></div></div>
     </div>
   </section>
 
   <section class="card">
     <div class="card__head"><h3 class="card__title">Status</h3><p class="card__sub">-1 background, -3 fill, -5 text</p></div>
     <div class="spec-grid">
-      <div class="spec-item"><span class="spec-sample" style="background: var(--positive-1)"></span><p class="note">--positive-1</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--positive-3)"></span><p class="note">--positive-3</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--positive-5)"></span><p class="note">--positive-5</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--warning-1)"></span><p class="note">--warning-1</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--warning-3)"></span><p class="note">--warning-3</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--warning-5)"></span><p class="note">--warning-5</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--negative-1)"></span><p class="note">--negative-1</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--negative-3)"></span><p class="note">--negative-3</p></div>
-      <div class="spec-item"><span class="spec-sample" style="background: var(--negative-5)"></span><p class="note">--negative-5</p></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--positive-1); color: var(--fg-1)"><p class="note">--positive-1</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--positive-3); color: #000"><p class="note">--positive-3</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--positive-5); color: var(--bg-1)"><p class="note">--positive-5</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--warning-1); color: var(--fg-1)"><p class="note">--warning-1</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--warning-3); color: #000"><p class="note">--warning-3</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--warning-5); color: var(--bg-1)"><p class="note">--warning-5</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--negative-1); color: var(--fg-1)"><p class="note">--negative-1</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--negative-3); color: var(--bg-1)"><p class="note">--negative-3</p></div></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--negative-5); color: var(--bg-1)"><p class="note">--negative-5</p></div></div>
     </div>
   </section>
 
@@ -132,7 +134,7 @@
       <div class="spec-item"><p class="note">--tap (44px): the smallest touch target</p><span class="spec-bar" style="--w: var(--tap); height: var(--tap)"></span></div>
       <div class="spec-item"><p class="note">--control-lg (52px): the large stepper</p><span class="spec-bar" style="--w: var(--control-lg); height: var(--control-lg)"></span></div>
       <div class="spec-item"><p class="note">--topbar-h (56px), --column-narrow (512px, as the bar below, capped to the card), --datecol (10ch)</p><span class="spec-bar" style="--w: var(--column-narrow); height: var(--topbar-h)"></span></div>
-      <div class="spec-item"><p class="note">--shadow-pop</p><span class="spec-sample" style="background: var(--bg-2); box-shadow: var(--shadow-pop)"></span></div>
+      <div class="spec-item"><div class="spec-sample" style="background: var(--bg-2); box-shadow: var(--shadow-pop); color: var(--fg-1)"><p class="note">--shadow-pop</p></div></div>
     </div>
   </section>
 
