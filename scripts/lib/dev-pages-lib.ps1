@@ -735,7 +735,7 @@ function Format-MarketplacePluginsPageHtml {
     if ($p.Name -ceq $addOnParent) {
         # What dkj-policy ships that can be looked at: the house style's specimens (Maikel, October 31, 2026).
         # It opens the page, above the add-ons, under the heading Assets, its card named dkj-brandbook (Maikel, October 31, 2026).
-        [void]$body.AppendLine('<div class="grid-3" id="assets"><div class="grid__head"><h2>Assets</h2></div>')
+        [void]$body.AppendLine('<div class="grid-3" id="assets"><div class="grid__head"><h2>Assets (Always on)</h2></div>')
         [void]$body.AppendLine((Format-HubCardLinkHtml -Href '/marketplace/dkj-policy/dkj-brandbook' -Label 'dkj-brandbook' -Heading 3 `
             -Sub 'Every token, the twelve themes and every component, with their variants and states' -Icon 'house-style'))
         [void]$body.AppendLine('</div>')
@@ -743,7 +743,7 @@ function Format-MarketplacePluginsPageHtml {
     if ($p.Name -ceq $addOnParent -and $addOns.Count) {
         # dkj-policy's add-ons, below its house style and above its facts (Maikel, October 30, 2026): one card
         # each, h3s under the section's h2.
-        [void]$body.AppendLine('<div class="grid-3" id="add-ons"><div class="grid__head"><h2>Add-ons</h2></div>')
+        [void]$body.AppendLine('<div class="grid-3" id="add-ons"><div class="grid__head"><h2>Add-ons (Optional)</h2></div>')
         foreach ($a in $addOns) { [void]$body.AppendLine((& $card $a ('/marketplace/' + $addOnParent + '/' + $a.Name) 3)) }
         [void]$body.AppendLine('</div>')
     }

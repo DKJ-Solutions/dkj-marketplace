@@ -39,19 +39,29 @@
 
 ### PLAN
 
+The owner judges the headings on the hub's dkj-policy page by eye before this merges (visible result).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Format-MarketplacePluginsPageHtml`: the Assets heading reads Assets (Always on), the add-ons heading Add-ons (Optional)
+- [x] `dev-pages.tests.ps1`: the two asserts that pin those headings follow
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1` green (543 passed, 0 failed)
+- [ ] The owner has looked at /marketplace/dkj-policy on the hub
+
 ### DEPLOY: feat/hub-assets-addons-heading-labels
 
-**Score:**
+The hub's dkj-policy page now says what each section is to a repo that installs it: its house-style assets are headed **Assets (Always on)**, and its add-ons **Add-ons (Optional)**, so a reader no longer has to guess which part comes with the plugin and which is a choice.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+The hub is this repo's own developer page; a user of the plugins never sees it.
+
+**Score:** N/A
 
 #### Pull Request
 
