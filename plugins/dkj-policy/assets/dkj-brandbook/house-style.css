@@ -552,7 +552,7 @@ p { margin: 0; }
 .theme-settings__toggle:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
 .theme-settings__close, .theme-settings__toggle[aria-expanded="true"] .theme-settings__open { display: none; }
 .theme-settings__toggle[aria-expanded="true"] .theme-settings__close { display: block; }
-.theme-settings__open { fill: currentColor; stroke: none; }   /* the filled Material 'settings' gear (Maikel, November 1, 2026; an outline until then) */
+.theme-settings__open { fill: currentColor; stroke: none; }   /* the filled Bootstrap 'gear-fill' gear (Maikel, November 1, 2026; an outline until then) */
 .theme-settings__panel { position: absolute; top: calc(100% + var(--spacing-2)); right: 0; z-index: 20; display: grid; gap: var(--spacing-4);
   width: max-content; max-width: calc(100vw - 2 * var(--spacing-4)); max-height: calc(100dvh - var(--tap) - 2 * var(--spacing-5));
   overflow-y: auto; padding: var(--spacing-4); text-align: left; background: var(--bg-2); border: 1px solid var(--bg-3);
@@ -738,8 +738,16 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
   line-height: 1; letter-spacing: 0.02em; }
 .site-header__name { overflow: hidden; font-size: var(--text-h3); font-weight: var(--font-weight-bold); white-space: nowrap; text-overflow: ellipsis; }
 .site-header__tag { font-weight: var(--font-weight-regular); color: var(--bg-3); }
-.site-header .theme-settings__toggle { color: var(--bg-1); }   /* the header's own colour, as the name (Maikel, November 1, 2026) */
-.site-header .theme-settings__toggle:focus-visible { outline-color: var(--bg-1); }
+/* In the header the settings button is a square cell the full height of the bar at its right end, a shade lighter
+   than the header, its gear in the header's own colour (Maikel, November 1, 2026). */
+.site-header .theme-settings { flex: none; align-self: stretch; margin: calc(-1 * var(--spacing-3)) calc(-1 * var(--spacing-4)) calc(-1 * var(--spacing-3)) 0;
+  width: calc(var(--text-h1) + 2 * var(--spacing-1) + 2 * var(--spacing-3)); }   /* the bar's height: the mark (its line, its padding) and the bar's own padding */
+.site-header .theme-settings__toggle { width: 100%; height: 100%; border-radius: 0; color: var(--bg-1);
+  background: color-mix(in srgb, var(--primary) 85%, var(--bg-1)); }
+.site-header .theme-settings__toggle:hover,
+.site-header .theme-settings__toggle[aria-expanded="true"] { background: color-mix(in srgb, var(--primary) 75%, var(--bg-1)); }
+.site-header .theme-settings__toggle svg { width: var(--spacing-6); height: var(--spacing-6); }
+.site-header .theme-settings__toggle:focus-visible { outline-color: var(--bg-1); outline-offset: -4px; }
 .site-header + .breadcrumbs-bar { background: var(--bg-1); border-bottom: 1px solid var(--bg-3); }
 .site-header + .breadcrumbs-bar .breadcrumbs a { color: var(--primary-muted); }   /* Maikel, November 1, 2026; it was --fg-3 */
 .site-header + .breadcrumbs-bar .breadcrumbs a:focus-visible { outline-color: var(--primary-muted); }
