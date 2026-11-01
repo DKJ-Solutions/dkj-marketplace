@@ -474,7 +474,7 @@ $script:ProductBrandbookTokenGroups = @(
             @{ Label = 'Theme'; Cards = @('60', '30', '10') }
             @{ Label = 'Graphs & Status'; Cards = @('Graphs', 'Status') }
         ) }
-    @{ Slug = 'text'; Label = 'Text'; Cards = @('Type scale') }
+    @{ Slug = 'text'; Label = 'Text'; Cards = @('Type scale', 'Font family') }   # the sizes, and the one face token apart from them (Maikel, November 1, 2026)
     @{ Slug = 'radius'; Label = 'Radius'; Cards = @('Radius') }
     @{ Slug = 'spacing'; Label = 'Spacing'; Cards = @('Spacing scale') }
     @{ Slug = 'size'; Label = 'Size'; Cards = @('Sizes and elevation') }
