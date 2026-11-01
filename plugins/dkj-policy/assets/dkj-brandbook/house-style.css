@@ -219,14 +219,14 @@ body > header, main > header { display: flex; justify-content: space-between; al
 .page-cta { margin: var(--spacing-4) 0 0; }
 /* minmax(0, 1fr), never a bare 1fr: a 1fr track never shrinks below the min-content of its card, so one nowrap line
    wider than half the row widened the page past the viewport (#3614). .grid-3 and both steps down use the same form. */
-.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacing-4); }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacing-3); }
 /* .grid-3: the same group three to a row (owner, October 22, 2026), for short cards such as one link each; it takes
    .grid__head and .grid__full as .grid-2 does, and steps down to two columns, then one. */
-.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-4); }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-3); }
 /* The container the cards sit in always keeps at least --spacing-3 (12px) of padding (owner, October 28, 2026), so a
    card never touches the edge of its group. .card-grid carries the same padding for a repo's own card grid (its own
    columns in its own class beside it: <div class="card-grid my-cards">), which never sets a padding of its own. */
-:is(.grid-2, .grid-3, .card-grid) { padding: var(--spacing-3); }
+:is(.grid-2, .grid-3, .card-grid) { padding: var(--spacing-3-5); }   /* padding 3-5 and gap 3 (Maikel, November 1, 2026; was 3 and 4) */
 /* The group is a surface one step off the page (--bg-2), and each card in it one step further (--bg-3), so
    on a dark theme the group is a little lighter than the page and the cards a little lighter again (owner, October
    28, 2026). The steps run away from the page in both modes, so on a light theme each is a little darker. A card on
