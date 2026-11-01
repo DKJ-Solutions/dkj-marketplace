@@ -51,6 +51,7 @@ itself stays defined, and the specimen still shows it.
 - [x] The plain `h3` goes from light to bold (Maikel, asked after looking)
 - [x] Under a site header, the breadcrumb links take `--primary-muted` (was `--fg-3`); the current page keeps `--primary`
 - [x] The settings toggle is the icon alone in `--fg-1`: no fill, edge, shadow or hover colour
+- [x] Inside a site header the toggle takes the header's own colour (`--bg-1`), as the name does
 
 ### TEST
 
@@ -66,7 +67,8 @@ Stopwatch start line follow. The plain `h3` turns from light (300) to bold (700)
 bold as well. Under a site header, the breadcrumb links are `--primary-muted` instead of `--fg-3`, and the
 current page at the right end stays `--primary`; the bar standing on `--primary` is unchanged. The settings toggle
 is just its icon in the text colour (`--fg-1`): no round card, `--primary` edge or shadow behind it, and no
-colour change under the pointer or while it is open. `--font-weight-black` stays defined for an app that wants it, but no house
+colour change under the pointer or while it is open. Inside a site header it takes the header's own
+colour (`--bg-1`), as the app's name does. `--font-weight-black` stays defined for an app that wants it, but no house
 rule uses it any more.
 
 **Score:** 3

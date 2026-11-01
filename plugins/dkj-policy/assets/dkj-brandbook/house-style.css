@@ -737,6 +737,8 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
   line-height: 1; letter-spacing: 0.02em; }
 .site-header__name { overflow: hidden; font-size: var(--text-h3); font-weight: var(--font-weight-bold); white-space: nowrap; text-overflow: ellipsis; }
 .site-header__tag { font-weight: var(--font-weight-regular); color: var(--bg-3); }
+.site-header .theme-settings__toggle { color: var(--bg-1); }   /* the header's own colour, as the name (Maikel, November 1, 2026) */
+.site-header .theme-settings__toggle:focus-visible { outline-color: var(--bg-1); }
 .site-header + .breadcrumbs-bar { background: var(--bg-1); border-bottom: 1px solid var(--bg-3); }
 .site-header + .breadcrumbs-bar .breadcrumbs a { color: var(--primary-muted); }   /* Maikel, November 1, 2026; it was --fg-3 */
 .site-header + .breadcrumbs-bar .breadcrumbs a:focus-visible { outline-color: var(--primary-muted); }
