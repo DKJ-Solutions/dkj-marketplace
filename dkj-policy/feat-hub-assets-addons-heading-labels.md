@@ -64,21 +64,37 @@ The owner judges the headings on the hub's dkj-policy page by eye before this me
 ### TEST
 
 - [x] `dev-pages.tests.ps1` green (543 passed, 0 failed)
-- [ ] The owner has looked at /marketplace/dkj-policy and its brand book's Color page on the hub
+- [x] The owner has looked at /marketplace/dkj-policy and its brand book's Color page on the hub, and said ship it
 
 ### DEPLOY: feat/hub-assets-addons-heading-labels
 
-The hub's dkj-policy page now says what each section is to a repo that installs it: its house-style assets are headed **Assets (Always on)**, and its add-ons **Add-ons (Optional)**, so a reader no longer has to guess which part comes with the plugin and which is a choice. The brand book's Color page sets its series and status colours under one heading, **Graphs & Status**, where it had two. The card colour `--bg-2` stands a clearer step off the page `--bg-1` in every theme (1.09:1 to 1.10:1 on light, 1.04:1 to 1.05:1 on dark), because it was barely visible in some; `--bg-3` moves along so a card inside a group keeps its own step. And the brand book's series slots are renamed: `--cat-1`, `--cat-2` and `--cat-3` are now `--graph-1`, `--graph-2` and `--graph-3`, with the same values, the grey `--muted` is now `--primary-muted`, the four backgrounds `--paper-1` to `--paper-4` are `--bg-1` to `--bg-4`, and their specimen card is called **Graphs** instead of Categories, every colour swatch now carries its token's name inside it, the dark themes' grey `--primary-muted` sits in its primary's own hue with a little more colour (Lila's read blue), the card groups round at `--radius-3` (12px, was 16px), a new corner step `--radius-4` (16px) rounds the dialog and the drawer, and every corner on the scale now reads its token instead of a hard-coded pixel value; the card groups pad a little more and space their cards a little closer, the brand book's Tokens page is gone, its address landing on the overview's token groups; the status colours' card is called **Status** instead of Status and direction.
+The brand book's colour tokens are named for what they are, and its pages read more clearly.
 
-**Score:** 2
+- **Renamed tokens, same values:** `--paper-1..4` is `--bg-1..4`, `--muted` is `--primary-muted`, and the series
+  slots `--cat-1..3` are `--graph-1..3`. The old names are retired tokens and the README carries a rename table.
+- **Colour:** `--bg-2` stands a clearer step off the page (1.09:1 to 1.10:1 on light, 1.04:1 to 1.05:1 on dark; it
+  was barely visible in some themes), with `--bg-3` moving along. On dark, `--primary-muted` now takes its
+  primary's own hue with a little more colour, so Lila's grey no longer reads blue.
+- **Corners and spacing:** a new `--radius-4` (16px) rounds the dialog and the drawer, every corner on the scale
+  reads its token instead of a pixel value, and the card groups round at `--radius-3`, pad at `--spacing-3-5` and
+  space their cards at `--spacing-3`.
+- **The specimens:** every colour swatch carries its token's name inside it, centred, in a colour that reads on it in
+  every theme. The Color page groups its cards under **Theme** and **Graphs & Status**, with the cards **Graphs** and
+  **Status**, and the Tokens section's own page is gone: its address lands on the overview's token groups.
+- **The hub's dkj-policy page** heads its sections **Assets (Always on)** and **Add-ons (Optional)**.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-A DKJ-Solutions repo that takes this release's `house-style.css` and uses a series slot in its own domain layer must rename `var(--cat-N)` to `var(--graph-N)` `var(--muted)` to `var(--primary-muted)` and `var(--paper-N)` to `var(--bg-N)`, per the README's rename table of November 1, 2026: the old names are gone, with no alias, so an unrenamed use loses its colour, and the house-style gate now reports each one as a retired token. The hub's relabelled headings reach no plugin user.
+A DKJ-Solutions repo that takes this release's `house-style.css` must rename, in its own domain layer,
+`var(--paper-N)` to `var(--bg-N)`, `var(--muted)` to `var(--primary-muted)` and `var(--cat-N)` to
+`var(--graph-N)`, per the README's rename table of November 1, 2026. There is no alias, so a use left behind loses
+its colour, and the house-style gate reports each one as a retired token.
 
 **Score:** 5
 
 #### Pull Request
 
-The brand book renames --muted, the series slots and the paper steps, widens the paper-2 step, and the hub relabels its sections
+The brand book renames its colour tokens (--bg-N, --primary-muted, --graph-N) and sharpens its pages
 
