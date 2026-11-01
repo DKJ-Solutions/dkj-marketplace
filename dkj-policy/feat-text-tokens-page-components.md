@@ -54,6 +54,7 @@ read as a plain `<p>`.
 - [x] `house-style.css`: four weight tokens, `--font-weight-light` 300 to `--font-weight-bold` 900, and every rule (the
   body too) sets its weight through one: 300 light, 400 regular, 600 semibold, 700 and 800 bold; the hub's stopwatch,
   masthead and consumer-dashboard layers likewise
+- [x] `h2` is semibold; `h3` is `--primary` and light (card titles keep their own `--fg-3` and semibold)
 - [x] `house-palette.tests.ps1` refuses a font weight set as a number in the stylesheet or those hub layers
 - [x] A section a token group shows is left off the overview, so Preview holds Themes alone
 - [x] `house-style.css`: `.eyebrow`, `.lead`, `.pos` and `.neg` gone, `.sub` gone into `.note`, the fill switches and comments with them
@@ -79,7 +80,8 @@ now holds Themes alone. The Headings specimen shows h1, h2 and h3.
 
 The house style gains four weight tokens, `--font-weight-light` (300), `--font-weight-regular` (500),
 `--font-weight-semibold` (700) and `--font-weight-bold` (900), and every rule now takes its weight from them, so all
-text is one step heavier: running text 500, h3 and card titles 700, h1 and h2 900. It drops five classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
+text is one step heavier: running text 500, card titles 700, h1 900. h2 is semibold (700), and h3 turns light (300)
+and takes the theme's colour, `--primary`, instead of `--fg-3`. It drops five classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
 body size read as a plain `<p>`; and `.sub`, merged into `.note`, the one quiet-text class, which had the same colour
 and size; and `.pos` and `.neg`, the colours of `.delta--up` and `.delta--down` without the weight.
 

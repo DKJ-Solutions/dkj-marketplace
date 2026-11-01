@@ -262,11 +262,12 @@ body > header, main > header { display: flex; justify-content: space-between; al
 
 /* ---- Typography ----------------------------------------------------------- */
 /* Every heading is in the body sans: h1 since October 24, 2026 (the owner; it was set in --font-serif, and in
-   capitals), h2 since the same day. h1 stands apart from h2 by its size step and the weight it shares with it,
-   with its tracking pulled in slightly, as a large sans wants. */
+   capitals), h2 since the same day. h1 stands apart from h2 by its size step and its weight,
+   with its tracking pulled in slightly, as a large sans wants. h2 is one step lighter, semibold (Maikel,
+   November 1, 2026). */
 h1 { font-weight: var(--font-weight-bold); letter-spacing: -0.01em; }
-h2 { font-weight: var(--font-weight-bold); }   /* bold since October 24, 2026 (owner); it was semibold */
-/* h1 and h2 are --primary, h3 --fg-3 (owner, October 24, 2026: h2 back in the colour, now 24px in the sans under
+h2 { font-weight: var(--font-weight-semibold); }   /* semibold since November 1, 2026 (Maikel); bold from October 24 */
+/* h1, h2 and h3 are --primary (h3 since November 1, 2026, Maikel; it was --fg-3) (owner, October 24, 2026: h2 back in the colour, now 24px in the sans under
    the h1; from October 19 it was --fg-2, because an h2 in the h1's colour read too much like it, and #3235 moved h2
    and h3 to the text steps). On a fill the paper is the text: .fill-primary and
    .fill-inverse at the end of this file switch every heading to --bg-1, so an h2 reads on the page and on the
@@ -274,7 +275,7 @@ h2 { font-weight: var(--font-weight-bold); }   /* bold since October 24, 2026 (o
    zero specificity, so a heading inside a coloured container (or one an app colours itself) wins without an override. */
 :where(h1) { color: var(--primary); }
 :where(h2) { color: var(--primary); }
-:where(h3) { color: var(--fg-3); }
+:where(h3) { color: var(--primary); }
 /* h1 is in its own case (owner, October 24, 2026; it was set in capitals from #3247). */
 h1 { font-size: var(--text-h1); margin: 0; }
 /* The h1 is never framed (owner, October 28, 2026): no border, outline, shadow or background of its own, and the
@@ -285,7 +286,7 @@ h2 { font-size: var(--text-h2); margin: 0 0 var(--spacing-1); }
    sit almost exactly mid-line, so 1px corrects the rest. */
 h2 { display: flex; align-items: center; }
 h2 .info-button { top: 1px; }
-h3 { font-size: var(--text-h3); margin: 0 0 var(--spacing-2); font-weight: var(--font-weight-semibold); }
+h3 { font-size: var(--text-h3); margin: 0 0 var(--spacing-2); font-weight: var(--font-weight-light); }   /* light since November 1, 2026 (Maikel) */
 /* There is no h4, h5 or h6: the scale ends at h3 (owner, October 25, 2026; h6 went on October 20). */
 /* The h1 with a "?" right of it that explains the page in a .tooltip--explain on hover or focus, so nothing sits
    under the h1 (Maikel, October 31, 2026; rule 5 of the README holds). The row's gap is the space. */
