@@ -49,11 +49,12 @@ read as a plain `<p>`.
 ### CREATE
 
 - [x] `dev-pages-lib.ps1`: a token group's heading may name a `Section`, and then shows every card of that section in
-  its own grid; the Text group gets Tokens (Font size, Font family) and Components (the Text section)
-- [x] The overview's Text card counts both halves (6 specimens)
+  its own grid; the Text group gets Tokens (Font size, Font family, Font weight) and Components (the Text section)
+- [x] The overview's Text card counts both halves (7 specimens)
+- [x] `house-style.css`: four weight tokens, `--font-weight-light` 300 to `--font-weight-bold` 700
 - [x] A section a token group shows is left off the overview, so Preview holds Themes alone
 - [x] `house-style.css`: `.eyebrow` and `.lead` gone, `.sub` gone into `.note`, the fill switches and comments with them
-- [x] `specimens.html`: the Type scale card is Font size, the Headings card shows h1, h2, h3, the Running text card drops its `.lead` row; the fill specimens' quieter line is a `.note`
+- [x] `specimens.html`: the Type scale card is Font size, a new Font weight card shows the four weight tokens, the Headings card shows h1, h2, h3, the Running text card drops its `.lead` row; the fill specimens' quieter line is a `.note`
 - [x] The hub: `Format-GeneralPageHtml`'s `-Eyebrow` (drawn only without a site header, which no caller had) removed
   with its callers; the consumer dashboard's two `.sub` lines are `.note`
 - [x] The brand book README and the `dkj-brandbook` skill name `.note` instead of `.sub` and `.eyebrow`, and no longer offer `.lead`
@@ -68,12 +69,13 @@ read as a plain `<p>`.
 
 ### DEPLOY: feat/text-tokens-page-components
 
-The brand book's Text token page sets its two token cards, Font size and Font family, under an h2 Tokens, and the
+The brand book's Text token page sets its three token cards, Font size, Font family and Font weight, under an h2 Tokens, and the
 Text section's own specimens (headings, running text, numbers, messages) under an h2 Components, so the type tokens
 and the type they produce read on one page. A token group's heading can now name a whole section to show, and that section leaves the overview's Preview, which
 now holds Themes alone. The Headings specimen shows h1, h2 and h3.
 
-The house style drops three classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
+The house style gains four weight tokens, `--font-weight-light` (300), `--font-weight-regular` (400),
+`--font-weight-semibold` (600) and `--font-weight-bold` (700), and drops three classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
 body size read as a plain `<p>`; and `.sub`, merged into `.note`, the one quiet-text class, which had the same colour
 and size.
 

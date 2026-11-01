@@ -148,6 +148,9 @@
   --radius-1: 4px; --radius-1-5: 6px; --radius-2: 8px; --radius-2-5: 10px; --radius-3: 12px; --radius-4: 16px; --radius-pill: 999px;
   /* the face of code in .prose */
   --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+  /* the four font weights, same in both modes (Maikel, November 1, 2026): light for a quiet value, regular for running
+     text, semibold for h3 and card titles, bold for h1 and h2 (the older rules above keep their literals) */
+  --font-weight-light: 300; --font-weight-regular: 400; --font-weight-semibold: 600; --font-weight-bold: 700;
 
   /* native controls (checkbox, radio, range, progress) and the text caret take the theme */
   accent-color: var(--primary);
