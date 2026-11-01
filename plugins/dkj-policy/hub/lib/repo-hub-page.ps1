@@ -128,7 +128,7 @@ function Format-PluginRepoHubHtml {
         [void]$sb.AppendLine('        Ports   = 5173..5180')
         [void]$sb.AppendLine('    }')
         [void]$sb.AppendLine('}</code></pre>')
-        [void]$sb.AppendLine('<p class="muted">Every field, and the rules for <code>Command</code>, are in the dkj-policy plugin''s <code>hub/README.md</code>, under &quot;The dev-preview hook&quot;.</p>')
+        [void]$sb.AppendLine('<p class="note">Every field, and the rules for <code>Command</code>, are in the dkj-policy plugin''s <code>hub/README.md</code>, under &quot;The dev-preview hook&quot;.</p>')
         [void]$sb.AppendLine('</div>')
         [void]$sb.AppendLine('</section>')
         [void]$sb.AppendLine('<section class="card grid__full">')
@@ -138,13 +138,13 @@ function Format-PluginRepoHubHtml {
         [void]$sb.AppendLine('<pre class="ph-code"><code>"workbench.externalUriOpeners": {')
         [void]$sb.AppendLine('    "localhost:4890": "simpleBrowser.open"')
         [void]$sb.AppendLine('}</code></pre>')
-        [void]$sb.AppendLine('<p class="muted">The toolbox takes the first free port from 4890 to 4899, so a repo opened beside others may get a later one; the session-start line names the port it got.</p>')
+        [void]$sb.AppendLine('<p class="note">The toolbox takes the first free port from 4890 to 4899, so a repo opened beside others may get a later one; the session-start line names the port it got.</p>')
         [void]$sb.AppendLine('</div>')
         [void]$sb.AppendLine('</section>')
         [void]$sb.AppendLine('</div>')
     }
 
-    [void]$sb.AppendLine('<p class="footer-note">Each page names its own source. Served on 127.0.0.1 only, by the dkj-policy plugin''s <code>hub/pages/serve-general-pages.ps1</code>.</p>')
+    [void]$sb.AppendLine('<p class="note">Each page names its own source. Served on 127.0.0.1 only, by the dkj-policy plugin''s <code>hub/pages/serve-general-pages.ps1</code>.</p>')
     [void]$sb.AppendLine('</main>')
     [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", width: "Width", fluid: "Fluid", phone: "Phone", full: "Full" });</script>')
     # The fit alarm, as Format-GeneralPageHtml closes every page below this one (#3558).

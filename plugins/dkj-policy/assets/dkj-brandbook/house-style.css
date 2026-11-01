@@ -69,8 +69,8 @@
      line (borders, row dividers, meter track, gridlines) and the tinted surfaces (an accent table head, a hover, a
      today row, the accent dialog); bg-4 a stronger border (an open card, a selected box). --primary the
      highlight: links (owner's decision, October 15, 2026), the primary button's fill (#109), the picker's dot, h1,
-     the states (hover, sorted) and native controls through accent-color. --primary-muted the eyebrow, sub lines, notes,
-     .muted, the tile label, the fills (switches, info badges, a pressed .seg), most focus
+     the states (hover, sorted) and native controls through accent-color. --primary-muted the eyebrow, sub lines, .note,
+     the tile label, the fills (switches, info badges, a pressed .seg), most focus
      rings and meters (a ring on a sort header, a .seg button, a chart bar or the read-more toggle is --primary). fg-1 every paragraph and an inverted surface (.fill-inverse, the showcase's panel); fg-2 h2 and .meta on a span; fg-3 h3;
      fg-4 no role yet. The breadcrumb bar stands on --primary, with the paper steps as its text. On a fill the text switches: on .fill-primary the paper is the text, so an h2
      is --bg-1 there and --fg-2 on the page (owner, #3235: "h2 heeft niet altijd dezelfde kleur", an h2 does not always have the same colour).
@@ -209,11 +209,11 @@ body > header, main > header { display: flex; justify-content: space-between; al
 .controls .seg, .controls .btn { height: 30px; box-sizing: border-box; }
 .controls .btn { display: inline-flex; align-items: center; padding: 0 var(--spacing-2-5); }
 /* Page column (#141): put it on <main> and its blocks stack with one --spacing-3 gap between them (owner, October 28, 2026; it was --spacing-5), the hub's
-   rhythm. .card, .tiles, .notice and .footer-note carry a margin-top of their own, which would add to the gap, so a
+   rhythm. .card, .tiles, .notice and .note carry a margin-top of their own, which would add to the gap, so a
    direct child of the column gives it up. .page-cta is the spacing of a primary button under the lead (a <p> that holds
    the button). */
 .page-column { display: grid; gap: var(--spacing-3); align-content: start; padding: var(--spacing-4) var(--spacing-4) var(--spacing-12); }
-.page-column > .card, .page-column > .tiles, .page-column > .notice, .page-column > .footer-note { margin-top: 0; }
+.page-column > .card, .page-column > .tiles, .page-column > .notice, .page-column > .note { margin-top: 0; }
 /* An in-page anchor in the column lands with room above it, clear of the settings button (#156). */
 .page-column [id] { scroll-margin-top: 5rem; }
 .page-cta { margin: var(--spacing-4) 0 0; }
@@ -302,11 +302,11 @@ h3 { font-size: var(--text-h3); margin: 0 0 var(--spacing-2); font-weight: 600; 
    5.5px. A tenth of the h1's size (3.2px) puts the "?" between the two, and scales with the h1. */
 .page-title .page-info-button { transform: translateY(calc(var(--text-h1) * 0.1)); }
 .page-info-button:focus-visible { outline: 2px solid var(--primary); outline-offset: -4px; }
-.muted { color: var(--primary-muted); font-size: var(--text-sm); }
 .meta { font-size: var(--text-sm); color: var(--fg-2); white-space: nowrap; }
+/* The one quiet-text class (Maikel, November 1, 2026): a note under something, a quiet word in a line, the line that
+   closes a page. It absorbed .muted and .footer-note, which looked exactly like it. */
 .note { font-size: var(--text-sm); color: var(--primary-muted); margin-top: var(--spacing-1); }
-.footer-note { color: var(--primary-muted); font-size: var(--text-sm); margin-top: var(--spacing-6); }
-/* Sub lines (.sub, .dialog__sub) , notes (.note, .footer-note) and .muted are --primary-muted, on a <p> too (owner's decision,
+/* Sub lines (.sub, .dialog__sub) and .note are --primary-muted, on a <p> too (owner's decision,
    October 15, 2026). Any other paragraph is --fg-1, the far end (owner's decision, October 14, 2026): .meta on a <p> takes
    it too, while the same class on a span or a div stays --fg-2. A <p> in a status colour, or on an --fg-1 surface,
    sets its own. */
@@ -351,7 +351,7 @@ p, p.meta { color: var(--fg-1); }
 .hero { display: flex; flex-wrap: wrap; gap: var(--spacing-6) var(--spacing-12); align-items: flex-end; }   /* use with .card */
 .hero .value { font-size: var(--text-h1); font-weight: 600; line-height: 1.1; color: var(--fg-1); }
 .tile { background: var(--bg-2); border: 1px solid var(--bg-3); border-radius: var(--radius-3); padding: var(--spacing-3-5) var(--spacing-4); }
-.tile .label { color: var(--primary-muted); font-size: var(--text-sm); }   /* a muted grey, as .muted: the figure leads (owner, October 20, 2026) */
+.tile .label { color: var(--primary-muted); font-size: var(--text-sm); }   /* a quiet grey, as .note: the figure leads (owner, October 20, 2026) */
 .tile .v { font-size: var(--text-lg); font-weight: 600; margin-top: var(--spacing-0-5); }
 .mini-card { border: 1px solid var(--bg-3); border-radius: var(--radius-2-5); padding: var(--spacing-3) var(--spacing-3-5); }
 .mini-card--highlight { border-color: var(--warning-3); }
@@ -797,7 +797,7 @@ a.menu-item:hover { background: var(--bg-3); }
    --fg-2 on the page (the owner: an h2 does not always have the same colour), a quieter line --bg-3. On
    .fill-inverse the ground is --fg-1, the paper is the text and --bg-4 the quieter line (15:1 or better on it).
    The text and the quieter lines weigh (0,2,0): :is() takes the weight of its strongest argument, a class, so they
-   beat .sub, .muted, p.meta and the zero-weight headings, and the quieter line wins over the text because it comes
+   beat .sub, .note, p.meta and the zero-weight headings, and the quieter line wins over the text because it comes
    after it. A link weighs (0,1,0), enough to beat the zero-weight house link and light enough that a .btn or an app's
    own class on an <a> keeps its colours. A component inside a fill keeps its own colours, so a .btn--primary on
    .fill-primary does not show: use an outline button there. */
@@ -805,8 +805,8 @@ a.menu-item:hover { background: var(--bg-3); }
 .fill-inverse { background: var(--fg-1); color: var(--bg-1); }
 .fill-primary :is(h1, h2, h3, p, .lead, .msg, .meta, .card__title),
 .fill-inverse :is(h1, h2, h3, p, .lead, .msg, .meta, .card__title) { color: var(--bg-1); }
-.fill-primary :is(.sub, .muted, .note, .footer-note, .card__sub, .eyebrow) { color: var(--bg-3); }
-.fill-inverse :is(.sub, .muted, .note, .footer-note, .card__sub, .eyebrow) { color: var(--bg-4); }
+.fill-primary :is(.sub, .note, .card__sub, .eyebrow) { color: var(--bg-3); }
+.fill-inverse :is(.sub, .note, .card__sub, .eyebrow) { color: var(--bg-4); }
 .fill-primary :where(a:any-link), .fill-inverse :where(a:any-link) { color: var(--bg-1); }
 .fill-primary :where(a:any-link:focus-visible), .fill-inverse :where(a:any-link:focus-visible) { outline-color: var(--bg-1); }
 

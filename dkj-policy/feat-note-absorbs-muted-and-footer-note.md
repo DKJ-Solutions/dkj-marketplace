@@ -41,17 +41,27 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-style.css`: the `.muted` and `.footer-note` rules go; `.note` is the one quiet-text class, and the page column, the fill switches and the comments name it alone
+- [x] README: a rename section with its table (`.muted`, `.footer-note` -> `.note`); every current-state mention follows, the dated history tables are left as written
+- [x] The house's own markup follows: `specimens.html` (the Text page's two rows go, the hero label and the shell note), both patterns, the hub's page shell, `repo-hub-page.ps1`, the consumer dashboard and the dev pages
+- [x] The suites that read `class="footer-note"` read `class="note"`: dev-pages, consumer-dashboard and dev-preview-sessionstart, all green
+- [x] Filed #3716: the release-notes map still points `ink-faint` at the retired `--muted` token (a different subject, found here)
 
 ### TEST
 
+- [ ] The owner has looked at the brand book's Text page and a hub page's footer note
+
 ### DEPLOY: feat/note-absorbs-muted-and-footer-note
 
-**Score:**
+The house style has one class for quiet text, `.note`. `.muted` and `.footer-note` drew the same `--primary-muted` text at `--text-sm` under three names, told apart only by a top margin the page column already took away, so they are retired into `.note` (Maikel, November 1, 2026). The README carries the rename table, and every page the hub and the dashboards render uses `.note`, so nothing here looks different.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+An app taking this release renames `.muted` and `.footer-note` to `.note` in its own markup, by the README's table. A use left behind loses its grey and reads as plain text, without an error, so the rename has to be done rather than noticed.
+
+**Score:** 4
 
 #### Pull Request
 

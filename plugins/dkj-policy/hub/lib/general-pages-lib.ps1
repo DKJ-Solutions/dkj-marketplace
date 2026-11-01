@@ -251,7 +251,7 @@ function Format-GeneralPageHtml {
             $script:LongPageSectionLimit + ' becomes an overview of cards, each opening a page of its own: the house style''s page rule (#3563).</p>')
     }
     [void]$sb.Append($Body)
-    if ($FooterNote) { [void]$sb.AppendLine('<p class="footer-note">' + $FooterNote + '</p>') }
+    if ($FooterNote) { [void]$sb.AppendLine('<p class="note">' + $FooterNote + '</p>') }
     [void]$sb.AppendLine('</main>')
     [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", width: "Width", fluid: "Fluid", phone: "Phone", full: "Full" });</script>')
     if ($Info -and -not $Bare) { [void]$sb.AppendLine((Get-PageInfoScript)) }
@@ -1577,7 +1577,7 @@ function Format-ReleaseNotesDevPage {
         follow whichever theme is picked and the served page reads house colour tokens only; nothing in the
         house file is redefined. Then a layer gives the template's column, masthead, sheet and colophon the Stopwatch page's
         measures (owner, October 25, 2026): the page column's width, padding and gap, the house h1, a
-        .card's border and radius, and a .footer-note's ink. Its width rules keep winning on specificity.
+        .card's border and radius, and a .note's ink. Its width rules keep winning on specificity.
 
         A page that is not the template's shape (no <html>, </style>, <body> or </body>) is returned as it
         came: it is still the release notes, and dev-pages.tests.ps1 holds the real template to that shape.
@@ -1605,7 +1605,7 @@ function Format-ReleaseNotesDevPage {
         '<link rel="stylesheet" href="/house-style.css">'
         '<script src="/house-theme.js"></script>'
         '<style>'
-        '/* The template''s layout, read as the Stopwatch page''s: main.page-column, a house h1, a .card, a .footer-note. */'
+        '/* The template''s layout, read as the Stopwatch page''s: main.page-column, a house h1, a .card, a .note. */'
         '.wrap { max-width: 1080px; display: grid; gap: var(--spacing-5); align-content: start; padding: var(--spacing-4) var(--spacing-4) var(--spacing-12); }'
         'header.masthead { padding: 0; }'
         'header.masthead h1 { font-family: inherit; font-size: var(--text-h1); font-weight: 700; letter-spacing: -0.01em; line-height: normal; text-transform: none; color: var(--primary); }'

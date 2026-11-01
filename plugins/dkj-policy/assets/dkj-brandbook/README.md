@@ -113,7 +113,7 @@ primary outweighs its paper has spent the 30% as ground.
 | Direction | `--positive-3` and `--negative-3` (also the gain and the loss in charts, so a direction chart can share a view with any series), `--positive-5`, `--negative-5` (numbers in text) | result and direction, never a category. `--positive-5`/`--negative-5` are the text versions of `--positive-3`/`--negative-3`, a step more contrast so a number reads as text: darker on light, lighter on dark |
 | Status | `--positive-3`, `--warning-3`, `--negative-3`, `--warning-5`, `--warning-1`, `--negative-1`, `--positive-1` | badges, meters, notices. `--warning-1`, `--negative-1` and `--positive-1` are the backgrounds of a warning, negative or positive message. The mark inside a status icon (check, cross, "!") is `--bg-1` |
 | Primary | `--primary` | the theme's colour, **one** step (owner, #3235, October 21, 2026): the most saturated colour of the theme's hue that reads on all four paper steps, so the paper reads on it too. **The highlight**: `h1`, the fill of `.btn--primary` (a filled main action, like the filled icon button; #109) and of `.fill-primary`, a state (hover, pressed, sorted, active, today), `strong`, list markers, links, a value meant to stand out, the accent dialog's title and the settings panel's title, and native controls through `accent-color` |
-| Grey | `--primary-muted` | a grey of the theme's colour, for what may recede: it reads extra well (7:1) on the page. `--primary-muted` is the eyebrow, every sub line (`.sub`, `.dialog__sub`, a component's `-sub`), every note (`.note`, `.footer-note`, `.muted`, on a `<p>` too), the tile label, the pressed `.seg` button, `.badge--info`, `.meter--info`, focus rings, meters and the `--accent` modifiers ([below](#how-far-a-theme-reaches)); on an inverted surface (`.fill-inverse`) those roles take `--bg-4` (`--muted-inverse` until November 1, 2026). Never a status or a number |
+| Grey | `--primary-muted` | a grey of the theme's colour, for what may recede: it reads extra well (7:1) on the page. `--primary-muted` is the eyebrow, every sub line (`.sub`, `.dialog__sub`, a component's `-sub`), every note (`.note`, on a `<p>` too), the tile label, the pressed `.seg` button, `.badge--info`, `.meter--info`, focus rings, meters and the `--accent` modifiers ([below](#how-far-a-theme-reaches)); on an inverted surface (`.fill-inverse`) those roles take `--bg-4` (`--muted-inverse` until November 1, 2026). Never a status or a number |
 | Text | `--fg-1` … `--fg-4` | what sits **on** the paper: four colours near black on light (near white on dark), in **very small** steps, so `fg-4` is still very dark, only a little less so than `fg-1` (owner, #3235). `fg-1` is **all text**, every paragraph and everything else: labels, table heads, legends, quiet icons, the text on a tinted surface, and the ground of an inverted surface; `fg-2` is `h2` and `.meta` on a span; `fg-3` is `h3`; `fg-4` has no role yet (the breadcrumb's current page took it until the bar turned `--primary`, #3235). On a fill the text switches to the paper ([Fills](#fills-the-text-switches-with-the-ground)) |
 | Elevation | `--shadow-pop` | tooltips |
 | Spacing | `--spacing-0-5` … `--spacing-96` | the spacing scale, same in both modes: `--spacing-N` is N × 4px, a half step (`-0-5`, `-1-5`, …) adds 2px. Every gap, margin and padding uses one, and a repo layer spaces its own components from the same scale |
@@ -369,7 +369,22 @@ backgrounds. Every value is unchanged, so nothing looks different:
 
 **An app that takes this update renames each use in its own layer** by the table. The old names are retired
 tokens, so the gate reports a use left behind; one that slips past loses its colour rather than raising an error.
-The class `.muted` keeps its name.
+
+### One quiet-text class: `.note` (November 1, 2026)
+
+**`.muted` and `.footer-note` are retired into `.note`** (Maikel, November 1, 2026). All three were `--primary-muted`
+at `--text-sm`, so on the page they were the same text under three names; only a top margin told them apart, and in a
+`.page-column`, where every footer note stands, the column already took that margin away. `.note` is now the one
+class for quiet text: a note under something, a quiet word in a line, and the line that closes a page.
+
+| Was | Now |
+|---|---|
+| `.muted` | `.note` |
+| `.footer-note` | `.note` |
+
+**An app that takes this update renames each use in its own markup** by the table. A use that slips past loses its
+grey and reads as plain text rather than raising an error. A footer note outside a `.page-column` loses its
+`--spacing-6` top margin with the class; the layout around it sets that space now.
 
 ## Themes: the user picks the colour
 
@@ -567,12 +582,12 @@ out). Three more things follow it by default, in light and in dark (and a measur
 reads on the page and on the primary alike, so it is not one colour: `--fg-2` on the page, `--bg-1` on a
 primary fill.
 
-| Class | Ground | Text | A quieter line (`.sub`, `.muted`, `.note`, `.eyebrow`, `.card__sub`) |
+| Class | Ground | Text | A quieter line (`.sub`, `.note`, `.eyebrow`, `.card__sub`) |
 |---|---|---|---|
 | `.fill-primary` | `--primary` | `--bg-1`: headings, paragraphs, `.lead`, `.msg`, `.meta`, `.card__title` and links | `--bg-3` (all four paper steps read on the primary) |
 | `.fill-inverse` | `--fg-1` | `--bg-1`, the same elements | `--bg-4` (15:1 or better on `--fg-1`) |
 
-The switch is written with `:is()` and stands last in the stylesheet, so it beats `.sub`, `.muted`, `p.meta` and the
+The switch is written with `:is()` and stands last in the stylesheet, so it beats `.sub`, `.note`, `p.meta` and the
 zero-weight headings without an `!important`, and a quieter line on a `<p>` keeps its quieter colour. A link weighs
 only one class, so a `.btn` or an app's own class on an `<a>` keeps its colours; its focus ring turns `--bg-1`. A
 component an app puts inside a fill (a button, a badge) keeps its own colours, so a `.btn--primary` on
@@ -589,12 +604,12 @@ the page header (`body > header`, `main > header`, with `.header--accent`) and i
 sortable headers via `.sort`/`.arrow` on `aria-sort`), `.seg` (a segmented switch), `.legend`/`.legend__item` (with
 `--line`), `.swatch`, `.badge` (with `--good`, `--warn`, `--bad`, `--info`, `--neutral`, `--sm`),
 `.badge-row`, `.badge-list` (a `<ul>` of `.badge-row` items), `.meter` (with `--good`, `--warn`, `--bad`, `--info`), `.mini-cards`/`.mini-card` (with
-`--highlight`), `.item-grid`/`.item`, `.notice`, `.note`, `.meta`, `.muted`, `.sub`, `.eyebrow`, `.lead`, `.msg` (with `--warn`), `.facts` (with `--row`: the facts as one row on the page, label over value, no card), `.fill-primary`, `.fill-inverse`, `.page-column`, `.page-title` (the `h1` with a `.page-info-button` right of it, a drawn "?" on a 24px ring with a 1px solid border, in a 44px button, whose `.tooltip--explain` says what the page is about on hover or focus), `.page-cta`, `.num` (tabular
+`--highlight`), `.item-grid`/`.item`, `.notice`, `.note`, `.meta`, `.sub`, `.eyebrow`, `.lead`, `.msg` (with `--warn`), `.facts` (with `--row`: the facts as one row on the page, label over value, no card), `.fill-primary`, `.fill-inverse`, `.page-column`, `.page-title` (the `h1` with a `.page-info-button` right of it, a drawn "?" on a 24px ring with a 1px solid border, in a 44px button, whose `.tooltip--explain` says what the page is about on hover or focus), `.page-cta`, `.num` (tabular
 numerals), `.delta` (with `--up`/`--down`, aliased `.pos`/`.neg`), `.btn` (with `--primary`, and a `:hover`, `:focus-visible` and `:disabled` state for both), `.info-button`, `.tooltip`
 (with `--explain`, and `--open` for one anchored to a trigger), `.more` (a disclosure), `.moretoggle` (a full-width read-more button), `.chart` (the SVG chart scope),
 `.theme-picker` (with `__row`, `__label`, `__swatches`), `.theme-swatch` (with `--light`, `--dark`) and
 `.theme-settings` (with `--floating`, `__toggle`, `__open`, `__close`, `__panel`, `__title`, `__group`,
-`__label`, `__picker`, `__width`, `__foot`, `__extra`, `__reset`), which `house-theme.js` draws, and `.footer-note`. The app components
+`__label`, `__picker`, `__width`, `__foot`, `__extra`, `__reset`), which `house-theme.js` draws. The app components
 ([below](#app-components-from-mesowise)) reserve these too: `.container--narrow`/`main.narrow`, `.field`
 (with `__error`), `.btn--touch`, `.btn--block`, `.icon-btn` (with `--ghost`), `.action-row`, `.dialog`
 (with `__body`, `__head` (with `--two`, `--back`), `__title`, `__sub`, `__close` (with `--save`,
@@ -812,7 +827,7 @@ the open issues and the pull requests moved to the **Repository** page on `/repo
 | 2 | The breadcrumb bar under it: the one crumb **Tools** ([above](#every-page-the-breadcrumb-bar)) | `.breadcrumbs-bar` / `.breadcrumbs` | fixed |
 | 3 | **The pages**, every one a card of its own, in this order: the repo's products, its own pages with **Repository** among them, and the general pages but Issues, those of a group behind its one card (below) | one `.grid-3`, **no** `.grid__head`, holding one `.card.card--link` per page or group | fixed form; the products and the repo's own pages are the repo's own |
 | 4 | Only where the plugin's hub serves a repo that states no product: the two **Set up a product** cards, under their own `h2` | a `.grid-2` with a `.grid__head`, then one `.card.grid__full` per step | the plugin's own text |
-| 5 | A footer note naming where the data comes from | `.footer-note` | the repo's own source |
+| 5 | A footer note naming where the data comes from | `.note` | the repo's own source |
 
 **The Repository page, on `/repository`, under the same site header, its trail Tools > Repository:**
 
@@ -822,7 +837,7 @@ the open issues and the pull requests moved to the **Repository** page on `/repo
 | 1 | **The facts**, as one row on the page rather than in a card: label over value | `.facts.facts--row` (a `<dl>`) | the facts are the repo's own |
 | 2 | **Its pages**, a card each: **Issues** first, then the repo's pages on GitHub (its pull requests, its CI runs) where it has a GitHub remote | one `.grid-3` of `.card.card--link` | Issues fixed; the GitHub cards the repo's own |
 | 3 | Where a repo keeps in-flight lists: one stat tile per list, the loading or warning line, and **In flight**, one data card per list under one `h2` | `.tiles` / `.tile`; `.msg` with `role="status"` / `.msg.msg--warn` with `role="alert"`; a `.grid-2` with a `.grid__head`, then one `.card.grid__full` per list around `.table-wrap` / `.table` | the repo's own lists. A count not read yet shows `--` |
-| 4 | A footer note naming where the data comes from | `.footer-note` | the repo's own source |
+| 4 | A footer note naming where the data comes from | `.note` | the repo's own source |
 
 A repo with no in-flight lists leaves block 3 out; this source repo's hub and the plugin's are both such
 repos. **An open issue is not listed twice**: where the **Issues** card is on the page, an in-flight issues
@@ -898,7 +913,7 @@ hit exactly this with an intro that was a `<header>`.
 
 **The form is complete from `house-style.css`** ([#141](https://github.com/DKJ-Solutions/dkj-brandbook/issues/141)).
 Every block above has a house class. The blocks stack in the page column, `.page-column` on `<main>`, which
-takes the top margin of its direct `.card`, `.tiles`, `.notice` and `.footer-note`, so they sit one
+takes the top margin of its direct `.card`, `.tiles`, `.notice` and `.note`, so they sit one
 `--spacing-5` apart; `.grid-2` does the same for a direct `.card`, `.tiles` or `.notice`, so its rows sit
 one `--spacing-4` apart ([#207](https://github.com/DKJ-Solutions/dkj-brandbook/issues/207)), and
 `.grid__head` and `.grid__full` span every column of it. An in-page anchor scrolls to `5rem` below the top,
