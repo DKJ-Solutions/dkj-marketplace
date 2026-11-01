@@ -268,7 +268,7 @@ Assert-True ($bwj -match '<h1>BWJ repos</h1>' -and $bwj -match 'No repo owned by
 Assert-Equal '3 repos &#183; 1 needs action &#183; 2 in sync' (Format-DashboardGroupSummary @(@{ Status = 'good' }, @{ Status = 'bad' }, @{ Status = 'good' })) 'a group summary counts its repos, then each status worst first'
 Assert-Equal '1 repo &#183; 1 not on this machine' (Format-DashboardGroupSummary @(@{ Status = 'skip' })) 'one repo is singular'
 Assert-Equal '2 repos &#183; 2 need action' (Format-DashboardGroupSummary @(@{ Status = 'bad' }, @{ Status = 'bad' })) 'and several agree with their verb'
-Assert-True ($html -match '\.cd-repo__name \{ margin: 0; font-weight: var\(--font-weight-semibold\); \}' -and $html -notmatch '<h4') 'a repo name is a bold line, not a heading: the house style has no h4 (October 25, 2026)'
+Assert-True ($html -match '\.cd-repo__name \{ margin: 0; font-weight: var\(--font-weight-bold\); \}' -and $html -notmatch '<h4') 'a repo name is a bold line, not a heading: the house style has no h4 (October 25, 2026)'
 Assert-True ($html -notmatch '<th>Errors</th>' -and $html -notmatch '<th>Notes</th>' -and ([regex]::Match($html, '<colgroup>.*?</colgroup>').Value -split '<col ').Count -eq 6) 'the overview has no Errors or Notes column: five columns, five widths'
 Assert-True ($html -notmatch '>Main</th>' -and $html -notmatch '>Checkout</th>' -and $html -notmatch 'behind') 'the overview has no Main or Checkout column, and nothing measures a trunk against origin'
 $failed = Format-ConsumerDashboardHtml -Consumers @() -Meta @{ GeneratedAt = 'now'; SourceCommit = ''; Seconds = $null; CheckFailed = 'boom <b>' }

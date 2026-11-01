@@ -139,16 +139,16 @@ Assert-True ($LASTEXITCODE -ne 0) '-Apply refuses a stylesheet without its three
 Remove-Item -LiteralPath $scratch -ErrorAction SilentlyContinue
 
 Write-Host '-- the font weights: only the four tokens' -ForegroundColor Cyan
-# Maikel, November 1, 2026: a rule sets a weight through --font-weight-light/-regular/-semibold/-bold, never a number.
+# Maikel, November 1, 2026: a rule sets a weight through --font-weight-light/-regular/-bold/-black, never a number.
 # The stylesheet and the hub's own domain layers on top of it are held to that; the four definitions are the one exception.
 $weightFiles = @('plugins\dkj-policy\assets\dkj-brandbook\house-style.css', 'plugins\dkj-policy\hub\lib\general-pages-lib.ps1',
     'plugins\dkj-policy\hub\lib\stopwatch-lib.ps1', 'scripts\lib\consumer-dashboard-lib.ps1')
 foreach ($wf in $weightFiles) {
     $wText = [System.IO.File]::ReadAllText((Join-Path $RepoRoot $wf))
-    $literal = @([regex]::Matches($wText, 'font-weight:(?>\s*)(?!var\(--font-weight-(light|regular|semibold|bold)\))[^;}''"]+') | ForEach-Object { $_.Value })
+    $literal = @([regex]::Matches($wText, 'font-weight:(?>\s*)(?!var\(--font-weight-(light|regular|bold|black)\))[^;}''"]+') | ForEach-Object { $_.Value })
     Assert-Equal '' ($literal -join ', ') "$wf sets no font weight but through a token"
 }
-Assert-True ($css -match '--font-weight-light: 300; --font-weight-regular: 500; --font-weight-semibold: 700; --font-weight-bold: 900;') 'the four weight tokens are defined once, 300, 500, 700 and 900'
+Assert-True ($css -match '--font-weight-light: 300; --font-weight-regular: 500; --font-weight-bold: 700; --font-weight-black: 900;') 'the four weight tokens are defined once, 300, 500, 700 and 900'
 
 Write-Host ''
 Write-Host "house-palette: $script:pass passed, $script:fail failed."

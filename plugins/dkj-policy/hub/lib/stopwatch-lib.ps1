@@ -945,7 +945,7 @@ function Format-StopwatchChangePercent {
 
 function Format-StopwatchPageShell {
     <# The pieces the two pages share: the page's own style layer and the live-clock script. Names are the page's (sw-), house tokens only. #>
-    $style = '.sw-clock { font-size: var(--text-h1); font-weight: var(--font-weight-semibold); margin: var(--spacing-2) 0; }' + "`n" +
+    $style = '.sw-clock { font-size: var(--text-h1); font-weight: var(--font-weight-bold); margin: var(--spacing-2) 0; }' + "`n" +
         # Five cards to a row, then two and one on a narrow screen (the owner, October 24, 2026).
         # A grid of the page's own rather than a .grid-3, so a group takes no top margin; the space between groups is
         # .sw-groups' gap instead. The house .card-grid beside the page's own columns gives the group its padding and surface (the owner, October 28, 2026).
@@ -960,7 +960,7 @@ function Format-StopwatchPageShell {
         # A card is the house one (Format-HubCardLinkHtml, #3566), its lines in the house text sizes and nothing else
         # (the owner, October 24, 2026). On a run card the start is the card's header (base, 800), the prompt label the
         # least visible line under it (the description), and the time under it (the value) with its change beside it.
-        '.sw-run .menu-item__label { font-weight: var(--font-weight-bold); }' + "`n" +
+        '.sw-run .menu-item__label { font-weight: var(--font-weight-black); }' + "`n" +
         # A card is three lines at most (the owner, October 26, 2026): the label one line ending in an ellipsis, since a
         # Logbook label is the first line of a prompt, and a card's note beside its time. The run's page shows the label whole.
         '.sw-run .menu-item__sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }' + "`n" +
@@ -981,9 +981,9 @@ function Format-StopwatchPageShell {
         '.sw-change--bad { color: var(--negative-5); }' + "`n" +
         # A run card's speed (-CardTones, the Logbook's): its time line in colour, green fast, orange medium, red slow, and
         # no band along the card's edge (the owner, October 26, 2026).
-        '.sw-card--fast .sw-time, .sw-card--fast .sw-time .sw-change { color: var(--positive-5); font-weight: var(--font-weight-semibold); }' + "`n" +
-        '.sw-card--medium .sw-time, .sw-card--medium .sw-time .sw-change { color: var(--warning-5); font-weight: var(--font-weight-semibold); }' + "`n" +
-        '.sw-card--slow .sw-time, .sw-card--slow .sw-time .sw-change { color: var(--negative-5); font-weight: var(--font-weight-semibold); }' + "`n" +
+        '.sw-card--fast .sw-time, .sw-card--fast .sw-time .sw-change { color: var(--positive-5); font-weight: var(--font-weight-bold); }' + "`n" +
+        '.sw-card--medium .sw-time, .sw-card--medium .sw-time .sw-change { color: var(--warning-5); font-weight: var(--font-weight-bold); }' + "`n" +
+        '.sw-card--slow .sw-time, .sw-card--slow .sw-time .sw-change { color: var(--negative-5); font-weight: var(--font-weight-bold); }' + "`n" +
         '.sw-left { text-align: left; }' + "`n" +
         '.sw-bar { display: block; min-width: var(--spacing-24); height: var(--spacing-2); background: var(--bg-3); border-radius: var(--spacing-1); overflow: hidden; }' + "`n" +
         '.sw-bar > span { display: block; height: 100%; background: var(--primary); }'

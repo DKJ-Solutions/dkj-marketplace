@@ -1605,7 +1605,7 @@ function Format-ReleaseNotesDevPage {
         '/* The template''s layout, read as the Stopwatch page''s: main.page-column, a house h1, a .card, a .note. */'
         '.wrap { max-width: 1080px; display: grid; gap: var(--spacing-5); align-content: start; padding: var(--spacing-4) var(--spacing-4) var(--spacing-12); }'
         'header.masthead { padding: 0; }'
-        'header.masthead h1 { font-family: inherit; font-size: var(--text-h1); font-weight: var(--font-weight-bold); letter-spacing: -0.01em; line-height: normal; text-transform: none; color: var(--primary); }'
+        'header.masthead h1 { font-family: inherit; font-size: var(--text-h1); font-weight: var(--font-weight-black); letter-spacing: -0.01em; line-height: normal; text-transform: none; color: var(--primary); }'
         'header.masthead p { margin: var(--spacing-1) 0 0; color: var(--primary-muted); font-size: var(--text-sm); }'
         '.sheet { border: 1px solid var(--bg-3); border-radius: var(--radius-3); padding: var(--spacing-2) var(--spacing-6) var(--spacing-4); }'
         '.noscript { margin: 0; }'
