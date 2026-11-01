@@ -45,15 +45,16 @@ The owner judges the headings on the hub's dkj-policy page by eye before this me
 
 - [x] `Format-MarketplacePluginsPageHtml`: the Assets heading reads Assets (Always on), the add-ons heading Add-ons (Optional)
 - [x] `dev-pages.tests.ps1`: the two asserts that pin those headings follow
+- [x] The brand book's Color page: the Stats and Status headings become one, Stats & Status, over both cards (Maikel, November 1, 2026)
 
 ### TEST
 
 - [x] `dev-pages.tests.ps1` green (543 passed, 0 failed)
-- [ ] The owner has looked at /marketplace/dkj-policy on the hub
+- [ ] The owner has looked at /marketplace/dkj-policy and its brand book's Color page on the hub
 
 ### DEPLOY: feat/hub-assets-addons-heading-labels
 
-The hub's dkj-policy page now says what each section is to a repo that installs it: its house-style assets are headed **Assets (Always on)**, and its add-ons **Add-ons (Optional)**, so a reader no longer has to guess which part comes with the plugin and which is a choice.
+The hub's dkj-policy page now says what each section is to a repo that installs it: its house-style assets are headed **Assets (Always on)**, and its add-ons **Add-ons (Optional)**, so a reader no longer has to guess which part comes with the plugin and which is a choice. The brand book's Color page sets its series and status colours under one heading, **Stats & Status**, where it had two.
 
 **Score:** 2
 
@@ -65,5 +66,5 @@ The hub is this repo's own developer page; a user of the plugins never sees it.
 
 #### Pull Request
 
-The dkj-policy hub page labels its sections Assets (Always on) and Add-ons (Optional)
+The hub's dkj-policy pages relabel their sections: Assets (Always on), Add-ons (Optional), and Stats & Status on the Color page
 

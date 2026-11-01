@@ -461,14 +461,13 @@ function Resolve-ProductHouseStyleRequest {
 # 2026): which of the Tokens section's specimen cards each one shows, by the card's own h3 title. A card of that
 # section named by no group is a defect the suite holds against the real specimens.
 # A group may set its cards under h2s of its own, -Headings, each naming its cards; its Cards are then those, in order.
-# Color does (Maikel, October 31, 2026): Theme holds the 60-30-10 rule's three shares, Stats the series slots, Status
-# the status and direction colours.
+# Color does (Maikel, October 31, 2026): Theme holds the 60-30-10 rule's three shares, and Stats & Status the series
+# slots and the status and direction colours, one heading since Maikel merged the two (November 1, 2026).
 $script:ProductBrandbookTokenGroups = @(
     @{ Slug = 'color'; Label = 'Color'; Cards = @('60', '30', '10', 'Categories', 'Status and direction')
         Headings = @(
             @{ Label = 'Theme'; Cards = @('60', '30', '10') }
-            @{ Label = 'Stats'; Cards = @('Categories') }
-            @{ Label = 'Status'; Cards = @('Status and direction') }
+            @{ Label = 'Stats & Status'; Cards = @('Categories', 'Status and direction') }
         ) }
     @{ Slug = 'text'; Label = 'Text'; Cards = @('Type scale') }
     @{ Slug = 'radius'; Label = 'Radius'; Cards = @('Radius') }
