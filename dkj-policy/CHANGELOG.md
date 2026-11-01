@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**6 / 11 minor entries** <!-- pending-tally -->
+**7 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/brandbook-30-group-reads-on-paper · 20261101-092048Z
+
+The brand book's 60-30-10 rule now says that everything in the 30% group (`--primary`, `--muted`) reads on
+all four paper steps, and that a theme has these three groups and no fourth. That retired `--muted-inverse`:
+it fitted no group and no value could make it fit. Each theme now has ten colours instead of eleven, the
+quieter line on `.fill-inverse` takes `--paper-4`, and the brand book's Color page and theme swatches show
+the three groups alone.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+`--muted-inverse` no longer exists. A DKJ-Solutions repo whose own domain layer uses it must switch to
+`--paper-4` on an inverted surface; the house-style check now reports every use as a retired token.
+
+**Score:** 5
+
+#### Pull Request
+
+The brand book retires --muted-inverse: a theme has the 60-30-10 groups and no fourth
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #3713](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3713)
+
+---
 
 ### DEPLOY: feat/brandbook-overview-theme-stats-status · 20261031-210130Z
 
