@@ -1131,7 +1131,7 @@ function Format-IssueGroupCard {
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.AppendLine($(if ($Full) { '<section class="card grid__full">' } else { '<section class="card">' }))
-    [void]$sb.AppendLine('<div class="card__head"><h3 class="card__title">' + (& $e $Title) + '</h3></div>')
+    [void]$sb.AppendLine('<div class="card__head"><h3>' + (& $e $Title) + '</h3></div>')
     if (@($Groups).Count) {
         $max = [double](@($Groups)[0].Count)
         [void]$sb.AppendLine('<div class="table-wrap"><table class="table"><thead class="dp-thead"><tr><th class="dp-left">' + (& $e $Title) + '</th><th>Issues</th><th class="dp-left">Against the largest</th><th>Share</th></tr></thead><tbody>')

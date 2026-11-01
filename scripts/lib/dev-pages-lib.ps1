@@ -496,7 +496,7 @@ function Get-ProductBrandbookTokenCards {
     param([AllowEmptyString()][string]$Inner = '')
     $cards = @()
     foreach ($m in [regex]::Matches($Inner, '(?ms)^  <section class="card[^"]*">.*?^  </section>\r?$')) {
-        $t = [regex]::Match($m.Value, '<h3 class="card__title">([^<]+)</h3>')
+        $t = [regex]::Match($m.Value, '<h3>([^<]+)</h3>')
         $cards += @{ Title = $(if ($t.Success) { [System.Net.WebUtility]::HtmlDecode($t.Groups[1].Value) } else { '' }); Html = $m.Value }
     }
     return $cards

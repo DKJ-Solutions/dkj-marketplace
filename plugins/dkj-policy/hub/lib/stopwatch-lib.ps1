@@ -909,7 +909,7 @@ function Format-StopwatchPhaseCard {
     param($Entry, [double]$Total, [AllowEmptyString()][string]$Title = '', $TotalNote = $null)
     $close = if ($null -eq $TotalNote) { '' } else { '<p><strong>Total</strong> <span class="num">' + (Format-DevSeconds $Total) + '</span>' + $(if ($TotalNote) { ' ' + $TotalNote } else { '' }) + '</p>' }
     $sub = if ($Entry -and $Entry.Sessions -gt 1) { '<p class="card__sub">' + $Entry.Sessions + ' sessions</p>' } else { '' }
-    $h3 = if ($Title) { '<h3 class="card__title">' + (ConvertTo-GeneralPageText $Title) + '</h3>' } else { '' }
+    $h3 = if ($Title) { '<h3>' + (ConvertTo-GeneralPageText $Title) + '</h3>' } else { '' }
     $card = '<section class="card">' + $(if ($h3 -or $sub) { '<div class="card__head">' + $h3 + $sub + '</div>' } else { '' })
     if ($null -eq $Entry) { return $card + '<p class="note">No phases read for this run yet.</p>' + $close + '</section>' }
     if (-not $Entry.Sessions) { return $card + '<p class="note">No session of this repo was active during this run.</p>' + $close + '</section>' }

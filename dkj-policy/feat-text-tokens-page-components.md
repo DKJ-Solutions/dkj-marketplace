@@ -54,7 +54,8 @@ read as a plain `<p>`.
 - [x] `house-style.css`: four weight tokens, `--font-weight-light` 300 to `--font-weight-bold` 900, and every rule (the
   body too) sets its weight through one: 300 light, 400 regular, 600 semibold, 700 and 800 bold; the hub's stopwatch,
   masthead and consumer-dashboard layers likewise
-- [x] `h2` is semibold; `h3` is `--primary` and light (card titles keep their own `--fg-3` and semibold)
+- [x] `h2` is semibold; `h3` is `--primary` and light
+- [x] `.card__title` gone: every card title is a plain `h3` in `.card__head` (the specimens, the patterns and the hub)
 - [x] `house-palette.tests.ps1` refuses a font weight set as a number in the stylesheet or those hub layers
 - [x] A section a token group shows is left off the overview, so Preview holds Themes alone
 - [x] `house-style.css`: `.eyebrow`, `.lead`, `.pos` and `.neg` gone, `.sub` gone into `.note`, the fill switches and comments with them
@@ -81,19 +82,21 @@ now holds Themes alone. The Headings specimen shows h1, h2 and h3.
 The house style gains four weight tokens, `--font-weight-light` (300), `--font-weight-regular` (500),
 `--font-weight-semibold` (700) and `--font-weight-bold` (900), and every rule now takes its weight from them, so all
 text is one step heavier: running text 500, card titles 700, h1 900. h2 is semibold (700), and h3 turns light (300)
-and takes the theme's colour, `--primary`, instead of `--fg-3`. It drops five classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
+and takes the theme's colour, `--primary`, instead of `--fg-3`. It drops six classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
 body size read as a plain `<p>`; and `.sub`, merged into `.note`, the one quiet-text class, which had the same colour
-and size; and `.pos` and `.neg`, the colours of `.delta--up` and `.delta--down` without the weight.
+and size; `.pos` and `.neg`, the colours of `.delta--up` and `.delta--down` without the weight; and `.card__title`: a card's
+title is a plain `h3`, set like every other.
 
 **Score:** 2
 
 #### What makes this deploy extra special
 
-`house-style.css` no longer defines `.eyebrow`, `.lead`, `.sub`, `.pos` or `.neg`. A page that takes the new copy and still uses either loses
+`house-style.css` no longer defines `.eyebrow`, `.lead`, `.sub`, `.pos`, `.neg` or `.card__title`. A page that takes the new copy and still uses either loses
 that styling: replace `class="sub"` with `class="note"` (the same colour and size, with a small top margin instead of a
 16px bottom one), drop the eyebrow line or set it as a `.note`, and drop `class="lead"` (the paragraph keeps the body size and colour,
 and loses its 46rem measure and its 8px top margin). Replace `class="pos"` with `class="delta delta--up"` and
-`class="neg"` with `class="delta delta--down"`; the figure then turns semibold. Text set in the house style is one
+`class="neg"` with `class="delta delta--down"`; the figure then turns semibold. Drop `class="card__title"` from a card's `h3`: it
+then takes the h3's light weight and the theme's colour instead of semibold `--fg-3`. Text set in the house style is one
 step heavier throughout (400 to 500, 600 to 700, 700 to 900); a domain layer that sets a weight should take one of
 the four `--font-weight-*` tokens rather than a number.
 
@@ -101,5 +104,5 @@ the four `--font-weight-*` tokens rather than a number.
 
 #### Pull Request
 
-the Text token page splits into Tokens and Components, and the house style retires .eyebrow, .lead, .sub, .pos and .neg
+the Text token page splits into Tokens and Components, and the house style retires .eyebrow, .lead, .sub, .pos, .neg and .card__title
 

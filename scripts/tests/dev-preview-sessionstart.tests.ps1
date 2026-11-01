@@ -399,7 +399,7 @@ Set-GeneralPagesThemeDefault ''
 Assert-True ((Format-PluginRepoHubHtml -RepoName 'r' -PagesUrl 'http://localhost:4890') -match 'data-theme-default="lilac"') 'and handing in nothing restores lilac'
 Assert-True ($html -match 'href="/house-style.css"' -and $html -match 'src="/house-theme.js"') 'and starts from the house style its own server serves'
 Assert-True ($html -notmatch '<h2>Products</h2>') 'without a stated server there is no Products section'
-Assert-True ($html -match '<h2>Set up a product</h2>' -and $html -match '<h3 class="card__title">Add a dev server of your own</h3>' -and $html -match '<h3 class="card__title">Open it in VS Code</h3>') 'the two setup cards share one h2, each titled with an h3 (#3175)'
+Assert-True ($html -match '<h2>Set up a product</h2>' -and $html -match '<h3>Add a dev server of your own</h3>' -and $html -match '<h3>Open it in VS Code</h3>') 'the two setup cards share one h2, each titled with an h3 (#3175)'
 Assert-True ($html -match 'Get-DevPreview' -and $html -match 'scripts/repo-config.ps1' -and $html -notmatch 'OwnHub' -and $html -match '"localhost:4890": "simpleBrowser.open"') 'they say how to state a server and which port to route, and offer no opt-out (#3643)'
 Assert-True ($html -notmatch '4880') 'and no longer name the retired 4880-4889 range'
 # The house hub form (#3383): one .grid-3 of card links with no heading above them; the facts and Issues are the

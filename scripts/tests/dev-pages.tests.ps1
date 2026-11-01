@@ -586,7 +586,7 @@ Assert-True ($ip.Contains('Free &lt;b&gt;') -and -not $ip.Contains('Free <b>')) 
 Assert-True ($ip.Contains('href="https://github.com/Org/some-repo/issues/7"')) 'an open issue links to the url gh gave it, not to a repo this lib knows'
 Assert-True ($ip -notmatch 'href="javascript' -and $ip.Contains('#8 Parked')) 'an issue whose url is not a GitHub issue link is shown without an href'
 Assert-True ($ip -notmatch 'dkj-claude-plugins') 'and nothing of this repo is built into the page'
-Assert-True ($ip -match '<div class="grid__head"><h2>Closed</h2>' -and ([regex]::Matches($ip, '<h3 class="card__title">')).Count -eq 3 -and $ip -match '<section class="card grid__full">\r?\n<div class="card__head"><h3 class="card__title">Closed as</h3>') 'the three closed breakdowns stand under one h2, each card titled with an h3 (#3175)'
+Assert-True ($ip -match '<div class="grid__head"><h2>Closed</h2>' -and ([regex]::Matches($ip, '<h3>')).Count -eq 3 -and $ip -match '<section class="card grid__full">\r?\n<div class="card__head"><h3>Closed as</h3>') 'the three closed breakdowns stand under one h2, each card titled with an h3 (#3175)'
 Assert-True ($ip -notmatch '<h2 class="card' -and ([regex]::Matches($ip, '<h2>')).Count -eq ([regex]::Matches($ip, '<div class="grid__head"><h2>')).Count) 'every h2 on the page stands in a grid__head, above its cards'
 Assert-True ((Format-IssuesPageHtml -Model $im -RepoName 'Org/some<repo>') -match 'name="description" content="The GitHub issues of Org/some&lt;repo&gt;:' -and (Format-IssuesPageHtml -Model $im -RepoName 'Org/x') -match '<title>Org/x -- Issues</title>') 'the repo''s name, escaped, is in the description and the title (#3585)'
 Assert-Equal '' (ConvertTo-IssueRow -Issue ('{ "number": 1, "title": "t", "url": "https://github.com/a/b/issues/1x" }' | ConvertFrom-Json)).Url 'a url with anything after the number is not kept'
@@ -937,10 +937,10 @@ $tkCards = Get-ProductBrandbookTokenCards -Inner ((Split-HouseStyleSpecimens -Bo
 $tkNamed = @($script:ProductBrandbookTokenGroups | ForEach-Object { $_.Cards })
 Assert-True ($tkCards.Count -gt 0 -and @($tkCards | Where-Object { $tkNamed -cnotcontains $_.Title }).Count -eq 0 -and @($tkNamed | Where-Object { @($tkCards.Title) -cnotcontains $_ }).Count -eq 0) 'every specimen card of the real Tokens section is in exactly the groups that name it, and every group names a card the file holds'
 $tkColor = Format-ProductHouseStylePageHtml -Body $specimens -Section 'tokens' -Token 'color'
-$tkOrder = @([regex]::Matches($tkColor, '<h2>([^<]+)</h2>|<h3 class="card__title">([^<]+)</h3>') | ForEach-Object { if ($_.Groups[1].Success) { '#' + $_.Groups[1].Value } else { $_.Groups[2].Value } })
+$tkOrder = @([regex]::Matches($tkColor, '<h2>([^<]+)</h2>|card__head"><h3>([^<]+)</h3>') | ForEach-Object { if ($_.Groups[1].Success) { '#' + $_.Groups[1].Value } else { $_.Groups[2].Value } })
 Assert-Equal '#Theme,60,30,10,#Graphs &amp; Status,Graphs,Status' ($tkOrder -join ',') 'the Color page sets its cards under the h2s Theme (60, 30, 10) and Graphs & Status (Graphs, Status) (Maikel, October 31 and November 1, 2026)'
 $tkText = Format-ProductHouseStylePageHtml -Body $specimens -Section 'tokens' -Token 'text'
-$txOrder = @([regex]::Matches($tkText, 'grid__head"><h2>([^<]+)</h2>|<h3 class="card__title">([^<]+)</h3>') | ForEach-Object { if ($_.Groups[1].Success) { '#' + $_.Groups[1].Value } else { $_.Groups[2].Value } })
+$txOrder = @([regex]::Matches($tkText, 'grid__head"><h2>([^<]+)</h2>|card__head"><h3>([^<]+)</h3>') | ForEach-Object { if ($_.Groups[1].Success) { '#' + $_.Groups[1].Value } else { $_.Groups[2].Value } })
 Assert-Equal '#Tokens,Font size,Font family,Font weight,#Components,Headings,Running text,Numbers,Messages and group headings' ($txOrder -join ',') 'the Text page sets its token cards under an h2 Tokens and the Text section''s cards under an h2 Components (Maikel, November 1, 2026)'
 Assert-True ($bbOver -match 'dkj-brandbook/tokens/text"[\s\S]*?7 specimens') 'and the overview''s Text card counts both halves'
 Assert-True ($null -eq (Format-ProductHouseStylePageHtml -Body ($specimens -replace 'id="hs-text"', 'id="hs-gone"') -Section 'tokens' -Token 'text')) 'a Text section gone from the file makes the Text page a 404 rather than an empty Components'

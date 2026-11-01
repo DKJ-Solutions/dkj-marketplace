@@ -608,7 +608,7 @@ primary fill.
 
 | Class | Ground | Text | A quieter line (`.note`, `.card__sub`) |
 |---|---|---|---|
-| `.fill-primary` | `--primary` | `--bg-1`: headings, paragraphs, `.msg`, `.meta`, `.card__title` and links | `--bg-3` (all four paper steps read on the primary) |
+| `.fill-primary` | `--primary` | `--bg-1`: headings, paragraphs, `.msg`, `.meta` and links | `--bg-3` (all four paper steps read on the primary) |
 | `.fill-inverse` | `--fg-1` | `--bg-1`, the same elements | `--bg-4` (15:1 or better on `--fg-1`) |
 
 The switch is written with `:is()` and stands last in the stylesheet, so it beats `.note`, `p.meta` and the
@@ -712,9 +712,9 @@ Both are gone: an `h2` may now title a card, as the Stopwatch's label cards do.
   `.grid__head` (the `h2`, then a `p.card__sub`), then the cards; a card with `.grid__full` takes the whole
   row. In a `.page-column` such a group takes no margin of its own: the column's `gap` is the only space between
   its blocks (Maikel, October 30, 2026; from #3175 it took an extra `--spacing-5` above it).
-- **A card's own title under such a group is still an `h3`**: `.card__head` > `h3.card__title` (room for a
-  `.badge` before the text) or a plain `h3`, then an optional `.card__sub`. A `.card__title` renders at
-  `--text-h3`, in the sans.
+- **A card's own title under such a group is still an `h3`**: `.card__head` > a plain `h3` (with room for a
+  `.badge` before the text), then an optional `.card__sub`. It is set like every `h3`; `.card__title`, which set it
+  apart in `--fg-3` and semibold, is gone (Maikel, November 1, 2026).
 - **A card that stands on its own may carry an `h2`** instead, when it is one of a set of cards that each name
   a subject of the page, rather than a part of one group.
 

@@ -334,18 +334,16 @@ p, p.meta { color: var(--fg-1); }
 
 /* ---- Surfaces ------------------------------------------------------------- */
 .card { background: var(--bg-2); border: 1px solid var(--bg-3); border-radius: var(--radius-3); padding: var(--spacing-6); margin-top: var(--spacing-4); }
-/* Data-card head (#141): <section class="card"><div class="card__head"><h3 class="card__title">Title</h3>
+/* Data-card head (#141): <section class="card"><div class="card__head"><h3>Title</h3>
    <p class="card__sub">Sub line</p></div> a .table-wrap or .facts</section>. The head is left-aligned, with no rule between it
-   and the body; whatever follows it sits --spacing-4 below. The title is an <h3> at --text-h3 in --fg-3; a card may
-   instead be titled by a plain h2 (#3175, retired October 24, 2026). Flex keeps an .info-button on the title's centre
-   line. */
+   and the body; whatever follows it sits --spacing-4 below. The title is a plain <h3>, set like every h3 (.card__title,
+   which set it apart in --fg-3 and semibold, is gone: Maikel, November 1, 2026); a card may instead be titled by a
+   plain h2 (#3175, retired October 24, 2026). No margin of its own, so the .card__sub sits --spacing-1 under it, and
+   flex keeps an .info-button on the title's centre line. */
 .card__head { text-align: left; }
-.card__title { display: flex; align-items: center; justify-content: flex-start; margin: 0; font-size: var(--text-h3); font-weight: var(--font-weight-semibold); color: var(--fg-3); }
+.card__head > h3 { display: flex; align-items: center; justify-content: flex-start; margin: 0; }
 /* A status .badge before the title text (#153); the badge is decorative, so the .card__sub says the status too. */
-.card__title > .badge { margin-right: var(--spacing-2); }
-/* A card titled with a plain h3, where its h2 stands above a group of cards (#206): no margin of its own, so the
-   .card__sub sits --spacing-1 under it as under a .card__title, which is the same h3 with room for a badge. */
-.card__head > h3 { margin: 0; }
+.card__head > h3 > .badge { margin-right: var(--spacing-2); }
 .card__sub { margin: var(--spacing-1) 0 0; font-size: var(--text-sm); color: var(--primary-muted); }
 .card > .card__head + * { margin-top: var(--spacing-4); }   /* (0,2,0): beats a body's own margin: 0, such as .facts */
 .hero { display: flex; flex-wrap: wrap; gap: var(--spacing-6) var(--spacing-12); align-items: flex-end; }   /* use with .card */
@@ -803,8 +801,8 @@ a.menu-item:hover { background: var(--bg-3); }
    .fill-primary does not show: use an outline button there. */
 .fill-primary { background: var(--primary); color: var(--bg-1); }
 .fill-inverse { background: var(--fg-1); color: var(--bg-1); }
-.fill-primary :is(h1, h2, h3, p, .msg, .meta, .card__title),
-.fill-inverse :is(h1, h2, h3, p, .msg, .meta, .card__title) { color: var(--bg-1); }
+.fill-primary :is(h1, h2, h3, p, .msg, .meta),
+.fill-inverse :is(h1, h2, h3, p, .msg, .meta) { color: var(--bg-1); }
 .fill-primary :is(.note, .card__sub) { color: var(--bg-3); }
 .fill-inverse :is(.note, .card__sub) { color: var(--bg-4); }
 .fill-primary :where(a:any-link), .fill-inverse :where(a:any-link) { color: var(--bg-1); }
