@@ -2,7 +2,45 @@
 
 ## [Unreleased]
 
-**7 / 12 minor entries** <!-- pending-tally -->
+**8 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/hub-assets-addons-heading-labels · 20261101-092830Z
+
+The brand book's colour tokens are named for what they are, and its pages read more clearly.
+
+- **Renamed tokens, same values:** `--paper-1..4` is `--bg-1..4`, `--muted` is `--primary-muted`, and the series
+  slots `--cat-1..3` are `--graph-1..3`. The old names are retired tokens and the README carries a rename table.
+- **Colour:** `--bg-2` stands a clearer step off the page (1.09:1 to 1.10:1 on light, 1.04:1 to 1.05:1 on dark; it
+  was barely visible in some themes), with `--bg-3` moving along. On dark, `--primary-muted` now takes its
+  primary's own hue with a little more colour, so Lila's grey no longer reads blue.
+- **Corners and spacing:** a new `--radius-4` (16px) rounds the dialog and the drawer, every corner on the scale
+  reads its token instead of a pixel value, and the card groups round at `--radius-3`, pad at `--spacing-3-5` and
+  space their cards at `--spacing-3`.
+- **The specimens:** every colour swatch carries its token's name inside it, centred, in a colour that reads on it in
+  every theme. The Color page groups its cards under **Theme** and **Graphs & Status**, with the cards **Graphs** and
+  **Status**, and the Tokens section's own page is gone: its address lands on the overview's token groups.
+- **The hub's dkj-policy page** heads its sections **Assets (Always on)** and **Add-ons (Optional)**.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions repo that takes this release's `house-style.css` must rename, in its own domain layer,
+`var(--paper-N)` to `var(--bg-N)`, `var(--muted)` to `var(--primary-muted)` and `var(--cat-N)` to
+`var(--graph-N)`, per the README's rename table of November 1, 2026. There is no alias, so a use left behind loses
+its colour, and the house-style gate reports each one as a retired token.
+
+**Score:** 5
+
+#### Pull Request
+
+The brand book renames its colour tokens (--bg-N, --primary-muted, --graph-N) and sharpens its pages
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #3714](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3714)
+
+---
 
 ### DEPLOY: docs/brandbook-30-group-reads-on-paper · 20261101-092048Z
 
