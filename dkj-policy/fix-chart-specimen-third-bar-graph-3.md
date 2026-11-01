@@ -42,6 +42,7 @@
 ### CREATE
 
 - [x] `specimens.html`, the Chart scope specimen: the third bar's fill `--positive-3` becomes `--graph-3`
+- [x] The legend and the swatch move from the Meters card, where they keyed nothing, to above the Chart scope chart: One/Two/Three in `--graph-1`..`--graph-3` name the bars, and the `--line` item names a new average line in `--fg-2` (the README names no colour for a reference line, and all three graph slots are taken)
 
 ### TEST
 
@@ -49,7 +50,7 @@
 
 ### DEPLOY: fix/chart-specimen-third-bar-graph-3
 
-The brand book's Chart scope specimen draws its three plain category bars in `--graph-1`, `--graph-2` and `--graph-3`. The third bar was `--positive-3`, a direction colour the README reserves for gain and never for a category, so the specimen taught the very mix the token table forbids. It came in with the static specimen page (#3493), carried over from the retired app's direction charts.
+The brand book's Chart scope specimen draws its three plain category bars in `--graph-1`, `--graph-2` and `--graph-3`. The third bar was `--positive-3`, a direction colour the README reserves for gain and never for a category, so the specimen taught the very mix the token table forbids. It came in with the static specimen page (#3493), carried over from the retired app's direction charts. The legend and the swatch beside text sat in the Meters card, keying `--graph` series that card does not draw; they now sit above the chart whose bars they name, with an average line in `--fg-2` to show the line item, and the card is called Meters.
 
 **Score:** 2
 
@@ -61,5 +62,5 @@ A reader building a chart from the brand book now sees the categorical slots use
 
 #### Pull Request
 
-The chart specimen's third bar takes --graph-3, not --positive-3
+The chart specimen draws its bars in the graph slots and carries its own legend
 

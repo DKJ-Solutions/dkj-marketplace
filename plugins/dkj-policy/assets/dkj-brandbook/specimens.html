@@ -386,22 +386,21 @@
   </section>
 
   <section class="card">
-    <div class="card__head"><h3 class="card__title">Meters and legend</h3><p class="card__sub">.meter, --good, --warn, --bad, --info, .legend, .swatch</p></div>
+    <div class="card__head"><h3 class="card__title">Meters</h3><p class="card__sub">.meter, --good, --warn, --bad, --info</p></div>
     <div class="spec-stack">
       <div class="meter meter--good"><span style="width: 70%"></span></div>
       <div class="meter meter--warn"><span style="width: 50%"></span></div>
       <div class="meter meter--bad"><span style="width: 30%"></span></div>
       <div class="meter meter--info"><span style="width: 60%"></span></div>
-      <div class="legend"><span class="legend__item" style="--c: var(--graph-1)">Series one</span><span class="legend__item" style="--c: var(--graph-2)">Series two</span><span class="legend__item legend__item--line" style="--c: var(--graph-3)">A line</span></div>
-      <p><span class="swatch" style="--c: var(--graph-1)"></span>Swatch beside text</p>
     </div>
   </section>
 
   <section class="card grid__full">
-    <div class="card__head"><h3 class="card__title">Chart scope</h3><p class="card__sub">.chart (inline SVG), .bar, .bar--active, and the tooltip rows .chart-detail, .chart-row, .chart-swatch, .chart-figure</p></div>
+    <div class="card__head"><h3 class="card__title">Chart scope</h3><p class="card__sub">.chart (inline SVG), .bar, .bar--active, .legend, .legend__item--line, .swatch, and the tooltip rows .chart-detail, .chart-row, .chart-swatch, .chart-figure</p></div>
     <div class="grid-2">
       <div class="chart">
-        <svg viewBox="0 0 300 140" role="img" aria-label="A bar chart of three values">
+        <div class="legend"><span class="legend__item" style="--c: var(--graph-1)">One</span><span class="legend__item" style="--c: var(--graph-2)">Two</span><span class="legend__item" style="--c: var(--graph-3)">Three</span><span class="legend__item legend__item--line" style="--c: var(--fg-2)">Average</span></div>
+        <svg viewBox="0 0 300 140" role="img" aria-label="A bar chart of three values with their average">
           <line x1="20" y1="110" x2="290" y2="110" style="stroke: var(--bg-4)"/>
           <rect class="bar" tabindex="0" x="40" y="50" width="50" height="60" style="fill: var(--graph-1)"/>
           <rect class="bar bar--active" tabindex="0" x="120" y="30" width="50" height="80" style="fill: var(--graph-2)"/>
@@ -410,8 +409,10 @@
           <text x="145" y="128" text-anchor="middle">Two</text>
           <text x="225" y="128" text-anchor="middle">Three</text>
           <text class="val" x="145" y="24" text-anchor="middle">80</text>
+          <line x1="30" y1="50" x2="280" y2="50" style="stroke: var(--fg-2); stroke-width: 2"/>
           <text class="axis-note" x="20" y="12">Axis note</text>
         </svg>
+        <p><span class="swatch" style="--c: var(--graph-1)"></span>One, keyed beside text</p>
       </div>
       <div class="spec-stage">
         <div class="tooltip tooltip--open">
