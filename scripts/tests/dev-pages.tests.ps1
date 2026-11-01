@@ -51,7 +51,7 @@ Assert-True ($shell -match 'data-theme-key="general-pages"') 'the theme key is t
 Assert-True ($shell -match '<p class="note">note</p>') 'the footer note closes the column'
 
 Write-Host '-- the general page shell (the plugin''s)' -ForegroundColor Cyan
-$gshell = Format-GeneralPageHtml -Title 'An <i>issue' -Lead 'lead' -Body '<p>body</p>' -Eyebrow 'Org/some<repo>' -SiteName 'Org/some<repo>'
+$gshell = Format-GeneralPageHtml -Title 'An <i>issue' -Lead 'lead' -Body '<p>body</p>' -SiteName 'Org/some<repo>'
 Assert-True ($gshell -match '<li><a href="/hub">Tools</a></li>') 'the first crumb goes to /hub on the general server'
 Assert-True ($gshell -match '<title>Org/some&lt;repo&gt; -- An &lt;i&gt;issue</title>' -and $gshell -match 'site-header__name">Org/some&lt;repo&gt; <span class="site-header__tag">toolbox</span>' -and $gshell -notmatch 'class="eyebrow"') 'the title and the site header carry the repo''s name, escaped, and a named page needs no eyebrow'
 Assert-True ($gshell -match 'data-theme-key="general-pages"') 'the theme key is the general server''s own'
@@ -62,7 +62,7 @@ Assert-True ($gshell.Contains((Format-RepoHubBanner)) -and $gshell.IndexOf('id="
 $anon = Format-GeneralPageHtml -Title 'T' -Lead 'L' -Body ''
 Assert-True ($anon -notmatch 'site-header' -and $anon -match 'theme-settings--floating') 'a page that names no site draws no site header, and its settings button floats as before'
 Assert-True ((ConvertTo-SiteHeaderName -RepoName 'DKJ-Solutions/dkj-x') -eq 'dkj-x' -and (ConvertTo-SiteHeaderName -RepoName 'a/b<c>') -eq 'a/b<c>') 'a GitHub slug loses its owner in the header; any other name stays whole'
-$bshell = Format-GeneralPageHtml -Title 'T' -Lead 'L' -Body '' -Eyebrow 'Org/r' -Brand 'r<x>' -HubHref '/home'
+$bshell = Format-GeneralPageHtml -Title 'T' -Lead 'L' -Body '' -Brand 'r<x>' -HubHref '/home'
 Assert-True ($bshell -match '<header class="site-header"><div class="container"><a class="site-header__brand" href="/home" aria-label="r&lt;x&gt;, home"><span class="site-header__mark" aria-hidden="true">DKJ</span><span class="site-header__name">r&lt;x&gt;</span></a><div id="settings"></div></div></header>') 'with -Brand the header carries the escaped name, links home, and holds the settings button'
 Assert-True ((Format-SiteHeaderHtml -Name 'n' -Tag 'p<q>') -match 'aria-label="n p&lt;q&gt;, home">.*site-header__name">n <span class="site-header__tag">p&lt;q&gt;</span></span>' -and $bshell -notmatch 'site-header__tag') 'a -Tag follows the name, escaped, and is left out when empty'
 Assert-True ((Format-ProductHomeHtml) -match 'site-header__name">dkj-marketplace <span class="site-header__tag">product</span>' -and (Format-MarketplacePluginsPageHtml -Plugins @()) -match '>product</span>') 'every page this server builds says product: it is this repo''s product port again (#3540)'

@@ -492,7 +492,7 @@ function Format-ConsumerRepoMiniCardHtml {
     [void]$sb.AppendLine('<div class="cd-repo"><span class="badge ' + $b.Class + '" aria-hidden="true">' + $b.Mark + '</span><p class="cd-repo__name">' + (& $e $c.Repo) + '</p></div>')
     $where = (@(Get-ConsumerCheckoutCandidates $c.Checkout) | ForEach-Object { '<code>' + (& $e $_) + '</code>' }) -join ' or '
     $ghUrl = 'https://github.com/' + (& $e $c.Repo)
-    [void]$sb.AppendLine('<p class="sub">' + $b.Word + ' &#183; ' + (& $e $c.Visibility) + ' &#183; checkout ' + $where +
+    [void]$sb.AppendLine('<p class="note">' + $b.Word + ' &#183; ' + (& $e $c.Visibility) + ' &#183; checkout ' + $where +
         ' &#183; <a class="cd-link" href="' + $ghUrl + '">GitHub</a> &#183; <code>consumers/' + (& $e $c.File) + '</code></p>')
     [void]$sb.Append((Format-ConsumerRepoDetailsHtml -Consumer $c))
     [void]$sb.AppendLine('</section>')
@@ -650,7 +650,7 @@ function Format-ConsumerDashboardHtml {
             [void]$sb.AppendLine('<div class="grid__head"><h2>Issues</h2><p class="card__sub">What the check reports per repo</p><a class="btn" href="#overview">Back to overview</a></div>')
             [void]$sb.AppendLine('<section class="card grid__full">')
             [void]$sb.AppendLine('<div id="group-' + $g.Key + '">')
-            [void]$sb.AppendLine('<p class="sub cd-group-summary">' + (Format-DashboardGroupSummary $members) + '</p>')
+            [void]$sb.AppendLine('<p class="note cd-group-summary">' + (Format-DashboardGroupSummary $members) + '</p>')
             foreach ($c in $members) { [void]$sb.Append((Format-ConsumerRepoMiniCardHtml -Consumer $c)) }
             [void]$sb.AppendLine('</div>')
             [void]$sb.AppendLine('</section>')

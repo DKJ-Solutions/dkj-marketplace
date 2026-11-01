@@ -114,8 +114,8 @@ page, dashboard and Artifact is designed to that screen first:
   page at the whole width rather than narrowing it to a reading column. `full` is the default only where
   `house-theme.js` runs; a page without it (an Artifact, a static report) is fluid at 1080px, so it sets
   `<html data-width="full">` itself.
-- **Nothing the brief did not ask for.** No eyebrow above a heading, no sub line or lead under it, no
-  hero, no extra row of meta. `.eyebrow`, `.sub`, `.lead` and `.card__sub` exist for the brief that asks
+- **Nothing the brief did not ask for.** No eyebrow above a heading (the house has no class for one), no sub line or lead under
+  it, no hero, no extra row of meta. `.note`, `.lead` and `.card__sub` exist for the brief that asks
   for one; that they exist is not an invitation.
 - **A page opens on its `h1` and goes straight to its content** (Dave, every DKJ-Solutions product,
   [#3585](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3585)): no intro or explainer

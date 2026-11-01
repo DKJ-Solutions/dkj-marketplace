@@ -231,7 +231,7 @@ function Format-PluginsPageHtml {
         }
         [void]$body.AppendLine('</div>')
     }
-    return Format-GeneralPageHtml -Title 'Installed plugins' -Body $body.ToString() -Eyebrow $RepoName -SiteName $RepoName -HubHref $HubHref `
+    return Format-GeneralPageHtml -Title 'Installed plugins' -Body $body.ToString() -SiteName $RepoName -HubHref $HubHref `
         -Lead '' `
         -FooterNote 'Read on every request by the plugin-versions skill''s own script, <code>plugin-versions.ps1 -Json</code>: the enable state from the settings files, the install record from <code>~/.claude/plugins/installed_plugins.json</code>, and the marketplace clone under <code>~/.claude/plugins/marketplaces</code>.'
 }
@@ -293,7 +293,7 @@ function Format-PluginPageHtml {
         [void]$body.AppendLine('</div>')
     }
     # No lead: the crumbs and the Id fact already say which plugin and marketplace this is (the density rule).
-    return Format-GeneralPageHtml -Title ([string]$Row.Name) -Body $body.ToString() -Eyebrow $RepoName -SiteName $RepoName -HubHref $HubHref `
+    return Format-GeneralPageHtml -Title ([string]$Row.Name) -Body $body.ToString() -SiteName $RepoName -HubHref $HubHref `
         -ParentCrumbs @(@{ Label = 'Installed plugins'; Href = '/plugins' }) -HeadAside $badge `
         -Style '.dp-about p { font-size: var(--text-base); }' `
         -Lead '' `
@@ -395,7 +395,7 @@ function Format-HouseStyleSpecimensPageHtml {
     if ($null -eq $parts) { return $null }
     $crumbs = @(@{ Label = 'Installed plugins'; Href = '/plugins' }, @{ Label = 'dkj-policy'; Href = '/plugins/dkj-policy' })
     if ($parts.Section) { $crumbs += @{ Label = 'House style'; Href = $base } }
-    return Format-GeneralPageHtml -Title $parts.Title -Body $parts.Body -Eyebrow $RepoName -SiteName $RepoName -HubHref $HubHref `
+    return Format-GeneralPageHtml -Title $parts.Title -Body $parts.Body -SiteName $RepoName -HubHref $HubHref `
         -ParentCrumbs $crumbs -Lead $parts.Lead `
         -FooterNote 'The stylesheet and these specimens are <code>assets/dkj-brandbook/</code> in the dkj-policy plugin this toolbox runs from.'
 }

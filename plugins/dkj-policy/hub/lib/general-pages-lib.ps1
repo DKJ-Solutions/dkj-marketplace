@@ -144,14 +144,13 @@ function Get-PageInfoScript {
 function Format-GeneralPageHtml {
     <#
         The whole page around -Body. -Title is the page's own name: the last crumb, the h1 and the
-        <title> (after -SiteName). -Eyebrow is the line over the h1, the repo's name. -HubHref is where
+        <title> (after -SiteName). -HubHref is where
         the first crumb, "Home" (#3270), goes: '/hub' on the general server, which answers it with the home page -- or, where a hub relays these pages from its own origin, '/hub' on that hub, which
         answers it itself (#3168). -Style is the page's own layer, names the house file does not define. -Lead and
         -FooterNote are markup the caller has escaped. -Lead is the page's <meta name="description">, never a
         paragraph under the h1: screen height is scarce, so a page opens on its h1 and goes straight to its content
         (owner, #3585). -Brand opts into the house site header (Format-SiteHeaderHtml):
-        the app's name on the primary above the bar, linking -HubHref, with the settings button in it; the eyebrow
-        then goes, since the header already names the site. -BrandTag is the word after the name. A page that
+        the app's name on the primary above the bar, linking -HubHref, with the settings button in it. -BrandTag is the word after the name. A page that
         names -SiteName and no -Brand gets the header anyway (ConvertTo-SiteHeaderName), since October 22, 2026. Without it the page is as it always was.
         -Bare (a page's own choice, default off) leaves out the intro above -Body: the h1, so the page
         opens on the general banner (the first block of every page, above the h1 where there is one) and then its own content; the crumbs, the site header and the banner stay (the
@@ -173,7 +172,6 @@ function Format-GeneralPageHtml {
         [AllowEmptyString()][string]$Style = '',
         [AllowEmptyString()][string]$FooterNote = '',
         [string]$ThemeKey = 'general-pages',
-        [AllowEmptyString()][string]$Eyebrow = '',
         [AllowEmptyString()][string]$SiteName = '',
         [string]$HubHref = '/hub',
         [AllowEmptyString()][string]$Brand = '',
@@ -228,7 +226,6 @@ function Format-GeneralPageHtml {
     if (-not $Bare) {
         if ($HeadAside) { [void]$sb.AppendLine('<header>') }
         [void]$sb.AppendLine('<div>')
-        if ($Eyebrow -and -not $Brand) { [void]$sb.AppendLine('<p class="eyebrow">' + (& $e $Eyebrow) + '</p>') }
         if ($Info) {
             # The h1 and its "?" on one row; the tooltip is fixed, placed by Get-PageInfoScript beside the button.
             # The "?" glyph is drawn, as mesowise draws its own (Maikel, October 31, 2026), so it never leans on a font's
@@ -999,7 +996,7 @@ function Format-ArtifactsPageHtml {
     [void]$body.AppendLine('</dl>')
     [void]$body.AppendLine('</section>')
     [void]$body.AppendLine('</div>')
-    return Format-GeneralPageHtml -Title 'Artifacts' -Body $body.ToString() -Eyebrow $RepoName -SiteName $RepoName `
+    return Format-GeneralPageHtml -Title 'Artifacts' -Body $body.ToString() -SiteName $RepoName `
         -Lead 'Every claude.ai Artifact a session in this repo has published: pages, decks and documents. An Artifact is private to the account that made it until it is shared, so a link may not open for everyone.' `
         -FooterNote 'Read from the repo''s <code>scripts/dashboard/artifacts.json</code>, on every request. The register is the repo''s own to keep; where it is absent the page says so.'
 }
@@ -1242,7 +1239,7 @@ function Format-IssuesPageHtml {
         ', read ' + (& $e $GeneratedAt) + $secs
     } else { '' }
     $whose = if ($RepoName) { 'The GitHub issues of <code>' + (& $e $RepoName) + '</code>' } else { 'This repo''s GitHub issues' }
-    return Format-GeneralPageHtml -Title 'Issues' -Style $script:DevBarStyle -Body $body.ToString() -Eyebrow $RepoName -SiteName $RepoName `
+    return Format-GeneralPageHtml -Title 'Issues' -Style $script:DevBarStyle -Body $body.ToString() -SiteName $RepoName `
         -Lead ($whose + ': what is open and where it stands, and what came in and went out over the last ' + $days + ' days.') `
         -FooterNote ('Read from GitHub with <code>gh issue list</code>, as the account <code>gh</code> is logged in as on this machine' + $when + ' (<a class="dp-link" href="/refresh?page=issues">read again</a>). The window is bounded because a GitHub search returns at most 1,000 issues.')
 }

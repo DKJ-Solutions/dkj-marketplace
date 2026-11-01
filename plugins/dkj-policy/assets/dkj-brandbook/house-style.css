@@ -69,7 +69,7 @@
      line (borders, row dividers, meter track, gridlines) and the tinted surfaces (an accent table head, a hover, a
      today row, the accent dialog); bg-4 a stronger border (an open card, a selected box). --primary the
      highlight: links (owner's decision, October 15, 2026), the primary button's fill (#109), the picker's dot, h1,
-     the states (hover, sorted) and native controls through accent-color. --primary-muted the eyebrow, sub lines, .note,
+     the states (hover, sorted) and native controls through accent-color. --primary-muted .note, the card and dialog sub lines,
      the tile label, the fills (switches, info badges, a pressed .seg), most focus
      rings and meters (a ring on a sort header, a .seg button, a chart bar or the read-more toggle is --primary). fg-1 every paragraph and an inverted surface (.fill-inverse, the showcase's panel); fg-2 h2 and .meta on a span; fg-3 h3;
      fg-4 no role yet. The breadcrumb bar stands on --primary, with the paper steps as its text. On a fill the text switches: on .fill-primary the paper is the text, so an h2
@@ -283,7 +283,6 @@ h2 { display: flex; align-items: center; }
 h2 .info-button { top: 1px; }
 h3 { font-size: var(--text-h3); margin: 0 0 var(--spacing-2); font-weight: 600; }
 /* There is no h4, h5 or h6: the scale ends at h3 (owner, October 25, 2026; h6 went on October 20). */
-.sub { color: var(--primary-muted); font-size: var(--text-sm); margin: 0 0 var(--spacing-4); }   /* line under a heading */
 /* The h1 with a "?" right of it that explains the page in a .tooltip--explain on hover or focus, so nothing sits
    under the h1 (Maikel, October 31, 2026; rule 5 of the README holds). The row's gap is the space. */
 .page-title { display: flex; align-items: center; gap: var(--spacing-1); }
@@ -303,17 +302,14 @@ h3 { font-size: var(--text-h3); margin: 0 0 var(--spacing-2); font-weight: 600; 
 .page-info-button:focus-visible { outline: 2px solid var(--primary); outline-offset: -4px; }
 .meta { font-size: var(--text-sm); color: var(--fg-2); white-space: nowrap; }
 /* The one quiet-text class (Maikel, November 1, 2026): a note under something, a quiet word in a line, the line that
-   closes a page. It absorbed .muted and .footer-note, which looked exactly like it. */
+   closes a page. It absorbed .muted and .footer-note, which looked exactly like it, and .sub, the same colour and size
+   under a heading (Maikel, November 1, 2026). */
 .note { font-size: var(--text-sm); color: var(--primary-muted); margin-top: var(--spacing-1); }
-/* Sub lines (.sub, .dialog__sub) and .note are --primary-muted, on a <p> too (owner's decision,
+/* Sub lines (.card__sub, .dialog__sub) and .note are --primary-muted, on a <p> too (owner's decision,
    October 15, 2026). Any other paragraph is --fg-1, the far end (owner's decision, October 14, 2026): .meta on a <p> takes
    it too, while the same class on a span or a div stays --fg-2. A <p> in a status colour, or on an --fg-1 surface,
    sets its own. */
 p, p.meta { color: var(--fg-1); }
-/* Eyebrow: a small uppercase line above a page title, the hub's <owner>/<repo> (#141). Put it on a <p>
-   (the class beats the paragraph colour). The colour is --primary-muted, a muted grey: the grey that recedes furthest while
-   still reading extra well (7:1 on the page, #3235), so it stands back behind the h1 (owner, October 19, 2026); semibold, with the same 0.04em tracking as the settings panel's uppercase labels. */
-.eyebrow { margin: 0 0 var(--spacing-1); font-size: var(--text-sm); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--primary-muted); }   /* 0.04em mirrors the brand book's --dkj-tracking-label */
 /* Lead: the one paragraph under a page title that says what the page is for (#141). On a <p>, in the paragraph
    colour, at the large running size, held to a readable measure. */
 .lead { max-width: 46rem; margin: var(--spacing-2) 0 0; font-size: var(--text-base); line-height: 1.35; color: var(--fg-1); }   /* 1.35 mirrors the brand book's --dkj-lh-snug */
@@ -796,7 +792,7 @@ a.menu-item:hover { background: var(--bg-3); }
    --fg-2 on the page (the owner: an h2 does not always have the same colour), a quieter line --bg-3. On
    .fill-inverse the ground is --fg-1, the paper is the text and --bg-4 the quieter line (15:1 or better on it).
    The text and the quieter lines weigh (0,2,0): :is() takes the weight of its strongest argument, a class, so they
-   beat .sub, .note, p.meta and the zero-weight headings, and the quieter line wins over the text because it comes
+   beat .note, p.meta and the zero-weight headings, and the quieter line wins over the text because it comes
    after it. A link weighs (0,1,0), enough to beat the zero-weight house link and light enough that a .btn or an app's
    own class on an <a> keeps its colours. A component inside a fill keeps its own colours, so a .btn--primary on
    .fill-primary does not show: use an outline button there. */
@@ -804,8 +800,8 @@ a.menu-item:hover { background: var(--bg-3); }
 .fill-inverse { background: var(--fg-1); color: var(--bg-1); }
 .fill-primary :is(h1, h2, h3, p, .lead, .msg, .meta, .card__title),
 .fill-inverse :is(h1, h2, h3, p, .lead, .msg, .meta, .card__title) { color: var(--bg-1); }
-.fill-primary :is(.sub, .note, .card__sub, .eyebrow) { color: var(--bg-3); }
-.fill-inverse :is(.sub, .note, .card__sub, .eyebrow) { color: var(--bg-4); }
+.fill-primary :is(.note, .card__sub) { color: var(--bg-3); }
+.fill-inverse :is(.note, .card__sub) { color: var(--bg-4); }
 .fill-primary :where(a:any-link), .fill-inverse :where(a:any-link) { color: var(--bg-1); }
 .fill-primary :where(a:any-link:focus-visible), .fill-inverse :where(a:any-link:focus-visible) { outline-color: var(--bg-1); }
 

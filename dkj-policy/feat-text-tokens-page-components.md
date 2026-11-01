@@ -41,7 +41,9 @@
 
 Maikel asked for two h2s, Tokens and Components, on the brand book's Text token page
 (`/marketplace/dkj-policy/dkj-brandbook/tokens/text`), and chose to show the Text section's own cards under Components,
-and then had the Text section's card taken off the overview's Preview: it lives on the Text token page now.
+and then had the Text section's card taken off the overview's Preview: it lives on the Text token page now. On the same
+page he then retired `.eyebrow`, asked for a complete Headings card (h1, h2, h3), and merged `.sub` into `.note`, which
+share colour and size (their margins differed: `.note`'s is kept).
 
 ### CREATE
 
@@ -49,11 +51,17 @@ and then had the Text section's card taken off the overview's Preview: it lives 
   its own grid; the Text group gets Tokens (Type scale, Font family) and Components (the Text section)
 - [x] The overview's Text card counts both halves (6 specimens)
 - [x] A section a token group shows is left off the overview, so Preview holds Themes alone
+- [x] `house-style.css`: `.eyebrow` gone, `.sub` gone into `.note`, the fill switches and comments with them
+- [x] `specimens.html`: the Headings card shows h1, h2, h3; the fill specimens' quieter line is a `.note`
+- [x] The hub: `Format-GeneralPageHtml`'s `-Eyebrow` (drawn only without a site header, which no caller had) removed
+  with its callers; the consumer dashboard's two `.sub` lines are `.note`
+- [x] The brand book README and the `dkj-brandbook` skill name `.note` instead of `.sub` and `.eyebrow`
 
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: the Text page's heading and card order, the overview's count, and a 404 when the Text
   section is gone from the file
+- [x] `consumer-dashboard.tests.ps1`, `check-house-style`, `check-plugin-integrity` green
 - [x] Looked at the live page on the product server
 - [ ] The owner's look at `/marketplace/dkj-policy/dkj-brandbook/tokens/text`
 
@@ -62,17 +70,22 @@ and then had the Text section's card taken off the overview's Preview: it lives 
 The brand book's Text token page sets its two token cards, Type scale and Font family, under an h2 Tokens, and the
 Text section's own specimens (headings, running text, numbers, messages) under an h2 Components, so the type tokens
 and the type they produce read on one page. A token group's heading can now name a whole section to show, and that section leaves the overview's Preview, which
-now holds Themes alone.
+now holds Themes alone. The Headings specimen shows h1, h2 and h3.
+
+The house style drops two classes: `.eyebrow`, which no page here drew any more, and `.sub`, merged into `.note`, the
+one quiet-text class, which had the same colour and size.
 
 **Score:** 2
 
 #### What makes this deploy extra special
 
-N/A -- the brand book's product pages run only in this source repo's own dev server; no consumer receives them.
+`house-style.css` no longer defines `.eyebrow` or `.sub`. A page that takes the new copy and still uses either loses
+that styling: replace `class="sub"` with `class="note"` (the same colour and size, with a small top margin instead of a
+16px bottom one), and drop the eyebrow line or set it as a `.note`.
 
-**Score:** N/A
+**Score:** 5
 
 #### Pull Request
 
-the Text token page splits into Tokens and Components
+the Text token page splits into Tokens and Components, and the house style retires .eyebrow and .sub
 
