@@ -148,9 +148,10 @@
   --radius-1: 4px; --radius-1-5: 6px; --radius-2: 8px; --radius-2-5: 10px; --radius-3: 12px; --radius-4: 16px; --radius-pill: 999px;
   /* the face of code in .prose */
   --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
-  /* the four font weights, same in both modes (Maikel, November 1, 2026): light for a quiet value, regular for running
-     text, semibold for h3 and card titles, bold for the heaviest stress (the older rules above keep their literals: h1 and h2 are 700) */
-  --font-weight-light: 300; --font-weight-regular: 400; --font-weight-semibold: 600; --font-weight-bold: 800;
+  /* the four font weights, same in both modes (Maikel, November 1, 2026): light 300, regular 500, semibold 700, bold 900.
+     The older rules above keep their literals (400 for running text, 600 for h3 and card titles, 700 for h1 and h2), so
+     none of them moves until it is set on a token */
+  --font-weight-light: 300; --font-weight-regular: 500; --font-weight-semibold: 700; --font-weight-bold: 900;
 
   /* native controls (checkbox, radio, range, progress) and the text caret take the theme */
   accent-color: var(--primary);
