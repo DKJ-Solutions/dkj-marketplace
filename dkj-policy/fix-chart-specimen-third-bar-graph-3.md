@@ -50,7 +50,7 @@
 
 ### TEST
 
-- [ ] The owner has looked at the Chart scope specimen on the brand book page
+- [x] The owner has looked at the brand book pages and approved the PR (Maikel, November 1, 2026)
 
 ### DEPLOY: fix/chart-specimen-third-bar-graph-3
 
