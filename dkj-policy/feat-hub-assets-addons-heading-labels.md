@@ -47,6 +47,7 @@ The owner judges the headings on the hub's dkj-policy page by eye before this me
 - [x] `dev-pages.tests.ps1`: the two asserts that pin those headings follow
 - [x] The brand book's Color page: the Stats and Status headings become one, Stats & Status, over both cards (Maikel, November 1, 2026)
 - [x] The brand book: the series slots `--cat-1` to `--cat-3` are renamed `--graph-1` to `--graph-3` in `house-style.css`, `specimens.html` and the README's current-state lines, and their specimen card Categories is renamed Graphs (Maikel, November 1, 2026); the README's history lines keep the old name
+- [x] The specimen card Status and direction is renamed Status (Maikel, November 1, 2026)
 - [x] `dev-pages`, `check-house-style`, `house-palette`, `consumer-dashboard` suites green
 
 ### TEST
@@ -56,7 +57,7 @@ The owner judges the headings on the hub's dkj-policy page by eye before this me
 
 ### DEPLOY: feat/hub-assets-addons-heading-labels
 
-The hub's dkj-policy page now says what each section is to a repo that installs it: its house-style assets are headed **Assets (Always on)**, and its add-ons **Add-ons (Optional)**, so a reader no longer has to guess which part comes with the plugin and which is a choice. The brand book's Color page sets its series and status colours under one heading, **Stats & Status**, where it had two. And the brand book's series slots are renamed: `--cat-1`, `--cat-2` and `--cat-3` are now `--graph-1`, `--graph-2` and `--graph-3`, with the same values, and their specimen card is called **Graphs** instead of Categories.
+The hub's dkj-policy page now says what each section is to a repo that installs it: its house-style assets are headed **Assets (Always on)**, and its add-ons **Add-ons (Optional)**, so a reader no longer has to guess which part comes with the plugin and which is a choice. The brand book's Color page sets its series and status colours under one heading, **Stats & Status**, where it had two. And the brand book's series slots are renamed: `--cat-1`, `--cat-2` and `--cat-3` are now `--graph-1`, `--graph-2` and `--graph-3`, with the same values, and their specimen card is called **Graphs** instead of Categories; the status colours' card is called **Status** instead of Status and direction.
 
 **Score:** 2
 
