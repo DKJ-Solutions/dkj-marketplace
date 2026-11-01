@@ -20,7 +20,7 @@
 
    How far a theme reaches: every use of --primary-muted (a grey of the colour: the pressed .seg, .badge--info,
    .meter--info, focus rings, a plain .btn's edge on a card inside a grid), the text caret and the selection; --primary, the colour itself,
-   for links, titles and values, the settings toggle's edge and the breadcrumb bar (#3235), .btn--primary (a filled main action, owner's decision, October 15, 2026, #109) and
+   for links, titles and values, the breadcrumb bar (#3235), .btn--primary (a filled main action, owner's decision, October 15, 2026, #109) and
    native checkboxes, radios, sliders and progress bars through accent-color. Beyond that, by default: the page,
    the cards and tiles stand on the paper (--bg-1, --bg-2), every line and tinted surface is --bg-3, and
    the text on them is --fg-1 to --fg-4. There are no untinted neutrals: text is --fg-1, and --primary is the
@@ -69,7 +69,10 @@
      line (borders, row dividers, meter track, gridlines) and the tinted surfaces (an accent table head, a hover, a
      today row, the accent dialog); bg-4 a stronger border (an open card, a selected box). --primary the
      highlight: links (owner's decision, October 15, 2026), the primary button's fill (#109), the picker's dot, h1,
-     the states (hover, sorted) and native controls through accent-color. --primary-muted .note, the card and dialog sub lines,
+     the states (hover, sorted) and native controls through accent-color. --primary-raised is --primary 15% of the way
+     to bg-1 (the settings cell in a .site-header); --primary-hover is --primary 15% of the way to fg-1 (a .btn--primary
+     under the pointer, the settings cell's hover and open state). Both are typed per theme, never derived in a rule:
+     no color-mix() or other colour function in this file, a gate refuses one (Maikel, November 1, 2026). --primary-muted .note, the card and dialog sub lines,
      the tile label, the fills (switches, info badges, a pressed .seg), most focus
      rings and meters (a ring on a sort header, a .seg button, a chart bar or the read-more toggle is --primary). fg-1 every paragraph and an inverted surface (.fill-inverse, the showcase's panel); fg-2 h2 and .meta on a span; fg-3 h3;
      fg-4 no role yet. The breadcrumb bar stands on --primary, with the paper steps as its text. On a fill the text switches: on .fill-primary the paper is the text, so an h2
@@ -81,7 +84,7 @@
      16.4:1; a bg-3 line on a bg-2 card 1.05:1 (Pink) to 1.09:1 (Magenta), a bg-4 border on it 1.14:1 to 1.22:1.
      Paper-2 stands a clearer step off the page since November 1, 2026 (Maikel): 1.04:1 to 1.05:1 on dark and 1.09:1
      to 1.10:1 on light, the figures above for bg-2 measured again that day. */
-  --bg-1: #fdfdff; --bg-2: #eff4fd; --bg-3: #e2ecff; --bg-4: #d1e0ff; --primary: #0000ff; --primary-muted: #4f5769; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c;
+  --bg-1: #fdfdff; --bg-2: #eff4fd; --bg-3: #e2ecff; --bg-4: #d1e0ff; --primary: #0000ff; --primary-muted: #4f5769; --primary-raised: #2626ff; --primary-hover: #0001db; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c;
 
   /* categorical palette (series slots) */
   --graph-1: #2574d1;          /* dark enough for --bg-1 text on it at 4.5:1 in every light theme (4.51:1, worst Roest; #92) */
@@ -166,7 +169,7 @@
     color-scheme: dark;
     --graph-1: #3987e5; --graph-2: #d95926; --graph-3: #199e70;
     --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
-    --bg-1: #01090b; --bg-2: #021113; --bg-3: #01191c; --bg-4: #002328; --primary: #63cfdc; --primary-muted: #6aa3aa; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
+    --bg-1: #01090b; --bg-2: #021113; --bg-3: #01191c; --bg-4: #002328; --primary: #63cfdc; --primary-muted: #6aa3aa; --primary-raised: #54b1bd; --primary-hover: #79d6e1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
   }
 }
 
@@ -177,7 +180,7 @@
   color-scheme: dark;
   --graph-1: #3987e5; --graph-2: #d95926; --graph-3: #199e70;
   --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
-  --bg-1: #01090b; --bg-2: #021113; --bg-3: #01191c; --bg-4: #002328; --primary: #63cfdc; --primary-muted: #6aa3aa; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
+  --bg-1: #01090b; --bg-2: #021113; --bg-3: #01191c; --bg-4: #002328; --primary: #63cfdc; --primary-muted: #6aa3aa; --primary-raised: #54b1bd; --primary-hover: #79d6e1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
 }
 
 /* ---- Themes: the theme's colour --------------------------------------------- */
@@ -186,18 +189,18 @@
    two whose primary sits next to the warning colour move the warning away from it. No red and
    no green theme: those hues mean bad and good. Order: magenta, purple, blue, teal, ochre, rust (light);
    pink, lilac, sky, cyan, yellow, orange (dark). */
-:root[data-theme="magenta"], .theme-swatch[data-id="magenta"] { --bg-1: #fffdfe; --bg-2: #fbf0f5; --bg-3: #fae4ef; --bg-4: #f7d4e6; --primary: #b90085; --primary-muted: #66525d; --fg-1: #0d0208; --fg-2: #160810; --fg-3: #1f1119; --fg-4: #281a22; }
-:root[data-theme="purple"], .theme-swatch[data-id="purple"] { --bg-1: #fdfdff; --bg-2: #f4f2fc; --bg-3: #ece8fd; --bg-4: #e1dbfb; --primary: #7f00ff; --primary-muted: #595568; --fg-1: #060410; --fg-2: #0e0b19; --fg-3: #171422; --fg-4: #201d2b; }
-:root[data-theme="blue"], .theme-swatch[data-id="blue"] { --bg-1: #fdfdff; --bg-2: #eff4fd; --bg-3: #e2ecff; --bg-4: #d1e0ff; --primary: #0000ff; --primary-muted: #4f5769; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c; }
-:root[data-theme="teal"], .theme-swatch[data-id="teal"] { --bg-1: #fafeff; --bg-2: #e9f6f8; --bg-3: #d7f1f4; --bg-4: #bee9ef; --primary: #006e79; --primary-muted: #435b5f; --fg-1: #000809; --fg-2: #001113; --fg-3: #051a1c; --fg-4: #0f2325; }
-:root[data-theme="ochre"], .theme-swatch[data-id="ochre"] { --bg-1: #fefef9; --bg-2: #f5f4e9; --bg-3: #efecd7; --bg-4: #e6e1bf; --primary: #716300; --primary-muted: #5c5845; --fg-1: #080600; --fg-2: #100d01; --fg-3: #191607; --fg-4: #222011; }
-:root[data-theme="rust"], .theme-swatch[data-id="rust"] { --bg-1: #fffdfc; --bg-2: #fcf1eb; --bg-3: #fce6db; --bg-4: #f9d8c5; --primary: #9c4b00; --primary-muted: #665449; --fg-1: #0e0300; --fg-2: #170903; --fg-3: #20120a; --fg-4: #291c14; --warning-3: #b88a00; }
-:root[data-theme="pink"], .theme-swatch[data-id="pink"] { --bg-1: #0e0507; --bg-2: #170a0e; --bg-3: #200f15; --bg-4: #2f141e; --primary: #ff9fd4; --primary-muted: #b88da3; --fg-1: #fffafc; --fg-2: #f6edf0; --fg-3: #ece1e4; --fg-4: #e2d5d9; }
-:root[data-theme="lilac"], .theme-swatch[data-id="lilac"] { --bg-1: #08060e; --bg-2: #0f0c18; --bg-3: #161222; --bg-4: #1f1a31; --primary: #d6adff; --primary-muted: #a492b8; --fg-1: #fcfbff; --fg-2: #f0eff6; --fg-3: #e5e3ec; --fg-4: #d9d7e2; }
-:root[data-theme="sky"], .theme-swatch[data-id="sky"] { --bg-1: #04070f; --bg-2: #090e19; --bg-3: #0d1523; --bg-4: #131d33; --primary: #b8b8ff; --primary-muted: #9596be; --fg-1: #fafcff; --fg-2: #edf0f7; --fg-3: #e0e5ed; --fg-4: #d4d9e3; }
-:root[data-theme="cyan"], .theme-swatch[data-id="cyan"] { --bg-1: #01090b; --bg-2: #021113; --bg-3: #01191c; --bg-4: #002328; --primary: #63cfdc; --primary-muted: #6aa3aa; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde; }
-:root[data-theme="yellow"], .theme-swatch[data-id="yellow"] { --bg-1: #0a0701; --bg-2: #130e03; --bg-3: #1b1404; --bg-4: #271d02; --primary: #e2ba51; --primary-muted: #a8986e; --fg-1: #fdfcf7; --fg-2: #f3f0e9; --fg-3: #e8e4dc; --fg-4: #ddd9cf; --warning-3: #f08a24; }
-:root[data-theme="orange"], .theme-swatch[data-id="orange"] { --bg-1: #0e0503; --bg-2: #170b06; --bg-3: #211009; --bg-4: #30160c; --primary: #ffaa74; --primary-muted: #b99178; --fg-1: #fffbf9; --fg-2: #f6eeeb; --fg-3: #ece2de; --fg-4: #e2d6d2; }
+:root[data-theme="magenta"], .theme-swatch[data-id="magenta"] { --bg-1: #fffdfe; --bg-2: #fbf0f5; --bg-3: #fae4ef; --bg-4: #f7d4e6; --primary: #b90085; --primary-muted: #66525d; --primary-raised: #c32697; --primary-hover: #9f0072; --fg-1: #0d0208; --fg-2: #160810; --fg-3: #1f1119; --fg-4: #281a22; }
+:root[data-theme="purple"], .theme-swatch[data-id="purple"] { --bg-1: #fdfdff; --bg-2: #f4f2fc; --bg-3: #ece8fd; --bg-4: #e1dbfb; --primary: #7f00ff; --primary-muted: #595568; --primary-raised: #9226ff; --primary-hover: #6d01db; --fg-1: #060410; --fg-2: #0e0b19; --fg-3: #171422; --fg-4: #201d2b; }
+:root[data-theme="blue"], .theme-swatch[data-id="blue"] { --bg-1: #fdfdff; --bg-2: #eff4fd; --bg-3: #e2ecff; --bg-4: #d1e0ff; --primary: #0000ff; --primary-muted: #4f5769; --primary-raised: #2626ff; --primary-hover: #0001db; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c; }
+:root[data-theme="teal"], .theme-swatch[data-id="teal"] { --bg-1: #fafeff; --bg-2: #e9f6f8; --bg-3: #d7f1f4; --bg-4: #bee9ef; --primary: #006e79; --primary-muted: #435b5f; --primary-raised: #25848d; --primary-hover: #005f68; --fg-1: #000809; --fg-2: #001113; --fg-3: #051a1c; --fg-4: #0f2325; }
+:root[data-theme="ochre"], .theme-swatch[data-id="ochre"] { --bg-1: #fefef9; --bg-2: #f5f4e9; --bg-3: #efecd7; --bg-4: #e6e1bf; --primary: #716300; --primary-muted: #5c5845; --primary-raised: #867a25; --primary-hover: #615500; --fg-1: #080600; --fg-2: #100d01; --fg-3: #191607; --fg-4: #222011; }
+:root[data-theme="rust"], .theme-swatch[data-id="rust"] { --bg-1: #fffdfc; --bg-2: #fcf1eb; --bg-3: #fce6db; --bg-4: #f9d8c5; --primary: #9c4b00; --primary-muted: #665449; --primary-raised: #ab6626; --primary-hover: #874000; --fg-1: #0e0300; --fg-2: #170903; --fg-3: #20120a; --fg-4: #291c14; --warning-3: #b88a00; }
+:root[data-theme="pink"], .theme-swatch[data-id="pink"] { --bg-1: #0e0507; --bg-2: #170a0e; --bg-3: #200f15; --bg-4: #2f141e; --primary: #ff9fd4; --primary-muted: #b88da3; --primary-raised: #db88b5; --primary-hover: #ffadda; --fg-1: #fffafc; --fg-2: #f6edf0; --fg-3: #ece1e4; --fg-4: #e2d5d9; }
+:root[data-theme="lilac"], .theme-swatch[data-id="lilac"] { --bg-1: #08060e; --bg-2: #0f0c18; --bg-3: #161222; --bg-4: #1f1a31; --primary: #d6adff; --primary-muted: #a492b8; --primary-raised: #b794db; --primary-hover: #dcb9ff; --fg-1: #fcfbff; --fg-2: #f0eff6; --fg-3: #e5e3ec; --fg-4: #d9d7e2; }
+:root[data-theme="sky"], .theme-swatch[data-id="sky"] { --bg-1: #04070f; --bg-2: #090e19; --bg-3: #0d1523; --bg-4: #131d33; --primary: #b8b8ff; --primary-muted: #9596be; --primary-raised: #9d9ddb; --primary-hover: #c2c2ff; --fg-1: #fafcff; --fg-2: #edf0f7; --fg-3: #e0e5ed; --fg-4: #d4d9e3; }
+:root[data-theme="cyan"], .theme-swatch[data-id="cyan"] { --bg-1: #01090b; --bg-2: #021113; --bg-3: #01191c; --bg-4: #002328; --primary: #63cfdc; --primary-muted: #6aa3aa; --primary-raised: #54b1bd; --primary-hover: #79d6e1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde; }
+:root[data-theme="yellow"], .theme-swatch[data-id="yellow"] { --bg-1: #0a0701; --bg-2: #130e03; --bg-3: #1b1404; --bg-4: #271d02; --primary: #e2ba51; --primary-muted: #a8986e; --primary-raised: #c29f45; --primary-hover: #e6c46a; --fg-1: #fdfcf7; --fg-2: #f3f0e9; --fg-3: #e8e4dc; --fg-4: #ddd9cf; --warning-3: #f08a24; }
+:root[data-theme="orange"], .theme-swatch[data-id="orange"] { --bg-1: #0e0503; --bg-2: #170b06; --bg-3: #211009; --bg-4: #30160c; --primary: #ffaa74; --primary-muted: #b99178; --primary-raised: #db9163; --primary-hover: #ffb688; --fg-1: #fffbf9; --fg-2: #f6eeeb; --fg-3: #ece2de; --fg-4: #e2d6d2; }
 
 /* ---- Base ---------------------------------------------------------------- */
 * { box-sizing: border-box; }
@@ -266,7 +269,7 @@ body > header, main > header { display: flex; justify-content: space-between; al
    capitals), h2 since the same day. h1 stands apart from h2 by its size step and its weight,
    with its tracking pulled in slightly, as a large sans wants. h2 is one step lighter, bold (Maikel,
    November 1, 2026). */
-h1 { font-weight: var(--font-weight-black); letter-spacing: -0.01em; }
+h1 { font-weight: var(--font-weight-bold); letter-spacing: -0.01em; }
 h2 { font-weight: var(--font-weight-bold); }   /* semibold since November 1, 2026 (Maikel); bold from October 24 */
 /* h1, h2 and h3 are --primary (h3 since November 1, 2026, Maikel; it was --fg-3) (owner, October 24, 2026: h2 back in the colour, now 24px in the sans under
    the h1; from October 19 it was --fg-2, because an h2 in the h1's colour read too much like it, and #3235 moved h2
@@ -287,7 +290,7 @@ h2 { font-size: var(--text-h2); margin: 0 0 var(--spacing-1); }
    sit almost exactly mid-line, so 1px corrects the rest. */
 h2 { display: flex; align-items: center; }
 h2 .info-button { top: 1px; }
-h3 { font-size: var(--text-h3); margin: 0 0 var(--spacing-2); font-weight: var(--font-weight-light); }   /* light since November 1, 2026 (Maikel) */
+h3 { font-size: var(--text-h3); margin: 0 0 var(--spacing-2); font-weight: var(--font-weight-bold); }   /* bold since November 1, 2026 (Maikel; light earlier that day) */
 /* There is no h4, h5 or h6: the scale ends at h3 (owner, October 25, 2026; h6 went on October 20). */
 /* The h1 with a "?" right of it that explains the page in a .tooltip--explain on hover or focus, so nothing sits
    under the h1 (Maikel, October 31, 2026; rule 5 of the README holds). The row's gap is the space. */
@@ -441,7 +444,7 @@ p { margin: 0; }
 
 /* ---- Badge ---------------------------------------------------------------- */
 .badge { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%;
-  font-family: system-ui, sans-serif; font-size: var(--text-sm); font-weight: var(--font-weight-black); line-height: 1; color: var(--bg-1); background: var(--b); flex: none; }
+  font-family: system-ui, sans-serif; font-size: var(--text-sm); font-weight: var(--font-weight-bold); line-height: 1; color: var(--bg-1); background: var(--b); flex: none; }
 .badge--good    { --b: var(--positive-3); }
 .badge--warn    { --b: var(--warning-3); }
 .badge--bad     { --b: var(--negative-3); }
@@ -508,10 +511,10 @@ p { margin: 0; }
 .moretoggle:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
 
 /* ---- Primary button -------------------------------------------------------- */
-.btn--primary { background: var(--primary); border-color: var(--primary); color: var(--bg-1); font-weight: var(--font-weight-black); }   /* bold: the filled main action (owner, #3649) */
+.btn--primary { background: var(--primary); border-color: var(--primary); color: var(--bg-1); font-weight: var(--font-weight-bold); }   /* bold: the filled main action (owner, #3649) */
 /* Hover: the fill moves 15% toward --fg-1, so it darkens on a light theme and lightens on a dark one, and the
    --bg-1 label gains contrast either way. It outweighs the plain .btn hover above and .btn--touch.btn--primary below. */
-.btn--primary:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 85%, var(--fg-1)); border-color: color-mix(in srgb, var(--primary) 85%, var(--fg-1)); }
+.btn--primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 /* Disabled: one rule for every .btn variant, so an app never adds its own on this reserved class. */
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -541,19 +544,18 @@ p { margin: 0; }
 /* ---- Settings button (drawn by house-theme.js: DKJTheme.settings(el)) ------- */
 /* A round toggle that opens a panel with the theme picker, the page width, a reset and the app's own controls
    (.theme-settings__extra). Inline by default, e.g. in a .topbar; --floating fixes it top right.
-   The panel lies over the page, so nothing moves when it opens. The toggle stands on the card (--bg-2) with
-   its edge in the theme's colour (owner, #3235): a --primary border, a --fg-1 icon that turns --primary under the
-   pointer and while open. */
+   The panel lies over the page, so nothing moves when it opens. The toggle is the icon alone, in --fg-1, with no
+   fill, edge or shadow, and it stays --fg-1 under the pointer and while open (Maikel, November 1, 2026; from #3235
+   until then it stood on --bg-2 with a --primary edge, and its icon turned --primary). */
 .theme-settings { position: relative; display: inline-block; }
 .theme-settings--floating { position: fixed; top: var(--spacing-3); right: var(--spacing-3); z-index: 20; }
 .theme-settings__toggle { display: inline-flex; align-items: center; justify-content: center; width: var(--tap); height: var(--tap);
-  padding: 0; color: var(--fg-1); background: var(--bg-2); border: 1px solid var(--primary); border-radius: 50%;
-  box-shadow: var(--shadow-pop); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-.theme-settings__toggle:hover { background: var(--bg-3); color: var(--primary); }
-.theme-settings__toggle[aria-expanded="true"] { color: var(--primary); }   /* open: a state, so the highlight */
+  padding: 0; color: var(--fg-1); background: none; border: 0; border-radius: 50%;
+  cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .theme-settings__toggle:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
 .theme-settings__close, .theme-settings__toggle[aria-expanded="true"] .theme-settings__open { display: none; }
 .theme-settings__toggle[aria-expanded="true"] .theme-settings__close { display: block; }
+.theme-settings__open { fill: currentColor; stroke: currentColor; stroke-width: 1.2; stroke-linejoin: round; }   /* a solid gear; the stroke only rounds its corners (Maikel, November 1, 2026; an outline until then) */
 .theme-settings__panel { position: absolute; top: calc(100% + var(--spacing-2)); right: 0; z-index: 20; display: grid; gap: var(--spacing-4);
   width: max-content; max-width: calc(100vw - 2 * var(--spacing-4)); max-height: calc(100dvh - var(--tap) - 2 * var(--spacing-5));
   overflow-y: auto; padding: var(--spacing-4); text-align: left; background: var(--bg-2); border: 1px solid var(--bg-3);
@@ -613,7 +615,7 @@ p { margin: 0; }
 .btn--touch { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap);
   padding: var(--spacing-2-5) var(--spacing-4); font-size: var(--text-base); font-weight: var(--font-weight-bold); color: var(--fg-1);
   background: var(--bg-2); -webkit-tap-highlight-color: transparent; }
-.btn--touch.btn--primary { background: var(--primary); border-color: var(--primary); color: var(--bg-1); font-weight: var(--font-weight-black); }
+.btn--touch.btn--primary { background: var(--primary); border-color: var(--primary); color: var(--bg-1); font-weight: var(--font-weight-bold); }
 .btn--block { width: 100%; }
 
 /* ---- Icon button and action row --------------------------------------------- */
@@ -675,7 +677,7 @@ html:has(dialog:modal) { overflow: hidden; }
   padding: 0 calc(var(--spacing-4) + var(--tap) + var(--spacing-2)) 0 var(--spacing-4); border-bottom: 1px solid var(--bg-3); }
 .dialog--drawer .dialog__head--two { padding-right: calc(var(--spacing-4) + 2 * var(--tap) + var(--spacing-4)); }
 .dialog--drawer .dialog__head--back { padding: 0 var(--spacing-4) 0 calc(var(--spacing-4) + var(--tap) + var(--spacing-2)); }
-.dialog--drawer :is(.dialog__head h3, .dialog__title) { font-weight: var(--font-weight-black); }   /* as the name in the top bar */
+.dialog--drawer :is(.dialog__head h3, .dialog__title) { font-weight: var(--font-weight-bold); }   /* as the name in the top bar */
 .dialog--drawer .dialog__close { top: calc((var(--topbar-h) - var(--tap)) / 2 + env(safe-area-inset-top)); }
 .dialog--drawer::backdrop { animation: house-backdrop-in 220ms ease-out; }
 @keyframes house-drawer-in { from { transform: translateX(100%); } }
@@ -690,7 +692,7 @@ html:has(dialog:modal) { overflow: hidden; }
 .topbar__inner { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: var(--column-narrow); height: var(--topbar-h);
   margin: 0 auto; padding: 0 var(--spacing-1) 0 var(--spacing-4); }
 .topbar__brand { display: flex; align-items: center; gap: var(--spacing-3); min-width: 0; }
-.topbar__name { flex: none; font-size: var(--text-h3); font-weight: var(--font-weight-black); }
+.topbar__name { flex: none; font-size: var(--text-h3); font-weight: var(--font-weight-bold); }
 html:has(.topbar) { scroll-padding-top: var(--topbar-h); }
 
 /* ---- Breadcrumbs ---------------------------------------------------------------- */
@@ -735,12 +737,22 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .site-header__brand { display: inline-flex; align-items: center; gap: var(--spacing-3); min-width: 0; color: var(--bg-1); text-decoration: none; }
 .site-header__brand:focus-visible { outline: 2px solid var(--bg-1); outline-offset: 4px; }
 .site-header__mark { display: inline-block; flex: none; padding: var(--spacing-1) var(--spacing-2);
-  border-radius: var(--spacing-2); background: var(--bg-1); color: var(--primary); font-size: var(--text-h1); font-weight: var(--font-weight-black);
+  border-radius: var(--spacing-2); background: var(--bg-1); color: var(--primary); font-size: var(--text-h1); font-weight: var(--font-weight-bold);
   line-height: 1; letter-spacing: 0.02em; }
-.site-header__name { overflow: hidden; font-size: var(--text-h3); font-weight: var(--font-weight-black); white-space: nowrap; text-overflow: ellipsis; }
+.site-header__name { overflow: hidden; font-size: var(--text-h3); font-weight: var(--font-weight-bold); white-space: nowrap; text-overflow: ellipsis; }
 .site-header__tag { font-weight: var(--font-weight-regular); color: var(--bg-3); }
+/* In the header the settings button is a square cell the full height of the bar at its right end, a shade lighter
+   than the header, its gear in the header's own colour (Maikel, November 1, 2026). */
+.site-header .theme-settings { flex: none; align-self: stretch; margin: calc(-1 * var(--spacing-3)) calc(-1 * var(--spacing-4)) calc(-1 * var(--spacing-3)) 0;
+  width: calc(var(--text-h1) + 2 * var(--spacing-1) + 2 * var(--spacing-3)); }   /* the bar's height: the mark (its line, its padding) and the bar's own padding */
+.site-header .theme-settings__toggle { width: 100%; height: 100%; border-radius: 0; color: var(--bg-1);
+  background: var(--primary-raised); }
+.site-header .theme-settings__toggle:hover,
+.site-header .theme-settings__toggle[aria-expanded="true"] { background: var(--primary-hover); }
+.site-header .theme-settings__toggle svg { width: var(--spacing-6); height: var(--spacing-6); }
+.site-header .theme-settings__toggle:focus-visible { outline-color: var(--bg-1); outline-offset: -4px; }
 .site-header + .breadcrumbs-bar { background: var(--bg-1); border-bottom: 1px solid var(--bg-3); }
-.site-header + .breadcrumbs-bar .breadcrumbs a { color: var(--fg-3); }
+.site-header + .breadcrumbs-bar .breadcrumbs a { color: var(--primary-muted); }   /* Maikel, November 1, 2026; it was --fg-3 */
 .site-header + .breadcrumbs-bar .breadcrumbs a:focus-visible { outline-color: var(--primary-muted); }
 .site-header + .breadcrumbs-bar .breadcrumbs__sep { color: var(--primary-muted); }
 .site-header + .breadcrumbs-bar .breadcrumbs [aria-current='page'] { color: var(--primary); }   /* owner, October 24, 2026; it was --fg-1 */
@@ -846,7 +858,7 @@ a.menu-item:hover { background: var(--bg-3); }
 .table .col-end, .table .col-end:first-child { text-align: right; }
 /* Facts: a muted line under a term, and a last row that sums up (bold, no rule under it). */
 .facts__detail { display: block; margin-top: var(--spacing-0-5); font-size: var(--text-sm); color: var(--fg-1); }
-.facts > .facts__total { border-bottom: 0; font-weight: var(--font-weight-black); }
+.facts > .facts__total { border-bottom: 0; font-weight: var(--font-weight-bold); }
 /* A chart bar the pointer or the keyboard is on, driven by the script: the same look as .bar:hover. */
 .chart .bar--active { opacity: 0.8; }
 
@@ -861,7 +873,7 @@ a.menu-item:hover { background: var(--bg-3); }
 .banner { margin: 0; padding: var(--spacing-3) var(--spacing-4); line-height: 1.35; color: var(--fg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-3); }
 .banner--accent { font-size: var(--text-h3); text-align: center; background: var(--bg-3); border-color: var(--bg-4); }
 .banner--accent strong { color: var(--primary); white-space: nowrap; }
-.banner__lead { display: inline-flex; align-items: center; gap: var(--spacing-1-5); font-weight: var(--font-weight-black); }
+.banner__lead { display: inline-flex; align-items: center; gap: var(--spacing-1-5); font-weight: var(--font-weight-bold); }
 /* Panel: a tinted box (--bg-3) with a --bg-4 border; --accent a --primary-muted border, --positive the green message
    colours, --button a panel that is one full-width button (<button class="panel panel--button">). Inside, __label is a
    small uppercase line and __value the figure. */
@@ -871,19 +883,19 @@ a.menu-item:hover { background: var(--bg-3); }
 .panel--button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-0-5); width: 100%; min-height: var(--tap);
   padding: var(--spacing-2-5) var(--spacing-2); border-radius: var(--radius-2); font: inherit; font-weight: var(--font-weight-bold); cursor: pointer; }
 .panel--button:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
-.panel__label { font-size: var(--text-sm); font-weight: var(--font-weight-black); letter-spacing: 0.03em; text-transform: uppercase; color: var(--fg-1); }
+.panel__label { font-size: var(--text-sm); font-weight: var(--font-weight-bold); letter-spacing: 0.03em; text-transform: uppercase; color: var(--fg-1); }
 .panel__value { font-size: var(--text-h3); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ---- Chip, tag, filter chips -------------------------------------------------- */
 /* Chip: a pill that states an answer: --yes filled, --no on the page, --todo dashed. */
 .chip { display: inline-block; max-width: 100%; padding: var(--spacing-0-5) var(--spacing-3); border: 1px solid var(--bg-3); border-radius: var(--radius-pill);
-  font-size: var(--text-base); font-weight: var(--font-weight-black); overflow-wrap: anywhere; }
+  font-size: var(--text-base); font-weight: var(--font-weight-bold); overflow-wrap: anywhere; }
 .chip--yes { background: var(--primary-muted); border-color: var(--primary-muted); color: var(--bg-1); }
 .chip--no { background: var(--bg-1); }
 .chip--todo { color: var(--fg-1); border-style: dashed; }
 /* Tag: a small uppercase pill above a title; --primary-muted fill, --info on --graph-1, --warn in text on the warning tint. */
 .tag { display: inline-block; padding: var(--spacing-0-5) var(--spacing-2); border-radius: var(--radius-pill); background: var(--primary-muted); color: var(--bg-1);
-  font-size: var(--text-xs); font-weight: var(--font-weight-black); line-height: 1.2; letter-spacing: 0.06em; text-transform: uppercase; }
+  font-size: var(--text-xs); font-weight: var(--font-weight-bold); line-height: 1.2; letter-spacing: 0.06em; text-transform: uppercase; }
 .tag--info { background: var(--graph-1); }
 .tag--warn { background: var(--warning-1); color: var(--warning-5); }
 /* Filter chips: a wrapping row of pressed-state buttons (wrapping, not scrolling: a scrolling row hides chips and their
@@ -911,7 +923,7 @@ a.menu-item:hover { background: var(--bg-3); }
 .round-toggle:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: -4px; }
 /* Badge toggle: the same on a 28px bordered circle that holds a character; the tap area grows to 44px (::after). */
 .badge-toggle { position: relative; display: inline-flex; align-items: center; justify-content: center; width: var(--spacing-7); height: var(--spacing-7); padding: 0; vertical-align: middle;
-  font-size: var(--text-sm); font-weight: var(--font-weight-black); line-height: 1; color: var(--fg-1); background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-pill);
+  font-size: var(--text-sm); font-weight: var(--font-weight-bold); line-height: 1; color: var(--fg-1); background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-pill);
   cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .badge-toggle::after { content: ""; position: absolute; inset: calc(-1 * var(--spacing-2)); }
 .badge-toggle[aria-expanded="true"] { color: var(--primary-muted); border-color: var(--primary-muted); }
@@ -926,11 +938,11 @@ a.menu-item:hover { background: var(--bg-3); }
 .more--structured { container-type: inline-size; width: 100%; }
 .more--structured > summary { display: flex; flex-wrap: wrap; align-items: baseline; align-content: center; column-gap: var(--spacing-2); row-gap: var(--spacing-0-5); min-height: var(--tap); }
 .more--structured > summary::after { flex: none; order: 1; }
-.more__title { flex: 1 1 12ch; min-width: 0; overflow-wrap: anywhere; font-weight: var(--font-weight-black); color: var(--fg-1); }
+.more__title { flex: 1 1 12ch; min-width: 0; overflow-wrap: anywhere; font-weight: var(--font-weight-bold); color: var(--fg-1); }
 .more__meta, .more__trailing { margin-inline-start: auto; white-space: nowrap; }
 .more__meta + .more__trailing { margin-inline-start: 0; }
 .more__meta { font-size: var(--text-sm); font-weight: var(--font-weight-regular); color: var(--fg-1); font-variant-numeric: tabular-nums; }
-.more__version { color: var(--primary-muted); font-weight: var(--font-weight-black); }
+.more__version { color: var(--primary-muted); font-weight: var(--font-weight-bold); }
 @container (max-width: 24rem) { .more__meta, .more__trailing { order: 2; margin-inline-start: 0; } }
 
 /* ---- Headings and answers ------------------------------------------------------ */
@@ -938,14 +950,14 @@ a.menu-item:hover { background: var(--bg-3); }
 /* A question: a title with its answer .chip at the right, then the answer line, a plain <p> (a <strong> in it where it
    is a verdict). .verdict, which was that line, is gone (Maikel, November 1, 2026): it read as a <p> with a <strong>. */
 .question-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--spacing-1) var(--spacing-3); margin: 0 0 var(--spacing-2); }
-.question-head h3 { margin: 0; font-size: var(--text-h3); font-weight: var(--font-weight-black); line-height: 1.2; }
+.question-head h3 { margin: 0; font-size: var(--text-h3); font-weight: var(--font-weight-bold); line-height: 1.2; }
 .question-head .chip { min-width: 0; margin-left: auto; text-align: right; }
 .question-head + p { margin: 0 0 var(--spacing-1-5); }
 /* .amount is gone into .num (Maikel, November 1, 2026): a figure with a small icon beside it is a .num with the svg in it. */
 /* Answer box: the result of a calculation, a label and the figure in --primary on the tint. */
 .answer { display: flex; align-items: center; gap: var(--spacing-3); margin-top: var(--spacing-2); padding: var(--spacing-2) var(--spacing-3); border-radius: var(--radius-2-5); background: var(--bg-3); }
 .answer__label { flex: 1; font-weight: var(--font-weight-bold); }
-.answer__value { font-size: var(--text-h3); font-weight: var(--font-weight-black); color: var(--primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.answer__value { font-size: var(--text-h3); font-weight: var(--font-weight-bold); color: var(--primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
 /* A value the app changed for you flashes once, in --primary-muted and fading out. */
 @keyframes house-flash { from { background: var(--primary-muted); color: var(--bg-1); } }
 .flash { animation: house-flash 1.2s ease-out; }
@@ -973,7 +985,7 @@ a.menu-item:hover { background: var(--bg-3); }
 .stepper input { display: block; padding: 0 var(--spacing-1); text-align: center; font-variant-numeric: tabular-nums; background: var(--bg-1); -moz-appearance: textfield; appearance: textfield; }
 .stepper input::-webkit-inner-spin-button, .stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .stepper--lg :is(button, input) { height: var(--control-lg); }
-.stepper--lg input { font-weight: var(--font-weight-black); }
+.stepper--lg input { font-weight: var(--font-weight-bold); }
 .stepper button:disabled { opacity: 0.5; cursor: not-allowed; }
 .stepper button:active { background: var(--bg-3); border-color: var(--primary-muted); }
 .stepper :is(button, input):focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
@@ -1000,7 +1012,7 @@ a.menu-item:hover { background: var(--bg-3); }
 .combo__option[aria-selected="true"] .combo__name { font-weight: var(--font-weight-bold); }
 .combo__option[aria-selected="true"] .combo__meta { color: var(--primary); }
 .combo__option--own { flex-direction: row; align-items: center; justify-content: flex-start; gap: var(--spacing-2); border: 1px dashed var(--primary); }
-.combo__option--own::before { content: "+"; flex: none; font-weight: var(--font-weight-black); color: var(--primary-muted); }
+.combo__option--own::before { content: "+"; flex: none; font-weight: var(--font-weight-bold); color: var(--primary-muted); }
 .combo__option--more { min-height: 0; padding-top: var(--spacing-1); padding-bottom: var(--spacing-1); cursor: default; }
 
 /* ---- Value box and stat rows -------------------------------------------------- */
@@ -1041,7 +1053,7 @@ a.menu-item:hover { background: var(--bg-3); }
    letters' centre) and a next button, on 5.5rem columns. The buttons are .btn. */
 .step-head { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) 5.5rem; align-items: center; gap: var(--spacing-2); }
 .step-head .btn { width: 100%; margin: 0; }
-.step-head__value { margin: 0; padding: var(--spacing-3) 0; font-size: var(--text-h1); font-weight: var(--font-weight-black); line-height: 1; text-align: center; text-box: trim-both cap alphabetic; }   /* text-box is ignored where unsupported */
+.step-head__value { margin: 0; padding: var(--spacing-3) 0; font-size: var(--text-h1); font-weight: var(--font-weight-bold); line-height: 1; text-align: center; text-box: trim-both cap alphabetic; }   /* text-box is ignored where unsupported */
 
 /* ---- Info rows ---------------------------------------------------------------- */
 /* Rows of a label and a value in a tinted box, each with a .round-toggle at the end: <div class="info-rows"><p
@@ -1103,10 +1115,10 @@ a.menu-item:hover { background: var(--bg-3); }
 .compare th, .compare td { padding: var(--spacing-2) 0; border-bottom: 1px solid var(--bg-3); vertical-align: baseline; }
 .compare tbody th { text-align: left; font-weight: var(--font-weight-regular); overflow-wrap: anywhere; }
 .compare td.num { padding-left: var(--spacing-2); }
-.compare thead th { padding: 0 0 var(--spacing-2) var(--spacing-2); font-size: var(--text-sm); font-weight: var(--font-weight-black); line-height: 1.2; color: var(--fg-1); text-align: right; vertical-align: bottom; }
+.compare thead th { padding: 0 0 var(--spacing-2) var(--spacing-2); font-size: var(--text-sm); font-weight: var(--font-weight-bold); line-height: 1.2; color: var(--fg-1); text-align: right; vertical-align: bottom; }
 .compare thead td { padding: 0; }
 .compare tbody tr:last-child > * { padding-bottom: var(--spacing-3); border-bottom: 0; }
-.compare tfoot th, .compare tfoot td { padding-top: var(--spacing-3-5); border-bottom: 0; border-top: 2px solid var(--primary-muted); font-weight: var(--font-weight-black); font-size: var(--text-h3); text-align: left; }
+.compare tfoot th, .compare tfoot td { padding-top: var(--spacing-3-5); border-bottom: 0; border-top: 2px solid var(--primary-muted); font-weight: var(--font-weight-bold); font-size: var(--text-h3); text-align: left; }
 .compare tfoot td { text-align: right; }
 /* Calculation: a grid of rows (a subgrid, so the columns line up through every box), each a __what, an __op (+ - x =)
    and a __num; a __box rings a group of rows and nests; --boxed lets boxes span in from an edge column; a __result row
@@ -1128,9 +1140,9 @@ a.menu-item:hover { background: var(--bg-3); }
 .calc--boxed .calc__box > .calc__row, .calc--boxed .calc__box > .calc__box { grid-column: 2 / -2; }   /* boxes only exist in a boxed calculation */
 .calc__box > .calc__row:last-child { border-bottom: 0; }
 .calc__result { border-bottom: 0; }
-.calc__result .calc__num { font-size: var(--text-h3); font-weight: var(--font-weight-black); color: var(--primary-muted); }
+.calc__result .calc__num { font-size: var(--text-h3); font-weight: var(--font-weight-bold); color: var(--primary-muted); }
 .calc-section + .calc-section { margin-top: var(--spacing-6); }
-.calc-section__question { margin: 0 0 var(--spacing-0-5); font-size: var(--text-h3); font-weight: var(--font-weight-black); color: var(--fg-1); }
+.calc-section__question { margin: 0 0 var(--spacing-0-5); font-size: var(--text-h3); font-weight: var(--font-weight-bold); color: var(--fg-1); }
 
 /* ---- Date list ---------------------------------------------------------------- */
 /* A list of dated items: a fixed date column (--datecol), a title with a muted line, an optional trailing label that
@@ -1149,7 +1161,7 @@ a.menu-item:hover { background: var(--bg-3); }
 .date-row__sub { font-size: var(--text-sm); color: var(--primary-muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .date-row__trailing { margin-left: auto; font-size: var(--text-sm); color: var(--fg-1); overflow-wrap: anywhere; }
 .date-row--near, .date-row--today { background: var(--bg-3); box-shadow: inset 3px 0 0 var(--primary-muted); }
-.date-row--near .date-row__when, .date-row--today .date-row__when { font-weight: var(--font-weight-black); color: var(--primary); }
+.date-row--near .date-row__when, .date-row--today .date-row__when { font-weight: var(--font-weight-bold); color: var(--primary); }
 .date-row--invalid { box-shadow: inset 3px 0 0 var(--negative-3); }
 .date-row--invalid .date-row__when { flex-direction: row; align-items: center; gap: var(--spacing-1); color: var(--negative-5); }
 .date-row__icon { flex: none; }

@@ -960,7 +960,7 @@ function Format-StopwatchPageShell {
         # A card is the house one (Format-HubCardLinkHtml, #3566), its lines in the house text sizes and nothing else
         # (the owner, October 24, 2026). On a run card the start is the card's header (base, 800), the prompt label the
         # least visible line under it (the description), and the time under it (the value) with its change beside it.
-        '.sw-run .menu-item__label { font-weight: var(--font-weight-black); }' + "`n" +
+        '.sw-run .menu-item__label { font-weight: var(--font-weight-bold); }' + "`n" +
         # A card is three lines at most (the owner, October 26, 2026): the label one line ending in an ellipsis, since a
         # Logbook label is the first line of a prompt, and a card's note beside its time. The run's page shows the label whole.
         '.sw-run .menu-item__sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }' + "`n" +

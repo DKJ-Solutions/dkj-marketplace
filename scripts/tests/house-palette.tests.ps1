@@ -67,7 +67,7 @@ Assert-Equal 12 $themes.Count 'twelve themes'
 Assert-Equal 6 @($themes | Where-Object Mode -eq 'light').Count 'six light themes'
 foreach ($th in $themes) {
     $p = Get-HousePalette -Hue $th.Hue -Mode $th.Mode -ChromaMax ([double]$th.ChromaMax)
-    Assert-Equal 10 $p.Count "$($th.Id): ten tokens"; Assert-True (-not $p.Contains('--muted-inverse')) "$($th.Id): no --muted-inverse (retired November 1, 2026)"
+    Assert-Equal 12 $p.Count "$($th.Id): twelve tokens"; Assert-True (-not $p.Contains('--muted-inverse')) "$($th.Id): no --muted-inverse (retired November 1, 2026)"
     $miss = @(Get-HousePaletteContrast $p | Where-Object { $_.Ratio -lt $_.Floor } | ForEach-Object { '{0} {1:N2}' -f $_.Pair, $_.Ratio })
     Assert-Equal '' ($miss -join '; ') "$($th.Id): every pairing reaches its floor"
     $l1 = (ConvertTo-OkLch $p['--fg-1']).L; $l4 = (ConvertTo-OkLch $p['--fg-4']).L
@@ -108,7 +108,7 @@ $css = [System.IO.File]::ReadAllText($Style)
 foreach ($th in $themes) {
     $expected = Format-HousePaletteDeclarations (Get-HousePalette -Hue $th.Hue -Mode $th.Mode -ChromaMax ([double]$th.ChromaMax))
     $line = ([regex]::Match($css, ":root\[data-theme=""$($th.Id)""\], \.theme-swatch\[data-id=""$($th.Id)""\] \{ ([^}]*)\}")).Groups[1].Value
-    Assert-True ($line.StartsWith($expected)) "$($th.Id): its theme line starts with the computed ten"
+    Assert-True ($line.StartsWith($expected)) "$($th.Id): its theme line starts with the computed twelve"
 }
 $blocks = @([regex]::Matches($css, '(?m)^\s+(--bg-1:[^\r\n]*)$') | ForEach-Object { $_.Groups[1].Value.Trim() })
 Assert-Equal 3 $blocks.Count 'three default token lines'
@@ -116,8 +116,8 @@ Assert-Equal (Format-HousePaletteDeclarations (Get-HousePalette -Hue 240 -Mode l
 Assert-Equal (Format-HousePaletteDeclarations (Get-HousePalette -Hue 185 -Mode dark -ChromaMax 0.10)) $blocks[1] 'the OS-followed dark default is Cyaan'
 Assert-Equal $blocks[1] $blocks[2] 'the two dark default blocks agree'
 Assert-True ($css -notmatch '--ink-[1-7]\b') 'no --ink-* is left in the stylesheet'
-Assert-True ($css -match 'data-id="rust"\] \{[^}]*--warning-3: #b88a00;') 'Roest keeps its own --warning-3 beside the ten'
-Assert-True ($css -match 'data-id="yellow"\] \{[^}]*--warning-3: #f08a24;') 'Geel keeps its own --warning-3 beside the ten'
+Assert-True ($css -match 'data-id="rust"\] \{[^}]*--warning-3: #b88a00;') 'Roest keeps its own --warning-3 beside the twelve'
+Assert-True ($css -match 'data-id="yellow"\] \{[^}]*--warning-3: #f08a24;') 'Geel keeps its own --warning-3 beside the twelve'
 
 Write-Host '-- group 4: the build script' -ForegroundColor Cyan
 
@@ -162,6 +162,20 @@ $classed = @(foreach ($hf in $headingFiles) {
 })
 Assert-Equal '' ($classed -join '; ') 'no h1, h2 or h3 carries a class, in any page or generator'
 Assert-Equal '' (@([regex]::Matches($css, '(?m)\bh[1-3]\.[a-z][\w-]*') | ForEach-Object { $_.Value }) -join ', ') 'and the stylesheet styles no class on a heading'
+
+Write-Host '-- every token is on the brand book page' -ForegroundColor Cyan
+# Maikel, November 1, 2026: a token that is added is always seen on the product's brand book pages
+# (/marketplace/dkj-policy/dkj-brandbook/tokens/<group>), which read their cards from specimens.html. So every custom
+# property a token block declares -- :root and the theme lines; a component's own variable, such as --gutter, is not a
+# token -- is named on that page.
+$specimens = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'plugins\dkj-policy\assets\dkj-brandbook\specimens.html'))
+$bare = $css -replace '(?s)/\*.*?\*/', ''
+$tokens = @(foreach ($b in [regex]::Matches($bare, '(?s):root[^{]*\{([^}]*)\}')) {
+    foreach ($d in [regex]::Matches($b.Groups[1].Value, '(--[a-z][\w-]*)\s*:')) { $d.Groups[1].Value }
+}) | Sort-Object -Unique
+Assert-True ($tokens.Count -gt 50) "the token blocks are read ($($tokens.Count) tokens)"
+$unshown = @($tokens | Where-Object { $specimens -notmatch ([regex]::Escape($_) + '(?![\w-])') })
+Assert-Equal '' ($unshown -join ', ') 'every token the stylesheet declares is shown in specimens.html'
 
 Write-Host ''
 Write-Host "house-palette: $script:pass passed, $script:fail failed."

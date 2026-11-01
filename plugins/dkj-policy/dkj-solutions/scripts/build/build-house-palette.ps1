@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Compute the ten colour tokens of every house-style theme (#3235) and, with -Apply, write them into
+    Compute the twelve colour tokens of every house-style theme (#3235) and, with -Apply, write them into
     house-style.css.
 
 .DESCRIPTION
@@ -51,7 +51,7 @@ foreach ($id in @($LightDefault, $DarkDefault)) { if (-not $palettes.Contains($i
 # muted-inverse and muted stay in the pattern though no theme has them any more (November 1, 2026; paper-N is bg-N and muted is
 # primary-muted since that day): an -Apply over a stylesheet
 # that still carries it removes it rather than keeping it as a theme's own token.
-$isPaletteToken = '^--(bg-\d|paper-\d|ink-\d|primary|primary-muted|muted|muted-inverse|fg-\d):'
+$isPaletteToken = '^--(bg-\d|paper-\d|ink-\d|primary|primary-muted|primary-raised|primary-hover|muted|muted-inverse|fg-\d):'
 $lines = [System.IO.File]::ReadAllLines((Resolve-Path -LiteralPath $StylePath).Path)
 $standalone = 0
 for ($i = 0; $i -lt $lines.Count; $i++) {

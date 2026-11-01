@@ -8,6 +8,11 @@
 //     correction, October 14, 2026): a layer reads the house tokens with var(), so it follows all twelve
 //     themes in light and dark.
 // Codes are compared case-insensitively with #abc expanded to #aabbcc, to name the house token a code repeats.
+//
+// A colour DERIVED in a rule is refused too, in every house-style stylesheet: color-mix(), the relative
+// colour syntax (`rgb(from ...)`, `oklch(from ...)`), and oklch()/oklab()/lab()/lch()/hwb()/color().
+// A mix of two tokens is a colour no theme defines, so it is a token that should exist; add it to every
+// theme line and read it with var() (Maikel, November 1, 2026: "we use only tokens").
 import { readFileSync } from 'node:fs'
 import { relative, sep } from 'node:path'
 import { repoRoot, houseCss, houseSheets } from './house-path.mjs'
@@ -16,6 +21,7 @@ import { repoRoot, houseCss, houseSheets } from './house-path.mjs'
 const read = (f) => readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '))
 
 const colour = /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\([^)]*\)/g
+const derived = /\b(?:color-mix|oklch|oklab|lab|lch|hwb|color)\(|\b(?:rgba?|hsla?)\(\s*from\b/gi
 const norm = (c) => {
   c = c.toLowerCase().replace(/\s+/g, '')
   return /^#[0-9a-f]{3}$/.test(c) ? '#' + [...c.slice(1)].map((x) => x + x).join('') : c
@@ -46,6 +52,10 @@ for (const f of houseSheets) {
     } else if (!decl) {
       problems.push(`${rel}:${line}  ${c[0]} outside a token declaration -- read a token with var()`)
     }
+  }
+  for (const c of src.matchAll(derived)) {
+    const line = src.slice(0, c.index).split('\n').length
+    problems.push(`${rel}:${line}  ${c[0].replace(/\s+/g, ' ')}... derives a colour -- add a token to every theme and read it with var()`)
   }
 }
 

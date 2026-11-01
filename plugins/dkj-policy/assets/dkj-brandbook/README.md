@@ -89,11 +89,18 @@ already has, not a new colour:
 | Share | Group | Tokens | What it is |
 |---|---|---|---|
 | **60%** | Paper | `--bg-1` … `--bg-4` | the ground: the page, the cards, the lines |
-| **30%** | Primary | `--primary`, with `--primary-muted` (its grey) | the theme's colour: `h1` and `h2`, links, the breadcrumb bar, `.btn--primary`, the states |
+| **30%** | Primary | `--primary`, with `--primary-muted` (its grey), `--primary-raised` and `--primary-hover` (its two shades) | the theme's colour: `h1` and `h2`, links, the breadcrumb bar, `.btn--primary`, the states; `--primary-raised` is the settings cell in a site header, `--primary-hover` a primary button under the pointer |
 | **10%** | Text | `--fg-1` … `--fg-4` | what sits on the paper: every paragraph, label and quiet icon |
 
+**A rule reads a colour only as a token, never derives one** (Maikel, a strict rule, November 1, 2026): no
+`color-mix()`, no relative colour (`rgb(from …)`), no `oklch()` or other colour function outside a token's own
+value. A shade a component needs is a new token, typed into every theme line, and `check-colour-literals.mjs`
+refuses a derived colour before it lands. `--primary-raised` and `--primary-hover` were added that way the same day:
+`--primary` 15% of the way to `--bg-1`, and to `--fg-1`, the exact values the two `color-mix()` rules had computed.
+
 **Everything in the 30% reads on all four paper steps**, as the 10% does (Maikel, November 1, 2026): `--primary`
-4.56:1 or better on `bg-4`, `--primary-muted` 5.30:1 or better (WCAG, the worst of the twelve themes). **And a theme has
+4.56:1 or better on `bg-4`, `--primary-muted` 5.30:1 or better (WCAG, the worst of the twelve themes); `--primary-raised` and `--primary-hover` are
+fills rather than text, so this is not asked of them. **And a theme has
 these three groups and no fourth**: a colour that fits none of them is not a theme colour. That retired
 `--muted-inverse` the same day. It was the grey of an inverted surface, 7:1 on `--fg-1`, and fitted no group: on the
 paper it read at 2.1:1 to 2.3:1 on `bg-4`, so not the 30; on `--primary` at 2.1:1 to 4.0:1, so not the 60; and
@@ -119,7 +126,7 @@ primary outweighs its paper has spent the 30% as ground.
 | Spacing | `--spacing-0-5` … `--spacing-96` | the spacing scale, same in both modes: `--spacing-N` is N × 4px, a half step (`-0-5`, `-1-5`, …) adds 2px. Every gap, margin and padding uses one, and a repo layer spaces its own components from the same scale |
 | Type | `--text-h1` … `--text-h3`, `--text-base`, `--text-sm`, `--text-xs` | the type scale, same in both modes: 36/22/16 for the headings since November 1, 2026 (Maikel; [below](#the-type-scale-of-november-1-2026)), 32/18/14 before (`h3` at 14px, the body size, and no `h4` or `h5` since October 25, 2026, the owner: [below](#the-heading-cut-of-october-25-2026)) (`h2` 18px since October 25, 2026, the owner; it went from 32 at weight 600 to 24 at 700 on October 24, and keeps the 700), and `.lead` was `--text-base` from the same day (it was `--text-lg`) until it was retired on November 1, 2026 (Maikel), 14/12/11 for running text (`--text-lg`, 18px, was retired on November 1, 2026). `h1`–`h3` each take the token of their own level, body text is `--text-base`. No heading is larger than 32px (owner's decision, October 22, 2026: as much content as possible on a 900px-high screen, since October 27 one of about 1300 x 900), so `h1` stands apart by its size and colour (by its capitals too until October 24, 2026); it was 48px from October 20, when `--text-h0` was retired. The hero figure is set at `--text-h1`. There is no `h6` either: the 24px `h3` was retired the same day, because it stood too close to `h2`, and every level below moved up one ([below](#the-heading-shift-of-october-20-2026)). The section label (`GroupHeading`), a heading at `--text-base`, uppercase and muted (owner's decision, October 15, 2026), was the one exception until November 1, 2026, when it went (Maikel): the house has one `h3`. `--font-serif` was the face of `h1` and `h2` until October 24, 2026, when the owner moved both to the sans; it stayed for a title that kept that face, none did, and it was retired on November 1, 2026 (Maikel) |
 | Font family | `--font-mono` | a typeface, not a size: the fixed-width face `.prose` sets its `code` and `pre` in, and an app takes for figures or ids that must line up by character. The body face is not a token; it is set on `body` |
-| Font weight | `--font-weight-light` 300, `--font-weight-regular` 500, `--font-weight-bold` 700, `--font-weight-black` 900 | the four weights, same in both modes (Maikel, November 1, 2026; bold and black were named semibold and bold until the same day): raised the same day from 400, 600 and 700/800. A rule sets a weight only through one of these four, never a number: what was 300 is light, 400 regular (body text too), 600 semibold, 700 and 800 bold |
+| Font weight | `--font-weight-light` 300, `--font-weight-regular` 500, `--font-weight-bold` 700, `--font-weight-black` 900 | the four weights, same in both modes (Maikel, November 1, 2026; bold and black were named semibold and bold until the same day): raised the same day from 400, 600 and 700/800. A rule sets a weight only through one of these four, never a number: what was 300 is light, 400 regular (body text too), 600 semibold, 700 and 800 bold. No house rule sets `--font-weight-black` since the same day: every rule that did now sets `--font-weight-bold` (Maikel), and the token stays for an app that wants it |
 | Radius | `--radius-1` … `--radius-4`, `--radius-pill` | the corner radii, same in both modes and named like the spacing scale: `--radius-N` is N × 4px, a half step adds 2px, so `--radius-1` 4px, `--radius-1-5` 6px, `--radius-2` 8px, `--radius-2-5` 10px, `--radius-3` 12px; `--radius-pill` rounds the ends fully. Named `xs` to `lg` with a `md-plus` until October 31, 2026 ([below](#the-radius-rename-of-october-31-2026)) |
 | App shell | `--control-h`, `--tap`, `--topbar-h`, `--column-narrow` | sizes for a mobile-first app, same in both modes: 38px for a value field and the button beside it, 44px as the smallest touch target, 56px for the top bar, 512px for the narrow app column |
 
@@ -294,7 +301,7 @@ Two departures from the library followed on October 20, 2026: its `h0` was retir
 and its 24px `h3` was retired with every level below it moving up one.
 **No heading is larger than 36px** (owner's decision, October 22, 2026, at 32px; 36px since November 1, 2026, Maikel): every pixel of a 900px-high screen goes to content,
 so `h1` came down from 48px to `h2`'s 32px, and the hero figure with it. The target screen is now about 1300 x 900 (the owner, October 27, 2026, after 1400 x 600 from October 26; rule 4 under [How to use it](#how-to-use-it)), which makes the reason stronger.
-**The `h1` is in the body sans and its own case, at the black weight** (700 until November 1, 2026, `--font-weight-black` since) (owner's decision, October 24, 2026). From
+**The `h1` is in the body sans and its own case, at the bold weight** (`--font-weight-bold`; it was `--font-weight-black` for part of November 1, 2026, until every black rule moved to bold the same day, Maikel) (owner's decision, October 24, 2026). From
 October 21, 2026 ([#3247](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3247)) it was set in
 capitals, and before that day in `--font-serif`; both went, so it stands apart from the `h2` by its size and
 weight (`h2` is bold, `--font-weight-bold`, since November 1, 2026, Maikel).
@@ -575,7 +582,7 @@ out). Three more things follow it by default, in light and in dark (and a measur
   theme, on its theme's `bg-1` (October 17, 2026). Paper and text both run away from the page: `bg-1` and
   `fg-1` are the two ends, the lightest and the darkest on light, the other way round on dark.
 - **A tinted surface takes `--fg-1` as its text.** `--bg-3` is every line and also the surface of the
-  `.table--accent` head, the hover of a joined choice and of the settings toggle, a near or today date row, a date
+  `.table--accent` head, the hover of a joined choice, a near or today date row, a date
   row's hover, the accent dialog and an InfoRows box. The text on it is `--fg-1`, like all text (17.2:1 or better).
 - **Measured** (WCAG relative luminance, worst and best of the twelve themes, October 21, 2026): `--primary` on
   `bg-1` 5.9:1 to 8.5:1 on light and 10.7:1 to 13.6:1 on dark, on `bg-4` 4.56:1 to 6.5:1 on light and 9.0:1 to
