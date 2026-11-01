@@ -48,6 +48,7 @@
 - [x] `--font-serif` retired: no house class and no app on this machine reads it (measured in dkj-marketplace, dkj-lifehub, dkj-music-library); the token, its specimen and its README row go. `--font-mono` stays: `.prose` sets code in it and dkj-music-library reads it about 55 times
 - [x] `--font-mono` leaves the Type scale card, where it read as a size, for a card of its own, Font family, in the same Text token group (`$script:ProductBrandbookTokenGroups`), and gets its own row in the README's token table
 - [x] The Type scale and Font family cards set each sample on the left and its token on the right, on one baseline (`.spec-pairs`/`.spec-pair`)
+- [x] The type scale's h2 sample takes `--primary` and its h3 sample `--fg-3`, as `h2` and `h3` do (`house-style.css` L270-272); only the h1 sample had its colour, so h2 showed in the body ink
 - [x] Filed #3716: the release-notes map still points `ink-faint` at the retired `--muted` token (a different subject, found here)
 
 ### TEST
@@ -56,7 +57,7 @@
 
 ### DEPLOY: feat/note-absorbs-muted-and-footer-note
 
-The house style has one class for quiet text, `.note`. `.muted` and `.footer-note` drew the same `--primary-muted` text at `--text-sm` under three names, told apart only by a top margin the page column already took away, so they are retired into `.note` (Maikel, November 1, 2026). The README carries the rename table, and every page the hub and the dashboards render uses `.note`, so nothing here looks different. `--font-serif`, kept after October 24 for a title that never came, is retired with them; `--font-mono` stays, and the brand book now shows it as what it is, a typeface: its own Font family card and table row instead of a line in the type scale. Both cards set each sample on the left and its token on the right.
+The house style has one class for quiet text, `.note`. `.muted` and `.footer-note` drew the same `--primary-muted` text at `--text-sm` under three names, told apart only by a top margin the page column already took away, so they are retired into `.note` (Maikel, November 1, 2026). The README carries the rename table, and every page the hub and the dashboards render uses `.note`, so nothing here looks different. `--font-serif`, kept after October 24 for a title that never came, is retired with them; `--font-mono` stays, and the brand book now shows it as what it is, a typeface: its own Font family card and table row instead of a line in the type scale. Both cards set each sample on the left and its token on the right, and the heading samples carry the colour their element has: `--primary` for h1 and h2, `--fg-3` for h3.
 
 **Score:** 3
 
