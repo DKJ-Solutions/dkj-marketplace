@@ -45,6 +45,7 @@
 - [x] README: a rename section with its table (`.muted`, `.footer-note` -> `.note`); every current-state mention follows, the dated history tables are left as written
 - [x] The house's own markup follows: `specimens.html` (the Text page's two rows go, the hero label and the shell note), both patterns, the hub's page shell, `repo-hub-page.ps1`, the consumer dashboard and the dev pages
 - [x] The suites that read `class="footer-note"` read `class="note"`: dev-pages, consumer-dashboard and dev-preview-sessionstart, all green
+- [x] `--font-serif` retired: no house class and no app on this machine reads it (measured in dkj-marketplace, dkj-lifehub, dkj-music-library); the token, its specimen and its README row go. `--font-mono` stays: `.prose` sets code in it and dkj-music-library reads it about 55 times
 - [x] Filed #3716: the release-notes map still points `ink-faint` at the retired `--muted` token (a different subject, found here)
 
 ### TEST
@@ -53,17 +54,17 @@
 
 ### DEPLOY: feat/note-absorbs-muted-and-footer-note
 
-The house style has one class for quiet text, `.note`. `.muted` and `.footer-note` drew the same `--primary-muted` text at `--text-sm` under three names, told apart only by a top margin the page column already took away, so they are retired into `.note` (Maikel, November 1, 2026). The README carries the rename table, and every page the hub and the dashboards render uses `.note`, so nothing here looks different.
+The house style has one class for quiet text, `.note`. `.muted` and `.footer-note` drew the same `--primary-muted` text at `--text-sm` under three names, told apart only by a top margin the page column already took away, so they are retired into `.note` (Maikel, November 1, 2026). The README carries the rename table, and every page the hub and the dashboards render uses `.note`, so nothing here looks different. `--font-serif`, kept after October 24 for a title that never came, is retired with them; `--font-mono` stays.
 
 **Score:** 3
 
 #### What makes this deploy extra special
 
-An app taking this release renames `.muted` and `.footer-note` to `.note` in its own markup, by the README's table. A use left behind loses its grey and reads as plain text, without an error, so the rename has to be done rather than noticed.
+An app taking this release renames `.muted` and `.footer-note` to `.note` in its own markup, by the README's table. A use left behind loses its grey and reads as plain text, without an error, so the rename has to be done rather than noticed. An app still reading `--font-serif` falls back to the sans.
 
 **Score:** 4
 
 #### Pull Request
 
-One quiet-text class: .note absorbs .muted and .footer-note
+One quiet-text class: .note absorbs .muted and .footer-note, and --font-serif is retired
 

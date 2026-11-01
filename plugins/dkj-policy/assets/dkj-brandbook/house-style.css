@@ -130,8 +130,6 @@
      so h1 is the top step and stands apart by its size and the theme's colour. The hero figure takes it too. */
   --text-h1: 32px; --text-h2: 18px; --text-h3: 14px;
   --text-lg: 18px; --text-base: 14px; --text-sm: 12px; --text-xs: 11px;
-  /* the serif h1 and h2 were set in until October 24, 2026 (both are in the sans now); a component whose title keeps that face takes it from here */
-  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Noto Serif", serif;
 
   /* app-shell sizes, same in both modes (built from the spacing scale; see "App components" at the end):
      the height of a value field and of the button beside it, the minimum touch target, the height of
