@@ -1008,7 +1008,7 @@ function Get-DkjRepoCardStyle {
         '.dr-facts dd { min-width: 0; overflow: hidden; text-overflow: ellipsis; }',
         # The session command in the Stopwatch card's sizes: one line ending in an ellipsis, copied whole by its button.
         '.dr-line { font-size: var(--text-sm); }',
-        '.dr-muted { color: var(--muted); }',
+        '.dr-muted { color: var(--primary-muted); }',
         '.dr-card > .dr-session { display: flex; align-items: center; gap: var(--spacing-2); margin-top: var(--spacing-3); }',
         '.dr-session code { flex: 1 1 auto; min-width: 0; font-size: var(--text-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }'
     ) -join "`n")

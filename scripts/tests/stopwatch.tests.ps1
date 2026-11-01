@@ -364,7 +364,7 @@ foreach ($pg in @(@{ N = 'the overview'; H = $page }, @{ N = 'an empty overview'
     Assert-Equal 'h1' $first.Groups[1].Value "$($pg.N) begins with an h1"
 }
 Assert-True ($flatNone -notmatch 'Ship PR') 'the Logbook''s flat overview carries no pinned card'
-Assert-True ($none -match '\.sw-steps \{ [^}]*font-size: var\(--text-sm\); font-weight: 400; color: var\(--muted\); \}') 'the steps take the instruction line''s house size, weight and colour'
+Assert-True ($none -match '\.sw-steps \{ [^}]*font-size: var\(--text-sm\); font-weight: 400; color: var\(--primary-muted\); \}') 'the steps take the instruction line''s house size, weight and colour'
 $evil = Format-StopwatchPageHtml -Model (ConvertTo-StopwatchModel -Runs @((& $mk '<script>x</script>' 0 10))) -StorePath 's'
 Assert-True ($evil -notmatch '<script>x</script>' -and $evil -match '&lt;script&gt;x&lt;/script&gt;' -and $evil -match 'href="/stopwatch/script-x-script"' -and (ConvertTo-StopwatchModel -Runs @((& $mk '<script>x</script>' 0 10))).Groups[0].LabelSlug -eq 'script-x-script') 'a label is escaped wherever it is shown, and its slugs are URL-safe'
 $empty = Format-StopwatchPageHtml -Model (ConvertTo-StopwatchModel -Runs @()) -StorePath 's' -Shared

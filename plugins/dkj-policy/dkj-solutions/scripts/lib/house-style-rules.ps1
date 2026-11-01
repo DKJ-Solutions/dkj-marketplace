@@ -53,7 +53,8 @@
     every name that tag's stylesheet defines again (`--ink-2` was retired and is live again as an ink
     step since October 20, 2026, when the twelve `--primary-*` steps split into paper and ink and were
     retired themselves; and `--primary` and `--muted` are live again since October 21, 2026, when the seven ink
-    steps split into one primary, two greys and four text steps, #3235, and were retired in turn). The rename tables
+    steps split into one primary, two greys and four text steps, #3235, and were retired in turn; and on November 1, 2026
+    --muted became --primary-muted and --cat-1..3 became --graph-1..3, so those old names are retired again). The rename tables
     alone miss `--gain`, which v1 and v2 defined and v3 dropped
     without a row. They are listed here rather than fetched, so the gate needs no network; a change to the
     canonical copy in assets/dkj-brandbook/ that retires a name updates this list in the same change
@@ -76,7 +77,7 @@ function Get-HouseStyleRetiredTokens {
     <# The token names the house style retired, as of the tag the skill pins (v0.4.0). #>
     return [string[]]@(
         '--axis', '--bad', '--border', '--border-base', '--down', '--gain', '--good', '--grid', '--grid-base',
-        '--ink', '--ink-1', '--ink-2', '--ink-3', '--ink-4', '--ink-5', '--ink-6', '--ink-7', '--loss', '--muted-inverse', '--neutral-1', '--neutral-2', '--neutral-3', '--neutral-4',
+        '--ink', '--ink-1', '--ink-2', '--ink-3', '--ink-4', '--ink-5', '--ink-6', '--ink-7', '--loss', '--cat-1', '--cat-2', '--cat-3', '--muted', '--muted-inverse', '--neutral-1', '--neutral-2', '--neutral-3', '--neutral-4',
         '--neutral-5', '--on-primary', '--on-warn', '--page', '--page-base', '--primary-1', '--primary-2',
         '--primary-3', '--primary-4', '--primary-5', '--primary-6', '--primary-7', '--primary-8', '--primary-9',
         '--primary-10', '--primary-11', '--primary-12', '--primary-ink',

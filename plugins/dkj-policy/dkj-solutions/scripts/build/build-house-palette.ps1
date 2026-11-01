@@ -48,9 +48,10 @@ Write-Host "[OK] every pairing reaches its floor in all $($palettes.Count) theme
 if (-not $Apply) { exit 0 }
 
 foreach ($id in @($LightDefault, $DarkDefault)) { if (-not $palettes.Contains($id)) { throw "unknown default theme '$id'" } }
-# muted-inverse stays in the pattern though no theme has it any more (November 1, 2026): an -Apply over a stylesheet
+# muted-inverse and muted stay in the pattern though no theme has them any more (November 1, 2026; muted is
+# primary-muted since that day): an -Apply over a stylesheet
 # that still carries it removes it rather than keeping it as a theme's own token.
-$isPaletteToken = '^--(paper-\d|ink-\d|primary|muted|muted-inverse|fg-\d):'
+$isPaletteToken = '^--(paper-\d|ink-\d|primary|primary-muted|muted|muted-inverse|fg-\d):'
 $lines = [System.IO.File]::ReadAllLines((Resolve-Path -LiteralPath $StylePath).Path)
 $standalone = 0
 for ($i = 0; $i -lt $lines.Count; $i++) {

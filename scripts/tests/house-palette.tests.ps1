@@ -94,10 +94,10 @@ foreach ($th in $themes) {
         Assert-True $true "$($th.Id): the primary is the pure colour itself (HSL 50%), which already reads"
     }
     # the greys recede as far as 7.05:1 allows: a step toward their ground no longer reaches it
-    $ml = (ConvertTo-OkLch $p['--muted']).L
+    $ml = (ConvertTo-OkLch $p['--primary-muted']).L
     $toward = if ($dark) { -0.01 } else { 0.01 }
     $okHue = (ConvertTo-OkLch (ConvertFrom-Hsl $th.Hue 1 0.5)).H
-    Assert-True ((Get-ContrastRatio (ConvertFrom-OkLch ($ml + $toward) 0.03 $okHue) $p['--paper-1']) -lt 7.05) "$($th.Id): --muted recedes as far as 7:1 allows"
+    Assert-True ((Get-ContrastRatio (ConvertFrom-OkLch ($ml + $toward) 0.03 $okHue) $p['--paper-1']) -lt 7.05) "$($th.Id): --primary-muted recedes as far as 7:1 allows"
 }
 
 Write-Host '-- group 3: the stylesheet carries exactly the computed values' -ForegroundColor Cyan

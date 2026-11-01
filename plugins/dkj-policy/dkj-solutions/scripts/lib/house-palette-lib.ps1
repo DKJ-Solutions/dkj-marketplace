@@ -9,7 +9,7 @@
                        reads at 4.5:1 on all four paper steps, so white (and every paper step) reads on it too.
       --paper-1..4     FOUR colours that read on the primary, from white towards a little darker: the page, the
                        card, the line, the stronger border -- and the text on a primary fill.
-      --muted          a grey of the colour that reads extra well (7:1) on the page.
+      --primary-muted  a grey of the colour that reads extra well (7:1) on the page.
     There is no grey for the far end (--muted-inverse was retired, Maikel, November 1, 2026): a theme's colours are
     the 60-30-10 groups and nothing else, and no colour reads at 4.5:1 on both paper-4 and fg-1, so it fitted none.
     The quieter line on an inverted surface takes --paper-4.
@@ -187,7 +187,7 @@ function Get-HousePalette {
     $p = [ordered]@{}
     for ($i = 0; $i -lt 4; $i++) { $p["--paper-$($i + 1)"] = $paper[$i] }
     $p['--primary'] = $primary
-    $p['--muted'] = $muted
+    $p['--primary-muted'] = $muted
     for ($i = 0; $i -lt 4; $i++) { $p["--fg-$($i + 1)"] = $fg[$i] }
     $p
 }
@@ -204,10 +204,10 @@ function Get-HousePaletteContrast {
     $rows = @()
     foreach ($n in 1..4) { $rows += @{ Pair = "primary on paper-$n"; Ratio = Get-ContrastRatio $Palette['--primary'] $Palette["--paper-$n"]; Floor = 4.5 } }
     foreach ($n in 1..4) { foreach ($k in 1..4) { $rows += @{ Pair = "fg-$n on paper-$k"; Ratio = Get-ContrastRatio $Palette["--fg-$n"] $Palette["--paper-$k"]; Floor = 7 } } }
-    $rows += @{ Pair = 'muted on paper-1'; Ratio = Get-ContrastRatio $Palette['--muted'] $Palette['--paper-1']; Floor = 7 }
-    $rows += @{ Pair = 'muted on paper-2'; Ratio = Get-ContrastRatio $Palette['--muted'] $Palette['--paper-2']; Floor = 4.5 }
-    $rows += @{ Pair = 'muted on paper-4'; Ratio = Get-ContrastRatio $Palette['--muted'] $Palette['--paper-4']; Floor = 4.5 }
+    $rows += @{ Pair = 'muted on paper-1'; Ratio = Get-ContrastRatio $Palette['--primary-muted'] $Palette['--paper-1']; Floor = 7 }
+    $rows += @{ Pair = 'muted on paper-2'; Ratio = Get-ContrastRatio $Palette['--primary-muted'] $Palette['--paper-2']; Floor = 4.5 }
+    $rows += @{ Pair = 'muted on paper-4'; Ratio = Get-ContrastRatio $Palette['--primary-muted'] $Palette['--paper-4']; Floor = 4.5 }
     $rows += @{ Pair = 'paper-4 on fg-1'; Ratio = Get-ContrastRatio $Palette['--paper-4'] $Palette['--fg-1']; Floor = 7 }
-    $rows += @{ Pair = 'paper-1 on muted'; Ratio = Get-ContrastRatio $Palette['--paper-1'] $Palette['--muted']; Floor = 4.5 }
+    $rows += @{ Pair = 'paper-1 on muted'; Ratio = Get-ContrastRatio $Palette['--paper-1'] $Palette['--primary-muted']; Floor = 4.5 }
     $rows
 }
