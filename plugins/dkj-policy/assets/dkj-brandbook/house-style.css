@@ -933,11 +933,12 @@ a.menu-item:hover { background: var(--bg-3); }
   font-size: var(--text-base); font-weight: var(--font-weight-bold); letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-1); }
 .group-heading__count { font-variant-numeric: tabular-nums; letter-spacing: 0; text-transform: none; white-space: nowrap; }
 .group-heading__count--over { color: var(--negative-5); }
-/* A question: a title with its answer .chip at the right, then the .verdict line. */
+/* A question: a title with its answer .chip at the right, then the answer line, a plain <p> (a <strong> in it where it
+   is a verdict). .verdict, which was that line, is gone (Maikel, November 1, 2026): it read as a <p> with a <strong>. */
 .question-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--spacing-1) var(--spacing-3); margin: 0 0 var(--spacing-2); }
 .question-head h3 { margin: 0; font-size: var(--text-h3); font-weight: var(--font-weight-black); line-height: 1.2; }
 .question-head .chip { min-width: 0; margin-left: auto; text-align: right; }
-.verdict { margin: 0 0 var(--spacing-1-5); font-size: var(--text-base); font-weight: var(--font-weight-bold); line-height: 1.35; }
+.question-head + p { margin: 0 0 var(--spacing-1-5); }
 /* .amount is gone into .num (Maikel, November 1, 2026): a figure with a small icon beside it is a .num with the svg in it. */
 /* Answer box: the result of a calculation, a label and the figure in --primary on the tint. */
 .answer { display: flex; align-items: center; gap: var(--spacing-3); margin-top: var(--spacing-2); padding: var(--spacing-2) var(--spacing-3); border-radius: var(--radius-2-5); background: var(--bg-3); }

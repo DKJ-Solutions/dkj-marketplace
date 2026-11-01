@@ -58,6 +58,8 @@ read as a plain `<p>`.
 - [x] `.card__title` gone: every card title is a plain `h3` in `.card__head` (the specimens, the patterns and the hub)
 - [x] `.grid-3` has `--spacing-5` of padding (the other card groups keep `--spacing-3-5`)
 - [x] `.amount` gone into `.num`: a `.num > svg` is the small icon beside a figure; the specimen shows it
+- [x] `.verdict` gone: the line under a `.question-head` is a plain `<p>` (`<strong>` for a verdict), whose margin
+  `.question-head + p` sets; the specimen shows it
 - [x] `house-palette.tests.ps1` refuses a font weight set as a number in the stylesheet or those hub layers
 - [x] A section a token group shows is left off the overview, so Preview holds Themes alone
 - [x] `house-style.css`: `.eyebrow`, `.lead`, `.pos` and `.neg` gone, `.sub` gone into `.note`, the fill switches and comments with them
@@ -85,21 +87,23 @@ A `.grid-3` group has 20px of padding (`--spacing-5`) instead of 14px.
 The house style gains four weight tokens, `--font-weight-light` (300), `--font-weight-regular` (500),
 `--font-weight-bold` (700) and `--font-weight-black` (900), and every rule now takes its weight from them, so all
 text is one step heavier: running text 500, card titles 700, h1 900. h2 is bold (700), and h3 turns light (300)
-and takes the theme's colour, `--primary`, instead of `--fg-3`. It drops seven classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
+and takes the theme's colour, `--primary`, instead of `--fg-3`. It drops eight classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
 body size read as a plain `<p>`; and `.sub`, merged into `.note`, the one quiet-text class, which had the same colour
 and size; `.pos` and `.neg`, the colours of `.delta--up` and `.delta--down` without the weight; `.card__title`: a card's
-title is a plain `h3`, set like every other; and `.amount`, gone into `.num`, which now sets a small icon beside its figure.
+title is a plain `h3`, set like every other; `.amount`, gone into `.num`, which now sets a small icon beside its figure; and `.verdict`, which read as a `<p>`
+with a `<strong>`.
 
 **Score:** 2
 
 #### What makes this deploy extra special
 
-`house-style.css` no longer defines `.eyebrow`, `.lead`, `.sub`, `.pos`, `.neg`, `.card__title` or `.amount`. A page that takes the new copy and still uses either loses
+`house-style.css` no longer defines `.eyebrow`, `.lead`, `.sub`, `.pos`, `.neg`, `.card__title`, `.amount` or `.verdict`. A page that takes the new copy and still uses either loses
 that styling: replace `class="sub"` with `class="note"` (the same colour and size, with a small top margin instead of a
 16px bottom one), drop the eyebrow line or set it as a `.note`, and drop `class="lead"` (the paragraph keeps the body size and colour,
 and loses its 46rem measure and its 8px top margin). Replace `class="pos"` with `class="delta delta--up"` and
 `class="neg"` with `class="delta delta--down"`; the figure then turns bold (700). Replace `<span class="amount"><span>12,50</span><svg…></span>` with
-`<span class="num">12,50<svg…></span>`. Drop `class="card__title"` from a card's `h3`: it
+`<span class="num">12,50<svg…></span>`. Replace `<p class="verdict">…</p>` with `<p><strong>…</strong></p>` (it keeps its margin under a
+`.question-head`). Drop `class="card__title"` from a card's `h3`: it
 then takes the h3's light weight and the theme's colour instead of semibold `--fg-3`. Text set in the house style is one
 step heavier throughout (400 to 500, 600 to 700, 700 to 900); a domain layer that sets a weight should take one of
 the four `--font-weight-*` tokens rather than a number.
@@ -108,5 +112,5 @@ the four `--font-weight-*` tokens rather than a number.
 
 #### Pull Request
 
-the Text token page splits into Tokens and Components, and the house style retires .eyebrow, .lead, .sub, .pos, .neg, .card__title and .amount
+the Text token page splits into Tokens and Components, and the house style retires .eyebrow, .lead, .sub, .pos, .neg, .card__title, .amount and .verdict
 
