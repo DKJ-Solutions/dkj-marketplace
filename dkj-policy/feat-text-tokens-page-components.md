@@ -56,6 +56,7 @@ read as a plain `<p>`.
   masthead and consumer-dashboard layers likewise
 - [x] `h2` is bold (700); `h3` is `--primary` and light
 - [x] `.card__title` gone: every card title is a plain `h3` in `.card__head` (the specimens, the patterns and the hub)
+- [x] `.grid-3` has `--spacing-5` of padding (the other card groups keep `--spacing-3-5`)
 - [x] `house-palette.tests.ps1` refuses a font weight set as a number in the stylesheet or those hub layers
 - [x] A section a token group shows is left off the overview, so Preview holds Themes alone
 - [x] `house-style.css`: `.eyebrow`, `.lead`, `.pos` and `.neg` gone, `.sub` gone into `.note`, the fill switches and comments with them
@@ -79,6 +80,7 @@ Text section's own specimens (headings, running text, numbers, messages) under a
 and the type they produce read on one page. A token group's heading can now name a whole section to show, and that section leaves the overview's Preview, which
 now holds Themes alone. The Headings specimen shows h1, h2 and h3.
 
+A `.grid-3` group has 20px of padding (`--spacing-5`) instead of 14px.
 The house style gains four weight tokens, `--font-weight-light` (300), `--font-weight-regular` (500),
 `--font-weight-bold` (700) and `--font-weight-black` (900), and every rule now takes its weight from them, so all
 text is one step heavier: running text 500, card titles 700, h1 900. h2 is bold (700), and h3 turns light (300)
