@@ -80,7 +80,7 @@ read as a plain `<p>`.
   section is gone from the file
 - [x] `consumer-dashboard.tests.ps1`, `check-house-style`, `check-plugin-integrity` green
 - [x] Looked at the live page on the product server
-- [ ] The owner's look at `/marketplace/dkj-policy/dkj-brandbook/tokens/text`
+- [x] The owner's look at `/marketplace/dkj-policy/dkj-brandbook/tokens/text` (Maikel: "ship it", November 1, 2026)
 
 ### DEPLOY: feat/text-tokens-page-components
 
