@@ -49,6 +49,8 @@
 - [x] `--font-mono` leaves the Type scale card, where it read as a size, for a card of its own, Font family, in the same Text token group (`$script:ProductBrandbookTokenGroups`), and gets its own row in the README's token table
 - [x] The Type scale and Font family cards drop their notes: each sample is its own token's name set in that token, one per line
 - [x] The type scale's heading samples drop their colour and weight: the card shows sizes only, and h1 alone carried `--primary`, so h2 read as a different colour than its element has
+- [x] The type scale: `--text-h1` 36px (was 32), `--text-h2` 22px (was 18), `--text-h3` 16px (was 14); `--text-lg` retired, its 13 house rules and the DKJ card title take `--text-h3`, and `.prose`'s h1 takes `--text-h2` to stay a step below the page. README: a dated section with the table, the Type row and the heading ceiling follow
+- [x] Suites: stopwatch's allowed-size list drops `text-lg`; dev-pages' DKJ-card assert read `h3` inside a value (`var(--text-h3)`) as a selector, so it now reads selectors only, checked to still catch an `h3` rule
 - [x] Filed #3716: the release-notes map still points `ink-faint` at the retired `--muted` token (a different subject, found here)
 
 ### TEST
@@ -57,17 +59,17 @@
 
 ### DEPLOY: feat/note-absorbs-muted-and-footer-note
 
-The house style has one class for quiet text, `.note`. `.muted` and `.footer-note` drew the same `--primary-muted` text at `--text-sm` under three names, told apart only by a top margin the page column already took away, so they are retired into `.note` (Maikel, November 1, 2026). The README carries the rename table, and every page the hub and the dashboards render uses `.note`, so nothing here looks different. `--font-serif`, kept after October 24 for a title that never came, is retired with them; `--font-mono` stays, and the brand book now shows it as what it is, a typeface: its own Font family card and table row instead of a line in the type scale. Both cards set each token's name in the token itself, with no note beside it, and in its size alone: no heading colour or weight, which belong to the elements on the Text page.
+The house style has one class for quiet text, `.note`. `.muted` and `.footer-note` drew the same `--primary-muted` text at `--text-sm` under three names, told apart only by a top margin the page column already took away, so they are retired into `.note` (Maikel, November 1, 2026). The README carries the rename table, and every page the hub and the dashboards render uses `.note`, so nothing here looks different. `--font-serif`, kept after October 24 for a title that never came, is retired with them; `--font-mono` stays, and the brand book now shows it as what it is, a typeface: its own Font family card and table row instead of a line in the type scale. The headings grow a step, 36/22/16 where they were 32/18/14, and `--text-lg` is retired into `--text-h3`. Both cards set each token's name in the token itself, with no note beside it, and in its size alone: no heading colour or weight, which belong to the elements on the Text page.
 
 **Score:** 3
 
 #### What makes this deploy extra special
 
-An app taking this release renames `.muted` and `.footer-note` to `.note` in its own markup, by the README's table. A use left behind loses its grey and reads as plain text, without an error, so the rename has to be done rather than noticed. An app still reading `--font-serif` falls back to the sans.
+An app taking this release renames `.muted` and `.footer-note` to `.note` in its own markup, by the README's table. A use left behind loses its grey and reads as plain text, without an error, so the rename has to be done rather than noticed. An app still reading `--font-serif` falls back to the sans. Headings render larger (36/22/16), and an app moves each `--text-lg` in its own layer to `--text-h3`; one left behind renders at the inherited size.
 
 **Score:** 4
 
 #### Pull Request
 
-One quiet-text class: .note absorbs .muted and .footer-note, and --font-serif is retired
+Brand book: .note absorbs .muted and .footer-note, a larger heading scale, and --font-serif and --text-lg are retired
 

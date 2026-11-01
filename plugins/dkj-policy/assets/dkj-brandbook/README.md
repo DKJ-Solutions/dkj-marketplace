@@ -117,7 +117,7 @@ primary outweighs its paper has spent the 30% as ground.
 | Text | `--fg-1` … `--fg-4` | what sits **on** the paper: four colours near black on light (near white on dark), in **very small** steps, so `fg-4` is still very dark, only a little less so than `fg-1` (owner, #3235). `fg-1` is **all text**, every paragraph and everything else: labels, table heads, legends, quiet icons, the text on a tinted surface, and the ground of an inverted surface; `fg-2` is `h2` and `.meta` on a span; `fg-3` is `h3`; `fg-4` has no role yet (the breadcrumb's current page took it until the bar turned `--primary`, #3235). On a fill the text switches to the paper ([Fills](#fills-the-text-switches-with-the-ground)) |
 | Elevation | `--shadow-pop` | tooltips |
 | Spacing | `--spacing-0-5` … `--spacing-96` | the spacing scale, same in both modes: `--spacing-N` is N × 4px, a half step (`-0-5`, `-1-5`, …) adds 2px. Every gap, margin and padding uses one, and a repo layer spaces its own components from the same scale |
-| Type | `--text-h1` … `--text-h3`, `--text-lg`, `--text-base`, `--text-sm`, `--text-xs` | the type scale, same in both modes: 32/18/14 for the headings (`h3` at 14px, the body size, and no `h4` or `h5` since October 25, 2026, the owner: [below](#the-heading-cut-of-october-25-2026)) (`h2` 18px since October 25, 2026, the owner; it went from 32 at weight 600 to 24 at 700 on October 24, and keeps the 700), and `.lead` is `--text-base` since the same day (it was `--text-lg`), 18/14/12/11 for running text. `h1`–`h3` each take the token of their own level, body text is `--text-base`. No heading is larger than 32px (owner's decision, October 22, 2026: as much content as possible on a 900px-high screen, since October 27 one of about 1300 x 900), so `h1` stands apart by its size and colour (by its capitals too until October 24, 2026); it was 48px from October 20, when `--text-h0` was retired. The hero figure is set at `--text-h1`. There is no `h6` either: the 24px `h3` was retired the same day, because it stood too close to `h2`, and every level below moved up one ([below](#the-heading-shift-of-october-20-2026)). The one exception is a section label (`GroupHeading`): it stays a heading for the document outline, but every level renders at `--text-base`, uppercase and muted (owner's decision, October 15, 2026). `--font-serif` was the face of `h1` and `h2` until October 24, 2026, when the owner moved both to the sans; it stayed for a title that kept that face, none did, and it was retired on November 1, 2026 (Maikel) |
+| Type | `--text-h1` … `--text-h3`, `--text-base`, `--text-sm`, `--text-xs` | the type scale, same in both modes: 36/22/16 for the headings since November 1, 2026 (Maikel; [below](#the-type-scale-of-november-1-2026)), 32/18/14 before (`h3` at 14px, the body size, and no `h4` or `h5` since October 25, 2026, the owner: [below](#the-heading-cut-of-october-25-2026)) (`h2` 18px since October 25, 2026, the owner; it went from 32 at weight 600 to 24 at 700 on October 24, and keeps the 700), and `.lead` is `--text-base` since the same day (it was `--text-lg`), 14/12/11 for running text (`--text-lg`, 18px, was retired on November 1, 2026). `h1`–`h3` each take the token of their own level, body text is `--text-base`. No heading is larger than 32px (owner's decision, October 22, 2026: as much content as possible on a 900px-high screen, since October 27 one of about 1300 x 900), so `h1` stands apart by its size and colour (by its capitals too until October 24, 2026); it was 48px from October 20, when `--text-h0` was retired. The hero figure is set at `--text-h1`. There is no `h6` either: the 24px `h3` was retired the same day, because it stood too close to `h2`, and every level below moved up one ([below](#the-heading-shift-of-october-20-2026)). The one exception is a section label (`GroupHeading`): it stays a heading for the document outline, but every level renders at `--text-base`, uppercase and muted (owner's decision, October 15, 2026). `--font-serif` was the face of `h1` and `h2` until October 24, 2026, when the owner moved both to the sans; it stayed for a title that kept that face, none did, and it was retired on November 1, 2026 (Maikel) |
 | Font family | `--font-mono` | a typeface, not a size: the fixed-width face `.prose` sets its `code` and `pre` in, and an app takes for figures or ids that must line up by character. The body face is not a token; it is set on `body` |
 | Radius | `--radius-1` … `--radius-4`, `--radius-pill` | the corner radii, same in both modes and named like the spacing scale: `--radius-N` is N × 4px, a half step adds 2px, so `--radius-1` 4px, `--radius-1-5` 6px, `--radius-2` 8px, `--radius-2-5` 10px, `--radius-3` 12px; `--radius-pill` rounds the ends fully. Named `xs` to `lg` with a `md-plus` until October 31, 2026 ([below](#the-radius-rename-of-october-31-2026)) |
 | App shell | `--control-h`, `--tap`, `--topbar-h`, `--column-narrow` | sizes for a mobile-first app, same in both modes: 38px for a value field and the button beside it, 44px as the smallest touch target, 56px for the top bar, 512px for the narrow app column |
@@ -291,7 +291,7 @@ scale did not, so taking it over changed sizes: body 15 → 14, `h2` 29 → 32, 
 small text → 12, a mini-card value 20 → 18, the info button's mark 10 → 11 (Maikel, October 12, 2026).
 Two departures from the library followed on October 20, 2026: its `h0` was retired with `h1` taking the 48px,
 and its 24px `h3` was retired with every level below it moving up one.
-**No heading is larger than 32px** (owner's decision, October 22, 2026): every pixel of a 900px-high screen goes to content,
+**No heading is larger than 36px** (owner's decision, October 22, 2026, at 32px; 36px since November 1, 2026, Maikel): every pixel of a 900px-high screen goes to content,
 so `h1` came down from 48px to `h2`'s 32px, and the hero figure with it. The target screen is now about 1300 x 900 (the owner, October 27, 2026, after 1400 x 600 from October 26; rule 4 under [How to use it](#how-to-use-it)), which makes the reason stronger.
 **The `h1` is in the body sans and its own case, at weight 700** (owner's decision, October 24, 2026). From
 October 21, 2026 ([#3247](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3247)) it was set in
@@ -355,6 +355,24 @@ half step adds 2px, so a name says its size and a new step has an obvious name. 
 **An app that takes this update renames each use in its own layer** by the table. The old names are retired
 tokens, so the gate reports a use left behind; one that slips past renders with square corners rather than an
 error.
+
+### The type scale of November 1, 2026
+
+**The headings grow a step and `--text-lg` is retired** (Maikel, November 1, 2026). `h3` no longer shares the body
+size, and the three headings stand further apart:
+
+| Token | Was | Now |
+|---|---|---|
+| `--text-h1` | 32px | 36px |
+| `--text-h2` | 18px | 22px |
+| `--text-h3` | 14px | 16px |
+| `--text-lg` | 18px | retired: `--text-h3` |
+
+Every house rule that was set in `--text-lg` (a tile or panel value, the site name, the stepper, the combo input,
+which must stay at 16px or more or iOS zooms in) takes `--text-h3`, 2px smaller than before. `.prose` keeps its
+headings one step below the page: its `h1` is `--text-h2` now, where it was `--text-lg`. **An app that takes this
+update moves each use of `--text-lg` in its own layer to `--text-h3`.** It is a retired token, so the gate reports a
+use left behind; one that slips past renders at the inherited size rather than raising an error.
 
 ### The colour renames of November 1, 2026
 
