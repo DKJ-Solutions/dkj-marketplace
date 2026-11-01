@@ -629,7 +629,7 @@ sortable headers via `.sort`/`.arrow` on `aria-sort`), `.seg` (a segmented switc
 `--line`), `.swatch`, `.badge` (with `--good`, `--warn`, `--bad`, `--info`, `--neutral`, `--sm`),
 `.badge-row`, `.badge-list` (a `<ul>` of `.badge-row` items), `.meter` (with `--good`, `--warn`, `--bad`, `--info`), `.mini-cards`/`.mini-card` (with
 `--highlight`), `.item-grid`/`.item`, `.notice`, `.note` (also the line under a heading: it absorbed `.sub`, and `.eyebrow` is gone, Maikel, November 1, 2026), `.meta` (`.lead` is gone too: it read as a plain `<p>`, Maikel, November 1, 2026), `.msg` (with `--warn`), `.facts` (with `--row`: the facts as one row on the page, label over value, no card), `.fill-primary`, `.fill-inverse`, `.page-column`, `.page-title` (the `h1` with a `.page-info-button` right of it, a drawn "?" on a 24px ring with a 1px solid border, in a 44px button, whose `.tooltip--explain` says what the page is about on hover or focus), `.page-cta`, `.num` (tabular
-numerals), `.delta` (with `--up`/`--down`, aliased `.pos`/`.neg`), `.btn` (with `--primary`, and a `:hover`, `:focus-visible` and `:disabled` state for both), `.info-button`, `.tooltip`
+numerals), `.delta` (with `--up`/`--down`; its aliases `.pos`/`.neg` are gone, Maikel, November 1, 2026), `.btn` (with `--primary`, and a `:hover`, `:focus-visible` and `:disabled` state for both), `.info-button`, `.tooltip`
 (with `--explain`, and `--open` for one anchored to a trigger), `.more` (a disclosure), `.moretoggle` (a full-width read-more button), `.chart` (the SVG chart scope),
 `.theme-picker` (with `__row`, `__label`, `__swatches`), `.theme-swatch` (with `--light`, `--dark`) and
 `.theme-settings` (with `--floating`, `__toggle`, `__open`, `__close`, `__panel`, `__title`, `__group`,

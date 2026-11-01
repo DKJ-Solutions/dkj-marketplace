@@ -53,8 +53,8 @@ read as a plain `<p>`.
 - [x] The overview's Text card counts both halves (7 specimens)
 - [x] `house-style.css`: four weight tokens, `--font-weight-light` 300 to `--font-weight-bold` 900
 - [x] A section a token group shows is left off the overview, so Preview holds Themes alone
-- [x] `house-style.css`: `.eyebrow` and `.lead` gone, `.sub` gone into `.note`, the fill switches and comments with them
-- [x] `specimens.html`: the Type scale card is Font size, a new Font weight card shows the four weight tokens, the Headings card shows h1, h2, h3, the Running text card drops its `.lead` row; the fill specimens' quieter line is a `.note`
+- [x] `house-style.css`: `.eyebrow`, `.lead`, `.pos` and `.neg` gone, `.sub` gone into `.note`, the fill switches and comments with them
+- [x] `specimens.html`: the Type scale card is Font size, a new Font weight card shows the four weight tokens, the Headings card shows h1, h2, h3, the Running text card drops its `.lead` row, the Numbers card its `.pos, .neg` row; the fill specimens' quieter line is a `.note`
 - [x] The hub: `Format-GeneralPageHtml`'s `-Eyebrow` (drawn only without a site header, which no caller had) removed
   with its callers; the consumer dashboard's two `.sub` lines are `.note`
 - [x] The brand book README and the `dkj-brandbook` skill name `.note` instead of `.sub` and `.eyebrow`, and no longer offer `.lead`
@@ -75,22 +75,23 @@ and the type they produce read on one page. A token group's heading can now name
 now holds Themes alone. The Headings specimen shows h1, h2 and h3.
 
 The house style gains four weight tokens, `--font-weight-light` (300), `--font-weight-regular` (500),
-`--font-weight-semibold` (700) and `--font-weight-bold` (900), and drops three classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
+`--font-weight-semibold` (700) and `--font-weight-bold` (900), and drops five classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
 body size read as a plain `<p>`; and `.sub`, merged into `.note`, the one quiet-text class, which had the same colour
-and size.
+and size; and `.pos` and `.neg`, the colours of `.delta--up` and `.delta--down` without the weight.
 
 **Score:** 2
 
 #### What makes this deploy extra special
 
-`house-style.css` no longer defines `.eyebrow`, `.lead` or `.sub`. A page that takes the new copy and still uses either loses
+`house-style.css` no longer defines `.eyebrow`, `.lead`, `.sub`, `.pos` or `.neg`. A page that takes the new copy and still uses either loses
 that styling: replace `class="sub"` with `class="note"` (the same colour and size, with a small top margin instead of a
 16px bottom one), drop the eyebrow line or set it as a `.note`, and drop `class="lead"` (the paragraph keeps the body size and colour,
-and loses its 46rem measure and its 8px top margin).
+and loses its 46rem measure and its 8px top margin). Replace `class="pos"` with `class="delta delta--up"` and
+`class="neg"` with `class="delta delta--down"`; the figure then turns semibold.
 
 **Score:** 5
 
 #### Pull Request
 
-the Text token page splits into Tokens and Components, and the house style retires .eyebrow, .lead and .sub
+the Text token page splits into Tokens and Components, and the house style retires .eyebrow, .lead, .sub, .pos and .neg
 

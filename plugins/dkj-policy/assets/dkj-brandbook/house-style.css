@@ -318,8 +318,9 @@ p, p.meta { color: var(--fg-1); }
    an h1 carries an intro any more (#3585). */
 .num { font-variant-numeric: tabular-nums; }                        /* aligned digits */
 .delta { font-weight: 600; }
-.delta--up, .pos { color: var(--positive-5); }
-.delta--down, .neg { color: var(--negative-5); }
+/* .pos and .neg, the same colours without the weight, are gone (Maikel, November 1, 2026): a signed figure is a .delta */
+.delta--up { color: var(--positive-5); }
+.delta--down { color: var(--negative-5); }
 
 /* ---- Links and selection ---------------------------------------------------- */
 /* A link (an <a> with an href) takes the theme's colour as text (--primary, owner's decision, October 15, 2026), visited or not: it reaches 4.55:1
