@@ -62,7 +62,7 @@ itself stays defined, and the specimen still shows it.
 ### TEST
 
 - [x] `stopwatch`, `house-palette` and `check-house-style` suites green, and the brandbook CSS gate
-- [ ] The owner has looked at the result (a visible change)
+- [x] The owner has looked at the result (a visible change): Maikel, "ship it"
 
 ### DEPLOY: feat/black-weight-to-bold
 
@@ -97,5 +97,5 @@ emphasised values a step lighter.
 
 #### Pull Request
 
-Everything set at the black weight is set at bold
+Bold instead of black, a bold h3, a header settings cell, and colours read only as tokens
 
