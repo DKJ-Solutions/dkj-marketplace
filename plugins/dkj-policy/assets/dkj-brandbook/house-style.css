@@ -149,8 +149,8 @@
   /* the face of code in .prose */
   --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
   /* the four font weights, same in both modes (Maikel, November 1, 2026): light for a quiet value, regular for running
-     text, semibold for h3 and card titles, bold for h1 and h2 (the older rules above keep their literals) */
-  --font-weight-light: 300; --font-weight-regular: 400; --font-weight-semibold: 600; --font-weight-bold: 700;
+     text, semibold for h3 and card titles, bold for the heaviest stress (the older rules above keep their literals: h1 and h2 are 700) */
+  --font-weight-light: 300; --font-weight-regular: 400; --font-weight-semibold: 600; --font-weight-bold: 800;
 
   /* native controls (checkbox, radio, range, progress) and the text caret take the theme */
   accent-color: var(--primary);
