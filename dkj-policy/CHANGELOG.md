@@ -2,7 +2,48 @@
 
 ## [Unreleased]
 
-**11 / 16 minor entries** <!-- pending-tally -->
+**12 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/black-weight-to-bold · 20261101-150802Z
+
+Every rule in the house stylesheet that was set at the black weight (900) is now set at bold (700): the
+`h1`, the primary button, the top bar and site header names, panel labels, totals, the answer and
+step-head values, the comparison table's head and foot, and the rest. The hub's masthead and the
+Stopwatch start line follow. The plain `h3` turns from light (300) to bold (700), so a card's `h3` is
+bold as well. Under a site header, the breadcrumb links are `--primary-muted` instead of `--fg-3`, and the
+current page at the right end stays `--primary`; the bar standing on `--primary` is unchanged. The settings toggle
+is just its icon in the text colour (`--fg-1`): no round card, `--primary` edge or shadow behind it, and no
+colour change under the pointer or while it is open. Inside a site header it takes the header's own
+colour (`--bg-1`), as the app's name does. The gear is a solid eight-tooth gear with an open centre instead
+of an outline, and in a site header the button is a square cell the full height of the bar at its right edge, a
+shade lighter than the header, and `--primary-hover` under the pointer and while open.
+
+Every theme carries two new tokens, `--primary-raised` and `--primary-hover`: the primary 15% of the way to
+`--bg-1` and to `--fg-1`, computed by the palette model rather than mixed in a rule. The primary button's hover
+reads `--primary-hover` and looks exactly as before. A house stylesheet may no longer derive a colour at all:
+the colour gate now refuses `color-mix()`, the relative colour syntax and the other colour functions, so a
+shade a component needs becomes a token. Both tokens are on the brand book's Color page, and a test now holds
+every token the stylesheet declares to being shown there. `--font-weight-black` stays defined for an app that wants it, but no house
+rule uses it any more.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every DKJ-Solutions app that takes the next brand book copy renders its headings, primary buttons and
+emphasised values a step lighter.
+
+**Score:** 3
+
+#### Pull Request
+
+Bold instead of black, a bold h3, a header settings cell, and colours read only as tokens
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #3721](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3721)
+
+---
 
 ### DEPLOY: feat/text-tokens-page-components · 20261101-140734Z
 
