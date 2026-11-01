@@ -497,6 +497,9 @@ function Resolve-ProductHouseStyleRedirect {
         sends them to. '' for any other path.
     #>
     param([AllowEmptyString()][string]$Path)
+    # THE TOKENS SECTION HAS NO PAGE OF ITS OWN (Maikel, November 1, 2026): its groups each have one, and the overview
+    # opens on them, so /tokens -- under either name, and the address a released toolbox sends -- lands there.
+    if ($Path -cmatch '^/marketplace/dkj-policy/(?:dkj-brandbook|house-style)/tokens/?\z') { return '/marketplace/dkj-policy/dkj-brandbook#tokens' }
     if ($Path -cnotmatch '^/marketplace/dkj-policy/house-style(?:/([a-z][a-z-]{0,39}))?/?\z') { return '' }
     return '/marketplace/dkj-policy/dkj-brandbook' + $(if ($Matches[1]) { '/' + $Matches[1] })
 }
@@ -512,7 +515,8 @@ function Format-ProductHouseStylePageHtml {
         THE OVERVIEW OPENS ON ITS TOKENS (Maikel, October 31, 2026): an h2 Tokens over one card per token group
         ($script:ProductBrandbookTokenGroups), then a card for every other section, as before. -Token names a group's
         own page, /tokens/<group>, holding only that group's specimen cards; a group none has, or whose cards the
-        file no longer holds, returns $null. /tokens itself still shows the whole section.
+        file no longer holds, returns $null. /tokens itself is no page since November 1, 2026 (Maikel): $null here, and
+        the server redirects it to the overview (Resolve-ProductHouseStyleRedirect).
     #>
     param(
         [AllowEmptyString()][string]$Body = '',
@@ -541,11 +545,14 @@ function Format-ProductHouseStylePageHtml {
             '<div class="' + $tokens.Grid + '">' + "`n" + (($picked | ForEach-Object { $_.Html }) -join "`n`n") + "`n" + '</div>'
         }
         $content = $split.Head + '<div class="spec-page">' + "`n" + $grids + "`n" + '</div>' + "`n" + $split.Tail
-        $crumbs += @{ Label = 'dkj-brandbook'; Href = $base }, @{ Label = $tokens.Title; Href = $base + '/tokens' }
+        # No Tokens crumb: that section has no page of its own any more (Maikel, November 1, 2026).
+        $crumbs += @{ Label = 'dkj-brandbook'; Href = $base }
         $lead = if ($group.ContainsKey('Headings')) { @($group.Headings | ForEach-Object { $_.Label }) -join ', ' } else { $group.Cards -join ', ' }
         return Format-DevPageHtml -Title $group.Label -Lead $lead -Body $content -ParentCrumbs $crumbs -FooterNote $foot
     }
 
+    # The Tokens section itself is no page (Maikel, November 1, 2026): the server redirects its address to the overview.
+    if ($Section -ceq 'tokens') { return $null }
     $parts = Get-HouseStyleSpecimensParts -Body $Body -ReadError $ReadError -Section $Section -BasePath $base
     if ($null -eq $parts) { return $null }
     if ($parts.Section) {
