@@ -461,9 +461,10 @@ function Resolve-ProductHouseStyleRequest {
 # 2026): which of the Tokens section's specimen cards each one shows, by the card's own h3 title. A card of that
 # section named by no group is a defect the suite holds against the real specimens.
 # The overview's sections after Tokens fall under two h2s (Maikel, November 1, 2026): Preview holds the sections that
-# show the whole style at once, the themes and the type; every other section is a component and falls under Components,
-# so a section added to specimens.html lands there without an edit here.
-$script:ProductBrandbookPreviewSections = @('themes', 'text')
+# show the whole style at once, the themes; every other section is a component and falls under Components, so a section
+# added to specimens.html lands there without an edit here. A section a token group shows (a heading's Section, the type
+# on the Text page since November 1, 2026) is on neither: its cards live on that group's page (Maikel).
+$script:ProductBrandbookPreviewSections = @('themes')
 
 # A group may set its cards under h2s of its own, -Headings, each naming its cards; its Cards are then those, in order.
 # Color does (Maikel, October 31, 2026): Theme holds the 60-30-10 rule's three shares, and Graphs & Status the series
@@ -524,7 +525,7 @@ function Format-ProductHouseStylePageHtml {
         section has returns $null, a 404.
 
         THE OVERVIEW OPENS ON ITS TOKENS (Maikel, October 31, 2026): an h2 Tokens over one card per token group
-        ($script:ProductBrandbookTokenGroups), then a card for every other section, under an h2 Preview (themes, text) or Components (the rest, November 1, 2026). -Token names a group's
+        ($script:ProductBrandbookTokenGroups), then a card for every other section, under an h2 Preview (themes) or Components (the rest, November 1, 2026); a section a group shows is on neither. -Token names a group's
         own page, /tokens/<group>, holding only that group's specimen cards; a group none has, or whose cards the
         file no longer holds, returns $null. /tokens itself is no page since November 1, 2026 (Maikel): $null here, and
         the server redirects it to the overview (Resolve-ProductHouseStyleRedirect).
@@ -598,7 +599,8 @@ function Format-ProductHouseStylePageHtml {
         }
         [void]$sb.AppendLine('</div>')
         # The other sections under two more h2s, Preview and Components, each card an h3 (Maikel, November 1, 2026).
-        $rest = @($split.Sections | Where-Object { $_.Slug -cne 'tokens' })
+        $absorbed = @($script:ProductBrandbookTokenGroups | Where-Object { $_.ContainsKey('Headings') } | ForEach-Object { $_.Headings } | Where-Object { $_.ContainsKey('Section') } | ForEach-Object { $_.Section })
+        $rest = @($split.Sections | Where-Object { $_.Slug -cne 'tokens' -and $absorbed -cnotcontains $_.Slug })
         $groups = @(
             @{ Id = 'preview'; Label = 'Preview'; Sections = @($rest | Where-Object { $script:ProductBrandbookPreviewSections -ccontains $_.Slug }) },
             @{ Id = 'components'; Label = 'Components'; Sections = @($rest | Where-Object { $script:ProductBrandbookPreviewSections -cnotcontains $_.Slug }) }

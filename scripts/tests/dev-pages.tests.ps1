@@ -931,7 +931,7 @@ $cmAt = $bbOver.IndexOf('<div class="grid-3" id="components"><div class="grid__h
 $pvOnly = if ($cmAt -gt $pvAt) { $bbOver.Substring($pvAt, $cmAt - $pvAt) } else { '' }
 $pvLabels = @([regex]::Matches($pvOnly, '<h3 class="menu-item__title">([^<]+)</h3>') | ForEach-Object { $_.Groups[1].Value })
 $cmLabels = @([regex]::Matches($bbOver.Substring([Math]::Max(0, $cmAt)), '<h3 class="menu-item__title">([^<]+)</h3>') | ForEach-Object { $_.Groups[1].Value })
-Assert-True ($pvAt -gt $tkAt -and ($pvLabels -join ',') -ceq 'Themes,Text' -and $bbOver.Substring($pvAt) -notmatch '<h2 class="menu-item__title">') 'the themes and the type follow under a second h2, Preview, each card an h3 (Maikel, November 1, 2026)'
+Assert-True ($pvAt -gt $tkAt -and ($pvLabels -join ',') -ceq 'Themes' -and $bbOver.Substring($pvAt) -notmatch '<h2 class="menu-item__title">') 'the themes follow under a second h2, Preview, each card an h3, and the Text section is not there: it lives on the Text token page (Maikel, November 1, 2026)'
 Assert-True ($cmAt -gt $pvAt -and $cmLabels.Count -gt 0 -and $cmLabels[0] -ceq 'Actions' -and $cmLabels -notcontains 'Themes' -and $cmLabels -notcontains 'Text') 'every other section follows under a third h2, Components'
 $tkCards = Get-ProductBrandbookTokenCards -Inner ((Split-HouseStyleSpecimens -Body $specimens).Sections | Where-Object { $_.Slug -ceq 'tokens' }).Inner
 $tkNamed = @($script:ProductBrandbookTokenGroups | ForEach-Object { $_.Cards })

@@ -41,13 +41,14 @@
 
 Maikel asked for two h2s, Tokens and Components, on the brand book's Text token page
 (`/marketplace/dkj-policy/dkj-brandbook/tokens/text`), and chose to show the Text section's own cards under Components,
-with that section's card staying under Preview on the overview.
+and then had the Text section's card taken off the overview's Preview: it lives on the Text token page now.
 
 ### CREATE
 
 - [x] `dev-pages-lib.ps1`: a token group's heading may name a `Section`, and then shows every card of that section in
   its own grid; the Text group gets Tokens (Type scale, Font family) and Components (the Text section)
 - [x] The overview's Text card counts both halves (6 specimens)
+- [x] A section a token group shows is left off the overview, so Preview holds Themes alone
 
 ### TEST
 
@@ -60,7 +61,8 @@ with that section's card staying under Preview on the overview.
 
 The brand book's Text token page sets its two token cards, Type scale and Font family, under an h2 Tokens, and the
 Text section's own specimens (headings, running text, numbers, messages) under an h2 Components, so the type tokens
-and the type they produce read on one page. A token group's heading can now name a whole section to show.
+and the type they produce read on one page. A token group's heading can now name a whole section to show, and that section leaves the overview's Preview, which
+now holds Themes alone.
 
 **Score:** 2
 
