@@ -20,7 +20,7 @@
 
    How far a theme reaches: every use of --primary-muted (a grey of the colour: the pressed .seg, .badge--info,
    .meter--info, focus rings, a plain .btn's edge on a card inside a grid), the text caret and the selection; --primary, the colour itself,
-   for links, titles and values, the settings toggle's edge and the breadcrumb bar (#3235), .btn--primary (a filled main action, owner's decision, October 15, 2026, #109) and
+   for links, titles and values, the breadcrumb bar (#3235), .btn--primary (a filled main action, owner's decision, October 15, 2026, #109) and
    native checkboxes, radios, sliders and progress bars through accent-color. Beyond that, by default: the page,
    the cards and tiles stand on the paper (--bg-1, --bg-2), every line and tinted surface is --bg-3, and
    the text on them is --fg-1 to --fg-4. There are no untinted neutrals: text is --fg-1, and --primary is the
@@ -541,16 +541,14 @@ p { margin: 0; }
 /* ---- Settings button (drawn by house-theme.js: DKJTheme.settings(el)) ------- */
 /* A round toggle that opens a panel with the theme picker, the page width, a reset and the app's own controls
    (.theme-settings__extra). Inline by default, e.g. in a .topbar; --floating fixes it top right.
-   The panel lies over the page, so nothing moves when it opens. The toggle stands on the card (--bg-2) with
-   its edge in the theme's colour (owner, #3235): a --primary border, a --fg-1 icon that turns --primary under the
-   pointer and while open. */
+   The panel lies over the page, so nothing moves when it opens. The toggle is the icon alone, in --fg-1, with no
+   fill, edge or shadow, and it stays --fg-1 under the pointer and while open (Maikel, November 1, 2026; from #3235
+   until then it stood on --bg-2 with a --primary edge, and its icon turned --primary). */
 .theme-settings { position: relative; display: inline-block; }
 .theme-settings--floating { position: fixed; top: var(--spacing-3); right: var(--spacing-3); z-index: 20; }
 .theme-settings__toggle { display: inline-flex; align-items: center; justify-content: center; width: var(--tap); height: var(--tap);
-  padding: 0; color: var(--fg-1); background: var(--bg-2); border: 1px solid var(--primary); border-radius: 50%;
-  box-shadow: var(--shadow-pop); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-.theme-settings__toggle:hover { background: var(--bg-3); color: var(--primary); }
-.theme-settings__toggle[aria-expanded="true"] { color: var(--primary); }   /* open: a state, so the highlight */
+  padding: 0; color: var(--fg-1); background: none; border: 0; border-radius: 50%;
+  cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .theme-settings__toggle:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
 .theme-settings__close, .theme-settings__toggle[aria-expanded="true"] .theme-settings__open { display: none; }
 .theme-settings__toggle[aria-expanded="true"] .theme-settings__close { display: block; }

@@ -575,7 +575,7 @@ out). Three more things follow it by default, in light and in dark (and a measur
   theme, on its theme's `bg-1` (October 17, 2026). Paper and text both run away from the page: `bg-1` and
   `fg-1` are the two ends, the lightest and the darkest on light, the other way round on dark.
 - **A tinted surface takes `--fg-1` as its text.** `--bg-3` is every line and also the surface of the
-  `.table--accent` head, the hover of a joined choice and of the settings toggle, a near or today date row, a date
+  `.table--accent` head, the hover of a joined choice, a near or today date row, a date
   row's hover, the accent dialog and an InfoRows box. The text on it is `--fg-1`, like all text (17.2:1 or better).
 - **Measured** (WCAG relative luminance, worst and best of the twelve themes, October 21, 2026): `--primary` on
   `bg-1` 5.9:1 to 8.5:1 on light and 10.7:1 to 13.6:1 on dark, on `bg-4` 4.56:1 to 6.5:1 on light and 9.0:1 to
