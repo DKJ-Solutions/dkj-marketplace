@@ -477,9 +477,9 @@ $script:ProductBrandbookTokenGroups = @(
         ) }
     # The sizes and the one face token apart from them (Maikel, November 1, 2026), under an h2 Tokens, and the Text
     # section's own cards under an h2 Components: a heading with a Section shows all of that section's cards.
-    @{ Slug = 'text'; Label = 'Text'; Cards = @('Type scale', 'Font family')
+    @{ Slug = 'text'; Label = 'Text'; Cards = @('Font size', 'Font family')
         Headings = @(
-            @{ Label = 'Tokens'; Cards = @('Type scale', 'Font family') }
+            @{ Label = 'Tokens'; Cards = @('Font size', 'Font family') }
             @{ Label = 'Components'; Section = 'text' }
         ) }
     @{ Slug = 'radius'; Label = 'Radius'; Cards = @('Radius') }

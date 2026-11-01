@@ -49,11 +49,11 @@ read as a plain `<p>`.
 ### CREATE
 
 - [x] `dev-pages-lib.ps1`: a token group's heading may name a `Section`, and then shows every card of that section in
-  its own grid; the Text group gets Tokens (Type scale, Font family) and Components (the Text section)
+  its own grid; the Text group gets Tokens (Font size, Font family) and Components (the Text section)
 - [x] The overview's Text card counts both halves (6 specimens)
 - [x] A section a token group shows is left off the overview, so Preview holds Themes alone
 - [x] `house-style.css`: `.eyebrow` and `.lead` gone, `.sub` gone into `.note`, the fill switches and comments with them
-- [x] `specimens.html`: the Headings card shows h1, h2, h3, the Running text card drops its `.lead` row; the fill specimens' quieter line is a `.note`
+- [x] `specimens.html`: the Type scale card is Font size, the Headings card shows h1, h2, h3, the Running text card drops its `.lead` row; the fill specimens' quieter line is a `.note`
 - [x] The hub: `Format-GeneralPageHtml`'s `-Eyebrow` (drawn only without a site header, which no caller had) removed
   with its callers; the consumer dashboard's two `.sub` lines are `.note`
 - [x] The brand book README and the `dkj-brandbook` skill name `.note` instead of `.sub` and `.eyebrow`, and no longer offer `.lead`
@@ -68,7 +68,7 @@ read as a plain `<p>`.
 
 ### DEPLOY: feat/text-tokens-page-components
 
-The brand book's Text token page sets its two token cards, Type scale and Font family, under an h2 Tokens, and the
+The brand book's Text token page sets its two token cards, Font size and Font family, under an h2 Tokens, and the
 Text section's own specimens (headings, running text, numbers, messages) under an h2 Components, so the type tokens
 and the type they produce read on one page. A token group's heading can now name a whole section to show, and that section leaves the overview's Preview, which
 now holds Themes alone. The Headings specimen shows h1, h2 and h3.
