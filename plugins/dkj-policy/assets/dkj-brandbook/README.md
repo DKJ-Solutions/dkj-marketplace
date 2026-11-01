@@ -62,7 +62,7 @@ that checks the stylesheet's syntax and tokens; the page is the look.
    extend, never override. One narrow exception: a component subtree may re-declare a house colour token
    (`--paper-2`, `--muted`) so its contents follow a tint, as the info and accent dialogs do;
    the token is never changed for the page. Everything inside such a subtree inherits the re-declared value,
-   so a tinted dialog nested inside an info dialog would tint from `--cat-1`; do not nest them.
+   so a tinted dialog nested inside an info dialog would tint from `--graph-1`; do not nest them.
 4. **Design to one screen of about 1300 x 900, at the full width, with nothing the brief did not ask for**
    (the owner, October 26, 2026; about 1300 x 900, a guideline, since October 27, when it replaced 1400 x 600): no scroll where cutting ornament or going wider avoids it, blocks side
    by side rather than stacked, and no eyebrow, sub line, lead or extra row unless the brief asks for
@@ -109,7 +109,7 @@ primary outweighs its paper has spent the 30% as ground.
 | Group | Tokens | Meaning |
 |---|---|---|
 | Paper | `--paper-1` … `--paper-4` | what sits **behind** the text, in very small steps, each only just darker on light (lighter on dark) than the one before: the page (`paper-1`), cards and tiles (`paper-2`), every line and the tinted surfaces (`paper-3`: borders, row dividers, grid lines, the meter track, an accent table head, a hover, the accent dialog), a stronger border (`paper-4`: an open card, a selected box). **All four read on `--primary`** (4.55:1 or better, #3235), so they are also the text on a primary fill (`.fill-primary`), `paper-1` the text on a `--muted` fill and the mark inside a status icon, and the paper steps the text on an inverted (`--fg-1`) surface |
-| Categorical | `--cat-1`, `--cat-2`, `--cat-3` | one series each. Never two meanings for one slot in a view |
+| Categorical | `--graph-1`, `--graph-2`, `--graph-3` | one series each. Never two meanings for one slot in a view. Named `--cat-1` to `--cat-3` until November 1, 2026 (Maikel) |
 | Direction | `--positive-3` and `--negative-3` (also the gain and the loss in charts, so a direction chart can share a view with any series), `--positive-5`, `--negative-5` (numbers in text) | result and direction, never a category. `--positive-5`/`--negative-5` are the text versions of `--positive-3`/`--negative-3`, a step more contrast so a number reads as text: darker on light, lighter on dark |
 | Status | `--positive-3`, `--warning-3`, `--negative-3`, `--warning-5`, `--warning-1`, `--negative-1`, `--positive-1` | badges, meters, notices. `--warning-1`, `--negative-1` and `--positive-1` are the backgrounds of a warning, negative or positive message. The mark inside a status icon (check, cross, "!") is `--paper-1` |
 | Primary | `--primary` | the theme's colour, **one** step (owner, #3235, October 21, 2026): the most saturated colour of the theme's hue that reads on all four paper steps, so the paper reads on it too. **The highlight**: `h1`, the fill of `.btn--primary` (a filled main action, like the filled icon button; #109) and of `.fill-primary`, a state (hover, pressed, sorted, active, today), `strong`, list markers, links, a value meant to stand out, the accent dialog's title and the settings panel's title, and native controls through `accent-color` |
@@ -279,7 +279,7 @@ section uses):
 | A switch … | Tokens | Why |
 |---|---|---|
 | to any other theme changes them | `--primary`, `--muted`, `--paper-1` … `--paper-4`, `--fg-1` … `--fg-4` | each theme sets all ten as fixed values, computed from its own hue; the House style page lists them as the three groups of the 60-30-10 rule |
-| changes them only between light and dark: categories | `--cat-1`, `--cat-2`, `--cat-3` | series slots, set once in the light block and once in the dark block, a shade apart |
+| changes them only between light and dark: categories | `--graph-1`, `--graph-2`, `--graph-3` | series slots, set once in the light block and once in the dark block, a shade apart |
 | changes them only between light and dark: status colours | `--negative-1`, `--negative-3`, `--negative-5`, `--positive-1`, `--positive-3`, `--positive-5`, `--warning-1`, `--warning-3`, `--warning-5` | set once in the light block and once in the dark block, a shade apart. One exception: `--warning-3` also moves in Roest and Geel ([below](#themes-the-user-picks-the-colour)) |
 
 **The spacing and type scales have a source: the Figma library** *Shopify Theme - LIBRARY*, variable
@@ -537,7 +537,7 @@ out). Three more things follow it by default, in light and in dark (and a measur
   from #3235 until then it was `--fg-2`, and before #3235 `h2` and `h3`–`h5` were steps of the colour).
 - **On a fill the text switches** (#3235, the owner: *"h2 heeft niet altijd dezelfde kleur"*, an h2 does not always have the same colour). See
   [Fills](#fills-the-text-switches-with-the-ground).
-- **Status, direction and categorical colours** (`--positive-3`, `--negative-3`, `--warning-3`, `--cat-*`,
+- **Status, direction and categorical colours** (`--positive-3`, `--negative-3`, `--warning-3`, `--graph-*`,
   `--positive-5`, `--negative-5`) are never tinted.
 
 ### Fills: the text switches with the ground

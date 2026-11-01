@@ -464,10 +464,10 @@ function Resolve-ProductHouseStyleRequest {
 # Color does (Maikel, October 31, 2026): Theme holds the 60-30-10 rule's three shares, and Stats & Status the series
 # slots and the status and direction colours, one heading since Maikel merged the two (November 1, 2026).
 $script:ProductBrandbookTokenGroups = @(
-    @{ Slug = 'color'; Label = 'Color'; Cards = @('60', '30', '10', 'Categories', 'Status and direction')
+    @{ Slug = 'color'; Label = 'Color'; Cards = @('60', '30', '10', 'Graphs', 'Status and direction')
         Headings = @(
             @{ Label = 'Theme'; Cards = @('60', '30', '10') }
-            @{ Label = 'Stats & Status'; Cards = @('Categories', 'Status and direction') }
+            @{ Label = 'Stats & Status'; Cards = @('Graphs', 'Status and direction') }
         ) }
     @{ Slug = 'text'; Label = 'Text'; Cards = @('Type scale') }
     @{ Slug = 'radius'; Label = 'Radius'; Cards = @('Radius') }

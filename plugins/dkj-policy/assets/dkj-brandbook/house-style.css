@@ -29,11 +29,11 @@
    Status, direction and categorical colours are never tinted. The
    --accent modifiers (header, table) carry it further where an app opts in.
 
-   Categorical colours: --cat-1 .. --cat-3 are series slots. Pick a slot per
+   Categorical colours: --graph-1 .. --graph-3 are series slots (--cat-1 .. --cat-3 until November 1, 2026). Pick a slot per
    series in your own app; do not reuse one slot for two meanings in a view.
    Semantic colours (--negative-3/--positive-5/--negative-5) are for direction and result, never
    for categories. In a chart, a gain is --positive-3 and a loss --negative-3, so
-   --cat-1 is only a series slot (there is no --gain; owner's decision, October 15, 2026, #131).
+   --graph-1 is only a series slot (there is no --gain; owner's decision, October 15, 2026, #131).
    ========================================================================== */
 
 /* ---- Tokens: light (default) -------------------------------------------- */
@@ -82,9 +82,9 @@
   --paper-1: #fdfdff; --paper-2: #f3f7ff; --paper-3: #e4edff; --paper-4: #d1e0ff; --primary: #0000ff; --muted: #4f5769; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c;
 
   /* categorical palette (series slots) */
-  --cat-1: #2574d1;          /* dark enough for --paper-1 text on it at 4.5:1 in every light theme (4.51:1, worst Roest; #92) */
-  --cat-2: #eb6834;
-  --cat-3: #1baf7a;
+  --graph-1: #2574d1;          /* dark enough for --paper-1 text on it at 4.5:1 in every light theme (4.51:1, worst Roest; #92) */
+  --graph-2: #eb6834;
+  --graph-3: #1baf7a;
 
   /* direction and result semantics */
   --positive-5: #006300;          /* positive number in text: a step darker than --positive-3, so it reads as text */
@@ -159,7 +159,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
     color-scheme: dark;
-    --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70;
+    --graph-1: #3987e5; --graph-2: #d95926; --graph-3: #199e70;
     --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
     --paper-1: #01090b; --paper-2: #010f11; --paper-3: #00181b; --paper-4: #002328; --primary: #63cfdc; --muted: #839ea1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
   }
@@ -170,7 +170,7 @@
 :root[data-theme="pink"], :root[data-theme="lilac"], :root[data-theme="sky"],
 :root[data-theme="cyan"], :root[data-theme="yellow"], :root[data-theme="orange"] {
   color-scheme: dark;
-  --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70;
+  --graph-1: #3987e5; --graph-2: #d95926; --graph-3: #199e70;
   --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
   --paper-1: #01090b; --paper-2: #010f11; --paper-3: #00181b; --paper-4: #002328; --primary: #63cfdc; --muted: #839ea1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
 }
@@ -410,7 +410,7 @@ p, p.meta { color: var(--fg-1); }
 .facts--row dd { text-align: left; }
 
 /* ---- Legend and swatches -------------------------------------------------- */
-/* Set the colour per item with style="--c: var(--cat-1)". */
+/* Set the colour per item with style="--c: var(--graph-1)". */
 .legend { display: flex; gap: var(--spacing-4); flex-wrap: wrap; font-size: var(--text-sm); color: var(--fg-1); margin: var(--spacing-1) 0 var(--spacing-3); }
 .legend__item::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px;
   background: var(--c); margin-right: var(--spacing-1-5); vertical-align: -1px; }
@@ -870,10 +870,10 @@ a.menu-item:hover { background: var(--paper-3); }
 .chip--yes { background: var(--muted); border-color: var(--muted); color: var(--paper-1); }
 .chip--no { background: var(--paper-1); }
 .chip--todo { color: var(--fg-1); border-style: dashed; }
-/* Tag: a small uppercase pill above a title; --muted fill, --info on --cat-1, --warn in text on the warning tint. */
+/* Tag: a small uppercase pill above a title; --muted fill, --info on --graph-1, --warn in text on the warning tint. */
 .tag { display: inline-block; padding: var(--spacing-0-5) var(--spacing-2); border-radius: var(--radius-pill); background: var(--muted); color: var(--paper-1);
   font-size: var(--text-xs); font-weight: 700; line-height: 1.2; letter-spacing: 0.06em; text-transform: uppercase; }
-.tag--info { background: var(--cat-1); }
+.tag--info { background: var(--graph-1); }
 .tag--warn { background: var(--warning-1); color: var(--warning-5); }
 /* Filter chips: a wrapping row of pressed-state buttons (wrapping, not scrolling: a scrolling row hides chips and their
    state off-screen at 360px). <div class="filter-chips"><button class="filter-chip" aria-pressed="false">..</button>
@@ -1042,14 +1042,14 @@ a.menu-item:hover { background: var(--paper-3); }
 /* Rows of a label and a value in a tinted box, each with a .round-toggle at the end: <div class="info-rows"><p
    class="info-rows__head">..</p><div class="info-rows__list"><div class="info-row"><div class="info-row__box">
    <button class="info-row__named">..</button><span class="info-row__value">..</span></div></div></div></div>. --info
-   puts the box on the card with a --cat-1 edge. The "i" of an info icon is cut out in the surface below it: .info-dot
+   puts the box on the card with a --graph-1 edge. The "i" of an info icon is cut out in the surface below it: .info-dot
    and .info-stem take that surface's colour. */
 .info-dot { fill: var(--paper-2); }
 .info-stem { stroke: var(--paper-2); }
 .info-rows:not(.info-rows--info) .info-row__box { background: var(--paper-3); color: var(--fg-1); }
 .info-rows:not(.info-rows--info) .info-row__box .info-dot { fill: var(--paper-3); }
 .info-rows:not(.info-rows--info) .info-row__box .info-stem { stroke: var(--paper-3); }
-.info-rows--info .info-row__box { background: var(--paper-2); box-shadow: inset 0 0 0 1px var(--cat-1); }
+.info-rows--info .info-row__box { background: var(--paper-2); box-shadow: inset 0 0 0 1px var(--graph-1); }
 .info-rows__head { margin: 0 0 var(--spacing-1-5); font-size: var(--text-base); font-weight: 600; color: var(--fg-1); }
 .info-rows__list { display: flex; flex-direction: column; gap: var(--spacing-1-5); }
 .info-row { display: flex; align-items: center; gap: var(--spacing-1-5); }
@@ -1216,7 +1216,7 @@ a.menu-item:hover { background: var(--paper-3); }
 
 /* ---- Chart extras --------------------------------------------------------------- */
 /* In a chart's tooltip and its table: a second line under a label, and a series row (a swatch in the series colour --
-   set it with style="background: var(--cat-1)" -- the name, the figure at the end). */
+   set it with style="background: var(--graph-1)" -- the name, the figure at the end). */
 .chart-detail { display: block; font-size: var(--text-xs); color: var(--fg-1); }
 .chart-row { display: flex; align-items: center; gap: var(--spacing-1-5); }
 .chart-swatch { flex: none; width: 8px; height: 8px; border-radius: 50%; }
