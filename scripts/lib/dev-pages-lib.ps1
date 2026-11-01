@@ -313,7 +313,7 @@ function Get-SpecialistStyle {
         '@media (max-width: 1000px) { .sp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }',
         '@media (max-width: 760px) { .sp-grid { grid-template-columns: 1fr; } }',
         '.sp-grid > .card { margin-top: 0; }',
-        '.sp-text { margin: 0; padding: var(--spacing-3); background: var(--paper-2); color: var(--fg-1); border-radius: var(--spacing-2); font-family: ui-monospace, Consolas, monospace; font-size: var(--text-sm); white-space: pre-wrap; overflow-wrap: anywhere; }'
+        '.sp-text { margin: 0; padding: var(--spacing-3); background: var(--bg-2); color: var(--fg-1); border-radius: var(--spacing-2); font-family: ui-monospace, Consolas, monospace; font-size: var(--text-sm); white-space: pre-wrap; overflow-wrap: anywhere; }'
     ) -join "`n")
 }
 

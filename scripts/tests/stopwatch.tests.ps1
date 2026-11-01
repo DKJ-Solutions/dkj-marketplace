@@ -341,7 +341,7 @@ Assert-True ($shipPage -match '<div class="grid__head"><h2>The prompt</h2></div>
 Assert-True ($shipPage.IndexOf('<h2>The prompt</h2>') -lt $shipPage.IndexOf('<h2>How to time it</h2>')) 'the prompt stands above the steps that refer to it'
 Assert-True ($shipPage -match '<button type="button" class="btn" data-copy="sw-prompt">Copy the prompt</button>' -and $shipPage -match 'navigator\.clipboard\.writeText\(document\.getElementById\(b\.getAttribute\("data-copy"\)\)\.textContent\)') 'a house button copies the block''s text to the clipboard'
 Assert-True ($shipPage.Replace((Format-RepoHubBanner), '') -notmatch '<form|method: "POST"|fetch\(') 'and the page still writes nothing: no form, POST or fetch'
-Assert-True ($shipPage -match '\.sw-prompt \{ [^}]*background: var\(--paper-2\); color: var\(--fg-1\);[^}]*font-size: var\(--text-sm\);' -and $shipPage -notmatch '\.btn \{') 'the block is drawn from house tokens, and the house button is used, not restyled'
+Assert-True ($shipPage -match '\.sw-prompt \{ [^}]*background: var\(--bg-2\); color: var\(--fg-1\);[^}]*font-size: var\(--text-sm\);' -and $shipPage -notmatch '\.btn \{') 'the block is drawn from house tokens, and the house button is used, not restyled'
 Assert-True ($shipPage -match 'pasting the prompt above' -and $shipPage -match 'the checkout left on it') 'the steps point at the prompt, and say to leave the checkout on the branch it ships'
 # Once a run of it exists, it is an ordinary label: the run card on its page, the steps still under it.
 $shipModel = ConvertTo-StopwatchModel -Runs @((& $mk 'ship pr' 0 10))

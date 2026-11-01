@@ -73,8 +73,8 @@ foreach ($th in $themes) {
     $l1 = (ConvertTo-OkLch $p['--fg-1']).L; $l4 = (ConvertTo-OkLch $p['--fg-4']).L
     Assert-True ([math]::Abs($l4 - $l1) -le 0.13) "$($th.Id): the four text steps lie close together (fg-1 to fg-4 within 0.13 L)"
     $dark = $th.Mode -eq 'dark'
-    Assert-True ($dark -eq ((Get-RelativeLuminance $p['--fg-1']) -gt (Get-RelativeLuminance $p['--paper-1']))) "$($th.Id): the text is light on dark and dark on light"
-    $lum = 1..4 | ForEach-Object { Get-RelativeLuminance $p["--paper-$_"] }
+    Assert-True ($dark -eq ((Get-RelativeLuminance $p['--fg-1']) -gt (Get-RelativeLuminance $p['--bg-1']))) "$($th.Id): the text is light on dark and dark on light"
+    $lum = 1..4 | ForEach-Object { Get-RelativeLuminance $p["--bg-$_"] }
     $ordered = if ($dark) { $lum[0] -lt $lum[1] -and $lum[1] -lt $lum[2] -and $lum[2] -lt $lum[3] } else { $lum[0] -gt $lum[1] -and $lum[1] -gt $lum[2] -and $lum[2] -gt $lum[3] }
     Assert-True $ordered "$($th.Id): the paper steps run away from the page"
     # the primary is the MOST saturated colour that reads: a step of HSL lightness toward 50% no longer reaches 4.55:1
@@ -85,11 +85,11 @@ foreach ($th in $themes) {
     if ($stp.PrimaryChromaMax) { Assert-True ($pc.C -le $stp.PrimaryChromaMax + 0.002) "$($th.Id): the primary is no more saturated than chroma $($stp.PrimaryChromaMax)" }
     if ($stp.PrimaryChromaMax -and [math]::Abs($pc.C - $stp.PrimaryChromaMax) -lt 0.003) {
         $darker = ConvertFrom-OkLch ($pc.L - 0.01) $pc.C $pc.H
-        Assert-True ((Get-ContrastRatio $darker $p['--paper-4']) -lt $stp.PrimaryFloor) "$($th.Id): the capped primary sits at the lightness where it reaches $($stp.PrimaryFloor):1"
+        Assert-True ((Get-ContrastRatio $darker $p['--bg-4']) -lt $stp.PrimaryFloor) "$($th.Id): the capped primary sits at the lightness where it reaches $($stp.PrimaryFloor):1"
     } elseif ([math]::Abs($pl - 0.5) -gt 0.02) {
         $closer = ConvertFrom-Hsl $th.Hue 1 ($pl + $(if ($dark) { -0.01 } else { 0.01 }))
         $floor = (Get-HousePaletteSteps -Mode $th.Mode).PrimaryFloor
-        Assert-True ((Get-ContrastRatio $closer $p['--paper-4']) -lt $floor) "$($th.Id): the primary is the most saturated colour that still reaches $($floor):1 on paper-4"
+        Assert-True ((Get-ContrastRatio $closer $p['--bg-4']) -lt $floor) "$($th.Id): the primary is the most saturated colour that still reaches $($floor):1 on bg-4"
     } else {
         Assert-True $true "$($th.Id): the primary is the pure colour itself (HSL 50%), which already reads"
     }
@@ -97,7 +97,7 @@ foreach ($th in $themes) {
     $ml = (ConvertTo-OkLch $p['--primary-muted']).L
     $toward = if ($dark) { -0.01 } else { 0.01 }
     $okHue = (ConvertTo-OkLch (ConvertFrom-Hsl $th.Hue 1 0.5)).H
-    Assert-True ((Get-ContrastRatio (ConvertFrom-OkLch ($ml + $toward) 0.03 $okHue) $p['--paper-1']) -lt 7.05) "$($th.Id): --primary-muted recedes as far as 7:1 allows"
+    Assert-True ((Get-ContrastRatio (ConvertFrom-OkLch ($ml + $toward) 0.03 $okHue) $p['--bg-1']) -lt 7.05) "$($th.Id): --primary-muted recedes as far as 7:1 allows"
 }
 
 Write-Host '-- group 3: the stylesheet carries exactly the computed values' -ForegroundColor Cyan
@@ -108,7 +108,7 @@ foreach ($th in $themes) {
     $line = ([regex]::Match($css, ":root\[data-theme=""$($th.Id)""\], \.theme-swatch\[data-id=""$($th.Id)""\] \{ ([^}]*)\}")).Groups[1].Value
     Assert-True ($line.StartsWith($expected)) "$($th.Id): its theme line starts with the computed ten"
 }
-$blocks = @([regex]::Matches($css, '(?m)^\s+(--paper-1:[^\r\n]*)$') | ForEach-Object { $_.Groups[1].Value.Trim() })
+$blocks = @([regex]::Matches($css, '(?m)^\s+(--bg-1:[^\r\n]*)$') | ForEach-Object { $_.Groups[1].Value.Trim() })
 Assert-Equal 3 $blocks.Count 'three default token lines'
 Assert-Equal (Format-HousePaletteDeclarations (Get-HousePalette -Hue 240 -Mode light)) $blocks[0] 'the light default is Blauw'
 Assert-Equal (Format-HousePaletteDeclarations (Get-HousePalette -Hue 185 -Mode dark -ChromaMax 0.10)) $blocks[1] 'the OS-followed dark default is Cyaan'
@@ -131,7 +131,7 @@ $orig = [System.IO.File]::ReadAllText($Style)
 $null = & powershell -NoProfile -ExecutionPolicy Bypass -File $Build -Apply -StylePath $scratch 2>&1
 Assert-Equal 0 $LASTEXITCODE '-Apply exits 0'
 Assert-True ([System.IO.File]::ReadAllText($scratch) -ceq $orig) '-Apply restores a scrambled copy byte for byte (an old --ink-7 replaced)'
-[System.IO.File]::WriteAllText($scratch, ($orig -replace '(?m)^\s+--paper-1:[^\n]*\n', ''))
+[System.IO.File]::WriteAllText($scratch, ($orig -replace '(?m)^\s+--bg-1:[^\n]*\n', ''))
 $null = & powershell -NoProfile -ExecutionPolicy Bypass -File $Build -Apply -StylePath $scratch 2>&1
 Assert-True ($LASTEXITCODE -ne 0) '-Apply refuses a stylesheet without its three default blocks'
 Remove-Item -LiteralPath $scratch -ErrorAction SilentlyContinue

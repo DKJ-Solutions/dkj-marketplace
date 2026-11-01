@@ -60,7 +60,7 @@ that checks the stylesheet's syntax and tokens; the page is the look.
    app is fixed here, through an issue on this repo, so that every app gets the fix. A value that is wrong
    for one app is a new domain token in that app, not an override. Same rule as the constitution:
    extend, never override. One narrow exception: a component subtree may re-declare a house colour token
-   (`--paper-2`, `--primary-muted`) so its contents follow a tint, as the info and accent dialogs do;
+   (`--bg-2`, `--primary-muted`) so its contents follow a tint, as the info and accent dialogs do;
    the token is never changed for the page. Everything inside such a subtree inherits the re-declared value,
    so a tinted dialog nested inside an info dialog would tint from `--graph-1`; do not nest them.
 4. **Design to one screen of about 1300 x 900, at the full width, with nothing the brief did not ask for**
@@ -88,17 +88,17 @@ already has, not a new colour:
 
 | Share | Group | Tokens | What it is |
 |---|---|---|---|
-| **60%** | Paper | `--paper-1` … `--paper-4` | the ground: the page, the cards, the lines |
+| **60%** | Paper | `--bg-1` … `--bg-4` | the ground: the page, the cards, the lines |
 | **30%** | Primary | `--primary`, with `--primary-muted` (its grey) | the theme's colour: `h1` and `h2`, links, the breadcrumb bar, `.btn--primary`, the states |
 | **10%** | Text | `--fg-1` … `--fg-4` | what sits on the paper: every paragraph, label and quiet icon |
 
 **Everything in the 30% reads on all four paper steps**, as the 10% does (Maikel, November 1, 2026): `--primary`
-4.56:1 or better on `paper-4`, `--primary-muted` 5.30:1 or better (WCAG, the worst of the twelve themes). **And a theme has
+4.56:1 or better on `bg-4`, `--primary-muted` 5.30:1 or better (WCAG, the worst of the twelve themes). **And a theme has
 these three groups and no fourth**: a colour that fits none of them is not a theme colour. That retired
 `--muted-inverse` the same day. It was the grey of an inverted surface, 7:1 on `--fg-1`, and fitted no group: on the
-paper it read at 2.1:1 to 2.3:1 on `paper-4`, so not the 30; on `--primary` at 2.1:1 to 4.0:1, so not the 60; and
-no colour at all reaches 4.5:1 on both `paper-4` and `--fg-1` (the best grey reaches 3.9:1 to 4.05:1), so no
-change of value could have moved it into the 30. The quieter line on `.fill-inverse` takes `--paper-4` (15:1 or
+paper it read at 2.1:1 to 2.3:1 on `bg-4`, so not the 30; on `--primary` at 2.1:1 to 4.0:1, so not the 60; and
+no colour at all reaches 4.5:1 on both `bg-4` and `--fg-1` (the best grey reaches 3.9:1 to 4.05:1), so no
+change of value could have moved it into the 30. The quieter line on `.fill-inverse` takes `--bg-4` (15:1 or
 better on `--fg-1`), and the house-style gate reports `--muted-inverse` as a retired token.
 
 A repo layer keeps to the same shares: what it adds lands in one of the three groups, and a page whose
@@ -108,12 +108,12 @@ primary outweighs its paper has spent the 30% as ground.
 
 | Group | Tokens | Meaning |
 |---|---|---|
-| Paper | `--paper-1` … `--paper-4` | what sits **behind** the text, in very small steps, each only just darker on light (lighter on dark) than the one before: the page (`paper-1`), cards and tiles (`paper-2`), every line and the tinted surfaces (`paper-3`: borders, row dividers, grid lines, the meter track, an accent table head, a hover, the accent dialog), a stronger border (`paper-4`: an open card, a selected box). **All four read on `--primary`** (4.55:1 or better, #3235), so they are also the text on a primary fill (`.fill-primary`), `paper-1` the text on a `--primary-muted` fill and the mark inside a status icon, and the paper steps the text on an inverted (`--fg-1`) surface |
+| Paper | `--bg-1` … `--bg-4` | what sits **behind** the text, in very small steps, each only just darker on light (lighter on dark) than the one before: the page (`bg-1`), cards and tiles (`bg-2`), every line and the tinted surfaces (`bg-3`: borders, row dividers, grid lines, the meter track, an accent table head, a hover, the accent dialog), a stronger border (`bg-4`: an open card, a selected box). **All four read on `--primary`** (4.55:1 or better, #3235), so they are also the text on a primary fill (`.fill-primary`), `bg-1` the text on a `--primary-muted` fill and the mark inside a status icon, and the paper steps the text on an inverted (`--fg-1`) surface |
 | Categorical | `--graph-1`, `--graph-2`, `--graph-3` | one series each. Never two meanings for one slot in a view. Named `--cat-1` to `--cat-3` until November 1, 2026 (Maikel) |
 | Direction | `--positive-3` and `--negative-3` (also the gain and the loss in charts, so a direction chart can share a view with any series), `--positive-5`, `--negative-5` (numbers in text) | result and direction, never a category. `--positive-5`/`--negative-5` are the text versions of `--positive-3`/`--negative-3`, a step more contrast so a number reads as text: darker on light, lighter on dark |
-| Status | `--positive-3`, `--warning-3`, `--negative-3`, `--warning-5`, `--warning-1`, `--negative-1`, `--positive-1` | badges, meters, notices. `--warning-1`, `--negative-1` and `--positive-1` are the backgrounds of a warning, negative or positive message. The mark inside a status icon (check, cross, "!") is `--paper-1` |
+| Status | `--positive-3`, `--warning-3`, `--negative-3`, `--warning-5`, `--warning-1`, `--negative-1`, `--positive-1` | badges, meters, notices. `--warning-1`, `--negative-1` and `--positive-1` are the backgrounds of a warning, negative or positive message. The mark inside a status icon (check, cross, "!") is `--bg-1` |
 | Primary | `--primary` | the theme's colour, **one** step (owner, #3235, October 21, 2026): the most saturated colour of the theme's hue that reads on all four paper steps, so the paper reads on it too. **The highlight**: `h1`, the fill of `.btn--primary` (a filled main action, like the filled icon button; #109) and of `.fill-primary`, a state (hover, pressed, sorted, active, today), `strong`, list markers, links, a value meant to stand out, the accent dialog's title and the settings panel's title, and native controls through `accent-color` |
-| Grey | `--primary-muted` | a grey of the theme's colour, for what may recede: it reads extra well (7:1) on the page. `--primary-muted` is the eyebrow, every sub line (`.sub`, `.dialog__sub`, a component's `-sub`), every note (`.note`, `.footer-note`, `.muted`, on a `<p>` too), the tile label, the pressed `.seg` button, `.badge--info`, `.meter--info`, focus rings, meters and the `--accent` modifiers ([below](#how-far-a-theme-reaches)); on an inverted surface (`.fill-inverse`) those roles take `--paper-4` (`--muted-inverse` until November 1, 2026). Never a status or a number |
+| Grey | `--primary-muted` | a grey of the theme's colour, for what may recede: it reads extra well (7:1) on the page. `--primary-muted` is the eyebrow, every sub line (`.sub`, `.dialog__sub`, a component's `-sub`), every note (`.note`, `.footer-note`, `.muted`, on a `<p>` too), the tile label, the pressed `.seg` button, `.badge--info`, `.meter--info`, focus rings, meters and the `--accent` modifiers ([below](#how-far-a-theme-reaches)); on an inverted surface (`.fill-inverse`) those roles take `--bg-4` (`--muted-inverse` until November 1, 2026). Never a status or a number |
 | Text | `--fg-1` … `--fg-4` | what sits **on** the paper: four colours near black on light (near white on dark), in **very small** steps, so `fg-4` is still very dark, only a little less so than `fg-1` (owner, #3235). `fg-1` is **all text**, every paragraph and everything else: labels, table heads, legends, quiet icons, the text on a tinted surface, and the ground of an inverted surface; `fg-2` is `h2` and `.meta` on a span; `fg-3` is `h3`; `fg-4` has no role yet (the breadcrumb's current page took it until the bar turned `--primary`, #3235). On a fill the text switches to the paper ([Fills](#fills-the-text-switches-with-the-ground)) |
 | Elevation | `--shadow-pop` | tooltips |
 | Spacing | `--spacing-0-5` … `--spacing-96` | the spacing scale, same in both modes: `--spacing-N` is N × 4px, a half step (`-0-5`, `-1-5`, …) adds 2px. Every gap, margin and padding uses one, and a repo layer spaces its own components from the same scale |
@@ -205,7 +205,7 @@ table; a missed rename shows the wrong colour rather than an error.
 **The primary scale split into paper and ink on October 20, 2026** (owner's decision): the colours behind
 the text are paper, in very small steps, and the colours on it are ink, in large steps. `--primary-*` no longer
 exists. The paper roles keep their colours except the stronger border, which turns from a grey into a tint a
-step beyond the line: `--paper-4` sits 36% of the way from the page to the light anchor, as `-2` and `-3` sit at 4%
+step beyond the line: `--bg-4` sits 36% of the way from the page to the light anchor, as `-2` and `-3` sit at 4%
 and 16%. The ink steps take **new values**: seven steps evenly spaced in lightness from the highlight to the far end, so
 `h2` and `h3`–`h5` shift slightly and the muted greys read darker on light and lighter on dark. `--primary-4`, the
 light anchor, had no role and is no token any more. An app that takes this update renames
@@ -213,11 +213,11 @@ in its own layer; the names do not overlap, so the order does not matter:
 
 | Was | Now |
 |---|---|
-| `--primary-1` (the page) | `--paper-1` |
-| `--primary-2` (cards, tiles) | `--paper-2` |
-| `--primary-3` (every line, the tinted surfaces) | `--paper-3` |
+| `--primary-1` (the page) | `--bg-1` |
+| `--primary-2` (cards, tiles) | `--bg-2` |
+| `--primary-3` (every line, the tinted surfaces) | `--bg-3` |
 | `--primary-4` (the light anchor, no role) | removed |
-| `--primary-5` (a stronger border) | `--paper-4`, with a **new value**: a tint instead of a grey |
+| `--primary-5` (a stronger border) | `--bg-4`, with a **new value**: a tint instead of a grey |
 | `--primary-6` (the eyebrow, the fills, focus rings, meters) | `--ink-3` |
 | `--primary-7` (sub lines, notes, `.muted`) | `--ink-4` |
 | `--primary-8` (the breadcrumb's current page) | `--ink-5` |
@@ -228,14 +228,14 @@ in its own layer; the names do not overlap, so the order does not matter:
 
 **`--ink-2` is live again with a new meaning**: it was retired on October 14, 2026 (the old secondary text). The
 gate reports every `--primary-*` left behind as a retired token, so nothing is missed silently; on an inverted
-surface `h1` follows `h2` to `--paper-3`, since the light anchor it took is gone.
+surface `h1` follows `h2` to `--bg-3`, since the light anchor it took is gone.
 
 **The ink split into one primary, two greys and four text steps on October 21, 2026** (owner, issue
 [#3235](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3235)). Every theme still has eleven colours, now
 computed by `scripts/build/build-house-palette.ps1` in the `dkj-solutions` plugin from the theme's hue and mode: one primary that
 reads on all four paper steps (and they on it), two greys that read extra well on the page and on the far end, four
 paper steps and four text steps in very small steps. **Every value changes**: the primary is a little darker on
-light (it has to read on `--paper-4` now, not only on the page), the paper steps are a little lighter, and `h2` and
+light (it has to read on `--bg-4` now, not only on the page), the paper steps are a little lighter, and `h2` and
 `h3`–`h5` are no longer in the colour but in the text steps. `--ink-*` no longer exists; `--primary` and `--primary-muted`
 were retired on October 14, 2026 and are **live again**, in the same sense they had then (the theme's colour, a muted
 grey). An app that takes this update renames in its own layer; the names do not overlap, so the order does not
@@ -253,11 +253,11 @@ matter:
 | (new) | `--muted-inverse`: the grey on an inverted surface, where `--primary-muted` would not read |
 | (new) | `.fill-primary` and `.fill-inverse`: a block on the primary or on the far end, where the text switches to the paper |
 
-**On an inverted surface**, a grey that was `--ink-3` or `--ink-4` takes `--muted-inverse`, not `--primary-muted` (and `--paper-4` since November 1, 2026, when `--muted-inverse` was retired). The gate
+**On an inverted surface**, a grey that was `--ink-3` or `--ink-4` takes `--muted-inverse`, not `--primary-muted` (and `--bg-4` since November 1, 2026, when `--muted-inverse` was retired). The gate
 reports every `--ink-*` left behind as a retired token, so nothing is missed silently.
 
 **An app still on the twelve `--primary-*` steps** (v5.26.0 and earlier) skips the ink names and maps straight
-across: `--primary-1`, `-2`, `-3` → `--paper-1`, `-2`, `-3`; `--primary-4` → removed; `--primary-5` → `--paper-4`;
+across: `--primary-1`, `-2`, `-3` → `--bg-1`, `-2`, `-3`; `--primary-4` → removed; `--primary-5` → `--bg-4`;
 `--primary-6` and `-7` → `--primary-muted`; `--primary-8` → `--fg-4`; `--primary-9` → `--primary`; `--primary-10` →
 `--fg-2`; `--primary-11` → `--fg-3`; `--primary-12` → `--fg-1`. Bare `--primary` is a token of its own, not one of the twelve steps: the
 gate tells `--primary-9` from it.
@@ -265,7 +265,7 @@ gate tells `--primary-9` from it.
 **A number in a colour token is a step away from the page** (owner's decisions, October 14 and 20, 2026). For
 `--negative-*`, `--positive-*` and `--warning-*` that is `-1`, `-3`, `-5`: `-1` is light on the light themes and dark
 on the dark themes (the ground end) and `-5` the opposite (the text end). The theme's own colour has two numbered
-groups (#3235), and each counts from its own start: `--paper-1` … `--paper-4` from the page outward (page, cards,
+groups (#3235), and each counts from its own start: `--bg-1` … `--bg-4` from the page outward (page, cards,
 lines and tinted surfaces, a stronger border), and `--fg-1` … `--fg-4` from the strongest text outward (all text,
 `h2`, `h3`, and one step with no role yet), both in very small steps. `--primary` and `--primary-muted` carry no
 number: there is one of each. There are no untinted neutrals: the
@@ -278,7 +278,7 @@ section uses):
 
 | A switch … | Tokens | Why |
 |---|---|---|
-| to any other theme changes them | `--primary`, `--primary-muted`, `--paper-1` … `--paper-4`, `--fg-1` … `--fg-4` | each theme sets all ten as fixed values, computed from its own hue; the House style page lists them as the three groups of the 60-30-10 rule |
+| to any other theme changes them | `--primary`, `--primary-muted`, `--bg-1` … `--bg-4`, `--fg-1` … `--fg-4` | each theme sets all ten as fixed values, computed from its own hue; the House style page lists them as the three groups of the 60-30-10 rule |
 | changes them only between light and dark: categories | `--graph-1`, `--graph-2`, `--graph-3` | series slots, set once in the light block and once in the dark block, a shade apart |
 | changes them only between light and dark: status colours | `--negative-1`, `--negative-3`, `--negative-5`, `--positive-1`, `--positive-3`, `--positive-5`, `--warning-1`, `--warning-3`, `--warning-5` | set once in the light block and once in the dark block, a shade apart. One exception: `--warning-3` also moves in Roest and Geel ([below](#themes-the-user-picks-the-colour)) |
 
@@ -356,13 +356,15 @@ error.
 
 ### The colour renames of November 1, 2026
 
-**The grey and the series slots are named for what they are** (Maikel, November 1, 2026): the grey is a muted
-tone of the theme's primary, and the series slots colour graphs. Every value is unchanged, so nothing looks different:
+**The grey, the series slots and the backgrounds are named for what they are** (Maikel, November 1, 2026): the
+grey is a muted tone of the theme's primary, the series slots colour graphs, and the four paper steps are the
+backgrounds. Every value is unchanged, so nothing looks different:
 
 | Was | Now |
 |---|---|
 | `--muted` | `--primary-muted` |
 | `--cat-1`, `--cat-2`, `--cat-3` | `--graph-1`, `--graph-2`, `--graph-3` |
+| `--paper-1`, `--paper-2`, `--paper-3`, `--paper-4` | `--bg-1`, `--bg-2`, `--bg-3`, `--bg-4` |
 
 **An app that takes this update renames each use in its own layer** by the table. The old names are retired
 tokens, so the gate reports a use left behind; one that slips past loses its colour rather than raising an error.
@@ -469,7 +471,7 @@ its own.
 `.meter--info` take the primary instead of the then `--ink` and `--cat-1`; the light warning is dark orange instead
 of amber and the dark one a brighter yellow; `--negative-5` on light is a darker red (`#a32424`); on dark
 `--positive-5`/`--negative-5` are a step lighter and `--negative-3` is the dark red it never had; status icons take
-the mark colour, now `--paper-1`.
+the mark colour, now `--bg-1`.
 
 ### How far a theme reaches
 
@@ -487,7 +489,7 @@ every theme. Now:
   subtree that sets its own `--primary-muted` or `--primary` keeps the page's theme on its native controls.
 - **Opt-in**, one modifier on a house element: `.header--accent` puts a primary rule under the page
   header and `.table--accent` a
-  `--paper-3` table head, its text `--fg-1`, as all text. They are modifiers rather than defaults, so an app
+  `--bg-3` table head, its text `--fg-1`, as all text. They are modifiers rather than defaults, so an app
   that takes the update keeps its layout until it adds one.
   `.card--accent` and `.tile--accent` drew a primary rule across the top and draw nothing now (owner's
   decision, October 15, 2026); an app that still carries either class loses the rule and nothing else.
@@ -499,7 +501,7 @@ sliders turn the theme's colour. Links an app already styles through a class kee
 out). Three more things follow it by default, in light and in dark (and a measurement):
 
 - **Every theme writes out its own ten values**, computed rather than tuned (owner, #3235, October 21, 2026).
-  `--primary`, `--primary-muted`, `--paper-1` … `--paper-4` and `--fg-1` … `--fg-4` are fixed hex values
+  `--primary`, `--primary-muted`, `--bg-1` … `--bg-4` and `--fg-1` … `--fg-4` are fixed hex values
   in each theme's block, not mixes (owner's decision, October 14, 2026: the percentages were too hard to follow), and
   `scripts/build/build-house-palette.ps1` in the `dkj-solutions` plugin computes them from the theme's hue and mode, checks every
   contrast below and writes them in with `-Apply`. A theme is changed there, never by hand in the stylesheet.
@@ -521,31 +523,31 @@ out). Three more things follow it by default, in light and in dark (and a measur
   - **Four colours that read on the primary**: the paper, from white towards a little darker, OKLCH L 0.995, 0.965,
     0.94 and 0.905 on light (0.13, 0.165, 0.195 and 0.235 on dark), with the chroma rising from 0.006 to 0.045. The
     eye is most sensitive to the first tint off white or black, so the card is only a little lifted off the page;
-    since November 1, 2026 that step is wider than the rest (Maikel: paper-2 was barely visible in some themes).
+    since November 1, 2026 that step is wider than the rest (Maikel: bg-2 was barely visible in some themes).
   - **Four colours that read on the paper**: the text, near black, in very small steps, OKLCH L 0.12, 0.16, 0.20
     and 0.24 at chroma 0.03 on light (0.99, 0.955, 0.92 and 0.885 on dark), so `fg-4` is still very dark.
 
   **A role takes the same step in both modes** (owner's decision, October 15, 2026): never `light-dark()` between
   two steps, and no dark-only rule that picks another step. Meters, the fills and most focus rings are `--primary-muted`
-  everywhere (a sort header, a `.seg` button, a chart bar and the read-more toggle ring in `--primary`), and the text on a `--primary-muted` or `--primary` fill is `paper-1`. The picker's dot is `--primary` in every
-  theme, on its theme's `paper-1` (October 17, 2026). Paper and text both run away from the page: `paper-1` and
+  everywhere (a sort header, a `.seg` button, a chart bar and the read-more toggle ring in `--primary`), and the text on a `--primary-muted` or `--primary` fill is `bg-1`. The picker's dot is `--primary` in every
+  theme, on its theme's `bg-1` (October 17, 2026). Paper and text both run away from the page: `bg-1` and
   `fg-1` are the two ends, the lightest and the darkest on light, the other way round on dark.
-- **A tinted surface takes `--fg-1` as its text.** `--paper-3` is every line and also the surface of the
+- **A tinted surface takes `--fg-1` as its text.** `--bg-3` is every line and also the surface of the
   `.table--accent` head, the hover of a joined choice and of the settings toggle, a near or today date row, a date
   row's hover, the accent dialog and an InfoRows box. The text on it is `--fg-1`, like all text (17.2:1 or better).
 - **Measured** (WCAG relative luminance, worst and best of the twelve themes, October 21, 2026): `--primary` on
-  `paper-1` 5.9:1 to 8.5:1 on light and 10.7:1 to 13.6:1 on dark, on `paper-4` 4.56:1 to 6.5:1 on light and 9.0:1 to
+  `bg-1` 5.9:1 to 8.5:1 on light and 10.7:1 to 13.6:1 on dark, on `bg-4` 4.56:1 to 6.5:1 on light and 9.0:1 to
   11.2:1 on dark, the same both ways round. On dark the primary sits close to the text (1.4:1 to 1.8:1 against
   `fg-1`), so `h1` and links stand out from the text by colour rather than by lightness; `fg-1` on
-  `paper-1` 19.5:1 to 20.1:1 and `fg-4` on `paper-4` 11.8:1 to 12.5:1; `--primary-muted` on `paper-1` 7.05:1 to 7.13:1 and on
-  a card 6.45:1 to 6.8:1 (measured again November 1, 2026); `paper-4` on `fg-1` 15.1:1 to 16.4:1. Nothing in the model is below 4.5:1, which
-  the paper-and-ink model of October 20 missed for `ink-1` on a card in Magenta, Roest and Lila. A `paper-3` line
-  on a card is faint: 1.05:1 (Pink) to 1.09:1 (Magenta); a `paper-4` border on it 1.14:1 to 1.22:1. The card on the
-  page, `paper-2` on `paper-1`: 1.04:1 to 1.05:1 on dark and 1.09:1 to 1.10:1 on light.
+  `bg-1` 19.5:1 to 20.1:1 and `fg-4` on `bg-4` 11.8:1 to 12.5:1; `--primary-muted` on `bg-1` 7.05:1 to 7.13:1 and on
+  a card 6.45:1 to 6.8:1 (measured again November 1, 2026); `bg-4` on `fg-1` 15.1:1 to 16.4:1. Nothing in the model is below 4.5:1, which
+  the paper-and-ink model of October 20 missed for `ink-1` on a card in Magenta, Roest and Lila. A `bg-3` line
+  on a card is faint: 1.05:1 (Pink) to 1.09:1 (Magenta); a `bg-4` border on it 1.14:1 to 1.22:1. The card on the
+  page, `bg-2` on `bg-1`: 1.04:1 to 1.05:1 on dark and 1.09:1 to 1.10:1 on light.
 - **The page and the cards are tinted.** On light the page is the whitest layer and a card sits a shade off it;
   on dark the card is a shade lighter than the page. Either way the page is the ground end (owner's decision,
   October 14, 2026: it used to be the other way round on light).
-- **Lines are tinted.** `--paper-3` is every line: borders, row dividers, grid lines and the meter track
+- **Lines are tinted.** `--bg-3` is every line: borders, row dividers, grid lines and the meter track
   (a separate grid colour was dropped on October 14, 2026: it was too close to the border to tell apart).
 - **The theme picker previews it:** each swatch shows its own theme's page, with the primary as the dot.
 - **Links are the theme's colour**, as `--primary` (owner's decision, October 15, 2026). **`h1` and `h2` are
@@ -559,17 +561,17 @@ out). Three more things follow it by default, in light and in dark (and a measur
 ### Fills: the text switches with the ground
 
 **A block can stand on the theme's colour or on the far end, and its text then takes the paper** (#3235). An `h2`
-reads on the page and on the primary alike, so it is not one colour: `--fg-2` on the page, `--paper-1` on a
+reads on the page and on the primary alike, so it is not one colour: `--fg-2` on the page, `--bg-1` on a
 primary fill.
 
 | Class | Ground | Text | A quieter line (`.sub`, `.muted`, `.note`, `.eyebrow`, `.card__sub`) |
 |---|---|---|---|
-| `.fill-primary` | `--primary` | `--paper-1`: headings, paragraphs, `.lead`, `.msg`, `.meta`, `.card__title` and links | `--paper-3` (all four paper steps read on the primary) |
-| `.fill-inverse` | `--fg-1` | `--paper-1`, the same elements | `--paper-4` (15:1 or better on `--fg-1`) |
+| `.fill-primary` | `--primary` | `--bg-1`: headings, paragraphs, `.lead`, `.msg`, `.meta`, `.card__title` and links | `--bg-3` (all four paper steps read on the primary) |
+| `.fill-inverse` | `--fg-1` | `--bg-1`, the same elements | `--bg-4` (15:1 or better on `--fg-1`) |
 
 The switch is written with `:is()` and stands last in the stylesheet, so it beats `.sub`, `.muted`, `p.meta` and the
 zero-weight headings without an `!important`, and a quieter line on a `<p>` keeps its quieter colour. A link weighs
-only one class, so a `.btn` or an app's own class on an `<a>` keeps its colours; its focus ring turns `--paper-1`. A
+only one class, so a `.btn` or an app's own class on an `<a>` keeps its colours; its focus ring turns `--bg-1`. A
 component an app puts inside a fill (a button, a badge) keeps its own colours, so a `.btn--primary` on
 `.fill-primary` does not show: use an outline button there.
 
@@ -580,7 +582,7 @@ the headings take its tint (through `:where()`, so a heading inside a coloured c
 
 **The complete list of reserved names**, so a repo layer knows what not to redefine:
 the page header (`body > header`, `main > header`, with `.header--accent`) and its `.controls` row, `main`/`.container`,
-`.hero`, `.tiles`/`.tile` (with `--accent`), `.card` (with `--accent`, and the head parts `__head`, `__title` (an `h3`), `__sub`, with a `.badge` before the title text, or a plain `h3`), `.grid-2` (and `.grid-3`, the same three to a row, two below 1000px, one below 760px; both keep `--spacing-3` (12px) of padding round their cards on a `--paper-2` surface, each direct `.card` in them one step further on `--paper-3` with its lines moved to `--paper-4`, as does `.card-grid`, which a repo puts on its own card grid beside the class that sets its columns) (with `.grid__head`, which holds a group's `h2`, and `.grid__full`), `.table-wrap`/`.table` (with `--accent`, `.row-total`, and
+`.hero`, `.tiles`/`.tile` (with `--accent`), `.card` (with `--accent`, and the head parts `__head`, `__title` (an `h3`), `__sub`, with a `.badge` before the title text, or a plain `h3`), `.grid-2` (and `.grid-3`, the same three to a row, two below 1000px, one below 760px; both keep `--spacing-3` (12px) of padding round their cards on a `--bg-2` surface, each direct `.card` in them one step further on `--bg-3` with its lines moved to `--bg-4`, as does `.card-grid`, which a repo puts on its own card grid beside the class that sets its columns) (with `.grid__head`, which holds a group's `h2`, and `.grid__full`), `.table-wrap`/`.table` (with `--accent`, `.row-total`, and
 sortable headers via `.sort`/`.arrow` on `aria-sort`), `.seg` (a segmented switch), `.legend`/`.legend__item` (with
 `--line`), `.swatch`, `.badge` (with `--good`, `--warn`, `--bad`, `--info`, `--neutral`, `--sm`),
 `.badge-row`, `.badge-list` (a `<ul>` of `.badge-row` items), `.meter` (with `--good`, `--warn`, `--bad`, `--info`), `.mini-cards`/`.mini-card` (with
@@ -625,7 +627,7 @@ and a side drawer, a top bar and a menu list. The group sits at the end of
   `.dialog--drawer` slides in from the side. A dialog on top of a dialog sets `--dialog-scale` (default
   0.95) smaller on itself: a hook the app sets, not a house token.
 - **Contrast.** Field labels and the quiet icons use `--fg-1`, which holds 4.5:1 on
-  `--paper-2`.
+  `--bg-2`.
 - **Input font.** The input's 16px is a literal, not a type step: iOS zooms in on focus below 16px.
 
 **What this changes for an app that takes the update:** nothing that exists, only additions. But an app
@@ -690,8 +692,8 @@ its own.
 - **The trail:** it always starts at **Tools** on the toolbox, linking to `/` (it read **Repo hub** until #3270 and **Home** until the owner renamed it, October 27, 2026; a product keeps **Home** for its own pages). Each further crumb is one level
   down: the product (under its own name), then a page inside it. The last crumb is the current page,
   unlinked, with `aria-current="page"`. The bar stands on the theme's colour, `--primary` (owner, #3235, October 21, 2026), so
-  the trail is in the paper steps, which all read on it: the chevron `--paper-3`, the ancestor links `--paper-2` (with
-  a `--paper-1` focus ring), the current page `--paper-1`, every crumb at weight 400 and `--text-base` (owner, October 24, 2026; it was `--text-sm`); a link shows its underline only under the pointer. On the home page itself the trail is that one crumb: the bar is
+  the trail is in the paper steps, which all read on it: the chevron `--bg-3`, the ancestor links `--bg-2` (with
+  a `--bg-1` focus ring), the current page `--bg-1`, every crumb at weight 400 and `--text-base` (owner, October 24, 2026; it was `--text-sm`); a link shows its underline only under the pointer. On the home page itself the trail is that one crumb: the bar is
   still there, so it sits in the same place on every page.
 - **The labels** are the pages' own names, short, in the app's language. A crumb names a page, never a
   section on a page: an in-page anchor is not a level.
@@ -750,13 +752,13 @@ every general page of every repo, with the repo's name and `toolbox` after it. A
 - **The header:** `header.site-header` > `.container`, at most `--spacing-18` (72px) high, on `--primary`
   over the full width. On the left the app's mark and name, `a.site-header__brand` linking home (`/`); on
   the far right the settings button, `DKJTheme.settings` mounted in a plain `#settings` inside the header,
-  so nothing floats. The mark is `.site-header__mark`, the organisation's initials on `--paper-1`, until the
+  so nothing floats. The mark is `.site-header__mark`, the organisation's initials on `--bg-1`, until the
   app has a logo of its own: set at `--text-h1` (32px; it was `--text-h2` until that token went to 24px, October 24, 2026) with a thin padding, so the edges hug the letters (#3301); `.site-header__tag` sets a quieter word after the name (`product`).
 - **No eyebrow under it:** the header already names the site, so the intro opens with the `h1`. **A home page has no
   intro at all** (owner, October 22, 2026): its `h1` and lead only repeated the header, so `<main>` opens on its first
   block.
 - **The bar under it leaves the primary to the header:** `.site-header + .breadcrumbs-bar` stands on
-  `--paper-1` with a `--paper-3` line under it, and the trail is in the text steps (links `--fg-3`, the
+  `--bg-1` with a `--bg-3` line under it, and the trail is in the text steps (links `--fg-3`, the
   chevron `--primary-muted`, the current page `--primary`, since October 24, 2026, the owner; it was `--fg-1`). The header
   scrolls away; the bar still sticks to the top.
 

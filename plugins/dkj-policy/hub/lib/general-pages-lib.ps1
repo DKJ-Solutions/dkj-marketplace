@@ -207,7 +207,7 @@ function Format-GeneralPageHtml {
     [void]$sb.AppendLine('<style>')
     [void]$sb.AppendLine('.dp-link { color: var(--fg-3); text-decoration: none; text-underline-offset: 2px; }')
     [void]$sb.AppendLine('.dp-link:hover, .dp-link:focus-visible { text-decoration: underline; }')
-    [void]$sb.AppendLine('.dp-thead th { background: var(--paper-3); }')
+    [void]$sb.AppendLine('.dp-thead th { background: var(--bg-3); }')
     [void]$sb.AppendLine('.table td.dp-left, .table th.dp-left { text-align: left; }')
     if ($Style) { [void]$sb.AppendLine($Style) }
     [void]$sb.AppendLine('</style>')
@@ -762,8 +762,8 @@ function Format-DevTiles {
     return $sb.ToString()
 }
 
-# The share bar every table draws: a track in --paper-3 and a fill in the house highlight.
-$script:DevBarStyle = '.dp-bar { display: block; height: 8px; border-radius: 4px; background: var(--paper-3); min-width: 80px; }' + "`n" +
+# The share bar every table draws: a track in --bg-3 and a fill in the house highlight.
+$script:DevBarStyle = '.dp-bar { display: block; height: 8px; border-radius: 4px; background: var(--bg-3); min-width: 80px; }' + "`n" +
     '.dp-bar > span { display: block; height: 100%; border-radius: 4px; background: var(--primary); }'
 
 function Format-DevShareCell {
@@ -1534,14 +1534,14 @@ function Format-ReleaseNotesEmptyPageHtml {
 }
 
 $script:ReleaseNotesHouseColors = [ordered]@{
-    'bg' = 'paper-1'; 'panel' = 'paper-2'; 'ink' = 'fg-1'; 'ink-soft' = 'fg-2'; 'ink-faint' = 'muted'
-    'line' = 'paper-3'; 'accent' = 'primary'; 'accent-soft' = 'paper-2'; 'code-bg' = 'paper-1'
+    'bg' = 'bg-1'; 'panel' = 'bg-2'; 'ink' = 'fg-1'; 'ink-soft' = 'fg-2'; 'ink-faint' = 'muted'
+    'line' = 'bg-3'; 'accent' = 'primary'; 'accent-soft' = 'bg-2'; 'code-bg' = 'bg-1'
 }
 
 function ConvertTo-ReleaseNotesHouseColors {
     <#
         Pure: the template's own <style> with every colour it reads from its own palette read from a house
-        token instead -- 'background: var(--code-bg)' becomes 'background: var(--paper-1)'. ONLY HOUSE COLOUR
+        token instead -- 'background: var(--code-bg)' becomes 'background: var(--bg-1)'. ONLY HOUSE COLOUR
         TOKENS ON THE HUB (owner, October 27, 2026): until then a layer here pointed the template's tokens at
         house ones, so the served page still read var(--code-bg) and reached the house through it. Only uses
         (var(--x)) are rewritten, never the palette's own definitions, which nothing reads any more on this
@@ -1610,7 +1610,7 @@ function Format-ReleaseNotesDevPage {
         'header.masthead { padding: 0; }'
         'header.masthead h1 { font-family: inherit; font-size: var(--text-h1); font-weight: 700; letter-spacing: -0.01em; line-height: normal; text-transform: none; color: var(--primary); }'
         'header.masthead p { margin: var(--spacing-1) 0 0; color: var(--primary-muted); font-size: var(--text-sm); }'
-        '.sheet { border: 1px solid var(--paper-3); border-radius: 12px; padding: var(--spacing-2) var(--spacing-6) var(--spacing-4); }'
+        '.sheet { border: 1px solid var(--bg-3); border-radius: 12px; padding: var(--spacing-2) var(--spacing-6) var(--spacing-4); }'
         '.noscript { margin: 0; }'
         '/* The release cards carry no icon, so they take a tighter padding than the house .card the hub''s icon cards keep (owner, October 25, 2026); the grid''s gap is their spacing. */'
         '.cards > .card { padding: var(--spacing-3) var(--spacing-4); margin-top: 0; }'
