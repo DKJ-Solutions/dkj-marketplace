@@ -319,6 +319,9 @@ p, p.meta { color: var(--fg-1); }
 /* .lead is gone (Maikel, November 1, 2026): since it went to --text-base it read as a plain <p>, and no page under
    an h1 carries an intro any more (#3585). */
 .num { font-variant-numeric: tabular-nums; }                        /* aligned digits */
+/* A small icon (an svg) beside a figure, on the text line rather than in a flex row, so a td.num stays a table cell
+   (it absorbed .amount, Maikel, November 1, 2026). */
+.num > svg { width: 0.75rem; height: 0.75rem; margin-left: var(--spacing-0-5); vertical-align: -0.0625rem; }
 .delta { font-weight: var(--font-weight-bold); }
 /* .pos and .neg, the same colours without the weight, are gone (Maikel, November 1, 2026): a signed figure is a .delta */
 .delta--up { color: var(--positive-5); }
@@ -935,9 +938,7 @@ a.menu-item:hover { background: var(--bg-3); }
 .question-head h3 { margin: 0; font-size: var(--text-h3); font-weight: var(--font-weight-black); line-height: 1.2; }
 .question-head .chip { min-width: 0; margin-left: auto; text-align: right; }
 .verdict { margin: 0 0 var(--spacing-1-5); font-size: var(--text-base); font-weight: var(--font-weight-bold); line-height: 1.35; }
-/* Amount: a figure with a small icon (an svg) beside it, right-aligned, tabular. */
-.amount { display: inline-flex; align-items: center; justify-content: flex-end; gap: var(--spacing-0-5); font-variant-numeric: tabular-nums; }
-.amount svg { flex: none; width: 0.75rem; height: 0.75rem; }
+/* .amount is gone into .num (Maikel, November 1, 2026): a figure with a small icon beside it is a .num with the svg in it. */
 /* Answer box: the result of a calculation, a label and the figure in --primary on the tint. */
 .answer { display: flex; align-items: center; gap: var(--spacing-3); margin-top: var(--spacing-2); padding: var(--spacing-2) var(--spacing-3); border-radius: var(--radius-2-5); background: var(--bg-3); }
 .answer__label { flex: 1; font-weight: var(--font-weight-bold); }
