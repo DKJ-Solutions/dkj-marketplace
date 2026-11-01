@@ -517,8 +517,10 @@ out). Three more things follow it by default, in light and in dark (and a measur
     vivid even at 0.13 and has a cap of its own, 0.10, Hemelsblauw's (owner, the same day). The hue is the HSL hue of the owner's original theme colour
     (Blauw and Hemelsblauw 240), held in HSL because at a constant OKLCH hue a saturated blue turns violet; Lila takes
     270, the hue of its light counterpart Paars, because at its own 254 it read as blue (owner, October 19, 2026).
-  - **One grey**: a grey of the colour that reads extra well on white (`--primary-muted`), OKLCH chroma 0.03 in the theme's
-    hue, as close to its ground as 7.05:1 allows, so it recedes by colour while it still reads. Its mirror for black,
+  - **One grey**: a grey of the colour that reads extra well on white (`--primary-muted`), in the primary's own OKLCH hue at
+    chroma 0.03 on light and 0.06 on dark, as close to its ground as 7.05:1 allows, so it recedes by colour while it still
+    reads. Since November 1, 2026 (Maikel) it follows the primary rather than the theme's base hue: a dark primary is
+    lightened in HSL, which drifts its hue (Lila from 292 to 307), and at chroma 0.03 the grey read blue beside a violet primary. Its mirror for black,
     `--muted-inverse`, was retired on November 1, 2026 ([above](#what-it-holds)).
   - **Four colours that read on the primary**: the paper, from white towards a little darker, OKLCH L 0.995, 0.965,
     0.94 and 0.905 on light (0.13, 0.165, 0.195 and 0.235 on dark), with the chroma rising from 0.006 to 0.045. The

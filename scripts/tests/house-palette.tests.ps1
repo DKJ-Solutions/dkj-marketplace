@@ -96,8 +96,10 @@ foreach ($th in $themes) {
     # the greys recede as far as 7.05:1 allows: a step toward their ground no longer reaches it
     $ml = (ConvertTo-OkLch $p['--primary-muted']).L
     $toward = if ($dark) { -0.01 } else { 0.01 }
-    $okHue = (ConvertTo-OkLch (ConvertFrom-Hsl $th.Hue 1 0.5)).H
-    Assert-True ((Get-ContrastRatio (ConvertFrom-OkLch ($ml + $toward) 0.03 $okHue) $p['--bg-1']) -lt 7.05) "$($th.Id): --primary-muted recedes as far as 7:1 allows"
+    $mo = ConvertTo-OkLch $p['--primary-muted']; $po = ConvertTo-OkLch $p['--primary']
+    Assert-True ((Get-ContrastRatio (ConvertFrom-OkLch ($ml + $toward) (Get-HousePaletteSteps -Mode $th.Mode).MutedC $po.H) $p['--bg-1']) -lt 7.05) "$($th.Id): --primary-muted recedes as far as 7:1 allows"
+    $dh = [math]::Abs($mo.H - $po.H); if ($dh -gt 180) { $dh = 360 - $dh }
+    Assert-True ($dh -le 3) "$($th.Id): --primary-muted takes the primary's own hue (off by $([math]::Round($dh, 1)) degrees; Maikel, November 1, 2026)"
 }
 
 Write-Host '-- group 3: the stylesheet carries exactly the computed values' -ForegroundColor Cyan

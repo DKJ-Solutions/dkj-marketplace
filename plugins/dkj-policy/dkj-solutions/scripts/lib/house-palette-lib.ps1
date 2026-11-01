@@ -57,7 +57,7 @@ function Get-HousePaletteSteps {
            FgL    = @(0.12, 0.16, 0.20, 0.24);     FgC    = @(0.030, 0.030, 0.028, 0.026); MutedC = 0.03; PrimaryFloor = 4.55 }
     } else {
         @{ PaperL = @(0.13, 0.165, 0.195, 0.235);   PaperC = @(0.020, 0.024, 0.032, 0.045)
-           FgL    = @(0.99, 0.955, 0.92, 0.885);   FgC    = @(0.006, 0.010, 0.012, 0.014); MutedC = 0.03; PrimaryFloor = 9.0; PrimaryChromaMax = 0.13 }
+           FgL    = @(0.99, 0.955, 0.92, 0.885);   FgC    = @(0.006, 0.010, 0.012, 0.014); MutedC = 0.06; PrimaryFloor = 9.0; PrimaryChromaMax = 0.13 }
     }
 }
 
@@ -177,7 +177,10 @@ function Get-HousePalette {
 
     # the grey: as close to its ground as 7:1 allows, so it recedes by colour while still reading extra well
     $mc = $steps.MutedC
-    $makeMuted = { param($l) ConvertFrom-OkLch $l $mc $okHue }.GetNewClosure()
+    # In the primary's OWN hue (Maikel, November 1, 2026): a dark primary is lightened in HSL, which drifts its OKLCH hue
+    # (Lila from 292 to 307), and a grey left at the base hue read blue beside a violet primary.
+    $mutedHue = (ConvertTo-OkLch $primary).H
+    $makeMuted = { param($l) ConvertFrom-OkLch $l $mc $mutedHue }.GetNewClosure()
     if ($Mode -eq 'light') {
         $muted   = Find-LightnessAtContrast $makeMuted $paper[0] 7.05 0 1 'high'
     } else {
