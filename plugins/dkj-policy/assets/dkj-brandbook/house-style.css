@@ -310,9 +310,8 @@ h3 { font-size: var(--text-h3); margin: 0 0 var(--spacing-2); font-weight: 600; 
    it too, while the same class on a span or a div stays --fg-2. A <p> in a status colour, or on an --fg-1 surface,
    sets its own. */
 p, p.meta { color: var(--fg-1); }
-/* Lead: the one paragraph under a page title that says what the page is for (#141). On a <p>, in the paragraph
-   colour, at the large running size, held to a readable measure. */
-.lead { max-width: 46rem; margin: var(--spacing-2) 0 0; font-size: var(--text-base); line-height: 1.35; color: var(--fg-1); }   /* 1.35 mirrors the brand book's --dkj-lh-snug */
+/* .lead is gone (Maikel, November 1, 2026): since it went to --text-base it read as a plain <p>, and no page under
+   an h1 carries an intro any more (#3585). */
 .num { font-variant-numeric: tabular-nums; }                        /* aligned digits */
 .delta { font-weight: 600; }
 .delta--up, .pos { color: var(--positive-5); }
@@ -798,8 +797,8 @@ a.menu-item:hover { background: var(--bg-3); }
    .fill-primary does not show: use an outline button there. */
 .fill-primary { background: var(--primary); color: var(--bg-1); }
 .fill-inverse { background: var(--fg-1); color: var(--bg-1); }
-.fill-primary :is(h1, h2, h3, p, .lead, .msg, .meta, .card__title),
-.fill-inverse :is(h1, h2, h3, p, .lead, .msg, .meta, .card__title) { color: var(--bg-1); }
+.fill-primary :is(h1, h2, h3, p, .msg, .meta, .card__title),
+.fill-inverse :is(h1, h2, h3, p, .msg, .meta, .card__title) { color: var(--bg-1); }
 .fill-primary :is(.note, .card__sub) { color: var(--bg-3); }
 .fill-inverse :is(.note, .card__sub) { color: var(--bg-4); }
 .fill-primary :where(a:any-link), .fill-inverse :where(a:any-link) { color: var(--bg-1); }

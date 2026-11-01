@@ -115,11 +115,11 @@ page, dashboard and Artifact is designed to that screen first:
   `house-theme.js` runs; a page without it (an Artifact, a static report) is fluid at 1080px, so it sets
   `<html data-width="full">` itself.
 - **Nothing the brief did not ask for.** No eyebrow above a heading (the house has no class for one), no sub line or lead under
-  it, no hero, no extra row of meta. `.note`, `.lead` and `.card__sub` exist for the brief that asks
+  it, no hero, no extra row of meta. `.note` and `.card__sub` exist for the brief that asks
   for one; that they exist is not an invitation.
 - **A page opens on its `h1` and goes straight to its content** (Dave, every DKJ-Solutions product,
   [#3585](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3585)): no intro or explainer
-  paragraph under it, whether `.lead`, a `.lede` of the repo's own or a plain `<p>`. Screen height is
+  paragraph under it, whether a lead, a `.lede` of the repo's own or a plain `<p>`. Screen height is
   scarce. What the page is for goes in its `<meta name="description">`. An empty state that says a list is
   empty is content, not an intro, and stays. More than that, such as a plugin's description, goes behind a
   `.page-info-button` right of the `h1` (`.page-title`), shown on hover or focus (Maikel, October 31, 2026).

@@ -43,7 +43,8 @@ Maikel asked for two h2s, Tokens and Components, on the brand book's Text token 
 (`/marketplace/dkj-policy/dkj-brandbook/tokens/text`), and chose to show the Text section's own cards under Components,
 and then had the Text section's card taken off the overview's Preview: it lives on the Text token page now. On the same
 page he then retired `.eyebrow`, asked for a complete Headings card (h1, h2, h3), and merged `.sub` into `.note`, which
-share colour and size (their margins differed: `.note`'s is kept).
+share colour and size (their margins differed: `.note`'s is kept), and retired `.lead`, which since it went to body size
+read as a plain `<p>`.
 
 ### CREATE
 
@@ -51,11 +52,11 @@ share colour and size (their margins differed: `.note`'s is kept).
   its own grid; the Text group gets Tokens (Type scale, Font family) and Components (the Text section)
 - [x] The overview's Text card counts both halves (6 specimens)
 - [x] A section a token group shows is left off the overview, so Preview holds Themes alone
-- [x] `house-style.css`: `.eyebrow` gone, `.sub` gone into `.note`, the fill switches and comments with them
-- [x] `specimens.html`: the Headings card shows h1, h2, h3; the fill specimens' quieter line is a `.note`
+- [x] `house-style.css`: `.eyebrow` and `.lead` gone, `.sub` gone into `.note`, the fill switches and comments with them
+- [x] `specimens.html`: the Headings card shows h1, h2, h3, the Running text card drops its `.lead` row; the fill specimens' quieter line is a `.note`
 - [x] The hub: `Format-GeneralPageHtml`'s `-Eyebrow` (drawn only without a site header, which no caller had) removed
   with its callers; the consumer dashboard's two `.sub` lines are `.note`
-- [x] The brand book README and the `dkj-brandbook` skill name `.note` instead of `.sub` and `.eyebrow`
+- [x] The brand book README and the `dkj-brandbook` skill name `.note` instead of `.sub` and `.eyebrow`, and no longer offer `.lead`
 
 ### TEST
 
@@ -72,20 +73,22 @@ Text section's own specimens (headings, running text, numbers, messages) under a
 and the type they produce read on one page. A token group's heading can now name a whole section to show, and that section leaves the overview's Preview, which
 now holds Themes alone. The Headings specimen shows h1, h2 and h3.
 
-The house style drops two classes: `.eyebrow`, which no page here drew any more, and `.sub`, merged into `.note`, the
-one quiet-text class, which had the same colour and size.
+The house style drops three classes: `.eyebrow`, which no page here drew any more; `.lead`, which since it went to
+body size read as a plain `<p>`; and `.sub`, merged into `.note`, the one quiet-text class, which had the same colour
+and size.
 
 **Score:** 2
 
 #### What makes this deploy extra special
 
-`house-style.css` no longer defines `.eyebrow` or `.sub`. A page that takes the new copy and still uses either loses
+`house-style.css` no longer defines `.eyebrow`, `.lead` or `.sub`. A page that takes the new copy and still uses either loses
 that styling: replace `class="sub"` with `class="note"` (the same colour and size, with a small top margin instead of a
-16px bottom one), and drop the eyebrow line or set it as a `.note`.
+16px bottom one), drop the eyebrow line or set it as a `.note`, and drop `class="lead"` (the paragraph keeps the body size and colour,
+and loses its 46rem measure and its 8px top margin).
 
 **Score:** 5
 
 #### Pull Request
 
-the Text token page splits into Tokens and Components, and the house style retires .eyebrow and .sub
+the Text token page splits into Tokens and Components, and the house style retires .eyebrow, .lead and .sub
 
