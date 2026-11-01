@@ -52,7 +52,7 @@ itself stays defined, and the specimen still shows it.
 - [x] Under a site header, the breadcrumb links take `--primary-muted` (was `--fg-3`); the current page keeps `--primary`
 - [x] The settings toggle is the icon alone in `--fg-1`: no fill, edge, shadow or hover colour
 - [x] Inside a site header the toggle takes the header's own colour (`--bg-1`), as the name does
-- [x] The gear is a solid eight-tooth gear with an open centre rather than the outlined one (`house-theme.js` draws a new path, Maikel's reference picture)
+- [x] The gear is the filled Material Icons `settings` gear (Apache 2.0) rather than the outlined one, picked by Maikel from three candidates
 
 ### TEST
 
@@ -69,8 +69,8 @@ bold as well. Under a site header, the breadcrumb links are `--primary-muted` in
 current page at the right end stays `--primary`; the bar standing on `--primary` is unchanged. The settings toggle
 is just its icon in the text colour (`--fg-1`): no round card, `--primary` edge or shadow behind it, and no
 colour change under the pointer or while it is open. Inside a site header it takes the header's own
-colour (`--bg-1`), as the app's name does. The gear is a solid eight-tooth gear with a round open centre
-instead of an outline. `--font-weight-black` stays defined for an app that wants it, but no house
+colour (`--bg-1`), as the app's name does. The gear is the filled Material Icons `settings` gear instead of an
+outline. `--font-weight-black` stays defined for an app that wants it, but no house
 rule uses it any more.
 
 **Score:** 3
