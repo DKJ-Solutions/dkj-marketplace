@@ -48,9 +48,10 @@ Write-Host "[OK] every pairing reaches its floor in all $($palettes.Count) theme
 if (-not $Apply) { exit 0 }
 
 foreach ($id in @($LightDefault, $DarkDefault)) { if (-not $palettes.Contains($id)) { throw "unknown default theme '$id'" } }
-# muted-inverse stays in the pattern though no theme has it any more (November 1, 2026): an -Apply over a stylesheet
+# muted-inverse and muted stay in the pattern though no theme has them any more (November 1, 2026; paper-N is bg-N and muted is
+# primary-muted since that day): an -Apply over a stylesheet
 # that still carries it removes it rather than keeping it as a theme's own token.
-$isPaletteToken = '^--(paper-\d|ink-\d|primary|muted|muted-inverse|fg-\d):'
+$isPaletteToken = '^--(bg-\d|paper-\d|ink-\d|primary|primary-muted|muted|muted-inverse|fg-\d):'
 $lines = [System.IO.File]::ReadAllLines((Resolve-Path -LiteralPath $StylePath).Path)
 $standalone = 0
 for ($i = 0; $i -lt $lines.Count; $i++) {
@@ -59,7 +60,7 @@ for ($i = 0; $i -lt $lines.Count; $i++) {
         $head = $Matches[1]; $tail = $Matches[4]; $id = $Matches[2]
         $keep = @($Matches[3] -split ';\s*' | Where-Object { $_ -and $_ -notmatch $isPaletteToken } | ForEach-Object { "$($_.Trim());" })
         $lines[$i] = $head + ((@(Format-HousePaletteDeclarations $palettes[$id]) + $keep) -join ' ') + $tail
-    } elseif ($line -match '^(\s+)--paper-1(?=:)') {   # (?=:), so the house-style gate does not read the pattern as a definition
+    } elseif ($line -match '^(\s+)--bg-1(?=:)') {   # (?=:), so the house-style gate does not read the pattern as a definition
         # the default blocks: the first is the light one, the two after it the dark one (OS-followed and forced)
         $id = if ($standalone -eq 0) { $LightDefault } else { $DarkDefault }
         $lines[$i] = $Matches[1] + (Format-HousePaletteDeclarations $palettes[$id])

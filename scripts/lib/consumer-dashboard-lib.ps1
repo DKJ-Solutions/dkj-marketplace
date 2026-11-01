@@ -416,19 +416,19 @@ function Format-ConsumerPageStart {
     # The page keeps the hub's frame (breadcrumb bar, settings button, intro, page column; #3066), so
     # this layer styles only what is inside its cards, never the blocks the house style fixes.
     [void]$sb.AppendLine('<style>')
-    # The links take the house highlight (--primary), the tinted head and the lines --paper-3, and the notes --muted.
+    # The links take the house highlight (--primary), the tinted head and the lines --bg-3, and the notes --primary-muted.
     [void]$sb.AppendLine('.cd-link { color: var(--primary); text-underline-offset: 2px; }')
-    [void]$sb.AppendLine('.cd-thead th { background: var(--paper-3); }')
+    [void]$sb.AppendLine('.cd-thead th { background: var(--bg-3); }')
     [void]$sb.AppendLine('.cd-table-gap { margin-top: var(--spacing-4); }')
-    [void]$sb.AppendLine('.cd-repo-card { margin-top: var(--spacing-3); background: var(--paper-1); }')
+    [void]$sb.AppendLine('.cd-repo-card { margin-top: var(--spacing-3); background: var(--bg-1); }')
     [void]$sb.AppendLine('.cd-group-summary { margin: 0 0 var(--spacing-1); }')
     [void]$sb.AppendLine('.cd-repo { display: flex; align-items: center; gap: var(--spacing-2); }')
     [void]$sb.AppendLine('.cd-repo__name { margin: 0; font-weight: 600; }')
     [void]$sb.AppendLine('.cd-signals { list-style: none; padding: 0; margin: var(--spacing-2) 0 0; }')
-    [void]$sb.AppendLine('.cd-signals li { display: flex; gap: var(--spacing-2); align-items: flex-start; padding: var(--spacing-1-5) 0; border-top: 1px solid var(--paper-3); font-size: var(--text-sm); }')
+    [void]$sb.AppendLine('.cd-signals li { display: flex; gap: var(--spacing-2); align-items: flex-start; padding: var(--spacing-1-5) 0; border-top: 1px solid var(--bg-3); font-size: var(--text-sm); }')
     [void]$sb.AppendLine('.cd-signals li .badge { margin-top: 1px; }')
     [void]$sb.AppendLine('.cd-signals code, .cd-plugins code { font-size: var(--text-xs); }')
-    [void]$sb.AppendLine('.cd-plugins { display: flex; flex-wrap: wrap; gap: var(--spacing-1-5) var(--spacing-4); margin-top: var(--spacing-2); font-size: var(--text-sm); color: var(--muted); }')
+    [void]$sb.AppendLine('.cd-plugins { display: flex; flex-wrap: wrap; gap: var(--spacing-1-5) var(--spacing-4); margin-top: var(--spacing-2); font-size: var(--text-sm); color: var(--primary-muted); }')
     [void]$sb.AppendLine('.cd-status { display: inline-flex; align-items: center; gap: var(--spacing-1-5); }')
     [void]$sb.AppendLine('.table td.cd-left, .table th.cd-left { text-align: left; }')
     # Fixed layout, so the table takes these widths rather than sizing to its own content; the min-width keeps them readable, scrolling inside .table-wrap on a narrow screen.

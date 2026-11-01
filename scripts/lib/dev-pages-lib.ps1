@@ -313,7 +313,7 @@ function Get-SpecialistStyle {
         '@media (max-width: 1000px) { .sp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }',
         '@media (max-width: 760px) { .sp-grid { grid-template-columns: 1fr; } }',
         '.sp-grid > .card { margin-top: 0; }',
-        '.sp-text { margin: 0; padding: var(--spacing-3); background: var(--paper-2); color: var(--fg-1); border-radius: var(--spacing-2); font-family: ui-monospace, Consolas, monospace; font-size: var(--text-sm); white-space: pre-wrap; overflow-wrap: anywhere; }'
+        '.sp-text { margin: 0; padding: var(--spacing-3); background: var(--bg-2); color: var(--fg-1); border-radius: var(--spacing-2); font-family: ui-monospace, Consolas, monospace; font-size: var(--text-sm); white-space: pre-wrap; overflow-wrap: anywhere; }'
     ) -join "`n")
 }
 
@@ -461,14 +461,13 @@ function Resolve-ProductHouseStyleRequest {
 # 2026): which of the Tokens section's specimen cards each one shows, by the card's own h3 title. A card of that
 # section named by no group is a defect the suite holds against the real specimens.
 # A group may set its cards under h2s of its own, -Headings, each naming its cards; its Cards are then those, in order.
-# Color does (Maikel, October 31, 2026): Theme holds the 60-30-10 rule's three shares, Stats the series slots, Status
-# the status and direction colours.
+# Color does (Maikel, October 31, 2026): Theme holds the 60-30-10 rule's three shares, and Graphs & Status the series
+# slots and the status and direction colours, one heading since Maikel merged the two (November 1, 2026).
 $script:ProductBrandbookTokenGroups = @(
-    @{ Slug = 'color'; Label = 'Color'; Cards = @('60', '30', '10', 'Categories', 'Status and direction')
+    @{ Slug = 'color'; Label = 'Color'; Cards = @('60', '30', '10', 'Graphs', 'Status')
         Headings = @(
             @{ Label = 'Theme'; Cards = @('60', '30', '10') }
-            @{ Label = 'Stats'; Cards = @('Categories') }
-            @{ Label = 'Status'; Cards = @('Status and direction') }
+            @{ Label = 'Graphs & Status'; Cards = @('Graphs', 'Status') }
         ) }
     @{ Slug = 'text'; Label = 'Text'; Cards = @('Type scale') }
     @{ Slug = 'radius'; Label = 'Radius'; Cards = @('Radius') }
@@ -498,6 +497,9 @@ function Resolve-ProductHouseStyleRedirect {
         sends them to. '' for any other path.
     #>
     param([AllowEmptyString()][string]$Path)
+    # THE TOKENS SECTION HAS NO PAGE OF ITS OWN (Maikel, November 1, 2026): its groups each have one, and the overview
+    # opens on them, so /tokens -- under either name, and the address a released toolbox sends -- lands there.
+    if ($Path -cmatch '^/marketplace/dkj-policy/(?:dkj-brandbook|house-style)/tokens/?\z') { return '/marketplace/dkj-policy/dkj-brandbook#tokens' }
     if ($Path -cnotmatch '^/marketplace/dkj-policy/house-style(?:/([a-z][a-z-]{0,39}))?/?\z') { return '' }
     return '/marketplace/dkj-policy/dkj-brandbook' + $(if ($Matches[1]) { '/' + $Matches[1] })
 }
@@ -513,7 +515,8 @@ function Format-ProductHouseStylePageHtml {
         THE OVERVIEW OPENS ON ITS TOKENS (Maikel, October 31, 2026): an h2 Tokens over one card per token group
         ($script:ProductBrandbookTokenGroups), then a card for every other section, as before. -Token names a group's
         own page, /tokens/<group>, holding only that group's specimen cards; a group none has, or whose cards the
-        file no longer holds, returns $null. /tokens itself still shows the whole section.
+        file no longer holds, returns $null. /tokens itself is no page since November 1, 2026 (Maikel): $null here, and
+        the server redirects it to the overview (Resolve-ProductHouseStyleRedirect).
     #>
     param(
         [AllowEmptyString()][string]$Body = '',
@@ -542,11 +545,14 @@ function Format-ProductHouseStylePageHtml {
             '<div class="' + $tokens.Grid + '">' + "`n" + (($picked | ForEach-Object { $_.Html }) -join "`n`n") + "`n" + '</div>'
         }
         $content = $split.Head + '<div class="spec-page">' + "`n" + $grids + "`n" + '</div>' + "`n" + $split.Tail
-        $crumbs += @{ Label = 'dkj-brandbook'; Href = $base }, @{ Label = $tokens.Title; Href = $base + '/tokens' }
+        # No Tokens crumb: that section has no page of its own any more (Maikel, November 1, 2026).
+        $crumbs += @{ Label = 'dkj-brandbook'; Href = $base }
         $lead = if ($group.ContainsKey('Headings')) { @($group.Headings | ForEach-Object { $_.Label }) -join ', ' } else { $group.Cards -join ', ' }
         return Format-DevPageHtml -Title $group.Label -Lead $lead -Body $content -ParentCrumbs $crumbs -FooterNote $foot
     }
 
+    # The Tokens section itself is no page (Maikel, November 1, 2026): the server redirects its address to the overview.
+    if ($Section -ceq 'tokens') { return $null }
     $parts = Get-HouseStyleSpecimensParts -Body $Body -ReadError $ReadError -Section $Section -BasePath $base
     if ($null -eq $parts) { return $null }
     if ($parts.Section) {
@@ -735,7 +741,7 @@ function Format-MarketplacePluginsPageHtml {
     if ($p.Name -ceq $addOnParent) {
         # What dkj-policy ships that can be looked at: the house style's specimens (Maikel, October 31, 2026).
         # It opens the page, above the add-ons, under the heading Assets, its card named dkj-brandbook (Maikel, October 31, 2026).
-        [void]$body.AppendLine('<div class="grid-3" id="assets"><div class="grid__head"><h2>Assets</h2></div>')
+        [void]$body.AppendLine('<div class="grid-3" id="assets"><div class="grid__head"><h2>Assets (Always on)</h2></div>')
         [void]$body.AppendLine((Format-HubCardLinkHtml -Href '/marketplace/dkj-policy/dkj-brandbook' -Label 'dkj-brandbook' -Heading 3 `
             -Sub 'Every token, the twelve themes and every component, with their variants and states' -Icon 'house-style'))
         [void]$body.AppendLine('</div>')
@@ -743,7 +749,7 @@ function Format-MarketplacePluginsPageHtml {
     if ($p.Name -ceq $addOnParent -and $addOns.Count) {
         # dkj-policy's add-ons, below its house style and above its facts (Maikel, October 30, 2026): one card
         # each, h3s under the section's h2.
-        [void]$body.AppendLine('<div class="grid-3" id="add-ons"><div class="grid__head"><h2>Add-ons</h2></div>')
+        [void]$body.AppendLine('<div class="grid-3" id="add-ons"><div class="grid__head"><h2>Add-ons (Optional)</h2></div>')
         foreach ($a in $addOns) { [void]$body.AppendLine((& $card $a ('/marketplace/' + $addOnParent + '/' + $a.Name) 3)) }
         [void]$body.AppendLine('</div>')
     }
@@ -1009,7 +1015,7 @@ function Get-DkjRepoCardStyle {
         '.dr-facts dd { min-width: 0; overflow: hidden; text-overflow: ellipsis; }',
         # The session command in the Stopwatch card's sizes: one line ending in an ellipsis, copied whole by its button.
         '.dr-line { font-size: var(--text-sm); }',
-        '.dr-muted { color: var(--muted); }',
+        '.dr-muted { color: var(--primary-muted); }',
         '.dr-card > .dr-session { display: flex; align-items: center; gap: var(--spacing-2); margin-top: var(--spacing-3); }',
         '.dr-session code { flex: 1 1 auto; min-width: 0; font-size: var(--text-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }'
     ) -join "`n")

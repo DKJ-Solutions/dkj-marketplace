@@ -7,12 +7,12 @@
     Per theme, in the owner's words (issue #3235, October 21, 2026), on a light theme:
       --primary        ONE colour: the most saturated colour of the theme's HSL hue (saturation 100%) that
                        reads at 4.5:1 on all four paper steps, so white (and every paper step) reads on it too.
-      --paper-1..4     FOUR colours that read on the primary, from white towards a little darker: the page, the
+      --bg-1..4     FOUR colours that read on the primary, from white towards a little darker: the page, the
                        card, the line, the stronger border -- and the text on a primary fill.
-      --muted          a grey of the colour that reads extra well (7:1) on the page.
+      --primary-muted  a grey of the colour that reads extra well (7:1) on the page.
     There is no grey for the far end (--muted-inverse was retired, Maikel, November 1, 2026): a theme's colours are
-    the 60-30-10 groups and nothing else, and no colour reads at 4.5:1 on both paper-4 and fg-1, so it fitted none.
-    The quieter line on an inverted surface takes --paper-4.
+    the 60-30-10 groups and nothing else, and no colour reads at 4.5:1 on both bg-4 and fg-1, so it fitted none.
+    The quieter line on an inverted surface takes --bg-4.
       --fg-1..4        FOUR text colours that read on the page, near black, in very small steps: fg-4 is still
                        very dark, only a little less so than fg-1.
     A dark theme is the mirror: the paper runs from black towards a little lighter and the text is near white. Its
@@ -47,15 +47,17 @@ function Get-HousePaletteThemes {
 }
 
 # The steps, per mode: OKLCH lightness and chroma of the four paper and the four text colours. Paper-1 and fg-1
-# keep the anchors of October 20, 2026 (the edge of white and black); the steps after them are small by design.
+# keep the anchors of October 20, 2026 (the edge of white and black); the steps after them are small by design, but
+# bg-2 stands a clear step off the page (Maikel, November 1, 2026: it was barely visible in some themes), and
+# bg-3 moves along so the card in a group keeps its own step.
 function Get-HousePaletteSteps {
     param([ValidateSet('light', 'dark')][string]$Mode)
     if ($Mode -eq 'light') {
-        @{ PaperL = @(0.995, 0.975, 0.945, 0.905); PaperC = @(0.006, 0.014, 0.028, 0.045)
+        @{ PaperL = @(0.995, 0.965, 0.94, 0.905); PaperC = @(0.006, 0.014, 0.028, 0.045)
            FgL    = @(0.12, 0.16, 0.20, 0.24);     FgC    = @(0.030, 0.030, 0.028, 0.026); MutedC = 0.03; PrimaryFloor = 4.55 }
     } else {
-        @{ PaperL = @(0.13, 0.155, 0.19, 0.235);   PaperC = @(0.020, 0.024, 0.032, 0.045)
-           FgL    = @(0.99, 0.955, 0.92, 0.885);   FgC    = @(0.006, 0.010, 0.012, 0.014); MutedC = 0.03; PrimaryFloor = 9.0; PrimaryChromaMax = 0.13 }
+        @{ PaperL = @(0.13, 0.165, 0.195, 0.235);   PaperC = @(0.020, 0.024, 0.032, 0.045)
+           FgL    = @(0.99, 0.955, 0.92, 0.885);   FgC    = @(0.006, 0.010, 0.012, 0.014); MutedC = 0.06; PrimaryFloor = 9.0; PrimaryChromaMax = 0.13 }
     }
 }
 
@@ -175,7 +177,10 @@ function Get-HousePalette {
 
     # the grey: as close to its ground as 7:1 allows, so it recedes by colour while still reading extra well
     $mc = $steps.MutedC
-    $makeMuted = { param($l) ConvertFrom-OkLch $l $mc $okHue }.GetNewClosure()
+    # In the primary's OWN hue (Maikel, November 1, 2026): a dark primary is lightened in HSL, which drifts its OKLCH hue
+    # (Lila from 292 to 307), and a grey left at the base hue read blue beside a violet primary.
+    $mutedHue = (ConvertTo-OkLch $primary).H
+    $makeMuted = { param($l) ConvertFrom-OkLch $l $mc $mutedHue }.GetNewClosure()
     if ($Mode -eq 'light') {
         $muted   = Find-LightnessAtContrast $makeMuted $paper[0] 7.05 0 1 'high'
     } else {
@@ -183,9 +188,9 @@ function Get-HousePalette {
     }
 
     $p = [ordered]@{}
-    for ($i = 0; $i -lt 4; $i++) { $p["--paper-$($i + 1)"] = $paper[$i] }
+    for ($i = 0; $i -lt 4; $i++) { $p["--bg-$($i + 1)"] = $paper[$i] }
     $p['--primary'] = $primary
-    $p['--muted'] = $muted
+    $p['--primary-muted'] = $muted
     for ($i = 0; $i -lt 4; $i++) { $p["--fg-$($i + 1)"] = $fg[$i] }
     $p
 }
@@ -200,12 +205,12 @@ function Get-HousePaletteContrast {
     <# The pairings the model promises, each with its ratio and the floor it must reach. #>
     param([Parameter(Mandatory)]$Palette)
     $rows = @()
-    foreach ($n in 1..4) { $rows += @{ Pair = "primary on paper-$n"; Ratio = Get-ContrastRatio $Palette['--primary'] $Palette["--paper-$n"]; Floor = 4.5 } }
-    foreach ($n in 1..4) { foreach ($k in 1..4) { $rows += @{ Pair = "fg-$n on paper-$k"; Ratio = Get-ContrastRatio $Palette["--fg-$n"] $Palette["--paper-$k"]; Floor = 7 } } }
-    $rows += @{ Pair = 'muted on paper-1'; Ratio = Get-ContrastRatio $Palette['--muted'] $Palette['--paper-1']; Floor = 7 }
-    $rows += @{ Pair = 'muted on paper-2'; Ratio = Get-ContrastRatio $Palette['--muted'] $Palette['--paper-2']; Floor = 4.5 }
-    $rows += @{ Pair = 'muted on paper-4'; Ratio = Get-ContrastRatio $Palette['--muted'] $Palette['--paper-4']; Floor = 4.5 }
-    $rows += @{ Pair = 'paper-4 on fg-1'; Ratio = Get-ContrastRatio $Palette['--paper-4'] $Palette['--fg-1']; Floor = 7 }
-    $rows += @{ Pair = 'paper-1 on muted'; Ratio = Get-ContrastRatio $Palette['--paper-1'] $Palette['--muted']; Floor = 4.5 }
+    foreach ($n in 1..4) { $rows += @{ Pair = "primary on bg-$n"; Ratio = Get-ContrastRatio $Palette['--primary'] $Palette["--bg-$n"]; Floor = 4.5 } }
+    foreach ($n in 1..4) { foreach ($k in 1..4) { $rows += @{ Pair = "fg-$n on bg-$k"; Ratio = Get-ContrastRatio $Palette["--fg-$n"] $Palette["--bg-$k"]; Floor = 7 } } }
+    $rows += @{ Pair = 'muted on bg-1'; Ratio = Get-ContrastRatio $Palette['--primary-muted'] $Palette['--bg-1']; Floor = 7 }
+    $rows += @{ Pair = 'muted on bg-2'; Ratio = Get-ContrastRatio $Palette['--primary-muted'] $Palette['--bg-2']; Floor = 4.5 }
+    $rows += @{ Pair = 'muted on bg-4'; Ratio = Get-ContrastRatio $Palette['--primary-muted'] $Palette['--bg-4']; Floor = 4.5 }
+    $rows += @{ Pair = 'bg-4 on fg-1'; Ratio = Get-ContrastRatio $Palette['--bg-4'] $Palette['--fg-1']; Floor = 7 }
+    $rows += @{ Pair = 'bg-1 on muted'; Ratio = Get-ContrastRatio $Palette['--bg-1'] $Palette['--primary-muted']; Floor = 4.5 }
     $rows
 }
