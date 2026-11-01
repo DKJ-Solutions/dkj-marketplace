@@ -69,7 +69,10 @@
      line (borders, row dividers, meter track, gridlines) and the tinted surfaces (an accent table head, a hover, a
      today row, the accent dialog); bg-4 a stronger border (an open card, a selected box). --primary the
      highlight: links (owner's decision, October 15, 2026), the primary button's fill (#109), the picker's dot, h1,
-     the states (hover, sorted) and native controls through accent-color. --primary-muted .note, the card and dialog sub lines,
+     the states (hover, sorted) and native controls through accent-color. --primary-raised is --primary 15% of the way
+     to bg-1 (the settings cell in a .site-header); --primary-hover is --primary 15% of the way to fg-1 (a .btn--primary
+     under the pointer, the settings cell's hover and open state). Both are typed per theme, never derived in a rule:
+     no color-mix() or other colour function in this file, a gate refuses one (Maikel, November 1, 2026). --primary-muted .note, the card and dialog sub lines,
      the tile label, the fills (switches, info badges, a pressed .seg), most focus
      rings and meters (a ring on a sort header, a .seg button, a chart bar or the read-more toggle is --primary). fg-1 every paragraph and an inverted surface (.fill-inverse, the showcase's panel); fg-2 h2 and .meta on a span; fg-3 h3;
      fg-4 no role yet. The breadcrumb bar stands on --primary, with the paper steps as its text. On a fill the text switches: on .fill-primary the paper is the text, so an h2
@@ -81,7 +84,7 @@
      16.4:1; a bg-3 line on a bg-2 card 1.05:1 (Pink) to 1.09:1 (Magenta), a bg-4 border on it 1.14:1 to 1.22:1.
      Paper-2 stands a clearer step off the page since November 1, 2026 (Maikel): 1.04:1 to 1.05:1 on dark and 1.09:1
      to 1.10:1 on light, the figures above for bg-2 measured again that day. */
-  --bg-1: #fdfdff; --bg-2: #eff4fd; --bg-3: #e2ecff; --bg-4: #d1e0ff; --primary: #0000ff; --primary-muted: #4f5769; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c;
+  --bg-1: #fdfdff; --bg-2: #eff4fd; --bg-3: #e2ecff; --bg-4: #d1e0ff; --primary: #0000ff; --primary-muted: #4f5769; --primary-raised: #2626ff; --primary-hover: #0001db; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c;
 
   /* categorical palette (series slots) */
   --graph-1: #2574d1;          /* dark enough for --bg-1 text on it at 4.5:1 in every light theme (4.51:1, worst Roest; #92) */
@@ -166,7 +169,7 @@
     color-scheme: dark;
     --graph-1: #3987e5; --graph-2: #d95926; --graph-3: #199e70;
     --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
-    --bg-1: #01090b; --bg-2: #021113; --bg-3: #01191c; --bg-4: #002328; --primary: #63cfdc; --primary-muted: #6aa3aa; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
+    --bg-1: #01090b; --bg-2: #021113; --bg-3: #01191c; --bg-4: #002328; --primary: #63cfdc; --primary-muted: #6aa3aa; --primary-raised: #54b1bd; --primary-hover: #79d6e1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
   }
 }
 
@@ -177,7 +180,7 @@
   color-scheme: dark;
   --graph-1: #3987e5; --graph-2: #d95926; --graph-3: #199e70;
   --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
-  --bg-1: #01090b; --bg-2: #021113; --bg-3: #01191c; --bg-4: #002328; --primary: #63cfdc; --primary-muted: #6aa3aa; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
+  --bg-1: #01090b; --bg-2: #021113; --bg-3: #01191c; --bg-4: #002328; --primary: #63cfdc; --primary-muted: #6aa3aa; --primary-raised: #54b1bd; --primary-hover: #79d6e1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
 }
 
 /* ---- Themes: the theme's colour --------------------------------------------- */
@@ -186,18 +189,18 @@
    two whose primary sits next to the warning colour move the warning away from it. No red and
    no green theme: those hues mean bad and good. Order: magenta, purple, blue, teal, ochre, rust (light);
    pink, lilac, sky, cyan, yellow, orange (dark). */
-:root[data-theme="magenta"], .theme-swatch[data-id="magenta"] { --bg-1: #fffdfe; --bg-2: #fbf0f5; --bg-3: #fae4ef; --bg-4: #f7d4e6; --primary: #b90085; --primary-muted: #66525d; --fg-1: #0d0208; --fg-2: #160810; --fg-3: #1f1119; --fg-4: #281a22; }
-:root[data-theme="purple"], .theme-swatch[data-id="purple"] { --bg-1: #fdfdff; --bg-2: #f4f2fc; --bg-3: #ece8fd; --bg-4: #e1dbfb; --primary: #7f00ff; --primary-muted: #595568; --fg-1: #060410; --fg-2: #0e0b19; --fg-3: #171422; --fg-4: #201d2b; }
-:root[data-theme="blue"], .theme-swatch[data-id="blue"] { --bg-1: #fdfdff; --bg-2: #eff4fd; --bg-3: #e2ecff; --bg-4: #d1e0ff; --primary: #0000ff; --primary-muted: #4f5769; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c; }
-:root[data-theme="teal"], .theme-swatch[data-id="teal"] { --bg-1: #fafeff; --bg-2: #e9f6f8; --bg-3: #d7f1f4; --bg-4: #bee9ef; --primary: #006e79; --primary-muted: #435b5f; --fg-1: #000809; --fg-2: #001113; --fg-3: #051a1c; --fg-4: #0f2325; }
-:root[data-theme="ochre"], .theme-swatch[data-id="ochre"] { --bg-1: #fefef9; --bg-2: #f5f4e9; --bg-3: #efecd7; --bg-4: #e6e1bf; --primary: #716300; --primary-muted: #5c5845; --fg-1: #080600; --fg-2: #100d01; --fg-3: #191607; --fg-4: #222011; }
-:root[data-theme="rust"], .theme-swatch[data-id="rust"] { --bg-1: #fffdfc; --bg-2: #fcf1eb; --bg-3: #fce6db; --bg-4: #f9d8c5; --primary: #9c4b00; --primary-muted: #665449; --fg-1: #0e0300; --fg-2: #170903; --fg-3: #20120a; --fg-4: #291c14; --warning-3: #b88a00; }
-:root[data-theme="pink"], .theme-swatch[data-id="pink"] { --bg-1: #0e0507; --bg-2: #170a0e; --bg-3: #200f15; --bg-4: #2f141e; --primary: #ff9fd4; --primary-muted: #b88da3; --fg-1: #fffafc; --fg-2: #f6edf0; --fg-3: #ece1e4; --fg-4: #e2d5d9; }
-:root[data-theme="lilac"], .theme-swatch[data-id="lilac"] { --bg-1: #08060e; --bg-2: #0f0c18; --bg-3: #161222; --bg-4: #1f1a31; --primary: #d6adff; --primary-muted: #a492b8; --fg-1: #fcfbff; --fg-2: #f0eff6; --fg-3: #e5e3ec; --fg-4: #d9d7e2; }
-:root[data-theme="sky"], .theme-swatch[data-id="sky"] { --bg-1: #04070f; --bg-2: #090e19; --bg-3: #0d1523; --bg-4: #131d33; --primary: #b8b8ff; --primary-muted: #9596be; --fg-1: #fafcff; --fg-2: #edf0f7; --fg-3: #e0e5ed; --fg-4: #d4d9e3; }
-:root[data-theme="cyan"], .theme-swatch[data-id="cyan"] { --bg-1: #01090b; --bg-2: #021113; --bg-3: #01191c; --bg-4: #002328; --primary: #63cfdc; --primary-muted: #6aa3aa; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde; }
-:root[data-theme="yellow"], .theme-swatch[data-id="yellow"] { --bg-1: #0a0701; --bg-2: #130e03; --bg-3: #1b1404; --bg-4: #271d02; --primary: #e2ba51; --primary-muted: #a8986e; --fg-1: #fdfcf7; --fg-2: #f3f0e9; --fg-3: #e8e4dc; --fg-4: #ddd9cf; --warning-3: #f08a24; }
-:root[data-theme="orange"], .theme-swatch[data-id="orange"] { --bg-1: #0e0503; --bg-2: #170b06; --bg-3: #211009; --bg-4: #30160c; --primary: #ffaa74; --primary-muted: #b99178; --fg-1: #fffbf9; --fg-2: #f6eeeb; --fg-3: #ece2de; --fg-4: #e2d6d2; }
+:root[data-theme="magenta"], .theme-swatch[data-id="magenta"] { --bg-1: #fffdfe; --bg-2: #fbf0f5; --bg-3: #fae4ef; --bg-4: #f7d4e6; --primary: #b90085; --primary-muted: #66525d; --primary-raised: #c32697; --primary-hover: #9f0072; --fg-1: #0d0208; --fg-2: #160810; --fg-3: #1f1119; --fg-4: #281a22; }
+:root[data-theme="purple"], .theme-swatch[data-id="purple"] { --bg-1: #fdfdff; --bg-2: #f4f2fc; --bg-3: #ece8fd; --bg-4: #e1dbfb; --primary: #7f00ff; --primary-muted: #595568; --primary-raised: #9226ff; --primary-hover: #6d01db; --fg-1: #060410; --fg-2: #0e0b19; --fg-3: #171422; --fg-4: #201d2b; }
+:root[data-theme="blue"], .theme-swatch[data-id="blue"] { --bg-1: #fdfdff; --bg-2: #eff4fd; --bg-3: #e2ecff; --bg-4: #d1e0ff; --primary: #0000ff; --primary-muted: #4f5769; --primary-raised: #2626ff; --primary-hover: #0001db; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c; }
+:root[data-theme="teal"], .theme-swatch[data-id="teal"] { --bg-1: #fafeff; --bg-2: #e9f6f8; --bg-3: #d7f1f4; --bg-4: #bee9ef; --primary: #006e79; --primary-muted: #435b5f; --primary-raised: #25848d; --primary-hover: #005f68; --fg-1: #000809; --fg-2: #001113; --fg-3: #051a1c; --fg-4: #0f2325; }
+:root[data-theme="ochre"], .theme-swatch[data-id="ochre"] { --bg-1: #fefef9; --bg-2: #f5f4e9; --bg-3: #efecd7; --bg-4: #e6e1bf; --primary: #716300; --primary-muted: #5c5845; --primary-raised: #867a25; --primary-hover: #615500; --fg-1: #080600; --fg-2: #100d01; --fg-3: #191607; --fg-4: #222011; }
+:root[data-theme="rust"], .theme-swatch[data-id="rust"] { --bg-1: #fffdfc; --bg-2: #fcf1eb; --bg-3: #fce6db; --bg-4: #f9d8c5; --primary: #9c4b00; --primary-muted: #665449; --primary-raised: #ab6626; --primary-hover: #874000; --fg-1: #0e0300; --fg-2: #170903; --fg-3: #20120a; --fg-4: #291c14; --warning-3: #b88a00; }
+:root[data-theme="pink"], .theme-swatch[data-id="pink"] { --bg-1: #0e0507; --bg-2: #170a0e; --bg-3: #200f15; --bg-4: #2f141e; --primary: #ff9fd4; --primary-muted: #b88da3; --primary-raised: #db88b5; --primary-hover: #ffadda; --fg-1: #fffafc; --fg-2: #f6edf0; --fg-3: #ece1e4; --fg-4: #e2d5d9; }
+:root[data-theme="lilac"], .theme-swatch[data-id="lilac"] { --bg-1: #08060e; --bg-2: #0f0c18; --bg-3: #161222; --bg-4: #1f1a31; --primary: #d6adff; --primary-muted: #a492b8; --primary-raised: #b794db; --primary-hover: #dcb9ff; --fg-1: #fcfbff; --fg-2: #f0eff6; --fg-3: #e5e3ec; --fg-4: #d9d7e2; }
+:root[data-theme="sky"], .theme-swatch[data-id="sky"] { --bg-1: #04070f; --bg-2: #090e19; --bg-3: #0d1523; --bg-4: #131d33; --primary: #b8b8ff; --primary-muted: #9596be; --primary-raised: #9d9ddb; --primary-hover: #c2c2ff; --fg-1: #fafcff; --fg-2: #edf0f7; --fg-3: #e0e5ed; --fg-4: #d4d9e3; }
+:root[data-theme="cyan"], .theme-swatch[data-id="cyan"] { --bg-1: #01090b; --bg-2: #021113; --bg-3: #01191c; --bg-4: #002328; --primary: #63cfdc; --primary-muted: #6aa3aa; --primary-raised: #54b1bd; --primary-hover: #79d6e1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde; }
+:root[data-theme="yellow"], .theme-swatch[data-id="yellow"] { --bg-1: #0a0701; --bg-2: #130e03; --bg-3: #1b1404; --bg-4: #271d02; --primary: #e2ba51; --primary-muted: #a8986e; --primary-raised: #c29f45; --primary-hover: #e6c46a; --fg-1: #fdfcf7; --fg-2: #f3f0e9; --fg-3: #e8e4dc; --fg-4: #ddd9cf; --warning-3: #f08a24; }
+:root[data-theme="orange"], .theme-swatch[data-id="orange"] { --bg-1: #0e0503; --bg-2: #170b06; --bg-3: #211009; --bg-4: #30160c; --primary: #ffaa74; --primary-muted: #b99178; --primary-raised: #db9163; --primary-hover: #ffb688; --fg-1: #fffbf9; --fg-2: #f6eeeb; --fg-3: #ece2de; --fg-4: #e2d6d2; }
 
 /* ---- Base ---------------------------------------------------------------- */
 * { box-sizing: border-box; }
@@ -511,7 +514,7 @@ p { margin: 0; }
 .btn--primary { background: var(--primary); border-color: var(--primary); color: var(--bg-1); font-weight: var(--font-weight-bold); }   /* bold: the filled main action (owner, #3649) */
 /* Hover: the fill moves 15% toward --fg-1, so it darkens on a light theme and lightens on a dark one, and the
    --bg-1 label gains contrast either way. It outweighs the plain .btn hover above and .btn--touch.btn--primary below. */
-.btn--primary:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 85%, var(--fg-1)); border-color: color-mix(in srgb, var(--primary) 85%, var(--fg-1)); }
+.btn--primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 /* Disabled: one rule for every .btn variant, so an app never adds its own on this reserved class. */
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -743,9 +746,9 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .site-header .theme-settings { flex: none; align-self: stretch; margin: calc(-1 * var(--spacing-3)) calc(-1 * var(--spacing-4)) calc(-1 * var(--spacing-3)) 0;
   width: calc(var(--text-h1) + 2 * var(--spacing-1) + 2 * var(--spacing-3)); }   /* the bar's height: the mark (its line, its padding) and the bar's own padding */
 .site-header .theme-settings__toggle { width: 100%; height: 100%; border-radius: 0; color: var(--bg-1);
-  background: color-mix(in srgb, var(--primary) 85%, var(--bg-1)); }
+  background: var(--primary-raised); }
 .site-header .theme-settings__toggle:hover,
-.site-header .theme-settings__toggle[aria-expanded="true"] { background: color-mix(in srgb, var(--primary) 75%, var(--bg-1)); }
+.site-header .theme-settings__toggle[aria-expanded="true"] { background: var(--primary-hover); }
 .site-header .theme-settings__toggle svg { width: var(--spacing-6); height: var(--spacing-6); }
 .site-header .theme-settings__toggle:focus-visible { outline-color: var(--bg-1); outline-offset: -4px; }
 .site-header + .breadcrumbs-bar { background: var(--bg-1); border-bottom: 1px solid var(--bg-3); }

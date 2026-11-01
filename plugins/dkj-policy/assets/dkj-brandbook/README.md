@@ -89,11 +89,18 @@ already has, not a new colour:
 | Share | Group | Tokens | What it is |
 |---|---|---|---|
 | **60%** | Paper | `--bg-1` … `--bg-4` | the ground: the page, the cards, the lines |
-| **30%** | Primary | `--primary`, with `--primary-muted` (its grey) | the theme's colour: `h1` and `h2`, links, the breadcrumb bar, `.btn--primary`, the states |
+| **30%** | Primary | `--primary`, with `--primary-muted` (its grey), `--primary-raised` and `--primary-hover` (its two shades) | the theme's colour: `h1` and `h2`, links, the breadcrumb bar, `.btn--primary`, the states; `--primary-raised` is the settings cell in a site header, `--primary-hover` a primary button under the pointer |
 | **10%** | Text | `--fg-1` … `--fg-4` | what sits on the paper: every paragraph, label and quiet icon |
 
+**A rule reads a colour only as a token, never derives one** (Maikel, a strict rule, November 1, 2026): no
+`color-mix()`, no relative colour (`rgb(from …)`), no `oklch()` or other colour function outside a token's own
+value. A shade a component needs is a new token, typed into every theme line, and `check-colour-literals.mjs`
+refuses a derived colour before it lands. `--primary-raised` and `--primary-hover` were added that way the same day:
+`--primary` 15% of the way to `--bg-1`, and to `--fg-1`, the exact values the two `color-mix()` rules had computed.
+
 **Everything in the 30% reads on all four paper steps**, as the 10% does (Maikel, November 1, 2026): `--primary`
-4.56:1 or better on `bg-4`, `--primary-muted` 5.30:1 or better (WCAG, the worst of the twelve themes). **And a theme has
+4.56:1 or better on `bg-4`, `--primary-muted` 5.30:1 or better (WCAG, the worst of the twelve themes); `--primary-raised` and `--primary-hover` are
+fills rather than text, so this is not asked of them. **And a theme has
 these three groups and no fourth**: a colour that fits none of them is not a theme colour. That retired
 `--muted-inverse` the same day. It was the grey of an inverted surface, 7:1 on `--fg-1`, and fitted no group: on the
 paper it read at 2.1:1 to 2.3:1 on `bg-4`, so not the 30; on `--primary` at 2.1:1 to 4.0:1, so not the 60; and

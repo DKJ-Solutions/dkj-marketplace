@@ -54,10 +54,13 @@ itself stays defined, and the specimen still shows it.
 - [x] Inside a site header the toggle takes the header's own colour (`--bg-1`), as the name does
 - [x] The gear is a solid eight-tooth gear with an open centre rather than the outlined one, its proportions measured off Maikel's reference screenshot
 - [x] In a site header the toggle is a square cell the bar's full height at its right edge, a shade lighter than the header
+- [x] No `color-mix()` anywhere: two new palette tokens, `--primary-raised` and `--primary-hover`, computed by `house-palette-lib.ps1` and written by `build-house-palette.ps1 -Apply`; the settings cell and `.btn--primary:hover` read them
+- [x] `check-colour-literals.mjs` refuses a derived colour (`color-mix()`, relative colour, `oklch()` and the other colour functions) in a house stylesheet; probed red on a temporary sheet
+- [x] The brand book README states the rule and the two tokens
 
 ### TEST
 
-- [x] `stopwatch` and `house-palette` suites green
+- [x] `stopwatch`, `house-palette` and `check-house-style` suites green, and the brandbook CSS gate
 - [ ] The owner has looked at the result (a visible change)
 
 ### DEPLOY: feat/black-weight-to-bold
@@ -72,7 +75,13 @@ is just its icon in the text colour (`--fg-1`): no round card, `--primary` edge 
 colour change under the pointer or while it is open. Inside a site header it takes the header's own
 colour (`--bg-1`), as the app's name does. The gear is a solid eight-tooth gear with an open centre instead
 of an outline, and in a site header the button is a square cell the full height of the bar at its right edge, a
-shade lighter than the header (a little lighter again under the pointer and while open). `--font-weight-black` stays defined for an app that wants it, but no house
+shade lighter than the header, and `--primary-hover` under the pointer and while open.
+
+Every theme carries two new tokens, `--primary-raised` and `--primary-hover`: the primary 15% of the way to
+`--bg-1` and to `--fg-1`, computed by the palette model rather than mixed in a rule. The primary button's hover
+reads `--primary-hover` and looks exactly as before. A house stylesheet may no longer derive a colour at all:
+the colour gate now refuses `color-mix()`, the relative colour syntax and the other colour functions, so a
+shade a component needs becomes a token. `--font-weight-black` stays defined for an app that wants it, but no house
 rule uses it any more.
 
 **Score:** 3

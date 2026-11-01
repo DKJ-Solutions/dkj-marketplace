@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    The colour model of the house style (#3235): ten tokens per theme, computed from the theme's hue and
+    The colour model of the house style (#3235): twelve tokens per theme, computed from the theme's hue and
     mode, so a theme is never tuned by hand again.
 
 .DESCRIPTION
@@ -10,6 +10,8 @@
       --bg-1..4     FOUR colours that read on the primary, from white towards a little darker: the page, the
                        card, the line, the stronger border -- and the text on a primary fill.
       --primary-muted  a grey of the colour that reads extra well (7:1) on the page.
+      --primary-raised, --primary-hover  the primary 15% of the way to bg-1 and to fg-1: two fills a rule reads
+                       instead of mixing them with color-mix() (Maikel, November 1, 2026).
     There is no grey for the far end (--muted-inverse was retired, Maikel, November 1, 2026): a theme's colours are
     the 60-30-10 groups and nothing else, and no colour reads at 4.5:1 on both bg-4 and fg-1, so it fitted none.
     The quieter line on an inverted surface takes --bg-4.
@@ -75,6 +77,14 @@ function ConvertFrom-HexColor {
 function ConvertTo-HexColor {
     param([double[]]$Rgb)
     '#' + (($Rgb | ForEach-Object { '{0:x2}' -f [int][math]::Round(([math]::Min(1.0, [math]::Max(0.0, [double]$_)) * 255.0)) }) -join '')
+}
+
+function Get-SrgbMix {
+    <# $From moved $Share of the way to $To, per channel in sRGB: what color-mix(in srgb, from (1-share), to) computes,
+       so a shade a rule would have mixed is typed into the theme as a token instead (Maikel, November 1, 2026). #>
+    param([string]$From, [string]$To, [double]$Share)
+    $a = ConvertFrom-HexColor $From; $b = ConvertFrom-HexColor $To
+    ConvertTo-HexColor @(0..2 | ForEach-Object { $a[$_] * (1 - $Share) + $b[$_] * $Share })
 }
 
 function Get-RelativeLuminance {
@@ -156,7 +166,7 @@ function Find-LightnessAtContrast {
 
 # ---- the palette ----------------------------------------------------------------------------------------------
 function Get-HousePalette {
-    <# The ten tokens of one theme, as an ordered map of token name to #rrggbb. #>
+    <# The twelve tokens of one theme, as an ordered map of token name to #rrggbb. #>
     param([Parameter(Mandatory)][double]$Hue, [Parameter(Mandatory)][ValidateSet('light', 'dark')][string]$Mode, [double]$ChromaMax = 0)
     $steps = Get-HousePaletteSteps -Mode $Mode
     if ($ChromaMax -gt 0) { $steps.PrimaryChromaMax = $ChromaMax }
@@ -191,12 +201,16 @@ function Get-HousePalette {
     for ($i = 0; $i -lt 4; $i++) { $p["--bg-$($i + 1)"] = $paper[$i] }
     $p['--primary'] = $primary
     $p['--primary-muted'] = $muted
+    # the primary's two shades, fills rather than text (Maikel, November 1, 2026): 15% of the way to the page and to
+    # the text. A rule reads them; it never derives them with color-mix().
+    $p['--primary-raised'] = Get-SrgbMix $primary $paper[0] 0.15
+    $p['--primary-hover']  = Get-SrgbMix $primary $fg[0] 0.15
     for ($i = 0; $i -lt 4; $i++) { $p["--fg-$($i + 1)"] = $fg[$i] }
     $p
 }
 
 function Format-HousePaletteDeclarations {
-    <# The ten tokens as one line of CSS declarations, in the stylesheet's order. #>
+    <# The twelve tokens as one line of CSS declarations, in the stylesheet's order. #>
     param([Parameter(Mandatory)]$Palette)
     ($Palette.Keys | ForEach-Object { "$($_): $($Palette[$_]);" }) -join ' '
 }
