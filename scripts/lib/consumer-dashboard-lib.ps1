@@ -423,7 +423,7 @@ function Format-ConsumerPageStart {
     [void]$sb.AppendLine('.cd-repo-card { margin-top: var(--spacing-3); background: var(--bg-1); }')
     [void]$sb.AppendLine('.cd-group-summary { margin: 0 0 var(--spacing-1); }')
     [void]$sb.AppendLine('.cd-repo { display: flex; align-items: center; gap: var(--spacing-2); }')
-    [void]$sb.AppendLine('.cd-repo__name { margin: 0; font-weight: 600; }')
+    [void]$sb.AppendLine('.cd-repo__name { margin: 0; font-weight: var(--font-weight-bold); }')
     [void]$sb.AppendLine('.cd-signals { list-style: none; padding: 0; margin: var(--spacing-2) 0 0; }')
     [void]$sb.AppendLine('.cd-signals li { display: flex; gap: var(--spacing-2); align-items: flex-start; padding: var(--spacing-1-5) 0; border-top: 1px solid var(--bg-3); font-size: var(--text-sm); }')
     [void]$sb.AppendLine('.cd-signals li .badge { margin-top: 1px; }')
@@ -492,7 +492,7 @@ function Format-ConsumerRepoMiniCardHtml {
     [void]$sb.AppendLine('<div class="cd-repo"><span class="badge ' + $b.Class + '" aria-hidden="true">' + $b.Mark + '</span><p class="cd-repo__name">' + (& $e $c.Repo) + '</p></div>')
     $where = (@(Get-ConsumerCheckoutCandidates $c.Checkout) | ForEach-Object { '<code>' + (& $e $_) + '</code>' }) -join ' or '
     $ghUrl = 'https://github.com/' + (& $e $c.Repo)
-    [void]$sb.AppendLine('<p class="sub">' + $b.Word + ' &#183; ' + (& $e $c.Visibility) + ' &#183; checkout ' + $where +
+    [void]$sb.AppendLine('<p class="note">' + $b.Word + ' &#183; ' + (& $e $c.Visibility) + ' &#183; checkout ' + $where +
         ' &#183; <a class="cd-link" href="' + $ghUrl + '">GitHub</a> &#183; <code>consumers/' + (& $e $c.File) + '</code></p>')
     [void]$sb.Append((Format-ConsumerRepoDetailsHtml -Consumer $c))
     [void]$sb.AppendLine('</section>')
@@ -578,7 +578,7 @@ function Format-ConsumerDashboardHtml {
 
     # The warning that the signals could not be read.
     if ($Meta.CheckFailed) {
-        [void]$sb.AppendLine('<p class="msg msg--warn" role="alert">check-consumers.ps1 could not be run: ' + (& $e $Meta.CheckFailed) + '. The register is shown without its signals.</p>')
+        [void]$sb.AppendLine('<p class="msg--warn" role="alert">check-consumers.ps1 could not be run: ' + (& $e $Meta.CheckFailed) + '. The register is shown without its signals.</p>')
     }
 
     # /consumers: a section per owner group headed by an h2 naming the group, and under
@@ -650,7 +650,7 @@ function Format-ConsumerDashboardHtml {
             [void]$sb.AppendLine('<div class="grid__head"><h2>Issues</h2><p class="card__sub">What the check reports per repo</p><a class="btn" href="#overview">Back to overview</a></div>')
             [void]$sb.AppendLine('<section class="card grid__full">')
             [void]$sb.AppendLine('<div id="group-' + $g.Key + '">')
-            [void]$sb.AppendLine('<p class="sub cd-group-summary">' + (Format-DashboardGroupSummary $members) + '</p>')
+            [void]$sb.AppendLine('<p class="note cd-group-summary">' + (Format-DashboardGroupSummary $members) + '</p>')
             foreach ($c in $members) { [void]$sb.Append((Format-ConsumerRepoMiniCardHtml -Consumer $c)) }
             [void]$sb.AppendLine('</div>')
             [void]$sb.AppendLine('</section>')

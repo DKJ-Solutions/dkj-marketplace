@@ -909,7 +909,7 @@ function Format-StopwatchPhaseCard {
     param($Entry, [double]$Total, [AllowEmptyString()][string]$Title = '', $TotalNote = $null)
     $close = if ($null -eq $TotalNote) { '' } else { '<p><strong>Total</strong> <span class="num">' + (Format-DevSeconds $Total) + '</span>' + $(if ($TotalNote) { ' ' + $TotalNote } else { '' }) + '</p>' }
     $sub = if ($Entry -and $Entry.Sessions -gt 1) { '<p class="card__sub">' + $Entry.Sessions + ' sessions</p>' } else { '' }
-    $h3 = if ($Title) { '<h3 class="card__title">' + (ConvertTo-GeneralPageText $Title) + '</h3>' } else { '' }
+    $h3 = if ($Title) { '<h3>' + (ConvertTo-GeneralPageText $Title) + '</h3>' } else { '' }
     $card = '<section class="card">' + $(if ($h3 -or $sub) { '<div class="card__head">' + $h3 + $sub + '</div>' } else { '' })
     if ($null -eq $Entry) { return $card + '<p class="note">No phases read for this run yet.</p>' + $close + '</section>' }
     if (-not $Entry.Sessions) { return $card + '<p class="note">No session of this repo was active during this run.</p>' + $close + '</section>' }
@@ -945,7 +945,7 @@ function Format-StopwatchChangePercent {
 
 function Format-StopwatchPageShell {
     <# The pieces the two pages share: the page's own style layer and the live-clock script. Names are the page's (sw-), house tokens only. #>
-    $style = '.sw-clock { font-size: var(--text-h1); font-weight: 600; margin: var(--spacing-2) 0; }' + "`n" +
+    $style = '.sw-clock { font-size: var(--text-h1); font-weight: var(--font-weight-bold); margin: var(--spacing-2) 0; }' + "`n" +
         # Five cards to a row, then two and one on a narrow screen (the owner, October 24, 2026).
         # A grid of the page's own rather than a .grid-3, so a group takes no top margin; the space between groups is
         # .sw-groups' gap instead. The house .card-grid beside the page's own columns gives the group its padding and surface (the owner, October 28, 2026).
@@ -960,7 +960,7 @@ function Format-StopwatchPageShell {
         # A card is the house one (Format-HubCardLinkHtml, #3566), its lines in the house text sizes and nothing else
         # (the owner, October 24, 2026). On a run card the start is the card's header (base, 800), the prompt label the
         # least visible line under it (the description), and the time under it (the value) with its change beside it.
-        '.sw-run .menu-item__label { font-weight: 800; }' + "`n" +
+        '.sw-run .menu-item__label { font-weight: var(--font-weight-black); }' + "`n" +
         # A card is three lines at most (the owner, October 26, 2026): the label one line ending in an ellipsis, since a
         # Logbook label is the first line of a prompt, and a card's note beside its time. The run's page shows the label whole.
         '.sw-run .menu-item__sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }' + "`n" +
@@ -968,22 +968,22 @@ function Format-StopwatchPageShell {
         # A label page's plain cards (its prompt, its steps): their lines sit close.
         '.sw-card > p { margin: 0; }' + "`n" +
         '.sw-card > p + p { margin-top: var(--spacing-1); }' + "`n" +
-        '.sw-instruction { font-size: var(--text-sm); font-weight: 400; color: var(--primary-muted); overflow-wrap: anywhere; }' + "`n" +
+        '.sw-instruction { font-size: var(--text-sm); font-weight: var(--font-weight-regular); color: var(--primary-muted); overflow-wrap: anywhere; }' + "`n" +
         # A pinned label's steps (Format-StopwatchPinnedSteps): the instruction line's size and colour, numbered.
-        '.sw-steps { margin: var(--spacing-2) 0 0; padding-left: var(--spacing-5); font-size: var(--text-sm); font-weight: 400; color: var(--primary-muted); }' + "`n" +
+        '.sw-steps { margin: var(--spacing-2) 0 0; padding-left: var(--spacing-5); font-size: var(--text-sm); font-weight: var(--font-weight-regular); color: var(--primary-muted); }' + "`n" +
         '.sw-steps > li + li { margin-top: var(--spacing-1); }' + "`n" +
         # A pinned label's prompt to copy (Format-StopwatchPinnedPrompt): the house has no code block, so this layer draws
         # one from house tokens, in a monospace face so the prompt reads as the text to paste.
         '.sw-prompt { margin: 0; padding: var(--spacing-3); background: var(--bg-2); color: var(--fg-1); border-radius: var(--spacing-2); font-family: ui-monospace, Consolas, monospace; font-size: var(--text-sm); white-space: pre-wrap; overflow-wrap: anywhere; }' + "`n" +
         '.sw-card > .sw-copy { margin-top: var(--spacing-3); }' + "`n" +
-        '.sw-change { margin-left: var(--spacing-2); font-size: var(--text-xs); font-weight: 400; color: var(--primary-muted); }' + "`n" +
+        '.sw-change { margin-left: var(--spacing-2); font-size: var(--text-xs); font-weight: var(--font-weight-regular); color: var(--primary-muted); }' + "`n" +
         '.sw-change--good { color: var(--positive-5); }' + "`n" +
         '.sw-change--bad { color: var(--negative-5); }' + "`n" +
         # A run card's speed (-CardTones, the Logbook's): its time line in colour, green fast, orange medium, red slow, and
         # no band along the card's edge (the owner, October 26, 2026).
-        '.sw-card--fast .sw-time, .sw-card--fast .sw-time .sw-change { color: var(--positive-5); font-weight: 600; }' + "`n" +
-        '.sw-card--medium .sw-time, .sw-card--medium .sw-time .sw-change { color: var(--warning-5); font-weight: 600; }' + "`n" +
-        '.sw-card--slow .sw-time, .sw-card--slow .sw-time .sw-change { color: var(--negative-5); font-weight: 600; }' + "`n" +
+        '.sw-card--fast .sw-time, .sw-card--fast .sw-time .sw-change { color: var(--positive-5); font-weight: var(--font-weight-bold); }' + "`n" +
+        '.sw-card--medium .sw-time, .sw-card--medium .sw-time .sw-change { color: var(--warning-5); font-weight: var(--font-weight-bold); }' + "`n" +
+        '.sw-card--slow .sw-time, .sw-card--slow .sw-time .sw-change { color: var(--negative-5); font-weight: var(--font-weight-bold); }' + "`n" +
         '.sw-left { text-align: left; }' + "`n" +
         '.sw-bar { display: block; min-width: var(--spacing-24); height: var(--spacing-2); background: var(--bg-3); border-radius: var(--spacing-1); overflow: hidden; }' + "`n" +
         '.sw-bar > span { display: block; height: 100%; background: var(--primary); }'
@@ -1167,10 +1167,10 @@ function Format-StopwatchPageHtml {
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $body = New-Object System.Text.StringBuilder
     if ($ReadError) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">The store could not be read: ' + (& $e $ReadError) + '. Nothing is written over it until it reads again, so no new run is recorded.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">The store could not be read: ' + (& $e $ReadError) + '. Nothing is written over it until it reads again, so no new run is recorded.</p>')
     }
     if ($Skipped) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">' + $Skipped + ' run(s) in the store could not be read and are not shown. The next write by a hook drops them; the file as it was is kept beside the store as a .bak.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">' + $Skipped + ' run(s) in the store could not be read and are not shown. The next write by a hook drops them; the file as it was is kept beside the store as a .bak.</p>')
     }
 
     if ($Fetching) {
@@ -1178,7 +1178,7 @@ function Format-StopwatchPageHtml {
         # the page already shows what the last fetch brought, and this one may bring newer runs (#3403).
         $what = if ($SharedMachines -gt 0) { 'Checking origin for newer runs from the other machines. This page reloads in a few seconds to show any.' }
                 else { 'The other machines'' runs are being fetched from origin. This page reloads in a few seconds to show them.' }
-        [void]$body.AppendLine('<p class="msg" role="status">' + $what + '</p>')
+        [void]$body.AppendLine('<p role="status">' + $what + '</p>')
         [void]$body.AppendLine('<script>setTimeout(function () { location.reload(); }, 4000);</script>')
     }
     # One card per prompt label under the page's h1, each linking the label's page (the owner, October 24, 2026). -Flat

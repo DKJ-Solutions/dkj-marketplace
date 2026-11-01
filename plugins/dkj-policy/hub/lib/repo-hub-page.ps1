@@ -102,14 +102,14 @@ function Format-PluginRepoHubHtml {
         if ($product) {
             [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $product -Label 'Product' -Sub ($product + ' -- the server this repo states in Get-DevPreview') -Icon 'product'))
         } else {
-            [void]$sb.AppendLine('<section class="card"><p class="msg" role="status">This repo''s own server is not running. The session-start line says why, and it is started again at the next session start.</p></section>')
+            [void]$sb.AppendLine('<section class="card"><p role="status">This repo''s own server is not running. The session-start line says why, and it is started again at the next session start.</p></section>')
         }
     }
     [void]$sb.AppendLine((Format-HubCardLinkHtml -Href '/repository' -Label 'GitHub' -Sub 'This repo''s facts and its open issues' -Icon 'github'))
     if ($general) {
         foreach ($card in @(Format-HubPageCardsHtml -Pages @(Get-GeneralPages | Where-Object { $_.Href -ne '/issues' }))) { [void]$sb.AppendLine($card) }
     } else {
-        [void]$sb.AppendLine('<section class="card grid__full"><p class="msg" role="status">The general pages server is not running. It starts at the next session start, and its pages are linked here from then on.</p></section>')
+        [void]$sb.AppendLine('<section class="card grid__full"><p role="status">The general pages server is not running. It starts at the next session start, and its pages are linked here from then on.</p></section>')
     }
     [void]$sb.AppendLine('</div>')
 
@@ -119,7 +119,7 @@ function Format-PluginRepoHubHtml {
         [void]$sb.AppendLine('<div class="grid-2">')
         [void]$sb.AppendLine('<div class="grid__head"><h2>Set up a product</h2><p class="card__sub">Two steps, both in this repo''s own files</p></div>')
         [void]$sb.AppendLine('<section class="card grid__full">')
-        [void]$sb.AppendLine('<div class="card__head"><h3 class="card__title">Add a dev server of your own</h3><p class="card__sub">From the next session on, it is the product on this page</p></div>')
+        [void]$sb.AppendLine('<div class="card__head"><h3>Add a dev server of your own</h3><p class="card__sub">From the next session on, it is the product on this page</p></div>')
         [void]$sb.AppendLine('<div>')
         [void]$sb.AppendLine('<p>State <code>Get-DevPreview</code> in this repo''s <code>scripts/repo-config.ps1</code>. The hook then starts that server, or reuses the one already running, and hands out its link beside this toolbox''s.</p>')
         [void]$sb.AppendLine('<pre class="ph-code"><code>function Get-DevPreview {')
@@ -132,7 +132,7 @@ function Format-PluginRepoHubHtml {
         [void]$sb.AppendLine('</div>')
         [void]$sb.AppendLine('</section>')
         [void]$sb.AppendLine('<section class="card grid__full">')
-        [void]$sb.AppendLine('<div class="card__head"><h3 class="card__title">Open it in VS Code</h3><p class="card__sub">In the Simple Browser rather than the system browser</p></div>')
+        [void]$sb.AppendLine('<div class="card__head"><h3>Open it in VS Code</h3><p class="card__sub">In the Simple Browser rather than the system browser</p></div>')
         [void]$sb.AppendLine('<div>')
         [void]$sb.AppendLine('<p>Route the toolbox''s port in this repo''s <code>.vscode/settings.json</code>:</p>')
         [void]$sb.AppendLine('<pre class="ph-code"><code>"workbench.externalUriOpeners": {')
@@ -189,7 +189,7 @@ function Format-PluginRepoRepositoryHtml {
     if ($PagesUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
         [void]$sb.AppendLine((Format-HubCardLinkHtml -Href '/issues' -Label 'Issues' -Sub 'The open issues, grouped by what they wait on' -Icon 'issues'))
     } else {
-        [void]$sb.AppendLine('<section class="card"><p class="msg" role="status">Issues is a general page, and the general pages server is not running. It starts at the next session start.</p></section>')
+        [void]$sb.AppendLine('<section class="card"><p role="status">Issues is a general page, and the general pages server is not running. It starts at the next session start.</p></section>')
     }
     if ($gh) {
         [void]$sb.AppendLine((Format-HubCardLinkHtml -Href "$gh/pulls" -Label 'Pull requests' -Sub 'On GitHub' -Icon 'pull-request'))

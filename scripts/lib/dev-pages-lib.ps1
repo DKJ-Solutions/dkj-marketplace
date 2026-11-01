@@ -110,7 +110,7 @@ function Format-ProductHomeHtml {
     if ($HubUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
         [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $HubUrl -Label 'Toolbox' -Sub 'The dkj-policy toolbox: GitHub, Issues, Release notes, the Test gate and every other general page' -Icon 'repository'))
     } else {
-        [void]$sb.AppendLine('<section class="card"><p class="msg" role="status">The toolbox is not running. The dkj-policy dev-preview hook starts it at the next session start.</p></section>')
+        [void]$sb.AppendLine('<section class="card"><p role="status">The toolbox is not running. The dkj-policy dev-preview hook starts it at the next session start.</p></section>')
     }
     foreach ($p in @($Pages)) { [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon)) }
     [void]$sb.AppendLine('</div>')
@@ -266,10 +266,10 @@ function Format-SpecialistPageHtml {
         @{ L = 'Lens'; V = (& $tok $r.LensBytes) },
         @{ L = 'Full read'; V = (& $tok $r.TotalBytes) })))
     if ($ReadError) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">The specialists could not all be read: ' + (& $e $ReadError) + '.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">The specialists could not all be read: ' + (& $e $ReadError) + '.</p>')
     }
     if (-not $Pick.Enabled) {
-        [void]$body.AppendLine('<p class="msg" role="status">Its plugin is not enabled in this repo''s <code>.claude/settings.json</code>: no session here carries its listing, and it has no lens here.</p>')
+        [void]$body.AppendLine('<p role="status">Its plugin is not enabled in this repo''s <code>.claude/settings.json</code>: no session here carries its listing, and it has no lens here.</p>')
     }
     [void]$body.AppendLine('<div class="grid-2" id="about">')
     [void]$body.AppendLine('<section class="card"><div class="card__head"><h2>What it is</h2></div><dl class="facts">')
@@ -339,7 +339,7 @@ function Format-SpecialistTeamHtml {
     $max = if ($rows.Count) { [double]$rows[0].TotalBytes } else { 0 }
     $body = New-Object System.Text.StringBuilder
     if ($ReadError) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">The specialists could not all be read: ' + (& $e $ReadError) + '.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">The specialists could not all be read: ' + (& $e $ReadError) + '.</p>')
     }
     # Its own columns beside the house .card-grid, which gives the group its padding and surface (the house .grid-3
     # is never restyled here); the heading inside it, as a headed group's is, and so each card untitled (#206).
@@ -461,9 +461,10 @@ function Resolve-ProductHouseStyleRequest {
 # 2026): which of the Tokens section's specimen cards each one shows, by the card's own h3 title. A card of that
 # section named by no group is a defect the suite holds against the real specimens.
 # The overview's sections after Tokens fall under two h2s (Maikel, November 1, 2026): Preview holds the sections that
-# show the whole style at once, the themes and the type; every other section is a component and falls under Components,
-# so a section added to specimens.html lands there without an edit here.
-$script:ProductBrandbookPreviewSections = @('themes', 'text')
+# show the whole style at once, the themes; every other section is a component and falls under Components, so a section
+# added to specimens.html lands there without an edit here. A section a token group shows (a heading's Section, the type
+# on the Text page since November 1, 2026) is on neither: its cards live on that group's page (Maikel).
+$script:ProductBrandbookPreviewSections = @('themes')
 
 # A group may set its cards under h2s of its own, -Headings, each naming its cards; its Cards are then those, in order.
 # Color does (Maikel, October 31, 2026): Theme holds the 60-30-10 rule's three shares, and Graphs & Status the series
@@ -474,7 +475,13 @@ $script:ProductBrandbookTokenGroups = @(
             @{ Label = 'Theme'; Cards = @('60', '30', '10') }
             @{ Label = 'Graphs & Status'; Cards = @('Graphs', 'Status') }
         ) }
-    @{ Slug = 'text'; Label = 'Text'; Cards = @('Type scale', 'Font family') }   # the sizes, and the one face token apart from them (Maikel, November 1, 2026)
+    # The sizes and the one face token apart from them (Maikel, November 1, 2026), under an h2 Tokens, and the Text
+    # section's own cards under an h2 Components: a heading with a Section shows all of that section's cards.
+    @{ Slug = 'text'; Label = 'Text'; Cards = @('Font size', 'Font family', 'Font weight')
+        Headings = @(
+            @{ Label = 'Tokens'; Cards = @('Font size', 'Font family', 'Font weight') }
+            @{ Label = 'Components'; Section = 'text' }
+        ) }
     @{ Slug = 'radius'; Label = 'Radius'; Cards = @('Radius') }
     @{ Slug = 'spacing'; Label = 'Spacing'; Cards = @('Spacing scale') }
     @{ Slug = 'size'; Label = 'Size'; Cards = @('Sizes and elevation') }
@@ -489,7 +496,7 @@ function Get-ProductBrandbookTokenCards {
     param([AllowEmptyString()][string]$Inner = '')
     $cards = @()
     foreach ($m in [regex]::Matches($Inner, '(?ms)^  <section class="card[^"]*">.*?^  </section>\r?$')) {
-        $t = [regex]::Match($m.Value, '<h3 class="card__title">([^<]+)</h3>')
+        $t = [regex]::Match($m.Value, '<h3>([^<]+)</h3>')
         $cards += @{ Title = $(if ($t.Success) { [System.Net.WebUtility]::HtmlDecode($t.Groups[1].Value) } else { '' }); Html = $m.Value }
     }
     return $cards
@@ -518,7 +525,7 @@ function Format-ProductHouseStylePageHtml {
         section has returns $null, a 404.
 
         THE OVERVIEW OPENS ON ITS TOKENS (Maikel, October 31, 2026): an h2 Tokens over one card per token group
-        ($script:ProductBrandbookTokenGroups), then a card for every other section, under an h2 Preview (themes, text) or Components (the rest, November 1, 2026). -Token names a group's
+        ($script:ProductBrandbookTokenGroups), then a card for every other section, under an h2 Preview (themes) or Components (the rest, November 1, 2026); a section a group shows is on neither. -Token names a group's
         own page, /tokens/<group>, holding only that group's specimen cards; a group none has, or whose cards the
         file no longer holds, returns $null. /tokens itself is no page since November 1, 2026 (Maikel): $null here, and
         the server redirects it to the overview (Resolve-ProductHouseStyleRedirect).
@@ -542,10 +549,22 @@ function Format-ProductHouseStylePageHtml {
         $picked = @(foreach ($title in $group.Cards) { $all | Where-Object { $_.Title -ceq $title } | Select-Object -First 1 })
         if ($picked.Count -ne @($group.Cards).Count) { return $null }
         $grids = if ($group.ContainsKey('Headings')) {
-            @(foreach ($h in $group.Headings) {
-                $html = @(foreach ($title in $h.Cards) { ($picked | Where-Object { $_.Title -ceq $title } | Select-Object -First 1).Html })
-                '<div class="' + $tokens.Grid + '">' + "`n" + '  <div class="grid__head"><h2>' + (ConvertTo-GeneralPageText $h.Label) + '</h2></div>' + "`n`n" + ($html -join "`n`n") + "`n" + '</div>'
-            }) -join "`n`n"
+            $missing = $false
+            $blocks = @(foreach ($h in $group.Headings) {
+                if ($h.ContainsKey('Section')) {
+                    # Another section's cards, all of them, in that section's own grid; gone from the file is a 404.
+                    $sec = @($split.Sections | Where-Object { $_.Slug -ceq $h.Section }) | Select-Object -First 1
+                    $html = if ($sec) { @(Get-ProductBrandbookTokenCards -Inner $sec.Inner | ForEach-Object { $_.Html }) } else { @() }
+                    if (-not $html.Count) { $missing = $true; continue }
+                    $grid = $sec.Grid
+                } else {
+                    $html = @(foreach ($title in $h.Cards) { ($picked | Where-Object { $_.Title -ceq $title } | Select-Object -First 1).Html })
+                    $grid = $tokens.Grid
+                }
+                '<div class="' + $grid + '">' + "`n" + '  <div class="grid__head"><h2>' + (ConvertTo-GeneralPageText $h.Label) + '</h2></div>' + "`n`n" + ($html -join "`n`n") + "`n" + '</div>'
+            })
+            if ($missing) { return $null }
+            $blocks -join "`n`n"
         } else {
             '<div class="' + $tokens.Grid + '">' + "`n" + (($picked | ForEach-Object { $_.Html }) -join "`n`n") + "`n" + '</div>'
         }
@@ -572,11 +591,16 @@ function Format-ProductHouseStylePageHtml {
         [void]$sb.AppendLine('<div class="grid-3" id="tokens"><div class="grid__head"><h2>' + (ConvertTo-GeneralPageText $tokens.Title) + '</h2></div>')
         foreach ($g in $script:ProductBrandbookTokenGroups) {
             $n = @($all | Where-Object { $g.Cards -ccontains $_.Title }).Count
+            # A heading that shows another section counts that section's cards too.
+            foreach ($h in @(if ($g.ContainsKey('Headings')) { $g.Headings | Where-Object { $_.ContainsKey('Section') } })) {
+                $n += [int](@($split.Sections | Where-Object { $_.Slug -ceq $h.Section }) | Select-Object -First 1).Cards
+            }
             [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ($base + '/tokens/' + $g.Slug) -Label $g.Label -Heading 3 -Sub $(if ($n -eq 1) { '1 specimen' } else { [string]$n + ' specimens' })))
         }
         [void]$sb.AppendLine('</div>')
         # The other sections under two more h2s, Preview and Components, each card an h3 (Maikel, November 1, 2026).
-        $rest = @($split.Sections | Where-Object { $_.Slug -cne 'tokens' })
+        $absorbed = @($script:ProductBrandbookTokenGroups | Where-Object { $_.ContainsKey('Headings') } | ForEach-Object { $_.Headings } | Where-Object { $_.ContainsKey('Section') } | ForEach-Object { $_.Section })
+        $rest = @($split.Sections | Where-Object { $_.Slug -cne 'tokens' -and $absorbed -cnotcontains $_.Slug })
         $groups = @(
             @{ Id = 'preview'; Label = 'Preview'; Sections = @($rest | Where-Object { $script:ProductBrandbookPreviewSections -ccontains $_.Slug }) },
             @{ Id = 'components'; Label = 'Components'; Sections = @($rest | Where-Object { $script:ProductBrandbookPreviewSections -cnotcontains $_.Slug }) }
@@ -676,7 +700,7 @@ function Format-MarketplacePluginsPageHtml {
         -Id ('plugin-' + $p.Name) -Class ('pl-card' + $(if ($p.Enabled) { '' } else { ' pl-card--off' })) }
     $body = New-Object System.Text.StringBuilder
     if ($ReadError) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">The plugins could not all be read: ' + (& $e $ReadError) + '.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">The plugins could not all be read: ' + (& $e $ReadError) + '.</p>')
     }
     $footer = 'Read from this checkout''s <code>.claude-plugin/marketplace.json</code> and each plugin''s <code>.claude-plugin/plugin.json</code> on every request, so it is the tree, not the installed release; enabled or off is <code>.claude/settings.json</code>. What this checkout loads, and any problem with it, is on the toolbox''s Installed plugins page.'
     # An off plugin's card is muted, never hidden.
@@ -750,7 +774,7 @@ function Format-MarketplacePluginsPageHtml {
     # the page opens on its content (#3585). With no description the marketplace's line stands in; with neither, no "?".
     $info = if ($p.Description) { ConvertTo-PluginDescriptionHtml -Text $p.Description } elseif ($p.Summary) { '<p>' + (& $e $p.Summary) + '</p>' } else { '' }
     if (-not $p.Enabled) {
-        [void]$body.AppendLine('<p class="msg" role="status">Not enabled in this repo''s <code>.claude/settings.json</code>: no session here loads it.</p>')
+        [void]$body.AppendLine('<p role="status">Not enabled in this repo''s <code>.claude/settings.json</code>: no session here loads it.</p>')
     }
     if ($p.Name -ceq $addOnParent) {
         # What dkj-policy ships that can be looked at: the house style's specimens (Maikel, October 31, 2026).
@@ -1013,7 +1037,7 @@ function Get-DkjRepoCardStyle {
         # row; the house style cuts it off where it still does not fit and keeps the status mark after it in its
         # place, and .dr-clip does the same for the facts and the checkout (Maikel, October 28, 2026).
         # The h2 cards only: an h3 card (the Consumers overview) keeps the house --text-h3 (Maikel, October 30, 2026).
-        '.dr-repos h2.menu-item__title { font-size: var(--text-h3); }',
+        '.dr-repos .menu-item__label > h2 { font-size: var(--text-h3); }',
         '.dr-clip { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: var(--text-sm); }',
         '.dr-clip code { font-size: var(--text-xs); }',
         # A grid-2 track is 1fr, which never shrinks below what its card holds -- and the session command is one nowrap
@@ -1089,10 +1113,10 @@ function Format-DkjReposPageHtml {
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.Append((Format-ConsumerPageStart -PageName 'DKJ repos' -Trail @(@{ Href = '/consumers'; Label = 'Consumers' }) -Style (Get-DkjRepoCardStyle)))
     if ($Query.Error) {
-        [void]$sb.AppendLine('<p class="msg msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The checkouts on this machine are shown without their issues.</p>')
+        [void]$sb.AppendLine('<p class="msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The checkouts on this machine are shown without their issues.</p>')
     }
     if ($CheckMeta.CheckFailed) {
-        [void]$sb.AppendLine('<p class="msg msg--warn" role="alert">check-consumers.ps1 could not be run: ' + (& $e $CheckMeta.CheckFailed) + '. The cards are shown without their status.</p>')
+        [void]$sb.AppendLine('<p class="msg--warn" role="alert">check-consumers.ps1 could not be run: ' + (& $e $CheckMeta.CheckFailed) + '. The cards are shown without their status.</p>')
     }
     # Four to a row, each card three lines at most -- its name, its facts, its checkout -- a longer one cut off with
     # an ellipsis and whole in its tooltip (Maikel, October 28, 2026). The house grids stop at three, so the four

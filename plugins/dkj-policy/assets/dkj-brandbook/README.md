@@ -70,7 +70,7 @@ that checks the stylesheet's syntax and tokens; the page is the look.
 5. **A page opens on its `h1` and goes straight to its content: no intro paragraph under it** (Dave, for
    every DKJ-Solutions product, October 27, 2026,
    [#3585](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3585)): *"ik moet zuinig zijn met de
-   hoogte van het scherm"* (I have to be economical with screen height). No `.lead`, no `.lede` of the
+   hoogte van het scherm"* (I have to be economical with screen height). No lead paragraph, no `.lede` of the
    repo's own, and no plain `<p>` that explains the page. A sentence saying what the page is for goes in its
    `<meta name="description">`, not on screen. Real content is not an intro: an empty state that says a list
    is empty stays. Where a page does want to say more, as a plugin's page does with its description, it goes behind a
@@ -113,12 +113,13 @@ primary outweighs its paper has spent the 30% as ground.
 | Direction | `--positive-3` and `--negative-3` (also the gain and the loss in charts, so a direction chart can share a view with any series), `--positive-5`, `--negative-5` (numbers in text) | result and direction, never a category. `--positive-5`/`--negative-5` are the text versions of `--positive-3`/`--negative-3`, a step more contrast so a number reads as text: darker on light, lighter on dark |
 | Status | `--positive-3`, `--warning-3`, `--negative-3`, `--warning-5`, `--warning-1`, `--negative-1`, `--positive-1` | badges, meters, notices. `--warning-1`, `--negative-1` and `--positive-1` are the backgrounds of a warning, negative or positive message. The mark inside a status icon (check, cross, "!") is `--bg-1` |
 | Primary | `--primary` | the theme's colour, **one** step (owner, #3235, October 21, 2026): the most saturated colour of the theme's hue that reads on all four paper steps, so the paper reads on it too. **The highlight**: `h1`, the fill of `.btn--primary` (a filled main action, like the filled icon button; #109) and of `.fill-primary`, a state (hover, pressed, sorted, active, today), `strong`, list markers, links, a value meant to stand out, the accent dialog's title and the settings panel's title, and native controls through `accent-color` |
-| Grey | `--primary-muted` | a grey of the theme's colour, for what may recede: it reads extra well (7:1) on the page. `--primary-muted` is the eyebrow, every sub line (`.sub`, `.dialog__sub`, a component's `-sub`), every note (`.note`, on a `<p>` too), the tile label, the pressed `.seg` button, `.badge--info`, `.meter--info`, focus rings, meters and the `--accent` modifiers ([below](#how-far-a-theme-reaches)); on an inverted surface (`.fill-inverse`) those roles take `--bg-4` (`--muted-inverse` until November 1, 2026). Never a status or a number |
-| Text | `--fg-1` … `--fg-4` | what sits **on** the paper: four colours near black on light (near white on dark), in **very small** steps, so `fg-4` is still very dark, only a little less so than `fg-1` (owner, #3235). `fg-1` is **all text**, every paragraph and everything else: labels, table heads, legends, quiet icons, the text on a tinted surface, and the ground of an inverted surface; `fg-2` is `h2` and `.meta` on a span; `fg-3` is `h3`; `fg-4` has no role yet (the breadcrumb's current page took it until the bar turned `--primary`, #3235). On a fill the text switches to the paper ([Fills](#fills-the-text-switches-with-the-ground)) |
+| Grey | `--primary-muted` | a grey of the theme's colour, for what may recede: it reads extra well (7:1) on the page. `--primary-muted` is every sub line (`.dialog__sub`, a component's `-sub`), every note (`.note`, on a `<p>` too, the line under a heading included), the tile label, the pressed `.seg` button, `.badge--info`, `.meter--info`, focus rings, meters and the `--accent` modifiers ([below](#how-far-a-theme-reaches)); on an inverted surface (`.fill-inverse`) those roles take `--bg-4` (`--muted-inverse` until November 1, 2026). Never a status or a number |
+| Text | `--fg-1` … `--fg-4` | what sits **on** the paper: four colours near black on light (near white on dark), in **very small** steps, so `fg-4` is still very dark, only a little less so than `fg-1` (owner, #3235). `fg-1` is **all text**, every paragraph and everything else: labels, table heads, legends, quiet icons, the text on a tinted surface, and the ground of an inverted surface; `fg-2` is `h2` and `.meta` on a span; `fg-3` is the card title (`h3` until November 1, 2026); `fg-4` has no role yet (the breadcrumb's current page took it until the bar turned `--primary`, #3235). On a fill the text switches to the paper ([Fills](#fills-the-text-switches-with-the-ground)) |
 | Elevation | `--shadow-pop` | tooltips |
 | Spacing | `--spacing-0-5` … `--spacing-96` | the spacing scale, same in both modes: `--spacing-N` is N × 4px, a half step (`-0-5`, `-1-5`, …) adds 2px. Every gap, margin and padding uses one, and a repo layer spaces its own components from the same scale |
-| Type | `--text-h1` … `--text-h3`, `--text-base`, `--text-sm`, `--text-xs` | the type scale, same in both modes: 36/22/16 for the headings since November 1, 2026 (Maikel; [below](#the-type-scale-of-november-1-2026)), 32/18/14 before (`h3` at 14px, the body size, and no `h4` or `h5` since October 25, 2026, the owner: [below](#the-heading-cut-of-october-25-2026)) (`h2` 18px since October 25, 2026, the owner; it went from 32 at weight 600 to 24 at 700 on October 24, and keeps the 700), and `.lead` is `--text-base` since the same day (it was `--text-lg`), 14/12/11 for running text (`--text-lg`, 18px, was retired on November 1, 2026). `h1`–`h3` each take the token of their own level, body text is `--text-base`. No heading is larger than 32px (owner's decision, October 22, 2026: as much content as possible on a 900px-high screen, since October 27 one of about 1300 x 900), so `h1` stands apart by its size and colour (by its capitals too until October 24, 2026); it was 48px from October 20, when `--text-h0` was retired. The hero figure is set at `--text-h1`. There is no `h6` either: the 24px `h3` was retired the same day, because it stood too close to `h2`, and every level below moved up one ([below](#the-heading-shift-of-october-20-2026)). The one exception is a section label (`GroupHeading`): it stays a heading for the document outline, but every level renders at `--text-base`, uppercase and muted (owner's decision, October 15, 2026). `--font-serif` was the face of `h1` and `h2` until October 24, 2026, when the owner moved both to the sans; it stayed for a title that kept that face, none did, and it was retired on November 1, 2026 (Maikel) |
+| Type | `--text-h1` … `--text-h3`, `--text-base`, `--text-sm`, `--text-xs` | the type scale, same in both modes: 36/22/16 for the headings since November 1, 2026 (Maikel; [below](#the-type-scale-of-november-1-2026)), 32/18/14 before (`h3` at 14px, the body size, and no `h4` or `h5` since October 25, 2026, the owner: [below](#the-heading-cut-of-october-25-2026)) (`h2` 18px since October 25, 2026, the owner; it went from 32 at weight 600 to 24 at 700 on October 24, and keeps the 700), and `.lead` was `--text-base` from the same day (it was `--text-lg`) until it was retired on November 1, 2026 (Maikel), 14/12/11 for running text (`--text-lg`, 18px, was retired on November 1, 2026). `h1`–`h3` each take the token of their own level, body text is `--text-base`. No heading is larger than 32px (owner's decision, October 22, 2026: as much content as possible on a 900px-high screen, since October 27 one of about 1300 x 900), so `h1` stands apart by its size and colour (by its capitals too until October 24, 2026); it was 48px from October 20, when `--text-h0` was retired. The hero figure is set at `--text-h1`. There is no `h6` either: the 24px `h3` was retired the same day, because it stood too close to `h2`, and every level below moved up one ([below](#the-heading-shift-of-october-20-2026)). The section label (`GroupHeading`), a heading at `--text-base`, uppercase and muted (owner's decision, October 15, 2026), was the one exception until November 1, 2026, when it went (Maikel): the house has one `h3`. `--font-serif` was the face of `h1` and `h2` until October 24, 2026, when the owner moved both to the sans; it stayed for a title that kept that face, none did, and it was retired on November 1, 2026 (Maikel) |
 | Font family | `--font-mono` | a typeface, not a size: the fixed-width face `.prose` sets its `code` and `pre` in, and an app takes for figures or ids that must line up by character. The body face is not a token; it is set on `body` |
+| Font weight | `--font-weight-light` 300, `--font-weight-regular` 500, `--font-weight-bold` 700, `--font-weight-black` 900 | the four weights, same in both modes (Maikel, November 1, 2026; bold and black were named semibold and bold until the same day): raised the same day from 400, 600 and 700/800. A rule sets a weight only through one of these four, never a number: what was 300 is light, 400 regular (body text too), 600 semibold, 700 and 800 bold |
 | Radius | `--radius-1` … `--radius-4`, `--radius-pill` | the corner radii, same in both modes and named like the spacing scale: `--radius-N` is N × 4px, a half step adds 2px, so `--radius-1` 4px, `--radius-1-5` 6px, `--radius-2` 8px, `--radius-2-5` 10px, `--radius-3` 12px; `--radius-pill` rounds the ends fully. Named `xs` to `lg` with a `md-plus` until October 31, 2026 ([below](#the-radius-rename-of-october-31-2026)) |
 | App shell | `--control-h`, `--tap`, `--topbar-h`, `--column-narrow` | sizes for a mobile-first app, same in both modes: 38px for a value field and the button beside it, 44px as the smallest touch target, 56px for the top bar, 512px for the narrow app column |
 
@@ -293,10 +294,10 @@ Two departures from the library followed on October 20, 2026: its `h0` was retir
 and its 24px `h3` was retired with every level below it moving up one.
 **No heading is larger than 36px** (owner's decision, October 22, 2026, at 32px; 36px since November 1, 2026, Maikel): every pixel of a 900px-high screen goes to content,
 so `h1` came down from 48px to `h2`'s 32px, and the hero figure with it. The target screen is now about 1300 x 900 (the owner, October 27, 2026, after 1400 x 600 from October 26; rule 4 under [How to use it](#how-to-use-it)), which makes the reason stronger.
-**The `h1` is in the body sans and its own case, at weight 700** (owner's decision, October 24, 2026). From
+**The `h1` is in the body sans and its own case, at the black weight** (700 until November 1, 2026, `--font-weight-black` since) (owner's decision, October 24, 2026). From
 October 21, 2026 ([#3247](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3247)) it was set in
 capitals, and before that day in `--font-serif`; both went, so it stands apart from the `h2` by its size and
-colour alone.
+weight (`h2` is bold, `--font-weight-bold`, since November 1, 2026, Maikel).
 
 ### The heading shift of October 20, 2026
 
@@ -320,8 +321,8 @@ step too small rather than an error.
 ### The heading cut of October 25, 2026
 
 **`h3` is 14px, the body size, and `h4` and `h5` are gone with their tokens** (owner's decision, October 25,
-2026). Three heading levels remain, and `h3` stands apart from running text by its weight (600) and its colour
-(`--fg-3`) alone:
+2026). Three heading levels remain, and `h3` stands apart from running text by its weight and its colour
+alone (semibold and `--fg-3` until November 1, 2026; light and `--primary` since, Maikel):
 
 | Was | Now |
 |---|---|
@@ -591,8 +592,8 @@ out). Three more things follow it by default, in light and in dark (and a measur
 - **Lines are tinted.** `--bg-3` is every line: borders, row dividers, grid lines and the meter track
   (a separate grid colour was dropped on October 14, 2026: it was too close to the border to tell apart).
 - **The theme picker previews it:** each swatch shows its own theme's page, with the primary as the dot.
-- **Links are the theme's colour**, as `--primary` (owner's decision, October 15, 2026). **`h1` and `h2` are
-  `--primary`, `.meta` on a span is `--fg-2` and `h3` is `--fg-3`** (the owner, October 24, 2026, for `h2`:
+- **Links are the theme's colour**, as `--primary` (owner's decision, October 15, 2026). **`h1`, `h2` and `h3` are
+  `--primary`, and `.meta` on a span is `--fg-2`** (Maikel, November 1, 2026, for `h3`, which was `--fg-3`; the owner, October 24, 2026, for `h2`:
   from #3235 until then it was `--fg-2`, and before #3235 `h2` and `h3`–`h5` were steps of the colour).
 - **On a fill the text switches** (#3235, the owner: *"h2 heeft niet altijd dezelfde kleur"*, an h2 does not always have the same colour). See
   [Fills](#fills-the-text-switches-with-the-ground).
@@ -605,12 +606,12 @@ out). Three more things follow it by default, in light and in dark (and a measur
 reads on the page and on the primary alike, so it is not one colour: `--fg-2` on the page, `--bg-1` on a
 primary fill.
 
-| Class | Ground | Text | A quieter line (`.sub`, `.note`, `.eyebrow`, `.card__sub`) |
+| Class | Ground | Text | A quieter line (`.note`, `.card__sub`) |
 |---|---|---|---|
-| `.fill-primary` | `--primary` | `--bg-1`: headings, paragraphs, `.lead`, `.msg`, `.meta`, `.card__title` and links | `--bg-3` (all four paper steps read on the primary) |
+| `.fill-primary` | `--primary` | `--bg-1`: headings, paragraphs, `.meta` and links | `--bg-3` (all four paper steps read on the primary) |
 | `.fill-inverse` | `--fg-1` | `--bg-1`, the same elements | `--bg-4` (15:1 or better on `--fg-1`) |
 
-The switch is written with `:is()` and stands last in the stylesheet, so it beats `.sub`, `.note`, `p.meta` and the
+The switch is written with `:is()` and stands last in the stylesheet, so it beats `.note`, `p.meta` and the
 zero-weight headings without an `!important`, and a quieter line on a `<p>` keeps its quieter colour. A link weighs
 only one class, so a `.btn` or an app's own class on an `<a>` keeps its colours; its focus ring turns `--bg-1`. A
 component an app puts inside a fill (a button, a badge) keeps its own colours, so a `.btn--primary` on
@@ -623,12 +624,12 @@ the headings take its tint (through `:where()`, so a heading inside a coloured c
 
 **The complete list of reserved names**, so a repo layer knows what not to redefine:
 the page header (`body > header`, `main > header`, with `.header--accent`) and its `.controls` row, `main`/`.container`,
-`.hero`, `.tiles`/`.tile` (with `--accent`), `.card` (with `--accent`, and the head parts `__head`, `__title` (an `h3`), `__sub`, with a `.badge` before the title text, or a plain `h3`), `.grid-2` (and `.grid-3`, the same three to a row, two below 1000px, one below 760px; both keep `--spacing-3` (12px) of padding round their cards on a `--bg-2` surface, each direct `.card` in them one step further on `--bg-3` with its lines moved to `--bg-4`, as does `.card-grid`, which a repo puts on its own card grid beside the class that sets its columns) (with `.grid__head`, which holds a group's `h2`, and `.grid__full`), `.table-wrap`/`.table` (with `--accent`, `.row-total`, and
+`.hero`, `.tiles`/`.tile` (with `--accent`), `.card` (with `--accent`, and the head parts `__head` (with a plain `h3` as the title, a `.badge` before its text where it has one) and `__sub`), `.grid-2` (and `.grid-3`, the same three to a row, two below 1000px, one below 760px; both keep `--spacing-3` (12px) of padding round their cards on a `--bg-2` surface, each direct `.card` in them one step further on `--bg-3` with its lines moved to `--bg-4`, as does `.card-grid`, which a repo puts on its own card grid beside the class that sets its columns) (with `.grid__head`, which holds a group's `h2`, and `.grid__full`), `.table-wrap`/`.table` (with `--accent`, `.row-total`, and
 sortable headers via `.sort`/`.arrow` on `aria-sort`), `.seg` (a segmented switch), `.legend`/`.legend__item` (with
 `--line`), `.swatch`, `.badge` (with `--good`, `--warn`, `--bad`, `--info`, `--neutral`, `--sm`),
 `.badge-row`, `.badge-list` (a `<ul>` of `.badge-row` items), `.meter` (with `--good`, `--warn`, `--bad`, `--info`), `.mini-cards`/`.mini-card` (with
-`--highlight`), `.item-grid`/`.item`, `.notice`, `.note`, `.meta`, `.sub`, `.eyebrow`, `.lead`, `.msg` (with `--warn`), `.facts` (with `--row`: the facts as one row on the page, label over value, no card), `.fill-primary`, `.fill-inverse`, `.page-column`, `.page-title` (the `h1` with a `.page-info-button` right of it, a drawn "?" on a 24px ring with a 1px solid border, in a 44px button, whose `.tooltip--explain` says what the page is about on hover or focus), `.page-cta`, `.num` (tabular
-numerals), `.delta` (with `--up`/`--down`, aliased `.pos`/`.neg`), `.btn` (with `--primary`, and a `:hover`, `:focus-visible` and `:disabled` state for both), `.info-button`, `.tooltip`
+`--highlight`), `.item-grid`/`.item`, `.notice`, `.note` (also the line under a heading: it absorbed `.sub`, and `.eyebrow` is gone, Maikel, November 1, 2026), `.meta` (`.lead` is gone too: it read as a plain `<p>`, Maikel, November 1, 2026), `.msg--positive`, `.msg--warn` and `.msg--error` on a plain `<p>` (`.msg` itself is gone, as every `<p>` has no margin, Maikel, November 1, 2026), `.facts` (with `--row`: the facts as one row on the page, label over value, no card), `.fill-primary`, `.fill-inverse`, `.page-column`, `.page-title` (the `h1` with a `.page-info-button` right of it, a drawn "?" on a 24px ring with a 1px solid border, in a 44px button, whose `.tooltip--explain` says what the page is about on hover or focus), `.page-cta`, `.num` (it absorbed `.amount`: an `svg` in it is a small icon beside the figure, Maikel, November 1, 2026) (tabular
+numerals), `.delta` (with `--up`/`--down`; its aliases `.pos`/`.neg` are gone, Maikel, November 1, 2026), `.btn` (with `--primary`, and a `:hover`, `:focus-visible` and `:disabled` state for both), `.info-button`, `.tooltip`
 (with `--explain`, and `--open` for one anchored to a trigger), `.more` (a disclosure), `.moretoggle` (a full-width read-more button), `.chart` (the SVG chart scope),
 `.theme-picker` (with `__row`, `__label`, `__swatches`), `.theme-swatch` (with `--light`, `--dark`) and
 `.theme-settings` (with `--floating`, `__toggle`, `__open`, `__close`, `__panel`, `__title`, `__group`,
@@ -639,7 +640,7 @@ numerals), `.delta` (with `--up`/`--down`, aliased `.pos`/`.neg`), `.btn` (with 
 `--cancel`, `--back`), and `--drawer`), `.topbar` (with `__inner`, `__brand`, `__name`), `.menu-list`,
 `.menu-row` (with `__label`, `__value`), `.menu-item` (with `__icon`, `__label`, `__chevron`),
 `.breadcrumbs` (with `__sep`), `.breadcrumbs-bar` ([below](#every-page-the-breadcrumb-bar)) and
-`.sr-only`. The brand-book components ([below](#brandbook-app-components)) reserve these too: `.alert` (`__title`, `__icon`), `.banner` (`--accent`, `__lead`), `.panel` (`--accent`, `--positive`, `--button`, `__label`, `__value`), `.chip` (`--yes`, `--no`, `--todo`), `.tag` (`--info`, `--warn`), `.filter-chips`/`.filter-chip` (`__check`, `__dot`, and `.filter-chips__clear`), `.round-toggle`, `.badge-toggle`, `.help`, `.more--structured` (`.more__title`, `__meta`, `__trailing`, `__version`), `.group-heading` (`__count`, `__count--over`), `.question-head`, `.verdict`, `.amount`, `.answer` (`__label`, `__value`), `.flash`, `.page-header`, `.field__fixed`, `.check`, `.stepper` (`--lg`), `.combo` (`__input` (with `--under`), `__picked`, `__glass`, `__list`, `__option` with `--own`, `--more`, `__name`, `__meta`), `.value-box` (`__num` with `--lg`, `--negative`, `--positive`, `--regular`, `__was`, `__unit`, `--changed`, `--flush`), `.stat-rows` (`--help`)/`.stat-row` (`__name`, `__sub`, `__help`, `__op`, `--help`, `--formula`, `--head`), `.step-head` (`__value`), `.info-rows` (`--info`, `__head`, `__list`), `.info-row` (`__box`, `__named`, `__value` with `--placeholder`), `.info-dot`, `.info-stem`, `.bill` (`--qty`, `__head`, `__slot`, `__name`, `__qty`, `__price`, `__action`, `__subtotal`, `__total`), `.compare`, `.calc` (`--boxed`, `__row`, `__box`, `__what`, `__sub`, `__op`, `__num`, `__result`), `.calc-section` (`__question`), `.date-list`/`.date-row` (`--near`, `--today`, `--invalid`, `--link`, `__when`, `__main`, `__body`, `__title`, `__sub`, `__trailing`, `__icon`, `__reason`), `.figure` (`--ratio-*`, `--contain`, `__frame`, `__placeholder`, `__glyph`, `__label`, `__caption`), `.prose` (`--sm`, `--fill`), `.chart-detail`, `.chart-row`, `.chart-swatch`, `.chart-figure`, and the additions to existing classes: `.card--open`, `.card--invalid`, `.msg--error`, `.table .row-negative`/`.row-positive`/`.row-warn`, `.table .col-start`/`.col-end`, `.facts__detail`, `.facts__total` and `.chart .bar--active`. Each is commented in the file.
+`.sr-only`. The brand-book components ([below](#brandbook-app-components)) reserve these too: `.alert` (`__title`, `__icon`), `.banner` (`--accent`, `__lead`), `.panel` (`--accent`, `--positive`, `--button`, `__label`, `__value`), `.chip` (`--yes`, `--no`, `--todo`), `.tag` (`--info`, `--warn`), `.filter-chips`/`.filter-chip` (`__check`, `__dot`, and `.filter-chips__clear`), `.round-toggle`, `.badge-toggle`, `.help`, `.more--structured` (`.more__title`, `__meta`, `__trailing`, `__version`), `.question-head` (the answer line under it is a plain `<p>`; `.verdict` is gone, Maikel, November 1, 2026), `.answer` (`__label`, `__value`), `.flash`, `.page-header`, `.field__fixed`, `.check`, `.stepper` (`--lg`), `.combo` (`__input` (with `--under`), `__picked`, `__glass`, `__list`, `__option` with `--own`, `--more`, `__name`, `__meta`), `.value-box` (`__num` with `--lg`, `--negative`, `--positive`, `--regular`, `__was`, `__unit`, `--changed`, `--flush`), `.stat-rows` (`--help`)/`.stat-row` (`__name`, `__sub`, `__help`, `__op`, `--help`, `--formula`, `--head`), `.step-head` (`__value`), `.info-rows` (`--info`, `__head`, `__list`), `.info-row` (`__box`, `__named`, `__value` with `--placeholder`), `.info-dot`, `.info-stem`, `.bill` (`--qty`, `__head`, `__slot`, `__name`, `__qty`, `__price`, `__action`, `__subtotal`, `__total`), `.compare`, `.calc` (`--boxed`, `__row`, `__box`, `__what`, `__sub`, `__op`, `__num`, `__result`), `.calc-section` (`__question`), `.date-list`/`.date-row` (`--near`, `--today`, `--invalid`, `--link`, `__when`, `__main`, `__body`, `__title`, `__sub`, `__trailing`, `__icon`, `__reason`), `.figure` (`--ratio-*`, `--contain`, `__frame`, `__placeholder`, `__glyph`, `__label`, `__caption`), `.prose` (`--sm`, `--fill`), `.chart-detail`, `.chart-row`, `.chart-swatch`, `.chart-figure`, and the additions to existing classes: `.card--open`, `.card--invalid`, `.msg--error`, `.table .row-negative`/`.row-positive`/`.row-warn`, `.table .col-start`/`.col-end`, `.facts__detail`, `.facts__total` and `.chart .bar--active`. Each is commented in the file.
 
 **Focus and targets.** Every interactive house class shows a visible focus ring on keyboard focus (an SVG
 `.chart .bar` shows a stroke instead), and its hit area is at least 44px (`--tap`) high where the mark is
@@ -662,7 +663,7 @@ and a side drawer, a top bar and a menu list. The group sits at the end of
   phone and, on a computer, the same width.
 - **Buttons.** `.btn--touch` and `.btn--block` are modifiers of `.btn`, so the `.btn` hover, focus and disabled states
   covers them too, `.btn--touch.btn--primary` included.
-- **Dialog.** A native `<dialog>` opened with `showModal`. Put `.dialog__title` on an `h3` or a `p`; in a
+- **Dialog.** A native `<dialog>` opened with `showModal`. Its title is the `h3` in `.dialog__head`, with no class, or a `p.dialog__title` where it is no heading; in a
   `.dialog--drawer` it is bold. The page stands still behind a modal
   (`html:has(dialog:modal)`), and `html:has(.topbar)` adds the scroll padding for the top bar.
   `.dialog--drawer` slides in from the side. A dialog on top of a dialog sets `--dialog-scale` (default
@@ -711,9 +712,9 @@ Both are gone: an `h2` may now title a card, as the Stopwatch's label cards do.
   `.grid__head` (the `h2`, then a `p.card__sub`), then the cards; a card with `.grid__full` takes the whole
   row. In a `.page-column` such a group takes no margin of its own: the column's `gap` is the only space between
   its blocks (Maikel, October 30, 2026; from #3175 it took an extra `--spacing-5` above it).
-- **A card's own title under such a group is still an `h3`**: `.card__head` > `h3.card__title` (room for a
-  `.badge` before the text) or a plain `h3`, then an optional `.card__sub`. A `.card__title` renders at
-  `--text-h3`, in the sans.
+- **A card's own title under such a group is still an `h3`**: `.card__head` > a plain `h3` (with room for a
+  `.badge` before the text), then an optional `.card__sub`. It is set like every `h3`; `.card__title`, which set it
+  apart in `--fg-3` and semibold, is gone (Maikel, November 1, 2026).
 - **A card that stands on its own may carry an `h2`** instead, when it is one of a set of cards that each name
   a subject of the page, rather than a part of one group.
 
@@ -734,7 +735,7 @@ its own.
   down: the product (under its own name), then a page inside it. The last crumb is the current page,
   unlinked, with `aria-current="page"`. The bar stands on the theme's colour, `--primary` (owner, #3235, October 21, 2026), so
   the trail is in the paper steps, which all read on it: the chevron `--bg-3`, the ancestor links `--bg-2` (with
-  a `--bg-1` focus ring), the current page `--bg-1`, every crumb at weight 400 and `--text-base` (owner, October 24, 2026; it was `--text-sm`); a link shows its underline only under the pointer. On the home page itself the trail is that one crumb: the bar is
+  a `--bg-1` focus ring), the current page `--bg-1`, every crumb at the regular weight and `--text-base` (owner, October 24, 2026; it was `--text-sm`); a link shows its underline only under the pointer. On the home page itself the trail is that one crumb: the bar is
   still there, so it sits in the same place on every page.
 - **The labels** are the pages' own names, short, in the app's language. A crumb names a page, never a
   section on a page: an in-page anchor is not a level.
@@ -859,7 +860,7 @@ the open issues and the pull requests moved to the **Repository** page on `/repo
 | 0 | The intro: `h1` **Repository** alone, under the breadcrumb bar, as on every page below the hub; what the page is for goes in its `<meta name="description">`, not under the `h1` (#3585) | `h1` | fixed title; the description is the repo's own |
 | 1 | **The facts**, as one row on the page rather than in a card: label over value | `.facts.facts--row` (a `<dl>`) | the facts are the repo's own |
 | 2 | **Its pages**, a card each: **Issues** first, then the repo's pages on GitHub (its pull requests, its CI runs) where it has a GitHub remote | one `.grid-3` of `.card.card--link` | Issues fixed; the GitHub cards the repo's own |
-| 3 | Where a repo keeps in-flight lists: one stat tile per list, the loading or warning line, and **In flight**, one data card per list under one `h2` | `.tiles` / `.tile`; `.msg` with `role="status"` / `.msg.msg--warn` with `role="alert"`; a `.grid-2` with a `.grid__head`, then one `.card.grid__full` per list around `.table-wrap` / `.table` | the repo's own lists. A count not read yet shows `--` |
+| 3 | Where a repo keeps in-flight lists: one stat tile per list, the loading or warning line, and **In flight**, one data card per list under one `h2` | `.tiles` / `.tile`; a `<p>` with `role="status"` / `.msg--warn` with `role="alert"`; a `.grid-2` with a `.grid__head`, then one `.card.grid__full` per list around `.table-wrap` / `.table` | the repo's own lists. A count not read yet shows `--` |
 | 4 | A footer note naming where the data comes from | `.note` | the repo's own source |
 
 A repo with no in-flight lists leaves block 3 out; this source repo's hub and the plugin's are both such
@@ -875,7 +876,7 @@ stretches over the whole card, so a click anywhere on the card follows it, and t
 not respond, so the two cannot be mistaken for each other. Its label is the page's own name as its breadcrumb
 reads it, short, in the app's language; its description is one line or nothing. A card links a route on the
 same dev server; only the Repository page's GitHub cards leave it. A page that cannot be linked (a product
-whose server is not running, a general pages server that is not up) is a plain `.card` holding one `.msg`
+whose server is not running, a general pages server that is not up) is a plain `.card` holding one `<p>`
 saying so, in the place its card would take. `Format-HubCardLinkHtml` in `dkj-policy`'s
 `hub/lib/general-pages-lib.ps1` writes the card; both served hubs use it, and **every** card link in the hub's
 page code goes through it, since a suite in `dev-pages.tests.ps1` fails on one written by hand
@@ -887,7 +888,7 @@ page code goes through it, since a suite in `dev-pages.tests.ps1` fails on one w
   budget, a run's time), on a line of its own under the description: `.menu-item__value`.
 - **A status badge** in the icon's place, where the card stands for something that has a state (a plugin):
   the house `.badge`.
-- **The label as an `h2`** (`.menu-item__title`, inside a `<div class="menu-item__label">`) where the cards
+- **The label as an `h2`** (a plain `h2` or `h3` inside a `<div class="menu-item__label">`; `.menu-item__title` is gone, Maikel, November 1, 2026) where the cards
   are a page's sections or groups, so the page's outline still names them.
 - **A status mark right after that label** (`-TitleBadgeHtml`: `<h2><span>label</span><span class="badge">`),
   where the state belongs to the name rather than in the icon's place.

@@ -184,7 +184,7 @@ function Format-TestGatePageHtml {
         '.tg-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: var(--spacing-4); align-items: start; }' + "`n" +
         ':is(.tg-cards, .tg-cols) > .card { margin-top: 0; }' + "`n" +
         '.tg-card { padding: var(--spacing-3) var(--spacing-4); }' + "`n" +
-        '.tg-card .menu-item__title { font-size: var(--text-base); }' + "`n" +
+        '.tg-card .menu-item__label > :is(h2, h3) { font-size: var(--text-base); }' + "`n" +
         '.tg-card .dp-bar { margin-top: var(--spacing-2); }' + "`n" +
         '.tg-tips > h3 { margin-top: 0; }' + "`n" +
         '.tg-guards { margin: 0 0 var(--spacing-3); }' + "`n" +
@@ -354,19 +354,19 @@ function Format-TestGatePageHtml {
     # THE OVERVIEW: one card per list, the change's and the measurement's, and no tiles above them (the owner,
     # October 27, 2026): each card carries its own sum and share, and the measurement's counts the unrecorded suites.
     if ($unmeasured) {
-        [void]$body.AppendLine('<p class="msg" role="status">No test gate has been measured in this repo yet. This page fills in once the repo records its suites'' CI durations in <code>scripts/tests/suite-durations.json</code>, which the dkj-policy plugin''s <code>record-suite-durations</code> skill writes from CI runs.</p>')
+        [void]$body.AppendLine('<p role="status">No test gate has been measured in this repo yet. This page fills in once the repo records its suites'' CI durations in <code>scripts/tests/suite-durations.json</code>, which the dkj-policy plugin''s <code>record-suite-durations</code> skill writes from CI runs.</p>')
     } elseif ($ReadError) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">scripts/tests/suite-durations.json could not be read: ' + (& $e $ReadError) + '.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">scripts/tests/suite-durations.json could not be read: ' + (& $e $ReadError) + '.</p>')
     }
     if ($GroupsError) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">scripts/tests/suite-groups.json could not be read: ' + (& $e $GroupsError) + ', so the suites are listed ungrouped.</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">scripts/tests/suite-groups.json could not be read: ' + (& $e $GroupsError) + ', so the suites are listed ungrouped.</p>')
     }
     if (@($Model.Ungrouped).Count) {
-        [void]$body.AppendLine('<p class="msg msg--warn" role="alert">In no group of scripts/tests/suite-groups.json: ' +
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">In no group of scripts/tests/suite-groups.json: ' +
             ((@($Model.Ungrouped) | ForEach-Object { '<code>' + (& $e $_) + '</code>' }) -join ', ') + '.</p>')
     }
     if (@($Model.Unknown).Count) {
-        [void]$body.AppendLine('<p class="msg" role="status">Grouped but no longer on disk: ' +
+        [void]$body.AppendLine('<p role="status">Grouped but no longer on disk: ' +
             ((@($Model.Unknown) | ForEach-Object { '<code>' + (& $e $_) + '</code>' }) -join ', ') + '.</p>')
     }
     # The house .card-grid beside the page's own columns gives the group its padding and surface (the owner, October 28, 2026).
