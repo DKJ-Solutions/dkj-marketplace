@@ -930,14 +930,7 @@ a.menu-item:hover { background: var(--bg-3); }
 @container (max-width: 24rem) { .more__meta, .more__trailing { order: 2; margin-inline-start: 0; } }
 
 /* ---- Headings and answers ------------------------------------------------------ */
-/* Group heading: a section label that stays a heading for the outline (any level) but is --text-base, uppercase and
-   tracked; __count is a figure at the right, --over when it is past its limit. The heading carries no class (Maikel,
-   November 1, 2026): <div class="group-heading"><h3>Label</h3><span class="group-heading__count">3 / 5</span></div>. */
-.group-heading { display: flex; justify-content: space-between; align-items: baseline; gap: var(--spacing-2); margin: 0 0 var(--spacing-1);
-  font-size: var(--text-base); font-weight: var(--font-weight-bold); color: var(--fg-1); }
-.group-heading > :is(h1, h2, h3) { margin: 0; font-size: inherit; font-weight: var(--font-weight-bold); color: inherit; letter-spacing: 0.04em; text-transform: uppercase; }
-.group-heading__count { font-variant-numeric: tabular-nums; letter-spacing: 0; text-transform: none; white-space: nowrap; }
-.group-heading__count--over { color: var(--negative-5); }
+/* .group-heading is gone (Maikel, November 1, 2026): the house has one h3, and a group's label is that h3. */
 /* A question: a title with its answer .chip at the right, then the answer line, a plain <p> (a <strong> in it where it
    is a verdict). .verdict, which was that line, is gone (Maikel, November 1, 2026): it read as a <p> with a <strong>. */
 .question-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--spacing-1) var(--spacing-3); margin: 0 0 var(--spacing-2); }

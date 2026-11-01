@@ -152,7 +152,7 @@ Assert-True ($css -match '--font-weight-light: 300; --font-weight-regular: 500; 
 
 Write-Host '-- a heading carries no class' -ForegroundColor Cyan
 # Maikel, November 1, 2026: no h1, h2 or h3 has a class name; its place (.card__head > h3, .menu-item__label > h2,
-# .group-heading > h3, .dialog__head h3) styles it. Held over every page, pattern and generator this repo ships, as
+# .dialog__head h3) styles it. Held over every page, pattern and generator this repo ships, as
 # literal markup and as a heading a .ps1 builds with its level spliced in ('<h' + $n + ' class=...').
 $headingFiles = @(git -C $RepoRoot ls-files -- 'plugins/*.html' 'plugins/*.ps1' 'plugins/*.js' 'scripts/lib/*.ps1' 'scripts/dashboard/*.ps1') |
     Where-Object { $_ -notmatch '/releases/' }
