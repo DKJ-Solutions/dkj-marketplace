@@ -45,6 +45,7 @@
 - [x] The legend and the swatch move from the Meters card, where they keyed nothing, to above the Chart scope chart: One/Two/Three in `--graph-1`..`--graph-3` name the bars, and the `--line` item names a new average line in `--fg-2` (the README names no colour for a reference line, and all three graph slots are taken)
 - [x] `dev-pages-lib.ps1`: the brand book overview sets every section but Tokens under a second h2, Preview, each card an h3; asserted in `dev-pages.tests.ps1`
 - [x] A third h2, Components: Preview keeps Themes and Text (`$script:ProductBrandbookPreviewSections`), every other section falls under Components, so a new section lands there without an edit; asserted in the same suite
+- [x] The Text section's two grab-bag cards become four, one subject each (Headings, Running text, Numbers, Messages and group headings), every sample on a labelled row (`.spec-rows`/`.spec-label`) with its class beside it and its own margins zeroed
 
 ### TEST
 
@@ -52,7 +53,7 @@
 
 ### DEPLOY: fix/chart-specimen-third-bar-graph-3
 
-The brand book's Chart scope specimen draws its three plain category bars in `--graph-1`, `--graph-2` and `--graph-3`. The third bar was `--positive-3`, a direction colour the README reserves for gain and never for a category, so the specimen taught the very mix the token table forbids. It came in with the static specimen page (#3493), carried over from the retired app's direction charts. The legend and the swatch beside text sat in the Meters card, keying `--graph` series that card does not draw; they now sit above the chart whose bars they name, with an average line in `--fg-2` to show the line item, and the card is called Meters. The brand book's overview now has three h2s: Tokens, Preview (Themes and Text, the whole style at once) and Components (Actions, Surfaces, Tables, Forms and every other section), each section card an h3.
+The brand book's Chart scope specimen draws its three plain category bars in `--graph-1`, `--graph-2` and `--graph-3`. The third bar was `--positive-3`, a direction colour the README reserves for gain and never for a category, so the specimen taught the very mix the token table forbids. It came in with the static specimen page (#3493), carried over from the retired app's direction charts. The legend and the swatch beside text sat in the Meters card, keying `--graph` series that card does not draw; they now sit above the chart whose bars they name, with an average line in `--fg-2` to show the line item, and the card is called Meters. The brand book's overview now has three h2s: Tokens, Preview (Themes and Text, the whole style at once) and Components (Actions, Surfaces, Tables, Forms and every other section), each section card an h3. The Text page reads as four cards of one subject each, every sample on its own row with the class that draws it beside it, where two cards used to stack fifteen unlabelled samples on uneven margins.
 
 **Score:** 2
 
@@ -64,5 +65,5 @@ A reader building a chart from the brand book now sees the categorical slots use
 
 #### Pull Request
 
-The chart specimen keys its own bars, and the brand book overview gets Preview and Components headings
+The chart specimen keys its own bars, the brand book overview gets Preview and Components headings, and the Text page is labelled
 

@@ -16,6 +16,13 @@
 .spec-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--spacing-3); }
 .spec-themes .theme-swatch { display: block; width: auto; height: auto; padding: var(--spacing-3); border-radius: var(--radius-3); cursor: default; text-align: left; color: var(--fg-1); }
 .spec-themes .theme-swatch h3 { margin: 0; }
+/* A labelled row: the class on the left, its sample on the right, so a reader sees which is which; a sample's own
+   margins are zeroed inside it so every row sits on the same rhythm. One column at phone width. */
+.spec-rows { display: grid; gap: var(--spacing-3); }
+.spec-label { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); align-items: baseline; gap: var(--spacing-3); }
+.spec-label > .note { margin: 0; overflow-wrap: anywhere; }
+.spec-label > :last-child { margin: 0; min-width: 0; }
+@media (max-width: 480px) { .spec-label { grid-template-columns: minmax(0, 1fr); gap: var(--spacing-1); } }
 .spec-space { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); align-items: center; gap: var(--spacing-2); }
 .spec-bar { display: block; width: var(--w); max-width: 100%; height: var(--spacing-2); border-radius: var(--radius-1); background: var(--primary-muted); }
 .spec-radius { display: block; width: var(--spacing-12); height: var(--spacing-12); border: 2px solid var(--primary-muted); background: var(--bg-3); }
@@ -233,32 +240,46 @@
   <div class="grid__head"><h2 id="hs-text">Text</h2><p class="card__sub">Headings, running text, links, numbers and message lines</p></div>
 
   <section class="card">
-    <div class="card__head"><h3 class="card__title">Headings and running text</h3><p class="card__sub">h2, h3, .eyebrow, .sub, .lead, .meta, .muted, .note, .footer-note</p></div>
-    <div class="spec-stack">
-      <p class="eyebrow">Eyebrow</p>
-      <h2>Heading two</h2>
-      <p class="sub">A sub line under a heading.</p>
-      <h3>Heading three</h3>
-      <p class="lead">A lead paragraph, held to a readable measure.</p>
-      <p>A plain paragraph with a <a href="#hs-text">link</a> and <strong>strong text</strong>.</p>
-      <p><span class="meta">.meta on a span</span> and <span class="muted">.muted</span></p>
-      <p class="note">A note.</p>
-      <p class="footer-note">A footer note.</p>
+    <div class="card__head"><h3 class="card__title">Headings</h3><p class="card__sub">.eyebrow, h2, .sub, h3</p></div>
+    <div class="spec-rows">
+      <div class="spec-label"><span class="note">.eyebrow</span><p class="eyebrow">Eyebrow</p></div>
+      <div class="spec-label"><span class="note">h2</span><h2>Heading two</h2></div>
+      <div class="spec-label"><span class="note">.sub</span><p class="sub">A sub line under a heading.</p></div>
+      <div class="spec-label"><span class="note">h3</span><h3>Heading three</h3></div>
     </div>
   </section>
 
   <section class="card">
-    <div class="card__head"><h3 class="card__title">Numbers, messages, group heading</h3><p class="card__sub">.num, .delta, .msg, .group-heading, .verdict, .amount</p></div>
-    <div class="spec-stack">
-      <p>Tabular figures: <span class="num">1,234.50</span> <span class="num">9.99</span></p>
-      <p><span class="delta delta--up">+1,2%</span> <span class="delta delta--down">-1,1%</span> <span class="pos">pos</span> <span class="neg">neg</span></p>
-      <p class="msg">A message line.</p>
-      <p class="msg msg--warn">A warning line.</p>
-      <p class="msg msg--error">An error line.</p>
-      <h3 class="group-heading"><span>Group heading</span><span class="group-heading__count">3 / 5</span></h3>
-      <h3 class="group-heading"><span>Over the limit</span><span class="group-heading__count group-heading__count--over">6 / 5</span></h3>
-      <p class="verdict">A verdict: yes, this holds.</p>
-      <span class="amount"><span>12,50</span><svg width="12" height="12" aria-hidden="true"><use href="#hs-plus"/></svg></span>
+    <div class="card__head"><h3 class="card__title">Running text</h3><p class="card__sub">.lead, p, a, strong, .meta, .muted, .note, .footer-note</p></div>
+    <div class="spec-rows">
+      <div class="spec-label"><span class="note">.lead</span><p class="lead">A lead paragraph, held to a readable measure.</p></div>
+      <div class="spec-label"><span class="note">p, a, strong</span><p>A plain paragraph with a <a href="#hs-text">link</a> and <strong>strong text</strong>.</p></div>
+      <div class="spec-label"><span class="note">.meta</span><p><span class="meta">Meta on a span</span></p></div>
+      <div class="spec-label"><span class="note">.muted</span><p><span class="muted">Muted text</span></p></div>
+      <div class="spec-label"><span class="note">.note</span><p class="note">A note.</p></div>
+      <div class="spec-label"><span class="note">.footer-note</span><p class="footer-note">A footer note.</p></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h3 class="card__title">Numbers</h3><p class="card__sub">.num, .delta, .pos, .neg, .amount</p></div>
+    <div class="spec-rows">
+      <div class="spec-label"><span class="note">.num</span><p><span class="num">1,234.50</span> <span class="num">9.99</span></p></div>
+      <div class="spec-label"><span class="note">.delta</span><p><span class="delta delta--up">+1,2%</span> <span class="delta delta--down">-1,1%</span></p></div>
+      <div class="spec-label"><span class="note">.pos, .neg</span><p><span class="pos">+12,50</span> <span class="neg">-3,20</span></p></div>
+      <div class="spec-label"><span class="note">.amount</span><p><span class="amount"><span>12,50</span><svg width="12" height="12" aria-hidden="true"><use href="#hs-plus"/></svg></span></p></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h3 class="card__title">Messages and group headings</h3><p class="card__sub">.msg, --warn, --error, .verdict, .group-heading</p></div>
+    <div class="spec-rows">
+      <div class="spec-label"><span class="note">.msg</span><p class="msg">A message line.</p></div>
+      <div class="spec-label"><span class="note">.msg--warn</span><p class="msg msg--warn">A warning line.</p></div>
+      <div class="spec-label"><span class="note">.msg--error</span><p class="msg msg--error">An error line.</p></div>
+      <div class="spec-label"><span class="note">.verdict</span><p class="verdict">A verdict: yes, this holds.</p></div>
+      <div class="spec-label"><span class="note">.group-heading</span><h3 class="group-heading"><span>Group heading</span><span class="group-heading__count">3 / 5</span></h3></div>
+      <div class="spec-label"><span class="note">__count--over</span><h3 class="group-heading"><span>Over the limit</span><span class="group-heading__count group-heading__count--over">6 / 5</span></h3></div>
     </div>
   </section>
 </div>
