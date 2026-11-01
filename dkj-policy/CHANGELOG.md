@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**9 / 14 minor entries** <!-- pending-tally -->
+**10 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/note-absorbs-muted-and-footer-note · 20261101-104821Z
+
+The house style has one class for quiet text, `.note`. `.muted` and `.footer-note` drew the same `--primary-muted` text at `--text-sm` under three names, told apart only by a top margin the page column already took away, so they are retired into `.note` (Maikel, November 1, 2026). The README carries the rename table, and every page the hub and the dashboards render uses `.note`, so nothing here looks different. `--font-serif`, kept after October 24 for a title that never came, is retired with them; `--font-mono` stays, and the brand book now shows it as what it is, a typeface: its own Font family card and table row instead of a line in the type scale. The headings grow a step, 36/22/16 where they were 32/18/14, and `--text-lg` is retired into `--text-h3`. Both cards set each token's name in the token itself, with no note beside it, and in its size alone: no heading colour or weight, which belong to the elements on the Text page.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+An app taking this release renames `.muted` and `.footer-note` to `.note` in its own markup, by the README's table. A use left behind loses its grey and reads as plain text, without an error, so the rename has to be done rather than noticed. An app still reading `--font-serif` falls back to the sans. Headings render larger (36/22/16), and an app moves each `--text-lg` in its own layer to `--text-h3`; one left behind renders at the inherited size.
+
+**Score:** 4
+
+#### Pull Request
+
+Brand book: .note absorbs .muted and .footer-note, a larger heading scale, and --font-serif and --text-lg are retired
+
+Plugins: dkj-policy
+
+[PR #3717](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3717)
+
+---
 
 ### DEPLOY: fix/chart-specimen-third-bar-graph-3 · 20261101-100352Z
 
