@@ -337,10 +337,16 @@ function Get-OrphanInstallRecords {
         (issue #1449). Nothing reports it, because the two halves fail in opposite
         directions: the checkout reports "not installed here", the record reports a checkout.
 
-        IT IS REPORT-ONLY, AND THAT IS NOT TIMIDITY. A record whose path is missing may be a checkout
-        that was moved (the plugin should be re-installed at the new path) or one that was deleted (the
-        record is dead weight). Those want opposite actions and nothing on disk distinguishes them, so
-        the run says which paths are gone and lets the reader say which happened.
+        IT IS REPORT-ONLY, AND IT HANDS OVER THE REMOVAL (#3751). Moved or deleted decides what happens at
+        the NEW location, not whether the old record is any use: after a move, re-installing in the new
+        folder writes a new record, and this one still names a path nothing will open. So the ambiguity
+        never was a reason to withhold the removal. What stood in the way is that `claude plugin
+        uninstall` takes no path -- it picks the record from the directory it runs in -- and measured
+        (Claude Code 2.1.316, #3751) the one sequence that reaches it: recreate the folder empty, uninstall
+        from inside it at the record's own scope, remove the still-empty folder. So each finding carries
+        the plugin, the marketplace and the scope, and the caller renders that sequence. Running it stays
+        the reader's act, for the one case it would be wrong: a path only TEMPORARILY absent (an unmounted
+        drive, a synced folder offline) looks identical to a deleted one.
 
         A DRIVE THAT IS NOT MOUNTED IS THE FALSE POSITIVE TO BEAT, and the caller's probe is what has to
         answer for it. This function tests nothing itself: it takes the answer per path, so a caller on
@@ -367,8 +373,15 @@ function Get-OrphanInstallRecords {
         if (-not $PathExists.ContainsKey($path)) { continue }
         if ($PathExists[$path]) { continue }
 
+        # The two halves of the id, split as Get-RetiredNameInstallRecords splits them: exactly two parts,
+        # or none -- the caller then prints placeholders rather than a guessed name (#3751).
+        $parts = ([string]$r.Id) -split '@'
+        $twoParts = ($parts.Count -eq 2 -and $parts[0] -and $parts[1])
         $orphans += [pscustomobject]@{
             ProjectPath = $path
+            Plugin      = $(if ($twoParts) { [string]$parts[0] } else { '' })
+            Marketplace = $(if ($twoParts) { [string]$parts[1] } else { '' })
+            Scope       = [string]$r.Scope
             # THE FIELD IS 'Id', AND IT USED TO BE 'Plugin' -- which no producer writes. Get-InstallRecord
             # projects every record onto Id/Scope/Version/GitCommitSha/InstallPath/ProjectPath/
             # InstalledAt/LastUpdated, so the old read resolved to $null on every real record and lane 8
@@ -378,7 +391,7 @@ function Get-OrphanInstallRecords {
             # function for #1773; the suite now asserts the id itself.
             Id          = [string]$r.Id
             Reason      = 'the checkout this record was written for is not on this machine any more (moved, renamed, or deleted)'
-            Command     = ''
+            Command     = 'claude plugin uninstall'
         }
     }
 

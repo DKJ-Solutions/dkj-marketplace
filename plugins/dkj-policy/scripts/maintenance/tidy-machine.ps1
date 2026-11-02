@@ -645,17 +645,32 @@ if ($runMachine) {
         # Wrapped for the single-element unwrap described at the stale-lane call above.
         $orphans = @(Get-OrphanInstallRecords -Records @($install.AllRecords) -PathExists $probe)
         if ($orphans.Count -eq 0) { Write-Item 'None.' 'DarkGray' }
-        foreach ($o in $orphans) {
-            $reportedTotal++
-            # Format-SuspectToken, not the raw id: it comes from a JSON key in ~/.claude, and this line
-            # is prose rather than a command -- so the id is sanitized for display and the reader is told
-            # when sanitizing changed it. Until #1773 this read $o.Plugin, a field no producer writes, so
-            # the name was silently absent from every finding.
-            Write-Item "$(Format-SuspectToken -Value ([string]$o.Id)) -> $(Get-DisplayPath $o.ProjectPath)" 'Yellow'
-            Write-Item "    $($o.Reason)" 'DarkGray'
+        # ONE SEQUENCE PER VANISHED FOLDER (#3751): `claude plugin uninstall` takes no path and picks the
+        # record from the directory it runs in, so the folder is recreated empty, every record naming it is
+        # uninstalled from inside it at its own scope, and the folder is removed again. `rmdir` removes only
+        # an EMPTY folder, so it refuses -- visibly -- should anything have been written there. Measured on
+        # one machine: 16 records over 4 folders, 16 removed, no file written into any of them.
+        foreach ($group in @($orphans | Group-Object -Property ProjectPath)) {
+            foreach ($o in @($group.Group)) {
+                $reportedTotal++
+                # Format-SuspectToken, not the raw id: it comes from a JSON key in ~/.claude, and this line
+                # is prose rather than a command -- so the id is sanitized for display and the reader is told
+                # when sanitizing changed it. Until #1773 this read $o.Plugin, a field no producer writes, so
+                # the name was silently absent from every finding.
+                Write-Item "$(Format-SuspectToken -Value ([string]$o.Id)) -> $(Get-DisplayPath $o.ProjectPath)" 'Yellow'
+                Write-Item "    $($o.Reason)" 'DarkGray'
+            }
+            Write-PathHandover -Prefix 'mkdir' -Path $group.Name -Placeholder '<that folder>'
+            Write-PathHandover -Prefix 'cd' -Path $group.Name -Placeholder '<that folder>'
+            foreach ($o in @($group.Group)) {
+                Write-PluginHandover -Prefix $o.Command -Plugin $o.Plugin -Marketplace $o.Marketplace -Scope $o.Scope
+            }
+            Write-Handover 'cd ..'
+            Write-PathHandover -Prefix 'rmdir' -Path $group.Name -Placeholder '<that folder>'
         }
         if ($orphans.Count -gt 0) {
-            Write-Item '  Moved checkout? Re-install the plugin there. Deleted? The record is dead weight. Nothing on disk tells the two apart, so nothing here guesses.' 'DarkGray'
+            Write-Item '  Moved or deleted, the record is dead: a moved checkout gets a NEW record when the plugin is re-installed there. The lines above remove it -- recreate the folder empty, uninstall from inside it, remove it again.' 'DarkGray'
+            Write-Item '  Only for a folder gone for good: a drive not mounted or a synced folder offline looks exactly the same, and there the record is still wanted.' 'DarkGray'
         }
         Write-Item (Get-TidySummaryLine -Lane 'Install records' -Reported $orphans.Count) 'White'
     }

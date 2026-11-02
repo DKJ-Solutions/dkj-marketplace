@@ -39,19 +39,45 @@
 
 ### PLAN
 
+#### Scope
+
+#3751 offered two shapes: a paste-ready handover, or acting behind an explicit flag. This branch builds the
+handover only. Whether `tidy-machine` may remove these records itself is the owner's decision under the
+"only delete what is provably merged" rule, and it is not taken here.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-OrphanInstallRecords` (`tidy-lib.ps1`, both copies) carries the plugin, the marketplace, the
+  record's own scope and the verb, and its docstring drops the "moved or deleted, so nothing guesses" reason
+- [x] Lane 8 (`tidy-machine.ps1`, both copies) prints one sequence per vanished folder: `mkdir`, `cd`, one
+  `claude plugin uninstall <id> --scope <own scope>` per record, `cd ..`, `rmdir`, through the existing
+  paste guards, with the temporarily-absent-path caveat kept visible
+- [x] `tidy-machine` SKILL.md: the lane table and the lanes 8 and 11 section
+- [x] `tidy-lib.tests.ps1`: the new fields, and an id that does not split in two
 
 ### TEST
 
+- [x] `tidy-lib.tests.ps1` standalone: 124 passed, 0 failed
+- [x] Lane 8 rendered against a throwaway home with two records (project and local) on one vanished path:
+  one sequence, both uninstalls at their own scope
+
 ### DEPLOY: feat/3751-lane8-gone-checkout-handover
 
-**Score:**
+`tidy-machine` lane 8 now hands over the removal of an install record whose checkout is gone (#3751).
+`claude plugin uninstall` takes no path and picks the record from the directory it runs in, so for each
+vanished folder the lane prints `mkdir` the folder, `cd` into it, one uninstall per record at that
+record's own scope, `cd ..`, and `rmdir`, which removes only an empty folder. Until now it printed
+"nothing here guesses" and no command, though moved or deleted the old record is dead either way.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+When `tidy-machine` reports install records for a checkout that no longer exists, it now prints the
+commands that remove them, ready to paste. Run them only for a folder that is gone for good. A drive that
+is not mounted, or a synced folder that is offline, looks the same.
+
+**Score:** 2
 
 #### Pull Request
 

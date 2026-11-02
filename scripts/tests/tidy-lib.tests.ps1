@@ -191,13 +191,23 @@ Write-Host '-- 6. orphaned install records --' -ForegroundColor Cyan
 # does not match its producer's is the whole failure, so the id is now asserted too.
 $recs = @(
     [pscustomobject]@{ Id = 'p-here@m';    ProjectPath = 'C:\here' }
-    [pscustomobject]@{ Id = 'p-gone@m';    ProjectPath = 'C:\gone' }
+    [pscustomobject]@{ Id = 'p-gone@m';    ProjectPath = 'C:\gone'; Scope = 'local' }
     [pscustomobject]@{ Id = 'p-unknown@m'; ProjectPath = 'D:\unmounted' }
 )
 $orphans = @(Get-OrphanInstallRecords -Records $recs -PathExists @{ 'C:\here' = $true; 'C:\gone' = $false })
 Assert-Equal 1 $orphans.Count 'only the record whose path is proven gone is an orphan'
 Assert-Equal 'C:\gone' $orphans[0].ProjectPath 'and it is the right one'
 Assert-Equal 'p-gone@m' $orphans[0].Id 'the id travels with the finding -- a finding nobody can name is half a finding'
+
+# THE REMOVAL IS HANDED OVER (#3751): the caller renders recreate-empty, uninstall from inside, remove --
+# so the finding carries the two halves of the id, the verb, and the record's OWN scope (a fixed
+# 'project' cannot remove a record at 'local', inbound #315).
+Assert-Equal 'p-gone' $orphans[0].Plugin 'the plugin half of the id'
+Assert-Equal 'm' $orphans[0].Marketplace 'the marketplace half of the id'
+Assert-Equal 'local' $orphans[0].Scope 'the scope is the record''s own, never a fixed project'
+Assert-Equal 'claude plugin uninstall' $orphans[0].Command 'the verb the caller renders'
+$odd = @(Get-OrphanInstallRecords -Records @([pscustomobject]@{ Id = 'a@b@c'; ProjectPath = 'C:\gone' }) -PathExists @{ 'C:\gone' = $false })
+Assert-True ($odd.Count -eq 1 -and $odd[0].Plugin -eq '' -and $odd[0].Marketplace -eq '') 'an id that does not split in two is still reported, with no guessed name for the caller to print'
 
 # A PATH THE CALLER DID NOT PROBE IS SILENCE, NOT A FINDING. An unmounted drive is the false positive
 # to beat here, and a wrong claim about somebody's disk is worse than saying nothing.
