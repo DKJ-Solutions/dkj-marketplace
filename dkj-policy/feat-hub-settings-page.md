@@ -42,19 +42,24 @@
 ### CREATE
 
 - [x] `Get-GeneralPages`: a Settings card on `/settings`, with a gear icon of its own
-- [x] `Format-HubSettingsPageHtml`: the page, its h1 Settings, then a card headed by the h2 Theme over the brand book's theme picker and its reset
+- [x] `Format-HubSettingsPageHtml`: the page, its h1 Settings, then the group headed by the h2 Theme
 - [x] `serve-general-pages.ps1`: the `/settings` route
-- [x] A card per theme in the house `.card-grid` the Theme h2 heads, laid out by the page's own `.hs-theme` as a wrapping row so each card hugs its swatch and a mode's six stand side by side; a card is clickable as a whole and the active one takes the selected `--primary` as its border, with no h3 (the swatch's own title names it), holding the brand book's picker cut to that theme's swatch alone, drawn from `DKJTheme.themes`; above them a Light/Dark toggle (the house `.seg`) that shows one mode's cards at a time, opening on the current theme's mode; the reset closing their row as a card of the same kind that is itself the button
+- [x] The Theme group: a house `.card-grid` laid out by the page's own `.hs-theme` as a wrapping row
+- [x] A card per theme, drawn from `DKJTheme.themes`, holding the brand book's picker cut to that theme's swatch alone, with no h3 (the swatch's own title names it); each card hugs its swatch, so a mode's six stand side by side
+- [x] A theme card is clickable as a whole; the active one takes the selected `--primary` as its border, and its swatch drops its own ring (the keyboard's focus ring kept)
+- [x] A Light/Dark toggle (the house `.seg`) above them, showing one mode's cards at a time and opening on the current theme's mode
+- [x] The reset closes their row as a card of the same kind that is itself the button, reading Reset
+- [x] Every card in the row takes the same `--bg-4` hover
 - [x] `house-style.css`: one padding for every card group, `--spacing-5`, the one `.grid-3` already took; the README's stale `--spacing-3` corrected
 
 ### TEST
 
-- [x] `dev-pages.tests.ps1`: the page list and the hub's card count updated, the Settings page asserted (578 passed)
-- [x] Served from this branch on 4898: `/settings` answers 200 with the h1, the Theme h2 and the picker, and the hub links it
+- [x] `dev-pages.tests.ps1`: the page list and the hub's card count updated, the Settings page asserted (590 passed)
+- [x] Served from this branch on 4898: `/settings` answers 200 with the h1, the Theme h2, the toggle and the reset card, and the hub links it; the page script passes `node --check`; `check-house-style` OK; reviewed by eye by Dave in the preview
 
 ### DEPLOY: feat/hub-settings-page
 
-The toolbox hub gets a **Settings** card, after Installed plugins and in the site header's menu. Its page, `/settings`, opens on an h2 **Theme** with the brand book's own theme picker one card per theme holding its swatch -- clickable as a whole, the active one bordered in the selected theme's primary -- with a **Light | Dark** toggle above them that shows one mode's six at a time, and a reset at the end of that row, a card that is itself the button -- the same choice the header's settings button makes, so the two always agree.
+The toolbox hub gets a **Settings** card, after Installed plugins and in the site header's menu. Its page, `/settings`, opens on an h2 **Theme** with one card per theme holding the brand book's own swatch for it -- clickable as a whole, the active one bordered in the selected theme's primary -- a **Light | Dark** toggle above them that shows one mode's six at a time, and a **Reset** card at the end of that row. It is the same choice the header's settings button makes, so the two always agree.
 
 **Score:** 2
 
