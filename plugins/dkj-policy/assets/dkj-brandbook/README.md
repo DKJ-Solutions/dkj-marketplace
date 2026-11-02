@@ -854,6 +854,42 @@ every general page of every repo, with the repo's name and `toolbox` after it. A
 **What this changes for an app that takes the update:** nothing, unless it adds a `.site-header`; the
 bar's own colours change only right under one.
 
+#### The menu in the header
+
+**A site header may carry the app's main pages between the brand and the settings button** (Maikel, November 2,
+2026, after the three-zone nav of djcylow: brand, menu, button). The breadcrumb bar under it stays: the menu says
+where you can go, the trail where you are.
+
+- **On a wide header** the links stand in the middle of the space between the name and the button, each a cell the
+  full height of the bar with the `--primary-hover` hover the settings button has; the page you are under carries a
+  `--bg-1` bar along its bottom (`aria-current="page"`).
+- **Narrower than 48rem** the links fold away and a three-line toggle beside the settings button opens them as the
+  house drawer (`dialog.dialog--drawer`, a `.menu-list` of `.menu-item` rows). The width is the **header's own**,
+  through a container query, so the Phone width in the settings folds it as a phone does.
+- **`house-theme.js` wires it** with no call of its own: the toggle opens the dialog its `aria-controls` names as a
+  modal (so Escape and the focus return are the browser's), and a click on the close button or the backdrop, or the
+  header growing wide again, shuts it.
+- **The drawer sits inside the header, after its `.container`**, so `.site-header + .breadcrumbs-bar` still matches.
+
+```html
+<header class="site-header"><div class="container">
+  <a class="site-header__brand" href="/" aria-label="my-app, home"><span class="site-header__name">my-app</span></a>
+  <nav class="site-header__nav" aria-label="Main">
+    <ul class="site-header__menu"><li><a href="/a" aria-current="page">A</a></li><li><a href="/b">B</a></li></ul>
+    <button class="site-header__menu-toggle" type="button" aria-controls="site-menu" aria-expanded="false" aria-label="Menu">(three lines)</button>
+  </nav>
+  <div id="settings"></div>
+</div>
+<dialog class="dialog dialog--drawer site-menu" id="site-menu" aria-label="Menu"><div class="dialog__body">
+  <div class="dialog__head"><p class="dialog__title">Menu</p></div>
+  <button class="dialog__close" type="button" aria-label="Close">(x)</button>
+  <nav class="menu-list" aria-label="Main"><a class="menu-item" href="/a" aria-current="page">..</a><a class="menu-item" href="/b">..</a></nav>
+</div></dialog></header>
+```
+
+**In the hub** the toolbox's menu is its home page's cards in their order (GitHub, Artifacts, Release notes, AI,
+Installed plugins: `Get-HubMenu`, from the same list the cards come from), and a product's is its own pages.
+
 ### The hub
 
 It is called a hub, not a dashboard (owner's call, October 17, 2026, [#199](https://github.com/DKJ-Solutions/dkj-brandbook/issues/199)): its job is to get you to the page you want quickly, while a dashboard is a page that shows how something stands, and the pages below it can be dashboards.

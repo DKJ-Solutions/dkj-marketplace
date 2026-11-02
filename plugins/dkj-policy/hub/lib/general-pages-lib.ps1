@@ -180,11 +180,14 @@ function Format-GeneralPageHtml {
         [AllowEmptyCollection()][object[]]$ParentCrumbs = @(),
         [AllowEmptyString()][string]$HeadAside = '',
         [string]$HomeLabel = 'Tools',
-        [AllowEmptyString()][string]$Info = ''
+        [AllowEmptyString()][string]$Info = '',
+        [AllowNull()][object[]]$Menu = $null
     )
     # EVERY NAMED PAGE CARRIES THE SITE HEADER (owner, October 22, 2026): a caller that names its site and passes no
     # -Brand gets the repo's short name in it, with 'hub' after it, since these are the hub's pages.
     if (-not $Brand -and $SiteName) { $Brand = ConvertTo-SiteHeaderName -RepoName $SiteName; if (-not $BrandTag) { $BrandTag = 'toolbox' } }
+    # -Menu is the site header's menu; a toolbox page that names none gets the toolbox's own (Get-HubMenu).
+    if ($null -eq $Menu) { $Menu = if ($Brand -and $BrandTag -eq 'toolbox') { @(Get-HubMenu) } else { @() } }
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $site = if ($SiteName) { (& $e $SiteName) + ' -- ' } else { '' }
     $sb = New-Object System.Text.StringBuilder
@@ -214,7 +217,7 @@ function Format-GeneralPageHtml {
     # The general banner on every page, not only the home page (#3297), and a bare one too (#3356): ALWAYS the first
     # thing in <body>, above the site header (owner, October 24, 2026).
     [void]$sb.AppendLine((Format-RepoHubBanner))
-    if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href $HubHref -Tag $BrandTag)) }
+    if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href $HubHref -Tag $BrandTag -Menu $Menu -Current (Get-SiteHeaderMenuCurrent -Menu $Menu -Title $Title -ParentCrumbs $ParentCrumbs))) }
     [void]$sb.AppendLine('<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>')
     [void]$sb.AppendLine('<li><a href="' + (& $e $HubHref) + '">' + (& $e $HomeLabel) + '</a></li>')
     $sep = '<span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span>'
@@ -788,19 +791,25 @@ function Format-HubPageCardsHtml {
         to, after them. A GitHub page is the caller's to leave out: the hub's GitHub page links it instead.
     #>
     param([AllowEmptyCollection()][object[]]$Pages = @())
+    foreach ($c in @(Get-HubPageCards -Pages $Pages)) { Format-HubCardLinkHtml -Href $c.Href -Label $c.Label -Sub $c.Sub -Icon $c.Icon }
+}
+
+function Get-HubPageCards {
+    <#
+        The cards Format-HubPageCardsHtml draws for -Pages, as the page or group entries themselves (Href, Label, Sub,
+        Icon), in the same order: it draws them, and the site header's menu (Get-HubMenu) lists them.
+    #>
+    param([AllowEmptyCollection()][object[]]$Pages = @())
     $done = @{}
     foreach ($p in $Pages) {
-        if (-not $p.Group) { Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon; continue }
+        if (-not $p.Group) { $p; continue }
         $g = @(Get-HubGroupCrumbs -Href $p.Group)[0]
         if ($done.ContainsKey($g.Href)) { continue }
         $done[$g.Href] = $true
-        $g = @(Get-HubGroups | Where-Object { $_.Href -eq $g.Href })[0]
-        Format-HubCardLinkHtml -Href $g.Href -Label $g.Label -Sub $g.Sub -Icon $g.Icon
+        @(Get-HubGroups | Where-Object { $_.Href -eq $g.Href })[0]
     }
     $grouped = @(Get-GeneralPages | Where-Object { $_.Group } | ForEach-Object { @(Get-HubGroupCrumbs -Href $_.Group)[0].Href })
-    foreach ($g in @(Get-HubGroups | Where-Object { -not $_.Group -and $grouped -notcontains $_.Href })) {
-        Format-HubCardLinkHtml -Href $g.Href -Label $g.Label -Sub $g.Sub -Icon $g.Icon
-    }
+    foreach ($g in @(Get-HubGroups | Where-Object { -not $_.Group -and $grouped -notcontains $_.Href })) { $g }
 }
 
 function Format-HubGroupPageHtml {
@@ -871,14 +880,53 @@ function Format-SiteHeaderHtml {
         (home), and the settings button's mount (#settings) on the far right. No mark (Dave, November 2, 2026).
         -Tag is the quieter word after the name
         ('hub', 'product'), left out when empty. Both are escaped here.
+        -Menu is the app's main pages, each @{ Label; Href }, in order (house-style.css, "Site header menu"; Maikel,
+        November 2, 2026): drawn between the brand and the settings button, and again as the drawer a phone opens from
+        the toggle. -Current is the Href of the one the page sits under, marked aria-current. No -Menu, no menu.
     #>
-    param([Parameter(Mandatory = $true)][string]$Name, [string]$Href = '/', [AllowEmptyString()][string]$Tag = '')
+    param([Parameter(Mandatory = $true)][string]$Name, [string]$Href = '/', [AllowEmptyString()][string]$Tag = '',
+        [AllowEmptyCollection()][object[]]$Menu = @(), [AllowEmptyString()][string]$Current = '')
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $label = if ($Tag) { "$Name $Tag" } else { $Name }
     $tagHtml = if ($Tag) { ' <span class="site-header__tag">' + (& $e $Tag) + '</span>' } else { '' }
+    $items = @($Menu | Where-Object { $_ -and $_.Label -and $_.Href })
+    $nav = ''; $drawer = ''
+    if ($items.Count) {
+        $cur = { param($i) if ($Current -and $i.Href -eq $Current) { ' aria-current="page"' } else { '' } }
+        $links = ($items | ForEach-Object { '<li><a href="' + (& $e $_.Href) + '"' + (& $cur $_) + '>' + (& $e $_.Label) + '</a></li>' }) -join ''
+        $nav = '<nav class="site-header__nav" aria-label="Main"><ul class="site-header__menu">' + $links + '</ul>' +
+            '<button class="site-header__menu-toggle" type="button" aria-controls="site-menu" aria-expanded="false" aria-label="Menu">' +
+            '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></nav>'
+        $chevron = '<svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg>'
+        $rows = ($items | ForEach-Object { '<a class="menu-item" href="' + (& $e $_.Href) + '"' + (& $cur $_) + '><span class="menu-item__label">' + (& $e $_.Label) + '</span>' + $chevron + '</a>' }) -join ''
+        $drawer = '<dialog class="dialog dialog--drawer site-menu" id="site-menu" aria-label="Menu"><div class="dialog__body">' +
+            '<div class="dialog__head"><p class="dialog__title">Menu</p></div>' +
+            '<button class="dialog__close" type="button" aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
+            '<nav class="menu-list" aria-label="Main">' + $rows + '</nav></div></dialog>'
+    }
     return '<header class="site-header"><div class="container"><a class="site-header__brand" href="' + (& $e $Href) + '" aria-label="' +
         (& $e $label) + ', home"><span class="site-header__name">' + (& $e $Name) +
-        $tagHtml + '</span></a><div id="settings"></div></div></header>' + "`n"
+        $tagHtml + '</span></a>' + $nav + '<div id="settings"></div></div>' + $drawer + '</header>' + "`n"
+}
+
+function Get-HubMenu {
+    <#
+        The toolbox's site header menu (Format-SiteHeaderHtml -Menu): its GitHub page, then the hub's own cards in their
+        order (Get-HubPageCards), each @{ Label; Href }. The same list as the home page's cards, so the two cannot drift.
+    #>
+    @(@{ Label = 'GitHub'; Href = '/repository' }) + @(Get-HubPageCards -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }) | ForEach-Object { @{ Label = $_.Label; Href = $_.Href } })
+}
+
+function Get-SiteHeaderMenuCurrent {
+    <#
+        Which -Menu item a page sits under: the Href of its first parent crumb when it has one, else the item whose Label
+        is the page's -Title. '' when neither names an item.
+    #>
+    param([AllowEmptyCollection()][object[]]$Menu = @(), [AllowEmptyString()][string]$Title = '', [AllowEmptyCollection()][object[]]$ParentCrumbs = @())
+    $first = @($ParentCrumbs | Where-Object { $_ })[0]
+    foreach ($i in @($Menu)) { if ($first -and $i.Href -eq $first.Href) { return $i.Href } }
+    foreach ($i in @($Menu)) { if (-not $first -and $Title -and $i.Label -eq $Title) { return $i.Href } }
+    return ''
 }
 
 function Format-RepoHomeHeadHtml {
@@ -892,12 +940,14 @@ function Format-RepoHomeHeadHtml {
         sections. The caller writes the <head> and '<body>' before it and the sections and </main> after it.
     #>
     param([Parameter(Mandatory = $true)][string]$RepoName, [Parameter(Mandatory = $true)][string]$Lead, [AllowEmptyString()][string]$Brand = '',
-        [AllowEmptyString()][string]$BrandTag = '', [string]$HomeLabel = 'Tools')
+        [AllowEmptyString()][string]$BrandTag = '', [string]$HomeLabel = 'Tools', [AllowNull()][object[]]$Menu = $null)
     $sb = New-Object System.Text.StringBuilder
     # The general banner first, above the site header, as on every hub page (owner, October 24, 2026).
     [void]$sb.AppendLine((Format-RepoHubBanner))
-    # -Brand: the house site header above the bar, as Format-GeneralPageHtml draws it, holding the settings button.
-    if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href '/' -Tag $BrandTag)) }
+    # -Brand: the house site header above the bar, as Format-GeneralPageHtml draws it, holding the settings button and,
+    # on a toolbox or wherever -Menu names one, the menu. The home page sits under none of its items.
+    if ($null -eq $Menu) { $Menu = if ($Brand -and $BrandTag -eq 'toolbox') { @(Get-HubMenu) } else { @() } }
+    if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href '/' -Tag $BrandTag -Menu $Menu)) }
     [void]$sb.AppendLine('<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>')
     [void]$sb.AppendLine('<li><span aria-current="page">' + (ConvertTo-GeneralPageText $HomeLabel) + '</span></li>')
     [void]$sb.AppendLine('</ol></nav></div></div>')
@@ -1805,7 +1855,7 @@ function Format-ReleaseNotesDevPage {
     ) -join "`n"
     if ($Release) { $Html = ([regex]'<a class="back" href="[^"]*">[^<]*</a>\s*').Replace($Html, '', 1) }
     # The site header above the bar, holding the settings button, when the repo is named; else the button floats.
-    $bar = if ($RepoName) { (Format-SiteHeaderHtml -Name (ConvertTo-SiteHeaderName -RepoName $RepoName) -Href $HubHref -Tag 'toolbox') + $bar }
+    $bar = if ($RepoName) { (Format-SiteHeaderHtml -Name (ConvertTo-SiteHeaderName -RepoName $RepoName) -Href $HubHref -Tag 'toolbox' -Menu @(Get-HubMenu) -Current '/release-notes') + $bar }
             else { $bar + "`n" + '<div id="settings" class="theme-settings--floating"></div>' }
     # Under that header the masthead opens with its h1 (#3423): the house page pattern has no eyebrow under a
     # site header, which already names the site. Only here -- the Worker's page has no header, and there the

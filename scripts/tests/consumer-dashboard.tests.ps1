@@ -219,7 +219,8 @@ Assert-True ($html.IndexOf('id="repo-org-beta"') -lt $html.IndexOf('id="repo-org
 Assert-True ($html -match 'href="/refresh\?page=consumers/other"') 'a group page''s re-run comes back to that same group page'
 Assert-True ($html -match 'href="/house-style.css"' -and $html -match 'src="/house-theme.js"') 'the page loads the house style from its own server'
 Assert-True ($html -match 'DKJTheme\.settings\(' -and $html -notmatch 'DKJTheme\.picker\(') 'the theme choice is the house settings button, not a hand-built picker card'
-Assert-True ($html -match '<div id="settings"></div></div></header>' -and $html -notmatch 'theme-settings--floating') 'the settings button sits at the far right of the site header'
+Assert-True ($html -match '(?s)<div id="settings"></div></div>(<dialog class="dialog dialog--drawer site-menu".*?</dialog>)?</header>' -and $html -notmatch 'theme-settings--floating') 'the settings button sits at the far right of the site header'
+Assert-True ($html -match '<li><a href="/consumers" aria-current="page">Consumers</a></li><li><a href="/marketplace">Marketplace</a></li>') 'the header carries the product''s pages as its menu, Consumers marked'
 # Five since the register notes' style went with them (October 28, 2026).
 Assert-True (([regex]::Matches($html, 'var\(--(primary|fg-|bg-)')).Count -ge 5 -and $html -match 'class="cd-link"') 'the chosen theme reaches the page beyond its buttons, through the repo layer''s own theme-colour accents'
 Assert-True ($html -notmatch 'class="eyebrow"' -and $html -match '<header class="site-header"><div class="container"><a class="site-header__brand" href="/"' -and $html -match '<h1>Other repos</h1>' -and $html -match '<main class="page-column">') 'the page keeps the hub frame: the site header in place of the eyebrow, its own h1, the page column'
