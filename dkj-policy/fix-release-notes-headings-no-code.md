@@ -41,17 +41,27 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] v6.3.0 audience notes: two headings reworded to plain words, the class names stay in the text under them
+- [x] Release-notes page rebuilt locally
 
 ### TEST
 
+- [ ] The owner looked at /release-notes/v6.3.0
+- [ ] Lint and test gates via open-pr
+
 ### DEPLOY: fix/release-notes-headings-no-code
 
-**Score:**
+The v6.3.0 release notes follow the brand book's new rule 7 (no `code` element inside an `h1`, `h2` or
+`h3`). Two headings now read "Drop the prose class" and "drop the mark from your site header". The class
+names stay in the text under them. A gate in the release-note form check is #3752.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A -- the wording of two headings on a published release note; nothing a consumer has to do changes.
+
+**Score:** N/A
 
 #### Pull Request
 
