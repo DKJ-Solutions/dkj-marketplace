@@ -32,7 +32,7 @@ function New-HubTimingContext {
     param(
         [Parameter(Mandatory = $true)][string]$RepoRoot,
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/hub',
+        [string]$HubHref = '/',
         [AllowEmptyString()][string]$StopwatchPath = '',
         [AllowEmptyString()][string]$LogbookPath = '',
         [AllowEmptyString()][string]$TranscriptDir = ''

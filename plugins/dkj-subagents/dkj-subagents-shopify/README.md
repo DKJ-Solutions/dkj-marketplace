@@ -43,7 +43,7 @@ insufficient here rather than merely weak:
 |---|---|---|
 | 1 | a theme **publish** — always | no |
 | 2 | a theme **delete** — always, unless the repo opts into a delete marker; the live theme never | only to opt in |
-| 3 | a theme **push** aimed at live — unless authorised | the id half does |
+| 3 | a theme **push** aimed at live — unless authorised, **and** every file it carries is what `origin/<trunk>` holds (#3758, [below](#merged-work-only)) | the id half does; the trunk is `Get-TrunkBranchName`, default `main` |
 | 4 | the same three through the Admin API: `shopify store execute` (or `store:execute`) running `themePublish` or a `role: MAIN` (as 1), `themeDelete` (as 2), or another theme write aimed at live (as 3), read from the command and any `--query-file`/`--variable-file` it names, whether or not `--allow-mutations` is on the line. With no live id configured, every theme write counts as aimed at live; a file it cannot read or place, and a `$(...)`, are refused | the id half does |
 | 5 | a **`git push` to the deploy branch** of a Git-connected live theme (#3014) — unless authorised with the live-push marker. Aimed at it means a refspec whose destination is that branch, `--all`/`--branches`/`--mirror`, a glob or a refspec the shell still expands, or no refspec while that branch is checked out (or while that cannot be told, as after a `cd` or with `git -C` -- so there an explicit refspec or the marker is needed). `gh pr merge` is **not** gated: the deploy ruleset already requires the promotion PR, and the push is what goes around it. On a broken install (no `command-guard-lib.ps1` beside the hook) the target cannot be read, so every `git push` needs the marker | yes: `Get-ShopifyLiveDeployBranch`; unanswered, the rule does not exist |
 
@@ -72,6 +72,22 @@ It is a comment in both shells, so it changes nothing about what runs. **A marke
 environment variable**, because the hook runs as its own process and would not inherit an inline env
 prefix — a variable would have to be set session-wide, which is exactly the state that makes a stray push
 dangerous. A marker authorises **one** command, visibly, in the transcript.
+
+#### Merged work only
+
+**The marker says somebody meant to push to live. It does not say what** (#3758). So an authorised live
+push is also held to the trunk: with `--only`, every named file must hold exactly what `origin/<trunk>`
+holds at that path, and a named file this checkout lacks (which the CLI deletes from live) must be absent
+there too. Without `--only`, the theme root must be clean and its commit equal to `origin/<trunk>` under
+it. A difference in line endings alone is not a difference. Anything else is refused with the files
+named. Merge first, fetch, and push what `live-preflight` composes.
+
+It compares **content, not the checked-out branch**: a push from a work branch whose files equal the
+trunk's passes, and a push from the trunk with an uncommitted edit does not. What it cannot read, it
+refuses: a pattern or a directory in `--only`, a value the shell still expands, a `cd` earlier in the
+command, `--environment`, a `SHOPIFY_FLAG_ONLY`/`_PATH`/`_ENVIRONMENT` on the line, or a checkout
+without `origin/<trunk>`. It does **not** reach an Admin API theme write (rule 4), whose content is inline
+rather than in files, nor files git ignores. The guard's header names each limit.
 
 ## What your repo has to answer
 

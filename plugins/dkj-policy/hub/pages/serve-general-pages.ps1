@@ -497,13 +497,20 @@ try {
                 else { Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($tp.Html)) -Method $method }
                 continue
             }
+            # The AI page became the Claude page on /claude (Maikel, November 2, 2026): an old /ai or /ai/claude/... link
+            # is moved there, the rest of its path kept.
+            if ($path -cmatch '^/ai(?:/claude)?(/.*)?$') {
+                $to = '/claude' + $(if ($Matches[1] -and $Matches[1] -ne '/') { $Matches[1] })
+                Send-LoopbackResponse $stream 301 'Moved Permanently' 'text/plain; charset=utf-8' ($utf8.GetBytes('Moved.')) @{ Location = $to } -Method $method
+                continue
+            }
             $html = $null
             if ($gp = Format-HubGroupPageHtml -Href $path -RepoName (Get-RepoIdentity).Name -RepoRoot $root) {
                 # A group page (Get-HubGroups): /performance, holding SessionStart and the Clock (the owner, October 30, 2026),
-                # and /clock, holding the Stopwatch and the Logbook (October 27, 2026); /performance sits in AI's
-                # Claude section since November 2, 2026, under the same route.
+                # and /clock, holding the Stopwatch and the Logbook (October 27, 2026); /performance sits in
+                # Claude since November 2, 2026, under the same route.
                 $html = $gp
-            } elseif ($path -cmatch '^/ai/claude/specialists/lenses/(specialist-\d{2}-\d{2}-lens)/?$') {
+            } elseif ($path -cmatch '^/claude/specialists/lenses/(specialist-\d{2}-\d{2}-lens)/?$') {
                 # One specialist lens's page, read from this checkout (Maikel, October 30, 2026); a lens it has not is a 404.
                 $html = Format-HubLensPageHtml -Name $Matches[1] -RepoRoot $root -RepoName (Get-RepoIdentity).Name
                 if ($null -eq $html) {

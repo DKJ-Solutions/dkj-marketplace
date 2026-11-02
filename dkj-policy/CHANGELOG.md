@@ -2,7 +2,118 @@
 
 ## [Unreleased]
 
-**7 / 7 minor entries** <!-- pending-tally -->
+**11 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/claude-hub-page · 20261102-220637Z
+
+The hub's AI card is now the Claude card, and its page is `/claude`: Claude is the page's h1, with the Rules,
+Skills, Specialists and Performance cards directly under it, where they sat under a Claude heading on an AI
+page before. Every page below it moves along: `/claude/rules`, `/claude/skills`, `/claude/specialists` and
+each lens's page under it, and every trail through it reads Tools > Claude. An old `/ai` link is redirected
+to its new address. And the cards on every group page (Claude, Performance, Clock) now stand on the page as the
+hub's own do, three to a row, instead of inside a grey group surface that belongs to a heading over smaller cards. Every card icon
+now stands in the middle of its square, so no icon looks shifted beside its neighbours. And there is more room
+in and between the cards: every menu row and card link (a brand book class, so every DKJ page that uses one) keeps
+24px between its icon, label and chevron instead of 16px, and the hub's cards stand 16px apart instead of 12px. Two more brand book changes reach every DKJ page the
+same way: the blocks of a page column stand 20px apart instead of 12px, and an `h2` is 20px instead of 22px, with a card's description 4px under its title.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+The hub is the toolbox every repo running dkj-policy gets: its user finds Claude's pages under Claude itself,
+one click and one heading fewer, and a bookmark to the old address still arrives.
+
+**Score:** 2
+
+#### Pull Request
+
+The hub's AI card is Claude, and its page holds Rules, Skills, Specialists and Performance directly under /claude
+
+Plugins: dkj-policy
+
+[PR #3764](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3764)
+
+---
+
+### DEPLOY: feat/tools-crumb-root · 20261102-214200Z
+
+The toolbox's first crumb, **Tools**, and the site-header name now link `/`, the toolbox's own root,
+instead of `/hub`. Both addresses render the same home page, so nothing a reader lands on changes; the URL
+in the address bar is simply the plain one. `/hub` still answers, so a bookmark or an old link keeps
+working. The README's crumb paragraph no longer describes the product relay retired with #3540 as live.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A toolbox user who clicks Tools sees `localhost:<port>/` in the address bar rather than `/hub`; the page
+is the same.
+
+**Score:** 1
+
+#### Pull Request
+
+The Tools crumb on the toolbox goes to / instead of /hub
+
+Plugins: dkj-policy
+
+[PR #3762](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3762)
+
+---
+
+### DEPLOY: feat/3758-live-push-merged-only · 20261102-213141Z
+
+`guard-live-theme` no longer lets the live-push marker authorise a push on its own (#3758). An
+authorised live push must also carry only what `origin/<trunk>` holds: every `--only` file must match
+the trunk byte for byte (a line-ending difference aside), a file the push would delete must be absent
+from the trunk too, and a push without `--only` needs a clean root whose commit equals the trunk. The
+refusal names each file and says to merge first. A pattern or directory in `--only`, a shell-expanded
+value, a `cd`, `--environment`, a `SHOPIFY_FLAG_ONLY`/`_PATH`/`_ENVIRONMENT` on the line, or a missing
+`origin/<trunk>` is refused, because what it would push cannot be read. The trunk is
+`Get-TrunkBranchName`, default `main`. A second live push on the same line is measured too.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+In a Shopify store repo, a live push of work that is not merged into the trunk is now refused even with
+the marker, so live can no longer hold work the trunk lacks, which a later push from the trunk would
+silently revert. The step-7 push `live-preflight` composes from the merged trunk passes as before.
+
+**Score:** 3
+
+#### Pull Request
+
+guard-live-theme refuses a live push of content the trunk does not hold
+
+Plugins: dkj-subagents-shopify
+
+[PR #3763](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3763)
+
+---
+
+### DEPLOY: feat/site-header-brand-hit-area · 20261102-205736Z
+
+The house site header's brand link is no longer only its text: the whole cell from the bar's left edge to the end of the name, top to bottom, goes home, and it lights up on hover in the header's hover shade -- the same shape the settings cell has at the bar's right end.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every page built on the brand book gets a larger, visible home target in its header, so going home no longer needs a click on the text itself.
+
+**Score:** 2
+
+#### Pull Request
+
+The site header's brand link fills the bar's full height as one clickable cell
+
+Plugins: dkj-policy
+
+[PR #3760](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3760)
+
+---
 
 ### DEPLOY: feat/site-header-nav · 20261102-190626Z
 

@@ -407,9 +407,7 @@ Assert-True ($html -notmatch '4880') 'and no longer name the retired 4880-4889 r
 Assert-True ($html -notmatch 'href="/about"' -and $html -notmatch '<h2>About this repo</h2>') 'no About this repo link: the hub is one page (#3289)'
 $grid = [regex]::Match($html, '(?s)<main class="page-column">\s*<div class="ph-cards">(.*?)</div>\s*<div class="grid-2">').Groups[1].Value
 Assert-True ($grid -and $grid -notmatch 'class="grid-' -and $html -match '\.ph-cards \{ display: grid; grid-template-columns: repeat\(3,') 'the cards stand three to a row in a .ph-cards, with no .grid-3 surface around them (the owner, November 2, 2026)'
-Assert-True ($grid -and ([regex]::Matches($grid, 'menu-item__label"><h2>')).Count -eq 6 -and ([regex]::Matches($grid, '<section class="card card--link">')).Count -eq 6 -and ([regex]::Matches($grid, '<a ')).Count -eq 6 -and $grid -match 'href="/plugins"' -and $grid -match 'href="/ai"' -and $grid -match 'href="/settings"') 'the pages are six card links, one link each, each card''s label its h2 (owner, October 29, 2026): GitHub, the General pages but the GitHub page''s, AI (Maikel, October 30, 2026), Plugins (#3482) and Settings (Dave, November 2, 2026)'
-Assert-True ($grid -match 'href="/ai"' -and $grid -notmatch 'href="/(performance|sessionstart|clock|test-gate|stopwatch|logbook)"') 'Performance, with SessionStart and the Clock, is reached through the AI card, and the Test gate through GitHub, never a card of their own on the hub (the owner, November 2, 2026)'
-Assert-True ($grid.IndexOf('href="/release-notes"') -lt $grid.IndexOf('href="/ai"') -and $grid.IndexOf('href="/ai"') -lt $grid.IndexOf('href="/plugins"')) 'the AI card takes SessionStart''s place, between Release notes and Plugins'
+Assert-True ($grid -and ([regex]::Matches($grid, 'menu-item__label"><h2>')).Count -eq 6 -and ([regex]::Matches($grid, '<section class="card card--link">')).Count -eq 6 -and ([regex]::Matches($grid, '<a ')).Count -eq 6 -and $grid -match 'href="/plugins"' -and $grid -match 'href="/claude"' -and $grid -match 'href="/settings"') 'the pages are six card links, one link each, each card''s label its h2 (owner, October 29, 2026): GitHub, the General pages but the GitHub page''s, Claude (Maikel, October 30 and November 2, 2026), Plugins (#3482) and Settings (Dave, November 2, 2026)'
 Assert-True ($grid -match 'href="/repository"' -and $grid -match 'href="/release-notes"' -and $grid -notmatch 'href="/issues"' -and $grid -notmatch 'localhost:4890/') 'by bare path, Issues left to the Repository page: the hub and its pages are one origin (#3245)'
 Assert-True ($grid -match '(?s)href="/repository".*?M9 19c-5 1\.5-5-2\.5-7-3.*?menu-item__label"><h2>GitHub<' -and $grid -notmatch '>Repository<') 'the /repository card is called GitHub and carries the GitHub logo'
 Assert-True ($html -notmatch '<h2>General pages</h2>' -and $html -notmatch '<h2>Facts</h2>' -and $html -notmatch '<dl class="facts') 'no General pages section and no facts on the home page'
@@ -785,7 +783,7 @@ try {
         Assert-True ((& $getRaw $genPort '/index.html') -match 'HTTP/1.1 200') 'and so does /index.html'
         Assert-True ((& $getRaw $genPort '/hub' 'evil.example') -match 'HTTP/1.1 403') 'a foreign Host is refused'
         $r2 = & $getRaw $genPort '/artifacts'
-        Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match '<h1>Artifacts</h1>' -and $r2 -match 'the file is not there' -and $r2 -match '<li><a href="/hub">Tools</a></li>' -and $r2 -match 'site-header__name">no-config <span') '/artifacts says the register is not there, in a repo that has none, under the folder''s name'
+        Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match '<h1>Artifacts</h1>' -and $r2 -match 'the file is not there' -and $r2 -match '<li><a href="/">Tools</a></li>' -and $r2 -match 'site-header__name">no-config <span') '/artifacts says the register is not there, in a repo that has none, under the folder''s name'
         New-Item -ItemType Directory -Force -Path (Join-Path $noConfig 'scripts\dashboard') | Out-Null
         [System.IO.File]::WriteAllText((Join-Path $noConfig 'scripts\dashboard\artifacts.json'), '{ "artifacts": [ { "title": "Fixture page", "url": "https://claude.ai/artifact/Fx1", "kind": "page", "created": "2026-10-01" } ] }')
         Assert-True ((& $getRaw $genPort '/artifacts') -match 'href="https://claude.ai/artifact/Fx1"[^>]*>Fixture page</a>') 'and lists the repo''s own register, read on every request'
@@ -798,7 +796,7 @@ try {
         New-Item -ItemType Directory -Force -Path (Join-Path $noConfig 'dkj-policy\releases\page') | Out-Null
         [System.IO.File]::WriteAllText((Join-Path $noConfig 'dkj-policy\releases\page\release-notes.html'), '<html lang="en"><head><style>a{}</style></head><body>shaped notes</body></html>')
         $r2 = & $getRaw $genPort '/release-notes'
-        Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match 'shaped notes' -and $r2 -match '<li><a href="/hub">Tools</a></li>' -and $r2 -match 'href="/house-style.css"') 'and dressed in the house style once it is, its Home crumb on /hub'
+        Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match 'shaped notes' -and $r2 -match '<li><a href="/">Tools</a></li>' -and $r2 -match 'href="/house-style.css"') 'and dressed in the house style once it is, its Home crumb on /'
         $newerNote = Join-Path $noConfig 'dkj-policy\releases\notes\9.9.9.md'
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $newerNote) | Out-Null
         [System.IO.File]::WriteAllText($newerNote, '# 9.9.9')

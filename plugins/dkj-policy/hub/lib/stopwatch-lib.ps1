@@ -74,7 +74,7 @@
 
 $script:StopwatchLabelMax = 80
 # Every Stopwatch and Logbook page sits under the hub's Clock page (the owner, October 27, 2026), itself under Performance
-# (October 30, 2026), under AI (November 2, 2026), so its trail reads Home > AI > Performance > Clock > ...:
+# (October 30, 2026), under Claude (November 2, 2026), so its trail reads Home > Claude > Performance > Clock > ...:
 # Get-HubGroupCrumbs -Href '/clock'.
 
 # The step log's reader (#3338), for a ship's steps: dkj-policy's own copy, beside hub/ in the plugin. Guarded: a
@@ -1162,7 +1162,7 @@ function Format-StopwatchPageHtml {
         [hashtable]$CardTones = @{},
         [switch]$Flat,
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/hub',
+        [string]$HubHref = '/',
         [switch]$Shared
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
@@ -1238,7 +1238,7 @@ function Format-StopwatchLabelPageHtml {
         [AllowEmptyString()][string]$StorePath = '',
         [datetime]$Now = [datetime]::UtcNow,
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/hub',
+        [string]$HubHref = '/',
         [switch]$Shared
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
@@ -1303,7 +1303,7 @@ function Format-StopwatchRunPageHtml {
         [AllowEmptyString()][string]$TimeNote = '',
         [switch]$LabelCrumb,
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/hub',
+        [string]$HubHref = '/',
         [switch]$Shared
     )
     $crumbs = @(Get-HubGroupCrumbs -Href '/clock') + @(@{ Label = $ParentLabel; Href = $Route })

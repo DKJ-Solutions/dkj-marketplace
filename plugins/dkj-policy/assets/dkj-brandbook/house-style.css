@@ -129,12 +129,12 @@
      2026 the owner cut the scale to three headings: h3 is 14px, the body size, set apart by weight and
      colour alone, and h4 and h5 were retired with their tokens.
      Headings take the heading token of their own level; body text is --text-base. Same in both modes. */
-  /* No heading above 36px (owner, October 22, 2026, at 32px; 36/22/16 since November 1, 2026, Maikel): a page shows as
+  /* No heading above 36px (owner, October 22, 2026, at 32px; 36/22/16 since November 1, 2026, Maikel; h2 20px since November 2): a page shows as
      much content as it can on a 900px-high screen, so h1 is the top step and stands apart by its size and the theme's
      colour. The hero figure takes it too. --text-lg went the same day: what was set in it takes --text-h3. */
-  --text-h1: 36px; --text-h2: 22px; --text-h3: 16px;
+  --text-h1: 36px; --text-h2: 20px; --text-h3: 16px;
   --text-base: 14px; --text-sm: 12px; --text-xs: 11px;
-  /* The site header's name (.site-header__name): a step of its own just under the h2 size, so the header can be tuned
+  /* The site header's name (.site-header__name): a step of its own, the h2 size since November 2, 2026, so the header can be tuned
      without moving every h2 (Dave, November 2, 2026; it was --text-h3). */
   --text-title: 20px;
 
@@ -217,11 +217,11 @@ body > header, main > header { display: flex; justify-content: space-between; al
 .controls { display: flex; align-items: center; gap: var(--spacing-2); flex-wrap: wrap; }
 .controls .seg, .controls .btn { height: 30px; box-sizing: border-box; }
 .controls .btn { display: inline-flex; align-items: center; padding: 0 var(--spacing-2-5); }
-/* Page column (#141): put it on <main> and its blocks stack with one --spacing-3 gap between them (owner, October 28, 2026; it was --spacing-5), the hub's
+/* Page column (#141): put it on <main> and its blocks stack with one --spacing-5 gap between them (Maikel, November 2, 2026; --spacing-3 from October 28, 2026, and --spacing-5 before), the hub's
    rhythm. .card, .tiles, .notice and .note carry a margin-top of their own, which would add to the gap, so a
    direct child of the column gives it up. .page-cta is the spacing of a primary button under the lead (a <p> that holds
    the button). */
-.page-column { display: grid; gap: var(--spacing-3); align-content: start; padding: var(--spacing-4) var(--spacing-4) var(--spacing-12); }
+.page-column { display: grid; gap: var(--spacing-5); align-content: start; padding: var(--spacing-4) var(--spacing-4) var(--spacing-12); }
 .page-column > .card, .page-column > .tiles, .page-column > .notice, .page-column > .note { margin-top: 0; }
 /* An in-page anchor in the column lands with room above it, clear of the settings button (#156). */
 .page-column [id] { scroll-margin-top: 5rem; }
@@ -750,8 +750,15 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .site-header { display: block; background: var(--primary); color: var(--bg-1); }
 .site-header > .container { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-3);
   max-height: var(--spacing-18); padding-top: var(--spacing-3); padding-bottom: var(--spacing-3); }
-.site-header__brand { display: inline-flex; align-items: center; gap: var(--spacing-3); min-width: 0; min-height: var(--spacing-11); color: var(--bg-1); text-decoration: none; }   /* 44px: the height the retired mark gave the header, kept without it (Dave, November 2, 2026) */
-.site-header__brand:focus-visible { outline: 2px solid var(--bg-1); outline-offset: 4px; }
+/* The brand is a cell the full height of the bar from its left edge, so the whole area around the name goes home,
+   the way the settings cell does at the right end (Maikel, November 2, 2026). The negative margins take the bar's
+   padding back, the padding gives it to the cell, and the min-height adds it back so the bar keeps its 44px line
+   (the height the retired mark gave the header, kept without it: Dave, November 2, 2026). */
+.site-header__brand { display: inline-flex; align-items: center; gap: var(--spacing-3); align-self: stretch; min-width: 0;
+  min-height: calc(var(--spacing-11) + 2 * var(--spacing-3)); margin: calc(-1 * var(--spacing-3)) 0 calc(-1 * var(--spacing-3)) calc(-1 * var(--spacing-4));
+  padding: 0 var(--spacing-4); color: var(--bg-1); text-decoration: none; }
+.site-header__brand:hover { background: var(--primary-hover); }
+.site-header__brand:focus-visible { outline: 2px solid var(--bg-1); outline-offset: -4px; }
 .site-header__name { overflow: hidden; font-size: var(--text-title); font-weight: var(--font-weight-bold); white-space: nowrap; text-overflow: ellipsis; }
 .site-header__tag { font-weight: var(--font-weight-regular); color: var(--bg-3); }
 /* In the header the settings button is a square cell the full height of the bar at its right end, a shade lighter
@@ -815,7 +822,8 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .menu-row .icon-btn { height: var(--control-h); margin-right: calc((var(--tap) - var(--control-h)) / 2); }
 /* A navigation row: a full-width button with icon, label and chevron; a line between items.
    <button class="menu-item"><svg class="menu-item__icon"/><span class="menu-item__label">..</span><svg class="menu-item__chevron"/></button> */
-.menu-item { display: flex; align-items: center; gap: var(--spacing-4); width: 100%; min-height: var(--tap); margin: 0; padding: 0;
+/* Its gap is --spacing-6 between icon, label and chevron (Maikel, November 2, 2026; it was --spacing-4). */
+.menu-item { display: flex; align-items: center; gap: var(--spacing-6); width: 100%; min-height: var(--tap); margin: 0; padding: 0;
   border: 0; border-radius: var(--radius-2); background: none; font: inherit; text-align: left; text-decoration: none; color: var(--fg-1); cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .menu-item + .menu-item { border-top: 1px solid var(--bg-3); border-top-left-radius: 0; border-top-right-radius: 0; }
 .menu-item:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: -2px; }   /* inset, so the ring is not cut off by the panel */
@@ -841,6 +849,8 @@ a.menu-item:hover { background: var(--bg-3); }
    no h1, h2 or h3 does (Maikel, November 1, 2026), so .menu-item__title is gone and its place in the label styles it. */
 .menu-item__value { display: block; margin-top: var(--spacing-1); font-size: var(--text-base); font-weight: var(--font-weight-light); color: var(--fg-1); }
 .menu-item__label > :is(h2, h3) { margin: 0; }
+/* The description stands --spacing-1 under the card's title (Maikel, November 2, 2026; it touched it). */
+.menu-item__label > :is(h2, h3) + .menu-item__sub { margin-top: var(--spacing-1); }
 .menu-item > .badge { flex: none; }
 /* A card's title is ONE line, cut off with an ellipsis where it does not fit the card's width (owner, October 28,
    2026): the plain label's first line, or the h2. A mark after the h2's label (Format-HubCardLinkHtml -TitleBadgeHtml:

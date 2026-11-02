@@ -145,8 +145,8 @@ function Format-GeneralPageHtml {
     <#
         The whole page around -Body. -Title is the page's own name: the last crumb, the h1 and the
         <title> (after -SiteName). -HubHref is where
-        the first crumb, "Home" (#3270), goes: '/hub' on the general server, which answers it with the home page -- or, where a hub relays these pages from its own origin, '/hub' on that hub, which
-        answers it itself (#3168). -Style is the page's own layer, names the house file does not define. -Lead and
+        the first crumb, "Home" (#3270), goes: '/' by default, the general server's own root and its home page. It was '/hub' while these pages could be relayed from a product's origin (#3168), where '/' is the product; nothing relays them any more, and a caller on another origin names its own -HubHref. The server still answers '/hub', so an old link keeps working.
+        -Style is the page's own layer, names the house file does not define. -Lead and
         -FooterNote are markup the caller has escaped. -Lead is the page's <meta name="description">, never a
         paragraph under the h1: screen height is scarce, so a page opens on its h1 and goes straight to its content
         (owner, #3585). -Brand opts into the house site header (Format-SiteHeaderHtml):
@@ -173,7 +173,7 @@ function Format-GeneralPageHtml {
         [AllowEmptyString()][string]$FooterNote = '',
         [string]$ThemeKey = 'general-pages',
         [AllowEmptyString()][string]$SiteName = '',
-        [string]$HubHref = '/hub',
+        [string]$HubHref = '/',
         [AllowEmptyString()][string]$Brand = '',
         [AllowEmptyString()][string]$BrandTag = '',
         [switch]$Bare,
@@ -469,9 +469,8 @@ $script:HubIcons = @{
     'consumers'     = '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M17 11l2 2 4-4"/>'
     'specialists'   = '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/>'
     'dkj-repos'     = '<path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'
-    # The AI group and its Claude page (Maikel, October 30, 2026): two sparkles, Claude's asterisk, a ruled list and
-    # a wrench (Feather's 'tool', MIT); the Specialists card reuses 'specialists' above.
-    'ai'            = '<path d="M10 3l1.8 4.7 4.7 1.8-4.7 1.8L10 16l-1.8-4.7L3.5 9.5l4.7-1.8z"/><path d="M18 14l.9 2.1 2.1.9-2.1.9L18 20l-.9-2.1-2.1-.9 2.1-.9z"/>'
+    # The Claude page and its cards (Maikel, October 30, 2026): Claude's asterisk, a ruled list and a wrench (Feather's
+    # 'tool', MIT); the Specialists card reuses 'specialists' above.
     'claude'        = '<path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/>'
     'rules'         = '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>'
     'lens'          = '<circle cx="11" cy="11" r="6"/><path d="M15.5 15.5L21 21"/>'
@@ -480,11 +479,30 @@ $script:HubIcons = @{
     'skills'        = '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'
 }
 
+# Every icon stands in the middle of its square, a 32px box nobody sees (Maikel, November 2, 2026). A drawing whose
+# middle is not the grid's (12, 12) moves its viewBox by the difference, @(dx, dy) in grid units, so it is centred
+# without being redrawn or scaled. Measured as the centre of each drawing's getBBox() in a browser, November 2, 2026:
+# an icon not named here is centred already. A new or redrawn icon is measured the same way.
+$script:HubIconOffsets = @{
+    'actions'       = @(-0.5, 0)
+    'artifacts'     = @(0, -1.5)
+    'github'        = @(-0.25, -0.5)
+    'lens'          = @(1, 1)
+    'performance'   = @(0, -1)
+    'plugins'       = @(0, -0.5)
+    'release-notes' = @(0, 1)
+    'rules'         = @(-0.25, 0)
+    'skills'        = @(0.5, -0.5)
+    'specialists'   = @(0, 0.25)
+}
+
 function Get-HubIconSvg {
     <# The hub card icon -Name names, as a .menu-item__icon svg; '' for no name or a name $script:HubIcons lacks. #>
     param([AllowEmptyString()][string]$Name = '')
     if (-not $Name -or -not $script:HubIcons.ContainsKey($Name)) { return '' }
-    return '<svg class="menu-item__icon" viewBox="0 0 24 24" width="32" height="32" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+    $o = $script:HubIconOffsets[$Name]
+    $vb = if ($o) { [string]::Format([System.Globalization.CultureInfo]::InvariantCulture, '{0} {1} 24 24', $o[0], $o[1]) } else { '0 0 24 24' }
+    return '<svg class="menu-item__icon" viewBox="' + $vb + '" width="32" height="32" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
         $script:HubIcons[$Name] + '</svg>'
 }
 
@@ -521,21 +539,21 @@ function Get-HubGroups {
         page, never a card with several rows: Clock holds Stopwatch and Logbook (the owner, October 27, 2026; the Test gate too, until November 2).
         A group may sit in another: its Group is the parent group's Href, and it is a card on that page instead of
         the hub. A group with no general page of its own is still a hub card (Format-HubPageCardsHtml). A Section group
-        is no card and no page: it is an h2 on its parent's page, over a grid of its members' cards. So AI opens on
-        the Claude section, holding Rules, Skills and Specialists (Maikel, October 30, 2026), each a page of its own.
+        is no card and no page: it is an h2 on its parent's page, over a grid of its members' cards. Claude holds
+        Rules, Skills and Specialists (Maikel, October 30, 2026), each a page of its own: a section of an AI page until
+        Maikel made it the page itself, on /claude (November 2, 2026).
         A Section with Source 'lenses' takes its cards from the repo instead: one per specialist lens (Get-HubLensPages).
-        Performance holds SessionStart and Clock (the owner, October 30, 2026), and sits in the Claude section since
+        Performance holds SessionStart and Clock (the owner, October 30, 2026), and sits in Claude since
         November 2, 2026: what it measures is what Claude's work costs. A group page keeps its route wherever it sits.
     #>
     @(
-        @{ Href = '/ai'; Label = 'AI'; Sub = 'The AI this repo works with: Claude'; Icon = 'ai' },
-        @{ Href = '/ai/claude'; Label = 'Claude'; Icon = 'claude'; Group = '/ai'; Section = $true },
-        @{ Href = '/ai/claude/rules'; Label = 'Rules'; Sub = 'The rules Claude works by'; Icon = 'rules'; Group = '/ai/claude' },
-        @{ Href = '/ai/claude/skills'; Label = 'Skills'; Sub = 'The skills Claude can use'; Icon = 'skills'; Group = '/ai/claude' },
-        @{ Href = '/ai/claude/specialists'; Label = 'Specialists'; Sub = 'The Claude Specialists, each with a craft of their own'; Icon = 'specialists'; Group = '/ai/claude' },
-        @{ Href = '/performance'; Label = 'Performance'; Sub = 'What Claude''s work costs: the SessionStart path and the Clock'; Icon = 'performance'; Group = '/ai/claude' },
+        @{ Href = '/claude'; Label = 'Claude'; Sub = 'The rules, skills and specialists Claude works by, and what its work costs'; Icon = 'claude' },
+        @{ Href = '/claude/rules'; Label = 'Rules'; Sub = 'The rules Claude works by'; Icon = 'rules'; Group = '/claude' },
+        @{ Href = '/claude/skills'; Label = 'Skills'; Sub = 'The skills Claude can use'; Icon = 'skills'; Group = '/claude' },
+        @{ Href = '/claude/specialists'; Label = 'Specialists'; Sub = 'The Claude Specialists, each with a craft of their own'; Icon = 'specialists'; Group = '/claude' },
+        @{ Href = '/performance'; Label = 'Performance'; Sub = 'What Claude''s work costs: the SessionStart path and the Clock'; Icon = 'performance'; Group = '/claude' },
         @{ Href = '/clock'; Label = 'Clock'; Sub = 'How long the work takes: the Stopwatch and the Logbook'; Icon = 'clock'; Group = '/performance' },
-        @{ Href = '/ai/claude/specialists/lenses'; Label = 'Lenses'; Icon = 'lens'; Group = '/ai/claude/specialists'; Section = $true; Source = 'lenses' }
+        @{ Href = '/claude/specialists/lenses'; Label = 'Lenses'; Icon = 'lens'; Group = '/claude/specialists'; Section = $true; Source = 'lenses' }
     )
 }
 
@@ -570,7 +588,7 @@ function Get-HubLensPages {
         try {
             foreach ($line in [System.IO.File]::ReadAllLines($f.FullName, $utf8)) { if ($line -match '^#\s+(.+)$') { $sub = $Matches[1].Trim(); break } }
         } catch { $sub = '' }
-        @{ Href = '/ai/claude/specialists/lenses/' + $f.BaseName; Label = $f.BaseName; Sub = $sub; Icon = 'lens'; Path = $f.FullName }
+        @{ Href = '/claude/specialists/lenses/' + $f.BaseName; Label = $f.BaseName; Sub = $sub; Icon = 'lens'; Path = $f.FullName }
     }
 }
 
@@ -587,7 +605,7 @@ function ConvertTo-HubLensBody {
     param([AllowEmptyString()][string]$Text)
     # A link to another lens file is a link to that lens's own page here (Maikel, November 2, 2026); its #anchor goes,
     # since the rendered page gives its headings no ids.
-    $Text = [regex]::Replace($Text, '\]\((?:\./)?(specialist-\d{2}-\d{2}-lens)\.md(?:#[^)]*)?\)', '](/ai/claude/specialists/lenses/$1)')
+    $Text = [regex]::Replace($Text, '\]\((?:\./)?(specialist-\d{2}-\d{2}-lens)\.md(?:#[^)]*)?\)', '](/claude/specialists/lenses/$1)')
     $md = ([regex]::Replace($Text, '\A---\n[\s\S]*?\n---\n', '')).TrimStart("`n")
     $md = ([regex]::Replace($md, '\A[ \t]*#[ \t]+.*(\n|\z)', '')).TrimStart("`n")
     $lines = @($md -split "`n")
@@ -707,7 +725,7 @@ if (Test-Path -LiteralPath $script:FenceLibPath -PathType Leaf) { . $script:Fenc
 
 function Format-HubLensPageHtml {
     <#
-        One specialist lens's own page on /ai/claude/specialists/lenses/<name> (Get-HubLensPages), under Tools > AI >
+        One specialist lens's own page on /claude/specialists/lenses/<name> (Get-HubLensPages), under Tools > Claude >
         Specialists: the file's name as the h1 and the last crumb, as its card reads, and the file RENDERED as markdown in
         a card (Maikel, November 2, 2026), past its frontmatter and its own '# ' title, so the page keeps ONE h1;
         any other '# ' heading is rendered as an h2. The renderer is the house's one, markdown-render.js beside the release-notes
@@ -715,7 +733,7 @@ function Format-HubLensPageHtml {
         as JSON in a <script type="application/json">, and the raw text stays in a <noscript> for a reader without
         JavaScript. $null for a name the repo has no lens of.
     #>
-    param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyString()][string]$RepoRoot = '', [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
+    param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyString()][string]$RepoRoot = '', [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/')
     $lens = @(Get-HubLensPages -RepoRoot $RepoRoot | Where-Object { $_.Label -ceq $Name })[0]
     if (-not $lens) { return $null }
     $e = { param($v) ConvertTo-GeneralPageText $v }
@@ -744,7 +762,7 @@ function Format-HubLensPageHtml {
         '#lens-body > * + :is(h2, h3) { margin-top: var(--spacing-6); }' + "`n" +
         '#lens-body li + li, #lens-body li > :is(ul, ol) { margin-top: var(--spacing-1); }'
     return Format-GeneralPageHtml -Title $title -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref -Style $style `
-        -ParentCrumbs @(@{ Label = 'AI'; Href = '/ai' }, @{ Label = 'Specialists'; Href = '/ai/claude/specialists' }) -FooterNote ('Read from <code>.claude/specialists/lenses/' + (& $e $lens.Label) + '.md</code> by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.')
+        -ParentCrumbs @(@{ Label = 'Claude'; Href = '/claude' }, @{ Label = 'Specialists'; Href = '/claude/specialists' }) -FooterNote ('Read from <code>.claude/specialists/lenses/' + (& $e $lens.Label) + '.md</code> by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.')
 }
 
 function Format-HubCardLinkHtml {
@@ -762,7 +780,7 @@ function Format-HubCardLinkHtml {
         invalid HTML, and the browser closes the card's link at the inner one, so the card falls apart (#3610). One
         that does is refused with a throw.
         The label is an h2 by default (owner, October 29, 2026): the cards are the sections of the page they sit on.
-        -Heading 3 makes it an h3, for a card under a .grid__head's h2 (the AI page's Claude section, Maikel, October 30,
+        -Heading 3 makes it an h3, for a card under a .grid__head's h2 (the Specialists page's Lenses section, Maikel, October 30,
         2026; the Plugins page's marketplace groups); -Heading 0 keeps it a plain span, for a card inside a section that has a heading of its own; -Id and -Class (extra classes,
         such as a tone) go on the card.
     #>
@@ -791,7 +809,7 @@ function Format-HubPageCardsHtml {
     <#
         -Pages (Get-GeneralPages' shape) as hub cards, one line each, in their order: a page with no Group as its
         own card, and each top-level Group's card (Get-HubGroups) in the place of its first page, however deep the page
-        sits (Stopwatch is under Clock, under Performance, under AI); then each top-level group no general page belongs
+        sits (Stopwatch is under Clock, under Performance, under Claude); then each top-level group no general page belongs
         to, after them. A GitHub page is the caller's to leave out: the hub's GitHub page links it instead.
     #>
     param([AllowEmptyCollection()][object[]]$Pages = @())
@@ -816,15 +834,32 @@ function Get-HubPageCards {
     foreach ($g in @(Get-HubGroups | Where-Object { -not $_.Group -and $grouped -notcontains $_.Href })) { $g }
 }
 
+function Get-HubCardGridStyle {
+    <#
+        The repo layer's .ph-cards: card links three to a row ON THE PAGE, with no surface around them, stepping down
+        where .grid-3 does, and .ph-cards__full for a card that takes the row. For h2 cards, which stand on their own:
+        the .grid-3 surface frames a group, an h2 over h3 cards, so an h2 card never sits in it (Maikel, November 2,
+        2026). The hub's page and every group page take it from here. Its gap is --spacing-4 (Maikel, November 2, 2026).
+    #>
+    @(
+        '.ph-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-4); }',
+        '.ph-cards > .card { margin-top: 0; }',
+        '.ph-cards__full { grid-column: 1 / -1; }',
+        '@media (max-width: 1000px) { .ph-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }',
+        '@media (max-width: 760px) { .ph-cards { grid-template-columns: minmax(0, 1fr); } }'
+    ) -join "`n"
+}
+
 function Format-HubGroupPageHtml {
     <#
-        The group page on -Href (Get-HubGroups), bare like the SessionStart overview: an h1 with a card per member
-        page and member group, three to a row, each one link; then each member Section, a .grid-3 headed by its h2 and
+        The group page on -Href (Get-HubGroups), bare like the SessionStart overview: an h1 with an h2 card per member
+        page and member group, three to a row on the page itself (.ph-cards, Get-HubCardGridStyle), each one link;
+        then each member Section, a .grid-3 headed by its h2 and
         holding its members as h3 cards. A group with no member yet says so in one card. Its trail runs through every
         group it sits in but a Section, which has no page. $null for an Href no group has, and for a Section.
         -RepoRoot is the checkout a Source section reads its cards from (the Lenses, Get-HubLensPages).
     #>
-    param([Parameter(Mandatory = $true)][string]$Href, [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub',
+    param([Parameter(Mandatory = $true)][string]$Href, [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/',
         [AllowEmptyString()][string]$RepoRoot = '')
     $groups = @(Get-HubGroups)
     $g = @($groups | Where-Object { $_.Href -ceq $Href })[0]
@@ -847,7 +882,8 @@ function Format-HubGroupPageHtml {
         [void]$body.AppendLine('<section class="card"><p role="status">Nothing on this page yet.</p></section>')
     }
     if ($members.Count -gt 0) {
-        [void]$body.AppendLine('<div class="grid-3">')
+        # h2 cards stand on the page, never in a .grid-3's surface, which frames an h2 over h3 cards (Maikel, November 2, 2026).
+        [void]$body.AppendLine('<div class="ph-cards">')
         foreach ($p in $members) {
             [void]$body.AppendLine((Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon))
         }
@@ -867,7 +903,8 @@ function Format-HubGroupPageHtml {
         [void]$body.AppendLine('</div>')
     }
     return Format-GeneralPageHtml -Title $g.Label -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref `
-        -ParentCrumbs $crumbs -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
+        -ParentCrumbs $crumbs -Style $(if ($members.Count -gt 0) { Get-HubCardGridStyle } else { '' }) `
+        -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
 }
 
 function Format-HubSettingsPageHtml {
@@ -1852,8 +1889,8 @@ function Format-ReleaseNotesDevPage {
     <#
         The built release-notes page (#3108), as a dev server serves it: the house stylesheet and theme
         script, the breadcrumb bar and the settings button, put around the page build-release-notes-page.ps1
-        leaves in dkj-policy/releases/page/. -HubHref is where the "Home" crumb goes ('/hub' on the
-        general server). -RepoName puts the site header above the bar (October 22, 2026).
+        leaves in dkj-policy/releases/page/. -HubHref is where the "Home" crumb goes ('/', the toolbox's
+        own root, by default). -RepoName puts the site header above the bar (October 22, 2026).
 
         ONLY THIS COPY, NOT THE TEMPLATE. The template is dkj-policy's, shared with every consumer --
         BWJ-Development repos included, which do not take the house style -- and it is deliberately
@@ -1879,7 +1916,7 @@ function Format-ReleaseNotesDevPage {
     param(
         [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Html,
         [string]$ThemeKey = 'general-pages',
-        [string]$HubHref = '/hub',
+        [string]$HubHref = '/',
         [AllowEmptyString()][string]$RepoName = '',
         [switch]$Release
     )

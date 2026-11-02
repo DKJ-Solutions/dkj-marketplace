@@ -5,14 +5,15 @@
 **Every repo that runs `dkj-policy` gets a hub at session start**, served by the plugin, with the
 General pages linked from it: Artifacts, Issues, Release notes, SessionStart, Test gate, Stopwatch, Logbook
 (Test gate and those two since [#3470](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3470)) and Plugins
-(since [#3482](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3482)), and the **AI** card. Issues and
+(since [#3482](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3482)), and the **Claude** card. Issues and
 the Test gate are linked from the **GitHub** page instead, the Test gate beside the CI runs it measures (since
 November 2, 2026). Stopwatch and Logbook sit behind the Clock card and its `/clock` page (October 27, 2026), and
-SessionStart and Clock behind the Performance card and its `/performance` page (October 30, 2026). The `/ai`
-page holds a Claude section, an `h2` over the Rules, Skills, Specialists and Performance cards (Performance there since
+SessionStart and Clock behind the Performance card and its `/performance` page (October 30, 2026). The `/claude`
+page (the `/ai` page, with Claude as its section, until Maikel made Claude its `h1` on November 2, 2026; an old `/ai`
+link is moved there) holds the Rules, Skills, Specialists and Performance cards (Performance there since
 November 2, 2026, because what it measures is what Claude's work costs; its route did not change), the first three
 landing pages with nothing on it yet, the Specialists page a Lenses section, a card per `.claude/specialists/lenses/specialist-NN-NN-lens.md` of the repo, each
-opening on `/ai/claude/specialists/lenses/<name>` with the lens's text (Maikel, October 30, 2026; groups may nest, and a `Section`
+opening on `/claude/specialists/lenses/<name>` with the lens's text (Maikel, October 30, 2026; groups may nest, and a `Section`
 group is a heading, `Get-HubGroups`). That covers
 BWJ-Development's repos too. Until [#3198](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3198)
 (the owner's decision, October 20, 2026) all of this shipped with `dkj-solutions`, which BWJ-Development
@@ -259,12 +260,12 @@ where it has one: the same trust the dev-preview hook already gives
 loopback**: any process on the machine can read them, so a private repo's issue titles are readable by
 every local process, not only by the browser of whoever started the session.
 
-Every page's first crumb is `/hub`, the hub on the same origin. A repo's product may also **relay** these
-pages from its own origin with `Copy-LoopbackUpstream` (in
-[`lib/loopback-server-lib.ps1`](lib/loopback-server-lib.ps1)) and link them by bare path. The pages then
-share that product's `localStorage`, and with it the theme and width choice under their key,
-`general-pages`. The source repo's consumer dashboard does this, a relay it kept from its years as an own
-hub ([#3168](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3168)). The pages
+Every page's first crumb is `/`, the toolbox's own root (Maikel, November 2, 2026). It was `/hub` while the
+source repo's product relayed these pages from its own origin with `Copy-LoopbackUpstream` (in
+[`lib/loopback-server-lib.ps1`](lib/loopback-server-lib.ps1),
+[#3168](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3168)), where `/` is the product's home.
+That relay ended with #3540, so nothing serves these pages from another origin now. A caller that ever does
+again names its own `-HubHref`, and `/hub` keeps answering, so an old link still lands on the hub. The pages
 carry the repo's name, `owner/name` from the `origin` remote, else the folder's. Each issue links to the
 `url` `gh` returned for it, and only when that is a GitHub issue link.
 

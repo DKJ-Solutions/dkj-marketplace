@@ -191,14 +191,14 @@ function Format-PluginsPageHtml {
         name, under two h2 sections -- dkj-marketplace's plugins, and MCP for every other marketplace's -- whose cards'
         names are h3s. Everything else -- the description, the command, the clone -- is on the plugin's page. -Model is
         ConvertFrom-PluginVersionsJson's; -ReadError is set when the script could not be found or run. -RepoName
-        names the repo; -HubHref is the Home crumb's target ('/hub' on the general server, '/' on a hub that serves
-        the page itself).
+        names the repo; -HubHref is the Home crumb's target ('/', the root of the toolbox
+        that serves the page).
     #>
     param(
         [Parameter(Mandatory = $true)][hashtable]$Model,
         [AllowEmptyString()][string]$ReadError = '',
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/hub'
+        [string]$HubHref = '/'
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $rows = @($Model.Plugins | Where-Object { $_ })
@@ -250,7 +250,7 @@ function Format-PluginPageHtml {
         [Parameter(Mandatory = $true)][hashtable]$Row,
         [Parameter(Mandatory = $true)][hashtable]$Model,
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/hub',
+        [string]$HubHref = '/',
         [AllowEmptyCollection()][object[]]$Cards = @()
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
@@ -390,7 +390,7 @@ function Format-HouseStyleSpecimensPageHtml {
         [AllowEmptyString()][string]$ReadError = '',
         [AllowEmptyString()][string]$RepoName = '',
         [AllowEmptyString()][string]$Section = '',
-        [string]$HubHref = '/hub'
+        [string]$HubHref = '/'
     )
     $base = '/plugins/dkj-policy/dkj-brandbook'
     $parts = Get-HouseStyleSpecimensParts -Body $Body -ReadError $ReadError -Section $Section -BasePath $base
