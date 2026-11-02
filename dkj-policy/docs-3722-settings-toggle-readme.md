@@ -39,19 +39,33 @@
 
 ### PLAN
 
+Resolves #3722: the brand book README's settings-button paragraph still described the toggle as it
+looked before November 1, 2026; `house-style.css` has drawn it icon-only since then.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Rewrite the toggle sentence in `plugins/dkj-policy/assets/dkj-brandbook/README.md` to match the
+  `.theme-settings__toggle` rule, keeping the earlier look as dated history
 
 ### TEST
 
+- [x] Read the sentence against `house-style.css` (`.theme-settings__toggle`: `background: none;
+  border: 0; color: var(--fg-1)`): they now agree. The gates run in `ship-pr`.
+
 ### DEPLOY: docs/3722-settings-toggle-readme
 
-**Score:**
+The brand book README describes the settings toggle as `house-style.css` draws it: the icon alone, in
+`--fg-1`, with no fill, edge or shadow, and no colour change under the pointer or while open. Until now
+it still described the `--primary` edge the toggle lost on November 1, 2026
+([#3722](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3722)).
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A doc sentence that disagreed with what renders; nothing an app does changes.
+
+**Score:** N/A
 
 #### Pull Request
 
