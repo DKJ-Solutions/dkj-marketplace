@@ -39,21 +39,33 @@
 
 ### PLAN
 
+- [x] Drop the heading-less `.grid-3` surface around the hub home page's card links, keeping three to a row (the owner, November 2, 2026)
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `repo-hub-page.ps1`: the cards in a `.ph-cards` of the page's own layer -- the `.grid-3` layout and its step-downs, without the framed surface
 
 ### TEST
 
+- [x] `dev-preview-sessionstart.tests.ps1` pins the new form; 427 passed, 0 failed
+- [x] Looked at by the owner on a preview served from the branch
+
 ### DEPLOY: feat/hub-cards-ungrouped
 
-**Score:**
+The hub's home page no longer wraps its card links in a framed `.grid-3` with no heading above it. The cards
+stand three to a row straight on the page, in a `.ph-cards` of the page's own layer that takes `.grid-3`'s
+columns and step-downs without its background and padding: a framed group with no heading groups nothing.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Every repo's toolbox home page looks different the moment it is opened: the cards stand on the page instead of
+inside a grey panel.
+
+**Score:** 2
 
 #### Pull Request
 
-Hub home page: each card stands on its own in the page column
+Hub home page: the cards three to a row without a grid surface
 
