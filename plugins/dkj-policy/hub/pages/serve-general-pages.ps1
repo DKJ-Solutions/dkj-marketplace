@@ -38,10 +38,11 @@
       /plugins, /plugins/<name>   a card per enabled plugin, and each one's own page: plugin-versions.ps1 -Json, the repo's
                       own copy first, then this plugin's, run in a CHILD process bounded at 30 s (Read-PluginsPageModel,
                       hub/lib/plugins-page-lib.ps1, #3482). A script that fails or is missing is a warning on the page.
-      /plugins/dkj-policy/house-style[/<section>]
-                      the house style's specimens (assets/dkj-brandbook/specimens.html, read per request): a card per
+      /plugins/dkj-policy/dkj-brandbook[/<section>]
+                      the brand book's specimens (assets/dkj-brandbook/specimens.html, read per request): a card per
                       section, and each section's own page (Split-HouseStyleSpecimens, #3563); a slug no section has
-                      is a 404. The old /plugins/dkj-solutions/house-style[/<section>] is a 301 to it (#3629).
+                      is a 404. The older /plugins/dkj-solutions/house-style[/<section>] (#3629) and
+                      /plugins/dkj-policy/house-style[/<section>] (#3704) are a 301 to it.
       /stopwatch, /stopwatch/<label>[/<run>], /logbook, /logbook/<slug>
                       this repo's timing stores on this machine (%LOCALAPPDATA%\dkj-claude-plugins\repos\<repo>\),
                       which the plugin's UserPromptSubmit and Stop hooks write, and the session transcripts under
@@ -521,7 +522,7 @@ try {
             } elseif ($plReq = Resolve-PluginsPageRequest -Path $path) {
                 # The overview, or one plugin's page (#3482); a name no enabled plugin has is a 404.
                 if ($plReq.Redirect) {
-                    # The house style's old address under dkj-solutions (#3629), so a link to it still lands.
+                    # The brand book's older house-style addresses (#3629, #3704), so a link to either still lands.
                     Send-LoopbackResponse $stream 301 'Moved Permanently' 'text/plain; charset=utf-8' ($utf8.GetBytes('Moved.')) @{ Location = $plReq.Redirect } -Method $method
                     continue
                 }
@@ -529,7 +530,7 @@ try {
                 if (-not $plReq.Name) {
                     $html = Format-PluginsPageHtml -Model $pl.Model -ReadError $pl.Error -RepoName (Get-RepoIdentity).Name
                 } elseif ($plRow = Find-PluginsPageRow -Model $pl.Model -Name $plReq.Name) {
-                    $hsState = if ($plReq.Page -eq 'house-style') { Read-RepoHubState -Root $root } else { $null }
+                    $hsState = if ($plReq.Page -eq 'dkj-brandbook') { Read-RepoHubState -Root $root } else { $null }
                     $hsTo = if ($hsState -and $hsState.Mode -eq 'product') {
                         Resolve-HouseStyleProductUrl -IsSource (Test-Path -LiteralPath (Join-Path $root 'plugins\dkj-policy\assets\dkj-brandbook\specimens.html') -PathType Leaf) `
                             -ProductUrl $hsState.Product -Section $plReq.Section
@@ -540,7 +541,7 @@ try {
                         Send-LoopbackResponse $stream 302 'Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('On the product.')) @{ Location = $hsTo } -Method $method
                         continue
                     }
-                    if ($plReq.Page -eq 'house-style') {
+                    if ($plReq.Page -eq 'dkj-brandbook') {
                         # The specimens beside the stylesheet this server already serves (#3493), read per request.
                         $specError = ''; $spec = ''
                         try { $spec = [System.IO.File]::ReadAllText((Join-Path $styleDir 'specimens.html'), $utf8) } catch { $specError = $_.Exception.Message }

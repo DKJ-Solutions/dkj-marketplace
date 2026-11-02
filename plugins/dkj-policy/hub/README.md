@@ -232,9 +232,9 @@ names the checkout), started hidden and detached.
 **It serves no Brandbook, in any repo** ([#3475](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3475),
 the owner, October 25, 2026). From #3198 to #3475 a DKJ-Solutions repo's server served a fifth page, the
 Brandbook app's build from `dkj-solutions/assets/brandbook/`, under `/brandbook/`. The route went with #3475, and the app itself with #3493: no repo has a Brand book to
-show. The brand book's own specimens are a page under Plugins instead, on `/plugins/dkj-policy/house-style` (still labelled House style, #3704),
+show. The brand book's own specimens are a page under Plugins instead, on `/plugins/dkj-policy/dkj-brandbook`, its card named dkj-brandbook as the product's is (#3704),
 in every repo that runs the toolbox, BWJ-Development's included ([#3629](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3629));
-the old `/plugins/dkj-solutions/house-style` redirects there.
+the older `/plugins/dkj-solutions/house-style` and `/plugins/dkj-policy/house-style` redirect there.
 
 | Page | Reads, from the repo it was started in | When it is absent |
 |---|---|---|
