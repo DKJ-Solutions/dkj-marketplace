@@ -258,7 +258,7 @@ try {
     $r = Invoke-Child $Gate $clean 'RepoRoot'
     Assert-Equal 0 $r.Code 'a clean repo passes the gate'
     $r = Invoke-Child $Hook $clean 'RepoRootOverride'
-    Assert-True ($r.Code -eq 0 -and $r.Out -match ('holds at ' + [regex]::Escape($pin.Tag))) 'the session check says the house style holds'
+    Assert-True ($r.Code -eq 0 -and $r.Out -match ('holds at ' + [regex]::Escape($pin.Tag))) 'the session check says the brand book holds'
 
     # -SkillPath (#3148): the reusable gate hands in the page as it reads at the pinned tag, and the gate
     # must hold the copies to THAT table rather than to the page beside it.

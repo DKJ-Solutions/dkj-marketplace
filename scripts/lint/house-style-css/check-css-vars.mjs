@@ -37,4 +37,4 @@ if (missing.length) {
   for (const m of missing) console.log(`  ${m}`)
   process.exit(1)
 }
-console.log(`[OK] every var() in the house style resolves (${defined.size} custom properties defined).`)
+console.log(`[OK] every var() in the brand book resolves (${defined.size} custom properties defined).`)
