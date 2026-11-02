@@ -142,7 +142,7 @@ function Format-TestGatePageHtml {
         -ReadError is set when suite-durations.json could not be read, -GroupsError when suite-groups.json could
         not be; without groups the suites are one list, 'suites'. A -ReadError of 'the file is not there' is the
         empty state: no test gate measured in this repo yet. -RepoName names the site in the page's header, -HubHref
-        is where its Home crumb goes ('/hub' on the general pages server), and -RepoSlug (owner/name) links each
+        is where its Home crumb goes ('/', the root of the toolbox), and -RepoSlug (owner/name) links each
         recorded CI run on GitHub; without it a run is its number.
 
         -Selection is what this checkout's change selects (#3309, lever 3), $null to leave it out:
@@ -151,7 +151,7 @@ function Format-TestGatePageHtml {
         so the page shows the gate's own answer rather than a second reading of it.
     #>
     param([Parameter(Mandatory = $true)][hashtable]$Model, [AllowEmptyString()][string]$ReadError = '', [AllowEmptyString()][string]$GroupsError = '', $Selection = $null,
-        [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub', [AllowEmptyString()][string]$RepoSlug = '', [AllowEmptyString()][string]$Path = '')
+        [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/', [AllowEmptyString()][string]$RepoSlug = '', [AllowEmptyString()][string]$Path = '')
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $inv = [Globalization.CultureInfo]::InvariantCulture
     $dot = ' ' + [char]0x00B7 + ' '
