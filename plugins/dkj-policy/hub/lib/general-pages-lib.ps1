@@ -474,6 +474,8 @@ $script:HubIcons = @{
     'claude'        = '<path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/>'
     'rules'         = '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>'
     'lens'          = '<circle cx="11" cy="11" r="6"/><path d="M15.5 15.5L21 21"/>'
+    # Settings: a gear (Feather's 'settings', MIT).
+    'settings'      = '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>'
     'skills'        = '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'
 }
 
@@ -524,7 +526,9 @@ function Get-GeneralPages {
         @{ Href = '/stopwatch';     Label = 'Stopwatch';     Sub = 'How long an assignment takes, timed from a stopwatch: prompt to back on the trunk, with the transcript phases'; Icon = 'stopwatch'; Group = '/clock' },
         @{ Href = '/logbook';       Label = 'Logbook';       Sub = 'Every assignment of a clean session, timed by itself: first prompt to back on the trunk, with the transcript phases'; Icon = 'logbook'; Group = '/clock' },
         # #3482: plugin-versions' verdict per enabled plugin, so a problem with one is visible from the hub.
-        @{ Href = '/plugins';       Label = 'Installed plugins'; Sub = 'Every plugin this repo enables, and any problem with one on this machine'; Icon = 'plugins' }
+        @{ Href = '/plugins';       Label = 'Installed plugins'; Sub = 'Every plugin this repo enables, and any problem with one on this machine'; Icon = 'plugins' },
+        # The toolbox's own settings, on a page of their own (Dave, November 2, 2026): the Theme first.
+        @{ Href = '/settings';      Label = 'Settings';      Sub = 'How this toolbox looks on this device: its theme'; Icon = 'settings' }
     )
 }
 
@@ -901,6 +905,77 @@ function Format-HubGroupPageHtml {
     return Format-GeneralPageHtml -Title $g.Label -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref `
         -ParentCrumbs $crumbs -Style $(if ($members.Count -gt 0) { Get-HubCardGridStyle } else { '' }) `
         -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
+}
+
+function Format-HubSettingsPageHtml {
+    <#
+        The toolbox's Settings page on /settings (Dave, November 2, 2026): its h1, then the group headed by the h2 Theme
+        holding a Light/Dark toggle and a card per theme holding that theme's swatch alone, with no h3: the swatch's own
+        title and aria-label name it (Dave, November 2, 2026) -- the
+        brand book's own picker (DKJTheme.picker, house-theme.js, which every page here loads) cut down to one swatch.
+        The toggle shows one mode's cards at a time. After them its reset, a card of the same kind that is itself the button. The choice is the same one the
+        header's settings button makes -- one key per app on this device -- so every swatch agrees. Nothing here is read
+        from disk: the cards are drawn from DKJTheme.themes, so a theme the brand book adds gets its card at once.
+    #>
+    param([AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
+    # The house grouping form (house-style.css, .card-grid and .grid__head): the Theme h2 over its group's surface (--bg-2),
+    # its cards on --bg-3 with a --bg-4 border. A .card-grid leaves its columns to the repo's own class, and .hs-theme
+    # makes them a wrapping row: each card hugs its swatch, so a mode's six stand side by side (Dave, November 2, 2026;
+    # .grid-2, then .grid-3, before it).
+    # The toggle: the house's segmented switch, at the height a .controls row gives it, a row of its own under the h2.
+    # Exactly one of its two is always pressed, and only that mode's cards are shown.
+    $toggle = '<div class="controls grid__full"><span class="seg" id="settings-theme-mode" role="group" aria-label="Mode">' +
+        '<button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>'
+    $body = '<div class="card-grid hs-theme" id="settings-theme-grid"><div class="grid__head"><h2>Theme</h2></div>' + $toggle +
+        # The reset IS a card like the swatches', the whole card the button (Dave, November 2, 2026), hovering as a link card
+        # does in a group, on --bg-4 (not .card--link itself, which is a link's, #3566); it closes their row, shown whichever mode the toggle shows (it carries no data-mode).
+        '<button type="button" class="card hs-swatch hs-reset" id="settings-theme-foot">Reset</button></div>' + "`n" +
+        # Each theme's card draws the whole picker and keeps only its own swatch, unwrapped from its row (no label, no
+        # 64px label column). The picker never redraws, and a click or a theme change reaches every swatch left in every
+        # picker, so the twelve cards and the header stay in step with no logic of this page's own. No house class is
+        # restyled for it, and the header panel's picker keeps its rows and labels.
+        '<script>(function () {' +
+        ' var grid = document.getElementById("settings-theme-grid"), foot = document.getElementById("settings-theme-foot");' +
+        ' DKJTheme.themes.forEach(function (t) {' +
+        ' var card = document.createElement("section"); card.className = "card hs-swatch"; card.setAttribute("data-mode", t.mode);' +
+        ' card.innerHTML = "<div></div>";' +
+        ' grid.insertBefore(card, foot);' +
+        ' var el = card.lastChild; DKJTheme.picker(el, { light: "Light", dark: "Dark" });' +
+        ' Array.prototype.forEach.call(el.querySelectorAll(".theme-picker__row"), function (row) { if (row.querySelector(".theme-swatch--" + t.mode)) { row.parentNode.replaceChild(row.querySelector(".theme-picker__swatches"), row); } else { row.parentNode.removeChild(row); } });' +
+        ' Array.prototype.forEach.call(el.querySelectorAll(".theme-swatch"), function (s) { if (s.getAttribute("data-id") !== t.id) { s.parentNode.removeChild(s); } });' +
+        # The whole card picks its theme (Dave, November 2, 2026), through the brand book's own set; the swatch in it stays
+        # the keyboard's target, and a click on the swatch itself sets the same theme twice, which changes nothing.
+        ' card.addEventListener("click", function () { DKJTheme.set(t.id); });' +
+        ' });' +
+        # The toggle opens on the mode of the theme in force, and follows a reset to the mode it lands in.
+        ' var seg = document.getElementById("settings-theme-mode");' +
+        ' function modeOf(id) { var t = DKJTheme.themes.filter(function (t) { return t.id === id; })[0]; return t ? t.mode : "light"; }' +
+        ' function show(mode) {' +
+        ' Array.prototype.forEach.call(grid.querySelectorAll(".card[data-mode]"), function (c) { c.hidden = c.getAttribute("data-mode") !== mode; });' +
+        ' Array.prototype.forEach.call(seg.querySelectorAll("button[data-mode]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-mode") === mode)); });' +
+        ' }' +
+        ' seg.addEventListener("click", function (e) { var b = e.target.closest("button[data-mode]"); if (b) { show(b.getAttribute("data-mode")); } });' +
+        ' show(modeOf(DKJTheme.current()));' +
+        ' foot.addEventListener("click", function () { DKJTheme.reset(); show(modeOf(DKJTheme.current())); });' +
+        ' })();</script>'
+    # .hs-theme, .hs-swatch and .hs-reset are this page's own classes: the row, the full-width head and toggle in it, a
+    # card that hugs its swatch, and what a <button> needs to read as a card. No house class or token is redefined.
+    $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
+        '.hs-theme > :is(.grid__head, .grid__full) { flex: 0 0 100%; }' + "`n" +
+        '.hs-swatch { margin-top: 0; padding: var(--spacing-2); }' + "`n" +
+        # A theme card is clickable as a whole, and the one holding the active swatch -- aria-pressed, which the brand book's
+        # picker keeps, from the header's choice too -- takes the selected theme's --primary as its border (Dave, November 2, 2026).
+        '.hs-swatch[data-mode] { cursor: pointer; }' + "`n" +
+        '.hs-swatch:has(.theme-swatch[aria-pressed="true"]) { border-color: var(--primary); }' + "`n" +
+        # So the swatch's own ring for the chosen theme goes here (Dave, November 2, 2026): the card's border says it. The
+        # keyboard's focus ring stays, and the header panel's picker keeps its ring.
+        '.hs-swatch .theme-swatch[aria-pressed="true"]:not(:focus-visible) { outline: 0; }' + "`n" +
+        '.hs-reset { font: inherit; color: var(--fg-1); cursor: pointer; padding-left: var(--spacing-4); padding-right: var(--spacing-4); }' + "`n" +
+        # Every card in the row is clickable, the theme cards and the reset alike, so all take the same hover: --bg-4, as a
+        # link card does in a group (Dave, November 2, 2026).
+        '.hs-swatch:hover { background: var(--bg-4); }'
+    return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $body -Style $style `
+        -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
 }
 
 function ConvertTo-SiteHeaderName {
