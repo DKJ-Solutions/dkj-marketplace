@@ -42,6 +42,8 @@
 ### CREATE
 
 - [x] v6.3.0 audience notes: two headings reworded to plain words, the class names stay in the text under them
+- [x] Brand book README rule 8 and the dkj-brandbook skill: a heading has five words at most
+- [x] v6.3.0 audience notes: every h1-h3 heading at five words or fewer; the Shopify audience moved into the text
 - [x] Release-notes page rebuilt locally
 
 ### TEST
@@ -51,19 +53,20 @@
 
 ### DEPLOY: fix/release-notes-headings-no-code
 
-The v6.3.0 release notes follow the brand book's new rule 7 (no `code` element inside an `h1`, `h2` or
-`h3`). Two headings now read "Drop the prose class" and "drop the mark from your site header". The class
-names stay in the text under them. A gate in the release-note form check is #3752.
+The brand book gains rule 8 (Maikel, November 2, 2026): an `h1`, `h2` or `h3` has five words at most,
+in its README and in the `dkj-brandbook` skill. The v6.3.0 release notes now follow rules 7 and 8: no
+`code` element in a heading, and every heading at five words or fewer. Who a change is for moved into the
+text under it. A gate in the release-note form check is #3752.
 
 **Score:** 1
 
 #### What makes this deploy extra special
 
-N/A -- the wording of two headings on a published release note; nothing a consumer has to do changes.
+A session building a page in a DKJ-Solutions repo now keeps every heading to five words and puts who it is for in the content under it.
 
-**Score:** N/A
+**Score:** 2
 
 #### Pull Request
 
-v6.3.0 release notes: no code element in a heading
+Brand book: headings of five words at most, applied to the v6.3.0 notes
 

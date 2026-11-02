@@ -128,6 +128,8 @@ page, dashboard and Artifact is designed to that screen first:
 - **No `code` element inside an `h1`, `h2` or `h3`** (Maikel, November 2, 2026): the fixed-width run
   looks out of place in a heading. Name the thing in plain words there; the `code` goes in the content
   under it.
+- **A heading has five words at most** (Maikel, November 2, 2026): an `h1`, `h2` or `h3` names the
+  subject. Who it is for and what changed go in the content under it.
 - **One row where one row does.** Label and value on one line (`.facts--row`), a card's action beside
   its heading rather than on a row of its own, filters in one bar. A second row has to carry something
   the first could not.
