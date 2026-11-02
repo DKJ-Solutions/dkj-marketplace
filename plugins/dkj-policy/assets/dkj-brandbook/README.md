@@ -85,6 +85,13 @@ that checks the stylesheet's syntax and tokens; the page is the look.
    the heading, or in a `code` element in the content under it.
 8. **A heading has five words at most** (Maikel, November 2, 2026): an `h1`, `h2` or `h3` that runs longer
    reads as a sentence. It names the subject; who it is for and what changed go in the content under it.
+9. **A page carries exactly one `h1`** (Maikel, November 2, 2026,
+   [#3745](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3745)): two on one page *"mag sowieso
+   nooit"* (must never happen at all). Content a page renders (a lens, a release note, any markdown) never
+   adds one: its own `# ` title is dropped or demoted to `h2`. The one page without an `h1` is the home page
+   under a site header ([the breadcrumb bar](#every-page-the-breadcrumb-bar)). The hub's page shell checks
+   it on sight: the fit alarm also warns when the live page holds more than one `h1`, or none where its
+   trail is longer than Home.
 
 ## What it holds
 
