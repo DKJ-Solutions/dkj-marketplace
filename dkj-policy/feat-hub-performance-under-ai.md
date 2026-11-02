@@ -54,7 +54,7 @@ page; the Test gate measures CI, not an agent, so it goes to GitHub, beside Acti
 
 - [x] dev-pages, dev-preview-sessionstart, stopwatch and consumer-dashboard suites green, asserts moved to the new layout
 - [x] A preview server from this tree serves every moved page with the right trail and cards
-- [ ] The owner has looked at the preview (visible result)
+- [x] The owner has looked at the preview (visible result): "ziet er goed uit, merge maar", November 2, 2026
 
 ### DEPLOY: feat/hub-performance-under-ai
 
