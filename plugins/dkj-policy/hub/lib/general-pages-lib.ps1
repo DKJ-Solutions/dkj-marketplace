@@ -934,7 +934,9 @@ function Format-HubSettingsPageHtml {
         # keyboard's focus ring stays, and the header panel's picker keeps its ring.
         '.hs-swatch .theme-swatch[aria-pressed="true"]:not(:focus-visible) { outline: 0; }' + "`n" +
         '.hs-reset { font: inherit; color: var(--fg-1); cursor: pointer; padding-left: var(--spacing-4); padding-right: var(--spacing-4); }' + "`n" +
-        '.hs-reset:hover { background: var(--bg-4); }'
+        # Every card in the row is clickable, the theme cards and the reset alike, so all take the same hover: --bg-4, as a
+        # link card does in a group (Dave, November 2, 2026).
+        '.hs-swatch:hover { background: var(--bg-4); }'
     return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $body -Style $style `
         -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
 }
