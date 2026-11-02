@@ -873,18 +873,25 @@ function Format-HubGroupPageHtml {
 function Format-HubSettingsPageHtml {
     <#
         The toolbox's Settings page on /settings (Dave, November 2, 2026): its h1, then the group headed by the h2 Theme
-        holding an h3 card, Colour, with the brand book's own theme picker in it (DKJTheme.picker, house-theme.js, which every page here loads), and
-        under that card, in the group, its reset. The choice is the same one the header's settings button makes -- one key per app on this device -- so the
-        two always agree. Nothing here is read from disk.
+        holding two h3 cards on one row, Light and Dark, each with the brand book's own theme picker (DKJTheme.picker,
+        house-theme.js, which every page here loads) cut down to that mode's row, and under them, in the group, its reset.
+        The choice is the same one the header's settings button makes -- one key per app on this device -- so the
+        pickers always agree. Nothing here is read from disk.
     #>
     param([AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
     # The house grouping form (house-style.css, .grid-2 and .grid__head): the Theme h2 over its group's surface (--bg-2),
-    # and the picker in an h3 card in it, which the house sets on --bg-3 with a --bg-4 border (Dave, November 2, 2026).
-    $body = '<div class="grid-2"><div class="grid__head"><h2>Theme</h2></div>' +
-        '<section class="card grid__full hs-settings"><div class="card__head"><h3>Colour</h3></div><div id="settings-theme"></div></section>' +
-        # The reset belongs to the whole Theme group, so it sits in the group under the card, a row of its own, and takes the house's roomier .btn--touch (Dave, November 2, 2026).
+    # and an h3 card per mode in its two columns, which the house sets on --bg-3 with a --bg-4 border (Dave, November 2, 2026).
+    $card = { param($mode, $label) '<section class="card hs-settings"><div class="card__head"><h3>' + $label + '</h3></div><div id="settings-theme-' + $mode + '"></div></section>' }
+    $body = '<div class="grid-2"><div class="grid__head"><h2>Theme</h2></div>' + (& $card 'light' 'Light') + (& $card 'dark' 'Dark') +
+        # The reset belongs to the whole Theme group, so it sits in the group under the cards, a row of its own, and takes the house's roomier .btn--touch (Dave, November 2, 2026).
         '<p class="grid__full"><button type="button" class="btn btn--touch" id="settings-theme-reset">Reset theme</button></p></div>' + "`n" +
-        '<script>DKJTheme.picker(document.getElementById("settings-theme"), { light: "Light", dark: "Dark" });' +
+        # Each card draws the whole picker and keeps only its own mode's row: the picker never redraws its rows, and a
+        # click or a theme change reaches every swatch left in it, so the two cards and the header stay in step.
+        '<script>["light", "dark"].forEach(function (mode) {' +
+        ' var el = document.getElementById("settings-theme-" + mode);' +
+        ' DKJTheme.picker(el, { light: "Light", dark: "Dark" });' +
+        ' Array.prototype.forEach.call(el.querySelectorAll(".theme-picker__row"), function (row) { if (!row.querySelector(".theme-swatch--" + mode)) { row.parentNode.removeChild(row); } });' +
+        ' });' +
         ' document.getElementById("settings-theme-reset").addEventListener("click", function () { DKJTheme.reset(); });</script>'
     # The reset's edge in the text colour, hover included (Dave, November 2, 2026): this page's own button by its id,
     # so no house class is redefined.

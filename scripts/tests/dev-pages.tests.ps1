@@ -70,9 +70,10 @@ Assert-True ($mshell -match '</a><nav class="site-header__nav" aria-label="Main"
 Assert-True ($bshell -notmatch 'site-header__nav|<dialog') 'no -Menu, no menu and no drawer'
 Assert-True (((Get-HubMenu) | ForEach-Object { $_.Href }) -join ' ' -eq '/repository /artifacts /release-notes /ai /plugins /settings') 'the toolbox menu is GitHub, then the hub''s own cards in their order'
 $st = Format-HubSettingsPageHtml -RepoName 'o/r'
-Assert-True ($st -match '<h1>Settings</h1>' -and $st -match '<h2>Theme</h2>' -and $st -match 'DKJTheme\.picker\(document\.getElementById\("settings-theme"\)') 'the Settings page opens with its h1, then the Theme h2 over the brand book''s own picker'
-Assert-True ($st -match '<div class="grid-2"><div class="grid__head"><h2>Theme</h2></div><section class="card grid__full hs-settings"><div class="card__head"><h3>Colour</h3></div><div id="settings-theme"></div>') 'the picker sits in an h3 card, Colour, in the house group the Theme h2 heads'
-Assert-True ($st -match '<div id="settings-theme"></div></section><p class="grid__full"><button type="button" class="btn btn--touch" id="settings-theme-reset">Reset theme</button></p></div>') 'the reset sits in the Theme group under the Colour card, not in the card'
+Assert-True ($st -match '<h1>Settings</h1>' -and $st -match '<h2>Theme</h2>' -and $st -match 'DKJTheme\.picker\(el, ') 'the Settings page opens with its h1, then the Theme h2 over the brand book''s own picker'
+Assert-True ($st -match '<div class="grid-2"><div class="grid__head"><h2>Theme</h2></div><section class="card hs-settings"><div class="card__head"><h3>Light</h3></div><div id="settings-theme-light"></div></section><section class="card hs-settings"><div class="card__head"><h3>Dark</h3></div><div id="settings-theme-dark"></div></section>') 'two h3 cards, Light then Dark, share one row of the house group the Theme h2 heads: neither is grid__full'
+Assert-True ($st -match 'if \(!row\.querySelector\(".theme-swatch--" \+ mode\)\) \{ row\.parentNode\.removeChild\(row\); \}') 'each card keeps only its own mode''s row of the picker'
+Assert-True ($st -match '<div id="settings-theme-dark"></div></section><p class="grid__full"><button type="button" class="btn btn--touch" id="settings-theme-reset">Reset theme</button></p></div>') 'the reset sits in the Theme group under the two cards, a row of its own'
 Assert-True ($st -match '#settings-theme-reset \{ border-color: var\(--fg-1\); \}') 'the reset''s border is the text colour, set on its own id'
 Assert-True ($st -match '<span aria-current="page">Settings</span>') 'the Settings page is its own last crumb'
 $tpage = Format-GeneralPageHtml -Title 'Stopwatch' -Lead '' -Body '' -SiteName 'o/r' -ParentCrumbs @(@{ Label = 'AI'; Href = '/ai' })
