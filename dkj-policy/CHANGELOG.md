@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**7 / 12 minor entries** <!-- pending-tally -->
+**7 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3716-release-notes-ink-faint · 20261102-112904Z
+
+The hub's release-notes page shows its faint text (dates, sub lines) in the quiet house grey again. Since the colour rename of November 1, 2026 it had pointed at `--muted`, a token the house stylesheet no longer declares, so that text fell back to the ordinary text colour. A test now holds every token that page's colour rewrite uses to the ones the stylesheet declares, so a future rename cannot leave the page behind ([#3716](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3716)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A -- the release-notes page is the hub's, a dev-side page; a consumer of the plugins sees it only on their own hub.
+
+**Score:** N/A
+
+#### Pull Request
+
+Release-notes page maps ink-faint to the retired --muted token
+
+Plugins: dkj-policy
+
+[PR #3737](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3737)
+
+---
 
 ### DEPLOY: feat/hub-performance-under-ai · 20261102-111836Z
 
