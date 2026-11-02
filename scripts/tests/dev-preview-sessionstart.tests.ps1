@@ -785,7 +785,7 @@ try {
         Assert-True ((& $getRaw $genPort '/index.html') -match 'HTTP/1.1 200') 'and so does /index.html'
         Assert-True ((& $getRaw $genPort '/hub' 'evil.example') -match 'HTTP/1.1 403') 'a foreign Host is refused'
         $r2 = & $getRaw $genPort '/artifacts'
-        Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match '<h1>Artifacts</h1>' -and $r2 -match 'the file is not there' -and $r2 -match '<li><a href="/hub">Tools</a></li>' -and $r2 -match 'site-header__name">no-config <span') '/artifacts says the register is not there, in a repo that has none, under the folder''s name'
+        Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match '<h1>Artifacts</h1>' -and $r2 -match 'the file is not there' -and $r2 -match '<li><a href="/">Tools</a></li>' -and $r2 -match 'site-header__name">no-config <span') '/artifacts says the register is not there, in a repo that has none, under the folder''s name'
         New-Item -ItemType Directory -Force -Path (Join-Path $noConfig 'scripts\dashboard') | Out-Null
         [System.IO.File]::WriteAllText((Join-Path $noConfig 'scripts\dashboard\artifacts.json'), '{ "artifacts": [ { "title": "Fixture page", "url": "https://claude.ai/artifact/Fx1", "kind": "page", "created": "2026-10-01" } ] }')
         Assert-True ((& $getRaw $genPort '/artifacts') -match 'href="https://claude.ai/artifact/Fx1"[^>]*>Fixture page</a>') 'and lists the repo''s own register, read on every request'
@@ -798,7 +798,7 @@ try {
         New-Item -ItemType Directory -Force -Path (Join-Path $noConfig 'dkj-policy\releases\page') | Out-Null
         [System.IO.File]::WriteAllText((Join-Path $noConfig 'dkj-policy\releases\page\release-notes.html'), '<html lang="en"><head><style>a{}</style></head><body>shaped notes</body></html>')
         $r2 = & $getRaw $genPort '/release-notes'
-        Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match 'shaped notes' -and $r2 -match '<li><a href="/hub">Tools</a></li>' -and $r2 -match 'href="/house-style.css"') 'and dressed in the house style once it is, its Home crumb on /hub'
+        Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match 'shaped notes' -and $r2 -match '<li><a href="/">Tools</a></li>' -and $r2 -match 'href="/house-style.css"') 'and dressed in the house style once it is, its Home crumb on /'
         $newerNote = Join-Path $noConfig 'dkj-policy\releases\notes\9.9.9.md'
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $newerNote) | Out-Null
         [System.IO.File]::WriteAllText($newerNote, '# 9.9.9')

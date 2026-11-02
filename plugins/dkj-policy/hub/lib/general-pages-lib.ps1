@@ -145,8 +145,8 @@ function Format-GeneralPageHtml {
     <#
         The whole page around -Body. -Title is the page's own name: the last crumb, the h1 and the
         <title> (after -SiteName). -HubHref is where
-        the first crumb, "Home" (#3270), goes: '/hub' on the general server, which answers it with the home page -- or, where a hub relays these pages from its own origin, '/hub' on that hub, which
-        answers it itself (#3168). -Style is the page's own layer, names the house file does not define. -Lead and
+        the first crumb, "Home" (#3270), goes: '/' by default, the general server's own root and its home page. It was '/hub' while these pages could be relayed from a product's origin (#3168), where '/' is the product; nothing relays them any more, and a caller on another origin names its own -HubHref. The server still answers '/hub', so an old link keeps working.
+        -Style is the page's own layer, names the house file does not define. -Lead and
         -FooterNote are markup the caller has escaped. -Lead is the page's <meta name="description">, never a
         paragraph under the h1: screen height is scarce, so a page opens on its h1 and goes straight to its content
         (owner, #3585). -Brand opts into the house site header (Format-SiteHeaderHtml):
@@ -173,7 +173,7 @@ function Format-GeneralPageHtml {
         [AllowEmptyString()][string]$FooterNote = '',
         [string]$ThemeKey = 'general-pages',
         [AllowEmptyString()][string]$SiteName = '',
-        [string]$HubHref = '/hub',
+        [string]$HubHref = '/',
         [AllowEmptyString()][string]$Brand = '',
         [AllowEmptyString()][string]$BrandTag = '',
         [switch]$Bare,
@@ -711,7 +711,7 @@ function Format-HubLensPageHtml {
         as JSON in a <script type="application/json">, and the raw text stays in a <noscript> for a reader without
         JavaScript. $null for a name the repo has no lens of.
     #>
-    param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyString()][string]$RepoRoot = '', [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
+    param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyString()][string]$RepoRoot = '', [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/')
     $lens = @(Get-HubLensPages -RepoRoot $RepoRoot | Where-Object { $_.Label -ceq $Name })[0]
     if (-not $lens) { return $null }
     $e = { param($v) ConvertTo-GeneralPageText $v }
@@ -820,7 +820,7 @@ function Format-HubGroupPageHtml {
         group it sits in but a Section, which has no page. $null for an Href no group has, and for a Section.
         -RepoRoot is the checkout a Source section reads its cards from (the Lenses, Get-HubLensPages).
     #>
-    param([Parameter(Mandatory = $true)][string]$Href, [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub',
+    param([Parameter(Mandatory = $true)][string]$Href, [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/',
         [AllowEmptyString()][string]$RepoRoot = '')
     $groups = @(Get-HubGroups)
     $g = @($groups | Where-Object { $_.Href -ceq $Href })[0]
@@ -1777,8 +1777,8 @@ function Format-ReleaseNotesDevPage {
     <#
         The built release-notes page (#3108), as a dev server serves it: the house stylesheet and theme
         script, the breadcrumb bar and the settings button, put around the page build-release-notes-page.ps1
-        leaves in dkj-policy/releases/page/. -HubHref is where the "Home" crumb goes ('/hub' on the
-        general server). -RepoName puts the site header above the bar (October 22, 2026).
+        leaves in dkj-policy/releases/page/. -HubHref is where the "Home" crumb goes ('/', the toolbox's
+        own root, by default). -RepoName puts the site header above the bar (October 22, 2026).
 
         ONLY THIS COPY, NOT THE TEMPLATE. The template is dkj-policy's, shared with every consumer --
         BWJ-Development repos included, which do not take the house style -- and it is deliberately
@@ -1804,7 +1804,7 @@ function Format-ReleaseNotesDevPage {
     param(
         [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Html,
         [string]$ThemeKey = 'general-pages',
-        [string]$HubHref = '/hub',
+        [string]$HubHref = '/',
         [AllowEmptyString()][string]$RepoName = '',
         [switch]$Release
     )

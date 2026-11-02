@@ -52,7 +52,7 @@ Assert-True ($shell -match '<p class="note">note</p>') 'the footer note closes t
 
 Write-Host '-- the general page shell (the plugin''s)' -ForegroundColor Cyan
 $gshell = Format-GeneralPageHtml -Title 'An <i>issue' -Lead 'lead' -Body '<p>body</p>' -SiteName 'Org/some<repo>'
-Assert-True ($gshell -match '<li><a href="/hub">Tools</a></li>') 'the first crumb goes to /hub on the general server'
+Assert-True ($gshell -match '<li><a href="/">Tools</a></li>') 'the first crumb goes to the general server''s own root, /'
 Assert-True ($gshell -match '<title>Org/some&lt;repo&gt; -- An &lt;i&gt;issue</title>' -and $gshell -match 'site-header__name">Org/some&lt;repo&gt; <span class="site-header__tag">toolbox</span>' -and $gshell -notmatch 'class="eyebrow"') 'the title and the site header carry the repo''s name, escaped, and a named page needs no eyebrow'
 Assert-True ($gshell -match 'data-theme-key="general-pages"') 'the theme key is the general server''s own'
 Assert-True ($gshell -notmatch 'dkj-claude-plugins') 'and nothing of this repo is built into it'
@@ -112,12 +112,12 @@ Assert-Equal '/ai/claude' ((Get-HubGroups | Where-Object { $_.Href -eq '/perform
 Assert-Equal '/performance' ((Get-HubGroups | Where-Object { $_.Href -eq '/clock' }).Group) 'the Clock group sits under Performance'
 $perfPage = Format-HubGroupPageHtml -Href '/performance' -RepoName 'dkj-claude-plugins'
 Assert-True ($perfPage -match '<div><h1>Performance</h1></div>' -and ([regex]::Matches($perfPage, '<section class="card card--link">')).Count -eq 2 -and $perfPage.IndexOf('href="/sessionstart"') -ge 0 -and $perfPage.IndexOf('href="/sessionstart"') -lt $perfPage.IndexOf('href="/clock"') -and $perfPage -notmatch 'href="/(test-gate|stopwatch|logbook)"') 'the /performance page holds one card link each for SessionStart and Clock, in that order, and none for the Clock''s members'
-Assert-True ($perfPage -match 'aria-current="page">Performance</span>' -and $perfPage -match '<li><a href="/hub">Tools</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/ai">AI</a></li>' -and $perfPage -notmatch '<a href="/performance">') 'its trail reads Tools > AI > Performance'
+Assert-True ($perfPage -match 'aria-current="page">Performance</span>' -and $perfPage -match '<li><a href="/">Tools</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/ai">AI</a></li>' -and $perfPage -notmatch '<a href="/performance">') 'its trail reads Tools > AI > Performance'
 Assert-Equal '/ai,/performance,/clock' ((Get-HubGroupCrumbs -Href '/clock' | ForEach-Object { $_.Href }) -join ',') 'the Clock''s trail runs through AI and Performance'
 Assert-Equal '/ai,/ai/claude/specialists' ((Get-HubGroupCrumbs -Href '/ai/claude/specialists' | ForEach-Object { $_.Href }) -join ',') 'and a Section, which has no page, is no crumb'
 $clockPage = Format-HubGroupPageHtml -Href '/clock' -RepoName 'dkj-claude-plugins'
 Assert-True ($clockPage -match '<div><h1>Clock</h1></div>' -and ([regex]::Matches($clockPage, '<section class="card card--link">')).Count -eq 2 -and $clockPage -notmatch 'href="/test-gate"' -and $clockPage.IndexOf('href="/stopwatch"') -lt $clockPage.IndexOf('href="/logbook"')) 'the /clock page is an h1 above its group (never inside it) and one card link each for Stopwatch and Logbook, in that order'
-Assert-True ($clockPage -match 'aria-current="page">Clock</span>' -and $clockPage -match '<li><a href="/hub">Tools</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/ai">AI</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/performance">Performance</a></li>') 'its trail reads Tools > AI > Performance > Clock'
+Assert-True ($clockPage -match 'aria-current="page">Clock</span>' -and $clockPage -match '<li><a href="/">Tools</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/ai">AI</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/performance">Performance</a></li>') 'its trail reads Tools > AI > Performance > Clock'
 Assert-True ($null -eq (Format-HubGroupPageHtml -Href '/nope') -and $null -eq (Format-HubGroupPageHtml -Href '/Clock')) 'a path no group has is no group page'
 
 Write-Host '-- the AI group: AI > Claude > Rules, Skills, Specialists (Maikel, October 30, 2026)' -ForegroundColor Cyan
@@ -165,7 +165,7 @@ try {
 } finally { Remove-Item -LiteralPath $lensRoot -Recurse -Force -ErrorAction SilentlyContinue }
 foreach ($leaf in 'rules', 'skills') {
     $leafPage = Format-HubGroupPageHtml -Href "/ai/claude/$leaf" -RepoName 'dkj-claude-plugins'
-    Assert-True ($leafPage -match '<li><a href="/hub">Tools</a></li>' -and $leafPage -match '<a href="/ai">AI</a>' -and $leafPage -notmatch 'href="/ai/claude"' -and $leafPage -match 'Nothing on this page yet\.' -and $leafPage -notmatch 'card--link') "the /ai/claude/$leaf page is a landing page of its own, under Tools > AI, with nothing on it yet"
+    Assert-True ($leafPage -match '<li><a href="/">Tools</a></li>' -and $leafPage -match '<a href="/ai">AI</a>' -and $leafPage -notmatch 'href="/ai/claude"' -and $leafPage -match 'Nothing on this page yet\.' -and $leafPage -notmatch 'card--link') "the /ai/claude/$leaf page is a landing page of its own, under Tools > AI, with nothing on it yet"
 }
 Assert-True ((Get-HubIconSvg -Name '') -eq '' -and (Get-HubIconSvg -Name 'nope') -eq '' -and (Format-HubCardLinkHtml -Href '/x' -Label 'X') -notmatch 'menu-item__icon') 'a card that names no icon, or one the hub lacks, draws none'
 $houseCss = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'plugins\dkj-policy\assets\dkj-brandbook\house-style.css'))
@@ -202,7 +202,7 @@ Assert-Equal 'a.tests.ps1' ($empty.Missing -join ',') 'and every suite on disk i
 Write-Host '-- the test-gate overview' -ForegroundColor Cyan
 $tg = Format-TestGatePageHtml -Model $m
 Assert-True ($tg -match '<h1>Test gate</h1>') 'the overview is named Test gate'
-Assert-True ($tg -match '<li><a href="/hub">Tools</a></li>' -and (Format-TestGatePageHtml -Model $m -HubHref '/') -match '<li><a href="/">Tools</a></li>') 'its Tools crumb is the general server''s /hub, or the hub the caller names'
+Assert-True ($tg -match '<li><a href="/">Tools</a></li>' -and (Format-TestGatePageHtml -Model $m -HubHref '/elsewhere') -match '<li><a href="/elsewhere">Tools</a></li>') 'its Tools crumb is the general server''s root, or the hub the caller names'
 Assert-True ($tg -match '<span aria-current="page">Test gate</span>' -and $tg -notmatch 'href="/test-gate">Test gate</a>') 'the overview is the trail''s last crumb, not a link to itself'
 Assert-True ($tg -match 'href="/test-gate/suites"><div class="menu-item__label"><h2>All suites</h2>' -and $tg -notmatch '<table') 'without groups it drills into one list, All suites, and holds no table itself'
 Assert-True ($tg -match 'id="recorded"><nav class="menu-list" aria-label="Where it was measured"><a class="menu-item" href="/test-gate/measured"><div class="menu-item__label"><h2>Where it was measured</h2><span class="menu-item__value"><span class="num">2026-10-07 . 2 CI runs . 1 not recorded</span>') 'the measurement is a card of its own, with its date, its run count and the suites not recorded'
@@ -211,7 +211,7 @@ Assert-True ($tg -match '\.tg-cards \{ display: grid; grid-template-columns: rep
 Assert-True ($tg -match 'class="note">Read from the repo') 'the overview closes on where it reads from'
 $none = Format-TestGatePageHtml -Model (ConvertFrom-SuiteDurations -Durations $null -SuiteFiles @('a.tests.ps1')) -ReadError 'the file is not there'
 Assert-True ($none -match 'No test gate has been measured in this repo yet' -and $none -notmatch 'could not be read' -and $none -match 'No suite durations are recorded in this repo') 'a repo with no suite-durations.json gets the empty state, not a warning (#3470)'
-Assert-True ($tg -match '<li><a href="/hub">Tools</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/repository">GitHub</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><span aria-current="page">Test gate</span></li>') 'and its trail reads Tools > GitHub > Test gate (the owner, November 2, 2026)'
+Assert-True ($tg -match '<li><a href="/">Tools</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/repository">GitHub</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><span aria-current="page">Test gate</span></li>') 'and its trail reads Tools > GitHub > Test gate (the owner, November 2, 2026)'
 $bad = Format-TestGatePageHtml -Model $empty -ReadError 'it is not valid JSON'
 Assert-True ($bad -match 'msg--warn" role="alert">scripts/tests/suite-durations.json could not be read: it is not valid JSON') 'an unreadable file is a warning'
 Assert-True ($bad -match 'No suite durations are recorded\.') 'and the cards say it is empty rather than vanishing'
@@ -544,7 +544,7 @@ Assert-True ($rn.IndexOf('<script src="/house-theme.js"></script>') -lt $rn.Inde
 $bodyAt = $rn.IndexOf('<body>')
 $barAt = $rn.IndexOf('<div class="breadcrumbs-bar">')
 Assert-True ($barAt -gt $bodyAt -and $rn.Substring($bodyAt + 6, $barAt - $bodyAt - 6).Trim() -eq (Format-RepoHubBanner).Trim()) 'the banner is the first thing in <body>, and with no repo named the breadcrumb bar comes straight after it'
-Assert-True ($rn -match '<li><a href="/hub">Tools</a></li>\s*<li><span class="breadcrumbs__sep" aria-hidden="true"><svg\ viewBox="0\ 0\ 24\ 24"><path\ fill="currentColor"\ fill-rule="evenodd"\ d="M9\.793\ 16\.707a1\ 1\ 0\ 0\ 1\ 0-1\.414L13\.086\ 12\ 9\.793\ 8\.707a1\ 1\ 0\ 0\ 1\ 1\.414-1\.414l4\ 4a1\ 1\ 0\ 0\ 1\ 0\ 1\.414l-4\ 4a1\ 1\ 0\ 0\ 1-1\.414\ 0"\ clip-rule="evenodd"/></svg></span><span aria-current="page">Release notes</span></li>') 'its trail runs from the hub, on /hub of the general server, to this page'
+Assert-True ($rn -match '<li><a href="/">Tools</a></li>\s*<li><span class="breadcrumbs__sep" aria-hidden="true"><svg\ viewBox="0\ 0\ 24\ 24"><path\ fill="currentColor"\ fill-rule="evenodd"\ d="M9\.793\ 16\.707a1\ 1\ 0\ 0\ 1\ 0-1\.414L13\.086\ 12\ 9\.793\ 8\.707a1\ 1\ 0\ 0\ 1\ 1\.414-1\.414l4\ 4a1\ 1\ 0\ 0\ 1\ 0\ 1\.414l-4\ 4a1\ 1\ 0\ 0\ 1-1\.414\ 0"\ clip-rule="evenodd"/></svg></span><span aria-current="page">Release notes</span></li>') 'its trail runs from the hub, on /hub of the general server, to this page'
 Assert-True ($rn.IndexOf('DKJTheme.settings(') -gt $rn.IndexOf('id="settings"') -and $rn.IndexOf('DKJTheme.settings(') -lt $rn.LastIndexOf('</body>')) 'the settings button is mounted before </body>'
 Assert-True ($rn.Contains((Format-FitAlarmHtml)) -and $rn.IndexOf('id="fit-alarm"') -gt $rn.IndexOf('DKJTheme.settings(') -and $rn.IndexOf('id="fit-alarm"') -lt $rn.LastIndexOf('</body>') -and ([regex]::Matches($rn, 'id="fit-alarm"')).Count -eq 1) 'and the fit alarm once after it, as every other hub page closes (#3558)'
 Assert-True ($rn.Contains('<div class="wrap">') -and $rn.Contains('@@PAGE_MAIN@@') -and $rn.Contains('@@PAGE_STYLE@@')) 'the template''s own content is left alone'
@@ -887,7 +887,7 @@ Assert-Equal 'dkj-policy' (Resolve-PluginsPageRequest -Path '/plugins/dkj-policy
 Assert-True ($null -eq (Resolve-PluginsPageRequest -Path '/plugins/../x') -and $null -eq (Resolve-PluginsPageRequest -Path '/plugins/A') -and $null -eq (Resolve-PluginsPageRequest -Path '/pluginsx')) 'anything that is not a plugin slug is no Plugins page'
 Assert-True ($null -eq (Find-PluginsPageRow -Model $pv -Name 'nope') -and (Find-PluginsPageRow -Model $pv -Name 'alpha').Status.Level -eq 'error') 'a name is found among the enabled plugins, with its state, or not at all'
 $one = Format-PluginPageHtml -Row (Find-PluginsPageRow -Model $pv -Name 'alpha') -Model $pv -RepoName 'r'
-Assert-True ($one -match '<a href="/hub">Tools</a>' -and $one -match '<a href="/plugins">Installed plugins</a>' -and $one -match '<span aria-current="page">alpha</span>' -and $one -match '<h1>alpha</h1>') 'its crumbs read Tools > Installed plugins > the plugin'
+Assert-True ($one -match '<a href="/">Tools</a>' -and $one -match '<a href="/plugins">Installed plugins</a>' -and $one -match '<span aria-current="page">alpha</span>' -and $one -match '<h1>alpha</h1>') 'its crumbs read Tools > Installed plugins > the plugin'
 Assert-True ($one.Contains('<code>claude plugin update alpha@m --scope project</code>') -and $one.Contains('the clone is &lt;b&gt;ahead&lt;/b&gt;') -and $one -match 'msg--warn') 'a problem is named, escaped, with the command that closes it'
 $zeta = Format-PluginPageHtml -Row (Find-PluginsPageRow -Model $pv -Name 'zeta') -Model $pv
 Assert-True ($zeta.Contains('&lt;i&gt;z&lt;/i&gt;') -and $zeta -notmatch 'role="status"' -and $zeta -notmatch 'To close it' -and $zeta -match 'committed 2026-10-25') 'a healthy plugin shows its description and the clone, and no verdict line or command'

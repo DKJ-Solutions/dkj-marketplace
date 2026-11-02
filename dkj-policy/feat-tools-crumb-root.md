@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Maikel asked why the Tools crumb on the toolbox (port 4890) leads to `/hub` rather than `/`. The two
+render the same page there; `/hub` was the default only so a product relaying these pages from its own
+origin (#3168) could still reach the hub, and that relay ended with #3540.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Every hub page lib defaults `-HubHref` to `/` instead of `/hub` (general pages, stopwatch, logbook, plugins, test gate, timing pages), and their docstrings say why
+- [x] The hub README's crumb paragraph no longer describes the retired relay as live
+- [x] `/hub` keeps answering on the toolbox, so an old link still lands on the hub
 
 ### TEST
 
+- [x] The crumb asserts in `dev-pages`, `stopwatch`, `consumer-dashboard` and `dev-preview-sessionstart` read `/`; the test-gate assert proves a caller-named `-HubHref` still wins
+- [x] All four suites green standalone
+- [ ] Maikel has looked at the crumb on the running toolbox
+
 ### DEPLOY: feat/tools-crumb-root
 
-**Score:**
+The toolbox's first crumb, **Tools**, and the site-header name now link `/`, the toolbox's own root,
+instead of `/hub`. Both addresses render the same home page, so nothing a reader lands on changes; the URL
+in the address bar is simply the plain one. `/hub` still answers, so a bookmark or an old link keeps
+working. The README's crumb paragraph no longer describes the product relay retired with #3540 as live.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A toolbox user who clicks Tools sees `localhost:<port>/` in the address bar rather than `/hub`; the page
+is the same.
+
+**Score:** 1
 
 #### Pull Request
 
