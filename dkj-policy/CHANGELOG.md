@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**11 / 11 minor entries** <!-- pending-tally -->
+**12 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/hub-settings-page · 20261102-222259Z
+
+The toolbox hub gets a **Settings** card, after Installed plugins and in the site header's menu. Its page, `/settings`, opens on an h2 **Theme** with one card per theme holding the brand book's own swatch for it -- clickable as a whole, the active one bordered in the selected theme's primary -- a **Light | Dark** toggle above them that shows one mode's six at a time, and a **Reset** card at the end of that row. It is the same choice the header's settings button makes, so the two always agree.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+The brand book gives every card group the same padding: `.grid-2` and `.card-grid` now take `--spacing-5` (20px), as `.grid-3` already did, so a two-column group no longer sits tighter than a three-column one.
+
+Every repo running dkj-policy gets the card on its toolbox: the theme is now one click from the hub, on a page of its own rather than only behind the header's gear.
+
+**Score:** 2
+
+#### Pull Request
+
+A Settings card on the toolbox hub, its page holding the theme settings
+
+Plugins: dkj-policy
+
+[PR #3765](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3765)
+
+---
 
 ### DEPLOY: feat/claude-hub-page · 20261102-220637Z
 
