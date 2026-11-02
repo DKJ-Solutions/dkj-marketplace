@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**3 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3747-checkout-v7 · 20261102-164702Z
+
+Every `actions/checkout` pin in the tree moves from v5 to v7 (#3747): this repo's own workflows, the
+reusable ones consumers call, the CI floor and the Shopify floor that `adopt-ci-floor` and
+`adopt-shopify-floor` write, and the two `bwj-development` Asana templates. The SHA-pinned write-capable
+runners take `3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1`, still equal across the generator and this
+repo's own copies, as `pin-parity` requires.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+If Dependabot has moved your workflows to `actions/checkout@v7`, re-adopting a scaffold no longer puts v5
+back. If yours are still on v5, a re-adopt now writes v7. One behaviour changes with it: `merge-on-green`
+now refuses to check out a pull request from a fork, which v7 blocks under `workflow_run`.
+
+**Score:** 2
+
+#### Pull Request
+
+Every actions/checkout pin moves from v5 to v7, scaffolds and this repo's own runners alike
+
+Plugins: bwj-development, dkj-policy, dkj-subagents-shopify
+
+[PR #3754](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3754)
+
+---
 
 ### DEPLOY: fix/release-notes-headings-no-code · 20261102-163529Z
 
