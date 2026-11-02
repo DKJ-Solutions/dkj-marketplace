@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Inbound #3729, ask 1: `live-preflight` exposes no way to give the backup a longer fill wait, so a large
+store's preflight refuses a copy that is still filling. Verified on the tree: `backup-live-theme.ps1`
+defaults `-TimeoutMinutes` to 20 and `live-preflight.ps1` called it with `-Store` only, inside a flat
+2700 s outer bound. Asks 2 and 3 are their own subjects, filed as #3732 and #3733.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `live-preflight.ps1`: a `-BackupTimeoutMinutes` (default 20, 1-600) passed to the backup as `-TimeoutMinutes`, with the outer capture bound growing with it (the wait plus the same 25 minutes the flat 2700 s allowed).
+- [x] Mirror both scripts into `plugins/dkj-subagents/dkj-subagents-shopify/scripts/task/`; document the parameter on the `live-preflight` skill page and in `backup-live-theme`'s help.
 
 ### TEST
 
+- [x] Both scripts parse; the script itself is not driven by a suite (it reaches a real store), as its NOTES state. The gates run in `ship-pr`.
+
 ### DEPLOY: fix/3729-preflight-backup-timeout
 
-**Score:**
+`live-preflight` takes a `-BackupTimeoutMinutes` and passes it to `backup-live-theme` as its
+`-TimeoutMinutes`, so a store whose live theme takes longer than 20 minutes to copy no longer has to run
+the backup by hand and then the preflight with `-SkipBackup`
+([#3729](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3729)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify store with a large live theme can now finish a release-day preflight in one run:
+`live-preflight -BackupTimeoutMinutes 45`. Measured on a 909-file theme, the copy was still filling at the
+20-minute default.
+
+**Score:** 3
 
 #### Pull Request
 
