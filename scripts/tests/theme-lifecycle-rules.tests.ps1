@@ -350,6 +350,30 @@ Assert-True  (-not $first[0].Delete)   '...and deletes nothing'
 
 # ---------------------------------------------------------------------------------------------------
 Write-Host ''
+Write-Host '-VerifyExisting -- adopting a copy a timed-out run left standing (#3733)' -ForegroundColor Cyan
+
+# THE ADOPTED COPY BECOMES ROTATION'S SURVIVOR, so every theme that is not one of our backups is refused.
+$ok = Get-ExistingBackupVerdict -Themes $withBackups -ThemeId '400' -LiveId '100'
+Assert-True  $ok.Accepted                                  'an existing backup of ours, not live, is adopted'
+Assert-Equal ($prefix + 'backup-20260901-120000') $ok.Name '...and its name is read off the theme list'
+Assert-Equal '400' (Get-ExistingBackupVerdict -Themes $withBackups -ThemeId ' 400 ' -LiveId '100').Id 'the id is trimmed before it is matched'
+
+Assert-True (-not (Get-ExistingBackupVerdict -Themes $withBackups -ThemeId '' -LiveId '100').Accepted)    'an empty id is refused'
+Assert-True (-not (Get-ExistingBackupVerdict -Themes $withBackups -ThemeId '999' -LiveId '100').Accepted) 'an id the store does not hold is refused'
+Assert-True (-not (Get-ExistingBackupVerdict -Themes $withBackups -ThemeId '100' -LiveId '100').Accepted) 'the configured live theme is refused -- it is the source, never its own backup'
+Assert-True (-not (Get-ExistingBackupVerdict -Themes $withBackups -ThemeId '402' -LiveId '100').Accepted) 'a repo-owned PREVIEW is refused -- it is not a backup'
+Assert-True (-not (Get-ExistingBackupVerdict -Themes $withBackups -ThemeId '403' -LiveId '100').Accepted) 'a hand-made theme outside the namespace is refused, whatever its name says'
+$restoredVerdict = Get-ExistingBackupVerdict -Themes $restored -ThemeId '400' -LiveId '100'
+Assert-True  (-not $restoredVerdict.Accepted)              'a backup the store reports as role main is refused -- a restored backup is live (#2589)'
+Assert-True  ($restoredVerdict.Reason -match 'restored')   '...and the reason says why'
+
+# AND ITS ROTATION IS THE ORDINARY ONE: adopted 400 is kept, the newer 401 rotates out.
+$adoptRot = Get-BackupRotationPlan -Themes $withBackups -KeepId $ok.Id
+Assert-True (-not (@($adoptRot | Where-Object { $_.Id -eq '400' })[0].Delete)) 'the adopted copy is the one retained'
+Assert-True (@($adoptRot | Where-Object { $_.Id -eq '401' })[0].Delete)        '...and every other backup of ours rotates out'
+
+# ---------------------------------------------------------------------------------------------------
+Write-Host ''
 Write-Host 'The cut/push order warning' -ForegroundColor Cyan
 
 Assert-Equal '' (Get-CutOrderWarning -TrunkIsLive $true) 'the documented order (push, then cut) is silent'

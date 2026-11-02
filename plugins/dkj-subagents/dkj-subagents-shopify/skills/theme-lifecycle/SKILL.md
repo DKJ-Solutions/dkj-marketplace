@@ -73,6 +73,7 @@ spell the plugin cache path out.
 | `-DryRun` | report every verdict and change nothing. Worth doing once in a new store. |
 | `-PollSeconds` | seconds between file-count samples while the copy fills. Default 20. |
 | `-TimeoutMinutes` | give up waiting and fail loudly. Default 20. |
+| `-VerifyExisting <id>` | skip the create and verify-then-rotate the copy a timed-out run left standing, instead of duplicating live again ([#3733](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3733)). Refuses an id that is live, not in the theme list, or outside this repo's backup namespace. The copy is judged against live as it stands now, so retry soon after the run that left it. |
 
 **Three steps, and the order is the whole design: create -> verify -> rotate.**
 

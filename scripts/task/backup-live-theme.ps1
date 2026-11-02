@@ -31,6 +31,8 @@
     THE ORDER IS CREATE -> VERIFY -> ROTATE, AND IT IS THE WHOLE DESIGN.
 
       1. CREATE. 'shopify theme duplicate' from the live theme into '<prefix>backup-<timestamp>'.
+         -VerifyExisting skips it and adopts a copy an earlier run created (#3733); steps 2 and 3 do
+         not change.
       2. VERIFY. Poll the copy's file count until it settles AND matches the source's. The CLI
          returns long before the copy is complete -- measured in the consumer on September 13, 2026:
          a duplicate of live grew 38 -> 538 -> 738 -> 833 files over roughly eight minutes. A step
@@ -118,6 +120,17 @@
     headroom than a small one did under the old, cheaper count. Run from live-preflight, this is that
     script's -BackupTimeoutMinutes (#3729: a 909-file theme was still filling after 20 minutes).
 
+.PARAMETER VerifyExisting
+    The id of a backup copy that already exists. Step 1 is skipped: nothing is duplicated, and the verify
+    and the rotation run against that copy as if this run had just created it (#3733). It is for the
+    retry after a run that timed out: such a run leaves its copy standing, and duplicating live again
+    cost a consumer two extra theme slots on one release day while the first copy was still filling.
+
+    It refuses an id the theme list does not hold, the live theme itself, a name outside this repo's
+    backup namespace, and a backup the store reports as live (Get-ExistingBackupVerdict). The verify
+    judges the copy against live AS IT STANDS NOW, so a copy of an older live stand fails there, by count
+    or by shortfall. Use it soon after the run that left the copy, not days later.
+
 .PARAMETER RootOverride
     Fixture root, so a suite can drive this against a scratch tree instead of a real store.
 
@@ -125,13 +138,16 @@
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts/task/backup-live-theme.ps1 -DryRun
 
 .EXAMPLE
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts/task/backup-live-theme.ps1 -VerifyExisting 123456789012
+
+.EXAMPLE
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts/task/backup-live-theme.ps1
 
 .NOTES
     COVERAGE, STATED RATHER THAN LEFT TO INFERENCE. scripts/tests/theme-lifecycle-rules.tests.ps1
     pins the rules this script invokes: the reserved namespace, the backup name, the fill verdict in
-    all four of its states, the shortfall verdict a short copy is judged by (#2568), and the two states
-    in which rotation refuses outright. THIS SCRIPT ITSELF
+    all four of its states, the shortfall verdict a short copy is judged by (#2568), the two states
+    in which rotation refuses outright, and every refusal of -VerifyExisting (#3733). THIS SCRIPT ITSELF
     IS NOT DRIVEN, for the same reason push-preview.ps1 is not: every path in it either invokes the
     Shopify CLI against a real store or reads a consumer's repo-config, and a suite must not be able
     to reach a store.
@@ -144,6 +160,7 @@ param(
     [switch]$DryRun,
     [int]$PollSeconds = 20,
     [int]$TimeoutMinutes = 20,
+    [string]$VerifyExisting = '',
     [string]$RootOverride = ''
 )
 $ErrorActionPreference = 'Stop'
@@ -252,10 +269,27 @@ if ($liveTheme.Count -eq 1) {
     exit 1
 }
 
-# --- Step 1: create --------------------------------------------------------------------------------
-$backupName = Get-BackupThemeName -Timestamp ([datetime]::Now)
+# --- Step 1: create, or adopt the copy -VerifyExisting names (#3733) --------------------------------
+$verifyExisting = ([string]$VerifyExisting).Trim()
+$adopted = $null
+if ($verifyExisting) {
+    $adopted = Get-ExistingBackupVerdict -Themes $themes -ThemeId $verifyExisting -LiveId $liveId
+    if (-not $adopted.Accepted) {
+        Write-Host "REFUSED: -VerifyExisting $(Format-SafeProseToken -Value $verifyExisting) -- $(Format-SafeProseToken -Value $adopted.Reason)." -ForegroundColor Red
+        Write-Host 'Nothing was created, verified or rotated; the previous backup is still standing.'
+        exit 1
+    }
+}
+
+$backupName = if ($adopted) { $adopted.Name } else { Get-BackupThemeName -Timestamp ([datetime]::Now) }
 Write-Host ''
-Write-Host "[1/3] create -- duplicating live into '$backupName'" -ForegroundColor Cyan
+if ($adopted) {
+    # THE SAME THREE STEPS, WITH THE FIRST ONE ALREADY DONE BY AN EARLIER RUN. The id is the one the theme
+    # list just answered for, and everything below it reads $backupId and $after exactly as after a create.
+    Write-Host "[1/3] create -- skipped: adopting the existing copy '$(Format-SafeProseToken -Value $backupName)' (id $($adopted.Id))" -ForegroundColor Cyan
+} else {
+    Write-Host "[1/3] create -- duplicating live into '$backupName'" -ForegroundColor Cyan
+}
 
 # ONE ARGUMENT LIST, READ BY BOTH BRANCHES (inbound #2031). It was two spellings -- a literal string in
 # the dry run and an array in the call -- and they drifted in the direction that costs most: the dry run
@@ -277,7 +311,9 @@ Write-Host "[1/3] create -- duplicating live into '$backupName'" -ForegroundColo
 # read the flag as decoration and take it out.
 $dupArgs = @('theme', 'duplicate', '--store', $store, '--theme', $liveId, '--name', $backupName, '--force')
 
-if ($DryRun) {
+if ($adopted) {
+    Write-Host '  nothing is duplicated: the verify and the rotation below run against this copy.'
+} elseif ($DryRun) {
     Write-Host "  DRY RUN: would run 'shopify $($dupArgs -join ' ')'."
 } else {
     $dup = Invoke-ShopifyCli -Arguments $dupArgs
@@ -291,7 +327,10 @@ if ($DryRun) {
 # ours and unique by its timestamp, so the list is the authoritative answer -- and it is the same read
 # rotation needs anyway, so this costs nothing and removes one thing that can be parsed wrong.
 $backupId = ''
-if (-not $DryRun) {
+if ($adopted) {
+    $backupId = $adopted.Id
+    $after = $themes
+} elseif (-not $DryRun) {
     $after = Get-ThemeList
     $hit = @($after | Where-Object { $_ -and ([string]$_.name).Trim() -eq $backupName })
     if ($hit.Count -eq 1) { $backupId = ([string]$hit[0].id).Trim() }
@@ -408,6 +447,16 @@ Write-Host ''
 Write-Host '[3/3] rotate -- exactly one backup is retained' -ForegroundColor Cyan
 
 if ($DryRun) {
+    # AN ADOPTED COPY IS THE SURVIVOR, NOT A CANDIDATE: the plan is the real one, keyed on its id (#3733).
+    if ($adopted) {
+        foreach ($row in @(Get-BackupRotationPlan -Themes $themes -KeepId $adopted.Id)) {
+            $verb = if ($row.Delete) { 'would rotate out' } else { 'would keep' }
+            Write-Host "  DRY RUN: $verb '$(Format-SafeProseToken -Value $row.Name)' (id $($row.Id)) -- $($row.Reason)."
+        }
+        Write-Host ''
+        Write-Host 'DRY RUN complete. Nothing was created, deleted or pushed.' -ForegroundColor Yellow
+        exit 0
+    }
     $existing = @($themes | Where-Object { $_ -and (Test-BackupThemeName -Name ([string]$_.name)) })
     if ($existing.Count -eq 0) {
         Write-Host '  DRY RUN: the store holds no backup of ours yet, so the first run would rotate nothing.'
