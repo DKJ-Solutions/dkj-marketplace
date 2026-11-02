@@ -2,7 +2,86 @@
 
 ## [Unreleased]
 
-**7 / 7 minor entries** <!-- pending-tally -->
+**10 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/tools-crumb-root · 20261102-214200Z
+
+The toolbox's first crumb, **Tools**, and the site-header name now link `/`, the toolbox's own root,
+instead of `/hub`. Both addresses render the same home page, so nothing a reader lands on changes; the URL
+in the address bar is simply the plain one. `/hub` still answers, so a bookmark or an old link keeps
+working. The README's crumb paragraph no longer describes the product relay retired with #3540 as live.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A toolbox user who clicks Tools sees `localhost:<port>/` in the address bar rather than `/hub`; the page
+is the same.
+
+**Score:** 1
+
+#### Pull Request
+
+The Tools crumb on the toolbox goes to / instead of /hub
+
+Plugins: dkj-policy
+
+[PR #3762](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3762)
+
+---
+
+### DEPLOY: feat/3758-live-push-merged-only · 20261102-213141Z
+
+`guard-live-theme` no longer lets the live-push marker authorise a push on its own (#3758). An
+authorised live push must also carry only what `origin/<trunk>` holds: every `--only` file must match
+the trunk byte for byte (a line-ending difference aside), a file the push would delete must be absent
+from the trunk too, and a push without `--only` needs a clean root whose commit equals the trunk. The
+refusal names each file and says to merge first. A pattern or directory in `--only`, a shell-expanded
+value, a `cd`, `--environment`, a `SHOPIFY_FLAG_ONLY`/`_PATH`/`_ENVIRONMENT` on the line, or a missing
+`origin/<trunk>` is refused, because what it would push cannot be read. The trunk is
+`Get-TrunkBranchName`, default `main`. A second live push on the same line is measured too.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+In a Shopify store repo, a live push of work that is not merged into the trunk is now refused even with
+the marker, so live can no longer hold work the trunk lacks, which a later push from the trunk would
+silently revert. The step-7 push `live-preflight` composes from the merged trunk passes as before.
+
+**Score:** 3
+
+#### Pull Request
+
+guard-live-theme refuses a live push of content the trunk does not hold
+
+Plugins: dkj-subagents-shopify
+
+[PR #3763](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3763)
+
+---
+
+### DEPLOY: feat/site-header-brand-hit-area · 20261102-205736Z
+
+The house site header's brand link is no longer only its text: the whole cell from the bar's left edge to the end of the name, top to bottom, goes home, and it lights up on hover in the header's hover shade -- the same shape the settings cell has at the bar's right end.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every page built on the brand book gets a larger, visible home target in its header, so going home no longer needs a click on the text itself.
+
+**Score:** 2
+
+#### Pull Request
+
+The site header's brand link fills the bar's full height as one clickable cell
+
+Plugins: dkj-policy
+
+[PR #3760](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3760)
+
+---
 
 ### DEPLOY: feat/site-header-nav · 20261102-190626Z
 

@@ -274,7 +274,7 @@ function Format-LogbookPageHtml {
         [hashtable]$Transcript = @{},
         [datetime]$Now = [datetime]::UtcNow,
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/hub'
+        [string]$HubHref = '/'
     )
     $notes = @{}
     $work = Get-LogbookWorkTimes -Runs $Runs -Transcript $Transcript
@@ -299,7 +299,7 @@ function Format-LogbookRunPageHtml {
         [hashtable]$Transcript = @{},
         [datetime]$Now = [datetime]::UtcNow,
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/hub'
+        [string]$HubHref = '/'
     )
     $note = 'Kept on this machine in <code>' + (ConvertTo-GeneralPageText $StorePath) + '</code>, outside the checkout, and not shared. ' +
         'The phases are read from this repo''s Claude Code session transcripts once a run has stopped, as the Stopwatch reads them: each second goes to the first phase going at that moment, ' +

@@ -1162,7 +1162,7 @@ function Format-StopwatchPageHtml {
         [hashtable]$CardTones = @{},
         [switch]$Flat,
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/hub',
+        [string]$HubHref = '/',
         [switch]$Shared
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
@@ -1238,7 +1238,7 @@ function Format-StopwatchLabelPageHtml {
         [AllowEmptyString()][string]$StorePath = '',
         [datetime]$Now = [datetime]::UtcNow,
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/hub',
+        [string]$HubHref = '/',
         [switch]$Shared
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
@@ -1303,7 +1303,7 @@ function Format-StopwatchRunPageHtml {
         [AllowEmptyString()][string]$TimeNote = '',
         [switch]$LabelCrumb,
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/hub',
+        [string]$HubHref = '/',
         [switch]$Shared
     )
     $crumbs = @(Get-HubGroupCrumbs -Href '/clock') + @(@{ Label = $ParentLabel; Href = $Route })

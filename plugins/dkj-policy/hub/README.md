@@ -260,12 +260,12 @@ where it has one: the same trust the dev-preview hook already gives
 loopback**: any process on the machine can read them, so a private repo's issue titles are readable by
 every local process, not only by the browser of whoever started the session.
 
-Every page's first crumb is `/hub`, the hub on the same origin. A repo's product may also **relay** these
-pages from its own origin with `Copy-LoopbackUpstream` (in
-[`lib/loopback-server-lib.ps1`](lib/loopback-server-lib.ps1)) and link them by bare path. The pages then
-share that product's `localStorage`, and with it the theme and width choice under their key,
-`general-pages`. The source repo's consumer dashboard does this, a relay it kept from its years as an own
-hub ([#3168](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3168)). The pages
+Every page's first crumb is `/`, the toolbox's own root (Maikel, November 2, 2026). It was `/hub` while the
+source repo's product relayed these pages from its own origin with `Copy-LoopbackUpstream` (in
+[`lib/loopback-server-lib.ps1`](lib/loopback-server-lib.ps1),
+[#3168](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3168)), where `/` is the product's home.
+That relay ended with #3540, so nothing serves these pages from another origin now. A caller that ever does
+again names its own `-HubHref`, and `/hub` keeps answering, so an old link still lands on the hub. The pages
 carry the repo's name, `owner/name` from the `origin` remote, else the folder's. Each issue links to the
 `url` `gh` returned for it, and only when that is a GitHub issue link.
 
