@@ -872,16 +872,17 @@ function Format-HubGroupPageHtml {
 
 function Format-HubSettingsPageHtml {
     <#
-        The toolbox's Settings page on /settings (Dave, November 2, 2026): its h1, then a card headed by the h2 Theme
-        holding a card headed by the h3 Colour, with the brand book's own theme picker in it, (DKJTheme.picker, house-theme.js, which every page here loads) and its
+        The toolbox's Settings page on /settings (Dave, November 2, 2026): its h1, then the group headed by the h2 Theme
+        holding an h3 card, Colour, with the brand book's own theme picker in it, (DKJTheme.picker, house-theme.js, which every page here loads) and its
         reset. The choice is the same one the header's settings button makes -- one key per app on this device -- so the
         two always agree. Nothing here is read from disk.
     #>
     param([AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
-    # The picker sits in a card of its own inside the Theme card, headed by an h3 (Dave, November 2, 2026).
-    $body = '<section class="card hs-settings"><h2>Theme</h2>' +
-        '<section class="card"><div class="card__head"><h3>Colour</h3></div><div id="settings-theme"></div></section>' +
-        '<p><button type="button" class="btn" id="settings-theme-reset">Reset theme</button></p></section>' + "`n" +
+    # The house grouping form (house-style.css, .grid-2 and .grid__head): the Theme h2 over its group's surface (--bg-2),
+    # and the picker in an h3 card in it, which the house sets on --bg-3 with a --bg-4 border (Dave, November 2, 2026).
+    $body = '<div class="grid-2"><div class="grid__head"><h2>Theme</h2></div>' +
+        '<section class="card grid__full hs-settings"><div class="card__head"><h3>Colour</h3></div><div id="settings-theme"></div>' +
+        '<p><button type="button" class="btn" id="settings-theme-reset">Reset theme</button></p></section></div>' + "`n" +
         '<script>DKJTheme.picker(document.getElementById("settings-theme"), { light: "Light", dark: "Dark" });' +
         ' document.getElementById("settings-theme-reset").addEventListener("click", function () { DKJTheme.reset(); });</script>'
     $style = '.hs-settings > * + * { margin-top: var(--spacing-3); }'
