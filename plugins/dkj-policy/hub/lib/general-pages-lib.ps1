@@ -918,13 +918,13 @@ function Format-HubSettingsPageHtml {
         ' show(modeOf(DKJTheme.current()));' +
         ' document.getElementById("settings-theme-reset").addEventListener("click", function () { DKJTheme.reset(); show(modeOf(DKJTheme.current())); });' +
         ' })();</script>'
-    # The reset's edge in the primary, hover included (Dave, November 2, 2026): this page's own button by its id,
+    # The reset with no edge and no fill, hover included: transparent rather than gone, so it keeps its height (Dave, November 2, 2026): this page's own button by its id,
     # so no house class is redefined.
     # .hs-theme and .hs-swatch are this page's own classes: the row, the full-width head, toggle and reset in it, and a
     # card that hugs its swatch. No house class or token is redefined.
     $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
         '.hs-theme > :is(.grid__head, .grid__full) { flex: 0 0 100%; }' + "`n" +
-        '.hs-swatch { margin-top: 0; padding: var(--spacing-2); }' + "`n" + '#settings-theme-reset { border-color: var(--primary); }'
+        '.hs-swatch { margin-top: 0; padding: var(--spacing-2); }' + "`n" + '#settings-theme-reset { border-color: transparent; background: none; }'
     return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $body -Style $style `
         -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
 }
