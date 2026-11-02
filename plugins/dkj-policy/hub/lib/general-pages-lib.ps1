@@ -592,6 +592,41 @@ function ConvertTo-HubLensBody {
     return ConvertTo-HubLensLeadHeadings -Text ((@($out) -join "`n").TrimStart("`n"))
 }
 
+function Split-HubLensIntro {
+    <#
+        Pure: a lens body (ConvertTo-HubLensBody) as @{ Intro; Body }. The Intro is the plain paragraphs before the first
+        heading -- what the lens says about itself, which its page sets under the h1 (Maikel, November 2, 2026). A quote
+        before that heading is dropped; a list, a table, code or anything indented stays in the Body, in its place. No
+        paragraph there, no Intro.
+    #>
+    param([AllowEmptyString()][string]$Text)
+    $lines = @($Text -split "`n")
+    $end = $lines.Count; $fence = $false
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match '^\s*```') { $fence = -not $fence; continue }
+        if (-not $fence -and $lines[$i] -match '^#{1,6}[ \t]') { $end = $i; break }
+    }
+    # The blocks before that heading, split on blank lines; a fence is one block, blank lines and all.
+    $blocks = New-Object System.Collections.Generic.List[object]; $cur = $null; $fence = $false
+    for ($i = 0; $i -lt $end; $i++) {
+        $l = $lines[$i]
+        if ($l -match '^\s*```') { $fence = -not $fence }
+        if (-not $fence -and $l -match '^\s*$' -and $l -notmatch '^\s*```') { $cur = $null; continue }
+        if (-not $cur) { $cur = New-Object System.Collections.Generic.List[string]; $blocks.Add($cur) }
+        $cur.Add($l)
+    }
+    $intro = New-Object System.Collections.Generic.List[string]; $kept = New-Object System.Collections.Generic.List[string]
+    foreach ($b in $blocks) {
+        # A quote there is the lens template's own note about where the lens sits, not content: it goes (Maikel, the same day).
+        if ($b[0] -match '^>') { continue }
+        $isPara = $b[0] -notmatch '^(\s|[-*+][ \t]|\d+\.[ \t]|\||```)'
+        if ($isPara) { $intro.Add(($b -join "`n")) } else { $kept.Add(($b -join "`n")) }
+    }
+    $rest = @($lines | Select-Object -Skip $end) -join "`n"
+    $bodyParts = @($kept) + @($(if ($rest) { $rest }))
+    return @{ Intro = (@($intro) -join "`n`n"); Body = ((@($bodyParts | Where-Object { $_ }) -join "`n`n")) }
+}
+
 function ConvertTo-HubLensLeadHeadings {
     <#
         Pure: the h3 level put to use (Maikel, November 2, 2026). A list straight under an h2 whose EVERY item opens with
@@ -663,20 +698,23 @@ function Format-HubLensPageHtml {
     [void]$body.AppendLine('<div><h1>' + (& $e $title) + '</h1></div>')
     try {
         $text = [System.IO.File]::ReadAllText($lens.Path, (New-Object System.Text.UTF8Encoding($false))) -replace "`r`n", "`n"
-        $md = ConvertTo-HubLensBody -Text $text
+        $parts = Split-HubLensIntro -Text (ConvertTo-HubLensBody -Text $text)
         $renderer = [System.IO.File]::ReadAllText($script:MarkdownRendererPath, (New-Object System.Text.UTF8Encoding($false)))
         # JSON inside a <script>: every '<' is escaped, so no '</script>' in a lens can end the block early.
-        $json = (ConvertTo-Json -InputObject $md -Compress) -replace '<', ('\' + 'u003c')
-        [void]$body.AppendLine('<section class="card dp-lens"><div id="lens-body"><noscript><pre tabindex="0"><code>' + (& $e $md) + '</code></pre></noscript></div></section>')
+        $json = (ConvertTo-Json -InputObject ([ordered]@{ intro = $parts.Intro; body = $parts.Body }) -Compress) -replace '<', ('\' + 'u003c')
+        # The lens's opening paragraphs stand under the h1, outside the card (Maikel, November 2, 2026).
+        if ($parts.Intro) { [void]$body.AppendLine('<div class="dp-lens" id="lens-intro"><noscript><p>' + (& $e $parts.Intro) + '</p></noscript></div>') }
+        [void]$body.AppendLine('<section class="card dp-lens"><div id="lens-body"><noscript><pre tabindex="0"><code>' + (& $e $parts.Body) + '</code></pre></noscript></div></section>')
         [void]$body.AppendLine('<script type="application/json" id="lens-md">' + $json + '</script>')
-        [void]$body.AppendLine("<script>`n(function () {`n  'use strict';`n" + $renderer.TrimEnd() + "`n  document.getElementById('lens-body').innerHTML = renderMd(JSON.parse(document.getElementById('lens-md').textContent));`n})();`n</script>")
+        [void]$body.AppendLine("<script>`n(function () {`n  'use strict';`n" + $renderer.TrimEnd() + "`n  var md = JSON.parse(document.getElementById('lens-md').textContent), intro = document.getElementById('lens-intro');`n  if (intro) { intro.innerHTML = renderMd(md.intro); }`n  document.getElementById('lens-body').innerHTML = renderMd(md.body);`n})();`n</script>")
     } catch {
         [void]$body.AppendLine('<p class="msg--warn" role="alert">This lens could not be read: ' + (& $e $_.Exception.Message) + '</p>')
     }
     # The lens card reads as a document, so it is never wider than 800px (Maikel, November 2, 2026). The elements in it
     # are the house's own (h1-h3, code, pre, lists, quotes, .table); this layer sets only the space between its blocks.
     $style = '.dp-lens { max-width: 800px; }' + "`n" +
-        '#lens-body > * + * { margin-top: var(--spacing-3); }' + "`n" +
+        '#lens-intro { margin-top: var(--spacing-2); }' + "`n" +
+        ':is(#lens-body, #lens-intro) > * + * { margin-top: var(--spacing-3); }' + "`n" +
         '#lens-body > * + :is(h2, h3) { margin-top: var(--spacing-6); }' + "`n" +
         '#lens-body li + li, #lens-body li > :is(ul, ol) { margin-top: var(--spacing-1); }'
     return Format-GeneralPageHtml -Title $title -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref -Style $style `

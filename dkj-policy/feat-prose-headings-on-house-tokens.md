@@ -49,12 +49,13 @@ Maikel, November 2, 2026: `.prose` headings showed through `--prose-h1`..`--pros
 - [x] Lens page: no `.prose`; the space between blocks set in its own page layer
 - [x] Lens page: a lone `## Specific to this repo` wrapping `###` sections goes, and the headings shift so the highest is an h2 (`ConvertTo-HubLensBody`), so a lens's sections are h2s rather than one h2 over many h3s
 - [x] Lens page: a list under an h2 whose every item opens with a bold lead becomes h3s over their text (`ConvertTo-HubLensLeadHeadings`), so the h3 level is used too
+- [x] Lens page: the opening paragraphs before the first heading stand under the h1, outside the card, and a quote there goes (`Split-HubLensIntro`). That is an intro under the h1, which #3585 rules out for a page in general; the owner asked for it here by name
 - [x] `specimens.html`: the prose cards replaced by a "Markdown elements" card
 - [x] README: a dated section on the retirement; the reserved-class and collision lists no longer name `.prose`
 
 ### TEST
 
-- [x] `check-house-style` 135/0, `house-palette` 161/0, `dev-pages` 566/0, `release-notes-page` 207/0, `shared-scripts` 1217/0; `check-house-style.ps1` OK, `check-plugin-integrity.ps1` 0 errors
+- [x] `check-house-style` 135/0, `house-palette` 161/0, `dev-pages` 567/0, `release-notes-page` 207/0, `shared-scripts` 1217/0; `check-house-style.ps1` OK, `check-plugin-integrity.ps1` 0 errors
 - [~] The owner's look in the browser: a visible result to every DKJ-Solutions app, so the branch waits for it instead of merging
 
 ### DEPLOY: feat/prose-headings-on-house-tokens
