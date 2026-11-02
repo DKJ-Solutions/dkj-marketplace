@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
-    The rules behind check-house-style (#3035): is every vendored copy of the house style the copy the
+    The rules behind check-house-style (#3035): is every vendored copy of the brand book the copy the
     dkj-brandbook skill pins, does the repo's own layer leave the house tokens and classes alone, and does
-    it still use a token name the house style retired.
+    it still use a token name the brand book retired.
 
 .DESCRIPTION
     WHY IT EXISTS. Measured October 15, 2026 across the DKJ-Solutions org, nothing checked a consumer's
@@ -22,8 +22,8 @@
       2. redefine -- the repo's own layer defines no house token (`--x:`) and styles no house class as
                      the subject of its own rule. The house set is read from the verified copy itself,
                      so it follows the pinned tag without a second list to maintain.
-      3. retired  -- the repo's own layer neither defines nor reads (`var(--x)`) a token name the house
-                     style retired.
+      3. retired  -- the repo's own layer neither defines nor reads (`var(--x)`) a token name the brand
+                     book retired.
 
     PATTERN GREP, NOT A PARSE. Checks 2 and 3 match patterns rather than parse CSS or SCSS: no runtime
     dependency, and a bare Windows PowerShell 5.1 runs it. The price is the occasional false positive,
@@ -74,7 +74,7 @@
 Set-StrictMode -Version Latest
 
 function Get-HouseStyleRetiredTokens {
-    <# The token names the house style retired, as of the tag the skill pins (v0.4.0). #>
+    <# The token names the brand book retired, as of the tag the skill pins (v0.4.0). #>
     return [string[]]@(
         '--axis', '--bad', '--border', '--border-base', '--down', '--gain', '--good', '--grid', '--grid-base',
         '--ink', '--ink-1', '--ink-2', '--ink-3', '--ink-4', '--ink-5', '--ink-6', '--ink-7', '--loss', '--cat-1', '--cat-2', '--cat-3', '--muted', '--muted-inverse', '--paper-1', '--paper-2', '--paper-3', '--paper-4', '--neutral-1', '--neutral-2', '--neutral-3', '--neutral-4',
@@ -91,7 +91,7 @@ function Get-HouseStyleCopyNames {
 }
 
 function Get-HouseStyleCanonicalDir {
-    <# Where the source repo keeps the canonical house style, relative to its root (#3531). #>
+    <# Where the source repo keeps the canonical brand book, relative to its root (#3531). #>
     return 'plugins/dkj-policy/assets/dkj-brandbook'
 }
 
@@ -102,7 +102,7 @@ function Get-HouseStyleSkillDirNames {
 
 function Test-HouseStyleSourceRepo {
     <#
-        Is this checkout the house style's source: its marketplace manifest publishes dkj-solutions, the
+        Is this checkout the brand book's source: its marketplace manifest publishes dkj-solutions, the
         plugin whose skill page pins the copies. Read rather than counted, as seam-lib's
         Test-IsWorkflowSourceRepo reads it -- a repo that publishes other plugins is still a consumer. An
         unreadable manifest is $false: the careful answer is to judge every copy against the pin.
@@ -584,7 +584,7 @@ function Invoke-HouseStyleCheck {
             $hits += @{ Check = 'redefine'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = "styles the house class $($h.Name) -- give the element a domain class of its own, or fix the class at its source (plugins/dkj-policy/assets/dkj-brandbook/ in DKJ-Solutions/dkj-marketplace)" }
         }
         foreach ($h in @(Find-HouseStyleTokenHit -Text $text -Names $retired -IncludeReads)) {
-            $hits += @{ Check = 'retired'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = "$($h.Kind) $($h.Name), a token name the house style retired -- rename it per the rename tables in assets/dkj-brandbook/README.md at $($Pin.Tag) (assets/house-style/README.md at a tag before the rename)" }
+            $hits += @{ Check = 'retired'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = "$($h.Kind) $($h.Name), a token name the brand book retired -- rename it per the rename tables in assets/dkj-brandbook/README.md at $($Pin.Tag) (assets/house-style/README.md at a tag before the rename)" }
         }
         foreach ($f in $hits) {
             if (Test-HouseStyleAllowed -Path $rel -Name $f.Name -Allow $Allow) { $allowed++ } else { $findings.Add($f) }

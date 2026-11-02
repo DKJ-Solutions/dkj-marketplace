@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Resolves #3705. The words the brand book's scripts print, and the comments around them, follow the
+rename to dkj-brandbook. The file names stay `house-style` (the owner's choice), and so do the hub page
+labels, which are #3704's.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-style-sessioncheck.ps1`, `check-house-style.ps1`, `house-style-rules.ps1`: console text and docstrings say "the brand book"
+- [x] `check-colour-literals.mjs`, `check-css-vars.mjs`: the `[OK]` lines say "the brand book"
+- [x] `reusable-house-style.yml` step name and `house-style-css.yml` comments; workflow `name:` keys left alone, so no check name changes
+- [x] `check-house-style.tests.ps1`: the assert label follows
 
 ### TEST
 
+- [x] the suites assert `holds at <tag>` and `nothing to check`, which both survive; the gate in ship-pr runs them
+
 ### DEPLOY: fix/3705-brandbook-console-text
 
-**Score:**
+The brand book's scripts now say "the brand book" where they printed "house style": the
+`house-style-sessioncheck` line at session start, `check-house-style`'s `[OK]`/`[FAIL]` verdict and its
+retired-token finding, and the two CSS gates' `[OK]` lines. The file names keep `house-style`, and no
+workflow or check name changes. Resolves #3705.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions repo's session-start line now reads *"the brand book holds at vX.Y.Z"*, in the same word the
+skill and the docs use since the rename.
+
+**Score:** 2
 
 #### Pull Request
 
