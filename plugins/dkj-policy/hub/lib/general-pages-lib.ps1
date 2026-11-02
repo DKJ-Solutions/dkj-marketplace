@@ -892,7 +892,7 @@ function Format-HubSettingsPageHtml {
     $body = '<div class="card-grid hs-theme" id="settings-theme-grid"><div class="grid__head"><h2>Theme</h2></div>' + $toggle +
         # The reset IS a card like the swatches', the whole card the button (Dave, November 2, 2026), hovering as a link card
         # does in a group, on --bg-4 (not .card--link itself, which is a link's, #3566); it closes their row, shown whichever mode the toggle shows (it carries no data-mode).
-        '<button type="button" class="card hs-swatch hs-reset" id="settings-theme-foot">Reset theme</button></div>' + "`n" +
+        '<button type="button" class="card hs-swatch hs-reset" id="settings-theme-foot">Reset</button></div>' + "`n" +
         # Each theme's card draws the whole picker and keeps only its own swatch, unwrapped from its row (no label, no
         # 64px label column). The picker never redraws, and a click or a theme change reaches every swatch left in every
         # picker, so the twelve cards and the header stay in step with no logic of this page's own. No house class is
