@@ -559,7 +559,10 @@ function Get-HubLensPages {
 # The house's one markdown renderer, beside the release-notes template in this plugin (Format-HubLensPageHtml).
 $script:MarkdownRendererPath = Join-Path $PSScriptRoot '..\..\scripts\release\markdown-render.js'
 # The tree's one fence tracker (#2536), so a lens's code blocks are read the way every other markdown reader reads them.
-. (Join-Path $PSScriptRoot '..\..\scripts\lib\fence-lib.ps1')
+# Loaded only where it is there: a copy of the hub's libs on their own (a test fixture) still loads, and the lens page
+# then reports its lens as unreadable rather than taking the whole lib down.
+$script:FenceLibPath = Join-Path $PSScriptRoot '..\..\scripts\lib\fence-lib.ps1'
+if (Test-Path -LiteralPath $script:FenceLibPath -PathType Leaf) { . $script:FenceLibPath }
 
 function Format-HubLensPageHtml {
     <#
