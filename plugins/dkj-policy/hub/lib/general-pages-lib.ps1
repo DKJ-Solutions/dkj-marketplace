@@ -1531,7 +1531,7 @@ function Format-ReleaseNotesEmptyPageHtml {
 }
 
 $script:ReleaseNotesHouseColors = [ordered]@{
-    'bg' = 'bg-1'; 'panel' = 'bg-2'; 'ink' = 'fg-1'; 'ink-soft' = 'fg-2'; 'ink-faint' = 'muted'
+    'bg' = 'bg-1'; 'panel' = 'bg-2'; 'ink' = 'fg-1'; 'ink-soft' = 'fg-2'; 'ink-faint' = 'primary-muted'
     'line' = 'bg-3'; 'accent' = 'primary'; 'accent-soft' = 'bg-2'; 'code-bg' = 'bg-1'
 }
 

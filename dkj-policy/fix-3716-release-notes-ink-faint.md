@@ -39,19 +39,31 @@
 
 ### PLAN
 
+#### Visible result -- parked for the owner's eye
+
+The faint text on the hub's release-notes page changes colour, so this branch is parked without a pull
+request until the owner has looked (sweep, #3552).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `$script:ReleaseNotesHouseColors` maps `ink-faint` to `primary-muted`, the token `--muted` was renamed to on November 1, 2026.
+- [x] `dev-pages.tests.ps1` asserts every value of that map is a token `house-style.css` declares.
 
 ### TEST
 
+- [~] No local gate at the park: `ship-pr` runs the gate once the owner has looked (sweep step 4, #3304).
+
 ### DEPLOY: fix/3716-release-notes-ink-faint
 
-**Score:**
+The hub's release-notes page shows its faint text (dates, sub lines) in the quiet house grey again. Since the colour rename of November 1, 2026 it had pointed at `--muted`, a token the house stylesheet no longer declares, so that text fell back to the ordinary text colour. A test now holds every token that page's colour rewrite uses to the ones the stylesheet declares, so a future rename cannot leave the page behind ([#3716](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3716)).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A -- the release-notes page is the hub's, a dev-side page; a consumer of the plugins sees it only on their own hub.
+
+**Score:** N/A
 
 #### Pull Request
 
