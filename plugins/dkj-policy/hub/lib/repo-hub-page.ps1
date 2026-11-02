@@ -13,8 +13,8 @@
     survived is here: the setup cards, the facts and the repo-name handling.
 
     THE HOUSE HUB FORM (#3383, the owner, October 24, 2026), which the source repo's own hub took first: under
-    the site header the home page is a column of card links, each standing on its own in the page column with no
-    .grid-3 around them (November 2, 2026; a heading-less grid until then) -- the product, the
+    the site header the home page is its card links three to a row in a .ph-cards, the .grid-3 layout without its
+    framed surface (November 2, 2026; a heading-less .grid-3 until then) -- the product, the
     Repository page and the General pages but Issues -- each a .card.card--link (Format-HubCardLinkHtml). A repo that states no product gets the two setup
     cards under the grid. The facts and the Issues page are the Repository page's (Format-PluginRepoRepositoryHtml),
     not the home page's: the home page only gets you somewhere.
@@ -85,8 +85,14 @@ function Format-PluginRepoHubHtml {
     [void]$sb.AppendLine('<title>' + $n + ' -- Tools</title>')
     [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
     [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
-    # The repo layer: one name the house file does not define (.ph-code), for the code samples.
+    # The repo layer: names the house file does not define -- .ph-cards, the card links three to a row with no
+    # surface around them (stepping down where .grid-3 does), and .ph-code, for the code samples.
     [void]$sb.AppendLine('<style>')
+    [void]$sb.AppendLine('.ph-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-3); }')
+    [void]$sb.AppendLine('.ph-cards > .card { margin-top: 0; }')
+    [void]$sb.AppendLine('.ph-cards__full { grid-column: 1 / -1; }')
+    [void]$sb.AppendLine('@media (max-width: 1000px) { .ph-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }')
+    [void]$sb.AppendLine('@media (max-width: 760px) { .ph-cards { grid-template-columns: minmax(0, 1fr); } }')
     [void]$sb.AppendLine('.ph-code { margin: var(--spacing-3) 0 0; padding: var(--spacing-3) var(--spacing-4); background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); overflow-x: auto; font-size: var(--text-xs); line-height: 1.6; }')
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
@@ -97,8 +103,10 @@ function Format-PluginRepoHubHtml {
     [void]$sb.Append((Format-RepoHomeHeadHtml -RepoName $n -Lead $lead -Brand (ConvertTo-SiteHeaderName -RepoName (ConvertTo-PluginRepoHubName $RepoName)) -BrandTag 'toolbox'))
 
     # Every page a card of its own (#3383): the product first, then the Repository page, and the General pages but
-    # Issues (the Repository page's). Each card stands on its own in the page column, one level up: no .grid-3
-    # surface around them, because a grid with no heading above it groups nothing (the owner, November 2, 2026).
+    # Issues (the Repository page's). Three to a row, but on the page itself: .ph-cards lays them out as .grid-3 does,
+    # without the .grid-3 surface, because a framed group with no heading above it groups nothing (the owner,
+    # November 2, 2026).
+    [void]$sb.AppendLine('<div class="ph-cards">')
     if ($Mode -eq 'product') {
         if ($product) {
             [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $product -Label 'Product' -Sub ($product + ' -- the server this repo states in Get-DevPreview') -Icon 'product'))
@@ -110,8 +118,9 @@ function Format-PluginRepoHubHtml {
     if ($general) {
         foreach ($card in @(Format-HubPageCardsHtml -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }))) { [void]$sb.AppendLine($card) }
     } else {
-        [void]$sb.AppendLine('<section class="card"><p role="status">The general pages server is not running. It starts at the next session start, and its pages are linked here from then on.</p></section>')
+        [void]$sb.AppendLine('<section class="card ph-cards__full"><p role="status">The general pages server is not running. It starts at the next session start, and its pages are linked here from then on.</p></section>')
     }
+    [void]$sb.AppendLine('</div>')
 
     # Where the repo states no product, the two setup cards stand under the grid, under one h2 of their own and
     # each titled with an h3 (#3175): they are instructions, not links, so they are no card in the grid.

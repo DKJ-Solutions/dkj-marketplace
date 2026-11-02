@@ -402,11 +402,11 @@ Assert-True ($html -notmatch '<h2>Products</h2>') 'without a stated server there
 Assert-True ($html -match '<h2>Set up a product</h2>' -and $html -match '<h3>Add a dev server of your own</h3>' -and $html -match '<h3>Open it in VS Code</h3>') 'the two setup cards share one h2, each titled with an h3 (#3175)'
 Assert-True ($html -match 'Get-DevPreview' -and $html -match 'scripts/repo-config.ps1' -and $html -notmatch 'OwnHub' -and $html -match '"localhost:4890": "simpleBrowser.open"') 'they say how to state a server and which port to route, and offer no opt-out (#3643)'
 Assert-True ($html -notmatch '4880') 'and no longer name the retired 4880-4889 range'
-# The house hub form (#3383): the card links stand on their own in the page column, with no .grid-3 around them
+# The house hub form (#3383): the card links three to a row in a .ph-cards, with no .grid-3 surface around them
 # (the owner, November 2, 2026); the facts and Issues are the Repository page's.
 Assert-True ($html -notmatch 'href="/about"' -and $html -notmatch '<h2>About this repo</h2>') 'no About this repo link: the hub is one page (#3289)'
-$grid = [regex]::Match($html, '(?s)<main class="page-column">\s*(.*?)<div class="grid-2">').Groups[1].Value
-Assert-True ($grid -and $grid -notmatch 'class="grid-') 'the cards stand in the page column itself, in no grid of their own (the owner, November 2, 2026)'
+$grid = [regex]::Match($html, '(?s)<main class="page-column">\s*<div class="ph-cards">(.*?)</div>\s*<div class="grid-2">').Groups[1].Value
+Assert-True ($grid -and $grid -notmatch 'class="grid-' -and $html -match '\.ph-cards \{ display: grid; grid-template-columns: repeat\(3,') 'the cards stand three to a row in a .ph-cards, with no .grid-3 surface around them (the owner, November 2, 2026)'
 Assert-True ($grid -and ([regex]::Matches($grid, 'menu-item__label"><h2>')).Count -eq 5 -and ([regex]::Matches($grid, '<section class="card card--link">')).Count -eq 5 -and ([regex]::Matches($grid, '<a ')).Count -eq 5 -and $grid -match 'href="/plugins"' -and $grid -match 'href="/ai"') 'the pages are five card links, one link each, each card''s label its h2 (owner, October 29, 2026): GitHub, the General pages but the GitHub page''s, AI (Maikel, October 30, 2026) and Plugins (#3482)'
 Assert-True ($grid -match 'href="/ai"' -and $grid -notmatch 'href="/(performance|sessionstart|clock|test-gate|stopwatch|logbook)"') 'Performance, with SessionStart and the Clock, is reached through the AI card, and the Test gate through GitHub, never a card of their own on the hub (the owner, November 2, 2026)'
 Assert-True ($grid.IndexOf('href="/release-notes"') -lt $grid.IndexOf('href="/ai"') -and $grid.IndexOf('href="/ai"') -lt $grid.IndexOf('href="/plugins"')) 'the AI card takes SessionStart''s place, between Release notes and Plugins'
@@ -421,7 +421,7 @@ Assert-True ($html -match '<title>dkj-thumbnail-generator -- Tools</title>' -and
 
 # A repo that states a server: the product is the first card, and no setup cards.
 $html = Format-PluginRepoHubHtml -RepoName 'dkj-recipes' -Folder 'recipes-checkout' -Mode 'product' -ProductUrl 'http://localhost:4321/dkj-recipes/' -PagesUrl 'http://localhost:4890'
-Assert-True ($html -match '<main class="page-column">\s*<section class="card card--link"><nav class="menu-list" aria-label="Product"><a class="menu-item" href="http://localhost:4321/dkj-recipes/">') 'a stated server is the first card, linking its url'
+Assert-True ($html -match '<div class="ph-cards">\s*<section class="card card--link"><nav class="menu-list" aria-label="Product"><a class="menu-item" href="http://localhost:4321/dkj-recipes/">') 'a stated server is the first card, linking its url'
 Assert-True ($html -notmatch '<h2>Products</h2>' -and $html -notmatch 'Set up a product' -and $html -notmatch 'Add a dev server of your own') 'with no Products heading, and the setup cards are only for a repo that states none'
 Assert-True ($html -match 'site-header__name">dkj-recipes <span') 'the site header names the repo whatever the repo states'
 $html = Format-PluginRepoHubHtml -RepoName 'dkj-recipes' -Mode 'product' -ProductUrl '' -PagesUrl 'http://localhost:4890'
