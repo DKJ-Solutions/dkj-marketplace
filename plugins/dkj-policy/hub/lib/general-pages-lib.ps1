@@ -876,7 +876,7 @@ function Format-HubSettingsPageHtml {
         holding a Light/Dark toggle and a card per theme holding that theme's swatch alone, with no h3: the swatch's own
         title and aria-label name it (Dave, November 2, 2026) -- the
         brand book's own picker (DKJTheme.picker, house-theme.js, which every page here loads) cut down to one swatch.
-        The toggle shows one mode's cards at a time. Under them, in the group, its reset. The choice is the same one the
+        The toggle shows one mode's cards at a time. After them, in a card of the same kind, its reset. The choice is the same one the
         header's settings button makes -- one key per app on this device -- so every swatch agrees. Nothing here is read
         from disk: the cards are drawn from DKJTheme.themes, so a theme the brand book adds gets its card at once.
     #>
@@ -890,8 +890,9 @@ function Format-HubSettingsPageHtml {
     $toggle = '<div class="controls grid__full"><span class="seg" id="settings-theme-mode" role="group" aria-label="Mode">' +
         '<button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>'
     $body = '<div class="card-grid hs-theme" id="settings-theme-grid"><div class="grid__head"><h2>Theme</h2></div>' + $toggle +
-        # The reset belongs to the whole Theme group, so it sits in the group under the cards, a row of its own, and takes the house's roomier .btn--touch (Dave, November 2, 2026).
-        '<p class="grid__full" id="settings-theme-foot"><button type="button" class="btn btn--touch" id="settings-theme-reset">Reset theme</button></p></div>' + "`n" +
+        # The reset takes a card like the swatches' and closes their row, shown whichever mode the toggle shows (it carries
+        # no data-mode); it takes the house's roomier .btn--touch (Dave, November 2, 2026).
+        '<section class="card hs-swatch" id="settings-theme-foot"><button type="button" class="btn btn--touch" id="settings-theme-reset">Reset theme</button></section></div>' + "`n" +
         # Each theme's card draws the whole picker and keeps only its own swatch, unwrapped from its row (no label, no
         # 64px label column). The picker never redraws, and a click or a theme change reaches every swatch left in every
         # picker, so the twelve cards and the header stay in step with no logic of this page's own. No house class is
