@@ -54,7 +54,7 @@
 
 ### TEST
 
-- [x] `dev-pages.tests.ps1`: the page list and the hub's card count updated, the Settings page asserted (590 passed)
+- [x] `dev-pages.tests.ps1`: the page list and the hub's card count updated, the Settings page asserted (590 passed); `dev-preview-sessionstart.tests.ps1`'s hub card count from five to six
 - [x] Served from this branch on 4898: `/settings` answers 200 with the h1, the Theme h2, the toggle and the reset card, and the hub links it; the page script passes `node --check`; `check-house-style` OK; reviewed by eye by Dave in the preview
 
 ### DEPLOY: feat/hub-settings-page
