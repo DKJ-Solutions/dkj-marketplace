@@ -51,7 +51,7 @@ Maikel asked for the lens page on the hub to be made pretty. It showed the lens 
 
 - [x] `dev-pages.tests.ps1` 560/0, `shared-scripts.tests.ps1` 1217/0, `check-plugin-integrity.ps1` 0 errors
 - [x] The served page rendered headlessly through the inlined renderer: headings, lists, a table, blockquotes and code all come out
-- [~] The owner's look in the browser: a visible result, so the branch waits for it instead of merging
+- [x] The owner's look in the browser: Maikel looked on November 2, 2026 and said ship it
 
 ### DEPLOY: feat/lens-page-rendered-markdown
 
