@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**5 / 5 minor entries** <!-- pending-tally -->
+**6 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3745-one-h1-per-page · 20261102-184846Z
+
+The brand book now states that a page carries exactly one `h1`: content a page renders (a lens, a release
+note, any markdown) never adds its own, and the home page under a site header is the one page without one
+(rule 9, #3745). The hub's page shell checks the rule on sight. The fit alarm in the bottom right also
+warns when the live page holds more than one `h1`, or none where its trail is longer than Home. It counts
+the live document, so a body rendered after load is judged too, and it is not width-gated.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Anyone opening a page in the hub (this repo's or a consumer's toolbox) now sees a warning when that page
+carries two `h1`, where before nothing said so. A page that keeps the rule sees nothing new.
+
+**Score:** 2
+
+#### Pull Request
+
+Brand book: a page carries exactly one h1, stated and checked
+
+Plugins: dkj-policy
+
+[PR #3757](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3757)
+
+---
 
 ### DEPLOY: feat/3752-release-note-heading-rules · 20261102-181642Z
 
