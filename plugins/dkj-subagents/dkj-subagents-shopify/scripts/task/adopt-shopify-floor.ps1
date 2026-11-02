@@ -332,7 +332,7 @@ jobs:
     # measures; re-size it if this repo's theme grows one that genuinely runs longer.
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Run theme check
         uses: Shopify/theme-check-action@v2
         with:

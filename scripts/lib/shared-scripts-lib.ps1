@@ -1847,8 +1847,9 @@ function Get-SharedScriptPairs {
             Source = 'scripts\lint\check-release-note-form.ps1'
             Plugin = 'dkj-policy'
             Skill  = 'cut-release'
-            # A fixture root, so the suite can judge scratch trees. A consumer never types it.
-            SkillParamsExempt = @('RootOverride')
+            # A fixture root, so the suite can judge scratch trees, and a fixture home, so whether dkj-solutions
+            # is enabled is the fixture's answer rather than the machine's (#3752). A consumer types neither.
+            SkillParamsExempt = @('RootOverride', 'UserHomeOverride')
             # NO MeasureArgs, although it is read-only: measure-skill's canary holds that nothing behind
             # the cut-release skill is ever run by pass 2, and that rule is worth more than one timing.
         },

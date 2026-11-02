@@ -103,7 +103,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 | # | lane | authority |
 |---|---|---|
 | 7 | the `~/.claude` plugin administration | → `check-claude-home.ps1` |
-| 8 | **install records pointing at a checkout that is gone** | reports |
+| 8 | **install records pointing at a checkout that is gone** | reports, with the recreate-uninstall-remove sequence (#3751) |
 | 9 | plugin and marketplace staleness | → `plugin-versions.ps1` |
 | 10 | **fixture trees under the scratch root** | attributes -- **never deletes** |
 | 11 | **install records under a plugin name the marketplace has retired** | reports, with the uninstall |
@@ -148,9 +148,16 @@ resolution and removed the dead line, leaving the question visible; this is the 
 
 Both answer *"this record names something that no longer exists"*, and neither can see the other's half.
 Lane 8 probes the record's **checkout**; lane 11 asks whether the **plugin name** is still in the
-manifest of the marketplace that record names. A record can be dead by either, and the remedies are
-opposites -- re-install at the new path, or drop a record nothing will ever use again -- which is why
-they are two lanes and not one.
+manifest of the marketplace that record names. A record can be dead by either, and the two probes cannot
+be one, which is why they are two lanes.
+
+**Both hand over the uninstall, and lane 8 needs a folder to run it from** (#3751). `claude plugin
+uninstall` takes no path: it picks the record from the directory it runs in. So for a vanished checkout
+lane 8 prints `mkdir` the folder, `cd` into it, one uninstall per record at that record's own scope,
+`cd ..`, and `rmdir`, which removes only an empty folder. Moved or deleted makes no difference to the old
+record: a moved checkout gets a new record when the plugin is re-installed there. The one case it is
+wrong is a path only temporarily absent, an unmounted drive or a synced folder offline, which looks
+identical, so running it stays the reader's act.
 
 **Lane 11 exists because this workflow generates its own instances of it.** A rename is a deliberate act,
 and each one turns every existing install record into dead weight on every machine that had the plugin.

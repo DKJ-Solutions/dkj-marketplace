@@ -46,7 +46,7 @@ jobs:
     # A job with no timeout-minutes runs to GitHub's six-hour default (#2296), holding ASANA_PAT.
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           # The job needs the script file and nothing else from git, so the token is not left in .git/config.
           persist-credentials: false

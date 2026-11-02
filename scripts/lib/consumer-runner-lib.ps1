@@ -10,7 +10,7 @@
     adopt-ci-floor.ps1 -- do not vendor the script they run. They check THIS repository out beside
     the consumer's own tree and run a path into it:
 
-        - uses: actions/checkout@v5
+        - uses: actions/checkout@v7
           with:
             repository: DKJ-Solutions/dkj-marketplace
             ref: main

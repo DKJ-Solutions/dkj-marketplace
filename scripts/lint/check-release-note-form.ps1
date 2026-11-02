@@ -26,6 +26,12 @@
     cut-release skill's step 4 already prescribes before the release-notes commit, so the note is held to
     its form at exactly the moment it was hand-edited. Run it by hand whenever you want the answer early.
 
+    AND THE BRAND BOOK'S TWO HEADING RULES, IN A DKJ-SOLUTIONS REPO ONLY (#3752). Where dkj-solutions is
+    enabled, the same note's h1-h3 headings are also held to rules 7 and 8 of the dkj-brandbook README: no
+    code span, five words at most (Get-ReleaseNoteHeadingFindings). These ARE rules of their own, the brand
+    book's rather than the draft's, which is why they live in a separate function and print under their own
+    [HEADING] label. The same newest-note-only answer covers them: older notes are records.
+
     Exit 0 when the form matches, or when there is no note to judge. Exit 1 with one line per difference.
     Pure ASCII, per this repo's script-layer convention.
 
@@ -35,13 +41,18 @@
 .PARAMETER RootOverride
     Repo root to operate on, for the test suite. A consumer never types this.
 
+.PARAMETER UserHomeOverride
+    The home whose ~/.claude settings join the enable-state chain, for the test suite, so a fixture's answer
+    to "is dkj-solutions enabled?" never depends on the machine running it. A consumer never types this.
+
 .EXAMPLE
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts/lint/check-release-note-form.ps1
 #>
 [CmdletBinding()]
 param(
     [string]$Path = '',
-    [string]$RootOverride = ''
+    [string]$RootOverride = '',
+    [string]$UserHomeOverride = ''
 )
 
 Set-StrictMode -Version Latest
@@ -114,13 +125,34 @@ if ($null -eq $tier) { $tier = 2 }
 $text = [System.IO.File]::ReadAllText($notePath, (New-Object System.Text.UTF8Encoding $false))
 $findings = @(Compare-ReleaseNoteForm -Text $text -Wording $wording -AudienceTier $tier)
 
-if ($findings.Count -eq 0) {
+# THE BRAND BOOK'S HEADING RULES, WHERE THE BRAND BOOK HOLDS (#3752): a code span or more than five words in an
+# h1-h3 heading. Only in a repo that has dkj-solutions enabled -- the brand book reaches DKJ-Solutions only, and
+# a BWJ-Development repo runs this same gate under its own styling. An enable state that cannot be read is
+# treated as not enabled: this half then says nothing rather than holding a repo to a style it never took.
+$brandBook = $false
+if (Test-FunctionDefined 'Get-EnabledPlugins') {
+    try {
+        $brandBook = @(@((Get-EnabledPlugins -RepoRoot $repoRoot -UserHomeOverride $UserHomeOverride).Ids) |
+            Where-Object { $_ -like 'dkj-solutions@*' }).Count -gt 0
+    } catch { $brandBook = $false }
+}
+$headingFindings = @(if ($brandBook) { Get-ReleaseNoteHeadingFindings -Text $text })
+
+if ($findings.Count -eq 0 -and $headingFindings.Count -eq 0) {
     Write-Host "[OK] $noteRel has the form cut-release drafts for this repo."
     exit 0
 }
-Write-Host "[DRIFT] $noteRel differs from the form cut-release drafts for this repo:" -ForegroundColor Red
-foreach ($f in $findings) { Write-Host "  - $f" -ForegroundColor Red }
-Write-Host ('  The form is the plugin''s, and only Get-ReleaseNoteWording in scripts/repo-config.ps1 changes it ' +
-    '(cut-release skill, step 2). Put the note back in the drafted form, or answer that seam once if this repo ' +
-    'genuinely needs other words.') -ForegroundColor Yellow
+if ($findings.Count -gt 0) {
+    Write-Host "[DRIFT] $noteRel differs from the form cut-release drafts for this repo:" -ForegroundColor Red
+    foreach ($f in $findings) { Write-Host "  - $f" -ForegroundColor Red }
+    Write-Host ('  The form is the plugin''s, and only Get-ReleaseNoteWording in scripts/repo-config.ps1 changes it ' +
+        '(cut-release skill, step 2). Put the note back in the drafted form, or answer that seam once if this repo ' +
+        'genuinely needs other words.') -ForegroundColor Yellow
+}
+if ($headingFindings.Count -gt 0) {
+    Write-Host "[HEADING] $noteRel has headings the brand book refuses:" -ForegroundColor Red
+    foreach ($f in $headingFindings) { Write-Host "  - $f" -ForegroundColor Red }
+    Write-Host ('  Name the thing in plain words, five at most; a file name or command it would have quoted goes in ' +
+        'the content under the heading (dkj-brandbook README, rules 7 and 8).') -ForegroundColor Yellow
+}
 exit 1

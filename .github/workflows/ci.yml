@@ -131,7 +131,7 @@ jobs:
     # 10, against a measured max of 1.5m -- a wedge detector, not a performance budget (#2296).
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Lint gate (check-plugin-integrity)
         shell: powershell
@@ -295,7 +295,7 @@ jobs:
       # shallow one; keeping the condition narrow (push AND the 'merge: ' subject, not every push) is what
       # keeps that cost off the PR path, the merge_group path and the 'fold:' path, which is every run
       # except the one this exists for.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           # QUOTED, NOT BARE: the literal 'merge: ' this expression matches against carries a colon
           # followed by a space, which YAML reads as a nested mapping indicator in an unquoted scalar --
@@ -475,7 +475,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 

@@ -98,7 +98,7 @@ jobs:
       # writes out for itself. gh reads its token from the environment, not from the workspace git
       # config, so nothing here needs the credential actions/checkout would otherwise leave in the tree
       # for every later step.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 

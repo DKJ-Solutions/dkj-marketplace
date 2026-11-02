@@ -270,7 +270,7 @@ $pluginDir  = "$sharedPath/plugins/dkj-policy/scripts"
 # repo's own fold-on-merge.yml. So the pin has a single refresh point and a gate that fails the moment
 # a hand-maintained workflow here is bumped and the scaffolder is not -- a consumer's floor cannot
 # quietly fall behind the floor this repo runs on itself.
-$checkoutPin = 'actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5'
+$checkoutPin = 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1'
 
 # THE SHARED SCRIPTS ARE PINNED TOO -- IN THE SAME THREE WRITE RUNNERS, AND ONLY THERE (issue #2333).
 # Pinning the ACTION is half of the job. The second checkout in each of those runners fetches this
@@ -612,7 +612,7 @@ $ciSkeletonRunner = @(
     '    # twice the slowest run you have actually measured.',
     '    timeout-minutes: 30',
     '    steps:',
-    '      - uses: actions/checkout@v5',
+    '      - uses: actions/checkout@v7',
     '      - name: Replace this with whatever this repo wants a merge to prove',
     '        run: |',
     '          echo "TODO (issue #1843 template): this step is a placeholder."',
@@ -1071,12 +1071,12 @@ $repoSettingsRunner = @(
     '    # all -- it simply spends the six-hour default and is found, if ever, in the Actions list.',
     '    timeout-minutes: 10',
     '    steps:',
-    '      - uses: actions/checkout@v5',
+    '      - uses: actions/checkout@v7',
     '        with:',
     '          persist-credentials: false',
     '',
     '      - name: Fetch the shared workflow scripts',
-    '        uses: actions/checkout@v5',
+    '        uses: actions/checkout@v7',
     '        with:',
     ('          repository: ' + $sharedRepo),
     ('          ref: ' + $sharedRef),

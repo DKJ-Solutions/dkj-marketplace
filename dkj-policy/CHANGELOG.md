@@ -2,7 +2,117 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**5 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3752-release-note-heading-rules · 20261102-181642Z
+
+`check-release-note-form` now holds the newest release note's `h1`-`h3` headings to the brand book's rules 7
+and 8 in a repo that has `dkj-solutions` enabled (#3752). A heading may carry no code span and no more than
+five words. Each offending line is named with its number under a `[HEADING]` label, apart from form drift.
+The rules are the brand book's rather than the draft's, so they live in their own function,
+`Get-ReleaseNoteHeadingFindings`, and a repo outside DKJ-Solutions is not held to them.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a DKJ-Solutions repo, the release-notes step of a cut now refuses a note whose section heading holds a
+code span or runs past five words, and names the line, before the note is published. A BWJ-Development
+repo sees no change.
+
+**Score:** 2
+
+#### Pull Request
+
+check-release-note-form refuses a code span or more than five words in a release note's h1-h3 heading
+
+Plugins: dkj-policy
+
+[PR #3756](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3756)
+
+---
+
+### DEPLOY: feat/3751-lane8-gone-checkout-handover · 20261102-171648Z
+
+`tidy-machine` lane 8 now hands over the removal of an install record whose checkout is gone (#3751).
+`claude plugin uninstall` takes no path and picks the record from the directory it runs in, so for each
+vanished folder the lane prints `mkdir` the folder, `cd` into it, one uninstall per record at that
+record's own scope, `cd ..`, and `rmdir`, which removes only an empty folder. Until now it printed
+"nothing here guesses" and no command, though moved or deleted the old record is dead either way.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+When `tidy-machine` reports install records for a checkout that no longer exists, it now prints the
+commands that remove them, ready to paste. Run them only for a folder that is gone for good. A drive that
+is not mounted, or a synced folder that is offline, looks the same.
+
+**Score:** 2
+
+#### Pull Request
+
+tidy-machine lane 8 hands over the recreate-and-uninstall sequence for a gone-checkout record
+
+Plugins: dkj-policy
+
+[PR #3755](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3755)
+
+---
+
+### DEPLOY: fix/3747-checkout-v7 · 20261102-164702Z
+
+Every `actions/checkout` pin in the tree moves from v5 to v7 (#3747): this repo's own workflows, the
+reusable ones consumers call, the CI floor and the Shopify floor that `adopt-ci-floor` and
+`adopt-shopify-floor` write, and the two `bwj-development` Asana templates. The SHA-pinned write-capable
+runners take `3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1`, still equal across the generator and this
+repo's own copies, as `pin-parity` requires.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+If Dependabot has moved your workflows to `actions/checkout@v7`, re-adopting a scaffold no longer puts v5
+back. If yours are still on v5, a re-adopt now writes v7. One behaviour changes with it: `merge-on-green`
+now refuses to check out a pull request from a fork, which v7 blocks under `workflow_run`.
+
+**Score:** 2
+
+#### Pull Request
+
+Every actions/checkout pin moves from v5 to v7, scaffolds and this repo's own runners alike
+
+Plugins: bwj-development, dkj-policy, dkj-subagents-shopify
+
+[PR #3754](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3754)
+
+---
+
+### DEPLOY: fix/release-notes-headings-no-code · 20261102-163529Z
+
+The brand book gains rule 8 (Maikel, November 2, 2026): an `h1`, `h2` or `h3` has five words at most,
+in its README and in the `dkj-brandbook` skill. The v6.3.0 release notes now follow rules 7 and 8: no
+`code` element in a heading, and every heading at five words or fewer. Who a change is for moved into the
+text under it. On the release-notes page each h3 and its text now stand in a house card of their own, in
+the grid form the brand book's own pages use, and the note no longer wraps them in a panel. A gate in the release-note form check is #3752.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A session building a page in a DKJ-Solutions repo now keeps every heading to five words and puts who it is for in the content under it.
+
+**Score:** 2
+
+#### Pull Request
+
+Release notes: short headings, no code in them, each h3 section a card
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #3753](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3753)
+
+---
 
 ### DEPLOY: docs/no-code-in-headings · 20261102-160112Z
 
