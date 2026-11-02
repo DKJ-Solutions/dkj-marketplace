@@ -13,7 +13,8 @@
     survived is here: the setup cards, the facts and the repo-name handling.
 
     THE HOUSE HUB FORM (#3383, the owner, October 24, 2026), which the source repo's own hub took first: under
-    the site header the home page is ONE .grid-3 of card links with no heading above them -- the product, the
+    the site header the home page is a column of card links, each standing on its own in the page column with no
+    .grid-3 around them (November 2, 2026; a heading-less grid until then) -- the product, the
     Repository page and the General pages but Issues -- each a .card.card--link (Format-HubCardLinkHtml). A repo that states no product gets the two setup
     cards under the grid. The facts and the Issues page are the Repository page's (Format-PluginRepoRepositoryHtml),
     not the home page's: the home page only gets you somewhere.
@@ -95,9 +96,9 @@ function Format-PluginRepoHubHtml {
     # The site header on the home page too (October 22, 2026): it names the repo, so the page has no intro of its own.
     [void]$sb.Append((Format-RepoHomeHeadHtml -RepoName $n -Lead $lead -Brand (ConvertTo-SiteHeaderName -RepoName (ConvertTo-PluginRepoHubName $RepoName)) -BrandTag 'toolbox'))
 
-    # Every page a card of its own, three to a row, with no heading above them (#3383): the product first, then
-    # the Repository page, and the General pages but Issues (the Repository page's).
-    [void]$sb.AppendLine('<div class="grid-3">')
+    # Every page a card of its own (#3383): the product first, then the Repository page, and the General pages but
+    # Issues (the Repository page's). Each card stands on its own in the page column, one level up: no .grid-3
+    # surface around them, because a grid with no heading above it groups nothing (the owner, November 2, 2026).
     if ($Mode -eq 'product') {
         if ($product) {
             [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $product -Label 'Product' -Sub ($product + ' -- the server this repo states in Get-DevPreview') -Icon 'product'))
@@ -109,9 +110,8 @@ function Format-PluginRepoHubHtml {
     if ($general) {
         foreach ($card in @(Format-HubPageCardsHtml -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }))) { [void]$sb.AppendLine($card) }
     } else {
-        [void]$sb.AppendLine('<section class="card grid__full"><p role="status">The general pages server is not running. It starts at the next session start, and its pages are linked here from then on.</p></section>')
+        [void]$sb.AppendLine('<section class="card"><p role="status">The general pages server is not running. It starts at the next session start, and its pages are linked here from then on.</p></section>')
     }
-    [void]$sb.AppendLine('</div>')
 
     # Where the repo states no product, the two setup cards stand under the grid, under one h2 of their own and
     # each titled with an h3 (#3175): they are instructions, not links, so they are no card in the grid.
