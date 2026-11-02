@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**4 / 6 minor entries** <!-- pending-tally -->
+**5 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3732-fill-wait-stall · 20261102-093728Z
+
+The theme fill wait in `backup-live-theme` and `push-preview` no longer gives up at a fixed clock while
+the copy is still growing. Past `-TimeoutMinutes` it waits on as long as the file count keeps rising, and
+stops on a stall or at three times the wait
+([#3732](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3732)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Shopify store with a large live theme gets a verified backup on release day without knowing its copy
+speed in advance, and without a retry that duplicates live a second time. Measured on a 909-file theme:
+661 files at the old 20-minute limit, still filling.
+
+**Score:** 3
+
+#### Pull Request
+
+Theme fill wait runs on while the copy is still growing, up to a hard cap
+
+Plugins: dkj-subagents-shopify
+
+[PR #3735](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3735)
+
+---
 
 ### DEPLOY: docs/3722-settings-toggle-readme · 20261102-092752Z
 
