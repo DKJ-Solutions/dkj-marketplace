@@ -200,6 +200,9 @@ if (Test-Path -LiteralPath $guardLib -PathType Leaf) { . $guardLib; Assert-OwnCo
 . (Join-Path $PSScriptRoot '..\lib\native-capture-lib.ps1')
 
 . (Join-Path $PSScriptRoot '..\lib\check-report-lib.ps1')
+
+# For $script:ThemeFillHardCapFactor only: step 7's outer bound must cover the backup's longest wait (#3732).
+. (Join-Path $PSScriptRoot '..\lib\theme-lifecycle-rules.ps1')
 $repoRoot = Resolve-RepoRootOrFail -Override $RootOverride -ScriptName 'live-preflight.ps1' -OverrideName '-RootOverride'
 
 # A repo that publishes plugins is this script's SOURCE, not a Shopify store. Same one-file test
@@ -875,15 +878,17 @@ if ($alreadyRefused.Count -gt 0 -and -not $SkipBackup) {
     # locking and CAN ARRIVE PARTIALLY, so a backup taken after one has captured the broken state and is
     # by construction not a rollback.
     Write-Host '  this is the slow step: the copy is polled until it is provably complete (roughly eight'
-    Write-Host "  minutes in the store this was specified from; the wait gives up after $BackupTimeoutMinutes min,"
-    Write-Host '  -BackupTimeoutMinutes raises it). Nothing after it is expensive.'
+    Write-Host "  minutes in the store this was specified from; past $BackupTimeoutMinutes min it waits on only while the"
+    Write-Host '  copy is still growing, and -BackupTimeoutMinutes raises both). Nothing after it is expensive.'
     # THE OUTER BOUND FOLLOWS THE INNER ONE (#3729). It was a flat 2700 s, i.e. the backup's own 20-minute
     # wait plus 25 minutes for the duplicate, the pulls and the rotation. A longer wait passed through
-    # without it would be cut off here as a timeout of the child, so the same 25 minutes ride on top.
+    # without it would be cut off here as a timeout of the child, so the same 25 minutes ride on top --
+    # of the HARD cap, since the backup's wait runs on past its deadline while the copy still grows (#3732).
     $backupArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $backupScript, '-Store', $store, '-TimeoutMinutes', [string]$BackupTimeoutMinutes)
     # ADOPT RATHER THAN DUPLICATE AGAIN (#3733): the copy a timed-out run left standing is verified in place.
     if (([string]$BackupVerifyExisting).Trim()) { $backupArgs += @('-VerifyExisting', ([string]$BackupVerifyExisting).Trim()) }
-    $backup = Invoke-NativeCapture -FilePath 'powershell' -Arguments $backupArgs -TimeoutSeconds (($BackupTimeoutMinutes + 25) * 60)
+    $backupCapMinutes = $BackupTimeoutMinutes * $script:ThemeFillHardCapFactor
+    $backup = Invoke-NativeCapture -FilePath 'powershell' -Arguments $backupArgs -TimeoutSeconds (($backupCapMinutes + 25) * 60)
     Write-Host ($backup.Output | Out-String)
     if ((Test-NativeExitMeasured -Capture $backup) -and $backup.ExitCode -eq 0) {
         # A PASS WITH EXCEPTIONS IS STILL NAMED AS ONE (#2568): the summary is what gets read, and 'proven
