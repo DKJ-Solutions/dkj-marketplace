@@ -53,7 +53,7 @@ origin (#3168) could still reach the hub, and that relay ended with #3540.
 
 - [x] The crumb asserts in `dev-pages`, `stopwatch`, `consumer-dashboard` and `dev-preview-sessionstart` read `/`; the test-gate assert proves a caller-named `-HubHref` still wins
 - [x] All four suites green standalone
-- [ ] Maikel has looked at the crumb on the running toolbox
+- [x] Maikel has looked at the crumb on the running toolbox (4910) and said ship it
 
 ### DEPLOY: feat/tools-crumb-root
 
