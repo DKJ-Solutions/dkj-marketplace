@@ -134,7 +134,14 @@ try {
     $specLens = Format-HubGroupPageHtml -Href '/ai/claude/specialists' -RepoName 'x' -RepoRoot $lensRoot
     Assert-True ($specLens -match 'href="/ai/claude/specialists/lenses/specialist-01-01-lens"' -and $specLens -match 'menu-item__label"><h3>specialist-05-05-lens</h3>' -and ([regex]::Matches($specLens, '<section class="card card--link">')).Count -eq 2) 'with a repo the Lenses grid holds one h3 card per lens'
     $lensPage = Format-HubLensPageHtml -Name 'specialist-05-05-lens' -RepoRoot $lensRoot -RepoName 'x'
-    Assert-True ($lensPage -match '<h1>specialist-05-05-lens</h1>' -and $lensPage -match 'Body &lt;b&gt;text&lt;/b&gt;\.' -and $lensPage -match '<a href="/ai">AI</a>' -and $lensPage -match '<a href="/ai/claude/specialists">Specialists</a>') 'a lens''s page shows its file, escaped, under Tools > AI > Specialists'
+    Assert-True ($lensPage -match '<h1>specialist-05-05-lens</h1>' -and $lensPage -match '<a href="/ai">AI</a>' -and $lensPage -match '<a href="/ai/claude/specialists">Specialists</a>') 'a lens''s page is titled as its card on the Specialists page reads, under Tools > AI > Specialists'
+    $lensJson = [regex]::Match($lensPage, '<script type="application/json" id="lens-md">(.*?)</script>').Groups[1].Value
+    Assert-Equal "Body <b>text</b>.`n" (ConvertFrom-Json $lensJson) 'its body travels as JSON for the renderer, past the frontmatter and its own # title, which would be a second h1'
+    Assert-True ($lensJson -notmatch '<' -and $lensPage -match 'renderMd\(JSON\.parse' -and $lensPage -match 'function renderMd\(' -and $lensPage -match '<noscript><pre tabindex="0"><code>Body &lt;b&gt;text&lt;/b&gt;\.') 'with no raw < in that JSON, the house renderer inlined to draw it, and the escaped text for a reader without JavaScript'
+    [System.IO.File]::WriteAllText((Join-Path $lensDir 'specialist-02-02-lens.md'), "# Title`n`n# Another top heading`n`n``````md`n# kept in code`n```````n")
+    $twoJson = [regex]::Match((Format-HubLensPageHtml -Name 'specialist-02-02-lens' -RepoRoot $lensRoot), '<script type="application/json" id="lens-md">(.*?)</script>').Groups[1].Value
+    Assert-Equal "## Another top heading`n`n``````md`n# kept in code`n```````n" (ConvertFrom-Json $twoJson) 'any other # heading drops to ##, so the page keeps one h1, while a # inside a code fence is left as written'
+    Assert-True ($lensPage -match '<section class="card dp-lens">' -and $lensPage -match '\.dp-lens \{ max-width: 800px; \}') 'its card is never wider than 800px'
     Assert-True ($null -eq (Format-HubLensPageHtml -Name 'notes' -RepoRoot $lensRoot) -and $null -eq (Format-HubLensPageHtml -Name '..\..\x' -RepoRoot $lensRoot) -and $null -eq (Format-HubLensPageHtml -Name 'specialist-09-09-lens' -RepoRoot $lensRoot)) 'a name that is no lens of the repo has no page'
 } finally { Remove-Item -LiteralPath $lensRoot -Recurse -Force -ErrorAction SilentlyContinue }
 foreach ($leaf in 'rules', 'skills') {

@@ -1728,6 +1728,16 @@ function Get-SharedScriptPairs {
             LibOnly = $true
         },
         @{
+            # The house's one markdown renderer, a JS fragment the template above inlines at its
+            # @@MARKDOWN_RENDERER@@ placeholder -- a pair for the template's own reason: the builder reaches
+            # it as a $PSScriptRoot sibling. The hub's lens page inlines the plugin copy too, which is why it
+            # left the template rather than being copied into a second renderer.
+            Name    = 'markdown-render'
+            Source  = 'scripts\release\markdown-render.js'
+            Plugin = 'dkj-policy'
+            LibOnly = $true
+        },
+        @{
             # The OPTIONAL live issue dashboard (#2643): the local half of a Cloudflare Worker that renders
             # a repo's open issues with a status and a blocked-by order. Shared because nothing in it is
             # repo-specific -- the worker carries no content, token or repo name, and this script reads

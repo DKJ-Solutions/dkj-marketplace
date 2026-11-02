@@ -556,24 +556,55 @@ function Get-HubLensPages {
     }
 }
 
+# The house's one markdown renderer, beside the release-notes template in this plugin (Format-HubLensPageHtml).
+$script:MarkdownRendererPath = Join-Path $PSScriptRoot '..\..\scripts\release\markdown-render.js'
+# The tree's one fence tracker (#2536), so a lens's code blocks are read the way every other markdown reader reads them.
+# Loaded only where it is there: a copy of the hub's libs on their own (a test fixture) still loads, and the lens page
+# then reports its lens as unreadable rather than taking the whole lib down.
+$script:FenceLibPath = Join-Path $PSScriptRoot '..\..\scripts\lib\fence-lib.ps1'
+if (Test-Path -LiteralPath $script:FenceLibPath -PathType Leaf) { . $script:FenceLibPath }
+
 function Format-HubLensPageHtml {
     <#
-        One specialist lens's own page on /ai/claude/specialists/lenses/<name> (Get-HubLensPages): an h1 with the file's
-        name, and the file's text, escaped, in a card, under Tools > AI > Specialists. $null for a name the repo has no lens of.
+        One specialist lens's own page on /ai/claude/specialists/lenses/<name> (Get-HubLensPages), under Tools > AI >
+        Specialists: the file's name as the h1 and the last crumb, as its card reads, and the file RENDERED as markdown in
+        a .prose card (Maikel, November 2, 2026), past its frontmatter and its own '# ' title, so the page keeps ONE h1;
+        any other '# ' heading is rendered as an h2. The renderer is the house's one, markdown-render.js beside the release-notes
+        template, inlined here the way that template inlines it, so one format keeps one renderer. The markdown travels
+        as JSON in a <script type="application/json">, and the raw text stays in a <noscript> for a reader without
+        JavaScript. $null for a name the repo has no lens of.
     #>
     param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyString()][string]$RepoRoot = '', [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
     $lens = @(Get-HubLensPages -RepoRoot $RepoRoot | Where-Object { $_.Label -ceq $Name })[0]
     if (-not $lens) { return $null }
     $e = { param($v) ConvertTo-GeneralPageText $v }
+    # The h1 reads what the lens's card on the Specialists page reads: the file's name (Maikel, November 2, 2026).
+    $title = $lens.Label
     $body = New-Object System.Text.StringBuilder
-    [void]$body.AppendLine('<div><h1>' + (& $e $lens.Label) + '</h1></div>')
+    [void]$body.AppendLine('<div><h1>' + (& $e $title) + '</h1></div>')
     try {
-        $text = [System.IO.File]::ReadAllText($lens.Path, (New-Object System.Text.UTF8Encoding($false)))
-        [void]$body.AppendLine('<section class="card"><div class="prose prose--fill"><pre tabindex="0"><code>' + (& $e $text) + '</code></pre></div></section>')
+        $text = [System.IO.File]::ReadAllText($lens.Path, (New-Object System.Text.UTF8Encoding($false))) -replace "`r`n", "`n"
+        # The frontmatter is the roster's data, not body. A page has ONE h1 (Maikel, November 2, 2026), and it is the
+        # file's name above: so the lens's own '# ' title goes (its card already shows it), and any other '# ' heading
+        # outside a code fence becomes '## ', so the rendered body can never carry an h1 of its own.
+        $md = ([regex]::Replace($text, '\A---\n[\s\S]*?\n---\n', '')).TrimStart("`n")
+        $md = ([regex]::Replace($md, '\A[ \t]*#[ \t]+.*(\n|\z)', '')).TrimStart("`n")
+        $fence = ''
+        $md = (@($md -split "`n" | ForEach-Object {
+            $was = Resolve-FenceState -Line $_ -Fence $fence; $fence = Get-NextFenceState -Line $_ -Fence $fence -AnyIndent
+            if (-not ($was -or $fence) -and $_ -match '^[ \t]*#[ \t]') { $_ -replace '^([ \t]*)#', '$1##' } else { $_ }
+        }) -join "`n")
+        $renderer = [System.IO.File]::ReadAllText($script:MarkdownRendererPath, (New-Object System.Text.UTF8Encoding($false)))
+        # JSON inside a <script>: every '<' is escaped, so no '</script>' in a lens can end the block early.
+        $json = (ConvertTo-Json -InputObject $md -Compress) -replace '<', ('\' + 'u003c')
+        [void]$body.AppendLine('<section class="card dp-lens"><div class="prose prose--fill" id="lens-body"><noscript><pre tabindex="0"><code>' + (& $e $md) + '</code></pre></noscript></div></section>')
+        [void]$body.AppendLine('<script type="application/json" id="lens-md">' + $json + '</script>')
+        [void]$body.AppendLine("<script>`n(function () {`n  'use strict';`n" + $renderer.TrimEnd() + "`n  document.getElementById('lens-body').innerHTML = renderMd(JSON.parse(document.getElementById('lens-md').textContent));`n})();`n</script>")
     } catch {
         [void]$body.AppendLine('<p class="msg--warn" role="alert">This lens could not be read: ' + (& $e $_.Exception.Message) + '</p>')
     }
-    return Format-GeneralPageHtml -Title $lens.Label -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref `
+    # The lens card reads as a document, so it is never wider than 800px (Maikel, November 2, 2026).
+    return Format-GeneralPageHtml -Title $title -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref -Style '.dp-lens { max-width: 800px; }' `
         -ParentCrumbs @(@{ Label = 'AI'; Href = '/ai' }, @{ Label = 'Specialists'; Href = '/ai/claude/specialists' }) -FooterNote ('Read from <code>.claude/specialists/lenses/' + (& $e $lens.Label) + '.md</code> by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.')
 }
 

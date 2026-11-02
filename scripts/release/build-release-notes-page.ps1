@@ -148,6 +148,12 @@ $templatePath = Join-Path $PSScriptRoot 'release-notes-page-template.html'
 if (-not (Test-Path -LiteralPath $templatePath -PathType Leaf)) {
     throw "The page template is missing: $templatePath"
 }
+# The markdown renderer the note is drawn with lives beside the template, because the hub's lens page
+# draws with it too -- one renderer for one format, inlined into the template's script at its placeholder.
+$rendererPath = Join-Path $PSScriptRoot 'markdown-render.js'
+if (-not (Test-Path -LiteralPath $rendererPath -PathType Leaf)) {
+    throw "The markdown renderer is missing: $rendererPath"
+}
 
 # --- 1. The repo's own answers --------------------------------------------------------------------
 # Dot-sourced and probed in a CHILD scope with StrictMode explicitly OFF: this script runs under
@@ -597,9 +603,10 @@ function ConvertTo-ReleaseDataJson {
 $stamp    = (Get-Date).ToString('yyyy-MM-dd')
 
 $template = [System.IO.File]::ReadAllText($templatePath, [System.Text.Encoding]::UTF8)
-foreach ($needle in @('@@PAGE_TITLE@@', '@@WINDOW_TITLE@@', '@@PAGE_BACK@@', '@@PAGE_HEADING@@', '@@PAGE_SUBTITLE@@', '@@PAGE_MASTHEAD@@', '@@BUILD_STAMP@@', '@@RELEASE_DATA@@', '@@PAGE_STYLE@@', '@@PAGE_MAIN@@')) {
+foreach ($needle in @('@@PAGE_TITLE@@', '@@WINDOW_TITLE@@', '@@PAGE_BACK@@', '@@PAGE_HEADING@@', '@@PAGE_SUBTITLE@@', '@@PAGE_MASTHEAD@@', '@@BUILD_STAMP@@', '@@RELEASE_DATA@@', '@@PAGE_STYLE@@', '@@PAGE_MAIN@@', '@@MARKDOWN_RENDERER@@')) {
     if ($template -notmatch [regex]::Escape($needle)) { throw "The template no longer carries $needle." }
 }
+$template = $template.Replace('@@MARKDOWN_RENDERER@@', [System.IO.File]::ReadAllText($rendererPath, [System.Text.Encoding]::UTF8).TrimEnd())
 
 # The text placeholders are HTML-escaped; the data placeholder is JSON and is escaped already.
 function ConvertTo-HtmlText {
@@ -857,7 +864,7 @@ function Format-ReleasePageMain {
 
         THE NOTE IS AN EMPTY ARTICLE THE RENDERER FILLS, which is the one half-measure this page keeps. The
         note is markdown, and rendering it here would need a second markdown implementation in PowerShell
-        beside the one in the template -- two renderers for one format. So without JavaScript the page has
+        beside the one the template inlines (markdown-render.js) -- two renderers for one format. So without JavaScript the page has
         its heading, its date and its neighbours, and the noscript line says why the note is missing.
 
         OLDER AND NEWER, NOT PREVIOUS AND NEXT. The list is newest first, so 'next' would mean older on the
