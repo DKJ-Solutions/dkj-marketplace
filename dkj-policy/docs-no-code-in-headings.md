@@ -41,17 +41,27 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Brand book README: rule 7 under "How to use it", no `code` element inside an `h1`, `h2` or `h3`
+- [x] `dkj-brandbook` skill: the same rule as a bullet beside "The `h1` is never framed"
 
 ### TEST
 
+- [x] Lint and test gates via open-pr
+
 ### DEPLOY: docs/no-code-in-headings
 
-**Score:**
+The brand book gains a rule (Maikel, November 2, 2026): no `code` element inside an `h1`, `h2` or `h3`,
+because a fixed-width run in a heading looks out of place. It is rule 7 in the brand book's README and a
+bullet in the `dkj-brandbook` skill, so a session reads it before any visual work.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A session building a page in a DKJ-Solutions repo now names things in plain words in its headings and
+keeps file names, commands and identifiers for the content under them.
+
+**Score:** 2
 
 #### Pull Request
 
