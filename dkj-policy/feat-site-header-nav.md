@@ -39,19 +39,35 @@
 
 ### PLAN
 
+Maikel, November 2, 2026: take over the three-zone nav of `DaveKJohn/djcylow-react` (logo, menu, CTA; a hamburger
+and a right-hand drawer on a phone) into the site header. Chosen: the menu in the header, the breadcrumb bar kept.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-style.css`: "Site header menu" -- `.site-header__nav` / `__menu` / `__menu-toggle`, full-height link cells with the settings cell's hover, a `--bg-1` bar under the current page, and a container query that folds the links into the toggle under 48rem (so the Phone width folds it too)
+- [x] `house-theme.js`: the toggle opens the `dialog.dialog--drawer.site-menu` it controls as a modal; the close button, the backdrop and the header widening again shut it -- document-level, so no call is needed
+- [x] `README.md` (brand book): "The menu in the header", with the markup
+- [x] `general-pages-lib.ps1`: `Format-SiteHeaderHtml -Menu -Current` draws the menu and the drawer; `Get-HubMenu` is the toolbox's (GitHub + the home page's cards, from the new `Get-HubPageCards` the cards are drawn from); `Get-SiteHeaderMenuCurrent` marks the item a page sits under; every toolbox page, its home and the release notes carry it
+- [x] `dev-pages-lib.ps1` / `consumer-dashboard-lib.ps1`: the product's menu is its own pages (`Get-ProductMenu`)
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the menu, its escaping, the current item, the drawer's place, the toolbox and product menus; four asserts that counted the whole page now read past the site header
+- [x] dev-pages, consumer-dashboard, dev-preview-sessionstart, house-palette, check-house-style, logbook, stopwatch, stopwatch-sync, cut-release-drive, cut-release-guardrail: green
+- [x] Rendered in Chrome: at 475px the toggle opens the drawer and the backdrop shuts it; zoomed out to ~1350px the links stand between the name and the gear, the current one underlined
+- [ ] Maikel looks at it (visible result: the branch waits for the owner's eye)
+
 ### DEPLOY: feat/site-header-nav
 
-**Score:**
+The house site header can carry an app's main pages between its name and the settings button. On a wide header they stand as full-height cells with the page you are under marked; narrower than 48rem they fold into a three-line toggle that opens them as the house drawer. The toolbox's menu is its home page's cards, a product's its own pages.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Every page of the toolbox, and of an app that adds a menu to its header, can be reached from every other page in one click, on a phone too, instead of going back home first.
+
+**Score:** 3
 
 #### Pull Request
 
