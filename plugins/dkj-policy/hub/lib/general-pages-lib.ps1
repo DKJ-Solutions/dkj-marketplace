@@ -704,9 +704,9 @@ function ConvertTo-SiteHeaderName {
 
 function Format-SiteHeaderHtml {
     <#
-        The house site header (house-style.css, "Site header"): the app's mark and -Name on the primary, linking -Href
-        (home), and the settings button's mount (#settings) on the far right. The mark is a wordmark, the
-        organisation's initials, until the app has a logo of its own. -Tag is the quieter word after the name
+        The house site header (house-style.css, "Site header"): the app's -Name on the primary, linking -Href
+        (home), and the settings button's mount (#settings) on the far right. No mark (Dave, November 2, 2026).
+        -Tag is the quieter word after the name
         ('hub', 'product'), left out when empty. Both are escaped here.
     #>
     param([Parameter(Mandatory = $true)][string]$Name, [string]$Href = '/', [AllowEmptyString()][string]$Tag = '')
@@ -714,7 +714,7 @@ function Format-SiteHeaderHtml {
     $label = if ($Tag) { "$Name $Tag" } else { $Name }
     $tagHtml = if ($Tag) { ' <span class="site-header__tag">' + (& $e $Tag) + '</span>' } else { '' }
     return '<header class="site-header"><div class="container"><a class="site-header__brand" href="' + (& $e $Href) + '" aria-label="' +
-        (& $e $label) + ', home"><span class="site-header__mark" aria-hidden="true">DKJ</span><span class="site-header__name">' + (& $e $Name) +
+        (& $e $label) + ', home"><span class="site-header__name">' + (& $e $Name) +
         $tagHtml + '</span></a><div id="settings"></div></div></header>' + "`n"
 }
 

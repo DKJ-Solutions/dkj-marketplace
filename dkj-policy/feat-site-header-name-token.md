@@ -41,30 +41,33 @@
 
 ### CREATE
 
-- [x] `house-style.css`: a new `--text-title` token (22px), and `.site-header__name` set in it
+- [x] `house-style.css`: a new `--text-title` token (20px), and `.site-header__name` set in it
 - [x] `README.md` and `specimens.html`: the token documented and shown on the type scale
+- [x] The site header's mark retired: the `.site-header__mark` rule, its `<span>` in the hub's header
+  (`Format-SiteHeaderHtml`), the specimens, the two patterns, the README and the suite that pins the markup
 
 ### TEST
 
 - [x] `check-plugin-integrity.ps1`: 0 errors (the suites run in `open-pr`'s gate)
-- [ ] The owner looks at the larger header name on the toolbox before the PR (a visible result)
+- [ ] The owner looks at the header on the toolbox before the PR (a visible result)
 
 ### DEPLOY: feat/site-header-name-token
 
-The site header's name -- the repo name and `toolbox` on every hub page -- has a type token of its own,
-`--text-title`, at 22px, about the `h2` size where it was `--text-h3` (16px). The header can now be
-tuned without moving every `h2` (Dave, November 2, 2026).
+The site header loses its mark and its name grows. The name -- the repo name and `toolbox` on every hub
+page -- has a type token of its own, `--text-title`, at 20px, just under `h2`, where it was `--text-h3`
+(16px), so the header can be tuned without moving every `h2`. The organisation's initials in front of it,
+`.site-header__mark`, are retired: the header carries the name alone (Dave, November 2, 2026).
 
 **Score:** 2
 
 #### What makes this deploy extra special
 
-Every hub page and every app with a site header shows its name larger after the update, and an app can
-read the new token to size its own header name to match.
+Every hub page shows a header with the name alone, larger. An app with its own site header that takes the
+new stylesheet drops the `.site-header__mark` span, which no longer has a rule, and can size its own header
+name with `--text-title`.
 
-**Score:** 2
+**Score:** 3
 
 #### Pull Request
 
-A house token for the site header name, near the h2 size
-
+The site header without its mark, and a --text-title token for its name
