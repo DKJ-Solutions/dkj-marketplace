@@ -835,12 +835,10 @@ function Get-HubCardGridStyle {
         The repo layer's .ph-cards: card links three to a row ON THE PAGE, with no surface around them, stepping down
         where .grid-3 does, and .ph-cards__full for a card that takes the row. For h2 cards, which stand on their own:
         the .grid-3 surface frames a group, an h2 over h3 cards, so an h2 card never sits in it (Maikel, November 2,
-        2026). The hub's page and every group page take it from here. .ph-cards--4 sets them four to a row, as the
-        group pages do (Maikel, November 2, 2026), stepping down to two and then one where .grid-3 does.
+        2026). The hub's page and every group page take it from here.
     #>
     @(
         '.ph-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-3); }',
-        '.ph-cards--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }',
         '.ph-cards > .card { margin-top: 0; }',
         '.ph-cards__full { grid-column: 1 / -1; }',
         '@media (max-width: 1000px) { .ph-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }',
@@ -881,7 +879,7 @@ function Format-HubGroupPageHtml {
     }
     if ($members.Count -gt 0) {
         # h2 cards stand on the page, never in a .grid-3's surface, which frames an h2 over h3 cards (Maikel, November 2, 2026).
-        [void]$body.AppendLine('<div class="ph-cards ph-cards--4">')
+        [void]$body.AppendLine('<div class="ph-cards">')
         foreach ($p in $members) {
             [void]$body.AppendLine((Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon))
         }
