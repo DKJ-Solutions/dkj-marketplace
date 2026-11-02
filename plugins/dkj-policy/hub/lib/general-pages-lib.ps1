@@ -876,7 +876,7 @@ function Format-HubSettingsPageHtml {
         holding a Light/Dark toggle and a card per theme holding that theme's swatch alone, with no h3: the swatch's own
         title and aria-label name it (Dave, November 2, 2026) -- the
         brand book's own picker (DKJTheme.picker, house-theme.js, which every page here loads) cut down to one swatch.
-        The toggle shows one mode's cards at a time. After them, in a card of the same kind, its reset. The choice is the same one the
+        The toggle shows one mode's cards at a time. After them its reset, a card of the same kind that is itself the button. The choice is the same one the
         header's settings button makes -- one key per app on this device -- so every swatch agrees. Nothing here is read
         from disk: the cards are drawn from DKJTheme.themes, so a theme the brand book adds gets its card at once.
     #>
@@ -890,9 +890,9 @@ function Format-HubSettingsPageHtml {
     $toggle = '<div class="controls grid__full"><span class="seg" id="settings-theme-mode" role="group" aria-label="Mode">' +
         '<button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>'
     $body = '<div class="card-grid hs-theme" id="settings-theme-grid"><div class="grid__head"><h2>Theme</h2></div>' + $toggle +
-        # The reset takes a card like the swatches' and closes their row, shown whichever mode the toggle shows (it carries
-        # no data-mode); it takes the house's roomier .btn--touch (Dave, November 2, 2026).
-        '<section class="card hs-swatch" id="settings-theme-foot"><button type="button" class="btn btn--touch" id="settings-theme-reset">Reset theme</button></section></div>' + "`n" +
+        # The reset IS a card like the swatches', the whole card the button (Dave, November 2, 2026), hovering as a link card
+        # does in a group, on --bg-4 (not .card--link itself, which is a link's, #3566); it closes their row, shown whichever mode the toggle shows (it carries no data-mode).
+        '<button type="button" class="card hs-swatch hs-reset" id="settings-theme-foot">Reset theme</button></div>' + "`n" +
         # Each theme's card draws the whole picker and keeps only its own swatch, unwrapped from its row (no label, no
         # 64px label column). The picker never redraws, and a click or a theme change reaches every swatch left in every
         # picker, so the twelve cards and the header stay in step with no logic of this page's own. No house class is
@@ -916,15 +916,15 @@ function Format-HubSettingsPageHtml {
         ' }' +
         ' seg.addEventListener("click", function (e) { var b = e.target.closest("button[data-mode]"); if (b) { show(b.getAttribute("data-mode")); } });' +
         ' show(modeOf(DKJTheme.current()));' +
-        ' document.getElementById("settings-theme-reset").addEventListener("click", function () { DKJTheme.reset(); show(modeOf(DKJTheme.current())); });' +
+        ' foot.addEventListener("click", function () { DKJTheme.reset(); show(modeOf(DKJTheme.current())); });' +
         ' })();</script>'
-    # The reset with no edge and no fill, hover included: transparent rather than gone, so it keeps its height (Dave, November 2, 2026): this page's own button by its id,
-    # so no house class is redefined.
-    # .hs-theme and .hs-swatch are this page's own classes: the row, the full-width head, toggle and reset in it, and a
-    # card that hugs its swatch. No house class or token is redefined.
+    # .hs-theme, .hs-swatch and .hs-reset are this page's own classes: the row, the full-width head and toggle in it, a
+    # card that hugs its swatch, and what a <button> needs to read as a card. No house class or token is redefined.
     $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
         '.hs-theme > :is(.grid__head, .grid__full) { flex: 0 0 100%; }' + "`n" +
-        '.hs-swatch { margin-top: 0; padding: var(--spacing-2); }' + "`n" + '#settings-theme-reset { border-color: transparent; background: none; }'
+        '.hs-swatch { margin-top: 0; padding: var(--spacing-2); }' + "`n" +
+        '.hs-reset { font: inherit; color: var(--fg-1); cursor: pointer; padding-left: var(--spacing-4); padding-right: var(--spacing-4); }' + "`n" +
+        '.hs-reset:hover { background: var(--bg-4); }'
     return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $body -Style $style `
         -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
 }

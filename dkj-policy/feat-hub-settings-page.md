@@ -44,7 +44,7 @@
 - [x] `Get-GeneralPages`: a Settings card on `/settings`, with a gear icon of its own
 - [x] `Format-HubSettingsPageHtml`: the page, its h1 Settings, then a card headed by the h2 Theme over the brand book's theme picker and its reset
 - [x] `serve-general-pages.ps1`: the `/settings` route
-- [x] A card per theme in the house `.card-grid` the Theme h2 heads, laid out by the page's own `.hs-theme` as a wrapping row so each card hugs its swatch and a mode's six stand side by side, with no h3 (the swatch's own title names it), holding the brand book's picker cut to that theme's swatch alone, drawn from `DKJTheme.themes`; above them a Light/Dark toggle (the house `.seg`) that shows one mode's cards at a time, opening on the current theme's mode; the reset closing their row in a card of the same kind
+- [x] A card per theme in the house `.card-grid` the Theme h2 heads, laid out by the page's own `.hs-theme` as a wrapping row so each card hugs its swatch and a mode's six stand side by side, with no h3 (the swatch's own title names it), holding the brand book's picker cut to that theme's swatch alone, drawn from `DKJTheme.themes`; above them a Light/Dark toggle (the house `.seg`) that shows one mode's cards at a time, opening on the current theme's mode; the reset closing their row as a card of the same kind that is itself the button
 - [x] `house-style.css`: one padding for every card group, `--spacing-5`, the one `.grid-3` already took; the README's stale `--spacing-3` corrected
 
 ### TEST
@@ -54,7 +54,7 @@
 
 ### DEPLOY: feat/hub-settings-page
 
-The toolbox hub gets a **Settings** card, after Installed plugins and in the site header's menu. Its page, `/settings`, opens on an h2 **Theme** with the brand book's own theme picker one card per theme holding its swatch, with a **Light | Dark** toggle above them that shows one mode's six at a time, and a reset in a card of its own at the end of that row -- the same choice the header's settings button makes, so the two always agree.
+The toolbox hub gets a **Settings** card, after Installed plugins and in the site header's menu. Its page, `/settings`, opens on an h2 **Theme** with the brand book's own theme picker one card per theme holding its swatch, with a **Light | Dark** toggle above them that shows one mode's six at a time, and a reset at the end of that row, a card that is itself the button -- the same choice the header's settings button makes, so the two always agree.
 
 **Score:** 2
 
