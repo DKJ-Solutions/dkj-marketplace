@@ -906,6 +906,9 @@ function Format-HubSettingsPageHtml {
         ' var el = card.lastChild; DKJTheme.picker(el, { light: "Light", dark: "Dark" });' +
         ' Array.prototype.forEach.call(el.querySelectorAll(".theme-picker__row"), function (row) { if (row.querySelector(".theme-swatch--" + t.mode)) { row.parentNode.replaceChild(row.querySelector(".theme-picker__swatches"), row); } else { row.parentNode.removeChild(row); } });' +
         ' Array.prototype.forEach.call(el.querySelectorAll(".theme-swatch"), function (s) { if (s.getAttribute("data-id") !== t.id) { s.parentNode.removeChild(s); } });' +
+        # The whole card picks its theme (Dave, November 2, 2026), through the brand book's own set; the swatch in it stays
+        # the keyboard's target, and a click on the swatch itself sets the same theme twice, which changes nothing.
+        ' card.addEventListener("click", function () { DKJTheme.set(t.id); });' +
         ' });' +
         # The toggle opens on the mode of the theme in force, and follows a reset to the mode it lands in.
         ' var seg = document.getElementById("settings-theme-mode");' +
@@ -923,6 +926,10 @@ function Format-HubSettingsPageHtml {
     $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
         '.hs-theme > :is(.grid__head, .grid__full) { flex: 0 0 100%; }' + "`n" +
         '.hs-swatch { margin-top: 0; padding: var(--spacing-2); }' + "`n" +
+        # A theme card is clickable as a whole, and the one holding the active swatch -- aria-pressed, which the brand book's
+        # picker keeps, from the header's choice too -- takes the selected theme's --primary as its border (Dave, November 2, 2026).
+        '.hs-swatch[data-mode] { cursor: pointer; }' + "`n" +
+        '.hs-swatch:has(.theme-swatch[aria-pressed="true"]) { border-color: var(--primary); }' + "`n" +
         '.hs-reset { font: inherit; color: var(--fg-1); cursor: pointer; padding-left: var(--spacing-4); padding-right: var(--spacing-4); }' + "`n" +
         '.hs-reset:hover { background: var(--bg-4); }'
     return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $body -Style $style `
