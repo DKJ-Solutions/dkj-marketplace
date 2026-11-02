@@ -369,6 +369,11 @@ function Get-ReleaseLiveFallbackVersion {
         be right on the day it was set and wrong at the next release, silently, on a page management reads.
         Deriving it costs no maintenance and cannot go stale.
 
+        A REPO WITH A LIVE STAGE NO LONGER MOVES IT BY HAND (#3739). There the cut comes after the push,
+        so cut-release.ps1 moves a marker it finds onto the row it writes (Move-ReleaseHistoryLiveMarker),
+        unless -NoLivePushRecord says the release had no push. A repo without a live stage still moves its
+        marker itself, or leaves the table unmarked and lets this derive it.
+
         THE COST, STATED: a repo whose live version is genuinely older and which has simply never marked it
         now gets a label that is wrong, where before it got none. That is the trade this fallback makes, and
         the override is the thing it defers to -- mark the row and the derivation stops.

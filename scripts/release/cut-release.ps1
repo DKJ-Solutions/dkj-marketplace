@@ -1919,6 +1919,20 @@ if (Test-Path -LiteralPath $relReadmePath) {
     # guardrails judged is the list the row is written into.
     $rm = $historyContent
     $rmNl = Get-DocumentNewline -Content $rm
+    # THE LIVE MARKER MOVES WITH THE CUT IN A REPO WITH A LIVE STAGE (#3739). There the cut comes after
+    # the promotion or push, so the release it writes IS the live one, and a marker left on the row below
+    # would label the replaced version live on the release-notes page. -NoLivePushRecord states there was
+    # no push for this release, so the live version did not change and the marker stays where it is. A
+    # repo without a live stage is not touched: its marker, if it has one, is a statement this cut has no
+    # grounds to change. See Move-ReleaseHistoryLiveMarker.
+    if ($liveStage -and -not $NoLivePushRecord) {
+        $liveMove = Move-ReleaseHistoryLiveMarker -Content $rm -NewRow $newRow
+        switch ($liveMove.Status) {
+            'moved'     { $rm = $liveMove.Content; $newRow = $liveMove.Row
+                          Write-Host "  LIVE marker moved: $($liveMove.From) -> $new" -ForegroundColor DarkGray }
+            'ambiguous' { Write-Warning "$historyRelPath marks more than one row **LIVE**, or the new row has no cell where the marker stood -- it was left as it is. Move it to the $new row by hand." }
+        }
+    }
     $headerRe = [regex]"(?m)^\| Version \| Date \| Type \| Title \|\r?\n\|[-| ]+\|\r?\n"
     $hm = $headerRe.Match($rm)
     if ($hm.Success) {

@@ -1179,6 +1179,63 @@ function Get-OverviewRowType {
     return ''
 }
 
+function Move-ReleaseHistoryLiveMarker {
+    <# Pure: take the '**LIVE**' marker off the one overview row that carries it and put it on the row a cut
+       is about to insert. Returns @{ Content; Row; Status; From }, where Status is 'moved', 'none' (no row
+       is marked, so the page's fallback derives the newest release and nothing needs moving) or
+       'ambiguous' (several rows are marked, or the new row has no cell where the marker stood -- a
+       statement this cannot repair, so both inputs come back untouched and the caller says so).
+
+       WHY THE CUT MOVES IT (#3739, the owner's choice of direction 1, November 2, 2026). The marker is a
+       deliberate override of the release-notes page's 'newest is live' fallback, and nothing moved it, so
+       in a repo with a live stage the cut -- which comes AFTER the promotion or push -- left the label on
+       the version the push had just replaced. Measured in a consumer on November 2, 2026: v2.50.0 was
+       promoted and cut, and its page went on labelling v2.49.0 live. The cut is the one moment that knows
+       the new version is the live one, so moving the marker there keeps it an explicit statement that is
+       true when the cut lands. Whether this applies at all is the CALLER's judgement (a live stage, and a
+       push this release actually made); this function only does the move.
+
+       THE MARKER IS CARRIED OVER AS WRITTEN, with the arrow in front of it when it has one, and matched
+       case-sensitively for the reason build-release-notes-page.ps1 states: a title containing the word
+       'live' is not a marker. Only table rows are read, so a mention in prose is never moved. #>
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Content,
+        [Parameter(Mandatory)][string]$NewRow
+    )
+    $arrow = [string][char]0x2190
+    $markerRe = [regex]("[ \t]*(?<tok>(?:$arrow[ \t]*)?\*\*LIVE\*\*)")
+    $rowRe = [regex]'(?m)^\|.*$'
+    # A RELEASE row only -- one naming '[x.y.z]', as the page's row reader requires -- so a legend or
+    # status table elsewhere in the file that mentions the marker is neither counted nor moved.
+    $marked = @($rowRe.Matches($Content) | Where-Object { $_.Value -cmatch '\*\*LIVE\*\*' -and $_.Value -match '\[\d+\.\d+\.\d+\]' })
+    $result = @{ Content = $Content; Row = $NewRow; Status = 'none'; From = '' }
+    if ($marked.Count -eq 0) { return $result }
+    if ($marked.Count -gt 1) { $result.Status = 'ambiguous'; return $result }
+
+    $line = $marked[0]
+    $tm = $markerRe.Match($line.Value)
+    $token = $tm.Groups['tok'].Value
+    $cleaned = $line.Value.Remove($tm.Index, $tm.Length)
+    $vm = [regex]::Match($line.Value, '\[(?<v>\d+\.\d+\.\d+)\]')
+    $result.From = if ($vm.Success) { $vm.Groups['v'].Value } else { '' }
+    $result.Content = $Content.Substring(0, $line.Index) + $cleaned + $Content.Substring($line.Index + $line.Length)
+
+    # INTO THE SAME CELL IT CAME FROM, at that cell's end. A repo writes it in the version cell
+    # ('| [2.49.0](...) <arrow> **LIVE** |', measured in the reporting consumer), where it stays out of the
+    # title the page renders -- so its position is the repo's choice, and the cut keeps it rather than
+    # picking a cell of its own. The cell is counted by the pipes in front of the marker.
+    $cell = ([regex]::Matches($line.Value.Substring(0, $tm.Index), '\|')).Count
+    $pipes = @([regex]::Matches($NewRow, '\|'))
+    if ($cell -lt 1 -or $pipes.Count -le $cell) {
+        $result.Content = $Content; $result.Status = 'ambiguous'; return $result
+    }
+    $close = $pipes[$cell].Index
+    $head = $NewRow.Substring(0, $close).TrimEnd()
+    $result.Row = "$head $token " + $NewRow.Substring($close)
+    $result.Status = 'moved'
+    return $result
+}
+
 # The audience each tier is named after in a generated document. ONE MAP, so the release notes and any
 # later reader of a tier number agree about what it means.
 #

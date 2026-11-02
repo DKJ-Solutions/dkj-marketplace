@@ -723,6 +723,34 @@ Assert-Equal 'Patch' (Get-OverviewRowType -ReadmeContent $rowDoc -Version '4.30.
 Assert-Equal 'Minor' (Get-OverviewRowType -ReadmeContent $rowDoc -Version '4.30.1') 'and in a linked cell'
 Assert-Equal '' (Get-OverviewRowType -ReadmeContent $rowDoc -Version '4.3.0') 'a version that is only a PREFIX of a row''s does not match it'
 Assert-Equal '' (Get-OverviewRowType -ReadmeContent $rowDoc -Version '9.9.9') 'no row: empty, so the caller falls back to the shape'
+# THE CUT MOVES THE LIVE MARKER ONTO THE ROW IT WRITES (#3739), into the cell it stood in, as written.
+# The arrow is composed from its code point: the script layer is ASCII.
+$liveArrow = [string][char]0x2190
+$liveDoc = "| Version | Date | Type | Title |`n|---|---|---|---|`n| [2.49.0](audience/2.x/2.49.0.md) $liveArrow **LIVE** | 2026-10-21 | Minor | Live now runs from the theme |`n| [2.48.0](audience/2.x/2.48.0.md) | 2026-10-19 | Minor | y |`n"
+$liveNew = '| [2.50.0](audience/2.x/2.50.0.md) | 2026-11-02 | Minor | Deal banners |'
+$mv = Move-ReleaseHistoryLiveMarker -Content $liveDoc -NewRow $liveNew
+Assert-Equal 'moved' $mv.Status 'one marked row: the marker is moved'
+Assert-Equal '2.49.0' $mv.From 'and the version it came from is reported'
+Assert-Equal "| [2.50.0](audience/2.x/2.50.0.md) $liveArrow **LIVE** | 2026-11-02 | Minor | Deal banners |" $mv.Row 'it lands in the version cell, where it stood, with its arrow'
+Assert-Equal $true ($mv.Content.Contains('| [2.49.0](audience/2.x/2.49.0.md) | 2026-10-21 |')) 'the old row loses it, and the space in front of it'
+Assert-Equal $false ($mv.Content -cmatch '\*\*LIVE\*\*') 'no marked row is left behind'
+Assert-Equal $true ($mv.Content.Contains('| Live now runs from the theme |')) 'a title containing the word live is untouched (case-sensitive)'
+$titleDoc = "| Version | Date | Type | Title |`n|---|---|---|---|`n| [1.1.0](a.md) | 2026-01-02 | Minor | x **LIVE** |`n"
+Assert-Equal '| [1.2.0](b.md) | 2026-02-01 | Minor | z **LIVE** |' (Move-ReleaseHistoryLiveMarker -Content $titleDoc -NewRow '| [1.2.0](b.md) | 2026-02-01 | Minor | z |').Row 'a marker without an arrow, in the title cell, moves into the title cell'
+$noneMv = Move-ReleaseHistoryLiveMarker -Content $rowDoc -NewRow $liveNew
+Assert-Equal 'none' $noneMv.Status 'no marked row: nothing to move, the page derives the newest'
+Assert-Equal $liveNew $noneMv.Row 'and the new row is returned as given'
+$twoDoc = $liveDoc -replace '\| \[2\.48\.0\]\(audience/2\.x/2\.48\.0\.md\)', '| [2.48.0](audience/2.x/2.48.0.md) **LIVE**'
+$twoMv = Move-ReleaseHistoryLiveMarker -Content $twoDoc -NewRow $liveNew
+Assert-Equal 'ambiguous' $twoMv.Status 'two marked rows: ambiguous, the cut does not choose'
+Assert-Equal $twoDoc $twoMv.Content 'and the content is returned untouched'
+Assert-Equal $liveNew $twoMv.Row 'and so is the new row'
+$proseDoc = "Mark the live one with **LIVE**.`n`n" + $rowDoc
+Assert-Equal 'none' (Move-ReleaseHistoryLiveMarker -Content $proseDoc -NewRow $liveNew).Status 'a mention in prose is not a marked row'
+$legendDoc = "| Mark | Meaning |`n|---|---|`n| **LIVE** | the version on the live theme |`n`n" + $liveDoc
+$legendMv = Move-ReleaseHistoryLiveMarker -Content $legendDoc -NewRow $liveNew
+Assert-Equal 'moved' $legendMv.Status 'a legend row naming no version is not counted, so the release row still moves'
+Assert-Equal $true ($legendMv.Content.Contains('| **LIVE** | the version on the live theme |')) 'and the legend keeps its marker'
 Assert-Match $notes '(?m)^# Changelog Releases\n\nA title\n\n## Version 3\.5\.0 \(Aug 05, 2026\)$' 'the H1 is followed by the title and then the version heading, nothing between'
 Assert-Match $notes 'A title' 'title included'
 # THE LEVELS ARE CHANGELOG.md'S OWN (#881, August 25, 2026) -- AND THEY ARE READ FROM THE FORMAT RATHER
