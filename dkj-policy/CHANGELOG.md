@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**9 / 9 minor entries** <!-- pending-tally -->
+**10 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/tools-crumb-root · 20261102-214200Z
+
+The toolbox's first crumb, **Tools**, and the site-header name now link `/`, the toolbox's own root,
+instead of `/hub`. Both addresses render the same home page, so nothing a reader lands on changes; the URL
+in the address bar is simply the plain one. `/hub` still answers, so a bookmark or an old link keeps
+working. The README's crumb paragraph no longer describes the product relay retired with #3540 as live.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A toolbox user who clicks Tools sees `localhost:<port>/` in the address bar rather than `/hub`; the page
+is the same.
+
+**Score:** 1
+
+#### Pull Request
+
+The Tools crumb on the toolbox goes to / instead of /hub
+
+Plugins: dkj-policy
+
+[PR #3762](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3762)
+
+---
 
 ### DEPLOY: feat/3758-live-push-merged-only · 20261102-213141Z
 
