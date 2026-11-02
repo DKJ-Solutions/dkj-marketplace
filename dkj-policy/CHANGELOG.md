@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**10 / 16 minor entries** <!-- pending-tally -->
+**11 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/lens-page-rendered-markdown · 20261102-142702Z
+
+A specialist lens's page in the toolbox (`/ai/claude/specialists/lenses/<name>`) now shows the lens as formatted
+text instead of raw markdown: its title, headings, lists, tables, quotes and code in the
+house `.prose` style. It is drawn by the same small renderer the release-notes pages use, which moved out of their
+template into `scripts/release/markdown-render.js` so both pages inline one file rather than each carrying a
+renderer of its own. A reader without JavaScript still gets the raw text.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Anyone who opens a lens in their toolbox reads it as a formatted document rather than as source.
+
+**Score:** 2
+
+#### Pull Request
+
+Render a specialist lens's page as formatted markdown
+
+Plugins: dkj-policy
+
+[PR #3748](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3748)
+
+---
 
 ### DEPLOY: feat/site-header-name-token · 20261102-131936Z
 
