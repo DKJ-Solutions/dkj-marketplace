@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**6 / 10 minor entries** <!-- pending-tally -->
+**6 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3704-hub-brandbook-route · 20261102-110036Z
+
+The hub's brand book page is named `dkj-brandbook` in the toolbox too, as it already was on the product: its card,
+title and breadcrumb, and its address, `/plugins/dkj-policy/dkj-brandbook`
+([#3704](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3704)). Both older addresses,
+`/plugins/dkj-policy/house-style` and `/plugins/dkj-solutions/house-style`, redirect there, a section to the same
+section.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+The hub's brand book page is named and routed as dkj-brandbook
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #3741](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3741)
+
+---
 
 ### DEPLOY: fix/3725-specimen-sample-text · 20261102-102200Z
 
