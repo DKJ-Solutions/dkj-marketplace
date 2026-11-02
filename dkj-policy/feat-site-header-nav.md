@@ -55,7 +55,7 @@ and a right-hand drawer on a phone) into the site header. Chosen: the menu in th
 - [x] `dev-pages.tests.ps1`: the menu, its escaping, the current item, the drawer's place, the toolbox and product menus; four asserts that counted the whole page now read past the site header
 - [x] dev-pages, consumer-dashboard, dev-preview-sessionstart, house-palette, check-house-style, logbook, stopwatch, stopwatch-sync, cut-release-drive, cut-release-guardrail: green
 - [x] Rendered in Chrome: at 475px the toggle opens the drawer and the backdrop shuts it; zoomed out to ~1350px the links stand between the name and the gear, the current one underlined
-- [ ] Maikel looks at it (visible result: the branch waits for the owner's eye)
+- [x] Maikel looked at it on the preview page (November 2, 2026): "it works quite well"; he had not planned the hub cards in the bar, and chose to ship them as they are
 
 ### DEPLOY: feat/site-header-nav
 
