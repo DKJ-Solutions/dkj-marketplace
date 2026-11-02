@@ -57,6 +57,8 @@ h2 section on it, and move the URL and the breadcrumbs with it.
 - [x] Maikel: every icon stands in the middle of an invisible square. Measured each drawing's bounding box in
   Edge: ten of the 24 were off-centre by 0.25 to 1.5 grid units, and each now moves its viewBox by that much
   (`$script:HubIconOffsets`); re-measured, all 24 centred
+- [x] Maikel: the brand book's `.menu-item` gap from `--spacing-4` to `--spacing-5`, and `.ph-cards`' gap from
+  `--spacing-3` to `--spacing-4`
 
 ### TEST
 
@@ -73,7 +75,9 @@ page before. Every page below it moves along: `/claude/rules`, `/claude/skills`,
 each lens's page under it, and every trail through it reads Tools > Claude. An old `/ai` link is redirected
 to its new address. And the cards on every group page (Claude, Performance, Clock) now stand on the page as the
 hub's own do, three to a row, instead of inside a grey group surface that belongs to a heading over smaller cards. Every card icon
-now stands in the middle of its square, so no icon looks shifted beside its neighbours.
+now stands in the middle of its square, so no icon looks shifted beside its neighbours. And there is more room
+in and between the cards: every menu row and card link (a brand book class, so every DKJ page that uses one) keeps
+20px between its icon, label and chevron instead of 16px, and the hub's cards stand 16px apart instead of 12px.
 
 **Score:** 2
 
