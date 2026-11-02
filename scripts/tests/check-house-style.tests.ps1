@@ -185,6 +185,22 @@ Assert-True (-not (Test-HouseStyleAllowed -Path 'web/a.css' -Name '--bad' -Allow
 Assert-Equal ('caf' + [char]0x00E9 + '.css') (ConvertFrom-GitQuotedPathHs -Line '"caf\303\251.css"') 'a git-quoted UTF-8 path is decoded'
 Assert-Equal 'plain.css' (ConvertFrom-GitQuotedPathHs -Line 'plain.css') 'an unquoted path is left alone'
 
+# Check 4, colour (#3720): a rule reads a colour only as a token; a domain token's own value is free.
+Assert-Equal 'types #fff' (Get-HitNames (Find-HouseStyleColourHit -Text '.my-x { color: #FFF; }')) 'a hex code in a rule'
+Assert-Equal 'types rgba' (Get-HitNames (Find-HouseStyleColourHit -Text '.my-x { box-shadow: 0 1px 2px rgba(0,0,0,.2); }')) 'an rgba() code in a shadow'
+Assert-Equal 'derives color-mix' (Get-HitNames (Find-HouseStyleColourHit -Text '.my-x { border: 1px solid color-mix(in srgb, var(--primary) 55%, var(--bg-1)); }')) 'a color-mix() in a shorthand'
+Assert-Equal 'derives rgb' (Get-HitNames (Find-HouseStyleColourHit -Text '.my-x { background: rgb(from var(--primary) r g b / 50%); }')) 'the relative colour syntax derives, not types'
+Assert-Equal 'types #0369a1' (Get-HitNames (Find-HouseStyleColourHit -Text '.my-x { background-color: light-dark(#0369a1, #38bdf8); }')) 'a code inside light-dark(), one hit per declaration'
+Assert-Equal '' (Get-HitNames (Find-HouseStyleColourHit -Text ':root { --emotion-cyan: light-dark(#0369a1, #38bdf8); --tint: color-mix(in srgb, red 5%, blue); }')) 'a domain token''s own value is free'
+Assert-Equal '' (Get-HitNames (Find-HouseStyleColourHit -Text '.my-x { color: var(--fg-1); background: var(--bg-2); }')) 'a token read is clean'
+Assert-Equal '' (Get-HitNames (Find-HouseStyleColourHit -Text '.my-x { fill: url(#grad); }')) 'a url() fragment is no colour code'
+Assert-Equal '' (Get-HitNames (Find-HouseStyleColourHit -Text '$brand: #fff; @accent: #000;')) 'an SCSS or Less variable is a token of the repo''s own'
+Assert-Equal '' (Get-HitNames (Find-HouseStyleColourHit -Text "Write-Host `"Text: #3720 closed`"")) 'a script line that is no colour property is not read'
+Assert-Equal '' (Get-HitNames (Find-HouseStyleColourHit -Text "/* color: #fff; */`n// background: #000;`n.my-x { }")) 'a commented-out declaration is no finding'
+Assert-Equal '' (Get-HitNames (Find-HouseStyleColourHit -Text 'a:hover { text-decoration: underline; }')) 'a selector pseudo-class is no declaration'
+$h = @(Find-HouseStyleColourHit -Text "x`n/* a`n b */`n.my-x { stroke: #abc; }")
+Assert-True ($h.Count -eq 1 -and $h[0].Line -eq 4 -and $h[0].Property -eq 'stroke') 'the line and the property of a hit, past a multi-line comment'
+
 Write-Host '-- group 2: the retired names, held to the pinned copy' -ForegroundColor Cyan
 
 $defs = Get-HouseStyleDefinitions -CssText ([System.IO.File]::ReadAllText((Join-Path $Vendored 'house-style.css')))
@@ -283,8 +299,12 @@ try {
     Assert-True ($r.Out -match '\[redefine\] web/page\.py:1 styles the house class \.card') 'check 2: a restyled house class'
     Assert-True ($r.Out -match '\[retired\] web/page\.py:1 reads --ink-4') 'check 3: a retired name in use'
     Assert-True ($r.Out -notmatch '\[heading\]|web/hub\.html') 'an h2 titling a card is no finding: the heading check was retired'
+    Set-Content -LiteralPath (Join-Path $drift 'web\domain.scss') -Value ":root { --my-hazard: #f2b100; }`n.my-row { background: color-mix(in srgb, var(--primary) 10%, var(--bg-2)); }" -Encoding ascii
+    Invoke-FixtureGitIn $drift add -A
+    $r = Invoke-Child $Gate $drift 'RepoRoot'
+    Assert-True ($r.Out -match '\[colour\] web/domain\.scss:2 background: derives a colour with color-mix\(\)' -and $r.Out -notmatch 'domain\.scss:1') 'check 4: a derived colour in a rule, and the domain token above it is free'
     $r = Invoke-Child $Hook $drift 'RepoRootOverride'
-    Assert-True ($r.Code -eq 0 -and $r.Out -match '\[WARN\] 4 finding') 'the session check reports the findings and still exits 0'
+    Assert-True ($r.Code -eq 0 -and $r.Out -match '\[WARN\] 5 finding') 'the session check reports the findings and still exits 0'
 
     New-Item -ItemType Directory -Force -Path (Join-Path $drift 'scripts') | Out-Null
     $config = "function Get-HouseStyleAllowlist { @(@{ Path = 'web/page.py'; Reason = 'a fixture' }, @{ Path = 'web/house-theme.js'; Reason = 'no use: a pin is never answered here' }) }"
