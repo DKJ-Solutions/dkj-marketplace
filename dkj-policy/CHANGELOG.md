@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**8 / 14 minor entries** <!-- pending-tally -->
+**9 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/hub-cards-ungrouped · 20261102-122251Z
+
+The hub's home page no longer wraps its card links in a framed `.grid-3` with no heading above it. The cards
+stand three to a row straight on the page, in a `.ph-cards` of the page's own layer that takes `.grid-3`'s
+columns and step-downs without its background and padding: a framed group with no heading groups nothing.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every repo's toolbox home page looks different the moment it is opened: the cards stand on the page instead of
+inside a grey panel.
+
+**Score:** 2
+
+#### Pull Request
+
+Hub home page: the cards three to a row without a grid surface
+
+Plugins: dkj-policy
+
+[PR #3744](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3744)
+
+---
 
 ### DEPLOY: fix/3739-cut-moves-live-marker · 20261102-120246Z
 
