@@ -238,6 +238,63 @@ function Test-BackupThemeName {
     return $rest.StartsWith('backup-', [System.StringComparison]::Ordinal)
 }
 
+function Get-ExistingBackupVerdict {
+    <#
+    .SYNOPSIS
+        May backup-live-theme's -VerifyExisting adopt the theme -ThemeId names? Returns an object with
+        Accepted (bool), Id, Name and Reason.
+
+    .DESCRIPTION
+        WHY THE MODE EXISTS (#3733). A run that times out leaves its unverified copy standing, by design,
+        and a retry used to duplicate live again: measured in a consumer on November 2, 2026, one release
+        day cost two extra theme slots on an 80-theme estate while the first copy was still filling and
+        would have verified. -VerifyExisting skips the duplicate and runs the verify and the rotation
+        against a copy that already exists.
+
+        AND THE ROTATION IS WHY THIS FUNCTION REFUSES SO MUCH. The adopted theme becomes the survivor that
+        Get-BackupRotationPlan keeps while every other backup rotates out, so the id must name one of THIS
+        repo's backups and nothing else. Each refusal below names a theme that is not a copy waiting to be
+        judged:
+
+          - an empty id, or one the store's theme list does not hold;
+          - the configured live theme itself (-LiveId), which is the source and never its own backup;
+          - a name outside this repo's backup namespace (Test-BackupThemeName): a preview, a colleague's
+            sandbox, a third party's theme;
+          - a backup the store reports as role 'live' or 'main': a restored backup IS live (#2589).
+
+        WHAT IT DOES NOT JUDGE is whether the copy is complete or of which live stand it was taken. That is
+        the verify step's question, asked against live as it stands now, so a copy of an older stand is
+        refused there by its count and shortfall rather than here by its timestamp.
+    #>
+    param(
+        [AllowNull()][AllowEmptyCollection()][object[]]$Themes,
+        [AllowEmptyString()][AllowNull()][string]$ThemeId,
+        [AllowEmptyString()][AllowNull()][string]$LiveId
+    )
+
+    $id = ([string]$ThemeId).Trim()
+    $live = ([string]$LiveId).Trim()
+    if (-not $id) {
+        return [pscustomobject]@{ Accepted = $false; Id = ''; Name = ''; Reason = 'no theme id was given' }
+    }
+    if ($live -and $id -eq $live) {
+        return [pscustomobject]@{ Accepted = $false; Id = $id; Name = ''; Reason = "id $id is the live theme itself, which is the source of a backup and never one" }
+    }
+    $hit = @(@($Themes) | Where-Object { $_ -and ([string]$_.id).Trim() -eq $id })
+    if ($hit.Count -ne 1) {
+        return [pscustomobject]@{ Accepted = $false; Id = $id; Name = ''; Reason = "the store's theme list holds no theme with id $id" }
+    }
+    $name = ([string]$hit[0].name).Trim()
+    if (-not (Test-BackupThemeName -Name $name)) {
+        return [pscustomobject]@{ Accepted = $false; Id = $id; Name = $name; Reason = "theme $id is outside this repo's backup namespace ('$($script:RepoThemePrefix)backup-...'), so it is not ours to adopt or to keep while our backups rotate out" }
+    }
+    $role = ([string]$hit[0].role).Trim().ToLower()
+    if ($role -eq 'live' -or $role -eq 'main') {
+        return [pscustomobject]@{ Accepted = $false; Id = $id; Name = $name; Reason = "the store reports theme $id as role '$role' -- a backup restored to live is the live theme now (#2589)" }
+    }
+    return [pscustomobject]@{ Accepted = $true; Id = $id; Name = $name; Reason = "theme $id is one of this repo's backups and not live" }
+}
+
 function Get-ThemeFillVerdict {
     <#
     .SYNOPSIS
@@ -314,6 +371,65 @@ function Get-ThemeFillVerdict {
     }
 
     return [pscustomobject]@{ Verdict = 'complete'; Reason = "settled at $count file(s), matching the source"; Count = $count }
+}
+
+# THE HARD CAP ON A FILL WAIT, AS A MULTIPLE OF THE CALLER'S -TimeoutMinutes (#3732). One value, read by
+# both callers and by live-preflight's outer bound around the backup, so the three cannot disagree.
+$script:ThemeFillHardCapFactor = 3
+
+function Get-ThemeFillWaitDecision {
+    <#
+    .SYNOPSIS
+        Should a fill wait take another sample? Returns Continue (bool), Extended (bool: past the soft
+        deadline and running on because the copy is still growing) and Reason.
+
+    .DESCRIPTION
+        THE SOFT DEADLINE WAS A FIXED CLOCK, AND IT FAILED A COPY THAT WAS NOT STUCK (#3732, from #3729).
+        Measured in BWJ-Development/smartwatchbanden on November 2, 2026: a 909-file live theme's copy held
+        661 files at the 20-minute default and was still rising by 3-4 files per sample. backup-live-theme
+        then refused it, left it standing, and the retry duplicated live again -- a second theme slot for a
+        copy that would have verified.
+
+        SO PAST THE SOFT DEADLINE THE WAIT RUNS ON WHILE THE COUNT IS STILL RISING, and stops on a stall.
+        "Rising" is the newest count above the count -GrowthWindow samples earlier. The window is several
+        samples wide on purpose: a copy grows in bursts with pauses between them (#1965), and two equal
+        samples inside one pause are not a stall. A copy that stalls stops the wait, and the caller judges
+        it exactly as before -- 'short' is still a refusal once the wait is over (#2350).
+
+        AND IT IS STILL BOUNDED. -HardDeadline ends the wait whatever the count does, so a copy that creeps
+        forever cannot hold a release cut forever. The caller sets it at -TimeoutMinutes times
+        $script:ThemeFillHardCapFactor.
+
+        -Now IS A PARAMETER, for the reason Get-BackupThemeName gives: a function that reads the clock
+        cannot be asserted against.
+    #>
+    param(
+        [AllowNull()][AllowEmptyCollection()][int[]]$Samples,
+        [Parameter(Mandatory = $true)][datetime]$Now,
+        [Parameter(Mandatory = $true)][datetime]$Deadline,
+        [Parameter(Mandatory = $true)][datetime]$HardDeadline,
+        [int]$GrowthWindow = 6
+    )
+
+    if ($Now -lt $Deadline) {
+        return [pscustomobject]@{ Continue = $true; Extended = $false; Reason = 'inside the wait' }
+    }
+    if ($Now -ge $HardDeadline) {
+        return [pscustomobject]@{ Continue = $false; Extended = $false; Reason = 'the hard cap on the wait has passed' }
+    }
+
+    $s = @($Samples)
+    if ($GrowthWindow -lt 1) { $GrowthWindow = 1 }
+    if ($s.Count -lt 2) {
+        return [pscustomobject]@{ Continue = $false; Extended = $false; Reason = 'too few samples to tell whether the copy is still growing' }
+    }
+    $newest = $s[$s.Count - 1]
+    $earlier = $s[[Math]::Max(0, $s.Count - 1 - $GrowthWindow)]
+    $span = ($s.Count - 1) - [Math]::Max(0, $s.Count - 1 - $GrowthWindow)
+    if ($newest -gt $earlier) {
+        return [pscustomobject]@{ Continue = $true; Extended = $true; Reason = "still growing ($earlier -> $newest over the last $span sample(s))" }
+    }
+    return [pscustomobject]@{ Continue = $false; Extended = $false; Reason = "no growth over the last $span sample(s) (held at $newest)" }
 }
 
 function Get-ThemeShortfallPaths {

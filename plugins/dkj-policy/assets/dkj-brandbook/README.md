@@ -93,9 +93,10 @@ already has, not a new colour:
 | **10%** | Text | `--fg-1` … `--fg-4` | what sits on the paper: every paragraph, label and quiet icon |
 
 **A rule reads a colour only as a token, never derives one** (Maikel, a strict rule, November 1, 2026): no
-`color-mix()`, no relative colour (`rgb(from …)`), no `oklch()` or other colour function outside a token's own
-value. A shade a component needs is a new token, typed into every theme line, and `check-colour-literals.mjs`
-refuses a derived colour before it lands. `--primary-raised` and `--primary-hover` were added that way the same day:
+`color-mix()`, no relative colour (`rgb(from …)`), no `oklch()` or other colour function, **a token's own value
+included** (Maikel, November 2, 2026, #3727): `--x: color-mix(…)` is a derived colour too. A shade a component
+needs is a new token, typed into every theme line, and `check-colour-literals.mjs` refuses a derived colour
+anywhere before it lands. `--primary-raised` and `--primary-hover` were added that way the same day:
 `--primary` 15% of the way to `--bg-1`, and to `--fg-1`, the exact values the two `color-mix()` rules had computed.
 
 **Everything in the 30% reads on all four paper steps**, as the 10% does (Maikel, November 1, 2026): `--primary`
@@ -466,8 +467,9 @@ draws the twelve swatches in two rows, light and dark. `DKJTheme.set(id)`, `DKJT
 `DKJTheme.current()` cover everything else. Copy it unchanged, like the stylesheet.
 
 **Or give the app the settings button, and the setting is done** ([#70](https://github.com/DKJ-Solutions/dkj-brandbook/issues/70)).
-`DKJTheme.settings(element)` draws a round toggle on the card colour with its edge in the theme's colour (a `--primary`
-border; the icon turns `--primary` under the pointer and while open; #3235), that opens a panel with the picker, the page width
+`DKJTheme.settings(element)` draws a toggle that is the icon alone, in `--fg-1`, with no fill, edge or shadow,
+and it stays `--fg-1` under the pointer and while open (Maikel, November 1, 2026; from #3235 until then it stood
+on the card colour with a `--primary` edge). The toggle opens a panel with the picker, the page width
 (below) and a reset, and returns the panel's slot (`.theme-settings__extra`), where the app puts settings of
 its own. The script owns the behaviour, so an app writes none of it: the toggle opens
 and closes the panel, Escape closes it and puts focus back on the toggle, and a click outside it or focus

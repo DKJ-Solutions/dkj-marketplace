@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
-    The rules behind check-house-style (#3035): is every vendored copy of the house style the copy the
+    The rules behind check-house-style (#3035): is every vendored copy of the brand book the copy the
     dkj-brandbook skill pins, does the repo's own layer leave the house tokens and classes alone, and does
-    it still use a token name the house style retired.
+    it still use a token name the brand book retired.
 
 .DESCRIPTION
     WHY IT EXISTS. Measured October 15, 2026 across the DKJ-Solutions org, nothing checked a consumer's
@@ -11,9 +11,9 @@
     longer defines (#3033). Without a gate the migration to one design system drifts again after it
     lands, so this is phase 1 of that plan.
 
-    THE THREE CHECKS, and the decisions behind their shape (owner, October 15, 2026, on #3035). A fourth,
-    `heading` (no h2 inside a card, Maikel, October 19, 2026, on #3175), was retired by Maikel on October 24,
-    2026: an h2 may title a card.
+    THE FOUR CHECKS, and the decisions behind their shape (owner, October 15, 2026, on #3035; the fourth
+    added by #3720). An earlier fourth, `heading` (no h2 inside a card, Maikel, October 19, 2026, on
+    #3175), was retired by Maikel on October 24, 2026: an h2 may title a card.
 
       1. pin      -- every tracked file named house-style.css or house-theme.js hashes to the sha256 the
                      skill page pins. The copies are FOUND (a discovery over the tracked files), not
@@ -22,10 +22,18 @@
       2. redefine -- the repo's own layer defines no house token (`--x:`) and styles no house class as
                      the subject of its own rule. The house set is read from the verified copy itself,
                      so it follows the pinned tag without a second list to maintain.
-      3. retired  -- the repo's own layer neither defines nor reads (`var(--x)`) a token name the house
-                     style retired.
+      3. retired  -- the repo's own layer neither defines nor reads (`var(--x)`) a token name the brand
+                     book retired.
+      4. colour   -- the repo's own layer types no colour code (#hex, rgb(), hsl()) and derives no colour
+                     (color-mix(), oklch(), `rgb(from ...)`) as the value of a colour property (#3720).
+                     A rule reads a colour only as a token (Maikel, November 1, 2026), and until this
+                     check that held only where the brand book is made (check-colour-literals.mjs in the
+                     source repo), not where it is used. A custom property's own value is NOT a finding:
+                     the README lets a repo add domain tokens, and a domain colour is one (an emotion
+                     palette, a hazard stripe). Only CSS property syntax is read, so a JS camelCase key
+                     (`backgroundColor:`) is not, and a named colour (`red`) is not a code.
 
-    PATTERN GREP, NOT A PARSE. Checks 2 and 3 match patterns rather than parse CSS or SCSS: no runtime
+    PATTERN GREP, NOT A PARSE. Checks 2 to 4 match patterns rather than parse CSS or SCSS: no runtime
     dependency, and a bare Windows PowerShell 5.1 runs it. The price is the occasional false positive,
     which the repo answers in its own allowlist (Get-HouseStyleAllowlist, below) with a reason per entry.
 
@@ -74,7 +82,7 @@
 Set-StrictMode -Version Latest
 
 function Get-HouseStyleRetiredTokens {
-    <# The token names the house style retired, as of the tag the skill pins (v0.4.0). #>
+    <# The token names the brand book retired, as of the tag the skill pins (v0.4.0). #>
     return [string[]]@(
         '--axis', '--bad', '--border', '--border-base', '--down', '--gain', '--good', '--grid', '--grid-base',
         '--ink', '--ink-1', '--ink-2', '--ink-3', '--ink-4', '--ink-5', '--ink-6', '--ink-7', '--loss', '--cat-1', '--cat-2', '--cat-3', '--muted', '--muted-inverse', '--paper-1', '--paper-2', '--paper-3', '--paper-4', '--neutral-1', '--neutral-2', '--neutral-3', '--neutral-4',
@@ -91,7 +99,7 @@ function Get-HouseStyleCopyNames {
 }
 
 function Get-HouseStyleCanonicalDir {
-    <# Where the source repo keeps the canonical house style, relative to its root (#3531). #>
+    <# Where the source repo keeps the canonical brand book, relative to its root (#3531). #>
     return 'plugins/dkj-policy/assets/dkj-brandbook'
 }
 
@@ -102,7 +110,7 @@ function Get-HouseStyleSkillDirNames {
 
 function Test-HouseStyleSourceRepo {
     <#
-        Is this checkout the house style's source: its marketplace manifest publishes dkj-solutions, the
+        Is this checkout the brand book's source: its marketplace manifest publishes dkj-solutions, the
         plugin whose skill page pins the copies. Read rather than counted, as seam-lib's
         Test-IsWorkflowSourceRepo reads it -- a repo that publishes other plugins is still a consumer. An
         unreadable manifest is $false: the careful answer is to judge every copy against the pin.
@@ -417,6 +425,42 @@ function Find-HouseStyleClassHit {
     }
 }
 
+function Find-HouseStyleColourHit {
+    <#
+        Every declaration of a colour property whose value types or derives a colour (#3720): a colour code
+        (#hex, rgb(), rgba(), hsl(), hsla()) or a derived colour (color-mix(), the relative colour syntax,
+        oklch() and the other colour functions). Returns @{ Name; Kind = 'types'|'derives'; Property; Line },
+        one per declaration, naming the first colour in it.
+        A custom property is never matched: its value is a domain token, which the README lets a repo add.
+        A colour PROPERTY gates the match, not any `x:` -- `Text: #3720` in a script is an issue number.
+    #>
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Text)
+
+    # Comments are blanked to spaces, so a line number still lands where it did.
+    $Text = [regex]::Replace($Text, '(?m)/\*[\s\S]*?\*/|^[ \t]*//.*$', [System.Text.RegularExpressions.MatchEvaluator] { param($c) $c.Value -replace '[^\n]', ' ' })
+    $props = '(?:background|border|outline|text-decoration|column-rule)(?:-[a-z]+)*|color|fill|stroke|box-shadow|text-shadow|caret-color|accent-color|stop-color|flood-color|lighting-color|scrollbar-color|text-emphasis-color|-webkit-text-fill-color|-webkit-text-stroke-color'
+    # Nothing before the name that makes it part of a longer one: a hyphen (`--my-color:`), a `$` or `@`
+    # (an SCSS or Less variable), a dot or a word character.
+    $decl = '(?<![\w$@.-])(?<prop>' + $props + ')[''"]?\s*:\s*(?<val>[^;{}\r\n]*)'
+    $code = '(?<![\w&#]|url\(\s*)#[0-9a-fA-F]{3,8}(?![\w-])|\b(?:rgba?|hsla?)\((?!\s*from\b)'
+    $derived = '\b(?:color-mix|oklch|oklab|lab|lch|hwb|color)\(|\b(?:rgba?|hsla?)\(\s*from\b'
+    $map = $null
+    foreach ($m in [regex]::Matches($Text, $decl)) {
+        $val = $m.Groups['val'].Value
+        $d = [regex]::Match($val, $derived)
+        $c = [regex]::Match($val, $code)
+        if (-not $d.Success -and -not $c.Success) { continue }
+        if ($null -eq $map) { $map = New-HouseStyleLineMap -Text $Text }
+        $first = if ($d.Success -and (-not $c.Success -or $d.Index -lt $c.Index)) { $d } else { $c }
+        @{
+            Name = ($first.Value -split '\(')[0].ToLowerInvariant()
+            Kind = $(if ($first -eq $d) { 'derives' } else { 'types' })
+            Property = $m.Groups['prop'].Value
+            Line = (Get-HouseStyleLineNumber -Map $map -Index $m.Index)
+        }
+    }
+}
+
 function ConvertFrom-GitQuotedPathHs {
     <#
         One path line from `git -c core.quotePath=true ls-files`, decoded. Git quotes a path with a
@@ -503,7 +547,7 @@ function Read-HouseStyleAllowlist {
 
 function Invoke-HouseStyleCheck {
     <#
-        Run the three checks over a checkout. Returns
+        Run the four checks over a checkout. Returns
         @{ Tag; Copies = @(@{ Path; Ok; Canonical }); Findings = @(@{ Check; Path; Line; Name; Text }); Allowed; Notes }.
         $Files defaults to the checkout's tracked files; tests pass their own. $SourceRepo defaults to
         Test-HouseStyleSourceRepo; a canonical copy is Ok whatever it hashes to (#3637).
@@ -584,7 +628,11 @@ function Invoke-HouseStyleCheck {
             $hits += @{ Check = 'redefine'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = "styles the house class $($h.Name) -- give the element a domain class of its own, or fix the class at its source (plugins/dkj-policy/assets/dkj-brandbook/ in DKJ-Solutions/dkj-marketplace)" }
         }
         foreach ($h in @(Find-HouseStyleTokenHit -Text $text -Names $retired -IncludeReads)) {
-            $hits += @{ Check = 'retired'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = "$($h.Kind) $($h.Name), a token name the house style retired -- rename it per the rename tables in assets/dkj-brandbook/README.md at $($Pin.Tag) (assets/house-style/README.md at a tag before the rename)" }
+            $hits += @{ Check = 'retired'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = "$($h.Kind) $($h.Name), a token name the brand book retired -- rename it per the rename tables in assets/dkj-brandbook/README.md at $($Pin.Tag) (assets/house-style/README.md at a tag before the rename)" }
+        }
+        foreach ($h in @(Find-HouseStyleColourHit -Text $text)) {
+            $what = if ($h.Kind -eq 'derives') { "derives a colour with $($h.Name)()" } else { "types the colour $($h.Name)" }
+            $hits += @{ Check = 'colour'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = "$($h.Property): $what -- a rule reads a colour only as a token: use a house token with var(), or add a domain token (--name: value) and read that" }
         }
         foreach ($f in $hits) {
             if (Test-HouseStyleAllowed -Path $rel -Name $f.Name -Allow $Allow) { $allowed++ } else { $findings.Add($f) }

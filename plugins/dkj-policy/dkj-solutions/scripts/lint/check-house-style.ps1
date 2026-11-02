@@ -1,8 +1,9 @@
 <#
 .SYNOPSIS
-    The house-style gate (#3035): every vendored house-style.css / house-theme.js is the copy the
-    dkj-brandbook skill pins, and the repo's own layer redefines no house token or class, and uses no
-    retired token name. In this plugin's source repo the canonical copy is the source rather than a
+    The brand book's gate (#3035): every vendored house-style.css / house-theme.js is the copy the
+    dkj-brandbook skill pins, and the repo's own layer redefines no house token or class, uses no
+    retired token name, and types or derives no colour in a rule (#3720). In this plugin's source repo
+    the canonical copy is the source rather than a
     copy, and is exempt from the pin (#3637; the lib says why).
 
 .DESCRIPTION
@@ -92,9 +93,9 @@ foreach ($f in $result.Findings) {
 
 $allowedNote = if ($result.Allowed) { ", $($result.Allowed) answered by Get-HouseStyleAllowlist" } else { '' }
 if ($result.Findings.Count) {
-    Write-Host "[FAIL] $($result.Findings.Count) finding(s) against the house style at $($result.Tag)$allowedNote." -ForegroundColor Red
+    Write-Host "[FAIL] $($result.Findings.Count) finding(s) against the brand book at $($result.Tag)$allowedNote." -ForegroundColor Red
     Write-Host '       A false positive is answered in scripts/repo-config.ps1, Get-HouseStyleAllowlist: @{ Path = ''<glob>''; Name = ''<token or .class>''; Reason = ''<why>'' }.'
     exit 1
 }
-Write-Host "[OK] the house style holds at $($result.Tag)$allowedNote." -ForegroundColor Green
+Write-Host "[OK] the brand book holds at $($result.Tag)$allowedNote." -ForegroundColor Green
 exit 0

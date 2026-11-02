@@ -168,6 +168,29 @@ Assert-True (-not (Test-BackupThemeName -Name 'backup-20260914-013000'))        
 
 # ---------------------------------------------------------------------------------------------------
 Write-Host ''
+Write-Host 'Does the fill wait take another sample? (the still-filling copy refused at a fixed clock, #3732)' -ForegroundColor Cyan
+
+$t0 = [datetime]'2026-11-02T09:12:24'
+$soft = $t0.AddMinutes(20)
+$hard = $t0.AddMinutes(60)
+# THE MEASURED SHAPE, from BWJ-Development/smartwatchbanden (#3729): 661 files at 20 minutes, rising 3-4 per sample.
+$rising = @(537, 541, 544, 548, 551, 555, 658, 661)
+$w = Get-ThemeFillWaitDecision -Samples @() -Now $t0 -Deadline $soft -HardDeadline $hard
+Assert-True ($w.Continue -and -not $w.Extended) 'inside the soft deadline the wait goes on, with no samples at all'
+$w = Get-ThemeFillWaitDecision -Samples $rising -Now $soft -Deadline $soft -HardDeadline $hard
+Assert-True ($w.Continue -and $w.Extended) 'past the soft deadline a copy still growing is waited on -- the measured case'
+Assert-True ($w.Reason.Contains('661')) '...and the reason names the count it reached'
+$w = Get-ThemeFillWaitDecision -Samples @(700, 738, 738, 738, 738, 738, 738, 738) -Now $soft -Deadline $soft -HardDeadline $hard
+Assert-True (-not $w.Continue) 'a copy flat over the whole growth window ends the wait, and the caller judges it short as before'
+$w = Get-ThemeFillWaitDecision -Samples @(700, 701, 701, 701, 701, 701, 701) -Now $soft -Deadline $soft -HardDeadline $hard
+Assert-True $w.Continue 'growth anywhere in the window keeps the wait going -- a pause between bursts is not a stall'
+$w = Get-ThemeFillWaitDecision -Samples $rising -Now $hard -Deadline $soft -HardDeadline $hard
+Assert-True (-not $w.Continue) 'the hard cap ends the wait whatever the count does'
+$w = Get-ThemeFillWaitDecision -Samples @(661) -Now $soft -Deadline $soft -HardDeadline $hard
+Assert-True (-not $w.Continue) 'one sample past the deadline cannot show growth, so the wait ends'
+Assert-Equal 3 $script:ThemeFillHardCapFactor 'the hard cap is three times the wait -- live-preflight bounds its backup run by the same factor'
+
+Write-Host ''
 Write-Host 'Has the duplicate finished filling? (the silent half-empty backup, #1965 point 3)' -ForegroundColor Cyan
 
 # THE MEASURED SHAPE, from the consumer: 38 -> 538 -> 738 -> 833 files over roughly eight minutes,
@@ -347,6 +370,30 @@ Assert-True  (-not $rrLive[0].Delete) 'the role spelled live is refused the same
 $first = Get-BackupRotationPlan -Themes @([pscustomobject]@{ id = '401'; name = ($prefix + 'backup-20260914-013000'); role = 'unpublished' }) -KeepId '401'
 Assert-Equal 1 $first.Count            'the first cut plans one row'
 Assert-True  (-not $first[0].Delete)   '...and deletes nothing'
+
+# ---------------------------------------------------------------------------------------------------
+Write-Host ''
+Write-Host '-VerifyExisting -- adopting a copy a timed-out run left standing (#3733)' -ForegroundColor Cyan
+
+# THE ADOPTED COPY BECOMES ROTATION'S SURVIVOR, so every theme that is not one of our backups is refused.
+$ok = Get-ExistingBackupVerdict -Themes $withBackups -ThemeId '400' -LiveId '100'
+Assert-True  $ok.Accepted                                  'an existing backup of ours, not live, is adopted'
+Assert-Equal ($prefix + 'backup-20260901-120000') $ok.Name '...and its name is read off the theme list'
+Assert-Equal '400' (Get-ExistingBackupVerdict -Themes $withBackups -ThemeId ' 400 ' -LiveId '100').Id 'the id is trimmed before it is matched'
+
+Assert-True (-not (Get-ExistingBackupVerdict -Themes $withBackups -ThemeId '' -LiveId '100').Accepted)    'an empty id is refused'
+Assert-True (-not (Get-ExistingBackupVerdict -Themes $withBackups -ThemeId '999' -LiveId '100').Accepted) 'an id the store does not hold is refused'
+Assert-True (-not (Get-ExistingBackupVerdict -Themes $withBackups -ThemeId '100' -LiveId '100').Accepted) 'the configured live theme is refused -- it is the source, never its own backup'
+Assert-True (-not (Get-ExistingBackupVerdict -Themes $withBackups -ThemeId '402' -LiveId '100').Accepted) 'a repo-owned PREVIEW is refused -- it is not a backup'
+Assert-True (-not (Get-ExistingBackupVerdict -Themes $withBackups -ThemeId '403' -LiveId '100').Accepted) 'a hand-made theme outside the namespace is refused, whatever its name says'
+$restoredVerdict = Get-ExistingBackupVerdict -Themes $restored -ThemeId '400' -LiveId '100'
+Assert-True  (-not $restoredVerdict.Accepted)              'a backup the store reports as role main is refused -- a restored backup is live (#2589)'
+Assert-True  ($restoredVerdict.Reason -match 'restored')   '...and the reason says why'
+
+# AND ITS ROTATION IS THE ORDINARY ONE: adopted 400 is kept, the newer 401 rotates out.
+$adoptRot = Get-BackupRotationPlan -Themes $withBackups -KeepId $ok.Id
+Assert-True (-not (@($adoptRot | Where-Object { $_.Id -eq '400' })[0].Delete)) 'the adopted copy is the one retained'
+Assert-True (@($adoptRot | Where-Object { $_.Id -eq '401' })[0].Delete)        '...and every other backup of ours rotates out'
 
 # ---------------------------------------------------------------------------------------------------
 Write-Host ''
