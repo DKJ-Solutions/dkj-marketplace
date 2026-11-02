@@ -491,7 +491,19 @@ if ($fillState -eq 'pending') {
     $samples = @()
     $verdict = $null
     $deadline = [datetime]::Now.AddMinutes($TimeoutMinutes)
-    while ([datetime]::Now -lt $deadline) {
+    # PAST THE DEADLINE THE WAIT RUNS ON WHILE THE COPY IS STILL GROWING, up to the hard cap (#3732).
+    $hardDeadline = $deadline.AddMinutes($TimeoutMinutes * ($script:ThemeFillHardCapFactor - 1))
+    $extended = $false
+    while ($true) {
+        $wait = Get-ThemeFillWaitDecision -Samples $samples -Now ([datetime]::Now) -Deadline $deadline -HardDeadline $hardDeadline
+        if (-not $wait.Continue) {
+            if ($extended) { Write-Host "  the extended wait ended: $($wait.Reason)." }
+            break
+        }
+        if ($wait.Extended -and -not $extended) {
+            Write-Host "  $TimeoutMinutes min have passed and the copy is $($wait.Reason) -- waiting on, at most until $($hardDeadline.ToString('HH:mm'))." -ForegroundColor Yellow
+            $extended = $true
+        }
         $n = Get-ThemeFileCount -Store $store -ThemeId $id
         if ($n -ge 0) { $samples += $n }
         $verdict = Get-ThemeFillVerdict -Samples $samples -SourceFileCount $sourceCount
@@ -503,7 +515,7 @@ if ($fillState -eq 'pending') {
     }
     if ($null -eq $verdict -or ($verdict.Verdict -ne 'complete' -and $verdict.Verdict -ne 'short')) {
         $why = if ($null -eq $verdict) { 'no samples were taken' } else { $verdict.Reason }
-        Write-Error ("The copy has not filled after $TimeoutMinutes min ($why). Nothing was pushed; re-run " +
+        Write-Error ("The copy has not filled within the wait ($TimeoutMinutes min, run on while it grew; $why). Nothing was pushed; re-run " +
             "this script -- it resumes the wait on the same theme (id $id).")
         exit 1
     }

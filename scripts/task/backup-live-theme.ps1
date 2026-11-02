@@ -116,7 +116,9 @@
     eight, and the bound is there so a stalled copy ends the run rather than the cut. Since each
     sample now pulls the theme (#2033) rather than reading a JSON field, a large theme may need more
     headroom than a small one did under the old, cheaper count. Run from live-preflight, this is that
-    script's -BackupTimeoutMinutes (#3729: a 909-file theme was still filling after 20 minutes).
+    script's -BackupTimeoutMinutes (#3729: a 909-file theme was still filling after 20 minutes). Past
+    it the wait runs on while the copy is still growing, and ends on a stall or at the hard cap of
+    $script:ThemeFillHardCapFactor times this value (#3732, Get-ThemeFillWaitDecision).
 
 .PARAMETER RootOverride
     Fixture root, so a suite can drive this against a scratch tree instead of a real store.
@@ -335,8 +337,20 @@ if ($DryRun) {
         $samples = @()
         $copyPaths = @()
         $deadline = [datetime]::Now.AddMinutes($TimeoutMinutes)
+        # PAST THE DEADLINE THE WAIT RUNS ON WHILE THE COPY IS STILL GROWING, up to the hard cap (#3732).
+        $hardDeadline = $deadline.AddMinutes($TimeoutMinutes * ($script:ThemeFillHardCapFactor - 1))
         $verdict = $null
-        while ([datetime]::Now -lt $deadline) {
+        $extended = $false
+        while ($true) {
+            $wait = Get-ThemeFillWaitDecision -Samples $samples -Now ([datetime]::Now) -Deadline $deadline -HardDeadline $hardDeadline
+            if (-not $wait.Continue) {
+                if ($extended) { Write-Host "  the extended wait ended: $($wait.Reason)." }
+                break
+            }
+            if ($wait.Extended -and -not $extended) {
+                Write-Host "  $TimeoutMinutes min have passed and the copy is $($wait.Reason) -- waiting on, at most until $($hardDeadline.ToString('HH:mm'))." -ForegroundColor Yellow
+                $extended = $true
+            }
             $snap = Get-ThemeFileSnapshot -Store $store -ThemeId $backupId
             if ($snap.Count -ge 0) { $samples += $snap.Count; $copyPaths = $snap.Paths }
             $verdict = Get-ThemeFillVerdict -Samples $samples -SourceFileCount $sourceCount

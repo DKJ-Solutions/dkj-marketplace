@@ -99,6 +99,14 @@ So a copy that settles **below** the source is a refusal, not a warning. On any 
 **nothing is rotated** -- the previous backup is still there, which is the state a reader would have
 asked for.
 
+**The wait ends on a stall, not on the clock alone**
+([#3732](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3732)). Past `-TimeoutMinutes` the poll
+goes on while the count is still rising (newer than six samples earlier) and stops once it is flat over
+that window, up to a hard cap of three times `-TimeoutMinutes`. Measured on a 909-file theme
+([#3729](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3729)): 661 files at 20 minutes and
+still growing, refused by the fixed clock, and the retry cost a second theme slot. `push-preview`'s fill
+wait reads the same rule (`Get-ThemeFillWaitDecision`).
+
 ### One exception, and it is decided path by path
 
 **Some stores' duplicates can never reach the source's count.** Measured in a consumer on September

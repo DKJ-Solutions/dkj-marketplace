@@ -316,6 +316,65 @@ function Get-ThemeFillVerdict {
     return [pscustomobject]@{ Verdict = 'complete'; Reason = "settled at $count file(s), matching the source"; Count = $count }
 }
 
+# THE HARD CAP ON A FILL WAIT, AS A MULTIPLE OF THE CALLER'S -TimeoutMinutes (#3732). One value, read by
+# both callers and by live-preflight's outer bound around the backup, so the three cannot disagree.
+$script:ThemeFillHardCapFactor = 3
+
+function Get-ThemeFillWaitDecision {
+    <#
+    .SYNOPSIS
+        Should a fill wait take another sample? Returns Continue (bool), Extended (bool: past the soft
+        deadline and running on because the copy is still growing) and Reason.
+
+    .DESCRIPTION
+        THE SOFT DEADLINE WAS A FIXED CLOCK, AND IT FAILED A COPY THAT WAS NOT STUCK (#3732, from #3729).
+        Measured in BWJ-Development/smartwatchbanden on November 2, 2026: a 909-file live theme's copy held
+        661 files at the 20-minute default and was still rising by 3-4 files per sample. backup-live-theme
+        then refused it, left it standing, and the retry duplicated live again -- a second theme slot for a
+        copy that would have verified.
+
+        SO PAST THE SOFT DEADLINE THE WAIT RUNS ON WHILE THE COUNT IS STILL RISING, and stops on a stall.
+        "Rising" is the newest count above the count -GrowthWindow samples earlier. The window is several
+        samples wide on purpose: a copy grows in bursts with pauses between them (#1965), and two equal
+        samples inside one pause are not a stall. A copy that stalls stops the wait, and the caller judges
+        it exactly as before -- 'short' is still a refusal once the wait is over (#2350).
+
+        AND IT IS STILL BOUNDED. -HardDeadline ends the wait whatever the count does, so a copy that creeps
+        forever cannot hold a release cut forever. The caller sets it at -TimeoutMinutes times
+        $script:ThemeFillHardCapFactor.
+
+        -Now IS A PARAMETER, for the reason Get-BackupThemeName gives: a function that reads the clock
+        cannot be asserted against.
+    #>
+    param(
+        [AllowNull()][AllowEmptyCollection()][int[]]$Samples,
+        [Parameter(Mandatory = $true)][datetime]$Now,
+        [Parameter(Mandatory = $true)][datetime]$Deadline,
+        [Parameter(Mandatory = $true)][datetime]$HardDeadline,
+        [int]$GrowthWindow = 6
+    )
+
+    if ($Now -lt $Deadline) {
+        return [pscustomobject]@{ Continue = $true; Extended = $false; Reason = 'inside the wait' }
+    }
+    if ($Now -ge $HardDeadline) {
+        return [pscustomobject]@{ Continue = $false; Extended = $false; Reason = 'the hard cap on the wait has passed' }
+    }
+
+    $s = @($Samples)
+    if ($GrowthWindow -lt 1) { $GrowthWindow = 1 }
+    if ($s.Count -lt 2) {
+        return [pscustomobject]@{ Continue = $false; Extended = $false; Reason = 'too few samples to tell whether the copy is still growing' }
+    }
+    $newest = $s[$s.Count - 1]
+    $earlier = $s[[Math]::Max(0, $s.Count - 1 - $GrowthWindow)]
+    $span = ($s.Count - 1) - [Math]::Max(0, $s.Count - 1 - $GrowthWindow)
+    if ($newest -gt $earlier) {
+        return [pscustomobject]@{ Continue = $true; Extended = $true; Reason = "still growing ($earlier -> $newest over the last $span sample(s))" }
+    }
+    return [pscustomobject]@{ Continue = $false; Extended = $false; Reason = "no growth over the last $span sample(s) (held at $newest)" }
+}
+
 function Get-ThemeShortfallPaths {
     <# The source's paths the copy does not hold, ordinally sorted. Ordinal and case-sensitive, because a
        theme path is a key on the store and 'Foo.json' is not 'foo.json' there. #>
