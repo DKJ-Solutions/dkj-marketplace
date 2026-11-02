@@ -47,12 +47,13 @@ Maikel, November 2, 2026: `.prose` headings showed through `--prose-h1`..`--pros
 - [x] `--prose-h1`..`--prose-h3` added to `Get-HouseStyleRetiredTokens`
 - [x] `markdown-render.js`: a table is a `.table` in a `.table-wrap` (`.table-scroll` kept for the release-notes page)
 - [x] Lens page: no `.prose`; the space between blocks set in its own page layer
+- [x] Lens page: a lone `## Specific to this repo` wrapping `###` sections goes, and the headings shift so the highest is an h2 (`ConvertTo-HubLensBody`), so a lens's sections are h2s rather than one h2 over many h3s
 - [x] `specimens.html`: the prose cards replaced by a "Markdown elements" card
 - [x] README: a dated section on the retirement; the reserved-class and collision lists no longer name `.prose`
 
 ### TEST
 
-- [x] `check-house-style` 135/0, `house-palette` 161/0, `dev-pages` 560/0, `release-notes-page` 207/0, `shared-scripts` 1217/0; `check-house-style.ps1` OK, `check-plugin-integrity.ps1` 0 errors
+- [x] `check-house-style` 135/0, `house-palette` 161/0, `dev-pages` 564/0, `release-notes-page` 207/0, `shared-scripts` 1217/0; `check-house-style.ps1` OK, `check-plugin-integrity.ps1` 0 errors
 - [~] The owner's look in the browser: a visible result to every DKJ-Solutions app, so the branch waits for it instead of merging
 
 ### DEPLOY: feat/prose-headings-on-house-tokens

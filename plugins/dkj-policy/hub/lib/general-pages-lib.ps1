@@ -556,6 +556,42 @@ function Get-HubLensPages {
     }
 }
 
+function ConvertTo-HubLensBody {
+    <#
+        Pure: a lens file's text (LF line ends) as the markdown its page renders. The frontmatter is the roster's data,
+        not body, and the lens's own '# ' title goes, because the page's one h1 is the file's name (Maikel, November 2,
+        2026). Then the headings are put to use, outside code fences only (Maikel, the same day): a lone '## ' that
+        opens the body and has '### ' sections under it is a wrapper ("Specific to this repo"), which says nothing on a
+        page that is all lens, so it goes; and every heading then shifts so the highest one present is an h2. So a lens
+        whose sections are '### ' shows them as h2s, their parts as h3s, and no heading is ever an h1. A lens with one
+        '## ' and nothing under it keeps it.
+    #>
+    param([AllowEmptyString()][string]$Text)
+    $md = ([regex]::Replace($Text, '\A---\n[\s\S]*?\n---\n', '')).TrimStart("`n")
+    $md = ([regex]::Replace($md, '\A[ \t]*#[ \t]+.*(\n|\z)', '')).TrimStart("`n")
+    $lines = @($md -split "`n")
+    $heads = New-Object 'System.Collections.Generic.Dictionary[int,int]'; $fence = $false
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match '^\s*```') { $fence = -not $fence; continue }
+        if (-not $fence -and $lines[$i] -match '^[ \t]*(#{1,6})[ \t]+\S') { $heads[$i] = $Matches[1].Length }
+    }
+    $drop = -1
+    $twos = @($heads.Keys | Where-Object { $heads[$_] -eq 2 })
+    $first = if ($heads.Count) { ($heads.Keys | Measure-Object -Minimum).Minimum } else { -1 }
+    if ($twos.Count -eq 1 -and $twos[0] -eq $first -and @($heads.Values | Where-Object { $_ -ge 3 }).Count -gt 0) {
+        $drop = $twos[0]; [void]$heads.Remove($drop)
+    }
+    $shift = if ($heads.Count) { 2 - ($heads.Values | Measure-Object -Minimum).Minimum } else { 0 }
+    $out = for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($i -eq $drop) { continue }
+        if ($heads.ContainsKey($i)) {
+            $level = [Math]::Max(2, [Math]::Min(6, $heads[$i] + $shift))
+            $lines[$i] -replace '^([ \t]*)#{1,6}', ('$1' + ('#' * $level))
+        } else { $lines[$i] }
+    }
+    return (@($out) -join "`n").TrimStart("`n")
+}
+
 # The house's one markdown renderer, beside the release-notes template in this plugin (Format-HubLensPageHtml).
 $script:MarkdownRendererPath = Join-Path $PSScriptRoot '..\..\scripts\release\markdown-render.js'
 
@@ -579,17 +615,7 @@ function Format-HubLensPageHtml {
     [void]$body.AppendLine('<div><h1>' + (& $e $title) + '</h1></div>')
     try {
         $text = [System.IO.File]::ReadAllText($lens.Path, (New-Object System.Text.UTF8Encoding($false))) -replace "`r`n", "`n"
-        # The frontmatter is the roster's data, not body. A page has ONE h1 (Maikel, November 2, 2026), and it is the
-        # file's name above: so the lens's own '# ' title goes (its card already shows it), and any other '# ' heading
-        # outside a code fence becomes '## ', so the rendered body can never carry an h1 of its own.
-        $md = ([regex]::Replace($text, '\A---\n[\s\S]*?\n---\n', '')).TrimStart("`n")
-        $md = ([regex]::Replace($md, '\A[ \t]*#[ \t]+.*(\n|\z)', '')).TrimStart("`n")
-        $fence = $false
-        $md = (@($md -split "`n" | ForEach-Object {
-            if ($_ -match '^\s*```') { $fence = -not $fence; $_ }
-            elseif (-not $fence -and $_ -match '^[ \t]*#[ \t]') { $_ -replace '^([ \t]*)#', '$1##' }
-            else { $_ }
-        }) -join "`n")
+        $md = ConvertTo-HubLensBody -Text $text
         $renderer = [System.IO.File]::ReadAllText($script:MarkdownRendererPath, (New-Object System.Text.UTF8Encoding($false)))
         # JSON inside a <script>: every '<' is escaped, so no '</script>' in a lens can end the block early.
         $json = (ConvertTo-Json -InputObject $md -Compress) -replace '<', ('\' + 'u003c')

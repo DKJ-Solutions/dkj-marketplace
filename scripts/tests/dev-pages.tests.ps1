@@ -141,6 +141,10 @@ try {
     [System.IO.File]::WriteAllText((Join-Path $lensDir 'specialist-02-02-lens.md'), "# Title`n`n# Another top heading`n`n``````md`n# kept in code`n```````n")
     $twoJson = [regex]::Match((Format-HubLensPageHtml -Name 'specialist-02-02-lens' -RepoRoot $lensRoot), '<script type="application/json" id="lens-md">(.*?)</script>').Groups[1].Value
     Assert-Equal "## Another top heading`n`n``````md`n# kept in code`n```````n" (ConvertFrom-Json $twoJson) 'any other # heading drops to ##, so the page keeps one h1, while a # inside a code fence is left as written'
+    Assert-Equal "> note`n`n## A`n`ntext`n`n### a1`n" (ConvertTo-HubLensBody -Text "---`nid: 01`n---`n# T`n`n## Specific to this repo (x)`n`n> note`n`n### A`n`ntext`n`n#### a1`n") 'a lone ## wrapping ### sections goes, and the sections become h2s, their parts h3s'
+    Assert-Equal "## A`n`n## B`n" (ConvertTo-HubLensBody -Text "# T`n`n### A`n`n### B`n") 'a lens with only ### sections shows them as h2s'
+    Assert-Equal "## Specific to this repo (VUL-IN)`n`nfill`n" (ConvertTo-HubLensBody -Text "# T`n`n## Specific to this repo (VUL-IN)`n`nfill`n") 'a lone ## with nothing under it stays'
+    Assert-Equal "## A`n`n## B`n`n### b`n" (ConvertTo-HubLensBody -Text "# T`n`n## A`n`n## B`n`n### b`n") 'a body that already opens on h2s is left as it is'
     Assert-True ($lensPage -match '<section class="card dp-lens">' -and $lensPage -match '\.dp-lens \{ max-width: 800px; \}') 'its card is never wider than 800px'
     Assert-True ($null -eq (Format-HubLensPageHtml -Name 'notes' -RepoRoot $lensRoot) -and $null -eq (Format-HubLensPageHtml -Name '..\..\x' -RepoRoot $lensRoot) -and $null -eq (Format-HubLensPageHtml -Name 'specialist-09-09-lens' -RepoRoot $lensRoot)) 'a name that is no lens of the repo has no page'
 } finally { Remove-Item -LiteralPath $lensRoot -Recurse -Force -ErrorAction SilentlyContinue }
