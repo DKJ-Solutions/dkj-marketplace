@@ -191,7 +191,7 @@
     grid-template-columns: repeat(auto-fill, minmax(max(9.5rem, (100% - 5 * var(--card-gap)) / 6), 1fr));
     gap: var(--card-gap);
   }
-  .card {
+  .cards > .card {
     display: flex; flex-direction: column; gap: .45rem;
     padding: .75rem 1rem;
     background: var(--panel);
@@ -200,10 +200,10 @@
     color: var(--ink); text-decoration: none;
     transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
   }
-  .card:hover { border-color: var(--accent); box-shadow: 0 4px 14px rgba(0, 0, 0, .07); transform: translateY(-1px); }
-  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .cards > .card:hover { border-color: var(--accent); box-shadow: 0 4px 14px rgba(0, 0, 0, .07); transform: translateY(-1px); }
+  .cards > .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   /* A link somebody already holds, '#v2.39.0', still lands on its card where JavaScript is off. */
-  .card:target { border-color: var(--accent); }
+  .cards > .card:target { border-color: var(--accent); }
   .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; }
 
   .sv { font-variant-numeric: tabular-nums; font-weight: 650; font-size: .85rem; color: var(--accent); }
@@ -244,6 +244,8 @@
      (a Worker-served page) the fallback is the size it always had. */
   article h2 { font-size: var(--text-h2, 1.1rem); margin: 1.75rem 0 .5rem; }
   article h3 { font-size: var(--text-h3); font-weight: 800; margin: 1.5rem 0 .35rem; }
+  /* An h3 that titles a house card sits at the top of it, as on the brand book's pages. */
+  article .card__head > h3 { margin: 0; }
   article h4 {
     font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
     color: var(--accent); margin: 1.5rem 0 .5rem;
@@ -372,7 +374,8 @@
   // A SECTION OF POINTS BECOMES A GRID (owner, October 27, 2026). Done on the rendered DOM rather than
   // inside renderMd, so the renderer stays a plain markdown renderer. A section is everything between two
   // h2s; it qualifies only when it holds nothing but paragraphs and lists and adds up to two points or
-  // more -- a section with a table, code or a sub-heading has a shape of its own and is left alone, and a
+  // more -- a section with a table or code has a shape of its own and is left alone (one with h3s takes
+  // cardSubSections above instead), and a
   // single point gains nothing from a grid. Each paragraph is a point, and so is each item of a list.
   // A card whose first paragraph OPENS with a bold sentence gets that sentence as its h3 -- never an h2,
   // which is the section heading standing above the grid (the house style's rule, #3175) -- and the rest
@@ -392,16 +395,61 @@
     if (!/\S/.test(p.textContent)) { cell.removeChild(p); }
   }
 
+  // A SECTION OF SUB-SECTIONS BECOMES THE HOUSE GRID OF CARDS (Maikel, November 2, 2026), in the form the
+  // brand book's own token pages take: a .grid-3 (.grid-2 for two or four cards) whose .grid__head holds the
+  // section's h2 and whatever stands under it before the first h3, then a section.card per h3, its h3 in a
+  // .card__head and everything under it up to the next h3 below. On the self-contained page, where no house
+  // stylesheet loads, these classes are inert, as .card-grid is on the index.
+  function cardSubSections(article, head, nodes) {
+    var first = -1;
+    var count = 0;
+    nodes.forEach(function (n, i) {
+      if (n.tagName !== 'H3') { return; }
+      count++;
+      if (first < 0) { first = i; }
+    });
+    var grid = document.createElement('div');
+    grid.className = (count === 2 || count === 4 || count === 1) ? 'grid-2' : 'grid-3';
+    article.insertBefore(grid, head);
+    var gridHead = document.createElement('div');
+    gridHead.className = 'grid__head';
+    grid.appendChild(gridHead);
+    gridHead.appendChild(head);
+    nodes.slice(0, first).forEach(function (n) { gridHead.appendChild(n); });
+    var card = null;
+    nodes.slice(first).forEach(function (n) {
+      if (n.tagName === 'H3') {
+        card = document.createElement('section');
+        card.className = count === 1 ? 'card grid__full' : 'card';
+        var cardHead = document.createElement('div');
+        cardHead.className = 'card__head';
+        card.appendChild(cardHead);
+        cardHead.appendChild(n);
+        grid.appendChild(card);
+        return;
+      }
+      card.appendChild(n);
+    });
+  }
+
   function gridNoteSections(article) {
     var kids = Array.prototype.slice.call(article.children);
     var runs = [];
     var run = null;
     kids.forEach(function (k) {
-      if (/^H[12]$/.test(k.tagName)) { run = []; runs.push(run); return; }
+      if (/^H[12]$/.test(k.tagName)) { run = []; run.head = k; runs.push(run); return; }
       if (run) { run.push(k); }
     });
     runs.forEach(function (nodes) {
       if (!nodes.length) { return; }
+      if (nodes.some(function (n) { return n.tagName === 'H3'; })) {
+        // Only under an h2: a grid's head is a section heading, never the note's own h1.
+        if (nodes.head.tagName !== 'H2') { return; }
+        cardSubSections(article, nodes.head, nodes);
+        // The cards stand on the page, as on the brand book's pages, so the note is no longer a panel around them.
+        article.classList.remove('sheet');
+        return;
+      }
       var plain = nodes.every(function (n) { return /^(P|UL|OL)$/.test(n.tagName); });
       if (!plain) { return; }
       var points = [];
