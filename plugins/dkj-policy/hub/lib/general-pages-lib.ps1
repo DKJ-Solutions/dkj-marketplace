@@ -558,6 +558,8 @@ function Get-HubLensPages {
 
 # The house's one markdown renderer, beside the release-notes template in this plugin (Format-HubLensPageHtml).
 $script:MarkdownRendererPath = Join-Path $PSScriptRoot '..\..\scripts\release\markdown-render.js'
+# The tree's one fence tracker (#2536), so a lens's code blocks are read the way every other markdown reader reads them.
+. (Join-Path $PSScriptRoot '..\..\scripts\lib\fence-lib.ps1')
 
 function Format-HubLensPageHtml {
     <#
@@ -584,11 +586,10 @@ function Format-HubLensPageHtml {
         # outside a code fence becomes '## ', so the rendered body can never carry an h1 of its own.
         $md = ([regex]::Replace($text, '\A---\n[\s\S]*?\n---\n', '')).TrimStart("`n")
         $md = ([regex]::Replace($md, '\A[ \t]*#[ \t]+.*(\n|\z)', '')).TrimStart("`n")
-        $fence = $false
+        $fence = ''
         $md = (@($md -split "`n" | ForEach-Object {
-            if ($_ -match '^\s*```') { $fence = -not $fence; $_ }
-            elseif (-not $fence -and $_ -match '^[ \t]*#[ \t]') { $_ -replace '^([ \t]*)#', '$1##' }
-            else { $_ }
+            $was = Resolve-FenceState -Line $_ -Fence $fence; $fence = Get-NextFenceState -Line $_ -Fence $fence -AnyIndent
+            if (-not ($was -or $fence) -and $_ -match '^[ \t]*#[ \t]') { $_ -replace '^([ \t]*)#', '$1##' } else { $_ }
         }) -join "`n")
         $renderer = [System.IO.File]::ReadAllText($script:MarkdownRendererPath, (New-Object System.Text.UTF8Encoding($false)))
         # JSON inside a <script>: every '<' is escaped, so no '</script>' in a lens can end the block early.
