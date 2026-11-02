@@ -45,7 +45,7 @@
 
 ### TEST
 
-- [ ] Maikel looks at it in the toolbox/product hub (visible result: the branch waits for the owner's eye)
+- [x] Maikel looked at it (November 2, 2026): "gezien en akkoord"
 
 ### DEPLOY: feat/site-header-brand-hit-area
 
