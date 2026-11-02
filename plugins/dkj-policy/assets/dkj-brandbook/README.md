@@ -83,6 +83,8 @@ that checks the stylesheet's syntax and tokens; the page is the look.
    sans with a fixed-width run of `--font-mono` in the middle of it looks out of place. A heading names
    the thing in words. A file name, a command or an identifier it would have quoted goes in plain text in
    the heading, or in a `code` element in the content under it.
+8. **A heading has five words at most** (Maikel, November 2, 2026): an `h1`, `h2` or `h3` that runs longer
+   reads as a sentence. It names the subject; who it is for and what changed go in the content under it.
 
 ## What it holds
 
