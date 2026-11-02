@@ -46,12 +46,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Fetch the shared workflow scripts
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           repository: DKJ-Solutions/dkj-marketplace
           ref: ${{ inputs.scripts-ref }}
@@ -82,7 +82,7 @@ jobs:
           "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Fetch the skill page at that tag
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           repository: DKJ-Solutions/dkj-marketplace
           ref: ${{ steps.pin.outputs.tag }}

@@ -129,7 +129,7 @@ jobs:
       # on a step in a job whose LATER step handles a 366-day standing write token could retag its way
       # into exfiltrating it, even though THIS particular checkout carries no token of its own.
       - name: Checkout the trusted trunk
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           path: trusted-main
@@ -169,7 +169,7 @@ jobs:
       # tree is trusted, and the Ship it step deepens THIS checkout, not this one's ref resolution.
       - name: Checkout the picked pull request's branch
         if: ${{ steps.pick.outputs.picked == 'true' }}
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ steps.pick.outputs.branch }}
           path: pr-branch

@@ -1120,7 +1120,7 @@ try {
         'and on merge_group too, even with no queue -- inert today, an outage to add later otherwise (#1325)'
     Assert-True ($ciSkeleton -match '(?m)^\s*contents:\s*read\s*$') 'least privilege: it only reads'
     Assert-True (Test-NoLeakedCredential $ciSkeleton) 'it borrows no standing credential and no write scope'
-    Assert-True ($ciSkeleton -match '(?m)^\s+-\s+uses:\s+actions/checkout@v5\s*$') `
+    Assert-True ($ciSkeleton -match '(?m)^\s+-\s+uses:\s+actions/checkout@v7\s*$') `
         'its checkout is unpinned, like repo-settings.yml -- this job never holds a credential worth pinning'
     Assert-True ($ciSkeleton -match '(?m)^\s+name:\s+"ci"\s*$') `
         "with no Get-CiTestCheckName seam declared, the job's check name falls back to the bare key 'ci'"

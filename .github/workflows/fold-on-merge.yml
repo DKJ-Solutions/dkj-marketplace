@@ -213,7 +213,7 @@ jobs:
       # retag its way into exfiltrating a 366-day standing write token instead of an hour-lived one.
       # ref: main, not the pushed SHA -- this job asks "does the trunk carry a leftover NOW", and a fold
       # already pushed on top of the merge commit must not read as still-unfolded here (issue #1543).
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           token: ${{ secrets.FOLD_PUSH_TOKEN }}
