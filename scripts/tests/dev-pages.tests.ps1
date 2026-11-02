@@ -305,6 +305,10 @@ $fitCd = Format-ConsumerDashboardHtml -Consumers @() -Meta @{ GeneratedAt = 'now
 Assert-True ($fitHome.Contains($fit) -and $fitHome.IndexOf('id="fit-alarm"') -lt $fitHome.LastIndexOf('</body>') -and $fitCd.Contains($fit) -and $fitCd.IndexOf('id="fit-alarm"') -lt $fitCd.LastIndexOf('</body>')) 'the product''s home page and its Consumers page carry the fit alarm before </body>'
 Assert-True ($fit -match 'window\.innerWidth < 1000' -and $fit -match 'ResizeObserver' -and $fit -match 'addEventListener\("resize"') 'it stays quiet in the narrow layout, and judges again on every resize'
 Assert-True ($fit -match 'alarm\.textContent = ' -and $fit -notmatch 'innerHTML|fetch\(|XMLHttpRequest') 'it writes text only, and asks nothing of any server'
+Assert-True ($fit -match 'querySelectorAll\("h1"\)\.length' -and $fit -match 'h1 > 1 \|\| \(h1 === 0 && crumbs !== 1\)' -and $fit -match 'querySelectorAll\("\.breadcrumbs li"\)') 'the same alarm says so when a page carries more than one h1, or none outside the home page''s one-crumb trail (#3745)'
+$fitJudge = $fit.Substring($fit.IndexOf('function judge'))
+Assert-True ($fitJudge.IndexOf('querySelectorAll("h1")') -gt $fitJudge.IndexOf('window.innerWidth < 1000') -and $fitJudge -notmatch 'innerWidth < 1000 \|\|') 'and the h1 half is not width-gated: the narrow layout silences only the fit half (#3745)'
+Assert-Equal 0 ([regex]::Matches($fit, '<h1[\s>]')).Count 'the alarm itself adds no h1 to the page it judges'
 
 Write-Host '-- suite-groups.json against the tree' -ForegroundColor Cyan
 # The file is a reading aid and nothing selects suites by it, so the only way it goes wrong is by going

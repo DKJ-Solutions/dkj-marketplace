@@ -39,19 +39,40 @@
 
 ### PLAN
 
+#### Status
+
+Built by a sweep (#3745). The alarm changes what a hub page shows, so it is parked for the owner's eye with
+`awaiting-review-dev` and no pull request.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Brand book rule 8 in `plugins/dkj-policy/assets/dkj-brandbook/README.md`: exactly one `h1`, rendered
+  content never adds one, the home page under a site header the one page without one
+- [x] `Format-FitAlarmHtml` also warns on more than one `h1`, or none where the trail is longer than Home, at
+  every width; the fit half keeps its 1000 px gate
+- [x] Four asserts in `scripts/tests/dev-pages.tests.ps1`
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1` standalone: 571 passed, 0 failed
+- [ ] The owner looks at a hub page with two `h1` (and at the home page, which must stay quiet)
+
 ### DEPLOY: feat/3745-one-h1-per-page
 
-**Score:**
+The brand book now states that a page carries exactly one `h1`: content a page renders (a lens, a release
+note, any markdown) never adds its own, and the home page under a site header is the one page without one
+(rule 8, #3745). The hub's page shell checks the rule on sight. The fit alarm in the bottom right also
+warns when the live page holds more than one `h1`, or none where its trail is longer than Home. It counts
+the live document, so a body rendered after load is judged too, and it is not width-gated.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Anyone opening a page in the hub (this repo's or a consumer's toolbox) now sees a warning when that page
+carries two `h1`, where before nothing said so. A page that keeps the rule sees nothing new.
+
+**Score:** 2
 
 #### Pull Request
 

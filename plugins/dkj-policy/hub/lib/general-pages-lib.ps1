@@ -268,6 +268,12 @@ function Format-FitAlarmHtml {
         It stays quiet below 1000 px of width, where the page has stepped down to its narrow layout and a scroll is
         the expected shape, and re-judges on resize and whenever the page's own size changes (the banner filling in).
         House classes only (.msg--warn) and an inline position, since the hub restyles nothing.
+
+        ONE H1 (#3745, Maikel, November 2, 2026): the same alarm says so when a page carries more than one h1, or
+        none where it should carry one -- the brand book's rule, checked on sight wherever the page is served, so a
+        rendered body that adds its own h1 is caught by whoever opens it. The one page without an h1 is the home page
+        under a site header, read here as a trail of one crumb. This half is not width-gated: a second h1 is wrong at
+        every width. It counts the live document, so content a script renders after load is judged too.
     #>
     return @'
 <p class="msg--warn" id="fit-alarm" role="alert" hidden style="position: fixed; right: 16px; bottom: 16px; margin: 0; z-index: 50; box-shadow: var(--shadow-pop)"></p>
@@ -276,13 +282,18 @@ function Format-FitAlarmHtml {
   var alarm = document.getElementById("fit-alarm");
   if (!alarm) { return; }
   function judge() {
-    var d = document.documentElement;
+    var d = document.documentElement, said = [];
     var tall = d.scrollHeight - window.innerHeight, wide = d.scrollWidth - d.clientWidth;
-    if (window.innerWidth < 1000 || (tall <= 1 && wide <= 1)) { alarm.hidden = true; return; }
-    var past = [];
-    if (tall > 1) { past.push(tall + " px too tall"); }
-    if (wide > 1) { past.push(wide + " px too wide"); }
-    alarm.textContent = "Does not fit one screen: " + past.join(", ");
+    if (!(window.innerWidth < 1000) && (tall > 1 || wide > 1)) {
+      var past = [];
+      if (tall > 1) { past.push(tall + " px too tall"); }
+      if (wide > 1) { past.push(wide + " px too wide"); }
+      said.push("Does not fit one screen: " + past.join(", "));
+    }
+    var h1 = document.querySelectorAll("h1").length, crumbs = document.querySelectorAll(".breadcrumbs li").length;
+    if (h1 > 1 || (h1 === 0 && crumbs !== 1)) { said.push(h1 + " h1 on this page, where a page carries exactly one"); }
+    if (!said.length) { alarm.hidden = true; return; }
+    alarm.textContent = said.join(". ");
     alarm.hidden = false;
   }
   window.addEventListener("load", judge);
