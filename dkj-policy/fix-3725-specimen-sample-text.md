@@ -39,19 +39,40 @@
 
 ### PLAN
 
+#3725: four samples on the House style page (`--graph-2`, `--graph-3`, `--positive-3`, `--warning-3`) typed
+`color: #000`, since those mid fills are light in every theme and no house token is dark in every theme.
+Rather than add a house token for one specimen page, the Graphs and Status grids put each label under its
+swatch (the page's own `.spec-item > .note` rule), so a label reads the page's text colour and the swatch
+carries only its fill. All twelve samples of the two grids move, so each grid keeps one look.
+
+#### A visible result
+
+This changes the House style page, so the branch is parked for the owner's look, not merged. Look at
+`/plugins/dkj-policy/house-style` (the Colours section, its Graphs and Status cards) in a light and a dark theme.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `specimens.html`: the twelve Graphs and Status samples carry their label beneath the swatch, no text colour
+- [x] `scripts/repo-config.ps1`: the `specimens.html` `#000` allowlist entry is gone; `check-house-style` holds without it
 
 ### TEST
 
+- [x] `check-house-style` over this repo: `[OK] the brand book holds`, with the entry removed
+
 ### DEPLOY: fix/3725-specimen-sample-text
 
-**Score:**
+The House style page's Graphs and Status samples show their token name under the swatch instead of inside it,
+so four of them no longer type `color: #000` for text on a light fill
+([#3725](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3725)). The page now passes the brand book's
+colour check without an allowlist entry.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
