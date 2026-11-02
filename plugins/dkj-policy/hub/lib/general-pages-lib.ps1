@@ -890,9 +890,10 @@ function Format-HubSettingsPageHtml {
         '<script>["light", "dark"].forEach(function (mode) {' +
         ' var el = document.getElementById("settings-theme-" + mode);' +
         ' DKJTheme.picker(el, { light: "Light", dark: "Dark" });' +
-        ' Array.prototype.forEach.call(el.querySelectorAll(".theme-picker__row"), function (row) { if (!row.querySelector(".theme-swatch--" + mode)) { row.parentNode.removeChild(row); } });' +
-        # And its row label goes too: the card's h3 already names the mode (Dave, November 2, 2026). The header panel keeps its own.
-        ' Array.prototype.forEach.call(el.querySelectorAll(".theme-picker__label"), function (l) { l.parentNode.removeChild(l); });' +
+        # Its own row is unwrapped to its swatches: the row's label goes, the card's h3 already naming the mode, and the
+        # swatches stand on one line instead of in the row's 64px label column (Dave, November 2, 2026). No house class is
+        # restyled for it, and the header panel's picker keeps its rows and labels.
+        ' Array.prototype.forEach.call(el.querySelectorAll(".theme-picker__row"), function (row) { if (row.querySelector(".theme-swatch--" + mode)) { row.parentNode.replaceChild(row.querySelector(".theme-picker__swatches"), row); } else { row.parentNode.removeChild(row); } });' +
         ' });' +
         ' document.getElementById("settings-theme-reset").addEventListener("click", function () { DKJTheme.reset(); });</script>'
     # The reset's edge in the primary, hover included (Dave, November 2, 2026): this page's own button by its id,
