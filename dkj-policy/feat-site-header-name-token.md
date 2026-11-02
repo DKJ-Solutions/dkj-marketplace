@@ -45,6 +45,8 @@
 - [x] `README.md` and `specimens.html`: the token documented and shown on the type scale
 - [x] The site header's mark retired: the `.site-header__mark` rule, its `<span>` in the hub's header
   (`Format-SiteHeaderHtml`), the specimens, the two patterns, the README and the suite that pins the markup
+- [x] The header keeps its height without the mark: `.site-header__brand` at a `--spacing-11` (44px) minimum,
+  the height the mark gave it
 
 ### TEST
 
