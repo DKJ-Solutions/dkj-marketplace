@@ -2134,12 +2134,14 @@ function Get-ReleaseNoteHeadingFindings {
     #>
     param([AllowEmptyString()][string]$Text = '')
     $findings = New-Object System.Collections.Generic.List[string]
-    $inFence = $false
+    # The tree's one fence tracker (fence-lib.ps1, loaded through entry-scaffold-lib above), never a toggle (#2536).
+    $fence = ''
     $n = 0
     foreach ($line in ($Text -split "`r?`n")) {
         $n++
-        if ($line -match '^\s{0,3}(```|~~~)') { $inFence = -not $inFence; continue }
-        if ($inFence) { continue }
+        $was = Resolve-FenceState -Line $line -Fence $fence
+        $fence = Get-NextFenceState -Line $line -Fence $fence -AnyIndent
+        if ($was -or $fence) { continue }
         $m = [regex]::Match($line, '^\s{0,3}(#{1,3})\s+(.*?)\s*#*\s*$')
         if (-not $m.Success) { continue }
         $level = $m.Groups[1].Value.Length
