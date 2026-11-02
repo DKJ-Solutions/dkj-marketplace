@@ -12,7 +12,7 @@
   // fenced code, tables, blockquotes, rules, and the inline set.
 
   // The code-span sentinel. Built here rather than typed, so the template carries no invisible
-  // byte. It must be something prose cannot contain: a readable placeholder is a trap, because a
+  // byte. It must be something written text cannot contain: a readable placeholder is a trap, because a
   // note that writes a bare number between markers would have it replaced by a code span that was
   // never there.
   var SENT = String.fromCharCode(1);

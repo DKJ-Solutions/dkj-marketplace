@@ -343,7 +343,7 @@ p { margin: 0; }
 
 /* ---- Running text ----------------------------------------------------------- */
 /* The plain elements a rendered markdown body is made of, styled by the house itself with no wrapper class (Maikel,
-   November 2, 2026, when .prose was retired). :where() keeps each at zero specificity, so any class wins. No margins:
+   November 2, 2026). :where() keeps each at zero specificity, so any class wins. No margins:
    as for <p>, the place sets the space around a block. A table is a .table in a .table-wrap; headings are h1-h3 above. */
 :where(ul, ol) { margin-block: 0; padding-left: var(--spacing-6); }
 :where(li)::marker { color: var(--primary); }
