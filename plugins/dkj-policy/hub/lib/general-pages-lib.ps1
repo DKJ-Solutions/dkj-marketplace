@@ -881,13 +881,15 @@ function Format-HubSettingsPageHtml {
         from disk: the cards are drawn from DKJTheme.themes, so a theme the brand book adds gets its card at once.
     #>
     param([AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
-    # The house grouping form (house-style.css, .grid-3 and .grid__head): the Theme h2 over its group's surface (--bg-2),
-    # its cards three to a row, which the house sets on --bg-3 with a --bg-4 border (Dave, November 2, 2026).
+    # The house grouping form (house-style.css, .card-grid and .grid__head): the Theme h2 over its group's surface (--bg-2),
+    # its cards on --bg-3 with a --bg-4 border. A .card-grid leaves its columns to the repo's own class, and .hs-theme
+    # makes them a wrapping row: each card hugs its swatch, so a mode's six stand side by side (Dave, November 2, 2026;
+    # .grid-2, then .grid-3, before it).
     # The toggle: the house's segmented switch, at the height a .controls row gives it, a row of its own under the h2.
     # Exactly one of its two is always pressed, and only that mode's cards are shown.
     $toggle = '<div class="controls grid__full"><span class="seg" id="settings-theme-mode" role="group" aria-label="Mode">' +
         '<button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>'
-    $body = '<div class="grid-3" id="settings-theme-grid"><div class="grid__head"><h2>Theme</h2></div>' + $toggle +
+    $body = '<div class="card-grid hs-theme" id="settings-theme-grid"><div class="grid__head"><h2>Theme</h2></div>' + $toggle +
         # The reset belongs to the whole Theme group, so it sits in the group under the cards, a row of its own, and takes the house's roomier .btn--touch (Dave, November 2, 2026).
         '<p class="grid__full" id="settings-theme-foot"><button type="button" class="btn btn--touch" id="settings-theme-reset">Reset theme</button></p></div>' + "`n" +
         # Each theme's card draws the whole picker and keeps only its own swatch, unwrapped from its row (no label, no
@@ -897,7 +899,7 @@ function Format-HubSettingsPageHtml {
         '<script>(function () {' +
         ' var grid = document.getElementById("settings-theme-grid"), foot = document.getElementById("settings-theme-foot");' +
         ' DKJTheme.themes.forEach(function (t) {' +
-        ' var card = document.createElement("section"); card.className = "card hs-settings"; card.setAttribute("data-mode", t.mode);' +
+        ' var card = document.createElement("section"); card.className = "card hs-swatch"; card.setAttribute("data-mode", t.mode);' +
         ' card.innerHTML = "<div></div>";' +
         ' grid.insertBefore(card, foot);' +
         ' var el = card.lastChild; DKJTheme.picker(el, { light: "Light", dark: "Dark" });' +
@@ -917,7 +919,11 @@ function Format-HubSettingsPageHtml {
         ' })();</script>'
     # The reset's edge in the primary, hover included (Dave, November 2, 2026): this page's own button by its id,
     # so no house class is redefined.
-    $style = '.hs-settings > * + * { margin-top: var(--spacing-3); }' + "`n" + '#settings-theme-reset { border-color: var(--primary); }'
+    # .hs-theme and .hs-swatch are this page's own classes: the row, the full-width head, toggle and reset in it, and a
+    # card that hugs its swatch. No house class or token is redefined.
+    $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
+        '.hs-theme > :is(.grid__head, .grid__full) { flex: 0 0 100%; }' + "`n" +
+        '.hs-swatch { margin-top: 0; padding: var(--spacing-2); }' + "`n" + '#settings-theme-reset { border-color: var(--primary); }'
     return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $body -Style $style `
         -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
 }
