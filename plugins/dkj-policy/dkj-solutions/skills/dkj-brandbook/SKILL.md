@@ -39,8 +39,8 @@ always pins the release that carries the bytes its checksums name.
 
 | File | Fetch from | sha256 |
 |---|---|---|
-| `house-style.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.1.0/plugins/dkj-policy/assets/dkj-brandbook/house-style.css` | `187a392d815d2a97f2740aa54bdbc6ae14a5c357d527116db16d5782e048016a` |
-| `house-theme.js` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.1.0/plugins/dkj-policy/assets/dkj-brandbook/house-theme.js` | `24ed94dd5f096274826bbdc47ff63f29932369f6bd55f2b47ab9ece25a09599f` |
+| `house-style.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.2.0/plugins/dkj-policy/assets/dkj-brandbook/house-style.css` | `10cc3735e4599cd79c8f5130b68a86eb8f523b6fecc1936ad72f37d6d7758fba` |
+| `house-theme.js` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.2.0/plugins/dkj-policy/assets/dkj-brandbook/house-theme.js` | `80eb039e008a9dd05aa77da1d9e9d2a3d1cdbfe6629b1c53c92c4666a92ad6ed` |
 
 The full rules (every token, the twelve themes, the reserved class names, what was left out) are in
 [`assets/dkj-brandbook/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md) in `dkj-policy`. It ships in the same
