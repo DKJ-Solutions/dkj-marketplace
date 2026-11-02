@@ -57,7 +57,7 @@ Maikel, November 2, 2026: `.prose` headings showed through `--prose-h1`..`--pros
 ### TEST
 
 - [x] `check-house-style` 135/0, `house-palette` 161/0, `dev-pages` 568/0, `release-notes-page` 207/0, `shared-scripts` 1217/0; `check-house-style.ps1` OK, `check-plugin-integrity.ps1` 0 errors
-- [~] The owner's look in the browser: a visible result to every DKJ-Solutions app, so the branch waits for it instead of merging
+- [x] The owner's look in the browser: Maikel looked on November 2, 2026 and said ship it
 
 ### DEPLOY: feat/prose-headings-on-house-tokens
 

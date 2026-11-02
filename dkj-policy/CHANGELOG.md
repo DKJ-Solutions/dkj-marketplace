@@ -2,7 +2,60 @@
 
 ## [Unreleased]
 
-**9 / 15 minor entries** <!-- pending-tally -->
+**11 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/lens-page-rendered-markdown · 20261102-142702Z
+
+A specialist lens's page in the toolbox (`/ai/claude/specialists/lenses/<name>`) now shows the lens as formatted
+text instead of raw markdown: its title, headings, lists, tables, quotes and code in the
+house `.prose` style. It is drawn by the same small renderer the release-notes pages use, which moved out of their
+template into `scripts/release/markdown-render.js` so both pages inline one file rather than each carrying a
+renderer of its own. A reader without JavaScript still gets the raw text.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Anyone who opens a lens in their toolbox reads it as a formatted document rather than as source.
+
+**Score:** 2
+
+#### Pull Request
+
+Render a specialist lens's page as formatted markdown
+
+Plugins: dkj-policy
+
+[PR #3748](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3748)
+
+---
+
+### DEPLOY: feat/site-header-name-token · 20261102-131936Z
+
+The site header loses its mark and its name grows. The name -- the repo name and `toolbox` on every hub
+page -- has a type token of its own, `--text-title`, at 20px, just under `h2`, where it was `--text-h3`
+(16px), so the header can be tuned without moving every `h2`. The organisation's initials in front of it,
+`.site-header__mark`, are retired: the header carries the name alone (Dave, November 2, 2026).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every hub page shows a header with the name alone, larger. An app with its own site header that takes the
+new stylesheet drops the `.site-header__mark` span, which no longer has a rule, and can size its own header
+name with `--text-title`.
+
+**Score:** 3
+
+#### Pull Request
+
+The site header without its mark, and a --text-title token for its name
+
+Plugins: dkj-policy
+
+[PR #3746](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3746)
+
+---
 
 ### DEPLOY: feat/hub-cards-ungrouped · 20261102-122251Z
 

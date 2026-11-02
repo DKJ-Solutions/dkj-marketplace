@@ -134,6 +134,9 @@
      colour. The hero figure takes it too. --text-lg went the same day: what was set in it takes --text-h3. */
   --text-h1: 36px; --text-h2: 22px; --text-h3: 16px;
   --text-base: 14px; --text-sm: 12px; --text-xs: 11px;
+  /* The site header's name (.site-header__name): a step of its own just under the h2 size, so the header can be tuned
+     without moving every h2 (Dave, November 2, 2026; it was --text-h3). */
+  --text-title: 20px;
 
   /* app-shell sizes, same in both modes (built from the spacing scale; see "App components" at the end):
      the height of a value field and of the button beside it, the minimum touch target, the height of
@@ -739,21 +742,18 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 
 /* ---- Site header ------------------------------------------------------------------ */
 /* The app's own header above the breadcrumb bar (owner, October 22, 2026): at most --spacing-18 (72px) high, on the
-   theme's colour, the app's mark and name on the left as the way home, the settings button on the far right.
-   <header class="site-header"><div class="container"><a class="site-header__brand" href="/"><span class="site-header__mark"
-   aria-hidden="true">DKJ</span><span class="site-header__name">name</span></a><div id="settings"></div></div></header>,
+   theme's colour, the app's name on the left as the way home, the settings button on the far right.
+   <header class="site-header"><div class="container"><a class="site-header__brand" href="/"><span
+   class="site-header__name">name</span></a><div id="settings"></div></div></header>,
    then the .breadcrumbs-bar. It scrolls away; the bar under it still sticks. Under a site header the bar leaves the
    primary to the header: the paper, a subtle line under it, and the trail in the text steps. A bar with no header
-   above it is unchanged. The mark hugs its initials (#3301): no fixed square, a thin padding round a large line. */
+   above it is unchanged. The header carries no mark since November 2, 2026 (Dave): .site-header__mark is retired. */
 .site-header { display: block; background: var(--primary); color: var(--bg-1); }
 .site-header > .container { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-3);
   max-height: var(--spacing-18); padding-top: var(--spacing-3); padding-bottom: var(--spacing-3); }
-.site-header__brand { display: inline-flex; align-items: center; gap: var(--spacing-3); min-width: 0; color: var(--bg-1); text-decoration: none; }
+.site-header__brand { display: inline-flex; align-items: center; gap: var(--spacing-3); min-width: 0; min-height: var(--spacing-11); color: var(--bg-1); text-decoration: none; }   /* 44px: the height the retired mark gave the header, kept without it (Dave, November 2, 2026) */
 .site-header__brand:focus-visible { outline: 2px solid var(--bg-1); outline-offset: 4px; }
-.site-header__mark { display: inline-block; flex: none; padding: var(--spacing-1) var(--spacing-2);
-  border-radius: var(--spacing-2); background: var(--bg-1); color: var(--primary); font-size: var(--text-h1); font-weight: var(--font-weight-bold);
-  line-height: 1; letter-spacing: 0.02em; }
-.site-header__name { overflow: hidden; font-size: var(--text-h3); font-weight: var(--font-weight-bold); white-space: nowrap; text-overflow: ellipsis; }
+.site-header__name { overflow: hidden; font-size: var(--text-title); font-weight: var(--font-weight-bold); white-space: nowrap; text-overflow: ellipsis; }
 .site-header__tag { font-weight: var(--font-weight-regular); color: var(--bg-3); }
 /* In the header the settings button is a square cell the full height of the bar at its right end, a shade lighter
    than the header, its gear in the header's own colour (Maikel, November 1, 2026). */

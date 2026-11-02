@@ -573,10 +573,11 @@ function ConvertTo-HubLensBody {
     $md = ([regex]::Replace($Text, '\A---\n[\s\S]*?\n---\n', '')).TrimStart("`n")
     $md = ([regex]::Replace($md, '\A[ \t]*#[ \t]+.*(\n|\z)', '')).TrimStart("`n")
     $lines = @($md -split "`n")
-    $heads = New-Object 'System.Collections.Generic.Dictionary[int,int]'; $fence = $false
+    $heads = New-Object 'System.Collections.Generic.Dictionary[int,int]'; $fence = ''
     for ($i = 0; $i -lt $lines.Count; $i++) {
-        if ($lines[$i] -match '^\s*```') { $fence = -not $fence; continue }
-        if (-not $fence -and $lines[$i] -match '^[ \t]*(#{1,6})[ \t]+\S') { $heads[$i] = $Matches[1].Length }
+        $was = Resolve-FenceState -Line $lines[$i] -Fence $fence; $fence = Get-NextFenceState -Line $lines[$i] -Fence $fence -AnyIndent
+        if ($was -or $fence) { continue }
+        if ($lines[$i] -match '^[ \t]*(#{1,6})[ \t]+\S') { $heads[$i] = $Matches[1].Length }
     }
     $drop = -1
     $twos = @($heads.Keys | Where-Object { $heads[$_] -eq 2 })
@@ -604,17 +605,17 @@ function Split-HubLensIntro {
     #>
     param([AllowEmptyString()][string]$Text)
     $lines = @($Text -split "`n")
-    $end = $lines.Count; $fence = $false
+    $end = $lines.Count; $fence = ''
     for ($i = 0; $i -lt $lines.Count; $i++) {
-        if ($lines[$i] -match '^\s*```') { $fence = -not $fence; continue }
-        if (-not $fence -and $lines[$i] -match '^#{1,6}[ \t]') { $end = $i; break }
+        $was = Resolve-FenceState -Line $lines[$i] -Fence $fence; $fence = Get-NextFenceState -Line $lines[$i] -Fence $fence -AnyIndent
+        if (-not ($was -or $fence) -and $lines[$i] -match '^#{1,6}[ \t]') { $end = $i; break }
     }
     # The blocks before that heading, split on blank lines; a fence is one block, blank lines and all.
-    $blocks = New-Object System.Collections.Generic.List[object]; $cur = $null; $fence = $false
+    $blocks = New-Object System.Collections.Generic.List[object]; $cur = $null; $fence = ''
     for ($i = 0; $i -lt $end; $i++) {
         $l = $lines[$i]
-        if ($l -match '^\s*```') { $fence = -not $fence }
-        if (-not $fence -and $l -match '^\s*$' -and $l -notmatch '^\s*```') { $cur = $null; continue }
+        $was = Resolve-FenceState -Line $l -Fence $fence; $fence = Get-NextFenceState -Line $l -Fence $fence -AnyIndent
+        if (-not ($was -or $fence) -and $l -match '^\s*$') { $cur = $null; continue }
         if (-not $cur) { $cur = New-Object System.Collections.Generic.List[string]; $blocks.Add($cur) }
         $cur.Add($l)
     }
@@ -642,11 +643,11 @@ function ConvertTo-HubLensLeadHeadings {
     $dash = '[-' + [char]0x2013 + [char]0x2014 + ']'
     $lines = @($Text -split "`n")
     $out = New-Object System.Collections.Generic.List[string]
-    $fence = $false; $level = 0; $i = 0
+    $fence = ''; $level = 0; $i = 0
     while ($i -lt $lines.Count) {
         $l = $lines[$i]
-        if ($l -match '^\s*```') { $fence = -not $fence; $out.Add($l); $i++; continue }
-        if ($fence) { $out.Add($l); $i++; continue }
+        $was = Resolve-FenceState -Line $l -Fence $fence; $fence = Get-NextFenceState -Line $l -Fence $fence -AnyIndent
+        if ($was -or $fence) { $out.Add($l); $i++; continue }
         if ($l -match '^(#{1,6})[ \t]') { $level = $Matches[1].Length; $out.Add($l); $i++; continue }
         if ($level -ne 2 -or $l -notmatch '^- ') { $out.Add($l); $i++; continue }
         # The list: its items start with '- ' at the margin; a line indented two or more, or a blank line before one, continues it.
@@ -680,6 +681,11 @@ function ConvertTo-HubLensLeadHeadings {
 
 # The house's one markdown renderer, beside the release-notes template in this plugin (Format-HubLensPageHtml).
 $script:MarkdownRendererPath = Join-Path $PSScriptRoot '..\..\scripts\release\markdown-render.js'
+# The tree's one fence tracker (#2536), so a lens's code blocks are read the way every other markdown reader reads them.
+# Loaded only where it is there: a copy of the hub's libs on their own (a test fixture) still loads, and the lens page
+# then reports its lens as unreadable rather than taking the whole lib down.
+$script:FenceLibPath = Join-Path $PSScriptRoot '..\..\scripts\lib\fence-lib.ps1'
+if (Test-Path -LiteralPath $script:FenceLibPath -PathType Leaf) { . $script:FenceLibPath }
 
 function Format-HubLensPageHtml {
     <#
@@ -850,9 +856,9 @@ function ConvertTo-SiteHeaderName {
 
 function Format-SiteHeaderHtml {
     <#
-        The house site header (house-style.css, "Site header"): the app's mark and -Name on the primary, linking -Href
-        (home), and the settings button's mount (#settings) on the far right. The mark is a wordmark, the
-        organisation's initials, until the app has a logo of its own. -Tag is the quieter word after the name
+        The house site header (house-style.css, "Site header"): the app's -Name on the primary, linking -Href
+        (home), and the settings button's mount (#settings) on the far right. No mark (Dave, November 2, 2026).
+        -Tag is the quieter word after the name
         ('hub', 'product'), left out when empty. Both are escaped here.
     #>
     param([Parameter(Mandatory = $true)][string]$Name, [string]$Href = '/', [AllowEmptyString()][string]$Tag = '')
@@ -860,7 +866,7 @@ function Format-SiteHeaderHtml {
     $label = if ($Tag) { "$Name $Tag" } else { $Name }
     $tagHtml = if ($Tag) { ' <span class="site-header__tag">' + (& $e $Tag) + '</span>' } else { '' }
     return '<header class="site-header"><div class="container"><a class="site-header__brand" href="' + (& $e $Href) + '" aria-label="' +
-        (& $e $label) + ', home"><span class="site-header__mark" aria-hidden="true">DKJ</span><span class="site-header__name">' + (& $e $Name) +
+        (& $e $label) + ', home"><span class="site-header__name">' + (& $e $Name) +
         $tagHtml + '</span></a><div id="settings"></div></div></header>' + "`n"
 }
 
