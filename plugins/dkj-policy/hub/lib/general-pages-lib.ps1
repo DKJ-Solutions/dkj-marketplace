@@ -475,6 +475,8 @@ $script:HubIcons = @{
     'claude'        = '<path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/>'
     'rules'         = '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>'
     'lens'          = '<circle cx="11" cy="11" r="6"/><path d="M15.5 15.5L21 21"/>'
+    # Settings: a gear (Feather's 'settings', MIT).
+    'settings'      = '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>'
     'skills'        = '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'
 }
 
@@ -506,7 +508,9 @@ function Get-GeneralPages {
         @{ Href = '/stopwatch';     Label = 'Stopwatch';     Sub = 'How long an assignment takes, timed from a stopwatch: prompt to back on the trunk, with the transcript phases'; Icon = 'stopwatch'; Group = '/clock' },
         @{ Href = '/logbook';       Label = 'Logbook';       Sub = 'Every assignment of a clean session, timed by itself: first prompt to back on the trunk, with the transcript phases'; Icon = 'logbook'; Group = '/clock' },
         # #3482: plugin-versions' verdict per enabled plugin, so a problem with one is visible from the hub.
-        @{ Href = '/plugins';       Label = 'Installed plugins'; Sub = 'Every plugin this repo enables, and any problem with one on this machine'; Icon = 'plugins' }
+        @{ Href = '/plugins';       Label = 'Installed plugins'; Sub = 'Every plugin this repo enables, and any problem with one on this machine'; Icon = 'plugins' },
+        # The toolbox's own settings, on a page of their own (Dave, November 2, 2026): the Theme first.
+        @{ Href = '/settings';      Label = 'Settings';      Sub = 'How this toolbox looks on this device: its theme'; Icon = 'settings' }
     )
 }
 
@@ -864,6 +868,23 @@ function Format-HubGroupPageHtml {
     }
     return Format-GeneralPageHtml -Title $g.Label -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref `
         -ParentCrumbs $crumbs -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
+}
+
+function Format-HubSettingsPageHtml {
+    <#
+        The toolbox's Settings page on /settings (Dave, November 2, 2026): its h1, then a card headed by the h2 Theme
+        holding the brand book's own theme picker (DKJTheme.picker, house-theme.js, which every page here loads) and its
+        reset. The choice is the same one the header's settings button makes -- one key per app on this device -- so the
+        two always agree. Nothing here is read from disk.
+    #>
+    param([AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
+    $body = '<section class="card hs-settings"><h2>Theme</h2><div id="settings-theme"></div>' +
+        '<p><button type="button" class="btn" id="settings-theme-reset">Reset theme</button></p></section>' + "`n" +
+        '<script>DKJTheme.picker(document.getElementById("settings-theme"), { light: "Light", dark: "Dark" });' +
+        ' document.getElementById("settings-theme-reset").addEventListener("click", function () { DKJTheme.reset(); });</script>'
+    $style = '.hs-settings > * + * { margin-top: var(--spacing-3); }'
+    return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $body -Style $style `
+        -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
 }
 
 function ConvertTo-SiteHeaderName {

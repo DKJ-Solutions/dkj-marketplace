@@ -41,17 +41,26 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-GeneralPages`: a Settings card on `/settings`, with a gear icon of its own
+- [x] `Format-HubSettingsPageHtml`: the page, its h1 Settings, then a card headed by the h2 Theme over the brand book's theme picker and its reset
+- [x] `serve-general-pages.ps1`: the `/settings` route
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the page list and the hub's card count updated, the Settings page asserted (578 passed)
+- [x] Served from this branch on 4898: `/settings` answers 200 with the h1, the Theme h2 and the picker, and the hub links it
+
 ### DEPLOY: feat/hub-settings-page
 
-**Score:**
+The toolbox hub gets a **Settings** card, after Installed plugins and in the site header's menu. Its page, `/settings`, opens on an h2 **Theme** with the brand book's own theme picker and a reset under it -- the same choice the header's settings button makes, so the two always agree.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Every repo running dkj-policy gets the card on its toolbox: the theme is now one click from the hub, on a page of its own rather than only behind the header's gear.
+
+**Score:** 2
 
 #### Pull Request
 

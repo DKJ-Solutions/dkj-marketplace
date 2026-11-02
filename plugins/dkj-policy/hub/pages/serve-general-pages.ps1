@@ -559,6 +559,9 @@ try {
                     Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('No plugin of that name is enabled in this repo.')) -Method $method
                     continue
                 }
+            } elseif ($path -eq '/settings') {
+                # The toolbox's Settings page (Dave, November 2, 2026): the Theme, drawn in the browser.
+                $html = Format-HubSettingsPageHtml -RepoName (Get-RepoIdentity).Name
             } elseif ($path -eq '/artifacts') {
                 $ar = Get-JsonFileModel (Join-Path $root 'scripts\dashboard\artifacts.json')
                 $html = Format-ArtifactsPageHtml -Model (ConvertFrom-ArtifactRegister -Register $ar.Json) -ReadError $ar.Error -RepoName (Get-RepoIdentity).Name
