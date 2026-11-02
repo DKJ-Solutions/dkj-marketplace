@@ -886,7 +886,9 @@ function Format-HubSettingsPageHtml {
         '<p class="grid__full"><button type="button" class="btn btn--touch" id="settings-theme-reset">Reset theme</button></p></div>' + "`n" +
         '<script>DKJTheme.picker(document.getElementById("settings-theme"), { light: "Light", dark: "Dark" });' +
         ' document.getElementById("settings-theme-reset").addEventListener("click", function () { DKJTheme.reset(); });</script>'
-    $style = '.hs-settings > * + * { margin-top: var(--spacing-3); }'
+    # The reset's edge in the text colour, hover included (Dave, November 2, 2026): this page's own button by its id,
+    # so no house class is redefined.
+    $style = '.hs-settings > * + * { margin-top: var(--spacing-3); }' + "`n" + '#settings-theme-reset { border-color: var(--fg-1); }'
     return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $body -Style $style `
         -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
 }
