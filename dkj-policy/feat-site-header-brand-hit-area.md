@@ -41,17 +41,23 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-style.css`: `.site-header__brand` stretches to the bar's full height from its left edge (negative margins take the bar's padding back, padding hands it to the cell, min-height keeps the 44px line), with a `--primary-hover` hover and an inset focus ring, the way the settings cell does it at the right end
 
 ### TEST
 
+- [ ] Maikel looks at it in the toolbox/product hub (visible result: the branch waits for the owner's eye)
+
 ### DEPLOY: feat/site-header-brand-hit-area
 
-**Score:**
+The house site header's brand link is no longer only its text: the whole cell from the bar's left edge to the end of the name, top to bottom, goes home, and it lights up on hover in the header's hover shade -- the same shape the settings cell has at the bar's right end.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Every page built on the brand book gets a larger, visible home target in its header, so going home no longer needs a click on the text itself.
+
+**Score:** 2
 
 #### Pull Request
 

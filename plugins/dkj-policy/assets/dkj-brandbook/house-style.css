@@ -751,8 +751,15 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .site-header { display: block; background: var(--primary); color: var(--bg-1); }
 .site-header > .container { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-3);
   max-height: var(--spacing-18); padding-top: var(--spacing-3); padding-bottom: var(--spacing-3); }
-.site-header__brand { display: inline-flex; align-items: center; gap: var(--spacing-3); min-width: 0; min-height: var(--spacing-11); color: var(--bg-1); text-decoration: none; }   /* 44px: the height the retired mark gave the header, kept without it (Dave, November 2, 2026) */
-.site-header__brand:focus-visible { outline: 2px solid var(--bg-1); outline-offset: 4px; }
+/* The brand is a cell the full height of the bar from its left edge, so the whole area around the name goes home,
+   the way the settings cell does at the right end (Maikel, November 2, 2026). The negative margins take the bar's
+   padding back, the padding gives it to the cell, and the min-height adds it back so the bar keeps its 44px line
+   (the height the retired mark gave the header, kept without it: Dave, November 2, 2026). */
+.site-header__brand { display: inline-flex; align-items: center; gap: var(--spacing-3); align-self: stretch; min-width: 0;
+  min-height: calc(var(--spacing-11) + 2 * var(--spacing-3)); margin: calc(-1 * var(--spacing-3)) 0 calc(-1 * var(--spacing-3)) calc(-1 * var(--spacing-4));
+  padding: 0 var(--spacing-4); color: var(--bg-1); text-decoration: none; }
+.site-header__brand:hover { background: var(--primary-hover); }
+.site-header__brand:focus-visible { outline: 2px solid var(--bg-1); outline-offset: -4px; }
 .site-header__name { overflow: hidden; font-size: var(--text-title); font-weight: var(--font-weight-bold); white-space: nowrap; text-overflow: ellipsis; }
 .site-header__tag { font-weight: var(--font-weight-regular); color: var(--bg-3); }
 /* In the header the settings button is a square cell the full height of the bar at its right end, a shade lighter
