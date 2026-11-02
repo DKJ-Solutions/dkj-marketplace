@@ -873,7 +873,8 @@ function Format-HubGroupPageHtml {
 function Format-HubSettingsPageHtml {
     <#
         The toolbox's Settings page on /settings (Dave, November 2, 2026): its h1, then the group headed by the h2 Theme
-        holding a Light/Dark toggle and an h3 card per theme, named after it, holding that theme's swatch alone -- the
+        holding a Light/Dark toggle and a card per theme holding that theme's swatch alone, with no h3: the swatch's own
+        title and aria-label name it (Dave, November 2, 2026) -- the
         brand book's own picker (DKJTheme.picker, house-theme.js, which every page here loads) cut down to one swatch.
         The toggle shows one mode's cards at a time. Under them, in the group, its reset. The choice is the same one the
         header's settings button makes -- one key per app on this device -- so every swatch agrees. Nothing here is read
@@ -881,7 +882,7 @@ function Format-HubSettingsPageHtml {
     #>
     param([AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
     # The house grouping form (house-style.css, .grid-3 and .grid__head): the Theme h2 over its group's surface (--bg-2),
-    # its h3 cards three to a row, which the house sets on --bg-3 with a --bg-4 border (Dave, November 2, 2026).
+    # its cards three to a row, which the house sets on --bg-3 with a --bg-4 border (Dave, November 2, 2026).
     # The toggle: the house's segmented switch, at the height a .controls row gives it, a row of its own under the h2.
     # Exactly one of its two is always pressed, and only that mode's cards are shown.
     $toggle = '<div class="controls grid__full"><span class="seg" id="settings-theme-mode" role="group" aria-label="Mode">' +
@@ -897,7 +898,7 @@ function Format-HubSettingsPageHtml {
         ' var grid = document.getElementById("settings-theme-grid"), foot = document.getElementById("settings-theme-foot");' +
         ' DKJTheme.themes.forEach(function (t) {' +
         ' var card = document.createElement("section"); card.className = "card hs-settings"; card.setAttribute("data-mode", t.mode);' +
-        ' card.innerHTML = "<div class=\"card__head\"><h3></h3></div><div></div>"; card.querySelector("h3").textContent = t.name;' +
+        ' card.innerHTML = "<div></div>";' +
         ' grid.insertBefore(card, foot);' +
         ' var el = card.lastChild; DKJTheme.picker(el, { light: "Light", dark: "Dark" });' +
         ' Array.prototype.forEach.call(el.querySelectorAll(".theme-picker__row"), function (row) { if (row.querySelector(".theme-swatch--" + t.mode)) { row.parentNode.replaceChild(row.querySelector(".theme-picker__swatches"), row); } else { row.parentNode.removeChild(row); } });' +
