@@ -28,6 +28,9 @@ $Script   = Join-Path $RepoRoot 'scripts/lint/check-release-note-form.ps1'
 $script:pass  = 0
 $script:fail  = 0
 $script:trees = @()
+$script:emptyHome = Join-Path ([System.IO.Path]::GetTempPath()) ("noteform-$PID-home-" + [guid]::NewGuid().ToString('N').Substring(0, 6))
+New-Item -ItemType Directory -Path $script:emptyHome -Force | Out-Null
+$script:trees += $script:emptyHome
 
 function Assert-True {
     param([bool]$Condition, [string]$Message)
@@ -44,7 +47,8 @@ function New-Draft {
 
 function Invoke-Check {
     param([string]$Root, [string[]]$Extra = @())
-    $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script -RootOverride $Root @Extra 2>&1
+    # An empty home, always: whether dkj-solutions is enabled must be the fixture's answer, never this machine's (#3752).
+    $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script -RootOverride $Root -UserHomeOverride $script:emptyHome @Extra 2>&1
     return [pscustomobject]@{ Exit = $LASTEXITCODE; Text = ($out | Out-String) }
 }
 
@@ -137,6 +141,29 @@ try {
         $region = if ($start -ge 0 -and $end -gt $start) { $src.Substring($start, $end - $start) } else { '' }
         Assert-True ($region -match 'if \(\$NoteTreeOnly\) \{[\s\S]*check-release-note-form\.ps1') "$copy runs the form check inside -GatesOnly, under -NoteTreeOnly"
     }
+
+    Write-Host "`n== 8. the brand book's heading rules, where dkj-solutions is enabled (#3752) ==" -ForegroundColor Cyan
+    Assert-True (@(Get-ReleaseNoteHeadingFindings -Text (New-Draft)).Count -eq 0) 'the drafted form keeps both rules by itself'
+    $bt = [string][char]0x60
+    $codeHead = (New-Draft) -replace '### Something shipped', ('### Drop ' + $bt + '.prose' + $bt)
+    $hf = @(Get-ReleaseNoteHeadingFindings -Text $codeHead)
+    Assert-True ($hf.Count -eq 1 -and $hf[0] -match 'code span' -and $hf[0] -match '^line \d+: the h3 ') 'a code span in an h3 is named, with its line and level (rule 7)'
+    $longHead = (New-Draft) -replace '### Something shipped', '### Your pages will look different now'
+    $hf = @(Get-ReleaseNoteHeadingFindings -Text $longHead)
+    Assert-True ($hf.Count -eq 1 -and $hf[0] -match 'runs to 6 words') 'six words in a heading is one too many (rule 8)'
+    Assert-True (@(Get-ReleaseNoteHeadingFindings -Text ("#### A fourth level heading may run long here`n`nWith " + $bt + 'code' + $bt + " in the body.")).Count -eq 0) 'an h4 and a code span in the body are not judged'
+    $fenced = "## What changed`n`n" + ($bt * 3) + "`n# a comment line that is not a heading at all, and long`n" + ($bt * 3) + "`n"
+    Assert-True (@(Get-ReleaseNoteHeadingFindings -Text $fenced).Count -eq 0) 'a # line inside a fenced code block is not a heading'
+
+    $t5 = New-Tree -Label 'brand'
+    Set-Note -Dir $t5 -Version '1.0.0' -Text $codeHead
+    Assert-True ((Invoke-Check -Root $t5).Exit -eq 0) 'without dkj-solutions enabled the heading rules say nothing -- a BWJ repo keeps its own styling'
+    New-Item -ItemType Directory -Path (Join-Path $t5 '.claude') -Force | Out-Null
+    [System.IO.File]::WriteAllText((Join-Path $t5 '.claude\settings.json'), '{ "enabledPlugins": { "dkj-solutions@dkj-marketplace": true } }')
+    $r = Invoke-Check -Root $t5
+    Assert-True ($r.Exit -eq 1 -and $r.Text -match '\[HEADING\]' -and $r.Text -match 'rule 7' -and $r.Text -notmatch '\[DRIFT\]') 'with it enabled the same note is refused under [HEADING], and its form is not called drift'
+    Set-Note -Dir $t5 -Version '1.1.0' -Text (New-Draft)
+    Assert-True ((Invoke-Check -Root $t5).Exit -eq 0) 'and the newest note is the only one judged: a clean 1.1.0 passes over the older 1.0.0'
 } finally {
     foreach ($d in $script:trees) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue }
 }

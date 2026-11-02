@@ -563,8 +563,10 @@ a release for a missing timestamp would be ceremony rather than a guard.
    and audience tier, so the two cannot disagree. A missing audience heading is
    fine, because the draft leaves it out too, but an added or renamed one is not. Only the newest note is
    judged. Published notes are records and keep the form they were written with, and the newest is the one
-   being finished here and the one the next writer copies. To check another note, pass
-   `-Path <note>`:
+   being finished here and the one the next writer copies. **Where `dkj-solutions` is enabled, the same run
+   also holds the note's `h1`-`h3` headings to the brand book's rules 7 and 8** (#3752): no code span, and
+   five words at most. It prints those under `[HEADING]`, apart from form drift. A repo outside DKJ-Solutions
+   is not held to them. To check another note, pass `-Path <note>`:
 
    ```powershell
    powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/lint/check-release-note-form.ps1" -Path <note root>/<dir>/<X.Y.Z>.md

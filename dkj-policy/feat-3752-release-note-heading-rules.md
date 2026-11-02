@@ -39,19 +39,48 @@
 
 ### PLAN
 
+#### Scope
+
+#3752 asks for rule 7 (no code span in an h1-h3 heading), and its comment adds rule 8 (five words at most),
+which #3753 introduced. Both are held. Two design answers:
+
+- **Only where `dkj-solutions` is enabled.** `check-release-note-form` is a `dkj-policy` gate and runs in
+  BWJ-Development repos too, which the brand book does not reach.
+- **Only the newest note**, the check's existing answer to the issue's question about older notes: they are
+  records. The v6.3.0 note, repaired by #3753, passes both rules; the v6.2.0 note would not, and is not
+  judged.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-ReleaseNoteHeadingFindings` in `release-lib.ps1` (both copies): one finding per offending h1-h3
+  line, skipping fenced code blocks
+- [x] `check-release-note-form.ps1` (both copies) calls it when `Get-EnabledPlugins` names a
+  `dkj-solutions@...` id, prints the findings under `[HEADING]`, and takes `-UserHomeOverride` for fixtures
+- [x] `cut-release` SKILL.md, step 4: one sentence on the heading rules
+- [x] `release-note-form.tests.ps1`: section 8, and every check run now uses an empty home
 
 ### TEST
 
+- [x] `release-note-form.tests.ps1` standalone: 33 passed, 0 failed
+- [x] The real check on this repo (dkj-solutions enabled): the v6.3.0 audience note passes
+
 ### DEPLOY: feat/3752-release-note-heading-rules
 
-**Score:**
+`check-release-note-form` now holds the newest release note's `h1`-`h3` headings to the brand book's rules 7
+and 8 in a repo that has `dkj-solutions` enabled (#3752). A heading may carry no code span and no more than
+five words. Each offending line is named with its number under a `[HEADING]` label, apart from form drift.
+The rules are the brand book's rather than the draft's, so they live in their own function,
+`Get-ReleaseNoteHeadingFindings`, and a repo outside DKJ-Solutions is not held to them.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a DKJ-Solutions repo, the release-notes step of a cut now refuses a note whose section heading holds a
+code span or runs past five words, and names the line, before the note is published. A BWJ-Development
+repo sees no change.
+
+**Score:** 2
 
 #### Pull Request
 

@@ -2114,6 +2114,47 @@ function Compare-ReleaseNoteForm {
     return @($findings.ToArray())
 }
 
+function Get-ReleaseNoteHeadingFindings {
+    <#
+        Pure: the brand book's two heading rules, held on a release note's h1-h3 headings (#3752). One string
+        per offending line, naming its line number; an empty array means every heading keeps them.
+
+          - rule 7: no `code` element inside an h1, h2 or h3, so no backtick span in the heading's text;
+          - rule 8: a heading has five words at most.
+
+        A SEPARATE FUNCTION FROM Compare-ReleaseNoteForm, ON PURPOSE. That one compares a note with the form
+        the generator drafts and adds no rule of its own; these two are the brand book's, a rule about how a
+        heading reads, and they hold only where the brand book does -- the check script asks that question
+        (is dkj-solutions enabled here?) before it calls this. A repo outside DKJ-Solutions keeps its own
+        styling and is never held to them.
+
+        Measured on the v6.3.0 audience note: two headings carried a code span and five ran to 8-11 words,
+        all repaired by hand (#3753) before this gate existed. Lines inside a fenced code block are not
+        headings and are skipped. Words are whitespace-separated runs, so an emoji counts as one.
+    #>
+    param([AllowEmptyString()][string]$Text = '')
+    $findings = New-Object System.Collections.Generic.List[string]
+    $inFence = $false
+    $n = 0
+    foreach ($line in ($Text -split "`r?`n")) {
+        $n++
+        if ($line -match '^\s{0,3}(```|~~~)') { $inFence = -not $inFence; continue }
+        if ($inFence) { continue }
+        $m = [regex]::Match($line, '^\s{0,3}(#{1,3})\s+(.*?)\s*#*\s*$')
+        if (-not $m.Success) { continue }
+        $level = $m.Groups[1].Value.Length
+        $heading = $m.Groups[2].Value
+        if ($heading -match '`[^`]+`') {
+            $findings.Add("line ${n}: the h$level '$heading' holds a code span -- a heading names the thing in words (brand book rule 7)")
+        }
+        $words = @($heading -split '\s+' | Where-Object { $_ }).Count
+        if ($words -gt 5) {
+            $findings.Add("line ${n}: the h$level '$heading' runs to $words words -- a heading has five at most (brand book rule 8)")
+        }
+    }
+    return @($findings.ToArray())
+}
+
 function Build-GitHubReleaseBody {
     <#
         The body of a GitHub Release: the release title, an optional pointer at the attached document,
