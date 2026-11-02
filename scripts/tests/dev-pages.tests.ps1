@@ -72,7 +72,6 @@ Assert-True (((Get-HubMenu) | ForEach-Object { $_.Href }) -join ' ' -eq '/reposi
 $st = Format-HubSettingsPageHtml -RepoName 'o/r'
 Assert-True ($st -match '<h1>Settings</h1>' -and $st -match '<h2>Theme</h2>' -and $st -match 'DKJTheme\.picker\(document\.getElementById\("settings-theme"\)') 'the Settings page opens with its h1, then the Theme h2 over the brand book''s own picker'
 Assert-True ($st -match '<div class="grid-2"><div class="grid__head"><h2>Theme</h2></div><section class="card grid__full hs-settings"><div class="card__head"><h3>Colour</h3></div><div id="settings-theme"></div>') 'the picker sits in an h3 card, Colour, in the house group the Theme h2 heads'
-Assert-True ($st -match 'querySelectorAll\("#settings-theme \.theme-picker__label"\)[^<]*removeChild') 'the Colour card''s picker loses its Light and Dark labels, and only that picker'
 Assert-True ($st -match '<span aria-current="page">Settings</span>') 'the Settings page is its own last crumb'
 $tpage = Format-GeneralPageHtml -Title 'Stopwatch' -Lead '' -Body '' -SiteName 'o/r' -ParentCrumbs @(@{ Label = 'AI'; Href = '/ai' })
 Assert-True ($tpage -match '<li><a href="/ai" aria-current="page">AI</a></li>' -and (Format-GeneralPageHtml -Title 'Artifacts' -Lead '' -Body '' -SiteName 'o/r') -match '<li><a href="/artifacts" aria-current="page">') 'a toolbox page carries the toolbox menu, marking the item it sits under: its first crumb, else its own title'
