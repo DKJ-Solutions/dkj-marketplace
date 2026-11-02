@@ -39,19 +39,40 @@
 
 ### PLAN
 
+Maikel, November 2, 2026: rename the hub's AI card to Claude, make Claude the `/ai` page's h1 instead of an
+h2 section on it, and move the URL and the breadcrumbs with it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-HubGroups`: the `/ai` group and its Claude section become one `/claude` group; Rules, Skills,
+  Specialists, Performance and the Lenses section move under `/claude`
+- [x] The lens page's crumbs and links follow; the unused `ai` icon goes
+- [x] `serve-general-pages.ps1`: an old `/ai` or `/ai/claude/...` link answers 301 to its `/claude` address
+- [x] The hub README and the comments that named AI follow
 
 ### TEST
 
+- [x] `dev-pages`, `dev-preview-sessionstart` and `stopwatch` suites updated and green
+- [x] Checked on a preview hub from this branch (port 4899): `/claude` has Claude as h1 over four h2 cards,
+  the Clock's trail reads Tools > Claude > Performance > Clock, and `/ai/...` redirects
+- [ ] Maikel looks at the result before the merge (a visible result)
+
 ### DEPLOY: feat/claude-hub-page
 
-**Score:**
+The hub's AI card is now the Claude card, and its page is `/claude`: Claude is the page's h1, with the Rules,
+Skills, Specialists and Performance cards directly under it, where they sat under a Claude heading on an AI
+page before. Every page below it moves along: `/claude/rules`, `/claude/skills`, `/claude/specialists` and
+each lens's page under it, and every trail through it reads Tools > Claude. An old `/ai` link is redirected
+to its new address.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+The hub is the toolbox every repo running dkj-policy gets: its user finds Claude's pages under Claude itself,
+one click and one heading fewer, and a bookmark to the old address still arrives.
+
+**Score:** 2
 
 #### Pull Request
 

@@ -5,14 +5,15 @@
 **Every repo that runs `dkj-policy` gets a hub at session start**, served by the plugin, with the
 General pages linked from it: Artifacts, Issues, Release notes, SessionStart, Test gate, Stopwatch, Logbook
 (Test gate and those two since [#3470](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3470)) and Plugins
-(since [#3482](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3482)), and the **AI** card. Issues and
+(since [#3482](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3482)), and the **Claude** card. Issues and
 the Test gate are linked from the **GitHub** page instead, the Test gate beside the CI runs it measures (since
 November 2, 2026). Stopwatch and Logbook sit behind the Clock card and its `/clock` page (October 27, 2026), and
-SessionStart and Clock behind the Performance card and its `/performance` page (October 30, 2026). The `/ai`
-page holds a Claude section, an `h2` over the Rules, Skills, Specialists and Performance cards (Performance there since
+SessionStart and Clock behind the Performance card and its `/performance` page (October 30, 2026). The `/claude`
+page (the `/ai` page, with Claude as its section, until Maikel made Claude its `h1` on November 2, 2026; an old `/ai`
+link is moved there) holds the Rules, Skills, Specialists and Performance cards (Performance there since
 November 2, 2026, because what it measures is what Claude's work costs; its route did not change), the first three
 landing pages with nothing on it yet, the Specialists page a Lenses section, a card per `.claude/specialists/lenses/specialist-NN-NN-lens.md` of the repo, each
-opening on `/ai/claude/specialists/lenses/<name>` with the lens's text (Maikel, October 30, 2026; groups may nest, and a `Section`
+opening on `/claude/specialists/lenses/<name>` with the lens's text (Maikel, October 30, 2026; groups may nest, and a `Section`
 group is a heading, `Get-HubGroups`). That covers
 BWJ-Development's repos too. Until [#3198](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3198)
 (the owner's decision, October 20, 2026) all of this shipped with `dkj-solutions`, which BWJ-Development

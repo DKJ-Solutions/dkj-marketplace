@@ -469,9 +469,8 @@ $script:HubIcons = @{
     'consumers'     = '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M17 11l2 2 4-4"/>'
     'specialists'   = '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/>'
     'dkj-repos'     = '<path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'
-    # The AI group and its Claude page (Maikel, October 30, 2026): two sparkles, Claude's asterisk, a ruled list and
-    # a wrench (Feather's 'tool', MIT); the Specialists card reuses 'specialists' above.
-    'ai'            = '<path d="M10 3l1.8 4.7 4.7 1.8-4.7 1.8L10 16l-1.8-4.7L3.5 9.5l4.7-1.8z"/><path d="M18 14l.9 2.1 2.1.9-2.1.9L18 20l-.9-2.1-2.1-.9 2.1-.9z"/>'
+    # The Claude page and its cards (Maikel, October 30, 2026): Claude's asterisk, a ruled list and a wrench (Feather's
+    # 'tool', MIT); the Specialists card reuses 'specialists' above.
     'claude'        = '<path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/>'
     'rules'         = '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>'
     'lens'          = '<circle cx="11" cy="11" r="6"/><path d="M15.5 15.5L21 21"/>'
@@ -517,21 +516,21 @@ function Get-HubGroups {
         page, never a card with several rows: Clock holds Stopwatch and Logbook (the owner, October 27, 2026; the Test gate too, until November 2).
         A group may sit in another: its Group is the parent group's Href, and it is a card on that page instead of
         the hub. A group with no general page of its own is still a hub card (Format-HubPageCardsHtml). A Section group
-        is no card and no page: it is an h2 on its parent's page, over a grid of its members' cards. So AI opens on
-        the Claude section, holding Rules, Skills and Specialists (Maikel, October 30, 2026), each a page of its own.
+        is no card and no page: it is an h2 on its parent's page, over a grid of its members' cards. Claude holds
+        Rules, Skills and Specialists (Maikel, October 30, 2026), each a page of its own: a section of an AI page until
+        Maikel made it the page itself, on /claude (November 2, 2026).
         A Section with Source 'lenses' takes its cards from the repo instead: one per specialist lens (Get-HubLensPages).
-        Performance holds SessionStart and Clock (the owner, October 30, 2026), and sits in the Claude section since
+        Performance holds SessionStart and Clock (the owner, October 30, 2026), and sits in Claude since
         November 2, 2026: what it measures is what Claude's work costs. A group page keeps its route wherever it sits.
     #>
     @(
-        @{ Href = '/ai'; Label = 'AI'; Sub = 'The AI this repo works with: Claude'; Icon = 'ai' },
-        @{ Href = '/ai/claude'; Label = 'Claude'; Icon = 'claude'; Group = '/ai'; Section = $true },
-        @{ Href = '/ai/claude/rules'; Label = 'Rules'; Sub = 'The rules Claude works by'; Icon = 'rules'; Group = '/ai/claude' },
-        @{ Href = '/ai/claude/skills'; Label = 'Skills'; Sub = 'The skills Claude can use'; Icon = 'skills'; Group = '/ai/claude' },
-        @{ Href = '/ai/claude/specialists'; Label = 'Specialists'; Sub = 'The Claude Specialists, each with a craft of their own'; Icon = 'specialists'; Group = '/ai/claude' },
-        @{ Href = '/performance'; Label = 'Performance'; Sub = 'What Claude''s work costs: the SessionStart path and the Clock'; Icon = 'performance'; Group = '/ai/claude' },
+        @{ Href = '/claude'; Label = 'Claude'; Sub = 'The rules, skills and specialists Claude works by, and what its work costs'; Icon = 'claude' },
+        @{ Href = '/claude/rules'; Label = 'Rules'; Sub = 'The rules Claude works by'; Icon = 'rules'; Group = '/claude' },
+        @{ Href = '/claude/skills'; Label = 'Skills'; Sub = 'The skills Claude can use'; Icon = 'skills'; Group = '/claude' },
+        @{ Href = '/claude/specialists'; Label = 'Specialists'; Sub = 'The Claude Specialists, each with a craft of their own'; Icon = 'specialists'; Group = '/claude' },
+        @{ Href = '/performance'; Label = 'Performance'; Sub = 'What Claude''s work costs: the SessionStart path and the Clock'; Icon = 'performance'; Group = '/claude' },
         @{ Href = '/clock'; Label = 'Clock'; Sub = 'How long the work takes: the Stopwatch and the Logbook'; Icon = 'clock'; Group = '/performance' },
-        @{ Href = '/ai/claude/specialists/lenses'; Label = 'Lenses'; Icon = 'lens'; Group = '/ai/claude/specialists'; Section = $true; Source = 'lenses' }
+        @{ Href = '/claude/specialists/lenses'; Label = 'Lenses'; Icon = 'lens'; Group = '/claude/specialists'; Section = $true; Source = 'lenses' }
     )
 }
 
@@ -566,7 +565,7 @@ function Get-HubLensPages {
         try {
             foreach ($line in [System.IO.File]::ReadAllLines($f.FullName, $utf8)) { if ($line -match '^#\s+(.+)$') { $sub = $Matches[1].Trim(); break } }
         } catch { $sub = '' }
-        @{ Href = '/ai/claude/specialists/lenses/' + $f.BaseName; Label = $f.BaseName; Sub = $sub; Icon = 'lens'; Path = $f.FullName }
+        @{ Href = '/claude/specialists/lenses/' + $f.BaseName; Label = $f.BaseName; Sub = $sub; Icon = 'lens'; Path = $f.FullName }
     }
 }
 
@@ -583,7 +582,7 @@ function ConvertTo-HubLensBody {
     param([AllowEmptyString()][string]$Text)
     # A link to another lens file is a link to that lens's own page here (Maikel, November 2, 2026); its #anchor goes,
     # since the rendered page gives its headings no ids.
-    $Text = [regex]::Replace($Text, '\]\((?:\./)?(specialist-\d{2}-\d{2}-lens)\.md(?:#[^)]*)?\)', '](/ai/claude/specialists/lenses/$1)')
+    $Text = [regex]::Replace($Text, '\]\((?:\./)?(specialist-\d{2}-\d{2}-lens)\.md(?:#[^)]*)?\)', '](/claude/specialists/lenses/$1)')
     $md = ([regex]::Replace($Text, '\A---\n[\s\S]*?\n---\n', '')).TrimStart("`n")
     $md = ([regex]::Replace($md, '\A[ \t]*#[ \t]+.*(\n|\z)', '')).TrimStart("`n")
     $lines = @($md -split "`n")
@@ -703,7 +702,7 @@ if (Test-Path -LiteralPath $script:FenceLibPath -PathType Leaf) { . $script:Fenc
 
 function Format-HubLensPageHtml {
     <#
-        One specialist lens's own page on /ai/claude/specialists/lenses/<name> (Get-HubLensPages), under Tools > AI >
+        One specialist lens's own page on /claude/specialists/lenses/<name> (Get-HubLensPages), under Tools > Claude >
         Specialists: the file's name as the h1 and the last crumb, as its card reads, and the file RENDERED as markdown in
         a card (Maikel, November 2, 2026), past its frontmatter and its own '# ' title, so the page keeps ONE h1;
         any other '# ' heading is rendered as an h2. The renderer is the house's one, markdown-render.js beside the release-notes
@@ -740,7 +739,7 @@ function Format-HubLensPageHtml {
         '#lens-body > * + :is(h2, h3) { margin-top: var(--spacing-6); }' + "`n" +
         '#lens-body li + li, #lens-body li > :is(ul, ol) { margin-top: var(--spacing-1); }'
     return Format-GeneralPageHtml -Title $title -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref -Style $style `
-        -ParentCrumbs @(@{ Label = 'AI'; Href = '/ai' }, @{ Label = 'Specialists'; Href = '/ai/claude/specialists' }) -FooterNote ('Read from <code>.claude/specialists/lenses/' + (& $e $lens.Label) + '.md</code> by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.')
+        -ParentCrumbs @(@{ Label = 'Claude'; Href = '/claude' }, @{ Label = 'Specialists'; Href = '/claude/specialists' }) -FooterNote ('Read from <code>.claude/specialists/lenses/' + (& $e $lens.Label) + '.md</code> by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.')
 }
 
 function Format-HubCardLinkHtml {
@@ -758,7 +757,7 @@ function Format-HubCardLinkHtml {
         invalid HTML, and the browser closes the card's link at the inner one, so the card falls apart (#3610). One
         that does is refused with a throw.
         The label is an h2 by default (owner, October 29, 2026): the cards are the sections of the page they sit on.
-        -Heading 3 makes it an h3, for a card under a .grid__head's h2 (the AI page's Claude section, Maikel, October 30,
+        -Heading 3 makes it an h3, for a card under a .grid__head's h2 (the Specialists page's Lenses section, Maikel, October 30,
         2026; the Plugins page's marketplace groups); -Heading 0 keeps it a plain span, for a card inside a section that has a heading of its own; -Id and -Class (extra classes,
         such as a tone) go on the card.
     #>
@@ -787,7 +786,7 @@ function Format-HubPageCardsHtml {
     <#
         -Pages (Get-GeneralPages' shape) as hub cards, one line each, in their order: a page with no Group as its
         own card, and each top-level Group's card (Get-HubGroups) in the place of its first page, however deep the page
-        sits (Stopwatch is under Clock, under Performance, under AI); then each top-level group no general page belongs
+        sits (Stopwatch is under Clock, under Performance, under Claude); then each top-level group no general page belongs
         to, after them. A GitHub page is the caller's to leave out: the hub's GitHub page links it instead.
     #>
     param([AllowEmptyCollection()][object[]]$Pages = @())
