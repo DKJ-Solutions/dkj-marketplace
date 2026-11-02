@@ -930,6 +930,9 @@ function Format-HubSettingsPageHtml {
         # picker keeps, from the header's choice too -- takes the selected theme's --primary as its border (Dave, November 2, 2026).
         '.hs-swatch[data-mode] { cursor: pointer; }' + "`n" +
         '.hs-swatch:has(.theme-swatch[aria-pressed="true"]) { border-color: var(--primary); }' + "`n" +
+        # So the swatch's own ring for the chosen theme goes here (Dave, November 2, 2026): the card's border says it. The
+        # keyboard's focus ring stays, and the header panel's picker keeps its ring.
+        '.hs-swatch .theme-swatch[aria-pressed="true"]:not(:focus-visible) { outline: 0; }' + "`n" +
         '.hs-reset { font: inherit; color: var(--fg-1); cursor: pointer; padding-left: var(--spacing-4); padding-right: var(--spacing-4); }' + "`n" +
         '.hs-reset:hover { background: var(--bg-4); }'
     return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $body -Style $style `
