@@ -39,19 +39,32 @@
 
 ### PLAN
 
+#3675 left `scripts/sync/check-connectors.ps1` as a forwarder to `check-consumers.ps1` for hooks
+installed at 6.0.0 or earlier. `consumer-sessioncheck.ps1` shipped in v6.1.0, and the owner confirmed
+on November 2, 2026 that every machine has updated, so the forwarder goes.
+
+Left alone on purpose: the 6.1.0 release notes, which describe that release correctly, and
+`scripts/dashboard/session-start-snapshot.json`, a recorded snapshot from October 29.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Delete `scripts/sync/check-connectors.ps1`; nothing in the live tree calls it (searched).
 
 ### TEST
 
+- [x] The gates run in open-pr; no suite references the forwarder.
+
 ### DEPLOY: feat/3691-remove-check-connectors-forwarder
 
-**Score:**
+The `scripts/sync/check-connectors.ps1` forwarder is gone, now that every machine runs v6.1.0 or later and its hook calls `check-consumers.ps1` directly ([#3691](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3691)).
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A -- a source-repo-only script; no plugin user runs it.
+
+**Score:** N/A
 
 #### Pull Request
 
