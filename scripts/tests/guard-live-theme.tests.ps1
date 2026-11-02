@@ -107,6 +107,27 @@ function New-FixtureRepo {
     return $root
 }
 
+function Initialize-MergedFixture {
+    <#
+        Turn a fixture repo into a checkout whose theme files ARE the trunk: one commit, with
+        refs/remotes/origin/main pointing at it. Since #3758 an authorised live push is held to
+        origin/<trunk>, so every case that asserts the marker AUTHORISES needs this ground under it.
+        autocrlf is pinned off so the stored bytes are the bytes written, whatever this machine's config.
+    #>
+    param([string]$Root, [string]$Trunk = 'main')
+    New-Item -ItemType Directory -Force -Path (Join-Path $Root 'assets'), (Join-Path $Root 'layout') | Out-Null
+    [System.IO.File]::WriteAllText((Join-Path $Root 'assets\x.css'), "body { color: red; }`n", $Utf8NoBom)
+    [System.IO.File]::WriteAllText((Join-Path $Root 'layout\theme.liquid'), "<html>`n{{ content_for_layout }}`n</html>`n", $Utf8NoBom)
+    Invoke-FixtureGitIn $Root init -q
+    Invoke-FixtureGitIn $Root symbolic-ref HEAD "refs/heads/$Trunk"
+    Invoke-FixtureGitIn $Root config core.autocrlf false
+    Invoke-FixtureGitIn $Root config user.name fixture
+    Invoke-FixtureGitIn $Root config user.email fixture@example.com
+    Invoke-FixtureGitIn $Root add -A
+    Invoke-FixtureGitIn $Root commit -q -m init
+    Invoke-FixtureGitIn $Root update-ref "refs/remotes/origin/$Trunk" HEAD
+}
+
 function Invoke-Guard {
     <# Returns the exit code. The payload is the shape the harness sends, built rather than typed. #>
     param([string]$Command, [string]$Root)
@@ -165,6 +186,8 @@ try {
 function Get-ShopifyLiveThemeId { return '$LIVE' }
 function Get-ShopifyThemeEstateStore { 'x.myshopify.com' }
 "@
+    # A checkout that matches its trunk, so the marker cases below measure the marker and not #3758.
+    Initialize-MergedFixture -Root $configured
 
     # --- group 1: the real thing, blocked ---------------------------------------------------------
     Write-Host "group 1 -- the real commands are blocked, wrapper and all" -ForegroundColor Cyan
@@ -280,6 +303,7 @@ function Get-ShopifyThemeEstateStore { 'x.myshopify.com' }
 function Get-ShopifyLiveThemeId { return '$LIVE' }
 function Get-ShopifyLivePushMarker { return 'ONLY-THIS-ONE' }
 "@
+    Initialize-MergedFixture -Root $narrow
     Assert-Equal 0 (Invoke-Guard -Command "shopify theme push --theme $LIVE --allow-live # ONLY-THIS-ONE" -Root $narrow) 'configured marker: the repo spelling authorises'
     Assert-Equal 2 (Invoke-Guard -Command "shopify theme push --theme $LIVE --allow-live # LIVE-PUSH-AUTHORIZED" -Root $narrow) 'configured marker: and the generic default no longer does -- configuring it NARROWS'
 
@@ -417,6 +441,7 @@ function Get-ShopifyLiveThemeId { return '$LIVE' }
 function Get-ShopifyLivePushMarker { return 'ONE-MARKER-FOR-BOTH' }
 function Get-ShopifyThemeDeleteMarker { return 'ONE-MARKER-FOR-BOTH' }
 "@
+    Initialize-MergedFixture -Root $same
     Assert-Equal 2 (Invoke-Guard -Command 'shopify theme delete --theme 1 # ONE-MARKER-FOR-BOTH' -Root $same) 'same string for both seams: the delete capability is refused rather than granted -- a routine live-push marker must not double as standing delete authorisation'
     Assert-Equal 0 (Invoke-Guard -Command "shopify theme push --theme $LIVE --allow-live # ONE-MARKER-FOR-BOTH" -Root $same) 'same string for both seams: while the push it was configured for keeps working'
 
@@ -724,6 +749,98 @@ function Get-ShopifyLiveDeployBranch { return 'live' }
     Assert-Equal 2 (Invoke-DegradedGuard -Command 'git push origin main' -Root $conn).Code 'no lib, deploy branch answered: a git push is blocked -- the target cannot be read'
     Assert-Equal 0 (Invoke-DegradedGuard -Command 'git push origin main:live # LIVE-PUSH-AUTHORIZED' -Root $conn).Code 'no lib: and the marker still authorises it'
     Assert-Equal 0 (Invoke-DegradedGuard -Command 'git push origin main' -Root $configured).Code 'no lib, seam unanswered: a git push is untouched'
+
+    # --- group 10: an authorised live push carries only what the trunk holds (#3758) --------------
+    # Measured in a consumer: two UNMERGED pull requests went to live with '--only' and the marker, and
+    # live then held work the trunk did not. The marker says somebody meant to push to live; this group
+    # asserts that it no longer decides WHAT -- every file must be what origin/<trunk> holds.
+    Write-Host "group 10 -- merged only: an authorised live push is held to origin/<trunk> (#3758)" -ForegroundColor Cyan
+    $m = New-FixtureRepo -Label 'merged' -ConfigBody "function Get-ShopifyLiveThemeId { return '$LIVE' }"
+    Initialize-MergedFixture -Root $m
+    $push = "shopify theme push --store x.myshopify.com --theme $LIVE --allow-live"
+    $mk = '# LIVE-PUSH-AUTHORIZED'
+    $css = Join-Path $m 'assets\x.css'
+
+    Assert-Equal 0 (Invoke-Guard -Command "$push --only assets/x.css $mk" -Root $m) 'merged: a file equal to origin/main passes'
+    Assert-Equal 0 (Invoke-Guard -Command "$push --only=assets/x.css $mk" -Root $m) 'merged: and in the --only=<file> spelling'
+    Assert-Equal 0 (Invoke-Guard -Command "$push -o assets/x.css -o layout/theme.liquid $mk" -Root $m) 'merged: and with the short flag, several files'
+    Assert-Equal 0 (Invoke-Guard -Command "$push $mk" -Root $m) 'merged: a whole-theme push from a clean checkout equal to origin/main passes'
+    Assert-Equal 0 (Invoke-Guard -Command "$push --only assets/gone.css $mk" -Root $m) 'merged: a deletion of a file the trunk does not hold either passes'
+
+    # LINE ENDINGS ARE NOT A DIFFERENCE, read the way sync-main reads them.
+    [System.IO.File]::WriteAllText($css, "body { color: red; }`r`n", $Utf8NoBom)
+    Assert-Equal 0 (Invoke-Guard -Command "$push --only assets/x.css $mk" -Root $m) 'merged: the same content with CRLF endings passes'
+
+    # An uncommitted edit, pushed from the trunk itself: the case a branch test would miss.
+    [System.IO.File]::WriteAllText($css, "body { color: blue; }`n", $Utf8NoBom)
+    Assert-Equal 2 (Invoke-Guard -Command "$push --only assets/x.css $mk" -Root $m) 'refused: an uncommitted edit on the trunk'
+    Assert-Equal 2 (Invoke-Guard -Command "$push $mk" -Root $m) 'refused: and a whole-theme push over it'
+    $refusal = Get-GuardRefusal -Command "$push --only assets/x.css $mk" -Root $m
+    Assert-True ($refusal -match 'assets/x\.css: differs from origin/main') 'refused: the refusal names the file and what it differs from'
+    Assert-True ($refusal -match 'Merge first') 'refused: and says to merge first'
+    Invoke-FixtureGitIn $m checkout -q -- assets/x.css
+
+    # The measured case: work committed on a branch that is not merged.
+    Invoke-FixtureGitIn $m checkout -q -b fix/401-unmerged
+    [System.IO.File]::WriteAllText($css, "body { color: green; }`n", $Utf8NoBom)
+    [System.IO.File]::WriteAllText((Join-Path $m 'assets\new.css'), "a {}`n", $Utf8NoBom)
+    Invoke-FixtureGitIn $m add -A
+    Invoke-FixtureGitIn $m commit -q -m 'unmerged work'
+    Assert-Equal 2 (Invoke-Guard -Command "$push --only assets/x.css $mk" -Root $m) 'refused: a file changed on an unmerged branch'
+    Assert-Equal 2 (Invoke-Guard -Command "$push --only assets/new.css $mk" -Root $m) 'refused: a file the trunk does not hold at all'
+    Assert-Equal 2 (Invoke-Guard -Command "$push $mk" -Root $m) 'refused: a whole-theme push from a commit ahead of origin/main'
+    Assert-Equal 0 (Invoke-Guard -Command "$push --only layout/theme.liquid $mk" -Root $m) 'merged: but a file that branch did not touch passes -- content, not the checked-out branch'
+    Invoke-FixtureGitIn $m checkout -q main
+    Invoke-FixtureGitIn $m branch -q -D fix/401-unmerged
+
+    # A deletion of merged work: the file is absent here and present on the trunk.
+    Remove-Item -LiteralPath $css -Force
+    Assert-Equal 2 (Invoke-Guard -Command "$push --only assets/x.css $mk" -Root $m) 'refused: an --only of a file the trunk holds but this checkout lacks -- it would delete merged work from live'
+    Invoke-FixtureGitIn $m checkout -q -- assets/x.css
+
+    [System.IO.File]::WriteAllText((Join-Path $m 'assets\stray.css'), "a {}`n", $Utf8NoBom)
+    Assert-Equal 2 (Invoke-Guard -Command "$push $mk" -Root $m) 'refused: a whole-theme push with an untracked file in the root'
+    Remove-Item -LiteralPath (Join-Path $m 'assets\stray.css') -Force
+
+    # A second live push in the same command is measured too: the first no longer ends the run.
+    [System.IO.File]::WriteAllText($css, "body { color: blue; }`n", $Utf8NoBom)
+    Assert-Equal 2 (Invoke-Guard -Command "$push --only layout/theme.liquid $mk${LF}$push --only assets/x.css $mk" -Root $m) 'refused: an unmerged file in a SECOND push on the same command, after a first that passes'
+    Invoke-FixtureGitIn $m checkout -q -- assets/x.css
+
+    # What cannot be read is refused -- the direction this guard fails in.
+    $unreadable = @(
+        @{ n = 'a pattern in --only';                 c = "$push --only 'assets/*.css' $mk" },
+        @{ n = 'a directory in --only';               c = "$push --only assets $mk" },
+        @{ n = 'a shell variable';                    c = "$push --only `$F $mk" },
+        @{ n = 'an environment from the toml';        c = "$push --environment production --only assets/x.css $mk" },
+        @{ n = 'a short -e';                          c = "$push -e production --only assets/x.css $mk" },
+        @{ n = 'a directory change first';            c = "cd sub && $push --only assets/x.css $mk" },
+        @{ n = 'SHOPIFY_FLAG_ONLY on the line';       c = "SHOPIFY_FLAG_ONLY=assets/new.css $push $mk" },
+        @{ n = 'a path outside the theme root';       c = "$push --only ../other/x.css $mk" }
+    )
+    foreach ($case in $unreadable) { Assert-Equal 2 (Invoke-Guard -Command $case.c -Root $m) "refused: $($case.n)" }
+
+    # No origin/<trunk> to compare with: fetch first. And no git checkout at all.
+    Invoke-FixtureGitIn $m update-ref -d refs/remotes/origin/main
+    Assert-True ((Get-GuardRefusal -Command "$push --only assets/x.css $mk" -Root $m) -match "git fetch origin") 'refused: with no origin/main the refusal says to fetch'
+    Invoke-FixtureGitIn $m update-ref refs/remotes/origin/main HEAD
+    $notGit = New-FixtureRepo -Label 'not-git' -ConfigBody "function Get-ShopifyLiveThemeId { return '$LIVE' }"
+    Assert-Equal 2 (Invoke-Guard -Command "$push $mk" -Root $notGit) 'refused: a theme root that is not a git checkout'
+
+    # The trunk comes from Get-TrunkBranchName, the seam push-preview and live-preflight read.
+    $dev = New-FixtureRepo -Label 'trunk-develop' -ConfigBody "function Get-ShopifyLiveThemeId { return '$LIVE' }${LF}function Get-TrunkBranchName { return 'develop' }"
+    Initialize-MergedFixture -Root $dev -Trunk 'develop'
+    Assert-Equal 0 (Invoke-Guard -Command "$push --only assets/x.css $mk" -Root $dev) 'trunk seam: measured against origin/develop where the repo names it'
+    $badTrunk = New-FixtureRepo -Label 'trunk-bad' -ConfigBody "function Get-ShopifyLiveThemeId { return '$LIVE' }${LF}function Get-TrunkBranchName { return 'VUL IN' }"
+    Initialize-MergedFixture -Root $badTrunk
+    Assert-Equal 2 (Invoke-Guard -Command "$push --only assets/x.css $mk" -Root $badTrunk) 'trunk seam: an answer that is not a branch name refuses rather than falling back to main'
+
+    # Degraded, the push cannot be read, so the marker alone no longer authorises it.
+    Assert-Equal 2 (Invoke-DegradedGuard -Command "$push --only assets/x.css $mk" -Root $m).Code 'no lib: an authorised live push is refused -- what it carries cannot be read'
+
+    # And the rest of rule 3 is untouched: a preview push is not measured at all.
+    [System.IO.File]::WriteAllText($css, "body { color: blue; }`n", $Utf8NoBom)
+    Assert-Equal 0 (Invoke-Guard -Command 'shopify theme push --store x.myshopify.com --theme 987654321 --only assets/x.css' -Root $m) 'untouched: a preview push of unmerged work'
 } finally {
     Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue
 }

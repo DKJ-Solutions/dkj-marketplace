@@ -39,19 +39,41 @@
 
 ### PLAN
 
+Inbound #3758 from xoxowildhearts#487: the owner ruled to enforce merged-only in `guard-live-theme`
+and to add no account check. Verified on pickup: line 347 authorised a live push on the marker alone.
+The repair names real mechanisms (`Get-TrunkBranchName`, sync-rules' raw and CR-stripped blob ids).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `guard-live-theme.ps1`: rule 3's second half compares every `--only` file (or the whole clean root)
+  with `origin/<trunk>`, refuses what it cannot read, and measures every live push on the line
+- [x] `guard-live-theme.tests.ps1`: group 10, plus merged fixtures under the existing marker cases
+- [x] README: rule 3 row and a "Merged work only" section
 
 ### TEST
 
+- [x] `guard-live-theme.tests.ps1` standalone: 249 passed, 0 failed
+
 ### DEPLOY: feat/3758-live-push-merged-only
 
-**Score:**
+`guard-live-theme` no longer lets the live-push marker authorise a push on its own (#3758). An
+authorised live push must also carry only what `origin/<trunk>` holds: every `--only` file must match
+the trunk byte for byte (a line-ending difference aside), a file the push would delete must be absent
+from the trunk too, and a push without `--only` needs a clean root whose commit equals the trunk. The
+refusal names each file and says to merge first. A pattern or directory in `--only`, a shell-expanded
+value, a `cd`, `--environment`, a `SHOPIFY_FLAG_ONLY`/`_PATH`/`_ENVIRONMENT` on the line, or a missing
+`origin/<trunk>` is refused, because what it would push cannot be read. The trunk is
+`Get-TrunkBranchName`, default `main`. A second live push on the same line is measured too.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+In a Shopify store repo, a live push of work that is not merged into the trunk is now refused even with
+the marker, so live can no longer hold work the trunk lacks, which a later push from the trunk would
+silently revert. The step-7 push `live-preflight` composes from the merged trunk passes as before.
+
+**Score:** 3
 
 #### Pull Request
 
