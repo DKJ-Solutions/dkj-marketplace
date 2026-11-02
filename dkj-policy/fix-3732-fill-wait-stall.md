@@ -39,19 +39,40 @@
 
 ### PLAN
 
+Issue #3732, split out of inbound #3729 (its ask 2). The fill wait in `backup-live-theme` and
+`push-preview` stopped at a fixed `-TimeoutMinutes`, so a copy still growing at the deadline was refused
+(measured: 661 of 909 files at 20 minutes, rising 3-4 per sample). Of the two options the issue named, the
+stall rule is taken rather than a count-scaled default: it needs no estimate of a store's copy speed, and
+it leaves #2350's reading intact (only `complete` ends the wait early; `short` is judged once the wait is
+over). The extension is bounded by a hard cap of three times the wait.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `theme-lifecycle-rules.ps1`: `Get-ThemeFillWaitDecision` (pure, `-Now` passed in) and `$script:ThemeFillHardCapFactor = 3`.
+- [x] `backup-live-theme.ps1` and `push-preview.ps1`: the poll loop asks it each round and says when it runs on past the deadline.
+- [x] `live-preflight.ps1`: the outer bound around the backup covers the hard cap (loads the lib for the factor).
+- [x] Mirror the four scripts into `plugins/dkj-subagents/dkj-subagents-shopify/scripts/`; the `theme-lifecycle` and `live-preflight` skill pages and `backup-live-theme`'s help say so.
 
 ### TEST
 
+- [x] `theme-lifecycle-rules.tests.ps1`: seven asserts on the decision (inside the wait, the measured still-growing shape, a stall, a pause inside the window, the hard cap, one sample, the factor). Run standalone: 147 pass, 0 fail.
+
 ### DEPLOY: fix/3732-fill-wait-stall
 
-**Score:**
+The theme fill wait in `backup-live-theme` and `push-preview` no longer gives up at a fixed clock while
+the copy is still growing. Past `-TimeoutMinutes` it waits on as long as the file count keeps rising, and
+stops on a stall or at three times the wait
+([#3732](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3732)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify store with a large live theme gets a verified backup on release day without knowing its copy
+speed in advance, and without a retry that duplicates live a second time. Measured on a 909-file theme:
+661 files at the old 20-minute limit, still filling.
+
+**Score:** 3
 
 #### Pull Request
 
