@@ -27,7 +27,7 @@ const norm = (c) => {
   return /^#[0-9a-f]{3}$/.test(c) ? '#' + [...c.slice(1)].map((x) => x + x).join('') : c
 }
 
-// Every code the house style defines, with the first token that holds it.
+// Every code the brand book defines, with the first token that holds it.
 const houseCodes = new Map()
 for (const m of read(houseCss).matchAll(/(--[\w-]+)\s*:([^;}]*)/g)) {
   for (const c of m[2].matchAll(colour)) if (!houseCodes.has(norm(c[0]))) houseCodes.set(norm(c[0]), m[1])
@@ -64,4 +64,4 @@ if (problems.length) {
   for (const p of problems) console.log(`  ${p}`)
   process.exit(1)
 }
-console.log(`[OK] every colour in the house style is a token (${houseSheets.length} file(s)).`)
+console.log(`[OK] every colour in the brand book is a token (${houseSheets.length} file(s)).`)

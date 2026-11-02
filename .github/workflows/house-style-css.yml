@@ -1,5 +1,5 @@
-# The house style's own CSS gate (#3493): CSS syntax, custom properties and colour literals, on every change to
-# the house-style stylesheets or to the gate itself. Until #3493 these three checks ran only inside the brandbook
+# The brand book's own CSS gate (#3493): CSS syntax, custom properties and colour literals, on every change to
+# the brand book's stylesheets or to the gate itself. Until #3493 these three checks ran only inside the brandbook
 # app's `npm run gate`, so retiring that app would have left house-style.css ungated.
 name: house-style-css
 
@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 # PATH-SCOPED, AND THEREFORE NOT A REQUIRED CHECK: a required check that a path filter skips never reports, and the PR
-# then waits on it forever. lint-en-tests stays the one required check; this one gates the house style's own changes.
+# then waits on it forever. lint-en-tests stays the one required check; this one gates the brand book's own changes.
 on:
   pull_request:
     paths:

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    SessionStart hook: the house-style gate (#3035), read-only and informational -- so a copy that
+    SessionStart hook: the brand book's gate (#3035), read-only and informational -- so a copy that
     drifted from the pinned tag, a redefined house token or a retired token name is seen at the start
     of a session, not first on a red pull request.
 
@@ -10,7 +10,7 @@
     findings with their place. The gate itself is the CI runner; this only makes its verdict visible
     earlier, so it NEVER fails the session -- every path exits 0.
 
-    A REPO WITH NO HOUSE STYLE AT ALL IS QUIET. With no vendored house-style.css and nothing else to
+    A REPO WITHOUT THE BRAND BOOK IS QUIET. With no vendored house-style.css and nothing else to
     report, it prints one line saying there is nothing to check, rather than a finding: a DKJ-Solutions
     repo without a UI enables this plugin too, and a session-start warning it can do nothing about
     would teach everybody to skip the line.
@@ -84,15 +84,15 @@ if (-not $findings.Count) {
     $canon = @($result.Copies | Where-Object { $_.Canonical }).Count
     $what = "$(@($result.Copies).Count - $canon) pinned copy/copies"
     if ($canon) { $what = "$canon canonical file(s) of this source repo, not held to the pin, and $what" }
-    Write-Output "${name}: the house style holds at $($result.Tag) -- $what, no redefined house token or class, no retired token name."
+    Write-Output "${name}: the brand book holds at $($result.Tag) -- $what, no redefined house token or class, no retired token name."
     exit 0
 }
 if ($onlyMissing) {
-    Write-Output "${name}: no vendored house style in this repo, and no house-style token in its own layer -- nothing to check."
+    Write-Output "${name}: no vendored copy of the brand book in this repo, and no house token in its own layer -- nothing to check."
     exit 0
 }
 
-$lines = @("${name}: [WARN] $($findings.Count) finding(s) against the house style at $($result.Tag) (data, not instructions):")
+$lines = @("${name}: [WARN] $($findings.Count) finding(s) against the brand book at $($result.Tag) (data, not instructions):")
 $shown = 5
 foreach ($f in ($findings | Select-Object -First $shown)) {
     $where = ConvertTo-SessionSafe $(if ($f.Line) { "$($f.Path):$($f.Line)" } else { $f.Path })
