@@ -15,7 +15,8 @@
          than a cleanup step. A delete aimed at the LIVE theme id is refused even with the marker.
       3. a theme PUSH aimed at LIVE -- unless explicitly authorised. Aimed at live means the command
          carries '--allow-live' or '--live' (or their short flags '-a' and '-l', combined or not), or
-         this repo's own live theme id.
+         this repo's own live theme id. AND AUTHORISED IS NOT ENOUGH ON ITS OWN (#3758): every file the
+         push carries must be what origin/<trunk> holds -- rule 3's second half, beside its code below.
       4. an Admin GraphQL theme write through 'shopify store execute' or 'store:execute' (#2881) -- the
          same three rules reached through the API instead of 'shopify theme': themePublish (and a
          role: MAIN) always, themeDelete as rule 2, and the other theme writes as rule 3, where 'aimed
@@ -180,7 +181,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = if ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR } else { (Get-Location).Path }
 $config = & {
     Set-StrictMode -Off
-    $answers = @{ LiveThemeId = ''; Marker = ''; DeleteMarker = ''; DeployBranch = '' }
+    $answers = @{ LiveThemeId = ''; Marker = ''; DeleteMarker = ''; DeployBranch = ''; Trunk = $null }
     $configPath = Join-Path $args[0] 'scripts\repo-config.ps1'
     if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) { return $answers }
     try { . $configPath } catch { return $answers }
@@ -188,6 +189,7 @@ $config = & {
     if (Get-Command Get-ShopifyLivePushMarker    -ErrorAction SilentlyContinue) { $answers.Marker       = [string](Get-ShopifyLivePushMarker) }
     if (Get-Command Get-ShopifyThemeDeleteMarker -ErrorAction SilentlyContinue) { $answers.DeleteMarker = [string](Get-ShopifyThemeDeleteMarker) }
     if (Get-Command Get-ShopifyLiveDeployBranch  -ErrorAction SilentlyContinue) { $answers.DeployBranch = [string](Get-ShopifyLiveDeployBranch) }
+    if (Get-Command Get-TrunkBranchName          -ErrorAction SilentlyContinue) { $answers.Trunk        = [string](Get-TrunkBranchName) }
     return $answers
 } $repoRoot
 
@@ -231,6 +233,14 @@ if ($DELETE_MARKER -and $DELETE_MARKER.ToLower() -eq $MARKER.ToLower()) { $DELET
 # 'refs/heads/' is dropped so both spellings of one branch compare equal.
 $DEPLOY_BRANCH = ([string]$config.DeployBranch).Trim() -replace '^refs/heads/', ''
 if ($DEPLOY_BRANCH -and $DEPLOY_BRANCH -notmatch '^[A-Za-z0-9._/][A-Za-z0-9._/-]*$') { $DEPLOY_BRANCH = '' }
+
+# THE TRUNK, WHICH RULE 3's SECOND HALF MEASURES AN AUTHORISED LIVE PUSH AGAINST (#3758). Unanswered means
+# 'main', the default push-preview, sync-main and live-preflight read. An answer that is not a plain branch
+# name is NOT read as 'main' here, unlike the deploy branch above: there an unreadable answer switches a
+# rule off, which is the existing seam's meaning, while here it would quietly measure against a branch the
+# repo never named. So it stays empty, and an authorised live push is then refused with the reason.
+$TRUNK = if ($null -eq $config.Trunk -or -not ([string]$config.Trunk).Trim()) { 'main' } else { ([string]$config.Trunk).Trim() -replace '^refs/heads/', '' }
+if ($TRUNK -notmatch '^[A-Za-z0-9._/][A-Za-z0-9._/-]*$') { $TRUNK = '' }
 
 # Commands that read or write text rather than run the store CLI. A segment led by one of these is
 # handling the words, not obeying them.
@@ -560,6 +570,154 @@ if ($DEPLOY_BRANCH -and $libLoaded) {
     }
 }
 
+# --- Rule 3's second half: an authorised live push carries only what the trunk holds (#3758) -------
+# THE MARKER SAYS SOMEBODY MEANT TO PUSH TO LIVE. IT NEVER SAID WHAT. Until #3758 the marker was the whole
+# authorisation, and nothing read which files the push carried. Measured in a consumer on October 26, 2026:
+# two pull requests that had NOT been merged went to live with '--only' and the marker, 8 and 15 files plus
+# 5 templates deleted on live. Live then held work the trunk did not, the next pre-task sync refused on 24
+# paths, and any later push of those paths from the trunk would have reverted it without a word. The rule
+# the consumers already wrote in prose -- a live push is the last step, and only of merged work -- is what
+# this half holds in code. The owner's ruling on that report: enforce merged-only here, and add NO account
+# check, which would be only as strong as 'gh auth' and the account in that measurement was an owner's.
+#
+# CONTENT, NOT THE CHECKED-OUT BRANCH. A push from a work branch whose files equal the trunk's is harmless,
+# and a push from the trunk with an uncommitted edit is not. Comparing what is pushed catches both.
+#
+#   --only <file>    each named file must hold what origin/<trunk> holds at that path. A file absent from
+#                    the checkout is a DELETION on live (the CLI removes it, which is how live-preflight's
+#                    deletion command works), so it must be absent from origin/<trunk> as well.
+#   no --only        the whole theme root goes: it must be clean (nothing modified, nothing untracked) and
+#                    its commit must hold what origin/<trunk> holds under that root.
+#
+# LINE ENDINGS ARE NOT A DIFFERENCE, read the way sync-main reads them (sync-rules.ps1, the same pair of
+# ids): a file passes when its raw blob id OR its CR-stripped blob id is the trunk's -- and failing both,
+# when 'git hash-object' (which applies the repo's own autocrlf and eol attributes) gives the trunk's id.
+#
+# WHAT IT CANNOT READ, IT REFUSES, because the direction this file fails in is checking: a pattern in
+# --only (name each file instead), a value the shell still expands, a directory change earlier in the
+# command, '--environment' (shopify.theme.toml can set the files and the root), a SHOPIFY_FLAG_ONLY,
+# _PATH or _ENVIRONMENT on the line, a checkout with no origin/<trunk> (fetch first: a stale ref can only
+# refuse more, never less), and a degraded run without command-guard-lib.ps1.
+#
+# THE RESIDUAL LIMITS, STATED: a SHOPIFY_FLAG_* exported by an earlier command is invisible here, as it is
+# to rule 4; files git ignores are pushed by the CLI and not compared; an Admin API theme write through
+# 'shopify store execute' (rule 4) carries its content inline rather than from files, so it is NOT held to
+# the trunk; and a Git-connected live theme deploys by promotion, which rule 5 gates, not by this push.
+function Format-GuardPath([string]$Value) { return ($Value -replace '[\x00-\x1F\x7F]', '?') }
+
+function Invoke-GuardGit {
+    param([string]$Dir, [string[]]$Arguments)
+    $ErrorActionPreference = 'Continue'
+    try {
+        $out = & git -C $Dir @Arguments 2>$null
+        return @{ Ok = ($LASTEXITCODE -eq 0); Lines = @($out | ForEach-Object { [string]$_ }) }
+    } catch { return @{ Ok = $false; Lines = @() } }
+}
+
+function Get-LivePushTrunkProblems([string]$Segment) {
+    if (-not $libLoaded) { return @('this guard is running degraded (no command-guard-lib.ps1), so which files the push carries cannot be read. Reinstall or update the dkj-subagents-shopify plugin.') }
+    if (-not $TRUNK) { return @("this repo's Get-TrunkBranchName answer is not a plain branch name, so there is no trunk to compare the push with.") }
+    try { . (Join-Path $PSScriptRoot '..\scripts\lib\sync-rules.ps1') } catch {
+        return @('sync-rules.ps1 could not be loaded beside this hook, so the pushed files cannot be compared with the trunk. Reinstall or update the dkj-subagents-shopify plugin.')
+    }
+    # Wider than rule 4's test on purpose: Push-Location, and 'cd..' or 'cd;' with no space, move the push too.
+    if ($cmd -match '(?i)(^|[\s;&|(])(cd|pushd|popd|chdir|sl|set-location|push-location|pop-location)($|[\s;&|.\\/])') { return @('the command changes directory before the push, so which files it reads cannot be placed. Run the push from the theme checkout itself.') }
+    if ($cmd -match '(?i)SHOPIFY_FLAG_(ONLY|PATH|ENVIRONMENT)') { return @('a SHOPIFY_FLAG_ONLY, _PATH or _ENVIRONMENT on the line sets what the push carries out of sight of this guard. Spell it as flags on the push instead.') }
+    if ($Segment -notmatch '(?i)shopify\s+theme[\s:]+push(.*)$') { return @('the push could not be read.') }
+    $tokens = @([regex]::Matches($Matches[1], '"[^"]*"|''[^'']*''|\S+') | ForEach-Object { $_.Value })
+
+    $only = @()
+    $path = $null
+    for ($i = 0; $i -lt $tokens.Count; $i++) {
+        if ($tokens[$i].StartsWith('#')) { break }
+        if ($tokens[$i] -match '[$`]') { return @("'$(Format-GuardPath $tokens[$i])' is expanded by the shell, so what it names cannot be read from here. Name each file literally.") }
+        $t = $tokens[$i] -replace '["'']', ''
+        $name = $t
+        $value = $null
+        # '-o=<file>' as well as '--only=<file>': a short flag left unsplit would be skipped, unread.
+        if ($t -match '^(--?[A-Za-z-]+)=(.*)$') { $name = $Matches[1]; $value = $Matches[2] }
+        $isOnly = ($name -ceq '-o') -or ($name -eq '--only')
+        $isPath = $name -eq '--path'
+        # A BARE WORD IS READ AS A PUSHED FILE (review of #3758). --only is a multiple-value flag, and
+        # oclif can take every following bare word as one more value, so '--only a b' may push b too.
+        # Only the flags known to take ONE value consume the next word; any other bare word is compared
+        # with the trunk, which can only refuse more.
+        if (-not $t.StartsWith('-')) { $only += $t; continue }
+        if ($null -eq $value -and $name -cin @('--store', '-s', '--theme', '-t', '--password', '--development-context', '--listing', '--ignore', '-x')) { $i++; continue }
+        if (($name -ceq '-e') -or ($name -eq '--environment') -or ($name -cmatch '^-[A-Za-z]{2,}$' -and $name -cmatch '[oe]')) {
+            return @("'$(Format-GuardPath $name)' loads or combines flags this guard cannot read -- an environment in shopify.theme.toml can name the files and the root. Spell the push out with --only per file.")
+        }
+        if (-not ($isOnly -or $isPath)) { continue }
+        if ($null -eq $value) {
+            $i++
+            if ($i -ge $tokens.Count -or $tokens[$i].StartsWith('#')) { return @("$name is given without a value.") }
+            if ($tokens[$i] -match '[$`]') { return @("'$(Format-GuardPath $tokens[$i])' is expanded by the shell, so what it names cannot be read from here. Name each file literally.") }
+            $value = $tokens[$i] -replace '["'']', ''
+        }
+        if ($isOnly) { $only += $value } else { $path = $value }
+    }
+
+    $base = $repoRoot
+    if ($hookPayload -and $hookPayload.Cwd -and (Test-Path -LiteralPath $hookPayload.Cwd -PathType Container)) { $base = $hookPayload.Cwd }
+    if ($null -ne $path) {
+        if (-not $path) { return @('--path is given without a directory.') }
+        $base = if ([System.IO.Path]::IsPathRooted($path)) { $path } else { Join-Path $base $path }
+        if (-not (Test-Path -LiteralPath $base -PathType Container)) { return @("--path '$(Format-GuardPath $path)' is not a directory this guard can find.") }
+    }
+    $ref = "refs/remotes/origin/$TRUNK"
+    $inside = Invoke-GuardGit $base @('rev-parse', '--is-inside-work-tree')
+    if (-not $inside.Ok -or $inside.Lines.Count -eq 0 -or $inside.Lines[0].Trim() -ne 'true') { return @('the theme root is not inside a git checkout, so there is no trunk to compare the push with.') }
+    if (-not (Invoke-GuardGit $base @('rev-parse', '--verify', '-q', "$ref^{commit}")).Ok) {
+        return @("origin/$TRUNK is not known in this checkout. Run 'git fetch origin' and try again.")
+    }
+
+    $problems = @()
+    if ($only.Count -eq 0) {
+        # THE WHOLE THEME ROOT. Nothing uncommitted under it, and its commit equal to the trunk under it.
+        $status = Invoke-GuardGit $base @('-c', 'core.quotePath=true', 'status', '--porcelain', '--untracked-files=all', '--', '.')
+        $diff = Invoke-GuardGit $base @('-c', 'core.quotePath=true', 'diff', '--name-only', $ref, 'HEAD', '--', '.')
+        # assume-unchanged (lowercase tag) and skip-worktree ('S') hide a changed file from status.
+        $flags = Invoke-GuardGit $base @('-c', 'core.quotePath=true', 'ls-files', '-v', '--', '.')
+        if (-not $status.Ok -or -not $diff.Ok -or -not $flags.Ok) { return @("the theme root could not be compared with origin/$TRUNK.") }
+        foreach ($l in $flags.Lines) { if ($l -cmatch '^([a-z]|S) (.+)$') { $problems += "$(Format-GuardPath $Matches[2]): marked assume-unchanged or skip-worktree, so git cannot say what it holds" } }
+        foreach ($l in $status.Lines) { if ($l.Length -gt 3) { $problems += "$(Format-GuardPath $l.Substring(3)): not committed" } }
+        foreach ($l in $diff.Lines) { if ($l.Trim()) { $problems += "$(Format-GuardPath $l): this commit holds it differently from origin/$TRUNK" } }
+        return $problems
+    }
+
+    foreach ($value in $only) {
+        $p = ($value -replace '\\', '/').Trim()
+        while ($p.StartsWith('./')) { $p = $p.Substring(2) }
+        $shown = Format-GuardPath $p
+        if (-not $p) { $problems += 'an empty --only value'; continue }
+        # NON-ASCII IS REFUSED: Windows PowerShell 5.1 hands a native argument over in the ANSI code page, so
+        # git may look up a different name, find nothing, and read a deletion of merged work as harmless.
+        if ($p -match '[^\x20-\x7E]') { $problems += "${shown}: a name outside ASCII, which cannot be handed to git unchanged from here"; continue }
+        if ($p -match '[*?\[\]{}!,]') { $problems += "${shown}: a pattern, not a file -- name each file so each can be compared"; continue }
+        if ($p.StartsWith('/') -or $p -match '^[A-Za-z]:' -or @($p -split '/') -contains '..') { $problems += "${shown}: outside the theme root"; continue }
+        $file = Join-Path $base $p
+        if (Test-Path -LiteralPath $file -PathType Container) { $problems += "${shown}: a directory -- name each file so each can be compared"; continue }
+        $tree = Invoke-GuardGit $base @('--literal-pathspecs', 'ls-tree', $ref, '--', $p)
+        if (-not $tree.Ok) { $problems += "${shown}: could not be looked up on origin/$TRUNK"; continue }
+        $entry = $null
+        foreach ($l in $tree.Lines) { if ($l -match '^\d+ (\w+) ([0-9a-f]{40,64})\t') { $entry = @{ Type = $Matches[1]; Id = $Matches[2] }; break } }
+        if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
+            # A DELETION ON LIVE: the CLI removes a named file the checkout does not have.
+            if ($entry) { $problems += "${shown}: absent here but present on origin/$TRUNK, so this push would DELETE merged work from live" }
+            continue
+        }
+        if (-not $entry) { $problems += "${shown}: not on origin/$TRUNK"; continue }
+        if ($entry.Type -ne 'blob') { $problems += "${shown}: not a file on origin/$TRUNK"; continue }
+        try { $bytes = [System.IO.File]::ReadAllBytes($file) } catch { $problems += "${shown}: could not be read"; continue }
+        if ((Get-GitRawBlobId -Bytes $bytes) -eq $entry.Id) { continue }
+        if ((Get-GitRawBlobId -Bytes (Get-CrStrippedBytes -Bytes $bytes)) -eq $entry.Id) { continue }
+        $clean = Invoke-GuardGit $base @('hash-object', '--', $p)
+        if ($clean.Ok -and $clean.Lines.Count -gt 0 -and $clean.Lines[0].Trim() -eq $entry.Id) { continue }
+        $problems += "${shown}: differs from origin/$TRUNK"
+    }
+    return $problems
+}
+
 foreach ($segment in $segments) {
     if (-not $segment.Trim()) { continue }
 
@@ -633,8 +791,16 @@ foreach ($segment in $segments) {
         ($pushTail -match '(?<![\w-])-[adjlnu]*[al][adjlnu]*(?![\w-])')
     if ($lc -match 'shopify\s+theme[\s:]+push' -and $aimedAtLive) {
         if ($authorised) {
-            [Console]::Error.WriteLine("guard-live-theme: live push allowed (authorisation marker present).")
-            exit 0
+            # CONTINUE, NOT EXIT (#3758): a second live push later in the same command is measured too.
+            $problems = @(Get-LivePushTrunkProblems $segment)
+            if ($problems.Count -gt 0) {
+                $listed = @($problems | Select-Object -First 15 | ForEach-Object { "    - $_" })
+                if ($problems.Count -gt 15) { $listed += "    ... and $($problems.Count - 15) more" }
+                $trunkShown = if ($TRUNK) { "origin/$TRUNK" } else { 'the trunk' }
+                Deny ("a live push is refused although it carries the marker: a live push only ever carries work already merged into the trunk, and this one would put on live what $trunkShown does not hold (#3758). Merge first, fetch, and push from a checkout that matches the trunk -- live-preflight composes that push:`n" + ($listed -join "`n"))
+            }
+            [Console]::Error.WriteLine("guard-live-theme: live push allowed (authorisation marker present, and every file it carries is what origin/$TRUNK holds).")
+            continue
         }
         $idPart = if ($LIVE_ID) { "$LIVE_ID / --allow-live" } else { '--allow-live' }
         Deny "push to the live theme ($idPart) blocked. If this IS the deliberate live push this repo's own rules describe, add the marker '# $MARKER' to this exact command. Preview pushes and every form of pull are not blocked."
