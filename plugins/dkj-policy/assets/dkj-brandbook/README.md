@@ -383,6 +383,17 @@ headings one step below the page: its `h1` is `--text-h2` now, where it was `--t
 update moves each use of `--text-lg` in its own layer to `--text-h3`.** It is a retired token, so the gate reports a
 use left behind; one that slips past renders at the inherited size rather than raising an error.
 
+### The prose headings of November 2, 2026
+
+**`.prose` sets each heading at the house token of its own level** (Maikel, November 2, 2026): `h1` at
+`--text-h1`, `h2` at `--text-h2`, `h3` at `--text-h3`, as every other heading in the house. Until that day it
+kept its headings one step below the page through three variables of its own, `--prose-h1`, `--prose-h2` and
+`--prose-h3`, so a prose `h2` was set in `--text-h3`. Those read as tokens without being in the table, and they
+are gone. `.prose--sm` names its sizes directly too: `h1` at `--text-base`, `h2` and `h3` at `--text-sm`, as
+before. **A rendered body that would add a second `h1` to its page drops its own title instead**, as the lens
+page on the hub does. **An app that read `--prose-h1` … `--prose-h3` in its own layer moves to the `--text-*`
+token it means.** The three are retired tokens, so the gate reports a use left behind.
+
 ### The colour renames of November 1, 2026
 
 **The grey, the series slots and the backgrounds are named for what they are** (Maikel, November 1, 2026): the
