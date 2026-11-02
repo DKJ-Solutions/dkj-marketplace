@@ -44,12 +44,12 @@ Maikel asked for the lens page on the hub to be made pretty. It showed the lens 
 ### CREATE
 
 - [x] Lift the release notes' markdown renderer out of its template into `scripts/release/markdown-render.js`, inlined back at `@@MARKDOWN_RENDERER@@` by the builder, registered as a mirrored pair
-- [x] Render the lens page with that same renderer: the file's name as h1 and crumb, as its card reads; frontmatter out of the body, raw text kept in a `<noscript>`
+- [x] Render the lens page with that same renderer: the file's name as h1 and crumb, as its card reads; frontmatter out of the body, raw text kept in a `<noscript>`, the card capped at 800px
 - [x] Plugin scripts README row for the new shared file
 
 ### TEST
 
-- [x] `dev-pages.tests.ps1` 558/0, `shared-scripts.tests.ps1` 1217/0, `check-plugin-integrity.ps1` 0 errors
+- [x] `dev-pages.tests.ps1` 559/0, `shared-scripts.tests.ps1` 1217/0, `check-plugin-integrity.ps1` 0 errors
 - [x] The served page rendered headlessly through the inlined renderer: headings, lists, a table, blockquotes and code all come out
 - [~] The owner's look in the browser: a visible result, so the branch waits for it instead of merging
 

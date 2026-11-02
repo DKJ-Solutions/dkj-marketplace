@@ -583,13 +583,14 @@ function Format-HubLensPageHtml {
         $renderer = [System.IO.File]::ReadAllText($script:MarkdownRendererPath, (New-Object System.Text.UTF8Encoding($false)))
         # JSON inside a <script>: every '<' is escaped, so no '</script>' in a lens can end the block early.
         $json = (ConvertTo-Json -InputObject $md -Compress) -replace '<', ('\' + 'u003c')
-        [void]$body.AppendLine('<section class="card"><div class="prose prose--fill" id="lens-body"><noscript><pre tabindex="0"><code>' + (& $e $md) + '</code></pre></noscript></div></section>')
+        [void]$body.AppendLine('<section class="card dp-lens"><div class="prose prose--fill" id="lens-body"><noscript><pre tabindex="0"><code>' + (& $e $md) + '</code></pre></noscript></div></section>')
         [void]$body.AppendLine('<script type="application/json" id="lens-md">' + $json + '</script>')
         [void]$body.AppendLine("<script>`n(function () {`n  'use strict';`n" + $renderer.TrimEnd() + "`n  document.getElementById('lens-body').innerHTML = renderMd(JSON.parse(document.getElementById('lens-md').textContent));`n})();`n</script>")
     } catch {
         [void]$body.AppendLine('<p class="msg--warn" role="alert">This lens could not be read: ' + (& $e $_.Exception.Message) + '</p>')
     }
-    return Format-GeneralPageHtml -Title $title -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref `
+    # The lens card reads as a document, so it is never wider than 800px (Maikel, November 2, 2026).
+    return Format-GeneralPageHtml -Title $title -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref -Style '.dp-lens { max-width: 800px; }' `
         -ParentCrumbs @(@{ Label = 'AI'; Href = '/ai' }, @{ Label = 'Specialists'; Href = '/ai/claude/specialists' }) -FooterNote ('Read from <code>.claude/specialists/lenses/' + (& $e $lens.Label) + '.md</code> by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.')
 }
 

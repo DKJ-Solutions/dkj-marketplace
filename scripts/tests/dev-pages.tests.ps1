@@ -138,6 +138,7 @@ try {
     $lensJson = [regex]::Match($lensPage, '<script type="application/json" id="lens-md">(.*?)</script>').Groups[1].Value
     Assert-Equal "# Derek - the DevOps Engineer`n`nBody <b>text</b>.`n" (ConvertFrom-Json $lensJson) 'its body travels as JSON for the renderer, past the frontmatter, its own # title included'
     Assert-True ($lensJson -notmatch '<' -and $lensPage -match 'renderMd\(JSON\.parse' -and $lensPage -match 'function renderMd\(' -and $lensPage -match '<noscript><pre tabindex="0"><code># Derek - the DevOps Engineer\n\nBody &lt;b&gt;text&lt;/b&gt;\.') 'with no raw < in that JSON, the house renderer inlined to draw it, and the escaped text for a reader without JavaScript'
+    Assert-True ($lensPage -match '<section class="card dp-lens">' -and $lensPage -match '\.dp-lens \{ max-width: 800px; \}') 'its card is never wider than 800px'
     Assert-True ($null -eq (Format-HubLensPageHtml -Name 'notes' -RepoRoot $lensRoot) -and $null -eq (Format-HubLensPageHtml -Name '..\..\x' -RepoRoot $lensRoot) -and $null -eq (Format-HubLensPageHtml -Name 'specialist-09-09-lens' -RepoRoot $lensRoot)) 'a name that is no lens of the repo has no page'
 } finally { Remove-Item -LiteralPath $lensRoot -Recurse -Force -ErrorAction SilentlyContinue }
 foreach ($leaf in 'rules', 'skills') {
