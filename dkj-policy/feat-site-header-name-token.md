@@ -51,7 +51,7 @@
 ### TEST
 
 - [x] `check-plugin-integrity.ps1`: 0 errors (the suites run in `open-pr`'s gate)
-- [ ] The owner looks at the header on the toolbox before the PR (a visible result)
+- [x] The owner looked at the header on the toolbox (port 4891) and approved it, November 2, 2026
 
 ### DEPLOY: feat/site-header-name-token
 
