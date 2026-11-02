@@ -893,9 +893,9 @@ function Format-HubSettingsPageHtml {
         ' Array.prototype.forEach.call(el.querySelectorAll(".theme-picker__row"), function (row) { if (!row.querySelector(".theme-swatch--" + mode)) { row.parentNode.removeChild(row); } });' +
         ' });' +
         ' document.getElementById("settings-theme-reset").addEventListener("click", function () { DKJTheme.reset(); });</script>'
-    # The reset's edge in the text colour, hover included (Dave, November 2, 2026): this page's own button by its id,
+    # The reset's edge in the primary, hover included (Dave, November 2, 2026): this page's own button by its id,
     # so no house class is redefined.
-    $style = '.hs-settings > * + * { margin-top: var(--spacing-3); }' + "`n" + '#settings-theme-reset { border-color: var(--fg-1); }'
+    $style = '.hs-settings > * + * { margin-top: var(--spacing-3); }' + "`n" + '#settings-theme-reset { border-color: var(--primary); }'
     return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $body -Style $style `
         -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
 }
