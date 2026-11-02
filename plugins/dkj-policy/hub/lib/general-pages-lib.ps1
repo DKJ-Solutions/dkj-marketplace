@@ -883,7 +883,10 @@ function Format-HubSettingsPageHtml {
     $body = '<div class="grid-2"><div class="grid__head"><h2>Theme</h2></div>' +
         '<section class="card grid__full hs-settings"><div class="card__head"><h3>Colour</h3></div><div id="settings-theme"></div>' +
         '<p><button type="button" class="btn" id="settings-theme-reset">Reset theme</button></p></section></div>' + "`n" +
+        # Its rows carry no Light/Dark label here (Dave, November 2, 2026): they are removed once drawn, and the picker
+        # never redraws its rows, so they stay gone. The header panel's picker keeps its own.
         '<script>DKJTheme.picker(document.getElementById("settings-theme"), { light: "Light", dark: "Dark" });' +
+        ' Array.prototype.forEach.call(document.querySelectorAll("#settings-theme .theme-picker__label"), function (l) { l.parentNode.removeChild(l); });' +
         ' document.getElementById("settings-theme-reset").addEventListener("click", function () { DKJTheme.reset(); });</script>'
     $style = '.hs-settings > * + * { margin-top: var(--spacing-3); }'
     return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $body -Style $style `

@@ -44,7 +44,7 @@
 - [x] `Get-GeneralPages`: a Settings card on `/settings`, with a gear icon of its own
 - [x] `Format-HubSettingsPageHtml`: the page, its h1 Settings, then a card headed by the h2 Theme over the brand book's theme picker and its reset
 - [x] `serve-general-pages.ps1`: the `/settings` route
-- [x] The picker in an h3 card, Colour, in the house group the Theme h2 heads
+- [x] The picker in an h3 card, Colour, in the house group the Theme h2 heads, its rows without the Light/Dark labels
 - [x] `house-style.css`: one padding for every card group, `--spacing-5`, the one `.grid-3` already took; the README's stale `--spacing-3` corrected
 
 ### TEST
