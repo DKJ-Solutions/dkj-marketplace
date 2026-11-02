@@ -46,6 +46,7 @@
 - [x] v6.3.0 audience notes: every h1-h3 heading at five words or fewer; the Shopify audience moved into the text
 - [x] Release-notes page template (both copies): a section with h3s takes the brand book's own grid form, as on the tokens/text page -- a `.grid-3` (`.grid-2` for two or four) with the h2 in its `.grid__head` and a house `section.card` per h3; the note drops its sheet so the cards stand on the page (`cardSubSections`)
 - [x] The template's own index `.card` rules scoped to `.cards > .card`, so their hover lift no longer reaches a house card
+- [x] v6.3.0 audience notes: a short summary under What changed, which the page sets in the grid's head above the cards
 - [x] Release-notes page rebuilt locally; the grouping checked on a simulated DOM (the hub refuses a driven browser)
 
 ### TEST
