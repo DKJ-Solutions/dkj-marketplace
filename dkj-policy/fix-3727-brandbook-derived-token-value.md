@@ -39,21 +39,35 @@
 
 ### PLAN
 
+Issue #3727, decided by Maikel on November 2, 2026: the brand book README's qualifier "outside a token's
+own value" goes, so the README follows `check-colour-literals.mjs`, which refuses a derived colour anywhere,
+a custom-property declaration included. Verified against the gate: its `derived` pattern is matched over the
+whole source, with no declaration-span exemption.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Drop the qualifier in `plugins/dkj-policy/assets/dkj-brandbook/README.md` and say outright that a token's own value may not derive either.
 
 ### TEST
 
+- [x] Doc-only change; the gates run in `ship-pr`.
+
 ### DEPLOY: fix/3727-brandbook-derived-token-value
 
-**Score:**
+The brand book README said a colour function was allowed "outside a token's own value", which read as
+permission for `--x: color-mix(…)`, while `check-colour-literals.mjs` refuses a derived colour anywhere. The
+README now follows the gate: no derived colour, a token's own value included
+([#3727](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3727)).
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer writing its own domain layer from the README could have typed a `color-mix()` token and been
+told it was allowed; the README no longer says so.
+
+**Score:** 1
 
 #### Pull Request
 
 Brand book README: a token's own value may not derive a colour either
-
