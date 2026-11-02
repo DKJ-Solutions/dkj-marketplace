@@ -467,8 +467,9 @@ draws the twelve swatches in two rows, light and dark. `DKJTheme.set(id)`, `DKJT
 `DKJTheme.current()` cover everything else. Copy it unchanged, like the stylesheet.
 
 **Or give the app the settings button, and the setting is done** ([#70](https://github.com/DKJ-Solutions/dkj-brandbook/issues/70)).
-`DKJTheme.settings(element)` draws a round toggle on the card colour with its edge in the theme's colour (a `--primary`
-border; the icon turns `--primary` under the pointer and while open; #3235), that opens a panel with the picker, the page width
+`DKJTheme.settings(element)` draws a toggle that is the icon alone, in `--fg-1`, with no fill, edge or shadow,
+and it stays `--fg-1` under the pointer and while open (Maikel, November 1, 2026; from #3235 until then it stood
+on the card colour with a `--primary` edge). The toggle opens a panel with the picker, the page width
 (below) and a reset, and returns the panel's slot (`.theme-settings__extra`), where the app puts settings of
 its own. The script owns the behaviour, so an app writes none of it: the toggle opens
 and closes the panel, Escape closes it and puts focus back on the toggle, and a click outside it or focus
