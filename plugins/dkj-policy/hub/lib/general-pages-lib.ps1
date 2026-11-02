@@ -879,10 +879,10 @@ function Format-HubSettingsPageHtml {
         pickers always agree. Nothing here is read from disk.
     #>
     param([AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
-    # The house grouping form (house-style.css, .grid-2 and .grid__head): the Theme h2 over its group's surface (--bg-2),
-    # and an h3 card per mode in its two columns, which the house sets on --bg-3 with a --bg-4 border (Dave, November 2, 2026).
+    # The house grouping form (house-style.css, .grid-3 and .grid__head): the Theme h2 over its group's surface (--bg-2),
+    # and an h3 card per mode in two of its three columns (.grid-2 until Dave asked for .grid-3, November 2, 2026), which the house sets on --bg-3 with a --bg-4 border (Dave, November 2, 2026).
     $card = { param($mode, $label) '<section class="card hs-settings"><div class="card__head"><h3>' + $label + '</h3></div><div id="settings-theme-' + $mode + '"></div></section>' }
-    $body = '<div class="grid-2"><div class="grid__head"><h2>Theme</h2></div>' + (& $card 'light' 'Light') + (& $card 'dark' 'Dark') +
+    $body = '<div class="grid-3"><div class="grid__head"><h2>Theme</h2></div>' + (& $card 'light' 'Light') + (& $card 'dark' 'Dark') +
         # The reset belongs to the whole Theme group, so it sits in the group under the cards, a row of its own, and takes the house's roomier .btn--touch (Dave, November 2, 2026).
         '<p class="grid__full"><button type="button" class="btn btn--touch" id="settings-theme-reset">Reset theme</button></p></div>' + "`n" +
         # Each card draws the whole picker and keeps only its own mode's row: the picker never redraws its rows, and a
