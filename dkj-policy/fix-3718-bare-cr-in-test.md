@@ -41,17 +41,23 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The `/plugins` redirect assert in `consumer-dashboard.tests.ps1` writes `\r` as the regex escape, like its siblings, instead of a raw carriage-return byte; the file holds no bare CR any more.
 
 ### TEST
 
+- [x] `ship-pr` runs the gate.
+
 ### DEPLOY: fix/3718-bare-cr-in-test
 
-**Score:**
+A consumer-dashboard test held a raw carriage-return byte inside a regex, so any edit through a tool that reads with universal newlines silently turned it into a line break and the assert went red with no visible change. It now writes the escape `\r`, as its neighbours do ([#3718](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3718)).
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A -- a test in this repo; nothing a plugin user takes changes.
+
+**Score:** N/A
 
 #### Pull Request
 

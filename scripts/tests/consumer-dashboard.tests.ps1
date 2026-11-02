@@ -506,7 +506,7 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
             $r = if ($up) { Get-Raw 'GET' '/specialists/alpha/paula' "localhost:$port3" '' $port3 } else { '' }
             Assert-True ($r -match 'HTTP/1.1 303' -and $r -match 'Location: /marketplace/dkj-subagents/dkj-subagents-alpha/paula\r') 'an old Specialists address sends an old link to the same page under its team (the owner, October 28, 2026)'
             $r = if ($up) { Get-Raw 'GET' '/plugins/p-one' "localhost:$port3" '' $port3 } else { '' }
-            Assert-True ($r -match 'HTTP/1.1 303' -and $r -match 'Location: /marketplace/p-one') 'an old /plugins address sends an old link to the same page under /marketplace, the url following the h1 (Maikel, October 30, 2026)'
+            Assert-True ($r -match 'HTTP/1.1 303' -and $r -match 'Location: /marketplace/p-one\r') 'an old /plugins address sends an old link to the same page under /marketplace, the url following the h1 (Maikel, October 30, 2026)'
             $r = if ($up) { Get-Raw 'GET' '/dkj-repos' "localhost:$port3" '' $port3 } else { '' }
             Assert-True ($r -match 'HTTP/1.1 303' -and $r -match 'Location: /consumers/dkj\r') 'the old /dkj-repos sends an old link to /consumers/dkj, which holds the repos on GitHub since #3549'
             Assert-True ($home3 -match 'The toolbox is not running' -and $home3 -notmatch 'href="http://localhost' -and $home3 -notmatch 'href="/brandbook' -and $home3 -notmatch 'href="/test-gate"') 'with no state file it says the hub is not running, and links no general page of its own'
