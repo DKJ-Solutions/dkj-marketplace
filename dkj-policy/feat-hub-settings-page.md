@@ -44,7 +44,7 @@
 - [x] `Get-GeneralPages`: a Settings card on `/settings`, with a gear icon of its own
 - [x] `Format-HubSettingsPageHtml`: the page, its h1 Settings, then a card headed by the h2 Theme over the brand book's theme picker and its reset
 - [x] `serve-general-pages.ps1`: the `/settings` route
-- [x] Two h3 cards on one row in the house group the Theme h2 heads, Light and Dark, each the picker cut to its own mode's row; the reset in the group under them
+- [x] Two h3 cards on one row in the house group the Theme h2 heads, Light and Dark, each the picker cut to its own mode's row; above them a Light/Dark toggle (the house `.seg`) that shows one card at a time, opening on the current theme's mode; the reset in the group under them
 - [x] `house-style.css`: one padding for every card group, `--spacing-5`, the one `.grid-3` already took; the README's stale `--spacing-3` corrected
 
 ### TEST
@@ -54,7 +54,7 @@
 
 ### DEPLOY: feat/hub-settings-page
 
-The toolbox hub gets a **Settings** card, after Installed plugins and in the site header's menu. Its page, `/settings`, opens on an h2 **Theme** with the brand book's own theme picker split over two h3 cards on one row, **Light** and **Dark**, and a reset under them -- the same choice the header's settings button makes, so the two always agree.
+The toolbox hub gets a **Settings** card, after Installed plugins and in the site header's menu. Its page, `/settings`, opens on an h2 **Theme** with the brand book's own theme picker split over two h3 cards, **Light** and **Dark**, with a Light/Dark toggle above them that shows one at a time, and a reset under them -- the same choice the header's settings button makes, so the two always agree.
 
 **Score:** 2
 
