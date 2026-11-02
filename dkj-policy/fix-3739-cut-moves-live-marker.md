@@ -39,19 +39,30 @@
 
 ### PLAN
 
+Direction 1 of #3739, as the owner decided on November 2, 2026: the cut moves the marker.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Move-ReleaseHistoryLiveMarker` in `release-lib.ps1`: takes the one marked row's marker off and puts it, as written, in the same cell of the new row; reports `none` or `ambiguous` and changes nothing then
+- [x] `cut-release.ps1` calls it before inserting the row, only in a repo with a live stage and not under `-NoLivePushRecord`
+- [x] the fallback's docstring in `build-release-notes-page.ps1` no longer says a live-stage repo moves the marker by hand
+- [x] mirrors regenerated with `build-shared-scripts.ps1`
 
 ### TEST
 
+- [x] `release-lib.tests.ps1`: moved (version cell with arrow, title cell without), none, two marked rows, a mention in prose, and a title containing the word "live" -- 637 asserts pass standalone
+
 ### DEPLOY: fix/3739-cut-moves-live-marker
 
-**Score:**
+In a repo with a live stage, `cut-release.ps1` now moves a `**LIVE**` marker in the release history onto the row it writes, into the same cell and with its arrow, because the cut runs after the push and the new version is the live one. Until now the marker stayed on the previous row, so the release-notes page labelled the replaced version live after every promote-then-cut. `-NoLivePushRecord` leaves the marker where it is, a repo without a live stage is not touched, and a table marking more than one row gets a warning instead of a guess ([#3739](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3739)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer store that promotes to live and then cuts no longer has to move the `**LIVE**` marker by hand after every release: its release-notes page names the version that is actually live from the moment the cut lands.
+
+**Score:** 3
 
 #### Pull Request
 
