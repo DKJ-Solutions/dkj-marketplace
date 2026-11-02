@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**9 / 15 minor entries** <!-- pending-tally -->
+**10 / 16 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/site-header-name-token · 20261102-131936Z
+
+The site header loses its mark and its name grows. The name -- the repo name and `toolbox` on every hub
+page -- has a type token of its own, `--text-title`, at 20px, just under `h2`, where it was `--text-h3`
+(16px), so the header can be tuned without moving every `h2`. The organisation's initials in front of it,
+`.site-header__mark`, are retired: the header carries the name alone (Dave, November 2, 2026).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every hub page shows a header with the name alone, larger. An app with its own site header that takes the
+new stylesheet drops the `.site-header__mark` span, which no longer has a rule, and can size its own header
+name with `--text-title`.
+
+**Score:** 3
+
+#### Pull Request
+
+The site header without its mark, and a --text-title token for its name
+
+Plugins: dkj-policy
+
+[PR #3746](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3746)
+
+---
 
 ### DEPLOY: feat/hub-cards-ungrouped · 20261102-122251Z
 
