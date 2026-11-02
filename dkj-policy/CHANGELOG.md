@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**4 / 5 minor entries** <!-- pending-tally -->
+**4 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/3722-settings-toggle-readme · 20261102-092752Z
+
+The brand book README describes the settings toggle as `house-style.css` draws it: the icon alone, in
+`--fg-1`, with no fill, edge or shadow, and no colour change under the pointer or while open. Until now
+it still described the `--primary` edge the toggle lost on November 1, 2026
+([#3722](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3722)).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A doc sentence that disagreed with what renders; nothing an app does changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+Brand book README describes the icon-only settings toggle
+
+Plugins: dkj-policy
+
+[PR #3726](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3726)
+
+---
 
 ### DEPLOY: fix/3729-preflight-backup-timeout · 20261102-091721Z
 
