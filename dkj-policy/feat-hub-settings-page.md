@@ -44,6 +44,8 @@
 - [x] `Get-GeneralPages`: a Settings card on `/settings`, with a gear icon of its own
 - [x] `Format-HubSettingsPageHtml`: the page, its h1 Settings, then a card headed by the h2 Theme over the brand book's theme picker and its reset
 - [x] `serve-general-pages.ps1`: the `/settings` route
+- [x] The picker in an h3 card, Colour, in the house group the Theme h2 heads
+- [x] `house-style.css`: one padding for every card group, `--spacing-5`, the one `.grid-3` already took; the README's stale `--spacing-3` corrected
 
 ### TEST
 
@@ -52,11 +54,13 @@
 
 ### DEPLOY: feat/hub-settings-page
 
-The toolbox hub gets a **Settings** card, after Installed plugins and in the site header's menu. Its page, `/settings`, opens on an h2 **Theme** with the brand book's own theme picker and a reset under it -- the same choice the header's settings button makes, so the two always agree.
+The toolbox hub gets a **Settings** card, after Installed plugins and in the site header's menu. Its page, `/settings`, opens on an h2 **Theme** with the brand book's own theme picker and a reset under it, in an h3 card Colour -- the same choice the header's settings button makes, so the two always agree.
 
 **Score:** 2
 
 #### What makes this deploy extra special
+
+The brand book gives every card group the same padding: `.grid-2` and `.card-grid` now take `--spacing-5` (20px), as `.grid-3` already did, so a two-column group no longer sits tighter than a three-column one.
 
 Every repo running dkj-policy gets the card on its toolbox: the theme is now one click from the hub, on a page of its own rather than only behind the header's gear.
 
