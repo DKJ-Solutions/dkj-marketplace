@@ -94,7 +94,7 @@ jobs:
             plugins/dkj-policy/dkj-solutions/skills/house-style
           persist-credentials: false
 
-      - name: The house style holds
+      - name: The brand book holds
         shell: pwsh
         env:
           CLAUDE_PROJECT_DIR: ${{ github.workspace }}
