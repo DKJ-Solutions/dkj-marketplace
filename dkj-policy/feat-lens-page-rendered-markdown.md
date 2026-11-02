@@ -39,19 +39,35 @@
 
 ### PLAN
 
+Maikel asked for the lens page on the hub to be made pretty. It showed the lens file raw in a `<pre>`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Lift the release notes' markdown renderer out of its template into `scripts/release/markdown-render.js`, inlined back at `@@MARKDOWN_RENDERER@@` by the builder, registered as a mirrored pair
+- [x] Render the lens page with that same renderer: the lens's own title as h1 and crumb, frontmatter and title out of the body, raw text kept in a `<noscript>`
+- [x] Plugin scripts README row for the new shared file
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1` 559/0, `shared-scripts.tests.ps1` 1217/0, `check-plugin-integrity.ps1` 0 errors
+- [x] The served page rendered headlessly through the inlined renderer: headings, lists, a table, blockquotes and code all come out
+- [~] The owner's look in the browser: a visible result, so the branch waits for it instead of merging
+
 ### DEPLOY: feat/lens-page-rendered-markdown
 
-**Score:**
+A specialist lens's page in the toolbox (`/ai/claude/specialists/lenses/<name>`) now shows the lens as formatted
+text instead of raw markdown: its own title as the heading, then headings, lists, tables, quotes and code in the
+house `.prose` style. It is drawn by the same small renderer the release-notes pages use, which moved out of their
+template into `scripts/release/markdown-render.js` so both pages inline one file rather than each carrying a
+renderer of its own. A reader without JavaScript still gets the raw text.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Anyone who opens a lens in their toolbox reads it as a formatted document rather than as source.
+
+**Score:** 2
 
 #### Pull Request
 

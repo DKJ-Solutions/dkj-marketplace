@@ -556,24 +556,41 @@ function Get-HubLensPages {
     }
 }
 
+# The house's one markdown renderer, beside the release-notes template in this plugin (Format-HubLensPageHtml).
+$script:MarkdownRendererPath = Join-Path $PSScriptRoot '..\..\scripts\release\markdown-render.js'
+
 function Format-HubLensPageHtml {
     <#
-        One specialist lens's own page on /ai/claude/specialists/lenses/<name> (Get-HubLensPages): an h1 with the file's
-        name, and the file's text, escaped, in a card, under Tools > AI > Specialists. $null for a name the repo has no lens of.
+        One specialist lens's own page on /ai/claude/specialists/lenses/<name> (Get-HubLensPages), under Tools > AI >
+        Specialists: the lens's own '# ' title as the h1 and the last crumb (the file's name where it has none), and the
+        rest of the file RENDERED as markdown in a .prose card (Maikel, November 2, 2026) -- past its frontmatter and that
+        title, which the h1 already says. The renderer is the house's one, markdown-render.js beside the release-notes
+        template, inlined here the way that template inlines it, so one format keeps one renderer. The markdown travels
+        as JSON in a <script type="application/json">, and the raw text stays in a <noscript> for a reader without
+        JavaScript. $null for a name the repo has no lens of.
     #>
     param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyString()][string]$RepoRoot = '', [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
     $lens = @(Get-HubLensPages -RepoRoot $RepoRoot | Where-Object { $_.Label -ceq $Name })[0]
     if (-not $lens) { return $null }
     $e = { param($v) ConvertTo-GeneralPageText $v }
+    $title = if ($lens.Sub) { $lens.Sub } else { $lens.Label }
     $body = New-Object System.Text.StringBuilder
-    [void]$body.AppendLine('<div><h1>' + (& $e $lens.Label) + '</h1></div>')
+    [void]$body.AppendLine('<div><h1>' + (& $e $title) + '</h1></div>')
     try {
-        $text = [System.IO.File]::ReadAllText($lens.Path, (New-Object System.Text.UTF8Encoding($false)))
-        [void]$body.AppendLine('<section class="card"><div class="prose prose--fill"><pre tabindex="0"><code>' + (& $e $text) + '</code></pre></div></section>')
+        $text = [System.IO.File]::ReadAllText($lens.Path, (New-Object System.Text.UTF8Encoding($false))) -replace "`r`n", "`n"
+        # The frontmatter is the roster's data, and the first '# ' title is the h1 above: neither is body.
+        $md = [regex]::Replace($text, '\A---\n[\s\S]*?\n---\n', '')
+        $md = ([regex]::Replace($md, '\A\s*#[ \t]+.*\n', '')).TrimStart("`n")
+        $renderer = [System.IO.File]::ReadAllText($script:MarkdownRendererPath, (New-Object System.Text.UTF8Encoding($false)))
+        # JSON inside a <script>: every '<' is escaped, so no '</script>' in a lens can end the block early.
+        $json = (ConvertTo-Json -InputObject $md -Compress) -replace '<', ('\' + 'u003c')
+        [void]$body.AppendLine('<section class="card"><div class="prose prose--fill" id="lens-body"><noscript><pre tabindex="0"><code>' + (& $e $md) + '</code></pre></noscript></div></section>')
+        [void]$body.AppendLine('<script type="application/json" id="lens-md">' + $json + '</script>')
+        [void]$body.AppendLine("<script>`n(function () {`n  'use strict';`n" + $renderer.TrimEnd() + "`n  document.getElementById('lens-body').innerHTML = renderMd(JSON.parse(document.getElementById('lens-md').textContent));`n})();`n</script>")
     } catch {
         [void]$body.AppendLine('<p class="msg--warn" role="alert">This lens could not be read: ' + (& $e $_.Exception.Message) + '</p>')
     }
-    return Format-GeneralPageHtml -Title $lens.Label -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref `
+    return Format-GeneralPageHtml -Title $title -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref `
         -ParentCrumbs @(@{ Label = 'AI'; Href = '/ai' }, @{ Label = 'Specialists'; Href = '/ai/claude/specialists' }) -FooterNote ('Read from <code>.claude/specialists/lenses/' + (& $e $lens.Label) + '.md</code> by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.')
 }
 
