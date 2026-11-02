@@ -53,6 +53,8 @@ The repair names real mechanisms (`Get-TrunkBranchName`, sync-rules' raw and CR-
 ### TEST
 
 - [x] `guard-live-theme.tests.ps1` standalone: 249 passed, 0 failed
+- [x] Code and security review: five ways around the first cut closed, each with a case (`Push-Location`
+  and `cd..`, `-o=<file>`, a non-ASCII name, a bare word after `--only`, a skip-worktree file); 255 passed
 
 ### DEPLOY: feat/3758-live-push-merged-only
 

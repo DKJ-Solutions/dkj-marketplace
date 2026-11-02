@@ -620,7 +620,8 @@ function Get-LivePushTrunkProblems([string]$Segment) {
     try { . (Join-Path $PSScriptRoot '..\scripts\lib\sync-rules.ps1') } catch {
         return @('sync-rules.ps1 could not be loaded beside this hook, so the pushed files cannot be compared with the trunk. Reinstall or update the dkj-subagents-shopify plugin.')
     }
-    if ($cmd -match '(^|[\s;&|(])(cd|pushd|set-location|sl|chdir)\s') { return @('the command changes directory before the push, so which files it reads cannot be placed. Run the push from the theme checkout itself.') }
+    # Wider than rule 4's test on purpose: Push-Location, and 'cd..' or 'cd;' with no space, move the push too.
+    if ($cmd -match '(?i)(^|[\s;&|(])(cd|pushd|popd|chdir|sl|set-location|push-location|pop-location)($|[\s;&|.\\/])') { return @('the command changes directory before the push, so which files it reads cannot be placed. Run the push from the theme checkout itself.') }
     if ($cmd -match '(?i)SHOPIFY_FLAG_(ONLY|PATH|ENVIRONMENT)') { return @('a SHOPIFY_FLAG_ONLY, _PATH or _ENVIRONMENT on the line sets what the push carries out of sight of this guard. Spell it as flags on the push instead.') }
     if ($Segment -notmatch '(?i)shopify\s+theme[\s:]+push(.*)$') { return @('the push could not be read.') }
     $tokens = @([regex]::Matches($Matches[1], '"[^"]*"|''[^'']*''|\S+') | ForEach-Object { $_.Value })
@@ -633,9 +634,16 @@ function Get-LivePushTrunkProblems([string]$Segment) {
         $t = $tokens[$i] -replace '["'']', ''
         $name = $t
         $value = $null
-        if ($t -match '^(--[A-Za-z-]+)=(.*)$') { $name = $Matches[1]; $value = $Matches[2] }
+        # '-o=<file>' as well as '--only=<file>': a short flag left unsplit would be skipped, unread.
+        if ($t -match '^(--?[A-Za-z-]+)=(.*)$') { $name = $Matches[1]; $value = $Matches[2] }
         $isOnly = ($name -ceq '-o') -or ($name -eq '--only')
         $isPath = $name -eq '--path'
+        # A BARE WORD IS READ AS A PUSHED FILE (review of #3758). --only is a multiple-value flag, and
+        # oclif can take every following bare word as one more value, so '--only a b' may push b too.
+        # Only the flags known to take ONE value consume the next word; any other bare word is compared
+        # with the trunk, which can only refuse more.
+        if (-not $t.StartsWith('-')) { $only += $t; continue }
+        if ($null -eq $value -and $name -cin @('--store', '-s', '--theme', '-t', '--password', '--development-context', '--listing', '--ignore', '-x')) { $i++; continue }
         if (($name -ceq '-e') -or ($name -eq '--environment') -or ($name -cmatch '^-[A-Za-z]{2,}$' -and $name -cmatch '[oe]')) {
             return @("'$(Format-GuardPath $name)' loads or combines flags this guard cannot read -- an environment in shopify.theme.toml can name the files and the root. Spell the push out with --only per file.")
         }
@@ -668,7 +676,10 @@ function Get-LivePushTrunkProblems([string]$Segment) {
         # THE WHOLE THEME ROOT. Nothing uncommitted under it, and its commit equal to the trunk under it.
         $status = Invoke-GuardGit $base @('-c', 'core.quotePath=true', 'status', '--porcelain', '--untracked-files=all', '--', '.')
         $diff = Invoke-GuardGit $base @('-c', 'core.quotePath=true', 'diff', '--name-only', $ref, 'HEAD', '--', '.')
-        if (-not $status.Ok -or -not $diff.Ok) { return @("the theme root could not be compared with origin/$TRUNK.") }
+        # assume-unchanged (lowercase tag) and skip-worktree ('S') hide a changed file from status.
+        $flags = Invoke-GuardGit $base @('-c', 'core.quotePath=true', 'ls-files', '-v', '--', '.')
+        if (-not $status.Ok -or -not $diff.Ok -or -not $flags.Ok) { return @("the theme root could not be compared with origin/$TRUNK.") }
+        foreach ($l in $flags.Lines) { if ($l -cmatch '^([a-z]|S) (.+)$') { $problems += "$(Format-GuardPath $Matches[2]): marked assume-unchanged or skip-worktree, so git cannot say what it holds" } }
         foreach ($l in $status.Lines) { if ($l.Length -gt 3) { $problems += "$(Format-GuardPath $l.Substring(3)): not committed" } }
         foreach ($l in $diff.Lines) { if ($l.Trim()) { $problems += "$(Format-GuardPath $l): this commit holds it differently from origin/$TRUNK" } }
         return $problems
@@ -679,6 +690,9 @@ function Get-LivePushTrunkProblems([string]$Segment) {
         while ($p.StartsWith('./')) { $p = $p.Substring(2) }
         $shown = Format-GuardPath $p
         if (-not $p) { $problems += 'an empty --only value'; continue }
+        # NON-ASCII IS REFUSED: Windows PowerShell 5.1 hands a native argument over in the ANSI code page, so
+        # git may look up a different name, find nothing, and read a deletion of merged work as harmless.
+        if ($p -match '[^\x20-\x7E]') { $problems += "${shown}: a name outside ASCII, which cannot be handed to git unchanged from here"; continue }
         if ($p -match '[*?\[\]{}!,]') { $problems += "${shown}: a pattern, not a file -- name each file so each can be compared"; continue }
         if ($p.StartsWith('/') -or $p -match '^[A-Za-z]:' -or @($p -split '/') -contains '..') { $problems += "${shown}: outside the theme root"; continue }
         $file = Join-Path $base $p

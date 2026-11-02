@@ -802,6 +802,13 @@ function Get-ShopifyLiveDeployBranch { return 'live' }
     Assert-Equal 2 (Invoke-Guard -Command "$push $mk" -Root $m) 'refused: a whole-theme push with an untracked file in the root'
     Remove-Item -LiteralPath (Join-Path $m 'assets\stray.css') -Force
 
+    # A change git status cannot see: skip-worktree hides it from the whole-root check.
+    Invoke-FixtureGitIn $m update-index --skip-worktree assets/x.css
+    [System.IO.File]::WriteAllText($css, "body { color: blue; }`n", $Utf8NoBom)
+    Assert-Equal 2 (Invoke-Guard -Command "$push $mk" -Root $m) 'refused: a whole-theme push over a skip-worktree file'
+    Invoke-FixtureGitIn $m update-index --no-skip-worktree assets/x.css
+    Invoke-FixtureGitIn $m checkout -q -- assets/x.css
+
     # A second live push in the same command is measured too: the first no longer ends the run.
     [System.IO.File]::WriteAllText($css, "body { color: blue; }`n", $Utf8NoBom)
     Assert-Equal 2 (Invoke-Guard -Command "$push --only layout/theme.liquid $mk${LF}$push --only assets/x.css $mk" -Root $m) 'refused: an unmerged file in a SECOND push on the same command, after a first that passes'
@@ -816,7 +823,13 @@ function Get-ShopifyLiveDeployBranch { return 'live' }
         @{ n = 'a short -e';                          c = "$push -e production --only assets/x.css $mk" },
         @{ n = 'a directory change first';            c = "cd sub && $push --only assets/x.css $mk" },
         @{ n = 'SHOPIFY_FLAG_ONLY on the line';       c = "SHOPIFY_FLAG_ONLY=assets/new.css $push $mk" },
-        @{ n = 'a path outside the theme root';       c = "$push --only ../other/x.css $mk" }
+        @{ n = 'a path outside the theme root';       c = "$push --only ../other/x.css $mk" },
+        # Review of #3758: each of these was read as harmless in the first cut.
+        @{ n = 'Push-Location first';                 c = "Push-Location sub; $push --only assets/x.css $mk" },
+        @{ n = 'cd.. with no space';                  c = "cd..; $push --only assets/x.css $mk" },
+        @{ n = 'a value given as -o=<value> is read'; c = "$push --only layout/theme.liquid -o=assets/*.css $mk" },
+        @{ n = 'a non-ASCII name';                    c = "$push --only assets/caf" + [char]0x00E9 + ".css $mk" },
+        @{ n = 'a second bare word after --only';     c = "$push --only layout/theme.liquid assets/*.css $mk" }
     )
     foreach ($case in $unreadable) { Assert-Equal 2 (Invoke-Guard -Command $case.c -Root $m) "refused: $($case.n)" }
 
