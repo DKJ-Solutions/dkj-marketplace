@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**6 / 11 minor entries** <!-- pending-tally -->
+**7 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/hub-performance-under-ai · 20261102-111836Z
+
+The hub's Performance card moved into the AI page's Claude section, beside Rules, Skills and Specialists, and the
+Test gate moved from the Clock to the GitHub page, beside Issues and Actions. The hub home carries the AI card in
+Performance's old place. Every route is unchanged; only the cards and the breadcrumb trails moved
+(Tools > AI > Performance > Clock, Tools > GitHub > Test gate).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every repo's toolbox reads differently: Performance is under AI and the Test gate under GitHub. No link breaks,
+because no route changed.
+
+**Score:** 2
+
+#### Pull Request
+
+Move Performance under AI > Claude and the Test gate under GitHub
+
+Plugins: dkj-policy
+
+[PR #3742](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3742)
+
+---
 
 ### DEPLOY: feat/3704-hub-brandbook-route · 20261102-110036Z
 
