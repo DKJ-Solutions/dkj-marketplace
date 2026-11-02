@@ -843,6 +843,8 @@ a.menu-item:hover { background: var(--bg-3); }
    no h1, h2 or h3 does (Maikel, November 1, 2026), so .menu-item__title is gone and its place in the label styles it. */
 .menu-item__value { display: block; margin-top: var(--spacing-1); font-size: var(--text-base); font-weight: var(--font-weight-light); color: var(--fg-1); }
 .menu-item__label > :is(h2, h3) { margin: 0; }
+/* The description stands --spacing-1 under the card's title (Maikel, November 2, 2026; it touched it). */
+.menu-item__label > :is(h2, h3) + .menu-item__sub { margin-top: var(--spacing-1); }
 .menu-item > .badge { flex: none; }
 /* A card's title is ONE line, cut off with an ellipsis where it does not fit the card's width (owner, October 28,
    2026): the plain label's first line, or the h2. A mark after the h2's label (Format-HubCardLinkHtml -TitleBadgeHtml:

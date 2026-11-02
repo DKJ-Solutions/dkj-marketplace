@@ -406,6 +406,7 @@ retired, so an app that takes this update changes nothing of its own:
 | `--text-h2` | 22px | 20px, the size `--text-title` already had |
 | `.page-column`'s `gap` | `--spacing-3` (12px) | `--spacing-5` (20px) |
 | `.menu-item`'s `gap`, between icon, label and chevron | `--spacing-4` (16px) | `--spacing-6` (24px) |
+| A card title's `.menu-item__sub` under its `h2` or `h3` | no space | `--spacing-1` (4px) |
 
 ### `.prose` retired, November 2, 2026
 
