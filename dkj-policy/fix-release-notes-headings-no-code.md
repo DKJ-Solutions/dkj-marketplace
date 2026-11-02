@@ -44,7 +44,8 @@
 - [x] v6.3.0 audience notes: two headings reworded to plain words, the class names stay in the text under them
 - [x] Brand book README rule 8 and the dkj-brandbook skill: a heading has five words at most
 - [x] v6.3.0 audience notes: every h1-h3 heading at five words or fewer; the Shopify audience moved into the text
-- [x] Release-notes page template (both copies): a section with h3s becomes a grid of cards, one per h3 and its text (`cardSubSections`)
+- [x] Release-notes page template (both copies): a section with h3s takes the brand book's own grid form, as on the tokens/text page -- a `.grid-3` (`.grid-2` for two or four) with the h2 in its `.grid__head` and a house `section.card` per h3; the note drops its sheet so the cards stand on the page (`cardSubSections`)
+- [x] The template's own index `.card` rules scoped to `.cards > .card`, so their hover lift no longer reaches a house card
 - [x] Release-notes page rebuilt locally; the grouping checked on a simulated DOM (the hub refuses a driven browser)
 
 ### TEST
@@ -57,8 +58,8 @@
 The brand book gains rule 8 (Maikel, November 2, 2026): an `h1`, `h2` or `h3` has five words at most,
 in its README and in the `dkj-brandbook` skill. The v6.3.0 release notes now follow rules 7 and 8: no
 `code` element in a heading, and every heading at five words or fewer. Who a change is for moved into the
-text under it. On the release-notes page each h3 and its text now stand in a card of their own, in the
-same grid a section's points already took. A gate in the release-note form check is #3752.
+text under it. On the release-notes page each h3 and its text now stand in a house card of their own, in
+the grid form the brand book's own pages use, and the note no longer wraps them in a panel. A gate in the release-note form check is #3752.
 
 **Score:** 1
 
