@@ -372,7 +372,8 @@
   // A SECTION OF POINTS BECOMES A GRID (owner, October 27, 2026). Done on the rendered DOM rather than
   // inside renderMd, so the renderer stays a plain markdown renderer. A section is everything between two
   // h2s; it qualifies only when it holds nothing but paragraphs and lists and adds up to two points or
-  // more -- a section with a table, code or a sub-heading has a shape of its own and is left alone, and a
+  // more -- a section with a table or code has a shape of its own and is left alone (one with h3s takes
+  // cardSubSections above instead), and a
   // single point gains nothing from a grid. Each paragraph is a point, and so is each item of a list.
   // A card whose first paragraph OPENS with a bold sentence gets that sentence as its h3 -- never an h2,
   // which is the section heading standing above the grid (the house style's rule, #3175) -- and the rest
@@ -392,6 +393,27 @@
     if (!/\S/.test(p.textContent)) { cell.removeChild(p); }
   }
 
+  // A SECTION OF SUB-SECTIONS BECOMES A GRID OF CARDS (Maikel, November 2, 2026). Where an h2's section
+  // carries h3s, each h3 and everything under it up to the next h3 is one card, in the same grid the points
+  // take. What stands before the first h3 stays where it is. The h3 already titles the card, so nothing is
+  // lifted.
+  function cardSubSections(article, nodes) {
+    var first = -1;
+    nodes.forEach(function (n, i) { if (first < 0 && n.tagName === 'H3') { first = i; } });
+    var grid = document.createElement('div');
+    grid.className = 'note-grid';
+    article.insertBefore(grid, nodes[first]);
+    var cell = null;
+    nodes.slice(first).forEach(function (n) {
+      if (n.tagName === 'H3') {
+        cell = document.createElement('div');
+        cell.className = 'note-cell';
+        grid.appendChild(cell);
+      }
+      cell.appendChild(n);
+    });
+  }
+
   function gridNoteSections(article) {
     var kids = Array.prototype.slice.call(article.children);
     var runs = [];
@@ -402,6 +424,7 @@
     });
     runs.forEach(function (nodes) {
       if (!nodes.length) { return; }
+      if (nodes.some(function (n) { return n.tagName === 'H3'; })) { cardSubSections(article, nodes); return; }
       var plain = nodes.every(function (n) { return /^(P|UL|OL)$/.test(n.tagName); });
       if (!plain) { return; }
       var points = [];

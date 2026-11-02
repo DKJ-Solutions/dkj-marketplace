@@ -44,7 +44,8 @@
 - [x] v6.3.0 audience notes: two headings reworded to plain words, the class names stay in the text under them
 - [x] Brand book README rule 8 and the dkj-brandbook skill: a heading has five words at most
 - [x] v6.3.0 audience notes: every h1-h3 heading at five words or fewer; the Shopify audience moved into the text
-- [x] Release-notes page rebuilt locally
+- [x] Release-notes page template (both copies): a section with h3s becomes a grid of cards, one per h3 and its text (`cardSubSections`)
+- [x] Release-notes page rebuilt locally; the grouping checked on a simulated DOM (the hub refuses a driven browser)
 
 ### TEST
 
@@ -56,7 +57,8 @@
 The brand book gains rule 8 (Maikel, November 2, 2026): an `h1`, `h2` or `h3` has five words at most,
 in its README and in the `dkj-brandbook` skill. The v6.3.0 release notes now follow rules 7 and 8: no
 `code` element in a heading, and every heading at five words or fewer. Who a change is for moved into the
-text under it. A gate in the release-note form check is #3752.
+text under it. On the release-notes page each h3 and its text now stand in a card of their own, in the
+same grid a section's points already took. A gate in the release-note form check is #3752.
 
 **Score:** 1
 
@@ -68,5 +70,5 @@ A session building a page in a DKJ-Solutions repo now keeps every heading to fiv
 
 #### Pull Request
 
-Brand book: headings of five words at most, applied to the v6.3.0 notes
+Release notes: short headings, no code in them, each h3 section a card
 
