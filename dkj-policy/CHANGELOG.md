@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**6 / 9 minor entries** <!-- pending-tally -->
+**6 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3725-specimen-sample-text · 20261102-102200Z
+
+The House style page's Graphs and Status samples show their token name under the swatch instead of inside it,
+so four of them no longer type `color: #000` for text on a light fill
+([#3725](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3725)). The page now passes the brand book's
+colour check without an allowlist entry.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+The House style page's light specimen samples read a token for their text
+
+Plugins: dkj-policy
+
+[PR #3738](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3738)
+
+---
 
 ### DEPLOY: feat/3691-remove-check-connectors-forwarder · 20261102-100241Z
 
