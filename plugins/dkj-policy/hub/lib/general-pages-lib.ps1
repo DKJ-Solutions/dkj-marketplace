@@ -891,6 +891,8 @@ function Format-HubSettingsPageHtml {
         ' var el = document.getElementById("settings-theme-" + mode);' +
         ' DKJTheme.picker(el, { light: "Light", dark: "Dark" });' +
         ' Array.prototype.forEach.call(el.querySelectorAll(".theme-picker__row"), function (row) { if (!row.querySelector(".theme-swatch--" + mode)) { row.parentNode.removeChild(row); } });' +
+        # And its row label goes too: the card's h3 already names the mode (Dave, November 2, 2026). The header panel keeps its own.
+        ' Array.prototype.forEach.call(el.querySelectorAll(".theme-picker__label"), function (l) { l.parentNode.removeChild(l); });' +
         ' });' +
         ' document.getElementById("settings-theme-reset").addEventListener("click", function () { DKJTheme.reset(); });</script>'
     # The reset's edge in the primary, hover included (Dave, November 2, 2026): this page's own button by its id,
