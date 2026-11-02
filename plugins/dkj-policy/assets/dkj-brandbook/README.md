@@ -79,6 +79,10 @@ that checks the stylesheet's syntax and tokens; the page is the look.
    background of its own, and the page's `h1` stands on the page itself, never inside a card, a panel or
    any other bordered box. `house-style.css` clears all four on every `h1`. The rest is a layout rule: the
    page heading always sits outside the boxes.
+7. **No `code` element inside an `h1`, `h2` or `h3`** (Maikel, November 2, 2026): a heading in the body
+   sans with a fixed-width run of `--font-mono` in the middle of it looks out of place. A heading names
+   the thing in words. A file name, a command or an identifier it would have quoted goes in plain text in
+   the heading, or in a `code` element in the content under it.
 
 ## What it holds
 

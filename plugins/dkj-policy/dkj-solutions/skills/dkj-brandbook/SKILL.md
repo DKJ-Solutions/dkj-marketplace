@@ -125,6 +125,9 @@ page, dashboard and Artifact is designed to that screen first:
   `.page-info-button` right of the `h1` (`.page-title`), shown on hover or focus (Maikel, October 31, 2026).
 - **The `h1` is never framed** (the owner, October 28, 2026): no border, outline, shadow or background
   on it, and the page's `h1` never sits inside a card, panel or bordered box. It stands on the page.
+- **No `code` element inside an `h1`, `h2` or `h3`** (Maikel, November 2, 2026): the fixed-width run
+  looks out of place in a heading. Name the thing in plain words there; the `code` goes in the content
+  under it.
 - **One row where one row does.** Label and value on one line (`.facts--row`), a card's action beside
   its heading rather than on a row of its own, filters in one bar. A second row has to carry something
   the first could not.
