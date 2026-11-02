@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**11 / 17 minor entries** <!-- pending-tally -->
+**12 / 18 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/prose-headings-on-house-tokens · 20261102-144558Z
+
+`.prose` is retired. A rendered markdown body is plain elements, and the brand book now styles those itself:
+headings are the ordinary `h1`-`h3` at `--text-h1`-`--text-h3`, and `code`, `pre`, lists, `blockquote` and `hr`
+have zero-specificity base rules, so an app's own class still wins. A table is a `.table` in a `.table-wrap`, which
+the house markdown renderer now writes. The three variables `.prose` set its headings through (`--prose-h1`..
+`--prose-h3`) are retired tokens. The README's "`.prose` retired, November 2, 2026" says what an app moves to.
+
+**Score:** 4
+
+#### What makes this deploy extra special
+
+An app that used `.prose` drops the class: its markdown takes the house look by itself, with headings at the same
+sizes as everywhere else, and it sets the space between blocks in its own layout. Plain `code`, `pre`, lists,
+quotes and rules anywhere in an app now take the house look too.
+
+**Score:** 4
+
+#### Pull Request
+
+Retire .prose: rendered markdown takes the house's own elements
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #3749](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3749)
+
+---
 
 ### DEPLOY: feat/lens-page-rendered-markdown · 20261102-142702Z
 
