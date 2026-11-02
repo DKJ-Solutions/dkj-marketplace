@@ -2,7 +2,27 @@
 
 ## [Unreleased]
 
-**6 / 8 minor entries** <!-- pending-tally -->
+**6 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3691-remove-check-connectors-forwarder · 20261102-100241Z
+
+The `scripts/sync/check-connectors.ps1` forwarder is gone, now that every machine runs v6.1.0 or later and its hook calls `check-consumers.ps1` directly ([#3691](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3691)).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A -- a source-repo-only script; no plugin user runs it.
+
+**Score:** N/A
+
+#### Pull Request
+
+Remove the check-connectors.ps1 forwarder
+
+[PR #3731](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3731)
+
+---
 
 ### DEPLOY: feat/3733-backup-verify-existing · 20261102-095115Z
 
