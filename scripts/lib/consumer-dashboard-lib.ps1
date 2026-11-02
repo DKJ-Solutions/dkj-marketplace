@@ -42,6 +42,26 @@
 # The plugin's page shell, for the house site header (Format-SiteHeaderHtml): this repo is its source, so it is read here.
 . (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\hub\lib\general-pages-lib.ps1')
 
+function Get-ProductPages {
+    <#
+        The pages the product's home page links, in the order it lists them: each a route on this server, its
+        label the page's own name as its breadcrumb reads it, and one line on what it shows. The general pages
+        are the plugin hub's, which the home page links as one card (#3540). Specialists is no longer one of
+        them: the specialists are the dkj-subagents teams', so they live on those teams' own Plugins pages.
+        Here rather than in dev-pages-lib (which loads this lib) because the Consumers page below draws them as its
+        header's menu (Get-ProductMenu).
+    #>
+    @(
+        @{ Href = '/consumers';  Label = 'Consumers';   Sub = 'Every repo that installs plugins from this marketplace, registered under consumers/ and checked by check-consumers.ps1 on this machine'; Icon = 'consumers' }
+        @{ Href = '/marketplace';     Label = 'Marketplace'; Sub = 'Every plugin this marketplace ships, its version and what it holds'; Icon = 'marketplace' }
+    )
+}
+
+function Get-ProductMenu {
+    <# The product's site header menu (Format-SiteHeaderHtml -Menu): its own pages, in the home page's order (Get-ProductPages). #>
+    @(Get-ProductPages | ForEach-Object { @{ Label = $_.Label; Href = $_.Href } })
+}
+
 function ConvertFrom-ConsumerCheckOutput {
     <#
         Splits check-consumers.ps1's text report into @{ <repo> = @{ Signals = list; Drift } }. Each
@@ -443,10 +463,8 @@ function Format-ConsumerPageStart {
     [void]$sb.AppendLine((Format-RepoHubBanner))
     # The house site header, holding the settings button, then the breadcrumb bar under it: its trail from Home to this page.
     # Tagged 'product': this page is the product's, beside the plugin's hub (#3540).
-    # The menu is the product's pages (Get-ProductMenu), which dev-pages-lib defines beside the server; a caller that
-    # loaded this lib alone gets the header without one.
-    $menu = if (Get-Command Get-ProductMenu -ErrorAction SilentlyContinue) { @(Get-ProductMenu) } else { @() }
-    [void]$sb.Append((Format-SiteHeaderHtml -Name 'dkj-marketplace' -Href '/' -Tag 'product' -Menu $menu -Current '/consumers'))
+    # The menu is the product's pages (Get-ProductMenu), the Consumers page marked.
+    [void]$sb.Append((Format-SiteHeaderHtml -Name 'dkj-marketplace' -Href '/' -Tag 'product' -Menu @(Get-ProductMenu) -Current '/consumers'))
     [void]$sb.AppendLine('<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>')
     $sep = '<span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span>'
     [void]$sb.AppendLine('<li><a href="/">Home</a></li>')

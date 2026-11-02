@@ -66,23 +66,8 @@ function Format-DevPageHtml {
         -Brand 'dkj-marketplace' -BrandTag 'product' -SiteName 'dkj-marketplace' -HubHref '/' -HomeLabel 'Home' -Bare:$Bare -ParentCrumbs $ParentCrumbs -Info $Info -Menu @(Get-ProductMenu)
 }
 
-function Get-ProductPages {
-    <#
-        The pages the product's home page links, in the order it lists them: each a route on this server, its
-        label the page's own name as its breadcrumb reads it, and one line on what it shows. The general pages
-        are the plugin hub's, which the home page links as one card (#3540). Specialists is no longer one of
-        them: the specialists are the dkj-subagents teams', so they live on those teams' own Plugins pages.
-    #>
-    @(
-        @{ Href = '/consumers';  Label = 'Consumers';   Sub = 'Every repo that installs plugins from this marketplace, registered under consumers/ and checked by check-consumers.ps1 on this machine'; Icon = 'consumers' }
-        @{ Href = '/marketplace';     Label = 'Marketplace'; Sub = 'Every plugin this marketplace ships, its version and what it holds'; Icon = 'marketplace' }
-    )
-}
-
-function Get-ProductMenu {
-    <# The product's site header menu (Format-SiteHeaderHtml -Menu): its own pages, in the home page's order (Get-ProductPages). #>
-    @(Get-ProductPages | ForEach-Object { @{ Label = $_.Label; Href = $_.Href } })
-}
+# Get-ProductPages and Get-ProductMenu live in consumer-dashboard-lib.ps1, loaded above: the Consumers page draws the
+# product's menu in its own header, and that lib is loaded alone by its suite.
 
 function Format-ProductHomeHtml {
     <#
