@@ -136,7 +136,7 @@
   --text-base: 14px; --text-sm: 12px; --text-xs: 11px;
   /* The site header's name (.site-header__name): a step of its own at about the h2 size, so the header can be tuned
      without moving every h2 (Dave, November 2, 2026; it was --text-h3). */
-  --text-site-header: 22px;
+  --text-title: 22px;
 
   /* app-shell sizes, same in both modes (built from the spacing scale; see "App components" at the end):
      the height of a value field and of the button beside it, the minimum touch target, the height of
@@ -742,7 +742,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .site-header__mark { display: inline-block; flex: none; padding: var(--spacing-1) var(--spacing-2);
   border-radius: var(--spacing-2); background: var(--bg-1); color: var(--primary); font-size: var(--text-h1); font-weight: var(--font-weight-bold);
   line-height: 1; letter-spacing: 0.02em; }
-.site-header__name { overflow: hidden; font-size: var(--text-site-header); font-weight: var(--font-weight-bold); white-space: nowrap; text-overflow: ellipsis; }
+.site-header__name { overflow: hidden; font-size: var(--text-title); font-weight: var(--font-weight-bold); white-space: nowrap; text-overflow: ellipsis; }
 .site-header__tag { font-weight: var(--font-weight-regular); color: var(--bg-3); }
 /* In the header the settings button is a square cell the full height of the bar at its right end, a shade lighter
    than the header, its gear in the header's own colour (Maikel, November 1, 2026). */

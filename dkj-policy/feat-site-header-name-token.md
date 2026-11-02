@@ -41,7 +41,7 @@
 
 ### CREATE
 
-- [x] `house-style.css`: a new `--text-site-header` token (22px), and `.site-header__name` set in it
+- [x] `house-style.css`: a new `--text-title` token (22px), and `.site-header__name` set in it
 - [x] `README.md` and `specimens.html`: the token documented and shown on the type scale
 
 ### TEST
@@ -52,7 +52,7 @@
 ### DEPLOY: feat/site-header-name-token
 
 The site header's name -- the repo name and `toolbox` on every hub page -- has a type token of its own,
-`--text-site-header`, at 22px, about the `h2` size where it was `--text-h3` (16px). The header can now be
+`--text-title`, at 22px, about the `h2` size where it was `--text-h3` (16px). The header can now be
 tuned without moving every `h2` (Dave, November 2, 2026).
 
 **Score:** 2
