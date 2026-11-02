@@ -873,12 +873,14 @@ function Format-HubGroupPageHtml {
 function Format-HubSettingsPageHtml {
     <#
         The toolbox's Settings page on /settings (Dave, November 2, 2026): its h1, then a card headed by the h2 Theme
-        holding the brand book's own theme picker (DKJTheme.picker, house-theme.js, which every page here loads) and its
+        holding a card headed by the h3 Colour, with the brand book's own theme picker in it, (DKJTheme.picker, house-theme.js, which every page here loads) and its
         reset. The choice is the same one the header's settings button makes -- one key per app on this device -- so the
         two always agree. Nothing here is read from disk.
     #>
     param([AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
-    $body = '<section class="card hs-settings"><h2>Theme</h2><div id="settings-theme"></div>' +
+    # The picker sits in a card of its own inside the Theme card, headed by an h3 (Dave, November 2, 2026).
+    $body = '<section class="card hs-settings"><h2>Theme</h2>' +
+        '<section class="card"><div class="card__head"><h3>Colour</h3></div><div id="settings-theme"></div></section>' +
         '<p><button type="button" class="btn" id="settings-theme-reset">Reset theme</button></p></section>' + "`n" +
         '<script>DKJTheme.picker(document.getElementById("settings-theme"), { light: "Light", dark: "Dark" });' +
         ' document.getElementById("settings-theme-reset").addEventListener("click", function () { DKJTheme.reset(); });</script>'

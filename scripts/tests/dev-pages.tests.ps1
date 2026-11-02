@@ -71,6 +71,7 @@ Assert-True ($bshell -notmatch 'site-header__nav|<dialog') 'no -Menu, no menu an
 Assert-True (((Get-HubMenu) | ForEach-Object { $_.Href }) -join ' ' -eq '/repository /artifacts /release-notes /ai /plugins /settings') 'the toolbox menu is GitHub, then the hub''s own cards in their order'
 $st = Format-HubSettingsPageHtml -RepoName 'o/r'
 Assert-True ($st -match '<h1>Settings</h1>' -and $st -match '<h2>Theme</h2>' -and $st -match 'DKJTheme\.picker\(document\.getElementById\("settings-theme"\)') 'the Settings page opens with its h1, then the Theme h2 over the brand book''s own picker'
+Assert-True ($st -match '<h2>Theme</h2><section class="card"><div class="card__head"><h3>Colour</h3></div><div id="settings-theme"></div></section>') 'the picker sits in an h3 card, Colour, inside the Theme card'
 Assert-True ($st -match '<span aria-current="page">Settings</span>') 'the Settings page is its own last crumb'
 $tpage = Format-GeneralPageHtml -Title 'Stopwatch' -Lead '' -Body '' -SiteName 'o/r' -ParentCrumbs @(@{ Label = 'AI'; Href = '/ai' })
 Assert-True ($tpage -match '<li><a href="/ai" aria-current="page">AI</a></li>' -and (Format-GeneralPageHtml -Title 'Artifacts' -Lead '' -Body '' -SiteName 'o/r') -match '<li><a href="/artifacts" aria-current="page">') 'a toolbox page carries the toolbox menu, marking the item it sits under: its first crumb, else its own title'
