@@ -41,17 +41,28 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-style.css`: a new `--text-site-header` token (22px), and `.site-header__name` set in it
+- [x] `README.md` and `specimens.html`: the token documented and shown on the type scale
 
 ### TEST
 
+- [x] `check-plugin-integrity.ps1`: 0 errors (the suites run in `open-pr`'s gate)
+- [ ] The owner looks at the larger header name on the toolbox before the PR (a visible result)
+
 ### DEPLOY: feat/site-header-name-token
 
-**Score:**
+The site header's name -- the repo name and `toolbox` on every hub page -- has a type token of its own,
+`--text-site-header`, at 22px, about the `h2` size where it was `--text-h3` (16px). The header can now be
+tuned without moving every `h2` (Dave, November 2, 2026).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Every hub page and every app with a site header shows its name larger after the update, and an app can
+read the new token to size its own header name to match.
+
+**Score:** 2
 
 #### Pull Request
 
