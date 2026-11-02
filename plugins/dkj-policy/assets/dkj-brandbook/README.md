@@ -93,9 +93,10 @@ already has, not a new colour:
 | **10%** | Text | `--fg-1` … `--fg-4` | what sits on the paper: every paragraph, label and quiet icon |
 
 **A rule reads a colour only as a token, never derives one** (Maikel, a strict rule, November 1, 2026): no
-`color-mix()`, no relative colour (`rgb(from …)`), no `oklch()` or other colour function outside a token's own
-value. A shade a component needs is a new token, typed into every theme line, and `check-colour-literals.mjs`
-refuses a derived colour before it lands. `--primary-raised` and `--primary-hover` were added that way the same day:
+`color-mix()`, no relative colour (`rgb(from …)`), no `oklch()` or other colour function, **a token's own value
+included** (Maikel, November 2, 2026, #3727): `--x: color-mix(…)` is a derived colour too. A shade a component
+needs is a new token, typed into every theme line, and `check-colour-literals.mjs` refuses a derived colour
+anywhere before it lands. `--primary-raised` and `--primary-hover` were added that way the same day:
 `--primary` 15% of the way to `--bg-1`, and to `--fg-1`, the exact values the two `color-mix()` rules had computed.
 
 **Everything in the 30% reads on all four paper steps**, as the 10% does (Maikel, November 1, 2026): `--primary`

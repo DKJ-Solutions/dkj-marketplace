@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**2 / 3 minor entries** <!-- pending-tally -->
+**3 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3727-brandbook-derived-token-value · 20261102-090218Z
+
+The brand book README said a colour function was allowed "outside a token's own value", which read as
+permission for `--x: color-mix(…)`, while `check-colour-literals.mjs` refuses a derived colour anywhere. The
+README now follows the gate: no derived colour, a token's own value included
+([#3727](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3727)).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A consumer writing its own domain layer from the README could have typed a `color-mix()` token and been
+told it was allowed; the README no longer says so.
+
+**Score:** 1
+
+#### Pull Request
+
+Brand book README: a token's own value may not derive a colour either
+
+Plugins: dkj-policy
+
+[PR #3730](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3730)
+
+---
 
 ### DEPLOY: feat/3720-house-style-colour-check · 20261102-085146Z
 
