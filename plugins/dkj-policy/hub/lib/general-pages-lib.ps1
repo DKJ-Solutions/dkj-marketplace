@@ -811,10 +811,27 @@ function Get-HubPageCards {
     foreach ($g in @(Get-HubGroups | Where-Object { -not $_.Group -and $grouped -notcontains $_.Href })) { $g }
 }
 
+function Get-HubCardGridStyle {
+    <#
+        The repo layer's .ph-cards: card links three to a row ON THE PAGE, with no surface around them, stepping down
+        where .grid-3 does, and .ph-cards__full for a card that takes the row. For h2 cards, which stand on their own:
+        the .grid-3 surface frames a group, an h2 over h3 cards, so an h2 card never sits in it (Maikel, November 2,
+        2026). The hub's page and every group page take it from here.
+    #>
+    @(
+        '.ph-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-3); }',
+        '.ph-cards > .card { margin-top: 0; }',
+        '.ph-cards__full { grid-column: 1 / -1; }',
+        '@media (max-width: 1000px) { .ph-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }',
+        '@media (max-width: 760px) { .ph-cards { grid-template-columns: minmax(0, 1fr); } }'
+    ) -join "`n"
+}
+
 function Format-HubGroupPageHtml {
     <#
-        The group page on -Href (Get-HubGroups), bare like the SessionStart overview: an h1 with a card per member
-        page and member group, three to a row, each one link; then each member Section, a .grid-3 headed by its h2 and
+        The group page on -Href (Get-HubGroups), bare like the SessionStart overview: an h1 with an h2 card per member
+        page and member group, three to a row on the page itself (.ph-cards, Get-HubCardGridStyle), each one link;
+        then each member Section, a .grid-3 headed by its h2 and
         holding its members as h3 cards. A group with no member yet says so in one card. Its trail runs through every
         group it sits in but a Section, which has no page. $null for an Href no group has, and for a Section.
         -RepoRoot is the checkout a Source section reads its cards from (the Lenses, Get-HubLensPages).
@@ -842,7 +859,8 @@ function Format-HubGroupPageHtml {
         [void]$body.AppendLine('<section class="card"><p role="status">Nothing on this page yet.</p></section>')
     }
     if ($members.Count -gt 0) {
-        [void]$body.AppendLine('<div class="grid-3">')
+        # h2 cards stand on the page, never in a .grid-3's surface, which frames an h2 over h3 cards (Maikel, November 2, 2026).
+        [void]$body.AppendLine('<div class="ph-cards">')
         foreach ($p in $members) {
             [void]$body.AppendLine((Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon))
         }
@@ -862,7 +880,8 @@ function Format-HubGroupPageHtml {
         [void]$body.AppendLine('</div>')
     }
     return Format-GeneralPageHtml -Title $g.Label -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref `
-        -ParentCrumbs $crumbs -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
+        -ParentCrumbs $crumbs -Style $(if ($members.Count -gt 0) { Get-HubCardGridStyle } else { '' }) `
+        -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
 }
 
 function ConvertTo-SiteHeaderName {

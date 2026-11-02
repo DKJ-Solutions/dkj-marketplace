@@ -88,11 +88,7 @@ function Format-PluginRepoHubHtml {
     # The repo layer: names the house file does not define -- .ph-cards, the card links three to a row with no
     # surface around them (stepping down where .grid-3 does), and .ph-code, for the code samples.
     [void]$sb.AppendLine('<style>')
-    [void]$sb.AppendLine('.ph-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-3); }')
-    [void]$sb.AppendLine('.ph-cards > .card { margin-top: 0; }')
-    [void]$sb.AppendLine('.ph-cards__full { grid-column: 1 / -1; }')
-    [void]$sb.AppendLine('@media (max-width: 1000px) { .ph-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }')
-    [void]$sb.AppendLine('@media (max-width: 760px) { .ph-cards { grid-template-columns: minmax(0, 1fr); } }')
+    [void]$sb.AppendLine((Get-HubCardGridStyle))
     [void]$sb.AppendLine('.ph-code { margin: var(--spacing-3) 0 0; padding: var(--spacing-3) var(--spacing-4); background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); overflow-x: auto; font-size: var(--text-xs); line-height: 1.6; }')
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
