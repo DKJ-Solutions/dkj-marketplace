@@ -51,8 +51,8 @@
 
 ### TEST
 
-- [ ] The owner looked at /release-notes/v6.3.0
-- [ ] Lint and test gates via open-pr
+- [x] The owner looked at /release-notes/v6.3.0
+- [x] Lint and test gates via open-pr
 
 ### DEPLOY: fix/release-notes-headings-no-code
 
