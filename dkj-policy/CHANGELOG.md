@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**6 / 6 minor entries** <!-- pending-tally -->
+**7 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/site-header-nav · 20261102-190626Z
+
+The house site header can carry an app's main pages between its name and the settings button. On a wide header they stand as full-height cells with the page you are under marked; narrower than 48rem they fold into a three-line toggle that opens them as the house drawer. The toolbox's menu is its home page's cards, a product's its own pages.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every page of the toolbox, and of an app that adds a menu to its header, can be reached from every other page in one click, on a phone too, instead of going back home first.
+
+**Score:** 3
+
+#### Pull Request
+
+The site header carries a menu between the brand and the settings, folding into a drawer on a phone
+
+Plugins: dkj-policy
+
+[PR #3759](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3759)
+
+---
 
 ### DEPLOY: feat/3745-one-h1-per-page · 20261102-184846Z
 
