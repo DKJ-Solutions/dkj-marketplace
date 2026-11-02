@@ -55,7 +55,7 @@
     }
     var head = cells(rows[0]);
     var body = rows.slice(2).map(cells);
-    return '<div class="table-scroll"><table><thead><tr>' +
+    return '<div class="table-scroll table-wrap" tabindex="0"><table class="table"><thead><tr>' +
       head.map(function (c) { return '<th>' + inlineMd(c) + '</th>'; }).join('') +
       '</tr></thead><tbody>' +
       body.map(function (r) {

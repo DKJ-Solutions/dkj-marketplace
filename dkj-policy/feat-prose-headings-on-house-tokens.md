@@ -39,37 +39,40 @@
 
 ### PLAN
 
-Maikel, November 2, 2026: `.prose` headings showed through `--prose-h1`..`--prose-h3`, which confused him -- he wants to see only his own tokens (`--text-h1`, `--text-h2`, ...). Stacked on `feat/lens-page-rendered-markdown` so both can be looked at together; that branch ships first.
+Maikel, November 2, 2026: `.prose` headings showed through `--prose-h1`..`--prose-h3`, which confused him; he wants only his own tokens, and then: remove the `.prose` class everywhere. He chose to have the plain markdown elements styled by the house itself (a menu, November 2). Stacked on `feat/lens-page-rendered-markdown` so both can be looked at together; that branch ships first.
 
 ### CREATE
 
-- [x] `house-style.css`: `.prose h1/h2/h3` at `--text-h1/h2/h3`, `.prose--sm` sizes named directly, the three variables gone
+- [x] `house-style.css`: every `.prose` rule gone, `--prose-h1`..`--prose-h3` with it; zero-specificity base rules for `code`, `pre`, `ul`/`ol`, `blockquote`, `hr` under "Running text"
 - [x] `--prose-h1`..`--prose-h3` added to `Get-HouseStyleRetiredTokens`
-- [x] README: a dated section on the change, beside the type-scale one
+- [x] `markdown-render.js`: a table is a `.table` in a `.table-wrap` (`.table-scroll` kept for the release-notes page)
+- [x] Lens page: no `.prose`; the space between blocks set in its own page layer
+- [x] `specimens.html`: the prose cards replaced by a "Markdown elements" card
+- [x] README: a dated section on the retirement; the reserved-class and collision lists no longer name `.prose`
 
 ### TEST
 
-- [x] `check-house-style.tests.ps1` 135/0, `house-palette.tests.ps1` 161/0, `dev-pages.tests.ps1` 560/0, `check-house-style.ps1` OK
+- [x] `check-house-style` 135/0, `house-palette` 161/0, `dev-pages` 560/0, `release-notes-page` 207/0, `shared-scripts` 1217/0; `check-house-style.ps1` OK, `check-plugin-integrity.ps1` 0 errors
 - [~] The owner's look in the browser: a visible result to every DKJ-Solutions app, so the branch waits for it instead of merging
 
 ### DEPLOY: feat/prose-headings-on-house-tokens
 
-`.prose` now sets each heading at the house token of its own level -- `h1` at `--text-h1`, `h2` at `--text-h2`,
-`h3` at `--text-h3` -- instead of one step down through `--prose-h1`..`--prose-h3`, three variables that read as
-tokens without being in the table. A prose `h2` is now 22px where it was 16px. The three are retired, so
-`check-house-style` reports an app that still reads one; the README's "The prose headings of November 2, 2026"
-says what to move to.
+`.prose` is retired. A rendered markdown body is plain elements, and the brand book now styles those itself:
+headings are the ordinary `h1`-`h3` at `--text-h1`-`--text-h3`, and `code`, `pre`, lists, `blockquote` and `hr`
+have zero-specificity base rules, so an app's own class still wins. A table is a `.table` in a `.table-wrap`, which
+the house markdown renderer now writes. The three variables `.prose` set its headings through (`--prose-h1`..
+`--prose-h3`) are retired tokens. The README's "`.prose` retired, November 2, 2026" says what an app moves to.
 
-**Score:** 3
+**Score:** 4
 
 #### What makes this deploy extra special
 
-An app that renders markdown in `.prose` shows its headings one size larger, the same sizes as headings
-everywhere else in the brand book; an app that read `--prose-h*` in its own layer is told to move to `--text-*`.
+An app that used `.prose` drops the class: its markdown takes the house look by itself, with headings at the same
+sizes as everywhere else, and it sets the space between blocks in its own layout. Plain `code`, `pre`, lists,
+quotes and rules anywhere in an app now take the house look too.
 
-**Score:** 3
+**Score:** 4
 
 #### Pull Request
 
-Prose headings use the house text tokens directly
-
+Retire .prose: rendered markdown takes the house's own elements

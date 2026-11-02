@@ -738,7 +738,7 @@
 
 <!-- ======================================================== MEDIA -->
 <div class="grid-2">
-  <div class="grid__head"><h2 id="hs-media">Figure and prose</h2><p class="card__sub">Framed images (placeholders here; cover and contain need a real image) and a rendered long-form body</p></div>
+  <div class="grid__head"><h2 id="hs-media">Figure and markdown elements</h2><p class="card__sub">Framed images (placeholders here; cover and contain need a real image) and the plain elements of a rendered body, with no wrapper class</p></div>
 
   <section class="card">
     <div class="card__head"><h3>Figure</h3></div>
@@ -755,29 +755,15 @@
   </section>
 
   <section class="card">
-    <div class="card__head"><h3>Prose</h3></div>
-    <div class="prose">
-      <h1>Prose heading one</h1>
-      <p>A paragraph with <strong>strong text</strong>, <a href="#hs-media">a link</a> and <code>inline code</code>.</p>
-      <h2>Heading two</h2>
-      <ul><li>A bullet</li><li>Another, with a nested list<ul><li>Nested</li></ul></li></ul>
-      <ol><li>First</li><li>Second</li></ol>
-      <ul><li><input type="checkbox" checked disabled aria-label="Done"> A done task</li><li><input type="checkbox" disabled aria-label="Open"> An open task</li></ul>
-      <h3>Heading three</h3>
-      <blockquote>A quotation.</blockquote>
-      <pre tabindex="0"><code>const x = 1;
-console.log(x);</code></pre>
-      <table><thead><tr><th>Name</th><th align="right">Value</th></tr></thead><tbody><tr><td>One</td><td align="right">1</td></tr><tr><td>Two</td><td align="right">2</td></tr></tbody></table>
-      <hr>
-      <p>After the rule.</p>
-    </div>
-  </section>
-
-  <section class="card grid__full">
-    <div class="card__head"><h3>Prose, small and filled</h3></div>
-    <div class="prose prose--sm prose--fill">
-      <h1>Small prose</h1>
-      <p>The smaller size, lifted to the full width of its card: <strong>strong</strong> and <code>code</code> keep their looks.</p>
+    <div class="card__head"><h3>Markdown elements</h3></div>
+    <div class="spec-rows">
+      <div class="spec-label"><span class="note">code</span><p>Text with <code>inline code</code>.</p></div>
+      <div class="spec-label"><span class="note">ul, ol</span><div><ul><li>A bullet</li><li>Another, with a nested list<ul><li>Nested</li></ul></li></ul><ol><li>First</li><li>Second</li></ol></div></div>
+      <div class="spec-label"><span class="note">blockquote</span><blockquote>A quotation.</blockquote></div>
+      <div class="spec-label"><span class="note">pre</span><pre tabindex="0"><code>const x = 1;
+console.log(x);</code></pre></div>
+      <div class="spec-label"><span class="note">.table</span><div class="table-wrap" tabindex="0"><table class="table"><thead><tr><th>Name</th><th>Value</th></tr></thead><tbody><tr><td>One</td><td class="num">1</td></tr><tr><td>Two</td><td class="num">2</td></tr></tbody></table></div></div>
+      <div class="spec-label"><span class="note">hr</span><hr></div>
     </div>
   </section>
 </div>

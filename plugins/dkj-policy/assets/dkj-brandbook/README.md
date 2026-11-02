@@ -126,7 +126,7 @@ primary outweighs its paper has spent the 30% as ground.
 | Elevation | `--shadow-pop` | tooltips |
 | Spacing | `--spacing-0-5` … `--spacing-96` | the spacing scale, same in both modes: `--spacing-N` is N × 4px, a half step (`-0-5`, `-1-5`, …) adds 2px. Every gap, margin and padding uses one, and a repo layer spaces its own components from the same scale |
 | Type | `--text-h1` … `--text-h3`, `--text-base`, `--text-sm`, `--text-xs` | the type scale, same in both modes: 36/22/16 for the headings since November 1, 2026 (Maikel; [below](#the-type-scale-of-november-1-2026)), 32/18/14 before (`h3` at 14px, the body size, and no `h4` or `h5` since October 25, 2026, the owner: [below](#the-heading-cut-of-october-25-2026)) (`h2` 18px since October 25, 2026, the owner; it went from 32 at weight 600 to 24 at 700 on October 24, and keeps the 700), and `.lead` was `--text-base` from the same day (it was `--text-lg`) until it was retired on November 1, 2026 (Maikel), 14/12/11 for running text (`--text-lg`, 18px, was retired on November 1, 2026). `h1`–`h3` each take the token of their own level, body text is `--text-base`. No heading is larger than 32px (owner's decision, October 22, 2026: as much content as possible on a 900px-high screen, since October 27 one of about 1300 x 900), so `h1` stands apart by its size and colour (by its capitals too until October 24, 2026); it was 48px from October 20, when `--text-h0` was retired. The hero figure is set at `--text-h1`. There is no `h6` either: the 24px `h3` was retired the same day, because it stood too close to `h2`, and every level below moved up one ([below](#the-heading-shift-of-october-20-2026)). The section label (`GroupHeading`), a heading at `--text-base`, uppercase and muted (owner's decision, October 15, 2026), was the one exception until November 1, 2026, when it went (Maikel): the house has one `h3`. `--font-serif` was the face of `h1` and `h2` until October 24, 2026, when the owner moved both to the sans; it stayed for a title that kept that face, none did, and it was retired on November 1, 2026 (Maikel) |
-| Font family | `--font-mono` | a typeface, not a size: the fixed-width face `.prose` sets its `code` and `pre` in, and an app takes for figures or ids that must line up by character. The body face is not a token; it is set on `body` |
+| Font family | `--font-mono` | a typeface, not a size: the fixed-width face the house sets `code` and `pre` in, and an app takes for figures or ids that must line up by character. The body face is not a token; it is set on `body` |
 | Font weight | `--font-weight-light` 300, `--font-weight-regular` 500, `--font-weight-bold` 700, `--font-weight-black` 900 | the four weights, same in both modes (Maikel, November 1, 2026; bold and black were named semibold and bold until the same day): raised the same day from 400, 600 and 700/800. A rule sets a weight only through one of these four, never a number: what was 300 is light, 400 regular (body text too), 600 semibold, 700 and 800 bold. No house rule sets `--font-weight-black` since the same day: every rule that did now sets `--font-weight-bold` (Maikel), and the token stays for an app that wants it |
 | Radius | `--radius-1` … `--radius-4`, `--radius-pill` | the corner radii, same in both modes and named like the spacing scale: `--radius-N` is N × 4px, a half step adds 2px, so `--radius-1` 4px, `--radius-1-5` 6px, `--radius-2` 8px, `--radius-2-5` 10px, `--radius-3` 12px; `--radius-pill` rounds the ends fully. Named `xs` to `lg` with a `md-plus` until October 31, 2026 ([below](#the-radius-rename-of-october-31-2026)) |
 | App shell | `--control-h`, `--tap`, `--topbar-h`, `--column-narrow` | sizes for a mobile-first app, same in both modes: 38px for a value field and the button beside it, 44px as the smallest touch target, 56px for the top bar, 512px for the narrow app column |
@@ -379,20 +379,25 @@ size, and the three headings stand further apart:
 
 Every house rule that was set in `--text-lg` (a tile or panel value, the site name, the stepper, the combo input,
 which must stay at 16px or more or iOS zooms in) takes `--text-h3`, 2px smaller than before. `.prose` keeps its
-headings one step below the page: its `h1` is `--text-h2` now, where it was `--text-lg`. **An app that takes this
+headings one step below the page: its `h1` is `--text-h2` now, where it was `--text-lg` (until `.prose` was retired the next day, [below](#prose-retired-november-2-2026)). **An app that takes this
 update moves each use of `--text-lg` in its own layer to `--text-h3`.** It is a retired token, so the gate reports a
 use left behind; one that slips past renders at the inherited size rather than raising an error.
 
-### The prose headings of November 2, 2026
+### `.prose` retired, November 2, 2026
 
-**`.prose` sets each heading at the house token of its own level** (Maikel, November 2, 2026): `h1` at
-`--text-h1`, `h2` at `--text-h2`, `h3` at `--text-h3`, as every other heading in the house. Until that day it
-kept its headings one step below the page through three variables of its own, `--prose-h1`, `--prose-h2` and
-`--prose-h3`, so a prose `h2` was set in `--text-h3`. Those read as tokens without being in the table, and they
-are gone. `.prose--sm` names its sizes directly too: `h1` at `--text-base`, `h2` and `h3` at `--text-sm`, as
-before. **A rendered body that would add a second `h1` to its page drops its own title instead**, as the lens
-page on the hub does. **An app that read `--prose-h1` … `--prose-h3` in its own layer moves to the `--text-*`
-token it means.** The three are retired tokens, so the gate reports a use left behind.
+**There is no `.prose` any more** (Maikel, November 2, 2026): a rendered markdown body is plain elements, and the
+house styles those itself, with no wrapper class. Headings are the ordinary `h1`-`h3` at `--text-h1`-`--text-h3`.
+`code`, `pre`, `ul`/`ol`, `blockquote` and `hr` have zero-specificity base rules under "Running text" in
+[`house-style.css`](house-style.css), so any class of an app's own still wins, and like a `<p>` they carry no
+margins: the place sets the space around a block. A table is a `.table` in a `.table-wrap`, which the house
+markdown renderer writes. The last day of `.prose` also took out the three variables it set its headings through
+(`--prose-h1`, `--prose-h2`, `--prose-h3`, one step down the scale), which read as tokens without being in the
+table.
+
+**An app that used `.prose`, `.prose--sm` or `.prose--fill` drops the class**: its headings and elements take the
+house look by themselves, and the space between blocks becomes its own layout (the hub's lens page sets it in its
+page layer). **One that read `--prose-h1` … `--prose-h3` moves to the `--text-*` token it means**; the three are
+retired tokens, so the gate reports a use left behind. A rendered body never adds a second `h1` to its page.
 
 ### The colour renames of November 1, 2026
 
@@ -427,7 +432,7 @@ grey and reads as plain text rather than raising an error. A footer note outside
 
 **`--font-serif` is retired the same day** (Maikel, November 1, 2026). It stayed after October 24 for a title that
 kept the serif face, and none did: no house class and no app on record read it. A use left behind falls back to the
-inherited sans. `--font-mono` stays, because `.prose` sets its code in it and apps read it.
+inherited sans. `--font-mono` stays, because the house sets `code` and `pre` in it and apps read it.
 
 ## Themes: the user picks the colour
 
@@ -660,7 +665,7 @@ numerals), `.delta` (with `--up`/`--down`; its aliases `.pos`/`.neg` are gone, M
 `--cancel`, `--back`), and `--drawer`), `.topbar` (with `__inner`, `__brand`, `__name`), `.menu-list`,
 `.menu-row` (with `__label`, `__value`), `.menu-item` (with `__icon`, `__label`, `__chevron`),
 `.breadcrumbs` (with `__sep`), `.breadcrumbs-bar` ([below](#every-page-the-breadcrumb-bar)) and
-`.sr-only`. The brand-book components ([below](#brandbook-app-components)) reserve these too: `.alert` (`__title`, `__icon`), `.banner` (`--accent`, `__lead`), `.panel` (`--accent`, `--positive`, `--button`, `__label`, `__value`), `.chip` (`--yes`, `--no`, `--todo`), `.tag` (`--info`, `--warn`), `.filter-chips`/`.filter-chip` (`__check`, `__dot`, and `.filter-chips__clear`), `.round-toggle`, `.badge-toggle`, `.help`, `.more--structured` (`.more__title`, `__meta`, `__trailing`, `__version`), `.question-head` (the answer line under it is a plain `<p>`; `.verdict` is gone, Maikel, November 1, 2026), `.answer` (`__label`, `__value`), `.flash`, `.page-header`, `.field__fixed`, `.check`, `.stepper` (`--lg`), `.combo` (`__input` (with `--under`), `__picked`, `__glass`, `__list`, `__option` with `--own`, `--more`, `__name`, `__meta`), `.value-box` (`__num` with `--lg`, `--negative`, `--positive`, `--regular`, `__was`, `__unit`, `--changed`, `--flush`), `.stat-rows` (`--help`)/`.stat-row` (`__name`, `__sub`, `__help`, `__op`, `--help`, `--formula`, `--head`), `.step-head` (`__value`), `.info-rows` (`--info`, `__head`, `__list`), `.info-row` (`__box`, `__named`, `__value` with `--placeholder`), `.info-dot`, `.info-stem`, `.bill` (`--qty`, `__head`, `__slot`, `__name`, `__qty`, `__price`, `__action`, `__subtotal`, `__total`), `.compare`, `.calc` (`--boxed`, `__row`, `__box`, `__what`, `__sub`, `__op`, `__num`, `__result`), `.calc-section` (`__question`), `.date-list`/`.date-row` (`--near`, `--today`, `--invalid`, `--link`, `__when`, `__main`, `__body`, `__title`, `__sub`, `__trailing`, `__icon`, `__reason`), `.figure` (`--ratio-*`, `--contain`, `__frame`, `__placeholder`, `__glyph`, `__label`, `__caption`), `.prose` (`--sm`, `--fill`), `.chart-detail`, `.chart-row`, `.chart-swatch`, `.chart-figure`, and the additions to existing classes: `.card--open`, `.card--invalid`, `.msg--error`, `.table .row-negative`/`.row-positive`/`.row-warn`, `.table .col-start`/`.col-end`, `.facts__detail`, `.facts__total` and `.chart .bar--active`. Each is commented in the file.
+`.sr-only`. The brand-book components ([below](#brandbook-app-components)) reserve these too: `.alert` (`__title`, `__icon`), `.banner` (`--accent`, `__lead`), `.panel` (`--accent`, `--positive`, `--button`, `__label`, `__value`), `.chip` (`--yes`, `--no`, `--todo`), `.tag` (`--info`, `--warn`), `.filter-chips`/`.filter-chip` (`__check`, `__dot`, and `.filter-chips__clear`), `.round-toggle`, `.badge-toggle`, `.help`, `.more--structured` (`.more__title`, `__meta`, `__trailing`, `__version`), `.question-head` (the answer line under it is a plain `<p>`; `.verdict` is gone, Maikel, November 1, 2026), `.answer` (`__label`, `__value`), `.flash`, `.page-header`, `.field__fixed`, `.check`, `.stepper` (`--lg`), `.combo` (`__input` (with `--under`), `__picked`, `__glass`, `__list`, `__option` with `--own`, `--more`, `__name`, `__meta`), `.value-box` (`__num` with `--lg`, `--negative`, `--positive`, `--regular`, `__was`, `__unit`, `--changed`, `--flush`), `.stat-rows` (`--help`)/`.stat-row` (`__name`, `__sub`, `__help`, `__op`, `--help`, `--formula`, `--head`), `.step-head` (`__value`), `.info-rows` (`--info`, `__head`, `__list`), `.info-row` (`__box`, `__named`, `__value` with `--placeholder`), `.info-dot`, `.info-stem`, `.bill` (`--qty`, `__head`, `__slot`, `__name`, `__qty`, `__price`, `__action`, `__subtotal`, `__total`), `.compare`, `.calc` (`--boxed`, `__row`, `__box`, `__what`, `__sub`, `__op`, `__num`, `__result`), `.calc-section` (`__question`), `.date-list`/`.date-row` (`--near`, `--today`, `--invalid`, `--link`, `__when`, `__main`, `__body`, `__title`, `__sub`, `__trailing`, `__icon`, `__reason`), `.figure` (`--ratio-*`, `--contain`, `__frame`, `__placeholder`, `__glyph`, `__label`, `__caption`), `.chart-detail`, `.chart-row`, `.chart-swatch`, `.chart-figure`, and the additions to existing classes: `.card--open`, `.card--invalid`, `.msg--error`, `.table .row-negative`/`.row-positive`/`.row-warn`, `.table .col-start`/`.col-end`, `.facts__detail`, `.facts__total` and `.chart .bar--active`. Each is commented in the file.
 
 **Focus and targets.** Every interactive house class shows a visible focus ring on keyboard focus (an SVG
 `.chart .bar` shows a stroke instead), and its hit area is at least 44px (`--tap`) high where the mark is
@@ -703,7 +708,7 @@ generic `.chip`, the stat rows and the stepper are house classes since the
 
 ## Brandbook-app components
 
-**The Brandbook app was retired under [#3493](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3493)** (owner's decision, October 26, 2026), and its component CSS moved here first so consumers receive it. Only the families the brand book had no class for were ported, renamed to the house convention (unprefixed, `.block`, `.block__part`, `.block--modifier`); a family the brand book already had was dropped in favour of the house class, so there is one vocabulary. The components were lifted from MesoWise and the ETF tracker, plus Brandbook-app originals (`.prose`, `.figure`, `.filter-chips`, `.date-list`). The group sits at the end of [`house-style.css`](house-style.css), under "Brandbook-app components".
+**The Brandbook app was retired under [#3493](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3493)** (owner's decision, October 26, 2026), and its component CSS moved here first so consumers receive it. Only the families the brand book had no class for were ported, renamed to the house convention (unprefixed, `.block`, `.block__part`, `.block--modifier`); a family the brand book already had was dropped in favour of the house class, so there is one vocabulary. The components were lifted from MesoWise and the ETF tracker, plus Brandbook-app originals (`.prose`, retired on November 2, 2026, `.figure`, `.filter-chips`, `.date-list`). The group sits at the end of [`house-style.css`](house-style.css), under "Brandbook-app components".
 
 **Ported:** alert, banner, panel, chip, tag, filter chips, round and badge toggles, help, a structured disclosure (`.more--structured`), group heading, question head and verdict, amount, answer box, flash, page header, read-only field value, checkbox, stepper, search combobox, value box, stat and formula rows, step header, info rows, bill, comparison and calculation tables, date list, figure, prose, and the chart's tooltip rows.
 
@@ -717,7 +722,7 @@ generic `.chip`, the stat rows and the stepper are house classes since the
 - **Browser support.** `.calc` needs `subgrid`, `.more--structured` container queries, `.step-head__value` uses `text-box` (ignored where unsupported, the figure is only less tightly centred).
 - **Markup contracts.** The combobox marks its active option with `aria-selected="true"`, not a class. A stat row's button is an `.icon-btn` made `--control-h` square.
 
-**What this changes for an app that takes the update:** nothing that exists, only additions. But an app that defines its own `.chip`, `.help`, `.amount`, `.calc`, `.verdict`, `.question-head` (all measured in MesoWise) or `.tag`, `.panel`, `.banner`, `.alert`, `.check`, `.answer`, `.flash`, `.prose`, `.figure`, `.stepper`, `.combo`, `.bill`, `.compare` now collides with a house name, and renames its class or adopts the house one. MesoWise's `.value` and `.input` do not collide (the value box is `.value-box`, and the standalone input class was not ported: `.field` styles its input).
+**What this changes for an app that takes the update:** nothing that exists, only additions. But an app that defines its own `.chip`, `.help`, `.amount`, `.calc`, `.verdict`, `.question-head` (all measured in MesoWise) or `.tag`, `.panel`, `.banner`, `.alert`, `.check`, `.answer`, `.flash`, `.figure`, `.stepper`, `.combo`, `.bill`, `.compare` now collides with a house name, and renames its class or adopts the house one. MesoWise's `.value` and `.input` do not collide (the value box is `.value-box`, and the standalone input class was not ported: `.field` styles its input).
 
 ## Page patterns
 
