@@ -50,7 +50,8 @@ Direction 1 of #3739, as the owner decided on November 2, 2026: the cut moves th
 
 ### TEST
 
-- [x] `release-lib.tests.ps1`: moved (version cell with arrow, title cell without), none, two marked rows, a mention in prose, and a title containing the word "live" -- 637 asserts pass standalone
+- [x] `release-lib.tests.ps1`: moved (version cell with arrow, title cell without), none, two marked rows, a mention in prose, a legend row naming no version, and a title containing the word "live" -- 639 asserts pass standalone
+- [x] code review (Victor): a marked non-release row was counted; only rows naming `[x.y.z]` count now, as on the page
 
 ### DEPLOY: fix/3739-cut-moves-live-marker
 

@@ -1205,7 +1205,9 @@ function Move-ReleaseHistoryLiveMarker {
     $arrow = [string][char]0x2190
     $markerRe = [regex]("[ \t]*(?<tok>(?:$arrow[ \t]*)?\*\*LIVE\*\*)")
     $rowRe = [regex]'(?m)^\|.*$'
-    $marked = @($rowRe.Matches($Content) | Where-Object { $_.Value -cmatch '\*\*LIVE\*\*' })
+    # A RELEASE row only -- one naming '[x.y.z]', as the page's row reader requires -- so a legend or
+    # status table elsewhere in the file that mentions the marker is neither counted nor moved.
+    $marked = @($rowRe.Matches($Content) | Where-Object { $_.Value -cmatch '\*\*LIVE\*\*' -and $_.Value -match '\[\d+\.\d+\.\d+\]' })
     $result = @{ Content = $Content; Row = $NewRow; Status = 'none'; From = '' }
     if ($marked.Count -eq 0) { return $result }
     if ($marked.Count -gt 1) { $result.Status = 'ambiguous'; return $result }

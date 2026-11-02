@@ -747,6 +747,10 @@ Assert-Equal $twoDoc $twoMv.Content 'and the content is returned untouched'
 Assert-Equal $liveNew $twoMv.Row 'and so is the new row'
 $proseDoc = "Mark the live one with **LIVE**.`n`n" + $rowDoc
 Assert-Equal 'none' (Move-ReleaseHistoryLiveMarker -Content $proseDoc -NewRow $liveNew).Status 'a mention in prose is not a marked row'
+$legendDoc = "| Mark | Meaning |`n|---|---|`n| **LIVE** | the version on the live theme |`n`n" + $liveDoc
+$legendMv = Move-ReleaseHistoryLiveMarker -Content $legendDoc -NewRow $liveNew
+Assert-Equal 'moved' $legendMv.Status 'a legend row naming no version is not counted, so the release row still moves'
+Assert-Equal $true ($legendMv.Content.Contains('| **LIVE** | the version on the live theme |')) 'and the legend keeps its marker'
 Assert-Match $notes '(?m)^# Changelog Releases\n\nA title\n\n## Version 3\.5\.0 \(Aug 05, 2026\)$' 'the H1 is followed by the title and then the version heading, nothing between'
 Assert-Match $notes 'A title' 'title included'
 # THE LEVELS ARE CHANGELOG.md'S OWN (#881, August 25, 2026) -- AND THEY ARE READ FROM THE FORMAT RATHER
