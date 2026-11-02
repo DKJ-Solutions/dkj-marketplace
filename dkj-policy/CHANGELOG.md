@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**3 / 3 minor entries** <!-- pending-tally -->
+**4 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3751-lane8-gone-checkout-handover · 20261102-171648Z
+
+`tidy-machine` lane 8 now hands over the removal of an install record whose checkout is gone (#3751).
+`claude plugin uninstall` takes no path and picks the record from the directory it runs in, so for each
+vanished folder the lane prints `mkdir` the folder, `cd` into it, one uninstall per record at that
+record's own scope, `cd ..`, and `rmdir`, which removes only an empty folder. Until now it printed
+"nothing here guesses" and no command, though moved or deleted the old record is dead either way.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+When `tidy-machine` reports install records for a checkout that no longer exists, it now prints the
+commands that remove them, ready to paste. Run them only for a folder that is gone for good. A drive that
+is not mounted, or a synced folder that is offline, looks the same.
+
+**Score:** 2
+
+#### Pull Request
+
+tidy-machine lane 8 hands over the recreate-and-uninstall sequence for a gone-checkout record
+
+Plugins: dkj-policy
+
+[PR #3755](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3755)
+
+---
 
 ### DEPLOY: fix/3747-checkout-v7 · 20261102-164702Z
 
