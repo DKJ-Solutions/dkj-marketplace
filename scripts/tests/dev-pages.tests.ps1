@@ -148,6 +148,7 @@ try {
     Assert-Equal "## A`n`n## B`n" (ConvertTo-HubLensBody -Text "# T`n`n### A`n`n### B`n") 'a lens with only ### sections shows them as h2s'
     Assert-Equal "## Specific to this repo (VUL-IN)`n`nfill`n" (ConvertTo-HubLensBody -Text "# T`n`n## Specific to this repo (VUL-IN)`n`nfill`n") 'a lone ## with nothing under it stays'
     Assert-Equal "## A`n`n## B`n`n### b`n" (ConvertTo-HubLensBody -Text "# T`n`n## A`n`n## B`n`n### b`n") 'a body that already opens on h2s is left as it is'
+    Assert-Equal "## S`n`nSee [x](/ai/claude/specialists/lenses/specialist-05-05-lens) and [y](../other.md).`n" (ConvertTo-HubLensBody -Text "# T`n`n## S`n`nSee [x](specialist-05-05-lens.md#a-part) and [y](../other.md).`n") 'a link to another lens file becomes a link to its page, anchor dropped; any other relative link is left as written'
     $leadIn = "# T`n`n## S`n`n- **One.** first`n  more`n- **Two:** " + [char]0x2014 + " second`n`n## U`n`n- **Only** x`n- plain`n"
     Assert-Equal "## S`n`n### One`n`nFirst`nmore`n`n### Two`n`nSecond`n`n## U`n`n- **Only** x`n- plain`n" (ConvertTo-HubLensBody -Text $leadIn) 'a list under an h2 whose every item opens bold becomes h3s over their text; a list with one plain item stays a list'
     Assert-Equal "## S`n`n### A lead that wraps`n`nOnto two lines.`n`n### B`n`nText`n" (ConvertTo-HubLensBody -Text "# T`n`n## S`n`n- **A lead that`n  wraps** onto two lines.`n- **B.** text`n") 'a bold lead that wraps onto its next line is still a lead'

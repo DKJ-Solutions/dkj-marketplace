@@ -567,6 +567,9 @@ function ConvertTo-HubLensBody {
         '## ' and nothing under it keeps it.
     #>
     param([AllowEmptyString()][string]$Text)
+    # A link to another lens file is a link to that lens's own page here (Maikel, November 2, 2026); its #anchor goes,
+    # since the rendered page gives its headings no ids.
+    $Text = [regex]::Replace($Text, '\]\((?:\./)?(specialist-\d{2}-\d{2}-lens)\.md(?:#[^)]*)?\)', '](/ai/claude/specialists/lenses/$1)')
     $md = ([regex]::Replace($Text, '\A---\n[\s\S]*?\n---\n', '')).TrimStart("`n")
     $md = ([regex]::Replace($md, '\A[ \t]*#[ \t]+.*(\n|\z)', '')).TrimStart("`n")
     $lines = @($md -split "`n")
