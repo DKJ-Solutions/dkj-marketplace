@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**4 / 4 minor entries** <!-- pending-tally -->
+**5 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3752-release-note-heading-rules · 20261102-181642Z
+
+`check-release-note-form` now holds the newest release note's `h1`-`h3` headings to the brand book's rules 7
+and 8 in a repo that has `dkj-solutions` enabled (#3752). A heading may carry no code span and no more than
+five words. Each offending line is named with its number under a `[HEADING]` label, apart from form drift.
+The rules are the brand book's rather than the draft's, so they live in their own function,
+`Get-ReleaseNoteHeadingFindings`, and a repo outside DKJ-Solutions is not held to them.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a DKJ-Solutions repo, the release-notes step of a cut now refuses a note whose section heading holds a
+code span or runs past five words, and names the line, before the note is published. A BWJ-Development
+repo sees no change.
+
+**Score:** 2
+
+#### Pull Request
+
+check-release-note-form refuses a code span or more than five words in a release note's h1-h3 heading
+
+Plugins: dkj-policy
+
+[PR #3756](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3756)
+
+---
 
 ### DEPLOY: feat/3751-lane8-gone-checkout-handover · 20261102-171648Z
 
