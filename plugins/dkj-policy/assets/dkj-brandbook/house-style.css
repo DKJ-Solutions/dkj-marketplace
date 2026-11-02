@@ -129,12 +129,12 @@
      2026 the owner cut the scale to three headings: h3 is 14px, the body size, set apart by weight and
      colour alone, and h4 and h5 were retired with their tokens.
      Headings take the heading token of their own level; body text is --text-base. Same in both modes. */
-  /* No heading above 36px (owner, October 22, 2026, at 32px; 36/22/16 since November 1, 2026, Maikel): a page shows as
+  /* No heading above 36px (owner, October 22, 2026, at 32px; 36/22/16 since November 1, 2026, Maikel; h2 20px since November 2): a page shows as
      much content as it can on a 900px-high screen, so h1 is the top step and stands apart by its size and the theme's
      colour. The hero figure takes it too. --text-lg went the same day: what was set in it takes --text-h3. */
-  --text-h1: 36px; --text-h2: 22px; --text-h3: 16px;
+  --text-h1: 36px; --text-h2: 20px; --text-h3: 16px;
   --text-base: 14px; --text-sm: 12px; --text-xs: 11px;
-  /* The site header's name (.site-header__name): a step of its own just under the h2 size, so the header can be tuned
+  /* The site header's name (.site-header__name): a step of its own, the h2 size since November 2, 2026, so the header can be tuned
      without moving every h2 (Dave, November 2, 2026; it was --text-h3). */
   --text-title: 20px;
 
@@ -217,11 +217,11 @@ body > header, main > header { display: flex; justify-content: space-between; al
 .controls { display: flex; align-items: center; gap: var(--spacing-2); flex-wrap: wrap; }
 .controls .seg, .controls .btn { height: 30px; box-sizing: border-box; }
 .controls .btn { display: inline-flex; align-items: center; padding: 0 var(--spacing-2-5); }
-/* Page column (#141): put it on <main> and its blocks stack with one --spacing-3 gap between them (owner, October 28, 2026; it was --spacing-5), the hub's
+/* Page column (#141): put it on <main> and its blocks stack with one --spacing-5 gap between them (Maikel, November 2, 2026; --spacing-3 from October 28, 2026, and --spacing-5 before), the hub's
    rhythm. .card, .tiles, .notice and .note carry a margin-top of their own, which would add to the gap, so a
    direct child of the column gives it up. .page-cta is the spacing of a primary button under the lead (a <p> that holds
    the button). */
-.page-column { display: grid; gap: var(--spacing-3); align-content: start; padding: var(--spacing-4) var(--spacing-4) var(--spacing-12); }
+.page-column { display: grid; gap: var(--spacing-5); align-content: start; padding: var(--spacing-4) var(--spacing-4) var(--spacing-12); }
 .page-column > .card, .page-column > .tiles, .page-column > .notice, .page-column > .note { margin-top: 0; }
 /* An in-page anchor in the column lands with room above it, clear of the settings button (#156). */
 .page-column [id] { scroll-margin-top: 5rem; }
