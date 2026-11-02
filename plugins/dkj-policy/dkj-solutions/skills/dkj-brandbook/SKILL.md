@@ -143,7 +143,7 @@ page, dashboard and Artifact is designed to that screen first:
 ## The gate: `check-house-style`
 
 **[`scripts/lint/check-house-style.ps1`](../../scripts/lint/check-house-style.ps1) holds a repo to these
-three rules** ([#3035](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3035)). A fourth, `heading` (no `h2`
+four rules** ([#3035](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3035)). An earlier fourth, `heading` (no `h2`
 inside a card, [#3175](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3175)), was retired on October 24, 2026
 (Maikel): an `h2` may title a card.
 
@@ -159,8 +159,14 @@ inside a card, [#3175](https://github.com/DKJ-Solutions/dkj-claude-plugins/issue
    a `.card` rule nested in a `.my-panel` rule is read as `.my-panel .card`
    ([#3694](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3694)).
 3. **retired**: the repo's own layer neither defines nor reads (`var(--x)`) a token name the brand book retired.
+4. **colour**: a rule in the repo's own layer reads a colour only as a token. A colour property
+   (`color`, `background`, `border-color`, `fill` and the like) whose value types a code (`#hex`, `rgb()`,
+   `hsl()`) or derives one (`color-mix()`, `oklch()`, `rgb(from ...)`) is a finding
+   ([#3720](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3720)). A domain token's own value
+   (`--emotion-cyan: #0369a1`) is not: a domain colour is a token of the repo's own, read with `var()` like
+   any other.
 
-Checks 2 and 3 use a pattern grep over every tracked file of the kinds a page is built in (`.css`, `.html`, `.js`,
+Checks 2 to 4 use a pattern grep over every tracked file of the kinds a page is built in (`.css`, `.html`, `.js`,
 `.py`, `.ps1` and the like, not Markdown), so CSS inside a Python or PowerShell string counts. A false
 positive is answered in the repo's `scripts/repo-config.ps1`. Every entry needs a reason, and a drifted
 copy is never answered there:

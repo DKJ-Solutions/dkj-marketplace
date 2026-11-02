@@ -39,19 +39,56 @@
 
 ### PLAN
 
+#3720: the brand book's colour rule (a rule reads a colour only as a token, Maikel, November 1, 2026) held
+only where the brand book is made, in `check-colour-literals.mjs`. Give `check-house-style` a fourth check,
+`colour`, so it holds where the brand book is used. Its shape follows the README rather than the issue's
+wording: a domain token's own value may hold a code (README "How to use it", step 2; "outside a token's own
+value", under "A rule reads a colour only as a token"), so only a colour *property*'s value is read.
+
+#### Measured before building
+
+All three consumers that call the reusable gate (dkj-music-library, dkj-recipes, dkj-etf-tracker) already
+fail it at v6.2.0 with 38 to 94 findings, so the new check turns no green CI red. It adds 11 findings in
+dkj-music-library (`color-mix()` in rules), 2 in dkj-recipes (an icon script) and 0 in dkj-etf-tracker, whose
+codes all sit in domain token values. In this repo it found 11, answered in `Get-HouseStyleAllowlist`: GitHub
+label-colour fixtures, the BWJ extension's own pages, and four `color: #000` samples on the House style page,
+filed as #3725. Whether a token's own value may *derive* is filed as #3727: the README allows it, the house
+sheets' gate refuses it, and this check follows the README until that is decided.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Find-HouseStyleColourHit` and check 4 in `house-style-rules.ps1`, wired into `Invoke-HouseStyleCheck`
+- [x] The allowlist entries in `scripts/repo-config.ps1`, the specimens one citing #3725
+- [x] The skill page, the plugin README, the hook, the gate's synopsis, the reusable workflow's header and the
+  marketplace description name the fourth check (the last two also lose the retired `h2`-in-a-card check)
 
 ### TEST
 
+- [x] `check-house-style.tests.ps1`: 13 unit asserts on the matcher and one fixture assert through the gate;
+  135 passed, the self-run over this repo included
+
 ### DEPLOY: feat/3720-house-style-colour-check
 
-**Score:**
+The brand book's gate, `check-house-style`, gains a fourth check, `colour`: a rule in a repo's own layer reads
+a colour only as a token ([#3720](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3720)). A colour
+property (`color`, `background`, `border-color`, `fill` and the like) whose value types a code (`#hex`,
+`rgb()`, `hsl()`) or derives one (`color-mix()`, `oklch()`, `rgb(from ...)`) is a finding. A custom
+property's own value is not, so a domain colour stays a token of the repo's own. The session check reports
+it too, and the House style page's four raw sample colours are allowlisted here until #3725 gives them a
+token.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions repo running the house-style gate gets a new finding for every rule that types or mixes a
+colour, and the reusable workflow tracks `main`, so it arrives at the merge rather than at the next release.
+Measured on November 2, 2026: 11 `color-mix()` rules in dkj-music-library, 2 in dkj-recipes' icon script,
+none in dkj-etf-tracker. All three already fail the gate on retired token names, so no green check turns
+red. The fix is the one the README names: add a domain token (`--my-row-tint: ...`) holding the colour and
+read it with `var()`, or answer a false positive in `Get-HouseStyleAllowlist` with its reason.
+
+**Score:** 3
 
 #### Pull Request
 
