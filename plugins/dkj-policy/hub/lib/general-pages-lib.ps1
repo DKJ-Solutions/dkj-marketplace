@@ -589,7 +589,55 @@ function ConvertTo-HubLensBody {
             $lines[$i] -replace '^([ \t]*)#{1,6}', ('$1' + ('#' * $level))
         } else { $lines[$i] }
     }
-    return (@($out) -join "`n").TrimStart("`n")
+    return ConvertTo-HubLensLeadHeadings -Text ((@($out) -join "`n").TrimStart("`n"))
+}
+
+function ConvertTo-HubLensLeadHeadings {
+    <#
+        Pure: the h3 level put to use (Maikel, November 2, 2026). A list straight under an h2 whose EVERY item opens with
+        a bold lead ('- **The sender header line.** Every reply ...', at least two items) is a run of sub-sections written
+        as bullets, so each item becomes '### <the lead>' over the rest of its text. The lead loses its closing '.' or
+        ':', and a dash opening the rest goes. A list with one item that does not open that way stays a list, as does a
+        list under an h3 (an h4 is no house heading). Code fences are left alone.
+    #>
+    param([AllowEmptyString()][string]$Text)
+    $dash = '[-' + [char]0x2013 + [char]0x2014 + ']'
+    $lines = @($Text -split "`n")
+    $out = New-Object System.Collections.Generic.List[string]
+    $fence = $false; $level = 0; $i = 0
+    while ($i -lt $lines.Count) {
+        $l = $lines[$i]
+        if ($l -match '^\s*```') { $fence = -not $fence; $out.Add($l); $i++; continue }
+        if ($fence) { $out.Add($l); $i++; continue }
+        if ($l -match '^(#{1,6})[ \t]') { $level = $Matches[1].Length; $out.Add($l); $i++; continue }
+        if ($level -ne 2 -or $l -notmatch '^- ') { $out.Add($l); $i++; continue }
+        # The list: its items start with '- ' at the margin; a line indented two or more, or a blank line before one, continues it.
+        $items = New-Object System.Collections.Generic.List[object]; $j = $i
+        while ($j -lt $lines.Count) {
+            if ($lines[$j] -match '^- ') { $items.Add((New-Object System.Collections.Generic.List[string])); $items[$items.Count - 1].Add($lines[$j]); $j++ }
+            elseif ($lines[$j] -match '^\s{2,}\S') { $items[$items.Count - 1].Add($lines[$j]); $j++ }
+            elseif ($lines[$j] -match '^\s*$' -and $j + 1 -lt $lines.Count -and $lines[$j + 1] -match '^(- |\s{2,}\S)') { $items[$items.Count - 1].Add(''); $j++ }
+            else { break }
+        }
+        # The item as one text, its continuation dedented, so a bold lead that wraps onto the next line still reads as one.
+        $texts = @($items | ForEach-Object { (@($_[0]) + @($_ | Select-Object -Skip 1 | ForEach-Object { $_ -replace '^  ', '' })) -join "`n" })
+        $leads = @($texts | ForEach-Object { [regex]::Match($_, '(?s)\A- \*\*(.+?)\*\*(.*)\z') })
+        if ($items.Count -lt 2 -or @($leads | Where-Object { -not $_.Success }).Count) {
+            for ($k = $i; $k -lt $j; $k++) { $out.Add($lines[$k]) }
+            $i = $j; continue
+        }
+        for ($n = 0; $n -lt $items.Count; $n++) {
+            $head = ($leads[$n].Groups[1].Value -replace '\s+', ' ').Trim() -replace '[.:]\z', ''
+            $rest = $leads[$n].Groups[2].Value -replace ('\A[ \t]*' + $dash + '?[ \t]*\n?'), ''
+            # The rest now opens a paragraph of its own, so a lower-case first letter (after a dash) is raised.
+            if ($rest -cmatch '\A[a-z]') { $rest = $rest.Substring(0, 1).ToUpperInvariant() + $rest.Substring(1) }
+            if ($out.Count -and $out[$out.Count - 1] -ne '') { $out.Add('') }
+            $out.Add('### ' + $head); $out.Add('')
+            foreach ($b in @($rest -split "`n")) { $out.Add($b) }
+        }
+        $i = $j
+    }
+    return (@($out) -join "`n")
 }
 
 # The house's one markdown renderer, beside the release-notes template in this plugin (Format-HubLensPageHtml).
