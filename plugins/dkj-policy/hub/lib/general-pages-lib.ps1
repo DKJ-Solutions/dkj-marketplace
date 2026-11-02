@@ -713,7 +713,6 @@ function Format-HubLensPageHtml {
     # The lens card reads as a document, so it is never wider than 800px (Maikel, November 2, 2026). The elements in it
     # are the house's own (h1-h3, code, pre, lists, quotes, .table); this layer sets only the space between its blocks.
     $style = '.dp-lens { max-width: 800px; }' + "`n" +
-        '#lens-intro { margin-top: var(--spacing-2); }' + "`n" +
         ':is(#lens-body, #lens-intro) > * + * { margin-top: var(--spacing-3); }' + "`n" +
         '#lens-body > * + :is(h2, h3) { margin-top: var(--spacing-6); }' + "`n" +
         '#lens-body li + li, #lens-body li > :is(ul, ol) { margin-top: var(--spacing-1); }'
