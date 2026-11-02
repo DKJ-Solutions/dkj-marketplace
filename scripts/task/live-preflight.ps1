@@ -110,6 +110,13 @@
     already exists -- which is a fact about the store, not about this run, so the run says so out loud
     and carries the skip into its summary rather than quietly passing.
 
+.PARAMETER BackupTimeoutMinutes
+    How long step 7's backup waits for the copy of live to fill, passed through to backup-live-theme.ps1 as
+    its -TimeoutMinutes. Default 20, that script's own default. Raise it for a large theme: measured in
+    BWJ-Development/smartwatchbanden on November 2, 2026 (#3729), a 909-file live theme's copy held 661
+    files after 20 minutes and was still filling at 3-4 files per sample, so the run refused a copy that
+    was not stuck. The bound this script puts around the whole backup run grows with it.
+
 .PARAMETER AcceptRejectedWriteBacks
     Git-connected mode only. Turn a rejected push in the deploy branch's rule-suite log from a refusal into
     a note, after a person has reconciled what it left on live. Never a default.
@@ -149,6 +156,8 @@ param(
     [string]$DriftCheckPath = '',
     [switch]$SkipGates,
     [switch]$SkipBackup,
+    [ValidateRange(1, 600)]
+    [int]$BackupTimeoutMinutes = 20,
     [switch]$AcceptRejectedWriteBacks,
     [switch]$AcceptOwedReconciliation,
     [string]$RootOverride = ''
@@ -860,8 +869,13 @@ if ($alreadyRefused.Count -gt 0 -and -not $SkipBackup) {
     # locking and CAN ARRIVE PARTIALLY, so a backup taken after one has captured the broken state and is
     # by construction not a rollback.
     Write-Host '  this is the slow step: the copy is polled until it is provably complete (roughly eight'
-    Write-Host '  minutes in the store this was specified from). Nothing after it is expensive.'
-    $backup = Invoke-NativeCapture -FilePath 'powershell' -Arguments @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $backupScript, '-Store', $store) -TimeoutSeconds 2700
+    Write-Host "  minutes in the store this was specified from; the wait gives up after $BackupTimeoutMinutes min,"
+    Write-Host '  -BackupTimeoutMinutes raises it). Nothing after it is expensive.'
+    # THE OUTER BOUND FOLLOWS THE INNER ONE (#3729). It was a flat 2700 s, i.e. the backup's own 20-minute
+    # wait plus 25 minutes for the duplicate, the pulls and the rotation. A longer wait passed through
+    # without it would be cut off here as a timeout of the child, so the same 25 minutes ride on top.
+    $backupArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $backupScript, '-Store', $store, '-TimeoutMinutes', [string]$BackupTimeoutMinutes)
+    $backup = Invoke-NativeCapture -FilePath 'powershell' -Arguments $backupArgs -TimeoutSeconds (($BackupTimeoutMinutes + 25) * 60)
     Write-Host ($backup.Output | Out-String)
     if ((Test-NativeExitMeasured -Capture $backup) -and $backup.ExitCode -eq 0) {
         # A PASS WITH EXCEPTIONS IS STILL NAMED AS ONE (#2568): the summary is what gets read, and 'proven
