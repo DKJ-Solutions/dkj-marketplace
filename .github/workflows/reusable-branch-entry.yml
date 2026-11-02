@@ -64,10 +64,10 @@ jobs:
     # the caller, because GitHub refuses timeout-minutes on a job that calls a reusable workflow.
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Fetch the shared workflow scripts
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           repository: DKJ-Solutions/dkj-marketplace
           ref: ${{ inputs.scripts-ref }}

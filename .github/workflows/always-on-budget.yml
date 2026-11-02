@@ -46,7 +46,7 @@ jobs:
     # The full derivation, and the incident it was written for, are in the banner above jobs: in ci.yml.
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # THE SHIM (issue #2488): the scripts launch children by the literal name `powershell`, and
       # ubuntu-latest has only `pwsh`. It runs before the first pwsh step.
