@@ -1515,5 +1515,8 @@ function Get-HouseStyleAllowlist {
         @{ Path = 'plugins/dkj-policy/hub/lib/general-pages-lib.ps1'; Name = '--ink'; Reason = 'the release-notes template''s own token, which Format-ReleaseNotesDevPage points AT a house token (#3108, moved to the plugin in #3119, to dkj-policy in #3198)' }
         @{ Path = 'scripts/tests/check-house-style.tests.ps1';  Reason = "the gate's own suite: every name in it is a fixture" }
         @{ Path = 'scripts/tests/house-palette.tests.ps1';      Reason = 'the palette suite: every name in it is a pattern or a fixture of the stylesheet it holds' }
+        @{ Path = 'plugins/dkj-policy/bwj-development/*';       Reason = 'the BWJ-Development extension: its pages carry BWJ''s own styling, outside the house style by design' }
+        @{ Path = 'scripts/tests/issue-dashboard.tests.ps1';    Reason = 'fixtures of GitHub label colours, which the issue dashboard renders as data' }
+        @{ Path = 'plugins/dkj-policy/assets/dkj-brandbook/specimens.html'; Name = '#000'; Reason = 'four light specimen samples type their text colour; #3725 gives them a token and removes this entry' }
     )
 }
