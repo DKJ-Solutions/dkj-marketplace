@@ -873,40 +873,47 @@ function Format-HubGroupPageHtml {
 function Format-HubSettingsPageHtml {
     <#
         The toolbox's Settings page on /settings (Dave, November 2, 2026): its h1, then the group headed by the h2 Theme
-        holding a Light/Dark toggle and two h3 cards, Light and Dark, each with the brand book's own theme picker
-        (DKJTheme.picker, house-theme.js, which every page here loads) cut down to that mode's row; the toggle shows one
-        card at a time. Under them, in the group, its reset. The choice is the same one the header's settings button
-        makes -- one key per app on this device -- so the pickers always agree. Nothing here is read from disk.
+        holding a Light/Dark toggle and an h3 card per theme, named after it, holding that theme's swatch alone -- the
+        brand book's own picker (DKJTheme.picker, house-theme.js, which every page here loads) cut down to one swatch.
+        The toggle shows one mode's cards at a time. Under them, in the group, its reset. The choice is the same one the
+        header's settings button makes -- one key per app on this device -- so every swatch agrees. Nothing here is read
+        from disk: the cards are drawn from DKJTheme.themes, so a theme the brand book adds gets its card at once.
     #>
     param([AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
     # The house grouping form (house-style.css, .grid-3 and .grid__head): the Theme h2 over its group's surface (--bg-2),
-    # and an h3 card per mode (.grid-2 until Dave asked for .grid-3, November 2, 2026), which the house sets on --bg-3
-    # with a --bg-4 border (Dave, November 2, 2026).
-    $card = { param($mode, $label) '<section class="card hs-settings" id="settings-theme-card-' + $mode + '"><div class="card__head"><h3>' + $label + '</h3></div><div id="settings-theme-' + $mode + '"></div></section>' }
-    # The toggle (Dave, November 2, 2026): the house's segmented switch, at the height a .controls row gives it, a row of
-    # its own under the h2. Exactly one of its two is always pressed, and only that mode's card is shown.
+    # its h3 cards three to a row, which the house sets on --bg-3 with a --bg-4 border (Dave, November 2, 2026).
+    # The toggle: the house's segmented switch, at the height a .controls row gives it, a row of its own under the h2.
+    # Exactly one of its two is always pressed, and only that mode's cards are shown.
     $toggle = '<div class="controls grid__full"><span class="seg" id="settings-theme-mode" role="group" aria-label="Mode">' +
         '<button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>'
-    $body = '<div class="grid-3"><div class="grid__head"><h2>Theme</h2></div>' + $toggle + (& $card 'light' 'Light') + (& $card 'dark' 'Dark') +
+    $body = '<div class="grid-3" id="settings-theme-grid"><div class="grid__head"><h2>Theme</h2></div>' + $toggle +
         # The reset belongs to the whole Theme group, so it sits in the group under the cards, a row of its own, and takes the house's roomier .btn--touch (Dave, November 2, 2026).
-        '<p class="grid__full"><button type="button" class="btn btn--touch" id="settings-theme-reset">Reset theme</button></p></div>' + "`n" +
-        # Each card draws the whole picker and keeps only its own mode's row: the picker never redraws its rows, and a
-        # click or a theme change reaches every swatch left in it, so the two cards and the header stay in step.
-        '<script>["light", "dark"].forEach(function (mode) {' +
-        ' var el = document.getElementById("settings-theme-" + mode);' +
-        ' DKJTheme.picker(el, { light: "Light", dark: "Dark" });' +
-        # Its own row is unwrapped to its swatches: the row's label goes, the card's h3 already naming the mode, and the
-        # swatches stand on one line instead of in the row's 64px label column (Dave, November 2, 2026). No house class is
+        '<p class="grid__full" id="settings-theme-foot"><button type="button" class="btn btn--touch" id="settings-theme-reset">Reset theme</button></p></div>' + "`n" +
+        # Each theme's card draws the whole picker and keeps only its own swatch, unwrapped from its row (no label, no
+        # 64px label column). The picker never redraws, and a click or a theme change reaches every swatch left in every
+        # picker, so the twelve cards and the header stay in step with no logic of this page's own. No house class is
         # restyled for it, and the header panel's picker keeps its rows and labels.
-        ' Array.prototype.forEach.call(el.querySelectorAll(".theme-picker__row"), function (row) { if (row.querySelector(".theme-swatch--" + mode)) { row.parentNode.replaceChild(row.querySelector(".theme-picker__swatches"), row); } else { row.parentNode.removeChild(row); } });' +
+        '<script>(function () {' +
+        ' var grid = document.getElementById("settings-theme-grid"), foot = document.getElementById("settings-theme-foot");' +
+        ' DKJTheme.themes.forEach(function (t) {' +
+        ' var card = document.createElement("section"); card.className = "card hs-settings"; card.setAttribute("data-mode", t.mode);' +
+        ' card.innerHTML = "<div class=\"card__head\"><h3></h3></div><div></div>"; card.querySelector("h3").textContent = t.name;' +
+        ' grid.insertBefore(card, foot);' +
+        ' var el = card.lastChild; DKJTheme.picker(el, { light: "Light", dark: "Dark" });' +
+        ' Array.prototype.forEach.call(el.querySelectorAll(".theme-picker__row"), function (row) { if (row.querySelector(".theme-swatch--" + t.mode)) { row.parentNode.replaceChild(row.querySelector(".theme-picker__swatches"), row); } else { row.parentNode.removeChild(row); } });' +
+        ' Array.prototype.forEach.call(el.querySelectorAll(".theme-swatch"), function (s) { if (s.getAttribute("data-id") !== t.id) { s.parentNode.removeChild(s); } });' +
         ' });' +
         # The toggle opens on the mode of the theme in force, and follows a reset to the mode it lands in.
         ' var seg = document.getElementById("settings-theme-mode");' +
         ' function modeOf(id) { var t = DKJTheme.themes.filter(function (t) { return t.id === id; })[0]; return t ? t.mode : "light"; }' +
-        ' function show(mode) { ["light", "dark"].forEach(function (m) { document.getElementById("settings-theme-card-" + m).hidden = m !== mode; seg.querySelector("[data-mode=\"" + m + "\"]").setAttribute("aria-pressed", String(m === mode)); }); }' +
+        ' function show(mode) {' +
+        ' Array.prototype.forEach.call(grid.querySelectorAll(".card[data-mode]"), function (c) { c.hidden = c.getAttribute("data-mode") !== mode; });' +
+        ' Array.prototype.forEach.call(seg.querySelectorAll("button[data-mode]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-mode") === mode)); });' +
+        ' }' +
         ' seg.addEventListener("click", function (e) { var b = e.target.closest("button[data-mode]"); if (b) { show(b.getAttribute("data-mode")); } });' +
         ' show(modeOf(DKJTheme.current()));' +
-        ' document.getElementById("settings-theme-reset").addEventListener("click", function () { DKJTheme.reset(); show(modeOf(DKJTheme.current())); });</script>'
+        ' document.getElementById("settings-theme-reset").addEventListener("click", function () { DKJTheme.reset(); show(modeOf(DKJTheme.current())); });' +
+        ' })();</script>'
     # The reset's edge in the primary, hover included (Dave, November 2, 2026): this page's own button by its id,
     # so no house class is redefined.
     $style = '.hs-settings > * + * { margin-top: var(--spacing-3); }' + "`n" + '#settings-theme-reset { border-color: var(--primary); }'
