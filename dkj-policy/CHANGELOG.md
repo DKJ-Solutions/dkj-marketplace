@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**7 / 7 minor entries** <!-- pending-tally -->
+**8 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/site-header-brand-hit-area · 20261102-205736Z
+
+The house site header's brand link is no longer only its text: the whole cell from the bar's left edge to the end of the name, top to bottom, goes home, and it lights up on hover in the header's hover shade -- the same shape the settings cell has at the bar's right end.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every page built on the brand book gets a larger, visible home target in its header, so going home no longer needs a click on the text itself.
+
+**Score:** 2
+
+#### Pull Request
+
+The site header's brand link fills the bar's full height as one clickable cell
+
+Plugins: dkj-policy
+
+[PR #3760](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3760)
+
+---
 
 ### DEPLOY: feat/site-header-nav · 20261102-190626Z
 
