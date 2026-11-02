@@ -563,7 +563,8 @@ function Format-HubLensPageHtml {
     <#
         One specialist lens's own page on /ai/claude/specialists/lenses/<name> (Get-HubLensPages), under Tools > AI >
         Specialists: the file's name as the h1 and the last crumb, as its card reads, and the file RENDERED as markdown in
-        a .prose card (Maikel, November 2, 2026), past its frontmatter. The renderer is the house's one, markdown-render.js beside the release-notes
+        a .prose card (Maikel, November 2, 2026), past its frontmatter and its own '# ' title, so the page keeps ONE h1;
+        any other '# ' heading is rendered as an h2. The renderer is the house's one, markdown-render.js beside the release-notes
         template, inlined here the way that template inlines it, so one format keeps one renderer. The markdown travels
         as JSON in a <script type="application/json">, and the raw text stays in a <noscript> for a reader without
         JavaScript. $null for a name the repo has no lens of.
@@ -578,8 +579,17 @@ function Format-HubLensPageHtml {
     [void]$body.AppendLine('<div><h1>' + (& $e $title) + '</h1></div>')
     try {
         $text = [System.IO.File]::ReadAllText($lens.Path, (New-Object System.Text.UTF8Encoding($false))) -replace "`r`n", "`n"
-        # The frontmatter is the roster's data, not body. The lens's own '# ' title stays: it opens the document.
+        # The frontmatter is the roster's data, not body. A page has ONE h1 (Maikel, November 2, 2026), and it is the
+        # file's name above: so the lens's own '# ' title goes (its card already shows it), and any other '# ' heading
+        # outside a code fence becomes '## ', so the rendered body can never carry an h1 of its own.
         $md = ([regex]::Replace($text, '\A---\n[\s\S]*?\n---\n', '')).TrimStart("`n")
+        $md = ([regex]::Replace($md, '\A[ \t]*#[ \t]+.*(\n|\z)', '')).TrimStart("`n")
+        $fence = $false
+        $md = (@($md -split "`n" | ForEach-Object {
+            if ($_ -match '^\s*```') { $fence = -not $fence; $_ }
+            elseif (-not $fence -and $_ -match '^[ \t]*#[ \t]') { $_ -replace '^([ \t]*)#', '$1##' }
+            else { $_ }
+        }) -join "`n")
         $renderer = [System.IO.File]::ReadAllText($script:MarkdownRendererPath, (New-Object System.Text.UTF8Encoding($false)))
         # JSON inside a <script>: every '<' is escaped, so no '</script>' in a lens can end the block early.
         $json = (ConvertTo-Json -InputObject $md -Compress) -replace '<', ('\' + 'u003c')
