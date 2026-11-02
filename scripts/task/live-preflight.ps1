@@ -117,6 +117,11 @@
     files after 20 minutes and was still filling at 3-4 files per sample, so the run refused a copy that
     was not stuck. The bound this script puts around the whole backup run grows with it.
 
+.PARAMETER BackupVerifyExisting
+    The id of a backup copy an earlier run left standing, passed through to backup-live-theme.ps1 as its
+    -VerifyExisting (#3733): step 7 then verifies and rotates that copy instead of duplicating live again.
+    For the retry after a backup that timed out; that script refuses any id outside its backup namespace.
+
 .PARAMETER AcceptRejectedWriteBacks
     Git-connected mode only. Turn a rejected push in the deploy branch's rule-suite log from a refusal into
     a note, after a person has reconciled what it left on live. Never a default.
@@ -158,6 +163,7 @@ param(
     [switch]$SkipBackup,
     [ValidateRange(1, 600)]
     [int]$BackupTimeoutMinutes = 20,
+    [string]$BackupVerifyExisting = '',
     [switch]$AcceptRejectedWriteBacks,
     [switch]$AcceptOwedReconciliation,
     [string]$RootOverride = ''
@@ -879,6 +885,8 @@ if ($alreadyRefused.Count -gt 0 -and -not $SkipBackup) {
     # without it would be cut off here as a timeout of the child, so the same 25 minutes ride on top --
     # of the HARD cap, since the backup's wait runs on past its deadline while the copy still grows (#3732).
     $backupArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $backupScript, '-Store', $store, '-TimeoutMinutes', [string]$BackupTimeoutMinutes)
+    # ADOPT RATHER THAN DUPLICATE AGAIN (#3733): the copy a timed-out run left standing is verified in place.
+    if (([string]$BackupVerifyExisting).Trim()) { $backupArgs += @('-VerifyExisting', ([string]$BackupVerifyExisting).Trim()) }
     $backupCapMinutes = $BackupTimeoutMinutes * $script:ThemeFillHardCapFactor
     $backup = Invoke-NativeCapture -FilePath 'powershell' -Arguments $backupArgs -TimeoutSeconds (($backupCapMinutes + 25) * 60)
     Write-Host ($backup.Output | Out-String)

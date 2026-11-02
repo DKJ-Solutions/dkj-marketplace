@@ -238,6 +238,63 @@ function Test-BackupThemeName {
     return $rest.StartsWith('backup-', [System.StringComparison]::Ordinal)
 }
 
+function Get-ExistingBackupVerdict {
+    <#
+    .SYNOPSIS
+        May backup-live-theme's -VerifyExisting adopt the theme -ThemeId names? Returns an object with
+        Accepted (bool), Id, Name and Reason.
+
+    .DESCRIPTION
+        WHY THE MODE EXISTS (#3733). A run that times out leaves its unverified copy standing, by design,
+        and a retry used to duplicate live again: measured in a consumer on November 2, 2026, one release
+        day cost two extra theme slots on an 80-theme estate while the first copy was still filling and
+        would have verified. -VerifyExisting skips the duplicate and runs the verify and the rotation
+        against a copy that already exists.
+
+        AND THE ROTATION IS WHY THIS FUNCTION REFUSES SO MUCH. The adopted theme becomes the survivor that
+        Get-BackupRotationPlan keeps while every other backup rotates out, so the id must name one of THIS
+        repo's backups and nothing else. Each refusal below names a theme that is not a copy waiting to be
+        judged:
+
+          - an empty id, or one the store's theme list does not hold;
+          - the configured live theme itself (-LiveId), which is the source and never its own backup;
+          - a name outside this repo's backup namespace (Test-BackupThemeName): a preview, a colleague's
+            sandbox, a third party's theme;
+          - a backup the store reports as role 'live' or 'main': a restored backup IS live (#2589).
+
+        WHAT IT DOES NOT JUDGE is whether the copy is complete or of which live stand it was taken. That is
+        the verify step's question, asked against live as it stands now, so a copy of an older stand is
+        refused there by its count and shortfall rather than here by its timestamp.
+    #>
+    param(
+        [AllowNull()][AllowEmptyCollection()][object[]]$Themes,
+        [AllowEmptyString()][AllowNull()][string]$ThemeId,
+        [AllowEmptyString()][AllowNull()][string]$LiveId
+    )
+
+    $id = ([string]$ThemeId).Trim()
+    $live = ([string]$LiveId).Trim()
+    if (-not $id) {
+        return [pscustomobject]@{ Accepted = $false; Id = ''; Name = ''; Reason = 'no theme id was given' }
+    }
+    if ($live -and $id -eq $live) {
+        return [pscustomobject]@{ Accepted = $false; Id = $id; Name = ''; Reason = "id $id is the live theme itself, which is the source of a backup and never one" }
+    }
+    $hit = @(@($Themes) | Where-Object { $_ -and ([string]$_.id).Trim() -eq $id })
+    if ($hit.Count -ne 1) {
+        return [pscustomobject]@{ Accepted = $false; Id = $id; Name = ''; Reason = "the store's theme list holds no theme with id $id" }
+    }
+    $name = ([string]$hit[0].name).Trim()
+    if (-not (Test-BackupThemeName -Name $name)) {
+        return [pscustomobject]@{ Accepted = $false; Id = $id; Name = $name; Reason = "theme $id is outside this repo's backup namespace ('$($script:RepoThemePrefix)backup-...'), so it is not ours to adopt or to keep while our backups rotate out" }
+    }
+    $role = ([string]$hit[0].role).Trim().ToLower()
+    if ($role -eq 'live' -or $role -eq 'main') {
+        return [pscustomobject]@{ Accepted = $false; Id = $id; Name = $name; Reason = "the store reports theme $id as role '$role' -- a backup restored to live is the live theme now (#2589)" }
+    }
+    return [pscustomobject]@{ Accepted = $true; Id = $id; Name = $name; Reason = "theme $id is one of this repo's backups and not live" }
+}
+
 function Get-ThemeFillVerdict {
     <#
     .SYNOPSIS
