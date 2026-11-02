@@ -39,19 +39,45 @@
 
 ### PLAN
 
+#3704: the brand book's rename left the toolbox page behind -- its card, title and breadcrumb said "House style"
+and it lived on `/plugins/dkj-policy/house-style`, while the product already shows the same page as `dkj-brandbook`
+on `/marketplace/dkj-policy/dkj-brandbook`. The owner gave the go-ahead to build it (November 2, 2026). The toolbox
+follows the product: the route, the card, the title and the crumb become `dkj-brandbook`, and both older addresses
+redirect. The file names (`house-style.css`, the `house-style` icon key, the `*HouseStyle*` functions) stay, as the
+rename chose.
+
+#### A visible result
+
+This changes the hub's page, so the branch is parked for the owner's look, not merged. Open `/plugins/dkj-policy`
+on a toolbox outside this repo (here the toolbox sends the page to the product): the card reads dkj-brandbook and
+opens `/plugins/dkj-policy/dkj-brandbook`; `/plugins/dkj-policy/house-style` lands there too.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins-page-lib.ps1`: `/plugins/dkj-policy/dkj-brandbook[/<section>]` is the page; `/plugins/dkj-policy/house-style` and `/plugins/dkj-solutions/house-style` (with a section) redirect to it; card, title, crumb and lead say dkj-brandbook / brand book
+- [x] `serve-general-pages.ps1`: serves the page under its new key, its header names both redirects
+- [x] Docs naming the old address: the hub README, the brand book README, the dkj-solutions README, Gwen's lens, a `dev-pages-lib.ps1` comment
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1` holds the new route, both redirects and the new labels: 552 passed, 0 failed
+
 ### DEPLOY: feat/3704-hub-brandbook-route
 
-**Score:**
+The hub's brand book page is named `dkj-brandbook` in the toolbox too, as it already was on the product: its card,
+title and breadcrumb, and its address, `/plugins/dkj-policy/dkj-brandbook`
+([#3704](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3704)). Both older addresses,
+`/plugins/dkj-policy/house-style` and `/plugins/dkj-solutions/house-style`, redirect there, a section to the same
+section.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
+The hub's brand book page is named and routed as dkj-brandbook

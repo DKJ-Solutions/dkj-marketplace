@@ -67,8 +67,8 @@ copied into `assets/brandbook/` (#3210). The hub card and that route were taken 
 building and shipping that folder ([#3477](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3477)).
 The app itself is retired ([#3493](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3493), the
 owner, October 26, 2026): `dkj-policy`'s `assets/dkj-brandbook/` is the one central place for DKJ styling, and a
-house-style change is judged by eye on its House style page, `specimens.html` in that folder, which every hub that
-runs `dkj-policy` shows under Plugins (`/plugins/dkj-policy/house-style`, #3629).
+house-style change is judged by eye on its dkj-brandbook page, `specimens.html` in that folder, which every hub that
+runs `dkj-policy` shows under Plugins (`/plugins/dkj-policy/dkj-brandbook`, #3629, #3704).
 
 ## The dev-preview hook
 
@@ -99,7 +99,7 @@ The plugin is enabled here since October 13, 2026
 ([#2976](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2976)), first for the dev-preview hook
 and, since that moved to `dkj-policy` (#3198), for the house-style session check. This repo's hub is
 described in [`dkj-policy`'s `hub/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/hub/README.md#in-the-source-repo).
-Its hub shows the House style page from the working tree (`/plugins/dkj-policy/house-style`), so a
+Its hub shows the dkj-brandbook page from the working tree (`/plugins/dkj-policy/dkj-brandbook`), so a
 change shows here before the release that ships it; every other hub that runs `dkj-policy` shows the released
 copy. The `house-style-css` CI gate checks the
 stylesheet itself.
