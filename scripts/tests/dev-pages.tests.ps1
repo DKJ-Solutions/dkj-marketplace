@@ -134,11 +134,10 @@ try {
     $specLens = Format-HubGroupPageHtml -Href '/ai/claude/specialists' -RepoName 'x' -RepoRoot $lensRoot
     Assert-True ($specLens -match 'href="/ai/claude/specialists/lenses/specialist-01-01-lens"' -and $specLens -match 'menu-item__label"><h3>specialist-05-05-lens</h3>' -and ([regex]::Matches($specLens, '<section class="card card--link">')).Count -eq 2) 'with a repo the Lenses grid holds one h3 card per lens'
     $lensPage = Format-HubLensPageHtml -Name 'specialist-05-05-lens' -RepoRoot $lensRoot -RepoName 'x'
-    Assert-True ($lensPage -match '<h1>Derek - the DevOps Engineer</h1>' -and $lensPage -match '<a href="/ai">AI</a>' -and $lensPage -match '<a href="/ai/claude/specialists">Specialists</a>') 'a lens''s page is titled with the lens''s own # title, under Tools > AI > Specialists'
+    Assert-True ($lensPage -match '<h1>specialist-05-05-lens</h1>' -and $lensPage -match '<a href="/ai">AI</a>' -and $lensPage -match '<a href="/ai/claude/specialists">Specialists</a>') 'a lens''s page is titled as its card on the Specialists page reads, under Tools > AI > Specialists'
     $lensJson = [regex]::Match($lensPage, '<script type="application/json" id="lens-md">(.*?)</script>').Groups[1].Value
-    Assert-Equal "Body <b>text</b>.`n" (ConvertFrom-Json $lensJson) 'its body travels as JSON for the renderer, past the frontmatter and the title, and decodes to the file''s own text'
-    Assert-True ($lensJson -notmatch '<' -and $lensPage -match 'renderMd\(JSON\.parse' -and $lensPage -match 'function renderMd\(' -and $lensPage -match '<noscript><pre tabindex="0"><code>Body &lt;b&gt;text&lt;/b&gt;\.') 'with no raw < in that JSON, the house renderer inlined to draw it, and the escaped text for a reader without JavaScript'
-    Assert-True ((Format-HubLensPageHtml -Name 'specialist-01-01-lens' -RepoRoot $lensRoot) -match '<h1>Chris - the Chief of Staff</h1>') 'a lens with only a title still has its page'
+    Assert-Equal "# Derek - the DevOps Engineer`n`nBody <b>text</b>.`n" (ConvertFrom-Json $lensJson) 'its body travels as JSON for the renderer, past the frontmatter, its own # title included'
+    Assert-True ($lensJson -notmatch '<' -and $lensPage -match 'renderMd\(JSON\.parse' -and $lensPage -match 'function renderMd\(' -and $lensPage -match '<noscript><pre tabindex="0"><code># Derek - the DevOps Engineer\n\nBody &lt;b&gt;text&lt;/b&gt;\.') 'with no raw < in that JSON, the house renderer inlined to draw it, and the escaped text for a reader without JavaScript'
     Assert-True ($null -eq (Format-HubLensPageHtml -Name 'notes' -RepoRoot $lensRoot) -and $null -eq (Format-HubLensPageHtml -Name '..\..\x' -RepoRoot $lensRoot) -and $null -eq (Format-HubLensPageHtml -Name 'specialist-09-09-lens' -RepoRoot $lensRoot)) 'a name that is no lens of the repo has no page'
 } finally { Remove-Item -LiteralPath $lensRoot -Recurse -Force -ErrorAction SilentlyContinue }
 foreach ($leaf in 'rules', 'skills') {

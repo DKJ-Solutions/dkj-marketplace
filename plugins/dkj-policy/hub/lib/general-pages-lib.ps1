@@ -562,9 +562,8 @@ $script:MarkdownRendererPath = Join-Path $PSScriptRoot '..\..\scripts\release\ma
 function Format-HubLensPageHtml {
     <#
         One specialist lens's own page on /ai/claude/specialists/lenses/<name> (Get-HubLensPages), under Tools > AI >
-        Specialists: the lens's own '# ' title as the h1 and the last crumb (the file's name where it has none), and the
-        rest of the file RENDERED as markdown in a .prose card (Maikel, November 2, 2026) -- past its frontmatter and that
-        title, which the h1 already says. The renderer is the house's one, markdown-render.js beside the release-notes
+        Specialists: the file's name as the h1 and the last crumb, as its card reads, and the file RENDERED as markdown in
+        a .prose card (Maikel, November 2, 2026), past its frontmatter. The renderer is the house's one, markdown-render.js beside the release-notes
         template, inlined here the way that template inlines it, so one format keeps one renderer. The markdown travels
         as JSON in a <script type="application/json">, and the raw text stays in a <noscript> for a reader without
         JavaScript. $null for a name the repo has no lens of.
@@ -573,14 +572,14 @@ function Format-HubLensPageHtml {
     $lens = @(Get-HubLensPages -RepoRoot $RepoRoot | Where-Object { $_.Label -ceq $Name })[0]
     if (-not $lens) { return $null }
     $e = { param($v) ConvertTo-GeneralPageText $v }
-    $title = if ($lens.Sub) { $lens.Sub } else { $lens.Label }
+    # The h1 reads what the lens's card on the Specialists page reads: the file's name (Maikel, November 2, 2026).
+    $title = $lens.Label
     $body = New-Object System.Text.StringBuilder
     [void]$body.AppendLine('<div><h1>' + (& $e $title) + '</h1></div>')
     try {
         $text = [System.IO.File]::ReadAllText($lens.Path, (New-Object System.Text.UTF8Encoding($false))) -replace "`r`n", "`n"
-        # The frontmatter is the roster's data, and the first '# ' title is the h1 above: neither is body.
-        $md = [regex]::Replace($text, '\A---\n[\s\S]*?\n---\n', '')
-        $md = ([regex]::Replace($md, '\A\s*#[ \t]+.*\n', '')).TrimStart("`n")
+        # The frontmatter is the roster's data, not body. The lens's own '# ' title stays: it opens the document.
+        $md = ([regex]::Replace($text, '\A---\n[\s\S]*?\n---\n', '')).TrimStart("`n")
         $renderer = [System.IO.File]::ReadAllText($script:MarkdownRendererPath, (New-Object System.Text.UTF8Encoding($false)))
         # JSON inside a <script>: every '<' is escaped, so no '</script>' in a lens can end the block early.
         $json = (ConvertTo-Json -InputObject $md -Compress) -replace '<', ('\' + 'u003c')
