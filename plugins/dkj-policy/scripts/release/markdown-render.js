@@ -1,6 +1,6 @@
 // The house's one markdown renderer -- a FRAGMENT, not a module: function declarations that a page
 // inlines inside its own script scope, so each page calls renderMd(md) as if it had written it itself.
-// Two pages inline it: the release-notes pages (build-release-notes-page.ps1, at @@MARKDOWN_RENDERER@@
+// Two pages inline it: the release-notes pages (build-release-notes-page.ps1, at the MARKDOWN_RENDERER placeholder
 // in release-notes-page-template.html) and a specialist lens's page on the hub (Format-HubLensPageHtml,
 // plugins/dkj-policy/hub/lib/general-pages-lib.ps1). One file, so one format never has two renderers.
 // Indented two spaces because that is where it lands: inside an IIFE.
