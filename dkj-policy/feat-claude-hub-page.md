@@ -54,6 +54,9 @@ h2 section on it, and move the URL and the breadcrumbs with it.
   both take
 - [x] Maikel: the group pages' cards four to a row (`.ph-cards--4`, two below 1000px, one below 760px); the hub
   keeps three
+- [x] Maikel: every icon stands in the middle of an invisible square. Measured each drawing's bounding box in
+  Edge: ten of the 24 were off-centre by 0.25 to 1.5 grid units, and each now moves its viewBox by that much
+  (`$script:HubIconOffsets`); re-measured, all 24 centred
 
 ### TEST
 
@@ -69,7 +72,8 @@ Skills, Specialists and Performance cards directly under it, where they sat unde
 page before. Every page below it moves along: `/claude/rules`, `/claude/skills`, `/claude/specialists` and
 each lens's page under it, and every trail through it reads Tools > Claude. An old `/ai` link is redirected
 to its new address. And the cards on every group page (Claude, Performance, Clock) now stand on the page as the
-hub's own do, four to a row, instead of inside a grey group surface that belongs to a heading over smaller cards.
+hub's own do, four to a row, instead of inside a grey group surface that belongs to a heading over smaller cards. Every card icon
+now stands in the middle of its square, so no icon looks shifted beside its neighbours.
 
 **Score:** 2
 

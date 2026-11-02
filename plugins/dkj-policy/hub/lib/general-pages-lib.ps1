@@ -477,11 +477,30 @@ $script:HubIcons = @{
     'skills'        = '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'
 }
 
+# Every icon stands in the middle of its square, a 32px box nobody sees (Maikel, November 2, 2026). A drawing whose
+# middle is not the grid's (12, 12) moves its viewBox by the difference, @(dx, dy) in grid units, so it is centred
+# without being redrawn or scaled. Measured as the centre of each drawing's getBBox() in a browser, November 2, 2026:
+# an icon not named here is centred already. A new or redrawn icon is measured the same way.
+$script:HubIconOffsets = @{
+    'actions'       = @(-0.5, 0)
+    'artifacts'     = @(0, -1.5)
+    'github'        = @(-0.25, -0.5)
+    'lens'          = @(1, 1)
+    'performance'   = @(0, -1)
+    'plugins'       = @(0, -0.5)
+    'release-notes' = @(0, 1)
+    'rules'         = @(-0.25, 0)
+    'skills'        = @(0.5, -0.5)
+    'specialists'   = @(0, 0.25)
+}
+
 function Get-HubIconSvg {
     <# The hub card icon -Name names, as a .menu-item__icon svg; '' for no name or a name $script:HubIcons lacks. #>
     param([AllowEmptyString()][string]$Name = '')
     if (-not $Name -or -not $script:HubIcons.ContainsKey($Name)) { return '' }
-    return '<svg class="menu-item__icon" viewBox="0 0 24 24" width="32" height="32" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+    $o = $script:HubIconOffsets[$Name]
+    $vb = if ($o) { [string]::Format([System.Globalization.CultureInfo]::InvariantCulture, '{0} {1} 24 24', $o[0], $o[1]) } else { '0 0 24 24' }
+    return '<svg class="menu-item__icon" viewBox="' + $vb + '" width="32" height="32" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
         $script:HubIcons[$Name] + '</svg>'
 }
 
