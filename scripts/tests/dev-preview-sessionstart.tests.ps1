@@ -402,17 +402,18 @@ Assert-True ($html -notmatch '<h2>Products</h2>') 'without a stated server there
 Assert-True ($html -match '<h2>Set up a product</h2>' -and $html -match '<h3>Add a dev server of your own</h3>' -and $html -match '<h3>Open it in VS Code</h3>') 'the two setup cards share one h2, each titled with an h3 (#3175)'
 Assert-True ($html -match 'Get-DevPreview' -and $html -match 'scripts/repo-config.ps1' -and $html -notmatch 'OwnHub' -and $html -match '"localhost:4890": "simpleBrowser.open"') 'they say how to state a server and which port to route, and offer no opt-out (#3643)'
 Assert-True ($html -notmatch '4880') 'and no longer name the retired 4880-4889 range'
-# The house hub form (#3383): one .grid-3 of card links with no heading above them; the facts and Issues are the
-# Repository page's.
+# The house hub form (#3383): the card links three to a row in a .ph-cards, with no .grid-3 surface around them
+# (the owner, November 2, 2026); the facts and Issues are the Repository page's.
 Assert-True ($html -notmatch 'href="/about"' -and $html -notmatch '<h2>About this repo</h2>') 'no About this repo link: the hub is one page (#3289)'
-$grid = [regex]::Match($html, '(?s)<div class="grid-3">(.*?)</div>\s*<div class="grid-2">').Groups[1].Value
-Assert-True ($grid -and ([regex]::Matches($grid, 'menu-item__label"><h2>')).Count -eq 5 -and ([regex]::Matches($grid, '<section class="card card--link">')).Count -eq 5 -and ([regex]::Matches($grid, '<a ')).Count -eq 5 -and $grid -match 'href="/plugins"' -and $grid -match 'href="/ai"') 'the pages are one grid of five card links, one link each, each card''s label its h2 (owner, October 29, 2026): GitHub, the General pages but the GitHub page''s, AI (Maikel, October 30, 2026) and Plugins (#3482)'
+$grid = [regex]::Match($html, '(?s)<main class="page-column">\s*<div class="ph-cards">(.*?)</div>\s*<div class="grid-2">').Groups[1].Value
+Assert-True ($grid -and $grid -notmatch 'class="grid-' -and $html -match '\.ph-cards \{ display: grid; grid-template-columns: repeat\(3,') 'the cards stand three to a row in a .ph-cards, with no .grid-3 surface around them (the owner, November 2, 2026)'
+Assert-True ($grid -and ([regex]::Matches($grid, 'menu-item__label"><h2>')).Count -eq 5 -and ([regex]::Matches($grid, '<section class="card card--link">')).Count -eq 5 -and ([regex]::Matches($grid, '<a ')).Count -eq 5 -and $grid -match 'href="/plugins"' -and $grid -match 'href="/ai"') 'the pages are five card links, one link each, each card''s label its h2 (owner, October 29, 2026): GitHub, the General pages but the GitHub page''s, AI (Maikel, October 30, 2026) and Plugins (#3482)'
 Assert-True ($grid -match 'href="/ai"' -and $grid -notmatch 'href="/(performance|sessionstart|clock|test-gate|stopwatch|logbook)"') 'Performance, with SessionStart and the Clock, is reached through the AI card, and the Test gate through GitHub, never a card of their own on the hub (the owner, November 2, 2026)'
 Assert-True ($grid.IndexOf('href="/release-notes"') -lt $grid.IndexOf('href="/ai"') -and $grid.IndexOf('href="/ai"') -lt $grid.IndexOf('href="/plugins"')) 'the AI card takes SessionStart''s place, between Release notes and Plugins'
 Assert-True ($grid -match 'href="/repository"' -and $grid -match 'href="/release-notes"' -and $grid -notmatch 'href="/issues"' -and $grid -notmatch 'localhost:4890/') 'by bare path, Issues left to the Repository page: the hub and its pages are one origin (#3245)'
 Assert-True ($grid -match '(?s)href="/repository".*?M9 19c-5 1\.5-5-2\.5-7-3.*?menu-item__label"><h2>GitHub<' -and $grid -notmatch '>Repository<') 'the /repository card is called GitHub and carries the GitHub logo'
 Assert-True ($html -notmatch '<h2>General pages</h2>' -and $html -notmatch '<h2>Facts</h2>' -and $html -notmatch '<dl class="facts') 'no General pages section and no facts on the home page'
-Assert-True ($html.IndexOf('class="grid-3"') -lt $html.IndexOf('<h2>Set up a product</h2>')) 'the setup cards stand under the grid'
+Assert-True ($html.IndexOf('class="card card--link"') -lt $html.IndexOf('<h2>Set up a product</h2>')) 'the setup cards stand under the card links'
 Assert-True ($html -match '<p class="note">[^<]*<code>hub/pages/serve-general-pages.ps1</code>' -and $html.IndexOf('class="note"') -gt $html.IndexOf('<h2>Set up a product</h2>')) 'the footer names the serving script, last'
 Assert-True ($html -notmatch 'brandbook' -and $html -notmatch 'Brand ?book') 'and no Brand book card: the brand book is the source repo''s product, on no consumer hub (#3475)'
 Assert-True (([regex]::Matches($html, '(?<!menu-item__label">)<h2>')).Count -eq ([regex]::Matches($html, '<div class="grid__head"><h2>')).Count) 'and every h2 stands in a grid__head, above its cards'
@@ -420,7 +421,7 @@ Assert-True ($html -match '<title>dkj-thumbnail-generator -- Tools</title>' -and
 
 # A repo that states a server: the product is the first card, and no setup cards.
 $html = Format-PluginRepoHubHtml -RepoName 'dkj-recipes' -Folder 'recipes-checkout' -Mode 'product' -ProductUrl 'http://localhost:4321/dkj-recipes/' -PagesUrl 'http://localhost:4890'
-Assert-True ($html -match '<div class="grid-3">\s*<section class="card card--link"><nav class="menu-list" aria-label="Product"><a class="menu-item" href="http://localhost:4321/dkj-recipes/">') 'a stated server is the first card, linking its url'
+Assert-True ($html -match '<div class="ph-cards">\s*<section class="card card--link"><nav class="menu-list" aria-label="Product"><a class="menu-item" href="http://localhost:4321/dkj-recipes/">') 'a stated server is the first card, linking its url'
 Assert-True ($html -notmatch '<h2>Products</h2>' -and $html -notmatch 'Set up a product' -and $html -notmatch 'Add a dev server of your own') 'with no Products heading, and the setup cards are only for a repo that states none'
 Assert-True ($html -match 'site-header__name">dkj-recipes <span') 'the site header names the repo whatever the repo states'
 $html = Format-PluginRepoHubHtml -RepoName 'dkj-recipes' -Mode 'product' -ProductUrl '' -PagesUrl 'http://localhost:4890'
