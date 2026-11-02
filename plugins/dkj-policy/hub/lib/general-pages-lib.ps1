@@ -478,14 +478,17 @@ function Get-GeneralPages {
         relative), its Label the page's own name as its breadcrumb reads it, one line on what it shows, and the
         key of its card's icon ($script:HubIcons). A Group is the Href of the group page (Get-HubGroups) the page
         is linked from instead of the hub: the hub shows that group as one card in the place of its first page.
+        GitHub marks a page the hub's GitHub page (/repository, Format-PluginRepoRepositoryHtml) links instead of
+        the hub: Issues, and the Test gate, which measures what the suites cost on GitHub Actions (the owner,
+        November 2, 2026).
     #>
     @(
         @{ Href = '/artifacts';     Label = 'Artifacts';     Sub = 'Every claude.ai Artifact published from a session in this repo'; Icon = 'artifacts' },
-        @{ Href = '/issues';        Label = 'Issues';        Sub = 'The open GitHub issues and where they stand, and the flow of the last four weeks'; Icon = 'issues' },
+        @{ Href = '/issues';        Label = 'Issues';        Sub = 'The open GitHub issues and where they stand, and the flow of the last four weeks'; Icon = 'issues'; GitHub = $true },
         @{ Href = '/release-notes'; Label = 'Release notes'; Sub = 'What each released version of the plugins changed'; Icon = 'release-notes' },
         @{ Href = '/sessionstart';  Label = 'SessionStart';  Sub = 'The always-on path every session loads before its first turn'; Icon = 'sessionstart'; Group = '/performance' },
         # Every repo's since #3470 (the owner, October 25, 2026): the source repo's own pages until then.
-        @{ Href = '/test-gate';     Label = 'Test gate';     Sub = 'What each test suite costs on CI'; Icon = 'test-gate'; Group = '/clock' },
+        @{ Href = '/test-gate';     Label = 'Test gate';     Sub = 'What each test suite costs on CI'; Icon = 'test-gate'; GitHub = $true },
         @{ Href = '/stopwatch';     Label = 'Stopwatch';     Sub = 'How long an assignment takes, timed from a stopwatch: prompt to back on the trunk, with the transcript phases'; Icon = 'stopwatch'; Group = '/clock' },
         @{ Href = '/logbook';       Label = 'Logbook';       Sub = 'Every assignment of a clean session, timed by itself: first prompt to back on the trunk, with the transcript phases'; Icon = 'logbook'; Group = '/clock' },
         # #3482: plugin-versions' verdict per enabled plugin, so a problem with one is visible from the hub.
@@ -497,22 +500,23 @@ function Get-HubGroups {
     <#
         The group pages, each the one card on the hub for the general pages whose Group is its Href, and a page of
         its own holding a card per member (Format-HubGroupPageHtml). A hub card is always ONE link, so a group is a
-        page, never a card with several rows: Clock holds Test gate, Stopwatch and Logbook (the owner, October 27, 2026).
+        page, never a card with several rows: Clock holds Stopwatch and Logbook (the owner, October 27, 2026; the Test gate too, until November 2).
         A group may sit in another: its Group is the parent group's Href, and it is a card on that page instead of
         the hub. A group with no general page of its own is still a hub card (Format-HubPageCardsHtml). A Section group
         is no card and no page: it is an h2 on its parent's page, over a grid of its members' cards. So AI opens on
         the Claude section, holding Rules, Skills and Specialists (Maikel, October 30, 2026), each a page of its own.
         A Section with Source 'lenses' takes its cards from the repo instead: one per specialist lens (Get-HubLensPages).
-        Performance holds SessionStart and Clock (the owner, October 30, 2026).
+        Performance holds SessionStart and Clock (the owner, October 30, 2026), and sits in the Claude section since
+        November 2, 2026: what it measures is what Claude's work costs. A group page keeps its route wherever it sits.
     #>
     @(
-        @{ Href = '/performance'; Label = 'Performance'; Sub = 'What the work costs: the SessionStart path and the Clock'; Icon = 'performance' },
-        @{ Href = '/clock'; Label = 'Clock'; Sub = 'How long the work takes: the Test gate, the Stopwatch and the Logbook'; Icon = 'clock'; Group = '/performance' },
         @{ Href = '/ai'; Label = 'AI'; Sub = 'The AI this repo works with: Claude'; Icon = 'ai' },
         @{ Href = '/ai/claude'; Label = 'Claude'; Icon = 'claude'; Group = '/ai'; Section = $true },
         @{ Href = '/ai/claude/rules'; Label = 'Rules'; Sub = 'The rules Claude works by'; Icon = 'rules'; Group = '/ai/claude' },
         @{ Href = '/ai/claude/skills'; Label = 'Skills'; Sub = 'The skills Claude can use'; Icon = 'skills'; Group = '/ai/claude' },
         @{ Href = '/ai/claude/specialists'; Label = 'Specialists'; Sub = 'The Claude Specialists, each with a craft of their own'; Icon = 'specialists'; Group = '/ai/claude' },
+        @{ Href = '/performance'; Label = 'Performance'; Sub = 'What Claude''s work costs: the SessionStart path and the Clock'; Icon = 'performance'; Group = '/ai/claude' },
+        @{ Href = '/clock'; Label = 'Clock'; Sub = 'How long the work takes: the Stopwatch and the Logbook'; Icon = 'clock'; Group = '/performance' },
         @{ Href = '/ai/claude/specialists/lenses'; Label = 'Lenses'; Icon = 'lens'; Group = '/ai/claude/specialists'; Section = $true; Source = 'lenses' }
     )
 }
@@ -617,8 +621,8 @@ function Format-HubPageCardsHtml {
     <#
         -Pages (Get-GeneralPages' shape) as hub cards, one line each, in their order: a page with no Group as its
         own card, and each top-level Group's card (Get-HubGroups) in the place of its first page, however deep the page
-        sits (Test gate is under Clock, under Performance); then each top-level group no general page belongs to (AI),
-        after them.
+        sits (Stopwatch is under Clock, under Performance, under AI); then each top-level group no general page belongs
+        to, after them. A GitHub page is the caller's to leave out: the hub's GitHub page links it instead.
     #>
     param([AllowEmptyCollection()][object[]]$Pages = @())
     $done = @{}

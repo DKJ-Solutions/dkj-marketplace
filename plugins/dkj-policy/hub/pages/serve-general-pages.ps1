@@ -499,7 +499,8 @@ try {
             $html = $null
             if ($gp = Format-HubGroupPageHtml -Href $path -RepoName (Get-RepoIdentity).Name -RepoRoot $root) {
                 # A group page (Get-HubGroups): /performance, holding SessionStart and the Clock (the owner, October 30, 2026),
-                # and /clock, holding the Test gate, the Stopwatch and the Logbook (October 27, 2026).
+                # and /clock, holding the Stopwatch and the Logbook (October 27, 2026); /performance sits in AI's
+                # Claude section since November 2, 2026, under the same route.
                 $html = $gp
             } elseif ($path -cmatch '^/ai/claude/specialists/lenses/(specialist-\d{2}-\d{2}-lens)/?$') {
                 # One specialist lens's page, read from this checkout (Maikel, October 30, 2026); a lens it has not is a 404.
