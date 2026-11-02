@@ -816,8 +816,8 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .menu-row .icon-btn { height: var(--control-h); margin-right: calc((var(--tap) - var(--control-h)) / 2); }
 /* A navigation row: a full-width button with icon, label and chevron; a line between items.
    <button class="menu-item"><svg class="menu-item__icon"/><span class="menu-item__label">..</span><svg class="menu-item__chevron"/></button> */
-/* Its gap is --spacing-5 between icon, label and chevron (Maikel, November 2, 2026; it was --spacing-4). */
-.menu-item { display: flex; align-items: center; gap: var(--spacing-5); width: 100%; min-height: var(--tap); margin: 0; padding: 0;
+/* Its gap is --spacing-6 between icon, label and chevron (Maikel, November 2, 2026; it was --spacing-4). */
+.menu-item { display: flex; align-items: center; gap: var(--spacing-6); width: 100%; min-height: var(--tap); margin: 0; padding: 0;
   border: 0; border-radius: var(--radius-2); background: none; font: inherit; text-align: left; text-decoration: none; color: var(--fg-1); cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .menu-item + .menu-item { border-top: 1px solid var(--bg-3); border-top-left-radius: 0; border-top-right-radius: 0; }
 .menu-item:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: -2px; }   /* inset, so the ring is not cut off by the panel */

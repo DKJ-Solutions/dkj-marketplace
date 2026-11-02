@@ -405,7 +405,7 @@ retired, so an app that takes this update changes nothing of its own:
 |---|---|---|
 | `--text-h2` | 22px | 20px, the size `--text-title` already had |
 | `.page-column`'s `gap` | `--spacing-3` (12px) | `--spacing-5` (20px) |
-| `.menu-item`'s `gap`, between icon, label and chevron | `--spacing-4` (16px) | `--spacing-5` (20px) |
+| `.menu-item`'s `gap`, between icon, label and chevron | `--spacing-4` (16px) | `--spacing-6` (24px) |
 
 ### `.prose` retired, November 2, 2026
 

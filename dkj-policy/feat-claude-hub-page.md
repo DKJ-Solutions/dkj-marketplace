@@ -57,7 +57,7 @@ h2 section on it, and move the URL and the breadcrumbs with it.
 - [x] Maikel: every icon stands in the middle of an invisible square. Measured each drawing's bounding box in
   Edge: ten of the 24 were off-centre by 0.25 to 1.5 grid units, and each now moves its viewBox by that much
   (`$script:HubIconOffsets`); re-measured, all 24 centred
-- [x] Maikel: the brand book's `.menu-item` gap from `--spacing-4` to `--spacing-5`, and `.ph-cards`' gap from
+- [x] Maikel: the brand book's `.menu-item` gap from `--spacing-4` to `--spacing-5`, then `--spacing-6`, and `.ph-cards`' gap from
   `--spacing-3` to `--spacing-4`
 - [x] Maikel: the brand book's `.page-column` gap from `--spacing-3` to `--spacing-5`, and `--text-h2` from 22px
   to 20px; the brand book's README records the three house changes in one dated section
@@ -79,7 +79,7 @@ to its new address. And the cards on every group page (Claude, Performance, Cloc
 hub's own do, three to a row, instead of inside a grey group surface that belongs to a heading over smaller cards. Every card icon
 now stands in the middle of its square, so no icon looks shifted beside its neighbours. And there is more room
 in and between the cards: every menu row and card link (a brand book class, so every DKJ page that uses one) keeps
-20px between its icon, label and chevron instead of 16px, and the hub's cards stand 16px apart instead of 12px. Two more brand book changes reach every DKJ page the
+24px between its icon, label and chevron instead of 16px, and the hub's cards stand 16px apart instead of 12px. Two more brand book changes reach every DKJ page the
 same way: the blocks of a page column stand 20px apart instead of 12px, and an `h2` is 20px instead of 22px.
 
 **Score:** 2
