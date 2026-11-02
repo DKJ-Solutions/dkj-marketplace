@@ -2,7 +2,40 @@
 
 ## [Unreleased]
 
-**1 / 2 minor entries** <!-- pending-tally -->
+**2 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3720-house-style-colour-check · 20261102-085146Z
+
+The brand book's gate, `check-house-style`, gains a fourth check, `colour`: a rule in a repo's own layer reads
+a colour only as a token ([#3720](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3720)). A colour
+property (`color`, `background`, `border-color`, `fill` and the like) whose value types a code (`#hex`,
+`rgb()`, `hsl()`) or derives one (`color-mix()`, `oklch()`, `rgb(from ...)`) is a finding. A custom
+property's own value is not, so a domain colour stays a token of the repo's own. The session check reports
+it too, and the House style page's four raw sample colours are allowlisted here until #3725 gives them a
+token.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions repo running the house-style gate gets a new finding for every rule that types or mixes a
+colour, and the reusable workflow tracks `main`, so it arrives at the merge rather than at the next release.
+Measured on November 2, 2026: 11 `color-mix()` rules in dkj-music-library, 2 in dkj-recipes' icon script,
+none in dkj-etf-tracker. All three already fail the gate on retired token names, so no green check turns
+red. The fix is the one the README names: add a domain token (`--my-row-tint: ...`) holding the colour and
+read it with `var()`, or answer a false positive in `Get-HouseStyleAllowlist` with its reason.
+
+**Score:** 3
+
+#### Pull Request
+
+check-house-style refuses a raw or derived colour in a consumer's rules
+
+Plugins: dkj-solutions
+
+[PR #3728](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3728)
+
+---
 
 ### DEPLOY: fix/3718-bare-cr-in-test · 20261102-084057Z
 
