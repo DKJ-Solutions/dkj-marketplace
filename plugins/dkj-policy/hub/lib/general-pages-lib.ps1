@@ -882,8 +882,8 @@ function Format-HubSettingsPageHtml {
     # and the picker in an h3 card in it, which the house sets on --bg-3 with a --bg-4 border (Dave, November 2, 2026).
     $body = '<div class="grid-2"><div class="grid__head"><h2>Theme</h2></div>' +
         '<section class="card grid__full hs-settings"><div class="card__head"><h3>Colour</h3></div><div id="settings-theme"></div></section>' +
-        # The reset belongs to the whole Theme group, so it sits in the group under the card, a row of its own (Dave, November 2, 2026).
-        '<p class="grid__full"><button type="button" class="btn" id="settings-theme-reset">Reset theme</button></p></div>' + "`n" +
+        # The reset belongs to the whole Theme group, so it sits in the group under the card, a row of its own, and takes the house's roomier .btn--touch (Dave, November 2, 2026).
+        '<p class="grid__full"><button type="button" class="btn btn--touch" id="settings-theme-reset">Reset theme</button></p></div>' + "`n" +
         '<script>DKJTheme.picker(document.getElementById("settings-theme"), { light: "Light", dark: "Dark" });' +
         ' document.getElementById("settings-theme-reset").addEventListener("click", function () { DKJTheme.reset(); });</script>'
     $style = '.hs-settings > * + * { margin-top: var(--spacing-3); }'
