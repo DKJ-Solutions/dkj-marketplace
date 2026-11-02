@@ -12,7 +12,7 @@
   // fenced code, tables, blockquotes, rules, and the inline set.
 
   // The code-span sentinel. Built here rather than typed, so the template carries no invisible
-  // byte. It must be something prose cannot contain: a readable placeholder is a trap, because a
+  // byte. It must be something written text cannot contain: a readable placeholder is a trap, because a
   // note that writes a bare number between markers would have it replaced by a code span that was
   // never there.
   var SENT = String.fromCharCode(1);
@@ -33,8 +33,8 @@
     s = esc(s);
     s = s.replace(/\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, function (m, text, url) {
       // A repo-relative link has no target on this page, so it renders as plain text rather than
-      // as a link that 404s. Only absolute and in-page links survive.
-      if (!/^(https?:|mailto:|#)/i.test(url)) { return text; }
+      // as a link that 404s. Only absolute, in-page and site-rooted (/...) links survive.
+      if (!/^(https?:|mailto:|#|\/(?!\/))/i.test(url)) { return text; }
       return '<a href="' + url + '" rel="noopener noreferrer">' + text + '</a>';
     });
     s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
@@ -55,11 +55,15 @@
     }
     var head = cells(rows[0]);
     var body = rows.slice(2).map(cells);
-    return '<div class="table-scroll"><table><thead><tr>' +
-      head.map(function (c) { return '<th>' + inlineMd(c) + '</th>'; }).join('') +
+    // A column is aligned as its separator says ('---:' to the end, anything else to the start), written as the house's
+    // .col-start/.col-end, because a bare .table sets every column but the first to the end, as for figures.
+    var align = cells(rows[1]).map(function (c) { return /:\s*$/.test(c) && !/^\s*:/.test(c) ? 'col-end' : 'col-start'; });
+    function cell(tag, c, i) { return '<' + tag + ' class="' + (align[i] || 'col-start') + '">' + inlineMd(c) + '</' + tag + '>'; }
+    return '<div class="table-scroll table-wrap" tabindex="0"><table class="table table--accent"><thead><tr>' +
+      head.map(function (c, i) { return cell('th', c, i); }).join('') +
       '</tr></thead><tbody>' +
       body.map(function (r) {
-        return '<tr>' + r.map(function (c) { return '<td>' + inlineMd(c) + '</td>'; }).join('') + '</tr>';
+        return '<tr>' + r.map(function (c, i) { return cell('td', c, i); }).join('') + '</tr>';
       }).join('') +
       '</tbody></table></div>';
   }

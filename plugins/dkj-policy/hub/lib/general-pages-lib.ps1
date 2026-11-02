@@ -556,6 +556,129 @@ function Get-HubLensPages {
     }
 }
 
+function ConvertTo-HubLensBody {
+    <#
+        Pure: a lens file's text (LF line ends) as the markdown its page renders. The frontmatter is the roster's data,
+        not body, and the lens's own '# ' title goes, because the page's one h1 is the file's name (Maikel, November 2,
+        2026). Then the headings are put to use, outside code fences only (Maikel, the same day): a lone '## ' that
+        opens the body and has '### ' sections under it is a wrapper ("Specific to this repo"), which says nothing on a
+        page that is all lens, so it goes; and every heading then shifts so the highest one present is an h2. So a lens
+        whose sections are '### ' shows them as h2s, their parts as h3s, and no heading is ever an h1. A lens with one
+        '## ' and nothing under it keeps it.
+    #>
+    param([AllowEmptyString()][string]$Text)
+    # A link to another lens file is a link to that lens's own page here (Maikel, November 2, 2026); its #anchor goes,
+    # since the rendered page gives its headings no ids.
+    $Text = [regex]::Replace($Text, '\]\((?:\./)?(specialist-\d{2}-\d{2}-lens)\.md(?:#[^)]*)?\)', '](/ai/claude/specialists/lenses/$1)')
+    $md = ([regex]::Replace($Text, '\A---\n[\s\S]*?\n---\n', '')).TrimStart("`n")
+    $md = ([regex]::Replace($md, '\A[ \t]*#[ \t]+.*(\n|\z)', '')).TrimStart("`n")
+    $lines = @($md -split "`n")
+    $heads = New-Object 'System.Collections.Generic.Dictionary[int,int]'; $fence = ''
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $was = Resolve-FenceState -Line $lines[$i] -Fence $fence; $fence = Get-NextFenceState -Line $lines[$i] -Fence $fence -AnyIndent
+        if ($was -or $fence) { continue }
+        if ($lines[$i] -match '^[ \t]*(#{1,6})[ \t]+\S') { $heads[$i] = $Matches[1].Length }
+    }
+    $drop = -1
+    $twos = @($heads.Keys | Where-Object { $heads[$_] -eq 2 })
+    $first = if ($heads.Count) { ($heads.Keys | Measure-Object -Minimum).Minimum } else { -1 }
+    if ($twos.Count -eq 1 -and $twos[0] -eq $first -and @($heads.Values | Where-Object { $_ -ge 3 }).Count -gt 0) {
+        $drop = $twos[0]; [void]$heads.Remove($drop)
+    }
+    $shift = if ($heads.Count) { 2 - ($heads.Values | Measure-Object -Minimum).Minimum } else { 0 }
+    $out = for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($i -eq $drop) { continue }
+        if ($heads.ContainsKey($i)) {
+            $level = [Math]::Max(2, [Math]::Min(6, $heads[$i] + $shift))
+            $lines[$i] -replace '^([ \t]*)#{1,6}', ('$1' + ('#' * $level))
+        } else { $lines[$i] }
+    }
+    return ConvertTo-HubLensLeadHeadings -Text ((@($out) -join "`n").TrimStart("`n"))
+}
+
+function Split-HubLensIntro {
+    <#
+        Pure: a lens body (ConvertTo-HubLensBody) as @{ Intro; Body }. The Intro is the plain paragraphs before the first
+        heading -- what the lens says about itself, which its page sets under the h1 (Maikel, November 2, 2026). A quote
+        before that heading is dropped; a list, a table, code or anything indented stays in the Body, in its place. No
+        paragraph there, no Intro.
+    #>
+    param([AllowEmptyString()][string]$Text)
+    $lines = @($Text -split "`n")
+    $end = $lines.Count; $fence = ''
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $was = Resolve-FenceState -Line $lines[$i] -Fence $fence; $fence = Get-NextFenceState -Line $lines[$i] -Fence $fence -AnyIndent
+        if (-not ($was -or $fence) -and $lines[$i] -match '^#{1,6}[ \t]') { $end = $i; break }
+    }
+    # The blocks before that heading, split on blank lines; a fence is one block, blank lines and all.
+    $blocks = New-Object System.Collections.Generic.List[object]; $cur = $null; $fence = ''
+    for ($i = 0; $i -lt $end; $i++) {
+        $l = $lines[$i]
+        $was = Resolve-FenceState -Line $l -Fence $fence; $fence = Get-NextFenceState -Line $l -Fence $fence -AnyIndent
+        if (-not ($was -or $fence) -and $l -match '^\s*$') { $cur = $null; continue }
+        if (-not $cur) { $cur = New-Object System.Collections.Generic.List[string]; $blocks.Add($cur) }
+        $cur.Add($l)
+    }
+    $intro = New-Object System.Collections.Generic.List[string]; $kept = New-Object System.Collections.Generic.List[string]
+    foreach ($b in $blocks) {
+        # A quote there is the lens template's own note about where the lens sits, not content: it goes (Maikel, the same day).
+        if ($b[0] -match '^>') { continue }
+        $isPara = $b[0] -notmatch '^(\s|[-*+][ \t]|\d+\.[ \t]|\||```)'
+        if ($isPara) { $intro.Add(($b -join "`n")) } else { $kept.Add(($b -join "`n")) }
+    }
+    $rest = @($lines | Select-Object -Skip $end) -join "`n"
+    $bodyParts = @($kept) + @($(if ($rest) { $rest }))
+    return @{ Intro = (@($intro) -join "`n`n"); Body = ((@($bodyParts | Where-Object { $_ }) -join "`n`n")) }
+}
+
+function ConvertTo-HubLensLeadHeadings {
+    <#
+        Pure: the h3 level put to use (Maikel, November 2, 2026). A list straight under an h2 whose EVERY item opens with
+        a bold lead ('- **The sender header line.** Every reply ...', at least two items) is a run of sub-sections written
+        as bullets, so each item becomes '### <the lead>' over the rest of its text. The lead loses its closing '.' or
+        ':', and a dash opening the rest goes. A list with one item that does not open that way stays a list, as does a
+        list under an h3 (an h4 is no house heading). Code fences are left alone.
+    #>
+    param([AllowEmptyString()][string]$Text)
+    $dash = '[-' + [char]0x2013 + [char]0x2014 + ']'
+    $lines = @($Text -split "`n")
+    $out = New-Object System.Collections.Generic.List[string]
+    $fence = ''; $level = 0; $i = 0
+    while ($i -lt $lines.Count) {
+        $l = $lines[$i]
+        $was = Resolve-FenceState -Line $l -Fence $fence; $fence = Get-NextFenceState -Line $l -Fence $fence -AnyIndent
+        if ($was -or $fence) { $out.Add($l); $i++; continue }
+        if ($l -match '^(#{1,6})[ \t]') { $level = $Matches[1].Length; $out.Add($l); $i++; continue }
+        if ($level -ne 2 -or $l -notmatch '^- ') { $out.Add($l); $i++; continue }
+        # The list: its items start with '- ' at the margin; a line indented two or more, or a blank line before one, continues it.
+        $items = New-Object System.Collections.Generic.List[object]; $j = $i
+        while ($j -lt $lines.Count) {
+            if ($lines[$j] -match '^- ') { $items.Add((New-Object System.Collections.Generic.List[string])); $items[$items.Count - 1].Add($lines[$j]); $j++ }
+            elseif ($lines[$j] -match '^\s{2,}\S') { $items[$items.Count - 1].Add($lines[$j]); $j++ }
+            elseif ($lines[$j] -match '^\s*$' -and $j + 1 -lt $lines.Count -and $lines[$j + 1] -match '^(- |\s{2,}\S)') { $items[$items.Count - 1].Add(''); $j++ }
+            else { break }
+        }
+        # The item as one text, its continuation dedented, so a bold lead that wraps onto the next line still reads as one.
+        $texts = @($items | ForEach-Object { (@($_[0]) + @($_ | Select-Object -Skip 1 | ForEach-Object { $_ -replace '^  ', '' })) -join "`n" })
+        $leads = @($texts | ForEach-Object { [regex]::Match($_, '(?s)\A- \*\*(.+?)\*\*(.*)\z') })
+        if ($items.Count -lt 2 -or @($leads | Where-Object { -not $_.Success }).Count) {
+            for ($k = $i; $k -lt $j; $k++) { $out.Add($lines[$k]) }
+            $i = $j; continue
+        }
+        for ($n = 0; $n -lt $items.Count; $n++) {
+            $head = ($leads[$n].Groups[1].Value -replace '\s+', ' ').Trim() -replace '[.:]\z', ''
+            $rest = $leads[$n].Groups[2].Value -replace ('\A[ \t]*' + $dash + '?[ \t]*\n?'), ''
+            # The rest now opens a paragraph of its own, so a lower-case first letter (after a dash) is raised.
+            if ($rest -cmatch '\A[a-z]') { $rest = $rest.Substring(0, 1).ToUpperInvariant() + $rest.Substring(1) }
+            if ($out.Count -and $out[$out.Count - 1] -ne '') { $out.Add('') }
+            $out.Add('### ' + $head); $out.Add('')
+            foreach ($b in @($rest -split "`n")) { $out.Add($b) }
+        }
+        $i = $j
+    }
+    return (@($out) -join "`n")
+}
+
 # The house's one markdown renderer, beside the release-notes template in this plugin (Format-HubLensPageHtml).
 $script:MarkdownRendererPath = Join-Path $PSScriptRoot '..\..\scripts\release\markdown-render.js'
 # The tree's one fence tracker (#2536), so a lens's code blocks are read the way every other markdown reader reads them.
@@ -568,7 +691,7 @@ function Format-HubLensPageHtml {
     <#
         One specialist lens's own page on /ai/claude/specialists/lenses/<name> (Get-HubLensPages), under Tools > AI >
         Specialists: the file's name as the h1 and the last crumb, as its card reads, and the file RENDERED as markdown in
-        a .prose card (Maikel, November 2, 2026), past its frontmatter and its own '# ' title, so the page keeps ONE h1;
+        a card (Maikel, November 2, 2026), past its frontmatter and its own '# ' title, so the page keeps ONE h1;
         any other '# ' heading is rendered as an h2. The renderer is the house's one, markdown-render.js beside the release-notes
         template, inlined here the way that template inlines it, so one format keeps one renderer. The markdown travels
         as JSON in a <script type="application/json">, and the raw text stays in a <noscript> for a reader without
@@ -584,27 +707,25 @@ function Format-HubLensPageHtml {
     [void]$body.AppendLine('<div><h1>' + (& $e $title) + '</h1></div>')
     try {
         $text = [System.IO.File]::ReadAllText($lens.Path, (New-Object System.Text.UTF8Encoding($false))) -replace "`r`n", "`n"
-        # The frontmatter is the roster's data, not body. A page has ONE h1 (Maikel, November 2, 2026), and it is the
-        # file's name above: so the lens's own '# ' title goes (its card already shows it), and any other '# ' heading
-        # outside a code fence becomes '## ', so the rendered body can never carry an h1 of its own.
-        $md = ([regex]::Replace($text, '\A---\n[\s\S]*?\n---\n', '')).TrimStart("`n")
-        $md = ([regex]::Replace($md, '\A[ \t]*#[ \t]+.*(\n|\z)', '')).TrimStart("`n")
-        $fence = ''
-        $md = (@($md -split "`n" | ForEach-Object {
-            $was = Resolve-FenceState -Line $_ -Fence $fence; $fence = Get-NextFenceState -Line $_ -Fence $fence -AnyIndent
-            if (-not ($was -or $fence) -and $_ -match '^[ \t]*#[ \t]') { $_ -replace '^([ \t]*)#', '$1##' } else { $_ }
-        }) -join "`n")
+        $parts = Split-HubLensIntro -Text (ConvertTo-HubLensBody -Text $text)
         $renderer = [System.IO.File]::ReadAllText($script:MarkdownRendererPath, (New-Object System.Text.UTF8Encoding($false)))
         # JSON inside a <script>: every '<' is escaped, so no '</script>' in a lens can end the block early.
-        $json = (ConvertTo-Json -InputObject $md -Compress) -replace '<', ('\' + 'u003c')
-        [void]$body.AppendLine('<section class="card dp-lens"><div class="prose prose--fill" id="lens-body"><noscript><pre tabindex="0"><code>' + (& $e $md) + '</code></pre></noscript></div></section>')
+        $json = (ConvertTo-Json -InputObject ([ordered]@{ intro = $parts.Intro; body = $parts.Body }) -Compress) -replace '<', ('\' + 'u003c')
+        # The lens's opening paragraphs stand under the h1, outside the card (Maikel, November 2, 2026).
+        if ($parts.Intro) { [void]$body.AppendLine('<div class="dp-lens" id="lens-intro"><noscript><p>' + (& $e $parts.Intro) + '</p></noscript></div>') }
+        [void]$body.AppendLine('<section class="card dp-lens"><div id="lens-body"><noscript><pre tabindex="0"><code>' + (& $e $parts.Body) + '</code></pre></noscript></div></section>')
         [void]$body.AppendLine('<script type="application/json" id="lens-md">' + $json + '</script>')
-        [void]$body.AppendLine("<script>`n(function () {`n  'use strict';`n" + $renderer.TrimEnd() + "`n  document.getElementById('lens-body').innerHTML = renderMd(JSON.parse(document.getElementById('lens-md').textContent));`n})();`n</script>")
+        [void]$body.AppendLine("<script>`n(function () {`n  'use strict';`n" + $renderer.TrimEnd() + "`n  var md = JSON.parse(document.getElementById('lens-md').textContent), intro = document.getElementById('lens-intro');`n  if (intro) { intro.innerHTML = renderMd(md.intro); }`n  document.getElementById('lens-body').innerHTML = renderMd(md.body);`n})();`n</script>")
     } catch {
         [void]$body.AppendLine('<p class="msg--warn" role="alert">This lens could not be read: ' + (& $e $_.Exception.Message) + '</p>')
     }
-    # The lens card reads as a document, so it is never wider than 800px (Maikel, November 2, 2026).
-    return Format-GeneralPageHtml -Title $title -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref -Style '.dp-lens { max-width: 800px; }' `
+    # The lens card reads as a document, so it is never wider than 800px (Maikel, November 2, 2026). The elements in it
+    # are the house's own (h1-h3, code, pre, lists, quotes, .table); this layer sets only the space between its blocks.
+    $style = '.dp-lens { max-width: 800px; }' + "`n" +
+        ':is(#lens-body, #lens-intro) > * + * { margin-top: var(--spacing-3); }' + "`n" +
+        '#lens-body > * + :is(h2, h3) { margin-top: var(--spacing-6); }' + "`n" +
+        '#lens-body li + li, #lens-body li > :is(ul, ol) { margin-top: var(--spacing-1); }'
+    return Format-GeneralPageHtml -Title $title -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref -Style $style `
         -ParentCrumbs @(@{ Label = 'AI'; Href = '/ai' }, @{ Label = 'Specialists'; Href = '/ai/claude/specialists' }) -FooterNote ('Read from <code>.claude/specialists/lenses/' + (& $e $lens.Label) + '.md</code> by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.')
 }
 

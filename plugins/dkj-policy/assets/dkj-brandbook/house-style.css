@@ -152,7 +152,7 @@
      (owner, October 31, 2026); --radius-pill rounds the ends fully. The Brand-book components use these
      (the older classes above keep their literals) */
   --radius-1: 4px; --radius-1-5: 6px; --radius-2: 8px; --radius-2-5: 10px; --radius-3: 12px; --radius-4: 16px; --radius-pill: 999px;
-  /* the face of code in .prose */
+  /* the face of code and pre */
   --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
   /* the four font weights, same in both modes (Maikel, November 1, 2026): light 300, regular 500, bold 700,
      black 900 (bold and black were named semibold and bold until the same day). A rule sets a weight only through one of these four, never a number (Maikel, November 1, 2026): what was 300 is
@@ -343,6 +343,20 @@ p { margin: 0; }
 :where(a:any-link:hover) { text-decoration-thickness: 2px; }
 :where(a:any-link:focus-visible) { outline: 2px solid var(--primary-muted); outline-offset: 2px; border-radius: 2px; }
 ::selection { background: var(--bg-3); }
+
+/* ---- Running text ----------------------------------------------------------- */
+/* The plain elements a rendered markdown body is made of, styled by the house itself with no wrapper class (Maikel,
+   November 2, 2026). :where() keeps each at zero specificity, so any class wins. No margins:
+   as for <p>, the place sets the space around a block. A table is a .table in a .table-wrap; headings are h1-h3 above. */
+:where(ul, ol) { margin-block: 0; padding-left: var(--spacing-6); }
+:where(li)::marker { color: var(--primary); }
+:where(code, pre) { font-family: var(--font-mono); }
+:where(code) { font-size: 0.9em; padding: 0.1em 0.35em; border-radius: var(--radius-1); background: var(--bg-3); }
+:where(pre) { margin: 0; font-size: var(--text-sm); padding: var(--spacing-3) var(--spacing-4); border: 1px solid var(--bg-3); border-radius: var(--radius-2); background: var(--bg-3); overflow-x: auto; white-space: pre; tab-size: 2; }
+:where(pre code) { padding: 0; border-radius: 0; background: none; font-size: inherit; }
+:where(pre):focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
+:where(blockquote) { margin: 0; padding-left: var(--spacing-4); border-left: 3px solid var(--bg-3); color: var(--fg-1); }
+:where(hr) { border: 0; border-top: 1px solid var(--bg-3); margin-block: var(--spacing-6); }
 
 /* ---- Surfaces ------------------------------------------------------------- */
 .card { background: var(--bg-2); border: 1px solid var(--bg-3); border-radius: var(--radius-3); padding: var(--spacing-6); margin-top: var(--spacing-4); }
@@ -1173,7 +1187,7 @@ a.menu-item:hover { background: var(--bg-3); }
 .date-row--link { cursor: pointer; }
 .date-row--link:hover { background: var(--bg-3); }
 
-/* ---- Figure and prose ----------------------------------------------------------- */
+/* ---- Figure ---------------------------------------------------------------------- */
 /* Figure: a framed image of a fixed aspect ratio (16:9; --ratio-4-3, -3-2, -1-1, -3-4, -9-16), with an optional __caption
    and, where there is no image yet, a __placeholder (a __glyph and a __label). The image covers the frame, or --contain
    fits inside it. <figure class="figure"><div class="figure__frame"><img ...></div><figcaption class="figure__caption">. */
@@ -1190,46 +1204,6 @@ a.menu-item:hover { background: var(--bg-3); }
 .figure__glyph { flex: none; }
 .figure__label { font-size: var(--text-sm); color: var(--fg-1); overflow-wrap: break-word; }
 .figure__caption { margin-top: var(--spacing-2); font-size: var(--text-sm); line-height: 1.35; color: var(--fg-2); text-align: left; overflow-wrap: break-word; }
-.prose .figure__frame > img { border-radius: 0; height: 100%; }   /* the frame already rounds and clips */
-/* Prose: a rendered long-form body (Markdown output): plain elements inside .prose are styled, so the markup needs no
-   classes. A 70ch measure at a 1.55 line height, headings one step down the scale (the page has its own h1; there is no
-   h4), --primary on <strong> and list markers, code in --font-mono, tables left-aligned and wrapping. --sm is the
-   smaller size, --fill lifts the measure. A scrolling pre or table needs tabindex="0" so a keyboard can reach it. */
-.prose { --prose-h1: var(--text-h2); --prose-h2: var(--text-h3); --prose-h3: var(--text-base); max-width: 70ch; font-size: var(--text-base); line-height: 1.55; color: var(--fg-1); }
-.prose--sm { --prose-h1: var(--text-base); --prose-h2: var(--text-sm); --prose-h3: var(--text-sm); font-size: var(--text-sm); }
-.prose--fill { max-width: none; }
-.prose > * { margin: 0; }
-.prose > * + * { margin-top: var(--spacing-3); }
-.prose > :first-child { margin-top: 0; }
-.prose :is(h1, h2, h3) { display: block; margin: 0; font-weight: var(--font-weight-bold); line-height: 1.35; }
-.prose h1 { font-size: var(--prose-h1); }
-.prose h2 { font-size: var(--prose-h2); }
-.prose h3 { font-size: var(--prose-h3); }
-.prose > * + :is(h1, h2) { margin-top: var(--spacing-6); }
-.prose > * + h3 { margin-top: var(--spacing-5); }
-.prose > :is(h1, h2, h3) + * { margin-top: var(--spacing-2); }
-.prose p { overflow-wrap: break-word; }
-.prose strong { font-weight: var(--font-weight-bold); color: var(--primary); }
-.prose :is(ul, ol) { padding-left: var(--spacing-6); }
-.prose li + li { margin-top: var(--spacing-1); }
-.prose li::marker { color: var(--primary); }
-.prose li :is(ul, ol) { margin-top: var(--spacing-1); }
-.prose li:has(> input[type="checkbox"]) { list-style: none; display: flex; flex-wrap: wrap; gap: var(--spacing-2); margin-left: calc(-1 * var(--spacing-6)); }
-.prose li:has(> input[type="checkbox"]) > :is(ul, ol) { flex-basis: 100%; }
-.prose li > input[type="checkbox"] { flex: none; width: 1rem; height: 1rem; margin: 0; transform: translateY(0.3em); }
-.prose :is(code, pre) { font-family: var(--font-mono); }
-.prose code { font-size: 0.9em; padding: 0.1em 0.35em; border-radius: var(--radius-1); background: var(--bg-3); }
-.prose pre { font-size: var(--text-sm); padding: var(--spacing-3) var(--spacing-4); border: 1px solid var(--bg-3); border-radius: var(--radius-2); background: var(--bg-3); overflow-x: auto; white-space: pre; tab-size: 2; }
-.prose pre code { padding: 0; border-radius: 0; background: none; font-size: inherit; }
-.prose table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
-.prose :is(th, td) { padding: var(--spacing-2) var(--spacing-2-5); text-align: left; border-bottom: 1px solid var(--bg-3); }
-.prose th { color: var(--fg-1); font-weight: var(--font-weight-bold); }
-.prose :is(th, td)[align="right"] { text-align: right; }
-.prose blockquote { margin-inline: 0; padding-left: var(--spacing-4); border-left: 3px solid var(--bg-3); color: var(--fg-1); }
-.prose hr { border: 0; border-top: 1px solid var(--bg-3); margin-block: var(--spacing-6); }
-.prose > hr + * { margin-top: 0; }
-.prose img { max-width: 100%; height: auto; border-radius: var(--radius-1-5); }
-.prose :is(pre, table):focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
 
 /* ---- Chart extras --------------------------------------------------------------- */
 /* In a chart's tooltip and its table: a second line under a label, and a series row (a swatch in the series colour --
