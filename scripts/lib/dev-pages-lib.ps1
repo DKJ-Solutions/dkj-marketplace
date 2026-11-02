@@ -519,7 +519,7 @@ function Resolve-ProductHouseStyleRedirect {
 function Format-ProductHouseStylePageHtml {
     <#
         The house style's specimens in the product's shell, under Marketplace and dkj-policy, the plugin whose files
-        they document: the same page the toolbox shows on /plugins/dkj-policy/house-style, from the plugin's
+        they document: the same page the toolbox shows on /plugins/dkj-policy/dkj-brandbook, from the plugin's
         Get-HouseStyleSpecimensParts, which the toolbox in this repo now sends here. -Body is this checkout's
         plugins/dkj-policy/assets/dkj-brandbook/specimens.html, -ReadError why it could not be read. A -Section no
         section has returns $null, a 404.

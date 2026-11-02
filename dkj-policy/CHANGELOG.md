@@ -2,7 +2,84 @@
 
 ## [Unreleased]
 
-**6 / 9 minor entries** <!-- pending-tally -->
+**7 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/hub-performance-under-ai · 20261102-111836Z
+
+The hub's Performance card moved into the AI page's Claude section, beside Rules, Skills and Specialists, and the
+Test gate moved from the Clock to the GitHub page, beside Issues and Actions. The hub home carries the AI card in
+Performance's old place. Every route is unchanged; only the cards and the breadcrumb trails moved
+(Tools > AI > Performance > Clock, Tools > GitHub > Test gate).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every repo's toolbox reads differently: Performance is under AI and the Test gate under GitHub. No link breaks,
+because no route changed.
+
+**Score:** 2
+
+#### Pull Request
+
+Move Performance under AI > Claude and the Test gate under GitHub
+
+Plugins: dkj-policy
+
+[PR #3742](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3742)
+
+---
+
+### DEPLOY: feat/3704-hub-brandbook-route · 20261102-110036Z
+
+The hub's brand book page is named `dkj-brandbook` in the toolbox too, as it already was on the product: its card,
+title and breadcrumb, and its address, `/plugins/dkj-policy/dkj-brandbook`
+([#3704](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3704)). Both older addresses,
+`/plugins/dkj-policy/house-style` and `/plugins/dkj-solutions/house-style`, redirect there, a section to the same
+section.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+The hub's brand book page is named and routed as dkj-brandbook
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #3741](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3741)
+
+---
+
+### DEPLOY: fix/3725-specimen-sample-text · 20261102-102200Z
+
+The House style page's Graphs and Status samples show their token name under the swatch instead of inside it,
+so four of them no longer type `color: #000` for text on a light fill
+([#3725](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3725)). The page now passes the brand book's
+colour check without an allowlist entry.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+The House style page's light specimen samples read a token for their text
+
+Plugins: dkj-policy
+
+[PR #3738](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3738)
+
+---
 
 ### DEPLOY: feat/3691-remove-check-connectors-forwarder · 20261102-100241Z
 

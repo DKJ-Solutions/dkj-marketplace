@@ -116,22 +116,24 @@ function Get-PluginRowStatus {
 function Resolve-PluginsPageRequest {
     <#
         Which Plugins page -Path asks for: @{ Name = ''; Page = '' } for the overview on /plugins, @{ Name = '<plugin>';
-        Page = '' } for one plugin's page on /plugins/<plugin>, @{ Name = 'dkj-policy'; Page = 'house-style' } for
-        the house style's specimens under the plugin whose files they document (#3493; under dkj-solutions until
+        Page = '' } for one plugin's page on /plugins/<plugin>, @{ Name = 'dkj-policy'; Page = 'dkj-brandbook' } for
+        the brand book's specimens under the plugin whose files they document (#3493; under dkj-solutions until
         #3629, which BWJ-Development never enables), or $null for a path that is none of these. Section is '' on the
-        specimens' overview and the section's slug on /plugins/dkj-policy/house-style/<section>, one page per section
-        (#3563); whether a section of that slug exists is the page's question. The old /plugins/dkj-solutions/
-        house-style[/<section>] returns @{ Redirect = '<the same page under dkj-policy>' }, so a link to it still
-        lands. The name is held to a plugin slug, so nothing else reaches a lookup; whether a plugin of that name is
+        specimens' overview and the section's slug on /plugins/dkj-policy/dkj-brandbook/<section>, one page per section
+        (#3563); whether a section of that slug exists is the page's question. The page took the brand book's name
+        (#3704), as the product's had: both older addresses, /plugins/dkj-solutions/house-style[/<section>] and
+        /plugins/dkj-policy/house-style[/<section>], return @{ Redirect = '<the same page under dkj-brandbook>' }, so
+        a link to either still lands. The name is held to a plugin slug, so nothing else reaches a lookup; whether a plugin of that name is
         enabled is the page's question (a 404 when not).
     #>
     param([AllowEmptyString()][string]$Path = '')
     if ($Path -eq '/plugins' -or $Path -eq '/plugins/') { return @{ Name = ''; Page = ''; Section = '' } }
     if ($Path -cmatch '^/plugins/([a-z0-9][a-z0-9-]{0,63})/?$') { return @{ Name = $Matches[1]; Page = ''; Section = '' } }
-    if ($Path -cmatch '^/plugins/(dkj-policy|dkj-solutions)/house-style(?:/([a-z][a-z-]{0,39}))?/?$') {
-        $section = [string]$Matches[2]
-        if ($Matches[1] -ceq 'dkj-solutions') { return @{ Redirect = '/plugins/dkj-policy/house-style' + $(if ($section) { '/' + $section }) } }
-        return @{ Name = 'dkj-policy'; Page = 'house-style'; Section = $section }
+    if ($Path -cmatch '^/plugins/dkj-policy/dkj-brandbook(?:/([a-z][a-z-]{0,39}))?/?$') {
+        return @{ Name = 'dkj-policy'; Page = 'dkj-brandbook'; Section = [string]$Matches[1] }
+    }
+    if ($Path -cmatch '^/plugins/(?:dkj-policy|dkj-solutions)/house-style(?:/([a-z][a-z-]{0,39}))?/?$') {
+        return @{ Redirect = '/plugins/dkj-policy/dkj-brandbook' + $(if ($Matches[1]) { '/' + $Matches[1] }) }
     }
     return $null
 }
@@ -280,11 +282,11 @@ function Format-PluginPageHtml {
     }
     [void]$body.AppendLine('<div><dt>Enabled in</dt><dd>' + $(if ($Model.Consulted) { & $e $Model.Consulted } else { '--' }) + '</dd></div>')
     [void]$body.AppendLine('</dl></section></div>')
-    # What a plugin ships that can be looked at: dkj-policy's house style, its specimens one page below (#3493,
-    # #3629), then the hub's own pages about this plugin.
+    # What a plugin ships that can be looked at: dkj-policy's brand book, its specimens one page below (#3493,
+    # #3629; named dkj-brandbook as on the product, #3704), then the hub's own pages about this plugin.
     $below = @()
     if ($Row.Name -ceq 'dkj-policy') {
-        $below += @{ Href = '/plugins/dkj-policy/house-style'; Label = 'House style'; Sub = 'Every token, the twelve themes and every component, with their variants and states'; Icon = 'house-style' }
+        $below += @{ Href = '/plugins/dkj-policy/dkj-brandbook'; Label = 'dkj-brandbook'; Sub = 'Every token, the twelve themes and every component, with their variants and states'; Icon = 'house-style' }
     }
     $below += @($Cards | Where-Object { $_ })
     if ($below.Count) {
@@ -337,7 +339,7 @@ function Get-HouseStyleSpecimensParts {
         [AllowEmptyString()][string]$Body = '',
         [AllowEmptyString()][string]$ReadError = '',
         [AllowEmptyString()][string]$Section = '',
-        [string]$BasePath = '/plugins/dkj-policy/house-style'
+        [string]$BasePath = '/plugins/dkj-policy/dkj-brandbook'
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $split = if ($ReadError) { @{ Head = ''; Sections = @(); Tail = '' } } else { Split-HouseStyleSpecimens -Body $Body }
@@ -364,13 +366,13 @@ function Get-HouseStyleSpecimensParts {
         }
         [void]$out.AppendLine('</div>')
     }
-    return @{ Title = 'House style'; Body = $out.ToString(); Section = $false
-              Lead = 'Every token, the twelve themes and every component of the DKJ-Solutions house style, with their variants and states.' }
+    return @{ Title = 'dkj-brandbook'; Body = $out.ToString(); Section = $false
+              Lead = 'Every token, the twelve themes and every component of the DKJ-Solutions brand book, with their variants and states.' }
 }
 
 function Format-HouseStyleSpecimensPageHtml {
     <#
-        The house style's specimens under /plugins/dkj-policy/house-style (#3493): every token, theme and component
+        The brand book's specimens under /plugins/dkj-policy/dkj-brandbook (#3493, #3704): every token, theme and component
         of the stylesheet, under the Plugins and dkj-policy crumbs, because the files they document sit in dkj-policy
         (#3531) and every repo running its toolbox renders with them (#3629); the rule to start from them stays
         dkj-solutions'. -Body is assets/dkj-brandbook/specimens.html
@@ -379,7 +381,7 @@ function Format-HouseStyleSpecimensPageHtml {
 
         A LONG PAGE BECOMES CARDS WITH A PAGE EACH (#3563): with no -Section the page is an overview, one card per
         section of the specimens naming how many specimens it holds, and each card opens
-        /plugins/dkj-policy/house-style/<section>, that section alone. A -Section no section has returns $null,
+        /plugins/dkj-policy/dkj-brandbook/<section>, that section alone. A -Section no section has returns $null,
         which the server answers with a 404. What the page holds is Get-HouseStyleSpecimensParts'; this is its
         toolbox shell.
     #>
@@ -390,11 +392,11 @@ function Format-HouseStyleSpecimensPageHtml {
         [AllowEmptyString()][string]$Section = '',
         [string]$HubHref = '/hub'
     )
-    $base = '/plugins/dkj-policy/house-style'
+    $base = '/plugins/dkj-policy/dkj-brandbook'
     $parts = Get-HouseStyleSpecimensParts -Body $Body -ReadError $ReadError -Section $Section -BasePath $base
     if ($null -eq $parts) { return $null }
     $crumbs = @(@{ Label = 'Installed plugins'; Href = '/plugins' }, @{ Label = 'dkj-policy'; Href = '/plugins/dkj-policy' })
-    if ($parts.Section) { $crumbs += @{ Label = 'House style'; Href = $base } }
+    if ($parts.Section) { $crumbs += @{ Label = 'dkj-brandbook'; Href = $base } }
     return Format-GeneralPageHtml -Title $parts.Title -Body $parts.Body -SiteName $RepoName -HubHref $HubHref `
         -ParentCrumbs $crumbs -Lead $parts.Lead `
         -FooterNote 'The stylesheet and these specimens are <code>assets/dkj-brandbook/</code> in the dkj-policy plugin this toolbox runs from.'

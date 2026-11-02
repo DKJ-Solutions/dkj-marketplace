@@ -1517,6 +1517,5 @@ function Get-HouseStyleAllowlist {
         @{ Path = 'scripts/tests/house-palette.tests.ps1';      Reason = 'the palette suite: every name in it is a pattern or a fixture of the stylesheet it holds' }
         @{ Path = 'plugins/dkj-policy/bwj-development/*';       Reason = 'the BWJ-Development extension: its pages carry BWJ''s own styling, outside the house style by design' }
         @{ Path = 'scripts/tests/issue-dashboard.tests.ps1';    Reason = 'fixtures of GitHub label colours, which the issue dashboard renders as data' }
-        @{ Path = 'plugins/dkj-policy/assets/dkj-brandbook/specimens.html'; Name = '#000'; Reason = 'four light specimen samples type their text colour; #3725 gives them a token and removes this entry' }
     )
 }

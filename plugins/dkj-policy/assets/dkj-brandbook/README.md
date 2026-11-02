@@ -42,8 +42,8 @@ so a stylesheet added later is gated without an edit.
 **A house-style change is judged by eye on the House style page**, `specimens.html` in this folder: every
 token, the twelve themes and every component with its variants and states, drawn from the stylesheet beside it.
 It ships with the plugin, and every hub that runs `dkj-policy` shows it under Plugins, on
-`/plugins/dkj-policy/house-style` (#3493, #3629), as one card per section with a page each
-(`/plugins/dkj-policy/house-style/<section>`, #3563); in the source repo that page reads the working tree, so a change
+`/plugins/dkj-policy/dkj-brandbook` (#3493, #3629, #3704), as one card per section with a page each
+(`/plugins/dkj-policy/dkj-brandbook/<section>`, #3563); in the source repo that page reads the working tree, so a change
 shows there before the release that ships it. It replaces the Brandbook app's showcase, which is retired. `house-style-css` is the gate
 that checks the stylesheet's syntax and tokens; the page is the look.
 
@@ -923,8 +923,9 @@ Brandbook app is retired ([#3493](https://github.com/DKJ-Solutions/dkj-claude-pl
 
 **A card is ALWAYS one link, never two or more** (owner, October 27, 2026). Pages that belong together
 are grouped on a **group page** of their own, and the hub carries one card linking that page. **Clock**
-(`/clock`) is the first: its card stands where the Test gate's stood, and the page is an `h1` with one card
-link each for Test gate, Stopwatch and Logbook, whose trails read Tools > Clock > the page. A page joins a group by the
+(`/clock`) was the first: the page is an `h1` with one card link each for Stopwatch and Logbook. Groups nest:
+Clock sits on Performance's page, and Performance in the Claude section of AI's, so their trails read
+Tools > AI > Performance > Clock > the page (November 2, 2026), and the hub carries only the AI card. A page joins a group by the
 `Group` key in `Get-GeneralPages`; the group itself is a row of `Get-HubGroups`, and
 `Format-HubGroupPageHtml` draws its page.
 

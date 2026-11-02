@@ -3,13 +3,15 @@
 **On screen it is called Toolbox** (the owner, October 27, 2026): the session-start line, the site header's tag, a product's card, and the first crumb, which reads **Tools**. The code, the `/hub` route and this page keep the word *hub* for the mechanism.
 
 **Every repo that runs `dkj-policy` gets a hub at session start**, served by the plugin, with the
-General pages linked from it: Artifacts, Issues, Release notes, SessionStart, Test gate, Stopwatch, Logbook (the last three
-behind the Clock card and its `/clock` page since October 27, 2026; SessionStart and Clock in turn behind the
-Performance card and its `/performance` page since October 30, 2026)
+General pages linked from it: Artifacts, Issues, Release notes, SessionStart, Test gate, Stopwatch, Logbook
 (Test gate and those two since [#3470](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3470)) and Plugins
-(since [#3482](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3482)), and the **AI** card, whose `/ai`
-page holds a Claude section, an `h2` over the Rules, Skills and Specialists cards, each a landing page with nothing on
-it yet, the Specialists page a Lenses section, a card per `.claude/specialists/lenses/specialist-NN-NN-lens.md` of the repo, each
+(since [#3482](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3482)), and the **AI** card. Issues and
+the Test gate are linked from the **GitHub** page instead, the Test gate beside the CI runs it measures (since
+November 2, 2026). Stopwatch and Logbook sit behind the Clock card and its `/clock` page (October 27, 2026), and
+SessionStart and Clock behind the Performance card and its `/performance` page (October 30, 2026). The `/ai`
+page holds a Claude section, an `h2` over the Rules, Skills, Specialists and Performance cards (Performance there since
+November 2, 2026, because what it measures is what Claude's work costs; its route did not change), the first three
+landing pages with nothing on it yet, the Specialists page a Lenses section, a card per `.claude/specialists/lenses/specialist-NN-NN-lens.md` of the repo, each
 opening on `/ai/claude/specialists/lenses/<name>` with the lens's text (Maikel, October 30, 2026; groups may nest, and a `Section`
 group is a heading, `Get-HubGroups`). That covers
 BWJ-Development's repos too. Until [#3198](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3198)
@@ -83,8 +85,8 @@ which names the repo, and under the breadcrumb bar the home page carries one `.g
 - the **product**, where the repo states a server: its link, or a card saying it is not running;
 - **GitHub**, with the GitHub logo, the page on `/repository` holding the facts (the GitHub repo where the `origin` remote is
   on github.com, the folder, the dev preview, where it is stated and who serves the hub) and a card for
-  **Issues** and, on GitHub, for the pull requests and the CI runs;
-- the **General** pages but Issues, by bare path.
+  **Issues** and the **Test gate** and, on GitHub, for the pull requests and the CI runs;
+- the **General** pages but Issues and the Test gate, by bare path.
 
 Under the grid, only where the repo states no `Get-DevPreview` at all, two **setup cards**: how to add one,
 and which port to route to VS Code's Simple Browser. A footer names the serving script.
@@ -232,9 +234,9 @@ names the checkout), started hidden and detached.
 **It serves no Brandbook, in any repo** ([#3475](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3475),
 the owner, October 25, 2026). From #3198 to #3475 a DKJ-Solutions repo's server served a fifth page, the
 Brandbook app's build from `dkj-solutions/assets/brandbook/`, under `/brandbook/`. The route went with #3475, and the app itself with #3493: no repo has a Brand book to
-show. The brand book's own specimens are a page under Plugins instead, on `/plugins/dkj-policy/house-style` (still labelled House style, #3704),
+show. The brand book's own specimens are a page under Plugins instead, on `/plugins/dkj-policy/dkj-brandbook`, its card named dkj-brandbook as the product's is (#3704),
 in every repo that runs the toolbox, BWJ-Development's included ([#3629](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3629));
-the old `/plugins/dkj-solutions/house-style` redirects there.
+the older `/plugins/dkj-solutions/house-style` and `/plugins/dkj-policy/house-style` redirect there.
 
 | Page | Reads, from the repo it was started in | When it is absent |
 |---|---|---|
