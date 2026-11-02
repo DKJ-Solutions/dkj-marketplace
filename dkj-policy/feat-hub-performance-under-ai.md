@@ -39,19 +39,38 @@
 
 ### PLAN
 
+The owner, November 2, 2026: Performance mostly measures what the AI agents' work costs, so it moves to the AI
+page; the Test gate measures CI, not an agent, so it goes to GitHub, beside Actions.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-HubGroups`: Performance into the Claude section of `/ai`, after Specialists; Clock's sub drops the Test gate
+- [x] `Get-GeneralPages`: a `GitHub` key on Issues and the Test gate, which leaves the Clock group
+- [x] The hub home filters on `GitHub` instead of a hard-coded `/issues`; the GitHub page gains a Test gate card
+- [x] Test gate trails read Tools > GitHub > Test gate on every level
+- [x] `hub/README.md` and the code comments describe the new layout
 
 ### TEST
 
+- [x] dev-pages, dev-preview-sessionstart, stopwatch and consumer-dashboard suites green, asserts moved to the new layout
+- [x] A preview server from this tree serves every moved page with the right trail and cards
+- [ ] The owner has looked at the preview (visible result)
+
 ### DEPLOY: feat/hub-performance-under-ai
 
-**Score:**
+The hub's Performance card moved into the AI page's Claude section, beside Rules, Skills and Specialists, and the
+Test gate moved from the Clock to the GitHub page, beside Issues and Actions. The hub home carries the AI card in
+Performance's old place. Every route is unchanged; only the cards and the breadcrumb trails moved
+(Tools > AI > Performance > Clock, Tools > GitHub > Test gate).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Every repo's toolbox reads differently: Performance is under AI and the Test gate under GitHub. No link breaks,
+because no route changed.
+
+**Score:** 2
 
 #### Pull Request
 
