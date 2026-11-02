@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**3 / 4 minor entries** <!-- pending-tally -->
+**4 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3729-preflight-backup-timeout · 20261102-091721Z
+
+`live-preflight` takes a `-BackupTimeoutMinutes` and passes it to `backup-live-theme` as its
+`-TimeoutMinutes`, so a store whose live theme takes longer than 20 minutes to copy no longer has to run
+the backup by hand and then the preflight with `-SkipBackup`
+([#3729](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3729)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Shopify store with a large live theme can now finish a release-day preflight in one run:
+`live-preflight -BackupTimeoutMinutes 45`. Measured on a 909-file theme, the copy was still filling at the
+20-minute default.
+
+**Score:** 3
+
+#### Pull Request
+
+live-preflight passes a longer backup timeout through to backup-live-theme
+
+Plugins: dkj-subagents-shopify
+
+[PR #3734](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3734)
+
+---
 
 ### DEPLOY: fix/3727-brandbook-derived-token-value · 20261102-090218Z
 

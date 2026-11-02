@@ -115,7 +115,8 @@
     Give up waiting after this long and fail loudly. Default 20 -- the measured fill took about
     eight, and the bound is there so a stalled copy ends the run rather than the cut. Since each
     sample now pulls the theme (#2033) rather than reading a JSON field, a large theme may need more
-    headroom than a small one did under the old, cheaper count.
+    headroom than a small one did under the old, cheaper count. Run from live-preflight, this is that
+    script's -BackupTimeoutMinutes (#3729: a 909-file theme was still filling after 20 minutes).
 
 .PARAMETER RootOverride
     Fixture root, so a suite can drive this against a scratch tree instead of a real store.
