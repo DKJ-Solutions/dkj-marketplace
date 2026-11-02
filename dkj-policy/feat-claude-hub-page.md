@@ -68,7 +68,7 @@ h2 section on it, and move the URL and the breadcrumbs with it.
 - [x] `dev-pages`, `dev-preview-sessionstart` and `stopwatch` suites updated and green
 - [x] Checked on a preview hub from this branch (port 4899): `/claude` has Claude as h1 over four h2 cards,
   the Clock's trail reads Tools > Claude > Performance > Clock, and `/ai/...` redirects
-- [ ] Maikel looks at the result before the merge (a visible result)
+- [x] Maikel looked at the result on the preview hub and approved it ("ship it", November 2, 2026)
 
 ### DEPLOY: feat/claude-hub-page
 
