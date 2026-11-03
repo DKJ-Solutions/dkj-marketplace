@@ -46,10 +46,12 @@ product on 4870). The toolbox's theme is chosen on its own `/settings` page sinc
 
 - [x] `Format-SiteHeaderHtml` (`plugins/dkj-policy/hub/lib/general-pages-lib.ps1`) no longer mounts `#settings`; every site header on both servers is built by it
 - [x] The pages' `DKJTheme.settings(...)` call stays: with no mount it returns null and draws nothing, and a page without a site header still floats its button
-- [~] No brand book change -- the `.site-header .theme-settings` rules stay for any app that still mounts the button
+- [~] The `.site-header .theme-settings` rules stay in the brand book, for any app that still mounts the button
+- [x] Maikel, same day: the whole `.site-header__menu` right-aligned -- `house-style.css` sets `.site-header__nav` to `justify-content: flex-end` (centred until then), and a nav that is the header's last child runs its last cell to the bar's right edge, as the brand does on the left
 
 ### TEST
 
+- [x] `check-plugin-integrity`, `check-house-style.tests.ps1` (135) and `house-palette.tests.ps1` (161) green on the stylesheet change
 - [x] `dev-pages.tests.ps1` (594) and `consumer-dashboard.tests.ps1` (241) green, their asserts flipped to "no settings button in the header"
 - [ ] The owner looks at the headers on 4890 and 4870 (visible result -- no merge before that)
 
@@ -57,13 +59,15 @@ product on 4870). The toolbox's theme is chosen on its own `/settings` page sinc
 
 The site header on the toolbox and product pages no longer carries the settings button (the gear with theme,
 width and reset). The toolbox's theme is chosen on its `/settings` page; a page without a site header still
-floats the button as before.
+floats the button as before. The brand book's site-header menu now stands at the right instead of in the middle,
+for every app that draws one.
 
 **Score:** 2
 
 #### What makes this deploy extra special
 
-A consumer running the toolbox sees a header without the gear; the theme moves to the Settings page.
+A consumer running the toolbox sees a header without the gear and its menu at the right; the theme moves to the
+Settings page.
 
 **Score:** 2
 
