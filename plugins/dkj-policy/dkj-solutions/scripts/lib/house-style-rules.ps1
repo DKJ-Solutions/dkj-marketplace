@@ -11,8 +11,8 @@
     longer defines (#3033). Without a gate the migration to one design system drifts again after it
     lands, so this is phase 1 of that plan.
 
-    THE FOUR CHECKS, and the decisions behind their shape (owner, October 15, 2026, on #3035; the fourth
-    added by #3720). An earlier fourth, `heading` (no h2 inside a card, Maikel, October 19, 2026, on
+    THE FIVE CHECKS, and the decisions behind their shape (owner, October 15, 2026, on #3035; the fourth
+    added by #3720, the fifth by #3778). An earlier fourth, `heading` (no h2 inside a card, Maikel, October 19, 2026, on
     #3175), was retired by Maikel on October 24, 2026: an h2 may title a card.
 
       1. pin      -- every tracked file named house-style.css or house-theme.js hashes to the sha256 the
@@ -32,8 +32,14 @@
                      the README lets a repo add domain tokens, and a domain colour is one (an emotion
                      palette, a hazard stripe). Only CSS property syntax is read, so a JS camelCase key
                      (`backgroundColor:`) is not, and a named colour (`red`) is not a code.
+      5. type     -- the repo's own layer reads a font size only from the type scale (#3778): a `font-size`
+                     is `var(--text-*)` or a CSS-wide keyword, and a `font` shorthand types no size.
+                     Measured November 3, 2026 in dkj-lifehub: 14 typed sizes in 6 files under a gate that
+                     reported the brand book clean, while colour, which was gated, had none. A custom
+                     property's own value is free, as for colour: `--text-hero: 48px` is a domain step.
+                     font-weight is not read: the house has no step for every weight a page types.
 
-    PATTERN GREP, NOT A PARSE. Checks 2 to 4 match patterns rather than parse CSS or SCSS: no runtime
+    PATTERN GREP, NOT A PARSE. Checks 2 to 5 match patterns rather than parse CSS or SCSS: no runtime
     dependency, and a bare Windows PowerShell 5.1 runs it. The price is the occasional false positive,
     which the repo answers in its own allowlist (Get-HouseStyleAllowlist, below) with a reason per entry.
 
@@ -461,6 +467,54 @@ function Find-HouseStyleColourHit {
     }
 }
 
+function Find-HouseStyleTypeHit {
+    <#
+        Every declaration whose font size is not read from the type scale (#3778): a `font-size` whose value
+        is anything but `var(--text-*)` or a CSS-wide keyword, and a `font` shorthand that types a size (a
+        length, a size keyword, or a calc()/clamp()/min()/max()). Returns @{ Name; Kind = 'types'; Property;
+        Line }, one per declaration. Name is the function's name for a computed size, else the value itself,
+        so an allowlist entry can name `16px`.
+        A custom property is never matched: `--text-hero: 48px` is a domain step on the scale, read with var().
+        font-weight is out of scope: the house has no step for every weight a page uses (#3778).
+    #>
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Text)
+
+    # Comments are blanked to spaces, so a line number still lands where it did.
+    $Text = [regex]::Replace($Text, '(?m)/\*[\s\S]*?\*/|^[ \t]*//.*$', [System.Text.RegularExpressions.MatchEvaluator] { param($c) $c.Value -replace '[^\n]', ' ' })
+    # Nothing before the name that makes it part of a longer one (`--my-font-size:`, `$font-size:`, `.font`),
+    # and nothing after `font` but the colon: `font-family:` and `font-weight:` are not read.
+    $decl = '(?<![\w$@.-])(?<prop>font-size|font)(?![\w-])[''"]?\s*:\s*(?<val>[^;{}\r\n]*)'
+    $wide = '^(?:inherit|initial|unset|revert|revert-layer)$'
+    $length = '(?<![\w.-])(?:\d*\.)?\d+(?:px|r?em|%|pt|pc|vw|vh|vmin|vmax|vi|vb|ch|ex|cap|ic|r?lh|cm|mm|in|q|cq[whib]|cqmin|cqmax)(?![\w-])'
+    $keyword = '(?<![\w-])(?:xx-small|x-small|small|medium|large|x-large|xx-large|xxx-large|larger|smaller)(?![\w-])'
+    $computed = '\b(?<fn>calc|clamp|min|max)\('
+    $map = $null
+    foreach ($m in [regex]::Matches($Text, $decl)) {
+        # A value inside a string ends at its closing quote; `!important` changes nothing about the size.
+        $val = ($m.Groups['val'].Value -replace '[''"`].*$', '' -replace '!\s*important', '').Trim()
+        if (-not $val -or $val -match $wide) { continue }
+        $name = $null
+        if ($m.Groups['prop'].Value -eq 'font-size') {
+            if ($val -match '^var\(\s*--text-[A-Za-z0-9_-]+\s*\)$') { continue }
+            $fn = [regex]::Match($val, '^(?<fn>[A-Za-z-]+)\(')
+            $name = if ($fn.Success -and $fn.Groups['fn'].Value -ne 'var') { $fn.Groups['fn'].Value.ToLowerInvariant() } else { $val }
+        } else {
+            # The shorthand: var() reads and the line height after the slash say nothing about the size.
+            $rest = [regex]::Replace($val, 'var\([^()]*\)', ' ')
+            $rest = [regex]::Replace($rest, '/\s*\S+', ' ')
+            $c = [regex]::Match($rest, $computed)
+            if ($c.Success) { $name = $c.Groups['fn'].Value.ToLowerInvariant() }
+            else {
+                $s = [regex]::Match($rest, $length + '|' + $keyword)
+                if (-not $s.Success) { continue }
+                $name = $s.Value
+            }
+        }
+        if ($null -eq $map) { $map = New-HouseStyleLineMap -Text $Text }
+        @{ Name = $name; Kind = 'types'; Property = $m.Groups['prop'].Value; Line = (Get-HouseStyleLineNumber -Map $map -Index $m.Index) }
+    }
+}
+
 function ConvertFrom-GitQuotedPathHs {
     <#
         One path line from `git -c core.quotePath=true ls-files`, decoded. Git quotes a path with a
@@ -547,7 +601,7 @@ function Read-HouseStyleAllowlist {
 
 function Invoke-HouseStyleCheck {
     <#
-        Run the four checks over a checkout. Returns
+        Run the five checks over a checkout. Returns
         @{ Tag; Copies = @(@{ Path; Ok; Canonical }); Findings = @(@{ Check; Path; Line; Name; Text }); Allowed; Notes }.
         $Files defaults to the checkout's tracked files; tests pass their own. $SourceRepo defaults to
         Test-HouseStyleSourceRepo; a canonical copy is Ok whatever it hashes to (#3637).
@@ -633,6 +687,9 @@ function Invoke-HouseStyleCheck {
         foreach ($h in @(Find-HouseStyleColourHit -Text $text)) {
             $what = if ($h.Kind -eq 'derives') { "derives a colour with $($h.Name)()" } else { "types the colour $($h.Name)" }
             $hits += @{ Check = 'colour'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = "$($h.Property): $what -- a rule reads a colour only as a token: use a house token with var(), or add a domain token (--name: value) and read that" }
+        }
+        foreach ($h in @(Find-HouseStyleTypeHit -Text $text)) {
+            $hits += @{ Check = 'type'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = "$($h.Property): types the size $($h.Name) -- a rule reads a font size only from the type scale: use var(--text-*), or add a domain step (--text-name: value) and read that" }
         }
         foreach ($f in $hits) {
             if (Test-HouseStyleAllowed -Path $rel -Name $f.Name -Allow $Allow) { $allowed++ } else { $findings.Add($f) }
