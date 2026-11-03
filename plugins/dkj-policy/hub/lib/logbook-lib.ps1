@@ -269,6 +269,25 @@ function ConvertTo-LogbookModel {
     return (ConvertTo-StopwatchModel -Runs @($Runs | Where-Object { $_ -and ($_.End -or $(if ($_.RunStart) { $_.RunStart } else { $_.Start }) -ge $cut) }) -KeepOpenRuns)
 }
 
+function Select-LogbookSlugRuns {
+    <#
+        The store runs among -Runs that can carry the run page slug -Slug (#3779), so '/logbook/<slug>' cuts and
+        models those and not the whole store. A run's slug is its start's local minute (yyyy-MM-dd-HHmm, with its id
+        after it when another shown run started in the same minute; ConvertTo-StopwatchModel), so the slug's minute
+        settles it: every run that starts in that minute, since all of them decide whether the suffix is there, and
+        every sweep whose window holds that minute, since a sweep's lap starts at the sweep's start or at a fold
+        inside it (Split-LogbookSweepRuns). A slug that names no minute matches nothing. Pure.
+    #>
+    param([AllowEmptyCollection()][object[]]$Runs = @(), [AllowEmptyString()][string]$Slug = '')
+    if ($Slug -notmatch '^(\d{4}-\d{2}-\d{2}-\d{4})(-|$)') { return @() }
+    $minute = $Matches[1]
+    $stamp = { param($t) $t.ToLocalTime().ToString('yyyy-MM-dd-HHmm', [Globalization.CultureInfo]::InvariantCulture) }
+    return @($Runs | Where-Object {
+            $_ -and $(if ($_.Label -imatch $script:LogbookSweepLabel) {
+                    ((& $stamp $_.Start) -le $minute) -and (-not $_.End -or $minute -le (& $stamp $_.End))
+                } else { (& $stamp $_.Start) -eq $minute }) })
+}
+
 function Get-LogbookWorkTimes {
     <#
         Each finished run's work time, by run id: its time less the phase in which no session was busy
