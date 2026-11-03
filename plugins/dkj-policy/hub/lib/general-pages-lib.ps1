@@ -520,7 +520,7 @@ function Get-GeneralPages {
         @{ Href = '/sessionstart';  Label = 'SessionStart';  Sub = 'The always-on path every session loads before its first turn'; Icon = 'sessionstart'; Group = '/performance/context' },
         # Every repo's since #3470 (the owner, October 25, 2026): the source repo's own pages until then.
         @{ Href = '/test-gate';     Label = 'Test gate';     Sub = 'What each test suite costs on CI'; Icon = 'test-gate'; GitHub = $true },
-        @{ Href = '/stopwatch';     Label = 'Stopwatch';     Sub = 'How long an assignment takes, timed from a stopwatch: prompt to back on the trunk, with the transcript phases'; Icon = 'stopwatch'; Group = '/clock' },
+        @{ Href = '/stopwatch';     Label = 'Stopwatch';     Sub = 'How long an assignment takes, timed from a stopwatch: prompt, or from the start of a release cut, to back on the trunk, with the transcript phases'; Icon = 'stopwatch'; Group = '/clock' },
         @{ Href = '/logbook';       Label = 'Logbook';       Sub = 'Every assignment of a clean session, timed by itself: first prompt to back on the trunk, with the transcript phases'; Icon = 'logbook'; Group = '/clock' },
         # #3482: plugin-versions' verdict per enabled plugin, so a problem with one is visible from the hub.
         @{ Href = '/plugins';       Label = 'Installed plugins'; Sub = 'Every plugin this repo enables, and any problem with one on this machine'; Icon = 'plugins' },
