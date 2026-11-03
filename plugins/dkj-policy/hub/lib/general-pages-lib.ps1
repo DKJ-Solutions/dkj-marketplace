@@ -1092,6 +1092,10 @@ function Format-HubSettingsPageHtml {
         # November 3, 2026). Scoped to this page's groups, so the house .controls .seg keeps its 30px everywhere else.
         '.hs-theme .controls .seg { height: calc(40px + 2 * var(--spacing-2) + 2px); border-color: var(--bg-4); }' + "`n" +
         '.hs-theme .controls .seg button + button { border-left-color: var(--bg-4); }' + "`n" +
+        # And each toggle is a fixed 400px wide, its options sharing it equally (Maikel, November 3, 2026), never wider
+        # than the column a phone gives it.
+        '.hs-theme .controls .seg { width: 400px; max-width: 100%; }' + "`n" +
+        '.hs-theme .controls .seg button { flex: 1 1 0; }' + "`n" +
         # A theme card is clickable as a whole, and the one holding the active swatch -- aria-pressed, which the brand book's
         # picker keeps, from the header's choice too -- takes the selected theme's --primary as its border (Dave, November 2, 2026).
         '.hs-swatch[data-mode] { cursor: pointer; }' + "`n" +
