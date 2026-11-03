@@ -1036,7 +1036,9 @@ function Format-HubSettingsPageHtml {
     # Exactly one of its two is always pressed, and only that mode's cards are shown.
     $toggle = '<div class="controls grid__full"><span class="seg" id="settings-theme-mode" role="group" aria-label="Mode">' +
         '<button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>'
-    $body = '<div class="card-grid hs-theme" id="settings-theme-grid"><div class="grid__head"><h2>Theme</h2></div>' + $toggle +
+    # Theme and Width stand side by side on one row (Maikel, November 3, 2026), wrapping under each other where the
+    # column is too narrow for both.
+    $body = '<div class="hs-row"><div class="card-grid hs-theme" id="settings-theme-grid"><div class="grid__head"><h2>Theme</h2></div>' + $toggle +
         # The reset IS a card like the swatches', the whole card the button (Dave, November 2, 2026), hovering as a link card
         # does in a group, on --bg-4 (not .card--link itself, which is a link's, #3566); it closes their row, shown whichever mode the toggle shows (it carries no data-mode).
         '<button type="button" class="card hs-swatch hs-reset" id="settings-theme-foot">Reset</button></div>' + "`n" +
@@ -1075,7 +1077,7 @@ function Format-HubSettingsPageHtml {
         '<div class="controls grid__full"><span class="seg" id="settings-width" role="group" aria-label="Width">' +
         '<button type="button" data-width="fluid" aria-pressed="false">Fluid</button>' +
         '<button type="button" data-width="phone" aria-pressed="false">Phone</button>' +
-        '<button type="button" data-width="full" aria-pressed="false">Full</button></span></div></div>' + "`n" +
+        '<button type="button" data-width="full" aria-pressed="false">Full</button></span></div></div></div>' + "`n" +
         '<script>(function () {' +
         ' var seg = document.getElementById("settings-width");' +
         ' function show() { var now = DKJTheme.width(); Array.prototype.forEach.call(seg.querySelectorAll("button[data-width]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-width") === now)); }); }' +
@@ -1084,7 +1086,13 @@ function Format-HubSettingsPageHtml {
         ' })();</script>'
     # .hs-theme, .hs-swatch and .hs-reset are this page's own classes: the row, the full-width head and toggle in it, a
     # card that hugs its swatch, and what a <button> needs to read as a card. No house class or token is redefined.
-    $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
+    # .hs-row puts the two groups on one row: the Theme group takes what the Width group leaves, the Width group
+    # hugs its switch, and both stretch to the same height.
+    $style = '.hs-row { display: flex; flex-wrap: wrap; gap: var(--spacing-3); align-items: stretch; }' + "`n" +
+        '.hs-row > .card-grid { margin-top: 0; }' + "`n" +
+        '.hs-row > #settings-theme-grid { flex: 1 1 auto; }' + "`n" +
+        '.hs-row > #settings-width-grid { flex: 0 0 auto; align-content: flex-start; }' + "`n" +
+        '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
         '.hs-theme > :is(.grid__head, .grid__full) { flex: 0 0 100%; }' + "`n" +
         '.hs-swatch { margin-top: 0; padding: var(--spacing-2); }' + "`n" +
         # A theme card is clickable as a whole, and the one holding the active swatch -- aria-pressed, which the brand book's
