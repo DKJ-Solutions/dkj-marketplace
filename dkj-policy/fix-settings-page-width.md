@@ -41,17 +41,27 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Format-HubSettingsPageHtml` (`hub/lib/general-pages-lib.ps1`): a Width group under Theme, the house `.seg` with Fluid / Phone / Full through `DKJTheme.setWidth`; the lead and the hub card's sub name the width too
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: three asserts pin the Width group, its wiring and its place after Theme (574 passed)
+- [x] Served from the branch on port 4892: `/settings` renders the Width group
+
 ### DEPLOY: fix/settings-page-width
 
-**Score:**
+The toolbox's Settings page offers the page width again -- Fluid, Phone or Full -- under the theme. It
+lived in the header's settings button, and when that button went the width choice went with it, so
+the page could no longer be widened or narrowed from anywhere.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Whoever uses the toolbox can switch its page width again, which they lost when the header's settings
+button was removed.
+
+**Score:** 3
 
 #### Pull Request
 

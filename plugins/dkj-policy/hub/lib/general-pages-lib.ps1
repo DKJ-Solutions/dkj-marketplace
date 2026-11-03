@@ -525,7 +525,7 @@ function Get-GeneralPages {
         # #3482: plugin-versions' verdict per enabled plugin, so a problem with one is visible from the hub.
         @{ Href = '/plugins';       Label = 'Installed plugins'; Sub = 'Every plugin this repo enables, and any problem with one on this machine'; Icon = 'plugins' },
         # The toolbox's own settings, on a page of their own (Dave, November 2, 2026): the Theme first.
-        @{ Href = '/settings';      Label = 'Settings';      Sub = 'How this toolbox looks on this device: its theme'; Icon = 'settings' }
+        @{ Href = '/settings';      Label = 'Settings';      Sub = 'How this toolbox looks on this device: its theme and its width'; Icon = 'settings' }
     )
 }
 
@@ -1067,6 +1067,20 @@ function Format-HubSettingsPageHtml {
         ' seg.addEventListener("click", function (e) { var b = e.target.closest("button[data-mode]"); if (b) { show(b.getAttribute("data-mode")); } });' +
         ' show(modeOf(DKJTheme.current()));' +
         ' foot.addEventListener("click", function () { DKJTheme.reset(); show(modeOf(DKJTheme.current())); });' +
+        ' })();</script>' + "`n" +
+        # The page width (Maikel, November 3, 2026): the header's settings panel carried it until that button went, so
+        # it moved here with the theme. The same three as that panel, through the brand book's own setWidth, so the
+        # choice is the one key per app that house-theme.js already reads; the segment opens on the width in force.
+        '<div class="card-grid hs-theme" id="settings-width-grid"><div class="grid__head"><h2>Width</h2></div>' +
+        '<div class="controls grid__full"><span class="seg" id="settings-width" role="group" aria-label="Width">' +
+        '<button type="button" data-width="fluid" aria-pressed="false">Fluid</button>' +
+        '<button type="button" data-width="phone" aria-pressed="false">Phone</button>' +
+        '<button type="button" data-width="full" aria-pressed="false">Full</button></span></div></div>' + "`n" +
+        '<script>(function () {' +
+        ' var seg = document.getElementById("settings-width");' +
+        ' function show() { var now = DKJTheme.width(); Array.prototype.forEach.call(seg.querySelectorAll("button[data-width]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-width") === now)); }); }' +
+        ' seg.addEventListener("click", function (e) { var b = e.target.closest("button[data-width]"); if (b) { DKJTheme.setWidth(b.getAttribute("data-width")); show(); } });' +
+        ' show();' +
         ' })();</script>'
     # .hs-theme, .hs-swatch and .hs-reset are this page's own classes: the row, the full-width head and toggle in it, a
     # card that hugs its swatch, and what a <button> needs to read as a card. No house class or token is redefined.
@@ -1084,7 +1098,7 @@ function Format-HubSettingsPageHtml {
         # Every card in the row is clickable, the theme cards and the reset alike, so all take the same hover: --bg-4, as a
         # link card does in a group (Dave, November 2, 2026).
         '.hs-swatch:hover { background: var(--bg-4); }'
-    return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $body -Style $style `
+    return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme and its width.' -Body $body -Style $style `
         -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
 }
 
