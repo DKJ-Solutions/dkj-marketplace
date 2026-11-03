@@ -2,7 +2,27 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**2 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3766-trunk-sync-cli-diagnostics · 20261103-091659Z
+
+When the `sync-trunk.ps1` single-checkout case in `trunk-sync.tests.ps1` fails, the suite now prints what that script said, not just the three red asserts. It failed once under the parallel test gate (#3766) and could not be reproduced in 18 runs, so the next failure will name its own cause.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+trunk-sync.tests: print sync-trunk.ps1's own output when the single-checkout case fails
+
+[PR #3769](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3769)
+
+---
 
 ### DEPLOY: feat/3761-store-execute-live-refused · 20261103-085504Z
 
