@@ -1,5 +1,6 @@
 {
   "schema": "session-start-data/1",
+  "repo": "dkj-marketplace",
   "asOf": "2026-10-02",
   "pageTitle": "Session-start context",
   "locale": "en-US",
@@ -407,7 +408,6 @@
     "totalBytes": 59364
   },
   "source": {
-    "artifact": "https://claude.ai/artifact/7etv9gy5m9PorHaCShghGu",
     "title": "Session-start context",
     "copied": "2026-10-18"
   }

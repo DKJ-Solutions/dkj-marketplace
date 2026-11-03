@@ -268,6 +268,14 @@ function Read-SessionStartDataBlock {
     #>
     param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Html)
 
+    # The snapshot (scripts/dashboard/session-start-snapshot.json) is the same data object a rendered page embeds,
+    # kept as a bare JSON file: it is the history now that no published page holds one. A text that opens with
+    # a brace is read as that file; a page opens with markup, so the two cannot be confused.
+    if ($Html.TrimStart().StartsWith('{')) {
+        try { return [pscustomobject]@{ Found = $true; Data = (ConvertFrom-Json -InputObject $Html); Reason = '' } }
+        catch { return [pscustomobject]@{ Found = $false; Data = $null; Reason = 'the JSON file did not parse' } }
+    }
+
     $i = $Html.IndexOf($script:SessionStartBegin, [System.StringComparison]::Ordinal)
     if ($i -lt 0) { return [pscustomobject]@{ Found = $false; Data = $null; Reason = 'the page has no data block (a hand-built page, or one rendered before this skill existed)' } }
     $start = $i + $script:SessionStartBegin.Length
@@ -483,8 +491,8 @@ function Merge-SessionStartTemplate {
         once, in order: a template with two begin markers would put the data in whichever the replace found
         first and leave the other as a stale copy that Read-SessionStartDataBlock might later pick up.
 
-        -PageTitle replaces the first <title> element, HTML-encoded: the artifact is found by that title, so
-        it has to survive the template's own default.
+        -PageTitle replaces the first <title> element, HTML-encoded, so the page's title is the repo's
+        own and survives the template's own default.
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Template,

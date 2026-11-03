@@ -2,7 +2,59 @@
 
 ## [Unreleased]
 
-**3 / 5 minor entries** <!-- pending-tally -->
+**5 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/gwen-simple-all-the-way-down · 20261103-130201Z
+
+Gwen's manual gains a hard rule, **Simple, all the way down**. Her bar is Linear's website or Apple Notes:
+a simple purpose, architecture, design and implementation. She cuts taglines, helper text and secondary
+labels, and fixes the layout when a screen seems to need them. Every decision has to improve the user,
+developer and agent experience at once, without breaking anything.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Pages and tools designed by Gwen in any consuming repo come out leaner: one purpose, no explanatory chrome.
+
+**Score:** 3
+
+#### Pull Request
+
+Gwen's manual holds the simple-all-the-way-down bar
+
+Plugins: dkj-subagents-alpha
+
+[PR #3774](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3774)
+
+---
+
+### DEPLOY: feat/3772-no-artifacts · 20261103-122943Z
+
+The workflow no longer uses claude.ai Artifacts or Claude Docs. The constitution says so always-on and overrides
+the harness's own default to publish one: a result someone must judge becomes a Toolbox page, a document a file in
+the repo. The Toolbox loses its Artifacts page and card (an old `/artifacts` link lands on the home page), the
+`measure-session-start` skill keeps its history in its snapshot file instead of a published page, and the
+specialists' and brand book's texts no longer point at Artifacts.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every session in every consumer stops publishing Artifacts after taking this version, including where the harness
+would offer one unprompted.
+
+**Score:** 3
+
+#### Pull Request
+
+Stop using claude.ai Artifacts and Claude Docs: a visible result becomes a Toolbox page
+
+Plugins: bwj-development, dkj-policy, dkj-solutions, dkj-subagents-alpha
+
+[PR #3773](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3773)
+
+---
 
 ### DEPLOY: feat/toolbox-in-product-menu · 20261103-113704Z
 

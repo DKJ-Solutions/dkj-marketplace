@@ -2,7 +2,7 @@
 .SYNOPSIS
     Tests for scripts/lib/dev-pages-lib.ps1 -- the hub and the test-gate page of the dev server
     (#3097) -- and for the plugin libs it reuses: plugins/dkj-policy/hub/lib/general-pages-lib.ps1 -- the page
-    shell, the number formats and the four general pages (SessionStart, Artifacts, Issues, Release notes) that
+    shell, the number formats and the three general pages (SessionStart, Issues, Release notes) that
     moved there in #3119, and to dkj-policy in #3198. Pure: the servers that serve them are
     exercised by consumer-dashboard.tests.ps1 and dev-preview-sessionstart.tests.ps1.
 
@@ -68,7 +68,7 @@ Assert-True ((Format-SiteHeaderHtml -Name 'n' -Tag 'p<q>') -match 'aria-label="n
 $mshell = Format-SiteHeaderHtml -Name 'n' -Menu @(@{ Label = 'A<b>'; Href = '/a' }, @{ Label = 'C'; Href = '/c' }) -Current '/c'
 Assert-True ($mshell -match '</a><nav class="site-header__nav" aria-label="Main"><ul class="site-header__menu"><li><a href="/a">A&lt;b&gt;</a></li><li><a href="/c" aria-current="page">C</a></li></ul><button class="site-header__menu-toggle" type="button" aria-controls="site-menu"' -and $mshell -match '</div><dialog class="dialog dialog--drawer site-menu" id="site-menu".*<a class="menu-item" href="/c" aria-current="page">.*</dialog></header>') 'a -Menu draws its links, escaped, between the brand and the settings, marks -Current, and again as the drawer inside the header after its container'
 Assert-True ($bshell -notmatch 'site-header__nav|<dialog') 'no -Menu, no menu and no drawer'
-Assert-True (((Get-HubMenu) | ForEach-Object { $_.Href }) -join ' ' -eq '/repository /artifacts /release-notes /claude /plugins /settings') 'the toolbox menu is GitHub, then the hub''s own cards in their order'
+Assert-True (((Get-HubMenu) | ForEach-Object { $_.Href }) -join ' ' -eq '/repository /release-notes /claude /plugins /settings') 'the toolbox menu is GitHub, then the hub''s own cards in their order'
 $st = Format-HubSettingsPageHtml -RepoName 'o/r'
 Assert-True ($st -match '<h1>Settings</h1>' -and $st -match '<h2>Theme</h2>' -and $st -match 'DKJTheme\.picker\(el, ') 'the Settings page opens with its h1, then the Theme h2 over the brand book''s own picker'
 Assert-True ($st -match '<div class="card-grid hs-theme" id="settings-theme-grid"><div class="grid__head"><h2>Theme</h2></div><div class="controls grid__full"><span class="seg" id="settings-theme-mode" role="group" aria-label="Mode"><button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>') 'under the Theme h2 a Light/Dark toggle, the house .seg in a .controls row of its own, one of the two pressed'
@@ -85,7 +85,7 @@ Assert-True ($st -match 'card\.className = "card hs-swatch";' -and $st -match '\
 Assert-True ($st -match 'foot\.addEventListener\("click", function \(\) \{ DKJTheme\.reset\(\);' -and $st -match '\.hs-reset \{ font: inherit; color: var\(--fg-1\); cursor: pointer;' -and $st -notmatch 'settings-theme-reset') 'a click anywhere on the reset card resets, and no button sits inside it'
 Assert-True ($st -match '<span aria-current="page">Settings</span>') 'the Settings page is its own last crumb'
 $tpage = Format-GeneralPageHtml -Title 'Stopwatch' -Lead '' -Body '' -SiteName 'o/r' -ParentCrumbs @(@{ Label = 'Claude'; Href = '/claude' })
-Assert-True ($tpage -match '<li><a href="/claude" aria-current="page">Claude</a></li>' -and (Format-GeneralPageHtml -Title 'Artifacts' -Lead '' -Body '' -SiteName 'o/r') -match '<li><a href="/artifacts" aria-current="page">') 'a toolbox page carries the toolbox menu, marking the item it sits under: its first crumb, else its own title'
+Assert-True ($tpage -match '<li><a href="/claude" aria-current="page">Claude</a></li>' -and (Format-GeneralPageHtml -Title 'Release notes' -Lead '' -Body '' -SiteName 'o/r') -match '<li><a href="/release-notes" aria-current="page">') 'a toolbox page carries the toolbox menu, marking the item it sits under: its first crumb, else its own title'
 Assert-True ((Format-ProductHomeHtml) -match '<li><a href="/consumers">Consumers</a></li><li><a href="/marketplace">Marketplace</a></li>' -and $tpage -notmatch '/consumers') 'the product carries its own pages as its menu, a toolbox the toolbox''s'
 Assert-True ((Format-ProductHomeHtml) -match 'site-header__name">dkj-marketplace <span class="site-header__tag">product</span>' -and (Format-MarketplacePluginsPageHtml -Plugins @()) -match '>product</span>') 'every page this server builds says product: it is this repo''s product port again (#3540)'
 Assert-True ((Format-RepoHomeHeadHtml -RepoName 'r' -Lead 'l') -match '<h1>r</h1>\s*</div>') 'without a site header the home page keeps its h1, as in every other repo, and no lead under it (#3585)'
@@ -97,7 +97,7 @@ Assert-True ($bshell -notmatch 'class="eyebrow"' -and $bshell -notmatch 'theme-s
 Write-Host '-- the product: the home page on / (#3540)' -ForegroundColor Cyan
 $pages = @(Get-ProductPages)
 Assert-Equal '/consumers,/marketplace' (($pages | ForEach-Object { $_.Href }) -join ',') 'the product links its two pages: Consumers and Plugins, Specialists a card on the Plugins page since October 28, 2026 (the owner), the DKJ repos on GitHub a section of /consumers/dkj since #3549; the general pages are the plugin hub''s (#3540)'
-Assert-Equal '/artifacts,/issues,/release-notes,/sessionstart,/test-gate,/stopwatch,/logbook,/plugins,/settings' ((Get-GeneralPages | ForEach-Object { $_.Href }) -join ',') 'the plugin lists the nine general pages, in order: Test gate, Stopwatch and Logbook every repo''s since #3470, Plugins since #3482, Settings last (Dave, November 2, 2026)'
+Assert-Equal '/issues,/release-notes,/sessionstart,/test-gate,/stopwatch,/logbook,/plugins,/settings' ((Get-GeneralPages | ForEach-Object { $_.Href }) -join ',') 'the plugin lists the eight general pages, in order: Test gate, Stopwatch and Logbook every repo''s since #3470, Plugins since #3482, Settings last (Dave, November 2, 2026)'
 Assert-Equal 'Toolbox=/hub,Consumers=/consumers,Marketplace=/marketplace' ((@(Get-ProductMenu) | ForEach-Object { $_.Label + '=' + $_.Href }) -join ',') 'the site header menu opens on the Toolbox, through the server''s /hub redirect, then the product''s own pages, in the home page''s card order (Maikel, November 3, 2026)'
 $ph = Format-ProductHomeHtml -HubUrl 'http://localhost:4890' -SourceCommit 'abc1234'
 Assert-True ($ph -match '<title>dkj-marketplace -- Home</title>' -and $ph -notmatch '<h1' -and $ph -notmatch 'class="lead"') 'under the site header the home page has no intro at all, and its title says Home'
@@ -108,7 +108,7 @@ Assert-True ($ph -match '<style>\r?\n\.ph-cards \{' -and $ph -notmatch 'class="g
 $phBody = $ph.Substring($ph.IndexOf('</header>'))   # the cards, not the site header's menu, which lists the same pages
 Assert-True ($phBody.IndexOf('aria-label="Toolbox"') -lt $phBody.IndexOf('href="/consumers"') -and $phBody.IndexOf('href="/consumers"') -lt $phBody.IndexOf('href="/marketplace"') -and $ph -notmatch 'href="/dkj-repos"' -and $ph -notmatch 'href="/specialists"') 'then Consumers and Plugins, in that order, and no DKJ repos (#3549) or Specialists card of its own'
 Assert-Equal 3 ([regex]::Matches($ph, '<section class="card card--link"><nav class="menu-list" aria-label="[^"]+"><a class="menu-item" href="[^"]+"><svg class="menu-item__icon"')).Count 'three cards, each a .card--link with its icon first'
-Assert-True ($ph -notmatch 'href="/(repository|test-gate|stopwatch|logbook|artifacts|issues|release-notes|sessionstart|brandbook)"') 'and no general page of its own: those are the plugin hub''s (#3540); its /plugins is its own, what the marketplace ships'
+Assert-True ($ph -notmatch 'href="/(repository|test-gate|stopwatch|logbook|issues|release-notes|sessionstart|brandbook)"') 'and no general page of its own: those are the plugin hub''s (#3540); its /plugins is its own, what the marketplace ships'
 Assert-True ($ph -match 'class="note">[^\n]*serve-consumer-dashboard\.ps1</code>, from <code>abc1234</code>') 'the footer names the server and the commit it loaded'
 Assert-True ((Format-ProductHomeHtml) -notmatch ', from <code>') 'and leaves the commit out when it could not be read'
 $down = Format-ProductHomeHtml
@@ -122,8 +122,8 @@ Assert-Equal '/stopwatch,/logbook' ((Get-GeneralPages | Where-Object { $_.Group 
 Assert-Equal '/issues,/test-gate' ((Get-GeneralPages | Where-Object { $_.GitHub } | ForEach-Object { $_.Href }) -join ',') 'Issues and the Test gate are the GitHub page''s, in that order, and in no group'
 Assert-True (@(Get-GeneralPages | Where-Object { $_.GitHub -and $_.Group }).Count -eq 0) 'a GitHub page sits in no group'
 $clockCards = @(Format-HubPageCardsHtml -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }))
-Assert-True ($clockCards.Count -eq 5 -and @($clockCards | Where-Object { $_ -notmatch '^<section class="card card--link">' }).Count -eq 0 -and @($clockCards | Where-Object { ([regex]::Matches($_, '<a ')).Count -ne 1 }).Count -eq 0) 'the hub draws five cards for the seven pages it holds, each a .card--link holding exactly one link'
-Assert-True ($clockCards[2] -match 'href="/claude"' -and $clockCards[2] -match '<h[23]>Claude<' -and -not ($clockCards -match 'href="/(performance|sessionstart|clock|test-gate|stopwatch|logbook|issues)"')) 'the Claude card takes SessionStart''s place, as the group Performance now sits in; nothing under it, and no GitHub page, has a hub card of its own (the owner, November 2, 2026)'
+Assert-True ($clockCards.Count -eq 4 -and @($clockCards | Where-Object { $_ -notmatch '^<section class="card card--link">' }).Count -eq 0 -and @($clockCards | Where-Object { ([regex]::Matches($_, '<a ')).Count -ne 1 }).Count -eq 0) 'the hub draws four cards for the six pages it holds, each a .card--link holding exactly one link'
+Assert-True ($clockCards[1] -match 'href="/claude"' -and $clockCards[1] -match '<h[23]>Claude<' -and -not ($clockCards -match 'href="/(performance|sessionstart|clock|test-gate|stopwatch|logbook|issues)"')) 'the Claude card takes SessionStart''s place, as the group Performance now sits in; nothing under it, and no GitHub page, has a hub card of its own (the owner, November 2, 2026)'
 Assert-Equal '/claude' ((Get-HubGroups | Where-Object { $_.Href -eq '/performance' }).Group) 'Performance sits in Claude'
 Assert-Equal '/performance' ((Get-HubGroups | Where-Object { $_.Href -eq '/clock' }).Group) 'the Clock group sits under Performance'
 $perfPage = Format-HubGroupPageHtml -Href '/performance' -RepoName 'dkj-claude-plugins'
@@ -428,7 +428,7 @@ $snap = @'
   "none": { "items": [ { "title": "Harness", "text": "fixed" } ] },
   "advice": { "heading": "Do this", "lede": "the verdict", "steps": [ { "title": "1", "text": "first" } ], "dont": { "label": "Do not", "text": "that" } },
   "footer": "method", "previous": { "noneTokens": 200, "totalTokens": 1000 },
-  "source": { "artifact": "https://claude.ai/artifact/abc", "title": "Session-start context", "copied": "2026-10-18" } }
+  "source": { "title": "Session-start context", "copied": "2026-10-18" } }
 '@ | ConvertFrom-Json
 $sp = Format-SessionStartPageHtml -Model $ssModel -Snapshot $snap
 $ids = @([regex]::Matches($sp, 'ss-card" id="([a-z-]+)"') | ForEach-Object { $_.Groups[1].Value })
@@ -451,114 +451,9 @@ Assert-True ($ac.IndexOf('Open one') -lt $ac.IndexOf('Old one')) 'open actions c
 Assert-True ($ac -match 'Old one.*?&#10003;</span>Done') 'a done action says so'
 Assert-True ($ac -match '<em>Caveat:</em> careful') 'an action carries its caveat'
 Assert-True ((& $page 'no-influence') -match '<dt>Harness</dt><dd>fixed</dd>' -and (& $page 'advice') -match '<strong>Do not:</strong> that') 'what cannot change, and the advice, are shown'
-Assert-True ((& $page 'method') -match 'href="https://claude.ai/artifact/abc"') 'the source Artifact is linked'
-$snap.source.artifact = 'javascript:alert(1)'
-Assert-True ((& $page 'method') -notmatch 'javascript:') 'a source that is not an Artifact link is not linked'
+Assert-True ((& $page 'method') -notmatch 'claude.ai|Artifact') 'the method card links no Artifact: nothing is published (#3772)'
 $badSnap = Format-SessionStartPageHtml -Model $ssModel -SnapshotError 'it is not valid JSON'
 Assert-True ($badSnap -match 'session-start-snapshot.json could not be read: it is not valid JSON') 'an unreadable snapshot is a warning'
-
-Write-Host '-- the Artifacts link check' -ForegroundColor Cyan
-Assert-True (Test-ArtifactUrl 'https://claude.ai/artifact/TzrnhFefotMqYp6oWXYp5y') 'a claude.ai/artifact link is one'
-Assert-True (Test-ArtifactUrl 'https://claude.ai/code/artifact/7d2fa536-ace6-412a-8977-60a4ddc4b6be') 'and so is a claude.ai/code/artifact link'
-Assert-True (-not (Test-ArtifactUrl 'javascript:alert(1)')) 'a script url is not'
-Assert-True (-not (Test-ArtifactUrl 'http://claude.ai/artifact/abc')) 'nor plain http'
-Assert-True (-not (Test-ArtifactUrl 'https://claude.ai.evil.example/artifact/abc')) 'nor another host'
-Assert-True (-not (Test-ArtifactUrl 'https://claude.ai/artifact/abc"><script>')) 'nor a link that breaks out of its attribute'
-Assert-True (-not (Test-ArtifactUrl '')) 'nor an empty one'
-Assert-True (-not (Test-ArtifactUrl "https://claude.ai/artifact/abc`n")) 'nor one with a trailing newline'
-
-Write-Host '-- the Artifacts model' -ForegroundColor Cyan
-$reg = '{ "recordedFrom": { "date": "2026-10-18", "method": "transcripts" }, "artifacts": [ { "title": "Old", "url": "https://claude.ai/artifact/aaa", "kind": "page", "created": "2026-09-01", "updated": "2026-09-02", "about": "first" }, { "title": "New <b>", "url": "https://claude.ai/code/artifact/0f1e-2a", "kind": "document", "created": "2026-10-07", "updated": "2026-10-07" }, { "title": "Bad", "url": "javascript:alert(1)", "kind": "page", "created": "2026-09-15" } ] }' | ConvertFrom-Json
-$am = ConvertFrom-ArtifactRegister -Register $reg
-Assert-Equal 'New <b>,Bad,Old' ((@($am.Artifacts) | ForEach-Object { $_.Title }) -join ',') 'newest first'
-Assert-Equal 'False' (@($am.Artifacts | Where-Object { $_.Title -eq 'Bad' })[0].Linked) 'a url that is not an Artifact link is kept, unlinked'
-Assert-Equal '2026-10-18' $am.Date 'the recording date is read'
-$empty = ConvertFrom-ArtifactRegister -Register $null
-Assert-Equal 0 @($empty.Artifacts).Count 'a missing register is an empty list'
-
-Write-Host '-- the Artifacts page' -ForegroundColor Cyan
-$ap = Format-ArtifactsPageHtml -Model $am
-Assert-True ($ap -match '<h1>Artifacts</h1>' -and $ap -match '<span aria-current="page">Artifacts</span>') 'the page is named Artifacts, in the h1 and the trail'
-Assert-True ($ap -match 'Artifacts</div><div class="v num">3<') 'the tile counts every recorded Artifact'
-Assert-True ($ap -match '<a class="dp-link" href="https://claude.ai/artifact/aaa" target="_blank" rel="noopener noreferrer">Old</a>') 'a recorded Artifact links to claude.ai, in a new tab'
-Assert-True ($ap -match 'New &lt;b&gt;</a>' -and $ap -notmatch 'New <b>') 'the title is escaped'
-Assert-True ($ap -notmatch 'href="javascript' -and $ap -match '<td class="dp-left">Bad</td>') 'an unlinked row shows its title without an href'
-Assert-True ($ap -match 'msg--warn" role="status">Not a claude.ai Artifact link.*<code>Bad</code>') 'and is named in a warning'
-Assert-True ($ap -match '<p class="note">first</p>') 'the one-line description sits under the title'
-Assert-True ($ap -match '<dt>Recorded</dt><dd>2026-10-18</dd>') 'where the list comes from is stated'
-$apFailed = Format-ArtifactsPageHtml -Model $empty -ReadError 'it is not valid JSON'
-Assert-True ($apFailed -match 'could not be read: it is not valid JSON' -and $apFailed -match 'No Artifact is recorded') 'an unreadable register is a warning and an empty table'
-
-Write-Host '-- the register in the tree' -ForegroundColor Cyan
-$treeReg = Get-Content -LiteralPath (Join-Path $RepoRoot 'scripts\dashboard\artifacts.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-$treeModel = ConvertFrom-ArtifactRegister -Register $treeReg
-Assert-True (@($treeModel.Artifacts).Count -gt 0) 'the register parses and records at least one Artifact'
-Assert-Equal 0 @($treeModel.Artifacts | Where-Object { -not $_.Linked }).Count 'every recorded url is a claude.ai Artifact link'
-Assert-Equal 0 @($treeModel.Artifacts | Where-Object { $_.Created -notmatch '^\d{4}-\d{2}-\d{2}$' }).Count 'every row has an ISO creation date'
-
-Write-Host '-- the harvest: urls read from a result (#3112)' -ForegroundColor Cyan
-. (Join-Path $RepoRoot 'scripts\lib\artifact-harvest-lib.ps1')
-Assert-Equal 'https://claude.ai/artifact/Abc123' (Get-ArtifactPublishUrl 'Published C:\x\index.html at https://claude.ai/artifact/Abc123 (Version 2, version id 1-a)') 'a publish names its Artifact after "at"'
-Assert-Equal 'https://claude.ai/artifact/New1' (Get-ArtifactPublishUrl 'Created a new Artifact at https://claude.ai/artifact/New1 (version 1) from the Artifact type https://claude.ai/artifact/Type9 (release 2)') 'a typed create names the new Artifact, not its type'
-Assert-Equal '' (Get-ArtifactPublishUrl 'The publish was refused: the file is too large.') 'a refused publish names none'
-Assert-Equal 'https://claude.ai/code/artifact/7d2f-ac' (Get-ArtifactPublishUrl '{"frame":{"url":"https://claude.ai/code/artifact/7d2f-ac"}}' -Docs) 'a Docs create names its code/artifact link'
-Assert-Equal 'https://claude.ai/artifact/Abc' (Get-ArtifactUrlKey 'https://claude.ai/artifact/Abc?sk=Zx_1') 'a share link is recorded without its key'
-Assert-True (Test-PathUnderRoot 'c:\users\me\repo\sub' @('C:/Users/me/repo')) 'a session in a subfolder is the repo''s, whatever the case or slash'
-Assert-True (-not (Test-PathUnderRoot 'C:\Users\me\repo-other' @('C:\Users\me\repo'))) 'a sibling with a longer name is not'
-
-Write-Host '-- the harvest: one transcript' -ForegroundColor Cyan
-$tmp = Join-Path ([IO.Path]::GetTempPath()) ('harvest-' + [guid]::NewGuid().ToString('N'))
-New-Item -ItemType Directory -Path $tmp | Out-Null
-$repo = 'C:\\Users\\me\\repo'
-$lines = @(
-    '{"type":"assistant","cwd":"{REPO}","timestamp":"2026-10-01T07:00:00Z","message":{"content":[{"type":"tool_use","id":"t1","name":"Artifact","input":{"file_path":"C:\\nowhere\\atlas.html","title":"Atlas","description":"first"}}]}}',
-    '{"type":"user","cwd":"{REPO}","message":{"content":[{"type":"tool_result","tool_use_id":"t1","content":"Published C:\\nowhere\\atlas.html at https://claude.ai/artifact/Atl1 (Version 1)"}]}}',
-    '{"type":"assistant","cwd":"{REPO}","timestamp":"2026-10-02T07:00:00Z","message":{"content":[{"type":"tool_use","id":"t2","name":"Artifact","input":{"action":"read","url":"https://claude.ai/artifact/Read1"}}]}}',
-    '{"type":"user","cwd":"{REPO}","message":{"content":[{"type":"tool_result","tool_use_id":"t2","content":"Read the Artifact at https://claude.ai/artifact/Read1"}]}}',
-    '{"type":"assistant","cwd":"C:\\Users\\me\\elsewhere","timestamp":"2026-10-03T07:00:00Z","message":{"content":[{"type":"tool_use","id":"t3","name":"Artifact","input":{"file_path":"C:\\nowhere\\x.html"}}]}}',
-    '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t3","content":"Published C:\\nowhere\\x.html at https://claude.ai/artifact/Other1 (Version 1)"}]}}',
-    '{"type":"assistant","cwd":"{REPO}","timestamp":"2026-10-04T07:00:00Z","message":{"content":[{"type":"tool_use","id":"t4","name":"mcp__claude_ai_Claude_Docs__batch","input":{"container":{"kind":"project","create":{"name":"Handout"}}}}]}}',
-    '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t4","content":[{"type":"text","text":"{\"frame\":{\"url\":\"https://claude.ai/code/artifact/0f1e-2a\"}}"}]}]}}',
-    '{"type":"assistant","cwd":"{REPO}","timestamp":"2026-10-05T07:00:00Z","message":{"content":[{"type":"tool_use","id":"t5","name":"Artifact","input":{"url":"https://claude.ai/artifact/Atl1?sk=k","file_path":"C:\\nowhere\\atlas.html","asset":true}}]}}',
-    '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t5","content":"Uploaded the asset at https://claude.ai/artifact/Atl1"}]}}',
-    '{"type":"assistant","cwd":"{REPO}","timestamp":"2026-10-06T07:00:00Z","message":{"content":[{"type":"tool_use","id":"t6","name":"Artifact","input":{"url":"https://claude.ai/artifact/Atl1?sk=k","file_path":"C:\\nowhere\\atlas.html","description":"second"}}]}}',
-    '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t6","content":"Published C:\\nowhere\\atlas.html at https://claude.ai/artifact/Atl1 (Version 2)"}]}}',
-    '{"type":"assistant","cwd":"{REPO}","message":{"content":[{"type":"tool_use","id":"t7","name":"Artif'
-) | ForEach-Object { $_.Replace('{REPO}', $repo) }
-$tx = Join-Path $tmp 'session.jsonl'
-[IO.File]::WriteAllText($tx, ($lines -join "`n"))
-$pubs = @(Read-ArtifactPublishes -Path $tx -Root @('C:\Users\me\repo'))
-Assert-Equal 'Atl1,0f1e-2a,Atl1' (($pubs | ForEach-Object { ($_.Url -split '/')[-1] }) -join ',') 'publishes and a Docs create are found; a read, an asset upload, another repo and a cut-off last line are not'
-Assert-Equal 'Atlas|page|2026-10-01' ($pubs[0].Title + '|' + $pubs[0].Kind + '|' + $pubs[0].Date) 'a publish carries its title, kind and day'
-Assert-Equal 'Handout|document' ($pubs[1].Title + '|' + $pubs[1].Kind) 'a Docs create is a document named after the doc'
-Assert-Equal 'atlas' $pubs[2].Title 'a publish without a title, its page gone, is named after its file'
-$none = @(Read-ArtifactPublishes -Path $tx -Root @('C:\Users\me\unrelated'))
-Assert-Equal 0 $none.Count 'a transcript from another repo yields nothing, not one empty entry'
-Remove-Item -LiteralPath $tmp -Recurse -Force
-
-Write-Host '-- the harvest: the merge only adds' -ForegroundColor Cyan
-$held = '{ "artifacts": [ { "title": "Fixed by hand", "url": "https://claude.ai/artifact/Atl1", "kind": "slides", "created": "2026-10-02", "updated": "2026-10-03", "about": "kept" } ] }' | ConvertFrom-Json
-$mg = Merge-ArtifactRegister -Register $held -Found $pubs
-Assert-Equal 2 @($mg.Artifacts).Count 'one row added, the held one not duplicated by its share link'
-$a1 = @($mg.Artifacts)[0]
-Assert-Equal 'Fixed by hand|slides|kept' ($a1.title + '|' + $a1.kind + '|' + $a1.about) 'a held row keeps its title, kind and about'
-Assert-Equal '2026-10-01..2026-10-06' ($a1.created + '..' + $a1.updated) 'and only has its dates widened'
-Assert-Equal 'https://claude.ai/artifact/Atl1' (@($mg.Widened) -join ',') 'the widened row is reported'
-Assert-Equal 'https://claude.ai/code/artifact/0f1e-2a' (@($mg.Added) -join ',') 'and so is the new one'
-$fresh = Merge-ArtifactRegister -Register $null -Found $pubs
-$f1 = @($fresh.Artifacts | Where-Object { $_.url -like '*Atl1' })[0]
-Assert-Equal 'Atlas|second|2026-10-01|2026-10-06' ($f1.title + '|' + $f1.about + '|' + $f1.created + '|' + $f1.updated) 'a new row: title from the first publish, about from the last, dates spanning both'
-$again = Merge-ArtifactRegister -Register ((ConvertTo-ArtifactRegisterJson -About 'a' -Date 'd' -Method 'm' -Artifacts $fresh.Artifacts) | ConvertFrom-Json) -Found $pubs
-Assert-Equal 0 (@($again.Added).Count + @($again.Widened).Count) 'a second harvest of the same transcripts changes nothing'
-
-Write-Host '-- the harvest: the file it writes' -ForegroundColor Cyan
-$json = ConvertTo-ArtifactRegisterJson -About "it's" -Date '2026-10-18' -Method 'm' -Artifacts @([ordered]@{ title = 'A "q" \ b'; url = 'https://claude.ai/artifact/X'; kind = 'page'; created = '2026-10-01'; updated = '2026-10-01'; about = "line`tend" })
-$back = $json | ConvertFrom-Json
-Assert-Equal 'A "q" \ b' $back.artifacts[0].title 'quotes and backslashes survive the round trip'
-Assert-Equal "line`tend" $back.artifacts[0].about 'and so does a control character'
-Assert-True ($json.Contains("`"about`": `"it's`"")) 'an apostrophe is written as itself'
-Assert-True ($json.StartsWith("{`n  `"about`"") -and $json.EndsWith("`n  ]`n}`n")) 'two-space indented, LF, ending in a newline'
-Assert-Equal 0 @((ConvertTo-ArtifactRegisterJson -About 'a' -Date 'd' -Method 'm' -Artifacts @()) | ConvertFrom-Json).artifacts.Count 'an empty register is still valid JSON'
 
 Write-Host '-- the release-notes page, as the dev server serves it (#3108)' -ForegroundColor Cyan
 # The real template, so a change to its shape that would leave the served copy undressed goes red here.

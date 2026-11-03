@@ -95,7 +95,7 @@ are green, so the PR is the next step rather than a decision. The test is the on
 [the safety rules](../../../plugins/dkj-policy/CLAUDE.md#never-directly-on-the-trunk--via-branch--pr): *does
 the owner's own look add something the gates cannot?* Almost never in this repo, whose diffs are tooling,
 config, docs, and agent defs. He **stops and reports instead** for a **visible result** (a frontend,
-styling, rendered output, an artifact — no gate proves that something looks right) or for
+styling, rendered output, a Toolbox page — no gate proves that something looks right) or for
 **irreversible/outward-facing** work (a release, version bump, tag, repo settings/rulesets, publishing
 beyond the PR flow), and whenever the owner pulled that specific job under the exception when assigning it.
 An explicit "open the PR" still counts as approval for the whole movement, so a waiting branch resumes
@@ -1186,7 +1186,7 @@ nor a sweep treats it as work that is ready (Dave, September 26, 2026,
 
 **`awaiting-decision-client` (`5319E7`) parks an issue that ends in a choice that is not the owner's** (a colleague's QA sign-off, a business decision from the client or requester outside the dev team; Dave, October 7, 2026, [#2890](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2890)). `sweep-issues` and `sweep-decisions` both skip it, where `sweep-decisions` puts `awaiting-decision-dev` to the owner. It is not `awaiting-info-client`, which means blocked on information the submitter has not given. New, so no former name is matched for it.
 
-**`awaiting-review-dev` and `awaiting-review-client` (`5319E7`) park an issue waiting on somebody's look at a visible result** (a preview, rendered output, an artifact; Dave, October 13, 2026, [#2977](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2977)): `dev` is the owner's look, `client` the client's or requester's. Review is not decision: someone has to *look*, not *choose*. Both pickup routes skip them, `sweep-decisions` walks neither, and `sweep-issues` sets one when it parks a branch for the owner's eye. New, so no former name is matched.
+**`awaiting-review-dev` and `awaiting-review-client` (`5319E7`) park an issue waiting on somebody's look at a visible result** (a preview, rendered output, a Toolbox page; Dave, October 13, 2026, [#2977](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2977)): `dev` is the owner's look, `client` the client's or requester's. Review is not decision: someone has to *look*, not *choose*. Both pickup routes skip them, `sweep-decisions` walks neither, and `sweep-issues` sets one when it parks a branch for the owner's eye. New, so no former name is matched.
 
 **`awaiting-recurrences-first` (`5319E7`) parks an issue waiting on its first reproducible occurrence** (Dave,
 September 28, 2026, [#2587](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2587)), after

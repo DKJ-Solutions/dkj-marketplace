@@ -329,7 +329,8 @@ than anywhere else, because the scan is their only entry point.
 ### The mechanism notes, and why a policy page carries them
 
 **A QR served as an image from a QR-image API does not render, and says nothing when it fails.** A
-published Artifact runs under a content-security policy that permits external **scripts** from a short
+page served under a strict content-security policy (a hosted or sandboxed viewer; a claude.ai Artifact
+was the measured case, and none is published any more) permits external **scripts** from a short
 list of CDNs and blocks everything else -- images included, from every host. So an
 `<img src="https://some-qr-api/...">` is silently empty, and a page of five markets is a page of five
 blank squares with no error anywhere. The two shapes that do work: render the code **client-side** from

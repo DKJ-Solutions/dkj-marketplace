@@ -2,7 +2,7 @@
 .SYNOPSIS
     This repo's PRODUCT (#3540): the home page on '/' and its own pages -- Consumers and Plugins, the specialists on their teams' Plugins pages.
     The hub is the dkj-policy plugin's, as in every other repo (#3245): this repo states its dev server as
-    its product and no longer opts out with OwnHub, so the general pages -- Repository, Artifacts, Issues,
+    its product and no longer opts out with OwnHub, so the general pages -- Repository, Issues,
     Release notes, SessionStart, Test gate, Stopwatch, Logbook and Plugins -- are the plugin hub's, and the
     product's home page links back to it. No I/O -- the server (scripts/dashboard/serve-consumer-dashboard.ps1)
     measures and reads, and hands the results in, so every rule here is tested without a server.

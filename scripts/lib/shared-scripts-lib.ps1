@@ -523,8 +523,8 @@ function Get-SharedScriptPairs {
             # disable-model-invocation: its page costs no always-on tokens in any session.
             #
             # ITS OWN SKILL PAGE, for the reason measure-closeouts gives: measure-skill's page is about what
-            # a SKILL costs, and this is a different subject with a different procedure (it ends in a
-            # republished claude.ai artifact). The page is the one place its template path is documented.
+            # a SKILL costs, and this is a different subject with a different procedure (it ends in advice
+            # the model writes). The page is the one place its template path is documented.
             #
             # NO MeasureArgs: a plain run shells out to `claude plugin details` once per enabled plugin, so
             # the median would move with the machine's plugin set rather than with this script -- the same

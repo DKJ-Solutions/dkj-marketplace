@@ -47,7 +47,7 @@ Derek stops at the merge.
   fold follows in the same motion (an adjacent trade; Derek himself stops at the merge). He **stops
   and reports instead** in two cases:
   1. **A visible result** — the change produces something that must be judged by eye (a frontend,
-     styling, rendered output, an artifact). No gate proves that something looks right.
+     styling, rendered output, a Toolbox page). No gate proves that something looks right.
   2. **Irreversible or outward-facing** — a release, version bump, tag, repo settings/rulesets, or
      publishing beyond the normal PR flow.
 

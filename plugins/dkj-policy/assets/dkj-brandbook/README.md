@@ -51,7 +51,7 @@ that checks the stylesheet's syntax and tokens; the page is the look.
 
 1. **Copy `house-style.css` into the output, unchanged**, and `house-theme.js` with it where the app
    lets the user pick a theme (below). Where the output must make no external
-   requests (a local report, an Artifact), inline it in a `<style>` block. Where the app has a build,
+   requests (a local report, an e-mail), inline it in a `<style>` block. Where the app has a build,
    vendor it as a file. Either way it is a copy of this file, never a retyped version.
 2. **Add the repo's own layer after it, in a separate block or file.** Domain colours and components
    (one app's series mapping, one app's special panel) go there. They **use** house tokens and may add
@@ -541,7 +541,7 @@ inside `:where()`, so a column class of the app's own still decides its own widt
 `.container` without such a class follows the width, a footer's or a demo's too. The top bar's inner row
 (`.topbar__inner`) deliberately does not: it stays the narrow column, the width of the app's own controls.
 Without the script there is no `data-width`, and the column is fluid, deliberately: the stylesheet alone
-also serves e-mail, Artifacts and static reports, which have no settings panel to narrow an unbounded
+also serves e-mail and static reports, which have no settings panel to narrow an unbounded
 column back to a reading width.
 
 **The theme names and the picker's row labels are Dutch on purpose**: DKJ-Solutions apps are
@@ -902,7 +902,7 @@ where you can go, the trail where you are.
 </div></dialog></header>
 ```
 
-**In the hub** the toolbox's menu is its home page's cards in their order (GitHub, Artifacts, Release notes, AI,
+**In the hub** the toolbox's menu is its home page's cards in their order (GitHub, Release notes, AI,
 Installed plugins: `Get-HubMenu`, from the same list the cards come from), and a product's is its own pages.
 
 ### The hub
@@ -998,7 +998,7 @@ closes the card's link at the inner one and the card falls apart
 
 **The order of the cards.** The products come first, because they are what the repo offers its visitors; a
 product is never the page on `/`. Then the repo's own pages, **Repository** among them; then the general
-pages every repo has (Artifacts, Release notes, SessionStart), Issues left to the Repository page. No hub
+pages every repo has (Release notes, SessionStart), Issues left to the Repository page. No hub
 carries a Brand book card ([#3475](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3475)), and the
 Brandbook app is retired ([#3493](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3493)).
 

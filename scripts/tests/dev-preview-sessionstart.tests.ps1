@@ -407,7 +407,7 @@ Assert-True ($html -notmatch '4880') 'and no longer name the retired 4880-4889 r
 Assert-True ($html -notmatch 'href="/about"' -and $html -notmatch '<h2>About this repo</h2>') 'no About this repo link: the hub is one page (#3289)'
 $grid = [regex]::Match($html, '(?s)<main class="page-column">\s*<div class="ph-cards">(.*?)</div>\s*<div class="grid-2">').Groups[1].Value
 Assert-True ($grid -and $grid -notmatch 'class="grid-' -and $html -match '\.ph-cards \{ display: grid; grid-template-columns: repeat\(3,') 'the cards stand three to a row in a .ph-cards, with no .grid-3 surface around them (the owner, November 2, 2026)'
-Assert-True ($grid -and ([regex]::Matches($grid, 'menu-item__label"><h2>')).Count -eq 6 -and ([regex]::Matches($grid, '<section class="card card--link">')).Count -eq 6 -and ([regex]::Matches($grid, '<a ')).Count -eq 6 -and $grid -match 'href="/plugins"' -and $grid -match 'href="/claude"' -and $grid -match 'href="/settings"') 'the pages are six card links, one link each, each card''s label its h2 (owner, October 29, 2026): GitHub, the General pages but the GitHub page''s, Claude (Maikel, October 30 and November 2, 2026), Plugins (#3482) and Settings (Dave, November 2, 2026)'
+Assert-True ($grid -and ([regex]::Matches($grid, 'menu-item__label"><h2>')).Count -eq 5 -and ([regex]::Matches($grid, '<section class="card card--link">')).Count -eq 5 -and ([regex]::Matches($grid, '<a ')).Count -eq 5 -and $grid -match 'href="/plugins"' -and $grid -match 'href="/claude"' -and $grid -match 'href="/settings"') 'the pages are five card links, one link each, each card''s label its h2 (owner, October 29, 2026): GitHub, the General pages but the GitHub page''s, Claude (Maikel, October 30 and November 2, 2026), Plugins (#3482) and Settings (Dave, November 2, 2026)'
 Assert-True ($grid -match 'href="/repository"' -and $grid -match 'href="/release-notes"' -and $grid -notmatch 'href="/issues"' -and $grid -notmatch 'localhost:4890/') 'by bare path, Issues left to the Repository page: the hub and its pages are one origin (#3245)'
 Assert-True ($grid -match '(?s)href="/repository".*?M9 19c-5 1\.5-5-2\.5-7-3.*?menu-item__label"><h2>GitHub<' -and $grid -notmatch '>Repository<') 'the /repository card is called GitHub and carries the GitHub logo'
 Assert-True ($html -notmatch '<h2>General pages</h2>' -and $html -notmatch '<h2>Facts</h2>' -and $html -notmatch '<dl class="facts') 'no General pages section and no facts on the home page'
@@ -772,21 +772,18 @@ try {
         # THE BROWSER'S OWN HEADERS (#3119): the hub's link to the pages and the crumb back to /hub all arrive
         # same-site as top-level navigations; now they are the same origin as well.
         $nav = "Sec-Fetch-Site: same-site`r`nSec-Fetch-Mode: navigate`r`nSec-Fetch-Dest: document`r`n"
-        $r2 = & $getRaw $genPort '/artifacts' '' $nav
-        Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match '<h1>Artifacts</h1>') 'a click from the hub to a general page, same-site and a navigation, is served'
+        $r2 = & $getRaw $genPort '/release-notes' '' $nav
+        Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match '<h1>Release notes</h1>') 'a click from the hub to a general page, same-site and a navigation, is served'
         $r2 = & $getRaw $genPort '/hub' '' $nav
         Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match 'site-header__name">no-config <span') 'and so is the "Home" crumb on it: /hub is the rendered home page'
-        Assert-True ((& $getRaw $genPort '/artifacts' '' "Sec-Fetch-Site: same-site`r`nSec-Fetch-Mode: no-cors`r`n") -match 'HTTP/1.1 403') 'a same-site subresource request is refused'
-        Assert-True ((& $getRaw $genPort '/artifacts' '' "Sec-Fetch-Site: cross-site`r`nSec-Fetch-Mode: navigate`r`n") -match 'HTTP/1.1 403') 'and a cross-site navigation'
+        Assert-True ((& $getRaw $genPort '/release-notes' '' "Sec-Fetch-Site: same-site`r`nSec-Fetch-Mode: no-cors`r`n") -match 'HTTP/1.1 403') 'a same-site subresource request is refused'
+        Assert-True ((& $getRaw $genPort '/release-notes' '' "Sec-Fetch-Site: cross-site`r`nSec-Fetch-Mode: navigate`r`n") -match 'HTTP/1.1 403') 'and a cross-site navigation'
         $r2 = & $getRaw $genPort '/'
         Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match 'site-header__name">no-config <span') '/ renders the hub too, not a redirect: there is no hub to send the visitor to'
         Assert-True ((& $getRaw $genPort '/index.html') -match 'HTTP/1.1 200') 'and so does /index.html'
         Assert-True ((& $getRaw $genPort '/hub' 'evil.example') -match 'HTTP/1.1 403') 'a foreign Host is refused'
         $r2 = & $getRaw $genPort '/artifacts'
-        Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match '<h1>Artifacts</h1>' -and $r2 -match 'the file is not there' -and $r2 -match '<li><a href="/">Tools</a></li>' -and $r2 -match 'site-header__name">no-config <span') '/artifacts says the register is not there, in a repo that has none, under the folder''s name'
-        New-Item -ItemType Directory -Force -Path (Join-Path $noConfig 'scripts\dashboard') | Out-Null
-        [System.IO.File]::WriteAllText((Join-Path $noConfig 'scripts\dashboard\artifacts.json'), '{ "artifacts": [ { "title": "Fixture page", "url": "https://claude.ai/artifact/Fx1", "kind": "page", "created": "2026-10-01" } ] }')
-        Assert-True ((& $getRaw $genPort '/artifacts') -match 'href="https://claude.ai/artifact/Fx1"[^>]*>Fixture page</a>') 'and lists the repo''s own register, read on every request'
+        Assert-True ($r2 -match 'HTTP/1.1 303' -and $r2 -match 'Location: /') '/artifacts, the page retired with the claude.ai Artifacts, answers 303 to the home page like /about (#3772)'
         Assert-True ((& $getRaw $genPort '/brandbook') -match 'HTTP/1.1 404' -and (& $getRaw $genPort '/brandbook/') -match 'HTTP/1.1 404') '/brandbook and /brandbook/ are not found, in a repo that enables dkj-solutions too (#3475)'
         $r2 = & $getRaw $genPort '/release-notes'
         # A repo with no release yet (this fixture has no history) is an empty state, not a build error (#3580).

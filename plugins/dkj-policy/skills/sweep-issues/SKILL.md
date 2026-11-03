@@ -236,7 +236,7 @@ Either way the gates' outcome is a number, not a feeling, and it is `ship-pr` th
 ### 5. Ship it, or park it for the owner's eye
 
 **Does the change produce something that has to be judged by eye?** A frontend, styling, rendered
-output, an artifact, anything a visitor of a storefront can see or do. If yes -- or if you have to
+output, a Toolbox page, anything a visitor of a storefront can see or do. If yes -- or if you have to
 ARGUE that it renders, which is itself the doubt -- then:
 
 - push whatever preview the repo has (in a Shopify consumer, `push-preview`), hand it over in the form

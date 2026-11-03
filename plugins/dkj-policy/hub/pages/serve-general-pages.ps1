@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Serve the plugin's REPOSITORY (#3245) and the GENERAL pages (#3119) on http://localhost:<Port>/ -- the hub on
-    '/', then /artifacts, /issues, /release-notes, /sessionstart, /test-gate, /clock, /stopwatch, /logbook and /plugins --
+    '/', then /issues, /release-notes, /sessionstart, /test-gate, /clock, /stopwatch, /logbook and /plugins --
     from the repo this server was started in. Not /brandbook: no hub has served the brand book since #3475, and the
     source repo retired the app itself under #3493.
 
@@ -14,7 +14,6 @@
     dkj-policy, which every repo runs, since #3198.
 
     WHAT EACH PAGE READS, from the repo, on every request unless it says otherwise:
-      /artifacts      scripts/dashboard/artifacts.json -- absent, the page says the file is not there.
       /issues         `gh issue list`, three calls (the open issues; created and closed in the last 28 days),
                       for --repo <owner/name> parsed from the origin remote when that is on github.com, else
                       for the repo gh finds from the working directory. Kept for -IssuesCacheSeconds; a failed
@@ -222,14 +221,6 @@ function Get-RepoIdentity {
     }
     $script:identity = @{ Slug = $slug; Name = $(if ($slug) { $slug } else { Split-Path -Leaf $root }); At = Get-Date }
     return $script:identity
-}
-
-function Get-JsonFileModel {
-    <# The parsed JSON file at -Path as @{ Json; Error }: Error is '' on success, 'the file is not there' or 'it is not valid JSON'. #>
-    param([string]$Path)
-    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return @{ Json = $null; Error = 'the file is not there' } }
-    try { return @{ Json = (Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json); Error = '' } }
-    catch { return @{ Json = $null; Error = 'it is not valid JSON' } }
 }
 
 function Get-SessionStartSnapshot {
@@ -456,8 +447,9 @@ try {
             # reaches the next page without a restart, and every page below opens in it.
             $state = Read-RepoHubState -Root $root
             Set-GeneralPagesThemeDefault $state.Theme
-            if ($path -eq '/about') {
-                # The hub is one page (#3289): an old link to About this repo goes on to the home page, which holds it.
+            if ($path -eq '/about' -or $path -eq '/artifacts') {
+                # The hub is one page (#3289): an old link to About this repo goes on to the home page, which holds it. So does an
+                # old link to Artifacts, a page retired with the claude.ai Artifacts themselves (#3772).
                 Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = '/' } -Method $method
                 continue
             }
@@ -577,9 +569,6 @@ try {
             } elseif ($path -eq '/settings') {
                 # The toolbox's Settings page (Dave, November 2, 2026): the Theme, drawn in the browser.
                 $html = Format-HubSettingsPageHtml -RepoName (Get-RepoIdentity).Name
-            } elseif ($path -eq '/artifacts') {
-                $ar = Get-JsonFileModel (Join-Path $root 'scripts\dashboard\artifacts.json')
-                $html = Format-ArtifactsPageHtml -Model (ConvertFrom-ArtifactRegister -Register $ar.Json) -ReadError $ar.Error -RepoName (Get-RepoIdentity).Name
             } elseif ($path -eq '/issues') {
                 # A failed read is kept for 30 s only, so a passing gh hiccup does not show for five minutes.
                 $isAge = if ($isCache) { ((Get-Date) - $isCache.At).TotalSeconds } else { 0 }

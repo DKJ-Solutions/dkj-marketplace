@@ -20,7 +20,7 @@
     under OwnHub (#3245), with the brandbook/ app's Vite dev server as the product beside it (#3283).
     Retiring the app (#3493) took the product port with it, which was never the intent. So the hub is the
     dkj-policy plugin's now, as in every other repo, and this server is the product: the general pages --
-    Repository, Artifacts, Issues, Release notes, SessionStart, Test gate, Stopwatch, Logbook and Plugins --
+    Repository, Issues, Release notes, SessionStart, Test gate, Stopwatch, Logbook and Plugins --
     are the plugin hub's, on its own port, and no longer relayed or built here. The house style's specimens
     are the one exception, back here since October 31, 2026 (Maikel): this repo is their source, so its
     toolbox sends its own house-style pages to this product (Resolve-HouseStyleProductUrl). The home page links the hub, read from the state file the dev-preview hook writes

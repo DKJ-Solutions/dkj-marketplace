@@ -3,7 +3,7 @@
 **On screen it is called Toolbox** (the owner, October 27, 2026): the session-start line, the site header's tag, a product's card, and the first crumb, which reads **Tools**. The code, the `/hub` route and this page keep the word *hub* for the mechanism.
 
 **Every repo that runs `dkj-policy` gets a hub at session start**, served by the plugin, with the
-General pages linked from it: Artifacts, Issues, Release notes, SessionStart, Test gate, Stopwatch, Logbook
+General pages linked from it: Issues, Release notes, SessionStart, Test gate, Stopwatch, Logbook
 (Test gate and those two since [#3470](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3470)) and Plugins
 (since [#3482](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3482)), and the **Claude** card. Issues and
 the Test gate are linked from the **GitHub** page instead, the Test gate beside the CI runs it measures (since
@@ -245,9 +245,8 @@ the older `/plugins/dkj-solutions/house-style` and `/plugins/dkj-policy/house-st
 
 | Page | Reads, from the repo it was started in | When it is absent |
 |---|---|---|
-| `/`, `/index.html`, `/hub` | The state file below, on every request: the home page of this plugin's hub; `/about` answers 303 to `/` (#3289). No repo's `/hub` redirects elsewhere any more (the `OwnHub` 303 went with #3643) | Always answers |
+| `/`, `/index.html`, `/hub` | The state file below, on every request: the home page of this plugin's hub; `/about` and the retired `/artifacts` answer 303 to `/` (#3289, #3772). No repo's `/hub` redirects elsewhere any more (the `OwnHub` 303 went with #3643) | Always answers |
 | `/repository` | The state file and the `origin` remote: the hub's GitHub page, its facts and a card for Issues and, where the remote is on github.com, its pull requests and CI runs (#3383) | Always answers; with no github.com remote the facts carry no GitHub row and the page no GitHub cards |
-| `/artifacts` | `scripts/dashboard/artifacts.json`, on every request | The page says the file is not there |
 | `/issues` | `gh issue list`, three calls (the open issues, and those opened and closed in the last 28 days), for `--repo <owner/name>` taken from the `origin` remote when it is on github.com, else for the repo `gh` finds in the working directory; kept for five minutes | A `gh` that fails or is missing is a warning on the page |
 | `/release-notes` | `dkj-policy/releases/page/release-notes.html`, dressed in the brand book on the way out. Built first where it is absent or older than a file under `dkj-policy/releases`, by `build-release-notes-page.ps1` in a child process (bounded at 60 s), the repo's own copy else this plugin's: the page is a gitignored snapshot that nothing else builds (#3189) | A plain 404 text naming why it could not be built; where a rebuild fails, the older page is served |
 | `/sessionstart` | The always-on path, measured in a child process (bounded at 60 s) by `always-on-budget-lib.ps1`, the repo's own copy else this plugin's; kept for a minute | The reason it could not measure, on the page |
