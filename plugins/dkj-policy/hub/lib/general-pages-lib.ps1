@@ -1106,9 +1106,10 @@ function Format-HubSettingsPageHtml {
         # its --bg-1 text reads on it, as every paper step down to bg-4 does.
         '.hs-theme .controls .seg button[aria-pressed="true"] { background: var(--primary); }' + "`n" +
         # Each OPTION is a fixed --spacing-60 wide, so a toggle with three is wider than one with two and every option
-        # matches (Maikel, November 3, 2026); on a column too narrow for them the options shrink, never the page.
+        # matches (Maikel, November 3, 2026); on a column too narrow for them the options shrink, never the page. A width,
+        # not a flex-basis: an inline-flex .seg sizes itself from its options' widths and ignores their basis.
         '.hs-theme .controls .seg { max-width: 100%; }' + "`n" +
-        '.hs-theme .controls .seg button { flex: 0 1 var(--spacing-60); min-width: 0; }' + "`n" +
+        '.hs-theme .controls .seg button { width: var(--spacing-60); flex: 0 1 auto; min-width: 0; }' + "`n" +
         # A theme card is clickable as a whole, and the one holding the active swatch -- aria-pressed, which the brand book's
         # picker keeps, from the header's choice too -- takes the selected theme's --primary as its border (Dave, November 2, 2026).
         '.hs-swatch[data-mode] { cursor: pointer; }' + "`n" +
