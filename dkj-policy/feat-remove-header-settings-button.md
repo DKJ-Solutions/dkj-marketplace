@@ -48,7 +48,7 @@ product on 4870). The toolbox's theme is chosen on its own `/settings` page sinc
 - [x] The pages' `DKJTheme.settings(...)` call stays: with no mount it returns null and draws nothing, and a page without a site header still floats its button
 - [~] The `.site-header .theme-settings` rules stay in the brand book, for any app that still mounts the button
 - [x] Maikel, same day: the whole `.site-header__menu` right-aligned -- `house-style.css` sets `.site-header__nav` to `justify-content: flex-end` (centred until then)
-- [x] Maikel, same day: the site header pads its sides only, `--spacing-5` (20px), and no cell reaches past that padding any more -- the brand, the menu and the settings cell lost their negative margins; the bar keeps its 68px height through a `min-height` and stretched cells
+- [x] Maikel, same day: the site header pads its sides only, with the `.container`'s own side padding (the breadcrumb bar's, so the two line up; 20px for one round first), and no cell reaches past that padding any more -- the brand, the menu and the settings cell lost their negative margins; the bar keeps its 68px height through a `min-height` and stretched cells
 
 ### TEST
 
@@ -61,7 +61,7 @@ product on 4870). The toolbox's theme is chosen on its own `/settings` page sinc
 The site header on the toolbox and product pages no longer carries the settings button (the gear with theme,
 width and reset). The toolbox's theme is chosen on its `/settings` page; a page without a site header still
 floats the button as before. The brand book's site-header menu now stands at the right instead of in the middle,
-for every app that draws one, and the header pads only its sides, 20px, which the name and the menu keep to.
+for every app that draws one, and the header pads only its sides, as the breadcrumb bar under it does, and the name and the menu keep to that padding.
 
 **Score:** 2
 
