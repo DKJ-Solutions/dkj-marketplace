@@ -39,19 +39,32 @@
 
 ### PLAN
 
+Maikel handed over a design brief to keep: simple purpose, architecture, design and implementation, at the
+level of Linear's website or Apple Notes; no taglines, helper text or secondary labels; every decision
+improving UX, DX and AX at once without breaking anything.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] A "Simple, all the way down" hard rule in Gwen's portable manual, beside "Nothing unasked"
 
 ### TEST
 
+- [x] Edith's copy edit of the new rule
+
 ### DEPLOY: docs/gwen-simple-all-the-way-down
 
-**Score:**
+Gwen's manual gains a hard rule, **Simple, all the way down**. Her bar is Linear's website or Apple Notes:
+a simple purpose, architecture, design and implementation. She cuts taglines, helper text and secondary
+labels, and fixes the layout when a screen seems to need them. Every decision has to improve the user,
+developer and agent experience at once, without breaking anything.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Pages and tools designed by Gwen in any consuming repo come out leaner: one purpose, no explanatory chrome.
+
+**Score:** 3
 
 #### Pull Request
 
