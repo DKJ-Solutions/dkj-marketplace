@@ -1085,7 +1085,7 @@ function Format-HubSettingsPageHtml {
         ' })();</script>'
     # .hs-theme, .hs-swatch and .hs-reset are this page's own classes: the row, the full-width head and toggle in it, a
     # card that hugs its swatch, and what a <button> needs to read as a card. No house class or token is redefined.
-    $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
+    $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-5); }' + "`n" +
         '.hs-theme > :is(.grid__head, .grid__full) { flex: 0 0 100%; }' + "`n" +
         '.hs-swatch { margin-top: 0; padding: var(--spacing-2); }' + "`n" +
         # The theme cards stand in a grid of their own (Maikel, November 3, 2026), wrapping on a narrow column. One step
