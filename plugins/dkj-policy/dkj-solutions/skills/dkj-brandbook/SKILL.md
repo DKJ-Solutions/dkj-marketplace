@@ -130,6 +130,8 @@ page, dashboard and Artifact is designed to that screen first:
   under it.
 - **A heading has five words at most** (Maikel, November 2, 2026): an `h1`, `h2` or `h3` names the
   subject. Who it is for and what changed go in the content under it.
+- **Never an em dash (—)** (Maikel, November 3, 2026): no text a page, report, dashboard or Artifact
+  renders carries one. Use a colon, a comma, parentheses or a new sentence instead.
 - **One row where one row does.** Label and value on one line (`.facts--row`), a card's action beside
   its heading rather than on a row of its own, filters in one bar. A second row has to carry something
   the first could not.

@@ -41,17 +41,27 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Brand book README: rule 10, the em dash is never used
+- [x] `dkj-brandbook` skill: the same rule as a bullet beside the heading rules
 
 ### TEST
 
+- [x] Lint and test gates via open-pr
+
 ### DEPLOY: docs/brandbook-no-em-dash
 
-**Score:**
+The brand book gains a rule (Maikel, November 3, 2026): the em dash (U+2014) is never used in any text a
+DKJ-Solutions app renders. It is rule 10 in the brand book's README and a bullet in the `dkj-brandbook`
+skill, so a session reads it before any visual work.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A page, report, dashboard or Artifact built in a DKJ-Solutions repo now writes a colon, a comma,
+parentheses or a new sentence where it would have used an em dash.
+
+**Score:** 2
 
 #### Pull Request
 

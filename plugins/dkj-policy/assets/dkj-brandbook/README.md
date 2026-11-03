@@ -92,6 +92,9 @@ that checks the stylesheet's syntax and tokens; the page is the look.
    under a site header ([the breadcrumb bar](#every-page-the-breadcrumb-bar)). The hub's page shell checks
    it on sight: the fit alarm also warns when the live page holds more than one `h1`, or none where its
    trail is longer than Home.
+10. **The em dash (—, U+2014) is never used** (Maikel, November 3, 2026): not in a heading, a label, a
+   button, a card, a page title, a `<meta name="description">` or any other text a DKJ-Solutions app
+   renders. Where one would go, write a colon, a comma, parentheses or a new sentence instead.
 
 ## What it holds
 
