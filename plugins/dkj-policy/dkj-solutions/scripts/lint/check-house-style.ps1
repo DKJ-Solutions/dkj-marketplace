@@ -2,7 +2,8 @@
 .SYNOPSIS
     The brand book's gate (#3035): every vendored house-style.css / house-theme.js is the copy the
     dkj-brandbook skill pins, and the repo's own layer redefines no house token or class, uses no
-    retired token name, and types or derives no colour in a rule (#3720). In this plugin's source repo
+    retired token name, types or derives no colour in a rule (#3720), and types no font size in a rule
+    (#3778). In this plugin's source repo
     the canonical copy is the source rather than a
     copy, and is exempt from the pin (#3637; the lib says why).
 

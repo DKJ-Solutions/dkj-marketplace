@@ -39,19 +39,54 @@
 
 ### PLAN
 
+#3778 (inbound from dkj-lifehub): `check-house-style` holds colour to a token (#3720), and type to nothing,
+so 14 typed font sizes passed a gate that reported the brand book clean. Give it a fifth check, `type`, the
+same shape as `colour`: a `font-size` reads `var(--text-*)` or a CSS-wide keyword, and a `font` shorthand
+types no size; a custom property's own value stays free, so a domain step (`--text-hero: 48px`) is allowed.
+
+The issue's two side questions: a relative size on `code` falls out of the rule (the house sets it once in
+`:where(code)`). `font-weight` is left out, because covering it means deciding whether the house gains a
+600 step, and that decision belongs to the owner: filed as #3784 (`awaiting-decision-dev`).
+
+#### Measured before building
+
+The check in this repo: 4 findings, all regex patterns in `stopwatch.tests.ps1` that read `font-size`
+out of rendered pages, answered in the allowlist. The hub's own CSS is clean. In the local consumer
+checkouts: 16 in dkj-lifehub's `main` as checked out here, 94 in dkj-music-library, which already fails the
+gate (measured on #3720), so no green check turns red there.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Find-HouseStyleTypeHit` and check 5 in `house-style-rules.ps1`, wired into `Invoke-HouseStyleCheck`
+- [x] The allowlist entry for `stopwatch.tests.ps1` in `scripts/repo-config.ps1`
+- [x] The skill page, the plugin README, the hook (synopsis and clean line), the gate's synopsis, the
+  reusable workflow's header and the marketplace description name the fifth check
 
 ### TEST
 
+- [x] `check-house-style.tests.ps1`: 14 unit asserts on the matcher and one fixture assert through the gate;
+  150 passed, the self-run over this repo included
+
 ### DEPLOY: feat/3778-house-style-type-check
 
-**Score:**
+The brand book's gate, `check-house-style`, gains a fifth check, `type`: a rule in a repo's own layer reads a
+font size only from the type scale ([#3778](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3778)).
+A `font-size` whose value is anything but `var(--text-*)` or `inherit` and its kin, or a `font` shorthand
+that types a size (`15px`, `0.88em`, `larger`, `clamp(...)`), is a finding. A custom property's own value
+is not, so a domain step such as `--text-hero: 48px` stays a token of the repo's own. `font-weight` is not
+read, pending [#3784](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3784).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions repo running the house-style gate gets a new finding for every rule that types a font size,
+and the reusable workflow tracks `main`, so it arrives at the merge rather than at the next release. The fix
+is a `--text-*` step read with `var()`, a domain step of the repo's own, or an allowlist entry with its reason
+for a false positive. Measured on November 3, 2026: 94 typed sizes in dkj-music-library, which already fails
+the gate, so no green check turns red there.
+
+**Score:** 3
 
 #### Pull Request
 
