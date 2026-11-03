@@ -1,4 +1,5 @@
 ---
+description: Which layers of the repo are English, and the deliberate exceptions
 paths:
   - "scripts/**"
   - "plugins/**/scripts/**"

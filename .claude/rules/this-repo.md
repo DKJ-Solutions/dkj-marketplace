@@ -1,3 +1,7 @@
+---
+description: Facts about this repo -- its owners, its language, its trunk and how it meets the constitution
+---
+
 # This repo — dkj-marketplace
 
 **The owners are Dave (DaveKJohn) and Maikel (maikel-bwj), with the same approval rights; wherever

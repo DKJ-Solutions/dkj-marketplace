@@ -182,10 +182,38 @@ try {
     Assert-True ($lensPage -match '<section class="card dp-lens">' -and $lensPage -match '\.dp-lens \{ max-width: 800px; \}') 'its card is never wider than 800px'
     Assert-True ($null -eq (Format-HubLensPageHtml -Name 'notes' -RepoRoot $lensRoot) -and $null -eq (Format-HubLensPageHtml -Name '..\..\x' -RepoRoot $lensRoot) -and $null -eq (Format-HubLensPageHtml -Name 'specialist-09-09-lens' -RepoRoot $lensRoot)) 'a name that is no lens of the repo has no page'
 } finally { Remove-Item -LiteralPath $lensRoot -Recurse -Force -ErrorAction SilentlyContinue }
-foreach ($leaf in 'rules', 'skills') {
-    $leafPage = Format-HubGroupPageHtml -Href "/claude/$leaf" -RepoName 'dkj-claude-plugins'
-    Assert-True ($leafPage -match '<li><a href="/">Tools</a></li>' -and $leafPage -match '<a href="/claude">Claude</a>' -and $leafPage -match 'Nothing on this page yet\.' -and $leafPage -notmatch 'card--link') "the /claude/$leaf page is a landing page of its own, under Tools > Claude, with nothing on it yet"
-}
+$skillsPage = Format-HubGroupPageHtml -Href '/claude/skills' -RepoName 'dkj-claude-plugins'
+Assert-True ($skillsPage -match '<li><a href="/">Tools</a></li>' -and $skillsPage -match '<a href="/claude">Claude</a>' -and $skillsPage -match 'Nothing on this page yet\.' -and $skillsPage -notmatch 'card--link') 'the /claude/skills page is a landing page of its own, under Tools > Claude, with nothing on it yet'
+
+Write-Host '-- the Rules page: what is in the repo''s .claude/rules folder, and nothing else (Maikel, November 3, 2026)' -ForegroundColor Cyan
+$rulesBare = Format-HubGroupPageHtml -Href '/claude/rules' -RepoName 'x'
+Assert-True ($rulesBare -match '<li><a href="/">Tools</a></li>' -and $rulesBare -match '<a href="/claude">Claude</a>' -and $rulesBare -notmatch '<h2>' -and $rulesBare -notmatch 'grid__head' -and $rulesBare -match 'Nothing on this page yet\.') 'the /claude/rules page has no heading under its h1, and with no repo to read says it has nothing yet'
+$ruleRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('hub-rules-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path (Join-Path $ruleRoot '.claude\rules'), (Join-Path $ruleRoot 'plugins\pol') -Force | Out-Null
+try {
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot 'CLAUDE.md'), "# CLAUDE.md`n`n@plugins/pol/CLAUDE.md`n")
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot 'plugins\pol\CLAUDE.md'), "# The constitution`n")
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot '.claude\rules\this-repo.md'), "# This repo`n`n## Facts`n`nTrunk is main.`n")
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot '.claude\rules\layers.md'), "---`npaths:`n  - `"scripts/**`"`n---`n`n# Layers`n`nDetail.`n")
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot '.claude\rules\lang.md'), ("# Language " + [char]0x2014 + " which layers are English`n"))
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot '.claude\rules\repo.md'), ("# This repo " + [char]0x2014 + " dkj-x`n"))
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot '.claude\rules\described.md'), "---`ndescription: `"Facts about this repo`"`n---`n`n# Described " + [char]0x2014 + " x`n")
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot '.claude\rules\both.md'), "---`ndescription: The layers`npaths:`n  - `"a/**`"`n---`n`n# Both`n")
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot '.claude\rules\notes.txt'), "not markdown`n")
+    $rules = @(Get-HubRulePages -RepoRoot $ruleRoot)
+    Assert-Equal 'both,described,lang,layers,repo,this-repo' (($rules | ForEach-Object { $_.Label }) -join ',') 'the rules are the .claude/rules markdown files by name -- not a CLAUDE.md the root imports, not a file that is no markdown'
+    Assert-True ($rules[5].Sub -eq 'This repo' -and $rules[5].Display -eq '.claude/rules/this-repo.md' -and $rules[3].Sub -eq 'Layers (path-scoped)') 'a rule card''s sub line is its own # title, and a path-scoped rule says so in two words'
+    Assert-True ($rules[2].Sub -ceq 'Which layers are English' -and $rules[4].Sub -ceq 'dkj-x') 'a title''s lead before its em dash goes, since the card''s own title names the subject; a plain word then opening it is raised, an identifier is not (Maikel, November 3, 2026)'
+    Assert-True ($rules[1].Sub -ceq 'Facts about this repo' -and $rules[0].Sub -ceq 'The layers (path-scoped)') 'a description: in the frontmatter is the sub line in place of the title, its quotes gone, and beside paths: it still says path-scoped (Maikel, November 3, 2026)'
+    $rulesPage = Format-HubGroupPageHtml -Href '/claude/rules' -RepoName 'x' -RepoRoot $ruleRoot
+    Assert-True ((Format-HubRulePageHtml -Name 'described' -RepoRoot $ruleRoot) -notmatch 'description:') 'the description is frontmatter, so the rule''s page does not show it as text'
+    Assert-True (([regex]::Matches($rulesPage, '<section class="card card--link">')).Count -eq 6 -and $rulesPage -match 'href="/claude/rules/layers"' -and $rulesPage -match 'menu-item__label"><h2>this-repo</h2>' -and $rulesPage -match '<div class="ph-cards">' -and $rulesPage -notmatch 'grid__head|Repo rules' -and $rulesPage -notmatch 'href="/claude/rules/pol"' -and $rulesPage -notmatch 'Nothing') 'with a repo the page holds one h2 card per rule file, standing on the page with no section heading over them (Maikel, November 3, 2026)'
+    $rulePage = Format-HubRulePageHtml -Name 'this-repo' -RepoRoot $ruleRoot -RepoName 'x'
+    $ruleMd = ConvertFrom-Json ([regex]::Match($rulePage, '<script type="application/json" id="lens-md">(.*?)</script>').Groups[1].Value)
+    Assert-True ($rulePage -match '<h1>this-repo</h1>' -and $rulePage -match '<a href="/claude">Claude</a>' -and $rulePage -match '<a href="/claude/rules">Rules</a>' -and $rulePage -match 'Read from <code>\.claude/rules/this-repo\.md</code>' -and $ruleMd.body -eq "## Facts`n`nTrunk is main.`n") 'a rule file''s page is rendered as a lens''s is, titled as its card, under Tools > Claude > Rules, naming the file it was read from'
+    Assert-True ((Format-HubRulePageHtml -Name 'layers' -RepoRoot $ruleRoot) -notmatch 'paths:' -and $null -eq (Format-HubRulePageHtml -Name 'pol' -RepoRoot $ruleRoot) -and $null -eq (Format-HubRulePageHtml -Name '..' -RepoRoot $ruleRoot) -and $null -eq (Format-HubRulePageHtml -Name 'notes' -RepoRoot $ruleRoot)) 'a path-scoped rule''s frontmatter is not body, and a name that is no rule file of the repo has no page'
+    Assert-True (@(Get-HubRulePages -RepoRoot '').Count -eq 0) 'no repo, no rule files'
+} finally { Remove-Item -LiteralPath $ruleRoot -Recurse -Force -ErrorAction SilentlyContinue }
 Assert-True ((Get-HubIconSvg -Name '') -eq '' -and (Get-HubIconSvg -Name 'nope') -eq '' -and (Format-HubCardLinkHtml -Href '/x' -Label 'X') -notmatch 'menu-item__icon') 'a card that names no icon, or one the hub lacks, draws none'
 Assert-True (@($script:HubIcons.Keys | Where-Object { (Get-HubIconSvg -Name $_) -notmatch '^<svg class="menu-item__icon" viewBox="-?[\d.]+ -?[\d.]+ 24 24" width="32" height="32"' }).Count -eq 0) 'every icon is drawn in the same 32px square, a 24-unit viewBox (Maikel, November 2, 2026)'
 Assert-True (@($script:HubIconOffsets.Keys | Where-Object { -not $script:HubIcons.ContainsKey($_) }).Count -eq 0 -and (Get-HubIconSvg -Name 'rules') -match 'viewBox="-0.25 0 24 24"' -and (Get-HubIconSvg -Name 'claude') -match 'viewBox="0 0 24 24"') 'an off-centre drawing moves its viewBox to stand in the middle of that square, and the offsets name only icons the hub has'

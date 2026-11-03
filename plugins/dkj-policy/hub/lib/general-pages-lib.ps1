@@ -550,8 +550,83 @@ function Get-HubGroups {
         @{ Href = '/claude/specialists'; Label = 'Specialists'; Sub = 'The Claude Specialists, each with a craft of their own'; Icon = 'specialists'; Group = '/claude' },
         @{ Href = '/performance'; Label = 'Performance'; Sub = 'What Claude''s work costs: the SessionStart path and the Clock'; Icon = 'performance'; Group = '/claude' },
         @{ Href = '/clock'; Label = 'Clock'; Sub = 'How long the work takes: the Stopwatch and the Logbook'; Icon = 'clock'; Group = '/performance' },
-        @{ Href = '/claude/specialists/lenses'; Label = 'Lenses'; Icon = 'lens'; Group = '/claude/specialists'; Section = $true; Source = 'lenses' }
+        @{ Href = '/claude/specialists/lenses'; Label = 'Lenses'; Icon = 'lens'; Group = '/claude/specialists'; Section = $true; Source = 'lenses' },
+        # The Rules page reads its cards from the repo too: what is in its .claude/rules folder, and nothing else
+        # (Maikel, November 3, 2026; Get-HubRulePages). Bare: no heading of its own, which would only repeat the
+        # page's h1, so its cards stand on the page as h2 cards (Maikel, the same day).
+        @{ Href = '/claude/rules/repo'; Label = 'Repo rules'; Icon = 'rules'; Group = '/claude/rules'; Section = $true; Source = 'repo-rules'; Bare = $true }
     )
+}
+
+function Get-HubSectionCards {
+    <#
+        The cards of a Section whose Source reads them from the repo at -RepoRoot: the Lenses (Get-HubLensPages) and the
+        Repo rules (Get-HubRulePages). None for a Source it does not know.
+    #>
+    param([AllowEmptyString()][string]$Source, [AllowEmptyString()][string]$RepoRoot = '')
+    switch ($Source) {
+        'lenses'     { return @(Get-HubLensPages -RepoRoot $RepoRoot) }
+        'repo-rules' { return @(Get-HubRulePages -RepoRoot $RepoRoot) }
+    }
+    return @()
+}
+
+function Get-HubDocTitle {
+    <# Pure-ish: the first '# ' title of the markdown file at -Path, past any frontmatter; '' where it has none or cannot be read. #>
+    param([Parameter(Mandatory = $true)][string]$Path)
+    try {
+        $inFront = $false; $n = 0
+        foreach ($line in [System.IO.File]::ReadAllLines($Path, (New-Object System.Text.UTF8Encoding($false)))) {
+            if ($n++ -eq 0 -and $line -eq '---') { $inFront = $true; continue }
+            if ($inFront) { if ($line -eq '---') { $inFront = $false }; continue }
+            if ($line -match '^#\s+(.+)$') { return $Matches[1].Trim() }
+        }
+    } catch { }
+    return ''
+}
+
+function Get-HubRulePages {
+    <#
+        The rule files in the .claude/rules folder of the repo at -RepoRoot -- what is in that folder and nothing else
+        (Maikel, November 3, 2026) -- each a card's @{ Href; Label; Sub; Icon; Path; Display }, by name, read per request
+        as the lenses are. The Label is the file's name, the Sub its 'description:' frontmatter or else its '# ' title, and a path-scoped rule ('paths:' in
+        its frontmatter, so it loads only when Claude touches a matching file) ends it on '(path-scoped)' (Maikel,
+        November 3, 2026: shorter than saying so in full). None without a -RepoRoot or the folder.
+    #>
+    param([AllowEmptyString()][string]$RepoRoot = '')
+    if (-not $RepoRoot) { return @() }
+    $dir = Join-Path $RepoRoot '.claude\rules'
+    if (-not (Test-Path -LiteralPath $dir -PathType Container)) { return @() }
+    $utf8 = New-Object System.Text.UTF8Encoding($false)
+    $out = New-Object System.Collections.Generic.List[object]
+    foreach ($f in @(Get-ChildItem -LiteralPath $dir -File | Where-Object { $_.Extension -eq '.md' } | Sort-Object Name)) {
+        $label = $f.BaseName
+        if ($label -cnotmatch '^[A-Za-z0-9._-]{1,80}\z') { continue }
+        $front = ''
+        try { $front = [regex]::Match(([System.IO.File]::ReadAllText($f.FullName, $utf8) -replace "`r`n", "`n"), '\A---\n([\s\S]*?)\n---(\n|\z)').Groups[1].Value } catch { }
+        # The card says what the rule is about in the file's own 'description:' frontmatter key, where it has one
+        # (Maikel, November 3, 2026). Claude Code reads only 'paths:' there, so the key changes nothing it loads.
+        $desc = [regex]::Match($front, '(?m)^description:[ \t]*(.+?)[ \t]*$')
+        if ($desc.Success) {
+            $sub = $desc.Groups[1].Value -replace '\A([''"])(.*)\1\z', '$2'
+        } else {
+            $sub = Get-HubDocTitle -Path $f.FullName
+            # Without one, the '# ' title, past its lead before an em dash: that names the subject, which the card's own
+            # title -- the file's name -- already does ('Language -- which layers ...' under 'language-layers'). A plain
+            # word then opening it is raised to a capital; an identifier ('dkj-marketplace') is left as written.
+            $dash = ' ' + [char]0x2014 + ' '
+            $at = $sub.IndexOf($dash)
+            if ($at -gt 0 -and $at + $dash.Length -lt $sub.Length) {
+                $sub = $sub.Substring($at + $dash.Length).Trim()
+                if ($sub -cmatch '\A[a-z]+ ') { $sub = $sub.Substring(0, 1).ToUpperInvariant() + $sub.Substring(1) }
+            }
+        }
+        # A top-level 'paths:' key, as Claude Code (and Test-IsRuleFileScoped) reads it.
+        $scoped = [regex]::IsMatch($front, '(?m)^paths:')
+        if ($scoped) { $sub = ($(if ($sub) { $sub + ' ' } else { '' })) + '(path-scoped)' }
+        $out.Add(@{ Href = '/claude/rules/' + $label; Label = $label; Sub = $sub; Icon = 'rules'; Path = $f.FullName; Display = ('.claude/rules/' + $f.Name) })
+    }
+    return $out.ToArray()
 }
 
 function Get-HubGroupCrumbs {
@@ -733,8 +808,36 @@ function Format-HubLensPageHtml {
     param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyString()][string]$RepoRoot = '', [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/')
     $lens = @(Get-HubLensPages -RepoRoot $RepoRoot | Where-Object { $_.Label -ceq $Name })[0]
     if (-not $lens) { return $null }
+    return Format-HubDocPageHtml -Doc $lens -RepoName $RepoName -HubHref $HubHref -What 'lens' `
+        -ParentCrumbs @(@{ Label = 'Claude'; Href = '/claude' }, @{ Label = 'Specialists'; Href = '/claude/specialists' }) `
+        -SourceDisplay ('.claude/specialists/lenses/' + $lens.Label + '.md')
+}
+
+function Format-HubRulePageHtml {
+    <#
+        One rule file's own page on /claude/rules/<name> (Get-HubRulePages), under Tools > Claude > Rules: a
+        .claude/rules file, rendered exactly as a lens is (Format-HubDocPageHtml). $null for a name the repo's
+        .claude/rules folder has no file of.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyString()][string]$RepoRoot = '', [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/')
+    $rule = @(Get-HubRulePages -RepoRoot $RepoRoot | Where-Object { $_.Label -ceq $Name })[0]
+    if (-not $rule) { return $null }
+    return Format-HubDocPageHtml -Doc $rule -RepoName $RepoName -HubHref $HubHref -What 'rule document' `
+        -ParentCrumbs @(@{ Label = 'Claude'; Href = '/claude' }, @{ Label = 'Rules'; Href = '/claude/rules' }) -SourceDisplay $rule.Display
+}
+
+function Format-HubDocPageHtml {
+    <#
+        The page of one markdown document the hub reads from the repo -- a lens, a rule -- -Doc being its card
+        (@{ Label; Path }): the card's label as the h1, the file rendered by the house renderer as Format-HubLensPageHtml
+        describes, under -ParentCrumbs, with -SourceDisplay named in the footer. -What names the thing in the message
+        shown when the file cannot be read.
+    #>
+    param([Parameter(Mandatory = $true)]$Doc, [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/', [string]$What = 'document',
+        [object[]]$ParentCrumbs = @(), [AllowEmptyString()][string]$SourceDisplay = '')
+    $lens = $Doc
     $e = { param($v) ConvertTo-GeneralPageText $v }
-    # The h1 reads what the lens's card on the Specialists page reads: the file's name (Maikel, November 2, 2026).
+    # The h1 reads what the document's card reads: the file's name (Maikel, November 2, 2026).
     $title = $lens.Label
     $body = New-Object System.Text.StringBuilder
     [void]$body.AppendLine('<div><h1>' + (& $e $title) + '</h1></div>')
@@ -750,7 +853,7 @@ function Format-HubLensPageHtml {
         [void]$body.AppendLine('<script type="application/json" id="lens-md">' + $json + '</script>')
         [void]$body.AppendLine("<script>`n(function () {`n  'use strict';`n" + $renderer.TrimEnd() + "`n  var md = JSON.parse(document.getElementById('lens-md').textContent), intro = document.getElementById('lens-intro');`n  if (intro) { intro.innerHTML = renderMd(md.intro); }`n  document.getElementById('lens-body').innerHTML = renderMd(md.body);`n})();`n</script>")
     } catch {
-        [void]$body.AppendLine('<p class="msg--warn" role="alert">This lens could not be read: ' + (& $e $_.Exception.Message) + '</p>')
+        [void]$body.AppendLine('<p class="msg--warn" role="alert">This ' + $What + ' could not be read: ' + (& $e $_.Exception.Message) + '</p>')
     }
     # The lens card reads as a document, so it is never wider than 800px (Maikel, November 2, 2026). The elements in it
     # are the house's own (h1-h3, code, pre, lists, quotes, .table); this layer sets only the space between its blocks.
@@ -759,7 +862,7 @@ function Format-HubLensPageHtml {
         '#lens-body > * + :is(h2, h3) { margin-top: var(--spacing-6); }' + "`n" +
         '#lens-body li + li, #lens-body li > :is(ul, ol) { margin-top: var(--spacing-1); }'
     return Format-GeneralPageHtml -Title $title -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref -Style $style `
-        -ParentCrumbs @(@{ Label = 'Claude'; Href = '/claude' }, @{ Label = 'Specialists'; Href = '/claude/specialists' }) -FooterNote ('Read from <code>.claude/specialists/lenses/' + (& $e $lens.Label) + '.md</code> by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.')
+        -ParentCrumbs $ParentCrumbs -FooterNote ('Read from <code>' + (& $e $SourceDisplay) + '</code> by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.')
 }
 
 function Format-HubCardLinkHtml {
@@ -871,7 +974,11 @@ function Format-HubGroupPageHtml {
     }
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $members = @(@(Get-GeneralPages | Where-Object { $_.Group -eq $g.Href }) + @($groups | Where-Object { $_.Group -ceq $g.Href -and -not $_.Section }))
-    $sections = @($groups | Where-Object { $_.Group -ceq $g.Href -and $_.Section })
+    # A Bare Section has no heading: its cards join the page's own h2 cards (Maikel, November 3, 2026).
+    foreach ($bare in @($groups | Where-Object { $_.Group -ceq $g.Href -and $_.Section -and $_.Bare })) {
+        $members += @(Get-HubSectionCards -Source $bare.Source -RepoRoot $RepoRoot)
+    }
+    $sections = @($groups | Where-Object { $_.Group -ceq $g.Href -and $_.Section -and -not $_.Bare })
     $body = New-Object System.Text.StringBuilder
     # The h1 stands on the page above the group, never inside its surface: the h1 is never framed (owner, October 28, 2026).
     [void]$body.AppendLine('<div><h1>' + (& $e $g.Label) + '</h1></div>')
@@ -890,7 +997,7 @@ function Format-HubGroupPageHtml {
         # The house grouping form: a .grid__head over the cards, whose titles are then h3s. The h2 alone, with no
         # p.card__sub under it (Maikel, October 30, 2026).
         [void]$body.AppendLine('<div class="grid-3"><div class="grid__head"><h2>' + (& $e $sec.Label) + '</h2></div>')
-        $cards = if ($sec.Source -eq 'lenses') { @(Get-HubLensPages -RepoRoot $RepoRoot) } else { @($groups | Where-Object { $_.Group -ceq $sec.Href }) }
+        $cards = if ($sec.Source) { @(Get-HubSectionCards -Source $sec.Source -RepoRoot $RepoRoot) } else { @($groups | Where-Object { $_.Group -ceq $sec.Href }) }
         foreach ($p in $cards) {
             [void]$body.AppendLine((Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon -Heading 3))
         }

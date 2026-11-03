@@ -509,6 +509,14 @@ try {
                     Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('No lens of that name in this repo.')) -Method $method
                     continue
                 }
+            } elseif ($path -cmatch '^/claude/rules/([A-Za-z0-9._-]{1,80})/?$') {
+                # One .claude/rules file's page, read from this checkout (Maikel, November 3, 2026); a name that folder
+                # has no file of is a 404.
+                $html = Format-HubRulePageHtml -Name $Matches[1] -RepoRoot $root -RepoName (Get-RepoIdentity).Name
+                if ($null -eq $html) {
+                    Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('No rule document of that name in this repo.')) -Method $method
+                    continue
+                }
             } elseif ($path -match '^/test-gate(?:/([a-z0-9-]{1,40})(?:/([A-Za-z0-9._-]{1,120}))?)?/?$') {
                 # The overview, a list's page, or one suite's (the owner, October 27, 2026); a path none names is a 404.
                 $tgPath = (@($Matches[1], $Matches[2]) | Where-Object { $_ }) -join '/'
