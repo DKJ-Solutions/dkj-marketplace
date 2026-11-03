@@ -989,11 +989,12 @@ function ConvertTo-SiteHeaderName {
 function Format-SiteHeaderHtml {
     <#
         The house site header (house-style.css, "Site header"): the app's -Name on the primary, linking -Href
-        (home), and the settings button's mount (#settings) on the far right. No mark (Dave, November 2, 2026).
-        -Tag is the quieter word after the name
+        (home). No mark (Dave, November 2, 2026), and no settings button (Maikel, November 3, 2026): the toolbox's
+        theme is chosen on its own /settings page, so the header no longer mounts #settings, and the pages' own
+        DKJTheme.settings call finds no element and draws nothing. -Tag is the quieter word after the name
         ('hub', 'product'), left out when empty. Both are escaped here.
         -Menu is the app's main pages, each @{ Label; Href }, in order (house-style.css, "Site header menu"; Maikel,
-        November 2, 2026): drawn between the brand and the settings button, and again as the drawer a phone opens from
+        November 2, 2026): drawn after the brand, and again as the drawer a phone opens from
         the toggle. -Current is the Href of the one the page sits under, marked aria-current. No -Menu, no menu.
     #>
     param([Parameter(Mandatory = $true)][string]$Name, [string]$Href = '/', [AllowEmptyString()][string]$Tag = '',
@@ -1018,7 +1019,7 @@ function Format-SiteHeaderHtml {
     }
     return '<header class="site-header"><div class="container"><a class="site-header__brand" href="' + (& $e $Href) + '" aria-label="' +
         (& $e $label) + ', home"><span class="site-header__name">' + (& $e $Name) +
-        $tagHtml + '</span></a>' + $nav + '<div id="settings"></div></div>' + $drawer + '</header>' + "`n"
+        $tagHtml + '</span></a>' + $nav + '</div>' + $drawer + '</header>' + "`n"
 }
 
 function Get-HubMenu {
@@ -1966,7 +1967,7 @@ function Format-ReleaseNotesDevPage {
         '</ol></nav></div></div>'
     ) -join "`n"
     if ($Release) { $Html = ([regex]'<a class="back" href="[^"]*">[^<]*</a>\s*').Replace($Html, '', 1) }
-    # The site header above the bar, holding the settings button, when the repo is named; else the button floats.
+    # The site header above the bar when the repo is named (it holds no settings button); else the button floats.
     $bar = if ($RepoName) { (Format-SiteHeaderHtml -Name (ConvertTo-SiteHeaderName -RepoName $RepoName) -Href $HubHref -Tag 'toolbox' -Menu @(Get-HubMenu) -Current '/release-notes') + $bar }
             else { $bar + "`n" + '<div id="settings" class="theme-settings--floating"></div>' }
     # Under that header the masthead opens with its h1 (#3423): the house page pattern has no eyebrow under a
