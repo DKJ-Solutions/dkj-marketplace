@@ -748,14 +748,15 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
    primary to the header: the paper, a subtle line under it, and the trail in the text steps. A bar with no header
    above it is unchanged. The header carries no mark since November 2, 2026 (Dave): .site-header__mark is retired. */
 .site-header { display: block; background: var(--primary); color: var(--bg-1); }
-.site-header > .container { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-3);
-  max-height: var(--spacing-18); padding-top: var(--spacing-3); padding-bottom: var(--spacing-3); }
-/* The brand is a cell the full height of the bar from its left edge, so the whole area around the name goes home,
-   the way the settings cell does at the right end (Maikel, November 2, 2026). The negative margins take the bar's
-   padding back, the padding gives it to the cell, and the min-height adds it back so the bar keeps its 44px line
-   (the height the retired mark gave the header, kept without it: Dave, November 2, 2026). */
-.site-header__brand { display: inline-flex; align-items: center; gap: var(--spacing-3); align-self: stretch; min-width: 0;
-  min-height: calc(var(--spacing-11) + 2 * var(--spacing-3)); margin: calc(-1 * var(--spacing-3)) 0 calc(-1 * var(--spacing-3)) calc(-1 * var(--spacing-4));
+/* The bar pads its sides only, --spacing-5 (20px), and every cell in it keeps to that padding: none reaches past it
+   with a negative margin (Maikel, November 3, 2026; until then the brand, the menu and the settings cell each took
+   the padding back). With no vertical padding the bar's height is its min-height: the 44px line the retired mark
+   gave it plus --spacing-3 above and below (Dave, November 2, 2026), which every cell fills by stretching. */
+.site-header > .container { display: flex; align-items: stretch; justify-content: space-between; gap: var(--spacing-3);
+  min-height: calc(var(--spacing-11) + 2 * var(--spacing-3)); max-height: var(--spacing-18); padding: 0 var(--spacing-5); }
+/* The brand is a cell the full height of the bar, so the whole area around the name goes home (Maikel, November 2,
+   2026). */
+.site-header__brand { display: inline-flex; align-items: center; gap: var(--spacing-3); min-width: 0;
   padding: 0 var(--spacing-4); color: var(--bg-1); text-decoration: none; }
 .site-header__brand:hover { background: var(--primary-hover); }
 .site-header__brand:focus-visible { outline: 2px solid var(--bg-1); outline-offset: -4px; }
@@ -763,7 +764,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .site-header__tag { font-weight: var(--font-weight-regular); color: var(--bg-3); }
 /* In the header the settings button is a square cell the full height of the bar at its right end, a shade lighter
    than the header, its gear in the header's own colour (Maikel, November 1, 2026). */
-.site-header .theme-settings { flex: none; align-self: stretch; margin: calc(-1 * var(--spacing-3)) calc(-1 * var(--spacing-4)) calc(-1 * var(--spacing-3)) 0;
+.site-header .theme-settings { flex: none;
   width: calc(var(--text-h1) + 2 * var(--spacing-1) + 2 * var(--spacing-3)); }   /* the bar's height: the mark (its line, its padding) and the bar's own padding */
 .site-header .theme-settings__toggle { width: 100%; height: 100%; border-radius: 0; color: var(--bg-1);
   background: var(--primary-raised); }
@@ -790,11 +791,8 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
    48rem the links fold away and the toggle opens the drawer (house-theme.js wires it). The width is the header's own,
    not the window's, so the Phone width folds it too. */
 .site-header > .container { container: site-header / inline-size; }
-.site-header__nav { display: flex; flex: 1 1 auto; align-self: stretch; justify-content: flex-end; min-width: 0;
-  margin: calc(-1 * var(--spacing-3)) 0; }
-/* The menu stands at the right (Maikel, November 3, 2026; centred until then). Where no settings button follows it,
-   its last cell runs to the bar's right edge, as the brand's does to the left one. */
-.site-header__nav:last-child { margin-right: calc(-1 * var(--spacing-4)); }
+/* The menu stands at the right, inside the bar's side padding (Maikel, November 3, 2026; centred until then). */
+.site-header__nav { display: flex; flex: 1 1 auto; justify-content: flex-end; min-width: 0; }
 .site-header__menu { display: flex; margin: 0; padding: 0; list-style: none; }
 .site-header__menu > li { display: flex; }
 .site-header__menu a { display: flex; align-items: center; padding: 0 var(--spacing-4); color: var(--bg-1); text-decoration: none; white-space: nowrap; }

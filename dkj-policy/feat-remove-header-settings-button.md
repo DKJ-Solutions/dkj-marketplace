@@ -47,7 +47,8 @@ product on 4870). The toolbox's theme is chosen on its own `/settings` page sinc
 - [x] `Format-SiteHeaderHtml` (`plugins/dkj-policy/hub/lib/general-pages-lib.ps1`) no longer mounts `#settings`; every site header on both servers is built by it
 - [x] The pages' `DKJTheme.settings(...)` call stays: with no mount it returns null and draws nothing, and a page without a site header still floats its button
 - [~] The `.site-header .theme-settings` rules stay in the brand book, for any app that still mounts the button
-- [x] Maikel, same day: the whole `.site-header__menu` right-aligned -- `house-style.css` sets `.site-header__nav` to `justify-content: flex-end` (centred until then), and a nav that is the header's last child runs its last cell to the bar's right edge, as the brand does on the left
+- [x] Maikel, same day: the whole `.site-header__menu` right-aligned -- `house-style.css` sets `.site-header__nav` to `justify-content: flex-end` (centred until then)
+- [x] Maikel, same day: the site header pads its sides only, `--spacing-5` (20px), and no cell reaches past that padding any more -- the brand, the menu and the settings cell lost their negative margins; the bar keeps its 68px height through a `min-height` and stretched cells
 
 ### TEST
 
@@ -60,7 +61,7 @@ product on 4870). The toolbox's theme is chosen on its own `/settings` page sinc
 The site header on the toolbox and product pages no longer carries the settings button (the gear with theme,
 width and reset). The toolbox's theme is chosen on its `/settings` page; a page without a site header still
 floats the button as before. The brand book's site-header menu now stands at the right instead of in the middle,
-for every app that draws one.
+for every app that draws one, and the header pads only its sides, 20px, which the name and the menu keep to.
 
 **Score:** 2
 
