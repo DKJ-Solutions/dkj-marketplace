@@ -181,7 +181,9 @@ Write-Host 'sync-trunk.ps1' -ForegroundColor Cyan
 
 $f = New-Fixture 'cli'
 $out = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $Script -RootOverride $f.Session 2>&1)
-Assert-Equal 0 $LASTEXITCODE 'a single-checkout sync exits 0'
+$cliExit = $LASTEXITCODE
+Assert-Equal 0 $cliExit 'a single-checkout sync exits 0'
+if ($cliExit -ne 0) { Write-Host ("         sync-trunk.ps1 said:`n" + (@($out | ForEach-Object { "           $_" }) -join "`n")) -ForegroundColor Red }
 Assert-True ((($out -join "`n")) -match 'fast-forwarded') 'and says it fast-forwarded'
 Assert-Equal $f.OriginHead (Get-Head $f.Session) 'and the trunk moved'
 

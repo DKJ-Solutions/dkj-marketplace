@@ -39,19 +39,27 @@
 
 ### PLAN
 
+#3766: the sync-trunk.ps1 single-checkout case failed once under the parallel test gate and passed alone. The issue's cause (a shared temp path, a git lock, the fetch, a timing window) is inferred, not measured. Not reproduced on November 3, 2026: 12 parallel runs of the suite under load, and 6 more with the gate's environment (`GIT_TERMINAL_PROMPT=0`, `GCM_INTERACTIVE=never`, `DKJ_TEST_GATE_DEPTH=1`, a foreign working directory), all 53/53. So this branch repairs nothing it cannot see: it makes the next failure say why. The issue stays open, parked `awaiting-recurrences-first`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `trunk-sync.tests.ps1`: when the single-checkout `sync-trunk.ps1` run exits non-zero, the suite prints that child's own output (it was captured and discarded before), so its `Write-SyncLine` names the outcome and the git detail (a fetch timeout, a refused fast-forward, an exception)
 
 ### TEST
 
+- [x] the gates run inside `ship-pr`
+
 ### DEPLOY: fix/3766-trunk-sync-cli-diagnostics
 
-**Score:**
+When the `sync-trunk.ps1` single-checkout case in `trunk-sync.tests.ps1` fails, the suite now prints what that script said, not just the three red asserts. It failed once under the parallel test gate (#3766) and could not be reproduced in 18 runs, so the next failure will name its own cause.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
