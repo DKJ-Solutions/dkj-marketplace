@@ -43,6 +43,7 @@
 
 - [x] `Get-ProductMenu` opens on a Toolbox item linking `/hub`, the server's 303 to the plugin hub
 - [x] `dev-pages.tests.ps1` pins the menu's labels, links and order
+- [x] The product home's cards stand in the toolbox home's `.ph-cards` (`Get-HubCardGridStyle`) instead of a `.grid-3`, so they behave as the toolbox's do; the #3133 assert now allows exactly that style and nothing else
 
 ### TEST
 
@@ -51,7 +52,7 @@
 
 ### DEPLOY: feat/toolbox-in-product-menu
 
-The product's site header menu on every page now opens on **Toolbox**, then Consumers and Marketplace -- the same order as the cards on Home. It links `/hub`, which this server already answers with a 303 to the dkj-policy hub once that hub answers as this checkout's, so the menu never has to look the hub's port up while a page is drawn.
+The product's site header menu on every page now opens on **Toolbox**, then Consumers and Marketplace -- the same order as the cards on Home. It links `/hub`, which this server already answers with a 303 to the dkj-policy hub once that hub answers as this checkout's, so the menu never has to look the hub's port up while a page is drawn. The cards on the product's Home now behave as the toolbox home's do: they stand on the page in the hub's own `.ph-cards` (no framing surface, the toolbox's gap and hover) instead of a `.grid-3`.
 
 **Score:** 2
 

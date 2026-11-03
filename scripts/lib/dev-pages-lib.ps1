@@ -91,12 +91,18 @@ function Format-ProductHomeHtml {
     [void]$sb.AppendLine('<title>dkj-marketplace -- Home</title>')
     [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
     [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
+    # The hub's own .ph-cards (Get-HubCardGridStyle), so these cards behave as the toolbox home's do (Maikel,
+    # November 3, 2026).
+    [void]$sb.AppendLine('<style>')
+    [void]$sb.AppendLine((Get-HubCardGridStyle))
+    [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
     [void]$sb.AppendLine('<body>')
     [void]$sb.Append((Format-RepoHomeHeadHtml -RepoName 'dkj-marketplace' -Brand 'dkj-marketplace' -BrandTag 'product' -HomeLabel 'Home' -Menu @(Get-ProductMenu) -Lead 'The source of the Claude Specialists plugins: the marketplace, its agent definitions, manuals and skills, and the scripts and gates that ship them.'))
     # Every page a card of its own, three to a row, with no heading above them (the house hub form, #3383): the
-    # hub first, so the way back is where the eye starts, then this repo's own pages.
-    [void]$sb.AppendLine('<div class="grid-3">')
+    # hub first, so the way back is where the eye starts, then this repo's own pages. On the page itself, in the
+    # toolbox home's .ph-cards rather than a .grid-3, whose surface frames an h2 over h3 cards (November 2, 2026).
+    [void]$sb.AppendLine('<div class="ph-cards">')
     if ($HubUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
         [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $HubUrl -Label 'Toolbox' -Sub 'The dkj-policy toolbox: GitHub, Issues, Release notes, the Test gate and every other general page' -Icon 'repository'))
     } else {
