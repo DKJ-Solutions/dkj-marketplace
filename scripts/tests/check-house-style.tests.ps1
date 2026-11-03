@@ -213,7 +213,15 @@ Assert-Equal 'types 10pt' (Get-HitNames (Find-HouseStyleTypeHit -Text '<p style=
 Assert-Equal '' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-size: var(--text-sm); } .my-y { font-size: var( --text-h2 ) !important; }')) 'a step read is clean, !important or not'
 Assert-Equal '' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-size: inherit; font: inherit; } .my-y { font: var(--font-weight-bold) var(--text-sm)/1.4 system-ui; }')) 'a CSS-wide keyword and a shorthand built from tokens are clean'
 Assert-Equal '' (Get-HitNames (Find-HouseStyleTypeHit -Text ':root { --text-hero: 48px; --my-font-size: 12px; } $font-size: 14px;')) 'a domain step''s own value, and an SCSS variable, are free'
-Assert-Equal '' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-weight: 600; font-family: "Segoe UI"; }')) 'font-weight and font-family are not read'
+Assert-Equal '' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-family: "Segoe UI"; font-style: italic; }')) 'font-family and font-style are not read'
+# The weight half (#3784, owner, November 3, 2026): only the four house weights, no semibold, no domain weight.
+Assert-Equal 'weights 600' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-weight: 600; }')) 'a typed 600: the house has no semibold'
+Assert-Equal 'weights bold' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-weight: bold; }')) 'a weight keyword'
+Assert-Equal 'weights var(--font-weight-semibold)' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-weight: var(--font-weight-semibold); }')) 'a domain weight token is no house weight'
+Assert-Equal 'weights 700' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font: italic 700 var(--text-sm)/1.4 system-ui; }')) 'a typed weight inside a shorthand whose size is a step'
+Assert-Equal 'types 13px' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font: bold 13px/1.4 system-ui; }')) 'a shorthand that types both is reported once, by its size'
+Assert-Equal '' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-weight: var(--font-weight-light); } .my-y { font-weight: var( --font-weight-black ) !important; font-weight: inherit; }')) 'a house weight, !important or not, and a CSS-wide keyword are clean'
+Assert-Equal '' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font: var(--font-weight-regular) var(--text-base)/1.5 "Font 2", system-ui; } :root { --my-weight: 600; }')) 'a shorthand from tokens is clean, a digit in a family name is not a weight, and a custom property''s own value is free'
 Assert-Equal '' (Get-HitNames (Find-HouseStyleTypeHit -Text "/* font-size: 12px; */`n// font: 12px a;`n.my-x { }")) 'a commented-out declaration is no finding'
 $h = @(Find-HouseStyleTypeHit -Text "x`n`n.my-x {`n  font-size: 11px;`n}")
 Assert-True ($h.Count -eq 1 -and $h[0].Line -eq 4 -and $h[0].Property -eq 'font-size') 'the line and the property of a hit'

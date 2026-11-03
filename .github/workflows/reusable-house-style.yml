@@ -2,7 +2,7 @@
 # few-line .github/workflows/house-style.yml in a DKJ-Solutions repo with a UI (issue #3035). Every vendored
 # house-style.css / house-theme.js is the copy the dkj-brandbook skill pins, and the repo's own layer
 # redefines no house token or class, uses no retired token name, types or derives no colour in a rule and
-# types no font size in a rule.
+# types no font size or font weight in a rule.
 #
 # The caller, as the dkj-brandbook skill gives it:
 #

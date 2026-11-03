@@ -37,7 +37,10 @@
                      Measured November 3, 2026 in dkj-lifehub: 14 typed sizes in 6 files under a gate that
                      reported the brand book clean, while colour, which was gated, had none. A custom
                      property's own value is free, as for colour: `--text-hero: 48px` is a domain step.
-                     font-weight is not read: the house has no step for every weight a page types.
+                     A weight is read too (#3784, owner, November 3, 2026): a `font-weight` is one of the
+                     four house weights, `var(--font-weight-light|regular|bold|black)`, or a CSS-wide
+                     keyword, and a `font` shorthand types no weight. There is no semibold step and no
+                     domain weight: a typed 600 becomes the bold or the regular.
 
     PATTERN GREP, NOT A PARSE. Checks 2 to 5 match patterns rather than parse CSS or SCSS: no runtime
     dependency, and a bare Windows PowerShell 5.1 runs it. The price is the occasional false positive,
@@ -469,21 +472,26 @@ function Find-HouseStyleColourHit {
 
 function Find-HouseStyleTypeHit {
     <#
-        Every declaration whose font size is not read from the type scale (#3778): a `font-size` whose value
-        is anything but `var(--text-*)` or a CSS-wide keyword, and a `font` shorthand that types a size (a
-        length, a size keyword, or a calc()/clamp()/min()/max()). Returns @{ Name; Kind = 'types'; Property;
-        Line }, one per declaration. Name is the function's name for a computed size, else the value itself,
-        so an allowlist entry can name `16px`.
+        Every declaration whose font size is not read from the type scale (#3778), or whose weight is not one
+        of the house weights (#3784): a `font-size` whose value is anything but `var(--text-*)` or a CSS-wide
+        keyword, a `font-weight` whose value is anything but `var(--font-weight-light|regular|bold|black)` or
+        a CSS-wide keyword, and a `font` shorthand that types a size (a length, a size keyword, or a
+        calc()/clamp()/min()/max()) or a weight (a number, `bold`, `bolder`, `lighter`). Returns @{ Name;
+        Kind = 'types' or 'weights'; Property; Line }, one per declaration, the size before the weight. Name
+        is the function's name for a computed value, else the value itself, so an allowlist entry can name
+        `16px` or `600`.
         A custom property is never matched: `--text-hero: 48px` is a domain step on the scale, read with var().
-        font-weight is out of scope: the house has no step for every weight a page uses (#3778).
+        A weight has no domain step: the owner chose the four house weights and no more (#3784).
     #>
     param([Parameter(Mandatory)][AllowEmptyString()][string]$Text)
 
     # Comments are blanked to spaces, so a line number still lands where it did.
     $Text = [regex]::Replace($Text, '(?m)/\*[\s\S]*?\*/|^[ \t]*//.*$', [System.Text.RegularExpressions.MatchEvaluator] { param($c) $c.Value -replace '[^\n]', ' ' })
     # Nothing before the name that makes it part of a longer one (`--my-font-size:`, `$font-size:`, `.font`),
-    # and nothing after `font` but the colon: `font-family:` and `font-weight:` are not read.
-    $decl = '(?<![\w$@.-])(?<prop>font-size|font)(?![\w-])[''"]?\s*:\s*(?<val>[^;{}\r\n]*)'
+    # and nothing after `font` but the colon: `font-family:` and the like are not read.
+    $decl = '(?<![\w$@.-])(?<prop>font-size|font-weight|font)(?![\w-])[''"]?\s*:\s*(?<val>[^;{}\r\n]*)'
+    $houseWeight = '^var\(\s*--font-weight-(?:light|regular|bold|black)\s*\)$'
+    $typedWeight = '(?<![\w.-])(?:[1-9]\d{0,2}|1000)(?![\w.%-])|(?<![\w-])(?:bold|bolder|lighter)(?![\w-])'
     $wide = '^(?:inherit|initial|unset|revert|revert-layer)$'
     $length = '(?<![\w.-])(?:\d*\.)?\d+(?:px|r?em|%|pt|pc|vw|vh|vmin|vmax|vi|vb|ch|ex|cap|ic|r?lh|cm|mm|in|q|cq[whib]|cqmin|cqmax)(?![\w-])'
     $keyword = '(?<![\w-])(?:xx-small|x-small|small|medium|large|x-large|xx-large|xxx-large|larger|smaller)(?![\w-])'
@@ -493,25 +501,30 @@ function Find-HouseStyleTypeHit {
         # A value inside a string ends at its closing quote; `!important` changes nothing about the size.
         $val = ($m.Groups['val'].Value -replace '[''"`].*$', '' -replace '!\s*important', '').Trim()
         if (-not $val -or $val -match $wide) { continue }
-        $name = $null
+        $name = $null; $kind = 'types'
         if ($m.Groups['prop'].Value -eq 'font-size') {
             if ($val -match '^var\(\s*--text-[A-Za-z0-9_-]+\s*\)$') { continue }
             $fn = [regex]::Match($val, '^(?<fn>[A-Za-z-]+)\(')
             $name = if ($fn.Success -and $fn.Groups['fn'].Value -ne 'var') { $fn.Groups['fn'].Value.ToLowerInvariant() } else { $val }
+        } elseif ($m.Groups['prop'].Value -eq 'font-weight') {
+            if ($val -match $houseWeight) { continue }
+            $kind = 'weights'
+            $fn = [regex]::Match($val, '^(?<fn>[A-Za-z-]+)\(')
+            $name = if ($fn.Success -and $fn.Groups['fn'].Value -ne 'var') { $fn.Groups['fn'].Value.ToLowerInvariant() } else { $val }
         } else {
-            # The shorthand: var() reads and the line height after the slash say nothing about the size.
+            # The shorthand: var() reads and the line height after the slash say nothing about the size or weight.
             $rest = [regex]::Replace($val, 'var\([^()]*\)', ' ')
             $rest = [regex]::Replace($rest, '/\s*\S+', ' ')
             $c = [regex]::Match($rest, $computed)
+            $s = [regex]::Match($rest, $length + '|' + $keyword)
+            $w = [regex]::Match($rest, $typedWeight)
             if ($c.Success) { $name = $c.Groups['fn'].Value.ToLowerInvariant() }
-            else {
-                $s = [regex]::Match($rest, $length + '|' + $keyword)
-                if (-not $s.Success) { continue }
-                $name = $s.Value
-            }
+            elseif ($s.Success) { $name = $s.Value }
+            elseif ($w.Success) { $name = $w.Value; $kind = 'weights' }
+            else { continue }
         }
         if ($null -eq $map) { $map = New-HouseStyleLineMap -Text $Text }
-        @{ Name = $name; Kind = 'types'; Property = $m.Groups['prop'].Value; Line = (Get-HouseStyleLineNumber -Map $map -Index $m.Index) }
+        @{ Name = $name; Kind = $kind; Property = $m.Groups['prop'].Value; Line = (Get-HouseStyleLineNumber -Map $map -Index $m.Index) }
     }
 }
 
@@ -689,7 +702,9 @@ function Invoke-HouseStyleCheck {
             $hits += @{ Check = 'colour'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = "$($h.Property): $what -- a rule reads a colour only as a token: use a house token with var(), or add a domain token (--name: value) and read that" }
         }
         foreach ($h in @(Find-HouseStyleTypeHit -Text $text)) {
-            $hits += @{ Check = 'type'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = "$($h.Property): types the size $($h.Name) -- a rule reads a font size only from the type scale: use var(--text-*), or add a domain step (--text-name: value) and read that" }
+            $text5 = if ($h.Kind -eq 'weights') { "$($h.Property): types the weight $($h.Name) -- a rule reads a font weight only as a house weight: use var(--font-weight-light|regular|bold|black); there is no semibold, so a 600 becomes the bold or the regular" }
+                else { "$($h.Property): types the size $($h.Name) -- a rule reads a font size only from the type scale: use var(--text-*), or add a domain step (--text-name: value) and read that" }
+            $hits += @{ Check = 'type'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = $text5 }
         }
         foreach ($f in $hits) {
             if (Test-HouseStyleAllowed -Path $rel -Name $f.Name -Allow $Allow) { $allowed++ } else { $findings.Add($f) }

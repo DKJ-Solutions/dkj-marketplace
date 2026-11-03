@@ -177,7 +177,11 @@ inside a card, [#3175](https://github.com/DKJ-Solutions/dkj-claude-plugins/issue
    that types a size (`15px`, `0.88em`, `larger`, `clamp(...)`), is a finding
    ([#3778](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3778)). A domain step's own value
    (`--text-hero: 48px`) is not, the same way a domain colour is not. A relative size on `code` in running
-   text is a finding too: the house sets it once, in `:where(code)`. `font-weight` is not read.
+   text is a finding too: the house sets it once, in `:where(code)`. A weight is held the same way
+   ([#3784](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3784)): a `font-weight` reads one of the
+   four house weights, `var(--font-weight-light|regular|bold|black)` (300/500/700/900), and a `font`
+   shorthand types no weight. There is no semibold step and no domain weight, so a typed `600` becomes the
+   bold or the regular.
 
 Checks 2 to 5 use a pattern grep over every tracked file of the kinds a page is built in (`.css`, `.html`, `.js`,
 `.py`, `.ps1` and the like, not Markdown), so CSS inside a Python or PowerShell string counts. A false
