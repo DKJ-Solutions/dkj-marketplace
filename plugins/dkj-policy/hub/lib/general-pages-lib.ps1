@@ -1039,17 +1039,18 @@ function Format-HubSettingsPageHtml {
     $body = '<div class="card-grid hs-theme" id="settings-theme-grid"><div class="grid__head"><h2>Theme</h2></div>' + $toggle +
         # The reset IS a card like the swatches', the whole card the button (Dave, November 2, 2026), hovering as a link card
         # does in a group, on --bg-4 (not .card--link itself, which is a link's, #3566); it closes their row, shown whichever mode the toggle shows (it carries no data-mode).
+        '<div class="hs-swatches" id="settings-theme-swatches"></div>' +
         '<button type="button" class="card hs-swatch hs-reset" id="settings-theme-foot">Reset</button></div>' + "`n" +
         # Each theme's card draws the whole picker and keeps only its own swatch, unwrapped from its row (no label, no
         # 64px label column). The picker never redraws, and a click or a theme change reaches every swatch left in every
         # picker, so the twelve cards and the header stay in step with no logic of this page's own. No house class is
         # restyled for it, and the header panel's picker keeps its rows and labels.
         '<script>(function () {' +
-        ' var grid = document.getElementById("settings-theme-grid"), foot = document.getElementById("settings-theme-foot");' +
+        ' var grid = document.getElementById("settings-theme-grid"), swatches = document.getElementById("settings-theme-swatches"), foot = document.getElementById("settings-theme-foot");' +
         ' DKJTheme.themes.forEach(function (t) {' +
         ' var card = document.createElement("section"); card.className = "card hs-swatch"; card.setAttribute("data-mode", t.mode);' +
         ' card.innerHTML = "<div></div>";' +
-        ' grid.insertBefore(card, foot);' +
+        ' swatches.appendChild(card);' +
         ' var el = card.lastChild; DKJTheme.picker(el, { light: "Light", dark: "Dark" });' +
         ' Array.prototype.forEach.call(el.querySelectorAll(".theme-picker__row"), function (row) { if (row.querySelector(".theme-swatch--" + t.mode)) { row.parentNode.replaceChild(row.querySelector(".theme-picker__swatches"), row); } else { row.parentNode.removeChild(row); } });' +
         ' Array.prototype.forEach.call(el.querySelectorAll(".theme-swatch"), function (s) { if (s.getAttribute("data-id") !== t.id) { s.parentNode.removeChild(s); } });' +
@@ -1087,6 +1088,12 @@ function Format-HubSettingsPageHtml {
     $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
         '.hs-theme > :is(.grid__head, .grid__full) { flex: 0 0 100%; }' + "`n" +
         '.hs-swatch { margin-top: 0; padding: var(--spacing-2); }' + "`n" +
+        # The theme cards stand in a grid of their own (Maikel, November 3, 2026), wrapping on a narrow column. One step
+        # down from the group, they lose the house's card-in-a-group look (it reads direct children only), so it is
+        # given back here with the same tokens: --bg-3 with a --bg-4 border, and the swatch's own ring on --bg-4.
+        '.hs-swatches { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
+        '.hs-swatches > .card { margin-top: 0; background: var(--bg-3); border-color: var(--bg-4); }' + "`n" +
+        '.hs-swatches > .card .theme-swatch { border-color: var(--bg-4); }' + "`n" +
         # The two toggles (Mode and Width) stand --spacing-11 tall and take the cards' --bg-4 border, the line between
         # their buttons too (Maikel, November 3, 2026). Scoped to this page's groups, so the house .controls .seg keeps its
         # 30px everywhere else.
