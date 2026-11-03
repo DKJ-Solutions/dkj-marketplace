@@ -54,7 +54,7 @@ specialist, each opening a landing page; then also an h2 Hooks and Skills.
 
 - [x] `dev-pages.tests.ps1`: 15 asserts on a fixture plugin (resolution, the three readers, the sections, the routes, each landing page, escaping); the suite is 561 passed, 0 failed.
 - [x] Served from the branch on port 4891: every route answers 200, an unknown slug 404.
-- [ ] The owner's look: a visible result, so the branch waits for it before the PR.
+- [x] The owner's look: a visible result, so the branch waited for it; Dave moved the new cards to the top and then said "open the PR" (November 3, 2026).
 
 ### DEPLOY: feat/plugin-page-contents
 
