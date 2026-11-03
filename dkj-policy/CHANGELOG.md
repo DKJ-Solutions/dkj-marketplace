@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**4 / 6 minor entries** <!-- pending-tally -->
+**5 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/gwen-simple-all-the-way-down · 20261103-130201Z
+
+Gwen's manual gains a hard rule, **Simple, all the way down**. Her bar is Linear's website or Apple Notes:
+a simple purpose, architecture, design and implementation. She cuts taglines, helper text and secondary
+labels, and fixes the layout when a screen seems to need them. Every decision has to improve the user,
+developer and agent experience at once, without breaking anything.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Pages and tools designed by Gwen in any consuming repo come out leaner: one purpose, no explanatory chrome.
+
+**Score:** 3
+
+#### Pull Request
+
+Gwen's manual holds the simple-all-the-way-down bar
+
+Plugins: dkj-subagents-alpha
+
+[PR #3774](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3774)
+
+---
 
 ### DEPLOY: feat/3772-no-artifacts · 20261103-122943Z
 
