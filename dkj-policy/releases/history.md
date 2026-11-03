@@ -4,6 +4,7 @@
 
 | Version | Date | Type | Title |
 |---|---|---|---|
+| [6.4.0](audience/6.x/6.4.0.md) | 2026-11-03 | Minor | Minor release |
 | [6.3.0](audience/6.x/6.3.0.md) | 2026-11-02 | Minor | Minor release |
 | [6.2.0](audience/6.x/6.2.0.md) | 2026-11-02 | Minor | Minor release |
 | [6.1.0](audience/6.x/6.1.0.md) | 2026-10-30 | Minor | Minor release |
