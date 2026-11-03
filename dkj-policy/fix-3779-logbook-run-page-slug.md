@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Issue #3779: `/logbook/<slug>` cut and modelled the whole Logbook store to find one run. Pick out only
+the runs whose minute can carry the slug, before the cut.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Select-LogbookSlugRuns` in `plugins/dkj-policy/hub/lib/logbook-lib.ps1`: the runs that start in the
+  slug's minute, plus every sweep whose window holds that minute
+- [x] `Resolve-HubTimingPage` cuts and models only those runs on a run page
 
 ### TEST
 
+- [x] `logbook.tests.ps1`: a same-minute pair keeps its id suffix, a sweep lap that starts at a fold is
+  found by the sweep's window and gets the slug the overview links, and a slug with no minute selects nothing
+
 ### DEPLOY: fix/3779-logbook-run-page-slug
 
-**Score:**
+A Logbook run page (`/logbook/<slug>`) no longer cuts and models every run in the store to find one
+([#3779](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3779)). `Select-LogbookSlugRuns`
+picks out the runs that can carry the slug: those that start in the slug's minute, which together
+decide whether it carries an id suffix, and every sweep whose window holds that minute, because a
+sweep's lap starts at a fold inside it. Only those reach `Get-LogbookRuns`, so the step log and the
+`git log` are read only for that window, not from the oldest sweep in the store. The page reads the
+same as before. On this machine, with 21 store runs, the whole-store cut took 470 ms.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+On a hub with a long Logbook, a run page opens without the delay that grew with every session.
+
+**Score:** 2
 
 #### Pull Request
 

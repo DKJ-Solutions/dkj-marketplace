@@ -134,7 +134,9 @@ function Resolve-HubTimingPage {
         $lbSlug = $Matches[1]
         $lb = Read-StopwatchStore -Path $c.LogbookPath
         if ($lb.Error) { return (& $ok (Format-LogbookPageHtml -Runs @() -ReadError $lb.Error -StorePath $c.LogbookPath @site)) }
-        $group = Find-StopwatchGroup -Model (ConvertTo-LogbookModel -Runs (Get-LogbookRuns -Runs $lb.Runs -StepLogPath $c.StepLogPath -RepoRoot $c.Root)) -Slug $lbSlug
+        # Only the store runs that can carry this slug are cut and modelled, so the page does not slow with the store (#3779).
+        $lbCandidates = Select-LogbookSlugRuns -Runs $lb.Runs -Slug $lbSlug
+        $group = Find-StopwatchGroup -Model (ConvertTo-LogbookModel -Runs (Get-LogbookRuns -Runs $lbCandidates -StepLogPath $c.StepLogPath -RepoRoot $c.Root)) -Slug $lbSlug
         if (-not $group) { return $missing }
         $phases = Get-StopwatchTranscriptCache -Runs @($group.Rows | ForEach-Object { $_.Run }) -CachePath $c.LogbookPhasesPath -TranscriptDir $c.TranscriptDir -StepLogPath $c.StepLogPath -RepoRoot $c.Root
         return (& $ok (Format-LogbookRunPageHtml -Group $group -StorePath $c.LogbookPath -Transcript $phases @site))

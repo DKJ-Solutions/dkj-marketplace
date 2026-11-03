@@ -196,6 +196,23 @@ Assert-True ($stale[-1].RunStart -eq $going.Start -and @($sm.Groups | Where-Obje
 $young = Split-LogbookSweepRuns -Runs @($going) -Folds @($folds[0], @{ At = (& $at 85000); Issue = '3500' })
 Assert-Equal 1 @((ConvertTo-LogbookModel -Runs $young -Now (& $at 86000)).Groups | Where-Object { $_.Running }).Count 'and a sweep under a day old still shows its issue in progress going'
 
+# A run page reads only the store runs that can carry its slug (#3779).
+$store = @(
+    @{ Id = 'm1'; Label = 'one'; Start = (& $at 5000); End = (& $at 5100) },
+    @{ Id = 'm2'; Label = 'two'; Start = (& $at 5030); End = (& $at 5200) },
+    @{ Id = 'far'; Label = 'far'; Start = (& $at 9000); End = (& $at 9100) },
+    $sw
+)
+$full = ConvertTo-LogbookModel -Runs (Split-LogbookSweepRuns -Runs $store -Folds $folds) -Now (& $at 9500)
+$pick = { param($slug) ConvertTo-LogbookModel -Runs (Split-LogbookSweepRuns -Runs (Select-LogbookSlugRuns -Runs $store -Slug $slug) -Folds $folds) -Now (& $at 9500) }
+$m2Slug = @($full.Groups | Where-Object { $_.Rows[0].Run.Id -eq 'm2' })[0].PageSlug
+Assert-Equal 'm1,m2' ((Select-LogbookSlugRuns -Runs $store -Slug $m2Slug | ForEach-Object { $_.Id } | Sort-Object) -join ',') 'a run slug selects every run that starts in its minute, and no other plain run'
+Assert-True ($m2Slug -match '-m2$' -and (Find-StopwatchGroup -Model (& $pick $m2Slug) -Slug $m2Slug).Rows[0].Run.Id -eq 'm2') 'so two runs of one minute keep their id suffix, and the slug still finds its run'
+$lapSlug = @($full.Groups | Where-Object { $_.Rows[0].Run.Id -eq 'sw1-2' })[0].PageSlug
+Assert-Equal 'sw1' ((Select-LogbookSlugRuns -Runs $store -Slug $lapSlug | ForEach-Object { $_.Id }) -join ',') 'a sweep lap that starts at a fold is found by the sweep''s window'
+Assert-Equal 'sw1-2' (Find-StopwatchGroup -Model (& $pick $lapSlug) -Slug $lapSlug).Rows[0].Run.Id 'and the cut sweep gives that lap the same slug the overview links'
+Assert-Equal 0 @(Select-LogbookSlugRuns -Runs $store -Slug 'not-a-minute').Count 'a slug that names no minute selects nothing'
+
 Write-Host ''
 Write-Host "logbook: $script:pass passed, $script:fail failed"
 if ($script:fail -gt 0) { exit 1 }
