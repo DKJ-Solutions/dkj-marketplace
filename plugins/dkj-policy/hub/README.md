@@ -346,12 +346,13 @@ the machine) once. And a product's `Ports` must not overlap 4890-4899, which the
 **They time how long an assignment takes, from the prompt to the moment Claude is back on the trunk**, and
 both were the source repo's own pages until the owner moved them here
 ([#3470](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3470), October 25, 2026). The
-**Stopwatch** times a prompt whose first line begins with `stopwatch:`, and every release cut without one:
-`cut-release.ps1` starts a `release cut` run as it begins, unless a run is already going, and it ends on the
-cut's `release: vX.Y.Z release notes` commit ([#3781](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3781));
-the **Logbook** times every session
-that begins on a clean trunk, without anybody marking it. This plugin's `UserPromptSubmit` and `Stop` hooks
-record the runs (`hooks/stopwatch-hook.ps1`, `hooks/logbook-hook.ps1`), and the pages only read them.
+**Stopwatch** times a prompt whose first line begins with `stopwatch:`, and every release cut even without
+one. The **Logbook** times every session that begins on a clean trunk, without anybody marking it. This plugin's `UserPromptSubmit` and `Stop` hooks
+record the runs (`hooks/stopwatch-hook.ps1`, `hooks/logbook-hook.ps1`), and the pages only read them. The
+one run a script starts is the cut's: `cut-release.ps1` starts a `release cut` run as it begins, unless a run
+is already going, and the Stop hook ends it on the cut's `release: vX.Y.Z release notes` commit. A cut refused
+after that start leaves its run going; the next cut discards it once it is over 12 hours old
+([#3781](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3781)).
 
 - **One store per repo, on each machine**: `%LOCALAPPDATA%\dkj-claude-plugins\repos\<repo>-<hash>\`, named by
   the checkout's folder and a hash of its path, so two repos in folders of one name never share one (a

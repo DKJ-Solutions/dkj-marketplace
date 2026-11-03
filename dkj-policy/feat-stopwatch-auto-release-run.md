@@ -45,7 +45,8 @@ Resolves #3781. The owner asked (November 3, 2026) that every release cut is tim
 
 - [x] `stopwatch-lib.ps1`: `Invoke-StopwatchScriptStart` (pure) and `Start-StopwatchScriptRun` (store write under the hooks' lock, never throws)
 - [x] `cut-release.ps1` (plugin and root copy): start a `release cut` run before the first step
-- [x] Docs: the hub README's timing section and the `stopwatch-prepare` skill
+- [x] A run of the cut's own label left going over 12 hours (a refused cut) is discarded at the next cut (Victor's review)
+- [x] Docs: the hub README's timing section, the `stopwatch-prepare` skill and the hook's header (Edith's copy edit); the rendered page texts went to #3782
 
 ### TEST
 
@@ -53,7 +54,7 @@ Resolves #3781. The owner asked (November 3, 2026) that every release cut is tim
 
 ### DEPLOY: feat/stopwatch-auto-release-run
 
-Every release cut is now timed on the hub's `/stopwatch` page, whether or not the prompt started with `stopwatch:`. `cut-release.ps1` starts a `release cut` run as it begins, unless a run is already going (the owner's own `stopwatch:` run, or this cut's on a catch-up round), and the run ends on the cut's `release: vX.Y.Z release notes` commit as before. A missing Stopwatch lib or a store that does not read leaves the cut exactly as it was. Until now only one cut had ever been timed, so no two cuts could be compared.
+Every release cut is now timed on the hub's `/stopwatch` page, whether or not the prompt started with `stopwatch:`. `cut-release.ps1` starts a `release cut` run as it begins, unless a run is already going (the owner's own `stopwatch:` run, or this cut's on a catch-up round), and the run ends on the cut's `release: vX.Y.Z release notes` commit as before. A cut refused after that start leaves its run going, and the next cut discards it once it is over 12 hours old. A missing Stopwatch lib or a store that does not read leaves the cut exactly as it was. Until now only one cut had ever been timed, so no two cuts could be compared.
 
 **Score:** 3
 

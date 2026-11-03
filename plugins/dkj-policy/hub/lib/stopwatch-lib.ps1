@@ -14,9 +14,10 @@
         with the checkout's HEAD as its StartHead. It is the only way a run starts from a prompt (a prepared card,
         below, has no run behind it; the first prompt carrying its label starts the run on that card). The one other
         start is a script's own: cut-release.ps1 starts a `release cut` run when it begins, unless a run is already
-        going (Start-StopwatchScriptRun, #3781), so every release cut is timed whether or not anybody asked. A run still going when a
-        marked prompt arrives is DISCARDED and the new one starts: a run that never reached the trunk would
-        otherwise block every later measurement, and the page has no button left to discard it.
+        going (Start-StopwatchScriptRun, #3781), so every release cut is timed whether or not anybody asked.
+        A run still going when a marked prompt arrives is DISCARDED and the new one starts: a run that never
+        reached the trunk would otherwise block every later measurement, and the page has no button left to
+        discard it.
       - A Stop hook ends the running run once the checkout is on the trunk, clean, with HEAD moved off StartHead.
         That is a sign the work landed, not a proof of it. The HEAD test is the reason no branch needs to be seen:
         a whole ship (branch, PR, merge, fold) usually happens inside one turn, and the Stop hook fires only at a
@@ -427,18 +428,27 @@ function Invoke-StopwatchScriptStart {
         label. A run going is either the owner's own `stopwatch:` run, which this cut is part of and which must not
         be discarded, or this same cut's run on a catch-up round or a retry after a refusal, which must keep its
         start. An empty -Head starts nothing, for the hook's reason: a run without a StartHead never stops by
-        itself. Unlike a marked prompt this never discards a run. Returns Runs and Changed (write only when set).
+        itself. The one run it does discard is a run of ITS OWN label started more than -StaleAfterHours ago: a cut
+        refused after the start leaves its run going, since only the notes commit ends it, and the next cut, days
+        later, would otherwise inherit that start and show the days between as cut time (Victor, #3781). Returns
+        Runs and Changed (write only when set).
     #>
     param(
         [AllowEmptyCollection()][object[]]$Runs = @(),
         [Parameter(Mandatory = $true)][string]$Label,
         [Parameter(Mandatory = $true)][datetime]$Now,
-        [string]$Head = ''
+        [string]$Head = '',
+        [double]$StaleAfterHours = 12
     )
     $runs = @($Runs | Where-Object { $_ })
     $label = ConvertTo-StopwatchLabel -Text $Label
-    if (-not $label -or -not $Head -or @($runs | Where-Object { -not $_.End }).Count) { return @{ Runs = $runs; Changed = $false } }
-    return @{ Runs = @($runs + @(New-StopwatchRun -Label $label -Now $Now -StartHead $Head)); Changed = $true }
+    $same = @{ Runs = $runs; Changed = $false }
+    if (-not $label -or -not $Head) { return $same }
+    $cutoff = $Now.ToUniversalTime().AddHours(-$StaleAfterHours)
+    $stale = @($runs | Where-Object { -not $_.End -and $_.Label -ieq $label -and $_.Start.ToUniversalTime() -lt $cutoff })
+    $kept = @($runs | Where-Object { $stale -notcontains $_ })
+    if (@($kept | Where-Object { -not $_.End }).Count) { return $same }
+    return @{ Runs = @($kept + @(New-StopwatchRun -Label $label -Now $Now -StartHead $Head)); Changed = $true }
 }
 
 function Start-StopwatchScriptRun {

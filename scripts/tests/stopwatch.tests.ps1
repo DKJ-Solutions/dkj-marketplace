@@ -683,6 +683,12 @@ Assert-True ($s.Changed -and @($s.Runs).Count -eq 2 -and $s.Runs[0].Id -eq 'd1' 
 $s = Invoke-StopwatchScriptStart -Runs @($done, $going) -Label 'release cut' -Now (& $at 10) -Head 'bbb'
 Assert-True (-not $s.Changed -and @($s.Runs).Count -eq 2 -and @($s.Runs | Where-Object { $_.Id -eq 'g1' -and -not $_.End }).Count -eq 1) 'a run already going -- the owner''s own, or this cut''s on a catch-up round -- is kept and nothing starts'
 Assert-True (-not (Invoke-StopwatchScriptStart -Runs @() -Label 'release cut' -Now (& $at 10) -Head '').Changed) 'an unknown HEAD starts nothing'
+$oldCut = @{ Id = 'c0'; Label = 'Release Cut'; Start = (& $at 0); End = $null; Auto = $true; StartHead = 'old' }
+$s = Invoke-StopwatchScriptStart -Runs @($done, $oldCut) -Label 'release cut' -Now (& $at (13 * 3600)) -Head 'new'
+Assert-True ($s.Changed -and @($s.Runs).Count -eq 2 -and $s.Runs[0].Id -eq 'd1' -and $s.Runs[1].StartHead -eq 'new' -and -not @($s.Runs | Where-Object { $_.Id -eq 'c0' }).Count) 'a run of its own label left going for more than 12 hours -- a refused cut -- is discarded and the new cut starts fresh'
+Assert-True (-not (Invoke-StopwatchScriptStart -Runs @($oldCut) -Label 'release cut' -Now (& $at (11 * 3600)) -Head 'new').Changed) 'a run of its own label under 12 hours old is kept: a retry or a stopwatch: release cut prompt'
+$oldOther = @{ Id = 'o0'; Label = 'Docs fix'; Start = (& $at 0); End = $null; Auto = $true; StartHead = 'old' }
+Assert-True (-not (Invoke-StopwatchScriptStart -Runs @($oldOther) -Label 'release cut' -Now (& $at (48 * 3600)) -Head 'new').Changed) 'a run of another label is never discarded, however old'
 Assert-True (-not (Invoke-StopwatchScriptStart -Runs @() -Label "  `t " -Now (& $at 10) -Head 'aaa').Changed) 'an empty label starts nothing'
 Assert-Equal 'release cut' $script:StopwatchReleaseLabel 'the cut is timed under the label the hand-timed cut used, so its runs land on that card'
 $cutRun = (Invoke-StopwatchScriptStart -Runs @() -Label $script:StopwatchReleaseLabel -Now (& $at 10) -Head 'aaa').Runs
