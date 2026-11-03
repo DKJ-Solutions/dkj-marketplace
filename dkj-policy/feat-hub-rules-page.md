@@ -47,7 +47,8 @@ cards from the repo, the way the Specialists page reads its Lenses.
 - [x] `Get-HubRulePages` + `Get-HubSectionCards` in `hub/lib/general-pages-lib.ps1`: a Repo rules `Source` section on `/claude/rules`, holding only what is in `.claude/rules` (Maikel dropped a Constitution section read from the root `CLAUDE.md`'s imports, the same day), and `Bare`, so no heading repeats the h1 and the cards stand on the page as h2 cards
 - [x] `Format-HubRulePageHtml` on a shared `Format-HubDocPageHtml`, which the lens page now uses too
 - [x] The `/claude/rules/<name>` route in `serve-general-pages.ps1`, a 404 for a name the repo has no rule document of
-- [x] `hub/README.md` names the Rules page's sections
+- [x] A card's sub line is the rule file's `description:` frontmatter, else its `# ` title past the lead before an em dash; `this-repo.md` and `language-layers.md` carry one (always-on budget gate: OK)
+- [x] `hub/README.md` names the Rules page's cards
 
 ### TEST
 
@@ -57,8 +58,9 @@ cards from the repo, the way the Specialists page reads its Lenses.
 ### DEPLOY: feat/hub-rules-page
 
 The toolbox's Rules page (`/claude/rules`) is no longer empty. It holds cards read from the repo, under no
-heading but the page's own: a card per `.claude/rules/*.md` and nothing else, where a path-scoped rule says it loads only when
-Claude touches a matching file. Each card opens on `/claude/rules/<name>` with the file rendered as a lens
+heading but the page's own: a card per `.claude/rules/*.md` and nothing else, described by the file's own `description:` frontmatter key (or
+its title where it has none), and marked `(path-scoped)` where it loads only when Claude touches a matching
+file. Each card opens on `/claude/rules/<name>` with the file rendered as a lens
 page is.
 
 **Score:** 2

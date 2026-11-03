@@ -592,7 +592,7 @@ function Get-HubRulePages {
     <#
         The rule files in the .claude/rules folder of the repo at -RepoRoot -- what is in that folder and nothing else
         (Maikel, November 3, 2026) -- each a card's @{ Href; Label; Sub; Icon; Path; Display }, by name, read per request
-        as the lenses are. The Label is the file's name, the Sub its own '# ' title, and a path-scoped rule ('paths:' in
+        as the lenses are. The Label is the file's name, the Sub its 'description:' frontmatter or else its '# ' title, and a path-scoped rule ('paths:' in
         its frontmatter, so it loads only when Claude touches a matching file) ends it on '(path-scoped)' (Maikel,
         November 3, 2026: shorter than saying so in full). None without a -RepoRoot or the folder.
     #>
@@ -605,18 +605,27 @@ function Get-HubRulePages {
     foreach ($f in @(Get-ChildItem -LiteralPath $dir -File | Where-Object { $_.Extension -eq '.md' } | Sort-Object Name)) {
         $label = $f.BaseName
         if ($label -cnotmatch '^[A-Za-z0-9._-]{1,80}\z') { continue }
-        $sub = Get-HubDocTitle -Path $f.FullName
-        # A title's lead before its em dash names the subject, which the card's own title -- the file's name -- already
-        # does (Maikel, November 3, 2026): 'Language -- which layers ...' under 'language-layers'. So the Sub is what
-        # follows it, a plain word opening it raised to a capital; an identifier ('dkj-marketplace') is left as written.
-        $dash = ' ' + [char]0x2014 + ' '
-        $at = $sub.IndexOf($dash)
-        if ($at -gt 0 -and $at + $dash.Length -lt $sub.Length) {
-            $sub = $sub.Substring($at + $dash.Length).Trim()
-            if ($sub -cmatch '\A[a-z]+ ') { $sub = $sub.Substring(0, 1).ToUpperInvariant() + $sub.Substring(1) }
+        $front = ''
+        try { $front = [regex]::Match(([System.IO.File]::ReadAllText($f.FullName, $utf8) -replace "`r`n", "`n"), '\A---\n([\s\S]*?)\n---(\n|\z)').Groups[1].Value } catch { }
+        # The card says what the rule is about in the file's own 'description:' frontmatter key, where it has one
+        # (Maikel, November 3, 2026). Claude Code reads only 'paths:' there, so the key changes nothing it loads.
+        $desc = [regex]::Match($front, '(?m)^description:[ \t]*(.+?)[ \t]*$')
+        if ($desc.Success) {
+            $sub = $desc.Groups[1].Value -replace '\A([''"])(.*)\1\z', '$2'
+        } else {
+            $sub = Get-HubDocTitle -Path $f.FullName
+            # Without one, the '# ' title, past its lead before an em dash: that names the subject, which the card's own
+            # title -- the file's name -- already does ('Language -- which layers ...' under 'language-layers'). A plain
+            # word then opening it is raised to a capital; an identifier ('dkj-marketplace') is left as written.
+            $dash = ' ' + [char]0x2014 + ' '
+            $at = $sub.IndexOf($dash)
+            if ($at -gt 0 -and $at + $dash.Length -lt $sub.Length) {
+                $sub = $sub.Substring($at + $dash.Length).Trim()
+                if ($sub -cmatch '\A[a-z]+ ') { $sub = $sub.Substring(0, 1).ToUpperInvariant() + $sub.Substring(1) }
+            }
         }
-        $scoped = $false
-        try { $scoped = [regex]::IsMatch(([System.IO.File]::ReadAllText($f.FullName, $utf8) -replace "`r`n", "`n"), '\A---\n(?:(?!---\n)[\s\S])*?(?m:^paths:)') } catch { }
+        # A top-level 'paths:' key, as Claude Code (and Test-IsRuleFileScoped) reads it.
+        $scoped = [regex]::IsMatch($front, '(?m)^paths:')
         if ($scoped) { $sub = ($(if ($sub) { $sub + ' ' } else { '' })) + '(path-scoped)' }
         $out.Add(@{ Href = '/claude/rules/' + $label; Label = $label; Sub = $sub; Icon = 'rules'; Path = $f.FullName; Display = ('.claude/rules/' + $f.Name) })
     }

@@ -16,7 +16,9 @@ landing page with nothing on it yet, the Specialists page a Lenses section, a ca
 opening on `/claude/specialists/lenses/<name>` with the lens's text (Maikel, October 30, 2026; groups may nest, and a `Section`
 group is a heading, `Get-HubGroups`), and the Rules page cards read from the repo the same way: a card per
 `.claude/rules/*.md` and nothing else, under no heading but the page's own, each opening on `/claude/rules/<name>`
-with its text (Maikel, November 3, 2026; `Get-HubRulePages`, a `Bare` section). That covers
+with its text (Maikel, November 3, 2026; `Get-HubRulePages`, a `Bare` section). A rule file's card reads its
+`description:` frontmatter key, and the file's `# ` title where it has none. Claude Code reads only `paths:` there.
+That covers
 BWJ-Development's repos too. Until [#3198](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3198)
 (the owner's decision, October 20, 2026) all of this shipped with `dkj-solutions`, which BWJ-Development
 never enables, so a General page reached only the DKJ-Solutions repos. **"General" means what every repo
