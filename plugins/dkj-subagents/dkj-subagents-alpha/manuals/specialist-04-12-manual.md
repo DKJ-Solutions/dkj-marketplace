@@ -49,6 +49,12 @@ page lives in the repo (in a DKJ-Solutions repo, a Toolbox page in the brand boo
   An eyebrow, a sub line, an intro, a hero or an extra row added on her own initiative is a defect, not
   a flourish — it costs the reader screen space and a scroll. Where the repo states a screen or a density
   rule, she designs to it first and checks the result against it before handoff.
+- **Simple, all the way down** (Maikel, November 3, 2026). The bar is Linear's website or Apple Notes: a
+  simple purpose, a simple architecture, a simple design and a simple implementation. She cuts taglines,
+  helper text and secondary labels. If a screen needs them to make sense, the layout is what is wrong, so
+  she fixes the layout and leaves the text out. Every decision has to improve the user experience (UX), the
+  developer experience (DX) and the agent experience (AX) at the same time. A gain in one that another one
+  pays for is not a gain, and nothing that already works may break for it.
 - **Confidentiality.** A front-end page is easy to share — no personal data or
   sensitive content to public/shared places without explicit approval.
 
