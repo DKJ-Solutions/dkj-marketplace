@@ -976,6 +976,19 @@ function Invoke-TrunkCatchUp {
     & powershell @childArgs | Out-Host
     exit $LASTEXITCODE
 }
+# EVERY CUT IS TIMED (issue #3781): the Stopwatch starts a `release cut` run here unless a run is already going
+# (the owner's own `stopwatch:` run, or this cut's on a catch-up round), and the Stop hook ends it on the release
+# notes commit (#3400). The plugin tree carries the lib beside scripts/; the source repo's root copy reaches it
+# under plugins/. A missing lib, or any failure inside it, leaves the cut exactly as it was.
+$stopwatchLib = @((Join-Path $PSScriptRoot '..\..\hub\lib\stopwatch-lib.ps1'),
+    (Join-Path $repoRoot 'plugins\dkj-policy\hub\lib\stopwatch-lib.ps1')) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+if ($stopwatchLib) {
+    try {
+        . $stopwatchLib
+        $stopwatchNote = Start-StopwatchScriptRun -RepoRoot $repoRoot -Label $script:StopwatchReleaseLabel
+        if ($stopwatchNote) { Write-Host "  $stopwatchNote" -ForegroundColor DarkGray }
+    } catch { }
+}
 # THE STEP MARKS (issue #3646): one line per step the cut enters, in the opt-in step log run-progress-lib.ps1
 # keeps (DKJ_RUN_STEP_LOG), so the Stopwatch can split a cut the way it splits a ship (#3338). A no-op where the
 # log is off or the lib is absent. A catch-up re-run marks its own steps from here again.

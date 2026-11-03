@@ -9,7 +9,7 @@
 
         powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hooks/stopwatch-hook.ps1" -Hook Prompt
 
-    THE MARKER IS THE ONLY WAY A RUN STARTS: the Prompt hook reads the UserPromptSubmit JSON from stdin (only parses
+    THE MARKER IS THE ONLY WAY A PROMPT STARTS A RUN (cut-release.ps1 starts its own, #3781): the Prompt hook reads the UserPromptSubmit JSON from stdin (only parses
     its `prompt` field, never prints it) and a prompt whose first line begins with `stopwatch:` starts an Auto run
     labelled with the rest of that line (Get-StopwatchPromptMarker, which reads a pasted prompt past its
     `<pasted_content>` wrapper, #3336), discarding a run still going. The page is
