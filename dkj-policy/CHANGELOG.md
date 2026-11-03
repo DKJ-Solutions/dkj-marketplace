@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**10 / 13 minor entries** <!-- pending-tally -->
+**11 / 14 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/3777-card-shape-rule · 20261103-153718Z
+
+The brand book README's "Page patterns" now opens with a table that says which shape a page's cards take for what the page holds: a flat list of pages is one `.grid-3` of card links with no head, a grouped list puts each group's `h2` inside its grid as the `.grid__head` with `h3` cards, a few subject cards each take an `h2`, a document of more than four sections becomes an overview with a page per section, and a group's empty state sits inside its own grid as a `.grid__full` card. The parts were each defined before, but not when to use which, and a consumer's pages were correct by every token check and wrong by eye in both directions. No check holds the table.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A session building a page in any DKJ-Solutions repo has one rule to follow for card and heading structure, instead of the owner correcting each page by eye.
+
+**Score:** 2
+
+#### Pull Request
+
+Brand book: a decision rule for when headings group cards
+
+Plugins: dkj-policy
+
+[PR #3788](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3788)
+
+---
 
 ### DEPLOY: fix/3779-logbook-run-page-slug · 20261103-151817Z
 
