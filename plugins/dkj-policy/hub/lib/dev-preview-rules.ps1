@@ -57,7 +57,7 @@
     '<root>\.claude\worktrees\' is a different checkout, so a server started there is not ours either.
 
     THE GENERAL PAGES SERVER AND THE STATE FILE (#3119). Beside the repo's own server the hook starts the
-    plugin's general pages server (hub/pages/serve-general-pages.ps1: Artifacts, Issues, Release notes,
+    plugin's general pages server (hub/pages/serve-general-pages.ps1: Issues, Release notes,
     SessionStart), on the first free port of 4890-4899 under the same ownership rule. The two servers learn
     of each other through ONE file per checkout, %TEMP%\dkj-repo-hub-<leaf>-<hash>.json, which the hook
     writes at every session start: { root, hub, pages, product, mode, theme }, the Repository's url, the general

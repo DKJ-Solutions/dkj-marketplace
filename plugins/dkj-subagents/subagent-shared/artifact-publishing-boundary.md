@@ -1,1 +1,1 @@
-- Publishing or hosting as an Artifact happens in the main conversation, not by you.
+- Publish nothing as a claude.ai Artifact or Claude Doc, and call no tool that does. A visible result lives in the repo as a page, a document as a file.

@@ -381,7 +381,7 @@ if ([System.Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) {
             # THE GENERAL PAGES ARE THE PLUGIN HUB'S (#3540): this server is the product, so it neither builds nor relays them.
             # /plugins is not among them: the product has a Plugins page of its own, what the marketplace ships, where
             # the hub's is what this checkout enables (the owner, October 27, 2026).
-            foreach ($general in '/stopwatch', '/logbook', '/test-gate', '/repository', '/artifacts', '/issues', '/sessionstart', '/release-notes', '/about') {
+            foreach ($general in '/stopwatch', '/logbook', '/test-gate', '/repository', '/issues', '/sessionstart', '/release-notes', '/about') {
                 Assert-Equal 404 (Get-Status 'GET' $general "localhost:$port") "$general is no page of the product: it is the plugin hub's"
             }
             Assert-Equal 404 (Get-Status 'GET' '/../consumers/x.json' "localhost:$port") 'a path outside the routes is not found'
@@ -486,7 +486,7 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
             $far = if ($at -ge 0) { $page.Substring($at, $page.IndexOf('</section>', $at) - $at) } else { '' }
             Assert-True ($far -and $far -notmatch 'class="meta"') 'a checkout outside the scope root is not read'
             # THE PRODUCT (#3540): the general pages are the plugin hub's, so this server neither relays nor builds them.
-            foreach ($moved in '/artifacts', '/issues', '/sessionstart', '/release-notes', '/test-gate', '/repository') {
+            foreach ($moved in '/issues', '/sessionstart', '/release-notes', '/test-gate', '/repository') {
                 $r = if ($up) { Get-Raw 'GET' $moved "localhost:$port3" '' $port3 } else { '' }
                 Assert-True ($r -match 'HTTP/1.1 404' -and $r -match 'Not found\.') "$moved is a plain 404: it is the plugin hub's page, not the product's"
             }

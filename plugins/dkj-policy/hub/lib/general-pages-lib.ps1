@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    The GENERAL pages every repo's hub links -- Artifacts, Issues, Release notes and SessionStart, and since #3470 Test
+    The GENERAL pages every repo's hub links -- Issues, Release notes and SessionStart, and since #3470 Test
     gate, Stopwatch and Logbook, whose pages are test-gate-lib.ps1's, stopwatch-lib.ps1's and logbook-lib.ps1's --
     and the page shell, formatters and rules behind them (#3119). No I/O: the server
     (hub/pages/serve-general-pages.ps1) measures and reads, and hands the results in, so every rule
@@ -24,15 +24,15 @@
     are read from this plugin's own assets/dkj-brandbook/ (Get-HouseStyleDir), which every install of
     dkj-policy carries; they sat in the dkj-solutions extension's folder until #3531.
 
-    NOTHING HERE IS A REPO'S. Every value that is the repo's -- its name, its issue links, the register
+    NOTHING HERE IS A REPO'S. Every value that is the repo's -- its name, its issue links
     and the notes it holds -- arrives as a parameter, and the lib depends on no other lib of any repo:
     it has its own HTML escape. The helpers a measurement page needs (the number formats, the tile row,
     the share bar) are here too, because the source repo's own Test gate page reuses them: that repo's
     scripts/lib/dev-pages-lib.ps1 dot-sources this file, so nothing is written twice.
 
     EVERY VALUE THAT REACHES A PAGE IS ESCAPED, through ConvertTo-GeneralPageText. A link built from
-    data is given an href only when its url matches a fixed shape (an Artifact link, a GitHub issue
-    link), so a register or a tracker cannot put a script url on a page.
+    data is given an href only when its url matches a fixed shape (a GitHub issue
+    link), so a tracker cannot put a script url on a page.
 
     THE HUB'S CARDS are rendered here too (Format-HubCardLinkHtml), one per page, because every hub draws its
     home page as one grid of card links (#3383). The "General" card that grouped the general pages went with
@@ -111,7 +111,7 @@ function Format-DevDuration {
 }
 
 # The most sections one page may hold before it becomes cards with a page each (the house style README, #3563).
-# SessionStart's seven were too many (#3543); the Issues page's three and the Artifacts page's two are not.
+# SessionStart's seven were too many (#3543); the Issues page's three is not.
 $script:LongPageSectionLimit = 4
 
 function Get-PageSectionCount {
@@ -451,7 +451,6 @@ $script:HubIcons = @{
     'issues'        = '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5"/>'
     'pull-request'  = '<circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M6 8v8M18 16V9a3 3 0 0 0-3-3h-4M13 4l-2 2 2 2"/>'
     'actions'       = '<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>'
-    'artifacts'     = '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>'
     'release-notes' = '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/>'
     'sessionstart'  = '<circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z"/>'
     'test-gate'     = '<path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>'
@@ -485,7 +484,6 @@ $script:HubIcons = @{
 # an icon not named here is centred already. A new or redrawn icon is measured the same way.
 $script:HubIconOffsets = @{
     'actions'       = @(-0.5, 0)
-    'artifacts'     = @(0, -1.5)
     'github'        = @(-0.25, -0.5)
     'lens'          = @(1, 1)
     'performance'   = @(0, -1)
@@ -517,7 +515,6 @@ function Get-GeneralPages {
         November 2, 2026).
     #>
     @(
-        @{ Href = '/artifacts';     Label = 'Artifacts';     Sub = 'Every claude.ai Artifact published from a session in this repo'; Icon = 'artifacts' },
         @{ Href = '/issues';        Label = 'Issues';        Sub = 'The open GitHub issues and where they stand, and the flow of the last four weeks'; Icon = 'issues'; GitHub = $true },
         @{ Href = '/release-notes'; Label = 'Release notes'; Sub = 'What each released version of the plugins changed'; Icon = 'release-notes' },
         @{ Href = '/sessionstart';  Label = 'SessionStart';  Sub = 'The always-on path every session loads before its first turn'; Icon = 'sessionstart'; Group = '/performance' },
@@ -1226,111 +1223,6 @@ function Resolve-ReleaseNotesRequest {
     return @{ File = (Join-Path (Get-ReleaseNotesPageDir -IndexFile $IndexFile) "v$version.html"); Version = $version }
 }
 
-function Test-ArtifactUrl {
-    <#
-        True for a claude.ai Artifact link and nothing else: claude.ai/artifact/<id> or
-        claude.ai/code/artifact/<uuid>, over https. The register is data in a public repo and the page
-        renders each url as a link, so anything else is never given an href.
-    #>
-    param([AllowEmptyString()][string]$Url)
-    return $Url -cmatch '^https://claude\.ai/(artifact/[A-Za-z0-9]+|code/artifact/[0-9a-f-]+)\z'
-}
-
-function ConvertFrom-ArtifactRegister {
-    <#
-        The Artifacts page model from the parsed scripts/dashboard/artifacts.json (-Register, $null when the
-        file is missing or unreadable). Returns @{ Artifacts (list of @{ Title; Url; Kind; Created; Updated;
-        About; Linked }, newest first); Date; Method }. A row whose url is not a claude.ai Artifact link is
-        kept, with Linked false, so a typo shows on the page instead of a row going missing.
-    #>
-    param($Register)
-    $rows = @()
-    if ($Register -and $Register.artifacts) {
-        foreach ($a in @($Register.artifacts)) {
-            if (-not $a) { continue }
-            $url = [string]$a.url
-            $rows += @{
-                Title   = [string]$a.title
-                Url     = $url
-                Kind    = [string]$a.kind
-                Created = [string]$a.created
-                Updated = [string]$a.updated
-                About   = [string]$a.about
-                Linked  = (Test-ArtifactUrl $url)
-            }
-        }
-    }
-    # ISO dates sort as text -- Windows PowerShell 5.1's ConvertFrom-Json leaves them strings, where 7 would
-    # make them DateTime, and the server runs under powershell.exe. The title breaks a tie so two of one day keep a stable order.
-    $rows = @($rows | Sort-Object @{ Expression = { $_.Created }; Descending = $true }, @{ Expression = { $_.Title } })
-    $from = if ($Register) { $Register.recordedFrom } else { $null }
-    return @{
-        Artifacts = $rows
-        Date      = if ($from) { [string]$from.date } else { '' }
-        Method    = if ($from) { [string]$from.method } else { '' }
-    }
-}
-
-function Format-ArtifactsPageHtml {
-    <#
-        The Artifacts page from ConvertFrom-ArtifactRegister's model. -ReadError is set when the file could
-        not be read or is not there. -RepoName is the repo's name, for the eyebrow and the title.
-    #>
-    param(
-        [Parameter(Mandatory = $true)][hashtable]$Model,
-        [AllowEmptyString()][string]$ReadError = '',
-        [AllowEmptyString()][string]$RepoName = ''
-    )
-    $e = { param($v) ConvertTo-GeneralPageText $v }
-    $rows = @($Model.Artifacts)
-    $unlinked = @($rows | Where-Object { -not $_.Linked })
-    $kinds = @($rows | ForEach-Object { $_.Kind } | Where-Object { $_ } | Sort-Object -Unique)
-    $body = New-Object System.Text.StringBuilder
-    [void]$body.Append((Format-DevTiles @(
-        @{ L = 'Artifacts'; V = $rows.Count },
-        @{ L = 'Kinds'; V = $kinds.Count },
-        @{ L = 'Most recent'; V = $(if ($rows.Count -and $rows[0].Created) { $rows[0].Created } else { '--' }) },
-        @{ L = 'Without a link'; V = $unlinked.Count })))
-    if ($ReadError) {
-        [void]$body.AppendLine('<p class="msg--warn" role="alert">scripts/dashboard/artifacts.json could not be read: ' + (& $e $ReadError) + '.</p>')
-    }
-    if ($unlinked.Count) {
-        [void]$body.AppendLine('<p class="msg--warn" role="status">Not a claude.ai Artifact link, so shown without one: ' +
-            (($unlinked | ForEach-Object { '<code>' + (& $e $_.Title) + '</code>' }) -join ', ') + '.</p>')
-    }
-    [void]$body.AppendLine('<div class="grid-2" id="artifacts">')
-    [void]$body.AppendLine('<div class="grid__head"><h2>Artifacts</h2><p class="card__sub">Newest first. Each opens on claude.ai, for an account it is shared with</p></div>')
-    [void]$body.AppendLine('<section class="card grid__full">')
-    if ($rows.Count) {
-        [void]$body.AppendLine('<div class="table-wrap"><table class="table"><thead class="dp-thead"><tr><th class="dp-left">Artifact</th><th class="dp-left">Kind</th><th class="dp-left">Created</th><th class="dp-left">Last published</th></tr></thead><tbody>')
-        foreach ($a in $rows) {
-            $name = if ($a.Title) { & $e $a.Title } else { '(untitled)' }
-            $title = if ($a.Linked) { '<a class="dp-link" href="' + (& $e $a.Url) + '" target="_blank" rel="noopener noreferrer">' + $name + '</a>' } else { $name }
-            $about = if ($a.About) { '<p class="note">' + (& $e $a.About) + '</p>' } else { '' }
-            $kind = if ($a.Kind) { '<span class="badge badge--sm badge--neutral">' + (& $e $a.Kind) + '</span>' } else { '--' }
-            [void]$body.AppendLine('<tr><td class="dp-left">' + $title + $about + '</td><td class="dp-left">' + $kind + '</td><td class="dp-left num">' +
-                $(if ($a.Created) { & $e $a.Created } else { '--' }) + '</td><td class="dp-left num">' + $(if ($a.Updated) { & $e $a.Updated } else { '--' }) + '</td></tr>')
-        }
-        [void]$body.AppendLine('</tbody></table></div>')
-    } else {
-        [void]$body.AppendLine('<p class="note">No Artifact is recorded.</p>')
-    }
-    [void]$body.AppendLine('</section>')
-    [void]$body.AppendLine('</div>')
-    [void]$body.AppendLine('<div class="grid-2" id="recorded">')
-    [void]$body.AppendLine('<div class="grid__head"><h2>Where the list comes from</h2></div>')
-    [void]$body.AppendLine('<section class="card grid__full">')
-    [void]$body.AppendLine('<dl class="facts">')
-    [void]$body.AppendLine('<div><dt>Recorded</dt><dd>' + $(if ($Model.Date) { & $e $Model.Date } else { '--' }) + '</dd></div>')
-    [void]$body.AppendLine('<div><dt>Method</dt><dd>' + $(if ($Model.Method) { & $e $Model.Method } else { '--' }) + '</dd></div>')
-    [void]$body.AppendLine('</dl>')
-    [void]$body.AppendLine('</section>')
-    [void]$body.AppendLine('</div>')
-    return Format-GeneralPageHtml -Title 'Artifacts' -Body $body.ToString() -SiteName $RepoName `
-        -Lead 'Every claude.ai Artifact a session in this repo has published: pages, decks and documents. An Artifact is private to the account that made it until it is shared, so a link may not open for everyone.' `
-        -FooterNote 'Read from the repo''s <code>scripts/dashboard/artifacts.json</code>, on every request. The register is the repo''s own to keep; where it is absent the page says so.'
-}
-
 function ConvertTo-IssueRow {
     <#
         One issue from gh issue list --json (number,title,state,stateReason,labels,assignees,createdAt,closedAt,url)
@@ -1600,7 +1492,7 @@ function Format-DevInfluence {
 
 function Get-SessionStartScore {
     <#
-        The efficiency score the session-start artifact shows: the no-influence share of the whole start,
+        The efficiency score the SessionStart page shows: the no-influence share of the whole start,
         1-100, with 100 kept for a start that adds nothing. $null without a total.
     #>
     param([double]$None, [double]$Total)
@@ -1612,7 +1504,7 @@ function Get-SessionStartScore {
 function Get-SessionStartSnapshotSections {
     <#
         The last full measurement, from scripts/dashboard/session-start-snapshot.json: the data block of the
-        session-start Artifact the measure-session-start skill publishes, copied into the repo. -Snapshot is the
+        snapshot the measure-session-start skill writes into the repo. -Snapshot is the
         parsed file, $null when it is missing. Returns its sections in page order, each a card on the overview and a
         page of its own (Get-SessionStartSections). Its always-on documents are left out: the live table measures
         them on every request.
@@ -1724,10 +1616,6 @@ function Get-SessionStartSnapshotSections {
         $sb = New-Object System.Text.StringBuilder
         [void]$sb.AppendLine('<p class="note">' + (& $md $Snapshot.footer) + '</p>')
         $src = $Snapshot.source
-        if ($src -and (Test-ArtifactUrl ([string]$src.artifact))) {
-            [void]$sb.AppendLine('<p class="note">Copied from the Artifact <a class="dp-link" href="' + (& $e $src.artifact) + '" target="_blank" rel="noopener noreferrer">' +
-                (& $e $src.title) + '</a>' + $(if ($src.copied) { ' on ' + (& $e $src.copied) } else { '' }) + '.</p>')
-        }
         $sections.Add(@{ Slug = 'method'; Title = 'How it was measured'; Sub = 'Where the numbers of the last full measurement come from'
             Value = $(if ($src -and $src.copied) { 'Copied ' + (& $e $src.copied) } elseif ($Snapshot.asOf) { 'As of ' + (& $e $Snapshot.asOf) } else { '--' }); Body = $sb.ToString() })
     }

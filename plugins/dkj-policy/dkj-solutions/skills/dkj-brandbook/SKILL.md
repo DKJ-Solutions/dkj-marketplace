@@ -1,6 +1,6 @@
 ---
 name: dkj-brandbook
-description: The DKJ-Solutions brand book -- the design tokens, the twelve themes a user picks from (and the script that applies them) and the base stylesheet every DKJ-Solutions app renders with. The files and the full rules live in the dkj-policy plugin's assets/dkj-brandbook folder; this skill says where, and the rules a session needs before it starts. Use it before writing or restyling ANY visual output in a DKJ-Solutions repo -- a web page, a local HTML report, a dashboard, a claude.ai Artifact, an email template, a chart's colours -- so it starts from the brand book instead of a fresh design. Load it alongside artifact-design and dataviz, not instead of them; where they offer a placeholder palette, the house tokens replace it.
+description: The DKJ-Solutions brand book -- the design tokens, the twelve themes a user picks from (and the script that applies them) and the base stylesheet every DKJ-Solutions app renders with. The files and the full rules live in the dkj-policy plugin's assets/dkj-brandbook folder; this skill says where, and the rules a session needs before it starts. Use it before writing or restyling ANY visual output in a DKJ-Solutions repo -- a web page, a local HTML report, a dashboard, an email template, a chart's colours -- so it starts from the brand book instead of a fresh design. Load it alongside dataviz, not instead of it; where it offers a placeholder palette, the house tokens replace it. Never publish the result as a claude.ai Artifact: a page is a Toolbox page.
 ---
 
 # The DKJ-Solutions brand book
@@ -73,7 +73,7 @@ appears, or the fetch fails, stop and report. Do not retype a copy from memory i
 
 1. **Fetch `house-style.css` and copy it into the output unchanged**, and `house-theme.js` with it where
    the app lets the user pick a theme. Where the output must make no external requests (a local report,
-   an Artifact), inline it in a `<style>` block. Where the app has a build, vendor it as a file. Either
+   an e-mail), inline it in a `<style>` block. Where the app has a build, vendor it as a file. Either
    way it is a copy of the house-style file, never a retyped version. An app that offers a theme choice
    uses `DKJTheme.settings(el)` from that script, the round settings button with the picker inside,
    instead of building its own toggle around `DKJTheme.picker`; the README has its options.
@@ -106,13 +106,13 @@ appears, or the fetch fails, stop and report. Do not retype a copy from memory i
 (the owner, October 26, 2026; the size since October 27, when it replaced 1400 x 600). The size is a
 guideline, not a measure: what counts is the browser window on that screen, about 1280 x 800 once the
 browser's own bars are off it. A layout that is correct, on-brand and tall still fails here. So every
-page, dashboard and Artifact is designed to that screen first:
+page and dashboard is designed to that screen first:
 
 - **The first view holds the content.** Vertical scroll is a defect to design away, not a given. Where
   the content cannot fit, cut ornament first, then go wider, and only then accept a scroll.
 - **Use the width.** Put blocks side by side in grid columns instead of stacking them, and keep the
   page at the whole width rather than narrowing it to a reading column. `full` is the default only where
-  `house-theme.js` runs; a page without it (an Artifact, a static report) is fluid at 1080px, so it sets
+  `house-theme.js` runs; a page without it (a static report) is fluid at 1080px, so it sets
   `<html data-width="full">` itself.
 - **Nothing the brief did not ask for.** No eyebrow above a heading (the house has no class for one), no sub line or lead under
   it, no hero, no extra row of meta. `.note` and `.card__sub` exist for the brief that asks
@@ -130,7 +130,7 @@ page, dashboard and Artifact is designed to that screen first:
   under it.
 - **A heading has five words at most** (Maikel, November 2, 2026): an `h1`, `h2` or `h3` names the
   subject. Who it is for and what changed go in the content under it.
-- **Never an em dash (—)** (Maikel, November 3, 2026): no text a page, report, dashboard or Artifact
+- **Never an em dash (—)** (Maikel, November 3, 2026): no text a page, report or dashboard
   renders carries one. Use a colon, a comma, parentheses or a new sentence instead.
 - **One row where one row does.** Label and value on one line (`.facts--row`), a card's action beside
   its heading rather than on a row of its own, filters in one bar. A second row has to carry something

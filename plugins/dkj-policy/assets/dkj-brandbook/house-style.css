@@ -5,7 +5,7 @@
    tuned by hand. Spacing and font sizes come from the Figma library's scales
    (Shopify Theme - LIBRARY); every other value is the dashboard's own.
    Self-contained: no external requests, no web fonts (system font stack only).
-   Use it inline in a <style> block (local HTML, Artifacts) or as a stylesheet.
+   Use it inline in a <style> block (local HTML, a Toolbox page) or as a stylesheet.
 
    Theme mechanism (keep exactly as is):
      - Twelve themes, each a mode plus a primary colour, set as

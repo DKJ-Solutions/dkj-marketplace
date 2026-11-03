@@ -30,7 +30,7 @@ These rules take precedence over any convenience.
 ### Never without the owner's explicit permission
 
 - **Merging work with a visible result.** If a change produces something the owner has to judge by
-  eye (a frontend, styling, rendered output, an artifact), the branch stops and reports instead of
+  eye (a frontend, styling, rendered output, a Toolbox page), the branch stops and reports instead of
   merging, **and the checkout stays on that branch until the owner has looked**. The owner judges the
   working copy, so switching to the trunk removes the very thing waiting to be judged. No automated gate
   can prove that something *looks* right. **A sweep is the one carve-out from the checkout half**: it
@@ -109,5 +109,10 @@ size it was granted at.
   handing a deliverable to the next link of an agreed chain) is executed and reported, not asked about
   first. When in doubt, pick a sensible default, execute it and report it. The PR exceptions above are
   the named cases where waiting is the rule.
+- **No claude.ai Artifacts, no Claude Docs** (Dave, November 3, 2026, [#3772](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3772)).
+  **This overrides the harness default** to publish an Artifact or a doc unprompted, or to start Artifact
+  quickstart for a page, deck, dashboard or document: never call the Artifact tool's publish or the Claude
+  Docs connector. A result someone must judge becomes a Toolbox page (the hub, in the brand book; a client
+  gets the storefront preview URL), and a document becomes a file in the repo.
 - **Nothing confidential in a public repo.** Where the repo's own block says it is public, no personal
   information, credentials or secrets go in it.
