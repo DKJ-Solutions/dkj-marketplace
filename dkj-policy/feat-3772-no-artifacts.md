@@ -58,7 +58,7 @@ Toolbox's Test gate, SessionStart, Skills and Performance pages already cover th
 
 - [x] `check-plugin-integrity` and `check-script-contract` green; `build-agent-defs` reports the subagent defs in sync
 - [x] `dev-pages` (545), `measure-session-start` (231), `consumer-dashboard` (239), `dev-preview-sessionstart` (364), `shared-scripts`, `claim-issue`, `house-palette`, `script-contract` green
-- [ ] The owner looks at the Toolbox on 4890 without its Artifacts card (visible result -- no merge before that)
+- [x] The owner looked at the branch's Toolbox on 4891 without its Artifacts card (Dave, November 3, 2026: "ziet er goed uit, merge maar")
 
 ### DEPLOY: feat/3772-no-artifacts
 
