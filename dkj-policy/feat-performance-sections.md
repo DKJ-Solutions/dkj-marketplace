@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Dave's request (November 3, 2026): on `/performance`, two `h2` headings, Clock and Context; under Clock
+the Stopwatch and Logbook `h3` cards, under Context SessionStart. A visible result: it waits for the
+owner's look before the merge.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-HubGroups`: Clock becomes a Section of Performance, and a new Context Section holds SessionStart
+- [x] `Format-HubGroupPageHtml`: a Section's cards include its member general pages, not only its groups
+- [x] `/clock` moves to `/performance` (301), because the Clock no longer has a page
+- [x] Docs: the hub README, the brand book README's group paragraph, the stopwatch-lib and server comments
 
 ### TEST
 
+- [x] `dev-pages` and `stopwatch` suites updated and green (571/0, 273/0)
+- [x] Served from the branch on port 4895: `/performance` reads h1 Performance, h2 Clock, h3 Stopwatch,
+  h3 Logbook, h2 Context, h3 SessionStart; `/clock` answers 301 to `/performance`
+
 ### DEPLOY: feat/performance-sections
 
-**Score:**
+The hub's Performance page now reads as two sections instead of two cards: **Clock**, with the Stopwatch and
+Logbook cards directly under it, and **Context**, with the SessionStart card. The Stopwatch and Logbook are
+therefore one click closer, and their trail reads Tools > Claude > Performance. The old `/clock` address moves
+to `/performance`.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Every repo's Toolbox shows the new Performance page, with Stopwatch and Logbook one click closer than they were.
+
+**Score:** 2
 
 #### Pull Request
 
