@@ -1099,6 +1099,9 @@ function Format-HubSettingsPageHtml {
         # 30px everywhere else.
         '.hs-theme .controls .seg { height: var(--spacing-11); border-color: var(--bg-5); }' + "`n" +
         '.hs-theme .controls .seg button + button { border-left-color: var(--bg-5); }' + "`n" +
+        # The pressed option is the --primary itself rather than the house's --primary-muted (Maikel, November 3, 2026);
+        # its --bg-1 text reads on it, as every paper step down to bg-4 does.
+        '.hs-theme .controls .seg button[aria-pressed="true"] { background: var(--primary); }' + "`n" +
         # And each toggle is a fixed --spacing-60 wide, its options sharing it equally (Maikel, November 3, 2026), never wider
         # than the column a phone gives it.
         '.hs-theme .controls .seg { width: var(--spacing-60); max-width: 100%; }' + "`n" +
