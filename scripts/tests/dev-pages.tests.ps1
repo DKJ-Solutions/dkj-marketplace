@@ -182,10 +182,34 @@ try {
     Assert-True ($lensPage -match '<section class="card dp-lens">' -and $lensPage -match '\.dp-lens \{ max-width: 800px; \}') 'its card is never wider than 800px'
     Assert-True ($null -eq (Format-HubLensPageHtml -Name 'notes' -RepoRoot $lensRoot) -and $null -eq (Format-HubLensPageHtml -Name '..\..\x' -RepoRoot $lensRoot) -and $null -eq (Format-HubLensPageHtml -Name 'specialist-09-09-lens' -RepoRoot $lensRoot)) 'a name that is no lens of the repo has no page'
 } finally { Remove-Item -LiteralPath $lensRoot -Recurse -Force -ErrorAction SilentlyContinue }
-foreach ($leaf in 'rules', 'skills') {
-    $leafPage = Format-HubGroupPageHtml -Href "/claude/$leaf" -RepoName 'dkj-claude-plugins'
-    Assert-True ($leafPage -match '<li><a href="/">Tools</a></li>' -and $leafPage -match '<a href="/claude">Claude</a>' -and $leafPage -match 'Nothing on this page yet\.' -and $leafPage -notmatch 'card--link') "the /claude/$leaf page is a landing page of its own, under Tools > Claude, with nothing on it yet"
-}
+$skillsPage = Format-HubGroupPageHtml -Href '/claude/skills' -RepoName 'dkj-claude-plugins'
+Assert-True ($skillsPage -match '<li><a href="/">Tools</a></li>' -and $skillsPage -match '<a href="/claude">Claude</a>' -and $skillsPage -match 'Nothing on this page yet\.' -and $skillsPage -notmatch 'card--link') 'the /claude/skills page is a landing page of its own, under Tools > Claude, with nothing on it yet'
+
+Write-Host '-- the Rules page: the constitution and the repo''s own rules (Maikel, November 3, 2026)' -ForegroundColor Cyan
+$rulesBare = Format-HubGroupPageHtml -Href '/claude/rules' -RepoName 'x'
+Assert-True ($rulesBare -match '<li><a href="/">Tools</a></li>' -and $rulesBare -match '<a href="/claude">Claude</a>' -and $rulesBare.IndexOf('<h2>Constitution</h2>') -ge 0 -and $rulesBare.IndexOf('<h2>Constitution</h2>') -lt $rulesBare.IndexOf('<h2>Repo rules</h2>') -and $rulesBare -notmatch 'Nothing on this page yet' -and ([regex]::Matches($rulesBare, 'Nothing here yet\.')).Count -eq 2) 'the /claude/rules page holds a Constitution section above a Repo rules section, each saying it has nothing yet with no repo to read'
+$ruleRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('hub-rules-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path (Join-Path $ruleRoot '.claude\rules'), (Join-Path $ruleRoot 'plugins\pol\ext'), (Join-Path $ruleRoot 'plugins\pol\docs') -Force | Out-Null
+try {
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot 'CLAUDE.md'), "# CLAUDE.md`n`n@plugins/pol/CLAUDE.md`n@plugins/pol/ext/CLAUDE.md`n@plugins/pol/docs/README.md`n@plugins/gone/CLAUDE.md`n`n``````md`n@plugins/pol/docs/CLAUDE.md`n```````n")
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot 'plugins\pol\CLAUDE.md'), "# The constitution`n`n## Safety rules`n`nNever.`n")
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot 'plugins\pol\ext\CLAUDE.md'), "# The extension`n")
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot 'plugins\pol\docs\README.md'), "# Not a rule`n")
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot 'plugins\pol\docs\CLAUDE.md'), "# Only in a fence`n")
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot '.claude\rules\this-repo.md'), "# This repo`n`nFacts.`n")
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot '.claude\rules\layers.md'), "---`npaths:`n  - `"scripts/**`"`n---`n`n# Layers`n`nDetail.`n")
+    [System.IO.File]::WriteAllText((Join-Path $ruleRoot '.claude\rules\notes.txt'), "not markdown`n")
+    $rules = @(Get-HubRulePages -RepoRoot $ruleRoot)
+    Assert-Equal 'constitution:pol,constitution:ext,repo-rules:layers,repo-rules:this-repo' (($rules | ForEach-Object { $_.Kind + ':' + $_.Label }) -join ',') 'the constitution is every CLAUDE.md the root CLAUDE.md imports, in import order and named by its folder -- not a README, not a file that is not there, not an import inside a code fence -- then the .claude/rules markdown files by name'
+    Assert-True ($rules[0].Sub -eq 'The constitution' -and $rules[0].Display -eq 'plugins/pol/CLAUDE.md' -and $rules[3].Sub -eq 'This repo' -and $rules[2].Sub -eq 'Layers (loads only when Claude touches a matching file)') 'a rule card''s sub line is its own # title, and a path-scoped rule says when it loads'
+    $rulesPage = Format-HubGroupPageHtml -Href '/claude/rules' -RepoName 'x' -RepoRoot $ruleRoot
+    Assert-True (([regex]::Matches($rulesPage, '<section class="card card--link">')).Count -eq 4 -and $rulesPage -match 'href="/claude/rules/pol"' -and $rulesPage -match 'menu-item__label"><h3>this-repo</h3>' -and $rulesPage.IndexOf('href="/claude/rules/ext"') -lt $rulesPage.IndexOf('<h2>Repo rules</h2>') -and $rulesPage -notmatch 'Nothing here yet') 'with a repo each section holds one h3 card per rule document'
+    $rulePage = Format-HubRulePageHtml -Name 'pol' -RepoRoot $ruleRoot -RepoName 'x'
+    $ruleMd = ConvertFrom-Json ([regex]::Match($rulePage, '<script type="application/json" id="lens-md">(.*?)</script>').Groups[1].Value)
+    Assert-True ($rulePage -match '<h1>pol</h1>' -and $rulePage -match '<a href="/claude">Claude</a>' -and $rulePage -match '<a href="/claude/rules">Rules</a>' -and $rulePage -match 'Read from <code>plugins/pol/CLAUDE\.md</code>' -and $ruleMd.body -eq "## Safety rules`n`nNever.`n") 'a rule document''s page is rendered as a lens''s is, titled as its card, under Tools > Claude > Rules, naming the file it was read from'
+    Assert-True ((Format-HubRulePageHtml -Name 'layers' -RepoRoot $ruleRoot) -notmatch 'paths:' -and $null -eq (Format-HubRulePageHtml -Name 'README' -RepoRoot $ruleRoot) -and $null -eq (Format-HubRulePageHtml -Name '..' -RepoRoot $ruleRoot) -and $null -eq (Format-HubRulePageHtml -Name 'notes' -RepoRoot $ruleRoot)) 'a path-scoped rule''s frontmatter is not body, and a name that is no rule document of the repo has no page'
+    Assert-True (@(Get-HubRulePages -RepoRoot '').Count -eq 0) 'no repo, no rule documents'
+} finally { Remove-Item -LiteralPath $ruleRoot -Recurse -Force -ErrorAction SilentlyContinue }
 Assert-True ((Get-HubIconSvg -Name '') -eq '' -and (Get-HubIconSvg -Name 'nope') -eq '' -and (Format-HubCardLinkHtml -Href '/x' -Label 'X') -notmatch 'menu-item__icon') 'a card that names no icon, or one the hub lacks, draws none'
 Assert-True (@($script:HubIcons.Keys | Where-Object { (Get-HubIconSvg -Name $_) -notmatch '^<svg class="menu-item__icon" viewBox="-?[\d.]+ -?[\d.]+ 24 24" width="32" height="32"' }).Count -eq 0) 'every icon is drawn in the same 32px square, a 24-unit viewBox (Maikel, November 2, 2026)'
 Assert-True (@($script:HubIconOffsets.Keys | Where-Object { -not $script:HubIcons.ContainsKey($_) }).Count -eq 0 -and (Get-HubIconSvg -Name 'rules') -match 'viewBox="-0.25 0 24 24"' -and (Get-HubIconSvg -Name 'claude') -match 'viewBox="0 0 24 24"') 'an off-centre drawing moves its viewBox to stand in the middle of that square, and the offsets name only icons the hub has'

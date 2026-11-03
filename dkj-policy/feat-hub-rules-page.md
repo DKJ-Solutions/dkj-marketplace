@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Maikel found `/claude/rules` on the toolbox empty: it was a group page with no members. It now reads its
+cards from the repo, the way the Specialists page reads its Lenses.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-HubRulePages` + `Get-HubSectionCards` in `hub/lib/general-pages-lib.ps1`: two `Source` sections on `/claude/rules` (Constitution, Repo rules)
+- [x] `Format-HubRulePageHtml` on a shared `Format-HubDocPageHtml`, which the lens page now uses too
+- [x] The `/claude/rules/<name>` route in `serve-general-pages.ps1`, a 404 for a name the repo has no rule document of
+- [x] `hub/README.md` names the Rules page's sections
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the two sections, the cards from a fixture (import order, README / missing / fenced import skipped, path-scoped note), the rule page, the 404 names -- 601 passed
+- [ ] The owner's look at `http://localhost:4890/claude/rules` on this branch
+
 ### DEPLOY: feat/hub-rules-page
 
-**Score:**
+The toolbox's Rules page (`/claude/rules`) is no longer empty. It holds two sections read from the repo:
+**Constitution**, a card per `CLAUDE.md` the root `CLAUDE.md` imports (the `dkj-policy` constitution and
+any extension), and **Repo rules**, a card per `.claude/rules/*.md`, where a path-scoped rule says it loads
+only when Claude touches a matching file. Each card opens on `/claude/rules/<name>` with the document
+rendered as a lens page is.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Every DKJ repo's toolbox now shows the rules its Claude sessions load, readable in one place instead of
+across the plugin cache and `.claude/rules`.
+
+**Score:** 3
 
 #### Pull Request
 
