@@ -135,6 +135,10 @@ function Resolve-PluginsPageRequest {
     if ($Path -cmatch '^/plugins/(?:dkj-policy|dkj-solutions)/house-style(?:/([a-z][a-z-]{0,39}))?/?$') {
         return @{ Redirect = '/plugins/dkj-policy/dkj-brandbook' + $(if ($Matches[1]) { '/' + $Matches[1] }) }
     }
+    # One specialist, skill or hook the plugin ships, on a landing page of its own (Dave, November 3, 2026).
+    if ($Path -cmatch '^/plugins/([a-z0-9][a-z0-9-]{0,63})/(specialists|skills|hooks)/([a-z0-9][a-z0-9._-]{0,79})/?$') {
+        return @{ Name = $Matches[1]; Page = $Matches[2]; Section = $Matches[3] }
+    }
     return $null
 }
 
@@ -251,7 +255,8 @@ function Format-PluginPageHtml {
         [Parameter(Mandatory = $true)][hashtable]$Model,
         [AllowEmptyString()][string]$RepoName = '',
         [string]$HubHref = '/',
-        [AllowEmptyCollection()][object[]]$Cards = @()
+        [AllowEmptyCollection()][object[]]$Cards = @(),
+        [AllowNull()][hashtable]$Contents = $null
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
     if (-not $Row.Status) { $Row.Status = Get-PluginRowStatus -Code $Row.Code -InstallPathMissing $Row.InstallPathMissing }
@@ -259,6 +264,9 @@ function Format-PluginPageHtml {
     # right of the h1's row (the owner, October 26, 2026).
     $badge = '<p class="badge-row">' + (Format-PluginBadgeHtml $Row.Status.Level) + (& $e $Row.Status.Label) + '</p>'
     $body = New-Object System.Text.StringBuilder
+    # What the plugin ships comes first, each kind an h2 over a card per item that opens its landing page (Dave,
+    # November 3, 2026). -Contents is Get-PluginContents'; a kind the plugin ships none of is not drawn.
+    if ($Contents) { [void]$body.Append((Format-PluginContentsSectionsHtml -PluginName ([string]$Row.Name) -Contents $Contents)) }
     # One screen, side by side (the owner, October 26, 2026; the house density rule): the description and the
     # state of this machine as two cards in one row, rather than a status block and two full-width groups stacked.
     [void]$body.AppendLine('<div class="grid-2">')
@@ -300,6 +308,328 @@ function Format-PluginPageHtml {
         -Style '.dp-about p { font-size: var(--text-base); }' `
         -Lead '' `
         -FooterNote 'Read on every request by <code>plugin-versions.ps1 -Json</code>, the plugin-versions skill''s own script.'
+}
+
+function Resolve-PluginPayloadDir {
+    <#
+        The folder holding -Row's plugin files, or '' where none is found. The repo's own tree first when the repo IS
+        that plugin's marketplace (its .claude-plugin/marketplace.json carries the row's marketplace name), so the
+        source repo shows the branch it is on; otherwise the marketplace clone plugin-versions names in -Model. The
+        plugin's folder is its marketplace entry's source, and only a relative one ('./...') is followed.
+    #>
+    param([Parameter(Mandatory = $true)][hashtable]$Row, [Parameter(Mandatory = $true)][hashtable]$Model, [AllowEmptyString()][string]$RepoRoot = '')
+    $roots = @()
+    if ($RepoRoot) { $roots += $RepoRoot }
+    $roots += @($Model.Clones | Where-Object { $_ -and $_.Marketplace -eq $Row.Marketplace -and $_.Dir } | ForEach-Object { $_.Dir })
+    foreach ($root in $roots) {
+        $mf = Join-Path $root '.claude-plugin\marketplace.json'
+        if (-not (Test-Path -LiteralPath $mf -PathType Leaf)) { continue }
+        try { $m = [System.IO.File]::ReadAllText($mf, (New-Object System.Text.UTF8Encoding($false))) | ConvertFrom-Json } catch { continue }
+        if ([string]$m.name -cne [string]$Row.Marketplace) { continue }
+        $p = @($m.plugins | Where-Object { $_ -and [string]$_.name -ceq [string]$Row.Name }) | Select-Object -First 1
+        $src = if ($p) { [string]$p.source } else { '' }
+        if ($src -cnotmatch '^\./[A-Za-z0-9._/-]+$' -or $src -match '\.\.') { continue }
+        $dir = Join-Path $root ($src.Substring(2) -replace '/', '\')
+        if (Test-Path -LiteralPath $dir -PathType Container) { return $dir }
+    }
+    return ''
+}
+
+function ConvertFrom-PluginFrontmatter {
+    <#
+        Pure: the frontmatter of a markdown file as a hashtable of its top-level keys. A folded or literal value
+        ('>', '>-', '|') joins its indented lines with a space; a quoted value loses its quotes. No frontmatter, empty.
+    #>
+    param([AllowEmptyString()][string]$Text)
+    $h = @{}
+    $m = [regex]::Match($Text, '\A---\r?\n([\s\S]*?)\r?\n---')
+    if (-not $m.Success) { return $h }
+    $lines = @($m.Groups[1].Value -split '\r?\n')
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -notmatch '^([A-Za-z0-9_-]+):[ \t]*(.*)$') { continue }
+        $key = $Matches[1]; $val = $Matches[2].Trim()
+        if ($val -match '^[>|][+-]?$') {
+            $parts = @()
+            while ($i + 1 -lt $lines.Count -and $lines[$i + 1] -match '^\s+\S') { $i++; $parts += $lines[$i].Trim() }
+            $val = $parts -join ' '
+        } elseif ($val -match '^"(.*)"$' -or $val -match "^'(.*)'$") { $val = $Matches[1] }
+        $h[$key] = $val
+    }
+    return $h
+}
+
+function Get-PluginScriptHelp {
+    <# Pure: the .SYNOPSIS and .DESCRIPTION of a script's opening comment-based help, each dedented, as @{ Synopsis; Description }. #>
+    param([AllowEmptyString()][string]$Text)
+    $out = @{ Synopsis = ''; Description = '' }
+    $m = [regex]::Match($Text, '\A\s*<#([\s\S]*?)#>')
+    if (-not $m.Success) { return $out }
+    $cur = ''; $buf = @{ SYNOPSIS = @(); DESCRIPTION = @() }
+    foreach ($l in @($m.Groups[1].Value -split '\r?\n')) {
+        if ($l -match '^\s*\.([A-Z]+)\b') { $cur = $Matches[1]; continue }
+        if ($buf.ContainsKey($cur)) { $buf[$cur] += $l }
+    }
+    foreach ($k in 'SYNOPSIS', 'DESCRIPTION') {
+        $ls = @($buf[$k])
+        $ind = @($ls | Where-Object { $_.Trim() } | ForEach-Object { ($_ -replace '^(\s*).*$', '$1').Length } | Measure-Object -Minimum).Minimum
+        $txt = (@($ls | ForEach-Object { if ($_.Length -ge $ind) { $_.Substring([int]$ind) } else { $_.Trim() } }) -join "`n").Trim()
+        if ($k -eq 'SYNOPSIS') { $out.Synopsis = $txt } else { $out.Description = $txt }
+    }
+    return $out
+}
+
+function ConvertTo-PluginParagraphsHtml {
+    <# Pure: plain text as escaped paragraphs, one per blank-line-separated block, its wrapped lines joined; a block of '- ' lines is a list. #>
+    param([AllowEmptyString()][string]$Text)
+    $e = { param($v) ConvertTo-GeneralPageText $v }
+    $html = foreach ($b in @([regex]::Split($Text.Trim(), '\r?\n\s*\r?\n') | Where-Object { $_.Trim() })) {
+        $ls = @($b -split '\r?\n')
+        if ($ls[0].TrimStart().StartsWith('- ')) {
+            $items = @(); foreach ($l in $ls) { if ($l.TrimStart().StartsWith('- ')) { $items += $l.Trim().Substring(2) } elseif ($items.Count) { $items[$items.Count - 1] += ' ' + $l.Trim() } }
+            '<ul>' + (@($items | ForEach-Object { '<li>' + (& $e $_) + '</li>' }) -join '') + '</ul>'
+        } else { '<p>' + (& $e ((@($ls | ForEach-Object { $_.Trim() }) -join ' '))) + '</p>' }
+    }
+    return (@($html) -join "`n")
+}
+
+function Get-PluginContents {
+    <#
+        What the plugin in -Dir ships, as @{ Specialists; Skills; Hooks }, each a list of items with a Slug that names its
+        landing page (Dave, November 3, 2026). Read per request, so the page shows the files as they are now.
+        - A specialist is every id under subagents/, personas/ or manuals/ (specialist-GG-II-<kind>.md). Its name, emoji
+          and title are its document's '# ' heading ("Victor <emoji> -- the Code Reviewer (...)"), the document being the
+          manual where there is one, else the persona, else the subagent definition; a subagent's frontmatter adds its
+          description, model and tools. Slug: the name in lower case, else the id.
+        - A skill is skills/<folder>/SKILL.md, named and described by its frontmatter. Slug: the folder.
+        - A hook is a script hooks/hooks.json runs, one item per script whatever events run it, with that script's
+          .SYNOPSIS and .DESCRIPTION. Slug: the script's name without its extension.
+        Nothing is read outside -Dir, and an unreadable file leaves its item out rather than the page.
+    #>
+    param([AllowEmptyString()][string]$Dir = '')
+    $out = @{ Specialists = @(); Skills = @(); Hooks = @() }
+    if (-not $Dir -or -not (Test-Path -LiteralPath $Dir -PathType Container)) { return $out }
+    $utf8 = New-Object System.Text.UTF8Encoding($false)
+    $read = { param($p) try { [System.IO.File]::ReadAllText($p, $utf8) -replace "`r`n", "`n" } catch { $null } }
+    $dash = [string][char]0x2014
+
+    # Specialists.
+    $files = @{}
+    foreach ($kind in 'subagent', 'persona', 'manual') {
+        $sub = Join-Path $Dir ($kind + 's')
+        if (-not (Test-Path -LiteralPath $sub -PathType Container)) { continue }
+        foreach ($f in @(Get-ChildItem -LiteralPath $sub -File | Where-Object { $_.Name -cmatch ('^specialist-(\d{2}-\d{2})-' + $kind + '\.md\z') })) {
+            $id = $f.Name.Substring(11, 5)
+            if (-not $files[$id]) { $files[$id] = @{} }
+            $files[$id][$kind] = $f.FullName
+        }
+    }
+    foreach ($id in @($files.Keys | Sort-Object)) {
+        $set = $files[$id]
+        $docPath = @($set['manual'], $set['persona'], $set['subagent']) | Where-Object { $_ } | Select-Object -First 1
+        $doc = & $read $docPath
+        if ($null -eq $doc) { continue }
+        # The name and title from the persona's heading where there is one: a manual beside a persona titles itself
+        # as the playbook ("..., the on-demand playbook"), not as the specialist.
+        $headDoc = if ($set['persona'] -and $docPath -ne $set['persona']) { [string](& $read $set['persona']) } else { $doc }
+        $heading = ''
+        foreach ($l in @(($headDoc -replace '\A---\n[\s\S]*?\n---\n', '') -split "`n")) { if ($l -match '^#\s+(.+)$') { $heading = $Matches[1].Trim(); break } }
+        $name = ''; $emoji = ''; $title = ''
+        if ($heading -match ('^(.+?)\s+' + $dash + '\s+(.+)$')) {
+            $who = @($Matches[1].Trim() -split '\s+'); $title = $Matches[2]
+            $name = $who[0]; $emoji = (@($who | Select-Object -Skip 1) -join ' ')
+            $title = ($title -replace '\s*\(.*\)\s*$', '' -replace '^(?i:the)\s+', '').Trim()
+            if ($title) { $title = $title.Substring(0, 1).ToUpperInvariant() + $title.Substring(1) }
+        } else { $name = $heading }
+        $fm = if ($set['subagent']) { ConvertFrom-PluginFrontmatter -Text ([string](& $read $set['subagent'])) } else { @{} }
+        if (-not $name -and $fm.name) { $name = $fm.name.Substring(0, 1).ToUpperInvariant() + $fm.name.Substring(1) }
+        $desc = [string]$fm.description
+        if (-not $desc) { $desc = ((Split-HubLensIntro -Text (ConvertTo-HubLensBody -Text $doc)).Intro -split "`n`n")[0] }
+        $slug = if ($name -cmatch '^[A-Za-z][A-Za-z0-9-]*$') { $name.ToLowerInvariant() } else { $id }
+        $out.Specialists += @{ Slug = $slug; Id = $id; Name = $(if ($name) { $name } else { $id }); Emoji = $emoji; Title = $title
+            Kind = $(if ($set['subagent']) { 'subagent' } else { 'persona' }); Description = $desc; Model = [string]$fm.model; Tools = [string]$fm.tools
+            DocPath = $docPath; DocLabel = (Split-Path (Split-Path $docPath -Parent) -Leaf) + '/' + (Split-Path $docPath -Leaf) }
+    }
+
+    # Skills.
+    $skillsDir = Join-Path $Dir 'skills'
+    if (Test-Path -LiteralPath $skillsDir -PathType Container) {
+        foreach ($d in @(Get-ChildItem -LiteralPath $skillsDir -Directory | Sort-Object Name)) {
+            $p = Join-Path $d.FullName 'SKILL.md'
+            if ($d.Name -cnotmatch '^[a-z0-9][a-z0-9._-]{0,79}$' -or -not (Test-Path -LiteralPath $p -PathType Leaf)) { continue }
+            $t = & $read $p
+            if ($null -eq $t) { continue }
+            $fm = ConvertFrom-PluginFrontmatter -Text $t
+            $out.Skills += @{ Slug = $d.Name; Name = $(if ($fm.name) { [string]$fm.name } else { $d.Name }); Description = [string]$fm.description
+                DocPath = $p; DocLabel = 'skills/' + $d.Name + '/SKILL.md' }
+        }
+    }
+
+    # Hooks.
+    $hj = Join-Path $Dir 'hooks\hooks.json'
+    $ht = if (Test-Path -LiteralPath $hj -PathType Leaf) { & $read $hj } else { $null }
+    if ($ht) {
+        $o = $null; try { $o = $ht | ConvertFrom-Json } catch { }
+        $byScript = [ordered]@{}
+        if ($o -and $o.hooks) {
+            foreach ($ev in @($o.hooks.PSObject.Properties)) {
+                $n = 0
+                foreach ($grp in @($ev.Value)) {
+                    foreach ($hk in @($grp.hooks)) {
+                        $n++
+                        $cmd = [string]$hk.command
+                        $script = if ($cmd -match 'hooks/([A-Za-z0-9._-]+\.(?:ps1|sh|js|py))') { $Matches[1] } else { '' }
+                        $slug = if ($script) { ([System.IO.Path]::GetFileNameWithoutExtension($script)).ToLowerInvariant() } else { ($ev.Name + '-' + $n).ToLowerInvariant() }
+                        if ($slug -cnotmatch '^[a-z0-9][a-z0-9._-]{0,79}$') { continue }
+                        if (-not $byScript.Contains($slug)) {
+                            $help = if ($script) { Get-PluginScriptHelp -Text ([string](& $read (Join-Path $Dir ('hooks\' + $script)))) } else { @{ Synopsis = ''; Description = '' } }
+                            $byScript[$slug] = @{ Slug = $slug; Name = $(if ($script) { [System.IO.Path]::GetFileNameWithoutExtension($script) } else { $ev.Name + ' hook ' + $n })
+                                Script = $(if ($script) { 'hooks/' + $script } else { '' }); Synopsis = $help.Synopsis; Description = $help.Description; Runs = @() }
+                        }
+                        $byScript[$slug].Runs += @{ Event = $ev.Name; Matcher = [string]$grp.matcher; Timeout = [string]$hk.timeout; StatusMessage = [string]$hk.statusMessage; Command = $cmd }
+                    }
+                }
+            }
+        }
+        $out.Hooks = @($byScript.Values | Sort-Object { $_.Name })
+    }
+    return $out
+}
+
+function Format-PluginContentsSectionsHtml {
+    <#
+        Pure: the Specialists, Hooks and Skills sections of a plugin's page (Dave, November 3, 2026), each an h2 in a
+        .grid__head over the house card per item (Format-HubCardLinkHtml, its label an h3), opening
+        /plugins/<plugin>/<kind>/<slug>. A kind with no item is not drawn.
+    #>
+    param([Parameter(Mandatory = $true)][string]$PluginName, [Parameter(Mandatory = $true)][hashtable]$Contents)
+    $sb = New-Object System.Text.StringBuilder
+    $kinds = @(
+        @{ Key = 'specialists'; Title = 'Specialists'; Items = @($Contents.Specialists) }
+        @{ Key = 'hooks'; Title = 'Hooks'; Items = @($Contents.Hooks) }
+        @{ Key = 'skills'; Title = 'Skills'; Items = @($Contents.Skills) }
+    )
+    foreach ($k in $kinds) {
+        $items = @($k.Items | Where-Object { $_ })
+        if (-not $items.Count) { continue }
+        [void]$sb.AppendLine('<div class="grid-3" id="plugin-' + $k.Key + '">')
+        [void]$sb.AppendLine('<div class="grid__head"><h2>' + $k.Title + '</h2></div>')
+        foreach ($it in $items) {
+            $href = '/plugins/' + $PluginName + '/' + $k.Key + '/' + $it.Slug
+            switch ($k.Key) {
+                'specialists' {
+                    $label = (@($it.Name, $it.Emoji) | Where-Object { $_ }) -join ' '
+                    $sub = (@($it.Title, $(if ($it.Kind -eq 'persona') { 'main loop' })) | Where-Object { $_ }) -join ' - '
+                    [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $href -Label $label -Sub $sub -Icon 'specialists' -Heading 3))
+                }
+                'hooks' {
+                    $sub = (@($it.Runs | ForEach-Object { $_.Event } | Select-Object -Unique) -join ', ')
+                    [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $href -Label $it.Name -Sub $sub -Icon $(if ($sub -match 'SessionStart') { 'sessionstart' } else { 'rules' }) -Heading 3))
+                }
+                'skills' { [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $href -Label $it.Name -Sub ($PluginName + ':' + $it.Name) -Icon 'skills' -Heading 3)) }
+            }
+        }
+        [void]$sb.AppendLine('</div>')
+    }
+    return $sb.ToString()
+}
+
+function Format-PluginMarkdownCardHtml {
+    <#
+        A markdown file rendered in a card, the way a lens page renders its lens (Format-HubLensPageHtml): its frontmatter,
+        its '# ' title and a quote before its first heading go, its headings shift so the highest is an h2, and the house's
+        one renderer draws it in the browser from JSON, the raw text kept in a <noscript>. A file that cannot be read is
+        a warning in its place.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Path, [Parameter(Mandatory = $true)][string]$Heading)
+    $e = { param($v) ConvertTo-GeneralPageText $v }
+    try {
+        $utf8 = New-Object System.Text.UTF8Encoding($false)
+        $text = [System.IO.File]::ReadAllText($Path, $utf8) -replace "`r`n", "`n"
+        $parts = Split-HubLensIntro -Text (ConvertTo-HubLensBody -Text $text)
+        $md = (@($parts.Intro, $parts.Body) | Where-Object { $_ }) -join "`n`n"
+        $renderer = [System.IO.File]::ReadAllText($script:MarkdownRendererPath, $utf8)
+        $json = (ConvertTo-Json -InputObject ([ordered]@{ body = $md }) -Compress) -replace '<', ('\' + 'u003c')
+        return '<section class="card dp-doc" id="doc"><h2>' + (& $e $Heading) + '</h2><div id="doc-body"><noscript><pre tabindex="0"><code>' + (& $e $md) + '</code></pre></noscript></div></section>' + "`n" +
+            '<script type="application/json" id="doc-md">' + $json + '</script>' + "`n" +
+            "<script>`n(function () {`n  'use strict';`n" + $renderer.TrimEnd() + "`n  document.getElementById('doc-body').innerHTML = renderMd(JSON.parse(document.getElementById('doc-md').textContent).body);`n})();`n</script>"
+    } catch {
+        return '<section class="card dp-doc"><p class="msg--warn" role="alert">' + (& $e $Heading) + ' could not be read: ' + (& $e $_.Exception.Message) + '</p></section>'
+    }
+}
+
+function Format-PluginItemPageHtml {
+    <#
+        The landing page of one specialist, skill or hook a plugin ships, on /plugins/<plugin>/<kind>/<slug> under the
+        Installed plugins and plugin crumbs (Dave, November 3, 2026): what it is and the facts about it as two cards side
+        by side (the house density rule), then its own document in full -- a specialist's manual (or persona), a skill's
+        SKILL.md -- or, for a hook, every event that runs it. -Kind is 'specialists', 'skills' or 'hooks'; -Contents is
+        Get-PluginContents'. $null for a slug the plugin has no item of, which the server answers with a 404. -RepoRoot
+        is read only to link a specialist's repo lens where this checkout has one.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][hashtable]$Row,
+        [Parameter(Mandatory = $true)][hashtable]$Contents,
+        [Parameter(Mandatory = $true)][ValidateSet('specialists', 'skills', 'hooks')][string]$Kind,
+        [Parameter(Mandatory = $true)][string]$Slug,
+        [AllowEmptyString()][string]$RepoName = '',
+        [AllowEmptyString()][string]$RepoRoot = '',
+        [string]$HubHref = '/'
+    )
+    $e = { param($v) ConvertTo-GeneralPageText $v }
+    $list = switch ($Kind) { 'specialists' { $Contents.Specialists } 'skills' { $Contents.Skills } 'hooks' { $Contents.Hooks } }
+    $it = @($list | Where-Object { $_ -and $_.Slug -ceq $Slug }) | Select-Object -First 1
+    if (-not $it) { return $null }
+    $plugin = [string]$Row.Name
+    $fact = { param($dt, $ddHtml) '<div><dt>' + $dt + '</dt><dd>' + $ddHtml + '</dd></div>' }
+    $body = New-Object System.Text.StringBuilder
+    $facts = @(); $about = ''; $after = ''; $title = $it.Name; $lead = ''
+    switch ($Kind) {
+        'specialists' {
+            $title = (@($it.Name, $it.Emoji) | Where-Object { $_ }) -join ' '
+            # The lead is only the page's meta description (#3585), so the title heads the card that says what they do.
+            $lead = & $e $it.Title
+            $about = '<h2>' + $(if ($it.Title) { & $e $it.Title } else { 'What they do' }) + '</h2>' + (ConvertTo-PluginParagraphsHtml $it.Description)
+            $facts += & $fact 'Id' ('<code>' + (& $e $it.Id) + '</code>')
+            $facts += & $fact 'Runs as' $(if ($it.Kind -eq 'subagent') { 'A subagent, handed work by Chris' } else { 'A persona in the main loop' })
+            if ($it.Model) { $facts += & $fact 'Model' (& $e $it.Model) }
+            if ($it.Tools) { $facts += & $fact 'Tools' (& $e $it.Tools) }
+            $lensName = 'specialist-' + $it.Id + '-lens'
+            if ($RepoRoot -and (Test-Path -LiteralPath (Join-Path $RepoRoot ('.claude\specialists\lenses\' + $lensName + '.md')) -PathType Leaf)) {
+                $facts += & $fact 'Lens in this repo' ('<a href="/claude/specialists/lenses/' + $lensName + '">' + $lensName + '</a>')
+            }
+            $facts += & $fact 'Source' ('<code>' + (& $e $it.DocLabel) + '</code>')
+            $after = Format-PluginMarkdownCardHtml -Path $it.DocPath -Heading $(if ($it.DocLabel -like 'manuals/*') { 'Manual' } elseif ($it.DocLabel -like 'personas/*') { 'Persona' } else { 'Definition' })
+        }
+        'skills' {
+            $about = '<h2>What it does</h2>' + (ConvertTo-PluginParagraphsHtml $it.Description)
+            $facts += & $fact 'Invoked as' ('<code>/' + (& $e ($plugin + ':' + $it.Name)) + '</code>')
+            $facts += & $fact 'Source' ('<code>' + (& $e $it.DocLabel) + '</code>')
+            $after = Format-PluginMarkdownCardHtml -Path $it.DocPath -Heading 'SKILL.md'
+        }
+        'hooks' {
+            $about = '<h2>What it does</h2>' + $(if ($it.Synopsis) { ConvertTo-PluginParagraphsHtml $it.Synopsis } else { '<p class="note">The script carries no synopsis.</p>' })
+            if ($it.Script) { $facts += & $fact 'Script' ('<code>' + (& $e $it.Script) + '</code>') }
+            foreach ($r in @($it.Runs)) {
+                $bits = @((& $e $r.Event) + $(if ($r.Matcher) { ' <code>' + (& $e $r.Matcher) + '</code>' }))
+                if ($r.Timeout) { $bits += 'timeout ' + (& $e $r.Timeout) + ' s' }
+                if ($r.StatusMessage) { $bits += '&quot;' + (& $e $r.StatusMessage) + '&quot;' }
+                $facts += & $fact 'Runs on' ($bits -join ', ')
+            }
+            if ($it.Description) { $after = '<section class="card dp-doc" id="doc"><h2>How it works</h2>' + (ConvertTo-PluginParagraphsHtml $it.Description) + '</section>' }
+        }
+    }
+    [void]$body.AppendLine('<div class="grid-2">')
+    [void]$body.AppendLine('<section class="card" id="about">' + $about + '</section>')
+    [void]$body.AppendLine('<section class="card" id="facts"><h2>Facts</h2><dl class="facts">' + ($facts -join '') + '</dl></section>')
+    [void]$body.AppendLine('</div>')
+    if ($after) { [void]$body.AppendLine($after) }
+    $style = '.dp-doc { max-width: 800px; }' + "`n" +
+        '#doc-body > * + *, .dp-doc > * + * { margin-top: var(--spacing-3); }' + "`n" +
+        '#doc-body > * + :is(h2, h3) { margin-top: var(--spacing-6); }' + "`n" +
+        '#doc-body li + li, #doc-body li > :is(ul, ol) { margin-top: var(--spacing-1); }'
+    return Format-GeneralPageHtml -Title $title -Body $body.ToString() -SiteName $RepoName -HubHref $HubHref -Style $style `
+        -ParentCrumbs @(@{ Label = 'Installed plugins'; Href = '/plugins' }, @{ Label = $plugin; Href = '/plugins/' + $plugin }) -Lead $lead `
+        -FooterNote ('Read on every request from the ' + (& $e $plugin) + ' plugin''s own files.')
 }
 
 function Split-HouseStyleSpecimens {

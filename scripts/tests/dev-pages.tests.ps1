@@ -854,6 +854,45 @@ $ds = Format-PluginPageHtml -Row $dsRow -Model $pv -RepoName 'r'
 Assert-True ($ds -match '<section class="card card--link"><nav class="menu-list" aria-label="dkj-brandbook"><a class="menu-item" href="/plugins/dkj-policy/dkj-brandbook"><svg class="menu-item__icon"') 'the dkj-policy page links its brand book as a card named dkj-brandbook, as the product''s is (#3704), with its icon'
 $dsOld = (Find-PluginsPageRow -Model $pv -Name 'zeta').Clone(); $dsOld.Name = 'dkj-solutions'
 Assert-True ((Format-PluginPageHtml -Row $dsOld -Model $pv) -notmatch '(house-style|dkj-brandbook)"') 'and the dkj-solutions page no longer does: the rule stays there, the specimens moved (#3629)'
+Write-Host '-- what a plugin ships (Dave, November 3, 2026): Specialists, Hooks and Skills, each item a card and a landing page' -ForegroundColor Cyan
+$pcRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('pc-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+try {
+    $pcU = New-Object System.Text.UTF8Encoding($false); $dash = [string][char]0x2014; $emo = [char]::ConvertFromUtf32(0x1F9D0)
+    $pcW = { param($rel, $txt) $p = Join-Path $pcRoot $rel; [void](New-Item -ItemType Directory -Force -Path (Split-Path $p -Parent)); [System.IO.File]::WriteAllText($p, $txt, $pcU) }
+    & $pcW '.claude-plugin\marketplace.json' '{"name":"m","plugins":[{"name":"zeta","source":"./plugins/zeta"},{"name":"beta","source":"../out"}]}'
+    & $pcW 'plugins\zeta\subagents\specialist-06-19-subagent.md' "---`nname: victor`ndescription: >`n  Code Reviewer <b>x</b> --`n  the final look.`ntools: Read, Grep`nmodel: sonnet`n---`n`nYou are Victor.`n"
+    & $pcW 'plugins\zeta\manuals\specialist-06-19-manual.md' "---`nid: 19`n---`n`n# Victor $emo $dash the Code Reviewer (*Code Reviewer Victor*)`n`n> A note.`n`nVictor reviews.`n`n## What Victor covers`n`n- a`n"
+    & $pcW 'plugins\zeta\personas\specialist-05-05-persona.md' "---`nid: 05`n---`n`n# Derek $dash the DevOps Engineer`n`n> Part of it.`n`nDerek knows Git.`n"
+    & $pcW 'plugins\zeta\skills\do-it\SKILL.md' "---`nname: do-it`ndescription: >-`n  Does it.`n---`n`n# Do it`n`nBody.`n"
+    & $pcW 'plugins\zeta\skills\Bad Name\SKILL.md' "---`nname: bad`n---`n"
+    & $pcW 'plugins\zeta\hooks\hooks.json' '{"hooks":{"SessionStart":[{"matcher":"startup","hooks":[{"type":"command","command":"powershell -File \"${CLAUDE_PLUGIN_ROOT}/hooks/check-a.ps1\"","timeout":30,"statusMessage":"checking"}]}],"Stop":[{"hooks":[{"type":"command","command":"powershell -File \"${CLAUDE_PLUGIN_ROOT}/hooks/check-a.ps1\""}]}]}}'
+    & $pcW 'plugins\zeta\hooks\check-a.ps1' "<#`n.SYNOPSIS`n    Checks a.`n`n.DESCRIPTION`n    First para`n    wraps.`n`n    - one`n    - two`n#>`n"
+    & $pcW '.claude\specialists\lenses\specialist-06-19-lens.md' "# Victor`n"
+    $pcModel = @{ Plugins = @(); Clones = @(@{ Marketplace = 'm'; Dir = (Join-Path $pcRoot 'nowhere') }) }
+    $pcRow = @{ Name = 'zeta'; Marketplace = 'm' }
+    $pcDir = Resolve-PluginPayloadDir -Row $pcRow -Model $pcModel -RepoRoot $pcRoot
+    Assert-Equal (Join-Path $pcRoot 'plugins\zeta') $pcDir 'the repo that is the marketplace finds the plugin by its entry''s relative source'
+    Assert-True ('' -eq (Resolve-PluginPayloadDir -Row @{ Name = 'beta'; Marketplace = 'm' } -Model $pcModel -RepoRoot $pcRoot) -and '' -eq (Resolve-PluginPayloadDir -Row @{ Name = 'zeta'; Marketplace = 'other' } -Model $pcModel -RepoRoot $pcRoot)) 'a source that climbs out of the root, or another marketplace, finds nothing'
+    $pcC = Get-PluginContents -Dir $pcDir
+    Assert-Equal 'derek,victor' ((@($pcC.Specialists) | ForEach-Object { $_.Slug }) -join ',') 'a specialist per id under subagents, personas and manuals, in id order, its slug its name'
+    $vic = $pcC.Specialists[1]
+    Assert-True ($vic.Name -eq 'Victor' -and $vic.Emoji -eq $emo -and $vic.Title -eq 'Code Reviewer' -and $vic.Kind -eq 'subagent' -and $vic.Model -eq 'sonnet' -and $vic.Description -eq 'Code Reviewer <b>x</b> -- the final look.' -and $vic.DocLabel -eq 'manuals/specialist-06-19-manual.md') 'name, emoji and title from the heading, the rest from the subagent''s frontmatter, the manual its document'
+    Assert-True ($pcC.Specialists[0].Kind -eq 'persona' -and $pcC.Specialists[0].Description -eq 'Derek knows Git.' -and $pcC.Specialists[0].Title -eq 'DevOps Engineer') 'a persona with no manual is described by its own opening paragraph'
+    Assert-Equal 'do-it' ((@($pcC.Skills) | ForEach-Object { $_.Slug }) -join ',') 'a skill per folder with a SKILL.md whose name is a slug'
+    Assert-True ($pcC.Hooks.Count -eq 1 -and $pcC.Hooks[0].Slug -eq 'check-a' -and $pcC.Hooks[0].Runs.Count -eq 2 -and $pcC.Hooks[0].Synopsis -eq 'Checks a.') 'a hook per script, whatever events run it, with its synopsis'
+    $pcPage = Format-PluginPageHtml -Row (Find-PluginsPageRow -Model $pv -Name 'zeta') -Model $pv -Contents $pcC
+    Assert-True ($pcPage.IndexOf('<h2>Specialists</h2>') -lt $pcPage.IndexOf('<h2>Hooks</h2>') -and $pcPage.IndexOf('<h2>Hooks</h2>') -lt $pcPage.IndexOf('<h2>Skills</h2>') -and $pcPage.Contains('href="/plugins/zeta/specialists/victor"') -and $pcPage.Contains('href="/plugins/zeta/hooks/check-a"') -and $pcPage.Contains('href="/plugins/zeta/skills/do-it"') -and $pcPage -match '<h3>Victor ' -and $pcPage.IndexOf('<h2>Skills</h2>') -lt $pcPage.IndexOf('id="facts"')) 'Specialists, Hooks and Skills, each an h2 over a card per item opening its landing page, at the top of the page (Dave, November 3, 2026)'
+    Assert-True ((Format-PluginPageHtml -Row (Find-PluginsPageRow -Model $pv -Name 'zeta') -Model $pv -Contents @{ Specialists = @(); Skills = @(); Hooks = @() }) -notmatch '<h2>(Specialists|Hooks|Skills)</h2>') 'a kind the plugin ships none of is not drawn'
+    $req = Resolve-PluginsPageRequest -Path '/plugins/zeta/specialists/victor'
+    Assert-True ($req.Name -eq 'zeta' -and $req.Page -eq 'specialists' -and $req.Section -eq 'victor' -and $null -eq (Resolve-PluginsPageRequest -Path '/plugins/zeta/agents/victor') -and $null -eq (Resolve-PluginsPageRequest -Path '/plugins/zeta/skills/A')) 'an item''s page is /plugins/<plugin>/<specialists|skills|hooks>/<slug>, and nothing else is'
+    $vp = Format-PluginItemPageHtml -Row $pcRow -Contents $pcC -Kind specialists -Slug victor -RepoRoot $pcRoot
+    Assert-True ($vp -match '<a href="/plugins/zeta">zeta</a>' -and $vp.Contains('<h2>Code Reviewer</h2>') -and $vp.Contains('&lt;b&gt;x&lt;/b&gt;') -and $vp.Contains('href="/claude/specialists/lenses/specialist-06-19-lens"') -and $vp.Contains('<h2>Manual</h2>') -and $vp -match 'id="doc-md"') 'a specialist''s page: its title over what they do, escaped, the facts with its lens, and its manual rendered'
+    Assert-True ((Format-PluginItemPageHtml -Row $pcRow -Contents $pcC -Kind specialists -Slug derek) -notmatch 'lenses/specialist-05-05') 'no lens link where the checkout has no lens'
+    $hp = Format-PluginItemPageHtml -Row $pcRow -Contents $pcC -Kind hooks -Slug check-a
+    Assert-True ($hp.Contains('<p>First para wraps.</p>') -and $hp.Contains('<li>one</li>') -and $hp.Contains('SessionStart <code>startup</code>, timeout 30 s') -and ([regex]::Matches($hp, '<dt>Runs on</dt>')).Count -eq 2) 'a hook''s page: its synopsis, every event that runs it, and its description as paragraphs and a list'
+    Assert-True ((Format-PluginItemPageHtml -Row $pcRow -Contents $pcC -Kind skills -Slug do-it).Contains('<code>/zeta:do-it</code>') -and $null -eq (Format-PluginItemPageHtml -Row $pcRow -Contents $pcC -Kind skills -Slug nope)) 'a skill''s page says how it is invoked; a slug the plugin has none of is no page'
+    Assert-Equal 0 (Get-PluginContents -Dir (Join-Path $pcRoot 'gone')).Specialists.Count 'a folder that is not there ships nothing'
+} finally { Remove-Item -LiteralPath $pcRoot -Recurse -Force -ErrorAction SilentlyContinue }
 $hsFix = "<style>.spec-x {}</style>`n<div class=`"spec-page`">`n`n<div class=`"grid-2`">`n  <div class=`"grid__head`"><h2 id=`"hs-alpha`">Alpha &amp; one</h2><p class=`"card__sub`">The <code>first</code> line</p></div>`n  <section class=`"card`" id=`"specimen-a1`"></section>`n  <section class=`"card grid__full`" id=`"specimen-a2`"></section>`n</div>`n`n" +
     "<div class=`"grid-3`">`n  <div class=`"grid__head`"><h2 id=`"hs-beta`">Beta</h2><p class=`"card__sub`">Second</p></div>`n  <section class=`"card`" id=`"specimen-b1`"></section>`n</div>`n`n</div>`n<dialog id=`"hs-modal`"></dialog>`n<script>/* s */</script>`n"
 $hsSplit = Split-HouseStyleSpecimens -Body $hsFix
