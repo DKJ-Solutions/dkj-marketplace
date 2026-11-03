@@ -51,9 +51,9 @@
     (Get-StopwatchStorePath, the repo named by Get-HubRepoKey). A file in the checkout would dirty it in the middle of
     the workflow being measured, and the scripts that ship a branch refuse a dirty tree. So the store is this
     machine's, like the session transcripts the transcript phases read (below). It is one per repo since the page is
-    every repo's (#3470): one store per machine would show every repo's runs on each repo's hub. The machine-wide
-    store of before, which only the source repo's own hooks ever wrote, is taken over as that repo's own
-    (Move-HubTimingLegacyStore). A REPO MAY SHARE ITS FINISHED RUNS (#3349): with DKJ_STOPWATCH_SHARE=1 in its
+    every repo's (#3470): one store per machine would show every repo's runs on each repo's hub. A store a
+    checkout left behind -- under its old key after a folder rename (#3780), or the machine-wide store of before
+    #3470 -- is adopted by the repo its runs' commits belong to (Import-HubTimingOrphanStore). A REPO MAY SHARE ITS FINISHED RUNS (#3349): with DKJ_STOPWATCH_SHARE=1 in its
     .claude/settings.json env block, each machine publishes them, with the phases it read for them, to a ref of its
     own on origin, and the pages show every other machine's beside this one's (stopwatch-sync-lib.ps1). It is an
     opt-in because a label is the first line of a prompt, and a public repo's refs are public. A run from another
@@ -69,7 +69,7 @@
 
     Pure except Read-StopwatchStore and Save-StopwatchStore (the store's own file), Read-StopwatchTranscriptEvents
     (one session transcript, read only) and Get-StopwatchTranscriptCache (the transcripts, and stopwatch-phases.json
-    beside the store), Move-HubTimingLegacyStore (the store of before #3470, moved once). Every value that reaches
+    beside the store), Import-HubTimingOrphanStore (an orphaned store, adopted once). Every value that reaches
     the page is escaped through the general pages' ConvertTo-GeneralPageText, and the page shell is theirs
     (Format-GeneralPageHtml), so a caller loads hub/lib/general-pages-lib.ps1 before it builds a page. Pure ASCII
     (repo convention for .ps1). Tested by scripts/tests/stopwatch.tests.ps1 in the source repo.
@@ -140,34 +140,162 @@ function Get-StopwatchStorePath {
     return (Join-Path (Get-HubTimingBaseDir) ('repos\' + (Get-HubRepoKey -RepoRoot $RepoRoot) + '\stopwatch.json'))
 }
 
-function Move-HubTimingLegacyStore {
+$script:HubCheckoutMarkFile = 'checkout.txt'
+
+function Test-HubTimingStoreLive {
     <#
-        Takes over the machine-wide stores of before #3470 as the source repo's own, once: until then the Stopwatch and
-        the Logbook were the source repo's pages alone, and their stores sat straight in Get-HubTimingBaseDir. Only a
-        checkout of the source repo takes them: its name is dkj-claude-plugins AND it carries this plugin's source
-        (plugins\dkj-policy\hub under -RepoRoot), so no other repo's hub ever shows that repo's runs. Both, because
-        either alone was not enough: a test fixture carries the plugin's tree under a folder of another name, and
-        measured on this branch, a fixture checkout called 'src' took this machine's real stores as its own. Each file
-        moves only where the repo's own copy is not there yet, and a failed move is left for the next call. The machine
-        id (stopwatch-machine.txt) stays where it is: it names this machine, not a repo. Returns the names it moved.
+        Whether the store folder -Dir still belongs to a checkout that exists (#3780), so it is nobody's orphan. Its
+        checkout.txt names the main checkout that last used it (Import-HubTimingOrphanStore writes it); a folder of
+        before that file is judged by its own name instead: <name>-<hash> is live when -MainCheckout's parent holds a
+        folder <name> whose path hashes to <hash>. That is the rename case, the one this was built for: a checkout
+        renamed in place leaves its old key's folder behind, and the old path no longer exists. A folder neither test
+        can place (no checkout.txt, its checkout somewhere else) is not live, and the commit test decides.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Dir, [Parameter(Mandatory = $true)][string]$MainCheckout)
+    $mark = Join-Path $Dir $script:HubCheckoutMarkFile
+    if (Test-Path -LiteralPath $mark -PathType Leaf) {
+        $path = ''
+        try { $path = ([System.IO.File]::ReadAllText($mark, (New-Object System.Text.UTF8Encoding($false)))).Trim() } catch { }
+        return [bool]($path -and (Test-Path -LiteralPath $path -PathType Container))
+    }
+    $m = [regex]::Match((Split-Path -Leaf $Dir), '^(.+)-[0-9a-f]{8}\z')
+    if (-not $m.Success) { return $false }
+    $sibling = Join-Path (Split-Path -Parent $MainCheckout) $m.Groups[1].Value
+    if ((Get-HubRepoKey -RepoRoot $sibling) -cne (Split-Path -Leaf $Dir)) { return $false }
+    return (Test-Path -LiteralPath $sibling -PathType Container)
+}
+
+function Get-HubCommitsKnown {
+    <#
+        Which of -Shas are commits in the repo at -RepoRoot, as a hashtable; $null when git could not be asked.
+        `git rev-list --no-walk --ignore-missing` with the shas as arguments, which prints the ones that are commits
+        here, 300 to a call so the command line stays short. Not `cat-file --batch-check` on stdin: measured on #3780,
+        Windows PowerShell's pipe into a native command made it read every sha as missing.
+    #>
+    param([Parameter(Mandatory = $true)][string]$RepoRoot, [AllowEmptyCollection()][string[]]$Shas = @())
+    $known = @{}
+    $ask = @($Shas | Where-Object { $_ -cmatch '^[0-9a-f]{40}\z' } | Select-Object -Unique)
+    $eap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+    try {
+        for ($i = 0; $i -lt $ask.Count; $i += 300) {
+            $chunk = @($ask[$i..([Math]::Min($i + 299, $ask.Count - 1))])
+            $out = @(git -C $RepoRoot rev-list --no-walk --ignore-missing @chunk 2>$null)
+            if ($LASTEXITCODE -ne 0) { return $null }
+            foreach ($line in $out) { $s = ([string]$line).Trim(); if ($s -cmatch '^[0-9a-f]{40}\z') { $known[$s] = $true } }
+        }
+    } catch { return $null } finally { $ErrorActionPreference = $eap }
+    return $known
+}
+
+function Merge-HubTimingRunStore {
+    <#
+        Folds the run store at -From into the one at -To, a union on run id where -To's own run wins (#3780, the owner's
+        choice for the Logbook, and the Stopwatch's store the same way). Its sessions (the Logbook's) and prepared
+        labels (the Stopwatch's) are a union too. A store that does not read on either side is left alone, so nothing
+        is written over. Returns whether -To was written.
+    #>
+    param([Parameter(Mandatory = $true)][string]$From, [Parameter(Mandatory = $true)][string]$To)
+    if (-not (Test-Path -LiteralPath $From -PathType Leaf)) { return $false }
+    $src = Read-StopwatchStore -Path $From; $dst = Read-StopwatchStore -Path $To
+    if ($src.Error -or $dst.Error) { return $false }
+    $ids = @{}; foreach ($r in @($dst.Runs)) { $ids[$r.Id] = $true }
+    $add = @($src.Runs | Where-Object { -not $ids.ContainsKey($_.Id) })
+    $labels = @{}; foreach ($p in @($dst.Prepared)) { $labels[$p.Label.ToLowerInvariant()] = $true }
+    $prep = @($src.Prepared | Where-Object { -not $labels.ContainsKey($_.Label.ToLowerInvariant()) })
+    $sess = @($src.Sessions | Where-Object { @($dst.Sessions) -cnotcontains $_ })
+    if (-not ($add.Count + $prep.Count + $sess.Count)) { return $false }
+    $runs = @(@($dst.Runs) + $add | Sort-Object { $_.Start })
+    $save = @{ Path = $To; Runs = $runs }
+    if (@($dst.Sessions).Count -or @($src.Sessions).Count) { $save.Sessions = [string[]]@(@($dst.Sessions) + $sess) }
+    if (@($dst.Prepared).Count -or @($src.Prepared).Count) { $save.Prepared = [object[]]@(@($dst.Prepared) + $prep) }
+    Save-StopwatchStore @save
+    return $true
+}
+
+function Merge-HubTimingPhaseCache {
+    <# Folds the phase cache at -From (an object keyed by run id) into the one at -To, -To's own entry winning. Either not reading leaves -To alone. Returns whether -To was written. #>
+    param([Parameter(Mandatory = $true)][string]$From, [Parameter(Mandatory = $true)][string]$To)
+    if (-not (Test-Path -LiteralPath $From -PathType Leaf)) { return $false }
+    $read = { param($p) if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { return [pscustomobject]@{} }; $t = [System.IO.File]::ReadAllText($p, (New-Object System.Text.UTF8Encoding($false))); if ($t.Trim()) { $t | ConvertFrom-Json } else { [pscustomobject]@{} } }
+    try { $src = & $read $From; $dst = & $read $To } catch { return $false }
+    if ($null -eq $src -or $null -eq $dst) { return $false }
+    $out = [ordered]@{}; foreach ($p in @($dst.PSObject.Properties)) { $out[$p.Name] = $p.Value }
+    $added = 0; foreach ($p in @($src.PSObject.Properties)) { if (-not $out.Contains($p.Name)) { $out[$p.Name] = $p.Value; $added++ } }
+    if (-not $added) { return $false }
+    $tmp = "$To.tmp"
+    [System.IO.File]::WriteAllText($tmp, ($out | ConvertTo-Json -Depth 8), (New-Object System.Text.UTF8Encoding($false)))
+    Move-Item -LiteralPath $tmp -Destination $To -Force
+    return $true
+}
+
+function Import-HubTimingOrphanStore {
+    <#
+        Adopts the timing stores a checkout left behind (#3780), once per store folder. The key stays the path hash
+        (Get-HubRepoKey, the #3470 isolation), so renaming a checkout's folder gives it a new key, and its runs stayed
+        under the old one: measured on #3780, the source repo's rename from dkj-claude-plugins to dkj-marketplace
+        emptied its /stopwatch overview, and its share published the empty store to origin.
+
+        A STORE IS AN ORPHAN when no existing checkout owns it (Test-HubTimingStoreLive), and it is ADOPTED when at
+        least one of its runs' StartHead commits is a commit in this repo: an unrelated repo shares none, so its runs
+        never cross over, and a clone of the same repo that still exists is not an orphan once its folder carries
+        checkout.txt. The machine-wide stores of before #3470,
+        straight in Get-HubTimingBaseDir, are one more candidate on the same terms, which retires the hard-coded
+        dkj-claude-plugins name the move of them used to need (a test fixture's commits are its own, so it adopts
+        nothing).
+
+        ADOPTING COPIES, AND NEVER DELETES: the run stores are folded in as a union on run id (Merge-HubTimingRunStore),
+        the phase caches by run id the same way, and the hide file is copied only where the repo has none. Nothing is
+        moved, so the old folder stays as it was. Then checkout.txt is written into the repo's own folder, naming its
+        main checkout, which makes every later call one Test-Path, and makes this folder live for the next rename.
+        Where the repo has no store folder yet and nothing is adopted, nothing is written, so a fixture leaves no
+        folder behind. Where git could not be asked, the mark is not written and the next call asks again. Held under
+        the hooks' lock, so two hooks firing at once adopt once. The machine id (stopwatch-machine.txt) is never
+        touched. Never throws. Returns the adopted files as '<folder>\<file>'.
     #>
     param([Parameter(Mandatory = $true)][string]$RepoRoot)
-    if ((Get-HubRepoName -RepoRoot $RepoRoot) -cne 'dkj-claude-plugins') { return @() }
-    if (-not (Test-Path -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\hub') -PathType Container)) { return @() }
-    $base = Get-HubTimingBaseDir
-    $dir = Split-Path -Parent (Get-StopwatchStorePath -RepoRoot $RepoRoot)
-    $moved = @()
-    foreach ($name in 'stopwatch.json', 'logbook.json', 'stopwatch-phases.json', 'logbook-phases.json', 'stopwatch-hidden.json', 'stopwatch-sync.stamp', 'stopwatch-sync.log') {
-        $old = Join-Path $base $name
-        $new = Join-Path $dir $name
-        if (-not (Test-Path -LiteralPath $old -PathType Leaf) -or (Test-Path -LiteralPath $new)) { continue }
-        try {
+    $lock = $null
+    try {
+        $dir = Split-Path -Parent (Get-StopwatchStorePath -RepoRoot $RepoRoot)
+        $mark = Join-Path $dir $script:HubCheckoutMarkFile
+        if (Test-Path -LiteralPath $mark -PathType Leaf) { return @() }
+        $lock = Get-HubTimingLock -StorePath $mark
+        if (Test-Path -LiteralPath $mark -PathType Leaf) { return @() }
+        $main = Get-HubMainCheckout -RepoRoot $RepoRoot
+        $base = Get-HubTimingBaseDir
+        $repos = Join-Path $base 'repos'
+        $candidates = @($base)
+        if (Test-Path -LiteralPath $repos -PathType Container) {
+            $candidates += @(Get-ChildItem -LiteralPath $repos -Directory -ErrorAction SilentlyContinue | Where-Object { $_.FullName -ne $dir } | ForEach-Object { $_.FullName })
+        }
+        $heads = @{}
+        foreach ($c in $candidates) {
+            if ($c -ne $base -and (Test-HubTimingStoreLive -Dir $c -MainCheckout $main)) { continue }
+            $h = @(foreach ($f in 'stopwatch.json', 'logbook.json') { $s = Read-StopwatchStore -Path (Join-Path $c $f); if (-not $s.Error) { $s.Runs | ForEach-Object { $_.StartHead } } })
+            $h = @($h | Where-Object { $_ })
+            if ($h.Count) { $heads[$c] = $h }
+        }
+        $known = @{}
+        if ($heads.Count) {
+            $known = Get-HubCommitsKnown -RepoRoot $RepoRoot -Shas @($heads.Values | ForEach-Object { $_ })
+            if ($null -eq $known) { return @() }
+        }
+        $adopted = @()
+        foreach ($c in @($heads.Keys | Sort-Object)) {
+            if (-not @($heads[$c] | Where-Object { $known.ContainsKey($_) }).Count) { continue }
             if (-not (Test-Path -LiteralPath $dir -PathType Container)) { [void](New-Item -ItemType Directory -Path $dir -Force) }
-            Move-Item -LiteralPath $old -Destination $new -ErrorAction Stop
-            $moved += $name
-        } catch { }
+            $leaf = Split-Path -Leaf $c
+            foreach ($f in 'stopwatch.json', 'logbook.json') { if (Merge-HubTimingRunStore -From (Join-Path $c $f) -To (Join-Path $dir $f)) { $adopted += "$leaf\$f" } }
+            foreach ($f in 'stopwatch-phases.json', 'logbook-phases.json') { if (Merge-HubTimingPhaseCache -From (Join-Path $c $f) -To (Join-Path $dir $f)) { $adopted += "$leaf\$f" } }
+            $hidden = Join-Path $c 'stopwatch-hidden.json'
+            if ((Test-Path -LiteralPath $hidden -PathType Leaf) -and -not (Test-Path -LiteralPath (Join-Path $dir 'stopwatch-hidden.json'))) {
+                Copy-Item -LiteralPath $hidden -Destination (Join-Path $dir 'stopwatch-hidden.json') -ErrorAction Stop; $adopted += "$leaf\stopwatch-hidden.json"
+            }
+        }
+        if (Test-Path -LiteralPath $dir -PathType Container) { [System.IO.File]::WriteAllText($mark, $main, (New-Object System.Text.UTF8Encoding($false))) }
+        return $adopted
+    } catch { return @() } finally {
+        if ($lock) { try { $lock.ReleaseMutex() } catch { }; $lock.Dispose() }
     }
-    return $moved
 }
 
 function Test-StopwatchShareEnabled {
@@ -465,7 +593,7 @@ function Start-StopwatchScriptRun {
     $lock = $null
     try {
         $root = [System.IO.Path]::GetFullPath($RepoRoot).TrimEnd('\', '/')
-        if (-not $StorePath) { [void](Move-HubTimingLegacyStore -RepoRoot $root); $StorePath = Get-StopwatchStorePath -RepoRoot $root }
+        if (-not $StorePath) { [void](Import-HubTimingOrphanStore -RepoRoot $root); $StorePath = Get-StopwatchStorePath -RepoRoot $root }
         $head = ''
         $eap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
         try { $out = @(git -C $root rev-parse HEAD 2>$null); if ($LASTEXITCODE -eq 0 -and $out.Count) { $head = ([string]$out[0]).Trim() } } finally { $ErrorActionPreference = $eap }

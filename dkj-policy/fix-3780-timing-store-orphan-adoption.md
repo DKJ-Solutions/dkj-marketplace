@@ -39,19 +39,59 @@
 
 ### PLAN
 
+- [x] Implement the owner's decision on #3780 (November 3, 2026): keep the path-hash key, add an
+  adopt-on-orphan fallback on the runs' `startHead` commits, retire the hard-coded `dkj-claude-plugins`
+  name, and merge the Logbook stores as a union on run id.
+
+#### Two choices the decision left open, made here
+
+- **Orphan means no existing checkout owns the folder**, not just "another key": two clones of one
+  repo share every commit, so the commit test alone would let one copy the other's runs. A folder's
+  new `checkout.txt` names its checkout; a folder of before that file is placed by its own
+  `<name>-<hash>` beside the current checkout, which is exactly the rename case.
+- **Adopting copies and never deletes**, as the issue's own local repair did, so a wrong adoption
+  costs duplicates and never loses a run.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Move-HubTimingLegacyStore` becomes `Import-HubTimingOrphanStore` in
+  `plugins/dkj-policy/hub/lib/stopwatch-lib.ps1`, with `Test-HubTimingStoreLive`,
+  `Get-HubCommitsKnown`, `Merge-HubTimingRunStore` and `Merge-HubTimingPhaseCache`; its six callers
+  (two hooks, two hub pages, `timing-pages.ps1`, `Start-StopwatchScriptRun`) renamed.
+- [x] The commit probe is `git rev-list --no-walk --ignore-missing` with the shas as arguments:
+  `cat-file --batch-check` fed through a Windows PowerShell pipe read every sha as missing.
 
 ### TEST
 
+- [x] `scripts/tests/stopwatch.tests.ps1`: the old move asserts replaced by the adoption block
+  (rename orphan adopted, Logbook union with its own run winning, sessions and phase caches merged,
+  hide file copied, old folder untouched, unrelated orphan and live clone never adopted, once per
+  folder, the machine-wide store adopted by commit and not by name, no folder left by a non-repo).
+  302 passed, three runs in a row.
+- [x] Dry read against this machine's real stores: of twelve folders only
+  `dkj-claude-plugins-b8e66305` is both an orphan and shares commits with this repo (62 of 91).
+
 ### DEPLOY: fix/3780-timing-store-orphan-adoption
 
-**Score:**
+Renaming a checkout's folder no longer empties its Stopwatch and Logbook
+([#3780](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3780)). The store key stays the
+path hash, so two unrelated repos with one folder name still never share a store (#3470), and the
+first time a repo's hooks or hub run after the upgrade, `Import-HubTimingOrphanStore` adopts any store
+no existing checkout owns whose runs started on a commit of this repo. The run stores merge as a union
+on run id, the repo's own run winning, with the phase caches the same way and the hide file copied
+where the repo has none. Nothing is moved or deleted. The repo's folder is then marked with its
+checkout in a `checkout.txt`, so every later call is one file test and the next rename finds it. The
+machine-wide stores of before #3470 are adopted on the same commit test, which retires the hard-coded
+`dkj-claude-plugins` name the old move needed.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A repo whose checkout folder was renamed gets its earlier Stopwatch cards and Logbook runs back on
+its hub without anyone copying files by hand, and a shared Stopwatch stops publishing an empty store.
+
+**Score:** 2
 
 #### Pull Request
 

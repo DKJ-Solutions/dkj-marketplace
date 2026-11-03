@@ -32,7 +32,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\stopwatch-lib.ps1')
 $root = if ($RepoRoot) { $RepoRoot } elseif ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR } else { (Get-Location).Path }
 $root = [System.IO.Path]::GetFullPath($root).TrimEnd('\', '/')
-if (-not $StorePath) { [void](Move-HubTimingLegacyStore -RepoRoot $root); $StorePath = Get-StopwatchStorePath -RepoRoot $root }
+if (-not $StorePath) { [void](Import-HubTimingOrphanStore -RepoRoot $root); $StorePath = Get-StopwatchStorePath -RepoRoot $root }
 
 $norm = ConvertTo-StopwatchLabel -Text $Label
 if (-not $norm) {
