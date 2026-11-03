@@ -551,8 +551,17 @@ try {
                             Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('No house-style section of that name.')) -Method $method
                             continue
                         }
+                    } elseif ($plReq.Page) {
+                        # One specialist, skill or hook the plugin ships (Dave, November 3, 2026); a slug it has none of is a 404.
+                        $plContents = Get-PluginContents -Dir (Resolve-PluginPayloadDir -Row $plRow -Model $pl.Model -RepoRoot $root)
+                        $html = Format-PluginItemPageHtml -Row $plRow -Contents $plContents -Kind $plReq.Page -Slug $plReq.Section -RepoName (Get-RepoIdentity).Name -RepoRoot $root
+                        if ($null -eq $html) {
+                            Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('This plugin ships nothing of that name.')) -Method $method
+                            continue
+                        }
                     } else {
-                        $html = Format-PluginPageHtml -Row $plRow -Model $pl.Model -RepoName (Get-RepoIdentity).Name
+                        $plContents = Get-PluginContents -Dir (Resolve-PluginPayloadDir -Row $plRow -Model $pl.Model -RepoRoot $root)
+                        $html = Format-PluginPageHtml -Row $plRow -Model $pl.Model -RepoName (Get-RepoIdentity).Name -Contents $plContents
                     }
                 } else {
                     Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('No plugin of that name is enabled in this repo.')) -Method $method

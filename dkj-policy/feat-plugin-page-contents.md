@@ -41,19 +41,33 @@
 
 Each plugin's hub page lists what it ships: a card per specialist, hook and skill, each opening a landing page with more about it.
 
+Asked by Dave, November 3, 2026, on `/plugins/dkj-subagents-alpha`: an h2 Specialists with a card per
+specialist, each opening a landing page; then also an h2 Hooks and Skills.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins-page-lib.ps1`: `Resolve-PluginPayloadDir` (the repo's own tree where it is the marketplace, else the clone), `Get-PluginContents` (specialists from subagents/personas/manuals, skills from `SKILL.md`, hooks from `hooks.json` and each script's help), `Format-PluginContentsSectionsHtml` (the three h2 sections) and `Format-PluginItemPageHtml` (the landing pages, a manual or `SKILL.md` rendered by the house markdown renderer).
+- [x] `serve-general-pages.ps1`: the plugin page passes `-Contents`; `/plugins/<name>/<specialists|skills|hooks>/<slug>` serves a landing page, a 404 for a slug the plugin has none of.
+- [x] Hub README row updated.
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: 15 asserts on a fixture plugin (resolution, the three readers, the sections, the routes, each landing page, escaping); the suite is 561 passed, 0 failed.
+- [x] Served from the branch on port 4891: every route answers 200, an unknown slug 404.
+- [ ] The owner's look: a visible result, so the branch waits for it before the PR.
+
 ### DEPLOY: feat/plugin-page-contents
 
-**Score:**
+Each plugin's page in the Toolbox now shows what the plugin ships, under three headings: **Specialists**,
+**Hooks** and **Skills**, a card per item. Each card opens a landing page of its own: a specialist's title,
+description, model, tools and repo lens beside their manual in full; a hook's synopsis, the events that run
+it and how it works; a skill's description, how it is invoked and its `SKILL.md`.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+**Score:** N/A
 
 #### Pull Request
 
