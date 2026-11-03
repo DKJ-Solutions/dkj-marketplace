@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**6 / 8 minor entries** <!-- pending-tally -->
+**6 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/plugin-page-contents · 20261103-133005Z
+
+Each plugin's page in the Toolbox now shows what the plugin ships, under three headings: **Specialists**,
+**Hooks** and **Skills**, a card per item. Each card opens a landing page of its own: a specialist's title,
+description, model, tools and repo lens beside their manual in full; a hook's synopsis, the events that run
+it and how it works; a skill's description, how it is invoked and its `SKILL.md`.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Nothing beyond the page itself: it reaches only a reader who opens a plugin's page in the Toolbox, and
+changes no workflow, gate or command.
+
+**Score:** N/A
+
+#### Pull Request
+
+Plugin page: Specialists, Hooks and Skills sections
+
+Plugins: dkj-policy
+
+[PR #3776](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3776)
+
+---
 
 ### DEPLOY: feat/hub-rules-page · 20261103-131931Z
 
