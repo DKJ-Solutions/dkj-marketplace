@@ -198,7 +198,7 @@ try {
     [System.IO.File]::WriteAllText((Join-Path $ruleRoot '.claude\rules\notes.txt'), "not markdown`n")
     $rules = @(Get-HubRulePages -RepoRoot $ruleRoot)
     Assert-Equal 'layers,this-repo' (($rules | ForEach-Object { $_.Label }) -join ',') 'the rules are the .claude/rules markdown files by name -- not a CLAUDE.md the root imports, not a file that is no markdown'
-    Assert-True ($rules[1].Sub -eq 'This repo' -and $rules[1].Display -eq '.claude/rules/this-repo.md' -and $rules[0].Sub -eq 'Layers (loads only when Claude touches a matching file)') 'a rule card''s sub line is its own # title, and a path-scoped rule says when it loads'
+    Assert-True ($rules[1].Sub -eq 'This repo' -and $rules[1].Display -eq '.claude/rules/this-repo.md' -and $rules[0].Sub -eq 'Layers (path-scoped)') 'a rule card''s sub line is its own # title, and a path-scoped rule says so in two words'
     $rulesPage = Format-HubGroupPageHtml -Href '/claude/rules' -RepoName 'x' -RepoRoot $ruleRoot
     Assert-True (([regex]::Matches($rulesPage, '<section class="card card--link">')).Count -eq 2 -and $rulesPage -match 'href="/claude/rules/layers"' -and $rulesPage -match 'menu-item__label"><h2>this-repo</h2>' -and $rulesPage -match '<div class="ph-cards">' -and $rulesPage -notmatch 'grid__head|Repo rules' -and $rulesPage -notmatch 'href="/claude/rules/pol"' -and $rulesPage -notmatch 'Nothing') 'with a repo the page holds one h2 card per rule file, standing on the page with no section heading over them (Maikel, November 3, 2026)'
     $rulePage = Format-HubRulePageHtml -Name 'this-repo' -RepoRoot $ruleRoot -RepoName 'x'

@@ -593,7 +593,8 @@ function Get-HubRulePages {
         The rule files in the .claude/rules folder of the repo at -RepoRoot -- what is in that folder and nothing else
         (Maikel, November 3, 2026) -- each a card's @{ Href; Label; Sub; Icon; Path; Display }, by name, read per request
         as the lenses are. The Label is the file's name, the Sub its own '# ' title, and a path-scoped rule ('paths:' in
-        its frontmatter) says it loads only when Claude touches a matching file. None without a -RepoRoot or the folder.
+        its frontmatter, so it loads only when Claude touches a matching file) ends it on '(path-scoped)' (Maikel,
+        November 3, 2026: shorter than saying so in full). None without a -RepoRoot or the folder.
     #>
     param([AllowEmptyString()][string]$RepoRoot = '')
     if (-not $RepoRoot) { return @() }
@@ -607,7 +608,7 @@ function Get-HubRulePages {
         $sub = Get-HubDocTitle -Path $f.FullName
         $scoped = $false
         try { $scoped = [regex]::IsMatch(([System.IO.File]::ReadAllText($f.FullName, $utf8) -replace "`r`n", "`n"), '\A---\n(?:(?!---\n)[\s\S])*?(?m:^paths:)') } catch { }
-        if ($scoped) { $sub = ($(if ($sub) { $sub + ' ' } else { '' })) + '(loads only when Claude touches a matching file)' }
+        if ($scoped) { $sub = ($(if ($sub) { $sub + ' ' } else { '' })) + '(path-scoped)' }
         $out.Add(@{ Href = '/claude/rules/' + $label; Label = $label; Sub = $sub; Icon = 'rules'; Path = $f.FullName; Display = ('.claude/rules/' + $f.Name) })
     }
     return $out.ToArray()
