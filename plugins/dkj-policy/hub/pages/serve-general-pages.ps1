@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Serve the plugin's REPOSITORY (#3245) and the GENERAL pages (#3119) on http://localhost:<Port>/ -- the hub on
-    '/', then /issues, /release-notes, /sessionstart, /test-gate, /clock, /stopwatch, /logbook and /plugins --
+    '/', then /issues, /release-notes, /sessionstart, /test-gate, /performance, /stopwatch, /logbook and /plugins --
     from the repo this server was started in. Not /brandbook: no hub has served the brand book since #3475, and the
     source repo retired the app itself under #3493.
 
@@ -496,11 +496,16 @@ try {
                 Send-LoopbackResponse $stream 301 'Moved Permanently' 'text/plain; charset=utf-8' ($utf8.GetBytes('Moved.')) @{ Location = $to } -Method $method
                 continue
             }
+            # The Clock is a section of /performance since November 3, 2026 (Dave), so its old page is moved there.
+            if ($path -cmatch '^/clock/?$') {
+                Send-LoopbackResponse $stream 301 'Moved Permanently' 'text/plain; charset=utf-8' ($utf8.GetBytes('Moved.')) @{ Location = '/performance' } -Method $method
+                continue
+            }
             $html = $null
             if ($gp = Format-HubGroupPageHtml -Href $path -RepoName (Get-RepoIdentity).Name -RepoRoot $root) {
-                # A group page (Get-HubGroups): /performance, holding SessionStart and the Clock (the owner, October 30, 2026),
-                # and /clock, holding the Stopwatch and the Logbook (October 27, 2026); /performance sits in
-                # Claude since November 2, 2026, under the same route.
+                # A group page (Get-HubGroups): /performance, its Clock section over the Stopwatch and the Logbook and its
+                # Context section over SessionStart (Dave, November 3, 2026); it sits in Claude since November 2, 2026,
+                # under the same route.
                 $html = $gp
             } elseif ($path -cmatch '^/claude/specialists/lenses/(specialist-\d{2}-\d{2}-lens)/?$') {
                 # One specialist lens's page, read from this checkout (Maikel, October 30, 2026); a lens it has not is a 404.

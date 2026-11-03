@@ -7,8 +7,9 @@ General pages linked from it: Issues, Release notes, SessionStart, Test gate, St
 (Test gate and those two since [#3470](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3470)) and Plugins
 (since [#3482](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3482)), and the **Claude** card. Issues and
 the Test gate are linked from the **GitHub** page instead, the Test gate beside the CI runs it measures (since
-November 2, 2026). Stopwatch and Logbook sit behind the Clock card and its `/clock` page (October 27, 2026), and
-SessionStart and Clock behind the Performance card and its `/performance` page (October 30, 2026). The `/claude`
+November 2, 2026). The Performance card's `/performance` page (October 30, 2026) holds two sections since
+November 3, 2026 (Dave): **Clock**, an `h2` over the Stopwatch and Logbook `h3` cards, and **Context**, over
+SessionStart's. Clock had a `/clock` page of its own from October 27, and that address now moves to `/performance`. The `/claude`
 page (the `/ai` page, with Claude as its section, until Maikel made Claude its `h1` on November 2, 2026; an old `/ai`
 link is moved there) holds the Rules, Skills, Specialists and Performance cards (Performance there since
 November 2, 2026, because what it measures is what Claude's work costs; its route did not change), the Skills page a
