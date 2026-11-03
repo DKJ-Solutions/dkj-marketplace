@@ -606,6 +606,15 @@ function Get-HubRulePages {
         $label = $f.BaseName
         if ($label -cnotmatch '^[A-Za-z0-9._-]{1,80}\z') { continue }
         $sub = Get-HubDocTitle -Path $f.FullName
+        # A title's lead before its em dash names the subject, which the card's own title -- the file's name -- already
+        # does (Maikel, November 3, 2026): 'Language -- which layers ...' under 'language-layers'. So the Sub is what
+        # follows it, a plain word opening it raised to a capital; an identifier ('dkj-marketplace') is left as written.
+        $dash = ' ' + [char]0x2014 + ' '
+        $at = $sub.IndexOf($dash)
+        if ($at -gt 0 -and $at + $dash.Length -lt $sub.Length) {
+            $sub = $sub.Substring($at + $dash.Length).Trim()
+            if ($sub -cmatch '\A[a-z]+ ') { $sub = $sub.Substring(0, 1).ToUpperInvariant() + $sub.Substring(1) }
+        }
         $scoped = $false
         try { $scoped = [regex]::IsMatch(([System.IO.File]::ReadAllText($f.FullName, $utf8) -replace "`r`n", "`n"), '\A---\n(?:(?!---\n)[\s\S])*?(?m:^paths:)') } catch { }
         if ($scoped) { $sub = ($(if ($sub) { $sub + ' ' } else { '' })) + '(path-scoped)' }
