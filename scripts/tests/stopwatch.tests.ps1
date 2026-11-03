@@ -700,8 +700,8 @@ $sdir = Join-Path ([System.IO.Path]::GetTempPath()) ('sw-script-' + [guid]::NewG
 try {
     $srepo = Join-Path $sdir 'repo'
     [void](New-Item -ItemType Directory -Path $srepo -Force)
-    $null = & git -C $srepo init -q 2>&1
-    $null = & git -C $srepo -c user.name=t -c user.email=t@t commit -q --allow-empty -m init 2>&1
+    Invoke-FixtureGitIn $srepo init -q -b main
+    Invoke-FixtureGitIn $srepo -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m init
     $sstore = Join-Path $sdir 'stopwatch.json'
     Save-StopwatchStore -Path $sstore -Runs @($done) -Prepared @(@{ Label = 'release cut'; PreparedAt = (& $at 0) }, @{ Label = 'Other'; PreparedAt = (& $at 0) })
     $note = Start-StopwatchScriptRun -RepoRoot $srepo -Label 'release cut' -StorePath $sstore
