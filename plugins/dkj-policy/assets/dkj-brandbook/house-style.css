@@ -748,12 +748,12 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
    primary to the header: the paper, a subtle line under it, and the trail in the text steps. A bar with no header
    above it is unchanged. The header carries no mark since November 2, 2026 (Dave): .site-header__mark is retired. */
 .site-header { display: block; background: var(--primary); color: var(--bg-1); }
-/* The bar pads its sides only, with the .container's own side padding, so it lines up with the breadcrumb bar under
-   it, and every cell in it keeps to that padding: none reaches past it with a negative margin (Maikel, November 3,
-   2026; until then the brand, the menu and the settings cell each took the padding back). With no vertical padding the bar's height is its min-height: the 44px line the retired mark
-   gave it plus --spacing-3 above and below (Dave, November 2, 2026), which every cell fills by stretching. */
+/* The bar has no padding at all, so its first and last cells meet the column's edges, and none reaches past them
+   with a negative margin (Maikel, November 3, 2026; until then the bar padded every side and the brand, the menu and
+   the settings cell each took that padding back). Its height is its min-height: the 44px line the retired mark gave
+   it plus --spacing-3 above and below (Dave, November 2, 2026), which every cell fills by stretching. */
 .site-header > .container { display: flex; align-items: stretch; justify-content: space-between; gap: var(--spacing-3);
-  min-height: calc(var(--spacing-11) + 2 * var(--spacing-3)); max-height: var(--spacing-18); padding-top: 0; padding-bottom: 0; }
+  min-height: calc(var(--spacing-11) + 2 * var(--spacing-3)); max-height: var(--spacing-18); padding: 0; }
 /* The brand is a cell the full height of the bar, so the whole area around the name goes home (Maikel, November 2,
    2026). */
 .site-header__brand { display: inline-flex; align-items: center; gap: var(--spacing-3); min-width: 0;
@@ -777,8 +777,9 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .site-header + .breadcrumbs-bar .breadcrumbs a:focus-visible { outline-color: var(--primary-muted); }
 .site-header + .breadcrumbs-bar .breadcrumbs__sep { color: var(--primary-muted); }
 .site-header + .breadcrumbs-bar .breadcrumbs [aria-current='page'] { color: var(--primary); }   /* owner, October 24, 2026; it was --fg-1 */
-/* Under a site header the trail is inset as far as a header cell insets its text, --spacing-4, so its first word
-   stands under the app's name (Maikel, November 3, 2026). */
+/* Under a site header the bar drops its side padding as the header does, and the trail is inset as far as a header
+   cell insets its text, --spacing-4, so its first word stands under the app's name (Maikel, November 3, 2026). */
+.site-header + .breadcrumbs-bar > .container { padding-left: 0; padding-right: 0; }
 .site-header + .breadcrumbs-bar .breadcrumbs { align-self: stretch; padding: 0 var(--spacing-4); }
 /* And each step is a cell the full height of the bar, as a menu link is in the header (Maikel, November 3, 2026):
    the trail, its list and its items stretch, and a link, the current page and a separator centre their content. */

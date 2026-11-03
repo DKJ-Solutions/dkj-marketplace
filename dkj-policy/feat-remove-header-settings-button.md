@@ -51,6 +51,7 @@ product on 4870). The toolbox's theme is chosen on its own `/settings` page sinc
 - [x] Maikel, same day: the site header pads its sides only, with the `.container`'s own side padding (the breadcrumb bar's, so the two line up; 20px for one round first), and no cell reaches past that padding any more -- the brand, the menu and the settings cell lost their negative margins; the bar keeps its 68px height through a `min-height` and stretched cells
 - [x] Maikel, same day: under a site header the breadcrumb trail takes a menu cell's own padding, `--spacing-4`, so its first word stands under the app's name
 - [x] Maikel, same day: under a site header each breadcrumb step is a cell the full height of the bar, as a menu link is
+- [x] Maikel, same day: the site header's `.container` has no padding at all; the breadcrumb bar under it drops its side padding too, so the trail's first word still stands under the name
 
 ### TEST
 
@@ -63,7 +64,7 @@ product on 4870). The toolbox's theme is chosen on its own `/settings` page sinc
 The site header on the toolbox and product pages no longer carries the settings button (the gear with theme,
 width and reset). The toolbox's theme is chosen on its `/settings` page; a page without a site header still
 floats the button as before. The brand book's site-header menu now stands at the right instead of in the middle,
-for every app that draws one, and the header pads only its sides, as the breadcrumb bar under it does, and the name and the menu keep to that padding. Under a site header the breadcrumb trail is inset as far as the
+for every app that draws one, and the header has no padding of its own. Under a site header the breadcrumb trail is inset as far as the
 name, so the two start on one line, and each step of the trail is a cell the full
 height of its bar, as a menu link is in the header.
 
