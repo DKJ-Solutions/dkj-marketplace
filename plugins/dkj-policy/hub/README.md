@@ -14,9 +14,9 @@ link is moved there) holds the Rules, Skills, Specialists and Performance cards 
 November 2, 2026, because what it measures is what Claude's work costs; its route did not change), the Skills page a
 landing page with nothing on it yet, the Specialists page a Lenses section, a card per `.claude/specialists/lenses/specialist-NN-NN-lens.md` of the repo, each
 opening on `/claude/specialists/lenses/<name>` with the lens's text (Maikel, October 30, 2026; groups may nest, and a `Section`
-group is a heading, `Get-HubGroups`), and the Rules page two sections read from the repo the same way (Maikel, November 3,
-2026): Constitution, a card per `CLAUDE.md` the root `CLAUDE.md` `@`-imports, and Repo rules, a card per
-`.claude/rules/*.md`, each opening on `/claude/rules/<name>` with its text (`Get-HubRulePages`). That covers
+group is a heading, `Get-HubGroups`), and the Rules page a Repo rules section read from the repo the same way: a card per
+`.claude/rules/*.md` and nothing else, each opening on `/claude/rules/<name>` with its text (Maikel, November 3,
+2026; `Get-HubRulePages`). That covers
 BWJ-Development's repos too. Until [#3198](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3198)
 (the owner's decision, October 20, 2026) all of this shipped with `dkj-solutions`, which BWJ-Development
 never enables, so a General page reached only the DKJ-Solutions repos. **"General" means what every repo

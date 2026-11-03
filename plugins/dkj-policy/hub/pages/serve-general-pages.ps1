@@ -518,8 +518,8 @@ try {
                     continue
                 }
             } elseif ($path -cmatch '^/claude/rules/([A-Za-z0-9._-]{1,80})/?$') {
-                # One rule document's page -- a CLAUDE.md of the constitution or a .claude/rules file -- read from this
-                # checkout (Maikel, November 3, 2026); a name the repo has no rule document of is a 404.
+                # One .claude/rules file's page, read from this checkout (Maikel, November 3, 2026); a name that folder
+                # has no file of is a 404.
                 $html = Format-HubRulePageHtml -Name $Matches[1] -RepoRoot $root -RepoName (Get-RepoIdentity).Name
                 if ($null -eq $html) {
                     Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('No rule document of that name in this repo.')) -Method $method

@@ -554,23 +554,21 @@ function Get-HubGroups {
         @{ Href = '/performance'; Label = 'Performance'; Sub = 'What Claude''s work costs: the SessionStart path and the Clock'; Icon = 'performance'; Group = '/claude' },
         @{ Href = '/clock'; Label = 'Clock'; Sub = 'How long the work takes: the Stopwatch and the Logbook'; Icon = 'clock'; Group = '/performance' },
         @{ Href = '/claude/specialists/lenses'; Label = 'Lenses'; Icon = 'lens'; Group = '/claude/specialists'; Section = $true; Source = 'lenses' },
-        # The Rules page reads its cards from the repo too (Maikel, November 3, 2026): the constitution the root
-        # CLAUDE.md imports, then the repo's own .claude/rules files (Get-HubRulePages).
-        @{ Href = '/claude/rules/constitution'; Label = 'Constitution'; Icon = 'rules'; Group = '/claude/rules'; Section = $true; Source = 'constitution' },
+        # The Rules page reads its cards from the repo too: what is in its .claude/rules folder, and nothing else
+        # (Maikel, November 3, 2026; Get-HubRulePages).
         @{ Href = '/claude/rules/repo'; Label = 'Repo rules'; Icon = 'rules'; Group = '/claude/rules'; Section = $true; Source = 'repo-rules' }
     )
 }
 
 function Get-HubSectionCards {
     <#
-        The cards of a Section whose Source reads them from the repo at -RepoRoot: the Lenses (Get-HubLensPages), the
-        Constitution and the Repo rules (Get-HubRulePages). None for a Source it does not know.
+        The cards of a Section whose Source reads them from the repo at -RepoRoot: the Lenses (Get-HubLensPages) and the
+        Repo rules (Get-HubRulePages). None for a Source it does not know.
     #>
     param([AllowEmptyString()][string]$Source, [AllowEmptyString()][string]$RepoRoot = '')
     switch ($Source) {
-        'lenses'       { return @(Get-HubLensPages -RepoRoot $RepoRoot) }
-        'constitution' { return @(Get-HubRulePages -RepoRoot $RepoRoot | Where-Object { $_.Kind -eq 'constitution' }) }
-        'repo-rules'   { return @(Get-HubRulePages -RepoRoot $RepoRoot | Where-Object { $_.Kind -eq 'repo-rules' }) }
+        'lenses'     { return @(Get-HubLensPages -RepoRoot $RepoRoot) }
+        'repo-rules' { return @(Get-HubRulePages -RepoRoot $RepoRoot) }
     }
     return @()
 }
@@ -591,61 +589,25 @@ function Get-HubDocTitle {
 
 function Get-HubRulePages {
     <#
-        The rules Claude works by in the repo at -RepoRoot, each a card's @{ Href; Label; Sub; Icon; Path; Kind; Display }
-        (Maikel, November 3, 2026), read per request as the lenses are:
-        - Kind 'constitution': every CLAUDE.md the repo's root CLAUDE.md '@'-imports, in import order, labelled by the
-          folder it sits in (dkj-policy, dkj-solutions). An import is resolved the way Claude Code resolves one: '~/' from
-          the user home, a rooted path as given, anything else from the root CLAUDE.md's folder. One that is not there
-          on this machine has no card.
-        - Kind 'repo-rules': every .claude/rules/*.md, by name, labelled by its file name; a path-scoped one says so.
-        The Sub is the file's own '# ' title. A label two files would share keeps the first. None without a -RepoRoot.
+        The rule files in the .claude/rules folder of the repo at -RepoRoot -- what is in that folder and nothing else
+        (Maikel, November 3, 2026) -- each a card's @{ Href; Label; Sub; Icon; Path; Display }, by name, read per request
+        as the lenses are. The Label is the file's name, the Sub its own '# ' title, and a path-scoped rule ('paths:' in
+        its frontmatter) says it loads only when Claude touches a matching file. None without a -RepoRoot or the folder.
     #>
     param([AllowEmptyString()][string]$RepoRoot = '')
     if (-not $RepoRoot) { return @() }
-    $utf8 = New-Object System.Text.UTF8Encoding($false)
-    $seen = @{}
-    $out = New-Object System.Collections.Generic.List[object]
-    $rootFull = [System.IO.Path]::GetFullPath($RepoRoot).TrimEnd('\', '/')
-    $userHome = if ($env:USERPROFILE) { $env:USERPROFILE } elseif ($env:HOME) { $env:HOME } else { [System.Environment]::GetFolderPath('UserProfile') }
-    $display = {
-        param($p)
-        if ($p.StartsWith($rootFull + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) { return ($p.Substring($rootFull.Length + 1) -replace '\\', '/') }
-        $h = $userHome.TrimEnd('\', '/')
-        if ($h -and $p.StartsWith($h + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) { return ('~/' + ($p.Substring($h.Length + 1) -replace '\\', '/')) }
-        return ($p -replace '\\', '/')
-    }
-    $claudeMd = Join-Path $RepoRoot 'CLAUDE.md'
-    if (Test-Path -LiteralPath $claudeMd -PathType Leaf) {
-        $lines = @(); try { $lines = [System.IO.File]::ReadAllLines($claudeMd, $utf8) } catch { }
-        $fence = $false
-        foreach ($line in $lines) {
-            if ($line -match '^\s*(```|~~~)') { $fence = -not $fence; continue }
-            if ($fence -or $line -notmatch '^@(\S.*)$') { continue }
-            $t = $Matches[1].Trim()
-            $full = if ($t -match '^~[\\/](.*)$') { Join-Path $userHome $Matches[1] }
-                    elseif ([System.IO.Path]::IsPathRooted($t)) { $t }
-                    else { Join-Path $RepoRoot $t }
-            try { $full = [System.IO.Path]::GetFullPath($full) } catch { continue }
-            if ([System.IO.Path]::GetFileName($full) -cne 'CLAUDE.md' -or -not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
-            $label = Split-Path -Leaf (Split-Path -Parent $full)
-            if ($label -cnotmatch '^[A-Za-z0-9._-]{1,80}\z' -or $seen.ContainsKey($label)) { continue }
-            $seen[$label] = $true
-            $out.Add(@{ Href = '/claude/rules/' + $label; Label = $label; Sub = (Get-HubDocTitle -Path $full); Icon = 'rules'; Path = $full; Kind = 'constitution'; Display = (& $display $full) })
-        }
-    }
     $dir = Join-Path $RepoRoot '.claude\rules'
-    if (Test-Path -LiteralPath $dir -PathType Container) {
-        foreach ($f in @(Get-ChildItem -LiteralPath $dir -File -Filter '*.md' | Sort-Object Name)) {
-            $label = $f.BaseName
-            if ($label -cnotmatch '^[A-Za-z0-9._-]{1,80}\z' -or $seen.ContainsKey($label)) { continue }
-            $seen[$label] = $true
-            $sub = Get-HubDocTitle -Path $f.FullName
-            # A rule with 'paths:' in its frontmatter loads only when Claude touches a matching file.
-            $scoped = $false
-            try { $scoped = [regex]::IsMatch(([System.IO.File]::ReadAllText($f.FullName, $utf8) -replace "`r`n", "`n"), '\A---\n(?:(?!---\n)[\s\S])*?(?m:^paths:)') } catch { }
-            if ($scoped) { $sub = ($(if ($sub) { $sub + ' ' } else { '' })) + '(loads only when Claude touches a matching file)' }
-            $out.Add(@{ Href = '/claude/rules/' + $label; Label = $label; Sub = $sub; Icon = 'rules'; Path = $f.FullName; Kind = 'repo-rules'; Display = (& $display $f.FullName) })
-        }
+    if (-not (Test-Path -LiteralPath $dir -PathType Container)) { return @() }
+    $utf8 = New-Object System.Text.UTF8Encoding($false)
+    $out = New-Object System.Collections.Generic.List[object]
+    foreach ($f in @(Get-ChildItem -LiteralPath $dir -File | Where-Object { $_.Extension -eq '.md' } | Sort-Object Name)) {
+        $label = $f.BaseName
+        if ($label -cnotmatch '^[A-Za-z0-9._-]{1,80}\z') { continue }
+        $sub = Get-HubDocTitle -Path $f.FullName
+        $scoped = $false
+        try { $scoped = [regex]::IsMatch(([System.IO.File]::ReadAllText($f.FullName, $utf8) -replace "`r`n", "`n"), '\A---\n(?:(?!---\n)[\s\S])*?(?m:^paths:)') } catch { }
+        if ($scoped) { $sub = ($(if ($sub) { $sub + ' ' } else { '' })) + '(loads only when Claude touches a matching file)' }
+        $out.Add(@{ Href = '/claude/rules/' + $label; Label = $label; Sub = $sub; Icon = 'rules'; Path = $f.FullName; Display = ('.claude/rules/' + $f.Name) })
     }
     return $out.ToArray()
 }
@@ -836,9 +798,9 @@ function Format-HubLensPageHtml {
 
 function Format-HubRulePageHtml {
     <#
-        One rule document's own page on /claude/rules/<name> (Get-HubRulePages), under Tools > Claude > Rules: a CLAUDE.md
-        of the constitution or one .claude/rules file, rendered exactly as a lens is (Format-HubDocPageHtml). $null for a
-        name the repo has no rule document of.
+        One rule file's own page on /claude/rules/<name> (Get-HubRulePages), under Tools > Claude > Rules: a
+        .claude/rules file, rendered exactly as a lens is (Format-HubDocPageHtml). $null for a name the repo's
+        .claude/rules folder has no file of.
     #>
     param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyString()][string]$RepoRoot = '', [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/')
     $rule = @(Get-HubRulePages -RepoRoot $RepoRoot | Where-Object { $_.Label -ceq $Name })[0]
