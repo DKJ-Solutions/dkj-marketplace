@@ -53,7 +53,7 @@ cards from the repo, the way the Specialists page reads its Lenses.
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: the one section, the cards from a fixture (only `.claude/rules/*.md`, an imported `CLAUDE.md` not, the path-scoped note), the rule page, the 404 names -- 601 passed
-- [ ] The owner's look at `http://localhost:4890/claude/rules` on this branch
+- [x] The owner's look at `http://localhost:4890/claude/rules` on this branch -- seen and approved (Maikel, November 3, 2026)
 
 ### DEPLOY: feat/hub-rules-page
 
