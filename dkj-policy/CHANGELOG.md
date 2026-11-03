@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**9 / 12 minor entries** <!-- pending-tally -->
+**10 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3779-logbook-run-page-slug · 20261103-151817Z
+
+A Logbook run page (`/logbook/<slug>`) no longer cuts and models every run in the store to find one
+([#3779](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3779)). `Select-LogbookSlugRuns`
+picks out the runs that can carry the slug: those that start in the slug's minute, which together
+decide whether it carries an id suffix, and every sweep whose window holds that minute, because a
+sweep's lap starts at a fold inside it. Only those reach `Get-LogbookRuns`, so the step log and the
+`git log` are read only for that window, not from the oldest sweep in the store. The page reads the
+same as before. On this machine, with 21 store runs, the whole-store cut took 470 ms.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+On a hub with a long Logbook, a run page opens without the delay that grew with every session.
+
+**Score:** 2
+
+#### Pull Request
+
+A Logbook run page cuts only the runs that can carry its slug
+
+Plugins: dkj-policy
+
+[PR #3786](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3786)
+
+---
 
 ### DEPLOY: feat/stopwatch-auto-release-run · 20261103-150649Z
 
