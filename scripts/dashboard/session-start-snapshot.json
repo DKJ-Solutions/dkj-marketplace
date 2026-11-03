@@ -1,5 +1,6 @@
 {
   "schema": "session-start-data/1",
+  "repo": "dkj-marketplace",
   "asOf": "2026-10-02",
   "pageTitle": "Session-start context",
   "locale": "en-US",
