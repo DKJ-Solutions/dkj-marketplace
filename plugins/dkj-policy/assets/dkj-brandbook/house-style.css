@@ -779,7 +779,12 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .site-header + .breadcrumbs-bar .breadcrumbs [aria-current='page'] { color: var(--primary); }   /* owner, October 24, 2026; it was --fg-1 */
 /* Under a site header the trail is inset as far as a header cell insets its text, --spacing-4, so its first word
    stands under the app's name (Maikel, November 3, 2026). */
-.site-header + .breadcrumbs-bar .breadcrumbs { padding: 0 var(--spacing-4); }
+.site-header + .breadcrumbs-bar .breadcrumbs { align-self: stretch; padding: 0 var(--spacing-4); }
+/* And each step is a cell the full height of the bar, as a menu link is in the header (Maikel, November 3, 2026):
+   the trail, its list and its items stretch, and a link, the current page and a separator centre their content. */
+.site-header + .breadcrumbs-bar .breadcrumbs ol { height: 100%; align-items: stretch; }
+.site-header + .breadcrumbs-bar .breadcrumbs li { align-items: stretch; }
+.site-header + .breadcrumbs-bar .breadcrumbs :is(a, [aria-current='page'], .breadcrumbs__sep) { display: flex; align-items: center; }
 
 /* ---- Site header menu --------------------------------------------------------------- */
 /* The app's main pages between the brand and the settings button (Maikel, November 2, 2026, after the three-zone nav
