@@ -42,7 +42,8 @@ not a rule a session has to follow, so it is no chapter and `CLAUDE.md` does not
 [`hooks/house-style-sessioncheck.ps1`](hooks/house-style-sessioncheck.ps1) runs the `check-house-style`
 gate at session start (`startup`, `resume`, `clear`) and reports what it finds: a vendored copy that is not
 the pinned one, a redefined house token or class, a retired token name, a colour a rule types or derives
-instead of reading a token, a font size a rule types instead of reading the type scale. It is read-only and never fails
+instead of reading a token, a font size a rule types instead of reading the type scale, a font weight a rule
+types instead of reading a house weight. It is read-only and never fails
 the session. In a repo with no brand book at all it prints one line saying there is nothing to check.
 The gate itself, its allowlist and the CI caller are on the
 [`dkj-brandbook` skill page](skills/dkj-brandbook/SKILL.md#the-gate-check-house-style)

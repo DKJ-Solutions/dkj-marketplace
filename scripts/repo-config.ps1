@@ -1518,5 +1518,6 @@ function Get-HouseStyleAllowlist {
         @{ Path = 'plugins/dkj-policy/bwj-development/*';       Reason = 'the BWJ-Development extension: its pages carry BWJ''s own styling, outside the house style by design' }
         @{ Path = 'scripts/tests/issue-dashboard.tests.ps1';    Reason = 'fixtures of GitHub label colours, which the issue dashboard renders as data' }
         @{ Path = 'scripts/tests/stopwatch.tests.ps1';          Reason = 'regex patterns that read font-size declarations out of rendered pages, not declarations of their own' }
+        @{ Path = 'scripts/tests/consumer-dashboard.tests.ps1'; Name = 'var\(--font-weight-bold\)'; Reason = 'a regex pattern that reads a house-weight declaration out of the rendered dashboard, not a declaration of its own (#3784)' }
     )
 }
