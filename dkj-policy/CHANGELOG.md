@@ -2,7 +2,37 @@
 
 ## [Unreleased]
 
-**6 / 9 minor entries** <!-- pending-tally -->
+**7 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/performance-sections · 20261103-144515Z
+
+The hub's Performance page now reads as two sections instead of two cards: **Clock**, with the Stopwatch and
+Logbook cards directly under it, and **Context**, with the SessionStart card. The Stopwatch and Logbook are
+therefore one click closer, and their trail reads Tools > Claude > Performance. The old `/clock` address moves
+to `/performance`.
+
+The Logbook overview no longer gets slower with every session: it shows the newest 20 runs, and older ones
+sit behind **Older runs** on `/logbook/page/2` and on. Only that page's runs are cut per sweep issue, read from
+the transcripts and drawn, so a load costs one page whatever the store holds.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every repo's Toolbox shows the new Performance page, with Stopwatch and Logbook one click closer than they were,
+and its Logbook stays fast however many sessions it has logged.
+
+**Score:** 2
+
+#### Pull Request
+
+The Performance page groups its cards under Clock and Context
+
+Plugins: dkj-policy
+
+[PR #3783](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3783)
+
+---
 
 ### DEPLOY: feat/plugin-page-contents · 20261103-133005Z
 
