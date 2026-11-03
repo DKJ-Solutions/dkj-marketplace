@@ -1087,14 +1087,14 @@ function Format-HubSettingsPageHtml {
     $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
         '.hs-theme > :is(.grid__head, .grid__full) { flex: 0 0 100%; }' + "`n" +
         '.hs-swatch { margin-top: 0; padding: var(--spacing-2); }' + "`n" +
-        # The two toggles (Mode and Width) stand as tall as a theme card -- its 40px swatch, its --spacing-2 padding and
-        # its 1px border, each twice -- and take the cards' --bg-4 border, the line between their buttons too (Maikel,
-        # November 3, 2026). Scoped to this page's groups, so the house .controls .seg keeps its 30px everywhere else.
-        '.hs-theme .controls .seg { height: calc(40px + 2 * var(--spacing-2) + 2px); border-color: var(--bg-4); }' + "`n" +
+        # The two toggles (Mode and Width) stand --spacing-11 tall and take the cards' --bg-4 border, the line between
+        # their buttons too (Maikel, November 3, 2026). Scoped to this page's groups, so the house .controls .seg keeps its
+        # 30px everywhere else.
+        '.hs-theme .controls .seg { height: var(--spacing-11); border-color: var(--bg-4); }' + "`n" +
         '.hs-theme .controls .seg button + button { border-left-color: var(--bg-4); }' + "`n" +
-        # And each toggle is a fixed 300px wide, its options sharing it equally (Maikel, November 3, 2026), never wider
+        # And each toggle is a fixed --spacing-60 wide, its options sharing it equally (Maikel, November 3, 2026), never wider
         # than the column a phone gives it.
-        '.hs-theme .controls .seg { width: 300px; max-width: 100%; }' + "`n" +
+        '.hs-theme .controls .seg { width: var(--spacing-60); max-width: 100%; }' + "`n" +
         '.hs-theme .controls .seg button { flex: 1 1 0; }' + "`n" +
         # A theme card is clickable as a whole, and the one holding the active swatch -- aria-pressed, which the brand book's
         # picker keeps, from the header's choice too -- takes the selected theme's --primary as its border (Dave, November 2, 2026).
