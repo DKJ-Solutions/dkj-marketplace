@@ -1090,9 +1090,12 @@ function Format-HubSettingsPageHtml {
         '.hs-swatch { margin-top: 0; padding: var(--spacing-2); }' + "`n" +
         # The theme cards stand in a grid of their own (Maikel, November 3, 2026), wrapping on a narrow column. One step
         # down from the group, they lose the house's card-in-a-group look (it reads direct children only), so it is
-        # given back here with the same tokens: --bg-3 with a --bg-4 border, and the swatch's own ring on --bg-4.
+        # given back here: --bg-3, and the swatch's own ring on --bg-4.
         '.hs-swatches { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
-        '.hs-swatches > .card { margin-top: 0; background: var(--bg-3); border-color: var(--bg-4); }' + "`n" +
+        '.hs-swatches > .card { margin-top: 0; background: var(--bg-3); border-color: var(--bg-5); }' + "`n" +
+        # The theme cards and the reset take the --bg-5 border, as the toggles do (Maikel, November 3, 2026); the active
+        # theme's --primary border still wins, its rule being the more specific.
+        '.hs-theme > .hs-reset { border-color: var(--bg-5); }' + "`n" +
         '.hs-swatches > .card .theme-swatch { border-color: var(--bg-4); }' + "`n" +
         # The two toggles (Mode and Width) stand --spacing-11 tall on a --bg-5 border, a step past the cards' --bg-4, the line between
         # their buttons too (Maikel, November 3, 2026). Scoped to this page's groups, so the house .controls .seg keeps its
