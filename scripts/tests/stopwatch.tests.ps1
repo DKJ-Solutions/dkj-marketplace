@@ -677,6 +677,51 @@ try {
     Remove-Item -LiteralPath $rdir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
+Write-Host '-- a release cut times itself (#3781)' -ForegroundColor Cyan
+$s = Invoke-StopwatchScriptStart -Runs @($done) -Label 'release cut' -Now (& $at 10) -Head 'aaa'
+Assert-True ($s.Changed -and @($s.Runs).Count -eq 2 -and $s.Runs[0].Id -eq 'd1' -and $s.Runs[1].Label -eq 'release cut' -and $s.Runs[1].Auto -and $s.Runs[1].StartHead -eq 'aaa' -and -not $s.Runs[1].End) 'with no run going, a script starts an Auto run under its label at HEAD and keeps the finished ones'
+$s = Invoke-StopwatchScriptStart -Runs @($done, $going) -Label 'release cut' -Now (& $at 10) -Head 'bbb'
+Assert-True (-not $s.Changed -and @($s.Runs).Count -eq 2 -and @($s.Runs | Where-Object { $_.Id -eq 'g1' -and -not $_.End }).Count -eq 1) 'a run already going -- the owner''s own, or this cut''s on a catch-up round -- is kept and nothing starts'
+Assert-True (-not (Invoke-StopwatchScriptStart -Runs @() -Label 'release cut' -Now (& $at 10) -Head '').Changed) 'an unknown HEAD starts nothing'
+Assert-True (-not (Invoke-StopwatchScriptStart -Runs @() -Label "  `t " -Now (& $at 10) -Head 'aaa').Changed) 'an empty label starts nothing'
+Assert-Equal 'release cut' $script:StopwatchReleaseLabel 'the cut is timed under the label the hand-timed cut used, so its runs land on that card'
+$cutRun = (Invoke-StopwatchScriptStart -Runs @() -Label $script:StopwatchReleaseLabel -Now (& $at 10) -Head 'aaa').Runs
+$cutMid = Invoke-StopwatchHookEvent -Hook Stop -Runs $cutRun -Now (& $at 500) -Branch 'main' -Clean $true -Head 'bbb' -Commits @(@{ Subject = 'release: v6.5.0'; Time = (& $at 100) })
+$cutEnd = Invoke-StopwatchHookEvent -Hook Stop -Runs $cutRun -Now (& $at 900) -Branch 'main' -Clean $true -Head 'ccc' -Commits @(@{ Subject = 'release: v6.5.0 release notes'; Time = (& $at 800) })
+Assert-True (-not $cutMid.Changed -and $cutEnd.Changed -and $cutEnd.Runs[0].End -eq (& $at 900)) 'the run it starts ends on the release notes commit, not on the release commit before it'
+
+$sdir = Join-Path ([System.IO.Path]::GetTempPath()) ('sw-script-' + [guid]::NewGuid().ToString('N'))
+try {
+    $srepo = Join-Path $sdir 'repo'
+    [void](New-Item -ItemType Directory -Path $srepo -Force)
+    $null = & git -C $srepo init -q 2>&1
+    $null = & git -C $srepo -c user.name=t -c user.email=t@t commit -q --allow-empty -m init 2>&1
+    $sstore = Join-Path $sdir 'stopwatch.json'
+    Save-StopwatchStore -Path $sstore -Runs @($done) -Prepared @(@{ Label = 'release cut'; PreparedAt = (& $at 0) }, @{ Label = 'Other'; PreparedAt = (& $at 0) })
+    $note = Start-StopwatchScriptRun -RepoRoot $srepo -Label 'release cut' -StorePath $sstore
+    $st = Read-StopwatchStore -Path $sstore
+    $headSha = ([string](& git -C $srepo rev-parse HEAD)).Trim()
+    Assert-True ($note -match 'release cut' -and @($st.Runs).Count -eq 2 -and $st.Runs[1].Label -eq 'release cut' -and $st.Runs[1].StartHead -eq $headSha) 'Start-StopwatchScriptRun writes the run at the repo''s HEAD and says so'
+    Assert-True (@($st.Prepared).Count -eq 1 -and $st.Prepared[0].Label -eq 'Other') 'it withdraws the prepared card of its own label and keeps the others'
+    Assert-Equal '' (Start-StopwatchScriptRun -RepoRoot $srepo -Label 'release cut' -StorePath $sstore) 'a second call while that run is going writes nothing'
+    Assert-Equal 2 @((Read-StopwatchStore -Path $sstore).Runs).Count 'and the store still holds the one run'
+    $bad = Join-Path $sdir 'bad.json'
+    [System.IO.File]::WriteAllText($bad, '{ not json')
+    Assert-Equal '' (Start-StopwatchScriptRun -RepoRoot $srepo -Label 'release cut' -StorePath $bad) 'a store that does not read is never written over'
+    Assert-Equal '{ not json' ([System.IO.File]::ReadAllText($bad)) 'and its bytes are untouched'
+    Assert-Equal '' (Start-StopwatchScriptRun -RepoRoot (Join-Path $sdir 'no-such-repo') -Label 'release cut' -StorePath (Join-Path $sdir 'x.json')) 'outside a git repo nothing starts and nothing throws'
+} finally {
+    Remove-Item -LiteralPath $sdir -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+Write-Host '-- cut-release.ps1 starts the run (#3781)' -ForegroundColor Cyan
+foreach ($cut in 'scripts\release\cut-release.ps1', 'plugins\dkj-policy\scripts\release\cut-release.ps1') {
+    $src = [System.IO.File]::ReadAllText((Join-Path $RepoRoot $cut))
+    $call = $src.IndexOf('Start-StopwatchScriptRun -RepoRoot $repoRoot -Label $script:StopwatchReleaseLabel')
+    $firstStep = $src.IndexOf("Add-RunStepMark -Run 'cut-release' -Step 'origin-check-before'")
+    Assert-True ($call -gt 0 -and $firstStep -gt $call) "$cut starts the Stopwatch run before its first step"
+}
+
 Write-Host ''
 $fixtureBroken = Write-FixtureGitSummary -Subject 'stopwatch.ps1'
 Write-Host "stopwatch: $script:pass passed, $script:fail failed"

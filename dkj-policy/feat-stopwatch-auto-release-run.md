@@ -39,19 +39,29 @@
 
 ### PLAN
 
+Resolves #3781. The owner asked (November 3, 2026) that every release cut is timed on the Stopwatch, asked for or not.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `stopwatch-lib.ps1`: `Invoke-StopwatchScriptStart` (pure) and `Start-StopwatchScriptRun` (store write under the hooks' lock, never throws)
+- [x] `cut-release.ps1` (plugin and root copy): start a `release cut` run before the first step
+- [x] Docs: the hub README's timing section and the `stopwatch-prepare` skill
 
 ### TEST
 
+- [x] `stopwatch.tests.ps1`: the start rules, the store write, the notes-commit end, and the call site in both copies of `cut-release.ps1`
+
 ### DEPLOY: feat/stopwatch-auto-release-run
 
-**Score:**
+Every release cut is now timed on the hub's `/stopwatch` page, whether or not the prompt started with `stopwatch:`. `cut-release.ps1` starts a `release cut` run as it begins, unless a run is already going (the owner's own `stopwatch:` run, or this cut's on a catch-up round), and the run ends on the cut's `release: vX.Y.Z release notes` commit as before. A missing Stopwatch lib or a store that does not read leaves the cut exactly as it was. Until now only one cut had ever been timed, so no two cuts could be compared.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+The owner of any repo running this workflow gets a timed `release cut` card on the Stopwatch for every cut from the next release on, without remembering to ask, so successive cuts can be compared.
+
+**Score:** 2
 
 #### Pull Request
 

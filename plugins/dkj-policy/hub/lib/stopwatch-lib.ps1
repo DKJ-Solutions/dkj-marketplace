@@ -11,8 +11,10 @@
 
       - A prompt whose first line begins with `stopwatch:` (any case, leading whitespace allowed) starts an Auto
         run at once, labelled with the rest of that line (Get-StopwatchPromptMarker; "Assignment" when empty),
-        with the checkout's HEAD as its StartHead. It is the only way a run starts (a prepared card, below, has no run
-        behind it; the first prompt carrying its label starts the run on that card). A run still going when a
+        with the checkout's HEAD as its StartHead. It is the only way a run starts from a prompt (a prepared card,
+        below, has no run behind it; the first prompt carrying its label starts the run on that card). The one other
+        start is a script's own: cut-release.ps1 starts a `release cut` run when it begins, unless a run is already
+        going (Start-StopwatchScriptRun, #3781), so every release cut is timed whether or not anybody asked. A run still going when a
         marked prompt arrives is DISCARDED and the new one starts: a run that never reached the trunk would
         otherwise block every later measurement, and the page has no button left to discard it.
       - A Stop hook ends the running run once the checkout is on the trunk, clean, with HEAD moved off StartHead.
@@ -412,6 +414,65 @@ function Invoke-StopwatchHookEvent {
     }
     $copy = $running.Clone(); $copy.End = $Now.ToUniversalTime()
     return @{ Runs = @($runs | ForEach-Object { if ($_.Id -eq $copy.Id) { $copy } else { $_ } }); Changed = $true }
+}
+
+# The label a release cut is timed under when nobody asked for a run (#3781): the label of the cut timed before it
+# by hand, so the automatic runs land on that same card and are compared with it.
+$script:StopwatchReleaseLabel = 'release cut'
+
+function Invoke-StopwatchScriptStart {
+    <#
+        What a script that times itself does to the store (#3781), decided without git or a clock so it is tested:
+        a run under -Label starts at -Now with -Head as its StartHead, unless a run is already going -- whatever its
+        label. A run going is either the owner's own `stopwatch:` run, which this cut is part of and which must not
+        be discarded, or this same cut's run on a catch-up round or a retry after a refusal, which must keep its
+        start. An empty -Head starts nothing, for the hook's reason: a run without a StartHead never stops by
+        itself. Unlike a marked prompt this never discards a run. Returns Runs and Changed (write only when set).
+    #>
+    param(
+        [AllowEmptyCollection()][object[]]$Runs = @(),
+        [Parameter(Mandatory = $true)][string]$Label,
+        [Parameter(Mandatory = $true)][datetime]$Now,
+        [string]$Head = ''
+    )
+    $runs = @($Runs | Where-Object { $_ })
+    $label = ConvertTo-StopwatchLabel -Text $Label
+    if (-not $label -or -not $Head -or @($runs | Where-Object { -not $_.End }).Count) { return @{ Runs = $runs; Changed = $false } }
+    return @{ Runs = @($runs + @(New-StopwatchRun -Label $label -Now $Now -StartHead $Head)); Changed = $true }
+}
+
+function Start-StopwatchScriptRun {
+    <#
+        Starts a Stopwatch run under -Label for the repo at -RepoRoot, from a script rather than a prompt (#3781):
+        cut-release.ps1 calls it so every release cut is timed, asked for or not. The rules are
+        Invoke-StopwatchScriptStart's; the run then ends the way any run does, by the Stop hook, and a label
+        beginning with `release` waits for the cut's `release: vX.Y.Z release notes` commit. Writes this machine's
+        store under the hooks' own lock, keeps the prepared labels less this one, and never throws: a timing aid
+        must not stop the work it times. -StorePath is for the tests. Returns a one-line note, '' when nothing was
+        written.
+    #>
+    param([Parameter(Mandatory = $true)][string]$RepoRoot, [Parameter(Mandatory = $true)][string]$Label, [string]$StorePath = '')
+    $lock = $null
+    try {
+        $root = [System.IO.Path]::GetFullPath($RepoRoot).TrimEnd('\', '/')
+        if (-not $StorePath) { [void](Move-HubTimingLegacyStore -RepoRoot $root); $StorePath = Get-StopwatchStorePath -RepoRoot $root }
+        $head = ''
+        $eap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+        try { $out = @(git -C $root rev-parse HEAD 2>$null); if ($LASTEXITCODE -eq 0 -and $out.Count) { $head = ([string]$out[0]).Trim() } } finally { $ErrorActionPreference = $eap }
+        $lock = Get-HubTimingLock -StorePath $StorePath
+        $store = Read-StopwatchStore -Path $StorePath
+        if ($store.Error) { return '' }
+        $r = Invoke-StopwatchScriptStart -Runs $store.Runs -Label $Label -Now ([datetime]::UtcNow) -Head $head
+        if (-not $r.Changed) { return '' }
+        if ($store.Skipped) { Copy-Item -LiteralPath $StorePath -Destination "$StorePath.bak" -Force -ErrorAction SilentlyContinue }
+        $norm = ConvertTo-StopwatchLabel -Text $Label
+        Save-StopwatchStore -Path $StorePath -Runs $r.Runs -Prepared @($store.Prepared | Where-Object { $_.Label -ine $norm })
+        return "Stopwatch: timing this run as `"$norm`" on the hub's /stopwatch page."
+    } catch {
+        return ''
+    } finally {
+        if ($lock) { try { $lock.ReleaseMutex() } catch { }; $lock.Dispose() }
+    }
 }
 
 function Get-StopwatchSlugs {
