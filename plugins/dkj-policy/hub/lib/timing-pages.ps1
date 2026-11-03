@@ -26,8 +26,8 @@ function New-HubTimingContext {
     <#
         What a server hands Resolve-HubTimingPage on every request: the repo at -RepoRoot, its name for the page
         header (-RepoName) and where Home goes (-HubHref), and the stores. -StopwatchPath, -LogbookPath and
-        -TranscriptDir are for the tests; a store passed in turns sharing off. Without them the machine-wide stores of
-        before #3470 are taken over first, where this is the source repo (Move-HubTimingLegacyStore).
+        -TranscriptDir are for the tests; a store passed in turns sharing off. Without them a store the repo left
+        behind under another key is adopted first (Import-HubTimingOrphanStore, #3780).
     #>
     param(
         [Parameter(Mandatory = $true)][string]$RepoRoot,
@@ -38,7 +38,7 @@ function New-HubTimingContext {
         [AllowEmptyString()][string]$TranscriptDir = ''
     )
     $own = -not $StopwatchPath
-    if ($own) { [void](Move-HubTimingLegacyStore -RepoRoot $RepoRoot); $StopwatchPath = Get-StopwatchStorePath -RepoRoot $RepoRoot }
+    if ($own) { [void](Import-HubTimingOrphanStore -RepoRoot $RepoRoot); $StopwatchPath = Get-StopwatchStorePath -RepoRoot $RepoRoot }
     if (-not $LogbookPath) { $LogbookPath = Join-Path (Split-Path -Parent $StopwatchPath) 'logbook.json' }
     if (-not $TranscriptDir) { $TranscriptDir = Get-StopwatchTranscriptDir -RepoRoot $RepoRoot }
     $shared = $own -and (Test-StopwatchShareEnabled -RepoRoot $RepoRoot)
