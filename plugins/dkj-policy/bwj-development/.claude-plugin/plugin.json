@@ -2,7 +2,7 @@
   "name": "bwj-development",
   "displayName": "Claude Specialists - DKJ policy for BWJ (policy scaffold, BWJ scope)",
   "description": "The shared rules for BWJ's two Shopify stores, smartwatchbanden and xoxowildhearts, so both repos follow one identical procedure. Four chapters. TICKET HANDLING: a problem you find becomes a GitHub issue first, then a colleague-friendly copy in Asana, linked both ways; when the issue is closed, reopened or put on hold, the Asana task gets a message, and only the colleague who asked ever ticks the task off. THE SYNC LOG: when someone else changed the live theme, a sync branch brings that change into the repo and records it in a sync log rather than the changelog. THE PREVIEW HANDOVER: a change you can see waits for a person to confirm they looked at its preview before its pull request opens, and that preview is shown as a pair per market, beside the live store, in one link to a page with a QR code per market, so a reviewer can open it on a phone. THE THEME LIFECYCLE: after a live push the preview themes this repo made are cleaned up, and at a release a fresh backup of the live theme is made before the old one goes, so there is always exactly one; nothing is ever deleted that this repo did not create. It adds to 'dkj-policy' and replaces nothing. Requires 'dkj-subagents-alpha' and 'dkj-policy'; the sync and preview chapters also need 'dkj-subagents-shopify'. Enable it in BWJ's two store repos, or in this marketplace's own repo for ticket handling alone.",
-  "version": "6.4.0",
+  "version": "6.5.0",
   "author": { "name": "DaveKJohn" },
   "keywords": ["specialists", "workflow", "claude-code", "asana", "issue-tracking", "shopify", "bwj", "sync-log", "opt-in"]
 }
