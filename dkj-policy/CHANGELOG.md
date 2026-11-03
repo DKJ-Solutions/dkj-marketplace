@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**13 / 16 minor entries** <!-- pending-tally -->
+**13 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3782-stopwatch-script-run-wording · 20261103-161336Z
+
+The hub's Stopwatch tile and the `release cut` label page now say that a release cut is also timed when
+`cut-release.ps1` starts the run itself (#3782), where both still claimed a run comes only from a
+`stopwatch:` prompt.
+
+**Score:** 1 -- a wrong sentence on two hub pages; it misled nobody into a wrong action yet.
+
+#### What makes this deploy extra special
+
+N/A -- a maintainer of a consumer sees two corrected sentences on the hub and has nothing to do.
+
+**Score:** N/A
+
+#### Pull Request
+
+Stopwatch texts name the script-started release cut run
+
+Plugins: dkj-policy
+
+[PR #3791](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3791)
+
+---
 
 ### DEPLOY: feat/3784-house-style-weight-check · 20261103-155817Z
 
