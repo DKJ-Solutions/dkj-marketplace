@@ -48,7 +48,7 @@
 ### TEST
 
 - [x] `dev-pages` and `consumer-dashboard` suites green
-- [ ] The owner has looked at the menu on the product (visible result)
+- [x] The owner has looked at the menu and the cards on the product (visible result; Maikel: "open de PR")
 
 ### DEPLOY: feat/toolbox-in-product-menu
 
