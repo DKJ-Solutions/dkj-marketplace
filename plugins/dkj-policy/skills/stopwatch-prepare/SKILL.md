@@ -5,9 +5,15 @@ description: Put a Stopwatch card for a label on the hub's /stopwatch overview w
 
 # stopwatch-prepare -- a Stopwatch card that is ready and not started
 
-**It exists so a run can be prepared first and started by the owner.** A Stopwatch run starts only from a
-prompt whose first line is `stopwatch: <label>` (the hook in `hooks/stopwatch-hook.ps1`), so Claude cannot
-start one by itself and should not: the run still starts only from such a prompt. What it can do is put the card on the page beforehand.
+**It exists so a run can be prepared first and started by the owner.** A run started by hand starts only
+from a prompt whose first line is `stopwatch: <label>` (the hook in `hooks/stopwatch-hook.ps1`), so Claude
+does not start one itself; what it can do is put the card on the page beforehand. The one exception is a
+release cut, below.
+
+**A release cut needs no card to be timed.** `cut-release.ps1` starts a `release cut` run itself when it
+begins and nothing is running yet (#3781), and that run removes a prepared `release cut` card too. Prepare the
+card, and start with `stopwatch: release cut`, only when the clock should run from the prompt rather than from
+the moment the script starts: the script then leaves that run going.
 
 **It writes a `prepared` entry in this machine's store, never a run.** The overview `/stopwatch` then shows a
 card for the label that says it is ready and not started, and how to start it. The label page opens too, with
