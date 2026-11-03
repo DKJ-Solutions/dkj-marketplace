@@ -122,13 +122,19 @@ function Resolve-HubTimingPage {
         foreach ($k in $sw.Shared.Phases.Keys) { if (-not $phases.ContainsKey($k)) { $phases[$k] = $sw.Shared.Phases[$k] } }
         return (& $ok (Format-StopwatchRunPageHtml -Group $group -StorePath $c.StopwatchPath -Transcript $phases -LabelCrumb -Shared:([bool]$c.Shared) @site))
     }
-    if ($Path -eq '/logbook') {
+    if ($Path -eq '/logbook' -or $Path -match '^/logbook/page/(\d{1,4})$') {
+        $n = if ($Path -eq '/logbook') { 1 } else { [int]$Matches[1] }
+        if ($Path -ne '/logbook' -and $n -eq 1) { return @{ Status = 301; Html = ''; Location = '/logbook' } }
         $lb = Read-StopwatchStore -Path $c.LogbookPath
+        # One page of the store's runs, newest first (Dave, November 3, 2026): everything below costs one page, not the store.
+        $pg = Select-LogbookPage -Runs $lb.Runs -Page $n
+        if (-not $pg.Page) { return $missing }
         # A sweep is shown per issue, cut at its folds (#3405).
-        $lbRuns = Get-LogbookRuns -Runs $lb.Runs -StepLogPath $c.StepLogPath -RepoRoot $c.Root
+        $lbRuns = Get-LogbookRuns -Runs $pg.Runs -StepLogPath $c.StepLogPath -RepoRoot $c.Root
         # Every finished run's phases, for its work time on its card: read from the transcripts once, then cached.
         $phases = Get-StopwatchTranscriptCache -Runs @($lbRuns | Where-Object { $_.End }) -CachePath $c.LogbookPhasesPath -TranscriptDir $c.TranscriptDir -StepLogPath $c.StepLogPath -RepoRoot $c.Root
-        return (& $ok (Format-LogbookPageHtml -Runs $lbRuns -ReadError $lb.Error -Skipped $lb.Skipped -StorePath $c.LogbookPath -Transcript $phases @site))
+        $pager = Format-LogbookPager -Page $pg.Page -Pages $pg.Pages -Total $pg.Total -Shown @($pg.Runs).Count -First $pg.First
+        return (& $ok (Format-LogbookPageHtml -Runs $lbRuns -ReadError $lb.Error -Skipped $lb.Skipped -StorePath $c.LogbookPath -Transcript $phases -PagerHtml $pager @site))
     }
     if ($Path -match '^/logbook/([a-z0-9-]{1,60})$') {
         $lbSlug = $Matches[1]

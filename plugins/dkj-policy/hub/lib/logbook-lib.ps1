@@ -56,6 +56,9 @@ $script:LogbookOpenRunMaxHours = 24
 # from there on, read off its work time (the owner, October 26, 2026).
 $script:LogbookFastSeconds = 15 * 60
 $script:LogbookSlowSeconds = 45 * 60
+# The overview shows this many of the store's runs per page, newest first (Dave, November 3, 2026): the page got slower
+# with every session, because each load cut every sweep, read every run's phases and drew every card.
+$script:LogbookPageSize = 20
 
 function Get-LogbookStorePath {
     <# The Logbook's store on this machine for the repo at -RepoRoot, beside its Stopwatch's. #>
@@ -215,6 +218,46 @@ function Get-LogbookRuns {
     }
 }
 
+function Select-LogbookPage {
+    <#
+        Page -Page of the store's -Runs, newest first, -Size to a page (Dave, November 3, 2026), as @{ Runs; Page;
+        Pages; Total }: only that page's runs are then cut, read and drawn, so a load costs one page whatever the
+        store holds. A page never ends between two runs that started in the same minute: their slugs depend on each
+        other (ConvertTo-StopwatchModel), so the page that takes one takes both. A sweep is one store run, so it stays
+        on one page however many issues it is cut into. First is the place of the page's first run among them all.
+        Page 0 for a -Page past the last; an empty store is page 1 of 1.
+        Pure.
+    #>
+    param([AllowEmptyCollection()][object[]]$Runs = @(), [int]$Page = 1, [int]$Size = $script:LogbookPageSize)
+    $all = @($Runs | Where-Object { $_ } | Sort-Object { $_.Start } -Descending)
+    $minute = { param($r) $r.Start.ToLocalTime().ToString('yyyy-MM-dd-HHmm', [Globalization.CultureInfo]::InvariantCulture) }
+    $pages = @(); $cur = @()
+    for ($i = 0; $i -lt $all.Count; $i++) {
+        $cur += $all[$i]
+        if ($cur.Count -ge $Size -and ($i + 1 -ge $all.Count -or (& $minute $all[$i + 1]) -ne (& $minute $all[$i]))) { $pages += , @($cur); $cur = @() }
+    }
+    if ($cur.Count -or -not $pages.Count) { $pages += , @($cur) }
+    $n = if ($Page -ge 1 -and $Page -le $pages.Count) { $Page } else { 0 }
+    $first = 1; for ($k = 0; $k -lt $n - 1; $k++) { $first += @($pages[$k]).Count }
+    return @{ Runs = $(if ($n) { @($pages[$n - 1]) } else { @() }); Page = $n; Pages = $pages.Count; Total = $all.Count; First = $first }
+}
+
+function Format-LogbookPager {
+    <#
+        The links between the overview's pages (Select-LogbookPage's -Page of -Pages): newer runs towards '/logbook', older
+        runs towards '/logbook/page/<n>', as house .btn links in a .controls row, with which runs this page shows. Empty
+        when there is one page.
+    #>
+    param([int]$Page = 1, [int]$Pages = 1, [int]$Total = 0, [int]$Shown = 0, [int]$First = 1)
+    if ($Pages -le 1) { return '' }
+    $href = { param($n) if ($n -le 1) { '/logbook' } else { '/logbook/page/' + $n } }
+    $parts = @()
+    if ($Page -gt 1) { $parts += '<a class="btn" href="' + (& $href ($Page - 1)) + '">Newer runs</a>' }
+    $parts += '<span class="note">Runs ' + $First + '-' + ($First + $Shown - 1) + ' of ' + $Total + ', page ' + $Page + ' of ' + $Pages + '</span>'
+    if ($Page -lt $Pages) { $parts += '<a class="btn" href="' + (& $href ($Page + 1)) + '">Older runs</a>' }
+    return '<nav class="controls" aria-label="Logbook pages">' + ($parts -join '') + '</nav>'
+}
+
 function ConvertTo-LogbookModel {
     <#
         What both Logbook pages show: ConvertTo-StopwatchModel -KeepOpenRuns over -Runs, without the open runs older
@@ -293,7 +336,8 @@ function Format-LogbookPageHtml {
         [hashtable]$Transcript = @{},
         [datetime]$Now = [datetime]::UtcNow,
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/'
+        [string]$HubHref = '/',
+        [AllowEmptyString()][string]$PagerHtml = ''
     )
     $notes = @{}
     $work = Get-LogbookWorkTimes -Runs $Runs -Transcript $Transcript
@@ -307,7 +351,7 @@ function Format-LogbookPageHtml {
         'Built by its <code>hub/lib/logbook-lib.ps1</code> on the Stopwatch''s pages.'
     return Format-StopwatchPageHtml -Model (ConvertTo-LogbookModel -Runs $Runs -Now $Now) -ReadError $ReadError -Skipped $Skipped -StorePath $StorePath -Now $Now `
         -Route '/logbook' -PageTitle 'Logbook' `
-        -FooterNote $note -NoDelta -CardNotes $notes -CardTones $tones -Flat -RepoName $RepoName -HubHref $HubHref
+        -FooterNote $note -NoDelta -CardNotes $notes -CardTones $tones -Flat -RepoName $RepoName -HubHref $HubHref -PagerHtml $PagerHtml
 }
 
 function Format-LogbookRunPageHtml {
