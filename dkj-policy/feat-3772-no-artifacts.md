@@ -39,19 +39,45 @@
 
 ### PLAN
 
+Dave, November 3, 2026 ([#3772](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3772)): no claude.ai
+Artifacts and no Claude Docs any more. A visible result someone must judge becomes a Toolbox page, a document a
+file in the repo. All 53 existing Artifacts were deleted in the same session; none converted, because the
+Toolbox's Test gate, SessionStart, Skills and Performance pages already cover the analysis pages.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The constitution (`plugins/dkj-policy/CLAUDE.md`) carries the rule always-on, overriding the harness default to publish; the visible-result safety rule says "a Toolbox page"
+- [x] `CONTRIBUTING-portable.md`: the section "A committed Artifact source carries its published URL" retired
+- [x] Gwen #12, Cody #13 (manuals, subagent defs), the shared `artifact-publishing-boundary` block, Derek's persona and lens, `ship-pr`, `sweep-issues`: no Artifact publishing
+- [x] Brand book: the `dkj-brandbook` skill, its README, `house-style.css`'s header comment, the `repo-dashboard` pattern, the `dkj-solutions` CLAUDE.md and descriptions name no Artifact
+- [x] The hub's `/artifacts` page and card removed; `/artifacts` answers 303 to `/`, as the retired `/about` does
+- [x] This repo's register and harvesting removed: `scripts/dashboard/artifacts.json`, the `harvest-artifacts` skill, its script and lib
+- [x] `measure-session-start` no longer publishes or downloads a "Sessiestart-context" Artifact; its previous measurement is the snapshot JSON, read as `-Previous`
 
 ### TEST
 
+- [x] `check-plugin-integrity` and `check-script-contract` green; `build-agent-defs` reports the subagent defs in sync
+- [x] `dev-pages` (545), `measure-session-start` (231), `consumer-dashboard` (239), `dev-preview-sessionstart` (364), `shared-scripts`, `claim-issue`, `house-palette`, `script-contract` green
+- [ ] The owner looks at the Toolbox on 4890 without its Artifacts card (visible result -- no merge before that)
+
 ### DEPLOY: feat/3772-no-artifacts
 
-**Score:**
+The workflow no longer uses claude.ai Artifacts or Claude Docs. The constitution says so always-on and overrides
+the harness's own default to publish one: a result someone must judge becomes a Toolbox page, a document a file in
+the repo. The Toolbox loses its Artifacts page and card (an old `/artifacts` link lands on the home page), the
+`measure-session-start` skill keeps its history in its snapshot file instead of a published page, and the
+specialists' and brand book's texts no longer point at Artifacts.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Every session in every consumer stops publishing Artifacts after taking this version, including where the harness
+would offer one unprompted.
+
+**Score:** 3
 
 #### Pull Request
+
+Stop using claude.ai Artifacts and Claude Docs: a visible result becomes a Toolbox page
 
