@@ -2,7 +2,27 @@
 
 ## [Unreleased]
 
-**3 / 4 minor entries** <!-- pending-tally -->
+**3 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/toolbox-in-product-menu · 20261103-113704Z
+
+The product's site header menu on every page now opens on **Toolbox**, then Consumers and Marketplace -- the same order as the cards on Home. It links `/hub`, which this server already answers with a 303 to the dkj-policy hub once that hub answers as this checkout's, so the menu never has to look the hub's port up while a page is drawn. The cards on the product's Home now behave as the toolbox home's do: they stand on the page in the hub's own `.ph-cards` (no framing surface, the toolbox's gap and hover) instead of a `.grid-3`.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A: the product hub is this repo's own dev server; no consumer takes it.
+
+**Score:** N/A
+
+#### Pull Request
+
+The Toolbox in the product's site header menu, beside Consumers and Marketplace
+
+[PR #3771](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3771)
+
+---
 
 ### DEPLOY: feat/remove-header-settings-button · 20261103-110636Z
 
