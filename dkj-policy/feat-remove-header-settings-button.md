@@ -57,7 +57,7 @@ product on 4870). The toolbox's theme is chosen on its own `/settings` page sinc
 
 - [x] `check-plugin-integrity`, `check-house-style.tests.ps1` (135) and `house-palette.tests.ps1` (161) green on the stylesheet change
 - [x] `dev-pages.tests.ps1` (594) and `consumer-dashboard.tests.ps1` (241) green, their asserts flipped to "no settings button in the header"
-- [ ] The owner looks at the headers on 4890 and 4870 (visible result -- no merge before that)
+- [x] The owner looked at the headers on 4892 (the branch toolbox) and 4870, and said "ship it"
 
 ### DEPLOY: feat/remove-header-settings-button
 
