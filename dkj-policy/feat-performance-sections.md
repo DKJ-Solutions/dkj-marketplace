@@ -49,12 +49,19 @@ owner's look before the merge.
 - [x] `Format-HubGroupPageHtml`: a Section's cards include its member general pages, not only its groups
 - [x] `/clock` moves to `/performance` (301), because the Clock no longer has a page
 - [x] Docs: the hub README, the brand book README's group paragraph, the stopwatch-lib and server comments
+- [x] Logbook in pages (Dave, same day: "it keeps getting slower"): `Select-LogbookPage` takes 20 store runs
+  per page, newest first, and only those are cut, read and drawn; `/logbook/page/<n>` for the older ones,
+  linked by `Format-LogbookPager`
+- [x] The run page still cuts the whole store to find a slug: filed as #3779
 
 ### TEST
 
 - [x] `dev-pages` and `stopwatch` suites updated and green (571/0, 273/0)
 - [x] Served from the branch on port 4895: `/performance` reads h1 Performance, h2 Clock, h3 Stopwatch,
   h3 Logbook, h2 Context, h3 SessionStart; `/clock` answers 301 to `/performance`
+- [x] `logbook` suite: paging asserts added, green (69/0)
+- [x] Served on 4895: `/logbook` 20 store runs with an "Older runs" link, `/logbook/page/2` the rest,
+  `/logbook/page/1` 301 to `/logbook`, a page past the last 404
 
 ### DEPLOY: feat/performance-sections
 
@@ -63,11 +70,16 @@ Logbook cards directly under it, and **Context**, with the SessionStart card. Th
 therefore one click closer, and their trail reads Tools > Claude > Performance. The old `/clock` address moves
 to `/performance`.
 
-**Score:** 2
+The Logbook overview no longer gets slower with every session: it shows the newest 20 runs, and older ones
+sit behind **Older runs** on `/logbook/page/2` and on. Only that page's runs are cut per sweep issue, read from
+the transcripts and drawn, so a load costs one page whatever the store holds.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-Every repo's Toolbox shows the new Performance page, with Stopwatch and Logbook one click closer than they were.
+Every repo's Toolbox shows the new Performance page, with Stopwatch and Logbook one click closer than they were,
+and its Logbook stays fast however many sessions it has logged.
 
 **Score:** 2
 

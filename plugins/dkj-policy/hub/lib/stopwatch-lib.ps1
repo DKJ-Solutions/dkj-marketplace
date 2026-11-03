@@ -1163,7 +1163,8 @@ function Format-StopwatchPageHtml {
         [switch]$Flat,
         [AllowEmptyString()][string]$RepoName = '',
         [string]$HubHref = '/',
-        [switch]$Shared
+        [switch]$Shared,
+        [AllowEmptyString()][string]$PagerHtml = ''
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $body = New-Object System.Text.StringBuilder
@@ -1203,6 +1204,8 @@ function Format-StopwatchPageHtml {
         [void]$body.AppendLine('</div>')
         [void]$body.AppendLine('</div>')
     }
+    # The Logbook's links between its pages (Format-LogbookPager), under the cards: already HTML, built from numbers alone.
+    if ($PagerHtml) { [void]$body.AppendLine($PagerHtml) }
     if (-not @($Model.Groups).Count) {
         [void]$body.AppendLine('<p class="note">No run yet.' + $(if ($NoDelta) { '' } else { ' The first one sets the baseline for its label.' }) + '</p>')
     }
