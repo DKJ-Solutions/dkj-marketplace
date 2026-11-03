@@ -58,8 +58,13 @@ function Get-ProductPages {
 }
 
 function Get-ProductMenu {
-    <# The product's site header menu (Format-SiteHeaderHtml -Menu): its own pages, in the home page's order (Get-ProductPages). #>
-    @(Get-ProductPages | ForEach-Object { @{ Label = $_.Label; Href = $_.Href } })
+    <#
+        The product's site header menu (Format-SiteHeaderHtml -Menu), in the home page's card order: the
+        Toolbox first, then its own pages (Get-ProductPages). The Toolbox links '/hub', this server's 303 to
+        the plugin hub, because the hub's port is only known once it answers (Get-GeneralPagesUrl) and a
+        menu drawn on every page should not ask it each time.
+    #>
+    @(@{ Label = 'Toolbox'; Href = '/hub' }) + @(Get-ProductPages | ForEach-Object { @{ Label = $_.Label; Href = $_.Href } })
 }
 
 function ConvertFrom-ConsumerCheckOutput {

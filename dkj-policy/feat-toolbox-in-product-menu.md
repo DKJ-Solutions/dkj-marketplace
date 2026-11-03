@@ -41,17 +41,25 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-ProductMenu` opens on a Toolbox item linking `/hub`, the server's 303 to the plugin hub
+- [x] `dev-pages.tests.ps1` pins the menu's labels, links and order
 
 ### TEST
 
+- [x] `dev-pages` and `consumer-dashboard` suites green
+- [ ] The owner has looked at the menu on the product (visible result)
+
 ### DEPLOY: feat/toolbox-in-product-menu
 
-**Score:**
+The product's site header menu on every page now opens on **Toolbox**, then Consumers and Marketplace -- the same order as the cards on Home. It links `/hub`, which this server already answers with a 303 to the dkj-policy hub once that hub answers as this checkout's, so the menu never has to look the hub's port up while a page is drawn.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: the product hub is this repo's own dev server; no consumer takes it.
+
+**Score:** N/A
 
 #### Pull Request
 
