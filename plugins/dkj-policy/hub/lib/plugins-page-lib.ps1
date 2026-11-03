@@ -264,6 +264,9 @@ function Format-PluginPageHtml {
     # right of the h1's row (the owner, October 26, 2026).
     $badge = '<p class="badge-row">' + (Format-PluginBadgeHtml $Row.Status.Level) + (& $e $Row.Status.Label) + '</p>'
     $body = New-Object System.Text.StringBuilder
+    # What the plugin ships comes first, each kind an h2 over a card per item that opens its landing page (Dave,
+    # November 3, 2026). -Contents is Get-PluginContents'; a kind the plugin ships none of is not drawn.
+    if ($Contents) { [void]$body.Append((Format-PluginContentsSectionsHtml -PluginName ([string]$Row.Name) -Contents $Contents)) }
     # One screen, side by side (the owner, October 26, 2026; the house density rule): the description and the
     # state of this machine as two cards in one row, rather than a status block and two full-width groups stacked.
     [void]$body.AppendLine('<div class="grid-2">')
@@ -299,9 +302,6 @@ function Format-PluginPageHtml {
         foreach ($c in $below) { [void]$body.AppendLine((Format-HubCardLinkHtml -Href $c.Href -Label $c.Label -Sub $c.Sub -Icon $c.Icon)) }
         [void]$body.AppendLine('</div>')
     }
-    # What the plugin ships, each kind an h2 over a card per item that opens its landing page (Dave, November 3,
-    # 2026). -Contents is Get-PluginContents'; a kind the plugin ships none of is not drawn.
-    if ($Contents) { [void]$body.Append((Format-PluginContentsSectionsHtml -PluginName ([string]$Row.Name) -Contents $Contents)) }
     # No lead: the crumbs and the Id fact already say which plugin and marketplace this is (the density rule).
     return Format-GeneralPageHtml -Title ([string]$Row.Name) -Body $body.ToString() -SiteName $RepoName -HubHref $HubHref `
         -ParentCrumbs @(@{ Label = 'Installed plugins'; Href = '/plugins' }) -HeadAside $badge `
