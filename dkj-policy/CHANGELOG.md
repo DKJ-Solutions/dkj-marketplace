@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**2 / 3 minor entries** <!-- pending-tally -->
+**3 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/remove-header-settings-button · 20261103-110636Z
+
+The site header on the toolbox and product pages no longer carries the settings button (the gear with theme,
+width and reset). The toolbox's theme is chosen on its `/settings` page; a page without a site header still
+floats the button as before. The brand book's site-header menu now stands at the right instead of in the middle,
+for every app that draws one, and the header has no padding of its own. Under a site header the breadcrumb trail is inset as far as the
+name, so the two start on one line, and each step of the trail is a cell the full
+height of its bar, as a menu link is in the header.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A consumer running the toolbox sees a header without the gear and its menu at the right; the theme moves to the
+Settings page.
+
+**Score:** 2
+
+#### Pull Request
+
+Remove the settings button from the toolbox and product headers
+
+Plugins: dkj-policy
+
+[PR #3770](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3770)
+
+---
 
 ### DEPLOY: fix/3766-trunk-sync-cli-diagnostics · 20261103-091659Z
 
