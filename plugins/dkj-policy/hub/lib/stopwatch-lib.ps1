@@ -1553,7 +1553,9 @@ function Format-StopwatchLabelPageHtml {
     }
     [void]$body.AppendLine('</div>')
     $shell = Format-StopwatchPageShell
-    $note = 'Every run whose prompt began with <code>stopwatch: ' + (& $e $Set.Title) + '</code>, labels compared case-insensitively, each against the run of this label before it. ' +
+    # A release cut is also started by cut-release.ps1 itself (#3781), so its note names that route too (#3782).
+    $scriptRoute = if ($Set.Title -eq $script:StopwatchReleaseLabel) { ', or that <code>cut-release.ps1</code> started itself when no run was going' } else { '' }
+    $note = 'Every run whose prompt began with <code>stopwatch: ' + (& $e $Set.Title) + '</code>' + $scriptRoute + ', labels compared case-insensitively, each against the run of this label before it. ' +
         'Kept on this machine in <code>' + (& $e $StorePath) + '</code>' + $(if ($Shared) { ' and shared with the other machines through <code>refs/stopwatch/&lt;machine&gt;</code> on origin' } else { ', not shared with other machines' }) + '. Built by the dkj-policy plugin''s <code>hub/lib/stopwatch-lib.ps1</code>.'
     return Format-GeneralPageHtml -Title $title -Style $shell.Style -Body ($body.ToString() + $shell.Script) -Lead '' -Bare -ParentCrumbs (@(Get-HubGroupCrumbs -Href '/clock') + @(@{ Label = 'Stopwatch'; Href = '/stopwatch' })) `
         -SiteName $RepoName -HubHref $HubHref -FooterNote $note

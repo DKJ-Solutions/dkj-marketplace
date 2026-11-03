@@ -39,19 +39,32 @@
 
 ### PLAN
 
+Closes #3782. Since #3781 `cut-release.ps1` starts a `release cut` run itself, but two rendered texts
+still said a run comes only from a `stopwatch:` prompt. Rendered page text is a visible result, so this
+branch stops before the merge for the owner's look.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The hub's Stopwatch tile sub text (`plugins/dkj-policy/hub/lib/general-pages-lib.ps1`) names both starts: a `stopwatch:` prompt, or the start of a release cut.
+- [x] The label page's footer note (`plugins/dkj-policy/hub/lib/stopwatch-lib.ps1`) adds the script route only on the `release cut` label's page (`$script:StopwatchReleaseLabel`, compared case-insensitively); every other label's note is unchanged, because there the prompt is still the only route.
 
 ### TEST
 
+- [x] `scripts/tests/stopwatch.tests.ps1` gains an assert: the `release cut` label page names `cut-release.ps1`, and another label's page does not. Suite: 310 passed, 0 failed.
+
 ### DEPLOY: fix/3782-stopwatch-script-run-wording
 
-**Score:**
+The hub's Stopwatch tile and the `release cut` label page now say that a release cut is also timed when
+`cut-release.ps1` starts the run itself (#3782), where both still claimed a run comes only from a
+`stopwatch:` prompt.
+
+**Score:** 1 -- a wrong sentence on two hub pages; it misled nobody into a wrong action yet.
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A -- a maintainer of a consumer sees two corrected sentences on the hub and has nothing to do.
+
+**Score:** N/A
 
 #### Pull Request
 
