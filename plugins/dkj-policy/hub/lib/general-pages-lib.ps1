@@ -1094,11 +1094,11 @@ function Format-HubSettingsPageHtml {
         '.hs-swatches { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
         '.hs-swatches > .card { margin-top: 0; background: var(--bg-3); border-color: var(--bg-4); }' + "`n" +
         '.hs-swatches > .card .theme-swatch { border-color: var(--bg-4); }' + "`n" +
-        # The two toggles (Mode and Width) stand --spacing-11 tall and take the cards' --bg-4 border, the line between
+        # The two toggles (Mode and Width) stand --spacing-11 tall on a --bg-5 border, a step past the cards' --bg-4, the line between
         # their buttons too (Maikel, November 3, 2026). Scoped to this page's groups, so the house .controls .seg keeps its
         # 30px everywhere else.
-        '.hs-theme .controls .seg { height: var(--spacing-11); border-color: var(--bg-4); }' + "`n" +
-        '.hs-theme .controls .seg button + button { border-left-color: var(--bg-4); }' + "`n" +
+        '.hs-theme .controls .seg { height: var(--spacing-11); border-color: var(--bg-5); }' + "`n" +
+        '.hs-theme .controls .seg button + button { border-left-color: var(--bg-5); }' + "`n" +
         # And each toggle is a fixed --spacing-60 wide, its options sharing it equally (Maikel, November 3, 2026), never wider
         # than the column a phone gives it.
         '.hs-theme .controls .seg { width: var(--spacing-60); max-width: 100%; }' + "`n" +

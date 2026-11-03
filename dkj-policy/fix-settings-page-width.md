@@ -41,7 +41,7 @@
 
 ### CREATE
 
-- [x] `Format-HubSettingsPageHtml` (`hub/lib/general-pages-lib.ps1`): a Width group under Theme, the house `.seg` with Fluid / Phone / Full through `DKJTheme.setWidth`; the lead and the hub card's sub name the width too; both toggles `--spacing-11` tall and `--spacing-60` wide, on a `--bg-4` border
+- [x] `Format-HubSettingsPageHtml` (`hub/lib/general-pages-lib.ps1`): a Width group under Theme, the house `.seg` with Fluid / Phone / Full through `DKJTheme.setWidth`; the lead and the hub card's sub name the width too; both toggles `--spacing-11` tall and `--spacing-60` wide, on a `--bg-5` border
 - [x] The house palette (`house-palette-lib.ps1`) gains `--bg-5`, one paper step past `--bg-4`; `build-house-palette.ps1 -Apply` wrote it into every theme line of `house-style.css`, and the specimens page and the brand book README show it
 
 ### TEST
