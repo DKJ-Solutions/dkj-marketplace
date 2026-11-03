@@ -67,15 +67,15 @@ Assert-Equal 12 $themes.Count 'twelve themes'
 Assert-Equal 6 @($themes | Where-Object Mode -eq 'light').Count 'six light themes'
 foreach ($th in $themes) {
     $p = Get-HousePalette -Hue $th.Hue -Mode $th.Mode -ChromaMax ([double]$th.ChromaMax)
-    Assert-Equal 12 $p.Count "$($th.Id): twelve tokens"; Assert-True (-not $p.Contains('--muted-inverse')) "$($th.Id): no --muted-inverse (retired November 1, 2026)"
+    Assert-Equal 13 $p.Count "$($th.Id): thirteen tokens"; Assert-True (-not $p.Contains('--muted-inverse')) "$($th.Id): no --muted-inverse (retired November 1, 2026)"
     $miss = @(Get-HousePaletteContrast $p | Where-Object { $_.Ratio -lt $_.Floor } | ForEach-Object { '{0} {1:N2}' -f $_.Pair, $_.Ratio })
     Assert-Equal '' ($miss -join '; ') "$($th.Id): every pairing reaches its floor"
     $l1 = (ConvertTo-OkLch $p['--fg-1']).L; $l4 = (ConvertTo-OkLch $p['--fg-4']).L
     Assert-True ([math]::Abs($l4 - $l1) -le 0.13) "$($th.Id): the four text steps lie close together (fg-1 to fg-4 within 0.13 L)"
     $dark = $th.Mode -eq 'dark'
     Assert-True ($dark -eq ((Get-RelativeLuminance $p['--fg-1']) -gt (Get-RelativeLuminance $p['--bg-1']))) "$($th.Id): the text is light on dark and dark on light"
-    $lum = 1..4 | ForEach-Object { Get-RelativeLuminance $p["--bg-$_"] }
-    $ordered = if ($dark) { $lum[0] -lt $lum[1] -and $lum[1] -lt $lum[2] -and $lum[2] -lt $lum[3] } else { $lum[0] -gt $lum[1] -and $lum[1] -gt $lum[2] -and $lum[2] -gt $lum[3] }
+    $lum = 1..5 | ForEach-Object { Get-RelativeLuminance $p["--bg-$_"] }
+    $ordered = if ($dark) { $lum[0] -lt $lum[1] -and $lum[1] -lt $lum[2] -and $lum[2] -lt $lum[3] -and $lum[3] -lt $lum[4] } else { $lum[0] -gt $lum[1] -and $lum[1] -gt $lum[2] -and $lum[2] -gt $lum[3] -and $lum[3] -gt $lum[4] }
     Assert-True $ordered "$($th.Id): the paper steps run away from the page"
     # the primary is the MOST saturated colour that reads: a step of HSL lightness toward 50% no longer reaches 4.55:1
     $pl = ConvertTo-HslLightness $p['--primary']
@@ -108,7 +108,7 @@ $css = [System.IO.File]::ReadAllText($Style)
 foreach ($th in $themes) {
     $expected = Format-HousePaletteDeclarations (Get-HousePalette -Hue $th.Hue -Mode $th.Mode -ChromaMax ([double]$th.ChromaMax))
     $line = ([regex]::Match($css, ":root\[data-theme=""$($th.Id)""\], \.theme-swatch\[data-id=""$($th.Id)""\] \{ ([^}]*)\}")).Groups[1].Value
-    Assert-True ($line.StartsWith($expected)) "$($th.Id): its theme line starts with the computed twelve"
+    Assert-True ($line.StartsWith($expected)) "$($th.Id): its theme line starts with the computed thirteen"
 }
 $blocks = @([regex]::Matches($css, '(?m)^\s+(--bg-1:[^\r\n]*)$') | ForEach-Object { $_.Groups[1].Value.Trim() })
 Assert-Equal 3 $blocks.Count 'three default token lines'

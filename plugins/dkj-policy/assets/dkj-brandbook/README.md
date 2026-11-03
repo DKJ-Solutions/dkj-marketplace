@@ -104,7 +104,7 @@ already has, not a new colour:
 
 | Share | Group | Tokens | What it is |
 |---|---|---|---|
-| **60%** | Paper | `--bg-1` … `--bg-4` | the ground: the page, the cards, the lines |
+| **60%** | Paper | `--bg-1` … `--bg-5` | the ground: the page, the cards, the lines |
 | **30%** | Primary | `--primary`, with `--primary-muted` (its grey), `--primary-raised` and `--primary-hover` (its two shades) | the theme's colour: `h1` and `h2`, links, the breadcrumb bar, `.btn--primary`, the states; `--primary-raised` is the settings cell in a site header, `--primary-hover` a primary button under the pointer |
 | **10%** | Text | `--fg-1` … `--fg-4` | what sits on the paper: every paragraph, label and quiet icon |
 
@@ -132,7 +132,7 @@ primary outweighs its paper has spent the 30% as ground.
 
 | Group | Tokens | Meaning |
 |---|---|---|
-| Paper | `--bg-1` … `--bg-4` | what sits **behind** the text, in very small steps, each only just darker on light (lighter on dark) than the one before: the page (`bg-1`), cards and tiles (`bg-2`), every line and the tinted surfaces (`bg-3`: borders, row dividers, grid lines, the meter track, an accent table head, a hover, the accent dialog), a stronger border (`bg-4`: an open card, a selected box). **All four read on `--primary`** (4.55:1 or better, #3235), so they are also the text on a primary fill (`.fill-primary`), `bg-1` the text on a `--primary-muted` fill and the mark inside a status icon, and the paper steps the text on an inverted (`--fg-1`) surface |
+| Paper | `--bg-1` … `--bg-5` | what sits **behind** the text, in very small steps, each only just darker on light (lighter on dark) than the one before: the page (`bg-1`), cards and tiles (`bg-2`), every line and the tinted surfaces (`bg-3`: borders, row dividers, grid lines, the meter track, an accent table head, a hover, the accent dialog), a stronger border (`bg-4`: an open card, a selected box), and one step past it (`bg-5`, Maikel, November 3, 2026). **`bg-1` to `bg-4` read on `--primary`** (4.55:1 or better, #3235; the primary is measured against `bg-4`, so `bg-5` is not promised there), so they are also the text on a primary fill (`.fill-primary`), `bg-1` the text on a `--primary-muted` fill and the mark inside a status icon, and the paper steps the text on an inverted (`--fg-1`) surface |
 | Categorical | `--graph-1`, `--graph-2`, `--graph-3` | one series each. Never two meanings for one slot in a view. Named `--cat-1` to `--cat-3` until November 1, 2026 (Maikel) |
 | Direction | `--positive-3` and `--negative-3` (also the gain and the loss in charts, so a direction chart can share a view with any series), `--positive-5`, `--negative-5` (numbers in text) | result and direction, never a category. `--positive-5`/`--negative-5` are the text versions of `--positive-3`/`--negative-3`, a step more contrast so a number reads as text: darker on light, lighter on dark |
 | Status | `--positive-3`, `--warning-3`, `--negative-3`, `--warning-5`, `--warning-1`, `--negative-1`, `--positive-1` | badges, meters, notices. `--warning-1`, `--negative-1` and `--positive-1` are the backgrounds of a warning, negative or positive message. The mark inside a status icon (check, cross, "!") is `--bg-1` |

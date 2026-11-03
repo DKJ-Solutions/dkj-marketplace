@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Compute the twelve colour tokens of every house-style theme (#3235) and, with -Apply, write them into
+    Compute the thirteen colour tokens of every house-style theme (#3235) and, with -Apply, write them into
     house-style.css.
 
 .DESCRIPTION

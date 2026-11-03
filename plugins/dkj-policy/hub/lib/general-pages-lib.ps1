@@ -525,7 +525,7 @@ function Get-GeneralPages {
         # #3482: plugin-versions' verdict per enabled plugin, so a problem with one is visible from the hub.
         @{ Href = '/plugins';       Label = 'Installed plugins'; Sub = 'Every plugin this repo enables, and any problem with one on this machine'; Icon = 'plugins' },
         # The toolbox's own settings, on a page of their own (Dave, November 2, 2026): the Theme first.
-        @{ Href = '/settings';      Label = 'Settings';      Sub = 'How this toolbox looks on this device: its theme'; Icon = 'settings' }
+        @{ Href = '/settings';      Label = 'Settings';      Sub = 'How this toolbox looks on this device: its theme and its width'; Icon = 'settings' }
     )
 }
 
@@ -1039,17 +1039,18 @@ function Format-HubSettingsPageHtml {
     $body = '<div class="card-grid hs-theme" id="settings-theme-grid"><div class="grid__head"><h2>Theme</h2></div>' + $toggle +
         # The reset IS a card like the swatches', the whole card the button (Dave, November 2, 2026), hovering as a link card
         # does in a group, on --bg-4 (not .card--link itself, which is a link's, #3566); it closes their row, shown whichever mode the toggle shows (it carries no data-mode).
+        '<div class="hs-swatches" id="settings-theme-swatches"></div>' +
         '<button type="button" class="card hs-swatch hs-reset" id="settings-theme-foot">Reset</button></div>' + "`n" +
         # Each theme's card draws the whole picker and keeps only its own swatch, unwrapped from its row (no label, no
         # 64px label column). The picker never redraws, and a click or a theme change reaches every swatch left in every
         # picker, so the twelve cards and the header stay in step with no logic of this page's own. No house class is
         # restyled for it, and the header panel's picker keeps its rows and labels.
         '<script>(function () {' +
-        ' var grid = document.getElementById("settings-theme-grid"), foot = document.getElementById("settings-theme-foot");' +
+        ' var grid = document.getElementById("settings-theme-grid"), swatches = document.getElementById("settings-theme-swatches"), foot = document.getElementById("settings-theme-foot");' +
         ' DKJTheme.themes.forEach(function (t) {' +
         ' var card = document.createElement("section"); card.className = "card hs-swatch"; card.setAttribute("data-mode", t.mode);' +
         ' card.innerHTML = "<div></div>";' +
-        ' grid.insertBefore(card, foot);' +
+        ' swatches.appendChild(card);' +
         ' var el = card.lastChild; DKJTheme.picker(el, { light: "Light", dark: "Dark" });' +
         ' Array.prototype.forEach.call(el.querySelectorAll(".theme-picker__row"), function (row) { if (row.querySelector(".theme-swatch--" + t.mode)) { row.parentNode.replaceChild(row.querySelector(".theme-picker__swatches"), row); } else { row.parentNode.removeChild(row); } });' +
         ' Array.prototype.forEach.call(el.querySelectorAll(".theme-swatch"), function (s) { if (s.getAttribute("data-id") !== t.id) { s.parentNode.removeChild(s); } });' +
@@ -1067,12 +1068,48 @@ function Format-HubSettingsPageHtml {
         ' seg.addEventListener("click", function (e) { var b = e.target.closest("button[data-mode]"); if (b) { show(b.getAttribute("data-mode")); } });' +
         ' show(modeOf(DKJTheme.current()));' +
         ' foot.addEventListener("click", function () { DKJTheme.reset(); show(modeOf(DKJTheme.current())); });' +
+        ' })();</script>' + "`n" +
+        # The page width (Maikel, November 3, 2026): the header's settings panel carried it until that button went, so
+        # it moved here with the theme. The same three as that panel, through the brand book's own setWidth, so the
+        # choice is the one key per app that house-theme.js already reads; the segment opens on the width in force.
+        '<div class="card-grid hs-theme" id="settings-width-grid"><div class="grid__head"><h2>Width</h2></div>' +
+        '<div class="controls grid__full"><span class="seg" id="settings-width" role="group" aria-label="Width">' +
+        '<button type="button" data-width="fluid" aria-pressed="false">Fluid</button>' +
+        '<button type="button" data-width="phone" aria-pressed="false">Phone</button>' +
+        '<button type="button" data-width="full" aria-pressed="false">Full</button></span></div></div>' + "`n" +
+        '<script>(function () {' +
+        ' var seg = document.getElementById("settings-width");' +
+        ' function show() { var now = DKJTheme.width(); Array.prototype.forEach.call(seg.querySelectorAll("button[data-width]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-width") === now)); }); }' +
+        ' seg.addEventListener("click", function (e) { var b = e.target.closest("button[data-width]"); if (b) { DKJTheme.setWidth(b.getAttribute("data-width")); show(); } });' +
+        ' show();' +
         ' })();</script>'
     # .hs-theme, .hs-swatch and .hs-reset are this page's own classes: the row, the full-width head and toggle in it, a
     # card that hugs its swatch, and what a <button> needs to read as a card. No house class or token is redefined.
-    $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
+    $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-5); }' + "`n" +
         '.hs-theme > :is(.grid__head, .grid__full) { flex: 0 0 100%; }' + "`n" +
         '.hs-swatch { margin-top: 0; padding: var(--spacing-2); }' + "`n" +
+        # The theme cards stand in a grid of their own (Maikel, November 3, 2026), wrapping on a narrow column. One step
+        # down from the group, they lose the house's card-in-a-group look (it reads direct children only), so it is
+        # given back here: --bg-3, and the swatch's own ring on --bg-4.
+        '.hs-swatches { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
+        '.hs-swatches > .card { margin-top: 0; background: var(--bg-3); border-color: var(--bg-5); }' + "`n" +
+        # The theme cards and the reset take the --bg-5 border, as the toggles do (Maikel, November 3, 2026); the active
+        # theme's --primary border still wins, its rule being the more specific.
+        '.hs-theme > .hs-reset { border-color: var(--bg-5); }' + "`n" +
+        '.hs-swatches > .card .theme-swatch { border-color: var(--bg-4); }' + "`n" +
+        # The two toggles (Mode and Width) stand --spacing-11 tall on a --bg-5 border, a step past the cards' --bg-4, the line between
+        # their buttons too (Maikel, November 3, 2026). Scoped to this page's groups, so the house .controls .seg keeps its
+        # 30px everywhere else.
+        '.hs-theme .controls .seg { height: var(--spacing-11); border-color: var(--bg-5); }' + "`n" +
+        '.hs-theme .controls .seg button + button { border-left-color: var(--bg-5); }' + "`n" +
+        # The pressed option is the --primary itself rather than the house's --primary-muted (Maikel, November 3, 2026);
+        # its --bg-1 text reads on it, as every paper step down to bg-4 does.
+        '.hs-theme .controls .seg button[aria-pressed="true"] { background: var(--primary); }' + "`n" +
+        # Each OPTION is a fixed --spacing-28 wide, so a toggle with three is wider than one with two and every option
+        # matches (Maikel, November 3, 2026); on a column too narrow for them the options shrink, never the page. A width,
+        # not a flex-basis: an inline-flex .seg sizes itself from its options' widths and ignores their basis.
+        '.hs-theme .controls .seg { max-width: 100%; }' + "`n" +
+        '.hs-theme .controls .seg button { width: var(--spacing-28); flex: 0 1 auto; min-width: 0; }' + "`n" +
         # A theme card is clickable as a whole, and the one holding the active swatch -- aria-pressed, which the brand book's
         # picker keeps, from the header's choice too -- takes the selected theme's --primary as its border (Dave, November 2, 2026).
         '.hs-swatch[data-mode] { cursor: pointer; }' + "`n" +
@@ -1084,7 +1121,7 @@ function Format-HubSettingsPageHtml {
         # Every card in the row is clickable, the theme cards and the reset alike, so all take the same hover: --bg-4, as a
         # link card does in a group (Dave, November 2, 2026).
         '.hs-swatch:hover { background: var(--bg-4); }'
-    return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $body -Style $style `
+    return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme and its width.' -Body $body -Style $style `
         -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
 }
 
