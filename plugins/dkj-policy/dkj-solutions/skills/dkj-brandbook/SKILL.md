@@ -150,7 +150,7 @@ page and dashboard is designed to that screen first:
 ## The gate: `check-house-style`
 
 **[`scripts/lint/check-house-style.ps1`](../../scripts/lint/check-house-style.ps1) holds a repo to these
-four rules** ([#3035](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3035)). An earlier fourth, `heading` (no `h2`
+five rules** ([#3035](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3035)). An earlier fourth, `heading` (no `h2`
 inside a card, [#3175](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3175)), was retired on October 24, 2026
 (Maikel): an `h2` may title a card.
 
@@ -172,8 +172,14 @@ inside a card, [#3175](https://github.com/DKJ-Solutions/dkj-claude-plugins/issue
    ([#3720](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3720)). A domain token's own value
    (`--emotion-cyan: #0369a1`) is not: a domain colour is a token of the repo's own, read with `var()` like
    any other.
+5. **type**: a rule in the repo's own layer reads a font size only from the type scale. A `font-size`
+   whose value is anything but `var(--text-*)` or a CSS-wide keyword (`inherit`), or a `font` shorthand
+   that types a size (`15px`, `0.88em`, `larger`, `clamp(...)`), is a finding
+   ([#3778](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3778)). A domain step's own value
+   (`--text-hero: 48px`) is not, the same way a domain colour is not. A relative size on `code` in running
+   text is a finding too: the house sets it once, in `:where(code)`. `font-weight` is not read.
 
-Checks 2 to 4 use a pattern grep over every tracked file of the kinds a page is built in (`.css`, `.html`, `.js`,
+Checks 2 to 5 use a pattern grep over every tracked file of the kinds a page is built in (`.css`, `.html`, `.js`,
 `.py`, `.ps1` and the like, not Markdown), so CSS inside a Python or PowerShell string counts. A false
 positive is answered in the repo's `scripts/repo-config.ps1`. Every entry needs a reason, and a drifted
 copy is never answered there:

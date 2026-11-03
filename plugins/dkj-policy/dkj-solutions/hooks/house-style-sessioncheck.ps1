@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
     SessionStart hook: the brand book's gate (#3035), read-only and informational -- so a copy that
-    drifted from the pinned tag, a redefined house token, a retired token name or a colour a rule types
-    or derives (#3720) is seen at the start
+    drifted from the pinned tag, a redefined house token, a retired token name, a colour a rule types
+    or derives (#3720) or a font size a rule types (#3778) is seen at the start
     of a session, not first on a red pull request.
 
 .DESCRIPTION
@@ -85,7 +85,7 @@ if (-not $findings.Count) {
     $canon = @($result.Copies | Where-Object { $_.Canonical }).Count
     $what = "$(@($result.Copies).Count - $canon) pinned copy/copies"
     if ($canon) { $what = "$canon canonical file(s) of this source repo, not held to the pin, and $what" }
-    Write-Output "${name}: the brand book holds at $($result.Tag) -- $what, no redefined house token or class, no retired token name, no colour typed or derived in a rule."
+    Write-Output "${name}: the brand book holds at $($result.Tag) -- $what, no redefined house token or class, no retired token name, no colour typed or derived in a rule, no font size typed in a rule."
     exit 0
 }
 if ($onlyMissing) {
