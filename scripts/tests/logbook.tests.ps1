@@ -196,6 +196,27 @@ Assert-True ($stale[-1].RunStart -eq $going.Start -and @($sm.Groups | Where-Obje
 $young = Split-LogbookSweepRuns -Runs @($going) -Folds @($folds[0], @{ At = (& $at 85000); Issue = '3500' })
 Assert-Equal 1 @((ConvertTo-LogbookModel -Runs $young -Now (& $at 86000)).Groups | Where-Object { $_.Running }).Count 'and a sweep under a day old still shows its issue in progress going'
 
+Write-Host '-- the overview in pages (Dave, November 3, 2026)' -ForegroundColor Cyan
+$many = @(for ($i = 0; $i -lt 45; $i++) { @{ Id = "p$i"; Label = "Run $i"; Start = (& $at ($i * 600)); End = (& $at ($i * 600 + 60)); Auto = $true; StartHead = 'a'; Session = "s$i" } })
+$p1 = Select-LogbookPage -Runs $many -Page 1 -Size 20
+Assert-True ($p1.Page -eq 1 -and $p1.Pages -eq 3 -and $p1.Total -eq 45 -and $p1.First -eq 1 -and @($p1.Runs).Count -eq 20 -and $p1.Runs[0].Id -eq 'p44' -and $p1.Runs[19].Id -eq 'p25') 'page 1 holds the newest 20 of 45 runs, newest first'
+$p3 = Select-LogbookPage -Runs $many -Page 3 -Size 20
+Assert-True ($p3.Page -eq 3 -and $p3.First -eq 41 -and @($p3.Runs).Count -eq 5 -and $p3.Runs[-1].Id -eq 'p0') 'the last page holds the oldest five, the first of them run 41'
+Assert-Equal 0 (Select-LogbookPage -Runs $many -Page 4 -Size 20).Page 'a page past the last is page 0'
+$empty = Select-LogbookPage -Runs @() -Page 1
+Assert-True ($empty.Page -eq 1 -and $empty.Pages -eq 1 -and @($empty.Runs).Count -eq 0) 'an empty store is page 1 of 1'
+# Three runs in one minute across the boundary of a page of two: the page takes all three.
+$minute = @(for ($i = 0; $i -lt 3; $i++) { @{ Id = "m$i"; Label = "M $i"; Start = (& $at (5000 + $i)); End = (& $at 5100); Auto = $true; StartHead = 'a'; Session = "m$i" } }) + @(@{ Id = 'old'; Label = 'Old'; Start = (& $at 0); End = (& $at 60); Auto = $true; StartHead = 'a'; Session = 'o' })
+$pm = Select-LogbookPage -Runs $minute -Page 1 -Size 2
+Assert-True (@($pm.Runs).Count -eq 3 -and $pm.Pages -eq 2) 'a page never ends between two runs that started in the same minute, whose slugs depend on each other'
+Assert-Equal '' (Format-LogbookPager -Page 1 -Pages 1 -Total 3 -Shown 3) 'one page draws no pager'
+$pager1 = Format-LogbookPager -Page 1 -Pages 3 -Total 45 -Shown 20 -First 1
+Assert-True ($pager1 -match 'href="/logbook/page/2">Older runs<' -and $pager1 -notmatch 'Newer runs' -and $pager1 -match 'Runs 1-20 of 45, page 1 of 3') 'page 1 links the older runs only, and says which runs it shows'
+$pager2 = Format-LogbookPager -Page 2 -Pages 3 -Total 45 -Shown 20 -First 21
+Assert-True ($pager2 -match 'href="/logbook">Newer runs<' -and $pager2 -match 'href="/logbook/page/3">Older runs<') 'page 2 links back to /logbook and on to page 3'
+$pp = Format-LogbookPageHtml -Runs @($p1.Runs) -Now (& $at 30000) -PagerHtml $pager1
+Assert-True ($pp -match 'aria-label="Logbook pages"' -and ([regex]::Matches($pp, 'class="card card--link')).Count -eq 20) 'the overview draws one page''s cards with its pager'
+
 Write-Host ''
 Write-Host "logbook: $script:pass passed, $script:fail failed"
 if ($script:fail -gt 0) { exit 1 }

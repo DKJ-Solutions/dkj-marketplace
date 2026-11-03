@@ -73,9 +73,9 @@
 #>
 
 $script:StopwatchLabelMax = 80
-# Every Stopwatch and Logbook page sits under the hub's Clock page (the owner, October 27, 2026), itself under Performance
-# (October 30, 2026), under Claude (November 2, 2026), so its trail reads Home > Claude > Performance > Clock > ...:
-# Get-HubGroupCrumbs -Href '/clock'.
+# Every Stopwatch and Logbook page sits in the Clock section of the hub's Performance page (a page of its own from
+# October 27 until Dave made it a section on November 3, 2026), under Claude (November 2, 2026), so its trail reads
+# Home > Claude > Performance > ...: Get-HubGroupCrumbs -Href '/clock', where the section is no crumb.
 
 # The step log's reader (#3338), for a ship's steps: dkj-policy's own copy, beside hub/ in the plugin. Guarded: a
 # tree that copies this file alone keeps one ship phase.
@@ -1163,7 +1163,8 @@ function Format-StopwatchPageHtml {
         [switch]$Flat,
         [AllowEmptyString()][string]$RepoName = '',
         [string]$HubHref = '/',
-        [switch]$Shared
+        [switch]$Shared,
+        [AllowEmptyString()][string]$PagerHtml = ''
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $body = New-Object System.Text.StringBuilder
@@ -1203,6 +1204,8 @@ function Format-StopwatchPageHtml {
         [void]$body.AppendLine('</div>')
         [void]$body.AppendLine('</div>')
     }
+    # The Logbook's links between its pages (Format-LogbookPager), under the cards: already HTML, built from numbers alone.
+    if ($PagerHtml) { [void]$body.AppendLine($PagerHtml) }
     if (-not @($Model.Groups).Count) {
         [void]$body.AppendLine('<p class="note">No run yet.' + $(if ($NoDelta) { '' } else { ' The first one sets the baseline for its label.' }) + '</p>')
     }

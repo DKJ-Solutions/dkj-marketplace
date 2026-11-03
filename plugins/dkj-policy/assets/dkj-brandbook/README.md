@@ -1004,9 +1004,10 @@ Brandbook app is retired ([#3493](https://github.com/DKJ-Solutions/dkj-claude-pl
 
 **A card is ALWAYS one link, never two or more** (owner, October 27, 2026). Pages that belong together
 are grouped on a **group page** of their own, and the hub carries one card linking that page. **Clock**
-(`/clock`) was the first: the page is an `h1` with one card link each for Stopwatch and Logbook. Groups nest:
-Clock sits on Performance's page, and Performance in the Claude section of AI's, so their trails read
-Tools > AI > Performance > Clock > the page (November 2, 2026), and the hub carries only the AI card. A page joins a group by the
+(`/clock`) was the first: the page was an `h1` with one card link each for Stopwatch and Logbook. Groups nest,
+and a group can also be a **section**, an `h2` over its members' `h3` cards with no page of its own: Clock is
+one on Performance's page since November 3, 2026, beside Context, and Performance sits on Claude's, so the
+trails read Tools > Claude > Performance > the page, and the hub carries only the Claude card. A page joins a group by the
 `Group` key in `Get-GeneralPages`; the group itself is a row of `Get-HubGroups`, and
 `Format-HubGroupPageHtml` draws its page.
 

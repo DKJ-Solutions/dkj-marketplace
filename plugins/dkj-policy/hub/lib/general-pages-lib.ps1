@@ -517,7 +517,7 @@ function Get-GeneralPages {
     @(
         @{ Href = '/issues';        Label = 'Issues';        Sub = 'The open GitHub issues and where they stand, and the flow of the last four weeks'; Icon = 'issues'; GitHub = $true },
         @{ Href = '/release-notes'; Label = 'Release notes'; Sub = 'What each released version of the plugins changed'; Icon = 'release-notes' },
-        @{ Href = '/sessionstart';  Label = 'SessionStart';  Sub = 'The always-on path every session loads before its first turn'; Icon = 'sessionstart'; Group = '/performance' },
+        @{ Href = '/sessionstart';  Label = 'SessionStart';  Sub = 'The always-on path every session loads before its first turn'; Icon = 'sessionstart'; Group = '/performance/context' },
         # Every repo's since #3470 (the owner, October 25, 2026): the source repo's own pages until then.
         @{ Href = '/test-gate';     Label = 'Test gate';     Sub = 'What each test suite costs on CI'; Icon = 'test-gate'; GitHub = $true },
         @{ Href = '/stopwatch';     Label = 'Stopwatch';     Sub = 'How long an assignment takes, timed from a stopwatch: prompt to back on the trunk, with the transcript phases'; Icon = 'stopwatch'; Group = '/clock' },
@@ -542,6 +542,8 @@ function Get-HubGroups {
         A Section with Source 'lenses' takes its cards from the repo instead: one per specialist lens (Get-HubLensPages).
         Performance holds SessionStart and Clock (the owner, October 30, 2026), and sits in Claude since
         November 2, 2026: what it measures is what Claude's work costs. A group page keeps its route wherever it sits.
+        Its two are Sections since November 3, 2026 (Dave): Clock, an h2 over the Stopwatch and Logbook h3 cards, and
+        Context, over SessionStart's. Clock had a /clock page until then, which now moves to /performance.
     #>
     @(
         @{ Href = '/claude'; Label = 'Claude'; Sub = 'The rules, skills and specialists Claude works by, and what its work costs'; Icon = 'claude' },
@@ -549,7 +551,8 @@ function Get-HubGroups {
         @{ Href = '/claude/skills'; Label = 'Skills'; Sub = 'The skills Claude can use'; Icon = 'skills'; Group = '/claude' },
         @{ Href = '/claude/specialists'; Label = 'Specialists'; Sub = 'The Claude Specialists, each with a craft of their own'; Icon = 'specialists'; Group = '/claude' },
         @{ Href = '/performance'; Label = 'Performance'; Sub = 'What Claude''s work costs: the SessionStart path and the Clock'; Icon = 'performance'; Group = '/claude' },
-        @{ Href = '/clock'; Label = 'Clock'; Sub = 'How long the work takes: the Stopwatch and the Logbook'; Icon = 'clock'; Group = '/performance' },
+        @{ Href = '/clock'; Label = 'Clock'; Sub = 'How long the work takes: the Stopwatch and the Logbook'; Icon = 'clock'; Group = '/performance'; Section = $true },
+        @{ Href = '/performance/context'; Label = 'Context'; Sub = 'What a session loads before its first turn'; Icon = 'sessionstart'; Group = '/performance'; Section = $true },
         @{ Href = '/claude/specialists/lenses'; Label = 'Lenses'; Icon = 'lens'; Group = '/claude/specialists'; Section = $true; Source = 'lenses' },
         # The Rules page reads its cards from the repo too: what is in its .claude/rules folder, and nothing else
         # (Maikel, November 3, 2026; Get-HubRulePages). Bare: no heading of its own, which would only repeat the
@@ -997,7 +1000,10 @@ function Format-HubGroupPageHtml {
         # The house grouping form: a .grid__head over the cards, whose titles are then h3s. The h2 alone, with no
         # p.card__sub under it (Maikel, October 30, 2026).
         [void]$body.AppendLine('<div class="grid-3"><div class="grid__head"><h2>' + (& $e $sec.Label) + '</h2></div>')
-        $cards = if ($sec.Source) { @(Get-HubSectionCards -Source $sec.Source -RepoRoot $RepoRoot) } else { @($groups | Where-Object { $_.Group -ceq $sec.Href }) }
+        # A section holds its member general pages first, in their order, then its member groups (Performance's Clock
+        # and Context, Dave, November 3, 2026).
+        $cards = if ($sec.Source) { @(Get-HubSectionCards -Source $sec.Source -RepoRoot $RepoRoot) }
+                 else { @(@(Get-GeneralPages | Where-Object { $_.Group -ceq $sec.Href }) + @($groups | Where-Object { $_.Group -ceq $sec.Href })) }
         foreach ($p in $cards) {
             [void]$body.AppendLine((Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon -Heading 3))
         }
