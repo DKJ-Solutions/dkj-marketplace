@@ -555,8 +555,9 @@ function Get-HubGroups {
         @{ Href = '/clock'; Label = 'Clock'; Sub = 'How long the work takes: the Stopwatch and the Logbook'; Icon = 'clock'; Group = '/performance' },
         @{ Href = '/claude/specialists/lenses'; Label = 'Lenses'; Icon = 'lens'; Group = '/claude/specialists'; Section = $true; Source = 'lenses' },
         # The Rules page reads its cards from the repo too: what is in its .claude/rules folder, and nothing else
-        # (Maikel, November 3, 2026; Get-HubRulePages).
-        @{ Href = '/claude/rules/repo'; Label = 'Repo rules'; Icon = 'rules'; Group = '/claude/rules'; Section = $true; Source = 'repo-rules' }
+        # (Maikel, November 3, 2026; Get-HubRulePages). Bare: no heading of its own, which would only repeat the
+        # page's h1, so its cards stand on the page as h2 cards (Maikel, the same day).
+        @{ Href = '/claude/rules/repo'; Label = 'Repo rules'; Icon = 'rules'; Group = '/claude/rules'; Section = $true; Source = 'repo-rules'; Bare = $true }
     )
 }
 
@@ -957,7 +958,11 @@ function Format-HubGroupPageHtml {
     }
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $members = @(@(Get-GeneralPages | Where-Object { $_.Group -eq $g.Href }) + @($groups | Where-Object { $_.Group -ceq $g.Href -and -not $_.Section }))
-    $sections = @($groups | Where-Object { $_.Group -ceq $g.Href -and $_.Section })
+    # A Bare Section has no heading: its cards join the page's own h2 cards (Maikel, November 3, 2026).
+    foreach ($bare in @($groups | Where-Object { $_.Group -ceq $g.Href -and $_.Section -and $_.Bare })) {
+        $members += @(Get-HubSectionCards -Source $bare.Source -RepoRoot $RepoRoot)
+    }
+    $sections = @($groups | Where-Object { $_.Group -ceq $g.Href -and $_.Section -and -not $_.Bare })
     $body = New-Object System.Text.StringBuilder
     # The h1 stands on the page above the group, never inside its surface: the h1 is never framed (owner, October 28, 2026).
     [void]$body.AppendLine('<div><h1>' + (& $e $g.Label) + '</h1></div>')

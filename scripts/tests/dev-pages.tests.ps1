@@ -187,7 +187,7 @@ Assert-True ($skillsPage -match '<li><a href="/">Tools</a></li>' -and $skillsPag
 
 Write-Host '-- the Rules page: what is in the repo''s .claude/rules folder, and nothing else (Maikel, November 3, 2026)' -ForegroundColor Cyan
 $rulesBare = Format-HubGroupPageHtml -Href '/claude/rules' -RepoName 'x'
-Assert-True ($rulesBare -match '<li><a href="/">Tools</a></li>' -and $rulesBare -match '<a href="/claude">Claude</a>' -and $rulesBare -match '<h2>Repo rules</h2>' -and ([regex]::Matches($rulesBare, '<h2>')).Count -eq 1 -and $rulesBare -notmatch 'Nothing on this page yet' -and $rulesBare -match 'Nothing here yet\.') 'the /claude/rules page holds one Repo rules section, which with no repo to read says it has nothing yet'
+Assert-True ($rulesBare -match '<li><a href="/">Tools</a></li>' -and $rulesBare -match '<a href="/claude">Claude</a>' -and $rulesBare -notmatch '<h2>' -and $rulesBare -notmatch 'grid__head' -and $rulesBare -match 'Nothing on this page yet\.') 'the /claude/rules page has no heading under its h1, and with no repo to read says it has nothing yet'
 $ruleRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('hub-rules-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path (Join-Path $ruleRoot '.claude\rules'), (Join-Path $ruleRoot 'plugins\pol') -Force | Out-Null
 try {
@@ -200,7 +200,7 @@ try {
     Assert-Equal 'layers,this-repo' (($rules | ForEach-Object { $_.Label }) -join ',') 'the rules are the .claude/rules markdown files by name -- not a CLAUDE.md the root imports, not a file that is no markdown'
     Assert-True ($rules[1].Sub -eq 'This repo' -and $rules[1].Display -eq '.claude/rules/this-repo.md' -and $rules[0].Sub -eq 'Layers (loads only when Claude touches a matching file)') 'a rule card''s sub line is its own # title, and a path-scoped rule says when it loads'
     $rulesPage = Format-HubGroupPageHtml -Href '/claude/rules' -RepoName 'x' -RepoRoot $ruleRoot
-    Assert-True (([regex]::Matches($rulesPage, '<section class="card card--link">')).Count -eq 2 -and $rulesPage -match 'href="/claude/rules/layers"' -and $rulesPage -match 'menu-item__label"><h3>this-repo</h3>' -and $rulesPage -notmatch 'href="/claude/rules/pol"' -and $rulesPage -notmatch 'Nothing here yet') 'with a repo the section holds one h3 card per rule file'
+    Assert-True (([regex]::Matches($rulesPage, '<section class="card card--link">')).Count -eq 2 -and $rulesPage -match 'href="/claude/rules/layers"' -and $rulesPage -match 'menu-item__label"><h2>this-repo</h2>' -and $rulesPage -match '<div class="ph-cards">' -and $rulesPage -notmatch 'grid__head|Repo rules' -and $rulesPage -notmatch 'href="/claude/rules/pol"' -and $rulesPage -notmatch 'Nothing') 'with a repo the page holds one h2 card per rule file, standing on the page with no section heading over them (Maikel, November 3, 2026)'
     $rulePage = Format-HubRulePageHtml -Name 'this-repo' -RepoRoot $ruleRoot -RepoName 'x'
     $ruleMd = ConvertFrom-Json ([regex]::Match($rulePage, '<script type="application/json" id="lens-md">(.*?)</script>').Groups[1].Value)
     Assert-True ($rulePage -match '<h1>this-repo</h1>' -and $rulePage -match '<a href="/claude">Claude</a>' -and $rulePage -match '<a href="/claude/rules">Rules</a>' -and $rulePage -match 'Read from <code>\.claude/rules/this-repo\.md</code>' -and $ruleMd.body -eq "## Facts`n`nTrunk is main.`n") 'a rule file''s page is rendered as a lens''s is, titled as its card, under Tools > Claude > Rules, naming the file it was read from'
