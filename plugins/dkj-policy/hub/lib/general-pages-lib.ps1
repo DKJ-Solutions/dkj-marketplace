@@ -1086,8 +1086,10 @@ function Format-HubSettingsPageHtml {
         ' })();</script>'
     # .hs-theme, .hs-swatch and .hs-reset are this page's own classes: the row, the full-width head and toggle in it, a
     # card that hugs its swatch, and what a <button> needs to read as a card. No house class or token is redefined.
-    # Inside the .grid-2 each group gives up its own top margin, as a card does there.
-    $style = '#settings-row > .card-grid { margin-top: 0; }' + "`n" +
+    # The .grid-2 is layout only here: no surface and no padding of its own, so the Theme and Width groups stay two
+    # surfaces with the grid's gap between them (Maikel, November 3, 2026). Inside it each group gives up its own top margin.
+    $style = '#settings-row { background: none; padding: 0; }' + "`n" +
+        '#settings-row > .card-grid { margin-top: 0; }' + "`n" +
         '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }' + "`n" +
         '.hs-theme > :is(.grid__head, .grid__full) { flex: 0 0 100%; }' + "`n" +
         '.hs-swatch { margin-top: 0; padding: var(--spacing-2); }' + "`n" +
