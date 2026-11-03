@@ -1105,10 +1105,10 @@ function Format-HubSettingsPageHtml {
         # The pressed option is the --primary itself rather than the house's --primary-muted (Maikel, November 3, 2026);
         # its --bg-1 text reads on it, as every paper step down to bg-4 does.
         '.hs-theme .controls .seg button[aria-pressed="true"] { background: var(--primary); }' + "`n" +
-        # And each toggle is a fixed --spacing-60 wide, its options sharing it equally (Maikel, November 3, 2026), never wider
-        # than the column a phone gives it.
-        '.hs-theme .controls .seg { width: var(--spacing-60); max-width: 100%; }' + "`n" +
-        '.hs-theme .controls .seg button { flex: 1 1 0; }' + "`n" +
+        # Each OPTION is a fixed --spacing-28 wide, so a toggle with three is wider than one with two and every option
+        # matches (Maikel, November 3, 2026); on a column too narrow for them the options shrink, never the page.
+        '.hs-theme .controls .seg { max-width: 100%; }' + "`n" +
+        '.hs-theme .controls .seg button { flex: 0 1 var(--spacing-28); min-width: 0; }' + "`n" +
         # A theme card is clickable as a whole, and the one holding the active swatch -- aria-pressed, which the brand book's
         # picker keeps, from the header's choice too -- takes the selected theme's --primary as its border (Dave, November 2, 2026).
         '.hs-swatch[data-mode] { cursor: pointer; }' + "`n" +
