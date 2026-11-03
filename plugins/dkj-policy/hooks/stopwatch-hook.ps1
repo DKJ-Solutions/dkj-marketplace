@@ -63,7 +63,7 @@ try {
     $root = [System.IO.Path]::GetFullPath($root).TrimEnd('\', '/')
     . (Join-Path $PSScriptRoot '..\hub\lib\stopwatch-lib.ps1')
     $ownStore = -not $StorePath
-    if ($ownStore) { [void](Move-HubTimingLegacyStore -RepoRoot $root); $StorePath = Get-StopwatchStorePath -RepoRoot $root }
+    if ($ownStore) { [void](Import-HubTimingOrphanStore -RepoRoot $root); $StorePath = Get-StopwatchStorePath -RepoRoot $root }
     $lock = Get-HubTimingLock -StorePath $StorePath
     $store = Read-StopwatchStore -Path $StorePath
     if ($store.Error) { exit 0 }

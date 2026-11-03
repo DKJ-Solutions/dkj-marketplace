@@ -754,6 +754,30 @@ generic `.chip`, the stat rows and the stepper are house classes since the
 
 ## Page patterns
 
+### Which shape a page's cards take
+
+**Read what the page holds, and take the one shape for it** (owners, November 3, 2026,
+[#3777](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3777)). The parts below were each defined, but
+not when to use which, and a consumer's pages came out correct by every token check and wrong by eye in
+both directions: an overview set each group's `h2` above its grid instead of inside it, and a document of
+six sections rendered as one card about 3700px tall, with no cards and no drill-down.
+
+| The page holds | Its shape | Not |
+|---|---|---|
+| **A flat list of pages**, no groups | one `.grid-3` with **no** `.grid__head`, one card link per page: THE card ([below](#every-page-a-long-page-becomes-cards-with-a-page-each)), its label the page's name | an `h2` or `h3` link inside the card; an `h2` above the grid |
+| **A grouped list** | one grid per group, its first child a `.grid__head` holding the group's `h2` (then a `p.card__sub`), and each card titled `h3` | the group's `h2` as a sibling above or beside its grid |
+| **A few cards, each naming a subject of the page** rather than a part of one group | each card titled `h2` ([below](#an-h2-may-title-a-card)), no `.grid__head` | an `h2` above them as well |
+| **A document of more than four sections** | an overview: the text before the first section in one card, then one card link per section, each section a page one level down ([below](#every-page-a-long-page-becomes-cards-with-a-page-each)) | the whole document in one card, however narrow |
+| **A group with nothing in it** | its empty state inside its own grid: one `.card.grid__full` after the `.grid__head` | an empty-state line beside or below the grid |
+
+A long list inside one group stays one group ([A list is not sections](#every-page-a-long-page-becomes-cards-with-a-page-each)).
+No check holds this table: the structural `heading` check stays retired (below), so it is the page's
+author who reads it.
+
+**What this changes for an app that takes the update:** nothing that exists; it names the choice the parts
+below already allow. A page whose shape does not match its row does not break, but it does not follow the
+brand book until it does.
+
 ### An h2 may title a card
 
 **Retired rule** (Maikel, October 24, 2026): from October 19, 2026

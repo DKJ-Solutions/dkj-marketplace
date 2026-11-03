@@ -2,7 +2,63 @@
 
 ## [Unreleased]
 
-**10 / 13 minor entries** <!-- pending-tally -->
+**12 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3780-timing-store-orphan-adoption · 20261103-154822Z
+
+Renaming a checkout's folder no longer empties its Stopwatch and Logbook
+([#3780](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3780)). The store key stays the
+path hash, so two unrelated repos with one folder name still never share a store (#3470), and the
+first time a repo's hooks or hub run after the upgrade, `Import-HubTimingOrphanStore` adopts the
+store its checkout left behind: a folder whose checkout is gone and that was this repo's, placed
+beside the checkout by its own name or carrying this repo's origin. From it, only the runs that
+started on a commit of this repo are taken, so a live clone, a fork or an unrelated repo never
+crosses over. The run stores merge as a union on run id, the repo's own run winning, and the phase
+caches and hide files the same way. Nothing is moved or deleted. The repo's folder is then marked
+with its checkout and origin in a local `checkout.txt` (no sync reads it), so every later call is one
+file test and the next rename finds it. The machine-wide stores of before #3470 are adopted on the
+same commit test, which retires the hard-coded `dkj-claude-plugins` name the old move needed.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A repo whose checkout folder was renamed gets its earlier Stopwatch cards and Logbook runs back on
+its hub without anyone copying files by hand, and a shared Stopwatch stops publishing an empty store.
+
+**Score:** 2
+
+#### Pull Request
+
+Stopwatch/Logbook: adopt a timing store orphaned by a checkout rename
+
+Plugins: dkj-policy
+
+[PR #3789](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3789)
+
+---
+
+### DEPLOY: docs/3777-card-shape-rule · 20261103-153718Z
+
+The brand book README's "Page patterns" now opens with a table that says which shape a page's cards take for what the page holds: a flat list of pages is one `.grid-3` of card links with no head, a grouped list puts each group's `h2` inside its grid as the `.grid__head` with `h3` cards, a few subject cards each take an `h2`, a document of more than four sections becomes an overview with a page per section, and a group's empty state sits inside its own grid as a `.grid__full` card. The parts were each defined before, but not when to use which, and a consumer's pages were correct by every token check and wrong by eye in both directions. No check holds the table.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A session building a page in any DKJ-Solutions repo has one rule to follow for card and heading structure, instead of the owner correcting each page by eye.
+
+**Score:** 2
+
+#### Pull Request
+
+Brand book: a decision rule for when headings group cards
+
+Plugins: dkj-policy
+
+[PR #3788](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3788)
+
+---
 
 ### DEPLOY: fix/3779-logbook-run-page-slug · 20261103-151817Z
 
