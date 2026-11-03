@@ -183,7 +183,7 @@ try {
     Save-StopwatchStore -Path (Join-Path $oldDir 'stopwatch.json') -Runs @(& $run 'sw-old' 'release cut' 0 $hRen) -Prepared @(@{ Label = 'prepared old'; PreparedAt = (& $at 0) })
     Save-StopwatchStore -Path (Join-Path $oldDir 'logbook.json') -Runs @((& $run 'lb-old' 'A' 0 $hRen 's1'), (& $run 'lb-both' 'old copy' 10 $hRen 's2')) -Sessions @('s1', 's2')
     [System.IO.File]::WriteAllText((Join-Path $oldDir 'logbook-phases.json'), '{ "lb-old": { "end": "x", "sessions": 1, "phases": [] }, "lb-both": { "end": "old", "sessions": 1, "phases": [] } }')
-    [System.IO.File]::WriteAllText((Join-Path $oldDir 'stopwatch-hidden.json'), '{ "hidden": [] }')
+    [System.IO.File]::WriteAllText((Join-Path $oldDir 'stopwatch-hidden.json'), '{ "hidden": [ { "kind": "run", "value": "own-run", "at": "2026-10-23T10:00:00.000Z", "hidden": false }, { "kind": "run", "value": "old-run", "at": "2026-10-23T10:00:00.000Z", "hidden": true } ] }')
     # An unrelated repo's orphaned store, and a live clone's store elsewhere: neither may cross over.
     $foreignDir = Join-Path $swBase 'dkj-claude-plugins\repos\gone-repo-0123abcd'
     Save-StopwatchStore -Path (Join-Path $foreignDir 'stopwatch.json') -Runs @(& $run 'sw-foreign' 'theirs' 0 $hOther)
@@ -195,24 +195,51 @@ try {
     $newDir = Split-Path -Parent (Get-StopwatchStorePath -RepoRoot $renamed)
     Save-StopwatchStore -Path (Join-Path $newDir 'logbook.json') -Runs @((& $run 'lb-both' 'new copy' 10 $hRen 's2'), (& $run 'lb-new' 'B' 100 $hRen 's3')) -Sessions @('s2', 's3')
     [System.IO.File]::WriteAllText((Join-Path $newDir 'logbook-phases.json'), '{ "lb-both": { "end": "new", "sessions": 1, "phases": [] } }')
+    [System.IO.File]::WriteAllText((Join-Path $newDir 'stopwatch-hidden.json'), '{ "hidden": [ { "kind": "run", "value": "own-run", "at": "2026-10-24T10:00:00.000Z", "hidden": true } ] }')
 
-    Assert-True (-not (Test-HubTimingStoreLive -Dir $oldDir -MainCheckout $renamed)) 'a folder whose name and hash place it beside the checkout, where nothing is any more, is an orphan'
-    Assert-True (Test-HubTimingStoreLive -Dir $newDir -MainCheckout $renamed) 'and the checkout''s own folder, placed the same way, is live'
-    Assert-True (Test-HubTimingStoreLive -Dir $liveDir -MainCheckout $renamed) 'a folder whose checkout.txt names a checkout that exists is live'
+    # A run in the old store that started on a commit this repo does not have stays behind (Sebastian, #3780).
+    Save-StopwatchStore -Path (Join-Path $oldDir 'logbook.json') -Runs @((& $run 'lb-old' 'A' 0 $hRen 's1'), (& $run 'lb-both' 'old copy' 10 $hRen 's2'), (& $run 'lb-alien' 'C' 20 $hOther 's9')) -Sessions @('s1', 's2', 's9')
+    # A clone of the same repo elsewhere, from before checkout.txt: its commits are this repo's, and it is not an orphan.
+    $cloneDir = Join-Path $swBase ('dkj-claude-plugins\repos\' + (Get-HubRepoKey -RepoRoot (Join-Path $swBase 'clones\new-name')))
+    Save-StopwatchStore -Path (Join-Path $cloneDir 'stopwatch.json') -Runs @(& $run 'sw-clone' 'unmarked clone' 0 $hRen)
+    # Two marked folders whose checkouts are gone: one with this repo's origin, one a fork's.
+    Invoke-FixtureGitIn $renamed remote add origin 'https://someone:tok@example.invalid/Acme/App.git'
+    $movedDir = Join-Path $swBase 'dkj-claude-plugins\repos\moved-aaaa1111'
+    Save-StopwatchStore -Path (Join-Path $movedDir 'stopwatch.json') -Runs @(& $run 'sw-moved' 'moved' 0 $hRen)
+    [System.IO.File]::WriteAllText((Join-Path $movedDir 'checkout.txt'), ((Join-Path $swBase 'gone\moved') + "`nhttps://example.invalid/acme/app"))
+    $forkDir = Join-Path $swBase 'dkj-claude-plugins\repos\fork-bbbb2222'
+    Save-StopwatchStore -Path (Join-Path $forkDir 'stopwatch.json') -Runs @(& $run 'sw-fork' 'fork' 0 $hRen)
+    [System.IO.File]::WriteAllText((Join-Path $forkDir 'checkout.txt'), ((Join-Path $swBase 'gone\fork') + "`nhttps://example.invalid/other/fork"))
+    $uncDir = Join-Path $swBase 'dkj-claude-plugins\repos\unc-cccc3333'
+    [void](New-Item -ItemType Directory -Path $uncDir -Force)
+    [System.IO.File]::WriteAllText((Join-Path $uncDir 'checkout.txt'), "\\host.invalid\share\repo`nhttps://example.invalid/acme/app")
+
+    $originId = Get-HubOriginId -RepoRoot $renamed
+    Assert-Equal 'https://example.invalid/acme/app' $originId 'the origin is compared without credentials, case or .git'
+    $verdict = { param($d) Get-HubTimingStoreVerdict -Dir $d -MainCheckout $renamed -Origin $originId }
+    Assert-Equal 'orphan' (& $verdict $oldDir) 'a folder whose name and hash place it beside the checkout, where nothing is any more, is an orphan'
+    Assert-Equal 'live' (& $verdict $newDir) 'and the checkout''s own folder, placed the same way, is live'
+    Assert-Equal 'live' (& $verdict $liveDir) 'a folder whose checkout.txt names a checkout that exists is live'
+    Assert-Equal 'unplaced' (& $verdict $cloneDir) 'an unmarked folder its name cannot place is never an orphan, so a clone elsewhere is not adopted (Victor, #3780)'
+    Assert-Equal 'orphan' (& $verdict $movedDir) 'a marked folder whose checkout is gone is an orphan when its origin is this repo''s'
+    Assert-Equal 'unplaced' (& $verdict $forkDir) 'and not when it is another origin''s, as a fork''s is (Sebastian, #3780)'
+    Assert-Equal 'unplaced' (& $verdict $uncDir) 'a checkout.txt naming a network path is never tested'
     $adopted = @(Import-HubTimingOrphanStore -RepoRoot $renamed)
     $sw = Read-StopwatchStore -Path (Join-Path $newDir 'stopwatch.json')
-    Assert-True (@($sw.Runs).Count -eq 1 -and $sw.Runs[0].Id -eq 'sw-old' -and @($sw.Prepared).Count -eq 1) 'the renamed checkout adopts its old Stopwatch store, prepared labels included'
+    Assert-Equal 'sw-moved,sw-old' ((@($sw.Runs | ForEach-Object { $_.Id }) | Sort-Object) -join ',') 'the renamed checkout adopts its old Stopwatch store and the moved one of its own origin'
+    Assert-True (@($sw.Prepared).Count -eq 1) 'prepared labels included'
     $lb = Read-StopwatchStore -Path (Join-Path $newDir 'logbook.json')
-    Assert-True ((@($lb.Runs | ForEach-Object { $_.Id }) -join ',') -eq 'lb-old,lb-both,lb-new' -and @($lb.Runs | Where-Object { $_.Id -eq 'lb-both' })[0].Label -eq 'new copy') 'the two Logbook stores merge as a union on run id, its own run winning'
-    Assert-Equal 's1,s2,s3' ((@($lb.Sessions) | Sort-Object) -join ',') 'and their sessions are a union too'
+    Assert-True ((@($lb.Runs | ForEach-Object { $_.Id }) -join ',') -eq 'lb-old,lb-both,lb-new' -and @($lb.Runs | Where-Object { $_.Id -eq 'lb-both' })[0].Label -eq 'new copy') 'the two Logbook stores merge as a union on run id, its own run winning, and a run on a commit this repo lacks stays behind'
+    Assert-Equal 's1,s2,s3' ((@($lb.Sessions) | Sort-Object) -join ',') 'and the sessions of the runs taken come with them'
     $ph = [System.IO.File]::ReadAllText((Join-Path $newDir 'logbook-phases.json')) | ConvertFrom-Json
     Assert-True ($ph.'lb-old' -and $ph.'lb-both'.end -eq 'new') 'the phase caches merge by run id the same way'
-    Assert-True ((Test-Path -LiteralPath (Join-Path $newDir 'stopwatch-hidden.json')) -and $adopted -contains ((Split-Path -Leaf $oldDir) + '\stopwatch.json')) 'the hide file is copied where the repo has none, and the adopted files are named'
+    $hid = [System.IO.File]::ReadAllText((Join-Path $newDir 'stopwatch-hidden.json')) | ConvertFrom-Json
+    Assert-True ((@($hid.hidden | ForEach-Object { $_.value }) -join ',') -eq 'own-run,old-run' -and $adopted -contains ((Split-Path -Leaf $oldDir) + '\stopwatch.json')) 'the hide files merge too, so a run hidden under the old key stays hidden (Victor), and the adopted files are named'
     Assert-True (@((Read-StopwatchStore -Path (Join-Path $oldDir 'stopwatch.json')).Runs).Count -eq 1) 'adopting copies: the old folder is left as it was'
-    Assert-True (-not @($sw.Runs | Where-Object { $_.Id -in 'sw-foreign', 'sw-live' }).Count) 'an unrelated repo''s orphan and a live clone''s store are never adopted'
-    Assert-Equal $renamed ([System.IO.File]::ReadAllText((Join-Path $newDir 'checkout.txt'))) 'the repo''s folder is marked with its checkout'
+    Assert-True (-not @($sw.Runs | Where-Object { $_.Id -in 'sw-foreign', 'sw-live', 'sw-clone', 'sw-fork' }).Count) 'an unrelated repo''s orphan, a live clone, an unplaced clone and a fork are never adopted'
+    Assert-Equal ($renamed + "`n" + $originId) ([System.IO.File]::ReadAllText((Join-Path $newDir 'checkout.txt'))) 'the repo''s folder is marked with its checkout and its origin'
     Save-StopwatchStore -Path (Join-Path $oldDir 'stopwatch.json') -Runs @((& $run 'sw-old' 'release cut' 0 $hRen), (& $run 'sw-later' 'x' 50 $hRen))
-    Assert-True (@(Import-HubTimingOrphanStore -RepoRoot $renamed).Count -eq 0 -and @((Read-StopwatchStore -Path (Join-Path $newDir 'stopwatch.json')).Runs).Count -eq 1) 'so it adopts once: a marked folder does not scan again'
+    Assert-True (@(Import-HubTimingOrphanStore -RepoRoot $renamed).Count -eq 0 -and @((Read-StopwatchStore -Path (Join-Path $newDir 'stopwatch.json')).Runs).Count -eq 2) 'so it adopts once: a marked folder does not scan again'
 
     # The machine-wide store of before #3470 is one more candidate, on the same commit test: no name is needed.
     $legacyRepo = Join-Path $swBase 'src\legacy'
@@ -224,6 +251,12 @@ try {
     Assert-Equal 0 @(Import-HubTimingOrphanStore -RepoRoot $repoA).Count 'a folder that is not a repo adopts nothing'
     Assert-True (-not (Test-Path -LiteralPath (Split-Path -Parent (Get-StopwatchStorePath -RepoRoot $repoA)))) 'and, with no store of its own, leaves no folder behind'
     $legacyDir = Split-Path -Parent (Get-StopwatchStorePath -RepoRoot $legacyRepo)
+    # A store of its own that does not read: nothing is written over, and no mark, so the next call tries again (Victor).
+    [void](New-Item -ItemType Directory -Path $legacyDir -Force)
+    [System.IO.File]::WriteAllText((Join-Path $legacyDir 'stopwatch.json'), '{ not json')
+    [void](Import-HubTimingOrphanStore -RepoRoot $legacyRepo)
+    Assert-True ((Get-Content -LiteralPath (Join-Path $legacyDir 'stopwatch.json') -Raw) -eq '{ not json' -and -not (Test-Path -LiteralPath (Join-Path $legacyDir 'checkout.txt'))) 'a store that does not read is left alone and the folder is not marked'
+    Remove-Item -LiteralPath (Join-Path $legacyDir 'stopwatch.json')
     Assert-True (@(Import-HubTimingOrphanStore -RepoRoot $legacyRepo) -contains 'dkj-claude-plugins\stopwatch.json' -and (Read-StopwatchStore -Path (Join-Path $legacyDir 'stopwatch.json')).Runs[0].Id -eq 'sw-legacy') 'the repo whose commits the machine-wide store holds adopts it, whatever its folder is called'
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $legacyDir 'stopwatch-machine.txt'))) 'the machine id stays where it was: it names the machine, not a repo'
 } finally {
