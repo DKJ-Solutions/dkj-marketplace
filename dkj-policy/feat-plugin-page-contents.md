@@ -67,6 +67,9 @@ it and how it works; a skill's description, how it is invoked and its `SKILL.md`
 
 #### What makes this deploy extra special
 
+Nothing beyond the page itself: it reaches only a reader who opens a plugin's page in the Toolbox, and
+changes no workflow, gate or command.
+
 **Score:** N/A
 
 #### Pull Request
