@@ -14,7 +14,7 @@ The second is the brand book, with two rules:
 
 - **Start from it** — the [`dkj-brandbook`](skills/dkj-brandbook/SKILL.md) skill, which points at the
   stylesheet and theme script in `dkj-policy`'s [`assets/dkj-brandbook/`](https://github.com/DKJ-Solutions/dkj-marketplace/tree/main/plugins/dkj-policy/assets/dkj-brandbook/) and the
-  rules in its [`README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md). Every page, report, dashboard or Artifact a
+  rules in its [`README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md). Every page, report or dashboard a
   DKJ-Solutions app renders starts from that stylesheet, and a repo adds its own domain layer on top
   without redefining a house token. Load the skill before any visual work. Where a repo's own lens
   names a style guide, that guide extends the brand book and does not replace it.

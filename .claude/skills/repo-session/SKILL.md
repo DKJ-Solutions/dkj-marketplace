@@ -10,7 +10,7 @@ description: Look into any DKJ repo from this hub (registered under consumers/, 
 from here the owner wants to look into the other repos and start work in one of them, say a new dossier
 in `dkj-lifehub`, without first finding that repo and starting it by hand.
 
-**It is repo-local**, beside `harvest-artifacts`: it reads this repo's own `consumers/` register and
+**It is repo-local**: it reads this repo's own `consumers/` register and
 every DKJ-Solutions checkout beside this repo (`Find-DkjCheckouts`, the same finder as the hub's **DKJ
 repos** page), so a DKJ repo that runs no plugin of this marketplace is reachable too. Nothing here ships in
 a plugin.
