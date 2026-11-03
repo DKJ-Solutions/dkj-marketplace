@@ -1,14 +1,14 @@
 <#
 .SYNOPSIS
-    The colour model of the house style (#3235): twelve tokens per theme, computed from the theme's hue and
+    The colour model of the house style (#3235): thirteen tokens per theme, computed from the theme's hue and
     mode, so a theme is never tuned by hand again.
 
 .DESCRIPTION
     Per theme, in the owner's words (issue #3235, October 21, 2026), on a light theme:
       --primary        ONE colour: the most saturated colour of the theme's HSL hue (saturation 100%) that
                        reads at 4.5:1 on all four paper steps, so white (and every paper step) reads on it too.
-      --bg-1..4     FOUR colours that read on the primary, from white towards a little darker: the page, the
-                       card, the line, the stronger border -- and the text on a primary fill.
+      --bg-1..5     FIVE colours from white towards a little darker: the page, the card, the line, the stronger
+                       border, and one step past it (bg-5, Maikel, November 3, 2026) -- bg-1..4 also the text on a primary fill.
       --primary-muted  a grey of the colour that reads extra well (7:1) on the page.
       --primary-raised, --primary-hover  the primary 15% of the way to bg-1 and to fg-1: two fills a rule reads
                        instead of mixing them with color-mix() (Maikel, November 1, 2026).
@@ -51,14 +51,14 @@ function Get-HousePaletteThemes {
 # The steps, per mode: OKLCH lightness and chroma of the four paper and the four text colours. Paper-1 and fg-1
 # keep the anchors of October 20, 2026 (the edge of white and black); the steps after them are small by design, but
 # bg-2 stands a clear step off the page (Maikel, November 1, 2026: it was barely visible in some themes), and
-# bg-3 moves along so the card in a group keeps its own step.
+# bg-3 moves along so the card in a group keeps its own step. bg-5 is one step past bg-4, a little lighter on a dark theme and a little darker on a light one (Maikel, November 3, 2026); the primary is still measured against bg-4, so no theme colour moved for it.
 function Get-HousePaletteSteps {
     param([ValidateSet('light', 'dark')][string]$Mode)
     if ($Mode -eq 'light') {
-        @{ PaperL = @(0.995, 0.965, 0.94, 0.905); PaperC = @(0.006, 0.014, 0.028, 0.045)
+        @{ PaperL = @(0.995, 0.965, 0.94, 0.905, 0.87); PaperC = @(0.006, 0.014, 0.028, 0.045, 0.058)
            FgL    = @(0.12, 0.16, 0.20, 0.24);     FgC    = @(0.030, 0.030, 0.028, 0.026); MutedC = 0.03; PrimaryFloor = 4.55 }
     } else {
-        @{ PaperL = @(0.13, 0.165, 0.195, 0.235);   PaperC = @(0.020, 0.024, 0.032, 0.045)
+        @{ PaperL = @(0.13, 0.165, 0.195, 0.235, 0.275); PaperC = @(0.020, 0.024, 0.032, 0.045, 0.055)
            FgL    = @(0.99, 0.955, 0.92, 0.885);   FgC    = @(0.006, 0.010, 0.012, 0.014); MutedC = 0.06; PrimaryFloor = 9.0; PrimaryChromaMax = 0.13 }
     }
 }
@@ -166,12 +166,12 @@ function Find-LightnessAtContrast {
 
 # ---- the palette ----------------------------------------------------------------------------------------------
 function Get-HousePalette {
-    <# The twelve tokens of one theme, as an ordered map of token name to #rrggbb. #>
+    <# The thirteen tokens of one theme, as an ordered map of token name to #rrggbb. #>
     param([Parameter(Mandatory)][double]$Hue, [Parameter(Mandatory)][ValidateSet('light', 'dark')][string]$Mode, [double]$ChromaMax = 0)
     $steps = Get-HousePaletteSteps -Mode $Mode
     if ($ChromaMax -gt 0) { $steps.PrimaryChromaMax = $ChromaMax }
     $okHue = (ConvertTo-OkLch (ConvertFrom-Hsl $Hue 1 0.5)).H
-    $paper = 0..3 | ForEach-Object { ConvertFrom-OkLch $steps.PaperL[$_] $steps.PaperC[$_] $okHue }
+    $paper = 0..4 | ForEach-Object { ConvertFrom-OkLch $steps.PaperL[$_] $steps.PaperC[$_] $okHue }
     $fg    = 0..3 | ForEach-Object { ConvertFrom-OkLch $steps.FgL[$_] $steps.FgC[$_] $okHue }
 
     # the primary: HSL saturation 100%, the lightness closest to 50% that still reaches the mode's floor on the
@@ -198,7 +198,7 @@ function Get-HousePalette {
     }
 
     $p = [ordered]@{}
-    for ($i = 0; $i -lt 4; $i++) { $p["--bg-$($i + 1)"] = $paper[$i] }
+    for ($i = 0; $i -lt 5; $i++) { $p["--bg-$($i + 1)"] = $paper[$i] }
     $p['--primary'] = $primary
     $p['--primary-muted'] = $muted
     # the primary's two shades, fills rather than text (Maikel, November 1, 2026): 15% of the way to the page and to
@@ -210,7 +210,7 @@ function Get-HousePalette {
 }
 
 function Format-HousePaletteDeclarations {
-    <# The twelve tokens as one line of CSS declarations, in the stylesheet's order. #>
+    <# The thirteen tokens as one line of CSS declarations, in the stylesheet's order. #>
     param([Parameter(Mandatory)]$Palette)
     ($Palette.Keys | ForEach-Object { "$($_): $($Palette[$_]);" }) -join ' '
 }

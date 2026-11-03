@@ -41,7 +41,7 @@
 
 ### CREATE
 
-- [x] `Format-HubSettingsPageHtml` (`hub/lib/general-pages-lib.ps1`): a Width group under Theme, the house `.seg` with Fluid / Phone / Full through `DKJTheme.setWidth`; the lead and the hub card's sub name the width too
+- [x] `Format-HubSettingsPageHtml` (`hub/lib/general-pages-lib.ps1`): a Width group under Theme, the house `.seg` with Fluid / Phone / Full through `DKJTheme.setWidth`; the lead and the hub card's sub name the width too; both toggles as tall as a theme card, 300px wide, on a `--bg-4` border
 
 ### TEST
 
@@ -65,5 +65,5 @@ button was removed.
 
 #### Pull Request
 
-Settings page gets the page-width choice back
+Settings page gets the page-width choice back, and the house style a --bg-5
 
