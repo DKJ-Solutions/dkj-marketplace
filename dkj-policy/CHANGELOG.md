@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**8 / 11 minor entries** <!-- pending-tally -->
+**9 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/stopwatch-auto-release-run · 20261103-150649Z
+
+Every release cut is now timed on the hub's `/stopwatch` page, whether or not the prompt started with `stopwatch:`. `cut-release.ps1` starts a `release cut` run as it begins, unless a run is already going (the owner's own `stopwatch:` run, or this cut's on a catch-up round), and the run ends on the cut's `release: vX.Y.Z release notes` commit as before. A cut refused after that start leaves its run going, and the next cut discards it once it is over 12 hours old. A missing Stopwatch lib or a store that does not read leaves the cut exactly as it was. Until now only one cut had ever been timed, so no two cuts could be compared.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+The owner of any repo running this workflow gets a timed `release cut` card on the Stopwatch for every cut from the next release on, without remembering to ask, so successive cuts can be compared.
+
+**Score:** 2
+
+#### Pull Request
+
+A release cut is timed on the Stopwatch without a stopwatch: prompt
+
+Plugins: dkj-policy
+
+[PR #3785](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3785)
+
+---
 
 ### DEPLOY: feat/3778-house-style-type-check · 20261103-145617Z
 
