@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**5 / 7 minor entries** <!-- pending-tally -->
+**6 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/hub-rules-page · 20261103-131931Z
+
+The toolbox's Rules page (`/claude/rules`) is no longer empty. It holds cards read from the repo, under no
+heading but the page's own: a card per `.claude/rules/*.md` and nothing else, described by the file's own `description:` frontmatter key (or
+its title where it has none), and marked `(path-scoped)` where it loads only when Claude touches a matching
+file. Each card opens on `/claude/rules/<name>` with the file rendered as a lens
+page is.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every DKJ repo's toolbox now shows the rule files in its `.claude/rules` folder, readable in the browser.
+
+**Score:** 3
+
+#### Pull Request
+
+The toolbox's Rules page lists the rules Claude works by
+
+Plugins: dkj-policy
+
+[PR #3775](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3775)
+
+---
 
 ### DEPLOY: docs/gwen-simple-all-the-way-down · 20261103-130201Z
 
