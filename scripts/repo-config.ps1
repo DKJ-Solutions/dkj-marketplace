@@ -1517,5 +1517,6 @@ function Get-HouseStyleAllowlist {
         @{ Path = 'scripts/tests/house-palette.tests.ps1';      Reason = 'the palette suite: every name in it is a pattern or a fixture of the stylesheet it holds' }
         @{ Path = 'plugins/dkj-policy/bwj-development/*';       Reason = 'the BWJ-Development extension: its pages carry BWJ''s own styling, outside the house style by design' }
         @{ Path = 'scripts/tests/issue-dashboard.tests.ps1';    Reason = 'fixtures of GitHub label colours, which the issue dashboard renders as data' }
+        @{ Path = 'scripts/tests/stopwatch.tests.ps1';          Reason = 'regex patterns that read font-size declarations out of rendered pages, not declarations of their own' }
     )
 }

@@ -201,6 +201,23 @@ Assert-Equal '' (Get-HitNames (Find-HouseStyleColourHit -Text 'a:hover { text-de
 $h = @(Find-HouseStyleColourHit -Text "x`n/* a`n b */`n.my-x { stroke: #abc; }")
 Assert-True ($h.Count -eq 1 -and $h[0].Line -eq 4 -and $h[0].Property -eq 'stroke') 'the line and the property of a hit, past a multi-line comment'
 
+# Check 5, type (#3778): a rule reads a font size only from the type scale; a domain step's own value is free.
+Assert-Equal 'types 15px' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-size: 15px; }')) 'a typed px size'
+Assert-Equal 'types 0.88em' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x code { font-size: 0.88em; }')) 'a relative size on code: the house sets it once'
+Assert-Equal 'types clamp' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-size: clamp(17px, 2.4vw, 20px); }')) 'a clamp() of lengths, named by its function'
+Assert-Equal 'types calc' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-size: calc(var(--text-base) * 1.1); }')) 'a size computed from a step is off the scale'
+Assert-Equal 'types larger' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-size: larger; }')) 'a size keyword'
+Assert-Equal 'types var(--hero)' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-size: var(--hero); }')) 'a token that is no --text-* step'
+Assert-Equal 'types 13px' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font: 600 13px/1.4 system-ui; }')) 'the size inside a font shorthand'
+Assert-Equal 'types 10pt' (Get-HitNames (Find-HouseStyleTypeHit -Text '<p style="font: 10pt Arial">x</p>')) 'a shorthand in an inline style'
+Assert-Equal '' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-size: var(--text-sm); } .my-y { font-size: var( --text-h2 ) !important; }')) 'a step read is clean, !important or not'
+Assert-Equal '' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-size: inherit; font: inherit; } .my-y { font: var(--font-weight-bold) var(--text-sm)/1.4 system-ui; }')) 'a CSS-wide keyword and a shorthand built from tokens are clean'
+Assert-Equal '' (Get-HitNames (Find-HouseStyleTypeHit -Text ':root { --text-hero: 48px; --my-font-size: 12px; } $font-size: 14px;')) 'a domain step''s own value, and an SCSS variable, are free'
+Assert-Equal '' (Get-HitNames (Find-HouseStyleTypeHit -Text '.my-x { font-weight: 600; font-family: "Segoe UI"; }')) 'font-weight and font-family are not read'
+Assert-Equal '' (Get-HitNames (Find-HouseStyleTypeHit -Text "/* font-size: 12px; */`n// font: 12px a;`n.my-x { }")) 'a commented-out declaration is no finding'
+$h = @(Find-HouseStyleTypeHit -Text "x`n`n.my-x {`n  font-size: 11px;`n}")
+Assert-True ($h.Count -eq 1 -and $h[0].Line -eq 4 -and $h[0].Property -eq 'font-size') 'the line and the property of a hit'
+
 Write-Host '-- group 2: the retired names, held to the pinned copy' -ForegroundColor Cyan
 
 $defs = Get-HouseStyleDefinitions -CssText ([System.IO.File]::ReadAllText((Join-Path $Vendored 'house-style.css')))
@@ -299,12 +316,13 @@ try {
     Assert-True ($r.Out -match '\[redefine\] web/page\.py:1 styles the house class \.card') 'check 2: a restyled house class'
     Assert-True ($r.Out -match '\[retired\] web/page\.py:1 reads --ink-4') 'check 3: a retired name in use'
     Assert-True ($r.Out -notmatch '\[heading\]|web/hub\.html') 'an h2 titling a card is no finding: the heading check was retired'
-    Set-Content -LiteralPath (Join-Path $drift 'web\domain.scss') -Value ":root { --my-hazard: #f2b100; }`n.my-row { background: color-mix(in srgb, var(--primary) 10%, var(--bg-2)); }" -Encoding ascii
+    Set-Content -LiteralPath (Join-Path $drift 'web\domain.scss') -Value ":root { --my-hazard: #f2b100; --text-hero: 48px; }`n.my-row { background: color-mix(in srgb, var(--primary) 10%, var(--bg-2)); }`n.my-body { font-size: 15px; }`n.my-hero { font-size: var(--text-hero); }" -Encoding ascii
     Invoke-FixtureGitIn $drift add -A
     $r = Invoke-Child $Gate $drift 'RepoRoot'
     Assert-True ($r.Out -match '\[colour\] web/domain\.scss:2 background: derives a colour with color-mix\(\)' -and $r.Out -notmatch 'domain\.scss:1') 'check 4: a derived colour in a rule, and the domain token above it is free'
+    Assert-True ($r.Out -match '\[type\] web/domain\.scss:3 font-size: types the size 15px' -and $r.Out -notmatch 'domain\.scss:4') 'check 5: a typed font size in a rule, and a domain step read with var() is free'
     $r = Invoke-Child $Hook $drift 'RepoRootOverride'
-    Assert-True ($r.Code -eq 0 -and $r.Out -match '\[WARN\] 5 finding') 'the session check reports the findings and still exits 0'
+    Assert-True ($r.Code -eq 0 -and $r.Out -match '\[WARN\] 6 finding') 'the session check reports the findings and still exits 0'
 
     New-Item -ItemType Directory -Force -Path (Join-Path $drift 'scripts') | Out-Null
     $config = "function Get-HouseStyleAllowlist { @(@{ Path = 'web/page.py'; Reason = 'a fixture' }, @{ Path = 'web/house-theme.js'; Reason = 'no use: a pin is never answered here' }) }"
