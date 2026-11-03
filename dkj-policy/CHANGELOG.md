@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**3 / 5 minor entries** <!-- pending-tally -->
+**4 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3772-no-artifacts · 20261103-122943Z
+
+The workflow no longer uses claude.ai Artifacts or Claude Docs. The constitution says so always-on and overrides
+the harness's own default to publish one: a result someone must judge becomes a Toolbox page, a document a file in
+the repo. The Toolbox loses its Artifacts page and card (an old `/artifacts` link lands on the home page), the
+`measure-session-start` skill keeps its history in its snapshot file instead of a published page, and the
+specialists' and brand book's texts no longer point at Artifacts.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every session in every consumer stops publishing Artifacts after taking this version, including where the harness
+would offer one unprompted.
+
+**Score:** 3
+
+#### Pull Request
+
+Stop using claude.ai Artifacts and Claude Docs: a visible result becomes a Toolbox page
+
+Plugins: bwj-development, dkj-policy, dkj-solutions, dkj-subagents-alpha
+
+[PR #3773](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3773)
+
+---
 
 ### DEPLOY: feat/toolbox-in-product-menu · 20261103-113704Z
 
