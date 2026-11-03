@@ -42,11 +42,13 @@
 ### CREATE
 
 - [x] `Format-HubSettingsPageHtml` (`hub/lib/general-pages-lib.ps1`): a Width group under Theme, the house `.seg` with Fluid / Phone / Full through `DKJTheme.setWidth`; the lead and the hub card's sub name the width too; both toggles as tall as a theme card, 300px wide, on a `--bg-4` border
+- [x] The house palette (`house-palette-lib.ps1`) gains `--bg-5`, one paper step past `--bg-4`; `build-house-palette.ps1 -Apply` wrote it into every theme line of `house-style.css`, and the specimens page and the brand book README show it
 
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: three asserts pin the Width group, its wiring and its place after Theme (574 passed)
 - [x] Served from the branch on port 4892: `/settings` renders the Width group
+- [x] `house-palette.tests.ps1` (161 passed) holds thirteen tokens and five ordered paper steps; the stylesheet diff adds `--bg-5` and changes no other value
 
 ### DEPLOY: fix/settings-page-width
 
@@ -54,12 +56,15 @@ The toolbox's Settings page offers the page width again -- Fluid, Phone or Full 
 lived in the header's settings button, and when that button went the width choice went with it, so
 the page could no longer be widened or narrowed from anywhere.
 
+The house style also gains a fifth paper token, `--bg-5`: one step past `--bg-4`, a little lighter on a dark
+theme and a little darker on a light one, computed for all twelve themes. No existing colour moved.
+
 **Score:** 3
 
 #### What makes this deploy extra special
 
 Whoever uses the toolbox can switch its page width again, which they lost when the header's settings
-button was removed.
+button was removed. An app on the house style can now use a fifth paper step, `--bg-5`.
 
 **Score:** 3
 
