@@ -39,19 +39,29 @@
 
 ### PLAN
 
+Decision on #3761 (davekokbwj, November 3, 2026): option (a). Rule 4 refuses every live-aimed theme write through `shopify store execute`, marker or not.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `guard-live-theme.ps1`: rule 4's theme-write branch no longer reads the live-push marker; the refusal points at the CLI live push `live-preflight` composes; header and both comment blocks restated; the duplicated `$THEME_WRITE` assignment removed
+- [x] `guard-live-theme.tests.ps1` group 9: the marker-passes assert flipped to refused, a `--variable-file` case with the marker added, the refusal-text assert now checks the marker is NOT offered and `live-preflight` is
+- [x] `dkj-subagents-shopify/README.md`: rule 4's row and the merged-work-only paragraph say no marker authorises the API route
 
 ### TEST
 
+- [x] the gates run inside `ship-pr`
+
 ### DEPLOY: feat/3761-store-execute-live-refused
 
-**Score:**
+The Shopify team's live-theme guard now refuses an Admin API theme write aimed at the live theme (`themeFilesUpsert`, `themeFilesCopy`, `themeUpdate` and the rest, through `shopify store execute`) even when the command carries `# LIVE-PUSH-AUTHORIZED`. Until now the marker let it through, and because its content is inline rather than in theme files, nothing held it to the trunk the way #3758 holds a CLI live push, so unmerged work could reach live by that route. The refusal now points at the one live route: a CLI `shopify theme push` of merged work, which `live-preflight` composes.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify consumer that wrote to its live theme through `shopify store execute` with the marker is refused now and has to push merged work with `shopify theme push` instead. No documented flow used the API route, so for most consumers nothing changes except that the merged-only rule can no longer be bypassed.
+
+**Score:** 2
 
 #### Pull Request
 

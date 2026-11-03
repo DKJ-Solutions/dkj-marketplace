@@ -19,9 +19,10 @@
          push carries must be what origin/<trunk> holds -- rule 3's second half, beside its code below.
       4. an Admin GraphQL theme write through 'shopify store execute' or 'store:execute' (#2881) -- the
          same three rules reached through the API instead of 'shopify theme': themePublish (and a
-         role: MAIN) always, themeDelete as rule 2, and the other theme writes as rule 3, where 'aimed
-         at live' is the live id in the command or a --query-file/--variable-file it names, or ANY
-         theme write while the repo has not said which theme is live. It does not wait for
+         role: MAIN) always, themeDelete as rule 2, and the other theme writes ALWAYS when aimed at live,
+         marker or not (#3761), where 'aimed at live' is the live id in the command or a
+         --query-file/--variable-file it names, or ANY theme write while the repo has not said which
+         theme is live. It does not wait for
          --allow-mutations, which can come from the environment. A file it cannot read or place, and a
          command substitution, are refused.
       5. a 'git push' to the branch a GIT-CONNECTED live theme deploys from (#3014) -- unless the command
@@ -399,11 +400,10 @@ function Deny([string]$msg) {
 #
 # THE MUTATIONS, MAPPED ONTO THE RULES ABOVE: themePublish is rule 1 (always refused), themeDelete is
 # rule 2 (the live id never, anything else only with the repo's delete marker), and the other theme
-# writes are rule 3 (refused when aimed at live, unless the live-push marker is on the command). 'Aimed
-# at live' is the live id appearing anywhere in what was read -- a theme GID carries the bare id -- and,
-# where the repo never named its live id, every theme write, because then nothing can tell.
-$THEME_WRITE = 'theme(filesupsert|filesdelete|filescopy|update|create|duplicate)\b'
-
+# writes are refused when aimed at live, with NO marker that lets them through (#3761) -- stricter than
+# rule 3, because their content cannot be held to the trunk. 'Aimed at live' is the live id appearing
+# anywhere in what was read -- a theme GID carries the bare id -- and, where the repo never named its
+# live id, every theme write, because then nothing can tell.
 #
 # NOT A FLAG TEST. The CLI runs a mutation only with --allow-mutations, but it reads that flag from
 # SHOPIFY_FLAG_ALLOW_MUTATIONS as well, and a variable exported by an earlier command is invisible here.
@@ -600,9 +600,7 @@ if ($DEPLOY_BRANCH -and $libLoaded) {
 # refuse more, never less), and a degraded run without command-guard-lib.ps1.
 #
 # THE RESIDUAL LIMITS, STATED: a SHOPIFY_FLAG_* exported by an earlier command is invisible here, as it is
-# to rule 4; files git ignores are pushed by the CLI and not compared; an Admin API theme write through
-# 'shopify store execute' (rule 4) carries its content inline rather than from files, so it is NOT held to
-# the trunk; and a Git-connected live theme deploys by promotion, which rule 5 gates, not by this push.
+# to rule 4; files git ignores are pushed by the CLI and not compared; and a Git-connected live theme deploys by promotion, which rule 5 gates, not by this push.
 function Format-GuardPath([string]$Value) { return ($Value -replace '[\x00-\x1F\x7F]', '?') }
 
 function Invoke-GuardGit {
@@ -770,11 +768,16 @@ foreach ($segment in $segments) {
                 Deny "a themeDelete through 'shopify store execute' follows the rule for 'shopify theme delete': refused unless this repo answers Get-ShopifyThemeDeleteMarker and the command carries that marker."
             }
         }
+        # NO MARKER AUTHORISES THIS ONE (#3761). The marker lets a CLI live push through only because rule 3's
+        # second half then holds every file it carries to origin/<trunk>. A write through the API carries its
+        # content inline, so nothing can be held to the trunk, and the marker alone would let unmerged work
+        # reach live. No documented flow needs this route: the deliberate live push is a CLI 'theme push',
+        # which live-preflight composes.
         if ($t -match $THEME_WRITE) {
             $aimed = (-not $LIVE_ID) -or $namesLive
-            if ($aimed -and -not $authorised) {
+            if ($aimed) {
                 $why = if ($LIVE_ID) { "it names the live theme ($LIVE_ID)" } else { "this repo has not said which theme is live (Get-ShopifyLiveThemeId), so a theme write cannot be told apart from a write to live" }
-                Deny "an Admin GraphQL theme write through 'shopify store execute' is blocked: $why. If this IS the deliberate live push this repo's own rules describe, add the marker '# $MARKER' to this exact command."
+                Deny "an Admin GraphQL theme write through 'shopify store execute' is blocked: $why. No marker authorises a live write through the API, because its content is inline and cannot be held to the trunk (#3761). The deliberate live push is a CLI 'shopify theme push' of merged work -- live-preflight composes it."
             }
         }
     }

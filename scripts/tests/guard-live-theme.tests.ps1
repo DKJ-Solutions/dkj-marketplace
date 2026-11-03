@@ -586,8 +586,8 @@ function Get-ShopifyThemeDeleteMarker { return 'XOXO-THEME-DELETE-AUTHORIZED' }
     Assert-Equal 2 (Invoke-Guard -Command "$exec --query 'mutation { themePublish(id: \`"gid://shopify/OnlineStoreTheme/1\`") { theme { id } } }'" -Root $configured) 'store execute: themePublish is refused, like rule 1'
     Assert-Equal 2 (Invoke-Guard -Command "$exec --query 'mutation { themeFilesUpsert(themeId: \`"$gid\`", files: []) { job { id } } }'" -Root $configured) 'store execute: a theme write naming the live id is refused'
     Assert-Equal 0 (Invoke-Guard -Command "$exec --query 'mutation { themeFilesUpsert(themeId: \`"gid://shopify/OnlineStoreTheme/987654321\`", files: []) { job { id } } }'" -Root $configured) 'store execute: the same write to a preview theme passes, like a preview push'
-    Assert-Equal 0 (Invoke-Guard -Command "$exec --query 'mutation { themeFilesUpsert(themeId: \`"$gid\`", files: []) { job { id } } }' # LIVE-PUSH-AUTHORIZED" -Root $configured) 'store execute: and the live write WITH the marker passes, like rule 3'
-    Assert-Equal 2 (Invoke-Guard -Command "$exec --query 'mutation { themeFilesUpsert(themeId: \`"gid://shopify/OnlineStoreTheme/987654321\`", files: []) { job { id } } }'" -Root $bare) 'store execute: with no live id configured, any theme write is refused -- nothing can tell it from live'
+    # #3761: unlike rule 3, the marker does NOT let it through -- the content is inline and cannot be held to the trunk.
+    Assert-Equal 2 (Invoke-Guard -Command "$exec --query 'mutation { themeFilesUpsert(themeId: \`"$gid\`", files: []) { job { id } } }' # LIVE-PUSH-AUTHORIZED" -Root $configured) 'store execute: and the live write WITH the marker is refused too -- no marker authorises a live write through the API (#3761)'    Assert-Equal 2 (Invoke-Guard -Command "$exec --query 'mutation { themeFilesUpsert(themeId: \`"gid://shopify/OnlineStoreTheme/987654321\`", files: []) { job { id } } }'" -Root $bare) 'store execute: with no live id configured, any theme write is refused -- nothing can tell it from live'
     Assert-Equal 2 (Invoke-Guard -Command "$exec --query 'mutation { themeDelete(id: \`"gid://shopify/OnlineStoreTheme/987654321\`") { deletedThemeId } }'" -Root $configured) 'store execute: themeDelete is refused without the delete seam, like rule 2'
     Assert-Equal 0 (Invoke-Guard -Command "$exec --query 'mutation { themeDelete(id: \`"gid://shopify/OnlineStoreTheme/987654321\`") { deletedThemeId } }' # XOXO-THEME-DELETE-AUTHORIZED" -Root $del) 'store execute: and allowed for a preview with the repo delete marker'
     Assert-Equal 2 (Invoke-Guard -Command "$exec --query 'mutation { themeDelete(id: \`"$gid\`") { deletedThemeId } }' # XOXO-THEME-DELETE-AUTHORIZED" -Root $del) 'store execute: but never for the live id, marker or not'
@@ -603,6 +603,7 @@ function Get-ShopifyThemeDeleteMarker { return 'XOXO-THEME-DELETE-AUTHORIZED' }
     [System.IO.File]::WriteAllText((Join-Path $configured 'upsert.graphql'), 'mutation($id: ID!) { themeFilesUpsert(themeId: $id, files: []) { job { id } } }', $Utf8NoBom)
     Assert-Equal 2 (Invoke-Guard -Command "$exec --query-file publish.graphql" -Root $configured) 'store execute: a themePublish in a --query-file is refused'
     Assert-Equal 2 (Invoke-Guard -Command "$exec --query-file upsert.graphql --variable-file vars.json" -Root $configured) 'store execute: the live id in a --variable-file counts as aimed at live'
+    Assert-Equal 2 (Invoke-Guard -Command "$exec --query-file upsert.graphql --variable-file vars.json # LIVE-PUSH-AUTHORIZED" -Root $configured) 'store execute: and the marker does not authorise it either (#3761)'
     Assert-Equal 0 (Invoke-Guard -Command "$exec --query-file product.graphql" -Root $configured) 'store execute: a non-theme mutation in a file passes'
     Assert-Equal 2 (Invoke-Guard -Command "$exec --query-file does-not-exist.graphql" -Root $configured) 'store execute: a query file that cannot be read is refused -- a theme mutation cannot be ruled out'
 
@@ -630,7 +631,8 @@ function Get-ShopifyThemeDeleteMarker { return 'XOXO-THEME-DELETE-AUTHORIZED' }
     Assert-Equal 0 (Invoke-Guard -Command "$exec --query 'mutation { productUpdate(input: {id: \`"gid://shopify/Product/1\`"}) { product { id } } }'" -Root $configured) 'store execute: a non-theme mutation passes'
     Assert-Equal 0 (Invoke-Guard -Command "grep -n 'shopify store execute --allow-mutations' notes.md # themePublish" -Root $configured) 'store execute: mentioning it in a text command is not running it'
     $refusal = Get-GuardRefusal -Command "$exec --query 'mutation { themeFilesUpsert(themeId: \`"$gid\`", files: []) { job { id } } }'" -Root $configured
-    Assert-True ($refusal -match 'LIVE-PUSH-AUTHORIZED') 'store execute: the refusal names the marker for the deliberate live write'
+    Assert-True ($refusal -notmatch 'LIVE-PUSH-AUTHORIZED') 'store execute: the refusal no longer offers the marker -- it would not let the write through (#3761)'
+    Assert-True ($refusal -match 'live-preflight') 'store execute: the refusal points at the CLI live push live-preflight composes instead'
 
     # --- rule 5: a git push to a Git-connected live theme's deploy branch (#3014) --------------------
     # The seam is answered, so the live theme deploys from 'live' and a push to it IS a live deploy.
