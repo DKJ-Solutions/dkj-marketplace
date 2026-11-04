@@ -40,6 +40,7 @@
     The most this run may wait for a settle window to pass before its one second look. 0 (the default)
     never waits, so a local or test run returns at once; the workflow passes the cap it can afford.
 #>
+[CmdletBinding()]
 param(
     [int]$WaitForSettleSeconds = 0
 )
