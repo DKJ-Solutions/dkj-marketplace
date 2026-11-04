@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**2 / 3 minor entries** <!-- pending-tally -->
+**3 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/product-width-bar · 20261104-092205Z
+
+The brand book gains a width bar, `DKJTheme.widthBar(el)`: a thin strip above the site header holding
+full, fluid and phone as three small icon buttons. This repo's product pages (the home and the
+consumer pages) open with it, so the page width is one click away again; the Toolbox stays on full.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions app that takes the next brand book copy can offer its users the width as a one-click
+bar instead of a setting inside the gear panel.
+
+**Score:** 2
+
+#### Pull Request
+
+Product pages: a thin width bar above the site header
+
+Plugins: dkj-policy
+
+[PR #3796](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3796)
+
+---
 
 ### DEPLOY: fix/3792-eol-only-claude-change · 20261104-084522Z
 
