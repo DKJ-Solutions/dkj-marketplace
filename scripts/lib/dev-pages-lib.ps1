@@ -66,6 +66,17 @@ function Format-DevPageHtml {
         -Brand 'dkj-marketplace' -BrandTag 'product' -SiteName 'dkj-marketplace' -HubHref '/' -HomeLabel 'Home' -Bare:$Bare -ParentCrumbs $ParentCrumbs -Info $Info -Menu @(Get-ProductMenu)
 }
 
+function Format-ProductSettingsHtml {
+    <#
+        The product's Settings page on /settings (Maikel, November 4, 2026): the Toolbox's Settings page with the Width
+        group added (Get-SettingsPageParts -Widths), in the product's own shell. The theme and width it sets are this
+        origin's, so the product keeps its own choice apart from the Toolbox's.
+    #>
+    $parts = Get-SettingsPageParts -Widths
+    return Format-DevPageHtml -Title 'Settings' -Lead 'How this product looks on this device: its theme and its width.' -Body $parts.Body -Style $parts.Style `
+        -FooterNote 'Built by <code>scripts/lib/dev-pages-lib.ps1</code>, from the dkj-policy plugin''s Settings page.'
+}
+
 # Get-ProductPages and Get-ProductMenu live in consumer-dashboard-lib.ps1, loaded above: the Consumers page draws the
 # product's menu in its own header, and that lib is loaded alone by its suite.
 

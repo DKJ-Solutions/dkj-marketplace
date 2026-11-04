@@ -384,6 +384,11 @@ try {
                 Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($html)) -Method $method
                 continue
             }
+            if ($path -eq '/settings') {
+                # The product's own Settings, theme and width (Maikel, November 4, 2026).
+                Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes((Format-ProductSettingsHtml))) -Method $method
+                continue
+            }
             if ($path -cmatch '^/consumers(?:/(dkj|bwj|other))?\z') {
                 # The overview with one card per owner group, or one group's own page (owner, October 26, 2026).
                 $group = [string]$Matches[1]

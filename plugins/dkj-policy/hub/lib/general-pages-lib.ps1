@@ -62,6 +62,17 @@ function Get-GeneralPagesThemeDefault {
     return 'lilac'
 }
 
+function Get-ToolboxWidthScript {
+    <#
+        THE TOOLBOX HAS ONE WIDTH, AND IT IS FULL (Maikel, November 4, 2026). The Toolbox is read in VS Code's Simple
+        Browser, a screen of about 16:9 that does not change, so a width choice has nothing to decide there; that
+        choice belongs to a repo's product port, which is built for a phone as well. Every Toolbox page loads this
+        right after house-theme.js, in <head>, so the page never paints in another width -- and a Phone or Fluid
+        a viewer stored while the Toolbox still offered the choice is overwritten rather than kept with no way back.
+    #>
+    return '<script>DKJTheme.setWidth("full");</script>'
+}
+
 function Format-GeneralPagesThemeAttributes {
     <#
         The <html> attributes that state the default theme, escaped: data-theme-default for one theme id, or
@@ -204,6 +215,8 @@ function Format-GeneralPageHtml {
     if ($description) { [void]$sb.AppendLine('<meta name="description" content="' + $description + '">') }
     [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
     [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
+    # The Toolbox's one width -- not a product's: a repo's own pages in this shell (-BrandTag 'product') keep the choice.
+    if ($BrandTag -ne 'product') { [void]$sb.AppendLine((Get-ToolboxWidthScript)) }
     # The page layer: only names the house file does not define (.dp-*).
     [void]$sb.AppendLine('<style>')
     [void]$sb.AppendLine('.dp-link { color: var(--fg-3); text-decoration: none; text-underline-offset: 2px; }')
@@ -253,7 +266,7 @@ function Format-GeneralPageHtml {
     [void]$sb.Append($Body)
     if ($FooterNote) { [void]$sb.AppendLine('<p class="note">' + $FooterNote + '</p>') }
     [void]$sb.AppendLine('</main>')
-    [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", width: "Width", fluid: "Fluid", phone: "Phone", full: "Full" });</script>')
+    [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", widths: false });</script>')
     if ($Info -and -not $Bare) { [void]$sb.AppendLine((Get-PageInfoScript)) }
     [void]$sb.AppendLine((Format-FitAlarmHtml))
     [void]$sb.AppendLine('</body>')
@@ -525,7 +538,7 @@ function Get-GeneralPages {
         # #3482: plugin-versions' verdict per enabled plugin, so a problem with one is visible from the hub.
         @{ Href = '/plugins';       Label = 'Installed plugins'; Sub = 'Every plugin this repo enables, and any problem with one on this machine'; Icon = 'plugins' },
         # The toolbox's own settings, on a page of their own (Dave, November 2, 2026): the Theme first.
-        @{ Href = '/settings';      Label = 'Settings';      Sub = 'How this toolbox looks on this device: its theme and its width'; Icon = 'settings' }
+        @{ Href = '/settings';      Label = 'Settings';      Sub = 'How this toolbox looks on this device: its theme'; Icon = 'settings' }
     )
 }
 
@@ -1019,15 +1032,28 @@ function Format-HubGroupPageHtml {
 
 function Format-HubSettingsPageHtml {
     <#
-        The toolbox's Settings page on /settings (Dave, November 2, 2026): its h1, then the group headed by the h2 Theme
+        The toolbox's Settings page on /settings (Dave, November 2, 2026): Get-SettingsPageParts with no Width group,
+        because the Toolbox has one width (Get-ToolboxWidthScript), in the toolbox's own page shell.
+    #>
+    param([AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
+    $parts = Get-SettingsPageParts
+    return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $parts.Body -Style $parts.Style `
+        -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
+}
+
+function Get-SettingsPageParts {
+    <#
+        A Settings page's body and its style, @{ Body; Style }, for whichever shell draws it: the Toolbox's
+        (Format-HubSettingsPageHtml) and a product's (Maikel, November 4, 2026). Its h1 comes from the shell; then the group headed by the h2 Theme
         holding a Light/Dark toggle and a card per theme holding that theme's swatch alone, with no h3: the swatch's own
         title and aria-label name it (Dave, November 2, 2026) -- the
         brand book's own picker (DKJTheme.picker, house-theme.js, which every page here loads) cut down to one swatch.
         The toggle shows one mode's cards at a time. After them its reset, a card of the same kind that is itself the button. The choice is the same one the
         header's settings button makes -- one key per app on this device -- so every swatch agrees. Nothing here is read
         from disk: the cards are drawn from DKJTheme.themes, so a theme the brand book adds gets its card at once.
+        -Widths adds the Width group under it: a product's, read on a phone as well, never the Toolbox's.
     #>
-    param([AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
+    param([switch]$Widths)
     # The house grouping form (house-style.css, .card-grid and .grid__head): the Theme h2 over its group's surface (--bg-2),
     # its cards on --bg-3 with a --bg-4 border. A .card-grid leaves its columns to the repo's own class, and .hs-theme
     # makes them a wrapping row: each card hugs its swatch, so a mode's six stand side by side (Dave, November 2, 2026;
@@ -1068,21 +1094,24 @@ function Format-HubSettingsPageHtml {
         ' seg.addEventListener("click", function (e) { var b = e.target.closest("button[data-mode]"); if (b) { show(b.getAttribute("data-mode")); } });' +
         ' show(modeOf(DKJTheme.current()));' +
         ' foot.addEventListener("click", function () { DKJTheme.reset(); show(modeOf(DKJTheme.current())); });' +
-        ' })();</script>' + "`n" +
-        # The page width (Maikel, November 3, 2026): the header's settings panel carried it until that button went, so
-        # it moved here with the theme. The same three as that panel, through the brand book's own setWidth, so the
-        # choice is the one key per app that house-theme.js already reads; the segment opens on the width in force.
-        '<div class="card-grid hs-theme" id="settings-width-grid"><div class="grid__head"><h2>Width</h2></div>' +
-        '<div class="controls grid__full"><span class="seg" id="settings-width" role="group" aria-label="Width">' +
-        '<button type="button" data-width="fluid" aria-pressed="false">Fluid</button>' +
-        '<button type="button" data-width="phone" aria-pressed="false">Phone</button>' +
-        '<button type="button" data-width="full" aria-pressed="false">Full</button></span></div></div>' + "`n" +
-        '<script>(function () {' +
-        ' var seg = document.getElementById("settings-width");' +
-        ' function show() { var now = DKJTheme.width(); Array.prototype.forEach.call(seg.querySelectorAll("button[data-width]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-width") === now)); }); }' +
-        ' seg.addEventListener("click", function (e) { var b = e.target.closest("button[data-width]"); if (b) { DKJTheme.setWidth(b.getAttribute("data-width")); show(); } });' +
-        ' show();' +
         ' })();</script>'
+    # The Width group (Maikel, November 3, 2026), a product's only (November 4): the Toolbox has one width, full, because
+    # it is read in VS Code's Simple Browser at about 16:9 (Get-ToolboxWidthScript), while a product is read on a phone
+    # too. The brand book's three, through its own setWidth, so the choice is the one key per app that house-theme.js
+    # already reads; the segment opens on the width in force.
+    if ($Widths) {
+        $body += "`n" + '<div class="card-grid hs-theme" id="settings-width-grid"><div class="grid__head"><h2>Width</h2></div>' +
+            '<div class="controls grid__full"><span class="seg" id="settings-width" role="group" aria-label="Width">' +
+            '<button type="button" data-width="fluid" aria-pressed="false">Fluid</button>' +
+            '<button type="button" data-width="phone" aria-pressed="false">Phone</button>' +
+            '<button type="button" data-width="full" aria-pressed="false">Full</button></span></div></div>' + "`n" +
+            '<script>(function () {' +
+            ' var seg = document.getElementById("settings-width");' +
+            ' function show() { var now = DKJTheme.width(); Array.prototype.forEach.call(seg.querySelectorAll("button[data-width]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-width") === now)); }); }' +
+            ' seg.addEventListener("click", function (e) { var b = e.target.closest("button[data-width]"); if (b) { DKJTheme.setWidth(b.getAttribute("data-width")); show(); } });' +
+            ' show();' +
+            ' })();</script>'
+    }
     # .hs-theme, .hs-swatch and .hs-reset are this page's own classes: the row, the full-width head and toggle in it, a
     # card that hugs its swatch, and what a <button> needs to read as a card. No house class or token is redefined.
     $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-5); }' + "`n" +
@@ -1097,15 +1126,15 @@ function Format-HubSettingsPageHtml {
         # theme's --primary border still wins, its rule being the more specific.
         '.hs-theme > .hs-reset { border-color: var(--bg-5); }' + "`n" +
         '.hs-swatches > .card .theme-swatch { border-color: var(--bg-4); }' + "`n" +
-        # The two toggles (Mode and Width) stand --spacing-11 tall on a --bg-5 border, a step past the cards' --bg-4, the line between
-        # their buttons too (Maikel, November 3, 2026). Scoped to this page's groups, so the house .controls .seg keeps its
+        # The Mode toggle stands --spacing-11 tall on a --bg-5 border, a step past the cards' --bg-4, the line between
+        # its buttons too (Maikel, November 3, 2026). Scoped to this page's groups, so the house .controls .seg keeps its
         # 30px everywhere else.
         '.hs-theme .controls .seg { height: var(--spacing-11); border-color: var(--bg-5); }' + "`n" +
         '.hs-theme .controls .seg button + button { border-left-color: var(--bg-5); }' + "`n" +
         # The pressed option is the --primary itself rather than the house's --primary-muted (Maikel, November 3, 2026);
         # its --bg-1 text reads on it, as every paper step down to bg-4 does.
         '.hs-theme .controls .seg button[aria-pressed="true"] { background: var(--primary); }' + "`n" +
-        # Each OPTION is a fixed --spacing-28 wide, so a toggle with three is wider than one with two and every option
+        # Each OPTION is a fixed --spacing-28 wide, so a toggle with more options is the wider one and every option
         # matches (Maikel, November 3, 2026); on a column too narrow for them the options shrink, never the page. A width,
         # not a flex-basis: an inline-flex .seg sizes itself from its options' widths and ignores their basis.
         '.hs-theme .controls .seg { max-width: 100%; }' + "`n" +
@@ -1121,8 +1150,7 @@ function Format-HubSettingsPageHtml {
         # Every card in the row is clickable, the theme cards and the reset alike, so all take the same hover: --bg-4, as a
         # link card does in a group (Dave, November 2, 2026).
         '.hs-swatch:hover { background: var(--bg-4); }'
-    return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme and its width.' -Body $body -Style $style `
-        -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
+    return @{ Body = $body; Style = $style }
 }
 
 function ConvertTo-SiteHeaderName {
@@ -1969,6 +1997,7 @@ function Format-ReleaseNotesDevPage {
     $head = @(
         '<link rel="stylesheet" href="/house-style.css">'
         '<script src="/house-theme.js"></script>'
+        (Get-ToolboxWidthScript)
         '<style>'
         '/* The template''s layout, read as the Stopwatch page''s: main.page-column, a house h1, a .card, a .note. */'
         '.wrap { max-width: 1080px; display: grid; gap: var(--spacing-5); align-content: start; padding: var(--spacing-4) var(--spacing-4) var(--spacing-12); }'
@@ -2017,7 +2046,7 @@ function Format-ReleaseNotesDevPage {
     # The general banner above the site header, as on every other hub page (#3297; owner, October 24, 2026). It
     # stands outside the template's layout, so that is left alone.
     $bar = (Format-RepoHubBanner) + $bar
-    $settings = '<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", width: "Width", fluid: "Fluid", phone: "Phone", full: "Full" });</script>'
+    $settings = '<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", widths: false });</script>'
 
     # Back to front, so each index still points where it was read. The fit alarm closes the body, as in
     # Format-GeneralPageHtml (#3558).

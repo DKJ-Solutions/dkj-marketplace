@@ -80,6 +80,19 @@ server itself, on the first free port from **4890 to 4899**, so the hub and its 
 origin and one stored theme choice. A server a repo states in `Get-DevPreview` is its **product**: one
 link on that hub, not the hub itself.
 
+**The Toolbox has one screen; the product has every screen** (Maikel, November 4, 2026). The two ports are
+read in different places, and that decides whether a page width is anybody's choice:
+
+- **The Toolbox is read in VS Code's Simple Browser**, so its screen is always about 16:9 and never a phone.
+  A width choice has nothing to decide there, so the Toolbox offers none: every Toolbox page pins the brand
+  book's width to `full` right after `house-theme.js` (`Get-ToolboxWidthScript`, which also overwrites a
+  Phone or Fluid stored while the choice was still offered), its Settings page has no Width group, and a
+  floating settings panel on one of its pages draws with `widths: false`. Design a Toolbox page for that one
+  screen.
+- **The product port is where a repo builds its app** (`dkj-recipes`, for one), read in the Simple Browser
+  *and* on a phone. There the page must be responsive, and the brand book's width choice (Fluid, Phone,
+  Full) is the app's to offer.
+
 **The hub has one form, in every repo** (the owner's decision, October 16, 2026,
 [#3066](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3066)): the one laid down in
 [`assets/dkj-brandbook/README.md`](../assets/dkj-brandbook/README.md), section

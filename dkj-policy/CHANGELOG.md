@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**2 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/toolbox-fixed-width · 20261104-083416Z
+
+The Toolbox has one page width again, the full one, because it is read in VS Code's Simple Browser at
+about 16:9 and never on a phone. Its Settings page no longer offers Fluid, Phone or Full, and a width
+stored while it did is overwritten. A repo's product port keeps the choice: that is where an app is built
+for the Simple Browser and a phone alike. This repo's own product gets a Settings page for it, theme and
+width, linked from its home page and its menu. It had none since the header's settings button went. The
+rule is in the hub's README.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Whoever uses the Toolbox gets one fixed full-width page, with no width setting that does nothing useful
+on the screen it is read on.
+
+**Score:** 2
+
+#### Pull Request
+
+The Toolbox keeps one width, so its Settings page no longer offers one
+
+Plugins: dkj-policy
+
+[PR #3794](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3794)
+
+---
 
 ### DEPLOY: fix/settings-page-width · 20261103-214954Z
 
