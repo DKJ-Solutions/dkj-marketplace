@@ -3070,6 +3070,20 @@ try {
                 # AND THE OVERLAP SCAN WITH IT (issue #2315), for the same reason and at the same three endings.
                 if ($overlapNote) { Write-Warning $overlapNote }
                 Write-Host "PR #$($recheckPr.number) for '$branch' exists -- the create landed despite the reported failure. $($recheckPr.url)" -ForegroundColor Green
+                # WHAT THE FAILED CALL WAS ABOUT TO SET IS SET AGAIN (issue #3804). gh creates the PR first
+                # and puts the label, assignee and milestone on it in a follow-up update; on PR #3803 that
+                # update was the call that failed, so the PR landed without its 'bug' label. Adding them
+                # again is idempotent, so this runs whether or not they were lost.
+                $restoreArgs = @()
+                if ($label) { $restoreArgs += @('--add-label', $label) }
+                if ($assignee) { $restoreArgs += @('--add-assignee', $assignee) }
+                if ($milestone) { $restoreArgs += @('--milestone', $milestone) }
+                if ($restoreArgs.Count -gt 0) {
+                    $restore = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr -Arguments (@('pr', 'edit', "$($recheckPr.number)", '--repo', $repo) + $restoreArgs)
+                    if ($restore.ExitCode -ne 0) {
+                        Write-Warning "PR #$($recheckPr.number) may be missing what the failed call was setting ($($restoreArgs -join ' ')), and setting it again failed too -- 'gh pr edit $($recheckPr.number) $($restoreArgs -join ' ')' sets it by hand (issue #3804)."
+                    }
+                }
                 if (Test-FunctionDefined 'Write-CloseOutReceipt') {
                     Write-CloseOutReceipt -Cite "PR #$($recheckPr.number)" -Bypass (Get-GateBypassNote -SkipLint:$SkipLint -SkipTests:$SkipTests)
                 }
