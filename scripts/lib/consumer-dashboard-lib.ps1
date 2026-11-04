@@ -470,8 +470,7 @@ function Format-ConsumerPageStart {
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
     [void]$sb.AppendLine('<body>')
-    # The hub's general banner first, above the site header, as on every other hub page (#3297, #3356; owner, October 24, 2026).
-    [void]$sb.AppendLine((Format-RepoHubBanner))
+    # No general banner: it is the Toolbox's alone, never a product page's (Dave, November 4, 2026).
     # The house site header, holding the settings button, then the breadcrumb bar under it: its trail from Home to this page.
     # Tagged 'product': this page is the product's, beside the plugin's hub (#3540).
     # The menu is the product's pages (Get-ProductMenu), the Consumers page marked.
