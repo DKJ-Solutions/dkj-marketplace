@@ -867,7 +867,7 @@ try {
     $eolDir = New-SweepCheckout -Name 'eol' -CrlfCommitted
     $eolFile = Join-Path $eolDir '.claude\settings.json'
     $eolBytes = [System.IO.File]::ReadAllText($eolFile)
-    Assert-True ($eolBytes.Contains("`r`n")) '25: precondition -- the committed settings.json is CRLF'
+    Assert-True ($eolBytes -match '\r\n')'25: precondition -- the committed settings.json is CRLF'
     Set-InstallRecords -HomeDir $sweepHome -Records @{ $ID1 = @(@{ scope = 'project'; projectPath = $eolDir }) }
 
     Write-Host "25. -AllCheckouts restores a line-ending-only rewrite of .claude/ instead of asking for a commit" -ForegroundColor Cyan
