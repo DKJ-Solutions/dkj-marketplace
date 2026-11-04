@@ -1,6 +1,79 @@
 {
     "machine":  "cbd9941c",
     "runs":  [
-
+                 {
+                     "id":  "20261029-132738-8bd2",
+                     "label":  "release cut",
+                     "start":  "2026-10-29T13:27:38.348Z",
+                     "end":  "2026-10-29T13:29:10.000Z",
+                     "sessions":  1,
+                     "phases":  [
+                                    {
+                                        "name":  "Other tool calls",
+                                        "seconds":  45.565
+                                    },
+                                    {
+                                        "name":  "Claude thinking and writing",
+                                        "seconds":  46.087
+                                    }
+                                ]
+                 },
+                 {
+                     "id":  "20261104-150325-48f6",
+                     "label":  "release cut",
+                     "start":  "2026-11-04T15:03:25.982Z",
+                     "end":  "2026-11-04T15:06:35.159Z",
+                     "sessions":  1,
+                     "phases":  [
+                                    {
+                                        "name":  "Cut: start",
+                                        "seconds":  0.125
+                                    },
+                                    {
+                                        "name":  "Cut: origin check and guardrails",
+                                        "seconds":  3.48
+                                    },
+                                    {
+                                        "name":  "Cut: lint gate",
+                                        "seconds":  0.004
+                                    },
+                                    {
+                                        "name":  "Cut: test gate",
+                                        "seconds":  0.003
+                                    },
+                                    {
+                                        "name":  "Cut: origin check after the gates",
+                                        "seconds":  0.784
+                                    },
+                                    {
+                                        "name":  "Cut: notes, overview and version bumps",
+                                        "seconds":  2.007
+                                    },
+                                    {
+                                        "name":  "Cut: commit and tag",
+                                        "seconds":  0.224
+                                    },
+                                    {
+                                        "name":  "Cut: push",
+                                        "seconds":  6.413
+                                    },
+                                    {
+                                        "name":  "Local gates and tests",
+                                        "seconds":  101.182
+                                    },
+                                    {
+                                        "name":  "Other tool calls",
+                                        "seconds":  23.469
+                                    },
+                                    {
+                                        "name":  "Claude thinking and writing",
+                                        "seconds":  50.671
+                                    },
+                                    {
+                                        "name":  "Waiting on you",
+                                        "seconds":  0.815
+                                    }
+                                ]
+                 }
              ]
 }
