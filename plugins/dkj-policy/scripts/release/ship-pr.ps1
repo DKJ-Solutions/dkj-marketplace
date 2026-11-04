@@ -3483,16 +3483,26 @@ $merge.Output | ForEach-Object { Write-Host $_ }
 # already failed, and folding on a guess risks the #1270 trapped-entry state on a merge that never
 # happened.
 $mergeTransientRecovery = $false
+# 'MERGE ALREADY IN PROGRESS' IS NOT A FAILED MERGE (issue #3802). After a 5xx GitHub can hold a
+# server-side merge lock while the PR still reads OPEN, and the re-run the 5xx refusal asked for was then
+# refused ON that lock. What GitHub refused is the duplicate call, not the merge, so it joins the #1916
+# read-back below instead of failing -- with a longer poll, because a held lock is not a lagging read.
+$mergeInProgress = $false
 if ($merge.ExitCode -ne 0) {
-    if (-not (Test-GhMutationTransient -OutputLines $merge.Output)) {
+    $mergeInProgress = Test-GhMergeInProgress -OutputLines $merge.Output
+    if ($mergeInProgress) {
+        Write-Warning "Merge of PR #${pr}: GitHub answered 'Merge already in progress' -- a merge of this PR is already in flight, so this is not a failed merge (issue #3802). Polling PR #$pr's state before deciding."
+        $mergeTransientRecovery = $true
+    } elseif (-not (Test-GhMutationTransient -OutputLines $merge.Output)) {
         Write-Error "Merge of PR #$pr failed."
         # A 4xx IS GITHUB REFUSING, not a CI state -- a review or protection rule the picker cannot see
         # refuses the same way on every retry, so it disarms like the two gates above (#2393).
         Remove-ShipMergeOnGreenArmForJudgement -Gate 'merge refusal from GitHub'
         exit 1
+    } else {
+        Write-Warning "Merge of PR #${pr}: gh reported a 5xx/transport failure on the merge call itself -- this may have landed anyway (inbound #1916). Reading PR #$pr's own state back before deciding."
+        $mergeTransientRecovery = $true
     }
-    Write-Warning "Merge of PR #${pr}: gh reported a 5xx/transport failure on the merge call itself -- this may have landed anyway (inbound #1916). Reading PR #$pr's own state back before deciding."
-    $mergeTransientRecovery = $true
 }
 
 # EXIT 0 FROM `gh pr merge` IS NOT PROOF THAT THE PR MERGED -- issue #1325, the second merge-queue
@@ -3518,8 +3528,15 @@ if ($merge.ExitCode -ne 0) {
 # read says MERGED; the two further attempts absorb a lagging read rather than waiting a queue out,
 # which is why the budget is seconds and not minutes. Waiting a queue out is a different decision and it
 # is not taken here -- the refusal hands it back instead of guessing at a timeout.
+#
+# EXCEPT WHERE THE MERGE CALL ITSELF FAILED (issue #3802). After a 5xx, or on 'Merge already in
+# progress', GitHub may be holding a merge lock while the PR reads OPEN -- measured on PR #3800, where
+# the 15-second budget read OPEN and refused. That is not a lagging read but a merge still landing, so
+# the budget there is about a minute: long enough for a held lock to resolve, short enough that a lock
+# that does not resolve is handed back (the PR stays armed) instead of being sat through.
+$mergeReadAttempts = if ($mergeTransientRecovery) { 13 } else { 3 }
 $mergedState = ''
-for ($mergeReadAttempt = 1; $mergeReadAttempt -le 3; $mergeReadAttempt++) {
+for ($mergeReadAttempt = 1; $mergeReadAttempt -le $mergeReadAttempts; $mergeReadAttempt++) {
     try {
         $stateRead = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr -Arguments @(
             'pr', 'view', "$pr", '--repo', $repo, '--json', 'state', '--jq', '.state')
@@ -3531,7 +3548,7 @@ for ($mergeReadAttempt = 1; $mergeReadAttempt -le 3; $mergeReadAttempt++) {
     # up, is PROPAGATION: with no queue the merge is synchronous and the two further attempts absorb a
     # lagging read. With a queue the expected state is not-MERGED and stays that way for minutes, so the
     # spin buys nothing and costs 10 seconds on every ship this repo makes. One read, then out.
-    if ($mergedState -eq 'MERGED' -or $queueActive -or $mergeReadAttempt -eq 3) { break }
+    if ($mergedState -eq 'MERGED' -or $queueActive -or $mergeReadAttempt -eq $mergeReadAttempts) { break }
     Start-Sleep -Seconds 5
 }
 # UNDER A QUEUE THIS SESSION NEVER FOLDS -- WHATEVER THE STATE READS (issue #1506). The three outcomes
@@ -3659,25 +3676,54 @@ if (-not $mergedState) {
         exit 1
     }
     Write-Host "  Merge state: PR #$pr's state could not be read -- not checked (this is not a finding)." -ForegroundColor DarkGray
-} elseif ($mergedState -ne 'MERGED') {
-    $mergeNotMergedLead = if ($mergeTransientRecovery) {
-        "gh reported a 5xx/transport failure on the merge and PR #$pr reads '$mergedState', not 'MERGED'"
+} elseif ($mergedState -ne 'MERGED' -and $mergeTransientRecovery) {
+    # A MERGE GITHUB HAS NOT CONFIRMED IS HANDED BACK, NOT REPORTED AS FAILED (issue #3802). The merge
+    # call failed with a 5xx or with 'Merge already in progress', and the minute of polling above never
+    # read MERGED. On PR #3800 that was GitHub holding a merge lock; the refusal below it used to blame a
+    # merge queue the trunk does not have, and the re-run it asked for then failed hard on the lock.
+    #
+    # NO DISARM, deliberately: the PR is not judged, only not yet landed, and the merge-on-green sweep is
+    # exactly the backstop for a merge this run could not see through (#2319).
+    $mergeHeldLead = if ($mergeInProgress) {
+        "GitHub answered 'Merge already in progress' and PR #$pr still reads '$mergedState' after about a minute"
     } else {
-        "gh pr merge returned 0 but PR #$pr reads '$mergedState', not 'MERGED'"
+        "gh reported a 5xx/transport failure on the merge and PR #$pr still reads '$mergedState' after about a minute"
+    }
+    $armLabel = Get-MergeOnGreenArmLabel
+    Write-Error @"
+$mergeHeldLead -- NOT folded, and NOT a failed merge (issues #1916, #3802).
+
+GitHub can hold a merge lock on a PR after a server error while the PR still reads OPEN. The merge may
+land on its own, or the lock may expire and leave the PR open.
+
+PR #$pr stays armed '$armLabel', so the merge-on-green sweep lands and folds it if this session does
+not. Or re-run ship-pr later: a merge that landed reads back MERGED and step 5 folds against it.
+"@
+    exit 1
+} elseif ($mergedState -ne 'MERGED') {
+    # A MERGE QUEUE IS NAMED AS THE CAUSE ONLY WHERE THE TRUNK'S RULES WERE NOT READ (issue #3802). When
+    # they were read and carry no merge_queue rule, a queue is the one cause already ruled out, and naming
+    # it first sent the reader looking for a setting this repo does not have.
+    $mergeNotMergedCause = if ($queueVerdict.Readable) {
+        @"
+The trunk's rules were read and carry no merge queue, so this is not a queue. Something on GitHub's side
+is holding the merge -- a lock after a server error is the measured case (#3802).
+"@
+    } else {
+        @"
+The trunk's rules could not be read this run, so a merge queue is not ruled out: under one, gh enqueues
+the PR and exits 0, and the merge lands minutes later. If it IS a queue, ship-pr handles it without this
+refusal once the rules read (issue #1506); check with:
+  gh api repos/$repo/rules/branches/main --jq '[.[].type]'
+"@
     }
     Write-Error @"
-$mergeNotMergedLead -- NOT folded (issue #1325).
+gh pr merge returned 0 but PR #$pr reads '$mergedState', not 'MERGED' -- NOT folded (issue #1325).
+Folding now would put the changelog entry on the trunk ahead of the merge it describes.
 
-The likeliest cause is a merge queue on 'main': gh enqueues the PR and exits 0, and the merge lands
-minutes later. Folding now would put the changelog entry on the trunk ahead of the merge it describes.
-
-No merge_queue rule was read on 'main' here, though -- so either the trunk's rules could not be read
-this run, or something other than a queue is holding the merge. If it IS a queue, ship-pr handles it
-without this refusal once the rules read (issue #1506); check with:
-  gh api repos/$repo/rules/branches/main --jq '[.[].type]'
-
+$mergeNotMergedCause
 Let the merge land, then re-run ship-pr: step 2 finds the merged PR and step 5 folds against a trunk
-that actually carries it. Nothing here needs undoing -- the PR is queued, not lost.
+that actually carries it. Nothing here needs undoing -- the PR is still open, not lost.
 "@
     exit 1
 }
