@@ -85,6 +85,7 @@ function Format-PluginRepoHubHtml {
     [void]$sb.AppendLine('<title>' + $n + ' -- Tools</title>')
     [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
     [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
+    [void]$sb.AppendLine((Get-ToolboxWidthScript))
     # The repo layer: names the house file does not define -- .ph-cards, the card links three to a row with no
     # surface around them (stepping down where .grid-3 does), and .ph-code, for the code samples.
     [void]$sb.AppendLine('<style>')
@@ -151,7 +152,7 @@ function Format-PluginRepoHubHtml {
 
     [void]$sb.AppendLine('<p class="note">Each page names its own source. Served on 127.0.0.1 only, by the dkj-policy plugin''s <code>hub/pages/serve-general-pages.ps1</code>.</p>')
     [void]$sb.AppendLine('</main>')
-    [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", width: "Width", fluid: "Fluid", phone: "Phone", full: "Full" });</script>')
+    [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", widths: false });</script>')
     # The fit alarm, as Format-GeneralPageHtml closes every page below this one (#3558).
     [void]$sb.AppendLine((Format-FitAlarmHtml))
     [void]$sb.AppendLine('</body>')

@@ -54,6 +54,9 @@ function Get-ProductPages {
     @(
         @{ Href = '/consumers';  Label = 'Consumers';   Sub = 'Every repo that installs plugins from this marketplace, registered under consumers/ and checked by check-consumers.ps1 on this machine'; Icon = 'consumers' }
         @{ Href = '/marketplace';     Label = 'Marketplace'; Sub = 'Every plugin this marketplace ships, its version and what it holds'; Icon = 'marketplace' }
+        # The product's own Settings, last as on the Toolbox (Maikel, November 4, 2026): its theme AND its width, because a
+        # product is read on a phone too, where the Toolbox has one screen (Get-SettingsPageParts -Widths).
+        @{ Href = '/settings';   Label = 'Settings';    Sub = 'How this product looks on this device: its theme and its width'; Icon = 'settings' }
     )
 }
 
