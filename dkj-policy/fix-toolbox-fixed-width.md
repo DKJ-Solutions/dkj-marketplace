@@ -52,7 +52,7 @@ Rule (Maikel, November 4, 2026): the Toolbox is viewed in VS Code's Simple Brows
 ### TEST
 
 - [x] `dev-pages.tests.ps1` (584 passed), `consumer-dashboard.tests.ps1` (239 passed) and `dev-preview-sessionstart.tests.ps1` (365 passed)
-- [ ] The owner looks at the Toolbox's Settings page before the merge (a visible result)
+- [x] The owner looked at both Settings pages before the merge (a visible result): "ship it", Maikel, November 4, 2026
 
 ### DEPLOY: fix/toolbox-fixed-width
 
