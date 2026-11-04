@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**5 / 6 minor entries** <!-- pending-tally -->
+**6 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3798-watcher-claude-holds-session · 20261104-104856Z
+
+The dev-preview watcher no longer stops a server while Claude Code still runs in the logon session that
+started it ([#3798](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3798)). Switched away from with
+fast user switching, a session reads disconnected while Claude Code keeps working in it, and its hub was
+stopped one grace later; the product it started after the switch survived, so the outcome depended only on
+when each server started. The watcher now reads its own session's process table at a disconnect, and a
+`claude.exe` (or `@anthropic-ai/claude-code` under node) there resets the clock as an uncertain read does.
+Once none is left, the session counts as abandoned, as #3569 meant.
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Toolbox hub that went dark mid-session, on a machine with two accounts, now stays up for as long as the
+Claude Code that started it is running.
+**Score:** 2
+
+#### Pull Request
+
+dev-preview watcher: a running Claude Code holds a disconnected session
+
+Plugins: dkj-policy
+
+[PR #3805](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3805)
+
+---
 
 ### DEPLOY: fix/3802-merge-in-progress · 20261104-103914Z
 
