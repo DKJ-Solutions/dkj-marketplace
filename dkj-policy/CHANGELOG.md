@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**3 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3811-desktop-shell · 20261104-195335Z
+
+The Toolbox's pages are built in a new desktop shell part of `house-style.css`; a product's pages keep the
+mobile-first layout, and the hub suites now assert both.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+The Toolbox no longer looks like a website: no site header and no breadcrumb bar, but a thin bar with the trail, a
+side tree of every Toolbox page and a main pane whose title sits in a compact toolbar, each pane scrolling on its own.
+
+**Score:** 4
+
+#### Pull Request
+
+A desktop shell for the Toolbox, beside the mobile-first app layer
+
+Plugins: dkj-policy
+
+[PR #3814](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3814)
+
+---
 
 ### DEPLOY: feat/hub-banner-toast · 20261104-193152Z
 
