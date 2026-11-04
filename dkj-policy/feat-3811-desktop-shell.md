@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Step 1 and the shell half of step 3 of #3811 (Dave, November 4, 2026): the Toolbox reads like a desktop tool, an
+Explorer or a task board, not a webshop. Step 2 (which README rules belong to which layer) and turning each page's
+cards into dense lists stay on #3811.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The "Desktop shell" part of house-style.css, a specimen section and patterns/toolbox-shell.html (Gwen)
+- [x] The brand book README names the two layers
+- [x] Every Toolbox page renders in the shell: Format-GeneralPageHtml, the home page, the release notes (Cody)
+- [x] Headings carry no class: the toolbar h1 is styled by position, the pane label is a p
 
 ### TEST
 
+- [x] The house-style CSS gate (syntax, vars, colour literals) and the brand-book session check are green
+- [x] dev-pages, dev-preview-sessionstart, consumer-dashboard and house-palette suites read the shell and are green (Tycho)
+- [x] The owner judged the shell live on a branch Toolbox server and approved it
+
 ### DEPLOY: feat/3811-desktop-shell
 
-**Score:**
+The Toolbox's pages are built in a new desktop shell part of `house-style.css`; a product's pages keep the
+mobile-first layout, and the hub suites now assert both.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+The Toolbox no longer looks like a website: no site header and no breadcrumb bar, but a thin bar with the trail, a
+side tree of every Toolbox page and a main pane whose title sits in a compact toolbar, each pane scrolling on its own.
+
+**Score:** 4
 
 #### Pull Request
 
