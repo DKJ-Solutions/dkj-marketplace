@@ -470,8 +470,7 @@ function Format-ConsumerPageStart {
     # The width bar first, above everything (Dave, November 4, 2026): full, fluid and phone as three icons. The product's
     # alone; the Toolbox stays full. It sets the width the settings panel did, so the panel leaves its own group out.
     [void]$sb.AppendLine('<div id="width-bar"></div><script>DKJTheme.widthBar(document.getElementById("width-bar"), { label: "Width", full: "Full", fluid: "Fluid", phone: "Phone" });</script>')
-    # The hub's general banner, above the site header, as on every other hub page (#3297, #3356; owner, October 24, 2026).
-    [void]$sb.AppendLine((Format-RepoHubBanner))
+    # No general banner: it is the Toolbox's alone, never a product page's (Dave, November 4, 2026).
     # The house site header, holding the settings button, then the breadcrumb bar under it: its trail from Home to this page.
     # Tagged 'product': this page is the product's, beside the plugin's hub (#3540).
     # The menu is the product's pages (Get-ProductMenu), the Consumers page marked.
