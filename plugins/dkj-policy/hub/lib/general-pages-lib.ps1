@@ -224,10 +224,37 @@ function Format-GeneralPageHtml {
     [void]$sb.AppendLine('.dp-link:hover, .dp-link:focus-visible { text-decoration: underline; }')
     [void]$sb.AppendLine('.dp-thead th { background: var(--bg-3); }')
     [void]$sb.AppendLine('.table td.dp-left, .table th.dp-left { text-align: left; }')
+    # A TOOLBOX PAGE STANDS IN THE DESKTOP SHELL (Dave, November 4, 2026, #3811): an Explorer, not a website, so no site
+    # header, no breadcrumb bar and no headline; a product's page (-BrandTag 'product') keeps the mobile-first layout below.
+    $toolbox = $BrandTag -ne 'product'
+    if ($toolbox) { [void]$sb.AppendLine((Get-ToolboxShellStyle)) }
     if ($Style) { [void]$sb.AppendLine($Style) }
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
     [void]$sb.AppendLine('<body>')
+    if ($toolbox) {
+        $glyph = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
+            '<path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5M12 17.5v.01" /></svg>'
+        $infoHtml = if ($Info -and -not $Bare) {
+            '<button class="page-info-button" type="button" id="page-info-button" aria-label="About ' + (& $e $Title) + '" aria-describedby="page-info" aria-expanded="false">' + $glyph + '</button>' +
+            '<div class="tooltip tooltip--explain" id="page-info" role="tooltip">' + $Info + '</div>'
+        } else { '' }
+        $trail = @(@($ParentCrumbs | Where-Object { $_ }) + @(@{ Label = $Title; Href = '' }))
+        [void]$sb.Append((Format-ToolboxShellOpen -Title $Title -Current (Get-ToolboxCurrentHref -Title $Title -ParentCrumbs $ParentCrumbs) -Trail $trail -HomeLabel $HomeLabel -HubHref $HubHref -Bare:$Bare -InfoHtml $infoHtml -HeadAside $HeadAside))
+        $sections = Get-PageSectionCount -Body $Body
+        if ($sections -gt $script:LongPageSectionLimit) {
+            [void]$sb.AppendLine('<p class="msg--warn" role="alert">This page holds ' + $sections + ' sections in one column. A page with more than ' +
+                $script:LongPageSectionLimit + ' becomes an overview of cards, each opening a page of its own: the house style''s page rule (#3563).</p>')
+        }
+        [void]$sb.Append($Body)
+        if ($FooterNote) { [void]$sb.AppendLine('<p class="note">' + $FooterNote + '</p>') }
+        [void]$sb.AppendLine((Format-ToolboxShellClose))
+        if ($Info -and -not $Bare) { [void]$sb.AppendLine((Get-PageInfoScript)) }
+        [void]$sb.AppendLine((Format-FitAlarmHtml))
+        [void]$sb.AppendLine('</body>')
+        [void]$sb.AppendLine('</html>')
+        return $sb.ToString()
+    }
     # The general banner on every Toolbox page, not only the home page (#3297), and a bare one too (#3356): ALWAYS the
     # first thing in <body>, above the site header (owner, October 24, 2026). Never on a product's page
     # (-BrandTag 'product'): the banner is the Toolbox's alone (Dave, November 4, 2026).
@@ -1213,6 +1240,111 @@ function Get-SiteHeaderMenuCurrent {
     return ''
 }
 
+function Get-ToolboxShellStyle {
+    <#
+        The page layer the Toolbox's desktop shell needs on top of the house's (house-style.css, "Desktop shell"; Dave,
+        November 4, 2026, #3811): names the house file does not define (.tb-*). The scroll pane always takes the main
+        pane's second row, so a page with no toolbar (-Bare) still scrolls there; the page column inside it keeps the
+        house column's stacking but none of its centring, since the pane is the page.
+    #>
+    '.tb-scroll { grid-row: 2; }' + "`n" +
+    '.tb-scroll > .notice { margin: 0; border: 0; border-radius: 0; border-bottom: 1px solid var(--bg-3); }' + "`n" +
+    '.tb-scroll > main.page-column { max-width: none; margin: 0; padding: var(--spacing-4); }' + "`n" +
+    '.tb-tree-root { margin-top: var(--spacing-1); }'
+}
+
+function Get-ToolboxTree {
+    <#
+        The Toolbox's side tree (#3811): Tools (home), then the toolbox's menu (Get-HubMenu) in its order, and under an
+        item that is a group page (Get-HubGroups) the groups and general pages that sit in it, so Claude opens onto Rules,
+        Skills, Specialists and Performance. A Section group is a heading on its parent's page, not a page, so it is no
+        node. Each node is @{ Label; Href; Children }.
+    #>
+    $groups = @(Get-HubGroups); $pages = @(Get-GeneralPages)
+    $kids = {
+        param($href)
+        @($groups | Where-Object { $_.Group -eq $href -and -not $_.Section } | ForEach-Object { @{ Label = $_.Label; Href = $_.Href; Children = @() } }) +
+        @($pages | Where-Object { $_.Group -eq $href } | ForEach-Object { @{ Label = $_.Label; Href = $_.Href; Children = @() } })
+    }
+    @(Get-HubMenu | ForEach-Object { @{ Label = $_.Label; Href = $_.Href; Children = @(& $kids $_.Href) } })
+}
+
+function Format-ToolboxShellOpen {
+    <#
+        The top of every Toolbox page in the desktop shell (#3811), in place of the site header, the breadcrumb bar and
+        the page column's intro: the thin bar with the trail, the side tree, and the main pane, whose toolbar holds the
+        page's one h1 (at the toolbar's size, .toolbar__title) with -Info's "?" and -HeadAside at its right end. The
+        general banner (Format-RepoHubBanner) stands at the top of the scroll pane, above the content, so the shell
+        itself always fits the window. It ends inside <main class="page-column">; Format-ToolboxShellClose closes it.
+        -Current is the Href of the tree node the page is, and -Trail the crumbs after Home, each @{ Label; Href },
+        the last one the page itself (no Href). -Bare leaves the toolbar out, as it leaves the h1 out elsewhere.
+        -InfoHtml and -HeadAside are markup the caller has escaped; every other value is escaped here.
+    #>
+    param([AllowEmptyString()][string]$Title = '', [AllowEmptyString()][string]$Current = '', [AllowEmptyCollection()][object[]]$Trail = @(),
+        [string]$HomeLabel = 'Tools', [string]$HubHref = '/', [switch]$Bare, [AllowEmptyString()][string]$InfoHtml = '', [AllowEmptyString()][string]$HeadAside = '')
+    $e = { param($v) ConvertTo-GeneralPageText $v }
+    $sb = New-Object System.Text.StringBuilder
+    [void]$sb.AppendLine('<div class="shell shell--no-aside">')
+    # The bar: where the page sits. Home is a crumb only where the page is not home itself.
+    $sep = '<span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span>'
+    [void]$sb.Append('<div class="shell__bar"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>')
+    $steps = @($Trail | Where-Object { $_ })
+    if ($steps.Count) { [void]$sb.Append('<li><a href="' + (& $e $HubHref) + '">' + (& $e $HomeLabel) + '</a></li>') }
+    else { [void]$sb.Append('<li><span aria-current="page">' + (& $e $HomeLabel) + '</span></li>') }
+    for ($i = 0; $i -lt $steps.Count; $i++) {
+        $s = $steps[$i]
+        if ($i -eq $steps.Count - 1) { [void]$sb.Append('<li>' + $sep + '<span aria-current="page">' + (& $e $s.Label) + '</span></li>') }
+        else { [void]$sb.Append('<li>' + $sep + '<a href="' + (& $e $s.Href) + '">' + (& $e $s.Label) + '</a></li>') }
+    }
+    [void]$sb.AppendLine('</ol></nav><div class="shell__actions"></div></div>')
+    # The tree: the page that is open is marked; a node with children always shows them.
+    $mark = { param($href) if ($href -eq $Current) { ' aria-current="page"' } else { '' } }
+    [void]$sb.Append('<nav class="shell__nav" aria-label="Main"><ul class="tree tb-tree-root">')
+    [void]$sb.Append('<li><a class="tree__item" href="' + (& $e $HubHref) + '"' + (& $mark $HubHref) + '><span class="tree__label">' + (& $e $HomeLabel) + '</span></a></li>')
+    foreach ($n in @(Get-ToolboxTree)) {
+        [void]$sb.Append('<li><a class="tree__item" href="' + (& $e $n.Href) + '"' + (& $mark $n.Href) + '><span class="tree__label">' + (& $e $n.Label) + '</span></a>')
+        $ch = @($n.Children | Where-Object { $_ })
+        if ($ch.Count) {
+            [void]$sb.Append('<ul>')
+            foreach ($c in $ch) { [void]$sb.Append('<li><a class="tree__item" href="' + (& $e $c.Href) + '"' + (& $mark $c.Href) + '><span class="tree__label">' + (& $e $c.Label) + '</span></a></li>') }
+            [void]$sb.Append('</ul>')
+        }
+        [void]$sb.Append('</li>')
+    }
+    [void]$sb.AppendLine('</ul></nav>')
+    [void]$sb.AppendLine('<div class="shell__main">')
+    if (-not $Bare -and $Title) {
+        [void]$sb.Append('<div class="toolbar"><h1>' + (& $e $Title) + '</h1>')
+        [void]$sb.Append($InfoHtml)
+        if ($HeadAside) { [void]$sb.Append('<div class="toolbar__end">' + $HeadAside + '</div>') }
+        [void]$sb.AppendLine('</div>')
+    }
+    [void]$sb.AppendLine('<div class="shell__list tb-scroll">')
+    [void]$sb.AppendLine((Format-RepoHubBanner))
+    [void]$sb.AppendLine('<main class="page-column">')
+    return $sb.ToString()
+}
+
+function Format-ToolboxShellClose {
+    <# The end of a Toolbox page's shell (Format-ToolboxShellOpen): the page column, the scroll pane, the main pane and the shell. #>
+    '</main></div></div></div>'
+}
+
+function Get-ToolboxCurrentHref {
+    <#
+        Which tree node a Toolbox page is (Format-ToolboxShellOpen -Current): the node whose Label is the page's -Title,
+        searched under its parent crumbs first, else anywhere in the tree; else the deepest parent crumb that is a
+        node, so a page below the tree (a lens, a run) marks the node it sits under. '' where none is.
+    #>
+    param([AllowEmptyString()][string]$Title = '', [AllowEmptyCollection()][object[]]$ParentCrumbs = @())
+    $all = @(Get-ToolboxTree | ForEach-Object { $_; @($_.Children) } | Where-Object { $_ })
+    $hit = @($all | Where-Object { $_.Label -eq $Title })[0]
+    if ($hit) { return $hit.Href }
+    $parents = @($ParentCrumbs | Where-Object { $_ })
+    for ($i = $parents.Count - 1; $i -ge 0; $i--) { $p = @($all | Where-Object { $_.Href -eq $parents[$i].Href })[0]; if ($p) { return $p.Href } }
+    return ''
+}
+
 function Format-RepoHomeHeadHtml {
     <#
         The top of a repo's home page on '/' (#3270), the same in every hub: the breadcrumb bar with its one
@@ -1225,6 +1357,9 @@ function Format-RepoHomeHeadHtml {
     #>
     param([Parameter(Mandatory = $true)][string]$RepoName, [Parameter(Mandatory = $true)][string]$Lead, [AllowEmptyString()][string]$Brand = '',
         [AllowEmptyString()][string]$BrandTag = '', [string]$HomeLabel = 'Tools', [AllowNull()][object[]]$Menu = $null)
+    # The Toolbox's home stands in the desktop shell like every Toolbox page (#3811): Tools open in the tree, no toolbar,
+    # and the caller closes it with Format-ToolboxShellClose where it would close </main>.
+    if ($BrandTag -eq 'toolbox') { return (Format-ToolboxShellOpen -Current '/' -HomeLabel $HomeLabel -Bare) }
     $sb = New-Object System.Text.StringBuilder
     # The general banner first, above the site header, as on every Toolbox page (owner, October 24, 2026); never on a
     # product's home (-BrandTag 'product'), since the banner is the Toolbox's alone (Dave, November 4, 2026).
