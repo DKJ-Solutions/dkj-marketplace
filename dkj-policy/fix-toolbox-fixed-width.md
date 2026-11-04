@@ -46,10 +46,12 @@ Rule (Maikel, November 4, 2026): the Toolbox is viewed in VS Code's Simple Brows
 - [x] `Get-ToolboxWidthScript` pins `full` right after `house-theme.js` on every Toolbox page (general pages, the hub, the release notes)
 - [x] The Settings page drops its Width group; every Toolbox settings panel draws with `widths: false`
 - [x] The rule written into `hub/README.md`, "The hub and the product"
+- [x] The pin skips a product page (`-BrandTag 'product'`), which shares the general page shell
+- [x] The product gets its own `/settings`, theme and width (`Get-SettingsPageParts -Widths`, `Format-ProductSettingsHtml`), as a card and a menu item
 
 ### TEST
 
-- [x] `dev-pages.tests.ps1` (579 passed) and `dev-preview-sessionstart.tests.ps1` (365 passed), with the Width asserts turned into the new rule
+- [x] `dev-pages.tests.ps1` (584 passed), `consumer-dashboard.tests.ps1` (239 passed) and `dev-preview-sessionstart.tests.ps1` (365 passed)
 - [ ] The owner looks at the Toolbox's Settings page before the merge (a visible result)
 
 ### DEPLOY: fix/toolbox-fixed-width
@@ -57,7 +59,9 @@ Rule (Maikel, November 4, 2026): the Toolbox is viewed in VS Code's Simple Brows
 The Toolbox has one page width again, the full one, because it is read in VS Code's Simple Browser at
 about 16:9 and never on a phone. Its Settings page no longer offers Fluid, Phone or Full, and a width
 stored while it did is overwritten. A repo's product port keeps the choice: that is where an app is built
-for the Simple Browser and a phone alike. The rule is in the hub's README.
+for the Simple Browser and a phone alike. This repo's own product gets a Settings page for it, theme and
+width, linked from its home page and its menu. It had none since the header's settings button went. The
+rule is in the hub's README.
 
 **Score:** 2
 

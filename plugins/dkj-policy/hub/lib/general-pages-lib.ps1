@@ -215,7 +215,8 @@ function Format-GeneralPageHtml {
     if ($description) { [void]$sb.AppendLine('<meta name="description" content="' + $description + '">') }
     [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
     [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
-    [void]$sb.AppendLine((Get-ToolboxWidthScript))
+    # The Toolbox's one width -- not a product's: a repo's own pages in this shell (-BrandTag 'product') keep the choice.
+    if ($BrandTag -ne 'product') { [void]$sb.AppendLine((Get-ToolboxWidthScript)) }
     # The page layer: only names the house file does not define (.dp-*).
     [void]$sb.AppendLine('<style>')
     [void]$sb.AppendLine('.dp-link { color: var(--fg-3); text-decoration: none; text-underline-offset: 2px; }')
@@ -1031,15 +1032,28 @@ function Format-HubGroupPageHtml {
 
 function Format-HubSettingsPageHtml {
     <#
-        The toolbox's Settings page on /settings (Dave, November 2, 2026): its h1, then the group headed by the h2 Theme
+        The toolbox's Settings page on /settings (Dave, November 2, 2026): Get-SettingsPageParts with no Width group,
+        because the Toolbox has one width (Get-ToolboxWidthScript), in the toolbox's own page shell.
+    #>
+    param([AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
+    $parts = Get-SettingsPageParts
+    return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $parts.Body -Style $parts.Style `
+        -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
+}
+
+function Get-SettingsPageParts {
+    <#
+        A Settings page's body and its style, @{ Body; Style }, for whichever shell draws it: the Toolbox's
+        (Format-HubSettingsPageHtml) and a product's (Maikel, November 4, 2026). Its h1 comes from the shell; then the group headed by the h2 Theme
         holding a Light/Dark toggle and a card per theme holding that theme's swatch alone, with no h3: the swatch's own
         title and aria-label name it (Dave, November 2, 2026) -- the
         brand book's own picker (DKJTheme.picker, house-theme.js, which every page here loads) cut down to one swatch.
         The toggle shows one mode's cards at a time. After them its reset, a card of the same kind that is itself the button. The choice is the same one the
         header's settings button makes -- one key per app on this device -- so every swatch agrees. Nothing here is read
         from disk: the cards are drawn from DKJTheme.themes, so a theme the brand book adds gets its card at once.
+        -Widths adds the Width group under it: a product's, read on a phone as well, never the Toolbox's.
     #>
-    param([AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
+    param([switch]$Widths)
     # The house grouping form (house-style.css, .card-grid and .grid__head): the Theme h2 over its group's surface (--bg-2),
     # its cards on --bg-3 with a --bg-4 border. A .card-grid leaves its columns to the repo's own class, and .hs-theme
     # makes them a wrapping row: each card hugs its swatch, so a mode's six stand side by side (Dave, November 2, 2026;
@@ -1081,9 +1095,23 @@ function Format-HubSettingsPageHtml {
         ' show(modeOf(DKJTheme.current()));' +
         ' foot.addEventListener("click", function () { DKJTheme.reset(); show(modeOf(DKJTheme.current())); });' +
         ' })();</script>'
-        # No Width group (Maikel, November 4, 2026): it stood here from November 3, but the Toolbox has one width, full,
-        # because it is read in VS Code's Simple Browser at about 16:9 (Get-ToolboxWidthScript). A width choice is a
-        # product port's, never the Toolbox's.
+    # The Width group (Maikel, November 3, 2026), a product's only (November 4): the Toolbox has one width, full, because
+    # it is read in VS Code's Simple Browser at about 16:9 (Get-ToolboxWidthScript), while a product is read on a phone
+    # too. The brand book's three, through its own setWidth, so the choice is the one key per app that house-theme.js
+    # already reads; the segment opens on the width in force.
+    if ($Widths) {
+        $body += "`n" + '<div class="card-grid hs-theme" id="settings-width-grid"><div class="grid__head"><h2>Width</h2></div>' +
+            '<div class="controls grid__full"><span class="seg" id="settings-width" role="group" aria-label="Width">' +
+            '<button type="button" data-width="fluid" aria-pressed="false">Fluid</button>' +
+            '<button type="button" data-width="phone" aria-pressed="false">Phone</button>' +
+            '<button type="button" data-width="full" aria-pressed="false">Full</button></span></div></div>' + "`n" +
+            '<script>(function () {' +
+            ' var seg = document.getElementById("settings-width");' +
+            ' function show() { var now = DKJTheme.width(); Array.prototype.forEach.call(seg.querySelectorAll("button[data-width]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-width") === now)); }); }' +
+            ' seg.addEventListener("click", function (e) { var b = e.target.closest("button[data-width]"); if (b) { DKJTheme.setWidth(b.getAttribute("data-width")); show(); } });' +
+            ' show();' +
+            ' })();</script>'
+    }
     # .hs-theme, .hs-swatch and .hs-reset are this page's own classes: the row, the full-width head and toggle in it, a
     # card that hugs its swatch, and what a <button> needs to read as a card. No house class or token is redefined.
     $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-5); }' + "`n" +
@@ -1122,8 +1150,7 @@ function Format-HubSettingsPageHtml {
         # Every card in the row is clickable, the theme cards and the reset alike, so all take the same hover: --bg-4, as a
         # link card does in a group (Dave, November 2, 2026).
         '.hs-swatch:hover { background: var(--bg-4); }'
-    return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $body -Style $style `
-        -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
+    return @{ Body = $body; Style = $style }
 }
 
 function ConvertTo-SiteHeaderName {
