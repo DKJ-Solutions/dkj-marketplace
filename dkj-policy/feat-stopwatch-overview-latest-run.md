@@ -52,7 +52,7 @@ Show the newest run's time instead, with its change in percent against the run b
 
 - [x] `stopwatch.tests.ps1`: the CSS comment card shows its newest run (4:10, -25%), not its fastest (3:20); a single run has no change; a label whose newest run is going shows the live clock -- 312 passed
 - [x] Served from this branch on :4899: release cut reads `3:09 -37%`
-- [ ] The owner has looked
+- [x] The owner has looked (November 4, 2026: "ship it")
 
 ### DEPLOY: feat/stopwatch-overview-latest-run
 
