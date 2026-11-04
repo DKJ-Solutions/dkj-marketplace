@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**3 / 4 minor entries** <!-- pending-tally -->
+**4 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/toolbox-only-banner · 20261104-100346Z
+
+The airsquats banner is the Toolbox's alone: a page built as a product's (`-BrandTag 'product'`) no longer
+carries it, and this repo's product pages (home, settings, Consumers, marketplace) open on the site header.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A repo whose own product pages are built with the plugin's page builder loses the banner there; it stays
+on every Toolbox page.
+
+**Score:** 1
+
+#### Pull Request
+
+The airsquats banner on the Toolbox only, not on the product pages
+
+Plugins: dkj-policy
+
+[PR #3799](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3799)
+
+---
 
 ### DEPLOY: feat/product-width-bar · 20261104-092205Z
 
