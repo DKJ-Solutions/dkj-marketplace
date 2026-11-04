@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**2 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/hub-banner-toast · 20261104-193152Z
+
+The airsquats banner on every Toolbox page is now a toast in the bottom-left corner. It pops up when squats come due
+and sinks away once they are ticked off. It used to be a strip that pushed the site header down.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A Toolbox user sees the reminder float over the page instead of shifting the header. They notice it the first time
+an hour comes due.
+
+**Score:** 2
+
+#### Pull Request
+
+The airsquats banner becomes a toast that rises bottom-left
+
+Plugins: dkj-policy
+
+[PR #3813](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3813)
+
+---
 
 ### DEPLOY: feat/stopwatch-overview-latest-run · 20261104-191020Z
 
