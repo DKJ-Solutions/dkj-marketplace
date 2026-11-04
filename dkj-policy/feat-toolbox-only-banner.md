@@ -52,7 +52,7 @@ before the PR.
 ### TEST
 
 - [x] `dev-pages`, `consumer-dashboard`, `dev-preview-sessionstart`, `stopwatch` suites green, the product asserts now expecting no banner and the Toolbox home still opening on it
-- [ ] Owner's look at the product (http://localhost:4870/) and the Toolbox (http://localhost:4890/)
+- [x] Owner's look at the product (http://localhost:4870/) and the Toolbox (http://localhost:4890/) (Dave: "gezien en akkoord")
 
 ### DEPLOY: feat/toolbox-only-banner
 
