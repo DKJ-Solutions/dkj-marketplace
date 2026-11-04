@@ -39,19 +39,35 @@
 
 ### PLAN
 
+The airsquats banner shows on the Toolbox port only, never on the product port (Dave, November 4, 2026).
+Both shared builders (`Format-GeneralPageHtml`, `Format-RepoHomeHeadHtml`) leave it out under
+`-BrandTag 'product'`, and the Consumers page stops drawing it. Visible result: stops for the owner's look
+before the PR.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `general-pages-lib.ps1`: the banner only where `-BrandTag` is not `product`, docstring updated
+- [x] `consumer-dashboard-lib.ps1`: the Consumers pages draw no banner
 
 ### TEST
 
+- [x] `dev-pages`, `consumer-dashboard`, `dev-preview-sessionstart`, `stopwatch` suites green, the product asserts now expecting no banner and the Toolbox home still opening on it
+- [ ] Owner's look at the product (http://localhost:4870/) and the Toolbox (http://localhost:4890/)
+
 ### DEPLOY: feat/toolbox-only-banner
 
-**Score:**
+The airsquats banner is the Toolbox's alone: a page built as a product's (`-BrandTag 'product'`) no longer
+carries it, and this repo's product pages (home, settings, Consumers, marketplace) open on the site header.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A repo whose own product pages are built with the plugin's page builder loses the banner there; it stays
+on every Toolbox page.
+
+**Score:** 1
 
 #### Pull Request
 
+The airsquats banner on the Toolbox only, not on the product pages
