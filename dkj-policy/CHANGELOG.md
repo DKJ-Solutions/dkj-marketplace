@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**2 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3792-eol-only-claude-change · 20261104-084522Z
+
+`update-plugins -AllCheckouts` no longer asks you to review and commit a `.claude/settings.json` that
+`claude plugin install/update` merely rewrote with different line endings (#3792). When every change the
+run left under `.claude/` is line endings only, the sweep restores the committed bytes and says so; a real
+change is still named in the summary as before.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Nothing beyond the summary line it corrects: a sweep that already worked now stops asking for a commit
+that does not exist, and changes nothing for a checkout whose `.claude/` really changed.
+
+**Score:** N/A
+
+#### Pull Request
+
+update-plugins -AllCheckouts restores an EOL-only .claude/ rewrite instead of asking for a commit
+
+Plugins: dkj-policy
+
+[PR #3795](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3795)
+
+---
 
 ### DEPLOY: fix/toolbox-fixed-width · 20261104-083416Z
 
