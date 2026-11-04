@@ -4,6 +4,7 @@
 
 | Version | Date | Type | Title |
 |---|---|---|---|
+| [6.6.0](audience/6.x/6.6.0.md) | 2026-11-04 | Minor | Minor release |
 | [6.5.0](audience/6.x/6.5.0.md) | 2026-11-03 | Minor | Every release cut is timed by the Stopwatch, the hub gains a rules page and plugin contents, and the brand book checks type and weight. |
 | [6.4.0](audience/6.x/6.4.0.md) | 2026-11-03 | Minor | Minor release |
 | [6.3.0](audience/6.x/6.3.0.md) | 2026-11-02 | Minor | Minor release |
