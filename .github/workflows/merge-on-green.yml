@@ -160,7 +160,7 @@ jobs:
       # no later CI run will come to wake the sweep, and the schedule above arrives hours late. While it
       # waits it holds the concurrency group; a CI completion meanwhile queues one pending sweep, which is
       # idempotent. 11 minutes plus two forward laps plus the ship still fits the 45-minute cap below.
-      # The consumer template does not pass it: there a waiting minute is a billed one.
+      # The consumer template passes the same cap (#3809): there the wait is billed, a cost accepted for it.
       - name: Is any armed pull request owed a merge?
         id: pick
         shell: pwsh

@@ -1256,6 +1256,12 @@ $mergeOnGreenRunner = @(
     '      # CLAUDE_PROJECT_DIR NAMES trusted-main AND NOTHING ELSE WILL DO: the workspace root holds no',
     '      # checkout at all, and the plugin tree carries the SOURCE repo''s scripts/repo-config.ps1, so',
     '      # pointed there the sweep would answer with another repository''s configuration.',
+    '      #',
+    '      # -WaitForSettleSeconds 660 (#3807, #3809): when nothing is eligible ONLY because the 10-minute',
+    '      # settle window refused it, the picker waits out the remainder and judges the tracker once more.',
+    '      # The pull request that goes green LAST has no later CI run to wake this sweep, and the',
+    '      # 3-hourly schedule arrives hours late. On a private repo the wait is billed: at most about 11',
+    '      # minutes, and only on a sweep the settle window alone refused -- a cost accepted for that latency.',
     '      - name: Is any armed pull request owed a merge?',
     '        id: pick',
     '        shell: pwsh',
@@ -1264,7 +1270,7 @@ $mergeOnGreenRunner = @(
     '          GH_REPO: ${{ github.repository }}',
     '          CLAUDE_PROJECT_DIR: ${{ github.workspace }}/trusted-main',
     '        run: |',
-    ('          powershell -NoProfile -ExecutionPolicy Bypass -File ' + $pluginDir + '/ci/pick-merge-on-green.ps1'),
+    ('          powershell -NoProfile -ExecutionPolicy Bypass -File ' + $pluginDir + '/ci/pick-merge-on-green.ps1 -WaitForSettleSeconds 660'),
     '          exit $LASTEXITCODE',
     '',
     '      # THE PICKED HEAD, IN ITS OWN TREE, with no token and nothing persisted. ref: is the picker''s',
@@ -1963,7 +1969,8 @@ Write-Host '    fold-on-merge.yml + verify-resolved.yml -- one job EACH per trun
 Write-Host '      fold: commit (skipped at the job level on that push, unbilled -- see section 2 above).' -ForegroundColor DarkGray
 Write-Host '    repo-settings.yml -- 1 scheduled job/day, about 30/month.' -ForegroundColor DarkGray
 Write-Host '    merge-on-green.yml -- 8 scheduled jobs/day, about 240/month, PLUS one per completed run' -ForegroundColor DarkGray
-Write-Host '      of every workflow named in its workflow_run trigger, above.' -ForegroundColor DarkGray
+Write-Host '      of every workflow named in its workflow_run trigger, above -- and a sweep the settle' -ForegroundColor DarkGray
+Write-Host '      window alone refused waits it out, up to about 11 more billed minutes (#3809).' -ForegroundColor DarkGray
 Write-Host '    close-parked-recurrences.yml -- one job per issue opened with, or given, a recurrence label;' -ForegroundColor DarkGray
 Write-Host '      every other issue event is skipped at the job level, unbilled.' -ForegroundColor DarkGray
 Write-Host ''

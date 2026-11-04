@@ -582,6 +582,8 @@ try {
     # job start, so the consumer template trades latency it rarely needs for roughly 1/6th the jobs.
     Assert-True ($mergeOnGreen -match '(?m)^\s+-\s+cron:\s+''0 \*/3 \* \* \*''\s*$') 'the consumer template''s schedule is every 3 hours, not half-hourly'
     Assert-True ($mergeOnGreen -notmatch '\*/30 \* \* \* \*') 'and never the source repo''s own half-hourly cadence'
+    # THE LAST GREEN PR WAITS NO SCHEDULE OUT (#3809): the picker gets the same settle-wait cap as the source's own runner.
+    Assert-True ($mergeOnGreen -match 'pick-merge-on-green\.ps1 -WaitForSettleSeconds 660') 'the consumer template passes the picker a settle-wait cap'
     # THE WAKE LIST IS READ OFF THE TREE: the fixture's own ci.yml is `name: CI`.
     Assert-True ($mergeOnGreen -match '(?m)^\s+workflows:\s*\["CI"\]\s*$') `
         'workflow_run names this repo''s own pull_request workflow, read off its top-level name:'
