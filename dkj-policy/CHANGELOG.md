@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**8 / 11 minor entries** <!-- pending-tally -->
+**9 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3809-template-settle-wait · 20261104-145309Z
+
+The merge-on-green workflow that `adopt-ci-floor` places in a consumer now waits out the settle window
+the way this repo's own runner has since #3807. It passes `pick-merge-on-green.ps1 -WaitForSettleSeconds 660`,
+so the last armed pull request to go green is merged within about 11 minutes instead of waiting
+for the 3-hourly schedule. The template comment and the run's cost summary name the price on a private
+repo: at most about 11 billed minutes, and only on a sweep the settle window alone refused
+([#3809](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3809)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer's maintainer who places or re-places the CI floor with `adopt-ci-floor` gets a merge-on-green
+runner that no longer leaves the last green pull request waiting for hours, at the price of up to about 11
+billed Actions minutes on the sweeps where the settle window alone held it back.
+
+**Score:** 3
+
+#### Pull Request
+
+merge-on-green consumer template waits out the settle window
+
+Plugins: dkj-policy
+
+[PR #3810](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3810)
+
+---
 
 ### DEPLOY: fix/3807-settle-window-rewake · 20261104-141227Z
 
