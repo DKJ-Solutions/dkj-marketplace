@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**7 / 8 minor entries** <!-- pending-tally -->
+**7 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/drop-product-width-bar · 20261104-123428Z
+
+The width bar above the product's site header is gone again, with `DKJTheme.widthBar` and its
+`.width-bar` classes in the brand book, both unreleased. The product's own pages now hold one width,
+`full`, as the Toolbox does, and the product's Settings page offers only the theme. Another screen size
+is judged in VS Code's Simple Browser's own device emulation instead of a toggle on the page.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A: the width bar and the product's width choice never reached a release, so no user of a release loses anything.
+
+**Score:** N/A
+
+#### Pull Request
+
+The width bar is gone; the product stays full, like the Toolbox
+
+Plugins: dkj-policy
+
+[PR #3801](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3801)
+
+---
 
 ### DEPLOY: feat/3797-page-name-two-words · 20261104-121848Z
 
