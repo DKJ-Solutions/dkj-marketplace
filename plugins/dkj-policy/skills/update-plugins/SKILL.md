@@ -94,7 +94,10 @@ left **no** diff in any of them, so the wall became a guard per checkout:
 - a checkout **not on its trunk** (`origin/HEAD`) is skipped -- a mid-work branch is never touched;
 - a checkout with **uncommitted changes under `.claude/`** is skipped, so this run's rewrite is never
   mixed into somebody's own edit;
-- a checkout the run **did** leave a `.claude/` diff in is named in the summary;
+- a checkout the run **did** leave a `.claude/` diff in is named in the summary, unless that diff is
+  line endings only: `claude plugin install/update` can rewrite a CRLF `settings.json` with LF, which
+  `git status` reports as modified while every diff is empty, so the sweep restores the committed
+  bytes instead of asking for a commit that would only churn line endings (#3792);
 - a record whose folder is gone is counted in one line, which [tidy-machine](../tidy-machine/SKILL.md)
   clears.
 
