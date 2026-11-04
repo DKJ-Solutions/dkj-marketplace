@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**4 / 5 minor entries** <!-- pending-tally -->
+**5 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3802-merge-in-progress · 20261104-103914Z
+
+ship-pr no longer reports GitHub's `Merge already in progress` as a failed merge (#3802). After a 5xx
+or that answer, it polls the PR for about a minute and folds once it reads MERGED. If it does not, it
+says the merge is held by GitHub and leaves the PR armed for the merge-on-green sweep. The refusal for
+an unmerged PR no longer names a merge queue when the trunk's rules were read and carry none.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Whoever runs ship-pr in a consumer and hits a GitHub server error on the merge now gets a run that
+waits the lock out or hands it back with the right advice, instead of a hard failure followed by a
+misleading hint about a merge queue. Small, and noticed only when GitHub has a bad minute.
+
+**Score:** 2
+
+#### Pull Request
+
+ship-pr: 'Merge already in progress' is a merge still landing, not a failed merge
+
+Plugins: dkj-policy
+
+[PR #3803](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3803)
+
+---
 
 ### DEPLOY: feat/toolbox-only-banner · 20261104-100346Z
 
