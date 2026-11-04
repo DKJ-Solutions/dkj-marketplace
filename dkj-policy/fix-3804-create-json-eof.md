@@ -39,19 +39,35 @@
 
 ### PLAN
 
+Issue #3804, measured on PR #3803: `gh pr create` printed the new PR's URL, then failed on its own
+follow-up update with `unexpected end of JSON input`. open-pr reported a failed create, ship-pr stopped,
+and the PR landed without its `bug` label. Route that wording into the #1916 recheck, and set what the
+failed update was setting again once the recheck finds the PR.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Test-GhMutationTransient` (both copies of `pr-issues-lib.ps1`) reads `unexpected end of JSON input` as a transport failure.
+- [x] open-pr's recheck sets the label, assignee and milestone again on a create that landed despite the failure, and names a hand command if that also fails.
 
 ### TEST
 
+- [x] `pr-issues.tests.ps1`: the measured output as a unit assert, plus call-site asserts on the restore. 1180 asserts pass standalone.
+
 ### DEPLOY: fix/3804-create-json-eof
 
-**Score:**
+open-pr no longer reports a created PR as a failed create when gh's follow-up update is cut off with
+`unexpected end of JSON input` (#3804). It finds the PR through the existing recheck and sets the label,
+assignee and milestone again, because the failed update was the call that sets them.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Whoever ships with open-pr or ship-pr in a consumer no longer has a run stop with "nothing merged" over
+a PR that was in fact created, and no longer gets that PR without its label. Small, and noticed only
+when GitHub cuts a response short.
+
+**Score:** 2
 
 #### Pull Request
 

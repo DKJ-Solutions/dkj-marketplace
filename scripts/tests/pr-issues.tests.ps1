@@ -1818,6 +1818,11 @@ Assert-True (Test-GhMutationTransient -OutputLines @('HTTP 503: Service Unavaila
 Assert-True (Test-GhMutationTransient -OutputLines @('gh: Internal Server Error')) '500 spelled out in words is transient'
 Assert-True (Test-GhMutationTransient -OutputLines @('Gateway Timeout')) 'a gateway timeout is transient'
 Assert-True (Test-GhMutationTransient -OutputLines @('some prose, non-200 OK status code: 500 , more prose')) 'a mid-sentence status code reads too'
+# #3804, measured on PR #3803: the create's URL, then gh's follow-up update cut off mid-response.
+Assert-True (Test-GhMutationTransient -OutputLines @(
+    'https://github.com/DKJ-Solutions/dkj-marketplace/pull/3803',
+    'pull request update failed: unexpected end of JSON input'
+)) '#3804: a truncated JSON response is transient -- the create had landed'
 
 # A 4xx is a REAL refusal from GitHub, not a request that never landed, and must stay a hard failure.
 Assert-Equal $false (Test-GhMutationTransient -OutputLines @('pull request create failed: GraphQL: No commits between main and docs/x (createPullRequest)')) 'a semantic refusal (4xx-shaped) is not transient'
@@ -1842,6 +1847,10 @@ $idxTransientCheck = $openText.IndexOf('Test-GhMutationTransient -OutputLines $c
 Assert-True ($idxCreateFail -ge 0 -and $idxTransientCheck -gt $idxCreateFail) 'the classification runs INSIDE the failure branch, not before gh has actually failed'
 Assert-True ($openText -like "*'--state', 'open', '--json', 'number,url', '--limit', '1'*") 'open-pr re-checks for the landed PR the same way it checks for an existing one'
 Assert-True ($openText -like '*this may have landed anyway*') 'and says so rather than a flat "failed"'
+$idxLanded = $openText.IndexOf('the create landed despite the reported failure')
+$idxRestore = $openText.IndexOf("'pr', 'edit', `"`$(`$recheckPr.number)`"")
+Assert-True ($idxLanded -ge 0 -and $idxRestore -gt $idxLanded) '#3804: a create that landed despite the failure gets its label, assignee and milestone set again'
+Assert-True ($openText -like "*if (`$label) { `$restoreArgs += @('--add-label', `$label) }*") '#3804: and the label is among them -- it is what PR #3803 lost'
 
 Assert-True ($shipMergedText -like '*Test-GhMutationTransient -OutputLines $merge.Output*') 'ship-pr classifies a failed merge before reporting it as failed'
 Assert-True ($shipMergedText -like '*$mergeTransientRecovery = $true*') 'and records the recovery so the read-back below can tell it apart from an ordinary exit 0'

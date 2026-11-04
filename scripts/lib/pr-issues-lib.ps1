@@ -816,6 +816,12 @@ function Test-GhMutationTransient {
     # repo's guess at one -- the phrase measured verbatim in inbound #1916.
     if ($text -match '(?i)GraphQL:\s*Something went wrong while executing your query') { return $true }
 
+    # A RESPONSE BODY THAT ENDED MID-WAY IS A TRANSPORT FAILURE, not an answer (issue #3804). Measured
+    # on PR #3803: `gh pr create` printed the new PR's URL and then failed on its own follow-up call
+    # with 'pull request update failed: unexpected end of JSON input'. gh could not parse what came
+    # back because it was cut off, so GitHub refused nothing -- and the create had landed.
+    if ($text -match '(?i)unexpected end of JSON input') { return $true }
+
     return $false
 }
 
