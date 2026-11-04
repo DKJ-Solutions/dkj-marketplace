@@ -155,7 +155,9 @@ function Get-PageInfoScript {
 function Format-GeneralPageHtml {
     <#
         The whole page around -Body. -Title is the page's own name: the last crumb, the h1 and the
-        <title> (after -SiteName). -HubHref is where
+        <title> (after -SiteName). A TOOLBOX page (any -BrandTag but 'product') stands in the desktop shell (#3811,
+        Format-ToolboxShellOpen): there -Brand, -BrandTag and -Menu draw nothing, and what is said below about the site
+        header, the breadcrumb bar and the settings button describes a product's page. -HubHref is where
         the first crumb, "Home" (#3270), goes: '/' by default, the general server's own root and its home page. It was '/hub' while these pages could be relayed from a product's origin (#3168), where '/' is the product; nothing relays them any more, and a caller on another origin names its own -HubHref. The server still answers '/hub', so an old link keeps working.
         -Style is the page's own layer, names the house file does not define. -Lead and
         -FooterNote are markup the caller has escaped. -Lead is the page's <meta name="description">, never a
@@ -232,20 +234,24 @@ function Format-GeneralPageHtml {
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
     [void]$sb.AppendLine('<body>')
+    # Shared by both layouts: the drawn "?" of -Info, and the long-page warning (#3563) a page with too many sections carries.
+    $glyph = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
+        '<path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5M12 17.5v.01" /></svg>'
+    $sections = Get-PageSectionCount -Body $Body
+    $longWarn = if ($sections -gt $script:LongPageSectionLimit) {
+        '<p class="msg--warn" role="alert">This page holds ' + $sections + ' sections in one column. A page with more than ' +
+            $script:LongPageSectionLimit + ' becomes an overview of cards, each opening a page of its own: the house style''s page rule (#3563).</p>'
+    } else { '' }
     if ($toolbox) {
-        $glyph = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
-            '<path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5M12 17.5v.01" /></svg>'
+        # No settings button in the shell: the toolbox's theme is chosen on its own /settings page, a node of the tree.
         $infoHtml = if ($Info -and -not $Bare) {
             '<button class="page-info-button" type="button" id="page-info-button" aria-label="About ' + (& $e $Title) + '" aria-describedby="page-info" aria-expanded="false">' + $glyph + '</button>' +
             '<div class="tooltip tooltip--explain" id="page-info" role="tooltip">' + $Info + '</div>'
         } else { '' }
         $trail = @(@($ParentCrumbs | Where-Object { $_ }) + @(@{ Label = $Title; Href = '' }))
-        [void]$sb.Append((Format-ToolboxShellOpen -Title $Title -Current (Get-ToolboxCurrentHref -Title $Title -ParentCrumbs $ParentCrumbs) -Trail $trail -HomeLabel $HomeLabel -HubHref $HubHref -Bare:$Bare -InfoHtml $infoHtml -HeadAside $HeadAside))
-        $sections = Get-PageSectionCount -Body $Body
-        if ($sections -gt $script:LongPageSectionLimit) {
-            [void]$sb.AppendLine('<p class="msg--warn" role="alert">This page holds ' + $sections + ' sections in one column. A page with more than ' +
-                $script:LongPageSectionLimit + ' becomes an overview of cards, each opening a page of its own: the house style''s page rule (#3563).</p>')
-        }
+        $tree = @(Get-ToolboxTree)
+        [void]$sb.Append((Format-ToolboxShellOpen -Title $Title -Current (Get-ToolboxCurrentHref -Title $Title -ParentCrumbs $ParentCrumbs -Tree $tree) -Tree $tree -Trail $trail -HomeLabel $HomeLabel -HubHref $HubHref -Bare:$Bare -InfoHtml $infoHtml -HeadAside $HeadAside))
+        if ($longWarn) { [void]$sb.AppendLine($longWarn) }
         [void]$sb.Append($Body)
         if ($FooterNote) { [void]$sb.AppendLine('<p class="note">' + $FooterNote + '</p>') }
         [void]$sb.AppendLine((Format-ToolboxShellClose))
@@ -262,7 +268,7 @@ function Format-GeneralPageHtml {
     if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href $HubHref -Tag $BrandTag -Menu $Menu -Current (Get-SiteHeaderMenuCurrent -Menu $Menu -Title $Title -ParentCrumbs $ParentCrumbs))) }
     [void]$sb.AppendLine('<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>')
     [void]$sb.AppendLine('<li><a href="' + (& $e $HubHref) + '">' + (& $e $HomeLabel) + '</a></li>')
-    $sep = '<span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span>'
+    $sep = Get-BreadcrumbSep
     foreach ($c in @($ParentCrumbs)) { if ($c) { [void]$sb.AppendLine('<li>' + $sep + '<a href="' + (& $e $c.Href) + '">' + (& $e $c.Label) + '</a></li>') } }
     [void]$sb.AppendLine('<li>' + $sep + '<span aria-current="page">' + (& $e $Title) + '</span></li>')
     [void]$sb.AppendLine('</ol></nav></div></div>')
@@ -275,8 +281,6 @@ function Format-GeneralPageHtml {
             # The h1 and its "?" on one row; the tooltip is fixed, placed by Get-PageInfoScript beside the button.
             # The "?" glyph is drawn, as mesowise draws its own (Maikel, October 31, 2026), so it never leans on a font's
             # baseline; its ring is the button's CSS border (.page-info-button::before), in a 44px button that is all tap target.
-            $glyph = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
-                '<path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5M12 17.5v.01" /></svg>'
             [void]$sb.AppendLine('<div class="page-title"><h1>' + (& $e $Title) + '</h1><button class="page-info-button" type="button" id="page-info-button" aria-label="About ' + (& $e $Title) + '" aria-describedby="page-info" aria-expanded="false">' + $glyph + '</button></div>')
             [void]$sb.AppendLine('<div class="tooltip tooltip--explain" id="page-info" role="tooltip">' + $Info + '</div>')
         } else {
@@ -287,11 +291,7 @@ function Format-GeneralPageHtml {
     }
     # A LONG PAGE BECOMES CARDS WITH A PAGE EACH (#3563): the rule was applied page by page and written down nowhere,
     # so a page that breaks it now says so itself, at its top, rather than waiting for the owner to spot it.
-    $sections = Get-PageSectionCount -Body $Body
-    if ($sections -gt $script:LongPageSectionLimit) {
-        [void]$sb.AppendLine('<p class="msg--warn" role="alert">This page holds ' + $sections + ' sections in one column. A page with more than ' +
-            $script:LongPageSectionLimit + ' becomes an overview of cards, each opening a page of its own: the house style''s page rule (#3563).</p>')
-    }
+    if ($longWarn) { [void]$sb.AppendLine($longWarn) }
     [void]$sb.Append($Body)
     if ($FooterNote) { [void]$sb.AppendLine('<p class="note">' + $FooterNote + '</p>') }
     [void]$sb.AppendLine('</main>')
@@ -1240,6 +1240,11 @@ function Get-SiteHeaderMenuCurrent {
     return ''
 }
 
+function Get-BreadcrumbSep {
+    <# The chevron between two crumbs, the house's own (house-style.css, "Breadcrumbs"): one copy for the breadcrumb bar, the shell's bar and the release notes. #>
+    '<span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span>'
+}
+
 function Get-ToolboxShellStyle {
     <#
         The page layer the Toolbox's desktop shell needs on top of the house's (house-style.css, "Desktop shell"; Dave,
@@ -1281,12 +1286,12 @@ function Format-ToolboxShellOpen {
         -InfoHtml and -HeadAside are markup the caller has escaped; every other value is escaped here.
     #>
     param([AllowEmptyString()][string]$Title = '', [AllowEmptyString()][string]$Current = '', [AllowEmptyCollection()][object[]]$Trail = @(),
-        [string]$HomeLabel = 'Tools', [string]$HubHref = '/', [switch]$Bare, [AllowEmptyString()][string]$InfoHtml = '', [AllowEmptyString()][string]$HeadAside = '', [switch]$NoColumn)
+        [string]$HomeLabel = 'Tools', [string]$HubHref = '/', [switch]$Bare, [AllowEmptyString()][string]$InfoHtml = '', [AllowEmptyString()][string]$HeadAside = '', [switch]$NoColumn, [AllowNull()][object[]]$Tree = $null)
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.AppendLine('<div class="shell shell--no-aside">')
     # The bar: where the page sits. Home is a crumb only where the page is not home itself.
-    $sep = '<span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span>'
+    $sep = Get-BreadcrumbSep
     [void]$sb.Append('<div class="shell__bar"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>')
     $steps = @($Trail | Where-Object { $_ })
     if ($steps.Count) { [void]$sb.Append('<li><a href="' + (& $e $HubHref) + '">' + (& $e $HomeLabel) + '</a></li>') }
@@ -1301,7 +1306,8 @@ function Format-ToolboxShellOpen {
     $mark = { param($href) if ($href -eq $Current) { ' aria-current="page"' } else { '' } }
     [void]$sb.Append('<nav class="shell__nav" aria-label="Main"><ul class="tree tb-tree-root">')
     [void]$sb.Append('<li><a class="tree__item" href="' + (& $e $HubHref) + '"' + (& $mark $HubHref) + '><span class="tree__label">' + (& $e $HomeLabel) + '</span></a></li>')
-    foreach ($n in @(Get-ToolboxTree)) {
+    if ($null -eq $Tree) { $Tree = @(Get-ToolboxTree) }
+    foreach ($n in @($Tree)) {
         [void]$sb.Append('<li><a class="tree__item" href="' + (& $e $n.Href) + '"' + (& $mark $n.Href) + '><span class="tree__label">' + (& $e $n.Label) + '</span></a>')
         $ch = @($n.Children | Where-Object { $_ })
         if ($ch.Count) {
@@ -1336,11 +1342,13 @@ function Format-ToolboxShellClose {
 function Get-ToolboxCurrentHref {
     <#
         Which tree node a Toolbox page is (Format-ToolboxShellOpen -Current): the node whose Label is the page's -Title,
-        searched under its parent crumbs first, else anywhere in the tree; else the deepest parent crumb that is a
-        node, so a page below the tree (a lens, a run) marks the node it sits under. '' where none is.
+        anywhere in the tree (no two nodes share a label today); else the deepest parent crumb that is a node, so a page
+        below the tree (a lens, a run) marks the node it sits under. '' where none is. -Tree is Get-ToolboxTree's answer,
+        passed in so a page builds it once.
     #>
-    param([AllowEmptyString()][string]$Title = '', [AllowEmptyCollection()][object[]]$ParentCrumbs = @())
-    $all = @(Get-ToolboxTree | ForEach-Object { $_; @($_.Children) } | Where-Object { $_ })
+    param([AllowEmptyString()][string]$Title = '', [AllowEmptyCollection()][object[]]$ParentCrumbs = @(), [AllowNull()][object[]]$Tree = $null)
+    if ($null -eq $Tree) { $Tree = @(Get-ToolboxTree) }
+    $all = @($Tree | ForEach-Object { $_; @($_.Children) } | Where-Object { $_ })
     $hit = @($all | Where-Object { $_.Label -eq $Title })[0]
     if ($hit) { return $hit.Href }
     $parents = @($ParentCrumbs | Where-Object { $_ })
@@ -1357,6 +1365,8 @@ function Format-RepoHomeHeadHtml {
         the caller's own <head> is where a description goes. No eyebrow: the h1 already names the repo. The general banner (#3250) opens it, above the
         site header. With -Brand the site header stands above the bar and there is no intro: <main> opens on the
         sections. The caller writes the <head> and '<body>' before it and the sections and </main> after it.
+        Under -BrandTag 'toolbox' all of that gives way to the desktop shell (#3811): this returns Format-ToolboxShellOpen
+        for the home page, -Brand, -Menu and -Lead are not drawn, and the caller closes it with Format-ToolboxShellClose.
     #>
     param([Parameter(Mandatory = $true)][string]$RepoName, [Parameter(Mandatory = $true)][string]$Lead, [AllowEmptyString()][string]$Brand = '',
         [AllowEmptyString()][string]$BrandTag = '', [string]$HomeLabel = 'Tools', [AllowNull()][object[]]$Menu = $null)
@@ -2153,11 +2163,33 @@ function Format-ReleaseNotesDevPage {
         '@media (max-width: 38rem) { .wrap { padding: var(--spacing-4) var(--spacing-4) var(--spacing-12); } header.masthead { padding-top: 0; } header.masthead h1 { font-size: var(--text-h1); } .sheet { padding: var(--spacing-1) var(--spacing-4) var(--spacing-3); border-radius: var(--radius-3); } }'
         '</style>'
     ) -join "`n"
-    $sep = '<span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span>'
-    $crumbs = if ($Release) {
-        # Only a label of the builder's own shape is placed, so the crumb never depends on what else an h1 might hold.
+    # A release's own page: only a label of the builder's own shape is placed, so the crumb never depends on what else
+    # an h1 might hold; and the page's own back link goes, because the crumb already is the way back.
+    $label = ''
+    if ($Release) {
         $label = ([regex]'<h1>([^<]*)</h1>').Match($Html).Groups[1].Value
         if ($label -notmatch '^Version [0-9.]+$') { $label = 'Release' }
+        $Html = ([regex]'<a class="back" href="[^"]*">[^<]*</a>\s*').Replace($Html, '', 1)
+    }
+    # Named for a repo the masthead opens with its h1 (#3423): the toolbox around it already names the site. Only here --
+    # the Worker's page has no toolbox around it, and there the eyebrow is the one line naming whose releases these are.
+    if ($RepoName) { $Html = ([regex]'<span class="eyebrow">[^<]*</span>\s*').Replace($Html, '', 1) }
+    $Html = ConvertTo-ReleaseNotesHouseColors -Html $Html
+    $bodyEnd = $Html.LastIndexOf('</body>')
+    # A TOOLBOX'S release notes stand in the desktop shell (#3811), the template's own column inside its scroll pane,
+    # where the shell puts the general banner.
+    if ($RepoName) {
+        $trail = if ($Release) { @(@{ Label = 'Release notes'; Href = '/release-notes' }, @{ Label = $label; Href = '' }) } else { @(@{ Label = 'Release notes'; Href = '' }) }
+        $out = $Html.Substring(0, $bodyEnd) + (Format-ToolboxShellClose -NoColumn) + "`n" + (Format-FitAlarmHtml) + $Html.Substring($bodyEnd)
+        $open = Format-ToolboxShellOpen -Current '/release-notes' -Trail $trail -HubHref $HubHref -Bare -NoColumn
+        $out = $bodyRx.Replace($out, { param($m) $m.Value + "`n" + $open }, 1)
+        $styleEnd = $out.IndexOf('</style>') + '</style>'.Length
+        $out = $out.Substring(0, $styleEnd) + "`n" + $head + "`n<style>" + (Get-ToolboxShellStyle) + "</style>" + $out.Substring($styleEnd)
+        return $htmlRx.Replace($out, ('<html lang="en" ' + (Format-GeneralPagesThemeAttributes) + ' data-width-default="full" data-theme-key="' + (& $e $ThemeKey) + '">'), 1)
+    }
+    # Unnamed: the breadcrumb bar, the floating settings button, and the general banner above them (#3297).
+    $sep = Get-BreadcrumbSep
+    $crumbs = if ($Release) {
         @(('<li>' + $sep + '<a href="/release-notes">Release notes</a></li>'), ('<li>' + $sep + '<span aria-current="page">' + $label + '</span></li>'))
     } else {
         @('<li>' + $sep + '<span aria-current="page">Release notes</span></li>')
@@ -2168,29 +2200,7 @@ function Format-ReleaseNotesDevPage {
         $crumbs
         '</ol></nav></div></div>'
     ) -join "`n"
-    if ($Release) { $Html = ([regex]'<a class="back" href="[^"]*">[^<]*</a>\s*').Replace($Html, '', 1) }
-    # The site header above the bar when the repo is named (it holds no settings button); else the button floats.
-    $bar = if ($RepoName) { (Format-SiteHeaderHtml -Name (ConvertTo-SiteHeaderName -RepoName $RepoName) -Href $HubHref -Tag 'toolbox' -Menu @(Get-HubMenu) -Current '/release-notes') + $bar }
-            else { $bar + "`n" + '<div id="settings" class="theme-settings--floating"></div>' }
-    # Under that header the masthead opens with its h1 (#3423): the house page pattern has no eyebrow under a
-    # site header, which already names the site. Only here -- the Worker's page has no header, and there the
-    # eyebrow is the one line naming whose releases these are.
-    if ($RepoName) { $Html = ([regex]'<span class="eyebrow">[^<]*</span>\s*').Replace($Html, '', 1) }
-    $Html = ConvertTo-ReleaseNotesHouseColors -Html $Html
-    $bodyEnd = $Html.LastIndexOf('</body>')
-    # The general banner above the site header, as on every other hub page (#3297; owner, October 24, 2026). It
-    # stands outside the template's layout, so that is left alone.
-    $bar = (Format-RepoHubBanner) + $bar
-    # A TOOLBOX'S release notes stand in the desktop shell (#3811), the template's own column inside its scroll pane.
-    if ($RepoName) {
-        $trail = if ($Release) { @(@{ Label = 'Release notes'; Href = '/release-notes' }, @{ Label = $label; Href = '' }) } else { @(@{ Label = 'Release notes'; Href = '' }) }
-        $out = $Html.Substring(0, $bodyEnd) + (Format-ToolboxShellClose -NoColumn) + "`n" + (Format-FitAlarmHtml) + $Html.Substring($bodyEnd)
-        $open = Format-ToolboxShellOpen -Current '/release-notes' -Trail $trail -HubHref $HubHref -Bare -NoColumn
-        $out = $bodyRx.Replace($out, { param($m) $m.Value + "`n" + $open }, 1)
-        $styleEnd = $out.IndexOf('</style>') + '</style>'.Length
-        $out = $out.Substring(0, $styleEnd) + "`n" + $head + "`n<style>" + (Get-ToolboxShellStyle) + "</style>" + $out.Substring($styleEnd)
-        return $htmlRx.Replace($out, ('<html lang="en" ' + (Format-GeneralPagesThemeAttributes) + ' data-width-default="full" data-theme-key="' + (& $e $ThemeKey) + '">'), 1)
-    }
+    $bar = (Format-RepoHubBanner) + $bar + "`n" + '<div id="settings" class="theme-settings--floating"></div>'
     $settings = '<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", widths: false });</script>'
 
     # Back to front, so each index still points where it was read. The fit alarm closes the body, as in

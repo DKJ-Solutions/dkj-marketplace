@@ -591,16 +591,16 @@ p { margin: 0; }
    board, not a website. No site header, no breadcrumb bar and no cards: a thin bar across the
    top, then a side tree, a main pane and an optional detail pane, each scrolling on its own and
    told apart by 1px lines instead of whitespace or shadows. Everything is compact (28px rows).
-   DESKTOP ONLY: this layer has no phone media query and no 44px touch target, and it must not be
+   DESKTOP ONLY: this layer has no phone media query and no 44px touch target (its rows are 28px, and it takes no .btn--touch), and it must not be
    used for the mobile-first product, which takes "App components" below. Markup: use div, nav,
-   section and aside, never main (the house's main caps its width at 1080px).
+   section and aside, never main as a pane of the grid (the house's main caps its width at 1080px; a main inside a pane needs that cap lifted, as the hub's .tb-scroll does).
    Every colour pairing is an existing token pair: --fg-1 on --bg-1 and --bg-2, --primary-muted
    on --bg-2, --primary on --bg-1, --bg-2 and --bg-3, --primary-muted on --bg-3, and the status
    fills (--positive-3, --warning-3, --negative-3) as a dot that always sits beside a text label.
    Lines are --bg-3 inside a pane and --bg-4 between panes. The classes are .shell (with --fit and
    --no-aside), .shell__bar, .shell__actions, .shell__nav, .shell__main, .shell__list,
-   .shell__aside, .shell__aside-body, .tree, .toolbar (with __title, __filter, __end), .pane-head,
-   .table--dense and .dot.
+   .shell__aside, .shell__aside-body, .tree (with __item, __chev, __label, __count), .toolbar (with __title,
+   __filter, __end), .pane-head, .table--dense and .dot (with --good, --warn, --bad).
    ========================================================================== */
 
 /* ---- The frame ------------------------------------------------------------- */

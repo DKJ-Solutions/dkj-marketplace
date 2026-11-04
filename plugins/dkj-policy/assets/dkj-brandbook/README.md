@@ -767,10 +767,10 @@ read in VS Code's Simple Browser, and looks like an Explorer or a task board, wh
 storefront) stays mobile-first with desktop as an option. The core (tokens, themes, typography, tables) is
 shared; each layer is a part of [`house-style.css`](house-style.css):
 
-- **Desktop shell**, "Desktop shell: the Toolbox's layer": a thin bar, a side tree, a main pane with a dense
+- **Desktop shell** (in [`house-style.css`](house-style.css), the part "Desktop shell: the Toolbox's layer"): a thin bar, a side tree, a main pane with a dense
   list and an optional detail pane, no site header and no cards. Desktop only, with no phone query. Reference:
   [`patterns/toolbox-shell.html`](patterns/toolbox-shell.html) and the "Desktop shell" specimens.
-- **Mobile-first app**, "App components": the narrow column, touch targets, dialogs, the top bar, and the
+- **Mobile-first app** (the part "App components"): the narrow column, touch targets, dialogs, the top bar, and the
   site header and breadcrumb bar under "Page patterns".
 
 Which of the page-pattern rules below belong to which layer is the next step on #3811, so until then they
