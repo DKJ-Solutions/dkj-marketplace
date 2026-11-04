@@ -467,7 +467,10 @@ function Format-ConsumerPageStart {
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
     [void]$sb.AppendLine('<body>')
-    # The hub's general banner first, above the site header, as on every other hub page (#3297, #3356; owner, October 24, 2026).
+    # The width bar first, above everything (Dave, November 4, 2026): full, fluid and phone as three icons. The product's
+    # alone; the Toolbox stays full. It sets the width the settings panel did, so the panel leaves its own group out.
+    [void]$sb.AppendLine('<div id="width-bar"></div><script>DKJTheme.widthBar(document.getElementById("width-bar"), { label: "Width", full: "Full", fluid: "Fluid", phone: "Phone" });</script>')
+    # The hub's general banner, above the site header, as on every other hub page (#3297, #3356; owner, October 24, 2026).
     [void]$sb.AppendLine((Format-RepoHubBanner))
     # The house site header, holding the settings button, then the breadcrumb bar under it: its trail from Home to this page.
     # Tagged 'product': this page is the product's, beside the plugin's hub (#3540).
@@ -496,7 +499,7 @@ function Format-ConsumerPageEnd {
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.AppendLine('<p class="note">' + $FooterHtml + '</p>')
     [void]$sb.AppendLine('</main>')
-    [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", width: "Width", fluid: "Fluid", phone: "Phone", full: "Full" });</script>')
+    [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", widths: false });</script>')
     # The fit alarm, as the plugin's page shell closes every hub page (#3558).
     [void]$sb.AppendLine((Format-FitAlarmHtml))
     [void]$sb.AppendLine('</body>')

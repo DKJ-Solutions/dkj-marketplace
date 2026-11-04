@@ -33,6 +33,8 @@
                                                      and a panel with the picker, the width and a
                                                      reset; returns the panel's slot for the app's
                                                      own controls)
+     DKJTheme.widthBar(el, options)                  (draws the width bar: full, fluid and phone as
+                                                     three icon buttons in a thin strip above the header)
      DKJTheme.set('ochre') / DKJTheme.reset() / DKJTheme.current()
      DKJTheme.setWidth('full') / DKJTheme.width()
    ========================================================================== */
@@ -212,6 +214,36 @@
     picker(el.querySelector('.theme-settings__picker'), { light: opts.light, dark: opts.dark });
     return el.querySelector('.theme-settings__extra');
   }
+  /* The width bar: a thin strip above the site header holding the page width as three small icon buttons, full,
+     fluid and phone, the way an editor's title bar holds its layout toggles (Dave, November 4, 2026). It sets the
+     same width as the settings panel, so an app that draws it passes widths: false to settings(). widthBar(el,
+     { label, full, fluid, phone }) -- every text optional, Dutch by default, and given as the app's own text,
+     never user input. Drawing the same element twice draws it once. */
+  var WIDTH_ICONS = {
+    full:  '<rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><rect x="3.5" y="4.5" width="9" height="7" rx=".5" class="width-bar__fill"/>',
+    fluid: '<rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><rect x="5.5" y="4.5" width="5" height="7" rx=".5" class="width-bar__fill"/>',
+    phone: '<rect x="4.5" y="1.5" width="7" height="13" rx="1.5"/><path d="M7 12h2"/>'
+  };
+  function widthBar(el, opts) {
+    if (!el || el.querySelector('.width-bar__group')) return;
+    opts = opts || {};
+    var text = { full: opts.full || 'Volledig', fluid: opts.fluid || 'Vloeiend', phone: opts.phone || 'Telefoon' };
+    var html = '<div class="width-bar__group" role="group" aria-label="' + (opts.label || 'Breedte') + '">';
+    ['full', 'fluid', 'phone'].forEach(function (w) {
+      html += '<button type="button" class="width-bar__button" data-width="' + w + '" aria-pressed="false" aria-label="' + text[w] +
+        '" title="' + text[w] + '"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
+        WIDTH_ICONS[w] + '</svg></button>';
+    });
+    el.classList.add('width-bar');
+    el.innerHTML = html + '</div>';
+    var group = el.querySelector('.width-bar__group');
+    group.addEventListener('click', function (e) {
+      for (var node = e.target; node && node !== group; node = node.parentNode)
+        if (node.getAttribute && node.getAttribute('data-width')) { setWidth(node.getAttribute('data-width')); return; }
+    });
+    widthGroups.push(group);
+    applyWidth();
+  }
   function set(id) { if (!byId(id)) return; try { localStorage.setItem(key, id); } catch (e) {} apply(); }
   function reset() { try { localStorage.removeItem(key); } catch (e) {} apply(); }
 
@@ -250,6 +282,6 @@
   }
   apply();
   applyWidth();
-  window.DKJTheme = { themes: THEMES.slice(), set: set, reset: reset, picker: picker, settings: settings, current: function () { return root.getAttribute('data-theme'); },
+  window.DKJTheme = { themes: THEMES.slice(), set: set, reset: reset, picker: picker, settings: settings, widthBar: widthBar, current: function () { return root.getAttribute('data-theme'); },
     widths: WIDTHS.slice(), setWidth: setWidth, width: function () { return root.getAttribute('data-width'); } };
 })();
