@@ -1851,6 +1851,32 @@ $idxNoQueueRecoveryGuard = $shipMergedText.IndexOf('if ($mergeTransientRecovery)
 Assert-True ($idxRecoveryFlag -ge 0 -and $idxQueueRecoveryGuard -gt $idxRecoveryFlag -and $idxNoQueueRecoveryGuard -gt $idxRecoveryFlag) 'the recovery flag is read by BOTH the queue and the no-queue read-back, not just one'
 Assert-True ($shipMergedText -like '*this run does not know whether the merge happened*') 'an unreadable state after a recovered failure is reported as unknown, not silently folded through'
 
+# --- Test-GhMergeInProgress: a held merge lock is a merge still landing (#3802) ----------------------
+# Measured on PR #3800: a 502 on the merge, then a re-run refused with GitHub's own wording below, while
+# the PR still read OPEN. ship-pr reported it as 'Merge of PR #3800 failed.'
+Write-Host "Test-GhMergeInProgress -- 'Merge already in progress' is not a failed merge" -ForegroundColor Cyan
+
+Assert-True (Test-GhMergeInProgress -OutputLines @('GraphQL: Merge already in progress (mergePullRequest)')) '#3802: the answer measured on PR #3800, verbatim'
+Assert-True (Test-GhMergeInProgress -OutputLines @('X Pull request DKJ-Solutions/x#1 is not mergeable', 'graphql: merge already in progress (mergePullRequest)')) 'matched case-insensitively and on any line'
+Assert-Equal $false (Test-GhMergeInProgress -OutputLines @('HTTP 405: Pull Request is not mergeable')) 'a real not-mergeable refusal stays a refusal'
+Assert-Equal $false (Test-GhMergeInProgress -OutputLines $null) '$null is not a crash'
+Assert-Equal $false (Test-GhMergeInProgress -OutputLines @()) 'no output is not a lock'
+# KEPT APART: the transient classifier also serves open-pr's create, and its caller polls for seconds.
+Assert-Equal $false (Test-GhMutationTransient -OutputLines @('GraphQL: Merge already in progress (mergePullRequest)')) 'the lock is not folded into the 5xx classifier'
+
+# Call sites: a reverted caller leaves every unit assert green while ship-pr fails the merge as before.
+Assert-True ($shipMergedText -like '*$mergeInProgress = Test-GhMergeInProgress -OutputLines $merge.Output*') 'ship-pr classifies a failed merge as a held lock'
+$idxInProgress = $shipMergedText.IndexOf('$mergeInProgress = Test-GhMergeInProgress')
+$idxHardFail = $shipMergedText.IndexOf('Write-Error "Merge of PR #$pr failed."')
+Assert-True ($idxInProgress -ge 0 -and $idxHardFail -gt $idxInProgress) 'and does so BEFORE the hard-failure path can report it as failed'
+Assert-True ($shipMergedText -like '*$mergeReadAttempts = if ($mergeTransientRecovery) { 13 } else { 3 }*') 'a failed merge call gets the longer read-back, an ordinary exit 0 keeps three reads'
+Assert-True ($shipMergedText -like '*NOT folded, and NOT a failed merge*') 'an unconfirmed merge after a failed call is handed back, not reported as failed'
+$idxHeldBranch = $shipMergedText.IndexOf("elseif (`$mergedState -ne 'MERGED' -and `$mergeTransientRecovery)")
+$idxHeldExit = $shipMergedText.IndexOf('exit 1', $idxHeldBranch)
+$heldBody = $shipMergedText.Substring($idxHeldBranch, $idxHeldExit - $idxHeldBranch)
+Assert-True ($idxHeldBranch -ge 0 -and $heldBody -notlike '*Remove-ShipMergeOnGreenArmForJudgement*') 'and the PR stays armed: a held lock is not a judgement on the branch'
+Assert-True ($shipMergedText -like '*$mergeNotMergedCause = if ($queueVerdict.Readable)*') 'the #1325 refusal names a merge queue only when the trunk''s rules were not read'
+
 # --- Get-FailedCheckRunRefs / Get-AuthoredFailureNote: the reason, relayed (#1103) ---------------
 #
 # Eight issues have been filed here against a red `claude-review` whose own diagnostic step had

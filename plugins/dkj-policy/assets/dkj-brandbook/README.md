@@ -85,6 +85,13 @@ that checks the stylesheet's syntax and tokens; the page is the look.
    the heading, or in a `code` element in the content under it.
 8. **A heading has five words at most** (Maikel, November 2, 2026): an `h1`, `h2` or `h3` that runs longer
    reads as a sentence. It names the subject; who it is for and what changed go in the content under it.
+   **A page's name has two words at most** (Dave, November 4, 2026,
+   [#3797](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3797)): its `h1`, and the crumb that reads
+   the same ([the breadcrumb bar](#every-page-the-breadcrumb-bar)). Every ancestor crumb repeats its page's
+   name, so a trail of longer names stops fitting its one-line bar. A hyphenated word counts as one, and a
+   subtitle after a dash counts in full, so it moves into the page. The five words stay the cap for `h2` and
+   `h3`. The hub's page shell checks it on sight: the fit alarm warns when the live page's `h1` or its
+   current crumb runs past two words.
 9. **A page carries exactly one `h1`** (Maikel, November 2, 2026,
    [#3745](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3745)): two on one page *"mag sowieso
    nooit"* (must never happen at all). Content a page renders (a lens, a release note, any markdown) never
@@ -814,7 +821,8 @@ its own.
   the trail is in the paper steps, which all read on it: the chevron `--bg-3`, the ancestor links `--bg-2` (with
   a `--bg-1` focus ring), the current page `--bg-1`, every crumb at the regular weight and `--text-base` (owner, October 24, 2026; it was `--text-sm`); a link shows its underline only under the pointer. On the home page itself the trail is that one crumb: the bar is
   still there, so it sits in the same place on every page.
-- **The labels** are the pages' own names, short, in the app's language. A crumb names a page, never a
+- **The labels** are the pages' own names, short, in the app's language: **two words at most**, as rule 8
+  under [How to use it](#how-to-use-it) holds the page name (#3797). A crumb names a page, never a
   section on a page: an in-page anchor is not a level.
 - **The page's `h1` reads exactly what its current crumb reads** (owner, October 25, 2026): the same words,
   the same case, so the bar and the page never name one page twice in two ways. Write the name once and

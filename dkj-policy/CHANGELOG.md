@@ -2,7 +2,83 @@
 
 ## [Unreleased]
 
-**4 / 5 minor entries** <!-- pending-tally -->
+**7 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3797-page-name-two-words · 20261104-121848Z
+
+The brand book now holds a page's name, its `h1` and the breadcrumb crumb that reads the same, to two words at most (rule 8 and the breadcrumb bar's labels; #3797). The five-word cap stays for `h2` and `h3`. The hub's fit alarm checks it on sight and warns when the live page's `h1` or its current crumb runs longer. A hyphenated word counts as one.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions app that takes this brand book now has a two-word page name to follow, so a page title such as "Subject - a subtitle" moves its subtitle into the page. Every hub page warns about a name that does not.
+
+**Score:** 2
+
+#### Pull Request
+
+Brand book: a page name is at most two words, checked by the page shell
+
+Plugins: dkj-policy
+
+[PR #3800](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3800)
+
+---
+
+### DEPLOY: fix/3798-watcher-claude-holds-session · 20261104-104856Z
+
+The dev-preview watcher no longer stops a server while Claude Code still runs in the logon session that
+started it ([#3798](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3798)). Switched away from with
+fast user switching, a session reads disconnected while Claude Code keeps working in it, and its hub was
+stopped one grace later; the product it started after the switch survived, so the outcome depended only on
+when each server started. The watcher now reads its own session's process table at a disconnect, and a
+`claude.exe` (or `@anthropic-ai/claude-code` under node) there resets the clock as an uncertain read does.
+Once none is left, the session counts as abandoned, as #3569 meant.
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Toolbox hub that went dark mid-session, on a machine with two accounts, now stays up for as long as the
+Claude Code that started it is running.
+**Score:** 2
+
+#### Pull Request
+
+dev-preview watcher: a running Claude Code holds a disconnected session
+
+Plugins: dkj-policy
+
+[PR #3805](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3805)
+
+---
+
+### DEPLOY: fix/3802-merge-in-progress · 20261104-103914Z
+
+ship-pr no longer reports GitHub's `Merge already in progress` as a failed merge (#3802). After a 5xx
+or that answer, it polls the PR for about a minute and folds once it reads MERGED. If it does not, it
+says the merge is held by GitHub and leaves the PR armed for the merge-on-green sweep. The refusal for
+an unmerged PR no longer names a merge queue when the trunk's rules were read and carry none.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Whoever runs ship-pr in a consumer and hits a GitHub server error on the merge now gets a run that
+waits the lock out or hands it back with the right advice, instead of a hard failure followed by a
+misleading hint about a merge queue. Small, and noticed only when GitHub has a bad minute.
+
+**Score:** 2
+
+#### Pull Request
+
+ship-pr: 'Merge already in progress' is a merge still landing, not a failed merge
+
+Plugins: dkj-policy
+
+[PR #3803](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3803)
+
+---
 
 ### DEPLOY: feat/toolbox-only-banner · 20261104-100346Z
 

@@ -218,6 +218,21 @@ $s = Get-DevPreviewWatchStep -State -1 -Since $null -Now $t0 -GraceSeconds 60
 Assert-True (-not $s.Armed) 'an unreadable state does not arm the watch either'
 $s = Get-DevPreviewWatchStep -State 1 -Since $null -Now $t0 -GraceSeconds 60
 Assert-True $s.Armed 'WTSConnected arms it as WTSActive does'
+# #3798: a disconnected session in which Claude Code still runs is in use.
+$s = Get-DevPreviewWatchStep -State 4 -Since $t0 -Now $t0.AddSeconds(600) -GraceSeconds 60 -Armed $true -Held $true
+Assert-True (-not $s.Stop -and $null -eq $s.Since -and $s.Armed) 'held by Claude Code: never stopped, and the clock resets (#3798)'
+$heldProcs = @(
+    @{ Name = 'claude.exe'; SessionId = 2; CommandLine = '"C:\Users\u\.local\bin\claude.exe"' },
+    @{ Name = 'node.exe'; SessionId = 3; CommandLine = 'node "C:\npm\node_modules\@anthropic-ai\claude-code\cli.js"' },
+    @{ Name = 'node.exe'; SessionId = 4; CommandLine = 'node "C:\npx\@cloudflare\mcp-server-cloudflare\dist\index.js"' },
+    @{ Name = 'Claude.exe'; SessionId = 5; CommandLine = '' }
+)
+Assert-True (Test-DevPreviewSessionHeld -SessionId 2 -Processes $heldProcs) 'the native claude.exe holds its session'
+Assert-True (Test-DevPreviewSessionHeld -SessionId 3 -Processes $heldProcs) 'the npm package under node holds its session'
+Assert-True (-not (Test-DevPreviewSessionHeld -SessionId 4 -Processes $heldProcs)) 'another node process does not'
+Assert-True (Test-DevPreviewSessionHeld -SessionId 5 -Processes $heldProcs) 'the name is matched case-insensitively'
+Assert-True (-not (Test-DevPreviewSessionHeld -SessionId 9 -Processes $heldProcs)) 'a Claude Code in ANOTHER session does not hold this one'
+Assert-True (-not (Test-DevPreviewSessionHeld -SessionId 2 -Processes @())) 'an empty table holds nothing'
 Assert-Equal '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\p\w.ps1" -ProcessId 12 -StartTicks 34' (Get-DevPreviewWatchArgs -Watcher 'C:\p\w.ps1' -ProcessId 12 -StartTicks 34) 'the watcher is started for the server''s pid and start time'
 Assert-Equal '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\p\w.ps1" -ProcessId 12 -StartTicks 34 -OwnerId 56 -OwnerStartTicks 78' (Get-DevPreviewWatchArgs -Watcher 'C:\p\w.ps1' -ProcessId 12 -StartTicks 34 -OwnerId 56 -OwnerStartTicks 78) 'and for its owner, where a test named one (#3620)'
 Assert-True ($null -eq (Get-DevPreviewOwner -Value '')) 'no DKJ_DEV_PREVIEW_OWNER_PID: no owner, which is every real session (#3620)'
@@ -696,6 +711,11 @@ try {
         $tgt = & $newTarget
         $w = Start-Process -FilePath 'powershell.exe' -WindowStyle Hidden -PassThru -ArgumentList ((Get-DevPreviewWatchArgs -Watcher $Watch -ProcessId $tgt.Id -StartTicks $tgt.StartTime.ToFileTimeUtc()) + ' -ForceState 4 -GraceSeconds 0 -PollSeconds 1')
         Assert-True (-not $tgt.WaitForExit(4000)) 'a session disconnected from the start: the server keeps running (#3595)'
+        & taskkill.exe /T /F /PID $tgt.Id 2>&1 | Out-Null
+        Assert-True $w.WaitForExit(15000) 'and the watcher leaves with it'
+        $tgt = & $newTarget
+        $w = Start-Process -FilePath 'powershell.exe' -WindowStyle Hidden -PassThru -ArgumentList ((Get-DevPreviewWatchArgs -Watcher $Watch -ProcessId $tgt.Id -StartTicks $tgt.StartTime.ToFileTimeUtc()) + ' -ForceState "0 4" -ForceHeld 1 -GraceSeconds 0 -PollSeconds 1')
+        Assert-True (-not $tgt.WaitForExit(4000)) 'a session disconnected while Claude Code still runs in it: the server keeps running (#3798)'
         & taskkill.exe /T /F /PID $tgt.Id 2>&1 | Out-Null
         Assert-True $w.WaitForExit(15000) 'and the watcher leaves with it'
         $tgt = & $newTarget
