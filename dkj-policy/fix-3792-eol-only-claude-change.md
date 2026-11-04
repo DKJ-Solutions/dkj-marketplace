@@ -67,6 +67,9 @@ change is still named in the summary as before.
 
 #### What makes this deploy extra special
 
+Nothing beyond the summary line it corrects: a sweep that already worked now stops asking for a commit
+that does not exist, and changes nothing for a checkout whose `.claude/` really changed.
+
 **Score:** N/A
 
 #### Pull Request
