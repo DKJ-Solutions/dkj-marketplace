@@ -398,12 +398,12 @@ Assert-True (-not (Test-DevPreviewVsCodeRoute -SettingsText "{`n  // `"localhost
 
 # A repo that states no Get-DevPreview: the home page, its setup cards, no Products section (#3270).
 $html = Format-PluginRepoHubHtml -RepoName 'dkj-thumbnail-generator' -PagesUrl 'http://localhost:4890'
-Assert-True ($html -match 'site-header__name">dkj-thumbnail-generator <span class="site-header__tag">toolbox</span>' -and $html -notmatch '<h1' -and $html -notmatch 'class="eyebrow"') 'the site header names the repo, so the home page needs no h1 and no eyebrow (October 22, 2026)'
+Assert-True ($html -match '<title>dkj-thumbnail-generator -- Tools</title>' -and ([regex]::Replace($html, '<title>.*?</title>', '')) -notmatch 'dkj-thumbnail-generator' -and $html -notmatch 'site-header' -and $html -notmatch '<h1' -and $html -notmatch 'class="eyebrow"') 'the <title> names the repo and nothing else on the home page does: it stands in the desktop shell with no site header, no h1 and no eyebrow (October 22, 2026; #3811)'
 Assert-True ($html -match '<main class="page-column">') 'and takes the home page form: the page column'
 Assert-True ($html -match 'house-theme\.js"></script>\s*<script>DKJTheme\.setWidth\("full"\);</script>' -and $html -notmatch 'fluid: "Fluid"') 'the hub pins the Toolbox''s one width, full, right after house-theme.js, and offers no width choice (Maikel, November 4, 2026)'
-Assert-True ($html -match '(?s)<body>\s*<div class="notice" id="hub-banner".*?</script>\s*<header class="site-header">.*?</header>\s*<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>\s*<li><span aria-current="page">Tools</span></li>') 'the banner opens <body>, the site header under it and the breadcrumb bar under that, its trail the one crumb Tools (#3090, #3270)'
-Assert-True ($html.Contains((Format-RepoHubBanner)) -and $html.IndexOf('id="hub-banner"') -lt $html.IndexOf('class="site-header"')) 'the plugin hub carries the same airsquats banner, above the site header (#3250; owner, October 24, 2026)'
-Assert-True (([regex]::Matches($html, '<header')).Count -eq 1) 'and its one <header> is the site header: no intro, so none the house style would lay out as a flex row'
+Assert-True ($html -match '(?s)<body>\s*<div class="shell shell--no-aside">\s*<div class="shell__bar"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><span aria-current="page">Tools</span></li></ol></nav>.*?<nav class="shell__nav" aria-label="Main">.*?<div class="shell__main">\s*<div class="shell__list tb-scroll">\s*<div class="notice" id="hub-banner"' -and $html -notmatch 'breadcrumbs-bar') 'the shell opens <body>: the bar with its one crumb Tools, the tree, then the scroll pane that opens on the banner (#3090, #3270; #3811)'
+Assert-True ($html.Contains((Format-RepoHubBanner)) -and ([regex]::Matches($html, 'id="hub-banner"')).Count -eq 1 -and $html.IndexOf('id="hub-banner"') -gt $html.IndexOf('class="shell__list tb-scroll"') -and $html.IndexOf('id="hub-banner"') -lt $html.IndexOf('<main class="page-column">')) 'the plugin hub carries the same airsquats banner, once, as the first thing in the scroll pane above the page column (#3250; owner, October 24, 2026; #3811)'
+Assert-True (([regex]::Matches($html, '<header')).Count -eq 0 -and $html -notmatch 'class="toolbar"') 'and it has no <header> at all: no site header, and no intro or toolbar the house style would lay out (#3811)'
 Assert-True ($html.Contains((Format-FitAlarmHtml)) -and $html.IndexOf('id="fit-alarm"') -lt $html.LastIndexOf('</body>')) 'the hub home page carries the fit alarm before </body>, as every page below it does (#3558)'
 Assert-True ($html -match '<html lang="en" data-theme-default="lilac" data-width-default="full" data-theme-key="general-pages">') 'with no stored theme it falls back to lilac, and it shares the general pages'' theme key: one origin now'
 Set-GeneralPagesThemeDefault 'teal'
@@ -437,7 +437,7 @@ Assert-True ($html -match '<title>dkj-thumbnail-generator -- Tools</title>' -and
 $html = Format-PluginRepoHubHtml -RepoName 'dkj-recipes' -Folder 'recipes-checkout' -Mode 'product' -ProductUrl 'http://localhost:4321/dkj-recipes/' -PagesUrl 'http://localhost:4890'
 Assert-True ($html -match '<div class="ph-cards">\s*<section class="card card--link"><nav class="menu-list" aria-label="Product"><a class="menu-item" href="http://localhost:4321/dkj-recipes/">') 'a stated server is the first card, linking its url'
 Assert-True ($html -notmatch '<h2>Products</h2>' -and $html -notmatch 'Set up a product' -and $html -notmatch 'Add a dev server of your own') 'with no Products heading, and the setup cards are only for a repo that states none'
-Assert-True ($html -match 'site-header__name">dkj-recipes <span') 'the site header names the repo whatever the repo states'
+Assert-True ($html -match '<title>dkj-recipes -- Tools</title>' -and $html -notmatch 'site-header') 'the <title> names the repo whatever the repo states, and there is no site header (#3811)'
 $html = Format-PluginRepoHubHtml -RepoName 'dkj-recipes' -Mode 'product' -ProductUrl '' -PagesUrl 'http://localhost:4890'
 Assert-True ($html -match 'own server is not running' -and $html -notmatch 'aria-label="Product"') 'a stated server that is not running says so, with no link'
 foreach ($badProduct in 'http://evil.example/x', 'javascript:alert(1)', 'https://localhost:4321/', 'http://localhost:4321@evil.example/', "http://localhost:4321/a`r`nb", 'http://localhost:99999/', 'http://localhost:4321//evil.example/', 'http://localhost:4321/"><script>x</script>') {
@@ -463,17 +463,17 @@ Assert-True ((Format-PluginRepoRepositoryHtml -RepoName 'a<b>&c' -Folder 'f<x>')
 
 # The two values from outside.
 $html = Format-PluginRepoHubHtml -RepoName '<script>x</script>'
-Assert-True ($html -notmatch '<script>x' -and $html -match 'site-header__name">&lt;script&gt;x&lt;/script&gt; <span class="site-header__tag">toolbox</span>') 'a repo name is HTML-escaped before it reaches the home page'
+Assert-True ($html -notmatch '<script>x' -and $html -match '<title>&lt;script&gt;x&lt;/script&gt; -- Tools</title>') 'a repo name is HTML-escaped before it reaches the home page'
 $html = Format-PluginRepoHubHtml -RepoName ('a&amp;b<i>"' + "'q") -Folder '"><b>f</b>'
 $once = 'a&amp;amp;b&lt;i&gt;&quot;&#39;q'
-Assert-True ($html -match ('site-header__name">' + [regex]::Escape($once) + ' <span') -and $html -match ('<title>' + [regex]::Escape($once) + ' -- Tools</title>')) 'and escaped exactly once, in the site header and the title alike'
+Assert-True ($html -match ('<title>' + [regex]::Escape($once) + ' -- Tools</title>') -and ([regex]::Replace($html, '<title>.*?</title>', '')) -notmatch 'a&amp;|a&lt;') 'and escaped exactly once in the title, the one place the name stands (the site header that also carried it is gone, #3811)'
 Assert-True ($html -notmatch '<i>"') 'with nothing of it raw on the page'
 $repo = Format-PluginRepoRepositoryHtml -RepoName ('a&amp;b<i>"' + "'q") -Folder '"><b>f</b>'
 Assert-True ($repo -match '<dd>&quot;&gt;&lt;b&gt;f&lt;/b&gt;</dd>' -and $repo -notmatch '<b>f</b>' -and $repo -notmatch '<i>"' -and $repo -match ('<title>' + [regex]::Escape($once) + ' -- GitHub</title>')) 'and on the Repository page, the folder and the name both escaped once'
 $html = Format-PluginRepoHubHtml -RepoName ('n' * 120)
-Assert-True ($html -match ('site-header__name">n{80} <span')) 'and cut at 80 characters'
-Assert-True ((Format-PluginRepoHubHtml -RepoName "a`nb") -match 'site-header__name">a b <span') 'with control characters made spaces'
-Assert-True ((Format-PluginRepoHubHtml -RepoName '  ') -match 'site-header__name">this repo <span') 'and a blank name read as this repo'
+Assert-True ($html -match ('<title>n{80} -- Tools</title>')) 'and cut at 80 characters'
+Assert-True ((Format-PluginRepoHubHtml -RepoName "a`nb") -match '<title>a b -- Tools</title>') 'with control characters made spaces'
+Assert-True ((Format-PluginRepoHubHtml -RepoName '  ') -match '<title>this repo -- Tools</title>') 'and a blank name read as this repo'
 
 # The hub serves the plugin's canonical copy in place (#2989). Its checksums in the dkj-brandbook skill's
 # table are the release cut's to write (#3636), so between cuts they name the tag's bytes, not the tree's:
@@ -756,7 +756,7 @@ try {
         $started += $genOwners
         try {
             $page = Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:$genPort/" -TimeoutSec 15
-            Assert-True ($page.StatusCode -eq 200 -and $page.Content -match 'site-header__name">no-config <span') 'the home page is served on /, naming the repo it was started in'
+            Assert-True ($page.StatusCode -eq 200 -and $page.Content -match '<title>no-config -- Tools</title>' -and $page.Content -match 'class="shell shell--no-aside"') 'the home page is served on /, in the shell, naming the repo it was started in (its title)'
             Assert-True ($page.Content -match '<h2>Set up a product</h2>' -and $page.Content -notmatch '<h2>Products</h2>') 'with the setup cards and no Products section, since the repo states no Get-DevPreview'
             Assert-True ($page.Content -match 'href="/release-notes"' -and $page.Content -match 'href="/repository"' -and $page.Content -notmatch 'href="/brandbook' -and $page.Content -notmatch '<h2>Facts</h2>' -and $page.Content -notmatch 'href="/about"') 'one page of card links (#3289, #3383): the General pages by bare path and the Repository page, and no Brandbook even where the repo enables dkj-solutions (#3475)'
             $repoPage = Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:$genPort/repository" -TimeoutSec 15
@@ -796,11 +796,11 @@ try {
         $r2 = & $getRaw $genPort '/release-notes' '' $nav
         Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match '<h1>Release notes</h1>') 'a click from the hub to a general page, same-site and a navigation, is served'
         $r2 = & $getRaw $genPort '/hub' '' $nav
-        Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match 'site-header__name">no-config <span') 'and so is the "Home" crumb on it: /hub is the rendered home page'
+        Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match '<title>no-config -- Tools</title>' -and $r2 -match 'class="shell shell--no-aside"') 'and so is the "Home" crumb on it: /hub is the rendered home page'
         Assert-True ((& $getRaw $genPort '/release-notes' '' "Sec-Fetch-Site: same-site`r`nSec-Fetch-Mode: no-cors`r`n") -match 'HTTP/1.1 403') 'a same-site subresource request is refused'
         Assert-True ((& $getRaw $genPort '/release-notes' '' "Sec-Fetch-Site: cross-site`r`nSec-Fetch-Mode: navigate`r`n") -match 'HTTP/1.1 403') 'and a cross-site navigation'
         $r2 = & $getRaw $genPort '/'
-        Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match 'site-header__name">no-config <span') '/ renders the hub too, not a redirect: there is no hub to send the visitor to'
+        Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match '<title>no-config -- Tools</title>' -and $r2 -match 'class="shell shell--no-aside"') '/ renders the hub too, not a redirect: there is no hub to send the visitor to'
         Assert-True ((& $getRaw $genPort '/index.html') -match 'HTTP/1.1 200') 'and so does /index.html'
         Assert-True ((& $getRaw $genPort '/hub' 'evil.example') -match 'HTTP/1.1 403') 'a foreign Host is refused'
         $r2 = & $getRaw $genPort '/artifacts'

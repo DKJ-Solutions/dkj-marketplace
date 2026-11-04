@@ -1281,7 +1281,7 @@ function Format-ToolboxShellOpen {
         -InfoHtml and -HeadAside are markup the caller has escaped; every other value is escaped here.
     #>
     param([AllowEmptyString()][string]$Title = '', [AllowEmptyString()][string]$Current = '', [AllowEmptyCollection()][object[]]$Trail = @(),
-        [string]$HomeLabel = 'Tools', [string]$HubHref = '/', [switch]$Bare, [AllowEmptyString()][string]$InfoHtml = '', [AllowEmptyString()][string]$HeadAside = '')
+        [string]$HomeLabel = 'Tools', [string]$HubHref = '/', [switch]$Bare, [AllowEmptyString()][string]$InfoHtml = '', [AllowEmptyString()][string]$HeadAside = '', [switch]$NoColumn)
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.AppendLine('<div class="shell shell--no-aside">')
@@ -1321,12 +1321,15 @@ function Format-ToolboxShellOpen {
     }
     [void]$sb.AppendLine('<div class="shell__list tb-scroll">')
     [void]$sb.AppendLine((Format-RepoHubBanner))
-    [void]$sb.AppendLine('<main class="page-column">')
+    # -NoColumn: the content brings its own column (the release notes' template), so no <main> is opened for it.
+    if (-not $NoColumn) { [void]$sb.AppendLine('<main class="page-column">') }
     return $sb.ToString()
 }
 
 function Format-ToolboxShellClose {
-    <# The end of a Toolbox page's shell (Format-ToolboxShellOpen): the page column, the scroll pane, the main pane and the shell. #>
+    <# The end of a Toolbox page's shell (Format-ToolboxShellOpen): the page column (not under -NoColumn), the scroll pane, the main pane and the shell. #>
+    param([switch]$NoColumn)
+    if ($NoColumn) { return '</div></div></div>' }
     '</main></div></div></div>'
 }
 
@@ -2178,6 +2181,16 @@ function Format-ReleaseNotesDevPage {
     # The general banner above the site header, as on every other hub page (#3297; owner, October 24, 2026). It
     # stands outside the template's layout, so that is left alone.
     $bar = (Format-RepoHubBanner) + $bar
+    # A TOOLBOX'S release notes stand in the desktop shell (#3811), the template's own column inside its scroll pane.
+    if ($RepoName) {
+        $trail = if ($Release) { @(@{ Label = 'Release notes'; Href = '/release-notes' }, @{ Label = $label; Href = '' }) } else { @(@{ Label = 'Release notes'; Href = '' }) }
+        $out = $Html.Substring(0, $bodyEnd) + (Format-ToolboxShellClose -NoColumn) + "`n" + (Format-FitAlarmHtml) + $Html.Substring($bodyEnd)
+        $open = Format-ToolboxShellOpen -Current '/release-notes' -Trail $trail -HubHref $HubHref -Bare -NoColumn
+        $out = $bodyRx.Replace($out, { param($m) $m.Value + "`n" + $open }, 1)
+        $styleEnd = $out.IndexOf('</style>') + '</style>'.Length
+        $out = $out.Substring(0, $styleEnd) + "`n" + $head + "`n<style>" + (Get-ToolboxShellStyle) + "</style>" + $out.Substring($styleEnd)
+        return $htmlRx.Replace($out, ('<html lang="en" ' + (Format-GeneralPagesThemeAttributes) + ' data-width-default="full" data-theme-key="' + (& $e $ThemeKey) + '">'), 1)
+    }
     $settings = '<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", widths: false });</script>'
 
     # Back to front, so each index still points where it was read. The fit alarm closes the body, as in
