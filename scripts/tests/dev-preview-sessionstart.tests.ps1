@@ -221,17 +221,17 @@ Assert-True $s.Armed 'WTSConnected arms it as WTSActive does'
 # #3798: a disconnected session in which Claude Code still runs is in use.
 $s = Get-DevPreviewWatchStep -State 4 -Since $t0 -Now $t0.AddSeconds(600) -GraceSeconds 60 -Armed $true -Held $true
 Assert-True (-not $s.Stop -and $null -eq $s.Since -and $s.Armed) 'held by Claude Code: never stopped, and the clock resets (#3798)'
-$procs = @(
+$heldProcs = @(
     @{ Name = 'claude.exe'; SessionId = 2; CommandLine = '"C:\Users\u\.local\bin\claude.exe"' },
     @{ Name = 'node.exe'; SessionId = 3; CommandLine = 'node "C:\npm\node_modules\@anthropic-ai\claude-code\cli.js"' },
     @{ Name = 'node.exe'; SessionId = 4; CommandLine = 'node "C:\npx\@cloudflare\mcp-server-cloudflare\dist\index.js"' },
     @{ Name = 'Claude.exe'; SessionId = 5; CommandLine = '' }
 )
-Assert-True (Test-DevPreviewSessionHeld -SessionId 2 -Processes $procs) 'the native claude.exe holds its session'
-Assert-True (Test-DevPreviewSessionHeld -SessionId 3 -Processes $procs) 'the npm package under node holds its session'
-Assert-True (-not (Test-DevPreviewSessionHeld -SessionId 4 -Processes $procs)) 'another node process does not'
-Assert-True (Test-DevPreviewSessionHeld -SessionId 5 -Processes $procs) 'the name is matched case-insensitively'
-Assert-True (-not (Test-DevPreviewSessionHeld -SessionId 9 -Processes $procs)) 'a Claude Code in ANOTHER session does not hold this one'
+Assert-True (Test-DevPreviewSessionHeld -SessionId 2 -Processes $heldProcs) 'the native claude.exe holds its session'
+Assert-True (Test-DevPreviewSessionHeld -SessionId 3 -Processes $heldProcs) 'the npm package under node holds its session'
+Assert-True (-not (Test-DevPreviewSessionHeld -SessionId 4 -Processes $heldProcs)) 'another node process does not'
+Assert-True (Test-DevPreviewSessionHeld -SessionId 5 -Processes $heldProcs) 'the name is matched case-insensitively'
+Assert-True (-not (Test-DevPreviewSessionHeld -SessionId 9 -Processes $heldProcs)) 'a Claude Code in ANOTHER session does not hold this one'
 Assert-True (-not (Test-DevPreviewSessionHeld -SessionId 2 -Processes @())) 'an empty table holds nothing'
 Assert-Equal '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\p\w.ps1" -ProcessId 12 -StartTicks 34' (Get-DevPreviewWatchArgs -Watcher 'C:\p\w.ps1' -ProcessId 12 -StartTicks 34) 'the watcher is started for the server''s pid and start time'
 Assert-Equal '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\p\w.ps1" -ProcessId 12 -StartTicks 34 -OwnerId 56 -OwnerStartTicks 78' (Get-DevPreviewWatchArgs -Watcher 'C:\p\w.ps1' -ProcessId 12 -StartTicks 34 -OwnerId 56 -OwnerStartTicks 78) 'and for its owner, where a test named one (#3620)'
