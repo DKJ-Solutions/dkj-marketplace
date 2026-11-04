@@ -109,6 +109,9 @@ function Format-ProductHomeHtml {
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
     [void]$sb.AppendLine('<body>')
+    # The width bar first, above everything (Dave, November 4, 2026): full, fluid and phone as three icons. The product's
+    # alone; the Toolbox stays full. It sets the width the settings panel did, so the panel leaves its own group out.
+    [void]$sb.AppendLine('<div id="width-bar"></div><script>DKJTheme.widthBar(document.getElementById("width-bar"), { label: "Width", full: "Full", fluid: "Fluid", phone: "Phone" });</script>')
     [void]$sb.Append((Format-RepoHomeHeadHtml -RepoName 'dkj-marketplace' -Brand 'dkj-marketplace' -BrandTag 'product' -HomeLabel 'Home' -Menu @(Get-ProductMenu) -Lead 'The source of the Claude Specialists plugins: the marketplace, its agent definitions, manuals and skills, and the scripts and gates that ship them.'))
     # Every page a card of its own, three to a row, with no heading above them (the house hub form, #3383): the
     # hub first, so the way back is where the eye starts, then this repo's own pages. On the page itself, in the
@@ -124,7 +127,7 @@ function Format-ProductHomeHtml {
     $at = if ($SourceCommit) { ', from <code>' + (& $e $SourceCommit) + '</code>' } else { '' }
     [void]$sb.AppendLine('<p class="note">Each page names its own source. Served on 127.0.0.1 only, by <code>scripts/dashboard/serve-consumer-dashboard.ps1</code>' + $at + '.</p>')
     [void]$sb.AppendLine('</main>')
-    [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", width: "Width", fluid: "Fluid", phone: "Phone", full: "Full" });</script>')
+    [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", widths: false });</script>')
     # The fit alarm, as the plugin's page shell closes every hub page (#3558).
     [void]$sb.AppendLine((Format-FitAlarmHtml))
     [void]$sb.AppendLine('</body>')

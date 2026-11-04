@@ -544,6 +544,13 @@ Without the script there is no `data-width`, and the column is fluid, deliberate
 also serves e-mail and static reports, which have no settings panel to narrow an unbounded
 column back to a reading width.
 
+**Or as a width bar above the header** (Dave, November 4, 2026). `DKJTheme.widthBar(el, { label, full,
+fluid, phone })` draws a thin strip (`.width-bar`) holding the same three widths as small icon buttons at its
+right end, the way an editor's title bar holds its layout toggles; the width in force is pressed. Mount it as
+the first element of `<body>`, above the banner and the site header, and pass `widths: false` to
+`settings()`, so one choice is not offered in two places. The texts are optional and Dutch by default, like
+the panel's. A Toolbox page never draws it: the Toolbox is always `full`.
+
 **The theme names and the picker's row labels are Dutch on purpose**: DKJ-Solutions apps are
 Dutch-language, and the names are the ones their users read. An app in another language passes its own
 row labels, `DKJTheme.picker(el, { light: 'Light', dark: 'Dark' })`. A page that ships

@@ -39,19 +39,36 @@
 
 ### PLAN
 
+A thin bar above the site header on the product pages (port 4870-4879), with full, fluid and phone as
+small icons, as VS Code's title bar holds its layout toggles (Dave, November 4, 2026). The Toolbox stays
+fixed on full and gets no bar. Visible result: stops for the owner's look before the PR.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Brand book: `DKJTheme.widthBar(el, opts)` in `house-theme.js` and `.width-bar` in `house-style.css`
+- [x] Product pages: the bar opens `<body>` on the consumer pages and the product home; their settings call drops its width group
+- [x] Brand book README: the width bar paragraph
 
 ### TEST
 
+- [x] `consumer-dashboard` and `dev-pages` suites: the body-order asserts now expect the bar first, green
+- [x] `check-house-style` gate and `house-palette` suite green
+- [ ] Owner's look at the product on http://localhost:4871/
+
 ### DEPLOY: feat/product-width-bar
 
-**Score:**
+The brand book gains a width bar, `DKJTheme.widthBar(el)`: a thin strip above the site header holding
+full, fluid and phone as three small icon buttons. This repo's product pages (the home and the
+consumer pages) open with it, so the page width is one click away again; the Toolbox stays on full.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions app that takes the next brand book copy can offer its users the width as a one-click
+bar instead of a setting inside the gear panel.
+
+**Score:** 2
 
 #### Pull Request
 
