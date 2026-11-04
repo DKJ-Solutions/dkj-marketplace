@@ -49,7 +49,7 @@ added today (#3796) are not needed. Option 1 of three: the product gets one widt
 - [x] The product home and consumer pages draw no width bar and pin `full` through `Get-ToolboxWidthScript`;
       `Format-GeneralPageHtml` pins it on a `product`-tagged page too
 - [x] The product's Settings page drops its Width group; `Get-SettingsPageParts` loses its `-Widths` switch
-- [ ] The owner's look at the product (http://localhost:4871/): no bar above the header, no Width on Settings
+- [x] The owner's look at the product (http://localhost:4871/): no bar above the header, no Width on Settings
 
 ### TEST
 
