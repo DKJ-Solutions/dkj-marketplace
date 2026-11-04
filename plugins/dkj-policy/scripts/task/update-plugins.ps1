@@ -86,7 +86,9 @@
       * a checkout with uncommitted changes under .claude/ is skipped -- this run's rewrite would be
         mixed into somebody's own edit;
       * a checkout this run DID leave a .claude/ diff in is named in the summary, so the diff is a
-        line to act on rather than a surprise in the next session there.
+        line to act on rather than a surprise in the next session there -- unless that diff is line
+        endings only (a CRLF file rewritten with LF), which is restored to the committed bytes instead,
+        since there is nothing to review and committing it would only churn line endings (#3792).
     A record that does not name the root of a git checkout is skipped too, and records whose folder is
     gone are counted into one summary line (tidy-machine owns those records). Each checkout runs this
     same script as a child process, from its own root -- except an unmodified checkout of the source
@@ -159,6 +161,31 @@ function Test-ClaudeDirDirty {
     $r = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $Path, 'status', '--porcelain', '--', '.claude') -DiscardStderr
     if ($r.ExitCode -ne 0) { return $true }
     return (@(@($r.Output) | Where-Object { "$_".Trim() }).Count -gt 0)
+}
+
+function Restore-EolOnlyClaudeChange {
+    # $true when every change under .claude/ in $Path differs from the index only in line endings, and
+    # has been restored to the committed bytes -- and read back clean (#3792). Measured November 3,
+    # 2026: `claude plugin install/update` rewrote a CRLF settings.json with LF, so `git status` said
+    # ` M` while every diff was empty, and the summary asked the owner to review and commit a change
+    # that did not exist. Called ONLY after the run, on a .claude/ the pre-run guard found clean, so
+    # every change there is this run's own and restoring it discards nothing of anybody's. Anything
+    # else -- an untracked or staged file, a content change, a git failure -- returns $false and is
+    # left exactly as the run wrote it, for the summary to name.
+    param([string]$Path)
+    $st = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $Path, 'status', '--porcelain', '--', '.claude') -DiscardStderr
+    if ($st.ExitCode -ne 0) { return $false }
+    $lines = @(@($st.Output) | ForEach-Object { "$_" } | Where-Object { $_.Trim() })
+    if ($lines.Count -eq 0) { return $false }
+    # Only ' M' (modified in the work tree, nothing staged): `git diff` below compares the work tree
+    # with the index, so a staged or untracked file is outside what it can vouch for.
+    if (@($lines | Where-Object { $_ -notmatch '^ M ' }).Count -gt 0) { return $false }
+    # Exit 0 = no change once CR-at-EOL is ignored, 1 = a real change; anything else is a failure.
+    $d = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $Path, 'diff', '--ignore-cr-at-eol', '--quiet', '--', '.claude') -DiscardStderr
+    if ($d.ExitCode -ne 0) { return $false }
+    $co = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $Path, 'checkout', '--', '.claude') -DiscardStderr
+    if ($co.ExitCode -ne 0) { return $false }
+    return -not (Test-ClaudeDirDirty -Path $Path)
 }
 
 if ($AllCheckouts) {
@@ -276,6 +303,9 @@ if ($AllCheckouts) {
 
         if ($code -ne 0) {
             $results.Add([pscustomobject]@{ Path = $p; Outcome = 'FAILED'; Detail = "exit $code -- see its run above"; Hint = '' })
+        } elseif (-not $DryRun -and (Test-ClaudeDirDirty -Path $p) -and (Restore-EolOnlyClaudeChange -Path $p)) {
+            Write-Host "update-plugins: the run rewrote .claude/ with line-ending changes only -- restored to the committed bytes (#3792)."
+            $results.Add([pscustomobject]@{ Path = $p; Outcome = 'updated'; Detail = ''; Hint = '' })
         } elseif (-not $DryRun -and (Test-ClaudeDirDirty -Path $p)) {
             $results.Add([pscustomobject]@{ Path = $p; Outcome = 'updated'; Detail = 'left uncommitted changes under .claude/ (or git could not say) -- review and commit them in that repo'; Hint = '' })
         } else {

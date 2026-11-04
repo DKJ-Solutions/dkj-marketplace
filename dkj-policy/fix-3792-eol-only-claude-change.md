@@ -39,19 +39,35 @@
 
 ### PLAN
 
+Issue #3792. Its reason verified in a scratch repo before the repair: with a CRLF file committed and
+rewritten as LF, `git status --porcelain` says ` M` while `git diff --ignore-cr-at-eol --quiet` exits 0
+(and 1 on a real content change), with `core.autocrlf` both false and true.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Restore-EolOnlyClaudeChange` in `update-plugins.ps1` (and its plugin mirror): after a run, a
+  `.claude/` whose every change is ` M` and EOL-only is restored with `git checkout -- .claude` and read
+  back clean; anything else falls through to the existing "review and commit" line
+- [x] The help text and the skill page say so
 
 ### TEST
 
+- [x] `update-plugins.tests.ps1` scenarios 25 (an LF rewrite of a CRLF settings.json is restored, the
+  bytes are CRLF again and no commit is asked for) and 26 (a real content change is still named and left
+  in place) -- 155 pass, 0 fail standalone
+
 ### DEPLOY: fix/3792-eol-only-claude-change
 
-**Score:**
+`update-plugins -AllCheckouts` no longer asks you to review and commit a `.claude/settings.json` that
+`claude plugin install/update` merely rewrote with different line endings (#3792). When every change the
+run left under `.claude/` is line endings only, the sweep restores the committed bytes and says so; a real
+change is still named in the summary as before.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+**Score:** N/A
 
 #### Pull Request
 

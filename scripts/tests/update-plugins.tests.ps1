@@ -290,8 +290,19 @@ function New-ClaudeShim {
         $CurrentNeedle (empty: never) makes a matching call print the CLI's no-op sentence, "is already
         at the latest version", and still exit 0 -- the call that moved nothing (#2728).
     #>
-    param([Parameter(Mandatory = $true)][string]$BinDir, [string]$FailNeedle = '', [string]$CurrentNeedle = '')
+    param([Parameter(Mandatory = $true)][string]$BinDir, [string]$FailNeedle = '', [string]$CurrentNeedle = '', [string]$RewriteMode = '')
     $body = "@echo off`r`necho CLAUDE-SHIM-CALLED %*`r`n"
+    # $RewriteMode (empty: never) makes every call rewrite the visited checkout's .claude/settings.json,
+    # the way the real CLI does (#3792): 'lf' with line endings only (CRLF -> LF), 'content' with a
+    # real change. The checkout is read from CLAUDE_PROJECT_DIR, which the sweep sets per child.
+    if ($RewriteMode) {
+        $helper = "`$f = Join-Path `$env:CLAUDE_PROJECT_DIR '.claude\settings.json'`r`n" +
+                  "`$t = [System.IO.File]::ReadAllText(`$f)`r`n" +
+                  "if ('$RewriteMode' -eq 'lf') { `$t = `$t -replace ""``r``n"", ""``n"" } else { `$t = `$t -replace 'true', 'false' }`r`n" +
+                  "[System.IO.File]::WriteAllText(`$f, `$t)`r`n"
+        [System.IO.File]::WriteAllText((Join-Path $BinDir 'rewrite.ps1'), $helper, $Utf8Ascii)
+        $body += "powershell -NoProfile -ExecutionPolicy Bypass -File `"%~dp0rewrite.ps1`"`r`n"
+    }
     if ($CurrentNeedle) {
         $body += "echo %* | findstr /C:`"$CurrentNeedle`" >nul`r`nif not errorlevel 1 echo Plugin is already at the latest version 9.9.9.`r`n"
     }
@@ -744,7 +755,7 @@ try {
     function New-SweepCheckout {
         # A git checkout with $ID1 enabled and COMMITTED (an untracked settings.json would read as a
         # dirty .claude/), origin/HEAD pointing at main unless -NoOriginHead, on $Branch.
-        param([string]$Name, [string]$Branch = 'main', [switch]$NoOriginHead, [switch]$DirtyClaude, [switch]$SourceShaped)
+        param([string]$Name, [string]$Branch = 'main', [switch]$NoOriginHead, [switch]$DirtyClaude, [switch]$SourceShaped, [switch]$CrlfCommitted)
         $dir = Join-Path $sweep $Name
         New-Item -ItemType Directory -Path $dir -Force | Out-Null
         Set-Enabled -RepoDir $dir -Ids @($ID1)
@@ -757,6 +768,11 @@ try {
         }
         $g = @('-C', $dir, '-c', 'user.name=t', '-c', 'user.email=t@example.invalid', '-c', 'commit.gpgsign=false')
         Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $dir, 'init', '-q', '-b', 'main') -DiscardStderr | Out-Null
+        # The CRLF settings.json (ConvertTo-Json writes CRLF on 5.1) is committed AS CRLF whatever the
+        # machine's global autocrlf says, so an LF rewrite is a line-ending-only change (#3792).
+        if ($CrlfCommitted) {
+            Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $dir, 'config', 'core.autocrlf', 'false') -DiscardStderr | Out-Null
+        }
         Invoke-NativeCapture -FilePath 'git' -Arguments ($g + @('add', '-A')) -DiscardStderr | Out-Null
         Invoke-NativeCapture -FilePath 'git' -Arguments ($g + @('commit', '-q', '-m', 'init')) -DiscardStderr | Out-Null
         Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $dir, 'update-ref', 'refs/remotes/origin/main', 'HEAD') -DiscardStderr | Out-Null
@@ -839,6 +855,38 @@ try {
     Assert-Equal 1 $r.Code '20: exit 1'
     Assert-Has   $r "FAILED $clean -- exit 1" '20: the summary names the failed checkout and its exit code'
     Assert-Has   $r '0 checkout(s) run, 4 skipped, 1 failed' '20: and counts it as failed, not run'
+    New-ClaudeShim -BinDir $sweepBin
+
+    # --- 25-26. -AllCheckouts after a run that rewrote .claude/ (#3792) ---------------------------
+    #     The real CLI rewrote a CRLF settings.json with LF: ` M` in git status, every diff empty. The
+    #     sweep must restore that, and must still name a checkout whose .claude/ changed for real.
+    function Get-Porcelain {
+        param([string]$Dir)
+        return @(@((Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $Dir, 'status', '--porcelain', '--', '.claude') -DiscardStderr).Output) | Where-Object { "$_".Trim() })
+    }
+    $eolDir = New-SweepCheckout -Name 'eol' -CrlfCommitted
+    $eolFile = Join-Path $eolDir '.claude\settings.json'
+    $eolBytes = [System.IO.File]::ReadAllText($eolFile)
+    Assert-True ($eolBytes.Contains("`r`n")) '25: precondition -- the committed settings.json is CRLF'
+    Set-InstallRecords -HomeDir $sweepHome -Records @{ $ID1 = @(@{ scope = 'project'; projectPath = $eolDir }) }
+
+    Write-Host "25. -AllCheckouts restores a line-ending-only rewrite of .claude/ instead of asking for a commit" -ForegroundColor Cyan
+    New-ClaudeShim -BinDir $sweepBin -RewriteMode 'lf'
+    $r = Invoke-UPAll
+    Assert-CleanExit -Run $r -Label '25: exit 0'
+    Assert-Has   $r "CLAUDE-SHIM-CALLED plugin update $ID1 --scope project" '25: the checkout was updated'
+    Assert-Has   $r 'line-ending changes only -- restored to the committed bytes' '25: the restore is said out loud'
+    Assert-Lacks $r 'review and commit' '25: and no commit is asked for'
+    Assert-Equal 0 (Get-Porcelain -Dir $eolDir).Count '25: .claude/ reads clean afterwards'
+    Assert-Equal $eolBytes ([System.IO.File]::ReadAllText($eolFile)) '25: settings.json holds its committed CRLF bytes again'
+
+    Write-Host "26. -AllCheckouts still names a checkout whose .claude/ changed for real, and leaves it" -ForegroundColor Cyan
+    New-ClaudeShim -BinDir $sweepBin -RewriteMode 'content'
+    $r = Invoke-UPAll
+    Assert-CleanExit -Run $r -Label '26: exit 0'
+    Assert-Has   $r "updated $eolDir -- left uncommitted changes under .claude/" '26: the real change is named in the summary'
+    Assert-Lacks $r 'restored to the committed bytes' '26: and nothing is restored'
+    Assert-Equal 1 (Get-Porcelain -Dir $eolDir).Count '26: the change is left in place'
     New-ClaudeShim -BinDir $sweepBin
 }
 finally {
