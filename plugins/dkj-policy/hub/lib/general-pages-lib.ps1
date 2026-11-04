@@ -290,6 +290,11 @@ function Format-FitAlarmHtml {
         rendered body that adds its own h1 is caught by whoever opens it. The one page without an h1 is the home page
         under a site header, read here as a trail of one crumb. This half is not width-gated: a second h1 is wrong at
         every width. It counts the live document, so content a script renders after load is judged too.
+
+        TWO WORDS FOR A PAGE NAME (#3797, Dave, November 4, 2026): the alarm also warns when the page's h1 or its
+        current crumb (the two read the same, by the brand book's breadcrumb rule) runs past two words. A word is a
+        whitespace-separated run holding a letter or a digit, so a hyphenated word counts once and a lone dash between
+        a subject and a subtitle counts not at all, while the subtitle's own words do. Not width-gated either.
     #>
     return @'
 <p class="msg--warn" id="fit-alarm" role="alert" hidden style="position: fixed; right: 16px; bottom: 16px; margin: 0; z-index: 50; box-shadow: var(--shadow-pop)"></p>
@@ -297,6 +302,9 @@ function Format-FitAlarmHtml {
 (function () {
   var alarm = document.getElementById("fit-alarm");
   if (!alarm) { return; }
+  function words(el) {
+    return el ? el.textContent.trim().split(/\s+/).filter(function (w) { return /[\p{L}\p{N}]/u.test(w); }).length : 0;
+  }
   function judge() {
     var d = document.documentElement, said = [];
     var tall = d.scrollHeight - window.innerHeight, wide = d.scrollWidth - d.clientWidth;
@@ -308,6 +316,8 @@ function Format-FitAlarmHtml {
     }
     var h1 = document.querySelectorAll("h1").length, crumbs = document.querySelectorAll(".breadcrumbs li").length;
     if (h1 > 1 || (h1 === 0 && crumbs !== 1)) { said.push(h1 + " h1 on this page, where a page carries exactly one"); }
+    var named = Math.max(words(document.querySelector("h1")), words(document.querySelector(".breadcrumbs [aria-current=\"page\"]")));
+    if (named > 2) { said.push("The page name runs " + named + " words, where a page name has two at most"); }
     if (!said.length) { alarm.hidden = true; return; }
     alarm.textContent = said.join(". ");
     alarm.hidden = false;

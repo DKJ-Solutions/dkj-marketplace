@@ -384,6 +384,10 @@ Assert-True ($fit -match 'querySelectorAll\("h1"\)\.length' -and $fit -match 'h1
 $fitJudge = $fit.Substring($fit.IndexOf('function judge'))
 Assert-True ($fitJudge.IndexOf('querySelectorAll("h1")') -gt $fitJudge.IndexOf('window.innerWidth < 1000') -and $fitJudge -notmatch 'innerWidth < 1000 \|\|') 'and the h1 half is not width-gated: the narrow layout silences only the fit half (#3745)'
 Assert-Equal 0 ([regex]::Matches($fit, '<h1[\s>]')).Count 'the alarm itself adds no h1 to the page it judges'
+Assert-True ($fit -match 'words\(document\.querySelector\("h1"\)\)' -and $fit -match 'words\(document\.querySelector\("\.breadcrumbs \[aria-current=\\"page\\"\]"\)\)' -and $fit -match 'if \(named > 2\)') 'it warns when the page''s h1 or its current crumb runs past two words (#3797)'
+Assert-True ($fit -match 'split\(/\\s\+/\)' -and $fit -match '\[\\p\{L\}\\p\{N\}\]/u') 'a word is a whitespace-separated run holding a letter or digit, so a hyphenated word counts once and a lone dash not at all (#3797)'
+$fitNamed = $fitJudge.Substring($fitJudge.IndexOf('var named'))
+Assert-True ($fitNamed -notmatch 'innerWidth') 'and the page-name half is not width-gated either (#3797)'
 
 Write-Host '-- suite-groups.json against the tree' -ForegroundColor Cyan
 # The file is a reading aid and nothing selects suites by it, so the only way it goes wrong is by going

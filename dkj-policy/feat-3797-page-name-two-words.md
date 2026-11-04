@@ -39,19 +39,34 @@
 
 ### PLAN
 
+Inbound #3797 (Dave): a page name, its `h1` and its current crumb, is at most two words, stated in the brand
+book and checked by the hub's fit alarm the way #3745 checks the one `h1`. Verified on pickup: rule 8 capped
+every heading at five words and nothing capped the page name; the fit alarm counted `h1`s and no words.
+
+#### Parked for the owner's look
+
+The alarm is a visible result, as #3745's was, so the branch parks without a pull request.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Brand book `README.md`: rule 8 gains the two-word page name; "The labels" under the breadcrumb bar say a crumb is two words at most.
+- [x] `Format-FitAlarmHtml`: warns when the live `h1` or the `aria-current` crumb runs past two words; a hyphenated word counts once, a lone dash not at all; not width-gated.
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: three asserts on the new half (what it reads, how it counts a word, not width-gated); the suite passes 587 of 587 standalone.
+
 ### DEPLOY: feat/3797-page-name-two-words
 
-**Score:**
+The brand book now holds a page's name, its `h1` and the breadcrumb crumb that reads the same, to two words at most (rule 8 and the breadcrumb bar's labels; #3797). The five-word cap stays for `h2` and `h3`. The hub's fit alarm checks it on sight and warns when the live page's `h1` or its current crumb runs longer. A hyphenated word counts as one.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions app that takes this brand book now has a two-word page name to follow, so a page title such as "Subject - a subtitle" moves its subtitle into the page. Every hub page warns about a name that does not.
+
+**Score:** 2
 
 #### Pull Request
 
