@@ -819,6 +819,42 @@ function Test-GhMutationTransient {
     return $false
 }
 
+function Test-GhMergeInProgress {
+    <#
+    .SYNOPSIS
+        Whether a failed `gh pr merge` was refused because GitHub already holds a merge of that PR in
+        flight -- true means the merge may still land, not that it failed.
+
+    .DESCRIPTION
+        Issue #3802, measured on PR #3800 on November 4, 2026. ship-pr's merge call got a 502, the #1916
+        read-back saw the PR still OPEN, and the refusal asked for a re-run. The re-run's merge call then
+        answered 'GraphQL: Merge already in progress (mergePullRequest)', and the read-back right after
+        it still showed OPEN. So after a 5xx GitHub can keep a server-side merge lock while the PR reads
+        OPEN, and a second merge call is refused ON that lock.
+
+        That answer is a 4xx in shape -- GitHub read the request and said no -- so
+        Test-GhMutationTransient rightly does not match it, and ship-pr reported it as 'Merge of PR #n
+        failed'. But what GitHub refused is the DUPLICATE, not the merge: the first one is still in
+        flight. It is the #1916 case (a mutation that may still land) reached one step later, so the
+        caller reads the PR state back instead of failing.
+
+        KEPT APART FROM Test-GhMutationTransient ON PURPOSE. That function also serves open-pr's
+        `gh pr create`, where this phrase can never occur, and its caller polls for seconds; a held merge
+        lock is a different wait, and ship-pr gives it a longer one.
+
+        Matched on GitHub's own wording only, the same discipline as the function above: the phrase
+        measured verbatim in #3802.
+
+    .PARAMETER OutputLines
+        The captured output of the failed `gh pr merge` (stdout + stderr merged).
+    #>
+    param([AllowNull()][string[]]$OutputLines)
+
+    if ($null -eq $OutputLines) { return $false }
+    $text = (($OutputLines | Where-Object { $_ -ne $null } | ForEach-Object { [string]$_ }) -join "`n")
+    return ($text -match '(?i)Merge already in progress')
+}
+
 function New-ResolvesBlock {
     <#
     .SYNOPSIS

@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Issue #3802, measured on PR #3800: a 502 on ship-pr's merge call, a read-back of OPEN, a refusal that
+blamed a merge queue this repo does not have, and a re-run whose merge call GitHub then refused with
+`Merge already in progress` -- reported as a plain failed merge. Repair both halves: treat the lock as
+a merge still landing, and stop naming a queue where the trunk's rules were read and carry none.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Test-GhMergeInProgress` in `pr-issues-lib.ps1` (both copies): GitHub's own wording, kept apart from the 5xx classifier that also serves open-pr's create.
+- [x] ship-pr classifies a failed merge as a held lock before the hard-failure path, and joins the #1916 read-back.
+- [x] The read-back polls about a minute (13 reads, 5s apart) after a failed merge call; an ordinary exit 0 keeps three reads.
+- [x] A merge that does not read MERGED in that minute is handed back as "NOT a failed merge", the PR left armed for the merge-on-green sweep.
+- [x] The #1325 refusal names a merge queue only when the trunk's rules could not be read.
 
 ### TEST
 
+- [x] `pr-issues.tests.ps1`: unit asserts for the classifier (the measured wording, a real not-mergeable refusal, null/empty, and that the 5xx classifier does not match it) and call-site asserts on ship-pr. 1177 asserts pass standalone.
+
 ### DEPLOY: fix/3802-merge-in-progress
 
-**Score:**
+ship-pr no longer reports GitHub's `Merge already in progress` as a failed merge (#3802). After a 5xx
+or that answer, it polls the PR for about a minute and folds once it reads MERGED. If it does not, it
+says the merge is held by GitHub and leaves the PR armed for the merge-on-green sweep. The refusal for
+an unmerged PR no longer names a merge queue when the trunk's rules were read and carry none.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Whoever runs ship-pr in a consumer and hits a GitHub server error on the merge now gets a run that
+waits the lock out or hands it back with the right advice, instead of a hard failure followed by a
+misleading hint about a merge queue. Small, and noticed only when GitHub has a bad minute.
+
+**Score:** 2
 
 #### Pull Request
 
