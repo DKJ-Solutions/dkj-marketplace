@@ -16,7 +16,9 @@
     session (WTSGetActiveConsoleSessionId), and WTSEnumerateSessions lists it as disconnected too. Measured
     on a machine with fast user switching, the single read was inverted -- 4 for the active console session,
     0 for a disconnected one -- so a switch away and back could arm the watcher and then stop a server in
-    use; a contradiction reads as uncertain (-1), which never stops a server. It exits as soon as the server
+    use; a contradiction reads as uncertain (-1), which never stops a server. And a disconnect counts only
+    while no Claude Code process runs in the session (#3798, Test-DevPreviewSessionHeld): Claude Code kept
+    running in a session switched away from, and the owner read its hub from the other one. It exits as soon as the server
     does, so a server stopped by hand leaves nothing behind. The rules are Get-DevPreviewWatchStep in
     hub/lib/dev-preview-rules.ps1.
 
@@ -27,6 +29,9 @@
       -PollSeconds   how often it looks (default 15)
       -ForceState    the TEST override: the connect states to read instead of the session's own, one per
                      poll and the last one repeated, space-separated (e.g. '0 4')
+      -ForceHeld     with -ForceState only: '1' reads the session as held by Claude Code, anything else as
+                     not held. A forced run never reads the live process table, because the gate that runs
+                     the test is itself a Claude Code process in that session
       -OwnerId, -OwnerStartTicks
                      the process the server is tied to (#3620), passed only where a test set
                      DKJ_DEV_PREVIEW_OWNER_PID: once it has exited, or its pid is no longer that process, the
@@ -42,6 +47,7 @@ param(
     [int]$GraceSeconds = -1,
     [int]$PollSeconds = -1,
     [string]$ForceState = '',
+    [string]$ForceHeld = '',
     [int]$OwnerId = 0,
     [long]$OwnerStartTicks = 0
 )
@@ -117,7 +123,20 @@ public static int ConnectState() {
         }
         $state = if ($forced.Count) { $forced[[Math]::Min($poll, $forced.Count - 1)] } else { try { [DkjDevPreview.Wts]::ConnectState() } catch { -1 } }
         $poll++
-        $step = Get-DevPreviewWatchStep -State $state -Since $since -Now (Get-Date) -GraceSeconds $GraceSeconds -Armed $armed
+        # THE HOLD (#3798), read only for a disconnect: the process table is the expensive look. A table that
+        # cannot be read is uncertain, and an uncertain read never stops a server.
+        $held = $false
+        if ($state -eq 4) {
+            if ($forced.Count) { $held = ($ForceHeld -eq '1') }
+            else {
+                try {
+                    $own = [Diagnostics.Process]::GetCurrentProcess().SessionId
+                    $rows = @(Get-CimInstance Win32_Process -Filter "SessionId = $own" -Property Name, SessionId, CommandLine -ErrorAction Stop)
+                    $held = Test-DevPreviewSessionHeld -SessionId $own -Processes $rows
+                } catch { $held = $true }
+            }
+        }
+        $step = Get-DevPreviewWatchStep -State $state -Since $since -Now (Get-Date) -GraceSeconds $GraceSeconds -Armed $armed -Held $held
         $armed = $step.Armed
         if ($step.Stop) {
             # Read again just before the kill: a server gone since the last look leaves its pid free for reuse.

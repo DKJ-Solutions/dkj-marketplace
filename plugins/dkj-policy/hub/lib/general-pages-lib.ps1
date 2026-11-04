@@ -227,9 +227,10 @@ function Format-GeneralPageHtml {
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
     [void]$sb.AppendLine('<body>')
-    # The general banner on every page, not only the home page (#3297), and a bare one too (#3356): ALWAYS the first
-    # thing in <body>, above the site header (owner, October 24, 2026).
-    [void]$sb.AppendLine((Format-RepoHubBanner))
+    # The general banner on every Toolbox page, not only the home page (#3297), and a bare one too (#3356): ALWAYS the
+    # first thing in <body>, above the site header (owner, October 24, 2026). Never on a product's page
+    # (-BrandTag 'product'): the banner is the Toolbox's alone (Dave, November 4, 2026).
+    if ($BrandTag -ne 'product') { [void]$sb.AppendLine((Format-RepoHubBanner)) }
     if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href $HubHref -Tag $BrandTag -Menu $Menu -Current (Get-SiteHeaderMenuCurrent -Menu $Menu -Title $Title -ParentCrumbs $ParentCrumbs))) }
     [void]$sb.AppendLine('<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>')
     [void]$sb.AppendLine('<li><a href="' + (& $e $HubHref) + '">' + (& $e $HomeLabel) + '</a></li>')
@@ -340,9 +341,10 @@ function Format-RepoHubBanner {
         The countdown keeps running whether or not the box is ticked, and every hour that passes unticked
         adds another 10, so the box shows the total owed; ticking it clears the total.
 
-        ONE FUNCTION, ON EVERY HUB PAGE (#3297): both home pages (through Format-RepoHomeHeadHtml), every page
-        Format-GeneralPageHtml draws, a -Bare one included (#3356), the Consumers page (Format-ConsumerDashboardHtml), and the release notes (Format-ReleaseNotesDevPage), so the hubs carry the
-        same banner wherever the visitor is. It is the first thing in <body>, ABOVE the site header (owner,
+        ONE FUNCTION, ON EVERY TOOLBOX PAGE (#3297): the Toolbox home (through Format-RepoHomeHeadHtml), every page
+        Format-GeneralPageHtml draws, a -Bare one included (#3356), and the release notes (Format-ReleaseNotesDevPage), so
+        the Toolbox carries the same banner wherever the visitor is. NEVER ON A PRODUCT'S PAGE (Dave, November 4, 2026):
+        both builders leave it out under -BrandTag 'product', and the Consumers page (Format-ConsumerDashboardHtml) draws none. It is the first thing in <body>, ABOVE the site header (owner,
         October 24, 2026; it was the first block of <main>, under the breadcrumb bar), so every caller writes it
         straight after '<body>'. It stands there with no margin, border or radius of its own, a bare strip flush against the
         header (owner, October 24, 2026), and otherwise uses house classes only (.notice, .num), because
@@ -1240,8 +1242,9 @@ function Format-RepoHomeHeadHtml {
     param([Parameter(Mandatory = $true)][string]$RepoName, [Parameter(Mandatory = $true)][string]$Lead, [AllowEmptyString()][string]$Brand = '',
         [AllowEmptyString()][string]$BrandTag = '', [string]$HomeLabel = 'Tools', [AllowNull()][object[]]$Menu = $null)
     $sb = New-Object System.Text.StringBuilder
-    # The general banner first, above the site header, as on every hub page (owner, October 24, 2026).
-    [void]$sb.AppendLine((Format-RepoHubBanner))
+    # The general banner first, above the site header, as on every Toolbox page (owner, October 24, 2026); never on a
+    # product's home (-BrandTag 'product'), since the banner is the Toolbox's alone (Dave, November 4, 2026).
+    if ($BrandTag -ne 'product') { [void]$sb.AppendLine((Format-RepoHubBanner)) }
     # -Brand: the house site header above the bar, as Format-GeneralPageHtml draws it, holding the settings button and,
     # on a toolbox or wherever -Menu names one, the menu. The home page sits under none of its items.
     if ($null -eq $Menu) { $Menu = if ($Brand -and $BrandTag -eq 'toolbox') { @(Get-HubMenu) } else { @() } }

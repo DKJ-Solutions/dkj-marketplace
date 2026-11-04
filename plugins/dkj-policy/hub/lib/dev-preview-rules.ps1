@@ -742,18 +742,43 @@ function Get-DevPreviewWatchStep {
         ran there -- and that is how Claude Code runs under another account on a machine that switches
         accounts: measured October 27, 2026, the hook's session 42 read WTSDisconnected while the console was
         another account's session 43, and the hub stopped about two minutes after every start.
+
+        A DISCONNECT COUNTS ONLY WHILE NO CLAUDE CODE RUNS IN THE SESSION (#3798): -Held is
+        Test-DevPreviewSessionHeld's answer, and a held session is in use however it reads, so its disconnect
+        resets the clock as an uncertain read does. Measured November 4, 2026: Claude Code kept running in a
+        session the owner had switched away from, and the hub it had started at a connected moment was stopped
+        one grace later, while the product it started after the switch survived.
     #>
     param(
         [int]$State,
         [AllowNull()]$Since,
         [Parameter(Mandatory = $true)][datetime]$Now,
         [int]$GraceSeconds = $script:DevPreviewWatchGraceSeconds,
-        [bool]$Armed = $false
+        [bool]$Armed = $false,
+        [bool]$Held = $false
     )
     if ($State -eq 0 -or $State -eq 1) { $Armed = $true }
-    if ($State -ne 4 -or -not $Armed) { return @{ Stop = $false; Since = $null; Armed = $Armed } }
+    if ($State -ne 4 -or -not $Armed -or $Held) { return @{ Stop = $false; Since = $null; Armed = $Armed } }
     $from = if ($null -ne $Since) { [datetime]$Since } else { $Now }
     return @{ Stop = (($Now - $from).TotalSeconds -ge $GraceSeconds); Since = $from; Armed = $Armed }
+}
+
+function Test-DevPreviewSessionHeld {
+    <#
+        True when a Claude Code process runs in logon session -SessionId (#3798), read from -Processes (rows
+        carrying Name, SessionId and CommandLine, as Win32_Process gives them). That is the native claude.exe,
+        or a node.exe whose command line runs the npm package @anthropic-ai/claude-code. A disconnected
+        session that still runs one is in use -- the owner reads its servers from another session -- so the
+        watcher leaves them running; once none is left, the session is abandoned as #3569 meant.
+    #>
+    param([int]$SessionId, [AllowEmptyCollection()][object[]]$Processes)
+    foreach ($p in @($Processes)) {
+        if (-not $p -or [int]$p.SessionId -ne $SessionId) { continue }
+        $name = [string]$p.Name
+        if ($name -eq 'claude.exe') { return $true }
+        if ($name -eq 'node.exe' -and [string]$p.CommandLine -match '@anthropic-ai[\\/]claude-code') { return $true }
+    }
+    return $false
 }
 
 function Get-DevPreviewWatchArgs {

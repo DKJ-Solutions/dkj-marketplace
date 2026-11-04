@@ -2,7 +2,85 @@
 
 ## [Unreleased]
 
-**3 / 4 minor entries** <!-- pending-tally -->
+**6 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3798-watcher-claude-holds-session · 20261104-104856Z
+
+The dev-preview watcher no longer stops a server while Claude Code still runs in the logon session that
+started it ([#3798](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3798)). Switched away from with
+fast user switching, a session reads disconnected while Claude Code keeps working in it, and its hub was
+stopped one grace later; the product it started after the switch survived, so the outcome depended only on
+when each server started. The watcher now reads its own session's process table at a disconnect, and a
+`claude.exe` (or `@anthropic-ai/claude-code` under node) there resets the clock as an uncertain read does.
+Once none is left, the session counts as abandoned, as #3569 meant.
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Toolbox hub that went dark mid-session, on a machine with two accounts, now stays up for as long as the
+Claude Code that started it is running.
+**Score:** 2
+
+#### Pull Request
+
+dev-preview watcher: a running Claude Code holds a disconnected session
+
+Plugins: dkj-policy
+
+[PR #3805](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3805)
+
+---
+
+### DEPLOY: fix/3802-merge-in-progress · 20261104-103914Z
+
+ship-pr no longer reports GitHub's `Merge already in progress` as a failed merge (#3802). After a 5xx
+or that answer, it polls the PR for about a minute and folds once it reads MERGED. If it does not, it
+says the merge is held by GitHub and leaves the PR armed for the merge-on-green sweep. The refusal for
+an unmerged PR no longer names a merge queue when the trunk's rules were read and carry none.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Whoever runs ship-pr in a consumer and hits a GitHub server error on the merge now gets a run that
+waits the lock out or hands it back with the right advice, instead of a hard failure followed by a
+misleading hint about a merge queue. Small, and noticed only when GitHub has a bad minute.
+
+**Score:** 2
+
+#### Pull Request
+
+ship-pr: 'Merge already in progress' is a merge still landing, not a failed merge
+
+Plugins: dkj-policy
+
+[PR #3803](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3803)
+
+---
+
+### DEPLOY: feat/toolbox-only-banner · 20261104-100346Z
+
+The airsquats banner is the Toolbox's alone: a page built as a product's (`-BrandTag 'product'`) no longer
+carries it, and this repo's product pages (home, settings, Consumers, marketplace) open on the site header.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A repo whose own product pages are built with the plugin's page builder loses the banner there; it stays
+on every Toolbox page.
+
+**Score:** 1
+
+#### Pull Request
+
+The airsquats banner on the Toolbox only, not on the product pages
+
+Plugins: dkj-policy
+
+[PR #3799](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3799)
+
+---
 
 ### DEPLOY: feat/product-width-bar · 20261104-092205Z
 
