@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**8 / 10 minor entries** <!-- pending-tally -->
+**8 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3807-settle-window-rewake · 20261104-141227Z
+
+The merge-on-green sweep no longer leaves the last armed pull request to go green waiting for hours.
+Its only wake was its own CI completion, which is exactly when the 10-minute settle window refuses it,
+and the `*/30` schedule meant to catch it was delivered every 4 to 8 hours. With the new
+`-WaitForSettleSeconds` cap, `pick-merge-on-green.ps1` waits out what is left of the window when that
+is the only reason nothing was picked, then judges the tracker once more. This repo's runner passes 660
+seconds; the default is 0, and the consumer template does not pass it, so nothing changes there
+([#3807](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3807)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+merge-on-green: wait out the settle window instead of dropping the last PR's only wake
+
+Plugins: dkj-policy
+
+[PR #3808](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3808)
+
+---
 
 ### DEPLOY: fix/3804-create-json-eof · 20261104-134340Z
 
