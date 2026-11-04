@@ -54,9 +54,15 @@ on:
     # gate cost of waiting). 48 extra jobs a day is a backstop; 96
     # would be this runner competing with the CI it exists to react to.
     #
+    # AND GITHUB DOES NOT HONOUR IT HERE (#3807): the scheduled runs of November 1-4, 2026 were created
+    # every 4 to 8 hours, not every 30 minutes -- GitHub drops and delays scheduled runs under load. So
+    # this is a backstop for a lost event, never a latency guarantee, and the one gap it was quietly
+    # covering -- the settle window refusing the LAST green pull request's only workflow_run wake -- is
+    # closed in the pick step instead (-WaitForSettleSeconds).
+    #
     # THIS REPO STAYS AT THIS CADENCE; adopt-ci-floor.ps1's consumer template places it sparser instead,
-    # every 3 hours (issue #2487) -- this repo is public, so a standard-runner job costs nothing and 30
-    # minutes buys latency for free, while a private consumer is billed per scheduled job start whether
+    # every 3 hours (issue #2487) -- this repo is public, so a standard-runner job costs nothing and a
+    # denser cron costs nothing either, while a private consumer is billed per scheduled job start whether
     # or not anything is owed a merge -- so on a private consumer the latency is worth giving up:
     # half-hourly is 48 billed jobs/day, every 3 hours is 8.
     - cron: '*/30 * * * *'
@@ -147,6 +153,14 @@ jobs:
       # read -- keeping the standing one out of every step that does not need it. RUN FROM 'trusted-main'
       # (working-directory), which is where this script's file now lives on disk -- the workspace ROOT no
       # longer holds a checkout at all, so a bare relative path here would resolve to nothing.
+      #
+      # -WaitForSettleSeconds 660 (#3807): when nothing is eligible ONLY because the settle window refused
+      # it, the picker waits out the remainder -- at most the 10-minute window plus a margin -- and judges
+      # the tracker once more. That wake is this run's own, because for the last pull request to go green
+      # no later CI run will come to wake the sweep, and the schedule above arrives hours late. While it
+      # waits it holds the concurrency group; a CI completion meanwhile queues one pending sweep, which is
+      # idempotent. 11 minutes plus two forward laps plus the ship still fits the 45-minute cap below.
+      # The consumer template does not pass it: there a waiting minute is a billed one.
       - name: Is any armed pull request owed a merge?
         id: pick
         shell: pwsh
@@ -155,7 +169,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/pick-merge-on-green.ps1
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/pick-merge-on-green.ps1 -WaitForSettleSeconds 660
           exit $LASTEXITCODE
 
       # THE PR'S OWN HEAD, IN ITS OWN TREE -- carrying no token, and persist-credentials: false so

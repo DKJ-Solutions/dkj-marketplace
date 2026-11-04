@@ -20,8 +20,8 @@
 
     FAIL-CLOSED AT EVERY BRANCH, the same posture as the sibling above. Anything short of a clean
     read answers Eligible=$false. The worst this file can be wrong about is a merge that waits for
-    the next sweep -- thirty minutes at the outside -- and the pull request stays exactly as it
-    was. It can never be wrong about a merge that should not have happened, because it does not decide one.
+    the next sweep -- which GitHub's schedule may deliver hours late (#3807) -- and the pull request
+    stays exactly as it was. It can never be wrong about a merge that should not have happened, because it does not decide one.
 
     PURE: no git, no gh, no environment. The reads live in scripts/ci/pick-merge-on-green.ps1.
 #>
@@ -74,9 +74,10 @@ function Get-MergeOnGreenSettleMinutes {
         staleness read and the step-4 gates are local reads plus a handful of gh calls. A forward lap
         pushes a new head, which starts a new CI run, so the required checks are no longer green and
         the window starts over on the new head -- a lap never runs out this clock. Ten minutes is
-        therefore generous on the live side, and on the dead side it costs one extra scheduled sweep
-        at the outside -- the calling workflow's own cadence (issue #2487: */30 on the source repo,
-        sparser on a metered consumer's template).
+        therefore generous on the live side. On the dead side it once cost "one extra scheduled sweep",
+        and that turned out to be hours, because GitHub delivered the source repo's */30 cron every 4 to
+        8 hours (#3807). So a sweep the window refused now waits the remainder out itself and looks once
+        more (Get-MergeOnGreenSettleWaitSeconds, pick-merge-on-green.ps1 -WaitForSettleSeconds).
     #>
     return 10
 }
@@ -431,7 +432,9 @@ function Test-MergeOnGreenRequiredChecksSettled {
         return [pscustomobject]@{ Ready = $false; Reason = 'when the required checks finished could not be read, so it cannot be told from a live ship'; Settle = $settle }
     }
     if ([double]$GreenAgeMinutes -lt $settle) {
-        return [pscustomobject]@{ Ready = $false; Reason = ("green for {0:N0} minute(s), under the {1}-minute settle window -- a live ship-pr may still be merging it" -f [math]::Floor([double]$GreenAgeMinutes), $settle); Settle = $settle }
+        # SettleRemainingMinutes IS SET ON THIS BRANCH ONLY (#3807): it is the one refusal that clears by
+        # the clock alone, so it is the one a sweep can wait out instead of leaving to the next wake.
+        return [pscustomobject]@{ Ready = $false; Reason = ("green for {0:N0} minute(s), under the {1}-minute settle window -- a live ship-pr may still be merging it" -f [math]::Floor([double]$GreenAgeMinutes), $settle); Settle = $settle; SettleRemainingMinutes = ($settle - [double]$GreenAgeMinutes) }
     }
 
     return [pscustomobject]@{ Ready = $true; Reason = ''; Settle = $settle }
@@ -557,7 +560,12 @@ function Get-MergeOnGreenPrVerdict {
     # reused rather than restated by Get-MergeOnGreenStrandedVerdict too, so the two cannot drift apart.
     $settled = Test-MergeOnGreenRequiredChecksSettled -MergeBlockVerdict $MergeBlockVerdict -GreenAgeMinutes $GreenAgeMinutes
     if (-not $settled.Ready) {
-        return [pscustomobject]@{ Eligible = $false; Reason = $settled.Reason }
+        $verdict = [pscustomobject]@{ Eligible = $false; Reason = $settled.Reason }
+        # Carried through only when the settle window is the refusal (#3807) -- see Get-MergeOnGreenSettleWaitSeconds.
+        if ($settled.PSObject.Properties['SettleRemainingMinutes']) {
+            $verdict | Add-Member -NotePropertyName SettleRemainingMinutes -NotePropertyValue $settled.SettleRemainingMinutes
+        }
+        return $verdict
     }
 
     return [pscustomobject]@{ Eligible = $true; Reason = "armed, not a draft, touches no code the runner executes, mergeable, and every required check has been green on its own head for at least $($settled.Settle) minutes" }
@@ -594,6 +602,61 @@ function Select-MergeOnGreenCandidate {
     })
     if ($eligible.Count -eq 0) { return $null }
     return @($eligible | Sort-Object { [int]$_.Number } | Select-Object -First 1)[0]
+}
+
+function Get-MergeOnGreenSettleWaitSeconds {
+    <#
+    .SYNOPSIS
+        How many seconds a sweep that picked nothing should wait before judging the tracker ONCE more --
+        0 when there is nothing worth waiting for (issue #3807).
+
+    .DESCRIPTION
+        WHY A SWEEP WAITS AT ALL. The sweep's ordinary wake is CI completing, and that is the very moment
+        the settle window refuses: for the LAST pull request to go green no later CI run comes along to
+        wake it again. The schedule was meant to be the backstop, but GitHub delivered the '*/30' cron
+        every 4 to 8 hours here (measured on #3807, November 1-4, 2026), so an armed, green, mergeable pull
+        request whose session had gone sat for hours.
+
+        ONLY THE SETTLE WINDOW IS WAITED OUT, because it is the one refusal that clears by the clock alone.
+        A pending check wakes the sweep itself when it completes; a conflict, a draft or a missing label
+        waits on a person. So the wait is the largest remaining settle time among the verdicts that carry
+        SettleRemainingMinutes -- the largest, so every pull request waiting on the window has cleared it
+        when the sweep looks again -- plus a margin, capped by CapSeconds.
+
+        NOTHING IS WAITED FOR WHEN SOMETHING IS ALREADY ELIGIBLE: the sweep hands that one over now, and its
+        merge is a push to the trunk whose CI wakes the next sweep.
+
+    .PARAMETER Verdicts
+        The records the picker formed, each carrying Eligible and, where the window refused it,
+        SettleRemainingMinutes.
+
+    .PARAMETER CapSeconds
+        The most this sweep may wait. 0 or less disables the wait.
+
+    .PARAMETER MarginSeconds
+        Added to the remaining time, so the second look lands past the window rather than on its edge.
+
+    .OUTPUTS
+        [int] seconds, 0 for "do not wait".
+    #>
+    param(
+        $Verdicts,
+        [int]$CapSeconds,
+        [int]$MarginSeconds = 30
+    )
+
+    if ($CapSeconds -le 0) { return 0 }
+    $all = @(@($Verdicts) | Where-Object { $_ })
+    if (@($all | Where-Object { $_.PSObject.Properties['Eligible'] -and $_.Eligible }).Count -gt 0) { return 0 }
+
+    $remaining = @($all | Where-Object { $_.PSObject.Properties['SettleRemainingMinutes'] } | ForEach-Object {
+        $value = [double]$_.SettleRemainingMinutes
+        if (-not [double]::IsNaN($value) -and -not [double]::IsInfinity($value) -and $value -gt 0) { $value }
+    })
+    if ($remaining.Count -eq 0) { return 0 }
+
+    $seconds = [int][math]::Ceiling((($remaining | Measure-Object -Maximum).Maximum) * 60) + $MarginSeconds
+    return [math]::Min($seconds, $CapSeconds)
 }
 
 function Get-MergeOnGreenStrandedVerdict {

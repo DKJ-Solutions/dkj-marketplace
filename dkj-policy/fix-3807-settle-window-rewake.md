@@ -39,19 +39,45 @@
 
 ### PLAN
 
+- [x] Verify #3807's reason: the settle window refuses the sweep's `workflow_run` wake for the last
+  pull request to go green, and the `*/30` schedule arrived every 4 to 8 hours (eight scheduled runs,
+  November 2-4, 2026, read back with `gh run list`).
+- [x] Direction: the picker waits the remainder of the window out itself and judges the tracker once
+  more, rather than re-anchoring the window (which would undo #2393's guard against a live ship).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `merge-on-green-lib.ps1`: the settle-window refusal carries `SettleRemainingMinutes`; new pure
+  `Get-MergeOnGreenSettleWaitSeconds` (longest remainder + 30 s, capped, 0 when anything is eligible
+  or nothing is in the window). Mirrored to `plugins/dkj-policy`.
+- [x] `pick-merge-on-green.ps1`: `-WaitForSettleSeconds` (default 0, never waits); one pass is a
+  function, so the second look re-reads the tracker. Mirrored.
+- [x] `merge-on-green.yml`: passes `-WaitForSettleSeconds 660`; the schedule comment's cadence claim
+  corrected to what GitHub delivered. The consumer template is unchanged: there a waiting minute is billed.
 
 ### TEST
 
+- [x] `merge-on-green-lib.tests.ps1`: 13 new asserts (remaining minutes carried only by the window
+  refusal, the wait arithmetic, the cap, the zero cases, the wiring) -- 282 pass, 0 fail.
+- [x] The picker runs cleanly with the new parameter (`picked=false`, nothing armed).
+
 ### DEPLOY: fix/3807-settle-window-rewake
 
-**Score:**
+The merge-on-green sweep no longer leaves the last armed pull request to go green waiting for hours.
+Its only wake was its own CI completion, which is exactly when the 10-minute settle window refuses it,
+and the `*/30` schedule meant to catch it was delivered every 4 to 8 hours. With the new
+`-WaitForSettleSeconds` cap, `pick-merge-on-green.ps1` waits out what is left of the window when that
+is the only reason nothing was picked, then judges the tracker once more. This repo's runner passes 660
+seconds; the default is 0, and the consumer template does not pass it, so nothing changes there
+([#3807](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3807)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 

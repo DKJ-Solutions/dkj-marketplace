@@ -29,7 +29,20 @@
     with the pull request untouched. How long that is is the calling workflow's own choice (issue
     #2487): the source repo's own copy runs the schedule at */30, a metered consumer's template
     sparser.
+
+    AND THE SCHEDULE IS NOT A BACKSTOP TO REST LATENCY ON (#3807). GitHub delivered the source repo's
+    */30 cron every 4 to 8 hours, so the pull request that goes green LAST -- whose only wake is its own
+    CI completion, the moment the settle window refuses it -- could sit for hours. With
+    -WaitForSettleSeconds, a sweep that picks nothing because of that window alone waits the remainder
+    out and judges the tracker once more.
+
+.PARAMETER WaitForSettleSeconds
+    The most this run may wait for a settle window to pass before its one second look. 0 (the default)
+    never waits, so a local or test run returns at once; the workflow passes the cap it can afford.
 #>
+param(
+    [int]$WaitForSettleSeconds = 0
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -84,6 +97,10 @@ if (-not $repo) {
     exit 0
 }
 
+# ONE PASS = ONE READ OF THE TRACKER AND ONE VERDICT PER ARMED PULL REQUEST. A function so the second look
+# after a settle wait (#3807) re-reads everything rather than reusing the first pass's facts: a live ship
+# may have merged the pull request meanwhile, or pushed a new head. Every early refusal still ends the run.
+function Invoke-PickPass {
 # THE SERVER-SIDE FILTER IS THE CHEAP HALF; the lib re-asks it locally, which is why this asks gh for
 # `labels` as well as passing --label. See Test-MergeOnGreenArmed for what that second read closes.
 # --limit is generous rather than tight: an armed pull request that fell off the end of the page would
@@ -157,13 +174,17 @@ foreach ($record in $armed) {
 
     Write-Host ("  #{0} ({1}): {2} -- {3}" -f $number, (Get-DisplayRef -Ref $branch), $(if ($verdict.Eligible) { 'ELIGIBLE' } else { 'waiting' }), $verdict.Reason)
 
-    $verdicts += [pscustomobject]@{
+    $entry = [pscustomobject]@{
         Number   = $number
         Branch   = $branch
         Sha      = $sha
         Eligible = $verdict.Eligible
         Reason   = $verdict.Reason
     }
+    if ($verdict.PSObject.Properties['SettleRemainingMinutes']) {
+        $entry | Add-Member -NotePropertyName SettleRemainingMinutes -NotePropertyValue $verdict.SettleRemainingMinutes
+    }
+    $verdicts += $entry
 }
 
 # N ARMED AND NO VERDICT IS A CONTRADICTION, NOT A WAIT: every armed pull request the list held was
@@ -171,6 +192,20 @@ foreach ($record in $armed) {
 if ($verdicts.Count -eq 0) {
     Write-PickVerdict -Picked $false -Reason "$($armed.Count) record(s) in the '$label' list, but none could be evaluated -- the list was not read as pull requests"
     exit 0
+}
+
+return $verdicts
+}
+
+$verdicts = @(Invoke-PickPass)
+
+# THE ONE WAIT (#3807): only when nothing is eligible and the settle window is what refused, and only once.
+# A second refusal is left to the next wake, so a run can never wait longer than the cap.
+$waitSeconds = Get-MergeOnGreenSettleWaitSeconds -Verdicts $verdicts -CapSeconds $WaitForSettleSeconds
+if ($waitSeconds -gt 0) {
+    Write-Host "merge-on-green: nothing eligible yet and the settle window is the reason -- waiting $waitSeconds s, then judging the tracker once more"
+    Start-Sleep -Seconds $waitSeconds
+    $verdicts = @(Invoke-PickPass)
 }
 
 $pick = Select-MergeOnGreenCandidate -Verdicts $verdicts

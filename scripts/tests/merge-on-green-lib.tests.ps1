@@ -851,6 +851,45 @@ $step1At = $shipRaw.IndexOf('# --- Step 1: open the PR')
 Assert-True ($fcAt -gt 0 -and $step1At -gt $fcAt) 'ship-pr.ps1 prints the forecast before step 1 runs the gates'
 
 Write-Host ''
+Write-Host 'Waiting out the settle window -- the last green pull request (#3807)' -ForegroundColor Cyan
+
+# THE WINDOW REFUSAL CARRIES WHAT IS LEFT OF IT, and no other refusal does: it is the only one that
+# clears by the clock alone, so it is the only one a sweep may wait for.
+$inWindow = Get-MergeOnGreenPrVerdict -Record (New-PrRecord) -MergeBlockVerdict (New-Green) -GreenAgeMinutes 3
+Assert-True ($inWindow.PSObject.Properties['SettleRemainingMinutes'] -and [double]$inWindow.SettleRemainingMinutes -eq 7) `
+    'a refusal by the settle window carries the remaining minutes (10 - 3 = 7)'
+$noAge = Get-MergeOnGreenPrVerdict -Record (New-PrRecord) -MergeBlockVerdict (New-Green)
+Assert-True (-not $noAge.PSObject.Properties['SettleRemainingMinutes']) 'an unreadable age carries none -- nothing to wait out'
+$settledOk = Get-MergeOnGreenPrVerdict -Record (New-PrRecord) -MergeBlockVerdict (New-Green) -GreenAgeMinutes 12
+Assert-True (-not $settledOk.PSObject.Properties['SettleRemainingMinutes']) 'an eligible verdict carries none'
+
+$w = @{ Eligible = $false; Reason = 'window' }
+$waitOne = [pscustomobject]($w + @{ SettleRemainingMinutes = 7.0; Number = '1' })
+$waitTwo = [pscustomobject]($w + @{ SettleRemainingMinutes = 2.5; Number = '2' })
+$redOne  = [pscustomobject]@{ Eligible = $false; Reason = 'red'; Number = '3' }
+$okOne   = [pscustomobject]@{ Eligible = $true; Reason = 'ok'; Number = '4' }
+
+Assert-Equal 450 (Get-MergeOnGreenSettleWaitSeconds -Verdicts @($waitOne) -CapSeconds 660) `
+    'seven minutes left waits 420 s plus the 30 s margin'
+Assert-Equal 450 (Get-MergeOnGreenSettleWaitSeconds -Verdicts @($waitTwo, $waitOne, $redOne) -CapSeconds 660) `
+    'several in the window: the LONGEST remainder, so all of them have cleared at the second look'
+Assert-Equal 300 (Get-MergeOnGreenSettleWaitSeconds -Verdicts @($waitOne) -CapSeconds 300) 'and never longer than the cap'
+Assert-Equal 0 (Get-MergeOnGreenSettleWaitSeconds -Verdicts @($waitOne) -CapSeconds 0) `
+    'cap 0 (the script default) never waits -- a local or test run returns at once'
+Assert-Equal 0 (Get-MergeOnGreenSettleWaitSeconds -Verdicts @($waitOne, $okOne) -CapSeconds 660) `
+    'something already eligible is handed over now, not waited behind'
+Assert-Equal 0 (Get-MergeOnGreenSettleWaitSeconds -Verdicts @($redOne) -CapSeconds 660) `
+    'a refusal that is not the window is not waited for -- a red check or a conflict waits on CI or a person'
+Assert-Equal 0 (Get-MergeOnGreenSettleWaitSeconds -Verdicts @() -CapSeconds 660) 'nothing armed waits for nothing'
+$nanOne = [pscustomobject]($w + @{ SettleRemainingMinutes = [double]::NaN; Number = '5' })
+Assert-Equal 0 (Get-MergeOnGreenSettleWaitSeconds -Verdicts @($nanOne) -CapSeconds 660) 'a NaN remainder is no reason to wait'
+
+# WIRED: the runner passes a cap, and the picker waits once and then judges a fresh pass.
+Assert-True ($flowRaw -match 'pick-merge-on-green\.ps1 -WaitForSettleSeconds \d+') 'merge-on-green.yml passes the picker a settle-wait cap'
+Assert-True ($pickRaw -match 'Get-MergeOnGreenSettleWaitSeconds' -and ([regex]::Matches($pickRaw, '\$verdicts = @\(Invoke-PickPass\)')).Count -eq 2) `
+    'the picker asks the lib how long to wait and re-reads the tracker for its second look'
+
+Write-Host ''
 Write-Host 'The lib, the script and the runner are ASCII' -ForegroundColor Cyan
 
 $rawLib = Get-Content -LiteralPath $LibPath -Raw
