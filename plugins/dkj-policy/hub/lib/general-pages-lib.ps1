@@ -347,9 +347,11 @@ function Format-RepoHubBanner {
         the Toolbox carries the same banner wherever the visitor is. NEVER ON A PRODUCT'S PAGE (Dave, November 4, 2026):
         both builders leave it out under -BrandTag 'product', and the Consumers page (Format-ConsumerDashboardHtml) draws none. It is the first thing in <body>, ABOVE the site header (owner,
         October 24, 2026; it was the first block of <main>, under the breadcrumb bar), so every caller writes it
-        straight after '<body>'. It stands there with no margin, border or radius of its own, a bare strip flush against the
-        header (owner, October 24, 2026), and otherwise uses house classes only (.notice, .num), because
-        the hub restyles nothing.
+        straight after '<body>'. It is a TOAST, not a strip (Maikel, November 4, 2026; it was a bare strip flush against
+        the header from October 24): fixed to the bottom-left corner, a spacing-4 gutter from both edges, never wider
+        than the viewport minus those gutters, and lifted by --shadow-pop. Its source position stays first in <body>
+        so the reading order is unchanged. It uses house classes and tokens only (.notice, .num, --spacing-4,
+        --shadow-pop), because the hub restyles nothing.
 
         ONE ROW, ALWAYS (Dave, October 24, 2026): the countdown and the box owed share a single <p> line,
         the box an inline span after the timer rather than a paragraph of its own, and its label is short
@@ -366,8 +368,8 @@ function Format-RepoHubBanner {
         until the page has had a click, which is its rule, not this page's.
 
         ONLY WHILE SOMETHING IS DUE (Dave, October 27, 2026): the strip is hidden until the server reports an hour
-        owed. When that happens while the page is open -- the hour turns -- it slides down; ticking the box slides
-        it back up. A page that opens with squats already owed shows it at once, without the slide, so moving
+        owed. When that happens while the page is open -- the hour turns -- it pops up from below the bottom edge;
+        ticking the box sinks it back out of sight. A page that opens with squats already owed shows it at once, without the slide, so moving
         between hub pages does not replay it, and prefers-reduced-motion drops the slide altogether. The motion
         is the Web Animations API on the element itself, because the hub restyles nothing and a page carries no
         <style> of its own.
@@ -384,7 +386,7 @@ function Format-RepoHubBanner {
         answers without the API is not offline, so it still shows no banner.
     #>
     return @'
-<div class="notice" id="hub-banner" role="region" aria-label="Airsquats" style="margin: 0; border: 0; border-radius: 0" hidden>
+<div class="notice" id="hub-banner" role="region" aria-label="Airsquats" style="position: fixed; left: var(--spacing-4); bottom: var(--spacing-4); z-index: 20; margin: 0; max-width: calc(100vw - 2 * var(--spacing-4)); box-shadow: var(--shadow-pop)" hidden>
 <p>Next airsquats in <strong class="num" data-hub-timer>--:--</strong><span class="msg--warn" data-hub-due hidden> &middot; <label><input type="checkbox" data-hub-done> <span data-hub-count>10</span> due</label></span><span class="msg--warn" data-hub-offline hidden> &middot; hub offline, this hour is not counted</span><span data-hub-owner hidden title="The Windows account this toolbox runs under"> &middot; <span data-hub-account></span></span></p>
 </div>
 <script>
@@ -401,14 +403,12 @@ function Format-RepoHubBanner {
   function slide(open) {
     if (open === want) { return; }
     want = open;
-    if (anim) { anim.cancel(); anim = null; box.style.overflow = ""; }
+    if (anim) { anim.cancel(); anim = null; }
     box.hidden = false;
     if (first || still || !box.animate) { box.hidden = !open; return; }
-    var cs = getComputedStyle(box), full = { height: box.offsetHeight + "px", paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom, opacity: 1 };
-    var shut = { height: "0px", paddingTop: "0px", paddingBottom: "0px", opacity: 0 };
-    box.style.overflow = "hidden";
+    var full = { transform: "translateY(0)", opacity: 1 }, shut = { transform: "translateY(calc(100% + 2rem))", opacity: 0 };
     anim = box.animate(open ? [shut, full] : [full, shut], { duration: 400, easing: open ? "ease-out" : "ease-in" });
-    anim.onfinish = function () { anim = null; box.style.overflow = ""; box.hidden = !open; };
+    anim.onfinish = function () { anim = null; box.hidden = !open; };
   }
   function tone() {
     try {

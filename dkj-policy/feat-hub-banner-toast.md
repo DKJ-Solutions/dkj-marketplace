@@ -39,19 +39,35 @@
 
 ### PLAN
 
+Maikel, November 4, 2026: the Toolbox's airsquats banner stops being a full-width strip above the site
+header and becomes a toast that pops up from the bottom-left corner.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Format-RepoHubBanner` (`plugins/dkj-policy/hub/lib/general-pages-lib.ps1`): fixed bottom-left in house
+  tokens (`--spacing-4` gutter, `--shadow-pop`), keeps `.notice`'s own border and radius, and the height slide
+  becomes a rise from below the edge (`translateY` + opacity). It stays first in `<body>`, so every placement
+  test still holds.
+- [x] `dev-pages.tests.ps1`: one assert pins the toast position and the rise.
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: 590 passed, 0 failed.
+- [ ] Maikel looks at it on the Toolbox (visible result).
+
 ### DEPLOY: feat/hub-banner-toast
 
-**Score:**
+The airsquats banner on every Toolbox page is now a toast in the bottom-left corner. It pops up when squats come due
+and sinks away once they are ticked off. It used to be a strip that pushed the site header down.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A Toolbox user sees the reminder float over the page instead of shifting the header. They notice it the first time
+an hour comes due.
+
+**Score:** 2
 
 #### Pull Request
 
