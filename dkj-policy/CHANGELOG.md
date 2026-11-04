@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**6 / 7 minor entries** <!-- pending-tally -->
+**7 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3797-page-name-two-words · 20261104-121848Z
+
+The brand book now holds a page's name, its `h1` and the breadcrumb crumb that reads the same, to two words at most (rule 8 and the breadcrumb bar's labels; #3797). The five-word cap stays for `h2` and `h3`. The hub's fit alarm checks it on sight and warns when the live page's `h1` or its current crumb runs longer. A hyphenated word counts as one.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions app that takes this brand book now has a two-word page name to follow, so a page title such as "Subject - a subtitle" moves its subtitle into the page. Every hub page warns about a name that does not.
+
+**Score:** 2
+
+#### Pull Request
+
+Brand book: a page name is at most two words, checked by the page shell
+
+Plugins: dkj-policy
+
+[PR #3800](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3800)
+
+---
 
 ### DEPLOY: fix/3798-watcher-claude-holds-session · 20261104-104856Z
 
