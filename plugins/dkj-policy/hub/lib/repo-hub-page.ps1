@@ -90,6 +90,7 @@ function Format-PluginRepoHubHtml {
     # surface around them (stepping down where .grid-3 does), and .ph-code, for the code samples.
     [void]$sb.AppendLine('<style>')
     [void]$sb.AppendLine((Get-HubCardGridStyle))
+    [void]$sb.AppendLine((Get-ToolboxShellStyle))
     [void]$sb.AppendLine('.ph-code { margin: var(--spacing-3) 0 0; padding: var(--spacing-3) var(--spacing-4); background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); overflow-x: auto; font-size: var(--text-xs); line-height: 1.6; }')
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
@@ -151,8 +152,7 @@ function Format-PluginRepoHubHtml {
     }
 
     [void]$sb.AppendLine('<p class="note">Each page names its own source. Served on 127.0.0.1 only, by the dkj-policy plugin''s <code>hub/pages/serve-general-pages.ps1</code>.</p>')
-    [void]$sb.AppendLine('</main>')
-    [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", widths: false });</script>')
+    [void]$sb.AppendLine((Format-ToolboxShellClose))
     # The fit alarm, as Format-GeneralPageHtml closes every page below this one (#3558).
     [void]$sb.AppendLine((Format-FitAlarmHtml))
     [void]$sb.AppendLine('</body>')

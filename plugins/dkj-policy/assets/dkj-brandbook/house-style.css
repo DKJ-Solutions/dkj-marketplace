@@ -586,7 +586,106 @@ p { margin: 0; }
 .theme-settings__width { justify-self: start; height: var(--tap); }   /* the page width: a .seg at tap height */
 
 /* ==========================================================================
-   App components: the generic, mobile-first parts of an app shell (lifted from MesoWise).
+   Desktop shell: the Toolbox's layer, desktop only (Dave, November 4, 2026, #3811).
+   The Toolbox is always a desktop tool, read in VS Code's Simple Browser: an Explorer or a task
+   board, not a website. No site header, no breadcrumb bar and no cards: a thin bar across the
+   top, then a side tree, a main pane and an optional detail pane, each scrolling on its own and
+   told apart by 1px lines instead of whitespace or shadows. Everything is compact (28px rows).
+   DESKTOP ONLY: this layer has no phone media query and no 44px touch target (its rows are 28px, and it takes no .btn--touch), and it must not be
+   used for the mobile-first product, which takes "App components" below. Markup: use div, nav,
+   section and aside, never main as a pane of the grid (the house's main caps its width at 1080px; a main inside a pane needs that cap lifted, as the hub's .tb-scroll does).
+   Every colour pairing is an existing token pair: --fg-1 on --bg-1 and --bg-2, --primary-muted
+   on --bg-2, --primary on --bg-1, --bg-2 and --bg-3, --primary-muted on --bg-3, and the status
+   fills (--positive-3, --warning-3, --negative-3) as a dot that always sits beside a text label.
+   Lines are --bg-3 inside a pane and --bg-4 between panes. The classes are .shell (with --fit and
+   --no-aside), .shell__bar, .shell__actions, .shell__nav, .shell__main, .shell__list,
+   .shell__aside, .shell__aside-body, .tree (with __item, __chev, __label, __count), .toolbar (with __title,
+   __filter, __end), .pane-head, .table--dense and .dot (with --good, --warn, --bad).
+   ========================================================================== */
+
+/* ---- The frame ------------------------------------------------------------- */
+/* The shell's sizes are its own tokens, set on the shell so a pane can be tuned in one place. */
+.shell { --shell-bar-h: var(--spacing-8-5); --shell-nav-w: var(--spacing-56); --shell-aside-w: var(--spacing-72); --shell-row-h: var(--spacing-7);
+  display: grid; grid-template-columns: var(--shell-nav-w) minmax(0, 1fr) var(--shell-aside-w); grid-template-rows: var(--shell-bar-h) minmax(0, 1fr);
+  height: 100vh; height: 100dvh; overflow: hidden; background: var(--bg-1); color: var(--fg-1); }
+/* --fit: the shell fills the box it sits in (a specimen frame, a split view) instead of the window. */
+.shell--fit { height: 100%; }
+/* --no-aside: two columns; the detail pane is not drawn. */
+.shell--no-aside { grid-template-columns: var(--shell-nav-w) minmax(0, 1fr); }
+.shell--no-aside > .shell__aside { display: none; }
+
+/* ---- The bar: where you are, and a few small actions ---------------------------- */
+.shell__bar { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-3); min-width: 0;
+  padding: 0 var(--spacing-1-5) 0 var(--spacing-3); background: var(--bg-2); border-bottom: 1px solid var(--bg-4); }
+.shell__bar .breadcrumbs { min-width: 0; overflow: hidden; }
+.shell__bar .breadcrumbs ol { font-size: var(--text-sm); gap: var(--spacing-0-5); }
+.shell__bar .breadcrumbs a { color: var(--primary-muted); }
+.shell__bar .breadcrumbs a:focus-visible { outline-color: var(--primary-muted); }
+.shell__bar .breadcrumbs__sep { color: var(--primary-muted); }
+.shell__bar .breadcrumbs__sep svg { width: var(--spacing-4); height: var(--spacing-4); }
+.shell__bar .breadcrumbs [aria-current='page'] { color: var(--primary); font-weight: var(--font-weight-bold); }
+.shell__actions { display: flex; align-items: center; gap: var(--spacing-1); flex: none; }
+/* The settings button, small: the 44px touch size is for a phone, and the Toolbox has none. */
+.shell__bar .theme-settings__toggle { width: var(--spacing-7); height: var(--spacing-7); }
+.shell__bar .theme-settings__toggle svg { width: var(--spacing-4-5); height: var(--spacing-4-5); }
+.shell .btn { padding: var(--spacing-0-5) var(--spacing-2); line-height: var(--spacing-5); border-radius: var(--radius-1-5); }
+
+/* ---- The side tree ----------------------------------------------------------- */
+.shell__nav { min-width: 0; overflow-y: auto; padding-bottom: var(--spacing-2); background: var(--bg-2); border-right: 1px solid var(--bg-4); }
+.tree, .tree ul { margin: 0; padding: 0; list-style: none; }
+.tree ul { padding-left: var(--spacing-3-5); }   /* one indent step: the width of a chevron */
+.tree__item { display: flex; align-items: center; gap: var(--spacing-1-5); width: 100%; height: var(--shell-row-h); padding: 0 var(--spacing-3) 0 var(--spacing-2);
+  background: none; border: 0; border-radius: 0; color: var(--fg-1); font: inherit; text-align: left; text-decoration: none; white-space: nowrap; cursor: pointer; }
+.tree__item:hover { background: var(--bg-3); }
+.tree__item:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: -2px; }
+.tree__item[aria-current="page"] { background: var(--bg-3); color: var(--primary); font-weight: var(--font-weight-bold); box-shadow: inset 2px 0 0 var(--primary); }
+/* A leaf has no chevron, so it takes the chevron's width as padding and its label lines up with a group's. */
+.tree li > a.tree__item { padding-left: calc(var(--spacing-2) + var(--spacing-3-5) + var(--spacing-1-5)); }
+.tree__chev { flex: none; width: var(--spacing-3-5); height: var(--spacing-3-5); color: var(--primary-muted); }
+.tree__item[aria-expanded="true"] > .tree__chev { transform: rotate(90deg); }
+.tree__item[aria-expanded="false"] + ul { display: none; }
+.tree__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.tree__count { margin-left: auto; padding-left: var(--spacing-2); font-size: var(--text-xs); font-variant-numeric: tabular-nums; color: var(--primary-muted); }
+
+/* ---- Pane heading: a small label over a pane's content ------------------------------ */
+.pane-head { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-2); height: var(--shell-row-h); margin: 0; padding: 0 var(--spacing-3);
+  font-size: var(--text-xs); font-weight: var(--font-weight-bold); letter-spacing: 0.04em; text-transform: uppercase; color: var(--primary-muted); }
+
+/* ---- The main pane: a toolbar over a list --------------------------------------------- */
+.shell__main { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; min-height: 0; background: var(--bg-1); }
+.toolbar { display: flex; align-items: center; gap: var(--spacing-2); min-width: 0; height: var(--spacing-9); padding: 0 var(--spacing-3); border-bottom: 1px solid var(--bg-3); }
+.toolbar > h1, .toolbar__title { margin: 0; font-size: var(--text-h3); white-space: nowrap; }   /* the page's one h1, set at the toolbar's size: a pane title, not a headline */
+.toolbar__filter { width: var(--spacing-52); max-width: 40%; height: var(--spacing-6); padding: 0 var(--spacing-2); background: var(--bg-1); color: var(--fg-1);
+  border: 1px solid var(--bg-3); border-radius: var(--radius-1-5); font: inherit; font-size: var(--text-sm); }
+.toolbar__filter:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 1px; }
+.toolbar__end { display: flex; align-items: center; gap: var(--spacing-1); margin-left: auto; }
+.shell__list { min-height: 0; overflow: auto; }
+
+/* ---- The detail pane -------------------------------------------------------------------- */
+.shell__aside { min-width: 0; overflow-y: auto; background: var(--bg-2); border-left: 1px solid var(--bg-4); }
+.shell__aside-body { padding: 0 var(--spacing-3) var(--spacing-3); }
+
+/* ---- Dense table: ~28px rows, hover, a selected row ------------------------------------------ */
+/* Add to .table. Plain text columns take .col-start; the head stays in view while the list scrolls. */
+.table--dense { font-size: var(--text-sm); }
+.table--dense th, .table--dense td { height: var(--shell-row-h); padding: 0 var(--spacing-3); }
+.table--dense th { position: sticky; top: 0; z-index: 1; background: var(--bg-2); border-bottom: 1px solid var(--bg-4); }
+.table--dense tbody tr:hover { background: var(--bg-2); }
+.table--dense tbody tr:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: -2px; }
+.table--dense tbody tr[aria-selected="true"] { background: var(--bg-3); }
+.table--dense tbody tr[aria-selected="true"] td:first-child { box-shadow: inset 2px 0 0 var(--primary); color: var(--primary); font-weight: var(--font-weight-bold); }
+
+/* ---- Status dot: a state at a glance, always beside its text label -------------------------------- */
+.dot { display: inline-block; flex: none; width: var(--spacing-2); height: var(--spacing-2); margin-right: var(--spacing-1-5); border-radius: var(--radius-pill); background: var(--primary-muted); }
+.dot--good { background: var(--positive-3); }
+.dot--warn { background: var(--warning-3); }
+.dot--bad { background: var(--negative-3); }
+
+/* ==========================================================================
+   App components: the MOBILE-FIRST product layer (phone first, desktop as an option), lifted from
+   MesoWise. The storefront and every product take this part, with the site header and the
+   breadcrumb bar below; the Toolbox does not: it takes the desktop shell above (Dave,
+   November 4, 2026, #3811).
    A form field, touch buttons, a dialog, a side drawer, a top bar and a menu list. Domain
    components stay in the app. Touch targets are at least --tap (44px) high. Every colour
    pairing below is an existing token pair (--primary on --bg-1 or --bg-2,

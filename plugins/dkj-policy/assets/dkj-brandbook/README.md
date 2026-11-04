@@ -759,6 +759,23 @@ generic `.chip`, the stat rows and the stepper are house classes since the
 
 **What this changes for an app that takes the update:** nothing that exists, only additions. But an app that defines its own `.chip`, `.help`, `.amount`, `.calc`, `.verdict`, `.question-head` (all measured in MesoWise) or `.tag`, `.panel`, `.banner`, `.alert`, `.check`, `.answer`, `.flash`, `.figure`, `.stepper`, `.combo`, `.bill`, `.compare` now collides with a house name, and renames its class or adopts the house one. MesoWise's `.value` and `.input` do not collide (the value box is `.value-box`, and the standalone input class was not ported: `.field` styles its input).
 
+## Two layers
+
+**The brand book has a shared core and two layers on top of it** (Dave, November 4, 2026,
+[#3811](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3811)): the Toolbox is always a desktop tool,
+read in VS Code's Simple Browser, and looks like an Explorer or a task board, while the product (the
+storefront) stays mobile-first with desktop as an option. The core (tokens, themes, typography, tables) is
+shared; each layer is a part of [`house-style.css`](house-style.css):
+
+- **Desktop shell** (in [`house-style.css`](house-style.css), the part "Desktop shell: the Toolbox's layer"): a thin bar, a side tree, a main pane with a dense
+  list and an optional detail pane, no site header and no cards. Desktop only, with no phone query. Reference:
+  [`patterns/toolbox-shell.html`](patterns/toolbox-shell.html) and the "Desktop shell" specimens.
+- **Mobile-first app** (the part "App components"): the narrow column, touch targets, dialogs, the top bar, and the
+  site header and breadcrumb bar under "Page patterns".
+
+Which of the page-pattern rules below belong to which layer is the next step on #3811, so until then they
+read as they do.
+
 ## Page patterns
 
 ### Which shape a page's cards take
