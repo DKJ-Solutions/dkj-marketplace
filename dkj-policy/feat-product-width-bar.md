@@ -1,4 +1,4 @@
-## feat/product-width-bar
+﻿## feat/product-width-bar
 
 > **How this file is read.** A step is `- [ ]` until it is resolved -- `- [x]` done, or
 > `- [~]` dropped with the reason, which exists so nobody ticks a box for work they did not do.
@@ -53,7 +53,7 @@ fixed on full and gets no bar. Visible result: stops for the owner's look before
 
 - [x] `consumer-dashboard` and `dev-pages` suites: the body-order asserts now expect the bar first, green
 - [x] `check-house-style` gate and `house-palette` suite green
-- [ ] Owner's look at the product on http://localhost:4871/
+- [x] Owner's look at the product on http://localhost:4871/ (Dave: "ja nice ship it")
 
 ### DEPLOY: feat/product-width-bar
 
