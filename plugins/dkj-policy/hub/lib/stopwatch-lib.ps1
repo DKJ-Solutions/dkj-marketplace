@@ -33,7 +33,7 @@
     THREE PAGES, ALL READ-ONLY AND BARE (no lead or tiles above their content, only the hub's airsquats banner,
     which is on every hub page, #3356; the plugin's Format-GeneralPageHtml -Bare). '/stopwatch' is an overview of
     cards under an h1 naming the page, ONE PER PROMPT LABEL, three to a row (the owner, October 24, 2026): an h2 with the
-    label's short title, when a run of it starts and stops, and its fastest time (or the live clock of its only run). Each links to '/stopwatch/<label slug>'
+    label's short title, when a run of it starts and stops, and its newest run's time with its change against the run before it (or that run's live clock). Each links to '/stopwatch/<label slug>'
     (Get-StopwatchSlugs), the label's page, which holds ONE CARD PER RUN of that label, never merged (the owner,
     October 23, 2026: runs of one label were merged into one card twice): named by the run's start, with its label,
     its time and its change against the previous run of the same label, in the hub's own card markup. Each run card
@@ -813,7 +813,8 @@ function Get-StopwatchOverviewSets {
         owner, October 25, 2026: a new card comes with its own page). So does every prepared label with no run (a set
         with Prepared $true). Its slug is computed beside every run label's, so
         a run label sharing its base gives both a suffix rather than one address to two labels. The sets stand slowest
-        first, by the fastest time their card shows (the owner, October 25, 2026); a set with no finished run follows
+        first (the owner, October 25, 2026), by their newest finished run's time, the one their card shows (the owner,
+        November 4, 2026: the latest run, not the fastest); a set with no finished run follows
         them, a run going before a pinned label with none, each kept in the order it came in.
     #>
     param([Parameter(Mandatory = $true)][hashtable]$Model)
@@ -838,10 +839,10 @@ function Get-StopwatchOverviewSets {
     # The place it came in breaks a tie, since Sort-Object in Windows PowerShell 5.1 is not stable.
     $n = 0
     $keyed = @(foreach ($s in $sets) {
-        $fastest = @($s.Groups | ForEach-Object { $_.Rows } | Where-Object { $_ } | ForEach-Object { [double]$_.Seconds } | Sort-Object) | Select-Object -First 1
-        @{ Set = $s; Fastest = $(if ($null -ne $fastest) { $fastest } else { -1.0 }); Index = $n++ }
+        $latest = @($s.Groups | ForEach-Object { $_.Rows } | Where-Object { $_ } | ForEach-Object { [double]$_.Seconds }) | Select-Object -First 1
+        @{ Set = $s; Latest = $(if ($null -ne $latest) { $latest } else { -1.0 }); Index = $n++ }
     })
-    return @($keyed | Sort-Object -Property @{ Expression = { $_.Fastest }; Descending = $true }, @{ Expression = { $_.Index }; Descending = $false } | ForEach-Object { $_.Set })
+    return @($keyed | Sort-Object -Property @{ Expression = { $_.Latest }; Descending = $true }, @{ Expression = { $_.Index }; Descending = $false } | ForEach-Object { $_.Set })
 }
 
 function Find-StopwatchLabel {
@@ -1321,16 +1322,18 @@ function Format-StopwatchLabelCard {
     <#
         One prompt label's card on the overview (the owner, October 24, 2026): an h2 with the label's short title
         (Get-StopwatchShortTitle), the card's one link, to the label's page; a line saying when a run of it starts and
-        when it stops; and its fastest finished time, with no change beside it, or the live clock while its only run
-        is still going. The run dates are on the label's page, not here.
+        when it stops; and the time of its newest run, with its change in percent against the run of the label before
+        it, or that run's live clock while it is still going (the owner, November 4, 2026: the latest run, not the
+        fastest, and whether it was faster or slower). The run dates are on the label's
+        page, not here.
     #>
     param([Parameter(Mandatory = $true)][hashtable]$Set, [datetime]$Now = [datetime]::UtcNow)
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $stop = if ([string]$Set.Title -match '^release') { 'the release notes of the cut are committed' } else { 'Claude is back on the trunk, clean, with a commit of its own' }
-    $fastest = @($Set.Groups | ForEach-Object { $_.Rows } | Where-Object { $_ } | Sort-Object { $_.Seconds }) | Select-Object -First 1
+    # The newest run's time, never the fastest, with its change against the run before it (the owner, November 4,
+    # 2026): Groups stand newest first, so the first is the run the owner last made -- its live clock while going.
     # A pinned label with no run yet (Get-StopwatchOverviewSets) has no time to show, and says so.
-    $time = if ($fastest) { '<span class="sw-time num">' + (Format-DevSeconds $fastest.Seconds) + '</span>' }
-            elseif ($Set.Prepared -and -not @($Set.Groups).Count) { '<span class="sw-time">Ready, not started</span>' }
+    $time = if ($Set.Prepared -and -not @($Set.Groups).Count) { '<span class="sw-time">Ready, not started</span>' }
             elseif (-not @($Set.Groups).Count) { '<span class="sw-time">No run yet</span>' }
             else { Format-StopwatchCardTime -Group $Set.Groups[0] -Now $Now }
     if ($Set.Prepared -and -not @($Set.Groups).Count) {

@@ -39,19 +39,35 @@
 
 ### PLAN
 
+The owner (November 4, 2026): the `/stopwatch` overview always showed a label's fastest time, which hid
+how the latest run went -- the release cut read 1:32 while its last three runs were 1:32, 2:18 and 3:09.
+Show the newest run's time instead, with its change in percent against the run before it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Format-StopwatchLabelCard` shows the newest run's time and change (`Format-StopwatchCardTime` without `-NoDelta`), or its live clock while it is going
+- [x] `Get-StopwatchOverviewSets` orders the cards slowest first by that same time, not by the fastest
 
 ### TEST
 
+- [x] `stopwatch.tests.ps1`: the CSS comment card shows its newest run (4:10, -25%), not its fastest (3:20); a single run has no change; a label whose newest run is going shows the live clock -- 312 passed
+- [x] Served from this branch on :4899: release cut reads `3:09 -37%`
+- [ ] The owner has looked
+
 ### DEPLOY: feat/stopwatch-overview-latest-run
 
-**Score:**
+Each card on the hub's `/stopwatch` overview now shows the time of the label's latest run, with its change in
+percent against the run before it (`+` faster, `-` slower), instead of the fastest run ever. A label whose
+latest run is still going shows its live clock, and the cards are ordered slowest first by that latest time.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Every dkj-policy user with a Toolbox sees the overview's times change: they now tell how the last run went,
+not the best one, so a run that got slower no longer hides behind an old record.
+
+**Score:** 2
 
 #### Pull Request
 
