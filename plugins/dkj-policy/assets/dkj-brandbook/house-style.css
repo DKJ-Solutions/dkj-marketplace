@@ -585,21 +585,6 @@ p { margin: 0; }
 .theme-settings__reset { margin-left: auto; }
 .theme-settings__width { justify-self: start; height: var(--tap); }   /* the page width: a .seg at tap height */
 
-/* ---- Width bar (drawn by house-theme.js: DKJTheme.widthBar(el)) ------------- */
-/* A thin strip at the very top of the page, above the site header, holding the page width as three small icon
-   buttons at its right end: full, fluid and phone, as an editor's title bar holds its layout toggles (Dave,
-   November 4, 2026). The page's own surface, so the primary stays the header's; the width in force is the button
-   in --primary on --bg-3, the others --fg-3 until the pointer reaches them. It spans the window whatever the width. */
-.width-bar { display: flex; justify-content: flex-end; align-items: stretch; height: var(--spacing-6);
-  padding: 0 var(--spacing-2); background: var(--bg-2); border-bottom: 1px solid var(--bg-3); }
-.width-bar__group { display: flex; gap: var(--spacing-0-5); align-items: stretch; }
-.width-bar__button { display: inline-flex; align-items: center; justify-content: center; width: var(--spacing-6); padding: 0;
-  color: var(--fg-3); background: none; border: 0; border-radius: var(--radius-1); cursor: pointer; }
-.width-bar__button:hover { color: var(--fg-1); background: var(--bg-3); }
-.width-bar__button[aria-pressed="true"] { color: var(--primary); background: var(--bg-3); }
-.width-bar__button:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
-.width-bar__fill { fill: currentColor; stroke: none; }
-
 /* ==========================================================================
    App components: the generic, mobile-first parts of an app shell (lifted from MesoWise).
    A form field, touch buttons, a dialog, a side drawer, a top bar and a menu list. Domain
