@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Dave, November 4, 2026: VS Code's Simple Browser already has a device emulator, so the three width toggles
+added today (#3796) are not needed. Option 1 of three: the product gets one width, full, like the Toolbox.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The brand book's `house-theme.js`, `house-style.css` and README back to their state before #3796: no
+      `DKJTheme.widthBar`, no `.width-bar` classes
+- [x] The product home and consumer pages draw no width bar and pin `full` through `Get-ToolboxWidthScript`;
+      `Format-GeneralPageHtml` pins it on a `product`-tagged page too
+- [x] The product's Settings page drops its Width group; `Get-SettingsPageParts` loses its `-Widths` switch
+- [ ] The owner's look at the product (http://localhost:4871/): no bar above the header, no Width on Settings
 
 ### TEST
 
+- [x] `dev-pages`, `consumer-dashboard` and `dev-preview-sessionstart` suites green
+
 ### DEPLOY: fix/drop-product-width-bar
 
-**Score:**
+The width bar above the product's site header is gone again, with `DKJTheme.widthBar` and its
+`.width-bar` classes in the brand book, both unreleased. The product's own pages now hold one width,
+`full`, as the Toolbox does, and the product's Settings page offers only the theme. Another screen size
+is judged in VS Code's Simple Browser's own device emulation instead of a toggle on the page.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: the width bar and the product's width choice never reached a release, so no user of a release loses anything.
+
+**Score:** N/A
 
 #### Pull Request
 

@@ -54,9 +54,9 @@ function Get-ProductPages {
     @(
         @{ Href = '/consumers';  Label = 'Consumers';   Sub = 'Every repo that installs plugins from this marketplace, registered under consumers/ and checked by check-consumers.ps1 on this machine'; Icon = 'consumers' }
         @{ Href = '/marketplace';     Label = 'Marketplace'; Sub = 'Every plugin this marketplace ships, its version and what it holds'; Icon = 'marketplace' }
-        # The product's own Settings, last as on the Toolbox (Maikel, November 4, 2026): its theme AND its width, because a
-        # product is read on a phone too, where the Toolbox has one screen (Get-SettingsPageParts -Widths).
-        @{ Href = '/settings';   Label = 'Settings';    Sub = 'How this product looks on this device: its theme and its width'; Icon = 'settings' }
+        # The product's own Settings, last as on the Toolbox (Maikel, November 4, 2026): its theme. No width, which is full
+        # here as on the Toolbox (Dave, November 4, 2026).
+        @{ Href = '/settings';   Label = 'Settings';    Sub = 'How this product looks on this device: its theme'; Icon = 'settings' }
     )
 }
 
@@ -440,6 +440,9 @@ function Format-ConsumerPageStart {
     [void]$sb.AppendLine('<title>dkj-marketplace -- ' + $name + '</title>')
     [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
     [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
+    # One width, full, as on the Toolbox (Dave, November 4, 2026): another screen is judged in the Simple Browser's own
+    # device emulation, so the product offers no width choice.
+    [void]$sb.AppendLine((Get-ToolboxWidthScript))
     # The repo layer: only names the house file does not define (.cd-*), spaced from the house scale.
     # The page keeps the hub's frame (breadcrumb bar, settings button, intro, page column; #3066), so
     # this layer styles only what is inside its cards, never the blocks the house style fixes.
@@ -467,10 +470,7 @@ function Format-ConsumerPageStart {
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
     [void]$sb.AppendLine('<body>')
-    # The width bar first, above everything (Dave, November 4, 2026): full, fluid and phone as three icons. The product's
-    # alone; the Toolbox stays full. It sets the width the settings panel did, so the panel leaves its own group out.
-    [void]$sb.AppendLine('<div id="width-bar"></div><script>DKJTheme.widthBar(document.getElementById("width-bar"), { label: "Width", full: "Full", fluid: "Fluid", phone: "Phone" });</script>')
-    # The hub's general banner, above the site header, as on every other hub page (#3297, #3356; owner, October 24, 2026).
+    # The hub's general banner first, above the site header, as on every other hub page (#3297, #3356; owner, October 24, 2026).
     [void]$sb.AppendLine((Format-RepoHubBanner))
     # The house site header, holding the settings button, then the breadcrumb bar under it: its trail from Home to this page.
     # Tagged 'product': this page is the product's, beside the plugin's hub (#3540).

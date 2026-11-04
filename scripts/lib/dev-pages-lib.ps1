@@ -68,12 +68,13 @@ function Format-DevPageHtml {
 
 function Format-ProductSettingsHtml {
     <#
-        The product's Settings page on /settings (Maikel, November 4, 2026): the Toolbox's Settings page with the Width
-        group added (Get-SettingsPageParts -Widths), in the product's own shell. The theme and width it sets are this
-        origin's, so the product keeps its own choice apart from the Toolbox's.
+        The product's Settings page on /settings (Maikel, November 4, 2026): the Toolbox's Settings page
+        (Get-SettingsPageParts) in the product's own shell. The theme it sets is this origin's, so the product keeps its
+        own choice apart from the Toolbox's. No Width group: the product has one width, full, as the Toolbox has (Dave,
+        November 4, 2026), and another screen is judged in the Simple Browser's own device emulation.
     #>
-    $parts = Get-SettingsPageParts -Widths
-    return Format-DevPageHtml -Title 'Settings' -Lead 'How this product looks on this device: its theme and its width.' -Body $parts.Body -Style $parts.Style `
+    $parts = Get-SettingsPageParts
+    return Format-DevPageHtml -Title 'Settings' -Lead 'How this product looks on this device: its theme.' -Body $parts.Body -Style $parts.Style `
         -FooterNote 'Built by <code>scripts/lib/dev-pages-lib.ps1</code>, from the dkj-policy plugin''s Settings page.'
 }
 
@@ -102,6 +103,9 @@ function Format-ProductHomeHtml {
     [void]$sb.AppendLine('<title>dkj-marketplace -- Home</title>')
     [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
     [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
+    # One width, full, as on the Toolbox (Dave, November 4, 2026): another screen is judged in the Simple Browser's own
+    # device emulation, so the product offers no width choice.
+    [void]$sb.AppendLine((Get-ToolboxWidthScript))
     # The hub's own .ph-cards (Get-HubCardGridStyle), so these cards behave as the toolbox home's do (Maikel,
     # November 3, 2026).
     [void]$sb.AppendLine('<style>')
@@ -109,9 +113,6 @@ function Format-ProductHomeHtml {
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
     [void]$sb.AppendLine('<body>')
-    # The width bar first, above everything (Dave, November 4, 2026): full, fluid and phone as three icons. The product's
-    # alone; the Toolbox stays full. It sets the width the settings panel did, so the panel leaves its own group out.
-    [void]$sb.AppendLine('<div id="width-bar"></div><script>DKJTheme.widthBar(document.getElementById("width-bar"), { label: "Width", full: "Full", fluid: "Fluid", phone: "Phone" });</script>')
     [void]$sb.Append((Format-RepoHomeHeadHtml -RepoName 'dkj-marketplace' -Brand 'dkj-marketplace' -BrandTag 'product' -HomeLabel 'Home' -Menu @(Get-ProductMenu) -Lead 'The source of the Claude Specialists plugins: the marketplace, its agent definitions, manuals and skills, and the scripts and gates that ship them.'))
     # Every page a card of its own, three to a row, with no heading above them (the house hub form, #3383): the
     # hub first, so the way back is where the eye starts, then this repo's own pages. On the page itself, in the

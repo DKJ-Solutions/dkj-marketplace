@@ -215,8 +215,9 @@ function Format-GeneralPageHtml {
     if ($description) { [void]$sb.AppendLine('<meta name="description" content="' + $description + '">') }
     [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
     [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
-    # The Toolbox's one width -- not a product's: a repo's own pages in this shell (-BrandTag 'product') keep the choice.
-    if ($BrandTag -ne 'product') { [void]$sb.AppendLine((Get-ToolboxWidthScript)) }
+    # One width, full, on every page of this shell, a repo's own product pages (-BrandTag 'product') included (Dave,
+    # November 4, 2026): another screen is judged in the Simple Browser's own device emulation.
+    [void]$sb.AppendLine((Get-ToolboxWidthScript))
     # The page layer: only names the house file does not define (.dp-*).
     [void]$sb.AppendLine('<style>')
     [void]$sb.AppendLine('.dp-link { color: var(--fg-3); text-decoration: none; text-underline-offset: 2px; }')
@@ -1051,9 +1052,7 @@ function Get-SettingsPageParts {
         The toggle shows one mode's cards at a time. After them its reset, a card of the same kind that is itself the button. The choice is the same one the
         header's settings button makes -- one key per app on this device -- so every swatch agrees. Nothing here is read
         from disk: the cards are drawn from DKJTheme.themes, so a theme the brand book adds gets its card at once.
-        -Widths adds the Width group under it: a product's, read on a phone as well, never the Toolbox's.
     #>
-    param([switch]$Widths)
     # The house grouping form (house-style.css, .card-grid and .grid__head): the Theme h2 over its group's surface (--bg-2),
     # its cards on --bg-3 with a --bg-4 border. A .card-grid leaves its columns to the repo's own class, and .hs-theme
     # makes them a wrapping row: each card hugs its swatch, so a mode's six stand side by side (Dave, November 2, 2026;
@@ -1095,23 +1094,8 @@ function Get-SettingsPageParts {
         ' show(modeOf(DKJTheme.current()));' +
         ' foot.addEventListener("click", function () { DKJTheme.reset(); show(modeOf(DKJTheme.current())); });' +
         ' })();</script>'
-    # The Width group (Maikel, November 3, 2026), a product's only (November 4): the Toolbox has one width, full, because
-    # it is read in VS Code's Simple Browser at about 16:9 (Get-ToolboxWidthScript), while a product is read on a phone
-    # too. The brand book's three, through its own setWidth, so the choice is the one key per app that house-theme.js
-    # already reads; the segment opens on the width in force.
-    if ($Widths) {
-        $body += "`n" + '<div class="card-grid hs-theme" id="settings-width-grid"><div class="grid__head"><h2>Width</h2></div>' +
-            '<div class="controls grid__full"><span class="seg" id="settings-width" role="group" aria-label="Width">' +
-            '<button type="button" data-width="fluid" aria-pressed="false">Fluid</button>' +
-            '<button type="button" data-width="phone" aria-pressed="false">Phone</button>' +
-            '<button type="button" data-width="full" aria-pressed="false">Full</button></span></div></div>' + "`n" +
-            '<script>(function () {' +
-            ' var seg = document.getElementById("settings-width");' +
-            ' function show() { var now = DKJTheme.width(); Array.prototype.forEach.call(seg.querySelectorAll("button[data-width]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-width") === now)); }); }' +
-            ' seg.addEventListener("click", function (e) { var b = e.target.closest("button[data-width]"); if (b) { DKJTheme.setWidth(b.getAttribute("data-width")); show(); } });' +
-            ' show();' +
-            ' })();</script>'
-    }
+    # No Width group, on the Toolbox's page or a product's (Dave, November 4, 2026): both have one width, full
+    # (Get-ToolboxWidthScript), and another screen is judged in the Simple Browser's own device emulation.
     # .hs-theme, .hs-swatch and .hs-reset are this page's own classes: the row, the full-width head and toggle in it, a
     # card that hugs its swatch, and what a <button> needs to read as a card. No house class or token is redefined.
     $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-5); }' + "`n" +
