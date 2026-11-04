@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**7 / 9 minor entries** <!-- pending-tally -->
+**8 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3804-create-json-eof · 20261104-134340Z
+
+open-pr no longer reports a created PR as a failed create when gh's follow-up update is cut off with
+`unexpected end of JSON input` (#3804). It finds the PR through the existing recheck and sets the label,
+assignee and milestone again, because the failed update was the call that sets them.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Whoever ships with open-pr or ship-pr in a consumer no longer has a run stop with "nothing merged" over
+a PR that was in fact created, and no longer gets that PR without its label. Small, and noticed only
+when GitHub cuts a response short.
+
+**Score:** 2
+
+#### Pull Request
+
+open-pr: a create that landed before gh's follow-up update failed is no longer reported as failed
+
+Plugins: dkj-policy
+
+[PR #3806](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3806)
+
+---
 
 ### DEPLOY: fix/drop-product-width-bar · 20261104-123428Z
 
