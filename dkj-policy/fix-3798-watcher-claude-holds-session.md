@@ -39,19 +39,38 @@
 
 ### PLAN
 
+Issue #3798: the dev-preview watcher (#3569) stopped the hub of a logon session that had been switched away
+from while Claude Code kept running in it. Reason verified in `dev-preview-watch.ps1`: the only liveness
+check is `-OwnerId`, which a real session never sets. Fix: a disconnect counts only while no Claude Code
+process runs in the watcher's own session.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Test-DevPreviewSessionHeld` in `hub/lib/dev-preview-rules.ps1`, and a `-Held` input on `Get-DevPreviewWatchStep`
+- [x] the watcher reads its session's process table on a disconnect only; `-ForceHeld` for a forced test run
+- [x] tests: the rule's asserts and a held watcher run in `dev-preview-sessionstart.tests.ps1`
+- [x] the hub README's watcher paragraph
 
 ### TEST
 
+- [x] the gates, run by `ship-pr`
+
 ### DEPLOY: fix/3798-watcher-claude-holds-session
 
-**Score:**
+The dev-preview watcher no longer stops a server while Claude Code still runs in the logon session that
+started it ([#3798](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3798)). Switched away from with
+fast user switching, a session reads disconnected while Claude Code keeps working in it, and its hub was
+stopped one grace later; the product it started after the switch survived, so the outcome depended only on
+when each server started. The watcher now reads its own session's process table at a disconnect, and a
+`claude.exe` (or `@anthropic-ai/claude-code` under node) there resets the clock as an uncertain read does.
+Once none is left, the session counts as abandoned, as #3569 meant.
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A Toolbox hub that went dark mid-session, on a machine with two accounts, now stays up for as long as the
+Claude Code that started it is running.
+**Score:** 2
 
 #### Pull Request
 

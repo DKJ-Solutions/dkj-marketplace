@@ -156,7 +156,11 @@ Product`. This repo was the last to use the opt-out, until #3540.
    connected** ([#3595](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3595)): a session that
    reads disconnected from the start is in use while disconnected, because the hook ran there. Claude Code
    under a second account on a machine that switches accounts runs exactly so, and its hub used to stop about
-   two minutes after every start.
+   two minutes after every start. **And it counts only while no Claude Code runs in the session**
+   ([#3798](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3798)): a session that was switched away
+   from while Claude Code kept working in it is in use, and the owner reads its hub from the other session.
+   Once no `claude.exe` (or `@anthropic-ai/claude-code` under node) is left there, the session counts as
+   abandoned again.
 4. It writes the state file, and prints **one line**, which hands out both links:
 
 | The repo | The line |
