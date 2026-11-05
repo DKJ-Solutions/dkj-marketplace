@@ -103,7 +103,7 @@
   </div>
 
   <script>
-    DKJTheme.settings(document.getElementById('settings'), { label: 'Preview settings', theme: 'Theme', reset: 'Reset theme', light: 'Light', dark: 'Dark', width: 'Width', fluid: 'Fluid', phone: 'Phone', full: 'Full' });
+    DKJTheme.settings(document.getElementById('settings'), { label: 'Preview settings', theme: 'Theme', reset: 'Reset theme', light: 'Light', dark: 'Dark', widths: false });
     document.querySelectorAll('#rows tbody tr').forEach(function (tr) {
       tr.addEventListener('click', function () {
         document.querySelectorAll('#rows tbody tr').forEach(function (o) { o.removeAttribute('aria-selected'); });

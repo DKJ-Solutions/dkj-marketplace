@@ -700,12 +700,20 @@ numerals), `.delta` (with `--up`/`--down`; its aliases `.pos`/`.neg` are gone, M
 `--cancel`, `--back`), and `--drawer`), `.topbar` (with `__inner`, `__brand`, `__name`), `.menu-list`,
 `.menu-row` (with `__label`, `__value`), `.menu-item` (with `__icon`, `__label`, `__chevron`),
 `.breadcrumbs` (with `__sep`), `.breadcrumbs-bar` ([below](#every-page-the-breadcrumb-bar)) and
-`.sr-only`. The brand-book components ([below](#brandbook-app-components)) reserve these too: `.alert` (`__title`, `__icon`), `.banner` (`--accent`, `__lead`), `.panel` (`--accent`, `--positive`, `--button`, `__label`, `__value`), `.chip` (`--yes`, `--no`, `--todo`), `.tag` (`--info`, `--warn`), `.filter-chips`/`.filter-chip` (`__check`, `__dot`, and `.filter-chips__clear`), `.round-toggle`, `.badge-toggle`, `.help`, `.more--structured` (`.more__title`, `__meta`, `__trailing`, `__version`), `.question-head` (the answer line under it is a plain `<p>`; `.verdict` is gone, Maikel, November 1, 2026), `.answer` (`__label`, `__value`), `.flash`, `.page-header`, `.field__fixed`, `.check`, `.stepper` (`--lg`), `.combo` (`__input` (with `--under`), `__picked`, `__glass`, `__list`, `__option` with `--own`, `--more`, `__name`, `__meta`), `.value-box` (`__num` with `--lg`, `--negative`, `--positive`, `--regular`, `__was`, `__unit`, `--changed`, `--flush`), `.stat-rows` (`--help`)/`.stat-row` (`__name`, `__sub`, `__help`, `__op`, `--help`, `--formula`, `--head`), `.step-head` (`__value`), `.info-rows` (`--info`, `__head`, `__list`), `.info-row` (`__box`, `__named`, `__value` with `--placeholder`), `.info-dot`, `.info-stem`, `.bill` (`--qty`, `__head`, `__slot`, `__name`, `__qty`, `__price`, `__action`, `__subtotal`, `__total`), `.compare`, `.calc` (`--boxed`, `__row`, `__box`, `__what`, `__sub`, `__op`, `__num`, `__result`), `.calc-section` (`__question`), `.date-list`/`.date-row` (`--near`, `--today`, `--invalid`, `--link`, `__when`, `__main`, `__body`, `__title`, `__sub`, `__trailing`, `__icon`, `__reason`), `.figure` (`--ratio-*`, `--contain`, `__frame`, `__placeholder`, `__glyph`, `__label`, `__caption`), `.chart-detail`, `.chart-row`, `.chart-swatch`, `.chart-figure`, and the additions to existing classes: `.card--open`, `.card--invalid`, `.msg--error`, `.table .row-negative`/`.row-positive`/`.row-warn`, `.table .col-start`/`.col-end`, `.facts__detail`, `.facts__total` and `.chart .bar--active`. Each is commented in the file.
+`.sr-only`. The desktop shell ([below](#two-layers)) reserves these too: `.shell` (with `--fit`, `--no-aside`,
+`__bar`, `__actions`, `__nav`, `__nav-foot`, `__main`, `__list`, `__aside`, `__aside-body`), `.nav-list`, `.nav-item`
+(with `__label`, `__count`), `.toolbar` (with `__title`, `__filter`, `__end`), `.pane-head`, `.table--dense` and `.dot`
+(with `--good`, `--warn`, `--bad`). The brand-book components ([below](#brandbook-app-components)) reserve these too: `.alert` (`__title`, `__icon`), `.banner` (`--accent`, `__lead`), `.panel` (`--accent`, `--positive`, `--button`, `__label`, `__value`), `.chip` (`--yes`, `--no`, `--todo`), `.tag` (`--info`, `--warn`), `.filter-chips`/`.filter-chip` (`__check`, `__dot`, and `.filter-chips__clear`), `.round-toggle`, `.badge-toggle`, `.help`, `.more--structured` (`.more__title`, `__meta`, `__trailing`, `__version`), `.question-head` (the answer line under it is a plain `<p>`; `.verdict` is gone, Maikel, November 1, 2026), `.answer` (`__label`, `__value`), `.flash`, `.page-header`, `.field__fixed`, `.check`, `.stepper` (`--lg`), `.combo` (`__input` (with `--under`), `__picked`, `__glass`, `__list`, `__option` with `--own`, `--more`, `__name`, `__meta`), `.value-box` (`__num` with `--lg`, `--negative`, `--positive`, `--regular`, `__was`, `__unit`, `--changed`, `--flush`), `.stat-rows` (`--help`)/`.stat-row` (`__name`, `__sub`, `__help`, `__op`, `--help`, `--formula`, `--head`), `.step-head` (`__value`), `.info-rows` (`--info`, `__head`, `__list`), `.info-row` (`__box`, `__named`, `__value` with `--placeholder`), `.info-dot`, `.info-stem`, `.bill` (`--qty`, `__head`, `__slot`, `__name`, `__qty`, `__price`, `__action`, `__subtotal`, `__total`), `.compare`, `.calc` (`--boxed`, `__row`, `__box`, `__what`, `__sub`, `__op`, `__num`, `__result`), `.calc-section` (`__question`), `.date-list`/`.date-row` (`--near`, `--today`, `--invalid`, `--link`, `__when`, `__main`, `__body`, `__title`, `__sub`, `__trailing`, `__icon`, `__reason`), `.figure` (`--ratio-*`, `--contain`, `__frame`, `__placeholder`, `__glyph`, `__label`, `__caption`), `.chart-detail`, `.chart-row`, `.chart-swatch`, `.chart-figure`, and the additions to existing classes: `.card--open`, `.card--invalid`, `.msg--error`, `.table .row-negative`/`.row-positive`/`.row-warn`, `.table .col-start`/`.col-end`, `.facts__detail`, `.facts__total` and `.chart .bar--active`. Each is commented in the file.
 
 **Focus and targets.** Every interactive house class shows a visible focus ring on keyboard focus (an SVG
 `.chart .bar` shows a stroke instead), and its hit area is at least 44px (`--tap`) high where the mark is
 smaller: the `.info-button`'s 16px mark, the `.table` header's `.sort` and the `.moretoggle`
-([#19](https://github.com/DKJ-Solutions/dkj-brandbook/issues/19)). A tooltip opened from a trigger takes
+([#19](https://github.com/DKJ-Solutions/dkj-brandbook/issues/19)). **The 44px is the product layer's and the
+shared core's, not the desktop shell's** (Dave, November 5, 2026,
+[#3811](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3811)): Admin is worked with a mouse,
+so its rows, navigation items and bar buttons are 28px (`--shell-row-h`), which is still above the 24px a pointer
+target needs (WCAG 2.5.8). A `.sort` header inside a `.table--dense` takes the row's height as its hit area,
+so it does not reach over the rows under it. A tooltip opened from a trigger takes
 `.tooltip--open`, which shows it and lets the pointer move onto its text; a chart tooltip that follows the
 pointer is shown by its own script and stays click-through.
 
@@ -716,8 +724,9 @@ October 13, 2026 by [#18](https://github.com/DKJ-Solutions/dkj-brandbook/issues/
 choice on [dkj-claude-plugins#2955](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2955)):
 the components that app had and the brand book lacked were lifted into the same stylesheet. They are
 the generic, mobile-first parts of an app shell: a narrow column, a form field, touch buttons, a dialog
-and a side drawer, a top bar and a menu list. The group sits at the end of
-[`house-style.css`](house-style.css), under "App components".
+and a side drawer, a top bar and a menu list. The group sits in
+[`house-style.css`](house-style.css) under "App components", right after the desktop shell and before the
+brand-book components.
 
 - **Sizes.** Touch targets are at least `--tap` (44px) high. The column is `--column-narrow` (512px), a
   phone and, on a computer, the same width.
@@ -773,10 +782,38 @@ shared; each layer is a part of [`house-style.css`](house-style.css):
 - **Mobile-first app** (the part "App components"): the narrow column, touch targets, dialogs, the top bar, and the
   site header and breadcrumb bar under "Page patterns".
 
-Which of the page-pattern rules below belong to which layer is the next step on #3811, so until then they
-read as they do.
+**The layer follows the task, not the device** (Dave, November 5, 2026, on #3811). Ask of each feature whether
+it is for *managing* (composing, ordering, correcting, bulk edits: the maker's or the operator's work) or for
+*using* (browsing, searching, playing, viewing: the end user's). Managing is dense, with many columns,
+drag-and-drop and multi-select, so it belongs in Admin and is therefore built for the desktop. Using shows
+little per screen behind large touch targets, so it belongs in the product, mobile-first. The same data in both
+layers is not duplication: these are two views of one source, each built for its own task. A management
+action that is really done on the go reaches the product only minimally, such as a drag handle or "up/down"
+within one list, and never as the full table. The measured case is `dkj-music-library`, whose playlist tables
+with drag-to-reorder stay in Admin while its product shows the same list as a two-line track row.
+
+**So the rules under "How to use it" and "Page patterns" fall to the layers like this.** A rule not named
+here is the shared core's and holds in both.
+
+| Rule | Product (mobile-first) | Admin (desktop shell) |
+|---|---|---|
+| The `h1`'s size ([Type](#what-it-holds)) | `--text-h1`, standing apart by size and colour | `--text-h3`, in the `.toolbar` over the main pane (`.toolbar > h1`): a pane title, not a headline |
+| One `h1`, at most two words, reading what the current crumb reads (rules 8 and 9 under [How to use it](#how-to-use-it), [the bar](#every-page-the-breadcrumb-bar)) | holds | holds: the toolbar's `h1` and the last crumb in the `.shell__bar` are the same words |
+| No intro under the `h1`, and the `h1` never framed (rules 5 and 6) | holds | holds: the toolbar is a row with a line under it, not a box |
+| [The breadcrumb bar](#every-page-the-breadcrumb-bar): a `.breadcrumbs-bar` above `<main>`, one `--tap` high, on `--primary` | holds | **does not apply.** The trail sits in the `.shell__bar` (the same `nav.breadcrumbs` markup, starting at **Home**), and the shell takes no `.breadcrumbs-bar`. A `<main>` is no pane of the grid: where a pane holds one, its 1080px cap is lifted |
+| [The site header](#the-site-header-above-the-bar) and [its menu](#the-menu-in-the-header) | holds | **does not apply**: the shell's bar and side navigation replace both |
+| [Which shape a page's cards take](#which-shape-a-pages-cards-take), [a long page becomes cards](#every-page-a-long-page-becomes-cards-with-a-page-each) and the hub's [card overview](#the-hub) | holds | **does not apply**: the side navigation is how Admin gets you somewhere, so an overview of card links in the pane repeats it, and a list Admin manages is a `.table--dense`, not cards |
+| The 44px target ([Focus and targets](#components)) | holds | **does not apply**: 28px rows, above the 24px a pointer needs |
+| The page width (`data-width`, `full`/`fluid`/`phone`), `.page-column` and the settings panel's Width control | holds | **does not apply**: the panes fill the window, so the shell mounts `DKJTheme.settings` with `widths: false` |
+
+**What is not moved yet.** The hub's pages still render their card overviews and the old page column inside the
+shell's main pane, and the hub's fit alarm still reads the product's page structure (the bar's trail and the
+`h1`): moving both to the shell is the hub's step on #3811.
 
 ## Page patterns
+
+**These are the product layer's patterns.** Which of them Admin's desktop shell takes is in the table
+under [Two layers](#two-layers): of the ones below, it takes the page-name rules and none of the page structure.
 
 ### Which shape a page's cards take
 
@@ -824,7 +861,8 @@ Both are gone: an `h2` may now title a card, as the Stopwatch's label cards do.
 **Every page a DKJ-Solutions dev server serves opens with a breadcrumb bar** (owner's request, October 17,
 2026). That is every page you can open in the preview browser: the home page, the product, and any
 page below either. The bar says where the page sits and is the way back, so no page needs a "back" link of
-its own.
+its own. **An Admin page in the desktop shell carries its trail in the `.shell__bar` instead**
+([Two layers](#two-layers)); the labels and the `h1` rule below hold there too.
 
 - **Place:** the first element in `<body>` above `<main>` and
   outside it, so it spans the full width. Its trail lines up with the page column.
