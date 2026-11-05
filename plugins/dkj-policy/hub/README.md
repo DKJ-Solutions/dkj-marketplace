@@ -8,7 +8,7 @@
 |---|---|
 | (no heading) | **Home**, the dashboard on `/`, then the repo's **domain objects** (Tracks, Playlists, Artists) at the top level, with no "Manage" wrapper, since everything in Admin is management (#3818). A repo states them in `Get-AdminObjects` in its `scripts/repo-config.ps1`, returning `@{ Label; Href; Count }` items; the count is drawn as a badge. **The repo's own server serves those routes, not the hub**: an `Href` that is a path (`/tracks`) is resolved against the product's address, and an http(s) URL is kept. The hub reads the seam in a child process at most once a minute, never in its own scope, keeps at most 12 items, and drops one without a label or with any other address. |
 | **Product** | **Storefront**, a link to the product this session started (the state file's `Product`); left out where the repo states none. Admin links to and manages the product, it is not the product. |
-| **Development** | The hub's own pages, under `/dev/...`: GitHub, Release notes, Claude, Installed plugins (`Get-HubMenu`). A group page such as Claude is one item, and its members are reached on it. |
+| **Development** | The hub's own pages, under `/dev/...`: GitHub, Goals, Release notes, Claude, Installed plugins (`Get-HubMenu`). A group page such as Claude is one item, and its members are reached on it. |
 | (foot) | **Settings**, on `/settings`, pinned to the bottom. |
 
 **Every address from before #3815 redirects** (`Resolve-AdminLegacyPath`, a 301): `/test-gate/...`, `/claude/...`, `/plugins/...` and the rest go to `/dev` and the same path, the query kept, so links and bookmarks keep working. The `-BrandTag` a caller passes is `admin` now; `toolbox` is still read as `admin` for this release (`ConvertTo-AdminBrandTag`).
@@ -46,12 +46,13 @@ hub (below).
 | The request rules the servers share | [`lib/loopback-server-lib.ps1`](lib/loopback-server-lib.ps1) |
 | The banner's airsquats state, and its sync with every other machine | [`lib/airsquats-lib.ps1`](lib/airsquats-lib.ps1), [`pages/sync-airsquats.ps1`](pages/sync-airsquats.ps1) |
 | The Test gate page | [`lib/test-gate-lib.ps1`](lib/test-gate-lib.ps1) |
+| The Goals page on `/dev/goals`, first of the hub's own cards: each open issue labelled `goal`, its sub-issues as milestones and theirs as tasks, with one **Now** card, a **Next** row and the milestones collapsed with a progress bar each ([#3816](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3816)); and the script behind the [`plan-goal`](../skills/plan-goal/SKILL.md) skill, which files a breakdown and answers "what now?" | [`lib/goals-lib.ps1`](lib/goals-lib.ps1), [`pages/plan-goal.ps1`](pages/plan-goal.ps1) |
 | The Plugins page, a card per enabled plugin, and each plugin's own page on `/dev/plugins/<name>`, from `plugin-versions.ps1 -Json`, with a Specialists, Hooks and Skills section of what it ships, each item a landing page on `/dev/plugins/<name>/<kind>/<slug>` | [`lib/plugins-page-lib.ps1`](lib/plugins-page-lib.ps1) |
 | The Stopwatch and the Logbook: their pages, their router, the hooks that time a run, and the Stopwatch's sync | [`lib/stopwatch-lib.ps1`](lib/stopwatch-lib.ps1), [`lib/logbook-lib.ps1`](lib/logbook-lib.ps1), [`lib/timing-pages.ps1`](lib/timing-pages.ps1), [`../hooks/stopwatch-hook.ps1`](../hooks/stopwatch-hook.ps1), [`../hooks/logbook-hook.ps1`](../hooks/logbook-hook.ps1), [`lib/stopwatch-sync-lib.ps1`](lib/stopwatch-sync-lib.ps1), [`pages/stopwatch-sync.ps1`](pages/stopwatch-sync.ps1), [`pages/stopwatch-hide.ps1`](pages/stopwatch-hide.ps1), the [`stopwatch-hide`](../skills/stopwatch-hide/SKILL.md) skill, [`pages/stopwatch-prepare.ps1`](pages/stopwatch-prepare.ps1) and the [`stopwatch-prepare`](../skills/stopwatch-prepare/SKILL.md) skill |
 
 These are plugin-only files, like [`../worker/`](../worker/): no root copy in the source repo mirrors
 them. They are tested there by `dev-preview-sessionstart.tests.ps1`, `dev-pages.tests.ps1`,
-`consumer-dashboard.tests.ps1`, `stopwatch.tests.ps1`, `stopwatch-sync.tests.ps1` and `logbook.tests.ps1`.
+`consumer-dashboard.tests.ps1`, `goals.tests.ps1`, `stopwatch.tests.ps1`, `stopwatch-sync.tests.ps1` and `logbook.tests.ps1`.
 
 ## One look in every repo
 

@@ -18,6 +18,10 @@
                       for --repo <owner/name> parsed from the origin remote when that is on github.com, else
                       for the repo gh finds from the working directory. Kept for -IssuesCacheSeconds; a failed
                       read for 30 s only. A gh that fails or is missing is a warning on the page, never a blank.
+      /dev/goals      `gh api graphql`, one call: the open issues labelled goal, their sub-issues (the milestones) and
+                      theirs (the tasks), for owner/name from the origin remote (Get-GoalsModel, hub/lib/goals-lib.ps1,
+                      #3816). Kept as the issues are; a repo whose origin is not on GitHub, or a gh that fails, is a
+                      warning on the page.
       /dev/release-notes  dkj-policy/releases/page/release-notes.html, dressed in the house style on the way out.
                       Built first, by build-release-notes-page.ps1 (found the way the always-on lib is), where it
                       is absent or older than a file under dkj-policy/releases (#3189): the page is a gitignored
@@ -55,7 +59,7 @@
                       OwnHub opt-out, which sent '/hub' on to a repo's own hub, went with #3643.
       /dev/repository     the hub's Repository page (Format-PluginRepoRepositoryHtml, #3383): the facts the home page
                       held until the house hub became a grid of card links, and the Issues page's card.
-      /refresh        ?page=issues or ?page=sessionstart drops that page's cache (at most once per
+      /refresh        ?page=issues, ?page=goals or ?page=sessionstart drops that page's cache (at most once per
                       -MinRefreshSeconds, and per 60 s for issues) and goes back to the page.
       /api/airsquats  the banner's state as JSON (GET), and POST /api/airsquats/clear ticks its box off (#3438):
                       the machine's file under %LOCALAPPDATA%\dkj-hub, synced with a private gist by a child
@@ -142,6 +146,8 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\timing-pages.ps1')
 # The Plugins page (#3482).
 . (Join-Path $PSScriptRoot '..\lib\plugins-page-lib.ps1')
+# The Goals page (#3816).
+. (Join-Path $PSScriptRoot '..\lib\goals-lib.ps1')
 
 $pluginRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $root = if ($RepoRootOverride) { [System.IO.Path]::GetFullPath($RepoRootOverride).TrimEnd('\', '/') }
@@ -265,6 +271,31 @@ function Get-IssuesModel {
         $err = ([string]$_.Exception.Message) -replace '\s+', ' '
     }
     return @{ Model = $model; Error = $err; GeneratedAt = $started.ToString('yyyy-MM-dd HH:mm:ss'); Seconds = ((Get-Date) - $started).TotalSeconds; At = Get-Date }
+}
+
+function Get-GoalsModel {
+    <#
+        The repo's goals from GitHub (#3816): the open issues labelled goal with their sub-issues and theirs, in ONE
+        `gh api graphql` call (Get-GoalsGraphQuery), cached like the issues. It needs owner/name, so a repo whose
+        origin is not on github.com is a ReadError, as a gh failure is -- never a blank page.
+    #>
+    $started = Get-Date
+    $slug = (Get-RepoIdentity).Slug
+    $gh = Get-ExecutablePath 'gh'
+    try {
+        if (-not $gh) { throw 'gh was not found on the PATH' }
+        if ($slug -notmatch '\A([^/\s]+)/([^/\s]+)\z') { throw 'the origin remote is not a GitHub repository' }
+        $argv = @('api', 'graphql', '-f', ('query=' + (Get-GoalsGraphQuery)), '-f', ('owner=' + $Matches[1]), '-f', ('name=' + $Matches[2]), '-f', ('label=' + (Get-GoalLabel)))
+        $q = Invoke-BoundedProcess -FilePath $gh -Arguments $argv -TimeoutSeconds 60 -WorkingDirectory $root
+        if ($q.TimedOut) { throw 'gh api graphql did not answer within 60 s' }
+        if ($q.ExitCode -ne 0) { throw "gh api graphql exited $($q.ExitCode)" }
+        $model = ConvertFrom-GoalsGraph -Data (ConvertFrom-Json -InputObject $q.Output)
+        $err = ''
+    } catch {
+        $model = $null
+        $err = ([string]$_.Exception.Message) -replace '\s+', ' '
+    }
+    return @{ Model = $model; Error = $err; GeneratedAt = $started.ToString('yyyy-MM-dd HH:mm:ss'); At = Get-Date }
 }
 
 function Resolve-DkjPolicyScript {
@@ -438,6 +469,7 @@ $listener.Start()
 Write-Host "general pages for $((Get-RepoIdentity).Name): http://localhost:$Port/"
 $ssCache = $null
 $isCache = $null
+$glCache = $null
 $aoCache = $null
 
 try {
@@ -515,12 +547,14 @@ try {
             if ($path -eq '/refresh') {
                 # At most one re-run per -MinRefreshSeconds, however often /refresh is asked for. ?page= names
                 # where to go back to, from a fixed list, so the redirect never leaves this server.
-                $page = if ([string]$target -match '[?&]page=(sessionstart|issues)(&|$)') { $Matches[1] } else { '' }
+                $page = if ([string]$target -match '[?&]page=(sessionstart|issues|goals)(&|$)') { $Matches[1] } else { '' }
                 if ($page -eq 'sessionstart') {
                     if ($ssCache -and ((Get-Date) - $ssCache.At).TotalSeconds -ge $MinRefreshSeconds) { $ssCache = $null }
                 } elseif ($page -eq 'issues') {
                     # At least a minute: a re-read holds this single-threaded loop for about 12 s.
                     if ($isCache -and ((Get-Date) - $isCache.At).TotalSeconds -ge [Math]::Max($MinRefreshSeconds, 60)) { $isCache = $null }
+                } elseif ($page -eq 'goals') {
+                    if ($glCache -and ((Get-Date) - $glCache.At).TotalSeconds -ge $MinRefreshSeconds) { $glCache = $null }
                 }
                 Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = $(if ($page) { "/dev/$page" } else { '/' }) } -Method $method
                 continue
@@ -640,6 +674,11 @@ try {
                 $isAge = if ($isCache) { ((Get-Date) - $isCache.At).TotalSeconds } else { 0 }
                 if ($null -eq $isCache -or $isAge -ge $IssuesCacheSeconds -or ($isCache.Error -and $isAge -ge 30)) { $isCache = Get-IssuesModel }
                 $html = Format-IssuesPageHtml -Model $isCache.Model -ReadError $isCache.Error -GeneratedAt $isCache.GeneratedAt -Seconds $isCache.Seconds -RepoName (Get-RepoIdentity).Name
+            } elseif ($path -cmatch '^/dev/goals/?$') {
+                # The goals and their next step (#3816), read as the issues are: kept for -IssuesCacheSeconds, a failed read for 30 s.
+                $glAge = if ($glCache) { ((Get-Date) - $glCache.At).TotalSeconds } else { 0 }
+                if ($null -eq $glCache -or $glAge -ge $IssuesCacheSeconds -or ($glCache.Error -and $glAge -ge 30)) { $glCache = Get-GoalsModel }
+                $html = Format-GoalsPageHtml -Model $glCache.Model -ReadError $glCache.Error -GeneratedAt $glCache.GeneratedAt -RepoName (Get-RepoIdentity).Name
             } elseif ($path -match '^/dev/sessionstart(?:/([a-z-]{1,40}))?$') {
                 # The overview, or one section's own page (the owner, October 26, 2026); a slug no section has is a 404.
                 $ssSection = [string]$Matches[1]
