@@ -39,19 +39,35 @@
 
 ### PLAN
 
+#3820: the airsquats toast could only be put away by ticking the box, which claims the squats were done. Give it a
+close button that sinks it without touching the server's count, and keep it down until something new happens.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] A ghost `.icon-btn` with a cross at the end of the toast's row, in house classes and tokens
+      (`Format-RepoHubBanner`, `plugins/dkj-policy/hub/lib/general-pages-lib.ps1`).
+- [x] Closing keeps the count it was closed on in `sessionStorage`, so another Admin page in the same tab does not
+      bring it back; another hour owed, or the hub going offline again, does.
+- [x] `dev-pages.tests.ps1`: the existing banner asserts follow the new lines, and one new assert covers the button.
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1` on its own: 599 passed, 0 failed.
+- [ ] The owner looks at the toast on an Admin page: the cross sits at the end of the row and closes it.
+
 ### DEPLOY: feat/3820-dismiss-toast
 
-**Score:**
+The airsquats toast on every Admin page now has a close button at the end of its row. It puts the toast away without
+ticking the squats off, and it stays away in that tab until another hour comes due or the hub goes offline again.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A user of the Toolbox who does not want the reminder on screen right now can close it, instead of ticking off squats
+they have not done.
+
+**Score:** 2
 
 #### Pull Request
 
