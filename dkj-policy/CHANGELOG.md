@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**4 / 4 minor entries** <!-- pending-tally -->
+**5 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3830-admin-fully-in-shell · 20261105-144508Z
+
+Admin's pages now stand fully in the desktop shell. Wherever a page listed the pages under it as a grid of cards, it now shows one compact table, a row per page with its description, under the section's heading: the home page, the GitHub page, Claude, Performance, the plugins and each plugin's contents, the brand book overview, SessionStart, the Test gate, the Stopwatch and the Logbook, and the release notes. Every page's title sits in the toolbar above the pane. The warning that flags a page that does not fit now reads the shell: the pane's own height, the toolbar's title and the bar's trail. A product's own pages keep their cards.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Anyone who opens Admin after updating sees its overviews as tables instead of cards. Nothing needs to be done.
+
+**Score:** 2
+
+#### Pull Request
+
+Admin pages fully in the desktop shell
+
+Plugins: dkj-policy
+
+[PR #3837](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3837)
+
+---
 
 ### DEPLOY: fix/3834-cross-site-top-level-get · 20261105-143153Z
 
