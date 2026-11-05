@@ -54,8 +54,9 @@ and fit alarm) is step 3 and is not on this branch.
 
 ### TEST
 
-- [ ] Lint and test gate green (open-pr)
-- [ ] Owner's look: a brand-book change is a visible result
+- [x] Integrity lint green locally (0 errors)
+- [~] Lint and test gate green: dropped as a step, because open-pr runs it itself before the push
+- [x] Owner's look: Dave said "open de pr" after the desktop-shell preview (November 5, 2026)
 
 ### DEPLOY: docs/3811-page-pattern-layers
 
