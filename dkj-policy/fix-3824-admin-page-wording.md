@@ -39,19 +39,28 @@
 
 ### PLAN
 
+#3824: #3819 (PR #3822) and #3815 (PR #3821) landed minutes apart, and the visible-result bullet kept
+both wordings, "an Admin page" and "a Toolbox page". One word changes.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-policy/CLAUDE.md`: "a Toolbox page" becomes "an Admin page" in the visible-result bullet's URL sentence.
 
 ### TEST
 
+- [x] `grep Toolbox` over `plugins/dkj-policy/CLAUDE.md` and `skills/sweep-issues/SKILL.md` returns nothing.
+
 ### DEPLOY: fix/3824-admin-page-wording
 
-**Score:**
+The constitution's visible-result bullet now names the page to open as an Admin page in both places, where one sentence still said Toolbox after the rename.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
