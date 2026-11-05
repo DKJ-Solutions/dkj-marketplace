@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**4 / 5 minor entries** <!-- pending-tally -->
+**5 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/issues-sweep-names · 20261105-132552Z
+
+The two sweep skills are renamed so that all three share one prefix: `sweep-issues` is now `issues-sweep`, and `sweep-decisions` is now `issues-sweep-decisions`, beside `issues-sweep-reviews`. Every page that names them follows, and each renamed page says what it used to be called. The hub's logbook still recognises a sweep recorded under the old name.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Anyone who types `/sweep-issues` or `/sweep-decisions` must type `/issues-sweep` or `/issues-sweep-decisions` after updating. The old names no longer exist as commands.
+
+**Score:** 4
+
+#### Pull Request
+
+Rename sweep-issues to issues-sweep and sweep-decisions to issues-sweep-decisions
+
+Plugins: dkj-policy
+
+[PR #3827](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3827)
+
+---
 
 ### DEPLOY: feat/sweep-reviews · 20261105-130532Z
 
