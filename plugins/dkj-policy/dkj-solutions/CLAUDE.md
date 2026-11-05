@@ -14,7 +14,7 @@ The second is the brand book, with two rules:
 
 - **Start from it** — the [`dkj-brandbook`](skills/dkj-brandbook/SKILL.md) skill, which points at the
   stylesheet and theme script in `dkj-policy`'s [`assets/dkj-brandbook/`](https://github.com/DKJ-Solutions/dkj-marketplace/tree/main/plugins/dkj-policy/assets/dkj-brandbook/) and the
-  rules in its [`README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md). Every page, report or dashboard a
+  rules in its [`README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md); a product page adds `house-product.css` after it, in this plugin. Every page, report or dashboard a
   DKJ-Solutions app renders starts from that stylesheet, and a repo adds its own domain layer on top
   without redefining a house token. Load the skill before any visual work. Where a repo's own lens
   names a style guide, that guide extends the brand book and does not replace it.
@@ -23,13 +23,13 @@ The second is the brand book, with two rules:
   by Dave in [#3130](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3130), October 18,
   2026: the brand book lives in `dkj-marketplace`, no longer in the archived `dkj-brandbook` repo whose name it now carries; its files sit in
   `dkj-policy` since [#3531](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3531)). A repo's copy of
-  `house-style.css` or `house-theme.js` is never edited, and the repo's own domain layer never redefines
+  `house-style.css`, `house-theme.js` or `house-product.css` is never edited, and the repo's own domain layer never redefines
   a house token or class. When a turn needs the brand book itself to change (a token value, a theme, a
   shared component's look), file an inbound issue (`feature-inbound` or `bug-inbound`) on
   `DKJ-Solutions/dkj-marketplace` naming what and why, keep working on the repo's own domain layer,
   and take the new copy once it has been released and the `dkj-brandbook` skill points at it. Only the
   repo's own domain layer (its own tokens, components and theme pair) is edited locally. **In
-  `dkj-marketplace` itself this rule does not apply**: the change is made in `plugins/dkj-policy/assets/dkj-brandbook/`.
+  `dkj-marketplace` itself this rule does not apply**: the change is made in `plugins/dkj-policy/assets/dkj-brandbook/` (the product layer: `plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/`).
 
 **This plugin reaches DKJ-Solutions only.** BWJ-Development has its own styling, so this extension is
 never enabled there.

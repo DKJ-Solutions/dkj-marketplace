@@ -46,8 +46,8 @@
 function Format-DevPageHtml {
     <#
         The whole page around -Body, for this repo's own pages (Consumers, Specialists, Plugins): the
-        plugin's page shell with this repo's site header, tagged 'product' (#3540), its title and theme key,
-        and the Home crumb on '/', the product's home page.
+        dkj-solutions plugin's product layout (Format-ProductPageHtml, #3831) with this repo's site header, tagged
+        'product' (#3540), its title and theme key, and the Home crumb on '/', the product's home page.
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Title,
@@ -60,10 +60,10 @@ function Format-DevPageHtml {
         [AllowEmptyCollection()][object[]]$ParentCrumbs = @(),
         [AllowEmptyString()][string]$Info = ''
     )
-    # -Bare: no h1 or lead above the body, the general banner still on top (Format-GeneralPageHtml's own switch, #3356), for a page that opens on its content.
-    # -Info: what a plugin's page is about, behind the "?" right of its h1 (Format-GeneralPageHtml's own, escaped by the caller).
-    return Format-GeneralPageHtml -Title $Title -Lead $Lead -Body $Body -Style $Style -FooterNote $FooterNote -ThemeKey $ThemeKey `
-        -Brand 'dkj-marketplace' -BrandTag 'product' -SiteName 'dkj-marketplace' -HubHref '/' -HomeLabel 'Home' -Bare:$Bare -ParentCrumbs $ParentCrumbs -Info $Info -Menu @(Get-ProductMenu)
+    # -Bare: no h1 above the body (Format-ProductPageHtml's own switch), for a page that opens on its content.
+    # -Info: what a plugin's page is about, behind the "?" right of its h1 (Format-ProductPageHtml's own, escaped by the caller).
+    return Format-ProductPageHtml -Title $Title -Lead $Lead -Body $Body -Style $Style -FooterNote $FooterNote -ThemeKey $ThemeKey `
+        -Brand 'dkj-marketplace' -SiteName 'dkj-marketplace' -HubHref '/' -HomeLabel 'Home' -Bare:$Bare -ParentCrumbs $ParentCrumbs -Info $Info -Menu @(Get-ProductMenu)
 }
 
 function Format-ProductSettingsHtml {
@@ -101,7 +101,10 @@ function Format-ProductHomeHtml {
     [void]$sb.AppendLine('<meta charset="utf-8">')
     [void]$sb.AppendLine('<meta name="viewport" content="width=device-width, initial-scale=1">')
     [void]$sb.AppendLine('<title>dkj-marketplace -- Home</title>')
+    [void]$sb.AppendLine('<meta name="description" content="The source of the Claude Specialists plugins: the marketplace, its agent definitions, manuals and skills, and the scripts and gates that ship them.">')
     [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
+    # The product layer on top of the core (#3831): this page is the product's.
+    foreach ($sheet in (Get-ProductStylesheets)) { [void]$sb.AppendLine('<link rel="stylesheet" href="' + $sheet + '">') }
     [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
     # One width, full, as on Admin (Dave, November 4, 2026): another screen is judged in the Simple Browser's own
     # device emulation, so the product offers no width choice.
@@ -113,7 +116,7 @@ function Format-ProductHomeHtml {
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
     [void]$sb.AppendLine('<body>')
-    [void]$sb.Append((Format-RepoHomeHeadHtml -RepoName 'dkj-marketplace' -Brand 'dkj-marketplace' -BrandTag 'product' -HomeLabel 'Home' -Menu @(Get-ProductMenu) -Lead 'The source of the Claude Specialists plugins: the marketplace, its agent definitions, manuals and skills, and the scripts and gates that ship them.'))
+    [void]$sb.Append((Format-ProductHomeHeadHtml -RepoName 'dkj-marketplace' -Brand 'dkj-marketplace' -HomeLabel 'Home' -Menu @(Get-ProductMenu)))
     # Every page a card of its own, three to a row, with no heading above them (the house hub form, #3383): the
     # hub first, so the way back is where the eye starts, then this repo's own pages. On the page itself, in the
     # Admin home's .ph-cards rather than a .grid-3, whose surface frames an h2 over h3 cards (November 2, 2026).
@@ -532,7 +535,8 @@ function Format-ProductHouseStylePageHtml {
         The house style's specimens in the product's shell, under Marketplace and dkj-policy, the plugin whose files
         they document: the same page Admin shows on /plugins/dkj-policy/dkj-brandbook, from the plugin's
         Get-HouseStyleSpecimensParts, which Admin in this repo now sends here. -Body is this checkout's
-        plugins/dkj-policy/assets/dkj-brandbook/specimens.html, -ReadError why it could not be read. A -Section no
+        plugins/dkj-policy/assets/dkj-brandbook/specimens.html joined with the product layer's own (Join-HouseStyleSpecimens,
+        #3831), so the product shows the whole book where Admin shows the core; -ReadError is why it could not be read. A -Section no
         section has returns $null, a 404.
 
         THE OVERVIEW OPENS ON ITS TOKENS (Maikel, October 31, 2026): an h2 Tokens over one card per token group
@@ -548,7 +552,7 @@ function Format-ProductHouseStylePageHtml {
         [AllowEmptyString()][string]$Token = ''
     )
     $base = '/marketplace/dkj-policy/dkj-brandbook'
-    $foot = 'Read from this checkout''s <code>plugins/dkj-policy/assets/dkj-brandbook/specimens.html</code> on every request, so it is the tree, not the installed release.'
+    $foot = 'Read from this checkout''s <code>plugins/dkj-policy/assets/dkj-brandbook/specimens.html</code> and the product layer''s <code>plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/specimens.html</code> on every request, so it is the tree, not the installed release.'
     $crumbs = @(@{ Label = 'Marketplace'; Href = '/marketplace' }, @{ Label = 'dkj-policy'; Href = '/marketplace/dkj-policy' })
     $split = if ($ReadError) { $null } else { Split-HouseStyleSpecimens -Body $Body }
     $tokens = if ($split) { @($split.Sections | Where-Object { $_.Slug -ceq 'tokens' }) | Select-Object -First 1 } else { $null }

@@ -152,31 +152,102 @@ function Get-PageInfoScript {
         ' document.addEventListener("keydown", function (e) { if (e.key === "Escape") { clearTimeout(h); close(); } }); })();</script>'
 }
 
+function Get-PageInfoGlyph {
+    <# The drawn "?" of a page's -Info button: one copy for Admin's toolbar and a product's h1 row (#3831). #>
+    return '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
+        '<path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5M12 17.5v.01" /></svg>'
+}
+
+function Get-LongPageWarningHtml {
+    <#
+        The long-page warning (#3563) a page with too many sections carries at its top, or '' when -Body holds no more
+        than the limit: the rule was applied page by page and written down nowhere, so a page that breaks it says so itself.
+    #>
+    param([AllowEmptyString()][string]$Body = '')
+    $sections = Get-PageSectionCount -Body $Body
+    if ($sections -le $script:LongPageSectionLimit) { return '' }
+    return '<p class="msg--warn" role="alert">This page holds ' + $sections + ' sections in one column. A page with more than ' +
+        $script:LongPageSectionLimit + ' becomes an overview of cards, each opening a page of its own: the house style''s page rule (#3563).</p>'
+}
+
+function Format-GeneralPageHeadHtml {
+    <#
+        A general page from '<!doctype html>' through '<body>': the theme attributes, the <title> (-SiteName before
+        -Title), -Lead as the <meta name="description"> (#3585), the house stylesheet and theme script, the one full
+        width, and the page layer (.dp-*) with -Style after it. -Admin adds the desktop shell's own layer
+        (Get-AdminShellStyle). -Stylesheets are further sheets linked after the house one, in order: a product page
+        names the dkj-solutions plugin's /house-product.css there (#3831), so the product layer loads on top of the
+        core and never in its place. Shared by Format-GeneralPageHtml and the dkj-solutions plugin's
+        Format-ProductPageHtml, so the two cannot drift.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][string]$Title,
+        [AllowEmptyString()][string]$Lead = '',
+        [AllowEmptyString()][string]$Style = '',
+        [string]$ThemeKey = 'general-pages',
+        [AllowEmptyString()][string]$SiteName = '',
+        [switch]$Admin,
+        [AllowEmptyCollection()][string[]]$Stylesheets = @()
+    )
+    $e = { param($v) ConvertTo-GeneralPageText $v }
+    $site = if ($SiteName) { (& $e $SiteName) + ' -- ' } else { '' }
+    $sb = New-Object System.Text.StringBuilder
+    [void]$sb.AppendLine('<!doctype html>')
+    # The theme key is shared by every page of one server, so a theme picked on one page holds on the next.
+    # With no width picked yet the pages open full width: a hub is tables and cards, not a reading column.
+    [void]$sb.AppendLine('<html lang="en" ' + (Format-GeneralPagesThemeAttributes) + ' data-width-default="full" data-theme-key="' + (& $e $ThemeKey) + '">')
+    [void]$sb.AppendLine('<head>')
+    [void]$sb.AppendLine('<meta charset="utf-8">')
+    [void]$sb.AppendLine('<meta name="viewport" content="width=device-width, initial-scale=1">')
+    [void]$sb.AppendLine('<title>' + $site + (& $e $Title) + '</title>')
+    # The lead is metadata, not a line on screen (#3585): its tags go, its entities are already escaped.
+    $description = ([regex]::Replace($Lead, '<[^>]*>', '')).Replace('"', '&quot;').Trim()
+    if ($description) { [void]$sb.AppendLine('<meta name="description" content="' + $description + '">') }
+    [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
+    foreach ($sheet in @($Stylesheets | Where-Object { $_ })) { [void]$sb.AppendLine('<link rel="stylesheet" href="' + (& $e $sheet) + '">') }
+    [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
+    # One width, full, on every page of this shell, a repo's own product pages included (Dave, November 4, 2026):
+    # another screen is judged in the Simple Browser's own device emulation.
+    [void]$sb.AppendLine((Get-AdminWidthScript))
+    # The page layer: only names the house file does not define (.dp-*).
+    [void]$sb.AppendLine('<style>')
+    [void]$sb.AppendLine('.dp-link { color: var(--fg-3); text-decoration: none; text-underline-offset: 2px; }')
+    [void]$sb.AppendLine('.dp-link:hover, .dp-link:focus-visible { text-decoration: underline; }')
+    [void]$sb.AppendLine('.dp-thead th { background: var(--bg-3); }')
+    [void]$sb.AppendLine('.table td.dp-left, .table th.dp-left { text-align: left; }')
+    if ($Admin) { [void]$sb.AppendLine((Get-AdminShellStyle)) }
+    if ($Style) { [void]$sb.AppendLine($Style) }
+    [void]$sb.AppendLine('</style>')
+    [void]$sb.AppendLine('</head>')
+    [void]$sb.AppendLine('<body>')
+    return $sb.ToString()
+}
+
 function Format-GeneralPageHtml {
     <#
-        The whole page around -Body. -Title is the page's own name: the last crumb, the h1 and the
-        <title> (after -SiteName). An ADMIN page (any -BrandTag but 'product') stands in the desktop shell (#3811,
-        Format-AdminShellOpen): there -Brand, -BrandTag and -Menu draw nothing, and what is said below about the site
-        header, the breadcrumb bar and the settings button describes a product's page. -HubHref is where
-        the first crumb, "Home" (#3270), goes: '/' by default, the general server's own root and its home page. It was '/hub' while these pages could be relayed from a product's origin (#3168), where '/' is the product; nothing relays them any more, and a caller on another origin names its own -HubHref. The server still answers '/hub', so an old link keeps working.
-        -Style is the page's own layer, names the house file does not define. -Lead and
-        -FooterNote are markup the caller has escaped. -Lead is the page's <meta name="description">, never a
-        paragraph under the h1: screen height is scarce, so a page opens on its h1 and goes straight to its content
-        (owner, #3585). -Brand opts into the house site header (Format-SiteHeaderHtml):
-        the app's name on the primary above the bar, linking -HubHref, with the settings button in it. -BrandTag is the word after the name. A page that
-        names -SiteName and no -Brand gets the header anyway (ConvertTo-SiteHeaderName), since October 22, 2026. Without it the page is as it always was.
-        -Bare (a page's own choice, default off) leaves out the intro above -Body: the h1, so the page
-        opens on the general banner (the first block of every page, above the h1 where there is one) and then its own content; the crumbs, the site header and the banner stay (the
-        banner is on every hub page without exception, #3356), and -Title still names the crumb and the <title>.
-        -Lead may then be empty.
+        The whole page around -Body, an ADMIN page: it stands in the desktop shell (#3811, Format-AdminShellOpen).
+        -Title is the page's own name: the last crumb in the shell's bar, the toolbar's title and the <title> (after
+        -SiteName). -HubHref is where the first crumb, "Home" (#3270), goes: '/' by default, the general server's own
+        root and its home page. It was '/hub' while these pages could be relayed from a product's origin (#3168); the
+        server still answers '/hub', so an old link keeps working.
+        -Style is the page's own layer, names the house file does not define. -Lead and -FooterNote are markup the
+        caller has escaped. -Lead is the page's <meta name="description">, never a paragraph under the title: screen
+        height is scarce, so a page goes straight to its content (owner, #3585).
+        -Bare (a page's own choice, default off) leaves out the toolbar's title row; a -Bare body that opens on its own
+        <div><h1>..</h1>..</div> has that h1 lifted into the toolbar instead (#3830), and -Title still names the crumb
+        and the <title>. -Lead may then be empty.
         -ParentCrumbs are the crumbs between Home and the page, in order, each @{ Label; Href }: a page nested under
         another (the Stopwatch's run pages) names its parent so the trail reads Home > parent > the page.
-        -HeadAside is markup the caller has escaped, set at the far right of the h1's row: the intro is then the house
-        page-header row (main > header, a flex row with the title on the left), as a plugin's page does with its state.
-        -Info is markup the caller has escaped: what the page is about, behind a drawn "?" (.page-info-button) right of the h1,
-        shown as a .tooltip--explain only while the pointer is on the button or the tooltip, or the button has focus
-        (Maikel, October 31, 2026, for a plugin's page). Nothing is on screen until then, so #3585 holds. Empty, as on
-        every other page, there is no button.
+        -HeadAside is markup the caller has escaped, set at the far right of the toolbar.
+        -Info is markup the caller has escaped: what the page is about, behind a drawn "?" (.page-info-button), shown as
+        a .tooltip--explain only while the pointer is on the button or the tooltip, or the button has focus (Maikel,
+        October 31, 2026, for a plugin's page). Nothing is on screen until then, so #3585 holds.
+
+        A PRODUCT PAGE IS NOT DRAWN HERE (#3831, Maikel, November 5, 2026). Its mobile-first layout (the site header,
+        the breadcrumb bar, the page column) and the stylesheet it needs ship with the dkj-solutions plugin alone:
+        its scripts/lib/product-pages-lib.ps1, Format-ProductPageHtml. -BrandTag 'product' is therefore refused, with
+        that pointer, rather than drawn as an Admin page. -Brand and -Menu are kept for the callers that pass them and
+        draw nothing: an Admin page carries its own navigation.
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Title,
@@ -196,121 +267,38 @@ function Format-GeneralPageHtml {
         [AllowEmptyString()][string]$Info = '',
         [AllowNull()][object[]]$Menu = $null
     )
-    # EVERY NAMED PAGE CARRIES THE SITE HEADER (owner, October 22, 2026): a caller that names its site and passes no
-    # -Brand gets the repo's short name in it, with 'admin' after it, since these are Admin's pages. 'toolbox', the tag's
-    # name until #3815, is read as 'admin' (ConvertTo-AdminBrandTag).
-    $BrandTag = ConvertTo-AdminBrandTag $BrandTag
-    if (-not $Brand -and $SiteName) { $Brand = ConvertTo-SiteHeaderName -RepoName $SiteName; if (-not $BrandTag) { $BrandTag = 'admin' } }
-    # -Menu is the site header's menu, drawn only on a product's page: an Admin page draws its own navigation instead.
-    if ($null -eq $Menu) { $Menu = @() }
+    if ((ConvertTo-AdminBrandTag $BrandTag) -eq 'product') {
+        throw "Format-GeneralPageHtml draws Admin pages only: a product page (-BrandTag 'product') is the dkj-solutions plugin's Format-ProductPageHtml (scripts/lib/product-pages-lib.ps1, #3831)."
+    }
     $e = { param($v) ConvertTo-GeneralPageText $v }
-    $site = if ($SiteName) { (& $e $SiteName) + ' -- ' } else { '' }
     $sb = New-Object System.Text.StringBuilder
-    [void]$sb.AppendLine('<!doctype html>')
-    # The theme key is shared by every page of one server, so a theme picked on one page holds on the next.
-    # With no width picked yet the pages open full width: a hub is tables and cards, not a reading column.
-    [void]$sb.AppendLine('<html lang="en" ' + (Format-GeneralPagesThemeAttributes) + ' data-width-default="full" data-theme-key="' + (& $e $ThemeKey) + '">')
-    [void]$sb.AppendLine('<head>')
-    [void]$sb.AppendLine('<meta charset="utf-8">')
-    [void]$sb.AppendLine('<meta name="viewport" content="width=device-width, initial-scale=1">')
-    [void]$sb.AppendLine('<title>' + $site + (& $e $Title) + '</title>')
-    # The lead is metadata, not a line on screen (#3585): its tags go, its entities are already escaped.
-    $description = ([regex]::Replace($Lead, '<[^>]*>', '')).Replace('"', '&quot;').Trim()
-    if ($description) { [void]$sb.AppendLine('<meta name="description" content="' + $description + '">') }
-    [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
-    [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
-    # One width, full, on every page of this shell, a repo's own product pages (-BrandTag 'product') included (Dave,
-    # November 4, 2026): another screen is judged in the Simple Browser's own device emulation.
-    [void]$sb.AppendLine((Get-AdminWidthScript))
-    # The page layer: only names the house file does not define (.dp-*).
-    [void]$sb.AppendLine('<style>')
-    [void]$sb.AppendLine('.dp-link { color: var(--fg-3); text-decoration: none; text-underline-offset: 2px; }')
-    [void]$sb.AppendLine('.dp-link:hover, .dp-link:focus-visible { text-decoration: underline; }')
-    [void]$sb.AppendLine('.dp-thead th { background: var(--bg-3); }')
-    [void]$sb.AppendLine('.table td.dp-left, .table th.dp-left { text-align: left; }')
-    # AN ADMIN PAGE STANDS IN THE DESKTOP SHELL (Dave, November 4, 2026, #3811): an Explorer, not a website, so no site
-    # header, no breadcrumb bar and no headline; a product's page (-BrandTag 'product') keeps the mobile-first layout below.
-    $admin = $BrandTag -ne 'product'
-    if ($admin) { [void]$sb.AppendLine((Get-AdminShellStyle)) }
-    if ($Style) { [void]$sb.AppendLine($Style) }
-    [void]$sb.AppendLine('</style>')
-    [void]$sb.AppendLine('</head>')
-    [void]$sb.AppendLine('<body>')
-    # Shared by both layouts: the drawn "?" of -Info, and the long-page warning (#3563) a page with too many sections carries.
-    $glyph = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
-        '<path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5M12 17.5v.01" /></svg>'
-    $sections = Get-PageSectionCount -Body $Body
-    $longWarn = if ($sections -gt $script:LongPageSectionLimit) {
-        '<p class="msg--warn" role="alert">This page holds ' + $sections + ' sections in one column. A page with more than ' +
-            $script:LongPageSectionLimit + ' becomes an overview of cards, each opening a page of its own: the house style''s page rule (#3563).</p>'
+    [void]$sb.Append((Format-GeneralPageHeadHtml -Title $Title -Lead $Lead -Style $Style -ThemeKey $ThemeKey -SiteName $SiteName -Admin))
+    $longWarn = Get-LongPageWarningHtml -Body $Body
+    # A -Bare page that writes its own h1 into -Body (`<div><h1>..</h1>..</div>`, the product's intro) has it lifted
+    # into the shell's toolbar (#3830), so an Admin page's h1 is always the pane title and never a headline in the
+    # pane. A line under that h1 (a .card__sub) stays, as a .note at the top of the pane.
+    if ($Bare) {
+        $own = [regex]::Match($Body, '(?s)<div><h1>(.*?)</h1>(.*?)</div>\r?\n?')
+        if ($own.Success) {
+            $Body = $Body.Remove($own.Index, $own.Length)
+            $Title = [System.Net.WebUtility]::HtmlDecode($own.Groups[1].Value)
+            $under = $own.Groups[2].Value -replace '^\s*<p class="card__sub">', '<p class="note">'
+            if ($under.Trim()) { $Body = $Body.Insert($own.Index, $under.Trim() + "`n") }
+            $Bare = $false
+        }
+    }
+    # No settings button in the shell: Admin's theme is chosen on its own /settings page, pinned to the navigation's foot.
+    $infoHtml = if ($Info -and -not $Bare) {
+        '<button class="page-info-button" type="button" id="page-info-button" aria-label="About ' + (& $e $Title) + '" aria-describedby="page-info" aria-expanded="false">' + (Get-PageInfoGlyph) + '</button>' +
+        '<div class="tooltip tooltip--explain" id="page-info" role="tooltip">' + $Info + '</div>'
     } else { '' }
-    if ($admin) {
-        # A -Bare page that writes its own h1 into -Body (`<div><h1>..</h1>..</div>`, the product's intro) has it lifted
-        # into the shell's toolbar (#3830), so an Admin page's h1 is always the pane title and never a headline in the
-        # pane. A line under that h1 (a .card__sub) stays, as a .note at the top of the pane.
-        if ($Bare) {
-            $own = [regex]::Match($Body, '(?s)<div><h1>(.*?)</h1>(.*?)</div>\r?\n?')
-            if ($own.Success) {
-                $Body = $Body.Remove($own.Index, $own.Length)
-                $Title = [System.Net.WebUtility]::HtmlDecode($own.Groups[1].Value)
-                $under = $own.Groups[2].Value -replace '^\s*<p class="card__sub">', '<p class="note">'
-                if ($under.Trim()) { $Body = $Body.Insert($own.Index, $under.Trim() + "`n") }
-                $Bare = $false
-            }
-        }
-        # No settings button in the shell: Admin's theme is chosen on its own /settings page, pinned to the navigation's foot.
-        $infoHtml = if ($Info -and -not $Bare) {
-            '<button class="page-info-button" type="button" id="page-info-button" aria-label="About ' + (& $e $Title) + '" aria-describedby="page-info" aria-expanded="false">' + $glyph + '</button>' +
-            '<div class="tooltip tooltip--explain" id="page-info" role="tooltip">' + $Info + '</div>'
-        } else { '' }
-        $trail = @(@($ParentCrumbs | Where-Object { $_ }) + @(@{ Label = $Title; Href = '' }))
-        $nav = @(Get-AdminNav)
-        [void]$sb.Append((Format-AdminShellOpen -Title $Title -Current (Get-AdminCurrentHref -Title $Title -ParentCrumbs $ParentCrumbs -Nav $nav) -Nav $nav -Trail $trail -HomeLabel $HomeLabel -HubHref $HubHref -Bare:$Bare -InfoHtml $infoHtml -HeadAside $HeadAside))
-        if ($longWarn) { [void]$sb.AppendLine($longWarn) }
-        [void]$sb.Append($Body)
-        if ($FooterNote) { [void]$sb.AppendLine('<p class="note">' + $FooterNote + '</p>') }
-        [void]$sb.AppendLine((Format-AdminShellClose))
-        if ($Info -and -not $Bare) { [void]$sb.AppendLine((Get-PageInfoScript)) }
-        [void]$sb.AppendLine((Format-FitAlarmHtml))
-        [void]$sb.AppendLine('</body>')
-        [void]$sb.AppendLine('</html>')
-        return $sb.ToString()
-    }
-    # The general banner on every Admin page, not only the home page (#3297), and a bare one too (#3356): ALWAYS the
-    # first thing in <body>, above the site header (owner, October 24, 2026). Never on a product's page
-    # (-BrandTag 'product'): the banner is Admin's alone (Dave, November 4, 2026).
-    if ($BrandTag -ne 'product') { [void]$sb.AppendLine((Format-RepoHubBanner)) }
-    if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href $HubHref -Tag $BrandTag -Menu $Menu -Current (Get-SiteHeaderMenuCurrent -Menu $Menu -Title $Title -ParentCrumbs $ParentCrumbs))) }
-    [void]$sb.AppendLine('<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>')
-    [void]$sb.AppendLine('<li><a href="' + (& $e $HubHref) + '">' + (& $e $HomeLabel) + '</a></li>')
-    $sep = Get-BreadcrumbSep
-    foreach ($c in @($ParentCrumbs)) { if ($c) { [void]$sb.AppendLine('<li>' + $sep + '<a href="' + (& $e $c.Href) + '">' + (& $e $c.Label) + '</a></li>') } }
-    [void]$sb.AppendLine('<li>' + $sep + '<span aria-current="page">' + (& $e $Title) + '</span></li>')
-    [void]$sb.AppendLine('</ol></nav></div></div>')
-    if (-not $Brand) { [void]$sb.AppendLine('<div id="settings" class="theme-settings--floating"></div>') }
-    [void]$sb.AppendLine('<main class="page-column">')
-    if (-not $Bare) {
-        if ($HeadAside) { [void]$sb.AppendLine('<header>') }
-        [void]$sb.AppendLine('<div>')
-        if ($Info) {
-            # The h1 and its "?" on one row; the tooltip is fixed, placed by Get-PageInfoScript beside the button.
-            # The "?" glyph is drawn, as mesowise draws its own (Maikel, October 31, 2026), so it never leans on a font's
-            # baseline; its ring is the button's CSS border (.page-info-button::before), in a 44px button that is all tap target.
-            [void]$sb.AppendLine('<div class="page-title"><h1>' + (& $e $Title) + '</h1><button class="page-info-button" type="button" id="page-info-button" aria-label="About ' + (& $e $Title) + '" aria-describedby="page-info" aria-expanded="false">' + $glyph + '</button></div>')
-            [void]$sb.AppendLine('<div class="tooltip tooltip--explain" id="page-info" role="tooltip">' + $Info + '</div>')
-        } else {
-            [void]$sb.AppendLine('<h1>' + (& $e $Title) + '</h1>')
-        }
-        [void]$sb.AppendLine('</div>')
-        if ($HeadAside) { [void]$sb.AppendLine($HeadAside); [void]$sb.AppendLine('</header>') }
-    }
-    # A LONG PAGE BECOMES CARDS WITH A PAGE EACH (#3563): the rule was applied page by page and written down nowhere,
-    # so a page that breaks it now says so itself, at its top, rather than waiting for the owner to spot it.
+    $trail = @(@($ParentCrumbs | Where-Object { $_ }) + @(@{ Label = $Title; Href = '' }))
+    $nav = @(Get-AdminNav)
+    [void]$sb.Append((Format-AdminShellOpen -Title $Title -Current (Get-AdminCurrentHref -Title $Title -ParentCrumbs $ParentCrumbs -Nav $nav) -Nav $nav -Trail $trail -HomeLabel $HomeLabel -HubHref $HubHref -Bare:$Bare -InfoHtml $infoHtml -HeadAside $HeadAside))
     if ($longWarn) { [void]$sb.AppendLine($longWarn) }
     [void]$sb.Append($Body)
     if ($FooterNote) { [void]$sb.AppendLine('<p class="note">' + $FooterNote + '</p>') }
-    [void]$sb.AppendLine('</main>')
-    [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", widths: false });</script>')
+    [void]$sb.AppendLine((Format-AdminShellClose))
     if ($Info -and -not $Bare) { [void]$sb.AppendLine((Get-PageInfoScript)) }
     [void]$sb.AppendLine((Format-FitAlarmHtml))
     [void]$sb.AppendLine('</body>')
@@ -1261,60 +1249,12 @@ function ConvertTo-SiteHeaderName {
     return $RepoName
 }
 
-function Format-SiteHeaderHtml {
-    <#
-        The house site header (house-style.css, "Site header"): the app's -Name on the primary, linking -Href
-        (home). No mark (Dave, November 2, 2026), and no settings button (Maikel, November 3, 2026): Admin's
-        theme is chosen on its own /settings page, so the header no longer mounts #settings, and the pages' own
-        DKJTheme.settings call finds no element and draws nothing. -Tag is the quieter word after the name
-        ('hub', 'product'), left out when empty. Both are escaped here.
-        -Menu is the app's main pages, each @{ Label; Href }, in order (house-style.css, "Site header menu"; Maikel,
-        November 2, 2026): drawn after the brand, and again as the drawer a phone opens from
-        the toggle. -Current is the Href of the one the page sits under, marked aria-current. No -Menu, no menu.
-    #>
-    param([Parameter(Mandatory = $true)][string]$Name, [string]$Href = '/', [AllowEmptyString()][string]$Tag = '',
-        [AllowEmptyCollection()][object[]]$Menu = @(), [AllowEmptyString()][string]$Current = '')
-    $e = { param($v) ConvertTo-GeneralPageText $v }
-    $label = if ($Tag) { "$Name $Tag" } else { $Name }
-    $tagHtml = if ($Tag) { ' <span class="site-header__tag">' + (& $e $Tag) + '</span>' } else { '' }
-    $items = @($Menu | Where-Object { $_ -and $_.Label -and $_.Href })
-    $nav = ''; $drawer = ''
-    if ($items.Count) {
-        $cur = { param($i) if ($Current -and $i.Href -eq $Current) { ' aria-current="page"' } else { '' } }
-        $links = ($items | ForEach-Object { '<li><a href="' + (& $e $_.Href) + '"' + (& $cur $_) + '>' + (& $e $_.Label) + '</a></li>' }) -join ''
-        $nav = '<nav class="site-header__nav" aria-label="Main"><ul class="site-header__menu">' + $links + '</ul>' +
-            '<button class="site-header__menu-toggle" type="button" aria-controls="site-menu" aria-expanded="false" aria-label="Menu">' +
-            '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></nav>'
-        $chevron = '<svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg>'
-        $rows = ($items | ForEach-Object { '<a class="menu-item" href="' + (& $e $_.Href) + '"' + (& $cur $_) + '><span class="menu-item__label">' + (& $e $_.Label) + '</span>' + $chevron + '</a>' }) -join ''
-        $drawer = '<dialog class="dialog dialog--drawer site-menu" id="site-menu" aria-label="Menu"><div class="dialog__body">' +
-            '<div class="dialog__head"><p class="dialog__title">Menu</p></div>' +
-            '<button class="dialog__close" type="button" aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
-            '<nav class="menu-list" aria-label="Main">' + $rows + '</nav></div></dialog>'
-    }
-    return '<header class="site-header"><div class="container"><a class="site-header__brand" href="' + (& $e $Href) + '" aria-label="' +
-        (& $e $label) + ', home"><span class="site-header__name">' + (& $e $Name) +
-        $tagHtml + '</span></a>' + $nav + '</div>' + $drawer + '</header>' + "`n"
-}
-
 function Get-HubMenu {
     <#
-        Admin's site header menu (Format-SiteHeaderHtml -Menu): its GitHub page, then the hub's own cards in their
+        Admin's menu (Get-AdminNav reads it): its GitHub page, then the hub's own cards in their
         order (Get-HubPageCards), each @{ Label; Href }. The same list as the home page's cards, so the two cannot drift.
     #>
     @(@{ Label = 'GitHub'; Href = '/dev/repository' }) + @(Get-HubPageCards -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }) | ForEach-Object { @{ Label = $_.Label; Href = $_.Href } })
-}
-
-function Get-SiteHeaderMenuCurrent {
-    <#
-        Which -Menu item a page sits under: the Href of its first parent crumb when it has one, else the item whose Label
-        is the page's -Title. '' when neither names an item.
-    #>
-    param([AllowEmptyCollection()][object[]]$Menu = @(), [AllowEmptyString()][string]$Title = '', [AllowEmptyCollection()][object[]]$ParentCrumbs = @())
-    $first = @($ParentCrumbs | Where-Object { $_ })[0]
-    foreach ($i in @($Menu)) { if ($first -and $i.Href -eq $first.Href) { return $i.Href } }
-    foreach ($i in @($Menu)) { if (-not $first -and $Title -and $i.Label -eq $Title) { return $i.Href } }
-    return ''
 }
 
 function Get-BreadcrumbSep {
@@ -1622,47 +1562,23 @@ function Get-AdminCurrentHref {
 
 function Format-RepoHomeHeadHtml {
     <#
-        The top of a repo's home page on '/' (#3270), the same in every hub: the breadcrumb bar with its one
-        crumb, Home; the settings button; and the opening of <main> with the intro, whose h1 is the repo's
-        name (-RepoName, escaped by the caller). -Lead (markup the caller escaped) is what the repo is for; it is
-        kept for the callers that pass it, and drawn nowhere, since a page carries no lead under its h1 (#3585):
-        the caller's own <head> is where a description goes. No eyebrow: the h1 already names the repo. The general banner (#3250) opens it, above the
-        site header. With -Brand the site header stands above the bar and there is no intro: <main> opens on the
-        sections. The caller writes the <head> and '<body>' before it and the sections and </main> after it.
-        Under -BrandTag 'admin' all of that gives way to the desktop shell (#3811): this returns Format-AdminShellOpen
-        for the home page, -Brand, -Menu and -Lead are not drawn, and the caller closes it with Format-AdminShellClose.
-        'toolbox', its name until #3815, is still read as 'admin' (ConvertTo-AdminBrandTag).
+        The top of a repo's Admin home page on '/' (#3270): the desktop shell opened for the home page (#3811,
+        Format-AdminShellOpen), Home marked in the navigation and no toolbar. The caller writes the <head> and '<body>'
+        before it and closes it with Format-AdminShellClose where it would close </main>. -RepoName, -Lead, -Brand and
+        -Menu are kept for the callers that pass them and drawn nowhere: the shell names the repo, and a page carries no
+        lead under its title (#3585). 'toolbox', the tag's name until #3815, is still read as 'admin'
+        (ConvertTo-AdminBrandTag).
+        A PRODUCT'S HOME IS NOT DRAWN HERE (#3831): its site header, breadcrumb bar and page column ship with the
+        dkj-solutions plugin, as Format-ProductHomeHeadHtml in its scripts/lib/product-pages-lib.ps1, so -BrandTag
+        'product' is refused with that pointer.
     #>
     param([Parameter(Mandatory = $true)][string]$RepoName, [Parameter(Mandatory = $true)][string]$Lead, [AllowEmptyString()][string]$Brand = '',
         [AllowEmptyString()][string]$BrandTag = '', [string]$HomeLabel = 'Home', [AllowNull()][object[]]$Menu = $null)
-    $BrandTag = ConvertTo-AdminBrandTag $BrandTag
-    # Admin's home stands in the desktop shell like every Admin page (#3811): Home marked in the navigation, no
-    # toolbar, and the caller closes it with Format-AdminShellClose where it would close </main>.
-    if ($BrandTag -eq 'admin') { return (Format-AdminShellOpen -Current '/' -HomeLabel $HomeLabel -Bare) }
-    $sb = New-Object System.Text.StringBuilder
-    # The general banner first, above the site header, as on every Admin page (owner, October 24, 2026); never on a
-    # product's home (-BrandTag 'product'), since the banner is Admin's alone (Dave, November 4, 2026).
-    if ($BrandTag -ne 'product') { [void]$sb.AppendLine((Format-RepoHubBanner)) }
-    # -Brand: the house site header above the bar, as Format-GeneralPageHtml draws it, holding the settings button and,
-    # wherever -Menu names one, the menu. The home page sits under none of its items.
-    if ($null -eq $Menu) { $Menu = @() }
-    if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href '/' -Tag $BrandTag -Menu $Menu)) }
-    [void]$sb.AppendLine('<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>')
-    [void]$sb.AppendLine('<li><span aria-current="page">' + (ConvertTo-GeneralPageText $HomeLabel) + '</span></li>')
-    [void]$sb.AppendLine('</ol></nav></div></div>')
-    if (-not $Brand) { [void]$sb.AppendLine('<div id="settings" class="theme-settings--floating"></div>') }
-    [void]$sb.AppendLine('<main class="page-column">')
-    # Under a site header there is no intro at all (owner, October 22, 2026): the header names the repo, and the
-    # page goes straight to its sections. Without one, the intro is a <div>, never a <header>, which the house
-    # style lays out as a flex row.
-    if (-not $Brand) {
-        [void]$sb.AppendLine('<div>')
-        [void]$sb.AppendLine('<h1>' + $RepoName + '</h1>')
-        [void]$sb.AppendLine('</div>')
+    if ((ConvertTo-AdminBrandTag $BrandTag) -eq 'product') {
+        throw "Format-RepoHomeHeadHtml draws Admin's home only: a product's home (-BrandTag 'product') is the dkj-solutions plugin's Format-ProductHomeHeadHtml (scripts/lib/product-pages-lib.ps1, #3831)."
     }
-    return $sb.ToString()
+    return (Format-AdminShellOpen -Current '/' -HomeLabel $HomeLabel -Bare)
 }
-
 function Format-DevTiles {
     <# The house tile row: -Tiles is a list of @{ L = label; V = value (already text) }. #>
     param([Parameter(Mandatory = $true)][object[]]$Tiles)
@@ -2363,9 +2279,9 @@ function ConvertTo-ReleaseNotesHouseColors {
 function Format-ReleaseNotesDevPage {
     <#
         The built release-notes page (#3108), as a dev server serves it: the house stylesheet and theme
-        script, the breadcrumb bar and the settings button, put around the page build-release-notes-page.ps1
-        leaves in dkj-policy/releases/page/. -HubHref is where the "Home" crumb goes ('/', Admin's
-        own root, by default). -RepoName puts the site header above the bar (October 22, 2026).
+        script and Admin's desktop shell (#3811), put around the page build-release-notes-page.ps1 leaves in
+        dkj-policy/releases/page/. -HubHref is where the "Home" crumb goes ('/', Admin's own root, by default).
+        -RepoName takes the template's eyebrow out, since Admin around it already names the site (#3423).
 
         ONLY THIS COPY, NOT THE TEMPLATE. The template is dkj-policy's, shared with every consumer --
         BWJ-Development repos included, which do not take the house style -- and it is deliberately
@@ -2441,62 +2357,33 @@ function Format-ReleaseNotesDevPage {
     # The template links its releases under the builder's own default, '/release-notes', which the Worker shares; on a
     # dev server they sit under Admin's Development section since #3815, so its links are moved there on the way out.
     $Html = $Html.Replace('href="/release-notes', 'href="' + (Get-AdminDevBase) + '/release-notes')
-    $bodyEnd = $Html.LastIndexOf('</body>')
     # ADMIN'S release notes stand in the desktop shell (#3811), the template's own column inside its scroll pane,
-    # where the shell puts the general banner.
-    if ($RepoName) {
-        $trail = if ($Release) { @(@{ Label = 'Release notes'; Href = '/dev/release-notes' }, @{ Label = $label; Href = '' }) } else { @(@{ Label = 'Release notes'; Href = '' }) }
-        # Admin's form (#3830): the masthead's h1 is lifted into the shell's toolbar, and the overview's release cards
-        # become one .table--dense, a row per release (version, title, date), the LIVE chip beside its version.
-        $h1 = ([regex]'(?s)<h1>(.*?)</h1>\s*').Match($Html)
-        $title = 'Release notes'
-        if ($h1.Success) { $title = [System.Net.WebUtility]::HtmlDecode($h1.Groups[1].Value); $Html = $Html.Remove($h1.Index, $h1.Length) }
-        if (-not $Release) {
-            $cardRx = [regex]'(?s)<a class="card" id="[^"]*" href="([^"]*)" title="([^"]*)">\s*<span class="card-head"><span class="sv">([^<]*)</span>(.*?)</span>\s*<span class="sd">([^<]*)</span>\s*</a>'
-            $gridRx = [regex]'(?s)<div class="card-grid cards" id="cards">(.*?)</div>'
-            $Html = $gridRx.Replace($Html, {
-                param($g)
-                $rows = foreach ($c in $cardRx.Matches($g.Groups[1].Value)) {
-                    $chip = $c.Groups[4].Value -replace 'class="chip[^"]*"', 'class="tag"'
-                    '<tr><td class="col-start"><a href="' + $c.Groups[1].Value + '">' + $c.Groups[3].Value + '</a>' + $(if ($chip) { ' ' + $chip } else { '' }) +
-                        '</td><td class="col-start">' + $c.Groups[2].Value + '</td><td>' + $c.Groups[5].Value + '</td></tr>'
-                }
-                '<section class="admin-list" id="cards"><table class="table table--dense"><thead><tr><th class="col-start">Version</th><th class="col-start">Title</th><th>Date</th></tr></thead><tbody>' +
-                    ($rows -join '') + '</tbody></table></section>'
-            }, 1)
-        }
-        $out = $Html.Substring(0, $Html.LastIndexOf('</body>')) + (Format-AdminShellClose -NoColumn) + "`n" + (Format-FitAlarmHtml) + $Html.Substring($Html.LastIndexOf('</body>'))
-        $open = Format-AdminShellOpen -Title $title -Current '/dev/release-notes' -Trail $trail -HubHref $HubHref -NoColumn
-        $out = $bodyRx.Replace($out, { param($m) $m.Value + "`n" + $open }, 1)
-        $styleEnd = $out.IndexOf('</style>') + '</style>'.Length
-        $out = $out.Substring(0, $styleEnd) + "`n" + $head + "`n<style>" + (Get-AdminShellStyle) + "`n.tb-scroll .wrap { max-width: none; }</style>" + $out.Substring($styleEnd)
-        return $htmlRx.Replace($out, ('<html lang="en" ' + (Format-GeneralPagesThemeAttributes) + ' data-width-default="full" data-theme-key="' + (& $e $ThemeKey) + '">'), 1)
+    # where the shell puts the general banner. Unnamed too (#3831): the breadcrumb bar an unnamed page once took is the
+    # product layer's, which Admin no longer loads, so only the eyebrow above differs.
+    $trail = if ($Release) { @(@{ Label = 'Release notes'; Href = '/dev/release-notes' }, @{ Label = $label; Href = '' }) } else { @(@{ Label = 'Release notes'; Href = '' }) }
+    # Admin's form (#3830): the masthead's h1 is lifted into the shell's toolbar, and the overview's release cards
+    # become one .table--dense, a row per release (version, title, date), the LIVE chip beside its version.
+    $h1 = ([regex]'(?s)<h1>(.*?)</h1>\s*').Match($Html)
+    $title = 'Release notes'
+    if ($h1.Success) { $title = [System.Net.WebUtility]::HtmlDecode($h1.Groups[1].Value); $Html = $Html.Remove($h1.Index, $h1.Length) }
+    if (-not $Release) {
+        $cardRx = [regex]'(?s)<a class="card" id="[^"]*" href="([^"]*)" title="([^"]*)">\s*<span class="card-head"><span class="sv">([^<]*)</span>(.*?)</span>\s*<span class="sd">([^<]*)</span>\s*</a>'
+        $gridRx = [regex]'(?s)<div class="card-grid cards" id="cards">(.*?)</div>'
+        $Html = $gridRx.Replace($Html, {
+            param($g)
+            $rows = foreach ($c in $cardRx.Matches($g.Groups[1].Value)) {
+                $chip = $c.Groups[4].Value -replace 'class="chip[^"]*"', 'class="tag"'
+                '<tr><td class="col-start"><a href="' + $c.Groups[1].Value + '">' + $c.Groups[3].Value + '</a>' + $(if ($chip) { ' ' + $chip } else { '' }) +
+                    '</td><td class="col-start">' + $c.Groups[2].Value + '</td><td>' + $c.Groups[5].Value + '</td></tr>'
+            }
+            '<section class="admin-list" id="cards"><table class="table table--dense"><thead><tr><th class="col-start">Version</th><th class="col-start">Title</th><th>Date</th></tr></thead><tbody>' +
+                ($rows -join '') + '</tbody></table></section>'
+        }, 1)
     }
-    # Unnamed: the breadcrumb bar, the floating settings button, and the general banner above them (#3297).
-    $sep = Get-BreadcrumbSep
-    $crumbs = if ($Release) {
-        @(('<li>' + $sep + '<a href="/dev/release-notes">Release notes</a></li>'), ('<li>' + $sep + '<span aria-current="page">' + $label + '</span></li>'))
-    } else {
-        @('<li>' + $sep + '<span aria-current="page">Release notes</span></li>')
-    }
-    $bar = @(
-        '<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>'
-        ('<li><a href="' + (& $e $HubHref) + '">Home</a></li>')
-        $crumbs
-        '</ol></nav></div></div>'
-    ) -join "`n"
-    $bar = (Format-RepoHubBanner) + $bar + "`n" + '<div id="settings" class="theme-settings--floating"></div>'
-    $settings = '<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", widths: false });</script>'
-
-    # Back to front, so each index still points where it was read. The fit alarm closes the body, as in
-    # Format-GeneralPageHtml (#3558).
-    $out = $Html.Substring(0, $bodyEnd) + $settings + "`n" + (Format-FitAlarmHtml) + $Html.Substring($bodyEnd)
-    $out = $bodyRx.Replace($out, { param($m) $m.Value + "`n" + $bar }, 1)
+    $out = $Html.Substring(0, $Html.LastIndexOf('</body>')) + (Format-AdminShellClose -NoColumn) + "`n" + (Format-FitAlarmHtml) + $Html.Substring($Html.LastIndexOf('</body>'))
+    $open = Format-AdminShellOpen -Title $title -Current '/dev/release-notes' -Trail $trail -HubHref $HubHref -NoColumn
+    $out = $bodyRx.Replace($out, { param($m) $m.Value + "`n" + $open }, 1)
     $styleEnd = $out.IndexOf('</style>') + '</style>'.Length
-    $out = $out.Substring(0, $styleEnd) + "`n" + $head + $out.Substring($styleEnd)
-    # The theme key is the server's, so a theme picked on one page holds on this one too, and with no
-    # choice stored it falls back to the defaults every other dev page uses: the repo's stated theme or lilac
-    # (#3162, #3390) and full width.
-    $out = $htmlRx.Replace($out, ('<html lang="en" ' + (Format-GeneralPagesThemeAttributes) + ' data-width-default="full" data-theme-key="' + (& $e $ThemeKey) + '">'), 1)
-    return $out
+    $out = $out.Substring(0, $styleEnd) + "`n" + $head + "`n<style>" + (Get-AdminShellStyle) + "`n.tb-scroll .wrap { max-width: none; }</style>" + $out.Substring($styleEnd)
+    return $htmlRx.Replace($out, ('<html lang="en" ' + (Format-GeneralPagesThemeAttributes) + ' data-width-default="full" data-theme-key="' + (& $e $ThemeKey) + '">'), 1)
 }

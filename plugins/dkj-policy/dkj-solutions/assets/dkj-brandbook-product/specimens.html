@@ -1,0 +1,352 @@
+<!-- The product layer's specimens (#3831): a body fragment beside house-product.css, in the dkj-solutions plugin. Never
+     shown alone: the product server joins it to dkj-policy's assets/dkj-brandbook/specimens.html section by section
+     (Join-HouseStyleSpecimens, scripts/lib/product-pages-lib.ps1), so a section here with a slug the core file also has
+     adds its cards after the core's, and the core file's head (the .spec-* layout and the hs-* icon sprite) and its
+     script (the live theme picker, and the data-hs-open buttons below) serve these cards too. Admin shows the core
+     file alone, since it renders without the product layer. -->
+<!-- ======================================================== THEMES -->
+<div class="grid-2">
+  <div class="grid__head"><h2 id="hs-themes">Themes</h2><p class="card__sub">All twelve, each card scoped to its own theme through the house's <code>.theme-swatch[data-id]</code> selector, so every token inside it is that theme's. The dots run primary, muted, bg-1 to 4, fg-1 to 4.</p></div>
+  <section class="card">
+    <div class="card__head"><h3>Fills</h3></div>
+    <div class="spec-stack">
+      <div class="fill-primary card"><h2>Heading two</h2><p>Paragraph on the primary.</p><p class="note">A quieter line.</p><a href="#hs-themes">A link</a></div>
+      <div class="fill-inverse card"><h2>Heading two</h2><p>Paragraph on the far end.</p><p class="note">A quieter line.</p><a href="#hs-themes">A link</a></div>
+    </div>
+  </section>
+</div>
+
+<!-- ======================================================== ACTIONS -->
+<div class="grid-2">
+  <div class="grid__head"><h2 id="hs-actions">Actions</h2><p class="card__sub">Buttons, switches, toggles and disclosures. Hover and focus rings show on the live controls.</p></div>
+  <section class="card">
+    <div class="card__head"><h3>Buttons</h3></div>
+    <div class="spec-stack">
+      <div class="spec-row"><button class="btn" type="button">Default</button><button class="btn btn--primary" type="button">Primary</button><button class="btn" type="button" disabled>Disabled</button><button class="btn btn--primary" type="button" disabled>Disabled primary</button><a class="btn" href="#hs-actions">Link as button</a></div>
+      <div class="spec-row"><button class="btn btn--touch" type="button">Touch</button><button class="btn btn--touch btn--primary" type="button">Touch primary</button></div>
+      <button class="btn btn--touch btn--block" type="button">Block</button>
+      <button class="btn btn--touch btn--primary btn--block" type="button">Block primary</button>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card__head"><h3>Toggles and help</h3></div>
+    <div class="spec-stack">
+      <p>Label with an inline help mark <button class="info-button" type="button" aria-label="Explain" aria-expanded="false">?</button> <button class="info-button" type="button" aria-label="Explain, open" aria-expanded="true">?</button></p>
+      <div class="spec-row"><button class="round-toggle" type="button" aria-label="Closed" aria-expanded="false"><svg width="20" height="20"><use href="#hs-help"/></svg></button><button class="round-toggle" type="button" aria-label="Open" aria-expanded="true"><svg width="20" height="20"><use href="#hs-help"/></svg></button><button class="badge-toggle" type="button" aria-label="Closed" aria-expanded="false">i</button><button class="badge-toggle" type="button" aria-label="Open" aria-expanded="true">i</button></div>
+      <div class="help"><button class="round-toggle" type="button" aria-label="Explain" aria-expanded="true"><svg width="20" height="20"><use href="#hs-help"/></svg></button><p>The text this toggle opens, under it at full width.</p></div>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card__head"><h3>Disclosures</h3></div>
+    <div class="spec-stack">
+      <details class="more"><summary>Closed disclosure</summary><p>Hidden detail.</p></details>
+      <details class="more" open><summary>Open disclosure</summary><p>Shown detail.</p></details>
+      <details class="more more--structured" open><summary><span class="more__title">Structured disclosure with a long title that wraps</span><span class="more__meta">12 items</span><span class="more__trailing"><span class="more__version">v2</span></span></summary><p>Detail under a structured summary.</p></details>
+      <div><p>Content above the toggle, which opens upward.</p><button class="moretoggle" type="button" aria-expanded="false">Read more</button><button class="moretoggle" type="button" aria-expanded="true">Read less</button></div>
+    </div>
+  </section>
+</div>
+
+<!-- ======================================================== SURFACES -->
+<div class="grid-2">
+  <div class="grid__head"><h2 id="hs-surfaces">Surfaces</h2><p class="card__sub">Cards, tiles, boxes and messages</p></div>
+  <section class="card">
+    <div class="card__head"><h3>Chips and tags</h3></div>
+    <div class="spec-stack">
+      <div class="spec-row"><span class="chip chip--yes">Yes</span><span class="chip chip--no">No</span><span class="chip chip--todo">To do</span></div>
+      <div class="spec-row"><span class="tag">Tag</span><span class="tag tag--info">Info</span><span class="tag tag--warn">Warn</span></div>
+      <div class="filter-chips" role="group" aria-label="Filters"><button class="filter-chip" type="button" aria-pressed="true"><svg class="filter-chip__check" width="14" height="14" aria-hidden="true"><use href="#hs-check"/></svg>Pressed</button><button class="filter-chip" type="button" aria-pressed="false">Idle</button><button class="filter-chip" type="button" aria-pressed="false"><span class="filter-chip__dot" style="--c: var(--graph-1)"></span>With dot</button><button class="filter-chip" type="button" aria-pressed="true"><span class="filter-chip__dot" style="--c: var(--graph-2)"></span>Dot, pressed</button><button class="filter-chips__clear" type="button">Clear</button></div>
+      <div><div class="question-head"><h3>A question?</h3><span class="chip chip--yes">Yes</span></div><p><strong>Yes, this holds.</strong></p></div>
+    </div>
+  </section>
+  <section class="card grid__full">
+    <div class="card__head"><h3>Page header</h3></div>
+    <div class="page-header header--accent"><h3>A block header with an accent rule</h3><div class="controls"><button class="btn" type="button">Action</button></div></div>
+  </section>
+</div>
+
+<!-- ======================================================== STATUS -->
+<div class="grid-2">
+  <div class="grid__head"><h2 id="hs-status">Status and charts</h2><p class="card__sub">Badges, meters, legends, deltas and the chart scope</p></div>
+  <section class="card grid__full">
+    <div class="card__head"><h3>Chart scope</h3></div>
+    <div class="grid-2">
+      <div class="chart">
+        <div class="legend"><span class="legend__item" style="--c: var(--graph-1)">One</span><span class="legend__item" style="--c: var(--graph-2)">Two</span><span class="legend__item" style="--c: var(--graph-3)">Three</span><span class="legend__item legend__item--line" style="--c: var(--fg-2)">Average</span></div>
+        <svg viewBox="0 0 300 140" role="img" aria-label="A bar chart of three values with their average">
+          <line x1="20" y1="110" x2="290" y2="110" style="stroke: var(--bg-4)"/>
+          <rect class="bar" tabindex="0" x="40" y="50" width="50" height="60" style="fill: var(--graph-1)"/>
+          <rect class="bar bar--active" tabindex="0" x="120" y="30" width="50" height="80" style="fill: var(--graph-2)"/>
+          <rect class="bar" tabindex="0" x="200" y="70" width="50" height="40" style="fill: var(--graph-3)"/>
+          <text x="65" y="128" text-anchor="middle">One</text>
+          <text x="145" y="128" text-anchor="middle">Two</text>
+          <text x="225" y="128" text-anchor="middle">Three</text>
+          <text class="val" x="145" y="24" text-anchor="middle">80</text>
+          <line x1="30" y1="50" x2="280" y2="50" style="stroke: var(--fg-2); stroke-width: 2"/>
+          <text class="axis-note" x="20" y="12">Axis note</text>
+        </svg>
+        <p><span class="swatch" style="--c: var(--graph-1)"></span>One, keyed beside text</p>
+      </div>
+      <div class="spec-stage">
+        <div class="tooltip tooltip--open">
+          <b>Series detail</b>
+          <div class="chart-row"><span class="chart-swatch" style="background: var(--graph-1)"></span><span>Series one</span><span class="chart-figure num">12</span></div>
+          <div class="chart-row"><span class="chart-swatch" style="background: var(--graph-2)"></span><span>Series two</span><span class="chart-figure num">34</span></div>
+          <span class="chart-detail">A second line under a label</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ======================================================== TABLES -->
+<div class="grid-2">
+  <div class="grid__head"><h2 id="hs-tables">Tables</h2><p class="card__sub">Data table, bill, comparison and calculation</p></div>
+  <section class="card">
+    <div class="card__head"><h3>Bill</h3></div>
+    <div class="table-wrap" tabindex="0">
+      <table class="bill bill--qty">
+        <thead><tr class="bill__head"><th>Slot</th><th>Item</th><th>Qty</th><th class="num">Price</th><th><span class="sr-only">Action</span></th></tr></thead>
+        <tbody>
+          <tr><th class="bill__slot" scope="row">Hat</th><td class="bill__name">A very long item name that truncates</td><td class="bill__qty">2</td><td class="bill__price num">12,00</td><td class="bill__action"><button class="icon-btn" type="button" aria-label="Remove"><svg width="18" height="18"><use href="#hs-x"/></svg></button></td></tr>
+          <tr><th class="bill__slot" scope="row">Coat</th><td class="bill__name">Coat</td><td class="bill__qty">1</td><td class="bill__price num">30,00</td><td class="bill__action"></td></tr>
+          <tr class="bill__subtotal"><th colspan="3">Subtotal</th><td class="num"><strong>42,00</strong></td><td></td></tr>
+        </tbody>
+        <tfoot><tr class="bill__total"><th colspan="3">Total</th><td class="num"><strong>42,00</strong></td><td></td></tr></tfoot>
+      </table>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card__head"><h3>Comparison</h3></div>
+    <div class="table-wrap" tabindex="0">
+      <table class="compare">
+        <thead><tr><td></td><th>Option A</th><th>Option B</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Cost</th><td class="num">120</td><td class="num">95</td></tr>
+          <tr><th scope="row">Upkeep</th><td class="num">10</td><td class="num">25</td></tr>
+        </tbody>
+        <tfoot><tr><th scope="row">Total</th><td class="num">130</td><td class="num">120</td></tr></tfoot>
+      </table>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card__head"><h3>Calculation</h3></div>
+    <div class="calc-section">
+      <p class="calc-section__question">How much in total?</p>
+      <div class="calc">
+        <div class="calc__row"><span class="calc__what">Base<span class="calc__sub">before bonus</span></span><span class="calc__op">+</span><span class="calc__num">100</span></div>
+        <div class="calc__row"><span class="calc__what">Bonus</span><span class="calc__op">+</span><span class="calc__num">25</span></div>
+        <div class="calc__row calc__result"><span class="calc__what">Result</span><span class="calc__op">=</span><span class="calc__num">125</span></div>
+      </div>
+      <div class="answer"><span class="answer__label">Answer</span><span class="answer__value">125</span></div>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card__head"><h3>Boxed calculation</h3></div>
+    <div class="calc calc--boxed">
+      <div class="calc__box">
+        <div class="calc__row"><span class="calc__what">Group A</span><span class="calc__op">+</span><span class="calc__num">40</span></div>
+        <div class="calc__box">
+          <div class="calc__row"><span class="calc__what">Nested</span><span class="calc__op">+</span><span class="calc__num">10</span></div>
+          <div class="calc__row"><span class="calc__what">Nested</span><span class="calc__op">+</span><span class="calc__num">5</span></div>
+        </div>
+      </div>
+      <div class="calc__row calc__result"><span class="calc__what">Result</span><span class="calc__op">=</span><span class="calc__num">55</span></div>
+    </div>
+  </section>
+</div>
+
+<!-- ======================================================== FORMS -->
+<div class="grid-2">
+  <div class="grid__head"><h2 id="hs-forms">Forms</h2><p class="card__sub">Fields, checkbox, stepper, combobox, value boxes, stat rows and info rows</p></div>
+  <section class="card">
+    <div class="card__head"><h3>Fields</h3></div>
+    <div class="spec-stack">
+      <label class="field"><span>Text field</span><input type="text" value="A value"></label>
+      <label class="field"><span>Select</span><select><option>One</option><option>Two</option></select></label>
+      <label class="field"><span>Disabled</span><input type="text" value="Disabled" disabled></label>
+      <label class="field"><span>With an error</span><input type="text" value="Wrong" aria-invalid="true"></label>
+      <p class="field__error" role="alert">That value is not allowed.</p>
+      <p class="field__fixed">A read-only value</p>
+      <label class="check"><input type="checkbox" checked><span>Checked<small>A help line under it</small></span></label>
+      <label class="check"><input type="checkbox"><span>Unchecked</span></label>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card__head"><h3>Stepper</h3></div>
+    <div class="spec-stack">
+      <div class="stepper"><button type="button" aria-label="Less">-</button><input type="number" value="3" aria-label="Amount"><button type="button" aria-label="More">+</button></div>
+      <div class="stepper stepper--lg"><button type="button" aria-label="Less">-</button><input type="number" value="12" aria-label="Amount"><button type="button" aria-label="More">+</button></div>
+      <div class="stepper"><button type="button" aria-label="Less" disabled>-</button><input type="number" value="0" aria-label="Amount"><button type="button" aria-label="More">+</button></div>
+      <div class="step-head"><button class="btn" type="button">Previous</button><p class="step-head__value">12</p><button class="btn" type="button">Next</button></div>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card__head"><h3>Search combobox</h3></div>
+    <div class="spec-stack">
+      <div class="spec-item"><p class="note">Open, with an active option</p>
+        <div class="combo"><input class="combo__input" type="text" role="combobox" aria-expanded="true" aria-controls="hs-combo-list" value="ar" aria-label="Search"><svg class="combo__glass" width="20" height="20" aria-hidden="true"><use href="#hs-search"/></svg>
+          <ul class="combo__list" role="listbox" id="hs-combo-list">
+            <li class="combo__option" role="option" aria-selected="true"><span class="combo__name">Arrow</span><span class="combo__meta">Weapon, level 10</span></li>
+            <li class="combo__option" role="option" aria-selected="false"><span class="combo__name">Armor</span><span class="combo__meta">Body, level 20</span></li>
+            <li class="combo__option combo__option--own" role="option" aria-selected="false">Add "ar"</li>
+            <li class="combo__option combo__option--more" role="presentation"><span class="combo__meta">3 more, keep typing</span></li>
+          </ul></div></div>
+      <div class="spec-item"><p class="note">An option picked</p>
+        <div class="combo"><input class="combo__input combo__input--under" type="text" role="combobox" aria-expanded="false" aria-label="Search" tabindex="-1"><button class="combo__picked" type="button">Arrow</button><svg class="combo__glass" width="20" height="20" aria-hidden="true"><use href="#hs-search"/></svg></div></div>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card__head"><h3>Value box</h3></div>
+    <div class="spec-row">
+      <span class="value-box"><span class="value-box__num">12</span></span>
+      <span class="value-box"><span class="value-box__num value-box__num--regular">12</span></span>
+      <span class="value-box"><span class="value-box__num value-box__num--lg">12</span></span>
+      <span class="value-box"><span class="value-box__num value-box__num--negative">-4</span></span>
+      <span class="value-box"><span class="value-box__num value-box__num--positive">+4</span></span>
+      <span class="value-box"><span class="value-box__num">12<span class="value-box__unit">kg</span></span></span>
+      <span class="value-box value-box--changed"><span class="value-box__num"><span class="value-box__was">8</span>12</span></span>
+      <span class="value-box value-box--flush"><span class="value-box__num">12</span></span>
+      <span class="value-box"><span class="value-box__num flash">12</span></span>
+    </div>
+  </section>
+  <section class="card grid__full">
+    <div class="card__head"><h3>Stat rows</h3></div>
+    <div class="grid-2">
+      <div class="stat-rows">
+        <div class="stat-row"><span class="stat-row__name">Strength<span class="stat-row__sub">base 12</span></span><span class="value-box"><span class="value-box__num">14</span></span><button class="icon-btn" type="button" aria-label="Edit"><svg width="18" height="18"><use href="#hs-plus"/></svg></button></div>
+        <div class="stat-row"><span class="stat-row__name">Dexterity</span><span class="value-box value-box--changed"><span class="value-box__num"><span class="value-box__was">8</span>10</span></span><button class="icon-btn" type="button" aria-label="Edit"><svg width="18" height="18"><use href="#hs-plus"/></svg></button></div>
+      </div>
+      <div class="stat-rows stat-rows--help">
+        <div class="stat-row"><span class="stat-row__name">With help</span><span class="value-box"><span class="value-box__num">7</span></span><span class="stat-row__help"><button class="round-toggle" type="button" aria-label="Explain" aria-expanded="false"><svg width="20" height="20"><use href="#hs-help"/></svg></button></span><button class="icon-btn" type="button" aria-label="Edit"><svg width="18" height="18"><use href="#hs-plus"/></svg></button></div>
+        <div class="stat-row"><span class="stat-row__name">Without, kept in line</span><span class="value-box"><span class="value-box__num">9</span></span><button class="icon-btn" type="button" aria-label="Edit"><svg width="18" height="18"><use href="#hs-plus"/></svg></button></div>
+      </div>
+      <div class="stat-rows" style="grid-column: 1 / -1">
+        <div class="stat-row stat-row--formula stat-row--head"><span></span><span>Base</span><span></span><span>Bonus</span><span></span><span>Total</span><span></span></div>
+        <div class="stat-row stat-row--formula"><span class="stat-row__name">Formula row</span><span class="value-box"><span class="value-box__num">10</span></span><span class="stat-row__op">+</span><span class="value-box"><span class="value-box__num">4</span></span><span class="stat-row__op">=</span><span class="value-box"><span class="value-box__num">14</span></span><button class="icon-btn" type="button" aria-label="Edit"><svg width="18" height="18"><use href="#hs-plus"/></svg></button></div>
+      </div>
+    </div>
+  </section>
+  <section class="card grid__full">
+    <div class="card__head"><h3>Info rows</h3></div>
+    <div class="grid-2">
+      <div class="info-rows"><p class="info-rows__head">On the tint</p><div class="info-rows__list">
+        <div class="info-row"><div class="info-row__box"><button class="info-row__named" type="button">Named value</button><span class="info-row__value">42</span><button class="round-toggle" type="button" aria-label="Explain" aria-expanded="false"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><circle class="info-dot" cx="12" cy="7.5" r="1.4"/><path class="info-stem" d="M12 11v6" stroke-width="2" stroke-linecap="round"/></svg></button></div></div>
+        <div class="info-row"><div class="info-row__box"><button class="info-row__named" type="button">No value yet</button><span class="info-row__value info-row__value--placeholder">not set</span></div></div>
+      </div></div>
+      <div class="info-rows info-rows--info"><p class="info-rows__head">Info variant</p><div class="info-rows__list">
+        <div class="info-row"><div class="info-row__box"><button class="info-row__named" type="button">Named value</button><span class="info-row__value">42</span></div></div>
+      </div></div>
+    </div>
+  </section>
+</div>
+
+<!-- ======================================================== NAVIGATION -->
+<div class="grid-2">
+  <div class="grid__head"><h2 id="hs-nav">Navigation and shell</h2><p class="card__sub">Static, non-sticky copies of the shell parts. The live site header and breadcrumb bar are above.</p></div>
+  <section class="card grid__full">
+    <div class="card__head"><h3>Site header and breadcrumb bar</h3></div>
+    <div class="spec-stage">
+      <header class="site-header"><div class="container"><a class="site-header__brand" href="#hs-nav" aria-label="specimen, home"><span class="site-header__name">specimen <span class="site-header__tag">hub</span></span></a></div></header>
+      <div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb specimen"><ol><li><a href="#hs-nav">Home</a></li><li><span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span><span aria-current="page">Current page</span></li></ol></nav></div></div>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card__head"><h3>Breadcrumb bar without a header</h3></div>
+    <div class="spec-stage">
+      <div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb specimen, no header"><ol><li><a href="#hs-nav">Home</a></li><li><span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span><a href="#hs-nav">Product</a></li><li><span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span><span aria-current="page">Page</span></li></ol></nav></div></div>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card__head"><h3>Top bar</h3></div>
+    <div class="spec-stage">
+      <header class="topbar"><div class="topbar__inner"><div class="topbar__brand"><span class="topbar__name">App name</span></div><button class="icon-btn icon-btn--ghost" type="button" aria-label="Menu"><svg width="20" height="20"><use href="#hs-menu"/></svg></button></div></header>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card__head"><h3>Date list</h3></div>
+    <ul class="date-list">
+      <li class="date-row"><div class="date-row__when">Mon 26 Oct</div><div class="date-row__main"><div class="date-row__body"><span class="date-row__title">A plain row</span><span class="date-row__sub">09:00-10:30</span></div><span class="date-row__trailing">Room 2</span></div></li>
+      <li class="date-row date-row--near"><div class="date-row__when">Tue 27 Oct</div><div class="date-row__main"><div class="date-row__body"><span class="date-row__title">Near</span><span class="date-row__sub">Tomorrow</span></div></div></li>
+      <li class="date-row date-row--today"><div class="date-row__when">Today</div><div class="date-row__main"><div class="date-row__body"><span class="date-row__title">Today</span></div><span class="date-row__trailing">A trailing label that wraps under the title on a narrow row</span></div></li>
+      <li class="date-row date-row--invalid"><div class="date-row__when"><svg class="date-row__icon" width="14" height="14" aria-hidden="true"><use href="#hs-alert"/></svg>31 Feb</div><div class="date-row__main"><div class="date-row__body"><span class="date-row__title">Invalid</span><span class="date-row__reason">That date does not exist.</span></div></div></li>
+      <li class="date-row date-row--link"><div class="date-row__when">Fri 30 Oct</div><div class="date-row__main"><div class="date-row__body"><span class="date-row__title"><a href="#hs-nav">A row that is one link</a></span></div></div></li>
+    </ul>
+  </section>
+</div>
+
+<!-- ======================================================== OVERLAYS -->
+<div class="grid-2">
+  <div class="grid__head"><h2 id="hs-overlays">Overlays</h2><p class="card__sub">Tooltips, dialogs and the drawer, shown open in place. The buttons open the real modal.</p></div>
+  <section class="card">
+    <div class="card__head"><h3>Live modals</h3></div>
+    <div class="spec-row"><button class="btn btn--touch" type="button" data-hs-open="hs-modal">Open dialog</button><button class="btn btn--touch" type="button" data-hs-open="hs-modal-drawer">Open drawer</button></div>
+  </section>
+  <section class="card">
+    <div class="card__head"><h3>Dialog</h3></div>
+    <div class="spec-stage">
+      <dialog class="dialog" open><div class="dialog__body">
+        <div class="dialog__head dialog__head--two"><div><h3>Dialog title</h3><p class="dialog__sub">A sub line</p></div></div>
+        <button class="dialog__close dialog__close--cancel" type="button" aria-label="Cancel"><svg width="20" height="20"><use href="#hs-undo"/></svg></button>
+        <button class="dialog__close dialog__close--save" type="button" aria-label="Save"><svg width="20" height="20"><use href="#hs-check"/></svg></button>
+        <label class="field"><span>A field in the dialog</span><input type="text" value="Value"></label>
+      </div></dialog>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card__head"><h3>Dialog, close and back</h3></div>
+    <div class="spec-stage">
+      <dialog class="dialog" open><div class="dialog__body">
+        <div class="dialog__head"><h3>With a close button</h3></div>
+        <button class="dialog__close" type="button" aria-label="Close"><svg width="20" height="20"><use href="#hs-x"/></svg></button>
+        <p>Body text.</p>
+      </div></dialog>
+      <dialog class="dialog" open><div class="dialog__body">
+        <div class="dialog__head dialog__head--back"><h3>A second panel</h3></div>
+        <button class="dialog__close dialog__close--back" type="button" aria-label="Back"><svg width="20" height="20"><use href="#hs-back"/></svg></button>
+        <p>Body text.</p>
+      </div></dialog>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card__head"><h3>Drawer</h3></div>
+    <div class="spec-stage spec-stage--tall">
+      <dialog class="dialog dialog--drawer" open><div class="dialog__body">
+        <div class="dialog__head"><h3>Drawer title</h3></div>
+        <button class="dialog__close" type="button" aria-label="Close"><svg width="20" height="20"><use href="#hs-x"/></svg></button>
+        <nav class="menu-list" aria-label="Drawer specimen"><a class="menu-item" href="#hs-overlays"><span class="menu-item__label">Item</span><svg class="menu-item__chevron" width="20" height="20" aria-hidden="true"><use href="#hs-chev"/></svg></a><a class="menu-item" href="#hs-overlays"><span class="menu-item__label">Item</span><svg class="menu-item__chevron" width="20" height="20" aria-hidden="true"><use href="#hs-chev"/></svg></a></nav>
+      </div></dialog>
+    </div>
+  </section>
+</div>
+
+<!-- ======================================================== MEDIA -->
+<div class="grid-2">
+  <div class="grid__head"><h2 id="hs-media">Figure and markdown elements</h2><p class="card__sub">Framed images (placeholders here; cover and contain need a real image) and the plain elements of a rendered body, with no wrapper class</p></div>
+  <section class="card">
+    <div class="card__head"><h3>Figure</h3></div>
+    <div class="spec-stack">
+      <figure class="figure"><div class="figure__frame"><div class="figure__placeholder"><svg class="figure__glyph" width="32" height="32" aria-hidden="true"><use href="#hs-image"/></svg><span class="figure__label">16:9, no image yet</span></div></div><figcaption class="figure__caption">A caption under the frame.</figcaption></figure>
+      <div class="spec-grid" style="grid-template-columns: repeat(auto-fill, minmax(96px, 1fr))">
+        <figure class="figure figure--ratio-4-3"><div class="figure__frame"><div class="figure__placeholder"><span class="figure__label">4:3</span></div></div></figure>
+        <figure class="figure figure--ratio-3-2"><div class="figure__frame"><div class="figure__placeholder"><span class="figure__label">3:2</span></div></div></figure>
+        <figure class="figure figure--ratio-1-1"><div class="figure__frame"><div class="figure__placeholder"><span class="figure__label">1:1</span></div></div></figure>
+        <figure class="figure figure--ratio-3-4"><div class="figure__frame"><div class="figure__placeholder"><span class="figure__label">3:4</span></div></div></figure>
+        <figure class="figure figure--ratio-9-16"><div class="figure__frame"><div class="figure__placeholder"><span class="figure__label">9:16</span></div></div></figure>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Modal specimens, opened by the buttons in "Overlays" (outside .spec-stage, so they keep the real modal look) -->
+<dialog class="dialog" id="hs-modal"><div class="dialog__body">
+  <div class="dialog__head dialog__head--two"><div><h3>Modal dialog</h3><p class="dialog__sub">Escape or the buttons close it</p></div></div>
+  <button class="dialog__close dialog__close--cancel" type="button" aria-label="Cancel" data-hs-close><svg width="20" height="20"><use href="#hs-undo"/></svg></button>
+  <button class="dialog__close dialog__close--save" type="button" aria-label="Save" data-hs-close><svg width="20" height="20"><use href="#hs-check"/></svg></button>
+  <label class="field"><span>A field</span><input type="text" value="Value"></label>
+</div></dialog>
+<dialog class="dialog dialog--drawer" id="hs-modal-drawer"><div class="dialog__body">
+  <div class="dialog__head"><h3>Modal drawer</h3></div>
+  <button class="dialog__close" type="button" aria-label="Close" data-hs-close><svg width="20" height="20"><use href="#hs-x"/></svg></button>
+  <p>Slides in from the right.</p>
+</div></dialog>

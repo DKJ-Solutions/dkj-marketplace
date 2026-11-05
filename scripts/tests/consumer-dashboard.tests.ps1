@@ -456,6 +456,9 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
         # dev-pages-lib reads the plugins' libs from the plugin tree beside scripts/, and the server its state reader.
         New-Item -ItemType Directory -Force -Path (Join-Path $src 'plugins\dkj-policy\hub\lib') | Out-Null
         Copy-Item (Join-Path $PluginLib '*.ps1') (Join-Path $src 'plugins\dkj-policy\hub\lib\')
+        # And dkj-solutions' product layout, which the product's pages are drawn with since #3831.
+        New-Item -ItemType Directory -Force -Path (Join-Path $src 'plugins\dkj-policy\dkj-solutions\scripts\lib') | Out-Null
+        Copy-Item (Join-Path $RepoRoot 'plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1') (Join-Path $src 'plugins\dkj-policy\dkj-solutions\scripts\lib\')
         Copy-Item $Server (Join-Path $src 'scripts\dashboard\')
         Set-Content -LiteralPath (Join-Path $src 'consumers\noup.json') -Encoding ASCII -Value '{ "repo": "Org/noup", "visibility": "private", "localCheckout": "../noup", "plugins": [] }'
         Set-Content -LiteralPath (Join-Path $src 'consumers\far.json') -Encoding ASCII -Value ('{ "repo": "Org/far", "visibility": "public", "localCheckout": "../../../' + (Split-Path -Leaf $outside) + '", "plugins": [] }')
@@ -586,6 +589,9 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\dev-pages-lib.ps1') (Join-Path $fixture4 'scripts\lib\')
         New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'plugins\dkj-policy\hub\lib') | Out-Null
         Copy-Item (Join-Path $PluginLib '*.ps1') (Join-Path $fixture4 'plugins\dkj-policy\hub\lib\')
+        # And dkj-solutions' product layout (#3831).
+        New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'plugins\dkj-policy\dkj-solutions\scripts\lib') | Out-Null
+        Copy-Item (Join-Path $RepoRoot 'plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1') (Join-Path $fixture4 'plugins\dkj-policy\dkj-solutions\scripts\lib\')
         Copy-Item $Server (Join-Path $fixture4 'scripts\dashboard\')
         # The stylesheet is there and the theme script is not: a present and a missing static file side by side.
         [System.IO.File]::WriteAllText((Join-Path $fixture4 'plugins\dkj-policy\assets\dkj-brandbook\house-style.css'), 'body{}')
@@ -686,8 +692,8 @@ $rsRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('repo-session-' + [guid]:
 $rsHub = Join-Path $rsRoot 'org\hub'
 New-Item -ItemType Directory -Force -Path (Join-Path $rsHub 'consumers'), (Join-Path $rsHub 'scripts\lib'), (Join-Path $rsRoot 'org\dkj-lifehub') | Out-Null
 # repo-session.ps1 loads the hub's page lib, which loads the consumer lib and the plugin libs beside it
-# (dev-preview-rules.ps1 for the Product card's url rule, #3468; test-gate-lib.ps1, the Test gate's page, #3470; plugins-page-lib.ps1, whose description paragraphs the product's Plugins pages use).
-foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'scripts\lib\dev-pages-lib.ps1', 'plugins\dkj-policy\hub\lib\general-pages-lib.ps1', 'plugins\dkj-policy\hub\lib\dev-preview-rules.ps1', 'plugins\dkj-policy\hub\lib\test-gate-lib.ps1', 'plugins\dkj-policy\hub\lib\plugins-page-lib.ps1') {
+# (dev-preview-rules.ps1 for the Product card's url rule, #3468; test-gate-lib.ps1, the Test gate's page, #3470; plugins-page-lib.ps1, whose description paragraphs the product's Plugins pages use; and dkj-solutions' product-pages-lib.ps1, the product layout, #3831).
+foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'scripts\lib\dev-pages-lib.ps1', 'plugins\dkj-policy\hub\lib\general-pages-lib.ps1', 'plugins\dkj-policy\hub\lib\dev-preview-rules.ps1', 'plugins\dkj-policy\hub\lib\test-gate-lib.ps1', 'plugins\dkj-policy\hub\lib\plugins-page-lib.ps1', 'plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1') {
     $to = Join-Path $rsHub (Split-Path -Parent $lib)
     New-Item -ItemType Directory -Force -Path $to | Out-Null
     Copy-Item -LiteralPath (Join-Path $RepoRoot $lib) -Destination $to

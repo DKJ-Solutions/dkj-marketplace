@@ -748,7 +748,8 @@ function Get-ReleasePluginTier {
 $script:ReleaseVersionPins = @(
     @{ Path = 'plugins/dkj-policy/dkj-solutions/skills/dkj-brandbook/SKILL.md'
        Prefix = 'https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/'
-       Checksums = @('plugins/dkj-policy/assets/dkj-brandbook/house-style.css', 'plugins/dkj-policy/assets/dkj-brandbook/house-theme.js') }
+       Checksums = @('plugins/dkj-policy/assets/dkj-brandbook/house-style.css', 'plugins/dkj-policy/assets/dkj-brandbook/house-theme.js',
+                     'plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/house-product.css') }
 )
 
 function Get-ReleaseVersionPins {

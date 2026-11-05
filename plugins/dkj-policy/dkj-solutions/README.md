@@ -9,7 +9,7 @@ no specialists.
 
 | Chapter | Where | What it holds |
 |---|---|---|
-| The brand book | [`skills/dkj-brandbook/`](skills/dkj-brandbook/SKILL.md) | The canonical brand book in `dkj-policy`'s [`assets/dkj-brandbook/`](https://github.com/DKJ-Solutions/dkj-marketplace/tree/main/plugins/dkj-policy/assets/dkj-brandbook/) (the design tokens, the twelve themes, the base stylesheet and the rules), the skill with what a session needs before it fetches them, and the `check-house-style` gate that holds a repo to them |
+| The brand book | [`skills/dkj-brandbook/`](skills/dkj-brandbook/SKILL.md) | The canonical brand book in `dkj-policy`'s [`assets/dkj-brandbook/`](https://github.com/DKJ-Solutions/dkj-marketplace/tree/main/plugins/dkj-policy/assets/dkj-brandbook/) (the design tokens, the twelve themes, the base stylesheet and the rules), this plugin's own [`assets/dkj-brandbook-product/`](assets/dkj-brandbook-product/README.md) (`house-product.css`, the mobile-first product layer a product page loads after the core, with its README, #3831), the skill with what a session needs before it fetches them, and the `check-house-style` gate that holds a repo to them |
 | The tracker labels | [below](#the-tracker-labels--feature-and-bug-in-every-repo) | `feat/` is labelled `feature` and `fix/` `bug`, in every DKJ-Solutions repo, and how a repo still on `enhancement` moves over |
 
 ## The tracker labels — `feature` and `bug`, in every repo
@@ -105,7 +105,9 @@ change shows here before the release that ships it; every other hub that runs `d
 copy. The `house-style-css` CI gate checks the
 stylesheet itself.
 
-The brand book itself is maintained in this repo, in `plugins/dkj-policy/assets/dkj-brandbook/`, since
+The brand book itself is maintained in this repo, in `plugins/dkj-policy/assets/dkj-brandbook/` (the core, which Admin
+renders from in every repo) and, since [#3831](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3831), the
+product layer in this plugin's `assets/dkj-brandbook-product/`, since
 [#3130](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3130) (October 18, 2026) moved it in
 from the `dkj-brandbook` repo (archived since; the name now belongs to the brand book here) and [#3531](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3531)
 (October 26, 2026) moved the files from this plugin into `dkj-policy`, whose hub renders in them in every
