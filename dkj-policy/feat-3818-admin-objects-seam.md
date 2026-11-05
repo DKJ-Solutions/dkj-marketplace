@@ -39,19 +39,49 @@
 
 ### PLAN
 
+#3818: Admin's navigation (#3815) reserves the top level, right under Home, for a repo's domain objects, but
+`Get-AdminNav` had no seam for them. The issue left open who serves the routes those items point at.
+
+#### The decision on the routes
+
+**The repo's own server, not a hub extension.** The hub never loads a repo's code into its own process (every read of
+`repo-config.ps1` runs in a child), so it cannot serve a repo's pages without giving that up. The repo's server already
+runs the repo's code and can draw its management pages in the brand book's desktop shell. So a path (`/tracks`) is
+resolved against the product's address, and an http(s) URL is kept. A hub extension stays possible later, and nothing
+here blocks it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `general-pages-lib.ps1`: `Set-AdminObjects` (reads the items defensively: label, a root path or an http(s) URL, a
+      whole-number count, at most 12) and `Resolve-AdminObjectHref`; `Get-AdminNav` puts them right under Home, and
+      `Format-AdminShellOpen` draws the count as `.nav-item__count`.
+- [x] `serve-general-pages.ps1`: `Get-AdminObjectsModel` reads `Get-AdminObjects` in a bounded child process, only
+      where `repo-config.ps1` names it, cached for a minute.
+- [x] `hub/README.md`: the navigation table's top row names the seam and the route decision.
+- [x] `dev-pages.tests.ps1`: six asserts on the placement, badges, resolution, rejects, the cap and the server read.
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1` on its own: 604 passed, 0 failed.
+- [x] The child read run for real against a temporary `repo-config.ps1` stating two objects: both came back, the path
+      resolved on the product's address, and an item without a count drew no badge.
+- [ ] The owner looks at Admin in a repo that states `Get-AdminObjects`: the objects under Home with their counts.
+
 ### DEPLOY: feat/3818-admin-objects-seam
 
-**Score:**
+A repo can now put its own domain objects at the top of Admin's navigation, right under Home: state
+`Get-AdminObjects` in `scripts/repo-config.ps1`, returning `@{ Label; Href; Count }` items, and each shows with its
+count as a badge. The repo's own server serves the pages they link to: a path such as `/tracks` opens on the
+product's address, and a full http(s) URL opens as given. A repo that states nothing sees no change.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+The maintainer of a repo with its own data (tracks, playlists, recipes) can reach its management pages from Admin's
+navigation, with the counts in view, instead of keeping them outside it.
+
+**Score:** 3
 
 #### Pull Request
 

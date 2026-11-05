@@ -1269,6 +1269,48 @@ function Set-AdminProductUrl {
     $script:AdminProductUrl = if ($Url -and $Url -cmatch '\Ahttps?://[^\s"<>]+\z') { $Url } else { '' }
 }
 
+# A repo's domain objects, for the top of Admin's navigation (#3818): set per request by the server from what the repo's
+# Get-AdminObjects seam answered, read in a child process (serve-general-pages.ps1). Empty where the repo states none.
+$script:AdminObjects = @()
+
+function Set-AdminObjects {
+    <#
+        Hands in the repo's domain objects (#3818): what its Get-AdminObjects in scripts/repo-config.ps1 returned, each
+        @{ Label; Href; Count }. Read defensively, as every seam is: an item without a Label or an Href is dropped, a Count
+        that is not a whole number of zero or more is left out, and an Href is kept only as an http(s) URL or a path from
+        the root ('/tracks'). At most 12 are kept, so a seam cannot push Development off the screen.
+    #>
+    param([AllowNull()][AllowEmptyCollection()][object[]]$Items = @())
+    $kept = @()
+    foreach ($i in @($Items | Where-Object { $_ })) {
+        $label = [string]$i.Label; $href = [string]$i.Href
+        if (-not $label.Trim() -or -not ($href -cmatch '\Ahttps?://[^\s"<>]+\z' -or $href -cmatch '\A/(?!/)[^\s"<>]*\z')) { continue }
+        # $i['Count'], never $i.Count: on a hashtable without the key, .Count is the number of keys.
+        $raw = if ($i -is [System.Collections.IDictionary]) { $i['Count'] } else { $i.PSObject.Properties['Count'].Value }
+        $count = $null
+        if ($null -ne $raw -and [string]$raw -match '\A\d{1,9}\z') { $count = [int][string]$raw }
+        $kept += @{ Label = $label.Trim(); Href = $href; Count = $count }
+        if ($kept.Count -ge 12) { break }
+    }
+    $script:AdminObjects = $kept
+}
+
+function Resolve-AdminObjectHref {
+    <#
+        Where a domain object's item links (#3818). THE REPO'S OWN SERVER SERVES THESE ROUTES, NOT THE HUB: a path is
+        resolved against the product's address (Set-AdminProductUrl), and an http(s) URL is kept as it is. The hub never
+        loads a repo's code into its own process (it reads the seam in a child), so it cannot serve a repo's pages; the
+        repo's server can, and draws them in the brand book's desktop shell. '' where a path has no product to resolve
+        against, which leaves the item out.
+    #>
+    param([AllowEmptyString()][string]$Href = '')
+    if ($Href -cmatch '\Ahttps?://') { return $Href }
+    if (-not $script:AdminProductUrl -or -not $Href.StartsWith('/')) { return '' }
+    $m = [regex]::Match($script:AdminProductUrl, '\Ahttps?://[^/]+')
+    if (-not $m.Success) { return '' }
+    return $m.Value + $Href
+}
+
 function ConvertTo-AdminBrandTag {
     <#
         A page's -BrandTag as it is read since #3815: 'toolbox', the tag's name until then, is 'admin'; every other value
@@ -1303,8 +1345,9 @@ function Get-AdminNav {
         Admin's side navigation (#3815, after the Shopify Admin): FLAT, under section headings, never a tree. Each
         section is @{ Heading; Items; Foot }, every item @{ Label; Href; External }, in this order:
           * no heading: Home, the dashboard on '/';
-          * the domain objects a repo manages would come next, at the top level with no "Manage" wrapper, since
-            everything in Admin is management -- this plugin ships none, so nothing is drawn there;
+          * the domain objects a repo manages, in the same list right under Home, with no "Manage" wrapper, since
+            everything in Admin is management (#3818): what its Get-AdminObjects seam states (Set-AdminObjects), each
+            with its Count as a badge and its Href resolved by Resolve-AdminObjectHref -- none where the repo states none;
           * Product: the storefront, linked rather than contained, since Admin manages the product and is not it
             ($script:AdminProductUrl, left out where the repo states no product);
           * Development: Admin's own pages under /dev, the hub's menu (Get-HubMenu) in its order -- a group page
@@ -1314,7 +1357,12 @@ function Get-AdminNav {
     $menu = @(Get-HubMenu)
     $dev = @($menu | Where-Object { $_.Href -ne '/settings' } | ForEach-Object { @{ Label = $_.Label; Href = $_.Href; External = $false } })
     $settings = @($menu | Where-Object { $_.Href -eq '/settings' } | ForEach-Object { @{ Label = $_.Label; Href = $_.Href; External = $false } })
-    $out = @(@{ Heading = ''; Items = @(@{ Label = 'Home'; Href = '/'; External = $false }); Foot = $false })
+    $top = @(@{ Label = 'Home'; Href = '/'; External = $false })
+    foreach ($o in @($script:AdminObjects)) {
+        $href = Resolve-AdminObjectHref -Href $o.Href
+        if ($href) { $top += @{ Label = $o.Label; Href = $href; External = $false; Count = $o['Count'] } }
+    }
+    $out = @(@{ Heading = ''; Items = $top; Foot = $false })
     if ($script:AdminProductUrl) { $out += @{ Heading = 'Product'; Items = @(@{ Label = 'Storefront'; Href = $script:AdminProductUrl; External = $true }); Foot = $false } }
     if ($dev.Count) { $out += @{ Heading = 'Development'; Items = $dev; Foot = $false } }
     if ($settings.Count) { $out += @{ Heading = ''; Items = $settings; Foot = $true } }
@@ -1368,7 +1416,10 @@ function Format-AdminShellOpen {
             # Home takes -HubHref and -HomeLabel, so a page served under another root still links its own home.
             $href = if ($i.Href -eq '/') { $HubHref } else { $i.Href }
             $label = if ($i.Href -eq '/') { $HomeLabel } else { $i.Label }
-            [void]$sb.Append('<li><a class="nav-item" href="' + (& $e $href) + '"' + (& $mark $href) + '><span class="nav-item__label">' + (& $e $label) + '</span></a></li>')
+            # A domain object's count is a badge at the right (#3818), the brand book's .nav-item__count.
+            $n = if ($i -is [System.Collections.IDictionary]) { $i['Count'] } else { $null }
+            $count = if ($null -ne $n -and [string]$n -match '\A\d{1,9}\z') { '<span class="nav-item__count">' + ([int][string]$n).ToString('N0', [Globalization.CultureInfo]::InvariantCulture) + '</span>' } else { '' }
+            [void]$sb.Append('<li><a class="nav-item" href="' + (& $e $href) + '"' + (& $mark $href) + '><span class="nav-item__label">' + (& $e $label) + '</span>' + $count + '</a></li>')
         }
         [void]$sb.Append('</ul>')
         if ($s.Foot) { [void]$sb.Append('</div>') }
