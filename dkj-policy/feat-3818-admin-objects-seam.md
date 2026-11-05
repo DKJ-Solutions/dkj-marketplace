@@ -65,7 +65,7 @@ here blocks it.
 - [x] `dev-pages.tests.ps1` on its own: 604 passed, 0 failed.
 - [x] The child read run for real against a temporary `repo-config.ps1` stating two objects: both came back, the path
       resolved on the product's address, and an item without a count drew no badge.
-- [ ] The owner looks at Admin in a repo that states `Get-AdminObjects`: the objects under Home with their counts.
+- [~] The owner looks at Admin in a repo that states `Get-AdminObjects`: the objects under Home with their counts. Not done as a separate look: Dave approved the branch through issues-sweep-reviews on 2026-11-05 without one.
 
 ### DEPLOY: feat/3818-admin-objects-seam
 
