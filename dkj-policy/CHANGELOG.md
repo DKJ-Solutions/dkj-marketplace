@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**2 / 3 minor entries** <!-- pending-tally -->
+**3 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/3811-page-pattern-layers · 20261105-125420Z
+
+The brand book's README now says which of its rules belong to Admin's desktop shell and which to the
+mobile-first product, by the task a feature serves rather than the device: the breadcrumb bar, the site
+header, the card overviews, the 44px target and the page width are the product's, while the page-name and
+one-`h1` rules hold in both. The shell's classes are reserved by name, and a sortable header in a dense table
+no longer reaches its hit area over the rows under it.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+An app building a management screen in the desktop shell now knows which brand-book rules it can drop (the
+bar, the cards, the 44px target) without breaking the house style, and which still hold.
+
+**Score:** 2
+
+#### Pull Request
+
+Assign the brand book's page-pattern rules to the Admin or the product layer
+
+Plugins: dkj-policy
+
+[PR #3823](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3823)
+
+---
 
 ### DEPLOY: fix/3824-admin-page-wording · 20261105-103236Z
 
