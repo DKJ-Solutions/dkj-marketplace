@@ -39,19 +39,32 @@
 
 ### PLAN
 
+#3819: the visible-result report names the URL to open, on a line of its own. The rule goes where the
+report's shape is owned: the constitution's "Merging work with a visible result" bullet, plus the two
+places the sweep skill spells out a park's handover and its close-out. Chris's persona is not edited: it
+restates no visible-result report shape, and the constitution already loads beside it in every session.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-policy/CLAUDE.md`: the visible-result bullet says the report names the exact URL that shows the result, on a line of its own, one line per changed page.
+- [x] `plugins/dkj-policy/skills/sweep-issues/SKILL.md`: step 5's review-label comment carries the URL, and the sweep's close-out lists each parked branch's page URLs on lines of their own.
+- [~] A script printing the line itself (#1884's approach): dropped, because no script prints a visible park's report. The park opens no pull request, so neither `open-pr` nor `ship-pr` runs at that moment, and there is nothing to attach the line to.
 
 ### TEST
 
+- [x] The three edits read in place; the constitution's always-on growth is three lines, well inside the 100,000 B budget the session check reported (39,121 B of headroom).
+
 ### DEPLOY: docs/3819-visible-park-url
 
-**Score:**
+When a branch stops for the owner's look, its report now names the exact URL that shows the result, a Toolbox page or a preview, on a line of its own and one per changed page. The rule sits in the constitution's visible-result bullet, and the sweep skill carries it into its review-label comment and its close-out. Until now the report could say "the branch waits for your look" without saying where, and the owner had to find the page themselves.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A session that parks a visible result in any repo running `dkj-policy` hands the owner the address to open, instead of a sentence they have to turn into one.
+
+**Score:** 2
 
 #### Pull Request
 
