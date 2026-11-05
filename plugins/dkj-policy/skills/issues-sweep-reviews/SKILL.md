@@ -18,7 +18,7 @@ one, that is one manual round per issue. This skill runs step 6 for every one of
 **Running it is the owner's explicit permission, and that is the whole reason it is safe.** The
 constitution lets a branch with a visible result merge only on the owner's word
 ([`CLAUDE.md`](../../CLAUDE.md#never-without-the-owners-explicit-permission)). `disable-model-invocation`
-keeps this page out of every session's context, so only a person types `/issues-sweep-reviews`, and the repo's
+keeps this page out of every session's context and leaves the command to a person: only a person types `/issues-sweep-reviews`, and the repo's
 own facts say which people count as the owner. **That command approves every issue it lists**, whether the
 owner has opened each preview or not: the owner chose to approve without looking, and the comment this
 skill leaves on each issue says so. A session never invokes it, never proposes it as the next step of a
@@ -102,7 +102,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 ```
 
 This is the same command as `sweep-issues` step 5, with the same reason: a branch named after its
-issue fails `open-pr`'s resolves gate without `-Resolves`. Read the run's **last line**, never its
+issue fails `open-pr`'s resolves gate without `-Resolves`. That flag also closes the issue: the merge
+resolves it, and `ship-pr` verifies the close. Read the run's **last line**, never its
 exit code through a pipe ([`ship-pr`](../ship-pr/SKILL.md)). `ship-pr`'s own close-out is this issue's
 receipt, not the sweep's (#2562), so go on to step 5.
 
