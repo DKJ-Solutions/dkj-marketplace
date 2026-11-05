@@ -2,7 +2,37 @@
 
 ## [Unreleased]
 
-**9 / 9 minor entries** <!-- pending-tally -->
+**10 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3816-goals-page · 20261105-154303Z
+
+Admin has a **Goals** page on `/dev/goals`, the first of its own pages, with a `plan-goal` skill beside it
+([#3816](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3816)). A goal is an open GitHub issue
+labelled `goal`, its milestones are its sub-issues, and their tasks are theirs, so the page moves as sessions
+claim and close issues, with no second administration. Per goal the page shows its progress, one prominent
+**Now** card (the first open task of the first open milestone, or a milestone still to break down), a short
+**Next** row and the milestones collapsed, each with a progress bar. The skill asks a few questions, proposes
+4 to 6 milestones with session-sized tasks, and once the owner agrees files them as linked sub-issues
+(`plan-goal.ps1 -PlanFile <plan> -Apply`). `plan-goal.ps1 -Next` answers "what now?" in the terminal.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every repo running `dkj-policy` gets a planning board that is never out of date, because it is the tracker
+itself: on a project too big to see the first step of, Admin names that step.
+
+**Score:** 3
+
+#### Pull Request
+
+Goals: an Admin page and a plan-goal skill (goal -> milestones -> tasks as GitHub sub-issues)
+
+Plugins: dkj-policy
+
+[PR #3845](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3845)
+
+---
 
 ### DEPLOY: fix/3841-frame-ancestors-sentences · 20261105-153137Z
 
