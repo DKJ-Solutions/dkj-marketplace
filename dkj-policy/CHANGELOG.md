@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**7 / 7 minor entries** <!-- pending-tally -->
+**8 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/3839-closeout-offers-the-fix · 20261105-151649Z
+
+Chris closes a status question about your stuck work differently now. Where his answer finds a fix he can carry out
+in the same session, the receipt ends with one plain line offering it, for example *"I can fix the assert and ship
+#3816 now -- shall I?"*. Before, it ended on *"the session can be cleared"* and left you to ask. He still acts only
+after your yes.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A wording sharpening with a measured instance behind it. The always-on persona grows by three lines.
+
+**Score:** 1
+
+#### Pull Request
+
+Close-out: a status question about stuck work offers the fix it found
+
+Plugins: dkj-subagents-alpha
+
+[PR #3842](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3842)
+
+---
 
 ### DEPLOY: feat/3817-admin-nav-search · 20261105-150658Z
 
