@@ -62,10 +62,19 @@ function Send-LoopbackResponse {
         One response, Connection: close. -Headers are extra header lines (the caller's own fixed values).
         A -Method HEAD gets the same headers as a GET, the real Content-Length included, and no body
         (RFC 9110, #3161) -- dropped here once rather than by each route.
+
+        No response may be framed, by any page, this machine's own included (#3835): frame-ancestors 'none'
+        for a browser that reads CSP, X-Frame-Options DENY for one that does not. A cross-site frame is
+        already refused by Test-LoopbackCrossSite, but only by a browser-set request header; a same-site
+        frame (a page on another localhost port) arrives as mode 'navigate' and is served, so the response
+        header is the barrier that holds there. No page of either server frames another. Sent on every
+        response rather than per type, so a route added later cannot forget it; a caller's -Headers must
+        not repeat either name.
     #>
     param($Stream, [int]$Status, [string]$Reason, [string]$Type, [byte[]]$Body, [hashtable]$Headers = @{}, [string]$Method = 'GET')
     $head = "HTTP/1.1 $Status $Reason`r`nContent-Type: $Type`r`nContent-Length: $($Body.Length)`r`n" +
-        "Cache-Control: no-store`r`nX-Content-Type-Options: nosniff`r`nConnection: close`r`n"
+        "Cache-Control: no-store`r`nX-Content-Type-Options: nosniff`r`n" +
+        "Content-Security-Policy: frame-ancestors 'none'`r`nX-Frame-Options: DENY`r`nConnection: close`r`n"
     foreach ($k in $Headers.Keys) { $head += "$k`: $($Headers[$k])`r`n" }
     $bytes = [System.Text.Encoding]::ASCII.GetBytes($head + "`r`n")
     $Stream.Write($bytes, 0, $bytes.Length)

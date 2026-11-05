@@ -39,19 +39,43 @@
 
 ### PLAN
 
+#3835: the two loopback servers send no `frame-ancestors` and no `X-Frame-Options`. The issue reasons from #3834
+(a cross-site top-level GET served), which is not on `main` yet. On `main` the reason is a different one, and it
+holds independently: `Test-LoopbackCrossSite` serves a **same-site** request in mode `navigate`, and an `<iframe>`
+from a page on another localhost port is exactly that, so today nothing but the absence of such a page stops it.
+
+No page of either server frames another (`<iframe>` grepped across `main` and the three open branches #3817, #3830,
+#3834). The issue's "merge with the dashboard's own CSP" does not arise: that CSP is the Cloudflare worker's, which
+does not use `Send-LoopbackResponse`. A host that frames these pages today (an editor's built-in browser) arrives
+`cross-site` and is already refused with a 403, so the header breaks nothing that works.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `loopback-server-lib.ps1`: `Send-LoopbackResponse` writes `Content-Security-Policy: frame-ancestors 'none'`
+      and `X-Frame-Options: DENY` into the head of every response, not only HTML, so a later route cannot forget it.
+- [x] `dev-preview-sessionstart.tests.ps1`: three asserts, the two headers and the same-site `navigate` pass that
+      makes them needed.
 
 ### TEST
 
+- [x] Both files parse, and a response written by the lib carries both headers in its head.
+- [x] No other suite pins the old head: the only other `nosniff` asserts are the worker's.
+
 ### DEPLOY: fix/3835-loopback-frame-ancestors
 
-**Score:**
+Every page the hub and the product's dev server answer with now carries `Content-Security-Policy: frame-ancestors
+'none'` and `X-Frame-Options: DENY`. Until now a page on another localhost port could frame them, because a
+same-site frame passes the request guard as a navigation. That has not been seen to happen. The point is
+that the airsquats `POST /api/airsquats/clear` can no longer be click-jacked from a frame.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+Nothing changes that the user sees. It closes a framing route before anything uses it, which is the whole point of a
+second barrier.
+
+**Score:** 1
 
 #### Pull Request
 
