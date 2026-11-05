@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**2 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3818-admin-objects-seam · 20261105-140226Z
+
+A repo can now put its own domain objects at the top of Admin's navigation, right under Home: state
+`Get-AdminObjects` in `scripts/repo-config.ps1`, returning `@{ Label; Href; Count }` items, and each shows with its
+count as a badge. The repo's own server serves the pages they link to: a path such as `/tracks` opens on the
+product's address, and a full http(s) URL opens as given. A repo that states nothing sees no change.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+The maintainer of a repo with its own data (tracks, playlists, recipes) can reach its management pages from Admin's
+navigation, with the counts in view, instead of keeping them outside it.
+
+**Score:** 3
+
+#### Pull Request
+
+A repo's domain objects in Admin's navigation, from a Get-AdminObjects seam
+
+Plugins: dkj-policy
+
+[PR #3832](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3832)
+
+---
 
 ### DEPLOY: feat/3820-dismiss-toast · 20261105-134848Z
 
