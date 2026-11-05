@@ -56,8 +56,8 @@ items, the group pages and the pages under them makes each one a few keystrokes 
 ### TEST
 
 - [x] On their own: dev-pages 603/0, check-house-style 157/0, house-palette 161/0, dev-preview-sessionstart 375/0.
-- [ ] The owner looks at Admin: the field on top of the navigation, Ctrl K focusing it, and typing (e.g. "rules")
-      narrowing the navigation to the matches.
+- [~] The owner looks at Admin: the field on top of the navigation, Ctrl K focusing it, and typing (e.g. "rules")
+      narrowing the navigation to the matches. Not done as a separate look: Dave approved the branch through issues-sweep-reviews on 2026-11-05 without one.
 
 ### DEPLOY: feat/3817-admin-nav-search
 
