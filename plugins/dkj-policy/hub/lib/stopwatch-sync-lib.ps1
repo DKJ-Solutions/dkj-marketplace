@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     The Stopwatch's shared copy (#3349): every machine publishes its finished runs to a ref of its own on origin,
-    refs/stopwatch/<machine id>, and reads every other machine's from there, so each machine's /stopwatch shows them
+    refs/stopwatch/<machine id>, and reads every other machine's from there, so each machine's /dev/stopwatch shows them
     all. Only where the repo opts in (Test-StopwatchShareEnabled, since #3470): every repo's hub has the page now,
     and a label is the first line of a prompt.
 

@@ -1,6 +1,6 @@
 ---
 name: stopwatch-prepare
-description: Put a Stopwatch card for a label on the hub's /stopwatch overview with NO clock running, so the owner can start the run themselves afterwards, or withdraw such a card. Use before a run the owner wants to time and start by hand -- above all before a release cut ("prepare the release cut card first, then we start it ourselves") -- and when a prepared card is no longer wanted.
+description: Put a Stopwatch card for a label on the hub's /dev/stopwatch overview with NO clock running, so the owner can start the run themselves afterwards, or withdraw such a card. Use before a run the owner wants to time and start by hand -- above all before a release cut ("prepare the release cut card first, then we start it ourselves") -- and when a prepared card is no longer wanted.
 ---
 
 # stopwatch-prepare -- a Stopwatch card that is ready and not started
@@ -15,7 +15,7 @@ begins and nothing is running yet (#3781), and that run removes a prepared `rele
 card, and start with `stopwatch: release cut`, only when the clock should run from the prompt rather than from
 the moment the script starts: the script then leaves that run going.
 
-**It writes a `prepared` entry in this machine's store, never a run.** The overview `/stopwatch` then shows a
+**It writes a `prepared` entry in this machine's store, never a run.** The overview `/dev/stopwatch` then shows a
 card for the label that says it is ready and not started, and how to start it. The label page opens too, with
 the same message in place of runs. When the owner sends `stopwatch: <label>`, the run starts exactly as
 always, lands on that card, and the hook removes the prepared entry. A label that already has runs keeps its
@@ -37,7 +37,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hub/p
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hub/pages/stopwatch-prepare.ps1" -Label "release cut" -Remove
 ```
 
-It prints a short receipt. Tell the owner the card is on `/stopwatch` and that the run starts with a prompt
+It prints a short receipt. Tell the owner the card is on `/dev/stopwatch` and that the run starts with a prompt
 whose first line is `stopwatch: <label>`.
 
 ## What to know

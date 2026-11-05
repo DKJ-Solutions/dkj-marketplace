@@ -23,7 +23,7 @@
     Repository, Issues, Release notes, SessionStart, Test gate, Stopwatch, Logbook and Plugins --
     are the plugin hub's, on its own port, and no longer relayed or built here. The house style's specimens
     are the one exception, back here since October 31, 2026 (Maikel): this repo is their source, so its
-    toolbox sends its own house-style pages to this product (Resolve-HouseStyleProductUrl). The home page links the hub, read from the state file the dev-preview hook writes
+    Admin sends its own house-style pages to this product (Resolve-HouseStyleProductUrl). The home page links the hub, read from the state file the dev-preview hook writes
     (Get-GeneralPagesUrl), and '/hub' sends there too.
 
 .DESCRIPTION
@@ -464,14 +464,14 @@ try {
             $hsTo = Resolve-ProductHouseStyleRedirect -Path $path
             if ($hsTo) {
                 # The specimens' address until they took the brand book's name (Maikel, October 31, 2026), and the
-                # one a released toolbox still sends: it lands on the same page under its new name.
+                # one a released Admin still sends: it lands on the same page under its new name.
                 Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = $hsTo } -Method $method
                 continue
             }
             $hsAt = Resolve-ProductHouseStyleRequest -Path $path
             if ($hsAt) {
                 # The house style's specimens under dkj-policy (Maikel, October 31, 2026), read from this tree per
-                # request; the toolbox in this repo sends its own house-style pages here. A section none has is a 404.
+                # request; Admin in this repo sends its own house-style pages here. A section none has is a 404.
                 $specError = ''; $spec = ''
                 try { $spec = [System.IO.File]::ReadAllText((Join-Path $styleDir 'specimens.html'), $utf8) } catch { $specError = $_.Exception.Message }
                 $html = Format-ProductHouseStylePageHtml -Body $spec -ReadError $specError -Section $hsAt.Section -Token $hsAt.Token
@@ -515,7 +515,7 @@ try {
                 if ($hubUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
                     Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = $hubUrl } -Method $method
                 } else {
-                    Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('The dkj-policy toolbox is not running for this repo: the dev-preview hook starts it at the next session start.')) -Method $method
+                    Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('The dkj-policy Admin is not running for this repo: the dev-preview hook starts it at the next session start.')) -Method $method
                 }
                 continue
             }

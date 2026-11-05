@@ -62,13 +62,13 @@ function Get-GeneralPagesThemeDefault {
     return 'lilac'
 }
 
-function Get-ToolboxWidthScript {
+function Get-AdminWidthScript {
     <#
-        THE TOOLBOX HAS ONE WIDTH, AND IT IS FULL (Maikel, November 4, 2026). The Toolbox is read in VS Code's Simple
+        ADMIN HAS ONE WIDTH, AND IT IS FULL (Maikel, November 4, 2026). Admin is read in VS Code's Simple
         Browser, a screen of about 16:9 that does not change, so a width choice has nothing to decide there; that
-        choice belongs to a repo's product port, which is built for a phone as well. Every Toolbox page loads this
+        choice belongs to a repo's product port, which is built for a phone as well. Every Admin page loads this
         right after house-theme.js, in <head>, so the page never paints in another width -- and a Phone or Fluid
-        a viewer stored while the Toolbox still offered the choice is overwritten rather than kept with no way back.
+        a viewer stored while Admin still offered the choice is overwritten rather than kept with no way back.
     #>
     return '<script>DKJTheme.setWidth("full");</script>'
 }
@@ -155,8 +155,8 @@ function Get-PageInfoScript {
 function Format-GeneralPageHtml {
     <#
         The whole page around -Body. -Title is the page's own name: the last crumb, the h1 and the
-        <title> (after -SiteName). A TOOLBOX page (any -BrandTag but 'product') stands in the desktop shell (#3811,
-        Format-ToolboxShellOpen): there -Brand, -BrandTag and -Menu draw nothing, and what is said below about the site
+        <title> (after -SiteName). An ADMIN page (any -BrandTag but 'product') stands in the desktop shell (#3811,
+        Format-AdminShellOpen): there -Brand, -BrandTag and -Menu draw nothing, and what is said below about the site
         header, the breadcrumb bar and the settings button describes a product's page. -HubHref is where
         the first crumb, "Home" (#3270), goes: '/' by default, the general server's own root and its home page. It was '/hub' while these pages could be relayed from a product's origin (#3168), where '/' is the product; nothing relays them any more, and a caller on another origin names its own -HubHref. The server still answers '/hub', so an old link keeps working.
         -Style is the page's own layer, names the house file does not define. -Lead and
@@ -192,15 +192,17 @@ function Format-GeneralPageHtml {
         [switch]$Bare,
         [AllowEmptyCollection()][object[]]$ParentCrumbs = @(),
         [AllowEmptyString()][string]$HeadAside = '',
-        [string]$HomeLabel = 'Tools',
+        [string]$HomeLabel = 'Home',
         [AllowEmptyString()][string]$Info = '',
         [AllowNull()][object[]]$Menu = $null
     )
     # EVERY NAMED PAGE CARRIES THE SITE HEADER (owner, October 22, 2026): a caller that names its site and passes no
-    # -Brand gets the repo's short name in it, with 'hub' after it, since these are the hub's pages.
-    if (-not $Brand -and $SiteName) { $Brand = ConvertTo-SiteHeaderName -RepoName $SiteName; if (-not $BrandTag) { $BrandTag = 'toolbox' } }
-    # -Menu is the site header's menu; a toolbox page that names none gets the toolbox's own (Get-HubMenu).
-    if ($null -eq $Menu) { $Menu = if ($Brand -and $BrandTag -eq 'toolbox') { @(Get-HubMenu) } else { @() } }
+    # -Brand gets the repo's short name in it, with 'admin' after it, since these are Admin's pages. 'toolbox', the tag's
+    # name until #3815, is read as 'admin' (ConvertTo-AdminBrandTag).
+    $BrandTag = ConvertTo-AdminBrandTag $BrandTag
+    if (-not $Brand -and $SiteName) { $Brand = ConvertTo-SiteHeaderName -RepoName $SiteName; if (-not $BrandTag) { $BrandTag = 'admin' } }
+    # -Menu is the site header's menu, drawn only on a product's page: an Admin page draws its own navigation instead.
+    if ($null -eq $Menu) { $Menu = @() }
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $site = if ($SiteName) { (& $e $SiteName) + ' -- ' } else { '' }
     $sb = New-Object System.Text.StringBuilder
@@ -219,17 +221,17 @@ function Format-GeneralPageHtml {
     [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
     # One width, full, on every page of this shell, a repo's own product pages (-BrandTag 'product') included (Dave,
     # November 4, 2026): another screen is judged in the Simple Browser's own device emulation.
-    [void]$sb.AppendLine((Get-ToolboxWidthScript))
+    [void]$sb.AppendLine((Get-AdminWidthScript))
     # The page layer: only names the house file does not define (.dp-*).
     [void]$sb.AppendLine('<style>')
     [void]$sb.AppendLine('.dp-link { color: var(--fg-3); text-decoration: none; text-underline-offset: 2px; }')
     [void]$sb.AppendLine('.dp-link:hover, .dp-link:focus-visible { text-decoration: underline; }')
     [void]$sb.AppendLine('.dp-thead th { background: var(--bg-3); }')
     [void]$sb.AppendLine('.table td.dp-left, .table th.dp-left { text-align: left; }')
-    # A TOOLBOX PAGE STANDS IN THE DESKTOP SHELL (Dave, November 4, 2026, #3811): an Explorer, not a website, so no site
+    # AN ADMIN PAGE STANDS IN THE DESKTOP SHELL (Dave, November 4, 2026, #3811): an Explorer, not a website, so no site
     # header, no breadcrumb bar and no headline; a product's page (-BrandTag 'product') keeps the mobile-first layout below.
-    $toolbox = $BrandTag -ne 'product'
-    if ($toolbox) { [void]$sb.AppendLine((Get-ToolboxShellStyle)) }
+    $admin = $BrandTag -ne 'product'
+    if ($admin) { [void]$sb.AppendLine((Get-AdminShellStyle)) }
     if ($Style) { [void]$sb.AppendLine($Style) }
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
@@ -242,28 +244,28 @@ function Format-GeneralPageHtml {
         '<p class="msg--warn" role="alert">This page holds ' + $sections + ' sections in one column. A page with more than ' +
             $script:LongPageSectionLimit + ' becomes an overview of cards, each opening a page of its own: the house style''s page rule (#3563).</p>'
     } else { '' }
-    if ($toolbox) {
-        # No settings button in the shell: the toolbox's theme is chosen on its own /settings page, a node of the tree.
+    if ($admin) {
+        # No settings button in the shell: Admin's theme is chosen on its own /settings page, pinned to the navigation's foot.
         $infoHtml = if ($Info -and -not $Bare) {
             '<button class="page-info-button" type="button" id="page-info-button" aria-label="About ' + (& $e $Title) + '" aria-describedby="page-info" aria-expanded="false">' + $glyph + '</button>' +
             '<div class="tooltip tooltip--explain" id="page-info" role="tooltip">' + $Info + '</div>'
         } else { '' }
         $trail = @(@($ParentCrumbs | Where-Object { $_ }) + @(@{ Label = $Title; Href = '' }))
-        $tree = @(Get-ToolboxTree)
-        [void]$sb.Append((Format-ToolboxShellOpen -Title $Title -Current (Get-ToolboxCurrentHref -Title $Title -ParentCrumbs $ParentCrumbs -Tree $tree) -Tree $tree -Trail $trail -HomeLabel $HomeLabel -HubHref $HubHref -Bare:$Bare -InfoHtml $infoHtml -HeadAside $HeadAside))
+        $nav = @(Get-AdminNav)
+        [void]$sb.Append((Format-AdminShellOpen -Title $Title -Current (Get-AdminCurrentHref -Title $Title -ParentCrumbs $ParentCrumbs -Nav $nav) -Nav $nav -Trail $trail -HomeLabel $HomeLabel -HubHref $HubHref -Bare:$Bare -InfoHtml $infoHtml -HeadAside $HeadAside))
         if ($longWarn) { [void]$sb.AppendLine($longWarn) }
         [void]$sb.Append($Body)
         if ($FooterNote) { [void]$sb.AppendLine('<p class="note">' + $FooterNote + '</p>') }
-        [void]$sb.AppendLine((Format-ToolboxShellClose))
+        [void]$sb.AppendLine((Format-AdminShellClose))
         if ($Info -and -not $Bare) { [void]$sb.AppendLine((Get-PageInfoScript)) }
         [void]$sb.AppendLine((Format-FitAlarmHtml))
         [void]$sb.AppendLine('</body>')
         [void]$sb.AppendLine('</html>')
         return $sb.ToString()
     }
-    # The general banner on every Toolbox page, not only the home page (#3297), and a bare one too (#3356): ALWAYS the
+    # The general banner on every Admin page, not only the home page (#3297), and a bare one too (#3356): ALWAYS the
     # first thing in <body>, above the site header (owner, October 24, 2026). Never on a product's page
-    # (-BrandTag 'product'): the banner is the Toolbox's alone (Dave, November 4, 2026).
+    # (-BrandTag 'product'): the banner is Admin's alone (Dave, November 4, 2026).
     if ($BrandTag -ne 'product') { [void]$sb.AppendLine((Format-RepoHubBanner)) }
     if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href $HubHref -Tag $BrandTag -Menu $Menu -Current (Get-SiteHeaderMenuCurrent -Menu $Menu -Title $Title -ParentCrumbs $ParentCrumbs))) }
     [void]$sb.AppendLine('<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>')
@@ -369,9 +371,9 @@ function Format-RepoHubBanner {
         The countdown keeps running whether or not the box is ticked, and every hour that passes unticked
         adds another 10, so the box shows the total owed; ticking it clears the total.
 
-        ONE FUNCTION, ON EVERY TOOLBOX PAGE (#3297): the Toolbox home (through Format-RepoHomeHeadHtml), every page
+        ONE FUNCTION, ON EVERY ADMIN PAGE (#3297): Admin home (through Format-RepoHomeHeadHtml), every page
         Format-GeneralPageHtml draws, a -Bare one included (#3356), and the release notes (Format-ReleaseNotesDevPage), so
-        the Toolbox carries the same banner wherever the visitor is. NEVER ON A PRODUCT'S PAGE (Dave, November 4, 2026):
+        Admin carries the same banner wherever the visitor is. NEVER ON A PRODUCT'S PAGE (Dave, November 4, 2026):
         both builders leave it out under -BrandTag 'product', and the Consumers page (Format-ConsumerDashboardHtml) draws none. It is the first thing in <body>, ABOVE the site header (owner,
         October 24, 2026; it was the first block of <main>, under the breadcrumb bar), so every caller writes it
         straight after '<body>'. It is a TOAST, not a strip (Maikel, November 4, 2026; it was a bare strip flush against
@@ -414,7 +416,7 @@ function Format-RepoHubBanner {
     #>
     return @'
 <div class="notice" id="hub-banner" role="region" aria-label="Airsquats" style="position: fixed; left: var(--spacing-4); bottom: var(--spacing-4); z-index: 20; margin: 0; max-width: calc(100vw - 2 * var(--spacing-4)); box-shadow: var(--shadow-pop)" hidden>
-<p>Next airsquats in <strong class="num" data-hub-timer>--:--</strong><span class="msg--warn" data-hub-due hidden> &middot; <label><input type="checkbox" data-hub-done> <span data-hub-count>10</span> due</label></span><span class="msg--warn" data-hub-offline hidden> &middot; hub offline, this hour is not counted</span><span data-hub-owner hidden title="The Windows account this toolbox runs under"> &middot; <span data-hub-account></span></span></p>
+<p>Next airsquats in <strong class="num" data-hub-timer>--:--</strong><span class="msg--warn" data-hub-due hidden> &middot; <label><input type="checkbox" data-hub-done> <span data-hub-count>10</span> due</label></span><span class="msg--warn" data-hub-offline hidden> &middot; hub offline, this hour is not counted</span><span data-hub-owner hidden title="The Windows account Admin runs under"> &middot; <span data-hub-account></span></span></p>
 </div>
 <script>
 (function () {
@@ -563,22 +565,22 @@ function Get-GeneralPages {
         relative), its Label the page's own name as its breadcrumb reads it, one line on what it shows, and the
         key of its card's icon ($script:HubIcons). A Group is the Href of the group page (Get-HubGroups) the page
         is linked from instead of the hub: the hub shows that group as one card in the place of its first page.
-        GitHub marks a page the hub's GitHub page (/repository, Format-PluginRepoRepositoryHtml) links instead of
+        GitHub marks a page the hub's GitHub page (/dev/repository, Format-PluginRepoRepositoryHtml) links instead of
         the hub: Issues, and the Test gate, which measures what the suites cost on GitHub Actions (the owner,
         November 2, 2026).
     #>
     @(
-        @{ Href = '/issues';        Label = 'Issues';        Sub = 'The open GitHub issues and where they stand, and the flow of the last four weeks'; Icon = 'issues'; GitHub = $true },
-        @{ Href = '/release-notes'; Label = 'Release notes'; Sub = 'What each released version of the plugins changed'; Icon = 'release-notes' },
-        @{ Href = '/sessionstart';  Label = 'SessionStart';  Sub = 'The always-on path every session loads before its first turn'; Icon = 'sessionstart'; Group = '/performance/context' },
+        @{ Href = '/dev/issues';        Label = 'Issues';        Sub = 'The open GitHub issues and where they stand, and the flow of the last four weeks'; Icon = 'issues'; GitHub = $true },
+        @{ Href = '/dev/release-notes'; Label = 'Release notes'; Sub = 'What each released version of the plugins changed'; Icon = 'release-notes' },
+        @{ Href = '/dev/sessionstart';  Label = 'SessionStart';  Sub = 'The always-on path every session loads before its first turn'; Icon = 'sessionstart'; Group = '/dev/performance/context' },
         # Every repo's since #3470 (the owner, October 25, 2026): the source repo's own pages until then.
-        @{ Href = '/test-gate';     Label = 'Test gate';     Sub = 'What each test suite costs on CI'; Icon = 'test-gate'; GitHub = $true },
-        @{ Href = '/stopwatch';     Label = 'Stopwatch';     Sub = 'How long an assignment takes, timed from a stopwatch: prompt, or from the start of a release cut, to back on the trunk, with the transcript phases'; Icon = 'stopwatch'; Group = '/clock' },
-        @{ Href = '/logbook';       Label = 'Logbook';       Sub = 'Every assignment of a clean session, timed by itself: first prompt to back on the trunk, with the transcript phases'; Icon = 'logbook'; Group = '/clock' },
+        @{ Href = '/dev/test-gate';     Label = 'Test gate';     Sub = 'What each test suite costs on CI'; Icon = 'test-gate'; GitHub = $true },
+        @{ Href = '/dev/stopwatch';     Label = 'Stopwatch';     Sub = 'How long an assignment takes, timed from a stopwatch: prompt, or from the start of a release cut, to back on the trunk, with the transcript phases'; Icon = 'stopwatch'; Group = '/dev/clock' },
+        @{ Href = '/dev/logbook';       Label = 'Logbook';       Sub = 'Every assignment of a clean session, timed by itself: first prompt to back on the trunk, with the transcript phases'; Icon = 'logbook'; Group = '/dev/clock' },
         # #3482: plugin-versions' verdict per enabled plugin, so a problem with one is visible from the hub.
-        @{ Href = '/plugins';       Label = 'Installed plugins'; Sub = 'Every plugin this repo enables, and any problem with one on this machine'; Icon = 'plugins' },
-        # The toolbox's own settings, on a page of their own (Dave, November 2, 2026): the Theme first.
-        @{ Href = '/settings';      Label = 'Settings';      Sub = 'How this toolbox looks on this device: its theme'; Icon = 'settings' }
+        @{ Href = '/dev/plugins';       Label = 'Installed plugins'; Sub = 'Every plugin this repo enables, and any problem with one on this machine'; Icon = 'plugins' },
+        # Admin's own settings, on a page of their own (Dave, November 2, 2026): the Theme first.
+        @{ Href = '/settings';      Label = 'Settings';      Sub = 'How Admin looks on this device: its theme'; Icon = 'settings' }
     )
 }
 
@@ -591,26 +593,26 @@ function Get-HubGroups {
         the hub. A group with no general page of its own is still a hub card (Format-HubPageCardsHtml). A Section group
         is no card and no page: it is an h2 on its parent's page, over a grid of its members' cards. Claude holds
         Rules, Skills and Specialists (Maikel, October 30, 2026), each a page of its own: a section of an AI page until
-        Maikel made it the page itself, on /claude (November 2, 2026).
+        Maikel made it the page itself, on /dev/claude (November 2, 2026).
         A Section with Source 'lenses' takes its cards from the repo instead: one per specialist lens (Get-HubLensPages).
         Performance holds SessionStart and Clock (the owner, October 30, 2026), and sits in Claude since
         November 2, 2026: what it measures is what Claude's work costs. A group page keeps its route wherever it sits.
         Its two are Sections since November 3, 2026 (Dave): Clock, an h2 over the Stopwatch and Logbook h3 cards, and
-        Context, over SessionStart's. Clock had a /clock page until then, which now moves to /performance.
+        Context, over SessionStart's. Clock had a /dev/clock page until then, which now moves to /dev/performance.
     #>
     @(
-        @{ Href = '/claude'; Label = 'Claude'; Sub = 'The rules, skills and specialists Claude works by, and what its work costs'; Icon = 'claude' },
-        @{ Href = '/claude/rules'; Label = 'Rules'; Sub = 'The rules Claude works by'; Icon = 'rules'; Group = '/claude' },
-        @{ Href = '/claude/skills'; Label = 'Skills'; Sub = 'The skills Claude can use'; Icon = 'skills'; Group = '/claude' },
-        @{ Href = '/claude/specialists'; Label = 'Specialists'; Sub = 'The Claude Specialists, each with a craft of their own'; Icon = 'specialists'; Group = '/claude' },
-        @{ Href = '/performance'; Label = 'Performance'; Sub = 'What Claude''s work costs: the SessionStart path and the Clock'; Icon = 'performance'; Group = '/claude' },
-        @{ Href = '/clock'; Label = 'Clock'; Sub = 'How long the work takes: the Stopwatch and the Logbook'; Icon = 'clock'; Group = '/performance'; Section = $true },
-        @{ Href = '/performance/context'; Label = 'Context'; Sub = 'What a session loads before its first turn'; Icon = 'sessionstart'; Group = '/performance'; Section = $true },
-        @{ Href = '/claude/specialists/lenses'; Label = 'Lenses'; Icon = 'lens'; Group = '/claude/specialists'; Section = $true; Source = 'lenses' },
+        @{ Href = '/dev/claude'; Label = 'Claude'; Sub = 'The rules, skills and specialists Claude works by, and what its work costs'; Icon = 'claude' },
+        @{ Href = '/dev/claude/rules'; Label = 'Rules'; Sub = 'The rules Claude works by'; Icon = 'rules'; Group = '/dev/claude' },
+        @{ Href = '/dev/claude/skills'; Label = 'Skills'; Sub = 'The skills Claude can use'; Icon = 'skills'; Group = '/dev/claude' },
+        @{ Href = '/dev/claude/specialists'; Label = 'Specialists'; Sub = 'The Claude Specialists, each with a craft of their own'; Icon = 'specialists'; Group = '/dev/claude' },
+        @{ Href = '/dev/performance'; Label = 'Performance'; Sub = 'What Claude''s work costs: the SessionStart path and the Clock'; Icon = 'performance'; Group = '/dev/claude' },
+        @{ Href = '/dev/clock'; Label = 'Clock'; Sub = 'How long the work takes: the Stopwatch and the Logbook'; Icon = 'clock'; Group = '/dev/performance'; Section = $true },
+        @{ Href = '/dev/performance/context'; Label = 'Context'; Sub = 'What a session loads before its first turn'; Icon = 'sessionstart'; Group = '/dev/performance'; Section = $true },
+        @{ Href = '/dev/claude/specialists/lenses'; Label = 'Lenses'; Icon = 'lens'; Group = '/dev/claude/specialists'; Section = $true; Source = 'lenses' },
         # The Rules page reads its cards from the repo too: what is in its .claude/rules folder, and nothing else
         # (Maikel, November 3, 2026; Get-HubRulePages). Bare: no heading of its own, which would only repeat the
         # page's h1, so its cards stand on the page as h2 cards (Maikel, the same day).
-        @{ Href = '/claude/rules/repo'; Label = 'Repo rules'; Icon = 'rules'; Group = '/claude/rules'; Section = $true; Source = 'repo-rules'; Bare = $true }
+        @{ Href = '/dev/claude/rules/repo'; Label = 'Repo rules'; Icon = 'rules'; Group = '/dev/claude/rules'; Section = $true; Source = 'repo-rules'; Bare = $true }
     )
 }
 
@@ -680,7 +682,7 @@ function Get-HubRulePages {
         # A top-level 'paths:' key, as Claude Code (and Test-IsRuleFileScoped) reads it.
         $scoped = [regex]::IsMatch($front, '(?m)^paths:')
         if ($scoped) { $sub = ($(if ($sub) { $sub + ' ' } else { '' })) + '(path-scoped)' }
-        $out.Add(@{ Href = '/claude/rules/' + $label; Label = $label; Sub = $sub; Icon = 'rules'; Path = $f.FullName; Display = ('.claude/rules/' + $f.Name) })
+        $out.Add(@{ Href = '/dev/claude/rules/' + $label; Label = $label; Sub = $sub; Icon = 'rules'; Path = $f.FullName; Display = ('.claude/rules/' + $f.Name) })
     }
     return $out.ToArray()
 }
@@ -716,7 +718,7 @@ function Get-HubLensPages {
         try {
             foreach ($line in [System.IO.File]::ReadAllLines($f.FullName, $utf8)) { if ($line -match '^#\s+(.+)$') { $sub = $Matches[1].Trim(); break } }
         } catch { $sub = '' }
-        @{ Href = '/claude/specialists/lenses/' + $f.BaseName; Label = $f.BaseName; Sub = $sub; Icon = 'lens'; Path = $f.FullName }
+        @{ Href = '/dev/claude/specialists/lenses/' + $f.BaseName; Label = $f.BaseName; Sub = $sub; Icon = 'lens'; Path = $f.FullName }
     }
 }
 
@@ -733,7 +735,7 @@ function ConvertTo-HubLensBody {
     param([AllowEmptyString()][string]$Text)
     # A link to another lens file is a link to that lens's own page here (Maikel, November 2, 2026); its #anchor goes,
     # since the rendered page gives its headings no ids.
-    $Text = [regex]::Replace($Text, '\]\((?:\./)?(specialist-\d{2}-\d{2}-lens)\.md(?:#[^)]*)?\)', '](/claude/specialists/lenses/$1)')
+    $Text = [regex]::Replace($Text, '\]\((?:\./)?(specialist-\d{2}-\d{2}-lens)\.md(?:#[^)]*)?\)', '](/dev/claude/specialists/lenses/$1)')
     $md = ([regex]::Replace($Text, '\A---\n[\s\S]*?\n---\n', '')).TrimStart("`n")
     $md = ([regex]::Replace($md, '\A[ \t]*#[ \t]+.*(\n|\z)', '')).TrimStart("`n")
     $lines = @($md -split "`n")
@@ -853,7 +855,7 @@ if (Test-Path -LiteralPath $script:FenceLibPath -PathType Leaf) { . $script:Fenc
 
 function Format-HubLensPageHtml {
     <#
-        One specialist lens's own page on /claude/specialists/lenses/<name> (Get-HubLensPages), under Tools > Claude >
+        One specialist lens's own page on /dev/claude/specialists/lenses/<name> (Get-HubLensPages), under Home > Claude >
         Specialists: the file's name as the h1 and the last crumb, as its card reads, and the file RENDERED as markdown in
         a card (Maikel, November 2, 2026), past its frontmatter and its own '# ' title, so the page keeps ONE h1;
         any other '# ' heading is rendered as an h2. The renderer is the house's one, markdown-render.js beside the release-notes
@@ -865,13 +867,13 @@ function Format-HubLensPageHtml {
     $lens = @(Get-HubLensPages -RepoRoot $RepoRoot | Where-Object { $_.Label -ceq $Name })[0]
     if (-not $lens) { return $null }
     return Format-HubDocPageHtml -Doc $lens -RepoName $RepoName -HubHref $HubHref -What 'lens' `
-        -ParentCrumbs @(@{ Label = 'Claude'; Href = '/claude' }, @{ Label = 'Specialists'; Href = '/claude/specialists' }) `
+        -ParentCrumbs @(@{ Label = 'Claude'; Href = '/dev/claude' }, @{ Label = 'Specialists'; Href = '/dev/claude/specialists' }) `
         -SourceDisplay ('.claude/specialists/lenses/' + $lens.Label + '.md')
 }
 
 function Format-HubRulePageHtml {
     <#
-        One rule file's own page on /claude/rules/<name> (Get-HubRulePages), under Tools > Claude > Rules: a
+        One rule file's own page on /dev/claude/rules/<name> (Get-HubRulePages), under Home > Claude > Rules: a
         .claude/rules file, rendered exactly as a lens is (Format-HubDocPageHtml). $null for a name the repo's
         .claude/rules folder has no file of.
     #>
@@ -879,7 +881,7 @@ function Format-HubRulePageHtml {
     $rule = @(Get-HubRulePages -RepoRoot $RepoRoot | Where-Object { $_.Label -ceq $Name })[0]
     if (-not $rule) { return $null }
     return Format-HubDocPageHtml -Doc $rule -RepoName $RepoName -HubHref $HubHref -What 'rule document' `
-        -ParentCrumbs @(@{ Label = 'Claude'; Href = '/claude' }, @{ Label = 'Rules'; Href = '/claude/rules' }) -SourceDisplay $rule.Display
+        -ParentCrumbs @(@{ Label = 'Claude'; Href = '/dev/claude' }, @{ Label = 'Rules'; Href = '/dev/claude/rules' }) -SourceDisplay $rule.Display
 }
 
 function Format-HubDocPageHtml {
@@ -1072,18 +1074,18 @@ function Format-HubGroupPageHtml {
 
 function Format-HubSettingsPageHtml {
     <#
-        The toolbox's Settings page on /settings (Dave, November 2, 2026): Get-SettingsPageParts with no Width group,
-        because the Toolbox has one width (Get-ToolboxWidthScript), in the toolbox's own page shell.
+        Admin's Settings page on /settings (Dave, November 2, 2026): Get-SettingsPageParts with no Width group,
+        because Admin has one width (Get-AdminWidthScript), in Admin's own page shell.
     #>
     param([AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
     $parts = Get-SettingsPageParts
-    return Format-GeneralPageHtml -Title 'Settings' -Lead 'How this toolbox looks on this device: its theme.' -Body $parts.Body -Style $parts.Style `
+    return Format-GeneralPageHtml -Title 'Settings' -Lead 'How Admin looks on this device: its theme.' -Body $parts.Body -Style $parts.Style `
         -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
 }
 
 function Get-SettingsPageParts {
     <#
-        A Settings page's body and its style, @{ Body; Style }, for whichever shell draws it: the Toolbox's
+        A Settings page's body and its style, @{ Body; Style }, for whichever shell draws it: Admin's
         (Format-HubSettingsPageHtml) and a product's (Maikel, November 4, 2026). Its h1 comes from the shell; then the group headed by the h2 Theme
         holding a Light/Dark toggle and a card per theme holding that theme's swatch alone, with no h3: the swatch's own
         title and aria-label name it (Dave, November 2, 2026) -- the
@@ -1133,8 +1135,8 @@ function Get-SettingsPageParts {
         ' show(modeOf(DKJTheme.current()));' +
         ' foot.addEventListener("click", function () { DKJTheme.reset(); show(modeOf(DKJTheme.current())); });' +
         ' })();</script>'
-    # No Width group, on the Toolbox's page or a product's (Dave, November 4, 2026): both have one width, full
-    # (Get-ToolboxWidthScript), and another screen is judged in the Simple Browser's own device emulation.
+    # No Width group, on Admin's page or a product's (Dave, November 4, 2026): both have one width, full
+    # (Get-AdminWidthScript), and another screen is judged in the Simple Browser's own device emulation.
     # .hs-theme, .hs-swatch and .hs-reset are this page's own classes: the row, the full-width head and toggle in it, a
     # card that hugs its swatch, and what a <button> needs to read as a card. No house class or token is redefined.
     $style = '.hs-theme { display: flex; flex-wrap: wrap; gap: var(--spacing-5); }' + "`n" +
@@ -1187,7 +1189,7 @@ function ConvertTo-SiteHeaderName {
 function Format-SiteHeaderHtml {
     <#
         The house site header (house-style.css, "Site header"): the app's -Name on the primary, linking -Href
-        (home). No mark (Dave, November 2, 2026), and no settings button (Maikel, November 3, 2026): the toolbox's
+        (home). No mark (Dave, November 2, 2026), and no settings button (Maikel, November 3, 2026): Admin's
         theme is chosen on its own /settings page, so the header no longer mounts #settings, and the pages' own
         DKJTheme.settings call finds no element and draws nothing. -Tag is the quieter word after the name
         ('hub', 'product'), left out when empty. Both are escaped here.
@@ -1222,10 +1224,10 @@ function Format-SiteHeaderHtml {
 
 function Get-HubMenu {
     <#
-        The toolbox's site header menu (Format-SiteHeaderHtml -Menu): its GitHub page, then the hub's own cards in their
+        Admin's site header menu (Format-SiteHeaderHtml -Menu): its GitHub page, then the hub's own cards in their
         order (Get-HubPageCards), each @{ Label; Href }. The same list as the home page's cards, so the two cannot drift.
     #>
-    @(@{ Label = 'GitHub'; Href = '/repository' }) + @(Get-HubPageCards -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }) | ForEach-Object { @{ Label = $_.Label; Href = $_.Href } })
+    @(@{ Label = 'GitHub'; Href = '/dev/repository' }) + @(Get-HubPageCards -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }) | ForEach-Object { @{ Label = $_.Label; Href = $_.Href } })
 }
 
 function Get-SiteHeaderMenuCurrent {
@@ -1245,48 +1247,95 @@ function Get-BreadcrumbSep {
     '<span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span>'
 }
 
-function Get-ToolboxShellStyle {
+function Get-AdminShellStyle {
     <#
-        The page layer the Toolbox's desktop shell needs on top of the house's (house-style.css, "Desktop shell"; Dave,
+        The page layer Admin's desktop shell needs on top of the house's (house-style.css, "Desktop shell"; Dave,
         November 4, 2026, #3811): names the house file does not define (.tb-*). The scroll pane always takes the main
         pane's second row, so a page with no toolbar (-Bare) still scrolls there; the page column inside it keeps the
         house column's stacking but none of its centring, since the pane is the page.
     #>
     '.tb-scroll { grid-row: 2; }' + "`n" +
     '.tb-scroll > .notice { margin: 0; border: 0; border-radius: 0; border-bottom: 1px solid var(--bg-3); }' + "`n" +
-    '.tb-scroll > main.page-column { max-width: none; margin: 0; padding: var(--spacing-4); }' + "`n" +
-    '.tb-tree-root { margin-top: var(--spacing-1); }'
+    '.tb-scroll > main.page-column { max-width: none; margin: 0; padding: var(--spacing-4); }'
 }
 
-function Get-ToolboxTree {
+# The product's address, for Admin's Product section (#3815): set per request by the server from the state file the
+# dev-preview hook writes, as the theme default is (Set-GeneralPagesThemeDefault). '' where the repo states no product.
+$script:AdminProductUrl = ''
+
+function Set-AdminProductUrl {
+    <# Sets the address Admin's Product section links to (Get-AdminNav); '' or anything but an http(s) URL clears it. #>
+    param([AllowEmptyString()][AllowNull()][string]$Url = '')
+    $script:AdminProductUrl = if ($Url -and $Url -cmatch '\Ahttps?://[^\s"<>]+\z') { $Url } else { '' }
+}
+
+function ConvertTo-AdminBrandTag {
     <#
-        The Toolbox's side tree (#3811): Tools (home), then the toolbox's menu (Get-HubMenu) in its order, and under an
-        item that is a group page (Get-HubGroups) the groups and general pages that sit in it, so Claude opens onto Rules,
-        Skills, Specialists and Performance. A Section group is a heading on its parent's page, not a page, so it is no
-        node. Each node is @{ Label; Href; Children }.
+        A page's -BrandTag as it is read since #3815: 'toolbox', the tag's name until then, is 'admin'; every other value
+        as it came. A consumer that passes 'toolbox' keeps its page in the desktop shell for this release; the alias goes
+        in the next major, which the release notes name.
     #>
-    $groups = @(Get-HubGroups); $pages = @(Get-GeneralPages)
-    $kids = {
-        param($href)
-        @($groups | Where-Object { $_.Group -eq $href -and -not $_.Section } | ForEach-Object { @{ Label = $_.Label; Href = $_.Href; Children = @() } }) +
-        @($pages | Where-Object { $_.Group -eq $href } | ForEach-Object { @{ Label = $_.Label; Href = $_.Href; Children = @() } })
-    }
-    @(Get-HubMenu | ForEach-Object { @{ Label = $_.Label; Href = $_.Href; Children = @(& $kids $_.Href) } })
+    param([AllowEmptyString()][AllowNull()][string]$Tag = '')
+    if ($Tag -eq 'toolbox') { return 'admin' }
+    return [string]$Tag
 }
 
-function Format-ToolboxShellOpen {
+function Get-AdminDevBase {
+    <# Where Admin's Development section lives (#3815): every general page but Home and Settings sits under it. #>
+    '/dev'
+}
+
+function Resolve-AdminLegacyPath {
     <#
-        The top of every Toolbox page in the desktop shell (#3811), in place of the site header, the breadcrumb bar and
-        the page column's intro: the thin bar with the trail, the side tree, and the main pane, whose toolbar holds the
+        Where a request for a general page's address from before #3815 goes now: '/dev' and the same path, with the query
+        kept, so a link or a bookmark to /test-gate/... or /claude/rules keeps working. '' for a path that never moved
+        (Home, Settings, the API, the static files) and for one already under /dev. -Target is the request target, path
+        and query. /clock moved before, and its own redirect carries it on from under /dev; /ai has a redirect of its own, straight to /dev/claude.
+    #>
+    param([AllowEmptyString()][string]$Target = '')
+    $m = [regex]::Match($Target, '\A(/(?:test-gate|plugins|stopwatch|logbook|release-notes|sessionstart|issues|claude|performance|repository|clock)(?:/[^?#]*)?)(\?[^#]*)?\z')
+    if (-not $m.Success) { return '' }
+    return (Get-AdminDevBase) + $m.Groups[1].Value + $m.Groups[2].Value
+}
+
+function Get-AdminNav {
+    <#
+        Admin's side navigation (#3815, after the Shopify Admin): FLAT, under section headings, never a tree. Each
+        section is @{ Heading; Items; Foot }, every item @{ Label; Href; External }, in this order:
+          * no heading: Home, the dashboard on '/';
+          * the domain objects a repo manages would come next, at the top level with no "Manage" wrapper, since
+            everything in Admin is management -- this plugin ships none, so nothing is drawn there;
+          * Product: the storefront, linked rather than contained, since Admin manages the product and is not it
+            ($script:AdminProductUrl, left out where the repo states no product);
+          * Development: Admin's own pages under /dev, the hub's menu (Get-HubMenu) in its order -- a group page
+            such as Claude is one item and its members are reached on it;
+          * Settings, pinned to the bottom (Foot).
+    #>
+    $menu = @(Get-HubMenu)
+    $dev = @($menu | Where-Object { $_.Href -ne '/settings' } | ForEach-Object { @{ Label = $_.Label; Href = $_.Href; External = $false } })
+    $settings = @($menu | Where-Object { $_.Href -eq '/settings' } | ForEach-Object { @{ Label = $_.Label; Href = $_.Href; External = $false } })
+    $out = @(@{ Heading = ''; Items = @(@{ Label = 'Home'; Href = '/'; External = $false }); Foot = $false })
+    if ($script:AdminProductUrl) { $out += @{ Heading = 'Product'; Items = @(@{ Label = 'Storefront'; Href = $script:AdminProductUrl; External = $true }); Foot = $false } }
+    if ($dev.Count) { $out += @{ Heading = 'Development'; Items = $dev; Foot = $false } }
+    if ($settings.Count) { $out += @{ Heading = ''; Items = $settings; Foot = $true } }
+    return $out
+}
+
+function Format-AdminShellOpen {
+    <#
+        The top of every Admin page in the desktop shell (#3811), in place of the site header, the breadcrumb bar and
+        the page column's intro: the thin bar with the trail, the side navigation (Get-AdminNav: flat, under section
+        headings, #3815), and the main pane, whose toolbar holds the
         page's one h1 (at the toolbar's size, .toolbar__title) with -Info's "?" and -HeadAside at its right end. The
         general banner (Format-RepoHubBanner) stands at the top of the scroll pane, above the content, so the shell
-        itself always fits the window. It ends inside <main class="page-column">; Format-ToolboxShellClose closes it.
-        -Current is the Href of the tree node the page is, and -Trail the crumbs after Home, each @{ Label; Href },
+        itself always fits the window. It ends inside <main class="page-column">; Format-AdminShellClose closes it.
+        -Current is the Href of the navigation item the page is, and -Trail the crumbs after Home, each @{ Label; Href },
         the last one the page itself (no Href). -Bare leaves the toolbar out, as it leaves the h1 out elsewhere.
-        -InfoHtml and -HeadAside are markup the caller has escaped; every other value is escaped here.
+        -InfoHtml and -HeadAside are markup the caller has escaped; every other value is escaped here. -Nav is
+        Get-AdminNav's answer, passed in so a page builds it once.
     #>
     param([AllowEmptyString()][string]$Title = '', [AllowEmptyString()][string]$Current = '', [AllowEmptyCollection()][object[]]$Trail = @(),
-        [string]$HomeLabel = 'Tools', [string]$HubHref = '/', [switch]$Bare, [AllowEmptyString()][string]$InfoHtml = '', [AllowEmptyString()][string]$HeadAside = '', [switch]$NoColumn, [AllowNull()][object[]]$Tree = $null)
+        [string]$HomeLabel = 'Home', [string]$HubHref = '/', [switch]$Bare, [AllowEmptyString()][string]$InfoHtml = '', [AllowEmptyString()][string]$HeadAside = '', [switch]$NoColumn, [AllowNull()][object[]]$Nav = $null)
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.AppendLine('<div class="shell shell--no-aside">')
@@ -1302,22 +1351,29 @@ function Format-ToolboxShellOpen {
         else { [void]$sb.Append('<li>' + $sep + '<a href="' + (& $e $s.Href) + '">' + (& $e $s.Label) + '</a></li>') }
     }
     [void]$sb.AppendLine('</ol></nav><div class="shell__actions"></div></div>')
-    # The tree: the page that is open is marked; a node with children always shows them.
+    # The navigation (#3815): flat lists under section headings, the page that is open marked, Settings in the foot.
     $mark = { param($href) if ($href -eq $Current) { ' aria-current="page"' } else { '' } }
-    [void]$sb.Append('<nav class="shell__nav" aria-label="Main"><ul class="tree tb-tree-root">')
-    [void]$sb.Append('<li><a class="tree__item" href="' + (& $e $HubHref) + '"' + (& $mark $HubHref) + '><span class="tree__label">' + (& $e $HomeLabel) + '</span></a></li>')
-    if ($null -eq $Tree) { $Tree = @(Get-ToolboxTree) }
-    foreach ($n in @($Tree)) {
-        [void]$sb.Append('<li><a class="tree__item" href="' + (& $e $n.Href) + '"' + (& $mark $n.Href) + '><span class="tree__label">' + (& $e $n.Label) + '</span></a>')
-        $ch = @($n.Children | Where-Object { $_ })
-        if ($ch.Count) {
-            [void]$sb.Append('<ul>')
-            foreach ($c in $ch) { [void]$sb.Append('<li><a class="tree__item" href="' + (& $e $c.Href) + '"' + (& $mark $c.Href) + '><span class="tree__label">' + (& $e $c.Label) + '</span></a></li>') }
-            [void]$sb.Append('</ul>')
+    [void]$sb.Append('<nav class="shell__nav" aria-label="Main">')
+    if ($null -eq $Nav) { $Nav = @(Get-AdminNav) }
+    $si = 0
+    foreach ($s in @($Nav | Where-Object { $_ })) {
+        $si++
+        $items = @($s.Items | Where-Object { $_ -and $_.Label -and $_.Href })
+        if (-not $items.Count) { continue }
+        $headId = 'admin-nav-' + $si
+        if ($s.Foot) { [void]$sb.Append('<div class="shell__nav-foot">') }
+        if ($s.Heading) { [void]$sb.Append('<p class="pane-head" id="' + $headId + '">' + (& $e $s.Heading) + '</p><ul class="nav-list" aria-labelledby="' + $headId + '">') }
+        else { [void]$sb.Append('<ul class="nav-list">') }
+        foreach ($i in $items) {
+            # Home takes -HubHref and -HomeLabel, so a page served under another root still links its own home.
+            $href = if ($i.Href -eq '/') { $HubHref } else { $i.Href }
+            $label = if ($i.Href -eq '/') { $HomeLabel } else { $i.Label }
+            [void]$sb.Append('<li><a class="nav-item" href="' + (& $e $href) + '"' + (& $mark $href) + '><span class="nav-item__label">' + (& $e $label) + '</span></a></li>')
         }
-        [void]$sb.Append('</li>')
+        [void]$sb.Append('</ul>')
+        if ($s.Foot) { [void]$sb.Append('</div>') }
     }
-    [void]$sb.AppendLine('</ul></nav>')
+    [void]$sb.AppendLine('</nav>')
     [void]$sb.AppendLine('<div class="shell__main">')
     if (-not $Bare -and $Title) {
         [void]$sb.Append('<div class="toolbar"><h1>' + (& $e $Title) + '</h1>')
@@ -1332,23 +1388,23 @@ function Format-ToolboxShellOpen {
     return $sb.ToString()
 }
 
-function Format-ToolboxShellClose {
-    <# The end of a Toolbox page's shell (Format-ToolboxShellOpen): the page column (not under -NoColumn), the scroll pane, the main pane and the shell. #>
+function Format-AdminShellClose {
+    <# The end of an Admin page's shell (Format-AdminShellOpen): the page column (not under -NoColumn), the scroll pane, the main pane and the shell. #>
     param([switch]$NoColumn)
     if ($NoColumn) { return '</div></div></div>' }
     '</main></div></div></div>'
 }
 
-function Get-ToolboxCurrentHref {
+function Get-AdminCurrentHref {
     <#
-        Which tree node a Toolbox page is (Format-ToolboxShellOpen -Current): the node whose Label is the page's -Title,
-        anywhere in the tree (no two nodes share a label today); else the deepest parent crumb that is a node, so a page
-        below the tree (a lens, a run) marks the node it sits under. '' where none is. -Tree is Get-ToolboxTree's answer,
-        passed in so a page builds it once.
+        Which navigation item an Admin page is (Format-AdminShellOpen -Current): the item whose Label is the page's
+        -Title (no two items share a label); else the deepest parent crumb that is an item, so a page below the
+        navigation (Rules under Claude, a lens, a run) marks the item it sits under. '' where none is. -Nav is
+        Get-AdminNav's answer, passed in so a page builds it once.
     #>
-    param([AllowEmptyString()][string]$Title = '', [AllowEmptyCollection()][object[]]$ParentCrumbs = @(), [AllowNull()][object[]]$Tree = $null)
-    if ($null -eq $Tree) { $Tree = @(Get-ToolboxTree) }
-    $all = @($Tree | ForEach-Object { $_; @($_.Children) } | Where-Object { $_ })
+    param([AllowEmptyString()][string]$Title = '', [AllowEmptyCollection()][object[]]$ParentCrumbs = @(), [AllowNull()][object[]]$Nav = $null)
+    if ($null -eq $Nav) { $Nav = @(Get-AdminNav) }
+    $all = @($Nav | ForEach-Object { @($_.Items) } | Where-Object { $_ -and -not $_.External })
     $hit = @($all | Where-Object { $_.Label -eq $Title })[0]
     if ($hit) { return $hit.Href }
     $parents = @($ParentCrumbs | Where-Object { $_ })
@@ -1365,21 +1421,23 @@ function Format-RepoHomeHeadHtml {
         the caller's own <head> is where a description goes. No eyebrow: the h1 already names the repo. The general banner (#3250) opens it, above the
         site header. With -Brand the site header stands above the bar and there is no intro: <main> opens on the
         sections. The caller writes the <head> and '<body>' before it and the sections and </main> after it.
-        Under -BrandTag 'toolbox' all of that gives way to the desktop shell (#3811): this returns Format-ToolboxShellOpen
-        for the home page, -Brand, -Menu and -Lead are not drawn, and the caller closes it with Format-ToolboxShellClose.
+        Under -BrandTag 'admin' all of that gives way to the desktop shell (#3811): this returns Format-AdminShellOpen
+        for the home page, -Brand, -Menu and -Lead are not drawn, and the caller closes it with Format-AdminShellClose.
+        'toolbox', its name until #3815, is still read as 'admin' (ConvertTo-AdminBrandTag).
     #>
     param([Parameter(Mandatory = $true)][string]$RepoName, [Parameter(Mandatory = $true)][string]$Lead, [AllowEmptyString()][string]$Brand = '',
-        [AllowEmptyString()][string]$BrandTag = '', [string]$HomeLabel = 'Tools', [AllowNull()][object[]]$Menu = $null)
-    # The Toolbox's home stands in the desktop shell like every Toolbox page (#3811): Tools open in the tree, no toolbar,
-    # and the caller closes it with Format-ToolboxShellClose where it would close </main>.
-    if ($BrandTag -eq 'toolbox') { return (Format-ToolboxShellOpen -Current '/' -HomeLabel $HomeLabel -Bare) }
+        [AllowEmptyString()][string]$BrandTag = '', [string]$HomeLabel = 'Home', [AllowNull()][object[]]$Menu = $null)
+    $BrandTag = ConvertTo-AdminBrandTag $BrandTag
+    # Admin's home stands in the desktop shell like every Admin page (#3811): Home marked in the navigation, no
+    # toolbar, and the caller closes it with Format-AdminShellClose where it would close </main>.
+    if ($BrandTag -eq 'admin') { return (Format-AdminShellOpen -Current '/' -HomeLabel $HomeLabel -Bare) }
     $sb = New-Object System.Text.StringBuilder
-    # The general banner first, above the site header, as on every Toolbox page (owner, October 24, 2026); never on a
-    # product's home (-BrandTag 'product'), since the banner is the Toolbox's alone (Dave, November 4, 2026).
+    # The general banner first, above the site header, as on every Admin page (owner, October 24, 2026); never on a
+    # product's home (-BrandTag 'product'), since the banner is Admin's alone (Dave, November 4, 2026).
     if ($BrandTag -ne 'product') { [void]$sb.AppendLine((Format-RepoHubBanner)) }
     # -Brand: the house site header above the bar, as Format-GeneralPageHtml draws it, holding the settings button and,
-    # on a toolbox or wherever -Menu names one, the menu. The home page sits under none of its items.
-    if ($null -eq $Menu) { $Menu = if ($Brand -and $BrandTag -eq 'toolbox') { @(Get-HubMenu) } else { @() } }
+    # wherever -Menu names one, the menu. The home page sits under none of its items.
+    if ($null -eq $Menu) { $Menu = @() }
     if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href '/' -Tag $BrandTag -Menu $Menu)) }
     [void]$sb.AppendLine('<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>')
     [void]$sb.AppendLine('<li><span aria-current="page">' + (ConvertTo-GeneralPageText $HomeLabel) + '</span></li>')
@@ -1485,7 +1543,7 @@ function Get-HouseStyleDir {
 
 function Get-ReleaseNotesPageNeed {
     <#
-        Whether /release-notes has to build its page first (#3189): 'absent' where there is no page, 'stale'
+        Whether /dev/release-notes has to build its page first (#3189): 'absent' where there is no page, 'stale'
         where a release document under -ReleasesDir changed after it was built, else ''. The page is a
         gitignored snapshot that nothing else builds -- not a fresh clone, not a second machine, not a cut --
         so the server that links it is the one place that can keep it there and current.
@@ -1529,7 +1587,7 @@ function Resolve-ReleaseNotesRequest {
     <#
         Pure: what a request path asks of the release notes, or $null where it is not theirs.
 
-        '/release-notes' is the index (File = -IndexFile, Version = ''). '/release-notes/v2.39.0' is that
+        '/dev/release-notes' is the index (File = -IndexFile, Version = ''). '/dev/release-notes/v2.39.0' is that
         release's own page, in Get-ReleaseNotesPageDir; 'v2.39' is accepted for it too, because that is how
         the page shows the version. Only a version is ever joined onto a path, so a request cannot name a
         file outside that folder. A trailing slash is ignored.
@@ -1539,8 +1597,8 @@ function Resolve-ReleaseNotesRequest {
         [Parameter(Mandatory = $true)][string]$IndexFile
     )
     $p = if ($Path.Length -gt 1) { $Path.TrimEnd('/') } else { $Path }
-    if ($p -eq '/release-notes') { return @{ File = $IndexFile; Version = '' } }
-    $m = [regex]::Match($p, '^/release-notes/v(\d+\.\d+)(\.\d+)?$')
+    if ($p -eq '/dev/release-notes') { return @{ File = $IndexFile; Version = '' } }
+    $m = [regex]::Match($p, '^/dev/release-notes/v(\d+\.\d+)(\.\d+)?$')
     if (-not $m.Success) { return $null }
     $version = $m.Groups[1].Value + $(if ($m.Groups[2].Success) { $m.Groups[2].Value } else { '.0' })
     return @{ File = (Join-Path (Get-ReleaseNotesPageDir -IndexFile $IndexFile) "v$version.html"); Version = $version }
@@ -1948,8 +2006,8 @@ function Get-SessionStartSnapshotSections {
 function Get-SessionStartSections {
     <#
         Every section of the SessionStart page, in page order, each @{ Slug; Title; Sub; Value; Body }: a card on
-        '/sessionstart' (Title as its h2, Sub and Value as its two lines) and a page of its own on
-        '/sessionstart/<Slug>' (Body, in one card). Sub, Value and Body are markup, already escaped. The live
+        '/dev/sessionstart' (Title as its h2, Sub and Value as its two lines) and a page of its own on
+        '/dev/sessionstart/<Slug>' (Body, in one card). Sub, Value and Body are markup, already escaped. The live
         always-on documents come first; the snapshot's sections (Get-SessionStartSnapshotSections) follow.
     #>
     param($Model, $Snapshot = $null)
@@ -1995,7 +2053,7 @@ $script:SessionStartStyle = $script:DevBarStyle + "`n" +
 
 function Format-SessionStartPageHtml {
     <#
-        The SessionStart pages, shaped like the Stopwatch's (the owner, October 26, 2026): '/sessionstart' is bare,
+        The SessionStart pages, shaped like the Stopwatch's (the owner, October 26, 2026): '/dev/sessionstart' is bare,
         an h1 with one card per section (Get-SessionStartSections), three to a row, each linking the section's own
         page; -Section names that page by its slug, bare too, with the section in one card under its h1 and a crumb
         back to the overview. $null for a slug no section has, which the server answers with a 404. -Model is
@@ -2041,7 +2099,7 @@ function Format-SessionStartPageHtml {
         [void]$body.AppendLine('</section>')
         [void]$body.AppendLine('</div>')
         return Format-GeneralPageHtml -Title $s.Title -Style $script:SessionStartStyle -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName `
-            -ParentCrumbs (@(Get-HubGroupCrumbs -Href '/performance') + @(@{ Label = 'SessionStart'; Href = '/sessionstart' })) -FooterNote $footer
+            -ParentCrumbs (@(Get-HubGroupCrumbs -Href '/dev/performance') + @(@{ Label = 'SessionStart'; Href = '/dev/sessionstart' })) -FooterNote $footer
     }
 
     if ($alert) { [void]$body.AppendLine($alert) }
@@ -2051,13 +2109,13 @@ function Format-SessionStartPageHtml {
     [void]$body.AppendLine('<div><h1>SessionStart</h1></div>')
     [void]$body.AppendLine('<div class="grid-3 ss-cards">')
     foreach ($s in $sections) {
-        [void]$body.AppendLine((Format-HubCardLinkHtml -Href ('/sessionstart/' + $s.Slug) -Label $s.Title -SubHtml $s.Sub -ValueHtml ('<span class="num">' + $s.Value + '</span>') `
+        [void]$body.AppendLine((Format-HubCardLinkHtml -Href ('/dev/sessionstart/' + $s.Slug) -Label $s.Title -SubHtml $s.Sub -ValueHtml ('<span class="num">' + $s.Value + '</span>') `
             -Heading 2 -Id $s.Slug -Class 'ss-card'))
     }
     [void]$body.AppendLine('</div>')
     # Under the hub's Performance page, beside the Clock (the owner, October 30, 2026).
     return Format-GeneralPageHtml -Title 'SessionStart' -Style $script:SessionStartStyle -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName `
-        -ParentCrumbs @(Get-HubGroupCrumbs -Href '/performance') -FooterNote $footer
+        -ParentCrumbs @(Get-HubGroupCrumbs -Href '/dev/performance') -FooterNote $footer
 }
 
 function Format-ReleaseNotesEmptyPageHtml {
@@ -2101,7 +2159,7 @@ function Format-ReleaseNotesDevPage {
     <#
         The built release-notes page (#3108), as a dev server serves it: the house stylesheet and theme
         script, the breadcrumb bar and the settings button, put around the page build-release-notes-page.ps1
-        leaves in dkj-policy/releases/page/. -HubHref is where the "Home" crumb goes ('/', the toolbox's
+        leaves in dkj-policy/releases/page/. -HubHref is where the "Home" crumb goes ('/', Admin's
         own root, by default). -RepoName puts the site header above the bar (October 22, 2026).
 
         ONLY THIS COPY, NOT THE TEMPLATE. The template is dkj-policy's, shared with every consumer --
@@ -2142,7 +2200,7 @@ function Format-ReleaseNotesDevPage {
     $head = @(
         '<link rel="stylesheet" href="/house-style.css">'
         '<script src="/house-theme.js"></script>'
-        (Get-ToolboxWidthScript)
+        (Get-AdminWidthScript)
         '<style>'
         '/* The template''s layout, read as the Stopwatch page''s: main.page-column, a house h1, a .card, a .note. */'
         '.wrap { max-width: 1080px; display: grid; gap: var(--spacing-5); align-content: start; padding: var(--spacing-4) var(--spacing-4) var(--spacing-12); }'
@@ -2171,32 +2229,35 @@ function Format-ReleaseNotesDevPage {
         if ($label -notmatch '^Version [0-9.]+$') { $label = 'Release' }
         $Html = ([regex]'<a class="back" href="[^"]*">[^<]*</a>\s*').Replace($Html, '', 1)
     }
-    # Named for a repo the masthead opens with its h1 (#3423): the toolbox around it already names the site. Only here --
-    # the Worker's page has no toolbox around it, and there the eyebrow is the one line naming whose releases these are.
+    # Named for a repo the masthead opens with its h1 (#3423): Admin around it already names the site. Only here --
+    # the Worker's page has no Admin around it, and there the eyebrow is the one line naming whose releases these are.
     if ($RepoName) { $Html = ([regex]'<span class="eyebrow">[^<]*</span>\s*').Replace($Html, '', 1) }
     $Html = ConvertTo-ReleaseNotesHouseColors -Html $Html
+    # The template links its releases under the builder's own default, '/release-notes', which the Worker shares; on a
+    # dev server they sit under Admin's Development section since #3815, so its links are moved there on the way out.
+    $Html = $Html.Replace('href="/release-notes', 'href="' + (Get-AdminDevBase) + '/release-notes')
     $bodyEnd = $Html.LastIndexOf('</body>')
-    # A TOOLBOX'S release notes stand in the desktop shell (#3811), the template's own column inside its scroll pane,
+    # ADMIN'S release notes stand in the desktop shell (#3811), the template's own column inside its scroll pane,
     # where the shell puts the general banner.
     if ($RepoName) {
-        $trail = if ($Release) { @(@{ Label = 'Release notes'; Href = '/release-notes' }, @{ Label = $label; Href = '' }) } else { @(@{ Label = 'Release notes'; Href = '' }) }
-        $out = $Html.Substring(0, $bodyEnd) + (Format-ToolboxShellClose -NoColumn) + "`n" + (Format-FitAlarmHtml) + $Html.Substring($bodyEnd)
-        $open = Format-ToolboxShellOpen -Current '/release-notes' -Trail $trail -HubHref $HubHref -Bare -NoColumn
+        $trail = if ($Release) { @(@{ Label = 'Release notes'; Href = '/dev/release-notes' }, @{ Label = $label; Href = '' }) } else { @(@{ Label = 'Release notes'; Href = '' }) }
+        $out = $Html.Substring(0, $bodyEnd) + (Format-AdminShellClose -NoColumn) + "`n" + (Format-FitAlarmHtml) + $Html.Substring($bodyEnd)
+        $open = Format-AdminShellOpen -Current '/dev/release-notes' -Trail $trail -HubHref $HubHref -Bare -NoColumn
         $out = $bodyRx.Replace($out, { param($m) $m.Value + "`n" + $open }, 1)
         $styleEnd = $out.IndexOf('</style>') + '</style>'.Length
-        $out = $out.Substring(0, $styleEnd) + "`n" + $head + "`n<style>" + (Get-ToolboxShellStyle) + "</style>" + $out.Substring($styleEnd)
+        $out = $out.Substring(0, $styleEnd) + "`n" + $head + "`n<style>" + (Get-AdminShellStyle) + "</style>" + $out.Substring($styleEnd)
         return $htmlRx.Replace($out, ('<html lang="en" ' + (Format-GeneralPagesThemeAttributes) + ' data-width-default="full" data-theme-key="' + (& $e $ThemeKey) + '">'), 1)
     }
     # Unnamed: the breadcrumb bar, the floating settings button, and the general banner above them (#3297).
     $sep = Get-BreadcrumbSep
     $crumbs = if ($Release) {
-        @(('<li>' + $sep + '<a href="/release-notes">Release notes</a></li>'), ('<li>' + $sep + '<span aria-current="page">' + $label + '</span></li>'))
+        @(('<li>' + $sep + '<a href="/dev/release-notes">Release notes</a></li>'), ('<li>' + $sep + '<span aria-current="page">' + $label + '</span></li>'))
     } else {
         @('<li>' + $sep + '<span aria-current="page">Release notes</span></li>')
     }
     $bar = @(
         '<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>'
-        ('<li><a href="' + (& $e $HubHref) + '">Tools</a></li>')
+        ('<li><a href="' + (& $e $HubHref) + '">Home</a></li>')
         $crumbs
         '</ol></nav></div></div>'
     ) -join "`n"

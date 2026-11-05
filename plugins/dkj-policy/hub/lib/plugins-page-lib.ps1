@@ -12,7 +12,7 @@
     or an install folder gone from disk, is an error; a stale clone, a retired name or a verdict that could not
     be reached is a warning; up to date, or on the released version with unreleased commits in the clone, is
     fine. The overview is a card per plugin, problems first (Format-PluginsPageHtml), and each plugin has its own
-    page on /plugins/<name> (Format-PluginPageHtml), routed by Resolve-PluginsPageRequest.
+    page on /dev/plugins/<name> (Format-PluginPageHtml), routed by Resolve-PluginsPageRequest.
 
     Read-PluginsPageModel is the one function here that starts a process; the rest has no I/O, so every rule
     is tested without a server (dev-pages.tests.ps1). Every value that reaches the page is escaped. Pure ASCII
@@ -115,28 +115,28 @@ function Get-PluginRowStatus {
 
 function Resolve-PluginsPageRequest {
     <#
-        Which Plugins page -Path asks for: @{ Name = ''; Page = '' } for the overview on /plugins, @{ Name = '<plugin>';
-        Page = '' } for one plugin's page on /plugins/<plugin>, @{ Name = 'dkj-policy'; Page = 'dkj-brandbook' } for
+        Which Plugins page -Path asks for: @{ Name = ''; Page = '' } for the overview on /dev/plugins, @{ Name = '<plugin>';
+        Page = '' } for one plugin's page on /dev/plugins/<plugin>, @{ Name = 'dkj-policy'; Page = 'dkj-brandbook' } for
         the brand book's specimens under the plugin whose files they document (#3493; under dkj-solutions until
         #3629, which BWJ-Development never enables), or $null for a path that is none of these. Section is '' on the
-        specimens' overview and the section's slug on /plugins/dkj-policy/dkj-brandbook/<section>, one page per section
+        specimens' overview and the section's slug on /dev/plugins/dkj-policy/dkj-brandbook/<section>, one page per section
         (#3563); whether a section of that slug exists is the page's question. The page took the brand book's name
-        (#3704), as the product's had: both older addresses, /plugins/dkj-solutions/house-style[/<section>] and
-        /plugins/dkj-policy/house-style[/<section>], return @{ Redirect = '<the same page under dkj-brandbook>' }, so
+        (#3704), as the product's had: both older addresses, /dev/plugins/dkj-solutions/house-style[/<section>] and
+        /dev/plugins/dkj-policy/house-style[/<section>], return @{ Redirect = '<the same page under dkj-brandbook>' }, so
         a link to either still lands. The name is held to a plugin slug, so nothing else reaches a lookup; whether a plugin of that name is
         enabled is the page's question (a 404 when not).
     #>
     param([AllowEmptyString()][string]$Path = '')
-    if ($Path -eq '/plugins' -or $Path -eq '/plugins/') { return @{ Name = ''; Page = ''; Section = '' } }
-    if ($Path -cmatch '^/plugins/([a-z0-9][a-z0-9-]{0,63})/?$') { return @{ Name = $Matches[1]; Page = ''; Section = '' } }
-    if ($Path -cmatch '^/plugins/dkj-policy/dkj-brandbook(?:/([a-z][a-z-]{0,39}))?/?$') {
+    if ($Path -eq '/dev/plugins' -or $Path -eq '/dev/plugins/') { return @{ Name = ''; Page = ''; Section = '' } }
+    if ($Path -cmatch '^/dev/plugins/([a-z0-9][a-z0-9-]{0,63})/?$') { return @{ Name = $Matches[1]; Page = ''; Section = '' } }
+    if ($Path -cmatch '^/dev/plugins/dkj-policy/dkj-brandbook(?:/([a-z][a-z-]{0,39}))?/?$') {
         return @{ Name = 'dkj-policy'; Page = 'dkj-brandbook'; Section = [string]$Matches[1] }
     }
-    if ($Path -cmatch '^/plugins/(?:dkj-policy|dkj-solutions)/house-style(?:/([a-z][a-z-]{0,39}))?/?$') {
-        return @{ Redirect = '/plugins/dkj-policy/dkj-brandbook' + $(if ($Matches[1]) { '/' + $Matches[1] }) }
+    if ($Path -cmatch '^/dev/plugins/(?:dkj-policy|dkj-solutions)/house-style(?:/([a-z][a-z-]{0,39}))?/?$') {
+        return @{ Redirect = '/dev/plugins/dkj-policy/dkj-brandbook' + $(if ($Matches[1]) { '/' + $Matches[1] }) }
     }
     # One specialist, skill or hook the plugin ships, on a landing page of its own (Dave, November 3, 2026).
-    if ($Path -cmatch '^/plugins/([a-z0-9][a-z0-9-]{0,63})/(specialists|skills|hooks)/([a-z0-9][a-z0-9._-]{0,79})/?$') {
+    if ($Path -cmatch '^/dev/plugins/([a-z0-9][a-z0-9-]{0,63})/(specialists|skills|hooks)/([a-z0-9][a-z0-9._-]{0,79})/?$') {
         return @{ Name = $Matches[1]; Page = $Matches[2]; Section = $Matches[3] }
     }
     return $null
@@ -195,7 +195,7 @@ function Format-PluginsPageHtml {
         name, under two h2 sections -- dkj-marketplace's plugins, and MCP for every other marketplace's -- whose cards'
         names are h3s. Everything else -- the description, the command, the clone -- is on the plugin's page. -Model is
         ConvertFrom-PluginVersionsJson's; -ReadError is set when the script could not be found or run. -RepoName
-        names the repo; -HubHref is the Home crumb's target ('/', the root of the toolbox
+        names the repo; -HubHref is the Home crumb's target ('/', the root of Admin
         that serves the page).
     #>
     param(
@@ -233,7 +233,7 @@ function Format-PluginsPageHtml {
             $sub = (& $e $r.Status.Label) + ': ' + $(if ($r.Status.Level -ne 'ok') { & $e (Get-PluginProblemText $r) }
                    elseif ($r.InstVersion) { (& $e $r.InstVersion) + $(if ($r.InstScope) { ', ' + (& $e $r.InstScope) + ' scope' } else { '' }) }
                    else { & $e $r.InstText })
-            [void]$body.AppendLine((Format-HubCardLinkHtml -Href ('/plugins/' + $r.Name) -Label $r.Name -SubHtml $sub -BadgeHtml (Format-PluginBadgeHtml $r.Status.Level) -Heading 3))
+            [void]$body.AppendLine((Format-HubCardLinkHtml -Href ('/dev/plugins/' + $r.Name) -Label $r.Name -SubHtml $sub -BadgeHtml (Format-PluginBadgeHtml $r.Status.Level) -Heading 3))
         }
         [void]$body.AppendLine('</div>')
     }
@@ -244,7 +244,7 @@ function Format-PluginsPageHtml {
 
 function Format-PluginPageHtml {
     <#
-        One plugin's page on /plugins/<name>, under the Plugins crumb: its state, what is wrong and the command that
+        One plugin's page on /dev/plugins/<name>, under the Plugins crumb: its state, what is wrong and the command that
         closes it where plugin-versions names one, its description, and the facts -- installed here, the marketplace
         clone and that clone's HEAD. -Row is Find-PluginsPageRow's; -Model the whole model, for the clone. -Cards are
         the hub's own pages below this plugin, each @{ Href; Label; Sub; Icon }, linked as cards after what the plugin
@@ -294,7 +294,7 @@ function Format-PluginPageHtml {
     # #3629; named dkj-brandbook as on the product, #3704), then the hub's own pages about this plugin.
     $below = @()
     if ($Row.Name -ceq 'dkj-policy') {
-        $below += @{ Href = '/plugins/dkj-policy/dkj-brandbook'; Label = 'dkj-brandbook'; Sub = 'Every token, the twelve themes and every component, with their variants and states'; Icon = 'house-style' }
+        $below += @{ Href = '/dev/plugins/dkj-policy/dkj-brandbook'; Label = 'dkj-brandbook'; Sub = 'Every token, the twelve themes and every component, with their variants and states'; Icon = 'house-style' }
     }
     $below += @($Cards | Where-Object { $_ })
     if ($below.Count) {
@@ -304,7 +304,7 @@ function Format-PluginPageHtml {
     }
     # No lead: the crumbs and the Id fact already say which plugin and marketplace this is (the density rule).
     return Format-GeneralPageHtml -Title ([string]$Row.Name) -Body $body.ToString() -SiteName $RepoName -HubHref $HubHref `
-        -ParentCrumbs @(@{ Label = 'Installed plugins'; Href = '/plugins' }) -HeadAside $badge `
+        -ParentCrumbs @(@{ Label = 'Installed plugins'; Href = '/dev/plugins' }) -HeadAside $badge `
         -Style '.dp-about p { font-size: var(--text-base); }' `
         -Lead '' `
         -FooterNote 'Read on every request by <code>plugin-versions.ps1 -Json</code>, the plugin-versions skill''s own script.'
@@ -499,7 +499,7 @@ function Format-PluginContentsSectionsHtml {
     <#
         Pure: the Specialists, Hooks and Skills sections of a plugin's page (Dave, November 3, 2026), each an h2 in a
         .grid__head over the house card per item (Format-HubCardLinkHtml, its label an h3), opening
-        /plugins/<plugin>/<kind>/<slug>. A kind with no item is not drawn.
+        /dev/plugins/<plugin>/<kind>/<slug>. A kind with no item is not drawn.
     #>
     param([Parameter(Mandatory = $true)][string]$PluginName, [Parameter(Mandatory = $true)][hashtable]$Contents)
     $sb = New-Object System.Text.StringBuilder
@@ -514,7 +514,7 @@ function Format-PluginContentsSectionsHtml {
         [void]$sb.AppendLine('<div class="grid-3" id="plugin-' + $k.Key + '">')
         [void]$sb.AppendLine('<div class="grid__head"><h2>' + $k.Title + '</h2></div>')
         foreach ($it in $items) {
-            $href = '/plugins/' + $PluginName + '/' + $k.Key + '/' + $it.Slug
+            $href = '/dev/plugins/' + $PluginName + '/' + $k.Key + '/' + $it.Slug
             switch ($k.Key) {
                 'specialists' {
                     $label = (@($it.Name, $it.Emoji) | Where-Object { $_ }) -join ' '
@@ -559,7 +559,7 @@ function Format-PluginMarkdownCardHtml {
 
 function Format-PluginItemPageHtml {
     <#
-        The landing page of one specialist, skill or hook a plugin ships, on /plugins/<plugin>/<kind>/<slug> under the
+        The landing page of one specialist, skill or hook a plugin ships, on /dev/plugins/<plugin>/<kind>/<slug> under the
         Installed plugins and plugin crumbs (Dave, November 3, 2026): what it is and the facts about it as two cards side
         by side (the house density rule), then its own document in full -- a specialist's manual (or persona), a skill's
         SKILL.md -- or, for a hook, every event that runs it. -Kind is 'specialists', 'skills' or 'hooks'; -Contents is
@@ -595,7 +595,7 @@ function Format-PluginItemPageHtml {
             if ($it.Tools) { $facts += & $fact 'Tools' (& $e $it.Tools) }
             $lensName = 'specialist-' + $it.Id + '-lens'
             if ($RepoRoot -and (Test-Path -LiteralPath (Join-Path $RepoRoot ('.claude\specialists\lenses\' + $lensName + '.md')) -PathType Leaf)) {
-                $facts += & $fact 'Lens in this repo' ('<a href="/claude/specialists/lenses/' + $lensName + '">' + $lensName + '</a>')
+                $facts += & $fact 'Lens in this repo' ('<a href="/dev/claude/specialists/lenses/' + $lensName + '">' + $lensName + '</a>')
             }
             $facts += & $fact 'Source' ('<code>' + (& $e $it.DocLabel) + '</code>')
             $after = Format-PluginMarkdownCardHtml -Path $it.DocPath -Heading $(if ($it.DocLabel -like 'manuals/*') { 'Manual' } elseif ($it.DocLabel -like 'personas/*') { 'Persona' } else { 'Definition' })
@@ -628,7 +628,7 @@ function Format-PluginItemPageHtml {
         '#doc-body > * + :is(h2, h3) { margin-top: var(--spacing-6); }' + "`n" +
         '#doc-body li + li, #doc-body li > :is(ul, ol) { margin-top: var(--spacing-1); }'
     return Format-GeneralPageHtml -Title $title -Body $body.ToString() -SiteName $RepoName -HubHref $HubHref -Style $style `
-        -ParentCrumbs @(@{ Label = 'Installed plugins'; Href = '/plugins' }, @{ Label = $plugin; Href = '/plugins/' + $plugin }) -Lead $lead `
+        -ParentCrumbs @(@{ Label = 'Installed plugins'; Href = '/dev/plugins' }, @{ Label = $plugin; Href = '/dev/plugins/' + $plugin }) -Lead $lead `
         -FooterNote ('Read on every request from the ' + (& $e $plugin) + ' plugin''s own files.')
 }
 
@@ -660,7 +660,7 @@ function Split-HouseStyleSpecimens {
 
 function Get-HouseStyleSpecimensParts {
     <#
-        What a specimens page holds, without the page around it, so the toolbox and the source repo's product
+        What a specimens page holds, without the page around it, so Admin and the source repo's product
         (#3540) render the same page each in its own shell: @{ Title; Lead; Body; Section }, Section $true on a
         section's own page. -BasePath is where the overview lives, each section's card opening <BasePath>/<slug>.
         A -Section no section has returns $null. -Body and -ReadError as Format-HouseStyleSpecimensPageHtml takes them.
@@ -669,7 +669,7 @@ function Get-HouseStyleSpecimensParts {
         [AllowEmptyString()][string]$Body = '',
         [AllowEmptyString()][string]$ReadError = '',
         [AllowEmptyString()][string]$Section = '',
-        [string]$BasePath = '/plugins/dkj-policy/dkj-brandbook'
+        [string]$BasePath = '/dev/plugins/dkj-policy/dkj-brandbook'
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $split = if ($ReadError) { @{ Head = ''; Sections = @(); Tail = '' } } else { Split-HouseStyleSpecimens -Body $Body }
@@ -702,18 +702,18 @@ function Get-HouseStyleSpecimensParts {
 
 function Format-HouseStyleSpecimensPageHtml {
     <#
-        The brand book's specimens under /plugins/dkj-policy/dkj-brandbook (#3493, #3704): every token, theme and component
+        The brand book's specimens under /dev/plugins/dkj-policy/dkj-brandbook (#3493, #3704): every token, theme and component
         of the stylesheet, under the Plugins and dkj-policy crumbs, because the files they document sit in dkj-policy
-        (#3531) and every repo running its toolbox renders with them (#3629); the rule to start from them stays
+        (#3531) and every repo running its Admin renders with them (#3629); the rule to start from them stays
         dkj-solutions'. -Body is assets/dkj-brandbook/specimens.html
         from the same payload as house-style.css (Get-HouseStyleDir), a body fragment trusted as the plugin's own
         markup; -ReadError is why it could not be read, shown, escaped, in its place.
 
         A LONG PAGE BECOMES CARDS WITH A PAGE EACH (#3563): with no -Section the page is an overview, one card per
         section of the specimens naming how many specimens it holds, and each card opens
-        /plugins/dkj-policy/dkj-brandbook/<section>, that section alone. A -Section no section has returns $null,
+        /dev/plugins/dkj-policy/dkj-brandbook/<section>, that section alone. A -Section no section has returns $null,
         which the server answers with a 404. What the page holds is Get-HouseStyleSpecimensParts'; this is its
-        toolbox shell.
+        Admin shell.
     #>
     param(
         [AllowEmptyString()][string]$Body = '',
@@ -722,22 +722,22 @@ function Format-HouseStyleSpecimensPageHtml {
         [AllowEmptyString()][string]$Section = '',
         [string]$HubHref = '/'
     )
-    $base = '/plugins/dkj-policy/dkj-brandbook'
+    $base = '/dev/plugins/dkj-policy/dkj-brandbook'
     $parts = Get-HouseStyleSpecimensParts -Body $Body -ReadError $ReadError -Section $Section -BasePath $base
     if ($null -eq $parts) { return $null }
-    $crumbs = @(@{ Label = 'Installed plugins'; Href = '/plugins' }, @{ Label = 'dkj-policy'; Href = '/plugins/dkj-policy' })
+    $crumbs = @(@{ Label = 'Installed plugins'; Href = '/dev/plugins' }, @{ Label = 'dkj-policy'; Href = '/dev/plugins/dkj-policy' })
     if ($parts.Section) { $crumbs += @{ Label = 'dkj-brandbook'; Href = $base } }
     return Format-GeneralPageHtml -Title $parts.Title -Body $parts.Body -SiteName $RepoName -HubHref $HubHref `
         -ParentCrumbs $crumbs -Lead $parts.Lead `
-        -FooterNote 'The stylesheet and these specimens are <code>assets/dkj-brandbook/</code> in the dkj-policy plugin this toolbox runs from.'
+        -FooterNote 'The stylesheet and these specimens are <code>assets/dkj-brandbook/</code> in the dkj-policy plugin Admin runs from.'
 }
 
 function Resolve-HouseStyleProductUrl {
     <#
-        Where the toolbox sends its house-style pages instead of serving them (Maikel, October 31, 2026): in the
+        Where Admin sends its house-style pages instead of serving them (Maikel, October 31, 2026): in the
         house style's SOURCE repo, whose product shows them at /marketplace/dkj-policy/dkj-brandbook[/<section>]
         beside the plugin they belong to (named after the brand book since October 31, 2026, Maikel; the product
-        redirects the older house-style address a released toolbox still sends). -IsSource is whether this checkout holds the canonical
+        redirects the older house-style address a released Admin still sends). -IsSource is whether this checkout holds the canonical
         plugins/dkj-policy/assets/dkj-brandbook/specimens.html; -ProductUrl is the product the state file names.
         '' -- serve them here -- in every other repo, and where no plain loopback product is known.
     #>

@@ -340,8 +340,8 @@ Assert-True ($twinSlugs.Count -eq 2 -and $twinSlugs[0] -ne $twinSlugs[1] -and $t
 
 Write-Host '-- the page' -ForegroundColor Cyan
 $page = Format-StopwatchPageHtml -Model $m -StorePath 'C:\x\stopwatch.json' -Now (& $at 5065)
-Assert-True ($page -match 'aria-current="page">Stopwatch</span>' -and $page -match '<li><a href="/">Tools</a></li>') 'the page has the house shell and its crumb back to the hub'
-Assert-True ((Format-StopwatchPageHtml -Model $m -StorePath 's' -HubHref '/' -RepoName 'dkj-claude-plugins') -match '<li><a href="/">Tools</a></li>') 'a hub that answers Home itself passes its own -HubHref, as the source repo''s does (#3470)'
+Assert-True ($page -match 'aria-current="page">Stopwatch</span>' -and $page -match '<li><a href="/">Home</a></li>') 'the page has the house shell and its crumb back to the hub'
+Assert-True ((Format-StopwatchPageHtml -Model $m -StorePath 's' -HubHref '/' -RepoName 'dkj-claude-plugins') -match '<li><a href="/">Home</a></li>') 'a hub that answers Home itself passes its own -HubHref, as the source repo''s does (#3470)'
 Assert-True ($page -notmatch 'class="lead"|Runs recorded|id="now"|class="sw-clock') 'the overview is bare: no lead, tiles or Now section above the cards'
 Assert-True (([regex]::Matches($page, 'id="hub-banner"')).Count -eq 1 -and $page.IndexOf('id="hub-banner"') -lt $page.IndexOf('<h1>')) 'but it carries the airsquats banner once, above the first heading, as every hub page does (#3356)'
 Assert-True ($page.IndexOf('<h1>') -lt $page.IndexOf('card--link')) 'it opens on its heading, then the cards'
@@ -352,16 +352,16 @@ Assert-True ($page -match '<div><h1>Stopwatch</h1></div>\r?\n<div class="sw-grou
 Assert-True ($page -match 'querySelectorAll\("\[data-start\]"\)') 'the clock script ticks every [data-start] element, the card''s live time included'
 Assert-Equal 4 ([regex]::Matches($page, '<section class="card card--link sw-card">')).Count 'one card per prompt label, case-insensitively: the three CSS comment runs are one card (three labels with runs, plus the pinned Ship PR)'
 Assert-True ($page -match '<div class="sw-groups">\r?\n<div class="card-grid sw-grid[^"]*">' -and $page -notmatch 'class="grid-3' -and $page -match '\.sw-groups \{ display: grid; gap: var\(--spacing-7\); \}' -and $page -match '\.sw-grid \{ display: grid; grid-template-columns: repeat\(5, minmax\(0, 1fr\)\); gap: var\(--spacing-4\); \}' -and $page -notmatch 'max-width: 1400px') 'the cards stand five to a row, two and one only on a narrow screen, in grids of the page''s own with no top margin, spaced apart by their wrapper''s gap'
-Assert-True ($page -match '<section class="card card--link sw-card"><nav class="menu-list" aria-label="CSS comment"><a class="menu-item" href="/stopwatch/css-comment"><div class="menu-item__label"><h2>CSS comment</h2><span class="menu-item__sub">From the prompt <code>stopwatch: CSS comment</code> until Claude is back on the trunk, clean, with a commit of its own\.</span><span class="menu-item__value"><span class="sw-time num">4:10 <span class="sw-change sw-change--bad">-25%</span></span></span></div>') 'a label card holds an h2 with the label linking its page, when a run starts and stops, and its newest run''s time -- not the fastest, 3:20 -- with its change against the run before it: 25% slower than 3:20 (the owner, November 4, 2026)'
-Assert-True ($page -match 'href="/stopwatch/docs"><div class="menu-item__label"><h2>Docs</h2>[^\n]*<span class="sw-time num">8:20</span>') 'a label run once shows that run''s time'
-Assert-True ($page -match 'href="/stopwatch/docs">[^
+Assert-True ($page -match '<section class="card card--link sw-card"><nav class="menu-list" aria-label="CSS comment"><a class="menu-item" href="/dev/stopwatch/css-comment"><div class="menu-item__label"><h2>CSS comment</h2><span class="menu-item__sub">From the prompt <code>stopwatch: CSS comment</code> until Claude is back on the trunk, clean, with a commit of its own\.</span><span class="menu-item__value"><span class="sw-time num">4:10 <span class="sw-change sw-change--bad">-25%</span></span></span></div>') 'a label card holds an h2 with the label linking its page, when a run starts and stops, and its newest run''s time -- not the fastest, 3:20 -- with its change against the run before it: 25% slower than 3:20 (the owner, November 4, 2026)'
+Assert-True ($page -match 'href="/dev/stopwatch/docs"><div class="menu-item__label"><h2>Docs</h2>[^\n]*<span class="sw-time num">8:20</span>') 'a label run once shows that run''s time'
+Assert-True ($page -match 'href="/dev/stopwatch/docs">[^
 ]*<span class="sw-time num">8:20</span></span></div>') 'a label run once has no run before it, so no change beside its time'
 $again = ConvertTo-StopwatchModel -Runs @((& $mk 'Again' 0 100), (& $mk 'Again' 1000 1600), (& $mk 'Again' 5000 $null))
 $againPage = Format-StopwatchPageHtml -Model $again -StorePath 's' -Now (& $at 5065)
-Assert-True ($againPage -match 'href="/stopwatch/again"><div class="menu-item__label"><h2>Again</h2>[^
+Assert-True ($againPage -match 'href="/dev/stopwatch/again"><div class="menu-item__label"><h2>Again</h2>[^
 ]*<span class="sw-time num" data-start="[^"]+">1:05</span>') 'a label whose newest run is going shows that run''s live clock, not an earlier finished time'
-Assert-True ($page -match ('href="/stopwatch/live"><div class="menu-item__label"><h2>Live</h2><span class="menu-item__sub">[^\n]+</span><span class="menu-item__value"><span class="sw-time num" data-start="2026-10-23T11:23:20.000Z">1:05</span></span></div>')) 'a label whose only run is going carries its live clock'
-Assert-True ($page -notmatch ('href="/stopwatch/' + (& $stampAt 3000) + '"') -and $page -notmatch 'class="sw-stamp|newest') 'the overview links no run page and shows no run date: those are on the label''s page'
+Assert-True ($page -match ('href="/dev/stopwatch/live"><div class="menu-item__label"><h2>Live</h2><span class="menu-item__sub">[^\n]+</span><span class="menu-item__value"><span class="sw-time num" data-start="2026-10-23T11:23:20.000Z">1:05</span></span></div>')) 'a label whose only run is going carries its live clock'
+Assert-True ($page -notmatch ('href="/dev/stopwatch/' + (& $stampAt 3000) + '"') -and $page -notmatch 'class="sw-stamp|newest') 'the overview links no run page and shows no run date: those are on the label''s page'
 Assert-True ($page -match '<div class="card-grid sw-grid sw-grid--wide">' -and $page -match '\.sw-grid--wide \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}' -and $page.IndexOf('.sw-grid--wide {') -lt $page.IndexOf('@media (max-width: 1000px)')) 'the label cards stand three to a row at most, with the narrow-screen rules after it'
 Assert-Equal 'CSS comment' (Get-StopwatchShortTitle 'CSS comment, start to end') 'a short title ends at the first comma'
 Assert-Equal 'CSS comment change' (Get-StopwatchShortTitle 'CSS comment change (reconstructed)') 'or at the first parenthesis'
@@ -372,18 +372,18 @@ Assert-True ($rel -match 'until the release notes of the cut are committed\.') '
 Write-Host '-- the label page' -ForegroundColor Cyan
 $labs = (@(Get-StopwatchLabelSets -Model $m) | ForEach-Object { Format-StopwatchLabelPageHtml -Set $_ -StorePath 'C:\x\stopwatch.json' -Now (& $at 5065) }) -join "`n"
 $lab = Format-StopwatchLabelPageHtml -Set $cssLabel -StorePath 's'
-Assert-True ($lab -match '<li><a href="/">Tools</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/claude">Claude</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/performance">Performance</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/stopwatch">Stopwatch</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><span aria-current="page">CSS comment</span></li>') 'the trail reads Tools, Claude, Performance, Stopwatch (the Clock a section, no crumb) (linking /stopwatch), then the label'
+Assert-True ($lab -match '<li><a href="/">Home</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/dev/claude">Claude</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/dev/performance">Performance</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/dev/stopwatch">Stopwatch</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><span aria-current="page">CSS comment</span></li>') 'the trail reads Home, Claude, Performance, Stopwatch (the Clock a section, no crumb) (linking /stopwatch), then the label'
 Assert-True ($lab -notmatch 'class="lead"' -and ([regex]::Matches($lab, 'id="hub-banner"')).Count -eq 1 -and $lab.IndexOf('id="hub-banner"') -lt $lab.IndexOf('<h1>')) 'it is bare like the overview, and carries the banner once, above its heading'
 Assert-Equal 'CSS comment' (([regex]::Matches($lab, '<h1>([^<]+)</h1>') | ForEach-Object { $_.Groups[1].Value }) -join '|') 'it opens with an h1, the label, and has no other h1 (the owner, October 25, 2026: a page always begins with an h1)'
 Assert-True ($lab -notmatch '<h2>') 'and a label that is not pinned has no h2 under it'
 Assert-True (([regex]::Matches($lab, '<section class="card card--link sw-card sw-run">')).Count -eq 3 -and $lab.IndexOf('v3</span>') -lt $lab.IndexOf('v2</span>') -and $lab.IndexOf('v2</span>') -lt $lab.IndexOf('v1</span>')) 'it holds every run of the label, each a card, newest first'
 Assert-True ($lab -match '\.sw-grid \{ display: grid; grid-template-columns: repeat\(5,' -and $lab -match 'C:\\x\\stopwatch.json|<code>s</code>') 'the run cards stand in the page''s own five-column grid, and the footer names the store'
-Assert-True ($labs -match ('<section class="card card--link sw-card sw-run"><nav class="menu-list" aria-label="' + [regex]::Escape((& $sp 3000)) + '"><a class="menu-item" href="/stopwatch/css-comment/' + (& $stampAt 3000) + '"><span class="menu-item__label">' + [regex]::Escape((& $sp 3000)) + '<span class="menu-item__sub">CSS comment v3</span><span class="menu-item__value"><span class="sw-time num">4:10 <span class="sw-change sw-change--bad">-25%</span></span></span></span>')) 'a run card holds three lines: the run''s start, its label linking the run''s page under the label''s, and its time with its change in percent beside it'
+Assert-True ($labs -match ('<section class="card card--link sw-card sw-run"><nav class="menu-list" aria-label="' + [regex]::Escape((& $sp 3000)) + '"><a class="menu-item" href="/dev/stopwatch/css-comment/' + (& $stampAt 3000) + '"><span class="menu-item__label">' + [regex]::Escape((& $sp 3000)) + '<span class="menu-item__sub">CSS comment v3</span><span class="menu-item__value"><span class="sw-time num">4:10 <span class="sw-change sw-change--bad">-25%</span></span></span></span>')) 'a run card holds three lines: the run''s start, its label linking the run''s page under the label''s, and its time with its change in percent beside it'
 $longSet = @(Get-StopwatchLabelSets -Model (ConvertTo-StopwatchModel -Runs @((& $mk 'Hub lib comment, start to end' 0 10))))[0]
 $long = Format-StopwatchLabelPageHtml -Set $longSet -StorePath 's'
-Assert-True ($long -match '<h1>Hub lib comment</h1>' -and $long -match '<title>[^<]*Hub lib comment</title>' -and $long -match '<span aria-current="page">Hub lib comment</span>' -and $long -match ('href="/stopwatch/hub-lib-comment/[^"]+"><span class="menu-item__label">[^<]*<span class="menu-item__sub">Hub lib comment</span>') -and $long -notmatch '>Hub lib comment, start to end<') 'a label page names the label by its short title, in its heading, its title, its crumb and its run cards (the owner, October 25, 2026)'
+Assert-True ($long -match '<h1>Hub lib comment</h1>' -and $long -match '<title>[^<]*Hub lib comment</title>' -and $long -match '<span aria-current="page">Hub lib comment</span>' -and $long -match ('href="/dev/stopwatch/hub-lib-comment/[^"]+"><span class="menu-item__label">[^<]*<span class="menu-item__sub">Hub lib comment</span>') -and $long -notmatch '>Hub lib comment, start to end<') 'a label page names the label by its short title, in its heading, its title, its crumb and its run cards (the owner, October 25, 2026)'
 $longRun = Format-StopwatchRunPageHtml -Group $longSet.Groups[0] -StorePath 's' -LabelCrumb
-Assert-True ($longRun -notmatch '<p class="card__sub">Hub lib comment</p>' -and $longRun -match '<a href="/stopwatch/hub-lib-comment">Hub lib comment</a>') 'with -LabelCrumb a run page names its label by its short title in the crumb, and only there'
+Assert-True ($longRun -notmatch '<p class="card__sub">Hub lib comment</p>' -and $longRun -match '<a href="/dev/stopwatch/hub-lib-comment">Hub lib comment</a>') 'with -LabelCrumb a run page names its label by its short title in the crumb, and only there'
 Assert-True ($labs -match '<span class="sw-time num">3:20 <span class="sw-change sw-change--good">\+33%</span></span>') 'a faster run carries a plus and the percent of the run before'
 Assert-True ($labs -match ('<span class="menu-item__label">' + [regex]::Escape((& $sp 2000)) + '<span class="menu-item__sub">Docs</span><span class="menu-item__value"><span class="sw-time num">8:20</span></span>')) 'a label''s first run has no change beside its time'
 Assert-True ($labs -notmatch 'than the run before|first run' -and $page -notmatch 'than the run before|first run') 'a card carries no words for its change'
@@ -412,7 +412,7 @@ Assert-True ($none -match 'No run yet' -and ([regex]::Matches($none, 'card--link
 
 Write-Host '-- the pinned Ship PR label: a card and a page of its own, the steps on the page (the owner, October 25, 2026)' -ForegroundColor Cyan
 # Before its first run the label already has its card, linking its own page, and that page holds the steps.
-$pinnedCard = [regex]::Match($none, '<section class="card card--link sw-card"><nav class="menu-list" aria-label="Ship PR"><a class="menu-item" href="/stopwatch/ship-pr">.*?</section>')
+$pinnedCard = [regex]::Match($none, '<section class="card card--link sw-card"><nav class="menu-list" aria-label="Ship PR"><a class="menu-item" href="/dev/stopwatch/ship-pr">.*?</section>')
 Assert-True $pinnedCard.Success 'with no Ship PR run the overview still carries a Ship PR card, linking its own page'
 Assert-True ($pinnedCard.Value -match '<code>stopwatch: Ship PR</code>' -and $pinnedCard.Value -match '<span class="sw-time">No run yet</span>') 'it names the prompt and says no run has been made'
 Assert-True ($none -notmatch 'sw-steps">') 'the steps are not on the overview: a card is the way in'
@@ -443,7 +443,7 @@ $cssPage = Format-StopwatchLabelPageHtml -Set $cssLabel -StorePath 's'
 Assert-True ($cssPage -notmatch 'sw-steps">|How to time it|sw-prompt"|data-copy') 'a label that is not pinned has no steps and no prompt on its page'
 $flatNone = Format-StopwatchPageHtml -Model $noneModel -StorePath 's' -Flat
 # THE h1 NAMES THE PAGE ITS BREADCRUMB NAMES: it was a fixed "Measurements" on the Logbook and on an empty overview.
-$flatRun = Format-StopwatchPageHtml -Model (ConvertTo-StopwatchModel -Runs @((& $mk 'Docs' 0 10))) -StorePath 's' -Flat -Route '/logbook' -PageTitle 'Logbook'
+$flatRun = Format-StopwatchPageHtml -Model (ConvertTo-StopwatchModel -Runs @((& $mk 'Docs' 0 10))) -StorePath 's' -Flat -Route '/dev/logbook' -PageTitle 'Logbook'
 Assert-True ($flatRun -match '<div><h1>Logbook</h1></div>' -and $flatRun -notmatch 'Measurements') 'the flat overview''s h1 is its -PageTitle, as the Logbook passes it'
 Assert-True ($none -match '<div><h1>Stopwatch</h1></div>' -and $none -notmatch 'Measurements') 'and an empty overview is headed with its page title too'
 # EVERY PAGE BEGINS WITH AN h1 (the owner, October 25, 2026): the overview, a label's page with or without runs,
@@ -455,7 +455,7 @@ foreach ($pg in @(@{ N = 'the overview'; H = $page }, @{ N = 'an empty overview'
 Assert-True ($flatNone -notmatch 'Ship PR') 'the Logbook''s flat overview carries no pinned card'
 Assert-True ($none -match '\.sw-steps \{ [^}]*font-size: var\(--text-sm\); font-weight: var\(--font-weight-regular\); color: var\(--primary-muted\); \}') 'the steps take the instruction line''s house size, weight and colour'
 $evil = Format-StopwatchPageHtml -Model (ConvertTo-StopwatchModel -Runs @((& $mk '<script>x</script>' 0 10))) -StorePath 's'
-Assert-True ($evil -notmatch '<script>x</script>' -and $evil -match '&lt;script&gt;x&lt;/script&gt;' -and $evil -match 'href="/stopwatch/script-x-script"' -and (ConvertTo-StopwatchModel -Runs @((& $mk '<script>x</script>' 0 10))).Groups[0].LabelSlug -eq 'script-x-script') 'a label is escaped wherever it is shown, and its slugs are URL-safe'
+Assert-True ($evil -notmatch '<script>x</script>' -and $evil -match '&lt;script&gt;x&lt;/script&gt;' -and $evil -match 'href="/dev/stopwatch/script-x-script"' -and (ConvertTo-StopwatchModel -Runs @((& $mk '<script>x</script>' 0 10))).Groups[0].LabelSlug -eq 'script-x-script') 'a label is escaped wherever it is shown, and its slugs are URL-safe'
 $empty = Format-StopwatchPageHtml -Model (ConvertTo-StopwatchModel -Runs @()) -StorePath 's' -Shared
 Assert-True ($empty -match 'no other machine has shared a run yet' -and $empty -notmatch 'being fetched|location\.reload') 'with no sync under way an empty origin is stated, and the page does not reload'
 $unshared = Format-StopwatchPageHtml -Model (ConvertTo-StopwatchModel -Runs @()) -StorePath 's'
@@ -475,9 +475,9 @@ Assert-True ($broken -match 'could not be read') 'a store that does not read say
 Write-Host '-- the run page (#3323)' -ForegroundColor Cyan
 $lp = Format-StopwatchRunPageHtml -Group (Find-StopwatchGroup -Model $m -Slug (& $stampAt 3000)) -StorePath 's'
 Assert-True ($lp -match ('<h1>' + [regex]::Escape((& $sp 3000)) + '</h1><p class="card__sub">CSS comment</p>') -and ([regex]::Matches($lp, '<h1>')).Count -eq 1 -and ([regex]::Matches($lp, 'id="hub-banner"')).Count -eq 1 -and $lp.IndexOf('id="hub-banner"') -lt $lp.IndexOf('<h1>')) 'a run''s page is named by its start, its label beneath, and carries the banner once, above its heading (#3356)'
-Assert-True ($lp -match ('<li><a href="/">Tools</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/claude">Claude</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/performance">Performance</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/stopwatch">Stopwatch</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><span aria-current="page">' + [regex]::Escape((& $sp 3000)) + '</span></li>')) 'the trail reads Tools, Claude, Performance, Stopwatch (the Clock a section, no crumb) (linking /stopwatch), then the run''s start'
+Assert-True ($lp -match ('<li><a href="/">Home</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/dev/claude">Claude</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/dev/performance">Performance</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/dev/stopwatch">Stopwatch</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><span aria-current="page">' + [regex]::Escape((& $sp 3000)) + '</span></li>')) 'the trail reads Home, Claude, Performance, Stopwatch (the Clock a section, no crumb) (linking /stopwatch), then the run''s start'
 $lpLabel = Format-StopwatchRunPageHtml -Group (Find-StopwatchGroup -Model $m -Slug (& $stampAt 3000)) -StorePath 's' -LabelCrumb
-Assert-True ($lpLabel -match ('<a href="/stopwatch">Stopwatch</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/stopwatch/css-comment">CSS comment</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><span aria-current="page">' + [regex]::Escape((& $sp 3000)) + '</span></li>')) 'with -LabelCrumb the trail passes the run''s label page on the way to the run'
+Assert-True ($lpLabel -match ('<a href="/dev/stopwatch">Stopwatch</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/dev/stopwatch/css-comment">CSS comment</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><span aria-current="page">' + [regex]::Escape((& $sp 3000)) + '</span></li>')) 'with -LabelCrumb the trail passes the run''s label page on the way to the run'
 Assert-True ($lpLabel -match ('<h1>' + [regex]::Escape((& $sp 3000)) + '</h1></div>')) 'with -LabelCrumb the label is not said again beneath the heading'
 Assert-True ($lp -notmatch '<h3>Time<' -and $lp -match '<p class="note">No phases read for this run yet\.</p><p><strong>Total</strong> <span class="num">4:10</span> <span class="sw-change sw-change--bad">-25%</span></p>' -and $lp -notmatch 'slower|than the previous run') 'with no phases yet, its total and its change against the previous run of its label, a sign and a percent as on the label page, stand under the reason, not on a Time card of their own'
 Assert-True ($lp -notmatch '<h2>Runs</h2>' -and $lp -notmatch 'Against the run before' -and $lp -notmatch '3:20|5:00') 'it holds this run only: no Runs heading, no table, no other run''s time'
@@ -738,10 +738,10 @@ try {
 Write-Host '-- prepared labels: the overview and the label page' -ForegroundColor Cyan
 $prepM = ConvertTo-StopwatchModel -Runs @() -Prepared @(@{ Label = 'release cut'; PreparedAt = (& $at 0) })
 $prepPage = Format-StopwatchPageHtml -Model $prepM -StorePath 's' -HubHref '/hub' -RepoName 'r'
-Assert-True ($prepPage -match 'Ready, not started' -and $prepPage -match 'href="/stopwatch/release-cut"' -and $prepPage -match '<code>stopwatch: release cut</code>' -and $prepPage -notmatch 'data-start=') 'a prepared-only label has a "Ready, not started" card telling the prompt, and no clock'
+Assert-True ($prepPage -match 'Ready, not started' -and $prepPage -match 'href="/dev/stopwatch/release-cut"' -and $prepPage -match '<code>stopwatch: release cut</code>' -and $prepPage -notmatch 'data-start=') 'a prepared-only label has a "Ready, not started" card telling the prompt, and no clock'
 $withRun = ConvertTo-StopwatchModel -Runs @((& $mk 'Release cut' 0 100)) -Prepared @(@{ Label = 'release cut'; PreparedAt = (& $at 0) })
 $wrPage = Format-StopwatchPageHtml -Model $withRun -StorePath 's' -HubHref '/hub' -RepoName 'r'
-Assert-True ($wrPage -notmatch 'Ready, not started' -and $wrPage -match '<span class="sw-time num">1:40</span>' -and ([regex]::Matches($wrPage, 'href="/stopwatch/release-cut"')).Count -eq 1) 'a prepared label that already has runs shows its normal card, once'
+Assert-True ($wrPage -notmatch 'Ready, not started' -and $wrPage -match '<span class="sw-time num">1:40</span>' -and ([regex]::Matches($wrPage, 'href="/dev/stopwatch/release-cut"')).Count -eq 1) 'a prepared label that already has runs shows its normal card, once'
 $pSet = Find-StopwatchLabel -Model $prepM -Slug 'release-cut'
 Assert-True ($null -ne $pSet -and $pSet.Prepared) 'the label page of a prepared-only label resolves (not a 404)'
 $pLab = Format-StopwatchLabelPageHtml -Set $pSet -StorePath 's'
@@ -758,9 +758,9 @@ try {
     $rs = Join-Path $rdir 'stopwatch.json'
     Save-StopwatchStore -Path $rs -Runs @() -Prepared @(@{ Label = 'release cut'; PreparedAt = (& $at 0) })
     $ctx = New-HubTimingContext -RepoRoot $RepoRoot -RepoName 'r' -StopwatchPath $rs -LogbookPath (Join-Path $rdir 'logbook.json') -TranscriptDir (Join-Path $rdir 't')
-    $r1 = Resolve-HubTimingPage -Path '/stopwatch/release-cut' -Context $ctx
-    $r0 = Resolve-HubTimingPage -Path '/stopwatch' -Context $ctx
-    $r2 = Resolve-HubTimingPage -Path '/stopwatch/not-prepared' -Context $ctx
+    $r1 = Resolve-HubTimingPage -Path '/dev/stopwatch/release-cut' -Context $ctx
+    $r0 = Resolve-HubTimingPage -Path '/dev/stopwatch' -Context $ctx
+    $r2 = Resolve-HubTimingPage -Path '/dev/stopwatch/not-prepared' -Context $ctx
     Assert-True ($r1.Status -eq 200 -and $r0.Status -eq 200 -and $r0.Html -match 'Ready, not started' -and $r2.Status -eq 404) 'routed: the prepared label''s page is 200, the overview shows its card, an unknown slug is still 404'
 } finally {
     Remove-Item -LiteralPath $rdir -Recurse -Force -ErrorAction SilentlyContinue

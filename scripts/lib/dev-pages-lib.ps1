@@ -68,9 +68,9 @@ function Format-DevPageHtml {
 
 function Format-ProductSettingsHtml {
     <#
-        The product's Settings page on /settings (Maikel, November 4, 2026): the Toolbox's Settings page
+        The product's Settings page on /settings (Maikel, November 4, 2026): Admin's Settings page
         (Get-SettingsPageParts) in the product's own shell. The theme it sets is this origin's, so the product keeps its
-        own choice apart from the Toolbox's. No Width group: the product has one width, full, as the Toolbox has (Dave,
+        own choice apart from Admin's. No Width group: the product has one width, full, as Admin has (Dave,
         November 4, 2026), and another screen is judged in the Simple Browser's own device emulation.
     #>
     $parts = Get-SettingsPageParts
@@ -103,10 +103,10 @@ function Format-ProductHomeHtml {
     [void]$sb.AppendLine('<title>dkj-marketplace -- Home</title>')
     [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
     [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
-    # One width, full, as on the Toolbox (Dave, November 4, 2026): another screen is judged in the Simple Browser's own
+    # One width, full, as on Admin (Dave, November 4, 2026): another screen is judged in the Simple Browser's own
     # device emulation, so the product offers no width choice.
-    [void]$sb.AppendLine((Get-ToolboxWidthScript))
-    # The hub's own .ph-cards (Get-HubCardGridStyle), so these cards behave as the toolbox home's do (Maikel,
+    [void]$sb.AppendLine((Get-AdminWidthScript))
+    # The hub's own .ph-cards (Get-HubCardGridStyle), so these cards behave as Admin home's do (Maikel,
     # November 3, 2026).
     [void]$sb.AppendLine('<style>')
     [void]$sb.AppendLine((Get-HubCardGridStyle))
@@ -116,12 +116,12 @@ function Format-ProductHomeHtml {
     [void]$sb.Append((Format-RepoHomeHeadHtml -RepoName 'dkj-marketplace' -Brand 'dkj-marketplace' -BrandTag 'product' -HomeLabel 'Home' -Menu @(Get-ProductMenu) -Lead 'The source of the Claude Specialists plugins: the marketplace, its agent definitions, manuals and skills, and the scripts and gates that ship them.'))
     # Every page a card of its own, three to a row, with no heading above them (the house hub form, #3383): the
     # hub first, so the way back is where the eye starts, then this repo's own pages. On the page itself, in the
-    # toolbox home's .ph-cards rather than a .grid-3, whose surface frames an h2 over h3 cards (November 2, 2026).
+    # Admin home's .ph-cards rather than a .grid-3, whose surface frames an h2 over h3 cards (November 2, 2026).
     [void]$sb.AppendLine('<div class="ph-cards">')
     if ($HubUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
-        [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $HubUrl -Label 'Toolbox' -Sub 'The dkj-policy toolbox: GitHub, Issues, Release notes, the Test gate and every other general page' -Icon 'repository'))
+        [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $HubUrl -Label 'Admin' -Sub 'The dkj-policy Admin: its Development section holds GitHub, Issues, Release notes, the Test gate and every other general page' -Icon 'repository'))
     } else {
-        [void]$sb.AppendLine('<section class="card"><p role="status">The toolbox is not running. The dkj-policy dev-preview hook starts it at the next session start.</p></section>')
+        [void]$sb.AppendLine('<section class="card"><p role="status">Admin is not running. The dkj-policy dev-preview hook starts it at the next session start.</p></section>')
     }
     foreach ($p in @($Pages)) { [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon)) }
     [void]$sb.AppendLine('</div>')
@@ -516,12 +516,12 @@ function Get-ProductBrandbookTokenCards {
 function Resolve-ProductHouseStyleRedirect {
     <#
         Where the specimens' first product address now lives: /marketplace/dkj-policy/house-style[/<section>] until
-        the page took the brand book's name (Maikel, October 31, 2026), and the address a released toolbox still
+        the page took the brand book's name (Maikel, October 31, 2026), and the address a released Admin still
         sends them to. '' for any other path.
     #>
     param([AllowEmptyString()][string]$Path)
     # THE TOKENS SECTION HAS NO PAGE OF ITS OWN (Maikel, November 1, 2026): its groups each have one, and the overview
-    # opens on them, so /tokens -- under either name, and the address a released toolbox sends -- lands there.
+    # opens on them, so /tokens -- under either name, and the address a released Admin sends -- lands there.
     if ($Path -cmatch '^/marketplace/dkj-policy/(?:dkj-brandbook|house-style)/tokens/?\z') { return '/marketplace/dkj-policy/dkj-brandbook#tokens' }
     if ($Path -cnotmatch '^/marketplace/dkj-policy/house-style(?:/([a-z][a-z-]{0,39}))?/?\z') { return '' }
     return '/marketplace/dkj-policy/dkj-brandbook' + $(if ($Matches[1]) { '/' + $Matches[1] })
@@ -530,8 +530,8 @@ function Resolve-ProductHouseStyleRedirect {
 function Format-ProductHouseStylePageHtml {
     <#
         The house style's specimens in the product's shell, under Marketplace and dkj-policy, the plugin whose files
-        they document: the same page the toolbox shows on /plugins/dkj-policy/dkj-brandbook, from the plugin's
-        Get-HouseStyleSpecimensParts, which the toolbox in this repo now sends here. -Body is this checkout's
+        they document: the same page Admin shows on /plugins/dkj-policy/dkj-brandbook, from the plugin's
+        Get-HouseStyleSpecimensParts, which Admin in this repo now sends here. -Body is this checkout's
         plugins/dkj-policy/assets/dkj-brandbook/specimens.html, -ReadError why it could not be read. A -Section no
         section has returns $null, a 404.
 
@@ -713,7 +713,7 @@ function Format-MarketplacePluginsPageHtml {
     if ($ReadError) {
         [void]$body.AppendLine('<p class="msg--warn" role="alert">The plugins could not all be read: ' + (& $e $ReadError) + '.</p>')
     }
-    $footer = 'Read from this checkout''s <code>.claude-plugin/marketplace.json</code> and each plugin''s <code>.claude-plugin/plugin.json</code> on every request, so it is the tree, not the installed release; enabled or off is <code>.claude/settings.json</code>. What this checkout loads, and any problem with it, is on the toolbox''s Installed plugins page.'
+    $footer = 'Read from this checkout''s <code>.claude-plugin/marketplace.json</code> and each plugin''s <code>.claude-plugin/plugin.json</code> on every request, so it is the tree, not the installed release; enabled or off is <code>.claude/settings.json</code>. What this checkout loads, and any problem with it, is on Admin''s Installed plugins page.'
     # An off plugin's card is muted, never hidden.
     $style = '.pl-card--off { opacity: 0.7; }'
 

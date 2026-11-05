@@ -24,7 +24,7 @@ script's step 6 — see [Step 6 on its own](#step-6-on-its-own-repairing-bookkee
 
 **The script executes; the repo's own rule decides whether it may.** Under the shared rule a finished
 branch ships by default once the gates are green, and waits for the owner's explicit word only for
-work with a **visible result** (a frontend, styling, rendered output, a Toolbox page — no gate proves
+work with a **visible result** (a frontend, styling, rendered output, an Admin page — no gate proves
 that something *looks* right) or work that is **irreversible or outward-facing** (a release, a version
 bump, a tag, repo settings, publishing beyond the PR flow).
 

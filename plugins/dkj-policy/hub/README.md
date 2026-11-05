@@ -1,22 +1,33 @@
 # The hub — the dev-preview hook and the general pages server
 
-**On screen it is called Toolbox** (the owner, October 27, 2026): the session-start line, the site header's tag, a product's card, and the first crumb, which reads **Tools**. The code, the `/hub` route and this page keep the word *hub* for the mechanism.
+**On screen it is called Admin** ([#3815](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3815), November 5, 2026; **Toolbox** from October 27 until then): Admin is for managing and the product for using, after the Shopify Admin. The session-start line opens with `Admin:`, a product links it on an **Admin** card, and the first crumb reads **Home**. The code, the `/hub` route and this page keep the word *hub* for the mechanism.
+
+**Admin's side navigation is flat, under section headings, never a tree** (#3815, `Get-AdminNav`):
+
+| Section | What it holds |
+|---|---|
+| (no heading) | **Home**, the dashboard on `/`. A repo's domain objects would follow here at the top level, with no "Manage" wrapper, since everything in Admin is management; this plugin ships none yet. |
+| **Product** | **Storefront**, a link to the product this session started (the state file's `Product`); left out where the repo states none. Admin links to and manages the product, it is not the product. |
+| **Development** | The hub's own pages, under `/dev/...`: GitHub, Release notes, Claude, Installed plugins (`Get-HubMenu`). A group page such as Claude is one item, and its members are reached on it. |
+| (foot) | **Settings**, on `/settings`, pinned to the bottom. |
+
+**Every address from before #3815 redirects** (`Resolve-AdminLegacyPath`, a 301): `/test-gate/...`, `/claude/...`, `/plugins/...` and the rest go to `/dev` and the same path, the query kept, so links and bookmarks keep working. The `-BrandTag` a caller passes is `admin` now; `toolbox` is still read as `admin` for this release (`ConvertTo-AdminBrandTag`).
 
 **Every repo that runs `dkj-policy` gets a hub at session start**, served by the plugin, with the
 General pages linked from it: Issues, Release notes, SessionStart, Test gate, Stopwatch, Logbook
 (Test gate and those two since [#3470](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3470)) and Plugins
 (since [#3482](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3482)), and the **Claude** card. Issues and
 the Test gate are linked from the **GitHub** page instead, the Test gate beside the CI runs it measures (since
-November 2, 2026). The Performance card's `/performance` page (October 30, 2026) holds two sections since
+November 2, 2026). The Performance card's `/dev/performance` page (October 30, 2026) holds two sections since
 November 3, 2026 (Dave): **Clock**, an `h2` over the Stopwatch and Logbook `h3` cards, and **Context**, over
-SessionStart's. Clock had a `/clock` page of its own from October 27, and that address now moves to `/performance`. The `/claude`
+SessionStart's. Clock had a `/dev/clock` page of its own from October 27, and that address now moves to `/dev/performance`. The `/dev/claude`
 page (the `/ai` page, with Claude as its section, until Maikel made Claude its `h1` on November 2, 2026; an old `/ai`
 link is moved there) holds the Rules, Skills, Specialists and Performance cards (Performance there since
 November 2, 2026, because what it measures is what Claude's work costs; its route did not change), the Skills page a
 landing page with nothing on it yet, the Specialists page a Lenses section, a card per `.claude/specialists/lenses/specialist-NN-NN-lens.md` of the repo, each
-opening on `/claude/specialists/lenses/<name>` with the lens's text (Maikel, October 30, 2026; groups may nest, and a `Section`
+opening on `/dev/claude/specialists/lenses/<name>` with the lens's text (Maikel, October 30, 2026; groups may nest, and a `Section`
 group is a heading, `Get-HubGroups`), and the Rules page cards read from the repo the same way: a card per
-`.claude/rules/*.md` and nothing else, under no heading but the page's own, each opening on `/claude/rules/<name>`
+`.claude/rules/*.md` and nothing else, under no heading but the page's own, each opening on `/dev/claude/rules/<name>`
 with its text (Maikel, November 3, 2026; `Get-HubRulePages`, a `Bare` section). A rule file's card reads its
 `description:` frontmatter key, and the file's `# ` title where it has none. Claude Code reads only `paths:` there.
 That covers
@@ -35,7 +46,7 @@ hub (below).
 | The request rules the servers share | [`lib/loopback-server-lib.ps1`](lib/loopback-server-lib.ps1) |
 | The banner's airsquats state, and its sync with every other machine | [`lib/airsquats-lib.ps1`](lib/airsquats-lib.ps1), [`pages/sync-airsquats.ps1`](pages/sync-airsquats.ps1) |
 | The Test gate page | [`lib/test-gate-lib.ps1`](lib/test-gate-lib.ps1) |
-| The Plugins page, a card per enabled plugin, and each plugin's own page on `/plugins/<name>`, from `plugin-versions.ps1 -Json`, with a Specialists, Hooks and Skills section of what it ships, each item a landing page on `/plugins/<name>/<kind>/<slug>` | [`lib/plugins-page-lib.ps1`](lib/plugins-page-lib.ps1) |
+| The Plugins page, a card per enabled plugin, and each plugin's own page on `/dev/plugins/<name>`, from `plugin-versions.ps1 -Json`, with a Specialists, Hooks and Skills section of what it ships, each item a landing page on `/dev/plugins/<name>/<kind>/<slug>` | [`lib/plugins-page-lib.ps1`](lib/plugins-page-lib.ps1) |
 | The Stopwatch and the Logbook: their pages, their router, the hooks that time a run, and the Stopwatch's sync | [`lib/stopwatch-lib.ps1`](lib/stopwatch-lib.ps1), [`lib/logbook-lib.ps1`](lib/logbook-lib.ps1), [`lib/timing-pages.ps1`](lib/timing-pages.ps1), [`../hooks/stopwatch-hook.ps1`](../hooks/stopwatch-hook.ps1), [`../hooks/logbook-hook.ps1`](../hooks/logbook-hook.ps1), [`lib/stopwatch-sync-lib.ps1`](lib/stopwatch-sync-lib.ps1), [`pages/stopwatch-sync.ps1`](pages/stopwatch-sync.ps1), [`pages/stopwatch-hide.ps1`](pages/stopwatch-hide.ps1), the [`stopwatch-hide`](../skills/stopwatch-hide/SKILL.md) skill, [`pages/stopwatch-prepare.ps1`](pages/stopwatch-prepare.ps1) and the [`stopwatch-prepare`](../skills/stopwatch-prepare/SKILL.md) skill |
 
 These are plugin-only files, like [`../worker/`](../worker/): no root copy in the source repo mirrors
@@ -47,9 +58,9 @@ them. They are tested there by `dev-preview-sessionstart.tests.ps1`, `dev-pages.
 **The rule, in three parts** (Maikel, October 29, 2026,
 [#3643](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3643)):
 
-1. **Every repo that runs `dkj-policy` gets the Toolbox, with no exceptions.** The plugin serves it at
+1. **Every repo that runs `dkj-policy` gets Admin, with no exceptions.** The plugin serves it at
    session start whatever the repo states, and no repo can opt out of it or put its own server in its place.
-2. **The Toolbox renders in the brand book in every one of those repos, BWJ-Development's included.** It is
+2. **Admin renders in the brand book in every one of those repos, BWJ-Development's included.** It is
    this plugin's own tooling, not a repo's product, so it keeps one look wherever it runs, the way any tool's
    own screens do. Nothing in the repo can change that.
 3. **A repo's product port is the repo's own, and the brand book reaches it only in a DKJ-Solutions repo.**
@@ -80,14 +91,14 @@ server itself, on the first free port from **4890 to 4899**, so the hub and its 
 origin and one stored theme choice. A server a repo states in `Get-DevPreview` is its **product**: one
 link on that hub, not the hub itself.
 
-**The Toolbox has one screen; the product has every screen** (Maikel, November 4, 2026). The two ports are
+**Admin has one screen; the product has every screen** (Maikel, November 4, 2026). The two ports are
 read in different places, and that decides whether a page width is anybody's choice:
 
-- **The Toolbox is read in VS Code's Simple Browser**, so its screen is always about 16:9 and never a phone.
-  A width choice has nothing to decide there, so the Toolbox offers none: every Toolbox page pins the brand
-  book's width to `full` right after `house-theme.js` (`Get-ToolboxWidthScript`, which also overwrites a
+- **Admin is read in VS Code's Simple Browser**, so its screen is always about 16:9 and never a phone.
+  A width choice has nothing to decide there, so Admin offers none: every Admin page pins the brand
+  book's width to `full` right after `house-theme.js` (`Get-AdminWidthScript`, which also overwrites a
   Phone or Fluid stored while the choice was still offered), its Settings page has no Width group, and a
-  floating settings panel on one of its pages draws with `widths: false`. Design a Toolbox page for that one
+  floating settings panel on one of its pages draws with `widths: false`. Design an Admin page for that one
   screen.
 - **The product port is where a repo builds its app** (`dkj-recipes`, for one), read in the Simple Browser
   *and* on a phone. There the page must be responsive, and the brand book's width choice (Fluid, Phone,
@@ -102,7 +113,7 @@ page; an old link to `/about` is sent to `/`), and since #3383 a grid of card li
 which names the repo, and under the breadcrumb bar the home page carries one `.grid-3` of card links, with no heading above them:
 
 - the **product**, where the repo states a server: its link, or a card saying it is not running;
-- **GitHub**, with the GitHub logo, the page on `/repository` holding the facts (the GitHub repo where the `origin` remote is
+- **GitHub**, with the GitHub logo, the page on `/dev/repository` holding the facts (the GitHub repo where the `origin` remote is
   on github.com, the folder, the dev preview, where it is stated and who serves the hub) and a card for
   **Issues** and the **Test gate** and, on GitHub, for the pull requests and the CI runs;
 - the **General** pages but Issues and the Test gate, by bare path.
@@ -111,7 +122,7 @@ Under the grid, only where the repo states no `Get-DevPreview` at all, two **set
 and which port to route to VS Code's Simple Browser. A footer names the serving script.
 
 Both pages are built per request from the state file below, and the repo's name, its `origin` slug and the
-product url, the only values from outside, are HTML-escaped. The line the hook prints opens with `Toolbox:` (`Hub:` until the owner renamed the hub Toolbox, October 27, 2026), and a repo cannot
+product url, the only values from outside, are HTML-escaped. The line the hook prints opens with `Admin:` (`Hub:` until the owner renamed the hub Toolbox, October 27, 2026, and `Toolbox:` until #3815), and a repo cannot
 choose another word. A `Name` a repo still states in `Get-DevPreview` is ignored, so delete it at your next
 edit. "dev-preview" names the mechanism, which is why the hook's lines about its own setup (skipped) still
 open with it.
@@ -120,10 +131,10 @@ open with it.
 October 29, 2026). From #3245 to #3643 a repo could state `OwnHub = $true` in `Get-DevPreview`, and its own
 server was then the hub instead of this plugin's, with a nested `Product = @{ ... }` beside it from
 [#3283](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3283). Such a hub was the repo's own, so
-nothing held it to the brand book, and a BWJ-Development repo could leave the Toolbox's one look behind.
+nothing held it to the brand book, and a BWJ-Development repo could leave Admin's one look behind.
 Since #3540 every repo has a product port and #3464 had rolled this plugin's hub out to every DKJ repo, so
 the opt-out had no remaining use. **Both keys are ignored where a repo still states them**, the way `Name`
-has been since #3064: the repo's server is its product on this plugin's Toolbox, a `Product` beside it is
+has been since #3064: the repo's server is its product on this plugin's Admin, a `Product` beside it is
 never started, and in a DKJ-Solutions repo the line ends `-- config drift: delete Get-DevPreview's OwnHub,
 Product`. This repo was the last to use the opt-out, until #3540.
 
@@ -165,15 +176,15 @@ Product`. This repo was the last to use the opt-out, until #3540.
 
 | The repo | The line |
 |---|---|
-| states no `Get-DevPreview` (or one that answers nothing) | `Toolbox: http://localhost:4890/ (started) -- this repo states no Get-DevPreview yet; route localhost:4890 to simpleBrowser.open in .vscode/settings.json to open it in VS Code` |
-| states a server | `Toolbox: http://localhost:4890/ -- product: http://localhost:4321/dkj-recipes/ (started)`; `(already running)` where it is reused |
-| states a server that cannot start | `Toolbox: http://localhost:4890/ -- product not started: port 3000 taken by other processes: 3000 by dkj-lifehub (pid 19544)` |
+| states no `Get-DevPreview` (or one that answers nothing) | `Admin: http://localhost:4890/ (started) -- this repo states no Get-DevPreview yet; route localhost:4890 to simpleBrowser.open in .vscode/settings.json to open it in VS Code` |
+| states a server | `Admin: http://localhost:4890/ -- product: http://localhost:4321/dkj-recipes/ (started)`; `(already running)` where it is reused |
+| states a server that cannot start | `Admin: http://localhost:4890/ -- product not started: port 3000 taken by other processes: 3000 by dkj-lifehub (pid 19544)` |
 | and the holder's command line cannot be read | `... 3000 by pid 22588 (its command line cannot be read)` |
 | and the holder runs in another Windows logon session | `... 3000 by pid 22588 (another logon session, 29 -- its command line cannot be read; stop it in that session, or from an elevated shell: Stop-Process -Id 22588)` (#3401, #3569) |
 | states a server that binds and then quits | `... -- product: the server on port 3001 stopped right after it started listening -- see <log>`: a started server reads as `(started)` only once it is still listening two seconds after its first answer (#3404) |
 | `Requires` a `node_modules` older than the `package-lock.json` beside it | the product's clause ends `; 'node_modules' is older than its package-lock.json -- run npm install` where a package the lock pins is installed at another version, or not at all, according to npm's own `node_modules/.package-lock.json`. A lock that was only rewritten is not named (#3419), and the server is still started (#3404) |
 | still states a retired key (`Name`, `OwnHub`, `Product`), in a DKJ-Solutions repo | the line as for a server, ending `-- config drift: delete Get-DevPreview's OwnHub, Product`; the keys are not read (#3064, #3643) |
-| and the hub cannot start | `Toolbox: not started -- <why>`, then the product's clause where there is one |
+| and the hub cannot start | `Admin: not started -- <why>`, then the product's clause where there is one |
 
 The route hint appears only where the repo states no server and does not route the hub's port; with the
 route, the hub opens in VS Code by itself. Routing the port is done once in the repo's
@@ -257,31 +268,31 @@ names the checkout), started hidden and detached.
 **It serves no Brandbook, in any repo** ([#3475](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3475),
 the owner, October 25, 2026). From #3198 to #3475 a DKJ-Solutions repo's server served a fifth page, the
 Brandbook app's build from `dkj-solutions/assets/brandbook/`, under `/brandbook/`. The route went with #3475, and the app itself with #3493: no repo has a Brand book to
-show. The brand book's own specimens are a page under Plugins instead, on `/plugins/dkj-policy/dkj-brandbook`, its card named dkj-brandbook as the product's is (#3704),
-in every repo that runs the toolbox, BWJ-Development's included ([#3629](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3629));
-the older `/plugins/dkj-solutions/house-style` and `/plugins/dkj-policy/house-style` redirect there.
+show. The brand book's own specimens are a page under Plugins instead, on `/dev/plugins/dkj-policy/dkj-brandbook`, its card named dkj-brandbook as the product's is (#3704),
+in every repo that runs Admin, BWJ-Development's included ([#3629](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3629));
+the older `/dev/plugins/dkj-solutions/house-style` and `/dev/plugins/dkj-policy/house-style` redirect there.
 
 | Page | Reads, from the repo it was started in | When it is absent |
 |---|---|---|
 | `/`, `/index.html`, `/hub` | The state file below, on every request: the home page of this plugin's hub; `/about` and the retired `/artifacts` answer 303 to `/` (#3289, #3772). No repo's `/hub` redirects elsewhere any more (the `OwnHub` 303 went with #3643) | Always answers |
-| `/repository` | The state file and the `origin` remote: the hub's GitHub page, its facts and a card for Issues and, where the remote is on github.com, its pull requests and CI runs (#3383) | Always answers; with no github.com remote the facts carry no GitHub row and the page no GitHub cards |
-| `/issues` | `gh issue list`, three calls (the open issues, and those opened and closed in the last 28 days), for `--repo <owner/name>` taken from the `origin` remote when it is on github.com, else for the repo `gh` finds in the working directory; kept for five minutes | A `gh` that fails or is missing is a warning on the page |
-| `/release-notes` | `dkj-policy/releases/page/release-notes.html`, dressed in the brand book on the way out. Built first where it is absent or older than a file under `dkj-policy/releases`, by `build-release-notes-page.ps1` in a child process (bounded at 60 s), the repo's own copy else this plugin's: the page is a gitignored snapshot that nothing else builds (#3189) | A plain 404 text naming why it could not be built; where a rebuild fails, the older page is served |
-| `/sessionstart` | The always-on path, measured in a child process (bounded at 60 s) by `always-on-budget-lib.ps1`, the repo's own copy else this plugin's; kept for a minute | The reason it could not measure, on the page |
-| `/test-gate` | `scripts/tests/suite-durations.json`, grouped by `scripts/tests/suite-groups.json` where the repo keeps one, and each suite's own `.SYNOPSIS` (#3470) | The page says no test gate has been measured in this repo yet |
-| `/stopwatch`, `/stopwatch/<label>[/<run>]` | This repo's Stopwatch store on this machine, and the session transcripts for a run's phases (#3470; see the timing pages below) | An empty overview |
-| `/logbook`, `/logbook/<slug>` | This repo's Logbook store on this machine, and the session transcripts (#3470; see the timing pages below) | An empty overview |
+| `/dev/repository` | The state file and the `origin` remote: the hub's GitHub page, its facts and a card for Issues and, where the remote is on github.com, its pull requests and CI runs (#3383) | Always answers; with no github.com remote the facts carry no GitHub row and the page no GitHub cards |
+| `/dev/issues` | `gh issue list`, three calls (the open issues, and those opened and closed in the last 28 days), for `--repo <owner/name>` taken from the `origin` remote when it is on github.com, else for the repo `gh` finds in the working directory; kept for five minutes | A `gh` that fails or is missing is a warning on the page |
+| `/dev/release-notes` | `dkj-policy/releases/page/release-notes.html`, dressed in the brand book on the way out. Built first where it is absent or older than a file under `dkj-policy/releases`, by `build-release-notes-page.ps1` in a child process (bounded at 60 s), the repo's own copy else this plugin's: the page is a gitignored snapshot that nothing else builds (#3189) | A plain 404 text naming why it could not be built; where a rebuild fails, the older page is served |
+| `/dev/sessionstart` | The always-on path, measured in a child process (bounded at 60 s) by `always-on-budget-lib.ps1`, the repo's own copy else this plugin's; kept for a minute | The reason it could not measure, on the page |
+| `/dev/test-gate` | `scripts/tests/suite-durations.json`, grouped by `scripts/tests/suite-groups.json` where the repo keeps one, and each suite's own `.SYNOPSIS` (#3470) | The page says no test gate has been measured in this repo yet |
+| `/dev/stopwatch`, `/dev/stopwatch/<label>[/<run>]` | This repo's Stopwatch store on this machine, and the session transcripts for a run's phases (#3470; see the timing pages below) | An empty overview |
+| `/dev/logbook`, `/dev/logbook/<slug>` | This repo's Logbook store on this machine, and the session transcripts (#3470; see the timing pages below) | An empty overview |
 | `/api/airsquats` | The banner's state as JSON; `POST /api/airsquats/clear` ticks its box off, the one `POST` the server takes, served same-origin only (#3438). Below | A state that cannot be read is a 503, and the banner stays hidden |
 
-**Two things to know about what these pages read and who can read them.** `/sessionstart` and
-`/release-notes` run a child process that first dot-sources the repo's own `scripts/repo-config.ps1`, and
+**Two things to know about what these pages read and who can read them.** `/dev/sessionstart` and
+`/dev/release-notes` run a child process that first dot-sources the repo's own `scripts/repo-config.ps1`, and
 the repo's own `scripts/lib/always-on-budget-lib.ps1` or `scripts/release/build-release-notes-page.ps1`
 where it has one: the same trust the dev-preview hook already gives
 `scripts/repo-config.ps1`, so enable the plugin only in repos you own. And the pages are **unauthenticated on
 loopback**: any process on the machine can read them, so a private repo's issue titles are readable by
 every local process, not only by the browser of whoever started the session.
 
-Every page's first crumb is `/`, the toolbox's own root (Maikel, November 2, 2026). It was `/hub` while the
+Every page's first crumb is `/`, Admin's own root (Maikel, November 2, 2026). It was `/hub` while the
 source repo's product relayed these pages from its own origin with `Copy-LoopbackUpstream` (in
 [`lib/loopback-server-lib.ps1`](lib/loopback-server-lib.ps1),
 [#3168](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3168)), where `/` is the product's home.

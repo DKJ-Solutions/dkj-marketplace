@@ -14,7 +14,7 @@
     A SAME-SITE REQUEST IS NOT ALWAYS FOREIGN. Browsers do not count the port toward "site", so the hub
     on localhost:4876 and the general pages on localhost:4890 are the same site, and a user clicking the
     hub's General link sends Sec-Fetch-Site: same-site -- as does the 303 hop from the repo server's
-    /issues to the general server, and the Home crumb back. That is a top-level navigation, a GET the
+    /dev/issues to the general server, and the Home crumb back. That is a top-level navigation, a GET the
     user made, and it is served. What stays refused is cross-site always, and same-site for anything that
     is not a navigation (a fetch, an image, a form post): the loop is single-threaded, and a page on
     another port of this machine must not be able to keep it busy. A missing header (curl, an old browser)
