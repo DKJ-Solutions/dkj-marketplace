@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**2 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3824-admin-page-wording · 20261105-103236Z
+
+The constitution's visible-result bullet now names the page to open as an Admin page in both places, where one sentence still said Toolbox after the rename.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+The constitution's visible-result bullet says Admin page throughout
+
+Plugins: dkj-policy
+
+[PR #3825](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3825)
+
+---
 
 ### DEPLOY: docs/3819-visible-park-url · 20261105-101546Z
 
