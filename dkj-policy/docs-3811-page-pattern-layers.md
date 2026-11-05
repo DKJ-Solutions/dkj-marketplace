@@ -39,19 +39,40 @@
 
 ### PLAN
 
+Step 2 of #3811: assign the seven rules the desktop-shell review listed to a layer, by Dave's criterion
+of November 5 (managing goes to the Toolbox, using to the product). The hub's own move (its card overviews
+and fit alarm) is step 3 and is not on this branch.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] README "Two layers": the criterion, and a table assigning each rule (h1 size, breadcrumb bar, site header, card shapes, touch target, page width) to a layer
+- [x] README "Page patterns" and "Every page: the breadcrumb bar": say they are the product's, and where the shell's trail sits
+- [x] README "Components": reserve the shell's classes; scope the 44px target to the product and the core
+- [x] README "App components": correct where the part sits in `house-style.css`
+- [x] `house-style.css`: a `.sort` header in a `.table--dense` takes the row height as its hit area, not 44px
+- [x] `patterns/toolbox-shell.html`: mount the settings with `widths: false`, as the hub already does
 
 ### TEST
 
+- [ ] Lint and test gate green (open-pr)
+- [ ] Owner's look: a brand-book change is a visible result
+
 ### DEPLOY: docs/3811-page-pattern-layers
 
-**Score:**
+The brand book's README now says which of its rules belong to the Toolbox's desktop shell and which to the
+mobile-first product, by the task a feature serves rather than the device: the breadcrumb bar, the site
+header, the card overviews, the 44px target and the page width are the product's, while the page-name and
+one-`h1` rules hold in both. The shell's classes are reserved by name, and a sortable header in a dense table
+no longer reaches its hit area over the rows under it.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+An app building a management screen in the desktop shell now knows which brand-book rules it can drop (the
+bar, the cards, the 44px target) without breaking the house style, and which still hold.
+
+**Score:** 2
 
 #### Pull Request
 

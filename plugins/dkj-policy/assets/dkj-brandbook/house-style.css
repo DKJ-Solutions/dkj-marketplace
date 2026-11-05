@@ -670,6 +670,8 @@ p { margin: 0; }
 .table--dense { font-size: var(--text-sm); }
 .table--dense th, .table--dense td { height: var(--shell-row-h); padding: 0 var(--spacing-3); }
 .table--dense th { position: sticky; top: 0; z-index: 1; background: var(--bg-2); border-bottom: 1px solid var(--bg-4); }
+/* A sortable header's hit area is the row, not the 44px --tap: a mouse needs no more, and 44px would reach over the rows under it. */
+.table--dense th .sort::before { height: var(--shell-row-h, var(--spacing-7)); }
 .table--dense tbody tr:hover { background: var(--bg-2); }
 .table--dense tbody tr:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: -2px; }
 .table--dense tbody tr[aria-selected="true"] { background: var(--bg-3); }

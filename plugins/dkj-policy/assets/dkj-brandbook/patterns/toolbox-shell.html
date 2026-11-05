@@ -101,7 +101,7 @@
   </div>
 
   <script>
-    DKJTheme.settings(document.getElementById('settings'), { label: 'Preview settings', theme: 'Theme', reset: 'Reset theme', light: 'Light', dark: 'Dark', width: 'Width', fluid: 'Fluid', phone: 'Phone', full: 'Full' });
+    DKJTheme.settings(document.getElementById('settings'), { label: 'Preview settings', theme: 'Theme', reset: 'Reset theme', light: 'Light', dark: 'Dark', widths: false });
     document.querySelectorAll('.tree__item[aria-expanded]').forEach(function (b) {
       b.addEventListener('click', function () { b.setAttribute('aria-expanded', b.getAttribute('aria-expanded') === 'true' ? 'false' : 'true'); });
     });
