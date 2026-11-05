@@ -39,19 +39,41 @@
 
 ### PLAN
 
+#3834: Claude in Chrome cannot open an Admin page -- its navigations arrive `Sec-Fetch-Site: cross-site`,
+which `Test-LoopbackCrossSite` refused always. Serve a cross-site top-level GET navigation into a document,
+keep every other cross-site request refused, and have the 403 name the headers it judged, since the
+extension's exact headers were inferred and not measured.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Read-LoopbackRequest` reads `Sec-Fetch-Dest`; `Test-LoopbackCrossSite` serves `cross-site` only for
+      mode `navigate` + `GET` + dest `document`, so a frame stays refused (the pages send no
+      `frame-ancestors`) (`plugins/dkj-policy/hub/lib/loopback-server-lib.ps1`).
+- [x] `Format-LoopbackCrossSiteRefusal`: the 403 names the three headers, cut to token characters; both
+      servers use it (`serve-general-pages.ps1`, `scripts/dashboard/serve-consumer-dashboard.ps1`).
+- [x] The hub README's Fetch Metadata paragraph states the new rule and why it is safe.
+- [x] Asserts in `consumer-dashboard.tests.ps1` and `dev-preview-sessionstart.tests.ps1`: document served,
+      frame / POST / non-navigation / no-dest refused, the 403's sanitising.
 
 ### TEST
 
+- [x] Security review (Sebastian #23) on the diff, as the issue asks.
+- [~] Claude in Chrome opening an Admin page: not available to this session. The 403 now names the headers,
+      so a refusal that remains measures itself.
+
 ### DEPLOY: fix/3834-cross-site-top-level-get
 
-**Score:**
+The Admin and product servers now serve a cross-site top-level `GET` navigation into a document, so Claude
+in Chrome can open their pages. Every other cross-site request, a frame included, is still refused, and the
+403 names the `Sec-Fetch-*` headers it judged.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A session driving Chrome can open the Admin page it built and look at it before handing it to the owner.
+
+**Score:** 3
 
 #### Pull Request
 
