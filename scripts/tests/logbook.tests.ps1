@@ -135,7 +135,7 @@ $lm = ConvertTo-LogbookModel -Runs $runs -Now (& $at (1000 + 24 * 3600 + 500))
 Assert-Equal 'Side by side,First' (($lm.Groups | ForEach-Object { $_.Label }) -join ',') 'the Logbook hides an open run older than a day, an abandoned session, and keeps the finished ones'
 Assert-Equal 3 @((ConvertTo-LogbookModel -Runs $runs -Now (& $at 2100)).Groups).Count 'and shows every open run younger than that'
 $page = Format-LogbookPageHtml -Runs $runs -StorePath 'C:\x\logbook.json' -Now (& $at 2100)
-Assert-True ($page -match '<title>[^<]*Logbook' -and $page -match 'href="/dev/logbook/\d{4}-\d{2}-\d{2}-\d{4}"' -and $page -notmatch 'href="/dev/stopwatch') 'the overview is titled Logbook and links its runs under /logbook'
+Assert-True ($page -match '<title>[^<]*Logbook' -and $page -match 'href="/dev/logbook/\d{4}-\d{2}-\d{2}-\d{4}"' -and $page -notmatch 'href="/dev/stopwatch/') 'the overview is titled Logbook and links its runs under /logbook (a run link, not the navigation''s own Stopwatch item, #3817)'
 Assert-True ($page -match 'Parked &lt;for&gt; a look' -and $page -notmatch 'Parked <for>') 'a label is escaped'
 Assert-True ($page -notmatch 'first run|faster|slower|the run before' -and ([regex]::Matches($page, 'data-start=')).Count -eq 2) 'no change against a run before, and a live clock on each open run'
 Assert-True ($page -match 'not shared' -and $page -match 'logbook-hook\.ps1') 'its footer says the store is not shared and names the hook'
