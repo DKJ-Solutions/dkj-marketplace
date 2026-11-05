@@ -86,10 +86,8 @@ function Format-PluginRepoHubHtml {
     [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
     [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
     [void]$sb.AppendLine((Get-AdminWidthScript))
-    # The repo layer: names the house file does not define -- .ph-cards, the card links three to a row with no
-    # surface around them (stepping down where .grid-3 does), and .ph-code, for the code samples.
+    # The repo layer: names the house file does not define -- .ph-code, for the code samples.
     [void]$sb.AppendLine('<style>')
-    [void]$sb.AppendLine((Get-HubCardGridStyle))
     [void]$sb.AppendLine((Get-AdminShellStyle))
     [void]$sb.AppendLine('.ph-code { margin: var(--spacing-3) 0 0; padding: var(--spacing-3) var(--spacing-4); background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); overflow-x: auto; font-size: var(--text-xs); line-height: 1.6; }')
     [void]$sb.AppendLine('</style>')
@@ -100,25 +98,21 @@ function Format-PluginRepoHubHtml {
     # The site header on the home page too (October 22, 2026): it names the repo, so the page has no intro of its own.
     [void]$sb.Append((Format-RepoHomeHeadHtml -RepoName $n -Lead $lead -Brand (ConvertTo-SiteHeaderName -RepoName (ConvertTo-PluginRepoHubName $RepoName)) -BrandTag 'admin'))
 
-    # Every page a card of its own (#3383): the product first, then the Repository page, and the General pages but
-    # Issues (the Repository page's). Three to a row, but on the page itself: .ph-cards lays them out as .grid-3 does,
-    # without the .grid-3 surface, because a framed group with no heading above it groups nothing (the owner,
-    # November 2, 2026).
-    [void]$sb.AppendLine('<div class="ph-cards">')
-    if ($Mode -eq 'product') {
-        if ($product) {
-            [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $product -Label 'Product' -Sub ($product + ' -- the server this repo states in Get-DevPreview') -Icon 'product'))
-        } else {
-            [void]$sb.AppendLine('<section class="card"><p role="status">This repo''s own server is not running. The session-start line says why, and it is started again at the next session start.</p></section>')
-        }
+    # Every page a row of its own (#3830, Admin's form of #3383's cards): the product first, then the GitHub page, and
+    # the General pages but Issues (the GitHub page's), one .table--dense, which adds to the side navigation what it
+    # cannot carry -- each page's description.
+    $rows = @()
+    if ($Mode -eq 'product' -and -not $product) {
+        [void]$sb.AppendLine('<p class="msg--warn" role="status">This repo''s own server is not running. The session-start line says why, and it is started again at the next session start.</p>')
     }
-    [void]$sb.AppendLine((Format-HubCardLinkHtml -Href '/dev/repository' -Label 'GitHub' -Sub 'This repo''s facts, its open issues and its Test gate' -Icon 'github'))
+    if ($product) { $rows += @{ Href = $product; Label = 'Product'; Sub = ($product + ' -- the server this repo states in Get-DevPreview') } }
+    $rows += @{ Href = '/dev/repository'; Label = 'GitHub'; Sub = 'This repo''s facts, its open issues and its Test gate' }
     if ($general) {
-        foreach ($card in @(Format-HubPageCardsHtml -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }))) { [void]$sb.AppendLine($card) }
+        $rows += @(Get-HubPageCards -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }))
     } else {
-        [void]$sb.AppendLine('<section class="card ph-cards__full"><p role="status">The general pages server is not running. It starts at the next session start, and its pages are linked here from then on.</p></section>')
+        [void]$sb.AppendLine('<p class="msg--warn" role="status">The general pages server is not running. It starts at the next session start, and its pages are linked here from then on.</p>')
     }
-    [void]$sb.AppendLine('</div>')
+    [void]$sb.AppendLine((Format-AdminLinkTableHtml -Items $rows -NameHead 'Page'))
 
     # Where the repo states no product, the two setup cards stand under the grid, under one h2 of their own and
     # each titled with an h3 (#3175): they are instructions, not links, so they are no card in the grid.
@@ -191,22 +185,23 @@ function Format-PluginRepoRepositoryHtml {
     [void]$sb.AppendLine('<div><dt>Stated in</dt><dd>scripts/repo-config.ps1</dd></div>')
     [void]$sb.AppendLine('<div><dt>Admin served by</dt><dd>the dkj-policy plugin, on a port from 4890 to 4899</dd></div>')
     [void]$sb.AppendLine('</dl>')
-    [void]$sb.AppendLine('<div class="grid-3">')
+    # Its pages as one .table--dense (#3830, Admin's form of the cards they were).
+    $rows = @()
     if ($PagesUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
         # Every general page marked GitHub, in their order, which the home page leaves out: Issues, and the Test gate
         # before the Actions whose runs it measures (the owner, November 2, 2026). Issues keeps the sub it had here.
         foreach ($p in @(Get-GeneralPages | Where-Object { $_.GitHub })) {
             $sub = if ($p.Href -eq '/dev/issues') { 'The open issues, grouped by what they wait on' } else { $p.Sub }
-            [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $sub -Icon $p.Icon))
+            $rows += @{ Href = $p.Href; Label = $p.Label; Sub = $sub }
         }
     } else {
-        [void]$sb.AppendLine('<section class="card"><p role="status">Issues and the Test gate are general pages, and the general pages server is not running. It starts at the next session start.</p></section>')
+        [void]$sb.AppendLine('<p class="msg--warn" role="status">Issues and the Test gate are general pages, and the general pages server is not running. It starts at the next session start.</p>')
     }
     if ($gh) {
-        [void]$sb.AppendLine((Format-HubCardLinkHtml -Href "$gh/pulls" -Label 'Pull requests' -Sub 'On GitHub' -Icon 'pull-request'))
-        [void]$sb.AppendLine((Format-HubCardLinkHtml -Href "$gh/actions" -Label 'Actions' -Sub 'The CI runs, on GitHub' -Icon 'actions'))
+        $rows += @{ Href = "$gh/pulls"; Label = 'Pull requests'; Sub = 'On GitHub' }
+        $rows += @{ Href = "$gh/actions"; Label = 'Actions'; Sub = 'The CI runs, on GitHub' }
     }
-    [void]$sb.AppendLine('</div>')
+    [void]$sb.AppendLine((Format-AdminLinkTableHtml -Items $rows -NameHead 'Page'))
     return Format-GeneralPageHtml -Title 'GitHub' -SiteName $name -Body $sb.ToString() `
         -Lead 'The repo Admin serves here: its facts, its open issues and its pull requests.' `
         -FooterNote 'The facts are what the hub knows about this folder; Issues is read with <code>gh</code>.'

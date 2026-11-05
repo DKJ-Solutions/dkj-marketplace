@@ -226,16 +226,15 @@ function Format-PluginsPageHtml {
         @{ Id = 'mcp'; Title = 'MCP'; Rows = @($rows | Where-Object { $_.Marketplace -cne 'dkj-marketplace' }) }
     )
     foreach ($section in @($sections | Where-Object { $_.Rows.Count })) {
-        [void]$body.AppendLine('<div class="grid-3" id="plugins-' + $section.Id + '">')
-        [void]$body.AppendLine('<div class="grid__head"><h2>' + (& $e $section.Title) + '</h2></div>')
-        foreach ($r in $section.Rows) {
+        # Admin's form (#3830): a .table--dense per section under its h2, one row per plugin.
+        $items = foreach ($r in $section.Rows) {
             # The sub line says the status in words, since the badge is only its mark.
             $sub = (& $e $r.Status.Label) + ': ' + $(if ($r.Status.Level -ne 'ok') { & $e (Get-PluginProblemText $r) }
                    elseif ($r.InstVersion) { (& $e $r.InstVersion) + $(if ($r.InstScope) { ', ' + (& $e $r.InstScope) + ' scope' } else { '' }) }
                    else { & $e $r.InstText })
-            [void]$body.AppendLine((Format-HubCardLinkHtml -Href ('/dev/plugins/' + $r.Name) -Label $r.Name -SubHtml $sub -BadgeHtml (Format-PluginBadgeHtml $r.Status.Level) -Heading 3))
+            @{ Href = ('/dev/plugins/' + $r.Name); Label = $r.Name; SubHtml = $sub; BadgeHtml = (Format-PluginBadgeHtml $r.Status.Level) }
         }
-        [void]$body.AppendLine('</div>')
+        [void]$body.AppendLine((Format-AdminLinkTableHtml -Items @($items) -Heading $section.Title -Id ('plugins-' + $section.Id) -NameHead 'Plugin' -SubHead 'Status'))
     }
     return Format-GeneralPageHtml -Title 'Installed plugins' -Body $body.ToString() -SiteName $RepoName -HubHref $HubHref `
         -Lead '' `
@@ -297,11 +296,7 @@ function Format-PluginPageHtml {
         $below += @{ Href = '/dev/plugins/dkj-policy/dkj-brandbook'; Label = 'dkj-brandbook'; Sub = 'Every token, the twelve themes and every component, with their variants and states'; Icon = 'house-style' }
     }
     $below += @($Cards | Where-Object { $_ })
-    if ($below.Count) {
-        [void]$body.AppendLine('<div class="grid-3">')
-        foreach ($c in $below) { [void]$body.AppendLine((Format-HubCardLinkHtml -Href $c.Href -Label $c.Label -Sub $c.Sub -Icon $c.Icon)) }
-        [void]$body.AppendLine('</div>')
-    }
+    if ($below.Count) { [void]$body.AppendLine((Format-AdminLinkTableHtml -Items $below -NameHead 'Page')) }
     # No lead: the crumbs and the Id fact already say which plugin and marketplace this is (the density rule).
     return Format-GeneralPageHtml -Title ([string]$Row.Name) -Body $body.ToString() -SiteName $RepoName -HubHref $HubHref `
         -ParentCrumbs @(@{ Label = 'Installed plugins'; Href = '/dev/plugins' }) -HeadAside $badge `
@@ -511,24 +506,19 @@ function Format-PluginContentsSectionsHtml {
     foreach ($k in $kinds) {
         $items = @($k.Items | Where-Object { $_ })
         if (-not $items.Count) { continue }
-        [void]$sb.AppendLine('<div class="grid-3" id="plugin-' + $k.Key + '">')
-        [void]$sb.AppendLine('<div class="grid__head"><h2>' + $k.Title + '</h2></div>')
-        foreach ($it in $items) {
+        # Admin's form (#3830): a .table--dense per kind under its h2, one row per item.
+        $rows = foreach ($it in $items) {
             $href = '/dev/plugins/' + $PluginName + '/' + $k.Key + '/' + $it.Slug
             switch ($k.Key) {
                 'specialists' {
-                    $label = (@($it.Name, $it.Emoji) | Where-Object { $_ }) -join ' '
-                    $sub = (@($it.Title, $(if ($it.Kind -eq 'persona') { 'main loop' })) | Where-Object { $_ }) -join ' - '
-                    [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $href -Label $label -Sub $sub -Icon 'specialists' -Heading 3))
+                    @{ Href = $href; Label = ((@($it.Name, $it.Emoji) | Where-Object { $_ }) -join ' ')
+                       Sub = ((@($it.Title, $(if ($it.Kind -eq 'persona') { 'main loop' })) | Where-Object { $_ }) -join ' - ') }
                 }
-                'hooks' {
-                    $sub = (@($it.Runs | ForEach-Object { $_.Event } | Select-Object -Unique) -join ', ')
-                    [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $href -Label $it.Name -Sub $sub -Icon $(if ($sub -match 'SessionStart') { 'sessionstart' } else { 'rules' }) -Heading 3))
-                }
-                'skills' { [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $href -Label $it.Name -Sub ($PluginName + ':' + $it.Name) -Icon 'skills' -Heading 3)) }
+                'hooks' { @{ Href = $href; Label = $it.Name; Sub = (@($it.Runs | ForEach-Object { $_.Event } | Select-Object -Unique) -join ', ') } }
+                'skills' { @{ Href = $href; Label = $it.Name; Sub = ($PluginName + ':' + $it.Name) } }
             }
         }
-        [void]$sb.AppendLine('</div>')
+        [void]$sb.AppendLine((Format-AdminLinkTableHtml -Items @($rows) -Heading $k.Title -Id ('plugin-' + $k.Key) -NameHead $(if ($k.Key -eq 'specialists') { 'Specialist' } else { $k.Title.TrimEnd('s') })))
     }
     return $sb.ToString()
 }
@@ -669,7 +659,8 @@ function Get-HouseStyleSpecimensParts {
         [AllowEmptyString()][string]$Body = '',
         [AllowEmptyString()][string]$ReadError = '',
         [AllowEmptyString()][string]$Section = '',
-        [string]$BasePath = '/dev/plugins/dkj-policy/dkj-brandbook'
+        [string]$BasePath = '/dev/plugins/dkj-policy/dkj-brandbook',
+        [switch]$Cards
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $split = if ($ReadError) { @{ Head = ''; Sections = @(); Tail = '' } } else { Split-HouseStyleSpecimens -Body $Body }
@@ -687,14 +678,20 @@ function Get-HouseStyleSpecimensParts {
         [void]$out.AppendLine('<section class="card"><p class="msg--warn" role="status">The specimens could not be read: ' + (& $e $ReadError) + '</p></section>')
     } elseif (-not @($split.Sections).Count) {
         [void]$out.AppendLine('<section class="card"><p class="msg--warn" role="status">The specimens were read, but no section was found in them.</p></section>')
-    } else {
+    } elseif ($Cards) {
+        # -Cards: the product's form, a card per section in a .grid-3 (the product's brand book page).
         [void]$out.AppendLine('<div class="grid-3">')
         foreach ($s in $split.Sections) {
-            # The house's one card (Format-HubCardLinkHtml, the README's "The card"), never a hand-written variant.
             $count = if ($s.Cards -eq 1) { '1 specimen' } else { [string]$s.Cards + ' specimens' }
             [void]$out.AppendLine((Format-HubCardLinkHtml -Href ($BasePath + '/' + $s.Slug) -Label $s.Title -Sub $count))
         }
         [void]$out.AppendLine('</div>')
+    } else {
+        # Admin's form (#3830): one .table--dense, a row per section of the specimens.
+        $rows = foreach ($s in $split.Sections) {
+            @{ Href = ($BasePath + '/' + $s.Slug); Label = $s.Title; Sub = $(if ($s.Cards -eq 1) { '1 specimen' } else { [string]$s.Cards + ' specimens' }) }
+        }
+        [void]$out.AppendLine((Format-AdminLinkTableHtml -Items @($rows) -NameHead 'Section' -SubHead 'Specimens'))
     }
     return @{ Title = 'dkj-brandbook'; Body = $out.ToString(); Section = $false
               Lead = 'Every token, the twelve themes and every component of the DKJ-Solutions brand book, with their variants and states.' }
