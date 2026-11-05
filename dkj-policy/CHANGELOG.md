@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**3 / 3 minor entries** <!-- pending-tally -->
+**4 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3834-cross-site-top-level-get · 20261105-143153Z
+
+The Admin and product servers now serve a cross-site top-level `GET` navigation into a document, so Claude
+in Chrome can open their pages. Every other cross-site request, a frame included, is still refused, and the
+403 names the `Sec-Fetch-*` headers it judged.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A session driving Chrome can open the Admin page it built and look at it before handing it to the owner.
+
+**Score:** 3
+
+#### Pull Request
+
+Admin serves a cross-site top-level GET navigation, so Claude in Chrome can open it
+
+Plugins: dkj-policy
+
+[PR #3836](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3836)
+
+---
 
 ### DEPLOY: fix/3829-reviews-resolve-look-step · 20261105-141408Z
 
