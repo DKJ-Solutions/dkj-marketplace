@@ -413,10 +413,16 @@ function Format-RepoHubBanner {
         counts only where a server sees it begin and one missed that way cannot be recovered. The countdown is the
         page's own and would otherwise keep ticking towards nothing. The first answer clears it. A server that
         answers without the API is not offline, so it still shows no banner.
+
+        AND IT CAN BE CLOSED WITHOUT TICKING THE BOX (#3820): a ghost icon button at the end of the row sinks the
+        toast without clearing anything on the server. It stays down until something new happens -- another hour
+        owed, or the hub going offline again after it came back -- because the count it was closed on is kept in
+        sessionStorage, a per-tab convenience, so moving between Admin pages does not bring it back. The count
+        owed is still the server's alone.
     #>
     return @'
 <div class="notice" id="hub-banner" role="region" aria-label="Airsquats" style="position: fixed; left: var(--spacing-4); bottom: var(--spacing-4); z-index: 20; margin: 0; max-width: calc(100vw - 2 * var(--spacing-4)); box-shadow: var(--shadow-pop)" hidden>
-<p>Next airsquats in <strong class="num" data-hub-timer>--:--</strong><span class="msg--warn" data-hub-due hidden> &middot; <label><input type="checkbox" data-hub-done> <span data-hub-count>10</span> due</label></span><span class="msg--warn" data-hub-offline hidden> &middot; hub offline, this hour is not counted</span><span data-hub-owner hidden title="The Windows account Admin runs under"> &middot; <span data-hub-account></span></span></p>
+<p>Next airsquats in <strong class="num" data-hub-timer>--:--</strong><span class="msg--warn" data-hub-due hidden> &middot; <label><input type="checkbox" data-hub-done> <span data-hub-count>10</span> due</label></span><span class="msg--warn" data-hub-offline hidden> &middot; hub offline, this hour is not counted</span><span data-hub-owner hidden title="The Windows account Admin runs under"> &middot; <span data-hub-account></span></span><button type="button" class="icon-btn icon-btn--ghost" data-hub-close aria-label="Close" title="Close" style="height: var(--control-h); min-width: var(--control-h); margin-left: var(--spacing-2); vertical-align: middle"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></p>
 </div>
 <script>
 (function () {
@@ -427,6 +433,9 @@ function Format-RepoHubBanner {
   var done = box.querySelector("[data-hub-done]"), count = box.querySelector("[data-hub-count]");
   var owner = box.querySelector("[data-hub-owner]"), account = box.querySelector("[data-hub-account]");
   var offline = box.querySelector("[data-hub-offline]"), fails = 0, OFFLINE = 2;
+  var closer = box.querySelector("[data-hub-close]"), HUSH = "hub-banner-hush", owed = 0, hush = 0, quiet = false;
+  try { hush = parseInt(sessionStorage.getItem(HUSH), 10) || 0; } catch (e) { }
+  function keep(n) { hush = n; try { sessionStorage.setItem(HUSH, String(n)); } catch (e) { } }
   var asked = 0, hour = Math.floor(Date.now() / HOUR), first = true, want = false, anim = null;
   var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   function slide(open) {
@@ -449,9 +458,11 @@ function Format-RepoHubBanner {
   function show(s) {
     if (!s || typeof s.owed !== "number") { return; }
     if (typeof s.account === "string" && s.account) { account.textContent = s.account; owner.hidden = false; }
-    due.hidden = !(s.owed > 0);
-    if (s.owed > 0) { count.textContent = String((s.per || 10) * s.owed); }
-    slide(s.owed > 0);
+    owed = s.owed;
+    if (owed < hush) { keep(owed); }
+    due.hidden = !(owed > 0);
+    if (owed > 0) { count.textContent = String((s.per || 10) * owed); }
+    slide((owed > hush) || (!offline.hidden && !quiet));
     first = false;
     if (s.announce) { tone(); }
   }
@@ -459,15 +470,20 @@ function Format-RepoHubBanner {
     fails++;
     if (fails < OFFLINE) { return; }
     offline.hidden = false;
-    slide(true);
+    if (!quiet) { slide(true); }
     first = false;
   }
   function up() {
     fails = 0;
     if (offline.hidden) { return; }
-    offline.hidden = true;
-    slide(!due.hidden);
+    offline.hidden = true; quiet = false;
+    slide(owed > hush);
   }
+  closer.addEventListener("click", function () {
+    keep(owed);
+    if (!offline.hidden) { quiet = true; }
+    slide(false);
+  });
   function ask(method, path) {
     if (!window.fetch) { return; }
     fetch(path, { method: method, cache: "no-store", credentials: "same-origin" })
