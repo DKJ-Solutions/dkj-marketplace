@@ -39,19 +39,33 @@
 
 ### PLAN
 
+Issue #3852: the `dkj-brandbook` skill said every dev-server page opens with the breadcrumb bar, while Admin's
+desktop shell (#3830) carries its trail in `.shell__bar`, as the product README's "Every page: the breadcrumb
+bar" already says.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-policy/dkj-solutions/skills/dkj-brandbook/SKILL.md`, step 1: every dev-server page carries a
+  trail starting at Home; a product page in the breadcrumb bar, an Admin page in the shell's bar.
 
 ### TEST
 
+- [x] Read against the product README's breadcrumb section; the lint gate runs in `ship-pr`.
+
 ### DEPLOY: docs/3852-skill-breadcrumb-shell
 
-**Score:**
+The `dkj-brandbook` skill no longer tells a session that Admin's pages open with the breadcrumb bar: a product
+page does, and an Admin page carries its trail in the desktop shell's bar
+([#3852](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3852)). The failure it prevents: a session
+building an Admin page from the skill adds a breadcrumb bar above the shell.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
