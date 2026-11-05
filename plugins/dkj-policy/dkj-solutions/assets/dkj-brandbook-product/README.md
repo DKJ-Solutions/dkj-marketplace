@@ -244,8 +244,10 @@ one keeps the bar as described above.
 
 - **The header:** `header.site-header` > `.container`, at most `--spacing-18` (72px) high, on `--primary`
   over the full width. On the left the app's name, `a.site-header__brand` linking home (`/`); on
-  the far right the settings button, `DKJTheme.settings` mounted in a plain `#settings` inside the header,
-  so nothing floats. The name, `.site-header__name`, is set at `--text-title` (20px); `.site-header__tag` sets a quieter word after the name (`product`).
+  the far right, **where the app offers its theme there**, the settings button, `DKJTheme.settings` mounted in a
+  plain `#settings` inside the header, so nothing floats. **The button is optional.** The dev servers this
+  marketplace ships mount none (Maikel, November 3, 2026): a product's theme is chosen on its own Settings page, and
+  the `.site-header .theme-settings` rules stay for an app that still mounts it. The name, `.site-header__name`, is set at `--text-title` (20px); `.site-header__tag` sets a quieter word after the name (`product`).
   **The header carries no mark** (Dave, November 2, 2026): `.site-header__mark`, the organisation's initials on
   `--bg-1` (#3301), is retired, so an app that takes this update drops that `<span>` from its header.
 - **No eyebrow under it:** the header already names the site, so the intro opens with the `h1`. **A home page has no
@@ -269,7 +271,7 @@ bar's own colours change only right under one.
 
 #### The menu in the header
 
-**A site header may carry the app's main pages between the brand and the settings button** (Maikel, November 2,
+**A site header may carry the app's main pages after the brand, before the settings button where there is one** (Maikel, November 2,
 2026, after the three-zone nav of djcylow: brand, menu, button). The breadcrumb bar under it stays: the menu says
 where you can go, the trail where you are.
 
