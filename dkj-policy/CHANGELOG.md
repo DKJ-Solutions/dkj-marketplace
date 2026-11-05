@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**2 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/3819-visible-park-url · 20261105-101546Z
+
+When a branch stops for the owner's look, its report now names the exact URL that shows the result, a Toolbox page or a preview, on a line of its own and one per changed page. The rule sits in the constitution's visible-result bullet, and the sweep skill carries it into its review-label comment and its close-out. Until now the report could say "the branch waits for your look" without saying where, and the owner had to find the page themselves.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A session that parks a visible result in any repo running `dkj-policy` hands the owner the address to open, instead of a sentence they have to turn into one.
+
+**Score:** 2
+
+#### Pull Request
+
+A visible result parked for the owner's look names the URL to open
+
+Plugins: dkj-policy
+
+[PR #3822](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3822)
+
+---
 
 ### DEPLOY: feat/3815-toolbox-to-admin · 20261105-100350Z
 
