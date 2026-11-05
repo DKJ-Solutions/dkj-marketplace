@@ -144,7 +144,7 @@ $wt = Get-LogbookWorkTimes -Runs $runs -Transcript $tr
 Assert-True (@($wt.Keys).Count -eq 1 -and $wt.r1.Work -eq 45 -and $wt.r1.Waiting -eq 75) 'a run''s work time is its time less the time waiting on the owner; an open run has none'
 Assert-Equal 0 @((Get-LogbookWorkTimes -Runs $runs -Transcript @{ r1 = @{ Sessions = 0; Phases = @() } }).Keys).Count 'a run no session covered has no work time, rather than all of it'
 $wpage = Format-LogbookPageHtml -Runs $runs -Transcript $tr -Now (& $at 2100)
-Assert-True ($wpage -match '>First</span><span class="menu-item__value"><span class="sw-time num">2:00<span class="sw-change">work 45\.0s</span></span>' -and $page -notmatch 'work \d') 'the card shows the work time beside the time, and only for a run the transcripts measured'
+Assert-True ($wpage -match '<td class="col-start">First</td><td><span class="sw-time num">2:00<span class="sw-change">work 45\.0s</span></span></td>' -and $page -notmatch 'work \d') 'the row shows the work time beside the time, and only for a run the transcripts measured'
 $speed = @(
     @{ Id = 'f'; Start = (& $at 0); End = (& $at ($script:LogbookFastSeconds - 1)) },
     @{ Id = 'm'; Start = (& $at 0); End = (& $at $script:LogbookFastSeconds) },
@@ -155,7 +155,7 @@ $speed = @(
 $tones = Get-LogbookSpeedTones -Runs $speed -WorkTimes @{ w = @{ Work = 60; Waiting = 0 } }
 Assert-Equal 'fast,medium,slow,fast' ((@('f', 'm', 's', 'w') | ForEach-Object { $tones[$_] }) -join ',') 'a run is fast under the first bound, medium from it, slow from the second, and read off its work time where it has one'
 Assert-True (-not $tones.ContainsKey('o')) 'an open run has no speed'
-Assert-True ($wpage -match 'class="card card--link sw-card sw-card--fast sw-run"><nav [^>]*><a [^>]*><span class="menu-item__label">[^<]*<span class="menu-item__sub">First<' -and ([regex]::Matches($wpage, '<section class="card card--link sw-card sw-card--')).Count -eq 1 -and $wpage -match 'green under 15 minutes') 'the overview colours a finished run''s card by its speed, leaves an open run uncoloured, and its footer names the bounds'
+Assert-True ($wpage -match '<tr class="sw-card sw-card--fast sw-run"><td class="col-start"><a [^>]*>[^<]*</a></td><td class="col-start">First</td>' -and ([regex]::Matches($wpage, '<tr class="sw-card sw-card--')).Count -eq 1 -and $wpage -match 'green under 15 minutes') 'the overview colours a finished run''s row by its speed, leaves an open run uncoloured, and its footer names the bounds'
 $g = Find-StopwatchGroup -Model $m -Slug $m.Groups[2].PageSlug
 $rp = Format-LogbookRunPageHtml -Group $g -StorePath 'C:\x\logbook.json'
 Assert-True ((Format-LogbookRunPageHtml -Group $g -Transcript $tr) -match 'Work 45\.0s, waiting on you 1:15\.' -and $rp -notmatch 'waiting on you \d') 'a run''s page states its work time and its waiting under its time'
@@ -169,25 +169,27 @@ $folds = Get-LogbookFolds -Marks @((& $mk 600), (& $mk 500 'ship-pr' 'merge'), (
 Assert-Equal '600:3392,1800:3397,2500:' (($folds | ForEach-Object { '{0}:{1}' -f ($_.At - $t0).TotalSeconds, $_.Issue }) -join ',') 'every ship-pr fold mark is a fold, named after the fold commit made just after it; a commit minutes before it, or no commit, names none'
 Assert-Equal '' (Get-LogbookFolds -Marks @((& $mk 600)) -Commits @((& $cm 604 'fold: docs/no-number changelog (#1)')))[0].Issue 'a fold commit whose branch carries no issue number names none'
 
-$sw = @{ Id = 'sw1'; Label = '/sweep-issues'; Start = (& $at 0); End = (& $at 1830); Auto = $true; StartHead = 'a'; Session = 's1' }
+$sw = @{ Id = 'sw1'; Label = '/issues-sweep'; Start = (& $at 0); End = (& $at 1830); Auto = $true; StartHead = 'a'; Session = 's1' }
 $other = @{ Id = 'o1'; Label = 'fix the thing'; Start = (& $at 100); End = (& $at 700); Auto = $true; StartHead = 'a'; Session = 's2' }
 $split = Split-LogbookSweepRuns -Runs @($sw, $other) -Folds $folds
 $shape = { param($rs) ($rs | ForEach-Object { '{0}|{1}|{2}-{3}' -f $_.Id, $_.Label, ($_.Start - $t0).TotalSeconds, $(if ($_.End) { ($_.End - $t0).TotalSeconds } else { 'going' }) }) -join ', ' }
-Assert-Equal 'sw1-1|/sweep-issues #3392|0-600, o1|fix the thing|100-700, sw1-2|/sweep-issues #3397|600-1800' (& $shape $split) 'a finished sweep becomes one run per issue, clean trunk to clean trunk; its time after the last fold is dropped, and another run is left alone'
-Assert-True ($split[0].Session -eq 's1' -and $sw.Id -eq 'sw1' -and $sw.Label -eq '/sweep-issues') 'an issue keeps the sweep''s session, and the stored run is not changed'
+Assert-Equal 'sw1-1|/issues-sweep #3392|0-600, o1|fix the thing|100-700, sw1-2|/issues-sweep #3397|600-1800' (& $shape $split) 'a finished sweep becomes one run per issue, clean trunk to clean trunk; its time after the last fold is dropped, and another run is left alone'
+Assert-True ($split[0].Session -eq 's1' -and $sw.Id -eq 'sw1' -and $sw.Label -eq '/issues-sweep') 'an issue keeps the sweep''s session, and the stored run is not changed'
 $going = $sw.Clone(); $going.End = $null
-Assert-Equal 'sw1-1|/sweep-issues #3392|0-600, sw1-2|/sweep-issues #3397|600-1800, sw1-3|/sweep-issues issue 3|1800-going' (& $shape (Split-LogbookSweepRuns -Runs @($going) -Folds @($folds[0], $folds[1]))) 'in a going sweep the issue in progress is going'
-Assert-Equal 'sw1-1|/dkj-policy:sweep-issues issue 1|0-600' (& $shape (Split-LogbookSweepRuns -Runs @(@{ Id = 'sw1'; Label = '/dkj-policy:sweep-issues'; Start = (& $at 0); End = (& $at 700) }) -Folds @(@{ At = (& $at 600); Issue = '' }))) 'the plugin-qualified command is a sweep too, and a fold that named no issue is numbered'
-Assert-Equal 'sw1|/sweep-issues|0-1830' (& $shape (Split-LogbookSweepRuns -Runs @($sw) -Folds @(@{ At = (& $at 1900); Issue = '1' }))) 'a sweep with no fold inside it stays whole'
+Assert-Equal 'sw1-1|/issues-sweep #3392|0-600, sw1-2|/issues-sweep #3397|600-1800, sw1-3|/issues-sweep issue 3|1800-going' (& $shape (Split-LogbookSweepRuns -Runs @($going) -Folds @($folds[0], $folds[1]))) 'in a going sweep the issue in progress is going'
+Assert-Equal 'sw1-1|/dkj-policy:issues-sweep issue 1|0-600' (& $shape (Split-LogbookSweepRuns -Runs @(@{ Id = 'sw1'; Label = '/dkj-policy:issues-sweep'; Start = (& $at 0); End = (& $at 700) }) -Folds @(@{ At = (& $at 600); Issue = '' }))) 'the plugin-qualified command is a sweep too, and a fold that named no issue is numbered'
+Assert-Equal 'sw1-1|/sweep-issues issue 1|0-600' (& $shape (Split-LogbookSweepRuns -Runs @(@{ Id = 'sw1'; Label = '/sweep-issues'; Start = (& $at 0); End = (& $at 700) }) -Folds @(@{ At = (& $at 600); Issue = '' }))) 'a run recorded under the skill''s former name is still a sweep'
+Assert-Equal 'sw1|/issues-sweep-reviews|0-700' (& $shape (Split-LogbookSweepRuns -Runs @(@{ Id = 'sw1'; Label = '/issues-sweep-reviews'; Start = (& $at 0); End = (& $at 700) }) -Folds @(@{ At = (& $at 600); Issue = '' }))) 'a sibling skill whose name starts with the sweep''s is not a sweep'
+Assert-Equal 'sw1|/issues-sweep|0-1830' (& $shape (Split-LogbookSweepRuns -Runs @($sw) -Folds @(@{ At = (& $at 1900); Issue = '1' }))) 'a sweep with no fold inside it stays whole'
 Assert-Equal 'o1|fix the thing|100-700' (& $shape (Split-LogbookSweepRuns -Runs @($other) -Folds $folds)) 'a run that is not a sweep is never cut, whatever it shipped'
-Assert-Equal 'sw1|/sweep-issues|0-1830' (& $shape (Get-LogbookRuns -Runs @($sw) -StepLogPath '')) 'without a step log the pages show the sweep whole'
+Assert-Equal 'sw1|/issues-sweep|0-1830' (& $shape (Get-LogbookRuns -Runs @($sw) -StepLogPath '')) 'without a step log the pages show the sweep whole'
 $two = @(
-    @{ Id = 'a'; Label = '/sweep-issues'; Start = (& $at 0); End = (& $at 2000); Session = 'sa' },
-    @{ Id = 'b'; Label = '/sweep-issues'; Start = (& $at 100); End = (& $at 2100); Session = 'sb' }
+    @{ Id = 'a'; Label = '/issues-sweep'; Start = (& $at 0); End = (& $at 2000); Session = 'sa' },
+    @{ Id = 'b'; Label = '/issues-sweep'; Start = (& $at 100); End = (& $at 2100); Session = 'sb' }
 )
 $own = @(@{ At = (& $at 500); Issue = '1'; Session = 'sa' }, @{ At = (& $at 900); Issue = '2'; Session = 'sb' }, @{ At = (& $at 1500); Issue = '3'; Session = 'sa' }, @{ At = (& $at 1900); Issue = '4'; Session = 'sb' })
-Assert-Equal 'a-1|/sweep-issues #1|0-500, b-1|/sweep-issues #2|100-900, a-2|/sweep-issues #3|500-1500, b-2|/sweep-issues #4|900-1900' (& $shape (Split-LogbookSweepRuns -Runs $two -Folds $own)) 'two overlapping sweeps from different sessions are each cut only at their own folds (#3534)'
-Assert-Equal 'a-1|/sweep-issues #1|0-500, a-2|/sweep-issues #2|500-900' (& $shape (Split-LogbookSweepRuns -Runs @($two[0]) -Folds @(@{ At = (& $at 500); Issue = '1'; Session = '' }, @{ At = (& $at 900); Issue = '2' }))) 'a fold that names no session, written before it did, still cuts every sweep'
+Assert-Equal 'a-1|/issues-sweep #1|0-500, b-1|/issues-sweep #2|100-900, a-2|/issues-sweep #3|500-1500, b-2|/issues-sweep #4|900-1900' (& $shape (Split-LogbookSweepRuns -Runs $two -Folds $own)) 'two overlapping sweeps from different sessions are each cut only at their own folds (#3534)'
+Assert-Equal 'a-1|/issues-sweep #1|0-500, a-2|/issues-sweep #2|500-900' (& $shape (Split-LogbookSweepRuns -Runs @($two[0]) -Folds @(@{ At = (& $at 500); Issue = '1'; Session = '' }, @{ At = (& $at 900); Issue = '2' }))) 'a fold that names no session, written before it did, still cuts every sweep'
 Assert-Equal 'sa,sb' (((Get-LogbookFolds -Marks @(@{ At = (& $at 500); Run = 'ship-pr'; Step = 'fold'; Session = 'sa' }, @{ At = (& $at 900); Run = 'ship-pr'; Step = 'fold'; Session = 'sb' })) | ForEach-Object { $_.Session }) -join ',') 'a fold carries the session of its mark'
 $old = 24 * 3600 + 3600
 $stale = Split-LogbookSweepRuns -Runs @($going) -Folds @($folds[0], @{ At = (& $at ($old - 600)); Issue = '3500' })
@@ -231,7 +233,7 @@ Assert-True ($pager1 -match 'href="/dev/logbook/page/2">Older runs<' -and $pager
 $pager2 = Format-LogbookPager -Page 2 -Pages 3 -Total 45 -Shown 20 -First 21
 Assert-True ($pager2 -match 'href="/dev/logbook">Newer runs<' -and $pager2 -match 'href="/dev/logbook/page/3">Older runs<') 'page 2 links back to /logbook and on to page 3'
 $pp = Format-LogbookPageHtml -Runs @($p1.Runs) -Now (& $at 30000) -PagerHtml $pager1
-Assert-True ($pp -match 'aria-label="Logbook pages"' -and ([regex]::Matches($pp, 'class="card card--link')).Count -eq 20) 'the overview draws one page''s cards with its pager'
+Assert-True ($pp -match 'aria-label="Logbook pages"' -and ([regex]::Matches($pp, '<tr class="sw-card[^"]*sw-run">')).Count -eq 20) 'the overview draws one page''s rows with its pager'
 
 Write-Host ''
 Write-Host "logbook: $script:pass passed, $script:fail failed"

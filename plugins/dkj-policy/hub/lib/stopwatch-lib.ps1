@@ -1302,7 +1302,7 @@ function Format-StopwatchRunCard {
         by its short title (Get-StopwatchShortTitle). -CardTones (fast, medium or slow by run id) colours a finished run's
         card green, orange or red.
     #>
-    param([Parameter(Mandatory = $true)][hashtable]$Group, [string]$Route = '/dev/stopwatch', [datetime]$Now = [datetime]::UtcNow, [switch]$NoDelta, [hashtable]$CardNotes = @{}, [hashtable]$CardTones = @{}, [switch]$ShortLabel)
+    param([Parameter(Mandatory = $true)][hashtable]$Group, [string]$Route = '/dev/stopwatch', [datetime]$Now = [datetime]::UtcNow, [switch]$NoDelta, [hashtable]$CardNotes = @{}, [hashtable]$CardTones = @{}, [switch]$ShortLabel, [switch]$AsRow)
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $stamp = $Group.Latest.ToLocalTime().ToString('yyyy-MM-dd HH:mm', [Globalization.CultureInfo]::InvariantCulture)
     $label = if ($ShortLabel) { Get-StopwatchShortTitle $Group.Label } else { $Group.Label }
@@ -1315,6 +1315,8 @@ function Format-StopwatchRunCard {
     # The house card (Format-HubCardLinkHtml, #3566), in the owner's order: the start is its label, the prompt label
     # its description, the time its value.
     $sub = (& $e $label) + $(if ($Group.Versions -gt 1) { ' v' + $Group.Version } else { '' })
+    # -AsRow: the same values as Admin's row (Format-AdminLinkTableHtml, #3830), the tone on the row.
+    if ($AsRow) { return @{ Href = ($Route + '/' + $Group.PageSlug); Label = $stamp; SubHtml = $sub; ValueHtml = $time; Class = ('sw-card' + $toneClass + ' sw-run') } }
     return Format-HubCardLinkHtml -Href ($Route + '/' + $Group.PageSlug) -Label $stamp -SubHtml $sub -ValueHtml $time -Class ('sw-card' + $toneClass + ' sw-run') -Heading 0
 }
 
@@ -1327,7 +1329,7 @@ function Format-StopwatchLabelCard {
         fastest, and whether it was faster or slower). The run dates are on the label's
         page, not here.
     #>
-    param([Parameter(Mandatory = $true)][hashtable]$Set, [datetime]$Now = [datetime]::UtcNow)
+    param([Parameter(Mandatory = $true)][hashtable]$Set, [datetime]$Now = [datetime]::UtcNow, [switch]$AsRow)
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $stop = if ([string]$Set.Title -match '^release') { 'the release notes of the cut are committed' } else { 'Claude is back on the trunk, clean, with a commit of its own' }
     # The newest run's time, never the fastest, with its change against the run before it (the owner, November 4,
@@ -1336,12 +1338,11 @@ function Format-StopwatchLabelCard {
     $time = if ($Set.Prepared -and -not @($Set.Groups).Count) { '<span class="sw-time">Ready, not started</span>' }
             elseif (-not @($Set.Groups).Count) { '<span class="sw-time">No run yet</span>' }
             else { Format-StopwatchCardTime -Group $Set.Groups[0] -Now $Now }
-    if ($Set.Prepared -and -not @($Set.Groups).Count) {
-        return Format-HubCardLinkHtml -Href ('/dev/stopwatch/' + $Set.Slug) -Label (Get-StopwatchShortTitle $Set.Title) -Heading 2 -Class 'sw-card' -ValueHtml $time `
-            -SubHtml ('Ready, not started: no clock is running. Start it by sending a prompt whose first line is <code>stopwatch: ' + (& $e $Set.Title) + '</code>.')
-    }
-    return Format-HubCardLinkHtml -Href ('/dev/stopwatch/' + $Set.Slug) -Label (Get-StopwatchShortTitle $Set.Title) -Heading 2 -Class 'sw-card' -ValueHtml $time `
-        -SubHtml ('From the prompt <code>stopwatch: ' + (& $e $Set.Title) + '</code> until ' + $stop + '.')
+    $sub = if ($Set.Prepared -and -not @($Set.Groups).Count) { 'Ready, not started: no clock is running. Start it by sending a prompt whose first line is <code>stopwatch: ' + (& $e $Set.Title) + '</code>.' }
+           else { 'From the prompt <code>stopwatch: ' + (& $e $Set.Title) + '</code> until ' + $stop + '.' }
+    # -AsRow: the same values as Admin's row (Format-AdminLinkTableHtml, #3830).
+    if ($AsRow) { return @{ Href = ('/dev/stopwatch/' + $Set.Slug); Label = (Get-StopwatchShortTitle $Set.Title); SubHtml = $sub; ValueHtml = $time; Class = 'sw-card' } }
+    return Format-HubCardLinkHtml -Href ('/dev/stopwatch/' + $Set.Slug) -Label (Get-StopwatchShortTitle $Set.Title) -Heading 2 -Class 'sw-card' -ValueHtml $time -SubHtml $sub
 }
 
 # A LABEL THE OVERVIEW SHOWS BEFORE ITS FIRST RUN (the owner, October 25, 2026), with the steps that time it the same
@@ -1474,15 +1475,14 @@ function Format-StopwatchPageHtml {
     if (@($Model.Groups).Count -or $sets.Count) {
         # The grid stands in a wrapper whose gap is the space between grids, so no grid carries a top margin (the owner,
         # October 24, 2026).
-        [void]$body.AppendLine('<div class="sw-groups">')
-        [void]$body.AppendLine($(if ($Flat) { '<div class="card-grid sw-grid">' } else { '<div class="card-grid sw-grid sw-grid--wide">' }))
+        # Admin's form (#3830): one .table--dense, a row per run (the Logbook) or per prompt label (the overview).
         if ($Flat) {
-            foreach ($g in @($Model.Groups)) { [void]$body.AppendLine((Format-StopwatchRunCard -Group $g -Route $Route -Now $Now -NoDelta:$NoDelta -CardNotes $CardNotes -CardTones $CardTones)) }
+            $rows = foreach ($g in @($Model.Groups)) { Format-StopwatchRunCard -Group $g -Route $Route -Now $Now -NoDelta:$NoDelta -CardNotes $CardNotes -CardTones $CardTones -AsRow }
+            [void]$body.AppendLine((Format-AdminLinkTableHtml -Items @($rows) -NameHead 'Started' -SubHead 'Label' -ValueHead 'Time'))
         } else {
-            foreach ($set in $sets) { [void]$body.AppendLine((Format-StopwatchLabelCard -Set $set -Now $Now)) }
+            $rows = foreach ($set in $sets) { Format-StopwatchLabelCard -Set $set -Now $Now -AsRow }
+            [void]$body.AppendLine((Format-AdminLinkTableHtml -Items @($rows) -NameHead 'Label' -SubHead 'Measures' -ValueHead 'Latest'))
         }
-        [void]$body.AppendLine('</div>')
-        [void]$body.AppendLine('</div>')
     }
     # The Logbook's links between its pages (Format-LogbookPager), under the cards: already HTML, built from numbers alone.
     if ($PagerHtml) { [void]$body.AppendLine($PagerHtml) }
@@ -1530,14 +1530,16 @@ function Format-StopwatchLabelPageHtml {
     # Above the group, never inside it: the h1 is never framed (owner, October 28, 2026).
     [void]$body.AppendLine('<div><h1>' + (& $e $title) + '</h1></div>')
     [void]$body.AppendLine('<div class="sw-groups">')
-    [void]$body.AppendLine('<div class="card-grid sw-grid">')
-    foreach ($g in @($Set.Groups)) { [void]$body.AppendLine((Format-StopwatchRunCard -Group $g -Route ('/dev/stopwatch/' + $Set.Slug) -Now $Now -ShortLabel)) }
-    # A pinned label before its first run (Get-StopwatchOverviewSets): one card saying so, where the runs will stand.
+    # Admin's form (#3830): one .table--dense, a row per run.
+    if (@($Set.Groups).Count) {
+        $rows = foreach ($g in @($Set.Groups)) { Format-StopwatchRunCard -Group $g -Route ('/dev/stopwatch/' + $Set.Slug) -Now $Now -ShortLabel -AsRow }
+        [void]$body.AppendLine((Format-AdminLinkTableHtml -Items @($rows) -NameHead 'Started' -SubHead 'Label' -ValueHead 'Time'))
+    }
+    # A pinned label before its first run (Get-StopwatchOverviewSets): one line saying so, where the runs will stand.
     if (-not @($Set.Groups).Count) {
         $none = if ($Set.Prepared) { 'Ready, not started: no clock is running. Start it by sending a prompt whose first line is <code>stopwatch: ' + (& $e $Set.Title) + '</code>; the run lands here.' } else { 'No run yet. The first one sets the baseline for this label.' }
         [void]$body.AppendLine('<section class="card sw-card"><p class="sw-instruction">' + $none + '</p></section>')
     }
-    [void]$body.AppendLine('</div>')
     # A pinned label's prompt to copy and its steps stand here, on its page, each under an h2 of its own above the one
     # card that holds it: the prompt first, since it is what a run starts from.
     $prompt = Format-StopwatchPinnedPrompt -Label $Set.Title

@@ -51,7 +51,7 @@ now reads whether another worktree holds `main` *before* anything is pushed (#10
 folds after a push to `main` (`fold-on-merge.yml`, which `adopt-dkj-policy`'s CI floor places), it merges
 and leaves the fold to that runner (#2087). Where none does, it refuses at that same cheap moment. So a
 ship from a lane no longer reaches the half-state in either kind of repo. In a repo with that runner it
-simply ships, which is what lets a second `sweep-issues` run in a lane
+simply ships, which is what lets a second `issues-sweep` run in a lane
 ([#3557](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3557)).
 
 ## So the lanes run the other way around

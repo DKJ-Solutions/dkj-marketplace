@@ -245,6 +245,19 @@ function Format-GeneralPageHtml {
             $script:LongPageSectionLimit + ' becomes an overview of cards, each opening a page of its own: the house style''s page rule (#3563).</p>'
     } else { '' }
     if ($admin) {
+        # A -Bare page that writes its own h1 into -Body (`<div><h1>..</h1>..</div>`, the product's intro) has it lifted
+        # into the shell's toolbar (#3830), so an Admin page's h1 is always the pane title and never a headline in the
+        # pane. A line under that h1 (a .card__sub) stays, as a .note at the top of the pane.
+        if ($Bare) {
+            $own = [regex]::Match($Body, '(?s)<div><h1>(.*?)</h1>(.*?)</div>\r?\n?')
+            if ($own.Success) {
+                $Body = $Body.Remove($own.Index, $own.Length)
+                $Title = [System.Net.WebUtility]::HtmlDecode($own.Groups[1].Value)
+                $under = $own.Groups[2].Value -replace '^\s*<p class="card__sub">', '<p class="note">'
+                if ($under.Trim()) { $Body = $Body.Insert($own.Index, $under.Trim() + "`n") }
+                $Bare = $false
+            }
+        }
         # No settings button in the shell: Admin's theme is chosen on its own /settings page, pinned to the navigation's foot.
         $infoHtml = if ($Info -and -not $Bare) {
             '<button class="page-info-button" type="button" id="page-info-button" aria-label="About ' + (& $e $Title) + '" aria-describedby="page-info" aria-expanded="false">' + $glyph + '</button>' +
@@ -326,6 +339,12 @@ function Format-FitAlarmHtml {
         current crumb (the two read the same, by the brand book's breadcrumb rule) runs past two words. A word is a
         whitespace-separated run holding a letter or a digit, so a hyphenated word counts once and a lone dash between
         a subject and a subtitle counts not at all, while the subtitle's own words do. Not width-gated either.
+
+        IN ADMIN'S DESKTOP SHELL (#3830) it reads the shell's own structure: the h1 is the toolbar's (.toolbar > h1)
+        and the trail the bar's (.shell__bar .breadcrumbs), and the screen it judges is the shell's main pane, which
+        scrolls on its own while the window never does. The pane is judged at its own height, so a pane that runs past
+        it says so as a page did; a list long by nature (a dense table of runs or releases) scrolls in its pane by design
+        and is exempt, since the shell is an Explorer, not a page of one screen.
     #>
     return @'
 <p class="msg--warn" id="fit-alarm" role="alert" hidden style="position: fixed; right: 16px; bottom: 16px; margin: 0; z-index: 50; box-shadow: var(--shadow-pop)"></p>
@@ -337,17 +356,24 @@ function Format-FitAlarmHtml {
     return el ? el.textContent.trim().split(/\s+/).filter(function (w) { return /[\p{L}\p{N}]/u.test(w); }).length : 0;
   }
   function judge() {
-    var d = document.documentElement, said = [];
+    var d = document.documentElement, said = [], shell = document.querySelector(".shell__list");
     var tall = d.scrollHeight - window.innerHeight, wide = d.scrollWidth - d.clientWidth;
+    if (shell) {
+      // Admin's shell (#3830): the window never scrolls, its main pane does. A pane holding a dense table scrolls by design.
+      tall = shell.querySelector(".table--dense") ? 0 : shell.scrollHeight - shell.clientHeight;
+      wide = Math.max(wide, shell.scrollWidth - shell.clientWidth);
+    }
     if (!(window.innerWidth < 1000) && (tall > 1 || wide > 1)) {
       var past = [];
       if (tall > 1) { past.push(tall + " px too tall"); }
       if (wide > 1) { past.push(wide + " px too wide"); }
       said.push("Does not fit one screen: " + past.join(", "));
     }
-    var h1 = document.querySelectorAll("h1").length, crumbs = document.querySelectorAll(".breadcrumbs li").length;
+    var trail = shell ? ".shell__bar .breadcrumbs" : ".breadcrumbs", head = shell ? ".toolbar > h1" : "h1";
+    var h1 = document.querySelectorAll("h1").length, crumbs = document.querySelectorAll(trail + " li").length;
     if (h1 > 1 || (h1 === 0 && crumbs !== 1)) { said.push(h1 + " h1 on this page, where a page carries exactly one"); }
-    var named = Math.max(words(document.querySelector("h1")), words(document.querySelector(".breadcrumbs [aria-current=\"page\"]")));
+    if (shell && h1 === 1 && !document.querySelector(head)) { said.push("The h1 stands in the pane, where Admin's h1 is the toolbar's"); }
+    var named = Math.max(words(document.querySelector(head)), words(document.querySelector(trail + " [aria-current=\"page\"]")));
     if (named > 2) { said.push("The page name runs " + named + " words, where a page name has two at most"); }
     if (!said.length) { alarm.hidden = true; return; }
     alarm.textContent = said.join(". ");
@@ -413,10 +439,16 @@ function Format-RepoHubBanner {
         counts only where a server sees it begin and one missed that way cannot be recovered. The countdown is the
         page's own and would otherwise keep ticking towards nothing. The first answer clears it. A server that
         answers without the API is not offline, so it still shows no banner.
+
+        AND IT CAN BE CLOSED WITHOUT TICKING THE BOX (#3820): a ghost icon button at the end of the row sinks the
+        toast without clearing anything on the server. It stays down until something new happens -- another hour
+        owed, or the hub going offline again after it came back -- because the count it was closed on is kept in
+        sessionStorage, a per-tab convenience, so moving between Admin pages does not bring it back. The count
+        owed is still the server's alone.
     #>
     return @'
 <div class="notice" id="hub-banner" role="region" aria-label="Airsquats" style="position: fixed; left: var(--spacing-4); bottom: var(--spacing-4); z-index: 20; margin: 0; max-width: calc(100vw - 2 * var(--spacing-4)); box-shadow: var(--shadow-pop)" hidden>
-<p>Next airsquats in <strong class="num" data-hub-timer>--:--</strong><span class="msg--warn" data-hub-due hidden> &middot; <label><input type="checkbox" data-hub-done> <span data-hub-count>10</span> due</label></span><span class="msg--warn" data-hub-offline hidden> &middot; hub offline, this hour is not counted</span><span data-hub-owner hidden title="The Windows account Admin runs under"> &middot; <span data-hub-account></span></span></p>
+<p>Next airsquats in <strong class="num" data-hub-timer>--:--</strong><span class="msg--warn" data-hub-due hidden> &middot; <label><input type="checkbox" data-hub-done> <span data-hub-count>10</span> due</label></span><span class="msg--warn" data-hub-offline hidden> &middot; hub offline, this hour is not counted</span><span data-hub-owner hidden title="The Windows account Admin runs under"> &middot; <span data-hub-account></span></span><button type="button" class="icon-btn icon-btn--ghost" data-hub-close aria-label="Close" title="Close" style="height: var(--control-h); min-width: var(--control-h); margin-left: var(--spacing-2); vertical-align: middle"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></p>
 </div>
 <script>
 (function () {
@@ -427,6 +459,9 @@ function Format-RepoHubBanner {
   var done = box.querySelector("[data-hub-done]"), count = box.querySelector("[data-hub-count]");
   var owner = box.querySelector("[data-hub-owner]"), account = box.querySelector("[data-hub-account]");
   var offline = box.querySelector("[data-hub-offline]"), fails = 0, OFFLINE = 2;
+  var closer = box.querySelector("[data-hub-close]"), HUSH = "hub-banner-hush", owed = 0, hush = 0, quiet = false;
+  try { hush = parseInt(sessionStorage.getItem(HUSH), 10) || 0; } catch (e) { }
+  function keep(n) { hush = n; try { sessionStorage.setItem(HUSH, String(n)); } catch (e) { } }
   var asked = 0, hour = Math.floor(Date.now() / HOUR), first = true, want = false, anim = null;
   var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   function slide(open) {
@@ -449,9 +484,11 @@ function Format-RepoHubBanner {
   function show(s) {
     if (!s || typeof s.owed !== "number") { return; }
     if (typeof s.account === "string" && s.account) { account.textContent = s.account; owner.hidden = false; }
-    due.hidden = !(s.owed > 0);
-    if (s.owed > 0) { count.textContent = String((s.per || 10) * s.owed); }
-    slide(s.owed > 0);
+    owed = s.owed;
+    if (owed < hush) { keep(owed); }
+    due.hidden = !(owed > 0);
+    if (owed > 0) { count.textContent = String((s.per || 10) * owed); }
+    slide((owed > hush) || (!offline.hidden && !quiet));
     first = false;
     if (s.announce) { tone(); }
   }
@@ -459,15 +496,20 @@ function Format-RepoHubBanner {
     fails++;
     if (fails < OFFLINE) { return; }
     offline.hidden = false;
-    slide(true);
+    if (!quiet) { slide(true); }
     first = false;
   }
   function up() {
     fails = 0;
     if (offline.hidden) { return; }
-    offline.hidden = true;
-    slide(!due.hidden);
+    offline.hidden = true; quiet = false;
+    slide(owed > hush);
   }
+  closer.addEventListener("click", function () {
+    keep(owed);
+    if (!offline.hidden) { quiet = true; }
+    slide(false);
+  });
   function ask(method, path) {
     if (!window.fetch) { return; }
     fetch(path, { method: method, cache: "no-store", credentials: "same-origin" })
@@ -963,6 +1005,50 @@ function Format-HubCardLinkHtml {
         '><nav class="menu-list" aria-label="' + (& $e $Label) + '"><a class="menu-item" href="' + (& $e $Href) + '">' + $mark + $labelHtml + $script:RepoHubChevron + '</a></nav></section>'
 }
 
+function Format-AdminLinkTableHtml {
+    <#
+        A set of links as Admin draws it (#3830): a .table--dense, one row per link, in the desktop shell's own form,
+        where the product layer draws a card per link (Format-HubCardLinkHtml). The brand book's layer table: "a list
+        Admin manages is a .table--dense, not cards". -Items are hashtables or objects carrying Format-HubCardLinkHtml's
+        own fields -- Href and Label (required), Sub or SubHtml, ValueHtml, BadgeHtml, TitleBadgeHtml, Class, Id -- so a
+        caller that built a card builds its row from the same values. The label links; the description is the second
+        column; a Value column is drawn only where an item has one. -Heading, when given, is the set's h2, set as a
+        .pane-head over the table (house-style.css, .admin-list > h2: a heading carries no class); -Id goes on the section. -Empty is the one row an empty set shows. The HTML slots are
+        markup the caller has escaped, and as on the card they hold no <a>: the label is the row's one link.
+    #>
+    param([AllowEmptyCollection()][object[]]$Items = @(), [AllowEmptyString()][string]$Heading = '', [AllowEmptyString()][string]$Id = '',
+        [string]$Empty = 'Nothing here yet.', [string]$NameHead = 'Name', [string]$SubHead = 'About', [string]$ValueHead = '')
+    $e = { param($v) ConvertTo-GeneralPageText $v }
+    $rows = @($Items | Where-Object { $_ })
+    $get = { param($o, $k) if ($o -is [System.Collections.IDictionary]) { $o[$k] } elseif ($o.PSObject.Properties[$k]) { $o.$k } else { $null } }
+    foreach ($r in $rows) {
+        foreach ($k in 'SubHtml', 'ValueHtml', 'BadgeHtml', 'TitleBadgeHtml') {
+            if ([string](& $get $r $k) -match '<a[\s>]') { throw "Format-AdminLinkTableHtml: -$k of '$(& $get $r 'Label')' holds an <a>, and the label is already the row's link (#3610)." }
+        }
+    }
+    $hasValue = @($rows | Where-Object { & $get $_ 'ValueHtml' }).Count -gt 0
+    $sb = New-Object System.Text.StringBuilder
+    [void]$sb.Append('<section class="admin-list"' + $(if ($Id) { ' id="' + (& $e $Id) + '"' } else { '' }) + '>')
+    if ($Heading) { [void]$sb.Append('<h2>' + (& $e $Heading) + '</h2>') }
+    [void]$sb.Append('<table class="table table--dense"><thead><tr><th class="col-start">' + (& $e $NameHead) + '</th><th class="col-start">' + (& $e $SubHead) + '</th>')
+    if ($hasValue) { [void]$sb.Append('<th>' + (& $e $ValueHead) + '</th>') }
+    [void]$sb.Append('</tr></thead><tbody>')
+    if (-not $rows.Count) {
+        [void]$sb.Append('<tr><td class="col-start" colspan="' + $(if ($hasValue) { 3 } else { 2 }) + '" role="status">' + (& $e $Empty) + '</td></tr>')
+    }
+    foreach ($r in $rows) {
+        $sub = [string](& $get $r 'SubHtml'); if (-not $sub) { $sub = & $e ([string](& $get $r 'Sub')) }
+        $badge = [string](& $get $r 'BadgeHtml') + [string](& $get $r 'TitleBadgeHtml')
+        $cls = [string](& $get $r 'Class'); $rid = [string](& $get $r 'Id')
+        [void]$sb.Append('<tr' + $(if ($rid) { ' id="' + (& $e $rid) + '"' } else { '' }) + $(if ($cls) { ' class="' + (& $e $cls) + '"' } else { '' }) + '><td class="col-start"><a href="' + (& $e ([string](& $get $r 'Href'))) + '">' +
+            (& $e ([string](& $get $r 'Label'))) + '</a>' + $(if ($badge) { ' ' + $badge } else { '' }) + '</td><td class="col-start">' + $sub + '</td>')
+        if ($hasValue) { [void]$sb.Append('<td>' + [string](& $get $r 'ValueHtml') + '</td>') }
+        [void]$sb.Append('</tr>')
+    }
+    [void]$sb.Append('</tbody></table></section>')
+    return $sb.ToString()
+}
+
 function Format-HubPageCardsHtml {
     <#
         -Pages (Get-GeneralPages' shape) as hub cards, one line each, in their order: a page with no Group as its
@@ -1010,10 +1096,9 @@ function Get-HubCardGridStyle {
 
 function Format-HubGroupPageHtml {
     <#
-        The group page on -Href (Get-HubGroups), bare like the SessionStart overview: an h1 with an h2 card per member
-        page and member group, three to a row on the page itself (.ph-cards, Get-HubCardGridStyle), each one link;
-        then each member Section, a .grid-3 headed by its h2 and
-        holding its members as h3 cards. A group with no member yet says so in one card. Its trail runs through every
+        The group page on -Href (Get-HubGroups), in Admin's form (#3830): its h1 the shell's toolbar title, its member
+        pages and member groups one .table--dense (Format-AdminLinkTableHtml), then each member Section a table of its
+        own under its h2. A group with no member yet says so in one line. Its trail runs through every
         group it sits in but a Section, which has no page. $null for an Href no group has, and for a Section.
         -RepoRoot is the checkout a Source section reads its cards from (the Lenses, Get-HubLensPages).
     #>
@@ -1038,38 +1123,23 @@ function Format-HubGroupPageHtml {
     }
     $sections = @($groups | Where-Object { $_.Group -ceq $g.Href -and $_.Section -and -not $_.Bare })
     $body = New-Object System.Text.StringBuilder
-    # The h1 stands on the page above the group, never inside its surface: the h1 is never framed (owner, October 28, 2026).
-    [void]$body.AppendLine('<div><h1>' + (& $e $g.Label) + '</h1></div>')
+    # Admin's form (#3830): the h1 is the shell's toolbar title, the members one .table--dense, and each Section a
+    # table of its own under its h2, where the product's form was a card per member.
     if ($members.Count -eq 0 -and $sections.Count -eq 0) {
-        [void]$body.AppendLine('<section class="card"><p role="status">Nothing on this page yet.</p></section>')
+        [void]$body.AppendLine('<p class="note" role="status">Nothing on this page yet.</p>')
     }
     if ($members.Count -gt 0) {
-        # h2 cards stand on the page, never in a .grid-3's surface, which frames an h2 over h3 cards (Maikel, November 2, 2026).
-        [void]$body.AppendLine('<div class="ph-cards">')
-        foreach ($p in $members) {
-            [void]$body.AppendLine((Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon))
-        }
-        [void]$body.AppendLine('</div>')
+        [void]$body.AppendLine((Format-AdminLinkTableHtml -Items $members -NameHead 'Page'))
     }
     foreach ($sec in $sections) {
-        # The house grouping form: a .grid__head over the cards, whose titles are then h3s. The h2 alone, with no
-        # p.card__sub under it (Maikel, October 30, 2026).
-        [void]$body.AppendLine('<div class="grid-3"><div class="grid__head"><h2>' + (& $e $sec.Label) + '</h2></div>')
         # A section holds its member general pages first, in their order, then its member groups (Performance's Clock
         # and Context, Dave, November 3, 2026).
         $cards = if ($sec.Source) { @(Get-HubSectionCards -Source $sec.Source -RepoRoot $RepoRoot) }
                  else { @(@(Get-GeneralPages | Where-Object { $_.Group -ceq $sec.Href }) + @($groups | Where-Object { $_.Group -ceq $sec.Href })) }
-        foreach ($p in $cards) {
-            [void]$body.AppendLine((Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon -Heading 3))
-        }
-        if ($cards.Count -eq 0) {
-            [void]$body.AppendLine('<section class="card grid__full"><p role="status">Nothing here yet.</p></section>')
-        }
-        [void]$body.AppendLine('</div>')
+        [void]$body.AppendLine((Format-AdminLinkTableHtml -Items $cards -Heading $sec.Label -NameHead 'Page'))
     }
-    return Format-GeneralPageHtml -Title $g.Label -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref `
-        -ParentCrumbs $crumbs -Style $(if ($members.Count -gt 0) { Get-HubCardGridStyle } else { '' }) `
-        -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
+    return Format-GeneralPageHtml -Title $g.Label -Body $body.ToString() -Lead '' -SiteName $RepoName -HubHref $HubHref `
+        -ParentCrumbs $crumbs -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
 }
 
 function Format-HubSettingsPageHtml {
@@ -1251,12 +1321,11 @@ function Get-AdminShellStyle {
     <#
         The page layer Admin's desktop shell needs on top of the house's (house-style.css, "Desktop shell"; Dave,
         November 4, 2026, #3811): names the house file does not define (.tb-*). The scroll pane always takes the main
-        pane's second row, so a page with no toolbar (-Bare) still scrolls there; the page column inside it keeps the
-        house column's stacking but none of its centring, since the pane is the page.
+        pane's second row, so a page with no toolbar (-Bare) still scrolls there. The content inside it stands in the
+        house's .shell__body (#3830), not the product's .page-column.
     #>
     '.tb-scroll { grid-row: 2; }' + "`n" +
-    '.tb-scroll > .notice { margin: 0; border: 0; border-radius: 0; border-bottom: 1px solid var(--bg-3); }' + "`n" +
-    '.tb-scroll > main.page-column { max-width: none; margin: 0; padding: var(--spacing-4); }'
+    '.tb-scroll > .notice { margin: 0; border: 0; border-radius: 0; border-bottom: 1px solid var(--bg-3); }'
 }
 
 # The product's address, for Admin's Product section (#3815): set per request by the server from the state file the
@@ -1267,6 +1336,48 @@ function Set-AdminProductUrl {
     <# Sets the address Admin's Product section links to (Get-AdminNav); '' or anything but an http(s) URL clears it. #>
     param([AllowEmptyString()][AllowNull()][string]$Url = '')
     $script:AdminProductUrl = if ($Url -and $Url -cmatch '\Ahttps?://[^\s"<>]+\z') { $Url } else { '' }
+}
+
+# A repo's domain objects, for the top of Admin's navigation (#3818): set per request by the server from what the repo's
+# Get-AdminObjects seam answered, read in a child process (serve-general-pages.ps1). Empty where the repo states none.
+$script:AdminObjects = @()
+
+function Set-AdminObjects {
+    <#
+        Hands in the repo's domain objects (#3818): what its Get-AdminObjects in scripts/repo-config.ps1 returned, each
+        @{ Label; Href; Count }. Read defensively, as every seam is: an item without a Label or an Href is dropped, a Count
+        that is not a whole number of zero or more is left out, and an Href is kept only as an http(s) URL or a path from
+        the root ('/tracks'). At most 12 are kept, so a seam cannot push Development off the screen.
+    #>
+    param([AllowNull()][AllowEmptyCollection()][object[]]$Items = @())
+    $kept = @()
+    foreach ($i in @($Items | Where-Object { $_ })) {
+        $label = [string]$i.Label; $href = [string]$i.Href
+        if (-not $label.Trim() -or -not ($href -cmatch '\Ahttps?://[^\s"<>]+\z' -or $href -cmatch '\A/(?!/)[^\s"<>]*\z')) { continue }
+        # $i['Count'], never $i.Count: on a hashtable without the key, .Count is the number of keys.
+        $raw = if ($i -is [System.Collections.IDictionary]) { $i['Count'] } else { $i.PSObject.Properties['Count'].Value }
+        $count = $null
+        if ($null -ne $raw -and [string]$raw -match '\A\d{1,9}\z') { $count = [int][string]$raw }
+        $kept += @{ Label = $label.Trim(); Href = $href; Count = $count }
+        if ($kept.Count -ge 12) { break }
+    }
+    $script:AdminObjects = $kept
+}
+
+function Resolve-AdminObjectHref {
+    <#
+        Where a domain object's item links (#3818). THE REPO'S OWN SERVER SERVES THESE ROUTES, NOT THE HUB: a path is
+        resolved against the product's address (Set-AdminProductUrl), and an http(s) URL is kept as it is. The hub never
+        loads a repo's code into its own process (it reads the seam in a child), so it cannot serve a repo's pages; the
+        repo's server can, and draws them in the brand book's desktop shell. '' where a path has no product to resolve
+        against, which leaves the item out.
+    #>
+    param([AllowEmptyString()][string]$Href = '')
+    if ($Href -cmatch '\Ahttps?://') { return $Href }
+    if (-not $script:AdminProductUrl -or -not $Href.StartsWith('/')) { return '' }
+    $m = [regex]::Match($script:AdminProductUrl, '\Ahttps?://[^/]+')
+    if (-not $m.Success) { return '' }
+    return $m.Value + $Href
 }
 
 function ConvertTo-AdminBrandTag {
@@ -1303,8 +1414,9 @@ function Get-AdminNav {
         Admin's side navigation (#3815, after the Shopify Admin): FLAT, under section headings, never a tree. Each
         section is @{ Heading; Items; Foot }, every item @{ Label; Href; External }, in this order:
           * no heading: Home, the dashboard on '/';
-          * the domain objects a repo manages would come next, at the top level with no "Manage" wrapper, since
-            everything in Admin is management -- this plugin ships none, so nothing is drawn there;
+          * the domain objects a repo manages, in the same list right under Home, with no "Manage" wrapper, since
+            everything in Admin is management (#3818): what its Get-AdminObjects seam states (Set-AdminObjects), each
+            with its Count as a badge and its Href resolved by Resolve-AdminObjectHref -- none where the repo states none;
           * Product: the storefront, linked rather than contained, since Admin manages the product and is not it
             ($script:AdminProductUrl, left out where the repo states no product);
           * Development: Admin's own pages under /dev, the hub's menu (Get-HubMenu) in its order -- a group page
@@ -1314,7 +1426,12 @@ function Get-AdminNav {
     $menu = @(Get-HubMenu)
     $dev = @($menu | Where-Object { $_.Href -ne '/settings' } | ForEach-Object { @{ Label = $_.Label; Href = $_.Href; External = $false } })
     $settings = @($menu | Where-Object { $_.Href -eq '/settings' } | ForEach-Object { @{ Label = $_.Label; Href = $_.Href; External = $false } })
-    $out = @(@{ Heading = ''; Items = @(@{ Label = 'Home'; Href = '/'; External = $false }); Foot = $false })
+    $top = @(@{ Label = 'Home'; Href = '/'; External = $false })
+    foreach ($o in @($script:AdminObjects)) {
+        $href = Resolve-AdminObjectHref -Href $o.Href
+        if ($href) { $top += @{ Label = $o.Label; Href = $href; External = $false; Count = $o['Count'] } }
+    }
+    $out = @(@{ Heading = ''; Items = $top; Foot = $false })
     if ($script:AdminProductUrl) { $out += @{ Heading = 'Product'; Items = @(@{ Label = 'Storefront'; Href = $script:AdminProductUrl; External = $true }); Foot = $false } }
     if ($dev.Count) { $out += @{ Heading = 'Development'; Items = $dev; Foot = $false } }
     if ($settings.Count) { $out += @{ Heading = ''; Items = $settings; Foot = $true } }
@@ -1409,7 +1526,7 @@ function Format-AdminShellOpen {
         headings, #3815), and the main pane, whose toolbar holds the
         page's one h1 (at the toolbar's size, .toolbar__title) with -Info's "?" and -HeadAside at its right end. The
         general banner (Format-RepoHubBanner) stands at the top of the scroll pane, above the content, so the shell
-        itself always fits the window. It ends inside <main class="page-column">; Format-AdminShellClose closes it.
+        itself always fits the window. It ends inside <main class="shell__body"> (#3830); Format-AdminShellClose closes it.
         -Current is the Href of the navigation item the page is, and -Trail the crumbs after Home, each @{ Label; Href },
         the last one the page itself (no Href). -Bare leaves the toolbar out, as it leaves the h1 out elsewhere.
         -InfoHtml and -HeadAside are markup the caller has escaped; every other value is escaped here. -Nav is
@@ -1451,7 +1568,10 @@ function Format-AdminShellOpen {
             # Home takes -HubHref and -HomeLabel, so a page served under another root still links its own home.
             $href = if ($i.Href -eq '/') { $HubHref } else { $i.Href }
             $label = if ($i.Href -eq '/') { $HomeLabel } else { $i.Label }
-            [void]$sb.Append('<li><a class="nav-item" href="' + (& $e $href) + '"' + (& $mark $href) + '><span class="nav-item__label">' + (& $e $label) + '</span></a></li>')
+            # A domain object's count is a badge at the right (#3818), the brand book's .nav-item__count.
+            $n = if ($i -is [System.Collections.IDictionary]) { $i['Count'] } else { $null }
+            $count = if ($null -ne $n -and [string]$n -match '\A\d{1,9}\z') { '<span class="nav-item__count">' + ([int][string]$n).ToString('N0', [Globalization.CultureInfo]::InvariantCulture) + '</span>' } else { '' }
+            [void]$sb.Append('<li><a class="nav-item" href="' + (& $e $href) + '"' + (& $mark $href) + '><span class="nav-item__label">' + (& $e $label) + '</span>' + $count + '</a></li>')
         }
         [void]$sb.Append('</ul>')
         if ($s.Foot) { [void]$sb.Append('</div>') }
@@ -1467,7 +1587,7 @@ function Format-AdminShellOpen {
     [void]$sb.AppendLine('<div class="shell__list tb-scroll">')
     [void]$sb.AppendLine((Format-RepoHubBanner))
     # -NoColumn: the content brings its own column (the release notes' template), so no <main> is opened for it.
-    if (-not $NoColumn) { [void]$sb.AppendLine('<main class="page-column">') }
+    if (-not $NoColumn) { [void]$sb.AppendLine('<main class="shell__body">') }
     return $sb.ToString()
 }
 
@@ -2190,12 +2310,9 @@ function Format-SessionStartPageHtml {
         [void]$body.AppendLine('<p class="msg--warn" role="alert">scripts/dashboard/session-start-snapshot.json could not be read: ' + (& $e $SnapshotError) + '.</p>')
     }
     [void]$body.AppendLine('<div><h1>SessionStart</h1></div>')
-    [void]$body.AppendLine('<div class="grid-3 ss-cards">')
-    foreach ($s in $sections) {
-        [void]$body.AppendLine((Format-HubCardLinkHtml -Href ('/dev/sessionstart/' + $s.Slug) -Label $s.Title -SubHtml $s.Sub -ValueHtml ('<span class="num">' + $s.Value + '</span>') `
-            -Heading 2 -Id $s.Slug -Class 'ss-card'))
-    }
-    [void]$body.AppendLine('</div>')
+    # Admin's form (#3830): one .table--dense, a row per section.
+    $rows = foreach ($s in $sections) { @{ Href = ('/dev/sessionstart/' + $s.Slug); Label = $s.Title; SubHtml = $s.Sub; ValueHtml = ('<span class="num">' + $s.Value + '</span>'); Id = $s.Slug; Class = 'ss-card' } }
+    [void]$body.AppendLine((Format-AdminLinkTableHtml -Items @($rows) -NameHead 'Section' -ValueHead 'Size'))
     # Under the hub's Performance page, beside the Clock (the owner, October 30, 2026).
     return Format-GeneralPageHtml -Title 'SessionStart' -Style $script:SessionStartStyle -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName `
         -ParentCrumbs @(Get-HubGroupCrumbs -Href '/dev/performance') -FooterNote $footer
@@ -2324,11 +2441,30 @@ function Format-ReleaseNotesDevPage {
     # where the shell puts the general banner.
     if ($RepoName) {
         $trail = if ($Release) { @(@{ Label = 'Release notes'; Href = '/dev/release-notes' }, @{ Label = $label; Href = '' }) } else { @(@{ Label = 'Release notes'; Href = '' }) }
-        $out = $Html.Substring(0, $bodyEnd) + (Format-AdminShellClose -NoColumn) + "`n" + (Format-FitAlarmHtml) + $Html.Substring($bodyEnd)
-        $open = Format-AdminShellOpen -Current '/dev/release-notes' -Trail $trail -HubHref $HubHref -Bare -NoColumn
+        # Admin's form (#3830): the masthead's h1 is lifted into the shell's toolbar, and the overview's release cards
+        # become one .table--dense, a row per release (version, title, date), the LIVE chip beside its version.
+        $h1 = ([regex]'(?s)<h1>(.*?)</h1>\s*').Match($Html)
+        $title = 'Release notes'
+        if ($h1.Success) { $title = [System.Net.WebUtility]::HtmlDecode($h1.Groups[1].Value); $Html = $Html.Remove($h1.Index, $h1.Length) }
+        if (-not $Release) {
+            $cardRx = [regex]'(?s)<a class="card" id="[^"]*" href="([^"]*)" title="([^"]*)">\s*<span class="card-head"><span class="sv">([^<]*)</span>(.*?)</span>\s*<span class="sd">([^<]*)</span>\s*</a>'
+            $gridRx = [regex]'(?s)<div class="card-grid cards" id="cards">(.*?)</div>'
+            $Html = $gridRx.Replace($Html, {
+                param($g)
+                $rows = foreach ($c in $cardRx.Matches($g.Groups[1].Value)) {
+                    $chip = $c.Groups[4].Value -replace 'class="chip[^"]*"', 'class="tag"'
+                    '<tr><td class="col-start"><a href="' + $c.Groups[1].Value + '">' + $c.Groups[3].Value + '</a>' + $(if ($chip) { ' ' + $chip } else { '' }) +
+                        '</td><td class="col-start">' + $c.Groups[2].Value + '</td><td>' + $c.Groups[5].Value + '</td></tr>'
+                }
+                '<section class="admin-list" id="cards"><table class="table table--dense"><thead><tr><th class="col-start">Version</th><th class="col-start">Title</th><th>Date</th></tr></thead><tbody>' +
+                    ($rows -join '') + '</tbody></table></section>'
+            }, 1)
+        }
+        $out = $Html.Substring(0, $Html.LastIndexOf('</body>')) + (Format-AdminShellClose -NoColumn) + "`n" + (Format-FitAlarmHtml) + $Html.Substring($Html.LastIndexOf('</body>'))
+        $open = Format-AdminShellOpen -Title $title -Current '/dev/release-notes' -Trail $trail -HubHref $HubHref -NoColumn
         $out = $bodyRx.Replace($out, { param($m) $m.Value + "`n" + $open }, 1)
         $styleEnd = $out.IndexOf('</style>') + '</style>'.Length
-        $out = $out.Substring(0, $styleEnd) + "`n" + $head + "`n<style>" + (Get-AdminShellStyle) + "</style>" + $out.Substring($styleEnd)
+        $out = $out.Substring(0, $styleEnd) + "`n" + $head + "`n<style>" + (Get-AdminShellStyle) + "`n.tb-scroll .wrap { max-width: none; }</style>" + $out.Substring($styleEnd)
         return $htmlRx.Replace($out, ('<html lang="en" ' + (Format-GeneralPagesThemeAttributes) + ' data-width-default="full" data-theme-key="' + (& $e $ThemeKey) + '">'), 1)
     }
     # Unnamed: the breadcrumb bar, the floating settings button, and the general banner above them (#3297).
