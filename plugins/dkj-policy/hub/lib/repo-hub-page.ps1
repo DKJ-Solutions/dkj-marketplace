@@ -12,11 +12,10 @@
     replaces #3047's placeholder, whose own server and ports (4880-4889) are retired; what of that page
     survived is here: the setup cards, the facts and the repo-name handling.
 
-    THE HOUSE HUB FORM (#3383, the owner, October 24, 2026), which the source repo's own hub took first: under
-    the site header the home page is its card links three to a row in a .ph-cards, the .grid-3 layout without its
-    framed surface (November 2, 2026; a heading-less .grid-3 until then) -- the product, the
-    Repository page and the General pages but Issues -- each a .card.card--link (Format-HubCardLinkHtml). A repo that states no product gets the two setup
-    cards under the grid. The facts and the Issues page are the Repository page's (Format-PluginRepoRepositoryHtml),
+    THE HOUSE HUB FORM (#3383, the owner, October 24, 2026; Admin's form since #3830): in the desktop shell the home
+    page lists its pages as one .table--dense (Format-AdminLinkTableHtml), a row per page with its description --
+    the product, the GitHub page and the General pages but Issues. A repo that states no product gets the two setup
+    cards under it. The facts and the Issues page are the Repository page's (Format-PluginRepoRepositoryHtml),
     not the home page's: the home page only gets you somewhere.
 
     THE PAGE STARTS FROM THE HOUSE STYLE: it loads /house-style.css and /house-theme.js, which the general
@@ -157,8 +156,7 @@ function Format-PluginRepoHubHtml {
 function Format-PluginRepoRepositoryHtml {
     <#
         The GitHub page on '/dev/repository' (#3383; called Repository until it took the GitHub name and logo): everything about the repo itself. Its facts as a .facts--row
-        (label over value, no card, since the cards on these pages are links), then its pages a card each in a
-        .grid-3: Issues (this server's, by bare path) and, where -Slug is a plain GitHub owner/name, its pull
+        (label over value), then its pages as one .table--dense (#3830): Issues (this server's, by bare path) and, where -Slug is a plain GitHub owner/name, its pull
         requests and CI runs on GitHub. -RepoName, -Folder, -Mode, -ProductUrl and -PagesUrl are
         Format-PluginRepoHubHtml's; -Slug is owner/name from the origin remote, or empty.
     #>

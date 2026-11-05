@@ -1096,10 +1096,9 @@ function Get-HubCardGridStyle {
 
 function Format-HubGroupPageHtml {
     <#
-        The group page on -Href (Get-HubGroups), bare like the SessionStart overview: an h1 with an h2 card per member
-        page and member group, three to a row on the page itself (.ph-cards, Get-HubCardGridStyle), each one link;
-        then each member Section, a .grid-3 headed by its h2 and
-        holding its members as h3 cards. A group with no member yet says so in one card. Its trail runs through every
+        The group page on -Href (Get-HubGroups), in Admin's form (#3830): its h1 the shell's toolbar title, its member
+        pages and member groups one .table--dense (Format-AdminLinkTableHtml), then each member Section a table of its
+        own under its h2. A group with no member yet says so in one line. Its trail runs through every
         group it sits in but a Section, which has no page. $null for an Href no group has, and for a Section.
         -RepoRoot is the checkout a Source section reads its cards from (the Lenses, Get-HubLensPages).
     #>

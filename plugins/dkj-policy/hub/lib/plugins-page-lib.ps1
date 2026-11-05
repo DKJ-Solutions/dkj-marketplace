@@ -492,8 +492,8 @@ function Get-PluginContents {
 
 function Format-PluginContentsSectionsHtml {
     <#
-        Pure: the Specialists, Hooks and Skills sections of a plugin's page (Dave, November 3, 2026), each an h2 in a
-        .grid__head over the house card per item (Format-HubCardLinkHtml, its label an h3), opening
+        Pure: the Specialists, Hooks and Skills sections of a plugin's page (Dave, November 3, 2026), each an h2 over
+        a .table--dense with a row per item (Format-AdminLinkTableHtml, #3830), opening
         /dev/plugins/<plugin>/<kind>/<slug>. A kind with no item is not drawn.
     #>
     param([Parameter(Mandatory = $true)][string]$PluginName, [Parameter(Mandatory = $true)][hashtable]$Contents)

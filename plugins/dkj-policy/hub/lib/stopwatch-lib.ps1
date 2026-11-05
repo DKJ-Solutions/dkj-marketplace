@@ -1481,7 +1481,7 @@ function Format-StopwatchPageHtml {
             [void]$body.AppendLine((Format-AdminLinkTableHtml -Items @($rows) -NameHead 'Started' -SubHead 'Label' -ValueHead 'Time'))
         } else {
             $rows = foreach ($set in $sets) { Format-StopwatchLabelCard -Set $set -Now $Now -AsRow }
-            [void]$body.AppendLine((Format-AdminLinkTableHtml -Items @($rows) -NameHead 'Label' -SubHead 'Runs' -ValueHead 'Latest'))
+            [void]$body.AppendLine((Format-AdminLinkTableHtml -Items @($rows) -NameHead 'Label' -SubHead 'Measures' -ValueHead 'Latest'))
         }
     }
     # The Logbook's links between its pages (Format-LogbookPager), under the cards: already HTML, built from numbers alone.

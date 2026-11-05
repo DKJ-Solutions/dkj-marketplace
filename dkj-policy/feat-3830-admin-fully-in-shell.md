@@ -53,8 +53,8 @@ Move the hub's remaining Admin pages off the product layer (breadcrumbs-bar, sit
 
 ### TEST
 
-- [ ] the hub suites (dev-preview-sessionstart, stopwatch, logbook, dev-pages, house-palette and the rest that load hub/lib) updated to the Admin form and green
-- [ ] every Admin page served from this branch checked: no `card--link`, `page-column` or `breadcrumbs-bar`, and its one `h1` in the toolbar
+- [x] the hub suites (dev-preview-sessionstart, stopwatch, logbook, dev-pages, house-palette and the rest that load hub/lib) updated to the Admin form and green
+- [x] every Admin page served from this branch checked: no `card--link`, `page-column` or `breadcrumbs-bar`, and its one `h1` in the toolbar
 
 ### DEPLOY: feat/3830-admin-fully-in-shell
 
