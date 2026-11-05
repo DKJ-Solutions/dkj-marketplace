@@ -39,21 +39,34 @@
 
 ### PLAN
 
+Dave, November 5, 2026: the sweeps get names that read the way he thinks of them, all under one prefix.
+`sweep-issues` becomes `issues-sweep` and `sweep-decisions` becomes `issues-sweep-decisions`, beside
+`issues-sweep-reviews` (#3826). The released changelog and archived release notes keep the old names,
+because they are history.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The two skill folders move, and every live reference in the tree follows: skills, `CONTRIBUTING-portable.md`, `ADOPTION.md`, Derek's lens, `repo-config.ps1` and the blueprint that mirrors it, and the comments in `claim-issue` and its plugin mirror (still byte-identical).
+- [x] `logbook-lib.ps1`: the hub's sweep regex accepts the old and the new name, so a run recorded as `/sweep-issues` is still cut per issue.
+- [x] Each renamed page says what it was called until today.
 
 ### TEST
 
+- [x] `logbook.tests.ps1`: two new asserts. A run under the former name is still a sweep, and `/issues-sweep-reviews` is not mistaken for one. 76 passed.
+- [x] `claim-issue.tests.ps1` 613 passed; `check-plugin-integrity.ps1` 0 errors.
+
 ### DEPLOY: feat/issues-sweep-names
 
-**Score:**
+The two sweep skills are renamed so that all three share one prefix: `sweep-issues` is now `issues-sweep`, and `sweep-decisions` is now `issues-sweep-decisions`, beside `issues-sweep-reviews`. Every page that names them follows, and each renamed page says what it used to be called. The hub's logbook still recognises a sweep recorded under the old name.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Anyone who types `/sweep-issues` or `/sweep-decisions` must type `/issues-sweep` or `/issues-sweep-decisions` after updating. The old names no longer exist as commands.
+
+**Score:** 4
 
 #### Pull Request
 
 Rename sweep-issues to issues-sweep and sweep-decisions to issues-sweep-decisions
-

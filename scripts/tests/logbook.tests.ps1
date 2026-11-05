@@ -169,25 +169,27 @@ $folds = Get-LogbookFolds -Marks @((& $mk 600), (& $mk 500 'ship-pr' 'merge'), (
 Assert-Equal '600:3392,1800:3397,2500:' (($folds | ForEach-Object { '{0}:{1}' -f ($_.At - $t0).TotalSeconds, $_.Issue }) -join ',') 'every ship-pr fold mark is a fold, named after the fold commit made just after it; a commit minutes before it, or no commit, names none'
 Assert-Equal '' (Get-LogbookFolds -Marks @((& $mk 600)) -Commits @((& $cm 604 'fold: docs/no-number changelog (#1)')))[0].Issue 'a fold commit whose branch carries no issue number names none'
 
-$sw = @{ Id = 'sw1'; Label = '/sweep-issues'; Start = (& $at 0); End = (& $at 1830); Auto = $true; StartHead = 'a'; Session = 's1' }
+$sw = @{ Id = 'sw1'; Label = '/issues-sweep'; Start = (& $at 0); End = (& $at 1830); Auto = $true; StartHead = 'a'; Session = 's1' }
 $other = @{ Id = 'o1'; Label = 'fix the thing'; Start = (& $at 100); End = (& $at 700); Auto = $true; StartHead = 'a'; Session = 's2' }
 $split = Split-LogbookSweepRuns -Runs @($sw, $other) -Folds $folds
 $shape = { param($rs) ($rs | ForEach-Object { '{0}|{1}|{2}-{3}' -f $_.Id, $_.Label, ($_.Start - $t0).TotalSeconds, $(if ($_.End) { ($_.End - $t0).TotalSeconds } else { 'going' }) }) -join ', ' }
-Assert-Equal 'sw1-1|/sweep-issues #3392|0-600, o1|fix the thing|100-700, sw1-2|/sweep-issues #3397|600-1800' (& $shape $split) 'a finished sweep becomes one run per issue, clean trunk to clean trunk; its time after the last fold is dropped, and another run is left alone'
-Assert-True ($split[0].Session -eq 's1' -and $sw.Id -eq 'sw1' -and $sw.Label -eq '/sweep-issues') 'an issue keeps the sweep''s session, and the stored run is not changed'
+Assert-Equal 'sw1-1|/issues-sweep #3392|0-600, o1|fix the thing|100-700, sw1-2|/issues-sweep #3397|600-1800' (& $shape $split) 'a finished sweep becomes one run per issue, clean trunk to clean trunk; its time after the last fold is dropped, and another run is left alone'
+Assert-True ($split[0].Session -eq 's1' -and $sw.Id -eq 'sw1' -and $sw.Label -eq '/issues-sweep') 'an issue keeps the sweep''s session, and the stored run is not changed'
 $going = $sw.Clone(); $going.End = $null
-Assert-Equal 'sw1-1|/sweep-issues #3392|0-600, sw1-2|/sweep-issues #3397|600-1800, sw1-3|/sweep-issues issue 3|1800-going' (& $shape (Split-LogbookSweepRuns -Runs @($going) -Folds @($folds[0], $folds[1]))) 'in a going sweep the issue in progress is going'
-Assert-Equal 'sw1-1|/dkj-policy:sweep-issues issue 1|0-600' (& $shape (Split-LogbookSweepRuns -Runs @(@{ Id = 'sw1'; Label = '/dkj-policy:sweep-issues'; Start = (& $at 0); End = (& $at 700) }) -Folds @(@{ At = (& $at 600); Issue = '' }))) 'the plugin-qualified command is a sweep too, and a fold that named no issue is numbered'
-Assert-Equal 'sw1|/sweep-issues|0-1830' (& $shape (Split-LogbookSweepRuns -Runs @($sw) -Folds @(@{ At = (& $at 1900); Issue = '1' }))) 'a sweep with no fold inside it stays whole'
+Assert-Equal 'sw1-1|/issues-sweep #3392|0-600, sw1-2|/issues-sweep #3397|600-1800, sw1-3|/issues-sweep issue 3|1800-going' (& $shape (Split-LogbookSweepRuns -Runs @($going) -Folds @($folds[0], $folds[1]))) 'in a going sweep the issue in progress is going'
+Assert-Equal 'sw1-1|/dkj-policy:issues-sweep issue 1|0-600' (& $shape (Split-LogbookSweepRuns -Runs @(@{ Id = 'sw1'; Label = '/dkj-policy:issues-sweep'; Start = (& $at 0); End = (& $at 700) }) -Folds @(@{ At = (& $at 600); Issue = '' }))) 'the plugin-qualified command is a sweep too, and a fold that named no issue is numbered'
+Assert-Equal 'sw1-1|/sweep-issues issue 1|0-600' (& $shape (Split-LogbookSweepRuns -Runs @(@{ Id = 'sw1'; Label = '/sweep-issues'; Start = (& $at 0); End = (& $at 700) }) -Folds @(@{ At = (& $at 600); Issue = '' }))) 'a run recorded under the skill''s former name is still a sweep'
+Assert-Equal 'sw1|/issues-sweep-reviews|0-700' (& $shape (Split-LogbookSweepRuns -Runs @(@{ Id = 'sw1'; Label = '/issues-sweep-reviews'; Start = (& $at 0); End = (& $at 700) }) -Folds @(@{ At = (& $at 600); Issue = '' }))) 'a sibling skill whose name starts with the sweep''s is not a sweep'
+Assert-Equal 'sw1|/issues-sweep|0-1830' (& $shape (Split-LogbookSweepRuns -Runs @($sw) -Folds @(@{ At = (& $at 1900); Issue = '1' }))) 'a sweep with no fold inside it stays whole'
 Assert-Equal 'o1|fix the thing|100-700' (& $shape (Split-LogbookSweepRuns -Runs @($other) -Folds $folds)) 'a run that is not a sweep is never cut, whatever it shipped'
-Assert-Equal 'sw1|/sweep-issues|0-1830' (& $shape (Get-LogbookRuns -Runs @($sw) -StepLogPath '')) 'without a step log the pages show the sweep whole'
+Assert-Equal 'sw1|/issues-sweep|0-1830' (& $shape (Get-LogbookRuns -Runs @($sw) -StepLogPath '')) 'without a step log the pages show the sweep whole'
 $two = @(
-    @{ Id = 'a'; Label = '/sweep-issues'; Start = (& $at 0); End = (& $at 2000); Session = 'sa' },
-    @{ Id = 'b'; Label = '/sweep-issues'; Start = (& $at 100); End = (& $at 2100); Session = 'sb' }
+    @{ Id = 'a'; Label = '/issues-sweep'; Start = (& $at 0); End = (& $at 2000); Session = 'sa' },
+    @{ Id = 'b'; Label = '/issues-sweep'; Start = (& $at 100); End = (& $at 2100); Session = 'sb' }
 )
 $own = @(@{ At = (& $at 500); Issue = '1'; Session = 'sa' }, @{ At = (& $at 900); Issue = '2'; Session = 'sb' }, @{ At = (& $at 1500); Issue = '3'; Session = 'sa' }, @{ At = (& $at 1900); Issue = '4'; Session = 'sb' })
-Assert-Equal 'a-1|/sweep-issues #1|0-500, b-1|/sweep-issues #2|100-900, a-2|/sweep-issues #3|500-1500, b-2|/sweep-issues #4|900-1900' (& $shape (Split-LogbookSweepRuns -Runs $two -Folds $own)) 'two overlapping sweeps from different sessions are each cut only at their own folds (#3534)'
-Assert-Equal 'a-1|/sweep-issues #1|0-500, a-2|/sweep-issues #2|500-900' (& $shape (Split-LogbookSweepRuns -Runs @($two[0]) -Folds @(@{ At = (& $at 500); Issue = '1'; Session = '' }, @{ At = (& $at 900); Issue = '2' }))) 'a fold that names no session, written before it did, still cuts every sweep'
+Assert-Equal 'a-1|/issues-sweep #1|0-500, b-1|/issues-sweep #2|100-900, a-2|/issues-sweep #3|500-1500, b-2|/issues-sweep #4|900-1900' (& $shape (Split-LogbookSweepRuns -Runs $two -Folds $own)) 'two overlapping sweeps from different sessions are each cut only at their own folds (#3534)'
+Assert-Equal 'a-1|/issues-sweep #1|0-500, a-2|/issues-sweep #2|500-900' (& $shape (Split-LogbookSweepRuns -Runs @($two[0]) -Folds @(@{ At = (& $at 500); Issue = '1'; Session = '' }, @{ At = (& $at 900); Issue = '2' }))) 'a fold that names no session, written before it did, still cuts every sweep'
 Assert-Equal 'sa,sb' (((Get-LogbookFolds -Marks @(@{ At = (& $at 500); Run = 'ship-pr'; Step = 'fold'; Session = 'sa' }, @{ At = (& $at 900); Run = 'ship-pr'; Step = 'fold'; Session = 'sb' })) | ForEach-Object { $_.Session }) -join ',') 'a fold carries the session of its mark'
 $old = 24 * 3600 + 3600
 $stale = Split-LogbookSweepRuns -Runs @($going) -Folds @($folds[0], @{ At = (& $at ($old - 600)); Issue = '3500' })
