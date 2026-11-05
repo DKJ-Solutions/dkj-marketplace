@@ -53,7 +53,7 @@ close button that sinks it without touching the server's count, and keep it down
 ### TEST
 
 - [x] `dev-pages.tests.ps1` on its own: 599 passed, 0 failed.
-- [ ] The owner looks at the toast on an Admin page: the cross sits at the end of the row and closes it.
+- [~] The owner looks at the toast on an Admin page: the cross sits at the end of the row and closes it. Not done as a separate look: Dave approved the branch through issues-sweep-reviews on 2026-11-05 without one.
 
 ### DEPLOY: feat/3820-dismiss-toast
 
