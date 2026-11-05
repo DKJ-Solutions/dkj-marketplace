@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**6 / 6 minor entries** <!-- pending-tally -->
+**7 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3817-admin-nav-search · 20261105-150658Z
+
+Admin's side navigation now opens on a search field. Press Ctrl K (Cmd K on a Mac) anywhere in Admin to jump to it,
+type part of a page's name or description, and Enter opens the first match. It finds every page in the navigation and
+the pages under its groups, such as Rules, Skills and Stopwatch, so none of them is more than a few keystrokes away.
+The brand book's desktop shell gains the field as `.nav-search`.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Toolbox user reaches any Admin page from the keyboard, without clicking through a group page first.
+
+**Score:** 3
+
+#### Pull Request
+
+Admin's navigation opens on a search field, focused with Ctrl K
+
+Plugins: dkj-policy
+
+[PR #3840](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3840)
+
+---
 
 ### DEPLOY: fix/3835-loopback-frame-ancestors · 20261105-145612Z
 
