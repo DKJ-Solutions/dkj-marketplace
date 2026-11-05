@@ -339,6 +339,63 @@
                                         "seconds":  0.484
                                     }
                                 ]
+                 },
+                 {
+                     "id":  "20261105-133116-cc6a",
+                     "label":  "release cut",
+                     "start":  "2026-11-05T13:31:16.719Z",
+                     "end":  "2026-11-05T13:32:51.104Z",
+                     "sessions":  1,
+                     "phases":  [
+                                    {
+                                        "name":  "Cut: start",
+                                        "seconds":  0.063
+                                    },
+                                    {
+                                        "name":  "Cut: origin check and guardrails",
+                                        "seconds":  2.016
+                                    },
+                                    {
+                                        "name":  "Cut: lint gate",
+                                        "seconds":  0.001
+                                    },
+                                    {
+                                        "name":  "Cut: test gate",
+                                        "seconds":  0.002
+                                    },
+                                    {
+                                        "name":  "Cut: origin check after the gates",
+                                        "seconds":  0.561
+                                    },
+                                    {
+                                        "name":  "Cut: release builds",
+                                        "seconds":  0.001
+                                    },
+                                    {
+                                        "name":  "Cut: notes, overview and version bumps",
+                                        "seconds":  0.585
+                                    },
+                                    {
+                                        "name":  "Cut: commit and tag",
+                                        "seconds":  0.152
+                                    },
+                                    {
+                                        "name":  "Cut: push",
+                                        "seconds":  4.742
+                                    },
+                                    {
+                                        "name":  "Other tool calls",
+                                        "seconds":  35.516
+                                    },
+                                    {
+                                        "name":  "Claude thinking and writing",
+                                        "seconds":  50.272
+                                    },
+                                    {
+                                        "name":  "Waiting on you",
+                                        "seconds":  0.475
+                                    }
+                                ]
                  }
              ]
 }
