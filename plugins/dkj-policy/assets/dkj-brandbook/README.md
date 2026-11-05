@@ -28,7 +28,7 @@ URLs, with `<tag>` the release tag the skill pins, which the release cut writes 
 **The rule that an app starts from it reaches DKJ-Solutions and nothing else**, through the
 `dkj-solutions` extension, where an app copies the files in and `check-house-style` holds the copy to the pin:
 nothing applies them to a product automatically. BWJ-Development styles its own apps. The files themselves
-reach every repo, because the plugin's own screens, the Toolbox, render in them there with no opt-out
+reach every repo, because the plugin's own screens, Admin, render in them there with no opt-out
 ([#3643](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3643)); the three-part rule is in
 [`hub/README.md`](../../hub/README.md#one-look-in-every-repo).
 
@@ -42,8 +42,8 @@ so a stylesheet added later is gated without an edit.
 **A house-style change is judged by eye on the House style page**, `specimens.html` in this folder: every
 token, the twelve themes and every component with its variants and states, drawn from the stylesheet beside it.
 It ships with the plugin, and every hub that runs `dkj-policy` shows it under Plugins, on
-`/plugins/dkj-policy/dkj-brandbook` (#3493, #3629, #3704), as one card per section with a page each
-(`/plugins/dkj-policy/dkj-brandbook/<section>`, #3563); in the source repo that page reads the working tree, so a change
+`/dev/plugins/dkj-policy/dkj-brandbook` (#3493, #3629, #3704), as one card per section with a page each
+(`/dev/plugins/dkj-policy/dkj-brandbook/<section>`, #3563); in the source repo that page reads the working tree, so a change
 shows there before the release that ships it. It replaces the Brandbook app's showcase, which is retired. `house-style-css` is the gate
 that checks the stylesheet's syntax and tokens; the page is the look.
 
@@ -762,14 +762,14 @@ generic `.chip`, the stat rows and the stepper are house classes since the
 ## Two layers
 
 **The brand book has a shared core and two layers on top of it** (Dave, November 4, 2026,
-[#3811](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3811)): the Toolbox is always a desktop tool,
+[#3811](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3811)): Admin is always a desktop tool,
 read in VS Code's Simple Browser, and looks like an Explorer or a task board, while the product (the
 storefront) stays mobile-first with desktop as an option. The core (tokens, themes, typography, tables) is
 shared; each layer is a part of [`house-style.css`](house-style.css):
 
-- **Desktop shell** (in [`house-style.css`](house-style.css), the part "Desktop shell: the Toolbox's layer"): a thin bar, a side tree, a main pane with a dense
+- **Desktop shell** (in [`house-style.css`](house-style.css), the part "Desktop shell: Admin's layer"): a thin bar, a flat side navigation under section headings (Home and the domain objects on top, then Product and Development, Settings in the foot, after the Shopify Admin, #3815), a main pane with a dense
   list and an optional detail pane, no site header and no cards. Desktop only, with no phone query. Reference:
-  [`patterns/toolbox-shell.html`](patterns/toolbox-shell.html) and the "Desktop shell" specimens.
+  [`patterns/admin-shell.html`](patterns/admin-shell.html) and the "Desktop shell" specimens.
 - **Mobile-first app** (the part "App components"): the narrow column, touch targets, dialogs, the top bar, and the
   site header and breadcrumb bar under "Page patterns".
 
@@ -832,7 +832,7 @@ its own.
   (44px) high and one line: a trail longer than the screen scrolls sideways inside the bar instead of
   wrapping, so the height never changes. Whatever else sticks to the top sits under it, at `top: var(--tap)`;
   the brand book already does that for the floating settings button and for in-page anchors.
-- **The trail:** it always starts at **Tools** on the toolbox, linking to `/` (it read **Repo hub** until #3270 and **Home** until the owner renamed it, October 27, 2026; a product keeps **Home** for its own pages). Each further crumb is one level
+- **The trail:** it always starts at **Home**, linking to `/` (it read **Repo hub** until #3270, and **Tools** on the Toolbox from October 27, 2026 until #3815 renamed it Admin; a product keeps **Home** for its own pages). Each further crumb is one level
   down: the product (under its own name), then a page inside it. The last crumb is the current page,
   unlinked, with `aria-current="page"`. The bar stands on the theme's colour, `--primary` (owner, #3235, October 21, 2026), so
   the trail is in the paper steps, which all read on it: the chevron `--bg-3`, the ancestor links `--bg-2` (with
@@ -878,7 +878,7 @@ growing page gets this shape without anyone having to point it out.
   section. No hand-written variant: no `h2` or `h3` link inside the card, and no extra rows. A card that
   needs more (a figure on its own line, a badge, its label as a heading) takes it from the card's slots
   ([The card](#the-hub)).
-- **The section's page** is that section alone, under one more crumb, so the trail reads Tools >
+- **The section's page** is that section alone, under one more crumb, so the trail reads Home >
   ... > the overview > the section. Its `h1` is the section's name and the section's line is its `<meta name="description">`, never a lead under the `h1` (#3585). Its
   own `.grid__head` goes, because the `h1` already says it.
 - **A list is not sections.** A logbook, a release list or an issue list may run long inside **one**
@@ -891,7 +891,7 @@ growing page gets this shape without anyone having to point it out.
 
 **An app may open with a site header, and the breadcrumb bar then stands right under it** (owner, October
 22, 2026). **Every hub page carries it**: the dkj-policy plugin's hub server draws it on the home page and
-every general page of every repo, with the repo's name and `toolbox` after it. A repo's own product may add it; an app without one keeps the bar as described above.
+every general page of every repo, with the repo's name and `admin` after it. A repo's own product may add it; an app without one keeps the bar as described above.
 
 - **The header:** `header.site-header` > `.container`, at most `--spacing-18` (72px) high, on `--primary`
   over the full width. On the left the app's name, `a.site-header__brand` linking home (`/`); on
@@ -951,14 +951,13 @@ where you can go, the trail where you are.
 </div></dialog></header>
 ```
 
-**In the hub** the toolbox's menu is its home page's cards in their order (GitHub, Release notes, AI,
-Installed plugins: `Get-HubMenu`, from the same list the cards come from), and a product's is its own pages.
+**In the hub** there is no site header menu: Admin draws its side navigation instead (`Get-AdminNav`), whose Development section is its home page's cards in their order (GitHub, Release notes, Claude, Installed plugins: `Get-HubMenu`, from the same list the cards come from). A product's menu is its own pages.
 
 ### The hub
 
 It is called a hub, not a dashboard (owner's call, October 17, 2026, [#199](https://github.com/DKJ-Solutions/dkj-brandbook/issues/199)): its job is to get you to the page you want quickly, while a dashboard is a page that shows how something stands, and the pages below it can be dashboards.
 
-**On screen it is called Toolbox** (the owner, October 27, 2026): the session-start line opens with `Toolbox:`, the site header tags the repo's name `toolbox`, its first crumb reads **Tools**, and a product links it on a **Toolbox** card. The code, its routes (`/hub`) and these pages still say *hub*, which names the mechanism.
+**On screen it is called Admin** (#3815, November 5, 2026; **Toolbox** from October 27 until then): Admin is for managing and the product for using, as in the Shopify Admin. The session-start line opens with `Admin:`, its first crumb reads **Home**, a product links it on an **Admin** card, and its development pages sit under `/dev/...`, the old addresses redirecting there. The code, its routes (`/hub`) and these pages still say *hub*, which names the mechanism.
 
 **Every repo's hub has this one form, and only its content differs** (owner's decision, October 16, 2026,
 [#139](https://github.com/DKJ-Solutions/dkj-brandbook/issues/139)). The hub is the dkj-policy plugin's own hub
@@ -979,20 +978,20 @@ old link still lands.
 took this form first, on October 22; the plugin's hub followed it once a consumer rebuilt its hub to the
 sectioned page this section used to lay down and its owner did not recognise it as the house hub. The home
 page only gets you somewhere: every page is a card, three to a row, with no heading above them. The facts,
-the open issues and the pull requests moved to the **Repository** page on `/repository`.
+the open issues and the pull requests moved to the **Repository** page on `/dev/repository`.
 
 **The home page, top to bottom, in this order:**
 
 | # | Block | House class (the stylesheet-only form) | Fixed, or the repo's own |
 |---|---|---|---|
 | 0 | The general banner, the first thing on the page, above the site header, with no margin, border or radius (owner, October 24, 2026): a countdown to the next full hour, and once an hour has passed a tone and a **10 airsquats** checkbox that shows the total owed ([#3250](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3250)), the same on every machine ([#3438](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3438)) | a `.notice` holding one `.msg` line, written by `Format-RepoHubBanner` in `dkj-policy`'s `hub/lib/general-pages-lib.ps1` | fixed: a hub a repo builds itself carries it only if it calls that function |
-| 1 | The site header: the mark and the repo's name with `toolbox` after it, linking home, and the settings button on the far right ([above](#the-site-header-above-the-bar)). It names the repo, so there is **no intro**: no `h1`, no lead, no eyebrow | `.site-header`, `DKJTheme.settings(el)` mounted in its `#settings` | fixed; the name is the repo's own |
-| 2 | The breadcrumb bar under it: the one crumb **Tools** ([above](#every-page-the-breadcrumb-bar)) | `.breadcrumbs-bar` / `.breadcrumbs` | fixed |
+| 1 | The site header: the mark and the repo's name with `admin` after it, linking home, and the settings button on the far right ([above](#the-site-header-above-the-bar)). It names the repo, so there is **no intro**: no `h1`, no lead, no eyebrow | `.site-header`, `DKJTheme.settings(el)` mounted in its `#settings` | fixed; the name is the repo's own |
+| 2 | The breadcrumb bar under it: the one crumb **Home** ([above](#every-page-the-breadcrumb-bar)) | `.breadcrumbs-bar` / `.breadcrumbs` | fixed |
 | 3 | **The pages**, every one a card of its own, in this order: the repo's products, its own pages with **Repository** among them, and the general pages but Issues, those of a group behind its one card (below) | one `.grid-3`, **no** `.grid__head`, holding one `.card.card--link` per page or group | fixed form; the products and the repo's own pages are the repo's own |
 | 4 | Only where the plugin's hub serves a repo that states no product: the two **Set up a product** cards, under their own `h2` | a `.grid-2` with a `.grid__head`, then one `.card.grid__full` per step | the plugin's own text |
 | 5 | A footer note naming where the data comes from | `.note` | the repo's own source |
 
-**The Repository page, on `/repository`, under the same site header, its trail Tools > Repository:**
+**The Repository page, on `/dev/repository`, under the same site header, its trail Home > Repository:**
 
 | # | Block | House class | Fixed, or the repo's own |
 |---|---|---|---|
@@ -1042,7 +1041,7 @@ closes the card's link at the inner one and the card falls apart
 - **An `id` and extra classes** on the card, for an anchor or a tone of the page's own (a run's speed colour).
 
 ```html
-<section class="card card--link"><nav class="menu-list" aria-label="Repository"><a class="menu-item" href="/repository"><span class="menu-item__label">Repository<span class="menu-item__sub">This repo's facts and its open issues</span></span><svg class="menu-item__chevron">...</svg></a></nav></section>
+<section class="card card--link"><nav class="menu-list" aria-label="Repository"><a class="menu-item" href="/dev/repository"><span class="menu-item__label">Repository<span class="menu-item__sub">This repo's facts and its open issues</span></span><svg class="menu-item__chevron">...</svg></a></nav></section>
 ```
 
 **The order of the cards.** The products come first, because they are what the repo offers its visitors; a
@@ -1053,10 +1052,10 @@ Brandbook app is retired ([#3493](https://github.com/DKJ-Solutions/dkj-claude-pl
 
 **A card is ALWAYS one link, never two or more** (owner, October 27, 2026). Pages that belong together
 are grouped on a **group page** of their own, and the hub carries one card linking that page. **Clock**
-(`/clock`) was the first: the page was an `h1` with one card link each for Stopwatch and Logbook. Groups nest,
+(`/dev/clock`) was the first: the page was an `h1` with one card link each for Stopwatch and Logbook. Groups nest,
 and a group can also be a **section**, an `h2` over its members' `h3` cards with no page of its own: Clock is
 one on Performance's page since November 3, 2026, beside Context, and Performance sits on Claude's, so the
-trails read Tools > Claude > Performance > the page, and the hub carries only the Claude card. A page joins a group by the
+trails read Home > Claude > Performance > the page, and the hub carries only the Claude card. A page joins a group by the
 `Group` key in `Get-GeneralPages`; the group itself is a row of `Get-HubGroups`, and
 `Format-HubGroupPageHtml` draws its page.
 

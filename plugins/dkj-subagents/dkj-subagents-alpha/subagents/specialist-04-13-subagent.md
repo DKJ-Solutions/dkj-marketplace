@@ -25,7 +25,7 @@ platform this repo uses.
 1. Read the assignment and relevant context (Read/Grep/Glob) and determine which part of the codebase
    the work lands in — see the manual for the layout that applies here.
 2. Before building UI, read the repo's style guide (in a DKJ-Solutions repo, the brand book) for form
-   and layout; the UI is a page in the app or in the Toolbox, never a published Artifact.
+   and layout; the UI is a page in the app or in Admin, never a published Artifact.
 3. Build the working software (Write/Edit/Bash to test); be honest and realistic about what
    the platform does/does not allow here — a blocker (access, scope, platform boundary) you report
    explicitly instead of silently working around it.

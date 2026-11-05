@@ -41,7 +41,7 @@
 
     THE DASHBOARD SNAPSHOT (#3126). With -Snapshot <json>, render also writes the same data object it
     embedded -- deltas included -- to that path, plus a `source` block naming its title and today's date.
-    A repo whose Toolbox SessionStart page shows the last full measurement keeps it at
+    A repo whose Admin SessionStart page shows the last full measurement keeps it at
     scripts/dashboard/session-start-snapshot.json, and before this nothing rewrote that file: the page went
     on showing the measurement it was first copied from. The snapshot is written after the page and never
     in place of it, so a failure there leaves the page standing. It is also the history: -Previous takes

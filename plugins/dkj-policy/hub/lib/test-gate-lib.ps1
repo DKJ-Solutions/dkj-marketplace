@@ -127,7 +127,7 @@ function Format-TestGatePageHtml {
     <#
         The Test gate pages from ConvertFrom-SuiteDurations' model, one screen each, drilled into by the crumbs
         (the owner, October 27, 2026: the one long page did not fit a screen of about 1300 x 900). -Path is the
-        part after '/test-gate/', '' for the overview:
+        part after '/dev/test-gate/', '' for the overview:
 
           ''                 the overview: the totals, and one card per suite list (Get-TestGateLists), plus the
                              change's card where -Selection is given and the measurement's card
@@ -142,7 +142,7 @@ function Format-TestGatePageHtml {
         -ReadError is set when suite-durations.json could not be read, -GroupsError when suite-groups.json could
         not be; without groups the suites are one list, 'suites'. A -ReadError of 'the file is not there' is the
         empty state: no test gate measured in this repo yet. -RepoName names the site in the page's header, -HubHref
-        is where its Home crumb goes ('/', the root of the toolbox), and -RepoSlug (owner/name) links each
+        is where its Home crumb goes ('/', the root of Admin), and -RepoSlug (owner/name) links each
         recorded CI run on GitHub; without it a run is its number.
 
         -Selection is what this checkout's change selects (#3309, lever 3), $null to leave it out:
@@ -161,7 +161,7 @@ function Format-TestGatePageHtml {
     $lists = @(Get-TestGateLists -Model $Model)
     $listOf = @{}
     foreach ($l in $lists) { foreach ($n in @(@($l.Suites | ForEach-Object { $_.Name }) + @($l.Unmeasured))) { if ($n -and -not $listOf.ContainsKey($n)) { $listOf[$n] = $l } } }
-    $suiteHref = { param($List, $Name) '/test-gate/' + (& $e $List.Key) + '/' + (& $e $Name) }
+    $suiteHref = { param($List, $Name) '/dev/test-gate/' + (& $e $List.Key) + '/' + (& $e $Name) }
     $pct = { param([double]$Part) if ($Model.Total -gt 0) { (100.0 * $Part / $Model.Total).ToString('0.0', $inv) + '%' } else { '0.0%' } }
     $bar = {
         param([double]$Part, [double]$Of)
@@ -193,8 +193,8 @@ function Format-TestGatePageHtml {
     $footer = 'Read from the repo''s <code>scripts/tests/suite-durations.json</code> on every request, grouped by its <code>scripts/tests/suite-groups.json</code> where it keeps one. Built by the dkj-policy plugin''s <code>hub/lib/test-gate-lib.ps1</code>.'
     # Under the hub's GitHub page, beside the Actions whose runs it measures, on every level (the owner, November 2,
     # 2026; under the Clock from October 27).
-    $github = @(@{ Label = 'GitHub'; Href = '/repository' })
-    $crumbs = @($github) + @(@{ Label = 'Test gate'; Href = '/test-gate' })
+    $github = @(@{ Label = 'GitHub'; Href = '/dev/repository' })
+    $crumbs = @($github) + @(@{ Label = 'Test gate'; Href = '/dev/test-gate' })
     $page = {
         # The source note closes the overview and the measurement's page only: a page further down spends its height on its own content.
         param([string]$Title, [string]$Body, [string]$Lead = '', [object[]]$Parents = $crumbs, [string]$Footer = '', [string]$Aside = '')
@@ -286,7 +286,7 @@ function Format-TestGatePageHtml {
     if ($parts.Count -ge 1) {
         $list = @($lists | Where-Object { $_.Key -ceq $parts[0] }) | Select-Object -First 1
         if (-not $list -or $parts.Count -gt 2) { return $null }
-        $listCrumbs = @($crumbs) + @(@{ Label = $list.Title; Href = '/test-gate/' + $list.Key })
+        $listCrumbs = @($crumbs) + @(@{ Label = $list.Title; Href = '/dev/test-gate/' + $list.Key })
 
         # ONE SUITE: what it protects, what it costs, where it ranks.
         if ($parts.Count -eq 2) {
@@ -296,7 +296,7 @@ function Format-TestGatePageHtml {
             [void]$body.AppendLine('<div class="tg-cols">')
             [void]$body.AppendLine('<section class="card"><dl class="facts">')
             [void]$body.AppendLine('<div><dt>File</dt><dd><code>scripts/tests/' + (& $e $name) + '</code></dd></div>')
-            [void]$body.AppendLine('<div><dt>' + $(if ($list.Key -eq 'ungrouped' -or $list.Key -eq 'suites') { 'Listed under' } else { 'Group' }) + '</dt><dd><a class="dp-link" href="/test-gate/' + (& $e $list.Key) + '">' + (& $e $list.Title) + '</a></dd></div>')
+            [void]$body.AppendLine('<div><dt>' + $(if ($list.Key -eq 'ungrouped' -or $list.Key -eq 'suites') { 'Listed under' } else { 'Group' }) + '</dt><dd><a class="dp-link" href="/dev/test-gate/' + (& $e $list.Key) + '">' + (& $e $list.Title) + '</a></dd></div>')
             if ($row) {
                 $rank = [array]::IndexOf(@($suites | ForEach-Object { $_.Name }), $name) + 1
                 [void]$body.AppendLine('<div><dt>Seconds on CI</dt><dd class="num">' + (Format-DevSeconds $row.Seconds) + '</dd></div>')
@@ -377,17 +377,17 @@ function Format-TestGatePageHtml {
     $heaviest = [double](($lists | ForEach-Object { $_.Total } | Measure-Object -Maximum).Maximum)
     foreach ($l in $lists) {
         $n = @($l.Suites).Count + @($l.Unmeasured).Count
-        [void]$body.AppendLine((Format-HubCardLinkHtml -Href ('/test-gate/' + $l.Key) -Label $l.Title -Heading 2 -Id ('group-' + $l.Key) -Class 'tg-card' `
+        [void]$body.AppendLine((Format-HubCardLinkHtml -Href ('/dev/test-gate/' + $l.Key) -Label $l.Title -Heading 2 -Id ('group-' + $l.Key) -Class 'tg-card' `
             -ValueHtml ('<span class="num">' + $n + ' suites' + $dot + (Format-DevSeconds $l.Total) + $dot + (& $pct $l.Total) + '</span>' + (& $bar $l.Total $heaviest))))
     }
     if ($null -ne $Selection) {
         $picked = if (-not @($Selection.Changed | Where-Object { $_ }).Count) { 'nothing changed' }
                   elseif (-not $Selection.Proven -or @($Selection.Selected).Count -ge $Selection.PoolCount) { 'every suite' }
                   else { '' + @($Selection.Selected).Count + ' of ' + $Selection.PoolCount + ' suites' }
-        [void]$body.AppendLine((Format-HubCardLinkHtml -Href '/test-gate/selection' -Label 'This checkout''s change' -Heading 2 -Id 'selection' -Class 'tg-card' `
+        [void]$body.AppendLine((Format-HubCardLinkHtml -Href '/dev/test-gate/selection' -Label 'This checkout''s change' -Heading 2 -Id 'selection' -Class 'tg-card' `
             -ValueHtml ('<span class="num">' + $picked + '</span>')))
     }
-    [void]$body.AppendLine((Format-HubCardLinkHtml -Href '/test-gate/measured' -Label 'Where it was measured' -Heading 2 -Id 'recorded' -Class 'tg-card' `
+    [void]$body.AppendLine((Format-HubCardLinkHtml -Href '/dev/test-gate/measured' -Label 'Where it was measured' -Heading 2 -Id 'recorded' -Class 'tg-card' `
         -ValueHtml ('<span class="num">' + $(if ($Model.Date) { & $e $Model.Date } else { '--' }) + $dot + @($Model.Runs).Count + ' CI runs' +
         $(if (@($Model.Missing).Count -and -not $unmeasured) { $dot + @($Model.Missing).Count + ' not recorded' } else { '' }) + '</span>')))
     [void]$body.AppendLine('</div>')

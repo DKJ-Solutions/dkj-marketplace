@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
-    The Stopwatch's and the Logbook's routes, answered for any hub server (#3470): /stopwatch, /stopwatch/<label>,
-    /stopwatch/<label>/<run>, /logbook and /logbook/<slug>.
+    The Stopwatch's and the Logbook's routes, answered for any hub server (#3470): /dev/stopwatch, /dev/stopwatch/<label>,
+    /dev/stopwatch/<label>/<run>, /dev/logbook and /dev/logbook/<slug>.
 
 .DESCRIPTION
     ONE ROUTER FOR TWO SERVERS. The pages began on the source repo's own hub (serve-consumer-dashboard.ps1) and are
@@ -97,13 +97,13 @@ function Resolve-HubTimingPage {
     $site = @{ RepoName = $c.RepoName; HubHref = $c.HubHref }
     $ok = { param($html) @{ Status = 200; Html = $html; Location = '' } }
     $missing = @{ Status = 404; Html = ''; Location = '' }
-    if ($Path -eq '/stopwatch') {
+    if ($Path -eq '/dev/stopwatch') {
         $sw = Get-StopwatchPageRuns -Context $c; $store = $sw.Store
         return (& $ok (Format-StopwatchPageHtml -Model (ConvertTo-StopwatchModel -Runs $sw.Runs -Prepared $store.Prepared) -ReadError $store.Error -Skipped $store.Skipped -StorePath $c.StopwatchPath `
             -SharedMachines $sw.Shared.Machines -Fetching:([bool]$sw.Shared.Fetching) -LastFetched $(if ($sw.Shared.ContainsKey('LastFetched')) { $sw.Shared.LastFetched } else { $null }) `
             -Shared:([bool]$c.Shared) @site))
     }
-    if ($Path -match '^/stopwatch/([a-z0-9-]{1,60})(?:/([a-z0-9-]{1,60}))?$') {
+    if ($Path -match '^/dev/stopwatch/([a-z0-9-]{1,60})(?:/([a-z0-9-]{1,60}))?$') {
         $swSlug = $Matches[1]; $swRunSlug = $Matches[2]
         $sw = Get-StopwatchPageRuns -Context $c; $store = $sw.Store
         if ($store.Error) { return (& $ok (Format-StopwatchPageHtml -Model (ConvertTo-StopwatchModel -Runs @()) -ReadError $store.Error -StorePath $c.StopwatchPath -Shared:([bool]$c.Shared) @site)) }
@@ -111,7 +111,7 @@ function Resolve-HubTimingPage {
         $labelSet = Find-StopwatchLabel -Model $swModel -Slug $swSlug
         if (-not $swRunSlug) {
             $group = Find-StopwatchGroup -Model $swModel -Slug $swSlug
-            if ($group -and $group.LabelSlug) { return @{ Status = 301; Html = ''; Location = "/stopwatch/$($group.LabelSlug)/$($group.PageSlug)" } }
+            if ($group -and $group.LabelSlug) { return @{ Status = 301; Html = ''; Location = "/dev/stopwatch/$($group.LabelSlug)/$($group.PageSlug)" } }
             if ($labelSet) { return (& $ok (Format-StopwatchLabelPageHtml -Set $labelSet -StorePath $c.StopwatchPath -Shared:([bool]$c.Shared) @site)) }
             return $missing
         }
@@ -122,9 +122,9 @@ function Resolve-HubTimingPage {
         foreach ($k in $sw.Shared.Phases.Keys) { if (-not $phases.ContainsKey($k)) { $phases[$k] = $sw.Shared.Phases[$k] } }
         return (& $ok (Format-StopwatchRunPageHtml -Group $group -StorePath $c.StopwatchPath -Transcript $phases -LabelCrumb -Shared:([bool]$c.Shared) @site))
     }
-    if ($Path -eq '/logbook' -or $Path -match '^/logbook/page/(\d{1,4})$') {
-        $n = if ($Path -eq '/logbook') { 1 } else { [int]$Matches[1] }
-        if ($Path -ne '/logbook' -and $n -eq 1) { return @{ Status = 301; Html = ''; Location = '/logbook' } }
+    if ($Path -eq '/dev/logbook' -or $Path -match '^/dev/logbook/page/(\d{1,4})$') {
+        $n = if ($Path -eq '/dev/logbook') { 1 } else { [int]$Matches[1] }
+        if ($Path -ne '/dev/logbook' -and $n -eq 1) { return @{ Status = 301; Html = ''; Location = '/dev/logbook' } }
         $lb = Read-StopwatchStore -Path $c.LogbookPath
         # One page of the store's runs, newest first (Dave, November 3, 2026): everything below costs one page, not the store.
         $pg = Select-LogbookPage -Runs $lb.Runs -Page $n
@@ -136,7 +136,7 @@ function Resolve-HubTimingPage {
         $pager = Format-LogbookPager -Page $pg.Page -Pages $pg.Pages -Total $pg.Total -Shown @($pg.Runs).Count -First $pg.First
         return (& $ok (Format-LogbookPageHtml -Runs $lbRuns -ReadError $lb.Error -Skipped $lb.Skipped -StorePath $c.LogbookPath -Transcript $phases -PagerHtml $pager @site))
     }
-    if ($Path -match '^/logbook/([a-z0-9-]{1,60})$') {
+    if ($Path -match '^/dev/logbook/([a-z0-9-]{1,60})$') {
         $lbSlug = $Matches[1]
         $lb = Read-StopwatchStore -Path $c.LogbookPath
         if ($lb.Error) { return (& $ok (Format-LogbookPageHtml -Runs @() -ReadError $lb.Error -StorePath $c.LogbookPath @site)) }
