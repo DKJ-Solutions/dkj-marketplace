@@ -319,7 +319,7 @@ it as the cue for step 7, not as the end of the assignment. Measured September 2
 one issue, took that template as its own close-out, and left four `free` issues untouched.
 
 **What it skipped as `awaiting-decision-dev` is the owner's half**, and `sweep-decisions` walks it with
-them in one pass; a decided issue comes back here as `free`. What it skipped as `awaiting-decision-client` is nobody's half here: it waits on the client or requester, and neither skill walks it. **Nor does either walk `awaiting-review-dev` or `awaiting-review-client`** (#2977): those wait on a look at a result, not on a choice, and the look is the owner's or the client's to give.
+them in one pass; a decided issue comes back here as `free`. What it skipped as `awaiting-decision-client` is nobody's half here: it waits on the client or requester, and neither skill walks it. **Nor does either walk `awaiting-review-dev` or `awaiting-review-client`** (#2977): those wait on a look at a result, not on a choice, and the look is the owner's or the client's to give. Where the owner gives it for the whole pile at once, `issues-sweep-reviews` runs step 6 for every `awaiting-review-dev` issue in one pass; only the owner types it.
 
 **The sweep closes out once, after the loop**, in the ordinary receipt shape: the PR number of each issue
 it shipped, each branch it parked for the owner's eye with the `git checkout <branch>` line and, each on

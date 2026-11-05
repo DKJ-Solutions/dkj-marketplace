@@ -39,21 +39,35 @@
 
 ### PLAN
 
+Dave, November 5, 2026: a third sweep that approves every issue parked on `awaiting-review-dev` and ships
+its parked branch. It runs `sweep-issues` step 6 for the whole pile in one pass. The constitution lets a
+visible result merge only on the owner's word, so the skill carries `disable-model-invocation: true`:
+only a person types it, and typing it is that word for every issue it lists. It skips
+`awaiting-review-client`, whose look belongs to somebody else. Named `issues-sweep-reviews` at Dave's
+request; renaming the two existing sweeps to the same scheme is a separate branch.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-policy/skills/issues-sweep-reviews/SKILL.md`: the new skill. It finds each issue's single parked branch, verifies or takes over the claim, comments the approval before it removes the label, ships with `ship-pr -Resolves`, and holds out an issue with no branch, two branches, a colleague's claim or a refused ship.
+- [x] `plugins/dkj-policy/CONTRIBUTING-portable.md`, `plugins/dkj-policy/skills/sweep-issues/SKILL.md`, `.claude/specialists/lenses/specialist-05-05-lens.md`, `plugins/ADOPTION.md`: each place that says which sweep walks the review labels now names the new one.
+- [~] A script that loops over the issues: dropped. Every step is an existing script (`claim-issue`, `ship-pr`, `prune-merged`), and `ship-pr` is long-running with a last line that has to be read per issue, so a wrapper would hide exactly what the session must read.
 
 ### TEST
 
+- [x] `check-plugin-integrity.ps1` passes with the new skill registered.
+
 ### DEPLOY: feat/sweep-reviews
 
-**Score:**
+A new skill, `issues-sweep-reviews`, approves and ships every issue parked on `awaiting-review-dev` in one pass. Each issue gets an approval comment and loses its label, and its parked branch goes through `ship-pr` (open, merge, fold). Only a person can run it, because typing the command is the owner's permission to merge a visible result. It never touches `awaiting-review-client`, and it holds out any issue without exactly one parked branch, any branch a colleague claims and any ship that is refused. Until now each parked branch had to be shipped by hand, one at a time.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+An owner who has a pile of visible results parked by `sweep-issues` ships them all with one command, instead of one round per branch.
+
+**Score:** 3
 
 #### Pull Request
 
-sweep-reviews: ship every awaiting-review-dev issue on the owner's word
-
+issues-sweep-reviews: ship every awaiting-review-dev issue on the owner's word
