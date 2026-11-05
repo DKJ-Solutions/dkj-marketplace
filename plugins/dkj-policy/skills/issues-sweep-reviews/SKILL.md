@@ -2,7 +2,7 @@
 name: issues-sweep-reviews
 description: >-
   Approve and ship every open issue parked on awaiting-review-dev in ONE pass -- the visible results
-  sweep-issues parked for the owner's eye. Typing the command IS the owner's word for every issue it
+  issues-sweep parked for the owner's eye. Typing the command IS the owner's word for every issue it
   lists: each one gets an approval comment, loses the label, and its parked branch ships through
   ship-pr (open, merge, fold). It never touches awaiting-review-client, and never runs unasked.
 disable-model-invocation: true
@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 # issues-sweep-reviews -- shipping the visible results that wait on the owner
 
-**`sweep-issues` parks a visible result instead of shipping it**: it pushes the branch to `origin`, sets
+**`issues-sweep` parks a visible result instead of shipping it**: it pushes the branch to `origin`, sets
 `awaiting-review-dev` on the issue and moves on (step 5, #3552). Shipping it afterwards is that skill's
 step 6, run by hand for one branch at a time. When the owner has looked at a batch, or decides to trust
 one, that is one manual round per issue. This skill runs step 6 for every one of them in a single pass.
@@ -101,7 +101,7 @@ git pull --ff-only
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/release/ship-pr.ps1" -Resolves <n>
 ```
 
-This is the same command as `sweep-issues` step 5, with the same reason: a branch named after its
+This is the same command as `issues-sweep` step 5, with the same reason: a branch named after its
 issue fails `open-pr`'s resolves gate without `-Resolves`. That flag also closes the issue: the merge
 resolves it, and `ship-pr` verifies the close. Read the run's **last line**, never its
 exit code through a pipe ([`ship-pr`](../ship-pr/SKILL.md)). `ship-pr`'s own close-out is this issue's
@@ -109,7 +109,7 @@ receipt, not the sweep's (#2562), so go on to step 5.
 
 **A refused ship holds the issue out, and does not put the label back.** A red gate or a conflict is not
 waiting on a look any more: it is work. Say on the issue in one comment what refused and where, leave
-the branch on `origin`, and let the next `sweep-issues` pick the issue up as `free`.
+the branch on `origin`, and let the next `issues-sweep` pick the issue up as `free`.
 
 ### 5. Clean up, and go again
 
@@ -131,7 +131,7 @@ with a clause for why (no branch, two branches, a colleague's claim, a refused s
 - **Touch `awaiting-review-client`**, or any other parking label. Only a look the owner can give is given here.
 - **Force anything.** A refused gate, a red CI run or a conflict stops that issue and nothing else, and
   `ship-pr` never merges past one.
-- **Build.** A branch that needs a fix commit goes back to `sweep-issues`.
+- **Build.** A branch that needs a fix commit goes back to `issues-sweep`.
 
 ## Requirements
 

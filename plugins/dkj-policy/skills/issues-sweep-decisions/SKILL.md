@@ -1,16 +1,18 @@
 ---
-name: sweep-decisions
+name: issues-sweep-decisions
 description: >-
   Work through every open issue parked on awaiting-decision-dev in ONE pass with the owner -- the backlog
-  sweep-issues skips by design. Each parked issue is put to the owner as a short menu, the answer goes
-  on the issue as a comment and the label comes off, so the next sweep-issues finds it free and finds
+  issues-sweep skips by design. Each parked issue is put to the owner as a short menu, the answer goes
+  on the issue as a comment and the label comes off, so the next issues-sweep finds it free and finds
   the decision in its thread. It decides nothing itself, builds nothing and claims nothing.
 disable-model-invocation: true
 ---
 
-# sweep-decisions -- the other half of the backlog
+# issues-sweep-decisions -- the other half of the backlog
 
-**`sweep-issues` skips every issue carrying `awaiting-decision-dev`, and that is correct**: such an issue ends
+**It was named `sweep-decisions` until November 5, 2026**, renamed by Dave so the three sweeps share one prefix with `issues-sweep` and `issues-sweep-reviews`.
+
+**`issues-sweep` skips every issue carrying `awaiting-decision-dev`, and that is correct**: such an issue ends
 in the owner's choice, so nothing in it can be built yet. But skipping it means the decisions pile up where
 no sweep looks, one per issue, each waiting for the owner to open it on their own initiative
 ([#2759](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2759)). This skill walks that pile with
@@ -85,7 +87,7 @@ that are not a design:
 ### 3. Record each answer -- on the issue, not in the conversation
 
 ```sh
-gh issue comment <n> --body-file <file>   # "Decision (<owner>, <date>): <the answer>. Recorded by sweep-decisions; the issue is free for pickup."
+gh issue comment <n> --body-file <file>   # "Decision (<owner>, <date>): <the answer>. Recorded by issues-sweep-decisions; the issue is free for pickup."
 gh issue edit <n> --remove-label awaiting-decision-dev   # or the former name the issue was listed under
 ```
 
@@ -108,12 +110,12 @@ decision that freed it. A session clears; the thread is what the next session re
 ### 4. Close out once, after the pile
 
 In the ordinary receipt shape: the numbers decided, the numbers dropped, the numbers left parked with a
-clause each for why. Decided issues are now `free` in `sweep-issues`, which is the natural next run.
+clause each for why. Decided issues are now `free` in `issues-sweep`, which is the natural next run.
 
 ## What it never does
 
 - **Decide on the owner's behalf.** A recommendation is an option in the menu, never an answer.
-- **Build, branch or claim.** A decided issue goes back to the backlog, and `sweep-issues` takes it from
+- **Build, branch or claim.** A decided issue goes back to the backlog, and `issues-sweep` takes it from
   there.
 - **Touch an issue parked on anything else** -- `awaiting-info-client` waits on the submitter, and the
   recurrence labels wait on evidence. Neither is the owner's choice.

@@ -28,7 +28,7 @@
       - Runs are keyed by session id, so two sessions side by side each keep their own run, and every open run shows
         as going (ConvertTo-StopwatchModel -KeepOpenRuns), up to a day old (ConvertTo-LogbookModel).
 
-    A SWEEP IS SHOWN PER ISSUE (#3405). A /sweep-issues session works several issues in one turn, so its run is the
+    A SWEEP IS SHOWN PER ISSUE (#3405). A /issues-sweep session works several issues in one turn, so its run is the
     whole sweep, and that length only says how many issues the backlog held (the owner, October 24, 2026). The pages
     cut it at every ship-pr fold its own session made in this checkout inside it (Get-LogbookRuns; #3534), since a
     fold is the moment the trunk is clean again: each issue is a run of its own, from the previous clean trunk to its fold, named after the issue
@@ -124,8 +124,9 @@ function Invoke-LogbookHookEvent {
     return @{ Runs = @($runs | ForEach-Object { if ($_.Id -eq $copy.Id) { $copy } else { $_ } }); Sessions = $seen; Changed = $true }
 }
 
-# A run whose label is this is a sweep, cut per issue on the pages (#3405).
-$script:LogbookSweepLabel = '^/(dkj-policy:)?sweep-issues(\s|$)'
+# A run whose label is this is a sweep, cut per issue on the pages (#3405). 'sweep-issues' is the skill's
+# name before it became 'issues-sweep' (November 5, 2026), kept so a run recorded under it is still cut.
+$script:LogbookSweepLabel = '^/(dkj-policy:)?(issues-sweep|sweep-issues)(\s|$)'
 # A fold commit is made seconds after its fold mark; one this far after it, or before it, belongs to another fold.
 $script:LogbookFoldCommitSeconds = 300
 
@@ -133,7 +134,7 @@ function Split-LogbookSweepRuns {
     <#
         -Runs with every sweep run ($script:LogbookSweepLabel) cut at the -Folds inside it (@{ At; Issue; Session }),
         oldest first, a fold of another session than the sweep's excepted (#3534): one run per fold, from the run's start or the fold before to this fold, labelled with the fold's issue
-        (`/sweep-issues #3397`, or `issue <n>` when the fold named none), and its id the sweep's with `-<n>` behind it.
+        (`/issues-sweep #3397`, or `issue <n>` when the fold named none), and its id the sweep's with `-<n>` behind it.
         Every lap carries the sweep's own start as RunStart, which is what ConvertTo-LogbookModel ages an open run by
         (#3533). A fold or a sweep that names no session (a mark or a run written before #3534) cuts and is cut as
         before. A finished sweep's time after its last fold is dropped; a going sweep's is the issue in progress,
@@ -347,7 +348,7 @@ function Format-LogbookPageHtml {
         'Kept on this machine in <code>' + (ConvertTo-GeneralPageText $StorePath) + '</code>, outside the checkout, and not shared: a label is the first line of a prompt. ' +
         'The first prompt of a new Claude Code session starts a run when the checkout is on the trunk and clean; a Stop hook ends it once a turn ends with the checkout back on the trunk and clean, ' +
         'also when nothing was merged, and not while a ship-pr is still waiting on CI. Both are the dkj-policy plugin''s <code>hooks/logbook-hook.ps1</code>. ' +
-        'A <code>/sweep-issues</code> run is shown per issue: cut at each ship-pr fold its own session made in this checkout, the moment the trunk is clean again, and named after the issue its fold commit names; the time after the last fold belongs to no issue. ' +
+        'A <code>/issues-sweep</code> run is shown per issue: cut at each ship-pr fold its own session made in this checkout, the moment the trunk is clean again, and named after the issue its fold commit names; the time after the last fold belongs to no issue. ' +
         'Built by its <code>hub/lib/logbook-lib.ps1</code> on the Stopwatch''s pages.'
     return Format-StopwatchPageHtml -Model (ConvertTo-LogbookModel -Runs $Runs -Now $Now) -ReadError $ReadError -Skipped $Skipped -StorePath $StorePath -Now $Now `
         -Route '/dev/logbook' -PageTitle 'Logbook' `

@@ -144,7 +144,7 @@
     it still claims, and the closing line points at the warning instead of "the work starts here".
     Default on that route: 'awaiting-info-client', 'awaiting-decision-dev', 'awaiting-decision-client', 'awaiting-review-dev', 'awaiting-review-client', 'awaiting-pull', 'awaiting-pull-external', 'awaiting-action-external', 'awaiting-action-dev', 'awaiting-release', 'awaiting-release-external', 'awaiting-recurrences-first' and
     'awaiting-recurrences', plus the former names 'awaiting-first-recurrence', 'awaiting-more-recurrences', 'needs-info', 'needs-decision', 'awaiting-decision', 'awaiting-recurrence', 'record',
-    'dossier', 'awaiting-owner-act' and 'awaiting-event' (#2683, #2723, #2741, #2890, #2896), the labels sweep-issues skips on -- blocked on the submitter, waiting on the
+    'dossier', 'awaiting-owner-act' and 'awaiting-event' (#2683, #2723, #2741, #2890, #2896), the labels issues-sweep skips on -- blocked on the submitter, waiting on the
     owner's choice (#2519), waiting on a review by eye from the dev or the client (#2977), waiting on another issue's pull request (#2757), waiting on an external event or date (#2784), waiting on an act only the owner performs (#2828), waiting on the next release (#2851),
     waiting on a first
     reproducible recurrence (#2587), and collecting instances
@@ -228,7 +228,7 @@ if ($Marker.Count -eq 0) { $Marker = @('claim-tag') }
 # an issue number that is not one is refused rather than dropped, since a skip that silently fails is
 # a held issue handed out.
 $SkipLabel = @(Split-CommaListArgument -Value $SkipLabel)
-# THE SINGLE-ISSUE ROUTE HONOURS THE SWEEP'S PARKING LABEL BY DEFAULT (issue #2518). sweep-issues passes
+# THE SINGLE-ISSUE ROUTE HONOURS THE SWEEP'S PARKING LABEL BY DEFAULT (issue #2518). issues-sweep passes
 # the same names on its own -SkipLabel command line; a person naming
 # one issue passes nothing, so without a default the route where somebody says "fix issue N" was the one
 # route blind to it. -Candidates keeps its empty default: the sweep names its labels itself. 'awaiting-decision-dev' ('awaiting-decision' until #2890, 'needs-decision' until #2741) joined in #2519: an issue waiting

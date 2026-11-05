@@ -78,7 +78,7 @@ the `taken` refusal would skip work that is free. Both are measured in
 
 So there is a second mode, and **the default one is untouched by it** -- without `-Tag` this script
 behaves exactly as the rest of this page says, refusals and all. The procedure that uses these
-parameters is the [`sweep-issues`](../sweep-issues/SKILL.md) skill; what they do is:
+parameters is the [`issues-sweep`](../issues-sweep/SKILL.md) skill; what they do is:
 
 - **`-Tag`** -- claim by TAG instead: `machine:checkout/account` (the checkout a short hash of its root,
   [#2836](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2836)), written as a marker comment, with the assignee
@@ -548,7 +548,7 @@ question the owner is for.
 
 ## A parking label: the issue waits on an answer, not a builder
 
-**The sweep route and this route used to disagree about one label.** [`sweep-issues`](../sweep-issues/SKILL.md)
+**The sweep route and this route used to disagree about one label.** [`issues-sweep`](../issues-sweep/SKILL.md)
 chooses with `-Candidates -SkipLabel awaiting-info-client,awaiting-decision-dev,awaiting-decision-client,awaiting-review-dev,awaiting-review-client,awaiting-pull,awaiting-pull-external,awaiting-action-external,awaiting-action-dev,awaiting-release,awaiting-release-external,awaiting-recurrences-first,awaiting-recurrences,awaiting-first-recurrence,awaiting-more-recurrences,awaiting-more-info,needs-info,needs-decision,awaiting-decision,awaiting-recurrence,record,dossier,awaiting-owner-act,awaiting-event`, so an issue parked with somebody else is
 skipped there. This route read no labels at all, so the same issue came back `[OK] ... the work starts here`
 the moment a person named it. Measured in a consumer, September 26, 2026
