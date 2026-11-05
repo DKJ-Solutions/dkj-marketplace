@@ -588,7 +588,7 @@ function Format-ProductHouseStylePageHtml {
 
     # The Tokens section itself is no page (Maikel, November 1, 2026): the server redirects its address to the overview.
     if ($Section -ceq 'tokens') { return $null }
-    $parts = Get-HouseStyleSpecimensParts -Body $Body -ReadError $ReadError -Section $Section -BasePath $base
+    $parts = Get-HouseStyleSpecimensParts -Body $Body -ReadError $ReadError -Section $Section -BasePath $base -Cards
     if ($null -eq $parts) { return $null }
     if ($parts.Section) {
         $crumbs += @{ Label = 'dkj-brandbook'; Href = $base }
