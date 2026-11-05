@@ -39,19 +39,35 @@
 
 ### PLAN
 
+#3829: `issues-sweep-reviews` step 4 runs `ship-pr` on a parked branch whose plan still ends on an open
+"the owner looks" step, so `open-pr`'s step gate refused every ship of the November 5 pass. The skill must
+tell the session to resolve that step with the approval before it ships.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `issues-sweep-reviews` step 4: mark the owner-look step `- [~]` with the approval's words, commit it,
+      then `ship-pr` (`plugins/dkj-policy/skills/issues-sweep-reviews/SKILL.md`).
+- [x] `issues-sweep` step 6, which ships an approved branch the same way, says the same in one clause
+      (`plugins/dkj-policy/skills/issues-sweep/SKILL.md`).
 
 ### TEST
 
+- [~] No suite reads the skills' prose; the gates `ship-pr` runs cover the tree.
+
 ### DEPLOY: fix/3829-reviews-resolve-look-step
 
-**Score:**
+`issues-sweep-reviews` now resolves a parked branch's "the owner looks" step with the approval before it
+ships, and `issues-sweep` step 6 does the same. Without it `open-pr`'s step gate refused every branch the
+skill was meant to ship.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+An owner who approves parked visible results in one `/issues-sweep-reviews` pass sees them ship, instead of
+every one being refused on its own plan.
+
+**Score:** 3
 
 #### Pull Request
 
