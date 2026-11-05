@@ -39,23 +39,35 @@
 
 ### PLAN
 
-Move the hub's remaining Admin pages off the product layer (breadcrumbs-bar, site header, page column, card-link overviews) into the desktop shell, and point the fit alarm at the shell's structure.
+Move the hub's remaining Admin pages off the product layer (breadcrumbs-bar, site header, page column, card-link overviews) into the desktop shell, and point the fit alarm at the shell's structure (#3830, the open step of #3811). It is the prerequisite of #3831, which moves the product layer out of `dkj-policy`. Product pages (BrandTag `product`) keep their cards.
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Format-AdminLinkTableHtml` (general-pages-lib): a set of links as one `.table--dense`, from the same fields a card took
+- [x] the house's desktop shell gains `.shell__body` (Admin's form of `.page-column`) and `.admin-list` (an `h2` over a `.table--dense`)
+- [x] Admin's pages switch: the home page, the GitHub page, every group page, the plugins pages and a plugin's contents, the brand book specimens overview, the SessionStart overview, the test gate, the Stopwatch overview and label pages, the Logbook, and the release notes overview
+- [x] a -Bare page that writes its own `h1` into its body has it lifted into the shell's toolbar, centrally in `Format-GeneralPageHtml`
+- [x] the fit alarm reads `.toolbar > h1` and the `.shell__bar` trail, and judges the main pane rather than the window
+- [x] the product's brand book page keeps its cards (`Get-HouseStyleSpecimensParts -Cards`)
+- [x] the brand book README's layer table and the "What is not moved yet" paragraph, and the docstrings that described the cards
 
 ### TEST
 
+- [ ] the hub suites (dev-preview-sessionstart, stopwatch, logbook, dev-pages, house-palette and the rest that load hub/lib) updated to the Admin form and green
+- [ ] every Admin page served from this branch checked: no `card--link`, `page-column` or `breadcrumbs-bar`, and its one `h1` in the toolbar
+
 ### DEPLOY: feat/3830-admin-fully-in-shell
 
-**Score:**
+Admin's pages now stand fully in the desktop shell. Wherever a page listed the pages under it as a grid of cards, it now shows one compact table, a row per page with its description, under the section's heading: the home page, the GitHub page, Claude, Performance, the plugins and each plugin's contents, the brand book overview, SessionStart, the Test gate, the Stopwatch and the Logbook, and the release notes. Every page's title sits in the toolbar above the pane. The warning that flags a page that does not fit now reads the shell: the pane's own height, the toolbar's title and the bar's trail. A product's own pages keep their cards.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Anyone who opens Admin after updating sees its overviews as tables instead of cards. Nothing needs to be done.
+
+**Score:** 2
 
 #### Pull Request
 
 Admin pages fully in the desktop shell
-
