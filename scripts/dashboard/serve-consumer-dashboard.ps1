@@ -324,8 +324,8 @@ try {
                 Send-LoopbackResponse $stream 403 'Forbidden' 'text/plain; charset=utf-8' ($utf8.GetBytes('Forbidden: this server answers only to localhost.')) -Method $method
                 continue
             }
-            if (Test-LoopbackCrossSite -SecFetchSite $request.SecFetchSite -SecFetchMode $request.SecFetchMode -Method $method) {
-                Send-LoopbackResponse $stream 403 'Forbidden' 'text/plain; charset=utf-8' ($utf8.GetBytes('Forbidden: another site may not drive this server.')) -Method $method
+            if (Test-LoopbackCrossSite -SecFetchSite $request.SecFetchSite -SecFetchMode $request.SecFetchMode -Method $method -SecFetchDest $request.SecFetchDest) {
+                Send-LoopbackResponse $stream 403 'Forbidden' 'text/plain; charset=utf-8' ($utf8.GetBytes((Format-LoopbackCrossSiteRefusal $request.SecFetchSite $request.SecFetchMode $request.SecFetchDest))) -Method $method
                 continue
             }
             if ($path -eq '/api/airsquats' -or $path.StartsWith('/api/airsquats/')) {

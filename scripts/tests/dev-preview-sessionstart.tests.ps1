@@ -567,7 +567,9 @@ Assert-True (Test-LoopbackCrossSite -SecFetchSite 'same-site' -SecFetchMode 'no-
 Assert-True (Test-LoopbackCrossSite -SecFetchSite 'same-site' -SecFetchMode 'cors' -Method 'GET') 'and a same-site fetch'
 Assert-True (Test-LoopbackCrossSite -SecFetchSite 'same-site' -SecFetchMode 'navigate' -Method 'POST') 'and a same-site navigation that is a POST'
 Assert-True (Test-LoopbackCrossSite -SecFetchSite 'Same-Site') 'a same-site request that names no mode is the old refusal'
-Assert-True (Test-LoopbackCrossSite -SecFetchSite 'cross-site' -SecFetchMode 'navigate' -Method 'GET') 'a cross-site navigation is refused'
+Assert-True (Test-LoopbackCrossSite -SecFetchSite 'cross-site' -SecFetchMode 'navigate' -Method 'GET') 'a cross-site navigation that names no destination is refused'
+Assert-True (-not (Test-LoopbackCrossSite -SecFetchSite 'cross-site' -SecFetchMode 'navigate' -Method 'GET' -SecFetchDest 'document')) 'a cross-site top-level GET navigation into a document is served (#3834)'
+Assert-True (Test-LoopbackCrossSite -SecFetchSite 'cross-site' -SecFetchMode 'navigate' -Method 'GET' -SecFetchDest 'iframe') 'and one into a frame is refused'
 Assert-True ((-not (Test-LoopbackCrossSite -SecFetchSite 'none' -SecFetchMode 'navigate' -Method 'GET')) -and (-not (Test-LoopbackCrossSite -SecFetchSite 'same-origin')) -and (-not (Test-LoopbackCrossSite -SecFetchSite ''))) 'a typed URL, the page itself and no header are served'
 Assert-Equal '' (ConvertFrom-RepoHubState -Text (Format-RepoHubState -Root $stateRoot -Hub 'http://localhost:4870/a b' -Pages '') -Root $stateRoot).Hub 'nor one with a space in its path'
 
