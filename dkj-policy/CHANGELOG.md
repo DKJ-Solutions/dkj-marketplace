@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**12 / 13 minor entries** <!-- pending-tally -->
+**12 / 14 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/3851-site-header-settings · 20261105-180005Z
+
+The product layer's README says the site header's settings button is optional, as the dev servers have drawn
+the header without one since November 3, 2026, choosing the theme on a Settings page; an app that mounts the
+button keeps its styling ([#3851](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3851)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+The product README makes the site header's settings button optional, as the dev servers have drawn it since November 3
+
+Plugins: dkj-solutions
+
+[PR #3853](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3853)
+
+---
 
 ### DEPLOY: docs/3843-hub-home-shell · 20261105-173340Z
 
