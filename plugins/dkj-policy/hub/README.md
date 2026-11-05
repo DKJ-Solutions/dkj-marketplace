@@ -332,8 +332,10 @@ top-level `GET` navigation (`Sec-Fetch-Mode: navigate`): the product's link on t
 opted-out repo's hub are served, a same-site fetch or image request is not. **`cross-site` is refused
 unless it is that same navigation into a document of its own** (`Sec-Fetch-Dest: document`, #3834), which
 is how Claude in Chrome opens a page: its initiator is the extension. Another site can then send the user
-to a page but never read it, and the one GET with an effect, `/refresh`, is rate-limited. A frame stays
-refused, because the pages send no `frame-ancestors`. The 403 names the three headers it judged.
+to a page but never read it, and the one GET with an effect, `/refresh`, is rate-limited. A cross-site frame
+stays refused by that `Dest` check, and every response forbids framing on its own as well
+(`Content-Security-Policy: frame-ancestors 'none'` and `X-Frame-Options: DENY`, #3835), which is what keeps out
+a same-site frame. The 403 names the three headers it judged.
 
 ## The banner, in sync on every machine
 

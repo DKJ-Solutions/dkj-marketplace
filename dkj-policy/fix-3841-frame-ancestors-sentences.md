@@ -39,19 +39,31 @@
 
 ### PLAN
 
+#3841: #3834 and #3835 merged one after the other. Two sentences from #3834 still say the pages send no
+`frame-ancestors`, and since #3835 they do. This branch rewords both. The wording now matches what the code does.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `loopback-server-lib.ps1`, the `Test-LoopbackCrossSite` docstring: `Dest` is the first barrier, against a
+      cross-site frame; the response header is the second, and the one that holds for a same-site frame.
+- [x] `hub/README.md`, the Fetch Metadata paragraph: the same, with both header names.
 
 ### TEST
 
+- [x] `frame-ancestors` grepped across the tree: no other sentence says the pages send none.
+
 ### DEPLOY: fix/3841-frame-ancestors-sentences
 
-**Score:**
+The hub's README no longer says that its pages can be framed by a page that is not refused. Since #3835 every response
+forbids framing, and the paragraph on the Fetch Metadata check now says so.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+It corrects a contradiction between two merged branches. Nothing about the behaviour changes.
+
+**Score:** 1
 
 #### Pull Request
 

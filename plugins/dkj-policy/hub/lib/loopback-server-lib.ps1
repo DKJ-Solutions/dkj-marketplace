@@ -138,10 +138,12 @@ function Test-LoopbackCrossSite {
         'navigate' AND Sec-Fetch-Dest 'document' (#3834). Claude in Chrome's navigations arrive cross-site,
         their initiator being the extension, and a page view changes nothing another site could read: the
         browser shows it to the user and hands the other site no byte of it. The one GET with an effect,
-        /refresh, drops a cache at most once per -MinRefreshSeconds. Dest is what keeps a frame out --
-        an <iframe> navigation is mode 'navigate' too, and these pages send no frame-ancestors, so a framed
-        page would put the airsquats POST under a click-jacker's overlay. A missing Dest is refused, which
-        is also the old behaviour for a caller that does not pass it.
+        /refresh, drops a cache at most once per -MinRefreshSeconds. Dest is what keeps a cross-site frame
+        out -- an <iframe> navigation is mode 'navigate' too, and a framed page would put the airsquats POST
+        under a click-jacker's overlay. It is the first of two barriers: every response also forbids framing
+        by itself (Send-LoopbackResponse, #3835), which is the one that holds for a same-site frame, since
+        same-site checks no Dest. A missing Dest is refused, which is also the old behaviour for a caller
+        that does not pass it.
     #>
     param(
         [AllowNull()][AllowEmptyString()][string]$SecFetchSite,
