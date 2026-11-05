@@ -39,21 +39,39 @@
 
 ### PLAN
 
+Issue #3851: the product README placed the settings button in every site header, while `Format-SiteHeaderHtml`
+mounts none since Maikel's November 3, 2026 request. The reason was read in the commit that made it
+(`0d5457299`): the button left the two dev servers, and its branch document kept the brand book unchanged on
+purpose, "the `.site-header .theme-settings` rules stay for any app that still mounts the button". So the
+README is completed rather than reversed: the button is optional.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/README.md`, "The site header, above the bar":
+  the settings button is optional, the dev servers mount none and choose the theme on a Settings page, and the
+  rules stay for an app that mounts it; "The menu in the header" places the menu after the brand, before the
+  button where there is one.
 
 ### TEST
 
+- [x] The renderer's comment, the November 3 commit and `house-product.css`'s `.site-header .theme-settings`
+  rules read against the new text; the lint gate runs in `ship-pr`.
+
 ### DEPLOY: docs/3851-site-header-settings
 
-**Score:**
+The product layer's README says the site header's settings button is optional, as the dev servers have drawn
+the header without one since November 3, 2026, choosing the theme on a Settings page; an app that mounts the
+button keeps its styling ([#3851](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3851)).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
-The product README's site header carries no settings button, as the renderer has drawn it since November 3
+The product README makes the site header's settings button optional, as the dev servers have drawn it since November 3
 
