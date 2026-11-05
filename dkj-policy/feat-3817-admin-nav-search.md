@@ -39,19 +39,40 @@
 
 ### PLAN
 
+#3817: Admin's navigation (#3815) was built without the search field the Shopify Admin puts at its top. A page two
+levels down (Rules, Skills, Stopwatch) is reached by clicking through a group page; a search over the navigation
+items, the group pages and the pages under them makes each one a few keystrokes away.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Brand book: `.nav-search` (with `__input`, `__key`) in `house-style.css`, beside the shell's other classes, with
+      the field drawn in the desktop-shell specimen (`specimens.html`) and in `patterns/admin-shell.html`.
+- [x] Hub: `Get-AdminSearchItems` (the navigation's items, the group pages that are pages, and the general pages, once
+      per address) and `Format-AdminNavSearch` (the field, Ctrl K / Cmd K, Enter opens the first match, Escape
+      clears), drawn first in `Format-AdminShellOpen`. The script only toggles `hidden` on what the server drew.
+- [x] `dev-pages.tests.ps1`: the navigation's opening assert follows the field, and five new asserts cover the field,
+      what it finds, the toggling, the ordering and dedupe, and the escaping.
 
 ### TEST
 
+- [x] On their own: dev-pages 603/0, check-house-style 157/0, house-palette 161/0, dev-preview-sessionstart 375/0.
+- [ ] The owner looks at Admin: the field on top of the navigation, Ctrl K focusing it, and typing (e.g. "rules")
+      narrowing the navigation to the matches.
+
 ### DEPLOY: feat/3817-admin-nav-search
 
-**Score:**
+Admin's side navigation now opens on a search field. Press Ctrl K (Cmd K on a Mac) anywhere in Admin to jump to it,
+type part of a page's name or description, and Enter opens the first match. It finds every page in the navigation and
+the pages under its groups, such as Rules, Skills and Stopwatch, so none of them is more than a few keystrokes away.
+The brand book's desktop shell gains the field as `.nav-search`.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A Toolbox user reaches any Admin page from the keyboard, without clicking through a group page first.
+
+**Score:** 3
 
 #### Pull Request
 

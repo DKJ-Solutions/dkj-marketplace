@@ -1321,6 +1321,87 @@ function Get-AdminNav {
     return $out
 }
 
+function Get-AdminSearchItems {
+    <#
+        What the navigation's search field finds (#3817), each @{ Label; Href; Sub; External }, once per Href: every item of
+        -Nav (Get-AdminNav's answer), then the group pages (Get-HubGroups, a Section left out since it is a heading on its
+        parent rather than a page) and the general pages (Get-GeneralPages), so a page two levels down is one search
+        away. Sub is the page's own line, which is searched too. A repo's domain objects join here once the navigation
+        carries them.
+    #>
+    param([AllowNull()][object[]]$Nav = $null)
+    if ($null -eq $Nav) { $Nav = @(Get-AdminNav) }
+    $all = @()
+    foreach ($s in @($Nav | Where-Object { $_ })) { foreach ($i in @($s.Items | Where-Object { $_ })) { $all += @{ Label = $i.Label; Href = $i.Href; Sub = ''; External = $i.External } } }
+    foreach ($g in @(Get-HubGroups | Where-Object { -not $_.Section })) { $all += @{ Label = $g.Label; Href = $g.Href; Sub = $g.Sub; External = $false } }
+    foreach ($p in @(Get-GeneralPages)) { $all += @{ Label = $p.Label; Href = $p.Href; Sub = $p.Sub; External = $false } }
+    $seen = @{}
+    $out = @()
+    foreach ($a in $all) {
+        if (-not $a.Label -or -not $a.Href -or $seen.ContainsKey([string]$a.Href)) { continue }
+        $seen[[string]$a.Href] = $true
+        $out += @{ Label = [string]$a.Label; Href = [string]$a.Href; Sub = [string]$a.Sub; External = [bool]$a.External }
+    }
+    return $out
+}
+
+function Format-AdminNavSearch {
+    <#
+        The search field at the top of Admin's navigation (#3817): the brand book's .nav-search with Ctrl K, and under it
+        a hidden list holding every item Get-AdminSearchItems finds, drawn as ordinary .nav-item links. Typing shows the
+        items whose label or line holds every word typed and hides the navigation's own lists; an empty field brings them
+        back. Ctrl K (or Cmd K) focuses the field from anywhere on the page, Enter opens the first match, Escape clears
+        it. The page's script only toggles `hidden` on what the server drew, so nothing typed is ever written into the
+        page. -HubHref replaces Home's '/', as in Format-AdminShellOpen.
+    #>
+    param([AllowNull()][object[]]$Nav = $null, [string]$HubHref = '/', [string]$HomeLabel = 'Home')
+    $e = { param($v) ConvertTo-GeneralPageText $v }
+    $sb = New-Object System.Text.StringBuilder
+    [void]$sb.Append('<div class="nav-search" role="search"><input class="nav-search__input" type="search" placeholder="Search" aria-label="Search Admin" autocomplete="off" spellcheck="false" data-admin-search><kbd class="nav-search__key">Ctrl K</kbd></div>')
+    [void]$sb.Append('<ul class="nav-list" data-admin-search-results aria-label="Search results" hidden>')
+    foreach ($i in @(Get-AdminSearchItems -Nav $Nav)) {
+        $href = if ($i.Href -eq '/') { $HubHref } else { $i.Href }
+        $label = if ($i.Href -eq '/') { $HomeLabel } else { $i.Label }
+        $find = ($label + ' ' + $i.Sub).ToLowerInvariant()
+        $title = if ($i.Sub) { ' title="' + (& $e $i.Sub) + '"' } else { '' }
+        $ext = if ($i.External) { ' target="_blank" rel="noopener"' } else { '' }
+        [void]$sb.Append('<li data-admin-find="' + (& $e $find) + '" hidden><a class="nav-item" href="' + (& $e $href) + '"' + $title + $ext + '><span class="nav-item__label">' + (& $e $label) + '</span></a></li>')
+    }
+    [void]$sb.Append('<li data-admin-search-none hidden><span class="nav-item">No match</span></li></ul>')
+    [void]$sb.Append(@'
+<script>
+(function () {
+  var field = document.querySelector("[data-admin-search]"), list = document.querySelector("[data-admin-search-results]");
+  if (!field || !list) { return; }
+  var nav = field.closest(".shell__nav"), none = list.querySelector("[data-admin-search-none]");
+  var rows = Array.prototype.slice.call(list.querySelectorAll("[data-admin-find]"));
+  var rest = Array.prototype.slice.call(nav.children).filter(function (n) { return n !== list && !n.contains(field); });
+  function run() {
+    var words = field.value.toLowerCase().split(/\s+/).filter(Boolean), hit = 0;
+    rows.forEach(function (r) {
+      var text = r.getAttribute("data-admin-find"), on = words.length > 0 && words.every(function (w) { return text.indexOf(w) >= 0; });
+      r.hidden = !on; if (on) { hit++; }
+    });
+    list.hidden = words.length === 0; none.hidden = hit > 0;
+    rest.forEach(function (n) { n.hidden = words.length > 0; });
+  }
+  field.addEventListener("input", run);
+  field.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape") { field.value = ""; run(); field.blur(); }
+    else if (ev.key === "Enter") {
+      var first = rows.filter(function (r) { return !r.hidden; })[0];
+      if (first) { ev.preventDefault(); first.querySelector("a").click(); }
+    }
+  });
+  document.addEventListener("keydown", function (ev) {
+    if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && (ev.key === "k" || ev.key === "K")) { ev.preventDefault(); field.focus(); field.select(); }
+  });
+})();
+</script>
+'@)
+    return $sb.ToString()
+}
+
 function Format-AdminShellOpen {
     <#
         The top of every Admin page in the desktop shell (#3811), in place of the site header, the breadcrumb bar and
@@ -1355,6 +1436,8 @@ function Format-AdminShellOpen {
     $mark = { param($href) if ($href -eq $Current) { ' aria-current="page"' } else { '' } }
     [void]$sb.Append('<nav class="shell__nav" aria-label="Main">')
     if ($null -eq $Nav) { $Nav = @(Get-AdminNav) }
+    # The search field first (#3817): over every section, as the Shopify Admin puts it.
+    [void]$sb.Append((Format-AdminNavSearch -Nav $Nav -HubHref $HubHref -HomeLabel $HomeLabel))
     $si = 0
     foreach ($s in @($Nav | Where-Object { $_ })) {
         $si++
