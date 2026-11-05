@@ -39,19 +39,45 @@
 
 ### PLAN
 
+Issue #3849, decided by the owner on November 5, 2026: recast both dkj-solutions pattern pages as a product
+home pattern and repoint the README sentence to `patterns/admin-shell.html` as Admin's reference. The form
+is read from what the product server draws today (`Format-ProductHomeHeadHtml`, `Format-SiteHeaderHtml`): the
+site header with its menu and drawer and no settings button, the breadcrumb bar, a `.grid-3` of card links.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `repo-dashboard.html` -> `patterns/product-home.html`: a product's home, the site header with a menu
+  (and its drawer), the one-crumb bar, one `.grid-3` of card links, no intro.
+- [x] `repo-repository.html` -> `patterns/product-page.html`: a page one level down, its menu item current,
+  Home > Projects, the h1, a facts row, tiles, the warning line and one grouped data card.
+- [x] Every reference repointed: the core README's page-column paragraph (Admin -> `admin-shell.html`, a
+  product -> the two new files), the product README's separator example, the `dkj-brandbook` skill's hub
+  passage, and `admin-shell.html`'s header comment. The comment in `general-pages-lib.ps1` cites the old file
+  at v0.3.0 and stays, being history.
+- [x] Two inconsistencies met on the way filed rather than fixed here: #3851 (the README's settings button
+  in the header against the renderer) and #3852 (the skill's breadcrumb-bar sentence against Admin's shell).
 
 ### TEST
 
+- [x] Every class in the two pages is one the served product home or the product README already uses; the
+  lint and house-style gates run in `ship-pr` once the owner has looked.
+
 ### DEPLOY: fix/3849-product-patterns
 
-**Score:**
+The brand book's two product pattern pages draw a product, not the hub as it was before #3830:
+`patterns/product-home.html` and `patterns/product-page.html` in dkj-solutions (formerly `repo-dashboard.html`
+and `repo-repository.html`) show the site header with its menu, the breadcrumb bar and the cards, and the
+brand book names `patterns/admin-shell.html` as Admin's reference
+([#3849](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3849)). A repo that copied the old files keeps
+them; a product without a build starts from the new ones.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 

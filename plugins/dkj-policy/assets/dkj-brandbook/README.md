@@ -959,14 +959,16 @@ takes the top margin of its direct `.card`, `.tiles`, `.notice` and `.note`, so 
 one `--spacing-4` apart ([#207](https://github.com/DKJ-Solutions/dkj-brandbook/issues/207)), and
 `.grid__head` and `.grid__full` span every column of it. An in-page anchor scrolls to `5rem` below the top,
 clear of the settings button; a card a table links down to carries a compact outline "Back to overview"
-button in its card head ([#156](https://github.com/DKJ-Solutions/dkj-brandbook/issues/156)). **The two
-pattern pages below still draw the hub as it was before #3830** (the site header and a grid of cards), and
-whether they become a product home pattern or are retired is
-[#3849](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3849). A repo without
-a build copies [`patterns/repo-dashboard.html`](../../dkj-solutions/assets/dkj-brandbook-product/patterns/repo-dashboard.html) and
-[`patterns/repo-repository.html`](../../dkj-solutions/assets/dkj-brandbook-product/patterns/repo-repository.html), the stylesheet-only reference pages for
-the home page and the Repository page, beside the product layer in dkj-solutions (#3831): they link `house-style.css`, `house-product.css` and `house-theme.js` and carry no CSS of
-their own, and their settings button sits in the site header. **These patterns are the only reference**: the Brandbook app drew no hub specimen or previews of other repos' hubs from October 21, 2026 (owner,
+button in its card head ([#156](https://github.com/DKJ-Solutions/dkj-brandbook/issues/156)). **For Admin, a
+repo without a build copies [`patterns/admin-shell.html`](patterns/admin-shell.html)**; **for a product, it copies
+[`patterns/product-home.html`](../../dkj-solutions/assets/dkj-brandbook-product/patterns/product-home.html) and
+[`patterns/product-page.html`](../../dkj-solutions/assets/dkj-brandbook-product/patterns/product-page.html)**, the
+stylesheet-only reference pages for a product's home page and a page one level below it, beside the product layer
+in dkj-solutions (#3831). They draw the product layer's own form (the site header with its menu, the breadcrumb
+bar, the cards), link `house-style.css`, `house-product.css` and `house-theme.js`, and carry no CSS of their own.
+Until [#3849](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3849) they were `repo-dashboard.html` and
+`repo-repository.html` and still drew the hub as it was before #3830. **These patterns are the only reference**:
+the Brandbook app drew no hub specimen or previews of other repos' hubs from October 21, 2026 (owner,
 [#3274](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3274)) and is retired now, so a repo with
 a framework builds the form from the blocks above with its own components.
 

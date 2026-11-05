@@ -1,0 +1,85 @@
+<!doctype html>
+<!--
+  A product's home page, the stylesheet-only reference (#3849): one page on /, under the site header, that is a
+  grid of card links and nothing else. A page below it is product-page.html beside this file.
+
+  Until #3849 this file was repo-dashboard.html, the reference for the hub. The hub is Admin's desktop shell
+  since #3830, and its reference is dkj-policy's assets/dkj-brandbook/patterns/admin-shell.html. This page is the
+  product layer's own form: the site header with its menu, the breadcrumb bar, the cards.
+
+  This is the reference for a product WITHOUT a build: the whole page is built from ../house-style.css,
+  ../house-product.css and ../house-theme.js, linked and not inlined, and from nothing else (no other CSS, no
+  external request). The core sheet and the script are dkj-policy's, the product sheet is dkj-solutions' (#3831),
+  so the links resolve where a repo vendors all three side by side. The rules are in the product README beside
+  this folder: "The site header, above the bar", "Every page: the breadcrumb bar" and "Which shape a page's cards
+  take". The names and pages below are placeholders. The product server draws the same form with
+  Format-ProductHomeHeadHtml in dkj-solutions' scripts/lib/product-pages-lib.ps1.
+-->
+<html lang="en" data-theme-light="blue" data-theme-dark="cyan">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Reference for a product's home page: the site header with its menu, the breadcrumb bar and one grid of card links.">
+  <title>my-app -- Home</title>
+  <link rel="stylesheet" href="../house-style.css">
+  <link rel="stylesheet" href="../house-product.css">
+  <script src="../house-theme.js"></script>
+</head>
+<body>
+  <!-- 1. The site header: the product's name as the way home, then its main pages as the menu. No settings button:
+       the theme is chosen on the product's own Settings page (Maikel, November 3, 2026). The home page sits under
+       none of the menu's items, so none carries aria-current. Narrower than 48rem the menu folds into the drawer
+       after the .container, which house-theme.js opens from the toggle. -->
+  <header class="site-header"><div class="container">
+    <a class="site-header__brand" href="product-home.html" aria-label="my-app, home"><span class="site-header__name">my-app</span></a>
+    <nav class="site-header__nav" aria-label="Main">
+      <ul class="site-header__menu"><li><a href="product-page.html">Projects</a></li><li><a href="#">Reports</a></li><li><a href="#">Settings</a></li></ul>
+      <button class="site-header__menu-toggle" type="button" aria-controls="site-menu" aria-expanded="false" aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    </nav>
+  </div>
+  <dialog class="dialog dialog--drawer site-menu" id="site-menu" aria-label="Menu"><div class="dialog__body">
+    <div class="dialog__head"><p class="dialog__title">Menu</p></div>
+    <button class="dialog__close" type="button" aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <nav class="menu-list" aria-label="Main">
+      <a class="menu-item" href="product-page.html"><span class="menu-item__label">Projects</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+      <a class="menu-item" href="#"><span class="menu-item__label">Reports</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+      <a class="menu-item" href="#"><span class="menu-item__label">Settings</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+    </nav>
+  </div></dialog></header>
+
+  <!-- 2. The breadcrumb bar, right under the site header; on the home page its trail is this one crumb. -->
+  <div class="breadcrumbs-bar">
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+          <li><span aria-current="page">Home</span></li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <main class="page-column">
+
+    <!-- 3. No intro: the site header names the product, so <main> opens on its first block. The pages: a flat list,
+         so one .grid-3 with no heading, every page a .card.card--link of its own holding one .menu-item row whose
+         link stretches over the whole card. In the menu's order. -->
+    <div class="grid-3">
+      <section class="card card--link"><nav class="menu-list" aria-label="Projects"><a class="menu-item" href="product-page.html">
+        <span class="menu-item__label">Projects<span class="menu-item__sub">Every project, with what is in flight</span></span>
+        <svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a></nav></section>
+      <section class="card card--link"><nav class="menu-list" aria-label="Reports"><a class="menu-item" href="#">
+        <span class="menu-item__label">Reports<span class="menu-item__sub">The monthly figures, newest first</span></span>
+        <svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a></nav></section>
+      <section class="card card--link"><nav class="menu-list" aria-label="Settings"><a class="menu-item" href="#">
+        <span class="menu-item__label">Settings<span class="menu-item__sub">How this product looks on this device: its theme</span></span>
+        <svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a></nav></section>
+    </div>
+
+    <!-- 4. The footer note: where the pages come from. -->
+    <p class="note">Each page names its own source. Placeholder pages in this reference page.</p>
+  </main>
+</body>
+</html>
