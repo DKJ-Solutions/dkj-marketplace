@@ -242,7 +242,8 @@ ARGUE that it renders, which is itself the doubt -- then:
 - push whatever preview the repo has (in a Shopify consumer, `push-preview`), hand it over in the form
   that repo's own pages prescribe, and **open no pull request**;
 - park the branch on `origin`, and set `awaiting-review-dev` on the issue (`awaiting-review-client` when
-  the client must look) together with a one-line comment on what to look at (#2977), so the next
+  the client must look) together with a one-line comment on what to look at and the URL that shows it
+  (#2977, #3819), so the next
   sweep reads it as `skipped`;
 - then **on to step 7, like any other issue** -- the sweep goes on with the next `free` one.
 
@@ -321,8 +322,8 @@ one issue, took that template as its own close-out, and left four `free` issues 
 them in one pass; a decided issue comes back here as `free`. What it skipped as `awaiting-decision-client` is nobody's half here: it waits on the client or requester, and neither skill walks it. **Nor does either walk `awaiting-review-dev` or `awaiting-review-client`** (#2977): those wait on a look at a result, not on a choice, and the look is the owner's or the client's to give.
 
 **The sweep closes out once, after the loop**, in the ordinary receipt shape: the PR number of each issue
-it shipped, each branch it parked for the owner's eye with the `git checkout <branch>` line that shows
-it, the number and label of each it parked as waiting, and the number of each it held out, with a clause
+it shipped, each branch it parked for the owner's eye with the `git checkout <branch>` line and, each on
+a line of its own, the URL of every page it changed (#3819), the number and label of each it parked as waiting, and the number of each it held out, with a clause
 for why.
 
 ## A second sweep beside a running one -- lane mode
