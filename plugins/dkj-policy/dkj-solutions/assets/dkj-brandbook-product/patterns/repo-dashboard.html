@@ -4,11 +4,13 @@
   grid of card links and nothing else. What the repo IS -- its facts, its issues, what is in flight -- is on the
   Repository page, repo-repository.html beside this file. /about sends an old link here.
 
-  This is the reference for a repo WITHOUT a build: the whole page is built from ../house-style.css and
-  ../house-theme.js, linked and not inlined, and from nothing else (no other CSS, no external request).
+  This is the reference for a repo WITHOUT a build: the whole page is built from ../house-style.css,
+  ../house-product.css and ../house-theme.js, linked and not inlined, and from nothing else (no other CSS, no
+  external request). It is a product page, so it sits beside the product layer in dkj-solutions (#3831); the core
+  sheet and the script are dkj-policy's, so the links resolve where a repo vendors all three side by side.
   The form, its blocks and their order are in dkj-brandbook/README.md, "The hub".
-  The cards below are placeholders. When a repo copies this file, the two links take the vendored copies of
-  the stylesheet and the script.
+  The cards below are placeholders. When a repo copies this file, the three links take the vendored copies of
+  the stylesheets and the script.
 -->
 <html lang="en" data-theme-light="blue" data-theme-dark="cyan">
 <head>
@@ -16,6 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>example-repo -- Home</title>
   <link rel="stylesheet" href="../house-style.css">
+  <link rel="stylesheet" href="../house-product.css">
   <script src="../house-theme.js"></script>
 </head>
 <body>

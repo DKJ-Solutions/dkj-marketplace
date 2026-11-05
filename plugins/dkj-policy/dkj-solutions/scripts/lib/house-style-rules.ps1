@@ -15,8 +15,8 @@
     added by #3720, the fifth by #3778). An earlier fourth, `heading` (no h2 inside a card, Maikel, October 19, 2026, on
     #3175), was retired by Maikel on October 24, 2026: an h2 may title a card.
 
-      1. pin      -- every tracked file named house-style.css or house-theme.js hashes to the sha256 the
-                     skill page pins. The copies are FOUND (a discovery over the tracked files), not
+      1. pin      -- every tracked file named house-style.css, house-theme.js or house-product.css (the product
+                     layer, #3831) hashes to the sha256 the skill page pins. The copies are FOUND (a discovery over the tracked files), not
                      declared, so no repo falls outside the gate by leaving a seam unfilled. A repo with
                      no house-style.css at all is a finding too: a repo running this gate renders a UI.
       2. redefine -- the repo's own layer defines no house token (`--x:`) and styles no house class as
@@ -103,13 +103,36 @@ function Get-HouseStyleRetiredTokens {
 }
 
 function Get-HouseStyleCopyNames {
-    <# The leaf names a vendored copy carries. A renamed copy is not found, and is not a copy. #>
+    <#
+        The leaf names a vendored copy carries. A renamed copy is not found, and is not a copy. house-product.css is
+        the product layer, in the dkj-solutions plugin since the split (#3831): a product repo vendors it beside the
+        core, and an Admin-only repo does not.
+    #>
+    return [string[]]@('house-style.css', 'house-theme.js', 'house-product.css')
+}
+
+function Get-HouseStylePinRequiredNames {
+    <#
+        The leaves a skill page must pin for its table to be complete. house-product.css is pinned where the page
+        names it and is not required, because a page read at a tag cut before the split (#3831) has no row for it,
+        and that page is still a complete pin of the two files it shipped.
+    #>
     return [string[]]@('house-style.css', 'house-theme.js')
 }
 
 function Get-HouseStyleCanonicalDir {
     <# Where the source repo keeps the canonical brand book, relative to its root (#3531). #>
     return 'plugins/dkj-policy/assets/dkj-brandbook'
+}
+
+function Get-HouseStyleCanonicalPath {
+    <#
+        The source repo's canonical file for a leaf, relative to its root: the core under dkj-policy's
+        assets/dkj-brandbook/, the product layer under dkj-solutions' assets/dkj-brandbook-product/ (#3831).
+    #>
+    param([Parameter(Mandatory)][string]$Leaf)
+    if ($Leaf -ceq 'house-product.css') { return 'plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/house-product.css' }
+    return (Get-HouseStyleCanonicalDir) + '/' + $Leaf
 }
 
 function Get-HouseStyleSkillDirNames {
@@ -180,13 +203,13 @@ function Get-HouseStylePin {
     $hashes = @{}
     $tag = $null
     foreach ($line in ($SkillText -split "`r?`n")) {
-        $m = [regex]::Match($line, '^\|\s*`(?<file>house-style\.css|house-theme\.js)`\s*\|\s*`(?<url>[^`]+)`\s*\|\s*`(?<sha>[0-9a-f]{64})`\s*\|')
+        $m = [regex]::Match($line, '^\|\s*`(?<file>house-style\.css|house-theme\.js|house-product\.css)`\s*\|\s*`(?<url>[^`]+)`\s*\|\s*`(?<sha>[0-9a-f]{64})`\s*\|')
         if (-not $m.Success) { continue }
         $hashes[$m.Groups['file'].Value] = $m.Groups['sha'].Value
-        $t = [regex]::Match($m.Groups['url'].Value, '/(?:dkj-marketplace|dkj-claude-plugins)/(?<tag>[^/]+)/plugins/dkj-policy/(?:dkj-solutions/)?assets/(?:dkj-brandbook|house-style)/')
+        $t = [regex]::Match($m.Groups['url'].Value, '/(?:dkj-marketplace|dkj-claude-plugins)/(?<tag>[^/]+)/plugins/dkj-policy/(?:dkj-solutions/)?assets/(?:dkj-brandbook-product|dkj-brandbook|house-style)/')
         if ($t.Success) { $tag = $t.Groups['tag'].Value }
     }
-    foreach ($name in (Get-HouseStyleCopyNames)) { if (-not $hashes.ContainsKey($name)) { return $null } }
+    foreach ($name in (Get-HouseStylePinRequiredNames)) { if (-not $hashes.ContainsKey($name)) { return $null } }
     return @{ Tag = $tag; Hashes = $hashes }
 }
 
@@ -629,7 +652,6 @@ function Invoke-HouseStyleCheck {
 
     if (-not $PSBoundParameters.ContainsKey('Files')) { $Files = Get-HouseStyleTrackedFiles -RepoRoot $RepoRoot }
     $isSource = if ($PSBoundParameters.ContainsKey('SourceRepo')) { [bool]$SourceRepo } else { Test-HouseStyleSourceRepo -RepoRoot $RepoRoot }
-    $canonicalDir = (Get-HouseStyleCanonicalDir) + '/'
     $findings = New-Object System.Collections.Generic.List[object]
     $notes = New-Object System.Collections.Generic.List[string]
     $copies = @()
@@ -638,6 +660,8 @@ function Invoke-HouseStyleCheck {
 
     # --- 1. pin --------------------------------------------------------------------------------------
     $verifiedCss = $null
+    # The product layer's classes are house classes too (#3831): a repo that vendors house-product.css may not restyle them.
+    $verifiedProductCss = $null
     $copyPaths = @($Files | Where-Object { $copyNames -contains ([System.IO.Path]::GetFileName($_)).ToLowerInvariant() })
     foreach ($rel in $copyPaths) {
         $leaf = ([System.IO.Path]::GetFileName($rel)).ToLowerInvariant()
@@ -646,14 +670,16 @@ function Invoke-HouseStyleCheck {
         $bytes = [System.IO.File]::ReadAllBytes($full)
         $pinned = @(Get-HouseStyleSha256 -Bytes $bytes) -contains $Pin.Hashes[$leaf]
         # The two files themselves, not the folder: a demo copy nested under it is still a copy.
-        $canonical = $isSource -and ($rel -ceq ($canonicalDir + $leaf))
+        $canonical = $isSource -and ($rel -ceq (Get-HouseStyleCanonicalPath -Leaf $leaf))
         $copies += @{ Path = $rel; Ok = ($pinned -or $canonical); Canonical = $canonical }
         if ($canonical) {
             # The source is the stylesheet check 2 reads the house set from, ahead of any vendored copy.
             if ($leaf -eq 'house-style.css') { $verifiedCss = [System.Text.Encoding]::UTF8.GetString($bytes) }
+            if ($leaf -eq 'house-product.css') { $verifiedProductCss = [System.Text.Encoding]::UTF8.GetString($bytes) }
             if (-not $pinned) { $notes.Add("$rel is this repo's canonical copy and differs from $($Pin.Tag) -- not a finding; the next release cut updates the pin") }
         } elseif ($pinned) {
             if ($leaf -eq 'house-style.css' -and -not $verifiedCss) { $verifiedCss = [System.Text.Encoding]::UTF8.GetString($bytes) }
+            if ($leaf -eq 'house-product.css' -and -not $verifiedProductCss) { $verifiedProductCss = [System.Text.Encoding]::UTF8.GetString($bytes) }
         } else {
             $findings.Add(@{ Check = 'pin'; Path = $rel; Line = 0; Name = $leaf; Text = "is not the copy the dkj-brandbook skill pins at $($Pin.Tag) -- replace it with the file served at that tag, unchanged" })
         }
@@ -667,6 +693,11 @@ function Invoke-HouseStyleCheck {
     if ($verifiedCss) {
         $defs = Get-HouseStyleDefinitions -CssText $verifiedCss
         $houseTokens = $defs.Tokens; $houseClasses = $defs.Classes
+        if ($verifiedProductCss) {
+            $prod = Get-HouseStyleDefinitions -CssText $verifiedProductCss
+            $houseTokens = [string[]]@(@($houseTokens) + @($prod.Tokens) | Sort-Object -Unique)
+            $houseClasses = [string[]]@(@($houseClasses) + @($prod.Classes) | Sort-Object -Unique)
+        }
     } else {
         $notes.Add('check 2 (redefine) did not run: no verified house-style.css to read the house tokens and classes from')
     }

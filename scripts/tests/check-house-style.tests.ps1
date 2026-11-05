@@ -73,6 +73,19 @@ $midPage = ($midRow -f 'house-style.css', ('a' * 64)) + "`n" + ($midRow -f 'hous
 Assert-Equal 'v6.1.0' (Get-HouseStylePin -SkillText $midPage).Tag 'a pin URL on the pre-rename assets/house-style/ path still yields its tag'
 Assert-Equal 'dkj-brandbook,house-style' ((Get-HouseStyleSkillDirNames) -join ',') 'the page at a tag is looked for under the current skill folder first, then the pre-rename one'
 
+Write-Host '-- group 1b: the product layer, pinned beside the core (#3831)' -ForegroundColor Cyan
+Assert-True ($pin.Hashes.ContainsKey('house-product.css')) 'the skill page pins the product layer too'
+Assert-True (@($skillPins | ForEach-Object { $_.Checksums }) -contains 'plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/house-product.css') '...and the cut writes the checksum of the canonical house-product.css beside its URL'
+$newRow = '| `{0}` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.0.0/plugins/dkj-policy/{2}/{0}` | `{1}` |'
+$newPage = ($newRow -f 'house-style.css', ('a' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-theme.js', ('b' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-product.css', ('c' * 64), 'dkj-solutions/assets/dkj-brandbook-product')
+$newPin = Get-HouseStylePin -SkillText $newPage
+Assert-True ($newPin.Tag -eq 'v7.0.0' -and $newPin.Hashes['house-product.css'] -eq ('c' * 64)) 'a page with the product row reads all three, and its tag'
+$midPin = Get-HouseStylePin -SkillText $midPage
+Assert-True ($null -ne $midPin -and -not $midPin.Hashes.ContainsKey('house-product.css')) 'a page at a tag before the split, with no product row, is still a complete pin of the two files it shipped'
+Assert-True ($null -eq (Get-HouseStylePin -SkillText (($newRow -f 'house-style.css', ('a' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-product.css', ('c' * 64), 'dkj-solutions/assets/dkj-brandbook-product')))) 'the product row does not stand in for a missing core row'
+Assert-Equal 'plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/house-product.css' (Get-HouseStyleCanonicalPath -Leaf 'house-product.css') 'the source repo''s canonical product layer is the dkj-solutions plugin''s'
+Assert-Equal 'plugins/dkj-policy/assets/dkj-brandbook/house-theme.js' (Get-HouseStyleCanonicalPath -Leaf 'house-theme.js') 'and the core files stay dkj-policy''s'
+
 # The page at the tag (#3588): taken only when it pins the same tag the installed page names.
 $installed = @{ Tag = 'v5.32.0'; Hashes = @{} }
 Assert-Equal ('a' * 64) (Get-HouseStyleTagPin -Pin $installed -TagPageText $oldPage).Hashes['house-style.css'] 'the page at the tag yields its own checksums'
@@ -269,6 +282,9 @@ try {
         $treeHash = @(Get-HouseStyleSha256 -Bytes ([System.IO.File]::ReadAllBytes((Join-Path $Vendored $leaf))))[-1]
         $realSkill = $realSkill.Replace($pin.Hashes[$leaf], $treeHash)
     }
+    # The product layer, in dkj-solutions since #3831, pinned to this tree's file the same way.
+    $productCss = Join-Path $Plugin 'assets\dkj-brandbook-product\house-product.css'
+    $realSkill = $realSkill.Replace($pin.Hashes['house-product.css'], @(Get-HouseStyleSha256 -Bytes ([System.IO.File]::ReadAllBytes($productCss)))[-1])
     $Skill = Join-Path $fxPlugin 'skills\dkj-brandbook\SKILL.md'
     New-Item -ItemType Directory -Force -Path (Split-Path $Skill) | Out-Null
     [System.IO.File]::WriteAllText($Skill, $realSkill)
@@ -284,6 +300,24 @@ try {
     Assert-Equal 0 $r.Code 'a clean repo passes the gate'
     $r = Invoke-Child $Hook $clean 'RepoRootOverride'
     Assert-True ($r.Code -eq 0 -and $r.Out -match ('holds at ' + [regex]::Escape($pin.Tag))) 'the session check says the brand book holds'
+
+    # #3831: a product repo vendors the product layer beside the core. Its classes are house classes, and a copy is held to the pin.
+    $product = New-FixtureRepo 'product'
+    Add-PinnedCopy $product
+    Copy-Item -LiteralPath $productCss -Destination (Join-Path $product 'web\house-product.css')
+    Set-Content -LiteralPath (Join-Path $product 'web\app.css') -Value '.my-card { color: var(--fg-1); }' -Encoding ascii
+    Invoke-FixtureGitIn $product add -A
+    $r = Invoke-Child $Gate $product 'RepoRoot'
+    Assert-True ($r.Code -eq 0 -and $r.Out -match '\[pinned\]   web/house-product\.css') 'a pinned copy of the product layer passes, and is named as pinned'
+    Set-Content -LiteralPath (Join-Path $product 'web\app.css') -Value '.site-header { color: var(--fg-1); }' -Encoding ascii
+    Invoke-FixtureGitIn $product add -A
+    $r = Invoke-Child $Gate $product 'RepoRoot'
+    Assert-True ($r.Code -eq 1 -and $r.Out -match '\[redefine\] web/app\.css:1 styles the house class \.site-header') 'a class only the product layer defines is a house class: restyling it is a finding'
+    Add-Content -LiteralPath (Join-Path $product 'web\house-product.css') -Value '/* edited */'
+    Set-Content -LiteralPath (Join-Path $product 'web\app.css') -Value '.my-card { color: var(--fg-1); }' -Encoding ascii
+    Invoke-FixtureGitIn $product add -A
+    $r = Invoke-Child $Gate $product 'RepoRoot'
+    Assert-True ($r.Code -eq 1 -and $r.Out -match '\[pin\] web/house-product\.css') 'an edited copy of the product layer is a pin finding'
 
     # -SkillPath (#3148): the reusable gate hands in the page as it reads at the pinned tag, and the gate
     # must hold the copies to THAT table rather than to the page beside it.

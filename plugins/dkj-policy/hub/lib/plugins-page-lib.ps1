@@ -627,16 +627,19 @@ function Split-HouseStyleSpecimens {
         assets/dkj-brandbook/specimens.html cut along its sections (#3563), so each can be a page of its own. A section is
         a column-0 <div class="grid-N"> opening on a grid__head with <h2 id="hs-<slug>">, up to the next column-0
         </div>. Returns @{ Head; Sections; Tail }: Head is what precedes <div class="spec-page"> (the specimens' own
-        style block and icon sprite), Tail is from the first column-0 <dialog> on (the modal specimens and the script), and
+        style block and icon sprite), Tail is from the first column-0 <dialog> or <script> on (the modal specimens, which
+        the product layer's own specimens carry since #3831, and the script), and
         each section is @{ Slug; Title; Sub; Grid; Inner; Cards }, Title as text, Sub the file's own markup and Cards the
         number of cards in it. One file stays the single source: the split is read, never written.
         Column 0, because the Overlays section shows dialogs open in place, indented inside its cards: a tail from the
         first <dialog> anywhere carried half that section onto every page, outside .spec-stage, floating over it (#3703).
+        <script> too, because the core file has no dialog of its own since the split (#3831) and its script still draws
+        the live theme picker on the Themes page.
     #>
     param([AllowEmptyString()][string]$Body = '')
     $pageAt = $Body.IndexOf('<div class="spec-page">')
     $head = if ($pageAt -gt 0) { $Body.Substring(0, $pageAt) } else { '' }
-    $tailMatch = [regex]::Match($Body, '(?m)^<dialog')
+    $tailMatch = [regex]::Match($Body, '(?m)^<(?:dialog|script)\b')
     $tail = if ($tailMatch.Success) { $Body.Substring($tailMatch.Index) } else { '' }
     $sections = @()
     $rx = '(?ms)^<div class="(grid-\d)">\r?\n\s*<div class="grid__head"><h2 id="hs-([a-z][a-z-]*)">([^<]+)</h2><p class="card__sub">(.*?)</p></div>\r?\n(.*?)^</div>\r?$'

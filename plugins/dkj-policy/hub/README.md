@@ -65,7 +65,8 @@ them. They are tested there by `dev-preview-sessionstart.tests.ps1`, `dev-pages.
    own screens do. Nothing in the repo can change that.
 3. **A repo's product port is the repo's own, and the brand book reaches it only in a DKJ-Solutions repo.**
    There it is a rule, not an automatism: the `dkj-solutions` extension says every page a DKJ-Solutions app
-   renders starts from the brand book, the app copies `house-style.css` and `house-theme.js` in unchanged,
+   renders starts from the brand book, the app copies `house-style.css` and `house-theme.js` in unchanged
+   (and, for a product page, `house-product.css`, the mobile-first product layer that lives in that extension),
    and that extension's `check-house-style` gate holds the copies to the pinned release. A BWJ-Development
    repo, which never enables `dkj-solutions`, styles its product itself.
 
@@ -73,7 +74,10 @@ The stylesheet and theme script come from this plugin's own
 [`assets/dkj-brandbook/`](../assets/dkj-brandbook/) (`Get-HouseStyleDir`), which every install of `dkj-policy`
 carries. They sat in the `dkj-solutions` extension's folder until
 [#3531](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3531); the rule that a DKJ-Solutions app
-starts from them stays there.
+starts from them stays there. **Admin renders from these two files alone**: the product layer (`house-product.css`,
+the site header, the breadcrumb bar and the mobile-first components) is the `dkj-solutions` extension's, loaded
+after them on a product page and never alone ([#3831](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3831)).
+`Format-GeneralPageHtml` draws Admin's desktop shell and refuses `-BrandTag 'product'`.
 
 **No hub shows or serves the Brandbook, whether or not the repo enables `dkj-solutions`**
 ([#3475](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3475), the owner, October 25, 2026). The

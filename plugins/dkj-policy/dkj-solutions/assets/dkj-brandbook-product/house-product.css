@@ -1,0 +1,532 @@
+/* ==========================================================================
+   DKJ-Solutions brand book: the product layer
+   --------------------------------------------------------------------------
+   The mobile-first layer every DKJ-Solutions product renders with, on top of the brand book's core
+   (dkj-policy's assets/dkj-brandbook/house-style.css). It ships with the dkj-solutions plugin alone
+   (#3831, Maikel, November 5, 2026): Admin renders in every repo running dkj-policy and takes only the
+   core, while a BWJ-Development repo has its Shopify storefront and never renders this layer.
+   NEVER LOADED ALONE. It defines no token, no theme and no base rule: every value it reads is a core
+   token, and several rules extend a core class (.btn, .breadcrumbs, .card, .theme-settings). A page
+   loads house-style.css first and this file right after it:
+     <link rel="stylesheet" href="house-style.css"><link rel="stylesheet" href="house-product.css">
+   ========================================================================== */
+
+/* ==========================================================================
+   App components: the MOBILE-FIRST product layer (phone first, desktop as an option), lifted from
+   MesoWise. The storefront and every product take this part, with the site header and the
+   breadcrumb bar below; Admin does not: it takes the core's desktop shell (Dave,
+   November 4, 2026, #3811).
+   A form field, touch buttons, a dialog, a side drawer, a top bar and a site menu. Domain
+   components stay in the app. Touch targets are at least --tap (44px) high. Every colour
+   pairing below is an existing token pair (--primary on --bg-1 or --bg-2,
+   --negative-5 on --bg-2, --bg-1 on --primary-muted) and holds 4.5:1 in every theme.
+   ========================================================================== */
+
+/* ---- Narrow column --------------------------------------------------------- */
+/* The mobile app column: a phone, and on a computer the same 512px. Use on main or .container. */
+.container--narrow, main.narrow { max-width: var(--column-narrow); }
+
+/* ---- Form field ------------------------------------------------------------ */
+/* <label class="field"><span>Label</span><input></label>, or a <select>. The error line sits
+   under the control and is hidden while empty: <p class="field__error" role="alert"></p>. */
+.field { display: block; margin-bottom: var(--spacing-3-5); }
+.field:last-child { margin-bottom: 0; }
+.field > span { display: block; font-size: var(--text-base); color: var(--fg-1); margin-bottom: var(--spacing-1); }
+.field input, .field select { display: block; width: 100%; min-height: var(--control-h);
+  font: inherit; font-size: 16px;   /* literal: iOS zooms in on focus below 16px, a platform constraint, not a type step */
+  padding: var(--spacing-2) var(--spacing-3); border: 1px solid var(--bg-3); border-radius: var(--radius-2);
+  background: var(--bg-1); color: var(--fg-1); }
+/* A select draws its own chevron, in the muted colour, with room to the edge. */
+.field select { -webkit-appearance: none; appearance: none; padding-right: var(--spacing-10); text-overflow: ellipsis;
+  background-image: linear-gradient(45deg, transparent 50%, var(--primary) 50%), linear-gradient(135deg, var(--primary) 50%, transparent 50%);
+  background-position: right 18px center, right 13px center; background-size: 5px 5px; background-repeat: no-repeat; }
+.field input:focus-visible, .field select:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
+.field__error { margin: var(--spacing-1) 0 0; font-size: var(--text-base); color: var(--negative-5); }
+.field__error:empty { display: none; }
+
+/* ---- Touch buttons ----------------------------------------------------------- */
+/* .btn--touch makes a .btn a touch target; .btn--block makes it full width. Both combine with
+   .btn--primary (restated below, because this block comes after it). */
+.btn--touch { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap);
+  padding: var(--spacing-2-5) var(--spacing-4); font-size: var(--text-base); font-weight: var(--font-weight-bold); color: var(--fg-1);
+  background: var(--bg-2); -webkit-tap-highlight-color: transparent; }
+.btn--touch.btn--primary { background: var(--primary); border-color: var(--primary); color: var(--bg-1); font-weight: var(--font-weight-bold); }
+.btn--block { width: 100%; }
+
+/* ---- Dialog (a native <dialog>, opened with showModal) -------------------------- */
+/* Centred, also on a phone; 95% of the app column, and taller content scrolls inside it. A dialog
+   on top of a dialog sets --dialog-scale smaller. The page behind stands still while one is open. */
+.dialog { width: calc(min(100vw, var(--column-narrow)) * var(--dialog-scale, 0.95)); max-width: none; max-height: calc(100% - var(--spacing-8));
+  margin: auto; padding: 0; overflow-y: auto; overscroll-behavior: contain; text-align: left;
+  color: var(--fg-1); background: var(--bg-2); border: 1px solid var(--bg-3); border-radius: var(--radius-4); }
+.dialog::backdrop { background: var(--bg-1); opacity: 0.45; }
+html:has(dialog:modal) { overflow: hidden; }
+/* The padding sits in the body, so a tap on empty space in the dialog never counts as a tap outside it. */
+.dialog__body { position: relative; padding: var(--spacing-4); }
+/* The head keeps the right edge free for the close button and is at least as tall, so a
+   one-line title sits level with it. */
+.dialog__head { display: flex; align-items: center; min-height: var(--tap); padding-right: calc(var(--tap) + var(--spacing-2)); margin-bottom: var(--spacing-4); }
+/* The title is the h3 in the head, or a <p class="dialog__title"> where it is no heading; a heading carries no class
+   (Maikel, November 1, 2026). */
+:is(.dialog__head h3, .dialog__title) { margin: 0; min-width: 0; font-size: var(--text-h3); font-weight: var(--font-weight-bold); overflow-wrap: anywhere; }
+.dialog__sub { margin: var(--spacing-0-5) 0 0; font-size: var(--text-sm); color: var(--primary-muted); }
+/* The close button, top right, with no visible border. Variants: --save (a filled plate, the
+   check that saves), --cancel (an outlined plate to the left of save, the undo arrow), --back
+   (on the left instead, for a second panel). The plates are 36px, the tap area stays 44px, and
+   the two tap areas overlap by 2px so the plates stand 6px apart. */
+.dialog__close { position: absolute; top: var(--spacing-4); right: var(--spacing-4); display: flex; align-items: center; justify-content: center;
+  width: var(--tap); height: var(--tap); padding: 0; color: var(--fg-1); background: transparent; border: 1px solid transparent; border-radius: var(--radius-2); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.dialog__close:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
+.dialog__close svg { position: relative; }   /* above the plate */
+.dialog__close--save::before, .dialog__close--cancel::before { content: ""; position: absolute; inset: var(--spacing-1); border: 1px solid; border-radius: var(--spacing-1-5); }
+.dialog__close--save { color: var(--bg-1); }
+.dialog__close--save::before { background: var(--primary-muted); border-color: var(--primary-muted); }
+.dialog__close--cancel { right: calc(var(--spacing-4) + var(--tap) - 2px); color: var(--negative-5); }
+.dialog__close--cancel::before { border-color: var(--negative-5); }
+.dialog__close--back { right: auto; left: var(--spacing-4); }
+/* Room for two buttons (cancel and save), or for the back button on the left. */
+.dialog__head--two { padding-right: calc(2 * var(--tap) + var(--spacing-2) - 2px); }
+.dialog__head--back { padding-right: 0; padding-left: calc(var(--tap) + var(--spacing-2)); }
+
+/* ---- Drawer: a dialog that slides in from the right ------------------------------ */
+/* <dialog class="dialog dialog--drawer">: full height, 352px or the screen minus 48px, rounded on
+   the left only. Its head is as tall as the top bar, with a line under it across the full width,
+   and the close button sits in the middle of that head. */
+.dialog--drawer { width: min(352px, calc(100% - 48px)); height: 100%; max-height: 100%; margin: 0 0 0 auto;
+  border-width: 0 0 0 1px; border-radius: var(--radius-4) 0 0 var(--radius-4); touch-action: pan-y; animation: house-drawer-in 220ms ease-out; }
+.dialog--drawer .dialog__body { display: flex; flex-direction: column; min-height: 100%; box-sizing: border-box;
+  padding-top: calc(var(--spacing-4) + env(safe-area-inset-top)); padding-bottom: calc(var(--spacing-4) + env(safe-area-inset-bottom)); }
+.dialog--drawer .dialog__head { box-sizing: border-box; height: var(--topbar-h); min-height: 0; margin: calc(-1 * var(--spacing-4)) calc(-1 * var(--spacing-4)) 0;
+  padding: 0 calc(var(--spacing-4) + var(--tap) + var(--spacing-2)) 0 var(--spacing-4); border-bottom: 1px solid var(--bg-3); }
+.dialog--drawer .dialog__head--two { padding-right: calc(var(--spacing-4) + 2 * var(--tap) + var(--spacing-4)); }
+.dialog--drawer .dialog__head--back { padding: 0 var(--spacing-4) 0 calc(var(--spacing-4) + var(--tap) + var(--spacing-2)); }
+.dialog--drawer :is(.dialog__head h3, .dialog__title) { font-weight: var(--font-weight-bold); }   /* as the name in the top bar */
+.dialog--drawer .dialog__close { top: calc((var(--topbar-h) - var(--tap)) / 2 + env(safe-area-inset-top)); }
+.dialog--drawer::backdrop { animation: house-backdrop-in 220ms ease-out; }
+@keyframes house-drawer-in { from { transform: translateX(100%); } }
+@keyframes house-backdrop-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .dialog--drawer, .dialog--drawer::backdrop { animation: none; } }
+
+/* ---- Top bar ------------------------------------------------------------------ */
+/* <header class="topbar"><div class="topbar__inner"><div class="topbar__brand">...</div> a .icon-btn--ghost</div></header>.
+   Always at the top, in the surface colour, over the full width; its content lines up with
+   the narrow column. A field scrolled into view stays below it. */
+.topbar { display: block; position: sticky; top: 0; z-index: 2; background: var(--bg-2); box-shadow: 0 1px 0 var(--bg-3); }
+.topbar__inner { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: var(--column-narrow); height: var(--topbar-h);
+  margin: 0 auto; padding: 0 var(--spacing-1) 0 var(--spacing-4); }
+.topbar__brand { display: flex; align-items: center; gap: var(--spacing-3); min-width: 0; }
+.topbar__name { flex: none; font-size: var(--text-h3); font-weight: var(--font-weight-bold); }
+html:has(.topbar) { scroll-padding-top: var(--topbar-h); }
+
+/* ---- Breadcrumbs ---------------------------------------------------------------- */
+/* Where the page sits, on every page a dev server serves: the first thing in <body>, above <main>.
+   <div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>
+   <li><a href="/">Home</a></li><li><span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24">
+   (the chevron path, in the house-style README)</svg></span><span aria-current="page">Current page</span></li></ol></nav></div></div>.
+   The bar stands on the theme's colour (owner, #3235, October 21, 2026), so the trail is in the paper steps, all of
+   which read on it: the chevron --bg-3, the ancestor links --bg-2, the current page --bg-1, so it stands out
+   the most; every crumb at the regular weight. A link shows its underline only under the pointer, and its focus ring is
+   --bg-1, because the usual --primary-muted ring would not show on the primary.
+   The bar spans the full width on --primary and sticks to the top of the screen, so it is always visible. It is
+   one --tap high and one line: a trail longer than the screen scrolls sideways inside the bar rather than wrapping, so
+   the height stays fixed and whatever else sticks to the top sits right under it. Its trail lines up with the page
+   column (.container). */
+.breadcrumbs-bar { position: sticky; top: 0; z-index: 4; background: var(--primary); }
+.breadcrumbs-bar > .container { display: flex; align-items: center; height: var(--tap); padding-top: 0; padding-bottom: 0; overflow-x: auto; }
+/* Under the bar: an anchor lands below it, and the floating settings button moves down by its height. */
+html:has(.breadcrumbs-bar) { scroll-padding-top: var(--tap); }
+html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + var(--spacing-3)); }
+
+/* ---- Site header ------------------------------------------------------------------ */
+/* The app's own header above the breadcrumb bar (owner, October 22, 2026): at most --spacing-18 (72px) high, on the
+   theme's colour, the app's name on the left as the way home, the settings button on the far right.
+   <header class="site-header"><div class="container"><a class="site-header__brand" href="/"><span
+   class="site-header__name">name</span></a><div id="settings"></div></div></header>,
+   then the .breadcrumbs-bar. It scrolls away; the bar under it still sticks. Under a site header the bar leaves the
+   primary to the header: the paper, a subtle line under it, and the trail in the text steps. A bar with no header
+   above it is unchanged. The header carries no mark since November 2, 2026 (Dave): .site-header__mark is retired. */
+.site-header { display: block; background: var(--primary); color: var(--bg-1); }
+/* The bar has no padding at all, so its first and last cells meet the column's edges, and none reaches past them
+   with a negative margin (Maikel, November 3, 2026; until then the bar padded every side and the brand, the menu and
+   the settings cell each took that padding back). Its height is its min-height: the 44px line the retired mark gave
+   it plus --spacing-3 above and below (Dave, November 2, 2026), which every cell fills by stretching. */
+.site-header > .container { display: flex; align-items: stretch; justify-content: space-between; gap: var(--spacing-3);
+  min-height: calc(var(--spacing-11) + 2 * var(--spacing-3)); max-height: var(--spacing-18); padding: 0; }
+/* The brand is a cell the full height of the bar, so the whole area around the name goes home (Maikel, November 2,
+   2026). */
+.site-header__brand { display: inline-flex; align-items: center; gap: var(--spacing-3); min-width: 0;
+  padding: 0 var(--spacing-4); color: var(--bg-1); text-decoration: none; }
+.site-header__brand:hover { background: var(--primary-hover); }
+.site-header__brand:focus-visible { outline: 2px solid var(--bg-1); outline-offset: -4px; }
+.site-header__name { overflow: hidden; font-size: var(--text-title); font-weight: var(--font-weight-bold); white-space: nowrap; text-overflow: ellipsis; }
+.site-header__tag { font-weight: var(--font-weight-regular); color: var(--bg-3); }
+/* In the header the settings button is a square cell the full height of the bar at its right end, a shade lighter
+   than the header, its gear in the header's own colour (Maikel, November 1, 2026). */
+.site-header .theme-settings { flex: none;
+  width: calc(var(--text-h1) + 2 * var(--spacing-1) + 2 * var(--spacing-3)); }   /* the bar's height: the mark (its line, its padding) and the bar's own padding */
+.site-header .theme-settings__toggle { width: 100%; height: 100%; border-radius: 0; color: var(--bg-1);
+  background: var(--primary-raised); }
+.site-header .theme-settings__toggle:hover,
+.site-header .theme-settings__toggle[aria-expanded="true"] { background: var(--primary-hover); }
+.site-header .theme-settings__toggle svg { width: var(--spacing-6); height: var(--spacing-6); }
+.site-header .theme-settings__toggle:focus-visible { outline-color: var(--bg-1); outline-offset: -4px; }
+.site-header + .breadcrumbs-bar { background: var(--bg-1); border-bottom: 1px solid var(--bg-3); }
+.site-header + .breadcrumbs-bar .breadcrumbs a { color: var(--primary-muted); }   /* Maikel, November 1, 2026; it was --fg-3 */
+.site-header + .breadcrumbs-bar .breadcrumbs a:focus-visible { outline-color: var(--primary-muted); }
+.site-header + .breadcrumbs-bar .breadcrumbs__sep { color: var(--primary-muted); }
+.site-header + .breadcrumbs-bar .breadcrumbs [aria-current='page'] { color: var(--primary); }   /* owner, October 24, 2026; it was --fg-1 */
+/* Under a site header the bar drops its side padding as the header does, and the trail is inset as far as a header
+   cell insets its text, --spacing-4, so its first word stands under the app's name (Maikel, November 3, 2026). */
+.site-header + .breadcrumbs-bar > .container { padding-left: 0; padding-right: 0; }
+.site-header + .breadcrumbs-bar .breadcrumbs { align-self: stretch; padding: 0 var(--spacing-4); }
+/* And each step is a cell the full height of the bar, as a menu link is in the header (Maikel, November 3, 2026):
+   the trail, its list and its items stretch, and a link, the current page and a separator centre their content. */
+.site-header + .breadcrumbs-bar .breadcrumbs ol { height: 100%; align-items: stretch; }
+.site-header + .breadcrumbs-bar .breadcrumbs li { align-items: stretch; }
+.site-header + .breadcrumbs-bar .breadcrumbs :is(a, [aria-current='page'], .breadcrumbs__sep) { display: flex; align-items: center; }
+
+/* ---- Site header menu --------------------------------------------------------------- */
+/* The app's main pages between the brand and the settings button (Maikel, November 2, 2026, after the three-zone nav
+   of djcylow: brand, menu, the button). The breadcrumb bar under the header stays: the menu says where you can go,
+   the trail where you are.
+   <nav class="site-header__nav" aria-label="Main"><ul class="site-header__menu"><li><a href aria-current="page">..</a></li>
+   ..</ul><button class="site-header__menu-toggle" type="button" aria-controls="site-menu" aria-expanded="false"
+   aria-label="Menu">(three lines)</button></nav>, between .site-header__brand and #settings; and inside the header,
+   after its .container (so .site-header + .breadcrumbs-bar still holds), <dialog class="dialog dialog--drawer site-menu"
+   id="site-menu"> holding the same links as a .menu-list of .menu-item rows. Each link is a cell the full height of
+   the bar, as the settings button is; the page it is on carries a bar under it. Where the header is narrower than
+   48rem the links fold away and the toggle opens the drawer (house-theme.js wires it). The width is the header's own,
+   not the window's, so the Phone width folds it too. */
+.site-header > .container { container: site-header / inline-size; }
+/* The menu stands at the right, inside the bar's side padding (Maikel, November 3, 2026; centred until then). */
+.site-header__nav { display: flex; flex: 1 1 auto; justify-content: flex-end; min-width: 0; }
+.site-header__menu { display: flex; margin: 0; padding: 0; list-style: none; }
+.site-header__menu > li { display: flex; }
+.site-header__menu a { display: flex; align-items: center; padding: 0 var(--spacing-4); color: var(--bg-1); text-decoration: none; white-space: nowrap; }
+.site-header__menu a:hover { background: var(--primary-hover); }
+.site-header__menu a[aria-current="page"] { box-shadow: inset 0 calc(-1 * var(--spacing-1)) 0 var(--bg-1); }
+.site-header__menu a:focus-visible { outline: 2px solid var(--bg-1); outline-offset: -4px; }
+.site-header__menu-toggle { display: none; align-items: center; justify-content: center; width: calc(var(--text-h1) + 2 * var(--spacing-1) + 2 * var(--spacing-3));
+  padding: 0; border: 0; color: var(--bg-1); background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }   /* as wide as the settings cell */
+.site-header__menu-toggle:hover, .site-header__menu-toggle[aria-expanded="true"] { background: var(--primary-hover); }
+.site-header__menu-toggle svg { width: var(--spacing-6); height: var(--spacing-6); }
+.site-header__menu-toggle:focus-visible { outline: 2px solid var(--bg-1); outline-offset: -4px; }
+@container site-header (max-width: 48rem) {
+  .site-header__menu { display: none; }
+  .site-header__menu-toggle { display: inline-flex; }
+}
+.site-menu .menu-item[aria-current="page"] { font-weight: var(--font-weight-bold); color: var(--primary); }
+
+/* ---- Fills ---------------------------------------------------------------- */
+/* A block on the theme's colour, or on the far end (#3235). The text switches with the ground. On .fill-primary the
+   paper steps are the text, because all four read on the primary (4.55:1 or better): an h2 is --bg-1 there and
+   --fg-2 on the page (the owner: an h2 does not always have the same colour), a quieter line --bg-3. On
+   .fill-inverse the ground is --fg-1, the paper is the text and --bg-4 the quieter line (15:1 or better on it).
+   The text and the quieter lines weigh (0,2,0): :is() takes the weight of its strongest argument, a class, so they
+   beat .note, p.meta and the zero-weight headings, and the quieter line wins over the text because it comes
+   after it. A link weighs (0,1,0), enough to beat the zero-weight house link and light enough that a .btn or an app's
+   own class on an <a> keeps its colours. A component inside a fill keeps its own colours, so a .btn--primary on
+   .fill-primary does not show: use an outline button there. */
+.fill-primary { background: var(--primary); color: var(--bg-1); }
+.fill-inverse { background: var(--fg-1); color: var(--bg-1); }
+.fill-primary :is(h1, h2, h3, p, .meta),
+.fill-inverse :is(h1, h2, h3, p, .meta) { color: var(--bg-1); }
+.fill-primary :is(.note, .card__sub) { color: var(--bg-3); }
+.fill-inverse :is(.note, .card__sub) { color: var(--bg-4); }
+.fill-primary :where(a:any-link), .fill-inverse :where(a:any-link) { color: var(--bg-1); }
+.fill-primary :where(a:any-link:focus-visible), .fill-inverse :where(a:any-link:focus-visible) { outline-color: var(--bg-1); }
+
+/* ==========================================================================
+   Brand-book components (#3493): the parts the house style lacked, lifted from the brand-book app when it was
+   retired (components from MesoWise and the ETF tracker, and brand-book originals). Only what the house style had
+   no class for is here; a family it already had (button, card, dialog, drawer, top bar, menu, breadcrumbs, field,
+   table, tooltip, badge, meter, tile, hero, legend, seg, facts) stays that class, and where one lacked a general
+   modifier or part it is added to that class below ("Additions to existing classes"). Every colour is a house
+   token pair, so all of it follows the twelve themes; interactive parts keep a 44px (--tap) hit area and a focus
+   ring (--primary-muted, or --bg-1 where a fill is behind it).
+   ========================================================================== */
+
+/* ---- Toggles, help and disclosure ---------------------------------------------- */
+/* Round toggle: a 44px round button around an icon that opens a text (aria-expanded). It takes the row's height, not
+   44px of it (the negative margin), and its ring sits inside the tap area. An inline "?" in a label is .info-button. */
+.round-toggle { display: inline-flex; align-items: center; justify-content: center; flex: none; width: var(--tap); height: var(--tap); margin: calc(-1 * var(--spacing-1-5)) 0; padding: 0;
+  color: var(--fg-1); background: transparent; border: 0; border-radius: 50%; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.round-toggle[aria-expanded="true"] { color: var(--primary-muted); }
+.round-toggle:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: -4px; }
+/* Badge toggle: the same on a 28px bordered circle that holds a character; the tap area grows to 44px (::after). */
+.badge-toggle { position: relative; display: inline-flex; align-items: center; justify-content: center; width: var(--spacing-7); height: var(--spacing-7); padding: 0; vertical-align: middle;
+  font-size: var(--text-sm); font-weight: var(--font-weight-bold); line-height: 1; color: var(--fg-1); background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-pill);
+  cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.badge-toggle::after { content: ""; position: absolute; inset: calc(-1 * var(--spacing-2)); }
+.badge-toggle[aria-expanded="true"] { color: var(--primary-muted); border-color: var(--primary-muted); }
+.badge-toggle:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
+/* Help: a toggle at the right and, under it, the <p> it opens (full width). */
+.help { display: flex; flex-direction: column; align-items: flex-end; }
+.help > p { align-self: stretch; margin-top: var(--spacing-2); }
+/* A .more whose summary is a row: <details class="more more--structured"><summary><span class="more__title">..</span>
+   <span class="more__meta">..</span><span class="more__trailing">..</span></summary>..</details>. A wrapping row with the
+   marker last; on a narrow row (under 24rem, of the .more itself) the meta and trailing drop under the title. The
+   containment makes the box take the full width. */
+.more--structured { container-type: inline-size; width: 100%; }
+.more--structured > summary { display: flex; flex-wrap: wrap; align-items: baseline; align-content: center; column-gap: var(--spacing-2); row-gap: var(--spacing-0-5); min-height: var(--tap); }
+.more--structured > summary::after { flex: none; order: 1; }
+.more__title { flex: 1 1 12ch; min-width: 0; overflow-wrap: anywhere; font-weight: var(--font-weight-bold); color: var(--fg-1); }
+.more__meta, .more__trailing { margin-inline-start: auto; white-space: nowrap; }
+.more__meta + .more__trailing { margin-inline-start: 0; }
+.more__meta { font-size: var(--text-sm); font-weight: var(--font-weight-regular); color: var(--fg-1); font-variant-numeric: tabular-nums; }
+.more__version { color: var(--primary-muted); font-weight: var(--font-weight-bold); }
+@container (max-width: 24rem) { .more__meta, .more__trailing { order: 2; margin-inline-start: 0; } }
+
+/* ---- Headings and answers ------------------------------------------------------ */
+/* .group-heading is gone (Maikel, November 1, 2026): the house has one h3, and a group's label is that h3. */
+/* A question: a title with its answer .chip at the right, then the answer line, a plain <p> (a <strong> in it where it
+   is a verdict). .verdict, which was that line, is gone (Maikel, November 1, 2026): it read as a <p> with a <strong>. */
+.question-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--spacing-1) var(--spacing-3); margin: 0 0 var(--spacing-2); }
+.question-head h3 { margin: 0; font-size: var(--text-h3); font-weight: var(--font-weight-bold); line-height: 1.2; }
+.question-head .chip { min-width: 0; margin-left: auto; text-align: right; }
+.question-head + p { margin: 0 0 var(--spacing-1-5); }
+/* .amount is gone into .num (Maikel, November 1, 2026): a figure with a small icon beside it is a .num with the svg in it. */
+/* Answer box: the result of a calculation, a label and the figure in --primary on the tint. */
+.answer { display: flex; align-items: center; gap: var(--spacing-3); margin-top: var(--spacing-2); padding: var(--spacing-2) var(--spacing-3); border-radius: var(--radius-2-5); background: var(--bg-3); }
+.answer__label { flex: 1; font-weight: var(--font-weight-bold); }
+.answer__value { font-size: var(--text-h3); font-weight: var(--font-weight-bold); color: var(--primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* A value the app changed for you flashes once, in --primary-muted and fading out. */
+@keyframes house-flash { from { background: var(--primary-muted); color: var(--bg-1); } }
+.flash { animation: house-flash 1.2s ease-out; }
+@media (prefers-reduced-motion: reduce) { .flash { animation: none; } }
+/* The header of a block that is not a direct child of main, which the rule for main > header would miss. */
+.page-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--spacing-3); }
+
+/* ---- Form parts: checkbox, stepper, search combobox ----------------------------- */
+/* A read-only value in a .field's place, as tall as a tap target: <p class="field__fixed">. */
+.field__fixed { margin: 0; display: flex; align-items: center; min-height: var(--tap); padding: var(--spacing-1) var(--spacing-3); font-size: var(--text-base); font-weight: var(--font-weight-bold); line-height: 1.2;
+  overflow-wrap: anywhere; background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); }
+/* Checkbox: <label class="check"><input type="checkbox"><span>Label</span><small>help</small></label>. The box is the native
+   one, so it takes the theme through accent-color; 24px, in a 44px row. */
+.check { display: flex; align-items: flex-start; gap: var(--spacing-2-5); min-height: var(--tap); font-size: var(--text-base); font-weight: var(--font-weight-bold); color: var(--fg-1); cursor: pointer; }
+.check input { flex: none; width: 1.5rem; height: 1.5rem; margin: var(--spacing-2-5) 0 0; }
+.check input:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
+.check span { padding: var(--spacing-2) 0; }
+.check small { display: block; margin-top: var(--spacing-0-5); font-size: var(--text-sm); font-weight: var(--font-weight-regular); color: var(--fg-1); }
+/* Stepper: <div class="stepper"><button>-</button><input type="number"><button>+</button></div>; --lg is the larger
+   one for a dialog. The number input shows no spin buttons. */
+.stepper { display: grid; grid-template-columns: var(--tap) 3.5rem var(--tap); gap: var(--spacing-1); }
+.stepper--lg { grid-template-columns: var(--control-lg) 5rem var(--control-lg); gap: var(--spacing-2); }
+.stepper :is(button, input) { height: var(--tap); margin: 0; padding: 0; font: inherit; font-size: var(--text-h3); color: var(--fg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); }
+.stepper button { line-height: 1; background: var(--bg-2); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.stepper input { display: block; padding: 0 var(--spacing-1); text-align: center; font-variant-numeric: tabular-nums; background: var(--bg-1); -moz-appearance: textfield; appearance: textfield; }
+.stepper input::-webkit-inner-spin-button, .stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.stepper--lg :is(button, input) { height: var(--control-lg); }
+.stepper--lg input { font-weight: var(--font-weight-bold); }
+.stepper button:disabled { opacity: 0.5; cursor: not-allowed; }
+.stepper button:active { background: var(--bg-3); border-color: var(--primary-muted); }
+.stepper :is(button, input):focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
+/* Search combobox: a text input over a list of options (role="combobox" and "listbox"); once an option is picked a
+   __picked button covers the input, showing it, and a click opens the list again. The magnifier (__glass) is at the
+   right while there is something to tap. An option is .combo__option, active on aria-selected="true" (a tint and a
+   bar at the left), --own the "add what I typed" option and --more a line that is not an option. */
+.combo { display: grid; grid-template-columns: minmax(0, 1fr); }
+.combo__input, .combo__picked { grid-row: 1; grid-column: 1; min-height: var(--tap); font: inherit; color: var(--fg-1); background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); }
+.combo__input { width: 100%; padding: var(--spacing-2-5) var(--spacing-3); font-size: var(--text-h3); }   /* 16px or more: iOS zooms in below it */
+.combo__input:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; border-color: var(--primary-muted); }
+.combo__input--under { opacity: 0; pointer-events: none; }
+.combo__picked { z-index: 1; min-width: 0; padding: var(--spacing-1) var(--spacing-3); text-align: left; font-size: var(--text-base); font-weight: var(--font-weight-bold); line-height: 1.2; overflow-wrap: anywhere; cursor: pointer; }
+.combo__picked:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
+.combo__input:not(:focus), .combo__picked { padding-right: var(--spacing-10); }
+.combo__glass { grid-row: 1; grid-column: 1; z-index: 2; justify-self: end; align-self: center; margin-right: var(--spacing-3); color: var(--fg-1); pointer-events: none; }
+.combo__input:focus ~ .combo__glass { display: none; }
+.combo__list { grid-row: 2; margin: var(--spacing-1-5) 0 0; padding: var(--spacing-1); list-style: none; background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); }
+.combo__option { display: flex; flex-direction: column; justify-content: center; min-height: var(--tap); padding: var(--spacing-1-5) var(--spacing-2-5); border-radius: var(--radius-1-5);
+  font-size: var(--text-base); line-height: 1.3; overflow-wrap: anywhere; cursor: pointer; }
+.combo__name { color: var(--fg-1); }
+.combo__meta { font-size: var(--text-sm); color: var(--fg-1); }
+.combo__option[aria-selected="true"] { background: var(--bg-3); box-shadow: inset 3px 0 0 var(--primary-muted); }
+.combo__option[aria-selected="true"] .combo__name { font-weight: var(--font-weight-bold); }
+.combo__option[aria-selected="true"] .combo__meta { color: var(--primary); }
+.combo__option--own { flex-direction: row; align-items: center; justify-content: flex-start; gap: var(--spacing-2); border: 1px dashed var(--primary); }
+.combo__option--own::before { content: "+"; flex: none; font-weight: var(--font-weight-bold); color: var(--primary-muted); }
+.combo__option--more { min-height: 0; padding-top: var(--spacing-1); padding-bottom: var(--spacing-1); cursor: default; }
+
+/* ---- Value box and stat rows -------------------------------------------------- */
+/* Value box: a figure in a box as tall as a control (--control-h), so it lines up with the button beside it. __num is the
+   figure (--regular, --lg, --negative, --positive), __was the old value, __unit the unit; --changed marks a value the
+   user changed (a --primary-muted border on the tint), --flush drops the side padding. */
+.value-box { display: flex; align-items: center; justify-content: center; gap: var(--spacing-1-5); min-width: var(--spacing-12); height: var(--control-h); padding: var(--spacing-1) var(--spacing-2-5);
+  border: 1px solid transparent; border-radius: var(--radius-2); font-variant-numeric: tabular-nums; }
+.value-box__num { display: flex; align-items: baseline; gap: var(--spacing-1); font-size: var(--text-base); font-weight: var(--font-weight-bold); line-height: 1.2; color: var(--fg-1); }
+.value-box__num--regular { font-weight: var(--font-weight-regular); }
+.value-box__num--lg { font-size: var(--text-h3); }
+.value-box__num--negative { color: var(--negative-5); }
+.value-box__num--positive { color: var(--positive-5); }
+.value-box__was { font-size: var(--text-sm); font-weight: var(--font-weight-regular); color: var(--fg-1); }
+.value-box__unit { font-size: var(--text-sm); font-weight: var(--font-weight-bold); color: var(--fg-1); }
+.value-box--changed { border: 2px solid var(--primary-muted); background: var(--bg-3); }
+.value-box--flush { padding-left: 0; padding-right: 0; }
+/* Stat rows: <div class="stat-rows"><div class="stat-row"><span class="stat-row__name">Name<span class="stat-row__sub">..</span></span>
+   a .value-box and an .icon-btn</div>..</div>. Name, value, action, a --bg-3 rule between rows; the button is
+   --control-h square, as the box. --help adds a column for a .round-toggle (on one row, or on all of them through
+   .stat-rows--help, so the values stay in line); --formula is name, a + b = total and the button; --head a row of
+   column heads. */
+.stat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--control-h); column-gap: var(--spacing-3); align-items: center; padding: var(--spacing-2) 0; border-bottom: 1px solid var(--bg-3); }
+.stat-rows > .stat-row:last-child { border-bottom: 0; }
+.stat-row .icon-btn { width: var(--control-h); min-width: var(--control-h); height: var(--control-h); }
+.stat-row__name { min-width: 0; font-size: var(--text-base); color: var(--fg-1); overflow-wrap: anywhere; }
+.stat-row__sub { display: block; font-size: var(--text-sm); color: var(--primary-muted); font-variant-numeric: tabular-nums; }
+.stat-row__help { display: flex; justify-content: center; }
+.stat-row--help, .stat-rows--help > .stat-row:not(.stat-row--formula) { grid-template-columns: minmax(0, 1fr) auto var(--spacing-9) var(--control-h); }
+.stat-rows--help > .stat-row:not(.stat-row--help):not(.stat-row--formula) > :nth-child(3) { grid-column: 4; }
+.stat-row--formula { column-gap: var(--spacing-1);
+  grid-template-columns: minmax(0, 1fr) var(--spacing-10) var(--spacing-2) var(--spacing-10) var(--spacing-2) var(--spacing-12) calc(var(--control-h) + var(--spacing-3)); }
+.stat-row--formula .value-box { min-width: 0; padding: var(--spacing-1); }
+.stat-row--formula > .icon-btn { justify-self: end; }
+.stat-row__op { text-align: center; font-weight: var(--font-weight-bold); color: var(--fg-1); }
+.stat-row--head { padding-bottom: 0; border-bottom: 0; font-size: var(--text-sm); font-weight: var(--font-weight-bold); color: var(--fg-1); text-align: center; }
+/* Step header: a previous button, a large value (an h1-size figure, trimmed to its cap height so the box centre is the
+   letters' centre) and a next button, on 5.5rem columns. The buttons are .btn. */
+.step-head { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) 5.5rem; align-items: center; gap: var(--spacing-2); }
+.step-head .btn { width: 100%; margin: 0; }
+.step-head__value { margin: 0; padding: var(--spacing-3) 0; font-size: var(--text-h1); font-weight: var(--font-weight-bold); line-height: 1; text-align: center; text-box: trim-both cap alphabetic; }   /* text-box is ignored where unsupported */
+
+/* ---- Info rows ---------------------------------------------------------------- */
+/* Rows of a label and a value in a tinted box, each with a .round-toggle at the end: <div class="info-rows"><p
+   class="info-rows__head">..</p><div class="info-rows__list"><div class="info-row"><div class="info-row__box">
+   <button class="info-row__named">..</button><span class="info-row__value">..</span></div></div></div></div>. --info
+   puts the box on the card with a --graph-1 edge. The "i" of an info icon is cut out in the surface below it: .info-dot
+   and .info-stem take that surface's colour. */
+.info-dot { fill: var(--bg-2); }
+.info-stem { stroke: var(--bg-2); }
+.info-rows:not(.info-rows--info) .info-row__box { background: var(--bg-3); color: var(--fg-1); }
+.info-rows:not(.info-rows--info) .info-row__box .info-dot { fill: var(--bg-3); }
+.info-rows:not(.info-rows--info) .info-row__box .info-stem { stroke: var(--bg-3); }
+.info-rows--info .info-row__box { background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--graph-1); }
+.info-rows__head { margin: 0 0 var(--spacing-1-5); font-size: var(--text-base); font-weight: var(--font-weight-bold); color: var(--fg-1); }
+.info-rows__list { display: flex; flex-direction: column; gap: var(--spacing-1-5); }
+.info-row { display: flex; align-items: center; gap: var(--spacing-1-5); }
+.info-row__box { flex: 1 1 auto; min-width: 0; min-height: calc(1.5rem + 2 * var(--spacing-2)); display: flex; align-items: center; padding: var(--spacing-2); border-radius: var(--radius-2); }
+.info-row__box .round-toggle { margin: calc(-1 * var(--spacing-2-5)) calc(-1 * var(--spacing-2-5)) calc(-1 * var(--spacing-2-5)) auto; }
+.info-row__named { flex: 0 1 auto; min-width: 0; min-height: var(--tap); margin: calc(-1 * var(--spacing-2-5)) calc(-1 * var(--spacing-2)); padding: 0 var(--spacing-2);
+  display: flex; align-items: center; gap: var(--spacing-1); font: inherit; text-align: left; color: var(--fg-1); background: transparent; border: 0; border-radius: var(--radius-2); cursor: pointer; }
+.info-row__named > svg { flex: none; }
+.info-row__named:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: -4px; }
+.info-row__value { min-width: 0; font-size: var(--text-base); line-height: 1.5rem; font-weight: var(--font-weight-bold); color: var(--primary); overflow-wrap: anywhere; }
+.info-row__value--placeholder { font-weight: var(--font-weight-regular); color: var(--fg-1); }
+
+/* ---- Tables: bill, comparison, calculation ------------------------------------ */
+/* Bill: one table per invoice: small uppercase column heads, a row per line (a __slot, an item __name that truncates, an
+   optional quantity, a price at the right, an action), groups that close with a __subtotal between stronger rules, and a
+   __total under a --primary rule. Add --qty when there is a quantity column, and .num to the figures' cells. */
+.bill, .compare { width: 100%; border-collapse: collapse; }
+.bill { table-layout: fixed; }
+.bill .num, .compare .num { text-align: right; white-space: nowrap; }
+.bill th, .bill td { height: 2.25rem; padding: var(--spacing-0-5) 0 var(--spacing-0-5) var(--spacing-1); vertical-align: middle; text-align: left; }
+.bill tr > :first-child { padding-left: 0; }
+.bill thead tr { border-bottom: 1px solid var(--bg-3); }
+.bill .bill__head > * { height: auto; padding-top: 0; padding-bottom: var(--spacing-1); vertical-align: bottom; font-size: var(--text-sm); font-weight: var(--font-weight-bold); letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-1); }
+.bill__head > :nth-child(1) { width: 4.75rem; }
+.bill__head > :nth-last-child(2) { width: 5rem; }
+.bill__head > :last-child { width: calc(var(--control-h) + var(--spacing-1)); }
+.bill--qty .bill__head > :nth-child(3) { width: var(--spacing-10); }
+.bill tbody tr { border-bottom: 1px solid var(--bg-3); }
+.bill tbody:last-of-type tr:last-child { border-bottom: 0; }
+.bill__slot { font-size: var(--text-base); font-weight: var(--font-weight-bold); color: var(--fg-1); }
+.bill__name { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-base); line-height: 1.3; }
+.bill__qty { font-size: var(--text-base); color: var(--fg-1); }
+.bill__price { font-size: var(--text-base); font-weight: var(--font-weight-bold); }
+.bill__action { text-align: right; }
+.bill__action .icon-btn { width: var(--control-h); min-width: var(--control-h); height: var(--control-h); margin-left: auto; }
+.bill__action .round-toggle { margin: calc(-1 * var(--spacing-2)) calc(-1 * var(--spacing-2)) calc(-1 * var(--spacing-2)) auto; }
+.bill .bill__subtotal { border-top: 2px solid var(--primary-muted); border-bottom: 2px solid var(--primary-muted); }
+.bill .bill__subtotal > * { height: auto; padding-top: var(--spacing-1-5); padding-bottom: var(--spacing-1-5); vertical-align: baseline; }
+.bill__subtotal th, .bill__total th { padding-right: var(--spacing-4); font-size: var(--text-base); font-weight: var(--font-weight-bold); text-align: right; }
+.bill__subtotal strong, .bill__total strong { font-size: var(--text-base); font-variant-numeric: tabular-nums; }
+.bill tfoot tr { border-top: 1px solid var(--primary); }
+.bill .bill__total > * { height: auto; padding-top: var(--spacing-2); padding-bottom: var(--spacing-2); vertical-align: baseline; }
+.bill__total strong { color: var(--primary-muted); }
+/* Comparison: row labels at the left and a column of figures per option, the closing row (a tfoot) large over a --primary-muted rule. */
+.compare { font-variant-numeric: tabular-nums; }
+.compare th, .compare td { padding: var(--spacing-2) 0; border-bottom: 1px solid var(--bg-3); vertical-align: baseline; }
+.compare tbody th { text-align: left; font-weight: var(--font-weight-regular); overflow-wrap: anywhere; }
+.compare td.num { padding-left: var(--spacing-2); }
+.compare thead th { padding: 0 0 var(--spacing-2) var(--spacing-2); font-size: var(--text-sm); font-weight: var(--font-weight-bold); line-height: 1.2; color: var(--fg-1); text-align: right; vertical-align: bottom; }
+.compare thead td { padding: 0; }
+.compare tbody tr:last-child > * { padding-bottom: var(--spacing-3); border-bottom: 0; }
+.compare tfoot th, .compare tfoot td { padding-top: var(--spacing-3-5); border-bottom: 0; border-top: 2px solid var(--primary-muted); font-weight: var(--font-weight-bold); font-size: var(--text-h3); text-align: left; }
+.compare tfoot td { text-align: right; }
+/* Calculation: a grid of rows (a subgrid, so the columns line up through every box), each a __what, an __op (+ - x =)
+   and a __num; a __box rings a group of rows and nests; --boxed lets boxes span in from an edge column; a __result row
+   sums up, large in --primary-muted. A .calc-section holds one question's calculation (its __question) and an .answer. */
+.calc { display: grid; grid-template-columns: [what] minmax(0, 1fr) [op] auto [num] auto; font-variant-numeric: tabular-nums; }
+.calc__row, .calc__box { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; }
+.calc__row { align-items: baseline; border-bottom: 1px solid var(--bg-3); line-height: 1.35; }
+.calc__row > * { padding: var(--spacing-2) 0; }
+.calc__row:has(+ .calc__result) { margin-bottom: var(--spacing-2); border-bottom: 0; }
+.calc__what { grid-column: what; padding-left: var(--spacing-3); font-size: var(--text-base); overflow-wrap: anywhere; }
+.calc__sub { display: block; font-size: var(--text-sm); color: var(--primary-muted); }
+.calc__op { grid-column: op; min-width: 1rem; padding-inline: var(--spacing-2); font-size: var(--text-base); text-align: center; color: var(--fg-1); }
+.calc__num { grid-column: num; padding-inline: var(--spacing-3); text-align: right; font-size: var(--text-base); font-weight: var(--font-weight-bold); white-space: nowrap; }
+.calc--boxed { --gutter: var(--spacing-1-5); grid-template-columns: [edge-l] var(--gutter) [what] minmax(0, 1fr) [op] auto [num] auto [edge-r] var(--gutter); }
+.calc--boxed .calc__what { padding-left: var(--spacing-2); }
+.calc--boxed .calc__op { padding-inline: var(--spacing-1); }
+.calc--boxed .calc__num { padding-inline: var(--spacing-2); }
+.calc__box { margin: 0; padding: var(--gutter, var(--spacing-1-5)) 0; border: 1.5px solid var(--bg-4); border-radius: var(--radius-2-5); }
+.calc--boxed .calc__box > .calc__row, .calc--boxed .calc__box > .calc__box { grid-column: 2 / -2; }   /* boxes only exist in a boxed calculation */
+.calc__box > .calc__row:last-child { border-bottom: 0; }
+.calc__result { border-bottom: 0; }
+.calc__result .calc__num { font-size: var(--text-h3); font-weight: var(--font-weight-bold); color: var(--primary-muted); }
+.calc-section + .calc-section { margin-top: var(--spacing-6); }
+.calc-section__question { margin: 0 0 var(--spacing-0-5); font-size: var(--text-h3); font-weight: var(--font-weight-bold); color: var(--fg-1); }
+
+/* ---- Date list ---------------------------------------------------------------- */
+/* A list of dated items: a fixed date column (--datecol), a title with a muted line, an optional trailing label that
+   wraps under the title on a narrow row by itself. --near and --today: a bar, the tint and the date in --primary;
+   --invalid: a --negative-3 bar, the date and the reason (__reason) in --negative-5; --link: the title's link stretches
+   over the row. <ul class="date-list"><li class="date-row"><div class="date-row__when">..</div><div class="date-row__main">
+   <div class="date-row__body"><span class="date-row__title">..</span><span class="date-row__sub">..</span></div>
+   <span class="date-row__trailing">..</span></div></li></ul>. */
+.date-list { list-style: none; margin: 0; padding: 0; }
+.date-row { position: relative; display: grid; grid-template-columns: var(--datecol) minmax(0, 1fr); column-gap: var(--spacing-3); align-items: start; min-height: var(--tap); padding: var(--spacing-2) var(--spacing-3); border-top: 1px solid var(--bg-3); }
+.date-list > .date-row:first-child { border-top: 0; }
+.date-row__when { display: flex; flex-direction: column; align-items: flex-start; gap: var(--spacing-1); font-size: var(--text-sm); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--fg-1); }
+.date-row__main { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--spacing-1) var(--spacing-3); min-width: 0; }
+.date-row__body { display: flex; flex-direction: column; flex: 1 1 10rem; min-width: 0; }
+.date-row__title { font-size: var(--text-base); color: var(--fg-1); overflow-wrap: anywhere; }
+.date-row__sub { font-size: var(--text-sm); color: var(--primary-muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.date-row__trailing { margin-left: auto; font-size: var(--text-sm); color: var(--fg-1); overflow-wrap: anywhere; }
+.date-row--near, .date-row--today { background: var(--bg-3); box-shadow: inset 3px 0 0 var(--primary-muted); }
+.date-row--near .date-row__when, .date-row--today .date-row__when { font-weight: var(--font-weight-bold); color: var(--primary); }
+.date-row--invalid { box-shadow: inset 3px 0 0 var(--negative-3); }
+.date-row--invalid .date-row__when { flex-direction: row; align-items: center; gap: var(--spacing-1); color: var(--negative-5); }
+.date-row__icon { flex: none; }
+.date-row__reason { font-size: var(--text-sm); color: var(--negative-5); overflow-wrap: anywhere; }
+.date-row__title a { color: inherit; text-decoration: underline; text-underline-offset: 0.15em; }
+.date-row__title a::after { content: ""; position: absolute; inset: 0; }
+.date-row__title a:focus-visible { outline: none; }
+.date-row__title a:focus-visible::after { outline: 2px solid var(--primary-muted); outline-offset: -2px; }
+.date-row--link { cursor: pointer; }
+.date-row--link:hover { background: var(--bg-3); }
+
+/* ---- Figure ---------------------------------------------------------------------- */
+/* Figure: a framed image of a fixed aspect ratio (16:9; --ratio-4-3, -3-2, -1-1, -3-4, -9-16), with an optional __caption
+   and, where there is no image yet, a __placeholder (a __glyph and a __label). The image covers the frame, or --contain
+   fits inside it. <figure class="figure"><div class="figure__frame"><img ...></div><figcaption class="figure__caption">. */
+.figure { margin: 0; min-width: 0; }
+.figure__frame { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--bg-3); border-radius: var(--radius-3); background: var(--bg-3); }
+.figure--ratio-4-3 .figure__frame { aspect-ratio: 4 / 3; }
+.figure--ratio-3-2 .figure__frame { aspect-ratio: 3 / 2; }
+.figure--ratio-1-1 .figure__frame { aspect-ratio: 1 / 1; }
+.figure--ratio-3-4 .figure__frame { aspect-ratio: 3 / 4; }
+.figure--ratio-9-16 .figure__frame { aspect-ratio: 9 / 16; }
+.figure__frame > img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
+.figure--contain .figure__frame > img { object-fit: contain; }
+.figure__placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-2); padding: var(--spacing-2); text-align: center; color: var(--fg-1); }
+.figure__glyph { flex: none; }
+.figure__label { font-size: var(--text-sm); color: var(--fg-1); overflow-wrap: break-word; }
+.figure__caption { margin-top: var(--spacing-2); font-size: var(--text-sm); line-height: 1.35; color: var(--fg-2); text-align: left; overflow-wrap: break-word; }
+
+/* ---- Chart extras --------------------------------------------------------------- */
+/* In a chart's tooltip and its table: a second line under a label, and a series row (a swatch in the series colour --
+   set it with style="background: var(--graph-1)" -- the name, the figure at the end). */
+.chart-detail { display: block; font-size: var(--text-xs); color: var(--fg-1); }
+.chart-row { display: flex; align-items: center; gap: var(--spacing-1-5); }
+.chart-swatch { flex: none; width: 8px; height: 8px; border-radius: 50%; }
+.chart-figure { margin-left: auto; padding-left: var(--spacing-3); }

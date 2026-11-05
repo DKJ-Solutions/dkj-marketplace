@@ -39,8 +39,10 @@
     change one, run the other.
 #>
 
-# The plugin's page shell, for the house site header (Format-SiteHeaderHtml): this repo is its source, so it is read here.
+# The plugins' page parts: dkj-policy's shared head and escape, and dkj-solutions' product layout -- the site header and the
+# breadcrumb bar (#3831). This repo is their source, so they are read from its own tree, dkj-policy's first.
 . (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\hub\lib\general-pages-lib.ps1')
+. (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1')
 
 function Get-ProductPages {
     <#
@@ -439,6 +441,8 @@ function Format-ConsumerPageStart {
     [void]$sb.AppendLine('<meta name="viewport" content="width=device-width, initial-scale=1">')
     [void]$sb.AppendLine('<title>dkj-marketplace -- ' + $name + '</title>')
     [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
+    # The product layer on top of the core (#3831): this page is the product's.
+    foreach ($sheet in (Get-ProductStylesheets)) { [void]$sb.AppendLine('<link rel="stylesheet" href="' + $sheet + '">') }
     [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
     # One width, full, as on Admin (Dave, November 4, 2026): another screen is judged in the Simple Browser's own
     # device emulation, so the product offers no width choice.
@@ -475,12 +479,7 @@ function Format-ConsumerPageStart {
     # Tagged 'product': this page is the product's, beside the plugin's hub (#3540).
     # The menu is the product's pages (Get-ProductMenu), the Consumers page marked.
     [void]$sb.Append((Format-SiteHeaderHtml -Name 'dkj-marketplace' -Href '/' -Tag 'product' -Menu @(Get-ProductMenu) -Current '/consumers'))
-    [void]$sb.AppendLine('<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>')
-    $sep = '<span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span>'
-    [void]$sb.AppendLine('<li><a href="/">Home</a></li>')
-    foreach ($t in @($Trail | Where-Object { $_ })) { [void]$sb.AppendLine('<li>' + $sep + '<a href="' + (& $e $t.Href) + '">' + (& $e $t.Label) + '</a></li>') }
-    [void]$sb.AppendLine('<li>' + $sep + '<span aria-current="page">' + $name + '</span></li>')
-    [void]$sb.AppendLine('</ol></nav></div></div>')
+    [void]$sb.Append((Format-ProductBreadcrumbBarHtml -Trail @($Trail | Where-Object { $_ }) -Current $PageName))
     [void]$sb.AppendLine('<main class="page-column">')
 
     # The intro is a <div>, never a <header>, which the house style lays out as a flex row.
