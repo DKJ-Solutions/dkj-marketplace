@@ -2,7 +2,38 @@
 
 ## [Unreleased]
 
-**10 / 10 minor entries** <!-- pending-tally -->
+**11 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3831-brandbook-product-split · 20261105-165433Z
+
+The DKJ-Solutions brand book is now two files. `dkj-policy` ships the core and Admin's desktop shell
+(`house-style.css`, `house-theme.js`). The mobile-first product layer is `house-product.css`, shipped by the
+`dkj-solutions` plugin alone, with its own README, specimens and reference pages. A product page links it after
+the core, and Admin never loads it. The page builders follow the same line. dkj-policy draws Admin pages only.
+The product's site header, breadcrumb bar and page column are dkj-solutions' `product-pages-lib.ps1`. The
+dkj-brandbook skill pins all three files, and the gate holds a vendored `house-product.css` to that pin and
+counts its classes as house classes. An Admin-only repo, such as every BWJ-Development repo, vendors and loads
+the core alone.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions product repo that vendors the brand book must add `house-product.css` beside its copy of
+`house-style.css` and link it after the core. Without it, the product's site header, breadcrumb bar, forms and
+dialogs lose their styling once that repo takes the new core. A repo that renders only Admin needs nothing.
+
+**Score:** 4
+
+#### Pull Request
+
+Brand book: core + Admin in dkj-policy, product layer only in dkj-solutions
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #3847](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3847)
+
+---
 
 ### DEPLOY: feat/3816-goals-page · 20261105-154303Z
 
