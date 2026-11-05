@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**12 / 12 minor entries** <!-- pending-tally -->
+**12 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/3843-hub-home-shell · 20261105-173340Z
+
+The brand book's "The hub" and the hub README describe Admin's home and GitHub page as the desktop shell draws
+them since #3830: the shell's bar and side navigation with no toolbar on the home page, then one `.table--dense`
+of links, a row per page
+([#3843](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3843)). The site header and card grid they
+used to describe are the product layer's.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+The hub docs describe Admin's home as the desktop shell draws it
+
+Plugins: dkj-policy
+
+[PR #3850](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3850)
+
+---
 
 ### DEPLOY: feat/3846-parked-review-takeover · 20261105-170739Z
 
