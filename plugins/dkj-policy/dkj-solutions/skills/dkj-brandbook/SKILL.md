@@ -1,6 +1,6 @@
 ---
 name: dkj-brandbook
-description: The DKJ-Solutions brand book -- the design tokens, the twelve themes a user picks from (and the script that applies them) and the base stylesheet every DKJ-Solutions app renders with. The files and the full rules live in the dkj-policy plugin's assets/dkj-brandbook folder; this skill says where, and the rules a session needs before it starts. Use it before writing or restyling ANY visual output in a DKJ-Solutions repo -- a web page, a local HTML report, a dashboard, an email template, a chart's colours -- so it starts from the brand book instead of a fresh design. Load it alongside dataviz, not instead of it; where it offers a placeholder palette, the house tokens replace it. Never publish the result as a claude.ai Artifact: a page is a Toolbox page.
+description: The DKJ-Solutions brand book -- the design tokens, the twelve themes a user picks from (and the script that applies them) and the base stylesheet every DKJ-Solutions app renders with. The files and the full rules live in the dkj-policy plugin's assets/dkj-brandbook folder; this skill says where, and the rules a session needs before it starts. Use it before writing or restyling ANY visual output in a DKJ-Solutions repo -- a web page, a local HTML report, a dashboard, an email template, a chart's colours -- so it starts from the brand book instead of a fresh design. Load it alongside dataviz, not instead of it; where it offers a placeholder palette, the house tokens replace it. Never publish the result as a claude.ai Artifact: a page is an Admin page.
 ---
 
 # The DKJ-Solutions brand book
@@ -23,7 +23,7 @@ its session check. This skill carries the rules a session needs before it fetche
 **The rule reaches DKJ-Solutions and nothing else.** This plugin is enabled only in DKJ-Solutions repos, so
 a DKJ-Solutions product starts from the brand book by this rule: copied in unchanged and held to the pin by
 `check-house-style`, never applied to it automatically. BWJ-Development styles its own apps, and this skill
-says nothing about them. The Toolbox is not such an app: `dkj-policy` serves it in every repo, BWJ's
+says nothing about them. Admin is not such an app: `dkj-policy` serves it in every repo, BWJ's
 included, always in the brand book, with no opt-out (#3643; the three-part rule is in `dkj-policy`'s
 `hub/README.md`, "One look in every repo").
 
@@ -83,7 +83,7 @@ appears, or the fetch fails, stop and report. Do not retype a copy from memory i
    under "Page patterns", "The hub"**: its blocks and their order, with only the content the repo's own.
    The site header names the repo; the page is one grid of card links with no heading (its products, its
    own pages and the general ones), and its facts, its Issues and what is in flight sit on a
-   separate **Repository** page on `/repository` (#3383). A repo without a build starts from
+   separate **Repository** page on `/dev/repository` (#3383). A repo without a build starts from
    [`patterns/repo-dashboard.html`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/patterns/repo-dashboard.html) and
    [`patterns/repo-repository.html`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/patterns/repo-repository.html)
    in `dkj-policy`'s `assets/dkj-brandbook/`, which carry no CSS of their own

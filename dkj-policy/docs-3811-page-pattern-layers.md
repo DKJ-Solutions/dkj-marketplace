@@ -39,8 +39,8 @@
 
 ### PLAN
 
-Step 2 of #3811: assign the seven rules the desktop-shell review listed to a layer, by Dave's criterion
-of November 5 (managing goes to the Toolbox, using to the product). The hub's own move (its card overviews
+Step 2 of #3811, built on `feat/3815-toolbox-to-admin` (merged in, so it lands after #3815 and uses its names: Admin, `.nav-list`, `admin-shell.html`): assign the seven rules the desktop-shell review listed to a layer, by Dave's criterion
+of November 5 (managing goes to Admin, using to the product). The hub's own move (its card overviews
 and fit alarm) is step 3 and is not on this branch.
 
 ### CREATE
@@ -50,7 +50,7 @@ and fit alarm) is step 3 and is not on this branch.
 - [x] README "Components": reserve the shell's classes; scope the 44px target to the product and the core
 - [x] README "App components": correct where the part sits in `house-style.css`
 - [x] `house-style.css`: a `.sort` header in a `.table--dense` takes the row height as its hit area, not 44px
-- [x] `patterns/toolbox-shell.html`: mount the settings with `widths: false`, as the hub already does
+- [x] `patterns/admin-shell.html` (`toolbox-shell.html` until #3815): mount the settings with `widths: false`, as the hub already does
 
 ### TEST
 
@@ -59,7 +59,7 @@ and fit alarm) is step 3 and is not on this branch.
 
 ### DEPLOY: docs/3811-page-pattern-layers
 
-The brand book's README now says which of its rules belong to the Toolbox's desktop shell and which to the
+The brand book's README now says which of its rules belong to Admin's desktop shell and which to the
 mobile-first product, by the task a feature serves rather than the device: the breadcrumb bar, the site
 header, the card overviews, the 44px target and the page width are the product's, while the page-name and
 one-`h1` rules hold in both. The shell's classes are reserved by name, and a sortable header in a dense table
@@ -76,5 +76,5 @@ bar, the cards, the 44px target) without breaking the house style, and which sti
 
 #### Pull Request
 
-Assign the brand book's page-pattern rules to the Toolbox or the product layer
+Assign the brand book's page-pattern rules to the Admin or the product layer
 

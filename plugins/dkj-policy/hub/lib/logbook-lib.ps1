@@ -244,13 +244,13 @@ function Select-LogbookPage {
 
 function Format-LogbookPager {
     <#
-        The links between the overview's pages (Select-LogbookPage's -Page of -Pages): newer runs towards '/logbook', older
-        runs towards '/logbook/page/<n>', as house .btn links in a .controls row, with which runs this page shows. Empty
+        The links between the overview's pages (Select-LogbookPage's -Page of -Pages): newer runs towards '/dev/logbook', older
+        runs towards '/dev/logbook/page/<n>', as house .btn links in a .controls row, with which runs this page shows. Empty
         when there is one page.
     #>
     param([int]$Page = 1, [int]$Pages = 1, [int]$Total = 0, [int]$Shown = 0, [int]$First = 1)
     if ($Pages -le 1) { return '' }
-    $href = { param($n) if ($n -le 1) { '/logbook' } else { '/logbook/page/' + $n } }
+    $href = { param($n) if ($n -le 1) { '/dev/logbook' } else { '/dev/logbook/page/' + $n } }
     $parts = @()
     if ($Page -gt 1) { $parts += '<a class="btn" href="' + (& $href ($Page - 1)) + '">Newer runs</a>' }
     $parts += '<span class="note">Runs ' + $First + '-' + ($First + $Shown - 1) + ' of ' + $Total + ', page ' + $Page + ' of ' + $Pages + '</span>'
@@ -271,7 +271,7 @@ function ConvertTo-LogbookModel {
 
 function Select-LogbookSlugRuns {
     <#
-        The store runs among -Runs that can carry the run page slug -Slug (#3779), so '/logbook/<slug>' cuts and
+        The store runs among -Runs that can carry the run page slug -Slug (#3779), so '/dev/logbook/<slug>' cuts and
         models those and not the whole store. A run's slug is its start's local minute (yyyy-MM-dd-HHmm, with its id
         after it when another shown run started in the same minute; ConvertTo-StopwatchModel), so the slug's minute
         settles it: every run that starts in that minute, since all of them decide whether the suffix is there, and
@@ -324,7 +324,7 @@ function Get-LogbookSpeedTones {
 
 function Format-LogbookPageHtml {
     <#
-        The overview on '/logbook': the Stopwatch's overview with the Logbook's words, every recent open run going
+        The overview on '/dev/logbook': the Stopwatch's overview with the Logbook's words, every recent open run going
         (ConvertTo-LogbookModel), no change against a run before, and each finished run's work time beside its time
         (Get-LogbookWorkTimes over -Transcript), so the time Claude waited on the owner does not hide the work.
     #>
@@ -350,12 +350,12 @@ function Format-LogbookPageHtml {
         'A <code>/sweep-issues</code> run is shown per issue: cut at each ship-pr fold its own session made in this checkout, the moment the trunk is clean again, and named after the issue its fold commit names; the time after the last fold belongs to no issue. ' +
         'Built by its <code>hub/lib/logbook-lib.ps1</code> on the Stopwatch''s pages.'
     return Format-StopwatchPageHtml -Model (ConvertTo-LogbookModel -Runs $Runs -Now $Now) -ReadError $ReadError -Skipped $Skipped -StorePath $StorePath -Now $Now `
-        -Route '/logbook' -PageTitle 'Logbook' `
+        -Route '/dev/logbook' -PageTitle 'Logbook' `
         -FooterNote $note -NoDelta -CardNotes $notes -CardTones $tones -Flat -RepoName $RepoName -HubHref $HubHref -PagerHtml $PagerHtml
 }
 
 function Format-LogbookRunPageHtml {
-    <# One run's page on '/logbook/<slug>': the Stopwatch's run page under the Logbook's crumb, without the change against a run before, with its work time and its waiting under its time. #>
+    <# One run's page on '/dev/logbook/<slug>': the Stopwatch's run page under the Logbook's crumb, without the change against a run before, with its work time and its waiting under its time. #>
     param(
         [Parameter(Mandatory = $true)][hashtable]$Group,
         [AllowEmptyString()][string]$StorePath = '',
@@ -372,5 +372,5 @@ function Format-LogbookRunPageHtml {
         $w = (Get-LogbookWorkTimes -Runs @($Group.Rows[0].Run) -Transcript $Transcript)[$Group.Rows[0].Run.Id]
         if ($w) { $timeNote = 'Work ' + (Format-DevSeconds $w.Work) + ', waiting on you ' + (Format-DevSeconds $w.Waiting) + '.' }
     }
-    return Format-StopwatchRunPageHtml -Group $Group -StorePath $StorePath -Transcript $Transcript -Now $Now -Route '/logbook' -ParentLabel 'Logbook' -FooterNote $note -NoDelta -TimeNote $timeNote -RepoName $RepoName -HubHref $HubHref
+    return Format-StopwatchRunPageHtml -Group $Group -StorePath $StorePath -Transcript $Transcript -Now $Now -Route '/dev/logbook' -ParentLabel 'Logbook' -FooterNote $note -NoDelta -TimeNote $timeNote -RepoName $RepoName -HubHref $HubHref
 }

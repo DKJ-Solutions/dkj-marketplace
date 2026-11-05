@@ -28,7 +28,7 @@ URLs, with `<tag>` the release tag the skill pins, which the release cut writes 
 **The rule that an app starts from it reaches DKJ-Solutions and nothing else**, through the
 `dkj-solutions` extension, where an app copies the files in and `check-house-style` holds the copy to the pin:
 nothing applies them to a product automatically. BWJ-Development styles its own apps. The files themselves
-reach every repo, because the plugin's own screens, the Toolbox, render in them there with no opt-out
+reach every repo, because the plugin's own screens, Admin, render in them there with no opt-out
 ([#3643](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3643)); the three-part rule is in
 [`hub/README.md`](../../hub/README.md#one-look-in-every-repo).
 
@@ -42,8 +42,8 @@ so a stylesheet added later is gated without an edit.
 **A house-style change is judged by eye on the House style page**, `specimens.html` in this folder: every
 token, the twelve themes and every component with its variants and states, drawn from the stylesheet beside it.
 It ships with the plugin, and every hub that runs `dkj-policy` shows it under Plugins, on
-`/plugins/dkj-policy/dkj-brandbook` (#3493, #3629, #3704), as one card per section with a page each
-(`/plugins/dkj-policy/dkj-brandbook/<section>`, #3563); in the source repo that page reads the working tree, so a change
+`/dev/plugins/dkj-policy/dkj-brandbook` (#3493, #3629, #3704), as one card per section with a page each
+(`/dev/plugins/dkj-policy/dkj-brandbook/<section>`, #3563); in the source repo that page reads the working tree, so a change
 shows there before the release that ships it. It replaces the Brandbook app's showcase, which is retired. `house-style-css` is the gate
 that checks the stylesheet's syntax and tokens; the page is the look.
 
@@ -701,8 +701,8 @@ numerals), `.delta` (with `--up`/`--down`; its aliases `.pos`/`.neg` are gone, M
 `.menu-row` (with `__label`, `__value`), `.menu-item` (with `__icon`, `__label`, `__chevron`),
 `.breadcrumbs` (with `__sep`), `.breadcrumbs-bar` ([below](#every-page-the-breadcrumb-bar)) and
 `.sr-only`. The desktop shell ([below](#two-layers)) reserves these too: `.shell` (with `--fit`, `--no-aside`,
-`__bar`, `__actions`, `__nav`, `__main`, `__list`, `__aside`, `__aside-body`), `.tree` (with `__item`, `__chev`,
-`__label`, `__count`), `.toolbar` (with `__title`, `__filter`, `__end`), `.pane-head`, `.table--dense` and `.dot`
+`__bar`, `__actions`, `__nav`, `__nav-foot`, `__main`, `__list`, `__aside`, `__aside-body`), `.nav-list`, `.nav-item`
+(with `__label`, `__count`), `.toolbar` (with `__title`, `__filter`, `__end`), `.pane-head`, `.table--dense` and `.dot`
 (with `--good`, `--warn`, `--bad`). The brand-book components ([below](#brandbook-app-components)) reserve these too: `.alert` (`__title`, `__icon`), `.banner` (`--accent`, `__lead`), `.panel` (`--accent`, `--positive`, `--button`, `__label`, `__value`), `.chip` (`--yes`, `--no`, `--todo`), `.tag` (`--info`, `--warn`), `.filter-chips`/`.filter-chip` (`__check`, `__dot`, and `.filter-chips__clear`), `.round-toggle`, `.badge-toggle`, `.help`, `.more--structured` (`.more__title`, `__meta`, `__trailing`, `__version`), `.question-head` (the answer line under it is a plain `<p>`; `.verdict` is gone, Maikel, November 1, 2026), `.answer` (`__label`, `__value`), `.flash`, `.page-header`, `.field__fixed`, `.check`, `.stepper` (`--lg`), `.combo` (`__input` (with `--under`), `__picked`, `__glass`, `__list`, `__option` with `--own`, `--more`, `__name`, `__meta`), `.value-box` (`__num` with `--lg`, `--negative`, `--positive`, `--regular`, `__was`, `__unit`, `--changed`, `--flush`), `.stat-rows` (`--help`)/`.stat-row` (`__name`, `__sub`, `__help`, `__op`, `--help`, `--formula`, `--head`), `.step-head` (`__value`), `.info-rows` (`--info`, `__head`, `__list`), `.info-row` (`__box`, `__named`, `__value` with `--placeholder`), `.info-dot`, `.info-stem`, `.bill` (`--qty`, `__head`, `__slot`, `__name`, `__qty`, `__price`, `__action`, `__subtotal`, `__total`), `.compare`, `.calc` (`--boxed`, `__row`, `__box`, `__what`, `__sub`, `__op`, `__num`, `__result`), `.calc-section` (`__question`), `.date-list`/`.date-row` (`--near`, `--today`, `--invalid`, `--link`, `__when`, `__main`, `__body`, `__title`, `__sub`, `__trailing`, `__icon`, `__reason`), `.figure` (`--ratio-*`, `--contain`, `__frame`, `__placeholder`, `__glyph`, `__label`, `__caption`), `.chart-detail`, `.chart-row`, `.chart-swatch`, `.chart-figure`, and the additions to existing classes: `.card--open`, `.card--invalid`, `.msg--error`, `.table .row-negative`/`.row-positive`/`.row-warn`, `.table .col-start`/`.col-end`, `.facts__detail`, `.facts__total` and `.chart .bar--active`. Each is commented in the file.
 
 **Focus and targets.** Every interactive house class shows a visible focus ring on keyboard focus (an SVG
@@ -710,8 +710,8 @@ numerals), `.delta` (with `--up`/`--down`; its aliases `.pos`/`.neg` are gone, M
 smaller: the `.info-button`'s 16px mark, the `.table` header's `.sort` and the `.moretoggle`
 ([#19](https://github.com/DKJ-Solutions/dkj-brandbook/issues/19)). **The 44px is the product layer's and the
 shared core's, not the desktop shell's** (Dave, November 5, 2026,
-[#3811](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3811)): the Toolbox is worked with a mouse,
-so its rows, tree items and bar buttons are 28px (`--shell-row-h`), which is still above the 24px a pointer
+[#3811](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3811)): Admin is worked with a mouse,
+so its rows, navigation items and bar buttons are 28px (`--shell-row-h`), which is still above the 24px a pointer
 target needs (WCAG 2.5.8). A `.sort` header inside a `.table--dense` takes the row's height as its hit area,
 so it does not reach over the rows under it. A tooltip opened from a trigger takes
 `.tooltip--open`, which shows it and lets the pointer move onto its text; a chart tooltip that follows the
@@ -771,49 +771,48 @@ generic `.chip`, the stat rows and the stepper are house classes since the
 ## Two layers
 
 **The brand book has a shared core and two layers on top of it** (Dave, November 4, 2026,
-[#3811](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3811)): the Toolbox is always a desktop tool,
+[#3811](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3811)): Admin is always a desktop tool,
 read in VS Code's Simple Browser, and looks like an Explorer or a task board, while the product (the
 storefront) stays mobile-first with desktop as an option. The core (tokens, themes, typography, tables) is
 shared; each layer is a part of [`house-style.css`](house-style.css):
 
-- **Desktop shell** (in [`house-style.css`](house-style.css), the part "Desktop shell: the Toolbox's layer"): a thin bar, a side tree, a main pane with a dense
+- **Desktop shell** (in [`house-style.css`](house-style.css), the part "Desktop shell: Admin's layer"): a thin bar, a flat side navigation under section headings (Home and the domain objects on top, then Product and Development, Settings in the foot, after the Shopify Admin, #3815), a main pane with a dense
   list and an optional detail pane, no site header and no cards. Desktop only, with no phone query. Reference:
-  [`patterns/toolbox-shell.html`](patterns/toolbox-shell.html) and the "Desktop shell" specimens.
+  [`patterns/admin-shell.html`](patterns/admin-shell.html) and the "Desktop shell" specimens.
 - **Mobile-first app** (the part "App components"): the narrow column, touch targets, dialogs, the top bar, and the
   site header and breadcrumb bar under "Page patterns".
 
 **The layer follows the task, not the device** (Dave, November 5, 2026, on #3811). Ask of each feature whether
 it is for *managing* (composing, ordering, correcting, bulk edits: the maker's or the operator's work) or for
 *using* (browsing, searching, playing, viewing: the end user's). Managing is dense, with many columns,
-drag-and-drop and multi-select, so it belongs in the Toolbox and is therefore built for the desktop. Using shows
+drag-and-drop and multi-select, so it belongs in Admin and is therefore built for the desktop. Using shows
 little per screen behind large touch targets, so it belongs in the product, mobile-first. The same data in both
 layers is not duplication: these are two views of one source, each built for its own task. A management
 action that is really done on the go reaches the product only minimally, such as a drag handle or "up/down"
 within one list, and never as the full table. The measured case is `dkj-music-library`, whose playlist tables
-with drag-to-reorder stay in the Toolbox while its product shows the same list as a two-line track row.
+with drag-to-reorder stay in Admin while its product shows the same list as a two-line track row.
 
 **So the rules under "How to use it" and "Page patterns" fall to the layers like this.** A rule not named
 here is the shared core's and holds in both.
 
-| Rule | Product (mobile-first) | Toolbox (desktop shell) |
+| Rule | Product (mobile-first) | Admin (desktop shell) |
 |---|---|---|
 | The `h1`'s size ([Type](#what-it-holds)) | `--text-h1`, standing apart by size and colour | `--text-h3`, in the `.toolbar` over the main pane (`.toolbar > h1`): a pane title, not a headline |
 | One `h1`, at most two words, reading what the current crumb reads (rules 8 and 9 under [How to use it](#how-to-use-it), [the bar](#every-page-the-breadcrumb-bar)) | holds | holds: the toolbar's `h1` and the last crumb in the `.shell__bar` are the same words |
 | No intro under the `h1`, and the `h1` never framed (rules 5 and 6) | holds | holds: the toolbar is a row with a line under it, not a box |
-| [The breadcrumb bar](#every-page-the-breadcrumb-bar): a `.breadcrumbs-bar` above `<main>`, one `--tap` high, on `--primary` | holds | **does not apply.** The trail sits in the `.shell__bar` (the same `nav.breadcrumbs` markup, starting at **Tools**), and the shell takes no `.breadcrumbs-bar`. A `<main>` is no pane of the grid: where a pane holds one, its 1080px cap is lifted |
+| [The breadcrumb bar](#every-page-the-breadcrumb-bar): a `.breadcrumbs-bar` above `<main>`, one `--tap` high, on `--primary` | holds | **does not apply.** The trail sits in the `.shell__bar` (the same `nav.breadcrumbs` markup, starting at **Home**), and the shell takes no `.breadcrumbs-bar`. A `<main>` is no pane of the grid: where a pane holds one, its 1080px cap is lifted |
 | [The site header](#the-site-header-above-the-bar) and [its menu](#the-menu-in-the-header) | holds | **does not apply**: the shell's bar and side navigation replace both |
-| [Which shape a page's cards take](#which-shape-a-pages-cards-take), [a long page becomes cards](#every-page-a-long-page-becomes-cards-with-a-page-each) and the hub's [card overview](#the-hub) | holds | **does not apply**: the side navigation is how the Toolbox gets you somewhere, so an overview of card links in the pane repeats it, and a list the Toolbox manages is a `.table--dense`, not cards |
+| [Which shape a page's cards take](#which-shape-a-pages-cards-take), [a long page becomes cards](#every-page-a-long-page-becomes-cards-with-a-page-each) and the hub's [card overview](#the-hub) | holds | **does not apply**: the side navigation is how Admin gets you somewhere, so an overview of card links in the pane repeats it, and a list Admin manages is a `.table--dense`, not cards |
 | The 44px target ([Focus and targets](#components)) | holds | **does not apply**: 28px rows, above the 24px a pointer needs |
 | The page width (`data-width`, `full`/`fluid`/`phone`), `.page-column` and the settings panel's Width control | holds | **does not apply**: the panes fill the window, so the shell mounts `DKJTheme.settings` with `widths: false` |
 
 **What is not moved yet.** The hub's pages still render their card overviews and the old page column inside the
 shell's main pane, and the hub's fit alarm still reads the product's page structure (the bar's trail and the
-`h1`): moving both to the shell is the hub's step on #3811, and the side tree becomes flat navigation under
-[#3815](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3815).
+`h1`): moving both to the shell is the hub's step on #3811.
 
 ## Page patterns
 
-**These are the product layer's patterns.** Which of them the Toolbox's desktop shell takes is in the table
+**These are the product layer's patterns.** Which of them Admin's desktop shell takes is in the table
 under [Two layers](#two-layers): of the ones below, it takes the page-name rules and none of the page structure.
 
 ### Which shape a page's cards take
@@ -862,7 +861,7 @@ Both are gone: an `h2` may now title a card, as the Stopwatch's label cards do.
 **Every page a DKJ-Solutions dev server serves opens with a breadcrumb bar** (owner's request, October 17,
 2026). That is every page you can open in the preview browser: the home page, the product, and any
 page below either. The bar says where the page sits and is the way back, so no page needs a "back" link of
-its own. **A Toolbox page in the desktop shell carries its trail in the `.shell__bar` instead**
+its own. **An Admin page in the desktop shell carries its trail in the `.shell__bar` instead**
 ([Two layers](#two-layers)); the labels and the `h1` rule below hold there too.
 
 - **Place:** the first element in `<body>` above `<main>` and
@@ -871,7 +870,7 @@ its own. **A Toolbox page in the desktop shell carries its trail in the `.shell_
   (44px) high and one line: a trail longer than the screen scrolls sideways inside the bar instead of
   wrapping, so the height never changes. Whatever else sticks to the top sits under it, at `top: var(--tap)`;
   the brand book already does that for the floating settings button and for in-page anchors.
-- **The trail:** it always starts at **Tools** on the toolbox, linking to `/` (it read **Repo hub** until #3270 and **Home** until the owner renamed it, October 27, 2026; a product keeps **Home** for its own pages). Each further crumb is one level
+- **The trail:** it always starts at **Home**, linking to `/` (it read **Repo hub** until #3270, and **Tools** on the Toolbox from October 27, 2026 until #3815 renamed it Admin; a product keeps **Home** for its own pages). Each further crumb is one level
   down: the product (under its own name), then a page inside it. The last crumb is the current page,
   unlinked, with `aria-current="page"`. The bar stands on the theme's colour, `--primary` (owner, #3235, October 21, 2026), so
   the trail is in the paper steps, which all read on it: the chevron `--bg-3`, the ancestor links `--bg-2` (with
@@ -917,7 +916,7 @@ growing page gets this shape without anyone having to point it out.
   section. No hand-written variant: no `h2` or `h3` link inside the card, and no extra rows. A card that
   needs more (a figure on its own line, a badge, its label as a heading) takes it from the card's slots
   ([The card](#the-hub)).
-- **The section's page** is that section alone, under one more crumb, so the trail reads Tools >
+- **The section's page** is that section alone, under one more crumb, so the trail reads Home >
   ... > the overview > the section. Its `h1` is the section's name and the section's line is its `<meta name="description">`, never a lead under the `h1` (#3585). Its
   own `.grid__head` goes, because the `h1` already says it.
 - **A list is not sections.** A logbook, a release list or an issue list may run long inside **one**
@@ -930,7 +929,7 @@ growing page gets this shape without anyone having to point it out.
 
 **An app may open with a site header, and the breadcrumb bar then stands right under it** (owner, October
 22, 2026). **Every hub page carries it**: the dkj-policy plugin's hub server draws it on the home page and
-every general page of every repo, with the repo's name and `toolbox` after it. A repo's own product may add it; an app without one keeps the bar as described above.
+every general page of every repo, with the repo's name and `admin` after it. A repo's own product may add it; an app without one keeps the bar as described above.
 
 - **The header:** `header.site-header` > `.container`, at most `--spacing-18` (72px) high, on `--primary`
   over the full width. On the left the app's name, `a.site-header__brand` linking home (`/`); on
@@ -990,14 +989,13 @@ where you can go, the trail where you are.
 </div></dialog></header>
 ```
 
-**In the hub** the toolbox's menu is its home page's cards in their order (GitHub, Release notes, AI,
-Installed plugins: `Get-HubMenu`, from the same list the cards come from), and a product's is its own pages.
+**In the hub** there is no site header menu: Admin draws its side navigation instead (`Get-AdminNav`), whose Development section is its home page's cards in their order (GitHub, Release notes, Claude, Installed plugins: `Get-HubMenu`, from the same list the cards come from). A product's menu is its own pages.
 
 ### The hub
 
 It is called a hub, not a dashboard (owner's call, October 17, 2026, [#199](https://github.com/DKJ-Solutions/dkj-brandbook/issues/199)): its job is to get you to the page you want quickly, while a dashboard is a page that shows how something stands, and the pages below it can be dashboards.
 
-**On screen it is called Toolbox** (the owner, October 27, 2026): the session-start line opens with `Toolbox:`, the site header tags the repo's name `toolbox`, its first crumb reads **Tools**, and a product links it on a **Toolbox** card. The code, its routes (`/hub`) and these pages still say *hub*, which names the mechanism.
+**On screen it is called Admin** (#3815, November 5, 2026; **Toolbox** from October 27 until then): Admin is for managing and the product for using, as in the Shopify Admin. The session-start line opens with `Admin:`, its first crumb reads **Home**, a product links it on an **Admin** card, and its development pages sit under `/dev/...`, the old addresses redirecting there. The code, its routes (`/hub`) and these pages still say *hub*, which names the mechanism.
 
 **Every repo's hub has this one form, and only its content differs** (owner's decision, October 16, 2026,
 [#139](https://github.com/DKJ-Solutions/dkj-brandbook/issues/139)). The hub is the dkj-policy plugin's own hub
@@ -1018,20 +1016,20 @@ old link still lands.
 took this form first, on October 22; the plugin's hub followed it once a consumer rebuilt its hub to the
 sectioned page this section used to lay down and its owner did not recognise it as the house hub. The home
 page only gets you somewhere: every page is a card, three to a row, with no heading above them. The facts,
-the open issues and the pull requests moved to the **Repository** page on `/repository`.
+the open issues and the pull requests moved to the **Repository** page on `/dev/repository`.
 
 **The home page, top to bottom, in this order:**
 
 | # | Block | House class (the stylesheet-only form) | Fixed, or the repo's own |
 |---|---|---|---|
 | 0 | The general banner, the first thing on the page, above the site header, with no margin, border or radius (owner, October 24, 2026): a countdown to the next full hour, and once an hour has passed a tone and a **10 airsquats** checkbox that shows the total owed ([#3250](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3250)), the same on every machine ([#3438](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3438)) | a `.notice` holding one `.msg` line, written by `Format-RepoHubBanner` in `dkj-policy`'s `hub/lib/general-pages-lib.ps1` | fixed: a hub a repo builds itself carries it only if it calls that function |
-| 1 | The site header: the mark and the repo's name with `toolbox` after it, linking home, and the settings button on the far right ([above](#the-site-header-above-the-bar)). It names the repo, so there is **no intro**: no `h1`, no lead, no eyebrow | `.site-header`, `DKJTheme.settings(el)` mounted in its `#settings` | fixed; the name is the repo's own |
-| 2 | The breadcrumb bar under it: the one crumb **Tools** ([above](#every-page-the-breadcrumb-bar)) | `.breadcrumbs-bar` / `.breadcrumbs` | fixed |
+| 1 | The site header: the mark and the repo's name with `admin` after it, linking home, and the settings button on the far right ([above](#the-site-header-above-the-bar)). It names the repo, so there is **no intro**: no `h1`, no lead, no eyebrow | `.site-header`, `DKJTheme.settings(el)` mounted in its `#settings` | fixed; the name is the repo's own |
+| 2 | The breadcrumb bar under it: the one crumb **Home** ([above](#every-page-the-breadcrumb-bar)) | `.breadcrumbs-bar` / `.breadcrumbs` | fixed |
 | 3 | **The pages**, every one a card of its own, in this order: the repo's products, its own pages with **Repository** among them, and the general pages but Issues, those of a group behind its one card (below) | one `.grid-3`, **no** `.grid__head`, holding one `.card.card--link` per page or group | fixed form; the products and the repo's own pages are the repo's own |
 | 4 | Only where the plugin's hub serves a repo that states no product: the two **Set up a product** cards, under their own `h2` | a `.grid-2` with a `.grid__head`, then one `.card.grid__full` per step | the plugin's own text |
 | 5 | A footer note naming where the data comes from | `.note` | the repo's own source |
 
-**The Repository page, on `/repository`, under the same site header, its trail Tools > Repository:**
+**The Repository page, on `/dev/repository`, under the same site header, its trail Home > Repository:**
 
 | # | Block | House class | Fixed, or the repo's own |
 |---|---|---|---|
@@ -1081,7 +1079,7 @@ closes the card's link at the inner one and the card falls apart
 - **An `id` and extra classes** on the card, for an anchor or a tone of the page's own (a run's speed colour).
 
 ```html
-<section class="card card--link"><nav class="menu-list" aria-label="Repository"><a class="menu-item" href="/repository"><span class="menu-item__label">Repository<span class="menu-item__sub">This repo's facts and its open issues</span></span><svg class="menu-item__chevron">...</svg></a></nav></section>
+<section class="card card--link"><nav class="menu-list" aria-label="Repository"><a class="menu-item" href="/dev/repository"><span class="menu-item__label">Repository<span class="menu-item__sub">This repo's facts and its open issues</span></span><svg class="menu-item__chevron">...</svg></a></nav></section>
 ```
 
 **The order of the cards.** The products come first, because they are what the repo offers its visitors; a
@@ -1092,10 +1090,10 @@ Brandbook app is retired ([#3493](https://github.com/DKJ-Solutions/dkj-claude-pl
 
 **A card is ALWAYS one link, never two or more** (owner, October 27, 2026). Pages that belong together
 are grouped on a **group page** of their own, and the hub carries one card linking that page. **Clock**
-(`/clock`) was the first: the page was an `h1` with one card link each for Stopwatch and Logbook. Groups nest,
+(`/dev/clock`) was the first: the page was an `h1` with one card link each for Stopwatch and Logbook. Groups nest,
 and a group can also be a **section**, an `h2` over its members' `h3` cards with no page of its own: Clock is
 one on Performance's page since November 3, 2026, beside Context, and Performance sits on Claude's, so the
-trails read Tools > Claude > Performance > the page, and the hub carries only the Claude card. A page joins a group by the
+trails read Home > Claude > Performance > the page, and the hub carries only the Claude card. A page joins a group by the
 `Group` key in `Get-GeneralPages`; the group itself is a row of `Get-HubGroups`, and
 `Format-HubGroupPageHtml` draws its page.
 

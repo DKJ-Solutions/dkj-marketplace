@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     The plugin's own hub (#3245): the repo's home page, which the general pages server answers on '/',
-    '/index.html' and '/hub' -- and '/about' sends there (#3289) -- and its Repository page on '/repository'
+    '/index.html' and '/hub' -- and '/about' sends there (#3289) -- and its Repository page on '/dev/repository'
     (#3383), in every repo (#3643 retired the OwnHub opt-out). No I/O -- hub/pages/serve-general-pages.ps1
     reads the state file and hands the values in, so every rule here is tested without a server.
 
@@ -85,12 +85,12 @@ function Format-PluginRepoHubHtml {
     [void]$sb.AppendLine('<title>' + $n + ' -- Tools</title>')
     [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
     [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
-    [void]$sb.AppendLine((Get-ToolboxWidthScript))
+    [void]$sb.AppendLine((Get-AdminWidthScript))
     # The repo layer: names the house file does not define -- .ph-cards, the card links three to a row with no
     # surface around them (stepping down where .grid-3 does), and .ph-code, for the code samples.
     [void]$sb.AppendLine('<style>')
     [void]$sb.AppendLine((Get-HubCardGridStyle))
-    [void]$sb.AppendLine((Get-ToolboxShellStyle))
+    [void]$sb.AppendLine((Get-AdminShellStyle))
     [void]$sb.AppendLine('.ph-code { margin: var(--spacing-3) 0 0; padding: var(--spacing-3) var(--spacing-4); background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); overflow-x: auto; font-size: var(--text-xs); line-height: 1.6; }')
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
@@ -98,7 +98,7 @@ function Format-PluginRepoHubHtml {
     $lead = if ($Mode -eq 'product') { 'The way in to what this repo offers: its product, its pages and its facts.' }
             else { 'The way in to this repo. It states no dev server of its own yet, so there is no product to link.' }
     # The site header on the home page too (October 22, 2026): it names the repo, so the page has no intro of its own.
-    [void]$sb.Append((Format-RepoHomeHeadHtml -RepoName $n -Lead $lead -Brand (ConvertTo-SiteHeaderName -RepoName (ConvertTo-PluginRepoHubName $RepoName)) -BrandTag 'toolbox'))
+    [void]$sb.Append((Format-RepoHomeHeadHtml -RepoName $n -Lead $lead -Brand (ConvertTo-SiteHeaderName -RepoName (ConvertTo-PluginRepoHubName $RepoName)) -BrandTag 'admin'))
 
     # Every page a card of its own (#3383): the product first, then the Repository page, and the General pages but
     # Issues (the Repository page's). Three to a row, but on the page itself: .ph-cards lays them out as .grid-3 does,
@@ -112,7 +112,7 @@ function Format-PluginRepoHubHtml {
             [void]$sb.AppendLine('<section class="card"><p role="status">This repo''s own server is not running. The session-start line says why, and it is started again at the next session start.</p></section>')
         }
     }
-    [void]$sb.AppendLine((Format-HubCardLinkHtml -Href '/repository' -Label 'GitHub' -Sub 'This repo''s facts, its open issues and its Test gate' -Icon 'github'))
+    [void]$sb.AppendLine((Format-HubCardLinkHtml -Href '/dev/repository' -Label 'GitHub' -Sub 'This repo''s facts, its open issues and its Test gate' -Icon 'github'))
     if ($general) {
         foreach ($card in @(Format-HubPageCardsHtml -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }))) { [void]$sb.AppendLine($card) }
     } else {
@@ -128,7 +128,7 @@ function Format-PluginRepoHubHtml {
         [void]$sb.AppendLine('<section class="card grid__full">')
         [void]$sb.AppendLine('<div class="card__head"><h3>Add a dev server of your own</h3><p class="card__sub">From the next session on, it is the product on this page</p></div>')
         [void]$sb.AppendLine('<div>')
-        [void]$sb.AppendLine('<p>State <code>Get-DevPreview</code> in this repo''s <code>scripts/repo-config.ps1</code>. The hook then starts that server, or reuses the one already running, and hands out its link beside this toolbox''s.</p>')
+        [void]$sb.AppendLine('<p>State <code>Get-DevPreview</code> in this repo''s <code>scripts/repo-config.ps1</code>. The hook then starts that server, or reuses the one already running, and hands out its link beside Admin''s.</p>')
         [void]$sb.AppendLine('<pre class="ph-code"><code>function Get-DevPreview {')
         [void]$sb.AppendLine('    @{')
         [void]$sb.AppendLine('        Command = ''npm run dev -- --host 127.0.0.1 --port {port} --strictPort''')
@@ -141,18 +141,18 @@ function Format-PluginRepoHubHtml {
         [void]$sb.AppendLine('<section class="card grid__full">')
         [void]$sb.AppendLine('<div class="card__head"><h3>Open it in VS Code</h3><p class="card__sub">In the Simple Browser rather than the system browser</p></div>')
         [void]$sb.AppendLine('<div>')
-        [void]$sb.AppendLine('<p>Route the toolbox''s port in this repo''s <code>.vscode/settings.json</code>:</p>')
+        [void]$sb.AppendLine('<p>Route Admin''s port in this repo''s <code>.vscode/settings.json</code>:</p>')
         [void]$sb.AppendLine('<pre class="ph-code"><code>"workbench.externalUriOpeners": {')
         [void]$sb.AppendLine('    "localhost:4890": "simpleBrowser.open"')
         [void]$sb.AppendLine('}</code></pre>')
-        [void]$sb.AppendLine('<p class="note">The toolbox takes the first free port from 4890 to 4899, so a repo opened beside others may get a later one; the session-start line names the port it got.</p>')
+        [void]$sb.AppendLine('<p class="note">Admin takes the first free port from 4890 to 4899, so a repo opened beside others may get a later one; the session-start line names the port it got.</p>')
         [void]$sb.AppendLine('</div>')
         [void]$sb.AppendLine('</section>')
         [void]$sb.AppendLine('</div>')
     }
 
     [void]$sb.AppendLine('<p class="note">Each page names its own source. Served on 127.0.0.1 only, by the dkj-policy plugin''s <code>hub/pages/serve-general-pages.ps1</code>.</p>')
-    [void]$sb.AppendLine((Format-ToolboxShellClose))
+    [void]$sb.AppendLine((Format-AdminShellClose))
     # The fit alarm, as Format-GeneralPageHtml closes every page below this one (#3558).
     [void]$sb.AppendLine((Format-FitAlarmHtml))
     [void]$sb.AppendLine('</body>')
@@ -162,7 +162,7 @@ function Format-PluginRepoHubHtml {
 
 function Format-PluginRepoRepositoryHtml {
     <#
-        The GitHub page on '/repository' (#3383; called Repository until it took the GitHub name and logo): everything about the repo itself. Its facts as a .facts--row
+        The GitHub page on '/dev/repository' (#3383; called Repository until it took the GitHub name and logo): everything about the repo itself. Its facts as a .facts--row
         (label over value, no card, since the cards on these pages are links), then its pages a card each in a
         .grid-3: Issues (this server's, by bare path) and, where -Slug is a plain GitHub owner/name, its pull
         requests and CI runs on GitHub. -RepoName, -Folder, -Mode, -ProductUrl and -PagesUrl are
@@ -189,14 +189,14 @@ function Format-PluginRepoRepositoryHtml {
     [void]$sb.AppendLine('<div><dt>Folder</dt><dd>' + $f + '</dd></div>')
     [void]$sb.AppendLine('<div><dt>Dev preview</dt><dd>' + $devPreview + '</dd></div>')
     [void]$sb.AppendLine('<div><dt>Stated in</dt><dd>scripts/repo-config.ps1</dd></div>')
-    [void]$sb.AppendLine('<div><dt>Toolbox served by</dt><dd>the dkj-policy plugin, on a port from 4890 to 4899</dd></div>')
+    [void]$sb.AppendLine('<div><dt>Admin served by</dt><dd>the dkj-policy plugin, on a port from 4890 to 4899</dd></div>')
     [void]$sb.AppendLine('</dl>')
     [void]$sb.AppendLine('<div class="grid-3">')
     if ($PagesUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
         # Every general page marked GitHub, in their order, which the home page leaves out: Issues, and the Test gate
         # before the Actions whose runs it measures (the owner, November 2, 2026). Issues keeps the sub it had here.
         foreach ($p in @(Get-GeneralPages | Where-Object { $_.GitHub })) {
-            $sub = if ($p.Href -eq '/issues') { 'The open issues, grouped by what they wait on' } else { $p.Sub }
+            $sub = if ($p.Href -eq '/dev/issues') { 'The open issues, grouped by what they wait on' } else { $p.Sub }
             [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $sub -Icon $p.Icon))
         }
     } else {
@@ -208,6 +208,6 @@ function Format-PluginRepoRepositoryHtml {
     }
     [void]$sb.AppendLine('</div>')
     return Format-GeneralPageHtml -Title 'GitHub' -SiteName $name -Body $sb.ToString() `
-        -Lead 'The repo this toolbox serves: its facts, its open issues and its pull requests.' `
+        -Lead 'The repo Admin serves here: its facts, its open issues and its pull requests.' `
         -FooterNote 'The facts are what the hub knows about this folder; Issues is read with <code>gh</code>.'
 }

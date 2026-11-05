@@ -1,22 +1,27 @@
 <!doctype html>
 <!--
-  The Toolbox shell, the stylesheet-only reference (Dave, November 4, 2026, #3811): the desktop layer of the brand
-  book, for the Toolbox. It is an Explorer or a task board, not a website: no site header, no breadcrumb bar
-  above a page of cards, only a thin bar, a side tree, a main pane with a dense list and a detail pane, each
-  scrolling on its own and told apart by 1px lines. Desktop only, read in VS Code's Simple Browser, about 1300 x 900.
+  The Admin shell, the stylesheet-only reference (Dave, November 4, 2026, #3811; Admin, after the Shopify Admin,
+  since #3815): the desktop layer of the brand book, for Admin. It is an Explorer or a task board, not a website:
+  no site header, no breadcrumb bar above a page of cards, only a thin bar, a flat side navigation under section
+  headings, a main pane with a dense list and a detail pane, each scrolling on its own and told apart by 1px lines.
+  Desktop only, read in VS Code's Simple Browser, about 1300 x 900.
 
-  The whole page is built from ../house-style.css ("Desktop shell: the Toolbox's layer") and ../house-theme.js,
+  The navigation follows the Shopify Admin: Home and the repo's domain objects at the top level (no "Manage"
+  wrapper, since everything in Admin is management), the Product as an entry Admin links to, secondary areas such
+  as Development under a section heading, and Settings pinned to the foot.
+
+  The whole page is built from ../house-style.css ("Desktop shell: Admin's layer") and ../house-theme.js,
   linked and not inlined, and from nothing else (no other CSS, no external request). The mobile-first product
   takes "App components" instead, as repo-dashboard.html shows.
-  The page names and the plugin rows below are sample content, drawn after the Toolbox's real pages. The one
-  script only opens and closes a tree group and selects a row, to show those states; a served page does its own.
+  The page names, the domain objects and the plugin rows below are sample content. The one script only selects
+  a row, to show that state; a served page does its own.
 -->
 <html lang="en" data-theme-light="blue" data-theme-dark="cyan">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Reference for the Toolbox shell: a bar, a side tree, a dense list and a detail pane.">
-  <title>Toolbox -- Plugins</title>
+  <meta name="description" content="Reference for the Admin shell: a bar, a flat side navigation under section headings, a dense list and a detail pane.">
+  <title>Admin -- Plugins</title>
   <link rel="stylesheet" href="../house-style.css">
   <script src="../house-theme.js"></script>
 </head>
@@ -27,40 +32,37 @@
     <div class="shell__bar">
       <nav class="breadcrumbs" aria-label="Breadcrumb">
         <ol>
-          <li><a href="toolbox-shell.html">Home</a></li>
+          <li><a href="admin-shell.html">Home</a></li>
           <li><span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span><span aria-current="page">Plugins</span></li>
         </ol>
       </nav>
       <div class="shell__actions"><button class="btn" type="button">Refresh</button><div id="settings"></div></div>
     </div>
 
-    <!-- 2. The side tree: the Toolbox's pages, a group opens and closes, the current page is marked, a count sits right. -->
-    <nav class="shell__nav" aria-label="Tools">
-      <p class="pane-head">Tools</p>
-      <ul class="tree">
-        <li><a class="tree__item" href="#"><span class="tree__label">Repository</span></a></li>
-        <li><a class="tree__item" href="#"><span class="tree__label">Issues</span><span class="tree__count">12</span></a></li>
-        <li><a class="tree__item" href="#"><span class="tree__label">Release notes</span></a></li>
-        <li><a class="tree__item" href="#"><span class="tree__label">Test gate</span></a></li>
-        <li><a class="tree__item" href="#" aria-current="page"><span class="tree__label">Plugins</span><span class="tree__count">5</span></a></li>
-        <li>
-          <button class="tree__item" type="button" aria-expanded="true"><svg class="tree__chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="tree__label">Claude</span></button>
-          <ul>
-            <li><a class="tree__item" href="#"><span class="tree__label">Rules</span><span class="tree__count">14</span></a></li>
-            <li><a class="tree__item" href="#"><span class="tree__label">Skills</span><span class="tree__count">31</span></a></li>
-            <li><a class="tree__item" href="#"><span class="tree__label">Specialists</span><span class="tree__count">15</span></a></li>
-            <li>
-              <button class="tree__item" type="button" aria-expanded="false"><svg class="tree__chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="tree__label">Performance</span></button>
-              <ul>
-                <li><a class="tree__item" href="#"><span class="tree__label">SessionStart</span></a></li>
-                <li><a class="tree__item" href="#"><span class="tree__label">Stopwatch</span></a></li>
-                <li><a class="tree__item" href="#"><span class="tree__label">Logbook</span></a></li>
-              </ul>
-            </li>
-          </ul>
-        </li>
-        <li><a class="tree__item" href="#"><span class="tree__label">Settings</span></a></li>
+    <!-- 2. The side navigation: flat lists under section headings, the current page marked, a count right, Settings in the foot. -->
+    <nav class="shell__nav" aria-label="Main">
+      <ul class="nav-list">
+        <li><a class="nav-item" href="#"><span class="nav-item__label">Home</span></a></li>
+        <li><a class="nav-item" href="#"><span class="nav-item__label">Tracks</span><span class="nav-item__count">1,204</span></a></li>
+        <li><a class="nav-item" href="#"><span class="nav-item__label">Playlists</span><span class="nav-item__count">38</span></a></li>
+        <li><a class="nav-item" href="#"><span class="nav-item__label">Artists</span><span class="nav-item__count">412</span></a></li>
       </ul>
+      <p class="pane-head" id="nav-product">Product</p>
+      <ul class="nav-list" aria-labelledby="nav-product">
+        <li><a class="nav-item" href="#"><span class="nav-item__label">Storefront</span></a></li>
+      </ul>
+      <p class="pane-head" id="nav-dev">Development</p>
+      <ul class="nav-list" aria-labelledby="nav-dev">
+        <li><a class="nav-item" href="#"><span class="nav-item__label">GitHub</span></a></li>
+        <li><a class="nav-item" href="#"><span class="nav-item__label">Release notes</span></a></li>
+        <li><a class="nav-item" href="#"><span class="nav-item__label">Claude</span></a></li>
+        <li><a class="nav-item" href="#" aria-current="page"><span class="nav-item__label">Installed plugins</span><span class="nav-item__count">5</span></a></li>
+      </ul>
+      <div class="shell__nav-foot">
+        <ul class="nav-list">
+          <li><a class="nav-item" href="#"><span class="nav-item__label">Settings</span></a></li>
+        </ul>
+      </div>
     </nav>
 
     <!-- 3. The main pane: a toolbar (the page's one h1, a filter, small buttons) over a dense table that scrolls. -->
@@ -102,9 +104,6 @@
 
   <script>
     DKJTheme.settings(document.getElementById('settings'), { label: 'Preview settings', theme: 'Theme', reset: 'Reset theme', light: 'Light', dark: 'Dark', widths: false });
-    document.querySelectorAll('.tree__item[aria-expanded]').forEach(function (b) {
-      b.addEventListener('click', function () { b.setAttribute('aria-expanded', b.getAttribute('aria-expanded') === 'true' ? 'false' : 'true'); });
-    });
     document.querySelectorAll('#rows tbody tr').forEach(function (tr) {
       tr.addEventListener('click', function () {
         document.querySelectorAll('#rows tbody tr').forEach(function (o) { o.removeAttribute('aria-selected'); });

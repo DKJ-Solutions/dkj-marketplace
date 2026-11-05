@@ -54,8 +54,8 @@ function Get-ProductPages {
     @(
         @{ Href = '/consumers';  Label = 'Consumers';   Sub = 'Every repo that installs plugins from this marketplace, registered under consumers/ and checked by check-consumers.ps1 on this machine'; Icon = 'consumers' }
         @{ Href = '/marketplace';     Label = 'Marketplace'; Sub = 'Every plugin this marketplace ships, its version and what it holds'; Icon = 'marketplace' }
-        # The product's own Settings, last as on the Toolbox (Maikel, November 4, 2026): its theme. No width, which is full
-        # here as on the Toolbox (Dave, November 4, 2026).
+        # The product's own Settings, last as on Admin (Maikel, November 4, 2026): its theme. No width, which is full
+        # here as on Admin (Dave, November 4, 2026).
         @{ Href = '/settings';   Label = 'Settings';    Sub = 'How this product looks on this device: its theme'; Icon = 'settings' }
     )
 }
@@ -63,11 +63,11 @@ function Get-ProductPages {
 function Get-ProductMenu {
     <#
         The product's site header menu (Format-SiteHeaderHtml -Menu), in the home page's card order: the
-        Toolbox first, then its own pages (Get-ProductPages). The Toolbox links '/hub', this server's 303 to
+        Admin first, then its own pages (Get-ProductPages). Admin links '/hub', this server's 303 to
         the plugin hub, because the hub's port is only known once it answers (Get-GeneralPagesUrl) and a
         menu drawn on every page should not ask it each time.
     #>
-    @(@{ Label = 'Toolbox'; Href = '/hub' }) + @(Get-ProductPages | ForEach-Object { @{ Label = $_.Label; Href = $_.Href } })
+    @(@{ Label = 'Admin'; Href = '/hub' }) + @(Get-ProductPages | ForEach-Object { @{ Label = $_.Label; Href = $_.Href } })
 }
 
 function ConvertFrom-ConsumerCheckOutput {
@@ -440,9 +440,9 @@ function Format-ConsumerPageStart {
     [void]$sb.AppendLine('<title>dkj-marketplace -- ' + $name + '</title>')
     [void]$sb.AppendLine('<link rel="stylesheet" href="/house-style.css">')
     [void]$sb.AppendLine('<script src="/house-theme.js"></script>')
-    # One width, full, as on the Toolbox (Dave, November 4, 2026): another screen is judged in the Simple Browser's own
+    # One width, full, as on Admin (Dave, November 4, 2026): another screen is judged in the Simple Browser's own
     # device emulation, so the product offers no width choice.
-    [void]$sb.AppendLine((Get-ToolboxWidthScript))
+    [void]$sb.AppendLine((Get-AdminWidthScript))
     # The repo layer: only names the house file does not define (.cd-*), spaced from the house scale.
     # The page keeps the hub's frame (breadcrumb bar, settings button, intro, page column; #3066), so
     # this layer styles only what is inside its cards, never the blocks the house style fixes.
@@ -470,7 +470,7 @@ function Format-ConsumerPageStart {
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
     [void]$sb.AppendLine('<body>')
-    # No general banner: it is the Toolbox's alone, never a product page's (Dave, November 4, 2026).
+    # No general banner: it is Admin's alone, never a product page's (Dave, November 4, 2026).
     # The house site header, holding the settings button, then the breadcrumb bar under it: its trail from Home to this page.
     # Tagged 'product': this page is the product's, beside the plugin's hub (#3540).
     # The menu is the product's pages (Get-ProductMenu), the Consumers page marked.
