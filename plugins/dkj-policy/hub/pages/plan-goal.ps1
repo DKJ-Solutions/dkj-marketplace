@@ -31,6 +31,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\goals-lib.ps1')
+. (Join-Path $PSScriptRoot '..\..\scripts\lib\ref-print-lib.ps1')
 
 function Stop-PlanGoal {
     param([string]$Message)
@@ -42,7 +43,9 @@ if (-not (Get-Command gh -CommandType Application -ErrorAction SilentlyContinue)
 if (-not $Next -and -not $PlanFile) { Stop-PlanGoal 'name -Next, or a -PlanFile to check (and -Apply to file it).' }
 
 if (-not $Repo) {
-    $Repo = [string](gh repo view --json nameWithOwner --jq .nameWithOwner 2>$null)
+    # Under 'Stop' a native stderr line throws through 2>$null in Windows PowerShell 5.1, so the read is
+    # wrapped: no answer is the same as no repo, and the refusal below names it.
+    try { $Repo = [string](gh repo view --json nameWithOwner --jq .nameWithOwner 2>$null) } catch { $Repo = '' }
     $Repo = $Repo.Trim()
 }
 if ($Repo -notmatch '\A([^/\s]+)/([^/\s]+)\z') { Stop-PlanGoal 'no GitHub repo: pass -Repo owner/name, or run this in a checkout whose origin is on GitHub.' }
@@ -132,7 +135,7 @@ try {
     }
 } catch {
     Write-Host ''
-    Write-Host "[FAILED] $($_.Exception.Message)"
+    Write-Host "[FAILED] $(ConvertTo-ConsoleStrippedText $_.Exception.Message)"
     if ($filed.Count) {
         Write-Host '  Filed before the failure -- put these numbers in the plan before you rerun it, so nothing is filed twice:'
         foreach ($f in $filed) { Write-Host "    $f" }
