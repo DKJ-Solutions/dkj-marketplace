@@ -41,21 +41,61 @@
 
 Rename the Toolbox port to Admin, modelled on the Shopify Admin: flat navigation with section headings, the existing pages under Development at /dev with redirects from the old paths.
 
+#### Decisions taken on the way
+
+- **Every general page but Home and Settings moves under `/dev`**, the matchers and the links the hub
+  generates together, so the two cannot disagree; one 301 (`Resolve-AdminLegacyPath`) carries every old
+  address there with its path and query.
+- **The release-notes template keeps linking `/release-notes`**, because the Worker shares it; the dev
+  server rewrites those links to `/dev/release-notes` on the way out (`Format-ReleaseNotesDevPage`).
+- **`-BrandTag 'toolbox'` stays accepted as `admin` for this release** (`ConvertTo-AdminBrandTag`); the
+  release notes name the alias's end.
+- **The `.tree*` classes are replaced, not kept beside**: `.nav-list`, `.nav-item` (with `__label`,
+  `__count`) and `.shell__nav-foot`, with the existing `.pane-head` as the section heading. They shipped in
+  v6.7.0 the same day, so no consumer is known to use them.
+- **Search (Ctrl K) and a seam for a repo's domain objects are not built here**: the issue's scope list
+  names neither, and each is a feature of its own: [#3817](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3817)
+  and [#3818](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3818).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `/dev` prefix on every hub route and every link the hub generates; the old paths redirect (301).
+- [x] Toolbox shell functions renamed to Admin (`Get-AdminNav`, `Format-AdminShellOpen`, ...); the side tree becomes a flat navigation: Home, Product (the storefront, where one is stated), Development, Settings in the foot.
+- [x] `-BrandTag 'admin'`, with `'toolbox'` read as `admin`; the first crumb reads Home; the SessionStart line opens with `Admin:`; the product's card reads Admin.
+- [x] Brand book: `house-style.css` "Desktop shell: Admin's layer" with the flat navigation classes, `patterns/admin-shell.html` (renamed from `toolbox-shell.html`), the specimens, and the README's "Two layers".
+- [x] Docs: the hub README, the brand book README and skill, the constitution's and the skills' "Admin page" wording. Historical release documents are not rewritten.
 
 ### TEST
 
+- [x] Tests under `scripts/tests` updated for the paths, the navigation, the label and the alias, with new asserts for the Product section, the foot, the legacy redirect (as a pure function and as a routed 301) and the alias.
+- [x] `check-plugin-integrity.ps1`: 0 errors.
+- [ ] The full suite gate.
+
 ### DEPLOY: feat/3815-toolbox-to-admin
 
-**Score:**
+The Toolbox is now **Admin**, modelled on the Shopify Admin: Admin is for managing, the product for using
+([#3815](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3815)). Its side navigation is flat,
+under section headings, instead of a tree: **Home** on top, a **Product** section linking the storefront
+the session started, a **Development** section holding GitHub, Release notes, Claude and Installed
+plugins, and **Settings** pinned to the foot. Every development page moved under `/dev/...`
+(`/dev/test-gate`, `/dev/claude/rules`, `/dev/plugins/...`), and every old address answers a 301 to the
+same page there, its query kept, so links and bookmarks keep working. The session-start line opens with
+`Admin:`, the first crumb reads **Home**, and the brand book's desktop shell takes `.nav-list`,
+`.nav-item` and `.shell__nav-foot` under a `.pane-head` heading in place of the `.tree*` classes
+(`patterns/admin-shell.html`, formerly `toolbox-shell.html`). A caller passing `-BrandTag 'toolbox'` is
+still served the desktop shell in this release; pass `'admin'`.
+
+**Score:** 4
 
 #### What makes this deploy extra special
 
-**Score:**
+Everyone who opens their repo's Admin notices it at once: a new name on the session-start line, a flat
+navigation in place of the tree, and every development page at a new address, with the old ones still
+landing. A consumer whose own code passes `-BrandTag 'toolbox'` or uses the `.tree*` classes has to move
+to `admin` and the `.nav-*` classes; the alias keeps the first working for this release.
+
+**Score:** 4
 
 #### Pull Request
 
 Rename the Toolbox port to Admin, with a Development section at /dev
-
