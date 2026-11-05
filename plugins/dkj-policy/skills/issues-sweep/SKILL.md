@@ -292,7 +292,7 @@ indistinguishable from your own. **This is the sharpest place a vague claim cost
 everything that carries a marker and is therefore safe whoever wrote it, while this step deliberately
 resumes on the tag's own work.
 
-Then take the review label off (`gh issue edit <n> --remove-label awaiting-review-dev`, or `awaiting-review-client`), ship it -- the same `ship-pr.ps1 -Resolves <n>` as step 5 -- and close the issue the way this repo
+Then take the review label off (`gh issue edit <n> --remove-label awaiting-review-dev`, or `awaiting-review-client`), mark the branch document's owner-look step `- [~]` with who approved it, when and what they saw, and commit that (`open-pr`'s step gate refuses it open, #3829), ship it -- the same `ship-pr.ps1 -Resolves <n>` as step 5 -- and close the issue the way this repo
 closes issues. **Where the issue mirrors a ticket
 somewhere else, the message to the person who asked comes BEFORE the close** -- the plugin that owns
 that mirror carries the form; without such a plugin the ordinary `Closes #<n>` applies.

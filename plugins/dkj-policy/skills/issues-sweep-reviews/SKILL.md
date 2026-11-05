@@ -98,8 +98,17 @@ look"*, because what was seen goes on the issue (#2977).
 ```powershell
 git checkout <branch>
 git pull --ff-only
+# resolve the plan's owner-look step (below), commit it, then:
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/release/ship-pr.ps1" -Resolves <n>
 ```
+
+**First resolve the step in the branch document that waits on the owner's look** (#3829). A parked
+visible result's plan ends on one, `- [ ] The owner looks at ...`, and `open-pr`'s step gate refuses
+every open step, with no `-Force`. So the approval of step 3 goes on that line too: mark it `- [~]` and
+append the same words as the comment, e.g. *"Not done as a separate look: <owner> approved the branch
+through issues-sweep-reviews on <date> without one."* (or what the owner saw). Commit it on the branch;
+`ship-pr` pushes it. Measured November 5, 2026: all four branches of one pass carried that step, and every
+ship was refused until it was resolved by hand. It records the owner's word, so it is not a build.
 
 This is the same command as `issues-sweep` step 5, with the same reason: a branch named after its
 issue fails `open-pr`'s resolves gate without `-Resolves`. That flag also closes the issue: the merge
