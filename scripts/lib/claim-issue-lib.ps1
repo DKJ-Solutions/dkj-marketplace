@@ -2283,7 +2283,7 @@ function Get-IssueBranchNames {
             The branches on a remote that belong to one issue, out of `git ls-remote --heads` text.
 
         .DESCRIPTION
-            THE CONVENTION IS '<prefix>/<n>-<short-name>', which is what sweep-issues' step 3 names and
+            THE CONVENTION IS '<prefix>/<n>-<short-name>', which is what issues-sweep's step 3 names and
             what every branch on this tracker's origin carries. Only the segment right after the prefix
             is read: '<n>' followed by a dash or the end. A number that merely APPEARS later in a name --
             'fix/2338-pin-12' against issue 12 -- is a different issue's branch and must not match.
@@ -2846,7 +2846,7 @@ function Get-ParkingWaitReferences {
             this reads it, and -Candidates asks the tracker whether each reference has landed.
 
             THE LAST PARKING COMMENT, AND ONLY ITS "WAITING ON" CLAUSE. A comment counts when it says
-            "parked" and "waiting on" -- the form the sweep-issues skill prescribes. The clause ends at the
+            "parked" and "waiting on" -- the form the issues-sweep skill prescribes. The clause ends at the
             first sentence end, ' -- ' or opening parenthesis, because what follows is explanation: #3126's
             comment goes on to cite a file path that is branch-shaped. Not at a comma: #3130 waits on
             "#3131, #3132, #3133 and #3134", and a list cut at its first comma clears on one of four.

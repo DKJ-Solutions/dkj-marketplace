@@ -33,7 +33,9 @@ These rules take precedence over any convenience.
   eye (a frontend, styling, rendered output, an Admin page), the branch stops and reports instead of
   merging, **and the checkout stays on that branch until the owner has looked**. The owner judges the
   working copy, so switching to the trunk removes the very thing waiting to be judged. No automated gate
-  can prove that something *looks* right. **A sweep is the one carve-out from the checkout half**: it
+  can prove that something *looks* right. **The report names where to look**: the exact URL that shows
+  the result (an Admin page, a preview), on a line of its own and never inside a sentence, one line per
+  changed page (Dave, #3819). **A sweep is the one carve-out from the checkout half**: it
   parks the branch on `origin` with its review label and moves on to the next issue, and the owner checks
   each parked branch out to look later (Maikel, #3552). The merge half holds there too.
 - **A release or version bump** (raising a plugin or package `version`, creating a tag) is done only

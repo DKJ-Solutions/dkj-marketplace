@@ -1316,8 +1316,8 @@ function Get-ExpectedRepoSettings {
 # AND A TWELFTH, A SEVENTH PARKING LABEL: 'awaiting-decision-client' (issue #2890, Dave October 7, 2026). A choice
 # that is NOT the owner's -- a colleague's QA sign-off, a business decision from the client or requester outside
 # the dev team -- is not free work either, and 'awaiting-decision-dev' says the opposite: that label is answered
-# by the owner alone, so 'sweep-decisions' puts it to the owner, while this one both 'sweep-issues' and
-# 'sweep-decisions' skip. It is deliberately NOT 'awaiting-info-client': that label means blocked on information
+# by the owner alone, so 'issues-sweep-decisions' puts it to the owner, while this one both 'issues-sweep' and
+# 'issues-sweep-decisions' skip. It is deliberately NOT 'awaiting-info-client': that label means blocked on information
 # the SUBMITTER has not given and, in bwj-development, moves the mirrored Asana card. New, so no former name;
 # same purple, same 'copy' reasoning: "waiting on the client's choice" asserts nothing about the adopting repo.
 # AND A THIRTEENTH AND A FOURTEENTH, AN EIGHTH AND A NINTH PARKING LABEL: 'awaiting-review-dev' and 'awaiting-review-client'

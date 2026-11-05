@@ -1,5 +1,5 @@
 ---
-name: sweep-issues
+name: issues-sweep
 description: >-
   Work an open-issue backlog with SEVERAL machines at once, without two of them building the same
   thing. Each session claims by TAG -- machine:checkout/account, written as a marker comment -- so a claim names
@@ -11,7 +11,9 @@ description: >-
 disable-model-invocation: true
 ---
 
-# sweep-issues -- six machines, one backlog, no duplicated work
+# issues-sweep -- six machines, one backlog, no duplicated work
+
+**It was named `sweep-issues` until November 5, 2026**, renamed by Dave so the three sweeps share one prefix: `issues-sweep`, `issues-sweep-decisions` and `issues-sweep-reviews`. The hub's logbook still recognises a run recorded under the old name.
 
 **It generalises a prompt block** that had to be pasted into a fresh session on every machine, whose
 claim was prose a session had to type correctly, and whose race resolution did not close
@@ -242,7 +244,8 @@ ARGUE that it renders, which is itself the doubt -- then:
 - push whatever preview the repo has (in a Shopify consumer, `push-preview`), hand it over in the form
   that repo's own pages prescribe, and **open no pull request**;
 - park the branch on `origin`, and set `awaiting-review-dev` on the issue (`awaiting-review-client` when
-  the client must look) together with a one-line comment on what to look at (#2977), so the next
+  the client must look) together with a one-line comment on what to look at and the URL that shows it
+  (#2977, #3819), so the next
   sweep reads it as `skipped`;
 - then **on to step 7, like any other issue** -- the sweep goes on with the next `free` one.
 
@@ -289,7 +292,7 @@ indistinguishable from your own. **This is the sharpest place a vague claim cost
 everything that carries a marker and is therefore safe whoever wrote it, while this step deliberately
 resumes on the tag's own work.
 
-Then take the review label off (`gh issue edit <n> --remove-label awaiting-review-dev`, or `awaiting-review-client`), ship it -- the same `ship-pr.ps1 -Resolves <n>` as step 5 -- and close the issue the way this repo
+Then take the review label off (`gh issue edit <n> --remove-label awaiting-review-dev`, or `awaiting-review-client`), mark the branch document's owner-look step `- [~]` with who approved it, when and what they saw, and commit that (`open-pr`'s step gate refuses it open, #3829), ship it -- the same `ship-pr.ps1 -Resolves <n>` as step 5 -- and close the issue the way this repo
 closes issues. **Where the issue mirrors a ticket
 somewhere else, the message to the person who asked comes BEFORE the close** -- the plugin that owns
 that mirror carries the form; without such a plugin the ordinary `Closes #<n>` applies.
@@ -317,12 +320,12 @@ park does.
 it as the cue for step 7, not as the end of the assignment. Measured September 28, 2026: a sweep shipped
 one issue, took that template as its own close-out, and left four `free` issues untouched.
 
-**What it skipped as `awaiting-decision-dev` is the owner's half**, and `sweep-decisions` walks it with
-them in one pass; a decided issue comes back here as `free`. What it skipped as `awaiting-decision-client` is nobody's half here: it waits on the client or requester, and neither skill walks it. **Nor does either walk `awaiting-review-dev` or `awaiting-review-client`** (#2977): those wait on a look at a result, not on a choice, and the look is the owner's or the client's to give.
+**What it skipped as `awaiting-decision-dev` is the owner's half**, and `issues-sweep-decisions` walks it with
+them in one pass; a decided issue comes back here as `free`. What it skipped as `awaiting-decision-client` is nobody's half here: it waits on the client or requester, and neither skill walks it. **Nor does either walk `awaiting-review-dev` or `awaiting-review-client`** (#2977): those wait on a look at a result, not on a choice, and the look is the owner's or the client's to give. Where the owner gives it for the whole pile at once, `issues-sweep-reviews` runs step 6 for every `awaiting-review-dev` issue in one pass; only the owner types it.
 
 **The sweep closes out once, after the loop**, in the ordinary receipt shape: the PR number of each issue
-it shipped, each branch it parked for the owner's eye with the `git checkout <branch>` line that shows
-it, the number and label of each it parked as waiting, and the number of each it held out, with a clause
+it shipped, each branch it parked for the owner's eye with the `git checkout <branch>` line and, each on
+a line of its own, the URL of every page it changed (#3819), the number and label of each it parked as waiting, and the number of each it held out, with a clause
 for why.
 
 ## A second sweep beside a running one -- lane mode

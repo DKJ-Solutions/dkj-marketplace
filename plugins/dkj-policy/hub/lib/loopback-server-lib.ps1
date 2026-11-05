@@ -48,11 +48,12 @@ function Read-LoopbackRequest {
         if ($end -ge 0) { break }
     }
     $lines = $text.Substring(0, $end) -split "`r`n"
-    $result = @{ RequestLine = $lines[0]; Host = ''; SecFetchSite = ''; SecFetchMode = '' }
+    $result = @{ RequestLine = $lines[0]; Host = ''; SecFetchSite = ''; SecFetchMode = ''; SecFetchDest = '' }
     foreach ($h in @($lines | Select-Object -Skip 1)) {
         if ($h -match '^Host:\s*(.*)$') { $result.Host = $Matches[1] }
         elseif ($h -match '^Sec-Fetch-Site:\s*(.*)$') { $result.SecFetchSite = $Matches[1] }
         elseif ($h -match '^Sec-Fetch-Mode:\s*(.*)$') { $result.SecFetchMode = $Matches[1] }
+        elseif ($h -match '^Sec-Fetch-Dest:\s*(.*)$') { $result.SecFetchDest = $Matches[1] }
     }
     return $result
 }
@@ -118,23 +119,44 @@ function Test-LoopbackHost {
 
 function Test-LoopbackCrossSite {
     <#
-        True when the request is to be refused for where it comes from. 'cross-site' always. 'same-site'
-        (another port or subdomain of this machine) unless it is a top-level navigation: Sec-Fetch-Mode
-        'navigate' on a GET, which is a user following a link, and a redirect hop of one. 'same-origin',
-        'none' and a missing header are allowed. -SecFetchMode and -Method default to empty, which makes a
-        same-site request a non-navigation: the old behaviour, for a caller that does not know them.
+        True when the request is to be refused for where it comes from. 'same-site' (another port or
+        subdomain of this machine) unless it is a top-level navigation: Sec-Fetch-Mode 'navigate' on a GET,
+        which is a user following a link, and a redirect hop of one. 'same-origin', 'none' and a missing
+        header are allowed. -SecFetchMode and -Method default to empty, which makes a same-site request a
+        non-navigation: the old behaviour, for a caller that does not know them.
+
+        'cross-site' unless it is a top-level GET navigation into a window of its own: Sec-Fetch-Mode
+        'navigate' AND Sec-Fetch-Dest 'document' (#3834). Claude in Chrome's navigations arrive cross-site,
+        their initiator being the extension, and a page view changes nothing another site could read: the
+        browser shows it to the user and hands the other site no byte of it. The one GET with an effect,
+        /refresh, drops a cache at most once per -MinRefreshSeconds. Dest is what keeps a frame out --
+        an <iframe> navigation is mode 'navigate' too, and these pages send no frame-ancestors, so a framed
+        page would put the airsquats POST under a click-jacker's overlay. A missing Dest is refused, which
+        is also the old behaviour for a caller that does not pass it.
     #>
     param(
         [AllowNull()][AllowEmptyString()][string]$SecFetchSite,
         [AllowNull()][AllowEmptyString()][string]$SecFetchMode = '',
-        [AllowNull()][AllowEmptyString()][string]$Method = ''
+        [AllowNull()][AllowEmptyString()][string]$Method = '',
+        [AllowNull()][AllowEmptyString()][string]$SecFetchDest = ''
     )
     if (-not $SecFetchSite) { return $false }
     $v = $SecFetchSite.Trim().ToLowerInvariant()
-    if ($v -eq 'cross-site') { return $true }
-    if ($v -eq 'same-site') {
-        $navigation = ([string]$SecFetchMode).Trim().ToLowerInvariant() -eq 'navigate' -and ([string]$Method).Trim().ToUpperInvariant() -eq 'GET'
-        return (-not $navigation)
+    $navigation = ([string]$SecFetchMode).Trim().ToLowerInvariant() -eq 'navigate' -and ([string]$Method).Trim().ToUpperInvariant() -eq 'GET'
+    if ($v -eq 'cross-site') {
+        return (-not ($navigation -and ([string]$SecFetchDest).Trim().ToLowerInvariant() -eq 'document'))
     }
+    if ($v -eq 'same-site') { return (-not $navigation) }
     return $false
+}
+
+function Format-LoopbackCrossSiteRefusal {
+    <#
+        The 403 text for a request Test-LoopbackCrossSite refused, naming the three headers it judged, so the
+        next refusal measures what a client actually sends (#3834: the extension's headers were inferred).
+        Each value is cut to its token characters, so nothing the client typed is echoed back verbatim.
+    #>
+    param([AllowNull()][AllowEmptyString()][string]$SecFetchSite, [AllowNull()][AllowEmptyString()][string]$SecFetchMode, [AllowNull()][AllowEmptyString()][string]$SecFetchDest)
+    $clean = { param($s) $t = ([string]$s) -replace '[^A-Za-z-]', ''; if ($t.Length -gt 20) { $t = $t.Substring(0, 20) }; if ($t) { $t } else { '(none)' } }
+    return "Forbidden: another site may not drive this server. Sec-Fetch-Site: $(& $clean $SecFetchSite), Sec-Fetch-Mode: $(& $clean $SecFetchMode), Sec-Fetch-Dest: $(& $clean $SecFetchDest)."
 }

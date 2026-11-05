@@ -369,28 +369,27 @@ function Format-TestGatePageHtml {
         [void]$body.AppendLine('<p role="status">Grouped but no longer on disk: ' +
             ((@($Model.Unknown) | ForEach-Object { '<code>' + (& $e $_) + '</code>' }) -join ', ') + '.</p>')
     }
-    # The house .card-grid beside the page's own columns gives the group its padding and surface (the owner, October 28, 2026).
-    [void]$body.AppendLine('<div class="card-grid tg-cards" id="groups">')
+    # Admin's form (#3830): one .table--dense, a row per group of suites, then the change and the measurement.
     if (-not $lists.Count) {
-        [void]$body.AppendLine('<section class="card"><p class="note">No suite durations are recorded' + $(if ($unmeasured) { ' in this repo' } else { '' }) + '.</p></section>')
+        [void]$body.AppendLine('<p class="note">No suite durations are recorded' + $(if ($unmeasured) { ' in this repo' } else { '' }) + '.</p>')
     }
     $heaviest = [double](($lists | ForEach-Object { $_.Total } | Measure-Object -Maximum).Maximum)
+    $rows = @()
     foreach ($l in $lists) {
         $n = @($l.Suites).Count + @($l.Unmeasured).Count
-        [void]$body.AppendLine((Format-HubCardLinkHtml -Href ('/dev/test-gate/' + $l.Key) -Label $l.Title -Heading 2 -Id ('group-' + $l.Key) -Class 'tg-card' `
-            -ValueHtml ('<span class="num">' + $n + ' suites' + $dot + (Format-DevSeconds $l.Total) + $dot + (& $pct $l.Total) + '</span>' + (& $bar $l.Total $heaviest))))
+        $rows += @{ Href = ('/dev/test-gate/' + $l.Key); Label = $l.Title; Id = ('group-' + $l.Key); Class = 'tg-card'
+                    SubHtml = ('<span class="num">' + $n + ' suites' + $dot + (Format-DevSeconds $l.Total) + $dot + (& $pct $l.Total) + '</span>'); ValueHtml = (& $bar $l.Total $heaviest) }
     }
     if ($null -ne $Selection) {
         $picked = if (-not @($Selection.Changed | Where-Object { $_ }).Count) { 'nothing changed' }
                   elseif (-not $Selection.Proven -or @($Selection.Selected).Count -ge $Selection.PoolCount) { 'every suite' }
                   else { '' + @($Selection.Selected).Count + ' of ' + $Selection.PoolCount + ' suites' }
-        [void]$body.AppendLine((Format-HubCardLinkHtml -Href '/dev/test-gate/selection' -Label 'This checkout''s change' -Heading 2 -Id 'selection' -Class 'tg-card' `
-            -ValueHtml ('<span class="num">' + $picked + '</span>')))
+        $rows += @{ Href = '/dev/test-gate/selection'; Label = 'This checkout''s change'; Id = 'selection'; Class = 'tg-card'; SubHtml = ('<span class="num">' + $picked + '</span>') }
     }
-    [void]$body.AppendLine((Format-HubCardLinkHtml -Href '/dev/test-gate/measured' -Label 'Where it was measured' -Heading 2 -Id 'recorded' -Class 'tg-card' `
-        -ValueHtml ('<span class="num">' + $(if ($Model.Date) { & $e $Model.Date } else { '--' }) + $dot + @($Model.Runs).Count + ' CI runs' +
-        $(if (@($Model.Missing).Count -and -not $unmeasured) { $dot + @($Model.Missing).Count + ' not recorded' } else { '' }) + '</span>')))
-    [void]$body.AppendLine('</div>')
+    $rows += @{ Href = '/dev/test-gate/measured'; Label = 'Where it was measured'; Id = 'recorded'; Class = 'tg-card'
+                SubHtml = ('<span class="num">' + $(if ($Model.Date) { & $e $Model.Date } else { '--' }) + $dot + @($Model.Runs).Count + ' CI runs' +
+                    $(if (@($Model.Missing).Count -and -not $unmeasured) { $dot + @($Model.Missing).Count + ' not recorded' } else { '' }) + '</span>') }
+    [void]$body.AppendLine((Format-AdminLinkTableHtml -Items $rows -Id 'groups' -NameHead 'Group' -SubHead 'Suites' -ValueHead 'Share'))
     return & $page 'Test gate' $body.ToString() '' $github $footer
 }
 

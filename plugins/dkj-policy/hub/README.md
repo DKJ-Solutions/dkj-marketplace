@@ -6,7 +6,7 @@
 
 | Section | What it holds |
 |---|---|
-| (no heading) | **Home**, the dashboard on `/`. A repo's domain objects would follow here at the top level, with no "Manage" wrapper, since everything in Admin is management; this plugin ships none yet. |
+| (no heading) | **Home**, the dashboard on `/`, then the repo's **domain objects** (Tracks, Playlists, Artists) at the top level, with no "Manage" wrapper, since everything in Admin is management (#3818). A repo states them in `Get-AdminObjects` in its `scripts/repo-config.ps1`, returning `@{ Label; Href; Count }` items; the count is drawn as a badge. **The repo's own server serves those routes, not the hub**: an `Href` that is a path (`/tracks`) is resolved against the product's address, and an http(s) URL is kept. The hub reads the seam in a child process at most once a minute, never in its own scope, keeps at most 12 items, and drops one without a label or with any other address. |
 | **Product** | **Storefront**, a link to the product this session started (the state file's `Product`); left out where the repo states none. Admin links to and manages the product, it is not the product. |
 | **Development** | The hub's own pages, under `/dev/...`: GitHub, Goals, Release notes, Claude, Installed plugins (`Get-HubMenu`). A group page such as Claude is one item, and its members are reached on it. |
 | (foot) | **Settings**, on `/settings`, pinned to the bottom. |
@@ -328,9 +328,13 @@ own language; a request for one of the four paths on its own server is best answ
 no server answers as this checkout's.
 
 **Ports do not count toward "site", so the links between the servers are same-site navigations.** The
-Fetch Metadata check both plugin servers (and the source repo's) apply refuses `cross-site` always, and
-`same-site` unless it is a top-level `GET` navigation (`Sec-Fetch-Mode: navigate`): the product's link on
-the hub and the 303 to an opted-out repo's hub are served, a same-site fetch or image request is not.
+Fetch Metadata check both plugin servers (and the source repo's) apply refuses `same-site` unless it is a
+top-level `GET` navigation (`Sec-Fetch-Mode: navigate`): the product's link on the hub and the 303 to an
+opted-out repo's hub are served, a same-site fetch or image request is not. **`cross-site` is refused
+unless it is that same navigation into a document of its own** (`Sec-Fetch-Dest: document`, #3834), which
+is how Claude in Chrome opens a page: its initiator is the extension. Another site can then send the user
+to a page but never read it, and the one GET with an effect, `/refresh`, is rate-limited. A frame stays
+refused, because the pages send no `frame-ancestors`. The 403 names the three headers it judged.
 
 ## The banner, in sync on every machine
 
