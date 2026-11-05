@@ -39,19 +39,42 @@
 
 ### PLAN
 
+Issue #3843: two docs still described Admin's home in its pre-#3830 form (site header, breadcrumb bar, a
+`.grid-3` of card links). Measured against the code: `Format-RepoHomeHeadHtml` opens
+`Format-AdminShellOpen -Current '/' -Bare`, and `Format-PluginRepoHubHtml` / `Format-PluginRepoRepositoryHtml`
+draw one `.table--dense` each. The issue's open question (does the old form live on?) is answered by #3831's
+code: the site header and the breadcrumb bar live on as a product's home (`Format-ProductHomeHeadHtml` in
+dkj-solutions), so nothing is retired that the product layer still uses.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-policy/assets/dkj-brandbook/README.md`, "The hub": the intro note, the one-page and
+  own-page paragraphs, both block tables (home and GitHub page), the row order, "What is fixed", and the
+  page-column paragraph, rewritten for the shell; the card component left as the shared one it is.
+- [x] `plugins/dkj-policy/hub/README.md`, "The hub has one form": the same, in its shorter form.
+- [x] The two dkj-solutions pattern pages (`repo-dashboard.html`, `repo-repository.html`) still draw the old
+  form; changing them is a different subject, filed as #3849 and named in the README.
 
 ### TEST
 
+- [x] Every class and function named was read in the code it names (`general-pages-lib.ps1`,
+  `repo-hub-page.ps1`, `product-pages-lib.ps1`); the lint gate runs in `ship-pr`.
+
 ### DEPLOY: docs/3843-hub-home-shell
 
-**Score:**
+The brand book's "The hub" and the hub README describe Admin's home and GitHub page as the desktop shell draws
+them since #3830: the shell's bar and side navigation with no toolbar on the home page, then one `.table--dense`
+of links, a row per page
+([#3843](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3843)). The site header and card grid they
+used to describe are the product layer's.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 

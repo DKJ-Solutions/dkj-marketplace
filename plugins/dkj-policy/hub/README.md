@@ -112,19 +112,25 @@ read in different places, and that decides whether a page width is anybody's cho
 **The hub has one form, in every repo** (the owner's decision, October 16, 2026,
 [#3066](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3066)): the one laid down in
 [`assets/dkj-brandbook/README.md`](../assets/dkj-brandbook/README.md), section
-"The hub": one page on `/`, under the site header (#3289, which ended #3270's separate About this repo
-page; an old link to `/about` is sent to `/`), and since #3383 a grid of card links with a separate
-**GitHub** page (called Repository until it took the GitHub name and logo). The blocks and their order are fixed. The general banner stands above the site header,
-which names the repo, and under the breadcrumb bar the home page carries one `.grid-3` of card links, with no heading above them:
+"The hub": one page on `/` (#3289, which ended #3270's separate About this repo page; an old link to
+`/about` is sent to `/`), with a separate **GitHub** page since #3383 (called Repository until it took the
+GitHub name and logo), both drawn in Admin's desktop shell since #3830. The blocks and their order are fixed.
+The home page opens the shell with **Home** as its one crumb and marked in the side navigation, and with no
+toolbar and no `h1`, because the shell names the repo (`Format-RepoHomeHeadHtml`). The general banner comes
+first in the main pane, and under it one `.table--dense` of links, a row per page with its description and no
+heading above it (`Format-AdminLinkTableHtml`):
 
-- the **product**, where the repo states a server: its link, or a card saying it is not running;
-- **GitHub**, with the GitHub logo, the page on `/dev/repository` holding the facts (the GitHub repo where the `origin` remote is
-  on github.com, the folder, the dev preview, where it is stated and who serves the hub) and a card for
+- the **product**, where the repo states a server: its link, or a line saying it is not running;
+- **GitHub**, the page on `/dev/repository` holding the facts (the GitHub repo where the `origin` remote is
+  on github.com, the folder, the dev preview, where it is stated and who serves the hub) and a row for
   **Issues** and the **Test gate** and, on GitHub, for the pull requests and the CI runs;
 - the **General** pages but Issues and the Test gate, by bare path.
 
-Under the grid, only where the repo states no `Get-DevPreview` at all, two **setup cards**: how to add one,
-and which port to route to VS Code's Simple Browser. A footer names the serving script.
+Under the list, only where the repo states no `Get-DevPreview` at all, two **setup cards**: how to add one,
+and which port to route to VS Code's Simple Browser. A footer names the serving script. **The site header
+and the card grid the hub had before #3830 are the product layer's now**: a product's own home page takes
+the site header and the breadcrumb bar through `dkj-solutions`' `Format-ProductHomeHeadHtml` (#3831), and its
+cards follow that layer's README.
 
 Both pages are built per request from the state file below, and the repo's name, its `origin` slug and the
 product url, the only values from outside, are HTML-escaped. The line the hook prints opens with `Admin:` (`Hub:` until the owner renamed the hub Toolbox, October 27, 2026, and `Toolbox:` until #3815), and a repo cannot
