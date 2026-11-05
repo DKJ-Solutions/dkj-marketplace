@@ -2428,11 +2428,25 @@ function Get-TakeOverVerdict {
             The author names of the one branch's commits off the trunk, as git wrote them. Read by the
             caller only for an untagged issue with exactly one branch; empty means unread.
 
+        .PARAMETER Parked
+            Asks to take a CO-OWNER's claim over because the issue is parked for the owner's look
+            (#3846) -- issues-sweep-reviews' path. Honoured only when -Labels carries -ReviewLabel;
+            without it a colleague's claim refuses as 'not-parked'. Without -Parked nothing changes.
+
+        .PARAMETER Labels
+            The issue's label names. Read only under -Parked.
+
+        .PARAMETER ReviewLabel
+            The label that proves the park. Default 'awaiting-review-dev'; never the client's label,
+            whose look the owner cannot give.
+
         .OUTPUTS
             Code     -- Get-TagClaimVerdict's code for anything not 'held' or untagged-with-a-branch;
-                        otherwise 'foreign-account' | 'no-branch' | 'ambiguous-branch' | 'take' for a
-                        held issue, and 'ambiguous-branch' | 'unknown-author' | 'foreign-author' |
-                        'take-untagged' for an untagged one.
+                        otherwise 'foreign-account' | 'not-parked' | 'no-branch' | 'ambiguous-branch' |
+                        'take' for a held issue, and 'ambiguous-branch' | 'unknown-author' |
+                        'foreign-author' | 'take-untagged' for an untagged one.
+            Colleagues -- on a -Parked 'take' (or its branch refusals), the other accounts' tags it
+                        takes over from. Always an array; empty on every other path.
             Holders  -- the tags that are not this one. Always an array.
             Branch   -- the one branch to resume, on 'take' / 'take-untagged'. '' otherwise.
             Branches -- every branch that matched. Always an array.
@@ -2448,19 +2462,23 @@ function Get-TakeOverVerdict {
         [AllowNull()][string[]]$Branches = @(),
         [AllowNull()][string[]]$OwnAccounts = @(),
         [AllowNull()][string[]]$SelfNames = @(),
-        [AllowNull()][string[]]$BranchAuthors = @()
+        [AllowNull()][string[]]$BranchAuthors = @(),
+        [switch]$Parked,
+        [AllowNull()][string[]]$Labels = @(),
+        [string]$ReviewLabel = 'awaiting-review-dev'
     )
 
     $base = Get-TagClaimVerdict -Tag $Tag -State $State -Records $Records -Url $Url
     $found = @(@($Branches) | Where-Object { $_ })
     $result = [pscustomobject]@{
-        Code     = $base.Code
-        Holders  = @($base.Holders)
-        Branch   = ''
-        Branches = $found
-        Rivals   = @()
-        Authors  = @()
-        Foreign  = @()
+        Code       = $base.Code
+        Holders    = @($base.Holders)
+        Branch     = ''
+        Branches   = $found
+        Rivals     = @()
+        Authors    = @()
+        Foreign    = @()
+        Colleagues = @()
     }
 
     if ($base.Code -eq 'free' -and $found.Count -gt 0) {
@@ -2488,7 +2506,17 @@ function Get-TakeOverVerdict {
         $holderAccount = if ($parts.Count -ge 2) { $parts[1] } else { '' }
         $parts.Count -lt 2 -or (@($myAccounts | Where-Object { $_ -ieq $holderAccount }).Count -eq 0)
     })
-    if ($foreign.Count -gt 0) { $result.Code = 'foreign-account'; return $result }
+    if ($foreign.Count -gt 0) {
+        # A CO-OWNER'S PARKED REVIEW IS THE ONE COLLEAGUE CLAIM THAT MAY MOVE (#3846). The refusal exists
+        # to keep a session off a branch somebody is still mid-flight on (#2207); an issue carrying the
+        # review label was handed to the owner's look by its builder, so there is no flight left. Only on
+        # request (-Parked), and only with the label actually on the issue -- the request alone is not
+        # evidence of the park.
+        if (-not $Parked) { $result.Code = 'foreign-account'; return $result }
+        $hasLabel = @(@($Labels) | Where-Object { $_ -and (([string]$_).Trim() -ieq $ReviewLabel) }).Count -gt 0
+        if (-not $hasLabel) { $result.Code = 'not-parked'; return $result }
+        $result.Colleagues = $foreign
+    }
     if ($found.Count -eq 0) { $result.Code = 'no-branch'; return $result }
     if ($found.Count -gt 1) { $result.Code = 'ambiguous-branch'; return $result }
 

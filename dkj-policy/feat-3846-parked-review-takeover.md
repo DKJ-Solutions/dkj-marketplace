@@ -39,19 +39,40 @@
 
 ### PLAN
 
+Issue #3846: `/issues-sweep-reviews` held out every parked issue claimed under the co-owner's account,
+because `-TakeOver` refuses a colleague's claim. Verified against #2207 first: that refusal guards a
+session still mid-flight on the branch, and an issue carrying `awaiting-review-dev` was handed to the
+owner's look by its builder. So the take-over may move it, on request and on the label only.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-TakeOverVerdict` takes `-Parked`, `-Labels` and `-ReviewLabel`: a foreign holder passes only
+  under `-Parked` with `awaiting-review-dev` on the issue (new code `not-parked` otherwise), and the
+  branch preconditions still apply. `Colleagues` names whose claim moved.
+- [x] `claim-issue.ps1` gains `-Parked` (refused without `-TakeOver`), passes the issue's labels, prints the
+  `not-parked` refusal and a take-over line naming the co-owner; plugin mirrors copied byte-identical.
+- [x] `issues-sweep-reviews` step 2 runs `-TakeOver -Parked`, and its approval comment names the builder.
+- [x] Seven asserts in `claim-issue.tests.ps1`.
 
 ### TEST
 
+- [x] `claim-issue.tests.ps1`: 620 passed, 0 failed, the seven new asserts included.
+
 ### DEPLOY: feat/3846-parked-review-takeover
 
-**Score:**
+`/issues-sweep-reviews` can now approve and ship a branch a co-owner parked for review: its claim step
+runs `claim-issue.ps1 -Tag -TakeOver -Parked`, which moves another account's claim only when the issue
+carries `awaiting-review-dev` ([#3846](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3846)).
+Outside a parked review the colleague refusal is unchanged (#2207).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A repo with two owners no longer has its review pass hold out half the parked work; whichever owner
+types the command can approve the other's branch, and the approval comment names whose work it was.
+
+**Score:** 2
 
 #### Pull Request
 

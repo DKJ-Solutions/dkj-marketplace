@@ -113,6 +113,13 @@
     on that branch off the trunk is authored under one of this checkout's names (issue #2394). "This
     same account" also covers the accounts declared in DKJ_OWN_ACCOUNTS -- see Get-OwnAccountNames.
 
+.PARAMETER Parked
+    With -TakeOver: also move a CO-OWNER's claim, but only when the issue carries 'awaiting-review-dev'
+    (issue #3846). That label says the builder parked the branch for the owner's look, so nobody is
+    mid-flight on it -- the case the colleague refusal exists for (#2207). issues-sweep-reviews passes
+    it, because typing that command is an owner's word, and the repo's own facts may name several
+    owners. Without the label it refuses as 'not parked'; the branch preconditions still apply.
+
 .PARAMETER ReleaseAll
     With -Tag, and no issue number: release EVERY open issue this tag holds -- its own marker comments
     and the assignee written beside them, and nothing else (issue #2395). The tidy-up before a PLANNED
@@ -179,6 +186,9 @@
     ./scripts/task/claim-issue.ps1 1234 -Tag -TakeOver
 
 .EXAMPLE
+    ./scripts/task/claim-issue.ps1 1234 -Tag -TakeOver -Parked
+
+.EXAMPLE
     ./scripts/task/claim-issue.ps1 -Tag -ReleaseAll -Apply
 #>
 [CmdletBinding(DefaultParameterSetName = 'Issue')]
@@ -189,6 +199,7 @@ param(
     [Parameter(ParameterSetName = 'Issue')][switch]$Verify,
     [Parameter(ParameterSetName = 'Issue')][switch]$Release,
     [Parameter(ParameterSetName = 'Issue')][switch]$TakeOver,
+    [Parameter(ParameterSetName = 'Issue')][switch]$Parked,
     [Parameter(Mandatory = $true, ParameterSetName = 'Candidates')][switch]$Candidates,
     [Parameter(ParameterSetName = 'Candidates')]
     [Parameter(ParameterSetName = 'Issue')][string[]]$SkipLabel = @(),
@@ -335,6 +346,11 @@ if (-not $Candidates -and -not $ReleaseAll) {
     if ($TakeOver -and (-not $Tag -or $Verify -or $Release)) {
         Write-Host '[ERROR] -TakeOver needs -Tag, and cannot be combined with -Verify or -Release -- nothing was read or written.' -ForegroundColor Red
         Write-Host '        It hands a TAG claim over from another machine; -Verify reads and -Release drops one.' -ForegroundColor Red
+        exit 1
+    }
+    if ($Parked -and -not $TakeOver) {
+        Write-Host '[ERROR] -Parked only qualifies -TakeOver -- nothing was read or written.' -ForegroundColor Red
+        Write-Host '        It lets a take-over move a co-owner''s claim on an issue parked for review (#3846).' -ForegroundColor Red
         exit 1
     }
 }
@@ -1068,7 +1084,8 @@ if ($Tag) {
 
         $takeSelfNames = @($identity.GitUserName, $identity.Account, $claimTag.Account) + $ownAccounts
         $take = Get-TakeOverVerdict -Tag $claimTag.Tag -State ([string]$facts.state) -Records $claimRecords -Url ([string]$facts.url) -Branches $issueBranches `
-                                    -OwnAccounts $ownAccounts -SelfNames $takeSelfNames -BranchAuthors $branchAuthors
+                                    -OwnAccounts $ownAccounts -SelfNames $takeSelfNames -BranchAuthors $branchAuthors `
+                                    -Parked:$Parked -Labels @(@($facts.labels) | ForEach-Object { [string]$_.name })
         $holderText = Format-ForConsole -Text (@($take.Holders) -join ', ')
         switch ($take.Code) {
             'free' {
@@ -1105,6 +1122,14 @@ if ($Tag) {
                 Write-Host "[REFUSED] #$number is held by $holderText -- a different account from this one ($($claimTag.Account))." -ForegroundColor Red
                 Write-Host '          Taking over your own issue from another of your machines is bookkeeping; taking over a' -ForegroundColor Red
                 Write-Host '          colleague''s is a conversation, and a switch cannot have one. Ask them to release it.' -ForegroundColor Red
+                Write-Host '          (A co-owner''s branch parked for review is the one exception: -TakeOver -Parked, #3846.)' -ForegroundColor Red
+                Write-Host "          $($facts.url)" -ForegroundColor Red
+                exit 1
+            }
+            'not-parked' {
+                Write-Host "[REFUSED] #$number is held by $holderText and does not carry 'awaiting-review-dev' -- nothing was taken over." -ForegroundColor Red
+                Write-Host '          -Parked moves a co-owner''s claim only on an issue parked for the owner''s look; without' -ForegroundColor Red
+                Write-Host '          that label the builder may still be mid-flight on it. Ask them to release it.' -ForegroundColor Red
                 Write-Host "          $($facts.url)" -ForegroundColor Red
                 exit 1
             }
@@ -1132,6 +1157,9 @@ if ($Tag) {
                     Write-Host '        It may now read as held by fewer tags than before, but it still reads as held. Run this again.' -ForegroundColor Red
                     Write-Host "        $($facts.url)" -ForegroundColor Red
                     exit 1
+                }
+                if (@($take.Colleagues).Count -gt 0) {
+                    Write-Host "  [take-over] parked for review: the claim of $(Format-ForConsole -Text (@($take.Colleagues) -join ', ')) moves for the owner's approval (#3846)." -ForegroundColor Yellow
                 }
                 Write-Host "  [take-over] removed the marker(s) of $holderText; claiming under $($claimTag.Tag)." -ForegroundColor Yellow
                 $takeOverFrom = @($take.Holders)

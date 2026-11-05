@@ -1891,6 +1891,22 @@ Assert-True ($v.Code -eq 'take' -and $v.Rivals[0].Id -eq 'IC_4') 'a declared own
 $v = Get-TakeOverVerdict -Tag 'DAVE/davekokbwj' -State 'OPEN' -Records @($otherAccount, $colleague) -Branches @('fix/2338-x') -OwnAccounts @('DaveKJohn')
 Assert-True ($v.Code -eq 'foreign-account') 'and declaring one account does not make a second, undeclared holder yours'
 
+# --- a co-owner's branch parked for review (#3846) ---
+$v = Get-TakeOverVerdict -Tag 'DAVE/davekokbwj' -State 'OPEN' -Records @($colleague) -Branches @('fix/2338-x') -Labels @('awaiting-review-dev')
+Assert-True ($v.Code -eq 'foreign-account') 'the review label alone changes nothing -- without -Parked a colleague''s claim still refuses'
+$v = Get-TakeOverVerdict -Tag 'DAVE/davekokbwj' -State 'OPEN' -Records @($colleague) -Branches @('fix/2338-x') -Parked -Labels @('feature', 'Awaiting-Review-Dev')
+Assert-True ($v.Code -eq 'take' -and $v.Rivals[0].Id -eq 'IC_2' -and @($v.Colleagues).Count -eq 1 -and $v.Colleagues[0] -eq 'LAPTOP/maikel-bwj') `
+    '-Parked on an issue carrying the review label takes the co-owner''s claim over, and names whose it was'
+$v = Get-TakeOverVerdict -Tag 'DAVE/davekokbwj' -State 'OPEN' -Records @($colleague) -Branches @('fix/2338-x') -Parked -Labels @('feature')
+Assert-True ($v.Code -eq 'not-parked' -and @($v.Rivals).Count -eq 0) 'and -Parked without the label refuses -- the request is not evidence of the park'
+$v = Get-TakeOverVerdict -Tag 'DAVE/davekokbwj' -State 'OPEN' -Records @($colleague) -Branches @('fix/2338-x') -Parked -Labels @('awaiting-review-client')
+Assert-True ($v.Code -eq 'not-parked') 'the client''s review label is not the owner''s to approve'
+$v = Get-TakeOverVerdict -Tag 'DAVE/davekokbwj' -State 'OPEN' -Records @($colleague) -Branches @() -Parked -Labels @('awaiting-review-dev')
+Assert-True ($v.Code -eq 'no-branch') 'the branch preconditions still hold on a parked take-over'
+$v = Get-TakeOverVerdict -Tag 'DAVE/davekokbwj' -State 'OPEN' -Records @($rival) -Branches @('fix/2338-x') -Parked -Labels @()
+Assert-True ($v.Code -eq 'take' -and @($v.Colleagues).Count -eq 0) 'and -Parked does not get in the way of an own-account take-over'
+Assert-True ($body -match '-Parked only qualifies -TakeOver') 'the script refuses -Parked without -TakeOver'
+
 $own = @(Get-OwnAccountNames -Value ' DaveKJohn, maikel-bwj,,DaveKJohn, bad/name ')
 Assert-True ($own.Count -eq 2 -and $own[0] -eq 'DaveKJohn' -and $own[1] -eq 'maikel-bwj') 'DKJ_OWN_ACCOUNTS: split, trimmed, blanks and repeats dropped, a name with / dropped'
 Assert-True (@(Get-OwnAccountNames -Value $null).Count -eq 0 -and @(Get-OwnAccountNames -Value '').Count -eq 0) 'nothing declared, nothing widened'
