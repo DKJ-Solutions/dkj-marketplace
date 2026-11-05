@@ -613,6 +613,10 @@ $getText = [System.Text.Encoding]::ASCII.GetString($getStream.ToArray())
 $headText = [System.Text.Encoding]::ASCII.GetString($headStream.ToArray())
 Assert-True ($getText.EndsWith("`r`n`r`nNot found.")) 'a GET carries its body'
 Assert-Equal $getText.Substring(0, $getText.Length - $respBody.Length) $headText 'a HEAD sends the same head, Content-Length included, and no body'
+# No response may be framed (#3835): a same-site frame arrives as mode 'navigate' and is served.
+Assert-True ($getText -match "(?m)^Content-Security-Policy: frame-ancestors 'none'\r$") 'every response forbids framing by CSP frame-ancestors'
+Assert-True ($getText -match "(?m)^X-Frame-Options: DENY\r$") '...and by X-Frame-Options, for a browser that reads no CSP'
+Assert-True (-not (Test-LoopbackCrossSite -SecFetchSite 'same-site' -SecFetchMode 'navigate' -Method 'GET')) 'which is why: a same-site navigate GET -- an iframe one included -- passes the request guard'
 
 Write-Host '-- group 2: the hook, end to end' -ForegroundColor Cyan
 
