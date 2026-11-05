@@ -72,7 +72,8 @@
     every session would start another server on the next port. Loopback only, and a request whose Host is not
     localhost:<Port> or 127.0.0.1:<Port> is refused (DNS rebinding), as is one the browser marks as coming
     from another site -- except a same-site top-level GET navigation (the hub's link, the 303 hop, the
-    crumb back), which is a user following a link and is served (Test-LoopbackCrossSite). GET and HEAD only,
+    crumb back), which is a user following a link and is served, and a cross-site one into a document,
+    which is how Claude in Chrome opens a page (#3834) (Test-LoopbackCrossSite). GET and HEAD only,
     but for the banner's POST /api/airsquats/clear.
 
     One request at a time, each answered with Connection: close. A connection whose request head is not
@@ -455,8 +456,8 @@ try {
                 Send-LoopbackResponse $stream 403 'Forbidden' 'text/plain; charset=utf-8' ($utf8.GetBytes('Forbidden: this server answers only to localhost.')) -Method $method
                 continue
             }
-            if (Test-LoopbackCrossSite -SecFetchSite $request.SecFetchSite -SecFetchMode $request.SecFetchMode -Method $method) {
-                Send-LoopbackResponse $stream 403 'Forbidden' 'text/plain; charset=utf-8' ($utf8.GetBytes('Forbidden: another site may not drive this server.')) -Method $method
+            if (Test-LoopbackCrossSite -SecFetchSite $request.SecFetchSite -SecFetchMode $request.SecFetchMode -Method $method -SecFetchDest $request.SecFetchDest) {
+                Send-LoopbackResponse $stream 403 'Forbidden' 'text/plain; charset=utf-8' ($utf8.GetBytes((Format-LoopbackCrossSiteRefusal $request.SecFetchSite $request.SecFetchMode $request.SecFetchDest))) -Method $method
                 continue
             }
             if ($path -eq '/api/airsquats' -or $path.StartsWith('/api/airsquats/')) {

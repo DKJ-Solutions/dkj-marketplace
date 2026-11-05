@@ -777,7 +777,8 @@ storefront) stays mobile-first with desktop as an option. The core (tokens, them
 shared; each layer is a part of [`house-style.css`](house-style.css):
 
 - **Desktop shell** (in [`house-style.css`](house-style.css), the part "Desktop shell: Admin's layer"): a thin bar, a flat side navigation under section headings (Home and the domain objects on top, then Product and Development, Settings in the foot, after the Shopify Admin, #3815), a main pane with a dense
-  list and an optional detail pane, no site header and no cards. Desktop only, with no phone query. Reference:
+  list and an optional detail pane, no site header and no cards. A pane's content stands in a `.shell__body`, and a
+  set of links is an `.admin-list`: an `h2` over a `.table--dense`, a row per link (#3830). Desktop only, with no phone query. Reference:
   [`patterns/admin-shell.html`](patterns/admin-shell.html) and the "Desktop shell" specimens.
 - **Mobile-first app** (the part "App components"): the narrow column, touch targets, dialogs, the top bar, and the
   site header and breadcrumb bar under "Page patterns".
@@ -802,13 +803,11 @@ here is the shared core's and holds in both.
 | No intro under the `h1`, and the `h1` never framed (rules 5 and 6) | holds | holds: the toolbar is a row with a line under it, not a box |
 | [The breadcrumb bar](#every-page-the-breadcrumb-bar): a `.breadcrumbs-bar` above `<main>`, one `--tap` high, on `--primary` | holds | **does not apply.** The trail sits in the `.shell__bar` (the same `nav.breadcrumbs` markup, starting at **Home**), and the shell takes no `.breadcrumbs-bar`. A `<main>` is no pane of the grid: where a pane holds one, its 1080px cap is lifted |
 | [The site header](#the-site-header-above-the-bar) and [its menu](#the-menu-in-the-header) | holds | **does not apply**: the shell's bar and side navigation replace both |
-| [Which shape a page's cards take](#which-shape-a-pages-cards-take), [a long page becomes cards](#every-page-a-long-page-becomes-cards-with-a-page-each) and the hub's [card overview](#the-hub) | holds | **does not apply**: the side navigation is how Admin gets you somewhere, so an overview of card links in the pane repeats it, and a list Admin manages is a `.table--dense`, not cards |
+| [Which shape a page's cards take](#which-shape-a-pages-cards-take), [a long page becomes cards](#every-page-a-long-page-becomes-cards-with-a-page-each) and the hub's [card overview](#the-hub) | holds | **does not apply**: the side navigation is how Admin gets you somewhere, so an overview of card links in the pane repeats it, and a list Admin manages is a `.table--dense`, not cards. Where a page still lists the pages under it, it is an `.admin-list`, a row per page with its description (#3830) |
 | The 44px target ([Focus and targets](#components)) | holds | **does not apply**: 28px rows, above the 24px a pointer needs |
-| The page width (`data-width`, `full`/`fluid`/`phone`), `.page-column` and the settings panel's Width control | holds | **does not apply**: the panes fill the window, so the shell mounts `DKJTheme.settings` with `widths: false` |
+| The page width (`data-width`, `full`/`fluid`/`phone`), `.page-column` and the settings panel's Width control | holds | **does not apply**: the panes fill the window, so the shell mounts `DKJTheme.settings` with `widths: false`, and a pane's content stands in a `.shell__body` |
+| The hub's fit alarm | reads the page: the document past the window, the `h1`, the bar's trail | reads the shell (#3830): the main pane past its own height (a pane holding a `.table--dense` scrolls by design), the `.toolbar > h1` and the `.shell__bar` trail |
 
-**What is not moved yet.** The hub's pages still render their card overviews and the old page column inside the
-shell's main pane, and the hub's fit alarm still reads the product's page structure (the bar's trail and the
-`h1`): moving both to the shell is the hub's step on #3811.
 
 ## Page patterns
 

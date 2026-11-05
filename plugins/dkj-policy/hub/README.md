@@ -327,9 +327,13 @@ own language; a request for one of the four paths on its own server is best answ
 no server answers as this checkout's.
 
 **Ports do not count toward "site", so the links between the servers are same-site navigations.** The
-Fetch Metadata check both plugin servers (and the source repo's) apply refuses `cross-site` always, and
-`same-site` unless it is a top-level `GET` navigation (`Sec-Fetch-Mode: navigate`): the product's link on
-the hub and the 303 to an opted-out repo's hub are served, a same-site fetch or image request is not.
+Fetch Metadata check both plugin servers (and the source repo's) apply refuses `same-site` unless it is a
+top-level `GET` navigation (`Sec-Fetch-Mode: navigate`): the product's link on the hub and the 303 to an
+opted-out repo's hub are served, a same-site fetch or image request is not. **`cross-site` is refused
+unless it is that same navigation into a document of its own** (`Sec-Fetch-Dest: document`, #3834), which
+is how Claude in Chrome opens a page: its initiator is the extension. Another site can then send the user
+to a page but never read it, and the one GET with an effect, `/refresh`, is rate-limited. A frame stays
+refused, because the pages send no `frame-ancestors`. The 403 names the three headers it judged.
 
 ## The banner, in sync on every machine
 
