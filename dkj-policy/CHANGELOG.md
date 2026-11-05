@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**12 / 14 minor entries** <!-- pending-tally -->
+**12 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/3852-skill-breadcrumb-shell · 20261105-181439Z
+
+The `dkj-brandbook` skill no longer tells a session that Admin's pages open with the breadcrumb bar: a product
+page does, and an Admin page carries its trail in the desktop shell's bar
+([#3852](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3852)). The failure it prevents: a session
+building an Admin page from the skill adds a breadcrumb bar above the shell.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+The dkj-brandbook skill says Admin's shell carries its trail in its bar, not a breadcrumb bar
+
+Plugins: dkj-solutions
+
+[PR #3854](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3854)
+
+---
 
 ### DEPLOY: docs/3851-site-header-settings · 20261105-180005Z
 
