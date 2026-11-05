@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**3 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3829-reviews-resolve-look-step · 20261105-141408Z
+
+`issues-sweep-reviews` now resolves a parked branch's "the owner looks" step with the approval before it
+ships, and `issues-sweep` step 6 does the same. Without it `open-pr`'s step gate refused every branch the
+skill was meant to ship.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+An owner who approves parked visible results in one `/issues-sweep-reviews` pass sees them ship, instead of
+every one being refused on its own plan.
+
+**Score:** 3
+
+#### Pull Request
+
+issues-sweep-reviews: resolve the plan's owner-look step before ship-pr
+
+Plugins: dkj-policy
+
+[PR #3833](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3833)
+
+---
 
 ### DEPLOY: feat/3818-admin-objects-seam · 20261105-140226Z
 
