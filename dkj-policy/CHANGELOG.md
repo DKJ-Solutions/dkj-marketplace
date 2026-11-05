@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**11 / 11 minor entries** <!-- pending-tally -->
+**12 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3846-parked-review-takeover · 20261105-170739Z
+
+`/issues-sweep-reviews` can now approve and ship a branch a co-owner parked for review: its claim step
+runs `claim-issue.ps1 -Tag -TakeOver -Parked`, which moves another account's claim only when the issue
+carries `awaiting-review-dev` ([#3846](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3846)).
+Outside a parked review the colleague refusal is unchanged (#2207).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A repo with two owners no longer has its review pass hold out half the parked work; whichever owner
+types the command can approve the other's branch, and the approval comment names whose work it was.
+
+**Score:** 2
+
+#### Pull Request
+
+issues-sweep-reviews: let an owner approve a co-owner's parked branch
+
+Plugins: dkj-policy
+
+[PR #3848](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3848)
+
+---
 
 ### DEPLOY: feat/3831-brandbook-product-split · 20261105-165433Z
 
