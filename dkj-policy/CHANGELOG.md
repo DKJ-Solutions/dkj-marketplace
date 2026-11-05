@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**5 / 5 minor entries** <!-- pending-tally -->
+**6 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3835-loopback-frame-ancestors · 20261105-145612Z
+
+Every page the hub and the product's dev server answer with now carries `Content-Security-Policy: frame-ancestors
+'none'` and `X-Frame-Options: DENY`. Until now a page on another localhost port could frame them, because a
+same-site frame passes the request guard as a navigation. That has not been seen to happen. The point is
+that the airsquats `POST /api/airsquats/clear` can no longer be click-jacked from a frame.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+Nothing changes that the user sees. It closes a framing route before anything uses it, which is the whole point of a
+second barrier.
+
+**Score:** 1
+
+#### Pull Request
+
+Loopback servers: send frame-ancestors 'none' as a second barrier against framing
+
+Plugins: dkj-policy
+
+[PR #3838](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3838)
+
+---
 
 ### DEPLOY: feat/3830-admin-fully-in-shell · 20261105-144508Z
 
