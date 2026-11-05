@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**3 / 4 minor entries** <!-- pending-tally -->
+**4 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/sweep-reviews · 20261105-130532Z
+
+A new skill, `issues-sweep-reviews`, approves and ships every issue parked on `awaiting-review-dev` in one pass. Each issue gets an approval comment and loses its label, and its parked branch goes through `ship-pr` (open, merge, fold). Only a person can run it, because typing the command is the owner's permission to merge a visible result. It never touches `awaiting-review-client`, and it holds out any issue without exactly one parked branch, any branch a colleague claims and any ship that is refused. Until now each parked branch had to be shipped by hand, one at a time.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+An owner who has a pile of visible results parked by `sweep-issues` ships them all with one command, instead of one round per branch.
+
+**Score:** 3
+
+#### Pull Request
+
+issues-sweep-reviews: ship every awaiting-review-dev issue on the owner's word
+
+Plugins: dkj-policy
+
+[PR #3826](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3826)
+
+---
 
 ### DEPLOY: docs/3811-page-pattern-layers · 20261105-125420Z
 
