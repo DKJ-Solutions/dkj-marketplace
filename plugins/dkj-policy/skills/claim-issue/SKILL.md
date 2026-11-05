@@ -112,6 +112,11 @@ parameters is the [`issues-sweep`](../issues-sweep/SKILL.md) skill; what they do
   that never ran `-Tag` leaves only its branch. There the check is **who wrote the branch**: exactly one
   branch on origin, and every commit on it off the trunk authored under one of this checkout's names.
   One foreign author refuses, and so does an author list that could not be read.
+- **`-Parked`** (with `-TakeOver`) -- also move a **co-owner's** claim, and only when the issue carries
+  `awaiting-review-dev` (#3846). That label says the builder parked the branch for the owner's look, so
+  nobody is still working on it, which is the case the colleague refusal guards (#2207).
+  `issues-sweep-reviews` passes it, because typing that command is an owner's word. Without the label it
+  refuses as `not parked`, and the one-branch precondition still holds.
 - **`DKJ_OWN_ACCOUNTS`** (environment variable, not a parameter) -- a comma list of the **other accounts
   you work under**, e.g. a work login at the office and a personal one at home (#2394). They count as
   yours for `-TakeOver` and for the parked-fix scan's `NOT YOURS` verdict; an account not listed stays a

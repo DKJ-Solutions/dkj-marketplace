@@ -71,12 +71,17 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 Exit 0 means this tag holds it. On anything else, take it over:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/claim-issue.ps1" <n> -Tag -TakeOver
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/claim-issue.ps1" <n> -Tag -TakeOver -Parked
 ```
 
-`-TakeOver` moves a claim from the owner's other machine to this one, and **refuses a colleague's claim
-outright**. That refusal holds the issue out. The owner's word covers the owner's own work, not a branch
-somebody else is still holding.
+`-TakeOver` moves a claim from the owner's other machine to this one. **`-Parked` also moves a
+co-owner's claim, and only on an issue that carries `awaiting-review-dev`** (#3846). Where the repo's own
+facts name more than one owner, each of them can approve a visible result, whoever built it. The
+colleague refusal exists to keep a session off a branch somebody is still working on (#2207), and a branch
+parked for review has no such session: its builder stopped and handed it to the owner's look. Without the
+label the claim refuses as `not parked`, and the branch preconditions (exactly one branch on `origin`)
+hold as before. A refusal holds the issue out. When the work was a co-owner's, the approval comment in
+step 3 says so: *"Approved (<owner>, <date>) ... Shipping <branch>, built by <co-owner>."*
 
 In the source repo, run its own copies of these scripts (`scripts/task/...`, `scripts/release/...`)
 rather than `${CLAUDE_PLUGIN_ROOT}`, for the reason [`ship-pr`](../ship-pr/SKILL.md) gives.
@@ -132,7 +137,7 @@ Then the next issue from step 0's list, in the same turn, until the list is empt
 ### 6. Close out once, after the list
 
 In the ordinary receipt shape: the PR number of each issue shipped, and the number of each one held out
-with a clause for why (no branch, two branches, a colleague's claim, a refused ship).
+with a clause for why (no branch, two branches, a claim that would not move, a refused ship).
 
 ## What it never does
 
