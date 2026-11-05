@@ -2,7 +2,30 @@
 
 ## [Unreleased]
 
-**8 / 8 minor entries** <!-- pending-tally -->
+**9 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3841-frame-ancestors-sentences · 20261105-153137Z
+
+The hub's README no longer says that its pages can be framed by a page that is not refused. Since #3835 every response
+forbids framing, and the paragraph on the Fetch Metadata check now says so.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+It corrects a contradiction between two merged branches. Nothing about the behaviour changes.
+
+**Score:** 1
+
+#### Pull Request
+
+Hub: the docs say the loopback pages forbid framing, as they do since #3835
+
+Plugins: dkj-policy
+
+[PR #3844](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3844)
+
+---
 
 ### DEPLOY: docs/3839-closeout-offers-the-fix · 20261105-151649Z
 
