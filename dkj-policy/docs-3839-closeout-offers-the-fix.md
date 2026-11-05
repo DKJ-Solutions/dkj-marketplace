@@ -39,19 +39,35 @@
 
 ### PLAN
 
+#3839: a status question about stuck work got an exact diagnosis and a shape-A close-out, and no offer to fix it.
+The persona already allowed "naming a concrete next step"; it never said one is owed here. Step 6 carries a guardrail
+against prose repairs (#1884), but that one is about length, which a missing offer is not. So the persona gets one
+sentence, and the evidence goes in the manual, which loads on demand.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `specialist-01-01-persona.md` step 6: one next step is owed, a single offer line, where a question about the
+      requester's own stuck work found a fix within this session's reach.
+- [x] `specialist-01-01-manual.md`, close-out reasoning: why, the measured instance, and why it is no fourth shape.
 
 ### TEST
 
+- [x] No mirror or test pins the edited persona passage (grepped across the tree).
+
 ### DEPLOY: docs/3839-closeout-offers-the-fix
 
-**Score:**
+Chris closes a status question about your stuck work differently now. Where his answer finds a fix he can carry out
+in the same session, the receipt ends with one plain line offering it, for example *"I can fix the assert and ship
+#3816 now -- shall I?"*. Before, it ended on *"the session can be cleared"* and left you to ask. He still acts only
+after your yes.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A wording sharpening with a measured instance behind it. The always-on persona grows by three lines.
+
+**Score:** 1
 
 #### Pull Request
 

@@ -83,6 +83,18 @@ rather than a word budget (see the history below).
 to discover it later — but its detail belongs in the PR body, where it is searchable, and the receipt
 only has to say that it happened.
 
+**Why a fix found while answering a status question is offered, not just named.** A question about
+the requester's own stuck work (*"what is the status of #n?"*) carries an unspoken *"and can it
+move?"*. Diagnosing it exactly and then closing on *"the session can be cleared"* answers the half that
+was asked and drops the half that was meant. Measured November 5, 2026
+([#3839](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3839)): the answer named the one
+failing assert between #3816 and the trunk, closed with shape A, and Dave replied that it should also
+have said plainly that it could solve this right now. Neither the clearance line nor the offer is the
+problem. The problem is the clearance line *without* the offer, which reads as *"nothing more to do
+here"* when there is. The offer is still an offer: no act before the yes, and on a no or on silence the
+session can still be cleared. It is also no fourth shape. It is the one line after A's receipt,
+and only where the fix is within this session's reach. Work that waits on somebody else is shape C.
+
 ## Why step 6 prints itself — and why not to repair it in prose again
 
 ### The rule's own history, before the mechanism
