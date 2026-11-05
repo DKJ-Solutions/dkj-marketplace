@@ -5,7 +5,7 @@
    tuned by hand. Spacing and font sizes come from the Figma library's scales
    (Shopify Theme - LIBRARY); every other value is the dashboard's own.
    Self-contained: no external requests, no web fonts (system font stack only).
-   Use it inline in a <style> block (local HTML, a Toolbox page) or as a stylesheet.
+   Use it inline in a <style> block (local HTML, an Admin page) or as a stylesheet.
 
    Theme mechanism (keep exactly as is):
      - Twelve themes, each a mode plus a primary colour, set as
@@ -586,10 +586,10 @@ p { margin: 0; }
 .theme-settings__width { justify-self: start; height: var(--tap); }   /* the page width: a .seg at tap height */
 
 /* ==========================================================================
-   Desktop shell: the Toolbox's layer, desktop only (Dave, November 4, 2026, #3811).
-   The Toolbox is always a desktop tool, read in VS Code's Simple Browser: an Explorer or a task
+   Desktop shell: Admin's layer, desktop only (Dave, November 4, 2026, #3811; Admin since #3815).
+   Admin is always a desktop tool, read in VS Code's Simple Browser: an Explorer or a task
    board, not a website. No site header, no breadcrumb bar and no cards: a thin bar across the
-   top, then a side tree, a main pane and an optional detail pane, each scrolling on its own and
+   top, then a side navigation, a main pane and an optional detail pane, each scrolling on its own and
    told apart by 1px lines instead of whitespace or shadows. Everything is compact (28px rows).
    DESKTOP ONLY: this layer has no phone media query and no 44px touch target (its rows are 28px, and it takes no .btn--touch), and it must not be
    used for the mobile-first product, which takes "App components" below. Markup: use div, nav,
@@ -599,7 +599,7 @@ p { margin: 0; }
    fills (--positive-3, --warning-3, --negative-3) as a dot that always sits beside a text label.
    Lines are --bg-3 inside a pane and --bg-4 between panes. The classes are .shell (with --fit and
    --no-aside), .shell__bar, .shell__actions, .shell__nav, .shell__main, .shell__list,
-   .shell__aside, .shell__aside-body, .tree (with __item, __chev, __label, __count), .toolbar (with __title,
+   .shell__nav-foot, .shell__aside, .shell__aside-body, .nav-list, .nav-item (with __label, __count), .toolbar (with __title,
    __filter, __end), .pane-head, .table--dense and .dot (with --good, --warn, --bad).
    ========================================================================== */
 
@@ -625,27 +625,26 @@ p { margin: 0; }
 .shell__bar .breadcrumbs__sep svg { width: var(--spacing-4); height: var(--spacing-4); }
 .shell__bar .breadcrumbs [aria-current='page'] { color: var(--primary); font-weight: var(--font-weight-bold); }
 .shell__actions { display: flex; align-items: center; gap: var(--spacing-1); flex: none; }
-/* The settings button, small: the 44px touch size is for a phone, and the Toolbox has none. */
+/* The settings button, small: the 44px touch size is for a phone, and Admin has none. */
 .shell__bar .theme-settings__toggle { width: var(--spacing-7); height: var(--spacing-7); }
 .shell__bar .theme-settings__toggle svg { width: var(--spacing-4-5); height: var(--spacing-4-5); }
 .shell .btn { padding: var(--spacing-0-5) var(--spacing-2); line-height: var(--spacing-5); border-radius: var(--radius-1-5); }
 
-/* ---- The side tree ----------------------------------------------------------- */
-.shell__nav { min-width: 0; overflow-y: auto; padding-bottom: var(--spacing-2); background: var(--bg-2); border-right: 1px solid var(--bg-4); }
-.tree, .tree ul { margin: 0; padding: 0; list-style: none; }
-.tree ul { padding-left: var(--spacing-3-5); }   /* one indent step: the width of a chevron */
-.tree__item { display: flex; align-items: center; gap: var(--spacing-1-5); width: 100%; height: var(--shell-row-h); padding: 0 var(--spacing-3) 0 var(--spacing-2);
+/* ---- The side navigation: flat, under section headings (#3815) ------------------- */
+/* After the Shopify Admin: Home and the domain objects at the top level, secondary areas under a
+   .pane-head section heading, never a tree, and Settings pinned to the foot. */
+.shell__nav { display: flex; flex-direction: column; min-width: 0; overflow-y: auto; padding: var(--spacing-1) 0 var(--spacing-2); background: var(--bg-2); border-right: 1px solid var(--bg-4); }
+.shell__nav > .pane-head { margin-top: var(--spacing-2); }
+.nav-list { margin: 0; padding: 0; list-style: none; }
+.nav-item { display: flex; align-items: center; gap: var(--spacing-1-5); width: 100%; height: var(--shell-row-h); padding: 0 var(--spacing-3);
   background: none; border: 0; border-radius: 0; color: var(--fg-1); font: inherit; text-align: left; text-decoration: none; white-space: nowrap; cursor: pointer; }
-.tree__item:hover { background: var(--bg-3); }
-.tree__item:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: -2px; }
-.tree__item[aria-current="page"] { background: var(--bg-3); color: var(--primary); font-weight: var(--font-weight-bold); box-shadow: inset 2px 0 0 var(--primary); }
-/* A leaf has no chevron, so it takes the chevron's width as padding and its label lines up with a group's. */
-.tree li > a.tree__item { padding-left: calc(var(--spacing-2) + var(--spacing-3-5) + var(--spacing-1-5)); }
-.tree__chev { flex: none; width: var(--spacing-3-5); height: var(--spacing-3-5); color: var(--primary-muted); }
-.tree__item[aria-expanded="true"] > .tree__chev { transform: rotate(90deg); }
-.tree__item[aria-expanded="false"] + ul { display: none; }
-.tree__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.tree__count { margin-left: auto; padding-left: var(--spacing-2); font-size: var(--text-xs); font-variant-numeric: tabular-nums; color: var(--primary-muted); }
+.nav-item:hover { background: var(--bg-3); }
+.nav-item:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: -2px; }
+.nav-item[aria-current="page"] { background: var(--bg-3); color: var(--primary); font-weight: var(--font-weight-bold); box-shadow: inset 2px 0 0 var(--primary); }
+.nav-item__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.nav-item__count { margin-left: auto; padding-left: var(--spacing-2); font-size: var(--text-xs); font-variant-numeric: tabular-nums; color: var(--primary-muted); }
+/* The foot: Settings (and the account), pinned to the bottom of the navigation however short it is. */
+.shell__nav-foot { margin-top: auto; padding-top: var(--spacing-2); border-top: 1px solid var(--bg-3); }
 
 /* ---- Pane heading: a small label over a pane's content ------------------------------ */
 .pane-head { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-2); height: var(--shell-row-h); margin: 0; padding: 0 var(--spacing-3);
@@ -684,7 +683,7 @@ p { margin: 0; }
 /* ==========================================================================
    App components: the MOBILE-FIRST product layer (phone first, desktop as an option), lifted from
    MesoWise. The storefront and every product take this part, with the site header and the
-   breadcrumb bar below; the Toolbox does not: it takes the desktop shell above (Dave,
+   breadcrumb bar below; Admin does not: it takes the desktop shell above (Dave,
    November 4, 2026, #3811).
    A form field, touch buttons, a dialog, a side drawer, a top bar and a menu list. Domain
    components stay in the app. Touch targets are at least --tap (44px) high. Every colour

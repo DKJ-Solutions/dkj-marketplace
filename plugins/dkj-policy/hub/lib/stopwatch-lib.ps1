@@ -31,15 +31,15 @@
     label, and the prompt that starts its run removes the entry.
 
     THREE PAGES, ALL READ-ONLY AND BARE (no lead or tiles above their content, only the hub's airsquats banner,
-    which is on every hub page, #3356; the plugin's Format-GeneralPageHtml -Bare). '/stopwatch' is an overview of
+    which is on every hub page, #3356; the plugin's Format-GeneralPageHtml -Bare). '/dev/stopwatch' is an overview of
     cards under an h1 naming the page, ONE PER PROMPT LABEL, three to a row (the owner, October 24, 2026): an h2 with the
-    label's short title, when a run of it starts and stops, and its newest run's time with its change against the run before it (or that run's live clock). Each links to '/stopwatch/<label slug>'
+    label's short title, when a run of it starts and stops, and its newest run's time with its change against the run before it (or that run's live clock). Each links to '/dev/stopwatch/<label slug>'
     (Get-StopwatchSlugs), the label's page, which holds ONE CARD PER RUN of that label, never merged (the owner,
     October 23, 2026: runs of one label were merged into one card twice): named by the run's start, with its label,
     its time and its change against the previous run of the same label, in the hub's own card markup. Each run card
-    links to '/stopwatch/<label slug>/<run slug>', the run's page under its label's, as its crumbs read: its time,
+    links to '/dev/stopwatch/<label slug>/<run slug>', the run's page under its label's, as its crumbs read: its time,
     that change and its transcript phases. A run's slug is its start (ConvertTo-StopwatchModel); a bare
-    '/stopwatch/<run slug>' redirects there, and an unknown slug is a 404. A label page and a run page name the label
+    '/dev/stopwatch/<run slug>' redirects there, and an unknown slug is a 404. A label page and a run page name the label
     by its short title (Get-StopwatchShortTitle), as its card does (the owner, October 25, 2026).
 
     THE CLOCK IS THE HOOKS', NOT THE PAGE'S. A run is a start stamp and an end stamp in the store, and the page
@@ -78,7 +78,7 @@
 $script:StopwatchLabelMax = 80
 # Every Stopwatch and Logbook page sits in the Clock section of the hub's Performance page (a page of its own from
 # October 27 until Dave made it a section on November 3, 2026), under Claude (November 2, 2026), so its trail reads
-# Home > Claude > Performance > ...: Get-HubGroupCrumbs -Href '/clock', where the section is no crumb.
+# Home > Claude > Performance > ...: Get-HubGroupCrumbs -Href '/dev/clock', where the section is no crumb.
 
 # The step log's reader (#3338), for a ship's steps: dkj-policy's own copy, beside hub/ in the plugin. Guarded: a
 # tree that copies this file alone keeps one ship phase.
@@ -300,7 +300,7 @@ function Import-HubTimingOrphanStore {
         Adopts the timing stores a checkout left behind (#3780), once per store folder. The key stays the path hash
         (Get-HubRepoKey, the #3470 isolation), so renaming a checkout's folder gives it a new key, and its runs stayed
         under the old one: measured on #3780, the source repo's rename from dkj-claude-plugins to dkj-marketplace
-        emptied its /stopwatch overview, and its share published the empty store to origin.
+        emptied its /dev/stopwatch overview, and its share published the empty store to origin.
 
         ONLY AN ORPHAN IS ADOPTED (Get-HubTimingStoreVerdict: no existing checkout owns it, and its own folder says it
         was this repo's), and from it only the runs whose StartHead is a commit in this repo (Merge-HubTimingRunStore).
@@ -683,7 +683,7 @@ function Start-StopwatchScriptRun {
         if ($store.Skipped) { Copy-Item -LiteralPath $StorePath -Destination "$StorePath.bak" -Force -ErrorAction SilentlyContinue }
         $norm = ConvertTo-StopwatchLabel -Text $Label
         Save-StopwatchStore -Path $StorePath -Runs $r.Runs -Prepared @($store.Prepared | Where-Object { $_.Label -ine $norm })
-        return "Stopwatch: timing this run as `"$norm`" on the hub's /stopwatch page."
+        return "Stopwatch: timing this run as `"$norm`" on the hub's /dev/stopwatch page."
     } catch {
         return ''
     } finally {
@@ -1302,7 +1302,7 @@ function Format-StopwatchRunCard {
         by its short title (Get-StopwatchShortTitle). -CardTones (fast, medium or slow by run id) colours a finished run's
         card green, orange or red.
     #>
-    param([Parameter(Mandatory = $true)][hashtable]$Group, [string]$Route = '/stopwatch', [datetime]$Now = [datetime]::UtcNow, [switch]$NoDelta, [hashtable]$CardNotes = @{}, [hashtable]$CardTones = @{}, [switch]$ShortLabel)
+    param([Parameter(Mandatory = $true)][hashtable]$Group, [string]$Route = '/dev/stopwatch', [datetime]$Now = [datetime]::UtcNow, [switch]$NoDelta, [hashtable]$CardNotes = @{}, [hashtable]$CardTones = @{}, [switch]$ShortLabel)
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $stamp = $Group.Latest.ToLocalTime().ToString('yyyy-MM-dd HH:mm', [Globalization.CultureInfo]::InvariantCulture)
     $label = if ($ShortLabel) { Get-StopwatchShortTitle $Group.Label } else { $Group.Label }
@@ -1337,10 +1337,10 @@ function Format-StopwatchLabelCard {
             elseif (-not @($Set.Groups).Count) { '<span class="sw-time">No run yet</span>' }
             else { Format-StopwatchCardTime -Group $Set.Groups[0] -Now $Now }
     if ($Set.Prepared -and -not @($Set.Groups).Count) {
-        return Format-HubCardLinkHtml -Href ('/stopwatch/' + $Set.Slug) -Label (Get-StopwatchShortTitle $Set.Title) -Heading 2 -Class 'sw-card' -ValueHtml $time `
+        return Format-HubCardLinkHtml -Href ('/dev/stopwatch/' + $Set.Slug) -Label (Get-StopwatchShortTitle $Set.Title) -Heading 2 -Class 'sw-card' -ValueHtml $time `
             -SubHtml ('Ready, not started: no clock is running. Start it by sending a prompt whose first line is <code>stopwatch: ' + (& $e $Set.Title) + '</code>.')
     }
-    return Format-HubCardLinkHtml -Href ('/stopwatch/' + $Set.Slug) -Label (Get-StopwatchShortTitle $Set.Title) -Heading 2 -Class 'sw-card' -ValueHtml $time `
+    return Format-HubCardLinkHtml -Href ('/dev/stopwatch/' + $Set.Slug) -Label (Get-StopwatchShortTitle $Set.Title) -Heading 2 -Class 'sw-card' -ValueHtml $time `
         -SubHtml ('From the prompt <code>stopwatch: ' + (& $e $Set.Title) + '</code> until ' + $stop + '.')
 }
 
@@ -1409,7 +1409,7 @@ function Get-StopwatchShortTitle {
 
 function Format-StopwatchPageHtml {
     <#
-        The overview on '/stopwatch', read-only, and bare (no lead or tiles; the general banner stays, #3356): it opens on the
+        The overview on '/dev/stopwatch', read-only, and bare (no lead or tiles; the general banner stays, #3356): it opens on the
         banner, then a Stopwatch h1 with one card per prompt label, three to a row (Format-StopwatchLabelCard), linking the label's own
         page (Format-StopwatchLabelPageHtml), which holds that label's run cards (the owner, October 24, 2026). -Flat,
         the Logbook's, shows the run cards themselves (Format-StopwatchRunCard) under that same h1 instead. Five
@@ -1434,7 +1434,7 @@ function Format-StopwatchPageHtml {
         [switch]$Fetching,
         [Nullable[datetime]]$LastFetched = $null,
         [datetime]$Now = [datetime]::UtcNow,
-        [string]$Route = '/stopwatch',
+        [string]$Route = '/dev/stopwatch',
         [string]$PageTitle = 'Stopwatch',
         [AllowEmptyString()][string]$FooterNote = '',
         [switch]$NoDelta,
@@ -1505,16 +1505,16 @@ function Format-StopwatchPageHtml {
         'Built by its <code>hub/lib/stopwatch-lib.ps1</code>.' }
     # Bare, with no lead (the owner, October 24, 2026): the overview's h1 names it, the Logbook's breadcrumb does, and the footer says
     # how a run starts.
-    return Format-GeneralPageHtml -Title $PageTitle -Style $shell.Style -Body ($body.ToString() + $shell.Script) -Lead '' -Bare -ParentCrumbs @(Get-HubGroupCrumbs -Href '/clock') `
+    return Format-GeneralPageHtml -Title $PageTitle -Style $shell.Style -Body ($body.ToString() + $shell.Script) -Lead '' -Bare -ParentCrumbs @(Get-HubGroupCrumbs -Href '/dev/clock') `
         -SiteName $RepoName -HubHref $HubHref -FooterNote $note
 }
 
 function Format-StopwatchLabelPageHtml {
     <#
-        One prompt label's page on '/stopwatch/<label slug>' (the owner, October 24, 2026), bare like the overview:
+        One prompt label's page on '/dev/stopwatch/<label slug>' (the owner, October 24, 2026), bare like the overview:
         an h2 with the label's short title, and under it one card per run of that label, newest first
         (Format-StopwatchRunCard), each linking the run's own page under this one. -Set is one of
-        Get-StopwatchLabelSets. The crumbs lead back to '/stopwatch'.
+        Get-StopwatchLabelSets. The crumbs lead back to '/dev/stopwatch'.
     #>
     param(
         [Parameter(Mandatory = $true)][hashtable]$Set,
@@ -1531,7 +1531,7 @@ function Format-StopwatchLabelPageHtml {
     [void]$body.AppendLine('<div><h1>' + (& $e $title) + '</h1></div>')
     [void]$body.AppendLine('<div class="sw-groups">')
     [void]$body.AppendLine('<div class="card-grid sw-grid">')
-    foreach ($g in @($Set.Groups)) { [void]$body.AppendLine((Format-StopwatchRunCard -Group $g -Route ('/stopwatch/' + $Set.Slug) -Now $Now -ShortLabel)) }
+    foreach ($g in @($Set.Groups)) { [void]$body.AppendLine((Format-StopwatchRunCard -Group $g -Route ('/dev/stopwatch/' + $Set.Slug) -Now $Now -ShortLabel)) }
     # A pinned label before its first run (Get-StopwatchOverviewSets): one card saying so, where the runs will stand.
     if (-not @($Set.Groups).Count) {
         $none = if ($Set.Prepared) { 'Ready, not started: no clock is running. Start it by sending a prompt whose first line is <code>stopwatch: ' + (& $e $Set.Title) + '</code>; the run lands here.' } else { 'No run yet. The first one sets the baseline for this label.' }
@@ -1560,17 +1560,17 @@ function Format-StopwatchLabelPageHtml {
     $scriptRoute = if ($Set.Title -eq $script:StopwatchReleaseLabel) { ', or that <code>cut-release.ps1</code> started itself when no run was going' } else { '' }
     $note = 'Every run whose prompt began with <code>stopwatch: ' + (& $e $Set.Title) + '</code>' + $scriptRoute + ', labels compared case-insensitively, each against the run of this label before it. ' +
         'Kept on this machine in <code>' + (& $e $StorePath) + '</code>' + $(if ($Shared) { ' and shared with the other machines through <code>refs/stopwatch/&lt;machine&gt;</code> on origin' } else { ', not shared with other machines' }) + '. Built by the dkj-policy plugin''s <code>hub/lib/stopwatch-lib.ps1</code>.'
-    return Format-GeneralPageHtml -Title $title -Style $shell.Style -Body ($body.ToString() + $shell.Script) -Lead '' -Bare -ParentCrumbs (@(Get-HubGroupCrumbs -Href '/clock') + @(@{ Label = 'Stopwatch'; Href = '/stopwatch' })) `
+    return Format-GeneralPageHtml -Title $title -Style $shell.Style -Body ($body.ToString() + $shell.Script) -Lead '' -Bare -ParentCrumbs (@(Get-HubGroupCrumbs -Href '/dev/clock') + @(@{ Label = 'Stopwatch'; Href = '/dev/stopwatch' })) `
         -SiteName $RepoName -HubHref $HubHref -FooterNote $note
 }
 
 function Format-StopwatchRunPageHtml {
     <#
-        One run's page on '/stopwatch/<slug>' (#3323), titled with the run's start and its label beneath. A run going
+        One run's page on '/dev/stopwatch/<slug>' (#3323), titled with the run's start and its label beneath. A run going
         now shows its live clock; a finished one its transcript phases, a row and a bar each, closed by
         its total time with its change against the previous run of the same label (-Transcript, by run id,
         from Get-StopwatchTranscriptCache; a run it lacks says so). -Group is one group of ConvertTo-StopwatchModel.
-        The crumbs lead back to '/stopwatch', or to -Route under -ParentLabel for the Logbook (#3364), whose
+        The crumbs lead back to '/dev/stopwatch', or to -Route under -ParentLabel for the Logbook (#3364), whose
         -FooterNote is its own, whose -NoDelta leaves out the change against the run before, and whose -TimeNote stands
         beside the run's total: its work time. -LabelCrumb puts the run's label page (Format-StopwatchLabelPageHtml)
         between the parent and the run, as the Stopwatch's run pages have it, and names the label by its short title
@@ -1581,7 +1581,7 @@ function Format-StopwatchRunPageHtml {
         [AllowEmptyString()][string]$StorePath = '',
         [hashtable]$Transcript = @{},
         [datetime]$Now = [datetime]::UtcNow,
-        [string]$Route = '/stopwatch',
+        [string]$Route = '/dev/stopwatch',
         [string]$ParentLabel = 'Stopwatch',
         [AllowEmptyString()][string]$FooterNote = '',
         [switch]$NoDelta,
@@ -1591,7 +1591,7 @@ function Format-StopwatchRunPageHtml {
         [string]$HubHref = '/',
         [switch]$Shared
     )
-    $crumbs = @(Get-HubGroupCrumbs -Href '/clock') + @(@{ Label = $ParentLabel; Href = $Route })
+    $crumbs = @(Get-HubGroupCrumbs -Href '/dev/clock') + @(@{ Label = $ParentLabel; Href = $Route })
     $label = if ($LabelCrumb) { Get-StopwatchShortTitle $Group.Label } else { [string]$Group.Label }
     if ($LabelCrumb -and $Group.LabelSlug) { $crumbs += @{ Label = $label; Href = $Route + '/' + $Group.LabelSlug } }
     $e = { param($v) ConvertTo-GeneralPageText $v }

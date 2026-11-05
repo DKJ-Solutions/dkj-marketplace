@@ -224,11 +224,11 @@ Assert-True ($html -match '<li><a href="/consumers" aria-current="page">Consumer
 # Five since the register notes' style went with them (October 28, 2026).
 Assert-True (([regex]::Matches($html, 'var\(--(primary|fg-|bg-)')).Count -ge 5 -and $html -match 'class="cd-link"') 'the chosen theme reaches the page beyond its buttons, through the repo layer''s own theme-colour accents'
 Assert-True ($html -notmatch 'class="eyebrow"' -and $html -match '<header class="site-header"><div class="container"><a class="site-header__brand" href="/"' -and $html -match '<h1>Other repos</h1>' -and $html -match '<main class="page-column">') 'the page keeps the hub frame: the site header in place of the eyebrow, its own h1, the page column'
-Assert-True ($html -match 'house-theme\.js"></script>\s*<script>DKJTheme\.setWidth\("full"\);</script>' -and $html -notmatch 'width-bar') 'the page pins the width to full, as the Toolbox does, and draws no width bar (Dave, November 4, 2026)'
+Assert-True ($html -match 'house-theme\.js"></script>\s*<script>DKJTheme\.setWidth\("full"\);</script>' -and $html -notmatch 'width-bar') 'the page pins the width to full, as Admin does, and draws no width bar (Dave, November 4, 2026)'
 Assert-True ($html -match '(?s)<body>\s*<header class="site-header">.*?</header>\s*<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>\s*<li><a href="/">Home</a></li>\s*<li><span class="breadcrumbs__sep" aria-hidden="true"><svg\ viewBox="0\ 0\ 24\ 24"><path\ fill="currentColor"\ fill-rule="evenodd"\ d="M9\.793\ 16\.707a1\ 1\ 0\ 0\ 1\ 0-1\.414L13\.086\ 12\ 9\.793\ 8\.707a1\ 1\ 0\ 0\ 1\ 1\.414-1\.414l4\ 4a1\ 1\ 0\ 0\ 1\ 0\ 1\.414l-4\ 4a1\ 1\ 0\ 0\ 1-1\.414\ 0"\ clip-rule="evenodd"/></svg></span><a href="/consumers">Consumers</a></li>\s*<li><span class="breadcrumbs__sep" aria-hidden="true"><svg[^>]*><path[^>]*/></svg></span><span aria-current="page">Other repos</span></li>') 'the site header opens <body> and the breadcrumb bar, its trail from the hub through Consumers to the group (#3090, #3097)'
 Assert-True (([regex]::Matches($html, '<header')).Count -eq 1 -and $html -notmatch 'cd-band|cd-accent') 'and its intro is no <header> (the one is the site header), and no decoration the form does not carry'
 Assert-True ($html -notmatch 'About this repo</h2>' -and $html -match 'href="#overview">Back to overview') 'the facts card is the hub''s, and the card the overview links down to carries the way back'
-Assert-True ($html -notmatch 'id="hub-banner"') 'the page carries no airsquats banner: that is the Toolbox''s alone, never a product page''s (Dave, November 4, 2026)'
+Assert-True ($html -notmatch 'id="hub-banner"') 'the page carries no airsquats banner: that is Admin''s alone, never a product page''s (Dave, November 4, 2026)'
 $ix = @('class="site-header"', 'class="breadcrumbs-bar"', '<h1>', 'Connected repos</h2>', 'Issues</h2>', 'class="note"') | ForEach-Object { $html.IndexOf($_) }
 Assert-True ((@($ix | Where-Object { $_ -lt 0 }).Count -eq 0) -and ((($ix | Sort-Object) -join ',') -eq ($ix -join ','))) 'and its blocks stand in the form''s order'
 Assert-True ($html -match '1\.3s|1\.2s') 'the run time is printed with an invariant decimal point'
@@ -511,9 +511,9 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
             Assert-True ($r -match 'HTTP/1.1 303' -and $r -match 'Location: /marketplace/p-one\r') 'an old /plugins address sends an old link to the same page under /marketplace, the url following the h1 (Maikel, October 30, 2026)'
             $r = if ($up) { Get-Raw 'GET' '/dkj-repos' "localhost:$port3" '' $port3 } else { '' }
             Assert-True ($r -match 'HTTP/1.1 303' -and $r -match 'Location: /consumers/dkj\r') 'the old /dkj-repos sends an old link to /consumers/dkj, which holds the repos on GitHub since #3549'
-            Assert-True ($home3 -match 'The toolbox is not running' -and $home3 -notmatch 'href="http://localhost' -and $home3 -notmatch 'href="/brandbook' -and $home3 -notmatch 'href="/test-gate"') 'with no state file it says the hub is not running, and links no general page of its own'
+            Assert-True ($home3 -match 'Admin is not running' -and $home3 -notmatch 'href="http://localhost' -and $home3 -notmatch 'href="/brandbook' -and $home3 -notmatch 'href="/test-gate"') 'with no state file it says the hub is not running, and links no general page of its own'
             $r = if ($up) { Get-Raw 'GET' '/hub' "localhost:$port3" '' $port3 } else { '' }
-            Assert-True ($r -match 'HTTP/1.1 404' -and $r -match 'toolbox is not running') 'and /hub is a 404 text, never a redirect to a port nobody answers on'
+            Assert-True ($r -match 'HTTP/1.1 404' -and $r -match 'Admin is not running') 'and /hub is a 404 text, never a redirect to a port nobody answers on'
             # A state file naming a port nobody answers on is no hub.
             Write-RepoHubState -Root $src -Hub "http://localhost:$genPort3/" -Pages "http://localhost:$genPort3" -Product "http://localhost:$port3/" -Mode 'product'
             $r = if ($up) { Get-Raw 'GET' '/hub' "localhost:$port3" '' $port3 } else { '' }
@@ -526,7 +526,7 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
                 Assert-True (Wait-ServerUp $genPort3) 'the fixture''s plugin hub listens'
                 Assert-True ((Get-Raw 'GET' '/brandbook' "localhost:$genPort3" '' $genPort3) -match 'HTTP/1.1 404') 'the plugin hub serves no Brandbook (#3475)'
                 $homeUp = if ($up) { Get-Raw 'GET' '/' "localhost:$port3" '' $port3 } else { '' }
-                Assert-True ($homeUp -match ('<a class="menu-item" href="http://localhost:' + $genPort3 + '">') -and $homeUp -notmatch 'toolbox is not running') 'the home page''s first card links the plugin hub, once it answers as this checkout''s'
+                Assert-True ($homeUp -match ('<a class="menu-item" href="http://localhost:' + $genPort3 + '">') -and $homeUp -notmatch 'Admin is not running') 'the home page''s first card links the plugin hub, once it answers as this checkout''s'
                 $r = if ($up) { Get-Raw 'GET' '/hub' "localhost:$port3" '' $port3 } else { '' }
                 Assert-True ($r -match 'HTTP/1.1 303' -and $r -match ('Location: http://localhost:' + $genPort3 + '\r')) 'and /hub sends the visitor there'
                 $hubHome = Get-Raw 'GET' '/' "localhost:$genPort3" '' $genPort3
@@ -545,7 +545,7 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
                 $gen3.WaitForExit(5000) | Out-Null
             }
             $homeDown = if ($up) { Get-Raw 'GET' '/' "localhost:$port3" '' $port3 } else { '' }
-            Assert-True ($homeDown -match 'HTTP/1.1 200' -and $homeDown -match 'The toolbox is not running') 'and the Toolbox card is back to not running once nothing answers there'
+            Assert-True ($homeDown -match 'HTTP/1.1 200' -and $homeDown -match 'Admin is not running') 'and the Admin card is back to not running once nothing answers there'
             Remove-Item -LiteralPath $srcState -Force -ErrorAction SilentlyContinue
             Assert-True ($overviewPage -match 'HTTP/1.1 200' -and $overviewPage -match '<h1>Consumers</h1>' -and $overviewPage -match '<a href="/">Home</a>' -and $overviewPage -match 'href="/consumers/other#repo-') '/consumers serves the overview as a page under the product''s home, its repo cards opening their group''s page'
             Assert-True ($page -match '<h1>Other repos</h1>' -and $page -match '<a href="/consumers">Consumers</a>') '/consumers/other serves that group''s page under the overview'

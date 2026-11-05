@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Serve the plugin's REPOSITORY (#3245) and the GENERAL pages (#3119) on http://localhost:<Port>/ -- the hub on
-    '/', then /issues, /release-notes, /sessionstart, /test-gate, /performance, /stopwatch, /logbook and /plugins --
+    '/', then /dev/issues, /dev/release-notes, /dev/sessionstart, /dev/test-gate, /dev/performance, /dev/stopwatch, /dev/logbook and /dev/plugins --
     from the repo this server was started in. Not /brandbook: no hub has served the brand book since #3475, and the
     source repo retired the app itself under #3493.
 
@@ -14,35 +14,35 @@
     dkj-policy, which every repo runs, since #3198.
 
     WHAT EACH PAGE READS, from the repo, on every request unless it says otherwise:
-      /issues         `gh issue list`, three calls (the open issues; created and closed in the last 28 days),
+      /dev/issues         `gh issue list`, three calls (the open issues; created and closed in the last 28 days),
                       for --repo <owner/name> parsed from the origin remote when that is on github.com, else
                       for the repo gh finds from the working directory. Kept for -IssuesCacheSeconds; a failed
                       read for 30 s only. A gh that fails or is missing is a warning on the page, never a blank.
-      /release-notes  dkj-policy/releases/page/release-notes.html, dressed in the house style on the way out.
+      /dev/release-notes  dkj-policy/releases/page/release-notes.html, dressed in the house style on the way out.
                       Built first, by build-release-notes-page.ps1 (found the way the always-on lib is), where it
                       is absent or older than a file under dkj-policy/releases (#3189): the page is a gitignored
                       snapshot nothing else builds. A 404 text naming why where it cannot be built.
-      /sessionstart   (also: scripts/dashboard/session-start-snapshot.json, where the repo keeps one -- the last
+      /dev/sessionstart   (also: scripts/dashboard/session-start-snapshot.json, where the repo keeps one -- the last
                       full session-start measurement, its sections shown after the live table's; absent, nothing
-                      is added) one card per section, and /sessionstart/<section> that section's own page
+                      is added) one card per section, and /dev/sessionstart/<section> that section's own page
                       (Get-SessionStartSections); a slug no section has is a 404.
                       the always-on path, measured in a CHILD process by always-on-budget-lib.ps1, found in
                       the repo's own scripts/lib, else in this plugin's own. Kept for -CacheSeconds.
                       The child first dot-sources the repo's own scripts/repo-config.ps1, the trust the
                       dev-preview hook already gives it, and is bounded at 60 s.
-      /test-gate, /test-gate/<list>[/<suite>], /test-gate/measured
+      /dev/test-gate, /dev/test-gate/<list>[/<suite>], /dev/test-gate/measured
                       scripts/tests/suite-durations.json, grouped by suite-groups.json where the repo keeps one, and
                       each suite's own header (Read-TestGateModel, hub/lib/test-gate-lib.ps1, #3470): an overview, a
                       page per group and per suite. Absent, the page says no test gate has been measured in this repo yet.
-      /plugins, /plugins/<name>   a card per enabled plugin, and each one's own page: plugin-versions.ps1 -Json, the repo's
+      /dev/plugins, /dev/plugins/<name>   a card per enabled plugin, and each one's own page: plugin-versions.ps1 -Json, the repo's
                       own copy first, then this plugin's, run in a CHILD process bounded at 30 s (Read-PluginsPageModel,
                       hub/lib/plugins-page-lib.ps1, #3482). A script that fails or is missing is a warning on the page.
-      /plugins/dkj-policy/dkj-brandbook[/<section>]
+      /dev/plugins/dkj-policy/dkj-brandbook[/<section>]
                       the brand book's specimens (assets/dkj-brandbook/specimens.html, read per request): a card per
                       section, and each section's own page (Split-HouseStyleSpecimens, #3563); a slug no section has
-                      is a 404. The older /plugins/dkj-solutions/house-style[/<section>] (#3629) and
-                      /plugins/dkj-policy/house-style[/<section>] (#3704) are a 301 to it.
-      /stopwatch, /stopwatch/<label>[/<run>], /logbook, /logbook/<slug>
+                      is a 404. The older /dev/plugins/dkj-solutions/house-style[/<section>] (#3629) and
+                      /dev/plugins/dkj-policy/house-style[/<section>] (#3704) are a 301 to it.
+      /dev/stopwatch, /dev/stopwatch/<label>[/<run>], /dev/logbook, /dev/logbook/<slug>
                       this repo's timing stores on this machine (%LOCALAPPDATA%\dkj-claude-plugins\repos\<repo>\),
                       which the plugin's UserPromptSubmit and Stop hooks write, and the session transcripts under
                       ~/.claude/projects (Resolve-HubTimingPage, hub/lib/timing-pages.ps1, #3470). The Stopwatch also
@@ -53,7 +53,7 @@
                       the hook wrote (%TEMP%\dkj-repo-hub-<leaf>-<hash>.json): the repo's own server as the
                       Product card (mode 'product'), the setup cards (mode 'none'). In every repo: the
                       OwnHub opt-out, which sent '/hub' on to a repo's own hub, went with #3643.
-      /repository     the hub's Repository page (Format-PluginRepoRepositoryHtml, #3383): the facts the home page
+      /dev/repository     the hub's Repository page (Format-PluginRepoRepositoryHtml, #3383): the facts the home page
                       held until the house hub became a grid of card links, and the Issues page's card.
       /refresh        ?page=issues or ?page=sessionstart drops that page's cache (at most once per
                       -MinRefreshSeconds, and per 60 s for issues) and goes back to the page.
@@ -447,6 +447,8 @@ try {
             # reaches the next page without a restart, and every page below opens in it.
             $state = Read-RepoHubState -Root $root
             Set-GeneralPagesThemeDefault $state.Theme
+            # Admin's Product section (#3815) links the product this session started, read per request as the theme is.
+            Set-AdminProductUrl $(if ($state.Mode -eq 'product') { $state.Product } else { '' })
             if ($path -eq '/about' -or $path -eq '/artifacts') {
                 # The hub is one page (#3289): an old link to About this repo goes on to the home page, which holds it. So does an
                 # old link to Artifacts, a page retired with the claude.ai Artifacts themselves (#3772).
@@ -460,7 +462,7 @@ try {
                 Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($hubHtml)) -Method $method
                 continue
             }
-            if ($path -eq '/repository') {
+            if ($path -eq '/dev/repository') {
                 # The hub's Repository page (#3383): the facts and the Issues page, which the home page no longer holds.
                 $hubMode = if ($state.Mode -eq 'product') { 'product' } else { 'none' }
                 $id = Get-RepoIdentity
@@ -478,7 +480,15 @@ try {
                     # At least a minute: a re-read holds this single-threaded loop for about 12 s.
                     if ($isCache -and ((Get-Date) - $isCache.At).TotalSeconds -ge [Math]::Max($MinRefreshSeconds, 60)) { $isCache = $null }
                 }
-                Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = "/$page" } -Method $method
+                Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = $(if ($page) { "/dev/$page" } else { '/' }) } -Method $method
+                continue
+            }
+            # THE DEVELOPMENT PAGES LIVE UNDER /dev SINCE #3815 (November 5, 2026): Admin is for managing and Product for
+            # using, so the tooling that is neither has a section of its own. A link or bookmark to an old address is
+            # moved there with the rest of its path and its query kept (Resolve-AdminLegacyPath).
+            $legacy = Resolve-AdminLegacyPath -Target ([string]$target)
+            if ($legacy) {
+                Send-LoopbackResponse $stream 301 'Moved Permanently' 'text/plain; charset=utf-8' ($utf8.GetBytes('Moved.')) @{ Location = $legacy } -Method $method
                 continue
             }
             # The Stopwatch's and the Logbook's routes (#3470): a page, a moved run slug, or a slug no run has.
@@ -489,32 +499,32 @@ try {
                 else { Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($tp.Html)) -Method $method }
                 continue
             }
-            # The AI page became the Claude page on /claude (Maikel, November 2, 2026): an old /ai or /ai/claude/... link
+            # The AI page became the Claude page on /dev/claude (Maikel, November 2, 2026): an old /ai or /ai/claude/... link
             # is moved there, the rest of its path kept.
             if ($path -cmatch '^/ai(?:/claude)?(/.*)?$') {
-                $to = '/claude' + $(if ($Matches[1] -and $Matches[1] -ne '/') { $Matches[1] })
+                $to = '/dev/claude' + $(if ($Matches[1] -and $Matches[1] -ne '/') { $Matches[1] })
                 Send-LoopbackResponse $stream 301 'Moved Permanently' 'text/plain; charset=utf-8' ($utf8.GetBytes('Moved.')) @{ Location = $to } -Method $method
                 continue
             }
-            # The Clock is a section of /performance since November 3, 2026 (Dave), so its old page is moved there.
-            if ($path -cmatch '^/clock/?$') {
-                Send-LoopbackResponse $stream 301 'Moved Permanently' 'text/plain; charset=utf-8' ($utf8.GetBytes('Moved.')) @{ Location = '/performance' } -Method $method
+            # The Clock is a section of /dev/performance since November 3, 2026 (Dave), so its old page is moved there.
+            if ($path -cmatch '^/dev/clock/?$') {
+                Send-LoopbackResponse $stream 301 'Moved Permanently' 'text/plain; charset=utf-8' ($utf8.GetBytes('Moved.')) @{ Location = '/dev/performance' } -Method $method
                 continue
             }
             $html = $null
             if ($gp = Format-HubGroupPageHtml -Href $path -RepoName (Get-RepoIdentity).Name -RepoRoot $root) {
-                # A group page (Get-HubGroups): /performance, its Clock section over the Stopwatch and the Logbook and its
+                # A group page (Get-HubGroups): /dev/performance, its Clock section over the Stopwatch and the Logbook and its
                 # Context section over SessionStart (Dave, November 3, 2026); it sits in Claude since November 2, 2026,
                 # under the same route.
                 $html = $gp
-            } elseif ($path -cmatch '^/claude/specialists/lenses/(specialist-\d{2}-\d{2}-lens)/?$') {
+            } elseif ($path -cmatch '^/dev/claude/specialists/lenses/(specialist-\d{2}-\d{2}-lens)/?$') {
                 # One specialist lens's page, read from this checkout (Maikel, October 30, 2026); a lens it has not is a 404.
                 $html = Format-HubLensPageHtml -Name $Matches[1] -RepoRoot $root -RepoName (Get-RepoIdentity).Name
                 if ($null -eq $html) {
                     Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('No lens of that name in this repo.')) -Method $method
                     continue
                 }
-            } elseif ($path -cmatch '^/claude/rules/([A-Za-z0-9._-]{1,80})/?$') {
+            } elseif ($path -cmatch '^/dev/claude/rules/([A-Za-z0-9._-]{1,80})/?$') {
                 # One .claude/rules file's page, read from this checkout (Maikel, November 3, 2026); a name that folder
                 # has no file of is a 404.
                 $html = Format-HubRulePageHtml -Name $Matches[1] -RepoRoot $root -RepoName (Get-RepoIdentity).Name
@@ -522,7 +532,7 @@ try {
                     Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('No rule document of that name in this repo.')) -Method $method
                     continue
                 }
-            } elseif ($path -match '^/test-gate(?:/([a-z0-9-]{1,40})(?:/([A-Za-z0-9._-]{1,120}))?)?/?$') {
+            } elseif ($path -match '^/dev/test-gate(?:/([a-z0-9-]{1,40})(?:/([A-Za-z0-9._-]{1,120}))?)?/?$') {
                 # The overview, a list's page, or one suite's (the owner, October 27, 2026); a path none names is a 404.
                 $tgPath = (@($Matches[1], $Matches[2]) | Where-Object { $_ }) -join '/'
                 $id = Get-RepoIdentity
@@ -581,14 +591,14 @@ try {
                     continue
                 }
             } elseif ($path -eq '/settings') {
-                # The toolbox's Settings page (Dave, November 2, 2026): the Theme, drawn in the browser.
+                # Admin's Settings page (Dave, November 2, 2026): the Theme, drawn in the browser.
                 $html = Format-HubSettingsPageHtml -RepoName (Get-RepoIdentity).Name
-            } elseif ($path -eq '/issues') {
+            } elseif ($path -eq '/dev/issues') {
                 # A failed read is kept for 30 s only, so a passing gh hiccup does not show for five minutes.
                 $isAge = if ($isCache) { ((Get-Date) - $isCache.At).TotalSeconds } else { 0 }
                 if ($null -eq $isCache -or $isAge -ge $IssuesCacheSeconds -or ($isCache.Error -and $isAge -ge 30)) { $isCache = Get-IssuesModel }
                 $html = Format-IssuesPageHtml -Model $isCache.Model -ReadError $isCache.Error -GeneratedAt $isCache.GeneratedAt -Seconds $isCache.Seconds -RepoName (Get-RepoIdentity).Name
-            } elseif ($path -match '^/sessionstart(?:/([a-z-]{1,40}))?$') {
+            } elseif ($path -match '^/dev/sessionstart(?:/([a-z-]{1,40}))?$') {
                 # The overview, or one section's own page (the owner, October 26, 2026); a slug no section has is a 404.
                 $ssSection = [string]$Matches[1]
                 if ($null -eq $ssCache -or ((Get-Date) - $ssCache.At).TotalSeconds -ge $CacheSeconds) { $ssCache = Get-SessionStartModel }

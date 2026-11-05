@@ -2,7 +2,7 @@
 name: measure-session-start
 description: >-
   Measure what a CLEAN session loads before the first question, write the result to the snapshot the
-  Toolbox's SessionStart page shows, and end the page with advice on where the most gain is
+  Admin's SessionStart page shows, and end the page with advice on where the most gain is
   and why. The script measures the always-on documents and the plugin listings and renders the page
   from a data file; this page tells the model how to add the estimated rest and write the advice. Run
   it by name when the session start has grown or before a change meant to shrink it.
@@ -58,7 +58,7 @@ the always-on gate does. That is that repo's code running in your session, so ru
 you trust.
 
 **2. Take the previous measurement.** The history is the repo's own
-`scripts/dashboard/session-start-snapshot.json`, the file the Toolbox SessionStart page shows: nothing is
+`scripts/dashboard/session-start-snapshot.json`, the file Admin SessionStart page shows: nothing is
 downloaded from anywhere. Where the file is absent, this is the first run and there will be no history. Its
 `repo` must name the repo being measured (collect wrote that name, #2736), or the render refuses it as history
 and says whose it is.
@@ -112,7 +112,7 @@ because an on-demand rule is gone after a compaction). Then the smaller levers i
 advise on a layer you only estimated without saying the figure is an estimate. If the findings from step 1
 say the numbers are shaky, say so first.
 
-**7. Render, and write the snapshot the Toolbox shows.** Write the full data object to `<scratch>/data.json`
+**7. Render, and write the snapshot Admin shows.** Write the full data object to `<scratch>/data.json`
 (the schema is below; start from `collect.json`), then:
 
 ```powershell
@@ -122,10 +122,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
   -Snapshot scripts/dashboard/session-start-snapshot.json
 ```
 
-**The result is seen on the Toolbox's SessionStart page** (the hub's `/sessionstart`), which reads
+**The result is seen on Admin's SessionStart page** (the hub's `/dev/sessionstart`), which reads
 `scripts/dashboard/session-start-snapshot.json`: nothing is published anywhere (#3772). `-Snapshot` writes the
 data the page embeds, deltas included, plus a `source` block (title and date). Nothing else rewrites that file,
-so a render without it leaves the Toolbox page showing the measurement before this one
+so a render without it leaves Admin page showing the measurement before this one
 ([#3126](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3126)). **The snapshot is the history**:
 `-Previous` takes that same file (a rendered page works too), so the next run computes its deltas against it,
 and leave `-Previous` off on a first run. It is read only when its data names this repo; otherwise the render

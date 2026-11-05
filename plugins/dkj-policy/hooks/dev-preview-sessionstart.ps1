@@ -48,9 +48,9 @@
 
     THE OUTPUT is SessionStart JSON with BOTH systemMessage (shown to the owner, so the links are clickable
     in the terminal) and additionalContext (the session knows the URLs too), ONE line, in one of these forms:
-      no product      Toolbox: <hub> (started|already running) -- this repo states no Get-DevPreview yet[; route ...]
-      with a product  Toolbox: <hub> -- product: <url> (started|already running[, LISTENING ON ALL INTERFACES ...])
-      product failed  Toolbox: <hub> -- product not started: <why>
+      no product      Admin: <hub> (started|already running) -- this repo states no Get-DevPreview yet[; route ...]
+      with a product  Admin: <hub> -- product: <url> (started|already running[, LISTENING ON ALL INTERFACES ...])
+      product failed  Admin: <hub> -- product not started: <why>
 
     WHAT KEEPS A DKJ-SOLUTIONS REPO FROM FOLLOWING A HUB CHANGE (#3463) is appended to the product form, from
     Get-DevPreviewDriftClauses: '-- config drift: ...' for OpenInVsCode with no hub port routed, or a Name, an

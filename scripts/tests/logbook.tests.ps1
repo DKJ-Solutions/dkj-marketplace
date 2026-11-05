@@ -135,7 +135,7 @@ $lm = ConvertTo-LogbookModel -Runs $runs -Now (& $at (1000 + 24 * 3600 + 500))
 Assert-Equal 'Side by side,First' (($lm.Groups | ForEach-Object { $_.Label }) -join ',') 'the Logbook hides an open run older than a day, an abandoned session, and keeps the finished ones'
 Assert-Equal 3 @((ConvertTo-LogbookModel -Runs $runs -Now (& $at 2100)).Groups).Count 'and shows every open run younger than that'
 $page = Format-LogbookPageHtml -Runs $runs -StorePath 'C:\x\logbook.json' -Now (& $at 2100)
-Assert-True ($page -match '<title>[^<]*Logbook' -and $page -match 'href="/logbook/\d{4}-\d{2}-\d{2}-\d{4}"' -and $page -notmatch 'href="/stopwatch') 'the overview is titled Logbook and links its runs under /logbook'
+Assert-True ($page -match '<title>[^<]*Logbook' -and $page -match 'href="/dev/logbook/\d{4}-\d{2}-\d{2}-\d{4}"' -and $page -notmatch 'href="/dev/stopwatch') 'the overview is titled Logbook and links its runs under /logbook'
 Assert-True ($page -match 'Parked &lt;for&gt; a look' -and $page -notmatch 'Parked <for>') 'a label is escaped'
 Assert-True ($page -notmatch 'first run|faster|slower|the run before' -and ([regex]::Matches($page, 'data-start=')).Count -eq 2) 'no change against a run before, and a live clock on each open run'
 Assert-True ($page -match 'not shared' -and $page -match 'logbook-hook\.ps1') 'its footer says the store is not shared and names the hook'
@@ -159,7 +159,7 @@ Assert-True ($wpage -match 'class="card card--link sw-card sw-card--fast sw-run"
 $g = Find-StopwatchGroup -Model $m -Slug $m.Groups[2].PageSlug
 $rp = Format-LogbookRunPageHtml -Group $g -StorePath 'C:\x\logbook.json'
 Assert-True ((Format-LogbookRunPageHtml -Group $g -Transcript $tr) -match 'Work 45\.0s, waiting on you 1:15\.' -and $rp -notmatch 'waiting on you \d') 'a run''s page states its work time and its waiting under its time'
-Assert-True ($rp -match 'First' -and $rp -match '2:00' -and $rp -match 'href="/logbook"' -and $rp -notmatch 'first run|than the previous run') 'a run''s page shows its time, crumbs back to /logbook, and no change against a run before'
+Assert-True ($rp -match 'First' -and $rp -match '2:00' -and $rp -match 'href="/dev/logbook"' -and $rp -notmatch 'first run|than the previous run') 'a run''s page shows its time, crumbs back to /logbook, and no change against a run before'
 
 Write-Host '-- a sweep, per issue (#3405)' -ForegroundColor Cyan
 $mk = { param([double]$s, $run = 'ship-pr', $step = 'fold') @{ At = (& $at $s); Run = $run; Step = $step; Workspace = 'C:\x' } }
@@ -227,9 +227,9 @@ $pm = Select-LogbookPage -Runs $minute -Page 1 -Size 2
 Assert-True (@($pm.Runs).Count -eq 3 -and $pm.Pages -eq 2) 'a page never ends between two runs that started in the same minute, whose slugs depend on each other'
 Assert-Equal '' (Format-LogbookPager -Page 1 -Pages 1 -Total 3 -Shown 3) 'one page draws no pager'
 $pager1 = Format-LogbookPager -Page 1 -Pages 3 -Total 45 -Shown 20 -First 1
-Assert-True ($pager1 -match 'href="/logbook/page/2">Older runs<' -and $pager1 -notmatch 'Newer runs' -and $pager1 -match 'Runs 1-20 of 45, page 1 of 3') 'page 1 links the older runs only, and says which runs it shows'
+Assert-True ($pager1 -match 'href="/dev/logbook/page/2">Older runs<' -and $pager1 -notmatch 'Newer runs' -and $pager1 -match 'Runs 1-20 of 45, page 1 of 3') 'page 1 links the older runs only, and says which runs it shows'
 $pager2 = Format-LogbookPager -Page 2 -Pages 3 -Total 45 -Shown 20 -First 21
-Assert-True ($pager2 -match 'href="/logbook">Newer runs<' -and $pager2 -match 'href="/logbook/page/3">Older runs<') 'page 2 links back to /logbook and on to page 3'
+Assert-True ($pager2 -match 'href="/dev/logbook">Newer runs<' -and $pager2 -match 'href="/dev/logbook/page/3">Older runs<') 'page 2 links back to /logbook and on to page 3'
 $pp = Format-LogbookPageHtml -Runs @($p1.Runs) -Now (& $at 30000) -PagerHtml $pager1
 Assert-True ($pp -match 'aria-label="Logbook pages"' -and ([regex]::Matches($pp, 'class="card card--link')).Count -eq 20) 'the overview draws one page''s cards with its pager'
 

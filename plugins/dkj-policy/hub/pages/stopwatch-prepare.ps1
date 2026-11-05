@@ -4,7 +4,7 @@
     plugin's stopwatch-prepare skill (skills/stopwatch-prepare/SKILL.md).
 
 .DESCRIPTION
-    Adds the label to the `prepared` list of THIS machine's stopwatch.json, so the hub's /stopwatch overview shows a
+    Adds the label to the `prepared` list of THIS machine's stopwatch.json, so the hub's /dev/stopwatch overview shows a
     "ready, not started" card for it. No run is created: the run still starts only when the owner sends a prompt whose
     first line is `stopwatch: <label>`, and the run then lands on that card (the hook removes the prepared entry).
     The label is normalised exactly as a prompt's label is (ConvertTo-StopwatchLabel: control characters as spaces,
@@ -62,7 +62,7 @@ try {
 if ($Remove) {
     Write-Host "[OK] withdrew the prepared card `"$norm`"."
 } else {
-    Write-Host "[OK] prepared the card `"$norm`" on /stopwatch: ready, no clock running."
+    Write-Host "[OK] prepared the card `"$norm`" on /dev/stopwatch: ready, no clock running."
     Write-Host "     The owner starts it with a prompt whose first line is: stopwatch: $norm"
 }
 exit 0

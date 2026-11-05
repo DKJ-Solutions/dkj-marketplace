@@ -69,7 +69,7 @@ Rename the Toolbox port to Admin, modelled on the Shopify Admin: flat navigation
 
 - [x] Tests under `scripts/tests` updated for the paths, the navigation, the label and the alias, with new asserts for the Product section, the foot, the legacy redirect (as a pure function and as a routed 301) and the alias.
 - [x] `check-plugin-integrity.ps1`: 0 errors.
-- [ ] The full suite gate.
+- [x] The full suite gate: all 171 suites passed (276 s, 25 lanes); `check-plugin-integrity.ps1` 0 errors after the last wording pass.
 
 ### DEPLOY: feat/3815-toolbox-to-admin
 
