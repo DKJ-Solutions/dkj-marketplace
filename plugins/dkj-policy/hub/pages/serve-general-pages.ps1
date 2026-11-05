@@ -392,14 +392,52 @@ $json = $o | ConvertTo-Json -Compress -Depth 4
     }
 }
 
+function Get-AdminObjectsModel {
+    <#
+        The repo's domain objects for Admin's navigation (#3818): what Get-AdminObjects in its scripts/repo-config.ps1
+        returns. In a CHILD process, as Get-SessionStartModel is, because repo-config.ps1's functions must not land in this
+        server's scope; bounded at 20 s. No child at all where repo-config.ps1 does not name the seam, so a repo that
+        states none pays nothing. Returns @{ Items; At }: a failure, or a seam that is not there, is an empty list -- the
+        navigation simply carries no objects -- and Set-AdminObjects checks every value again.
+    #>
+    $none = @{ Items = @(); At = Get-Date }
+    $cfg = Join-Path $root 'scripts\repo-config.ps1'
+    if (-not (Test-Path -LiteralPath $cfg -PathType Leaf)) { return $none }
+    try { if (-not (Select-String -LiteralPath $cfg -Pattern '\bfunction\s+Get-AdminObjects\b' -Quiet)) { return $none } } catch { return $none }
+    $script = @'
+$ErrorActionPreference = 'Stop'
+. (Join-Path $env:DKJ_GP_ROOT 'scripts\repo-config.ps1')
+$items = @()
+foreach ($i in @(Get-AdminObjects | Where-Object { $_ })) { $items += [pscustomobject]@{ Label = [string]$i.Label; Href = [string]$i.Href; Count = $(if ($null -ne $i.Count) { [string]$i.Count } else { '' }) } }
+$json = ConvertTo-Json -InputObject @($items) -Compress -Depth 3
+[Console]::Out.WriteLine('DKJ-GP-RESULT ' + [regex]::Replace($json, '[^\x00-\x7F]', { param($x) '\u{0:x4}' -f [int][char]$x.Value }))
+'@
+    $env:DKJ_GP_ROOT = $root
+    try {
+        $run = Invoke-BoundedProcess -FilePath (Join-Path $PSHOME 'powershell.exe') -TimeoutSeconds 20 -WorkingDirectory $root -Arguments @(
+            '-NoProfile', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($script)))
+        if ($run.TimedOut) { return $none }
+        $line = @($run.Output -split "`r?`n" | Where-Object { $_.StartsWith('DKJ-GP-RESULT ') }) | Select-Object -Last 1
+        if (-not $line) { return $none }
+        $items = @(($line.Substring(14) | ConvertFrom-Json) | Where-Object { $_ } | ForEach-Object {
+            @{ Label = [string]$_.Label; Href = [string]$_.Href; Count = $(if ([string]$_.Count) { [string]$_.Count } else { $null }) } })
+        return @{ Items = $items; At = Get-Date }
+    } catch {
+        return $none
+    } finally {
+        Remove-Item Env:\DKJ_GP_ROOT -ErrorAction SilentlyContinue
+    }
+}
+
 $utf8 = New-Object System.Text.UTF8Encoding($false)
-$rootHash = Get-DevPreviewRootHash -Root $root
+$rootHash =Get-DevPreviewRootHash -Root $root
 $timing = New-HubTimingContext -RepoRoot $root -RepoName (Get-RepoIdentity).Name -StopwatchPath $StopwatchPath -LogbookPath $LogbookPath -TranscriptDir $TranscriptDir
 $listener = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Loopback, $Port)
 $listener.Start()
 Write-Host "general pages for $((Get-RepoIdentity).Name): http://localhost:$Port/"
 $ssCache = $null
 $isCache = $null
+$aoCache = $null
 
 try {
     while ($true) {
@@ -449,6 +487,9 @@ try {
             Set-GeneralPagesThemeDefault $state.Theme
             # Admin's Product section (#3815) links the product this session started, read per request as the theme is.
             Set-AdminProductUrl $(if ($state.Mode -eq 'product') { $state.Product } else { '' })
+            # The repo's domain objects (#3818), from its Get-AdminObjects seam, read at most once a minute.
+            if ($null -eq $aoCache -or ((Get-Date) - $aoCache.At).TotalSeconds -ge 60) { $aoCache = Get-AdminObjectsModel }
+            Set-AdminObjects -Items $aoCache.Items
             if ($path -eq '/about' -or $path -eq '/artifacts') {
                 # The hub is one page (#3289): an old link to About this repo goes on to the home page, which holds it. So does an
                 # old link to Artifacts, a page retired with the claude.ai Artifacts themselves (#3772).

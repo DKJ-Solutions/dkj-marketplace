@@ -6,7 +6,7 @@
 
 | Section | What it holds |
 |---|---|
-| (no heading) | **Home**, the dashboard on `/`. A repo's domain objects would follow here at the top level, with no "Manage" wrapper, since everything in Admin is management; this plugin ships none yet. |
+| (no heading) | **Home**, the dashboard on `/`, then the repo's **domain objects** (Tracks, Playlists, Artists) at the top level, with no "Manage" wrapper, since everything in Admin is management (#3818). A repo states them in `Get-AdminObjects` in its `scripts/repo-config.ps1`, returning `@{ Label; Href; Count }` items; the count is drawn as a badge. **The repo's own server serves those routes, not the hub**: an `Href` that is a path (`/tracks`) is resolved against the product's address, and an http(s) URL is kept. The hub reads the seam in a child process at most once a minute, never in its own scope, keeps at most 12 items, and drops one without a label or with any other address. |
 | **Product** | **Storefront**, a link to the product this session started (the state file's `Product`); left out where the repo states none. Admin links to and manages the product, it is not the product. |
 | **Development** | The hub's own pages, under `/dev/...`: GitHub, Release notes, Claude, Installed plugins (`Get-HubMenu`). A group page such as Claude is one item, and its members are reached on it. |
 | (foot) | **Settings**, on `/settings`, pinned to the bottom. |
