@@ -106,10 +106,12 @@ appears, or the fetch fails, stop and report. The same holds for `house-product.
    [`patterns/repo-repository.html`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/patterns/repo-repository.html)
    in `dkj-policy`'s `assets/dkj-brandbook/`, which carry no CSS of their own
    ([#3066](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3066)).
-   **Every page a repo's dev server serves opens with the breadcrumb bar**, the home page and the
-   product alike, its trail starting at **Home**, and the page's `h1` reads exactly what its current
-   crumb reads, as the product README lays it down under "Page patterns", "Every page: the breadcrumb bar"
-   ([#3088](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3088)).
+   **Every page a repo's dev server serves carries a breadcrumb trail**, its trail starting at **Home**,
+   and the page's `h1` reads exactly what its current crumb reads, as the product README lays it down under
+   "Page patterns", "Every page: the breadcrumb bar"
+   ([#3088](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3088)). A product page opens with the
+   breadcrumb bar; an Admin page in the desktop shell carries its trail in the `.shell__bar` instead, and
+   has no breadcrumb bar (#3830).
 2. **Add the repo's own layer after it, in a separate block or file.** Domain colours and components go
    there. They **use** house tokens and may add tokens of their own, under a name the house file does
    not define.
