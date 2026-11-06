@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**12 / 16 minor entries** <!-- pending-tally -->
+**13 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3857-settle-verdict · 20261106-154057Z
+
+A merge-on-green runner placed before #3810 kept the settle-window gap indefinitely, and nothing said so:
+a re-run of `adopt-ci-floor` judged it fine, and moving its `ref:` pin did not help, because the wait is
+a YAML flag. A re-run now names such a runner under `[settle]`, with the flag to append
+([#3857](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3857)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A repo that adopted merge-on-green before #3810 sees a `[settle]` line the next time it re-runs
+`adopt-ci-floor`. Appending `-WaitForSettleSeconds 660` to the picker line stops the last pull request
+to go green from waiting hours for the schedule.
+
+**Score:** 3
+
+#### Pull Request
+
+adopt-ci-floor: report an existing merge-on-green.yml whose picker lacks -WaitForSettleSeconds
+
+Plugins: dkj-policy
+
+[PR #3858](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3858)
+
+---
 
 ### DEPLOY: fix/3849-product-patterns · 20261106-112402Z
 
