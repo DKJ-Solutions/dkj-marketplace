@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**12 / 15 minor entries** <!-- pending-tally -->
+**12 / 16 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3849-product-patterns · 20261106-112402Z
+
+The brand book's two product pattern pages draw a product, not the hub as it was before #3830:
+`patterns/product-home.html` and `patterns/product-page.html` in dkj-solutions (formerly `repo-dashboard.html`
+and `repo-repository.html`) show the site header with its menu, the breadcrumb bar and the cards, and the
+brand book names `patterns/admin-shell.html` as Admin's reference
+([#3849](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3849)). A repo that copied the old files keeps
+them; a product without a build starts from the new ones.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+The brand book's product patterns draw a product home, not the pre-#3830 hub
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #3855](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3855)
+
+---
 
 ### DEPLOY: docs/3852-skill-breadcrumb-shell · 20261105-181439Z
 
