@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Inbound #3857, verified against the tree: the template's picker line carries `-WaitForSettleSeconds 660`
+since #3810, `pick-merge-on-green.ps1` defaults it to 0, `adopt-ci-floor` never rewrites an existing
+runner, and none of its four existing-runner verdicts reads the flag. The issue's first direction, a
+fifth verdict, is the repair. The wider "compare against the template's line set" direction is not
+taken: the consumer's own deliberate bridges (smartwatchbanden's missing `schedule:`) would read as drift.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Write-MergeOnGreenSettleVerdict` in `adopt-ci-floor.ps1` (both copies): silent when the picker line
+  carries the flag, `[settle]` with the line to add when it does not, unread when no picker line exists.
+- [x] The `adopt-dkj-policy` skill names the `[settle]` line beside `[shape]`.
 
 ### TEST
 
+- [x] `adopt-ci-floor.tests.ps1`: a current runner draws no `[settle]`, a pre-#3810 picker line draws it,
+  the same line with the flag draws none, and a hand-written file is reported unread.
+
 ### DEPLOY: fix/3857-settle-verdict
 
-**Score:**
+A merge-on-green runner placed before #3810 kept the settle-window gap indefinitely, and nothing said so:
+a re-run of `adopt-ci-floor` judged it fine, and moving its `ref:` pin did not help, because the wait is
+a YAML flag. A re-run now names such a runner under `[settle]`, with the flag to append
+([#3857](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3857)).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A repo that adopted merge-on-green before #3810 sees a `[settle]` line the next time it re-runs
+`adopt-ci-floor`. Appending `-WaitForSettleSeconds 660` to the picker line stops the last pull request
+to go green from waiting hours for the schedule.
+
+**Score:** 3
 
 #### Pull Request
 

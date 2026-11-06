@@ -759,6 +759,13 @@ to the branch. Re-running Part 3 names such a runner with a `[shape]` line. Dele
 do, the shared picker keeps refusing any pull request that touches `.workflow-scripts/`, which covers
 the worst case of that shape.
 
+**A runner you adopted before #3810 does not wait out the settle window**, and a newer `ref:` pin does
+not change that. The wait is a flag on the picker line in the YAML (`-WaitForSettleSeconds 660`), and
+the picker defaults it to 0. Without it, the pull request that goes green last is refused at its only
+`workflow_run` wake and sits until the next schedule or a hand dispatch (#3809). Re-running Part 3
+names such a runner with a `[settle]` line (#3857). Append the flag to the `pick-merge-on-green.ps1`
+line, or delete the file and re-run with `-Apply`.
+
 **It uses the same `FOLD_PUSH_TOKEN`, with one more scope: `Pull requests: Read and write`.** A merge
 made with the job-scoped `GITHUB_TOKEN` starts no workflow runs, so it would land the pull request and
 silence your CI on the trunk and the fold and resolves runners, all at once. Without the scope the merge

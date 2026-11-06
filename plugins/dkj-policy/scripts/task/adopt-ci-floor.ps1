@@ -1586,6 +1586,37 @@ function Write-MergeOnGreenScopeVerdict {
     Write-Host '            line(s) under permissions:, or delete this file and re-run adopt-ci-floor -Apply.' -ForegroundColor Yellow
 }
 
+function Write-MergeOnGreenSettleVerdict {
+    <#
+        One line about the picker line of an existing merge-on-green.yml (#3857): it runs
+        pick-merge-on-green.ps1 without -WaitForSettleSeconds, which this scaffolder has written since
+        #3810. It prints nothing when the flag is there.
+
+        WHY THIS IS SAID AT ALL -- #2449's reason, for a correction that lives in the YAML rather than in
+        the scripts. The picker defaults the wait to 0, so moving the runner's ref: pin to a newer release
+        (the [pin] advice) does not deliver #3809's repair: the pull request that goes green LAST is
+        refused at its only workflow_run wake by the 10-minute settle window and waits for the schedule
+        or a hand dispatch. The file is never rewritten, so a re-run of this command is the one moment
+        anything looks at it again.
+
+        READ IN THE SHAPE THIS SCAFFOLDER WRITES, AND NO FURTHER: a line invoking pick-merge-on-green.ps1.
+        A file without one is said to be unread, never judged clean.
+    #>
+    param([string]$Text)
+
+    $line = [regex]::Match($Text, '(?m)^[^\n#]*pick-merge-on-green\.ps1[^\n]*$')
+    if (-not $line.Success) {
+        Write-Host '            its picker line could not be read, so whether the last pull request to go green waits out' -ForegroundColor DarkGray
+        Write-Host '            the settle window (#3809) was NOT established.' -ForegroundColor DarkGray
+        return
+    }
+    if ($line.Value -match '-WaitForSettleSeconds\b') { return }
+    Write-Host '            [settle] its picker runs without -WaitForSettleSeconds, so the pull request that goes green' -ForegroundColor Yellow
+    Write-Host '            LAST is refused by the 10-minute settle window and waits for the next schedule or a hand' -ForegroundColor Yellow
+    Write-Host '            dispatch (#3809). A newer ref: alone does not fix it: append -WaitForSettleSeconds 660 to the' -ForegroundColor Yellow
+    Write-Host '            pick-merge-on-green.ps1 line, or delete this file and re-run adopt-ci-floor -Apply.' -ForegroundColor Yellow
+}
+
 function Write-RunnerGroupVerdict {
     <#
         One line about the concurrency group of an existing fold-on-merge.yml or verify-resolved.yml
@@ -1879,6 +1910,7 @@ foreach ($t in $targets) {
             if ($t.Rel -eq $mergeOnGreenRunnerRel) {
                 Write-MergeOnGreenShapeVerdict -Text $existing
                 Write-MergeOnGreenScopeVerdict -Text $existing
+                Write-MergeOnGreenSettleVerdict -Text $existing
             }
             else { Write-RunnerGroupVerdict -Rel $t.Rel -Text $existing -TemplateText $t.Content }
         }

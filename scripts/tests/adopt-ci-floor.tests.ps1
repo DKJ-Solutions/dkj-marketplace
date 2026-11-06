@@ -1371,6 +1371,19 @@ try {
     $rScopeActions = Invoke-Adopt -Dir $pinDir -ScriptArgs @('-RulesJsonOverride', $rulesOff, '-Apply')
     Assert-True ($rScopeActions.Flat -like '*`[scope`] its job token has no actions: read, so*') 'a #3491-era block is reported for actions: read alone (#3619)'
 
+    # A RUNNER PLACED BEFORE #3810 IS NAMED ON A RE-RUN (#3857): its picker line lacks the settle wait,
+    # which a newer ref: pin cannot deliver because the picker defaults it to 0.
+    Assert-True ($rPin.Flat -notlike '*`[settle`]*') 'a merge-on-green.yml whose picker carries -WaitForSettleSeconds draws no settle advisory'
+    Assert-True ($rUnread.Flat -like '*its picker line could not be read*') 'a runner with no picker line is said to be unread, never judged clean (#3857)'
+    $pickerLine = "          powershell -NoProfile -ExecutionPolicy Bypass -File .workflow-scripts/plugins/dkj-policy/scripts/ci/pick-merge-on-green.ps1"
+    [System.IO.File]::WriteAllText($mogPath, "name: Merge on green`n        run: |`n$pickerLine`n          exit `$LASTEXITCODE`n")
+    $rSettle = Invoke-Adopt -Dir $pinDir -ScriptArgs @('-RulesJsonOverride', $rulesOff, '-Apply')
+    Assert-True ($rSettle.Flat -like '*`[settle`] its picker runs without -WaitForSettleSeconds*') 'a pre-#3810 picker line is reported (#3857)'
+    Assert-True ($rSettle.Flat -like '*append -WaitForSettleSeconds 660*') 'and the advisory names the flag to add'
+    [System.IO.File]::WriteAllText($mogPath, "name: Merge on green`n        run: |`n$pickerLine -WaitForSettleSeconds 660`n")
+    $rSettleOk = Invoke-Adopt -Dir $pinDir -ScriptArgs @('-RulesJsonOverride', $rulesOff, '-Apply')
+    Assert-True ($rSettleOk.Flat -notlike '*`[settle`]*') 'and the same line with the flag draws none'
+
     # THE PRE-#2813 CONCURRENCY GROUP IS NAMED ON A RE-RUN TOO (#2816), and the runners this floor just
     # placed carry the current one, so the pin-rerun pass above already proved the silent case.
     Assert-True ($rPin.Flat -notlike '*`[group`]*') 'a fold or resolves runner with the current group line draws no group advisory'
