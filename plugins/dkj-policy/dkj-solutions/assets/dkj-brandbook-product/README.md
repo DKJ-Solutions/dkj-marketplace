@@ -200,7 +200,7 @@ trail is the core's ("Shared components", [core README][core-shared]), because t
   <svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg>
   ```
 
-  [`patterns/repo-dashboard.html`][pattern-dashboard] carries it.
+  [`patterns/product-page.html`][pattern-page] carries it.
 
 **What this changes for an app that takes the update:** nothing that exists, only an addition. A page
 without the bar does not break, but it does not follow the brand book until it has one. An app with its
@@ -319,4 +319,4 @@ the `house-style-css` gate parses `house-product.css` as it does the core's.
 [core-two-layers]: https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md#two-layers
 [core-hub]: https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md#the-hub
 [core-changing]: https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md#changing-the-brand-book
-[pattern-dashboard]: patterns/repo-dashboard.html
+[pattern-page]: patterns/product-page.html

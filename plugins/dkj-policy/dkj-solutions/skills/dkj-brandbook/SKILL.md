@@ -95,16 +95,15 @@ appears, or the fetch fails, stop and report. The same holds for `house-product.
    `house-product.css` after it**, never alone; an Admin-only repo does not need it. An app that offers a theme choice
    uses `DKJTheme.settings(el)` from that script, the round settings button with the picker inside,
    instead of building its own toggle around `DKJTheme.picker`; the core README has its options.
-   **The hub** (a repo's dev server's home page on `/`, one page under the site header since #3289, with
-   `/about` sending an old link there; the dkj-policy plugin serves one in every repo, with no opt-out since
-   #3643, and the repo's own server as its first card, #3245) **takes the one form the core README lays down
-   under "The hub"**: its blocks and their order, with only the content the repo's own.
-   The site header names the repo; the page is one grid of card links with no heading (its products, its
-   own pages and the general ones), and its facts, its Issues and what is in flight sit on a
-   separate **Repository** page on `/dev/repository` (#3383). A repo without a build starts from
-   [`patterns/repo-dashboard.html`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/patterns/repo-dashboard.html) and
-   [`patterns/repo-repository.html`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/patterns/repo-repository.html)
-   in `dkj-policy`'s `assets/dkj-brandbook/`, which carry no CSS of their own
+   **The hub** (Admin, the dkj-policy plugin's dev server in every repo, with no opt-out since #3643)
+   **takes the one form the core README lays down under "The hub"**: the desktop shell since #3830, whose
+   stylesheet-only reference is
+   [`patterns/admin-shell.html`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/patterns/admin-shell.html)
+   in `dkj-policy`'s `assets/dkj-brandbook/`. **A product** takes the product layer's form, the site header
+   with its menu, the breadcrumb bar and the cards; a product without a build starts from
+   [`patterns/product-home.html`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/patterns/product-home.html) and
+   [`patterns/product-page.html`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/patterns/product-page.html)
+   in this plugin's `assets/dkj-brandbook-product/` (#3849). None of the three carries CSS of its own
    ([#3066](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3066)).
    **Every page a repo's dev server serves carries a breadcrumb trail**, its trail starting at **Home**,
    and the page's `h1` reads exactly what its current crumb reads, as the product README lays it down under
