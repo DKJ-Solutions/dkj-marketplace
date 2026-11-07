@@ -39,35 +39,43 @@
 
 ### PLAN
 
-The owner decided the AI knowledge base belongs in his private brain repo rather than here, so the
-folder added in #3863 goes again.
+The owner decided the AI knowledge base belongs in `dkj-lifehub` rather than here, so the folder
+added in #3863 goes again. On one condition (Maikel, November 7, 2026): this repo keeps a clear line
+to that knowledge base, because the items are still to be used here and held against the current
+setup. So the folder is replaced by a repo-local skill that reads the radar from the lifehub checkout.
 
 ### CREATE
 
 - [x] Remove `ai-radar/`
 - [x] Rebecca's lens: drop the radar exception, so "no research folder" stands unqualified again
 - [x] Sylvester's lens, repo layout: drop the `ai-radar/` bullet
+- [x] `scripts/dashboard/ai-radar.ps1`: find the lifehub through the register, find the AI dossier by its shape, list the inbox (`-All`: every item with its verdict)
+- [x] `.claude/skills/ai-radar/SKILL.md`: how to go through the radar here, where a gap is filed, and that verdicts are written back in the lifehub
+- [x] Fixture tests in `consumer-dashboard.tests.ps1`, beside repo-session's
 
 ### TEST
 
+- [x] `consumer-dashboard.tests.ps1`: 250 passed, 0 failed
+- [x] Run against the real lifehub checkout: it finds the dossier and reports 0 items (the dossier is still empty)
 - [x] Lint and suites run by open-pr
 
 ### DEPLOY: docs/remove-ai-radar
 
-The AI radar added in #3863 is removed again: the owner keeps the AI knowledge base in his own
-private knowledge base instead. Rebecca's lens and the repo layout in Sylvester's lens are back to
-what they said before. A gap that knowledge base finds in the plugins still arrives here, as an
-inbound issue.
+The AI radar added in #3863 leaves this repo: the owner keeps the AI knowledge base in `dkj-lifehub`
+instead. This repo keeps a line to it, the repo-local `ai-radar` skill: its script finds the
+lifehub checkout through the register, lists the items still to be assessed, and the skill says how
+to hold them against this tree, file a gap here and write the verdict back in the lifehub. Rebecca's
+lens and the repo layout in Sylvester's lens are back to what they said before.
 
 **Score:** 1
 
 #### What makes this deploy extra special
 
-N/A: the folder sat outside `plugins/`, so nothing a consumer installs changes.
+N/A: the folder sat outside `plugins/`, and the new skill is repo-local, so nothing a consumer installs changes.
 
 **Score:** N/A
 
 #### Pull Request
 
-Remove the AI radar: it moves to the owner's own knowledge base
+Move the AI radar to the lifehub, and read it from here with the ai-radar skill
 
