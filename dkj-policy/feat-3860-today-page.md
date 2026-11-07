@@ -39,21 +39,39 @@
 
 ### PLAN
 
+The day plan from #3859 needs a place that stays open all day (Dave, November 7, 2026): a hub page that shows the
+day goal, the plan with each item's live state, what got done and the week. A visible result, so this branch stops
+for the owner's look before it merges.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `day-plan.ps1 -Status`: the page's model as JSON, the past-day filter shared with `-Close` (`Select-DayPlanDay`)
+- [x] `plugins/dkj-policy/hub/lib/today-page-lib.ps1`: the renderer, brand book classes only
+- [x] `serve-general-pages.ps1`: `Get-TodayModel` (the script as a child), the route, the cache, `/refresh?page=today`
+- [x] `Get-GeneralPages`: Today first of the hub's own cards, with a calendar icon; the hub README row; the skill page
 
 ### TEST
 
+- [x] `dayplan.tests.ps1` (69), `dev-pages.tests.ps1` (633) and `goals.tests.ps1` (56) green, the page order pins updated
+- [x] A preview hub from this branch on port 4895 with a scratch state: the page renders, #3859 shows done live
+- [ ] Review: Victor (code), Sebastian (security), Edith (copy)
+
 ### DEPLOY: feat/3860-today-page
 
-**Score:**
+A new hub page and a `-Status` mode on `day-plan.ps1`; the hub's menu gains a card, first of its own, so the
+Goals card moves one place along. The page reads the day file and runs the script as a child of the hub, so the
+GitHub search has one source.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Admin opens on Today: the day goal with a progress bar, the plan with each item ticked off as its PR or issue
+closes, what got done outside the plan, what was deliberately left for another day, and the week so far. The day
+you planned with Paula stays in view while you work, and at the end of it you can see what you did.
+
+**Score:** 3
 
 #### Pull Request
 
 Admin page /dev/today: the day plan, what got done, and the week
-
