@@ -1,10 +1,10 @@
 <#
 .SYNOPSIS
-    The Today page of every repo's hub (#3860): the day plan from day-plan.ps1 -Status, its goal and progress, each
+    The Today page of every repo's admin (#3860): the day plan from day-plan.ps1 -Status, its goal and progress, each
     item's live state, what got done (the extra work included), what is not today, and the week.
 
 .DESCRIPTION
-    Rendered in the hub, where general-pages-lib.ps1 is loaded: ConvertTo-GeneralPageText escapes and
+    Rendered in Admin, where general-pages-lib.ps1 is loaded: ConvertTo-GeneralPageText escapes and
     Format-GeneralPageHtml draws the shell. The model is day-plan.ps1 -Status's JSON, so the GitHub search behind it has
     one source; the server only runs it and caches the answer (Get-TodayModel in serve-general-pages.ps1).
 

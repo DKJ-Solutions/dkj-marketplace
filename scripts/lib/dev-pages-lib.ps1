@@ -1,22 +1,22 @@
 <#
 .SYNOPSIS
     This repo's PRODUCT (#3540): the home page on '/' and its own pages -- Consumers and Plugins, the specialists on their teams' Plugins pages.
-    The hub is the dkj-policy plugin's, as in every other repo (#3245): this repo states its dev server as
+    Admin is the dkj-policy plugin's, as in every other repo (#3245): this repo states its dev server as
     its product and no longer opts out with OwnHub, so the general pages -- Repository, Issues,
-    Release notes, SessionStart, Test gate, Stopwatch, Logbook and Plugins -- are the plugin hub's, and the
+    Release notes, SessionStart, Test gate, Stopwatch, Logbook and Plugins -- are the plugin admin's, and the
     product's home page links back to it. No I/O -- the server (scripts/dashboard/serve-consumer-dashboard.ps1)
     measures and reads, and hands the results in, so every rule here is tested without a server.
 
 .DESCRIPTION
     EVERY REPO HAS A PRODUCT PORT (Maikel, October 26, 2026, #3540). Retiring the brandbook/ app (#3493) took
-    the product port with it and made this server the hub again, with the product's pages on it. The app
+    the product port with it and made this server Admin again, with the product's pages on it. The app
     could go; the port could not. So this server is the product once more, as it was from #3283 to #3493 for
-    Consumers, Specialists and DKJ repos, and the hub is the plugin's: the same form as every consumer
-    (#3464), so a hub change reaches this repo with a plugin update too.
+    Consumers, Specialists and DKJ repos, and Admin is the plugin's: the same form as every consumer
+    (#3464), so an admin change reaches this repo with a plugin update too.
 
-    THE HOME PAGE is the house hub form (#3383): the general banner, the site header naming the repo with
-    'product' after it, the bar with its one crumb, Home, and one .grid-3 of card links -- the Hub first,
-    where the plugin's hub is known, then this repo's own pages (Get-ProductPages) -- and a footer note.
+    THE HOME PAGE is the house admin form (#3383): the general banner, the site header naming the repo with
+    'product' after it, the bar with its one crumb, Home, and one .grid-3 of card links -- the Admin first,
+    where the plugin's admin is known, then this repo's own pages (Get-ProductPages) -- and a footer note.
 
     ONE SHELL FOR EVERY PAGE BELOW THE HOME PAGE. Each page opens with the house breadcrumb bar, its trail
     starting at the home page on '/' and ending at the page itself, unlinked ("Every page: the breadcrumb
@@ -38,10 +38,10 @@
 . (Join-Path $PSScriptRoot 'consumer-dashboard-lib.ps1')
 # The plugin's lib: this repo is its source, so it reads it from its own tree -- dkj-policy's page shell and
 # card (#3198).
-. (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\hub\lib\general-pages-lib.ps1')
-# And the hub's Plugins page lib, for ConvertTo-PluginDescriptionHtml (a plugin's description as paragraphs) and the house
+. (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1')
+# And Admin's Plugins page lib, for ConvertTo-PluginDescriptionHtml (a plugin's description as paragraphs) and the house
 # style's specimens (Get-HouseStyleSpecimensParts).
-. (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\hub\lib\plugins-page-lib.ps1')
+. (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\apps\admin\lib\plugins-page-lib.ps1')
 
 function Format-DevPageHtml {
     <#
@@ -63,7 +63,7 @@ function Format-DevPageHtml {
     # -Bare: no h1 above the body (Format-ProductPageHtml's own switch), for a page that opens on its content.
     # -Info: what a plugin's page is about, behind the "?" right of its h1 (Format-ProductPageHtml's own, escaped by the caller).
     return Format-ProductPageHtml -Title $Title -Lead $Lead -Body $Body -Style $Style -FooterNote $FooterNote -ThemeKey $ThemeKey `
-        -Brand 'dkj-marketplace' -SiteName 'dkj-marketplace' -HubHref '/' -HomeLabel 'Home' -Bare:$Bare -ParentCrumbs $ParentCrumbs -Info $Info -Menu @(Get-ProductMenu)
+        -Brand 'dkj-marketplace' -SiteName 'dkj-marketplace' -AdminHref '/' -HomeLabel 'Home' -Bare:$Bare -ParentCrumbs $ParentCrumbs -Info $Info -Menu @(Get-ProductMenu)
 }
 
 function Format-ProductSettingsHtml {
@@ -83,14 +83,14 @@ function Format-ProductSettingsHtml {
 
 function Format-ProductHomeHtml {
     <#
-        The product's home page on '/' (#3540). -Pages is Get-ProductPages' shape. -HubUrl is the plugin hub's
+        The product's home page on '/' (#3540). -Pages is Get-ProductPages' shape. -AdminUrl is the plugin admin's
         url from the state file the dev-preview hook writes, or empty: only a plain loopback url is linked, as
-        the Hub card that opens the grid; without one, a card says the hub starts at the next session start.
+        the Admin card that opens the grid; without one, a card says Admin starts at the next session start.
         -SourceCommit is the short sha the server loaded, or empty.
     #>
     param(
         [AllowEmptyCollection()][object[]]$Pages = @(Get-ProductPages),
-        [AllowEmptyString()][string]$HubUrl = '',
+        [AllowEmptyString()][string]$AdminUrl = '',
         [AllowEmptyString()][string]$SourceCommit = ''
     )
     $e = { param($v) ConvertTo-DashboardText $v }
@@ -109,30 +109,30 @@ function Format-ProductHomeHtml {
     # One width, full, as on Admin (Dave, November 4, 2026): another screen is judged in the Simple Browser's own
     # device emulation, so the product offers no width choice.
     [void]$sb.AppendLine((Get-AdminWidthScript))
-    # The hub's own .ph-cards (Get-HubCardGridStyle), so these cards behave as Admin home's do (Maikel,
+    # Admin's own .ph-cards (Get-AdminCardGridStyle), so these cards behave as Admin home's do (Maikel,
     # November 3, 2026).
     [void]$sb.AppendLine('<style>')
-    [void]$sb.AppendLine((Get-HubCardGridStyle))
+    [void]$sb.AppendLine((Get-AdminCardGridStyle))
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
     [void]$sb.AppendLine('<body>')
     [void]$sb.Append((Format-ProductHomeHeadHtml -RepoName 'dkj-marketplace' -Brand 'dkj-marketplace' -HomeLabel 'Home' -Menu @(Get-ProductMenu)))
-    # Every page a card of its own, three to a row, with no heading above them (the house hub form, #3383): the
-    # hub first, so the way back is where the eye starts, then this repo's own pages. On the page itself, in the
+    # Every page a card of its own, three to a row, with no heading above them (the house admin form, #3383): the
+    # admin first, so the way back is where the eye starts, then this repo's own pages. On the page itself, in the
     # Admin home's .ph-cards rather than a .grid-3, whose surface frames an h2 over h3 cards (November 2, 2026).
     [void]$sb.AppendLine('<div class="ph-cards">')
-    if ($HubUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
-        [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $HubUrl -Label 'Admin' -Sub 'The dkj-policy Admin: its Development section holds GitHub, Issues, Release notes, the Test gate and every other general page' -Icon 'repository'))
+    if ($AdminUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
+        [void]$sb.AppendLine((Format-AdminCardLinkHtml -Href $AdminUrl -Label 'Admin' -Sub 'The dkj-policy Admin: its Development section holds GitHub, Issues, Release notes, the Test gate and every other general page' -Icon 'repository'))
     } else {
         [void]$sb.AppendLine('<section class="card"><p role="status">Admin is not running. The dkj-policy dev-preview hook starts it at the next session start.</p></section>')
     }
-    foreach ($p in @($Pages)) { [void]$sb.AppendLine((Format-HubCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon)) }
+    foreach ($p in @($Pages)) { [void]$sb.AppendLine((Format-AdminCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon)) }
     [void]$sb.AppendLine('</div>')
     $at = if ($SourceCommit) { ', from <code>' + (& $e $SourceCommit) + '</code>' } else { '' }
     [void]$sb.AppendLine('<p class="note">Each page names its own source. Served on 127.0.0.1 only, by <code>scripts/dashboard/serve-consumer-dashboard.ps1</code>' + $at + '.</p>')
     [void]$sb.AppendLine('</main>')
     [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", widths: false });</script>')
-    # The fit alarm, as the plugin's page shell closes every hub page (#3558).
+    # The fit alarm, as the plugin's page shell closes every admin page (#3558).
     [void]$sb.AppendLine((Format-FitAlarmHtml))
     [void]$sb.AppendLine('</body>')
     [void]$sb.AppendLine('</html>')
@@ -362,7 +362,7 @@ function Format-SpecialistTeamHtml {
     foreach ($r in @($rows | Sort-Object @{ Expression = { $_.Id } })) {
         $sub = @(('#' + (& $e $r.Number)), $(if ($r.Title) { & $e $r.Title }), (& $e $r.Form), ('full read ' + (& $tok $r.TotalBytes))) |
             Where-Object { $_ }
-        [void]$body.AppendLine((Format-HubCardLinkHtml -Href ($BaseHref + '/' + $r.Slug) -SubHtml ($sub -join ' &middot; ') `
+        [void]$body.AppendLine((Format-AdminCardLinkHtml -Href ($BaseHref + '/' + $r.Slug) -SubHtml ($sub -join ' &middot; ') `
             -Label ($r.Name + $(if ($r.Emoji) { ' ' + $r.Emoji } else { '' })) -Id ('specialist-' + $r.Slug) -Class 'sp-card' -Heading 0))
     }
     if (-not $rows.Count) {
@@ -610,7 +610,7 @@ function Format-ProductHouseStylePageHtml {
             foreach ($h in @(if ($g.ContainsKey('Headings')) { $g.Headings | Where-Object { $_.ContainsKey('Section') } })) {
                 $n += [int](@($split.Sections | Where-Object { $_.Slug -ceq $h.Section }) | Select-Object -First 1).Cards
             }
-            [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ($base + '/tokens/' + $g.Slug) -Label $g.Label -Heading 3 -Sub $(if ($n -eq 1) { '1 specimen' } else { [string]$n + ' specimens' })))
+            [void]$sb.AppendLine((Format-AdminCardLinkHtml -Href ($base + '/tokens/' + $g.Slug) -Label $g.Label -Heading 3 -Sub $(if ($n -eq 1) { '1 specimen' } else { [string]$n + ' specimens' })))
         }
         [void]$sb.AppendLine('</div>')
         # The other sections under two more h2s, Preview and Components, each card an h3 (Maikel, November 1, 2026).
@@ -625,7 +625,7 @@ function Format-ProductHouseStylePageHtml {
             [void]$sb.AppendLine('<div class="grid-3" id="' + $grp.Id + '"><div class="grid__head"><h2>' + $grp.Label + '</h2></div>')
             foreach ($s in $grp.Sections) {
                 $count = if ($s.Cards -eq 1) { '1 specimen' } else { [string]$s.Cards + ' specimens' }
-                [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ($base + '/' + $s.Slug) -Label $s.Title -Heading 3 -Sub $count))
+                [void]$sb.AppendLine((Format-AdminCardLinkHtml -Href ($base + '/' + $s.Slug) -Label $s.Title -Heading 3 -Sub $count))
             }
             [void]$sb.AppendLine('</div>')
         }
@@ -665,7 +665,7 @@ function Format-MarketplacePluginsPageHtml {
         The Plugins pages: every plugin this marketplace ships. -Plugins is the server's model, in
         marketplace.json's order, each @{ Name; Kind; Source; Version; Enabled; Summary; Description; Subagents;
         Personas; Skills; Hooks }: Summary is the marketplace's own line, Description the plugin.json's. Where the
-        hub's Plugins page shows what THIS checkout enables, these show what the repo OFFERS, enabled here or not.
+        admin's Plugins page shows what THIS checkout enables, these show what the repo OFFERS, enabled here or not.
 
         THE LEVELS (the owner, October 27, 2026: the cards were crammed, so the detail goes a level deeper, as on
         the Specialists pages; and the four specialist teams share one card). Without -Plugin or -Group it is
@@ -673,7 +673,7 @@ function Format-MarketplacePluginsPageHtml {
         teams (dkj-subagents-*), which stand as ONE card, 'dkj-subagents', in the place of the first of them. With
         -Group 'dkj-subagents' alone it is that card's page, one link card per team. With -Plugin it is one
         plugin's page -- /marketplace/<name>, or /marketplace/dkj-subagents/<name> for a team, so a team is reachable only
-        under its group: the marketplace's line as the lead, a facts card, and the full description as paragraphs (the hub's
+        under its group: the marketplace's line as the lead, a facts card, and the full description as paragraphs (Admin's
         ConvertTo-PluginDescriptionHtml) behind the "?" right of the h1 (Maikel, October 31, 2026: no Description card since). A -Group or -Plugin that names nothing, or a plugin under the
         wrong level, returns $null, so the server answers 404 rather than an empty page. dkj-policy's add-ons
         (Maikel, October 30, 2026) are not on the overview: dkj-policy's page carries them as cards, and each is
@@ -711,7 +711,7 @@ function Format-MarketplacePluginsPageHtml {
     $spOf = { param($name) @($spPlugins | Where-Object { $_.Plugin -ceq $name })[0] }
     $tok = { param($b) if ([int64]$b -le 0) { '--' } else { '~' + (Format-DevNumber ([Math]::Round([double]$b / $CharsPerToken))) } }
     $state = { param($p) @((& $e $p.Kind), $(if ($p.Version) { 'v' + (& $e $p.Version) }), $(if ($p.Enabled) { 'enabled here' } else { 'off here' })) | Where-Object { $_ } }
-    $card = { param($p, $href, $h) Format-HubCardLinkHtml -Href $href -Label $p.Name -SubHtml ((& $state $p) -join ' &middot; ') -Heading $h `
+    $card = { param($p, $href, $h) Format-AdminCardLinkHtml -Href $href -Label $p.Name -SubHtml ((& $state $p) -join ' &middot; ') -Heading $h `
         -Id ('plugin-' + $p.Name) -Class ('pl-card' + $(if ($p.Enabled) { '' } else { ' pl-card--off' })) }
     $body = New-Object System.Text.StringBuilder
     if ($ReadError) {
@@ -731,7 +731,7 @@ function Format-MarketplacePluginsPageHtml {
                 $teamsDone = $true
                 $on = @($teams | Where-Object { $_.Enabled }).Count
                 $sub = [string]$teams.Count + ' specialist team' + $(if ($teams.Count -ne 1) { 's' } else { '' }) + ' &middot; ' + $on + ' enabled here'
-                [void]$body.AppendLine((Format-HubCardLinkHtml -Href ('/marketplace/' + $teamGroup) -Label $teamGroup -SubHtml $sub -Heading 2 `
+                [void]$body.AppendLine((Format-AdminCardLinkHtml -Href ('/marketplace/' + $teamGroup) -Label $teamGroup -SubHtml $sub -Heading 2 `
                     -Id ('group-' + $teamGroup) -Class ('pl-card' + $(if ($on) { '' } else { ' pl-card--off' }))))
                 continue
             }
@@ -758,7 +758,7 @@ function Format-MarketplacePluginsPageHtml {
                 # A team's card also counts its specialists and what reading all of them costs.
                 $sp = & $spOf $p.Name
                 $sub = @(& $state $p) + $(if ($sp) { @(([string]$sp.Rows.Count + ' specialist' + $(if ($sp.Rows.Count -ne 1) { 's' } else { '' })), ('full read ' + (& $tok $sp.TotalBytes))) } else { @() })
-                [void]$body.AppendLine((Format-HubCardLinkHtml -Href ('/marketplace/' + $teamGroup + '/' + $p.Name) -Label $p.Name -SubHtml ($sub -join ' &middot; ') -Heading 3 `
+                [void]$body.AppendLine((Format-AdminCardLinkHtml -Href ('/marketplace/' + $teamGroup + '/' + $p.Name) -Label $p.Name -SubHtml ($sub -join ' &middot; ') -Heading 3 `
                     -Id ('plugin-' + $p.Name) -Class ('pl-card' + $(if ($p.Enabled) { '' } else { ' pl-card--off' }))))
             }
             [void]$body.AppendLine('</div>')
@@ -795,7 +795,7 @@ function Format-MarketplacePluginsPageHtml {
         # What dkj-policy ships that can be looked at: the house style's specimens (Maikel, October 31, 2026).
         # It opens the page, above the add-ons, under the heading Assets, its card named dkj-brandbook (Maikel, October 31, 2026).
         [void]$body.AppendLine('<div class="grid-3" id="assets"><div class="grid__head"><h2>Assets (Always on)</h2></div>')
-        [void]$body.AppendLine((Format-HubCardLinkHtml -Href '/marketplace/dkj-policy/dkj-brandbook' -Label 'dkj-brandbook' -Heading 3 `
+        [void]$body.AppendLine((Format-AdminCardLinkHtml -Href '/marketplace/dkj-policy/dkj-brandbook' -Label 'dkj-brandbook' -Heading 3 `
             -Sub 'Every token, the twelve themes and every component, with their variants and states' -Icon 'house-style'))
         [void]$body.AppendLine('</div>')
     }
@@ -1076,7 +1076,7 @@ function Get-DkjRepoCardStyle {
 
 function Format-DkjRepoCardsHtml {
     <#
-        The DKJ repos' cards and nothing around them: one per repo in the hub's card form (Format-HubCardLinkHtml), each
+        The DKJ repos' cards and nothing around them: one per repo in Admin's card form (Format-AdminCardLinkHtml), each
         opening that repo's own page. The DKJ group's page sets them in its .dr-repos grid with an h2 each, and the
         Consumers overview under its DKJ h2 with an h3 each (Maikel, October 30, 2026). The parameters are
         Format-DkjReposPageHtml's; -Heading is the cards' heading level.
@@ -1099,15 +1099,15 @@ function Format-DkjRepoCardsHtml {
         $reg = $byConsumer[([string]$r.Repo).ToLowerInvariant()]
         $badge = if ($reg) { $b = Get-DashboardStatusBadge ([string]$reg.Status); '<span class="badge badge--sm ' + $b.Class + '" title="' + $b.Word + '" aria-label="' + $b.Word + '">' + $b.Mark + '</span>' } else { '' }
         $id = 'repo-' + (([string]$r.Name) -replace '[^A-Za-z0-9]+', '-').ToLowerInvariant()
-        [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ('/consumers/dkj/' + $r.Name) -Label ([string]$r.Name) -SubHtml (& $clip (Format-DkjRepoFactsHtml -Row $r -NoLinks)) -ValueHtml $value -TitleBadgeHtml $badge -Heading $Heading -Id $id))
+        [void]$sb.AppendLine((Format-AdminCardLinkHtml -Href ('/consumers/dkj/' + $r.Name) -Label ([string]$r.Name) -SubHtml (& $clip (Format-DkjRepoFactsHtml -Row $r -NoLinks)) -ValueHtml $value -TitleBadgeHtml $badge -Heading $Heading -Id $id))
     }
     return $sb.ToString()
 }
 
 function Format-DkjReposPageHtml {
     <#
-        /consumers/dkj (Maikel, October 28, 2026): one card per DKJ repo, in the hub's card form three to a row
-        (Format-HubCardLinkHtml), each opening that repo's own page (Format-DkjRepoPageHtml). Newest push first: the
+        /consumers/dkj (Maikel, October 28, 2026): one card per DKJ repo, in Admin's card form three to a row
+        (Format-AdminCardLinkHtml), each opening that repo's own page (Format-DkjRepoPageHtml). Newest push first: the
         repos GitHub lists, then every checkout it did not (Get-DkjRepoRows), so the page never hides a folder on
         disk. A card's line is its GitHub facts, its value its checkout here, and its mark the status
         check-consumers.ps1 gives it where it is registered under consumers/.

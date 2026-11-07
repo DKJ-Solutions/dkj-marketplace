@@ -232,21 +232,21 @@
                    {
                        "key":  "pages",
                        "title":  "The dev server pages",
-                       "guards":  "the hub and its pages, the server that serves them, the hook that starts it and the live issue dashboard",
+                       "guards":  "Admin and its pages, the server that serves them, the hook that starts it and the live issue dashboard",
                        "suites":  [
                                       "consumer-dashboard.tests.ps1",
                                       "dayplan.tests.ps1",
                                       "dev-pages.tests.ps1",
                                       "dev-preview-sessionstart.tests.ps1",
                                       "goals.tests.ps1",
-                                      "hub-airsquats.tests.ps1",
+                                      "admin-airsquats.tests.ps1",
                                       "issue-dashboard.tests.ps1",
                                       "logbook.tests.ps1",
                                       "stopwatch.tests.ps1",
                                       "stopwatch-sync.tests.ps1"
                                   ],
                        "tips":  [
-                                    "The hub restarts itself when HEAD moves, so a commit shows on the page within seconds; a page that looks stale is usually mid-restart."
+                                    "Admin restarts itself when HEAD moves, so a commit shows on the page within seconds; a page that looks stale is usually mid-restart."
                                 ]
                    },
                    {

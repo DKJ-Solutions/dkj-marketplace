@@ -52,7 +52,7 @@
     THE NOTES ARE A SET OF PAGES, NOT ONE (#3500). The builder writes an index of cards and, in a
     folder named after it, one page per release, and every card links to its release's own page. So
     a notes publish uploads the whole set -- each release page under '<kind>:<token>/v<x.y.z>', the
-    index last under '<kind>:<token>' -- after moving the builder's links from the hub's address onto
+    index last under '<kind>:<token>' -- after moving the builder's links from Admin's address onto
     the worker's route (Convert-BwjPageLinks says why the build is not redone for it). Before anything
     is uploaded, every site-absolute link in the set has to be one the worker will serve; a link that
     is not stops the run. That is the measured failure: an index whose every card led to a 404.

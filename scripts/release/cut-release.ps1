@@ -513,7 +513,7 @@ $releaseBuilds = @(foreach ($b in @(Get-SeamValue -Name 'Get-ReleaseBuilds' -Def
 # AND WHERE THE HOLDER IS THIS CHECKOUT'S OWN DEV-PREVIEW PRODUCT, THE CUT STOPS IT FIRST (#3462). The SessionStart
 # hook starts that product in every session, so the refusal fired at every cut here (v5.30.0, v5.31.0), each time
 # over a server the next session starts again. The product is the one Get-DevPreview states (its Product beside an
-# own hub, or the server itself), and only a listener on its ports that the hook's own ownership rule reads as this
+# own admin, or the server itself), and only a listener on its ports that the hook's own ownership rule reads as this
 # checkout's is stopped, as the whole tree under the hook's cmd.exe. Anything else -- a foreign holder, no
 # dev-preview lib, no seam -- leaves the held files held, and the refusal below stands as it was.
 function Get-ReleaseBuildHeldFiles([string]$Dir) {
@@ -522,8 +522,8 @@ function Get-ReleaseBuildHeldFiles([string]$Dir) {
 }
 function Stop-OwnDevPreviewProduct {
     # The plugin tree carries the lib beside scripts/; the source repo's root copy reaches it under plugins/.
-    $lib = @((Join-Path $PSScriptRoot '..\..\hub\lib\dev-preview-rules.ps1'),
-        (Join-Path $repoRoot 'plugins\dkj-policy\hub\lib\dev-preview-rules.ps1')) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+    $lib = @((Join-Path $PSScriptRoot '..\..\apps\admin\lib\dev-preview-rules.ps1'),
+        (Join-Path $repoRoot 'plugins\dkj-policy\apps\admin\lib\dev-preview-rules.ps1')) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
     if (-not $lib) { return @() }
     try {
         . $lib
@@ -980,8 +980,8 @@ function Invoke-TrunkCatchUp {
 # (the owner's own `stopwatch:` run, or this cut's on a catch-up round), and the Stop hook ends it on the release
 # notes commit (#3400). The plugin tree carries the lib beside scripts/; the source repo's root copy reaches it
 # under plugins/. A missing lib, or any failure inside it, leaves the cut exactly as it was.
-$stopwatchLib = @((Join-Path $PSScriptRoot '..\..\hub\lib\stopwatch-lib.ps1'),
-    (Join-Path $repoRoot 'plugins\dkj-policy\hub\lib\stopwatch-lib.ps1')) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+$stopwatchLib = @((Join-Path $PSScriptRoot '..\..\apps\admin\lib\stopwatch-lib.ps1'),
+    (Join-Path $repoRoot 'plugins\dkj-policy\apps\admin\lib\stopwatch-lib.ps1')) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
 if ($stopwatchLib) {
     try {
         . $stopwatchLib

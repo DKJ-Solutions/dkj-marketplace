@@ -758,7 +758,7 @@ function Get-ReleaseVersionPins {
 }
 
 # The builds cut-release ships (#3210): none. The brandbook/ app's build was the one entry, copied into the
-# dkj-solutions plugin for consumer hubs to serve at /brandbook/; once no consumer hub served it (#3475), the cut
+# dkj-solutions plugin for consumer Admin servers to serve at /brandbook/; once no consumer admin served it (#3475), the cut
 # stopped paying npm ci and a build for a folder nothing read (#3477). An empty list is a valid answer, and the
 # literal keeps its two-line shape because cut-release-drive.tests.ps1's fixture rewrites it by that shape. A build
 # added here again runs its commands with --ignore-scripts on npm: no dependency's install script runs in the shell
@@ -1486,9 +1486,9 @@ function Get-DeclinedAdoptions {
 
 function Get-DevPreview {
     <# This repo's PRODUCT: the consumer dashboard server, home of Consumers and Specialists.
-       The dkj-policy dev-preview hook starts it (or reuses it) at session start beside the plugin's hub,
+       The dkj-policy dev-preview hook starts it (or reuses it) at session start beside the plugin's admin,
        and hands out both links. Every repo has a product port (Maikel, October 26, 2026, #3540), so this
-       repo no longer opts out with OwnHub: the hub is the plugin's, as in every consumer (#3245), and the
+       repo no longer opts out with OwnHub: Admin is the plugin's, as in every consumer (#3245), and the
        general pages are its. (OwnHub held from #3245 until #3540, with the brandbook/ app as the Product
        beside it from #3283 until #3493 retired the app.) The server binds to 127.0.0.1 itself, so the
        Command needs no bind flag. It runs under cmd.exe, hence the backslashes. #>
@@ -1513,7 +1513,7 @@ function Get-HouseStyleAllowlist {
         @{ Path = 'plugins/dkj-policy/skills/*';               Reason = $shared }
         @{ Path = 'plugins/dkj-policy/worker/*';               Reason = $shared }
         @{ Path = 'scripts/tests/release-notes-page.tests.ps1'; Reason = 'fixtures of the release-notes page above' }
-        @{ Path = 'plugins/dkj-policy/hub/lib/general-pages-lib.ps1'; Name = '--ink'; Reason = 'the release-notes template''s own token, which Format-ReleaseNotesDevPage points AT a house token (#3108, moved to the plugin in #3119, to dkj-policy in #3198)' }
+        @{ Path = 'plugins/dkj-policy/apps/admin/lib/general-pages-lib.ps1'; Name = '--ink'; Reason = 'the release-notes template''s own token, which Format-ReleaseNotesDevPage points AT a house token (#3108, moved to the plugin in #3119, to dkj-policy in #3198)' }
         @{ Path = 'scripts/tests/check-house-style.tests.ps1';  Reason = "the gate's own suite: every name in it is a fixture" }
         @{ Path = 'scripts/tests/house-palette.tests.ps1';      Reason = 'the palette suite: every name in it is a pattern or a fixture of the stylesheet it holds' }
         @{ Path = 'plugins/dkj-policy/bwj-development/*';       Reason = 'the BWJ-Development extension: its pages carry BWJ''s own styling, outside the house style by design' }

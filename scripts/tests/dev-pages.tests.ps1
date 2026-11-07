@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
-    Tests for scripts/lib/dev-pages-lib.ps1 -- the hub and the test-gate page of the dev server
-    (#3097) -- and for the plugin libs it reuses: plugins/dkj-policy/hub/lib/general-pages-lib.ps1 -- the page
+    Tests for scripts/lib/dev-pages-lib.ps1 -- Admin and the test-gate page of the dev server
+    (#3097) -- and for the plugin libs it reuses: plugins/dkj-policy/apps/admin/lib/general-pages-lib.ps1 -- the page
     shell, the number formats and the three general pages (SessionStart, Issues, Release notes) that
     moved there in #3119, and to dkj-policy in #3198. Pure: the servers that serve them are
     exercised by consumer-dashboard.tests.ps1 and dev-preview-sessionstart.tests.ps1.
@@ -13,8 +13,8 @@ $ErrorActionPreference = 'Continue'
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 . (Join-Path $RepoRoot 'scripts\lib\dev-pages-lib.ps1')
 # The Test gate page's lib, which this suite also covers: the plugin's since #3470, and no longer loaded by
-# dev-pages-lib now that the Test gate is the plugin hub's alone (#3540).
-. (Join-Path $RepoRoot 'plugins\dkj-policy\hub\lib\test-gate-lib.ps1')
+# dev-pages-lib now that the Test gate is the plugin admin's alone (#3540).
+. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\test-gate-lib.ps1')
 
 $script:pass = 0
 $script:fail = 0
@@ -47,7 +47,7 @@ Assert-True ($shell.IndexOf('<div class="breadcrumbs-bar">') -lt $shell.IndexOf(
 Assert-True ($shell -match '<li><a href="/">Home</a></li>') 'the trail starts at Home, linked'
 Assert-True ($shell -match 'breadcrumbs__sep" aria-hidden="true"><svg\ viewBox="0\ 0\ 24\ 24"><path\ fill="currentColor"\ fill-rule="evenodd"\ d="M9\.793\ 16\.707a1\ 1\ 0\ 0\ 1\ 0-1\.414L13\.086\ 12\ 9\.793\ 8\.707a1\ 1\ 0\ 0\ 1\ 1\.414-1\.414l4\ 4a1\ 1\ 0\ 0\ 1\ 0\ 1\.414l-4\ 4a1\ 1\ 0\ 0\ 1-1\.414\ 0"\ clip-rule="evenodd"/></svg></span><span aria-current="page">A &lt;b&gt;page</span>') 'and ends at the page, unlinked and escaped'
 Assert-True ($shell -match '<h1>A &lt;b&gt;page</h1>') 'the h1 is the page name, escaped'
-Assert-True ($shell -match 'data-theme-key="general-pages"') 'the theme key is the general pages'' own, so a theme picked on any page the hub serves holds on all of them (#3168)'
+Assert-True ($shell -match 'data-theme-key="general-pages"') 'the theme key is the general pages'' own, so a theme picked on any page Admin serves holds on all of them (#3168)'
 Assert-True ($shell -match '<p class="note">note</p>') 'the footer note closes the column'
 
 Write-Host '-- the general page shell (the plugin''s)' -ForegroundColor Cyan
@@ -65,19 +65,19 @@ Assert-True ($gshell -match 'data-theme-key="general-pages"') 'the theme key is 
 Assert-True ($gshell -notmatch 'dkj-claude-plugins') 'and nothing of this repo is built into it'
 $gIntro = $gshell.IndexOf('<h1>')
 $gScroll = $gshell.IndexOf('<div class="shell__list tb-scroll">')
-Assert-True ($gshell.Contains((Format-RepoHubBanner)) -and $gScroll -ge 0 -and $gshell.IndexOf('id="hub-banner"') -gt $gScroll -and $gshell.IndexOf('id="hub-banner"') -lt $gshell.IndexOf('<main class="shell__body">') -and $gshell.IndexOf('<main class="shell__body">') -lt $gshell.IndexOf('<p>body</p>') -and $gshell.IndexOf('<h1>') -lt $gScroll -and ([regex]::Matches($gshell, 'id="hub-banner"')).Count -eq 1) 'every page carries the general banner once, as the first thing in the scroll pane, above its own blocks, in the pane body (#3297; owner, October 24, 2026; in the shell, #3811)'
+Assert-True ($gshell.Contains((Format-RepoAdminBanner)) -and $gScroll -ge 0 -and $gshell.IndexOf('id="admin-banner"') -gt $gScroll -and $gshell.IndexOf('id="admin-banner"') -lt $gshell.IndexOf('<main class="shell__body">') -and $gshell.IndexOf('<main class="shell__body">') -lt $gshell.IndexOf('<p>body</p>') -and $gshell.IndexOf('<h1>') -lt $gScroll -and ([regex]::Matches($gshell, 'id="admin-banner"')).Count -eq 1) 'every page carries the general banner once, as the first thing in the scroll pane, above its own blocks, in the pane body (#3297; owner, October 24, 2026; in the shell, #3811)'
 # THE SITE HEADER (October 22, 2026): only where a caller asks for it with -Brand, so every other repo's pages stay as they were.
 $anon = Format-GeneralPageHtml -Title 'T' -Lead 'L' -Body ''
 Assert-True ($anon -notmatch 'site-header' -and $anon -match 'class="shell shell--no-aside"' -and $anon -notmatch 'theme-settings--floating') 'a page that names no site draws no site header and no floating settings button: it stands in the shell (#3811)'
 Assert-True ((ConvertTo-SiteHeaderName -RepoName 'DKJ-Solutions/dkj-x') -eq 'dkj-x' -and (ConvertTo-SiteHeaderName -RepoName 'a/b<c>') -eq 'a/b<c>') 'a GitHub slug loses its owner in the header; any other name stays whole'
-$bshell = Format-GeneralPageHtml -Title 'T' -Lead 'L' -Body '' -Brand 'r<x>' -HubHref '/home'
-Assert-True ($bshell -notmatch 'site-header' -and $bshell -notmatch 'r&lt;x&gt;' -and $bshell -match '<li><a href="/home">Home</a></li>' -and $bshell -notmatch 'id="settings"') 'with -Brand an Admin page draws no site header and names no brand anywhere; its first crumb links -HubHref (Maikel, November 3, 2026; in the shell, #3811)'
+$bshell = Format-GeneralPageHtml -Title 'T' -Lead 'L' -Body '' -Brand 'r<x>' -AdminHref '/home'
+Assert-True ($bshell -notmatch 'site-header' -and $bshell -notmatch 'r&lt;x&gt;' -and $bshell -match '<li><a href="/home">Home</a></li>' -and $bshell -notmatch 'id="settings"') 'with -Brand an Admin page draws no site header and names no brand anywhere; its first crumb links -AdminHref (Maikel, November 3, 2026; in the shell, #3811)'
 Assert-True ((Format-SiteHeaderHtml -Name 'n' -Tag 'p<q>') -match 'aria-label="n p&lt;q&gt;, home">.*site-header__name">n <span class="site-header__tag">p&lt;q&gt;</span></span>' -and $bshell -notmatch 'site-header__tag') 'a -Tag follows the name, escaped, and is left out when empty'
 $mshell = Format-SiteHeaderHtml -Name 'n' -Menu @(@{ Label = 'A<b>'; Href = '/a' }, @{ Label = 'C'; Href = '/c' }) -Current '/c'
 Assert-True ($mshell -match '</a><nav class="site-header__nav" aria-label="Main"><ul class="site-header__menu"><li><a href="/a">A&lt;b&gt;</a></li><li><a href="/c" aria-current="page">C</a></li></ul><button class="site-header__menu-toggle" type="button" aria-controls="site-menu"' -and $mshell -match '</div><dialog class="dialog dialog--drawer site-menu" id="site-menu".*<a class="menu-item" href="/c" aria-current="page">.*</dialog></header>') 'a -Menu draws its links, escaped, between the brand and the settings, marks -Current, and again as the drawer inside the header after its container'
 Assert-True ($bshell -notmatch 'site-header__nav|<dialog') 'no -Menu, no menu and no drawer'
-Assert-True (((Get-HubMenu) | ForEach-Object { $_.Href }) -join ' ' -eq '/dev/repository /dev/today /dev/goals /dev/release-notes /dev/claude /dev/plugins /settings') 'Admin''s menu is GitHub, then the hub''s own cards in their order, Today first of them (#3860), then Goals (#3816)'
-$st = Format-HubSettingsPageHtml -RepoName 'o/r'
+Assert-True (((Get-AdminMenu) | ForEach-Object { $_.Href }) -join ' ' -eq '/dev/repository /dev/today /dev/goals /dev/release-notes /dev/claude /dev/plugins /settings') 'Admin''s menu is GitHub, then Admin''s own cards in their order, Today first of them (#3860), then Goals (#3816)'
+$st = Format-AdminSettingsPageHtml -RepoName 'o/r'
 Assert-True ($st -match '<h1>Settings</h1>' -and $st -match '<h2>Theme</h2>' -and $st -match 'DKJTheme\.picker\(el, ') 'the Settings page opens with its h1, then the Theme h2 over the brand book''s own picker'
 Assert-True ($st -match '<div class="card-grid hs-theme" id="settings-theme-grid"><div class="grid__head"><h2>Theme</h2></div><div class="controls grid__full"><span class="seg" id="settings-theme-mode" role="group" aria-label="Mode"><button type="button" data-mode="light" aria-pressed="true">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button></span></div>') 'under the Theme h2 a Light/Dark toggle, the house .seg in a .controls row of its own, one of the two pressed'
 Assert-True ($st -match 'DKJTheme\.themes\.forEach\(function \(t\) \{' -and $st -match 'card\.innerHTML = "<div></div>";' -and $st -notmatch '<h3>' -and $st -match 'card\.setAttribute\("data-mode", t\.mode\);' -and $st -match 'swatches\.appendChild\(card\);') 'a card per theme of the brand book, with no h3 (the swatch names itself), marked with its mode, in the swatches grid'
@@ -131,10 +131,11 @@ Set-AdminObjects -Items @(1..20 | ForEach-Object { @{ Label = "O$_"; Href = "htt
 Assert-True (@(Get-AdminNav)[0].Items.Count -eq 13) 'at most 12 objects are kept, so a seam cannot push Development off the screen (#3818)'
 Set-AdminObjects -Items @()
 Assert-True (@(Get-AdminNav)[0].Items.Count -eq 1) 'a repo that states no objects has Home alone at the top (#3818)'
-$gp = [IO.File]::ReadAllText((Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\hub\pages\serve-general-pages.ps1'))
+$gp = [IO.File]::ReadAllText((Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\apps\admin\pages\serve-general-pages.ps1'))
 Assert-True ($gp -match "Select-String -LiteralPath \`$cfg -Pattern '\\bfunction\\s\+Get-AdminObjects\\b' -Quiet" -and $gp -match "-TimeoutSeconds 20[^\n]*\n[^\n]*-EncodedCommand" -and $gp -match 'TotalSeconds -ge 60\) \{ \$aoCache = Get-AdminObjectsModel \}' -and $gp -match 'Set-AdminObjects -Items \$aoCache\.Items') 'the server reads the seam in a bounded child, only where repo-config.ps1 names it, at most once a minute (#3818)'
 Set-AdminProductUrl ''
 Assert-Equal '/dev/test-gate/suites/x?y=1|/dev/claude|/dev/clock||||' ((Resolve-AdminLegacyPath '/test-gate/suites/x?y=1'), (Resolve-AdminLegacyPath '/claude'), (Resolve-AdminLegacyPath '/clock'), (Resolve-AdminLegacyPath '/settings'), (Resolve-AdminLegacyPath '/dev/claude'), (Resolve-AdminLegacyPath '/'), (Resolve-AdminLegacyPath '/claudex') -join '|') 'an address from before #3815 moves under /dev with its path and query; Home, Settings, /dev itself and a lookalike do not'
+Assert-Equal '/|/?x=1|/||' ((Resolve-AdminLegacyPath '/hub'), (Resolve-AdminLegacyPath '/hub?x=1'), (Resolve-AdminLegacyPath '/hub/'), (Resolve-AdminLegacyPath '/hubs'), (Resolve-AdminLegacyPath '/admin') -join '|') 'the home page''s address before #3873, /hub, moves to / with its query; a lookalike and /admin do not'
 Assert-True ((ConvertTo-AdminBrandTag 'toolbox') -eq 'admin' -and (ConvertTo-AdminBrandTag 'product') -eq 'product' -and (Format-RepoHomeHeadHtml -RepoName 'r' -Lead 'l' -Brand 'r' -BrandTag 'toolbox') -match 'class="shell shell--no-aside"') 'the old tag toolbox is still read as admin for one release (#3815)'
 Assert-True ((Format-ProductHomeHtml) -match '<li><a href="/consumers">Consumers</a></li><li><a href="/marketplace">Marketplace</a></li>' -and $tpage -notmatch '/consumers') 'the product carries its own pages as its menu, an Admin Admin''s'
 Assert-True ((Format-ProductHomeHtml) -match 'site-header__name">dkj-marketplace <span class="site-header__tag">product</span>' -and (Format-MarketplacePluginsPageHtml -Plugins @()) -match '>product</span>') 'every page this server builds says product: it is this repo''s product port again (#3540)'
@@ -148,9 +149,9 @@ Assert-True ($bshell -notmatch 'class="eyebrow"' -and $bshell -notmatch 'theme-s
 
 Write-Host '-- the product: the home page on / (#3540)' -ForegroundColor Cyan
 $pages = @(Get-ProductPages)
-Assert-Equal '/consumers,/marketplace,/settings' (($pages | ForEach-Object { $_.Href }) -join ',') 'the product links its two pages: Consumers and Plugins, Specialists a card on the Plugins page since October 28, 2026 (the owner), the DKJ repos on GitHub a section of /consumers/dkj since #3549; the general pages are the plugin hub''s (#3540)'
-Assert-Equal '/dev/issues,/dev/today,/dev/goals,/dev/release-notes,/dev/sessionstart,/dev/test-gate,/dev/stopwatch,/dev/logbook,/dev/plugins,/settings' ((Get-GeneralPages | ForEach-Object { $_.Href }) -join ',') 'the plugin lists the ten general pages, in order: Today first of the hub''s own (#3860), then Goals (#3816), Test gate, Stopwatch and Logbook every repo''s since #3470, Plugins since #3482, Settings last (Dave, November 2, 2026)'
-Assert-Equal 'Admin=/hub,Consumers=/consumers,Marketplace=/marketplace,Settings=/settings' ((@(Get-ProductMenu) | ForEach-Object { $_.Label + '=' + $_.Href }) -join ',') 'the site header menu opens on Admin, through the server''s /hub redirect, then the product''s own pages, in the home page''s card order (Maikel, November 3, 2026)'
+Assert-Equal '/consumers,/marketplace,/settings' (($pages | ForEach-Object { $_.Href }) -join ',') 'the product links its two pages: Consumers and Plugins, Specialists a card on the Plugins page since October 28, 2026 (the owner), the DKJ repos on GitHub a section of /consumers/dkj since #3549; the general pages are the plugin admin''s (#3540)'
+Assert-Equal '/dev/issues,/dev/today,/dev/goals,/dev/release-notes,/dev/sessionstart,/dev/test-gate,/dev/stopwatch,/dev/logbook,/dev/plugins,/settings' ((Get-GeneralPages | ForEach-Object { $_.Href }) -join ',') 'the plugin lists the ten general pages, in order: Today first of Admin''s own (#3860), then Goals (#3816), Test gate, Stopwatch and Logbook every repo''s since #3470, Plugins since #3482, Settings last (Dave, November 2, 2026)'
+Assert-Equal 'Admin=/admin,Consumers=/consumers,Marketplace=/marketplace,Settings=/settings' ((@(Get-ProductMenu) | ForEach-Object { $_.Label + '=' + $_.Href }) -join ',') 'the site header menu opens on Admin, through the server''s /admin redirect, then the product''s own pages, in the home page''s card order (Maikel, November 3, 2026)'
 # The product has one width, full, as Admin has: another screen is judged in the Simple Browser's own device
 # emulation (Dave, November 4, 2026), so its Settings page carries the theme alone.
 $ps = Format-ProductSettingsHtml
@@ -158,98 +159,98 @@ Assert-True ($ps -match '<h1>Settings</h1>' -and $ps -match '<h2>Theme</h2>' -an
 Assert-True ($ps -notmatch '<h2>Width</h2>' -and $ps -notmatch 'settings-width' -and $ps -notmatch 'data-width=') 'the product''s Settings page offers no width either'
 Assert-True ($ps -match 'house-theme\.js"></script>\s*<script>DKJTheme\.setWidth\("full"\);</script>' -and (Format-DevPageHtml -Title 'x' -Lead '' -Body '') -match 'DKJTheme\.setWidth\("full"\);') 'every product page pins the width to full, as Admin does'
 Assert-True ((Format-ProductHomeHtml) -match '<a class="menu-item" href="/settings">') 'the product home links Settings as a card'
-$ph = Format-ProductHomeHtml -HubUrl 'http://localhost:4890' -SourceCommit 'abc1234'
+$ph = Format-ProductHomeHtml -AdminUrl 'http://localhost:4890' -SourceCommit 'abc1234'
 Assert-True ($ph -match '<title>dkj-marketplace -- Home</title>' -and $ph -notmatch '<h1' -and $ph -notmatch 'class="lead"') 'under the site header the home page has no intro at all, and its title says Home'
 Assert-True ($ph -match 'house-theme\.js"></script>\s*<script>DKJTheme\.setWidth\("full"\);</script>' -and $ph -notmatch 'width-bar') 'the product home pins the width to full and draws no width bar'
 Assert-True ($ph -match '(?s)<body>\s*<header class="site-header">.*?</header>\s*<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>\s*<li><span aria-current="page">Home</span></li>\s*</ol>') 'the site header opens <body> under it and the bar right under that, its trail the one crumb Home'
 Assert-True ($ph -match 'site-header__name">dkj-marketplace <span class="site-header__tag">product</span>' -and $ph -match '<header class="site-header"><div class="container"><a class="site-header__brand" href="/"') 'the site header names the repo with product after it, and goes home'
 Assert-True ($ph -notmatch 'class="eyebrow"' -and ([regex]::Matches($ph, '<header')).Count -eq 1 -and $ph -notmatch 'theme-settings--floating' -and $ph -notmatch 'id="settings"') 'no eyebrow, no <header> but the site header, and no settings button anywhere'
-Assert-True ($ph -match '<style>\r?\n\.ph-cards \{' -and $ph -notmatch 'class="grid-3"' -and $ph -match '<div class="ph-cards">\r?\n<section class="card card--link"><nav class="menu-list" aria-label="Admin"><a class="menu-item" href="http://localhost:4890">') 'the cards stand in the Admin home''s .ph-cards, never a .grid-3 (Maikel, November 3, 2026), and open on the Admin card, linking the plugin hub'
+Assert-True ($ph -match '<style>\r?\n\.ph-cards \{' -and $ph -notmatch 'class="grid-3"' -and $ph -match '<div class="ph-cards">\r?\n<section class="card card--link"><nav class="menu-list" aria-label="Admin"><a class="menu-item" href="http://localhost:4890">') 'the cards stand in the Admin home''s .ph-cards, never a .grid-3 (Maikel, November 3, 2026), and open on the Admin card, linking the plugin admin'
 $phBody = $ph.Substring($ph.IndexOf('</header>'))   # the cards, not the site header's menu, which lists the same pages
 Assert-True ($phBody.IndexOf('aria-label="Admin"') -ge 0 -and $phBody.IndexOf('aria-label="Admin"') -lt $phBody.IndexOf('href="/consumers"') -and $phBody.IndexOf('href="/consumers"') -lt $phBody.IndexOf('href="/marketplace"') -and $ph -notmatch 'href="/dkj-repos"' -and $ph -notmatch 'href="/specialists"') 'then Consumers and Plugins, in that order, and no DKJ repos (#3549) or Specialists card of its own'
 Assert-Equal 4 ([regex]::Matches($ph, '<section class="card card--link"><nav class="menu-list" aria-label="[^"]+"><a class="menu-item" href="[^"]+"><svg class="menu-item__icon"')).Count 'four cards (Admin, Consumers, Marketplace, Settings), each a .card--link with its icon first'
-Assert-True ($ph -notmatch 'href="/(repository|test-gate|stopwatch|logbook|issues|release-notes|sessionstart|brandbook)"') 'and no general page of its own: those are the plugin hub''s (#3540); its /plugins is its own, what the marketplace ships'
+Assert-True ($ph -notmatch 'href="/(repository|test-gate|stopwatch|logbook|issues|release-notes|sessionstart|brandbook)"') 'and no general page of its own: those are the plugin admin''s (#3540); its /plugins is its own, what the marketplace ships'
 Assert-True ($ph -match 'class="note">[^\n]*serve-consumer-dashboard\.ps1</code>, from <code>abc1234</code>') 'the footer names the server and the commit it loaded'
 Assert-True ((Format-ProductHomeHtml) -notmatch ', from <code>') 'and leaves the commit out when it could not be read'
 $down = Format-ProductHomeHtml
-Assert-True ($down -match '<section class="card"><p role="status">Admin is not running' -and $down -notmatch 'aria-label="Admin"' -and $down -match 'href="/consumers"') 'with no hub known one card says it is not running, and the product''s own pages stay linked'
-Assert-True ((Format-ProductHomeHtml -HubUrl 'http://evil.example:4890') -match 'Admin is not running' -and (Format-ProductHomeHtml -HubUrl 'javascript:alert(1)') -notmatch 'javascript:') 'a hub url that is not plain loopback is no hub at all'
-Assert-True (@(@($pages) + @(Get-GeneralPages) | Where-Object { -not (Get-HubIconSvg -Name $_.Icon) }).Count -eq 0) 'every page a hub or the product links names an icon the hub has'
-Assert-True (@(Get-HubGroups | Where-Object { -not (Get-HubIconSvg -Name $_.Icon) }).Count -eq 0) 'and every group page a hub card links names one too'
+Assert-True ($down -match '<section class="card"><p role="status">Admin is not running' -and $down -notmatch 'aria-label="Admin"' -and $down -match 'href="/consumers"') 'with no admin known one card says it is not running, and the product''s own pages stay linked'
+Assert-True ((Format-ProductHomeHtml -AdminUrl 'http://evil.example:4890') -match 'Admin is not running' -and (Format-ProductHomeHtml -AdminUrl 'javascript:alert(1)') -notmatch 'javascript:') 'an admin url that is not plain loopback is no admin at all'
+Assert-True (@(@($pages) + @(Get-GeneralPages) | Where-Object { -not (Get-AdminIconSvg -Name $_.Icon) }).Count -eq 0) 'every page an admin or the product links names an icon Admin has'
+Assert-True (@(Get-AdminGroups | Where-Object { -not (Get-AdminIconSvg -Name $_.Icon) }).Count -eq 0) 'and every group page an admin card links names one too'
 
 Write-Host '-- the Clock group page (the owner, October 27, 2026)' -ForegroundColor Cyan
 Assert-Equal '/dev/stopwatch,/dev/logbook' ((Get-GeneralPages | Where-Object { $_.Group -eq '/dev/clock' } | ForEach-Object { $_.Href }) -join ',') 'Stopwatch and Logbook belong to the Clock group, in that order; the Test gate went to GitHub (the owner, November 2, 2026)'
 Assert-Equal '/dev/issues,/dev/test-gate' ((Get-GeneralPages | Where-Object { $_.GitHub } | ForEach-Object { $_.Href }) -join ',') 'Issues and the Test gate are the GitHub page''s, in that order, and in no group'
 Assert-True (@(Get-GeneralPages | Where-Object { $_.GitHub -and $_.Group }).Count -eq 0) 'a GitHub page sits in no group'
-$clockCards = @(Format-HubPageCardsHtml -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }))
-Assert-True ($clockCards.Count -eq 6 -and @($clockCards | Where-Object { $_ -notmatch '^<section class="card card--link">' }).Count -eq 0 -and @($clockCards | Where-Object { ([regex]::Matches($_, '<a ')).Count -ne 1 }).Count -eq 0) 'the hub draws six cards for the eight pages it holds, each a .card--link holding exactly one link'
-Assert-True ($clockCards[0] -match 'href="/dev/today"' -and $clockCards[1] -match 'href="/dev/goals"' -and $clockCards[3] -match 'href="/dev/claude"' -and $clockCards[3] -match '<h[23]>Claude<' -and -not ($clockCards -match 'href="/(performance|sessionstart|clock|test-gate|stopwatch|logbook|issues)"')) 'the Claude card takes SessionStart''s place, as the group Performance now sits in; nothing under it, and no GitHub page, has a hub card of its own (the owner, November 2, 2026)'
-Assert-Equal '/dev/claude' ((Get-HubGroups | Where-Object { $_.Href -eq '/dev/performance' }).Group) 'Performance sits in Claude'
-Assert-True (@(Get-HubGroups | Where-Object { $_.Href -in '/dev/clock', '/dev/performance/context' -and $_.Group -eq '/dev/performance' -and $_.Section }).Count -eq 2) 'Clock and Context are Sections of Performance (Dave, November 3, 2026)'
+$clockCards = @(Format-AdminPageCardsHtml -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }))
+Assert-True ($clockCards.Count -eq 6 -and @($clockCards | Where-Object { $_ -notmatch '^<section class="card card--link">' }).Count -eq 0 -and @($clockCards | Where-Object { ([regex]::Matches($_, '<a ')).Count -ne 1 }).Count -eq 0) 'Admin draws six cards for the eight pages it holds, each a .card--link holding exactly one link'
+Assert-True ($clockCards[0] -match 'href="/dev/today"' -and $clockCards[1] -match 'href="/dev/goals"' -and $clockCards[3] -match 'href="/dev/claude"' -and $clockCards[3] -match '<h[23]>Claude<' -and -not ($clockCards -match 'href="/(performance|sessionstart|clock|test-gate|stopwatch|logbook|issues)"')) 'the Claude card takes SessionStart''s place, as the group Performance now sits in; nothing under it, and no GitHub page, has an admin card of its own (the owner, November 2, 2026)'
+Assert-Equal '/dev/claude' ((Get-AdminGroups | Where-Object { $_.Href -eq '/dev/performance' }).Group) 'Performance sits in Claude'
+Assert-True (@(Get-AdminGroups | Where-Object { $_.Href -in '/dev/clock', '/dev/performance/context' -and $_.Group -eq '/dev/performance' -and $_.Section }).Count -eq 2) 'Clock and Context are Sections of Performance (Dave, November 3, 2026)'
 Assert-Equal '/dev/performance/context' ((Get-GeneralPages | Where-Object { $_.Href -eq '/dev/sessionstart' }).Group) 'SessionStart sits in the Context section'
-$perfPage = Format-HubGroupPageHtml -Href '/dev/performance' -RepoName 'dkj-claude-plugins'
+$perfPage = Format-AdminGroupPageHtml -Href '/dev/performance' -RepoName 'dkj-claude-plugins'
 $perfHeads = ([regex]::Matches($perfPage, '<h[23]>[^<]+</h[23]>') | ForEach-Object { $_.Value }) -join ','
 Assert-Equal '<h2>Clock</h2>,<h2>Context</h2>' $perfHeads 'the /performance page is an h2 Clock over a table of the Stopwatch and Logbook rows, then an h2 Context over a table holding the SessionStart row, with no h3 card titles (Admin''s form, #3830)'
 Assert-True ($perfPage -match '<div class="toolbar"><h1>Performance</h1></div>' -and ([regex]::Matches($perfPage, '<section class="admin-list"><h2>')).Count -eq 2 -and (([regex]::Matches($perfPage, '<tr><td class="col-start"><a href="[^"]+">([^<]+)</a>') | ForEach-Object { $_.Groups[1].Value }) -join ',') -eq 'Stopwatch,Logbook,SessionStart' -and $perfPage -notmatch 'href="/(test-gate|clock)"' -and $perfPage -notmatch 'class="ph-cards"|card--link|class="grid-3"') 'three rows in two tables, no Clock page linked, and no card grid above the sections'
 Assert-True ($perfPage -match 'aria-current="page">Performance</span>' -and $perfPage -match '<li><a href="/">Home</a></li>\s*<li><span class="breadcrumbs__sep"[^>]*>.*?</span><a href="/dev/claude">Claude</a></li>' -and $perfPage -notmatch '<a href="/dev/performance">') 'its trail reads Home > Claude > Performance'
-Assert-Equal '/dev/claude,/dev/performance' ((Get-HubGroupCrumbs -Href '/dev/clock' | ForEach-Object { $_.Href }) -join ',') 'a page in the Clock section trails through Claude and Performance; the section is no crumb'
-Assert-Equal '/dev/claude,/dev/claude/specialists' ((Get-HubGroupCrumbs -Href '/dev/claude/specialists' | ForEach-Object { $_.Href }) -join ',') 'and a group in Claude runs through Claude'
-Assert-True ($null -eq (Format-HubGroupPageHtml -Href '/dev/clock' -RepoName 'dkj-claude-plugins')) 'the Clock has no page of its own any more: it is a section, and /clock moves to /performance'
-Assert-True ($null -eq (Format-HubGroupPageHtml -Href '/nope') -and $null -eq (Format-HubGroupPageHtml -Href '/Clock')) 'a path no group has is no group page'
+Assert-Equal '/dev/claude,/dev/performance' ((Get-AdminGroupCrumbs -Href '/dev/clock' | ForEach-Object { $_.Href }) -join ',') 'a page in the Clock section trails through Claude and Performance; the section is no crumb'
+Assert-Equal '/dev/claude,/dev/claude/specialists' ((Get-AdminGroupCrumbs -Href '/dev/claude/specialists' | ForEach-Object { $_.Href }) -join ',') 'and a group in Claude runs through Claude'
+Assert-True ($null -eq (Format-AdminGroupPageHtml -Href '/dev/clock' -RepoName 'dkj-claude-plugins')) 'the Clock has no page of its own any more: it is a section, and /clock moves to /performance'
+Assert-True ($null -eq (Format-AdminGroupPageHtml -Href '/nope') -and $null -eq (Format-AdminGroupPageHtml -Href '/Clock')) 'a path no group has is no group page'
 
 Write-Host '-- the Claude page: Rules, Skills, Specialists, Performance (Maikel, October 30 and November 2, 2026)' -ForegroundColor Cyan
-Assert-True (@($clockCards -match 'href="/dev/claude"').Count -eq 1 -and -not ($clockCards -match 'href="/dev/claude/') -and -not ($clockCards -match 'href="/ai')) 'the Claude card is on the hub once, no nested group has a hub card of its own, and no AI card is left'
-$claudePage = Format-HubGroupPageHtml -Href '/dev/claude' -RepoName 'dkj-claude-plugins'
+Assert-True (@($clockCards -match 'href="/dev/claude"').Count -eq 1 -and -not ($clockCards -match 'href="/dev/claude/') -and -not ($clockCards -match 'href="/ai')) 'the Claude card is on Admin once, no nested group has an admin card of its own, and no AI card is left'
+$claudePage = Format-AdminGroupPageHtml -Href '/dev/claude' -RepoName 'dkj-claude-plugins'
 Assert-True ($claudePage -match '<div class="toolbar"><h1>Claude</h1></div>' -and $claudePage -notmatch 'grid__head' -and $claudePage -match 'aria-current="page">Claude</span>' -and $claudePage -match '<li><a href="/">Home</a></li>') 'the /claude page has Claude as its h1 in the toolbar, under Tools, with no section heading of its own (Maikel, November 2, 2026)'
 Assert-True (([regex]::Matches($claudePage, '<tr><td class="col-start"><a href=')).Count -eq 4 -and $claudePage -notmatch '<h2>' -and $claudePage.IndexOf('href="/dev/claude/rules"') -lt $claudePage.IndexOf('href="/dev/claude/skills"') -and $claudePage.IndexOf('href="/dev/claude/skills"') -lt $claudePage.IndexOf('href="/dev/claude/specialists"') -and $claudePage.IndexOf('href="/dev/claude/specialists"') -lt $claudePage.IndexOf('href="/dev/performance"') -and $claudePage -notmatch 'href="/(sessionstart|clock)"') 'and under it Rules, Skills, Specialists and Performance, in that order, each a row of one table, and nothing of Performance''s own (the owner, November 2, 2026)'
 Assert-True ($claudePage -match '<section class="admin-list"><table class="table table--dense">' -and $claudePage -notmatch 'class="ph-cards"|class="grid-3"|\.ph-cards \{' -and $perfPage -notmatch 'class="grid-3"') 'the rows stand in one dense table on the page, never in a .ph-cards or a .grid-3 surface (Maikel, November 2, 2026; Admin''s form, #3830)'
-$specBare = Format-HubGroupPageHtml -Href '/dev/claude/specialists' -RepoName 'x'
+$specBare = Format-AdminGroupPageHtml -Href '/dev/claude/specialists' -RepoName 'x'
 Assert-True ($specBare -match '<section class="admin-list"><h2>Lenses</h2><table class="table table--dense">' -and $specBare -notmatch '\.ph-cards \{|class="grid-3"') 'a Section is its h2 over a table of its own, and a page with no card grid carries no .ph-cards rules'
-Assert-True ($null -eq (Format-HubGroupPageHtml -Href '/ai')) 'there is no /ai page any more'
+Assert-True ($null -eq (Format-AdminGroupPageHtml -Href '/ai')) 'there is no /ai page any more'
 Assert-True ($claudePage -notmatch 'Lenses') 'the Lenses are not on /claude'
-$specPage = Format-HubGroupPageHtml -Href '/dev/claude/specialists' -RepoName 'x'
+$specPage = Format-AdminGroupPageHtml -Href '/dev/claude/specialists' -RepoName 'x'
 Assert-True ($specPage -match '<section class="admin-list"><h2>Lenses</h2>' -and $specPage -notmatch 'Nothing on this page yet' -and $specPage -match '(?s)<h2>Lenses</h2><table[^>]*>.*?<td class="col-start" colspan="2" role="status">Nothing here yet\.') 'the Specialists page holds a Lenses section, which with no repo to read says it has nothing yet'
-$lensRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('hub-lenses-' + [guid]::NewGuid().ToString('N'))
+$lensRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('admin-lenses-' + [guid]::NewGuid().ToString('N'))
 $lensDir = Join-Path $lensRoot '.claude\specialists\lenses'
 New-Item -ItemType Directory -Path $lensDir -Force | Out-Null
 try {
     [System.IO.File]::WriteAllText((Join-Path $lensDir 'specialist-05-05-lens.md'), "---`nid: 05`n---`n`n# Derek - the DevOps Engineer`n`nBody <b>text</b>.`n")
     [System.IO.File]::WriteAllText((Join-Path $lensDir 'specialist-01-01-lens.md'), "# Chris - the Chief of Staff`n")
     [System.IO.File]::WriteAllText((Join-Path $lensDir 'notes.md'), "# Not a lens`n")
-    $lenses = @(Get-HubLensPages -RepoRoot $lensRoot)
+    $lenses = @(Get-AdminLensPages -RepoRoot $lensRoot)
     Assert-Equal 'specialist-01-01-lens,specialist-05-05-lens' (($lenses | ForEach-Object { $_.Label }) -join ',') 'the lenses are the repo''s specialist-NN-NN-lens files, by name, and nothing else in the folder'
     Assert-Equal 'Derek - the DevOps Engineer' $lenses[1].Sub 'a lens card''s sub line is its own # title, past the frontmatter'
-    $specLens = Format-HubGroupPageHtml -Href '/dev/claude/specialists' -RepoName 'x' -RepoRoot $lensRoot
+    $specLens = Format-AdminGroupPageHtml -Href '/dev/claude/specialists' -RepoName 'x' -RepoRoot $lensRoot
     Assert-True ($specLens -match 'href="/dev/claude/specialists/lenses/specialist-01-01-lens"' -and $specLens -match '<a href="[^"]+">specialist-05-05-lens</a>' -and ([regex]::Matches($specLens, '<tr><td class="col-start"><a href=')).Count -eq 2) 'with a repo the Lenses table holds one row per lens'
-    $lensPage = Format-HubLensPageHtml -Name 'specialist-05-05-lens' -RepoRoot $lensRoot -RepoName 'x'
+    $lensPage = Format-AdminLensPageHtml -Name 'specialist-05-05-lens' -RepoRoot $lensRoot -RepoName 'x'
     Assert-True ($lensPage -match '<h1>specialist-05-05-lens</h1>' -and $lensPage -match '<a href="/dev/claude">Claude</a>' -and $lensPage -match '<a href="/dev/claude/specialists">Specialists</a>') 'a lens''s page is titled as its card on the Specialists page reads, under Home > Claude > Specialists'
     $lensJson = [regex]::Match($lensPage, '<script type="application/json" id="lens-md">(.*?)</script>').Groups[1].Value
     $lensMd = ConvertFrom-Json $lensJson
     Assert-True ($lensMd.intro -eq 'Body <b>text</b>.' -and $lensMd.body -eq '') 'its text travels as JSON for the renderer, past the frontmatter and its own # title (a second h1), the opening paragraph as the intro'
     Assert-True ($lensJson -notmatch '<' -and $lensPage -match 'renderMd\(md\.body\)' -and $lensPage -match 'function renderMd\(' -and $lensPage -match '<div class="dp-lens" id="lens-intro"><noscript><p>Body &lt;b&gt;text&lt;/b&gt;\.</p>' -and $lensPage.IndexOf('id="lens-intro"') -lt $lensPage.IndexOf('id="lens-body"')) 'with no raw < in that JSON, the house renderer inlined to draw it, the intro under the h1 above the card, and the escaped text for a reader without JavaScript'
     [System.IO.File]::WriteAllText((Join-Path $lensDir 'specialist-02-02-lens.md'), "# Title`n`n# Another top heading`n`n``````md`n# kept in code`n```````n")
-    $twoJson = [regex]::Match((Format-HubLensPageHtml -Name 'specialist-02-02-lens' -RepoRoot $lensRoot), '<script type="application/json" id="lens-md">(.*?)</script>').Groups[1].Value
+    $twoJson = [regex]::Match((Format-AdminLensPageHtml -Name 'specialist-02-02-lens' -RepoRoot $lensRoot), '<script type="application/json" id="lens-md">(.*?)</script>').Groups[1].Value
     Assert-Equal "## Another top heading`n`n``````md`n# kept in code`n```````n" (ConvertFrom-Json $twoJson).body 'any other # heading drops to ##, so the page keeps one h1, while a # inside a code fence is left as written'
-    $split = Split-HubLensIntro -Text "> where the lens sits`n`nThis repo is special.`nIt says so.`n`n- a list`n`n## A`n`n> kept quote`n"
+    $split = Split-AdminLensIntro -Text "> where the lens sits`n`nThis repo is special.`nIt says so.`n`n- a list`n`n## A`n`n> kept quote`n"
     Assert-True ($split.Intro -eq "This repo is special.`nIt says so." -and $split.Body -eq "- a list`n`n## A`n`n> kept quote`n") 'the paragraphs before the first heading are the intro, a quote there goes, a list there stays in the body, and a quote under a heading is kept'
-    Assert-Equal "> note`n`n## A`n`ntext`n`n### a1`n" (ConvertTo-HubLensBody -Text "---`nid: 01`n---`n# T`n`n## Specific to this repo (x)`n`n> note`n`n### A`n`ntext`n`n#### a1`n") 'a lone ## wrapping ### sections goes, and the sections become h2s, their parts h3s'
-    Assert-Equal "## A`n`n## B`n" (ConvertTo-HubLensBody -Text "# T`n`n### A`n`n### B`n") 'a lens with only ### sections shows them as h2s'
-    Assert-Equal "## Specific to this repo (VUL-IN)`n`nfill`n" (ConvertTo-HubLensBody -Text "# T`n`n## Specific to this repo (VUL-IN)`n`nfill`n") 'a lone ## with nothing under it stays'
-    Assert-Equal "## A`n`n## B`n`n### b`n" (ConvertTo-HubLensBody -Text "# T`n`n## A`n`n## B`n`n### b`n") 'a body that already opens on h2s is left as it is'
-    Assert-Equal "## S`n`nSee [x](/dev/claude/specialists/lenses/specialist-05-05-lens) and [y](../other.md).`n" (ConvertTo-HubLensBody -Text "# T`n`n## S`n`nSee [x](specialist-05-05-lens.md#a-part) and [y](../other.md).`n") 'a link to another lens file becomes a link to its page, anchor dropped; any other relative link is left as written'
+    Assert-Equal "> note`n`n## A`n`ntext`n`n### a1`n" (ConvertTo-AdminLensBody -Text "---`nid: 01`n---`n# T`n`n## Specific to this repo (x)`n`n> note`n`n### A`n`ntext`n`n#### a1`n") 'a lone ## wrapping ### sections goes, and the sections become h2s, their parts h3s'
+    Assert-Equal "## A`n`n## B`n" (ConvertTo-AdminLensBody -Text "# T`n`n### A`n`n### B`n") 'a lens with only ### sections shows them as h2s'
+    Assert-Equal "## Specific to this repo (VUL-IN)`n`nfill`n" (ConvertTo-AdminLensBody -Text "# T`n`n## Specific to this repo (VUL-IN)`n`nfill`n") 'a lone ## with nothing under it stays'
+    Assert-Equal "## A`n`n## B`n`n### b`n" (ConvertTo-AdminLensBody -Text "# T`n`n## A`n`n## B`n`n### b`n") 'a body that already opens on h2s is left as it is'
+    Assert-Equal "## S`n`nSee [x](/dev/claude/specialists/lenses/specialist-05-05-lens) and [y](../other.md).`n" (ConvertTo-AdminLensBody -Text "# T`n`n## S`n`nSee [x](specialist-05-05-lens.md#a-part) and [y](../other.md).`n") 'a link to another lens file becomes a link to its page, anchor dropped; any other relative link is left as written'
     $leadIn = "# T`n`n## S`n`n- **One.** first`n  more`n- **Two:** " + [char]0x2014 + " second`n`n## U`n`n- **Only** x`n- plain`n"
-    Assert-Equal "## S`n`n### One`n`nFirst`nmore`n`n### Two`n`nSecond`n`n## U`n`n- **Only** x`n- plain`n" (ConvertTo-HubLensBody -Text $leadIn) 'a list under an h2 whose every item opens bold becomes h3s over their text; a list with one plain item stays a list'
-    Assert-Equal "## S`n`n### A lead that wraps`n`nOnto two lines.`n`n### B`n`nText`n" (ConvertTo-HubLensBody -Text "# T`n`n## S`n`n- **A lead that`n  wraps** onto two lines.`n- **B.** text`n") 'a bold lead that wraps onto its next line is still a lead'
+    Assert-Equal "## S`n`n### One`n`nFirst`nmore`n`n### Two`n`nSecond`n`n## U`n`n- **Only** x`n- plain`n" (ConvertTo-AdminLensBody -Text $leadIn) 'a list under an h2 whose every item opens bold becomes h3s over their text; a list with one plain item stays a list'
+    Assert-Equal "## S`n`n### A lead that wraps`n`nOnto two lines.`n`n### B`n`nText`n" (ConvertTo-AdminLensBody -Text "# T`n`n## S`n`n- **A lead that`n  wraps** onto two lines.`n- **B.** text`n") 'a bold lead that wraps onto its next line is still a lead'
     Assert-True ($lensPage -match '<section class="card dp-lens">' -and $lensPage -match '\.dp-lens \{ max-width: 800px; \}') 'its card is never wider than 800px'
-    Assert-True ($null -eq (Format-HubLensPageHtml -Name 'notes' -RepoRoot $lensRoot) -and $null -eq (Format-HubLensPageHtml -Name '..\..\x' -RepoRoot $lensRoot) -and $null -eq (Format-HubLensPageHtml -Name 'specialist-09-09-lens' -RepoRoot $lensRoot)) 'a name that is no lens of the repo has no page'
+    Assert-True ($null -eq (Format-AdminLensPageHtml -Name 'notes' -RepoRoot $lensRoot) -and $null -eq (Format-AdminLensPageHtml -Name '..\..\x' -RepoRoot $lensRoot) -and $null -eq (Format-AdminLensPageHtml -Name 'specialist-09-09-lens' -RepoRoot $lensRoot)) 'a name that is no lens of the repo has no page'
 } finally { Remove-Item -LiteralPath $lensRoot -Recurse -Force -ErrorAction SilentlyContinue }
-$skillsPage = Format-HubGroupPageHtml -Href '/dev/claude/skills' -RepoName 'dkj-claude-plugins'
+$skillsPage = Format-AdminGroupPageHtml -Href '/dev/claude/skills' -RepoName 'dkj-claude-plugins'
 Assert-True ($skillsPage -match '<li><a href="/">Home</a></li>' -and $skillsPage -match '<a href="/dev/claude">Claude</a>' -and $skillsPage -match 'Nothing on this page yet\.' -and $skillsPage -notmatch 'card--link') 'the /claude/skills page is a landing page of its own, under Home > Claude, with nothing on it yet'
 
 Write-Host '-- the Rules page: what is in the repo''s .claude/rules folder, and nothing else (Maikel, November 3, 2026)' -ForegroundColor Cyan
-$rulesBare = Format-HubGroupPageHtml -Href '/dev/claude/rules' -RepoName 'x'
+$rulesBare = Format-AdminGroupPageHtml -Href '/dev/claude/rules' -RepoName 'x'
 Assert-True ($rulesBare -match '<li><a href="/">Home</a></li>' -and $rulesBare -match '<a href="/dev/claude">Claude</a>' -and $rulesBare -notmatch '<h2>' -and $rulesBare -notmatch 'grid__head' -and $rulesBare -match 'Nothing on this page yet\.') 'the /claude/rules page has no heading under its h1, and with no repo to read says it has nothing yet'
-$ruleRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('hub-rules-' + [guid]::NewGuid().ToString('N'))
+$ruleRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('admin-rules-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path (Join-Path $ruleRoot '.claude\rules'), (Join-Path $ruleRoot 'plugins\pol') -Force | Out-Null
 try {
     [System.IO.File]::WriteAllText((Join-Path $ruleRoot 'CLAUDE.md'), "# CLAUDE.md`n`n@plugins/pol/CLAUDE.md`n")
@@ -261,41 +262,41 @@ try {
     [System.IO.File]::WriteAllText((Join-Path $ruleRoot '.claude\rules\described.md'), "---`ndescription: `"Facts about this repo`"`n---`n`n# Described " + [char]0x2014 + " x`n")
     [System.IO.File]::WriteAllText((Join-Path $ruleRoot '.claude\rules\both.md'), "---`ndescription: The layers`npaths:`n  - `"a/**`"`n---`n`n# Both`n")
     [System.IO.File]::WriteAllText((Join-Path $ruleRoot '.claude\rules\notes.txt'), "not markdown`n")
-    $rules = @(Get-HubRulePages -RepoRoot $ruleRoot)
+    $rules = @(Get-AdminRulePages -RepoRoot $ruleRoot)
     Assert-Equal 'both,described,lang,layers,repo,this-repo' (($rules | ForEach-Object { $_.Label }) -join ',') 'the rules are the .claude/rules markdown files by name -- not a CLAUDE.md the root imports, not a file that is no markdown'
     Assert-True ($rules[5].Sub -eq 'This repo' -and $rules[5].Display -eq '.claude/rules/this-repo.md' -and $rules[3].Sub -eq 'Layers (path-scoped)') 'a rule card''s sub line is its own # title, and a path-scoped rule says so in two words'
     Assert-True ($rules[2].Sub -ceq 'Which layers are English' -and $rules[4].Sub -ceq 'dkj-x') 'a title''s lead before its em dash goes, since the card''s own title names the subject; a plain word then opening it is raised, an identifier is not (Maikel, November 3, 2026)'
     Assert-True ($rules[1].Sub -ceq 'Facts about this repo' -and $rules[0].Sub -ceq 'The layers (path-scoped)') 'a description: in the frontmatter is the sub line in place of the title, its quotes gone, and beside paths: it still says path-scoped (Maikel, November 3, 2026)'
-    $rulesPage = Format-HubGroupPageHtml -Href '/dev/claude/rules' -RepoName 'x' -RepoRoot $ruleRoot
-    Assert-True ((Format-HubRulePageHtml -Name 'described' -RepoRoot $ruleRoot) -notmatch 'description:') 'the description is frontmatter, so the rule''s page does not show it as text'
+    $rulesPage = Format-AdminGroupPageHtml -Href '/dev/claude/rules' -RepoName 'x' -RepoRoot $ruleRoot
+    Assert-True ((Format-AdminRulePageHtml -Name 'described' -RepoRoot $ruleRoot) -notmatch 'description:') 'the description is frontmatter, so the rule''s page does not show it as text'
     Assert-True (([regex]::Matches($rulesPage, '<tr><td class="col-start"><a href=')).Count -eq 6 -and $rulesPage -match 'href="/dev/claude/rules/layers"' -and $rulesPage -match '<a href="[^"]+">this-repo</a>' -and $rulesPage -match '<section class="admin-list"><table class="table table--dense">' -and $rulesPage -notmatch '<h2>|grid__head|Repo rules|ph-cards' -and $rulesPage -notmatch 'href="/dev/claude/rules/pol"' -and $rulesPage -notmatch 'Nothing') 'with a repo the page holds one row per rule file in one table, with no section heading over them (Maikel, November 3, 2026)'
-    $rulePage = Format-HubRulePageHtml -Name 'this-repo' -RepoRoot $ruleRoot -RepoName 'x'
+    $rulePage = Format-AdminRulePageHtml -Name 'this-repo' -RepoRoot $ruleRoot -RepoName 'x'
     $ruleMd = ConvertFrom-Json ([regex]::Match($rulePage, '<script type="application/json" id="lens-md">(.*?)</script>').Groups[1].Value)
     Assert-True ($rulePage -match '<h1>this-repo</h1>' -and $rulePage -match '<a href="/dev/claude">Claude</a>' -and $rulePage -match '<a href="/dev/claude/rules">Rules</a>' -and $rulePage -match 'Read from <code>\.claude/rules/this-repo\.md</code>' -and $ruleMd.body -eq "## Facts`n`nTrunk is main.`n") 'a rule file''s page is rendered as a lens''s is, titled as its card, under Home > Claude > Rules, naming the file it was read from'
-    Assert-True ((Format-HubRulePageHtml -Name 'layers' -RepoRoot $ruleRoot) -notmatch 'paths:' -and $null -eq (Format-HubRulePageHtml -Name 'pol' -RepoRoot $ruleRoot) -and $null -eq (Format-HubRulePageHtml -Name '..' -RepoRoot $ruleRoot) -and $null -eq (Format-HubRulePageHtml -Name 'notes' -RepoRoot $ruleRoot)) 'a path-scoped rule''s frontmatter is not body, and a name that is no rule file of the repo has no page'
-    Assert-True (@(Get-HubRulePages -RepoRoot '').Count -eq 0) 'no repo, no rule files'
+    Assert-True ((Format-AdminRulePageHtml -Name 'layers' -RepoRoot $ruleRoot) -notmatch 'paths:' -and $null -eq (Format-AdminRulePageHtml -Name 'pol' -RepoRoot $ruleRoot) -and $null -eq (Format-AdminRulePageHtml -Name '..' -RepoRoot $ruleRoot) -and $null -eq (Format-AdminRulePageHtml -Name 'notes' -RepoRoot $ruleRoot)) 'a path-scoped rule''s frontmatter is not body, and a name that is no rule file of the repo has no page'
+    Assert-True (@(Get-AdminRulePages -RepoRoot '').Count -eq 0) 'no repo, no rule files'
 } finally { Remove-Item -LiteralPath $ruleRoot -Recurse -Force -ErrorAction SilentlyContinue }
-Assert-True ((Get-HubIconSvg -Name '') -eq '' -and (Get-HubIconSvg -Name 'nope') -eq '' -and (Format-HubCardLinkHtml -Href '/x' -Label 'X') -notmatch 'menu-item__icon') 'a card that names no icon, or one the hub lacks, draws none'
-Assert-True (@($script:HubIcons.Keys | Where-Object { (Get-HubIconSvg -Name $_) -notmatch '^<svg class="menu-item__icon" viewBox="-?[\d.]+ -?[\d.]+ 24 24" width="32" height="32"' }).Count -eq 0) 'every icon is drawn in the same 32px square, a 24-unit viewBox (Maikel, November 2, 2026)'
-Assert-True (@($script:HubIconOffsets.Keys | Where-Object { -not $script:HubIcons.ContainsKey($_) }).Count -eq 0 -and (Get-HubIconSvg -Name 'rules') -match 'viewBox="-0.25 0 24 24"' -and (Get-HubIconSvg -Name 'claude') -match 'viewBox="0 0 24 24"') 'an off-centre drawing moves its viewBox to stand in the middle of that square, and the offsets name only icons the hub has'
+Assert-True ((Get-AdminIconSvg -Name '') -eq '' -and (Get-AdminIconSvg -Name 'nope') -eq '' -and (Format-AdminCardLinkHtml -Href '/x' -Label 'X') -notmatch 'menu-item__icon') 'a card that names no icon, or one Admin lacks, draws none'
+Assert-True (@($script:AdminIcons.Keys | Where-Object { (Get-AdminIconSvg -Name $_) -notmatch '^<svg class="menu-item__icon" viewBox="-?[\d.]+ -?[\d.]+ 24 24" width="32" height="32"' }).Count -eq 0) 'every icon is drawn in the same 32px square, a 24-unit viewBox (Maikel, November 2, 2026)'
+Assert-True (@($script:AdminIconOffsets.Keys | Where-Object { -not $script:AdminIcons.ContainsKey($_) }).Count -eq 0 -and (Get-AdminIconSvg -Name 'rules') -match 'viewBox="-0.25 0 24 24"' -and (Get-AdminIconSvg -Name 'claude') -match 'viewBox="0 0 24 24"') 'an off-centre drawing moves its viewBox to stand in the middle of that square, and the offsets name only icons Admin has'
 $houseCss = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'plugins\dkj-policy\assets\dkj-brandbook\house-style.css'))
 Assert-True ($houseCss -match '\.card--link \{ position: relative; display: flex; flex-direction: column; justify-content: center; \}' -and $houseCss -match '\.card--link a::after \{ content: ""; position: absolute; inset: 0; \}') 'the house style stretches a .card--link''s one link over the card, its content in the middle of the card''s height'
-Assert-True (([regex]::Matches($ph, '(?s)<style>(.*?)</style>') | ForEach-Object { $_.Groups[1].Value.Trim() }) -join '|' -ceq (Get-HubCardGridStyle) -and $ph -notmatch 'grid__head') 'the home page restyles nothing but the hub''s own .ph-cards, as Admin home does, and has no group heading (#3133)'
-Assert-True ($ph -notmatch 'id="hub-banner"' -and (Format-ProductSettingsHtml) -notmatch 'id="hub-banner"') 'no product page carries the airsquats banner: it is Admin''s alone (Dave, November 4, 2026)'
+Assert-True (([regex]::Matches($ph, '(?s)<style>(.*?)</style>') | ForEach-Object { $_.Groups[1].Value.Trim() }) -join '|' -ceq (Get-AdminCardGridStyle) -and $ph -notmatch 'grid__head') 'the home page restyles nothing but Admin''s own .ph-cards, as Admin home does, and has no group heading (#3133)'
+Assert-True ($ph -notmatch 'id="admin-banner"' -and (Format-ProductSettingsHtml) -notmatch 'id="admin-banner"') 'no product page carries the airsquats banner: it is Admin''s alone (Dave, November 4, 2026)'
 $tbHome = Format-RepoHomeHeadHtml -RepoName 'r' -Lead 'l' -Brand 'r' -BrandTag 'admin'
-Assert-True ($tbHome.IndexOf('<div class="notice" id="hub-banner"') -gt $tbHome.IndexOf('<div class="shell__list tb-scroll">') -and $tbHome.IndexOf('<div class="shell__list tb-scroll">') -gt 0 -and $tbHome -notmatch 'class="site-header"' -and $tbHome -notmatch '<div class="toolbar">' -and $tbHome -match '<span aria-current="page">Home</span>') 'Admin home opens its scroll pane on the airsquats banner, in the shell with no site header and no toolbar (#3811)'
-$bannerHtml = Format-RepoHubBanner
-Assert-True ($bannerHtml.Contains('data-hub-timer') -and $bannerHtml.Contains('<input type="checkbox" data-hub-done> <span data-hub-count>10</span> due') -and $bannerHtml.Contains('data-hub-due hidden')) 'it counts down to the hour, and its "10 due" box stays hidden until an hour has passed, on the same one-row line as the timer'
-Assert-True (([regex]::Matches((Format-RepoHubBanner), '<p[ >]')).Count -eq 1) 'the banner is one row: the timer and the box owed share a single paragraph, never a second line (Dave, October 24, 2026)'
-$bannerJs = Format-RepoHubBanner
-Assert-True ($bannerJs -match '<div class="notice" id="hub-banner"[^>]*style="position: fixed; left: var\(--spacing-4\); bottom: var\(--spacing-4\);[^"]*box-shadow: var\(--shadow-pop\)"' -and $bannerJs -match 'translateY\(calc\(100% \+ 2rem\)\)' -and $bannerJs -notmatch 'border-radius: 0') 'the banner is a toast fixed bottom-left in house tokens, popping up from below the edge rather than a strip under the header (Maikel, November 4, 2026)'
-Assert-True ($bannerJs -notmatch 'localStorage' -and $bannerJs -match 'fetch\(path' -and ([regex]::Matches($bannerJs, '"/api/airsquats')).Count -eq 1 -and $bannerJs -notmatch 'XMLHttpRequest|WebSocket|sendBeacon|eval\(|new Function|document\.cookie') 'its state is the server''s, shared by every hub and machine: it asks /api/airsquats on its own origin and nothing else (#3438)'
+Assert-True ($tbHome.IndexOf('<div class="notice" id="admin-banner"') -gt $tbHome.IndexOf('<div class="shell__list tb-scroll">') -and $tbHome.IndexOf('<div class="shell__list tb-scroll">') -gt 0 -and $tbHome -notmatch 'class="site-header"' -and $tbHome -notmatch '<div class="toolbar">' -and $tbHome -match '<span aria-current="page">Home</span>') 'Admin home opens its scroll pane on the airsquats banner, in the shell with no site header and no toolbar (#3811)'
+$bannerHtml = Format-RepoAdminBanner
+Assert-True ($bannerHtml.Contains('data-admin-timer') -and $bannerHtml.Contains('<input type="checkbox" data-admin-done> <span data-admin-count>10</span> due') -and $bannerHtml.Contains('data-admin-due hidden')) 'it counts down to the hour, and its "10 due" box stays hidden until an hour has passed, on the same one-row line as the timer'
+Assert-True (([regex]::Matches((Format-RepoAdminBanner), '<p[ >]')).Count -eq 1) 'the banner is one row: the timer and the box owed share a single paragraph, never a second line (Dave, October 24, 2026)'
+$bannerJs = Format-RepoAdminBanner
+Assert-True ($bannerJs -match '<div class="notice" id="admin-banner"[^>]*style="position: fixed; left: var\(--spacing-4\); bottom: var\(--spacing-4\);[^"]*box-shadow: var\(--shadow-pop\)"' -and $bannerJs -match 'translateY\(calc\(100% \+ 2rem\)\)' -and $bannerJs -notmatch 'border-radius: 0') 'the banner is a toast fixed bottom-left in house tokens, popping up from below the edge rather than a strip under the header (Maikel, November 4, 2026)'
+Assert-True ($bannerJs -notmatch 'localStorage' -and $bannerJs -match 'fetch\(path' -and ([regex]::Matches($bannerJs, '"/api/airsquats')).Count -eq 1 -and $bannerJs -notmatch 'XMLHttpRequest|WebSocket|sendBeacon|eval\(|new Function|document\.cookie') 'its state is the server''s, shared by every admin and machine: it asks /api/airsquats on its own origin and nothing else (#3438)'
 Assert-True ($bannerJs -match 'ask\("POST", API \+ "/clear"\)' -and $bannerJs -match '\(s\.per \|\| 10\) \* owed' -and $bannerJs -match 'if \(s\.announce\) \{ tone\(\); \}') 'ticking the box is a POST to /clear, the box shows 10 per hour owed, and the server says when to play the tone'
-Assert-True ($bannerJs -match '<span data-hub-owner hidden[^>]*> &middot; <span data-hub-account></span></span><button' -and $bannerJs -match 'account\.textContent = s\.account; owner\.hidden = false;' -and $bannerJs -notmatch 'innerHTML') 'the row ends on the Windows account the hub runs under, written as text and shown only once the server names one (#3476)'
-Assert-True ($bannerJs -match '<div class="notice" id="hub-banner"[^>]* hidden>' -and $bannerJs -match 'slide\(\(owed > hush\) \|\| \(!offline\.hidden && !quiet\)\);' -and $bannerJs -match 'asked = Date\.now\(\); slide\(false\);' -and $bannerJs -match 'box\.animate\(' -and $bannerJs -match 'prefers-reduced-motion: reduce' -and $bannerJs -match 'if \(first \|\| still \|\| !box\.animate\)') 'the banner is hidden until something is due, slides down when it comes due and up once ticked, and opens without the slide on load or under reduced motion (Dave, October 27, 2026)'
-Assert-True ($bannerJs -match '<span class="msg--warn" data-hub-offline hidden> &middot; hub offline, this hour is not counted</span>' -and $bannerJs -match 'OFFLINE = 2' -and $bannerJs -match 'function \(\) \{ down\(\); return null; \}' -and $bannerJs -match 'function \(r\) \{ up\(\); return r\.ok') 'the banner opens on "hub offline" after two polls whose request fails outright, and the first answer clears it -- an hour the server never saw cannot be recovered (#3596)'
+Assert-True ($bannerJs -match '<span data-admin-owner hidden[^>]*> &middot; <span data-admin-account></span></span><button' -and $bannerJs -match 'account\.textContent = s\.account; owner\.hidden = false;' -and $bannerJs -notmatch 'innerHTML') 'the row ends on the Windows account Admin runs under, written as text and shown only once the server names one (#3476)'
+Assert-True ($bannerJs -match '<div class="notice" id="admin-banner"[^>]* hidden>' -and $bannerJs -match 'slide\(\(owed > hush\) \|\| \(!offline\.hidden && !quiet\)\);' -and $bannerJs -match 'asked = Date\.now\(\); slide\(false\);' -and $bannerJs -match 'box\.animate\(' -and $bannerJs -match 'prefers-reduced-motion: reduce' -and $bannerJs -match 'if \(first \|\| still \|\| !box\.animate\)') 'the banner is hidden until something is due, slides down when it comes due and up once ticked, and opens without the slide on load or under reduced motion (Dave, October 27, 2026)'
+Assert-True ($bannerJs -match '<span class="msg--warn" data-admin-offline hidden> &middot; admin offline, this hour is not counted</span>' -and $bannerJs -match 'OFFLINE = 2' -and $bannerJs -match 'function \(\) \{ down\(\); return null; \}' -and $bannerJs -match 'function \(r\) \{ up\(\); return r\.ok') 'the banner opens on "admin offline" after two polls whose request fails outright, and the first answer clears it -- an hour the server never saw cannot be recovered (#3596)'
 Assert-True ($bannerJs -match 'due\.hidden = !\(owed > 0\);') 'and a cleared "due" box is hidden again, so an offline strip never shows a stale count'
-Assert-True ($bannerJs -match '<button type="button" class="icon-btn icon-btn--ghost" data-hub-close aria-label="Close"' -and $bannerJs -match 'closer\.addEventListener\("click", function \(\) \{\s+keep\(owed\);' -and $bannerJs -match 'sessionStorage\.setItem\(HUSH' -and $bannerJs -match 'if \(owed < hush\) \{ keep\(owed\); \}') 'a ghost close button sinks the toast without clearing the count on the server, and it stays down in this tab until another hour is owed (#3820)'
+Assert-True ($bannerJs -match '<button type="button" class="icon-btn icon-btn--ghost" data-admin-close aria-label="Close"' -and $bannerJs -match 'closer\.addEventListener\("click", function \(\) \{\s+keep\(owed\);' -and $bannerJs -match 'sessionStorage\.setItem\(HUSH' -and $bannerJs -match 'if \(owed < hush\) \{ keep\(owed\); \}') 'a ghost close button sinks the toast without clearing the count on the server, and it stays down in this tab until another hour is owed (#3820)'
 $ix = @('class="site-header"', 'class="breadcrumbs-bar"', 'class="ph-cards"', 'class="note"') | ForEach-Object { $ph.IndexOf($_) }
 Assert-True ((@($ix | Where-Object { $_ -lt 0 }).Count -eq 0) -and ((($ix | Sort-Object) -join ',') -eq ($ix -join ','))) 'the blocks stand in the form''s order'
 $evil = Format-ProductHomeHtml -Pages @(@{ Href = '/x"><script>'; Label = '<b>'; Sub = '' })
@@ -342,7 +343,7 @@ Assert-True ($null -eq $noThrow) 'markup that merely starts with <a, an <abbr> o
 Write-Host '-- the test-gate overview' -ForegroundColor Cyan
 $tg = Format-TestGatePageHtml -Model $m
 Assert-True ($tg -match '<h1>Test gate</h1>') 'the overview is named Test gate'
-Assert-True ($tg -match '<li><a href="/">Home</a></li>' -and (Format-TestGatePageHtml -Model $m -HubHref '/elsewhere') -match '<li><a href="/elsewhere">Home</a></li>') 'its Home crumb is the general server''s root, or the hub the caller names'
+Assert-True ($tg -match '<li><a href="/">Home</a></li>' -and (Format-TestGatePageHtml -Model $m -AdminHref '/elsewhere') -match '<li><a href="/elsewhere">Home</a></li>') 'its Home crumb is the general server''s root, or the address the caller names'
 Assert-True ($tg -match '<span aria-current="page">Test gate</span>' -and $tg -notmatch 'href="/dev/test-gate">Test gate</a>') 'the overview is the trail''s last crumb, not a link to itself'
 Assert-True ($tg -match '<tr id="group-suites" class="tg-card"><td class="col-start"><a href="/dev/test-gate/suites">All suites</a></td>') 'without groups it drills into one list, All suites, a row of the groups table'
 Assert-True ($tg -match '<tr id="recorded" class="tg-card"><td class="col-start"><a href="/dev/test-gate/measured">Where it was measured</a></td><td class="col-start"><span class="num">2026-10-07 . 2 CI runs . 1 not recorded</span>') 'the measurement is a row of its own, with its date, its run count and the suites not recorded'
@@ -497,7 +498,7 @@ Assert-True ($ssDocs -match 'Headroom \(B\)</div><div class="v num">3,000') 'ins
 Assert-True ($ssDocs.IndexOf('~/persona.md') -lt $ssDocs.IndexOf('<code>CLAUDE.md</code></td>')) 'the documents are listed largest first'
 Assert-True ($ssDocs -match '~/persona.md</code></td><td class="num">900</td>.*?<td>90.0%</td><td class="dp-left">from the baseline') 'a carried document says so'
 Assert-True ($ssDocs -match 'role="status">Not counted.*lost.md') 'an unmeasured document is named, not counted as zero'
-Assert-True ($ss.Replace((Format-RepoHubBanner), '').Replace((Format-FitAlarmHtml), '') -notmatch 'msg--warn' -and $ssDocs.Replace((Format-RepoHubBanner), '').Replace((Format-FitAlarmHtml), '') -notmatch 'msg--warn') 'no warning inside the budget (the general banner''s own hidden line and the hidden fit alarm aside, #3297)'
+Assert-True ($ss.Replace((Format-RepoAdminBanner), '').Replace((Format-FitAlarmHtml), '') -notmatch 'msg--warn' -and $ssDocs.Replace((Format-RepoAdminBanner), '').Replace((Format-FitAlarmHtml), '') -notmatch 'msg--warn') 'no warning inside the budget (the general banner''s own hidden line and the hidden fit alarm aside, #3297)'
 Assert-True ($null -eq (Format-SessionStartPageHtml -Model $ssModel -Section 'nope')) 'a slug no section has is no page, which the server answers with a 404'
 $ssModel.Total = 5000; $ssModel.Ok = $false; $ssModel.State = 'over-growing'
 $over = Format-SessionStartPageHtml -Model $ssModel -Section 'documents'
@@ -556,7 +557,7 @@ Write-Host '-- the release-notes page, as the dev server serves it (#3108)' -For
 $tpl = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'scripts\release\release-notes-page-template.html'))
 $rn = Format-ReleaseNotesDevPage -Html $tpl
 Assert-True ($rn -ne $tpl) 'the template has the shape the dressing needs'
-Assert-True (([regex]::Matches($rn, 'id="hub-banner"')).Count -eq 1 -and $rn -match 'class="shell shell--no-aside"' -and $rn -notmatch 'breadcrumbs-bar') 'the release notes carry the general banner once, and stand in Admin''s shell even unnamed: the breadcrumb bar is the product layer''s (#3297, #3831)'
+Assert-True (([regex]::Matches($rn, 'id="admin-banner"')).Count -eq 1 -and $rn -match 'class="shell shell--no-aside"' -and $rn -notmatch 'breadcrumbs-bar') 'the release notes carry the general banner once, and stand in Admin''s shell even unnamed: the breadcrumb bar is the product layer''s (#3297, #3831)'
 Assert-True ($rn -match '<html lang="en" data-theme-default="lilac" data-width-default="full" data-theme-key="general-pages">') 'it takes the theme key and the lilac default every other page of the general server uses (#3162)'
 Assert-True ($rn -match 'house-theme\.js"></script>\s*<script>DKJTheme\.setWidth\("full"\);</script>' -and $rn -notmatch 'fluid: "Fluid"') 'the release notes pin Admin''s one width too, and offer no width choice'
 Set-GeneralPagesThemeDefault 'teal'
@@ -570,7 +571,7 @@ Assert-True ($pairRn -match '<html lang="en" data-theme-light="blue" data-theme-
 Set-GeneralPagesThemeDefault 'a"/b<'
 Assert-True ((Format-GeneralPageHtml -Title 't' -Lead '' -Body '') -match 'data-theme-light="a&quot;" data-theme-dark="b&lt;"') 'and both halves are escaped'
 Set-GeneralPagesThemeDefault ''
-Assert-True ((Format-ReleaseNotesDevPage -Html $tpl -ThemeKey 'k"x' -HubHref '/') -match 'data-theme-key="k&quot;x"' -and (Format-ReleaseNotesDevPage -Html $tpl -HubHref '/') -match '<li><a href="/">Home</a></li>') 'a caller may name the theme key and the hub crumb''s target, both escaped'
+Assert-True ((Format-ReleaseNotesDevPage -Html $tpl -ThemeKey 'k"x' -AdminHref '/') -match 'data-theme-key="k&quot;x"' -and (Format-ReleaseNotesDevPage -Html $tpl -AdminHref '/') -match '<li><a href="/">Home</a></li>') 'a caller may name the theme key and the Admin crumb''s target, both escaped'
 $tplStyleEnd = $rn.IndexOf('</style>')
 $houseAt = $rn.IndexOf('<link rel="stylesheet" href="/house-style.css">')
 Assert-True ($houseAt -gt $tplStyleEnd -and $tplStyleEnd -gt 0) 'the house stylesheet loads after the template''s own style, so the house body wins'
@@ -583,9 +584,9 @@ Assert-True ((ConvertTo-ReleaseNotesHouseColors -Html '<style>a{color:var(--acce
 Assert-True ($rn.IndexOf('.wrap { max-width: 1080px; display: grid;') -gt $houseAt -and $rn.Contains('header.masthead h1 { font-family: inherit; font-size: var(--text-h1);') -and $rn.Contains('footer.colophon { margin: 0; padding: 0; border: 0; color: var(--primary-muted);')) 'and its column, h1 and colophon take the Stopwatch page''s measures (owner, October 25, 2026)'
 Assert-True ($rn.IndexOf('<script src="/house-theme.js"></script>') -lt $rn.IndexOf('<body')) 'the theme script loads in the head'
 Assert-True (($rn -replace '<span class="eyebrow">[^<]*</span>\s*', '') -ceq (Format-ReleaseNotesDevPage -Html $tpl -RepoName 'Org/r')) 'unnamed, the page is the named one but for the template''s eyebrow, which names whose releases these are (#3831)'
-Assert-True ($rn -match '<li><a href="/">Home</a></li>\s*<li><span class="breadcrumbs__sep" aria-hidden="true"><svg\ viewBox="0\ 0\ 24\ 24"><path\ fill="currentColor"\ fill-rule="evenodd"\ d="M9\.793\ 16\.707a1\ 1\ 0\ 0\ 1\ 0-1\.414L13\.086\ 12\ 9\.793\ 8\.707a1\ 1\ 0\ 0\ 1\ 1\.414-1\.414l4\ 4a1\ 1\ 0\ 0\ 1\ 0\ 1\.414l-4\ 4a1\ 1\ 0\ 0\ 1-1\.414\ 0"\ clip-rule="evenodd"/></svg></span><span aria-current="page">Release notes</span></li>') 'its trail runs from the hub, on /hub of the general server, to this page'
+Assert-True ($rn -match '<li><a href="/">Home</a></li>\s*<li><span class="breadcrumbs__sep" aria-hidden="true"><svg\ viewBox="0\ 0\ 24\ 24"><path\ fill="currentColor"\ fill-rule="evenodd"\ d="M9\.793\ 16\.707a1\ 1\ 0\ 0\ 1\ 0-1\.414L13\.086\ 12\ 9\.793\ 8\.707a1\ 1\ 0\ 0\ 1\ 1\.414-1\.414l4\ 4a1\ 1\ 0\ 0\ 1\ 0\ 1\.414l-4\ 4a1\ 1\ 0\ 0\ 1-1\.414\ 0"\ clip-rule="evenodd"/></svg></span><span aria-current="page">Release notes</span></li>') 'its trail runs from Admin, on /admin of the general server, to this page'
 Assert-True ($rn -notmatch 'DKJTheme\.settings\(' -and $rn -notmatch 'id="settings"') 'no floating settings button: Admin''s theme is chosen on its own /settings page'
-Assert-True ($rn.Contains((Format-FitAlarmHtml)) -and $rn.IndexOf('id="fit-alarm"') -gt $rn.IndexOf('@@PAGE_MAIN@@') -and $rn.IndexOf('id="fit-alarm"') -lt $rn.LastIndexOf('</body>') -and ([regex]::Matches($rn, 'id="fit-alarm"')).Count -eq 1) 'and the fit alarm once, closing the body as every other hub page does (#3558)'
+Assert-True ($rn.Contains((Format-FitAlarmHtml)) -and $rn.IndexOf('id="fit-alarm"') -gt $rn.IndexOf('@@PAGE_MAIN@@') -and $rn.IndexOf('id="fit-alarm"') -lt $rn.LastIndexOf('</body>') -and ([regex]::Matches($rn, 'id="fit-alarm"')).Count -eq 1) 'and the fit alarm once, closing the body as every other admin page does (#3558)'
 Assert-True ($rn.Contains('<div class="wrap">') -and $rn.Contains('@@PAGE_MAIN@@') -and $rn.Contains('@@PAGE_STYLE@@')) 'the template''s own content is left alone'
 # The settings panel's width reaches main and .container only, and the template's column is neither, so the
 # template answers data-width itself -- every width the theme script offers but fluid, which is its own column.
@@ -602,7 +603,7 @@ Assert-True ($rn -match '<span class="eyebrow">@@PAGE_TITLE@@</span>' -and $tpl 
 
 $rnEmpty = Format-ReleaseNotesEmptyPageHtml -RepoName 'Org/repo'
 Assert-True ($rnEmpty -match '<h1>Release notes</h1>' -and $rnEmpty -match 'role="status">No release has been cut yet' -and $rnEmpty -notmatch 'role="alert">No release') 'before the first cut the index is an empty state, not a warning (#3580)'
-$srv = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'plugins\dkj-policy\hub\pages\serve-general-pages.ps1'))
+$srv = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'plugins\dkj-policy\apps\admin\pages\serve-general-pages.ps1'))
 Assert-True ($srv -match '\$run\.ExitCode -eq 3\) \{ \$noRelease = \$true \}' -and $srv -match 'Format-ReleaseNotesEmptyPageHtml') 'the server reads the builder''s exit 3 as that empty state (#3580)'
 
 Write-Host '-- a release''s own page, as the dev server serves it (owner, October 25, 2026)' -ForegroundColor Cyan
@@ -846,19 +847,19 @@ Assert-True ((Get-DkjRepoCardStyle) -match '\.dr-repos \.menu-item__label > h2 \
 $cdk = @(@{ Repo = 'DKJ-Solutions/dkj-lifehub'; Status = 'bad'; Visibility = 'private'; File = 'life-hub.json'; Checkout = @('../dkj-lifehub'); Plugins = @(@{ Id = 'dkj-policy'; Extensions = @() }); Signals = @(@{ Level = 'ERROR'; Plugin = 'dkj-policy'; Text = 'behind <x>' }); Present = $true; Git = $null; Notes = '' })
 $dp = Format-DkjReposPageHtml -Query $q -Checkouts $co -Consumers $cdk -Meta @{ GeneratedAt = '2026-10-20 12:00:00'; Seconds = 1.2 } -CheckMeta @{ GeneratedAt = '2026-10-20 12:00:01'; Seconds = 0.4 }
 Assert-True ($dp -match '<h1>DKJ repos</h1>' -and $dp.Contains('<a href="/consumers">Consumers</a>') -and $dp.Contains('<span aria-current="page">DKJ repos</span>') -and ([regex]::Matches($dp, '<h1')).Count -eq 1) 'the DKJ page is headed DKJ repos, under Home > Consumers'
-Assert-True ($dp -match '<div class="card-grid dr-repos" id="repos">' -and $dp -match '\.dr-repos \{ display: grid; grid-template-columns: repeat\(4, ' -and ([regex]::Matches($dp, '<section class="card card--link"')).Count -eq 2 -and $dp -notmatch '<table' -and $dp -notmatch 'id="issues"' -and $dp -notmatch 'mini-card') 'it is a card per repo in the hub''s card form, four to a row (October 28, 2026): no table, no Issues card and no mini-card -- those are a repo''s own page'
+Assert-True ($dp -match '<div class="card-grid dr-repos" id="repos">' -and $dp -match '\.dr-repos \{ display: grid; grid-template-columns: repeat\(4, ' -and ([regex]::Matches($dp, '<section class="card card--link"')).Count -eq 2 -and $dp -notmatch '<table' -and $dp -notmatch 'id="issues"' -and $dp -notmatch 'mini-card') 'it is a card per repo in Admin''s card form, four to a row (October 28, 2026): no table, no Issues card and no mini-card -- those are a repo''s own page'
 Assert-True ($dp.Contains('href="/consumers/dkj/dkj-lifehub"') -and $dp.Contains('menu-item__label"><h2><span>dkj-lifehub</span>') -and $dp.Contains('href="/consumers/dkj/unlisted"')) 'each card opens its repo''s page, its name an h2, and a checkout GitHub did not list keeps its card'
 Assert-True ($dp.Contains('<span class="menu-item__sub"><span class="dr-clip" title="private ' + [char]0x00B7 + ' 3 issues ' + [char]0x00B7 + ' 0 PRs ' + [char]0x00B7 + ' 2026-10-20">private &middot; 3 issues &middot; 0 PRs &middot; 2026-10-20</span></span>') -and $dp.Contains('<span class="menu-item__value"><span class="dr-clip" title="main 2 uncommitted"><code>main</code> 2 uncommitted</span></span>')) 'a card''s line is its GitHub facts and its value its checkout here, each one line cut off with an ellipsis and whole in its tooltip'
 $cardLinks = [regex]::Matches(([regex]::Replace($dp, '(?s)<header class="site-header">.*?</header>', '')), '<a class="menu-item"[^>]*>(.*?)</a>')   # the cards, not the header's drawer
 Assert-True ($cardLinks.Count -eq 2 -and @($cardLinks | Where-Object { $_.Groups[1].Value -match '<a[ >]' }).Count -eq 0 -and $dp -notmatch 'id="repos">[^\n]*dr-link') 'no link sits inside a card''s link: an <a> in an <a> is invalid, and the browser broke the card at the first one (Maikel''s screenshot, October 28, 2026)'
 Assert-True ($dp -match 'id="repo-dkj-lifehub"><nav[^\n]*menu-item__label"><h2><span>dkj-lifehub</span><span class="badge badge--sm badge--bad" title="Needs action"[^>]*>!</span></h2>' -and $dp.Contains('menu-item__label"><h2>unlisted</h2>') -and $dp -notmatch 'id="repo-unlisted"><nav[^\n]*class="badge ') 'a registered repo''s status mark sits right after its name, in the h2 (October 28, 2026); an unregistered repo has none'
-Assert-True ((Format-HubCardLinkHtml -Href '/x' -Label 'a <b>' -TitleBadgeHtml '<i>m</i>' -Heading 2).Contains('menu-item__label"><h2><span>a &lt;b&gt;</span><i>m</i></h2>') -and (Format-HubCardLinkHtml -Href '/x' -Label 'a' -Heading 2).Contains('menu-item__label"><h2>a</h2>')) 'the card link''s -TitleBadgeHtml puts a mark after the escaped label, in a span of its own; without it the label is unchanged'
+Assert-True ((Format-AdminCardLinkHtml -Href '/x' -Label 'a <b>' -TitleBadgeHtml '<i>m</i>' -Heading 2).Contains('menu-item__label"><h2><span>a &lt;b&gt;</span><i>m</i></h2>') -and (Format-AdminCardLinkHtml -Href '/x' -Label 'a' -Heading 2).Contains('menu-item__label"><h2>a</h2>')) 'the card link''s -TitleBadgeHtml puts a mark after the escaped label, in a span of its own; without it the label is unchanged'
 $slotRefusals = @('SubHtml', 'ValueHtml', 'BadgeHtml', 'TitleBadgeHtml') | Where-Object {
     $slotArgs = @{ Href = '/x'; Label = 'x' }; $slotArgs[$_] = 'see <a href="/y">y</a>'
-    try { Format-HubCardLinkHtml @slotArgs | Out-Null; $false } catch { $_.Exception.Message -match '#3610' }
+    try { Format-AdminCardLinkHtml @slotArgs | Out-Null; $false } catch { $_.Exception.Message -match '#3610' }
 }
 Assert-True (@($slotRefusals).Count -eq 4) 'the card link refuses an <a> in each of its four markup slots, since the card is already one link (#3610)'
-Assert-True ((Format-HubCardLinkHtml -Href '/x' -Label 'x' -SubHtml '<abbr>PR</abbr> <span>2</span>') -match '<abbr>PR</abbr>') 'and an element whose name merely starts with a, such as <abbr>, passes'
+Assert-True ((Format-AdminCardLinkHtml -Href '/x' -Label 'x' -SubHtml '<abbr>PR</abbr> <span>2</span>') -match '<abbr>PR</abbr>') 'and an element whose name merely starts with a, such as <abbr>, passes'
 Assert-True ($dp -match '1 archived repo is left out' -and $dp -notmatch '/consumers/dkj/old"' -and $dp -notmatch 'data-copy=') 'an archived repo is counted, not listed, and no session command is on this page'
 Assert-True ($dp -match 'href="/refresh\?page=consumers/dkj"' -and $dp -match 'gh api graphql</code> call[^<]*2026-10-20 12:00:00 in 1\.2s\. The status is read from <code>check-consumers\.ps1</code>, checked 2026-10-20 12:00:01 in 0\.4s\.') 'its footer names both reads and comes back to /consumers/dkj'
 $dpArch = Format-DkjReposPageHtml -Query $q -Checkouts @(@{ Repo = 'DKJ-Solutions/old'; Path = 'C:\x\old'; Branch = 'main'; Dirty = 0 }) -Meta @{ GeneratedAt = 'x' }
@@ -894,9 +895,9 @@ Assert-True ($rp -match '\.dr-facts dd \{' -and $rp -match '\.cd-lenses \{' -and
 $rpUn = Format-DkjRepoPageHtml -Row $set.Rows[1] -Checkout $null -Consumer $null -Meta @{ GeneratedAt = 'x' }
 Assert-True ($rpUn.Contains('<span class="badge badge--sm badge--neutral" aria-hidden="true">-</span>Not registered</span>') -and $rpUn.Contains('<div><dt>Register</dt><dd>Not under <code>consumers/</code>, so not checked</dd></div>') -and $rpUn.Contains('<div><dt>Checkout</dt><dd>Not checked out here</dd></div>') -and $rpUn -notmatch 'data-copy=' -and $rpUn -notmatch '<dt>Checks</dt>') 'a repo not registered says so, and one not checked out here has no session'
 Write-Host '-- the Plugins page (#3482): plugin-versions -Json read into a model, and the page it draws' -ForegroundColor Cyan
-. (Join-Path $RepoRoot 'plugins\dkj-policy\hub\lib\plugins-page-lib.ps1')
-Assert-True ((Get-HubIconSvg -Name 'plugins') -match '<svg') 'the Installed plugins card has an icon'
-Assert-Equal 3 (@('plugins', 'marketplace', 'consumers' | ForEach-Object { Get-HubIconSvg -Name $_ } | Where-Object { $_ } | Select-Object -Unique).Count) 'Installed plugins, Marketplace and Consumers each draw an icon of their own, so the three cards that once shared one plug read apart'
+. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\plugins-page-lib.ps1')
+Assert-True ((Get-AdminIconSvg -Name 'plugins') -match '<svg') 'the Installed plugins card has an icon'
+Assert-Equal 3 (@('plugins', 'marketplace', 'consumers' | ForEach-Object { Get-AdminIconSvg -Name $_ } | Where-Object { $_ } | Select-Object -Unique).Count) 'Installed plugins, Marketplace and Consumers each draw an icon of their own, so the three cards that once shared one plug read apart'
 $pvJson = '{"Root":"C:\r","Consulted":"user and repo","Plugins":[' +
     '{"Id":"zeta@m","Name":"zeta","Marketplace":"m","InstVersion":"1.0.0","InstScope":"project","Code":"match","Verdict":"up to date","Action":"the clone advances only on: x","Description":"<i>z</i>"},' +
     '{"Id":"alpha@m","Name":"alpha","Marketplace":"m","InstVersion":"0.9.0","InstScope":"project","Code":"behind","Verdict":"the clone is <b>ahead</b>","Action":"claude plugin update alpha@m --scope project"},' +
@@ -924,7 +925,7 @@ Assert-True ((Format-PluginsPageHtml -Model (ConvertFrom-PluginVersionsJson -Tex
 $ppErr = Format-PluginsPageHtml -Model (ConvertFrom-PluginVersionsJson -Text '') -ReadError 'it <broke>'
 Assert-True ($ppErr -match 'msg--warn' -and $ppErr.Contains('it &lt;broke&gt;') -and $ppErr -notmatch 'card--link') 'a failed read is an escaped warning, with no cards'
 Assert-True ((Read-PluginsPageModel -Script (Join-Path $RepoRoot 'no-such.ps1') -RepoRoot $RepoRoot).Error -match 'not found') 'a missing script is a sentence, not a throw'
-Assert-True ((Format-PluginsPageHtml -Model $pv -HubHref '/') -match 'href="/"') 'a hub that serves the page itself points Home at its own root'
+Assert-True ((Format-PluginsPageHtml -Model $pv -AdminHref '/') -match 'href="/"') 'an admin that serves the page itself points Home at its own root'
 Write-Host '-- one plugin''s page (#3482): /plugins/<name>' -ForegroundColor Cyan
 Assert-Equal '' (Resolve-PluginsPageRequest -Path '/dev/plugins').Name 'the overview is /plugins'
 Assert-Equal 'dkj-policy' (Resolve-PluginsPageRequest -Path '/dev/plugins/dkj-policy').Name 'a plugin''s page is /plugins/<name>'
@@ -948,7 +949,7 @@ Assert-Equal '/dev/plugins/dkj-policy/dkj-brandbook/tokens' (Resolve-PluginsPage
 Assert-True ($null -eq (Resolve-PluginsPageRequest -Path '/dev/plugins/dkj-solutions/house-style/A') -and $null -eq (Resolve-PluginsPageRequest -Path '/dev/plugins/dkj-policy/house-style/a/b')) 'an old address that was never a page is no redirect either'
 Assert-True ($zeta -notmatch 'href="/dev/plugins/dkj-policy/dkj-brandbook"' -and $zeta -notmatch 'class="grid-3"|class="admin-list"') 'a plugin that ships no house style links none, and with no pages below it there is no table'
 $zc = Format-PluginPageHtml -Row (Find-PluginsPageRow -Model $pv -Name 'zeta') -Model $pv -Cards @(@{ Href = '/dev/plugins/zeta/x'; Label = 'X <y>'; Sub = 's'; Icon = 'specialists' })
-Assert-True ($zc -match '<section class="admin-list"><table class="table table--dense">' -and $zc -match '<a href="/dev/plugins/zeta/x">X &lt;y&gt;</a>' -and $zc -notmatch 'class="grid-3"|card--link') 'a hub''s own page below a plugin is a row on that plugin''s page, its label escaped'
+Assert-True ($zc -match '<section class="admin-list"><table class="table table--dense">' -and $zc -match '<a href="/dev/plugins/zeta/x">X &lt;y&gt;</a>' -and $zc -notmatch 'class="grid-3"|card--link') 'an admin''s own page below a plugin is a row on that plugin''s page, its label escaped'
 $dsRow = (Find-PluginsPageRow -Model $pv -Name 'zeta').Clone(); $dsRow.Name = 'dkj-policy'
 $ds = Format-PluginPageHtml -Row $dsRow -Model $pv -RepoName 'r'
 Assert-True ($ds -match '<tr><td class="col-start"><a href="/dev/plugins/dkj-policy/dkj-brandbook">dkj-brandbook</a></td>') 'the dkj-policy page links its brand book as a row named dkj-brandbook, as the product''s card is (#3704)'
@@ -1033,7 +1034,7 @@ Assert-Equal '' (Resolve-ProductHouseStyleRequest -Path '/marketplace/dkj-policy
 Assert-Equal 'tokens' (Resolve-ProductHouseStyleRequest -Path '/marketplace/dkj-policy/dkj-brandbook/tokens/').Section 'and a section is one slug below it'
 Assert-True ($null -eq (Resolve-ProductHouseStyleRequest -Path '/marketplace/dkj-policy') -and $null -eq (Resolve-ProductHouseStyleRequest -Path '/marketplace/dkj-policy/dkj-brandbook/A') -and $null -eq (Resolve-ProductHouseStyleRequest -Path '/marketplace/dkj-policy/dkj-brandbook/a/b') -and $null -eq (Resolve-ProductHouseStyleRequest -Path '/marketplace/dkj-solutions/house-style')) 'and nothing else is the product''s house style'
 $phs = Format-ProductHouseStylePageHtml -Body $hsFix
-Assert-True ($phs -match '<a href="/marketplace">Marketplace</a>' -and $phs -match '<a href="/marketplace/dkj-policy">dkj-policy</a>' -and $phs -match '<span aria-current="page">dkj-brandbook</span>' -and $phs -match '<h1>dkj-brandbook</h1>' -and $phs.Contains((Format-HubCardLinkHtml -Href '/marketplace/dkj-policy/dkj-brandbook/alpha' -Label 'Alpha & one' -Sub '2 specimens'))) 'the product''s overview sits under Marketplace and dkj-policy, each section''s card linking its page there'
+Assert-True ($phs -match '<a href="/marketplace">Marketplace</a>' -and $phs -match '<a href="/marketplace/dkj-policy">dkj-policy</a>' -and $phs -match '<span aria-current="page">dkj-brandbook</span>' -and $phs -match '<h1>dkj-brandbook</h1>' -and $phs.Contains((Format-AdminCardLinkHtml -Href '/marketplace/dkj-policy/dkj-brandbook/alpha' -Label 'Alpha & one' -Sub '2 specimens'))) 'the product''s overview sits under Marketplace and dkj-policy, each section''s card linking its page there'
 Assert-True ($phs -match 'site-header__tag">product<' -and $phs -match 'specimens\.html</code> on every request') 'in the product''s shell, naming the tree it reads'
 $phsA = Format-ProductHouseStylePageHtml -Body $hsFix -Section 'alpha'
 Assert-True ($phsA -match '<a href="/marketplace/dkj-policy/dkj-brandbook">dkj-brandbook</a>' -and $phsA -match 'id="specimen-a1"' -and $phsA -notmatch 'id="specimen-b1"') 'a section''s page on the product holds that section alone, one crumb below the overview'
@@ -1088,20 +1089,20 @@ $subRow.Description = ''
 Assert-True ((Format-MarketplacePluginsPageHtml -Plugins @($subRow) -Plugin 'dkj-policy').Contains('role="tooltip"><p>The line. More.</p>')) 'with no description the marketplace''s line stands in'
 Assert-True ((Format-MarketplacePluginsPageHtml -Plugins @($subRow)) -notmatch 'page-info-button' -and (Format-ProductHouseStylePageHtml -Body $hsFix) -notmatch 'page-info' -and (Format-GeneralPageHtml -Title 't' -Lead '' -Body '') -notmatch 'page-info') 'and no other page carries one: the overview, the specimens and a page with no -Info open on their h1 alone'
 Write-Host '-- one card link, never a hand-written one (#3563, #3566)' -ForegroundColor Cyan
-# Every `card card--link` in the hub's and the repo's page code, per file. Format-HubCardLinkHtml is the one card, and the
+# Every `card card--link` in Admin's and the repo's page code, per file. Format-AdminCardLinkHtml is the one card, and the
 # variants written before this guard have all moved onto it (#3566), so it is the list's only entry.
-# A NEW site fails here: call Format-HubCardLinkHtml instead of writing the card's markup by hand.
+# A NEW site fails here: call Format-AdminCardLinkHtml instead of writing the card's markup by hand.
 $cardSites = @{
-    'plugins/dkj-policy/hub/lib/general-pages-lib.ps1' = 1   # Format-HubCardLinkHtml
+    'plugins/dkj-policy/apps/admin/lib/general-pages-lib.ps1' = 1   # Format-AdminCardLinkHtml
 }
-$cardFiles = @(Get-ChildItem -Path (Join-Path $RepoRoot 'plugins\dkj-policy\hub'), (Join-Path $RepoRoot 'scripts\lib') -Filter '*.ps1' -Recurse -File)
+$cardFiles = @(Get-ChildItem -Path (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin'), (Join-Path $RepoRoot 'scripts\lib') -Filter '*.ps1' -Recurse -File)
 $cardFound = @{}
 foreach ($f in $cardFiles) {
     $n = [regex]::Matches([System.IO.File]::ReadAllText($f.FullName), 'card card--link').Count
     if ($n) { $cardFound[$f.FullName.Substring($RepoRoot.Length + 1).Replace('\', '/')] = $n }
 }
 $cardOver = @($cardFound.Keys | Where-Object { $cardFound[$_] -gt [int]$cardSites[$_] } | ForEach-Object { $_ + ' (' + $cardFound[$_] + ')' })
-Assert-True ($cardOver.Count -eq 0) ('no card link is written by hand outside Format-HubCardLinkHtml (#3566)' + $(if ($cardOver.Count) { ': ' + ($cardOver -join ', ') } else { '' }))
+Assert-True ($cardOver.Count -eq 0) ('no card link is written by hand outside Format-AdminCardLinkHtml (#3566)' + $(if ($cardOver.Count) { ': ' + ($cardOver -join ', ') } else { '' }))
 $cardStale = @($cardSites.Keys | Where-Object { [int]$cardFound[$_] -lt $cardSites[$_] })
 Assert-True ($cardStale.Count -eq 0) ('and the list names no site that no longer writes one' + $(if ($cardStale.Count) { ': ' + ($cardStale -join ', ') } else { '' }))
 Write-Host '-- a long page becomes cards with a page each (#3563)' -ForegroundColor Cyan

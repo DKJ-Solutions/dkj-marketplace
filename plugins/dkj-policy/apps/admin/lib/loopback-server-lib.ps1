@@ -1,19 +1,19 @@
 <#
 .SYNOPSIS
-    What the plugin's general pages server (hub/pages/serve-general-pages.ps1, the hub since #3245)
-    and the source repo's own hub server share: reading one request head off a TcpClient, writing one
+    What the plugin's general pages server (apps/admin/pages/serve-general-pages.ps1, Admin since #3245)
+    and the source repo's own admin server share: reading one request head off a TcpClient, writing one
     response, and the two refusals every request meets first (a Host that is not loopback, a browser
     request from another site). One copy, so a fix to either rule lands in both servers (#3119). The
-    source repo's own hub (scripts/dashboard/serve-consumer-dashboard.ps1) loads it from the plugin tree
+    source repo's own admin (scripts/dashboard/serve-consumer-dashboard.ps1) loads it from the plugin tree
     too, rather than keeping a copy of its own (#3163).
 
 .DESCRIPTION
     The reader and the writer touch only the client's stream, which the caller hands in; the two tests
     are pure. Nothing here knows a page, a route or a repo.
 
-    A SAME-SITE REQUEST IS NOT ALWAYS FOREIGN. Browsers do not count the port toward "site", so the hub
+    A SAME-SITE REQUEST IS NOT ALWAYS FOREIGN. Browsers do not count the port toward "site", so Admin
     on localhost:4876 and the general pages on localhost:4890 are the same site, and a user clicking the
-    hub's General link sends Sec-Fetch-Site: same-site -- as does the 303 hop from the repo server's
+    admin's General link sends Sec-Fetch-Site: same-site -- as does the 303 hop from the repo server's
     /dev/issues to the general server, and the Home crumb back. That is a top-level navigation, a GET the
     user made, and it is served. What stays refused is cross-site always, and same-site for anything that
     is not a navigation (a fetch, an image, a form post): the loop is single-threaded, and a page on
@@ -86,7 +86,7 @@ function Send-LoopbackResponse {
 function Copy-LoopbackUpstream {
     <#
         Relays one request to the loopback server on -Port and writes its whole answer, byte for byte, to
-        -Stream: status, headers and body as that server sent them. A hub uses it to serve another server's
+        -Stream: status, headers and body as that server sent them. An admin uses it to serve another server's
         pages from its own origin, so the browser keeps one localStorage -- one theme choice -- for both
         (#3168). -Target is the caller's own fixed path, never the browser's raw request target. The answer
         is read in full before a byte is written, so $false (nothing answered, or the read failed or ran past

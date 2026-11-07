@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    The GENERAL pages every repo's hub links -- Issues, Release notes and SessionStart, and since #3470 Test
+    The GENERAL pages every repo's admin links -- Issues, Release notes and SessionStart, and since #3470 Test
     gate, Stopwatch and Logbook, whose pages are test-gate-lib.ps1's, stopwatch-lib.ps1's and logbook-lib.ps1's --
     and the page shell, formatters and rules behind them (#3119). No I/O: the server
-    (hub/pages/serve-general-pages.ps1) measures and reads, and hands the results in, so every rule
+    (apps/admin/pages/serve-general-pages.ps1) measures and reads, and hands the results in, so every rule
     here is tested without a server.
 
 .DESCRIPTION
@@ -11,13 +11,13 @@
     page that is meant to exist in every repo cannot be built into one repo's server, and the repos' own
     servers are not all PowerShell (Vite in dkj-brandbook, Next.js in life-hub). So the plugin ships them
     as a small server of its own, which the dev-preview hook starts beside the repo's own, and each
-    repo's hub links to it (#3119, the owner's decision of October 18, 2026: two ports per repo).
+    repo's admin links to it (#3119, the owner's decision of October 18, 2026: two ports per repo).
 
     WHY THE PLUGIN IS DKJ-POLICY (#3198, the owner's decision of October 20, 2026). "General" means what
     every repo has, whichever organisation it belongs to, so these pages ship with the plugin every repo
     runs. They moved here from dkj-solutions, which BWJ-Development never enables. The one DKJ-Solutions
     page, the Brandbook, stayed in that plugin until #3475 (the owner, October 25, 2026) took it off every
-    consumer hub: it is the source repo's product, and only that repo's own server shows it.
+    consumer admin: it is the source repo's product, and only that repo's own server shows it.
 
     THEY RENDER IN THE HOUSE STYLE IN EVERY REPO, BWJ-Development's included. They are this plugin's own
     tooling, not a repo's product, so they keep one look wherever they run; the stylesheet and theme script
@@ -34,13 +34,13 @@
     data is given an href only when its url matches a fixed shape (a GitHub issue
     link), so a tracker cannot put a script url on a page.
 
-    THE HUB'S CARDS are rendered here too (Format-HubCardLinkHtml), one per page, because every hub draws its
+    THE ADMIN'S CARDS are rendered here too (Format-AdminCardLinkHtml), one per page, because every admin draws its
     home page as one grid of card links (#3383). The "General" card that grouped the general pages went with
     its last caller (#3478).
 
     THE DEFAULT THEME IS THE ONE VALUE THAT ARRIVES BY A SETTER, not a parameter (#3390): every page of the
     server opens in it, so threading it through each formatter would add one parameter to all of them for a
-    value that is the same on every page. The server reads it from the hub's state file per request
+    value that is the same on every page. The server reads it from Admin's state file per request
     (DefaultTheme in the repo's Get-DevPreview) and hands it in with Set-GeneralPagesThemeDefault; where
     nothing is handed in, every page falls back to lilac (#3162).
 
@@ -194,7 +194,7 @@ function Format-GeneralPageHeadHtml {
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.AppendLine('<!doctype html>')
     # The theme key is shared by every page of one server, so a theme picked on one page holds on the next.
-    # With no width picked yet the pages open full width: a hub is tables and cards, not a reading column.
+    # With no width picked yet the pages open full width: an admin is tables and cards, not a reading column.
     [void]$sb.AppendLine('<html lang="en" ' + (Format-GeneralPagesThemeAttributes) + ' data-width-default="full" data-theme-key="' + (& $e $ThemeKey) + '">')
     [void]$sb.AppendLine('<head>')
     [void]$sb.AppendLine('<meta charset="utf-8">')
@@ -227,9 +227,9 @@ function Format-GeneralPageHtml {
     <#
         The whole page around -Body, an ADMIN page: it stands in the desktop shell (#3811, Format-AdminShellOpen).
         -Title is the page's own name: the last crumb in the shell's bar, the toolbar's title and the <title> (after
-        -SiteName). -HubHref is where the first crumb, "Home" (#3270), goes: '/' by default, the general server's own
+        -SiteName). -AdminHref is where the first crumb, "Home" (#3270), goes: '/' by default, the general server's own
         root and its home page. It was '/hub' while these pages could be relayed from a product's origin (#3168); the
-        server still answers '/hub', so an old link keeps working.
+        server still answers '/admin', and '/hub' moves there (#3873), so an old link keeps working.
         -Style is the page's own layer, names the house file does not define. -Lead and -FooterNote are markup the
         caller has escaped. -Lead is the page's <meta name="description">, never a paragraph under the title: screen
         height is scarce, so a page goes straight to its content (owner, #3585).
@@ -257,7 +257,7 @@ function Format-GeneralPageHtml {
         [AllowEmptyString()][string]$FooterNote = '',
         [string]$ThemeKey = 'general-pages',
         [AllowEmptyString()][string]$SiteName = '',
-        [string]$HubHref = '/',
+        [string]$AdminHref = '/',
         [AllowEmptyString()][string]$Brand = '',
         [AllowEmptyString()][string]$BrandTag = '',
         [switch]$Bare,
@@ -294,7 +294,7 @@ function Format-GeneralPageHtml {
     } else { '' }
     $trail = @(@($ParentCrumbs | Where-Object { $_ }) + @(@{ Label = $Title; Href = '' }))
     $nav = @(Get-AdminNav)
-    [void]$sb.Append((Format-AdminShellOpen -Title $Title -Current (Get-AdminCurrentHref -Title $Title -ParentCrumbs $ParentCrumbs -Nav $nav) -Nav $nav -Trail $trail -HomeLabel $HomeLabel -HubHref $HubHref -Bare:$Bare -InfoHtml $infoHtml -HeadAside $HeadAside))
+    [void]$sb.Append((Format-AdminShellOpen -Title $Title -Current (Get-AdminCurrentHref -Title $Title -ParentCrumbs $ParentCrumbs -Nav $nav) -Nav $nav -Trail $trail -HomeLabel $HomeLabel -AdminHref $AdminHref -Bare:$Bare -InfoHtml $infoHtml -HeadAside $HeadAside))
     if ($longWarn) { [void]$sb.AppendLine($longWarn) }
     [void]$sb.Append($Body)
     if ($FooterNote) { [void]$sb.AppendLine('<p class="note">' + $FooterNote + '</p>') }
@@ -308,14 +308,14 @@ function Format-GeneralPageHtml {
 
 function Format-FitAlarmHtml {
     <#
-        THE FIT ALARM (the owner, October 27, 2026): every hub page is designed to one screen of about 1300 x 900, a
+        THE FIT ALARM (the owner, October 27, 2026): every admin page is designed to one screen of about 1300 x 900, a
         guideline rather than a measure, and a page that runs past the window it is read in says so at once, instead
         of waiting for somebody to notice the scroll. So it judges the window, not a fixed box: the document taller or
         wider than the viewport is the alarm, a warning pinned to the bottom right that names how far past it runs.
 
         It stays quiet below 1000 px of width, where the page has stepped down to its narrow layout and a scroll is
         the expected shape, and re-judges on resize and whenever the page's own size changes (the banner filling in).
-        House classes only (.msg--warn) and an inline position, since the hub restyles nothing.
+        House classes only (.msg--warn) and an inline position, since Admin restyles nothing.
 
         ONE H1 (#3745, Maikel, November 2, 2026): the same alarm says so when a page carries more than one h1, or
         none where it should carry one -- the brand book's rule, checked on sight wherever the page is served, so a
@@ -376,11 +376,11 @@ function Format-FitAlarmHtml {
 '@
 }
 
-function Format-RepoHubBanner {
+function Format-RepoAdminBanner {
     <#
         stopwatch test run 2026-10-25 10:27
 
-        The hub's general banner (#3250, Dave, October 21, 2026): a countdown to the next full hour,
+        Admin's general banner (#3250, Dave, October 21, 2026): a countdown to the next full hour,
         and once an hour has passed a checkbox for the 10 airsquats due, with a short tone when it comes due.
         The countdown keeps running whether or not the box is ticked, and every hour that passes unticked
         adds another 10, so the box shows the total owed; ticking it clears the total.
@@ -394,18 +394,18 @@ function Format-RepoHubBanner {
         the header from October 24): fixed to the bottom-left corner, a spacing-4 gutter from both edges, never wider
         than the viewport minus those gutters, and lifted by --shadow-pop. Its source position stays first in <body>
         so the reading order is unchanged. It uses house classes and tokens only (.notice, .num, --spacing-4,
-        --shadow-pop), because the hub restyles nothing.
+        --shadow-pop), because Admin restyles nothing.
 
         ONE ROW, ALWAYS (Dave, October 24, 2026): the countdown and the box owed share a single <p> line,
         the box an inline span after the timer rather than a paragraph of its own, and its label is short
         ('30 due') so the line still fits a phone's column.
 
         THE STATE IS THE SERVER'S, AND EVERY MACHINE'S (#3438, Dave, October 25, 2026). It lived in localStorage
-        until then, one count per origin, so two repo hubs on one machine already disagreed. Now the page asks its
+        until then, one count per origin, so two repo Admin servers on one machine already disagreed. Now the page asks its
         own server, GET /api/airsquats every 15 s and at the turn of the hour, and ticking the box is a POST to
         /api/airsquats/clear; the server answers from one file per machine, which a child merges with a private
         gist every machine shares. The rules are in airsquats-lib.ps1. The countdown is the page's own and needs
-        nothing. An hour still counts only where a hub saw it begin, so a night with every hub closed adds nothing,
+        nothing. An hour still counts only where an admin saw it begin, so a night with every admin closed adds nothing,
         and the server says when to play the tone: once per machine, within two minutes of the hour. A page on a
         server without the API (a request answered with an error) shows no banner at all. A browser may hold the tone back
         until the page has had a click, which is its rule, not this page's.
@@ -413,41 +413,41 @@ function Format-RepoHubBanner {
         ONLY WHILE SOMETHING IS DUE (Dave, October 27, 2026): the strip is hidden until the server reports an hour
         owed. When that happens while the page is open -- the hour turns -- it pops up from below the bottom edge;
         ticking the box sinks it back out of sight. A page that opens with squats already owed shows it at once, without the slide, so moving
-        between hub pages does not replay it, and prefers-reduced-motion drops the slide altogether. The motion
-        is the Web Animations API on the element itself, because the hub restyles nothing and a page carries no
+        between admin pages does not replay it, and prefers-reduced-motion drops the slide altogether. The motion
+        is the Web Animations API on the element itself, because Admin restyles nothing and a page carries no
         <style> of its own.
 
-        THE ROW ENDS ON THE ACCOUNT THE HUB RUNS UNDER (#3476): the server's "account", filled in by textContent
+        THE ROW ENDS ON THE ACCOUNT THE ADMIN RUNS UNDER (#3476): the server's "account", filled in by textContent
         once the first answer arrives. On a machine with several Windows accounts logged on, localhost ports
-        are shared between them, so the hub a browser opens may be another account's, and this is where that
+        are shared between them, so Admin a browser opens may be another account's, and this is where that
         shows. A server that names no account leaves the row as it was.
 
         AND IT SAYS SO WHEN ITS SERVER STOPS ANSWERING (#3596): after two polls in a row whose request fails
-        outright -- about 30 seconds -- the strip opens on 'hub offline, this hour is not counted', because an hour
+        outright -- about 30 seconds -- the strip opens on 'admin offline, this hour is not counted', because an hour
         counts only where a server sees it begin and one missed that way cannot be recovered. The countdown is the
         page's own and would otherwise keep ticking towards nothing. The first answer clears it. A server that
         answers without the API is not offline, so it still shows no banner.
 
         AND IT CAN BE CLOSED WITHOUT TICKING THE BOX (#3820): a ghost icon button at the end of the row sinks the
         toast without clearing anything on the server. It stays down until something new happens -- another hour
-        owed, or the hub going offline again after it came back -- because the count it was closed on is kept in
+        owed, or Admin going offline again after it came back -- because the count it was closed on is kept in
         sessionStorage, a per-tab convenience, so moving between Admin pages does not bring it back. The count
         owed is still the server's alone.
     #>
     return @'
-<div class="notice" id="hub-banner" role="region" aria-label="Airsquats" style="position: fixed; left: var(--spacing-4); bottom: var(--spacing-4); z-index: 20; margin: 0; max-width: calc(100vw - 2 * var(--spacing-4)); box-shadow: var(--shadow-pop)" hidden>
-<p>Next airsquats in <strong class="num" data-hub-timer>--:--</strong><span class="msg--warn" data-hub-due hidden> &middot; <label><input type="checkbox" data-hub-done> <span data-hub-count>10</span> due</label></span><span class="msg--warn" data-hub-offline hidden> &middot; hub offline, this hour is not counted</span><span data-hub-owner hidden title="The Windows account Admin runs under"> &middot; <span data-hub-account></span></span><button type="button" class="icon-btn icon-btn--ghost" data-hub-close aria-label="Close" title="Close" style="height: var(--control-h); min-width: var(--control-h); margin-left: var(--spacing-2); vertical-align: middle"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></p>
+<div class="notice" id="admin-banner" role="region" aria-label="Airsquats" style="position: fixed; left: var(--spacing-4); bottom: var(--spacing-4); z-index: 20; margin: 0; max-width: calc(100vw - 2 * var(--spacing-4)); box-shadow: var(--shadow-pop)" hidden>
+<p>Next airsquats in <strong class="num" data-admin-timer>--:--</strong><span class="msg--warn" data-admin-due hidden> &middot; <label><input type="checkbox" data-admin-done> <span data-admin-count>10</span> due</label></span><span class="msg--warn" data-admin-offline hidden> &middot; admin offline, this hour is not counted</span><span data-admin-owner hidden title="The Windows account Admin runs under"> &middot; <span data-admin-account></span></span><button type="button" class="icon-btn icon-btn--ghost" data-admin-close aria-label="Close" title="Close" style="height: var(--control-h); min-width: var(--control-h); margin-left: var(--spacing-2); vertical-align: middle"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></p>
 </div>
 <script>
 (function () {
-  var box = document.getElementById("hub-banner");
+  var box = document.getElementById("admin-banner");
   if (!box) { return; }
   var API = "/api/airsquats", HOUR = 3600000, POLL = 15000;
-  var timer = box.querySelector("[data-hub-timer]"), due = box.querySelector("[data-hub-due]");
-  var done = box.querySelector("[data-hub-done]"), count = box.querySelector("[data-hub-count]");
-  var owner = box.querySelector("[data-hub-owner]"), account = box.querySelector("[data-hub-account]");
-  var offline = box.querySelector("[data-hub-offline]"), fails = 0, OFFLINE = 2;
-  var closer = box.querySelector("[data-hub-close]"), HUSH = "hub-banner-hush", owed = 0, hush = 0, quiet = false;
+  var timer = box.querySelector("[data-admin-timer]"), due = box.querySelector("[data-admin-due]");
+  var done = box.querySelector("[data-admin-done]"), count = box.querySelector("[data-admin-count]");
+  var owner = box.querySelector("[data-admin-owner]"), account = box.querySelector("[data-admin-account]");
+  var offline = box.querySelector("[data-admin-offline]"), fails = 0, OFFLINE = 2;
+  var closer = box.querySelector("[data-admin-close]"), HUSH = "admin-banner-hush", owed = 0, hush = 0, quiet = false;
   try { hush = parseInt(sessionStorage.getItem(HUSH), 10) || 0; } catch (e) { }
   function keep(n) { hush = n; try { sessionStorage.setItem(HUSH, String(n)); } catch (e) { } }
   var asked = 0, hour = Math.floor(Date.now() / HOUR), first = true, want = false, anim = null;
@@ -523,12 +523,12 @@ function Format-RepoHubBanner {
 }
 
 # The Pages row's chevron, the brand book's own svg (patterns/repo-dashboard.html at v0.3.0).
-$script:RepoHubChevron = '<svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+$script:RepoAdminChevron = '<svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 
-# The hub cards' icons: each a line drawing on a 24-unit grid, stroked in the text colour like the chevron. A card
-# names one by its key (-Icon on Format-HubCardLinkHtml); the svg wrapper is Get-HubIconSvg's, drawn at 32px with a 1.75 stroke so the
+# The Admin cards' icons: each a line drawing on a 24-unit grid, stroked in the text colour like the chevron. A card
+# names one by its key (-Icon on Format-AdminCardLinkHtml); the svg wrapper is Get-AdminIconSvg's, drawn at 32px with a 1.75 stroke so the
 # lines keep their weight at that size (owner, October 29, 2026).
-$script:HubIcons = @{
+$script:AdminIcons = @{
     'product'       = '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>'
     'repository'    = '<circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 8v8M18 10v1a5 5 0 0 1-5 5H8"/>'
     # The GitHub mark as a line drawing (Feather's 'github', MIT), for the GitHub page's card.
@@ -552,7 +552,7 @@ $script:HubIcons = @{
     # its consumers a subscriber ticked off (Feather's 'user-check', MIT), so the three cards that once shared one plug read apart.
     'plugins'       = '<path d="M12 2v4M8 6h8v5a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z"/><path d="M10 13v4M14 13v4"/><rect x="4" y="17" width="16" height="4" rx="1"/>'
     'marketplace'   = '<path d="M4 4h16l1 5H3z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/>'
-    # The source repo's own hub pages (#3493), drawn as the product port's root page drew them.
+    # The source repo's own admin pages (#3493), drawn as the product port's root page drew them.
     'house-style'   = '<path d="M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.6 0-1-.8-1.4-.8-2.4s.8-1.5 1.8-1.5H17a4 4 0 0 0 4-4c0-4.7-4-8.5-9-8.5z"/><circle cx="7.5" cy="11" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16.5" cy="11" r="1"/>'
     'consumers'     = '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M17 11l2 2 4-4"/>'
     'specialists'   = '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/>'
@@ -571,7 +571,7 @@ $script:HubIcons = @{
 # middle is not the grid's (12, 12) moves its viewBox by the difference, @(dx, dy) in grid units, so it is centred
 # without being redrawn or scaled. Measured as the centre of each drawing's getBBox() in a browser, November 2, 2026:
 # an icon not named here is centred already. A new or redrawn icon is measured the same way.
-$script:HubIconOffsets = @{
+$script:AdminIconOffsets = @{
     'actions'       = @(-0.5, 0)
     'github'        = @(-0.25, -0.5)
     'lens'          = @(1, 1)
@@ -583,29 +583,29 @@ $script:HubIconOffsets = @{
     'specialists'   = @(0, 0.25)
 }
 
-function Get-HubIconSvg {
-    <# The hub card icon -Name names, as a .menu-item__icon svg; '' for no name or a name $script:HubIcons lacks. #>
+function Get-AdminIconSvg {
+    <# The Admin card icon -Name names, as a .menu-item__icon svg; '' for no name or a name $script:AdminIcons lacks. #>
     param([AllowEmptyString()][string]$Name = '')
-    if (-not $Name -or -not $script:HubIcons.ContainsKey($Name)) { return '' }
-    $o = $script:HubIconOffsets[$Name]
+    if (-not $Name -or -not $script:AdminIcons.ContainsKey($Name)) { return '' }
+    $o = $script:AdminIconOffsets[$Name]
     $vb = if ($o) { [string]::Format([System.Globalization.CultureInfo]::InvariantCulture, '{0} {1} 24 24', $o[0], $o[1]) } else { '0 0 24 24' }
     return '<svg class="menu-item__icon" viewBox="' + $vb + '" width="32" height="32" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
-        $script:HubIcons[$Name] + '</svg>'
+        $script:AdminIcons[$Name] + '</svg>'
 }
 
 function Get-GeneralPages {
     <#
-        The general pages, in the order the hub lists them: each a route on the general server (Href,
+        The general pages, in the order Admin lists them: each a route on the general server (Href,
         relative), its Label the page's own name as its breadcrumb reads it, one line on what it shows, and the
-        key of its card's icon ($script:HubIcons). A Group is the Href of the group page (Get-HubGroups) the page
-        is linked from instead of the hub: the hub shows that group as one card in the place of its first page.
-        GitHub marks a page the hub's GitHub page (/dev/repository, Format-PluginRepoRepositoryHtml) links instead of
-        the hub: Issues, and the Test gate, which measures what the suites cost on GitHub Actions (the owner,
+        key of its card's icon ($script:AdminIcons). A Group is the Href of the group page (Get-AdminGroups) the page
+        is linked from instead of Admin: Admin shows that group as one card in the place of its first page.
+        GitHub marks a page Admin's GitHub page (/dev/repository, Format-PluginRepoRepositoryHtml) links instead of
+        Admin: Issues, and the Test gate, which measures what the suites cost on GitHub Actions (the owner,
         November 2, 2026).
     #>
     @(
         @{ Href = '/dev/issues';        Label = 'Issues';        Sub = 'The open GitHub issues and where they stand, and the flow of the last four weeks'; Icon = 'issues'; GitHub = $true },
-        # The day plan (Dave, November 7, 2026, #3860): first of the hub's own cards, since today is where a day starts,
+        # The day plan (Dave, November 7, 2026, #3860): first of Admin's own cards, since today is where a day starts,
         # then the goals and the one step to take now (#3816).
         @{ Href = '/dev/today';         Label = 'Today';         Sub = 'The day goal, the plan and what got done, and the week'; Icon = 'today' },
         @{ Href = '/dev/goals';         Label = 'Goals';         Sub = 'Each goal broken into milestones and tasks, and the one step to take now'; Icon = 'goals' },
@@ -615,24 +615,24 @@ function Get-GeneralPages {
         @{ Href = '/dev/test-gate';     Label = 'Test gate';     Sub = 'What each test suite costs on CI'; Icon = 'test-gate'; GitHub = $true },
         @{ Href = '/dev/stopwatch';     Label = 'Stopwatch';     Sub = 'How long an assignment takes, timed from a stopwatch: prompt, or from the start of a release cut, to back on the trunk, with the transcript phases'; Icon = 'stopwatch'; Group = '/dev/clock' },
         @{ Href = '/dev/logbook';       Label = 'Logbook';       Sub = 'Every assignment of a clean session, timed by itself: first prompt to back on the trunk, with the transcript phases'; Icon = 'logbook'; Group = '/dev/clock' },
-        # #3482: plugin-versions' verdict per enabled plugin, so a problem with one is visible from the hub.
+        # #3482: plugin-versions' verdict per enabled plugin, so a problem with one is visible from Admin.
         @{ Href = '/dev/plugins';       Label = 'Installed plugins'; Sub = 'Every plugin this repo enables, and any problem with one on this machine'; Icon = 'plugins' },
         # Admin's own settings, on a page of their own (Dave, November 2, 2026): the Theme first.
         @{ Href = '/settings';      Label = 'Settings';      Sub = 'How Admin looks on this device: its theme'; Icon = 'settings' }
     )
 }
 
-function Get-HubGroups {
+function Get-AdminGroups {
     <#
-        The group pages, each the one card on the hub for the general pages whose Group is its Href, and a page of
-        its own holding a card per member (Format-HubGroupPageHtml). A hub card is always ONE link, so a group is a
+        The group pages, each the one card on Admin for the general pages whose Group is its Href, and a page of
+        its own holding a card per member (Format-AdminGroupPageHtml). An admin card is always ONE link, so a group is a
         page, never a card with several rows: Clock holds Stopwatch and Logbook (the owner, October 27, 2026; the Test gate too, until November 2).
         A group may sit in another: its Group is the parent group's Href, and it is a card on that page instead of
-        the hub. A group with no general page of its own is still a hub card (Format-HubPageCardsHtml). A Section group
+        Admin. A group with no general page of its own is still an admin card (Format-AdminPageCardsHtml). A Section group
         is no card and no page: it is an h2 on its parent's page, over a grid of its members' cards. Claude holds
         Rules, Skills and Specialists (Maikel, October 30, 2026), each a page of its own: a section of an AI page until
         Maikel made it the page itself, on /dev/claude (November 2, 2026).
-        A Section with Source 'lenses' takes its cards from the repo instead: one per specialist lens (Get-HubLensPages).
+        A Section with Source 'lenses' takes its cards from the repo instead: one per specialist lens (Get-AdminLensPages).
         Performance holds SessionStart and Clock (the owner, October 30, 2026), and sits in Claude since
         November 2, 2026: what it measures is what Claude's work costs. A group page keeps its route wherever it sits.
         Its two are Sections since November 3, 2026 (Dave): Clock, an h2 over the Stopwatch and Logbook h3 cards, and
@@ -648,26 +648,26 @@ function Get-HubGroups {
         @{ Href = '/dev/performance/context'; Label = 'Context'; Sub = 'What a session loads before its first turn'; Icon = 'sessionstart'; Group = '/dev/performance'; Section = $true },
         @{ Href = '/dev/claude/specialists/lenses'; Label = 'Lenses'; Icon = 'lens'; Group = '/dev/claude/specialists'; Section = $true; Source = 'lenses' },
         # The Rules page reads its cards from the repo too: what is in its .claude/rules folder, and nothing else
-        # (Maikel, November 3, 2026; Get-HubRulePages). Bare: no heading of its own, which would only repeat the
+        # (Maikel, November 3, 2026; Get-AdminRulePages). Bare: no heading of its own, which would only repeat the
         # page's h1, so its cards stand on the page as h2 cards (Maikel, the same day).
         @{ Href = '/dev/claude/rules/repo'; Label = 'Repo rules'; Icon = 'rules'; Group = '/dev/claude/rules'; Section = $true; Source = 'repo-rules'; Bare = $true }
     )
 }
 
-function Get-HubSectionCards {
+function Get-AdminSectionCards {
     <#
-        The cards of a Section whose Source reads them from the repo at -RepoRoot: the Lenses (Get-HubLensPages) and the
-        Repo rules (Get-HubRulePages). None for a Source it does not know.
+        The cards of a Section whose Source reads them from the repo at -RepoRoot: the Lenses (Get-AdminLensPages) and the
+        Repo rules (Get-AdminRulePages). None for a Source it does not know.
     #>
     param([AllowEmptyString()][string]$Source, [AllowEmptyString()][string]$RepoRoot = '')
     switch ($Source) {
-        'lenses'     { return @(Get-HubLensPages -RepoRoot $RepoRoot) }
-        'repo-rules' { return @(Get-HubRulePages -RepoRoot $RepoRoot) }
+        'lenses'     { return @(Get-AdminLensPages -RepoRoot $RepoRoot) }
+        'repo-rules' { return @(Get-AdminRulePages -RepoRoot $RepoRoot) }
     }
     return @()
 }
 
-function Get-HubDocTitle {
+function Get-AdminDocTitle {
     <# Pure-ish: the first '# ' title of the markdown file at -Path, past any frontmatter; '' where it has none or cannot be read. #>
     param([Parameter(Mandatory = $true)][string]$Path)
     try {
@@ -681,7 +681,7 @@ function Get-HubDocTitle {
     return ''
 }
 
-function Get-HubRulePages {
+function Get-AdminRulePages {
     <#
         The rule files in the .claude/rules folder of the repo at -RepoRoot -- what is in that folder and nothing else
         (Maikel, November 3, 2026) -- each a card's @{ Href; Label; Sub; Icon; Path; Display }, by name, read per request
@@ -706,7 +706,7 @@ function Get-HubRulePages {
         if ($desc.Success) {
             $sub = $desc.Groups[1].Value -replace '\A([''"])(.*)\1\z', '$2'
         } else {
-            $sub = Get-HubDocTitle -Path $f.FullName
+            $sub = Get-AdminDocTitle -Path $f.FullName
             # Without one, the '# ' title, past its lead before an em dash: that names the subject, which the card's own
             # title -- the file's name -- already does ('Language -- which layers ...' under 'language-layers'). A plain
             # word then opening it is raised to a capital; an identifier ('dkj-marketplace') is left as written.
@@ -725,13 +725,13 @@ function Get-HubRulePages {
     return $out.ToArray()
 }
 
-function Get-HubGroupCrumbs {
+function Get-AdminGroupCrumbs {
     <#
-        The crumbs from the hub down to and including the group on -Href, outermost first, each @{ Label; Href }: the
+        The crumbs from Admin down to and including the group on -Href, outermost first, each @{ Label; Href }: the
         trail of a page that sits in that group. A Section has no page, so it is no crumb.
     #>
     param([Parameter(Mandatory = $true)][string]$Href)
-    $groups = @{}; foreach ($g in Get-HubGroups) { $groups[$g.Href] = $g }
+    $groups = @{}; foreach ($g in Get-AdminGroups) { $groups[$g.Href] = $g }
     $trail = @()
     for ($g = $groups[$Href]; $g; $g = $(if ($g.Group) { $groups[$g.Group] } else { $null })) {
         if (-not $g.Section) { $trail = @(@{ Label = $g.Label; Href = $g.Href }) + $trail }
@@ -739,7 +739,7 @@ function Get-HubGroupCrumbs {
     return $trail
 }
 
-function Get-HubLensPages {
+function Get-AdminLensPages {
     <#
         Every specialist lens of the repo at -RepoRoot (.claude/specialists/lenses/specialist-NN-NN-lens.md), by name:
         each a card's @{ Href; Label; Sub; Icon; Path }, its Label the file's name and its Sub the lens's own '# ' title.
@@ -760,7 +760,7 @@ function Get-HubLensPages {
     }
 }
 
-function ConvertTo-HubLensBody {
+function ConvertTo-AdminLensBody {
     <#
         Pure: a lens file's text (LF line ends) as the markdown its page renders. The frontmatter is the roster's data,
         not body, and the lens's own '# ' title goes, because the page's one h1 is the file's name (Maikel, November 2,
@@ -797,12 +797,12 @@ function ConvertTo-HubLensBody {
             $lines[$i] -replace '^([ \t]*)#{1,6}', ('$1' + ('#' * $level))
         } else { $lines[$i] }
     }
-    return ConvertTo-HubLensLeadHeadings -Text ((@($out) -join "`n").TrimStart("`n"))
+    return ConvertTo-AdminLensLeadHeadings -Text ((@($out) -join "`n").TrimStart("`n"))
 }
 
-function Split-HubLensIntro {
+function Split-AdminLensIntro {
     <#
-        Pure: a lens body (ConvertTo-HubLensBody) as @{ Intro; Body }. The Intro is the plain paragraphs before the first
+        Pure: a lens body (ConvertTo-AdminLensBody) as @{ Intro; Body }. The Intro is the plain paragraphs before the first
         heading -- what the lens says about itself, which its page sets under the h1 (Maikel, November 2, 2026). A quote
         before that heading is dropped; a list, a table, code or anything indented stays in the Body, in its place. No
         paragraph there, no Intro.
@@ -835,7 +835,7 @@ function Split-HubLensIntro {
     return @{ Intro = (@($intro) -join "`n`n"); Body = ((@($bodyParts | Where-Object { $_ }) -join "`n`n")) }
 }
 
-function ConvertTo-HubLensLeadHeadings {
+function ConvertTo-AdminLensLeadHeadings {
     <#
         Pure: the h3 level put to use (Maikel, November 2, 2026). A list straight under an h2 whose EVERY item opens with
         a bold lead ('- **The sender header line.** Every reply ...', at least two items) is a run of sub-sections written
@@ -883,17 +883,17 @@ function ConvertTo-HubLensLeadHeadings {
     return (@($out) -join "`n")
 }
 
-# The house's one markdown renderer, beside the release-notes template in this plugin (Format-HubLensPageHtml).
-$script:MarkdownRendererPath = Join-Path $PSScriptRoot '..\..\scripts\release\markdown-render.js'
+# The house's one markdown renderer, beside the release-notes template in this plugin (Format-AdminLensPageHtml).
+$script:MarkdownRendererPath = Join-Path $PSScriptRoot '..\..\..\scripts\release\markdown-render.js'
 # The tree's one fence tracker (#2536), so a lens's code blocks are read the way every other markdown reader reads them.
-# Loaded only where it is there: a copy of the hub's libs on their own (a test fixture) still loads, and the lens page
+# Loaded only where it is there: a copy of Admin's libs on their own (a test fixture) still loads, and the lens page
 # then reports its lens as unreadable rather than taking the whole lib down.
-$script:FenceLibPath = Join-Path $PSScriptRoot '..\..\scripts\lib\fence-lib.ps1'
+$script:FenceLibPath = Join-Path $PSScriptRoot '..\..\..\scripts\lib\fence-lib.ps1'
 if (Test-Path -LiteralPath $script:FenceLibPath -PathType Leaf) { . $script:FenceLibPath }
 
-function Format-HubLensPageHtml {
+function Format-AdminLensPageHtml {
     <#
-        One specialist lens's own page on /dev/claude/specialists/lenses/<name> (Get-HubLensPages), under Home > Claude >
+        One specialist lens's own page on /dev/claude/specialists/lenses/<name> (Get-AdminLensPages), under Home > Claude >
         Specialists: the file's name as the h1 and the last crumb, as its card reads, and the file RENDERED as markdown in
         a card (Maikel, November 2, 2026), past its frontmatter and its own '# ' title, so the page keeps ONE h1;
         any other '# ' heading is rendered as an h2. The renderer is the house's one, markdown-render.js beside the release-notes
@@ -901,35 +901,35 @@ function Format-HubLensPageHtml {
         as JSON in a <script type="application/json">, and the raw text stays in a <noscript> for a reader without
         JavaScript. $null for a name the repo has no lens of.
     #>
-    param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyString()][string]$RepoRoot = '', [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/')
-    $lens = @(Get-HubLensPages -RepoRoot $RepoRoot | Where-Object { $_.Label -ceq $Name })[0]
+    param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyString()][string]$RepoRoot = '', [AllowEmptyString()][string]$RepoName = '', [string]$AdminHref = '/admin')
+    $lens = @(Get-AdminLensPages -RepoRoot $RepoRoot | Where-Object { $_.Label -ceq $Name })[0]
     if (-not $lens) { return $null }
-    return Format-HubDocPageHtml -Doc $lens -RepoName $RepoName -HubHref $HubHref -What 'lens' `
+    return Format-AdminDocPageHtml -Doc $lens -RepoName $RepoName -AdminHref $AdminHref -What 'lens' `
         -ParentCrumbs @(@{ Label = 'Claude'; Href = '/dev/claude' }, @{ Label = 'Specialists'; Href = '/dev/claude/specialists' }) `
         -SourceDisplay ('.claude/specialists/lenses/' + $lens.Label + '.md')
 }
 
-function Format-HubRulePageHtml {
+function Format-AdminRulePageHtml {
     <#
-        One rule file's own page on /dev/claude/rules/<name> (Get-HubRulePages), under Home > Claude > Rules: a
-        .claude/rules file, rendered exactly as a lens is (Format-HubDocPageHtml). $null for a name the repo's
+        One rule file's own page on /dev/claude/rules/<name> (Get-AdminRulePages), under Home > Claude > Rules: a
+        .claude/rules file, rendered exactly as a lens is (Format-AdminDocPageHtml). $null for a name the repo's
         .claude/rules folder has no file of.
     #>
-    param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyString()][string]$RepoRoot = '', [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/')
-    $rule = @(Get-HubRulePages -RepoRoot $RepoRoot | Where-Object { $_.Label -ceq $Name })[0]
+    param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyString()][string]$RepoRoot = '', [AllowEmptyString()][string]$RepoName = '', [string]$AdminHref = '/admin')
+    $rule = @(Get-AdminRulePages -RepoRoot $RepoRoot | Where-Object { $_.Label -ceq $Name })[0]
     if (-not $rule) { return $null }
-    return Format-HubDocPageHtml -Doc $rule -RepoName $RepoName -HubHref $HubHref -What 'rule document' `
+    return Format-AdminDocPageHtml -Doc $rule -RepoName $RepoName -AdminHref $AdminHref -What 'rule document' `
         -ParentCrumbs @(@{ Label = 'Claude'; Href = '/dev/claude' }, @{ Label = 'Rules'; Href = '/dev/claude/rules' }) -SourceDisplay $rule.Display
 }
 
-function Format-HubDocPageHtml {
+function Format-AdminDocPageHtml {
     <#
-        The page of one markdown document the hub reads from the repo -- a lens, a rule -- -Doc being its card
-        (@{ Label; Path }): the card's label as the h1, the file rendered by the house renderer as Format-HubLensPageHtml
+        The page of one markdown document Admin reads from the repo -- a lens, a rule -- -Doc being its card
+        (@{ Label; Path }): the card's label as the h1, the file rendered by the house renderer as Format-AdminLensPageHtml
         describes, under -ParentCrumbs, with -SourceDisplay named in the footer. -What names the thing in the message
         shown when the file cannot be read.
     #>
-    param([Parameter(Mandatory = $true)]$Doc, [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/', [string]$What = 'document',
+    param([Parameter(Mandatory = $true)]$Doc, [AllowEmptyString()][string]$RepoName = '', [string]$AdminHref = '/', [string]$What = 'document',
         [object[]]$ParentCrumbs = @(), [AllowEmptyString()][string]$SourceDisplay = '')
     $lens = $Doc
     $e = { param($v) ConvertTo-GeneralPageText $v }
@@ -939,7 +939,7 @@ function Format-HubDocPageHtml {
     [void]$body.AppendLine('<div><h1>' + (& $e $title) + '</h1></div>')
     try {
         $text = [System.IO.File]::ReadAllText($lens.Path, (New-Object System.Text.UTF8Encoding($false))) -replace "`r`n", "`n"
-        $parts = Split-HubLensIntro -Text (ConvertTo-HubLensBody -Text $text)
+        $parts = Split-AdminLensIntro -Text (ConvertTo-AdminLensBody -Text $text)
         $renderer = [System.IO.File]::ReadAllText($script:MarkdownRendererPath, (New-Object System.Text.UTF8Encoding($false)))
         # JSON inside a <script>: every '<' is escaped, so no '</script>' in a lens can end the block early.
         $json = (ConvertTo-Json -InputObject ([ordered]@{ intro = $parts.Intro; body = $parts.Body }) -Compress) -replace '<', ('\' + 'u003c')
@@ -957,16 +957,16 @@ function Format-HubDocPageHtml {
         ':is(#lens-body, #lens-intro) > * + * { margin-top: var(--spacing-3); }' + "`n" +
         '#lens-body > * + :is(h2, h3) { margin-top: var(--spacing-6); }' + "`n" +
         '#lens-body li + li, #lens-body li > :is(ul, ol) { margin-top: var(--spacing-1); }'
-    return Format-GeneralPageHtml -Title $title -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -HubHref $HubHref -Style $style `
-        -ParentCrumbs $ParentCrumbs -FooterNote ('Read from <code>' + (& $e $SourceDisplay) + '</code> by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.')
+    return Format-GeneralPageHtml -Title $title -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName -AdminHref $AdminHref -Style $style `
+        -ParentCrumbs $ParentCrumbs -FooterNote ('Read from <code>' + (& $e $SourceDisplay) + '</code> by the dkj-policy plugin''s <code>apps/admin/lib/general-pages-lib.ps1</code>.')
 }
 
-function Format-HubCardLinkHtml {
+function Format-AdminCardLinkHtml {
     <#
-        One page as a hub card (#3383, the house hub form since the owner's decision of October 24, 2026): a
+        One page as an admin card (#3383, the house admin form since the owner's decision of October 24, 2026): a
         .card.card--link holding the page's one .menu-item row, so a click anywhere on the card follows it. -Href,
-        -Label and -Sub (optional, one line) are escaped here; -Icon (optional) is a key of $script:HubIcons, drawn
-        before the label. The hubs set these cards three to a row, in a .grid-3 with no heading above them.
+        -Label and -Sub (optional, one line) are escaped here; -Icon (optional) is a key of $script:AdminIcons, drawn
+        before the label. The Admin servers set these cards three to a row, in a .grid-3 with no heading above them.
         It is the ONE card link (#3566): an overview that needs more says so through the slots below, never with markup
         of its own. -SubHtml is the description as the caller's own markup, in place of -Sub. -ValueHtml is the card's
         headline figure (a count, a time), a line of its own under the description; -BadgeHtml a status mark in the
@@ -986,7 +986,7 @@ function Format-HubCardLinkHtml {
         [AllowEmptyString()][string]$Class = '', [AllowEmptyString()][string]$TitleBadgeHtml = '')
     # The docstring's NO <a>, enforced (#3610): a caller that breaks it fails its suite instead of a broken card.
     foreach ($slot in @(@('SubHtml', $SubHtml), @('ValueHtml', $ValueHtml), @('BadgeHtml', $BadgeHtml), @('TitleBadgeHtml', $TitleBadgeHtml))) {
-        if ($slot[1] -match '<a[\s>]') { throw "Format-HubCardLinkHtml: -$($slot[0]) holds an <a>, and the card is already one link -- an <a> inside an <a> breaks the card (#3610). Pass the text without its link." }
+        if ($slot[1] -match '<a[\s>]') { throw "Format-AdminCardLinkHtml: -$($slot[0]) holds an <a>, and the card is already one link -- an <a> inside an <a> breaks the card (#3610). Pass the text without its link." }
     }
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $subText = if ($SubHtml) { $SubHtml } elseif ($Sub) { & $e $Sub } else { '' }
@@ -996,16 +996,16 @@ function Format-HubCardLinkHtml {
     # A heading may not sit in a <span>, so a card with one holds its label in a <div>.
     $labelHtml = if ($Heading) { '<div class="menu-item__label"><h' + $Heading + '>' + $title + '</h' + $Heading + '>' + $s + $v + '</div>' }
              else { '<span class="menu-item__label">' + $title + $s + $v + '</span>' }
-    $mark = if ($BadgeHtml) { $BadgeHtml } else { Get-HubIconSvg -Name $Icon }
+    $mark = if ($BadgeHtml) { $BadgeHtml } else { Get-AdminIconSvg -Name $Icon }
     return '<section class="card card--link' + $(if ($Class) { ' ' + (& $e $Class) } else { '' }) + '"' + $(if ($Id) { ' id="' + (& $e $Id) + '"' } else { '' }) +
-        '><nav class="menu-list" aria-label="' + (& $e $Label) + '"><a class="menu-item" href="' + (& $e $Href) + '">' + $mark + $labelHtml + $script:RepoHubChevron + '</a></nav></section>'
+        '><nav class="menu-list" aria-label="' + (& $e $Label) + '"><a class="menu-item" href="' + (& $e $Href) + '">' + $mark + $labelHtml + $script:RepoAdminChevron + '</a></nav></section>'
 }
 
 function Format-AdminLinkTableHtml {
     <#
         A set of links as Admin draws it (#3830): a .table--dense, one row per link, in the desktop shell's own form,
-        where the product layer draws a card per link (Format-HubCardLinkHtml). The brand book's layer table: "a list
-        Admin manages is a .table--dense, not cards". -Items are hashtables or objects carrying Format-HubCardLinkHtml's
+        where the product layer draws a card per link (Format-AdminCardLinkHtml). The brand book's layer table: "a list
+        Admin manages is a .table--dense, not cards". -Items are hashtables or objects carrying Format-AdminCardLinkHtml's
         own fields -- Href and Label (required), Sub or SubHtml, ValueHtml, BadgeHtml, TitleBadgeHtml, Class, Id -- so a
         caller that built a card builds its row from the same values. The label links; the description is the second
         column; a Value column is drawn only where an item has one. -Heading, when given, is the set's h2, set as a
@@ -1045,41 +1045,41 @@ function Format-AdminLinkTableHtml {
     return $sb.ToString()
 }
 
-function Format-HubPageCardsHtml {
+function Format-AdminPageCardsHtml {
     <#
-        -Pages (Get-GeneralPages' shape) as hub cards, one line each, in their order: a page with no Group as its
-        own card, and each top-level Group's card (Get-HubGroups) in the place of its first page, however deep the page
+        -Pages (Get-GeneralPages' shape) as admin cards, one line each, in their order: a page with no Group as its
+        own card, and each top-level Group's card (Get-AdminGroups) in the place of its first page, however deep the page
         sits (Stopwatch is under Clock, under Performance, under Claude); then each top-level group no general page belongs
-        to, after them. A GitHub page is the caller's to leave out: the hub's GitHub page links it instead.
+        to, after them. A GitHub page is the caller's to leave out: Admin's GitHub page links it instead.
     #>
     param([AllowEmptyCollection()][object[]]$Pages = @())
-    foreach ($c in @(Get-HubPageCards -Pages $Pages)) { Format-HubCardLinkHtml -Href $c.Href -Label $c.Label -Sub $c.Sub -Icon $c.Icon }
+    foreach ($c in @(Get-AdminPageCards -Pages $Pages)) { Format-AdminCardLinkHtml -Href $c.Href -Label $c.Label -Sub $c.Sub -Icon $c.Icon }
 }
 
-function Get-HubPageCards {
+function Get-AdminPageCards {
     <#
-        The cards Format-HubPageCardsHtml draws for -Pages, as the page or group entries themselves (Href, Label, Sub,
-        Icon), in the same order: it draws them, and the site header's menu (Get-HubMenu) lists them.
+        The cards Format-AdminPageCardsHtml draws for -Pages, as the page or group entries themselves (Href, Label, Sub,
+        Icon), in the same order: it draws them, and the site header's menu (Get-AdminMenu) lists them.
     #>
     param([AllowEmptyCollection()][object[]]$Pages = @())
     $done = @{}
     foreach ($p in $Pages) {
         if (-not $p.Group) { $p; continue }
-        $g = @(Get-HubGroupCrumbs -Href $p.Group)[0]
+        $g = @(Get-AdminGroupCrumbs -Href $p.Group)[0]
         if ($done.ContainsKey($g.Href)) { continue }
         $done[$g.Href] = $true
-        @(Get-HubGroups | Where-Object { $_.Href -eq $g.Href })[0]
+        @(Get-AdminGroups | Where-Object { $_.Href -eq $g.Href })[0]
     }
-    $grouped = @(Get-GeneralPages | Where-Object { $_.Group } | ForEach-Object { @(Get-HubGroupCrumbs -Href $_.Group)[0].Href })
-    foreach ($g in @(Get-HubGroups | Where-Object { -not $_.Group -and $grouped -notcontains $_.Href })) { $g }
+    $grouped = @(Get-GeneralPages | Where-Object { $_.Group } | ForEach-Object { @(Get-AdminGroupCrumbs -Href $_.Group)[0].Href })
+    foreach ($g in @(Get-AdminGroups | Where-Object { -not $_.Group -and $grouped -notcontains $_.Href })) { $g }
 }
 
-function Get-HubCardGridStyle {
+function Get-AdminCardGridStyle {
     <#
         The repo layer's .ph-cards: card links three to a row ON THE PAGE, with no surface around them, stepping down
         where .grid-3 does, and .ph-cards__full for a card that takes the row. For h2 cards, which stand on their own:
         the .grid-3 surface frames a group, an h2 over h3 cards, so an h2 card never sits in it (Maikel, November 2,
-        2026). The hub's page and every group page take it from here. Its gap is --spacing-4 (Maikel, November 2, 2026).
+        2026). Admin's page and every group page take it from here. Its gap is --spacing-4 (Maikel, November 2, 2026).
     #>
     @(
         '.ph-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-4); }',
@@ -1090,17 +1090,17 @@ function Get-HubCardGridStyle {
     ) -join "`n"
 }
 
-function Format-HubGroupPageHtml {
+function Format-AdminGroupPageHtml {
     <#
-        The group page on -Href (Get-HubGroups), in Admin's form (#3830): its h1 the shell's toolbar title, its member
+        The group page on -Href (Get-AdminGroups), in Admin's form (#3830): its h1 the shell's toolbar title, its member
         pages and member groups one .table--dense (Format-AdminLinkTableHtml), then each member Section a table of its
         own under its h2. A group with no member yet says so in one line. Its trail runs through every
         group it sits in but a Section, which has no page. $null for an Href no group has, and for a Section.
-        -RepoRoot is the checkout a Source section reads its cards from (the Lenses, Get-HubLensPages).
+        -RepoRoot is the checkout a Source section reads its cards from (the Lenses, Get-AdminLensPages).
     #>
-    param([Parameter(Mandatory = $true)][string]$Href, [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/',
+    param([Parameter(Mandatory = $true)][string]$Href, [AllowEmptyString()][string]$RepoName = '', [string]$AdminHref = '/',
         [AllowEmptyString()][string]$RepoRoot = '')
-    $groups = @(Get-HubGroups)
+    $groups = @(Get-AdminGroups)
     $g = @($groups | Where-Object { $_.Href -ceq $Href })[0]
     if (-not $g -or $g.Section) { return $null }
     $crumbs = @()
@@ -1115,7 +1115,7 @@ function Format-HubGroupPageHtml {
     $members = @(@(Get-GeneralPages | Where-Object { $_.Group -eq $g.Href }) + @($groups | Where-Object { $_.Group -ceq $g.Href -and -not $_.Section }))
     # A Bare Section has no heading: its cards join the page's own h2 cards (Maikel, November 3, 2026).
     foreach ($bare in @($groups | Where-Object { $_.Group -ceq $g.Href -and $_.Section -and $_.Bare })) {
-        $members += @(Get-HubSectionCards -Source $bare.Source -RepoRoot $RepoRoot)
+        $members += @(Get-AdminSectionCards -Source $bare.Source -RepoRoot $RepoRoot)
     }
     $sections = @($groups | Where-Object { $_.Group -ceq $g.Href -and $_.Section -and -not $_.Bare })
     $body = New-Object System.Text.StringBuilder
@@ -1130,29 +1130,29 @@ function Format-HubGroupPageHtml {
     foreach ($sec in $sections) {
         # A section holds its member general pages first, in their order, then its member groups (Performance's Clock
         # and Context, Dave, November 3, 2026).
-        $cards = if ($sec.Source) { @(Get-HubSectionCards -Source $sec.Source -RepoRoot $RepoRoot) }
+        $cards = if ($sec.Source) { @(Get-AdminSectionCards -Source $sec.Source -RepoRoot $RepoRoot) }
                  else { @(@(Get-GeneralPages | Where-Object { $_.Group -ceq $sec.Href }) + @($groups | Where-Object { $_.Group -ceq $sec.Href })) }
         [void]$body.AppendLine((Format-AdminLinkTableHtml -Items $cards -Heading $sec.Label -NameHead 'Page'))
     }
-    return Format-GeneralPageHtml -Title $g.Label -Body $body.ToString() -Lead '' -SiteName $RepoName -HubHref $HubHref `
-        -ParentCrumbs $crumbs -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
+    return Format-GeneralPageHtml -Title $g.Label -Body $body.ToString() -Lead '' -SiteName $RepoName -AdminHref $AdminHref `
+        -ParentCrumbs $crumbs -FooterNote 'Built by the dkj-policy plugin''s <code>apps/admin/lib/general-pages-lib.ps1</code>.'
 }
 
-function Format-HubSettingsPageHtml {
+function Format-AdminSettingsPageHtml {
     <#
         Admin's Settings page on /settings (Dave, November 2, 2026): Get-SettingsPageParts with no Width group,
         because Admin has one width (Get-AdminWidthScript), in Admin's own page shell.
     #>
-    param([AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/hub')
+    param([AllowEmptyString()][string]$RepoName = '', [string]$AdminHref = '/admin')
     $parts = Get-SettingsPageParts
     return Format-GeneralPageHtml -Title 'Settings' -Lead 'How Admin looks on this device: its theme.' -Body $parts.Body -Style $parts.Style `
-        -SiteName $RepoName -HubHref $HubHref -FooterNote 'Built by the dkj-policy plugin''s <code>hub/lib/general-pages-lib.ps1</code>.'
+        -SiteName $RepoName -AdminHref $AdminHref -FooterNote 'Built by the dkj-policy plugin''s <code>apps/admin/lib/general-pages-lib.ps1</code>.'
 }
 
 function Get-SettingsPageParts {
     <#
         A Settings page's body and its style, @{ Body; Style }, for whichever shell draws it: Admin's
-        (Format-HubSettingsPageHtml) and a product's (Maikel, November 4, 2026). Its h1 comes from the shell; then the group headed by the h2 Theme
+        (Format-AdminSettingsPageHtml) and a product's (Maikel, November 4, 2026). Its h1 comes from the shell; then the group headed by the h2 Theme
         holding a Light/Dark toggle and a card per theme holding that theme's swatch alone, with no h3: the swatch's own
         title and aria-label name it (Dave, November 2, 2026) -- the
         brand book's own picker (DKJTheme.picker, house-theme.js, which every page here loads) cut down to one swatch.
@@ -1252,12 +1252,12 @@ function ConvertTo-SiteHeaderName {
     return $RepoName
 }
 
-function Get-HubMenu {
+function Get-AdminMenu {
     <#
-        Admin's menu (Get-AdminNav reads it): its GitHub page, then the hub's own cards in their
-        order (Get-HubPageCards), each @{ Label; Href }. The same list as the home page's cards, so the two cannot drift.
+        Admin's menu (Get-AdminNav reads it): its GitHub page, then Admin's own cards in their
+        order (Get-AdminPageCards), each @{ Label; Href }. The same list as the home page's cards, so the two cannot drift.
     #>
-    @(@{ Label = 'GitHub'; Href = '/dev/repository' }) + @(Get-HubPageCards -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }) | ForEach-Object { @{ Label = $_.Label; Href = $_.Href } })
+    @(@{ Label = 'GitHub'; Href = '/dev/repository' }) + @(Get-AdminPageCards -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }) | ForEach-Object { @{ Label = $_.Label; Href = $_.Href } })
 }
 
 function Get-BreadcrumbSep {
@@ -1314,8 +1314,8 @@ function Set-AdminObjects {
 
 function Resolve-AdminObjectHref {
     <#
-        Where a domain object's item links (#3818). THE REPO'S OWN SERVER SERVES THESE ROUTES, NOT THE HUB: a path is
-        resolved against the product's address (Set-AdminProductUrl), and an http(s) URL is kept as it is. The hub never
+        Where a domain object's item links (#3818). THE REPO'S OWN SERVER SERVES THESE ROUTES, NOT THE ADMIN: a path is
+        resolved against the product's address (Set-AdminProductUrl), and an http(s) URL is kept as it is. Admin never
         loads a repo's code into its own process (it reads the seam in a child), so it cannot serve a repo's pages; the
         repo's server can, and draws them in the brand book's desktop shell. '' where a path has no product to resolve
         against, which leaves the item out.
@@ -1350,8 +1350,11 @@ function Resolve-AdminLegacyPath {
         kept, so a link or a bookmark to /test-gate/... or /claude/rules keeps working. '' for a path that never moved
         (Home, Settings, the API, the static files) and for one already under /dev. -Target is the request target, path
         and query. /clock moved before, and its own redirect carries it on from under /dev; /ai has a redirect of its own, straight to /dev/claude.
+        '/hub', the home page's address while the code called Admin the hub, goes to '/' (#3873).
     #>
     param([AllowEmptyString()][string]$Target = '')
+    $h = [regex]::Match($Target, '\A/hub/?(\?[^#]*)?\z')
+    if ($h.Success) { return '/' + $h.Groups[1].Value }
     $m = [regex]::Match($Target, '\A(/(?:test-gate|plugins|stopwatch|logbook|release-notes|sessionstart|issues|claude|performance|repository|clock)(?:/[^?#]*)?)(\?[^#]*)?\z')
     if (-not $m.Success) { return '' }
     return (Get-AdminDevBase) + $m.Groups[1].Value + $m.Groups[2].Value
@@ -1367,11 +1370,11 @@ function Get-AdminNav {
             with its Count as a badge and its Href resolved by Resolve-AdminObjectHref -- none where the repo states none;
           * Product: the storefront, linked rather than contained, since Admin manages the product and is not it
             ($script:AdminProductUrl, left out where the repo states no product);
-          * Development: Admin's own pages under /dev, the hub's menu (Get-HubMenu) in its order -- a group page
+          * Development: Admin's own pages under /dev, Admin's menu (Get-AdminMenu) in its order -- a group page
             such as Claude is one item and its members are reached on it;
           * Settings, pinned to the bottom (Foot).
     #>
-    $menu = @(Get-HubMenu)
+    $menu = @(Get-AdminMenu)
     $dev = @($menu | Where-Object { $_.Href -ne '/settings' } | ForEach-Object { @{ Label = $_.Label; Href = $_.Href; External = $false } })
     $settings = @($menu | Where-Object { $_.Href -eq '/settings' } | ForEach-Object { @{ Label = $_.Label; Href = $_.Href; External = $false } })
     $top = @(@{ Label = 'Home'; Href = '/'; External = $false })
@@ -1389,7 +1392,7 @@ function Get-AdminNav {
 function Get-AdminSearchItems {
     <#
         What the navigation's search field finds (#3817), each @{ Label; Href; Sub; External }, once per Href: every item of
-        -Nav (Get-AdminNav's answer), then the group pages (Get-HubGroups, a Section left out since it is a heading on its
+        -Nav (Get-AdminNav's answer), then the group pages (Get-AdminGroups, a Section left out since it is a heading on its
         parent rather than a page) and the general pages (Get-GeneralPages), so a page two levels down is one search
         away. Sub is the page's own line, which is searched too. A repo's domain objects join here once the navigation
         carries them.
@@ -1398,7 +1401,7 @@ function Get-AdminSearchItems {
     if ($null -eq $Nav) { $Nav = @(Get-AdminNav) }
     $all = @()
     foreach ($s in @($Nav | Where-Object { $_ })) { foreach ($i in @($s.Items | Where-Object { $_ })) { $all += @{ Label = $i.Label; Href = $i.Href; Sub = ''; External = $i.External } } }
-    foreach ($g in @(Get-HubGroups | Where-Object { -not $_.Section })) { $all += @{ Label = $g.Label; Href = $g.Href; Sub = $g.Sub; External = $false } }
+    foreach ($g in @(Get-AdminGroups | Where-Object { -not $_.Section })) { $all += @{ Label = $g.Label; Href = $g.Href; Sub = $g.Sub; External = $false } }
     foreach ($p in @(Get-GeneralPages)) { $all += @{ Label = $p.Label; Href = $p.Href; Sub = $p.Sub; External = $false } }
     $seen = @{}
     $out = @()
@@ -1417,15 +1420,15 @@ function Format-AdminNavSearch {
         items whose label or line holds every word typed and hides the navigation's own lists; an empty field brings them
         back. Ctrl K (or Cmd K) focuses the field from anywhere on the page, Enter opens the first match, Escape clears
         it. The page's script only toggles `hidden` on what the server drew, so nothing typed is ever written into the
-        page. -HubHref replaces Home's '/', as in Format-AdminShellOpen.
+        page. -AdminHref replaces Home's '/', as in Format-AdminShellOpen.
     #>
-    param([AllowNull()][object[]]$Nav = $null, [string]$HubHref = '/', [string]$HomeLabel = 'Home')
+    param([AllowNull()][object[]]$Nav = $null, [string]$AdminHref = '/', [string]$HomeLabel = 'Home')
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.Append('<div class="nav-search" role="search"><input class="nav-search__input" type="search" placeholder="Search" aria-label="Search Admin" autocomplete="off" spellcheck="false" data-admin-search><kbd class="nav-search__key">Ctrl K</kbd></div>')
     [void]$sb.Append('<ul class="nav-list" data-admin-search-results aria-label="Search results" hidden>')
     foreach ($i in @(Get-AdminSearchItems -Nav $Nav)) {
-        $href = if ($i.Href -eq '/') { $HubHref } else { $i.Href }
+        $href = if ($i.Href -eq '/') { $AdminHref } else { $i.Href }
         $label = if ($i.Href -eq '/') { $HomeLabel } else { $i.Label }
         $find = ($label + ' ' + $i.Sub).ToLowerInvariant()
         $title = if ($i.Sub) { ' title="' + (& $e $i.Sub) + '"' } else { '' }
@@ -1473,7 +1476,7 @@ function Format-AdminShellOpen {
         the page column's intro: the thin bar with the trail, the side navigation (Get-AdminNav: flat, under section
         headings, #3815), and the main pane, whose toolbar holds the
         page's one h1 (at the toolbar's size, .toolbar__title) with -Info's "?" and -HeadAside at its right end. The
-        general banner (Format-RepoHubBanner) stands at the top of the scroll pane, above the content, so the shell
+        general banner (Format-RepoAdminBanner) stands at the top of the scroll pane, above the content, so the shell
         itself always fits the window. It ends inside <main class="shell__body"> (#3830); Format-AdminShellClose closes it.
         -Current is the Href of the navigation item the page is, and -Trail the crumbs after Home, each @{ Label; Href },
         the last one the page itself (no Href). -Bare leaves the toolbar out, as it leaves the h1 out elsewhere.
@@ -1481,7 +1484,7 @@ function Format-AdminShellOpen {
         Get-AdminNav's answer, passed in so a page builds it once.
     #>
     param([AllowEmptyString()][string]$Title = '', [AllowEmptyString()][string]$Current = '', [AllowEmptyCollection()][object[]]$Trail = @(),
-        [string]$HomeLabel = 'Home', [string]$HubHref = '/', [switch]$Bare, [AllowEmptyString()][string]$InfoHtml = '', [AllowEmptyString()][string]$HeadAside = '', [switch]$NoColumn, [AllowNull()][object[]]$Nav = $null)
+        [string]$HomeLabel = 'Home', [string]$AdminHref = '/', [switch]$Bare, [AllowEmptyString()][string]$InfoHtml = '', [AllowEmptyString()][string]$HeadAside = '', [switch]$NoColumn, [AllowNull()][object[]]$Nav = $null)
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.AppendLine('<div class="shell shell--no-aside">')
@@ -1489,7 +1492,7 @@ function Format-AdminShellOpen {
     $sep = Get-BreadcrumbSep
     [void]$sb.Append('<div class="shell__bar"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>')
     $steps = @($Trail | Where-Object { $_ })
-    if ($steps.Count) { [void]$sb.Append('<li><a href="' + (& $e $HubHref) + '">' + (& $e $HomeLabel) + '</a></li>') }
+    if ($steps.Count) { [void]$sb.Append('<li><a href="' + (& $e $AdminHref) + '">' + (& $e $HomeLabel) + '</a></li>') }
     else { [void]$sb.Append('<li><span aria-current="page">' + (& $e $HomeLabel) + '</span></li>') }
     for ($i = 0; $i -lt $steps.Count; $i++) {
         $s = $steps[$i]
@@ -1502,7 +1505,7 @@ function Format-AdminShellOpen {
     [void]$sb.Append('<nav class="shell__nav" aria-label="Main">')
     if ($null -eq $Nav) { $Nav = @(Get-AdminNav) }
     # The search field first (#3817): over every section, as the Shopify Admin puts it.
-    [void]$sb.Append((Format-AdminNavSearch -Nav $Nav -HubHref $HubHref -HomeLabel $HomeLabel))
+    [void]$sb.Append((Format-AdminNavSearch -Nav $Nav -AdminHref $AdminHref -HomeLabel $HomeLabel))
     $si = 0
     foreach ($s in @($Nav | Where-Object { $_ })) {
         $si++
@@ -1513,8 +1516,8 @@ function Format-AdminShellOpen {
         if ($s.Heading) { [void]$sb.Append('<p class="pane-head" id="' + $headId + '">' + (& $e $s.Heading) + '</p><ul class="nav-list" aria-labelledby="' + $headId + '">') }
         else { [void]$sb.Append('<ul class="nav-list">') }
         foreach ($i in $items) {
-            # Home takes -HubHref and -HomeLabel, so a page served under another root still links its own home.
-            $href = if ($i.Href -eq '/') { $HubHref } else { $i.Href }
+            # Home takes -AdminHref and -HomeLabel, so a page served under another root still links its own home.
+            $href = if ($i.Href -eq '/') { $AdminHref } else { $i.Href }
             $label = if ($i.Href -eq '/') { $HomeLabel } else { $i.Label }
             # A domain object's count is a badge at the right (#3818), the brand book's .nav-item__count.
             $n = if ($i -is [System.Collections.IDictionary]) { $i['Count'] } else { $null }
@@ -1533,7 +1536,7 @@ function Format-AdminShellOpen {
         [void]$sb.AppendLine('</div>')
     }
     [void]$sb.AppendLine('<div class="shell__list tb-scroll">')
-    [void]$sb.AppendLine((Format-RepoHubBanner))
+    [void]$sb.AppendLine((Format-RepoAdminBanner))
     # -NoColumn: the content brings its own column (the release notes' template), so no <main> is opened for it.
     if (-not $NoColumn) { [void]$sb.AppendLine('<main class="shell__body">') }
     return $sb.ToString()
@@ -2173,7 +2176,7 @@ function Get-SessionStartSections {
 
 # The page layer of the SessionStart pages (names the house file does not define, ss-): a card's description held to
 # two lines. The h1 stands above the cards, outside their group (the h1 is never framed, owner, October 28, 2026). The
-# card itself is the house one (Format-HubCardLinkHtml, #3566).
+# card itself is the house one (Format-AdminCardLinkHtml, #3566).
 $script:SessionStartStyle = $script:DevBarStyle + "`n" +
     # Two lines at most on a card; the section's page shows the line whole.
     '.ss-card .menu-item__sub { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }'
@@ -2226,7 +2229,7 @@ function Format-SessionStartPageHtml {
         [void]$body.AppendLine('</section>')
         [void]$body.AppendLine('</div>')
         return Format-GeneralPageHtml -Title $s.Title -Style $script:SessionStartStyle -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName `
-            -ParentCrumbs (@(Get-HubGroupCrumbs -Href '/dev/performance') + @(@{ Label = 'SessionStart'; Href = '/dev/sessionstart' })) -FooterNote $footer
+            -ParentCrumbs (@(Get-AdminGroupCrumbs -Href '/dev/performance') + @(@{ Label = 'SessionStart'; Href = '/dev/sessionstart' })) -FooterNote $footer
     }
 
     if ($alert) { [void]$body.AppendLine($alert) }
@@ -2237,16 +2240,16 @@ function Format-SessionStartPageHtml {
     # Admin's form (#3830): one .table--dense, a row per section.
     $rows = foreach ($s in $sections) { @{ Href = ('/dev/sessionstart/' + $s.Slug); Label = $s.Title; SubHtml = $s.Sub; ValueHtml = ('<span class="num">' + $s.Value + '</span>'); Id = $s.Slug; Class = 'ss-card' } }
     [void]$body.AppendLine((Format-AdminLinkTableHtml -Items @($rows) -NameHead 'Section' -ValueHead 'Size'))
-    # Under the hub's Performance page, beside the Clock (the owner, October 30, 2026).
+    # Under Admin's Performance page, beside the Clock (the owner, October 30, 2026).
     return Format-GeneralPageHtml -Title 'SessionStart' -Style $script:SessionStartStyle -Body $body.ToString() -Lead '' -Bare -SiteName $RepoName `
-        -ParentCrumbs @(Get-HubGroupCrumbs -Href '/dev/performance') -FooterNote $footer
+        -ParentCrumbs @(Get-AdminGroupCrumbs -Href '/dev/performance') -FooterNote $footer
 }
 
 function Format-ReleaseNotesEmptyPageHtml {
     <#
         Pure: the release-notes index of a repo that has never cut a release (#3580). The builder answers that
         state with exit 3 rather than a page, because before the first cut there is nothing to build from and
-        nothing the repo could add to change that -- so the hub says so as an empty state, not as an error.
+        nothing the repo could add to change that -- so Admin says so as an empty state, not as an error.
     #>
     param([AllowEmptyString()][string]$RepoName = '')
     $body = '<p role="status">No release has been cut yet. The release notes appear here with the first cut.</p>'
@@ -2262,7 +2265,7 @@ function ConvertTo-ReleaseNotesHouseColors {
     <#
         Pure: the template's own <style> with every colour it reads from its own palette read from a house
         token instead -- 'background: var(--code-bg)' becomes 'background: var(--bg-1)'. ONLY HOUSE COLOUR
-        TOKENS ON THE HUB (owner, October 27, 2026): until then a layer here pointed the template's tokens at
+        TOKENS ON THE ADMIN (owner, October 27, 2026): until then a layer here pointed the template's tokens at
         house ones, so the served page still read var(--code-bg) and reached the house through it. Only uses
         (var(--x)) are rewritten, never the palette's own definitions, which nothing reads any more on this
         copy; and only in the first <style>, the template's, so its script and its notes are left alone. The
@@ -2283,7 +2286,7 @@ function Format-ReleaseNotesDevPage {
     <#
         The built release-notes page (#3108), as a dev server serves it: the house stylesheet and theme
         script and Admin's desktop shell (#3811), put around the page build-release-notes-page.ps1 leaves in
-        dkj-policy/releases/page/. -HubHref is where the "Home" crumb goes ('/', Admin's own root, by default).
+        dkj-policy/releases/page/. -AdminHref is where the "Home" crumb goes ('/', Admin's own root, by default).
         -RepoName takes the template's eyebrow out, since Admin around it already names the site (#3423).
 
         ONLY THIS COPY, NOT THE TEMPLATE. The template is dkj-policy's, shared with every consumer --
@@ -2310,7 +2313,7 @@ function Format-ReleaseNotesDevPage {
     param(
         [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Html,
         [string]$ThemeKey = 'general-pages',
-        [string]$HubHref = '/',
+        [string]$AdminHref = '/',
         [AllowEmptyString()][string]$RepoName = '',
         [switch]$Release
     )
@@ -2333,7 +2336,7 @@ function Format-ReleaseNotesDevPage {
         'header.masthead p { margin: var(--spacing-1) 0 0; color: var(--primary-muted); font-size: var(--text-sm); }'
         '.sheet { border: 1px solid var(--bg-3); border-radius: var(--radius-3); padding: var(--spacing-2) var(--spacing-6) var(--spacing-4); }'
         '.noscript { margin: 0; }'
-        '/* The release cards carry no icon, so they take a tighter padding than the house .card the hub''s icon cards keep (owner, October 25, 2026); the grid''s gap is their spacing. */'
+        '/* The release cards carry no icon, so they take a tighter padding than the house .card Admin''s icon cards keep (owner, October 25, 2026); the grid''s gap is their spacing. */'
         '.cards > .card { padding: var(--spacing-3) var(--spacing-4); margin-top: 0; }'
         '/* The version and its date stand --spacing-1 apart, a title over its sub line as in .card__sub, and the LIVE chip takes the size of the house .tag, which fits inside the line of the version, so it keeps the padding of its card and its card is no taller than the rest of its row, none of which is stretched to an empty bottom (Maikel, October 29, 2026). */'
         '.cards > .card { gap: var(--spacing-1); }'
@@ -2384,7 +2387,7 @@ function Format-ReleaseNotesDevPage {
         }, 1)
     }
     $out = $Html.Substring(0, $Html.LastIndexOf('</body>')) + (Format-AdminShellClose -NoColumn) + "`n" + (Format-FitAlarmHtml) + $Html.Substring($Html.LastIndexOf('</body>'))
-    $open = Format-AdminShellOpen -Title $title -Current '/dev/release-notes' -Trail $trail -HubHref $HubHref -NoColumn
+    $open = Format-AdminShellOpen -Title $title -Current '/dev/release-notes' -Trail $trail -AdminHref $AdminHref -NoColumn
     $out = $bodyRx.Replace($out, { param($m) $m.Value + "`n" + $open }, 1)
     $styleEnd = $out.IndexOf('</style>') + '</style>'.Length
     $out = $out.Substring(0, $styleEnd) + "`n" + $head + "`n<style>" + (Get-AdminShellStyle) + "`n.tb-scroll .wrap { max-width: none; }</style>" + $out.Substring($styleEnd)

@@ -140,9 +140,9 @@ Remove-Item -LiteralPath $scratch -ErrorAction SilentlyContinue
 
 Write-Host '-- the font weights: only the four tokens' -ForegroundColor Cyan
 # Maikel, November 1, 2026: a rule sets a weight through --font-weight-light/-regular/-bold/-black, never a number.
-# The stylesheet and the hub's own domain layers on top of it are held to that; the four definitions are the one exception.
-$weightFiles = @('plugins\dkj-policy\assets\dkj-brandbook\house-style.css', 'plugins\dkj-policy\hub\lib\general-pages-lib.ps1',
-    'plugins\dkj-policy\hub\lib\stopwatch-lib.ps1', 'scripts\lib\consumer-dashboard-lib.ps1')
+# The stylesheet and Admin's own domain layers on top of it are held to that; the four definitions are the one exception.
+$weightFiles = @('plugins\dkj-policy\assets\dkj-brandbook\house-style.css', 'plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1',
+    'plugins\dkj-policy\apps\admin\lib\stopwatch-lib.ps1', 'scripts\lib\consumer-dashboard-lib.ps1')
 foreach ($wf in $weightFiles) {
     $wText = [System.IO.File]::ReadAllText((Join-Path $RepoRoot $wf))
     $literal = @([regex]::Matches($wText, 'font-weight:(?>\s*)(?!var\(--font-weight-(light|regular|bold|black)\))[^;}''"]+') | ForEach-Object { $_.Value })

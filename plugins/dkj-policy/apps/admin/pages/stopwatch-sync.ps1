@@ -1,13 +1,13 @@
 <#
 .SYNOPSIS
     Share the Stopwatch's runs across machines (#3349): fetch every machine's runs from origin and publish this
-    machine's own, through refs/stopwatch/<machine id>. The rules are in hub/lib/stopwatch-sync-lib.ps1, beside
-    this plugin's hub/pages/. ONLY WHERE THE REPO OPTS IN with DKJ_STOPWATCH_SHARE=1 (Test-StopwatchShareEnabled,
+    machine's own, through refs/stopwatch/<machine id>. The rules are in apps/admin/lib/stopwatch-sync-lib.ps1, beside
+    this plugin's apps/admin/pages/. ONLY WHERE THE REPO OPTS IN with DKJ_STOPWATCH_SHARE=1 (Test-StopwatchShareEnabled,
     #3470): elsewhere it writes 'not shared' to its log and touches neither the network nor a ref.
 
 .DESCRIPTION
     Started in the background, never waited on: by the Stop hook (this plugin's hooks/stopwatch-hook.ps1) once a run
-    has ended, and by the hub (serve-general-pages.ps1, or the source repo's own) when a Stopwatch page is loaded and the last sync is
+    has ended, and by Admin (serve-general-pages.ps1, or the source repo's own) when a Stopwatch page is loaded and the last sync is
     more than a few minutes old. Either way the run is the same: fetch, then erase from this machine's store every
     finished run a hide entry of any machine names (#3453), then compute the phases of this machine's
     finished runs from its own transcripts (Get-StopwatchTranscriptCache, which also fills the local cache), then
@@ -19,7 +19,7 @@
     #3349). The operating system releases the lock when the process ends, however it ends. A push that is refused
     anyway is tried once more, from a fresh fetch.
 
-    It stamps stopwatch-sync.stamp beside the store when it starts, so a hub that loads a page every few seconds
+    It stamps stopwatch-sync.stamp beside the store when it starts, so an admin that loads a page every few seconds
     starts one sync, not one per load. It writes the outcome of its last run to stopwatch-sync.log beside the store
     (one line, overwritten), so a sync that keeps failing can be read without a console. It always exits 0.
 
@@ -64,7 +64,7 @@ try {
 
     $store = Read-StopwatchStore -Path $StorePath
     # The machine id names this machine, so it is one for every repo's store (#3470); a test's own store keeps its own.
-    $machine = Get-StopwatchMachineId -StoreDir $(if ($ownStore) { Get-HubTimingBaseDir } else { $dir })
+    $machine = Get-StopwatchMachineId -StoreDir $(if ($ownStore) { Get-AdminTimingBaseDir } else { $dir })
     $outcome = ''
     for ($try = 1; $try -le 2; $try++) {
         $fetched = Receive-StopwatchShared -RepoRoot $root -Remote $Remote

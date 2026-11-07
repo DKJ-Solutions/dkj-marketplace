@@ -1,16 +1,16 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/hub/lib/airsquats-lib.ps1 -- the hub banner's airsquats state, shared by every hub
+    Tests for plugins/dkj-policy/apps/admin/lib/airsquats-lib.ps1 -- the Admin banner's airsquats state, shared by every admin
     and every machine (#3438): the merge rule, the hours a poll counts, the API the banner asks, and one sync with
-    the gist through a fake gh. The machine's file is a scratch folder (DKJ_HUB_STATE_DIR), and no child is started
-    (DKJ_HUB_NO_SYNC).
+    the gist through a fake gh. The machine's file is a scratch folder (DKJ_ADMIN_STATE_DIR), and no child is started
+    (DKJ_ADMIN_NO_SYNC).
 
     Pure ASCII (repo convention for .ps1).
 #>
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-. (Join-Path $RepoRoot 'plugins\dkj-policy\hub\lib\airsquats-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\airsquats-lib.ps1')
 
 $script:pass = 0
 $script:fail = 0
@@ -29,9 +29,9 @@ function Assert-Equal {
 $H = [int64]3600000
 $base = [int64]490000 * $H   # a full hour, some time in 2025
 
-$scratch = Join-Path ([System.IO.Path]::GetTempPath()) ('hub-airsquats-' + [guid]::NewGuid().ToString('N'))
-$oldDir = $env:DKJ_HUB_STATE_DIR; $oldNoSync = $env:DKJ_HUB_NO_SYNC; $oldGist = $env:DKJ_HUB_AIRSQUATS_GIST
-$env:DKJ_HUB_STATE_DIR = $scratch; $env:DKJ_HUB_NO_SYNC = '1'; $env:DKJ_HUB_AIRSQUATS_GIST = ''
+$scratch = Join-Path ([System.IO.Path]::GetTempPath()) ('admin-airsquats-' + [guid]::NewGuid().ToString('N'))
+$oldDir = $env:DKJ_ADMIN_STATE_DIR; $oldNoSync = $env:DKJ_ADMIN_NO_SYNC; $oldGist = $env:DKJ_ADMIN_AIRSQUATS_GIST; $oldHubGist = $env:DKJ_HUB_AIRSQUATS_GIST
+$env:DKJ_ADMIN_STATE_DIR = $scratch; $env:DKJ_ADMIN_NO_SYNC = '1'; $env:DKJ_ADMIN_AIRSQUATS_GIST = ''; $env:DKJ_HUB_AIRSQUATS_GIST = ''
 try {
     Write-Host '-- the merge rule' -ForegroundColor Cyan
     $a = @{ hours = @(490001, 490002); clearedAt = [int64]0 }
@@ -56,13 +56,13 @@ try {
     $s = Add-AirsquatsSeen -State @{ lastSeen = $base + $H - 15000 } -Now ($base + $H + 1000)
     Assert-Equal '490001' ($s.hours -join ',') 'a poll just past the hour, with one just before it, counts that hour'
     $s = Add-AirsquatsSeen -State @{ lastSeen = $base + 10 } -Now ($base + 5 * $H)
-    Assert-Equal 0 (Get-AirsquatsOwedHours $s) 'a hub closed for hours adds nothing on its return (#3250)'
+    Assert-Equal 0 (Get-AirsquatsOwedHours $s) 'an admin closed for hours adds nothing on its return (#3250)'
     Assert-Equal ($base + 5 * $H) $s.lastSeen 'and lastSeen moves on either way'
 
     Write-Host '-- the API the banner asks' -ForegroundColor Cyan
     $r = Invoke-AirsquatsApi -Method GET -Path '/api/airsquats' -Now ($base + $H - 10000)
     Assert-True ($r.Status -eq 200 -and $r.Body -match '"owed":0' -and $r.Body -match '"per":10' -and $r.Body -match '"announce":false') 'a GET answers JSON: nothing owed, 10 per hour, no tone'
-# THE ACCOUNT (#3476): ports are machine-wide, so the hub names the Windows account it runs under.
+# THE ACCOUNT (#3476): ports are machine-wide, so Admin names the Windows account it runs under.
 Assert-True ($r.Body -match ('"account":"' + [regex]::Escape(($env:USERNAME -replace '[^A-Za-z0-9._ -]', '')) + '"')) 'and names the Windows account the server runs under'
 $r = Invoke-AirsquatsApi -Method GET -Path '/api/airsquats' -Now ($base + $H - 10000) -Account ('dave"},<x>\' + ('a' * 80))
 Assert-True ($r.Body -match '"account":"davexa{59}"' -and ($r.Body | ConvertFrom-Json).account.Length -eq 64) 'an account name is held to plain characters and 64 of them, so it cannot break the JSON or the page'
@@ -70,7 +70,7 @@ Assert-True ($r.Body -match '"account":"davexa{59}"' -and ($r.Body | ConvertFrom
     $r = Invoke-AirsquatsApi -Method GET -Path '/api/airsquats' -Now ($base + $H + 5000)
     Assert-True ($r.Body -match '"owed":1' -and $r.Body -match '"announce":true') 'the poll past the hour owes one and plays the tone'
     $r = Invoke-AirsquatsApi -Method GET -Path '/api/airsquats' -Now ($base + $H + 20000)
-    Assert-True ($r.Body -match '"owed":1' -and $r.Body -match '"announce":false') 'the next poll -- another tab, another repo hub -- plays it no more: once per machine'
+    Assert-True ($r.Body -match '"owed":1' -and $r.Body -match '"announce":false') 'the next poll -- another tab, another repo admin -- plays it no more: once per machine'
     $r = Invoke-AirsquatsApi -Method POST -Path '/api/airsquats/clear' -SecFetchSite 'same-site' -Now ($base + $H + 30000)
     Assert-Equal 403 $r.Status 'a POST from another port of this machine may not clear the box'
     $r = Invoke-AirsquatsApi -Method POST -Path '/api/airsquats/clear' -SecFetchSite 'cross-site' -Now ($base + $H + 30000)
@@ -112,19 +112,19 @@ Assert-True ($r.Body -match '"account":"davexa{59}"' -and ($r.Body | ConvertFrom
     Write-Host '-- the gist is an opt-in (#3439)' -ForegroundColor Cyan
     $before = [System.IO.File]::ReadAllText((Join-Path $scratch 'airsquats.json'))
     $r = Sync-AirsquatsGist -Gh $fake
-    Assert-True (-not $r.Ok -and -not $r.Error -and $script:calls.Count -eq 0) 'with DKJ_HUB_AIRSQUATS_GIST unset, a sync calls no gh at all'
+    Assert-True (-not $r.Ok -and -not $r.Error -and $script:calls.Count -eq 0) 'with DKJ_ADMIN_AIRSQUATS_GIST unset, a sync calls no gh at all'
     Assert-Equal $before ([System.IO.File]::ReadAllText((Join-Path $scratch 'airsquats.json'))) 'and writes nothing to the machine''s file, not even the attempt'
     # A harmless script in the child's place: were the opt-in not checked, a hidden child would run it and report $true.
     $oldScript = $script:AirsquatsSyncScript; $script:AirsquatsSyncScript = Join-Path $scratch 'noop-sync.ps1'
     [System.IO.File]::WriteAllText($script:AirsquatsSyncScript, 'exit 0')
-    $env:DKJ_HUB_NO_SYNC = ''
+    $env:DKJ_ADMIN_NO_SYNC = ''
     try { Assert-True (-not (Start-AirsquatsSync -Due $true -Changed $true)) 'and the server starts no sync child' }
-    finally { $env:DKJ_HUB_NO_SYNC = '1'; $script:AirsquatsSyncScript = $oldScript }
-    $env:DKJ_HUB_AIRSQUATS_GIST = 'yes'
+    finally { $env:DKJ_ADMIN_NO_SYNC = '1'; $script:AirsquatsSyncScript = $oldScript }
+    $env:DKJ_ADMIN_AIRSQUATS_GIST = 'yes'
     $r = Sync-AirsquatsGist -Gh $fake
     Assert-True (-not $r.Ok -and $r.Error -match 'neither' -and $script:calls.Count -eq 0) 'a value that is neither auto nor an id calls no gh either'
     Assert-True ((Use-AirsquatsFile -Change { param($s) $s }).syncError -match 'neither') 'and says so as the sync''s error'
-    $env:DKJ_HUB_AIRSQUATS_GIST = 'auto'
+    $env:DKJ_ADMIN_AIRSQUATS_GIST = 'auto'
 
     $r = Sync-AirsquatsGist -Gh $fake
     Assert-True ($r.Ok -and $r.Pushed -and $r.Gist -eq 'abcdef0123456789') 'with auto and no gist anywhere, the first sync creates it'
@@ -149,28 +149,35 @@ Assert-True ($r.Body -match '"account":"davexa{59}"' -and ($r.Body | ConvertFrom
     Assert-True ($r.Pushed -and ($script:gists['abcdef0123456789'] | ConvertFrom-Json).clearedAt -eq (490004 * $H)) 'a tick-off here is written to the gist, for every other machine'
 
     # A second machine, its own folder, the same account: it finds the gist by its description.
-    $env:DKJ_HUB_STATE_DIR = Join-Path $scratch 'second'
+    $env:DKJ_ADMIN_STATE_DIR = Join-Path $scratch 'second'
     $r = Sync-AirsquatsGist -Gh $fake
     Assert-True ($r.Ok -and $r.Gist -eq 'abcdef0123456789' -and (Use-AirsquatsFile -Change { param($s) $s }).clearedAt -eq (490004 * $H)) 'a second machine on auto finds the same gist by its description, and reads it cleared'
-    $env:DKJ_HUB_STATE_DIR = $scratch
+    $env:DKJ_ADMIN_STATE_DIR = $scratch
 
     $r = Sync-AirsquatsGist -Gh { param($a) @{ ExitCode = 1; Out = '' } }
     $local = Use-AirsquatsFile -Change { param($s) $s }
     Assert-True (-not $r.Ok -and $local.syncError -and $local.gist -eq 'abcdef0123456789') 'a gh that fails is written into the state as the sync''s error, and the remembered gist is kept'
-    $env:DKJ_HUB_AIRSQUATS_GIST = '../../etc'
+    $env:DKJ_ADMIN_AIRSQUATS_GIST = '../../etc'
     $script:calls.Clear()
     [void](Sync-AirsquatsGist -Gh $fake)
     Assert-True (-not ($script:calls -match '\.\.')) 'a pinned gist id that is not an id is never put in a gh call'
-    $env:DKJ_HUB_AIRSQUATS_GIST = "abcdef0123456789`n"
+    $env:DKJ_ADMIN_AIRSQUATS_GIST = "abcdef0123456789`n"
     $script:calls.Clear()
     [void](Sync-AirsquatsGist -Gh $fake)
     Assert-True (-not ($script:calls -match "`n")) 'nor one carrying a trailing newline'
     # A pinned id is that gist and no other: unreadable, it is an error, never a search or a new gist.
-    $env:DKJ_HUB_AIRSQUATS_GIST = '0123456789abcdef'
+    $env:DKJ_ADMIN_AIRSQUATS_GIST = '0123456789abcdef'
     $script:calls.Clear()
     $r = Sync-AirsquatsGist -Gh $fake
     Assert-True (-not $r.Ok -and -not ($script:calls -match 'per_page|POST')) 'a pinned gist that cannot be read is an error, never a search or a new gist'
-    $env:DKJ_HUB_AIRSQUATS_GIST = ''
+    $env:DKJ_ADMIN_AIRSQUATS_GIST = ''
+
+    Write-Host '-- the name before #3873' -ForegroundColor Cyan
+    $env:DKJ_HUB_AIRSQUATS_GIST = 'auto'
+    Assert-Equal 'auto' (Get-AirsquatsGistSetting).Mode 'DKJ_HUB_AIRSQUATS_GIST is still read for one release where the new name is unset'
+    $env:DKJ_ADMIN_AIRSQUATS_GIST = '0123456789abcdef'
+    Assert-Equal 'pinned' (Get-AirsquatsGistSetting).Mode 'and the new name wins where both are set'
+    $env:DKJ_ADMIN_AIRSQUATS_GIST = ''; $env:DKJ_HUB_AIRSQUATS_GIST = ''
 
     Write-Host '-- a gist is bounded input' -ForegroundColor Cyan
     $now = Get-AirsquatsNow
@@ -179,11 +186,11 @@ Assert-True ($r.Body -match '"account":"davexa{59}"' -and ($r.Body | ConvertFrom
     $huge = ConvertTo-AirsquatsState @{ hours = @(1..5000 | ForEach-Object { 490000 + $_ }) }
     Assert-True ($huge.hours.Count -eq 1000 -and $huge.hours[-1] -eq 491000) 'and at most the first 1000 hours of a list are read'
 } finally {
-    $env:DKJ_HUB_STATE_DIR = $oldDir; $env:DKJ_HUB_NO_SYNC = $oldNoSync; $env:DKJ_HUB_AIRSQUATS_GIST = $oldGist
+    $env:DKJ_ADMIN_STATE_DIR = $oldDir; $env:DKJ_ADMIN_NO_SYNC = $oldNoSync; $env:DKJ_ADMIN_AIRSQUATS_GIST = $oldGist; $env:DKJ_HUB_AIRSQUATS_GIST = $oldHubGist
     Remove-Item -LiteralPath $scratch -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 Write-Host ''
-Write-Host "hub-airsquats: $script:pass passed, $script:fail failed"
+Write-Host "admin-airsquats: $script:pass passed, $script:fail failed"
 if ($script:fail -gt 0) { exit 1 }
 exit 0

@@ -191,18 +191,18 @@ try {
     $fixSib = New-Fixture -Label 't5'
     $bareSib = New-BareOrigin -Dir $fixSib -Label 't5'
     Publish-FixtureTrunk -Dir $fixSib
-    Add-OriginBranch -Bare $bareSib -Label 't5' -Branch 'fix/3596-airsquats-hub-offline' -MarkerFile 'first.txt'
+    Add-OriginBranch -Bare $bareSib -Label 't5' -Branch 'fix/3596-airsquats-admin-offline' -MarkerFile 'first.txt'
 
-    $rSib = Invoke-NewBranch -Dir $fixSib -Name 'fix/3596-banner-hub-offline' -Title 'Second fix'
+    $rSib = Invoke-NewBranch -Dir $fixSib -Name 'fix/3596-banner-admin-offline' -Title 'Second fix'
     Assert-ExitCode 1 $rSib 'sibling on origin: new-branch exit 1'
     Assert-True (Test-Phrase -Text $rSib.Out -Phrase 'issue #3596 already has a branch on origin') 'sibling on origin: says why'
-    Assert-True (Test-Phrase -Text $rSib.Out -Phrase 'fix/3596-airsquats-hub-offline') 'sibling on origin: and names the branch'
-    Assert-True (-not (Test-BranchOnRemote -Bare $bareSib -Ref 'refs/heads/fix/3596-banner-hub-offline')) 'sibling on origin: nothing was pushed'
+    Assert-True (Test-Phrase -Text $rSib.Out -Phrase 'fix/3596-airsquats-admin-offline') 'sibling on origin: and names the branch'
+    Assert-True (-not (Test-BranchOnRemote -Bare $bareSib -Ref 'refs/heads/fix/3596-banner-admin-offline')) 'sibling on origin: nothing was pushed'
 
     $rOther = Invoke-NewBranch -Dir $fixSib -Name 'fix/35960-another-issue' -Title 'Another issue'
     Assert-ExitCode 0 $rOther 'a number that merely starts the same: not a sibling, exit 0'
 
-    $rResume = Invoke-NewBranch -Dir $fixSib -Name 'fix/3596-airsquats-hub-offline' -Title 'Resume'
+    $rResume = Invoke-NewBranch -Dir $fixSib -Name 'fix/3596-airsquats-admin-offline' -Title 'Resume'
     Assert-ExitCode 0 $rResume 'the sibling itself: a resume, exit 0'
 
     # --- (u) NO REMOTE-TRACKING TRUNK: not asked, not claimed (#1046) -------------------------------

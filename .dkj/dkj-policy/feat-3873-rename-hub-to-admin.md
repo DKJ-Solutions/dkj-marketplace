@@ -39,23 +39,58 @@
 
 ### PLAN
 
-Rename hub to admin everywhere: the folder to plugins/dkj-policy/apps/admin/, the routes, the state dir, identifiers, the hook; redirects for old routes and a state-dir migration for one release.
+Rename the hub mechanism to admin everywhere, so the code matches the name on screen (#3873; Dave unparked it
+on November 7, 2026). The folder goes to `plugins/dkj-policy/apps/admin/` (placement decided on the issue).
+
+#### Decisions
+
+- **Two names keep *hub* on purpose**, because something outside this tree holds them: the gist description
+  `dkj-hub-airsquats` (every machine searches its own account for it, so renaming it would split the shared
+  state) and the timing store's mutex `dkj-hub-timing-` (two plugin versions on one machine must share it).
+- **`hub` in `repo-session` is a different word**: there it means this repo as the centre of every DKJ repo,
+  not the Admin mechanism, so that skill and its script are left alone.
+- **`OwnHub` stays**: it names a retired key (#3643) as history.
+- **Compatibility for one release**: `/hub` answers with a 301 (to `/` on the general server, to `/admin` on
+  the consumer dashboard); `%LOCALAPPDATA%\dkj-hub\` is copied to `dkj-admin\` once by the session-start hook
+  (a copy, so a checkout still on the old plugin keeps its folder); `DKJ_HUB_AIRSQUATS_GIST` is still read where
+  `DKJ_ADMIN_AIRSQUATS_GIST` is unset; the stale-server check knows both the old and the new path of
+  `serve-general-pages.ps1`, so an old version's server is still recognised and replaced after the update.
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Move `plugins/dkj-policy/hub/` to `plugins/dkj-policy/apps/admin/` and deepen its relative paths
+- [x] Rename identifiers, file names (`repo-admin-page.ps1`, `admin-processes-sessioncheck.ps1`,
+  `check-admin-processes.ps1`, `admin-airsquats.tests.ps1`), env vars, the state file and the prose
+- [x] `/hub` redirects, the state-folder copy, the env-var fallback, the stale-server regex for both layouts
+- [x] Repair the history sentences and anchors the mechanical pass got wrong
 
 ### TEST
 
+- [x] New assertions: `/hub` redirects (dev-pages), the state-folder copy (dev-preview-sessionstart), the old
+  env-var name (admin-airsquats)
+- [x] The touched suites pass locally: dev-preview-sessionstart, dev-pages, tidy-lib, check-house-style,
+  admin-airsquats
+
 ### DEPLOY: feat/3873-rename-hub-to-admin
 
-**Score:**
+The code now says *admin* where the screen already did (#3873). Admin's folder moved from
+`plugins/dkj-policy/hub/` to [`plugins/dkj-policy/apps/admin/`](../../plugins/dkj-policy/apps/admin/README.md),
+the first app under `apps/`; the identifiers (`Format-AdminCardLinkHtml`, `Get-AdminMenu`, ...), the
+`admin-processes-sessioncheck` hook, `check-admin-processes.ps1`, the per-checkout state file
+(`%TEMP%\dkj-repo-admin-*.json`) and the route `/admin` follow. Two names keep *hub* on purpose: the gist
+description `dkj-hub-airsquats` and the timing store's mutex, both shared with things outside this tree.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Nothing to do but update the plugin, in every checkout: the first session start copies the machine's state
+folder `%LOCALAPPDATA%\dkj-hub\` (the day plan, the airsquats banner) to `%LOCALAPPDATA%\dkj-admin\`, and a
+bookmark to `/hub` is redirected. Where you set `DKJ_HUB_AIRSQUATS_GIST` in your settings, rename it to
+`DKJ_ADMIN_AIRSQUATS_GIST`: the old name is still read for this release only.
+
+**Score:** 3
 
 #### Pull Request
 
 Rename the hub mechanism to admin
-

@@ -56,9 +56,9 @@ afterwards ([#2913](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2
 index of cards and, in the `release-notes/` folder beside it, one page per release, and every card
 links to its release's own page. So `-Kind notes` uploads the whole set: each release page under
 `notes:<token>/v<x.y.z>` and the index **last** under `notes:<token>`, each read back and compared.
-The builder's links carry the hub's address (`/release-notes/v<x.y.z>`), and the publish moves them
+The builder's links carry Admin's address (`/release-notes/v<x.y.z>`), and the publish moves them
 onto the worker's route (`/notes/<token>/v<x.y.z>`) in its own copy. The page is not rebuilt for the
-worker, because the hub serves the same folder. **Before anything is uploaded, every site-absolute link
+worker, because Admin serves the same folder. **Before anything is uploaded, every site-absolute link
 in the set has to be one the worker will serve**, and a link that is not stops the run. That is the
 measured failure: an index whose every card led to a 404. Two costs to know about. Through a wrangler
 login every page is two `npx` calls, so a long history takes minutes where the API token takes seconds.

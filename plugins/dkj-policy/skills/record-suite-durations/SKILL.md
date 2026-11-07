@@ -2,16 +2,16 @@
 name: record-suite-durations
 description: >-
   Write this repo's scripts/tests/suite-durations.json -- the per-suite CI durations the test gate packs
-  its shards from and the hub's Test gate page shows -- from the table the plugin's gate printed in real
-  CI runs. Use it when the hub's Test gate page shows its empty state, after a suite has been added or
+  its shards from and Admin's Test gate page shows -- from the table the plugin's gate printed in real
+  CI runs. Use it when Admin's Test gate page shows its empty state, after a suite has been added or
   has grown, or when a shard has become the slow one. Needs gh and a CI that runs the suites through the
   plugin's gate; -DryRun writes nothing.
 ---
 
-# record-suite-durations -- the gate's CI cost, written down where the gate and the hub read it
+# record-suite-durations -- the gate's CI cost, written down where the gate and Admin read it
 
 **It ships because every consumer's Test gate page was empty**
-([#3474](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3474)). The hub's Test gate page
+([#3474](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3474)). Admin's Test gate page
 reads `scripts/tests/suite-durations.json`, and until this skill only the source repo could write that
 file.
 
@@ -19,7 +19,7 @@ file.
 
 Three things, and nothing about job names or shards:
 
-1. **The suites are `scripts/tests/*.tests.ps1`.** That is the directory the gate runs and the hub page
+1. **The suites are `scripts/tests/*.tests.ps1`.** That is the directory the gate runs and the Admin page
    reads; there is no setting for another one.
 2. **A CI workflow runs them through the plugin's gate** -- `open-pr.ps1 -GatesOnly`, or
    `Invoke-TestSuiteGate` directly. That gate prints a per-suite table in the run's log, one line per
@@ -56,7 +56,7 @@ next positional parameter, `-RepoRoot`, and the script stops on it with the comm
 | parameter | what it does |
 |---|---|
 | `-RunId` | the CI run ids to read, comma-separated |
-| `-Machine` | what the runs were measured on, shown on the hub page. Omitted, the value already in the file is kept; a first write without it records `not stated` |
+| `-Machine` | what the runs were measured on, shown on the Admin page. Omitted, the value already in the file is kept; a first write without it records `not stated` |
 | `-RepoRoot` | the repo to write into. Defaults to the session's project, otherwise the git root |
 | `-DryRun` | print the twelve slowest suites and the pool total, and write nothing |
 

@@ -4,7 +4,7 @@
     entry point is this plugin's plan-goal skill (skills/plan-goal/SKILL.md).
 
 .DESCRIPTION
-    A goal is an open issue labelled `goal`; its milestones are its sub-issues, and their tasks are theirs. The hub's
+    A goal is an open issue labelled `goal`; its milestones are its sub-issues, and their tasks are theirs. Admin's
     /dev/goals page reads the same issues, so whatever this files is on that page at its next read.
 
       -Next [-Goal <n>]        print Now and Next for every open goal, or for goal #n only. Writes nothing.
@@ -31,7 +31,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\goals-lib.ps1')
-. (Join-Path $PSScriptRoot '..\..\scripts\lib\ref-print-lib.ps1')
+. (Join-Path $PSScriptRoot '..\..\..\scripts\lib\ref-print-lib.ps1')
 
 function Stop-PlanGoal {
     param([string]$Message)

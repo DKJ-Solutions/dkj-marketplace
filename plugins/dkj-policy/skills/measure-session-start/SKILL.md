@@ -122,10 +122,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
   -Snapshot scripts/dashboard/session-start-snapshot.json
 ```
 
-**The result is seen on Admin's SessionStart page** (the hub's `/dev/sessionstart`), which reads
+**The result is seen on Admin's SessionStart page** (Admin's `/dev/sessionstart`), which reads
 `scripts/dashboard/session-start-snapshot.json`: nothing is published anywhere (#3772). `-Snapshot` writes the
 data the page embeds, deltas included, plus a `source` block (title and date). Nothing else rewrites that file,
-so a render without it leaves Admin page showing the measurement before this one
+so a render without it leaves the Admin page showing the measurement before this one
 ([#3126](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3126)). **The snapshot is the history**:
 `-Previous` takes that same file (a rendered page works too), so the next run computes its deltas against it,
 and leave `-Previous` off on a first run. It is read only when its data names this repo; otherwise the render

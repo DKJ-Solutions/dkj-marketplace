@@ -1,28 +1,28 @@
 <#
 .SYNOPSIS
-    SessionStart hook: start (or reuse) the plugin's hub and, where the repo states one, its own local
+    SessionStart hook: start (or reuse) the plugin's admin and, where the repo states one, its own local
     dev server (the product), and hand the session both localhost links in one line.
 
 .DESCRIPTION
     INBOUND #2967, reshaped by #3245 (the owner's decision of October 21, 2026). Replaces the three per-repo
     copies (dkj-brandbook, dkj-etf-tracker, life-hub); the seam and the ownership rule are in
-    hub/lib/dev-preview-rules.ps1, which says what a repo states and why a listener counts as ours.
+    apps/admin/lib/dev-preview-rules.ps1, which says what a repo states and why a listener counts as ours.
 
     THE PLUGIN SERVES THE REPOSITORY IN EVERY REPO, whether or not the repo states Get-DevPreview: the general
-    pages server (hub/pages/serve-general-pages.ps1: the hub on '/', and Issues, Release notes,
-    SessionStart) is the hub, on the first free port of 4890-4899,
+    pages server (apps/admin/pages/serve-general-pages.ps1: Admin on '/', and Issues, Release notes,
+    SessionStart) is Admin, on the first free port of 4890-4899,
     under the ownership rule, with its log in %TEMP%\dev-preview-general-<repo>-<hash>.log. A server the repo
-    states in Get-DevPreview is its PRODUCT, one link on that hub. There is no opt-out (#3643, the owner's
-    decision of October 29, 2026): every repo gets this hub, in the house style. The OwnHub key that let a
-    repo serve its own hub from #3245 to #3643, and the Product it allowed beside it (#3283), are ignored
+    states in Get-DevPreview is its PRODUCT, one link on that admin. There is no opt-out (#3643, the owner's
+    decision of October 29, 2026): every repo gets this admin, in the house style. The OwnHub key that let a
+    repo serve its own admin from #3245 to #3643, and the Product it allowed beside it (#3283), are ignored
     where a repo still states them, and named as config drift in a DKJ-Solutions repo.
 
     WHAT IT DOES, in order: reads Get-DevPreview (in a child scope with StrictMode off, the way the
     bwj-development hooks read their seams). It then takes one snapshot of the listening sockets and the
     process table, and STARTS OR REUSES THE GENERAL PAGES SERVER FIRST, before anything that can end the
     hook early: a product whose ports are all taken, a Requires path that is missing, a '%' or '^' in the
-    repo root, a config that does not parse or cannot be read. The hub does not depend on any of them (#3244's
-    second half, settled by #3245). The one thing that can keep the hub from starting is the hub's own
+    repo root, a config that does not parse or cannot be read. Admin does not depend on any of them (#3244's
+    second half, settled by #3245). The one thing that can keep Admin from starting is Admin's own
     problem: its ports 4890-4899 all taken, a '%' or '^' in the plugin or repo path, a plugin install that
     lacks the state library. The line then names that instead of a link.
     Then, where the repo states a server, it REUSES the first port whose listener is
@@ -30,30 +30,30 @@
     outlives the hook, under a cmd.exe that changes into the repo root first (that command line is what
     makes a server recognisable as ours next time). It waits until each server it started actually listens
     before it hands out its link -- a dead link is worse than none -- and both waits run in ONE loop, so the
-    common case costs the longer of the two, never their sum. The hub has its own short deadline (12 s); the
+    common case costs the longer of the two, never their sum. Admin has its own short deadline (12 s); the
     product has the repo's WaitSeconds.
 
-    THE STATE FILE (%TEMP%\dkj-repo-hub-<repo>-<hash>.json: root, hub, pages, product, mode) is written
+    THE STATE FILE (%TEMP%\dkj-repo-admin-<repo>-<hash>.json: root, admin, pages, product, mode) is written
     every session, from whatever the hook found, because it is the one contract by which the servers and
-    hubs find each other. It is written before the wait and again after it where a wait failed, so it never
-    names a server that did not come up. mode is what the repo states: 'none' (no Get-DevPreview, so the hub
+    Admin servers find each other. It is written before the wait and again after it where a wait failed, so it never
+    names a server that did not come up. mode is what the repo states: 'none' (no Get-DevPreview, so Admin
     shows the setup cards) or 'product'.
 
     SILENCE: a Get-DevPreview that answers nothing used to print nothing. Since #3245 it is a repo that
-    states no server, so it gets the hub's line like one with no seam at all. Nothing is silent but a
+    states no server, so it gets Admin's line like one with no seam at all. Nothing is silent but a
     non-Windows host and a missing rules library.
 
-    IN DKJ-POLICY SINCE #3198 (the owner's decision of October 20, 2026): the hub and its General pages
+    IN DKJ-POLICY SINCE #3198 (the owner's decision of October 20, 2026): Admin and its General pages
     are what every repo has, so the hook ships with the plugin every repo runs, BWJ-Development's included.
 
     THE OUTPUT is SessionStart JSON with BOTH systemMessage (shown to the owner, so the links are clickable
     in the terminal) and additionalContext (the session knows the URLs too), ONE line, in one of these forms:
-      no product      Admin: <hub> (started|already running) -- this repo states no Get-DevPreview yet[; route ...]
-      with a product  Admin: <hub> -- product: <url> (started|already running[, LISTENING ON ALL INTERFACES ...])
-      product failed  Admin: <hub> -- product not started: <why>
+      no product      Admin: <admin> (started|already running) -- this repo states no Get-DevPreview yet[; route ...]
+      with a product  Admin: <admin> -- product: <url> (started|already running[, LISTENING ON ALL INTERFACES ...])
+      product failed  Admin: <admin> -- product not started: <why>
 
-    WHAT KEEPS A DKJ-SOLUTIONS REPO FROM FOLLOWING A HUB CHANGE (#3463) is appended to the product form, from
-    Get-DevPreviewDriftClauses: '-- config drift: ...' for OpenInVsCode with no hub port routed, or a Name, an
+    WHAT KEEPS A DKJ-SOLUTIONS REPO FROM FOLLOWING A ADMIN CHANGE (#3463) is appended to the product form, from
+    Get-DevPreviewDriftClauses: '-- config drift: ...' for OpenInVsCode with no admin port routed, or a Name, an
     OwnHub or a Product still stated.
 
     BIND TO 127.0.0.1 IN THE COMMAND. The hook cannot know what a server exposes, so where the repo serves
@@ -62,11 +62,11 @@
     (one started by hand in the checkout counts as ours too), so where the Command names loopback and the
     reused listener is bound to every interface, the line says so (#3041).
 
-    OpenInVsCode hands the HUB's URL to VS Code through `code --open-url`, only when the session runs in VS Code's terminal (TERM_PROGRAM=vscode) --
+    OpenInVsCode hands the ADMIN's URL to VS Code through `code --open-url`, only when the session runs in VS Code's terminal (TERM_PROGRAM=vscode) --
     etf-tracker's route, where .vscode/settings.json routes the URL to the Simple Browser through
     workbench.externalUriOpeners. Off by default: without that setting VS Code passes the URL to the system
     browser. A repo that states no Get-DevPreview has no way to set it, so it is on where the repo routes the
-    hub's port, and otherwise off, with the line naming the route to add.
+    admin's port, and otherwise off, with the line naming the route to add.
 
     NEVER FAILS THE SESSION: every path exits 0, with at most one line. Windows only, like the three
     copies it replaces (the socket and process reads are Windows cmdlets); elsewhere it prints nothing.
@@ -75,7 +75,7 @@
     THE PRODUCT WAITS FOR THE TRUNK SYNC, AND OUTLIVES NO HEAD MOVE (#3657). sessioncheck-dispatch.ps1
     fast-forwards the trunk in a SEPARATE SessionStart entry that runs beside this one, and a server loads its
     code once at start: measured October 29, 2026, the product started at 19:30:23, the trunk moved at
-    19:30:24, and the product served the old code. So the hub starts first, then the product waits (up to
+    19:30:24, and the product served the old code. So Admin starts first, then the product waits (up to
     20 s) for the dispatcher's prep-done mark in the session cache. And a product this hook started that is
     older than HEAD's last move -- a sync, a checkout, a /clear after either -- is stopped and started again
     on its port, which the line names; a server somebody started by hand is reused as before.
@@ -117,16 +117,18 @@ trap {
 
 if ([System.Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) { exit 0 }
 
-$libPath = Join-Path $PSScriptRoot '..\hub\lib\dev-preview-rules.ps1'
+$libPath = Join-Path $PSScriptRoot '..\apps\admin\lib\dev-preview-rules.ps1'
 if (-not (Test-Path -LiteralPath $libPath -PathType Leaf)) {
     [Console]::Error.WriteLine('dev-preview: dev-preview-rules.ps1 not found beside this hook -- reinstall or update the dkj-policy plugin.')
     exit 0
 }
 . $libPath
 # The I/O half of the state-file contract (it dot-sources the rules lib again, which is harmless). A plugin
-# install that lacks it still gets the repo's own server: the hub step checks before it calls.
-$stateLibPath = Join-Path $PSScriptRoot '..\hub\lib\general-pages-state.ps1'
+# install that lacks it still gets the repo's own server: Admin step checks before it calls.
+$stateLibPath = Join-Path $PSScriptRoot '..\apps\admin\lib\general-pages-state.ps1'
 if (Test-Path -LiteralPath $stateLibPath -PathType Leaf) { . $stateLibPath }
+# The machine's state folder was dkj-hub before #3873; carry it over once (a copy, so an older checkout keeps its own).
+if (-not $RepoRootOverride -and (Get-Command Copy-AdminLegacyStateDir -ErrorAction SilentlyContinue)) { [void](Copy-AdminLegacyStateDir) }
 # The session cache, for the prep steps' done mark (#3657). A plugin install that lacks it starts the product
 # without waiting, as before.
 $cacheLibPath = Join-Path $PSScriptRoot '..\scripts\lib\session-cache-lib.ps1'
@@ -161,7 +163,7 @@ if (Test-Path -LiteralPath $configPath -PathType Leaf) {
 }
 if ($raw -is [array]) { $raw = @($raw | Where-Object { $_ -is [System.Collections.IDictionary] })[-1] }
 
-# What the repo states, and so what the hub shows (#3245): 'none' (no Get-DevPreview, or one that answers
+# What the repo states, and so what Admin shows (#3245): 'none' (no Get-DevPreview, or one that answers
 # nothing, or a config that could not be read) or 'product' (a server of its own).
 # A seam that states something the hook cannot run is 'product' with no server, and its Problem is the line's reason.
 $cfg = $null
@@ -232,7 +234,7 @@ function Wait-DevPreviewSessionPrep([string]$SessionId, [int]$Seconds) {
 function Start-DevPreviewWatch($Proc) {
     try {
         if (-not $Proc -or $Proc.HasExited -or -not (Test-DevPreviewSessionWatchable -SessionId $Proc.SessionId)) { return }
-        $watcher = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\hub\pages\dev-preview-watch.ps1'))
+        $watcher = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\apps\admin\pages\dev-preview-watch.ps1'))
         if (-not (Test-Path -LiteralPath $watcher -PathType Leaf)) { return }
         # A TEST TIES THE SERVER TO ITSELF (#3620) through DKJ_DEV_PREVIEW_OWNER_PID; a real session leaves it unset.
         $owner = Get-DevPreviewOwner
@@ -262,17 +264,17 @@ function Select-DevPreviewAfterStop([int]$Port, [int[]]$Ports) {
     return Select-DevPreviewRestartPort -Port $Port -Ports $Ports -Listeners $now -Processes $table -Root $root
 }
 
-# The hub: the plugin's general pages server (#3119, #3245), started or reused FIRST. Returns @{ Action =
+# Admin: the plugin's general pages server (#3119, #3245), started or reused FIRST. Returns @{ Action =
 # 'reuse'|'start'|'refused'|'none'; Port; Base; Proc; Reason; Restarted }: Base is its url without a slash, Reason
-# says why there is no hub, Restarted that the start replaced this checkout's hub from another plugin version. Never waits and never throws: the caller waits, and whatever goes wrong here is a line.
-function Start-DevPreviewHub($Listeners, $Processes) {
+# says why there is no admin, Restarted that the start replaced this checkout's admin from another plugin version. Never waits and never throws: the caller waits, and whatever goes wrong here is a line.
+function Start-DevPreviewAdmin($Listeners, $Processes) {
     $r = @{ Action = 'refused'; Port = 0; Base = ''; Proc = $null; Reason = ''; Restarted = $false }
     try {
         $ports = @(Get-GeneralPagesPortRange)
         $pluginRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-        $server = Join-Path $pluginRoot 'hub\pages\serve-general-pages.ps1'
-        if (-not (Get-Command Write-RepoHubState -ErrorAction SilentlyContinue) -or -not (Test-Path -LiteralPath $server -PathType Leaf)) {
-            $r.Reason = 'the plugin lacks the hub server or its libraries -- reinstall or update the dkj-policy plugin'
+        $server = Join-Path $pluginRoot 'apps\admin\pages\serve-general-pages.ps1'
+        if (-not (Get-Command Write-RepoAdminState -ErrorAction SilentlyContinue) -or -not (Test-Path -LiteralPath $server -PathType Leaf)) {
+            $r.Reason = 'the plugin lacks the Admin server or its libraries -- reinstall or update the dkj-policy plugin'
             return $r
         }
         # A '%' or '^' in either path is rewritten by cmd.exe even inside quotes: refused, as for the repo's server.
@@ -291,13 +293,13 @@ function Start-DevPreviewHub($Listeners, $Processes) {
         # that server is stopped and this version's started on the same port, or on the next free one where the
         # stopped server has not let go of it yet -- never reused once stopped (#3695).
         if ($pick.Action -eq 'reuse') {
-            $stale = @(Get-DevPreviewStaleHubOwners -Port $pick.Port -Listeners $Listeners -Processes $Processes -Server $server)
+            $stale = @(Get-DevPreviewStaleAdminOwners -Port $pick.Port -Listeners $Listeners -Processes $Processes -Server $server)
             if ($stale.Count) {
                 foreach ($id in $stale) { Stop-Process -Id $id -Force -ErrorAction SilentlyContinue }
                 $pick = Select-DevPreviewAfterStop -Port $pick.Port -Ports $ports
                 if ($pick.Action -eq 'none') {
                     $r.Action = 'none'
-                    $r.Reason = "the hub of another plugin version was stopped but still held port $($pick.Port), and no other port in $(Format-DevPreviewPorts -Ports $ports) is free"
+                    $r.Reason = "Admin of another plugin version was stopped but still held port $($pick.Port), and no other port in $(Format-DevPreviewPorts -Ports $ports) is free"
                     return $r
                 }
                 $r.Restarted = $true
@@ -315,7 +317,7 @@ function Start-DevPreviewHub($Listeners, $Processes) {
         $r.Base = "http://localhost:$($pick.Port)"
     } catch {
         $r.Action = 'refused'
-        $r.Reason = 'the hub could not be started: ' + ((([string]$_.Exception.Message) -replace '\s+', ' ') -replace '\p{C}', '')
+        $r.Reason = 'Admin could not be started: ' + ((([string]$_.Exception.Message) -replace '\s+', ' ') -replace '\p{C}', '')
     }
     return $r
 }
@@ -397,13 +399,13 @@ if ($cfg) { $ports += @($cfg.Ports) }
 $listeners = @(Get-DevPreviewListeners $ports)
 $processes = if ($listeners.Count) { Get-DevPreviewProcesses } else { @{} }
 
-# --- The hub first, then the product -----------------------------------------------------------------
-$hub = Start-DevPreviewHub -Listeners $listeners -Processes $processes
-# A throw while starting the product is the product's failure, never the hub's: the hub link and the state
+# --- Admin first, then the product -----------------------------------------------------------------
+$admin = Start-DevPreviewAdmin -Listeners $listeners -Processes $processes
+# A throw while starting the product is the product's failure, never Admin's: the Admin link and the state
 # file must survive it.
 $prod = $null
 if ($cfg) {
-    # The hub is already starting; the product waits for the trunk sync (#3657), at most 20 s and never more
+    # Admin is already starting; the product waits for the trunk sync (#3657), at most 20 s and never more
     # than the hook's 60 s leave after the product's own wait, its settle and about 10 s for the rest (the
     # stdin read, a restart's port release). DKJ_DEV_PREVIEW_PREP_WAIT (0-99) is the TEST override, and 0
     # also skips the stdin read that finds the session id.
@@ -426,23 +428,23 @@ if ($cfg) {
 
 # --- Wait until what was started listens: one loop, one clock each -----------------------------------
 $targets = @()
-# The hub's own deadline, 12 s; DKJ_DEV_PREVIEW_HUB_WAIT (0-99) is the TEST override.
-$hubWait = 12
-if ([string]$env:DKJ_DEV_PREVIEW_HUB_WAIT -match '^[0-9]{1,2}$') { $hubWait = [int]$env:DKJ_DEV_PREVIEW_HUB_WAIT }
+# Admin's own deadline, 12 s; DKJ_DEV_PREVIEW_ADMIN_WAIT (0-99) is the TEST override.
+$adminWait = 12
+if ([string]$env:DKJ_DEV_PREVIEW_ADMIN_WAIT -match '^[0-9]{1,2}$') { $adminWait = [int]$env:DKJ_DEV_PREVIEW_ADMIN_WAIT }
 # The settle after a started product's first answer (#3404); DKJ_DEV_PREVIEW_SETTLE (0-99) is the TEST override.
 if ([string]$env:DKJ_DEV_PREVIEW_SETTLE -match '^[0-9]{1,2}$') { $script:DevPreviewSettleSeconds = [int]$env:DKJ_DEV_PREVIEW_SETTLE }
-if ($hub.Action -eq 'start') { $targets += @{ Name = 'hub'; Port = $hub.Port; Proc = $hub.Proc; Deadline = (Get-Date).AddSeconds($hubWait); Done = $false; Ok = $false; Fail = '' } }
+if ($admin.Action -eq 'start') { $targets += @{ Name = 'admin'; Port = $admin.Port; Proc = $admin.Proc; Deadline = (Get-Date).AddSeconds($adminWait); Done = $false; Ok = $false; Fail = '' } }
 if ($prod -and $prod.Action -eq 'start') { $targets += @{ Name = 'product'; Port = $prod.Port; Proc = $prod.Proc; Deadline = (Get-Date).AddSeconds($cfg.WaitSeconds); Done = $false; Ok = $false; Fail = '' } }
-# The state file goes in before the wait, so a hub that answers early already knows what the repo states, and
+# The state file goes in before the wait, so an admin that answers early already knows what the repo states, and
 # again after it where a wait failed, so it never names a server that did not come up.
 function Save-DevPreviewState {
     try {
-        if (-not (Get-Command Write-RepoHubState -ErrorAction SilentlyContinue)) { return }
-        $pagesUrl = if ($hub.Base -and -not (@($targets | Where-Object { $_.Name -eq 'hub' -and $_.Fail -eq 'exited' }).Count)) { $hub.Base } else { '' }
+        if (-not (Get-Command Write-RepoAdminState -ErrorAction SilentlyContinue)) { return }
+        $pagesUrl = if ($admin.Base -and -not (@($targets | Where-Object { $_.Name -eq 'admin' -and $_.Fail -eq 'exited' }).Count)) { $admin.Base } else { '' }
         $productUrl = if ($prod -and $prod.Url -and -not (@($targets | Where-Object { $_.Name -eq 'product' -and $_.Done -and -not $_.Ok }).Count)) { $prod.Url } else { '' }
-        $hubUrl = if ($pagesUrl) { "$pagesUrl/" } else { '' }
+        $adminUrl = if ($pagesUrl) { "$pagesUrl/" } else { '' }
         $theme = if ($cfg) { [string]$cfg.DefaultTheme } else { '' }
-        Write-RepoHubState -Root $root -Hub $hubUrl -Pages $pagesUrl -Product $productUrl -Mode $mode -Theme $theme
+        Write-RepoAdminState -Root $root -Admin $adminUrl -Pages $pagesUrl -Product $productUrl -Mode $mode -Theme $theme
     } catch { }
 }
 Save-DevPreviewState
@@ -479,7 +481,7 @@ while ($pending.Count) {
         # also where another process holds the port: that is a lost bind, not a slow start (#3378).
         switch (Get-DevPreviewWaitOutcome -State $state -Exited ([bool]$t.Proc.HasExited)) {
             'ok'     {
-                if ($t.Name -eq 'hub') { $t.Done = $true; $t.Ok = $true }
+                if ($t.Name -eq 'admin') { $t.Done = $true; $t.Ok = $true }
                 else { $t.SettleUntil = (Get-Date).AddSeconds($script:DevPreviewSettleSeconds) }
             }
             'exited' { $t.Done = $true; $t.Fail = 'exited' }
@@ -491,17 +493,17 @@ while ($pending.Count) {
 if (@($targets | Where-Object { -not $_.Ok }).Count) { Save-DevPreviewState }
 
 # --- The one line ------------------------------------------------------------------------------------
-$hubT = @($targets | Where-Object { $_.Name -eq 'hub' }) | Select-Object -First 1
+$adminT = @($targets | Where-Object { $_.Name -eq 'admin' }) | Select-Object -First 1
 $prodT = @($targets | Where-Object { $_.Name -eq 'product' }) | Select-Object -First 1
-$hubUrl = ''
-$hubWord = ''
-$hubReason = $hub.Reason
-if ($hub.Action -eq 'reuse') { $hubUrl = "$($hub.Base)/"; $hubWord = 'already running' }
-elseif ($hub.Action -eq 'start') {
-    if ($hubT.Ok) { $hubUrl = "$($hub.Base)/"; $hubWord = $(if ($hub.Restarted) { 'restarted: it ran another plugin version' } else { 'started' }) }
-    elseif ($hubT.Fail -eq 'exited') { $hubReason = "the hub on port $($hub.Port) exited at start -- see $(Get-DevPreviewLogPath -Root $root -Name 'dev-preview-general')" }
-    elseif ($hubT.Fail -eq 'lost') { $hubReason = "the hub lost port $($hub.Port) to a process this hook cannot identify ($($hubT.Holder)) -- it may be a hub started beside this one; see $(Get-DevPreviewLogPath -Root $root -Name 'dev-preview-general')" }
-    else { $hubReason = "the hub on port $($hub.Port) is not listening after ${hubWait}s -- see $(Get-DevPreviewLogPath -Root $root -Name 'dev-preview-general')" }
+$adminUrl = ''
+$adminWord = ''
+$adminReason = $admin.Reason
+if ($admin.Action -eq 'reuse') { $adminUrl = "$($admin.Base)/"; $adminWord = 'already running' }
+elseif ($admin.Action -eq 'start') {
+    if ($adminT.Ok) { $adminUrl = "$($admin.Base)/"; $adminWord = $(if ($admin.Restarted) { 'restarted: it ran another plugin version' } else { 'started' }) }
+    elseif ($adminT.Fail -eq 'exited') { $adminReason = "Admin on port $($admin.Port) exited at start -- see $(Get-DevPreviewLogPath -Root $root -Name 'dev-preview-general')" }
+    elseif ($adminT.Fail -eq 'lost') { $adminReason = "Admin lost port $($admin.Port) to a process this hook cannot identify ($($adminT.Holder)) -- it may be an admin started beside this one; see $(Get-DevPreviewLogPath -Root $root -Name 'dev-preview-general')" }
+    else { $adminReason = "Admin on port $($admin.Port) is not listening after ${adminWait}s -- see $(Get-DevPreviewLogPath -Root $root -Name 'dev-preview-general')" }
 }
 
 # A server's part: what it is and how it stands, or why it is not. Returns @{ Url; Word; Fail }.
@@ -531,11 +533,11 @@ function Format-DevPreviewProductClause($Part, $P) {
 $part = Get-DevPreviewServerPart $prod $prodT $cfg
 
 $settings = Join-Path $root '.vscode\settings.json'
-# An unreadable settings file must not cost the hub link: it reads as no route.
+# An unreadable settings file must not cost the Admin link: it reads as no route.
 $text = ''
 try { if (Test-Path -LiteralPath $settings -PathType Leaf) { $text = [System.IO.File]::ReadAllText($settings) } } catch { $text = '' }
 
-# What keeps this repo from following a hub change, in a DKJ-Solutions repo (#3463). A failure here costs the
+# What keeps this repo from following an admin change, in a DKJ-Solutions repo (#3463). A failure here costs the
 # drift clauses, never the line.
 $drift = ''
 try {
@@ -543,25 +545,25 @@ try {
     $drift = -join @(Get-DevPreviewDriftClauses -DkjSolutions $dkjSolutions -Mode $mode -Config $cfg -SettingsText $text | ForEach-Object { " -- $_" })
 } catch { $drift = '' }
 
-$head = if ($hubUrl) { "$script:DevPreviewLabel`: $hubUrl" } else { "$script:DevPreviewLabel`: not started -- $hubReason" }
+$head = if ($adminUrl) { "$script:DevPreviewLabel`: $adminUrl" } else { "$script:DevPreviewLabel`: not started -- $adminReason" }
 
 if ($mode -eq 'product') {
     $clause = if ($productProblem) { "product not started: $productProblem" }
               else { Format-DevPreviewProductClause $part $prod }
     $opened = ''
-    if ($hubUrl) {
+    if ($adminUrl) {
         $script:openInVsCode = [bool]($cfg -and $cfg.OpenInVsCode)
-        $opened = Open-DevPreviewInVsCode $hubUrl
+        $opened = Open-DevPreviewInVsCode $adminUrl
     }
     Write-DevPreviewLine ($head + $(if ($opened) { " (opened in VS Code)" } else { '' }) + " -- $clause$drift")
 }
 
-# No server stated: the hub alone, and -- where the repo has no Simple Browser route for its port -- the one
-# line that adds it. With the route the hub opens in VS Code; without it, it does not, because VS Code would
+# No server stated: Admin alone, and -- where the repo has no Simple Browser route for its port -- the one
+# line that adds it. With the route Admin opens in VS Code; without it, it does not, because VS Code would
 # hand the URL to the system browser.
-if (-not $hubUrl) { Write-DevPreviewLine $head }
-$script:openInVsCode = Test-DevPreviewVsCodeRoute -SettingsText $text -Port $hub.Port
+if (-not $adminUrl) { Write-DevPreviewLine $head }
+$script:openInVsCode = Test-DevPreviewVsCodeRoute -SettingsText $text -Port $admin.Port
 $note = ''
-if (-not $script:openInVsCode) { $note = "; route localhost:$($hub.Port) to simpleBrowser.open in .vscode/settings.json to open it in VS Code" }
-$opened = Open-DevPreviewInVsCode $hubUrl
-Write-DevPreviewLine "$head ($hubWord$opened) -- $noteNone$note"
+if (-not $script:openInVsCode) { $note = "; route localhost:$($admin.Port) to simpleBrowser.open in .vscode/settings.json to open it in VS Code" }
+$opened = Open-DevPreviewInVsCode $adminUrl
+Write-DevPreviewLine "$head ($adminWord$opened) -- $noteNone$note"

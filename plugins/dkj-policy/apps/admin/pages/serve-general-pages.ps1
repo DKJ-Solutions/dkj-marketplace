@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
-    Serve the plugin's REPOSITORY (#3245) and the GENERAL pages (#3119) on http://localhost:<Port>/ -- the hub on
+    Serve the plugin's REPOSITORY (#3245) and the GENERAL pages (#3119) on http://localhost:<Port>/ -- Admin on
     '/', then /dev/issues, /dev/release-notes, /dev/sessionstart, /dev/test-gate, /dev/performance, /dev/stopwatch, /dev/logbook and /dev/plugins --
-    from the repo this server was started in. Not /brandbook: no hub has served the brand book since #3475, and the
+    from the repo this server was started in. Not /brandbook: no admin has served the brand book since #3475, and the
     source repo retired the app itself under #3493.
 
 .DESCRIPTION
@@ -10,7 +10,7 @@
     states one, under a cmd.exe that changes into the repo root first, so the working directory IS the repo
     and that cmd.exe's command line is what lets the hook recognise this server as the checkout's own next
     time. A repo whose own server is not PowerShell (Vite, Next.js) gets the same pages this way. The pages
-    and their rules are in hub/lib/general-pages-lib.ps1, the hub's page in hub/lib/repo-hub-page.ps1. In
+    and their rules are in apps/admin/lib/general-pages-lib.ps1, Admin's page in apps/admin/lib/repo-admin-page.ps1. In
     dkj-policy, which every repo runs, since #3198.
 
     WHAT EACH PAGE READS, from the repo, on every request unless it says otherwise:
@@ -19,12 +19,12 @@
                       for the repo gh finds from the working directory. Kept for -IssuesCacheSeconds; a failed
                       read for 30 s only. A gh that fails or is missing is a warning on the page, never a blank.
       /dev/goals      `gh api graphql`, one call: the open issues labelled goal, their sub-issues (the milestones) and
-                      theirs (the tasks), for owner/name from the origin remote (Get-GoalsModel, hub/lib/goals-lib.ps1,
+                      theirs (the tasks), for owner/name from the origin remote (Get-GoalsModel, apps/admin/lib/goals-lib.ps1,
                       #3816). Kept as the issues are; a repo whose origin is not on GitHub, or a gh that fails, is a
                       warning on the page.
       /dev/today      the day plan (#3860): this machine's day file, matched live against the PRs merged and the issues
                       closed today, and the week, from day-plan.ps1 -Status run as a child (Get-TodayModel,
-                      hub/lib/today-page-lib.ps1), so the GitHub search behind it has one source. Kept for 60 s, a
+                      apps/admin/lib/today-page-lib.ps1), so the GitHub search behind it has one source. Kept for 60 s, a
                       failed run for 30 s; a gh that fails is a warning on the page, and the plan still shows.
       /dev/release-notes  dkj-policy/releases/page/release-notes.html, dressed in the house style on the way out.
                       Built first, by build-release-notes-page.ps1 (found the way the always-on lib is), where it
@@ -40,11 +40,11 @@
                       dev-preview hook already gives it, and is bounded at 60 s.
       /dev/test-gate, /dev/test-gate/<list>[/<suite>], /dev/test-gate/measured
                       scripts/tests/suite-durations.json, grouped by suite-groups.json where the repo keeps one, and
-                      each suite's own header (Read-TestGateModel, hub/lib/test-gate-lib.ps1, #3470): an overview, a
+                      each suite's own header (Read-TestGateModel, apps/admin/lib/test-gate-lib.ps1, #3470): an overview, a
                       page per group and per suite. Absent, the page says no test gate has been measured in this repo yet.
       /dev/plugins, /dev/plugins/<name>   a card per enabled plugin, and each one's own page: plugin-versions.ps1 -Json, the repo's
                       own copy first, then this plugin's, run in a CHILD process bounded at 30 s (Read-PluginsPageModel,
-                      hub/lib/plugins-page-lib.ps1, #3482). A script that fails or is missing is a warning on the page.
+                      apps/admin/lib/plugins-page-lib.ps1, #3482). A script that fails or is missing is a warning on the page.
       /dev/plugins/dkj-policy/dkj-brandbook[/<section>]
                       the brand book's specimens (assets/dkj-brandbook/specimens.html, read per request): a card per
                       section, and each section's own page (Split-HouseStyleSpecimens, #3563); a slug no section has
@@ -53,24 +53,24 @@
       /dev/stopwatch, /dev/stopwatch/<label>[/<run>], /dev/logbook, /dev/logbook/<slug>
                       this repo's timing stores on this machine (%LOCALAPPDATA%\dkj-claude-plugins\repos\<repo>\),
                       which the plugin's UserPromptSubmit and Stop hooks write, and the session transcripts under
-                      ~/.claude/projects (Resolve-HubTimingPage, hub/lib/timing-pages.ps1, #3470). The Stopwatch also
+                      ~/.claude/projects (Resolve-AdminTimingPage, apps/admin/lib/timing-pages.ps1, #3470). The Stopwatch also
                       shows this repo's other machines' runs and starts a background sync, where the repo opts in
                       with DKJ_STOPWATCH_SHARE=1 (Test-StopwatchShareEnabled: the environment, else the repo's .claude/settings.json).
-      /hub, / and /index.html
-                      the plugin's hub (Format-PluginRepoHubHtml), built per request from the state file
-                      the hook wrote (%TEMP%\dkj-repo-hub-<leaf>-<hash>.json): the repo's own server as the
+      /admin, / and /index.html
+                      the plugin's admin (Format-PluginRepoAdminHtml), built per request from the state file
+                      the hook wrote (%TEMP%\dkj-repo-admin-<leaf>-<hash>.json): the repo's own server as the
                       Product card (mode 'product'), the setup cards (mode 'none'). In every repo: the
-                      OwnHub opt-out, which sent '/hub' on to a repo's own hub, went with #3643.
-      /dev/repository     the hub's Repository page (Format-PluginRepoRepositoryHtml, #3383): the facts the home page
-                      held until the house hub became a grid of card links, and the Issues page's card.
+                      OwnHub opt-out, which sent '/admin' on to a repo's own admin, went with #3643.
+      /dev/repository     Admin's Repository page (Format-PluginRepoRepositoryHtml, #3383): the facts the home page
+                      held until the house admin became a grid of card links, and the Issues page's card.
       /refresh        ?page=issues, ?page=goals, ?page=today or ?page=sessionstart drops that page's cache (at most once per
                       -MinRefreshSeconds, and per 60 s for issues) and goes back to the page.
       /api/airsquats  the banner's state as JSON (GET), and POST /api/airsquats/clear ticks its box off (#3438):
-                      the machine's file under %LOCALAPPDATA%\dkj-hub, synced with a private gist by a child
-                      (sync-airsquats.ps1) where DKJ_HUB_AIRSQUATS_GIST opts in (#3439). The one route that
+                      the machine's file under %LOCALAPPDATA%\dkj-admin, synced with a private gist by a child
+                      (sync-airsquats.ps1) where DKJ_ADMIN_AIRSQUATS_GIST opts in (#3439). The one route that
                       takes a POST, served same-origin only.
       /whoami         the hash of the repo root this server was started in (Get-DevPreviewRootHash): the
-                      hubs ask it before they link here, because an open port does not say whose server it is.
+                      Admin servers ask it before they link here, because an open port does not say whose server it is.
       /house-style.css, /house-theme.js   the canonical copy under assets/dkj-brandbook/ in this
                       plugin's payload (Get-HouseStyleDir), in every repo: the pages keep one look everywhere.
     The repo's name on the pages is owner/name from the origin remote, else the folder's name.
@@ -79,7 +79,7 @@
     http.sys (PID 4), so the hook's ownership walk could never reach the cmd.exe that names the checkout, and
     every session would start another server on the next port. Loopback only, and a request whose Host is not
     localhost:<Port> or 127.0.0.1:<Port> is refused (DNS rebinding), as is one the browser marks as coming
-    from another site -- except a same-site top-level GET navigation (the hub's link, the 303 hop, the
+    from another site -- except a same-site top-level GET navigation (Admin's link, the 303 hop, the
     crumb back), which is a user following a link and is served, and a cross-site one into a document,
     which is how Claude in Chrome opens a page (#3834) (Test-LoopbackCrossSite). GET and HEAD only,
     but for the banner's POST /api/airsquats/clear.
@@ -89,8 +89,8 @@
     is cut after 2 s. Every child process (git, gh, the measurement) is bounded, by a process helper of this
     file's own. It runs until the process is stopped.
 
-    Pure ASCII (repo convention for .ps1). The pages and the request rules are in hub/lib/
-    general-pages-lib.ps1 and repo-hub-page.ps1, tested by scripts/tests/dev-pages.tests.ps1 and
+    Pure ASCII (repo convention for .ps1). The pages and the request rules are in apps/admin/lib/
+    general-pages-lib.ps1 and repo-admin-page.ps1, tested by scripts/tests/dev-pages.tests.ps1 and
     dev-preview-sessionstart.tests.ps1 in the source repo.
 
 .PARAMETER Port
@@ -139,11 +139,11 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\general-pages-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\general-pages-state.ps1')
 # The request reader, the response writer and the Host and Sec-Fetch-Site rules: one copy in the plugin,
-# shared with the source repo's own hub server.
+# shared with the source repo's own admin server.
 . (Join-Path $PSScriptRoot '..\lib\loopback-server-lib.ps1')
-# The hub's page (#3245).
-. (Join-Path $PSScriptRoot '..\lib\repo-hub-page.ps1')
-# The banner's airsquats state, shared by every hub and every machine (#3438).
+# Admin's page (#3245).
+. (Join-Path $PSScriptRoot '..\lib\repo-admin-page.ps1')
+# The banner's airsquats state, shared by every admin and every machine (#3438).
 . (Join-Path $PSScriptRoot '..\lib\airsquats-lib.ps1')
 # The Test gate, the Stopwatch and the Logbook, every repo's pages since #3470.
 . (Join-Path $PSScriptRoot '..\lib\test-gate-lib.ps1')
@@ -154,7 +154,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\goals-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\today-page-lib.ps1')
 
-$pluginRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
+$pluginRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..\..')).Path
 $root = if ($RepoRootOverride) { [System.IO.Path]::GetFullPath($RepoRootOverride).TrimEnd('\', '/') }
         else { [System.IO.Path]::GetFullPath((Get-Location).Path).TrimEnd('\', '/') }
 $styleDir = Get-HouseStyleDir -PluginRoot $pluginRoot
@@ -493,7 +493,7 @@ $json = ConvertTo-Json -InputObject @($items) -Compress -Depth 3
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 $rootHash =Get-DevPreviewRootHash -Root $root
-$timing = New-HubTimingContext -RepoRoot $root -RepoName (Get-RepoIdentity).Name -StopwatchPath $StopwatchPath -LogbookPath $LogbookPath -TranscriptDir $TranscriptDir
+$timing = New-AdminTimingContext -RepoRoot $root -RepoName (Get-RepoIdentity).Name -StopwatchPath $StopwatchPath -LogbookPath $LogbookPath -TranscriptDir $TranscriptDir
 $listener = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Loopback, $Port)
 $listener.Start()
 Write-Host "general pages for $((Get-RepoIdentity).Name): http://localhost:$Port/"
@@ -535,7 +535,7 @@ try {
                 continue
             }
             if ($path -eq '/whoami') {
-                # Whose server this is: the hash of the root it was started in. The hubs ask before they link here.
+                # Whose server this is: the hash of the root it was started in. The Admin servers ask before they link here.
                 Send-LoopbackResponse $stream 200 'OK' 'text/plain; charset=utf-8' ($utf8.GetBytes($rootHash)) -Method $method
                 continue
             }
@@ -545,9 +545,9 @@ try {
                 Send-LoopbackResponse $stream 200 'OK' $s.Type $body -Method $method
                 continue
             }
-            # The repo's DefaultTheme (#3390), read per request like the hub, so a session start that changes it
+            # The repo's DefaultTheme (#3390), read per request like Admin, so a session start that changes it
             # reaches the next page without a restart, and every page below opens in it.
-            $state = Read-RepoHubState -Root $root
+            $state = Read-RepoAdminState -Root $root
             Set-GeneralPagesThemeDefault $state.Theme
             # Admin's Product section (#3815) links the product this session started, read per request as the theme is.
             Set-AdminProductUrl $(if ($state.Mode -eq 'product') { $state.Product } else { '' })
@@ -555,23 +555,23 @@ try {
             if ($null -eq $aoCache -or ((Get-Date) - $aoCache.At).TotalSeconds -ge 60) { $aoCache = Get-AdminObjectsModel }
             Set-AdminObjects -Items $aoCache.Items
             if ($path -eq '/about' -or $path -eq '/artifacts') {
-                # The hub is one page (#3289): an old link to About this repo goes on to the home page, which holds it. So does an
+                # Admin is one page (#3289): an old link to About this repo goes on to the home page, which holds it. So does an
                 # old link to Artifacts, a page retired with the claude.ai Artifacts themselves (#3772).
                 Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = '/' } -Method $method
                 continue
             }
-            if ($path -eq '/' -or $path -eq '/index.html' -or $path -eq '/hub') {
-                # THE HUB IS THIS SERVER'S (#3245), built per request from the state file, in every repo (#3643).
-                $hubMode = if ($state.Mode -eq 'product') { 'product' } else { 'none' }
-                $hubHtml = Format-PluginRepoHubHtml -RepoName (Get-RepoIdentity).Name -Folder (Split-Path -Leaf $root) -Mode $hubMode -ProductUrl $state.Product -PagesUrl "http://localhost:$Port"
-                Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($hubHtml)) -Method $method
+            if ($path -eq '/' -or $path -eq '/index.html' -or $path -eq '/admin') {
+                # THE ADMIN IS THIS SERVER'S (#3245), built per request from the state file, in every repo (#3643).
+                $adminMode = if ($state.Mode -eq 'product') { 'product' } else { 'none' }
+                $adminHtml = Format-PluginRepoAdminHtml -RepoName (Get-RepoIdentity).Name -Folder (Split-Path -Leaf $root) -Mode $adminMode -ProductUrl $state.Product -PagesUrl "http://localhost:$Port"
+                Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($adminHtml)) -Method $method
                 continue
             }
             if ($path -eq '/dev/repository') {
-                # The hub's Repository page (#3383): the facts and the Issues page, which the home page no longer holds.
-                $hubMode = if ($state.Mode -eq 'product') { 'product' } else { 'none' }
+                # Admin's Repository page (#3383): the facts and the Issues page, which the home page no longer holds.
+                $adminMode = if ($state.Mode -eq 'product') { 'product' } else { 'none' }
                 $id = Get-RepoIdentity
-                $repoHtml = Format-PluginRepoRepositoryHtml -RepoName $id.Name -Folder (Split-Path -Leaf $root) -Slug $id.Slug -Mode $hubMode -ProductUrl $state.Product -PagesUrl "http://localhost:$Port"
+                $repoHtml = Format-PluginRepoRepositoryHtml -RepoName $id.Name -Folder (Split-Path -Leaf $root) -Slug $id.Slug -Mode $adminMode -ProductUrl $state.Product -PagesUrl "http://localhost:$Port"
                 Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($repoHtml)) -Method $method
                 continue
             }
@@ -601,7 +601,7 @@ try {
                 continue
             }
             # The Stopwatch's and the Logbook's routes (#3470): a page, a moved run slug, or a slug no run has.
-            $tp = Resolve-HubTimingPage -Path $path -Context $timing
+            $tp = Resolve-AdminTimingPage -Path $path -Context $timing
             if ($null -ne $tp) {
                 if ($tp.Status -eq 301) { Send-LoopbackResponse $stream 301 'Moved Permanently' 'text/plain; charset=utf-8' ($utf8.GetBytes('Moved.')) @{ Location = $tp.Location } -Method $method }
                 elseif ($tp.Status -eq 404) { Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('Not found.')) -Method $method }
@@ -621,14 +621,14 @@ try {
                 continue
             }
             $html = $null
-            if ($gp = Format-HubGroupPageHtml -Href $path -RepoName (Get-RepoIdentity).Name -RepoRoot $root) {
-                # A group page (Get-HubGroups): /dev/performance, its Clock section over the Stopwatch and the Logbook and its
+            if ($gp = Format-AdminGroupPageHtml -Href $path -RepoName (Get-RepoIdentity).Name -RepoRoot $root) {
+                # A group page (Get-AdminGroups): /dev/performance, its Clock section over the Stopwatch and the Logbook and its
                 # Context section over SessionStart (Dave, November 3, 2026); it sits in Claude since November 2, 2026,
                 # under the same route.
                 $html = $gp
             } elseif ($path -cmatch '^/dev/claude/specialists/lenses/(specialist-\d{2}-\d{2}-lens)/?$') {
                 # One specialist lens's page, read from this checkout (Maikel, October 30, 2026); a lens it has not is a 404.
-                $html = Format-HubLensPageHtml -Name $Matches[1] -RepoRoot $root -RepoName (Get-RepoIdentity).Name
+                $html = Format-AdminLensPageHtml -Name $Matches[1] -RepoRoot $root -RepoName (Get-RepoIdentity).Name
                 if ($null -eq $html) {
                     Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('No lens of that name in this repo.')) -Method $method
                     continue
@@ -636,7 +636,7 @@ try {
             } elseif ($path -cmatch '^/dev/claude/rules/([A-Za-z0-9._-]{1,80})/?$') {
                 # One .claude/rules file's page, read from this checkout (Maikel, November 3, 2026); a name that folder
                 # has no file of is a 404.
-                $html = Format-HubRulePageHtml -Name $Matches[1] -RepoRoot $root -RepoName (Get-RepoIdentity).Name
+                $html = Format-AdminRulePageHtml -Name $Matches[1] -RepoRoot $root -RepoName (Get-RepoIdentity).Name
                 if ($null -eq $html) {
                     Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('No rule document of that name in this repo.')) -Method $method
                     continue
@@ -662,7 +662,7 @@ try {
                 if (-not $plReq.Name) {
                     $html = Format-PluginsPageHtml -Model $pl.Model -ReadError $pl.Error -RepoName (Get-RepoIdentity).Name
                 } elseif ($plRow = Find-PluginsPageRow -Model $pl.Model -Name $plReq.Name) {
-                    $hsState = if ($plReq.Page -eq 'dkj-brandbook') { Read-RepoHubState -Root $root } else { $null }
+                    $hsState = if ($plReq.Page -eq 'dkj-brandbook') { Read-RepoAdminState -Root $root } else { $null }
                     $hsTo = if ($hsState -and $hsState.Mode -eq 'product') {
                         Resolve-HouseStyleProductUrl -IsSource (Test-Path -LiteralPath (Join-Path $root 'plugins\dkj-policy\assets\dkj-brandbook\specimens.html') -PathType Leaf) `
                             -ProductUrl $hsState.Product -Section $plReq.Section
@@ -701,7 +701,7 @@ try {
                 }
             } elseif ($path -eq '/settings') {
                 # Admin's Settings page (Dave, November 2, 2026): the Theme, drawn in the browser.
-                $html = Format-HubSettingsPageHtml -RepoName (Get-RepoIdentity).Name
+                $html = Format-AdminSettingsPageHtml -RepoName (Get-RepoIdentity).Name
             } elseif ($path -eq '/dev/issues') {
                 # A failed read is kept for 30 s only, so a passing gh hiccup does not show for five minutes.
                 $isAge = if ($isCache) { ((Get-Date) - $isCache.At).TotalSeconds } else { 0 }

@@ -16,19 +16,19 @@
     /marketplace/dkj-policy/house-style redirects there). The rules of
     each page are in scripts/lib/dev-pages-lib.ps1. The server takes no POST but the banner's.
 
-    EVERY REPO HAS A PRODUCT PORT (Maikel, October 26, 2026, #3540). This server was this repo's own hub
+    EVERY REPO HAS A PRODUCT PORT (Maikel, October 26, 2026, #3540). This server was this repo's own admin
     under OwnHub (#3245), with the brandbook/ app's Vite dev server as the product beside it (#3283).
-    Retiring the app (#3493) took the product port with it, which was never the intent. So the hub is the
+    Retiring the app (#3493) took the product port with it, which was never the intent. So Admin is the
     dkj-policy plugin's now, as in every other repo, and this server is the product: the general pages --
     Repository, Issues, Release notes, SessionStart, Test gate, Stopwatch, Logbook and Plugins --
-    are the plugin hub's, on its own port, and no longer relayed or built here. The house style's specimens
+    are the plugin admin's, on its own port, and no longer relayed or built here. The house style's specimens
     are the one exception, back here since October 31, 2026 (Maikel): this repo is their source, so its
-    Admin sends its own house-style pages to this product (Resolve-HouseStyleProductUrl). The home page links the hub, read from the state file the dev-preview hook writes
-    (Get-GeneralPagesUrl), and '/hub' sends there too.
+    Admin sends its own house-style pages to this product (Resolve-HouseStyleProductUrl). The home page links Admin, read from the state file the dev-preview hook writes
+    (Get-GeneralPagesUrl), and '/admin' sends there too ('/hub' before #3873, which moves there).
 
 .DESCRIPTION
     Normally started by the dkj-policy dev-preview SessionStart hook, through this repo's
-    Get-DevPreview in scripts/repo-config.ps1, as the repo's product beside the plugin's hub (#3540); it can
+    Get-DevPreview in scripts/repo-config.ps1, as the repo's product beside the plugin's admin (#3540); it can
     be started by hand the same way:
 
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dashboard\serve-consumer-dashboard.ps1 -Port 4870
@@ -95,17 +95,17 @@ $root = if ($RepoRootOverride) { [System.IO.Path]::GetFullPath($RepoRootOverride
         else { (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path }
 . (Join-Path $root 'scripts\lib\consumer-dashboard-lib.ps1')
 . (Join-Path $root 'scripts\lib\dev-pages-lib.ps1')
-# The state file the hook writes, and the probe of the plugin's hub server (#3119), whose url the home page links
+# The state file the hook writes, and the probe of the plugin's admin server (#3119), whose url the home page links
 # (#3540): the plugin's, read from this repo's own tree because this repo is the plugin's source.
-. (Join-Path $root 'plugins\dkj-policy\hub\lib\general-pages-state.ps1')
+. (Join-Path $root 'plugins\dkj-policy\apps\admin\lib\general-pages-state.ps1')
 # The request reader, the response writer and the two refusals: the same ones the plugin's servers use, so a
 # fix to any of them lands in all three (#3163).
-. (Join-Path $root 'plugins\dkj-policy\hub\lib\loopback-server-lib.ps1')
-# The banner's airsquats state, the same file and gist as every other hub's (#3438).
-. (Join-Path $root 'plugins\dkj-policy\hub\lib\airsquats-lib.ps1')
+. (Join-Path $root 'plugins\dkj-policy\apps\admin\lib\loopback-server-lib.ps1')
+# The banner's airsquats state, the same file and gist as every other admin's (#3438).
+. (Join-Path $root 'plugins\dkj-policy\apps\admin\lib\airsquats-lib.ps1')
 
 $scopeRoot = [System.IO.Path]::GetFullPath((Join-Path $root '..\..'))
-# The canonical copy lives in the plugin (#3130); the hub no longer vendors its own.
+# The canonical copy lives in the plugin (#3130); Admin no longer vendors its own.
 $styleDir = Join-Path $root 'plugins\dkj-policy\assets\dkj-brandbook'
 $static = @{
     '/house-style.css' = @{ File = (Join-Path $styleDir 'house-style.css'); Type = 'text/css; charset=utf-8' }
@@ -381,8 +381,8 @@ try {
                 continue
             }
             if ($path -eq '/' -or $path -eq '/index.html') {
-                # The product's home page (#3540), with the plugin's hub as its first card where it answers.
-                $html = Format-ProductHomeHtml -Pages (Get-ProductPages) -HubUrl (Get-GeneralPagesUrl -Root $root -TimeoutMs 500) -SourceCommit $(if ($loadedSha) { $loadedSha.Substring(0, 8) } else { '' })
+                # The product's home page (#3540), with the plugin's admin as its first card where it answers.
+                $html = Format-ProductHomeHtml -Pages (Get-ProductPages) -AdminUrl (Get-GeneralPagesUrl -Root $root -TimeoutMs 500) -SourceCommit $(if ($loadedSha) { $loadedSha.Substring(0, 8) } else { '' })
                 Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($html)) -Method $method
                 continue
             }
@@ -514,11 +514,16 @@ try {
                 continue
             }
             if ($path -eq '/hub') {
-                # The way to the plugin's hub (#3540): a 303 to the url the state file names, once it answers as
+                # The address before #3873 (a 301, so a bookmark learns the new one).
+                Send-LoopbackResponse $stream 301 'Moved Permanently' 'text/plain; charset=utf-8' ($utf8.GetBytes('Moved.')) @{ Location = '/admin' } -Method $method
+                continue
+            }
+            if ($path -eq '/admin') {
+                # The way to the plugin's admin (#3540): a 303 to the url the state file names, once it answers as
                 # this checkout's; else a short text, never a redirect to a port another checkout may hold.
-                $hubUrl = Get-GeneralPagesUrl -Root $root -TimeoutMs 500
-                if ($hubUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
-                    Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = $hubUrl } -Method $method
+                $adminUrl = Get-GeneralPagesUrl -Root $root -TimeoutMs 500
+                if ($adminUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
+                    Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = $adminUrl } -Method $method
                 } else {
                     Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('The dkj-policy Admin is not running for this repo: the dev-preview hook starts it at the next session start.')) -Method $method
                 }

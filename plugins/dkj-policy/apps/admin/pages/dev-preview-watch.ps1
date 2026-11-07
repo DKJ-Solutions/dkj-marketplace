@@ -18,9 +18,9 @@
     0 for a disconnected one -- so a switch away and back could arm the watcher and then stop a server in
     use; a contradiction reads as uncertain (-1), which never stops a server. And a disconnect counts only
     while no Claude Code process runs in the session (#3798, Test-DevPreviewSessionHeld): Claude Code kept
-    running in a session switched away from, and the owner read its hub from the other one. It exits as soon as the server
+    running in a session switched away from, and the owner read its admin from the other one. It exits as soon as the server
     does, so a server stopped by hand leaves nothing behind. The rules are Get-DevPreviewWatchStep in
-    hub/lib/dev-preview-rules.ps1.
+    apps/admin/lib/dev-preview-rules.ps1.
 
       -ProcessId     the cmd.exe the hook launched (the root of the server's tree)
       -StartTicks    that process's start time as FILETIME UTC: a pid reused by another process is not

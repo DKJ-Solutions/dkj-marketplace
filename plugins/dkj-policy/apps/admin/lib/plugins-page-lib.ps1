@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    The hub's Plugins page (#3482): every plugin enabled in the repo, and whether it is healthy on this machine.
+    Admin's Plugins page (#3482): every plugin enabled in the repo, and whether it is healthy on this machine.
 
 .DESCRIPTION
     ONE READING, NOT TWO. The page reads nothing itself: the server runs plugin-versions.ps1 -Json in a child
@@ -195,14 +195,14 @@ function Format-PluginsPageHtml {
         name, under two h2 sections -- dkj-marketplace's plugins, and MCP for every other marketplace's -- whose cards'
         names are h3s. Everything else -- the description, the command, the clone -- is on the plugin's page. -Model is
         ConvertFrom-PluginVersionsJson's; -ReadError is set when the script could not be found or run. -RepoName
-        names the repo; -HubHref is the Home crumb's target ('/', the root of Admin
+        names the repo; -AdminHref is the Home crumb's target ('/', the root of Admin
         that serves the page).
     #>
     param(
         [Parameter(Mandatory = $true)][hashtable]$Model,
         [AllowEmptyString()][string]$ReadError = '',
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/'
+        [string]$AdminHref = '/'
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $rows = @($Model.Plugins | Where-Object { $_ })
@@ -236,7 +236,7 @@ function Format-PluginsPageHtml {
         }
         [void]$body.AppendLine((Format-AdminLinkTableHtml -Items @($items) -Heading $section.Title -Id ('plugins-' + $section.Id) -NameHead 'Plugin' -SubHead 'Status'))
     }
-    return Format-GeneralPageHtml -Title 'Installed plugins' -Body $body.ToString() -SiteName $RepoName -HubHref $HubHref `
+    return Format-GeneralPageHtml -Title 'Installed plugins' -Body $body.ToString() -SiteName $RepoName -AdminHref $AdminHref `
         -Lead '' `
         -FooterNote 'Read on every request by the plugin-versions skill''s own script, <code>plugin-versions.ps1 -Json</code>: the enable state from the settings files, the install record from <code>~/.claude/plugins/installed_plugins.json</code>, and the marketplace clone under <code>~/.claude/plugins/marketplaces</code>.'
 }
@@ -246,14 +246,14 @@ function Format-PluginPageHtml {
         One plugin's page on /dev/plugins/<name>, under the Plugins crumb: its state, what is wrong and the command that
         closes it where plugin-versions names one, its description, and the facts -- installed here, the marketplace
         clone and that clone's HEAD. -Row is Find-PluginsPageRow's; -Model the whole model, for the clone. -Cards are
-        the hub's own pages below this plugin, each @{ Href; Label; Sub; Icon }, linked as cards after what the plugin
-        ships itself: a hub that builds a page about a plugin hangs it here rather than on its own home page.
+        Admin's own pages below this plugin, each @{ Href; Label; Sub; Icon }, linked as cards after what the plugin
+        ships itself: an admin that builds a page about a plugin hangs it here rather than on its own home page.
     #>
     param(
         [Parameter(Mandatory = $true)][hashtable]$Row,
         [Parameter(Mandatory = $true)][hashtable]$Model,
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/',
+        [string]$AdminHref = '/',
         [AllowEmptyCollection()][object[]]$Cards = @(),
         [AllowNull()][hashtable]$Contents = $null
     )
@@ -290,7 +290,7 @@ function Format-PluginPageHtml {
     [void]$body.AppendLine('<div><dt>Enabled in</dt><dd>' + $(if ($Model.Consulted) { & $e $Model.Consulted } else { '--' }) + '</dd></div>')
     [void]$body.AppendLine('</dl></section></div>')
     # What a plugin ships that can be looked at: dkj-policy's brand book, its specimens one page below (#3493,
-    # #3629; named dkj-brandbook as on the product, #3704), then the hub's own pages about this plugin.
+    # #3629; named dkj-brandbook as on the product, #3704), then Admin's own pages about this plugin.
     $below = @()
     if ($Row.Name -ceq 'dkj-policy') {
         $below += @{ Href = '/dev/plugins/dkj-policy/dkj-brandbook'; Label = 'dkj-brandbook'; Sub = 'Every token, the twelve themes and every component, with their variants and states'; Icon = 'house-style' }
@@ -298,7 +298,7 @@ function Format-PluginPageHtml {
     $below += @($Cards | Where-Object { $_ })
     if ($below.Count) { [void]$body.AppendLine((Format-AdminLinkTableHtml -Items $below -NameHead 'Page')) }
     # No lead: the crumbs and the Id fact already say which plugin and marketplace this is (the density rule).
-    return Format-GeneralPageHtml -Title ([string]$Row.Name) -Body $body.ToString() -SiteName $RepoName -HubHref $HubHref `
+    return Format-GeneralPageHtml -Title ([string]$Row.Name) -Body $body.ToString() -SiteName $RepoName -AdminHref $AdminHref `
         -ParentCrumbs @(@{ Label = 'Installed plugins'; Href = '/dev/plugins' }) -HeadAside $badge `
         -Style '.dp-about p { font-size: var(--text-base); }' `
         -Lead '' `
@@ -438,7 +438,7 @@ function Get-PluginContents {
         $fm = if ($set['subagent']) { ConvertFrom-PluginFrontmatter -Text ([string](& $read $set['subagent'])) } else { @{} }
         if (-not $name -and $fm.name) { $name = $fm.name.Substring(0, 1).ToUpperInvariant() + $fm.name.Substring(1) }
         $desc = [string]$fm.description
-        if (-not $desc) { $desc = ((Split-HubLensIntro -Text (ConvertTo-HubLensBody -Text $doc)).Intro -split "`n`n")[0] }
+        if (-not $desc) { $desc = ((Split-AdminLensIntro -Text (ConvertTo-AdminLensBody -Text $doc)).Intro -split "`n`n")[0] }
         $slug = if ($name -cmatch '^[A-Za-z][A-Za-z0-9-]*$') { $name.ToLowerInvariant() } else { $id }
         $out.Specialists += @{ Slug = $slug; Id = $id; Name = $(if ($name) { $name } else { $id }); Emoji = $emoji; Title = $title
             Kind = $(if ($set['subagent']) { 'subagent' } else { 'persona' }); Description = $desc; Model = [string]$fm.model; Tools = [string]$fm.tools
@@ -525,7 +525,7 @@ function Format-PluginContentsSectionsHtml {
 
 function Format-PluginMarkdownCardHtml {
     <#
-        A markdown file rendered in a card, the way a lens page renders its lens (Format-HubLensPageHtml): its frontmatter,
+        A markdown file rendered in a card, the way a lens page renders its lens (Format-AdminLensPageHtml): its frontmatter,
         its '# ' title and a quote before its first heading go, its headings shift so the highest is an h2, and the house's
         one renderer draws it in the browser from JSON, the raw text kept in a <noscript>. A file that cannot be read is
         a warning in its place.
@@ -535,7 +535,7 @@ function Format-PluginMarkdownCardHtml {
     try {
         $utf8 = New-Object System.Text.UTF8Encoding($false)
         $text = [System.IO.File]::ReadAllText($Path, $utf8) -replace "`r`n", "`n"
-        $parts = Split-HubLensIntro -Text (ConvertTo-HubLensBody -Text $text)
+        $parts = Split-AdminLensIntro -Text (ConvertTo-AdminLensBody -Text $text)
         $md = (@($parts.Intro, $parts.Body) | Where-Object { $_ }) -join "`n`n"
         $renderer = [System.IO.File]::ReadAllText($script:MarkdownRendererPath, $utf8)
         $json = (ConvertTo-Json -InputObject ([ordered]@{ body = $md }) -Compress) -replace '<', ('\' + 'u003c')
@@ -563,7 +563,7 @@ function Format-PluginItemPageHtml {
         [Parameter(Mandatory = $true)][string]$Slug,
         [AllowEmptyString()][string]$RepoName = '',
         [AllowEmptyString()][string]$RepoRoot = '',
-        [string]$HubHref = '/'
+        [string]$AdminHref = '/'
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $list = switch ($Kind) { 'specialists' { $Contents.Specialists } 'skills' { $Contents.Skills } 'hooks' { $Contents.Hooks } }
@@ -617,7 +617,7 @@ function Format-PluginItemPageHtml {
         '#doc-body > * + *, .dp-doc > * + * { margin-top: var(--spacing-3); }' + "`n" +
         '#doc-body > * + :is(h2, h3) { margin-top: var(--spacing-6); }' + "`n" +
         '#doc-body li + li, #doc-body li > :is(ul, ol) { margin-top: var(--spacing-1); }'
-    return Format-GeneralPageHtml -Title $title -Body $body.ToString() -SiteName $RepoName -HubHref $HubHref -Style $style `
+    return Format-GeneralPageHtml -Title $title -Body $body.ToString() -SiteName $RepoName -AdminHref $AdminHref -Style $style `
         -ParentCrumbs @(@{ Label = 'Installed plugins'; Href = '/dev/plugins' }, @{ Label = $plugin; Href = '/dev/plugins/' + $plugin }) -Lead $lead `
         -FooterNote ('Read on every request from the ' + (& $e $plugin) + ' plugin''s own files.')
 }
@@ -686,7 +686,7 @@ function Get-HouseStyleSpecimensParts {
         [void]$out.AppendLine('<div class="grid-3">')
         foreach ($s in $split.Sections) {
             $count = if ($s.Cards -eq 1) { '1 specimen' } else { [string]$s.Cards + ' specimens' }
-            [void]$out.AppendLine((Format-HubCardLinkHtml -Href ($BasePath + '/' + $s.Slug) -Label $s.Title -Sub $count))
+            [void]$out.AppendLine((Format-AdminCardLinkHtml -Href ($BasePath + '/' + $s.Slug) -Label $s.Title -Sub $count))
         }
         [void]$out.AppendLine('</div>')
     } else {
@@ -720,14 +720,14 @@ function Format-HouseStyleSpecimensPageHtml {
         [AllowEmptyString()][string]$ReadError = '',
         [AllowEmptyString()][string]$RepoName = '',
         [AllowEmptyString()][string]$Section = '',
-        [string]$HubHref = '/'
+        [string]$AdminHref = '/'
     )
     $base = '/dev/plugins/dkj-policy/dkj-brandbook'
     $parts = Get-HouseStyleSpecimensParts -Body $Body -ReadError $ReadError -Section $Section -BasePath $base
     if ($null -eq $parts) { return $null }
     $crumbs = @(@{ Label = 'Installed plugins'; Href = '/dev/plugins' }, @{ Label = 'dkj-policy'; Href = '/dev/plugins/dkj-policy' })
     if ($parts.Section) { $crumbs += @{ Label = 'dkj-brandbook'; Href = $base } }
-    return Format-GeneralPageHtml -Title $parts.Title -Body $parts.Body -SiteName $RepoName -HubHref $HubHref `
+    return Format-GeneralPageHtml -Title $parts.Title -Body $parts.Body -SiteName $RepoName -AdminHref $AdminHref `
         -ParentCrumbs $crumbs -Lead $parts.Lead `
         -FooterNote 'The stylesheet and these specimens are <code>assets/dkj-brandbook/</code> in the dkj-policy plugin Admin runs from.'
 }

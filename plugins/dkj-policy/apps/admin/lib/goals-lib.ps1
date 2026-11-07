@@ -9,7 +9,7 @@
     sub-issues, each list in the order GitHub keeps it. So the page updates itself as sessions claim and close
     issues, and there is no second administration to keep in step.
 
-    Read by the hub's /dev/goals page (Format-GoalsPageHtml, served by pages/serve-general-pages.ps1) and by the
+    Read by Admin's /dev/goals page (Format-GoalsPageHtml, served by pages/serve-general-pages.ps1) and by the
     plan-goal skill's script (pages/plan-goal.ps1), which files a breakdown and answers "what now?". The model
     functions here are pure; the gh calls are their callers'. Format-GoalsPageHtml needs general-pages-lib.ps1
     loaded beside this file, as the server has it.

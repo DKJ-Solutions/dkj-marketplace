@@ -13,7 +13,7 @@ disable-model-invocation: true
 
 # issues-sweep -- six machines, one backlog, no duplicated work
 
-**It was named `sweep-issues` until November 5, 2026**, renamed by Dave so the three sweeps share one prefix: `issues-sweep`, `issues-sweep-decisions` and `issues-sweep-reviews`. The hub's logbook still recognises a run recorded under the old name.
+**It was named `sweep-issues` until November 5, 2026**, renamed by Dave so the three sweeps share one prefix: `issues-sweep`, `issues-sweep-decisions` and `issues-sweep-reviews`. Admin's logbook still recognises a run recorded under the old name.
 
 **It generalises a prompt block** that had to be pasted into a fresh session on every machine, whose
 claim was prose a session had to type correctly, and whose race resolution did not close

@@ -16,7 +16,7 @@ marked done once its PR or issue is, what got done outside the plan, and the wee
 **Paula carries it** -- the Project Planner. Load her manual's *The day rhythm* section before the first
 step: she proposes, the owner decides, and she holds the band in both directions.
 
-**In the source repo, run its own copy instead**: `plugins/dkj-policy/hub/pages/day-plan.ps1`.
+**In the source repo, run its own copy instead**: `plugins/dkj-policy/apps/admin/pages/day-plan.ps1`.
 `${CLAUDE_PLUGIN_ROOT}` resolves into the plugin cache, which holds the last released copy.
 
 ## Morning: plan the day
@@ -24,7 +24,7 @@ step: she proposes, the owner decides, and she holds the band in both directions
 1. **Read the morning's input.** It writes nothing:
 
    ```powershell
-   powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hub/pages/day-plan.ps1" -Context
+   powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/apps/admin/pages/day-plan.ps1" -Context
    ```
 
    It prints the carry-over from the last planned day (within the past week, so Friday's on a Monday), the
@@ -54,8 +54,8 @@ step: she proposes, the owner decides, and she holds the band in both directions
    ```
 
    ```powershell
-   powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hub/pages/day-plan.ps1" -PlanFile "<scratchpad>/day.json"
-   powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hub/pages/day-plan.ps1" -PlanFile "<scratchpad>/day.json" -Apply
+   powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/apps/admin/pages/day-plan.ps1" -PlanFile "<scratchpad>/day.json"
+   powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/apps/admin/pages/day-plan.ps1" -PlanFile "<scratchpad>/day.json" -Apply
    ```
 
    A `ref` is `#n` (this repo), `owner/repo#n` or an issue or PR URL. An item with a ref is marked done at the
@@ -65,7 +65,7 @@ step: she proposes, the owner decides, and she holds the band in both directions
 ## During the day: one more thing?
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hub/pages/day-plan.ps1" -Add -Title "<what>" -Hours <h> -Mode plan|go [-Ref <ref>]
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/apps/admin/pages/day-plan.ps1" -Add -Title "<what>" -Hours <h> -Mode plan|go [-Ref <ref>]
 ```
 
 It refuses when the day would go over 8 hours. Then ask what moves to tomorrow instead. `-Override` only
@@ -74,8 +74,8 @@ with a reason the owner gives.
 ## Evening: close the day, and on Friday the week
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hub/pages/day-plan.ps1" -Close [-Done 3,4]
-powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hub/pages/day-plan.ps1" -Week
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/apps/admin/pages/day-plan.ps1" -Close [-Done 3,4]
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/apps/admin/pages/day-plan.ps1" -Week
 ```
 
 `-Close` reads what got done from GitHub (PRs merged and issues closed today), matches it against the plan,
@@ -89,8 +89,8 @@ loose ends to it, because what is not done has already been named as tomorrow's.
 - **Whose work counts**: `-Author`, else `DKJ_DAYPLAN_AUTHORS` (comma-separated), else the login `gh` acts
   as plus git's `user.name`. Both, because a checkout can act as one account and commit as another. Measured
   November 7, 2026: the PRs were authored by one account and the issues assigned to the other.
-- **The day file is the machine's**: `%LOCALAPPDATA%\dkj-hub\dayplan\<yyyy-MM-dd>.json`
-  (`DKJ_HUB_STATE_DIR` moves it for tests). It is not in any repo, because the day belongs to the person and
+- **The day file is the machine's**: `%LOCALAPPDATA%\dkj-admin\dayplan\<yyyy-MM-dd>.json`
+  (`DKJ_ADMIN_STATE_DIR` moves it for tests). It is not in any repo, because the day belongs to the person and
   not to a repo.
 - **The pace is a context, not a quota.** It counts merged PRs, which vary in size. The hour band is the
   bound.

@@ -9,7 +9,7 @@
     stopwatch-hidden.json instead, then runs the sync, which publishes the entry in this machine's own payload. Every
     machine's pages leave out what any machine hid; the newest entry for a run id or label wins, so -Show undoes a
     hide from whichever machine wrote it. The machine that recorded a hidden run erases it from its own store at its
-    next sync (#3453), and from then on -Show cannot bring it back. The rules are in hub/lib/stopwatch-sync-lib.ps1.
+    next sync (#3453), and from then on -Show cannot bring it back. The rules are in apps/admin/lib/stopwatch-sync-lib.ps1.
     In a repo that does not share its runs (DKJ_STOPWATCH_SHARE, #3470) the entry hides the run on this machine's
     pages only, and the sync it runs says 'not shared'.
 
@@ -42,9 +42,9 @@ $ErrorActionPreference = 'Stop'
 $root = if ($RepoRoot) { $RepoRoot } elseif ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR } else { (Get-Location).Path }
 $root = [System.IO.Path]::GetFullPath($root).TrimEnd('\', '/')
 $ownStore = -not $StorePath
-if ($ownStore) { [void](Import-HubTimingOrphanStore -RepoRoot $root); $StorePath = Get-StopwatchStorePath -RepoRoot $root }
+if ($ownStore) { [void](Import-AdminTimingOrphanStore -RepoRoot $root); $StorePath = Get-StopwatchStorePath -RepoRoot $root }
 $hidePath = Get-StopwatchHiddenPath -StorePath $StorePath
-$machine = Get-StopwatchMachineId -StoreDir $(if ($ownStore) { Get-HubTimingBaseDir } else { Split-Path -Parent $StorePath })
+$machine = Get-StopwatchMachineId -StoreDir $(if ($ownStore) { Get-AdminTimingBaseDir } else { Split-Path -Parent $StorePath })
 $own = Read-StopwatchHidden -Path $hidePath
 if ($own.Error) {
     Write-Host "[REFUSED] $hidePath does not read ($($own.Error)) -- nothing was written. Repair or remove it by hand first."

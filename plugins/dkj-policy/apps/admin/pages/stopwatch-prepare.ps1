@@ -4,7 +4,7 @@
     plugin's stopwatch-prepare skill (skills/stopwatch-prepare/SKILL.md).
 
 .DESCRIPTION
-    Adds the label to the `prepared` list of THIS machine's stopwatch.json, so the hub's /dev/stopwatch overview shows a
+    Adds the label to the `prepared` list of THIS machine's stopwatch.json, so Admin's /dev/stopwatch overview shows a
     "ready, not started" card for it. No run is created: the run still starts only when the owner sends a prompt whose
     first line is `stopwatch: <label>`, and the run then lands on that card (the hook removes the prepared entry).
     The label is normalised exactly as a prompt's label is (ConvertTo-StopwatchLabel: control characters as spaces,
@@ -32,14 +32,14 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\stopwatch-lib.ps1')
 $root = if ($RepoRoot) { $RepoRoot } elseif ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR } else { (Get-Location).Path }
 $root = [System.IO.Path]::GetFullPath($root).TrimEnd('\', '/')
-if (-not $StorePath) { [void](Import-HubTimingOrphanStore -RepoRoot $root); $StorePath = Get-StopwatchStorePath -RepoRoot $root }
+if (-not $StorePath) { [void](Import-AdminTimingOrphanStore -RepoRoot $root); $StorePath = Get-StopwatchStorePath -RepoRoot $root }
 
 $norm = ConvertTo-StopwatchLabel -Text $Label
 if (-not $norm) {
     Write-Host '[REFUSED] -Label is empty -- nothing was written.'
     exit 1
 }
-$lock = Get-HubTimingLock -StorePath $StorePath
+$lock = Get-AdminTimingLock -StorePath $StorePath
 try {
     $store = Read-StopwatchStore -Path $StorePath
     if ($store.Error) {

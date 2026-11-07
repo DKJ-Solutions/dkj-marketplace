@@ -2,7 +2,7 @@
 .SYNOPSIS
     One command for the clutter this workflow leaves on a machine: finished branches, stale lanes,
     abandoned work, expired backups, plugin records naming a checkout or a plugin name that is gone,
-    leftover fixture trees, and hub processes that outlived the run that started them. It DELETES
+    leftover fixture trees, and admin processes that outlived the run that started them. It DELETES
     only what prune-merged.ps1 can already prove; everything else it classifies and hands over.
 
 .DESCRIPTION
@@ -139,7 +139,7 @@
     (Fixtures) pin the scratch root the fixture-tree lane walks. Defaults to this machine's TEMP.
 
 .PARAMETER ProcessTableJson
-    (Fixtures) the process table lane 13 judges instead of this machine's; see check-hub-processes.ps1.
+    (Fixtures) the process table lane 13 judges instead of this machine's; see check-admin-processes.ps1.
 
 .EXAMPLE
     ./scripts/maintenance/tidy-machine.ps1 -DryRun
@@ -1027,25 +1027,25 @@ if ($runMachine) {
 }
 
 # ===================================================================================================
-# LANE 13 -- hub servers and watchers that outlived the run that started them (#3620).
+# LANE 13 -- admin servers and watchers that outlived the run that started them (#3620).
 #
-# DELEGATED, like lanes 6 and 7: check-hub-processes.ps1 is also what the session check runs, so the two
+# DELEGATED, like lanes 6 and 7: check-admin-processes.ps1 is also what the session check runs, so the two
 # cannot disagree. It REPORTS and hands over a Stop-Process line; a process is not a merge proof, so this
 # run stops none.
 # ===================================================================================================
 
 if ($runMachine) {
-    Write-Lane '13' 'Hub processes that outlived the run that started them -- delegated to check-hub-processes.ps1'
-    $hubCheck = Join-Path $PSScriptRoot '..\lint\check-hub-processes.ps1'
-    if (Test-Path -LiteralPath $hubCheck -PathType Leaf) {
-        $hubArgs = @{}
-        if ($UserHomeOverride) { $hubArgs['UserHomeOverride'] = $UserHomeOverride }
-        if ($ProcessTableJson) { $hubArgs['ProcessTableJson'] = $ProcessTableJson }
-        $hubOut = @(& $hubCheck @hubArgs 6>&1)
-        foreach ($line in $hubOut) { Write-Item ([string]$line).TrimEnd() 'Yellow' }
-        $reportedTotal += @($hubOut | Where-Object { ([string]$_) -match '^\s+\[WARN\] pid ' }).Count
+    Write-Lane '13' 'Admin processes that outlived the run that started them -- delegated to check-admin-processes.ps1'
+    $adminCheck = Join-Path $PSScriptRoot '..\lint\check-admin-processes.ps1'
+    if (Test-Path -LiteralPath $adminCheck -PathType Leaf) {
+        $adminArgs = @{}
+        if ($UserHomeOverride) { $adminArgs['UserHomeOverride'] = $UserHomeOverride }
+        if ($ProcessTableJson) { $adminArgs['ProcessTableJson'] = $ProcessTableJson }
+        $adminOut = @(& $adminCheck @adminArgs 6>&1)
+        foreach ($line in $adminOut) { Write-Item ([string]$line).TrimEnd() 'Yellow' }
+        $reportedTotal += @($adminOut | Where-Object { ([string]$_) -match '^\s+\[WARN\] pid ' }).Count
     }
-    else { Write-Item 'check-hub-processes.ps1 is not present in this repo -- lane skipped.' 'DarkGray' }
+    else { Write-Item 'check-admin-processes.ps1 is not present in this repo -- lane skipped.' 'DarkGray' }
 }
 
 # ===================================================================================================

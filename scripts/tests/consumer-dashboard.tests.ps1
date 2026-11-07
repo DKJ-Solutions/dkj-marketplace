@@ -10,7 +10,7 @@
     the real server on a free loopback port against this tree and asks it for the static files, a foreign Host, a cross-site request, a POST, a missing path, a dripping client and
     an oversized head. Group 3 serves the page from a fixture tree: a checkout with no upstream, one
     outside the scope root, and no check-consumers.ps1 at all -- and the four general routes that moved to
-    the general pages server (#3119, dkj-policy's since #3198): the hub's General card before and after a state file
+    the general pages server (#3119, dkj-policy's since #3198): Admin's General card before and after a state file
     names a server that answers, and the relayed answer or the 404 each of those routes gets (#3168).
 
     Pure ASCII (repo convention for .ps1).
@@ -21,8 +21,8 @@ $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $Server   = Join-Path $RepoRoot 'scripts\dashboard\serve-consumer-dashboard.ps1'
 . (Join-Path $RepoRoot 'scripts\lib\consumer-dashboard-lib.ps1')
 # The state file's reader and writer, which the server and these fixtures share (#3119).
-$PluginLib = Join-Path $RepoRoot 'plugins\dkj-policy\hub\lib'
-$GeneralServer = Join-Path $RepoRoot 'plugins\dkj-policy\hub\pages\serve-general-pages.ps1'
+$PluginLib = Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib'
+$GeneralServer = Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\pages\serve-general-pages.ps1'
 . (Join-Path $PluginLib 'general-pages-state.ps1')
 . (Join-Path $PluginLib 'loopback-server-lib.ps1')
 
@@ -229,17 +229,17 @@ Assert-True ($html -notmatch 'id="settings"' -and $html -notmatch 'theme-setting
 Assert-True ($html -match '<li><a href="/consumers" aria-current="page">Consumers</a></li><li><a href="/marketplace">Marketplace</a></li>') 'the header carries the product''s pages as its menu, Consumers marked'
 # Five since the register notes' style went with them (October 28, 2026).
 Assert-True (([regex]::Matches($html, 'var\(--(primary|fg-|bg-)')).Count -ge 5 -and $html -match 'class="cd-link"') 'the chosen theme reaches the page beyond its buttons, through the repo layer''s own theme-colour accents'
-Assert-True ($html -notmatch 'class="eyebrow"' -and $html -match '<header class="site-header"><div class="container"><a class="site-header__brand" href="/"' -and $html -match '<h1>Other repos</h1>' -and $html -match '<main class="page-column">') 'the page keeps the hub frame: the site header in place of the eyebrow, its own h1, the page column'
+Assert-True ($html -notmatch 'class="eyebrow"' -and $html -match '<header class="site-header"><div class="container"><a class="site-header__brand" href="/"' -and $html -match '<h1>Other repos</h1>' -and $html -match '<main class="page-column">') 'the page keeps the Admin frame: the site header in place of the eyebrow, its own h1, the page column'
 Assert-True ($html -match 'house-theme\.js"></script>\s*<script>DKJTheme\.setWidth\("full"\);</script>' -and $html -notmatch 'width-bar') 'the page pins the width to full, as Admin does, and draws no width bar (Dave, November 4, 2026)'
-Assert-True ($html -match '(?s)<body>\s*<header class="site-header">.*?</header>\s*<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>\s*<li><a href="/">Home</a></li>\s*<li><span class="breadcrumbs__sep" aria-hidden="true"><svg\ viewBox="0\ 0\ 24\ 24"><path\ fill="currentColor"\ fill-rule="evenodd"\ d="M9\.793\ 16\.707a1\ 1\ 0\ 0\ 1\ 0-1\.414L13\.086\ 12\ 9\.793\ 8\.707a1\ 1\ 0\ 0\ 1\ 1\.414-1\.414l4\ 4a1\ 1\ 0\ 0\ 1\ 0\ 1\.414l-4\ 4a1\ 1\ 0\ 0\ 1-1\.414\ 0"\ clip-rule="evenodd"/></svg></span><a href="/consumers">Consumers</a></li>\s*<li><span class="breadcrumbs__sep" aria-hidden="true"><svg[^>]*><path[^>]*/></svg></span><span aria-current="page">Other repos</span></li>') 'the site header opens <body> and the breadcrumb bar, its trail from the hub through Consumers to the group (#3090, #3097)'
+Assert-True ($html -match '(?s)<body>\s*<header class="site-header">.*?</header>\s*<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>\s*<li><a href="/">Home</a></li>\s*<li><span class="breadcrumbs__sep" aria-hidden="true"><svg\ viewBox="0\ 0\ 24\ 24"><path\ fill="currentColor"\ fill-rule="evenodd"\ d="M9\.793\ 16\.707a1\ 1\ 0\ 0\ 1\ 0-1\.414L13\.086\ 12\ 9\.793\ 8\.707a1\ 1\ 0\ 0\ 1\ 1\.414-1\.414l4\ 4a1\ 1\ 0\ 0\ 1\ 0\ 1\.414l-4\ 4a1\ 1\ 0\ 0\ 1-1\.414\ 0"\ clip-rule="evenodd"/></svg></span><a href="/consumers">Consumers</a></li>\s*<li><span class="breadcrumbs__sep" aria-hidden="true"><svg[^>]*><path[^>]*/></svg></span><span aria-current="page">Other repos</span></li>') 'the site header opens <body> and the breadcrumb bar, its trail from Admin through Consumers to the group (#3090, #3097)'
 Assert-True (([regex]::Matches($html, '<header')).Count -eq 1 -and $html -notmatch 'cd-band|cd-accent') 'and its intro is no <header> (the one is the site header), and no decoration the form does not carry'
-Assert-True ($html -notmatch 'About this repo</h2>' -and $html -match 'href="#overview">Back to overview') 'the facts card is the hub''s, and the card the overview links down to carries the way back'
-Assert-True ($html -notmatch 'id="hub-banner"') 'the page carries no airsquats banner: that is Admin''s alone, never a product page''s (Dave, November 4, 2026)'
+Assert-True ($html -notmatch 'About this repo</h2>' -and $html -match 'href="#overview">Back to overview') 'the facts card is Admin''s, and the card the overview links down to carries the way back'
+Assert-True ($html -notmatch 'id="admin-banner"') 'the page carries no airsquats banner: that is Admin''s alone, never a product page''s (Dave, November 4, 2026)'
 $ix = @('class="site-header"', 'class="breadcrumbs-bar"', '<h1>', 'Connected repos</h2>', 'Issues</h2>', 'class="note"') | ForEach-Object { $html.IndexOf($_) }
 Assert-True ((@($ix | Where-Object { $_ -lt 0 }).Count -eq 0) -and ((($ix | Sort-Object) -join ',') -eq ($ix -join ','))) 'and its blocks stand in the form''s order'
 Assert-True ($html -match '1\.3s|1\.2s') 'the run time is printed with an invariant decimal point'
 Assert-Equal 'bwj' (Get-ConsumerOwnerGroup 'BWJ-Development/shop') 'a BWJ-Development repo is in the BWJ group'
-Assert-Equal 'dkj' (Get-ConsumerOwnerGroup 'dkj-solutions/hub') 'a DKJ-Solutions repo is in the DKJ group, whatever the case'
+Assert-Equal 'dkj' (Get-ConsumerOwnerGroup 'dkj-solutions/admin') 'a DKJ-Solutions repo is in the DKJ group, whatever the case'
 Assert-Equal 'other' (Get-ConsumerOwnerGroup 'DaveKJohn/djcylow-react') 'any other owner is Other'
 Assert-Equal 'other' (Get-ConsumerOwnerGroup '') 'no slug is Other, not an error'
 $three = @(
@@ -258,7 +258,7 @@ Assert-True ($overview.IndexOf('href="/consumers/dkj#repo-dkj-solutions-w"') -ge
 Assert-True ($overview.Contains('<span>w</span><span class="badge badge--sm badge--bad"') -and $overview -match 'href="/consumers/other#repo-someone-x"') 'the card names the repo without its owner, its status mark after the name'
 Assert-True ($overview -match '<h2>BWJ</h2></div>' -and $overview -match 'No repo owned by BWJ-Development is registered') 'an empty group keeps its section and says so'
 Assert-True ($overview -notmatch 'Connected repos</h2>' -and $overview -notmatch '<section class="mini-card' -and $overview -notmatch 'id="issues"') 'the overview holds no table and no details: those are the group pages'
-$withDkj = Format-ConsumerDashboardHtml -Consumers $three -Meta @{ GeneratedAt = 'now' } -DkjCardsHtml ((Format-HubCardLinkHtml -Href '/a' -Label 'a' -Heading 3) + (Format-HubCardLinkHtml -Href '/b' -Label 'b' -Heading 3)) -Style '.dr-x { }' -NoticeHtml '<p>n</p>'
+$withDkj = Format-ConsumerDashboardHtml -Consumers $three -Meta @{ GeneratedAt = 'now' } -DkjCardsHtml ((Format-AdminCardLinkHtml -Href '/a' -Label 'a' -Heading 3) + (Format-AdminCardLinkHtml -Href '/b' -Label 'b' -Heading 3)) -Style '.dr-x { }' -NoticeHtml '<p>n</p>'
 Assert-True ($withDkj -match '<div class="card-grid dr-repos" id="group-dkj">' -and $withDkj.Contains('<h2>DKJ</h2></div>') -and ([regex]::Matches($withDkj, 'menu-item__label"><h3>')).Count -eq 3 -and $withDkj -notmatch 'consumers/dkj#repo' -and $withDkj.Contains('.dr-x { }') -and $withDkj.Contains('<p>n</p>')) 'handed the DKJ page''s own cards, the DKJ section holds those in their grid, with their style and notice'
 Assert-True ($overview -notmatch 'class="tiles"' -and $overview -notmatch 'class="lead"') 'the overview has no tiles and no lead: its h1, then its groups'' sections (owner, October 26, 2026)'
 Assert-True ($html -notmatch 'class="tiles"' -and $html -notmatch 'class="lead"') 'and neither has a group''s page'
@@ -385,17 +385,17 @@ if ([System.Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) {
             Assert-Equal 403 (Get-Status 'GET' '/house-style.css' "evil.example:$port") 'a foreign Host is refused'
             Assert-Equal 405 (Get-Status 'POST' '/' "localhost:$port") 'a POST is refused'
             Assert-Equal 405 (Get-Status 'POST' '/stopwatch/start?label=x' "localhost:$port" "Sec-Fetch-Site: same-origin`r`n") 'the Stopwatch takes no POST any more (#3323)'
-            # THE GENERAL PAGES ARE THE PLUGIN HUB'S (#3540): this server is the product, so it neither builds nor relays them.
+            # THE GENERAL PAGES ARE THE PLUGIN ADMIN'S (#3540): this server is the product, so it neither builds nor relays them.
             # /plugins is not among them: the product has a Plugins page of its own, what the marketplace ships, where
-            # the hub's is what this checkout enables (the owner, October 27, 2026).
+            # Admin's is what this checkout enables (the owner, October 27, 2026).
             foreach ($general in '/stopwatch', '/logbook', '/test-gate', '/repository', '/issues', '/sessionstart', '/release-notes', '/about') {
-                Assert-Equal 404 (Get-Status 'GET' $general "localhost:$port") "$general is no page of the product: it is the plugin hub's"
+                Assert-Equal 404 (Get-Status 'GET' $general "localhost:$port") "$general is no page of the product: it is the plugin admin's"
             }
             Assert-Equal 404 (Get-Status 'GET' '/../consumers/x.json' "localhost:$port") 'a path outside the routes is not found'
-            # The brandbook app is retired (#3493): the product neither serves nor redirects it, and the house style's specimens are under the hub's /plugins.
+            # The brandbook app is retired (#3493): the product neither serves nor redirects it, and the house style's specimens are under Admin's /plugins.
             Assert-Equal 404 (Get-Status 'GET' '/brandbook' "localhost:$port") '/brandbook is not a page of the product'
             Assert-Equal 404 (Get-Status 'GET' '/brandbook/' "localhost:$port") 'and neither is /brandbook/'
-            Assert-Equal 404 (Get-Status 'GET' '/house-style' "localhost:$port") 'and no /house-style either: the house style is the dkj-policy plugin''s, under the hub''s /plugins (#3493, #3629)'
+            Assert-Equal 404 (Get-Status 'GET' '/house-style' "localhost:$port") 'and no /house-style either: the house style is the dkj-policy plugin''s, under Admin''s /plugins (#3493, #3629)'
             # Whose server this is: the general server's own question, answered the same way.
             $who = Get-Raw 'GET' '/whoami' "localhost:$port"
             Assert-True ($who -match 'HTTP/1.1 200' -and $who.EndsWith("`r`n`r`n" + (Get-DevPreviewRootHash -Root $RepoRoot))) '/whoami answers the hash of this root, as the general server does'
@@ -454,8 +454,8 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\consumer-dashboard-lib.ps1') (Join-Path $src 'scripts\lib\')
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\dev-pages-lib.ps1') (Join-Path $src 'scripts\lib\')
         # dev-pages-lib reads the plugins' libs from the plugin tree beside scripts/, and the server its state reader.
-        New-Item -ItemType Directory -Force -Path (Join-Path $src 'plugins\dkj-policy\hub\lib') | Out-Null
-        Copy-Item (Join-Path $PluginLib '*.ps1') (Join-Path $src 'plugins\dkj-policy\hub\lib\')
+        New-Item -ItemType Directory -Force -Path (Join-Path $src 'plugins\dkj-policy\apps\admin\lib') | Out-Null
+        Copy-Item (Join-Path $PluginLib '*.ps1') (Join-Path $src 'plugins\dkj-policy\apps\admin\lib\')
         # And dkj-solutions' product layout, which the product's pages are drawn with since #3831.
         New-Item -ItemType Directory -Force -Path (Join-Path $src 'plugins\dkj-policy\dkj-solutions\scripts\lib') | Out-Null
         Copy-Item (Join-Path $RepoRoot 'plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1') (Join-Path $src 'plugins\dkj-policy\dkj-solutions\scripts\lib\')
@@ -495,12 +495,12 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
             $at = $page.IndexOf('id="repo-org-far"')
             $far = if ($at -ge 0) { $page.Substring($at, $page.IndexOf('</section>', $at) - $at) } else { '' }
             Assert-True ($far -and $far -notmatch 'class="meta"') 'a checkout outside the scope root is not read'
-            # THE PRODUCT (#3540): the general pages are the plugin hub's, so this server neither relays nor builds them.
+            # THE PRODUCT (#3540): the general pages are the plugin admin's, so this server neither relays nor builds them.
             foreach ($moved in '/issues', '/sessionstart', '/release-notes', '/test-gate', '/repository') {
                 $r = if ($up) { Get-Raw 'GET' $moved "localhost:$port3" '' $port3 } else { '' }
-                Assert-True ($r -match 'HTTP/1.1 404' -and $r -match 'Not found\.') "$moved is a plain 404: it is the plugin hub's page, not the product's"
+                Assert-True ($r -match 'HTTP/1.1 404' -and $r -match 'Not found\.') "$moved is a plain 404: it is the plugin admin's page, not the product's"
             }
-            $srcState = Get-RepoHubStatePath -Root $src
+            $srcState = Get-RepoAdminStatePath -Root $src
             # The product's home page on '/' and the pages under it (#3540).
             $home3 = if ($up) { Get-Raw 'GET' '/' "localhost:$port3" '' $port3 } else { '' }
             Assert-True ($home3 -match 'HTTP/1.1 200' -and $home3 -match 'site-header__name">dkj-marketplace <span class="site-header__tag">product</span>' -and $home3 -match 'href="/consumers"' -and $home3 -notmatch 'href="/specialists"' -and $home3 -match 'href="/marketplace"' -and $home3 -notmatch 'href="/dkj-repos"') '/ serves the product''s home page, linking Consumers and Plugins'
@@ -520,31 +520,31 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
             Assert-True ($r -match 'HTTP/1.1 303' -and $r -match 'Location: /marketplace/p-one\r') 'an old /plugins address sends an old link to the same page under /marketplace, the url following the h1 (Maikel, October 30, 2026)'
             $r = if ($up) { Get-Raw 'GET' '/dkj-repos' "localhost:$port3" '' $port3 } else { '' }
             Assert-True ($r -match 'HTTP/1.1 303' -and $r -match 'Location: /consumers/dkj\r') 'the old /dkj-repos sends an old link to /consumers/dkj, which holds the repos on GitHub since #3549'
-            Assert-True ($home3 -match 'Admin is not running' -and $home3 -notmatch 'href="http://localhost' -and $home3 -notmatch 'href="/brandbook' -and $home3 -notmatch 'href="/test-gate"') 'with no state file it says the hub is not running, and links no general page of its own'
-            $r = if ($up) { Get-Raw 'GET' '/hub' "localhost:$port3" '' $port3 } else { '' }
-            Assert-True ($r -match 'HTTP/1.1 404' -and $r -match 'Admin is not running') 'and /hub is a 404 text, never a redirect to a port nobody answers on'
-            # A state file naming a port nobody answers on is no hub.
-            Write-RepoHubState -Root $src -Hub "http://localhost:$genPort3/" -Pages "http://localhost:$genPort3" -Product "http://localhost:$port3/" -Mode 'product'
-            $r = if ($up) { Get-Raw 'GET' '/hub' "localhost:$port3" '' $port3 } else { '' }
-            Assert-True ($r -match 'HTTP/1.1 404') 'a state file naming a port where nothing answers is no hub: a 404 text, not a redirect'
-            # The real plugin hub for this fixture, which answers /whoami with this root's hash.
+            Assert-True ($home3 -match 'Admin is not running' -and $home3 -notmatch 'href="http://localhost' -and $home3 -notmatch 'href="/brandbook' -and $home3 -notmatch 'href="/test-gate"') 'with no state file it says Admin is not running, and links no general page of its own'
+            $r = if ($up) { Get-Raw 'GET' '/admin' "localhost:$port3" '' $port3 } else { '' }
+            Assert-True ($r -match 'HTTP/1.1 404' -and $r -match 'Admin is not running') 'and /admin is a 404 text, never a redirect to a port nobody answers on'
+            # A state file naming a port nobody answers on is no admin.
+            Write-RepoAdminState -Root $src -Admin "http://localhost:$genPort3/" -Pages "http://localhost:$genPort3" -Product "http://localhost:$port3/" -Mode 'product'
+            $r = if ($up) { Get-Raw 'GET' '/admin' "localhost:$port3" '' $port3 } else { '' }
+            Assert-True ($r -match 'HTTP/1.1 404') 'a state file naming a port where nothing answers is no admin: a 404 text, not a redirect'
+            # The real plugin admin for this fixture, which answers /whoami with this root's hash.
             $gen3 = Start-Process -FilePath 'powershell' -PassThru -WindowStyle Hidden -ArgumentList @(
                 '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$GeneralServer`"", '-Port', $genPort3, '-RepoRootOverride', "`"$src`"",
                 '-StopwatchPath', "`"$(Join-Path $fixture 'timing\stopwatch.json')`"", '-LogbookPath', "`"$(Join-Path $fixture 'timing\logbook.json')`"", '-TranscriptDir', "`"$(Join-Path $fixture 'timing\transcripts')`"")
             try {
-                Assert-True (Wait-ServerUp $genPort3) 'the fixture''s plugin hub listens'
-                Assert-True ((Get-Raw 'GET' '/brandbook' "localhost:$genPort3" '' $genPort3) -match 'HTTP/1.1 404') 'the plugin hub serves no Brandbook (#3475)'
+                Assert-True (Wait-ServerUp $genPort3) 'the fixture''s plugin admin listens'
+                Assert-True ((Get-Raw 'GET' '/brandbook' "localhost:$genPort3" '' $genPort3) -match 'HTTP/1.1 404') 'the plugin admin serves no Brandbook (#3475)'
                 $homeUp = if ($up) { Get-Raw 'GET' '/' "localhost:$port3" '' $port3 } else { '' }
-                Assert-True ($homeUp -match ('<a class="menu-item" href="http://localhost:' + $genPort3 + '">') -and $homeUp -notmatch 'Admin is not running') 'the home page''s first card links the plugin hub, once it answers as this checkout''s'
-                $r = if ($up) { Get-Raw 'GET' '/hub' "localhost:$port3" '' $port3 } else { '' }
-                Assert-True ($r -match 'HTTP/1.1 303' -and $r -match ('Location: http://localhost:' + $genPort3 + '\r')) 'and /hub sends the visitor there'
-                $hubHome = Get-Raw 'GET' '/' "localhost:$genPort3" '' $genPort3
-                Assert-True ($hubHome -match 'HTTP/1.1 200' -and $hubHome -match ('href="http://localhost:' + $port3 + '/"')) 'the plugin hub links the product in turn, from the state file (#3245)'
-                # THE BROWSER'S OWN HEADERS (#3119): ports do not count toward "site", so the hub's link to the product
+                Assert-True ($homeUp -match ('<a class="menu-item" href="http://localhost:' + $genPort3 + '">') -and $homeUp -notmatch 'Admin is not running') 'the home page''s first card links the plugin admin, once it answers as this checkout''s'
+                $r = if ($up) { Get-Raw 'GET' '/admin' "localhost:$port3" '' $port3 } else { '' }
+                Assert-True ($r -match 'HTTP/1.1 303' -and $r -match ('Location: http://localhost:' + $genPort3 + '\r')) 'and /admin sends the visitor there'
+                $adminHome = Get-Raw 'GET' '/' "localhost:$genPort3" '' $genPort3
+                Assert-True ($adminHome -match 'HTTP/1.1 200' -and $adminHome -match ('href="http://localhost:' + $port3 + '/"')) 'the plugin admin links the product in turn, from the state file (#3245)'
+                # THE BROWSER'S OWN HEADERS (#3119): ports do not count toward "site", so Admin's link to the product
                 # arrives same-site -- a top-level navigation. A fetch or a cross-site request does not get in.
                 $nav = "Sec-Fetch-Site: same-site`r`nSec-Fetch-Mode: navigate`r`nSec-Fetch-Dest: document`r`n"
                 $r = Get-Raw 'GET' '/' "localhost:$port3" $nav $port3
-                Assert-True ($r -match 'HTTP/1.1 200' -and $r -match '<title>dkj-marketplace -- Home</title>') 'a same-site navigation from the hub to the product is served'
+                Assert-True ($r -match 'HTTP/1.1 200' -and $r -match '<title>dkj-marketplace -- Home</title>') 'a same-site navigation from Admin to the product is served'
                 $r = Get-Raw 'GET' '/consumers' "localhost:$port3" "Sec-Fetch-Site: same-site`r`nSec-Fetch-Mode: cors`r`n" $port3
                 Assert-True ($r -match 'HTTP/1.1 403') 'a same-site fetch is still refused'
                 $r = Get-Raw 'GET' '/' "localhost:$port3" "Sec-Fetch-Site: cross-site`r`nSec-Fetch-Mode: navigate`r`n" $port3
@@ -587,8 +587,8 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
         New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'scripts\lib'), (Join-Path $fixture4 'scripts\dashboard'),(Join-Path $fixture4 'plugins\dkj-policy\assets\dkj-brandbook') | Out-Null
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\consumer-dashboard-lib.ps1') (Join-Path $fixture4 'scripts\lib\')
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\dev-pages-lib.ps1') (Join-Path $fixture4 'scripts\lib\')
-        New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'plugins\dkj-policy\hub\lib') | Out-Null
-        Copy-Item (Join-Path $PluginLib '*.ps1') (Join-Path $fixture4 'plugins\dkj-policy\hub\lib\')
+        New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'plugins\dkj-policy\apps\admin\lib') | Out-Null
+        Copy-Item (Join-Path $PluginLib '*.ps1') (Join-Path $fixture4 'plugins\dkj-policy\apps\admin\lib\')
         # And dkj-solutions' product layout (#3831).
         New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'plugins\dkj-policy\dkj-solutions\scripts\lib') | Out-Null
         Copy-Item (Join-Path $RepoRoot 'plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1') (Join-Path $fixture4 'plugins\dkj-policy\dkj-solutions\scripts\lib\')
@@ -605,8 +605,8 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
             '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$(Join-Path $fixture4 'scripts\dashboard\serve-consumer-dashboard.ps1')`"", '-Port', $port4)
         $up = Wait-ServerUp $port4
         Assert-True $up 'the group-4 server listens on the port it was given'
-        $hub = if ($up) { Get-Raw 'GET' '/' "localhost:$port4" '' $port4 } else { '' }
-        Assert-True ($hub -match 'HTTP/1.1 200' -and $hub -match "<code>$($first.Substring(0, 8))</code>") 'the home page''s footer names the commit the server loaded'
+        $admin = if ($up) { Get-Raw 'GET' '/' "localhost:$port4" '' $port4 } else { '' }
+        Assert-True ($admin -match 'HTTP/1.1 200' -and $admin -match "<code>$($first.Substring(0, 8))</code>") 'the home page''s footer names the commit the server loaded'
         # Measured October 19, 2026: a server started before #3130 moved the house style threw on the file it
         # could no longer find, and the browser saw a dropped connection instead of a stylesheet.
         $gone = if ($up) { Get-Raw 'GET' '/house-theme.js' "localhost:$port4" '' $port4 } else { '' }
@@ -621,8 +621,8 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
         Assert-True ($proc4.WaitForExit(15000)) 'and the old server exits'
         $up = Wait-ServerUp $port4
         Assert-True $up 'its successor listens on the same port'
-        $hub = if ($up) { Get-Raw 'GET' '/' "localhost:$port4" '' $port4 } else { '' }
-        Assert-True ($hub -match 'HTTP/1.1 200' -and $hub -match "<code>$($second.Substring(0, 8))</code>") 'and serves the new commit'
+        $admin = if ($up) { Get-Raw 'GET' '/' "localhost:$port4" '' $port4 } else { '' }
+        Assert-True ($admin -match 'HTTP/1.1 200' -and $admin -match "<code>$($second.Substring(0, 8))</code>") 'and serves the new commit'
         $succ = @(Get-NetTCPConnection -State Listen -LocalPort $port4 -ErrorAction SilentlyContinue | ForEach-Object { $_.OwningProcess })
         & git -C $fixture4 -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m 'third' 2>$null
         $page = if ($up) { Get-Raw 'GET' '/' "localhost:$port4" '' $port4 } else { '' }
@@ -689,20 +689,20 @@ Assert-Equal "Set-Location -LiteralPath 'C:\x\o''b'; claude 'start it''s dossier
 
 # repo-session.ps1 against a fixture tree: the register resolves, a missing checkout is refused, -WhatIf runs nothing.
 $rsRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('repo-session-' + [guid]::NewGuid().ToString('n'))
-$rsHub = Join-Path $rsRoot 'org\hub'
-New-Item -ItemType Directory -Force -Path (Join-Path $rsHub 'consumers'), (Join-Path $rsHub 'scripts\lib'), (Join-Path $rsRoot 'org\dkj-lifehub') | Out-Null
-# repo-session.ps1 loads the hub's page lib, which loads the consumer lib and the plugin libs beside it
+$rsAdmin = Join-Path $rsRoot 'org\admin'
+New-Item -ItemType Directory -Force -Path (Join-Path $rsAdmin 'consumers'), (Join-Path $rsAdmin 'scripts\lib'), (Join-Path $rsRoot 'org\dkj-lifehub') | Out-Null
+# repo-session.ps1 loads Admin's page lib, which loads the consumer lib and the plugin libs beside it
 # (dev-preview-rules.ps1 for the Product card's url rule, #3468; test-gate-lib.ps1, the Test gate's page, #3470; plugins-page-lib.ps1, whose description paragraphs the product's Plugins pages use; and dkj-solutions' product-pages-lib.ps1, the product layout, #3831).
-foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'scripts\lib\dev-pages-lib.ps1', 'plugins\dkj-policy\hub\lib\general-pages-lib.ps1', 'plugins\dkj-policy\hub\lib\dev-preview-rules.ps1', 'plugins\dkj-policy\hub\lib\test-gate-lib.ps1', 'plugins\dkj-policy\hub\lib\plugins-page-lib.ps1', 'plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1') {
-    $to = Join-Path $rsHub (Split-Path -Parent $lib)
+foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'scripts\lib\dev-pages-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\dev-preview-rules.ps1', 'plugins\dkj-policy\apps\admin\lib\test-gate-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\plugins-page-lib.ps1', 'plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1') {
+    $to = Join-Path $rsAdmin (Split-Path -Parent $lib)
     New-Item -ItemType Directory -Force -Path $to | Out-Null
     Copy-Item -LiteralPath (Join-Path $RepoRoot $lib) -Destination $to
 }
-Set-Content -LiteralPath (Join-Path $rsHub 'consumers\life-hub.json') -Encoding UTF8 -Value '{ "repo": "DKJ-Solutions/dkj-lifehub", "visibility": "private", "localCheckout": ["../dkj-lifehub", "../life-hub"] }'
-Set-Content -LiteralPath (Join-Path $rsHub 'consumers\recipes.json') -Encoding UTF8 -Value '{ "repo": "DKJ-Solutions/dkj-recipes", "visibility": "private", "localCheckout": "../dkj-recipes" }'
-Set-Content -LiteralPath (Join-Path $rsHub 'consumers\escape.json') -Encoding UTF8 -Value '{ "repo": "DKJ-Solutions/escape", "visibility": "public", "localCheckout": "../../../../.." }'
+Set-Content -LiteralPath (Join-Path $rsAdmin 'consumers\life-hub.json') -Encoding UTF8 -Value '{ "repo": "DKJ-Solutions/dkj-lifehub", "visibility": "private", "localCheckout": ["../dkj-lifehub", "../life-hub"] }'
+Set-Content -LiteralPath (Join-Path $rsAdmin 'consumers\recipes.json') -Encoding UTF8 -Value '{ "repo": "DKJ-Solutions/dkj-recipes", "visibility": "private", "localCheckout": "../dkj-recipes" }'
+Set-Content -LiteralPath (Join-Path $rsAdmin 'consumers\escape.json') -Encoding UTF8 -Value '{ "repo": "DKJ-Solutions/escape", "visibility": "public", "localCheckout": "../../../../.." }'
 $rsScript = Join-Path $RepoRoot 'scripts\dashboard\repo-session.ps1'
-$run = { param([string[]]$a) $o = & powershell -NoProfile -ExecutionPolicy Bypass -File $rsScript @a -RepoRootOverride $rsHub 2>&1 | ForEach-Object { [string]$_ }; @{ Out = ($o -join "`n"); Code = $LASTEXITCODE } }
+$run = { param([string[]]$a) $o = & powershell -NoProfile -ExecutionPolicy Bypass -File $rsScript @a -RepoRootOverride $rsAdmin 2>&1 | ForEach-Object { [string]$_ }; @{ Out = ($o -join "`n"); Code = $LASTEXITCODE } }
 try {
     $r = & $run @('lifehub', '-Open', '-WhatIf', '-Prompt', 'Start a dossier')
     $expected = Format-RepoSessionCommand -Path ([System.IO.Path]::GetFullPath((Join-Path $rsRoot 'org\dkj-lifehub'))) -Prompt 'Start a dossier'
@@ -731,30 +731,30 @@ try {
 # ai-radar.ps1 against a fixture tree (#3867): the lifehub resolves through the register, the dossier is found by
 # its shape, the inbox holds only unjudged items, -All holds them all, and a missing checkout is refused.
 $arRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('ai-radar-' + [guid]::NewGuid().ToString('n'))
-$arHub = Join-Path $arRoot 'org\hub'
+$arAdmin = Join-Path $arRoot 'org\admin'
 $arAi = Join-Path $arRoot 'org\dkj-lifehub\Brains\b\x\dkj-solutions\ai'
-New-Item -ItemType Directory -Force -Path (Join-Path $arHub 'consumers'), (Join-Path $arAi 'claude'), (Join-Path $arAi 'ecosysteem') | Out-Null
-foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'plugins\dkj-policy\hub\lib\general-pages-lib.ps1', 'plugins\dkj-policy\hub\lib\dev-preview-rules.ps1', 'plugins\dkj-policy\hub\lib\test-gate-lib.ps1', 'plugins\dkj-policy\hub\lib\plugins-page-lib.ps1', 'plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1') {
-    $to = Join-Path $arHub (Split-Path -Parent $lib)
+New-Item -ItemType Directory -Force -Path (Join-Path $arAdmin 'consumers'), (Join-Path $arAi 'claude'), (Join-Path $arAi 'ecosysteem') | Out-Null
+foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\dev-preview-rules.ps1', 'plugins\dkj-policy\apps\admin\lib\test-gate-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\plugins-page-lib.ps1', 'plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1') {
+    $to = Join-Path $arAdmin (Split-Path -Parent $lib)
     New-Item -ItemType Directory -Force -Path $to | Out-Null
     Copy-Item -LiteralPath (Join-Path $RepoRoot $lib) -Destination $to
 }
-Set-Content -LiteralPath (Join-Path $arHub 'consumers\dkj-lifehub.json') -Encoding UTF8 -Value '{ "repo": "DKJ-Solutions/dkj-lifehub", "visibility": "private", "localCheckout": ["../dkj-lifehub"] }'
+Set-Content -LiteralPath (Join-Path $arAdmin 'consumers\dkj-lifehub.json') -Encoding UTF8 -Value '{ "repo": "DKJ-Solutions/dkj-lifehub", "visibility": "private", "localCheckout": ["../dkj-lifehub"] }'
 Set-Content -LiteralPath (Join-Path $arAi 'CORTEX.md') -Encoding UTF8 -Value "# AI`n`n### Not an item: the dossier's own example`n- **Onze setup:** <oordeel>"
 Set-Content -LiteralPath (Join-Path $arAi 'claude\CORTEX.md') -Encoding UTF8 -Value ("# Claude`n`n## Claude Code`n`n### Judged one`n`n- **Onze setup:** ``Hebben we``, plugins/dkj-policy/skills/x/`n`n" +
     "### Open one`n`n- **Onze setup:** ``Te beoordelen```n`n## Modellen en API`n`n### No verdict yet`n`n- **Bron:** https://example.com")
 Set-Content -LiteralPath (Join-Path $arAi 'ecosysteem\CORTEX.md') -Encoding UTF8 -Value '# Ecosysteem'
 $arScript = Join-Path $RepoRoot 'scripts\dashboard\ai-radar.ps1'
-$arRun = { param([string]$Hub, [string[]]$a) $o = & powershell -NoProfile -ExecutionPolicy Bypass -File $arScript @a -RepoRootOverride $Hub 2>&1 | ForEach-Object { [string]$_ }; @{ Out = ($o -join "`n"); Code = $LASTEXITCODE } }
+$arRun = { param([string]$Admin, [string[]]$a) $o = & powershell -NoProfile -ExecutionPolicy Bypass -File $arScript @a -RepoRootOverride $Admin 2>&1 | ForEach-Object { [string]$_ }; @{ Out = ($o -join "`n"); Code = $LASTEXITCODE } }
 try {
-    $r = & $arRun $arHub @()
+    $r = & $arRun $arAdmin @()
     Assert-True ($r.Code -eq 0 -and $r.Out -match '3 in all, 2 still') 'the radar counts the items of every subfolder, and the dossier''s own example is not one'
     Assert-True ($r.Out -match 'Open one' -and $r.Out -match 'No verdict yet' -and $r.Out -notmatch 'Judged one') 'the inbox holds an item marked Te beoordelen and one with no verdict, and not a judged one'
     Assert-True ($r.Out -match 'claude/CORTEX.md > Modellen en API') 'an item is shown under its file and section'
-    $r = & $arRun $arHub @('-All')
+    $r = & $arRun $arAdmin @('-All')
     Assert-True ($r.Code -eq 0 -and $r.Out -match 'Judged one\s+--\s+`Hebben we`') '-All shows a judged item with its verdict'
     Remove-Item -LiteralPath (Join-Path $arRoot 'org\dkj-lifehub') -Recurse -Force
-    $r = & $arRun $arHub @()
+    $r = & $arRun $arAdmin @()
     Assert-True ($r.Code -eq 1 -and $r.Out -match 'no checkout on this machine') 'a lifehub with no checkout is refused'
 } finally {
     Remove-Item -LiteralPath $arRoot -Recurse -Force -ErrorAction SilentlyContinue

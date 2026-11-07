@@ -32,10 +32,10 @@ $script:DayPlanMaxItems = 12
 $script:DayPlanModes = @('plan', 'go')
 
 function Get-DayPlanDir {
-    <# The machine's folder for day files: DKJ_HUB_STATE_DIR where set (the tests), else %LOCALAPPDATA%\dkj-hub, then dayplan. #>
-    $base = if ($env:DKJ_HUB_STATE_DIR) { $env:DKJ_HUB_STATE_DIR }
-            elseif ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'dkj-hub' }
-            else { Join-Path ([System.IO.Path]::GetTempPath()) 'dkj-hub' }
+    <# The machine's folder for day files: DKJ_ADMIN_STATE_DIR where set (the tests), else %LOCALAPPDATA%\dkj-admin, then dayplan. #>
+    $base = if ($env:DKJ_ADMIN_STATE_DIR) { $env:DKJ_ADMIN_STATE_DIR }
+            elseif ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'dkj-admin' }
+            else { Join-Path ([System.IO.Path]::GetTempPath()) 'dkj-admin' }
     return (Join-Path $base 'dayplan')
 }
 

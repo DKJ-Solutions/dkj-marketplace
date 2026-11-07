@@ -1,20 +1,20 @@
 <#
 .SYNOPSIS
-    The Test gate page of every repo's hub (#3097; in dkj-policy since #3470): what each test suite costs on CI,
+    The Test gate page of every repo's admin (#3097; in dkj-policy since #3470): what each test suite costs on CI,
     grouped by the workflow step it guards, read from the repo's own scripts/tests/suite-durations.json.
 
 .DESCRIPTION
     NO I/O BUT Read-TestGateModel, which reads the repo's files for either server (serve-general-pages.ps1 in every
-    repo, the source repo's own hub there) and hands the parsed JSON to the pure functions, so every rule is tested
+    repo, the source repo's own admin there) and hands the parsed JSON to the pure functions, so every rule is tested
     without a server.
 
     THE DATA IS THE REPO'S OWN, NOT A SECOND MEASUREMENT: scripts/tests/suite-durations.json, and where the repo keeps
     one, scripts/tests/suite-groups.json to group the suites by the workflow step each guards. Any repo writes the
     first with the plugin's record-suite-durations.ps1 from CI runs (its record-suite-durations skill, #3474). A repo without that file
-    gets the page anyway, saying no test gate has been measured here yet: every hub has the card, the owner's choice
+    gets the page anyway, saying no test gate has been measured here yet: every admin has the card, the owner's choice
     on #3470.
 
-    A SECTION ONLY THE SOURCE REPO HAS: what this checkout's change selects (-Selection), built by its own hub from
+    A SECTION ONLY THE SOURCE REPO HAS: what this checkout's change selects (-Selection), built by its own admin from
     the affected-suite selection open-pr and its CI check run. The plugin's server passes none, and the page leaves
     the section out.
 
@@ -141,7 +141,7 @@ function Format-TestGatePageHtml {
 
         -ReadError is set when suite-durations.json could not be read, -GroupsError when suite-groups.json could
         not be; without groups the suites are one list, 'suites'. A -ReadError of 'the file is not there' is the
-        empty state: no test gate measured in this repo yet. -RepoName names the site in the page's header, -HubHref
+        empty state: no test gate measured in this repo yet. -RepoName names the site in the page's header, -AdminHref
         is where its Home crumb goes ('/', the root of Admin), and -RepoSlug (owner/name) links each
         recorded CI run on GitHub; without it a run is its number.
 
@@ -151,7 +151,7 @@ function Format-TestGatePageHtml {
         so the page shows the gate's own answer rather than a second reading of it.
     #>
     param([Parameter(Mandatory = $true)][hashtable]$Model, [AllowEmptyString()][string]$ReadError = '', [AllowEmptyString()][string]$GroupsError = '', $Selection = $null,
-        [AllowEmptyString()][string]$RepoName = '', [string]$HubHref = '/', [AllowEmptyString()][string]$RepoSlug = '', [AllowEmptyString()][string]$Path = '')
+        [AllowEmptyString()][string]$RepoName = '', [string]$AdminHref = '/', [AllowEmptyString()][string]$RepoSlug = '', [AllowEmptyString()][string]$Path = '')
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $inv = [Globalization.CultureInfo]::InvariantCulture
     $dot = ' ' + [char]0x00B7 + ' '
@@ -190,15 +190,15 @@ function Format-TestGatePageHtml {
         '.tg-guards { margin: 0 0 var(--spacing-3); }' + "`n" +
         '.tg-tips > ul { margin: 0; padding-left: var(--spacing-5); }' + "`n" +
         '@media (max-width: 1000px) { .tg-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tg-list { grid-template-columns: 1fr; } }'
-    $footer = 'Read from the repo''s <code>scripts/tests/suite-durations.json</code> on every request, grouped by its <code>scripts/tests/suite-groups.json</code> where it keeps one. Built by the dkj-policy plugin''s <code>hub/lib/test-gate-lib.ps1</code>.'
-    # Under the hub's GitHub page, beside the Actions whose runs it measures, on every level (the owner, November 2,
+    $footer = 'Read from the repo''s <code>scripts/tests/suite-durations.json</code> on every request, grouped by its <code>scripts/tests/suite-groups.json</code> where it keeps one. Built by the dkj-policy plugin''s <code>apps/admin/lib/test-gate-lib.ps1</code>.'
+    # Under Admin's GitHub page, beside the Actions whose runs it measures, on every level (the owner, November 2,
     # 2026; under the Clock from October 27).
     $github = @(@{ Label = 'GitHub'; Href = '/dev/repository' })
     $crumbs = @($github) + @(@{ Label = 'Test gate'; Href = '/dev/test-gate' })
     $page = {
         # The source note closes the overview and the measurement's page only: a page further down spends its height on its own content.
         param([string]$Title, [string]$Body, [string]$Lead = '', [object[]]$Parents = $crumbs, [string]$Footer = '', [string]$Aside = '')
-        Format-GeneralPageHtml -Title $Title -Style $style -Body $Body -Lead $Lead -SiteName $RepoName -HubHref $HubHref -ParentCrumbs $Parents -FooterNote $Footer -HeadAside $Aside
+        Format-GeneralPageHtml -Title $Title -Style $style -Body $Body -Lead $Lead -SiteName $RepoName -AdminHref $AdminHref -ParentCrumbs $Parents -FooterNote $Footer -HeadAside $Aside
     }
     $unmeasured = $ReadError -eq 'the file is not there'
     $parts = @($Path.Trim('/') -split '/' | Where-Object { $_ })

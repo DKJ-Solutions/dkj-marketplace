@@ -1,18 +1,18 @@
 <#
 .SYNOPSIS
-    The plugin's own hub (#3245): the repo's home page, which the general pages server answers on '/',
-    '/index.html' and '/hub' -- and '/about' sends there (#3289) -- and its Repository page on '/dev/repository'
-    (#3383), in every repo (#3643 retired the OwnHub opt-out). No I/O -- hub/pages/serve-general-pages.ps1
+    The plugin's own admin (#3245): the repo's home page, which the general pages server answers on '/',
+    '/index.html' and '/admin' -- and '/about' sends there (#3289) -- and its Repository page on '/dev/repository'
+    (#3383), in every repo (#3643 retired the OwnHub opt-out). No I/O -- apps/admin/pages/serve-general-pages.ps1
     reads the state file and hands the values in, so every rule here is tested without a server.
 
 .DESCRIPTION
-    INBOUND #3245. The owner decided (October 21, 2026) that the plugin serves the hub in EVERY repo,
-    whether or not it states Get-DevPreview: the general pages server is the hub, so the hub and its General
-    pages share one origin, and a server the repo states becomes its PRODUCT, one link on the hub. This page
+    INBOUND #3245. The owner decided (October 21, 2026) that the plugin serves Admin in EVERY repo,
+    whether or not it states Get-DevPreview: the general pages server is Admin, so Admin and its General
+    pages share one origin, and a server the repo states becomes its PRODUCT, one link on Admin. This page
     replaces #3047's placeholder, whose own server and ports (4880-4889) are retired; what of that page
     survived is here: the setup cards, the facts and the repo-name handling.
 
-    THE HOUSE HUB FORM (#3383, the owner, October 24, 2026; Admin's form since #3830): in the desktop shell the home
+    THE HOUSE ADMIN FORM (#3383, the owner, October 24, 2026; Admin's form since #3830): in the desktop shell the home
     page lists its pages as one .table--dense (Format-AdminLinkTableHtml), a row per page with its description --
     the product, the GitHub page and the General pages but Issues. A repo that states no product gets the two setup
     cards under it. The facts and the Issues page are the Repository page's (Format-PluginRepoRepositoryHtml),
@@ -22,7 +22,7 @@
     server serves from the canonical copy inside dkj-policy's payload (assets/dkj-brandbook/,
     which Get-HouseStyleDir names), in every repo, and its own layer uses only names the house file does not
     define (.ph-*). The form, its blocks and their order are laid down in the plugin's
-    assets/dkj-brandbook/README.md, "The hub".
+    assets/dkj-brandbook/README.md, "Admin".
 
     ONE ORIGIN: every card links its page by bare path, because this page is served by the same server, so the
     visitor keeps one origin and one stored theme choice.
@@ -39,7 +39,7 @@
 . (Join-Path $PSScriptRoot 'dev-preview-rules.ps1')
 . (Join-Path $PSScriptRoot 'general-pages-lib.ps1')
 
-function ConvertTo-PluginRepoHubName {
+function ConvertTo-PluginRepoAdminName {
     <#
         A repo or folder name as both pages show it, NOT yet escaped: control characters blanked, cut at 80,
         'this repo' when empty. Each caller escapes it where it is used, once.
@@ -51,14 +51,14 @@ function ConvertTo-PluginRepoHubName {
     return $t.Trim()
 }
 
-function Format-PluginRepoHubHtml {
+function Format-PluginRepoAdminHtml {
     <#
         The home page for the repo named -RepoName. -Mode is what the repo states: 'none' (no Get-DevPreview:
         the setup cards show) or 'product' (a server of its own: the first card links it). -ProductUrl is that
         server's url, or empty where it is not running (its card says so). -PagesUrl is this server's own base
         url; it is always the general server that serves this page, so every card links by bare path, and
         without one the General cards give way to a line saying the server is not running. -Folder is kept for
-        the callers: the facts it named are the Repository page's now. No Brand book card: no hub has linked or served the
+        the callers: the facts it named are the Repository page's now. No Brand book card: no admin has linked or served the
         brand book since #3475, and the source repo retired the app under #3493.
     #>
     param(
@@ -68,15 +68,15 @@ function Format-PluginRepoHubHtml {
         [AllowEmptyString()][string]$ProductUrl = '',
         [AllowEmptyString()][string]$PagesUrl = ''
     )
-    $n =ConvertTo-GeneralPageText (ConvertTo-PluginRepoHubName $RepoName)
-    $product = if (Test-RepoHubLocalUrl $ProductUrl) { $ProductUrl } else { '' }
+    $n =ConvertTo-GeneralPageText (ConvertTo-PluginRepoAdminName $RepoName)
+    $product = if (Test-RepoAdminLocalUrl $ProductUrl) { $ProductUrl } else { '' }
     $general = $PagesUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z'
     $e = { param($v) ConvertTo-GeneralPageText $v }
 
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.AppendLine('<!doctype html>')
     # With no choice stored it falls back to the default every other dev page uses (#3166, #3390). The theme key is
-    # the general pages' own: the hub and its pages are one origin now, so a theme picked on one holds on the others.
+    # the general pages' own: Admin and its pages are one origin now, so a theme picked on one holds on the others.
     [void]$sb.AppendLine('<html lang="en" ' + (Format-GeneralPagesThemeAttributes) + ' data-width-default="full" data-theme-key="general-pages">')
     [void]$sb.AppendLine('<head>')
     [void]$sb.AppendLine('<meta charset="utf-8">')
@@ -95,7 +95,7 @@ function Format-PluginRepoHubHtml {
     $lead = if ($Mode -eq 'product') { 'The way in to what this repo offers: its product, its pages and its facts.' }
             else { 'The way in to this repo. It states no dev server of its own yet, so there is no product to link.' }
     # The site header on the home page too (October 22, 2026): it names the repo, so the page has no intro of its own.
-    [void]$sb.Append((Format-RepoHomeHeadHtml -RepoName $n -Lead $lead -Brand (ConvertTo-SiteHeaderName -RepoName (ConvertTo-PluginRepoHubName $RepoName)) -BrandTag 'admin'))
+    [void]$sb.Append((Format-RepoHomeHeadHtml -RepoName $n -Lead $lead -Brand (ConvertTo-SiteHeaderName -RepoName (ConvertTo-PluginRepoAdminName $RepoName)) -BrandTag 'admin'))
 
     # Every page a row of its own (#3830, Admin's form of #3383's cards): the product first, then the GitHub page, and
     # the General pages but Issues (the GitHub page's), one .table--dense, which adds to the side navigation what it
@@ -107,7 +107,7 @@ function Format-PluginRepoHubHtml {
     if ($product) { $rows += @{ Href = $product; Label = 'Product'; Sub = ($product + ' -- the server this repo states in Get-DevPreview') } }
     $rows += @{ Href = '/dev/repository'; Label = 'GitHub'; Sub = 'This repo''s facts, its open issues and its Test gate' }
     if ($general) {
-        $rows += @(Get-HubPageCards -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }))
+        $rows += @(Get-AdminPageCards -Pages @(Get-GeneralPages | Where-Object { -not $_.GitHub }))
     } else {
         [void]$sb.AppendLine('<p class="msg--warn" role="status">The general pages server is not running. It starts at the next session start, and its pages are linked here from then on.</p>')
     }
@@ -128,7 +128,7 @@ function Format-PluginRepoHubHtml {
         [void]$sb.AppendLine('        Ports   = 5173..5180')
         [void]$sb.AppendLine('    }')
         [void]$sb.AppendLine('}</code></pre>')
-        [void]$sb.AppendLine('<p class="note">Every field, and the rules for <code>Command</code>, are in the dkj-policy plugin''s <code>hub/README.md</code>, under &quot;The dev-preview hook&quot;.</p>')
+        [void]$sb.AppendLine('<p class="note">Every field, and the rules for <code>Command</code>, are in the dkj-policy plugin''s <code>apps/admin/README.md</code>, under &quot;The dev-preview hook&quot;.</p>')
         [void]$sb.AppendLine('</div>')
         [void]$sb.AppendLine('</section>')
         [void]$sb.AppendLine('<section class="card grid__full">')
@@ -144,7 +144,7 @@ function Format-PluginRepoHubHtml {
         [void]$sb.AppendLine('</div>')
     }
 
-    [void]$sb.AppendLine('<p class="note">Each page names its own source. Served on 127.0.0.1 only, by the dkj-policy plugin''s <code>hub/pages/serve-general-pages.ps1</code>.</p>')
+    [void]$sb.AppendLine('<p class="note">Each page names its own source. Served on 127.0.0.1 only, by the dkj-policy plugin''s <code>apps/admin/pages/serve-general-pages.ps1</code>.</p>')
     [void]$sb.AppendLine((Format-AdminShellClose))
     # The fit alarm, as Format-GeneralPageHtml closes every page below this one (#3558).
     [void]$sb.AppendLine((Format-FitAlarmHtml))
@@ -158,7 +158,7 @@ function Format-PluginRepoRepositoryHtml {
         The GitHub page on '/dev/repository' (#3383; called Repository until it took the GitHub name and logo): everything about the repo itself. Its facts as a .facts--row
         (label over value), then its pages as one .table--dense (#3830): Issues (this server's, by bare path) and, where -Slug is a plain GitHub owner/name, its pull
         requests and CI runs on GitHub. -RepoName, -Folder, -Mode, -ProductUrl and -PagesUrl are
-        Format-PluginRepoHubHtml's; -Slug is owner/name from the origin remote, or empty.
+        Format-PluginRepoAdminHtml's; -Slug is owner/name from the origin remote, or empty.
     #>
     param(
         [AllowNull()][AllowEmptyString()][string]$RepoName,
@@ -169,9 +169,9 @@ function Format-PluginRepoRepositoryHtml {
         [AllowEmptyString()][string]$PagesUrl = ''
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
-    $name = ConvertTo-PluginRepoHubName $RepoName
-    $f = if ($Folder) { & $e (ConvertTo-PluginRepoHubName $Folder) } else { & $e $name }
-    $product = if (Test-RepoHubLocalUrl $ProductUrl) { $ProductUrl } else { '' }
+    $name = ConvertTo-PluginRepoAdminName $RepoName
+    $f = if ($Folder) { & $e (ConvertTo-PluginRepoAdminName $Folder) } else { & $e $name }
+    $product = if (Test-RepoAdminLocalUrl $ProductUrl) { $ProductUrl } else { '' }
     $gh = if ($Slug -cmatch '^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+\z') { 'https://github.com/' + $Slug } else { '' }
     $devPreview = if ($Mode -ne 'product') { 'none stated yet' } elseif ($product) { & $e $product } else { 'stated, not running' }
 
@@ -202,5 +202,5 @@ function Format-PluginRepoRepositoryHtml {
     [void]$sb.AppendLine((Format-AdminLinkTableHtml -Items $rows -NameHead 'Page'))
     return Format-GeneralPageHtml -Title 'GitHub' -SiteName $name -Body $sb.ToString() `
         -Lead 'The repo Admin serves here: its facts, its open issues and its pull requests.' `
-        -FooterNote 'The facts are what the hub knows about this folder; Issues is read with <code>gh</code>.'
+        -FooterNote 'The facts are what Admin knows about this folder; Issues is read with <code>gh</code>.'
 }

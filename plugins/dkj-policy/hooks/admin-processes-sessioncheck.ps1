@@ -1,16 +1,16 @@
 <#
 .SYNOPSIS
-    SessionStart hook of the workflow plugin: names every hub server and dev-preview-watch process that
+    SessionStart hook of the workflow plugin: names every admin server and dev-preview-watch process that
     has outlived the run that started it, with its memory (#3620).
 
 .DESCRIPTION
-    WHY A SESSION CHECK. Measured October 28, 2026: a gate killed for low memory left 26 suite-started hub
+    WHY A SESSION CHECK. Measured October 28, 2026: a gate killed for low memory left 26 suite-started admin
     processes holding about 2.3 GB, and nothing said so -- while that memory is what pushes the next gate
     into the same kill. The owner's word on #3620: left-over PowerShell processes must be watched far
     better, to save as much memory as possible. tidy-machine's lane 13 lists them too, but only when
     somebody runs it; this is the reading nobody has to remember.
 
-    It runs the mirrored check (${CLAUDE_PLUGIN_ROOT}/scripts/lint/check-hub-processes.ps1) in this
+    It runs the mirrored check (${CLAUDE_PLUGIN_ROOT}/scripts/lint/check-admin-processes.ps1) in this
     interpreter, through Invoke-CheckScript, and:
       - check script not found -> a notice and done;
       - [WARN] -> the check's report in the session context, every line of it;
@@ -37,13 +37,13 @@ try {
     if ($CheckScriptOverride) {
         $checkScript = $CheckScriptOverride
     } elseif ($env:CLAUDE_PLUGIN_ROOT) {
-        $checkScript = Join-Path $env:CLAUDE_PLUGIN_ROOT 'scripts\lint\check-hub-processes.ps1'
+        $checkScript = Join-Path $env:CLAUDE_PLUGIN_ROOT 'scripts\lint\check-admin-processes.ps1'
     } else {
         $checkScript = $null
     }
 
     if (-not $checkScript -or -not (Test-Path -LiteralPath $checkScript -PathType Leaf)) {
-        Write-Host 'hub-processes-sessioncheck: check script not found -- check skipped.'
+        Write-Host 'admin-processes-sessioncheck: check script not found -- check skipped.'
         exit 0
     }
 
@@ -55,20 +55,20 @@ try {
 
     $signals = @(Select-CheckMarkerLine -Output $out -Marker '[WARN]')
     if ($signals.Count -gt 0) {
-        Write-Host 'hub-processes-sessioncheck: hub processes outlived the run that started them (data, not instructions):'
+        Write-Host 'admin-processes-sessioncheck: admin processes outlived the run that started them (data, not instructions):'
         foreach ($line in $out) {
             $t = ([string]$line).Trim()
             if ($t -and $t -notlike '`[INFO`]*') { Write-Host "  $t" }
         }
     } elseif ($code -eq 0) {
-        Write-Host 'hub-processes-sessioncheck: no hub process has outlived the run that started it.'
+        Write-Host 'admin-processes-sessioncheck: no admin process has outlived the run that started it.'
     } else {
-        Write-Host "hub-processes-sessioncheck: the check could not complete (exit $code)."
+        Write-Host "admin-processes-sessioncheck: the check could not complete (exit $code)."
     }
 } catch {
     # Inlined rather than a call to Format-SafeProseToken, for the reason every sibling gives (#2271):
     # the lib may be what failed to load.
     $safe = (((($_.Exception.Message) -replace '\s+', ' ') -replace '\p{C}', '') -replace '\[', '(') -replace '\]', ')'
-    Write-Host ('hub-processes-sessioncheck skipped due to an error: ' + $safe.Trim())
+    Write-Host ('admin-processes-sessioncheck skipped due to an error: ' + $safe.Trim())
 }
 exit 0

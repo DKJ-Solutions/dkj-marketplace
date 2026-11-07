@@ -20,7 +20,7 @@ into this plugin, and [#3531](https://github.com/DKJ-Solutions/dkj-claude-plugin
 (October 26, 2026) moved the files one level up into `dkj-policy`. On October 31, 2026 the skill and its folder were renamed from
 `house-style` to `dkj-brandbook` (Maikel). **The files kept their names**: `house-style.css`, `house-theme.js`,
 the house tokens and classes, `check-house-style` and its session check, so no copy in a consuming repo has to
-change. The hub and the General pages of
+change. Admin and the General pages of
 `dkj-policy` render in them in every repo, BWJ-Development's included, so the files belong to the plugin
 every repo installs. **The rule stays here**: this skill, the pin table below, `check-house-style` and
 its session check. This skill carries the rules a session needs before it fetches anything.
@@ -30,7 +30,7 @@ a DKJ-Solutions product starts from the brand book by this rule: copied in uncha
 `check-house-style`, never applied to it automatically. BWJ-Development styles its own apps, and this skill
 says nothing about them. Admin is not such an app: `dkj-policy` serves it in every repo, BWJ's
 included, always in the brand book, with no opt-out (#3643; the three-part rule is in `dkj-policy`'s
-`hub/README.md`, "One look in every repo").
+`apps/admin/README.md`, "One look in every repo").
 
 ## Where the files are
 
@@ -95,8 +95,8 @@ appears, or the fetch fails, stop and report. The same holds for `house-product.
    `house-product.css` after it**, never alone; an Admin-only repo does not need it. An app that offers a theme choice
    uses `DKJTheme.settings(el)` from that script, the round settings button with the picker inside,
    instead of building its own toggle around `DKJTheme.picker`; the core README has its options.
-   **The hub** (Admin, the dkj-policy plugin's dev server in every repo, with no opt-out since #3643)
-   **takes the one form the core README lays down under "The hub"**: the desktop shell since #3830, whose
+   **Admin** (Admin, the dkj-policy plugin's dev server in every repo, with no opt-out since #3643)
+   **takes the one form the core README lays down under "Admin"**: the desktop shell since #3830, whose
    stylesheet-only reference is
    [`patterns/admin-shell.html`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/patterns/admin-shell.html)
    in `dkj-policy`'s `assets/dkj-brandbook/`. **A product** takes the product layer's form, the site header
@@ -158,11 +158,11 @@ page and dashboard is designed to that screen first:
   cards, each linking its own page one level down, with the breadcrumbs as the way back. Go as many
   levels deep as the content needs; every level fits one screen. **More than four sections**
   (`.grid__head` blocks with an `h2`) is a long page too, whatever the window (#3563). Each overview card is
-  the house's one card link (`Format-HubCardLinkHtml`, the core README's "The card" under "The hub"), never a variant written by
+  the house's one card link (`Format-AdminCardLinkHtml`, the core README's "The card" under "Admin"), never a variant written by
   hand, carrying the section's headline figure as its one line.
 - **Check it before handing it over**: in a window of about 1300 x 900, does it fit without scrolling,
   does it hold four sections or fewer, and is every element there because the brief needs it? An
-  element that fails the last question goes, however good it looks. A hub page answers the first question itself: `dkj-policy`'s page shell carries
+  element that fails the last question goes, however good it looks. An Admin page answers the first question itself: `dkj-policy`'s page shell carries
   a fit alarm, a warning at the bottom right the moment the page runs past the window it is read in, and
   a warning at the top of any page holding more than four sections.
 
@@ -249,7 +249,7 @@ DKJ-Solutions app the next time it takes a copy, so the branch stops for the own
 merging.
 
 **There is one canonical copy of each file, and it is its folder.** The source repo's consumer dashboard
-and the plugin's own hub (the general pages server, which serves every repo's hub) both read it in place, so
+and the plugin's own Admin (the general pages server, which serves every repo's Admin) both read it in place, so
 no second copy needs replacing by hand
 ([#2989](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2989),
 [#3047](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3047)). The table above guards a

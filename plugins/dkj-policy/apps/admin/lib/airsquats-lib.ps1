@@ -1,37 +1,37 @@
 <#
 .SYNOPSIS
-    The hub banner's airsquats state, kept by the hub servers and shared by every machine (#3438): ticking the box
-    on one machine clears it on all of them, and on every repo hub of each.
+    The Admin banner's airsquats state, kept by the Admin servers and shared by every machine (#3438): ticking the box
+    on one machine clears it on all of them, and on every repo admin of each.
 
 .DESCRIPTION
     Until #3438 the banner kept its state in the browser's localStorage, so it was one count per ORIGIN: every repo
-    hub is its own port, so two repos on one machine already disagreed, and a second machine knew nothing.
+    admin is its own port, so two repos on one machine already disagreed, and a second machine knew nothing.
 
     THREE LAYERS.
       1. The page asks its own server (GET /api/airsquats every 15 s and at the hour; POST /api/airsquats/clear
          when the box is ticked), and counts the minutes down by itself in between.
-      2. Every hub server on a machine reads and writes ONE file, %LOCALAPPDATA%\dkj-hub\airsquats.json, under a
-         lock -- so the repo hubs of one machine agree at once.
+      2. Every admin server on a machine reads and writes ONE file, %LOCALAPPDATA%\dkj-admin\airsquats.json, under a
+         lock -- so the repo Admin servers of one machine agree at once.
       3. That file is merged with a private GitHub gist, by sync-airsquats.ps1 in a child process, so the
          machines agree within a sync (owner's choice, October 25, 2026). The server never waits on the network:
-         it starts the child and answers from the file. ONLY ON AN OPT-IN (#3439): DKJ_HUB_AIRSQUATS_GIST=auto
+         it starts the child and answers from the file. ONLY ON AN OPT-IN (#3439): DKJ_ADMIN_AIRSQUATS_GIST=auto
          finds or creates the gist, a gist id pins one, and unset there is no sync at all -- the banner then
-         agrees across the repo hubs of one machine only, because a background server does not write to
+         agrees across the repo Admin servers of one machine only, because a background server does not write to
          somebody's GitHub account unasked.
 
     THE STATE MERGES WITHOUT CONFLICT, which is what lets three layers write it in any order:
-      hours      the full hours (Unix ms / 3600000) at whose start some hub was open. Merge: the union.
+      hours      the full hours (Unix ms / 3600000) at whose start some admin was open. Merge: the union.
       clearedAt  the last tick-off, Unix ms. Merge: the later one.
-    The number owed is 10 per hour in `hours` that starts after clearedAt. An hour counts only where a hub saw it
-    begin -- a poll within two minutes before and one after -- so a night with every hub closed still adds
+    The number owed is 10 per hour in `hours` that starts after clearedAt. An hour counts only where an admin saw it
+    begin -- a poll within two minutes before and one after -- so a night with every admin closed still adds
     nothing, the rule the banner kept from #3250. Hours at or before clearedAt can never count again and are
     pruned, and at most the newest 72 are kept, so the file and the gist stay a few hundred bytes.
 
     The local file also holds what is this machine's own and never synced: lastSeen (the last poll), announced
     (the newest hour this machine has played the tone for, so it plays once per machine, not once per tab or
-    per repo hub), and the sync's bookkeeping.
+    per repo admin), and the sync's bookkeeping.
 
-    Pure ASCII (repo convention for .ps1). Tested by scripts/tests/hub-airsquats.tests.ps1 in the source repo.
+    Pure ASCII (repo convention for .ps1). Tested by scripts/tests/admin-airsquats.tests.ps1 in the source repo.
 #>
 
 $script:AirsquatsHourMs = [int64]3600000
@@ -48,19 +48,21 @@ $script:AirsquatsSyncStartedAt = [int64]0
 function Get-AirsquatsNow { [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() }
 
 function Get-AirsquatsDir {
-    <# The machine's folder for the state: DKJ_HUB_STATE_DIR where set (the tests), else %LOCALAPPDATA%\dkj-hub. #>
-    if ($env:DKJ_HUB_STATE_DIR) { return $env:DKJ_HUB_STATE_DIR }
+    <# The machine's folder for the state: DKJ_ADMIN_STATE_DIR where set (the tests), else %LOCALAPPDATA%\dkj-admin. #>
+    if ($env:DKJ_ADMIN_STATE_DIR) { return $env:DKJ_ADMIN_STATE_DIR }
     $base = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [System.IO.Path]::GetTempPath() }
-    return (Join-Path $base 'dkj-hub')
+    return (Join-Path $base 'dkj-admin')
 }
 
 function Get-AirsquatsGistSetting {
     <#
-        What DKJ_HUB_AIRSQUATS_GIST asks for, as @{ Mode; Id }: 'off' (unset -- no sync), 'auto' (find the gist,
+        What DKJ_ADMIN_AIRSQUATS_GIST asks for, as @{ Mode; Id }: 'off' (unset -- no sync), 'auto' (find the gist,
         or create it), 'pinned' (that gist id, never another) or 'invalid' (set, but neither -- never put in a gh
         call). The opt-in is #3439's: without it nothing is written to the account gh is logged in as.
     #>
-    $v = ([string]$env:DKJ_HUB_AIRSQUATS_GIST).Trim()
+    $v = ([string]$env:DKJ_ADMIN_AIRSQUATS_GIST).Trim()
+    # DKJ_HUB_AIRSQUATS_GIST is its name before #3873, still read for one release where the new one is unset.
+    if (-not $v) { $v = ([string]$env:DKJ_HUB_AIRSQUATS_GIST).Trim() }
     if (-not $v) { return @{ Mode = 'off'; Id = '' } }
     if ($v -eq 'auto') { return @{ Mode = 'auto'; Id = '' } }
     if ($v -match '^[0-9a-fA-F]{8,64}\z') { return @{ Mode = 'pinned'; Id = $v } }
@@ -71,7 +73,7 @@ function ConvertTo-AirsquatsState {
     <#
         Any parsed object (or $null) as a well-formed state: hours a sorted, distinct int64 list, clearedAt an
         int64, the local fields kept where present. Anything unreadable reads as nothing, never as an error.
-        A gist is somebody else's text once DKJ_HUB_AIRSQUATS_GIST pins one, so the input is bounded: at most the
+        A gist is somebody else's text once DKJ_ADMIN_AIRSQUATS_GIST pins one, so the input is bounded: at most the
         first 1000 hours are read, and an hour or a time more than a day in the future is dropped -- it could
         otherwise pin or silence the banner for good, and overflow the hour-to-ms product.
     #>
@@ -150,7 +152,7 @@ function Get-AirsquatsOwedHours {
 function Use-AirsquatsFile {
     <#
         Runs -Change on the machine's state under its lock and writes what it returns; returns that state. The lock
-        is an exclusive open of airsquats.lock, waited for up to -TimeoutMs, because every hub server and the sync
+        is an exclusive open of airsquats.lock, waited for up to -TimeoutMs, because every admin server and the sync
         child of this machine write the same file.
     #>
     param([scriptblock]$Change, [int]$TimeoutMs = 3000)
@@ -185,11 +187,11 @@ function Start-AirsquatsSync {
         -Changed that the state did change. The child takes a lock of its own, so a second server's child simply
         exits. This server also keeps its own start time and starts no child within AirsquatsSyncEveryMs of the
         last unless the state changed: a child that dies before it records its attempt would otherwise be started
-        again at every poll. DKJ_HUB_NO_SYNC (the tests), no opt-in (DKJ_HUB_AIRSQUATS_GIST unset, #3439) and a
+        again at every poll. DKJ_ADMIN_NO_SYNC (the tests), no opt-in (DKJ_ADMIN_AIRSQUATS_GIST unset, #3439) and a
         missing script start nothing.
     #>
     param([bool]$Due, [bool]$Changed = $false, [int64]$Now = (Get-AirsquatsNow))
-    if (-not $Due -or $env:DKJ_HUB_NO_SYNC) { return $false }
+    if (-not $Due -or $env:DKJ_ADMIN_NO_SYNC) { return $false }
     if ((Get-AirsquatsGistSetting).Mode -eq 'off') { return $false }
     if ($script:AirsquatsSyncProcess -and -not $script:AirsquatsSyncProcess.HasExited) { return $false }
     if (-not $Changed -and ($Now - $script:AirsquatsSyncStartedAt) -lt $script:AirsquatsSyncEveryMs) { return $false }
@@ -209,14 +211,14 @@ function Invoke-AirsquatsApi {
         off. A POST is served only same-origin or with no Sec-Fetch-Site at all (curl, a relay such as the product
         port's): a page on another port or site cannot clear the box.
         announce is true once per machine per hour, and only within two minutes of that hour's start, so opening
-        a hub later on a count another machine made plays no tone. Once per machine means the first poll to see
+        an admin later on a count another machine made plays no tone. Once per machine means the first poll to see
         the hour: where that is a background tab, or a browser holding audio back, no other tab plays it.
         The hours and tick-offs are each machine's own clock, so a machine whose clock runs ahead clears its
         hours a little early on the others; Windows' time sync keeps that to seconds.
         account is the Windows account the server runs under (#3476). Loopback ports are machine-wide, so on a
-        machine with several accounts logged on, localhost:4870 may be another account's hub with another
+        machine with several accounts logged on, localhost:4870 may be another account's admin with another
         account's state, and nothing else on the page says so. The browser cannot know its own account, so the
-        hub names its owner and the reader compares. Held to [A-Za-z0-9._ -], at most 64 characters.
+        admin names its owner and the reader compares. Held to [A-Za-z0-9._ -], at most 64 characters.
     #>
     param([string]$Method, [string]$Path, [string]$SecFetchSite = '', [int64]$Now = (Get-AirsquatsNow), [string]$Account = $env:USERNAME)
     $m = ([string]$Method).ToUpperInvariant()
@@ -226,7 +228,7 @@ function Invoke-AirsquatsApi {
     if (-not $clear -and $m -ne 'GET' -and $m -ne 'HEAD') { return @{ Status = 405; Reason = 'Method Not Allowed'; Body = '{"error":"GET only"}'; Allow = 'GET, HEAD' } }
     if ($clear) {
         $site = ([string]$SecFetchSite).Trim().ToLowerInvariant()
-        if ($site -and $site -ne 'same-origin') { return @{ Status = 403; Reason = 'Forbidden'; Body = '{"error":"only this hub may clear the box"}' } }
+        if ($site -and $site -ne 'same-origin') { return @{ Status = 403; Reason = 'Forbidden'; Body = '{"error":"only this admin may clear the box"}' } }
     }
     # Flags the -Change block sets: it runs two scopes down, inside Use-AirsquatsFile, so it writes into this table.
     $flags = @{ Announce = $false; Changed = $false }
@@ -265,7 +267,7 @@ function Sync-AirsquatsGist {
         One sync of the machine's file with the gist, through -Gh: a scriptblock taking gh's arguments and returning
         @{ ExitCode; Out } (the tests pass a fake). syncedAt records the ATTEMPT, failed or not, so an offline machine
         tries again every AirsquatsSyncEveryMs rather than at every poll; syncError says whether it landed.
-        Only on an opt-in (Get-AirsquatsGistSetting, #3439): with DKJ_HUB_AIRSQUATS_GIST unset it calls no gh and
+        Only on an opt-in (Get-AirsquatsGistSetting, #3439): with DKJ_ADMIN_AIRSQUATS_GIST unset it calls no gh and
         writes nothing, not even syncedAt. Pinned, it uses that gist id and no other; 'auto' takes the id the file
         remembers, else the gist by its description among this account's gists, else creates it (private). Reads
         it, merges it into the file under the lock, and writes it back only where the merge changed it. Returns
@@ -276,7 +278,7 @@ function Sync-AirsquatsGist {
     $setting = Get-AirsquatsGistSetting
     if ($setting.Mode -eq 'off') { return $result }
     try {
-        if ($setting.Mode -eq 'invalid') { throw "DKJ_HUB_AIRSQUATS_GIST is neither 'auto' nor a gist id" }
+        if ($setting.Mode -eq 'invalid') { throw "DKJ_ADMIN_AIRSQUATS_GIST is neither 'auto' nor a gist id" }
         $local = Use-AirsquatsFile -Change { param($s) $s }
         $gist = if ($setting.Mode -eq 'pinned') { $setting.Id } else { $local.gist }
         if ($gist -notmatch '^[0-9a-fA-F]{8,64}\z') { $gist = '' }

@@ -118,8 +118,8 @@ generic `.chip`, the stat rows and the stepper are house classes since the
 
 **These are the product layer's patterns.** Which of them Admin's desktop shell takes is in the table
 under [Two layers][core-two-layers] in the core README: of the ones below, it takes the page-name rules and
-none of the page structure. The hub, the one page pattern Admin keeps, stays in the core README
-([The hub][core-hub]).
+none of the page structure. Admin, the one page pattern Admin keeps, stays in the core README
+([Admin][core-admin]).
 
 ### Which shape a page's cards take
 
@@ -178,7 +178,7 @@ trail is the core's ("Shared components", [core README][core-shared]), because t
   (44px) high and one line: a trail longer than the screen scrolls sideways inside the bar instead of
   wrapping, so the height never changes. Whatever else sticks to the top sits under it, at `top: var(--tap)`;
   the brand book already does that for the floating settings button and for in-page anchors.
-- **The trail:** it always starts at **Home**, linking to `/` (it read **Repo hub** until #3270, and **Tools** on the Toolbox from October 27, 2026 until #3815 renamed it Admin; a product keeps **Home** for its own pages). Each further crumb is one level
+- **The trail:** it always starts at **Home**, linking to `/` (it read **Repo Admin** until #3270, and **Tools** on the Toolbox from October 27, 2026 until #3815 renamed it Admin; a product keeps **Home** for its own pages). Each further crumb is one level
   down: the product (under its own name), then a page inside it. The last crumb is the current page,
   unlinked, with `aria-current="page"`. The bar stands on the theme's colour, `--primary` (owner, #3235, October 21, 2026), so
   the trail is in the paper steps, which all read on it: the chevron `--bg-3`, the ancestor links `--bg-2` (with
@@ -217,13 +217,13 @@ scrolling past the rest. This was decided one page at a time (the Stopwatch, Ses
 brand book's own specimens in #3563, the Specialists in #3551) and is written down here once, so a new or
 growing page gets this shape without anyone having to point it out.
 
-- **The overview card is THE card**: the hub's one card link ([The card][core-hub], a `.card.card--link`
-  holding one `.menu-item` row, written by `Format-HubCardLinkHtml`), three to a row in a `.grid-3`. Its
+- **The overview card is THE card**: Admin's one card link ([The card][core-admin], a `.card.card--link`
+  holding one `.menu-item` row, written by `Format-AdminCardLinkHtml`), three to a row in a `.grid-3`. Its
   label is the section's name, and its one-line description is the section's **headline**: the figure
   that tells you whether the page is worth opening, such as the number of specimens in a house-style
   section. No hand-written variant: no `h2` or `h3` link inside the card, and no extra rows. A card that
   needs more (a figure on its own line, a badge, its label as a heading) takes it from the card's slots
-  ([The card][core-hub]).
+  ([The card][core-admin]).
 - **The section's page** is that section alone, under one more crumb, so the trail reads Home >
   ... > the overview > the section. Its `h1` is the section's name and the section's line is its `<meta name="description">`, never a lead under the `h1` (#3585). Its
   own `.grid__head` goes, because the `h1` already says it.
@@ -236,7 +236,7 @@ growing page gets this shape without anyone having to point it out.
 ### The site header, above the bar
 
 **An app may open with a site header, and the breadcrumb bar then stands right under it** (owner, October
-22, 2026). **Every hub page carried it until #3831** (the dkj-policy plugin's hub server drew it on the home page and
+22, 2026). **Every Admin page carried it until #3831** (the dkj-policy plugin's Admin server drew it on the home page and
 every general page of every repo, with the repo's name and `admin` after it): **Admin's pages no longer do**, because the
 desktop shell's bar and side navigation replace it ([Two layers][core-two-layers]), and `dkj-policy` ships no code
 that draws it. A product's pages carry it, drawn by `Format-SiteHeaderHtml` in `product-pages-lib.ps1`; an app without
@@ -302,7 +302,7 @@ where you can go, the trail where you are.
 </div></dialog></header>
 ```
 
-**In the hub** there is no site header menu: Admin draws its side navigation instead (`Get-AdminNav`), whose Development section is its home page's cards in their order (GitHub, Release notes, Claude, Installed plugins: `Get-HubMenu`, from the same list the cards come from). A product's menu is its own pages.
+**In Admin** there is no site header menu: Admin draws its side navigation instead (`Get-AdminNav`), whose Development section is its home page's cards in their order (GitHub, Release notes, Claude, Installed plugins: `Get-AdminMenu`, from the same list the cards come from). A product's menu is its own pages.
 
 ## Changing this layer
 
@@ -317,6 +317,6 @@ the `house-style-css` gate parses `house-product.css` as it does the core's.
 [core-shared]: https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md#shared-components
 [core-radius]: https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md#the-radius-rename-of-october-31-2026
 [core-two-layers]: https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md#two-layers
-[core-hub]: https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md#the-hub
+[core-admin]: https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md#admin
 [core-changing]: https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md#changing-the-brand-book
 [pattern-page]: patterns/product-page.html

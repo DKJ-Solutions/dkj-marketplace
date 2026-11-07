@@ -493,7 +493,7 @@ function Get-SharedScriptPairs {
             Skill  = 'measure-closeouts'
         },
         @{
-            # THE WRITER OF suite-durations.json, shipped so a consumer's hub Test gate page can fill in
+            # THE WRITER OF suite-durations.json, shipped so a consumer's admin Test gate page can fill in
             # (issue #3474; the owner's decision on it, October 26, 2026). It was repo-local because it
             # was thought to read this repo's CI shape; what it actually reads is the per-suite table
             # Invoke-TestSuiteGate prints, which is the plugin's own gate. The CI contract that follows
@@ -1216,7 +1216,7 @@ function Get-SharedScriptPairs {
         @{
             # THE WORKFLOW FOLDER'S NAME (#3870): '.dkj/dkj-policy' and the names it had before. A leaf with no
             # dependencies, mirrored because seam-lib and entry-scaffold-lib both dot-source it and a
-            # consumer runs the mirror -- and so do the hub's release-notes route and measure-closeouts.
+            # consumer runs the mirror -- and so do Admin's release-notes route and measure-closeouts.
             Name    = 'workflow-folder-lib'
             Source  = 'scripts\lib\workflow-folder-lib.ps1'
             Plugin  = 'dkj-policy'
@@ -1690,9 +1690,9 @@ function Get-SharedScriptPairs {
             Source = 'scripts\release\cut-release.ps1'
             Plugin = 'dkj-policy'
             Skill  = 'cut-release'
-            # #3462: the dev-preview lib lives only under plugins/dkj-policy/hub/, so the stop of the own product
+            # #3462: the dev-preview lib lives only under plugins/dkj-policy/apps/admin/, so the stop of the own product
             # probes it at both depths, the way issue-dashboard finds its worker files.
-            MirrorRunExempt = 'both copies probe the hub lib at both depths and resolve the same file, and a missing one only keeps the #3353 refusal, so a mirror run would only re-measure what the source run already did'
+            MirrorRunExempt = 'both copies probe the Admin lib at both depths and resolve the same file, and a missing one only keeps the #3353 refusal, so a mirror run would only re-measure what the source run already did'
         },
         @{
             # Travels with cut-release for the same reason verify-resolved-issues travels with ship-pr:
@@ -1739,7 +1739,7 @@ function Get-SharedScriptPairs {
         @{
             # The house's one markdown renderer, a JS fragment the template above inlines at its
             # @@MARKDOWN_RENDERER@@ placeholder -- a pair for the template's own reason: the builder reaches
-            # it as a $PSScriptRoot sibling. The hub's lens page inlines the plugin copy too, which is why it
+            # it as a $PSScriptRoot sibling. Admin's lens page inlines the plugin copy too, which is why it
             # left the template rather than being copied into a second renderer.
             Name    = 'markdown-render'
             Source  = 'scripts\release\markdown-render.js'
@@ -1957,13 +1957,13 @@ function Get-SharedScriptPairs {
             MeasureArgs = @()
         },
         @{
-            # The orphaned-hub-process check (issue #3620). A gate killed for low memory left 26
-            # suite-started hub servers and watchers holding about 2.3 GB, and nothing reported them.
-            # Its callers are the SessionStart hook hub-processes-sessioncheck.ps1 and tidy-machine's
-            # lane 13. ADVISORY and in no gate: a CI runner has no hub. NO SKILL: both callers are
+            # The orphaned-admin-process check (issue #3620). A gate killed for low memory left 26
+            # suite-started admin servers and watchers holding about 2.3 GB, and nothing reported them.
+            # Its callers are the SessionStart hook admin-processes-sessioncheck.ps1 and tidy-machine's
+            # lane 13. ADVISORY and in no gate: a CI runner has no admin. NO SKILL: both callers are
             # automatic or already a skill.
-            Name   = 'check-hub-processes'
-            Source = 'scripts\lint\check-hub-processes.ps1'
+            Name   = 'check-admin-processes'
+            Source = 'scripts\lint\check-admin-processes.ps1'
             Plugin = 'dkj-policy'
             Skill  = ''
             # Fixture seams; a consumer never types either.

@@ -54,8 +54,8 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\dayplan-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\goals-lib.ps1')
-. (Join-Path $PSScriptRoot '..\..\scripts\lib\ref-print-lib.ps1')
-. (Join-Path $PSScriptRoot '..\..\scripts\lib\native-capture-lib.ps1')
+. (Join-Path $PSScriptRoot '..\..\..\scripts\lib\ref-print-lib.ps1')
+. (Join-Path $PSScriptRoot '..\..\..\scripts\lib\native-capture-lib.ps1')
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 
@@ -365,7 +365,7 @@ if ($Status) {
     $rows = @($wk.Rows | ForEach-Object { [pscustomobject]@{ date = $_.Date.ToString('yyyy-MM-dd'); goal = $_.Goal; planned = $_.Planned; done = $_.Done; extra = $_.Extra; verdict = $_.Verdict; closed = $_.Closed } })
     $model = [pscustomobject]@{ date = $day.ToString('yyyy-MM-dd'); day = $existing; live = $live; error = $readError; week = $rows }
     # ConvertTo-Json writes non-ASCII raw, and a redirected Windows PowerShell writes its stdout in the console code page,
-    # which the hub then reads as UTF-8 (Victor, #3860). So every character above ASCII is written as a JSON escape: the
+    # which Admin then reads as UTF-8 (Victor, #3860). So every character above ASCII is written as a JSON escape: the
     # line is pure ASCII, which every code page agrees on, and ConvertFrom-Json gives the characters back.
     $json = $model | ConvertTo-Json -Depth 8 -Compress
     $escape = ('\' + 'u') + '{0:x4}'

@@ -785,7 +785,7 @@ function Get-PayloadTreeVerdict {
     }
 }
 
-function Test-HubProcessAlive {
+function Test-AdminProcessAlive {
     # Is $Id in the process table, and -- where $Ticks is known -- still the process it was? A pid is
     # reused by the OS, so a match on the number alone could take a stranger for the server. CIM's
     # CreationDate and Process.StartTime round differently, so a second's slack is allowed.
@@ -796,22 +796,22 @@ function Test-HubProcessAlive {
     return $true
 }
 
-function Get-HubProcessVerdict {
+function Get-AdminProcessVerdict {
     <#
     .SYNOPSIS
-        What one powershell.exe IS, read from its command line: not a hub process, a hub server or
+        What one powershell.exe IS, read from its command line: not an admin process, an admin server or
         watcher that is doing its job, or one that has outlived the run that started it (#3620).
 
     .DESCRIPTION
-        MEASURED OCTOBER 28, 2026 (#3620): a gate killed for low memory left 26 hub servers and
+        MEASURED OCTOBER 28, 2026 (#3620): a gate killed for low memory left 26 admin servers and
         dev-preview-watch processes from the suites it was running, about 2.3 GB, and a watcher from
         plugin 5.34.0 had outlived its own server by five hours. Nothing reported any of them. #3625
         tied a suite's servers to the suite; this is the after-the-fact half -- the reading that names
         what got through anyway.
 
         THE PARENT IS NOT THE TEST, and that is the one thing the issue's first idea got wrong. The hook
-        starts the session's hub hidden and detached under a cmd.exe and then exits, so EVERY hub
-        server's launcher is gone, the healthy session hub's included -- it is meant to outlive the
+        starts the session's admin hidden and detached under a cmd.exe and then exits, so EVERY admin
+        server's launcher is gone, the healthy session admin's included -- it is meant to outlive the
         session for the next one to reuse. So the verdicts read what each process was told instead:
 
           watcher, -ProcessId ended        'orphan' -- it exits when its server does; still running, it
@@ -821,7 +821,7 @@ function Get-HubProcessVerdict {
           record points at                 'stale'  -- a plugin version this machine has moved past
                                            (never judged without a readable register)
           server from outside the cache    its watcher's verdict where it has one; otherwise
-          whose launcher ended             'orphan' -- a session's hub runs from the cache, so this is
+          whose launcher ended             'orphan' -- a session's admin runs from the cache, so this is
                                            a suite's or a hand-run's, and that run is over
           anything else                    'live'
 
@@ -848,7 +848,7 @@ function Get-HubProcessVerdict {
 
     .PARAMETER RegisterRead
         Was the install register read? Without it no tree can be called stale -- an empty InstallPaths
-        would otherwise make the healthy session hub one.
+        would otherwise make the healthy session admin one.
 
     .PARAMETER ProcessId
         The process's own pid. .PARAMETER Ticks its creation time, FILETIME UTC (0 unknown).
@@ -878,7 +878,7 @@ function Get-HubProcessVerdict {
     # the script -- so a -Command that merely MENTIONS the script is not taken for one running it.
     $shape = '^\s*"?[^"]*?\b(?:powershell|pwsh)(?:\.exe)?"?(?:\s+-(?!File\b)[A-Za-z]+(?:\s+[A-Za-z0-9]+)?)*\s+-File\s+"?(?<script>[^"]*?\\(?<kind>serve-general-pages|dev-preview-watch)\.ps1)(?:"|\s|$)'
     if ($CommandLine -notmatch $shape) {
-        return [pscustomobject]@{ Class = 'not-hub'; Kind = ''; Where = ''; Reason = ''; Target = 0 }
+        return [pscustomobject]@{ Class = 'not-admin'; Kind = ''; Where = ''; Reason = ''; Target = 0 }
     }
     $scriptPath = $Matches['script'].Replace('/', '\')
     $kind = if ($Matches['kind'] -eq 'dev-preview-watch') { 'watcher' } else { 'server' }
@@ -906,10 +906,10 @@ function Get-HubProcessVerdict {
         if ($CommandLine -match '-StartTicks\s+(\d{1,18})\b') { $targetTicks = [long]$Matches[1] }
         if ($CommandLine -match '-OwnerId\s+(\d{1,9})\b') { $owner = [int]$Matches[1] }
         if ($CommandLine -match '-OwnerStartTicks\s+(\d{1,18})\b') { $ownerTicks = [long]$Matches[1] }
-        if ($target -gt 0 -and -not (Test-HubProcessAlive -Processes $Processes -Id $target -Ticks $targetTicks)) {
+        if ($target -gt 0 -and -not (Test-AdminProcessAlive -Processes $Processes -Id $target -Ticks $targetTicks)) {
             return [pscustomobject]@{ Class = 'orphan'; Kind = $kind; Where = $where; Reason = 'the server it watches has ended, and it should have ended with it.'; Target = $target }
         }
-        if ($owner -gt 0 -and -not (Test-HubProcessAlive -Processes $Processes -Id $owner -Ticks $ownerTicks)) {
+        if ($owner -gt 0 -and -not (Test-AdminProcessAlive -Processes $Processes -Id $owner -Ticks $ownerTicks)) {
             return [pscustomobject]@{ Class = 'orphan'; Kind = $kind; Where = $where; Reason = 'the run that started it has ended.'; Target = $target }
         }
     }
@@ -942,10 +942,10 @@ function Get-HubProcessVerdict {
         if ($Processes.ContainsKey($launcher) -and ([string]$Processes[$launcher].Name) -ieq 'cmd.exe') {
             $launcher = [int]$Processes[$launcher].ParentId
         }
-        $alive = Test-HubProcessAlive -Processes $Processes -Id $launcher
+        $alive = Test-AdminProcessAlive -Processes $Processes -Id $launcher
         if ($alive -and $Ticks -gt 0 -and [long]$Processes[$launcher].Ticks -gt $Ticks) { $alive = $false }
         if (-not $alive) {
-            return [pscustomobject]@{ Class = 'orphan'; Kind = $kind; Where = $where; Reason = 'the run that started it has ended -- a session''s hub runs from the plugin cache, so this was a suite''s or a hand-run''s.'; Target = 0 }
+            return [pscustomobject]@{ Class = 'orphan'; Kind = $kind; Where = $where; Reason = 'the run that started it has ended -- a session''s admin runs from the plugin cache, so this was a suite''s or a hand-run''s.'; Target = 0 }
         }
     }
     return [pscustomobject]@{ Class = 'live'; Kind = $kind; Where = $where; Reason = ''; Target = $target }

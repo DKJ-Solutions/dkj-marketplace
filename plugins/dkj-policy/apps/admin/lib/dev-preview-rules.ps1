@@ -19,29 +19,29 @@
                 Requires     = 'node_modules'   # optional: path(s) under the repo root that must exist
                 WaitSeconds  = 20               # optional: how long to wait for the server to listen (1-45)
                 OpenInVsCode = $false           # optional: also hand the URL to VS Code (see the hook)
-                DefaultTheme = 'teal'           # optional: the house theme the plugin's hub and general pages open in
+                DefaultTheme = 'teal'           # optional: the house theme the plugin's admin and general pages open in
                                                 #   while the visitor has picked none; lilac where unstated (#3390), or
                                                 #   a pair by OS mode, @{ Light = 'blue'; Dark = 'sky' } (#3608)
             }
         }
 
-    THE LINE HAS ONE WORD IN EVERY REPO, 'Admin' (INBOUND #3064, October 16, 2026; 'Hub' until the owner renamed it 'Toolbox', October 27, 2026, and 'Toolbox' until #3815, November 5, 2026): the line the hook prints
-    opens with it. It read 'Repo dashboard' until dkj-brandbook v0.3.0 (#3097), 'Repo hub' until #3285 and
+    THE LINE HAS ONE WORD IN EVERY REPO, 'Admin' (INBOUND #3064, October 16, 2026; 'Admin' until the owner renamed it 'Toolbox', October 27, 2026, and 'Toolbox' until #3815, November 5, 2026): the line the hook prints
+    opens with it. It read 'Repo dashboard' until dkj-brandbook v0.3.0 (#3097), 'Repo admin' until #3285 and
     'Repository' until #3291 gave that name to the GitHub repo's own page (/dev/repository) and called the port
-    hub. A repo once chose its own
+    admin. A repo once chose its own
     word through a Name key, and three repos said Showcase, consumer dashboard and dev-preview for the
     same page. A Name a repo still states is ignored rather than refused, so a config that predates this
     keeps working; the word "dev-preview" stays the MECHANISM's, on the hook's lines about its own setup
     (skipped, config unreadable, a config it cannot run), which are printed before any config is read.
 
     THE PLUGIN SERVES THE REPOSITORY IN EVERY REPO (#3245, the owner's decision of October 21, 2026), whether
-    or not the repo states Get-DevPreview: the general pages server answers '/' with the hub, and a server
+    or not the repo states Get-DevPreview: the general pages server answers '/' with Admin, and a server
     the repo states is its PRODUCT, one link on that Repository. This replaces #3047's placeholder, whose own
-    server on 4880-4889 is retired: the hub IS the general pages server.
+    server on 4880-4889 is retired: Admin IS the general pages server.
 
     THERE IS NO OPT-OUT (#3643, the owner's decision of October 29, 2026): every repo that runs dkj-policy gets
-    this hub, and it renders in the house style. From #3245 to #3643 OwnHub = $true let a repo's own server be
-    the hub, with a Product beside it from #3283. Like Name, both are ignored where a repo still states them,
+    this admin, and it renders in the house style. From #3245 to #3643 OwnHub = $true let a repo's own server be
+    Admin, with a Product beside it from #3283. Like Name, both are ignored where a repo still states them,
     so a config that predates this keeps its product, and the keys are named as config drift in a
     DKJ-Solutions repo.
 
@@ -57,12 +57,12 @@
     '<root>\.claude\worktrees\' is a different checkout, so a server started there is not ours either.
 
     THE GENERAL PAGES SERVER AND THE STATE FILE (#3119). Beside the repo's own server the hook starts the
-    plugin's general pages server (hub/pages/serve-general-pages.ps1: Issues, Release notes,
+    plugin's general pages server (apps/admin/pages/serve-general-pages.ps1: Issues, Release notes,
     SessionStart), on the first free port of 4890-4899 under the same ownership rule. The two servers learn
-    of each other through ONE file per checkout, %TEMP%\dkj-repo-hub-<leaf>-<hash>.json, which the hook
-    writes at every session start: { root, hub, pages, product, mode, theme }, the Repository's url, the general
-    server's base url, the repo's own server url, what the repo states (#3245) and its DefaultTheme (#3390). Get-RepoHubStatePath names
-    it, Format-RepoHubState writes it, ConvertFrom-RepoHubState reads it and believes it only when it names
+    of each other through ONE file per checkout, %TEMP%\dkj-repo-admin-<leaf>-<hash>.json, which the hook
+    writes at every session start: { root, admin, pages, product, mode, theme }, the Repository's url, the general
+    server's base url, the repo's own server url, what the repo states (#3245) and its DefaultTheme (#3390). Get-RepoAdminStatePath names
+    it, Format-RepoAdminState writes it, ConvertFrom-RepoAdminState reads it and believes it only when it names
     this root and carries plain loopback urls. The hash is the one the hook's
     log paths use (Get-DevPreviewRootHash), so a checkout's files sit together in %TEMP%.
 
@@ -73,7 +73,7 @@
 $script:DevPreviewMaxAncestors = 4
 # How long a started product must keep listening after its first answer before it reads as started (#3404).
 $script:DevPreviewSettleSeconds = 2
-# The word the session-start line opens with, in every repo (#3064): 'Admin' since #3815 (November 5, 2026; 'Toolbox' from October 27, and 'Hub' before that), Admin beside Product.
+# The word the session-start line opens with, in every repo (#3064): 'Admin' since #3815 (November 5, 2026; 'Toolbox' from October 27, and 'Admin' before that), Admin beside Product.
 $script:DevPreviewLabel = 'Admin'
 # The general pages server, which is the Repository (#3119, #3245). Fixed, so a .vscode route can name them; ten,
 # so ten checkouts open side by side each get their own. Clear of the ranges the repos measured in #2967 and
@@ -84,7 +84,7 @@ function Get-GeneralPagesPortRange {
     <#
         The ports the general pages server may take, and so the only ports a state file's pages url is
         believed on: 4890-4899. DKJ_GENERAL_PAGES_PORTS (comma-separated ports) replaces them -- the TEST
-        override, read from the environment of the process the hook, the servers and the hubs all start in,
+        override, read from the environment of the process the hook, the servers and the Admin servers all start in,
         so a test run never meets a real server. A value that is not a plain port list is ignored.
     #>
     $o = [string]$env:DKJ_GENERAL_PAGES_PORTS
@@ -190,7 +190,7 @@ function ConvertTo-DevPreviewConfig {
         $wait = $w
     }
 
-    # The theme the plugin's hub and general pages open in (#3390): a theme id, the shape house-theme.js names its
+    # The theme the plugin's admin and general pages open in (#3390): a theme id, the shape house-theme.js names its
     # themes in, so it can be written into an attribute as it stands. One the house style does not know falls
     # back in the browser, the way a stored choice naming a retired theme does. A pair, @{ Light; Dark } (#3608),
     # is carried as 'light/dark' and opens the pages in the half that matches the OS mode, as house-theme.js reads
@@ -233,12 +233,12 @@ function ConvertTo-DevPreviewConfig {
 
 function Get-DevPreviewDriftClauses {
     <#
-        The clauses that name what keeps a DKJ-Solutions repo from following a hub change (#3463), in the
+        The clauses that name what keeps a DKJ-Solutions repo from following an admin change (#3463), in the
         order they print; empty where nothing does. -Config is ConvertTo-DevPreviewConfig's, -Mode what the
-        repo states, -SettingsText its .vscode/settings.json, -HubPorts the plugin hub's range.
+        repo states, -SettingsText its .vscode/settings.json, -AdminPorts the plugin admin's range.
 
-        EVERY ONE IS A DEFECT IN THE REPO'S CONFIG. OpenInVsCode with no hub port routed: since #3245
-        OpenInVsCode hands out the HUB's url, so a route written for the product alone sends it to the system
+        EVERY ONE IS A DEFECT IN THE REPO'S CONFIG. OpenInVsCode with no admin port routed: since #3245
+        OpenInVsCode hands out the ADMIN's url, so a route written for the product alone sends it to the system
         browser. A Name still stated: ignored since #3064. An OwnHub or a Product still stated: ignored since
         #3643 retired the opt-out, which until then was named here as a plain fact (October 25, 2026). The
         keys a repo still states but nothing reads share ONE defect, "delete Get-DevPreview's <keys>", and the
@@ -251,15 +251,15 @@ function Get-DevPreviewDriftClauses {
         [AllowEmptyString()][string]$Mode = 'none',
         [AllowNull()]$Config,
         [AllowNull()][AllowEmptyString()][string]$SettingsText,
-        [int[]]$HubPorts = @(Get-GeneralPagesPortRange)
+        [int[]]$AdminPorts = @(Get-GeneralPagesPortRange)
     )
     # TERSE ON PURPOSE (Victor's review): they close a line ConvertTo-DevPreviewLine cuts at 300 characters, so
     # every word here is one the product's url and words cannot use.
     $clauses = @()
     if (-not $DkjSolutions -or -not $Config) { return $clauses }
     $defects = @()
-    if ($Mode -eq 'product' -and $Config.OpenInVsCode -and -not @($HubPorts | Where-Object { Test-DevPreviewVsCodeRoute -SettingsText $SettingsText -Port $_ }).Count) {
-        $defects += "OpenInVsCode but no hub port ($((Format-DevPreviewPorts -Ports $HubPorts) -replace '^ports? ', '')) routed"
+    if ($Mode -eq 'product' -and $Config.OpenInVsCode -and -not @($AdminPorts | Where-Object { Test-DevPreviewVsCodeRoute -SettingsText $SettingsText -Port $_ }).Count) {
+        $defects += "OpenInVsCode but no admin port ($((Format-DevPreviewPorts -Ports $AdminPorts) -replace '^ports? ', '')) routed"
     }
     $unread = @(@($(if ($Config.NameStated) { 'Name' })) + @($Config.RetiredStated) | Where-Object { $_ })
     if ($unread.Count) { $defects += "delete Get-DevPreview's " + ($unread -join ', ') }
@@ -486,13 +486,13 @@ function Select-DevPreviewRestartPort {
     return @{ Action = 'none'; Port = $Port }
 }
 
-function Get-DevPreviewStaleHubOwners {
+function Get-DevPreviewStaleAdminOwners {
     <#
         The process ids listening on -Port whose own command line runs a serve-general-pages.ps1 from an
-        absolute path other than -Server: a hub this checkout started under ANOTHER plugin version. INBOUND
+        absolute path other than -Server: an admin this checkout started under ANOTHER plugin version. INBOUND
         #3275: ownership is read from the checkout the command line names, not from the payload it runs, so
-        after an update the hook reused a v5.26.0 server whose '/' answered with a 303 to the state file's hub
-        -- itself, since #3245 made the hub this server's own page. Empty where the listener runs -Server,
+        after an update the hook reused a v5.26.0 server whose '/' answered with a 303 to the state file's admin
+        -- itself, since #3245 made Admin this server's own page. Empty where the listener runs -Server,
         or a relative path (a server somebody started by hand from a tree), which is left alone.
     #>
     param(
@@ -506,7 +506,7 @@ function Get-DevPreviewStaleHubOwners {
     foreach ($o in @($Listeners | Where-Object { $_ -and [int]$_.LocalPort -eq $Port } | ForEach-Object { [int]$_.OwningProcess } | Select-Object -Unique)) {
         if (-not $Processes.ContainsKey($o)) { continue }
         $cl = ([string]$Processes[$o].CommandLine).Replace('/', '\')
-        if ($cl -notmatch '(?i)([A-Za-z]:\\[^"]*?\\hub\\pages\\serve-general-pages\.ps1)') { continue }
+        if ($cl -notmatch '(?i)([A-Za-z]:\\[^"]*?\\(?:hub|apps\\admin)\\pages\\serve-general-pages\.ps1)') { continue }
         if (-not [string]::Equals([System.IO.Path]::GetFullPath($Matches[1]), $own, [StringComparison]::OrdinalIgnoreCase)) { $stale += $o }
     }
     return $stale
@@ -644,7 +644,7 @@ function Format-DevPreviewPortHolders {
         session cannot stop it at all, so the entry names the session and the one targeted command that frees
         the port. Never 'logoff': this line reaches the model's context, and a logoff ends another account's
         whole session with its unsaved work. A server this hook starts now stops itself once its session stays disconnected (the
-        watcher, hub/pages/dev-preview-watch.ps1), so this is for the holders started before that.
+        watcher, apps/admin/pages/dev-preview-watch.ps1), so this is for the holders started before that.
     #>
     param(
         [Parameter(Mandatory = $true)][int[]]$Ports,
@@ -741,12 +741,12 @@ function Get-DevPreviewWatchStep {
         disconnected when its server starts is in use while disconnected -- the hook that started the server
         ran there -- and that is how Claude Code runs under another account on a machine that switches
         accounts: measured October 27, 2026, the hook's session 42 read WTSDisconnected while the console was
-        another account's session 43, and the hub stopped about two minutes after every start.
+        another account's session 43, and Admin stopped about two minutes after every start.
 
         A DISCONNECT COUNTS ONLY WHILE NO CLAUDE CODE RUNS IN THE SESSION (#3798): -Held is
         Test-DevPreviewSessionHeld's answer, and a held session is in use however it reads, so its disconnect
         resets the clock as an uncertain read does. Measured November 4, 2026: Claude Code kept running in a
-        session the owner had switched away from, and the hub it had started at a connected moment was stopped
+        session the owner had switched away from, and Admin it had started at a connected moment was stopped
         one grace later, while the product it started after the switch survived.
     #>
     param(
@@ -808,7 +808,7 @@ function Get-DevPreviewOwner {
         pid, so a server the suite started through the hook is stopped by its watcher once the suite has gone,
         even when a killed gate never reached the suite's own finally. Measured October 28, 2026: a killed
         ship-pr left 26 suite-started servers and watchers holding about 2.3 GB. A real session never sets it:
-        the hub is meant to outlive the session that started it, for the next one to reuse.
+        Admin is meant to outlive the session that started it, for the next one to reuse.
     #>
     param([AllowEmptyString()][string]$Value = [string]$env:DKJ_DEV_PREVIEW_OWNER_PID)
     if ($Value -notmatch '^[1-9][0-9]{0,9}$') { return $null }
@@ -859,11 +859,11 @@ function Get-DevPreviewLogPath {
     return Join-Path ([System.IO.Path]::GetTempPath()) ("$Name-$leaf-$(Get-DevPreviewRootHash -Root $Root).log")
 }
 
-function Get-RepoHubStatePath {
-    <# %TEMP%\dkj-repo-hub-<leaf>-<hash>.json: where the two servers of one checkout find each other (#3119). #>
+function Get-RepoAdminStatePath {
+    <# %TEMP%\dkj-repo-admin-<leaf>-<hash>.json: where the two servers of one checkout find each other (#3119). #>
     param([Parameter(Mandatory = $true)][string]$Root)
     $leaf = Split-Path -Leaf $Root
-    return Join-Path ([System.IO.Path]::GetTempPath()) ("dkj-repo-hub-$leaf-$(Get-DevPreviewRootHash -Root $Root).json")
+    return Join-Path ([System.IO.Path]::GetTempPath()) ("dkj-repo-admin-$leaf-$(Get-DevPreviewRootHash -Root $Root).json")
 }
 
 function ConvertTo-DevPreviewRootKey {
@@ -873,11 +873,11 @@ function ConvertTo-DevPreviewRootKey {
     return $Root.Replace('/', '\').TrimEnd('\').ToLowerInvariant()
 }
 
-function Test-RepoHubLocalUrl {
+function Test-RepoAdminLocalUrl {
     <#
         True when -Url is a plain loopback url: http://localhost:<port> and an optional path of the characters
         Get-DevPreview's Path allows, at most 240 characters, the port 1024-65535, the path not opening with '//'. The one believe-rule for a state-file url that is
-        a link or a redirect target (the hub's, the product's), so a file another process can write cannot
+        a link or a redirect target (Admin's, the product's), so a file another process can write cannot
         point a link at another host, another scheme or a control character (#3245).
     #>
     param([AllowNull()][AllowEmptyString()][string]$Url)
@@ -888,50 +888,50 @@ function Test-RepoHubLocalUrl {
     return -not ([string]$Matches[2]).StartsWith('//')
 }
 
-function Format-RepoHubState {
+function Format-RepoAdminState {
     <#
-        The state file's text (#3245). -Hub is the Repository's url: the general server's own base plus '/'.
+        The state file's text (#3245). -Admin is the Repository's url: the general server's own base plus '/'.
         -Pages is the general server's base url, '' where none is running. -Product is the repo's own server
-        url, or ''. -Mode is what the repo states: 'none' (no Get-DevPreview, so the hub carries the setup
-        cards) or 'product' (a server of its own, one link on the plugin's hub); 'ownhub' went with #3643.
+        url, or ''. -Mode is what the repo states: 'none' (no Get-DevPreview, so Admin carries the setup
+        cards) or 'product' (a server of its own, one link on the plugin's admin); 'ownhub' went with #3643.
         -Theme is the repo's DefaultTheme, or '' (#3390).
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Root,
-        [AllowEmptyString()][string]$Hub = '',
+        [AllowEmptyString()][string]$Admin = '',
         [AllowEmptyString()][string]$Pages = '',
         [AllowEmptyString()][string]$Product = '',
         [ValidateSet('none', 'product')][string]$Mode = 'none',
         [AllowEmptyString()][string]$Theme = ''
     )
-    return ([ordered]@{ root = $Root; hub = $Hub; pages = $Pages; product = $Product; mode = $Mode; theme = $Theme } | ConvertTo-Json -Compress)
+    return ([ordered]@{ root = $Root; admin = $Admin; pages = $Pages; product = $Product; mode = $Mode; theme = $Theme } | ConvertTo-Json -Compress)
 }
 
-function ConvertFrom-RepoHubState {
+function ConvertFrom-RepoAdminState {
     <#
-        @{ Hub; Pages; Product; Mode; Theme } from the state file's -Text, each '' (Mode 'none') unless it can be
+        @{ Admin; Pages; Product; Mode; Theme } from the state file's -Text, each '' (Mode 'none') unless it can be
         believed: the file is JSON, its root is -Root (compared the way paths are), and each url is a plain
-        loopback url -- the hub's and the product's with an optional path of the characters Get-DevPreview's
-        Path allows (Test-RepoHubLocalUrl), the pages' a bare base on one of the general pages ports
-        (Get-GeneralPagesPortRange), so a file another process can write cannot point a hub's links at any
+        loopback url -- Admin's and the product's with an optional path of the characters Get-DevPreview's
+        Path allows (Test-RepoAdminLocalUrl), the pages' a bare base on one of the general pages ports
+        (Get-GeneralPagesPortRange), so a file another process can write cannot point an admin's links at any
         other local service. The urls are redirect targets and link hrefs, so a state file that names anything
         else is ignored. Mode is believed only as 'none' or 'product'; a file written before #3245 has none,
-        and reads as 'none': the plugin's own hub. An 'ownhub' a hook before #3643 wrote reads as 'product',
+        and reads as 'none': the plugin's own admin. An 'ownhub' a hook before #3643 wrote reads as 'product',
         since that repo states a server and its next session start writes the file again. Theme is believed only as a theme id or a 'light/dark'
         pair of them (Test-DevPreviewThemeValue), since every page writes it into its <html> (#3390, #3608).
     #>
     param([AllowNull()][AllowEmptyString()][string]$Text, [Parameter(Mandatory = $true)][string]$Root)
-    $state = @{ Hub = ''; Pages = ''; Product = ''; Mode = 'none'; Theme = '' }
+    $state = @{ Admin = ''; Pages = ''; Product = ''; Mode = 'none'; Theme = '' }
     if (-not $Text) { return $state }
     try { $s = $Text | ConvertFrom-Json } catch { return $state }
     if (-not $s -or -not $s.PSObject.Properties['root']) { return $state }
     if ((ConvertTo-DevPreviewRootKey ([string]$s.root)) -ne (ConvertTo-DevPreviewRootKey $Root)) { return $state }
-    $h = if ($s.PSObject.Properties['hub']) { [string]$s.hub } else { '' }
+    $h = if ($s.PSObject.Properties['admin']) { [string]$s.admin } else { '' }
     $p = if ($s.PSObject.Properties['pages']) { [string]$s.pages } else { '' }
     $q = if ($s.PSObject.Properties['product']) { [string]$s.product } else { '' }
     $m = if ($s.PSObject.Properties['mode']) { [string]$s.mode } else { '' }
-    if (Test-RepoHubLocalUrl $h) { $state.Hub = $h }
-    if (Test-RepoHubLocalUrl $q) { $state.Product = $q }
+    if (Test-RepoAdminLocalUrl $h) { $state.Admin = $h }
+    if (Test-RepoAdminLocalUrl $q) { $state.Product = $q }
     if ($p -cmatch '^http://localhost:([0-9]{4,5})/?\z' -and (@(Get-GeneralPagesPortRange) -contains [int]$Matches[1])) { $state.Pages = $p.TrimEnd('/') }
     if ($m -cmatch '^(none|product)\z') { $state.Mode = $m }
     elseif ($m -ceq 'ownhub') { $state.Mode = 'product' }

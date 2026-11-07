@@ -2,7 +2,7 @@
 .SYNOPSIS
     The Stopwatch's shared copy (#3349): every machine publishes its finished runs to a ref of its own on origin,
     refs/stopwatch/<machine id>, and reads every other machine's from there, so each machine's /dev/stopwatch shows them
-    all. Only where the repo opts in (Test-StopwatchShareEnabled, since #3470): every repo's hub has the page now,
+    all. Only where the repo opts in (Test-StopwatchShareEnabled, since #3470): every repo's admin has the page now,
     and a label is the first line of a prompt.
 
 .DESCRIPTION
@@ -14,7 +14,7 @@
 
     ONE REF PER MACHINE, so two machines never write the same ref and every push is a fast-forward of the copy
     this machine last fetched of its own ref. The machine id is random (New-StopwatchMachineId), kept in
-    stopwatch-machine.txt in Get-HubTimingBaseDir, so no computer name reaches a repo's origin; it names the machine,
+    stopwatch-machine.txt in Get-AdminTimingBaseDir, so no computer name reaches a repo's origin; it names the machine,
     so it is one for every repo's store on it. Origin's refs are fetched into
     refs/stopwatch-origin/*, never into refs/stopwatch/*, so a local ref can never shadow what origin holds.
 
@@ -26,8 +26,8 @@
     so the blob reads the same under whatever code page a native git call's output is decoded with, and a label
     with an accent reaches the other machine intact.
 
-    WHO CALLS IT: hub/pages/stopwatch-sync.ps1 in this plugin, started in the background by the Stop hook once a run
-    has ended and by the hub at most every few minutes (Test-StopwatchSyncDue), and it does nothing where the repo
+    WHO CALLS IT: apps/admin/pages/stopwatch-sync.ps1 in this plugin, started in the background by the Stop hook once a run
+    has ended and by Admin at most every few minutes (Test-StopwatchSyncDue), and it does nothing where the repo
     has not opted in. Neither waits on it, so no turn and no
     page load waits on the network. Everything that reads or writes a ref runs git; every failure is returned,
     never thrown.
@@ -39,7 +39,7 @@
     A label entry hides every finished run of that label, a run finished after it included, until it is shown again;
     a run still going is never hidden.
     Per run id or label the newest entry across all machines wins, so a hide written on one machine is undone from
-    any other by a newer show entry. The entries are written by hub/pages/stopwatch-hide.ps1 (the
+    any other by a newer show entry. The entries are written by apps/admin/pages/stopwatch-hide.ps1 (the
     stopwatch-hide skill); the pages stay read-only (#3323).
 
     A HIDDEN RUN IS ERASED BY THE MACHINE THAT RECORDED IT (#3453). At its sync, after the fetch, a machine drops
@@ -324,7 +324,7 @@ function Test-StopwatchSyncRunning {
 
 function Start-StopwatchSync {
     <#
-        Starts this plugin's hub/pages/stopwatch-sync.ps1 for -RepoRoot as a hidden process of its own and returns at
+        Starts this plugin's apps/admin/pages/stopwatch-sync.ps1 for -RepoRoot as a hidden process of its own and returns at
         once; nothing waits on it. Returns whether it started, and does not start it where the repo has not opted in
         (Test-StopwatchShareEnabled). A caller that must not reach the network (a test) does not call it.
     #>

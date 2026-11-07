@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/hub/lib/logbook-lib.ps1 -- the Logbook page of the dev server (#3364): the label, the hook's rules,
+    Tests for plugins/dkj-policy/apps/admin/lib/logbook-lib.ps1 -- the Logbook page of the dev server (#3364): the label, the hook's rules,
     the store's session list, the hook script itself against a fixture checkout, and the two pages.
 
     Pure ASCII (repo convention for .ps1).
@@ -9,7 +9,7 @@ $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 . (Join-Path $RepoRoot 'scripts\lib\dev-pages-lib.ps1')
-. (Join-Path $RepoRoot 'plugins\dkj-policy\hub\lib\logbook-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\logbook-lib.ps1')
 
 $script:pass = 0
 $script:fail = 0
@@ -30,7 +30,7 @@ $t0 = [datetime]::new(2026, 10, 24, 10, 0, 0, [DateTimeKind]::Utc)
 $at = { param([double]$s) $t0.AddSeconds($s) }
 
 Write-Host '-- the label' -ForegroundColor Cyan
-Assert-Equal 'add a card to the hub' (Get-LogbookPromptLabel -Prompt "  add a card to the hub  `nand the rest") 'the label is the prompt''s first line, trimmed'
+Assert-Equal 'add a card to Admin' (Get-LogbookPromptLabel -Prompt "  add a card to Admin  `nand the rest") 'the label is the prompt''s first line, trimmed'
 Assert-Equal 'from a paste' (Get-LogbookPromptLabel -Prompt "<pasted_content id=`"3f0a`">`r`nfrom a paste`r`nmore`r`n</pasted_content id=`"3f0a`">") 'a prompt that is a paste is read from the pasted text''s first line'
 Assert-Equal 80 (Get-LogbookPromptLabel -Prompt ('a' * 200)).Length 'it is cut at the label maximum'
 Assert-Equal 'Assignment' (Get-LogbookPromptLabel -Prompt "   `n") 'an empty first line is called Assignment'
@@ -79,10 +79,10 @@ try {
     # The hook script, against a fixture checkout of its own: the libs it loads, git on main, its own store and
     # its own run-progress directory. The payload arrives as JSON on stdin; silent, exit 0.
     $fx = Join-Path $dir 'checkout'
-    # The plugin's layout (#3470): the hook under hooks\, its libs under hub\lib\ and dkj-policy's scripts\lib\.
+    # The plugin's layout (#3470): the hook under hooks\, its libs under apps\admin\lib\ and dkj-policy's scripts\lib\.
     $fxPlugin = Join-Path $fx 'plugins\dkj-policy'
-    New-Item -ItemType Directory -Path (Join-Path $fxPlugin 'hooks'), (Join-Path $fxPlugin 'hub\lib'), (Join-Path $fxPlugin 'scripts\lib') -Force | Out-Null
-    foreach ($lib in 'logbook-lib.ps1', 'stopwatch-lib.ps1') { Copy-Item (Join-Path $RepoRoot "plugins\dkj-policy\hub\lib\$lib") (Join-Path $fxPlugin 'hub\lib\') }
+    New-Item -ItemType Directory -Path (Join-Path $fxPlugin 'hooks'), (Join-Path $fxPlugin 'apps\admin\lib'), (Join-Path $fxPlugin 'scripts\lib') -Force | Out-Null
+    foreach ($lib in 'logbook-lib.ps1', 'stopwatch-lib.ps1') { Copy-Item (Join-Path $RepoRoot "plugins\dkj-policy\apps\admin\lib\$lib") (Join-Path $fxPlugin 'apps\admin\lib\') }
     foreach ($lib in 'run-progress-lib.ps1', 'command-probe-lib.ps1') { Copy-Item (Join-Path $RepoRoot "plugins\dkj-policy\scripts\lib\$lib") (Join-Path $fxPlugin 'scripts\lib\') }
     foreach ($lib in 'run-progress-lib.ps1', 'workflow-folder-lib.ps1') { Copy-Item (Join-Path $RepoRoot "plugins\dkj-policy\scripts\lib\$lib") (Join-Path $fxPlugin 'scripts\lib\') }
     Copy-Item (Join-Path $RepoRoot 'plugins\dkj-policy\hooks\logbook-hook.ps1') (Join-Path $fxPlugin 'hooks\')

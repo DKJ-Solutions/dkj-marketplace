@@ -37,10 +37,10 @@
     records which runs produced the numbers, so a later reader can re-derive them or notice they are old.
 
     IT SHIPS IN dkj-policy, AND THIS IS THE CI CONTRACT IT READS (issue #3474). Until then only the source
-    repo could write the file, so every consumer's Test gate page in the hub showed its empty state. What
+    repo could write the file, so every consumer's Test gate page in Admin showed its empty state. What
     a consumer's CI has to do for this script to read it is three things, and nothing about job names or
     shards is among them:
-      1. Its suites are `scripts/tests/*.tests.ps1` -- the directory the gate and the hub page read.
+      1. Its suites are `scripts/tests/*.tests.ps1` -- the directory the gate and the Admin page read.
       2. A workflow run executes them through the plugin's own gate (Invoke-TestSuiteGate, which
          `open-pr.ps1 -GatesOnly` calls), because that gate prints the per-suite table this parses:
          one line per suite, `<seconds>s  <name>.tests.ps1  started +<offset>s`. A CI step that runs
@@ -49,7 +49,7 @@
     A sharded CI is read the same as an unsharded one: every row in the run's log is a sample.
 
 .PARAMETER Machine
-    What the runs were measured on, written to `recordedFrom.machine` and shown on the hub's Test gate
+    What the runs were measured on, written to `recordedFrom.machine` and shown on Admin's Test gate
     page, e.g. 'windows-latest (4 cores), 4 lanes per shard'. Omitted, the value already in the file is
     kept, so a refresh does not need it retyped; a first write without it records 'not stated'.
 

@@ -826,7 +826,7 @@ try {
     Assert-Equal 0 $r.Code '20b: exit 0'
     Assert-Equal '[SUMMARY] 1 plugin(s) enabled here: 0 behind, 1 up to date.' $r.Text.Trim() '20b: ver-match emits nothing but the summary -- indistinguishable from match, by contract'
 
-    # --- 20j. -Json (#3482): the same rows as one JSON line, for the hub's Plugins page ---------------
+    # --- 20j. -Json (#3482): the same rows as one JSON line, for Admin's Plugins page ---------------
     Write-Host "20j. -Json: one JSON line with the row, its description, and nothing else" -ForegroundColor Cyan
     $c = New-Case 'json-match'
     $head = New-Clone -Dir $c.Clone -Version '4.32.0'

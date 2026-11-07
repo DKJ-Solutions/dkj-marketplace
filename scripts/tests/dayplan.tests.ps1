@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/hub/lib/dayplan-lib.ps1 and plugins/dkj-policy/hub/pages/day-plan.ps1 -- the day plan
+    Tests for plugins/dkj-policy/apps/admin/lib/dayplan-lib.ps1 and plugins/dkj-policy/apps/admin/pages/day-plan.ps1 -- the day plan
     (#3859): reading a proposed plan, the 6-8 h band that Paula holds both ways, the measured pace, matching the plan
     against GitHub's finished work, the carry-over, the texts, and the script's refusals and day file.
 
@@ -9,8 +9,8 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-. (Join-Path $RepoRoot 'plugins\dkj-policy\hub\lib\dayplan-lib.ps1')
-$Script = Join-Path $RepoRoot 'plugins\dkj-policy\hub\pages\day-plan.ps1'
+. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\dayplan-lib.ps1')
+$Script = Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\pages\day-plan.ps1'
 
 $script:pass = 0
 $script:fail = 0
@@ -112,8 +112,8 @@ $wt = Format-DayPlanWeekText -Week $wk -Prs 7 -Issues 3
 Assert-True ($wt -match 'Mon 02' -and $wt -match 'not closed' -and $wt -match '7 PR\(s\) merged, 3 issue\(s\) closed' -and $wt -match 'reached on 0 of 2') 'the week shows each day, the totals, and how often the goal was reached'
 
 Write-Host '-- the Today page (#3860)' -ForegroundColor Cyan
-. (Join-Path $RepoRoot 'plugins\dkj-policy\hub\lib\general-pages-lib.ps1')
-. (Join-Path $RepoRoot 'plugins\dkj-policy\hub\lib\today-page-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\today-page-lib.ps1')
 $now = [datetime]'2026-11-07T12:00'
 $pageDay = [pscustomobject]@{ date = '2026-11-07'; goal = 'Ship <it>'; notToday = @('Spotify'); overrides = @([pscustomobject]@{ at = 'start'; reason = 'short day' }); close = $null
     items = @((& $item 'Script' 3 'go' 'o/r#1'), (& $item 'Page <b>' 2 'plan' ''), ([pscustomobject]@{ title = 'Review'; hours = 1; mode = 'go'; ref = ''; added = $true })) }
@@ -138,12 +138,12 @@ $err = Format-TodayPageHtml -Model $null -ReadError 'day-plan.ps1 -Status exited
 Assert-True ($err -match 'msg--warn" role="alert">The day plan could not be read' -and $err -notmatch 'No plan yet') 'a failed read is a warning, not an empty plan'
 Assert-True ((Format-TodayPageHtml -Model $empty -Now ([datetime]'2026-11-08')) -ne $null -and (Format-TodayPageHtml -Model ([pscustomobject]@{ date = '2026-11-07'; day = $null; week = @() }) -Now ([datetime]'2026-11-08')) -match '<title>[^<]*Saturday 7 November') 'a page showing another day than today names its date'
 $gp = @(Get-GeneralPages | Where-Object { $_.Href -eq '/dev/today' })
-Assert-True ($gp.Count -eq 1 -and $gp[0].Label -eq 'Today' -and -not $gp[0].Group -and -not $gp[0].GitHub -and (Get-HubIconSvg -Name $gp[0].Icon) -match '<svg') 'Today is a general page of its own, with an icon'
+Assert-True ($gp.Count -eq 1 -and $gp[0].Label -eq 'Today' -and -not $gp[0].Group -and -not $gp[0].GitHub -and (Get-AdminIconSvg -Name $gp[0].Icon) -match '<svg') 'Today is a general page of its own, with an icon'
 
 Write-Host '-- the script' -ForegroundColor Cyan
 $state = Join-Path ([System.IO.Path]::GetTempPath()) ('dkj-dayplan-tests-' + [guid]::NewGuid().ToString('N'))
-$prevState = $env:DKJ_HUB_STATE_DIR
-$env:DKJ_HUB_STATE_DIR = $state
+$prevState = $env:DKJ_ADMIN_STATE_DIR
+$env:DKJ_ADMIN_STATE_DIR = $state
 try {
     [void](New-Item -ItemType Directory -Path $state -Force)
     $planPath = Join-Path $state 'plan.json'
@@ -195,7 +195,7 @@ try {
     $r = & $run @('-Context', '-Close')
     Assert-True ($r.Code -eq 1 -and $r.Out -match 'exactly one') 'two modes at once are refused'
 } finally {
-    $env:DKJ_HUB_STATE_DIR = $prevState
+    $env:DKJ_ADMIN_STATE_DIR = $prevState
     Remove-Item -LiteralPath $state -Recurse -Force -ErrorAction SilentlyContinue
 }
 

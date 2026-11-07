@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    The Logbook page of every repo's hub (#3364; in dkj-policy since #3470): every assignment given in a clean session, timed from its
+    The Logbook page of every repo's admin (#3364; in dkj-policy since #3470): every assignment given in a clean session, timed from its
     first prompt until Claude is back on the trunk, without anybody marking it.
 
 .DESCRIPTION
@@ -337,7 +337,7 @@ function Format-LogbookPageHtml {
         [hashtable]$Transcript = @{},
         [datetime]$Now = [datetime]::UtcNow,
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/',
+        [string]$AdminHref = '/',
         [AllowEmptyString()][string]$PagerHtml = ''
     )
     $notes = @{}
@@ -349,10 +349,10 @@ function Format-LogbookPageHtml {
         'The first prompt of a new Claude Code session starts a run when the checkout is on the trunk and clean; a Stop hook ends it once a turn ends with the checkout back on the trunk and clean, ' +
         'also when nothing was merged, and not while a ship-pr is still waiting on CI. Both are the dkj-policy plugin''s <code>hooks/logbook-hook.ps1</code>. ' +
         'A <code>/issues-sweep</code> run is shown per issue: cut at each ship-pr fold its own session made in this checkout, the moment the trunk is clean again, and named after the issue its fold commit names; the time after the last fold belongs to no issue. ' +
-        'Built by its <code>hub/lib/logbook-lib.ps1</code> on the Stopwatch''s pages.'
+        'Built by its <code>apps/admin/lib/logbook-lib.ps1</code> on the Stopwatch''s pages.'
     return Format-StopwatchPageHtml -Model (ConvertTo-LogbookModel -Runs $Runs -Now $Now) -ReadError $ReadError -Skipped $Skipped -StorePath $StorePath -Now $Now `
         -Route '/dev/logbook' -PageTitle 'Logbook' `
-        -FooterNote $note -NoDelta -CardNotes $notes -CardTones $tones -Flat -RepoName $RepoName -HubHref $HubHref -PagerHtml $PagerHtml
+        -FooterNote $note -NoDelta -CardNotes $notes -CardTones $tones -Flat -RepoName $RepoName -AdminHref $AdminHref -PagerHtml $PagerHtml
 }
 
 function Format-LogbookRunPageHtml {
@@ -363,15 +363,15 @@ function Format-LogbookRunPageHtml {
         [hashtable]$Transcript = @{},
         [datetime]$Now = [datetime]::UtcNow,
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/'
+        [string]$AdminHref = '/'
     )
     $note = 'Kept on this machine in <code>' + (ConvertTo-GeneralPageText $StorePath) + '</code>, outside the checkout, and not shared. ' +
         'The phases are read from this repo''s Claude Code session transcripts once a run has stopped, as the Stopwatch reads them: each second goes to the first phase going at that moment, ' +
-        'and a second in which no session was busy is time spent waiting on you. Built by the dkj-policy plugin''s <code>hub/lib/logbook-lib.ps1</code>.'
+        'and a second in which no session was busy is time spent waiting on you. Built by the dkj-policy plugin''s <code>apps/admin/lib/logbook-lib.ps1</code>.'
     $timeNote = ''
     if (@($Group.Rows).Count) {
         $w = (Get-LogbookWorkTimes -Runs @($Group.Rows[0].Run) -Transcript $Transcript)[$Group.Rows[0].Run.Id]
         if ($w) { $timeNote = 'Work ' + (Format-DevSeconds $w.Work) + ', waiting on you ' + (Format-DevSeconds $w.Waiting) + '.' }
     }
-    return Format-StopwatchRunPageHtml -Group $Group -StorePath $StorePath -Transcript $Transcript -Now $Now -Route '/dev/logbook' -ParentLabel 'Logbook' -FooterNote $note -NoDelta -TimeNote $timeNote -RepoName $RepoName -HubHref $HubHref
+    return Format-StopwatchRunPageHtml -Group $Group -StorePath $StorePath -Transcript $Transcript -Now $Now -Route '/dev/logbook' -ParentLabel 'Logbook' -FooterNote $note -NoDelta -TimeNote $timeNote -RepoName $RepoName -AdminHref $AdminHref
 }

@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
-    The Stopwatch's and the Logbook's routes, answered for any hub server (#3470): /dev/stopwatch, /dev/stopwatch/<label>,
+    The Stopwatch's and the Logbook's routes, answered for any admin server (#3470): /dev/stopwatch, /dev/stopwatch/<label>,
     /dev/stopwatch/<label>/<run>, /dev/logbook and /dev/logbook/<slug>.
 
 .DESCRIPTION
-    ONE ROUTER FOR TWO SERVERS. The pages began on the source repo's own hub (serve-consumer-dashboard.ps1) and are
+    ONE ROUTER FOR TWO SERVERS. The pages began on the source repo's own admin (serve-consumer-dashboard.ps1) and are
     every repo's since #3470, served by this plugin's serve-general-pages.ps1. Both servers call
-    Resolve-HubTimingPage with a context from New-HubTimingContext, so the rules of which page a path is, and which
+    Resolve-AdminTimingPage with a context from New-AdminTimingContext, so the rules of which page a path is, and which
     path is a redirect or a 404, are written once.
 
     THE CONTEXT FIXES WHAT A SERVER READS FOR ITS WHOLE LIFE: the repo's stores (one per repo, Get-StopwatchStorePath),
@@ -22,28 +22,28 @@
 . (Join-Path $PSScriptRoot 'logbook-lib.ps1')
 . (Join-Path $PSScriptRoot 'stopwatch-sync-lib.ps1')
 
-function New-HubTimingContext {
+function New-AdminTimingContext {
     <#
-        What a server hands Resolve-HubTimingPage on every request: the repo at -RepoRoot, its name for the page
-        header (-RepoName) and where Home goes (-HubHref), and the stores. -StopwatchPath, -LogbookPath and
+        What a server hands Resolve-AdminTimingPage on every request: the repo at -RepoRoot, its name for the page
+        header (-RepoName) and where Home goes (-AdminHref), and the stores. -StopwatchPath, -LogbookPath and
         -TranscriptDir are for the tests; a store passed in turns sharing off. Without them a store the repo left
-        behind under another key is adopted first (Import-HubTimingOrphanStore, #3780).
+        behind under another key is adopted first (Import-AdminTimingOrphanStore, #3780).
     #>
     param(
         [Parameter(Mandatory = $true)][string]$RepoRoot,
         [AllowEmptyString()][string]$RepoName = '',
-        [string]$HubHref = '/',
+        [string]$AdminHref = '/',
         [AllowEmptyString()][string]$StopwatchPath = '',
         [AllowEmptyString()][string]$LogbookPath = '',
         [AllowEmptyString()][string]$TranscriptDir = ''
     )
     $own = -not $StopwatchPath
-    if ($own) { [void](Import-HubTimingOrphanStore -RepoRoot $RepoRoot); $StopwatchPath = Get-StopwatchStorePath -RepoRoot $RepoRoot }
+    if ($own) { [void](Import-AdminTimingOrphanStore -RepoRoot $RepoRoot); $StopwatchPath = Get-StopwatchStorePath -RepoRoot $RepoRoot }
     if (-not $LogbookPath) { $LogbookPath = Join-Path (Split-Path -Parent $StopwatchPath) 'logbook.json' }
     if (-not $TranscriptDir) { $TranscriptDir = Get-StopwatchTranscriptDir -RepoRoot $RepoRoot }
     $shared = $own -and (Test-StopwatchShareEnabled -RepoRoot $RepoRoot)
     return @{
-        Root = $RepoRoot; RepoName = $RepoName; HubHref = $HubHref
+        Root = $RepoRoot; RepoName = $RepoName; AdminHref = $AdminHref
         StopwatchPath = $StopwatchPath; LogbookPath = $LogbookPath; TranscriptDir = $TranscriptDir
         StopwatchPhasesPath = (Join-Path (Split-Path -Parent $StopwatchPath) 'stopwatch-phases.json')
         LogbookPhasesPath = (Join-Path (Split-Path -Parent $LogbookPath) 'logbook-phases.json')
@@ -51,7 +51,7 @@ function New-HubTimingContext {
         StepLogPath = $(if ($script:StopwatchStepLogAvailable) { Get-RunStepLogPath } else { '' })
         Shared = $shared
         # The machine id names this machine, so it is one for every repo's store on it (#3470).
-        MachineId = $(if ($shared) { Get-StopwatchMachineId -StoreDir (Get-HubTimingBaseDir) } else { '' })
+        MachineId = $(if ($shared) { Get-StopwatchMachineId -StoreDir (Get-AdminTimingBaseDir) } else { '' })
     }
 }
 
@@ -84,7 +84,7 @@ function Get-StopwatchPageRuns {
     return @{ Store = $store; Runs = $runs; Shared = $shared }
 }
 
-function Resolve-HubTimingPage {
+function Resolve-AdminTimingPage {
     <#
         The answer to -Path when it is one of the Stopwatch's or the Logbook's routes, else $null: @{ Status; Html;
         Location }, Status 200 with the page, 301 with the Location a bare run slug moved to, or 404. A label's page,
@@ -94,7 +94,7 @@ function Resolve-HubTimingPage {
     #>
     param([Parameter(Mandatory = $true)][string]$Path, [Parameter(Mandatory = $true)][hashtable]$Context)
     $c = $Context
-    $site = @{ RepoName = $c.RepoName; HubHref = $c.HubHref }
+    $site = @{ RepoName = $c.RepoName; AdminHref = $c.AdminHref }
     $ok = { param($html) @{ Status = 200; Html = $html; Location = '' } }
     $missing = @{ Status = 404; Html = ''; Location = '' }
     if ($Path -eq '/dev/stopwatch') {

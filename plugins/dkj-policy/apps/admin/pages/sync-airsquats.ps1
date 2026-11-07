@@ -3,20 +3,20 @@
     One sync of this machine's airsquats state with the private GitHub gist every machine shares (#3438).
 
 .DESCRIPTION
-    Started by a hub server (Start-AirsquatsSync, hub/lib/airsquats-lib.ps1) in a hidden child, so the server's
+    Started by an admin server (Start-AirsquatsSync, apps/admin/lib/airsquats-lib.ps1) in a hidden child, so the server's
     single-threaded loop never waits on the network. The rules -- which gist, how the two states merge, when the
     gist is written -- are Sync-AirsquatsGist's; this file is the process around it: a lock of its own, so two
     servers' children never sync at once, and gh bounded at 20 s a call.
 
-    THE GIST, ONLY ON AN OPT-IN (#3439). DKJ_HUB_AIRSQUATS_GIST=auto finds it by the id this machine remembers,
+    THE GIST, ONLY ON AN OPT-IN (#3439). DKJ_ADMIN_AIRSQUATS_GIST=auto finds it by the id this machine remembers,
     else by its description ('dkj-hub-airsquats') among the gists of the account gh is logged in as, and creates
     it private on first use; so two machines on the same gh account find each other with that one setting.
-    Machines on different accounts each pin the same gist id in DKJ_HUB_AIRSQUATS_GIST instead. Unset, the
+    Machines on different accounts each pin the same gist id in DKJ_ADMIN_AIRSQUATS_GIST instead. Unset, the
     server starts no child, and a child started anyway calls no gh.
 
     Exits 0 always: a failed sync is written into the state file (syncError) for the banner, never raised.
 
-    Pure ASCII (repo convention for .ps1). The rules are tested by scripts/tests/hub-airsquats.tests.ps1.
+    Pure ASCII (repo convention for .ps1). The rules are tested by scripts/tests/admin-airsquats.tests.ps1.
 #>
 [CmdletBinding()]
 param([ValidateRange(1000, 120000)][int]$GhTimeoutMs = 20000)
