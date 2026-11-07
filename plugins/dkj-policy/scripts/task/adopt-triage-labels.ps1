@@ -46,11 +46,14 @@
     reach axis; it only offers the priority axis to an ordinary dkj-policy consumer that has no BWJ
     board of its own.
 
-    TWO DIFFERENT GUARDS, AND THIS SCRIPT CARRIES ONLY ONE OF THEM. `source-repo-guard-lib.ps1`'s
-    `Assert-OwnCopy` is the UNIVERSAL one every person-invoked shared script in this family carries
-    (`source-repo-guard.tests.ps1`'s own coverage assert enforces it, with an exemption reserved for a
-    hook nobody types): it refuses a STALE, released copy of THIS script running from inside the repo
-    that maintains it, and does nothing anywhere else. This script has it, right below.
+    NEITHER OF THE TWO SOURCE-REPO GUARDS, SINCE #3882. `source-repo-guard-lib.ps1`'s `Assert-OwnCopy` is
+    the UNIVERSAL one every person-invoked shared script in this family carries, with an exemption
+    reserved for a script a HOOK runs: it refuses a released copy running inside the repo that maintains
+    it, and a hook runs the released copy by design, so the refusal would fire at every session start
+    there. This script became hook-invoked with #3882 -- `triage-labels-sessioncheck.ps1` runs it so a
+    session start says the tracker lacks labels, where before nothing did until a sweep's
+    `gh issue edit --add-label` failed -- and it reads the TRACKER rather than this tree, so a released
+    copy answers the same question this one does. The exemption is argued in `source-repo-guard.tests.ps1`.
     `Test-IsWorkflowSourceRepo`, the SEPARATE, content-specific refusal `adopt-ci-floor.ps1` and
     `adopt-workflow-folder.ps1` carry, is different: it refuses the whole OPERATION in the source repo,
     because those commands WRITE local files that would collide with the hand-kept originals they are
@@ -94,23 +97,26 @@
     gh. For the test suite, which has to reach every arm (missing labels, all present, an unreadable
     payload) without a network or a real repo. A consumer never types it.
 
+.PARAMETER TimeoutSeconds
+    Bounds each of the two `gh` reads, so a hung `gh` cannot hold up its caller. 0, the default, leaves
+    them unbounded, which is what a person running this by hand wants; `triage-labels-sessioncheck.ps1`
+    passes a bound, because a session start must not wait on the network (#3882).
+
 .EXAMPLE
     .\scripts\task\adopt-triage-labels.ps1
 #>
 
 [CmdletBinding()]
 param(
-    [string]$LabelJsonOverride = ''
+    [string]$LabelJsonOverride = '',
+    [int]$TimeoutSeconds = 0
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# THE SOURCE-REPO GUARD: refuses THIS script when it is a released copy running in the repo that
-# maintains it -- the universal one, not the content-specific Test-IsWorkflowSourceRepo (see the
-# header). Guarded dot-source, so a tree without the lib behaves as before. Why: the lib's own header.
-$guardLib = Join-Path $PSScriptRoot '..\lib\source-repo-guard-lib.ps1'
-if (Test-Path -LiteralPath $guardLib -PathType Leaf) { . $guardLib; Assert-OwnCopy -ScriptPath $PSCommandPath }
+# NO SOURCE-REPO GUARD, ON PURPOSE (#3882): triage-labels-sessioncheck.ps1 runs this released copy at
+# every session start, and it reads the tracker rather than this tree. The header says why in full.
 
 # Dual-context repo root: a consumer running the plugin mirror gets it from CLAUDE_PROJECT_DIR, the
 # source's root copy falls back to the git root. Same resolution as every other mirrored script.
@@ -192,7 +198,7 @@ if (-not $repoSlug) {
     # No seam answer: ask gh what repo this checkout is, exactly as adopt-ci-floor does for the same
     # reason -- a fresh adoption has not necessarily answered Get-RepoName yet, and refusing here would
     # gate this report on a seam that has nothing to do with it.
-    $slugRead = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr -Arguments @('repo', 'view', '--json', 'nameWithOwner', '--jq', '.nameWithOwner')
+    $slugRead = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr -TimeoutSeconds $TimeoutSeconds -Arguments @('repo', 'view', '--json', 'nameWithOwner', '--jq', '.nameWithOwner')
     if ($slugRead.ExitCode -eq 0) { $repoSlug = ($slugRead.Output -join '').Trim() }
 }
 
@@ -208,7 +214,7 @@ if ($LabelJsonOverride) {
     # -DiscardStderr because this output is PARSED: a gh warning merged into it would break the
     # ConvertFrom-Json inside Get-LabelNames, exactly the reasoning adopt-ci-floor's own rules read
     # gives for the same flag.
-    $labelRead = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr -Arguments $labelArgs
+    $labelRead = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr -TimeoutSeconds $TimeoutSeconds -Arguments $labelArgs
     if ($labelRead.ExitCode -eq 0) { $labelJson = $labelRead.Output -join "`n" }
 }
 

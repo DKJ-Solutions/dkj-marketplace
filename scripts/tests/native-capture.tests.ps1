@@ -2033,7 +2033,11 @@ foreach ($af in $auditFiles) {
 # inside a recreated vanished checkout), -Utf8 and at the shared network bound as update-plugins' own uninstall.
 # Judged only by a POSITIVE `-eq 0`: anything else, an unmeasured code included, is a FAILED line and the
 # record is handed over with its paste-ready sequence, so a capture it could not judge never counts as removed.
-Assert-Equal 108 $boundedTotal 'the parser still counts 108 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
+# 108 -> 110 (#3882): adopt-triage-labels.ps1's $slugRead (`gh repo view`) and $labelRead (`gh label list`), at
+# the caller's -TimeoutSeconds -- 0 by hand, 15 from triage-labels-sessioncheck.ps1 at session start. Both are
+# judged only by a POSITIVE `-eq 0`: anything else leaves the slug or the payload empty, which the script reads
+# as an unreadable tracker and reports as [skip], so a capture it could not judge never reads as a missing label.
+Assert-Equal 110 $boundedTotal 'the parser still counts 110 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
 Assert-Equal 0 $unguarded.Count `
     ('every bounded capture judged with a NEGATIVE exit-code test either asks Test-NativeExitMeasured/Get-NativeExitLabel about THAT capture or is exempt with a reason (#2081)' +
      $(if ($unguarded.Count) { ' -- unguarded: ' + ($unguarded -join ' | ') } else { '' }))

@@ -391,6 +391,12 @@ $guardExempt = @(
     # SessionStart: unshipped-pr-sessioncheck (#2525) -- check-stranded-sweep's sibling, exempt for the
     # identical reason: the hook runs the released copy from '${CLAUDE_PLUGIN_ROOT}/scripts/lint/'.
     'scripts\lint\check-unshipped-pr.ps1',
+    # SessionStart: triage-labels-sessioncheck (#3882). check-stranded-sweep's reason: the hook runs the
+    # released copy from '${CLAUDE_PLUGIN_ROOT}/scripts/task/', and the script reads the TRACKER's labels,
+    # not this tree, so a released copy answers what this one does. It is also typed by hand -- the one
+    # entry here with a person as a second caller -- and that costs nothing: it writes nothing, and its
+    # only repo-relative read is the consumer's own Get-TriageLabels seam, which is not the plugin's code.
+    'scripts\task\adopt-triage-labels.ps1',
     # SessionStart: admin-processes-sessioncheck (#3620). check-claude-home's reason exactly: the hook runs the
     # released copy, and the check reads the process table and the user's home, nothing repo-relative, so
     # the released copy and this one compute the identical answer.
