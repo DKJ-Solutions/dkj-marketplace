@@ -63,6 +63,7 @@
 ### TEST
 
 - [x] Lint `check-plugin-integrity.ps1`: 0 errors.
+- [x] The first gate run found two suites building the path from segments (`reach-label`, `dev-preview-sessionstart`); both repointed, and `check-house-style` gained a product row at the new depth.
 - [x] `bwj-extension-import.tests.ps1` gains old-depth asserts (pattern, not-imported, retired row) and an
   end-to-end adopt rewrite; it and `dev-pages`, `consumer-dashboard`, `consumer-prose-gate`,
   `adopt-workflow-folder`, `check-house-style`, `house-palette`, `cut-release-drive`, `shared-scripts` and

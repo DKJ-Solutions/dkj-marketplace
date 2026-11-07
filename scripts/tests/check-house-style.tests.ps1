@@ -80,6 +80,10 @@ $newRow = '| `{0}` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-market
 $newPage = ($newRow -f 'house-style.css', ('a' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-theme.js', ('b' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-product.css', ('c' * 64), 'dkj-solutions/assets/dkj-brandbook-product')
 $newPin = Get-HouseStylePin -SkillText $newPage
 Assert-True ($newPin.Tag -eq 'v7.0.0' -and $newPin.Hashes['house-product.css'] -eq ('c' * 64)) 'a page with the product row reads all three, and its tag'
+# THE PRODUCT ROW AT THE #3871 DEPTH: the extension moved under extensions/, so a page cut after the move
+# names the product layer there, and one cut before it at the old depth (the page above).
+$extPin = Get-HouseStylePin -SkillText (($newRow -f 'house-style.css', ('a' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-theme.js', ('b' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-product.css', ('c' * 64), 'extensions/dkj-solutions/assets/dkj-brandbook-product'))
+Assert-True ($extPin.Tag -eq 'v7.0.0' -and $extPin.Hashes['house-product.css'] -eq ('c' * 64)) 'a page with the product row under extensions/ (#3871) reads all three, and its tag'
 $midPin = Get-HouseStylePin -SkillText $midPage
 Assert-True ($null -ne $midPin -and -not $midPin.Hashes.ContainsKey('house-product.css')) 'a page at a tag before the split, with no product row, is still a complete pin of the two files it shipped'
 Assert-True ($null -eq (Get-HouseStylePin -SkillText (($newRow -f 'house-style.css', ('a' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-product.css', ('c' * 64), 'dkj-solutions/assets/dkj-brandbook-product')))) 'the product row does not stand in for a missing core row'
