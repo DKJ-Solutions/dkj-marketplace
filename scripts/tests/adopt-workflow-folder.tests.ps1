@@ -831,7 +831,8 @@ try {
     $mvChangelog = "# Changelog`n`nOur history.`n"
     [System.IO.File]::WriteAllText((Join-Path $cMv 'dkj-policy\CHANGELOG.md'), $mvChangelog)
     [System.IO.File]::WriteAllText((Join-Path $cMv 'scripts\repo-config.ps1'),
-        "`$script:ChangelogPath = 'dkj-policy/CHANGELOG.md'`nfunction Get-ChangelogPath { `$script:ChangelogPath }`n# the dkj-policy/ folder, in prose`n")
+        ("`$script:ChangelogPath = 'dkj-policy/CHANGELOG.md'`nfunction Get-ChangelogPath { `$script:ChangelogPath }`n# the dkj-policy/ folder, in prose`n" +
+         "  # was 'dkj-policy/releases/README.md' until #885`n<#`n  history: `"dkj-policy/old.md`"`n#>`n"))
     [System.IO.File]::WriteAllText((Join-Path $cMv '.gitignore'), "/dkj-policy/dashboard/`nnode_modules/`n")
     New-Item -ItemType Directory -Path (Join-Path $cMv '.github') -Force | Out-Null
     $mvTpl = "<!-- Filled from the DEPLOY section of dkj-policy/<branch>.md, heading and all. -->`n`nOur notes on dkj-policy/ stay.`n"
@@ -846,6 +847,11 @@ try {
     $mvCfg = [System.IO.File]::ReadAllText((Join-Path $cMv 'scripts\repo-config.ps1'))
     Assert-Match "ChangelogPath = '\.dkj/dkj-policy/CHANGELOG\.md'" $mvCfg 'move: the quoted seam answer is repointed'
     Assert-Match '# the dkj-policy/ folder, in prose' $mvCfg 'move: and prose naming the old folder is left as written'
+    # #3885: a QUOTED path in a '#' line or a '<# #>' block is history too, and stays.
+    Assert-Match "# was 'dkj-policy/releases/README\.md' until #885" $mvCfg 'move: a quoted path in a # comment is left as written'
+    Assert-Match 'history: "dkj-policy/old\.md"' $mvCfg 'move: a quoted path in a block comment is left as written'
+    Assert-Match '\[repoint\]\s+scripts/repo-config\.ps1: 1 path' $rMvDry.Flat 'move: the dry run counts only the code-line path'
+    Assert-Match '\[kept\]\s+scripts/repo-config\.ps1: 2 path' $rMvDry.Flat 'move: and names the two comment hits it keeps'
     Assert-Match '(?m)^/\.dkj/dkj-policy/dashboard/' ([System.IO.File]::ReadAllText((Join-Path $cMv '.gitignore'))) 'move: the .gitignore line is repointed'
     # #3884: the template's first-line comment follows the move; the body below it is the repo's own.
     $mvTplAfter = [System.IO.File]::ReadAllText((Join-Path $cMv '.github\pull_request_template.md'))
