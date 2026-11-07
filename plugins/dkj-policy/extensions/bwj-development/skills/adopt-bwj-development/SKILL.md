@@ -488,8 +488,9 @@ nothing to configure for types, and no `enhancement` label is created.
 
 **`bug` and `feature` also classify the pull request, so answer the prefix table with them** (Dave, October
 3, 2026, [#2769](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2769)). `open-pr` labels a
-PR from the row of `scripts/lib/branch-info.ps1` its branch prefix matches. That file is the repo's own
-and this skill does not write it, so check it by hand:
+PR from the row of `scripts/lib/branch-info.ps1` its branch prefix matches. The table is the same in
+every DKJ repo (#3886), `check-script-contract` reports one that differs, and this skill does not write
+the file, so check it by hand against this one:
 
 ```powershell
 $script:BranchPrefixTable = @{
@@ -506,7 +507,9 @@ kind. A table still naming `documentation` there is stale: replace it.
 **A BWJ table adopted before #2750 answers `Label = $null` for `feat` and `fix`.** That was right while
 the issue type carried the kind and `bug` and `enhancement` were deleted org-wide, and it is stale now:
 the PR goes out unlabelled while its issue carries the kind. Replace both `$null`s with the names above,
-and keep any other row the repo has as it is. **Run this step's label check first.** `open-pr`'s label
+and drop any other row: the table is the shared one, with `chore/` refused.
+
+**Run this step's label check first.** `open-pr`'s label
 gate refuses a create whose label the repo does not have, and it refuses before the push, so a table
 naming `feature` on a tracker without it stops every `feat/` PR.
 

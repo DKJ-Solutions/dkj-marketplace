@@ -440,7 +440,7 @@ and dot-source two **repo-owned** libs from your repo:
 
 ```text
 scripts/repo-config.ps1        20 functions -- what this repo is and how it releases
-scripts/lib/branch-info.ps1     2 functions -- the branch prefix table and its validator
+scripts/lib/branch-info.ps1     3 functions -- the branch prefix table, shared by every DKJ repo (#3886), and its validator
 ```
 
 `check-script-contract.ps1` already tells you which of those are missing and what the shared script

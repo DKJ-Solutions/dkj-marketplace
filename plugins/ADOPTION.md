@@ -516,8 +516,8 @@ working it already had. Two consequences worth knowing before you enable the one
   ([#886](https://github.com/DaveKJohn/claude-code-specialists/issues/886)), so there is nothing left to
   turn off and nothing left to warn you.
 - **Enabling it makes your repo owe it two files** — `scripts/repo-config.ps1` (repo name, lint gate)
-  and `scripts/lib/branch-info.ps1` (your branch-prefix table). `specialists-init` scaffolds both, and a
-  session check tells you if a function is missing; **answering them is step 3**, below. Enable no
+  and `scripts/lib/branch-info.ps1` (the branch-prefix table, which is the same in every DKJ repo).
+  `specialists-init` scaffolds both, and a session check tells you if a function is missing; **answering them is step 3**, below. Enable no
   workflow and you are asked for neither.
 
 > **If your `.claude/settings.json` still names `workflow-default`, remove that line.** It was the

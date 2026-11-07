@@ -140,7 +140,7 @@
     WHAT THIS LIB DOES NOT DO. It is not the creation-side
     guard -- Test-BranchName in the repo-owned scripts\lib\branch-info.ps1 holds the same allowlist so a
     branch this workflow CREATES is safe by construction. Neither half closes the hole alone: that file
-    is repo-owned and per-consumer, and a branch cloned, fetched or created by hand reaches these print
+    sits in each consumer's own repo, and a branch cloned, fetched or created by hand reaches these print
     sites having never met it. This lib is the half that travels.
 
     No Set-StrictMode here: dot-sourcing would change the strict mode of the calling script. No

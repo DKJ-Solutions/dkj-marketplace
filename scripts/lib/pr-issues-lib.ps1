@@ -3344,7 +3344,7 @@ function Get-MissingLabelNote {
     $note = "'$wanted' is not a label$where, so 'gh pr create' would refuse this PR -- refused HERE instead, before the push."
 
     $note += if ($Prefix) {
-        " The label comes from the branch prefix '$Prefix/' via $SeamPath, which is repo-owned: this script cannot validate it against a list of its own, so it asked GitHub."
+        " The label comes from the branch prefix '$Prefix/' via $SeamPath. Whether that label exists is a fact about this repo's tracker, which this script cannot know without asking, so it asked GitHub."
     } else {
         " Nothing produced it but the unknown-prefix fallback: '$wanted' is a GitHub DEFAULT label, which a repo may equally have deleted."
     }

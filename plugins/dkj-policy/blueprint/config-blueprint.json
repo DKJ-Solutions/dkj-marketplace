@@ -6,8 +6,8 @@
                     {
                         "lib":  "scripts\\lib\\branch-info.ps1",
                         "function":  "Get-BranchInfo",
-                        "adopt":  "decide",
-                        "adoptWhy":  "branch-info.ps1 says of itself that it is repo-owned and does not travel: \u0027every consumer has their own copy with their own table\u0027. The table is three rows of THIS repo\u0027s policy -- feat/fix/docs, and no release/ prefix because a release lands directly on the trunk here",
+                        "adopt":  "copy",
+                        "adoptWhy":  "the branch-prefix table is the shared way of working: feat -\u003e feature, fix -\u003e bug, docs -\u003e no label, three rows, and no release/ prefix because a release lands directly on the trunk. REVERSED, ISSUE #3886, NOVEMBER 7, 2026 -- amended rather than silently flipped. This record used to be \u0027decide\u0027, on the ground that branch-info.ps1 said of itself that it is repo-owned and does not travel (\u0027every consumer has their own copy with their own table\u0027). Dave decided that every DKJ repo uses the SAME table as the source, so a consumer whose table differs is a defect to fix rather than a local choice, and check-script-contract now reports it. ACCEPTED COST: a repo with domain prefixes (Dossier, Pijplijn, Data, ...) loses those changelog types and its release notes no longer group by domain; pending entries under an old type must be folded before the switch",
                         "optional":  false,
                         "default":  "",
                         "returns":  "an object for a branch name with at least Prefix, Label and ChangelogType, derived from this repo\u0027s own branch-prefix table",
@@ -17,8 +17,8 @@
                     {
                         "lib":  "scripts\\lib\\branch-info.ps1",
                         "function":  "Test-BranchName",
-                        "adopt":  "decide",
-                        "adoptWhy":  "the validation logic is generic, but one of its hard rejects is not: it refuses \u0027chore/\u0027 outright, which is this repo\u0027s rule and was written down as one that must NOT reach a consumer who legitimately runs chore/ branches. Copying the function would impose exactly that",
+                        "adopt":  "copy",
+                        "adoptWhy":  "the validation logic is generic and so is its refusal of \u0027chore/\u0027: chore work lands directly on the trunk, so a chore BRANCH is a contradiction in every repo. REVERSED, ISSUE #3886, NOVEMBER 7, 2026 -- amended rather than silently flipped. This record used to be \u0027decide\u0027, because the \u0027chore/\u0027 refusal was written down as this repo\u0027s rule and one that must NOT reach a consumer who legitimately runs chore/ branches. Dave decided that no DKJ repo does, so copying the function imposes the shared rule and a consumer that still allows \u0027chore/\u0027 is reported",
                         "optional":  false,
                         "default":  "",
                         "returns":  "an object with IsValid plus a Reason when invalid; reject an empty name and the main branch",
@@ -28,8 +28,8 @@
                     {
                         "lib":  "scripts\\lib\\branch-info.ps1",
                         "function":  "Get-BranchTypes",
-                        "adopt":  "decide",
-                        "adoptWhy":  "the same reason as the two records above: it is a projection of the branch-prefix table, which branch-info.ps1 says of itself is repo-owned and does not travel. Copying this repo\u0027s four types into a repo that produces \u0027Liquid\u0027 or \u0027Tooling\u0027 states somebody else\u0027s table as theirs, and the value is indistinguishable from the built-in fallback, so a copy also hides whether the seam was ever answered",
+                        "adopt":  "copy",
+                        "adoptWhy":  "the same reason as the two records above: it is a projection of the branch-prefix table, which is now the same in every DKJ repo. REVERSED, ISSUE #3886, NOVEMBER 7, 2026 -- amended rather than silently flipped. This record used to be \u0027decide\u0027: copying the four types into a repo that produced \u0027Liquid\u0027 or \u0027Tooling\u0027 stated somebody else\u0027s table as theirs. Dave decided the table is shared, so those domain types are retired where they exist (fold pending entries under them first) and the four types are the answer everywhere",
                         "optional":  true,
                         "default":  "the canonical four (Feat, Fix, Docs, Chore) -- which REFUSES the fold for a repo whose types differ, rather than degrading it",
                         "returns":  "the changelog types this repo\u0027s own branch table produces, as an array of strings in the order the release documents should read them -- a projection of that table, never a second list beside it. Two readers, and they use it differently: recognition (which H2 blocks in CHANGELOG.md are entries, and what the type field of a pre-format heading says) falls back to Feat/Fix/Docs/Chore where this function is out of scope, so a repo producing other types has every such entry read as typeless and its fold REFUSED by name; validation (is a declared type one this repo produces) only fires where the function is genuinely reachable. Being present is not enough -- the script that reads it has to load the lib",
@@ -331,7 +331,7 @@
                         "default":  "@() -- nothing is built",
                         "returns":  "@{ Name; WorkingDirectory; Commands; Output; Target } per build, the paths repo-root-relative. After the gates the cut runs each command under cmd.exe in WorkingDirectory, then copies Output over Target in the release commit. It aborts before its first write when the directory is missing, Output is not ignored by git, Target is not a folder inside a plugin under plugins/, a command fails, or the build changes a file git sees. Built for the brandbook/ app (#3210); an empty list is a valid answer, and the source repo has named none since #3477",
                         "declared":  true,
-                        "text":  "# The builds cut-release ships (#3210): none. The brandbook/ app\u0027s build was the one entry, copied into the\n# dkj-solutions plugin for consumer Admin servers to serve at /brandbook/; once no consumer Admin served it (#3475), the cut\n# stopped paying npm ci and a build for a folder nothing read (#3477). An empty list is a valid answer, and the\n# literal keeps its two-line shape because cut-release-drive.tests.ps1\u0027s fixture rewrites it by that shape. A build\n# added here again runs its commands with --ignore-scripts on npm: no dependency\u0027s install script runs in the shell\n# that holds the push credentials (security review, #3210).\n$script:ReleaseBuilds = @(\n)\n\nfunction Get-ReleaseBuilds {\n    \u003c# The builds cut-release runs after its gates and copies into a plugin in the release commit. #\u003e\n    return $script:ReleaseBuilds\n}"
+                        "text":  "# The builds cut-release ships (#3210): none. The brandbook/ app\u0027s build was the one entry, copied into the\n# dkj-solutions plugin for consumer Admin servers to serve at /brandbook/; once no consumer admin served it (#3475), the cut\n# stopped paying npm ci and a build for a folder nothing read (#3477). An empty list is a valid answer, and the\n# literal keeps its two-line shape because cut-release-drive.tests.ps1\u0027s fixture rewrites it by that shape. A build\n# added here again runs its commands with --ignore-scripts on npm: no dependency\u0027s install script runs in the shell\n# that holds the push credentials (security review, #3210).\n$script:ReleaseBuilds = @(\n)\n\nfunction Get-ReleaseBuilds {\n    \u003c# The builds cut-release runs after its gates and copies into a plugin in the release commit. #\u003e\n    return $script:ReleaseBuilds\n}"
                     },
                     {
                         "lib":  "scripts\\repo-config.ps1",

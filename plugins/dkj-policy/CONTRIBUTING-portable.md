@@ -428,17 +428,15 @@ entry. The full convention is spelled out in
 [`DEVELOPMENT-portable.md`](DEVELOPMENT-portable.md), which travels with this plugin; the
 guidance for every field is inside the document itself, so there is no reference copy to keep current.
 
-**The branch name is validated by your own lib, not by the plugin.** `new-branch` calls
-`Test-BranchName` out of `scripts/lib/branch-info.ps1`, which lives in **your** repo — so which prefixes
-are valid, which GitHub label each earns, which changelog type each produces, and which names are refused
-outright are all yours (`Get-BranchTypes` / `Get-BranchInfo`). `specialists-init` scaffolds a starting
-version of that file; changing it is an ordinary edit in your repo, not a fork of anything shared. An
-unknown prefix is a soft warning rather than a refusal, and falls back to the type your
-`Get-EntryFallbackType` names.
-
-So how many prefixes there are, whether a given one exists, and what your repo refuses on sight are
-questions this page deliberately cannot answer for you — check your own table rather than assuming the
-source repo's.
+**The branch name is validated by a lib that lives in your repo, and its table is the source's.**
+`new-branch` calls `Test-BranchName` out of `scripts/lib/branch-info.ps1` (`Get-BranchTypes` /
+`Get-BranchInfo` beside it). The file sits in **your** repo, but every DKJ repo uses the **same** table
+(Dave, November 7, 2026, [#3886](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3886)):
+`feat/` earns the label `feature`, `fix/` earns `bug`, `docs/` earns none, and `chore/` is refused
+outright. A table that differs is a defect to fix, not a local choice, and the `check-script-contract`
+session check reports it with the repair. `specialists-init` scaffolds the file, and the plugin's config
+blueprint carries the text of the three functions. An unknown prefix is a soft warning rather than a
+refusal, and falls back to the type your `Get-EntryFallbackType` names.
 
 **The DEPLOY section holds the entry block and nothing around it**, so it pastes into your changelog in
 one go. The entry is one heading with two `####` sections under it:

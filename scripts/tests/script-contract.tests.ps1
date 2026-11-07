@@ -43,7 +43,10 @@
 $ErrorActionPreference = 'Stop'
 
 $RepoRoot      = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Script        = Join-Path $RepoRoot 'scripts\sync\check-script-contract.ps1'
+# THE PLUGIN COPY, SINCE #3886: the branch-table comparison reads the blueprint that ships beside it, and the
+# scripts\sync copy has none next to it, so it would add one "not compared" [INFO] to every scenario below.
+# The two copies are byte-identical (check 8), so nothing else about the scenarios changes.
+$Script        = Join-Path $RepoRoot 'plugins\dkj-policy\scripts\sync\check-script-contract.ps1'
 # The registry moved out of the check on August 8, 2026 (#456), once a third reader appeared -- the
 # blueprint generator. The scenarios below still run the real CHECK; the asserts about how records are
 # DECLARED read the lib, which is where they are now.
@@ -500,7 +503,7 @@ function Get-RosterIgnoredIds { return @() }
         Assert-Match "\[OK\]\s+'$fn' present in" $r.Out "strict-mode regression: '$fn' still reported OK"
     }
     $okCount6b = @([regex]::Matches($r.Out, '\[OK\]')).Count
-    Assert-Equal 8 $okCount6b 'strict-mode regression: exactly eight [OK] lines (all functions detected despite the loose top-level code -- seven since inbound #580 declared Get-BranchTypes, which this fixture''s branch-info.ps1 also defines, plus the workflow-folder line since August 14, 2026)'
+    Assert-Equal 9 $okCount6b 'strict-mode regression: exactly nine [OK] lines (NINE SINCE #3886, which adds the branch-table line -- the fixture table matches the source one; before that eight: all functions detected despite the loose top-level code -- seven since inbound #580 declared Get-BranchTypes, which this fixture''s branch-info.ps1 also defines, plus the workflow-folder line since August 14, 2026)'
 
     Write-Host "`n== script-contract.tests: contract-completeness drift guard ==" -ForegroundColor Cyan
     # Two-layered defense against the declared $script:Contract array in check-script-contract.ps1
@@ -1205,6 +1208,134 @@ if ($scoped -eq 'never') {
     Assert-Match 'script-contract drift found' $h.Out `
         'throwing seam + drift: and the drift report survives, which is what the defect was costing'
     Assert-Match "'Test-BranchName' missing" $h.Out 'throwing seam + drift: naming the actual missing function'
+
+    # --- 14. The branch-prefix table is the source's in every DKJ repo (#3886, Dave, November 7, 2026) ----
+    # Run against the PLUGIN copy of the check: the table is read from the blueprint that ships beside it,
+    # and the scripts\sync copy has no blueprint next to it (nothing to compare with, so it claims nothing).
+    Write-Host "`n== script-contract.tests: the branch-prefix table is the source's ==" -ForegroundColor Cyan
+    $PluginCheck = Join-Path $RepoRoot 'plugins\dkj-policy\scripts\sync\check-script-contract.ps1'
+    function Invoke-PluginCheck {
+        param([string[]]$ScriptArgs)
+        $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $PluginCheck @ScriptArgs
+        return [pscustomobject]@{ Code = $LASTEXITCODE; Out = ($out -join "`n") }
+    }
+    $tableLine = "branch-prefix table in scripts\\lib\\branch-info.ps1 differs"
+    $docsRow   = "    docs  = @{ Label = `$null;           Type = 'Docs' }"
+    Assert-True ($script:RealBranchInfo.Contains($docsRow)) 'fixture builder: the docs row this scenario edits is still where it was'
+
+    $c = New-FixtureConsumer
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-NotMatch $tableLine $r.Out 'the source''s own table: silent'
+    Assert-Match 'branch-prefix table in scripts\\lib\\branch-info.ps1 matches' $r.Out 'the source''s own table: reported as matching'
+
+    $differs = $script:RealBranchInfo.Replace($docsRow, "    docs  = @{ Label = 'documentation'; Type = 'Docs' }`n    data  = @{ Label = 'data';          Type = 'Data' }")
+    $c = New-FixtureConsumer -BranchInfoContentOverride $differs
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-Equal 1 $r.Code 'a differing table: exit-code 1'
+    Assert-Match "\[ERROR\].*$tableLine" $r.Out 'a differing table: reported as [ERROR]'
+    Assert-Match 'missing or different: docs' $r.Out 'a differing table: names the source prefix whose label differs'
+    Assert-Match 'prefixes the source does not have: data' $r.Out 'a differing table: names the extra prefix'
+    Assert-Match 'Repair: replace the prefix table' $r.Out 'a differing table: and the repair'
+
+    $allowsChore = $script:RealBranchInfo.Replace("'^chore(/|`$)'", "'^never-matches-anything`$'")
+    Assert-True ($allowsChore -ne $script:RealBranchInfo) 'fixture builder: the chore refusal this scenario removes is still where it was'
+    $c = New-FixtureConsumer -BranchInfoContentOverride $allowsChore
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-Match "\[ERROR\].*$tableLine.*'chore/' is allowed" $r.Out 'a table that allows chore/: reported'
+
+    $throwsInfo = $script:RealBranchInfo + "`nfunction Get-BranchInfo { throw 'a consumer bug in this table' }`n"
+    $c = New-FixtureConsumer -BranchInfoContentOverride $throwsInfo
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-Equal 0 $r.Code 'a throwing table: the check completes with exit-code 0'
+    Assert-Match '\[INFO\].*could not be compared with the source' $r.Out 'a throwing table: degrades to one [INFO] line'
+    Assert-NotMatch 'a consumer bug in this table' $r.Out 'a throwing table: the consumer''s own message is never printed'
+
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $RepoRoot)
+    Assert-NotMatch $tableLine $r.Out 'run on the source repo itself: silent'
+    Assert-NotMatch 'branch-prefix table in scripts' $r.Out 'run on the source repo itself: not even a matching line'
+    Assert-NotMatch 'was not compared' $r.Out 'run on the source repo itself: and no "not compared" line either'
+
+    # A blueprint that is missing or unreadable is one [INFO] line: never silence, and never a verdict.
+    $c = New-FixtureConsumer
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c, '-BlueprintPathOverride', (Join-Path $Fixture 'no-such-blueprint.json'))
+    Assert-Equal 0 $r.Code 'missing blueprint: exit-code 0'
+    Assert-Match '\[INFO\].*was not compared with the source''s: the blueprint' $r.Out 'missing blueprint: one [INFO] line says so'
+    Assert-NotMatch $tableLine $r.Out 'missing blueprint: no verdict'
+    $badBp = Join-Path $Fixture 'malformed-blueprint.json'
+    [System.IO.File]::WriteAllText($badBp, '{ this is not json')
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c, '-BlueprintPathOverride', $badBp)
+    Assert-Equal 0 $r.Code 'malformed blueprint: exit-code 0'
+    Assert-Match '\[INFO\].*was not compared with the source''s: the blueprint' $r.Out 'malformed blueprint: one [INFO] line says so'
+    $partialBp = Join-Path $Fixture 'partial-blueprint.json'
+    [System.IO.File]::WriteAllText($partialBp, '{"records":[]}')
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c, '-BlueprintPathOverride', $partialBp)
+    Assert-Match '\[INFO\].*was not compared with the source''s: the blueprint' $r.Out 'blueprint without the three records: the same [INFO] line'
+
+    # A table under another variable name cannot be listed, and the check says so rather than "matches".
+    $renamed = $script:RealBranchInfo.Replace('$script:BranchPrefixTable', '$script:MyPrefixes')
+    Assert-True ($renamed -ne $script:RealBranchInfo) 'fixture builder: the table variable this scenario renames is still named that'
+    $c = New-FixtureConsumer -BranchInfoContentOverride $renamed
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-Equal 0 $r.Code 'a table under another name, same behaviour: exit-code 0'
+    Assert-Match '\[INFO\].*own prefix set could not be listed' $r.Out 'a table under another name: says its prefix set could not be listed'
+    Assert-NotMatch 'branch-prefix table in scripts\\lib\\branch-info.ps1 matches' $r.Out 'a table under another name: never claims a full match'
+    $renamedDiffers = $renamed.Replace("Label = 'bug';           Type = 'Fix'", "Label = 'defect';        Type = 'Fix'")
+    Assert-True ($renamedDiffers -ne $renamed) 'fixture builder: the fix row this scenario edits is still where it was'
+    $c = New-FixtureConsumer -BranchInfoContentOverride $renamedDiffers
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-Match "\[ERROR\].*$tableLine.*missing or different: fix" $r.Out 'a differing table under another name: still reported for the source''s own prefixes'
+
+    # Nothing of the SOURCE's table may leak into the consumer's probe: this consumer reads
+    # $script:BranchPrefixTable without ever assigning it, so it answers only if the source's is still there.
+    $reader = @'
+function Get-BranchPrefix { param([string]$Branch) return ($Branch -split '/')[0] }
+function Get-BranchInfo {
+    param([string]$Branch)
+    $p = Get-BranchPrefix -Branch $Branch
+    $k = [bool]($script:BranchPrefixTable -and $script:BranchPrefixTable.ContainsKey($p))
+    [pscustomobject]@{ IsKnown = $k; Label = $(if ($k) { $script:BranchPrefixTable[$p].Label }); Type = $(if ($k) { $script:BranchPrefixTable[$p].Type }) }
+}
+function Test-BranchName { param([string]$Branch) [pscustomobject]@{ IsValid = ($Branch -notmatch '^chore'); Reason = $null; IsKnown = $false } }
+function Get-BranchTypes { return @('Feat', 'Fix', 'Docs', 'Chore') }
+'@
+    $c = New-FixtureConsumer -BranchInfoContentOverride $reader
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-Match "\[ERROR\].*$tableLine.*missing or different: docs, feat, fix" $r.Out 'a consumer reading a table it never assigns: reported, because the source''s table is NOT in its scope'
+
+    # A consumer without Test-BranchName: the missing function is its own [ERROR]; the chore refusal is not claimed either way.
+    $c = New-FixtureConsumer -StripFromBranchInfo @('Test-BranchName')
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-Match "'Test-BranchName' missing" $r.Out 'no Test-BranchName: the missing function is reported'
+    Assert-NotMatch $tableLine $r.Out 'no Test-BranchName: and the table is not accused of allowing chore/'
+
+    # A differing Get-BranchTypes is compared too, in order.
+    $types = $script:RealBranchInfo.Replace("@('Feat', 'Fix', 'Docs', 'Chore')", "@('Feat', 'Fix', 'Docs', 'Chore', 'Data')")
+    Assert-True ($types -ne $script:RealBranchInfo) 'fixture builder: the type list this scenario edits is still where it was'
+    $c = New-FixtureConsumer -BranchInfoContentOverride $types
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-Match "\[ERROR\].*$tableLine.*Get-BranchTypes returns a different list" $r.Out 'a differing Get-BranchTypes: reported'
+    $reordered = $script:RealBranchInfo.Replace("@('Feat', 'Fix', 'Docs', 'Chore')", "@('Fix', 'Feat', 'Docs', 'Chore')")
+    $c = New-FixtureConsumer -BranchInfoContentOverride $reordered
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-Match "\[ERROR\].*$tableLine.*Get-BranchTypes returns a different list" $r.Out 'a reordered Get-BranchTypes: reported, because the order is the release-notes order'
+
+    # The echo filter is anchored: a prefix with a trailing newline is not a plain word.
+    $c = New-FixtureConsumer -BranchInfoContentOverride $differs
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-Match 'prefixes the source does not have: data \(1 in all\)' $r.Out 'the echo filter: a plain extra prefix is named and counted'
+
+    # The check evaluates the blueprint's Get-BranchInfo with its own Get-BranchPrefix, which the blueprint
+    # does not carry (#3888); it must answer exactly as the source's own function does.
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($PluginCheck, [ref]$null, [ref]$null)
+    $stub = $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Get-BranchPrefix' }, $true) | Select-Object -First 1
+    Assert-True ($null -ne $stub) 'the check defines the Get-BranchPrefix stub this assertion compares'
+    if ($stub) {
+        . ([scriptblock]::Create($stub.Extent.Text.Replace('function Get-BranchPrefix', 'function Get-StubBranchPrefix')))
+        . $BranchInfoSrc
+        foreach ($name in @('feat/x', 'fix/y/z', 'docs/a-b', 'chore/c', 'feat-x', 'main', 'plain', '/lead', 'a/')) {
+            Assert-Equal (Get-BranchPrefix -Branch $name) (Get-StubBranchPrefix -Branch $name) "Get-BranchPrefix stub agrees with branch-info.ps1 for '$name'"
+        }
+    }
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }
 }
