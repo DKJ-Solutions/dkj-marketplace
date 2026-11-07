@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**5 / 5 minor entries** <!-- pending-tally -->
+**6 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3882-triage-labels-sessioncheck · 20261107-194141Z
+
+A new session check, `triage-labels-sessioncheck`, says in one line when this repo's tracker lacks any of the
+canonical triage labels or carries one in a non-canonical colour, and names `adopt-triage-labels` as the
+command that prints the fix. Until now nothing said so before a sweep's `gh issue edit --add-label` failed
+(#3882). It runs `adopt-triage-labels.ps1` in-process with its `gh` reads bounded to 15 seconds, stays silent
+when the labels are complete or the tracker cannot be read, and creates nothing, so #1895's print-only answer
+stands. `adopt-triage-labels.ps1` leaves the source-repo guard as a hook-invoked script.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer whose tracker is missing triage labels is told at session start, with the one command that prints
+every `gh label create`, instead of discovering it when a sweep fails to park an issue.
+
+**Score:** 3
+
+#### Pull Request
+
+A session-start line when the tracker lacks the canonical triage labels
+
+Plugins: dkj-policy
+
+[PR #3893](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3893)
+
+---
 
 ### DEPLOY: feat/3886-prescribed-branch-prefixes · 20261107-193225Z
 
