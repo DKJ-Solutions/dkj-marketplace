@@ -17,7 +17,7 @@
 
 $script:TodayPageStyle = '.today-goal { border-left: 4px solid var(--primary-muted); }' + "`n" +
     '.today-goal .today-goal__title { display: flex; gap: var(--spacing-3); align-items: center; justify-content: space-between; margin: 0 0 var(--spacing-2); font-size: var(--text-h3); }' + "`n" +
-    '.today-sub { margin: var(--spacing-4) 0 var(--spacing-1); }' + "`n" +
+    '.today-done h3 { margin: var(--spacing-4) 0 var(--spacing-1); }' + "`n" +
     '.today-items { margin: 0; padding: 0; list-style: none; }' + "`n" +
     '.today-items > li { display: flex; gap: var(--spacing-2); align-items: baseline; padding: var(--spacing-1) 0; border-top: 1px solid var(--bg-4); }' + "`n" +
     '.today-items > li:first-child { border-top: 0; }' + "`n" +
@@ -122,10 +122,10 @@ function Format-TodayPageHtml {
         $unplanned = @($(if ($live) { @($live.unplanned) } elseif ($closed) { @($day.close.unplanned) }) | Where-Object { $_ })
         $prs = if ($live) { [int]$live.prs } elseif ($closed) { [int]$day.close.prs } else { 0 }
         $issues = if ($live) { [int]$live.issues } elseif ($closed) { [int]$day.close.issues } else { 0 }
-        [void]$body.Append('<section class="card"><div class="card__head"><h2>Done</h2></div>')
+        [void]$body.Append('<section class="card today-done"><div class="card__head"><h2>Done</h2></div>')
         [void]$body.Append('<dl class="facts facts--row"><dt>PRs merged</dt><dd class="num">' + $prs + '</dd><dt>Issues closed</dt><dd class="num">' + $issues + '</dd></dl>')
         if ($unplanned.Count) {
-            [void]$body.Append('<h3 class="today-sub">Extra</h3><ul class="today-items">')
+            [void]$body.Append('<h3>Extra</h3><ul class="today-items">')
             foreach ($u in $unplanned) {
                 [void]$body.Append('<li><span class="today-items__title">' + (& $e $u.title) + ' ' + (Format-TodayRefHtml -Ref ([string]$u.ref) -Url ([string]$u.url)) + '</span><span class="tag">' + (& $e $u.kind) + '</span></li>')
             }
@@ -135,7 +135,7 @@ function Format-TodayPageHtml {
         }
         $notToday = @($day.notToday | Where-Object { $_ })
         if ($notToday.Count) {
-            [void]$body.Append('<h3 class="today-sub">Not today</h3><ul class="today-items">')
+            [void]$body.Append('<h3>Not today</h3><ul class="today-items">')
             foreach ($n in $notToday) { [void]$body.Append('<li><span class="today-items__title">' + (& $e $n) + '</span></li>') }
             [void]$body.Append('</ul>')
         }
