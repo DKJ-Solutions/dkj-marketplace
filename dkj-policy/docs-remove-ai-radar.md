@@ -39,19 +39,33 @@
 
 ### PLAN
 
+The owner decided the AI knowledge base belongs in his private brain repo rather than here, so the
+folder added in #3863 goes again.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Remove `ai-radar/`
+- [x] Rebecca's lens: drop the radar exception, so "no research folder" stands unqualified again
+- [x] Sylvester's lens, repo layout: drop the `ai-radar/` bullet
 
 ### TEST
 
+- [x] Lint and suites run by open-pr
+
 ### DEPLOY: docs/remove-ai-radar
 
-**Score:**
+The AI radar added in #3863 is removed again: the owner keeps the AI knowledge base in his own
+private knowledge base instead. Rebecca's lens and the repo layout in Sylvester's lens are back to
+what they said before. A gap that knowledge base finds in the plugins still arrives here, as an
+inbound issue.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: the folder sat outside `plugins/`, so nothing a consumer installs changes.
+
+**Score:** N/A
 
 #### Pull Request
 
