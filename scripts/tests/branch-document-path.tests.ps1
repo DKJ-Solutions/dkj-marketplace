@@ -256,6 +256,17 @@ try {
     Assert-Equal '.dkj/dkj-policy/development-fix-mine-v1.md' `
         (Resolve-BranchFilePath -Kind Cycle -Reader $reader -Branch 'fix/mine-v1') `
         'and it finds the pre-#1335 name too, which only the named candidate can reach on this arm'
+
+    # THIS FIXTURE IS AN UNMOVED CONSUMER -- a root 'dkj-policy/' folder -- AND THAT IS WHERE #3881 BIT.
+    # PolicyFolderPerBranch answers '' there by design, the legacy list carried that '' through, and
+    # new-branch.ps1 binds the list to a Mandatory [string[]] -Legacy whose AllowEmptyCollection does not
+    # cover an empty ELEMENT: the branch was created and its document never written. The second assert
+    # binds the list exactly the way new-branch does, so a later list that leaks an empty row fails here.
+    $unmoved = @(Get-BranchFileLegacyNames -Kind 'Cycle' -Branch 'fix/mine-v1' -RepoRoot $fx)
+    Assert-True (@($unmoved | Where-Object { -not $_ }).Count -eq 0) 'an unmoved tree''s legacy list carries no empty entry (#3881)'
+    function Test-BindsLikeNewBranch { param([Parameter(Mandatory)][AllowEmptyCollection()][string[]]$Legacy) $true }
+    $bound = try { Test-BindsLikeNewBranch -Legacy $unmoved } catch { $false }
+    Assert-True $bound 'and it binds to a Mandatory [string[]] the way new-branch.ps1 binds it'
 }
 finally {
     Remove-Item -LiteralPath $fx -Recurse -Force -ErrorAction SilentlyContinue
