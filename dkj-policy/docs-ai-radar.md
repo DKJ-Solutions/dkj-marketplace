@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Maikel asked for a place to keep AI and Claude Code news from social feeds and team chats, and to
+hold each item against our own setup to find the gaps. Chosen: a folder in this repo (over issues
+only), since the plugins are the setup being compared against.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `ai-radar/README.md`: purpose, entry format, the five verdicts, how a gap becomes an issue
+- [x] `ai-radar/claude-code.md`, `models-and-api.md`, `ecosystem.md`: the three topic files, empty
+- [x] Rebecca's lens: why the radar is a folder while research still lands on issues
+- [x] Sylvester's lens, repo layout: the new root folder and why it sits at the root
 
 ### TEST
 
+- [x] Lint and suites run by open-pr
+
 ### DEPLOY: docs/ai-radar
 
-**Score:**
+A new root folder, [`ai-radar/`](../ai-radar/README.md), keeps a running log of AI and Claude Code
+news. Each entry is held against what the plugins already ship and gets a verdict: `Covered`,
+`Partly`, `Gap`, `Not for us` or `To assess`. A `Gap` is filed as an issue and the entry cites it, so
+the radar turns news into work on the tracker. Rebecca's lens says why this folder does not break her
+rule that research lands on issues, and Sylvester's repo layout lists it.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: the folder sits outside `plugins/`, so nothing a consumer installs changes.
+
+**Score:** N/A
 
 #### Pull Request
 
