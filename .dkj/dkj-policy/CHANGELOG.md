@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**4 / 7 minor entries** <!-- pending-tally -->
+**5 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3868-ship-pr-merged-during-lap · 20261107-144938Z
+
+`ship-pr` no longer reports "NOT merged, NOT folded" for a pull request that something else merged while
+it waited, such as its own `merge-when-green` arm. Before the stale-certificate lap forwards or refuses,
+and before step 4 merges, it reads the PR's state; when it reads `MERGED` it says so and carries on with
+the post-merge steps (the fold, or standing down where the fold already landed) instead of refusing (#3868).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Whoever ships with `ship-pr` stops getting a false refusal that invites a re-ship or a blocker report for
+work that had already landed.
+
+**Score:** 2
+
+#### Pull Request
+
+ship-pr: recognise a PR merged by another path during the forward lap
+
+Plugins: dkj-policy
+
+[PR #3875](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3875)
+
+---
 
 ### DEPLOY: feat/3870-dkj-dotfolder · 20261107-141444Z
 
