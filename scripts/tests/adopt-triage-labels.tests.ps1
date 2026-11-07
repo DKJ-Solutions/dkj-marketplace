@@ -434,6 +434,58 @@ try {
         Assert-True ([bool]$c.Returns) 'it carries a Returns line, so a finding is actionable without this source repo'
         Assert-True ($c.Default -like '*adopt-triage-labels.ps1*') "its Default names the script that carries the fallback"
     }
+
+    # --- 10. triage-labels-sessioncheck.ps1 (#3882): the session-start line over this script ----------
+    #         Nothing said a tracker lacked the labels until a sweep's `gh issue edit --add-label` failed
+    #         on one. The hook runs this script in-process and prints ONE line naming the counts and the
+    #         command, or nothing. Same fixtures and payloads as above, so it stays network-free.
+    Write-Host '-- 10. triage-labels-sessioncheck.ps1 -- one line on a gap, silent otherwise --' -ForegroundColor Cyan
+    $Hook = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\triage-labels-sessioncheck.ps1'
+    function Invoke-Hook {
+        param([string]$Dir, [string]$LabelJsonPath, [string]$CheckScript = $Script)
+        $prevPd = $env:CLAUDE_PROJECT_DIR
+        try {
+            $env:CLAUDE_PROJECT_DIR = $Dir
+            $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Hook -CheckScriptOverride $CheckScript -LabelJsonOverride $LabelJsonPath
+            return [pscustomobject]@{ Code = $LASTEXITCODE; Lines = @($out | Where-Object { "$_".Trim() }); Out = ($out -join "`n") }
+        } finally {
+            if ($null -eq $prevPd) { Remove-Item Env:CLAUDE_PROJECT_DIR -ErrorAction SilentlyContinue } else { $env:CLAUDE_PROJECT_DIR = $prevPd }
+        }
+    }
+    Assert-True (Test-Path -LiteralPath $Hook -PathType Leaf) 'the hook exists where the dispatcher discovers it (hooks/*-sessioncheck.ps1)'
+    $hookDir = New-FixtureConsumer -Label 'hook'
+
+    $r = Invoke-Hook -Dir $hookDir -LabelJsonPath (New-LabelsFile -Label 'hook-none' -Json $LabelsNone)
+    Assert-Equal 0 $r.Code 'none present: the hook exits 0'
+    Assert-True ($r.Out -match 'triage-labels-sessioncheck:.*16 canonical triage label\(s\) missing') 'none present: the headline counts all sixteen as missing'
+    Assert-True ($r.Out -match 'adopt-triage-labels\.ps1') 'and it names the command that prints the fix'
+    Assert-True ($r.Out -notmatch 'gh label create') 'and it forwards no per-label command -- one line, not the report'
+    Assert-Equal 3 $r.Lines.Count 'the whole report is three lines: headline, what to do, the command'
+
+    $r = Invoke-Hook -Dir $hookDir -LabelJsonPath (New-LabelsFile -Label 'hook-all' -Json $LabelsAll)
+    Assert-True ($r.Code -eq 0 -and $r.Lines.Count -eq 0) 'all present in canonical colours: silent, exit 0'
+
+    $driftJson = $LabelsAll -replace '"name":"prio-2","color":"F57C00"', '"name":"prio-2","color":"FBCA04"'
+    $r = Invoke-Hook -Dir $hookDir -LabelJsonPath (New-LabelsFile -Label 'hook-drift' -Json $driftJson)
+    Assert-True ($r.Out -match '1 in a colour other than the canonical one' -and $r.Out -notmatch 'missing,') 'a colour drift alone is reported as drift, not as a missing label'
+
+    $renameJson = $LabelsAll -replace '"name":"awaiting-decision-dev"', '"name":"needs-decision"'
+    $r = Invoke-Hook -Dir $hookDir -LabelJsonPath (New-LabelsFile -Label 'hook-rename' -Json $renameJson)
+    Assert-True ($r.Out -match '1 canonical triage label\(s\) missing') 'a label still under a former name counts as missing under its current one'
+
+    $r = Invoke-Hook -Dir $hookDir -LabelJsonPath (New-LabelsFile -Label 'hook-bad' -Json $LabelsBad)
+    Assert-True ($r.Code -eq 0 -and $r.Lines.Count -eq 0) 'an unreadable label list ([skip]) stays silent -- no gh or offline is an ordinary machine state'
+
+    # A description is a consumer's free text when its Get-TriageLabels answers it; a marker inside one
+    # must not count (#2142's anchoring, through Select-CheckMarkerLine).
+    $markerDir = New-FixtureConsumer -Label 'hook-marker' -CustomTriageLabelsBody "@([pscustomobject]@{ Name = 'prio-1'; Color = 'FFA726'; Description = 'x [missing] y [drift] z' })"
+    $r = Invoke-Hook -Dir $markerDir -LabelJsonPath (New-LabelsFile -Label 'hook-marker' -Json '[{"name":"prio-1","color":"FFA726","description":"d"}]')
+    Assert-True ($r.Lines.Count -eq 0) 'a marker inside a label description does not trip the hook'
+
+    $r = Invoke-Hook -Dir $hookDir -LabelJsonPath (New-LabelsFile -Label 'hook-nf' -Json $LabelsNone) -CheckScript (Join-Path $Fixture 'nowhere.ps1')
+    Assert-True ($r.Code -eq 0 -and $r.Out -match 'script not found -- check skipped') 'a missing script is a notice, exit 0'
+
+    Assert-True (-not ([System.IO.File]::ReadAllText($Hook) -cmatch '[^\x00-\x7F]')) 'the hook is pure ASCII'
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }
 }

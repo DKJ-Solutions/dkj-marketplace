@@ -154,6 +154,8 @@ Priority is the same kind of label — nothing here reads it either — and `tas
 prints (never creates) a `gh label create` line for whichever of the canonical triage labels your tracker
 is missing (the four `prio-1`..`prio-4` rungs, `awaiting-recurrences`, `awaiting-decision-dev`, `awaiting-decision-client`, `awaiting-review-dev`, `awaiting-review-client`, `awaiting-pull`, `awaiting-pull-external`, `awaiting-action-external`, `awaiting-action-dev`, `awaiting-release`, `awaiting-release-external` and
 `awaiting-recurrences-first`), so adopting the convention costs one command instead of sixteen typed by hand.
+A session start says so in one line when any of them is missing or in a non-canonical colour
+(`triage-labels-sessioncheck`, #3882), so the gap shows before a sweep's `gh issue edit --add-label` fails on it.
 
 **A parking label goes on when the issue is filed, whichever one it is**
 ([#2796](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2796), October 4, 2026). The twelve

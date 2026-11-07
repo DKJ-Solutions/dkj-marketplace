@@ -41,17 +41,31 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `hooks/triage-labels-sessioncheck.ps1`: runs `adopt-triage-labels.ps1` in-process and prints one line on a missing or off-colour label, silent otherwise
+- [x] `adopt-triage-labels.ps1` (both copies): `-TimeoutSeconds` on its two `gh` reads, and out of the source-repo guard as a hook-invoked script, argued in `source-repo-guard.tests.ps1`
+- [~] `issues-sweep` step 1 printing the same line: dropped, the session-start line already reaches every sweep before step 1
 
 ### TEST
 
+- [x] `adopt-triage-labels.tests.ps1` section 10 covers the hook: 205 of 205 pass. `source-repo-guard.tests.ps1` 70 of 70 and `sessioncheck-dispatch.tests.ps1` 61 of 61 pass, and a live run here is silent in 1.6s
+
 ### DEPLOY: feat/3882-triage-labels-sessioncheck
 
-**Score:**
+A new session check, `triage-labels-sessioncheck`, says in one line when this repo's tracker lacks any of the
+canonical triage labels or carries one in a non-canonical colour, and names `adopt-triage-labels` as the
+command that prints the fix. Until now nothing said so before a sweep's `gh issue edit --add-label` failed
+(#3882). It runs `adopt-triage-labels.ps1` in-process with its `gh` reads bounded to 15 seconds, stays silent
+when the labels are complete or the tracker cannot be read, and creates nothing, so #1895's print-only answer
+stands. `adopt-triage-labels.ps1` leaves the source-repo guard as a hook-invoked script.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer whose tracker is missing triage labels is told at session start, with the one command that prints
+every `gh label create`, instead of discovering it when a sweep fails to park an issue.
+
+**Score:** 3
 
 #### Pull Request
 
