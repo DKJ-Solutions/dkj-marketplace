@@ -26,8 +26,11 @@
     THE AUTHORITY SPLIT, DECIDED BY DAVE ON SEPTEMBER 10, 2026, IS THE DESIGN. Asked what this command
     may throw away on its own, he chose: only what is provably merged. So:
 
-      DELETES  -- exactly one lane, and only by delegation: prune-merged.ps1, on its own two existing
-                  proofs (an ancestor of the trunk, or a tip that is the head commit of a merged PR).
+      DELETES  -- lane 2, and only by delegation: prune-merged.ps1, on its own two existing proofs (an
+                  ancestor of the trunk, or a tip that is the head commit of a merged PR).
+      REMOVES  -- lane 8, install records whose checkout is gone, whose parent folder is still here
+                  (#3862). That revisits the September 10 answer for one lane, and on purpose: a record
+                  holds no work, so a wrong removal costs one `claude plugin install`, not a commit.
       REPORTS  -- everything else, each item with what was measured and the command that would act on
                   it, paste-ready.
 
@@ -645,14 +648,85 @@ if ($runMachine) {
         # Wrapped for the single-element unwrap described at the stale-lane call above.
         $orphans = @(Get-OrphanInstallRecords -Records @($install.AllRecords) -PathExists $probe)
         if ($orphans.Count -eq 0) { Write-Item 'None.' 'DarkGray' }
-        # ONE SEQUENCE PER VANISHED FOLDER (#3751): `claude plugin uninstall` takes no path and picks the
-        # record from the directory it runs in, so the folder is recreated empty, every record naming it is
-        # uninstalled from inside it at its own scope, and the folder is removed again. `rmdir` removes only
-        # an EMPTY folder, so it refuses -- visibly -- should anything have been written there. Measured on
-        # one machine: 16 records over 4 folders, 16 removed, no file written into any of them.
-        foreach ($group in @($orphans | Group-Object -Property ProjectPath)) {
-            foreach ($o in @($group.Group)) {
-                $reportedTotal++
+
+        # THE PARENT PROBE IS THE GUARD (#3862). Lane 8 now runs the removal itself, and the one case where
+        # that would be wrong -- a path only temporarily absent, an unmounted drive or a sync root offline
+        # -- loses an ancestor, not just the leaf. So a folder acts only when its parent is proven present;
+        # Get-OrphanRemovalPlan decides, this probe only answers.
+        $parentProbe = @{}
+        foreach ($o in $orphans) {
+            $par = ''
+            try { $par = [string](Split-Path -Path ([string]$o.ProjectPath) -Parent) } catch { $par = '' }
+            if (-not $par -or $parentProbe.ContainsKey($par)) { continue }
+            $parentProbe[$par] = [bool](Test-Path -LiteralPath $par -PathType Container)
+        }
+        $plans = @(Get-OrphanRemovalPlan -Orphans $orphans -ParentExists $parentProbe)
+
+        # A FIXTURE RUN NEVER REACHES THE REAL ADMINISTRATION. `claude plugin uninstall` writes the real
+        # ~/.claude whatever -UserHomeOverride says, so under the override every folder stays on report.
+        $mayAct = (-not $DryRun) -and (-not $UserHomeOverride)
+        $removed8 = 0
+        $reported8 = 0
+
+        foreach ($plan in $plans) {
+            $folder = [string]$plan.ProjectPath
+            $acted = $false
+            if ($plan.Act -and $mayAct) {
+                # ONE SEQUENCE PER VANISHED FOLDER (#3751), run rather than printed since #3862:
+                # `claude plugin uninstall` takes no path and picks the record from the directory it runs
+                # in -- and from CLAUDE_PROJECT_DIR above that, which a session sets, so both are pointed at
+                # the folder (update-plugins.ps1 sets the same pair for the same reason).
+                Write-Item "$(Get-DisplayPath $folder) -- recreating it empty to uninstall $(@($plan.Removable).Count) record(s) from inside it" 'Yellow'
+                $created = $false
+                try {
+                    New-Item -ItemType Directory -Path $folder -ErrorAction Stop | Out-Null
+                    $created = $true
+                } catch {
+                    Write-Item "    could not recreate the folder: $(Format-SafeProseToken -Value $_.Exception.Message) -- handed over below instead." 'Red'
+                }
+                if ($created) {
+                    $acted = $true
+                    $prevProj = $env:CLAUDE_PROJECT_DIR
+                    $env:CLAUDE_PROJECT_DIR = $folder
+                    Push-Location -LiteralPath $folder
+                    try {
+                        foreach ($o in @($plan.Removable)) {
+                            $r = Invoke-NativeCapture -FilePath 'claude' -Arguments @('plugin', 'uninstall', "$($o.Plugin)@$($o.Marketplace)", '--scope', ([string]$o.Scope)) -Utf8
+                            $label = "$(Format-SuspectToken -Value ([string]$o.Id)) --scope $(Format-SuspectToken -Value ([string]$o.Scope))"
+                            if ($r.ExitCode -eq 0) {
+                                $removed8++
+                                Write-Item "    removed: $label" 'Green'
+                            } else {
+                                $reported8++
+                                Write-Item "    FAILED ($(Get-NativeExitLabel -Capture $r)): $label" 'Red'
+                                foreach ($line in @($r.Output)) { Write-Item "      $(Format-SafeProseToken -Value ([string]$line))" 'DarkGray' }
+                            }
+                        }
+                    } finally {
+                        Pop-Location
+                        [Environment]::SetEnvironmentVariable('CLAUDE_PROJECT_DIR', $prevProj, 'Process')
+                    }
+                    # NEVER RECURSIVE: the folder goes only while it is still empty. Measured (#3862) the
+                    # uninstall writes nothing into it; should that ever change, the folder is left and named.
+                    if (@(Get-ChildItem -LiteralPath $folder -Force -ErrorAction SilentlyContinue).Count -eq 0) {
+                        # The ONE-argument Directory.Delete, deliberately: it refuses a folder that is not
+                        # empty, so even a race between the check above and this line cannot take content.
+                        try { [System.IO.Directory]::Delete($folder) } catch {
+                            Write-Item "    the recreated folder could not be removed: $(Format-SafeProseToken -Value $_.Exception.Message)" 'Red'
+                        }
+                    } else {
+                        $reportedTotal++
+                        Write-Item "    the recreated folder is not empty any more, so it was left standing: $(Get-DisplayPath $folder)" 'Red'
+                    }
+                }
+            }
+
+            # WHAT IS HANDED OVER, as before #3862: every record of a folder this run did not act on, and
+            # the records an acting folder still refused (no name, scope managed or unknown).
+            $handOver = if ($acted) { @($plan.Reported) } else { @($plan.Removable) + @($plan.Reported) }
+            if ($handOver.Count -eq 0) { continue }
+            foreach ($o in $handOver) {
+                $reported8++
                 # Format-SuspectToken, not the raw id: it comes from a JSON key in ~/.claude, and this line
                 # is prose rather than a command -- so the id is sanitized for display and the reader is told
                 # when sanitizing changed it. Until #1773 this read $o.Plugin, a field no producer writes, so
@@ -660,19 +734,23 @@ if ($runMachine) {
                 Write-Item "$(Format-SuspectToken -Value ([string]$o.Id)) -> $(Get-DisplayPath $o.ProjectPath)" 'Yellow'
                 Write-Item "    $($o.Reason)" 'DarkGray'
             }
-            Write-PathHandover -Prefix 'mkdir' -Path $group.Name -Placeholder '<that folder>'
-            Write-PathHandover -Prefix 'cd' -Path $group.Name -Placeholder '<that folder>'
-            foreach ($o in @($group.Group)) {
+            if ($plan.Reason) { Write-Item "    kept on report: $($plan.Reason)" 'DarkGray' }
+            elseif ($DryRun -and $plan.Act) { Write-Item '    (-DryRun) a real run removes these itself -- the sequence it would run:' 'DarkGray' }
+            elseif ($UserHomeOverride -and $plan.Act) { Write-Item '    (-UserHomeOverride) a fixture run never uninstalls from the real administration -- the sequence:' 'DarkGray' }
+            Write-PathHandover -Prefix 'mkdir' -Path $folder -Placeholder '<that folder>'
+            Write-PathHandover -Prefix 'cd' -Path $folder -Placeholder '<that folder>'
+            foreach ($o in $handOver) {
                 Write-PluginHandover -Prefix $o.Command -Plugin $o.Plugin -Marketplace $o.Marketplace -Scope $o.Scope
             }
             Write-Handover 'cd ..'
-            Write-PathHandover -Prefix 'rmdir' -Path $group.Name -Placeholder '<that folder>'
+            Write-PathHandover -Prefix 'rmdir' -Path $folder -Placeholder '<that folder>'
         }
-        if ($orphans.Count -gt 0) {
+        $reportedTotal += $reported8
+        $actedTotal += $removed8
+        if ($reported8 -gt 0) {
             Write-Item '  Moved or deleted, the record is dead: a moved checkout gets a NEW record when the plugin is re-installed there. The lines above remove it -- recreate the folder empty, uninstall from inside it, remove it again.' 'DarkGray'
-            Write-Item '  Only for a folder gone for good: a drive not mounted or a synced folder offline looks exactly the same, and there the record is still wanted.' 'DarkGray'
         }
-        Write-Item (Get-TidySummaryLine -Lane 'Install records' -Reported $orphans.Count) 'White'
+        Write-Item (Get-TidySummaryLine -Lane 'Install records' -Acted $removed8 -Reported $reported8) 'White'
     }
 }
 

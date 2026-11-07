@@ -337,16 +337,15 @@ function Get-OrphanInstallRecords {
         (issue #1449). Nothing reports it, because the two halves fail in opposite
         directions: the checkout reports "not installed here", the record reports a checkout.
 
-        IT IS REPORT-ONLY, AND IT HANDS OVER THE REMOVAL (#3751). Moved or deleted decides what happens at
-        the NEW location, not whether the old record is any use: after a move, re-installing in the new
-        folder writes a new record, and this one still names a path nothing will open. So the ambiguity
-        never was a reason to withhold the removal. What stood in the way is that `claude plugin
-        uninstall` takes no path -- it picks the record from the directory it runs in -- and measured
-        (Claude Code 2.1.316, #3751) the one sequence that reaches it: recreate the folder empty, uninstall
-        from inside it at the record's own scope, remove the still-empty folder. So each finding carries
-        the plugin, the marketplace and the scope, and the caller renders that sequence. Running it stays
-        the reader's act, for the one case it would be wrong: a path only TEMPORARILY absent (an unmounted
-        drive, a synced folder offline) looks identical to a deleted one.
+        IT CLASSIFIES; THE CALLER REMOVES (#3751, #3862). Moved or deleted decides what happens at the NEW
+        location, not whether the old record is any use: after a move, re-installing in the new folder
+        writes a new record, and this one still names a path nothing will open. What stood in the way is
+        that `claude plugin uninstall` takes no path -- it picks the record from the directory it runs in
+        -- and measured (Claude Code 2.1.316, #3751) the one sequence that reaches it: recreate the folder
+        empty, uninstall from inside it at the record's own scope, remove the still-empty folder. So each
+        finding carries the plugin, the marketplace and the scope. Since #3862 lane 8 runs that sequence
+        itself, on the plan Get-OrphanRemovalPlan below draws: a record holds no work, and a wrong removal
+        costs one `claude plugin install` in that folder when it comes back.
 
         A DRIVE THAT IS NOT MOUNTED IS THE FALSE POSITIVE TO BEAT, and the caller's probe is what has to
         answer for it. This function tests nothing itself: it takes the answer per path, so a caller on
@@ -396,6 +395,86 @@ function Get-OrphanInstallRecords {
     }
 
     return @($orphans)
+}
+
+function Get-OrphanRemovalPlan {
+    <#
+    .SYNOPSIS
+        Groups Get-OrphanInstallRecords' findings by vanished folder and decides, per folder and per
+        record, whether lane 8 removes it itself or only reports it (#3862).
+
+    .DESCRIPTION
+        WHY LANE 8 ACTS AT ALL, when every other lane but lane 2 only reports. Lane 2's doctrine -- delete
+        only on proof -- exists because a wrongly deleted branch can lose commits that exist nowhere else.
+        An install record holds no work: removing one wrongly costs a single `claude plugin install` in
+        that folder when it comes back. Measured November 7, 2026 (v6.9.0): 26 records over 6 vanished
+        checkouts, all 26 uninstalls exited 0, the recreated folders stayed empty, and the report-only
+        default had handed the same list back on every run before that.
+
+        THE ONE GUARD IS THE PARENT FOLDER. The stated risk is a path only TEMPORARILY absent -- an
+        unmounted drive, a sync root offline -- and in both cases what is gone is an ancestor, not just the
+        leaf. So a folder acts only when its parent is PROVEN present; a parent absent from the table, or
+        proven absent, keeps the whole folder on report, exactly as before #3862.
+
+        PER RECORD, three more refusals, each keeping that record on report:
+          - an id that did not split into plugin@marketplace: there is no name to uninstall;
+          - scope 'managed': an administrator's record, never this command's to remove;
+          - any scope this lib does not know (not user, project or local): an unknown is not a licence.
+
+        Pure: it tests nothing on disk. The caller probes and passes the answers in.
+
+    .PARAMETER Orphans
+        Get-OrphanInstallRecords' output.
+
+    .PARAMETER ParentExists
+        A hashtable from a folder's PARENT path to $true/$false, as the caller probed it.
+
+    .OUTPUTS
+        One object per folder: ProjectPath, Parent, Act ($true when the parent is proven present),
+        Reason (why not, when Act is $false), Removable (the records lane 8 uninstalls) and Reported (the
+        records it hands over as before).
+    #>
+    param(
+        $Orphans = @(),
+        [hashtable]$ParentExists = @{}
+    )
+
+    $knownScopes = @('user', 'project', 'local')
+    $plans = @()
+    foreach ($group in @(@($Orphans) | Where-Object { $null -ne $_ } | Group-Object -Property ProjectPath)) {
+        $path = [string]$group.Name
+        $parent = ''
+        try { $parent = [string](Split-Path -Path $path -Parent) } catch { $parent = '' }
+
+        $act = $false
+        $reason = ''
+        if (-not $parent) {
+            $reason = 'the folder has no parent to probe -- a drive or share root is never recreated'
+        } elseif (-not $ParentExists.ContainsKey($parent)) {
+            $reason = 'its parent folder was not probed -- reported, not acted on'
+        } elseif (-not $ParentExists[$parent]) {
+            $reason = 'its parent folder is not on this machine either -- possibly a drive not mounted or a synced folder offline, so the record is kept'
+        } else {
+            $act = $true
+        }
+
+        $removable = @()
+        $reported = @()
+        foreach ($o in @($group.Group)) {
+            $ok = $act -and $o.Plugin -and $o.Marketplace -and ($knownScopes -contains ([string]$o.Scope).ToLowerInvariant())
+            if ($ok) { $removable += $o } else { $reported += $o }
+        }
+
+        $plans += [pscustomobject]@{
+            ProjectPath = $path
+            Parent      = $parent
+            Act         = [bool]($act -and $removable.Count -gt 0)
+            Reason      = $reason
+            Removable   = @($removable)
+            Reported    = @($reported)
+        }
+    }
+    return @($plans)
 }
 
 function Get-RetiredNameInstallRecords {

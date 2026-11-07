@@ -9,7 +9,8 @@ description: >-
   fixture trees under the scratch root, and hub servers and watchers that outlived the run that
   started them. It DELETES only what
   prune-merged can already prove -- an ancestor of the trunk, or a tip that is the head commit of a
-  merged PR -- and everything else it classifies and hands over with the command, paste-ready. Use it when branches have piled up, as the closing tidy-up
+  merged PR -- plus install records whose checkout is gone (they hold no work), and everything else it
+  classifies and hands over with the command, paste-ready. Use it when branches have piled up, as the closing tidy-up
   of a working session, when a lane worktree has outlived its branch, or when you want to know which
   of the trees under your temp directory belong to runs that have ended.
 ---
@@ -47,7 +48,8 @@ merged.** So:
 
 | | |
 |---|---|
-| **deletes** | exactly one lane, and only by delegation -- `prune-merged.ps1`, on its own two existing proofs |
+| **deletes** | lane 2, and only by delegation -- `prune-merged.ps1`, on its own two existing proofs |
+| **removes** | lane 8, install records whose checkout is gone, when the parent folder is still here (#3862) -- a record holds no work, so this one lane acts without a merge proof |
 | **reports** | everything else, each item with what was measured and the command that would act on it |
 
 **That is the `-IncludeRemote` doctrine turned inward.** `prune-merged` refuses to delete a *remote*
@@ -103,7 +105,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 | # | lane | authority |
 |---|---|---|
 | 7 | the `~/.claude` plugin administration | → `check-claude-home.ps1` |
-| 8 | **install records pointing at a checkout that is gone** | reports, with the recreate-uninstall-remove sequence (#3751) |
+| 8 | **install records pointing at a checkout that is gone** | **removes them** -- recreate empty, uninstall, remove -- when the parent folder is still here; reports otherwise (#3751, #3862) |
 | 9 | plugin and marketplace staleness | → `plugin-versions.ps1` |
 | 10 | **fixture trees under the scratch root** | attributes -- **never deletes** |
 | 11 | **install records under a plugin name the marketplace has retired** | reports, with the uninstall |
@@ -151,13 +153,27 @@ Lane 8 probes the record's **checkout**; lane 11 asks whether the **plugin name*
 manifest of the marketplace that record names. A record can be dead by either, and the two probes cannot
 be one, which is why they are two lanes.
 
-**Both hand over the uninstall, and lane 8 needs a folder to run it from** (#3751). `claude plugin
-uninstall` takes no path: it picks the record from the directory it runs in. So for a vanished checkout
-lane 8 prints `mkdir` the folder, `cd` into it, one uninstall per record at that record's own scope,
-`cd ..`, and `rmdir`, which removes only an empty folder. Moved or deleted makes no difference to the old
-record: a moved checkout gets a new record when the plugin is re-installed there. The one case it is
-wrong is a path only temporarily absent, an unmounted drive or a synced folder offline, which looks
-identical, so running it stays the reader's act.
+**Lane 8 runs the uninstall itself, and it needs a folder to run it from** (#3751, #3862). `claude plugin
+uninstall` takes no path: it picks the record from the directory it runs in (and from
+`CLAUDE_PROJECT_DIR` above that, which lane 8 sets too). So for a vanished checkout lane 8 recreates the
+folder empty, runs one uninstall per record from inside it at that record's own scope, and removes the
+folder again **only while it is still empty**, never recursively. Moved or deleted makes no difference to
+the old record: a moved checkout gets a new record when the plugin is re-installed there.
+
+**Why this lane acts when the others report.** The delete-only-on-proof doctrine protects commits that
+exist nowhere else. A record holds no work: a wrong removal costs one `claude plugin install` in that
+folder when it comes back. Measured November 7, 2026: 26 records over 6 vanished checkouts, all 26
+uninstalls exited 0, the folders stayed empty, and every report-only run before that had handed the same
+list back.
+
+**What it still only reports**, with the `mkdir` / `cd` / uninstall / `cd ..` / `rmdir` lines as before:
+
+- a folder whose **parent** is not on this machine either. That is the shape of the one case where
+  removal is wrong, a drive not mounted or a synced folder offline;
+- a record at scope `managed`, or at a scope it does not know, or whose id does not split into
+  `plugin@marketplace`;
+- every record under `-DryRun`, and under `-UserHomeOverride`, because the uninstall writes the real
+  `~/.claude` whatever the override says.
 
 **Lane 11 exists because this workflow generates its own instances of it.** A rename is a deliberate act,
 and each one turns every existing install record into dead weight on every machine that had the plugin.

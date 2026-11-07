@@ -39,19 +39,37 @@
 
 ### PLAN
 
+- [x] Lane 8 runs the recreate/uninstall/remove sequence itself, guarded by the parent folder (#3862).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-OrphanRemovalPlan` in `tidy-lib.ps1`: per vanished folder, act only on a proven-present parent; per record, refuse `managed`, an unknown scope, or an id that does not split.
+- [x] Lane 8 in `tidy-machine.ps1` runs the uninstalls with `CLAUDE_PROJECT_DIR` and the working directory on the folder, then removes it through the one-argument `Directory.Delete` (empty only); `-DryRun` and `-UserHomeOverride` keep the handover.
+- [x] Skill page and script header: lane 8 now removes, and why.
 
 ### TEST
 
+- [x] `tidy-lib.tests.ps1`: the plan's cases (acting folder, gone parent, unprobed parent, managed, unknown scope, unsplittable id, drive root) and the structural asserts on the one directory delete; 137 passed.
+- [x] `tidy-machine -MachineOnly -DryRun` on this machine: lane 8 renders, nothing found.
+
 ### DEPLOY: feat/3862-tidy-lane8-removes-records
 
-**Score:**
+`tidy-machine` lane 8 now removes an install record whose checkout is gone, instead of printing the
+sequence for the reader to run. It recreates the folder empty, uninstalls each record from inside it at
+that record's own scope, and removes the folder again only while it is still empty. It acts only when the
+folder's parent is still on the machine, so an unmounted drive or an offline sync root stays on report,
+and it never touches a `managed` record
+([#3862](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3862)).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Running `tidy-machine` now clears the dead install records a moved or deleted checkout leaves behind, in
+the same run. Before this, every run handed back the same list of uninstall lines to paste by hand.
+`-DryRun` still shows the sequence without running it.
+
+**Score:** 3
 
 #### Pull Request
 

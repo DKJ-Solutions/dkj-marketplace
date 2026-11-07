@@ -213,6 +213,43 @@ Assert-True ($odd.Count -eq 1 -and $odd[0].Plugin -eq '' -and $odd[0].Marketplac
 # to beat here, and a wrong claim about somebody's disk is worse than saying nothing.
 Assert-True (-not ($orphans | Where-Object { $_.ProjectPath -eq 'D:\unmounted' })) 'an unprobed path is never reported'
 
+# --- 6b. The removal plan lane 8 runs itself (#3862) -------------------------------------------------
+Write-Host '-- 6b. orphan removal plan --' -ForegroundColor Cyan
+
+$planRecs = @(
+    [pscustomobject]@{ Id = 'a@m';  ProjectPath = 'C:\work\gone';  Scope = 'project' }
+    [pscustomobject]@{ Id = 'b@m';  ProjectPath = 'C:\work\gone';  Scope = 'Local' }
+    [pscustomobject]@{ Id = 'c@m';  ProjectPath = 'C:\work\gone';  Scope = 'managed' }
+    [pscustomobject]@{ Id = 'x@y@z'; ProjectPath = 'C:\work\gone'; Scope = 'project' }
+    [pscustomobject]@{ Id = 'd@m';  ProjectPath = 'E:\sync\gone';  Scope = 'project' }
+    [pscustomobject]@{ Id = 'e@m';  ProjectPath = 'F:\unprobed\gone'; Scope = 'user' }
+    [pscustomobject]@{ Id = 'f@m';  ProjectPath = 'C:\work\odd';   Scope = 'weird' }
+)
+$planOrphans = @(Get-OrphanInstallRecords -Records $planRecs -PathExists @{ 'C:\work\gone' = $false; 'E:\sync\gone' = $false; 'F:\unprobed\gone' = $false; 'C:\work\odd' = $false })
+$plan = @(Get-OrphanRemovalPlan -Orphans $planOrphans -ParentExists @{ 'C:\work' = $true; 'E:\sync' = $false })
+Assert-Equal 4 $plan.Count 'one plan per vanished folder'
+
+$pGone = @($plan | Where-Object { $_.ProjectPath -eq 'C:\work\gone' })[0]
+Assert-True $pGone.Act 'a folder whose parent is proven present acts'
+Assert-Equal 'a@m,b@m' ((@($pGone.Removable) | ForEach-Object { $_.Id }) -join ',') 'project and local (any case) records are removed by the lane'
+Assert-Equal 'c@m,x@y@z' ((@($pGone.Reported) | ForEach-Object { $_.Id }) -join ',') 'a managed record and an unsplittable id stay on report, even in an acting folder'
+
+$pSync = @($plan | Where-Object { $_.ProjectPath -eq 'E:\sync\gone' })[0]
+Assert-True (-not $pSync.Act) 'a folder whose parent is ALSO gone never acts -- the unmounted-drive guard'
+Assert-True ($pSync.Reason -match 'not on this machine either') 'and it says why it kept the record'
+Assert-Equal 1 @($pSync.Reported).Count 'its record is handed over as before'
+
+$pUnprobed = @($plan | Where-Object { $_.ProjectPath -eq 'F:\unprobed\gone' })[0]
+Assert-True (-not $pUnprobed.Act) 'an unprobed parent is not a licence to act'
+
+$pOdd = @($plan | Where-Object { $_.ProjectPath -eq 'C:\work\odd' })[0]
+Assert-True (-not $pOdd.Act) 'a folder whose only record has an unknown scope does not act'
+Assert-Equal 1 @($pOdd.Reported).Count 'and the unknown-scope record is reported'
+
+$rootPlan = @(Get-OrphanRemovalPlan -Orphans @([pscustomobject]@{ Id = 'r@m'; ProjectPath = 'Z:\'; Plugin = 'r'; Marketplace = 'm'; Scope = 'project' }) -ParentExists @{})
+Assert-True (-not $rootPlan[0].Act) 'a drive root has no parent and is never recreated'
+Assert-Equal 0 @(Get-OrphanRemovalPlan -Orphans @()).Count 'no orphans, no plan'
+
 # --- 6b. Records under a RETIRED plugin name (#1773) ----------------------------------------------
 Write-Host '-- 6b. retired-name install records --' -ForegroundColor Cyan
 
@@ -431,7 +468,11 @@ Assert-True ($codeText -notmatch "'push'")     'no git push'
 Assert-True ($codeText -notmatch "'merge'")    'no gh pr merge'
 Assert-True ($codeText -notmatch "'close'")    'no gh pr close'
 Assert-True ($codeText -notmatch 'Remove-Item') 'nothing in this script removes anything from disk'
-Assert-True ($codeText -notmatch 'ReapScratch') 'and the scratch-sweep flag does not exist (#1659/#1668)'
+# LANE 8'S ONE DELETE (#3862) is the folder it recreated itself, and only through the ONE-argument
+# Directory.Delete, which refuses a non-empty folder -- so no content can go, even in a race.
+$dirDeletes = @([regex]::Matches($codeText, '\[System\.IO\.Directory\]::Delete\(([^)]*)\)'))
+Assert-Equal 1 $dirDeletes.Count 'exactly one directory delete in this script -- lane 8''s recreated folder'
+Assert-True ($dirDeletes.Count -eq 1 -and $dirDeletes[0].Groups[1].Value -notmatch ',') 'and it is the non-recursive one-argument form'Assert-True ($codeText -notmatch 'ReapScratch') 'and the scratch-sweep flag does not exist (#1659/#1668)'
 
 # LANE 12 CLASSIFIES THROUGH THE PURE FUNCTION RATHER THAN INLINE, which is what makes the cases in
 # section 9 worth anything: an inline copy of that judgement in the conductor would be untested. And
