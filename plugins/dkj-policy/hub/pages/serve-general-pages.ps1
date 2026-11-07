@@ -288,8 +288,8 @@ function Get-TodayModel {
     try {
         $script = Join-Path $PSScriptRoot 'day-plan.ps1'
         $exe = (Get-Process -Id $PID).Path
-        $q = Invoke-BoundedProcess -FilePath $exe -Arguments @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script, '-Status') -TimeoutSeconds 90 -WorkingDirectory $root
-        if ($q.TimedOut) { throw 'day-plan.ps1 -Status did not answer within 90 s' }
+        $q = Invoke-BoundedProcess -FilePath $exe -Arguments @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script, '-Status') -TimeoutSeconds 60 -WorkingDirectory $root
+        if ($q.TimedOut) { throw 'day-plan.ps1 -Status did not answer within 60 s' }
         if ($q.ExitCode -ne 0) { throw ("day-plan.ps1 -Status exited $($q.ExitCode): " + (([string]$q.Output + ' ' + [string]$q.Error).Trim())) }
         $model = ConvertFrom-Json -InputObject $q.Output
         $err = ''
@@ -710,10 +710,14 @@ try {
                 if ($null -eq $glCache -or $glAge -ge $IssuesCacheSeconds -or ($glCache.Error -and $glAge -ge 30)) { $glCache = Get-GoalsModel }
                 $html = Format-GoalsPageHtml -Model $glCache.Model -ReadError $glCache.Error -GeneratedAt $glCache.GeneratedAt -RepoName (Get-RepoIdentity).Name
             } elseif ($path -cmatch '^/dev/today/?$') {
-                # The day plan (#3860): a day moves faster than the issues, so a minute; a failed run for 30 s.
+                # The day plan (#3860): a day moves faster than the issues, so a minute; a failed run, or one that could not
+                # read GitHub, for 30 s. Bounded at 60 s like the other gh reads, since the loop serves nothing meanwhile.
                 $tdAge = if ($tdCache) { ((Get-Date) - $tdCache.At).TotalSeconds } else { 0 }
-                if ($null -eq $tdCache -or $tdAge -ge 60 -or ($tdCache.Error -and $tdAge -ge 30) -or $tdCache.At.Date -ne (Get-Date).Date) { $tdCache = Get-TodayModel }
-                $html = Format-TodayPageHtml -Model $tdCache.Model -ReadError $tdCache.Error -GeneratedAt $tdCache.GeneratedAt -RepoName (Get-RepoIdentity).Name
+                if ($null -eq $tdCache -or $tdAge -ge 60 -or (($tdCache.Error -or ($tdCache.Model -and $tdCache.Model.error)) -and $tdAge -ge 30) -or $tdCache.At.Date -ne (Get-Date).Date) { $tdCache = Get-TodayModel }
+                # A day file edited by hand into something the page cannot draw is a warning on the page: the loop's own
+                # catch would close the connection with no answer at all (Sebastian, #3860).
+                try { $html = Format-TodayPageHtml -Model $tdCache.Model -ReadError $tdCache.Error -GeneratedAt $tdCache.GeneratedAt -RepoName (Get-RepoIdentity).Name }
+                catch { $html = Format-TodayPageHtml -Model $null -ReadError ('the day file could not be drawn: ' + (([string]$_.Exception.Message) -replace '\s+', ' ')) -RepoName (Get-RepoIdentity).Name }
             } elseif ($path -match '^/dev/sessionstart(?:/([a-z-]{1,40}))?$') {
                 # The overview, or one section's own page (the owner, October 26, 2026); a slug no section has is a 404.
                 $ssSection = [string]$Matches[1]

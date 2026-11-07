@@ -55,6 +55,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\dayplan-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\goals-lib.ps1')
 . (Join-Path $PSScriptRoot '..\..\scripts\lib\ref-print-lib.ps1')
+. (Join-Path $PSScriptRoot '..\..\scripts\lib\native-capture-lib.ps1')
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 
@@ -134,17 +135,19 @@ function Invoke-DayPlanSearch {
         do {
             $ghArgs = @('api', 'graphql', '-f', ('query=' + (Get-DayPlanPrQuery)), '-f', ('q=' + $q))
             if ($after) { $ghArgs += @('-f', ('after=' + $after)) }
-            $raw = & gh @ghArgs
-            if ($LASTEXITCODE -ne 0) { throw "gh api graphql exited $LASTEXITCODE reading the PRs of $a" }
-            $page = ($raw -join "`n") | ConvertFrom-Json
+            # -Utf8: gh writes UTF-8, and a plain & would decode it through the console code page, turning an
+            # accented title or an emoji into the wrong characters before it ever reaches a plan (Victor, #3860).
+            $res = Invoke-NativeCapture -FilePath 'gh' -Arguments $ghArgs -Utf8 -DiscardStderr
+            if ($res.ExitCode -ne 0) { throw "gh api graphql exited $($res.ExitCode) reading the PRs of $a" }
+            $page = (@($res.Output) -join "`n") | ConvertFrom-Json
             $nodes = @($page.data.search.nodes | Where-Object { $_ -and $_.number })
             $prs += @(ConvertFrom-DayPlanSearch -Json (ConvertTo-Json -InputObject @($nodes) -Depth 6) -Kind 'pr')
             $read += $nodes.Count
             $after = if ($page.data.search.pageInfo.hasNextPage) { [string]$page.data.search.pageInfo.endCursor } else { $null }
         } while ($after -and $read -lt $Limit)
-        $i = gh search issues --assignee $a --closed $since --json $fields --limit $Limit
-        if ($LASTEXITCODE -ne 0) { throw "gh search issues exited $LASTEXITCODE for $a" }
-        $issues += @(ConvertFrom-DayPlanSearch -Json ($i -join "`n") -Kind 'issue')
+        $res = Invoke-NativeCapture -FilePath 'gh' -Arguments @('search', 'issues', '--assignee', $a, '--closed', $since, '--json', $fields, '--limit', [string]$Limit) -Utf8 -DiscardStderr
+        if ($res.ExitCode -ne 0) { throw "gh search issues exited $($res.ExitCode) for $a" }
+        $issues += @(ConvertFrom-DayPlanSearch -Json (@($res.Output) -join "`n") -Kind 'issue')
     }
     $prs = @($prs | Sort-Object ref -Unique)
     $issues = @($issues | Sort-Object ref -Unique)
@@ -361,7 +364,11 @@ if ($Status) {
     $wk = Get-DayPlanWeek -Date $day -Days $days
     $rows = @($wk.Rows | ForEach-Object { [pscustomobject]@{ date = $_.Date.ToString('yyyy-MM-dd'); goal = $_.Goal; planned = $_.Planned; done = $_.Done; extra = $_.Extra; verdict = $_.Verdict; closed = $_.Closed } })
     $model = [pscustomobject]@{ date = $day.ToString('yyyy-MM-dd'); day = $existing; live = $live; error = $readError; week = $rows }
-    # Windows PowerShell's ConvertTo-Json writes non-ASCII as \uXXXX escapes, so no code page touches a title on its way out.
-    Write-Output ($model | ConvertTo-Json -Depth 8 -Compress)
+    # ConvertTo-Json writes non-ASCII raw, and a redirected Windows PowerShell writes its stdout in the console code page,
+    # which the hub then reads as UTF-8 (Victor, #3860). So every character above ASCII is written as a JSON escape: the
+    # line is pure ASCII, which every code page agrees on, and ConvertFrom-Json gives the characters back.
+    $json = $model | ConvertTo-Json -Depth 8 -Compress
+    $escape = ('\' + 'u') + '{0:x4}'
+    Write-Output ([regex]::Replace($json, '[^\x00-\x7F]', { param($m) $escape -f [int][char]$m.Value }))
     exit 0
 }

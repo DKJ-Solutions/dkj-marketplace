@@ -43,6 +43,13 @@ function Format-TodayRefHtml {
     return '<a class="dp-link" href="' + (& $e $u) + '" target="_blank" rel="noopener noreferrer" title="' + (& $e $Ref) + '">' + (& $e $label) + '</a>'
 }
 
+function ConvertTo-TodayDate {
+    <# A model date as a DateTime: Windows PowerShell's ConvertFrom-Json leaves 'yyyy-MM-dd' a string, PowerShell 7's makes it a DateTime. #>
+    param($Value)
+    if ($Value -is [datetime]) { return $Value.Date }
+    return [datetime]::ParseExact([string]$Value, 'yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture)
+}
+
 function Format-TodayPageHtml {
     <#
         The page from day-plan.ps1 -Status's model. -ReadError is why the model could not be read at all; the model's
@@ -69,7 +76,8 @@ function Format-TodayPageHtml {
             '<p>Ask Claude to plan the day (the <code>day-plan</code> skill). Paula proposes one goal and the items for it, each with an hour estimate, inside a day of 6 to 8 hours, and writes it once you agree.</p></section>')
     }
     if ($day) {
-        $items = @($day.items | Where-Object { $_ })
+        # Not filtered: an item's index is its number in the plan, which the close-out's done list counts by.
+        $items = @($day.items)
         $doneSet = @{}
         $doneList = if ($live) { @($live.done) } elseif ($day.close) { @($day.close.done) } else { @() }
         foreach ($i in $doneList) { if ($null -ne $i) { $doneSet[[int]$i] = $true } }
@@ -113,7 +121,7 @@ function Format-TodayPageHtml {
         $unplanned = @($(if ($live) { @($live.unplanned) } elseif ($closed) { @($day.close.unplanned) }) | Where-Object { $_ })
         $prs = if ($live) { [int]$live.prs } elseif ($closed) { [int]$day.close.prs } else { 0 }
         $issues = if ($live) { [int]$live.issues } elseif ($closed) { [int]$day.close.issues } else { 0 }
-        [void]$body.Append('<section class="card"><div class="card__head"><h2>Done today</h2></div>')
+        [void]$body.Append('<section class="card"><div class="card__head"><h2>Done</h2></div>')
         [void]$body.Append('<dl class="facts facts--row"><dt>PRs merged</dt><dd class="num">' + $prs + '</dd><dt>Issues closed</dt><dd class="num">' + $issues + '</dd></dl>')
         if ($unplanned.Count) {
             [void]$body.Append('<h3>Extra</h3><ul class="today-items">')
@@ -136,9 +144,9 @@ function Format-TodayPageHtml {
     $rows = if ($Model) { @($Model.week | Where-Object { $_ }) } else { @() }
     if ($rows.Count) {
         $wrap = if ($day) { 'card grid__full' } else { 'card' }
-        [void]$body.Append('<section class="' + $wrap + '"><div class="card__head"><h2>This week</h2></div><div class="table-wrap"><table class="table table--dense"><thead><tr><th>Day</th><th>Goal</th><th class="num">Done</th><th class="num">Extra</th><th>Day goal</th></tr></thead><tbody>')
+        [void]$body.Append('<section class="' + $wrap + '"><div class="card__head"><h2>This week</h2></div><div class="table-wrap"><table class="table table--dense"><thead><tr><th>Day</th><th>Goal</th><th class="num">Done</th><th class="num">Extra</th><th>Result</th></tr></thead><tbody>')
         foreach ($r in $rows) {
-            $d = [datetime]::ParseExact([string]$r.date, 'yyyy-MM-dd', $inv)
+            $d = ConvertTo-TodayDate $r.date
             $v = if (-not $r.closed) { '<span class="badge badge--sm badge--neutral">open</span>' } else {
                 switch ([string]$r.verdict) {
                     'reached' { '<span class="badge badge--sm badge--good">reached</span>' }
@@ -157,11 +165,11 @@ function Format-TodayPageHtml {
     # past midnight) names its date, so the page never claims a day it is not showing.
     $title = 'Today'
     if ($Model -and $Model.date) {
-        $dd = [datetime]::ParseExact([string]$Model.date, 'yyyy-MM-dd', $inv)
+        $dd = ConvertTo-TodayDate $Model.date
         if ($dd -ne $Now.Date) { $title = $dd.ToString('dddd d MMMM', $inv) }
     }
     $when = if ($GeneratedAt) { ', read ' + (& $e $GeneratedAt) } else { '' }
     return Format-GeneralPageHtml -Title $title -Style ($script:TodayPageStyle) -Body $body.ToString() -SiteName $RepoName `
         -Lead 'The day plan: the day goal, the plan and what got done, and the week.' `
-        -FooterNote ('The plan is this machine''s day file; done is read from GitHub, the PRs merged and the issues closed today' + $when + ' (<a class="dp-link" href="/refresh?page=today">read again</a>).')
+        -FooterNote ('The plan is this machine''s day file. An item is done when GitHub shows its PR merged or its issue closed that day, or when the close-out marked it done' + $when + ' (<a class="dp-link" href="/refresh?page=today">read again</a>).')
 }

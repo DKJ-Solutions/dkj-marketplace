@@ -125,7 +125,7 @@ Assert-True ($html -match '<h2>Day goal</h2><span class="badge badge--neutral">I
 Assert-True ($html -match '1 of 3 done, 3 h of 6 h planned in a 8 h day' -and $html -match 'aria-label="50% of the planned hours done"') 'the progress counts items and the hours they carry'
 Assert-True ($html -match 'today-items__done">Script <a class="dp-link" href="https://github.com/o/r/issues/1"' -and $html -match 'Page &lt;b&gt;</span><span class="tag tag--info">plan first</span>') 'a done item is struck through with its link; an open one shows its mode'
 Assert-True ($html -match 'Review <span class="tag tag--warn">added</span>' -and $html -match 'Planned on an override \(start\): short day') 'an item added during the day and the override both show'
-Assert-True ($html -match '<dt>PRs merged</dt><dd class="num">4</dd>' -and $html -match 'Hotfix <a class="dp-link" href="https://github.com/o/r/pull/9"' -and $html -match '<h3>Not today</h3>') 'done today shows the counts, the extra work linked, and not today'
+Assert-True ($html -match '<dt>PRs merged</dt><dd class="num">4</dd>' -and $html -match 'Hotfix <a class="dp-link" href="https://github.com/o/r/pull/9"' -and $html -match '<h3>Not today</h3>') 'the Done card shows the counts, the extra work linked, and not today'
 Assert-True ($html -match '<td>Fri 6 Nov</td><td>Friday</td><td class="num">2 of 3</td>' -and $html -match '3 planned</td>') 'the week shows a closed day''s result and an open day''s plan'
 Assert-True ($html -notmatch [char]0x2014 -and ([regex]::Matches($html, 'class="grid__head"')).Count -le 4) 'no em dash, and at most four sections'
 $closedModel = [pscustomobject]@{ date = '2026-11-07'; error = 'gh exited 1'; live = $null; week = @()
@@ -184,6 +184,13 @@ try {
     [System.IO.File]::WriteAllText((Join-Path $state 'dayplan\2026-11-05.json'), '{ not json', $utf8)
     $r = & $run @('-Add', '-Title', 'X', '-Hours', '1', '-Mode', 'go', '-Date', '2026-11-05')
     Assert-True ($r.Code -eq 1 -and $r.Out -match 'does not parse') 'a day file that does not parse is refused, never read as no plan and overwritten'
+
+    $accented = 'Caf' + [char]0x00E9 + ' ' + [char]0x2014 + ' plan'
+    $statusDay = [pscustomobject]@{ date = '2026-11-02'; goal = $accented; items = @((& $item 'A' 6)); notToday = @(); overrides = @(); close = $null }
+    [System.IO.File]::WriteAllText((Join-Path $state 'dayplan\2026-11-02.json'), ($statusDay | ConvertTo-Json -Depth 5), $utf8)
+    $r = & $run @('-Status', '-Date', '2026-11-06')
+    $sm = try { $r.Out | ConvertFrom-Json } catch { $null }
+    Assert-True ($r.Code -eq 0 -and $r.Out -notmatch '[^\x00-\x7F]' -and $sm -and $null -eq $sm.day -and (@($sm.week | Where-Object { $_.goal -eq $accented }).Count -eq 1)) '-Status writes pure ASCII JSON, and an accent and a dash come back whole through it'
 
     $r = & $run @('-Context', '-Close')
     Assert-True ($r.Code -eq 1 -and $r.Out -match 'exactly one') 'two modes at once are refused'
