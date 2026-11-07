@@ -908,7 +908,7 @@ if ($runMachine) {
             }
         }
         if ($elsewhere -gt 0) {
-            Write-Item "  $elsewhere of these belong to another checkout on this machine. They are reported, not acted on, for the same reason lane 8 reports rather than repairs: this run reads the machine-wide register and does not visit another repository." 'DarkGray'
+            Write-Item "  $elsewhere of these belong to another checkout on this machine. They are reported, not acted on: this run reads the machine-wide register and does not visit another repository." 'DarkGray'
             if (-not $repoRoot) {
                 # Otherwise "another checkout" invites the reader to work out which one is THIS one, and
                 # under -MachineOnly outside a checkout there is no such answer to find (#1926).

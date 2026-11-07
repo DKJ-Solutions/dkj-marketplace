@@ -67,7 +67,7 @@ and it never touches a `managed` record
 #### What makes this deploy extra special
 
 Running `tidy-machine` now clears the dead install records a moved or deleted checkout leaves behind, in
-the same run. Before this, every run handed back the same list of uninstall lines to paste by hand.
+the same run, as long as the folder's parent is still on the machine. Before this, every run handed back the same list of uninstall lines to paste by hand.
 `-DryRun` still shows the sequence without running it.
 
 **Score:** 3
