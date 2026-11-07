@@ -10,7 +10,8 @@
 
     ONE DEFINITION WHERE THERE WERE TWO. build-release-notes-page.ps1 (worker-path-token.txt) and
     issue-dashboard.ps1 (dashboard-path-token.txt, #2643) each carried a near-copy of this walk,
-    differing only in the file name, so any change to the guard had to be made twice (#2644).
+    differing only in the file name, so any change to the guard had to be made twice (#2644). The
+    issue dashboard was retired in #3872, so build-release-notes-page.ps1 is its one caller now.
 
     WHY IT LOOKS AT ALL. Both tokens live in a directory that is derived from a tracked folder and
     gitignored -- two good decisions that combine into one hazard. Rename or repoint that folder and

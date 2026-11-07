@@ -2,7 +2,37 @@
 
 ## [Unreleased]
 
-**5 / 8 minor entries** <!-- pending-tally -->
+**6 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3872-retire-issue-dashboard · 20261107-145945Z
+
+The optional live issue dashboard is retired: the Cloudflare Worker under `plugins/dkj-policy/worker/`,
+`issue-dashboard.ps1`, its suite and its skill are gone, and so is the `Get-IssueDashboardWorkerName`
+seam. Nothing ran it, and Admin's GitHub page already lists the open issues locally, so every new parking
+label no longer has to be taught to a worker nobody deploys. The BWJ pages worker is a different worker
+and stays.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A repo that answered `Get-IssueDashboardWorkerName` in `scripts/repo-config.ps1` can delete the function:
+nothing reads it any more, and no check names it, so it stays as dead code until you do. If you ever
+deployed the dashboard, remove the worker
+with `npx wrangler delete <repo>-issue-dashboard` (or the name your seam gave it); the path token under
+`.dkj/dkj-policy/dashboard/` can go with it.
+
+**Score:** 2
+
+#### Pull Request
+
+Retire the optional Cloudflare issue dashboard
+
+Plugins: dkj-policy
+
+[PR #3876](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3876)
+
+---
 
 ### DEPLOY: fix/3868-ship-pr-merged-during-lap · 20261107-144938Z
 

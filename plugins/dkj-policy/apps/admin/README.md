@@ -52,7 +52,7 @@ Admin (below).
 | The Plugins page, a card per enabled plugin, and each plugin's own page on `/dev/plugins/<name>`, from `plugin-versions.ps1 -Json`, with a Specialists, Hooks and Skills section of what it ships, each item a landing page on `/dev/plugins/<name>/<kind>/<slug>` | [`lib/plugins-page-lib.ps1`](lib/plugins-page-lib.ps1) |
 | The Stopwatch and the Logbook: their pages, their router, the hooks that time a run, and the Stopwatch's sync | [`lib/stopwatch-lib.ps1`](lib/stopwatch-lib.ps1), [`lib/logbook-lib.ps1`](lib/logbook-lib.ps1), [`lib/timing-pages.ps1`](lib/timing-pages.ps1), [`../hooks/stopwatch-hook.ps1`](../../hooks/stopwatch-hook.ps1), [`../hooks/logbook-hook.ps1`](../../hooks/logbook-hook.ps1), [`lib/stopwatch-sync-lib.ps1`](lib/stopwatch-sync-lib.ps1), [`pages/stopwatch-sync.ps1`](pages/stopwatch-sync.ps1), [`pages/stopwatch-hide.ps1`](pages/stopwatch-hide.ps1), the [`stopwatch-hide`](../../skills/stopwatch-hide/SKILL.md) skill, [`pages/stopwatch-prepare.ps1`](pages/stopwatch-prepare.ps1) and the [`stopwatch-prepare`](../../skills/stopwatch-prepare/SKILL.md) skill |
 
-These are plugin-only files, like [`../worker/`](../../worker/): no root copy in the source repo mirrors
+These are plugin-only files: no root copy in the source repo mirrors
 them. They are tested there by `dev-preview-sessionstart.tests.ps1`, `dev-pages.tests.ps1`,
 `consumer-dashboard.tests.ps1`, `goals.tests.ps1`, `dayplan.tests.ps1`, `stopwatch.tests.ps1`, `stopwatch-sync.tests.ps1` and `logbook.tests.ps1`.
 

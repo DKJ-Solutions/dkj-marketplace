@@ -1260,8 +1260,8 @@ function Get-SharedScriptPairs {
         },
         @{
             # THE STRAY PATH-TOKEN FINDER (issue #2644). One walk for the two gitignored path tokens,
-            # build-release-notes-page's and issue-dashboard's, which each carried a copy differing only
-            # in the file name. A leaf with no dependencies; mirrored because both callers are.
+            # build-release-notes-page's and the since-retired issue-dashboard's (#3872), which each carried a
+            # copy differing only in the file name. A leaf with no dependencies; mirrored because its caller is.
             Name    = 'stray-token-lib'
             Source  = 'scripts\lib\stray-token-lib.ps1'
             Plugin  = 'dkj-policy'
@@ -1691,7 +1691,7 @@ function Get-SharedScriptPairs {
             Plugin = 'dkj-policy'
             Skill  = 'cut-release'
             # #3462: the dev-preview lib lives only under plugins/dkj-policy/apps/admin/, so the stop of the own product
-            # probes it at both depths, the way issue-dashboard finds its worker files.
+            # probes it at both depths.
             MirrorRunExempt = 'both copies probe the Admin lib at both depths and resolve the same file, and a missing one only keeps the #3353 refusal, so a mirror run would only re-measure what the source run already did'
         },
         @{
@@ -1745,22 +1745,6 @@ function Get-SharedScriptPairs {
             Source  = 'scripts\release\markdown-render.js'
             Plugin = 'dkj-policy'
             LibOnly = $true
-        },
-        @{
-            # The OPTIONAL live issue dashboard (#2643): the local half of a Cloudflare Worker that renders
-            # a repo's open issues with a status and a blocked-by order. Shared because nothing in it is
-            # repo-specific -- the worker carries no content, token or repo name, and this script reads
-            # its two optional answers through seams that fall back. It PRINTS the wrangler commands and
-            # deploys nothing. THE TWO WORKER FILES ARE NOT PAIRS: they live only under
-            # plugins/dkj-policy/worker/ (the way the BWJ pages worker lives under its plugin), and the
-            # script finds them from $PSScriptRoot in the mirror and under plugins/ in the source.
-            Name   = 'issue-dashboard'
-            Source = 'scripts\task\issue-dashboard.ps1'
-            Plugin = 'dkj-policy'
-            Skill  = 'issue-dashboard'
-            # A fixture root, so a suite can run the script against a synthetic tree. A consumer never types it.
-            SkillParamsExempt = @('RepoRoot')
-            MirrorRunExempt = 'both copies probe the worker folder at both depths and resolve the same two files, so a mirror run would only re-measure what the source run already did'
         },
         @{
             # Which plugins a repo publishes, and where each one's folder is (August 9, 2026). Travels

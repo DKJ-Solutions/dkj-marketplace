@@ -1327,7 +1327,7 @@ function Get-ExpectedRepoSettings {
 # 'awaiting-decision-*'), no pull request is pending, and the act is a judgement by eye rather than a deed
 # ('awaiting-action-dev'). Split in the shape of #2890: '-dev' is the owner's look, '-client' the look of the client or
 # requester outside the dev team (a preview sent to them). Both are skipped by the sweep route, warned on by a claim and shown
-# as Waiting on the issue dashboard. New, so no former names; same purple, same 'copy' reasoning: "waiting on a look"
+# as Parked on Admin's GitHub page. New, so no former names; same purple, same 'copy' reasoning: "waiting on a look"
 # asserts nothing about the adopting repo.
 # AND A FIFTEENTH, A TENTH PARKING LABEL: 'awaiting-pull-external' (issue #3044, October 15, 2026). An issue
 # whose blocker is a pull request in ANOTHER repo -- a consumer waiting on a dkj-brandbook token -- is not
@@ -1470,12 +1470,6 @@ function Get-ReleasePageMasthead {
     return @()
 }
 
-function Get-IssueDashboardWorkerName {
-    <# Empty: this repo hosts no live issue dashboard, so it names no worker (#2643). A repo that runs
-       issue-dashboard.ps1 and answers nothing gets '<repo name>-issue-dashboard'. #>
-    return ''
-}
-
 function Get-DeclinedAdoptions {
     <# Nothing declined. The adoption section that reads this is skipped in the repo that publishes the
        workflow, so the answer is inert here -- stated anyway, because an unstated one reads as unasked. #>
@@ -1517,7 +1511,6 @@ function Get-HouseStyleAllowlist {
         @{ Path = 'scripts/tests/check-house-style.tests.ps1';  Reason = "the gate's own suite: every name in it is a fixture" }
         @{ Path = 'scripts/tests/house-palette.tests.ps1';      Reason = 'the palette suite: every name in it is a pattern or a fixture of the stylesheet it holds' }
         @{ Path = 'plugins/dkj-policy/bwj-development/*';       Reason = 'the BWJ-Development extension: its pages carry BWJ''s own styling, outside the house style by design' }
-        @{ Path = 'scripts/tests/issue-dashboard.tests.ps1';    Reason = 'fixtures of GitHub label colours, which the issue dashboard renders as data' }
         @{ Path = 'scripts/tests/stopwatch.tests.ps1';          Reason = 'regex patterns that read font-size declarations out of rendered pages, not declarations of their own' }
         @{ Path = 'scripts/tests/consumer-dashboard.tests.ps1'; Name = 'var\(--font-weight-bold\)'; Reason = 'a regex pattern that reads a house-weight declaration out of the rendered dashboard, not a declaration of its own (#3784)' }
     )
