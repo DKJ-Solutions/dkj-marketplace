@@ -507,7 +507,9 @@ kind. A table still naming `documentation` there is stale: replace it.
 **A BWJ table adopted before #2750 answers `Label = $null` for `feat` and `fix`.** That was right while
 the issue type carried the kind and `bug` and `enhancement` were deleted org-wide, and it is stale now:
 the PR goes out unlabelled while its issue carries the kind. Replace both `$null`s with the names above,
-and drop any other row: the table is the shared one, with `chore/` refused. **Run this step's label check first.** `open-pr`'s label
+and drop any other row: the table is the shared one, with `chore/` refused.
+
+**Run this step's label check first.** `open-pr`'s label
 gate refuses a create whose label the repo does not have, and it refuses before the push, so a table
 naming `feature` on a tracker without it stops every `feat/` PR.
 

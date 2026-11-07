@@ -57,6 +57,13 @@ the way is #3888 (the blueprint's `Get-BranchInfo` text calls `Get-BranchPrefix`
       absent; a throwing lib degrades to one `[INFO]` line
 - [x] `shared-scripts-lib.ps1` declares `MirrorRun` for the check (the blueprint path resolves differently
       in the mirror)
+- [x] Review round: the source's `$script:` table no longer leaks into the consumer's probe; `Get-BranchTypes`
+      is compared in order; a blueprint that is missing or unreadable is one `[INFO]` line; a consumer whose
+      table cannot be listed (not a `$script:BranchPrefixTable`) is told so rather than told it matches; the
+      blueprint is parsed only once the consumer's `branch-info.ps1` exists; the echo filter is anchored
+- [x] Comments that still called the table per-repo or repo-owned now say it is the shared table in a repo
+      file (`release-lib`, `entry-scaffold-lib`, `check-branch-entry`, `park-cycle`, `pr-issues-lib`,
+      `ref-print-lib`, the `open-pr` skill page)
 - [x] Docs that called the table a local choice: `CONTRIBUTING-portable.md`, `ADOPTION.md`, the
       `adopt-dkj-policy` and `adopt-bwj-development` skill pages
 
@@ -65,6 +72,10 @@ the way is #3888 (the blueprint's `Get-BranchInfo` text calls `Get-BranchPrefix`
 - [x] `script-contract.tests.ps1`: new section 14 -- the source's table is silent and reported as matching,
       a differing table and a chore-allowing table report `[ERROR]` with the repair, a throwing table
       degrades to `[INFO]`, the source repo itself says nothing
+- [x] The suite now runs the plugin copy of the check, and adds fixtures for a missing, malformed and
+      partial blueprint, a table under another variable name, a consumer reading a table it never assigns
+      (the leak), a consumer without `Test-BranchName`, a differing and a reordered `Get-BranchTypes`, and
+      the `Get-BranchPrefix` stub agreeing with `branch-info.ps1`'s own
 - [x] `config-blueprint.tests.ps1` now pins all three records as `copy`
 - [x] `script-contract`, `config-blueprint`, `branch-info` suites and `check-plugin-integrity.ps1` green
 
@@ -84,7 +95,8 @@ If your `scripts/lib/branch-info.ps1` keeps its own prefixes (`data/`, `dossier/
 labels `docs/` as `documentation`, the session check now fails with a line naming the difference. Replace
 the table and the `Get-BranchInfo`, `Test-BranchName` and `Get-BranchTypes` functions with the text of
 those three records in the plugin's `blueprint/config-blueprint.json` (`adopt-config` will not overwrite a
-function you already have). Fold any pending changelog entry under a type the shared table does not have
+function you already have, and the blueprint's `Get-BranchInfo` calls `Get-BranchPrefix`, which it does not
+carry, so keep yours: [#3888](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3888)). Fold any pending changelog entry under a type the shared table does not have
 first, because the shared table produces only Feat, Fix, Docs and Chore. The cost is accepted: release
 notes no longer group by a domain type.
 

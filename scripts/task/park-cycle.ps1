@@ -361,8 +361,8 @@ if (Test-Path -LiteralPath $repoConfig -PathType Leaf) {
     try { . $repoConfig } catch { Write-CycleParkNote "scripts/repo-config.ps1 failed to load -- the built-in paths are used." 'DarkYellow' }
 }
 
-# branch-info.ps1 IS repo-owned and does not travel with the plugin -- every consumer keeps their own
-# prefix table and trunk name -- so it is loaded from the repo being acted on, guarded. All this script
+# branch-info.ps1 is a repo file and does not travel with the plugin -- each consumer holds its own copy,
+# with its own trunk name -- so it is loaded from the repo being acted on, guarded. All this script
 # wants from it is the trunk name, which has a shared fallback, so a repo without the lib degrades to
 # that rather than to a failure.
 $branchInfoLib = Join-Path $root 'scripts\lib\branch-info.ps1'

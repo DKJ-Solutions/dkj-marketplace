@@ -807,8 +807,8 @@ land with an unfinished plan.
 
 ## The label gate: does the label your seam names still exist?
 
-The PR is labelled from the branch prefix -- `fix/` -> `bug`, `feat/` -> `feature`, whatever your own
-`scripts/lib/branch-info.ps1` says -- and that label used to go straight to `gh pr create --label`, with
+The PR is labelled from the branch prefix -- `fix/` -> `bug`, `feat/` -> `feature`, as the table in
+`scripts/lib/branch-info.ps1` says (the same table in every DKJ repo) -- and that label used to go straight to `gh pr create --label`, with
 `gh` as the one to discover it does not exist. `gh` refuses the **whole** create, so no PR is opened:
 
 ```text
@@ -826,8 +826,8 @@ not exist is refused there:
 ```text
 label gate: 'bug' is not a label in <owner>/<repo>, so 'gh pr create' would refuse this PR -- refused
 HERE instead, before the push. The label comes from the branch prefix 'fix/' via
-scripts\lib\branch-info.ps1, which is repo-owned: this script cannot validate it against a list of its
-own, so it asked GitHub. Labels that do exist: 'documentation', 'inbound' and 'question'. Two remedies,
+scripts\lib\branch-info.ps1. Whether that label exists is a fact about this repo's tracker, which this
+script cannot know without asking, so it asked GitHub. Labels that do exist: 'documentation', 'inbound' and 'question'. Two remedies,
 and this script takes neither: create the label (gh label create 'bug' --repo <owner>/<repo>), or point
 the prefix at a label that exists (scripts\lib\branch-info.ps1). ...
 ```

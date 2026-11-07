@@ -67,14 +67,16 @@ function Get-ScriptContract {
 # today ends in the DEFAULT the shared script falls back to and never in what the source chose or why --
 # which is the gap #456 was filed about.
 #
-# TEN WERE 'decide' (EIGHT SINCE NOVEMBER 7, 2026, #3886) AND SIX OF THEM WERE NOT ON THE ISSUE'S LIST, which named Get-ReservedRootMd,
-# Get-ReleasePluginTier, Get-ReleaseConsumerBumps (then still named ...HighlightsBumps) and
-# Get-ReleaseMajorMinMinors. That list answered a neighbouring question -- which values a SCRIPT cannot
-# judge from the outside -- so it never mentioned
-# Get-RepoName, Get-LintScript, Get-LiveStage or Get-PrMergeMethod: nobody would think to have a script
-# guess a repo's name. Under THIS question they are the clearest cases in the table, Get-RepoName most
-# of all, where copying does not merely assert something false but points every gh call in the consumer
-# at the source repo.
+# TEN WERE 'decide' WHEN THIS WAS WRITTEN, AND SIX OF THEM WERE NOT ON THE ISSUE'S LIST, which named
+# Get-ReservedRootMd, Get-ReleasePluginTier, Get-ReleaseConsumerBumps (then still named
+# ...HighlightsBumps) and Get-ReleaseMajorMinMinors. That list answered a neighbouring question -- which
+# values a SCRIPT cannot judge from the outside -- so it never mentioned Get-RepoName, Get-LintScript,
+# Get-LiveStage or Get-PrMergeMethod: nobody would think to have a script guess a repo's name. Under THIS
+# question they are the clearest cases in the table, Get-RepoName most of all, where copying does not
+# merely assert something false but points every gh call in the consumer at the source repo.
+#
+# TWO OF THOSE TEN, THE branch-info.ps1 PAIR, ARE 'copy' SINCE NOVEMBER 7, 2026 (#3886), AND SO IS
+# Get-BranchTypes, DECLARED LATER: EIGHT 'decide' RECORDS OF THE ORIGINAL TEN REMAIN.
 #
 # THE OTHER TWO WERE CLASSIFIED 'copy' FIRST AND THE REPO OVERRULED IT -- AND THE OWNER OVERRULED THE REPO
 # ON NOVEMBER 7, 2026 (Dave, #3886). Both branch-info.ps1 records looked like the shared way of working --

@@ -106,8 +106,8 @@
 
     THE REACHABILITY FINDING IS ALWAYS [INFO], NEVER [ERROR]. Every function reached this way is probed
     with Get-Command by the lib that wants it, so the fallback is a designed state rather than a breach,
-    and for most repos it is also the right one -- branch-info.ps1 is repo-owned, and a repo whose types
-    ARE the canonical four loses nothing. What the reader needs is to know which of the two answers they
+    and for a repo on the shared branch table it is also the right one -- the canonical four ARE that
+    table's types, so nothing is lost. What the reader needs is to know which of the two answers they
     are getting, before the fold rather than at it. A consumer closes it by making the lib reachable from
     a file the script already loads (chaining it from scripts\repo-config.ps1 is the shortest route);
     leaving it open is a legitimate choice, not a defect.
@@ -148,8 +148,11 @@
     table is read from the shipped blueprint and EVALUATED, never matched as text, so a consumer that wrote
     the same table in another shape is silent and one that kept the shape and changed a value is not. It
     runs inside the probe that already loads the lib, so it costs no second load; it is silent in the repo
-    that publishes this workflow and wherever the blueprint cannot be found; and a lib whose functions throw
-    degrades to one [INFO] line instead of taking the report down.
+    that publishes this workflow; the blueprint is parsed only once branch-info.ps1 is there to compare (a
+    blueprint that cannot be read is one [INFO] line, never silence and never a verdict); a lib whose
+    functions throw degrades to one [INFO] line instead of taking the report down; and a consumer whose
+    prefix set cannot be enumerated (its table is not a $script:BranchPrefixTable) is told so rather than
+    told it matches. Get-BranchTypes is compared too, in order.
 
     Soft/read-only, mirroring check-roster-sync.ps1: this script changes nothing, in any repo.
     [OK]/[INFO]/[ERROR] convention shared via check-report-lib.ps1 (issue #114).
@@ -168,6 +171,10 @@
 .PARAMETER ConsumerPathOverride
     (Optional, for tests) Use this path as the consumer repo root instead of the dual-context default.
 
+.PARAMETER BlueprintPathOverride
+    (Optional, for tests) Read the source's branch table from this blueprint file instead of the one
+    shipped beside the plugin's scripts.
+
 .PARAMETER SkipReachability
     Run the presence half only. Passed by the SessionStart hook, which filters this check's output to
     [ERROR]/[SCOPE] -- so a reachability finding, always [INFO], could never reach the session context,
@@ -180,7 +187,8 @@
 [CmdletBinding()]
 param(
     [string]$ConsumerPathOverride = '',
-    [switch]$SkipReachability
+    [switch]$SkipReachability,
+    [string]$BlueprintPathOverride = ''
 )
 
 # Test-FunctionDefined (issue #1729): the seam probes below read the function table directly rather
@@ -264,8 +272,8 @@ function Get-RecordReturns {
 #
 # ALWAYS [INFO], NEVER [ERROR], and that is a deliberate ceiling rather than caution. Every function
 # reached this way is probed with Get-Command by the lib that wants it, so the fallback is a designed
-# state, not a breach -- and for most repos it is also the RIGHT state, since branch-info.ps1 is
-# repo-owned and a repo whose types are the canonical four loses nothing. What the reader needs is to
+# state, not a breach -- and for a repo on the shared branch table it is also the RIGHT state, since
+# the canonical four ARE that table's types and nothing is lost. What the reader needs is to
 # learn which answer they are getting, before the fold rather than at it.
 #
 # A SCRIPT THIS CHECK CANNOT LOCATE PRODUCES NO CLAIM AT ALL. check-roster-sync ships in a different
@@ -316,14 +324,17 @@ function Write-ContractGap {
 
 # --- The branch-prefix table is the source's in every DKJ repo (#3886) ------------------------------
 # Get-BranchBehaviour answers, for whatever branch-info functions are in the CALLER's scope, what the
-# table does: the label and type of each prefix it knows and whether 'chore/x' is refused. Behaviour, not
-# text, so two spellings of one table compare equal. Prefixes tried: the ones given plus the keys of
-# $script:BranchPrefixTable when the lib has one, plus 'chore' (the refusal is a rule, not a row).
+# table does: the label and type of each prefix it knows, whether 'chore/x' is refused, and the types
+# Get-BranchTypes returns. Behaviour, not text, so two spellings of one table compare equal. Prefixes
+# tried: the ones given plus the keys of $script:BranchPrefixTable when the lib has one, plus 'chore'
+# (the refusal is a rule, not a row). Enumerated = $false when the lib has no such table: its prefix set
+# is then only known for the prefixes asked about, and the caller must not call that a match.
 function Get-BranchBehaviour {
     param([string[]]$Prefixes = @())
     Set-StrictMode -Off
+    $enumerated = $script:BranchPrefixTable -is [System.Collections.IDictionary]
     $keys = @()
-    if ($script:BranchPrefixTable -is [System.Collections.IDictionary]) { $keys = @($script:BranchPrefixTable.Keys | ForEach-Object { [string]$_ }) }
+    if ($enumerated) { $keys = @($script:BranchPrefixTable.Keys | ForEach-Object { [string]$_ }) }
     $entries = @()
     foreach ($p in @(@($Prefixes) + $keys + 'chore' | Sort-Object -Unique)) {
         $i = Get-BranchInfo -Branch "$p/x"
@@ -335,18 +346,23 @@ function Get-BranchBehaviour {
     if (Test-FunctionDefined 'Test-BranchName') {
         $chore = if ((Test-BranchName -Branch 'chore/x').IsValid) { 'allowed' } else { 'refused' }
     }
-    return [pscustomobject]@{ Entries = @($entries | Sort-Object); Chore = $chore; Keys = $keys }
+    $types = $null
+    if (Test-FunctionDefined 'Get-BranchTypes') { $types = @(Get-BranchTypes | ForEach-Object { [string]$_ }) }
+    return [pscustomobject]@{ Entries = @($entries | Sort-Object); Chore = $chore; Keys = $keys; Enumerated = $enumerated; Types = $types }
 }
 
-# The source's behaviour, from the blueprint's own function texts. $null when it cannot be had -- then
-# nothing is claimed.
+# The source's behaviour, from the blueprint's own function texts. $null when it cannot be had. The source
+# table is evaluated in a child scope, but its '$script:' assignments land in THIS script's scope, so they
+# are removed afterwards: left in place, a consumer Get-BranchInfo that never assigns its own table would
+# read the source's and be reported as matching it.
 function Get-SourceBranchBehaviour {
-    $bp = Join-Path $PSScriptRoot '..\..\blueprint\config-blueprint.json'
+    $bp = if ($BlueprintPathOverride) { $BlueprintPathOverride } else { Join-Path $PSScriptRoot '..\..\blueprint\config-blueprint.json' }
     if (-not (Test-Path -LiteralPath $bp -PathType Leaf)) { return $null }
     try {
+        $want = @('Get-BranchInfo', 'Test-BranchName', 'Get-BranchTypes')
         $recs = @((Get-Content -LiteralPath $bp -Raw -Encoding UTF8 | ConvertFrom-Json).records |
-            Where-Object { $_.lib -eq 'scripts\lib\branch-info.ps1' -and $_.function -in @('Get-BranchInfo', 'Test-BranchName') -and $_.text })
-        if ($recs.Count -ne 2) { return $null }
+            Where-Object { $_.lib -eq 'scripts\lib\branch-info.ps1' -and $_.function -in $want -and $_.text })
+        if ($recs.Count -ne $want.Count) { return $null }
         return (& {
             Set-StrictMode -Off
             # Get-BranchInfo calls Get-BranchPrefix, which is not a contract record and so is not in the
@@ -360,7 +376,9 @@ function Get-SourceBranchBehaviour {
             foreach ($r in $recs) { . ([scriptblock]::Create($r.text)) }
             Get-BranchBehaviour
         })
-    } catch { return $null }
+    } catch { return $null } finally {
+        Remove-Variable -Name BranchPrefixTable, BranchTypeOrder -Scope Script -ErrorAction SilentlyContinue
+    }
 }
 
 Write-Host '== check-script-contract ==' -ForegroundColor Cyan
@@ -564,7 +582,7 @@ if (-not $foundWorkflowFolder) {
 
 $unansweredDecide = [System.Collections.Generic.List[string]]::new()
 # Silent in the repo that publishes the workflow: its own table IS the source's.
-$sourceBranch = if (Test-IsWorkflowSourceRepo -RepoRoot $repoRoot) { $null } else { Get-SourceBranchBehaviour }
+$isSourceRepo = Test-IsWorkflowSourceRepo -RepoRoot $repoRoot
 
 foreach ($libRel in $contractLibs) {
     $records = @($script:Contract | Where-Object { $_.Lib -eq $libRel })
@@ -580,6 +598,12 @@ foreach ($libRel in $contractLibs) {
         continue
     }
 
+    # The source's table is parsed here, and only here: the consumer's branch-info.ps1 exists (the missing-lib
+    # case continued above) and is about to be loaded, so the ~85 ms of parsing is paid only by a repo
+    # that has something to compare.
+    $comparing = ($libRel -eq 'scripts\lib\branch-info.ps1' -and -not $isSourceRepo)
+    $sourceBranch = if ($comparing) { Get-SourceBranchBehaviour } else { $null }
+
     # Dot-source + probe the consumer lib in a CHILD scope with StrictMode explicitly OFF -- the real
     # runtime callers this check models (open-pr.ps1, new-branch.ps1,
     # fold-changelog-entry.ps1) never call Set-StrictMode, and branch-info.ps1/repo-config.ps1 are
@@ -589,6 +613,9 @@ foreach ($libRel in $contractLibs) {
     $probe = & {
         Set-StrictMode -Off
         $result = [pscustomobject]@{ Loaded = $true; Error = $null; Present = @{}; Table = $null; TableThrew = $false }
+        # Nothing of the source's table may be in scope when the consumer's lib loads (see
+        # Get-SourceBranchBehaviour): a consumer that does not assign its own would read it.
+        Remove-Variable -Name BranchPrefixTable, BranchTypeOrder -Scope Script -ErrorAction SilentlyContinue
         try {
             . $args[0]
         } catch {
@@ -607,7 +634,7 @@ foreach ($libRel in $contractLibs) {
             catch { $result.TableThrew = $true }
         }
         return $result
-    } $libPath (@($records.Function)) $(if ($libRel -eq 'scripts\lib\branch-info.ps1') { $sourceBranch } else { $null })
+    } $libPath (@($records.Function)) $sourceBranch
 
     if (-not $probe.Loaded) {
         foreach ($r in $records) {
@@ -617,9 +644,11 @@ foreach ($libRel in $contractLibs) {
         continue
     }
 
-    if ($null -ne $sourceBranch -and $probe.TableThrew) {
+    if ($comparing -and $null -eq $sourceBranch) {
+        Write-Info "the branch-prefix table in $libRel was not compared with the source's: the blueprint that carries the source's table is missing or unreadable here, so nothing is claimed either way."
+    } elseif ($comparing -and $probe.TableThrew) {
         Write-Info "the branch-prefix table in $libRel could not be compared with the source's: a function in it raised an error. Its message is not repeated here -- it is text this repo did not write."
-    } elseif ($null -ne $sourceBranch -and $null -ne $probe.Table) {
+    } elseif ($comparing -and $null -ne $probe.Table) {
         $mine = $probe.Table
         $diff = @()
         $missing = @($sourceBranch.Entries | Where-Object { $mine.Entries -notcontains $_ } | ForEach-Object { ($_ -split '=')[0] })
@@ -627,11 +656,14 @@ foreach ($libRel in $contractLibs) {
         $extra = @($mine.Entries | Where-Object { $sourceBranch.Entries -notcontains $_ } | ForEach-Object { ($_ -split '=')[0] } | Where-Object { $missing -notcontains $_ })
         if ($extra.Count -gt 0) {
             # Prefix names are the consumer's text: only a plain word is echoed, the rest is counted.
-            $plain = @($extra | Where-Object { $_ -match '^[a-z0-9-]{1,24}$' } | Select-Object -First 8)
+            $plain = @($extra | Where-Object { $_ -cmatch '^[a-z0-9-]{1,24}\z' } | Select-Object -First 8)
             $names = if ($plain.Count -gt 0) { ' ' + ($plain -join ', ') } else { '' }
             $diff += "prefixes the source does not have:$names ($($extra.Count) in all)"
         }
         if ($mine.Chore -eq 'allowed') { $diff += "'chore/' is allowed" }
+        if ($null -ne $mine.Types -and (($mine.Types -join ',') -cne ($sourceBranch.Types -join ','))) {
+            $diff += "Get-BranchTypes returns a different list than the source's ($($sourceBranch.Types -join ', '))"
+        }
         if ($diff.Count -gt 0) {
             Write-Failure ("the branch-prefix table in $libRel differs from the one every DKJ repo uses (the source's: " +
                 (($sourceBranch.Entries | Where-Object { $_ -notlike 'chore=*' }) -join ', ') + "; 'chore/' refused) -- " + ($diff -join '; ') + ". " +
@@ -639,6 +671,9 @@ foreach ($libRel in $contractLibs) {
                 "Get-BranchTypes functions in that file with the text of those three records in the plugin's blueprint " +
                 "(blueprint/config-blueprint.json; adopt-config places a record only where its function is absent, so it will not overwrite yours), " +
                 "and fold any pending changelog entry under a type the shared table does not have before you switch.")
+        } elseif (-not $mine.Enumerated) {
+            Write-Info ("the branch-prefix table in $libRel agrees with the source's for the source's prefixes, but its own prefix set could " +
+                "not be listed -- it keeps no `$script:BranchPrefixTable -- so a prefix the source does not have would go unseen. Nothing is claimed beyond that.")
         } else {
             Write-Ok "the branch-prefix table in $libRel matches the source's."
         }

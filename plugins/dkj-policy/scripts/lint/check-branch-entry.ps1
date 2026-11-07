@@ -187,8 +187,8 @@ if (Test-Path -LiteralPath $repoConfig -PathType Leaf) {
 . (Join-Path $PSScriptRoot '..\lib\seam-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\native-capture-lib.ps1')
 
-# branch-info.ps1 is REPO-OWNED and does not travel with the plugin -- every consumer keeps their own
-# prefix table -- so it is loaded from the repo being judged, guarded. All this gate wants from it is
+# branch-info.ps1 is a repo file and does not travel with the plugin -- each consumer holds its own copy
+# of the shared table -- so it is loaded from the repo being judged, guarded. All this gate wants from it is
 # SafeName for the legacy entry path, which is one substitution, so a repo without the lib degrades to
 # computing it here rather than to a failure.
 $branchInfoLib = Join-Path $repoRoot 'scripts\lib\branch-info.ps1'

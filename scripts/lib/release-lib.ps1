@@ -85,8 +85,9 @@
 # reads them via Get-BranchTypes instead of its own copy.
 #
 # DOT-SOURCED FROM THE SAME FOLDER ONLY WHEN THAT FOLDER HAS IT, and that condition is the whole point
-# since this lib became shared (#417). branch-info.ps1 is REPO-OWNED -- the prefix table differs per
-# repo -- so it does not travel into the plugin mirror, while this file does. In the workshop root the
+# since this lib became shared (#417). branch-info.ps1 is a repo file -- its table is the same in every DKJ repo
+# since #3886, but the file is adopted into each repo -- so it does not travel into the plugin mirror,
+# while this file does. In the workshop root the
 # two are siblings and this dot-source is what it always was; from the mirror the sibling is absent and
 # the caller (cut-release.ps1) has already dot-sourced the CONSUMER's branch-info from its repo root,
 # which puts Get-BranchTypes in scope for the functions below.
