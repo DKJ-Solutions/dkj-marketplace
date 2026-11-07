@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**1 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/ai-radar · 20261107-103730Z
+
+A new root folder, [`ai-radar/`](../ai-radar/README.md), keeps a running log of AI and Claude Code
+news. Each entry is held against what the plugins already ship and gets a verdict: `Covered`,
+`Partly`, `Gap`, `Not for us` or `To assess`. A `Gap` is filed as an issue and the entry cites it, so
+the radar turns news into work on the tracker. Rebecca's lens says why this folder does not break her
+rule that research lands on issues, and Sylvester's repo layout lists it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A: the folder sits outside `plugins/`, so nothing a consumer installs changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+AI radar: a knowledge base of AI and Claude Code news, held against our own setup
+
+[PR #3863](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3863)
+
+---
 
 ### DEPLOY: feat/3859-day-plan-skill · 20261107-102517Z
 
