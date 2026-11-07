@@ -6523,7 +6523,13 @@ function Get-BranchFileLegacyNames {
     )
     $paths = Get-BranchFilePaths -Branch $Branch -RepoRoot $RepoRoot
     $legacyKind = if ($Kind -eq 'File') { 'Cycle' } else { $Kind }
-    return @(
+    # EMPTY ROWS ARE DROPPED HERE, NOT AT EACH CALLER (#3881, November 7, 2026). Several rows answer '' by
+    # design -- the per-branch names without a branch, and PolicyFolderPerBranch in a repo that has not
+    # moved to '.dkj/dkj-policy' -- and a '' is a path no reader can open. new-branch.ps1 binds this list to
+    # a Mandatory [string[]] parameter, where AllowEmptyCollection does not cover an empty ELEMENT, so
+    # every unmoved consumer had its branch created and its document never written. Filtering at the one
+    # source protects every caller, including the next one to bind it to a typed parameter.
+    return @(@(
         [string]$paths.PriorPerBranchFile,
         [string]$paths.SharedFile,
         [string]$paths.PriorNameFile,
@@ -6539,7 +6545,7 @@ function Get-BranchFileLegacyNames {
         [string]$paths.PriorFolderFile,
         [string]$paths."PriorFolderLegacy$legacyKind",
         [string]$paths."PriorFolderOlder$legacyKind"
-    )
+    ) | Where-Object { $_ })
 }
 
 function Resolve-BranchFilePath {
