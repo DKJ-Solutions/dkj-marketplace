@@ -4,6 +4,7 @@
 
 | Version | Date | Type | Title |
 |---|---|---|---|
+| [6.10.0](audience/6.x/6.10.0.md) | 2026-11-07 | Minor | Minor release |
 | [6.9.0](audience/6.x/6.9.0.md) | 2026-11-06 | Minor | Minor release |
 | [6.8.0](audience/6.x/6.8.0.md) | 2026-11-05 | Minor | Minor release |
 | [6.7.0](audience/6.x/6.7.0.md) | 2026-11-04 | Minor | The Toolbox gets a desktop shell, a toast reminder and latest-run Stopwatch cards |
