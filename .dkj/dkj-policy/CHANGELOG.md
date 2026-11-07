@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**3 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3883-retired-constitution-import · 20261107-191022Z
+
+`adopt-workflow-folder` now rewrites a constitution import that still names the retired
+`dkj-claude-plugins` marketplace, the same way it already rewrote a retired extension import beside it.
+Before, the dry run said `[keep]` and the repo silently loaded no constitution (#3883).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A consumer that adopted before the `dkj-marketplace` rename gets its constitution back on the next
+`adopt-workflow-folder -Apply`, and the session check now warns about the dead line until then.
+
+**Score:** 2
+
+#### Pull Request
+
+adopt-workflow-folder rewrites a constitution import on the retired marketplace path
+
+Plugins: bwj-development, dkj-policy
+
+[PR #3890](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3890)
+
+---
 
 ### DEPLOY: fix/3884-pr-template-folder-repoint · 20261107-190003Z
 
