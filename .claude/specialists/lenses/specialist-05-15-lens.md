@@ -825,11 +825,6 @@ folder by folder:
   `claude plugin marketplace update` — no release, no version bump. Under `plugins/` the same files
   would wait for a cut and then land in the payload of every consumer, none of which has any use for
   them.
-- **[`ai-radar/`](../../../ai-radar/README.md)** — the AI radar (Maikel, November 7, 2026): a running log
-  of AI and Claude Code news, each entry held against what the plugins already ship, with every gap
-  filed as an issue. At the root for the same reason as `assets/`: it is about the plugins, not part of
-  them, so it must not travel in any consumer's payload. Why a folder and not issue comments is in
-  [Rebecca's lens](specialist-03-07-lens.md#where-findings-land-here).
 - **`scripts/lib/`, `scripts/lint/`, `scripts/release/`, `scripts/sync/`, `scripts/agents/`,
   `scripts/task/`, `scripts/tests/`** — the shared helpers (`branch-info.ps1`, `release-lib.ps1`,
   `subagent-shared-lib.ps1`, and `plugin-tree-lib.ps1`, which answers which plugins this repo publishes

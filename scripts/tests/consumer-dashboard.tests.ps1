@@ -728,6 +728,38 @@ try {
     Remove-Item -LiteralPath $rsRoot -Recurse -Force -ErrorAction SilentlyContinue
 }
 
+# ai-radar.ps1 against a fixture tree (#3867): the lifehub resolves through the register, the dossier is found by
+# its shape, the inbox holds only unjudged items, -All holds them all, and a missing checkout is refused.
+$arRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('ai-radar-' + [guid]::NewGuid().ToString('n'))
+$arHub = Join-Path $arRoot 'org\hub'
+$arAi = Join-Path $arRoot 'org\dkj-lifehub\Brains\b\x\dkj-solutions\ai'
+New-Item -ItemType Directory -Force -Path (Join-Path $arHub 'consumers'), (Join-Path $arAi 'claude'), (Join-Path $arAi 'ecosysteem') | Out-Null
+foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'plugins\dkj-policy\hub\lib\general-pages-lib.ps1', 'plugins\dkj-policy\hub\lib\dev-preview-rules.ps1', 'plugins\dkj-policy\hub\lib\test-gate-lib.ps1', 'plugins\dkj-policy\hub\lib\plugins-page-lib.ps1', 'plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1') {
+    $to = Join-Path $arHub (Split-Path -Parent $lib)
+    New-Item -ItemType Directory -Force -Path $to | Out-Null
+    Copy-Item -LiteralPath (Join-Path $RepoRoot $lib) -Destination $to
+}
+Set-Content -LiteralPath (Join-Path $arHub 'consumers\dkj-lifehub.json') -Encoding UTF8 -Value '{ "repo": "DKJ-Solutions/dkj-lifehub", "visibility": "private", "localCheckout": ["../dkj-lifehub"] }'
+Set-Content -LiteralPath (Join-Path $arAi 'CORTEX.md') -Encoding UTF8 -Value "# AI`n`n### Not an item: the dossier's own example`n- **Onze setup:** <oordeel>"
+Set-Content -LiteralPath (Join-Path $arAi 'claude\CORTEX.md') -Encoding UTF8 -Value ("# Claude`n`n## Claude Code`n`n### Judged one`n`n- **Onze setup:** ``Hebben we``, plugins/dkj-policy/skills/x/`n`n" +
+    "### Open one`n`n- **Onze setup:** ``Te beoordelen```n`n## Modellen en API`n`n### No verdict yet`n`n- **Bron:** https://example.com")
+Set-Content -LiteralPath (Join-Path $arAi 'ecosysteem\CORTEX.md') -Encoding UTF8 -Value '# Ecosysteem'
+$arScript = Join-Path $RepoRoot 'scripts\dashboard\ai-radar.ps1'
+$arRun = { param([string]$Hub, [string[]]$a) $o = & powershell -NoProfile -ExecutionPolicy Bypass -File $arScript @a -RepoRootOverride $Hub 2>&1 | ForEach-Object { [string]$_ }; @{ Out = ($o -join "`n"); Code = $LASTEXITCODE } }
+try {
+    $r = & $arRun $arHub @()
+    Assert-True ($r.Code -eq 0 -and $r.Out -match '3 in all, 2 still') 'the radar counts the items of every subfolder, and the dossier''s own example is not one'
+    Assert-True ($r.Out -match 'Open one' -and $r.Out -match 'No verdict yet' -and $r.Out -notmatch 'Judged one') 'the inbox holds an item marked Te beoordelen and one with no verdict, and not a judged one'
+    Assert-True ($r.Out -match 'claude/CORTEX.md > Modellen en API') 'an item is shown under its file and section'
+    $r = & $arRun $arHub @('-All')
+    Assert-True ($r.Code -eq 0 -and $r.Out -match 'Judged one\s+--\s+`Hebben we`') '-All shows a judged item with its verdict'
+    Remove-Item -LiteralPath (Join-Path $arRoot 'org\dkj-lifehub') -Recurse -Force
+    $r = & $arRun $arHub @()
+    Assert-True ($r.Code -eq 1 -and $r.Out -match 'no checkout on this machine') 'a lifehub with no checkout is refused'
+} finally {
+    Remove-Item -LiteralPath $arRoot -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 Write-Host ''
 Write-Host "consumer-dashboard: $script:pass passed, $script:fail failed"
 if ($script:fail -gt 0) { exit 1 }

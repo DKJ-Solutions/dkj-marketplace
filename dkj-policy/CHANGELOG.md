@@ -35,7 +35,7 @@ Plugins: dkj-policy
 
 ### DEPLOY: docs/ai-radar · 20261107-103730Z
 
-A new root folder, [`ai-radar/`](../ai-radar/README.md), keeps a running log of AI and Claude Code
+A new root folder, [`ai-radar/`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/dea5c62f4/ai-radar/README.md), keeps a running log of AI and Claude Code
 news. Each entry is held against what the plugins already ship and gets a verdict: `Covered`,
 `Partly`, `Gap`, `Not for us` or `To assess`. A `Gap` is filed as an issue and the entry cites it, so
 the radar turns news into work on the tracker. Rebecca's lens says why this folder does not break her

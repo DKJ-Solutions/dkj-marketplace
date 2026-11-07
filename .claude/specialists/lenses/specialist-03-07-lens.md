@@ -25,12 +25,6 @@ earlier finding on the same topic.
 - **Destination:** one comment on the issue the research answers, on this repo's tracker -- the
   portable rule in her manual, which this repo follows without exception. There is no `research/`
   folder here, and none is to be created.
-- **The AI radar is not research, and that is why it is a folder.** [`ai-radar/`](../../../ai-radar/README.md)
-  (Maikel, November 7, 2026) is a running log of AI and Claude Code news held against what this
-  marketplace ships. It answers no single question, so there is no issue for it to land on, and the
-  manual's reason against a findings file (it outlives its question unread) has no question to outlive.
-  The rule above still holds for everything else: a finding for an issue goes on that issue, and a
-  `Gap` the radar finds becomes an issue of its own, which the entry cites.
 - **Who posts it:** Rebecca delivers the material, and [Derek #05](specialist-05-05-lens.md) posts it
   with `gh issue comment` (the tracker is his). The comment is in English, like everything on the tracker.
 - **No branch.** A finding alone changes no file. The follow-up issues the finding names each get
