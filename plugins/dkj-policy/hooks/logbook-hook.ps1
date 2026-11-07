@@ -10,7 +10,7 @@
         powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hooks/logbook-hook.ps1" -Hook Prompt
 
     Both events carry the session's id on stdin as JSON (`session_id`), and UserPromptSubmit its `prompt`; both are
-    only parsed, never printed. The rules are Invoke-LogbookHookEvent's in hub/lib/logbook-lib.ps1 (pure, tested
+    only parsed, never printed. The rules are Invoke-LogbookHookEvent's in apps/admin/lib/logbook-lib.ps1 (pure, tested
     by scripts/tests/logbook.tests.ps1); this script only gathers what they need (the store, the checkout's branch,
     cleanliness and HEAD, and whether a ship-pr CI wait is live) and writes the store back when the decision changed
     it.
@@ -24,7 +24,7 @@
     parse is copied to a .bak beside it before the write drops it.
 
     The store is one per repo (Get-LogbookStorePath), the repo CLAUDE_PROJECT_DIR, else the working directory. One hook
-    at a time per store (Get-HubTimingLock), for the Stopwatch hook's reason: a repo that still wires this script itself
+    at a time per store (Get-AdminTimingLock), for the Stopwatch hook's reason: a repo that still wires this script itself
     beside the plugin's copy must not log one session twice (#3470).
 
     -StorePath, -RepoRoot and -ProgressRoot are for the tests; hooks.json passes none of them.
@@ -52,9 +52,9 @@ try {
 
     $root = if ($RepoRoot) { $RepoRoot } elseif ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR } else { (Get-Location).Path }
     $root = [System.IO.Path]::GetFullPath($root).TrimEnd('\', '/')
-    . (Join-Path $PSScriptRoot '..\hub\lib\logbook-lib.ps1')
-    if (-not $StorePath) { [void](Import-HubTimingOrphanStore -RepoRoot $root); $StorePath = Get-LogbookStorePath -RepoRoot $root }
-    $lock = Get-HubTimingLock -StorePath $StorePath
+    . (Join-Path $PSScriptRoot '..\apps\admin\lib\logbook-lib.ps1')
+    if (-not $StorePath) { [void](Import-AdminTimingOrphanStore -RepoRoot $root); $StorePath = Get-LogbookStorePath -RepoRoot $root }
+    $lock = Get-AdminTimingLock -StorePath $StorePath
     $store = Read-StopwatchStore -Path $StorePath
     if ($store.Error) { exit 0 }
     # Nothing to decide, so no git: a Prompt needs a session not seen yet; a Stop an open run of this session.

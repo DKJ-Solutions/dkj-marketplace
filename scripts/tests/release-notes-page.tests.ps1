@@ -397,10 +397,10 @@ try {
     $workerJs = [System.IO.File]::ReadAllText((Join-Path $pageDir7 'worker.js'), [System.Text.Encoding]::UTF8)
     Assert-Match ([regex]::Escape("/notes/$token")) $workerJs 'worker: the route carries the token'
     # EVERY RELEASE'S PAGE TRAVELS INTO THE WORKER, built again for the worker's own address so the cards
-    # lead under the token rather than to the hub's '/release-notes'.
+    # lead under the token rather than to Admin's '/release-notes'.
     Assert-Match '"/v2\.2\.0":' $workerJs 'worker: each release''s page is in the bundle, keyed under the route'
     Assert-Match ([regex]::Escape("href=\`"/notes/$token/v2.2.0\`"")) $workerJs 'worker: and the cards in it lead under the token'
-    Assert-True ($workerJs -notmatch 'href=\\"/release-notes/') 'worker: never to the hub''s address'
+    Assert-True ($workerJs -notmatch 'href=\\"/release-notes/') 'worker: never to Admin''s address'
     Assert-Match 'x-robots-tag' $workerJs 'worker: the response is marked noindex'
     Assert-Match 'status: 404' $workerJs 'worker: everything off the route is a 404'
 
@@ -489,7 +489,7 @@ try {
 
     # --- 10. A repo that has never cut a release (#3580) -------------------------------------------
     # Not an error: before the first cut there is no history row and no note root, and nothing the repo
-    # could add changes that. Exit 3 is the builder's "no release yet", which the hub shows as an empty
+    # could add changes that. Exit 3 is the builder's "no release yet", which Admin shows as an empty
     # state. The three shapes are the issue's own: no history; no history and no note root; a history
     # whose table has no row.
     Write-Host "build -- a repo with no release yet is an empty state, not an error (#3580)" -ForegroundColor Cyan

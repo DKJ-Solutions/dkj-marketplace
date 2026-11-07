@@ -10,10 +10,10 @@
     with the stylesheet: dkj-policy's Format-GeneralPageHtml and Format-RepoHomeHeadHtml draw the desktop shell only and
     refuse -BrandTag 'product' with a pointer here, and one plugin owns both the product's markup and its style.
 
-    LOAD ORDER. Dot-source dkj-policy's hub/lib/general-pages-lib.ps1 first: this lib builds on its shared parts
+    LOAD ORDER. Dot-source dkj-policy's apps/admin/lib/general-pages-lib.ps1 first: this lib builds on its shared parts
     (Format-GeneralPageHeadHtml, Get-BreadcrumbSep, Get-PageInfoGlyph, Get-LongPageWarningHtml, Get-PageInfoScript,
     Format-FitAlarmHtml, ConvertTo-GeneralPageText), so a product page and an Admin page share one head and cannot drift.
-    Join-HouseStyleSpecimens also needs dkj-policy's hub/lib/plugins-page-lib.ps1 (Split-HouseStyleSpecimens).
+    Join-HouseStyleSpecimens also needs dkj-policy's apps/admin/lib/plugins-page-lib.ps1 (Split-HouseStyleSpecimens).
     Every page links /house-style.css and then /house-product.css: the server that serves a product page serves both.
 
     Pure ASCII (repo convention for .ps1). Tested by scripts/tests/dev-pages.tests.ps1 in the source repo.
@@ -51,7 +51,7 @@ function Format-SiteHeaderHtml {
         (home). No mark (Dave, November 2, 2026), and no settings button (Maikel, November 3, 2026): the
         theme is chosen on its own /settings page, so the header no longer mounts #settings, and the pages' own
         DKJTheme.settings call finds no element and draws nothing. -Tag is the quieter word after the name
-        ('hub', 'product'), left out when empty. Both are escaped here.
+        ('admin', 'product'), left out when empty. Both are escaped here.
         -Menu is the app's main pages, each @{ Label; Href }, in order (house-product.css, "Site header menu"; Maikel,
         November 2, 2026): drawn after the brand, and again as the drawer a phone opens from
         the toggle. -Current is the Href of the one the page sits under, marked aria-current. No -Menu, no menu.
@@ -96,7 +96,7 @@ function Get-SiteHeaderMenuCurrent {
 function Format-ProductPageHtml {
     <#
         A product's whole page around -Body (#3540; moved here from dkj-policy's Format-GeneralPageHtml in #3831): the
-        house site header with -Brand (the app's name) and -BrandTag (the word after it) linking -HubHref, -Menu as its
+        house site header with -Brand (the app's name) and -BrandTag (the word after it) linking -AdminHref, -Menu as its
         menu, then the breadcrumb bar from -HomeLabel through -ParentCrumbs to -Title, and the page column. No general
         banner: the banner is Admin's alone (Dave, November 4, 2026). Without -Brand there is no header, and the
         settings button floats instead.
@@ -115,7 +115,7 @@ function Format-ProductPageHtml {
         [AllowEmptyString()][string]$FooterNote = '',
         [string]$ThemeKey = 'general-pages',
         [AllowEmptyString()][string]$SiteName = '',
-        [string]$HubHref = '/',
+        [string]$AdminHref = '/',
         [AllowEmptyString()][string]$Brand = '',
         [AllowEmptyString()][string]$BrandTag = 'product',
         [switch]$Bare,
@@ -128,8 +128,8 @@ function Format-ProductPageHtml {
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.Append((Format-GeneralPageHeadHtml -Title $Title -Lead $Lead -Style $Style -ThemeKey $ThemeKey -SiteName $SiteName -Stylesheets (Get-ProductStylesheets)))
-    if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href $HubHref -Tag $BrandTag -Menu $Menu -Current (Get-SiteHeaderMenuCurrent -Menu $Menu -Title $Title -ParentCrumbs $ParentCrumbs))) }
-    [void]$sb.Append((Format-ProductBreadcrumbBarHtml -HomeHref $HubHref -HomeLabel $HomeLabel -Trail $ParentCrumbs -Current $Title))
+    if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href $AdminHref -Tag $BrandTag -Menu $Menu -Current (Get-SiteHeaderMenuCurrent -Menu $Menu -Title $Title -ParentCrumbs $ParentCrumbs))) }
+    [void]$sb.Append((Format-ProductBreadcrumbBarHtml -HomeHref $AdminHref -HomeLabel $HomeLabel -Trail $ParentCrumbs -Current $Title))
     if (-not $Brand) { [void]$sb.AppendLine('<div id="settings" class="theme-settings--floating"></div>') }
     [void]$sb.AppendLine('<main class="page-column">')
     if (-not $Bare) {

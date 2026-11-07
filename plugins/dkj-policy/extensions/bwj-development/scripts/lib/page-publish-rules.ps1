@@ -60,7 +60,7 @@ $script:BwjPageKinds = @(
     }
 )
 
-# The address a hub serves the release notes at, and so the one the builder's links carry by default
+# The address an admin serves the release notes at, and so the one the builder's links carry by default
 # (its own -LinkBase). publish-page maps it onto the worker's route -- see Convert-BwjPageLinks.
 $script:BwjNotesLinkBase = '/release-notes'
 
@@ -224,14 +224,14 @@ function Get-BwjPageKvKey {
 
 function Convert-BwjPageLinks {
     <#
-        Pure: a built release-notes page with its links moved from the address a hub serves it at onto
+        Pure: a built release-notes page with its links moved from the address an admin serves it at onto
         the worker's route -- href="/release-notes" and href="/release-notes/v<x>" become
         href="/notes/<token>" and href="/notes/<token>/v<x>" (#3500).
 
         WHY HERE AND NOT IN THE BUILDER. The builder already takes -LinkBase, but its output directory is
-        the one the hub serves '/release-notes' from, and the hub rebuilds it only when an input is newer.
-        A build for the worker's address would leave the hub's cards pointing at '/notes/<token>' until the
-        next release. So the page is built once, for the hub, and the publish maps the one address it
+        the one Admin serves '/release-notes' from, and Admin rebuilds it only when an input is newer.
+        A build for the worker's address would leave Admin's cards pointing at '/notes/<token>' until the
+        next release. So the page is built once, for Admin, and the publish maps the one address it
         knows onto the route it holds the token for. Only the attribute form the builder writes is
         touched; a note body's own links are rendered from data on the client and never carry it.
     #>

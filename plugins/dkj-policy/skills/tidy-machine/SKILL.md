@@ -6,7 +6,7 @@ description: >-
   backup branches, old stashes, an unfolded changelog entry, the ~/.claude plugin administration,
   install records pointing at a checkout that is gone or naming a plugin the marketplace has retired,
   plugin/marketplace staleness, extracted plugin payload no install record points at any more,
-  fixture trees under the scratch root, and hub servers and watchers that outlived the run that
+  fixture trees under the scratch root, and Admin servers and watchers that outlived the run that
   started them. It DELETES only what
   prune-merged can already prove -- an ancestor of the trunk, or a tip that is the head commit of a
   merged PR -- plus install records whose checkout is gone (they hold no work), and everything else it
@@ -110,7 +110,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 | 10 | **fixture trees under the scratch root** | attributes -- **never deletes** |
 | 11 | **install records under a plugin name the marketplace has retired** | reports, with the uninstall |
 | 12 | **extracted plugin payload no install record points at** | reports -- **no command, nothing removed** |
-| 13 | **hub servers and watchers that outlived the run that started them** (#3620) | → `check-hub-processes.ps1`; reports, with a `Stop-Process` line -- **stops nothing** |
+| 13 | **Admin servers and watchers that outlived the run that started them** (#3620) | → `check-admin-processes.ps1`; reports, with a `Stop-Process` line -- **stops nothing** |
 
 Seven of the thirteen are a call into a script that already exists and already has its own suite. Only six
 carry new logic, and that logic is pure and lives in `tidy-lib.ps1`, which is what lets its suite drive
@@ -297,21 +297,21 @@ grows this pile rather than clearing it.
   ([#1659](https://github.com/DKJ-Solutions/claude-code-specialists/issues/1659)). Clear by hand what
   you recognise.
 
-### Lane 13 reads what each hub process was told, not who its parent is (#3620)
+### Lane 13 reads what each Admin process was told, not who its parent is (#3620)
 
-Measured October 28, 2026: a gate killed for low memory left 26 suite-started hub servers and
+Measured October 28, 2026: a gate killed for low memory left 26 suite-started Admin servers and
 `dev-preview-watch` processes holding about 2.3 GB, and a watcher from plugin 5.34.0 had outlived its own
 server by five hours. #3625 tied a suite's servers to the suite; this lane names what still gets through.
 
-**A missing parent is not the test**, because the healthy session hub has none either: the SessionStart
+**A missing parent is not the test**, because the healthy session Admin has none either: the SessionStart
 hook starts it detached under a `cmd.exe` and exits, so that it outlives the session for the next one. So
-`Get-HubProcessVerdict` in `tidy-lib.ps1` reads the command line instead. A watcher whose `-ProcessId`
-server or `-OwnerId` run has ended is an orphan. A hub process from a plugin cache version no install
+`Get-AdminProcessVerdict` in `tidy-lib.ps1` reads the command line instead. A watcher whose `-ProcessId`
+server or `-OwnerId` run has ended is an orphan. An Admin process from a plugin cache version no install
 record points at is stale. A server from outside the cache whose launcher has ended is an orphan, because
-a session's hub runs from the cache. A process whose command line this run cannot read (another security
+a session's Admin runs from the cache. A process whose command line this run cannot read (another security
 context, elevated or sandboxed) is counted and named, never judged.
 
-The same script, `check-hub-processes.ps1`, is what the `hub-processes-sessioncheck` hook runs at every
+The same script, `check-admin-processes.ps1`, is what the `admin-processes-sessioncheck` hook runs at every
 session start, so the lane and the session check cannot disagree. It **stops nothing**: a process is not
 a merge proof, so each finding carries its `Stop-Process` line for the reader.
 

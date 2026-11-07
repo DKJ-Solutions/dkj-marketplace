@@ -60,7 +60,7 @@
     one hung check would silence all ten. This dispatcher stops waiting at -DeadlineSeconds, reports the
     checks that had not finished by name, and leaves the process -- comfortably inside the 120 s entry.
 
-    THE TIMING LINE. A session start had grown heavy (a trunk sync, ten checks, a hub start beside them)
+    THE TIMING LINE. A session start had grown heavy (a trunk sync, ten checks, an admin start beside them)
     while nothing on screen said how long it took. So the dispatcher times each prep step and each check
     and ends its systemMessage with one line the person sees:
         sessionstart: 3.4 s -- prep 0.9 s (trunk-sync), checks 2.5 s (slowest: consumer 2.3 s, ...)

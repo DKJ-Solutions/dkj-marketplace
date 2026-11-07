@@ -14,7 +14,7 @@ one **Now** card per goal, a short **Next** row, and the milestones collapsed wi
 **sub-issues**, and their tasks are theirs, each list in GitHub's own order. Sessions that claim and close
 those issues move the page without any second administration. A non-code task is an issue too.
 
-**In the source repo, run its own copy instead**: `plugins/dkj-policy/hub/pages/plan-goal.ps1`. `${CLAUDE_PLUGIN_ROOT}`
+**In the source repo, run its own copy instead**: `plugins/dkj-policy/apps/admin/pages/plan-goal.ps1`. `${CLAUDE_PLUGIN_ROOT}`
 resolves into the plugin cache, which holds the last released copy.
 
 ## Break a goal down
@@ -41,7 +41,7 @@ resolves into the plugin cache, which holds the last released copy.
    ```
 
    ```powershell
-   powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hub/pages/plan-goal.ps1" -PlanFile "<scratchpad>/plan.json"
+   powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/apps/admin/pages/plan-goal.ps1" -PlanFile "<scratchpad>/plan.json"
    ```
 
    `"goal": { "number": n }` breaks down an existing goal, and `"number"` on a milestone adds tasks to one that
@@ -56,7 +56,7 @@ resolves into the plugin cache, which holds the last released copy.
 ## What now?
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hub/pages/plan-goal.ps1" -Next [-Goal <n>]
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/apps/admin/pages/plan-goal.ps1" -Next [-Goal <n>]
 ```
 
 It prints each open goal with its progress, **Now** and up to three **Next**, and writes nothing. Now is the
@@ -68,7 +68,7 @@ it is an ordinary issue, so claim it and build it the way this repo builds any i
 
 - **A closed milestone is done whole.** Its leftover open tasks no longer count as steps, and its bar
   reads full.
-- **The page and the script read the same query** (`Get-GoalsGraphQuery` in `hub/lib/goals-lib.ps1`): the
+- **The page and the script read the same query** (`Get-GoalsGraphQuery` in `apps/admin/lib/goals-lib.ps1`): the
   first 20 open goals, 25 milestones each and 50 tasks per milestone.
 - **Nothing is filed without the owner's agreement to the tree**, because filing issues is visible on the
   tracker to everyone who reads it.

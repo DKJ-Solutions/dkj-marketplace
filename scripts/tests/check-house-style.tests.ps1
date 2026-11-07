@@ -353,7 +353,7 @@ try {
     Add-Content -LiteralPath (Join-Path $drift 'web\house-theme.js') -Value '// edited'
     $py = "PAGE = '''<style>:root { --primary: red; } .card { padding: 0; } p { color: var(--ink-4); }</style>'''"
     Set-Content -LiteralPath (Join-Path $drift 'web\page.py') -Value $py -Encoding ascii
-    Set-Content -LiteralPath (Join-Path $drift 'web\hub.html') -Value '<section class="card"><div class="card__head"><h2 class="card__title">Issues</h2></div></section>' -Encoding ascii
+    Set-Content -LiteralPath (Join-Path $drift 'web\admin.html') -Value '<section class="card"><div class="card__head"><h2 class="card__title">Issues</h2></div></section>' -Encoding ascii
     Invoke-FixtureGitIn $drift add -A
     $r = Invoke-Child $Gate $drift 'RepoRoot'
     Assert-Equal 1 $r.Code 'a drifted repo fails the gate'

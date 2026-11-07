@@ -49,31 +49,31 @@ The gate itself, its allowlist and the CI caller are on the
 [`dkj-brandbook` skill page](skills/dkj-brandbook/SKILL.md#the-gate-check-house-style)
 ([#3035](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3035)).
 
-## The hub and the retired Brandbook
+## Admin and the retired Brandbook
 
-**The dev-preview hook, the hub and the general pages server are `dkj-policy`'s**, since
+**The dev-preview hook, Admin and the general pages server are `dkj-policy`'s**, since
 [#3198](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3198) (the owner's decision, October
 20, 2026): "General" means what every repo has, whichever organisation it belongs to, and BWJ-Development
 never enables this plugin. They are documented in
-[`dkj-policy`'s `hub/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/hub/README.md), the `Get-DevPreview` seam included.
-Every page the hub machinery renders uses the brand book, in every repo, from the copy of this folder
+[`dkj-policy`'s `apps/admin/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/apps/admin/README.md), the `Get-DevPreview` seam included.
+Every page Admin machinery renders uses the brand book, in every repo, from the copy of this folder
 inside `dkj-policy`'s own payload.
 
-**No consumer hub shows or serves the Brandbook**
+**No consumer Admin shows or serves the Brandbook**
 ([#3475](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3475), the owner, October 25, 2026).
 From #3283 to #3493 the Brandbook app was the source repo's `brandbook/` React app, that repo's own product on
-its own product port, and from #3198 to #3475 this plugin also put a DKJ-Solutions card on the hub of every
+its own product port, and from #3198 to #3475 this plugin also put a DKJ-Solutions card on the Admin of every
 repo that enabled it, and the general pages server answered `/brandbook` there with the build each release
-copied into `assets/brandbook/` (#3210). The hub card and that route were taken off, and the release stopped
+copied into `assets/brandbook/` (#3210). The Admin card and that route were taken off, and the release stopped
 building and shipping that folder ([#3477](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3477)).
 The app itself is retired ([#3493](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3493), the
 owner, October 26, 2026): `dkj-policy`'s `assets/dkj-brandbook/` is the one central place for DKJ styling, and a
-house-style change is judged by eye on its dkj-brandbook page, `specimens.html` in that folder, which every hub that
+house-style change is judged by eye on its dkj-brandbook page, `specimens.html` in that folder, which every Admin that
 runs `dkj-policy` shows under Plugins (`/dev/plugins/dkj-policy/dkj-brandbook`, #3629, #3704).
 
 ## The dev-preview hook
 
-Moved to `dkj-policy` in #3198: see [`dkj-policy`'s `hub/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/hub/README.md#the-dev-preview-hook).
+Moved to `dkj-policy` in #3198: see [`dkj-policy`'s `apps/admin/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/apps/admin/README.md#the-dev-preview-hook).
 
 ## Who enables it
 
@@ -98,10 +98,10 @@ session start ([#2697](https://github.com/DKJ-Solutions/dkj-claude-plugins/issue
 
 The plugin is enabled here since October 13, 2026
 ([#2976](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2976)), first for the dev-preview hook
-and, since that moved to `dkj-policy` (#3198), for the house-style session check. This repo's hub is
-described in [`dkj-policy`'s `hub/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/hub/README.md#in-the-source-repo).
-Its hub shows the dkj-brandbook page from the working tree (`/dev/plugins/dkj-policy/dkj-brandbook`), so a
-change shows here before the release that ships it; every other hub that runs `dkj-policy` shows the released
+and, since that moved to `dkj-policy` (#3198), for the house-style session check. This repo's Admin is
+described in [`dkj-policy`'s `apps/admin/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/apps/admin/README.md#in-the-source-repo).
+Its Admin shows the dkj-brandbook page from the working tree (`/dev/plugins/dkj-policy/dkj-brandbook`), so a
+change shows here before the release that ships it; every other Admin that runs `dkj-policy` shows the released
 copy. The `house-style-css` CI gate checks the
 stylesheet itself.
 
@@ -110,5 +110,5 @@ renders from in every repo) and, since [#3831](https://github.com/DKJ-Solutions/
 product layer in this plugin's `assets/dkj-brandbook-product/`, since
 [#3130](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3130) (October 18, 2026) moved it in
 from the `dkj-brandbook` repo (archived since; the name now belongs to the brand book here) and [#3531](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3531)
-(October 26, 2026) moved the files from this plugin into `dkj-policy`, whose hub renders in them in every
+(October 26, 2026) moved the files from this plugin into `dkj-policy`, whose Admin renders in them in every
 repo. The rule, the skill and the gate stay here. A consuming repo asks for a change through an inbound issue on this repo.

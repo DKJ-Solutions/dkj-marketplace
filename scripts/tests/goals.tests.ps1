@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/hub/lib/goals-lib.ps1 -- the Goals page and the plan-goal skill (#3816): the query,
+    Tests for plugins/dkj-policy/apps/admin/lib/goals-lib.ps1 -- the Goals page and the plan-goal skill (#3816): the query,
     the model read from GitHub's answer, the step to take Now and the ones Next, the "what now?" text, the plan a
     breakdown is filed from, and the page itself.
 
@@ -9,8 +9,8 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-. (Join-Path $RepoRoot 'plugins\dkj-policy\hub\lib\general-pages-lib.ps1')
-. (Join-Path $RepoRoot 'plugins\dkj-policy\hub\lib\goals-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\goals-lib.ps1')
 
 $script:pass = 0
 $script:fail = 0
@@ -123,10 +123,10 @@ Assert-True ($err -match 'msg--warn" role="alert">The goals could not be read fr
 $xss = Format-GoalsPageHtml -Model (ConvertFrom-GoalsGraph -Data (& $graph @((& $node 9 '<script>alert(1)</script>'))))
 Assert-True ($xss -notmatch '<script>alert' -and $xss -match '&lt;script&gt;') 'a title is escaped'
 
-Write-Host '-- the hub' -ForegroundColor Cyan
+Write-Host '-- Admin' -ForegroundColor Cyan
 $gp = @(Get-GeneralPages | Where-Object { $_.Href -eq '/dev/goals' })
-Assert-True ($gp.Count -eq 1 -and $gp[0].Label -eq 'Goals' -and -not $gp[0].Group -and -not $gp[0].GitHub -and (Get-HubIconSvg -Name $gp[0].Icon) -match '<svg') 'Goals is a general page of its own, with an icon'
-Assert-Equal 'Goals' (@(Get-HubMenu)[2].Label) 'it is the second of the hub''s own items, right after Today (#3860)'
+Assert-True ($gp.Count -eq 1 -and $gp[0].Label -eq 'Goals' -and -not $gp[0].Group -and -not $gp[0].GitHub -and (Get-AdminIconSvg -Name $gp[0].Icon) -match '<svg') 'Goals is a general page of its own, with an icon'
+Assert-Equal 'Goals' (@(Get-AdminMenu)[2].Label) 'it is the second of Admin''s own items, right after Today (#3860)'
 
 Write-Host ''
 Write-Host "goals: $script:pass passed, $script:fail failed"

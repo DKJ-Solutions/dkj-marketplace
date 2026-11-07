@@ -129,7 +129,7 @@ Assert-True  ($route.IsMatch("/notes/$HexA/v2.48"))               '...and the sh
 Assert-True  (-not $route.IsMatch("/notes/$HexA/2.48.0"))          'a release without its v is not a page'
 Assert-True  (-not $route.IsMatch("/notes/$HexA/v2.48.0/x"))       'nothing below a release page is a route'
 Assert-True  (-not $route.IsMatch("/notes/$HexA/../backlog"))      'nothing traversal-shaped survives under the token either'
-Assert-True  (-not $route.IsMatch("/notes/$HexA/release-notes/v2.48.0")) 'the hub''s address under the token is not a route -- one of the three 404s #3500 measured'
+Assert-True  (-not $route.IsMatch("/notes/$HexA/release-notes/v2.48.0")) 'Admin''s address under the token is not a route -- one of the three 404s #3500 measured'
 
 $jsPaged = ([regex]::Match($workerJs, 'const\s+PAGED\s*=\s*new\s+Set\(\[([^\]]*)\]\)')).Groups[1].Value
 $jsPagedList = @([regex]::Matches($jsPaged, '"([a-z]+)"') | ForEach-Object { $_.Groups[1].Value }) | Sort-Object
@@ -172,8 +172,8 @@ Write-Host ''
 Write-Host 'The links of a set of pages (#3500)' -ForegroundColor Cyan
 
 $r = "/notes/$HexA"
-$hubPage = '<a class="back" href="/release-notes">x</a><a class="card" href="/release-notes/v2.48.0">y</a><a href="/release-notes-old">z</a><a href="https://e.com/release-notes">w</a>'
-$moved = Convert-BwjPageLinks -Html $hubPage -FromBase '/release-notes' -ToBase $r
+$adminPage = '<a class="back" href="/release-notes">x</a><a class="card" href="/release-notes/v2.48.0">y</a><a href="/release-notes-old">z</a><a href="https://e.com/release-notes">w</a>'
+$moved = Convert-BwjPageLinks -Html $adminPage -FromBase '/release-notes' -ToBase $r
 Assert-True ($moved -like "*href=`"$r`"*")           'the back link moves onto the route'
 Assert-True ($moved -like "*href=`"$r/v2.48.0`"*")   '...and a card onto the release page under it'
 Assert-True ($moved -like '*href="/release-notes-old"*') 'an address that only starts with the same characters is left alone'
@@ -417,8 +417,8 @@ $putPage  = $log.IndexOf("kv key put notes:$writtenToken/v1.0.0 ")
 $putIndex = $log.IndexOf("kv key put notes:$writtenToken --path")
 Assert-True ($putPage -ge 0 -and $putIndex -gt $putPage) '...the release page under <kind>:<token>/v1.0.0 first, the index last'
 Assert-True ($log -like "*kv key get notes:$writtenToken/v1.0.0 --namespace-id*") '...each read back under its own key'
-Assert-True ([System.IO.File]::ReadAllText($shimStore) -like "*href=`"/notes/$writtenToken/v1.0.0`"*") '...and what landed links to the worker''s route, not the hub''s'
-Assert-True ([System.IO.File]::ReadAllText($setIndex) -like '*href="/release-notes/v1.0.0"*') 'the built page itself is left as the hub serves it'
+Assert-True ([System.IO.File]::ReadAllText($shimStore) -like "*href=`"/notes/$writtenToken/v1.0.0`"*") '...and what landed links to the worker''s route, not Admin''s'
+Assert-True ([System.IO.File]::ReadAllText($setIndex) -like '*href="/release-notes/v1.0.0"*') 'the built page itself is left as Admin serves it'
 $stages = @(Get-ChildItem -LiteralPath ([System.IO.Path]::GetTempPath()) -Directory -Filter 'bwj-page-stage-*' -ErrorAction SilentlyContinue |
             Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-2) -and (Test-Path (Join-Path $_.FullName 'v1.0.0.html')) })
 Assert-Equal 0 $stages.Count '...and no staged copy of a private page is left in the temp directory'

@@ -8,7 +8,7 @@ with **every value kept exactly as chosen** (spacing and font sizes have since m
 library's scales, below), and the copy in this folder is the only one:
 [`house-style.css`](house-style.css) and [`house-theme.js`](house-theme.js).
 
-**It lives in the `dkj-policy` plugin**, because the plugin's own hub and General pages render in it in
+**It lives in the `dkj-policy` plugin**, because the plugin's own Admin and General pages render in it in
 every repo, BWJ-Development's included
 ([#3531](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3531), October 26, 2026). The **rule**
 that a DKJ-Solutions app starts from it stays in the `dkj-solutions` plugin, whose `dkj-brandbook` skill
@@ -38,7 +38,7 @@ this one. Its raw URL, the same tag:
 nothing applies them to a product automatically. BWJ-Development styles its own apps. The files themselves
 reach every repo, because the plugin's own screens, Admin, render in them there with no opt-out
 ([#3643](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3643)); the three-part rule is in
-[`hub/README.md`](../../hub/README.md#one-look-in-every-repo).
+[`apps/admin/README.md`](../../apps/admin/README.md#one-look-in-every-repo).
 
 **Every change to a stylesheet in this folder passes a CSS gate of its own**
 ([#3493](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3493)): `house-style-css` in this repo's
@@ -49,7 +49,7 @@ so a stylesheet added later is gated without an edit.
 
 **A house-style change is judged by eye on the House style page**, `specimens.html` in this folder: every
 token, the twelve themes and every component with its variants and states, drawn from the stylesheet beside it.
-It ships with the plugin, and every hub that runs `dkj-policy` shows it under Plugins, on
+It ships with the plugin, and every Admin that runs `dkj-policy` shows it under Plugins, on
 `/dev/plugins/dkj-policy/dkj-brandbook` (#3493, #3629, #3704), as one card per section with a page each
 (`/dev/plugins/dkj-policy/dkj-brandbook/<section>`, #3563); in the source repo that page reads the working tree, so a change
 shows there before the release that ships it. It replaces the Brandbook app's showcase, which is retired. `house-style-css` is the gate
@@ -100,13 +100,13 @@ that checks the stylesheet's syntax and tokens; the page is the look.
    the same ([the breadcrumb bar][product-bar]). Every ancestor crumb repeats its page's
    name, so a trail of longer names stops fitting its one-line bar. A hyphenated word counts as one, and a
    subtitle after a dash counts in full, so it moves into the page. The five words stay the cap for `h2` and
-   `h3`. The hub's page shell checks it on sight: the fit alarm warns when the live page's `h1` or its
+   `h3`. Admin's page shell checks it on sight: the fit alarm warns when the live page's `h1` or its
    current crumb runs past two words.
 9. **A page carries exactly one `h1`** (Maikel, November 2, 2026,
    [#3745](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3745)): two on one page *"mag sowieso
    nooit"* (must never happen at all). Content a page renders (a lens, a release note, any markdown) never
    adds one: its own `# ` title is dropped or demoted to `h2`. The one page without an `h1` is the home page
-   under a site header ([the breadcrumb bar][product-bar]). The hub's page shell checks
+   under a site header ([the breadcrumb bar][product-bar]). Admin's page shell checks
    it on sight: the fit alarm also warns when the live page holds more than one `h1`, or none where its
    trail is longer than Home.
 10. **The em dash (—, U+2014) is never used** (Maikel, November 3, 2026): not in a heading, a label, a
@@ -440,7 +440,7 @@ markdown renderer writes. The last day of `.prose` also took out the three varia
 table.
 
 **An app that used `.prose`, `.prose--sm` or `.prose--fill` drops the class**: its headings and elements take the
-house look by themselves, and the space between blocks becomes its own layout (the hub's lens page sets it in its
+house look by themselves, and the space between blocks becomes its own layout (Admin's lens page sets it in its
 page layer). **One that read `--prose-h1` … `--prose-h3` moves to the `--text-*` token it means**; the three are
 retired tokens, so the gate reports a use left behind. A rendered body never adds a second `h1` to its page.
 
@@ -736,7 +736,7 @@ end of [`house-style.css`](house-style.css), under "Shared components", and both
 - **`.icon-btn`** (with `--ghost`) and **`.action-row`**.
 - **The base `.breadcrumbs` trail** (with `__sep`), which the Admin shell's bar uses; the `.breadcrumbs-bar` that
   carries it above a product page is the product layer's ([the product README][product-readme]).
-- **`.menu-list`, `.menu-item`, `.menu-row` and `.card--link`**: the one card link ([The hub](#the-hub)).
+- **`.menu-list`, `.menu-item`, `.menu-row` and `.card--link`**: the one card link ([Admin](#admin)).
 - **`.sr-only`.**
 - **The additions to existing classes**: `.card--open`, `.card--invalid`, `.msg--error`, `.table-wrap:focus-visible`,
   `.table .row-negative`, `.row-positive`, `.row-warn`, `.col-start`, `.col-end`, `.facts__detail`,
@@ -804,10 +804,10 @@ here is the shared core's and holds in both.
 | No intro under the `h1`, and the `h1` never framed (rules 5 and 6) | holds | holds: the toolbar is a row with a line under it, not a box |
 | [The breadcrumb bar][product-bar]: a `.breadcrumbs-bar` above `<main>`, one `--tap` high, on `--primary` | holds | **does not apply.** The trail sits in the `.shell__bar` (the same `nav.breadcrumbs` markup, starting at **Home**), and the shell takes no `.breadcrumbs-bar`. A `<main>` is no pane of the grid: where a pane holds one, its 1080px cap is lifted |
 | [The site header][product-header] and [its menu][product-menu] | holds | **does not apply**: the shell's bar and side navigation replace both |
-| [Which shape a page's cards take][product-shape], [a long page becomes cards][product-long] and the hub's [card overview](#the-hub) | holds | **does not apply**: the side navigation is how Admin gets you somewhere, so an overview of card links in the pane repeats it, and a list Admin manages is a `.table--dense`, not cards. Where a page still lists the pages under it, it is an `.admin-list`, a row per page with its description (#3830) |
+| [Which shape a page's cards take][product-shape], [a long page becomes cards][product-long] and Admin's [card overview](#admin) | holds | **does not apply**: the side navigation is how Admin gets you somewhere, so an overview of card links in the pane repeats it, and a list Admin manages is a `.table--dense`, not cards. Where a page still lists the pages under it, it is an `.admin-list`, a row per page with its description (#3830) |
 | The 44px target ([Focus and targets](#components)) | holds | **does not apply**: 28px rows, above the 24px a pointer needs |
 | The page width (`data-width`, `full`/`fluid`/`phone`), `.page-column` and the settings panel's Width control | holds | **does not apply**: the panes fill the window, so the shell mounts `DKJTheme.settings` with `widths: false`, and a pane's content stands in a `.shell__body` |
-| The hub's fit alarm | reads the page: the document past the window, the `h1`, the bar's trail | reads the shell (#3830): the main pane past its own height (a pane holding a `.table--dense` scrolls by design), the `.toolbar > h1` and the `.shell__bar` trail |
+| Admin's fit alarm | reads the page: the document past the window, the `h1`, the bar's trail | reads the shell (#3830): the main pane past its own height (a pane holding a `.table--dense` scrolls by design), the `.toolbar > h1` and the `.shell__bar` trail |
 
 
 ## Page patterns
@@ -816,30 +816,30 @@ here is the shared core's and holds in both.
 that titles a card, the breadcrumb bar on every page, a long page that becomes cards with a page each, and the
 site header with its menu are in [the product README][product-readme], under "Page patterns". Which of them
 Admin's desktop shell takes is in the table under [Two layers](#two-layers): it takes the page-name rules and
-none of the page structure. **The hub** below is the one page pattern Admin keeps.
+none of the page structure. **Admin** below is the one page pattern Admin keeps.
 
-## The hub
+## Admin
 
 **This section is Admin's home page and its GitHub page, as the desktop shell draws them** (#3830,
-[#3843](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3843)). Until #3830 the hub was a page under the
+[#3843](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3843)). Until #3830 Admin was a page under the
 product's site header with a grid of card links, and that form is retired as Admin's. What lives on of it
 belongs to the product layer: a product's own home page takes the site header and the breadcrumb bar
 (`Format-ProductHomeHeadHtml` in dkj-solutions' `scripts/lib/product-pages-lib.ps1`, #3831), and its cards
 take [the shape a page's cards take][product-shape], both in [the product README][product-readme]. The card
-itself ([below](#the-hub), `Format-HubCardLinkHtml`) stays a shared component, which both layers still use.
+itself ([below](#admin), `Format-AdminCardLinkHtml`) stays a shared component, which both layers still use.
 
-It is called a hub, not a dashboard (owner's call, October 17, 2026, [#199](https://github.com/DKJ-Solutions/dkj-brandbook/issues/199)): its job is to get you to the page you want quickly, while a dashboard is a page that shows how something stands, and the pages below it can be dashboards.
+It was called a hub, not a dashboard (owner's call, October 17, 2026, [#199](https://github.com/DKJ-Solutions/dkj-brandbook/issues/199)): its job is to get you to the page you want quickly, while a dashboard is a page that shows how something stands, and the pages below it can be dashboards.
 
-**On screen it is called Admin** (#3815, November 5, 2026; **Toolbox** from October 27 until then): Admin is for managing and the product for using, as in the Shopify Admin. The session-start line opens with `Admin:`, its first crumb reads **Home**, a product links it on an **Admin** card, and its development pages sit under `/dev/...`, the old addresses redirecting there. The code, its routes (`/hub`) and these pages still say *hub*, which names the mechanism.
+**On screen it is called Admin** (#3815, November 5, 2026; **Toolbox** from October 27 until then): Admin is for managing and the product for using, as in the Shopify Admin. The session-start line opens with `Admin:`, its first crumb reads **Home**, a product links it on an **Admin** card, and its development pages sit under `/dev/...`, the old addresses redirecting there. The code said *hub* for the mechanism until #3873 renamed it too: the plugin's `apps/admin/` folder, the `/admin` route (`/hub` answers with a 301 to `/`).
 
-**Every repo's hub has this one form, and only its content differs** (owner's decision, October 16, 2026,
-[#139](https://github.com/DKJ-Solutions/dkj-brandbook/issues/139)). The hub is the dkj-policy plugin's own hub
+**Every repo's Admin has this one form, and only its content differs** (owner's decision, October 16, 2026,
+[#139](https://github.com/DKJ-Solutions/dkj-brandbook/issues/139)). Admin is the dkj-policy plugin's own
 server in every repo that runs it, BWJ-Development's included, and the repo's server is its product
 ([#3245](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3245)). No repo can opt out of it: the
-`OwnHub` key that let a repo serve its own hub went with
+`OwnHub` key that let a repo serve its own Admin went with
 [#3643](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3643).
 
-**The hub is one page, on `/`** (owner, October 22, 2026,
+**Admin is one page, on `/`** (owner, October 22, 2026,
 [#3289](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3289)). From October 21 it was two
 ([#3270](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3270)): a portal home page on `/` and
 About this repo on `/about`. Once the repo's name stood on every page, the home page had nothing left of its
@@ -853,16 +853,16 @@ the GitHub name and logo). From #3383 to #3830 the home page was a grid of card 
 #3830 it is one list: the side navigation already gets you to every page, so the pane adds only what the
 navigation cannot carry, each page's description.
 
-**The home page, top to bottom, in this order** (`Format-PluginRepoHubHtml` in `dkj-policy`'s
-`hub/lib/repo-hub-page.ps1`):
+**The home page, top to bottom, in this order** (`Format-PluginRepoAdminHtml` in `dkj-policy`'s
+`apps/admin/lib/repo-admin-page.ps1`):
 
 | # | Block | House class | Fixed, or the repo's own |
 |---|---|---|---|
 | 0 | The shell, opened for the home page: the bar with the one crumb **Home**, and the side navigation with **Home** marked. There is **no toolbar and no `h1`**: the shell names the repo, so the home page has no intro | `.shell.shell--no-aside`, `.shell__bar` holding `nav.breadcrumbs`, `.shell__nav` (`Format-RepoHomeHeadHtml`, which opens `Format-AdminShellOpen -Current '/' -Bare`) | fixed |
-| 1 | The general banner, the first thing in the main pane's scroll area, with no margin, border or radius (owner, October 24, 2026): a countdown to the next full hour, and once an hour has passed a tone and a **10 airsquats** checkbox that shows the total owed ([#3250](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3250)), the same on every machine ([#3438](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3438)) | a `.notice` holding one `.msg` line, written by `Format-RepoHubBanner` in `dkj-policy`'s `hub/lib/general-pages-lib.ps1` | fixed: a hub a repo builds itself carries it only if it calls that function |
+| 1 | The general banner, the first thing in the main pane's scroll area, with no margin, border or radius (owner, October 24, 2026): a countdown to the next full hour, and once an hour has passed a tone and a **10 airsquats** checkbox that shows the total owed ([#3250](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3250)), the same on every machine ([#3438](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3438)) | a `.notice` holding one `.msg` line, written by `Format-RepoAdminBanner` in `dkj-policy`'s `apps/admin/lib/general-pages-lib.ps1` | fixed: an Admin a repo builds itself carries it only if it calls that function |
 | 2 | Only where a server the page links is not running (the repo's product, or the general pages server): one line saying so, where its row would be | `.msg--warn` with `role="status"` | the plugin's own text |
 | 3 | **The pages**, a row each with its description, in this order: the repo's product where it states one, **GitHub**, and the general pages but those on the GitHub page (Issues, the Test gate), a group's pages behind its one row (below) | one `.table--dense` with no heading (`Format-AdminLinkTableHtml`) | fixed form; the product is the repo's own |
-| 4 | Only where the plugin's hub serves a repo that states no product: the two **Set up a product** cards, under their own `h2` | a `.grid-2` with a `.grid__head`, then one `.card.grid__full` per step | the plugin's own text |
+| 4 | Only where the plugin's Admin serves a repo that states no product: the two **Set up a product** cards, under their own `h2` | a `.grid-2` with a `.grid__head`, then one `.card.grid__full` per step | the plugin's own text |
 | 5 | A footer note naming the script that serves the page | `.note` | fixed |
 
 **The GitHub page, on `/dev/repository`, in the same shell, its trail Home > GitHub** (`Format-PluginRepoRepositoryHtml`):
@@ -875,7 +875,7 @@ navigation cannot carry, each page's description.
 | 3 | Where a repo keeps in-flight lists: one stat tile per list, the loading or warning line, and **In flight**, one data card per list under one `h2` | `.tiles` / `.tile`; a `<p>` with `role="status"` / `.msg--warn` with `role="alert"`; a `.grid-2` with a `.grid__head`, then one `.card.grid__full` per list around `.table-wrap` / `.table` | the repo's own lists. A count not read yet shows `--` |
 | 4 | A footer note naming where the data comes from | `.note` | the repo's own source |
 
-A repo with no in-flight lists leaves block 3 out; this source repo's hub and the plugin's are both such
+A repo with no in-flight lists leaves block 3 out; this source repo's Admin and the plugin's are both such
 repos. **An open issue is not listed twice**: where the **Issues** row is on the page, an in-flight issues
 list is that page's job, and the page links it rather than repeating it.
 
@@ -889,8 +889,8 @@ not respond, so the two cannot be mistaken for each other. Its label is the page
 reads it, short, in the app's language; its description is one line or nothing. A card links a route on the
 same dev server; only the Repository page's GitHub cards leave it. A page that cannot be linked (a product
 whose server is not running, a general pages server that is not up) is a plain `.card` holding one `<p>`
-saying so, in the place its card would take. `Format-HubCardLinkHtml` in `dkj-policy`'s
-`hub/lib/general-pages-lib.ps1` writes the card; both served hubs use it, and **every** card link in the hub's
+saying so, in the place its card would take. `Format-AdminCardLinkHtml` in `dkj-policy`'s
+`apps/admin/lib/general-pages-lib.ps1` writes the card; both served Admin servers use it, and **every** card link in Admin's
 page code goes through it, since a suite in `dev-pages.tests.ps1` fails on one written by hand
 ([#3566](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3566)).
 
@@ -920,18 +920,18 @@ closes the card's link at the inner one and the card falls apart
 
 **The order of the home page's rows.** The product comes first, because it is what the repo offers its
 visitors; a product is never the page on `/`. Then **GitHub**; then the general pages every repo has
-(Release notes, SessionStart), Issues and the Test gate left to the GitHub page. No hub
+(Release notes, SessionStart), Issues and the Test gate left to the GitHub page. No Admin
 carries a Brand book card ([#3475](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3475)), and the
 Brandbook app is retired ([#3493](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3493)).
 
 **A card is ALWAYS one link, never two or more** (owner, October 27, 2026). Pages that belong together
-are grouped on a **group page** of their own, and the hub carries one card linking that page. **Clock**
+are grouped on a **group page** of their own, and Admin carries one card linking that page. **Clock**
 (`/dev/clock`) was the first: the page was an `h1` with one card link each for Stopwatch and Logbook. Groups nest,
 and a group can also be a **section**, an `h2` over its members' `h3` cards with no page of its own: Clock is
 one on Performance's page since November 3, 2026, beside Context, and Performance sits on Claude's, so the
-trails read Home > Claude > Performance > the page, and the hub carries only the Claude card. A page joins a group by the
-`Group` key in `Get-GeneralPages`; the group itself is a row of `Get-HubGroups`, and
-`Format-HubGroupPageHtml` draws its page.
+trails read Home > Claude > Performance > the page, and Admin carries only the Claude card. A page joins a group by the
+`Group` key in `Get-GeneralPages`; the group itself is a row of `Get-AdminGroups`, and
+`Format-AdminGroupPageHtml` draws its page.
 
 **The in-flight lists, where a repo has them:** open pull requests, newest first, with the branch as the
 sub line (and "(draft)" on a draft); open issues by their `prio-N` label, unprioritised last and the highest
@@ -953,7 +953,7 @@ it, and #137 hit exactly this with an intro that was a `<header>`.
 Every block above has a house class, the shell's included, so Admin's two pages need no CSS of their own beyond
 the setup cards' `.ph-code`; the stylesheet-only reference for the shell is
 [`patterns/admin-shell.html`](patterns/admin-shell.html). **The rest of this paragraph is the product layer's
-page column**, where the hub's blocks stood until #3830. The blocks stack in the page column, `.page-column` on `<main>`, which
+page column**, where Admin's blocks stood until #3830. The blocks stack in the page column, `.page-column` on `<main>`, which
 takes the top margin of its direct `.card`, `.tiles`, `.notice` and `.note`, so they sit one
 `--spacing-5` apart; `.grid-2` does the same for a direct `.card`, `.tiles` or `.notice`, so its rows sit
 one `--spacing-4` apart ([#207](https://github.com/DKJ-Solutions/dkj-brandbook/issues/207)), and
@@ -967,8 +967,8 @@ stylesheet-only reference pages for a product's home page and a page one level b
 in dkj-solutions (#3831). They draw the product layer's own form (the site header with its menu, the breadcrumb
 bar, the cards), link `house-style.css`, `house-product.css` and `house-theme.js`, and carry no CSS of their own.
 Until [#3849](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3849) they were `repo-dashboard.html` and
-`repo-repository.html` and still drew the hub as it was before #3830. **These patterns are the only reference**:
-the Brandbook app drew no hub specimen or previews of other repos' hubs from October 21, 2026 (owner,
+`repo-repository.html` and still drew Admin as it was before #3830. **These patterns are the only reference**:
+the Brandbook app drew no Admin specimen or previews of other repos' Admin servers from October 21, 2026 (owner,
 [#3274](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3274)) and is retired now, so a repo with
 a framework builds the form from the blocks above with its own components.
 

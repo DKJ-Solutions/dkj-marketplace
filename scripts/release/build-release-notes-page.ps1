@@ -95,7 +95,7 @@
 
 .PARAMETER LinkBase
     The address the index is served at, which the links between the pages carry. Defaults to
-    '/release-notes', where both hubs serve it; the Worker bundle is built for its own route regardless.
+    '/release-notes', where both Admin servers serve it; the Worker bundle is built for its own route regardless.
 
 .EXAMPLE
     ./scripts/release/build-release-notes-page.ps1
@@ -148,7 +148,7 @@ $templatePath = Join-Path $PSScriptRoot 'release-notes-page-template.html'
 if (-not (Test-Path -LiteralPath $templatePath -PathType Leaf)) {
     throw "The page template is missing: $templatePath"
 }
-# The markdown renderer the note is drawn with lives beside the template, because the hub's lens page
+# The markdown renderer the note is drawn with lives beside the template, because Admin's lens page
 # draws with it too -- one renderer for one format, inlined into the template's script at its placeholder.
 $rendererPath = Join-Path $PSScriptRoot 'markdown-render.js'
 if (-not (Test-Path -LiteralPath $rendererPath -PathType Leaf)) {
@@ -199,8 +199,8 @@ $historyPath = Join-Path $repoRoot ($config.HistoryPath -replace '/', '\')
 # A REPO THAT HAS NEVER CUT A RELEASE IS NOT A BROKEN ONE (#3580). Before the first cut there is no
 # history, or a history whose table has no row, and no note root -- the cut creates both (#786, #1150).
 # Every throw below then named a file to create that either fixes nothing or that the plugin decided a
-# consumer should not commit, and a hub showed that as a build error. So that state is its own answer:
-# exit 3, which a caller (the hub) reads as "no release yet" and shows as an empty state. A history with
+# consumer should not commit, and an admin showed that as a build error. So that state is its own answer:
+# exit 3, which a caller (Admin) reads as "no release yet" and shows as an empty state. A history with
 # ANY version-shaped row is past it, so a changed table shape still reaches the throw that says so.
 $noReleaseYetExitCode = 3
 $hasReleaseRow = (Test-Path -LiteralPath $historyPath -PathType Leaf) -and
@@ -794,7 +794,7 @@ function Get-ReleasePageHref {
 
         THE FULL SEMVER, as the old deep-link id was: it is the address people will send, and the visible
         label may be shorter (Format-ReleaseVersionLabel) without the two ever having to agree. -LinkBase is
-        where the index is served: '/release-notes' on a hub, '/notes/<token>' in the Worker.
+        where the index is served: '/release-notes' on an admin, '/notes/<token>' in the Worker.
     #>
     param(
         [Parameter(Mandatory)][string]$LinkBase,
@@ -946,7 +946,7 @@ function Format-ReleasePageFromTemplate {
 function New-ReleasePageSet {
     <#
         The whole site for one address: the index, and one page per release keyed by its full version.
-        Called once for the hub's address and, with -Worker, again for the Worker's, because the links
+        Called once for Admin's address and, with -Worker, again for the Worker's, because the links
         between the pages carry the address they are served from.
     #>
     param([Parameter(Mandatory)][string]$LinkBase)
@@ -992,7 +992,7 @@ if (-not (Test-Path -LiteralPath $pageDir)) { New-Item -ItemType Directory -Forc
 
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
-# The directory ignores itself (#3431): a '*' .gitignore inside it, written only when absent. The hub
+# The directory ignores itself (#3431): a '*' .gitignore inside it, written only when absent. Admin
 # builds this page in every consumer (#3189), and a repo-level ignore line reached only the consumers
 # that had read the release-notes-page skill -- the rest got the page as an untracked folder, and one
 # committed it with a 'git add -A'. A file already there is left alone, as wrangler.toml is.
@@ -1003,11 +1003,11 @@ if (-not (Test-Path -LiteralPath $pageIgnore)) {
 
 if (-not $OutFile) { $OutFile = Join-Path $pageDir 'release-notes.html' }
 # ONE FILE PER RELEASE, in a folder named after the index beside it -- release-notes\v2.39.0.html next to
-# release-notes.html -- so a hub maps '/release-notes/v2.39.0' onto it without a table. A page left there by
+# release-notes.html -- so an admin maps '/release-notes/v2.39.0' onto it without a table. A page left there by
 # an earlier build is removed first: a release taken out of the history must not stay reachable. Only a
 # name this script writes is removed, so an -OutFile pointed somewhere unexpected deletes nothing else.
 #
-# THE PAGES FIRST AND THE INDEX LAST. A hub judges the whole site current by the index's time, so an index
+# THE PAGES FIRST AND THE INDEX LAST. An admin judges the whole site current by the index's time, so an index
 # written before a page that then failed would be served as current with cards that lead to a 404 -- until
 # some input changed. Written last, a failed run leaves the old index older than its inputs, and the next
 # visit builds again.
@@ -1112,7 +1112,7 @@ if ($token -notmatch '^[0-9a-f]{32}$') {
 $route = "/notes/$token"
 
 # THE SITE IS BUILT AGAIN FOR THE WORKER'S ADDRESS, because the links between the pages carry the address
-# they are served from: '/notes/<token>/v2.39.0' there, '/release-notes/v2.39.0' on a hub. Every page
+# they are served from: '/notes/<token>/v2.39.0' there, '/release-notes/v2.39.0' on an admin. Every page
 # travels into the worker as one JSON string, keyed by the path under the route ('' is the index), which is
 # why nothing here has to escape anything a second time.
 $workerSite = New-ReleasePageSet -LinkBase $route

@@ -64,7 +64,7 @@ already says where this repo keeps its release documents:
 ```
 
 **That directory ignores itself**: the script writes a `.gitignore` holding `*` into it when there is
-none ([#3431](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3431)), because the hub builds
+none ([#3431](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3431)), because Admin builds
 the page in every consumer and a line in your own `.gitignore` reached only the repos that read this
 page. The page and the worker are derivatives of documents that are already tracked, rebuildable in a
 second, and large enough that a tracked copy dirties the working tree on every release — which is a
@@ -254,7 +254,7 @@ can make.
 | parameter | what it does |
 |---|---|
 | `-OutFile <path>` | where the index lands, instead of `release-notes.html` in the page directory; the release pages go in a folder of the same name beside it |
-| `-LinkBase <path>` | the address the index is served at, which the links between the pages carry; `/release-notes` by default, where both hubs serve it. The Worker bundle uses its own route regardless, so you rarely type this |
+| `-LinkBase <path>` | the address the index is served at, which the links between the pages carry; `/release-notes` by default, where both Admin servers serve it. The Worker bundle uses its own route regardless, so you rarely type this |
 | `-Worker` | also write `worker.js`, and `wrangler.toml` if it is not there yet |
 | `-InitToken` | create the path token when there is none; refuses to replace one |
 

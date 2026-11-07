@@ -78,7 +78,7 @@
     can put in front of a session (#1591); a person reading the answer wants the default view.
 
 .PARAMETER Json
-    Emit the same rows as ONE line of JSON and nothing else, for the hub's Plugins page (#3482), so the
+    Emit the same rows as ONE line of JSON and nothing else, for Admin's Plugins page (#3482), so the
     page shows this script's own verdict rather than a second reading of the same files. Every non-ASCII
     character is escaped, so the console code page of the process reading it cannot garble a field.
     Adds what only a page shows: each plugin's description and its marketplace's clone line, and whether

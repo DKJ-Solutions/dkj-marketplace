@@ -1,6 +1,6 @@
 ---
 name: stopwatch-prepare
-description: Put a Stopwatch card for a label on the hub's /dev/stopwatch overview with NO clock running, so the owner can start the run themselves afterwards, or withdraw such a card. Use before a run the owner wants to time and start by hand -- above all before a release cut ("prepare the release cut card first, then we start it ourselves") -- and when a prepared card is no longer wanted.
+description: Put a Stopwatch card for a label on Admin's /dev/stopwatch overview with NO clock running, so the owner can start the run themselves afterwards, or withdraw such a card. Use before a run the owner wants to time and start by hand -- above all before a release cut ("prepare the release cut card first, then we start it ourselves") -- and when a prepared card is no longer wanted.
 ---
 
 # stopwatch-prepare -- a Stopwatch card that is ready and not started
@@ -24,17 +24,17 @@ normal card. A prepared label is this machine's own and is never shared with oth
 The label is normalised as a prompt's label is (control characters as spaces, trimmed, cut at 80
 characters), so the card and the prompt agree. Case does not matter: labels compare case-insensitively.
 
-**In the source repo, run its own copy instead** -- `plugins/dkj-policy/hub/pages/stopwatch-prepare.ps1` --
+**In the source repo, run its own copy instead** -- `plugins/dkj-policy/apps/admin/pages/stopwatch-prepare.ps1` --
 since `${CLAUDE_PLUGIN_ROOT}` resolves into the plugin cache, which holds the last released copy.
 
 ## Run it
 
 ```powershell
 # prepare the card
-powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hub/pages/stopwatch-prepare.ps1" -Label "release cut"
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/apps/admin/pages/stopwatch-prepare.ps1" -Label "release cut"
 
 # withdraw it
-powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hub/pages/stopwatch-prepare.ps1" -Label "release cut" -Remove
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/apps/admin/pages/stopwatch-prepare.ps1" -Label "release cut" -Remove
 ```
 
 It prints a short receipt. Tell the owner the card is on `/dev/stopwatch` and that the run starts with a prompt

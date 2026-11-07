@@ -217,7 +217,7 @@ body > header, main > header { display: flex; justify-content: space-between; al
 .controls { display: flex; align-items: center; gap: var(--spacing-2); flex-wrap: wrap; }
 .controls .seg, .controls .btn { height: 30px; box-sizing: border-box; }
 .controls .btn { display: inline-flex; align-items: center; padding: 0 var(--spacing-2-5); }
-/* Page column (#141): put it on <main> and its blocks stack with one --spacing-5 gap between them (Maikel, November 2, 2026; --spacing-3 from October 28, 2026, and --spacing-5 before), the hub's
+/* Page column (#141): put it on <main> and its blocks stack with one --spacing-5 gap between them (Maikel, November 2, 2026; --spacing-3 from October 28, 2026, and --spacing-5 before), Admin's
    rhythm. .card, .tiles, .notice and .note carry a margin-top of their own, which would add to the gap, so a
    direct child of the column gives it up. .page-cta is the spacing of a primary button under the lead (a <p> that holds
    the button). */
@@ -593,7 +593,7 @@ p { margin: 0; }
    told apart by 1px lines instead of whitespace or shadows. Everything is compact (28px rows).
    DESKTOP ONLY: this layer has no phone media query and no 44px touch target (its rows are 28px, and it takes no .btn--touch), and it must not be
    used for the mobile-first product, which takes "App components" in house-product.css (dkj-solutions, #3831). Markup: use div, nav,
-   section and aside, never main as a pane of the grid (the house's main caps its width at 1080px; a main inside a pane needs that cap lifted, as the hub's .tb-scroll does).
+   section and aside, never main as a pane of the grid (the house's main caps its width at 1080px; a main inside a pane needs that cap lifted, as Admin's .tb-scroll does).
    Every colour pairing is an existing token pair: --fg-1 on --bg-1 and --bg-2, --primary-muted
    on --bg-2, --primary on --bg-1, --bg-2 and --bg-3, --primary-muted on --bg-3, and the status
    fills (--positive-3, --warning-3, --negative-3) as a dot that always sits beside a text label.
@@ -785,7 +785,7 @@ a.menu-item:hover { background: var(--bg-3); }
 .menu-item__label > :is(h2, h3) + .menu-item__sub { margin-top: var(--spacing-1); }
 .menu-item > .badge { flex: none; }
 /* A card's title is ONE line, cut off with an ellipsis where it does not fit the card's width (owner, October 28,
-   2026): the plain label's first line, or the h2. A mark after the h2's label (Format-HubCardLinkHtml -TitleBadgeHtml:
+   2026): the plain label's first line, or the h2. A mark after the h2's label (Format-AdminCardLinkHtml -TitleBadgeHtml:
    <h2><span>label</span><span class="badge">) keeps its place, and the label in front of it is cut off instead. The
    description and the value under it still wrap. */
 .card--link .menu-item__label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

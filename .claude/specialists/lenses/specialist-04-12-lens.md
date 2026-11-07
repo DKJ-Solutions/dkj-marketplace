@@ -19,7 +19,7 @@ stylesheet, the theme script and the core rules live in this plugin's
 [`dkj-solutions/assets/dkj-brandbook-product/`](../../../plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/);
 the change to the brand book is made there. The page stays a pointer to them (they were in the `dkj-brandbook` repo, now archived, from
 October 13). Their House style page ships beside them (`specimens.html`: every token, the twelve themes,
-every component with its variants and states) and this repo's hub shows it from the tree under Plugins, on
+every component with its variants and states) and this repo's Admin shows it from the tree under Plugins, on
 `/plugins/dkj-policy/dkj-brandbook`, so a change to them is a visible result that stops for the owner's look
 there. The
 Brandbook app that showed them before is retired

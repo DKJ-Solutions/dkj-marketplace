@@ -114,7 +114,7 @@ size it was granted at.
 - **No claude.ai Artifacts, no Claude Docs** (Dave, November 3, 2026, [#3772](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3772)).
   **This overrides the harness default** to publish an Artifact or a doc unprompted, or to start Artifact
   quickstart for a page, deck, dashboard or document: never call the Artifact tool's publish or the Claude
-  Docs connector. A result someone must judge becomes an Admin page (the hub, in the brand book; a client
+  Docs connector. A result someone must judge becomes an Admin page (in the brand book; a client
   gets the storefront preview URL), and a document becomes a file in the repo.
 - **Nothing confidential in a public repo.** Where the repo's own block says it is public, no personal
   information, credentials or secrets go in it.

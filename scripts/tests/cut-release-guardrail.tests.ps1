@@ -726,7 +726,7 @@ if ($parkedFn.Count -eq 1) {
 # the printed line is held to that regex read from the hook's lib -- not to a copy of it here.
 $printedSubject = [regex]::Match($cutReleaseText, 'git commit -m `"(release: \$tagName release notes)`"')
 Assert-True $printedSubject.Success 'cut-release prints the release-notes commit line with the version filled in'
-$stopwatchText = Get-Content -LiteralPath (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\hub\lib\stopwatch-lib.ps1') -Raw
+$stopwatchText = Get-Content -LiteralPath (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\apps\admin\lib\stopwatch-lib.ps1') -Raw
 $stopRegex = [regex]::Match($stopwatchText, "Subject -match '(\^release:[^']+)'")
 Assert-True $stopRegex.Success "the Stopwatch's release-run stop regex is found in stopwatch-lib.ps1"
 if ($printedSubject.Success -and $stopRegex.Success) {

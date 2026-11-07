@@ -41,14 +41,14 @@
 
 # The plugins' page parts: dkj-policy's shared head and escape, and dkj-solutions' product layout -- the site header and the
 # breadcrumb bar (#3831). This repo is their source, so they are read from its own tree, dkj-policy's first.
-. (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\hub\lib\general-pages-lib.ps1')
+. (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1')
 . (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\product-pages-lib.ps1')
 
 function Get-ProductPages {
     <#
         The pages the product's home page links, in the order it lists them: each a route on this server, its
         label the page's own name as its breadcrumb reads it, and one line on what it shows. The general pages
-        are the plugin hub's, which the home page links as one card (#3540). Specialists is no longer one of
+        are the plugin admin's, which the home page links as one card (#3540). Specialists is no longer one of
         them: the specialists are the dkj-subagents teams', so they live on those teams' own Plugins pages.
         Here rather than in dev-pages-lib (which loads this lib) because the Consumers page below draws them as its
         header's menu (Get-ProductMenu).
@@ -65,11 +65,11 @@ function Get-ProductPages {
 function Get-ProductMenu {
     <#
         The product's site header menu (Format-SiteHeaderHtml -Menu), in the home page's card order: the
-        Admin first, then its own pages (Get-ProductPages). Admin links '/hub', this server's 303 to
-        the plugin hub, because the hub's port is only known once it answers (Get-GeneralPagesUrl) and a
+        Admin first, then its own pages (Get-ProductPages). Admin links '/admin', this server's 303 to
+        the plugin admin, because Admin's port is only known once it answers (Get-GeneralPagesUrl) and a
         menu drawn on every page should not ask it each time.
     #>
-    @(@{ Label = 'Admin'; Href = '/hub' }) + @(Get-ProductPages | ForEach-Object { @{ Label = $_.Label; Href = $_.Href } })
+    @(@{ Label = 'Admin'; Href = '/admin' }) + @(Get-ProductPages | ForEach-Object { @{ Label = $_.Label; Href = $_.Href } })
 }
 
 function ConvertFrom-ConsumerCheckOutput {
@@ -427,7 +427,7 @@ function Format-RepoLensesCardHtml {
 function Format-ConsumerPageStart {
     <#
         A consumer page up to and including its h1: the head with the repo layer's style (-Style added to it),
-        the hub's banner, the site header, the trail from Home through -Trail (a list of @{ Href; Label }) to
+        Admin's banner, the site header, the trail from Home through -Trail (a list of @{ Href; Label }) to
         -PageName, and the intro holding the h1. Format-ConsumerPageEnd closes it.
     #>
     param([Parameter(Mandatory = $true)][string]$PageName, [AllowEmptyCollection()][object[]]$Trail = @(), [AllowEmptyString()][string]$Style = '')
@@ -448,7 +448,7 @@ function Format-ConsumerPageStart {
     # device emulation, so the product offers no width choice.
     [void]$sb.AppendLine((Get-AdminWidthScript))
     # The repo layer: only names the house file does not define (.cd-*), spaced from the house scale.
-    # The page keeps the hub's frame (breadcrumb bar, settings button, intro, page column; #3066), so
+    # The page keeps Admin's frame (breadcrumb bar, settings button, intro, page column; #3066), so
     # this layer styles only what is inside its cards, never the blocks the house style fixes.
     [void]$sb.AppendLine('<style>')
     # The links take the house highlight (--primary), the tinted head and the lines --bg-3, and the notes --primary-muted.
@@ -476,7 +476,7 @@ function Format-ConsumerPageStart {
     [void]$sb.AppendLine('<body>')
     # No general banner: it is Admin's alone, never a product page's (Dave, November 4, 2026).
     # The house site header, holding the settings button, then the breadcrumb bar under it: its trail from Home to this page.
-    # Tagged 'product': this page is the product's, beside the plugin's hub (#3540).
+    # Tagged 'product': this page is the product's, beside the plugin's admin (#3540).
     # The menu is the product's pages (Get-ProductMenu), the Consumers page marked.
     [void]$sb.Append((Format-SiteHeaderHtml -Name 'dkj-marketplace' -Href '/' -Tag 'product' -Menu @(Get-ProductMenu) -Current '/consumers'))
     [void]$sb.Append((Format-ProductBreadcrumbBarHtml -Trail @($Trail | Where-Object { $_ }) -Current $PageName))
@@ -498,7 +498,7 @@ function Format-ConsumerPageEnd {
     [void]$sb.AppendLine('<p class="note">' + $FooterHtml + '</p>')
     [void]$sb.AppendLine('</main>')
     [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", widths: false });</script>')
-    # The fit alarm, as the plugin's page shell closes every hub page (#3558).
+    # The fit alarm, as the plugin's page shell closes every admin page (#3558).
     [void]$sb.AppendLine((Format-FitAlarmHtml))
     [void]$sb.AppendLine('</body>')
     [void]$sb.AppendLine('</html>')
@@ -574,8 +574,8 @@ function Format-ConsumerDashboardHtml {
         The whole page. -Consumers is a list of @{ Repo; Visibility; File; Checkout; Present; Plugins
         (list of @{ Id; Extensions }); Signals; Drift (see ConvertFrom-ConsumerCheckOutput, or $null); Status; Git (@{ Branch; Trunk; Subject; When }
         or $null) }. -Meta is @{ GeneratedAt; Seconds; CheckFailed }.
-        It is the Consumers page under the hub on '/' (#3097): a two-crumb trail and its own h1. The
-        facts card belongs to the hub, so this page ends on its footer note.
+        It is the Consumers page under Admin on '/' (#3097): a two-crumb trail and its own h1. The
+        facts card belongs to Admin, so this page ends on its footer note.
 
         -Group splits it in two (owner, October 26, 2026). Empty, it is /consumers: a section per owner group
         (Get-DashboardOwnerGroups) holding that group's repo cards, the DKJ ones handed in as -DkjCardsHtml with their
@@ -636,7 +636,7 @@ function Format-ConsumerDashboardHtml {
                     $n = @($c.Plugins).Count
                     $sub = (& $e $c.Visibility) + ' &#183; ' + $n + ' plugin' + $(if ($n -ne 1) { 's' } else { '' }) + ' &#183; ' + (Format-DashboardInstalledVersion $c)
                     $name = ([string]$c.Repo) -replace '^.*/', ''
-                    [void]$sb.AppendLine((Format-HubCardLinkHtml -Href ('/consumers/' + $g.Key + '#' + $anchor) -Label $name -SubHtml $sub -TitleBadgeHtml $badge -Heading 3))
+                    [void]$sb.AppendLine((Format-AdminCardLinkHtml -Href ('/consumers/' + $g.Key + '#' + $anchor) -Label $name -SubHtml $sub -TitleBadgeHtml $badge -Heading 3))
                 }
             }
             [void]$sb.AppendLine('</div>')
