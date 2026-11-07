@@ -162,7 +162,10 @@ $static = @{
     '/house-style.css' = @{ File = (Join-Path $styleDir 'house-style.css'); Type = 'text/css; charset=utf-8' }
     '/house-theme.js'  = @{ File = (Join-Path $styleDir 'house-theme.js');  Type = 'text/javascript; charset=utf-8' }
 }
-$releaseNotesFile = Join-Path $root 'dkj-policy\releases\page\release-notes.html'
+# The workflow folder is read off this tree (#3870): '.dkj/dkj-policy' once a repo has moved, 'dkj-policy' before.
+. (Join-Path $pluginRoot 'scripts\lib\workflow-folder-lib.ps1')
+$workflowFolderRel = Get-WorkflowFolderName -RepoRoot $root
+$releaseNotesFile = Join-Path $root (($workflowFolderRel -replace '/', '\') + '\releases\page\release-notes.html')
 
 function ConvertTo-ProcessArgument {
     <# One argument as a Windows command line carries it (backslashes before a quote doubled, the whole quoted when it needs it). #>
@@ -739,7 +742,7 @@ try {
                         continue
                     }
                     $why = if ($build.NoRelease) { 'no release has been cut yet' } else { $build.Error }
-                    Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes("Not built yet: this repo has no dkj-policy/releases/page/release-notes.html, and this server could not build it ($why).")) -Method $method
+                    Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes("Not built yet: this repo has no $workflowFolderRel/releases/page/release-notes.html, and this server could not build it ($why).")) -Method $method
                     continue
                 }
                 if (-not (Test-Path -LiteralPath $rn.File -PathType Leaf)) {

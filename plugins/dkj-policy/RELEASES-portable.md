@@ -256,7 +256,7 @@ publishes to, whichever of the two audience tiers that is. The audience root is 
 `Get-ReleaseNoteRoot`; **its shared default is deliberately still `releases/notes`**, so a consumer who never
 answered that knob is not silently pointed at a directory they do not have.
 
-**All three of them live inside this workflow's own folder by default** (`dkj-policy/releases/`),
+**All three of them live inside this workflow's own folder by default** (`.dkj/dkj-policy/releases/`),
 and the two generated ones joined `audience/` there in #914. The reasoning is worth stating because it is the
 line between these roots and the two files whose DEFAULT still branches: a repo's `CHANGELOG.md` and its
 release list exist whichever tooling cut them, so `Get-ChangelogPath` and `Get-ReleaseHistoryPath` answer the
@@ -520,7 +520,7 @@ In one motion, on a clean `main`:
    otherwise there is nothing to bump and the version lives in the tag alone;
 2. generates the full release notes in `changelog/<dir>/<X.Y.Z>.md` (from the folded entries, grouped by
    tier and, within a tier, a flat list in the ranked order the fold left), adds a row to the release list
-   on the page `Get-ReleaseHistoryPath` names — `dkj-policy/releases/history.md` unless you repointed it
+   on the page `Get-ReleaseHistoryPath` names — `.dkj/dkj-policy/releases/history.md` unless you repointed it
    — and **empties `CHANGELOG.md` down to its fixed head** — the title and the pending heading, and
    nothing else. There is no intro prose to keep: every repo's head is identical, because an intro each repo
    wrote for itself drifted until each said something different about one mechanism (#2486), and the fold

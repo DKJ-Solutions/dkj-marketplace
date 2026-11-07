@@ -76,7 +76,7 @@ carries the type.
 
 Creating the branch and creating its changelog entry file are no longer two separate manual steps —
 **a branch is never entry-less.** `new-branch.ps1` checks out the branch (idempotently — running it
-again on an existing branch simply resumes it) and writes `dkj-policy/<branch>.md` in the
+again on an existing branch simply resumes it) and writes `.dkj/dkj-policy/<branch>.md` in the
 same run — one document holding both jobs: the step phases, and the `### DEPLOY:` section that is the entry.
 It uses the name **exactly as given** — it does not complete a `-v<N>` suffix (see above), so a caller
 wrapping it for a branch whose name it does not own gets that name. **One script since August 7, 2026** —
@@ -113,7 +113,7 @@ table above).
 [#506](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/506) +
 [#505](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/505)). The PR is called
 `<branch-type>: <the entry's Branch title>`, so the prefix mirrors the branch type by construction and the
-words are the ones already in the DEPLOY section of `dkj-policy/<branch>.md`. `-Title` is still accepted and ignored, with a
+words are the ones already in the DEPLOY section of `.dkj/dkj-policy/<branch>.md`. `-Title` is still accepted and ignored, with a
 warning naming the title the entry gives.
 
 **That rule used to live in this very paragraph, and was violated five PRs in a row.** It read "the title
@@ -160,7 +160,7 @@ started.
 
 **The PR body fills itself in** via `open-pr.ps1` — simply leave out `-Body`. The script ticks the
 right "Type of change" box (from the branch prefix), fills "What does this change do?" with the
-description from the changelog entry (the DEPLOY section of `dkj-policy/<branch>.md`), and ticks the two checklist items
+description from the changelog entry (the DEPLOY section of `.dkj/dkj-policy/<branch>.md`), and ticks the two checklist items
 it can honestly verify ("Changelog entry written" + "Requested by Dave"). The first is judged on the file
 actually **holding** an entry, not on its existing — a branch cut before August 23, 2026 carries the trunk's
 old empty copy, so a self-ticking box keyed on existence would tick for a branch that wrote nothing. Only
@@ -221,7 +221,7 @@ folding onto a trunk it was never tested against.
 
 **Two PRs cannot merge at the same time, and `CHANGELOG.md` is why.** Every branch's fold writes into the
 same file at the same place — the top of `## [Unreleased]` in
-[`dkj-policy/CHANGELOG.md`](../../../dkj-policy/CHANGELOG.md), newest to oldest — and it writes there
+[`.dkj/dkj-policy/CHANGELOG.md`](../../../.dkj/dkj-policy/CHANGELOG.md), newest to oldest — and it writes there
 *after* the merge, on `main`. Two folds racing each other break in the gap between the merge and the
 fold, which is the state nothing reports: the PR is already merged, the entry has not landed, and every
 gate stays green until a release trips over it.
@@ -388,7 +388,7 @@ the ship — `open-pr`'s lint and test gates — is the one step that reads the 
 minute or more, and a second command in the same checkout during that minute moves it under them:
 `new-branch.ps1` cutting a branch, `worktree-lane.ps1` moving the tree. Measured on
 [PR #1144](https://github.com/DKJ-Solutions/dkj-claude-plugins/pull/1144): one suite of 55 red inside the
-gate, green standalone on the same commit seconds later, because `dkj-policy/<branch>.md` exists on the
+gate, green standalone on the same commit seconds later, because `.dkj/dkj-policy/<branch>.md` exists on the
 branch and not on the trunk and the suite walks every `*.md` under that folder. **No gate refuses this** —
 `open-pr` reports it instead: a red whose tree moved says it is not trustworthy, and a green whose tree
 moved is not recorded as gate evidence. Re-run the gate; do not go hunting the failure.
@@ -752,7 +752,7 @@ Behind *"Verify the stand against the repo, not against a handover text"* in
 [Chris's lens](specialist-01-01-lens.md#the-dave-rules): the mechanics and the history behind the two
 checklist items that are more than a single command.
 
-**`dkj-policy/<branch>.md` sitting on the trunk is a silent half-state**, because that document exists
+**`.dkj/dkj-policy/<branch>.md` sitting on the trunk is a silent half-state**, because that document exists
 only while a branch is open. Since
 [#1270](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1270)
 `check-unfolded-entry.ps1` catches it automatically, but read it yourself too: a session that starts
@@ -922,7 +922,7 @@ anyway because a contributor reading a lens has no guarantee of having the plugi
 step that is only legible to an agent is not a route.
 
 Then the branch is opened over it, and the issue number goes in the DEPLOY body so the fold carries it
-into [`dkj-policy/CHANGELOG.md`](../../../dkj-policy/CHANGELOG.md) with the change that closed it — named
+into [`.dkj/dkj-policy/CHANGELOG.md`](../../../.dkj/dkj-policy/CHANGELOG.md) with the change that closed it — named
 with a closing keyword on the PR via `-Resolves`, per
 [Opening a pull request](#opening-a-pull-request) above.
 
@@ -1288,7 +1288,7 @@ entitled to its own. Do not read a consumer without these scripts as misconfigur
 Derek prefers not to touch the git commands by hand. His toolbox:
 
 - `scripts/task/new-branch.ps1 -Name <branch-name> [-Title "…"] [-Intent "…"] [-NoPush]` — create (or
-  idempotently resume) the branch and, in the same move, write its `dkj-policy/<branch>.md`.
+  idempotently resume) the branch and, in the same move, write its `.dkj/dkj-policy/<branch>.md`.
   `-Intent` records where you left off / what is next **as the opening paragraph of `PLAN`, without a
   heading** — above the phases until #908/#925 (August 26, 2026), which is the one region the preamble
   rule refuses, so the scaffolder wrote a document its own branch-entry gate rejected. Deliberately not in
@@ -1302,7 +1302,7 @@ Derek prefers not to touch the git commands by hand. His toolbox:
   [Step 3 above](#classifying-naming-and-creating-a-branch).
 - `scripts/task/park-cycle.ps1 [-Quiet] [-UnderHook] [-BudgetSeconds <n>]` — **Derek does not run this**, and it is here so he recognises its
   commits. A Stop hook (`cycle-autopark.ps1`) invokes it after every turn and it pushes
-  `dkj-policy/<branch>.md`, and only that file, for the life of the branch — the plan
+  `.dkj/dkj-policy/<branch>.md`, and only that file, for the life of the branch — the plan
   and the phase state being what another device actually needs. **It stops PUSHING the moment a PR
   exists**, because the DEPLOY lock (#884) refuses the merge once that document diverges from what the PR
   published; a pusher that kept going would block every merge in the repo. Same reason its fail-safe runs

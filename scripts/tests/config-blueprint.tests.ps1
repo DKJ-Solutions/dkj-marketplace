@@ -400,7 +400,7 @@ $answers = & {
 } $repoConfig
 Assert-Equal 'someone/their-repo' $answers.RepoName 'the consumer keeps its own repo name'
 Assert-Equal '.claude/specialists/SPECIALISTS.md' $answers.RosterPath 'an adopted function answers'
-Assert-Equal 'dkj-policy/releases/history.md' $answers.HistoryPath 'an adopted function answers (in the workflow folder since August 27, 2026, which reverses the August 19 answer: the durability worry that sent the list back to the repo root was answered by #885 making that folder permanent)'
+Assert-Equal '.dkj/dkj-policy/releases/history.md' $answers.HistoryPath 'an adopted function answers (in the workflow folder since August 27, 2026, which reverses the August 19 answer: the durability worry that sent the list back to the repo root was answered by #885 making that folder permanent)'
 Assert-Equal 'Chore' $answers.Fallback 'an adopted function answers'
 Assert-True ($null -ne $answers.BodyHolder -and $answers.BodyHolder.Length -gt 0) 'a function that sits below the shared assignment block still answers (extraction bug 2)'
 

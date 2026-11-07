@@ -71,7 +71,7 @@ Decision by Dave, August 3, 2026.
 
 ### The two pages the workflow folder used to carry, and why they are gone
 
-**`dkj-policy/` holds no `README.md` and no `CONTRIBUTING.md` any more** (Dave,
+**`.dkj/dkj-policy/` holds no `README.md` and no `CONTRIBUTING.md` any more** (Dave,
 [#2171](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2171), September 20, 2026, carried
 out for this repo's own copies by
 [#2179](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2179)): *"deze twee bestanden in een
@@ -435,7 +435,7 @@ that applies here.
 
 **The measurement**, taken September 19, 2026 with `git grep` against `origin/main` -- the ref is
 named because the first pass was run on a local trunk 11 commits behind and reported different
-figures -- outside the `dkj-policy/releases/**`
+figures -- outside the `.dkj/dkj-policy/releases/**`
 historical carve-out: **270 occurrences of `agent def` / `agent-def` / `agent defs` across 87
 markdown files**, against **11** of `subagent def(inition)`, plus **195 lines** of the same in `.ps1`
 comments, docstrings and console output across 50 scripts.

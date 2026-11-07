@@ -1214,6 +1214,15 @@ function Get-SharedScriptPairs {
             LibOnly = $true
         },
         @{
+            # THE WORKFLOW FOLDER'S NAME (#3870): '.dkj/dkj-policy' and the names it had before. A leaf with no
+            # dependencies, mirrored because seam-lib and entry-scaffold-lib both dot-source it and a
+            # consumer runs the mirror -- and so do the hub's release-notes route and measure-closeouts.
+            Name    = 'workflow-folder-lib'
+            Source  = 'scripts\lib\workflow-folder-lib.ps1'
+            Plugin  = 'dkj-policy'
+            LibOnly = $true
+        },
+        @{
             # THE SECOND MIRROR OF THE SAME SOURCE, on ref-print-lib-shopify's precedent above -- read
             # native-capture-lib-shopify's banner for why a second entry rather than a list of mirrors.
             # The caller here is that plugin's own native-capture-lib copy, which dot-sources this one.

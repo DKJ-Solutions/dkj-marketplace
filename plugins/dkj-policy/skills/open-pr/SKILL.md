@@ -44,7 +44,7 @@ whose refusal came back to a backgrounded caller as `completed (exit code 0)`; t
 **No title is passed, and that is the change of August 7, 2026 ([#506](https://github.com/DKJ-Solutions/claude-code-specialists/issues/506)
 + [#505](https://github.com/DKJ-Solutions/claude-code-specialists/issues/505)).** The PR is called
 `<branch type>: <the entry's Branch title>` — the type off the branch prefix, the words out of
-the DEPLOY section of `dkj-policy/<branch>.md`. So the sentence is written **once**, when the branch is created
+the DEPLOY section of `.dkj/dkj-policy/<branch>.md`. So the sentence is written **once**, when the branch is created
 (`new-branch -Title`), and the PR, `CHANGELOG.md` and the release documents cannot disagree about what the
 change is called. It also cannot lose its type prefix, which the five PRs before this change all had.
 
@@ -615,7 +615,7 @@ nothing at all.
 
 ## The entry gate: is there an entry at all?
 
-`Test-DevelopmentEntryMissing` refuses to push a `dkj-policy/<branch>.md` whose **DEPLOY section is
+`Test-DevelopmentEntryMissing` refuses to push a `.dkj/dkj-policy/<branch>.md` whose **DEPLOY section is
 gone**. It runs ahead of the scaffold gate below, and it is a separate gate rather than a stricter version
 of it — which is the whole reason it exists.
 
@@ -701,7 +701,7 @@ than refused, and every finding quotes the level it actually read.
 rules used to live only in `check-branch-entry.ps1`, which **reports** rather than refuses. A document that
 had lost its first phase heading — to an edit that anchored on the string `### PLAN`, which occurs inside
 the guidance blockquote as well — then shipped through push, the required check, the merge and the fold,
-with every other gate correctly green. And the fold **removes** `dkj-policy/<branch>.md` on success, so
+with every other gate correctly green. And the fold **removes** `.dkj/dkj-policy/<branch>.md` on success, so
 afterwards the red check pointed at a path that no longer existed. Here the refusal lands while the file is
 still on disk.
 
@@ -713,13 +713,13 @@ still on disk.
 
 ## The link gate: do the entry's links survive the fold?
 
-The entry is the DEPLOY section of `dkj-policy/<branch>.md`, and the fold copies its text
+The entry is the DEPLOY section of `.dkj/dkj-policy/<branch>.md`, and the fold copies its text
 **verbatim** into your `CHANGELOG.md`. So a relative link in it has to resolve from **that file's directory**,
 which is not necessarily the one you are typing in — and where the two differ, the correct link looks wrong
 until it moves.
 
 **The base is your `Get-ChangelogPath`, read the same way the fold reads it.** Left unset, a repo that
-publishes no plugin marketplace gets `dkj-policy/CHANGELOG.md` — the same directory as the
+publishes no plugin marketplace gets `.dkj/dkj-policy/CHANGELOG.md` — the same directory as the
 document — so there the link that already reads correctly in front of you is the correct one. The source repo
 keeps its changelog at the root, and there it is the other way round:
 

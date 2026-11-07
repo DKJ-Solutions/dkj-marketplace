@@ -149,15 +149,15 @@ function Invoke-Adopt {
 # are placed", which is the claim the loop below actually makes and the only one worth having: the
 # folder's whole contents are now one file, and the next page added here has to be added here.
 $ExpectedFiles = @(
-    'dkj-policy\CHANGELOG.md'
+    '.dkj\dkj-policy\CHANGELOG.md'
 )
 # THE ABSENCE ITSELF IS ASSERTED, NOT JUST IMPLIED BY LEAVING THEM OFF THE LIST ABOVE. A list nobody
 # checks the negative of is a list the next refactor can add a line back to without any assert
 # noticing -- which is exactly how these pages arrived silently in the first place.
 $RetiredScaffoldFiles = @(
-    'dkj-policy\README.md',
-    'dkj-policy\CONTRIBUTING.md',
-    'dkj-policy\releases\README.md'
+    '.dkj\dkj-policy\README.md',
+    '.dkj\dkj-policy\CONTRIBUTING.md',
+    '.dkj\dkj-policy\releases\README.md'
 )
 
 try {
@@ -170,14 +170,14 @@ try {
     $r1 = Invoke-Adopt -Dir $c1
     Assert-Equal 0 $r1.Code 'dry run: exit 0'
     Assert-Match 'DRY RUN' $r1.Out 'dry run: says so out loud'
-    Assert-Match '\[create\]\s+dkj-policy/CHANGELOG\.md' $r1.Out 'dry run: lists the changelog as to-create'
-    Assert-True (-not (Test-Path -LiteralPath (Join-Path $c1 'dkj-policy'))) 'dry run: the folder was not created'
+    Assert-Match '\[create\]\s+\.dkj/dkj-policy/CHANGELOG\.md' $r1.Out 'dry run: lists the changelog as to-create'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $c1 '.dkj\dkj-policy'))) 'dry run: the folder was not created'
     # NO RETIRED PAGE IS EVER LISTED AS TO-CREATE (#2171, #2196) -- this run scaffolds none of the
     # three, so a dry run over a fresh consumer (who has none of them) reports no legacy line either:
     # there is nothing to report on.
-    Assert-True ($r1.Out -notmatch '\[create\]\s+dkj-policy/README\.md') 'dry run: the retired README is never listed as to-create'
-    Assert-True ($r1.Out -notmatch '\[create\]\s+dkj-policy/CONTRIBUTING\.md') 'dry run: the retired CONTRIBUTING is never listed as to-create'
-    Assert-True ($r1.Out -notmatch '\[create\]\s+dkj-policy/releases/README\.md') 'dry run: the retired releases page is never listed as to-create'
+    Assert-True ($r1.Out -notmatch '\[create\]\s+\.dkj/dkj-policy/README\.md') 'dry run: the retired README is never listed as to-create'
+    Assert-True ($r1.Out -notmatch '\[create\]\s+\.dkj/dkj-policy/CONTRIBUTING\.md') 'dry run: the retired CONTRIBUTING is never listed as to-create'
+    Assert-True ($r1.Out -notmatch '\[create\]\s+\.dkj/dkj-policy/releases/README\.md') 'dry run: the retired releases page is never listed as to-create'
     Assert-True ($r1.Out -notmatch '\[legacy\]') 'dry run: a fresh consumer with no retired page triggers no legacy report'
     # The PR template is in the plan and not on disk -- the whole promise of the default run (#1843).
     Assert-Match '\[create\]\s+\.github/pull_request_template\.md' $r1.Out 'dry run: lists the PR template as to-create'
@@ -294,13 +294,13 @@ try {
     # folder was also their reference. The document exists only while a branch is open now, so placing one
     # would hand them a file their own first fold deletes -- the only entry in this list that is not
     # permanently theirs.
-    Assert-True (-not (Test-Path -LiteralPath (Join-Path $c2 'dkj-policy\development.md'))) '-Apply: the branch document is NOT placed -- it lives only while a branch is open'
-    Assert-True (-not (Test-Path -LiteralPath (Join-Path $c2 'dkj-policy\branch'))) '-Apply: and no branch/ directory is placed any more'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $c2 '.dkj\dkj-policy\development.md'))) '-Apply: the branch document is NOT placed -- it lives only while a branch is open'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $c2 '.dkj\dkj-policy\branch'))) '-Apply: and no branch/ directory is placed any more'
     # NEITHER IS THE AUDIENCE ROOT (issue #1150). It was placed as a .gitkeep on the stated ground that
     # "the audience root must exist before the first cut writes into it" -- a premise cut-release itself
     # contradicts: it creates the note's own parent before writing. So the file bought nothing, while what
     # it did buy was an empty committed directory asserting a destination the unanswered seam did not use.
-    Assert-True (-not (Test-Path -LiteralPath (Join-Path $c2 'dkj-policy\releases\audience'))) '-Apply: the audience root is NOT placed -- the first cut creates it'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $c2 '.dkj\dkj-policy\releases\audience'))) '-Apply: the audience root is NOT placed -- the first cut creates it'
     # TWO ASSERTS ON THE SCAFFOLDED RELEASES PAGE WERE DROPPED HERE (#2196), NOT MOVED. They were the
     # regression guard on inbound #786: until August 20, 2026 that page was scaffolded with a
     # '## Release history' heading, a table, and a VUL-IN promising that the cut would insert its rows
@@ -323,7 +323,7 @@ try {
     # ASSERTED AGAINST Get-EntryHeadingLevel RATHER THAN AGAINST '###'. Pinning the literal would pass while
     # the sentence went stale again at the next shift, which is exactly the failure being repaired -- and it
     # would also turn red for a repo that legitimately overrode the level. The constant is the claim.
-    $clText = [System.IO.File]::ReadAllText((Join-Path $c2 'dkj-policy\CHANGELOG.md'), [System.Text.Encoding]::UTF8)
+    $clText = [System.IO.File]::ReadAllText((Join-Path $c2 '.dkj\dkj-policy\CHANGELOG.md'), [System.Text.Encoding]::UTF8)
     $entryHashes = '#' * (Get-EntryHeadingLevel)
     # SUPERSEDED BY #2486: there is no intro sentence left to go stale. The scaffolded document IS the fixed
     # head, byte for byte, which retires the #1098 defect by removing the sentence it lived in.
@@ -369,11 +369,11 @@ try {
     # is ever retired too, this assert has nowhere left to go and the contract it proves is empty.
     Write-Host "adopt-workflow-folder -- re-run keeps every existing file" -ForegroundColor Cyan
     $marker = '# HAND-EDITED -- the scaffold must never win over this line'
-    [System.IO.File]::WriteAllText((Join-Path $c2 'dkj-policy\CHANGELOG.md'), $marker)
+    [System.IO.File]::WriteAllText((Join-Path $c2 '.dkj\dkj-policy\CHANGELOG.md'), $marker)
     $r3 = Invoke-Adopt -Dir $c2 -ScriptArgs @('-Apply')
     Assert-Equal 0 $r3.Code 're-run: exit 0'
-    Assert-Match '\[exists\]\s+dkj-policy/CHANGELOG\.md' $r3.Out 're-run: the edited file is reported as left alone'
-    $kept = [System.IO.File]::ReadAllText((Join-Path $c2 'dkj-policy\CHANGELOG.md'), [System.Text.Encoding]::UTF8)
+    Assert-Match '\[exists\]\s+\.dkj/dkj-policy/CHANGELOG\.md' $r3.Out 're-run: the edited file is reported as left alone'
+    $kept = [System.IO.File]::ReadAllText((Join-Path $c2 '.dkj\dkj-policy\CHANGELOG.md'), [System.Text.Encoding]::UTF8)
     Assert-Equal $marker $kept 're-run: the hand-edited content survives byte for byte'
 
     # AND THE SAME FOR THE PR TEMPLATE, asserted separately because it is the file most likely to be
@@ -395,7 +395,7 @@ try {
     $r4 = Invoke-Adopt -Dir $c4 -ScriptArgs @('-Apply')
     Assert-Equal 1 $r4.Code 'workflow source: exit 1'
     Assert-Match 'REFUSED' $r4.Out 'workflow source: says it is refusing, and why'
-    Assert-True (-not (Test-Path -LiteralPath (Join-Path $c4 'dkj-policy'))) 'workflow source: nothing was written'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $c4 '.dkj\dkj-policy'))) 'workflow source: nothing was written'
 
     # --- 4b. A repo that publishes OTHER plugins is NOT refused (issue #998) -------------------------
     # THE CASE THIS SCRIPT USED TO GET WRONG, and the harm was concrete: the refusal was `Test-Path
@@ -408,7 +408,7 @@ try {
     $rOther = Invoke-Adopt -Dir $cOther -ScriptArgs @('-Apply')
     Assert-Equal 0 $rOther.Code 'other plugins: exit 0 -- not refused'
     Assert-True ($rOther.Out -notmatch 'REFUSED') 'other plugins: no refusal in the output'
-    Assert-True (Test-Path -LiteralPath (Join-Path $cOther 'dkj-policy\CHANGELOG.md')) 'other plugins: the folder really was scaffolded'
+    Assert-True (Test-Path -LiteralPath (Join-Path $cOther '.dkj\dkj-policy\CHANGELOG.md')) 'other plugins: the folder really was scaffolded'
 
     # --- 5. The two generated note roots #914 moved (issue #955) -------------------------------------
     # BOTH DIRECTIONS ARE ASSERTED, and the silent one is the half that matters. A warning that fires
@@ -469,7 +469,7 @@ try {
     Assert-Equal 0 $r7.Code 'seam fresh: exit 0'
     $cfg7 = [System.IO.File]::ReadAllText((Join-Path $c7 'scripts\repo-config.ps1'), [System.Text.Encoding]::UTF8)
     Assert-Match 'function Get-ReleaseNoteRoot' $cfg7 'seam fresh: the answer was written into scripts/repo-config.ps1'
-    Assert-Match "'dkj-policy/releases/audience'" $cfg7 'seam fresh: and it points into the folder this run just scaffolded'
+    Assert-Match "'\.dkj/dkj-policy/releases/audience'" $cfg7 'seam fresh: and it points into the folder this run just scaffolded'
     # THE GENERATED SOURCE IS PARSED, not merely matched. This block writes PowerShell into somebody
     # else's lib, and the failure mode it already produced once in development is a file that greps
     # correctly and does not parse -- an array literal splits an unparenthesised 'a' + $x + 'b' into three
@@ -533,7 +533,7 @@ try {
         Assert-Equal 0 @(Get-ChildItem -LiteralPath $c9gOut -Recurse -Force).Count 'create junction: nothing was written outside the repo'
         Assert-Match '\[refused\]\s+\.github/workflows/branch-entry\.yml' $r9g.Flat 'create junction: the run names the refused file'
         Assert-Match 'file\(s\) refused' $r9g.Flat 'create junction: the summary counts the refusals'
-        Assert-True (Test-Path -LiteralPath (Join-Path $c9g 'dkj-policy\CHANGELOG.md')) 'create junction: a file outside the junction is still created'
+        Assert-True (Test-Path -LiteralPath (Join-Path $c9g '.dkj\dkj-policy\CHANGELOG.md')) 'create junction: a file outside the junction is still created'
     } finally {
         & cmd /c rmdir "$(Join-Path $c9g '.github')" | Out-Null
     }
@@ -545,7 +545,7 @@ try {
     $r10 = Invoke-Adopt -Dir $c10 -ScriptArgs @('-Apply')
     Assert-Equal 0 $r10.Code 'seam no-config: exit 0'
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $c10 'scripts\repo-config.ps1'))) 'seam no-config: no lib was conjured up'
-    Assert-True (Test-Path -LiteralPath (Join-Path $c10 'dkj-policy\CHANGELOG.md')) 'seam no-config: the folder was scaffolded anyway'
+    Assert-True (Test-Path -LiteralPath (Join-Path $c10 '.dkj\dkj-policy\CHANGELOG.md')) 'seam no-config: the folder was scaffolded anyway'
     Assert-Match 'has no scripts/repo-config\.ps1' $r10.Flat 'seam no-config: and the run says why the seam is unanswered'
 
     # --- WHAT USED TO BE HERE: the UPDATE-section fence (#1766) and its CRLF coverage (#1829) --------
@@ -589,26 +589,26 @@ try {
     # (b) ALL THREE PRESENT, WITH ARBITRARY CONTENT: the important case, because it is the one where a
     # regression would silently start rewriting or deleting a consumer's own page again.
     $c17 = New-FixtureConsumer -Label 'legacy-both'
-    New-Item -ItemType Directory -Path (Join-Path $c17 'dkj-policy') -Force | Out-Null
-    New-Item -ItemType Directory -Path (Join-Path $c17 'dkj-policy\releases') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $c17 '.dkj\dkj-policy') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $c17 '.dkj\dkj-policy\releases') -Force | Out-Null
     $legacyReadme = "# Our own dkj-policy folder`r`n`r`nWritten long before #2171, in our own words.`r`n"
     $legacyContributing = "# Our own CONTRIBUTING`n`nArbitrary content, no BOM, no relation to anything this script writes.`n"
     $legacyReleases = "# Our own releases page`r`n`r`nOur seam answers, written before #2196.`r`n"
-    [System.IO.File]::WriteAllText((Join-Path $c17 'dkj-policy\README.md'), $legacyReadme, (New-Object System.Text.UTF8Encoding($false)))
-    [System.IO.File]::WriteAllText((Join-Path $c17 'dkj-policy\CONTRIBUTING.md'), $legacyContributing, (New-Object System.Text.UTF8Encoding($false)))
-    [System.IO.File]::WriteAllText((Join-Path $c17 'dkj-policy\releases\README.md'), $legacyReleases, (New-Object System.Text.UTF8Encoding($false)))
+    [System.IO.File]::WriteAllText((Join-Path $c17 '.dkj\dkj-policy\README.md'), $legacyReadme, (New-Object System.Text.UTF8Encoding($false)))
+    [System.IO.File]::WriteAllText((Join-Path $c17 '.dkj\dkj-policy\CONTRIBUTING.md'), $legacyContributing, (New-Object System.Text.UTF8Encoding($false)))
+    [System.IO.File]::WriteAllText((Join-Path $c17 '.dkj\dkj-policy\releases\README.md'), $legacyReleases, (New-Object System.Text.UTF8Encoding($false)))
     $r17 = Invoke-Adopt -Dir $c17 -ScriptArgs @('-Apply')
     Assert-Equal 0 $r17.Code 'legacy both: exit 0'
-    Assert-Match '\[legacy\]\s+dkj-policy/README\.md' $r17.Flat 'legacy both: the README is reported as legacy'
-    Assert-Match '\[legacy\]\s+dkj-policy/CONTRIBUTING\.md' $r17.Flat 'legacy both: and so is CONTRIBUTING'
-    Assert-Match '\[legacy\]\s+dkj-policy/releases/README\.md' $r17.Flat 'legacy both: and so is the releases page, one directory down'
+    Assert-Match '\[legacy\]\s+\.dkj/dkj-policy/README\.md' $r17.Flat 'legacy both: the README is reported as legacy'
+    Assert-Match '\[legacy\]\s+\.dkj/dkj-policy/CONTRIBUTING\.md' $r17.Flat 'legacy both: and so is CONTRIBUTING'
+    Assert-Match '\[legacy\]\s+\.dkj/dkj-policy/releases/README\.md' $r17.Flat 'legacy both: and so is the releases page, one directory down'
     Assert-Match 'no longer writes or refreshes it' $r17.Flat 'legacy both: the report names what changed'
     # THE PART THAT MATTERS MOST: BYTE FOR BYTE, after -Apply. A CRLF file with no trailing BOM and an
     # LF file are read back exactly as written, so a rewrite -- even one that only touched line endings
     # or re-encoded the file -- would be caught here.
-    $afterReadme17 = [System.IO.File]::ReadAllText((Join-Path $c17 'dkj-policy\README.md'), [System.Text.Encoding]::UTF8)
-    $afterContributing17 = [System.IO.File]::ReadAllText((Join-Path $c17 'dkj-policy\CONTRIBUTING.md'), [System.Text.Encoding]::UTF8)
-    $afterReleases17 = [System.IO.File]::ReadAllText((Join-Path $c17 'dkj-policy\releases\README.md'), [System.Text.Encoding]::UTF8)
+    $afterReadme17 = [System.IO.File]::ReadAllText((Join-Path $c17 '.dkj\dkj-policy\README.md'), [System.Text.Encoding]::UTF8)
+    $afterContributing17 = [System.IO.File]::ReadAllText((Join-Path $c17 '.dkj\dkj-policy\CONTRIBUTING.md'), [System.Text.Encoding]::UTF8)
+    $afterReleases17 = [System.IO.File]::ReadAllText((Join-Path $c17 '.dkj\dkj-policy\releases\README.md'), [System.Text.Encoding]::UTF8)
     Assert-Equal $legacyReadme $afterReadme17 'legacy both: README.md survives -Apply byte for byte'
     Assert-Equal $legacyContributing $afterContributing17 'legacy both: CONTRIBUTING.md survives -Apply byte for byte'
     Assert-Equal $legacyReleases $afterReleases17 'legacy both: releases/README.md survives -Apply byte for byte'
@@ -620,28 +620,28 @@ try {
     # (c) ONE PRESENT, ONE ABSENT: only the one that exists is named, and the absent one is neither
     # reported nor created.
     $c18 = New-FixtureConsumer -Label 'legacy-onlyreadme'
-    New-Item -ItemType Directory -Path (Join-Path $c18 'dkj-policy') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $c18 '.dkj\dkj-policy') -Force | Out-Null
     $onlyReadme = "# Just our README, no CONTRIBUTING here.`n"
-    [System.IO.File]::WriteAllText((Join-Path $c18 'dkj-policy\README.md'), $onlyReadme, (New-Object System.Text.UTF8Encoding($false)))
+    [System.IO.File]::WriteAllText((Join-Path $c18 '.dkj\dkj-policy\README.md'), $onlyReadme, (New-Object System.Text.UTF8Encoding($false)))
     $r18 = Invoke-Adopt -Dir $c18 -ScriptArgs @('-Apply')
     Assert-Equal 0 $r18.Code 'legacy one-of-two: exit 0'
-    Assert-Match '\[legacy\]\s+dkj-policy/README\.md' $r18.Flat 'legacy one-of-two: the present README is reported'
-    Assert-True ($r18.Flat -notmatch '\[legacy\]\s+dkj-policy/CONTRIBUTING\.md') 'legacy one-of-two: the absent CONTRIBUTING is not reported'
-    Assert-True (-not (Test-Path -LiteralPath (Join-Path $c18 'dkj-policy\CONTRIBUTING.md'))) 'legacy one-of-two: and it was not created either'
-    Assert-Equal $onlyReadme ([System.IO.File]::ReadAllText((Join-Path $c18 'dkj-policy\README.md'), [System.Text.Encoding]::UTF8)) `
+    Assert-Match '\[legacy\]\s+\.dkj/dkj-policy/README\.md' $r18.Flat 'legacy one-of-two: the present README is reported'
+    Assert-True ($r18.Flat -notmatch '\[legacy\]\s+\.dkj/dkj-policy/CONTRIBUTING\.md') 'legacy one-of-two: the absent CONTRIBUTING is not reported'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $c18 '.dkj\dkj-policy\CONTRIBUTING.md'))) 'legacy one-of-two: and it was not created either'
+    Assert-Equal $onlyReadme ([System.IO.File]::ReadAllText((Join-Path $c18 '.dkj\dkj-policy\README.md'), [System.Text.Encoding]::UTF8)) `
         'legacy one-of-two: the present README survives -Apply byte for byte'
 
     # And the mirror image, so the "only the present one is named" claim is proven both ways.
     $c19 = New-FixtureConsumer -Label 'legacy-onlycontributing'
-    New-Item -ItemType Directory -Path (Join-Path $c19 'dkj-policy') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $c19 '.dkj\dkj-policy') -Force | Out-Null
     $onlyContributing = "# Just our CONTRIBUTING, no README here.`n"
-    [System.IO.File]::WriteAllText((Join-Path $c19 'dkj-policy\CONTRIBUTING.md'), $onlyContributing, (New-Object System.Text.UTF8Encoding($false)))
+    [System.IO.File]::WriteAllText((Join-Path $c19 '.dkj\dkj-policy\CONTRIBUTING.md'), $onlyContributing, (New-Object System.Text.UTF8Encoding($false)))
     $r19 = Invoke-Adopt -Dir $c19 -ScriptArgs @('-Apply')
     Assert-Equal 0 $r19.Code 'legacy other-of-two: exit 0'
-    Assert-Match '\[legacy\]\s+dkj-policy/CONTRIBUTING\.md' $r19.Flat 'legacy other-of-two: the present CONTRIBUTING is reported'
-    Assert-True ($r19.Flat -notmatch '\[legacy\]\s+dkj-policy/README\.md') 'legacy other-of-two: the absent README is not reported'
-    Assert-True (-not (Test-Path -LiteralPath (Join-Path $c19 'dkj-policy\README.md'))) 'legacy other-of-two: and it was not created either'
-    Assert-Equal $onlyContributing ([System.IO.File]::ReadAllText((Join-Path $c19 'dkj-policy\CONTRIBUTING.md'), [System.Text.Encoding]::UTF8)) `
+    Assert-Match '\[legacy\]\s+\.dkj/dkj-policy/CONTRIBUTING\.md' $r19.Flat 'legacy other-of-two: the present CONTRIBUTING is reported'
+    Assert-True ($r19.Flat -notmatch '\[legacy\]\s+\.dkj/dkj-policy/README\.md') 'legacy other-of-two: the absent README is not reported'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $c19 '.dkj\dkj-policy\README.md'))) 'legacy other-of-two: and it was not created either'
+    Assert-Equal $onlyContributing ([System.IO.File]::ReadAllText((Join-Path $c19 '.dkj\dkj-policy\CONTRIBUTING.md'), [System.Text.Encoding]::UTF8)) `
         'legacy other-of-two: the present CONTRIBUTING survives -Apply byte for byte'
 
     # --- The plugin mirror, run from its OWN depth (issue #1857) -----------------------------------
@@ -797,6 +797,31 @@ try {
     $cE2 = New-FixtureConsumer -Label 'ext-none'
     $rE2 = Invoke-Adopt -Dir $cE2 -ScriptArgs @('-Apply')
     Assert-True ($rE2.Flat -notmatch 'extension import') 'extensions: none enabled -- nothing said about them'
+
+    # THE MOVE TO .dkj/dkj-policy/ (#3870). A consumer adopted before that day holds the root dkj-policy/,
+    # states its changelog seam as a literal into it, and gitignores a page under it. A dry run names the
+    # move and moves nothing; -Apply moves the folder and repoints exactly the quoted path and the line
+    # that START with the old folder -- prose naming it is history and stays.
+    $cMv = New-FixtureConsumer -Label 'move-dotfolder'
+    New-Item -ItemType Directory -Path (Join-Path $cMv 'dkj-policy') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $cMv 'scripts') -Force | Out-Null
+    $mvChangelog = "# Changelog`n`nOur history.`n"
+    [System.IO.File]::WriteAllText((Join-Path $cMv 'dkj-policy\CHANGELOG.md'), $mvChangelog)
+    [System.IO.File]::WriteAllText((Join-Path $cMv 'scripts\repo-config.ps1'),
+        "`$script:ChangelogPath = 'dkj-policy/CHANGELOG.md'`nfunction Get-ChangelogPath { `$script:ChangelogPath }`n# the dkj-policy/ folder, in prose`n")
+    [System.IO.File]::WriteAllText((Join-Path $cMv '.gitignore'), "/dkj-policy/dashboard/`nnode_modules/`n")
+    $rMvDry = Invoke-Adopt -Dir $cMv
+    Assert-Match '\[move\]\s+dkj-policy/ -> \.dkj/dkj-policy/' $rMvDry.Flat 'move: the dry run names the move'
+    Assert-True (Test-Path -LiteralPath (Join-Path $cMv 'dkj-policy\CHANGELOG.md')) 'move: and the dry run moved nothing'
+    $rMv = Invoke-Adopt -Dir $cMv -ScriptArgs @('-Apply')
+    Assert-Equal 0 $rMv.Code 'move: -Apply exits 0'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $cMv 'dkj-policy'))) 'move: the root folder is gone'
+    Assert-Equal $mvChangelog ([System.IO.File]::ReadAllText((Join-Path $cMv '.dkj\dkj-policy\CHANGELOG.md'))) 'move: the changelog arrived byte for byte'
+    $mvCfg = [System.IO.File]::ReadAllText((Join-Path $cMv 'scripts\repo-config.ps1'))
+    Assert-Match "ChangelogPath = '\.dkj/dkj-policy/CHANGELOG\.md'" $mvCfg 'move: the quoted seam answer is repointed'
+    Assert-Match '# the dkj-policy/ folder, in prose' $mvCfg 'move: and prose naming the old folder is left as written'
+    Assert-Match '(?m)^/\.dkj/dkj-policy/dashboard/' ([System.IO.File]::ReadAllText((Join-Path $cMv '.gitignore'))) 'move: the .gitignore line is repointed'
+    Assert-Match '\[exists\]\s+\.dkj/dkj-policy/CHANGELOG\.md' $rMv.Out 'move: and the scaffold that follows reads the moved folder'
 
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }

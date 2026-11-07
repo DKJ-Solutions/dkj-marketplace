@@ -1373,7 +1373,8 @@ function Test-BranchEntryAlreadyFolded {
     #>
     param([Parameter(Mandatory)][string]$Branch)
     try {
-        $doc = "dkj-policy/$($Branch -replace '/', '-').md"
+        # The folder is read off this tree (#3870): '.dkj/dkj-policy/' once a repo has moved, 'dkj-policy/' before.
+        $doc = [string](Get-BranchFilePaths -Branch $Branch -RepoRoot $repoRoot).File
         $onHead = (Invoke-NativeCapture -FilePath 'git' -DiscardStderr -Arguments @('cat-file', '-e', "HEAD:$doc")).ExitCode -eq 0
         if (-not $onHead) { return $false }
         $delLog = Invoke-NativeCapture -FilePath 'git' -DiscardStderr -Arguments @(
@@ -1537,7 +1538,7 @@ function Wait-CheckRegistration {
             # the file and is deliberately left raw: a strip there would look for a file that does not
             # exist. The two spellings differ only for a name no repo should have, and only in the
             # direction that makes the printed one readable.
-            $conflictNote += " AND THIS BRANCH IS SPENT: its changelog entry ($(Get-DisplayRef -Ref ("dkj-policy/$($Branch -replace '/', '-').md"))) has already folded on 'main', so the conflict is the fold's deletion against this branch's own copy -- resolving it just re-adds a folded entry. Put the follow-up work on a fresh branch off 'main' (#1584)."
+            $conflictNote += " AND THIS BRANCH IS SPENT: its changelog entry ($(Get-DisplayRef -Ref ([string](Get-BranchFilePaths -Branch $Branch -RepoRoot $repoRoot).File))) has already folded on 'main', so the conflict is the fold's deletion against this branch's own copy -- resolving it just re-adds a folded entry. Put the follow-up work on a fresh branch off 'main' (#1584)."
         }
         Write-Error "No CI check will register for PR #$Pr -- NOT merged (CONFLICTING). $conflictNote"
         exit 1
@@ -1818,7 +1819,7 @@ function Get-FoldExemptCommits {
     $reservedForFold = @()
     try {
         $changelogForFold = Get-SeamValue -Name 'Get-ChangelogPath' -Default (Get-DefaultChangelogPath -RepoRoot $repoRoot)
-        $branchPathsForFold = Get-BranchFilePaths
+        $branchPathsForFold = Get-BranchFilePaths -RepoRoot $repoRoot
         $entryDirForFold = $branchPathsForFold.Directory
         $reservedForFold = @($branchPathsForFold.ReservedNames)
     } catch {

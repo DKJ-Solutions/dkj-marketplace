@@ -397,7 +397,7 @@ $documents = if (Test-FunctionDefined 'Get-CheckProseCorpus') {
     @(Get-CheckProseCorpus -RepoRoot $repoRoot -RootDocument $RootDocument)
 } else { @() }
 
-$branchPaths = Get-BranchFilePaths
+$branchPaths = Get-BranchFilePaths -RepoRoot $repoRoot
 $consumerRels = @(Get-ConsumerProseDocuments -Documents $documents)
 $folderPrefix = "$($branchPaths.Directory)/"
 

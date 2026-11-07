@@ -153,9 +153,9 @@ try {
     # ONE DOCUMENT, AND NO branch/ DIRECTORY AT ALL. The second half is the assert that would catch a
     # scaffolder still writing the retired pair beside the new file -- which would leave two entries for one
     # branch, the exact half-state the merge removes.
-    $wfDirFiles = @(Get-ChildItem -LiteralPath (Join-Path $fixtureBC 'dkj-policy') -Filter '*.md' -File)
+    $wfDirFiles = @(Get-ChildItem -LiteralPath (Join-Path $fixtureBC '.dkj\dkj-policy') -Filter '*.md' -File)
     Assert-Equal 1 $wfDirFiles.Count 'exactly one branch document, no duplicate per branch'
-    Assert-True (-not (Test-Path -LiteralPath (Join-Path $fixtureBC 'dkj-policy\branch'))) 'and no branch/ directory is created any more'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $fixtureBC '.dkj\dkj-policy\branch'))) 'and no branch/ directory is created any more'
 
     Write-Host "new-branch.ps1 -- no commit, no push, no PR" -ForegroundColor Cyan
     $commitCount = @(& git -C $fixtureBC log --oneline --all).Count
@@ -163,7 +163,8 @@ try {
     $remotes = @(& git -C $fixtureBC remote)
     Assert-Equal 0 $remotes.Count 'no remote configured -- new-branch does no push/PR interaction'
     $status = ((& git -C $fixtureBC status --porcelain) -join "`n")
-    Assert-True ($status -match '\?\? dkj-policy/') 'the branch files are untracked -- no git add/commit performed'
+    # '.dkj/' and not the folder itself: git collapses a wholly untracked tree to its top directory (#3870).
+    Assert-True ($status -match '\?\? \.dkj/') 'the branch files are untracked -- no git add/commit performed'
 
     # --- (b2) THE VERSION SUFFIX IS NOT COMPLETED, IN BOTH DIRECTIONS (Dave, September 3, 2026) -------
     # new-branch no longer appends '-v1'. This block is the guard against a restore: a bare name must stay

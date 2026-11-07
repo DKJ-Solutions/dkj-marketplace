@@ -1032,7 +1032,11 @@ function Get-PrDescriptionPlaceholderDefaults {
         "<!-- Filled from the DEPLOY section of dkj-policy/development.md, heading and all. Opening a PR by hand? Paste that whole section here, starting at its '## DEPLOY:' line. -->",
         "<!-- Filled from the DEPLOY section of dkj-policy/development-<branch>.md, heading and all. Opening a PR by hand? Paste that whole section here, starting at its '## DEPLOY:' line. -->",
         "<!-- Filled from the DEPLOY section of dkj-policy/<branch>.md, heading and all. Opening a PR by hand? Paste that whole section here, starting at its '## DEPLOY:' line. -->",
-        "<!-- Filled from the DEPLOY section of dkj-policy/<branch>.md, heading and all. Opening a PR by hand? Paste that whole section here, starting at its '### DEPLOY:' line. -->"
+        "<!-- Filled from the DEPLOY section of dkj-policy/<branch>.md, heading and all. Opening a PR by hand? Paste that whole section here, starting at its '### DEPLOY:' line. -->",
+        # AND THE FOLDER MOVED UNDER '.dkj/' (#3870, November 7, 2026). Appended for #952's reason once more:
+        # every consumer's template still carries the line above, and it stays recognised. The last line is
+        # the one that is WRITTEN.
+        "<!-- Filled from the DEPLOY section of .dkj/dkj-policy/<branch>.md, heading and all. Opening a PR by hand? Paste that whole section here, starting at its '### DEPLOY:' line. -->"
     )
 }
 

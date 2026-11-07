@@ -74,7 +74,7 @@ step begins.
 ## What the cycle gains here
 
 **Install this beside `dkj-policy` and that workflow's cycle gains exactly two steps.** Everything
-before the step list is unchanged -- the issue, the branch, its `dkj-policy/<branch>.md`, the writing of
+before the step list is unchanged -- the issue, the branch, its `.dkj/dkj-policy/<branch>.md`, the writing of
 `### PLAN` / `### CREATE` / `### TEST` -- and nothing already in that document is rewritten
 (Dave, September 18, 2026,
 [#2100](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2100)).

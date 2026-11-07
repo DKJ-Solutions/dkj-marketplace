@@ -773,7 +773,7 @@ if ($BypassNote -and -not $bypassSkipped) {
 # choosing to. Preferring the new path and falling back to the old one is what lets a branch cut over
 # mid-flight without this gate suddenly finding no entry -- which would not merely warn, it would let a
 # scaffolded entry through, since a gate with nothing to read reports nothing.
-$branchFiles = Get-BranchFilePaths
+$branchFiles = Get-BranchFilePaths -RepoRoot $repoRoot
 # Resolve- rather than Get-, because the file may still carry its pre-August-19-2026 name on a branch
 # that was created before the rename -- exactly the mid-flight cut-over the paragraph above describes,
 # one rename further on.
@@ -1910,7 +1910,7 @@ $(if ($entryTier.Shape -eq 'sections') { 'Correct the Score line(s) named above 
         # own way: the first was the seam's old default (inbound #967) and the second was where the entry
         # sat before it became a section of the cycle document -- so on the shipped defaults this refusal
         # named two paths, neither of which was in play.
-        $entryDirRel = ((Get-BranchFilePaths).Directory -replace '\\', '/').Trim('/')
+        $entryDirRel = ((Get-BranchFilePaths -RepoRoot $repoRoot).Directory -replace '\\', '/').Trim('/')
         $destShown  = if ($destDirRel)  { "$destDirRel/" }  else { 'the repo root' }
         $entryShown = if ($entryDirRel) { "$entryDirRel/" } else { 'the repo root' }
         # SAME DIRECTORY IS A DIFFERENT SENTENCE, because there the advice is not 'drop the ../' -- a link

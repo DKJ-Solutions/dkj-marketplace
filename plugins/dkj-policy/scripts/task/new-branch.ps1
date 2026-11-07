@@ -1170,7 +1170,7 @@ if (-not $branchType) {
 # ONE NAME PER BRANCH SINCE #1255 (September 3, 2026), where it was one fixed path. The fixed path did not
 # collide on CHECKOUT, which is what the old reasoning said; it collided on MERGE, which is what it did not.
 # See the block in entry-scaffold-lib.ps1 for the measurement.
-$branchFiles    = Get-BranchFilePaths -Branch $branch
+$branchFiles    = Get-BranchFilePaths -Branch $branch -RepoRoot $repoRoot
 $branchDirPath  = Join-Path $repoRoot $branchFiles.Directory
 
 # WHICH NAME THIS RUN WRITES, on a repo that may still hold a pre-August-23-2026 pair. The rule is the

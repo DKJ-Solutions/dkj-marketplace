@@ -1168,7 +1168,7 @@ if (Test-Path -LiteralPath $pluginsRootDir) {
 # document sits directly in the workflow folder now, where it used to sit in a branch/ subdirectory of it. So
 # the seam answers with the folder itself, and scanning it covers the branch document, releases/ and whatever
 # docs the folder gains.
-$workflowDirForLinks = Join-Path $RepoRoot ((Get-BranchFilePaths).Directory -replace '/', '\')
+$workflowDirForLinks = Join-Path $RepoRoot ((Get-BranchFilePaths -RepoRoot $RepoRoot).Directory -replace '/', '\')
 if (Test-Path -LiteralPath $workflowDirForLinks) {
     $linkFiles += @(Get-ChildItem -Path $workflowDirForLinks -Recurse -Filter '*.md' -File |
         Select-Object -ExpandProperty FullName)
@@ -1372,8 +1372,8 @@ foreach ($lf in $linkFiles) {
     # the head is guidance comments and phase headings, which carry no links at all in the scaffold, and an
     # author who does write one in a step means the same path the section below asks for. Two bases inside
     # one document would be a rule nobody could apply while writing.
-    $entryRelsForLinks = @((Get-BranchFilePaths).File, (Get-BranchFilePaths).LegacyDeployment,
-        (Get-BranchFilePaths).OlderDeployment) |
+    $entryRelsForLinks = @((Get-BranchFilePaths -RepoRoot $RepoRoot).File, (Get-BranchFilePaths -RepoRoot $RepoRoot).LegacyDeployment,
+        (Get-BranchFilePaths -RepoRoot $RepoRoot).OlderDeployment) |
         ForEach-Object { '\' + ($_ -replace '/', '\') }
     if ($lf -match '\\personas\\.*-persona\.md$') {
         $dir = Join-Path $RepoRoot '.claude\extensions'
@@ -2190,7 +2190,7 @@ $lifecycleFiles = @($linkFiles | Where-Object {
     if ($rel -match '(^|\\)RELEASE\.md$') { return $false }
     if ($rel -match '^releases\\') { return $false }
     # The moved release pages are the same history at their workflow-folder address (August 14, 2026).
-    if ($rel -match '^dkj-policy\\releases\\') { return $false }
+    if ($rel -match '^(\.dkj\\)?dkj-policy\\releases\\') { return $false }
     # A root <branch-name>.md entry file is history in the making; same reasoning as CHANGELOG.md.
     if (($rel -notmatch '\\') -and (Test-IsChangelogEntryFile -Path $_)) { return $false }
     # branch/ is the same subject at its new address. Both files: the entry is history in the making, and
@@ -2203,9 +2203,9 @@ $lifecycleFiles = @($linkFiles | Where-Object {
     # under the branch directory, which WAS only branch files; the seam's Directory is the workflow folder
     # itself now, so the same expression would wave through the folder's README, CLAUDE.md and
     # CONTRIBUTING.md -- three documents that print lifecycle commands and are exactly what this check is for.
-    $lcBranchDoc = @((Get-BranchFilePaths).File, (Get-BranchFilePaths).LegacyCycle,
-        (Get-BranchFilePaths).LegacyDeployment, (Get-BranchFilePaths).OlderCycle,
-        (Get-BranchFilePaths).OlderDeployment) | ForEach-Object { $_ -replace '/', '\' }
+    $lcBranchDoc = @((Get-BranchFilePaths -RepoRoot $RepoRoot).File, (Get-BranchFilePaths -RepoRoot $RepoRoot).LegacyCycle,
+        (Get-BranchFilePaths -RepoRoot $RepoRoot).LegacyDeployment, (Get-BranchFilePaths -RepoRoot $RepoRoot).OlderCycle,
+        (Get-BranchFilePaths -RepoRoot $RepoRoot).OlderDeployment) | ForEach-Object { $_ -replace '/', '\' }
     # THE PER-BRANCH NAMES JOIN IT BY PATTERN (#1255) -- see the predicate's own header for why a list
     # cannot do this job any more.
     if ($lcBranchDoc -contains $rel) { return $false }
@@ -2684,7 +2684,7 @@ if (Test-CheckEnabled 'branch-template') {
         # one thing it could no longer see: a stale document now sits at a name this check was not looking
         # at, and the run reported 'absent, which is the trunk between branches'. A gate that answers
         # 'nothing here' when it did not look is worse than no gate, so the subject is the SET.
-        $btPaths = Get-BranchFilePaths
+        $btPaths = Get-BranchFilePaths -RepoRoot $RepoRoot
         $btRels  = @([string]$btPaths.SharedFile) + @(Get-PerBranchDocumentRels -RepoRoot $RepoRoot)
         $btDocs = @()
         foreach ($btRel in ($btRels | Select-Object -Unique)) {
@@ -3195,7 +3195,7 @@ $scFiles = @($linkFiles | Where-Object {
     if ($rel -match '(^|\\)RELEASE\.md$') { return $false }
     if ($rel -match '^releases\\') { return $false }
     # The moved release pages are the same history at their workflow-folder address (August 14, 2026).
-    if ($rel -match '^dkj-policy\\releases\\') { return $false }
+    if ($rel -match '^(\.dkj\\)?dkj-policy\\releases\\') { return $false }
     if (($rel -notmatch '\\') -and (Test-IsChangelogEntryFile -Path $_)) { return $false }
     # The branch's own document only -- NOT the whole folder. It is history in the making above and a scratch
     # pad below; the folder's own pages are the convention itself and are checked.
@@ -3216,7 +3216,7 @@ $scFiles = @($linkFiles | Where-Object {
     # holds either, and either alone is enough to miss -- so the quiet is two accidents deep, not one.
     # Same answer as checks 4 and 11, which each pair their own fixed list with this predicate: keep the
     # names, add the pattern -- a list cannot answer a pattern.
-    $scPaths = Get-BranchFilePaths
+    $scPaths = Get-BranchFilePaths -RepoRoot $RepoRoot
     $scBranchFiles = @($scPaths.File, $scPaths.LegacyCycle, $scPaths.LegacyDeployment,
         $scPaths.OlderCycle, $scPaths.OlderDeployment) |
         ForEach-Object { $_ -replace '/', '\' }

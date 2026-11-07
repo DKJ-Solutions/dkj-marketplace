@@ -41,14 +41,14 @@ documents [#508](https://github.com/DaveKJohn/claude-code-specialists/issues/508
 count is now held by the lint against `Get-EntrySectionHeadings`, so this cannot silently drift again; the
 NAMES are not, and deliberately, for the reason that check's own comment records. **The shape itself is
 written once**, by the formatters in `scripts/lib/entry-scaffold-lib.ps1` — and the copy of
-`dkj-policy/<branch>.md` sitting on the trunk is what that produces, held to it by the
+`.dkj/dkj-policy/<branch>.md` sitting on the trunk is what that produces, held to it by the
 lint. Read it there rather than trusting any prose, this paragraph included.
 
 **Two sections went in the same movement, and each for a measured reason.**
 
 - **`## Latest Release`.** It used to accumulate a block per release and had reached **434 of 1,062 lines**
   across 72 blocks that each said no more than "see the notes", while
-  [`releases/history.md`](../../../dkj-policy/releases/history.md) already listed all 72 with a date, a type and a
+  [`releases/history.md`](../../../.dkj/dkj-policy/releases/history.md) already listed all 72 with a date, a type and a
   descriptive title — the same coverage, verified in both directions, and richer per row. `'latest'` mode cut
   it to one block; this removes the last one. The intro's one-line pointer to that page is what answers
   "which version is current" now, and being hand-written prose it cannot go stale at a cut that no longer
@@ -69,7 +69,7 @@ entries rather than off which section they sit in.
 
 #### How it works
 
-- **`dkj-policy/<branch>.md`** — written when the branch is created. One document with two
+- **`.dkj/dkj-policy/<branch>.md`** — written when the branch is created. One document with two
   halves: `### PLAN` / `### CREATE` / `### TEST` carry the step list, and the fourth phase,
   `### DEPLOY: <branch>`, IS the entry — **nothing around it**, so it pastes into `CHANGELOG.md` in one
   go. **One document per branch since September 3, 2026** ([#1255](https://github.com/DaveKJohn/claude-code-specialists/issues/1255))
@@ -172,7 +172,7 @@ itself.
 improvement, the entry comes into being **at the moment the branch is created** — no
 separate later scaffolding step: [Derek #05](specialist-05-05-lens.md#classifying-naming-and-creating-a-branch)'s
 `new-branch.ps1` checks out the branch and, in the same move, calls the shared
-`scripts/task/new-branch.ps1 -Title "…"` (which writes `dkj-policy/<branch>.md`, filling in
+`scripts/task/new-branch.ps1 -Title "…"` (which writes `.dkj/dkj-policy/<branch>.md`, filling in
 the title, the branch name and the type from the prefix automatically) as a child step. A branch is never
 entry-less. Whoever builds on the
 branch (often [Tessa #16](specialist-06-16-lens.md) or [Sylvester #15](specialist-05-15-lens.md)) fills in the
@@ -180,7 +180,7 @@ description while building; ownership of the entry mechanism stays Rendall's.
 
 #### Lifecycle
 
-1. **Branch** → `dkj-policy/<branch>.md` is written *at branch creation* (Derek's `new-branch.ps1`); you
+1. **Branch** → `.dkj/dkj-policy/<branch>.md` is written *at branch creation* (Derek's `new-branch.ps1`); you
    fill in the description and keep the step list current while building. Never touch `CHANGELOG.md`.
 2. **Merge to `main`** ([Derek #05](specialist-05-05-lens.md#merging-to-main)) → the entry travels
    along. Rendall runs `fold-changelog-entry.ps1 -Branch <name> -Push` on `main`: that folds, commits
@@ -194,7 +194,7 @@ description while building; ownership of the entry mechanism stays Rendall's.
    **this** repo's direct-on-`main` exception, which is what the path-scoped commit exists to keep honest,
    and the branch part of the two-machine lesson sits with
    [Derek #05](specialist-05-05-lens.md#branch--repo-hygiene).
-   The fold also **REMOVES `dkj-policy/<branch>.md`** — `Remove-Item` in
+   The fold also **REMOVES `.dkj/dkj-policy/<branch>.md`** — `Remove-Item` in
    [`fold-changelog-entry.ps1`](../../../scripts/release/fold-changelog-entry.ps1), not a rewrite to an
    empty state — and names it in the same commit, so the trunk carries no copy of that document at all
    rather than an emptied one. That is why the commit's scope is two paths rather than three, and why
@@ -213,7 +213,7 @@ description while building; ownership of the entry mechanism stays Rendall's.
 
 A release here is a **recorded moment**: all plugins get the same version number
 (**lockstep, repo-wide**) and the state is tagged as `vX.Y.Z`. `cut-release.ps1` itself publishes
-nothing to GitHub Releases — only a git tag, the full notes in `dkj-policy/releases/changelog/`, and a
+nothing to GitHub Releases — only a git tag, the full notes in `.dkj/dkj-policy/releases/changelog/`, and a
 reference to them in `CHANGELOG.md`. Publishing a GitHub Release is a manual closing step Rendall walks
 through afterward, per the `cut-release` skill's checklist — not automated by the script.
 
@@ -233,7 +233,7 @@ unrelated product would get its own repository and marketplace rather than joini
 - **Every release.** Until August 4 a patch skipped the step entirely (tag only). It no longer does, so
   the Release page becomes a continuous record rather than one with gaps where the patches were.
 - **A generated body**, with every hand-written document and the development notes as **attachments**.
-  `cut-release.ps1` writes `dkj-policy/releases/github/<dir>/<X.Y.Z>.md` — the release title, a
+  `cut-release.ps1` writes `.dkj/dkj-policy/releases/github/<dir>/<X.Y.Z>.md` — the release title, a
   pointer at the attached notes where one is expected, and one linked line per change that landed, every
   tier included. Rendall edits nothing; he points `gh` at it, and the cut prints the exact command.
 - **What this replaced, and why it is the more important half.** The body was the **internal note** from
@@ -281,8 +281,8 @@ this lens used to state as one rule. Rendall's local obligation is unchanged: **
 in the closing report of every release.**
 
 **Where the generated documents live, since the step names and the tree do not line up by themselves**:
-the changelog notes are `dkj-policy/releases/changelog/<major>.x/<version>.md` and the GitHub notes
-`dkj-policy/releases/github/<major>.x/<version>.md` — **the same answer here as in a consumer**, which is
+the changelog notes are `.dkj/dkj-policy/releases/changelog/<major>.x/<version>.md` and the GitHub notes
+`.dkj/dkj-policy/releases/github/<major>.x/<version>.md` — **the same answer here as in a consumer**, which is
 the part that changed on August 26, 2026
 ([#914](https://github.com/DaveKJohn/claude-code-specialists/issues/914)). Both trees sat at this repo's
 root until then, on the reasoning that `Test-IsWorkflowSourceRepo` keeps a source's root files at the
@@ -301,7 +301,7 @@ old name too and a consumer who had defined it acts on nothing.
 that step because #914 carried the subject out the same day. The three note roots are siblings now, so the
 layout question has an answer rather than an owner.
 
-The note roots, all three under the workflow folder's `releases/` since #914 (August 26, 2026) -- `dkj-policy/releases/` today, `contributing-davekjohn/releases/` until #1437 (September 5, 2026); `releases/`
+The note roots, all three under the workflow folder's `releases/` since #914 (August 26, 2026) -- `.dkj/dkj-policy/releases/` today, `contributing-davekjohn/releases/` until #1437 (September 5, 2026); `releases/`
 at the repo root now holds nothing but the release list:
 - **`changelog/<X>.x/<X.Y.Z>.md`** — the full release notes: **every** pending entry, tier 0
   included, ordered by **tier** and, inside a tier, ranked — one flat list at `CHANGELOG.md`'s own levels
@@ -328,7 +328,7 @@ And beside them, in the same folder since August 27, 2026:
   inside an immutable tag. The cell was chosen over a fourth column because the table's shape is matched by
   one regex that three readers share — including the row inserter and the new-major guardrail — and only new
   rows are touched, so the existing 72 keep pointing where they always did.
-- **`dkj-policy/releases/audience/<X>.x/<X.Y.Z>.md`** — **the one hand-written document, since August 10, 2026**, drafted
+- **`.dkj/dkj-policy/releases/audience/<X>.x/<X.Y.Z>.md`** — **the one hand-written document, since August 10, 2026**, drafted
   by the cut for every bump `Get-ReleaseConsumerBumps` names. One section, *What changed* (pre-filled with
   the tier-2 entries, and absent where none reached tier 2), and Rendall's pass is a rewrite of it. Until
   [#3584](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3584) (October 27, 2026) two empty
@@ -350,7 +350,7 @@ And beside them, in the same folder since August 27, 2026:
     the note did not exist while the cut ran; it does now, so the cut writes the Version cell correctly
     straight away and nothing repoints it afterwards. A patch's row keeps pointing at the changelog notes,
     which is the most readable document that release has.
-- **`dkj-policy/releases/audience/<X>.x/<X.Y.Z>.md`, the *For consumers* section** — *what the two-document era's
+- **`.dkj/dkj-policy/releases/audience/<X>.x/<X.Y.Z>.md`, the *For consumers* section** — *what the two-document era's
   `releases/consumer/` document became.* **That directory no longer exists**: on August 12, 2026 Dave had its
   twelve documents merged with their `releases/internal/` counterparts, one merged document per version. Read
   the paragraph below as history — it
@@ -374,7 +374,7 @@ And beside them, in the same folder since August 27, 2026:
   opposite. **Markdown only** — the tier generated a print-ready `.html` alongside it for exactly one
   release (v3.2.0) and no longer does; Dave does not want it anywhere. A PDF, if ever needed, comes from
   rendering the markdown with a tool built for it.
-- **`dkj-policy/releases/audience/<X>.x/<X.Y.Z>.md`, the *What it is worth* and *What was still open* sections** — *what
+- **`.dkj/dkj-policy/releases/audience/<X>.x/<X.Y.Z>.md`, the *What it is worth* and *What was still open* sections** — *what
   the two-document era's `releases/internal/` document became, until #3584 retired both sections from the
   draft; the notes up to v5.34.0 carry them as written.* **That directory no longer exists either**,
   merged in the same movement (Dave, August 12, 2026). `new-internal-note.ps1` still ships and still works for
@@ -470,7 +470,7 @@ the trunk:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/release/open-pr.ps1 -GatesOnly
 ```
 
-**[`releases/history.md`](../../../dkj-policy/releases/history.md) is the living index** — the cut inserts
+**[`releases/history.md`](../../../.dkj/dkj-policy/releases/history.md) is the living index** — the cut inserts
 its own row, so **never add one by hand** for a release a script will write. It is now the only document in
 that folder anybody edits by hand: `releases/README.md` sat beside it carrying this repo's answers to the
 portable page, and #2196 retired it — those answers are
@@ -478,7 +478,7 @@ portable page, and #2196 retired it — those answers are
 two shared the name `README.md` until August 27, 2026, when the list moved into the workflow folder and had
 to stop; the list keeps the name it took then.
 
-**Everything under `dkj-policy/releases/audience/` is a published record**: links may be repointed when a
+**Everything under `.dkj/dkj-policy/releases/audience/` is a published record**: links may be repointed when a
 target moves, prose is never rewritten. **What that protects is a line that was TRUE when it was
 published** — going stale afterwards is the record working. A line that was **false when it was written**
 is not protected by it, and correcting one restores the record rather than breaking it; the rule, and how
@@ -492,7 +492,7 @@ false line.**
 
 **Worth knowing why any of this is written down at all:** until August 4, 2026 the route was an
 *assumption* presented as a rule in `CLAUDE.md`,
-[`releases/history.md`](../../../dkj-policy/releases/history.md) and the `cut-release` skill — asked twice, unanswered,
+[`releases/history.md`](../../../.dkj/dkj-policy/releases/history.md) and the `cut-release` skill — asked twice, unanswered,
 and written in anyway. This lens, the one place Rendall would actually look, was the one that never said it.
 
 **Rendall notes the clock before he starts.** Step 0a of the
@@ -521,8 +521,8 @@ does everything in one motion:
 `cut-release.ps1 (-Version <X.Y.Z> | -Bump <major|minor|patch>) [-Title "…"] [-SummaryFile <path>]` on
 a clean `main`:
 1. bumps all plugin versions in lockstep to `X.Y.Z`;
-2. generates `dkj-policy/releases/changelog/<X>.x/<X.Y.Z>.md`, adds a row to the release list
-   `Get-ReleaseHistoryPath` names (`dkj-policy/releases/history.md` here), and **empties
+2. generates `.dkj/dkj-policy/releases/changelog/<X>.x/<X.Y.Z>.md`, adds a row to the release list
+   `Get-ReleaseHistoryPath` names (`.dkj/dkj-policy/releases/history.md` here), and **empties
    `CHANGELOG.md` down to its intro** — the intro passes through verbatim, so whatever the repo says about
    itself up there survives every cut, in whatever language it wrote it;
 3. **(retired, August 8, 2026 -- Dave)** steps 3 and 4 used to write a per-plugin `CHANGELOG.md` and
@@ -557,7 +557,7 @@ on `main`, ahead of the release commit** (deliberately unnumbered here, so they 
 the list above — they run before its first one):
 
 - add `#### <X>.x` plus its empty table header above the current top section in
-  [`releases/history.md`](../../../dkj-policy/releases/history.md) — the refusal prints the exact heading at the
+  [`releases/history.md`](../../../.dkj/dkj-policy/releases/history.md) — the refusal prints the exact heading at the
   level the document uses, so follow what it prints rather than what this page says;
 - repoint the live assert in [`release-lib.tests.ps1`](../../../scripts/tests/release-lib.tests.ps1)
   at the new major, **with a reason written above it** — the file asks for that in as many words.
@@ -578,7 +578,7 @@ decision then wrote down. **And a major is not rare**: `v1.0.0` through `v4.0.0`
 July 30 and August 9, 2026, one every nine days or so.
 
 Guardrails: on a clean `main`, no unfolded entry — neither a pre-split file in the root nor a filled
-`dkj-policy/<branch>.md`, which is its own check because a filled one looks like the reset
+`.dkj/dkj-policy/<branch>.md`, which is its own check because a filled one looks like the reset
 state at a glance until you read the branch name in its heading — lint gate green, and the tag must not
 exist yet. There is deliberately **no release branch and no `release` prefix** — the release
 does not touch the branch workflow. A shared agent-def change still lands here first, gets
@@ -616,7 +616,7 @@ hand-written note's *For consumers* section is written for them. A repo that del
 commissioner answers `1` and never writes that section.
 
 Every release document groups **per major** (`3.x`) — the consumer this model came from folders per minor.
-`Get-ReleaseHistoryPath` answers [`releases/history.md`](../../../dkj-policy/releases/history.md) — since
+`Get-ReleaseHistoryPath` answers [`releases/history.md`](../../../.dkj/dkj-policy/releases/history.md) — since
 August 27, 2026, which is also the answer its computed default has been giving every **consumer** since
 issue #885, so the source stopped being the one repo answering it differently. It pointed at the workflow
 folder once before, between August 14 and August 19, 2026, when the hand-kept release pages moved there and
@@ -798,7 +798,7 @@ back to what this repo already did.
 `## Latest Release` block naming the version, the date, the type and a pointer to the notes. Measured
 before removing it: that accumulating section had grown to **434 of the changelog's 1,062 lines**
 across 72 blocks that each said no more than "see the notes", while
-[`releases/history.md`](../../../dkj-policy/releases/history.md) already listed every one of those 72 versions with a date,
+[`releases/history.md`](../../../.dkj/dkj-policy/releases/history.md) already listed every one of those 72 versions with a date,
 a type and a descriptive title — the same coverage, verified in both directions, and richer per row.
 So the intro carries a one-line pointer to that page and the cut leaves the document at its intro.
 One consequence worth knowing: the hand-written note's only inbound link is the **Version cell** of
@@ -890,9 +890,9 @@ number decides which release document it appears in:
 
 | tier | who notices | where it is written | when |
 |---|---|---|---|
-| **2** | subscribers of the service | the *For consumers* section of `dkj-policy/releases/audience/<X>.x/<X.Y.Z>.md` | minor/major |
+| **2** | subscribers of the service | the *For consumers* section of `.dkj/dkj-policy/releases/audience/<X>.x/<X.Y.Z>.md` | minor/major |
 | **1** | management and the employer/commissioner | the organisation's two sections of that same file | minor/major |
-| **0** | only this repo's developers | `dkj-policy/releases/changelog/<X>.x/<X.Y.Z>.md` | every release |
+| **0** | only this repo's developers | `.dkj/dkj-policy/releases/changelog/<X>.x/<X.Y.Z>.md` | every release |
 
 **TIERS 1 AND 2 ARE TWO KINDS OF AUDIENCE, NOT TWO RUNGS, AND A REPO HAS EXACTLY ONE** (Dave, August 12,
 2026; inbound [#620](https://github.com/DaveKJohn/claude-code-specialists/issues/620)). Tier 1 is
@@ -1283,7 +1283,7 @@ the tier ladder and the release cut are one particular way of running a release,
 release management. Rendall's craft in such a repo is whatever *that* repo's release process is.
 
 - `scripts/task/new-branch.ps1 [-Title <string>] [-Intent <string>]` — write the branch's
-  `dkj-policy/<branch>.md`. `-Intent` records where you left off / what is next **at the
+  `.dkj/dkj-policy/<branch>.md`. `-Intent` records where you left off / what is next **at the
   top of that document**, not in the DEPLOY section (#162): an intent is a status, and that section's text
   folds verbatim into `CHANGELOG.md`. Idempotent, judged on what the document says it belongs to rather
   than on its existing — it exists on `main` by design. Shared/mirrored to the plugin
@@ -1299,8 +1299,8 @@ release management. Rendall's craft in such a repo is whatever *that* repo's rel
   omitted, it resolves the repo root as before.
 - `scripts/release/cut-release.ps1 (-Version <X.Y.Z> | -Bump <major|minor|patch>) [-Title "…"] [-NoPush] [-SkipLint] [-SkipTierGate]`
   — cut a repo-wide release, directly on `main`: the **bump gate** (does the pending work earn this bump?)
-  + lockstep bump + release notes in `dkj-policy/releases/changelog/` + a row in the release list
-  `Get-ReleaseHistoryPath` names (`dkj-policy/releases/history.md` here) +
+  + lockstep bump + release notes in `.dkj/dkj-policy/releases/changelog/` + a row in the release list
+  `Get-ReleaseHistoryPath` names (`.dkj/dkj-policy/releases/history.md` here) +
   `CHANGELOG.md` emptied down to its intro + commit + tag `vX.Y.Z` + push. It wrote per-plugin
   `CHANGELOG.md`s and `RELEASE.md` cards until August 8, 2026 — see step 3 above for why it no longer does.
   The pure logic (version bump, CHANGELOG transformation, notes assembly) lives in

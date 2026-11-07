@@ -49,7 +49,7 @@ For a dashboard over a whole organization, add `-Org <login>`, once per organiza
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/issue-dashboard.ps1" -Org <login> -InitToken -EmitWorker
 ```
 
-It writes into **`dkj-policy/dashboard/`** (or `dkj-policy/dashboard/org-<login>/` with `-Org`) (add `/dkj-policy/dashboard/` to your `.gitignore`; the source
+It writes into **`.dkj/dkj-policy/dashboard/`** (or `.dkj/dkj-policy/dashboard/org-<login>/` with `-Org`) (add `/dkj-policy/dashboard/` to your `.gitignore`; the source
 repo already has it), then **prints**, for you to run from that directory:
 
 ```powershell
@@ -73,15 +73,15 @@ wrong thing. The script warns if a `wrangler.toml` stands at the root.
 
 | parameter | what it does |
 |---|---|
-| `-InitToken` | create the 32-hex path token in `dkj-policy/dashboard/dashboard-path-token.txt`; refuses to replace one, and refuses when a token stands anywhere else in the tree, and refuses when the file is not gitignored (`git check-ignore -q`; add `/dkj-policy/dashboard/` to `.gitignore`), only warning where git cannot answer |
+| `-InitToken` | create the 32-hex path token in `.dkj/dkj-policy/dashboard/dashboard-path-token.txt`; refuses to replace one, and refuses when a token stands anywhere else in the tree, and refuses when the file is not gitignored (`git check-ignore -q`; add `/dkj-policy/dashboard/` to `.gitignore`), only warning where git cannot answer |
 | `-EmitWorker` | copy the two worker files from the plugin, write `wrangler.toml` if it is absent, and print the secret and deploy commands; needs the token, and refuses likewise when the token file is not gitignored |
-| `-Org <login>` | org mode: prepare a dashboard over **every repository of that organization** instead of this repo, in `dkj-policy/dashboard/org-<login>/` with its own token and `wrangler.toml` (`[vars] GITHUB_ORG`, worker `<login>-issue-dashboard`). Combine with `-InitToken` and `-EmitWorker` as above; several org dashboards and this repo's can stand side by side |
+| `-Org <login>` | org mode: prepare a dashboard over **every repository of that organization** instead of this repo, in `.dkj/dkj-policy/dashboard/org-<login>/` with its own token and `wrangler.toml` (`[vars] GITHUB_ORG`, worker `<login>-issue-dashboard`). Combine with `-InitToken` and `-EmitWorker` as above; several org dashboards and this repo's can stand side by side |
 | `-RepoRoot <path>` | test seam -- the repo root to work in instead of the one git names; a consumer never types it |
 
 ## What is written, and what is yours
 
 ```text
-dkj-policy/dashboard/
+.dkj/dkj-policy/dashboard/
   dashboard-path-token.txt        the path token (written once, never replaced)
   issue-dashboard-worker.js       copied from the plugin, overwritten each run
   issue-dashboard-logic.js        copied from the plugin, overwritten each run
@@ -129,7 +129,7 @@ or a `<prefix>/<n>-` branch under `feat/`, `fix/`, `docs/`), **Waiting** (label 
 **Filed**. Order is topological over open in-repo blockers, ties by issue number; priority labels and age
 do not order. An open blocker outside the repo sinks an issue, and any issue behind a sunk one, below every issue without one; a cycle is
 flagged on the page and broken by issue number; a truncated GitHub connection is reported, never dropped.
-**The page itself lists the issues newest first** (by creation date, ties by the higher number), each led by its issue number, and it answers the sweep question per row (Dave, September 30, 2026): only a Filed issue is sweepable, and every other row is **tinted red**, with a tooltip saying what it waits on (in review, in progress, the parking label, its open blockers, or who claimed it). The counts are Sweepable and Skip. A sweep claim-tag comment is not read, so an issue a sweep has just tagged reads as sweepable until it is assigned or gets a branch. The pick-up order above still decides the cycle and circular-chain warnings. The rules are `issue-dashboard-logic.js` (`deriveDashboard`), copied into `dkj-policy/dashboard/` -- read it
+**The page itself lists the issues newest first** (by creation date, ties by the higher number), each led by its issue number, and it answers the sweep question per row (Dave, September 30, 2026): only a Filed issue is sweepable, and every other row is **tinted red**, with a tooltip saying what it waits on (in review, in progress, the parking label, its open blockers, or who claimed it). The counts are Sweepable and Skip. A sweep claim-tag comment is not read, so an issue a sweep has just tagged reads as sweepable until it is assigned or gets a branch. The pick-up order above still decides the cycle and circular-chain warnings. The rules are `issue-dashboard-logic.js` (`deriveDashboard`), copied into `.dkj/dkj-policy/dashboard/` -- read it
 for the exact semantics.
 
 **In org mode** the worker lists the organization's non-archived repositories that have issues enabled

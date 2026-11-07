@@ -20,12 +20,12 @@
                                           dkj-subagents/subagent-shared/ (the source of the generated shared
                                           blocks) and the README/ADOPTION pages
         README.md, LICENSE                context for whoever opens the business repo
-        dkj-policy/CHANGELOG.md              the changelog -- in the workflow folder since August 27, 2026
+        .dkj/dkj-policy/CHANGELOG.md         the changelog -- in the workflow folder since August 27, 2026 (.dkj/ since #3870)
         .github/ISSUE_TEMPLATE/           the inbound path the docs link to
         .gitignore, .gitattributes        so a clone behaves the same
 
     WHAT DOES NOT. scripts/, .claude/, consumers/, CLAUDE.md, SECURITY.md, and the whole of
-    dkj-policy/ EXCEPT its CHANGELOG.md -- which is named as its own published path above
+    .dkj/dkj-policy/ EXCEPT its CHANGELOG.md -- which is named as its own published path above
     rather than travelling with the folder. That is one file out of a maintainer's folder, and it is
     there because the changelog is context for whoever opens the business repo wherever this repo
     happens to keep it (August 27, 2026: it moved into that folder together with CONTRIBUTING.md and
@@ -177,7 +177,7 @@ $PublishedPaths = @(
     'plugins'
     'README.md'
     'LICENSE'
-    'dkj-policy/CHANGELOG.md'
+    '.dkj/dkj-policy/CHANGELOG.md'
     '.github/ISSUE_TEMPLATE'
     '.gitignore'
     '.gitattributes'

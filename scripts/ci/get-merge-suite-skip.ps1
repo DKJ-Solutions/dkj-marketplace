@@ -158,7 +158,7 @@ if ($newMainCommits.Count -gt 0) {
     $entryDirForFold = ''
     $reservedForFold = @()
     try {
-        $branchPathsForFold = Get-BranchFilePaths
+        $branchPathsForFold = Get-BranchFilePaths -RepoRoot $RepoRoot
         $entryDirForFold = $branchPathsForFold.Directory
         $reservedForFold = @($branchPathsForFold.ReservedNames)
     } catch {

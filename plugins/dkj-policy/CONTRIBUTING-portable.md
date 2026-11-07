@@ -1,6 +1,6 @@
 # The contribution cycle — the portable half
 
-This is the cycle the `dkj-policy` scripts run: an issue, a branch, its `dkj-policy/<branch>.md`, a Pull
+This is the cycle the `dkj-policy` scripts run: an issue, a branch, its `.dkj/dkj-policy/<branch>.md`, a Pull
 Request that has to get past its gates, a merge, and a fold. **It is written to be read in any repo that
 enables this plugin**, which is why it names the *seam* wherever a repo owns the answer, rather than stating
 one repo's answer as the rule.
@@ -407,7 +407,7 @@ the axis is unaffected, and a repo that answers nothing is already right.
 Creating the branch writes its working document, so **a branch is never entry-less**. It has two halves
 with two different readers:
 
-| half of `dkj-policy/<branch>.md` | subject | lifetime |
+| half of `.dkj/dkj-policy/<branch>.md` | subject | lifetime |
 |---|---|---|
 | `### PLAN` · `### CREATE` · `### TEST` | what still **must happen** — the step list | removed at the merge; never folded |
 | `### DEPLOY: <branch>` | what the change **does** — the entry that folds into your changelog | folded at the merge, then removed with the rest |
@@ -1302,7 +1302,7 @@ branch's own `<branch>.md`, never a contributing page, so both answers work.
 **The recommendation is still the root page, for two reasons that have nothing to do with the gates.**
 GitHub links a root `CONTRIBUTING.md` from the new-issue and new-pull-request pages and from the
 repository sidebar, and it recognises that file only in the root, `.github/` or `docs/` — a page in
-`dkj-policy/` gets none of that surfacing. And it is the file a drive-by contributor looks
+`.dkj/dkj-policy/` gets none of that surfacing. And it is the file a drive-by contributor looks
 for by name. Both matter most in a public repo with contributors who have installed nothing, which is
 precisely the reader the floor exists for. Keep the root page unless you can say why your repo is not
 that case.

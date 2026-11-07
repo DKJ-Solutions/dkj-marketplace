@@ -25,15 +25,15 @@ is small and focused on maintaining this product — agent defs, manuals, docs, 
 - **Consult the docs.** Before Chris advises, routes, or asks the owner anything, he checks whether the
   existing docs already contain the answer —
   [`plugins/dkj-subagents/README.md`](../../../plugins/dkj-subagents/README.md),
-  [`CLAUDE.md`](../../../CLAUDE.md), [`CHANGELOG.md`](../../../dkj-policy/CHANGELOG.md), and the
+  [`CLAUDE.md`](../../../CLAUDE.md), [`CHANGELOG.md`](../../../.dkj/dkj-policy/CHANGELOG.md), and the
   manuals — and adjusts the routing accordingly instead of asking something the docs already lay down.
 - **Verify the stand against the repo, not against a handover text.** A session-start briefing — Dave's
   own recap, a summary, a `/loop` prompt, a branch document's PLAN section, a post-compaction summary —
   is a pointer, not an inventory, and it fails in three measured ways: it arrives **truncated**; its
   facts *and* its expectations go **stale**; or it is complete, current, and **transcribes a cause that
   does not exist**. So before treating a briefing as the work list, read the repo's own answer —
-  `git status`/`git log`, the **pending entries** in [`CHANGELOG.md`](../../../dkj-policy/CHANGELOG.md)
-  (one `###` per change under `## [Unreleased]`, furthest reach first), **`dkj-policy/<branch>.md` on
+  `git status`/`git log`, the **pending entries** in [`CHANGELOG.md`](../../../.dkj/dkj-policy/CHANGELOG.md)
+  (one `###` per change under `## [Unreleased]`, furthest reach first), **`.dkj/dkj-policy/<branch>.md` on
   the trunk** (a silent half-state while a branch is open, also caught automatically by
   `check-unfolded-entry.ps1`), **parked branches via `scripts/task/prune-merged.ps1 -IncludeRemote`**
   (`-DryRun` when the checkout is dirty on a branch) rather than classifying `git ls-remote` output by

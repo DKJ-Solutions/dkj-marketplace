@@ -1,7 +1,7 @@
 # `<branch>.md` — the portable half
 
 Everything a branch needs to carry lives in **one file**:
-`dkj-policy/<branch>.md` — one document per branch, named after it, inside the
+`.dkj/dkj-policy/<branch>.md` — one document per branch, named after it, inside the
 workflow's own root folder where everything portable gathers. (It was the single shared
 `development.md` until September 3, 2026; [see below](#why-the-name-carries-the-branch) for what that
 cost and why it changed.) It has two halves with two
@@ -263,7 +263,7 @@ something Claude's own output demonstrates, and for a branch that is the gate ou
 depend on:
 
 ```text
-/goal every step above the DEPLOY heading in dkj-policy/<branch>.md is resolved
+/goal every step above the DEPLOY heading in .dkj/dkj-policy/<branch>.md is resolved
 and open-pr reports the lint and test gates green, or stop after 20 turns
 ```
 
@@ -317,7 +317,7 @@ it *lands* rather than for where you are typing it.
 
 **Which directory that is, is one seam, and the shipped default puts it beside this document.**
 `Get-ChangelogPath` answers it; left unset, a repo that publishes no plugin marketplace gets
-`dkj-policy/CHANGELOG.md` — the same directory this file is in, where the link that already reads
+`.dkj/dkj-policy/CHANGELOG.md` — the same directory this file is in, where the link that already reads
 correctly in front of you *is* the correct one. A repo whose changelog is at the root gets the opposite, and
 there the correct form looks wrong until it moves:
 
@@ -327,7 +327,7 @@ See [the lib](../scripts/lib/release-lib.ps1).    <- correct where it sits BESID
 ```
 
 **You do not have to work out which one you are.** The guidance block at the top of your own
-`dkj-policy/<branch>.md` states your repo's answer in one sentence, composed by
+`.dkj/dkj-policy/<branch>.md` states your repo's answer in one sentence, composed by
 `new-branch` from the same seam `open-pr`'s link gate resolves against — so the file you are typing in and
 the gate that refuses cannot disagree about the base.
 
@@ -522,7 +522,7 @@ parking note — and the gate goes quiet.
 
 ## Why the name carries the branch
 
-**One document per branch: `dkj-policy/<branch>.md`**, where `<branch>` is the
+**One document per branch: `.dkj/dkj-policy/<branch>.md`**, where `<branch>` is the
 branch name with its slashes flattened — `fix/thing-v1` becomes `fix-thing-v1.md`. Two
 branches therefore never write the same path.
 

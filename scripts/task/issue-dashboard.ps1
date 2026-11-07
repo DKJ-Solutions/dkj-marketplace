@@ -166,16 +166,23 @@ $config = & {
 if ($Org -and $Org -notmatch '^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$') {
     throw "-Org '$Org' is not a GitHub login (letters, digits and hyphens, at most 39 characters)."
 }
-$dashRoot  = Join-Path $repoRoot 'dkj-policy\dashboard'
-$dashRel   = if ($Org) { "dkj-policy/dashboard/org-$($Org.ToLowerInvariant())" } else { 'dkj-policy/dashboard' }
+# The workflow folder is read off this tree (#3870): '.dkj/dkj-policy' once a repo has moved, 'dkj-policy' before.
+. (Join-Path $PSScriptRoot '..\lib\workflow-folder-lib.ps1')
+$workflowFolderRel = Get-WorkflowFolderName -RepoRoot $repoRoot
+$dashRoot  = Join-Path $repoRoot (($workflowFolderRel -replace '/', '\') + '\dashboard')
+$dashRel   = if ($Org) { "$workflowFolderRel/dashboard/org-$($Org.ToLowerInvariant())" } else { "$workflowFolderRel/dashboard" }
 $dashDir   = if ($Org) { Join-Path $dashRoot "org-$($Org.ToLowerInvariant())" } else { $dashRoot }
 $tokenPath = Join-Path $dashDir 'dashboard-path-token.txt'
 $tokenRel  = "$dashRel/dashboard-path-token.txt"
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
 # NEVER THE ROOT (issue #2581). The directory is a fixed child of the root, so this cannot fire
-# through the parameters; it is here for whoever changes the constant above.
-if ((Split-Path -Parent (Split-Path -Parent $dashRoot)).TrimEnd('\', '/') -ne $repoRoot.TrimEnd('\', '/')) {
+# through the parameters; it is here for whoever changes the constant above. The workflow folder is
+# one segment deep or two since #3870 ('.dkj/dkj-policy'), so the test is that the dashboard sits
+# STRICTLY BELOW the root, rather than a fixed number of levels under it.
+$dashFull = [System.IO.Path]::GetFullPath($dashRoot).TrimEnd('\', '/')
+$rootFull = [System.IO.Path]::GetFullPath($repoRoot).TrimEnd('\', '/')
+if (-not $dashFull.StartsWith($rootFull + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "The dashboard directory must be a child of the repository root, never the root itself: $dashRoot"
 }
 
@@ -225,10 +232,10 @@ function Assert-TokenIgnored {
         'not-ignored' {
             throw ("The path token file ($tokenRel) is NOT gitignored, so it " +
                    "could be committed -- and the token is the only lock on the dashboard. Add this line to " +
-                   ".gitignore and run again: /dkj-policy/dashboard/")
+                   ".gitignore and run again: /$workflowFolderRel/dashboard/")
         }
         'unknown' {
-            Write-Warning "Could not ask git whether dkj-policy/dashboard/ is gitignored (git missing or not a repository). Make sure /dkj-policy/dashboard/ is in .gitignore: the token file must never be committed."
+            Write-Warning "Could not ask git whether $workflowFolderRel/dashboard/ is gitignored (git missing or not a repository). Make sure /$workflowFolderRel/dashboard/ is in .gitignore: the token file must never be committed."
         }
     }
 }

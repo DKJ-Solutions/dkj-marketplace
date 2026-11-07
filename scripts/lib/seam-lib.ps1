@@ -3,7 +3,7 @@
     Get-SeamValue: read an optional repo-config seam function, falling back to a default when the repo
     does not define it. Get-Default*: the computed defaults for the changelog and release-note-root seams
     (issue #885) -- source keeps its root files, consumer is isolated inside the workflow's own root
-    folder by default. That folder is NAMED by Get-WorkflowFolderName below and never written out here:
+    folder by default. That folder is NAMED by Get-WorkflowFolderName (workflow-folder-lib.ps1) and never written out here:
     it renamed once already (#886), and a docstring that states the answer instead of the function goes
     stale the next time it does.
 
@@ -34,6 +34,10 @@
 # use instead of an inline Get-Command, so it is the one place that most had to stop being one itself.
 # Unconditional and $PSScriptRoot-relative, so it resolves in the plugin mirror as well as here.
 . (Join-Path $PSScriptRoot 'command-probe-lib.ps1')
+
+# THE WORKFLOW FOLDER'S NAME (#3870): one list, read here for the seam defaults and in entry-scaffold-lib.ps1
+# for the branch documents. A leaf, $PSScriptRoot-relative like the probe above.
+. (Join-Path $PSScriptRoot 'workflow-folder-lib.ps1')
 
 function Get-SeamValue {
     <#
@@ -145,7 +149,9 @@ function Test-IsWorkflowSourceRepo {
     param([Parameter(Mandatory)][string]$RepoRoot)
     $manifest = Join-Path $RepoRoot '.claude-plugin\marketplace.json'
     if (-not (Test-Path -LiteralPath $manifest -PathType Leaf)) { return $false }
-    $workflow = Get-WorkflowFolderName -RepoRoot $RepoRoot
+    # THE LEAF, NOT THE PATH (#3870): the folder is '.dkj/dkj-policy' now, and what names the plugin is its
+    # last segment -- the folder is named after the plugin that legislates it, inside the '.dkj/' home.
+    $workflow = (Get-WorkflowFolderName -RepoRoot $RepoRoot) -replace '^.*/', ''
     try {
         $json = Get-Content -LiteralPath $manifest -Raw -ErrorAction Stop | ConvertFrom-Json
     } catch { return $false }
@@ -162,39 +168,8 @@ function Test-IsWorkflowSourceRepo {
     }
     return $false
 }
-function Get-WorkflowFolderName {
-    <#
-        The name of the workflow's own root folder in $RepoRoot: 'dkj-policy' normally, and whichever
-        earlier name is present where a repo has not migrated yet -- 'contributing-davekjohn', then
-        'workflow-davekjohn'.
-
-        WHY THIS EXISTS (#886, August 26, 2026). The folder renamed, and the five seam DEFAULTS below all
-        compose a path out of it. Hardcoding the new name would point a consumer's changelog and release
-        roots at a directory they do not have, and the fold would then create a second changelog beside the
-        one holding their history rather than failing loudly. Hardcoding the old name would send every NEW
-        consumer to a folder the scaffolder no longer writes. Neither is a default worth shipping.
-
-        AND IT HAS NOW RENAMED TWICE (#1437, September 5, 2026): 'contributing-davekjohn' became
-        'dkj-policy' when the plugin did, because the folder is named after the plugin that legislates it.
-        That is the argument above holding rather than a new one -- which is why the list grew by an entry
-        instead of the function being rewritten. THE ORDER IS NEWEST FIRST and the walk stops at the first
-        hit, so a repo mid-migration that briefly has two of them gets the newer, which is the one a writer
-        would have made.
-
-        SO: PREFER WHAT EXISTS, which is the same answer Resolve-BranchFilePath gives one level down for the
-        documents inside this folder. A repo with none of them gets the current name, so a writer creates the
-        current one.
-
-        Deliberately NOT a seam. A repo that wants to differ already has Get-ChangelogPath and the four
-        release-root seams to say so; a sixth answer for "what is the folder called" would let those five
-        disagree with each other.
-    #>
-    param([Parameter(Mandatory)][string]$RepoRoot)
-    foreach ($name in @('dkj-policy', 'contributing-davekjohn', 'workflow-davekjohn')) {
-        if (Test-Path -LiteralPath (Join-Path $RepoRoot $name) -PathType Container) { return $name }
-    }
-    return 'dkj-policy'
-}
+# Get-WorkflowFolderName lives in workflow-folder-lib.ps1 since #3870, so entry-scaffold-lib.ps1 reads the
+# same list for the branch documents -- see that file for why the folder is '.dkj/dkj-policy' now.
 
 function Get-DefaultReleaseHistoryPath {
     <#
@@ -391,7 +366,8 @@ function Assert-WorkflowIsolatedSeamPath {
     # only the new name would turn this guard from an isolation check into a hard stop on every seam call in
     # every unmigrated consumer, and it REFUSES with exit 1 rather than warning. Same answer as
     # Get-BranchFilePaths gives for the documents inside it: recognise the old name, write the new one.
-    $allowedRoots = @('dkj-policy', 'contributing-davekjohn', 'workflow-davekjohn')
+    # '.dkj/dkj-policy' joined the list under #3870, read from the one list in workflow-folder-lib.ps1.
+    $allowedRoots = @(Get-WorkflowFolderNames)
     foreach ($root in $allowedRoots) {
         if ($normalized -eq $root -or $normalized -like "$root/*") { return }
     }
@@ -409,6 +385,6 @@ function Assert-WorkflowIsolatedSeamPath {
     } else {
         $allowedClause = 'no answer outside that folder is accepted for it'
     }
-    Write-Error "$SeamName resolved to '$RelativePath'. This repo is a workflow consumer (issue #885) and this seam isolates into dkj-policy/ by default; $allowedClause. Nothing was read or written. If '$RelativePath' is genuinely where this belongs, move it under dkj-policy/ instead of pointing the seam outside it."
+    Write-Error "$SeamName resolved to '$RelativePath'. This repo is a workflow consumer (issue #885) and this seam isolates into $(Get-WorkflowFolderName -RepoRoot $RepoRoot)/ by default; $allowedClause. Nothing was read or written. If '$RelativePath' is genuinely where this belongs, move it under $(Get-WorkflowFolderName -RepoRoot $RepoRoot)/ instead of pointing the seam outside it."
     exit 1
 }

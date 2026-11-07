@@ -235,6 +235,7 @@ function New-Fixture {
     # the very unjudged .Trim() this repair removes.
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\check-report-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\check-report-lib.ps1') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\command-probe-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\command-probe-lib.ps1') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\workflow-folder-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\workflow-folder-lib.ps1') -Force
     # repo-root-lib.ps1 likewise (#2115): check-report-lib.ps1 resolves the repo root through
     # Get-GitTopLevelPath, which lives there. UNGUARDED in that lib, deliberately -- it is mirrored
     # beside it into every plugin that carries it, so a payload missing it is broken rather than old.

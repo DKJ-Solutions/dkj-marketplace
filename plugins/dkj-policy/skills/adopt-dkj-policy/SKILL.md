@@ -1,6 +1,6 @@
 ---
 name: adopt-dkj-policy
-description: Adopt the dkj-policy workflow in a consuming repo, in five independent parts that can run in any order or alone. Part 1 scaffolds the workflow's own root folder -- dkj-policy/ -- the releases root with this repo's release answers, the branch-entry CI gate, the always-on budget CI gate that holds every PR to not growing what every session pays before a single assignment is given, and the PR template open-pr fills in; use this right after installing the plugin, or when the script-contract session check reports the folder missing, since an install alone writes nothing into the repo. Part 2 adopts the source repo's workflow configuration from the shipped blueprint -- placing the values that state the shared way of working into this repo's own seam libs, and proposing the rest for a person to answer; use this after specialists-init has laid down scripts/repo-config.ps1 and scripts/lib/branch-info.ps1, or whenever the script-contract check reports functions this repo has never configured. Part 3 builds the CI floor -- it places the runners that keep the fold and the resolves verification alive across a merge the shipping session never observes (a merge queue, or the GitHub UI merge button), places a scheduled runner that checks whether a GitHub-side repo setting still matches what this repo declares, and reports whether a required status check exists at all, which is the certificate ship-pr dates its staleness guard from; use it after installing the plugin, when ship-pr says the staleness guard is off because no required check is known, when a merge landed and nothing folded, or when a repo setting may have drifted. A merge queue is optional and is not this workflow policy: most repos cannot have one, so a missing queue is reported as the ordinary state rather than as a gap. Part 4 puts the one issue label this workflow prescribes on the tracker -- the reach label, minor by default, which is the tier model read on an issue instead of on a changelog entry; use it after installing the plugin, or when a filing fails because the label does not exist. Part 5 wires up the statusLine that draws the progress bar for the long runs this workflow backgrounds -- the gates and ship-pr's CI wait, which stream no stdout anywhere visible; use it after installing the plugin, or when a backgrounded run leaves the session looking idle. statusLine is a settings key, so no plugin component can place it. Parts 1 to 3 and part 5 are strictly additive and dry-run by default; none overwrites anything, and part 4 is a person's gh call rather than a script.
+description: Adopt the dkj-policy workflow in a consuming repo, in five independent parts that can run in any order or alone. Part 1 scaffolds the workflow's own folder -- .dkj/dkj-policy/, moving an older root dkj-policy/ there -- the releases root with this repo's release answers, the branch-entry CI gate, the always-on budget CI gate that holds every PR to not growing what every session pays before a single assignment is given, and the PR template open-pr fills in; use this right after installing the plugin, or when the script-contract session check reports the folder missing, since an install alone writes nothing into the repo. Part 2 adopts the source repo's workflow configuration from the shipped blueprint -- placing the values that state the shared way of working into this repo's own seam libs, and proposing the rest for a person to answer; use this after specialists-init has laid down scripts/repo-config.ps1 and scripts/lib/branch-info.ps1, or whenever the script-contract check reports functions this repo has never configured. Part 3 builds the CI floor -- it places the runners that keep the fold and the resolves verification alive across a merge the shipping session never observes (a merge queue, or the GitHub UI merge button), places a scheduled runner that checks whether a GitHub-side repo setting still matches what this repo declares, and reports whether a required status check exists at all, which is the certificate ship-pr dates its staleness guard from; use it after installing the plugin, when ship-pr says the staleness guard is off because no required check is known, when a merge landed and nothing folded, or when a repo setting may have drifted. A merge queue is optional and is not this workflow policy: most repos cannot have one, so a missing queue is reported as the ordinary state rather than as a gap. Part 4 puts the one issue label this workflow prescribes on the tracker -- the reach label, minor by default, which is the tier model read on an issue instead of on a changelog entry; use it after installing the plugin, or when a filing fails because the label does not exist. Part 5 wires up the statusLine that draws the progress bar for the long runs this workflow backgrounds -- the gates and ship-pr's CI wait, which stream no stdout anywhere visible; use it after installing the plugin, or when a backgrounded run leaves the session looking idle. statusLine is a settings key, so no plugin component can place it. Parts 1 to 3 and part 5 are strictly additive and dry-run by default; none overwrites anything, and part 4 is a person's gh call rather than a script.
 ---
 
 # adopt-dkj-policy -- scaffold the folder, place the config seams, build the CI floor
@@ -117,6 +117,22 @@ no body at all.** Like everything else here it is never overwritten, so a templa
 your checkboxes, your sections, even an older placeholder the matcher still recognises on purpose --
 is left exactly as it is.
 
+### The folder is `.dkj/dkj-policy/` since #3870, and this part moves an older one
+
+**Build in `plugins/`, use in `.dkj/`** (Dave, November 7, 2026). A dot-folder is a tool's and a plain
+folder is the product, the convention `.github/` and `.vscode/` already follow. So `.dkj/` is the one
+home for every plugin of this marketplace that leaves data in your repo, each in a subfolder named after
+the plugin. It is not `.claude/`, because that is a Claude Code protected path: every write there asks
+for confirmation, and the branch document is written almost every turn.
+
+**A repo adopted before that day keeps working as it is**: every shared script still reads the root
+`dkj-policy/` (and the two names before it) wherever `.dkj/dkj-policy/` does not exist yet. **Running this
+part with `-Apply` moves it**: one `git mv` of the whole folder, so the changelog, the release roots and
+any open branch document travel together, plus a repoint of the quoted paths in your
+`scripts/repo-config.ps1` and of the `.gitignore` lines that start with the old folder. Prose that only
+mentions the old name is left alone. It moves nothing when `.dkj/dkj-policy/` already exists, and the
+dry run lists what it would move. Commit the result on a branch like any other change.
+
 ### Run it
 
 ```powershell
@@ -180,7 +196,7 @@ own plugin cache instead, so the easy route is to ask for the skill rather than 
 - **A leftover root `branch/` from before the move is yours to remove by hand** -- the scripts read
   only the new location, deliberately without a dual-read fallback.
 - **The folder itself is permanent** (issue #885). No command in this plugin removes
-  `dkj-policy/`, and no future teardown may -- uninstalling the plugin takes the plugin, not the
+  `.dkj/dkj-policy/`, and no future teardown may -- uninstalling the plugin takes the plugin, not the
   record that belongs to your repo. `<branch>.md` is the one file inside it that does not share
   that lifetime: it exists only while a branch is open, which is a precision on the rule rather than an
   exception to it.
@@ -320,7 +336,7 @@ The release machinery finds the folder through a `decide` seam in your `scripts/
 (Part 2 below explains the marker):
 
 ```powershell
-Get-ReleaseNoteRoot     -> 'dkj-policy/releases/audience'
+Get-ReleaseNoteRoot     -> '.dkj/dkj-policy/releases/audience'
 ```
 
 **Since [#1150](https://github.com/DaveKJohn/claude-code-specialists/issues/1150) the run writes that
@@ -352,10 +368,10 @@ with no answer and no notes it is not describing a tree -- it is making one.
 **`Get-ReleaseHistoryPath` is isolated by default now too** (issue #885, group E, reversing the
 August 19, 2026 answer below). That answer kept the list at the repo root on a durability argument:
 a repo that has cut releases has a **history** whichever tooling cut it, so it should not live in a
-folder a teardown could remove. #885 also settled that `dkj-policy/` is **permanent** -- see
+folder a teardown could remove. #885 also settled that `.dkj/dkj-policy/` is **permanent** -- see
 [the rules above](#the-rules-it-works-under) -- which answers that same durability worry the other way:
 the folder is now the safer place for the list, not the riskier one. So a fresh consumer gets
-`dkj-policy/releases/history.md` without configuring anything, the same computed-default
+`.dkj/dkj-policy/releases/history.md` without configuring anything, the same computed-default
 treatment `Get-ChangelogPath` already gets. **A repo that adopted before August 25, 2026 keeps its
 existing list at the root**: the computed default only isolates a *consumer*, and re-adopting an
 existing one starts a *second* list here rather than moving the first one under it silently -- repoint

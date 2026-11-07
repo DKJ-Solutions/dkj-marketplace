@@ -39,7 +39,7 @@ just advice.
   repaired" and cites evidence against it — and the evidence is a different failure wearing the same
   name.** [#1499](https://github.com/DKJ-Solutions/claude-code-specialists/issues/1499), picked up
   September 6, 2026, the day it was filed. It reported that `fold-on-merge.yml` misreads
-  `dkj-policy/CHANGELOG.md` as an unfolded dossier and fails every time it has something to fold, and it
+  `.dkj/dkj-policy/CHANGELOG.md` as an unfolded dossier and fails every time it has something to fold, and it
   ruled out the obvious close in its own words: *"Why this isn't the #1497 bug back again"*, on the
   ground that one of its three cited runs was **the merge of #1498 itself** — the push carrying the fix —
   *"and it fails with the identical symptom anyway"*. That is a well-formed argument, it names the right

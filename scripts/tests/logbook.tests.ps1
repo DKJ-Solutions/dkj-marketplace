@@ -84,6 +84,7 @@ try {
     New-Item -ItemType Directory -Path (Join-Path $fxPlugin 'hooks'), (Join-Path $fxPlugin 'hub\lib'), (Join-Path $fxPlugin 'scripts\lib') -Force | Out-Null
     foreach ($lib in 'logbook-lib.ps1', 'stopwatch-lib.ps1') { Copy-Item (Join-Path $RepoRoot "plugins\dkj-policy\hub\lib\$lib") (Join-Path $fxPlugin 'hub\lib\') }
     foreach ($lib in 'run-progress-lib.ps1', 'command-probe-lib.ps1') { Copy-Item (Join-Path $RepoRoot "plugins\dkj-policy\scripts\lib\$lib") (Join-Path $fxPlugin 'scripts\lib\') }
+    foreach ($lib in 'run-progress-lib.ps1', 'workflow-folder-lib.ps1') { Copy-Item (Join-Path $RepoRoot "plugins\dkj-policy\scripts\lib\$lib") (Join-Path $fxPlugin 'scripts\lib\') }
     Copy-Item (Join-Path $RepoRoot 'plugins\dkj-policy\hooks\logbook-hook.ps1') (Join-Path $fxPlugin 'hooks\')
     & git -C $fx init -q -b main 2>$null
     & git -C $fx -c user.name=t -c user.email=t@example.invalid add -A 2>$null

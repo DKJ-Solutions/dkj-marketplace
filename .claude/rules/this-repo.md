@@ -82,12 +82,12 @@ this section.
   [the same lens](../specialists/lenses/specialist-05-15-lens.md#how-the-gate-checks-got-their-shape-and-the-measurements-behind-them-august-15-2026).
   **Read it before changing a check.**
 - **Three bounded exceptions land directly on `main`**, and read end to end they are one procedure:
-  1. The **fold commit** after a merge — bounded to `dkj-policy/CHANGELOG.md` and the branch's
+  1. The **fold commit** after a merge — bounded to `.dkj/dkj-policy/CHANGELOG.md` and the branch's
      development document (named by its resolver, `Resolve-BranchFilePath`), which the same run removes.
   2. The **release commit**, only on explicit request — the lockstep version bump, the generated
      release notes, the changelog emptied to its intro, the builds `Get-ReleaseBuilds` names (none
      since #3477), and the tag `vX.Y.Z`. A major also takes two
-     preparation commits, bounded to the new section in `dkj-policy/releases/history.md` and the assert
+     preparation commits, bounded to the new section in `.dkj/dkj-policy/releases/history.md` and the assert
      in `release-lib.tests.ps1` that pins the major.
   3. The **release-notes commit** after the tag — bounded to the hand-written documents of a cut that
      was actually asked for.

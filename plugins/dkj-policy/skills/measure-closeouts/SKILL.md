@@ -89,7 +89,7 @@ it is an override, not something you have to remember:
 | running from | baseline lands in | why |
 |---|---|---|
 | the repo this script is maintained in | `baselines/closeout-ceiling.json` beside the script | where the committed baseline already sits |
-| **the plugin mirror** (a consumer) | `dkj-policy/baselines/closeout-ceiling.json` in **your** repo | `$PSScriptRoot` is the version-scoped plugin cache, which the next `claude plugin update` replaces — a baseline written there is lost without anybody being told |
+| **the plugin mirror** (a consumer) | `.dkj/dkj-policy/baselines/closeout-ceiling.json` in **your** repo | `$PSScriptRoot` is the version-scoped plugin cache, which the next `claude plugin update` replaces — a baseline written there is lost without anybody being told |
 
 The parent directory is created if it does not exist. **Commit the file**: a baseline nobody can diff
 is the same sample of one this whole script exists to replace.

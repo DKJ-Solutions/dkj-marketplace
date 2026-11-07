@@ -78,7 +78,7 @@ try {
     # false, against 4 claims with 3 correct), and a rule keyed on names is one rename away from going
     # silent -- which is exactly what just happened to the collision itself.
     Write-Host "check 20: a claimed section count vs. the scaffolder" -ForegroundColor Cyan
-    $shapeDoc = Join-Path $Fixture 'dkj-policy\branch\README.md'
+    $shapeDoc = Join-Path $Fixture '.dkj\dkj-policy\branch\README.md'
     New-Item -ItemType Directory -Path (Split-Path -Parent $shapeDoc) -Force | Out-Null
 
     # 44. A wrong count is reported, naming the file, the claim and the truth.
@@ -126,7 +126,7 @@ try {
     # across a line break. A test that only pinned the exclusion would pass against a check that still sees
     # nothing.
     Write-Host "check 20b: the changelog intro is held, its entries stay history" -ForegroundColor Cyan
-    $shapeCl = Join-Path $Fixture 'dkj-policy\CHANGELOG.md'
+    $shapeCl = Join-Path $Fixture '.dkj\dkj-policy\CHANGELOG.md'
     $shapeEntry = @(
         ''
         '## #123 ' + ([char]0x00B7) + ' A real entry'
@@ -153,7 +153,7 @@ try {
     #     requires and this one deliberately does not. This is the exact sentence that was on main.
     Write-ShapeChangelog 'Everything merged since the last release: one `##` per change, and under it three named sections.'
     $e4 = Invoke-Integrity -FixtureRoot $Fixture
-    Assert-True ($e4.Out -match '\[entry-shape\] dkj-policy[\\/]CHANGELOG\.md:3: says an entry has 3') `
+    Assert-True ($e4.Out -match '\[entry-shape\] \.dkj[\\/]dkj-policy[\\/]CHANGELOG\.md:3: says an entry has 3') `
         'entry-shape: a stale count in the changelog intro is reported, with its line, and needs no level marker'
 
     # 48. THE RELAXATION IS CONFINED TO THE HEAD. The same markerless claim below the first entry heading
@@ -172,7 +172,7 @@ try {
     #     bypass -- and the drift that prompted this was written exactly that way.
     Write-ShapeChangelog "Everything merged since the last release: one $docEntryH per change, and under it three`nnamed $docSectH sections."
     $e6 = Invoke-Integrity -FixtureRoot $Fixture
-    Assert-True ($e6.Out -match '\[entry-shape\] dkj-policy[\\/]CHANGELOG\.md:3: says an entry has 3') `
+    Assert-True ($e6.Out -match '\[entry-shape\] \.dkj[\\/]dkj-policy[\\/]CHANGELOG\.md:3: says an entry has 3') `
         'entry-shape: a claim split across a line break in the intro is caught, at the line it starts on'
 
     # 50. And the right count clears it -- taken from the scaffolder, not from the literal 'six', so this
@@ -218,8 +218,8 @@ try {
     # than a blanket absence check besides.
     Write-Host "check 20c: the branch document is exempt, the folder's own pages are not" -ForegroundColor Cyan
     $shapeStale   = "An entry is one $docEntryH heading with three named $docSectH sections under it."
-    $shapeBranch  = Join-Path $Fixture 'dkj-policy\fix-2180-demo.md'
-    $shapeFolderR = Join-Path $Fixture 'dkj-policy\README.md'
+    $shapeBranch  = Join-Path $Fixture '.dkj\dkj-policy\fix-2180-demo.md'
+    $shapeFolderR = Join-Path $Fixture '.dkj\dkj-policy\README.md'
     $shapeLegacy  = Join-Path $Fixture ((Get-BranchFilePaths).LegacyCycle -replace '/', '\')
 
     # 51. All three in one run: the branch document silent, the folder's own page reported, the legacy name
@@ -231,11 +231,11 @@ try {
     [System.IO.File]::WriteAllText($shapeFolderR, "# dkj-policy`n`n$shapeStale`n", $Utf8NoBom)
     [System.IO.File]::WriteAllText($shapeLegacy, "## feat/old-branch`n`n$shapeStale`n", $Utf8NoBom)
     $e8 = Invoke-Integrity -FixtureRoot $Fixture
-    Assert-True (-not ($e8.Out -match '\[entry-shape\] dkj-policy[\\/]fix-2180-demo\.md')) `
+    Assert-True (-not ($e8.Out -match '\[entry-shape\] \.dkj[\\/]dkj-policy[\\/]fix-2180-demo\.md')) `
         'entry-shape: the branch''s OWN document is exempt by pattern, not by the retired shared name (#2180)'
-    Assert-True ($e8.Out -match '\[entry-shape\] dkj-policy[\\/]README\.md:3: says an entry has 3') `
+    Assert-True ($e8.Out -match '\[entry-shape\] \.dkj[\\/]dkj-policy[\\/]README\.md:3: says an entry has 3') `
         'entry-shape: and the same sentence in the folder''s own page IS reported, so the sweep does reach here'
-    Assert-True (-not ($e8.Out -match '\[entry-shape\] dkj-policy[\\/]branch[\\/]branch-cycle\.md')) `
+    Assert-True (-not ($e8.Out -match '\[entry-shape\] \.dkj[\\/]dkj-policy[\\/]branch[\\/]branch-cycle\.md')) `
         'entry-shape: a legacy branch-file name is still exempt -- the fixed list was kept, not swapped out'
     Remove-Item -LiteralPath $shapeBranch, $shapeFolderR, $shapeLegacy -Force
 

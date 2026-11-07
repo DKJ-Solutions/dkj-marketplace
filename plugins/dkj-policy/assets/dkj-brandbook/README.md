@@ -997,7 +997,7 @@ on the owner's explicit request, like any tag. The first four releases were set 
 `house-style-v1` to `house-style-v4`. The owner brought those four together as `v0.1.0`, the first
 `vX.Y.Z` release (#172, #178), and every release since is cut with the `dkj-policy` plugin's
 `cut-release` and tagged `vX.Y.Z`. The cut also writes the release's changelog notes and its row in
-[`dkj-policy/releases/history.md`](https://github.com/DKJ-Solutions/dkj-brandbook/blob/v0.4.0/dkj-policy/releases/history.md), which lists the four earlier releases
+[`.dkj/dkj-policy/releases/history.md`](https://github.com/DKJ-Solutions/dkj-brandbook/blob/v0.4.0/dkj-policy/releases/history.md), which lists the four earlier releases
 too. A tag is never moved or reused: a fix is a new release. Then the `dkj-brandbook` skill in the
 `dkj-solutions` plugin
 ([DKJ-Solutions/dkj-marketplace](https://github.com/DKJ-Solutions/dkj-marketplace)) is repointed to

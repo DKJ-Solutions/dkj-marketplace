@@ -83,28 +83,28 @@ function New-LegacyBranchDoc {
 
 Write-Host "layer 1 -- the name IS the branch"
 $p = Get-BranchFilePaths -Branch 'fix/thing-v1'
-Assert-Equal 'dkj-policy/fix-thing-v1.md' $p.File 'a branch gets a document named after it, slashes flattened and nothing else'
+Assert-Equal '.dkj/dkj-policy/fix-thing-v1.md' $p.File 'a branch gets a document named after it, slashes flattened and nothing else'
 Assert-Equal $p.File $p.Cycle      'Cycle answers the same document'
 Assert-Equal $p.File $p.Deployment 'and so does Deployment -- two jobs, one file'
-Assert-Equal 'dkj-policy/development-fix-thing-v1.md' $p.PriorPerBranchFile 'the pre-#1335 prefixed name is read and never written'
-Assert-Equal 'dkj-policy/development.md' $p.SharedFile 'SharedFile is the pre-#1255 name, which is read and never written'
+Assert-Equal '.dkj/dkj-policy/development-fix-thing-v1.md' $p.PriorPerBranchFile 'the pre-#1335 prefixed name is read and never written'
+Assert-Equal '.dkj/dkj-policy/development.md' $p.SharedFile 'SharedFile is the pre-#1255 name, which is read and never written'
 Assert-Equal '*.md' $p.Pattern 'and the pattern every per-branch document matches -- widened with the prefix gone'
 Assert-True (@($p.ReservedNames) -contains 'CHANGELOG.md') 'the widened pattern comes with the exclusion that makes it safe'
 # THE NO-BRANCH ARM IS BACK-COMPAT AND IS ASSERTED ON PURPOSE. Callers that want the layout's shape --
 # the directory, the sweep list -- have no branch to offer, and making the parameter mandatory would have
 # forced a branch lookup into every one of them.
 $n = Get-BranchFilePaths
-Assert-Equal 'dkj-policy/development.md' $n.File 'omitting the branch answers the shared name, unchanged from before #1255'
-Assert-Equal 'dkj-policy' $n.Directory 'the directory is the same either way'
+Assert-Equal '.dkj/dkj-policy/development.md' $n.File 'omitting the branch answers the shared name, unchanged from before #1255'
+Assert-Equal '.dkj/dkj-policy' $n.Directory 'the directory is the same either way'
 Assert-Equal '' $n.PriorPerBranchFile 'and it names no prefixed predecessor, because there is no branch to build one from'
 # A branch name is the only thing here that can carry a path separator; Windows forbids the rest.
-Assert-Equal 'dkj-policy/feat-a-b-c.md' (Get-BranchFilePaths -Branch 'feat/a/b/c').File 'every slash is flattened, not only the first'
+Assert-Equal '.dkj/dkj-policy/feat-a-b-c.md' (Get-BranchFilePaths -Branch 'feat/a/b/c').File 'every slash is flattened, not only the first'
 # THE LEGACY LIST IS ORDERED NEWEST-PREDECESSOR FIRST, and since #1335 its first entry is branch-dependent
 # -- which is why it takes -Branch at all. A caller that omits it simply gets the constants.
 $legacy = @(Get-BranchFileLegacyNames -Kind 'Cycle' -Branch 'fix/thing-v1')
-Assert-Equal 'dkj-policy/development-fix-thing-v1.md' $legacy[0] 'the newest predecessor leads the legacy list'
-Assert-Equal 'dkj-policy/development.md' $legacy[1] 'and the pre-#1255 shared name follows it'
-Assert-True (@(Get-BranchFileLegacyNames -Kind 'Cycle') -notcontains 'dkj-policy/development-.md') 'omitting the branch never fabricates a prefixed name'
+Assert-Equal '.dkj/dkj-policy/development-fix-thing-v1.md' $legacy[0] 'the newest predecessor leads the legacy list'
+Assert-Equal '.dkj/dkj-policy/development.md' $legacy[1] 'and the pre-#1255 shared name follows it'
+Assert-True (@(Get-BranchFileLegacyNames -Kind 'Cycle') -notcontains '.dkj/dkj-policy/development-.md') 'omitting the branch never fabricates a prefixed name'
 
 # THE PRE-#1437 FOLDER IS IN THE LIST, AND ITS PER-BRANCH NAME IS THE ONE THAT MATTERS (September 5, 2026).
 # The folder rename before this one landed while the document was still one shared file, so PriorFolder*
@@ -114,6 +114,7 @@ Assert-True (@(Get-BranchFileLegacyNames -Kind 'Cycle') -notcontains 'dkj-policy
 # index: the position is a preference the declare-test overrides, and pinning it would turn a reordering
 # into a failure without anything being broken.
 $legacyContrib = @(Get-BranchFileLegacyNames -Kind 'Cycle' -Branch 'fix/thing-v1')
+Assert-True ($legacyContrib -contains 'dkj-policy/fix-thing-v1.md') 'the pre-#3870 root folder''s per-branch name is read, so a branch open across the move to .dkj/ is still found'
 Assert-True ($legacyContrib -contains 'contributing-davekjohn/fix-thing-v1.md') 'the pre-#1437 folder''s per-branch name is read'
 Assert-True ($legacyContrib -contains 'contributing-davekjohn/development.md') 'and so is its pre-#1255 shared name'
 Assert-True ($legacyContrib -contains 'contributing-davekjohn/development-cycle.md') 'and its pre-#963 filename'
@@ -124,7 +125,9 @@ Assert-True (@(Get-BranchFileLegacyNames -Kind 'Cycle') -notcontains 'contributi
 
 Write-Host ""
 Write-Host "layer 2 -- the predicate the two lint checks read"
-Assert-True (Test-IsPerBranchDocumentPath -RelativePath 'dkj-policy/fix-x-v1.md') 'a per-branch document is recognised'
+Assert-True (Test-IsPerBranchDocumentPath -RelativePath '.dkj/dkj-policy/fix-x-v1.md') 'a per-branch document in the moved folder is recognised, its leading dot kept (#3870)'
+Assert-True (Test-IsPerBranchDocumentPath -RelativePath './.dkj/dkj-policy/fix-x-v1.md') 'and a leading ./ is stripped as a prefix, not the dot after it'
+Assert-True (Test-IsPerBranchDocumentPath -RelativePath 'dkj-policy/fix-x-v1.md') 'and one in the pre-#3870 root folder still is, for a repo that has not moved'
 Assert-True (Test-IsPerBranchDocumentPath -RelativePath '\dkj-policy\fix-x-v1.md') 'separators are normalised -- one check builds its path from a Windows path, the other from the seam'
 Assert-True (Test-IsPerBranchDocumentPath -RelativePath './dkj-policy/fix-x-v1.md') 'and a leading ./ does not hide it'
 Assert-True (Test-IsPerBranchDocumentPath -RelativePath 'dkj-policy/development-fix-x-v1.md') 'the pre-#1335 prefixed name still matches, so a branch open across the rename keeps its exclusions'
@@ -249,8 +252,8 @@ try {
     Assert-Equal 'dkj-policy/fix-mine-v1.md' `
         (Resolve-BranchFilePath -Kind Cycle -Reader $reader -Branch 'fix/mine-v1') `
         'the Reader arm finds the per-branch document when the caller names the branch'
-    $readerDocs = @{ 'dkj-policy/development-fix-mine-v1.md' = ('## Development: ' + $BT + 'fix/mine-v1' + $BT) }
-    Assert-Equal 'dkj-policy/development-fix-mine-v1.md' `
+    $readerDocs = @{ '.dkj/dkj-policy/development-fix-mine-v1.md' = ('## Development: ' + $BT + 'fix/mine-v1' + $BT) }
+    Assert-Equal '.dkj/dkj-policy/development-fix-mine-v1.md' `
         (Resolve-BranchFilePath -Kind Cycle -Reader $reader -Branch 'fix/mine-v1') `
         'and it finds the pre-#1335 name too, which only the named candidate can reach on this arm'
 }
