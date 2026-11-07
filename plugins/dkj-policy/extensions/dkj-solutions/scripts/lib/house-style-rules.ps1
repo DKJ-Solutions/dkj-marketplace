@@ -131,7 +131,7 @@ function Get-HouseStyleCanonicalPath {
         assets/dkj-brandbook/, the product layer under dkj-solutions' assets/dkj-brandbook-product/ (#3831).
     #>
     param([Parameter(Mandatory)][string]$Leaf)
-    if ($Leaf -ceq 'house-product.css') { return 'plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/house-product.css' }
+    if ($Leaf -ceq 'house-product.css') { return 'plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css' }
     return (Get-HouseStyleCanonicalDir) + '/' + $Leaf
 }
 
@@ -196,7 +196,9 @@ function Get-HouseStylePin {
         The URL path is read in every spelling it has had: plugins/dkj-policy/assets/dkj-brandbook/ since
         the rename to dkj-brandbook, plugins/dkj-policy/assets/house-style/ from #3531 until then, and
         plugins/dkj-policy/dkj-solutions/assets/house-style/ before that, which every page at an earlier tag
-        still carries -- and the reusable gate reads the page AT the pinned tag.
+        still carries -- and the reusable gate reads the page AT the pinned tag. The product layer's URL
+        has its own two depths: plugins/dkj-policy/extensions/dkj-solutions/ since #3871, and
+        plugins/dkj-policy/dkj-solutions/ before it.
     #>
     param([Parameter(Mandatory)][string]$SkillText)
 
@@ -206,7 +208,7 @@ function Get-HouseStylePin {
         $m = [regex]::Match($line, '^\|\s*`(?<file>house-style\.css|house-theme\.js|house-product\.css)`\s*\|\s*`(?<url>[^`]+)`\s*\|\s*`(?<sha>[0-9a-f]{64})`\s*\|')
         if (-not $m.Success) { continue }
         $hashes[$m.Groups['file'].Value] = $m.Groups['sha'].Value
-        $t = [regex]::Match($m.Groups['url'].Value, '/(?:dkj-marketplace|dkj-claude-plugins)/(?<tag>[^/]+)/plugins/dkj-policy/(?:dkj-solutions/)?assets/(?:dkj-brandbook-product|dkj-brandbook|house-style)/')
+        $t = [regex]::Match($m.Groups['url'].Value, '/(?:dkj-marketplace|dkj-claude-plugins)/(?<tag>[^/]+)/plugins/dkj-policy/(?:(?:extensions/)?dkj-solutions/)?assets/(?:dkj-brandbook-product|dkj-brandbook|house-style)/')
         if ($t.Success) { $tag = $t.Groups['tag'].Value }
     }
     foreach ($name in (Get-HouseStylePinRequiredNames)) { if (-not $hashes.ContainsKey($name)) { return $null } }
@@ -231,15 +233,19 @@ function Get-HouseStyleTagPin {
         if (-not (Test-Path -LiteralPath $env:DKJ_HOUSE_STYLE_TAG_PAGE -PathType Leaf)) { return $null }
         $TagPageText = [System.IO.File]::ReadAllText($env:DKJ_HOUSE_STYLE_TAG_PAGE, [System.Text.Encoding]::UTF8)
     } elseif (-not $PSBoundParameters.ContainsKey('TagPageText')) {
-        # The skill was named house-style until the rename to dkj-brandbook, so a tag cut before it carries
-        # the page under the old folder: try the current name first, then the old one.
+        # The skill was named house-style until the rename to dkj-brandbook, and the extension sat at
+        # plugins/dkj-policy/extensions/dkj-solutions/ until #3871 moved it under extensions/, so a tag cut before
+        # either carries the page at an older path: try the current spelling first, then the older ones.
         [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-        foreach ($skillDir in (Get-HouseStyleSkillDirNames)) {
-            $url = "https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/$($Pin.Tag)/plugins/dkj-policy/dkj-solutions/skills/$skillDir/SKILL.md"
-            try {
-                $TagPageText = [string](Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec $TimeoutSec -ErrorAction Stop).Content
-                break
-            } catch { $TagPageText = $null }
+        foreach ($extDir in @('extensions/dkj-solutions', 'dkj-solutions')) {
+            foreach ($skillDir in (Get-HouseStyleSkillDirNames)) {
+                $url = "https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/$($Pin.Tag)/plugins/dkj-policy/$extDir/skills/$skillDir/SKILL.md"
+                try {
+                    $TagPageText = [string](Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec $TimeoutSec -ErrorAction Stop).Content
+                    break
+                } catch { $TagPageText = $null }
+            }
+            if ($TagPageText) { break }
         }
     }
     if (-not $TagPageText) { return $null }

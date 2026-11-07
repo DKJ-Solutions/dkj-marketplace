@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/bwj-development/hooks/asana-link-pickupcheck.ps1 and its lib,
+    Tests for plugins/dkj-policy/extensions/bwj-development/hooks/asana-link-pickupcheck.ps1 and its lib,
     scripts/lib/asana-pickup-rules.ps1 -- the PostToolUse hook that warns at pickup when an issue names
     Asana but links no task (inbound #2919).
 
@@ -22,7 +22,7 @@
 #>
 $ErrorActionPreference = 'Continue'
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\bwj-development'
+$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development'
 $Hook       = Join-Path $PluginRoot 'hooks\asana-link-pickupcheck.ps1'
 $HooksJson  = Join-Path $PluginRoot 'hooks\hooks.json'
 

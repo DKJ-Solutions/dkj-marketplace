@@ -774,7 +774,7 @@ try {
     # a disabled one does not. dkj-solutions ships no adopter of its own, so this run is its only writer.
     Write-Host ''
     Write-Host 'The extension imports'
-    $extRx = { param($e) "^@~/\.claude/plugins/marketplaces/[^/]+/plugins/dkj-policy/$e/CLAUDE\.md$" }
+    $extRx = { param($e) "^@~/\.claude/plugins/marketplaces/[^/]+/plugins/dkj-policy/extensions/$e/CLAUDE\.md$" }
 
     $cE1 = New-FixtureConsumer -Label 'ext-both'
     New-Item -ItemType Directory -Path (Join-Path $cE1 '.claude') -Force | Out-Null

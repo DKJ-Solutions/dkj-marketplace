@@ -401,7 +401,7 @@ count is worth stating precisely because the wrong one is what kept the second s
 6. **(Retired October 5, 2026 -- the site no longer exists.) `asana-mirror`'s stage lines** -- the Asana
    task NAME, the GitHub project board's STATUS names, and the phrase saying WHY a card moved, which
    carried a submitter's name off the task's notes (`Format-ForConsole`,
-   `plugins/dkj-policy/bwj-development/templates/asana-mirror.ps1`,
+   `plugins/dkj-policy/extensions/bwj-development/templates/asana-mirror.ps1`,
    [#2019](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2019)) -- four sites in the CI
    template this workflow shipped to a BWJ store. The template was removed with the whole asana-mirror
    automation (Dave, October 5, 2026), so the entry is kept for the history and the numbering and guards
@@ -732,7 +732,7 @@ prints foreign text has, at most, every place found so far.
 
 **A FOURTH copy sat outside the libs until October 5, 2026 (retired with the asana-mirror automation, Dave),
 and #2019 was why it was a copy rather than a call.**
-`plugins/dkj-policy/bwj-development/templates/asana-mirror.ps1` shipped standalone: `adopt-bwj-development`
+`plugins/dkj-policy/extensions/bwj-development/templates/asana-mirror.ps1` shipped standalone: `adopt-bwj-development`
 copied it into a consumer as `.github/scripts/asana-mirror.ps1`, where none of these libs exist -- so a
 dot-source there named a path that was not there, and the argument that keeps the three libs apart did
 not even have to be made. It was the reason entry 6 went unguarded for as long as it did: every other

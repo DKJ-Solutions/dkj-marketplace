@@ -187,7 +187,7 @@ foreach ($rel in $scaffolders) {
 # THE BWJ ASANA-MIRROR WORKFLOW TEMPLATE IS RETIRED (Dave, October 5, 2026). It was a real file outside
 # .github/workflows/ that adopt-bwj-development copied into a consumer, parsed here for the same cap.
 # Pinned as absent so a stray re-add of a workflow template is noticed rather than slipping past.
-$asanaMirror = Join-Path $repoRoot 'plugins\dkj-policy\bwj-development\templates\asana-mirror.yml'
+$asanaMirror = Join-Path $repoRoot 'plugins\dkj-policy\extensions\bwj-development\templates\asana-mirror.yml'
 Assert-True (-not (Test-Path -LiteralPath $asanaMirror)) 'the asana-mirror workflow template no longer ships'
 
 # ------------------------------------------------------------------------------------------------

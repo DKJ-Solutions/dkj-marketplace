@@ -111,7 +111,7 @@ $static = @{
     '/house-style.css' = @{ File = (Join-Path $styleDir 'house-style.css'); Type = 'text/css; charset=utf-8' }
     '/house-theme.js'  = @{ File = (Join-Path $styleDir 'house-theme.js');  Type = 'text/javascript; charset=utf-8' }
     # The product layer, on top of the core on every page this server renders: it ships with dkj-solutions (#3831).
-    '/house-product.css' = @{ File = (Join-Path $root 'plugins\dkj-policy\dkj-solutions\assets\dkj-brandbook-product\house-product.css'); Type = 'text/css; charset=utf-8' }
+    '/house-product.css' = @{ File = (Join-Path $root 'plugins\dkj-policy\extensions\dkj-solutions\assets\dkj-brandbook-product\house-product.css'); Type = 'text/css; charset=utf-8' }
 }
 
 function Invoke-DashboardGit {
@@ -477,7 +477,7 @@ try {
                 # layer's specimens are dkj-solutions' (#3831), joined to the core's so this page shows the whole book.
                 $specError = ''; $spec = ''
                 try {
-                    $spec = Join-HouseStyleSpecimens -Core ([System.IO.File]::ReadAllText((Join-Path $styleDir 'specimens.html'), $utf8)) `n                        -Product ([System.IO.File]::ReadAllText((Join-Path $root 'plugins\dkj-policy\dkj-solutions\assets\dkj-brandbook-product\specimens.html'), $utf8))
+                    $spec = Join-HouseStyleSpecimens -Core ([System.IO.File]::ReadAllText((Join-Path $styleDir 'specimens.html'), $utf8)) `n                        -Product ([System.IO.File]::ReadAllText((Join-Path $root 'plugins\dkj-policy\extensions\dkj-solutions\assets\dkj-brandbook-product\specimens.html'), $utf8))
                 } catch { $specError = $_.Exception.Message }
                 $html = Format-ProductHouseStylePageHtml -Body $spec -ReadError $specError -Section $hsAt.Section -Token $hsAt.Token
                 if ($null -eq $html) {

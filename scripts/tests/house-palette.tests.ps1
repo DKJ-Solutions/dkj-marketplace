@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for the house-style colour model (#3235): plugins/dkj-policy/dkj-solutions/scripts/lib/house-palette-lib.ps1
+    Tests for the house-style colour model (#3235): plugins/dkj-policy/extensions/dkj-solutions/scripts/lib/house-palette-lib.ps1
     and the build script beside it, scripts/build/build-house-palette.ps1.
 
 .DESCRIPTION
@@ -15,7 +15,7 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Plugin   = Join-Path $RepoRoot 'plugins\dkj-policy\dkj-solutions'
+$Plugin   = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\dkj-solutions'
 $Build    = Join-Path $Plugin 'scripts\build\build-house-palette.ps1'
 $Style    = Join-Path $RepoRoot 'plugins\dkj-policy\assets\dkj-brandbook\house-style.css'
 

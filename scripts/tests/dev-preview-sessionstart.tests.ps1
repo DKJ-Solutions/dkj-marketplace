@@ -397,7 +397,7 @@ Write-Host '-- group 1d: the plugin''s Repository page, and the Simple Browser r
 # The hook, the servers and the Admin page are dkj-policy's (#3198); the house style they serve is the
 # dkj-solutions extension's, inside dkj-policy's own payload.
 $PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy'
-$SolutionsRoot = Join-Path $PluginRoot 'dkj-solutions'
+$SolutionsRoot = Join-Path $PluginRoot 'extensions\dkj-solutions'
 . (Join-Path $PluginRoot 'apps\admin\lib\repo-admin-page.ps1')
 
 # The placeholder is retired (#3245): Admin is the general pages server, so nothing of it ships any more.

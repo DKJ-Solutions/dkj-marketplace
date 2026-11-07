@@ -41,7 +41,7 @@
 $ErrorActionPreference = 'Stop'
 
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\bwj-development'
+$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development'
 $LibPath    = Join-Path $PluginRoot 'scripts\lib\page-publish-rules.ps1'
 $ScriptPath = Join-Path $PluginRoot 'scripts\task\publish-page.ps1'
 $WorkerPath = Join-Path $PluginRoot 'worker\bwj-pages-worker.js'
@@ -191,7 +191,7 @@ Assert-Equal "https://p.workers.dev/notes/$HexA" (Get-BwjPageUrl -BaseUrl 'https
 $coUrl = "https://p.workers.dev/notes/$HexA"
 Assert-True ((Format-BwjPageCloseOut -Kind 'notes' -Url $coUrl) -like "Close-out:*$coUrl") 'a verified notes publish prints the close-out line ending in the URL'
 Assert-Equal '' (Format-BwjPageCloseOut -Kind 'backlog' -Url $coUrl) 'the backlog page is no cut''s receipt, so it prints none'
-$ppSrc = Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\bwj-development\scripts\task\publish-page.ps1') -Raw
+$ppSrc = Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development\scripts\task\publish-page.ps1') -Raw
 Assert-Equal 1 ([regex]::Matches($ppSrc, 'Format-BwjPageCloseOut -Kind \$Kind -Url \$url')).Count 'one verified exit path, shared by wrangler and the KV API, prints it'
 
 $apiUrl = Get-BwjPageKvApiUrl -AccountId $HexA -NamespaceId $HexB -Key "notes:$HexA"

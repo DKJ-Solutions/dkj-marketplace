@@ -42,7 +42,7 @@
 # The plugins' page parts: dkj-policy's shared head and escape, and dkj-solutions' product layout -- the site header and the
 # breadcrumb bar (#3831). This repo is their source, so they are read from its own tree, dkj-policy's first.
 . (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1')
-. (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1')
+. (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\product-pages-lib.ps1')
 
 function Get-ProductPages {
     <#

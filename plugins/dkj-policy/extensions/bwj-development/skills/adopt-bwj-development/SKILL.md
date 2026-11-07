@@ -545,7 +545,7 @@ the `dkj-policy` import that `adopt-dkj-policy` writes
 ([#2374](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2374)):
 
 ```
-@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-policy/bwj-development/CLAUDE.md
+@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-policy/extensions/bwj-development/CLAUDE.md
 ```
 
 **This step writes that line** ([#2532](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2532)).

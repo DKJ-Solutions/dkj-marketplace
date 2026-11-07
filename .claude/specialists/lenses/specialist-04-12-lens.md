@@ -11,12 +11,12 @@ group: 04
 ## Specific to this repo (claude-code-specialists)
 
 **Gwen's domain here is the `dkj-brandbook` skill page**:
-[`plugins/dkj-policy/dkj-solutions/skills/dkj-brandbook/SKILL.md`](../../../plugins/dkj-policy/dkj-solutions/skills/dkj-brandbook/SKILL.md).
+[`plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/SKILL.md`](../../../plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/SKILL.md).
 Since October 18, 2026 ([#3130](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3130)) the
 stylesheet, the theme script and the core rules live in this plugin's
 [`assets/dkj-brandbook/`](../../../plugins/dkj-policy/assets/dkj-brandbook/), and the mobile-first product layer
 (`house-product.css`, its page patterns and its README, #3831) in
-[`dkj-solutions/assets/dkj-brandbook-product/`](../../../plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/);
+[`dkj-solutions/assets/dkj-brandbook-product/`](../../../plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/);
 the change to the brand book is made there. The page stays a pointer to them (they were in the `dkj-brandbook` repo, now archived, from
 October 13). Their House style page ships beside them (`specimens.html`: every token, the twelve themes,
 every component with its variants and states) and this repo's Admin shows it from the tree under Plugins, on

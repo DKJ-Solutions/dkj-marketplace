@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/bwj-development/hooks/closed-message-sessioncheck.ps1 -- the session check
+    Tests for plugins/dkj-policy/extensions/bwj-development/hooks/closed-message-sessioncheck.ps1 -- the session check
     that reports a store whose asana-closed-message copy is missing, stale, or has no ASANA_PAT (#2871),
     and a store config that states no Get-ResolvesExemptMatchers (#2959).
 
@@ -16,8 +16,8 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot  = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Hook      = Join-Path $RepoRoot 'plugins\dkj-policy\bwj-development\hooks\closed-message-sessioncheck.ps1'
-$Templates = Join-Path $RepoRoot 'plugins\dkj-policy\bwj-development\templates'
+$Hook      = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development\hooks\closed-message-sessioncheck.ps1'
+$Templates = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development\templates'
 # $PID and a guid in the fixture path: the test gate runs suites in parallel.
 $Fixture   = Join-Path ([System.IO.Path]::GetTempPath()) "closed-message-sessioncheck-$PID-$([guid]::NewGuid().ToString('n'))"
 

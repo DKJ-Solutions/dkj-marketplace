@@ -13,14 +13,14 @@ on:
   pull_request:
     paths:
       - 'plugins/dkj-policy/assets/dkj-brandbook/**'
-      - 'plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/**'
+      - 'plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/**'
       - 'scripts/lint/house-style-css/**'
       - '.github/workflows/house-style-css.yml'
   push:
     branches: [main]
     paths:
       - 'plugins/dkj-policy/assets/dkj-brandbook/**'
-      - 'plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/**'
+      - 'plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/**'
       - 'scripts/lint/house-style-css/**'
       - '.github/workflows/house-style-css.yml'
   merge_group:

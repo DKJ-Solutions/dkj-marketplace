@@ -31,7 +31,7 @@ layer is a third file, `house-product.css`, in the `dkj-solutions` plugin
 `house-style.css` and never alone, and it has [a README of its own][product-readme]: the app components, the
 page patterns of a product page, the site header and the breadcrumb bar. A session doing Admin work reads only
 this one. Its raw URL, the same tag:
-`https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/<tag>/plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/house-product.css`.
+`https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/<tag>/plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css`.
 
 **The rule that an app starts from it reaches DKJ-Solutions and nothing else**, through the
 `dkj-solutions` extension, where an app copies the files in and `check-house-style` holds the copy to the pin:
@@ -749,14 +749,14 @@ end of [`house-style.css`](house-style.css), under "Shared components", and both
 Each is commented in the file. **The rest of what the Brandbook app and MesoWise gave the house** (the narrow
 column, the form field, touch buttons, the dialog and drawer, the top bar, the toggles, the form parts, the value
 box, the bill and calculation tables, the date list, the figure) is the product layer's, in
-[`house-product.css`](../../dkj-solutions/assets/dkj-brandbook-product/house-product.css), documented in
+[`house-product.css`](../../extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css), documented in
 [its README][product-readme] under "App components" and "Brandbook-app components". The corner radii, `--control-lg`,
 `--datecol` and `--font-mono` those components brought are tokens and stay in the core ([Tokens](#what-it-holds)).
 
 ## The product layer
 
 **The mobile-first product has a stylesheet of its own** (Maikel, [#3831](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3831),
-November 5, 2026): [`house-product.css`](../../dkj-solutions/assets/dkj-brandbook-product/house-product.css) in the
+November 5, 2026): [`house-product.css`](../../extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css) in the
 `dkj-solutions` plugin, loaded **after** `house-style.css` and never alone. It holds the app components (the
 narrow column, the form field, touch buttons, the dialog and drawer, the top bar, the `.breadcrumbs-bar`, the
 site header and its menu) and the brand-book components that are not shared. **Its documentation moved with it**:
@@ -773,7 +773,7 @@ the whole of what Admin renders from. A product page vendors `house-style.css`, 
 read in VS Code's Simple Browser, and looks like an Explorer or a task board, while the product (the
 storefront) stays mobile-first with desktop as an option. The core (tokens, themes, typography, tables) is
 shared; the desktop shell is a part of [`house-style.css`](house-style.css), and the product layer is
-[`house-product.css`](../../dkj-solutions/assets/dkj-brandbook-product/house-product.css) in the `dkj-solutions`
+[`house-product.css`](../../extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css) in the `dkj-solutions`
 plugin ([`README.md`][product-readme] beside it, #3831):
 
 - **Desktop shell** (in [`house-style.css`](house-style.css), the part "Desktop shell: Admin's layer"): a thin bar, a flat side navigation under section headings (Home and the domain objects on top, then Product and Development, Settings in the foot, after the Shopify Admin, #3815), a main pane with a dense
@@ -961,8 +961,8 @@ one `--spacing-4` apart ([#207](https://github.com/DKJ-Solutions/dkj-brandbook/i
 clear of the settings button; a card a table links down to carries a compact outline "Back to overview"
 button in its card head ([#156](https://github.com/DKJ-Solutions/dkj-brandbook/issues/156)). **For Admin, a
 repo without a build copies [`patterns/admin-shell.html`](patterns/admin-shell.html)**; **for a product, it copies
-[`patterns/product-home.html`](../../dkj-solutions/assets/dkj-brandbook-product/patterns/product-home.html) and
-[`patterns/product-page.html`](../../dkj-solutions/assets/dkj-brandbook-product/patterns/product-page.html)**, the
+[`patterns/product-home.html`](../../extensions/dkj-solutions/assets/dkj-brandbook-product/patterns/product-home.html) and
+[`patterns/product-page.html`](../../extensions/dkj-solutions/assets/dkj-brandbook-product/patterns/product-page.html)**, the
 stylesheet-only reference pages for a product's home page and a page one level below it, beside the product layer
 in dkj-solutions (#3831). They draw the product layer's own form (the site header with its menu, the breadcrumb
 bar, the cards), link `house-style.css`, `house-product.css` and `house-theme.js`, and carry no CSS of their own.

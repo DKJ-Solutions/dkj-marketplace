@@ -289,19 +289,19 @@ $HistoryMajors
     # carries a stale sha256 cell, and the three files its Checksums names exist, LF-only (#3636; the product
     # layer's house-product.css in dkj-solutions since #3831).
     $zeros = '0' * 64
-    Write-Utf8 (Join-Path $root 'plugins\dkj-policy\dkj-solutions\skills\dkj-brandbook\SKILL.md') @"
+    Write-Utf8 (Join-Path $root 'plugins\dkj-policy\extensions\dkj-solutions\skills\dkj-brandbook\SKILL.md') @"
 # A fixture pin page
 
 | ``house-style.css`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-policy/assets/dkj-brandbook/house-style.css`` | ``$zeros`` |
 | ``house-theme.js`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-policy/assets/dkj-brandbook/house-theme.js`` | ``$zeros`` |
-| ``house-product.css`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/house-product.css`` | ``$zeros`` |
+| ``house-product.css`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css`` | ``$zeros`` |
 https://raw.githubusercontent.com/DKJ-Solutions/other-repo/v0.1.0/a/file.css
 "@
     $assets = Join-Path $root 'plugins\dkj-policy\assets\dkj-brandbook'
     New-Item -ItemType Directory -Path $assets -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $assets 'house-style.css'), ":root { --x: 1; }`n")
     [System.IO.File]::WriteAllText((Join-Path $assets 'house-theme.js'), "// fixture`n")
-    $productAssets = Join-Path $root 'plugins\dkj-policy\dkj-solutions\assets\dkj-brandbook-product'
+    $productAssets = Join-Path $root 'plugins\dkj-policy\extensions\dkj-solutions\assets\dkj-brandbook-product'
     New-Item -ItemType Directory -Path $productAssets -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $productAssets 'house-product.css'), ".y { color: var(--x); }`n")
     New-Item -ItemType Directory -Path (Join-Path $root '.dkj\dkj-policy\releases\audience\1.x') -Force | Out-Null
@@ -366,15 +366,15 @@ try {
     Assert-Equal '1.4.1' $v2 'happy path: the workflow plugin moved with it -- lockstep, not per plugin'
 
     # The version pins (#3133): every URL under the pinned prefix names the new tag, and nothing else moved.
-    $pinPage = Get-Content -LiteralPath (Join-Path $root 'plugins\dkj-policy\dkj-solutions\skills\dkj-brandbook\SKILL.md') -Raw
+    $pinPage = Get-Content -LiteralPath (Join-Path $root 'plugins\dkj-policy\extensions\dkj-solutions\skills\dkj-brandbook\SKILL.md') -Raw
     Assert-Equal 3 ([regex]::Matches($pinPage, 'dkj-marketplace/v1\.4\.1/')).Count 'happy path: all three pinned URLs name the tag the cut made'
     Assert-NotMatch 'dkj-marketplace/v1\.4\.0/' $pinPage 'happy path: no pinned URL is left on the old tag'
     Assert-Match 'other-repo/v0\.1\.0/' $pinPage 'happy path: a URL under another prefix is left alone'
-    Assert-Says 'repinned: plugins/dkj-policy/dkj-solutions/skills/dkj-brandbook/SKILL.md -> v1.4.1 (3 URL(s))' $r.Out 'happy path: the run says what it repinned'
+    Assert-Says 'repinned: plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/SKILL.md -> v1.4.1 (3 URL(s))' $r.Out 'happy path: the run says what it repinned'
     Assert-NotMatch '\?\? .*SKILL\.md|M .*SKILL\.md' (Get-GitOut -Root $root -GitArgs @('status', '--porcelain')) 'happy path: the repinned page is inside the release commit'
     # The checksums (#3636): each cell beside a pinned URL is the sha256 of the bytes that tag serves.
     $sha = [System.Security.Cryptography.SHA256]::Create()
-    foreach ($pinned in 'assets\dkj-brandbook\house-style.css', 'assets\dkj-brandbook\house-theme.js', 'dkj-solutions\assets\dkj-brandbook-product\house-product.css') {
+    foreach ($pinned in 'assets\dkj-brandbook\house-style.css', 'assets\dkj-brandbook\house-theme.js', 'extensions\dkj-solutions\assets\dkj-brandbook-product\house-product.css') {
         $leaf = Split-Path -Leaf $pinned
         $want = ([System.BitConverter]::ToString($sha.ComputeHash([System.IO.File]::ReadAllBytes((Join-Path $root "plugins\dkj-policy\$pinned")))) -replace '-', '').ToLowerInvariant()
         Assert-Match ([regex]::Escape("/$leaf``") + '.*' + $want) $pinPage "happy path: the cut wrote the sha256 of $leaf beside its URL"
@@ -861,7 +861,7 @@ $cutSectH11 Pull Request
     Write-Host ""
     Write-Host "cut-release.ps1 -- a missing version-pin file refuses before the first write" -ForegroundColor Cyan
     $root17 = New-CutFixture -Name 'pin-missing'
-    Remove-Item -LiteralPath (Join-Path $root17 'plugins\dkj-policy\dkj-solutions\skills\dkj-brandbook\SKILL.md')
+    Remove-Item -LiteralPath (Join-Path $root17 'plugins\dkj-policy\extensions\dkj-solutions\skills\dkj-brandbook\SKILL.md')
     Push-Location $root17
     try { Invoke-NativeCapture -FilePath 'git' -Arguments @('commit', '--quiet', '-am', 'fixture: drop the pin page') | Out-Null }
     finally { Pop-Location }
@@ -875,7 +875,7 @@ $cutSectH11 Pull Request
     # A checksummed file the page names on no line beside a sha256 refuses the same way (#3636): the cut
     # would otherwise have no cell to write, and the page would ship a stale checksum.
     $root17b = New-CutFixture -Name 'checksum-cell-missing'
-    $page17b = Join-Path $root17b 'plugins\dkj-policy\dkj-solutions\skills\dkj-brandbook\SKILL.md'
+    $page17b = Join-Path $root17b 'plugins\dkj-policy\extensions\dkj-solutions\skills\dkj-brandbook\SKILL.md'
     Write-Utf8 $page17b (((Get-Content -LiteralPath $page17b -Raw) -split "`r?`n" | Where-Object { $_ -notmatch 'house-theme\.js' }) -join "`n")
     Push-Location $root17b
     try { Invoke-NativeCapture -FilePath 'git' -Arguments @('commit', '--quiet', '-am', 'fixture: drop a checksum row') | Out-Null }

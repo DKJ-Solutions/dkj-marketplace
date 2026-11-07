@@ -2,7 +2,39 @@
 
 ## [Unreleased]
 
-**6 / 9 minor entries** <!-- pending-tally -->
+**7 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3871-extensions-folder · 20261107-154845Z
+
+The two `dkj-policy` extension plugins, `bwj-development` and `dkj-solutions`, now sit together under
+`plugins/dkj-policy/extensions/` (#3871). They stay two separate plugins with the same ids, so
+`.claude/settings.json` needs nothing. In this repo, every path, test and workflow follows the move, and the
+house-style gate still reads a brand-book pin from a tag cut before it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+**Action needed in every repo that enables `bwj-development` or `dkj-solutions`.** Your `CLAUDE.md` imports
+the extension by its path in the marketplace clone, and that path moved: the old line
+`@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-policy/<extension>/CLAUDE.md` loads nothing
+after this release, so the extension's rules quietly drop out of context. After updating the plugins
+(`update-plugins`, which refreshes the marketplace clone too), run the `adopt-dkj-policy` skill's
+`adopt-workflow-folder.ps1 -Apply`, or in a BWJ store repo the `adopt-bwj-development` skill: it rewrites the
+line in place to `.../plugins/dkj-policy/extensions/<extension>/CLAUDE.md`. Until you do, the session-start
+check warns about the old line and prints the new one.
+
+**Score:** 5
+
+#### Pull Request
+
+Group the dkj-policy extensions under plugins/dkj-policy/extensions/
+
+Plugins: bwj-development, dkj-policy, dkj-solutions, dkj-subagents-shopify
+
+[PR #3877](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3877)
+
+---
 
 ### DEPLOY: fix/3872-retire-issue-dashboard · 20261107-145945Z
 

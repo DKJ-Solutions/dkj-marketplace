@@ -746,10 +746,10 @@ function Get-ReleasePluginTier {
 # owner's choice of October 28, 2026): a cell every house-style branch rewrote by hand conflicted between any two
 # of them, and between releases it named bytes the tag beside it does not serve.
 $script:ReleaseVersionPins = @(
-    @{ Path = 'plugins/dkj-policy/dkj-solutions/skills/dkj-brandbook/SKILL.md'
+    @{ Path = 'plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/SKILL.md'
        Prefix = 'https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/'
        Checksums = @('plugins/dkj-policy/assets/dkj-brandbook/house-style.css', 'plugins/dkj-policy/assets/dkj-brandbook/house-theme.js',
-                     'plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/house-product.css') }
+                     'plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css') }
 )
 
 function Get-ReleaseVersionPins {
@@ -1510,7 +1510,7 @@ function Get-HouseStyleAllowlist {
         @{ Path = 'plugins/dkj-policy/apps/admin/lib/general-pages-lib.ps1'; Name = '--ink'; Reason = 'the release-notes template''s own token, which Format-ReleaseNotesDevPage points AT a house token (#3108, moved to the plugin in #3119, to dkj-policy in #3198)' }
         @{ Path = 'scripts/tests/check-house-style.tests.ps1';  Reason = "the gate's own suite: every name in it is a fixture" }
         @{ Path = 'scripts/tests/house-palette.tests.ps1';      Reason = 'the palette suite: every name in it is a pattern or a fixture of the stylesheet it holds' }
-        @{ Path = 'plugins/dkj-policy/bwj-development/*';       Reason = 'the BWJ-Development extension: its pages carry BWJ''s own styling, outside the house style by design' }
+        @{ Path = 'plugins/dkj-policy/extensions/bwj-development/*';       Reason = 'the BWJ-Development extension: its pages carry BWJ''s own styling, outside the house style by design' }
         @{ Path = 'scripts/tests/stopwatch.tests.ps1';          Reason = 'regex patterns that read font-size declarations out of rendered pages, not declarations of their own' }
         @{ Path = 'scripts/tests/consumer-dashboard.tests.ps1'; Name = 'var\(--font-weight-bold\)'; Reason = 'a regex pattern that reads a house-weight declaration out of the rendered dashboard, not a declaration of its own (#3784)' }
     )
