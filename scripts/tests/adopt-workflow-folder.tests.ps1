@@ -731,6 +731,29 @@ try {
         'constitution, already imported under another marketplace name: the file is untouched'
     Assert-Match '\[keep\]\s+CLAUDE\.md already imports' $rC4.Flat 'constitution, already imported: says it kept it'
 
+    # A LINE UNDER A RETIRED MARKETPLACE NAME IS REWRITTEN IN PLACE (#3883): its clone is gone, so it
+    # loads nothing -- measured in dkj-recipes and dkj-etf-tracker, where the dry run said [keep].
+    $cC9 = New-FixtureConsumer -Label 'const-retired'
+    $cC9Md = Join-Path $cC9 'CLAUDE.md'
+    [System.IO.File]::WriteAllText($cC9Md, "# T`n`n@~/.claude/plugins/marketplaces/dkj-claude-plugins/plugins/dkj-policy/CLAUDE.md`n@~/.claude/other.md`n")
+    $rC9 = Invoke-Adopt -Dir $cC9 -ScriptArgs @('-Apply')
+    Assert-Match '\[renamed\]\s+the constitution import' $rC9.Flat 'constitution, retired marketplace: says it renamed the line'
+    $cC9Lines = @(([System.IO.File]::ReadAllText($cC9Md)).TrimEnd() -split "`n")
+    Assert-Equal '@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-policy/CLAUDE.md' $cC9Lines[2] `
+        'constitution, retired marketplace: the line is rewritten in place to the current marketplace'
+    Assert-Equal 4 $cC9Lines.Count 'constitution, retired marketplace: no second constitution line is added'
+    $rC9b = Invoke-Adopt -Dir $cC9 -ScriptArgs @('-Apply')
+    Assert-Match '\[keep\]\s+CLAUDE\.md already imports' $rC9b.Flat 'constitution, retired marketplace: a re-run keeps the rewritten line'
+
+    # BESIDE THE CURRENT LINE, the retired one is only removed.
+    $cC10 = New-FixtureConsumer -Label 'const-retired-both'
+    $cC10Md = Join-Path $cC10 'CLAUDE.md'
+    [System.IO.File]::WriteAllText($cC10Md, "@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-policy/CLAUDE.md`n@~/.claude/plugins/marketplaces/dkj-claude-plugins/plugins/dkj-policy/CLAUDE.md`n")
+    $rC10 = Invoke-Adopt -Dir $cC10 -ScriptArgs @('-Apply')
+    Assert-Match '\[removed\]\s+the constitution import' $rC10.Flat 'constitution, retired beside current: says it removed the retired line'
+    Assert-Equal "@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-policy/CLAUDE.md`n" ([System.IO.File]::ReadAllText($cC10Md)) `
+        'constitution, retired beside current: only the current line is left'
+
     # A FOUR-BACKTICK BLOCK WRAPPING A THREE-BACKTICK EXAMPLE: the inner fence must not close the outer
     # one, or the line lands inside the quoted example and imports nothing (Victor's review of #2531).
     $cC6 = New-FixtureConsumer -Label 'const-nested'
