@@ -711,7 +711,7 @@ try {
     Assert-Equal 1 $rc.Code 'scaffolds vs contract: exit-code 1 -- the one finding is the workflow-folder pointer, by design'
     $rcErrors = @([regex]::Matches($rc.Out, '\[ERROR\]')).Count
     Assert-Equal 1 $rcErrors 'scaffolds vs contract: exactly one [ERROR] -- nothing about a file the bootstrap just wrote'
-    Assert-True ($rc.Out -match "\[ERROR\].*'dkj-policy/' does not exist") 'scaffolds vs contract: and it is the workflow-folder pointer, naming the adopt-dkj-policy step'
+    Assert-True ($rc.Out -match "\[ERROR\].*'.dkj/dkj-policy/' does not exist") 'scaffolds vs contract: and it is the workflow-folder pointer, naming the adopt-dkj-policy step'
     # And it must be reaching the real per-function verdicts, not passing because the [BOOTSTRAP]
     # short-circuit from #225 swallowed the run -- that would make this assertion worthless.
     Assert-True (-not ($rc.Out -match '\[BOOTSTRAP\]')) 'scaffolds vs contract: the libs exist, so the check really did probe them'

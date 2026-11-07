@@ -543,7 +543,7 @@ and `git status` silent.
    your next plugin update — silently, while still reading as covered. **What the rule keeps
    literal, around the wildcards, is the install path's shape** — `.claude`, `plugins`, `cache`, the
    plugin's name, `scripts`, the script — because the plugin's name alone also matched the
-   `dkj-policy/` folder in your own root, where a pull request could place a script that then ran
+   `.dkj/dkj-policy/` folder in your own root, where a pull request could place a script that then ran
    unprompted ([#2746](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2746)). That
    **narrows** the rule; it does not pin a location. A plugin-shaped tree committed into your repo
    would still match, so it is stopped at the pull request instead. The branch-entry check that

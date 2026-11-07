@@ -354,19 +354,21 @@ if ($contractLibs.Count -gt 0 -and $presentLibs.Count -eq 0) {
 # adding a third dependency to answer "does a directory exist" costs more than it buys. The previous note
 # here said the trade would flip at a fourth name; the third has arrived and it has not, because the list
 # is still one line and the dependency is still the whole cost.
-$workflowFolderNames = @('dkj-policy', 'contributing-davekjohn', 'workflow-davekjohn')
+# THE NAMES COME FROM workflow-folder-lib.ps1 SINCE #3870, which seam-lib.ps1 above already loads -- the
+# trade the note above weighed (a dependency for one line) flipped the day the folder moved under '.dkj/',
+# because a fourth copy of the list is exactly what would let this check and the scripts disagree.
+$workflowFolderNames = @(Get-WorkflowFolderNames)
 $foundWorkflowFolder = $workflowFolderNames | Where-Object {
-    Test-Path -LiteralPath (Join-Path $repoRoot $_) -PathType Container
+    Test-Path -LiteralPath (Join-Path $repoRoot ($_ -replace '/', '\')) -PathType Container
 } | Select-Object -First 1
 if (-not $foundWorkflowFolder) {
-    Write-Failure ("the workflow folder 'dkj-policy/' does not exist in this repo -- since " +
-        "August 14, 2026 the branch dossier, the folder docs and the audience releases live there, and " +
-        "the shared scripts read only that location. Run the 'adopt-dkj-policy' skill to scaffold " +
-        "it (dry-run by default, additive, never overwrites). A leftover root branch/ from before the " +
-        "move is yours to remove by hand.")
+    Write-Failure ("the workflow folder '$($workflowFolderNames[0])/' does not exist in this repo -- the " +
+        "changelog, the release roots and the branch documents live there, and the shared scripts read " +
+        "only that location. Run the 'adopt-dkj-policy' skill to scaffold it (dry-run by default, " +
+        "additive, never overwrites).")
 } elseif ($foundWorkflowFolder -ne $workflowFolderNames[0]) {
-    Write-Ok ("workflow folder: $foundWorkflowFolder/ exists -- the PRE-RENAME name, still read. Renaming " +
-        "it to $($workflowFolderNames[0])/ is yours to do when it suits you (#886).")
+    Write-Ok ("workflow folder: $foundWorkflowFolder/ exists -- a PRE-MOVE name, still read. Part 1 of the " +
+        "'adopt-dkj-policy' skill moves it to $($workflowFolderNames[0])/ in one git mv (#3870).")
 } else {
     Write-Ok "workflow folder: $foundWorkflowFolder/ exists."
 }

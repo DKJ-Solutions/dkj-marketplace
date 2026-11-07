@@ -155,6 +155,70 @@ if (Test-IsWorkflowSourceRepo -RepoRoot $repoRoot) {
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 $nl = "`n"
 
+# THE MOVE TO '.dkj/dkj-policy/' (#3870, November 7, 2026). A repo adopted before that day keeps its
+# folder under an older name, and every shared script still reads it there (Get-WorkflowFolderName walks
+# the old names), so nothing breaks while it stays. This run is where it moves: one 'git mv' of the whole
+# folder, history and all, so the changelog, the release roots and any open branch document travel
+# together and no reader ever sees half of them in each place. Only where the new folder does not exist
+# yet -- a repo holding both is mid-move by hand, and moving onto it would merge two trees nobody has
+# compared. A dry run says what it would move and moves nothing, like every other step here.
+$currentFolderName = @(Get-WorkflowFolderNames)[0]
+$foundFolderName   = Get-WorkflowFolderName -RepoRoot $repoRoot
+$currentFolderAbs  = Join-Path $repoRoot ($currentFolderName -replace '/', '\')
+if ($foundFolderName -ne $currentFolderName -and -not (Test-Path -LiteralPath $currentFolderAbs)) {
+    $legacyAbs = Join-Path $repoRoot ($foundFolderName -replace '/', '\')
+    if ($Apply) {
+        $parentAbs = Split-Path -Path $currentFolderAbs -Parent
+        if (-not (Test-Path -LiteralPath $parentAbs)) { New-Item -ItemType Directory -Force -Path $parentAbs | Out-Null }
+        $tracked = @(& git -C $repoRoot ls-files -- $foundFolderName)
+        if ($tracked.Count -gt 0) {
+            & git -C $repoRoot mv -- $foundFolderName $currentFolderName
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "  [ERROR]   could not move $foundFolderName/ to $currentFolderName/ (git mv exited $LASTEXITCODE). Nothing else was written." -ForegroundColor Red
+                exit 1
+            }
+        } else {
+            Move-Item -LiteralPath $legacyAbs -Destination $currentFolderAbs
+        }
+        Write-Host "  [moved]   $foundFolderName/ -> $currentFolderName/ (#3870): commit the move on a branch." -ForegroundColor Green
+    } else {
+        Write-Host "  [move]    $foundFolderName/ -> $currentFolderName/ (#3870) -- re-run with -Apply to move it." -ForegroundColor Yellow
+    }
+    # AND THE PATHS THAT NAME IT MOVE WITH IT. A consumer that adopted the config states its seam answers
+    # as literals -- $script:ChangelogPath = 'dkj-policy/CHANGELOG.md' -- copied from the source's own
+    # answers, and a .gitignore line names the folder's generated pages. Moving the folder and leaving those
+    # would point the fold at a changelog that is no longer there, so the same run repoints them: in
+    # repo-config.ps1 only a QUOTED path that starts with the old folder ('dkj-policy/...' or
+    # "dkj-policy/..."), and in .gitignore only a line that starts with it. Prose that merely mentions the
+    # folder is left alone, because it is history rather than an address.
+    $oldEsc = [regex]::Escape($foundFolderName)
+    $rewrites = @(
+        @{ Rel = 'scripts/repo-config.ps1'; Pattern = "(['" + '"' + "])$oldEsc/"; Replace = "`${1}$currentFolderName/" },
+        @{ Rel = '.gitignore';              Pattern = "(?m)^(/?)$oldEsc/";            Replace = "`${1}$currentFolderName/" }
+    )
+    foreach ($rw in $rewrites) {
+        $abs = Join-Path $repoRoot ($rw.Rel -replace '/', '\')
+        if (-not (Test-Path -LiteralPath $abs -PathType Leaf)) { continue }
+        $text  = [System.IO.File]::ReadAllText($abs)
+        $count = ([regex]::Matches($text, $rw.Pattern)).Count
+        if ($count -eq 0) { continue }
+        if ($Apply) {
+            [System.IO.File]::WriteAllText($abs, ([regex]::Replace($text, $rw.Pattern, $rw.Replace)), $Utf8NoBom)
+            Write-Host "  [repointed] $($rw.Rel): $count path(s) from $foundFolderName/ to $currentFolderName/." -ForegroundColor Green
+        } else {
+            Write-Host "  [repoint] $($rw.Rel): $count path(s) from $foundFolderName/ to $currentFolderName/." -ForegroundColor Yellow
+        }
+    }
+    if ($Apply) {
+        # Read the folder and the repointed seams again, so everything below this point scaffolds into the
+        # moved folder and names the paths the fold will actually use.
+        $foundFolderName = Get-WorkflowFolderName -RepoRoot $repoRoot
+        if (Test-Path -LiteralPath $repoConfig -PathType Leaf) {
+            try { . $repoConfig } catch { Write-Warning "scripts/repo-config.ps1 failed to reload ($(Format-SafeProseToken -Value $_.Exception.Message))." }
+        }
+    }
+}
+
 # WHERE THIS REPO KEEPS ITS RELEASE LIST, read rather than assumed. The pages below name that path, and
 # naming the default where a repo has repointed the seam would send its reader to a file that is not
 # theirs -- the same mistake cut-release's missing-file warning was repaired for (August 4, 2026). Read

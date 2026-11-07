@@ -819,11 +819,11 @@ try {
         Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match '<h1>Release notes</h1>' -and $r2 -match 'No release has been cut yet') '/dev/release-notes tries to build a page that is absent, and before the first cut answers with an empty state (#3189, #3580)'
         $r2 = & $getRaw $genPort '/dev/release-notes/v1.0'
         Assert-True ($r2 -match 'HTTP/1.1 404' -and $r2 -match 'Not built yet' -and $r2 -match 'no release has been cut yet') 'while a release''s own page is a 404 text naming why'
-        New-Item -ItemType Directory -Force -Path (Join-Path $noConfig 'dkj-policy\releases\page') | Out-Null
-        [System.IO.File]::WriteAllText((Join-Path $noConfig 'dkj-policy\releases\page\release-notes.html'), '<html lang="en"><head><style>a{}</style></head><body>shaped notes</body></html>')
+        New-Item -ItemType Directory -Force -Path (Join-Path $noConfig '.dkj\dkj-policy\releases\page') | Out-Null
+        [System.IO.File]::WriteAllText((Join-Path $noConfig '.dkj\dkj-policy\releases\page\release-notes.html'), '<html lang="en"><head><style>a{}</style></head><body>shaped notes</body></html>')
         $r2 = & $getRaw $genPort '/dev/release-notes'
         Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match 'shaped notes' -and $r2 -match '<li><a href="/">Home</a></li>' -and $r2 -match 'href="/house-style.css"') 'and dressed in the house style once it is, its Home crumb on /'
-        $newerNote = Join-Path $noConfig 'dkj-policy\releases\notes\9.9.9.md'
+        $newerNote = Join-Path $noConfig '.dkj\dkj-policy\releases\notes\9.9.9.md'
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $newerNote) | Out-Null
         [System.IO.File]::WriteAllText($newerNote, '# 9.9.9')
         (Get-Item -LiteralPath $newerNote).LastWriteTimeUtc = (Get-Date).ToUniversalTime().AddMinutes(5)

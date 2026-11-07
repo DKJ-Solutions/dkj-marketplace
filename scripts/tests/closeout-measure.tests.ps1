@@ -215,7 +215,7 @@ try {
     # version-scoped plugin cache, which the next `claude plugin update` replaces -- so a baseline written
     # there is lost without anybody being told. Pinned in the SOURCE because the mirror is held byte-identical
     # to it by check 8, and a run from a real plugin cache cannot be staged from here.
-    Assert-True ($src -match 'repoRoot .dkj-policy.baselines.closeout-ceiling') 'the mirror copy writes its baseline into the consumer repo, not into the plugin cache'
+    Assert-True ($src -match 'Join-Path \$repoRoot .*Get-WorkflowFolderName -RepoRoot \$repoRoot.*baselines.closeout-ceiling') 'the mirror copy writes its baseline into the consumer repo, not into the plugin cache'
     Assert-True ($src -match '\$env:CLAUDE_PROJECT_DIR') '...resolved dual-context, which is what makes that answer right in a consumer'
 
     # The guard matters MORE on an instrument than on a gate: a stale gate fails loudly, a stale measurement

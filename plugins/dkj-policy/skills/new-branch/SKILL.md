@@ -2,7 +2,7 @@
 name: new-branch
 description: >-
   Create (or idempotently resume) a git branch AND its development document --
-  dkj-policy/<branch>.md, the branch's plan and the DEPLOY section that becomes its
+  .dkj/dkj-policy/<branch>.md, the branch's plan and the DEPLOY section that becomes its
   changelog entry -- in one move, via the shared, centralized new-branch script from the plugin
   (single source of truth, issue #81), so a consumer does not have to duplicate this script locally.
   Use this whenever a new piece of work starts: a branch is never entry-less -- creating it brings that
@@ -59,7 +59,7 @@ The script:
    Where it exists in **both** places and `origin` is **ahead**, the run warns with the count and the
    remote tip's author and subject -- another session's work on the branch you are about to build on
    (issue #1439 -- see below).
-6. Immediately writes that branch's **`dkj-policy/<branch>.md`** -- so the branch and its
+6. Immediately writes that branch's **`.dkj/dkj-policy/<branch>.md`** -- so the branch and its
    document come into existence in a single step. Idempotent: a document that already belongs to this
    branch is left exactly as it is, and one belonging to somebody else is replaced with its owner named,
    unless it holds uncommitted work, which is kept and reported instead.
@@ -472,7 +472,7 @@ count is worth stating precisely because the wrong one is what kept the second s
    `Format-SafeProseToken` cap at 200.
 10. **A branch document's own PROSE, quoted back at it** (`Get-DevelopmentShapeFindings`,
     `scripts/lib/entry-scaffold-lib.ps1`, #1650) -- stray phase headings and "preamble stray" lines out
-    of `dkj-policy/<branch>.md`, typed by whoever wrote that branch's plan. Guarded via `Get-DisplayRef`
+    of `.dkj/dkj-policy/<branch>.md`, typed by whoever wrote that branch's plan. Guarded via `Get-DisplayRef`
     and capped at 72. Printed by `open-pr.ps1`'s shape gate, which refuses the push, and by
     `check-branch-entry.ps1`, its CI advisory twin. The file's own comment already calls itself "the
     third caller" of `ref-print-lib.ps1` -- so this site was known, and simply never carried into this

@@ -826,7 +826,7 @@ function New-DashRepo {
     if ($Config) { [System.IO.File]::WriteAllText((Join-Path $p 'scripts\repo-config.ps1'), $Config, $Utf8NoBom) }
     if (-not $NoGit) { Invoke-FixtureGitJudged -Arguments @('init', '-q', $p) }
     # The script refuses to prepare a token git would commit, so the happy paths carry the ignore line.
-    if (-not $NoIgnore) { [System.IO.File]::WriteAllText((Join-Path $p '.gitignore'), "/dkj-policy/dashboard/`n", $Utf8NoBom) }
+    if (-not $NoIgnore) { [System.IO.File]::WriteAllText((Join-Path $p '.gitignore'), "/.dkj/dkj-policy/dashboard/`n", $Utf8NoBom) }
     return $p
 }
 
@@ -856,7 +856,7 @@ function Invoke-Dash {
 
 $cfg = "function Get-RepoName { return 'acme/widgets' }"
 $repo = New-DashRepo 'repo1' $cfg
-$dash = Join-Path $repo 'dkj-policy\dashboard'
+$dash = Join-Path $repo '.dkj\dkj-policy\dashboard'
 $tokenFile = Join-Path $dash 'dashboard-path-token.txt'
 
 $none = Invoke-Dash $repo
@@ -982,19 +982,19 @@ Assert-True ($rootToml.Text -like '*wrangler.toml stands at the repository root*
 $repo2 = New-DashRepo 'repo2' "function Get-RepoName { return 'acme/widgets' }`nfunction Get-IssueDashboardWorkerName { return 'my-board' }"
 $both = Invoke-Dash $repo2 @('-InitToken', '-EmitWorker')
 Assert-Equal 0 $both.ExitCode '-InitToken -EmitWorker together work on a fresh repo'
-$token2 = [System.IO.File]::ReadAllText((Join-Path $repo2 'dkj-policy\dashboard\dashboard-path-token.txt'))
+$token2 = [System.IO.File]::ReadAllText((Join-Path $repo2 '.dkj\dkj-policy\dashboard\dashboard-path-token.txt'))
 Assert-True (($token2 -cmatch '^[0-9a-f]{32}$') -and ($both.Text -notlike "*$token2*")) '...and the freshly minted token appears nowhere in the combined output'
-Assert-True ([System.IO.File]::ReadAllText((Join-Path $repo2 'dkj-policy\dashboard\wrangler.toml')) -match '(?m)^name = "my-board"$') 'Get-IssueDashboardWorkerName names the worker'
+Assert-True ([System.IO.File]::ReadAllText((Join-Path $repo2 '.dkj\dkj-policy\dashboard\wrangler.toml')) -match '(?m)^name = "my-board"$') 'Get-IssueDashboardWorkerName names the worker'
 
 $repo3 = New-DashRepo 'repo3' "function Get-RepoName { return 'acme/widgets' }`nfunction Get-IssueDashboardWorkerName { return 'Bad Name' }"
 $bad = Invoke-Dash $repo3 @('-InitToken', '-EmitWorker')
 Assert-True ($bad.ExitCode -ne 0) 'a worker name Cloudflare would refuse is refused first'
 Assert-True ($bad.Text -like '*not a valid Cloudflare Worker name*') '...saying why'
-Assert-True (-not (Test-Path -LiteralPath (Join-Path $repo3 'dkj-policy\dashboard\wrangler.toml'))) '...before any wrangler.toml is written'
+Assert-True (-not (Test-Path -LiteralPath (Join-Path $repo3 '.dkj\dkj-policy\dashboard\wrangler.toml'))) '...before any wrangler.toml is written'
 
 # ORG MODE (#2649): a dashboard of its own beside this repo's, in repo1, which already holds a token.
 Remove-Item -LiteralPath (Join-Path $repo 'wrangler.toml') -Force   # the root-toml case above is done
-$orgDash = Join-Path $repo 'dkj-policy\dashboard\org-acme'
+$orgDash = Join-Path $repo '.dkj\dkj-policy\dashboard\org-acme'
 $org = Invoke-Dash $repo @('-Org', 'Acme', '-InitToken', '-EmitWorker')
 Assert-Equal 0 $org.ExitCode '-Org -InitToken -EmitWorker works beside an existing repo dashboard'
 Assert-True ($org.Text -notlike '*already holds one*') '...the repo dashboard token is a sibling, not a stray'
@@ -1024,7 +1024,7 @@ Assert-True ($orgBoth.Text -like '*sets GITHUB_REPO as well as GITHUB_ORG*') 'an
 $badOrg = Invoke-Dash $repo @('-Org', 'not/a-login', '-InitToken')
 Assert-True ($badOrg.ExitCode -ne 0) 'an -Org that is not a GitHub login is refused'
 Assert-True ($badOrg.Text -like '*not a GitHub login*') '...saying why'
-Assert-True (-not (Test-Path -LiteralPath (Join-Path $repo 'dkj-policy\dashboard\org-not'))) '...before anything is written'
+Assert-True (-not (Test-Path -LiteralPath (Join-Path $repo '.dkj\dkj-policy\dashboard\org-not'))) '...before anything is written'
 
 # The stray-token search: a renamed dkj-policy folder leaves the gitignored token behind.
 $repo4 = New-DashRepo 'repo4' $cfg
@@ -1035,7 +1035,7 @@ $stray = Invoke-Dash $repo4 @('-InitToken')
 Assert-True ($stray.ExitCode -ne 0) '-InitToken refuses while a token sits elsewhere in the tree'
 Assert-True ($stray.Text -like '*old-policy*') '...naming where it found it'
 Assert-True ($stray.Text -like '*MOVE that folder here*') '...and saying to move it rather than mint a second one'
-Assert-True (-not (Test-Path -LiteralPath (Join-Path $repo4 'dkj-policy\dashboard\dashboard-path-token.txt'))) '...and minted nothing'
+Assert-True (-not (Test-Path -LiteralPath (Join-Path $repo4 '.dkj\dkj-policy\dashboard\dashboard-path-token.txt'))) '...and minted nothing'
 $strayEmit = Invoke-Dash $repo4 @('-EmitWorker')
 Assert-True ($strayEmit.ExitCode -ne 0) '-EmitWorker without the token refuses the same way'
 Assert-True ($strayEmit.Text -like '*already holds one*') '...leading with what it found'
@@ -1046,8 +1046,8 @@ $noIgnInit = Invoke-Dash $repo6 @('-InitToken')
 Assert-True ($noIgnInit.ExitCode -ne 0) '-InitToken is refused when git does not ignore the token path'
 Assert-True ($noIgnInit.Text -like '*NOT gitignored*') '...saying so'
 Assert-True ($noIgnInit.Text -like '*/dkj-policy/dashboard/*') '...and naming the .gitignore line to add'
-Assert-True (-not (Test-Path -LiteralPath (Join-Path $repo6 'dkj-policy\dashboard\dashboard-path-token.txt'))) '...and no token file was written'
-$dash6 = Join-Path $repo6 'dkj-policy\dashboard'
+Assert-True (-not (Test-Path -LiteralPath (Join-Path $repo6 '.dkj\dkj-policy\dashboard\dashboard-path-token.txt'))) '...and no token file was written'
+$dash6 = Join-Path $repo6 '.dkj\dkj-policy\dashboard'
 New-Item -ItemType Directory -Path $dash6 -Force | Out-Null
 [System.IO.File]::WriteAllText((Join-Path $dash6 'dashboard-path-token.txt'), $HexB, $Utf8NoBom)
 $noIgnEmit = Invoke-Dash $repo6 @('-EmitWorker')
@@ -1056,7 +1056,7 @@ Assert-True ($noIgnEmit.Text -like '*NOT gitignored*') '...saying so'
 Assert-True (-not (Test-Path -LiteralPath (Join-Path $dash6 'wrangler.toml'))) '...and wrote no wrangler.toml'
 Assert-True (-not (Test-Path -LiteralPath (Join-Path $dash6 'issue-dashboard-worker.js'))) '...and copied no worker'
 Assert-True ($noIgnEmit.Text -notlike "*$HexB*") '...and never prints the token'
-[System.IO.File]::WriteAllText((Join-Path $repo6 '.gitignore'), "/dkj-policy/dashboard/`n", $Utf8NoBom)
+[System.IO.File]::WriteAllText((Join-Path $repo6 '.gitignore'), "/.dkj/dkj-policy/dashboard/`n", $Utf8NoBom)
 Assert-Equal 0 (Invoke-Dash $repo6 @('-EmitWorker')).ExitCode '...and the same repo passes once the line is added'
 
 # Where git cannot answer (not a repository) the run warns and carries on.
@@ -1064,12 +1064,12 @@ $repo7 = New-DashRepo 'repo7' $cfg -NoIgnore -NoGit
 $noGit = Invoke-Dash $repo7 @('-InitToken')
 Assert-Equal 0 $noGit.ExitCode '-InitToken outside a git repository still runs'
 Assert-True ($noGit.Text -like '*Could not ask git*') '...with a warning that it could not ask git'
-Assert-True (Test-Path -LiteralPath (Join-Path $repo7 'dkj-policy\dashboard\dashboard-path-token.txt')) '...and creates the token'
+Assert-True (Test-Path -LiteralPath (Join-Path $repo7 '.dkj\dkj-policy\dashboard\dashboard-path-token.txt')) '...and creates the token'
 
 # A hand-damaged token is refused, not shipped.
 $repo5 = New-DashRepo 'repo5' $cfg
 Assert-Equal 0 (Invoke-Dash $repo5 @('-InitToken')).ExitCode 'a fifth repo gets a token'
-[System.IO.File]::WriteAllText((Join-Path $repo5 'dkj-policy\dashboard\dashboard-path-token.txt'), $HexA.ToUpperInvariant(), $Utf8NoBom)
+[System.IO.File]::WriteAllText((Join-Path $repo5 '.dkj\dkj-policy\dashboard\dashboard-path-token.txt'), $HexA.ToUpperInvariant(), $Utf8NoBom)
 $upper = Invoke-Dash $repo5 @('-EmitWorker')
 Assert-True ($upper.ExitCode -ne 0) 'an UPPERCASE token file is refused -- the worker route only matches lowercase'
 Assert-True ($upper.Text -like '*not 32 lowercase hex*') '...saying why'
@@ -1079,8 +1079,8 @@ Write-Host ''
 Write-Host 'The .gitignore anchors the dashboard directory' -ForegroundColor Cyan
 
 $gi = [System.IO.File]::ReadAllLines((Join-Path $RepoRoot '.gitignore'))
-Assert-True ($gi -contains '/dkj-policy/dashboard/') '.gitignore carries the anchored line /dkj-policy/dashboard/'
-Assert-True (-not ($gi -contains 'dkj-policy/dashboard/') -and -not ($gi -contains 'dashboard/')) '...and no unanchored form that would swallow an unrelated dashboard/ folder'
+Assert-True ($gi -contains '/.dkj/dkj-policy/dashboard/') '.gitignore carries the anchored line /.dkj/dkj-policy/dashboard/'
+Assert-True (-not ($gi -contains '.dkj/dkj-policy/dashboard/') -and -not ($gi -contains 'dashboard/')) '...and no unanchored form that would swallow an unrelated dashboard/ folder'
 
 function Test-GitIgnored {
     param([string]$RelPath)
@@ -1088,8 +1088,8 @@ function Test-GitIgnored {
     $ErrorActionPreference = 'Continue'
     try { & git -C $RepoRoot check-ignore -q -- $RelPath 2>$null; return ($LASTEXITCODE -eq 0) } finally { $ErrorActionPreference = $prev }
 }
-Assert-True (Test-GitIgnored 'dkj-policy/dashboard/dashboard-path-token.txt') 'git ignores the path token file'
-Assert-True (Test-GitIgnored 'dkj-policy/dashboard/wrangler.toml')            '...and the wrangler.toml'
+Assert-True (Test-GitIgnored '.dkj/dkj-policy/dashboard/dashboard-path-token.txt') 'git ignores the path token file'
+Assert-True (Test-GitIgnored '.dkj/dkj-policy/dashboard/wrangler.toml')            '...and the wrangler.toml'
 Assert-True (-not (Test-GitIgnored 'sub/dkj-policy/dashboard/x.txt'))         'but not a dkj-policy/dashboard/ nested elsewhere'
 Assert-True (-not (Test-GitIgnored 'dashboard/x.txt'))                        '...nor a bare dashboard/ folder'
 

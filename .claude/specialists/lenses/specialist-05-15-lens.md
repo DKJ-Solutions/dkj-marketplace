@@ -566,7 +566,7 @@ infrastructure.
     the whole script, silently dropping every block below it while still exiting `0`; the degrade path is
     an `else`.
 - **`scripts/lib/release-lib.ps1`** — the pure release helpers (version bump, emptying `CHANGELOG.md` down
-  to its intro, and the assembly of the changelog notes under `dkj-policy/releases/changelog/`)
+  to its intro, and the assembly of the changelog notes under `.dkj/dkj-policy/releases/changelog/`)
   that [`cut-release.ps1`](../../../scripts/release/cut-release.ps1) dot-sources; deliberately
   pure so [Tycho #18](specialist-04-18-lens.md) can test them in isolation. The release *process* is
   [Rendall #06](specialist-05-06-lens.md)'s domain; Sylvester guards the script mechanics underneath.
@@ -782,7 +782,7 @@ and are only pointed at below.
 
 - **A refusal reading "auto mode cannot determine the safety" is retried, not routed around through
   another tool** — it is transient, and the detour turns a refusal into a bypass.
-- **Before writing "this was never recorded", grep `CHANGELOG.md` and `dkj-policy/releases/**` too** —
+- **Before writing "this was never recorded", grep `CHANGELOG.md` and `.dkj/dkj-policy/releases/**` too** —
   an entry is where a finding lands first.
 - This repo is **public**: config never contains secrets.
 
@@ -831,20 +831,20 @@ folder by folder:
   mirrored copy for consumers lives inside the plugins — the sync/check scripts in `dkj-subagents-alpha`, the
   branch/release workflow in `dkj-policy` — see its own
   [README](../../../plugins/dkj-policy/scripts/README.md).
-- **`dkj-policy/`** — the workflow's own root folder (named `contributing-davekjohn/` from August 27
-  until September 5, 2026, #1437), and since August 27, 2026 the home of
+- **`.dkj/dkj-policy/`** — the workflow's own root folder (named `contributing-davekjohn/` from August 27
+  until September 5, 2026, #1437, and `dkj-policy/` at the root until November 7, 2026, #3870), and since August 27, 2026 the home of
   every document the contribution cycle produces or governs. **It carries no prose pages of its own**
   — a `CONTRIBUTING.md` and a `README.md` sat here until
   [#2171](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2171), September 20, 2026, when a
   per-repo restatement beside
   [`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portable.md) was retired and this repo's
   own answers moved into the specialist lenses. What is here is
-  [`CHANGELOG.md`](../../../dkj-policy/CHANGELOG.md), the open branch's
+  [`CHANGELOG.md`](../../../.dkj/dkj-policy/CHANGELOG.md), the open branch's
   `<branch>.md` while one is open, and `releases/` — what a cut *generated*
   (`changelog/<X>.x/<X.Y.Z>.md`, the complete note per version, and `github/<X>.x/<X.Y.Z>.md`, that
   version's GitHub Release body), the hand-written note per version under `audience/`, the dated list of
   every release ever cut in
-  [`releases/history.md`](../../../dkj-policy/releases/history.md). **The folder carries no prose page of its
+  [`releases/history.md`](../../../.dkj/dkj-policy/releases/history.md). **The folder carries no prose page of its
   own** — this repo's seam answers sat in a `releases/README.md` until #2196 retired it, and they are in
   the lenses of the specialists who own them:
   [Rendall](specialist-05-06-lens.md#versioning--releases) for the release
@@ -1094,7 +1094,7 @@ layer states the current answer once, in `scripts/repo-config.ps1`. Before chang
   `check-consumers.ps1` matches them alongside the current one. **The list only grows.**
 - **Existing citations are corrected when a file is edited for other reasons, not swept**
   ([#1526](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1526)): both spellings resolve, and a
-  sweep is a diff nobody can review. The archived release history under `dkj-policy/releases/**` stays as
+  sweep is a diff nobody can review. The archived release history under `.dkj/dkj-policy/releases/**` stays as
   written, the carve-out [`language-layers.md`](../../rules/language-layers.md) makes too.
 - **Every place the name is read rather than displayed must be current**: `Get-RepoName`, the
   `repository:` line the consumer scaffolders write, the matcher that finds it, and the marketplace source
@@ -1122,8 +1122,8 @@ stayed **inside** `plugins/` because it *is* plugin source, and was moved twice:
 `plugins/dkj-subagents/subagent-shared/` under
 [#1698](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1698). **No tooling had to learn an
 address**: every script that asks which plugins exist reads `marketplace.json` through
-[`plugin-tree-lib.ps1`](../../../scripts/lib/plugin-tree-lib.ps1). The workflow folder `dkj-policy/` was
-`contributing-davekjohn/` until September 5, 2026 (#1437).
+[`plugin-tree-lib.ps1`](../../../scripts/lib/plugin-tree-lib.ps1). The workflow folder `.dkj/dkj-policy/` was
+`contributing-davekjohn/` until September 5, 2026 (#1437), and `dkj-policy/` at the root until November 7, 2026 (#3870).
 
 ### Why `Get-RosterIgnoredIds` is empty
 
@@ -1290,7 +1290,7 @@ Here the hand-run overran the 120s foreground timeout while `open-pr`'s own gate
 
 #### DEPLOY: folder-relative links, and audience tier 2
 
-**Links are written folder-relative to `dkj-policy/`**, because the changelog sits there: `../scripts/x.ps1`,
+**Links are written folder-relative to `.dkj/dkj-policy/`**, because the changelog sits there: `../../scripts/x.ps1` (one `../` more since #3870 moved it under `.dkj/`),
 never `scripts/x.ps1`, which is dead once it lands, and `open-pr`'s link gate refuses it
 ([`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md#the-deploy-section--the-changelog-entry)).
 **This repo answers audience tier 2**, so the entry is the `### DEPLOY: <branch>` section (tier 0, its answer
@@ -1459,7 +1459,7 @@ hook) are in the
 - **Like `branch-entry`, it is not in the `main` ruleset** — a required check is the owner's act, not a
   script's.
 
-### The `dkj-policy/` folder, and this repo's answers to the portable seams
+### The `.dkj/dkj-policy/` folder, and this repo's answers to the portable seams
 
 The workflow occupies one folder in the repo root (Dave, August 14, 2026); the conventions travel with the
 plugin, and what follows is **this repo's own set of answers** to them. The folder's `README.md` and
@@ -1471,9 +1471,9 @@ plugin, and what follows is **this repo's own set of answers** to them. The fold
 
 | here | what it holds | portable half |
 |---|---|---|
-| [`CHANGELOG.md`](../../../dkj-policy/CHANGELOG.md) | what is pending for the next release: one `##` entry per merged branch, folded in at the merge and emptied by a cut (`Get-ChangelogPath`) | *(the format travels in [`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md))* |
+| [`CHANGELOG.md`](../../../.dkj/dkj-policy/CHANGELOG.md) | what is pending for the next release: one `##` entry per merged branch, folded in at the merge and emptied by a cut (`Get-ChangelogPath`) | *(the format travels in [`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md))* |
 | `<branch>.md` | the branch's own document, one per branch and present only while that branch is open: its plan, and the DEPLOY section that folds into the changelog | [`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md) |
-| [`releases/`](../../../dkj-policy/releases/) | the dated list of every release ever cut ([`history.md`](../../../dkj-policy/releases/history.md)), the published audience notes, and the generated changelog and GitHub-Release trees. The release seam answers are [Rendall's](specialist-05-06-lens.md#versioning--releases) | [`RELEASES-portable.md`](../../../plugins/dkj-policy/RELEASES-portable.md) |
+| [`releases/`](../../../.dkj/dkj-policy/releases/) | the dated list of every release ever cut ([`history.md`](../../../.dkj/dkj-policy/releases/history.md)), the published audience notes, and the generated changelog and GitHub-Release trees. The release seam answers are [Rendall's](specialist-05-06-lens.md#versioning--releases) | [`RELEASES-portable.md`](../../../plugins/dkj-policy/RELEASES-portable.md) |
 
 In this repo the portable pages resolve as relative links because this is the plugin's **source**; in a
 consumer they live in the plugin install instead. The folder moved in whole on August 27, 2026 (Dave): every
@@ -1496,15 +1496,15 @@ are Rendall's to explain ([lens](specialist-05-06-lens.md#versioning--releases))
 | your entry's section headings | the English defaults — nothing is overridden | *(no override defined)* |
 | the wording inside the development document | the English defaults | `Get-BranchFileWordingOverrides` *(none)* |
 | your significance rubric | the shared default, 1–5 | *(no override defined)* |
-| your permanent root docs | `CHANGELOG` · `CLAUDE` · `README` · `LICENSE` · `CONTRIBUTING` · `SECURITY` · `INSTALL` · `UNINSTALL` — **`CHANGELOG` and `CONTRIBUTING` no longer sit at the root and stay on the list**: it names permanent documents, not what the root holds today, and the portable `cut-release` reads it (the comment above `$script:ReservedRootMd` in [`repo-config.ps1`](../../../scripts/repo-config.ps1) has the reasoning; `ReservedNames` in [`Get-BranchFilePaths`](../../../scripts/lib/entry-scaffold-lib.ps1) is the same rule for the `dkj-policy/` folder's own pages) | `Get-ReservedRootMd` |
-| where your changelog lives | `dkj-policy/CHANGELOG.md` — the consumer default | `Get-ChangelogPath` |
-| where the release list lives | `dkj-policy/releases/history.md` | `Get-ReleaseHistoryPath` |
-| where the generated internal note goes | `dkj-policy/releases/internal` | `Get-ReleaseInternalNotesRoot` |
+| your permanent root docs | `CHANGELOG` · `CLAUDE` · `README` · `LICENSE` · `CONTRIBUTING` · `SECURITY` · `INSTALL` · `UNINSTALL` — **`CHANGELOG` and `CONTRIBUTING` no longer sit at the root and stay on the list**: it names permanent documents, not what the root holds today, and the portable `cut-release` reads it (the comment above `$script:ReservedRootMd` in [`repo-config.ps1`](../../../scripts/repo-config.ps1) has the reasoning; `ReservedNames` in [`Get-BranchFilePaths`](../../../scripts/lib/entry-scaffold-lib.ps1) is the same rule for the `.dkj/dkj-policy/` folder's own pages) | `Get-ReservedRootMd` |
+| where your changelog lives | `.dkj/dkj-policy/CHANGELOG.md` — the consumer default | `Get-ChangelogPath` |
+| where the release list lives | `.dkj/dkj-policy/releases/history.md` | `Get-ReleaseHistoryPath` |
+| where the generated internal note goes | `.dkj/dkj-policy/releases/internal` | `Get-ReleaseInternalNotesRoot` |
 | your merge method | `merge` — a merge commit, not a squash | `Get-PrMergeMethod` |
 | whether you have a plugin tier | yes — the `Plugins:` line is derived | `Get-ReleasePluginTier` |
 | whether you have a separate live stage | **no** — which is what makes the cycle's live step a no-op here | `Get-LiveStage` |
 | how release notes are foldered | per **major** (`3.x`) | `Get-ReleaseNotesGrouping` |
-| where the hand-written notes live | `dkj-policy/releases/audience` | `Get-ReleaseNoteRoot` |
+| where the hand-written notes live | `.dkj/dkj-policy/releases/audience` | `Get-ReleaseNoteRoot` |
 
 All of them live in [`scripts/repo-config.ps1`](../../../scripts/repo-config.ps1) except the prefix table,
 which is its own repo-owned lib. Where the table says *no override defined*, this repo deliberately runs on
@@ -1523,7 +1523,7 @@ builds it. This repo's answers:
 |---|---|
 | `Get-ReleasePageTitle` | `Claude Specialists` — the **product's** name, not the repository's; it is the masthead eyebrow and half the window title (the heading is the template's own *Release notes*) |
 | `Get-ReleasePageWorkerName` | `''` — hosted nowhere (below) |
-| where the output lands | `dkj-policy/releases/page/`, derived from `Get-ReleaseNoteRoot` rather than configured |
+| where the output lands | `.dkj/dkj-policy/releases/page/`, derived from `Get-ReleaseNoteRoot` rather than configured |
 | where it is read | the dkj-policy general pages server serves it at `http://localhost:<port>/release-notes` (a port from 4890 to 4899; the hub the session start prints links it from its General card, and the repo's own server redirects `/release-notes` there), which opens in VS Code's Simple Browser |
 | what is committed | **nothing from that directory.** The page is a derivative of the tracked documents, and a 400 KB file changing every release would dirty the tree `cut-release.ps1` refuses to run on |
 

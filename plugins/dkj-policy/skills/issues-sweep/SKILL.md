@@ -209,7 +209,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 ```
 
 The prefix table is this repo's own (`scripts/lib/branch-info.ps1`) -- read it rather than guessing.
-Fill the `### DEPLOY:` section of `dkj-policy/<branch>.md`: that section IS the changelog entry. The
+Fill the `### DEPLOY:` section of `.dkj/dkj-policy/<branch>.md`: that section IS the changelog entry. The
 change and its entry go in **one** commit.
 
 ### 4. The gates -- `ship-pr` runs them, not you

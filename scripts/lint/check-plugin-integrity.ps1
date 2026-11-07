@@ -2190,7 +2190,7 @@ $lifecycleFiles = @($linkFiles | Where-Object {
     if ($rel -match '(^|\\)RELEASE\.md$') { return $false }
     if ($rel -match '^releases\\') { return $false }
     # The moved release pages are the same history at their workflow-folder address (August 14, 2026).
-    if ($rel -match '^dkj-policy\\releases\\') { return $false }
+    if ($rel -match '^(\.dkj\\)?dkj-policy\\releases\\') { return $false }
     # A root <branch-name>.md entry file is history in the making; same reasoning as CHANGELOG.md.
     if (($rel -notmatch '\\') -and (Test-IsChangelogEntryFile -Path $_)) { return $false }
     # branch/ is the same subject at its new address. Both files: the entry is history in the making, and
@@ -3195,7 +3195,7 @@ $scFiles = @($linkFiles | Where-Object {
     if ($rel -match '(^|\\)RELEASE\.md$') { return $false }
     if ($rel -match '^releases\\') { return $false }
     # The moved release pages are the same history at their workflow-folder address (August 14, 2026).
-    if ($rel -match '^dkj-policy\\releases\\') { return $false }
+    if ($rel -match '^(\.dkj\\)?dkj-policy\\releases\\') { return $false }
     if (($rel -notmatch '\\') -and (Test-IsChangelogEntryFile -Path $_)) { return $false }
     # The branch's own document only -- NOT the whole folder. It is history in the making above and a scratch
     # pad below; the folder's own pages are the convention itself and are checked.

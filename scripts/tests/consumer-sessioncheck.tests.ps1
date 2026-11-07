@@ -327,6 +327,7 @@ function Invoke-HookWithFakeEngine {
         # command-probe-lib.ps1 is a sibling of a sibling (#1729): the three libs above dot-source it for
         # Test-FunctionDefined, so the fixture owes it exactly as it owes ref-print-lib.
         Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\command-probe-lib.ps1') -Destination (Join-Path $EngineDir 'scripts\lib\command-probe-lib.ps1') -Force
+        Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\workflow-folder-lib.ps1') -Destination (Join-Path $EngineDir 'scripts\lib\workflow-folder-lib.ps1') -Force
     }
     $prevP = $env:CLAUDE_PROJECT_DIR
     $prevU = $env:USERPROFILE

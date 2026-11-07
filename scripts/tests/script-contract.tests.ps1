@@ -249,7 +249,7 @@ try {
     $c = New-FixtureConsumer -OmitWorkflowFolder
     $r = Invoke-Ps @('-ConsumerPathOverride', $c)
     Assert-Equal 1 $r.Code 'missing workflow folder: exit-code 1'
-    Assert-Match "\[ERROR\].*'dkj-policy/' does not exist" $r.Out 'missing workflow folder: the ERROR names the folder'
+    Assert-Match "\[ERROR\].*'.dkj/dkj-policy/' does not exist" $r.Out 'missing workflow folder: the ERROR names the folder'
     Assert-Match 'adopt-dkj-policy' $r.Out 'missing workflow folder: the finding names the skill that scaffolds it'
     $errCountWf = @([regex]::Matches($r.Out, '\[ERROR\]')).Count
     Assert-Equal 1 $errCountWf 'missing workflow folder: exactly one error -- every contract record is still satisfied'
@@ -392,7 +392,7 @@ try {
     # THE FALLBACK TEXT ITSELF CHANGED (issue #885): the literal 'releases/README.md' became the short
     # computed-default description Get-ReleasePluginTier already set the precedent for, since the real
     # default now differs between a source repo and a consumer.
-    Assert-Match "\[INFO\].*'Get-ReleaseHistoryPath' missing from scripts\\repo-config\.ps1.*used by: cut-release, new-internal-note.*optional.*falls back to 'releases/README\.md \(source\) or dkj-policy/releases/history\.md \(consumer\), computed'" $r.Out 'optional absent: INFO names the function, both callers and the fallback'
+    Assert-Match "\[INFO\].*'Get-ReleaseHistoryPath' missing from scripts\\repo-config\.ps1.*used by: cut-release, new-internal-note.*optional.*falls back to 'releases/README\.md \(source\) or .dkj/dkj-policy/releases/history\.md \(consumer\), computed'" $r.Out 'optional absent: INFO names the function, both callers and the fallback'
 
     # --- 6d. Get-LiveStage: absent -> [INFO] naming the empty-string fallback, exit 0 (issue #177) ----
     #     Mirrors test 6c above (Get-ChangelogHeading, issue #178): Get-LiveStage is Optional in the

@@ -73,7 +73,7 @@ if a repo ever does split it, the other repo splits it the same way on the same 
 point of this plugin is that the two cannot diverge. Stated here so nobody has to decide it twice.
 
 **The folder is `bwj-development/`**, matching the plugin that owns the rule, exactly as
-`dkj-policy/` matches the workflow that owns the branch documents.
+`.dkj/dkj-policy/` matches the workflow that owns the branch documents.
 
 **The file is scaffolded at adopt time, carrying nothing but a masthead** (Dave, September 5, 2026):
 

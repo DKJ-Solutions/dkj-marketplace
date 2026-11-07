@@ -13,7 +13,7 @@ document rather than as the back half of an install manual.
 
 **Why the procedure is what it is** — which step was added when, and what was measured to justify it —
 is not on this page. It lives in the release record:
-[`releases/history.md`](../dkj-policy/releases/history.md) indexes every version with the changes
+[`releases/history.md`](../.dkj/dkj-policy/releases/history.md) indexes every version with the changes
 behind it. This page tells you what to do; that one tells you why it changed.
 
 > **Budget most of the time for the last step.** The bootstrap places the whole seam in seconds and the
@@ -249,7 +249,7 @@ whose `version` is the release it belongs to, bumped in lockstep across every pl
 [Cutting a release](dkj-policy/RELEASES-portable.md#cutting-a-release) for the lockstep mechanics. Because
 `claude plugin update` pins the cache to a specific version, the
 cached `version` is *exactly* the installed release. The full history of that release lives in the source
-repo's `CHANGELOG.md` and `dkj-policy/releases/` — and a consumer has both, because
+repo's `CHANGELOG.md` and `.dkj/dkj-policy/releases/` — and a consumer has both, because
 the marketplace source is a git clone of the whole repository at
 `~/.claude/plugins/marketplaces/<marketplace>/`, not a per-plugin extract.
 
@@ -371,7 +371,7 @@ Read the `version` in your cached `<plugin>/.claude-plugin/plugin.json`. It trav
 cache, so once `claude plugin update` has pinned your install to a version, that number is exactly the
 release you are on. Every plugin bumps in lockstep, so any one of them answers the question.
 
-For **what changed** in that release, read the source repo's `CHANGELOG.md` and `dkj-policy/releases/`
+For **what changed** in that release, read the source repo's `CHANGELOG.md` and `.dkj/dkj-policy/releases/`
 in the marketplace clone you already have — `~/.claude/plugins/marketplaces/dkj-marketplace/`. See
 [Consumption](#consumption) above for the mechanics.
 
@@ -544,7 +544,7 @@ numbers from before the point where the four steps start.
 > **The adoption commit lands on the trunk, and it is the one exception — it is spent by using it**
 > (inbound [#1085](https://github.com/DaveKJohn/claude-code-specialists/issues/1085)). Everything this
 > step and the next two write — the seam, the lenses, the two script scaffolds, the `@`-import, and the
-> whole `dkj-policy/` folder if you enabled that workflow — is one sizeable commit, and it
+> whole `.dkj/dkj-policy/` folder if you enabled that workflow — is one sizeable commit, and it
 > **cannot** go through the branch-and-PR cycle it is installing. That is not a preference: `new-branch`
 > refuses without `scripts/lib/branch-info.ps1`, which is one of the files this step writes, so before it
 > there is no branch to put the work on. The gates are downstream of the same commit for the same reason
@@ -622,7 +622,7 @@ The set as of this release:
 
 | skill | shipped by | what your repo lacks without it | what reports it |
 |---|---|---|---|
-| `adopt-dkj-policy` | `dkj-policy` | two independent things, either order: **Part 1** — `dkj-policy/` itself, the only location the shared scripts read the branch dossier and the release documents from; **Part 2** — the seam values that state the shared way of working, answering what step 1 only *scaffolded* (`scripts/repo-config.ps1` and `scripts/lib/branch-info.ps1`) | `script-contract-sessioncheck` |
+| `adopt-dkj-policy` | `dkj-policy` | two independent things, either order: **Part 1** — `.dkj/dkj-policy/` itself, the only location the shared scripts read the branch dossier and the release documents from; **Part 2** — the seam values that state the shared way of working, answering what step 1 only *scaffolded* (`scripts/repo-config.ps1` and `scripts/lib/branch-info.ps1`) | `script-contract-sessioncheck` |
 | `adopt-shopify-floor` | `dkj-subagents-shopify` | the live-theme guard's id half, a starter `.theme-check.yml`, and the CI gate that runs it | `shopify-floor-sessioncheck` |
 
 **Enumerate it from your own slash list rather than from this table.** A plugin added after this release

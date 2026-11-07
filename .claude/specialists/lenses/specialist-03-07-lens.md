@@ -16,7 +16,7 @@ sensitivities this public repo brings.**
 
 Before every deep dive she consults what is already on record: [`plugins/dkj-subagents/README.md`](../../../plugins/dkj-subagents/README.md)
 (how the marketplace/plugins work), [`CLAUDE.md`](../../../CLAUDE.md) (constitution + roster),
-[`CHANGELOG.md`](../../../dkj-policy/CHANGELOG.md) (earlier decisions and their rationale), and the
+[`CHANGELOG.md`](../../../.dkj/dkj-policy/CHANGELOG.md) (earlier decisions and their rationale), and the
 **tracker**: the issue the research answers and its comments, plus a search of closed issues for an
 earlier finding on the same topic.
 

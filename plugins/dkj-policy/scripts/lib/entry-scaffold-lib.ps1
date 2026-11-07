@@ -57,6 +57,11 @@
 # more than any other file in the tree, and Get-ReleaseAudienceTier's is the frame #1723 faulted in.
 . (Join-Path $PSScriptRoot 'command-probe-lib.ps1')
 
+# THE WORKFLOW FOLDER'S NAME (#3870). Get-BranchFilePaths names the folder the branch documents live in, and
+# seam-lib.ps1 names the same folder for the changelog -- one list, in a leaf both load, so the two cannot
+# disagree in a repo mid-move. Same unconditional, $PSScriptRoot-relative shape as the probe above.
+. (Join-Path $PSScriptRoot 'workflow-folder-lib.ps1')
+
 # THE DOCUMENT-NEWLINE READING (issue #1832): Get-DocumentNewline, where the two sites below hand-typed
 # it. Same unconditional, $PSScriptRoot-relative shape as the two leaves above and for the same reason --
 # it has to resolve in the plugin mirror as well as here -- and it is likewise a leaf with no dependencies
@@ -5481,7 +5486,7 @@ function Get-EntryLinkFindings {
         # that repoints Get-ChangelogPath back there.
         [string]$DestDirRel = ''
     )
-    if (-not $EntryDirRel) { $EntryDirRel = (Get-BranchFilePaths).Directory }
+    if (-not $EntryDirRel) { $EntryDirRel = (Get-BranchFilePaths -RepoRoot $RepoRoot).Directory }
     $destDir = if ($DestDirRel) { Join-Path $RepoRoot ($DestDirRel -replace '/', '\') } else { $RepoRoot }
     $findings = @()
     foreach ($target in (Get-EntryLinkTargets -EntryText $EntryText)) {
@@ -6123,6 +6128,23 @@ function Get-TrunkGap {
     return $result
 }
 
+function Get-BranchDocumentRepoRoot {
+    <#
+        The tree Get-BranchFilePaths reads the workflow folder's name off when its caller names none (#3870):
+        $env:CLAUDE_PROJECT_DIR where it points at a directory -- the same dual-context answer every shared
+        script resolves its repo root from -- else the current location, which is the repo root for a script
+        run the documented way and for every CI step, which runs in the checkout.
+
+        WHY A CALLER WITHOUT A ROOT STILL GETS A TREE. Get-BranchFilePaths was pure until the folder moved,
+        and thirty-odd callers ask it for the layout's shape with no tree in hand. What changed is that the
+        shape now depends on whether this repo has moved yet, so it has to be read somewhere -- and a caller
+        that DOES hold a root passes -RepoRoot, which always wins. No git call: this runs on every lookup.
+    #>
+    $projectDir = [string]$env:CLAUDE_PROJECT_DIR
+    if ($projectDir -and (Test-Path -LiteralPath $projectDir -PathType Container)) { return $projectDir }
+    return (Get-Location).ProviderPath
+}
+
 function Get-BranchFilePaths {
     <#
         The branch's own working document, its repo-relative path and the directory holding it, as ONE
@@ -6242,8 +6264,15 @@ function Get-BranchFilePaths {
         # function for the SHAPE of the layout -- the directory, the list of names to sweep -- and have no
         # branch to offer; making it mandatory would have forced a branch lookup into callers that do not
         # need one. Every WRITER passes it.
-        [string]$Branch = ''
+        [string]$Branch = '',
+        # THE TREE WHOSE FOLDER IS NAMED (#3870). The folder moved to '.dkj/dkj-policy', and a repo that has
+        # not moved yet still holds 'dkj-policy/' -- so the directory is read off the tree, by the same walk
+        # seam-lib.ps1 uses for the changelog. Omitted, it is read off the tree this process is standing in
+        # (Get-BranchDocumentRepoRoot), which is the repo root for every script run the documented way.
+        [string]$RepoRoot = ''
     )
+    if (-not $RepoRoot) { $RepoRoot = Get-BranchDocumentRepoRoot }
+    $dir = Get-WorkflowFolderName -RepoRoot $RepoRoot
     # THE SLUG IS THE BRANCH WITH ITS SLASHES FLATTENED, which is the same transform Get-BranchInfo's
     # SafeName has always applied and the same one the pre-split root entry '<SafeName>.md' was named with.
     # Done inline rather than by calling Get-BranchInfo on purpose: that function lives in the REPO-OWNED
@@ -6253,9 +6282,9 @@ function Get-BranchFilePaths {
     # not loaded. A git branch name cannot contain the characters Windows forbids in a filename, so the
     # slash is the only one that has to go.
     $slug = if ($Branch) { $Branch -replace '/', '-' } else { '' }
-    $perBranch = if ($slug) { "dkj-policy/$slug.md" } else { 'dkj-policy/development.md' }
+    $perBranch = if ($slug) { "$dir/$slug.md" } else { "$dir/development.md" }
     return [pscustomobject]@{
-        Directory        = 'dkj-policy'
+        Directory        = $dir
         File             = $perBranch
         # THE PATTERN EVERY PER-BRANCH DOCUMENT MATCHES, so a reader can discover one without being told the
         # branch. Resolve-BranchFilePath sweeps it and then asks each hit which branch it DECLARES, which is
@@ -6295,7 +6324,7 @@ function Get-BranchFilePaths {
         # THE PRE-#1255 SHARED NAME, read and never written. Every branch open on September 3, 2026 carries
         # it, here and in every consumer, and they meet this change through a plugin update rather than by
         # choosing to -- the same answer the five renames before this one got.
-        SharedFile       = 'dkj-policy/development.md'
+        SharedFile       = "$dir/development.md"
         # Cycle and Deployment both answer the same path now, deliberately, so every caller that asks for
         # one of the two halves keeps working and gets the one document. They are kept as names rather than
         # collapsed into File alone because they still mean different THINGS -- the step list and the entry
@@ -6310,7 +6339,7 @@ function Get-BranchFilePaths {
         # explicit candidate below gives. The reverse case, a branch whose slug is literally 'cycle', would
         # write to this exact name; the declare-test resolves that correctly too, because the file would
         # declare that branch.
-        PriorNameFile    = 'dkj-policy/development-cycle.md'
+        PriorNameFile    = "$dir/development-cycle.md"
         # THE PRE-#1335 PER-BRANCH NAME, read and never written -- 'development-<slug>.md'. Branch-dependent,
         # unlike every other legacy row here, which is why Get-BranchFileLegacyNames had to learn -Branch:
         # a caller on the -Reader arm cannot sweep a directory, so this name has to be NAMED for it. On the
@@ -6320,11 +6349,16 @@ function Get-BranchFilePaths {
         # EMPTY WHERE NO BRANCH WAS GIVEN, not 'development-.md'. A caller asking for the SHAPE of the layout
         # has no branch to build this from, and a candidate list containing a path nothing can ever have
         # written is a path every reader still opens.
-        PriorPerBranchFile = if ($slug) { "dkj-policy/development-$slug.md" } else { '' }
-        LegacyCycle      = 'dkj-policy/branch/branch-cycle.md'
-        LegacyDeployment = 'dkj-policy/branch/branch-deployment.md'
-        OlderCycle       = 'dkj-policy/branch/branch-progress.md'
-        OlderDeployment  = 'dkj-policy/branch/branch-changelog.md'
+        PriorPerBranchFile = if ($slug) { "$dir/development-$slug.md" } else { '' }
+        LegacyCycle      = "$dir/branch/branch-cycle.md"
+        LegacyDeployment = "$dir/branch/branch-deployment.md"
+        OlderCycle       = "$dir/branch/branch-progress.md"
+        OlderDeployment  = "$dir/branch/branch-changelog.md"
+        # THE PRE-#3870 FOLDER, read and never written -- 'dkj-policy/' at the repo root, which every branch
+        # open on November 7, 2026 is standing in. Only the per-branch name: every older shape under it was
+        # retired before that folder existed (see Get-BranchFileLegacyNames). Empty where $dir IS that
+        # folder -- a repo that has not moved yet -- because there the current rows above already name it.
+        PolicyFolderPerBranch         = if ($slug -and $dir -ne 'dkj-policy') { "dkj-policy/$slug.md" } else { '' }
         # THE PRE-#1437 FOLDER, read and never written -- 'contributing-davekjohn/', which every branch open
         # on September 5, 2026 is standing in, here and in every consumer. ContribFolder* mirrors the whole
         # set above one directory over, PER-BRANCH NAME INCLUDED, and that last part is what makes it
@@ -6379,7 +6413,9 @@ function Test-IsPerBranchDocumentPath {
     param([Parameter(Mandatory)][AllowEmptyString()][string]$RelativePath)
     if ([string]::IsNullOrWhiteSpace($RelativePath)) { return $false }
     $paths = Get-BranchFilePaths
-    $norm  = ($RelativePath -replace '\\', '/').TrimStart('.', '/')
+    # './' STRIPPED AS A PREFIX, NOT AS CHARACTERS (#3870): TrimStart('.', '/') also ate the leading dot of
+    # '.dkj/dkj-policy/...', so no document under the moved folder could ever match.
+    $norm  = (($RelativePath -replace '\\', '/') -replace '^(\./)+', '') -replace '^/+', ''
     $dir   = [string]$paths.Directory
     # The pattern is a filename glob; anchor it to the folder so a same-named file elsewhere in the tree is
     # not swept in. -like rather than a regex because Pattern is authored as a glob and stays readable as one.
@@ -6392,7 +6428,9 @@ function Test-IsPerBranchDocumentPath {
     # directory is matched as a whole segment and the glob is applied to the filename alone.
     $slash = $norm.LastIndexOf('/')
     if ($slash -lt 0) { return $false }
-    if ($norm.Substring(0, $slash) -ne $dir) { return $false }
+    # ANY NAME THE FOLDER HAS HAD (#3870), not only the one this tree resolves to: both callers use this to
+    # EXEMPT a file, and a document still sitting in the pre-move folder is a branch document all the same.
+    if ($norm.Substring(0, $slash) -ne $dir -and @(Get-WorkflowFolderNames) -notcontains $norm.Substring(0, $slash)) { return $false }
     if ($norm.Substring($slash + 1) -notlike ([string]$paths.Pattern)) { return $false }
     # AND THE FOLDER'S OWN PAGES ARE NOT PER-BRANCH DOCUMENTS (#1335). Since the glob became '*.md' this
     # predicate would otherwise answer true for CHANGELOG.md, README.md and CONTRIBUTING.md -- and both its
@@ -6432,7 +6470,7 @@ function Get-PerBranchDocumentRels {
         folder's adopter yet has no folder, and every caller here is a reader.
     #>
     param([Parameter(Mandatory)][string]$RepoRoot)
-    $paths = Get-BranchFilePaths
+    $paths = Get-BranchFilePaths -RepoRoot $RepoRoot
     $dir = Join-Path $RepoRoot ([string]$paths.Directory -replace '/', '\')
     if (-not (Test-Path -LiteralPath $dir -PathType Container)) { return @() }
     $reserved = @($paths.ReservedNames)
@@ -6478,9 +6516,11 @@ function Get-BranchFileLegacyNames {
     #>
     param(
         [Parameter(Mandatory)][ValidateSet('File', 'Cycle', 'Deployment')][string]$Kind,
-        [string]$Branch = ''
+        [string]$Branch = '',
+        # The tree whose workflow folder the names sit in (#3870); omitted, Get-BranchFilePaths' own default.
+        [string]$RepoRoot = ''
     )
-    $paths = Get-BranchFilePaths -Branch $Branch
+    $paths = Get-BranchFilePaths -Branch $Branch -RepoRoot $RepoRoot
     $legacyKind = if ($Kind -eq 'File') { 'Cycle' } else { $Kind }
     return @(
         [string]$paths.PriorPerBranchFile,
@@ -6488,6 +6528,7 @@ function Get-BranchFileLegacyNames {
         [string]$paths.PriorNameFile,
         [string]$paths."Legacy$legacyKind",
         [string]$paths."Older$legacyKind",
+        [string]$paths.PolicyFolderPerBranch,
         [string]$paths.ContribFolderPerBranch,
         [string]$paths.ContribFolderPriorPerBranch,
         [string]$paths.ContribFolderShared,
@@ -6600,7 +6641,7 @@ function Resolve-BranchFilePath {
             return [System.IO.File]::ReadAllText($full, [System.Text.Encoding]::UTF8)
         }
     }
-    $paths = Get-BranchFilePaths -Branch $Branch
+    $paths = Get-BranchFilePaths -Branch $Branch -RepoRoot $(if ($PSCmdlet.ParameterSetName -eq 'Tree') { $RepoRoot } else { '' })
     $trunk = Get-BranchTrunkName
     # 'File' is the name a caller uses when it means the document rather than one of its two jobs; Cycle and
     # Deployment resolve to the same path and are kept so a gate can still say WHICH half it was reading.
@@ -6636,7 +6677,7 @@ function Resolve-BranchFilePath {
     # list as nested Object[] elements -- an array subexpression does not flatten a sub-array reached
     # through a variable or a call -- and the foreach below would then hand a whole array to the reader as
     # one $rel. Concatenation flattens each operand one level, which is exactly the depth here.
-    $candidates = @($current) + @($discovered) + @(Get-BranchFileLegacyNames -Kind $Kind -Branch $Branch)
+    $candidates = @($current) + @($discovered) + @(Get-BranchFileLegacyNames -Kind $Kind -Branch $Branch -RepoRoot $(if ($PSCmdlet.ParameterSetName -eq 'Tree') { $RepoRoot } else { '' }))
 
     # Read once per candidate and remember it: the second loop asks the same question again, and on the
     # -Reader arm one question is a child process rather than a Test-Path.
@@ -8137,7 +8178,7 @@ function Get-UnfoldedTrunkEntry {
         }
     }
 
-    $paths = Get-BranchFilePaths
+    $paths = Get-BranchFilePaths -RepoRoot $RepoRoot
 
     # The per-branch sweep, plus the pre-#1255 shared name explicitly. Since #1335 the glob is '*.md' and
     # Get-PerBranchDocumentRels is what keeps it off this folder's own pages -- CHANGELOG.md above all,
@@ -8237,7 +8278,7 @@ function Test-BranchFoldedOnRef {
     if (-not (Test-FunctionDefined 'Invoke-NativeCapture')) { return $null }
 
     if (-not $ChangelogRel) {
-        $paths = Get-BranchFilePaths
+        $paths = Get-BranchFilePaths -RepoRoot $RepoRoot
         $ChangelogRel = "$($paths.Directory)/CHANGELOG.md"
     }
     # A LITERAL Replace RATHER THAN -replace: git wants forward slashes in a pathspec, and a caller may
@@ -8303,7 +8344,7 @@ function Get-RetiredBranchDocNames {
         claims a span per line, so 'development-cycle.md' has to be tried before 'development.md' could
         be looked for inside it.
     #>
-    $paths = Get-BranchFilePaths
+    $paths = Get-BranchFilePaths -RepoRoot $RepoRoot
     $current = $paths.Directory
 
     $names = New-Object System.Collections.Generic.List[object]
@@ -8327,8 +8368,8 @@ function Get-RetiredBranchDocNames {
 
     # The retired FILENAMES, both Kinds unioned. Basenames only: a prose page names the file far more
     # often than the whole path, and every path form contains the basename anyway.
-    $currentFile = [System.IO.Path]::GetFileName(((Get-BranchFilePaths -Branch 'x').File -replace '/', '\'))
-    foreach ($rel in (@(Get-BranchFileLegacyNames -Kind File) + @(Get-BranchFileLegacyNames -Kind Deployment))) {
+    $currentFile = [System.IO.Path]::GetFileName(((Get-BranchFilePaths -Branch 'x' -RepoRoot $RepoRoot).File -replace '/', '\'))
+    foreach ($rel in (@(Get-BranchFileLegacyNames -Kind File -RepoRoot $RepoRoot) + @(Get-BranchFileLegacyNames -Kind Deployment -RepoRoot $RepoRoot))) {
         if (-not $rel) { continue }
         $leaf = [System.IO.Path]::GetFileName(($rel -replace '/', '\'))
         if (-not $leaf) { continue }
@@ -8696,7 +8737,7 @@ function Get-ConsumerProseDocuments {
         [string]$RepoRoot = ''
     )
 
-    $paths = Get-BranchFilePaths
+    $paths = Get-BranchFilePaths -RepoRoot $RepoRoot
     $rels = New-Object System.Collections.Generic.List[string]
     $seen = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
 

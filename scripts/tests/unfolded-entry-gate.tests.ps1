@@ -57,7 +57,7 @@ function Assert-True {
 function New-Tree {
     param([Parameter(Mandatory = $true)][string]$Label)
     $dir = Join-Path ([System.IO.Path]::GetTempPath()) ("unfoldedgate-$PID-$Label-" + [guid]::NewGuid().ToString('N').Substring(0, 6))
-    New-Item -ItemType Directory -Path (Join-Path $dir 'dkj-policy') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $dir '.dkj\dkj-policy') -Force | Out-Null
     # A CHANGELOG.md IN EVERY TREE SINCE #1601, because that is now the file the upstream question is
     # asked of. Without one 'git show <ref>:...' fails and Test-BranchFoldedOnRef answers $null -- the
     # right VERDICT for a stranded document, reached for the wrong reason, which is exactly the kind of
@@ -79,7 +79,7 @@ function Set-Changelog {
         $lines += (Format-BranchFileHeadingLine -Branch $b -Title (Get-BranchFileWording).ChangelogTitle -Level (Get-EntryHeadingLevel))
         $lines += @('', "Folded entry for $b.", '')
     }
-    $target = Join-Path $Dir 'dkj-policy/CHANGELOG.md'
+    $target = Join-Path $Dir '.dkj/dkj-policy/CHANGELOG.md'
     $parent = Split-Path -Parent $target
     if (-not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
     [System.IO.File]::WriteAllText($target, ($lines -join "`n") + "`n", (New-Object System.Text.UTF8Encoding($false)))
@@ -254,7 +254,7 @@ try {
     $onMain = New-Tree -Label 'onmain'
     Set-Doc -Dir $onMain -Branch 'feat/alpha'
     $f = @(Get-UnfoldedTrunkEntry -RepoRoot $onMain -CurrentBranch 'main')
-    Assert-True ($f.Count -eq 1 -and $f[0].DeclaredBranch -eq 'feat/alpha' -and $f[0].Rel -match 'dkj-policy/feat-alpha\.md$') `
+    Assert-True ($f.Count -eq 1 -and $f[0].DeclaredBranch -eq 'feat/alpha' -and $f[0].Rel -match '.dkj/dkj-policy/feat-alpha\.md$') `
         'a written per-branch doc, HEAD = main -- one finding naming the file and the branch it declares'
 
     $onOwn = New-Tree -Label 'onown'
@@ -405,7 +405,7 @@ try {
         'no branch to key on -- $null'
     Assert-True ($null -eq (Test-BranchFoldedOnRef -RepoRoot $stale -Ref '' -Branch 'feat/alpha')) `
         'no ref -- $null'
-    Assert-True ($null -eq (Test-BranchFoldedOnRef -RepoRoot $stale -Ref $refMain -Branch 'feat/alpha' -ChangelogRel 'dkj-policy/no-such-file.md')) `
+    Assert-True ($null -eq (Test-BranchFoldedOnRef -RepoRoot $stale -Ref $refMain -Branch 'feat/alpha' -ChangelogRel '.dkj/dkj-policy/no-such-file.md')) `
         'no changelog at that ref -- $null, which the check reads as NOT folded'
     Assert-True ((Test-BranchFoldedOnRef -RepoRoot $stale -Ref $refMain -Branch 'feat/alph') -eq $false) `
         'a prefix of the folded branch does not answer for it -- matched as a whole name'

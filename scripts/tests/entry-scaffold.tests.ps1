@@ -252,6 +252,7 @@ Copy-Item -LiteralPath $RunProgressSrc -Destination (Join-Path $fixture 'scripts
 # the very unjudged .Trim() this repair removes.
 Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\check-report-lib.ps1') -Destination (Join-Path $fixture 'scripts\lib\check-report-lib.ps1') -Force
 Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\command-probe-lib.ps1') -Destination (Join-Path $fixture 'scripts\lib\command-probe-lib.ps1') -Force
+Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\workflow-folder-lib.ps1') -Destination (Join-Path $fixture 'scripts\lib\workflow-folder-lib.ps1') -Force
 # repo-root-lib.ps1 likewise (#2115): check-report-lib.ps1 resolves the repo root through
 # Get-GitTopLevelPath, which lives there. UNGUARDED in that lib, deliberately -- it is mirrored
 # beside it into every plugin that carries it, so a payload missing it is broken rather than old.
@@ -1873,7 +1874,7 @@ Assert-True ($bfp.ContribFolderFile.EndsWith('contributing-davekjohn/development
 $resolveFx = Join-Path ([System.IO.Path]::GetTempPath()) "branch-file-resolve-$PID-$([guid]::NewGuid().ToString('n'))"
 if (Test-Path -LiteralPath $resolveFx) { Remove-Item -Recurse -Force -LiteralPath $resolveFx }
 New-Item -ItemType Directory -Path (Join-Path $resolveFx ($bfp.Directory -replace '/', '\')) -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $resolveFx 'dkj-policy\branch') -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $resolveFx (($bfp.Directory -replace '/', '\') + '\branch')) -Force | Out-Null
 try {
     Assert-Equal $bfp.File (Resolve-BranchFilePath -Kind Cycle -RepoRoot $resolveFx) 'nothing present: the resolver names the CURRENT one, so a writer creates that'
     [System.IO.File]::WriteAllText((Join-Path $resolveFx ($bfp.LegacyCycle -replace '/', '\')), "# ``feat/in-flight`` cycle`n")
@@ -2528,14 +2529,14 @@ Write-Host "Get-EntryLinkTargets / Get-EntryLinkFindings -- the entry's links re
 # reads -- so this fixture is the depth the suggester will actually try.
 $linkEntry = @(
     '## DEPLOY: `fix/x-v1`', '',
-    'See [the lib](scripts/lib/release-lib.ps1) and [the gate](../scripts/lint/check-plugin-integrity.ps1).',
+    'See [the lib](scripts/lib/release-lib.ps1) and [the gate](../../scripts/lint/check-plugin-integrity.ps1).',
     'Also [upstream](https://example.com/x), [an anchor](#somewhere) and [absolute](/etc/x).', '',
     '**Score:** 3', ''
 ) -join "`n"
 $targets = @(Get-EntryLinkTargets -EntryText $linkEntry)
 Assert-Equal 2 $targets.Count 'only the two RELATIVE targets are read -- http, a pure anchor and an absolute path cannot be broken by the move'
 Assert-True ($targets -contains 'scripts/lib/release-lib.ps1') 'the root-relative one is read'
-Assert-True ($targets -contains '../scripts/lint/check-plugin-integrity.ps1') 'and the branch-relative one, as written'
+Assert-True ($targets -contains '../../scripts/lint/check-plugin-integrity.ps1') 'and the branch-relative one, as written'
 
 # THE ANCHOR AND THE TITLE ARE DROPPED: whether a heading exists is a different question with a different
 # answer, and the repo's own link lint already asks it. This function answers only "is there a file there".
@@ -2559,7 +2560,7 @@ Assert-Equal 0 (@(Get-EntryLinkTargets -EntryText $quoting)).Count 'a link quote
 $repoRootForLinks = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $findings = @(Get-EntryLinkFindings -EntryText $linkEntry -RepoRoot $repoRootForLinks)
 Assert-Equal 1 $findings.Count 'the root-relative link resolves and is not reported; the branch-relative one is'
-Assert-Equal '../scripts/lint/check-plugin-integrity.ps1' $findings[0].Target 'the finding names the link AS WRITTEN, which is what the author has to find in their file'
+Assert-Equal '../../scripts/lint/check-plugin-integrity.ps1' $findings[0].Target 'the finding names the link AS WRITTEN, which is what the author has to find in their file'
 # THE SUGGESTION IS THE POINT, not decoration. A finding that only says "does not exist" sends the author to
 # add another '../' -- the repo's own link lint had to learn the same lesson on August 19, 2026.
 Assert-Equal 'scripts/lint/check-plugin-integrity.ps1' $findings[0].Suggested 'and it names the root-relative form, because the naive repair is to add another ../'
@@ -2629,7 +2630,7 @@ try {
     $rootStyleLink = '[the script](scripts/x.ps1)'
     $fromFolder = @(Get-EntryLinkFindings -EntryText $rootStyleLink -RepoRoot $linkFixture -DestDirRel $folderRel)
     Assert-Equal 1 $fromFolder.Count 'a root-relative link is dead at a destination inside the folder, and is reported there'
-    Assert-Equal '../scripts/x.ps1' $fromFolder[0].Suggested 'and the suggestion names the form that destination needs, computed from the repo root as the second candidate base'
+    Assert-Equal '../../scripts/x.ps1' $fromFolder[0].Suggested 'and the suggestion names the form that destination needs, computed from the repo root as the second candidate base'
     Assert-Equal 0 (@(Get-EntryLinkFindings -EntryText $rootStyleLink -RepoRoot $linkFixture -DestDirRel '')).Count 'while the same link passes for a repo whose changelog is at the root'
 
     # A TYPO IS STILL A TYPO AT EITHER DESTINATION, and gets no guess at either.
@@ -2645,7 +2646,7 @@ try {
     Assert-Equal 'scripts/x.ps1' `
         (Get-PathRelativeToDirectory -FullPath (Join-Path $linkFixture 'scripts\x.ps1') -Directory $linkFixture) `
         'a target UNDER the directory is its tail -- the only case the substring this replaced could answer'
-    Assert-Equal '../scripts/x.ps1' `
+    Assert-Equal '../../scripts/x.ps1' `
         (Get-PathRelativeToDirectory -FullPath (Join-Path $linkFixture 'scripts\x.ps1') -Directory (Join-Path $linkFixture $folderRel)) `
         'a target BESIDE it needs a ../, which is the case that silently produced nothing before'
     Assert-Equal 'beside.md' `

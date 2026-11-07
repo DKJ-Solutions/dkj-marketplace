@@ -304,9 +304,9 @@ https://raw.githubusercontent.com/DKJ-Solutions/other-repo/v0.1.0/a/file.css
     $productAssets = Join-Path $root 'plugins\dkj-policy\dkj-solutions\assets\dkj-brandbook-product'
     New-Item -ItemType Directory -Path $productAssets -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $productAssets 'house-product.css'), ".y { color: var(--x); }`n")
-    New-Item -ItemType Directory -Path (Join-Path $root 'dkj-policy\releases\audience\1.x') -Force | Out-Null
-    New-Item -ItemType Directory -Path (Join-Path $root 'dkj-policy\releases\changelog\1.x') -Force | Out-Null
-    New-Item -ItemType Directory -Path (Join-Path $root 'dkj-policy\releases\github\1.x') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $root '.dkj\dkj-policy\releases\audience\1.x') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $root '.dkj\dkj-policy\releases\changelog\1.x') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $root '.dkj\dkj-policy\releases\github\1.x') -Force | Out-Null
 
     # A git repo with NO remote: -NoPush is belt, this is braces.
     Push-Location $root
@@ -396,7 +396,7 @@ try {
 
     # The changelog note carries the entry that was folded away, which is the whole point of writing
     # it before emptying the file.
-    $notePath = Join-Path $root 'dkj-policy\releases\changelog\1.x\1.4.1.md'
+    $notePath = Join-Path $root '.dkj\dkj-policy\releases\changelog\1.x\1.4.1.md'
     Assert-True (Test-Path -LiteralPath $notePath) 'happy path: the changelog note was written at the grouped path'
     if (Test-Path -LiteralPath $notePath) {
         Assert-Match 'A fixture change' (Get-Content -LiteralPath $notePath -Raw) 'happy path: and it carries the entry the CHANGELOG lost'
@@ -455,7 +455,7 @@ try {
     $root4 = New-CutFixture -Name 'tier1' -AudienceTier 1 -EntryTopTier 1
     $r4 = Invoke-Cut -Root $root4 -Arguments @('-Bump', 'minor', '-NoPush', '-SkipLint', '-SkipTests')
     Assert-Equal 0 $r4.Code 'tier 1: the minor is earned by the tier-1 entry and the cut succeeds'
-    $note4 = Join-Path $root4 'dkj-policy\releases\audience\1.x\1.5.0.md'
+    $note4 = Join-Path $root4 '.dkj\dkj-policy\releases\audience\1.x\1.5.0.md'
     Assert-True (Test-Path -LiteralPath $note4) 'tier 1: the hand-written note was drafted'
     if (Test-Path -LiteralPath $note4) {
         $n4 = Get-Content -LiteralPath $note4 -Raw
@@ -489,7 +489,7 @@ try {
     $root5 = New-CutFixture -Name 'tier2' -EntryTopTier 2
     $r5 = Invoke-Cut -Root $root5 -Arguments @('-Bump', 'minor', '-NoPush', '-SkipLint', '-SkipTests')
     Assert-Equal 0 $r5.Code 'tier 2: the minor is earned by the tier-2 entry and the cut succeeds'
-    $note5 = Join-Path $root5 'dkj-policy\releases\audience\1.x\1.5.0.md'
+    $note5 = Join-Path $root5 '.dkj\dkj-policy\releases\audience\1.x\1.5.0.md'
     Assert-True (Test-Path -LiteralPath $note5) 'tier 2: the hand-written note was drafted'
     if (Test-Path -LiteralPath $note5) {
         $n5 = Get-Content -LiteralPath $note5 -Raw
@@ -534,7 +534,7 @@ try {
     $root7 = New-CutFixture -Name 'statedtype' -HistoryMajors $recordedHistory
     $r7 = Invoke-Cut -Root $root7 -Arguments @('-Version', '1.4.1', '-Type', 'patch', '-NoPush', '-SkipLint', '-SkipTests')
     Assert-Equal 0 $r7.Code 'stated type: the cut runs'
-    $note7 = Join-Path $root7 'dkj-policy\releases\changelog\1.x\1.4.1.md'
+    $note7 = Join-Path $root7 '.dkj\dkj-policy\releases\changelog\1.x\1.4.1.md'
     Assert-True (Test-Path -LiteralPath $note7) 'stated type: the changelog note was written'
     if (Test-Path -LiteralPath $note7) {
         # THE NOTE CARRIES NO '**Type:**' LINE SINCE #2491, so the stated type's one record is the overview row
@@ -593,7 +593,7 @@ https://github.com/DaveKJohn/claude-code-specialists/pull/2
     $root9 = New-CutFixture -Name 'retraction' -EntryTopTier 2 -ExtraEntry $revertEntry
     $r9 = Invoke-Cut -Root $root9 -Arguments @('-Bump', 'minor', '-NoPush', '-SkipLint', '-SkipTests')
     Assert-Equal 0 $r9.Code 'retraction: the minor is still earned by the retracted entry''s own tier-2 declaration'
-    $note9 = Join-Path $root9 'dkj-policy\releases\audience\1.x\1.5.0.md'
+    $note9 = Join-Path $root9 '.dkj\dkj-policy\releases\audience\1.x\1.5.0.md'
     Assert-True (Test-Path -LiteralPath $note9) 'retraction: the audience document was still drafted'
     if (Test-Path -LiteralPath $note9) {
         $n9 = Get-Content -LiteralPath $note9 -Raw
@@ -604,7 +604,7 @@ https://github.com/DaveKJohn/claude-code-specialists/pull/2
     }
     # THE RECORD KEEPS BOTH -- CHANGELOG.md's own history, folded into the changelog note, is untouched
     # by any of this: it is what reached the trunk, and both entries did.
-    $changelogNote9 = Join-Path $root9 'dkj-policy\releases\changelog\1.x\1.5.0.md'
+    $changelogNote9 = Join-Path $root9 '.dkj\dkj-policy\releases\changelog\1.x\1.5.0.md'
     Assert-True (Test-Path -LiteralPath $changelogNote9) 'retraction: the changelog note (the record) was written'
     if (Test-Path -LiteralPath $changelogNote9) {
         $cn9 = Get-Content -LiteralPath $changelogNote9 -Raw
@@ -739,7 +739,7 @@ $cutSectH11 Pull Request
 
     $r11 = Invoke-Cut -Root $root11 -Arguments @('-Bump', 'patch', '-NoPush', '-SkipLint', '-SkipTests', '-LivePushRecord', $recordPath11)
     Assert-Equal 0 $r11.Code 'live-push record: the cut succeeds'
-    $body11Path = Join-Path $root11 'dkj-policy\releases\github\1.x\1.4.1.md'
+    $body11Path = Join-Path $root11 '.dkj\dkj-policy\releases\github\1.x\1.4.1.md'
     Assert-True (Test-Path -LiteralPath $body11Path) 'live-push record: the GitHub body was written'
     if (Test-Path -LiteralPath $body11Path) {
         $b11 = Get-Content -LiteralPath $body11Path -Raw

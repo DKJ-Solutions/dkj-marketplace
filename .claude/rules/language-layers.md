@@ -6,8 +6,8 @@ paths:
   - "plugins/**/hooks/**"
   - ".github/**"
   - "releases/**"
-  - "dkj-policy/releases/**"
-  - "dkj-policy/CHANGELOG.md"
+  - ".dkj/dkj-policy/releases/**"
+  - ".dkj/dkj-policy/CHANGELOG.md"
   - ".gitignore"
 ---
 
@@ -55,7 +55,7 @@ discovery — as an earlier pass did for `.github/workflows/ci.yml` — not a qu
   `## Releases`/plugin-CHANGELOG intro texts, the date label) were translated in that pass.
   `CHANGELOG.md` itself is now fully English (its intro paragraphs and every `## Releases` reference
   line were translated on July 22, 2026 — Dave's decision). The archived changelog notes
-  (`dkj-policy/releases/changelog/*.md`) stay in their original language, so older ones
+  (`.dkj/dkj-policy/releases/changelog/*.md`) stay in their original language, so older ones
   remain Dutch.
 - **The script layer is ASCII, and a character the script must EMIT is written as a code point.** Measured
   August 19, 2026, on the branch that gave the changelog entry's heading a middle dot: typed literally into
@@ -156,11 +156,11 @@ discovery — as an earlier pass did for `.github/workflows/ci.yml` — not a qu
   the retired marketplace name `claude-code-specialists` matched alongside `dkj-claude-plugins` in the
   teardown script's `settings.json` probe (`specialists-teardown/teardown.ps1`): a consumer that has not
   yet done the flag-day re-install still carries the old name in every `enabledPlugins` key.
-- **History** — the archived per-release notes under `dkj-policy/releases/changelog/*.md` (at
+- **History** — the archived per-release notes under `.dkj/dkj-policy/releases/changelog/*.md` (at
   `releases/development/*.md` until August 26, 2026, #914) are this repo's narrow
   exception to the norm and may remain in their original language (older ones are Dutch).
   `CHANGELOG.md` and the release history (both under the workflow folder since August 27, 2026, named
-  `contributing-davekjohn/` then and `dkj-policy/` since September 5, 2026, #1437 --
+  `contributing-davekjohn/` then, `dkj-policy/` from September 5, 2026, #1437, and `.dkj/dkj-policy/` since November 7, 2026, #3870 --
   the changelog beside this folder's contributing page, the list as `releases/history.md`) are themselves fully English (translated July 22, 2026,
   Dave's decision), so the exception no longer covers them.
 

@@ -93,7 +93,7 @@ Four blocks, in this order:
    **discovered, not listed** -- a plugin shipping no portable page is not a legislator and drops out
    silently; one that could not be located at all gets a `[not located]` line, because whatever it
    legislates was not read.
-2. **RANK 2** -- this repo's own answers to the seams, which live in **two** places: the `dkj-policy/`
+2. **RANK 2** -- this repo's own answers to the seams, which live in **two** places: the `.dkj/dkj-policy/`
    pages, and the **repo lenses** under `.claude/specialists/lenses/` (or whichever of the four lens
    layouts this repo uses). Each entry carries its line count, and the rank closes with a tally.
 3. **RANK 3** -- the always-on closure: `CLAUDE.md` and everything it `@`-imports.
