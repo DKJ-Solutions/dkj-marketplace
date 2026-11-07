@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**3 / 3 minor entries** <!-- pending-tally -->
+**4 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3885-repoint-skips-comments · 20261107-192235Z
+
+When `adopt-workflow-folder -Apply` moves `dkj-policy/` to `.dkj/dkj-policy/`, it now repoints quoted paths
+in `scripts/repo-config.ps1` only on code lines. A quoted path inside a `#` comment or a `<# ... #>` block
+is left as written, and the run lists those as `[kept]`. Before this, the move rewrote history comments too,
+so a comment recording an earlier seam value then claimed a value that was never set (#3885).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A consumer still to move keeps its `repo-config.ps1` comments true, and no longer has to undo the rewrite
+by hand the way dkj-lifehub did.
+
+**Score:** 1
+
+#### Pull Request
+
+adopt-workflow-folder leaves comments in repo-config.ps1 alone on the move
+
+Plugins: dkj-policy
+
+[PR #3891](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3891)
+
+---
 
 ### DEPLOY: fix/3883-retired-constitution-import · 20261107-191022Z
 
