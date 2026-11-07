@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**2 / 3 minor entries** <!-- pending-tally -->
+**2 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/remove-ai-radar · 20261107-111644Z
+
+The AI radar added in #3863 leaves this repo: the owner keeps the AI knowledge base in `dkj-lifehub`
+instead. This repo keeps a line to it, the repo-local `ai-radar` skill: its script finds the
+lifehub checkout through the register, lists the items still to be assessed, and the skill says how
+to hold them against this tree, file a gap here and write the verdict back in the lifehub. Rebecca's
+lens and the repo layout in Sylvester's lens are back to what they said before.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A: the folder sat outside `plugins/`, and the new skill is repo-local, so nothing a consumer installs changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+Move the AI radar to the lifehub, and read it from here with the ai-radar skill
+
+[PR #3867](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3867)
+
+---
 
 ### DEPLOY: feat/3862-tidy-lane8-removes-records · 20261107-104657Z
 
