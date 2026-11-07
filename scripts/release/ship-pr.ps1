@@ -1819,7 +1819,7 @@ function Get-FoldExemptCommits {
     $reservedForFold = @()
     try {
         $changelogForFold = Get-SeamValue -Name 'Get-ChangelogPath' -Default (Get-DefaultChangelogPath -RepoRoot $repoRoot)
-        $branchPathsForFold = Get-BranchFilePaths
+        $branchPathsForFold = Get-BranchFilePaths -RepoRoot $repoRoot
         $entryDirForFold = $branchPathsForFold.Directory
         $reservedForFold = @($branchPathsForFold.ReservedNames)
     } catch {

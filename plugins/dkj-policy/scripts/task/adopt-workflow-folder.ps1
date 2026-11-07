@@ -193,7 +193,10 @@ if ($foundFolderName -ne $currentFolderName -and -not (Test-Path -LiteralPath $c
     # folder is left alone, because it is history rather than an address.
     $oldEsc = [regex]::Escape($foundFolderName)
     $rewrites = @(
-        @{ Rel = 'scripts/repo-config.ps1'; Pattern = "(['" + '"' + "])$oldEsc/"; Replace = "`${1}$currentFolderName/" },
+        # Either separator after the folder: a seam answer written 'dkj-policy\CHANGELOG.md' is the same
+        # address, and leaving it would point the fold at a file that moved. It comes out forward-slashed,
+        # which every reader of these seams accepts.
+        @{ Rel = 'scripts/repo-config.ps1'; Pattern = "(['" + '"' + "])$oldEsc[/\\]"; Replace = "`${1}$currentFolderName/" },
         @{ Rel = '.gitignore';              Pattern = "(?m)^(/?)$oldEsc/";            Replace = "`${1}$currentFolderName/" }
     )
     foreach ($rw in $rewrites) {

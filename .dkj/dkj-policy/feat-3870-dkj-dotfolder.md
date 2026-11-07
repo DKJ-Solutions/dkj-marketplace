@@ -56,6 +56,7 @@ was declined as the home because it is a Claude Code protected path (every write
 
 - [x] The migration step run on a throwaway repo: folder, seam answer and `.gitignore` line all moved
 - [x] Lint gate and the suites that touch the folder
+- [x] Code review (Victor): publish-to-business still named the old changelog path, and callers holding a repo root now pass it to Get-BranchFilePaths
 
 ### DEPLOY: feat/3870-dkj-dotfolder
 
