@@ -126,7 +126,7 @@ Assert-True ($xss -notmatch '<script>alert' -and $xss -match '&lt;script&gt;') '
 Write-Host '-- the hub' -ForegroundColor Cyan
 $gp = @(Get-GeneralPages | Where-Object { $_.Href -eq '/dev/goals' })
 Assert-True ($gp.Count -eq 1 -and $gp[0].Label -eq 'Goals' -and -not $gp[0].Group -and -not $gp[0].GitHub -and (Get-HubIconSvg -Name $gp[0].Icon) -match '<svg') 'Goals is a general page of its own, with an icon'
-Assert-Equal 'Goals' (@(Get-HubMenu)[1].Label) 'it is the first of the hub''s own items, right after GitHub'
+Assert-Equal 'Goals' (@(Get-HubMenu)[2].Label) 'it is the second of the hub''s own items, right after Today (#3860)'
 
 Write-Host ''
 Write-Host "goals: $script:pass passed, $script:fail failed"

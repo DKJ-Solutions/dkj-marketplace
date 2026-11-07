@@ -534,6 +534,8 @@ $script:HubIcons = @{
     # The GitHub mark as a line drawing (Feather's 'github', MIT), for the GitHub page's card.
     'github'        = '<path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>'
     'issues'        = '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5"/>'
+    # A calendar (Feather's 'calendar', MIT), for the Today card.
+    'today'         = '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'
     # A flag (Feather's 'flag', MIT), for the Goals card.
     'goals'         = '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>'
     'pull-request'  = '<circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M6 8v8M18 16V9a3 3 0 0 0-3-3h-4M13 4l-2 2 2 2"/>'
@@ -603,8 +605,9 @@ function Get-GeneralPages {
     #>
     @(
         @{ Href = '/dev/issues';        Label = 'Issues';        Sub = 'The open GitHub issues and where they stand, and the flow of the last four weeks'; Icon = 'issues'; GitHub = $true },
-        # The goals and the one step to take now (Dave, November 5, 2026, #3816): first of the hub's own cards, since
-        # where to start is what the page is for.
+        # The day plan (Dave, November 7, 2026, #3860): first of the hub's own cards, since today is where a day starts,
+        # then the goals and the one step to take now (#3816).
+        @{ Href = '/dev/today';         Label = 'Today';         Sub = 'The day goal, the plan and what got done, and the week'; Icon = 'today' },
         @{ Href = '/dev/goals';         Label = 'Goals';         Sub = 'Each goal broken into milestones and tasks, and the one step to take now'; Icon = 'goals' },
         @{ Href = '/dev/release-notes'; Label = 'Release notes'; Sub = 'What each released version of the plugins changed'; Icon = 'release-notes' },
         @{ Href = '/dev/sessionstart';  Label = 'SessionStart';  Sub = 'The always-on path every session loads before its first turn'; Icon = 'sessionstart'; Group = '/dev/performance/context' },
