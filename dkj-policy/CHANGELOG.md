@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**2 / 4 minor entries** <!-- pending-tally -->
+**3 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3860-today-page · 20261107-113029Z
+
+A new hub page and a `-Status` mode on `day-plan.ps1`; the hub's menu gains a card, first of its own, so the
+Goals card moves one place along. The page reads the day file and runs the script as a child of the hub, so the
+GitHub search has one source.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Admin opens on Today: the day goal with a progress bar, the plan with each item ticked off as its PR or issue
+closes, what got done outside the plan, what was deliberately left for another day, and the week so far. The day
+you planned with Paula stays in view while you work, and at the end of it you can see what you did.
+
+**Score:** 3
+
+#### Pull Request
+
+Admin page /dev/today: the day plan, what got done, and the week
+
+Plugins: dkj-policy
+
+[PR #3865](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3865)
+
+---
 
 ### DEPLOY: docs/remove-ai-radar · 20261107-111644Z
 
