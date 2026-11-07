@@ -816,15 +816,9 @@ folder by folder:
   they are in sync (see its own [README](../../../consumers/README.md)). At the root, deliberately **not** under
   `plugins/`: it is maintenance data read by `scripts/sync/check-consumers.ps1`, not payload, and it
   must not travel along with the plugin cache.
-- **[`assets/`](../../../assets/)** — material that is neither code nor documentation, one subfolder per kind;
-  today that is [`assets/avatars/`](../../../assets/avatars/), the profile images of the GitHub accounts this
-  repo is worked on under, one PNG per account and named after it; nothing in the tree reads them. At the root for the same
-  reason as `consumers/` and with one extra property: **the marketplace clone is the whole
-  repository**, so anything here is on every machine at
-  `~/.claude/plugins/marketplaces/dkj-marketplace/assets/…` after a
-  `claude plugin marketplace update` — no release, no version bump. Under `plugins/` the same files
-  would wait for a cut and then land in the payload of every consumer, none of which has any use for
-  them.
+- **No root `assets/`.** It held only the GitHub-account avatars, which nothing in the tree read; they
+  moved to `dkj-lifehub` (Dave, November 7, 2026), because they are personal material used outside
+  this repo as well (Windows accounts, for one), not part of the product.
 - **`scripts/lib/`, `scripts/lint/`, `scripts/release/`, `scripts/sync/`, `scripts/agents/`,
   `scripts/task/`, `scripts/tests/`** — the shared helpers (`branch-info.ps1`, `release-lib.ps1`,
   `subagent-shared-lib.ps1`, and `plugin-tree-lib.ps1`, which answers which plugins this repo publishes

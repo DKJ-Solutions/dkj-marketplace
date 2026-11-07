@@ -41,17 +41,24 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Remove `assets/avatars/` (the three account PNGs; the whole root `assets/` goes with it)
+- [x] Replace the `assets/` bullet in Sylvester's repo-layout lens with a note saying where the avatars went
 
 ### TEST
 
 ### DEPLOY: docs/move-avatars-to-lifehub
 
-**Score:**
+The three GitHub-account avatars leave this repo for `dkj-lifehub`: they are the owner's personal
+material, also used outside this repo (Windows accounts), and nothing here read them. The root
+`assets/` folder goes with them, and Sylvester's repo-layout lens says where they went.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A -- no plugin ships or reads these files; no consumer notices.
+
+**Score:** N/A
 
 #### Pull Request
 
