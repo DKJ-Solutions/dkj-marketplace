@@ -17,7 +17,7 @@
 #>
 
 # What this suite's live-tree walks read (#3309): the extension's own folder (its *-portable.md chapter pages).
-# gate-selection: walks plugins/dkj-policy/bwj-development/*
+# gate-selection: walks plugins/dkj-policy/extensions/bwj-development/*
 
 # Test-FunctionDefined (issue #1729): the retirement asserts below ask the function table directly
 # rather than through Get-Command, whose miss path -- the case every one of those asserts is in --
@@ -26,7 +26,7 @@
 . (Join-Path $PSScriptRoot '..\lib\fixture-git-lib.ps1')
 $ErrorActionPreference = 'Stop'
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\bwj-development'
+$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development'
 
 $script:pass = 0
 $script:fail = 0
@@ -159,7 +159,7 @@ Write-Host "`n-- marketplace --" -ForegroundColor Cyan
 $marketplace = Get-Content -LiteralPath (Join-Path $RepoRoot '.claude-plugin\marketplace.json') -Raw | ConvertFrom-Json
 $entry = $marketplace.plugins | Where-Object { $_.name -eq 'bwj-development' }
 Assert-True ($null -ne $entry) 'bwj-development is listed in marketplace.json'
-Assert-Equal './plugins/dkj-policy/bwj-development' $entry.source 'marketplace source points at the plugin folder'
+Assert-Equal './plugins/dkj-policy/extensions/bwj-development' $entry.source 'marketplace source points at the plugin folder'
 
 $alphaManifest = Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-alpha\.claude-plugin\plugin.json') -Raw | ConvertFrom-Json
 Assert-Equal $alphaManifest.version $manifest.version 'version is in lockstep with dkj-subagents-alpha'

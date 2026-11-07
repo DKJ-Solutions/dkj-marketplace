@@ -145,9 +145,9 @@ $defaultClaims = @(
     @{ Pattern = '`?tier-1`?[^.\r\n]{0,80}never\s+answered';            What = "calls tier-1 what an unanswered repo gets" }
 )
 foreach ($rel in @('RELEASES-portable.md', 'CONTRIBUTING-portable.md', 'skills\adopt-dkj-policy\SKILL.md',
-                   'bwj-development\WORKFLOW-portable.md', 'bwj-development\README.md',
-                   'bwj-development\skills\report-issue\SKILL.md',
-                   'bwj-development\skills\adopt-bwj-development\SKILL.md')) {
+                   'extensions\bwj-development\WORKFLOW-portable.md', 'extensions\bwj-development\README.md',
+                   'extensions\bwj-development\skills\report-issue\SKILL.md',
+                   'extensions\bwj-development\skills\adopt-bwj-development\SKILL.md')) {
     $txt = Get-Text $rel
     foreach ($claim in $defaultClaims) {
         Assert-True (-not [regex]::IsMatch($txt, $claim.Pattern)) `

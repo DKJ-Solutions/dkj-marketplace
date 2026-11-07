@@ -29,7 +29,7 @@ The second is the brand book, with two rules:
   `DKJ-Solutions/dkj-marketplace` naming what and why, keep working on the repo's own domain layer,
   and take the new copy once it has been released and the `dkj-brandbook` skill points at it. Only the
   repo's own domain layer (its own tokens, components and theme pair) is edited locally. **In
-  `dkj-marketplace` itself this rule does not apply**: the change is made in `plugins/dkj-policy/assets/dkj-brandbook/` (the product layer: `plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/`).
+  `dkj-marketplace` itself this rule does not apply**: the change is made in `plugins/dkj-policy/assets/dkj-brandbook/` (the product layer: `plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/`).
 
 **This plugin reaches DKJ-Solutions only.** BWJ-Development has its own styling, so this extension is
 never enabled there.

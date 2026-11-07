@@ -248,7 +248,8 @@ if (@($documents).Count -gt 0 -and (Test-FunctionDefined 'Test-ExtensionImported
 # dkj-solutions. A repo that adopted before the rename keeps both old names until it migrates: the
 # enabledPlugins id, which the marketplace no longer declares, so nothing of the extension loads; and the
 # '@'-line, whose path the marketplace clone no longer has, so it imports nothing. Neither fails loudly,
-# so each gets a [WARNING] naming the current name. Same terms as the blocks above: never the exit code,
+# so each gets a [WARNING] naming the current name. The same warning names an import at the depth #3871 retired
+# (.../dkj-policy/<name>/CLAUDE.md, before the extensions moved under extensions/), which loads nothing either. Same terms as the blocks above: never the exit code,
 # and wrapped so a malformed settings layer cannot take the SessionStart hook down.
 if (Test-FunctionDefined 'Get-RetiredPolicyExtensionNames') {
     $retiredExt = Get-RetiredPolicyExtensionNames
@@ -267,8 +268,8 @@ if (Test-FunctionDefined 'Get-RetiredPolicyExtensionNames') {
     }
     if (@($documents).Count -gt 0) {
         foreach ($row in @(Get-RetiredExtensionImports -Documents $documents)) {
-            Write-Host "[WARNING] CLAUDE.md imports the $($row.Retired) extension under its retired name, a path that no" -ForegroundColor Yellow
-            Write-Host '          longer exists, so it loads nothing. Replace the line with the one below, or delete it' -ForegroundColor Yellow
+            Write-Host "[WARNING] CLAUDE.md imports the $($row.Retired) extension at a retired name or path (#2788, #3871) --" -ForegroundColor Yellow
+            Write-Host '          a path that no longer exists, so it loads nothing. Replace the line with the one below, or delete it' -ForegroundColor Yellow
             Write-Host '          where that line is already there:' -ForegroundColor Yellow
             Write-Host "            $(Get-ExtensionImportLine -Extension $row.Current)" -ForegroundColor Yellow
             Write-Host '          adopt-workflow-folder.ps1 -Apply does either for you.' -ForegroundColor Yellow

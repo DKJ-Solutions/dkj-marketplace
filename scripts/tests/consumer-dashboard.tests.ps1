@@ -325,7 +325,7 @@ Write-Host '-- group 1e: the skill pins a checksum for each canonical file' -For
 # nothing noticed. There is now one canonical copy, in the plugin (#3130), which the dashboard reads in place.
 # Its checksums are the release cut's to write (#3636): between cuts the table names the tag's bytes, not the
 # tree's, so this suite holds only that the table has a cell for each file.
-$skillPage = Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\dkj-solutions\skills\dkj-brandbook\SKILL.md') -Raw
+$skillPage = Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\extensions\dkj-solutions\skills\dkj-brandbook\SKILL.md') -Raw
 foreach ($file in 'house-style.css', 'house-theme.js') {
     $row = [regex]::Match($skillPage, '(?m)^\| `' + [regex]::Escape($file) + '` \|.*\| `([0-9a-f]{64})` \|\s*$')
     Assert-True $row.Success "the skill's table pins a sha256 for $file"
@@ -457,8 +457,8 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
         New-Item -ItemType Directory -Force -Path (Join-Path $src 'plugins\dkj-policy\hub\lib') | Out-Null
         Copy-Item (Join-Path $PluginLib '*.ps1') (Join-Path $src 'plugins\dkj-policy\hub\lib\')
         # And dkj-solutions' product layout, which the product's pages are drawn with since #3831.
-        New-Item -ItemType Directory -Force -Path (Join-Path $src 'plugins\dkj-policy\dkj-solutions\scripts\lib') | Out-Null
-        Copy-Item (Join-Path $RepoRoot 'plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1') (Join-Path $src 'plugins\dkj-policy\dkj-solutions\scripts\lib\')
+        New-Item -ItemType Directory -Force -Path (Join-Path $src 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib') | Out-Null
+        Copy-Item (Join-Path $RepoRoot 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\product-pages-lib.ps1') (Join-Path $src 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\')
         Copy-Item $Server (Join-Path $src 'scripts\dashboard\')
         Set-Content -LiteralPath (Join-Path $src 'consumers\noup.json') -Encoding ASCII -Value '{ "repo": "Org/noup", "visibility": "private", "localCheckout": "../noup", "plugins": [] }'
         Set-Content -LiteralPath (Join-Path $src 'consumers\far.json') -Encoding ASCII -Value ('{ "repo": "Org/far", "visibility": "public", "localCheckout": "../../../' + (Split-Path -Leaf $outside) + '", "plugins": [] }')
@@ -590,8 +590,8 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
         New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'plugins\dkj-policy\hub\lib') | Out-Null
         Copy-Item (Join-Path $PluginLib '*.ps1') (Join-Path $fixture4 'plugins\dkj-policy\hub\lib\')
         # And dkj-solutions' product layout (#3831).
-        New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'plugins\dkj-policy\dkj-solutions\scripts\lib') | Out-Null
-        Copy-Item (Join-Path $RepoRoot 'plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1') (Join-Path $fixture4 'plugins\dkj-policy\dkj-solutions\scripts\lib\')
+        New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib') | Out-Null
+        Copy-Item (Join-Path $RepoRoot 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\product-pages-lib.ps1') (Join-Path $fixture4 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\')
         Copy-Item $Server (Join-Path $fixture4 'scripts\dashboard\')
         # The stylesheet is there and the theme script is not: a present and a missing static file side by side.
         [System.IO.File]::WriteAllText((Join-Path $fixture4 'plugins\dkj-policy\assets\dkj-brandbook\house-style.css'), 'body{}')
@@ -693,7 +693,7 @@ $rsHub = Join-Path $rsRoot 'org\hub'
 New-Item -ItemType Directory -Force -Path (Join-Path $rsHub 'consumers'), (Join-Path $rsHub 'scripts\lib'), (Join-Path $rsRoot 'org\dkj-lifehub') | Out-Null
 # repo-session.ps1 loads the hub's page lib, which loads the consumer lib and the plugin libs beside it
 # (dev-preview-rules.ps1 for the Product card's url rule, #3468; test-gate-lib.ps1, the Test gate's page, #3470; plugins-page-lib.ps1, whose description paragraphs the product's Plugins pages use; and dkj-solutions' product-pages-lib.ps1, the product layout, #3831).
-foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'scripts\lib\dev-pages-lib.ps1', 'plugins\dkj-policy\hub\lib\general-pages-lib.ps1', 'plugins\dkj-policy\hub\lib\dev-preview-rules.ps1', 'plugins\dkj-policy\hub\lib\test-gate-lib.ps1', 'plugins\dkj-policy\hub\lib\plugins-page-lib.ps1', 'plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1') {
+foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'scripts\lib\dev-pages-lib.ps1', 'plugins\dkj-policy\hub\lib\general-pages-lib.ps1', 'plugins\dkj-policy\hub\lib\dev-preview-rules.ps1', 'plugins\dkj-policy\hub\lib\test-gate-lib.ps1', 'plugins\dkj-policy\hub\lib\plugins-page-lib.ps1', 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\product-pages-lib.ps1') {
     $to = Join-Path $rsHub (Split-Path -Parent $lib)
     New-Item -ItemType Directory -Force -Path $to | Out-Null
     Copy-Item -LiteralPath (Join-Path $RepoRoot $lib) -Destination $to
@@ -734,7 +734,7 @@ $arRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('ai-radar-' + [guid]::New
 $arHub = Join-Path $arRoot 'org\hub'
 $arAi = Join-Path $arRoot 'org\dkj-lifehub\Brains\b\x\dkj-solutions\ai'
 New-Item -ItemType Directory -Force -Path (Join-Path $arHub 'consumers'), (Join-Path $arAi 'claude'), (Join-Path $arAi 'ecosysteem') | Out-Null
-foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'plugins\dkj-policy\hub\lib\general-pages-lib.ps1', 'plugins\dkj-policy\hub\lib\dev-preview-rules.ps1', 'plugins\dkj-policy\hub\lib\test-gate-lib.ps1', 'plugins\dkj-policy\hub\lib\plugins-page-lib.ps1', 'plugins\dkj-policy\dkj-solutions\scripts\lib\product-pages-lib.ps1') {
+foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'plugins\dkj-policy\hub\lib\general-pages-lib.ps1', 'plugins\dkj-policy\hub\lib\dev-preview-rules.ps1', 'plugins\dkj-policy\hub\lib\test-gate-lib.ps1', 'plugins\dkj-policy\hub\lib\plugins-page-lib.ps1', 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\product-pages-lib.ps1') {
     $to = Join-Path $arHub (Split-Path -Parent $lib)
     New-Item -ItemType Directory -Force -Path $to | Out-Null
     Copy-Item -LiteralPath (Join-Path $RepoRoot $lib) -Destination $to

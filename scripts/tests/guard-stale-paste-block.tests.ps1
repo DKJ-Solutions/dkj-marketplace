@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/bwj-development/hooks/guard-stale-paste-block.ps1 and its lib,
+    Tests for plugins/dkj-policy/extensions/bwj-development/hooks/guard-stale-paste-block.ps1 and its lib,
     scripts/lib/stale-paste-block-rules.ps1 -- the PreToolUse hook that refuses to ship a pull request
     closing an issue whose go-live block predates the issue's last reopen (inbound #2968), and to close an
     Asana-linked issue as completed by hand while it carries no block for this round (inbound #3004).
@@ -31,7 +31,7 @@
 #>
 $ErrorActionPreference = 'Continue'
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\bwj-development'
+$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development'
 $Hook       = Join-Path $PluginRoot 'hooks\guard-stale-paste-block.ps1'
 $HooksJson  = Join-Path $PluginRoot 'hooks\hooks.json'
 

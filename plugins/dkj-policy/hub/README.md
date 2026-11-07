@@ -35,7 +35,7 @@ BWJ-Development's repos too. Until [#3198](https://github.com/DKJ-Solutions/dkj-
 (the owner's decision, October 20, 2026) all of this shipped with `dkj-solutions`, which BWJ-Development
 never enables, so a General page reached only the DKJ-Solutions repos. **"General" means what every repo
 has, whichever organisation it belongs to**, so the machinery moved here. The DKJ-Solutions card and its
-Brandbook stayed in [`dkj-solutions`](../dkj-solutions/README.md) until #3475 took them off every consumer
+Brandbook stayed in [`dkj-solutions`](../extensions/dkj-solutions/README.md) until #3475 took them off every consumer
 hub (below).
 
 | Part | Where |

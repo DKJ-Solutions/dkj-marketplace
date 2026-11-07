@@ -379,7 +379,7 @@ Write-Host '-- group 1d: the plugin''s Repository page, and the Simple Browser r
 # The hook, the servers and the hub page are dkj-policy's (#3198); the house style they serve is the
 # dkj-solutions extension's, inside dkj-policy's own payload.
 $PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy'
-$SolutionsRoot = Join-Path $PluginRoot 'dkj-solutions'
+$SolutionsRoot = Join-Path $PluginRoot 'extensions\dkj-solutions'
 . (Join-Path $PluginRoot 'hub\lib\repo-hub-page.ps1')
 
 # The placeholder is retired (#3245): the hub is the general pages server, so nothing of it ships any more.

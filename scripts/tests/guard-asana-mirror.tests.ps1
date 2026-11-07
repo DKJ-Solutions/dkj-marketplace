@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/bwj-development/hooks/guard-asana-mirror.ps1 and its lib,
+    Tests for plugins/dkj-policy/extensions/bwj-development/hooks/guard-asana-mirror.ps1 and its lib,
     scripts/lib/asana-mirror-gate.ps1 -- the PreToolUse hook that refuses an Asana task mirroring a
     GitHub issue without the reach label (inbound #2482).
 
@@ -22,7 +22,7 @@
 #>
 $ErrorActionPreference = 'Continue'
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\bwj-development'
+$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development'
 $Hook       = Join-Path $PluginRoot 'hooks\guard-asana-mirror.ps1'
 $HooksJson  = Join-Path $PluginRoot 'hooks\hooks.json'
 
@@ -77,7 +77,7 @@ Assert-Equal 0 @(Get-MirroredIssueRefs -Text 'https://github.com/BWJ-Development
 Assert-Equal 1 @(Get-MirroredIssueRefs -Text 'https://github.com/DKJ-Solutions/DKJ-Claude-Plugins/issues/1').Count 'the repo name is matched case-insensitively'
 Assert-Equal 2 @(Get-MirroredIssueRefs -Text 'https://github.com/a/xoxowildhearts/issues/1 https://github.com/b/smartwatchbanden/issues/2').Count 'two admitted repos in one task are two mirrored issues'
 Assert-Equal 1 @(Get-MirroredIssueRefs -Text 'https://github.com/BWJ-Development/phone-factory/issues/3').Count 'phone-factory is admitted, for ticket handling (#2705)'
-$skillAdmits = Get-Content -Raw -Encoding UTF8 (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\bwj-development\skills\report-issue\SKILL.md')
+$skillAdmits = Get-Content -Raw -Encoding UTF8 (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\extensions\bwj-development\skills\report-issue\SKILL.md')
 foreach ($name in $script:AsanaMirrorAdmittedRepos) {
     Assert-True ($skillAdmits.Contains("``$name``")) "report-issue's 'Before you start' names '$name', the list this gate matches on"
 }

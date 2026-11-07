@@ -174,12 +174,12 @@ try {
   "name": "fixture",
   "plugins": [
     { "name": "dkj-policy", "source": "./plugins/dkj-policy" },
-    { "name": "bwj-development", "source": "./plugins/dkj-policy/bwj-development" }
+    { "name": "bwj-development", "source": "./plugins/dkj-policy/extensions/bwj-development" }
   ]
 }
 '@
     Add-FixturePlugin -Dir $source -Root './plugins/dkj-policy' -Name 'dkj-policy' -Page 'CONTRIBUTING-portable.md'
-    Add-FixturePlugin -Dir $source -Root './plugins/dkj-policy/bwj-development' -Name 'bwj-development' -Page 'WORKFLOW-portable.md'
+    Add-FixturePlugin -Dir $source -Root './plugins/dkj-policy/extensions/bwj-development' -Name 'bwj-development' -Page 'WORKFLOW-portable.md'
     Set-Text -Dir $source -Rel '.claude/settings.json' -Text @'
 {
   "enabledPlugins": {

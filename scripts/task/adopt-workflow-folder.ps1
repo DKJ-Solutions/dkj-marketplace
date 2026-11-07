@@ -702,9 +702,9 @@ foreach ($ext in $enabledExtensions) {
         'kept'    { Write-Host "  [keep]     CLAUDE.md already imports the $ext extension -- left as it is" -ForegroundColor DarkGray }
         'refused' { Write-Host "  [refused]  CLAUDE.md is a symlink or junction, so the $ext import was NOT written -- add it by hand: $extLine" -ForegroundColor Yellow }
         'replace' { $verb = if ($Apply) { '[renamed]' } else { '[rename] ' }
-                    Write-Host "  $verb  the $ext import in CLAUDE.md still named the extension by its retired name -- now: $extLine" -ForegroundColor Green }
+                    Write-Host "  $verb  the $ext import in CLAUDE.md still named the extension at a retired name or path (#2788, #3871) -- now: $extLine" -ForegroundColor Green }
         'removed' { $verb = if ($Apply) { '[removed]' } else { '[remove] ' }
-                    Write-Host "  $verb  the $ext import under its retired name, beside the current line CLAUDE.md already has" -ForegroundColor Green }
+                    Write-Host "  $verb  the $ext import at a retired name or path, beside the current line CLAUDE.md already has" -ForegroundColor Green }
         default   { $verb = if ($Apply) { '[added]  ' } else { '[add]    ' }
                     Write-Host "  $verb  the $ext extension import to CLAUDE.md: $extLine" -ForegroundColor Green }
     }

@@ -631,14 +631,14 @@ changing it, know:
 **Anything the two stores share goes to `bwj-development`, unless it is obviously universal** (Dave, on
 [#1881](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1881)). The portable statement, the
 price it accepts and the second question a store has to ask before building anything are in
-[that plugin's own README](../../../plugins/dkj-policy/bwj-development/README.md#what-this-plugin-owns),
+[that plugin's own README](../../../plugins/dkj-policy/extensions/bwj-development/README.md#what-this-plugin-owns),
 because they are read in a store repo rather than here. What belongs in this lens is the part that is
 this repo's:
 
 - **The line "policy, never mechanism" was widened**, not broken: the distinction that survives in
   `bwj-development` is copy-vs-dot-source (a consumer **copies** `templates/`, **dot-sources** a lib), not
   prose-vs-code.
-- **The first increment is [`scripts/tests/test-lib.ps1`](../../../plugins/dkj-policy/bwj-development/scripts/tests/test-lib.ps1)**,
+- **The first increment is [`scripts/tests/test-lib.ps1`](../../../plugins/dkj-policy/extensions/bwj-development/scripts/tests/test-lib.ps1)**,
   the superset of the two stores' diverged copies, in English.
 - **It has a suite here though nothing here uses it**:
   [`bwj-test-lib.tests.ps1`](../../../scripts/tests/bwj-test-lib.tests.ps1), because a mechanism with no

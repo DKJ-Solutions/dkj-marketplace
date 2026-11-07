@@ -10,7 +10,7 @@ description: The DKJ-Solutions brand book -- the design tokens, the twelve theme
 family is written down in **[`assets/dkj-brandbook/`](https://github.com/DKJ-Solutions/dkj-marketplace/tree/main/plugins/dkj-policy/assets/dkj-brandbook/)** of the `dkj-policy`
 plugin: the stylesheet, the theme script and the rules, which Admin renders from in every repo. **The mobile-first
 product layer is a second stylesheet, `house-product.css`, in this plugin**
-([`assets/dkj-brandbook-product/`](https://github.com/DKJ-Solutions/dkj-marketplace/tree/main/plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/),
+([`assets/dkj-brandbook-product/`](https://github.com/DKJ-Solutions/dkj-marketplace/tree/main/plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/),
 [#3831](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3831), November 5, 2026): it loads after the
 core and never alone, and carries the app components, the page patterns of a product page, the site header and
 the breadcrumb bar. The core files lived in the
@@ -46,7 +46,7 @@ always pins the release that carries the bytes its checksums name.
 |---|---|---|
 | `house-style.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.9.0/plugins/dkj-policy/assets/dkj-brandbook/house-style.css` | `898e19768f26d5638a6b73826f4bc195bef7c43414bae6814b9d7cb192de57f9` |
 | `house-theme.js` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.9.0/plugins/dkj-policy/assets/dkj-brandbook/house-theme.js` | `5b58c4c99e8408eff9abad1929c47a2b3138a0dfb37dba6bb24dfd7f2963847a` |
-| `house-product.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.9.0/plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/house-product.css` | `344e38dfd6aa8acd7805dd8372ff62aa37ceb74208410438cc5f8ebdd3c74078` |
+| `house-product.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.9.0/plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css` | `344e38dfd6aa8acd7805dd8372ff62aa37ceb74208410438cc5f8ebdd3c74078` |
 
 **A product page vendors and links all three files, `house-style.css` first and `house-product.css` after it**
 (the product file is never loaded alone), with `house-theme.js` where the app lets the user pick a theme. **An
@@ -57,14 +57,14 @@ The full rules are in two READMEs, one per file group. The core's
 [`assets/dkj-brandbook/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md)
 in `dkj-policy` holds the tokens, the twelve themes, the typography, tables and surfaces, the desktop shell, the
 shared components, the rename tables and the process for changing it; the product layer's
-[`assets/dkj-brandbook-product/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/README.md)
+[`assets/dkj-brandbook-product/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/README.md)
 in this plugin holds the app components, the brand-book components and the page patterns of a product page
 (the card shapes, the breadcrumb bar, the site header). Both ship in the same release as this page, so they
 describe the files that tag serves.
 
 **Check each fetched file's sha256 against the table before you use it. If it does not match, check it
 once more against the table on this page as it reads at the tag above** (the same URL with
-`plugins/dkj-policy/dkj-solutions/skills/dkj-brandbook/SKILL.md` as its path, #3588). **Only if that does not
+`plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/SKILL.md` as its path, #3588). **Only if that does not
 match either, stop and report it to the owner.** Never inline a mismatched file, and never take a substitute from `main`. The checksums live
 on this page rather than beside the files because a checksum stored next to the file guards nothing
 against a change to that file.
@@ -101,8 +101,8 @@ appears, or the fetch fails, stop and report. The same holds for `house-product.
    [`patterns/admin-shell.html`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/patterns/admin-shell.html)
    in `dkj-policy`'s `assets/dkj-brandbook/`. **A product** takes the product layer's form, the site header
    with its menu, the breadcrumb bar and the cards; a product without a build starts from
-   [`patterns/product-home.html`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/patterns/product-home.html) and
-   [`patterns/product-page.html`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/patterns/product-page.html)
+   [`patterns/product-home.html`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/patterns/product-home.html) and
+   [`patterns/product-page.html`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/patterns/product-page.html)
    in this plugin's `assets/dkj-brandbook-product/` (#3849). None of the three carries CSS of its own
    ([#3066](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3066)).
    **Every page a repo's dev server serves carries a breadcrumb trail**, its trail starting at **Home**,
@@ -177,7 +177,7 @@ inside a card, [#3175](https://github.com/DKJ-Solutions/dkj-claude-plugins/issue
    except the source repo's canonical copy (next sentence). The copies are found in the tree, so no repo needs to
    declare where they live. A repo without a `house-style.css` fails too; the `house-product.css` row is optional,
    so a page at an older tag that lacks it is still a complete pin. In this plugin's source repo the files in
-   `plugins/dkj-policy/assets/dkj-brandbook/` and `plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/`
+   `plugins/dkj-policy/assets/dkj-brandbook/` and `plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/`
    run ahead of the installed tag between cuts, so they are named as the source and read for check 2 instead
    ([#3637](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3637)).
 2. **redefine**: the repo's own layer defines no house token (`--x:`) and restyles no house class (those of
@@ -243,7 +243,7 @@ led to the `dkj-brandbook` repo, which will be archived once the migration in
 
 **In this source repo the change is made directly**, in
 [`assets/dkj-brandbook/`](https://github.com/DKJ-Solutions/dkj-marketplace/tree/main/plugins/dkj-policy/assets/dkj-brandbook/) (the core) or
-[`dkj-solutions/assets/dkj-brandbook-product/`](https://github.com/DKJ-Solutions/dkj-marketplace/tree/main/plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/)
+[`dkj-solutions/assets/dkj-brandbook-product/`](https://github.com/DKJ-Solutions/dkj-marketplace/tree/main/plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/)
 (the product layer), and there it is a **visible result**: it reaches every
 DKJ-Solutions app the next time it takes a copy, so the branch stops for the owner's look instead of
 merging.
@@ -267,8 +267,8 @@ from its hue and mode through
 `scripts/lib/house-palette-lib.ps1` beside it. A change to a theme, a step or a contrast floor is made there:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File plugins/dkj-policy/dkj-solutions/scripts/build/build-house-palette.ps1          # print and check
-powershell -NoProfile -ExecutionPolicy Bypass -File plugins/dkj-policy/dkj-solutions/scripts/build/build-house-palette.ps1 -Apply   # write house-style.css
+powershell -NoProfile -ExecutionPolicy Bypass -File plugins/dkj-policy/extensions/dkj-solutions/scripts/build/build-house-palette.ps1          # print and check
+powershell -NoProfile -ExecutionPolicy Bypass -File plugins/dkj-policy/extensions/dkj-solutions/scripts/build/build-house-palette.ps1 -Apply   # write house-style.css
 ```
 
 Without `-Apply` it prints every theme's declarations and each pairing that misses its floor, and writes

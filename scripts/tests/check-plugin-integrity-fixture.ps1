@@ -314,7 +314,7 @@ function New-IntegrityFixture {
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-alpha\.claude-plugin') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-shopify\.claude-plugin') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-policy\.claude-plugin') -Force | Out-Null
-    New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-policy\bwj-development\.claude-plugin') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-policy\extensions\bwj-development\.claude-plugin') -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $Fixture '.claude-plugin\marketplace.json'), (@'
 {
   "name": "fixture-marketplace",
@@ -322,7 +322,7 @@ function New-IntegrityFixture {
     { "name": "dkj-subagents-alpha",         "source": "./plugins/dkj-subagents/dkj-subagents-alpha" },
     { "name": "dkj-subagents-shopify",       "source": "./plugins/dkj-subagents/dkj-subagents-shopify" },
     { "name": "dkj-policy", "source": "./plugins/dkj-policy" },
-    { "name": "bwj-development",              "source": "./plugins/dkj-policy/bwj-development" }
+    { "name": "bwj-development",              "source": "./plugins/dkj-policy/extensions/bwj-development" }
   ]
 }
 '@), $Utf8NoBom)
@@ -339,7 +339,7 @@ function New-IntegrityFixture {
     # bwj-development (then dkj-policy-bwj) joined the registry on September 26, 2026 (#2509), with its mirrors of live-push-rules,
     # git-porcelain-lib and ref-print-lib -- the third measured instance of the failure the paragraph above
     # names: 15 unrelated scenarios failed in one suite before this list grew with it.
-    [System.IO.File]::WriteAllText((Join-Path $Fixture 'plugins\dkj-policy\bwj-development\.claude-plugin\plugin.json'),
+    [System.IO.File]::WriteAllText((Join-Path $Fixture 'plugins\dkj-policy\extensions\bwj-development\.claude-plugin\plugin.json'),
         "{ `"name`": `"bwj-development`", `"version`": `"0.0.1`" }`n", $Utf8NoBom)
 
     Copy-Item -Path $IntegritySrc -Destination (Join-Path $Fixture 'scripts\lint\check-plugin-integrity.ps1') -Force
