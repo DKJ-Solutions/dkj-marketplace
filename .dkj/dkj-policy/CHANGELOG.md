@@ -2,7 +2,30 @@
 
 ## [Unreleased]
 
-**8 / 11 minor entries** <!-- pending-tally -->
+**8 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3879-house-style-css-product-path · 20261107-165610Z
+
+The `house-style-css` CI gate reads the brand book's product layer at
+`plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/` again. Since #3871 moved the
+extension, `house-path.mjs` still joined the old folder, so the gate failed with `ENOENT` on every PR that
+triggered it (#3879). The workflow's `paths:` filters had already moved with #3871.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Nothing a user of the plugins takes: the gate runs only in this repo's own CI.
+
+**Score:** N/A
+
+#### Pull Request
+
+house-style-css gate reads the product layer at its extensions/ path
+
+[PR #3880](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3880)
+
+---
 
 ### DEPLOY: feat/3873-rename-hub-to-admin · 20261107-164315Z
 
