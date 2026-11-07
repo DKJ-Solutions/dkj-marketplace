@@ -8,7 +8,7 @@ import { join } from 'node:path'
 
 export const repoRoot = join(import.meta.dirname, '..', '..', '..')
 export const houseDir = join(repoRoot, 'plugins', 'dkj-policy', 'assets', 'dkj-brandbook')
-export const productDir = join(repoRoot, 'plugins', 'dkj-policy', 'dkj-solutions', 'assets', 'dkj-brandbook-product')
+export const productDir = join(repoRoot, 'plugins', 'dkj-policy', 'extensions', 'dkj-solutions', 'assets', 'dkj-brandbook-product')
 export const houseCss = join(houseDir, 'house-style.css')
 export const houseSheets = [houseDir, productDir]
   .flatMap((dir) => readdirSync(dir, { recursive: true })

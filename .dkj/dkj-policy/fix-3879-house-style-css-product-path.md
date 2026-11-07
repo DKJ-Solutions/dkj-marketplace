@@ -39,19 +39,36 @@
 
 ### PLAN
 
+#### Verifying #3879's reason
+
+The issue names two places. Read on `main` at 481cafc20, only one still stands:
+`scripts/lint/house-style-css/house-path.mjs:11` joins the pre-#3871 path. The `paths:` filters in
+`.github/workflows/house-style-css.yml` already name `plugins/dkj-policy/extensions/dkj-solutions/`, so they
+need no edit. The other `plugins/dkj-policy/dkj-solutions` hits in the tree are deliberate fallbacks for tags
+cut before #3871 and stay.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-path.mjs`: `productDir` joins `extensions/` before `dkj-solutions`
 
 ### TEST
 
+- [x] The `house-style-css` workflow runs on this PR (its own script is in its `paths:` filter) and is the proof
+
 ### DEPLOY: fix/3879-house-style-css-product-path
 
-**Score:**
+The `house-style-css` CI gate reads the brand book's product layer at
+`plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/` again. Since #3871 moved the
+extension, `house-path.mjs` still joined the old folder, so the gate failed with `ENOENT` on every PR that
+triggered it (#3879). The workflow's `paths:` filters had already moved with #3871.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Nothing a user of the plugins takes: the gate runs only in this repo's own CI.
+
+**Score:** N/A
 
 #### Pull Request
 
