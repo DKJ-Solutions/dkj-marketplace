@@ -2,7 +2,40 @@
 
 ## [Unreleased]
 
-**3 / 6 minor entries** <!-- pending-tally -->
+**4 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3870-dkj-dotfolder · 20261107-141444Z
+
+The workflow's own folder moves from the repo root to [`.dkj/dkj-policy/`](./), so a repo now tells what
+it **builds** (`plugins/<plugin>/`, in this repo) from what an installed plugin **uses** in it
+(`.dkj/<plugin>/`): a dot-folder is a tool's, a plain folder is the product. A second plugin that leaves
+data in a repo gets `.dkj/<its-name>/` beside it, so nothing ever has to merge. `.claude/` was the first
+candidate and was declined: it is a Claude Code protected path, so every write there asks for
+confirmation, and the branch document is written almost every turn.
+
+One list of folder names now lives in
+[`workflow-folder-lib.ps1`](../../scripts/lib/workflow-folder-lib.ps1), read for the changelog and release
+roots and for the branch documents alike, so the two cannot disagree in a repo mid-move. The root
+`dkj-policy/` and the two names before it are still read wherever `.dkj/dkj-policy/` does not exist, so
+nothing breaks before a repo moves.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every consumer moves its folder once: Part 1 of `adopt-dkj-policy`, run with `-Apply`, does it in one
+`git mv` and repoints the quoted paths in `scripts/repo-config.ps1` and the `.gitignore` lines that name
+the old folder. Until then everything keeps working where it is, and the session check names the move.
+
+**Score:** 4
+
+#### Pull Request
+
+The workflow folder moves to .dkj/dkj-policy/: build in plugins/, use in .dkj/
+
+[PR #3874](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3874)
+
+---
 
 ### DEPLOY: docs/move-avatars-to-lifehub · 20261107-120950Z
 
