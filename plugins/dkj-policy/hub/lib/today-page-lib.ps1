@@ -16,7 +16,8 @@
 . (Join-Path $PSScriptRoot 'dayplan-lib.ps1')
 
 $script:TodayPageStyle = '.today-goal { border-left: 4px solid var(--primary-muted); }' + "`n" +
-    '.today-goal .today-goal__title { margin: 0; font-size: var(--text-h3); }' + "`n" +
+    '.today-goal .today-goal__title { display: flex; gap: var(--spacing-3); align-items: center; justify-content: space-between; margin: 0 0 var(--spacing-2); font-size: var(--text-h3); }' + "`n" +
+    '.today-sub { margin: var(--spacing-4) 0 var(--spacing-1); }' + "`n" +
     '.today-items { margin: 0; padding: 0; list-style: none; }' + "`n" +
     '.today-items > li { display: flex; gap: var(--spacing-2); align-items: baseline; padding: var(--spacing-1) 0; border-top: 1px solid var(--bg-4); }' + "`n" +
     '.today-items > li:first-child { border-top: 0; }' + "`n" +
@@ -89,16 +90,16 @@ function Format-TodayPageHtml {
         $allDone = $items.Count -and $doneSet.Count -eq $items.Count
         $badge = if ($closed) {
             switch ([string]$day.close.verdict) {
-                'reached' { '<span class="badge badge--good">Goal reached</span>' }
-                'partly'  { '<span class="badge badge--info">Partly reached</span>' }
-                default   { '<span class="badge badge--warn">Not reached</span>' }
+                'reached' { '<span class="tag">Goal reached</span>' }
+                'partly'  { '<span class="tag tag--info">Partly reached</span>' }
+                default   { '<span class="tag tag--warn">Not reached</span>' }
             }
-        } elseif ($allDone) { '<span class="badge badge--good">All done</span>' } else { '<span class="badge badge--neutral">In progress</span>' }
+        } elseif ($allDone) { '<span class="tag">All done</span>' } else { '<span class="chip">In progress</span>' }
         $tone = if ($allDone) { 'good' } else { 'info' }
 
         [void]$body.AppendLine('<div class="grid-2">')
-        [void]$body.Append('<section class="card grid__full today-goal"><div class="card__head"><h2>Day goal</h2>' + $badge + '</div>')
-        [void]$body.Append('<p class="today-goal__title">' + (& $e $day.goal) + '</p>')
+        [void]$body.Append('<section class="card grid__full today-goal"><div class="card__head"><h2>Day goal</h2></div>')
+        [void]$body.Append('<p class="today-goal__title"><span>' + (& $e $day.goal) + '</span>' + $badge + '</p>')
         [void]$body.Append('<p class="card__sub"><span class="today-progress"><span class="meter meter--' + $tone + '" role="img" aria-label="' + $pct + '% of the planned hours done"><span style="width: ' + $pct + '%"></span></span>' +
             '<span class="num">' + $doneSet.Count + ' of ' + $items.Count + ' done, ' + (& $e (Format-DayPlanHours $doneHours)) + ' of ' + (& $e (Format-DayPlanHours $hours)) + ' planned in a ' + $script:DayPlanBudgetHours + ' h day</span></span></p>')
         foreach ($o in @($day.overrides | Where-Object { $_ })) { [void]$body.Append('<p class="note">Planned on an override (' + (& $e $o.at) + '): ' + (& $e $o.reason) + '</p>') }
@@ -124,7 +125,7 @@ function Format-TodayPageHtml {
         [void]$body.Append('<section class="card"><div class="card__head"><h2>Done</h2></div>')
         [void]$body.Append('<dl class="facts facts--row"><dt>PRs merged</dt><dd class="num">' + $prs + '</dd><dt>Issues closed</dt><dd class="num">' + $issues + '</dd></dl>')
         if ($unplanned.Count) {
-            [void]$body.Append('<h3>Extra</h3><ul class="today-items">')
+            [void]$body.Append('<h3 class="today-sub">Extra</h3><ul class="today-items">')
             foreach ($u in $unplanned) {
                 [void]$body.Append('<li><span class="today-items__title">' + (& $e $u.title) + ' ' + (Format-TodayRefHtml -Ref ([string]$u.ref) -Url ([string]$u.url)) + '</span><span class="tag">' + (& $e $u.kind) + '</span></li>')
             }
@@ -134,7 +135,7 @@ function Format-TodayPageHtml {
         }
         $notToday = @($day.notToday | Where-Object { $_ })
         if ($notToday.Count) {
-            [void]$body.Append('<h3>Not today</h3><ul class="today-items">')
+            [void]$body.Append('<h3 class="today-sub">Not today</h3><ul class="today-items">')
             foreach ($n in $notToday) { [void]$body.Append('<li><span class="today-items__title">' + (& $e $n) + '</span></li>') }
             [void]$body.Append('</ul>')
         }
@@ -144,18 +145,18 @@ function Format-TodayPageHtml {
     $rows = if ($Model) { @($Model.week | Where-Object { $_ }) } else { @() }
     if ($rows.Count) {
         $wrap = if ($day) { 'card grid__full' } else { 'card' }
-        [void]$body.Append('<section class="' + $wrap + '"><div class="card__head"><h2>This week</h2></div><div class="table-wrap"><table class="table table--dense"><thead><tr><th>Day</th><th>Goal</th><th class="num">Done</th><th class="num">Extra</th><th>Result</th></tr></thead><tbody>')
+        [void]$body.Append('<section class="' + $wrap + '"><div class="card__head"><h2>This week</h2></div><div class="table-wrap"><table class="table table--dense"><thead><tr><th>Day</th><th class="col-start">Goal</th><th class="num">Done</th><th class="num">Extra</th><th>Result</th></tr></thead><tbody>')
         foreach ($r in $rows) {
             $d = ConvertTo-TodayDate $r.date
-            $v = if (-not $r.closed) { '<span class="badge badge--sm badge--neutral">open</span>' } else {
+            $v = if (-not $r.closed) { '<span class="chip">open</span>' } else {
                 switch ([string]$r.verdict) {
-                    'reached' { '<span class="badge badge--sm badge--good">reached</span>' }
-                    'partly'  { '<span class="badge badge--sm badge--info">partly</span>' }
-                    default   { '<span class="badge badge--sm badge--warn">not reached</span>' }
+                    'reached' { '<span class="tag">reached</span>' }
+                    'partly'  { '<span class="tag tag--info">partly</span>' }
+                    default   { '<span class="tag tag--warn">not reached</span>' }
                 } }
             $doneCell = if ($r.closed) { [string]$r.done + ' of ' + [string]$r.planned } else { [string]$r.planned + ' planned' }
             $extraCell = if ($r.closed) { [string]$r.extra } else { '' }
-            [void]$body.Append('<tr><td>' + (& $e $d.ToString('ddd d MMM', $inv)) + '</td><td>' + (& $e $r.goal) + '</td><td class="num">' + (& $e $doneCell) + '</td><td class="num">' + (& $e $extraCell) + '</td><td>' + $v + '</td></tr>')
+            [void]$body.Append('<tr><td>' + (& $e $d.ToString('ddd d MMM', $inv)) + '</td><td class="col-start">' + (& $e $r.goal) + '</td><td class="num">' + (& $e $doneCell) + '</td><td class="num">' + (& $e $extraCell) + '</td><td>' + $v + '</td></tr>')
         }
         [void]$body.AppendLine('</tbody></table></div></section>')
     }

@@ -121,17 +121,17 @@ $pageModel = [pscustomobject]@{ date = '2026-11-07'; error = ''; day = $pageDay
     live = [pscustomobject]@{ done = @(0); carried = @(1, 2); verdict = 'partly'; prs = 4; issues = 2; unplanned = @([pscustomobject]@{ ref = 'o/r#9'; title = 'Hotfix'; url = 'https://github.com/o/r/pull/9'; kind = 'pr' }) }
     week = @([pscustomobject]@{ date = '2026-11-06'; goal = 'Friday'; planned = 3; done = 2; extra = 1; verdict = 'partly'; closed = $true }, [pscustomobject]@{ date = '2026-11-07'; goal = 'Ship'; planned = 3; done = 0; extra = 0; verdict = 'open'; closed = $false }) }
 $html = Format-TodayPageHtml -Model $pageModel -GeneratedAt '2026-11-07 12:00:00' -RepoName 'r' -Now $now
-Assert-True ($html -match '<h2>Day goal</h2><span class="badge badge--neutral">In progress</span>' -and $html -match 'Ship &lt;it&gt;' -and $html -notmatch 'Ship <it>') 'the goal is escaped, and an open day reads in progress'
+Assert-True ($html -match '<h2>Day goal</h2></div><p class="today-goal__title"><span>Ship &lt;it&gt;</span><span class="chip">In progress</span>' -and $html -match 'Ship &lt;it&gt;' -and $html -notmatch 'Ship <it>') 'the goal is escaped, and an open day reads in progress'
 Assert-True ($html -match '1 of 3 done, 3 h of 6 h planned in a 8 h day' -and $html -match 'aria-label="50% of the planned hours done"') 'the progress counts items and the hours they carry'
 Assert-True ($html -match 'today-items__done">Script <a class="dp-link" href="https://github.com/o/r/issues/1"' -and $html -match 'Page &lt;b&gt;</span><span class="tag tag--info">plan first</span>') 'a done item is struck through with its link; an open one shows its mode'
 Assert-True ($html -match 'Review <span class="tag tag--warn">added</span>' -and $html -match 'Planned on an override \(start\): short day') 'an item added during the day and the override both show'
-Assert-True ($html -match '<dt>PRs merged</dt><dd class="num">4</dd>' -and $html -match 'Hotfix <a class="dp-link" href="https://github.com/o/r/pull/9"' -and $html -match '<h3>Not today</h3>') 'the Done card shows the counts, the extra work linked, and not today'
-Assert-True ($html -match '<td>Fri 6 Nov</td><td>Friday</td><td class="num">2 of 3</td>' -and $html -match '3 planned</td>') 'the week shows a closed day''s result and an open day''s plan'
+Assert-True ($html -match '<dt>PRs merged</dt><dd class="num">4</dd>' -and $html -match 'Hotfix <a class="dp-link" href="https://github.com/o/r/pull/9"' -and $html -match '<h3 class="today-sub">Not today</h3>') 'the Done card shows the counts, the extra work linked, and not today'
+Assert-True ($html -match '<td>Fri 6 Nov</td><td class="col-start">Friday</td><td class="num">2 of 3</td>' -and $html -match '<span class="tag tag--info">partly</span>' -and $html -match '<span class="chip">open</span>' -and $html -notmatch 'badge--neutral">[A-Za-z]' -and $html -match '3 planned</td>') 'the week shows a closed day''s result and an open day''s plan'
 Assert-True ($html -notmatch [char]0x2014 -and ([regex]::Matches($html, 'class="grid__head"')).Count -le 4) 'no em dash, and at most four sections'
 $closedModel = [pscustomobject]@{ date = '2026-11-07'; error = 'gh exited 1'; live = $null; week = @()
     day = [pscustomobject]@{ goal = 'G'; items = @((& $item 'A' 6 'go' '')); notToday = @(); overrides = @(); close = [pscustomobject]@{ done = @(0); carried = @(); unplanned = @(); prs = 1; issues = 0; verdict = 'reached' } } }
 $ch = Format-TodayPageHtml -Model $closedModel -Now $now
-Assert-True ($ch -match 'badge--good">Goal reached' -and $ch -match 'today-items__done">A' -and $ch -match 'GitHub could not be read') 'a closed day reads from its close-out when GitHub cannot be read, and says so'
+Assert-True ($ch -match '<span class="tag">Goal reached' -and $ch -match 'today-items__done">A' -and $ch -match 'GitHub could not be read') 'a closed day reads from its close-out when GitHub cannot be read, and says so'
 $empty = Format-TodayPageHtml -Model ([pscustomobject]@{ date = '2026-11-07'; error = ''; day = $null; live = $null; week = @() }) -Now $now
 Assert-True ($empty -match '<h2>No plan yet</h2>' -and $empty -match 'day-plan') 'no plan is an empty state that says how to make one'
 $err = Format-TodayPageHtml -Model $null -ReadError 'day-plan.ps1 -Status exited 1' -Now $now
