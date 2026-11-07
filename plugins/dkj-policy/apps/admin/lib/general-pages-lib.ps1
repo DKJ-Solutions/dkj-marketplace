@@ -1353,9 +1353,10 @@ function Resolve-AdminLegacyPath {
         '/hub', the home page's address while the code called Admin the hub, goes to '/' (#3873).
     #>
     param([AllowEmptyString()][string]$Target = '')
-    $h = [regex]::Match($Target, '\A/hub/?(\?[^#]*)?\z')
+    # No CR or LF in what is kept: it goes into a Location header.
+    $h = [regex]::Match($Target, '\A/hub/?(\?[^#\r\n]*)?\z')
     if ($h.Success) { return '/' + $h.Groups[1].Value }
-    $m = [regex]::Match($Target, '\A(/(?:test-gate|plugins|stopwatch|logbook|release-notes|sessionstart|issues|claude|performance|repository|clock)(?:/[^?#]*)?)(\?[^#]*)?\z')
+    $m = [regex]::Match($Target, '\A(/(?:test-gate|plugins|stopwatch|logbook|release-notes|sessionstart|issues|claude|performance|repository|clock)(?:/[^?#\r\n]*)?)(\?[^#\r\n]*)?\z')
     if (-not $m.Success) { return '' }
     return (Get-AdminDevBase) + $m.Groups[1].Value + $m.Groups[2].Value
 }

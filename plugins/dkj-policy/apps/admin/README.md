@@ -305,7 +305,7 @@ where it has one: the same trust the dev-preview hook already gives
 loopback**: any process on the machine can read them, so a private repo's issue titles are readable by
 every local process, not only by the browser of whoever started the session.
 
-Every page's first crumb is `/`, Admin's own root (Maikel, November 2, 2026). It was `/admin` while the
+Every page's first crumb is `/`, Admin's own root (Maikel, November 2, 2026). It was `/hub` while the
 source repo's product relayed these pages from its own origin with `Copy-LoopbackUpstream` (in
 [`lib/loopback-server-lib.ps1`](lib/loopback-server-lib.ps1),
 [#3168](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3168)), where `/` is the product's home.
@@ -354,7 +354,7 @@ a same-site frame. The 403 names the three headers it judged.
 
 **Ticking the airsquats box on one machine clears it on every machine, and in every repo's Admin on each**
 ([#3438](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3438), Dave, October 25, 2026). Until
-then the banner kept its count in the browser's `localStorage`. That is one count per origin, and every repo
+then the banner kept its count in the browser's `localStorage`. That is one count per origin, and every repo's
 Admin has its own port, so two repo Admin servers on one machine already disagreed.
 
 **And it shows only while something is due** (Dave, October 27, 2026): hidden until an hour is owed, it

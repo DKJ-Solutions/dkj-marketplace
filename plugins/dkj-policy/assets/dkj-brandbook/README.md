@@ -828,12 +828,12 @@ belongs to the product layer: a product's own home page takes the site header an
 take [the shape a page's cards take][product-shape], both in [the product README][product-readme]. The card
 itself ([below](#admin), `Format-AdminCardLinkHtml`) stays a shared component, which both layers still use.
 
-It is called an Admin, not a dashboard (owner's call, October 17, 2026, [#199](https://github.com/DKJ-Solutions/dkj-brandbook/issues/199)): its job is to get you to the page you want quickly, while a dashboard is a page that shows how something stands, and the pages below it can be dashboards.
+It was called a hub, not a dashboard (owner's call, October 17, 2026, [#199](https://github.com/DKJ-Solutions/dkj-brandbook/issues/199)): its job is to get you to the page you want quickly, while a dashboard is a page that shows how something stands, and the pages below it can be dashboards.
 
-**On screen it is called Admin** (#3815, November 5, 2026; **Toolbox** from October 27 until then): Admin is for managing and the product for using, as in the Shopify Admin. The session-start line opens with `Admin:`, its first crumb reads **Home**, a product links it on an **Admin** card, and its development pages sit under `/dev/...`, the old addresses redirecting there. The code said *hub* for the mechanism until #3873 renamed it too: the plugin's `apps/admin/` folder, the `/admin` route (`/hub` answers with a 301).
+**On screen it is called Admin** (#3815, November 5, 2026; **Toolbox** from October 27 until then): Admin is for managing and the product for using, as in the Shopify Admin. The session-start line opens with `Admin:`, its first crumb reads **Home**, a product links it on an **Admin** card, and its development pages sit under `/dev/...`, the old addresses redirecting there. The code said *hub* for the mechanism until #3873 renamed it too: the plugin's `apps/admin/` folder, the `/admin` route (`/hub` answers with a 301 to `/`).
 
 **Every repo's Admin has this one form, and only its content differs** (owner's decision, October 16, 2026,
-[#139](https://github.com/DKJ-Solutions/dkj-brandbook/issues/139)). Admin is the dkj-policy plugin's own Admin
+[#139](https://github.com/DKJ-Solutions/dkj-brandbook/issues/139)). Admin is the dkj-policy plugin's own
 server in every repo that runs it, BWJ-Development's included, and the repo's server is its product
 ([#3245](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3245)). No repo can opt out of it: the
 `OwnHub` key that let a repo serve its own Admin went with

@@ -178,7 +178,7 @@ trail is the core's ("Shared components", [core README][core-shared]), because t
   (44px) high and one line: a trail longer than the screen scrolls sideways inside the bar instead of
   wrapping, so the height never changes. Whatever else sticks to the top sits under it, at `top: var(--tap)`;
   the brand book already does that for the floating settings button and for in-page anchors.
-- **The trail:** it always starts at **Home**, linking to `/` (it read **Repo Admin** until #3270, and **Tools** on the Toolbox from October 27, 2026 until #3815 renamed it Admin; a product keeps **Home** for its own pages). Each further crumb is one level
+- **The trail:** it always starts at **Home**, linking to `/` (it read **Repo hub** until #3270, and **Tools** on the Toolbox from October 27, 2026 until #3815 renamed it Admin; a product keeps **Home** for its own pages). Each further crumb is one level
   down: the product (under its own name), then a page inside it. The last crumb is the current page,
   unlinked, with `aria-current="page"`. The bar stands on the theme's colour, `--primary` (owner, #3235, October 21, 2026), so
   the trail is in the paper steps, which all read on it: the chevron `--bg-3`, the ancestor links `--bg-2` (with
