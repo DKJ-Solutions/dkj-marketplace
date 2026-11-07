@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**3 / 5 minor entries** <!-- pending-tally -->
+**3 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/move-avatars-to-lifehub · 20261107-120950Z
+
+The three GitHub-account avatars leave this repo for `dkj-lifehub`: they are the owner's personal
+material, also used outside this repo (Windows accounts), and nothing here read them. The root
+`assets/` folder goes with them, and Sylvester's repo-layout lens says where they went.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A -- no plugin ships or reads these files; no consumer notices.
+
+**Score:** N/A
+
+#### Pull Request
+
+Move the GitHub-account avatars out of this repo, to dkj-lifehub
+
+[PR #3869](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3869)
+
+---
 
 ### DEPLOY: feat/3860-today-page · 20261107-113029Z
 
