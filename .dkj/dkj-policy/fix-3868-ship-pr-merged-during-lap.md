@@ -39,19 +39,39 @@
 
 ### PLAN
 
+- [x] Verify the reported reason: step 3b's forward lap classified update-branch's `422 head ref does
+  not exist` as `failed` and refused with "NOT merged, NOT folded" without ever reading the PR's state
+  (#3868, measured on PR #3867).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Test-PrMergedNow` in `ship-pr.ps1`: true only on a positively read `MERGED`.
+- [x] Step 3b asks it before the forward (whether or not a lap is left) and again after an update-branch
+  that did not forward; a merged PR breaks out of the lap instead of refusing.
+- [x] One more read before step 4 covers a merge the lap never saw; a merged PR skips step 4's two gates
+  and the `gh pr merge` call, and the read-back plus step 5 (with its already-folded handling, #1792) run
+  against the merge that landed.
+- [x] Plugin mirror kept byte-identical.
 
 ### TEST
 
+- [x] Five structural asserts in `forward-lane-lib.tests.ps1`; the suite passes 117/0 on its own.
+
 ### DEPLOY: fix/3868-ship-pr-merged-during-lap
 
-**Score:**
+`ship-pr` no longer reports "NOT merged, NOT folded" for a pull request that something else merged while
+it waited, such as its own `merge-when-green` arm. Before the stale-certificate lap forwards or refuses,
+and before step 4 merges, it reads the PR's state; when it reads `MERGED` it says so and carries on with
+the post-merge steps (the fold, or standing down where the fold already landed) instead of refusing (#3868).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Whoever ships with `ship-pr` stops getting a false refusal that invites a re-ship or a blocker report for
+work that had already landed.
+
+**Score:** 2
 
 #### Pull Request
 

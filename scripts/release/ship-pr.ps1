@@ -1690,6 +1690,35 @@ function Get-CheckFactsNow {
     return [pscustomobject]@{ Checks = $checksJson; Required = $requiredJson }
 }
 
+function Test-PrMergedNow {
+    <#
+    .SYNOPSIS
+        $true only when PR <n> positively reads MERGED right now; $false on any other state or a failed read.
+
+    .DESCRIPTION
+        THE FORWARD LAP CAN LOSE A RACE IT DOES NOT KNOW IT IS IN (issue #3868). An armed
+        `merge-when-green` PR can be merged by the sweep runner while this run sits in step 3b, and the
+        merge deletes the head branch. update-branch then answers `422 head ref does not exist`, and
+        before this read the lap reported "NOT merged, NOT folded" about a PR that had landed and folded.
+        Measured on PR #3867, November 7, 2026.
+
+        ONLY A POSITIVE MERGED COUNTS. A failed read leaves the run on the path it was already on, which
+        is the refusal: treating an unread state as merged would skip step 4's merge on a guess.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][string]$Pr,
+        [Parameter(Mandatory = $true)][string]$Repo
+    )
+    try {
+        $stateRead = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr -Arguments @(
+            'pr', 'view', "$Pr", '--repo', $Repo, '--json', 'state', '--jq', '.state')
+        if ($stateRead.ExitCode -ne 0) { return $false }
+        return ((($stateRead.Output -join '').Trim()) -eq 'MERGED')
+    } catch {
+        return $false
+    }
+}
+
 function Wait-ForwardedCertificate {
     <#
     .SYNOPSIS
@@ -2365,6 +2394,9 @@ $waited = Wait-CheckRegistration -Pr "$pr" -Repo $repo -Branch $branch `
 # answers as it always did. And a payload that does not read is retried twice before it hands over, so a
 # single network blip does not end the phase.
 $forwardLapsUsed = 0
+# Set by step 3b's lap when the PR turns out to have been merged by another path (issue #3868); step 4
+# then skips its gates and its merge call, and the read-back and step 5 run against the merge that landed.
+$prMergedElsewhere = $false
 # One trunk reading per four watch polls -- a minute at the default. The reading is a fetch, plus a gh api
 # call only when the trunk has actually moved.
 $earlyProbeSec = 4 * $PollSeconds
@@ -3071,6 +3103,15 @@ certificate anyway.
                 # is the same operation with the #1588 trap designed out of it: an API call cannot
                 # fast-forward the wrong branch, and it does not care where this checkout is standing.
                 $lap = Get-ForwardLapDecision -LapsUsed $forwardLapsUsed -MaxLaps $MaxForwardLaps -Situation $forwardSituation
+                # MERGED BY ANOTHER PATH IS NOT STALE (issue #3868). Asked before the forward, so a PR the
+                # merge-on-green runner already landed is not sent through update-branch at all -- and
+                # asked whether or not a lap is left, because the spent-budget refusal below says
+                # "NOT merged" too.
+                if (Test-PrMergedNow -Pr "$pr" -Repo $repo) {
+                    Write-Host "ship-pr: PR #$pr was merged by another path while this run waited (likely its merge-when-green arm) -- nothing to forward or merge; continuing with the post-merge steps (#3868)." -ForegroundColor Green
+                    $prMergedElsewhere = $true
+                    break
+                }
                 if ($lap.Forward) {
                     $forwardLapsUsed++
                     Write-Host "ship-pr: the certificate is stale -- bringing '$branchShown' up to date with 'main' and re-certifying (lap $forwardLapsUsed of $MaxForwardLaps, issue #2087)." -ForegroundColor Cyan
@@ -3082,6 +3123,15 @@ certificate anyway.
                     $updateRead = Invoke-NativeCapture -FilePath 'gh' -Arguments @(
                         'api', '--method', 'PUT', "repos/$repo/pulls/$pr/update-branch")
                     $updateOutcome = Get-UpdateBranchOutcome -ExitCode $updateRead.ExitCode -OutputLines @($updateRead.Output)
+
+                    # THE SAME RACE, LOST BETWEEN THE READ ABOVE AND THE CALL (issue #3868). The measured
+                    # tell is '422 head ref does not exist': the merge deleted the branch. Re-read before
+                    # any sentence about a forward that could not be made.
+                    if ($updateOutcome.Outcome -ne 'forwarded' -and (Test-PrMergedNow -Pr "$pr" -Repo $repo)) {
+                        Write-Host "ship-pr: PR #$pr was merged by another path during the forward lap (likely its merge-when-green arm) -- not a refusal; continuing with the post-merge steps (#3868)." -ForegroundColor Green
+                        $prMergedElsewhere = $true
+                        break
+                    }
 
                     if ($updateOutcome.Outcome -eq 'already-current') {
                         # NOT A FAILURE AND NOT A LAP. GitHub says there is nothing to bring across, so a
@@ -3190,6 +3240,14 @@ $($lap.Note)
 
 if (Test-FunctionDefined 'Add-RunStepMark') { [void](Add-RunStepMark -Run 'ship-pr' -Step 'merge') }
 
+# THE SAME QUESTION ONCE MORE BEFORE STEP 4 (issue #3868), for the route 3b's lap never saw: a PR merged
+# during the CI wait whose certificate then read as current, or a run with -SkipStaleCheck. Without it
+# step 4 would call `gh pr merge` on a merged PR and refuse on gh's answer.
+if (-not $prMergedElsewhere -and (Test-PrMergedNow -Pr "$pr" -Repo $repo)) {
+    Write-Host "ship-pr: PR #$pr is already merged (by another path while this run waited) -- skipping the merge call; continuing with the post-merge steps (#3868)." -ForegroundColor Green
+    $prMergedElsewhere = $true
+}
+
 # --- Step 4: merge (no --admin: never bypass the CI gate) ----------------------------------------
 #
 # THE STEP-LIST GATE FIRES AGAIN HERE, and that is not belt-and-braces. Dave's requirement is about the
@@ -3257,7 +3315,9 @@ $shipProgressRel  = Resolve-BranchFilePath -Kind Cycle -Reader $shipCycleRead -B
 # there. The refusals print the readable spelling of the same two things.
 $shipCycleRefShown    = Get-DisplayRef -Ref $shipCycleRef
 $shipProgressRelShown = Get-DisplayRef -Ref $shipProgressRel
-$shipCycleText    = & $shipCycleRead $shipProgressRel
+# A PR ALREADY MERGED BY ANOTHER PATH (issue #3868) skips both gates below: they guard the merge, and
+# the merge has happened. A refusal here would be the false "NOT merged" sentence #3868 removed from 3b.
+$shipCycleText    = if ($prMergedElsewhere) { $null } else { & $shipCycleRead $shipProgressRel }
 # BOTH STEP-4 REFUSALS LEAD WITH A CHECKOUT, FOR #1588'S REASON ONE GATE LATER (issue #2493). Each one
 # prescribes a commit on the branch -- and the DEPLOY lock also `open-pr.ps1 -RefreshBody` -- but step 2b
 # has already handed the primary checkout back to 'main', so the remedy as written met open-pr's
@@ -3465,7 +3525,13 @@ CI has already passed, so a re-run picks up from here. There is no -Force for th
 # the flag's scope is unknown for squash, and known-harmless for merge. Measure it in a squash-configured
 # repo before changing anything.
 $mergeSubject = "merge: $branch (#$pr)"
-$merge = Invoke-NativeCapture -FilePath 'gh' -Arguments @('pr', 'merge', "$pr", "--$mergeMethod", '--subject', $mergeSubject, '--repo', $repo)
+# NO MERGE CALL ON A PR THAT IS ALREADY MERGED (issue #3868). The stand-in reads as a merge call that
+# exited 0, so the read-back below still reads the state from GitHub before step 5 folds against it.
+$merge = if ($prMergedElsewhere) {
+    [pscustomobject]@{ ExitCode = 0; Output = @() }
+} else {
+    Invoke-NativeCapture -FilePath 'gh' -Arguments @('pr', 'merge', "$pr", "--$mergeMethod", '--subject', $mergeSubject, '--repo', $repo)
+}
 $merge.Output | ForEach-Object { Write-Host $_ }
 
 # A NON-ZERO EXIT IS NOT PROOF THE MERGE DID NOT LAND (inbound #1916) -- the same doctrine claim-issue
