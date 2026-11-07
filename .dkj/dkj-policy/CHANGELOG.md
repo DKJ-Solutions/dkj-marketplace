@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**6 / 6 minor entries** <!-- pending-tally -->
+**7 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3888-branchinfo-self-contained · 20261107-203949Z
+
+The config blueprint's `Get-BranchInfo` record runs on its own. Its text called `Get-BranchPrefix`, which no
+contract record carries, so a consumer with a hand-built `branch-info.ps1` that adopted the record (a `copy`
+record since #3886) got a `Get-BranchInfo` that threw (#3888). The function now derives the prefix inline,
+`check-script-contract` evaluates the records without the stub it carried for this, and
+`config-blueprint.tests.ps1` evaluates the branch-info records from their own text.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A repo whose `branch-info.ps1` was written by hand can adopt `Get-BranchInfo` from the blueprint without it
+failing on first use. A repo set up by `specialists-init` already had `Get-BranchPrefix` and notices nothing.
+
+**Score:** 2
+
+#### Pull Request
+
+Get-BranchInfo's blueprint text no longer calls Get-BranchPrefix, which the blueprint does not carry
+
+Plugins: dkj-policy
+
+[PR #3894](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3894)
+
+---
 
 ### DEPLOY: feat/3882-triage-labels-sessioncheck · 20261107-194141Z
 
