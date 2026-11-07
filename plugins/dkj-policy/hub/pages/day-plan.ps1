@@ -205,8 +205,10 @@ if ($Context) {
     $repo = Get-CurrentRepo
     if ($repo -match '\A([^/\s]+)/([^/\s]+)\z') {
         $owner = $Matches[1]; $name = $Matches[2]
-        $raw = gh api graphql -f ('query=' + (Get-GoalsGraphQuery)) -f ('owner=' + $owner) -f ('name=' + $name) -f ('label=' + (Get-GoalLabel)) 2>$null
-        if ($LASTEXITCODE -eq 0) {
+        # Under 'Stop' a native stderr line throws through 2>$null in Windows PowerShell 5.1, so the read is wrapped:
+        # goals that cannot be read are left out of the morning's input rather than ending it.
+        try { $raw = gh api graphql -f ('query=' + (Get-GoalsGraphQuery)) -f ('owner=' + $owner) -f ('name=' + $name) -f ('label=' + (Get-GoalLabel)) 2>$null; $goalsOk = ($LASTEXITCODE -eq 0) } catch { $goalsOk = $false }
+        if ($goalsOk) {
             $goals = @(ConvertFrom-GoalsGraph -Data (($raw -join "`n") | ConvertFrom-Json) | Where-Object { $_ })
             if ($goals.Count) { Write-Host "Goals in ${repo}:"; foreach ($g in $goals) { Write-SafeLines (Format-GoalFocusText -Goal $g); Write-Host '' } }
             else { Write-Host "Goals in ${repo}: none open." }
