@@ -704,12 +704,20 @@ $constitutionLine = Get-ConstitutionImportLine
 $claudeMdPath     = Join-Path $repoRoot 'CLAUDE.md'
 $constitutionElsewhere = (Test-Path -LiteralPath $claudeMdPath -PathType Leaf) -and
     (Test-ConstitutionImported -Documents @(Get-CheckProseCorpus -RepoRoot $repoRoot))
+# A LINE UNDER A RETIRED MARKETPLACE NAME IS REWRITTEN, like a retired extension line (#3883): it names a
+# clone that is gone, so it loads nothing, and Test-ConstitutionImported does not count it either.
 $constitutionAction = Add-ClaudeMdImportLine -Path $claudeMdPath -Root $repoRoot -Line $constitutionLine `
-    -ImportedPattern '^\s*@\S*/plugins/dkj-policy/CLAUDE\.md\s*$' -ImportedElsewhere:$constitutionElsewhere -Apply:$Apply
+    -ImportedPattern '^\s*@\S*/plugins/dkj-policy/CLAUDE\.md\s*$' `
+    -ReplacePattern (Get-RetiredConstitutionImportPattern) `
+    -ImportedElsewhere:$constitutionElsewhere -Apply:$Apply
 
 switch ($constitutionAction) {
     'kept'   { Write-Host '  [keep]     CLAUDE.md already imports the dkj-policy constitution -- left as it is' -ForegroundColor DarkGray }
     'refused' { Write-Host "  [refused]  CLAUDE.md is a symlink or junction, so the constitution import was NOT written -- add it by hand: $constitutionLine" -ForegroundColor Yellow }
+    'replace' { $verb = if ($Apply) { '[renamed]' } else { '[rename] ' }
+                Write-Host "  $verb  the constitution import in CLAUDE.md named a retired marketplace (#3883) -- now: $constitutionLine" -ForegroundColor Green }
+    'removed' { $verb = if ($Apply) { '[removed]' } else { '[remove] ' }
+                Write-Host "  $verb  the constitution import under a retired marketplace, beside the current line the closure already has" -ForegroundColor Green }
     'create' { $verb = if ($Apply) { '[created]' } else { '[create] ' }
                Write-Host "  $verb  CLAUDE.md, holding the constitution import: $constitutionLine" -ForegroundColor Green }
     default  { $verb = if ($Apply) { '[added]  ' } else { '[add]    ' }

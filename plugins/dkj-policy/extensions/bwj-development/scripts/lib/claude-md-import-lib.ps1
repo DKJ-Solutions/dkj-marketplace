@@ -39,6 +39,8 @@
       * Get-RetiredPolicyExtensionNames / Get-RetiredExtensionImportPattern / Get-RetiredExtensionImports
         -- the names #2788 retired and the depth #3871 retired, and the import lines that still carry them.
       * Get-RetiredExtensionRepair -- the one repair sentence for an enabled id under a retired name.
+      * Get-RetiredMarketplaceNames / Get-RetiredConstitutionImportPattern -- the marketplace names a
+        constitution line can carry after its clone is gone (#3883), and the pattern that rewrites it.
       * Test-ConstitutionImported / Test-ExtensionImported -- is the line already in the '@'-import
         closure, judged on the rows Get-AlwaysOnDocuments returns.
       * Add-ClaudeMdImportLine -- the fence-aware scan and the byte-preserving insert.
@@ -221,6 +223,31 @@ function Get-RetiredExtensionImports {
     return @($found)
 }
 
+function Get-RetiredMarketplaceNames {
+    <#
+        The marketplace names a constitution import can still carry although no clone sits under them any
+        more (#3883): 'dkj-claude-plugins' became 'dkj-marketplace' in #3662. The name the running lib
+        itself sits under (Get-DkjMarketplaceSegment) is never retired, so a machine still registered under
+        an old name keeps the line it can load. 'claude-code-specialists' is NOT on this list: the business
+        publication still ships under that marketplace name (repo-config.ps1, Dave, August 14, 2026).
+    #>
+    param([string]$LibDir = $PSScriptRoot)
+    $current = Get-DkjMarketplaceSegment -LibDir $LibDir
+    return [string[]]@(@('dkj-claude-plugins') | Where-Object { $_ -ine $current })
+}
+
+function Get-RetiredConstitutionImportPattern {
+    <#
+        The regex for a constitution '@'-line under a retired marketplace name, for Add-ClaudeMdImportLine's
+        -ReplacePattern (#3883), or '' when no name is retired. Such a line names a clone that is gone, so it
+        loads nothing -- the constitution's counterpart of Get-RetiredExtensionImportPattern.
+    #>
+    param([string]$LibDir = $PSScriptRoot)
+    $names = @(Get-RetiredMarketplaceNames -LibDir $LibDir)
+    if ($names.Count -eq 0) { return '' }
+    return "^\s*@~/\.claude/plugins/marketplaces/(?:$(($names | ForEach-Object { [regex]::Escape($_) }) -join '|'))/plugins/dkj-policy/CLAUDE\.md\s*$"
+}
+
 function Test-ConstitutionImported {
     <#
         Does this always-on closure '@'-import the dkj-policy constitution (issue #2374)? Matched on the
@@ -228,11 +255,18 @@ function Test-ConstitutionImported {
         form, any marketplace name, and the source repo's relative form all count. A row that does NOT
         resolve (Exists = $false) still counts: the line is written, and a clone that has not refreshed
         yet is a lag the next 'claude plugin marketplace update' closes, not a missing import.
+
+        EXCEPT UNDER A RETIRED MARKETPLACE NAME (#3883): that clone is gone for good, not lagging, so the
+        row does not count -- the adoption then rewrites the line, and the warning names it until it does.
     #>
-    param([AllowNull()][AllowEmptyCollection()][object[]]$Documents)
+    param([AllowNull()][AllowEmptyCollection()][object[]]$Documents, [string]$LibDir = $PSScriptRoot)
+    $retired = @(Get-RetiredMarketplaceNames -LibDir $LibDir)
     foreach ($d in @($Documents)) {
         if ($null -eq $d) { continue }
-        if ((([string]$d.Path) -replace '\\', '/') -imatch '/plugins/dkj-policy/CLAUDE\.md$') { return $true }
+        $path = ([string]$d.Path) -replace '\\', '/'
+        if ($path -notmatch '/plugins/dkj-policy/CLAUDE\.md$') { continue }
+        if ($path -imatch '/plugins/marketplaces/([^/]+)/plugins/dkj-policy/CLAUDE\.md$' -and $retired -icontains $Matches[1]) { continue }
+        return $true
     }
     return $false
 }
@@ -328,8 +362,10 @@ function Add-ClaudeMdImportLine {
         # Get-ImportLinePath, not a looser pattern: Claude Code reads only a column-0 '@' as an import, so
         # an indented look-alike (a bullet, a blockquote) is prose -- neither "already there" nor an anchor.
         if ($wasFence -or $fence -or -not (Get-ImportLinePath -Line $bare)) { continue }
-        if ($bare -imatch $ImportedPattern) { $imported = $true; continue }
+        # The retired test runs FIRST: a constitution -ImportedPattern accepts any marketplace name, so a
+        # line under a retired one would otherwise read as already imported (#3883).
         if ($ReplacePattern -and $bare -imatch $ReplacePattern) { $retiredAt.Add($i); continue }
+        if ($bare -imatch $ImportedPattern) { $imported = $true; continue }
         if ($firstImport -lt 0) { $firstImport = $i }
         if ($AfterPattern -and $anchor -lt 0 -and $bare -imatch $AfterPattern) { $anchor = $i }
     }
