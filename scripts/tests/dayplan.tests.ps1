@@ -40,8 +40,10 @@ Assert-True ((ConvertTo-DayPlan -Json '{"items":[{"title":"A","hours":1,"mode":"
 Assert-True ((ConvertTo-DayPlan -Json '{"goal":"g","items":[{"title":"A","hours":0,"mode":"go"}]}').Error -match 'hour estimate') 'an item without an hour estimate is refused'
 Assert-True ((ConvertTo-DayPlan -Json '{"goal":"g","items":[{"title":"A","hours":9,"mode":"go"}]}').Error -match 'hour estimate') 'one item longer than the whole day is refused'
 Assert-True ((ConvertTo-DayPlan -Json '{"goal":"g","items":[{"title":"A","hours":1,"mode":"later"}]}').Error -match "'plan'") 'a mode other than plan or go is refused'
+Assert-True ((ConvertTo-DayPlan -Json '{"goal":"g","items":[{"title":"A","hours":"NaN","mode":"go"}]}').Error -match 'hour estimate' -and (ConvertTo-DayPlan -Json '{"goal":"g","items":[{"title":"A","hours":"Infinity","mode":"go"}]}').Error -match 'hour estimate') 'NaN and Infinity are refused, since NaN passes every comparison and would read as inside the band'
 Assert-True ((ConvertTo-DayPlan -Json '{"goal":"g","items":[{"title":"A","hours":1,"mode":"go","ref":"#5"}]}').Error -match 'ref') 'a bare #n with no repo to resolve it against is refused'
 Assert-True ((ConvertTo-DayPlan -Json 'not json').Error -match 'not valid JSON') 'text that is not JSON is refused'
+Assert-True ($null -eq (ConvertTo-DayPlanRef -Ref ('o/r' + [char]0x1B + '[2J#5')) -and $null -eq (ConvertTo-DayPlanRef -Ref ('o/r' + [char]0x202E + '#5'))) 'a ref carrying a control or format character is refused, so it never reaches the console'
 
 Write-Host '-- the band, strict both ways' -ForegroundColor Cyan
 Assert-Equal 'under' (Test-DayPlanBudget -Items @((& $item 'A' 3), (& $item 'B' 2.5))).Verdict '5.5 h is not a full day'
@@ -79,6 +81,16 @@ Assert-Equal 'o/r#9' (@($c.Unplanned | ForEach-Object { $_.ref }) -join ',') 'fi
 Assert-Equal 'partly' $c.Verdict 'some done is partly reached'
 Assert-Equal 'reached' (Compare-DayPlanDone -Items $items -Finished $fin -MarkedDone @(1, 2)).Verdict 'all done is reached'
 Assert-Equal 'missed' (Compare-DayPlanDone -Items $items -Finished @()).Verdict 'none done is missed'
+$pair = @([pscustomobject]@{ ref = 'o/r#50'; title = 'Fix B'; kind = 'pr'; closes = @('o/r#2') }, [pscustomobject]@{ ref = 'o/r#2'; title = 'B'; kind = 'issue'; closes = @() },
+          [pscustomobject]@{ ref = 'o/r#60'; title = 'Fix Y'; kind = 'pr'; closes = @('o/r#61') }, [pscustomobject]@{ ref = 'o/r#61'; title = 'Y'; kind = 'issue'; closes = @() })
+$pc = Compare-DayPlanDone -Items $items -Finished $pair
+Assert-True (@($pc.Done) -contains 1) 'a planned issue a merged PR closed is done'
+Assert-Equal 'o/r#60' (@($pc.Unplanned | ForEach-Object { $_.ref }) -join ',') 'the PR that closed a planned issue is not extra, and an unplanned PR with its issue is one extra, not two'
+$onlyPr = Compare-DayPlanDone -Items $items -Finished @([pscustomobject]@{ ref = 'o/r#50'; title = 'Fix B'; kind = 'pr'; closes = @('o/r#2') })
+Assert-True (@($onlyPr.Done) -contains 1) 'the PR alone marks its planned issue done, even before the issue''s own close is found'
+$gq = '[{"number":50,"title":"Fix B","url":"https://github.com/o/r/pull/50","repository":{"nameWithOwner":"o/r"},"closedAt":"2026-11-07T10:00:00Z","closingIssuesReferences":{"nodes":[{"number":2,"repository":{"nameWithOwner":"o/r"}},{"number":3,"repository":{}}]}}]'
+Assert-Equal 'o/r#2,o/r#3' ((@(ConvertFrom-DayPlanSearch -Json $gq -Kind 'pr')[0].closes) -join ',') 'a PR node carries the issues it closed, a missing repository taken as the PR''s own'
+Assert-True ((Get-DayPlanPrQuery) -match 'closingIssuesReferences' -and (Get-DayPlanPrQuery) -match '\$after: String' -and (Get-DayPlanPrQuery) -notmatch '"') 'the PR query reads closing issues, pages with a cursor, and holds no quote a command line could mangle'
 
 Write-Host '-- the carry-over' -ForegroundColor Cyan
 $closed = [pscustomobject]@{ items = $items; close = [pscustomobject]@{ carried = @(1) } }
@@ -127,11 +139,22 @@ try {
     $saved = [System.IO.File]::ReadAllText($file, $utf8) | ConvertFrom-Json
     Assert-True ($r.Code -eq 0 -and @($saved.items).Count -eq 3 -and $saved.items[2].added) 'an addition inside the band is added, marked as added during the day'
 
+    $r = & $run @('-PlanFile', $planPath, '-Apply', '-Date', $date, '-Override', 'again')
+    Assert-True ($r.Code -eq 1 -and $r.Out -match 'already planned' -and @(([System.IO.File]::ReadAllText($file, $utf8) | ConvertFrom-Json).items).Count -eq 3) 'applying over a day already planned is refused, so its additions are not lost'
+
     $r = & $run @('-Close', '-Done', '7', '-Date', $date, '-Author', 'nobody-at-all')
     Assert-True ($r.Code -eq 1 -and $r.Out -match '-Done 7 is not an item') 'a -Done that names no item is refused before GitHub is asked'
 
     $r = & $run @('-Add', '-Title', 'X', '-Hours', '1', '-Mode', 'go', '-Date', '2026-11-04')
     Assert-True ($r.Code -eq 1 -and $r.Out -match 'no plan for 2026-11-04') 'an addition to a day with no plan is refused'
+
+    [System.IO.File]::WriteAllText($planPath, ('{"goal":"G","items":[{"title":"A' + [char]0x1B + '[2J","hours":3,"mode":"later"}]}'), $utf8)
+    $r = & $run @('-PlanFile', $planPath, '-Date', $date)
+    Assert-True ($r.Code -eq 1 -and $r.Out -match 'needs a mode' -and $r.Out -notmatch [char]0x1B) 'a refusal quoting a plan title prints it stripped'
+
+    [System.IO.File]::WriteAllText((Join-Path $state 'dayplan\2026-11-05.json'), '{ not json', $utf8)
+    $r = & $run @('-Add', '-Title', 'X', '-Hours', '1', '-Mode', 'go', '-Date', '2026-11-05')
+    Assert-True ($r.Code -eq 1 -and $r.Out -match 'does not parse') 'a day file that does not parse is refused, never read as no plan and overwritten'
 
     $r = & $run @('-Context', '-Close')
     Assert-True ($r.Code -eq 1 -and $r.Out -match 'exactly one') 'two modes at once are refused'

@@ -5,18 +5,21 @@
     day-plan skill (skills/day-plan/SKILL.md); the person behind it is Paula, the Project Planner.
 
 .DESCRIPTION
-      -Context                     the morning's input: yesterday's carry-over, the measured pace (median merged
+      -Context                     the morning's input: the last planned day's carry-over, the measured pace (median merged
                                    PRs per working day over the last four weeks), the open issues assigned to the
                                    owner, and the open goals' Now and Next for this repo. Writes nothing.
       -PlanFile <path>             read a proposed plan (JSON, see ConvertTo-DayPlan), check it and the 6-8 h band,
                                    print it. Writes nothing.
-      -PlanFile <path> -Apply      write it as today's day file. Refused outside the band unless -Override.
+      -PlanFile <path> -Apply      write it as today's day file. Refused outside the band unless -Override, and
+                                   refused over a day already planned unless -Replace (its additions and
+                                   overrides would be lost).
       -Add -Title <t> -Hours <h> -Mode plan|go [-Ref <r>]
                                    add an item to today's plan. Refused when it takes the day over 8 h, unless
                                    -Override.
       -Close [-Done 1,3]           match today's plan against the PRs merged and the issues closed today, write the
                                    close-out into the day file, print the receipt. -Done marks plan items (1-based)
-                                   with no ref as done, since only the owner can say so.
+                                   with no ref as done, since only the owner can say so. A second -Close keeps
+                                   the first one's done items.
       -Week                        the week so far, from the day files and GitHub.
       -Override <reason>           go past the band anyway; the reason is kept in the day file and printed again at
                                    the close-out.
@@ -40,6 +43,7 @@ param(
     [switch]$Close,
     [int[]]$Done = @(),
     [switch]$Week,
+    [switch]$Replace,
     [string]$Override = '',
     [string[]]$Author = @(),
     [string]$Date = ''
@@ -53,7 +57,8 @@ $utf8 = New-Object System.Text.UTF8Encoding($false)
 
 function Stop-DayPlan {
     param([string]$Message)
-    Write-Host "[REFUSED] $Message"
+    # Stripped: a refusal can quote a plan title, a -Date or a path, which are somebody else's characters.
+    Write-Host "[REFUSED] $(ConvertTo-ConsoleStrippedText $Message)"
     exit 1
 }
 
@@ -75,7 +80,8 @@ function Read-DayFile {
     param([datetime]$On)
     $p = Get-DayPlanPath -Date $On
     if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { return $null }
-    try { return ([System.IO.File]::ReadAllText($p, $utf8) | ConvertFrom-Json) } catch { return $null }
+    # A file that does not parse is refused rather than read as no plan: -Apply would otherwise overwrite it.
+    try { return ([System.IO.File]::ReadAllText($p, $utf8) | ConvertFrom-Json) } catch { Stop-DayPlan "the day file $(Get-DisplayPath $p) does not parse; repair or remove it first." }
 }
 function Save-DayFile {
     param($Day, [datetime]$On)
@@ -108,15 +114,31 @@ function Get-SinceStamp {
     return ([DateTimeOffset]$From.Date).ToString('yyyy-MM-ddTHH:mm:sszzz', [System.Globalization.CultureInfo]::InvariantCulture)
 }
 function Invoke-DayPlanSearch {
-    <# Finished work since -From by every author: merged PRs they authored, closed issues assigned to them. #>
+    <#
+        Finished work since -From by every author: merged PRs they authored (through GraphQL, so each carries the
+        issues it closed), and closed issues assigned to them.
+    #>
     param([datetime]$From, [string[]]$Authors, [int]$Limit = 200)
-    $since = '>=' + (Get-SinceStamp -From $From)
+    $stamp = Get-SinceStamp -From $From
+    $since = '>=' + $stamp
     $fields = 'number,title,url,repository,closedAt'
     $prs = @(); $issues = @()
     foreach ($a in $Authors) {
-        $p = gh search prs --author $a --merged-at $since --json $fields --limit $Limit
-        if ($LASTEXITCODE -ne 0) { throw "gh search prs exited $LASTEXITCODE for $a" }
-        $prs += @(ConvertFrom-DayPlanSearch -Json ($p -join "`n") -Kind 'pr')
+        # GitHub's search stops at 1000 results; the pages stop there or at -Limit, whichever comes first.
+        $q = "author:$a is:pr is:merged merged:>=$stamp"
+        $after = $null
+        $read = 0
+        do {
+            $ghArgs = @('api', 'graphql', '-f', ('query=' + (Get-DayPlanPrQuery)), '-f', ('q=' + $q))
+            if ($after) { $ghArgs += @('-f', ('after=' + $after)) }
+            $raw = & gh @ghArgs
+            if ($LASTEXITCODE -ne 0) { throw "gh api graphql exited $LASTEXITCODE reading the PRs of $a" }
+            $page = ($raw -join "`n") | ConvertFrom-Json
+            $nodes = @($page.data.search.nodes | Where-Object { $_ -and $_.number })
+            $prs += @(ConvertFrom-DayPlanSearch -Json (ConvertTo-Json -InputObject @($nodes) -Depth 6) -Kind 'pr')
+            $read += $nodes.Count
+            $after = if ($page.data.search.pageInfo.hasNextPage) { [string]$page.data.search.pageInfo.endCursor } else { $null }
+        } while ($after -and $read -lt $Limit)
         $i = gh search issues --assignee $a --closed $since --json $fields --limit $Limit
         if ($LASTEXITCODE -ne 0) { throw "gh search issues exited $LASTEXITCODE for $a" }
         $issues += @(ConvertFrom-DayPlanSearch -Json ($i -join "`n") -Kind 'issue')
@@ -142,7 +164,7 @@ if ($Context) {
         $carry = @(Get-DayPlanCarryOver -Day $prev)
         $closedWord = if ($prev.close) { 'closed' } else { 'never closed, so every item counts' }
         Write-Host "Carried over from $($prevDate.ToString('ddd yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture)) ($closedWord): $($carry.Count)"
-        foreach ($c in $carry) { Write-Host "  - $(ConvertTo-ConsoleStrippedText $c.title) ($(Format-DayPlanHours $c.hours), $($c.mode))$(if ($c.ref) { '  ' + $c.ref })" }
+        foreach ($c in $carry) { Write-Host "  - $(ConvertTo-ConsoleStrippedText $c.title) ($(Format-DayPlanHours $c.hours), $(ConvertTo-ConsoleStrippedText $c.mode))$(if ($c.ref) { '  ' + (ConvertTo-ConsoleStrippedText $c.ref) })" }
     } else {
         Write-Host 'Carried over: nothing -- no day file in the last week.'
     }
@@ -154,7 +176,8 @@ if ($Context) {
             $found = Invoke-DayPlanSearch -From $from -Authors $authors -Limit 1000
             $merged = @($found.Prs | Where-Object { $_.closedAt } | ForEach-Object { [datetime]$_.closedAt })
             $cap = Get-DayPlanCapacity -MergedAt $merged -From $from -To $day
-            Write-Host ("Pace: a median of {0} merged PR(s) per working day over the last {1} working days ({2} PRs, {3} issues closed)." -f $cap.Median, $cap.Days, @($found.Prs).Count, @($found.Issues).Count)
+            $median = ([double]$cap.Median).ToString('0.#', [System.Globalization.CultureInfo]::InvariantCulture)
+            Write-Host "Pace: a median of $median merged PR(s) per working day over the last $($cap.Days) working days ($(@($found.Prs).Count) PRs, $(@($found.Issues).Count) issues closed)."
         } catch {
             Write-Host "Pace: unknown -- $(ConvertTo-ConsoleStrippedText $_.Exception.Message)"
         }
@@ -185,7 +208,7 @@ if ($Context) {
         $raw = gh api graphql -f ('query=' + (Get-GoalsGraphQuery)) -f ('owner=' + $owner) -f ('name=' + $name) -f ('label=' + (Get-GoalLabel)) 2>$null
         if ($LASTEXITCODE -eq 0) {
             $goals = @(ConvertFrom-GoalsGraph -Data (($raw -join "`n") | ConvertFrom-Json) | Where-Object { $_ })
-            if ($goals.Count) { Write-Host "Goals in ${repo}:"; foreach ($g in $goals) { Write-Host (Format-GoalFocusText -Goal $g); Write-Host '' } }
+            if ($goals.Count) { Write-Host "Goals in ${repo}:"; foreach ($g in $goals) { Write-SafeLines (Format-GoalFocusText -Goal $g); Write-Host '' } }
             else { Write-Host "Goals in ${repo}: none open." }
         }
     }
@@ -209,6 +232,7 @@ if ($PlanFile) {
     if (-not $Apply) { Write-Host "[OK] $($b.Message) Nothing was written; rerun with -Apply once it is agreed."; exit 0 }
     $existing = Read-DayFile -On $day
     if ($existing -and $existing.close) { Stop-DayPlan "$($day.ToString('yyyy-MM-dd')) is already closed; plan another -Date." }
+    if ($existing -and -not $Replace) { Stop-DayPlan "$($day.ToString('yyyy-MM-dd')) is already planned. Add to it with -Add, or give -Replace to start the day over (its additions and overrides are dropped)." }
     $p = Save-DayFile -Day $dayObj -On $day
     $why = if ($b.Verdict -ne 'ok') { "Written on an override: $(ConvertTo-ConsoleStrippedText $Override.Trim())" } else { $b.Message }
     Write-Host "[OK] the plan for $($day.ToString('yyyy-MM-dd')) is written ($(Get-DisplayPath $p)). $why"
@@ -220,7 +244,11 @@ if ($Add) {
     $existing = Read-DayFile -On $day
     if (-not $existing) { Stop-DayPlan "there is no plan for $($day.ToString('yyyy-MM-dd')) yet; plan the day first." }
     if ($existing.close) { Stop-DayPlan "$($day.ToString('yyyy-MM-dd')) is already closed." }
-    $repo = if ($Ref -match '\A#?\d+\z') { Get-CurrentRepo } else { '' }
+    $repo = ''
+    if ($Ref -match '\A#?\d+\z') {
+        if (-not (Get-Command gh -CommandType Application -ErrorAction SilentlyContinue)) { Stop-DayPlan "-Ref '$Ref' needs gh to name this repo, and gh was not found on the PATH; give owner/repo#n instead." }
+        $repo = Get-CurrentRepo
+    }
     $it = ConvertTo-DayPlanItem -Raw ([pscustomobject]@{ title = $Title; hours = $Hours; mode = $Mode; ref = $Ref; added = $true }) -Repo $repo -Index (@($existing.items).Count + 1)
     if ($it -is [string]) { Stop-DayPlan $it }
     $items = @($existing.items) + $it
@@ -258,7 +286,9 @@ if ($Close) {
         $found.Prs = @($found.Prs | Where-Object { & $inDay $_ }); $found.Issues = @($found.Issues | Where-Object { & $inDay $_ })
     }
     $finished = @($found.Prs) + @($found.Issues)
-    $cmp = Compare-DayPlanDone -Items $existing.items -Finished $finished -MarkedDone @($Done | ForEach-Object { $_ - 1 })
+    # A second close keeps the first one's done items, so a -Done given then is not lost now (Victor, #3859).
+    $marked = @(@($Done | ForEach-Object { $_ - 1 }) + @($(if ($existing.close) { @($existing.close.done) })) | Where-Object { $null -ne $_ } | ForEach-Object { [int]$_ } | Select-Object -Unique)
+    $cmp = Compare-DayPlanDone -Items $existing.items -Finished $finished -MarkedDone $marked
     $closeRec = [pscustomobject]@{
         at = (Get-Date).ToString('o'); done = @($cmp.Done); carried = @($cmp.Carried)
         unplanned = @($cmp.Unplanned | ForEach-Object { [pscustomobject]@{ ref = $_.ref; title = $_.title; url = $_.url; kind = $_.kind } })

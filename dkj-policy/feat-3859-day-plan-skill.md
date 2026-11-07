@@ -54,7 +54,8 @@ end from GitHub. The Admin page that shows it is #3860, a separate branch becaus
 
 - [x] The suite: 47 passed
 - [x] End to end against GitHub with a scratch state dir: -Context, the refusal under the band, an override, -Add refused over 8 h and accepted inside it, -Close, -Week
-- [ ] Review: Victor (code), Sebastian (security), Edith (copy)
+- [x] Review: Victor (code), Sebastian (security), Edith (copy). All findings taken: NaN hours refused (it passed both bounds), a merged PR matched to the issue it closed (GraphQL `closingIssuesReferences`, so a "fixes #n" pair is not counted as extra), `-Apply` over a planned day refused unless `-Replace`, a second `-Close` keeping the first one's done items, a corrupt day file refused instead of overwritten, every foreign value stripped at the console (refusals, goals, carry-over refs) and control characters refused in a ref, the pace printed culture-invariant
+- [x] The suite after the review: 57 passed; a live `-Close` of November 6 matched #3857 through its PR
 
 ### DEPLOY: feat/3859-day-plan-skill
 

@@ -52,6 +52,8 @@ function ConvertTo-DayPlanRef {
     param([string]$Ref, [string]$Repo = '')
     $r = ([string]$Ref).Trim()
     if (-not $r) { return '' }
+    # A ref is printable ASCII without a space ('!' to '~'), so a control or format character never passes as one.
+    if ($r -match '[^!-~]') { return $null }
     if ($r -match '\Ahttps://github\.com/([^/\s]+/[^/\s]+)/(?:issues|pull)/(\d+)\z') { return "$($Matches[1])#$($Matches[2])" }
     if ($r -match '\A([^/\s#]+/[^/\s#]+)#(\d+)\z') { return "$($Matches[1])#$($Matches[2])" }
     if ($r -match '\A#?(\d+)\z' -and $Repo) { return "$Repo#$($Matches[1])" }
@@ -64,7 +66,9 @@ function ConvertTo-DayPlanItem {
     $title = ([string]$Raw.title).Trim()
     if (-not $title) { return "item $Index has no title" }
     $hours = 0.0
-    if (-not [double]::TryParse([string]$Raw.hours, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$hours) -or $hours -le 0 -or $hours -gt $script:DayPlanBudgetHours) {
+    # NaN and Infinity parse as doubles, and every comparison with NaN is false, so a 'NaN' estimate would pass both
+    # bounds below and then make the whole plan read as inside the band (Victor, #3859). Refused by name first.
+    if (-not [double]::TryParse([string]$Raw.hours, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$hours) -or [double]::IsNaN($hours) -or [double]::IsInfinity($hours) -or $hours -le 0 -or $hours -gt $script:DayPlanBudgetHours) {
         return "item $Index ('$title') needs an hour estimate above 0 and at most $($script:DayPlanBudgetHours)"
     }
     $mode = ([string]$Raw.mode).Trim().ToLowerInvariant()
@@ -153,10 +157,12 @@ function Get-DayPlanCapacity {
 
 function ConvertFrom-DayPlanSearch {
     <#
-        gh search's JSON (prs or issues, fields number,title,url,repository,closedAt) as done records:
-        @{ ref; title; url; kind; closedAt }. -Kind is 'pr' or 'issue'. Deduplicated on ref. closedAt is a LOCAL
-        DateTime (or $null): Windows PowerShell 5.1's ConvertFrom-Json already turns an ISO stamp into a DateTime and
-        PowerShell 7 may not, so both are normalised here rather than parsed again by each caller.
+        gh's JSON for finished work as done records: @{ ref; title; url; kind; closedAt; closes }. Takes gh search's
+        answer (fields number,title,url,repository,closedAt) and the PR nodes of Get-DayPlanPrQuery, whose
+        closingIssuesReferences become `closes`: the issue refs a merged PR closed, so the close-out can tell a PR that
+        finished a planned issue from extra work. -Kind is 'pr' or 'issue'. Deduplicated on ref.
+        closedAt is a LOCAL DateTime (or $null): Windows PowerShell 5.1's ConvertFrom-Json leaves an ISO stamp a
+        string and PowerShell 7 turns it into a DateTime, so both are normalised here rather than by each caller.
     #>
     param([string]$Json, [string]$Kind)
     if (-not $Json -or -not $Json.Trim()) { return @() }
@@ -177,29 +183,47 @@ function ConvertFrom-DayPlanSearch {
             $o = [DateTimeOffset]::MinValue
             if ([DateTimeOffset]::TryParse([string]$n.closedAt, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::None, [ref]$o)) { $at = $o.LocalDateTime }
         }
-        $out += [pscustomobject]@{ ref = $ref; title = [string]$n.title; url = [string]$n.url; kind = $Kind; closedAt = $at }
+        $closes = @(@($n.closingIssuesReferences.nodes) | Where-Object { $_ } | ForEach-Object {
+            $cr = [string]$_.repository.nameWithOwner; if (-not $cr) { $cr = $repo }; "$cr#$($_.number)" })
+        $out += [pscustomobject]@{ ref = $ref; title = [string]$n.title; url = [string]$n.url; kind = $Kind; closedAt = $at; closes = $closes }
     }
     return $out
+}
+
+function Get-DayPlanPrQuery {
+    <#
+        The GraphQL search for one author's merged PRs since a moment, with the issues each one closed -- which gh
+        search's JSON does not carry. Variables: $q (the search string), $after (the page cursor, may be null).
+    #>
+    return 'query($q: String!, $after: String) { search(query: $q, type: ISSUE, first: 100, after: $after) { pageInfo { hasNextPage endCursor } nodes { ... on PullRequest { number title url closedAt repository { nameWithOwner } closingIssuesReferences(first: 10) { nodes { number repository { nameWithOwner } } } } } } }'
 }
 
 function Compare-DayPlanDone {
     <#
         Match a day's items against what got done: @{ Done; Carried; Unplanned; Verdict }.
-        Done and Carried are item indexes (0-based). An item is done when its ref is among -Finished, or its index is
-        in -MarkedDone (an item with no ref, which only the owner can say is done). Unplanned is every finished record
-        no item names. Verdict: 'reached' when every item is done, 'partly' when some are, 'missed' when none are.
+        Done and Carried are item indexes (0-based). An item is done when its ref is among -Finished, or a finished PR
+        closed it, or its index is in -MarkedDone (an item with no ref, which only the owner can say is done).
+        Unplanned is the finished work no item names, counted once: a PR that closed a planned issue is that item's
+        work, and an issue a finished PR closed is that PR's, so the usual "PR fixes #n" pair is never two extras.
+        Verdict: 'reached' when every item is done, 'partly' when some are, 'missed' when none are.
     #>
     param($Items, $Finished, [int[]]$MarkedDone = @())
     $items = @($Items)
-    $refs = @{}
-    foreach ($f in @($Finished)) { if ($f) { $refs[[string]$f.ref] = $true } }
+    $refs = @{}; $closedByPr = @{}
+    foreach ($f in @($Finished)) {
+        if (-not $f) { continue }
+        $refs[[string]$f.ref] = $true
+        foreach ($c in @($f.closes)) { if ($c) { $refs[[string]$c] = $true; $closedByPr[[string]$c] = $true } }
+    }
     $done = @(); $carried = @(); $named = @{}
     for ($i = 0; $i -lt $items.Count; $i++) {
         $r = [string]$items[$i].ref
         if ($r) { $named[$r] = $true }
         if (($r -and $refs[$r]) -or ($MarkedDone -contains $i)) { $done += $i } else { $carried += $i }
     }
-    $unplanned = @(@($Finished) | Where-Object { $_ -and -not $named[[string]$_.ref] })
+    $unplanned = @(@($Finished) | Where-Object {
+        $_ -and -not $named[[string]$_.ref] -and -not $closedByPr[[string]$_.ref] -and
+        -not @(@($_.closes) | Where-Object { $_ -and $named[[string]$_] }).Count })
     $verdict = if ($items.Count -and $done.Count -eq $items.Count) { 'reached' } elseif ($done.Count) { 'partly' } else { 'missed' }
     return @{ Done = $done; Carried = $carried; Unplanned = $unplanned; Verdict = $verdict }
 }

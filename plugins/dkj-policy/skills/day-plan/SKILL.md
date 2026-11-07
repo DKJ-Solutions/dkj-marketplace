@@ -24,8 +24,9 @@ step: she proposes, the owner decides, and she holds the band in both directions
    powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/hub/pages/day-plan.ps1" -Context
    ```
 
-   It prints yesterday's carry-over, the measured pace (the median merged PRs per working day over the last
-   four weeks), every open issue assigned to the owner across all repos, and this repo's goals with their
+   It prints the carry-over from the last planned day (within the past week, so Friday's on a Monday), the
+   measured pace (the median merged PRs per working day over the last four weeks), the open issues assigned to
+   the owner across all repos (up to 50 per account), and this repo's goals with their
    **Now** and **Next**.
 2. **Propose the day in one message**: one day goal (a result, not an activity), and the items that serve it,
    each with an **hour estimate** and a **mode**:
