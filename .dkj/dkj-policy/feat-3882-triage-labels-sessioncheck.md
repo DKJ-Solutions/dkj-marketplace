@@ -48,6 +48,7 @@
 ### TEST
 
 - [x] `adopt-triage-labels.tests.ps1` section 10 covers the hook: 205 of 205 pass. `source-repo-guard.tests.ps1` 70 of 70 and `sessioncheck-dispatch.tests.ps1` 61 of 61 pass, and a live run here is silent in 1.6s
+- [x] `native-capture.tests.ps1` audited count of bounded captures moved 108 -> 110 for the two `gh` reads, both judged by a positive `-eq 0`: caught by the first ship's test gate, 355 of 355 pass
 
 ### DEPLOY: feat/3882-triage-labels-sessioncheck
 
