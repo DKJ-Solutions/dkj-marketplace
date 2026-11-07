@@ -41,17 +41,30 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-BranchInfo` in `scripts/lib/branch-info.ps1` derives its prefix inline instead of calling `Get-BranchPrefix`; the blueprint rebuilt from it
+- [x] `check-script-contract.ps1` (both copies) drops the `Get-BranchPrefix` stub it needed to evaluate the record
 
 ### TEST
 
+- [x] `config-blueprint.tests.ps1` evaluates every `branch-info.ps1` record from its own text: 3 failed before the change (`Get-BranchPrefix` not recognized), 237 of 237 pass after
+- [x] `script-contract.tests.ps1` now holds the inline rule to `Get-BranchPrefix` over nine names and asserts the stub is gone: 463 of 463 pass
+
 ### DEPLOY: fix/3888-branchinfo-self-contained
 
-**Score:**
+The config blueprint's `Get-BranchInfo` record runs on its own. Its text called `Get-BranchPrefix`, which no
+contract record carries, so a consumer with a hand-built `branch-info.ps1` that adopted the record (a `copy`
+record since #3886) got a `Get-BranchInfo` that threw (#3888). The function now derives the prefix inline,
+`check-script-contract` evaluates the records without the stub it carried for this, and
+`config-blueprint.tests.ps1` evaluates the branch-info records from their own text.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A repo whose `branch-info.ps1` was written by hand can adopt `Get-BranchInfo` from the blueprint without it
+failing on first use. A repo set up by `specialists-init` already had `Get-BranchPrefix` and notices nothing.
+
+**Score:** 2
 
 #### Pull Request
 

@@ -1324,17 +1324,16 @@ function Get-BranchTypes { return @('Feat', 'Fix', 'Docs', 'Chore') }
     $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
     Assert-Match 'prefixes the source does not have: data \(1 in all\)' $r.Out 'the echo filter: a plain extra prefix is named and counted'
 
-    # The check evaluates the blueprint's Get-BranchInfo with its own Get-BranchPrefix, which the blueprint
-    # does not carry (#3888); it must answer exactly as the source's own function does.
+    # Get-BranchInfo derives its prefix INLINE since #3888, so its blueprint text runs without
+    # Get-BranchPrefix (no record carries that one); the check evaluates the records as shipped, with no
+    # stub of its own. The inline rule and Get-BranchPrefix are now two statements of one rule in one
+    # file, and this holds them to the same answer.
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($PluginCheck, [ref]$null, [ref]$null)
     $stub = $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Get-BranchPrefix' }, $true) | Select-Object -First 1
-    Assert-True ($null -ne $stub) 'the check defines the Get-BranchPrefix stub this assertion compares'
-    if ($stub) {
-        . ([scriptblock]::Create($stub.Extent.Text.Replace('function Get-BranchPrefix', 'function Get-StubBranchPrefix')))
-        . $BranchInfoSrc
-        foreach ($name in @('feat/x', 'fix/y/z', 'docs/a-b', 'chore/c', 'feat-x', 'main', 'plain', '/lead', 'a/')) {
-            Assert-Equal (Get-BranchPrefix -Branch $name) (Get-StubBranchPrefix -Branch $name) "Get-BranchPrefix stub agrees with branch-info.ps1 for '$name'"
-        }
+    Assert-True ($null -eq $stub) 'the check carries no Get-BranchPrefix stub -- the records evaluate as shipped (#3888)'
+    . $BranchInfoSrc
+    foreach ($name in @('feat/x', 'fix/y/z', 'docs/a-b', 'chore/c', 'feat-x', 'main', 'plain', '/lead', 'a/')) {
+        Assert-Equal (Get-BranchPrefix -Branch $name) (Get-BranchInfo -Branch $name).Prefix "Get-BranchInfo's inline prefix agrees with Get-BranchPrefix for '$name'"
     }
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }
