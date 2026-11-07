@@ -56,6 +56,7 @@
 ### TEST
 
 - [x] Five structural asserts in `forward-lane-lib.tests.ps1`; the suite passes 117/0 on its own.
+- [x] `merge-queue-prereq.tests.ps1` searches the post-merge state read from the merge call, since `Test-PrMergedNow` now asks the same question earlier in the file.
 
 ### DEPLOY: fix/3868-ship-pr-merged-during-lap
 

@@ -131,8 +131,11 @@ Assert-True ($ship -match "(?m)^\s*\}\s*elseif\s*\(\s*\`$mergedState -ne 'MERGED
 
 # THE ORDER IS THE WHOLE POINT. The read has to sit between the merge and the fold; a read placed after
 # step 5 would pass a substring assert and prevent nothing.
+# The state read is searched FROM the merge call: Test-PrMergedNow (#3868) asks the same question earlier
+# in the file, before the merge, and a first-match search would find that one and read the order wrong.
 $mergeIdx = $ship.IndexOf("'pr', 'merge'")
-$stateIdx = [regex]::Match($ship, "'pr',\s*'view'[^\r\n]*'state'").Index
+$stateMatch = if ($mergeIdx -gt 0) { [regex]::new("'pr',\s*'view'[^\r\n]*'state'").Match($ship, $mergeIdx) } else { $null }
+$stateIdx = if ($stateMatch -and $stateMatch.Success) { $stateMatch.Index } else { -1 }
 $foldIdx = $ship.IndexOf('--- Step 5:')
 Assert-True ($mergeIdx -gt 0 -and $stateIdx -gt $mergeIdx) 'the state read comes after the gh pr merge call'
 Assert-True ($foldIdx -gt 0 -and $stateIdx -lt $foldIdx) 'and before step 5, which is the step that folds onto the trunk'
