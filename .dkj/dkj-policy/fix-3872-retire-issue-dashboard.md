@@ -54,6 +54,9 @@ different worker, which stays.
 - [x] Drop the suite from `suite-groups.json` and `suite-durations.json`, and its palette exemption
 - [x] Repoint the prose: `CONTRIBUTING-portable.md` and a `repo-config.ps1` comment now name Admin's
       GitHub page, which shows parked issues as Parked; stray-token-lib names its one remaining caller
+- [x] Dead links the lint gate found: the `../worker/` link in `hub/README.md` dropped, and the 5.10.0 and
+      5.11.0 notes' links to the deleted skill pinned to their own tags (the precedent in 5.24.0 and 5.29.0);
+      the text of those notes is unchanged
 - [x] Keep the `.gitignore` line, reworded: a machine that ever deployed still holds the path token there,
       and this repo is public
 
