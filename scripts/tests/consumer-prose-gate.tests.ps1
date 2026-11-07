@@ -694,6 +694,17 @@ try {
 
     Assert-True (-not (Test-ConstitutionImported -Documents @())) 'an empty closure imports nothing'
 
+    # A RETIRED MARKETPLACE NAME DOES NOT COUNT (#3883): that clone is gone for good, not lagging --
+    # unless the lib itself still runs from under that name.
+    $retiredRow = [pscustomobject]@{ Path = 'C:\Users\x\.claude\plugins\marketplaces\dkj-claude-plugins\plugins\dkj-policy\CLAUDE.md'; Exists = $false }
+    Assert-True (-not (Test-ConstitutionImported -Documents @($retiredRow))) `
+        'an import under a retired marketplace name does not count as the constitution'
+    Assert-True (Test-ConstitutionImported -Documents @($retiredRow) -LibDir 'C:\Users\x\.claude\plugins\cache\dkj-claude-plugins\dkj-policy\6.0.0\scripts\lib') `
+        'but it does where the running lib still sits under that name'
+    $cssRow = [pscustomobject]@{ Path = 'C:\Users\x\.claude\plugins\marketplaces\claude-code-specialists\plugins\dkj-policy\CLAUDE.md'; Exists = $false }
+    Assert-True (Test-ConstitutionImported -Documents @($cssRow)) `
+        'claude-code-specialists is not retired -- the business publication still ships under it'
+
     $r = Invoke-Hook -Dir $clean
     Assert-True ($r.Code -eq 0 -and $r.Out -match 'no inverted supremacy declaration' -and $r.Out -match 'does not import the dkj-policy constitution' -and
                  $r.Out -match [regex]::Escape('/plugins/dkj-policy/CLAUDE.md')) `

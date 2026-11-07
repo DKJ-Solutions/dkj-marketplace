@@ -39,21 +39,42 @@
 
 ### PLAN
 
+- [x] Verify #3883's reason in the source: the constitution step passes no `-ReplacePattern`, its
+  `-ImportedPattern` accepts any marketplace name, and `Test-ConstitutionImported` counts the dead row
+  too, so a plain replace pattern alone would have REMOVED the line instead of rewriting it.
+- [x] Keep `claude-code-specialists` valid: the business publication still ships under that
+  marketplace name, and `adopt-workflow-folder.tests.ps1` pins it as kept.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `claude-md-import-lib.ps1`: `Get-RetiredMarketplaceNames` (`dkj-claude-plugins`, never the
+  segment the running lib sits under) and `Get-RetiredConstitutionImportPattern`; `Test-ConstitutionImported`
+  no longer counts a row under a retired name; `Add-ClaudeMdImportLine` tests `-ReplacePattern` before
+  `-ImportedPattern`. Mirrored into dkj-policy and bwj-development.
+- [x] `adopt-workflow-folder.ps1`: the constitution step passes the retired pattern and reports
+  `[renamed]` / `[removed]`.
 
 ### TEST
 
+- [x] `adopt-workflow-folder.tests.ps1`: a retired line is rewritten in place, a re-run keeps it, and
+  beside the current line it is only removed. `consumer-prose-gate.tests.ps1`: the detector skips a
+  retired name, except where the lib itself runs from under it, and still counts `claude-code-specialists`.
+
 ### DEPLOY: fix/3883-retired-constitution-import
 
-**Score:**
+`adopt-workflow-folder` now rewrites a constitution import that still names the retired
+`dkj-claude-plugins` marketplace, the same way it already rewrote a retired extension import beside it.
+Before, the dry run said `[keep]` and the repo silently loaded no constitution (#3883).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer that adopted before the `dkj-marketplace` rename gets its constitution back on the next
+`adopt-workflow-folder -Apply`, and the session check now warns about the dead line until then.
+
+**Score:** 2
 
 #### Pull Request
 
 adopt-workflow-folder rewrites a constitution import on the retired marketplace path
-
