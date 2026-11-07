@@ -41,17 +41,28 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-BranchFileLegacyNames` drops its empty rows at the source, in both byte-identical copies of `entry-scaffold-lib.ps1`
 
 ### TEST
 
+- [x] `branch-document-path.tests.ps1` holds an unmoved tree's legacy list to no empty entry and binds it the way `new-branch.ps1` does: 2 failed without the fix, 55 of 55 passed with it
+
 ### DEPLOY: fix/3881-legacy-names-empty-entry
 
-**Score:**
+`new-branch` writes the branch document again in a repo that has not moved to `.dkj/dkj-policy/` yet. There
+`Get-BranchFileLegacyNames` returned an empty row (`PolicyFolderPerBranch` is `''` by design in an unmoved
+repo), and `new-branch.ps1` binds that list to a Mandatory `[string[]] -Legacy`, which refuses an empty
+element: the branch was created and the run died before its document (#3881). The list now drops empty rows
+at its one source, and `branch-document-path.tests.ps1` pins it against an unmoved fixture.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer still on the root `dkj-policy/` folder could not start a branch through `new-branch` on v6.10.0:
+the branch appeared and its document did not. After this release it works without moving the folder first.
+
+**Score:** 4
 
 #### Pull Request
 
