@@ -46,10 +46,11 @@
 - [x] `Get-OrphanRemovalPlan` in `tidy-lib.ps1`: per vanished folder, act only on a proven-present parent; per record, refuse `managed`, an unknown scope, or an id that does not split.
 - [x] Lane 8 in `tidy-machine.ps1` runs the uninstalls with `CLAUDE_PROJECT_DIR` and the working directory on the folder, then removes it through the one-argument `Directory.Delete` (empty only); `-DryRun` and `-UserHomeOverride` keep the handover.
 - [x] Skill page and script header: lane 8 now removes, and why.
+- [x] Review fixes: names held to `[A-Za-z0-9._-]` with no leading dash and the path must be rooted (Sebastian); `Push-Location` inside the `try`, a failed uninstall handed over again, every left-standing folder counted in the lane tally (Victor).
 
 ### TEST
 
-- [x] `tidy-lib.tests.ps1`: the plan's cases (acting folder, gone parent, unprobed parent, managed, unknown scope, unsplittable id, drive root) and the structural asserts on the one directory delete; 137 passed.
+- [x] `tidy-lib.tests.ps1`: the plan's cases (acting folder, gone parent, unprobed parent, managed, unknown scope, unsplittable id, drive root) and the structural asserts on the one directory delete, hostile names and a relative path; 140 passed.
 - [x] `tidy-machine -MachineOnly -DryRun` on this machine: lane 8 renders, nothing found.
 
 ### DEPLOY: feat/3862-tidy-lane8-removes-records

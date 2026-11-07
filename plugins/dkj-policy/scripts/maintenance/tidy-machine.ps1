@@ -671,6 +671,7 @@ if ($runMachine) {
         foreach ($plan in $plans) {
             $folder = [string]$plan.ProjectPath
             $acted = $false
+            $failed = @()
             if ($plan.Act -and $mayAct) {
                 # ONE SEQUENCE PER VANISHED FOLDER (#3751), run rather than printed since #3862:
                 # `claude plugin uninstall` takes no path and picks the record from the directory it runs
@@ -687,9 +688,11 @@ if ($runMachine) {
                 if ($created) {
                     $acted = $true
                     $prevProj = $env:CLAUDE_PROJECT_DIR
-                    $env:CLAUDE_PROJECT_DIR = $folder
-                    Push-Location -LiteralPath $folder
+                    $pushed = $false
                     try {
+                        $env:CLAUDE_PROJECT_DIR = $folder
+                        Push-Location -LiteralPath $folder
+                        $pushed = $true
                         foreach ($o in @($plan.Removable)) {
                             $r = Invoke-NativeCapture -FilePath 'claude' -Arguments @('plugin', 'uninstall', "$($o.Plugin)@$($o.Marketplace)", '--scope', ([string]$o.Scope)) -Utf8
                             $label = "$(Format-SuspectToken -Value ([string]$o.Id)) --scope $(Format-SuspectToken -Value ([string]$o.Scope))"
@@ -697,13 +700,14 @@ if ($runMachine) {
                                 $removed8++
                                 Write-Item "    removed: $label" 'Green'
                             } else {
-                                $reported8++
+                                # Handed over below with the refused records, so the reader gets the line.
+                                $failed += $o
                                 Write-Item "    FAILED ($(Get-NativeExitLabel -Capture $r)): $label" 'Red'
                                 foreach ($line in @($r.Output)) { Write-Item "      $(Format-SafeProseToken -Value ([string]$line))" 'DarkGray' }
                             }
                         }
                     } finally {
-                        Pop-Location
+                        if ($pushed) { Pop-Location }
                         [Environment]::SetEnvironmentVariable('CLAUDE_PROJECT_DIR', $prevProj, 'Process')
                     }
                     # NEVER RECURSIVE: the folder goes only while it is still empty. Measured (#3862) the
@@ -712,18 +716,19 @@ if ($runMachine) {
                         # The ONE-argument Directory.Delete, deliberately: it refuses a folder that is not
                         # empty, so even a race between the check above and this line cannot take content.
                         try { [System.IO.Directory]::Delete($folder) } catch {
+                            $reported8++
                             Write-Item "    the recreated folder could not be removed: $(Format-SafeProseToken -Value $_.Exception.Message)" 'Red'
                         }
                     } else {
-                        $reportedTotal++
+                        $reported8++
                         Write-Item "    the recreated folder is not empty any more, so it was left standing: $(Get-DisplayPath $folder)" 'Red'
                     }
                 }
             }
 
             # WHAT IS HANDED OVER, as before #3862: every record of a folder this run did not act on, and
-            # the records an acting folder still refused (no name, scope managed or unknown).
-            $handOver = if ($acted) { @($plan.Reported) } else { @($plan.Removable) + @($plan.Reported) }
+            # the records an acting folder still refused (no name, scope managed or unknown) or failed to uninstall.
+            $handOver = @(if ($acted) { @($failed) + @($plan.Reported) } else { @($plan.Removable) + @($plan.Reported) })
             if ($handOver.Count -eq 0) { continue }
             foreach ($o in $handOver) {
                 $reported8++

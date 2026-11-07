@@ -250,6 +250,18 @@ $rootPlan = @(Get-OrphanRemovalPlan -Orphans @([pscustomobject]@{ Id = 'r@m'; Pr
 Assert-True (-not $rootPlan[0].Act) 'a drive root has no parent and is never recreated'
 Assert-Equal 0 @(Get-OrphanRemovalPlan -Orphans @()).Count 'no orphans, no plan'
 
+$hostile = @(
+    [pscustomobject]@{ Id = '--x@m';     ProjectPath = 'C:\work\h'; Plugin = '--x';    Marketplace = 'm'; Scope = 'project' }
+    [pscustomobject]@{ Id = 'a&calc@m';  ProjectPath = 'C:\work\h'; Plugin = 'a&calc'; Marketplace = 'm'; Scope = 'project' }
+    [pscustomobject]@{ Id = 'ok@m|x';    ProjectPath = 'C:\work\h'; Plugin = 'ok';     Marketplace = 'm|x'; Scope = 'project' }
+)
+$hPlan = @(Get-OrphanRemovalPlan -Orphans $hostile -ParentExists @{ 'C:\work' = $true })
+Assert-True (-not $hPlan[0].Act) 'a leading dash or a shell metacharacter in a name never reaches claude'
+Assert-Equal 3 @($hPlan[0].Reported).Count 'and every such record is reported instead'
+
+$relPlan = @(Get-OrphanRemovalPlan -Orphans @([pscustomobject]@{ Id = 'r@m'; ProjectPath = 'rel\gone'; Plugin = 'r'; Marketplace = 'm'; Scope = 'project' }) -ParentExists @{ 'rel' = $true })
+Assert-True (-not $relPlan[0].Act) 'a relative recorded path never acts, even with its parent probed present'
+
 # --- 6b. Records under a RETIRED plugin name (#1773) ----------------------------------------------
 Write-Host '-- 6b. retired-name install records --' -ForegroundColor Cyan
 

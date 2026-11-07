@@ -416,8 +416,11 @@ function Get-OrphanRemovalPlan {
         leaf. So a folder acts only when its parent is PROVEN present; a parent absent from the table, or
         proven absent, keeps the whole folder on report, exactly as before #3862.
 
+        A RELATIVE PATH NEVER ACTS either: it would be recreated relative to wherever the run stands.
+
         PER RECORD, three more refusals, each keeping that record on report:
-          - an id that did not split into plugin@marketplace: there is no name to uninstall;
+          - an id that did not split into plugin@marketplace, or a half outside [A-Za-z0-9._-] or
+            starting with '-': there is no safe name to pass to `claude`;
           - scope 'managed': an administrator's record, never this command's to remove;
           - any scope this lib does not know (not user, project or local): an unknown is not a licence.
 
@@ -448,7 +451,12 @@ function Get-OrphanRemovalPlan {
 
         $act = $false
         $reason = ''
-        if (-not $parent) {
+        $rooted = $false
+        try { $rooted = [System.IO.Path]::IsPathRooted($path) } catch { $rooted = $false }
+        if (-not $rooted) {
+            # A relative path would be probed, recreated and entered relative to wherever the run stands.
+            $reason = 'the recorded path is not absolute -- reported, not acted on'
+        } elseif (-not $parent) {
             $reason = 'the folder has no parent to probe -- a drive or share root is never recreated'
         } elseif (-not $ParentExists.ContainsKey($parent)) {
             $reason = 'its parent folder was not probed -- reported, not acted on'
@@ -461,7 +469,11 @@ function Get-OrphanRemovalPlan {
         $removable = @()
         $reported = @()
         foreach ($o in @($group.Group)) {
-            $ok = $act -and $o.Plugin -and $o.Marketplace -and ($knownScopes -contains ([string]$o.Scope).ToLowerInvariant())
+            # NAMES ARE HELD TO [A-Za-z0-9._-] AND MAY NOT START WITH '-' (Sebastian, #3862): they reach
+            # `claude` as arguments, and where that resolves to a .cmd shim, cmd.exe would read a
+            # metacharacter in them, while a leading dash would read as an option.
+            $nameOk = { param($n) ([string]$n) -match '^[A-Za-z0-9._][A-Za-z0-9._-]*$' }
+            $ok = $act -and (& $nameOk $o.Plugin) -and (& $nameOk $o.Marketplace) -and ($knownScopes -contains ([string]$o.Scope).ToLowerInvariant())
             if ($ok) { $removable += $o } else { $reported += $o }
         }
 
