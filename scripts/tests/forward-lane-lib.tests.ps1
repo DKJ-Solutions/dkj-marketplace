@@ -313,6 +313,23 @@ Assert-True ($ship -match '(?s)function Wait-ForwardedCertificate.*?Get-Cancelle
 # disagree would gate the merge on a document the PR does not contain, which nothing downstream reports.
 Assert-True ($ship -match "could not be fast-forwarded") 'a local ref that will not fast-forward refuses'
 
+# A PR MERGED BY ANOTHER PATH DURING THE LAP IS NOT A REFUSAL (issue #3868). Measured on PR #3867: the
+# merge-on-green arm landed it mid-lap, update-branch answered '422 head ref does not exist', and the run
+# printed "NOT merged, NOT folded" about a PR that had merged and folded.
+$lapAt = $ship.IndexOf('$lap = Get-ForwardLapDecision')
+$mergedBeforeForwardAt = $ship.IndexOf('if (Test-PrMergedNow -Pr "$pr" -Repo $repo) {', $lapAt)
+$forwardIfAt = $ship.IndexOf('if ($lap.Forward) {', $lapAt)
+Assert-True ($lapAt -ge 0 -and $mergedBeforeForwardAt -gt $lapAt -and $mergedBeforeForwardAt -lt $forwardIfAt) 'step 3b asks whether the PR merged elsewhere before it forwards or refuses (#3868)'
+$updateOutcomeAt = $ship.IndexOf('$updateOutcome = Get-UpdateBranchOutcome')
+$mergedAfterFailAt = $ship.IndexOf("if (`$updateOutcome.Outcome -ne 'forwarded' -and (Test-PrMergedNow", $updateOutcomeAt)
+$stillStaleAt = $ship.IndexOf('The certificate is still stale, so nothing has been merged.')
+Assert-True ($mergedAfterFailAt -gt $updateOutcomeAt -and $mergedAfterFailAt -lt $stillStaleAt) '...and again when update-branch fails, before the "nothing has been merged" refusal'
+$step4At = $ship.IndexOf('# --- Step 4: merge')
+$guardAt = $ship.IndexOf('if (-not $prMergedElsewhere -and (Test-PrMergedNow')
+Assert-True ($guardAt -ge 0 -and $guardAt -lt $step4At) 'a last read before step 4 covers a merge the lap never saw'
+Assert-True ($ship -match '\$shipCycleText\s+= if \(\$prMergedElsewhere\) \{ \$null \}') 'step 4''s two gates are skipped for a PR already merged'
+Assert-True ($ship -match '(?s)\$merge = if \(\$prMergedElsewhere\) \{\s*\[pscustomobject\]@\{ ExitCode = 0') '...and so is the merge call, while the read-back still reads the state'
+
 Write-Host ''
 Write-Host 'The lib is ASCII and mirrored' -ForegroundColor Cyan
 
