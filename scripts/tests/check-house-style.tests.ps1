@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for the house-style gate (#3035): plugins/dkj-policy/dkj-solutions/scripts/lint/check-house-style.ps1,
+    Tests for the house-style gate (#3035): plugins/dkj-policy/extensions/dkj-solutions/scripts/lint/check-house-style.ps1,
     its rules in scripts/lib/house-style-rules.ps1 beside it, and the session check in hooks/.
 
 .DESCRIPTION
@@ -16,7 +16,7 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Plugin   = Join-Path $RepoRoot 'plugins\dkj-policy\dkj-solutions'
+$Plugin   = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\dkj-solutions'
 $Gate     = Join-Path $Plugin 'scripts\lint\check-house-style.ps1'
 $Hook     = Join-Path $Plugin 'hooks\house-style-sessioncheck.ps1'
 $Skill    = Join-Path $Plugin 'skills\dkj-brandbook\SKILL.md'
@@ -57,7 +57,7 @@ Assert-True (Test-Path -LiteralPath (Join-Path $Vendored 'README.md')) 'the READ
 # branch that changes the stylesheet no longer hand-edits the cell -- the cut writes it from the blob it tags. So
 # what this suite holds is that the cut is told to: both files are under Checksums of the skill page's pin.
 . (Join-Path $RepoRoot 'scripts\repo-config.ps1')
-$skillPins = @(Get-ReleaseVersionPins | Where-Object { $_.Path -eq 'plugins/dkj-policy/dkj-solutions/skills/dkj-brandbook/SKILL.md' })
+$skillPins = @(Get-ReleaseVersionPins | Where-Object { $_.Path -eq 'plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/SKILL.md' })
 Assert-Equal 1 $skillPins.Count 'the cut repoints the skill page (Get-ReleaseVersionPins)'
 foreach ($leaf in 'house-style.css', 'house-theme.js') {
     Assert-True (@($skillPins | ForEach-Object { $_.Checksums }) -contains "plugins/dkj-policy/assets/dkj-brandbook/$leaf") "...and writes the checksum of the canonical $leaf beside its URL"
@@ -75,7 +75,7 @@ Assert-Equal 'dkj-brandbook,house-style' ((Get-HouseStyleSkillDirNames) -join ',
 
 Write-Host '-- group 1b: the product layer, pinned beside the core (#3831)' -ForegroundColor Cyan
 Assert-True ($pin.Hashes.ContainsKey('house-product.css')) 'the skill page pins the product layer too'
-Assert-True (@($skillPins | ForEach-Object { $_.Checksums }) -contains 'plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/house-product.css') '...and the cut writes the checksum of the canonical house-product.css beside its URL'
+Assert-True (@($skillPins | ForEach-Object { $_.Checksums }) -contains 'plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css') '...and the cut writes the checksum of the canonical house-product.css beside its URL'
 $newRow = '| `{0}` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.0.0/plugins/dkj-policy/{2}/{0}` | `{1}` |'
 $newPage = ($newRow -f 'house-style.css', ('a' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-theme.js', ('b' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-product.css', ('c' * 64), 'dkj-solutions/assets/dkj-brandbook-product')
 $newPin = Get-HouseStylePin -SkillText $newPage
@@ -83,7 +83,7 @@ Assert-True ($newPin.Tag -eq 'v7.0.0' -and $newPin.Hashes['house-product.css'] -
 $midPin = Get-HouseStylePin -SkillText $midPage
 Assert-True ($null -ne $midPin -and -not $midPin.Hashes.ContainsKey('house-product.css')) 'a page at a tag before the split, with no product row, is still a complete pin of the two files it shipped'
 Assert-True ($null -eq (Get-HouseStylePin -SkillText (($newRow -f 'house-style.css', ('a' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-product.css', ('c' * 64), 'dkj-solutions/assets/dkj-brandbook-product')))) 'the product row does not stand in for a missing core row'
-Assert-Equal 'plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/house-product.css' (Get-HouseStyleCanonicalPath -Leaf 'house-product.css') 'the source repo''s canonical product layer is the dkj-solutions plugin''s'
+Assert-Equal 'plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css' (Get-HouseStyleCanonicalPath -Leaf 'house-product.css') 'the source repo''s canonical product layer is the dkj-solutions plugin''s'
 Assert-Equal 'plugins/dkj-policy/assets/dkj-brandbook/house-theme.js' (Get-HouseStyleCanonicalPath -Leaf 'house-theme.js') 'and the core files stay dkj-policy''s'
 
 # The page at the tag (#3588): taken only when it pins the same tag the installed page names.
@@ -435,8 +435,8 @@ Assert-True (Test-HouseStyleSourceRepo -RepoRoot $RepoRoot) 'this repo is read a
 # The reusable workflow reads the pin at the tag the page names (#3148), not at the ref it runs from.
 $wf = [System.IO.File]::ReadAllText((Join-Path $RepoRoot '.github\workflows\reusable-house-style.yml'))
 Assert-True ($wf -match 'ref: \$\{\{ steps\.pin\.outputs\.tag \}\}') 'the reusable gate checks out the skill page at the pinned tag'
-Assert-True ($wf -match "\.workflow-pin/plugins/dkj-policy/dkj-solutions/skills/dkj-brandbook/SKILL\.md'" -and $wf -match 'check-house-style\.ps1 -SkillPath \$skill') '...and hands that page to the gate'
-Assert-True ($wf -match 'sparse-checkout: \|\s+plugins/dkj-policy/dkj-solutions/skills/dkj-brandbook\s+plugins/dkj-policy/dkj-solutions/skills/house-style') '...fetching the pre-rename skill folder too, since a tag cut before the rename carries the page there'
+Assert-True ($wf -match "\.workflow-pin/plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/SKILL\.md'" -and $wf -match 'check-house-style\.ps1 -SkillPath \$skill') '...and hands that page to the gate'
+Assert-True ($wf -match 'sparse-checkout: \|\s+plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook\s+plugins/dkj-policy/extensions/dkj-solutions/skills/house-style') '...fetching the pre-rename skill folder too, since a tag cut before the rename carries the page there'
 
 Write-Host ''
 # A broken fixture fails the run even when every assert passed (issue #1635).

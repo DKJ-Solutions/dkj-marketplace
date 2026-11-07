@@ -3375,7 +3375,7 @@ Write-Coverage -Category 'skill-command' -Checked $skillCmdChecked `
 # rest of the name saying whose it is, and Dave kept that directory name through #886 (decision A on that
 # issue). #1467 renamed it to plugins/dkj-policy/ and lifted the prime ministry's own files to its root,
 # so the directory now names the GOVERNMENT: 'dkj-policy' at plugins\dkj-policy, and every other ministry
-# one level inside it ('bwj-development' at plugins\dkj-policy\bwj-development). That is what the anchored
+# one level inside it ('bwj-development' at plugins\dkj-policy\extensions\bwj-development). That is what the anchored
 # '^plugins\\dkj-policy($|\\)' below says, and the '($|\\)' is load-bearing rather than tidy: a bare
 # prefix would also accept a sibling directory merely beginning with the same characters, which is a
 # different plugin family and not a ministry.
@@ -3410,7 +3410,7 @@ Write-Coverage -Category 'skill-command' -Checked $skillCmdChecked `
 # THE POLICY EXTENSIONS ARE CLASSIFIED BY LIST SINCE OCTOBER 4, 2026 (#2788), when 'dkj-policy-bwj' became
 # 'bwj-development' and 'dkj-policy-dkjs' became 'dkj-solutions'. Each is named after its organisation, so
 # no name shape covers both. Get-PolicyExtensionList (claude-md-import-lib.ps1) is the one list the import
-# machinery already reads, and a listed extension is held to plugins/dkj-policy/ like any other ministry.
+# machinery already reads, and a listed extension is held to plugins/dkj-policy/extensions/ since #3871.
 . (Join-Path $PSScriptRoot '..\lib\claude-md-import-lib.ps1')
 $policyExtensions = @(Get-PolicyExtensionList)
 $kindChecked = 0
@@ -3422,8 +3422,8 @@ foreach ($p in $publishedPlugins) {
             Add-Error "[plugin-kind] '$($p.Name)' is one of this family's teams by its name but its source is '$rel' -- 'dkj-subagents-*' belongs under plugins/dkj-subagents/."
         }
     } elseif ($policyExtensions -ccontains $p.Name) {
-        if ($rel -notmatch '^plugins\\dkj-policy\\') {
-            Add-Error "[plugin-kind] '$($p.Name)' is a dkj-policy extension (Get-PolicyExtensionList) but its source is '$rel' -- an extension belongs one level inside plugins/dkj-policy/."
+        if ($rel -notmatch '^plugins\\dkj-policy\\extensions\\[^\\]+$') {
+            Add-Error "[plugin-kind] '$($p.Name)' is a dkj-policy extension (Get-PolicyExtensionList) but its source is '$rel' -- an extension belongs one level inside plugins/dkj-policy/extensions/ (#3871)."
         }
     } elseif ($p.Name -like '*-policy' -or $p.Name -like '*-policy-*') {
         if ($rel -notmatch '^plugins\\dkj-policy($|\\)') {
@@ -5047,7 +5047,7 @@ Write-Coverage -Category 'check-list' -Checked $clChecked `
 # Dave's chosen repair actually needs -- and it would put a CLI on this gate's critical path, in CI and in
 # every consumer, for an answer thirty lines of PowerShell give offline.
 #
-# A NESTED PLUGIN ROOT IS NOT ITS PARENT'S CONTENT. plugins/dkj-policy/bwj-development sits inside
+# A NESTED PLUGIN ROOT IS NOT ITS PARENT'S CONTENT. plugins/dkj-policy/extensions/bwj-development sits inside
 # plugins/dkj-policy, so a plain recursive scan would credit the child's files to the parent and demand the
 # parent declare them. Neither ships an agent def today, so nothing bites -- which is exactly why it is
 # handled now rather than after it does.

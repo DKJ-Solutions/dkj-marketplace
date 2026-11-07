@@ -552,7 +552,7 @@ function Format-ProductHouseStylePageHtml {
         [AllowEmptyString()][string]$Token = ''
     )
     $base = '/marketplace/dkj-policy/dkj-brandbook'
-    $foot = 'Read from this checkout''s <code>plugins/dkj-policy/assets/dkj-brandbook/specimens.html</code> and the product layer''s <code>plugins/dkj-policy/dkj-solutions/assets/dkj-brandbook-product/specimens.html</code> on every request, so it is the tree, not the installed release.'
+    $foot = 'Read from this checkout''s <code>plugins/dkj-policy/assets/dkj-brandbook/specimens.html</code> and the product layer''s <code>plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/specimens.html</code> on every request, so it is the tree, not the installed release.'
     $crumbs = @(@{ Label = 'Marketplace'; Href = '/marketplace' }, @{ Label = 'dkj-policy'; Href = '/marketplace/dkj-policy' })
     $split = if ($ReadError) { $null } else { Split-HouseStyleSpecimens -Body $Body }
     $tokens = if ($split) { @($split.Sections | Where-Object { $_.Slug -ceq 'tokens' }) | Select-Object -First 1 } else { $null }

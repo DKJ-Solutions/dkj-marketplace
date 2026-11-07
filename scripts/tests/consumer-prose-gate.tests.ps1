@@ -717,7 +717,7 @@ try {
     Write-Host ''
     Write-Host 'extension import (#2538)'
     $constLine = "@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-policy/CLAUDE.md"
-    $extLine = "@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-policy/bwj-development/CLAUDE.md"
+    $extLine = "@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-policy/extensions/bwj-development/CLAUDE.md"
     $bwjSettings = '{ "enabledPlugins": { "dkj-policy@dkj-marketplace": true, "bwj-development@dkj-marketplace": true } }'
 
     $bwjMissing = New-Tree -Label 'bwjmissing'
@@ -725,7 +725,7 @@ try {
     Set-Text -Dir $bwjMissing -Rel '.claude/settings.json' -Text $bwjSettings
     $r = Invoke-Script -Dir $bwjMissing
     Assert-True ($r.Code -eq 0 -and $r.Out -match '\[WARNING\] this repo enables bwj-development, but its CLAUDE\.md does not import the extension' -and
-                 $r.Out -match 'adopt-workflow-folder\.ps1' -and $r.Out -match [regex]::Escape('/plugins/dkj-policy/bwj-development/CLAUDE.md')) `
+                 $r.Out -match 'adopt-workflow-folder\.ps1' -and $r.Out -match [regex]::Escape('/plugins/dkj-policy/extensions/bwj-development/CLAUDE.md')) `
         'bwj enabled, no extension import -- a [WARNING] naming the adopter and the paste-ready line, still exit 0'
     $r = Invoke-Hook -Dir $bwjMissing
     Assert-True ($r.Code -eq 0 -and $r.Out -match 'does not import the extension') `
@@ -761,14 +761,14 @@ try {
 
     # Any dkj-policy extension, not bwj alone (#2697): one warning per enabled extension whose line is
     # missing, and none for an extension that is imported.
-    $dkjsLine = "@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-policy/dkj-solutions/CLAUDE.md"
+    $dkjsLine = "@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-policy/extensions/dkj-solutions/CLAUDE.md"
     $bothSettings = '{ "enabledPlugins": { "dkj-policy@dkj-marketplace": true, "bwj-development@dkj-marketplace": true, "dkj-solutions@dkj-marketplace": true } }'
     $dkjsMissing = New-Tree -Label 'dkjsmissing'
     Set-Text -Dir $dkjsMissing -Rel 'CLAUDE.md' -Text "# Consumer`n`n$constLine"
     Set-Text -Dir $dkjsMissing -Rel '.claude/settings.json' -Text '{ "enabledPlugins": { "dkj-policy@dkj-marketplace": true, "dkj-solutions@dkj-marketplace": true } }'
     $r = Invoke-Script -Dir $dkjsMissing
     Assert-True ($r.Code -eq 0 -and $r.Out -match '\[WARNING\] this repo enables dkj-solutions, but its CLAUDE\.md does not import the extension' -and
-                 $r.Out -match [regex]::Escape('/plugins/dkj-policy/dkj-solutions/CLAUDE.md') -and $r.Out -notmatch 'enables bwj-development') `
+                 $r.Out -match [regex]::Escape('/plugins/dkj-policy/extensions/dkj-solutions/CLAUDE.md') -and $r.Out -notmatch 'enables bwj-development') `
         'dkjs enabled, no extension import -- a [WARNING] for dkjs, with its line, and none for bwj'
 
     $bothOneMissing = New-Tree -Label 'bothonemissing'
@@ -800,8 +800,8 @@ try {
     . (Join-Path $PSScriptRoot '..\lib\claude-md-import-lib.ps1')
     Assert-True ($r.Out.Contains((Get-RetiredExtensionRepair -Name 'dkj-policy-bwj' -Marketplace 'dkj-marketplace'))) `
         'a retired enabled id -- the repair is the shared sentence, with the marketplace from settings'
-    Assert-True ($r.Out -match '\[WARNING\] CLAUDE\.md imports the dkj-policy-bwj extension under its retired name' -and
-                 $r.Out -match [regex]::Escape('/plugins/dkj-policy/bwj-development/CLAUDE.md')) `
+    Assert-True ($r.Out -match '\[WARNING\] CLAUDE\.md imports the dkj-policy-bwj extension at a retired name or path' -and
+                 $r.Out -match [regex]::Escape('/plugins/dkj-policy/extensions/bwj-development/CLAUDE.md')) `
         'a retired import line -- a [WARNING] with the current line'
     Assert-True ($r.Out -match 'enables bwj-development, but its CLAUDE\.md does not import the extension') `
         'and the retired id still owes the current import, so the missing-line warning fires too'

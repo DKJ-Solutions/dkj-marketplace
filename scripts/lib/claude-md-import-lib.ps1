@@ -17,7 +17,12 @@
     'dkj-policy-<slug>' (#2697). The extensions are named after their organisation now (dkj-policy-bwj
     became bwj-development, dkj-policy-dkjs became dkj-solutions), so their names no longer share a
     shape. A new extension adds one entry to the list, and bwj-extension-import.tests.ps1 fails until
-    the list matches the plugins under plugins/dkj-policy/.
+    the list matches the plugins under plugins/dkj-policy/extensions/.
+
+    THE EXTENSIONS LIVE UNDER plugins/dkj-policy/extensions/ SINCE #3871 (Dave, November 7, 2026), so
+    the current line is '.../dkj-policy/extensions/<name>/CLAUDE.md'. A line at the old depth,
+    '.../dkj-policy/<name>/CLAUDE.md', names a path the marketplace clone no longer has: it is a retired
+    line exactly like one under a retired name, and it is detected and rewritten the same way.
 
     THE RETIRED NAMES ARE MAPPED, NOT FORGOTTEN (#2788). A consumer that adopted before the rename still
     enables the old id and still imports '.../dkj-policy/<old name>/CLAUDE.md', a path the marketplace
@@ -32,7 +37,7 @@
       * Get-PolicyExtensionList / Test-PolicyExtensionName / Get-PolicyExtensionNames /
         Get-ExtensionImportPattern -- which plugins are extensions, and the '@'-line pattern for one.
       * Get-RetiredPolicyExtensionNames / Get-RetiredExtensionImportPattern / Get-RetiredExtensionImports
-        -- the names #2788 retired, and the import lines that still carry them.
+        -- the names #2788 retired and the depth #3871 retired, and the import lines that still carry them.
       * Get-RetiredExtensionRepair -- the one repair sentence for an enabled id under a retired name.
       * Test-ConstitutionImported / Test-ExtensionImported -- is the line already in the '@'-import
         closure, judged on the rows Get-AlwaysOnDocuments returns.
@@ -55,10 +60,11 @@
 
 function Get-PolicyExtensionList {
     <#
-        The dkj-policy extensions, by name (#2788): every plugin under plugins/dkj-policy/ that extends the
-        constitution with a CLAUDE.md of its own. A list, because the names stopped sharing a prefix when
-        the extensions were named after their organisation. bwj-extension-import.tests.ps1 holds it equal
-        to the plugin folders under plugins/dkj-policy/, so a new extension cannot ship without an entry.
+        The dkj-policy extensions, by name (#2788): every plugin under plugins/dkj-policy/extensions/ (#3871)
+        that extends the constitution with a CLAUDE.md of its own. A list, because the names stopped sharing
+        a prefix when the extensions were named after their organisation. bwj-extension-import.tests.ps1
+        holds it equal to the plugin folders under plugins/dkj-policy/extensions/, so a new extension cannot
+        ship without an entry.
     #>
     return [string[]]@('bwj-development', 'dkj-solutions')
 }
@@ -162,34 +168,39 @@ function Get-ExtensionImportLine {
     #>
     param([Parameter(Mandatory)][string]$Extension, [string]$LibDir = $PSScriptRoot)
     if (-not (Test-PolicyExtensionName $Extension)) { throw "not a dkj-policy extension name: '$Extension'" }
-    return "@~/.claude/plugins/marketplaces/$(Get-DkjMarketplaceSegment -LibDir $LibDir)/plugins/dkj-policy/$Extension/CLAUDE.md"
+    return "@~/.claude/plugins/marketplaces/$(Get-DkjMarketplaceSegment -LibDir $LibDir)/plugins/dkj-policy/extensions/$Extension/CLAUDE.md"
 }
 
 function Get-ExtensionImportPattern {
     <# The regex Add-ClaudeMdImportLine's -ImportedPattern takes for one extension's line, under any marketplace name. #>
     param([Parameter(Mandatory)][string]$Extension)
     if (-not (Test-PolicyExtensionName $Extension)) { throw "not a dkj-policy extension name: '$Extension'" }
-    return "^\s*@\S*/dkj-policy/$Extension/CLAUDE\.md\s*$"
+    return "^\s*@\S*/dkj-policy/extensions/$Extension/CLAUDE\.md\s*$"
 }
 
 function Get-RetiredExtensionImportPattern {
     <#
-        The regex for an '@'-line that still imports one extension under its RETIRED name (#2788), for
-        Add-ClaudeMdImportLine's -ReplacePattern. Empty when the extension never had another name.
+        The regex for an '@'-line that still imports one extension at a RETIRED spelling, for
+        Add-ClaudeMdImportLine's -ReplacePattern: under a retired name (#2788), at either depth, or under
+        its current name at the depth #3871 retired ('.../dkj-policy/<name>/CLAUDE.md'). It never matches
+        the current line, which carries 'extensions/' before the current name.
     #>
     param([Parameter(Mandatory)][string]$Extension)
     if (-not (Test-PolicyExtensionName $Extension)) { throw "not a dkj-policy extension name: '$Extension'" }
     $retired = Get-RetiredPolicyExtensionNames
     $old = @($retired.Keys | Where-Object { $retired[$_] -ceq $Extension })
-    if ($old.Count -eq 0) { return '' }
-    return "^\s*@\S*/dkj-policy/($($old -join '|'))/CLAUDE\.md\s*$"
+    $alts = @("$Extension")
+    if ($old.Count -gt 0) { $alts += "(?:extensions/)?(?:$($old -join '|'))" }
+    return "^\s*@\S*/dkj-policy/(?:$($alts -join '|'))/CLAUDE\.md\s*$"
 }
 
 function Get-RetiredExtensionImports {
     <#
-        The rows of an always-on closure that import an extension under a RETIRED name (#2788), each as
-        Retired / Current / Path. Such a row names a path the marketplace clone no longer has, so it loads
-        nothing. Matched on the path tail, like Test-ExtensionImported.
+        The rows of an always-on closure that import an extension at a RETIRED spelling, each as
+        Retired / Current / Path: under a retired name (#2788), at either depth, or under its current name
+        at the depth #3871 retired. Such a row names a path the marketplace clone no longer has, so it
+        loads nothing. Matched on the path tail, like Test-ExtensionImported. Retired is the spelling the
+        row used ('dkj-policy-dkjs', or 'dkj-solutions' at the old depth).
     #>
     param([AllowNull()][AllowEmptyCollection()][object[]]$Documents)
     $retired = Get-RetiredPolicyExtensionNames
@@ -197,8 +208,13 @@ function Get-RetiredExtensionImports {
         if ($null -eq $d) { continue }
         $path = ([string]$d.Path) -replace '\\', '/'
         foreach ($old in @($retired.Keys)) {
-            if ($path -imatch "/dkj-policy/$old/CLAUDE\.md$") {
+            if ($path -imatch "/dkj-policy/(?:extensions/)?$old/CLAUDE\.md$") {
                 [pscustomobject]@{ Retired = $old; Current = $retired[$old]; Path = [string]$d.Path }
+            }
+        }
+        foreach ($ext in @(Get-PolicyExtensionList)) {
+            if ($path -imatch "/dkj-policy/$ext/CLAUDE\.md$") {
+                [pscustomobject]@{ Retired = $ext; Current = $ext; Path = [string]$d.Path }
             }
         }
     }
@@ -222,7 +238,7 @@ function Test-ConstitutionImported {
 }
 
 function Test-ExtensionImported {
-    <# Test-ConstitutionImported's rule, for one extension's tail '.../dkj-policy/<extension>/CLAUDE.md'. #>
+    <# Test-ConstitutionImported's rule, for one extension's tail '.../dkj-policy/extensions/<extension>/CLAUDE.md' (#3871). #>
     param(
         [Parameter(Mandatory)][string]$Extension,
         [AllowNull()][AllowEmptyCollection()][object[]]$Documents
@@ -230,7 +246,7 @@ function Test-ExtensionImported {
     if (-not (Test-PolicyExtensionName $Extension)) { throw "not a dkj-policy extension name: '$Extension'" }
     foreach ($d in @($Documents)) {
         if ($null -eq $d) { continue }
-        if ((([string]$d.Path) -replace '\\', '/') -imatch "/dkj-policy/$Extension/CLAUDE\.md$") { return $true }
+        if ((([string]$d.Path) -replace '\\', '/') -imatch "/dkj-policy/extensions/$Extension/CLAUDE\.md$") { return $true }
     }
     return $false
 }

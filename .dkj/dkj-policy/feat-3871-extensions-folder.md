@@ -39,19 +39,56 @@
 
 ### PLAN
 
+- [x] Dave chose (November 7, 2026, on #3871) to build this on its own now rather than wait for a bundled
+  import-line change. Both stay separate plugins; only the folder grouping changes, and plugin ids do not.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `git mv` both extension folders under `plugins/dkj-policy/extensions/`; `marketplace.json` sources follow.
+- [x] Every path citation outside the release history repointed (scripts, tests, workflows, lenses, READMEs,
+  the root `CLAUDE.md` import); release-history files keep their text and only get their relative links
+  repointed so the link gate holds. Measured-history comments keep the path they measured.
+- [x] Admin URLs (`/marketplace/dkj-policy/<extension>`) are unchanged: they are addresses, not paths.
+- [x] `build-house-palette.ps1` climbs one level more to the core brand book.
+- [x] The house-style pin reads both depths: `Get-HouseStylePin` accepts the product URL at either depth,
+  `Get-HouseStyleTagPin` fetches a pinned tag's page at either depth, and the reusable workflow sparse-checks
+  out and picks from both, because a pinned tag cut before this move carries the old path.
+- [x] `claude-md-import-lib.ps1` (three byte-identical copies): the current import line names
+  `.../dkj-policy/extensions/<name>/CLAUDE.md`; a line at the old depth counts as retired, so adopt rewrites
+  it in place and `consumer-prose-sessioncheck` warns about it. Its warning and adopt's messages now say
+  "a retired name or path".
+- [x] The `[plugin-kind]` lint holds an extension to `plugins/dkj-policy/extensions/<name>`.
+- [x] The `adopt-dkj-policy` skill page names the new line and the old-depth rewrite.
 
 ### TEST
 
+- [x] Lint `check-plugin-integrity.ps1`: 0 errors.
+- [x] `bwj-extension-import.tests.ps1` gains old-depth asserts (pattern, not-imported, retired row) and an
+  end-to-end adopt rewrite; it and `dev-pages`, `consumer-dashboard`, `consumer-prose-gate`,
+  `adopt-workflow-folder`, `check-house-style`, `house-palette`, `cut-release-drive`, `shared-scripts` and
+  the other touched suites pass on their own.
+
 ### DEPLOY: feat/3871-extensions-folder
 
-**Score:**
+The two `dkj-policy` extension plugins, `bwj-development` and `dkj-solutions`, now sit together under
+`plugins/dkj-policy/extensions/` (#3871). They stay two separate plugins with the same ids, so
+`.claude/settings.json` needs nothing. In this repo, every path, test and workflow follows the move, and the
+house-style gate still reads a brand-book pin from a tag cut before it.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+**Action needed in every repo that enables `bwj-development` or `dkj-solutions`.** Your `CLAUDE.md` imports
+the extension by its path in the marketplace clone, and that path moved: the old line
+`@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-policy/<extension>/CLAUDE.md` loads nothing
+after this release, so the extension's rules quietly drop out of context. After updating the plugins
+(`update-plugins`, which refreshes the marketplace clone too), run the `adopt-dkj-policy` skill's
+`adopt-workflow-folder.ps1 -Apply`, or in a BWJ store repo the `adopt-bwj-development` skill: it rewrites the
+line in place to `.../plugins/dkj-policy/extensions/<extension>/CLAUDE.md`. Until you do, the session-start
+check warns about the old line and prints the new one.
+
+**Score:** 5
 
 #### Pull Request
 

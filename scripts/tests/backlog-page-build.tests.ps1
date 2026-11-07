@@ -25,7 +25,7 @@
 $ErrorActionPreference = 'Stop'
 
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\bwj-development'
+$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development'
 $LibPath    = Join-Path $PluginRoot 'scripts\lib\backlog-page-rules.ps1'
 $ScriptPath = Join-Path $PluginRoot 'scripts\task\build-backlog-page.ps1'
 $Fixture    = Join-Path ([System.IO.Path]::GetTempPath()) "backlog-page-build-fixture-$PID-$([guid]::NewGuid().ToString('n'))"

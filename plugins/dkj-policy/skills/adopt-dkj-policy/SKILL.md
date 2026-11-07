@@ -324,8 +324,12 @@ keeps warning at session start while a line is missing or prose sits beside the 
 named after its organisation, such as `bwj-development` or `dkj-solutions`, and it ships a `CLAUDE.md` of
 its own. The two were named `dkj-policy-bwj` and `dkj-policy-dkjs` until
 [#2788](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2788): a repo still carrying an old
-name gets a session-start warning for each one, and this run rewrites an old import line in place. For each one your `.claude/settings.json` enables, the run puts
-`@~/.claude/plugins/marketplaces/<marketplace>/plugins/dkj-policy/<extension>/CLAUDE.md` directly below
+name gets a session-start warning for each one, and this run rewrites an old import line in place. The
+same holds for the path: the extensions moved under `plugins/dkj-policy/extensions/` in
+[#3871](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3871), so a line that still reads
+`.../plugins/dkj-policy/<extension>/CLAUDE.md` loads nothing, is warned about, and is rewritten in place
+too. For each one your `.claude/settings.json` enables, the run puts
+`@~/.claude/plugins/marketplaces/<marketplace>/plugins/dkj-policy/extensions/<extension>/CLAUDE.md` directly below
 the constitution import, on the same terms as above. An enable in your own user settings does not count,
 because it is not this repo's decision. The same hook warns once per enabled extension whose line is
 missing.

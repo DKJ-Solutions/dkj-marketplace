@@ -1005,7 +1005,7 @@ are still worth knowing:
 
 1. **The BWJ names are not a convention, they are code** — which is exactly why the reversal arrived as
    an inbound issue rather than as a label rename somebody typed.
-   `plugins/dkj-policy/bwj-development/templates/asana-mirror.ps1` (retired October 5, 2026, with the
+   `plugins/dkj-policy/extensions/bwj-development/templates/asana-mirror.ps1` (retired October 5, 2026, with the
    whole sweep that set the labels) held them as a literal
    (`$script:PrioLabels`), `Get-PrioLabelForScore` returned those exact strings from a score band, and
    `scripts/tests/bwj-development.tests.ps1` asserts every boundary from both sides. Unifying was an

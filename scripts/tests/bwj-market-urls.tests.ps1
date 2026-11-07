@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Regression tests for the shared BWJ market URL builder that bwj-development ships --
-    plugins/dkj-policy/bwj-development/scripts/lib/market-urls.ps1 (issue #1886, candidate 1).
+    plugins/dkj-policy/extensions/bwj-development/scripts/lib/market-urls.ps1 (issue #1886, candidate 1).
 
 .DESCRIPTION
     Dependency-free: no Pester needed, only PowerShell.
@@ -47,7 +47,7 @@
 $ErrorActionPreference = 'Stop'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$LibPath  = Join-Path $RepoRoot 'plugins\dkj-policy\bwj-development\scripts\lib\market-urls.ps1'
+$LibPath  = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development\scripts\lib\market-urls.ps1'
 
 # Test-FunctionDefined, for the export cases at the foot of this file. This repo routes every function
 # probe through it rather than through Get-Command (issue #1729), and its own gate refuses the old
