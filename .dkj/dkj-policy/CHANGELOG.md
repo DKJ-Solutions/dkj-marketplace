@@ -2,7 +2,40 @@
 
 ## [Unreleased]
 
-**4 / 4 minor entries** <!-- pending-tally -->
+**5 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3886-prescribed-branch-prefixes · 20261107-193225Z
+
+Every DKJ repo now uses the source's branch prefixes: `feat/` earns `feature`, `fix/` earns `bug`, `docs/`
+earns no label, and `chore/` is refused. The three `branch-info.ps1` records are `copy` instead of
+`decide`, and the script-contract session check reports a repo whose table differs, with the repair. It
+runs at every session start, so a repo with its own prefixes now sees one `[ERROR]` line until it adopts
+the shared table. In this repo nothing changes: its table already is the source's.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+If your `scripts/lib/branch-info.ps1` keeps its own prefixes (`data/`, `dossier/`, `chore/` and so on) or
+labels `docs/` as `documentation`, the session check now fails with a line naming the difference. Replace
+the table and the `Get-BranchInfo`, `Test-BranchName` and `Get-BranchTypes` functions with the text of
+those three records in the plugin's `blueprint/config-blueprint.json` (`adopt-config` will not overwrite a
+function you already have, and the blueprint's `Get-BranchInfo` calls `Get-BranchPrefix`, which it does not
+carry, so keep yours: [#3888](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3888)). Fold any pending changelog entry under a type the shared table does not have
+first, because the shared table produces only Feat, Fix, Docs and Chore. The cost is accepted: release
+notes no longer group by a domain type.
+
+**Score:** 3
+
+#### Pull Request
+
+Every DKJ repo uses the source's branch prefixes
+
+Plugins: bwj-development, dkj-policy, dkj-subagents-shopify
+
+[PR #3892](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3892)
+
+---
 
 ### DEPLOY: fix/3885-repoint-skips-comments · 20261107-192235Z
 
