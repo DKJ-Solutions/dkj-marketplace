@@ -501,6 +501,29 @@ try {
     Remove-Item -Recurse -Force -LiteralPath $mirrorFixture -ErrorAction SilentlyContinue
 }
 
+    # --- A copy record's text runs on its own (#3888) -----------------------------------------------
+    # adopt-config places a record's TEXT into a consumer that may have nothing else from this repo. The
+    # Get-BranchInfo text called Get-BranchPrefix, which no record carries, so a hand-built branch-info.ps1
+    # adopting it got a Get-BranchInfo that threw. Each branch-info.ps1 record is evaluated here in a
+    # scope holding only the records themselves -- exactly what a consumer adopting all of them has.
+    Write-Host "`n-- every branch-info.ps1 record runs from its own text (#3888) --" -ForegroundColor Cyan
+    $biRecs = @((Get-Content -LiteralPath $Artefact -Raw -Encoding UTF8 | ConvertFrom-Json).records |
+        Where-Object { $_.lib -eq 'scripts\lib\branch-info.ps1' -and $_.text })
+    Assert-True ($biRecs.Count -ge 3) "the blueprint carries branch-info.ps1's records ($($biRecs.Count))"
+    $standalone = & {
+        Set-StrictMode -Version Latest
+        try {
+            foreach ($r in $biRecs) { . ([scriptblock]::Create($r.text)) }
+            $i = Get-BranchInfo -Branch 'fix/x-y'
+            $n = Test-BranchName -Branch 'fix/x-y'
+            [pscustomobject]@{ Ok = $true; Prefix = $i.Prefix; Type = $i.Type; Valid = [bool]$n.IsValid; Error = '' }
+        } catch {
+            [pscustomobject]@{ Ok = $false; Prefix = ''; Type = ''; Valid = $false; Error = $_.Exception.Message }
+        }
+    }
+    Assert-True $standalone.Ok "the records evaluate and run with nothing else defined -- no call to a function no record carries ($($standalone.Error))"
+    Assert-Equal 'fix' $standalone.Prefix 'Get-BranchInfo derives the prefix from its own text'
+    Assert-Equal 'Fix' $standalone.Type 'and reads the table its own record carries'
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }
 }

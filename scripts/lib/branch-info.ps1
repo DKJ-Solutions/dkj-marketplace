@@ -81,7 +81,11 @@ function Get-BranchPrefix {
 
 function Get-BranchInfo {
     param([Parameter(Mandatory = $true)][string]$Branch)
-    $prefix = Get-BranchPrefix -Branch $Branch
+    # Get-BranchPrefix's rule, INLINED rather than called (#3888): this function's text is a 'copy'
+    # record in the config blueprint, and Get-BranchPrefix is not a record, so a consumer adopting this
+    # text without its own Get-BranchPrefix got a Get-BranchInfo that threw. Self-contained, the copied
+    # text runs whichever records a repo takes. Keep the two in step.
+    $prefix = if ($Branch -match '/') { ($Branch -split '/')[0] } else { ($Branch -split '-')[0] }
     $known  = $script:BranchPrefixTable.ContainsKey($prefix)
     [pscustomobject]@{
         Branch   = $Branch

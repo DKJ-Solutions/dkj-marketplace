@@ -365,14 +365,8 @@ function Get-SourceBranchBehaviour {
         if ($recs.Count -ne $want.Count) { return $null }
         return (& {
             Set-StrictMode -Off
-            # Get-BranchInfo calls Get-BranchPrefix, which is not a contract record and so is not in the
-            # blueprint's text: the same one-line rule the source's file carries, stated here so the
-            # evaluation can run.
-            function Get-BranchPrefix {
-                param([string]$Branch)
-                if ($Branch -match '/') { return ($Branch -split '/')[0] }
-                return ($Branch -split '-')[0]
-            }
+            # The record texts are self-contained since #3888 -- Get-BranchInfo derives its prefix inline
+            # rather than calling Get-BranchPrefix, which no record carries -- so they evaluate as shipped.
             foreach ($r in $recs) { . ([scriptblock]::Create($r.text)) }
             Get-BranchBehaviour
         })
