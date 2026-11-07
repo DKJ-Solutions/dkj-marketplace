@@ -39,21 +39,42 @@
 
 ### PLAN
 
+Dave, November 7, 2026: work never feels finished because nothing adds a day up. Paula plans the day in
+the morning (one goal, items with hours and a plan/go mode, strictly 6-8 h both ways) and closes it at the
+end from GitHub. The Admin page that shows it is #3860, a separate branch because it is a visible result.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-policy/hub/lib/dayplan-lib.ps1`: reading a plan, the band, the pace, matching, the texts
+- [x] `plugins/dkj-policy/hub/pages/day-plan.ps1`: -Context, -PlanFile [-Apply], -Add, -Close, -Week, -Override
+- [x] `plugins/dkj-policy/skills/day-plan/SKILL.md`, Paula's manual section and her description, the hub README row
+- [x] `scripts/tests/dayplan.tests.ps1`, in the pages group of `suite-groups.json`
 
 ### TEST
 
+- [x] The suite: 47 passed
+- [x] End to end against GitHub with a scratch state dir: -Context, the refusal under the band, an override, -Add refused over 8 h and accepted inside it, -Close, -Week
+- [ ] Review: Victor (code), Sebastian (security), Edith (copy)
+
 ### DEPLOY: feat/3859-day-plan-skill
 
-**Score:**
+A new `day-plan` skill and script in `dkj-policy`, with a test suite and Paula's day-rhythm section; nothing
+existing changes behaviour. The script keeps one day file per machine under `%LOCALAPPDATA%\dkj-hub\dayplan\`,
+outside any repo, and counts the work of both accounts a checkout can act and commit as.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+The owner's working day gets a beginning and an end. In the morning Paula proposes one day goal and the items
+for it, each with an hour estimate and a mode (plan first, or go), and she holds the day between 6 and 8
+hours: a thin day and an overfull one are both refused, and an addition during the day that does not fit is
+too. Overruling her takes a reason, which comes back at the close-out. In the evening the close-out reads
+GitHub, says what got done, what moves to tomorrow and what was extra, and ends with "You can close the day";
+on Friday the week does the same.
+
+**Score:** 3
 
 #### Pull Request
 
 Day plan skill: Paula's morning plan and day/week close-out
-

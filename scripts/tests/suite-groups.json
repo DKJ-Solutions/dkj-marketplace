@@ -235,6 +235,7 @@
                        "guards":  "the hub and its pages, the server that serves them, the hook that starts it and the live issue dashboard",
                        "suites":  [
                                       "consumer-dashboard.tests.ps1",
+                                      "dayplan.tests.ps1",
                                       "dev-pages.tests.ps1",
                                       "dev-preview-sessionstart.tests.ps1",
                                       "goals.tests.ps1",
