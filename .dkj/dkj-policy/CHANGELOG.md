@@ -2,7 +2,37 @@
 
 ## [Unreleased]
 
-**7 / 10 minor entries** <!-- pending-tally -->
+**8 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3873-rename-hub-to-admin · 20261107-164315Z
+
+The code now says *admin* where the screen already did (#3873). Admin's folder moved from
+`plugins/dkj-policy/hub/` to [`plugins/dkj-policy/apps/admin/`](../../plugins/dkj-policy/apps/admin/README.md),
+the first app under `apps/`; the identifiers (`Format-AdminCardLinkHtml`, `Get-AdminMenu`, ...), the
+`admin-processes-sessioncheck` hook, `check-admin-processes.ps1`, the per-checkout state file
+(`%TEMP%\dkj-repo-admin-*.json`) and the route `/admin` follow. Two names keep *hub* on purpose: the gist
+description `dkj-hub-airsquats` and the timing store's mutex, both shared with things outside this tree.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Nothing to do but update the plugin, in every checkout: the first session start copies the machine's state
+folder `%LOCALAPPDATA%\dkj-hub\` (the day plan, the airsquats banner) to `%LOCALAPPDATA%\dkj-admin\`, and a
+bookmark to `/hub` is redirected. Where you set `DKJ_HUB_AIRSQUATS_GIST` in your settings, rename it to
+`DKJ_ADMIN_AIRSQUATS_GIST`: the old name is still read for this release only.
+
+**Score:** 3
+
+#### Pull Request
+
+Rename the hub mechanism to admin
+
+Plugins: bwj-development, dkj-policy, dkj-solutions
+
+[PR #3878](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3878)
+
+---
 
 ### DEPLOY: feat/3871-extensions-folder · 20261107-154845Z
 
