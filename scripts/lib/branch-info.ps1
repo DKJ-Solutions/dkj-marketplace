@@ -56,9 +56,11 @@ $script:BranchTypeOrder = @('Feat', 'Fix', 'Docs', 'Chore')
 #
 # TEST-BranchName REFUSES IT OUTRIGHT, rather than the row merely going missing. Removing the row alone
 # would demote 'chore/' to an unknown prefix -- soft warn, proceed -- and a soft warn is what let it
-# through twelve times. THIS FILE IS REPO-OWNED and does not travel into the plugin: every consumer has
-# their own copy with their own table, so refusing it here states our rule without touching a consumer
-# who legitimately runs chore/ branches of their own.
+# through twelve times. THE TABLE IS THE SAME IN EVERY DKJ REPO SINCE NOVEMBER 7, 2026 (Dave, #3886):
+# the functions in this file are the shared source, adopted into a consumer from the config blueprint, so
+# the refusal here is the rule everywhere. A consumer whose table differs is a defect, and
+# check-script-contract reports it. (Until then this file was described as repo-owned, with every
+# consumer free to keep its own table and its own chore/ branches.)
 $script:BranchPrefixTable = @{
     feat  = @{ Label = 'feature';       Type = 'Feat' }
     fix   = @{ Label = 'bug';           Type = 'Fix' }

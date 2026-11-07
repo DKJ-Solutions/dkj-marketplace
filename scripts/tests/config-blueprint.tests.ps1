@@ -159,12 +159,12 @@ $grpRec = $contract | Where-Object { $_.Function -eq 'Get-ReleaseNotesGrouping' 
 Assert-Equal 'decide' $grpRec.Adopt 'Get-ReleaseNotesGrouping describes a TREE, not a way of working -- so it is proposed, never placed'
 Assert-Match 'releases/changelog' $grpRec.Returns 'and its Returns text names the tree the answer is read off, so a decider does not have to guess (the tier-0 directory renamed development -> changelog in #914; the assert follows the current name, because a decider compares it against a tree they have TODAY)'
 
-# branch-info.ps1 says of ITSELF that it is repo-owned and does not travel, and its refusal of 'chore/'
-# is written down as this repo's rule. Both records were classified 'copy' on the first pass; this
-# assert is what stops that returning.
-foreach ($fn in 'Get-BranchInfo', 'Test-BranchName') {
+# The branch-prefix table is the same in every DKJ repo (Dave, November 7, 2026, #3886), so the three
+# branch-info.ps1 records are 'copy'. They were 'decide' from #456 until then; this assert is what stops
+# that returning.
+foreach ($fn in 'Get-BranchInfo', 'Test-BranchName', 'Get-BranchTypes') {
     $rec = $contract | Where-Object { $_.Function -eq $fn }
-    Assert-Equal 'decide' $rec.Adopt "$fn stays repo-owned -- branch-info.ps1 declares itself so"
+    Assert-Equal 'copy' $rec.Adopt "$fn is the shared table -- every DKJ repo uses the source's, so it is placed, not proposed"
 }
 
 Write-Host "`n== the generated artefact ==" -ForegroundColor Cyan

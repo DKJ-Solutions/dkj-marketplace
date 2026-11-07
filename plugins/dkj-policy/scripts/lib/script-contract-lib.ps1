@@ -67,7 +67,7 @@ function Get-ScriptContract {
 # today ends in the DEFAULT the shared script falls back to and never in what the source chose or why --
 # which is the gap #456 was filed about.
 #
-# TEN ARE 'decide' AND SIX OF THEM WERE NOT ON THE ISSUE'S LIST, which named Get-ReservedRootMd,
+# TEN WERE 'decide' (EIGHT SINCE NOVEMBER 7, 2026, #3886) AND SIX OF THEM WERE NOT ON THE ISSUE'S LIST, which named Get-ReservedRootMd,
 # Get-ReleasePluginTier, Get-ReleaseConsumerBumps (then still named ...HighlightsBumps) and
 # Get-ReleaseMajorMinMinors. That list answered a neighbouring question -- which values a SCRIPT cannot
 # judge from the outside -- so it never mentioned
@@ -76,25 +76,28 @@ function Get-ScriptContract {
 # of all, where copying does not merely assert something false but points every gh call in the consumer
 # at the source repo.
 #
-# THE OTHER TWO WERE CLASSIFIED 'copy' FIRST AND THE REPO OVERRULED IT. Both branch-info.ps1 records
-# looked like the shared way of working -- a prefix table and a name validator. That file states the
-# opposite about itself in its own comments: it "is repo-owned and does not travel into the plugin:
-# every consumer has their own copy with their own table", and its refusal of 'chore/' is written down
-# as this repo's rule, deliberately phrased so it does not reach "a consumer who legitimately runs
-# chore/ branches of their own". Copying either would have imposed precisely what that sentence exists
-# to prevent. Recorded because it is the axis's own failure mode: a value can look portable and be
-# governed by a decision somebody already wrote down somewhere else.
+# THE OTHER TWO WERE CLASSIFIED 'copy' FIRST AND THE REPO OVERRULED IT -- AND THE OWNER OVERRULED THE REPO
+# ON NOVEMBER 7, 2026 (Dave, #3886). Both branch-info.ps1 records looked like the shared way of working --
+# a prefix table and a name validator. That file stated the opposite about itself in its own comments:
+# it 'is repo-owned and does not travel', and its refusal of 'chore/' was written down as this repo's
+# rule. That reading is REVERSED: every DKJ repo uses the SAME table as the source (feat -> feature,
+# fix -> bug, docs -> no label, 'chore/' refused), and a consumer whose table differs is a defect to fix,
+# not a local choice. The three records are 'copy' again, and check-script-contract REPORTS a table that
+# differs. Recorded because it is the axis's own failure mode in both directions: a value can look
+# portable and be governed by a decision written down elsewhere, and that decision can itself be
+# reversed -- the AdoptWhy of each record carries the dated amendment rather than a silent flip.
 $script:ContractRecords = @(
     @{ Lib = 'scripts\lib\branch-info.ps1'; Function = 'Get-BranchInfo';  Scripts = @('new-branch', 'open-pr');
-       Adopt = 'decide'; AdoptWhy = "branch-info.ps1 says of itself that it is repo-owned and does not travel: 'every consumer has their own copy with their own table'. The table is three rows of THIS repo's policy -- feat/fix/docs, and no release/ prefix because a release lands directly on the trunk here";
+       Adopt = 'copy'; AdoptWhy = "the branch-prefix table is the shared way of working: feat -> feature, fix -> bug, docs -> no label, three rows, and no release/ prefix because a release lands directly on the trunk. REVERSED, ISSUE #3886, NOVEMBER 7, 2026 -- amended rather than silently flipped. This record used to be 'decide', on the ground that branch-info.ps1 said of itself that it is repo-owned and does not travel ('every consumer has their own copy with their own table'). Dave decided that every DKJ repo uses the SAME table as the source, so a consumer whose table differs is a defect to fix rather than a local choice, and check-script-contract now reports it. ACCEPTED COST: a repo with domain prefixes (Dossier, Pijplijn, Data, ...) loses those changelog types and its release notes no longer group by domain; pending entries under an old type must be folded before the switch";
        Returns = "an object for a branch name with at least Prefix, Label and ChangelogType, derived from this repo's own branch-prefix table" },
     @{ Lib = 'scripts\lib\branch-info.ps1'; Function = 'Test-BranchName'; Scripts = @('new-branch');
-       Adopt = 'decide'; AdoptWhy = "the validation logic is generic, but one of its hard rejects is not: it refuses 'chore/' outright, which is this repo's rule and was written down as one that must NOT reach a consumer who legitimately runs chore/ branches. Copying the function would impose exactly that";
+       Adopt = 'copy'; AdoptWhy = "the validation logic is generic and so is its refusal of 'chore/': chore work lands directly on the trunk, so a chore BRANCH is a contradiction in every repo. REVERSED, ISSUE #3886, NOVEMBER 7, 2026 -- amended rather than silently flipped. This record used to be 'decide', because the 'chore/' refusal was written down as this repo's rule and one that must NOT reach a consumer who legitimately runs chore/ branches. Dave decided that no DKJ repo does, so copying the function imposes the shared rule and a consumer that still allows 'chore/' is reported";
        Returns = 'an object with IsValid plus a Reason when invalid; reject an empty name and the main branch' },
     # THE RECORD INBOUND #580 WAS FILED ABOUT, and it is the first one declared for a function nothing
     # CALLS directly: entry-scaffold-lib's Get-ReleaseChangeTypes PROBES for it with Get-Command and falls
-    # back to the canonical four. That probe is the right design -- branch-info.ps1 is repo-owned and does
-    # not travel, so 'absent' is the ordinary case in a consumer -- and it is precisely why the gap was
+    # back to the canonical four. That probe is the right design -- branch-info.ps1 is a repo-owned FILE
+    # (the table is the source's since #3886, but the file is still adopted into the consumer), so 'absent'
+    # is the ordinary case in a consumer that has not adopted it yet -- and it is precisely why the gap was
     # silent for so long: nothing crashes, nothing warns, the fallback simply answers a question it was
     # never asked.
     #
@@ -112,7 +115,7 @@ $script:ContractRecords = @(
     # repair the reporting consumer made -- or leaves it, which is correct wherever the canonical four ARE
     # the repo's types.
     @{ Lib = 'scripts\lib\branch-info.ps1'; Function = 'Get-BranchTypes'; Scripts = @('fold-changelog-entry', 'cut-release', 'new-internal-note');
-       Adopt = 'decide'; AdoptWhy = "the same reason as the two records above: it is a projection of the branch-prefix table, which branch-info.ps1 says of itself is repo-owned and does not travel. Copying this repo's four types into a repo that produces 'Liquid' or 'Tooling' states somebody else's table as theirs, and the value is indistinguishable from the built-in fallback, so a copy also hides whether the seam was ever answered";
+       Adopt = 'copy'; AdoptWhy = "the same reason as the two records above: it is a projection of the branch-prefix table, which is now the same in every DKJ repo. REVERSED, ISSUE #3886, NOVEMBER 7, 2026 -- amended rather than silently flipped. This record used to be 'decide': copying the four types into a repo that produced 'Liquid' or 'Tooling' stated somebody else's table as theirs. Dave decided the table is shared, so those domain types are retired where they exist (fold pending entries under them first) and the four types are the answer everywhere";
        ViaLib = 'entry-scaffold-lib';
        Optional = $true; Default = "the canonical four (Feat, Fix, Docs, Chore) -- which REFUSES the fold for a repo whose types differ, rather than degrading it";
        Returns = "the changelog types this repo's own branch table produces, as an array of strings in the order the release documents should read them -- a projection of that table, never a second list beside it. Two readers, and they use it differently: recognition (which H2 blocks in CHANGELOG.md are entries, and what the type field of a pre-format heading says) falls back to Feat/Fix/Docs/Chore where this function is out of scope, so a repo producing other types has every such entry read as typeless and its fold REFUSED by name; validation (is a declared type one this repo produces) only fires where the function is genuinely reachable. Being present is not enough -- the script that reads it has to load the lib" },
@@ -664,7 +667,7 @@ $script:ContractRecords = @(
 # truth about their repo and telling them the truth about this one. release-lib.ps1 dot-sources its
 # SIBLING branch-info.ps1 behind a Test-Path: in this workshop the two are siblings and the sibling is
 # there, so new-internal-note genuinely reaches Get-BranchTypes here -- and in the plugin mirror
-# branch-info.ps1 is absent (it is repo-owned and does not travel), so the same script does not. A walk
+# branch-info.ps1 is absent (it is a repo-owned file, adopted into a consumer rather than shipped in the plugin), so the same script does not. A walk
 # collecting leaf NAMES would report this repo's answer at every consumer.
 
 # The parse cache for the walk below -- see Get-ScriptDotSourceTargets for what it costs without one.

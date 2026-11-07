@@ -141,6 +141,16 @@
     has not defined, in one line the session hook forwards -- because a 'decide' fallback is an answer
     nobody chose, and as one [INFO] among the 'copy' seams it was indistinguishable from a harmless one.
 
+    AND SINCE #3886 (Dave, November 7, 2026) IT COMPARES THE BRANCH-PREFIX TABLE, which is the one thing
+    here that is a BEHAVIOUR rather than a function's presence: every DKJ repo uses the source's table
+    (feat -> feature, fix -> bug, docs -> no label, 'chore/' refused), so a consumer whose
+    scripts\lib\branch-info.ps1 answers differently is reported as [ERROR] with the repair. The source's
+    table is read from the shipped blueprint and EVALUATED, never matched as text, so a consumer that wrote
+    the same table in another shape is silent and one that kept the shape and changed a value is not. It
+    runs inside the probe that already loads the lib, so it costs no second load; it is silent in the repo
+    that publishes this workflow and wherever the blueprint cannot be found; and a lib whose functions throw
+    degrades to one [INFO] line instead of taking the report down.
+
     Soft/read-only, mirroring check-roster-sync.ps1: this script changes nothing, in any repo.
     [OK]/[INFO]/[ERROR] convention shared via check-report-lib.ps1 (issue #114).
 
@@ -302,6 +312,55 @@ function Write-ContractGap {
     } else {
         Write-Failure $Message
     }
+}
+
+# --- The branch-prefix table is the source's in every DKJ repo (#3886) ------------------------------
+# Get-BranchBehaviour answers, for whatever branch-info functions are in the CALLER's scope, what the
+# table does: the label and type of each prefix it knows and whether 'chore/x' is refused. Behaviour, not
+# text, so two spellings of one table compare equal. Prefixes tried: the ones given plus the keys of
+# $script:BranchPrefixTable when the lib has one, plus 'chore' (the refusal is a rule, not a row).
+function Get-BranchBehaviour {
+    param([string[]]$Prefixes = @())
+    Set-StrictMode -Off
+    $keys = @()
+    if ($script:BranchPrefixTable -is [System.Collections.IDictionary]) { $keys = @($script:BranchPrefixTable.Keys | ForEach-Object { [string]$_ }) }
+    $entries = @()
+    foreach ($p in @(@($Prefixes) + $keys + 'chore' | Sort-Object -Unique)) {
+        $i = Get-BranchInfo -Branch "$p/x"
+        if (-not $i.IsKnown) { continue }
+        $type = if ($i.Type) { $i.Type } else { $i.ChangelogType }
+        $entries += ("$p=" + $i.Label + '|' + $type)
+    }
+    $chore = 'unknown'
+    if (Test-FunctionDefined 'Test-BranchName') {
+        $chore = if ((Test-BranchName -Branch 'chore/x').IsValid) { 'allowed' } else { 'refused' }
+    }
+    return [pscustomobject]@{ Entries = @($entries | Sort-Object); Chore = $chore; Keys = $keys }
+}
+
+# The source's behaviour, from the blueprint's own function texts. $null when it cannot be had -- then
+# nothing is claimed.
+function Get-SourceBranchBehaviour {
+    $bp = Join-Path $PSScriptRoot '..\..\blueprint\config-blueprint.json'
+    if (-not (Test-Path -LiteralPath $bp -PathType Leaf)) { return $null }
+    try {
+        $recs = @((Get-Content -LiteralPath $bp -Raw -Encoding UTF8 | ConvertFrom-Json).records |
+            Where-Object { $_.lib -eq 'scripts\lib\branch-info.ps1' -and $_.function -in @('Get-BranchInfo', 'Test-BranchName') -and $_.text })
+        if ($recs.Count -ne 2) { return $null }
+        return (& {
+            Set-StrictMode -Off
+            # Get-BranchInfo calls Get-BranchPrefix, which is not a contract record and so is not in the
+            # blueprint's text: the same one-line rule the source's file carries, stated here so the
+            # evaluation can run.
+            function Get-BranchPrefix {
+                param([string]$Branch)
+                if ($Branch -match '/') { return ($Branch -split '/')[0] }
+                return ($Branch -split '-')[0]
+            }
+            foreach ($r in $recs) { . ([scriptblock]::Create($r.text)) }
+            Get-BranchBehaviour
+        })
+    } catch { return $null }
 }
 
 Write-Host '== check-script-contract ==' -ForegroundColor Cyan
@@ -504,6 +563,8 @@ if (-not $foundWorkflowFolder) {
 }
 
 $unansweredDecide = [System.Collections.Generic.List[string]]::new()
+# Silent in the repo that publishes the workflow: its own table IS the source's.
+$sourceBranch = if (Test-IsWorkflowSourceRepo -RepoRoot $repoRoot) { $null } else { Get-SourceBranchBehaviour }
 
 foreach ($libRel in $contractLibs) {
     $records = @($script:Contract | Where-Object { $_.Lib -eq $libRel })
@@ -527,7 +588,7 @@ foreach ($libRel in $contractLibs) {
     # leaks into this script's own strict scope.
     $probe = & {
         Set-StrictMode -Off
-        $result = [pscustomobject]@{ Loaded = $true; Error = $null; Present = @{} }
+        $result = [pscustomobject]@{ Loaded = $true; Error = $null; Present = @{}; Table = $null; TableThrew = $false }
         try {
             . $args[0]
         } catch {
@@ -538,8 +599,15 @@ foreach ($libRel in $contractLibs) {
         foreach ($fn in $args[1]) {
             $result.Present[$fn] = [bool](Test-FunctionDefined $fn)
         }
+        # The prefix table (#3886): only for branch-info.ps1, only where the source's own answer exists, and
+        # inside its own try -- these are consumer functions CALLED, not probed, and a throw must cost one
+        # line rather than the report.
+        if ($args[2] -and $result.Present['Get-BranchInfo']) {
+            try { $result.Table = Get-BranchBehaviour -Prefixes @($args[2].Entries | ForEach-Object { ($_ -split '=')[0] }) }
+            catch { $result.TableThrew = $true }
+        }
         return $result
-    } $libPath (@($records.Function))
+    } $libPath (@($records.Function)) $(if ($libRel -eq 'scripts\lib\branch-info.ps1') { $sourceBranch } else { $null })
 
     if (-not $probe.Loaded) {
         foreach ($r in $records) {
@@ -547,6 +615,33 @@ foreach ($libRel in $contractLibs) {
             Write-ContractGap -Record $r -Message "'$libRel' failed to load ($($probe.Error)) -- '$($r.Function)' (required by: $scriptList) cannot be checked."
         }
         continue
+    }
+
+    if ($null -ne $sourceBranch -and $probe.TableThrew) {
+        Write-Info "the branch-prefix table in $libRel could not be compared with the source's: a function in it raised an error. Its message is not repeated here -- it is text this repo did not write."
+    } elseif ($null -ne $sourceBranch -and $null -ne $probe.Table) {
+        $mine = $probe.Table
+        $diff = @()
+        $missing = @($sourceBranch.Entries | Where-Object { $mine.Entries -notcontains $_ } | ForEach-Object { ($_ -split '=')[0] })
+        if ($missing.Count -gt 0) { $diff += "missing or different: $($missing -join ', ')" }
+        $extra = @($mine.Entries | Where-Object { $sourceBranch.Entries -notcontains $_ } | ForEach-Object { ($_ -split '=')[0] } | Where-Object { $missing -notcontains $_ })
+        if ($extra.Count -gt 0) {
+            # Prefix names are the consumer's text: only a plain word is echoed, the rest is counted.
+            $plain = @($extra | Where-Object { $_ -match '^[a-z0-9-]{1,24}$' } | Select-Object -First 8)
+            $names = if ($plain.Count -gt 0) { ' ' + ($plain -join ', ') } else { '' }
+            $diff += "prefixes the source does not have:$names ($($extra.Count) in all)"
+        }
+        if ($mine.Chore -eq 'allowed') { $diff += "'chore/' is allowed" }
+        if ($diff.Count -gt 0) {
+            Write-Failure ("the branch-prefix table in $libRel differs from the one every DKJ repo uses (the source's: " +
+                (($sourceBranch.Entries | Where-Object { $_ -notlike 'chore=*' }) -join ', ') + "; 'chore/' refused) -- " + ($diff -join '; ') + ". " +
+                "This is a defect, not a local choice (#3886). Repair: replace the prefix table and the Get-BranchInfo, Test-BranchName and " +
+                "Get-BranchTypes functions in that file with the text of those three records in the plugin's blueprint " +
+                "(blueprint/config-blueprint.json; adopt-config places a record only where its function is absent, so it will not overwrite yours), " +
+                "and fold any pending changelog entry under a type the shared table does not have before you switch.")
+        } else {
+            Write-Ok "the branch-prefix table in $libRel matches the source's."
+        }
     }
 
     foreach ($r in $records) {

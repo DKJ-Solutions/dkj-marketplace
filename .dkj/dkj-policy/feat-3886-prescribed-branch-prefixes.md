@@ -39,21 +39,57 @@
 
 ### PLAN
 
+Prescribe one branch-prefix table for every DKJ repo and report a consumer that differs, per #3886
+(Dave, November 7, 2026): `feat/` -> `feature`, `fix/` -> `bug`, `docs/` -> no label, `chore/` refused.
+Out of scope: fixing each consumer, which runs through that consumer's own issue. The one finding found on
+the way is #3888 (the blueprint's `Get-BranchInfo` text calls `Get-BranchPrefix`, which it does not carry).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Flip the three `branch-info.ps1` records (`Get-BranchInfo`, `Test-BranchName`, `Get-BranchTypes`)
+      from `decide` to `copy` in `script-contract-lib.ps1` (plugin copy and its source mirror), each
+      `AdoptWhy` amended with the dated reversal; the block comment and the "ten are decide" count amended
+- [x] Rewrite the self-description in `scripts/lib/branch-info.ps1` (no longer "repo-owned and does not
+      travel") and regenerate `config-blueprint.json` with `build-config-blueprint.ps1`
+- [x] `check-script-contract.ps1` (plugin copy and mirror) compares behaviour with the blueprint's: the
+      label and type of every prefix either table knows, and whether `chore/x` is refused. A difference is
+      one `[ERROR]` line naming it and the repair; silent in the source repo and wherever the blueprint is
+      absent; a throwing lib degrades to one `[INFO]` line
+- [x] `shared-scripts-lib.ps1` declares `MirrorRun` for the check (the blueprint path resolves differently
+      in the mirror)
+- [x] Docs that called the table a local choice: `CONTRIBUTING-portable.md`, `ADOPTION.md`, the
+      `adopt-dkj-policy` and `adopt-bwj-development` skill pages
 
 ### TEST
 
+- [x] `script-contract.tests.ps1`: new section 14 -- the source's table is silent and reported as matching,
+      a differing table and a chore-allowing table report `[ERROR]` with the repair, a throwing table
+      degrades to `[INFO]`, the source repo itself says nothing
+- [x] `config-blueprint.tests.ps1` now pins all three records as `copy`
+- [x] `script-contract`, `config-blueprint`, `branch-info` suites and `check-plugin-integrity.ps1` green
+
 ### DEPLOY: feat/3886-prescribed-branch-prefixes
 
-**Score:**
+Every DKJ repo now uses the source's branch prefixes: `feat/` earns `feature`, `fix/` earns `bug`, `docs/`
+earns no label, and `chore/` is refused. The three `branch-info.ps1` records are `copy` instead of
+`decide`, and the script-contract session check reports a repo whose table differs, with the repair. It
+runs at every session start, so a repo with its own prefixes now sees one `[ERROR]` line until it adopts
+the shared table. In this repo nothing changes: its table already is the source's.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+If your `scripts/lib/branch-info.ps1` keeps its own prefixes (`data/`, `dossier/`, `chore/` and so on) or
+labels `docs/` as `documentation`, the session check now fails with a line naming the difference. Replace
+the table and the `Get-BranchInfo`, `Test-BranchName` and `Get-BranchTypes` functions with the text of
+those three records in the plugin's `blueprint/config-blueprint.json` (`adopt-config` will not overwrite a
+function you already have). Fold any pending changelog entry under a type the shared table does not have
+first, because the shared table produces only Feat, Fix, Docs and Chore. The cost is accepted: release
+notes no longer group by a domain type.
+
+**Score:** 3
 
 #### Pull Request
 
 Every DKJ repo uses the source's branch prefixes
-
