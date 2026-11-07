@@ -833,6 +833,9 @@ try {
     [System.IO.File]::WriteAllText((Join-Path $cMv 'scripts\repo-config.ps1'),
         "`$script:ChangelogPath = 'dkj-policy/CHANGELOG.md'`nfunction Get-ChangelogPath { `$script:ChangelogPath }`n# the dkj-policy/ folder, in prose`n")
     [System.IO.File]::WriteAllText((Join-Path $cMv '.gitignore'), "/dkj-policy/dashboard/`nnode_modules/`n")
+    New-Item -ItemType Directory -Path (Join-Path $cMv '.github') -Force | Out-Null
+    $mvTpl = "<!-- Filled from the DEPLOY section of dkj-policy/<branch>.md, heading and all. -->`n`nOur notes on dkj-policy/ stay.`n"
+    [System.IO.File]::WriteAllText((Join-Path $cMv '.github\pull_request_template.md'), $mvTpl)
     $rMvDry = Invoke-Adopt -Dir $cMv
     Assert-Match '\[move\]\s+dkj-policy/ -> \.dkj/dkj-policy/' $rMvDry.Flat 'move: the dry run names the move'
     Assert-True (Test-Path -LiteralPath (Join-Path $cMv 'dkj-policy\CHANGELOG.md')) 'move: and the dry run moved nothing'
@@ -844,6 +847,11 @@ try {
     Assert-Match "ChangelogPath = '\.dkj/dkj-policy/CHANGELOG\.md'" $mvCfg 'move: the quoted seam answer is repointed'
     Assert-Match '# the dkj-policy/ folder, in prose' $mvCfg 'move: and prose naming the old folder is left as written'
     Assert-Match '(?m)^/\.dkj/dkj-policy/dashboard/' ([System.IO.File]::ReadAllText((Join-Path $cMv '.gitignore'))) 'move: the .gitignore line is repointed'
+    # #3884: the template's first-line comment follows the move; the body below it is the repo's own.
+    $mvTplAfter = [System.IO.File]::ReadAllText((Join-Path $cMv '.github\pull_request_template.md'))
+    Assert-Match '\A<!-- Filled from the DEPLOY section of \.dkj/dkj-policy/<branch>\.md' $mvTplAfter 'move: the PR template comment is repointed'
+    Assert-Match 'Our notes on dkj-policy/ stay\.' $mvTplAfter 'move: and the template body below it is left as written'
+    Assert-Match '\[repoint\]\s+\.github/pull_request_template\.md' $rMvDry.Flat 'move: the dry run names the template repoint'
     Assert-Match '\[exists\]\s+\.dkj/dkj-policy/CHANGELOG\.md' $rMv.Out 'move: and the scaffold that follows reads the moved folder'
 
 } finally {

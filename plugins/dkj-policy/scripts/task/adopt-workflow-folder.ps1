@@ -197,7 +197,12 @@ if ($foundFolderName -ne $currentFolderName -and -not (Test-Path -LiteralPath $c
         # address, and leaving it would point the fold at a file that moved. It comes out forward-slashed,
         # which every reader of these seams accepts.
         @{ Rel = 'scripts/repo-config.ps1'; Pattern = "(['" + '"' + "])$oldEsc[/\\]"; Replace = "`${1}$currentFolderName/" },
-        @{ Rel = '.gitignore';              Pattern = "(?m)^(/?)$oldEsc/";            Replace = "`${1}$currentFolderName/" }
+        @{ Rel = '.gitignore';              Pattern = "(?m)^(/?)$oldEsc/";            Replace = "`${1}$currentFolderName/" },
+        # The PR template's FIRST-LINE comment names the branch document by its folder (#3884), and the
+        # scaffold below never overwrites an existing template, so a moved repo kept saying
+        # 'dkj-policy/<branch>.md' -- measured in all six consumers moved on November 7, 2026. Only the
+        # opening '<!--' line is touched; the rest of a hand-edited template is the repo's own.
+        @{ Rel = '.github/pull_request_template.md'; Pattern = "\A(<!--[^\r\n]*?)(?<![\w./-])$oldEsc/"; Replace = "`${1}$currentFolderName/" }
     )
     foreach ($rw in $rewrites) {
         $abs = Join-Path $repoRoot ($rw.Rel -replace '/', '\')
