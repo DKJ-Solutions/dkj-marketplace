@@ -39,19 +39,32 @@
 
 ### PLAN
 
+Maikel asked for a Claude-specific folder in the radar, so news about different AI models stays apart.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Move `claude-code.md` and `models-and-api.md` into `ai-radar/claude/`, fix their README links
+- [x] README: the one-folder-per-model-family rule, the new paths, and when another family gets a folder
+- [x] `ecosystem.md`: narrowed to what is not tied to one model
 
 ### TEST
 
+- [x] Lint and suites run by open-pr
+
 ### DEPLOY: docs/ai-radar-claude-folder
 
-**Score:**
+The AI radar now keeps one folder per AI model family. The Claude files moved into
+[`ai-radar/claude/`](../ai-radar/README.md#the-files), and another family (OpenAI, Gemini) gets its
+own folder when its first entry arrives. `ecosystem.md` stays at the top for what is not tied to one
+model.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: the folder sits outside `plugins/`, so nothing a consumer installs changes.
+
+**Score:** N/A
 
 #### Pull Request
 

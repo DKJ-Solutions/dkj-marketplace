@@ -9,11 +9,18 @@ Started by Maikel on November 7, 2026.
 
 ## The files
 
+**One folder per AI model family**, so news about one model is never mixed up with another. Whatever
+is not tied to one model goes in `ecosystem.md` at this level.
+
 | File | What goes in it |
 |---|---|
-| [`claude-code.md`](claude-code.md) | Claude Code itself: releases, features, settings, hooks, skills, subagents, plugins, MCP, workflows and tips for using it. **The main focus.** |
-| [`models-and-api.md`](models-and-api.md) | Claude models, the API, the Agent SDK, pricing and limits. |
-| [`ecosystem.md`](ecosystem.md) | The wider AI world: other coding agents and tools, MCP servers, practices and ideas worth borrowing. |
+| [`claude/claude-code.md`](claude/claude-code.md) | Claude Code itself: releases, features, settings, hooks, skills, subagents, plugins, MCP, workflows and tips for using it. **The main focus.** |
+| [`claude/models-and-api.md`](claude/models-and-api.md) | Claude's models, the API, the Agent SDK, pricing and limits. |
+| [`ecosystem.md`](ecosystem.md) | Whatever is not tied to one model: MCP servers, cross-vendor tools, practices and ideas worth borrowing. |
+
+**Another model family gets its own folder when its first entry arrives**, e.g. `openai/` or
+`gemini/`, with the same split (its coding agent, its models and API) and a row in the table above.
+No empty folders are made in advance.
 
 A file splits when it gets too long to scan. Split it by subject, add the new file to the table above,
 and do not repeat its entries anywhere else.

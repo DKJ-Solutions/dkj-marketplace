@@ -1,6 +1,7 @@
 # AI radar: the ecosystem
 
-The wider AI world: other coding agents and tools, MCP servers, practices and ideas worth borrowing.
-The entry format and the verdicts are in the [README](README.md). Newest first.
+Whatever is not tied to one model: MCP servers, cross-vendor tools, practices and ideas worth
+borrowing. News about one model family goes in that family's own folder, as the
+[README](README.md#the-files) says. The entry format and the verdicts are in the [README](README.md). Newest first.
 
 <!-- New entries go directly below this line. -->
