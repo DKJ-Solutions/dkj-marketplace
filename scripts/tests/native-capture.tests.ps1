@@ -2029,7 +2029,11 @@ foreach ($af in $auditFiles) {
 # $status and $merge -- each bounded because the SessionStart prep step runs before the dispatcher's pool and
 # nothing else can interrupt it. Each asks Test-NativeExitMeasured, and anything but a measured 0 is "could not
 # establish": a skip or a failure, never a fast-forward.
-Assert-Equal 107 $boundedTotal 'the parser still counts 107 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
+# 107 -> 108 (#3862): tidy-machine.ps1's lane 8 $uninst (`claude plugin uninstall <id> --scope <scope>`, run from
+# inside a recreated vanished checkout), -Utf8 and at the shared network bound as update-plugins' own uninstall.
+# Judged only by a POSITIVE `-eq 0`: anything else, an unmeasured code included, is a FAILED line and the
+# record is handed over with its paste-ready sequence, so a capture it could not judge never counts as removed.
+Assert-Equal 108 $boundedTotal 'the parser still counts 108 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
 Assert-Equal 0 $unguarded.Count `
     ('every bounded capture judged with a NEGATIVE exit-code test either asks Test-NativeExitMeasured/Get-NativeExitLabel about THAT capture or is exempt with a reason (#2081)' +
      $(if ($unguarded.Count) { ' -- unguarded: ' + ($unguarded -join ' | ') } else { '' }))

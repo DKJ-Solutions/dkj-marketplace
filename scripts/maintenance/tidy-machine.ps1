@@ -694,16 +694,16 @@ if ($runMachine) {
                         Push-Location -LiteralPath $folder
                         $pushed = $true
                         foreach ($o in @($plan.Removable)) {
-                            $r = Invoke-NativeCapture -FilePath 'claude' -Arguments @('plugin', 'uninstall', "$($o.Plugin)@$($o.Marketplace)", '--scope', ([string]$o.Scope)) -Utf8
+                            $uninst = Invoke-NativeCapture -FilePath 'claude' -Arguments @('plugin', 'uninstall', "$($o.Plugin)@$($o.Marketplace)", '--scope', ([string]$o.Scope)) -Utf8 -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
                             $label = "$(Format-SuspectToken -Value ([string]$o.Id)) --scope $(Format-SuspectToken -Value ([string]$o.Scope))"
-                            if ($r.ExitCode -eq 0) {
+                            if ($uninst.ExitCode -eq 0) {
                                 $removed8++
                                 Write-Item "    removed: $label" 'Green'
                             } else {
                                 # Handed over below with the refused records, so the reader gets the line.
                                 $failed += $o
-                                Write-Item "    FAILED ($(Get-NativeExitLabel -Capture $r)): $label" 'Red'
-                                foreach ($line in @($r.Output)) { Write-Item "      $(Format-SafeProseToken -Value ([string]$line))" 'DarkGray' }
+                                Write-Item "    FAILED ($(Get-NativeExitLabel -Capture $uninst)): $label" 'Red'
+                                foreach ($line in @($uninst.Output)) { Write-Item "      $(Format-SafeProseToken -Value ([string]$line))" 'DarkGray' }
                             }
                         }
                     } finally {
