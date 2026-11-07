@@ -52,7 +52,7 @@ for the owner's look before it merges.
 
 ### TEST
 
-- [x] `dayplan.tests.ps1` (69), `dev-pages.tests.ps1` (633) and `goals.tests.ps1` (56) green, the page order pins updated
+- [x] `dayplan.tests.ps1` (69), `dev-pages.tests.ps1` (633), `goals.tests.ps1` (56) and `dev-preview-sessionstart.tests.ps1` (380) green, the page order pins updated
 - [x] A preview hub from this branch on port 4895 with a scratch state: the page renders, #3859 shows done live
 - [x] Review: Victor (code), Sebastian (security), Edith (copy). Taken: titles kept whole through the child (gh read with `Invoke-NativeCapture -Utf8`, the `-Status` JSON written as pure ASCII with escapes, so no code page touches an accent or a dash; tested), the child bounded at 60 s like the other gh reads and a GitHub failure cached 30 s, a model date read whether it arrives as a string or a DateTime, item indexes never shifted, a day file the page cannot draw shown as a warning instead of a dropped connection, the README's two "first" cards, the week's last column named Result, the Done card and the footer worded for any day and for items marked done by hand
 - [x] After the review: `dayplan.tests.ps1` 70 passed; a live `-Status` for November 6 matched #3857 through its PR
