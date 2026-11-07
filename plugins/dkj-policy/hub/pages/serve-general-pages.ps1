@@ -22,6 +22,10 @@
                       theirs (the tasks), for owner/name from the origin remote (Get-GoalsModel, hub/lib/goals-lib.ps1,
                       #3816). Kept as the issues are; a repo whose origin is not on GitHub, or a gh that fails, is a
                       warning on the page.
+      /dev/today      the day plan (#3860): this machine's day file, matched live against the PRs merged and the issues
+                      closed today, and the week, from day-plan.ps1 -Status run as a child (Get-TodayModel,
+                      hub/lib/today-page-lib.ps1), so the GitHub search behind it has one source. Kept for 60 s, a
+                      failed run for 30 s; a gh that fails is a warning on the page, and the plan still shows.
       /dev/release-notes  dkj-policy/releases/page/release-notes.html, dressed in the house style on the way out.
                       Built first, by build-release-notes-page.ps1 (found the way the always-on lib is), where it
                       is absent or older than a file under dkj-policy/releases (#3189): the page is a gitignored
@@ -59,7 +63,7 @@
                       OwnHub opt-out, which sent '/hub' on to a repo's own hub, went with #3643.
       /dev/repository     the hub's Repository page (Format-PluginRepoRepositoryHtml, #3383): the facts the home page
                       held until the house hub became a grid of card links, and the Issues page's card.
-      /refresh        ?page=issues, ?page=goals or ?page=sessionstart drops that page's cache (at most once per
+      /refresh        ?page=issues, ?page=goals, ?page=today or ?page=sessionstart drops that page's cache (at most once per
                       -MinRefreshSeconds, and per 60 s for issues) and goes back to the page.
       /api/airsquats  the banner's state as JSON (GET), and POST /api/airsquats/clear ticks its box off (#3438):
                       the machine's file under %LOCALAPPDATA%\dkj-hub, synced with a private gist by a child
@@ -146,8 +150,9 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\timing-pages.ps1')
 # The Plugins page (#3482).
 . (Join-Path $PSScriptRoot '..\lib\plugins-page-lib.ps1')
-# The Goals page (#3816).
+# The Goals page (#3816), and the Today page (#3860).
 . (Join-Path $PSScriptRoot '..\lib\goals-lib.ps1')
+. (Join-Path $PSScriptRoot '..\lib\today-page-lib.ps1')
 
 $pluginRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $root = if ($RepoRootOverride) { [System.IO.Path]::GetFullPath($RepoRootOverride).TrimEnd('\', '/') }
@@ -271,6 +276,28 @@ function Get-IssuesModel {
         $err = ([string]$_.Exception.Message) -replace '\s+', ' '
     }
     return @{ Model = $model; Error = $err; GeneratedAt = $started.ToString('yyyy-MM-dd HH:mm:ss'); Seconds = ((Get-Date) - $started).TotalSeconds; At = Get-Date }
+}
+
+function Get-TodayModel {
+    <#
+        The day plan's model (#3860): day-plan.ps1 -Status, beside this file, run as a child of the same PowerShell, so
+        the page and the skill read GitHub through one search. Its JSON is the model; a run that fails, times out or
+        answers with something that is not JSON is a ReadError, never a blank page.
+    #>
+    $started = Get-Date
+    try {
+        $script = Join-Path $PSScriptRoot 'day-plan.ps1'
+        $exe = (Get-Process -Id $PID).Path
+        $q = Invoke-BoundedProcess -FilePath $exe -Arguments @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script, '-Status') -TimeoutSeconds 60 -WorkingDirectory $root
+        if ($q.TimedOut) { throw 'day-plan.ps1 -Status did not answer within 60 s' }
+        if ($q.ExitCode -ne 0) { throw ("day-plan.ps1 -Status exited $($q.ExitCode): " + (([string]$q.Output + ' ' + [string]$q.Error).Trim())) }
+        $model = ConvertFrom-Json -InputObject $q.Output
+        $err = ''
+    } catch {
+        $model = $null
+        $err = ([string]$_.Exception.Message) -replace '\s+', ' '
+    }
+    return @{ Model = $model; Error = $err; GeneratedAt = $started.ToString('yyyy-MM-dd HH:mm:ss'); At = Get-Date }
 }
 
 function Get-GoalsModel {
@@ -470,6 +497,7 @@ Write-Host "general pages for $((Get-RepoIdentity).Name): http://localhost:$Port
 $ssCache = $null
 $isCache = $null
 $glCache = $null
+$tdCache = $null
 $aoCache = $null
 
 try {
@@ -547,7 +575,7 @@ try {
             if ($path -eq '/refresh') {
                 # At most one re-run per -MinRefreshSeconds, however often /refresh is asked for. ?page= names
                 # where to go back to, from a fixed list, so the redirect never leaves this server.
-                $page = if ([string]$target -match '[?&]page=(sessionstart|issues|goals)(&|$)') { $Matches[1] } else { '' }
+                $page = if ([string]$target -match '[?&]page=(sessionstart|issues|goals|today)(&|$)') { $Matches[1] } else { '' }
                 if ($page -eq 'sessionstart') {
                     if ($ssCache -and ((Get-Date) - $ssCache.At).TotalSeconds -ge $MinRefreshSeconds) { $ssCache = $null }
                 } elseif ($page -eq 'issues') {
@@ -555,6 +583,8 @@ try {
                     if ($isCache -and ((Get-Date) - $isCache.At).TotalSeconds -ge [Math]::Max($MinRefreshSeconds, 60)) { $isCache = $null }
                 } elseif ($page -eq 'goals') {
                     if ($glCache -and ((Get-Date) - $glCache.At).TotalSeconds -ge $MinRefreshSeconds) { $glCache = $null }
+                } elseif ($page -eq 'today') {
+                    if ($tdCache -and ((Get-Date) - $tdCache.At).TotalSeconds -ge $MinRefreshSeconds) { $tdCache = $null }
                 }
                 Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = $(if ($page) { "/dev/$page" } else { '/' }) } -Method $method
                 continue
@@ -679,6 +709,15 @@ try {
                 $glAge = if ($glCache) { ((Get-Date) - $glCache.At).TotalSeconds } else { 0 }
                 if ($null -eq $glCache -or $glAge -ge $IssuesCacheSeconds -or ($glCache.Error -and $glAge -ge 30)) { $glCache = Get-GoalsModel }
                 $html = Format-GoalsPageHtml -Model $glCache.Model -ReadError $glCache.Error -GeneratedAt $glCache.GeneratedAt -RepoName (Get-RepoIdentity).Name
+            } elseif ($path -cmatch '^/dev/today/?$') {
+                # The day plan (#3860): a day moves faster than the issues, so a minute; a failed run, or one that could not
+                # read GitHub, for 30 s. Bounded at 60 s like the other gh reads, since the loop serves nothing meanwhile.
+                $tdAge = if ($tdCache) { ((Get-Date) - $tdCache.At).TotalSeconds } else { 0 }
+                if ($null -eq $tdCache -or $tdAge -ge 60 -or (($tdCache.Error -or ($tdCache.Model -and $tdCache.Model.error)) -and $tdAge -ge 30) -or $tdCache.At.Date -ne (Get-Date).Date) { $tdCache = Get-TodayModel }
+                # A day file edited by hand into something the page cannot draw is a warning on the page: the loop's own
+                # catch would close the connection with no answer at all (Sebastian, #3860).
+                try { $html = Format-TodayPageHtml -Model $tdCache.Model -ReadError $tdCache.Error -GeneratedAt $tdCache.GeneratedAt -RepoName (Get-RepoIdentity).Name }
+                catch { $html = Format-TodayPageHtml -Model $null -ReadError ('the day file could not be drawn: ' + (([string]$_.Exception.Message) -replace '\s+', ' ')) -RepoName (Get-RepoIdentity).Name }
             } elseif ($path -match '^/dev/sessionstart(?:/([a-z-]{1,40}))?$') {
                 # The overview, or one section's own page (the owner, October 26, 2026); a slug no section has is a 404.
                 $ssSection = [string]$Matches[1]

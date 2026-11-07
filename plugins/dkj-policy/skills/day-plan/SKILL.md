@@ -10,6 +10,9 @@ description: Plan the owner's working day in the morning and close it at the end
 work never felt finished, because there was no moment that said what the day was for or what it got done.
 This skill gives the day both: a plan in the morning, and a close-out that says *you can close the day*.
 
+**Admin's Today page (`/dev/today`) shows it all day**: the goal with its progress, the plan with each item
+marked done once its PR or issue is, what got done outside the plan, and the week.
+
 **Paula carries it** -- the Project Planner. Load her manual's *The day rhythm* section before the first
 step: she proposes, the owner decides, and she holds the band in both directions.
 

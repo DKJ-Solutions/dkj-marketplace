@@ -21,6 +21,8 @@
                                    with no ref as done, since only the owner can say so. A second -Close keeps
                                    the first one's done items.
       -Week                        the week so far, from the day files and GitHub.
+      -Status                      the Today page's model as JSON (#3860): the day file, its live match against
+                                   GitHub, and the week's rows. Writes nothing; a GitHub failure is a field, not an exit.
       -Override <reason>           go past the band anyway; the reason is kept in the day file and printed again at
                                    the close-out.
       -Author <login,...>          whose work counts. Default: DKJ_DAYPLAN_AUTHORS (comma-separated), else the login
@@ -44,6 +46,7 @@ param(
     [int[]]$Done = @(),
     [switch]$Week,
     [switch]$Replace,
+    [switch]$Status,
     [string]$Override = '',
     [string[]]$Author = @(),
     [string]$Date = ''
@@ -52,6 +55,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\dayplan-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\goals-lib.ps1')
 . (Join-Path $PSScriptRoot '..\..\scripts\lib\ref-print-lib.ps1')
+. (Join-Path $PSScriptRoot '..\..\scripts\lib\native-capture-lib.ps1')
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 
@@ -68,8 +72,8 @@ $day = if ($Date) {
     $parsed
 } else { (Get-Date).Date }
 
-$modes = @($Context, [bool]$PlanFile, $Add, $Close, $Week) | Where-Object { $_ }
-if (@($modes).Count -ne 1) { Stop-DayPlan 'name exactly one of -Context, -PlanFile, -Add, -Close or -Week.' }
+$modes = @($Context, [bool]$PlanFile, $Add, $Close, $Week, $Status) | Where-Object { $_ }
+if (@($modes).Count -ne 1) { Stop-DayPlan 'name exactly one of -Context, -PlanFile, -Add, -Close, -Week or -Status.' }
 
 function Write-SafeLines {
     <# Multi-line text to the console, each line stripped on its own: the strip removes control characters, newlines among them. #>
@@ -131,21 +135,32 @@ function Invoke-DayPlanSearch {
         do {
             $ghArgs = @('api', 'graphql', '-f', ('query=' + (Get-DayPlanPrQuery)), '-f', ('q=' + $q))
             if ($after) { $ghArgs += @('-f', ('after=' + $after)) }
-            $raw = & gh @ghArgs
-            if ($LASTEXITCODE -ne 0) { throw "gh api graphql exited $LASTEXITCODE reading the PRs of $a" }
-            $page = ($raw -join "`n") | ConvertFrom-Json
+            # -Utf8: gh writes UTF-8, and a plain & would decode it through the console code page, turning an
+            # accented title or an emoji into the wrong characters before it ever reaches a plan (Victor, #3860).
+            $res = Invoke-NativeCapture -FilePath 'gh' -Arguments $ghArgs -Utf8 -DiscardStderr
+            if ($res.ExitCode -ne 0) { throw "gh api graphql exited $($res.ExitCode) reading the PRs of $a" }
+            $page = (@($res.Output) -join "`n") | ConvertFrom-Json
             $nodes = @($page.data.search.nodes | Where-Object { $_ -and $_.number })
             $prs += @(ConvertFrom-DayPlanSearch -Json (ConvertTo-Json -InputObject @($nodes) -Depth 6) -Kind 'pr')
             $read += $nodes.Count
             $after = if ($page.data.search.pageInfo.hasNextPage) { [string]$page.data.search.pageInfo.endCursor } else { $null }
         } while ($after -and $read -lt $Limit)
-        $i = gh search issues --assignee $a --closed $since --json $fields --limit $Limit
-        if ($LASTEXITCODE -ne 0) { throw "gh search issues exited $LASTEXITCODE for $a" }
-        $issues += @(ConvertFrom-DayPlanSearch -Json ($i -join "`n") -Kind 'issue')
+        $res = Invoke-NativeCapture -FilePath 'gh' -Arguments @('search', 'issues', '--assignee', $a, '--closed', $since, '--json', $fields, '--limit', [string]$Limit) -Utf8 -DiscardStderr
+        if ($res.ExitCode -ne 0) { throw "gh search issues exited $($res.ExitCode) for $a" }
+        $issues += @(ConvertFrom-DayPlanSearch -Json (@($res.Output) -join "`n") -Kind 'issue')
     }
     $prs = @($prs | Sort-Object ref -Unique)
     $issues = @($issues | Sort-Object ref -Unique)
     return @{ Prs = $prs; Issues = $issues }
+}
+
+function Select-DayPlanDay {
+    <# A past day keeps only what finished on that day itself; the search reads from its start with no end. #>
+    param($Found, [datetime]$On)
+    if ($On -ge (Get-Date).Date) { return $Found }
+    $end = $On.AddDays(1)
+    $inDay = { param($x) $x.closedAt -and ([datetime]$x.closedAt) -lt $end }
+    return @{ Prs = @($Found.Prs | Where-Object { & $inDay $_ }); Issues = @($Found.Issues | Where-Object { & $inDay $_ }) }
 }
 
 if (-not (Get-Command gh -CommandType Application -ErrorAction SilentlyContinue) -and ($Context -or $Close -or $Week)) {
@@ -281,12 +296,7 @@ if ($Close) {
     $count = @($existing.items).Count
     foreach ($n in $Done) { if ($n -lt 1 -or $n -gt $count) { Stop-DayPlan "-Done $n is not an item of today's plan (1..$count)." } }
     try { $found = Invoke-DayPlanSearch -From $day -Authors $authors } catch { Stop-DayPlan "GitHub could not be read: $(ConvertTo-ConsoleStrippedText $_.Exception.Message)" }
-    if ($day -lt (Get-Date).Date) {
-        # A past day: only what finished on that day itself.
-        $end = $day.AddDays(1)
-        $inDay = { param($x) $x.closedAt -and ([datetime]$x.closedAt) -lt $end }
-        $found.Prs = @($found.Prs | Where-Object { & $inDay $_ }); $found.Issues = @($found.Issues | Where-Object { & $inDay $_ })
-    }
+    $found = Select-DayPlanDay -Found $found -On $day
     $finished = @($found.Prs) + @($found.Issues)
     # A second close keeps the first one's done items, so a -Done given then is not lost now (Victor, #3859).
     $marked = @(@($Done | ForEach-Object { $_ - 1 }) + @($(if ($existing.close) { @($existing.close.done) })) | Where-Object { $null -ne $_ } | ForEach-Object { [int]$_ } | Select-Object -Unique)
@@ -316,5 +326,49 @@ if ($Week) {
         catch { Write-Host "[note] GitHub could not be read; the totals below count 0." }
     }
     Write-SafeLines (Format-DayPlanWeekText -Week $wk -Prs $prs -Issues $issues)
+    exit 0
+}
+
+# ---- the Today page's model ------------------------------------------------------------------------------------
+if ($Status) {
+    $existing = Read-DayFile -On $day
+    $live = $null
+    $readError = ''
+    if ($existing) {
+        try {
+            if (-not (Get-Command gh -CommandType Application -ErrorAction SilentlyContinue)) { throw 'gh was not found on the PATH' }
+            $authors = Get-DayPlanAuthors
+            if (-not @($authors).Count) { throw 'no author to count the work of' }
+            $found = Select-DayPlanDay -Found (Invoke-DayPlanSearch -From $day -Authors $authors) -On $day
+            $marked = @($(if ($existing.close) { @($existing.close.done) }) | Where-Object { $null -ne $_ } | ForEach-Object { [int]$_ })
+            $cmp = Compare-DayPlanDone -Items $existing.items -Finished (@($found.Prs) + @($found.Issues)) -MarkedDone $marked
+            $live = [pscustomobject]@{
+                done = @($cmp.Done); carried = @($cmp.Carried); verdict = $cmp.Verdict
+                unplanned = @($cmp.Unplanned | ForEach-Object { [pscustomobject]@{ ref = $_.ref; title = $_.title; url = $_.url; kind = $_.kind } })
+                prs = @($found.Prs).Count; issues = @($found.Issues).Count
+            }
+        } catch {
+            $readError = ([string]$_.Exception.Message) -replace '\s+', ' '
+        }
+    }
+    $days = @{}
+    $offset = (([int]$day.DayOfWeek) + 6) % 7
+    $monday = $day.AddDays(-$offset)
+    for ($d = 0; $d -lt 7; $d++) {
+        $on = $monday.AddDays($d)
+        $p = Get-DayPlanPath -Date $on
+        if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { continue }
+        # The week reads past a broken day file instead of refusing the page: only today's has to parse.
+        try { $days[$on.ToString('yyyy-MM-dd')] = [System.IO.File]::ReadAllText($p, $utf8) | ConvertFrom-Json } catch { }
+    }
+    $wk = Get-DayPlanWeek -Date $day -Days $days
+    $rows = @($wk.Rows | ForEach-Object { [pscustomobject]@{ date = $_.Date.ToString('yyyy-MM-dd'); goal = $_.Goal; planned = $_.Planned; done = $_.Done; extra = $_.Extra; verdict = $_.Verdict; closed = $_.Closed } })
+    $model = [pscustomobject]@{ date = $day.ToString('yyyy-MM-dd'); day = $existing; live = $live; error = $readError; week = $rows }
+    # ConvertTo-Json writes non-ASCII raw, and a redirected Windows PowerShell writes its stdout in the console code page,
+    # which the hub then reads as UTF-8 (Victor, #3860). So every character above ASCII is written as a JSON escape: the
+    # line is pure ASCII, which every code page agrees on, and ConvertFrom-Json gives the characters back.
+    $json = $model | ConvertTo-Json -Depth 8 -Compress
+    $escape = ('\' + 'u') + '{0:x4}'
+    Write-Output ([regex]::Replace($json, '[^\x00-\x7F]', { param($m) $escape -f [int][char]$m.Value }))
     exit 0
 }

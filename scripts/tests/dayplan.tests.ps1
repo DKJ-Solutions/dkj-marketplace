@@ -111,6 +111,35 @@ Assert-Equal '2' @($wk.Rows).Count 'the week holds its own days only'
 $wt = Format-DayPlanWeekText -Week $wk -Prs 7 -Issues 3
 Assert-True ($wt -match 'Mon 02' -and $wt -match 'not closed' -and $wt -match '7 PR\(s\) merged, 3 issue\(s\) closed' -and $wt -match 'reached on 0 of 2') 'the week shows each day, the totals, and how often the goal was reached'
 
+Write-Host '-- the Today page (#3860)' -ForegroundColor Cyan
+. (Join-Path $RepoRoot 'plugins\dkj-policy\hub\lib\general-pages-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-policy\hub\lib\today-page-lib.ps1')
+$now = [datetime]'2026-11-07T12:00'
+$pageDay = [pscustomobject]@{ date = '2026-11-07'; goal = 'Ship <it>'; notToday = @('Spotify'); overrides = @([pscustomobject]@{ at = 'start'; reason = 'short day' }); close = $null
+    items = @((& $item 'Script' 3 'go' 'o/r#1'), (& $item 'Page <b>' 2 'plan' ''), ([pscustomobject]@{ title = 'Review'; hours = 1; mode = 'go'; ref = ''; added = $true })) }
+$pageModel = [pscustomobject]@{ date = '2026-11-07'; error = ''; day = $pageDay
+    live = [pscustomobject]@{ done = @(0); carried = @(1, 2); verdict = 'partly'; prs = 4; issues = 2; unplanned = @([pscustomobject]@{ ref = 'o/r#9'; title = 'Hotfix'; url = 'https://github.com/o/r/pull/9'; kind = 'pr' }) }
+    week = @([pscustomobject]@{ date = '2026-11-06'; goal = 'Friday'; planned = 3; done = 2; extra = 1; verdict = 'partly'; closed = $true }, [pscustomobject]@{ date = '2026-11-07'; goal = 'Ship'; planned = 3; done = 0; extra = 0; verdict = 'open'; closed = $false }) }
+$html = Format-TodayPageHtml -Model $pageModel -GeneratedAt '2026-11-07 12:00:00' -RepoName 'r' -Now $now
+Assert-True ($html -match '<h2>Day goal</h2></div><p class="today-goal__title"><span>Ship &lt;it&gt;</span><span class="chip">In progress</span>' -and $html -match 'Ship &lt;it&gt;' -and $html -notmatch 'Ship <it>') 'the goal is escaped, and an open day reads in progress'
+Assert-True ($html -match '1 of 3 done, 3 h of 6 h planned in a 8 h day' -and $html -match 'aria-label="50% of the planned hours done"') 'the progress counts items and the hours they carry'
+Assert-True ($html -match 'today-items__done">Script <a class="dp-link" href="https://github.com/o/r/issues/1"' -and $html -match 'Page &lt;b&gt;</span><span class="tag tag--info">plan first</span>') 'a done item is struck through with its link; an open one shows its mode'
+Assert-True ($html -match 'Review <span class="tag tag--warn">added</span>' -and $html -match 'Planned on an override \(start\): short day') 'an item added during the day and the override both show'
+Assert-True ($html -match '<dt>PRs merged</dt><dd class="num">4</dd>' -and $html -match 'Hotfix <a class="dp-link" href="https://github.com/o/r/pull/9"' -and $html -match '<h3>Not today</h3>' -and $html -notmatch '<h[1-3] class=') 'the Done card shows the counts, the extra work linked, and not today'
+Assert-True ($html -match '<td>Fri 6 Nov</td><td class="col-start">Friday</td><td class="num">2 of 3</td>' -and $html -match '<span class="tag tag--info">partly</span>' -and $html -match '<span class="chip">open</span>' -and $html -notmatch 'badge--neutral">[A-Za-z]' -and $html -match '3 planned</td>') 'the week shows a closed day''s result and an open day''s plan'
+Assert-True ($html -notmatch [char]0x2014 -and ([regex]::Matches($html, 'class="grid__head"')).Count -le 4) 'no em dash, and at most four sections'
+$closedModel = [pscustomobject]@{ date = '2026-11-07'; error = 'gh exited 1'; live = $null; week = @()
+    day = [pscustomobject]@{ goal = 'G'; items = @((& $item 'A' 6 'go' '')); notToday = @(); overrides = @(); close = [pscustomobject]@{ done = @(0); carried = @(); unplanned = @(); prs = 1; issues = 0; verdict = 'reached' } } }
+$ch = Format-TodayPageHtml -Model $closedModel -Now $now
+Assert-True ($ch -match '<span class="tag">Goal reached' -and $ch -match 'today-items__done">A' -and $ch -match 'GitHub could not be read') 'a closed day reads from its close-out when GitHub cannot be read, and says so'
+$empty = Format-TodayPageHtml -Model ([pscustomobject]@{ date = '2026-11-07'; error = ''; day = $null; live = $null; week = @() }) -Now $now
+Assert-True ($empty -match '<h2>No plan yet</h2>' -and $empty -match 'day-plan') 'no plan is an empty state that says how to make one'
+$err = Format-TodayPageHtml -Model $null -ReadError 'day-plan.ps1 -Status exited 1' -Now $now
+Assert-True ($err -match 'msg--warn" role="alert">The day plan could not be read' -and $err -notmatch 'No plan yet') 'a failed read is a warning, not an empty plan'
+Assert-True ((Format-TodayPageHtml -Model $empty -Now ([datetime]'2026-11-08')) -ne $null -and (Format-TodayPageHtml -Model ([pscustomobject]@{ date = '2026-11-07'; day = $null; week = @() }) -Now ([datetime]'2026-11-08')) -match '<title>[^<]*Saturday 7 November') 'a page showing another day than today names its date'
+$gp = @(Get-GeneralPages | Where-Object { $_.Href -eq '/dev/today' })
+Assert-True ($gp.Count -eq 1 -and $gp[0].Label -eq 'Today' -and -not $gp[0].Group -and -not $gp[0].GitHub -and (Get-HubIconSvg -Name $gp[0].Icon) -match '<svg') 'Today is a general page of its own, with an icon'
+
 Write-Host '-- the script' -ForegroundColor Cyan
 $state = Join-Path ([System.IO.Path]::GetTempPath()) ('dkj-dayplan-tests-' + [guid]::NewGuid().ToString('N'))
 $prevState = $env:DKJ_HUB_STATE_DIR
@@ -155,6 +184,13 @@ try {
     [System.IO.File]::WriteAllText((Join-Path $state 'dayplan\2026-11-05.json'), '{ not json', $utf8)
     $r = & $run @('-Add', '-Title', 'X', '-Hours', '1', '-Mode', 'go', '-Date', '2026-11-05')
     Assert-True ($r.Code -eq 1 -and $r.Out -match 'does not parse') 'a day file that does not parse is refused, never read as no plan and overwritten'
+
+    $accented = 'Caf' + [char]0x00E9 + ' ' + [char]0x2014 + ' plan'
+    $statusDay = [pscustomobject]@{ date = '2026-11-02'; goal = $accented; items = @((& $item 'A' 6)); notToday = @(); overrides = @(); close = $null }
+    [System.IO.File]::WriteAllText((Join-Path $state 'dayplan\2026-11-02.json'), ($statusDay | ConvertTo-Json -Depth 5), $utf8)
+    $r = & $run @('-Status', '-Date', '2026-11-06')
+    $sm = try { $r.Out | ConvertFrom-Json } catch { $null }
+    Assert-True ($r.Code -eq 0 -and $r.Out -notmatch '[^\x00-\x7F]' -and $sm -and $null -eq $sm.day -and (@($sm.week | Where-Object { $_.goal -eq $accented }).Count -eq 1)) '-Status writes pure ASCII JSON, and an accent and a dash come back whole through it'
 
     $r = & $run @('-Context', '-Close')
     Assert-True ($r.Code -eq 1 -and $r.Out -match 'exactly one') 'two modes at once are refused'
