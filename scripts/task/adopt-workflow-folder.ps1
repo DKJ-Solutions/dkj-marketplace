@@ -196,7 +196,10 @@ if ($foundFolderName -ne $currentFolderName -and -not (Test-Path -LiteralPath $c
         # Either separator after the folder: a seam answer written 'dkj-policy\CHANGELOG.md' is the same
         # address, and leaving it would point the fold at a file that moved. It comes out forward-slashed,
         # which every reader of these seams accepts.
-        @{ Rel = 'scripts/repo-config.ps1'; Pattern = "(['" + '"' + "])$oldEsc[/\\]"; Replace = "`${1}$currentFolderName/" },
+        # CodeOnly (#3885): a quoted path inside a '#' line or a '<# ... #>' block is history, not an
+        # address. Measured in dkj-lifehub (PR #657, November 7, 2026): rewriting a comment that records an
+        # earlier seam value made it claim a past value that was never set.
+        @{ Rel = 'scripts/repo-config.ps1'; Pattern = "(['" + '"' + "])$oldEsc[/\\]"; Replace = "`${1}$currentFolderName/"; CodeOnly = $true },
         @{ Rel = '.gitignore';              Pattern = "(?m)^(/?)$oldEsc/";            Replace = "`${1}$currentFolderName/" },
         # The PR template's FIRST-LINE comment names the branch document by its folder (#3884), and the
         # scaffold below never overwrites an existing template, so a moved repo kept saying
@@ -208,10 +211,40 @@ if ($foundFolderName -ne $currentFolderName -and -not (Test-Path -LiteralPath $c
         $abs = Join-Path $repoRoot ($rw.Rel -replace '/', '\')
         if (-not (Test-Path -LiteralPath $abs -PathType Leaf)) { continue }
         $text  = [System.IO.File]::ReadAllText($abs)
-        $count = ([regex]::Matches($text, $rw.Pattern)).Count
+        $count = 0; $skipped = 0
+        if ($rw.ContainsKey('CodeOnly')) {
+            # Line by line, terminators kept, so the file is rewritten byte for byte outside the hits.
+            $lines   = [regex]::Split($text, '(?<=\n)')
+            $inBlock = $false
+            for ($i = 0; $i -lt $lines.Count; $i++) {
+                $line = $lines[$i]
+                $isComment = $false
+                if ($inBlock) {
+                    $isComment = $true
+                    if ($line -match '#>') { $inBlock = $false }
+                } elseif ($line -match '<#') {
+                    $isComment = $true
+                    $inBlock = -not ($line.Substring($line.IndexOf('<#') + 2) -match '#>')
+                } elseif ($line -match '^\s*#') {
+                    $isComment = $true
+                }
+                $hits = ([regex]::Matches($line, $rw.Pattern)).Count
+                if ($hits -eq 0) { continue }
+                if ($isComment) { $skipped += $hits; continue }
+                $count += $hits
+                $lines[$i] = [regex]::Replace($line, $rw.Pattern, $rw.Replace)
+            }
+            $newText = $lines -join ''
+        } else {
+            $count   = ([regex]::Matches($text, $rw.Pattern)).Count
+            $newText = [regex]::Replace($text, $rw.Pattern, $rw.Replace)
+        }
+        if ($skipped -gt 0) {
+            Write-Host "  [kept]     $($rw.Rel): $skipped path(s) naming $foundFolderName/ inside comments, left as written (#3885)." -ForegroundColor DarkGray
+        }
         if ($count -eq 0) { continue }
         if ($Apply) {
-            [System.IO.File]::WriteAllText($abs, ([regex]::Replace($text, $rw.Pattern, $rw.Replace)), $Utf8NoBom)
+            [System.IO.File]::WriteAllText($abs, $newText, $Utf8NoBom)
             Write-Host "  [repointed] $($rw.Rel): $count path(s) from $foundFolderName/ to $currentFolderName/." -ForegroundColor Green
         } else {
             Write-Host "  [repoint] $($rw.Rel): $count path(s) from $foundFolderName/ to $currentFolderName/." -ForegroundColor Yellow

@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Issue #3885: the folder-move repoint in `adopt-workflow-folder -Apply` rewrote quoted `dkj-policy/` paths
+inside comments of `scripts/repo-config.ps1`, which turned a history comment into a false record
+(dkj-lifehub PR #657). Restrict that one file's repoint to code lines, and name the comment hits it keeps.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `adopt-workflow-folder.ps1` (both copies, byte-identical): the `repo-config.ps1` row is `CodeOnly`;
+  `#` lines and `<# ... #>` blocks are skipped and reported as `[kept]`.
+- [x] The move test in `adopt-workflow-folder.tests.ps1` adds a `#` comment and a block comment with
+  quoted old-folder paths: both are kept, the dry run counts 1 repoint and 2 kept.
 
 ### TEST
 
+- [x] `adopt-workflow-folder.tests.ps1` alone: 172 of 172 asserts pass. The full gate runs in `ship-pr`.
+
 ### DEPLOY: fix/3885-repoint-skips-comments
 
-**Score:**
+When `adopt-workflow-folder -Apply` moves `dkj-policy/` to `.dkj/dkj-policy/`, it now repoints quoted paths
+in `scripts/repo-config.ps1` only on code lines. A quoted path inside a `#` comment or a `<# ... #>` block
+is left as written, and the run lists those as `[kept]`. Before this, the move rewrote history comments too,
+so a comment recording an earlier seam value then claimed a value that was never set (#3885).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer still to move keeps its `repo-config.ps1` comments true, and no longer has to undo the rewrite
+by hand the way dkj-lifehub did.
+
+**Score:** 1
 
 #### Pull Request
 
