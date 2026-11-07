@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**1 / 2 minor entries** <!-- pending-tally -->
+**2 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3862-tidy-lane8-removes-records · 20261107-104657Z
+
+`tidy-machine` lane 8 now removes an install record whose checkout is gone, instead of printing the
+sequence for the reader to run. It recreates the folder empty, uninstalls each record from inside it at
+that record's own scope, and removes the folder again only while it is still empty. It acts only when the
+folder's parent is still on the machine, so an unmounted drive or an offline sync root stays on report,
+and it never touches a `managed` record
+([#3862](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3862)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Running `tidy-machine` now clears the dead install records a moved or deleted checkout leaves behind, in
+the same run, as long as the folder's parent is still on the machine. Before this, every run handed back the same list of uninstall lines to paste by hand.
+`-DryRun` still shows the sequence without running it.
+
+**Score:** 3
+
+#### Pull Request
+
+tidy-machine lane 8 removes a gone checkout's install records itself
+
+Plugins: dkj-policy
+
+[PR #3864](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3864)
+
+---
 
 ### DEPLOY: docs/ai-radar · 20261107-103730Z
 
