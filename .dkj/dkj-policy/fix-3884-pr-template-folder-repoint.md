@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Issue #3884: on the folder move, `adopt-workflow-folder -Apply` repoints `repo-config.ps1` and
+`.gitignore` but never an existing `.github/pull_request_template.md`, whose first-line comment keeps
+naming `dkj-policy/<branch>.md`. Add it to the same repoint list, bounded to that first `<!--` line.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Third repoint row in `adopt-workflow-folder.ps1` (both copies, byte-identical): the template's
+  opening comment line only.
+- [x] Fixture template in the move test of `adopt-workflow-folder.tests.ps1`: the dry run names the
+  repoint, `-Apply` repoints the comment, and the body below it stays as written.
 
 ### TEST
 
+- [x] `adopt-workflow-folder.tests.ps1` alone: 168 of 168 asserts pass. The full gate runs in `ship-pr`.
+
 ### DEPLOY: fix/3884-pr-template-folder-repoint
 
-**Score:**
+`adopt-workflow-folder -Apply` now also repoints the folder in the first-line comment of an existing
+`.github/pull_request_template.md` when it moves `dkj-policy/` to `.dkj/dkj-policy/`. Before this, the
+comment kept naming `dkj-policy/<branch>.md` after the move, because the scaffold never overwrites a
+template that is already there (#3884). The rest of a hand-edited template is left alone, and the dry
+run names the repoint like the other two.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer that runs the move on this release gets a PR template naming the folder its branch documents
+actually live in. Six consumers that moved on v6.10.0 fixed the comment by hand or still carry the old one.
+
+**Score:** 2
 
 #### Pull Request
 
