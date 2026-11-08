@@ -10,6 +10,7 @@ description: >-
   would otherwise become permanent in the release notes and the consumer-facing plugin CHANGELOGs.
   Use this when a branch is ready and the repo's governance rule allows the PR to be opened.
 disable-model-invocation: true
+argument-hint: "[issue-number(s) it resolves]"
 ---
 
 # open-pr — the shared PR opener for consumers

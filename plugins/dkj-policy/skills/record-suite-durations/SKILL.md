@@ -6,6 +6,7 @@ description: >-
   CI runs. Use it when Admin's Test gate page shows its empty state, after a suite has been added or
   has grown, or when a shard has become the slow one. Needs gh and a CI that runs the suites through the
   plugin's gate; -DryRun writes nothing.
+argument-hint: "[ci-run-id ...]"
 ---
 
 # record-suite-durations -- the gate's CI cost, written down where the gate and Admin read it

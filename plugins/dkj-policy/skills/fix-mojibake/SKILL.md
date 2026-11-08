@@ -9,6 +9,7 @@ description: >-
   it reaches characters nobody thought to list. Use -Check for a gate or a dry run. Use this when
   non-ASCII text has been mangled, or to verify that it has not been.
 disable-model-invocation: true
+argument-hint: "[path]"
 ---
 
 # fix-mojibake — the shared encoding repair for consumers

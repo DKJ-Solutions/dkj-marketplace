@@ -6,6 +6,7 @@ description: >-
   missing pointer, or just the work), and file each real finding as an issue. Run it by name, after a
   stretch of work or weekly, and before and after a doc change meant to make finding things cheaper.
 disable-model-invocation: true
+argument-hint: "[-Last <n>] [-Since <date>] [-Until <date>]"
 ---
 
 # retro -- what a session spent finding things, and which doc it was looking for

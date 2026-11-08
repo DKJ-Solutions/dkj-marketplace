@@ -7,6 +7,7 @@ description: >-
   (single source of truth, issue #81), so a consumer does not have to duplicate this script locally.
   Use this whenever a new piece of work starts: a branch is never entry-less -- creating it brings that
   document to life in the same step, instead of a separate later scaffolding step.
+argument-hint: "[<prefix>/<n>-<short-name>] [title]"
 ---
 
 # new-branch -- the shared branch+entry creator for consumers
