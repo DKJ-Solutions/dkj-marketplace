@@ -2,7 +2,38 @@
 
 ## [Unreleased]
 
-**1 / 2 minor entries** <!-- pending-tally -->
+**2 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3905-retro-skill · 20261108-232207Z
+
+A new skill, [`retro`](../../plugins/dkj-policy/skills/retro/SKILL.md), measures what this repo's recent
+sessions spent looking once the work was known: searches, reads and re-reads, the lookups made before the
+first edit, reverted edits and tokens, per session, plus the files read most across them. The page then
+has the model open the costliest sessions, judge whether the looking was a missing pointer, a stale doc or
+just the work, and file each real finding as an issue. It is the other half of the cost the always-on
+budget, `measure-skill` and `measure-session-start` measure up front. Like `measure-closeouts`, it reads
+transcripts in place and emits only counts, session ids and repo or plugin paths; a home path and the
+project directory name never leave it. `-Since` and `-Until` give a before-and-after
+comparison around a doc change (#3905).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer can now run `/retro` to find which of its own docs its sessions keep searching past, and get
+issues rather than a report. It costs nothing until typed (`disable-model-invocation`).
+
+**Score:** 2
+
+#### Pull Request
+
+Add a retro skill that reads session transcripts for search cost
+
+Plugins: dkj-policy
+
+[PR #3909](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3909)
+
+---
 
 ### DEPLOY: feat/3895-plugin-dependencies · 20261108-231102Z
 

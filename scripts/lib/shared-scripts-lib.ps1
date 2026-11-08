@@ -498,6 +498,17 @@ function Get-SharedScriptPairs {
             Skill  = 'measure-closeouts'
         },
         @{
+            # THE RETRO (#3905): what a session spent LOOKING once the work was known -- the other half of
+            # the cost the always-on budget and measure-skill measure up front. It mirrors cleanly for
+            # measure-closeouts' reason: it reads ~/.claude/projects, needs no seam, always exits 0, and only
+            # counts, session ids and repo-relative paths leave it. Its own page, disable-model-invocation, so
+            # it costs no session anything until somebody types it.
+            Name   = 'retro'
+            Source = 'scripts\maintenance\retro.ps1'
+            Plugin = 'dkj-policy'
+            Skill  = 'retro'
+        },
+        @{
             # THE WRITER OF suite-durations.json, shipped so a consumer's admin Test gate page can fill in
             # (issue #3474; the owner's decision on it, October 26, 2026). It was repo-local because it
             # was thought to read this repo's CI shape; what it actually reads is the per-suite table
