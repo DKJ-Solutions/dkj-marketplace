@@ -78,8 +78,9 @@ Moved to `dkj-policy` in #3198: see [`dkj-policy`'s `apps/admin/README.md`](http
 ## Who enables it
 
 **DKJ-Solutions repos only.** BWJ-Development has its own styling, so this plugin is never enabled in
-BWJ's repos. It requires `dkj-subagents-alpha` and `dkj-policy`.
-
+BWJ's repos. It requires `dkj-subagents-alpha` and `dkj-policy`. Its `plugin.json` declares
+`dkj-policy` under `dependencies`, without a version, so Claude Code installs `dkj-policy` with it
+and the release keeps its one lockstep `vX.Y.Z` tag (#3895).
 ## Installing it in a DKJ-Solutions repo
 
 1. Refresh the marketplace clone first (`claude plugin marketplace update dkj-marketplace`). A stale
