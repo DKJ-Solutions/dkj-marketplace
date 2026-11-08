@@ -1,6 +1,7 @@
 ---
 name: check-branch-entry
 description: Answer whether this branch carries a WRITTEN changelog entry, the way the CI gate answers it -- so you learn it before the push rather than from a red check. Use it on a branch whose work is finished, when a PR was opened outside open-pr, or when a red "Branch entry" check needs explaining. It adds no rule of its own: it calls the same functions open-pr calls, and -- given a PR number -- the same DEPLOY-lock function ship-pr calls, so a section edited after the PR opened is refused here too. It reports an unsettled significance rather than refusing on it, because that refusal belongs to the release cut -- a malformed value, such as N/A under tier 0, it refuses.
+argument-hint: "[pr-number]"
 ---
 
 # check-branch-entry -- is the entry written?
