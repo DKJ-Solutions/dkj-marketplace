@@ -4,6 +4,7 @@
 
 | Version | Date | Type | Title |
 |---|---|---|---|
+| [6.11.0](audience/6.x/6.11.0.md) | 2026-11-08 | Minor | Adoption repairs for consumers, a triage-labels session check and prescribed branch prefixes |
 | [6.10.0](audience/6.x/6.10.0.md) | 2026-11-07 | Minor | Minor release |
 | [6.9.0](audience/6.x/6.9.0.md) | 2026-11-06 | Minor | Minor release |
 | [6.8.0](audience/6.x/6.8.0.md) | 2026-11-05 | Minor | Minor release |
