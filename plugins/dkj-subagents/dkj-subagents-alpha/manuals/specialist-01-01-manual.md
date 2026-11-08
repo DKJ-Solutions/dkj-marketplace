@@ -291,10 +291,16 @@ repo.
   not contain the change — and what comes back is a confident "no findings" with nothing in it to
   say which tree it read.
 - **It dirties the tree it was meant to protect.** The harness puts the worktree at
-  `.claude/worktrees/agent-<id>`, **inside the checkout**, and nothing ignores that path — while the
-  agent runs, the primary's own `git status` carries `?? .claude/worktrees/`. Every step of a
-  workflow that refuses on a dirty tree sees that, and the flag offers no way to put the worktree
-  anywhere else.
+  `.claude/worktrees/agent-<id>`, **inside the checkout**, and the harness does not ignore that path —
+  measured then, while the agent ran the primary's own `git status` carried `?? .claude/worktrees/`,
+  and every step of a workflow that refuses on a dirty tree saw it. A repo repairs this half with an
+  anchored `/.claude/worktrees/` in `.gitignore`, as the source repo does (#1673); the flag itself
+  offers no way to put the worktree anywhere else.
+
+**Re-checked November 8, 2026 (#3904): the first reason still holds.** The harness now branches a
+subagent's worktree from the default branch rather than from `HEAD` (`worktree.baseRef`: `fresh` or
+`head`), and `.worktreeinclude` copies gitignored files only, so no setting carries uncommitted work
+in. The detail is on the `worktree-lane` skill page.
 
 So a reviewer is a fresh agent in the primary checkout, and the `working-copy-boundary` block stays
 the whole of what keeps it off the working copy. **That is not weakened by being unenforceable** —

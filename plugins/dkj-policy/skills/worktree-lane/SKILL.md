@@ -244,6 +244,35 @@ skill's own external placement is the right tool for a lane that outlives a sing
 be double-counted by the gates. Adopting the native mechanism for lanes would be a regression, not an
 upgrade.
 
+### Re-checked against the docs, November 8, 2026 (#3904)
+
+Inbound [#3904](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3904) asked whether
+`worktree.baseRef`, `.worktreeinclude` and the `WorktreeCreate` hook remove the two objections
+(#1667: a worktree carries no uncommitted work; #1673: it lands inside the repo). Read against
+[worktrees](https://code.claude.com/docs/en/worktrees), [hooks](https://code.claude.com/docs/en/hooks)
+and [sub-agents](https://code.claude.com/docs/en/sub-agents):
+
+- **`worktree.baseRef` does not touch #1667.** It takes `fresh` (`origin/<default-branch>`, the
+  default) or `head` (local `HEAD`), and both start from a commit. No value carries a tracked edit or an
+  untracked file. A subagent worktree now branches from the default branch, not the parent's `HEAD`.
+- **`.worktreeinclude` does not touch it either.** It copies only files that are gitignored *and* match
+  a pattern; tracked edits and untracked, non-ignored files stay behind. This repo is secret-free, so it
+  still has nothing to carry.
+- **The `WorktreeCreate` hook is the one real change, and only for #1673.** It runs for `--worktree`
+  and for `isolation: "worktree"` subagents, and the path it prints is where the worktree goes, so it
+  could place a subagent's worktree outside the repo the way a lane is placed. It replaces the default
+  wholesale (`.worktreeinclude` is then not processed), and a subagent's worktree gets no
+  `WorktreeRemove` call: the hook's owner removes it, branch included. No setting moves the default
+  placement (`worktree.location` is read by the desktop app's SSH sessions only), and the harness does
+  not ignore `.claude/worktrees/` for you.
+
+Net: the lanes verdict above stands. A hook that places worktrees outside the repo would be
+`worktree-lane.ps1` rebuilt inside a hook, and a native lane's own branch (`worktree-<name>`) carries
+no prefix the branch table accepts. For dispatched subagents the in-tree placement is already repaired
+by an anchored `/.claude/worktrees/` in `.gitignore` (#1673), so a hook buys nothing there either.
+Reopen #3904 if a release lets `.worktreeinclude` carry tracked edits or lets `baseRef` take the
+working copy.
+
 ## Requirements in the consumer
 
 The script itself needs only `git`. Because step 4 delegates to `new-branch.ps1`, a lane inherits that
