@@ -39,19 +39,53 @@
 
 ### PLAN
 
+Picked up by a sweep (#3905, feature-inbound). The issue proposed a weekly cloud routine; verified on pickup
+that a `/schedule` routine runs in the cloud and cannot read `~/.claude/projects`, so the page names the
+local routes instead.
+
+#### Boundaries carried over from measure-closeouts
+
+- Counts, session ids and repo-relative paths only: no search pattern, message or tool output leaves it,
+  and a path outside the repo is shown as `(outside the repo)`.
+- This repo's sessions (and its lanes') by default, since the paths it names belong to this repo's tracker.
+- A measurement, not a gate: always exit 0, no verdict; the judging and the filing are the model's.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/maintenance/retro.ps1`: per session the searches, explorations, web lookups, reads and
+  re-reads, shell reads, edits, lookups before the first edit, reverted edits and tokens; across sessions
+  the files read most; `-Last`, `-Since`, `-Until`, `-Top`, `-Project`, `-Json`.
+- [x] Registered in `shared-scripts-lib.ps1` and mirrored into `dkj-policy`.
+- [x] The `retro` skill page, `disable-model-invocation: true`: measure, open the costly sessions, judge,
+  file one issue per finding without quoting transcript text.
+- [x] Listed in the scripts README and the ADOPTION skill list.
 
 ### TEST
 
+- [x] `scripts/tests/retro.tests.ps1` (34 asserts, in the `tools` suite group): the counts, the
+  before-first-edit cut, the revert rule, the lane fold, the hidden outside path, no transcript text in
+  either output, the filters, exit 0.
+- [x] Run against this repo's last ten real sessions: about one second, medians and hot files as expected.
+
 ### DEPLOY: feat/3905-retro-skill
 
-**Score:**
+A new skill, [`retro`](../../plugins/dkj-policy/skills/retro/SKILL.md), measures what this repo's recent
+sessions spent looking once the work was known: searches, reads and re-reads, the lookups made before the
+first edit, reverted edits and tokens, per session, plus the files read most across them. The page then
+has the model open the costliest sessions, judge whether the looking was a missing pointer, a stale doc or
+just the work, and file each real finding as an issue. It is the other half of the cost the always-on
+budget and `measure-skill` measure up front. Like `measure-closeouts`, it reads transcripts in place and
+emits only counts, session ids and repo-relative paths. `-Since` and `-Until` give a before-and-after
+comparison around a doc change (#3905).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer can now run `/retro` to find which of its own docs its sessions keep searching past, and get
+issues rather than a report. It costs nothing until typed (`disable-model-invocation`).
+
+**Score:** 2
 
 #### Pull Request
 
