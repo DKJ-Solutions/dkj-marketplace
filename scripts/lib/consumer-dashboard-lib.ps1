@@ -56,6 +56,8 @@ function Get-ProductPages {
     @(
         @{ Href = '/consumers';  Label = 'Consumers';   Sub = 'Every repo that installs plugins from this marketplace, registered under consumers/ and checked by check-consumers.ps1 on this machine'; Icon = 'consumers' }
         @{ Href = '/marketplace';     Label = 'Marketplace'; Sub = 'Every plugin this marketplace ships, its version and what it holds'; Icon = 'marketplace' }
+        # The ten opportunities a comparison of the Claude Code docs against this repo found, one page each (#3906).
+        @{ Href = '/docs-coverage'; Label = 'Docs coverage'; Sub = 'Ten Claude Code features this repo does not use yet, each with its status'; Icon = 'claude' }
         # The product's own Settings, last as on Admin (Maikel, November 4, 2026): its theme. No width, which is full
         # here as on Admin (Dave, November 4, 2026).
         @{ Href = '/settings';   Label = 'Settings';    Sub = 'How this product looks on this device: its theme'; Icon = 'settings' }

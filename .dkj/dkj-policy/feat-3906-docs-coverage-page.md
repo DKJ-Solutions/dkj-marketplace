@@ -39,19 +39,40 @@
 
 ### PLAN
 
+#### The shape (#3906)
+
+An overview on the product (`/docs-coverage`) with one house card link per opportunity, its status as the card's
+value, and a page of its own per item one level down (`/docs-coverage/<slug>`), the breadcrumbs the way back. An
+item's idea and what the docs said about it are fixed text in `scripts/lib/docs-coverage-lib.ps1`, as a sweep
+verified them on November 8, 2026 (the comments on #3895 to #3904). The status is live: one `gh api graphql` call,
+cached like the DKJ repos page.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/lib/docs-coverage-lib.ps1`: the ten items, the status query and its parse, the status word, both pages
+- [x] The product's menu and home card (`Get-ProductPages`), and the server's routes, cache and `/refresh` target
+- [x] Tests in `scripts/tests/dev-pages.tests.ps1`, and the three asserts that pin the product's page list
+- [ ] The owner looks at the pages: a visible result, parked for their eye (the constitution)
 
 ### TEST
 
 ### DEPLOY: feat/3906-docs-coverage-page
 
-**Score:**
+The product's home page has a **Docs coverage** card
+([#3906](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3906)). It opens an overview of the ten Claude
+Code features a comparison of the official docs against v6.11.0 found unused here (#3895 to #3904), one card each
+with its live status (Open, In progress, Awaiting decision, In review, Waiting, Done or Declined). Each card opens
+the item's own page: its idea, and what the docs turned out to say when a sweep checked it, including the
+corrections to what the issue assumed. The status is read from the issues with one GraphQL call. The ideas are
+fixed text, so a later change to an issue's content is copied in by hand.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: the product portal is this repo's own local server, and no plugin ships it.
+
+**Score:** N/A
 
 #### Pull Request
 

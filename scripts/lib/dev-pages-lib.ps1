@@ -42,6 +42,8 @@
 # And Admin's Plugins page lib, for ConvertTo-PluginDescriptionHtml (a plugin's description as paragraphs) and the house
 # style's specimens (Get-HouseStyleSpecimensParts).
 . (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\apps\admin\lib\plugins-page-lib.ps1')
+# The Docs coverage pages (#3906), which use this file's page shell.
+. (Join-Path $PSScriptRoot 'docs-coverage-lib.ps1')
 
 function Format-DevPageHtml {
     <#
