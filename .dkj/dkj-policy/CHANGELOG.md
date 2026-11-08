@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**2 / 4 minor entries** <!-- pending-tally -->
+**3 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3899-skill-argument-hints · 20261108-234152Z
+
+Fifteen skills now show the argument they expect in the slash-command autocomplete: `/claim-issue
+[issue-number]`, `/new-branch [<prefix>/<n>-<short-name>] [title]`, `/ship-pr [issue-number(s) it
+resolves]`, `/push-preview [storefront path]` and so on. No skill gained a tool grant: the owner chose
+`argument-hint` only, and `shell` governs injection blocks no skill has (#3899).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Typing `/` and a skill name now says what to type after it, for the fifteen skills that take an argument.
+
+**Score:** 2
+
+#### Pull Request
+
+Skills show their expected argument in the slash menu
+
+Plugins: dkj-policy, dkj-subagents-shopify
+
+[PR #3914](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3914)
+
+---
 
 ### DEPLOY: feat/3896-skill-trigger-evals · 20261108-233206Z
 
