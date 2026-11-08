@@ -39,19 +39,39 @@
 
 ### PLAN
 
+The owner's decision on #3902 (November 8, 2026): keep the OAuth subscription token, no API key; read
+`num_turns` from recent green review runs and set `--max-turns` just above that ceiling. No `--model`
+was asked for.
+
+#### The measurement
+
+`num_turns` from the logs of the last 40 green `claude-code-review` runs (November 9, 2026): 4 to 90,
+median 12. The 90 is a real review of a large PR (#3896's evals branch), and the next highest is 44.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `claude_args` in `.github/workflows/claude-code-review.yml` gains `--max-turns 100`, with the
+  measurement and how to re-take it in the comment beside it.
 
 ### TEST
 
+- [~] Not testable on this PR: the action skips a run whose workflow file differs from `main`'s and goes
+  green without reviewing (the file's own header). The first PR after the merge exercises it.
+
 ### DEPLOY: feat/3902-review-max-turns
 
-**Score:**
+The Claude review workflow now stops a run at 100 turns, so one review cannot drain the subscription
+quota its token shares with interactive work. The bound sits just above the measured ceiling: over the
+last 40 green runs `num_turns` was 4 to 90, median 12. The token stays the OAuth subscription token, as
+the owner chose (#3902).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: the review workflow runs in this repo's CI only, and nothing a consumer installs changes.
+
+**Score:** N/A
 
 #### Pull Request
 
