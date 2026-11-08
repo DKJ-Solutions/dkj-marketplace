@@ -39,19 +39,37 @@
 
 ### PLAN
 
+- [x] The issue's first direction: skip the start where the root is not a git work tree. Admin
+  describes a repository, so a folder that is none has nothing for it to show. The other direction (an
+  `EVAL_*` opt-out) would need every eval case to set it, and #3643 removed opt-outs on purpose.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `dev-preview-sessionstart.ps1` exits silently when `git rev-parse --is-inside-work-tree` says
+  the root is not a work tree. Where git is missing it carries on as before, and `-RepoRootOverride`
+  skips the guard, because the suite's fixtures are plain folders.
 
 ### TEST
 
+- [x] `dev-preview-sessionstart.tests.ps1`: a plain temp folder reached through `CLAUDE_PROJECT_DIR`
+  gets exit 0, no output, nothing listening on the general port, and no state file. The full gate runs
+  in `ship-pr`.
+
 ### DEPLOY: fix/3911-admin-outside-worktree
 
-**Score:**
+`dkj-policy`'s SessionStart hook no longer starts Admin in a folder that is not a git work tree. Every
+`claude plugin eval` run used to leave an Admin server behind in its temporary workspace, which kept
+the eval CLI from removing that folder (`EBUSY`). An eval run now leaves nothing running, and every
+repo still gets its Admin as before
+([#3911](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3911)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Plugin eval runs no longer leave Admin servers and locked temp folders behind.
+
+**Score:** 2
 
 #### Pull Request
 
