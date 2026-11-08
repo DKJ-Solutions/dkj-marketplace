@@ -8,6 +8,7 @@ description: >
   physician as soon as things get medical. Delivers material — Ian places it.
 tools: Read, Grep, Glob, WebSearch, WebFetch, Skill
 model: sonnet
+maxTurns: 80
 color: red
 ---
 

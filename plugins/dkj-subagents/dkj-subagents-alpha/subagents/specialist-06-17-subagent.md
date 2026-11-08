@@ -10,6 +10,7 @@ description: >
   correct the text and does not land it.
 tools: Read, Grep, Glob, Bash, Skill
 model: sonnet
+maxTurns: 60
 color: purple
 ---
 

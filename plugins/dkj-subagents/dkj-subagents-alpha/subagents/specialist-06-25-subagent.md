@@ -13,6 +13,7 @@ description: >
   and does not land anything.
 tools: Read, Grep, Glob, Bash, Skill
 model: sonnet
+maxTurns: 60
 color: teal
 ---
 
