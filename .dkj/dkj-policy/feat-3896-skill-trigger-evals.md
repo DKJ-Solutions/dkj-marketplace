@@ -39,19 +39,36 @@
 
 ### PLAN
 
+#3896, as decided on its thread (November 8, 2026): `claude plugin eval` cases for a few key skills, run by
+hand, no CI spend. The cases test triggering only, the risk the issue names (a description shortened until
+the skill stops firing), with free `tool_used: Skill` graders, so no judge model is paid for.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-policy/evals/`: four `*-fires` cases (`claim-issue`, `new-branch`, `sync-trunk`, `day-plan`) and one negative case
+- [x] `evals/README.md`: the local command (`--no-publish` required, `--ablation none`), the case table, the cleanup line
+- [x] `.gitignore`: the eval results directory
+- [x] Filed #3911: the dev-preview hook starts an Admin server per eval run that outlives it
 
 ### TEST
 
+- [x] Ran locally November 9, 2026: `claude plugin eval plugins/dkj-policy --runs 1 --ablation none --no-publish --trust-plugin`, 5/5 cases passed, exit 0.
+- [x] The repo gates run inside `ship-pr`.
+
 ### DEPLOY: feat/3896-skill-trigger-evals
 
-**Score:**
+`dkj-policy` carries an eval suite (`plugins/dkj-policy/evals/`) that checks four key skills (`claim-issue`,
+`new-branch`, `sync-trunk`, `day-plan`) still fire on everyday phrasing, plus one case that checks a plain
+question fires none. It runs by hand with `claude plugin eval`, never in CI, and its README gives the
+command, including `--no-publish`, which keeps the report off claude.ai.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
