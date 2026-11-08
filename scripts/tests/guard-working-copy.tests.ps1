@@ -177,6 +177,13 @@ try {
         Assert-Equal 0 (Invoke-Guard (New-Payload -Command $cmd)).Code                    "the main thread may still run: $cmd"
     }
 
+    # THE PRE-GATE READS JSON, where a newline or a tab before `git` is the two characters `\n` or `\t` --
+    # which hid it from a `\bgit` test until the review of #3901 caught it. Through the real hook, so the
+    # pre-gate is what is being tested.
+    foreach ($cmd in @("cd x`ngit push -f", "echo a`ngit reset --hard", "cd x;`tgit reset --hard", "echo a`r`ngit push --force")) {
+        Assert-Equal 2 (Invoke-Guard (New-Payload -Command $cmd)).Code "a multi-line command is still judged: $($cmd -replace '\s', ' ')"
+    }
+
     $r = Invoke-Guard (New-Payload -Command 'git push --force')
     Assert-True ($r.Out -match 'BLOCKED \(guard-working-copy\)')  'the refusal is marked as this guard'
     Assert-True ($r.Out -match "owner's explicit permission")      'and names the constitution rule it enforces'

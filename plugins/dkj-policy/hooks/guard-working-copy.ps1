@@ -132,8 +132,12 @@ if ([Console]::IsInputRedirected) { $raw = [Console]::In.ReadToEnd() }
 # AND A SECOND STRING TEST, FOR THE ONE RULE THAT HOLDS ON EVERY THREAD (#3901): the constitution's force
 # push and hard reset. Only a payload naming git AND push or reset pays the lib load on the main thread;
 # the rest of the 89% still leaves here. Like the first test, it can only err towards more work.
+#
+# NO \b IN IT, and that is measured rather than tidied (review of #3901): $raw is JSON, where a newline
+# before `git` is the two characters `\n`, so `\bgit` finds no boundary after that `n` and a multi-line
+# command walked past the rule. A bare substring cannot lose a boundary to escaping.
 $isSubagentCall = $raw -match '"agent_id"\s*:'
-$mayBreakSafetyRule = ($raw -match '(?i)\bgit\b') -and ($raw -match '(?i)\b(?:push|reset)\b')
+$mayBreakSafetyRule = ($raw -match '(?i)git') -and ($raw -match '(?i)push|reset')
 if (-not $isSubagentCall -and -not $mayBreakSafetyRule) { exit 0 }
 
 # $PSScriptRoot-relative, so it resolves the same in the source tree, in the plugin mirror and in a
@@ -171,7 +175,8 @@ if ($null -ne $safety) {
         '',
         '  IF THEY HAVE NOT: it is their decision, not your command. Ask it as one choice (close-out shape B),',
         '  and name the safer route where there is one -- a new commit instead of a rewrite, a revert PR',
-        '  instead of a reset, `git stash` or a branch to keep work before a reset.',
+        '  instead of a reset. On the main thread, a stash or a branch keeps work before a reset; a',
+        '  dispatched subagent runs neither, and says what it needs in its deliverable instead.',
         '',
         '  WRITING THE RULE INTO A FILE through a script piped into an interpreter? Text that a command',
         "  executes is judged as a command. Use the harness's Edit/Write tool instead."

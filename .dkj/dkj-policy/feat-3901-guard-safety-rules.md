@@ -52,17 +52,18 @@ thread, with no consumer setting to change. In scope: every force push (`-f`, `-
 - [x] Tests: a `Get-SafetyRuleViolation` group in `working-copy-guard-lib.tests.ps1`; group 6 in `guard-working-copy.tests.ps1`; group 1's main-thread `reset --hard` case is now `reset --soft`
 - [x] `plugins/dkj-policy/scripts/README.md`: the lib row names the new function
 - [x] Code review (Victor) and security review (Sebastian)
+- [x] Review fixes: the hook's pre-gate drops `\b` (a newline before `git` is `\n` in the JSON, so a multi-line command walked past it); `HEAD:+main` and `--mirror` count as force pushes; `& git` and `"git"` are git-led (both rules); unique abbreviations `--force-w...` and `--ha...` are read; the refusal offers a stash or branch to the main thread only; the residual limits are listed in full
 
 ### TEST
 
-- [x] `working-copy-guard-lib.tests.ps1` 113/0, `guard-working-copy.tests.ps1` 53/0, `hook-fail-closed` 43/0, `hook-stdin-guard` 56/0, `exception-message-guard` 18/0, run locally.
-- [x] Measured over 4593 recorded Bash/PowerShell calls in this repo's transcripts: one refusal, a false positive (a heredoc piped into `python -` that wrote the test cases), recorded in the lib and answered in the refusal text.
+- [x] After the review fixes: `working-copy-guard-lib.tests.ps1` 125/0, `guard-working-copy.tests.ps1` 57/0, `hook-fail-closed` 43/0, `hook-stdin-guard` 56/0, `command-guard-lib` 38/0, run locally.
+- [x] Measured over this repo's transcripts: 1 refusal in 4593 calls before the reviews, 8 in 4638 after, every one a heredoc of test data or a reviewer's own probe of this rule. No real force push or hard reset is in the corpus. Recorded in the lib.
 - [x] The repo gates run inside `ship-pr`.
 
 ### DEPLOY: feat/3901-guard-safety-rules
 
-`guard-working-copy` now refuses a force push (`-f`, `--force`, `--force-with-lease`, a `+` refspec) and
-`git reset --hard` on every thread, the main one included. It used to guard only dispatched subagents. The
+`guard-working-copy` now refuses a force push (`-f`, `--force`, `--force-with-lease`, `--mirror`, a `+`
+refspec) and `git reset --hard` on every thread, the main one included, abbreviations git accepts as well. It used to guard only dispatched subagents. The
 constitution allows both commands only with the owner's explicit permission, and a plugin cannot ship
 permission rules, so the guard enforces them itself (#3901). The refusal tells the session to give the owner
 the exact command to run themselves. A commit message or grep that names the rule is not refused.
