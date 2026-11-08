@@ -7,6 +7,7 @@ description: >-
   can merge, and you want to start the next piece of work instead. Also use it with -HandBack to
   release a finished lane's branch so ship-pr can run on it from the primary checkout.
 disable-model-invocation: true
+argument-hint: "[<prefix>/<short-name> | hand back]"
 ---
 
 # worktree-lane -- build in one place, ship in another

@@ -1,6 +1,7 @@
 ---
 name: archive-theme
 description: Archive one or more Shopify themes to a local, verified backup and leave a committed receipt for each -- the step that makes removing a spent preview theme recoverable. Use it before any theme leaves the store, and re-run it over an estate already backed up to give older archives the receipt they never had. It NEVER removes a theme: it prints the removal command for somebody to run as its own visible act, because a command buried inside a script is invisible to the live-theme guard. The live theme is refused outright.
+argument-hint: "[theme-id ...]"
 ---
 
 # archive-theme -- the backup, the receipt, and the command it will not run for you

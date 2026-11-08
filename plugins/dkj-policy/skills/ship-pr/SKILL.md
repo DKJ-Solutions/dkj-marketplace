@@ -9,6 +9,7 @@ description: >-
   to it under the fold exception. Use this when a branch is finished, committed, and the repo's
   governance rule allows the PR to be opened.
 disable-model-invocation: true
+argument-hint: "[issue-number(s) it resolves]"
 ---
 
 # ship-pr — the shared PR chain for consumers

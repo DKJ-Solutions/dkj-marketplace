@@ -39,19 +39,39 @@
 
 ### PLAN
 
+The owner's decision on #3899 (November 8, 2026): `argument-hint`, and `shell` where it fits; no
+`allowed-tools` grants. Verified against code.claude.com/docs/en/skills: `shell` governs only the
+`` !`command` `` and ` ```! ` injection blocks, and no skill in the tree has one, so it fits none. A hint
+goes only on a skill that takes a typed argument, its wording taken from the parameter the skill's own
+script reads.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `argument-hint` on fifteen skills: `claim-issue`, `new-branch`, `ship-pr`, `open-pr`,
+  `worktree-lane`, `check-branch-entry`, `fix-mojibake`, `stopwatch-prepare`, `stopwatch-hide`,
+  `plan-goal`, `retro`, `record-suite-durations` (dkj-policy), and `start-task`, `archive-theme`,
+  `push-preview` (dkj-subagents-shopify). One frontmatter line each, nothing else changed.
+- [~] `shell`: dropped, as no skill carries an injection block for it to govern.
 
 ### TEST
 
+- [x] `claude plugin validate` on both plugins passes; its one warning (the plugin-root `CLAUDE.md`) predates
+  this branch.
+
 ### DEPLOY: feat/3899-skill-argument-hints
 
-**Score:**
+Fifteen skills now show the argument they expect in the slash-command autocomplete: `/claim-issue
+[issue-number]`, `/new-branch [<prefix>/<n>-<short-name>] [title]`, `/ship-pr [issue-number(s) it
+resolves]`, `/push-preview [storefront path]` and so on. No skill gained a tool grant: the owner chose
+`argument-hint` only, and `shell` governs injection blocks no skill has (#3899).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Typing `/` and a skill name now says what to type after it, for the fifteen skills that take an argument.
+
+**Score:** 2
 
 #### Pull Request
 
