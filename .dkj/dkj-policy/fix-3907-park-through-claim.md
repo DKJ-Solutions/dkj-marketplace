@@ -39,19 +39,44 @@
 
 ### PLAN
 
+#### The direction (#3907 left three open)
+
+The first and the third: park through `claim-issue` (`-Park <label> -Reason <text>`), and refuse a plain `-Tag`
+claim on an already-parked issue. The second (re-read before commenting) narrows the window and does not close it,
+and the first makes it unneeded. The refusal is scoped to the sweep route on purpose. The assignee route keeps
+#2518's warning, because #1485's reason (a stale label must not block) holds there, while the sweep route never
+claims a parked issue except through this race. It sits below the verdict switch, outside the advisory scan block
+that #1485's own asserts keep free of exits.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Test-ParkLabel` and `Format-ParkComment` in `claim-issue-lib.ps1` (both mirrors byte-identical)
+- [x] `claim-issue.ps1`: `-Park`/`-Reason`, validated before any read; the label and the comment only after the
+  read-back names the winner; the claim released on every path; the parked-issue refusal under `-Tag` (both mirrors)
+- [x] `issues-sweep` step 1 parks through `-Park`, step 2 names the new refusal, and a verdict that closes an issue
+  is building work that starts with a claim
+- [x] Tests in `claim-issue.tests.ps1`, including three runs of the script's own refusals
 
 ### TEST
 
 ### DEPLOY: fix/3907-park-through-claim
 
-**Score:**
+`claim-issue.ps1 <n> -Tag -Park <awaiting-label> -Reason "<what>"` parks an issue under a claim
+([#3907](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3907)). Only the winner of the claim's read-back
+sets the label and posts `Parked by a sweep: waiting on <what>.`, and the claim is released on every path. A plain
+`-Tag` claim on an issue that another sweep parked after step 1 now refuses instead of warning and printing
+`[OK] claimed`. The assignee route keeps its warning (#2518). `issues-sweep` step 1 parks this way now, and says
+that evaluating and closing an issue starts with a claim.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A repo that runs several sweeps at once no longer gets one issue parked two or three times with comments that
+disagree. `issues-sweep` users park with one command where they used two, and a late claim on a parked issue
+stops rather than taking it.
+
+**Score:** 3
 
 #### Pull Request
 

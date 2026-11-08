@@ -120,6 +120,18 @@
     it, because typing that command is an owner's word, and the repo's own facts may name several
     owners. Without the label it refuses as 'not parked'; the branch preconditions still apply.
 
+.PARAMETER Park
+    With -Tag and -Reason: PARK the issue rather than build it (issue #3907). The run claims it exactly as
+    a plain -Tag claim does (the marker, the assignee, the read-back that settles a race), and only the
+    winner then adds this awaiting-* label, posts "Parked by a sweep: waiting on <Reason>", and releases
+    its own claim. A park is a tracker write like a claim. Measured November 8, 2026: four sweeps parked
+    the same issues within three minutes, each with a comment of its own, because a park took no claim
+    and so had no read-back to lose. A lost race now costs a claim and writes no label and no comment.
+
+.PARAMETER Reason
+    With -Park: what the issue waits on, the "<what>" of the parking comment. For awaiting-pull it names
+    the blocker as #<n> or a branch first, since that clause is what -Candidates' stale-park reading parses.
+
 .PARAMETER ReleaseAll
     With -Tag, and no issue number: release EVERY open issue this tag holds -- its own marker comments
     and the assignee written beside them, and nothing else (issue #2395). The tidy-up before a PLANNED
@@ -200,6 +212,8 @@ param(
     [Parameter(ParameterSetName = 'Issue')][switch]$Release,
     [Parameter(ParameterSetName = 'Issue')][switch]$TakeOver,
     [Parameter(ParameterSetName = 'Issue')][switch]$Parked,
+    [Parameter(ParameterSetName = 'Issue')][string]$Park = '',
+    [Parameter(ParameterSetName = 'Issue')][string]$Reason = '',
     [Parameter(Mandatory = $true, ParameterSetName = 'Candidates')][switch]$Candidates,
     [Parameter(ParameterSetName = 'Candidates')]
     [Parameter(ParameterSetName = 'Issue')][string[]]$SkipLabel = @(),
@@ -352,6 +366,20 @@ if (-not $Candidates -and -not $ReleaseAll) {
         Write-Host '[ERROR] -Parked only qualifies -TakeOver -- nothing was read or written.' -ForegroundColor Red
         Write-Host '        It lets a take-over move a co-owner''s claim on an issue parked for review (#3846).' -ForegroundColor Red
         exit 1
+    }
+    # -Park IS A CLAIM THAT ENDS IN A LABEL (issue #3907), so it takes the claim's own tag and nothing that
+    # reads or moves another claim. Refused before anything is read, like the two checks above.
+    if ($Park -or $Reason) {
+        if (-not $Tag -or $Verify -or $Release -or $TakeOver) {
+            Write-Host '[ERROR] -Park needs -Tag, and cannot be combined with -Verify, -Release or -TakeOver -- nothing was read or written.' -ForegroundColor Red
+            Write-Host '        It parks a free issue under a claim of this tag, so the claim''s read-back settles a race between sweeps.' -ForegroundColor Red
+            exit 1
+        }
+        if (-not (Test-ParkLabel -Label $Park) -or -not $Reason.Trim()) {
+            Write-Host '[ERROR] -Park takes an awaiting-* label and -Reason the text of what it waits on -- nothing was read or written.' -ForegroundColor Red
+            Write-Host '          claim-issue.ps1 <n> -Tag -Park awaiting-decision-dev -Reason "the owner''s choice of X"' -ForegroundColor Red
+            exit 1
+        }
     }
 }
 
@@ -1677,6 +1705,25 @@ switch ($verdict.Code) {
     }
 }
 
+# --- BUT A SWEEP'S CLAIM ON A PARKED ISSUE IS REFUSED (issue #3907) ---------------------------------
+#
+# The warning above stays a warning on the assignee route, for #2518's reason. A plain -Tag claim is the
+# sweep route, and the sweep route never claims a parked issue on purpose: -Candidates skips it, a decided
+# issue comes back with its label gone, and a review resume runs -Verify or -TakeOver -Parked, never this.
+# So a parked issue reaches here only through the race #3907 measured: free at step 1, parked by another
+# sweep before this claim. On November 8, 2026 that printed the PARKED warning and then "[OK] claimed",
+# twice, and both sessions had to release by hand. A label that has gone stale is lifted first, and the
+# claim then runs as usual.
+if ($parked -and $Tag -and -not $TakeOver -and $verdict.Action -eq 'claim') {
+    Write-Host "[REFUSED] #$number is already parked -- nothing was claimed$(if ($Park) { ' and nothing was parked' })." -ForegroundColor Red
+    Write-Host '          A sweep claims only a free issue, and a parking label means another session judged it' -ForegroundColor Red
+    Write-Host '          as waiting after this sweep''s step 1 read it. Take the next free number. If the label is' -ForegroundColor Red
+    Write-Host '          stale, lift it first and run this again:' -ForegroundColor Red
+    Write-Host "            gh issue edit $number --remove-label $(Format-ForConsole -Text (@($parkingLabels)[0]))" -ForegroundColor Red
+    Write-Host "          $($facts.url)" -ForegroundColor Red
+    exit 1
+}
+
 # --- CLAIM IT -------------------------------------------------------------------------------------
 if ($DryRun) {
     $who = if ($Tag) { "tag $($claimTag.Tag) (a marker comment, and the assignee '$($identity.Account)' beside it)" } else { "'$($identity.Account)'" }
@@ -1861,6 +1908,39 @@ if ($Tag) {
     }
 
     $rivalNote = if (@($race.Rivals).Count -gt 0) { " (ahead of $(Format-ForConsole -Text (@($race.Rivals) -join ', ')))" } else { '' }
+    # -Park: THE WINNER LABELS, COMMENTS AND LETS GO (issue #3907). Every write below runs only after the
+    # read-back named this tag the winner, so a second sweep parking the same issue has already released
+    # itself above and written nothing. The claim is released whatever happens here, because a marker left
+    # behind holds the issue against every other machine, which is the worse state for a park to leave.
+    if ($Park) {
+        $releaseArgs = @{ Issue = $number; Tag = $true; Release = $true; Marker = $Marker }
+        if ($RootOverride) { $releaseArgs.RootOverride = $RootOverride }
+        $labelEdit = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'edit', $number) + $repoArgs + @('--add-label', $Park)) -Utf8 `
+                                          -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+        if (-not $labelEdit -or -not (Test-NativeExitMeasured -Capture $labelEdit) -or $labelEdit.ExitCode -ne 0) {
+            Write-Host "[ERROR] the label '$Park' did not land on #$number, so it is NOT parked; the claim is released." -ForegroundColor Red
+            foreach ($line in @($labelEdit.Output)) { Write-Host "        $(Format-ForConsole -Text ([string]$line))" -ForegroundColor Red }
+            Write-Host '        If the tracker lacks the label, adopt-triage-labels prints the line that creates it.' -ForegroundColor Red
+            & $PSCommandPath @releaseArgs
+            exit 1
+        }
+        $parkBody = Format-ParkComment -Reason $Reason
+        $parkNote = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'comment', $number) + $repoArgs + @('--body', $parkBody)) -Utf8 `
+                                         -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+        $noteLanded = ($parkNote -and (Test-NativeExitMeasured -Capture $parkNote) -and $parkNote.ExitCode -eq 0)
+        & $PSCommandPath @releaseArgs
+        if (-not $noteLanded) {
+            Write-Host "[WARNING] #$number is parked as '$Park', but its comment did not land. Say what it waits on by hand:" -ForegroundColor Yellow
+            Write-Host "            gh issue comment $number --body `"$parkBody`"" -ForegroundColor Yellow
+            exit 1
+        }
+        Write-Host "[OK] #$number parked by $($claimTag.Tag) as '$Park'$rivalNote, and the claim released." -ForegroundColor Green
+        Write-Host "     $(Format-ForConsole -Text $parkBody)"
+        Write-Host '     Back to step 1: the next free number.'
+        Write-Host "     $($facts.url)"
+        exit 0
+    }
+
     Write-Host "[OK] #$number claimed by $($claimTag.Tag)$rivalNote." -ForegroundColor Green
     Write-Host "     $title"
     if ($takeOverBranch) {

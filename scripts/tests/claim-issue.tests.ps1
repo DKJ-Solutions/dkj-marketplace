@@ -1940,6 +1940,30 @@ foreach ($path in @($Script, $Lib, $IdLib)) {
 }
 
 Write-Host ''
+# --- a park is a claim that ends in a label (#3907) ---
+Assert-True (Test-ParkLabel -Label 'awaiting-decision-dev') 'an awaiting-* label may be parked with'
+Assert-True (Test-ParkLabel -Label 'awaiting-release-external') 'a multi-part one too'
+Assert-True (-not (Test-ParkLabel -Label 'needs-info')) 'a former name is not: a sweep parks under the current family only'
+Assert-True (-not (Test-ParkLabel -Label 'Awaiting-Decision-Dev')) 'the label is spelt as the tracker spells it'
+Assert-True (-not (Test-ParkLabel -Label '') -and -not (Test-ParkLabel -Label $null)) 'no label is refused'
+Assert-True (-not (Test-ParkLabel -Label 'awaiting-decision-dev --repo x/y')) 'and nothing rides along after the name'
+Assert-True ((Format-ParkComment -Reason 'the owner''s choice of X') -ceq 'Parked by a sweep: waiting on the owner''s choice of X.') 'the comment carries the waiting-on clause and a full stop'
+Assert-True ((Format-ParkComment -Reason ' Waiting on #123''s pull request. ') -ceq 'Parked by a sweep: waiting on #123''s pull request.') 'a reason that already opens with "waiting on" is not given a second one'
+Assert-True ((Format-ParkComment -Reason 'owner/repo''s next release?') -ceq 'Parked by a sweep: waiting on owner/repo''s next release?') 'a reason that ends a sentence keeps its own mark'
+Assert-True ($body -match '-Park needs -Tag, and cannot be combined with -Verify, -Release or -TakeOver') 'the script refuses -Park outside a plain tag claim'
+Assert-True ($body -match '\$parked -and \$Tag -and -not \$TakeOver -and \$verdict\.Action -eq ''claim''') 'a plain -Tag claim on a parked issue is refused, the assignee route keeps its warning (#2518)'
+$parkAt = $body.IndexOf('# -Park: THE WINNER LABELS')
+$raceAt = $body.IndexOf('$race = Resolve-ClaimRace')
+Assert-True ($parkAt -gt $raceAt -and $raceAt -gt 0) 'the label and the comment are written only after the read-back named the winner'
+$parkTail = if ($parkAt -gt 0) { $body.Substring($parkAt) } else { '' }
+Assert-True ($parkTail -match '(?s)\A(?:(?!exit 1).)*?& \$PSCommandPath @releaseArgs\s+exit 1') 'and a failed label releases the claim before it exits'
+$out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Park awaiting-decision-dev -Reason 'x' 2>&1 | Out-String
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-Park needs -Tag') 'run: -Park without -Tag refuses before anything is read'
+$out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park needs-info -Reason 'x' 2>&1 | Out-String
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'takes an awaiting-\* label') 'run: a label outside the awaiting-* family refuses'
+$out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-decision-dev 2>&1 | Out-String
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'takes an awaiting-\* label') 'run: and so does a park without a reason'
+
 if ($script:fail -gt 0) {
     Write-Host "claim-issue.tests: $($script:pass) passed, $($script:fail) FAILED" -ForegroundColor Red
     exit 1
