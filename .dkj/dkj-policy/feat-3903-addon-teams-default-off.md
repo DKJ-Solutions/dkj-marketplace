@@ -39,19 +39,35 @@
 
 ### PLAN
 
+#### The decision (#3903)
+
+The owner's decision of November 8, 2026: `defaultEnabled: false` on the three add-on teams only. Chris stays an
+`@`-imported persona (no main-thread `agent`), and no repo-config seam becomes `userConfig`. Per the docs the key
+applies only where the user has set no `enabledPlugins` entry, and a dependency starts enabled regardless, so
+`dkj-subagents-alpha` (which the teams declare since #3895) is unaffected.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `"defaultEnabled": false` in the `plugin.json` of `dkj-subagents-ecomm`, `-lifehub` and `-shopify`
+- [x] `ADOPTION.md` says the add-on teams ship switched off
 
 ### TEST
 
 ### DEPLOY: feat/3903-addon-teams-default-off
 
-**Score:**
+The three add-on teams (`dkj-subagents-ecomm`, `dkj-subagents-lifehub`, `dkj-subagents-shopify`) declare
+`defaultEnabled: false` ([#3903](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3903)). A repo that has not
+named a team in `enabledPlugins` no longer gets it enabled just by installing it. A repo that already names one keeps
+its own choice. The core team and the policy plugins are unchanged.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A fresh install of an add-on team stays off until the repo turns it on with `"<team>@dkj-marketplace": true` in
+`enabledPlugins`. A repo that already lists the team sees no change.
+
+**Score:** 2
 
 #### Pull Request
 
