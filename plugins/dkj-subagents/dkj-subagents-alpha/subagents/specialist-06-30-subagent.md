@@ -12,6 +12,7 @@ description: >
   material for the follow-up; does not place it in the final destination, and does not land the work itself.
 tools: Read, Write, Edit, Grep, Glob, Skill
 model: sonnet
+maxTurns: 80
 color: indigo
 ---
 

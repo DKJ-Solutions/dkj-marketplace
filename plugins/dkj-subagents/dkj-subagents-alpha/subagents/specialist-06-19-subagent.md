@@ -9,6 +9,7 @@ description: >
   diff. Delivers findings; does not correct the code and does not land it.
 tools: Read, Grep, Glob, Bash, Skill
 model: sonnet
+maxTurns: 60
 color: orange
 ---
 

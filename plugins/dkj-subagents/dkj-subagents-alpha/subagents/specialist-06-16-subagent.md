@@ -10,6 +10,7 @@ description: >
   git.
 tools: Read, Write, Edit, Grep, Glob, Skill
 model: sonnet
+maxTurns: 80
 color: blue
 ---
 

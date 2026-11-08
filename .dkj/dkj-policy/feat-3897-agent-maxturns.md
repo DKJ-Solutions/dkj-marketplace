@@ -39,19 +39,36 @@
 
 ### PLAN
 
+- [x] Follow the owner's decision on #3897 (davekokbwj, 2026-11-08): a `maxTurns` ceiling per role
+  only; `model: sonnet` everywhere, no `memory:`, no `skills:` preload. The docs (sub-agents,
+  supported frontmatter fields) list `maxTurns` among the keys a plugin agent keeps.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `maxTurns` in all 26 subagent defs, read off each def's `tools` line: 60 read-and-report,
+  80 web research or writing without `Bash`, 120 writing with `Bash`.
+- [x] The teams README states the rule beside the frontmatter it describes.
 
 ### TEST
 
+- [x] `git diff --stat`: 26 defs, one inserted line each and nothing else changed; the full gate
+  runs in `ship-pr`.
+
 ### DEPLOY: feat/3897-agent-maxturns
 
-**Score:**
+Every specialist subagent now carries a `maxTurns` ceiling that matches its role: 60 turns for one
+that only reads and reports, 80 for one that also searches the web or writes files, and 120 for one
+that writes and runs `Bash`. A runaway dispatch now stops at that ceiling and hands back what it has.
+Model, effort and memory stay as they were
+([#3897](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3897)).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A specialist that loops now stops and returns its partial work instead of running on.
+
+**Score:** 2
 
 #### Pull Request
 
