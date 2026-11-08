@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**2 / 3 minor entries** <!-- pending-tally -->
+**2 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3896-skill-trigger-evals · 20261108-233206Z
+
+`dkj-policy` carries an eval suite (`plugins/dkj-policy/evals/`) that checks four key skills (`claim-issue`,
+`new-branch`, `sync-trunk`, `day-plan`) still fire on everyday phrasing, plus one case that checks a plain
+question fires none. It runs by hand with `claude plugin eval`, never in CI, and its README gives the
+command, including `--no-publish`, which keeps the report off claude.ai.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+Local plugin evals that prove dkj-policy's key skills still fire on natural phrasing
+
+Plugins: dkj-policy
+
+[PR #3912](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3912)
+
+---
 
 ### DEPLOY: feat/3905-retro-skill · 20261108-232207Z
 
