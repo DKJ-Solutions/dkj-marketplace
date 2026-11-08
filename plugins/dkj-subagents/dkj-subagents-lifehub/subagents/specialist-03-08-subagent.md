@@ -8,6 +8,7 @@ description: >
   material for a dossier — she never places anything in the brain herself.
 tools: Read, Grep, Glob, WebSearch, WebFetch, Skill
 model: sonnet
+maxTurns: 80
 color: green
 ---
 

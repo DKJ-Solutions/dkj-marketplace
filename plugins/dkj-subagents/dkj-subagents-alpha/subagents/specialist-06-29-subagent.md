@@ -13,6 +13,7 @@ description: >
   verdict; does not rewrite, fix, or commit, and does not land the work itself.
 tools: Read, Grep, Glob, WebSearch, WebFetch, Skill
 model: sonnet
+maxTurns: 80
 color: yellow
 ---
 

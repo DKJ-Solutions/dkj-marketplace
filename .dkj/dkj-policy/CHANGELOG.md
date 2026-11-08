@@ -2,7 +2,58 @@
 
 ## [Unreleased]
 
-**2 / 4 minor entries** <!-- pending-tally -->
+**4 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3897-agent-maxturns · 20261108-235613Z
+
+Every specialist subagent now carries a `maxTurns` ceiling that matches its role: 60 turns for one
+that only reads and reports, 80 for one that also searches the web or writes files, and 120 for one
+that writes and runs `Bash`. A runaway dispatch now stops at that ceiling and hands back what it has.
+Model, effort and memory stay as they were
+([#3897](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3897)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A specialist that loops now stops and returns its partial work instead of running on.
+
+**Score:** 2
+
+#### Pull Request
+
+Give every specialist subagent a maxTurns ceiling per role
+
+Plugins: dkj-subagents-alpha, dkj-subagents-ecomm, dkj-subagents-lifehub, dkj-subagents-shopify
+
+[PR #3913](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3913)
+
+---
+
+### DEPLOY: feat/3899-skill-argument-hints · 20261108-234152Z
+
+Fifteen skills now show the argument they expect in the slash-command autocomplete: `/claim-issue
+[issue-number]`, `/new-branch [<prefix>/<n>-<short-name>] [title]`, `/ship-pr [issue-number(s) it
+resolves]`, `/push-preview [storefront path]` and so on. No skill gained a tool grant: the owner chose
+`argument-hint` only, and `shell` governs injection blocks no skill has (#3899).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Typing `/` and a skill name now says what to type after it, for the fifteen skills that take an argument.
+
+**Score:** 2
+
+#### Pull Request
+
+Skills show their expected argument in the slash menu
+
+Plugins: dkj-policy, dkj-subagents-shopify
+
+[PR #3914](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3914)
+
+---
 
 ### DEPLOY: feat/3896-skill-trigger-evals · 20261108-233206Z
 

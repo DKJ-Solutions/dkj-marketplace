@@ -1,6 +1,7 @@
 ---
 name: stopwatch-hide
 description: Delete a Stopwatch run, or every run of a label, from every machine's /dev/stopwatch pages -- whichever machine recorded it -- or show it again before it is erased. Use when the owner asks to delete, remove or hide a Stopwatch card, run or label ("delete that stopwatch run", "remove the reconstructed card"), when a run was recorded by mistake, and to undo such a hide in time. Writes one entry beside this machine's store and syncs it; the recording machine erases the run at its next sync.
+argument-hint: "[label | run-id]"
 ---
 
 # stopwatch-hide -- delete a Stopwatch run from any machine

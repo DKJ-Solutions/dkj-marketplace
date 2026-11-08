@@ -10,6 +10,7 @@ description: >
   does not place anything final itself and does not land the work itself.
 tools: Read, Write, Edit, Grep, Glob, Bash, Skill
 model: sonnet
+maxTurns: 120
 color: indigo
 ---
 

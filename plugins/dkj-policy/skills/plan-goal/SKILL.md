@@ -1,6 +1,7 @@
 ---
 name: plan-goal
 description: Break a large goal into milestones and tasks, filed as GitHub issues and sub-issues, and say where to start. Use when the owner names a big goal and the steps toward it are unclear ("I want a replacement for HelloFresh", "help me plan X"), when they ask "what now?" or "where do I start?" on a goal, and when a milestone on Admin's Goals page still says to break it down. It asks a few questions, proposes the breakdown, and files it only once the owner agrees.
+argument-hint: "[goal]"
 ---
 
 # plan-goal -- from a goal to the next step
