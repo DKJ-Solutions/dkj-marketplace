@@ -8,6 +8,7 @@ description: >-
   code or opening a branch. It writes one assignee and nothing else -- no branch, no commit, no
   comment -- so it is the step that runs first and not a replacement for new-branch: claim, then carry
   straight on into the work in the same turn.
+argument-hint: "[issue-number]"
 ---
 
 # claim-issue -- the claim rule, performed

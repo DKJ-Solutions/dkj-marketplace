@@ -2,6 +2,7 @@
 name: start-task
 description: Start a new task in a Shopify store repo — the git branch. Invoke manually as "/dkj-subagents-shopify:start-task <prefix>/<short-name>", e.g. /dkj-subagents-shopify:start-task feat/size-chart-popup. It drives THIS repo's own start-task script; the team deliberately ships none. The preview theme is NOT created here: push-preview creates it on the first push, so a branch that never needed one leaves none behind.
 disable-model-invocation: true
+argument-hint: "[<prefix>/<short-name>]"
 ---
 
 # start-task — the branch that opens a Shopify task

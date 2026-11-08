@@ -10,6 +10,7 @@
     "./subagents/specialist-04-04-subagent.md"
   ],
   "version": "6.11.0",
+  "dependencies": ["dkj-subagents-alpha"],
   "author": { "name": "DaveKJohn" },
   "keywords": ["specialists", "team", "claude-code", "life-hub", "brain"]
 }

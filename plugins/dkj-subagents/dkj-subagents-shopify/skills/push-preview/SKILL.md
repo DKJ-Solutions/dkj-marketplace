@@ -1,6 +1,7 @@
 ---
 name: push-preview
 description: Push the current branch to its own unpublished Shopify preview theme, creating that theme on the first push rather than at branch creation. Use it whenever a theme change has to be looked at -- it prints the preview URL(s), which are raw material for a handover rather than the handover itself. It never publishes, never deletes, and refuses the live theme; the theme it creates is unpublished by definition. Lazy creation is the point: a branch that never needed a preview never leaves one behind on a store whose theme ceiling is finite.
+argument-hint: "[storefront path]"
 ---
 
 # push-preview -- the branch's own preview theme, created when it is first needed

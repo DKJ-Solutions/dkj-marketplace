@@ -99,3 +99,8 @@ $RECYCLE.BIN/
 # THE GENERAL LESSON: deleting a directory that carried its own .gitignore turns its ignored build output into
 # untracked files on every other checkout, so its ignore line moves here in the same change.
 /brandbook/
+
+# THE PLUGIN EVAL RESULTS (#3896). `claude plugin eval` writes aggregate-result.json and report.html under
+# <eval dir>/results/<timestamp>/ on every run. They are one operator's local run, not part of the suite.
+# ANCHORED to the one eval dir this repo has, like the entries above.
+/plugins/dkj-policy/evals/results/

@@ -1,6 +1,7 @@
 ---
 name: stopwatch-prepare
 description: Put a Stopwatch card for a label on Admin's /dev/stopwatch overview with NO clock running, so the owner can start the run themselves afterwards, or withdraw such a card. Use before a run the owner wants to time and start by hand -- above all before a release cut ("prepare the release cut card first, then we start it ourselves") -- and when a prepared card is no longer wanted.
+argument-hint: "[label]"
 ---
 
 # stopwatch-prepare -- a Stopwatch card that is ready and not started
