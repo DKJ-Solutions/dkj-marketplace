@@ -55,7 +55,20 @@ that #1485's own asserts keep free of exits.
   read-back names the winner; the claim released on every path; the parked-issue refusal under `-Tag` (both mirrors)
 - [x] `issues-sweep` step 1 parks through `-Park`, step 2 names the new refusal, and a verdict that closes an issue
   is building work that starts with a claim
-- [x] Tests in `claim-issue.tests.ps1`, including three runs of the script's own refusals
+- [x] Tests in `claim-issue.tests.ps1`, including four runs of the script's own refusals
+- [x] Review fixes. Victor: a park of an issue this tag already holds parks it (it said "nothing to write" and left
+  the claim standing); the release's exit code is read; the read-back reads the labels, so a park that landed
+  meanwhile writes nothing a second time; the label must be one the sweeps skip. Sebastian: the reason is posted as
+  one line, and the paste-ready fallback is single-quoted and stripped.
+
+#### Two things a reviewer should know
+
+- **The refusal also covers `record`, `dossier`, `awaiting-owner-act` and `awaiting-event`** (Victor): they are in
+  the default skip list, so a plain `-Tag` claim on such an issue now refuses where it warned. That is intended, since
+  `-Candidates` skips them too and the sweep route never claims them.
+- **The write paths are pinned by shape, not run**: the suite has no `gh` stub seam, so `Invoke-ClaimPark` is held
+  by asserts on its text (every refusal releases before it exits, the release's exit code is read), and only the
+  validation refusals are executed.
 
 ### TEST
 

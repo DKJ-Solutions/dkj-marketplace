@@ -3063,14 +3063,16 @@ function Get-OwnTagClaims {
 function Test-ParkLabel {
     <#
         .SYNOPSIS
-            Whether -Park names a label a sweep may park with (issue #3907): an awaiting-* label, which is
-            the family every sweep reads as skipped.
+            Whether -Park names a label a sweep may park with (issue #3907): a well-formed awaiting-* name
+            that is also in -Allowed, the skip list the sweeps read. A name outside it would park the issue
+            in name only, since -Candidates would still read it as free (Victor, #3907).
 
         .OUTPUTS
-            $true for a well-formed awaiting-* name; $false otherwise, so the script refuses before it reads.
+            $true when both hold; $false otherwise, so the script refuses before it reads.
     #>
-    param([AllowNull()][AllowEmptyString()][string]$Label)
-    return ([string]$Label -cmatch '^awaiting-[a-z]+(-[a-z]+)*\z')
+    param([AllowNull()][AllowEmptyString()][string]$Label, [AllowNull()][string[]]$Allowed = @())
+    if ([string]$Label -cnotmatch '^awaiting-[a-z]+(-[a-z]+)*\z') { return $false }
+    return (@(@($Allowed) | Where-Object { [string]$_ -ceq $Label }).Count -gt 0)
 }
 
 function Format-ParkComment {
@@ -3087,7 +3089,8 @@ function Format-ParkComment {
             The comment body, a single string.
     #>
     param([Parameter(Mandatory = $true)][string]$Reason)
-    $r = $Reason.Trim()
+    # ONE LINE (Sebastian, #3907): a reason pasted with line breaks would post a comment of several paragraphs.
+    $r = ($Reason -replace '\s+', ' ').Trim()
     $r = $r -replace '^(?i:waiting on)\s+', ''
     if ($r -notmatch '[.!?]\z') { $r += '.' }
     return 'Parked by a sweep: waiting on ' + $r

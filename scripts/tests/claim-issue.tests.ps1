@@ -1941,29 +1941,41 @@ foreach ($path in @($Script, $Lib, $IdLib)) {
 
 Write-Host ''
 # --- a park is a claim that ends in a label (#3907) ---
-Assert-True (Test-ParkLabel -Label 'awaiting-decision-dev') 'an awaiting-* label may be parked with'
-Assert-True (Test-ParkLabel -Label 'awaiting-release-external') 'a multi-part one too'
-Assert-True (-not (Test-ParkLabel -Label 'needs-info')) 'a former name is not: a sweep parks under the current family only'
-Assert-True (-not (Test-ParkLabel -Label 'Awaiting-Decision-Dev')) 'the label is spelt as the tracker spells it'
-Assert-True (-not (Test-ParkLabel -Label '') -and -not (Test-ParkLabel -Label $null)) 'no label is refused'
-Assert-True (-not (Test-ParkLabel -Label 'awaiting-decision-dev --repo x/y')) 'and nothing rides along after the name'
+$allow = @('awaiting-decision-dev', 'awaiting-release-external', 'needs-info')
+Assert-True (Test-ParkLabel -Label 'awaiting-decision-dev' -Allowed $allow) 'an awaiting-* label the sweeps skip may be parked with'
+Assert-True (Test-ParkLabel -Label 'awaiting-release-external' -Allowed $allow) 'a multi-part one too'
+Assert-True (-not (Test-ParkLabel -Label 'awaiting-foo' -Allowed $allow)) 'an awaiting-* name the sweeps do not skip would park in name only, so it is refused (Victor)'
+Assert-True (-not (Test-ParkLabel -Label 'needs-info' -Allowed $allow)) 'a former name in the skip list is not: a sweep parks under the current family only'
+Assert-True (-not (Test-ParkLabel -Label 'Awaiting-Decision-Dev' -Allowed @('Awaiting-Decision-Dev'))) 'the label is spelt as the tracker spells it'
+Assert-True (-not (Test-ParkLabel -Label '' -Allowed $allow) -and -not (Test-ParkLabel -Label $null -Allowed $allow)) 'no label is refused'
+Assert-True (-not (Test-ParkLabel -Label 'awaiting-decision-dev --repo x/y' -Allowed @('awaiting-decision-dev --repo x/y'))) 'and nothing rides along after the name'
 Assert-True ((Format-ParkComment -Reason 'the owner''s choice of X') -ceq 'Parked by a sweep: waiting on the owner''s choice of X.') 'the comment carries the waiting-on clause and a full stop'
 Assert-True ((Format-ParkComment -Reason ' Waiting on #123''s pull request. ') -ceq 'Parked by a sweep: waiting on #123''s pull request.') 'a reason that already opens with "waiting on" is not given a second one'
 Assert-True ((Format-ParkComment -Reason 'owner/repo''s next release?') -ceq 'Parked by a sweep: waiting on owner/repo''s next release?') 'a reason that ends a sentence keeps its own mark'
+Assert-True ((Format-ParkComment -Reason "two`nlines`r`n  here") -ceq 'Parked by a sweep: waiting on two lines here.') 'and a reason is posted as one line (Sebastian)'
 Assert-True ($body -match '-Park needs -Tag, and cannot be combined with -Verify, -Release or -TakeOver') 'the script refuses -Park outside a plain tag claim'
+Assert-True ($body -match 'Test-ParkLabel -Label \$Park -Allowed \$SkipLabel') 'and validates the label against the skip list the sweeps read'
 Assert-True ($body -match '\$parked -and \$Tag -and -not \$TakeOver -and \$verdict\.Action -eq ''claim''') 'a plain -Tag claim on a parked issue is refused, the assignee route keeps its warning (#2518)'
 $parkAt = $body.IndexOf('# -Park: THE WINNER LABELS')
 $raceAt = $body.IndexOf('$race = Resolve-ClaimRace')
-Assert-True ($parkAt -gt $raceAt -and $raceAt -gt 0) 'the label and the comment are written only after the read-back named the winner'
-$parkTail = if ($parkAt -gt 0) { $body.Substring($parkAt) } else { '' }
-Assert-True ($parkTail -match '(?s)\A(?:(?!exit 1).)*?& \$PSCommandPath @releaseArgs\s+exit 1') 'and a failed label releases the claim before it exits'
+Assert-True ($parkAt -gt $raceAt -and $raceAt -gt 0) 'the winner parks only after the read-back named it'
+Assert-True ($body -match '''--json'', ''comments,labels''') 'and the read-back reads the labels, so a park that landed meanwhile is seen (Victor)'
+Assert-True ($body -match "'already-yours' \{\s+(#[^\n]*\n\s+)+if \(\`$Park\) \{ Invoke-ClaimPark") 'a park of an issue this tag already holds parks it, not "nothing to write" (Victor)'
+$fn = if ($body -match '(?s)function Invoke-ClaimPark \{(.*?)\n\}\n') { $Matches[1] } else { '' }
+Assert-True ($fn -ne '') 'the park writes live in one function'
+$exits = [regex]::Matches($fn, '(?m)^\s*exit 1\s*$').Count
+$releasedBefore = [regex]::Matches($fn, '(?s)\[void\]\(& \$release\)\s+exit 1').Count
+Assert-True ($exits -eq 3 -and $releasedBefore -eq 2) 'every refusal releases the claim before it exits; the comment-failure exit follows the release already run'
+Assert-True ($fn -match '\$LASTEXITCODE -ne 0') 'and the release''s own exit code is read, so a claim left standing is never reported as released (Victor)'
+Assert-True ($fn -match 'if \(-not \$released\) \{ exit 1 \}') 'a failed release turns the park''s exit code red'
 $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Park awaiting-decision-dev -Reason 'x' 2>&1 | Out-String
 Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-Park needs -Tag') 'run: -Park without -Tag refuses before anything is read'
 $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park needs-info -Reason 'x' 2>&1 | Out-String
 Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'takes an awaiting-\* label') 'run: a label outside the awaiting-* family refuses'
+$out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-foo -Reason 'x' 2>&1 | Out-String
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'the sweeps skip') 'run: so does an awaiting-* label the sweeps do not skip'
 $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-decision-dev 2>&1 | Out-String
-Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'takes an awaiting-\* label') 'run: and so does a park without a reason'
-
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'takes an awaiting-\* label') 'run: and a park without a reason'
 if ($script:fail -gt 0) {
     Write-Host "claim-issue.tests: $($script:pass) passed, $($script:fail) FAILED" -ForegroundColor Red
     exit 1

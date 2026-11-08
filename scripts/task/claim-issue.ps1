@@ -375,12 +375,68 @@ if (-not $Candidates -and -not $ReleaseAll) {
             Write-Host '        It parks a free issue under a claim of this tag, so the claim''s read-back settles a race between sweeps.' -ForegroundColor Red
             exit 1
         }
-        if (-not (Test-ParkLabel -Label $Park) -or -not $Reason.Trim()) {
-            Write-Host '[ERROR] -Park takes an awaiting-* label and -Reason the text of what it waits on -- nothing was read or written.' -ForegroundColor Red
-            Write-Host '          claim-issue.ps1 <n> -Tag -Park awaiting-decision-dev -Reason "the owner''s choice of X"' -ForegroundColor Red
+        # ONE OF THE LABELS THE SWEEPS SKIP (Victor, #3907): an awaiting-* name outside -SkipLabel would park
+        # the issue in name only, since -Candidates and the refusal below read that same list.
+        if (-not (Test-ParkLabel -Label $Park -Allowed $SkipLabel) -or -not $Reason.Trim()) {
+            Write-Host '[ERROR] -Park takes an awaiting-* label the sweeps skip, and -Reason the text of what it waits on -- nothing was read or written.' -ForegroundColor Red
+            Write-Host '        claim-issue.ps1 <n> -Tag -Park awaiting-decision-dev -Reason "the owner''s choice of X"' -ForegroundColor Red
             exit 1
         }
     }
+}
+
+function Invoke-ClaimPark {
+    <#
+        -Park's writes, for a claim this tag holds (issue #3907): the label, the comment, and the release of the
+        claim, which runs on every path because a marker left behind holds the issue against every other
+        machine. Called after the race read-back named this tag the winner, and on 'already-yours'. -LabelsNow
+        is the issue's labels as last read: a parking label there means another session parked it after this
+        run's first read, so nothing is written but the release (Victor's residual race, #3907). Never returns.
+    #>
+    param([AllowEmptyCollection()][string[]]$LabelsNow = @(), [string]$RivalNote = '')
+    $releaseArgs = @{ Issue = $number; Tag = $true; Release = $true; Marker = $Marker }
+    if ($RootOverride) { $releaseArgs.RootOverride = $RootOverride }
+    $release = {
+        & $PSCommandPath @releaseArgs | Out-Host
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "[ERROR] this tag's claim on #$number could not be released -- it MAY STILL READ AS HELD. Run:" -ForegroundColor Red
+            Write-Host "          claim-issue.ps1 $number -Tag -Release" -ForegroundColor Red
+            return $false
+        }
+        return $true
+    }
+    $already = @(Select-ParkingLabels -Labels $LabelsNow -SkipLabel $SkipLabel)
+    if ($already.Count -gt 0) {
+        Write-Host "[REFUSED] #$number is already parked as '$(Format-ForConsole -Text $already[0])' -- nothing was parked; this tag's claim is released." -ForegroundColor Red
+        [void](& $release)
+        exit 1
+    }
+    $labelEdit = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'edit', $number) + $repoArgs + @('--add-label', $Park)) -Utf8 `
+                                      -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    if (-not $labelEdit -or -not (Test-NativeExitMeasured -Capture $labelEdit) -or $labelEdit.ExitCode -ne 0) {
+        Write-Host "[ERROR] the label '$Park' did not land on #$number, so it is NOT parked; this tag's claim is released." -ForegroundColor Red
+        foreach ($line in @($labelEdit.Output)) { Write-Host "        $(Format-ForConsole -Text ([string]$line))" -ForegroundColor Red }
+        Write-Host '        If the tracker lacks the label, adopt-triage-labels prints the line that creates it.' -ForegroundColor Red
+        [void](& $release)
+        exit 1
+    }
+    $parkBody = Format-ParkComment -Reason $Reason
+    $parkNote = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'comment', $number) + $repoArgs + @('--body', $parkBody)) -Utf8 `
+                                     -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    $noteLanded = ($parkNote -and (Test-NativeExitMeasured -Capture $parkNote) -and $parkNote.ExitCode -eq 0)
+    $released = & $release
+    if (-not $noteLanded) {
+        # Single-quoted for PowerShell, with the quote doubled, so the line is safe to paste (Sebastian, #3907).
+        Write-Host "[WARNING] #$number is parked as '$Park', but its comment did not land. Say what it waits on by hand:" -ForegroundColor Yellow
+        Write-Host "            gh issue comment $number --body '$(Format-ForConsole -Text ($parkBody -replace "'", "''"))'" -ForegroundColor Yellow
+        exit 1
+    }
+    if (-not $released) { exit 1 }
+    Write-Host "[OK] #$number parked by $($claimTag.Tag) as '$Park'$RivalNote, and the claim released." -ForegroundColor Green
+    Write-Host "     $(Format-ForConsole -Text $parkBody)"
+    Write-Host '     Back to step 1: the next free number.'
+    Write-Host "     $($facts.url)"
+    exit 0
 }
 
 # --- WHICH REPO -----------------------------------------------------------------------------------
@@ -1676,6 +1732,10 @@ switch ($verdict.Code) {
         exit 1
     }
     'already-yours' {
+        # A PARK OF AN ISSUE THIS TAG ALREADY HOLDS IS THE COMMON CASE, not a resume (Victor, #3907): a sweep
+        # claims at step 2, reads the issue, and finds it waits. Without this it printed "nothing to write",
+        # exited 0, and left the claim standing with no label.
+        if ($Park) { Invoke-ClaimPark -LabelsNow @(Get-IssueLabelNames -Issue $facts) }
         # WHOSE IT IS DEPENDS ON WHICH CLAIM WAS MADE, and naming the wrong one here is how a sweep's
         # resume goes to another session's branch: 'yours' under -Tag means this machine AND this
         # account, where the assignee alone means the account on any machine.
@@ -1866,7 +1926,7 @@ if (-not $Tag -and -not $assigneeLanded) {
 # wanted it. Resolve-ClaimRace picks the earliest marker, so exactly one session keeps it and the
 # others release. See its docstring for the tie-break.
 if ($Tag) {
-    $raceRead = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'view', $number) + $repoArgs + @('--json', 'comments')) -Utf8 -DiscardStderr `
+    $raceRead = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'view', $number) + $repoArgs + @('--json', 'comments,labels')) -Utf8 -DiscardStderr `
                                      -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
     $raceOk = [bool]($raceRead -and (Test-NativeExitMeasured -Capture $raceRead) -and $raceRead.ExitCode -eq 0 -and -not $raceRead.ShortRead)
     if (-not $raceOk) {
@@ -1908,37 +1968,14 @@ if ($Tag) {
     }
 
     $rivalNote = if (@($race.Rivals).Count -gt 0) { " (ahead of $(Format-ForConsole -Text (@($race.Rivals) -join ', ')))" } else { '' }
-    # -Park: THE WINNER LABELS, COMMENTS AND LETS GO (issue #3907). Every write below runs only after the
+    # -Park: THE WINNER LABELS, COMMENTS AND LETS GO (issue #3907), through Invoke-ClaimPark. Only after the
     # read-back named this tag the winner, so a second sweep parking the same issue has already released
-    # itself above and written nothing. The claim is released whatever happens here, because a marker left
-    # behind holds the issue against every other machine, which is the worse state for a park to leave.
+    # itself above and written nothing; the labels come from that same read-back, so a park that landed
+    # while this run claimed is seen too.
     if ($Park) {
-        $releaseArgs = @{ Issue = $number; Tag = $true; Release = $true; Marker = $Marker }
-        if ($RootOverride) { $releaseArgs.RootOverride = $RootOverride }
-        $labelEdit = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'edit', $number) + $repoArgs + @('--add-label', $Park)) -Utf8 `
-                                          -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
-        if (-not $labelEdit -or -not (Test-NativeExitMeasured -Capture $labelEdit) -or $labelEdit.ExitCode -ne 0) {
-            Write-Host "[ERROR] the label '$Park' did not land on #$number, so it is NOT parked; the claim is released." -ForegroundColor Red
-            foreach ($line in @($labelEdit.Output)) { Write-Host "        $(Format-ForConsole -Text ([string]$line))" -ForegroundColor Red }
-            Write-Host '        If the tracker lacks the label, adopt-triage-labels prints the line that creates it.' -ForegroundColor Red
-            & $PSCommandPath @releaseArgs
-            exit 1
-        }
-        $parkBody = Format-ParkComment -Reason $Reason
-        $parkNote = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'comment', $number) + $repoArgs + @('--body', $parkBody)) -Utf8 `
-                                         -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
-        $noteLanded = ($parkNote -and (Test-NativeExitMeasured -Capture $parkNote) -and $parkNote.ExitCode -eq 0)
-        & $PSCommandPath @releaseArgs
-        if (-not $noteLanded) {
-            Write-Host "[WARNING] #$number is parked as '$Park', but its comment did not land. Say what it waits on by hand:" -ForegroundColor Yellow
-            Write-Host "            gh issue comment $number --body `"$parkBody`"" -ForegroundColor Yellow
-            exit 1
-        }
-        Write-Host "[OK] #$number parked by $($claimTag.Tag) as '$Park'$rivalNote, and the claim released." -ForegroundColor Green
-        Write-Host "     $(Format-ForConsole -Text $parkBody)"
-        Write-Host '     Back to step 1: the next free number.'
-        Write-Host "     $($facts.url)"
-        exit 0
+        $labelsNow = @()
+        try { $labelsNow = @(Get-IssueLabelNames -Issue ((@($raceRead.Output) -join "`n") | ConvertFrom-Json)) } catch { $labelsNow = @() }
+        Invoke-ClaimPark -LabelsNow $labelsNow -RivalNote $rivalNote
     }
 
     Write-Host "[OK] #$number claimed by $($claimTag.Tag)$rivalNote." -ForegroundColor Green
