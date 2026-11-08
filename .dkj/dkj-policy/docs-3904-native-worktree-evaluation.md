@@ -39,19 +39,35 @@
 
 ### PLAN
 
+#3904 asked whether `worktree.baseRef`, `.worktreeinclude` and the `WorktreeCreate` hook remove the two
+objections to native worktrees (#1667, #1673). Verified against code.claude.com/docs: they do not; the
+verdict was posted on #3904, which another sweep closed as evaluated. This branch puts that verdict where a
+later reader looks: the `worktree-lane` skill page and the orchestrator manual, whose paragraph still said
+nothing ignores `.claude/worktrees/` although `.gitignore:82` has since #1673.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `worktree-lane/SKILL.md`: a dated re-check section under "Why this doesn't just use ..."
+- [x] `specialist-01-01-manual.md`: the placement bullet names the `.gitignore` repair, plus the re-check note
 
 ### TEST
 
+- [x] The gates run inside `ship-pr`.
+
 ### DEPLOY: docs/3904-native-worktree-evaluation
 
-**Score:**
+The `worktree-lane` skill page and the orchestrator manual record the November 8 re-check of native
+worktrees (#3904): `worktree.baseRef` and `.worktreeinclude` still carry no uncommitted work into a
+worktree, and a `WorktreeCreate` hook would only rebuild `worktree-lane.ps1` inside a hook. The manual's
+placement bullet no longer says nothing ignores `.claude/worktrees/`, which `.gitignore` has done since #1673.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
