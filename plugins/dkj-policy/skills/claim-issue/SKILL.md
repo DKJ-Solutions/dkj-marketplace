@@ -117,6 +117,15 @@ parameters is the [`issues-sweep`](../issues-sweep/SKILL.md) skill; what they do
   nobody is still working on it, which is the case the colleague refusal guards (#2207).
   `issues-sweep-reviews` passes it, because typing that command is an owner's word. Without the label it
   refuses as `not parked`, and the one-branch precondition still holds.
+- **`-Park <label>`** with **`-Reason <text>`** (with `-Tag`) -- park the issue instead of building it
+  ([#3907](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3907)). It claims like a plain `-Tag`
+  claim. Only the winner of the read-back adds the label and posts `Parked by a sweep: waiting on <text>.`
+  (one line), and then it releases its own claim on every path. On an issue this tag already holds, it parks
+  directly. `<label>` must be an `awaiting-*` label in the skip list the sweeps read, and `<text>` is a short
+  clause in your own words, never pasted tracker text. A lost race, and an issue that another session parked
+  meanwhile, both refuse with exit 1 and write nothing. `issues-sweep` step 1 parks this way.
+  **A plain `-Tag` claim on an issue that is already parked refuses too**, where the assignee route only
+  warns (#2518). A sweep claims only a free issue, so a stale label is lifted first.
 - **`DKJ_OWN_ACCOUNTS`** (environment variable, not a parameter) -- a comma list of the **other accounts
   you work under**, e.g. a work login at the office and a personal one at home (#2394). They count as
   yours for `-TakeOver` and for the parked-fix scan's `NOT YOURS` verdict; an account not listed stays a
