@@ -220,6 +220,7 @@
                                       "plugin-versions.tests.ps1",
                                       "policy-drift-report.tests.ps1",
                                       "prune-merged.tests.ps1",
+                                      "retro.tests.ps1",
                                       "sibling-divergence.tests.ps1",
                                       "tidy-lib.tests.ps1",
                                       "update-plugins.tests.ps1"
@@ -227,7 +228,7 @@
                        "tips":  [
                                     "Most of these run only when somebody asks for them, so a regression here goes unnoticed in daily work until the suite catches it."
                                 ],
-                       "split":  "the measure skills (measure-always-on, measure-session-start, measure-skill, closeout-measure); machine upkeep (tidy-lib, prune-merged, plugin-versions, update-plugins); and the cross-repo checks (consumers, the sibling checks, policy-drift, find-specialist-mentions, fanout)."
+                       "split":  "the measure skills (measure-always-on, measure-session-start, measure-skill, closeout-measure, retro); machine upkeep (tidy-lib, prune-merged, plugin-versions, update-plugins); and the cross-repo checks (consumers, the sibling checks, policy-drift, find-specialist-mentions, fanout)."
                    },
                    {
                        "key":  "pages",
