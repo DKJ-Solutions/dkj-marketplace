@@ -8,6 +8,7 @@ description: >
   (overview/summary/action items) — Ian files it in the brain.
 tools: Read, Grep, Glob, Skill
 model: sonnet
+maxTurns: 60
 color: teal
 ---
 

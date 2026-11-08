@@ -10,6 +10,7 @@ description: >
   material; the final placement is done by the follow-up specialist(s) — see the manual.
 tools: Read, Write, Edit, Grep, Glob, Skill
 model: sonnet
+maxTurns: 80
 color: pink
 ---
 

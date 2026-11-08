@@ -11,6 +11,7 @@ description: >
   not fix anything and does not land it.
 tools: Read, Grep, Glob, Bash, Skill
 model: sonnet
+maxTurns: 60
 color: red
 ---
 
