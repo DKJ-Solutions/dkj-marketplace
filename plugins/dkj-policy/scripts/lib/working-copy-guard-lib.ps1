@@ -9,7 +9,8 @@
         . (Join-Path $PSScriptRoot '..\lib\working-copy-guard-lib.ps1')
 
     Supplies Get-WorkingCopyViolation (the whole judgement, pure) and the pieces under it --
-    Get-GitInvocation, Test-HasFlag, Remove-TokenQuotes. It dot-sources command-guard-lib.ps1 from its
+    Get-GitInvocation, Test-HasFlag, Remove-TokenQuotes -- and Get-SafetyRuleViolation, the
+    constitution's force-push and hard-reset rule for every thread, built on the same pieces (#3901). It dot-sources command-guard-lib.ps1 from its
     own directory for the false-positive machinery.
 
     WHY THE JUDGEMENT IS SPLIT OFF FROM THE HOOK (issue #1669). Same reason fanout-lib.ps1 states for
@@ -407,6 +408,78 @@ function Get-WorkingCopyViolation {
                 # expiring it counts here even though it leaves the tree alone.
                 if ($first -eq 'expire' -or $first -eq 'delete') {
                     return @{ Sub = 'reflog'; Segment = $segment; Reason = "``git reflog $first`` destroys the only record by which a discarded commit could still be found. Reading the reflog is not blocked." }
+                }
+            }
+        }
+    }
+
+    return $null
+}
+
+function Get-SafetyRuleViolation {
+    <#
+    .SYNOPSIS
+        The constitution's "never without the owner's explicit permission" git commands. Returns $null,
+        or @{ Sub; Reason; Segment } for the first command in this string that breaks one.
+
+    .DESCRIPTION
+        THE OWNER CHOSE THIS ROUTE (#3901, November 8, 2026). A plugin cannot ship `deny` or `ask`
+        permission rules (a plugin settings.json honours only `agent` and `subagentStatusLine`), so the
+        rules sat as a suggestion in specialists-init that a consumer had to apply. Extending this guard
+        makes the enforcement ship with the plugin, with no consumer setting to change.
+
+        WHAT IT JUDGES, FOR EVERY THREAD (the hook asks it before its agent_id gate):
+
+          git push    with -f, --force, --force-with-lease, or a `+<refspec>` -- every form of a force push
+          git reset   with --hard
+
+        THE SAME PARSING AS Get-WorkingCopyViolation, and that is the point of putting it here: only a
+        segment LED by git counts, at git's own subcommand position, so a commit message, a heredoc or a
+        grep that names the rule is not refused. The one match-anywhere case is the same narrow one too:
+        text the command itself pipes into an interpreter.
+
+        NO PROJECT SCOPE, which is where it parts from the working-copy rule. That rule protects one
+        checkout from a subagent, so a fixture repo elsewhere is out of its scope. The constitution says
+        `git push --force` "on any branch", in any repo, so a `-C` or a `cd` elsewhere exempts nothing.
+        Fixture tests are not affected: they run git inside a script file, which no hook reads.
+
+        MEASURED BEFORE IT SHIPPED (November 9, 2026): over the 4593 Bash/PowerShell calls in this repo's
+        transcripts, it refuses one. That one is a false positive of the match-anywhere case: a heredoc
+        piped into `python -` that wrote these very test cases into a file. The hook's refusal names the
+        Edit/Write tool for exactly that, and no real force push or hard reset was in the corpus.
+
+        AND WHAT IT DELIBERATELY DOES NOT JUDGE: `git rebase` "on a shared branch". Whether a branch is
+        shared is not in the command string, so a rule here would refuse every local rebase or none. For
+        a subagent, Get-WorkingCopyViolation already refuses every rebase.
+    #>
+    param([string]$Command)
+
+    if (-not $Command) { return $null }
+
+    $pushReason = '`git push` with a force flag or a `+` refspec overwrites history on the remote, and the constitution allows it only with the owner''s explicit permission.'
+    $resetReason = '`git reset --hard` discards uncommitted work with no reflog to recover it from, and the constitution allows it only with the owner''s explicit permission.'
+
+    if (Test-CommandExecutesText $Command) {
+        $m = [regex]::Match($Command, '(?i)\bgit\s+push\b[^|;&\r\n]*\s(?:-f\b|--force\b|--force-with-lease\b|\+\S)')
+        if ($m.Success) { return @{ Sub = 'push'; Segment = $m.Value; Reason = $pushReason } }
+        $m = [regex]::Match($Command, '(?i)\bgit\s+reset\b[^|;&\r\n]*\s--hard\b')
+        if ($m.Success) { return @{ Sub = 'reset'; Segment = $m.Value; Reason = $resetReason } }
+    }
+
+    foreach ($segment in (Get-GuardSegments -Command $Command -TextTools $script:WcTextTools)) {
+        $git = Get-GitInvocation $segment
+        if ($null -eq $git) { continue }
+
+        switch ($git.Sub) {
+            'push' {
+                $plusRefspec = @($git.Args | Where-Object { ([string]$_) -match '^\+' }).Count -gt 0
+                if ($plusRefspec -or (Test-HasFlag -Arguments $git.Args -Flags @('-f', '--force', '--force-with-lease'))) {
+                    return @{ Sub = 'push'; Segment = $segment; Reason = $pushReason }
+                }
+            }
+            'reset' {
+                if (Test-HasFlag -Arguments $git.Args -Flags @('--hard')) {
+                    return @{ Sub = 'reset'; Segment = $segment; Reason = $resetReason }
                 }
             }
         }

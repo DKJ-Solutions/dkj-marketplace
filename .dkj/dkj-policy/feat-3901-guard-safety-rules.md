@@ -39,19 +39,42 @@
 
 ### PLAN
 
+#3901, as decided on its thread (November 8, 2026): a plugin cannot ship `deny` or `ask` permission rules, so
+the PreToolUse guard `guard-working-copy` refuses the constitution's safety-rule commands itself, on every
+thread, with no consumer setting to change. In scope: every force push (`-f`, `--force`,
+`--force-with-lease`, a `+` refspec) and `git reset --hard`. Out of scope, and written down as such:
+`git rebase` "on a shared branch", because whether a branch is shared is not in the command string.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `working-copy-guard-lib.ps1` (both copies): `Get-SafetyRuleViolation`, on the same segment and subcommand parsing as the subagent rule, with no project scope
+- [x] `guard-working-copy.ps1`: a second string pre-gate, the safety rule asked before the `agent_id` gate, and a refusal that says the owner runs the command themselves
+- [x] Tests: a `Get-SafetyRuleViolation` group in `working-copy-guard-lib.tests.ps1`; group 6 in `guard-working-copy.tests.ps1`; group 1's main-thread `reset --hard` case is now `reset --soft`
+- [x] `plugins/dkj-policy/scripts/README.md`: the lib row names the new function
+- [x] Code review (Victor) and security review (Sebastian)
 
 ### TEST
 
+- [x] `working-copy-guard-lib.tests.ps1` 113/0, `guard-working-copy.tests.ps1` 53/0, `hook-fail-closed` 43/0, `hook-stdin-guard` 56/0, `exception-message-guard` 18/0, run locally.
+- [x] Measured over 4593 recorded Bash/PowerShell calls in this repo's transcripts: one refusal, a false positive (a heredoc piped into `python -` that wrote the test cases), recorded in the lib and answered in the refusal text.
+- [x] The repo gates run inside `ship-pr`.
+
 ### DEPLOY: feat/3901-guard-safety-rules
 
-**Score:**
+`guard-working-copy` now refuses a force push (`-f`, `--force`, `--force-with-lease`, a `+` refspec) and
+`git reset --hard` on every thread, the main one included. It used to guard only dispatched subagents. The
+constitution allows both commands only with the owner's explicit permission, and a plugin cannot ship
+permission rules, so the guard enforces them itself (#3901). The refusal tells the session to give the owner
+the exact command to run themselves. A commit message or grep that names the rule is not refused.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Every repo with `dkj-policy` installed gets the refusal at its next plugin update, with no setting to change.
+A session that tries to force-push or hard-reset is stopped and hands the command to its owner instead.
+
+**Score:** 3
 
 #### Pull Request
 

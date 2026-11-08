@@ -94,7 +94,8 @@ try {
     Write-Host ""
     Write-Host "-- group 1: the gate -- identical text, opposite verdicts" -ForegroundColor Cyan
 
-    foreach ($cmd in @('git checkout main', 'git stash', 'git reset --hard HEAD',
+    # 'git reset --soft', not '--hard': since #3901 a hard reset is refused on the main thread too (group 6).
+    foreach ($cmd in @('git checkout main', 'git stash', 'git reset --soft HEAD~1',
                        'git checkout HEAD -- scripts/lib/gate-lib.ps1', 'git clean -fd')) {
         Assert-Equal 0 (Invoke-Guard (New-Payload -Command $cmd)).Code                    "main thread may run: $cmd"
         Assert-Equal 2 (Invoke-Guard (New-Payload -Command $cmd -AgentId 'a1')).Code      "a dispatched subagent may not: $cmd"
@@ -162,6 +163,25 @@ try {
         'a main-thread command whose TEXT contains the agent_id key is still the main thread'
     Assert-Equal 2 (Invoke-Guard (New-Payload -Command 'grep -rn ''"agent_id":'' plugins/ && git checkout main' -AgentId 'a1')).Code `
         'and the same command from a subagent is still refused'
+
+    Write-Host ""
+    Write-Host "-- group 6: the constitution's force push and hard reset, refused on EVERY thread (#3901)" -ForegroundColor Cyan
+
+    foreach ($cmd in @('git push --force', 'git push -f origin main', 'git push --force-with-lease',
+                       'git push origin +main', 'git reset --hard HEAD', 'git reset --hard origin/main')) {
+        Assert-Equal 2 (Invoke-Guard (New-Payload -Command $cmd)).Code                    "the main thread may not: $cmd"
+        Assert-Equal 2 (Invoke-Guard (New-Payload -Command $cmd -AgentId 'a1')).Code      "nor a subagent: $cmd"
+    }
+    foreach ($cmd in @('git push', 'git push -u origin feat/x', 'git reset --soft HEAD~1', 'git reset HEAD -- a.txt',
+                       'git commit -m "never run git push --force or git reset --hard"')) {
+        Assert-Equal 0 (Invoke-Guard (New-Payload -Command $cmd)).Code                    "the main thread may still run: $cmd"
+    }
+
+    $r = Invoke-Guard (New-Payload -Command 'git push --force')
+    Assert-True ($r.Out -match 'BLOCKED \(guard-working-copy\)')  'the refusal is marked as this guard'
+    Assert-True ($r.Out -match "owner's explicit permission")      'and names the constitution rule it enforces'
+    Assert-True ($r.Out -match 'run it\s+themselves')              'and says the owner runs it themselves'
+    Assert-True ($r.Out -notmatch 'This checkout belongs to')      'and is not the subagent working-copy text'
 } finally {
     Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue
 }

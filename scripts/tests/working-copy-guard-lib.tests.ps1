@@ -216,6 +216,40 @@ if (-not (Test-HasFlag -Arguments @('--contains') -Flags @('-c'))) { $script:pas
 else { $script:fail++; Write-Host "  [FAIL] and does not read a long flag as a bundle of short ones" -ForegroundColor Red }
 
 Write-Host ""
+Write-Host "-- group: Get-SafetyRuleViolation, the force push and hard reset rule (#3901)" -ForegroundColor Cyan
+
+function Assert-Safety {
+    param([string]$Command, [string]$Name, [string]$ExpectSub = '')
+    $v = Get-SafetyRuleViolation -Command $Command
+    $ok = if ($ExpectSub) { $null -ne $v -and $v.Sub -eq $ExpectSub } else { $null -eq $v }
+    if ($ok) { $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green }
+    else { $script:fail++; Write-Host "  [FAIL] $Name`n         expected '$ExpectSub', got '$(if ($v) { $v.Sub } else { 'none' })'" -ForegroundColor Red }
+}
+
+Assert-Safety 'git push --force'                       'push --force'                                  -ExpectSub 'push'
+Assert-Safety 'git push -f origin main'                'push -f'                                       -ExpectSub 'push'
+Assert-Safety 'git push -uf origin feat/x'             'a bundled -f (-uf carries -f)'                 -ExpectSub 'push'
+Assert-Safety 'git push --force-with-lease'            'a lease is still a force push'                 -ExpectSub 'push'
+Assert-Safety 'git push --force-with-lease=main:abc'   'and so is a lease with a value'                -ExpectSub 'push'
+Assert-Safety 'git push origin +main'                  'a + refspec is a force push'                   -ExpectSub 'push'
+Assert-Safety 'git push origin "+HEAD:main"'           'and so is a quoted one'                        -ExpectSub 'push'
+Assert-Safety 'git -C ../other push --force'           'another repo is not exempt: "on any branch"'   -ExpectSub 'push'
+Assert-Safety 'cd /tmp/fixture && git reset --hard'    'nor is a cd elsewhere'                         -ExpectSub 'reset'
+Assert-Safety 'git reset --hard HEAD'                  'reset --hard'                                  -ExpectSub 'reset'
+Assert-Safety 'git status && git reset --hard origin/main' 'a later segment is still judged'           -ExpectSub 'reset'
+Assert-Safety 'echo "git push --force" | bash'         'text piped into an interpreter runs'           -ExpectSub 'push'
+
+Assert-Safety 'git push'                               'a plain push is fine'
+Assert-Safety 'git push -u origin feat/x'              'and so is setting an upstream'
+Assert-Safety 'git push --force-if-includes'           'force-if-includes alone forces nothing'
+Assert-Safety 'git reset --soft HEAD~1'                'a soft reset is not a hard one'
+Assert-Safety 'git reset HEAD -- a.txt'                'nor is unstaging a path'
+Assert-Safety 'git rebase origin/main'                 'rebase is out of scope: "shared" is not in the string'
+Assert-Safety 'git commit -m "never git push --force"' 'a commit message naming the rule is not the rule'
+Assert-Safety 'grep -rn "reset --hard" plugins/'       'nor is a grep for it'
+Assert-Safety ''                                       'an empty command is no violation'
+
+Write-Host ""
 Write-Host "Summary: $script:pass passed, $script:fail failed" -ForegroundColor $(if ($script:fail -eq 0) { 'Green' } else { 'Red' })
 if ($script:fail -gt 0) { exit 1 }
 exit 0
