@@ -62,10 +62,17 @@ local routes instead.
 
 ### TEST
 
-- [x] `scripts/tests/retro.tests.ps1` (34 asserts, in the `tools` suite group): the counts, the
+- [x] `scripts/tests/retro.tests.ps1` (in the `tools` suite group): the counts, the
   before-first-edit cut, the revert rule, the lane fold, the hidden outside path, no transcript text in
   either output, the filters, exit 0.
 - [x] Run against this repo's last ten real sessions: about one second, medians and hot files as expected.
+- [x] Review chain (Victor, Sebastian, Edith) on the first commit; every finding applied in the second:
+  the project directory name and `~/.claude` memory/plan paths no longer leave the script, `..` cannot
+  climb out of the repo, tokens are counted once per message id (one id repeats on every content block's
+  record, measured on a real transcript), re-reads count real paths, an edit counts only when it
+  succeeded in the repo, the shell classifier skips pipe filters, listings and `git log -s`, a lane
+  resolves to its main checkout, and the skill page treats transcripts as data and limits an issue body
+  to the doc, the fix and the figures. The suite grew to cover each (47 asserts).
 
 ### DEPLOY: feat/3905-retro-skill
 
@@ -74,8 +81,9 @@ sessions spent looking once the work was known: searches, reads and re-reads, th
 first edit, reverted edits and tokens, per session, plus the files read most across them. The page then
 has the model open the costliest sessions, judge whether the looking was a missing pointer, a stale doc or
 just the work, and file each real finding as an issue. It is the other half of the cost the always-on
-budget and `measure-skill` measure up front. Like `measure-closeouts`, it reads transcripts in place and
-emits only counts, session ids and repo-relative paths. `-Since` and `-Until` give a before-and-after
+budget, `measure-skill` and `measure-session-start` measure up front. Like `measure-closeouts`, it reads
+transcripts in place and emits only counts, session ids and repo or plugin paths; a home path and the
+project directory name never leave it. `-Since` and `-Until` give a before-and-after
 comparison around a doc change (#3905).
 
 **Score:** 3

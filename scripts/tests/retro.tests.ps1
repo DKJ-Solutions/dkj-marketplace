@@ -52,8 +52,9 @@ Assert-True ($src -match 'Assert-OwnCopy') 'it carries the source-repo guard'
 
 function New-Tool {
     <# One assistant record carrying one tool_use, plus a usage block, as a single JSONL line. #>
-    param([string]$Name, [hashtable]$ToolInput, [int]$Out = 10)
-    $msg = @{ content = @(@{ type = 'tool_use'; id = 'x'; name = $Name; input = $ToolInput }); usage = @{ input_tokens = 2; cache_read_input_tokens = 100; output_tokens = $Out } }
+    param([string]$Name, [hashtable]$ToolInput, [int]$Out = 10, [string]$Id = 'x', [string]$MsgId = '')
+    $msg = @{ content = @(@{ type = 'tool_use'; id = $Id; name = $Name; input = $ToolInput }); usage = @{ input_tokens = 2; cache_read_input_tokens = 100; output_tokens = $Out } }
+    if ($MsgId) { $msg.id = $MsgId }
     return (@{ type = 'assistant'; message = $msg } | ConvertTo-Json -Depth 8 -Compress)
 }
 
@@ -98,6 +99,27 @@ try {
     ) | Set-Content -LiteralPath (Join-Path $projLane 'bbbb2222.jsonl') -Encoding ascii
     (Get-Item -LiteralPath (Join-Path $projLane 'bbbb2222.jsonl')).LastWriteTime = (Get-Date '2026-11-05 10:00')
 
+    # SESSION D -- what must NOT count, and the paths that must not show. Written last-but-oldest so the
+    # -Last and -Since asserts below are unaffected.
+    $failedResult = (@{ type = 'user'; message = @{ content = @(@{ type = 'tool_result'; tool_use_id = 'e1'; is_error = $true; content = 'x' }) } } | ConvertTo-Json -Depth 8 -Compress)
+    @(
+        (New-Tool -Name 'Bash' -ToolInput @{ command = 'npm test 2>&1 | tail -20' } -Out 7 -MsgId 'm1')
+        (New-Tool -Name 'Bash' -ToolInput @{ command = 'git log --oneline -s' } -Out 7 -MsgId 'm1')
+        (New-Tool -Name 'Bash' -ToolInput @{ command = 'ls -la' } -Out 7 -MsgId 'm1')
+        (New-Tool -Name 'Bash' -ToolInput @{ command = "cd x`ngrep -r foo ." })
+        (New-Tool -Name 'Bash' -ToolInput @{ command = 'FOO=1 grep x .' })
+        (New-Tool -Name 'Bash' -ToolInput @{ command = 'git log -S needle' })
+        (New-Tool -Name 'Read' -ToolInput @{ file_path = 'D:\a.txt' })
+        (New-Tool -Name 'Read' -ToolInput @{ file_path = 'D:\b.txt' })
+        (New-Tool -Name 'Read' -ToolInput @{ file_path = (Join-Path $HOME '.claude\projects\X\memory\PRIVATE-MEMORY-NAME.md') })
+        (New-Tool -Name 'Read' -ToolInput @{ file_path = (Join-Path $HOME '.claude\plugins\cache\m\p\1.0\SKILL.md') })
+        (New-Tool -Name 'Read' -ToolInput @{ file_path = "$fakeRepo\..\CLIMBED-OUT\x.txt" })
+        (New-Tool -Name 'Edit' -Id 'e1' -ToolInput @{ file_path = "$fakeRepo\a.ps1"; old_string = 'a'; new_string = 'b' })
+        $failedResult
+        (New-Tool -Name 'Write' -ToolInput @{ file_path = 'D:\scratch\plan.md'; content = 'x' })
+    ) | Set-Content -LiteralPath (Join-Path $projOwn 'dddd4444.jsonl') -Encoding ascii
+    (Get-Item -LiteralPath (Join-Path $projOwn 'dddd4444.jsonl')).LastWriteTime = (Get-Date '2026-10-01 10:00')
+
     # SESSION C -- another repo's. The default scope must not read it.
     @( (New-Tool -Name 'Grep' -ToolInput @{ pattern = 'x' }) ) | Set-Content -LiteralPath (Join-Path $projOther 'cccc3333.jsonl') -Encoding ascii
 
@@ -110,7 +132,7 @@ try {
     Write-Host 'Scope: this checkout and its lanes, not another repo' -ForegroundColor Cyan
     Assert-Equal 0 $exit '-Json exits 0'
     $r = $raw | ConvertFrom-Json
-    Assert-Equal 2 $r.Summary.Sessions 'two sessions read -- the own project directory and its lane'
+    Assert-Equal 3 $r.Summary.Sessions 'three sessions read -- the own project directory and its lane'
     Assert-True (-not (@($r.Sessions | Where-Object { $_.Session -eq 'cccc3333' }).Count)) "another repo's session is not read"
 
     Write-Host ''
@@ -135,14 +157,28 @@ try {
     Assert-True ($null -ne $guide) 'a repo file is shown repo-relative'
     Assert-Equal 2 $guide.Sessions '...and the lane path folds onto the same file: read in two sessions'
     Assert-Equal 1 $guide.ReReadIn '...re-read within one of them'
-    Assert-True (@($r.HotFiles | Where-Object { $_.Path -eq '(outside the repo)' }).Count -eq 1) 'a path outside the repo is hidden'
+    Assert-True (@($r.HotFiles | Where-Object { $_.Path.StartsWith('(') }).Count -eq 0) 'a path outside the repo is no hot file'
+    Assert-True (@($r.HotFiles | Where-Object { $_.Path -eq '~/.claude/plugins/cache/m/p/1.0/SKILL.md' }).Count -eq 1) 'a plugin-cache file is shown'
 
     Write-Host ''
-    Write-Host 'No transcript text leaves it' -ForegroundColor Cyan
+    Write-Host 'What does not count' -ForegroundColor Cyan
+    $d = @($r.Sessions | Where-Object { $_.Session -eq 'dddd4444' })[0]
+    Assert-Equal 3 $d.Searches 'a newline-split grep, a VAR=1 grep and git log -S are searches; | tail, git log -s and ls are not'
+    Assert-Equal 0 $d.ShellReads '`npm test | tail` is not a shell read'
+    Assert-Equal 0 $d.Edits 'a failed Edit and a Write outside the repo are no edits'
+    Assert-Equal '' "$($d.LookupsBeforeFirstEdit)" '...so the session never edited'
+    Assert-Equal 0 $d.ReReads 'two different files outside the repo are not one file re-read'
+    Assert-Equal (7 + 100) $d.OutputTokens 'three records of one message count its usage once (the ten others carry no id, 10 each)'
+
+    Write-Host ''
+    Write-Host 'No transcript text and no home path leaves it' -ForegroundColor Cyan
     foreach ($out in @(@{ N = 'JSON'; T = $raw }, @{ N = 'report'; T = $human })) {
         Assert-True ($out.T -notmatch 'SECRET-SEARCH-PATTERN') "the $($out.N) carries no search pattern"
         Assert-True ($out.T -notmatch 'SECRET-MESSAGE-TEXT') "the $($out.N) carries no message text"
         Assert-True ($out.T -notmatch 'someone') "the $($out.N) carries no path outside the repo"
+        Assert-True ($out.T -notmatch 'C--work') "the $($out.N) carries no project directory name (it encodes the checkout path)"
+        Assert-True ($out.T -notmatch 'PRIVATE-MEMORY-NAME') "the $($out.N) hides a file under ~/.claude outside the plugin trees"
+        Assert-True ($out.T -notmatch 'CLIMBED-OUT') "the $($out.N) hides a path that climbs out of the repo with .."
     }
 
     Write-Host ''

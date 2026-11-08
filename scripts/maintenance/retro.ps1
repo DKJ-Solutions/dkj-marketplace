@@ -11,14 +11,24 @@
     missing pointer or a stale doc, and the constitution already says where that lesson goes -- into the
     doc that owns it. A retro names which doc; this script finds where to look.
 
-    WHAT IT COUNTS, PER SESSION. Searches (Grep, Glob, and a shell segment led by grep, rg, find,
-    Select-String, Get-ChildItem and their kin), delegated explorations (an Agent call of type Explore),
-    web lookups, reads (the Read tool, with the distinct paths, so a re-read is visible) and shell reads
-    (cat, Get-Content, sed -n and kin), edits, LOOKUPS BEFORE THE FIRST EDIT (the headline: every search
-    and read a session made before it changed anything), REVERTED EDITS (an Edit that undoes an earlier
-    Edit of the same file exactly), and the tokens the session's assistant turns report. And ACROSS
-    sessions, the files read most often: a file read in most sessions, or re-read within them, is the
-    first candidate for a missing pointer or a summary that should exist.
+    WHAT IT COUNTS, PER SESSION.
+      - LOOKUPS, of five kinds: searches (Grep, Glob, and a shell command led by grep, rg, find,
+        Select-String, a recursive or filtered Get-ChildItem, git grep, or git log -S/-G), delegated
+        explorations (an Agent call of type Explore), web lookups (WebSearch, WebFetch), reads (the Read
+        tool; a re-read is a second read of the same file) and shell reads (cat, head, tail,
+        Get-Content, sed -n and kin). A plain directory listing is not a lookup, and neither is a filter
+        over a command's own output: `npm test | tail` reads nothing, so only the part of a pipeline
+        before its first `|` is classified.
+      - EDITS: an Edit, Write, MultiEdit or NotebookEdit that SUCCEEDED and landed IN THE REPO. A failed
+        call (its tool_result is an error) and a write to a scratch or plan file outside the repo are not
+        the session changing the work.
+      - LOOKUPS BEFORE THE FIRST EDIT, the headline: every lookup before the session first changed the
+        repo. A session that never edits reports none, not zero.
+      - REVERTED EDITS: an Edit that undoes an earlier Edit of the same file exactly.
+      - TOKENS, once per assistant message. Claude Code writes one record per content block and repeats
+        the message's usage on each, so the usage is summed per message id, not per record.
+    And ACROSS sessions, the repo files read most often: a file read in most sessions, or re-read within
+    them, is the first candidate for a missing pointer or a summary that should exist.
 
     LESS SEARCHING ALONE PROVES NOTHING, and that is why the edits are counted beside it. A session that
     searched little and then reverted three edits did not find the right thing faster -- it found the
@@ -33,17 +43,22 @@
     reason. The judgement (was this search a missing pointer, a stale doc, or just the work?) is the
     model's, on the skill page, after opening the sessions this report names.
 
-    WHAT LEAVES IT: COUNTS, SESSION IDS AND FILE PATHS -- NEVER TRANSCRIPT TEXT. No search pattern, no
-    message, no tool output is printed or written. Paths are made repo-relative; a path in the plugin
-    cache or elsewhere under ~/.claude is shown from '~/.claude/'; anything else is '(outside the repo)',
-    so a user name in a home path never reaches a report that may be quoted in a public tracker. The
-    transcripts are read in place under ~/.claude/projects and never written to.
+    WHAT LEAVES IT: COUNTS, SESSION IDS AND FILE PATHS -- NEVER TRANSCRIPT TEXT, AND NO HOME PATH. No
+    search pattern, message or tool output is printed or written. A path is shown repo-relative when it
+    is inside the repo (normalised first, so '..' cannot climb out), as itself under ~/.claude/plugins
+    (the plugin cache and the marketplace clones, which are public content), as '~/.claude/(other)'
+    anywhere else under ~/.claude (memory and plan files are named after what they hold), and as
+    '(outside the repo)' everywhere else. The project directory names Claude Code keeps encode the
+    absolute checkout path, user name included, so the scope is printed as a description, never as the
+    name, and no transcript path is emitted: the session id finds the file. The transcripts are read in
+    place under ~/.claude/projects and never written to.
 
     WHICH SESSIONS: THIS REPO'S, by default -- unlike measure-closeouts, which measures the machine. The
     paths it names belong to one repo, and the issues a retro files belong in that repo's tracker. The
     project directory Claude Code keeps for a checkout is its path with every character outside
-    [A-Za-z0-9] turned into '-'; the default reads that directory and its worktree lanes'
-    ('<repo>-lanes-*'). -Project takes a wildcard instead.
+    [A-Za-z0-9] turned into '-'; the default reads the main checkout's directory and its worktree lanes'
+    ('<repo>-lanes-*'), and run from inside a lane it resolves the main checkout first. -Project takes a
+    wildcard instead.
 
     ONLY THE TOP-LEVEL TRANSCRIPTS. A dispatched subagent's own transcript is not read: what the main
     thread delegated is counted at the delegation (an Explore call), not inside it.
@@ -52,8 +67,8 @@
     Where the session transcripts live. Defaults to ~/.claude/projects.
 
 .PARAMETER Project
-    A wildcard over the project directory names to read. Default: this checkout's own directory and its
-    worktree lanes'.
+    A wildcard over the project directory names to read. Default: this repo's main checkout and its
+    worktree lanes.
 
 .PARAMETER Last
     How many sessions to read, most recent first, after -Since and -Until. Defaults to 10.
@@ -94,15 +109,20 @@ $guardLib = Join-Path $PSScriptRoot '..\lib\source-repo-guard-lib.ps1'
 if (Test-Path -LiteralPath $guardLib -PathType Leaf) { . $guardLib; Assert-OwnCopy -ScriptPath $PSCommandPath }
 
 # The repo root, dual-context: CLAUDE_PROJECT_DIR for a consumer running the mirror, otherwise the git
-# root (repo-root-lib, never rev-parse --show-toplevel -- #2115).
+# root (repo-root-lib, never rev-parse --show-toplevel -- #2115). A worktree lane ('<repo>-lanes\<lane>')
+# resolves to its main checkout, so a retro run from a lane reads the same sessions as one run from the
+# primary.
 . (Join-Path $PSScriptRoot '..\lib\repo-root-lib.ps1')
 $repoRoot = $null
 if ($env:CLAUDE_PROJECT_DIR) { $repoRoot = $env:CLAUDE_PROJECT_DIR }
 else { try { $repoRoot = (Get-GitTopLevelPath).Path } catch { $repoRoot = $null } }
-if ($repoRoot) { $repoRoot = [System.IO.Path]::GetFullPath($repoRoot.Trim()).TrimEnd('\', '/') }
+if ($repoRoot) {
+    $repoRoot = [System.IO.Path]::GetFullPath($repoRoot.Trim()).TrimEnd('\', '/')
+    if ($repoRoot -match '^(.+)-lanes[\\/][^\\/]+$') { $repoRoot = $Matches[1] }
+}
 
-$script:SearchLeads = '^(grep|egrep|fgrep|rg|ag|ack|find|fd|tree|select-string|sls|get-childitem|gci|ls|dir|git\s+grep|git\s+log\s+.*-[SG])(\s|$)'
-$script:ReadLeads   = '^(cat|head|tail|less|more|type|get-content|gc|sed\s+-n)(\s|$)'
+$script:SearchLeads = '^(grep|egrep|fgrep|rg|ag|ack|find|fd|tree|select-string|sls|git\s+grep)(\s|$)|^(get-childitem|gci)\s.*-(recurse|filter|include)'
+$script:ReadLeads   = '^(cat|head|tail|less|more|get-content|gc|sed\s+-n)(\s|$)'
 $script:EditTools   = @('Edit', 'Write', 'MultiEdit', 'NotebookEdit')
 
 function Get-TranscriptProjectName {
@@ -123,52 +143,70 @@ function Get-Field {
 function ConvertTo-ReportPath {
     <#
     .SYNOPSIS
-        A file path as the report may show it: repo-relative, '~/.claude/...', or '(outside the repo)'.
+        A file path as the report may show it: repo-relative, '~/.claude/plugins/...',
+        '~/.claude/(other)', or '(outside the repo)'.
 
     .DESCRIPTION
-        A worktree lane ('<repo>-lanes\<lane>\...') is folded onto the repo, since it is the same tree. The
-        fallback hides the path entirely, because a home directory carries a user name and this report
-        may be quoted into a public tracker.
+        NORMALISED BEFORE IT IS TESTED, so 'C:\repo\..\secret\x' is outside the repo rather than shown as
+        '../secret/x'. A worktree lane ('<repo>-lanes\<lane>\...') folds onto the repo, since it is the
+        same tree. Under ~/.claude only the plugin trees are shown, because they are public content; a
+        memory or plan file is named after what it holds. Everything else is hidden entirely, because a
+        home directory carries a user name and this report may be quoted into a public tracker.
     #>
     param([string]$Path, [string]$RepoRoot)
 
     if ([string]::IsNullOrWhiteSpace($Path)) { return '' }
-    $p = $Path -replace '/', '\'
+    if (-not [System.IO.Path]::IsPathRooted($Path)) { return '(outside the repo)' }
+    try { $p = [System.IO.Path]::GetFullPath($Path) } catch { return '(outside the repo)' }
     if ($RepoRoot) {
-        $root = $RepoRoot -replace '/', '\'
-        if ($p.StartsWith($root + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
-            return ($p.Substring($root.Length + 1) -replace '\\', '/')
+        if ($p.StartsWith($RepoRoot + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
+            return ($p.Substring($RepoRoot.Length + 1) -replace '\\', '/')
         }
-        $lanes = $root + '-lanes\'
+        $lanes = $RepoRoot + '-lanes\'
         if ($p.StartsWith($lanes, [System.StringComparison]::OrdinalIgnoreCase)) {
             $rest = $p.Substring($lanes.Length)
             $cut = $rest.IndexOf('\')
             if ($cut -ge 0) { return ($rest.Substring($cut + 1) -replace '\\', '/') }
         }
     }
-    $claudeHome = (Join-Path $HOME '.claude') -replace '/', '\'
-    if ($p.StartsWith($claudeHome + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
+    $claudeHome = [System.IO.Path]::GetFullPath((Join-Path $HOME '.claude'))
+    if ($p.StartsWith($claudeHome + '\plugins\', [System.StringComparison]::OrdinalIgnoreCase)) {
         return ('~/.claude/' + ($p.Substring($claudeHome.Length + 1) -replace '\\', '/'))
     }
+    if ($p.StartsWith($claudeHome + '\', [System.StringComparison]::OrdinalIgnoreCase)) { return '~/.claude/(other)' }
     return '(outside the repo)'
+}
+
+function Test-RepoReportPath {
+    <# True when a report path names a file in the repo (not a plugin file, not a hidden one). #>
+    param([string]$ReportPath)
+    return ($ReportPath -and -not $ReportPath.StartsWith('(') -and -not $ReportPath.StartsWith('~'))
 }
 
 function Get-ShellCommandKind {
     <#
     .SYNOPSIS
-        'search', 'read' or '' for one shell command line: the first segment that is either decides.
+        'search', 'read' or '' for one shell command: the first command in it that is either decides.
 
     .DESCRIPTION
-        The line is split on && || ; and |, so `cd x && grep -r y` is a search. One call counts once
-        however many segments match: a pipeline of three greps is one lookup.
+        The text is split into lines and each line on && || and ;, and of each piece ONLY THE PART BEFORE
+        ITS FIRST '|' is classified -- `npm test | tail` and `git status | grep x` filter a command's own
+        output and are not lookups. Leading VAR=value assignments are skipped. git log counts only with
+        the pickaxe, -S or -G, matched case-sensitively: -s (no patch) and -g (walk reflogs) are not
+        searches. One call counts once however many of its commands match. A heredoc body can still
+        produce a false piece; that is accepted rather than parsed.
     #>
     param([string]$Command)
 
     if ([string]::IsNullOrWhiteSpace($Command)) { return '' }
-    foreach ($segment in ($Command -split '&&|\|\||;|\|')) {
-        $s = $segment.Trim().TrimStart('(', '{', '&', ' ').ToLower()
-        if ($s -match $script:SearchLeads) { return 'search' }
-        if ($s -match $script:ReadLeads) { return 'read' }
+    foreach ($line in ($Command -split "`r?`n")) {
+        foreach ($piece in ($line -split '&&|\|\||;')) {
+            $s = ($piece -split '\|')[0].Trim().TrimStart('(', '{', '&', ' ')
+            while ($s -match '^[A-Za-z_][A-Za-z0-9_]*=\S*\s+(.*)$') { $s = $Matches[1].Trim() }
+            if ($s -cmatch '^git\s+log\s.*-[SG]') { return 'search' }
+            if ($s -match $script:SearchLeads) { return 'search' }
+            if ($s -match $script:ReadLeads) { return 'read' }
+        }
     }
     return ''
 }
@@ -179,20 +217,37 @@ function Measure-RetroTranscript {
         One session's lookup cost, from its records in order. Returns $null when it made no tool call.
 
     .DESCRIPTION
-        A LINE THAT DOES NOT PARSE IS SKIPPED, for measure-closeouts' reason: transcripts are appended to
-        while sessions run, so a half-written last line is ordinary. Only assistant records are parsed,
-        which is where tool calls and usage live, and the cheap string test runs before the JSON parse.
+        TWO PASSES OVER THE FILE. The first collects the ids of tool calls whose result was an error (only
+        lines carrying '"is_error":true' are parsed); the second walks the assistant records. A line that
+        does not parse is skipped, for measure-closeouts' reason: transcripts are appended to while
+        sessions run, so a half-written last line is ordinary.
 
-        THE EDIT STRINGS ARE COMPARED IN MEMORY AND NEVER LEAVE THIS FUNCTION. A reverted edit is an Edit
-        whose old_string and new_string are an earlier Edit's of the same file, swapped.
+        THE EDIT STRINGS ARE COMPARED IN MEMORY AND NEVER LEAVE THIS FUNCTION, and re-reads are counted on
+        the full normalised path, so two different files outside the repo are two files rather than one
+        '(outside the repo)' read twice.
     #>
     param([string]$Path, [string]$RepoRoot)
+
+    $failed = New-Object 'System.Collections.Generic.HashSet[string]'
+    foreach ($line in [System.IO.File]::ReadLines($Path)) {
+        if ($line.IndexOf('"is_error":true') -lt 0) { continue }
+        try { $rec = $line | ConvertFrom-Json } catch { continue }
+        $content = Get-Field (Get-Field $rec 'message') 'content'
+        if (-not $content -or $content -is [string]) { continue }
+        foreach ($block in $content) {
+            if ((Get-Field $block 'type') -eq 'tool_result' -and (Get-Field $block 'is_error') -eq $true) {
+                [void]$failed.Add([string](Get-Field $block 'tool_use_id'))
+            }
+        }
+    }
 
     $searches = 0; $explores = 0; $web = 0; $reads = 0; $shellReads = 0; $edits = 0; $tools = 0
     $reverted = 0; $beforeFirstEdit = 0; $firstEditSeen = $false
     $inTokens = 0L; $outTokens = 0L
     $readPaths = @{}
+    $readFull = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
     $editPairs = New-Object 'System.Collections.Generic.HashSet[string]'
+    $seenMessages = New-Object 'System.Collections.Generic.HashSet[string]'
 
     foreach ($line in [System.IO.File]::ReadLines($Path)) {
         if ($line.IndexOf('"type":"assistant"') -lt 0) { continue }
@@ -201,7 +256,8 @@ function Measure-RetroTranscript {
         if (-not $msg) { continue }
 
         $usage = Get-Field $msg 'usage'
-        if ($usage) {
+        $msgId = [string](Get-Field $msg 'id')
+        if ($usage -and (-not $msgId -or $seenMessages.Add($msgId))) {
             foreach ($f in 'input_tokens', 'cache_creation_input_tokens', 'cache_read_input_tokens') {
                 $v = Get-Field $usage $f; if ($v) { $inTokens += [long]$v }
             }
@@ -226,8 +282,14 @@ function Measure-RetroTranscript {
                 }
                 '^Read$' {
                     $reads++; $lookup = $true
-                    $rp = ConvertTo-ReportPath -Path ([string](Get-Field $inputObj 'file_path')) -RepoRoot $RepoRoot
-                    if ($rp) { if ($readPaths.ContainsKey($rp)) { $readPaths[$rp]++ } else { $readPaths[$rp] = 1 } }
+                    $raw = [string](Get-Field $inputObj 'file_path')
+                    $full = $raw
+                    try { if ([System.IO.Path]::IsPathRooted($raw)) { $full = [System.IO.Path]::GetFullPath($raw) } } catch { }
+                    [void]$readFull.Add($full)
+                    $rp = ConvertTo-ReportPath -Path $raw -RepoRoot $RepoRoot
+                    if ($rp -and -not $rp.StartsWith('(') -and $rp -ne '~/.claude/(other)') {
+                        if ($readPaths.ContainsKey($rp)) { $readPaths[$rp]++ } else { $readPaths[$rp] = 1 }
+                    }
                     break
                 }
                 '^(Bash|PowerShell)$' {
@@ -239,15 +301,19 @@ function Measure-RetroTranscript {
             }
 
             if ($script:EditTools -contains $name) {
-                $edits++
-                $firstEditSeen = $true
-                if ($name -eq 'Edit') {
-                    $fp = [string](Get-Field $inputObj 'file_path')
-                    $old = [string](Get-Field $inputObj 'old_string')
-                    $new = [string](Get-Field $inputObj 'new_string')
-                    $sep = [char]0x1F
-                    if ($editPairs.Contains("$fp$sep$new$sep$old")) { $reverted++ }
-                    [void]$editPairs.Add("$fp$sep$old$sep$new")
+                $target = [string](Get-Field $inputObj 'file_path')
+                if (-not $target) { $target = [string](Get-Field $inputObj 'notebook_path') }
+                $inRepo = Test-RepoReportPath -ReportPath (ConvertTo-ReportPath -Path $target -RepoRoot $RepoRoot)
+                if ($inRepo -and -not $failed.Contains([string](Get-Field $block 'id'))) {
+                    $edits++
+                    $firstEditSeen = $true
+                    if ($name -eq 'Edit') {
+                        $old = [string](Get-Field $inputObj 'old_string')
+                        $new = [string](Get-Field $inputObj 'new_string')
+                        $sep = [char]0x1F
+                        if ($editPairs.Contains("$target$sep$new$sep$old")) { $reverted++ }
+                        [void]$editPairs.Add("$target$sep$old$sep$new")
+                    }
                 }
             } elseif ($lookup -and -not $firstEditSeen) {
                 $beforeFirstEdit++
@@ -256,23 +322,22 @@ function Measure-RetroTranscript {
     }
 
     if ($tools -eq 0) { return $null }
-    $distinct = $readPaths.Count
     return [pscustomobject]@{
-        Session               = [System.IO.Path]::GetFileNameWithoutExtension($Path)
-        ToolCalls             = $tools
-        Searches              = $searches
-        Explores              = $explores
-        WebLookups            = $web
-        Reads                 = $reads
-        DistinctReads         = $distinct
-        ReReads               = $reads - $distinct
-        ShellReads            = $shellReads
-        Edits                 = $edits
+        Session                = [System.IO.Path]::GetFileNameWithoutExtension($Path)
+        ToolCalls              = $tools
+        Searches               = $searches
+        Explores               = $explores
+        WebLookups             = $web
+        Reads                  = $reads
+        DistinctReads          = $readFull.Count
+        ReReads                = $reads - $readFull.Count
+        ShellReads             = $shellReads
+        Edits                  = $edits
         LookupsBeforeFirstEdit = if ($firstEditSeen) { $beforeFirstEdit } else { $null }
-        RevertedEdits         = $reverted
-        InputTokens           = $inTokens
-        OutputTokens          = $outTokens
-        ReadPaths             = $readPaths
+        RevertedEdits          = $reverted
+        InputTokens            = $inTokens
+        OutputTokens           = $outTokens
+        ReadPaths              = $readPaths
     }
 }
 
@@ -290,15 +355,18 @@ function Get-Median {
 # ---------------------------------------------------------------------------------------------------
 
 if (-not (Test-Path -LiteralPath $TranscriptRoot -PathType Container)) {
-    Write-Host "[SKIP] No transcript root at '$TranscriptRoot' -- nothing to measure." -ForegroundColor Yellow
+    Write-Host '[SKIP] No transcript root at the given path -- nothing to measure.' -ForegroundColor Yellow
     exit 0
 }
 
+# The scope is described, never named: a project directory name is the absolute checkout path.
 $patterns = @()
-if ($Project) { $patterns = @($Project) }
+$scope = ''
+if ($Project) { $patterns = @($Project); $scope = 'the directories -Project names' }
 elseif ($repoRoot) {
     $own = Get-TranscriptProjectName -Path $repoRoot
     $patterns = @($own, "$own-lanes-*")
+    $scope = "this repo's checkout and its worktree lanes"
 } else {
     Write-Host "[SKIP] Not inside a repository and no -Project given -- name the sessions to read with -Project." -ForegroundColor Yellow
     exit 0
@@ -318,15 +386,14 @@ foreach ($file in $files) {
         $row = Measure-RetroTranscript -Path $file.FullName -RepoRoot $repoRoot
         if ($row) {
             $row | Add-Member -NotePropertyName LastWrite -NotePropertyValue $file.LastWriteTime.ToString('yyyy-MM-dd HH:mm')
-            $row | Add-Member -NotePropertyName Transcript -NotePropertyValue (ConvertTo-ReportPath -Path $file.FullName -RepoRoot $repoRoot)
             $rows.Add($row)
         } else { $skipped++ }
     } catch { $skipped++ }
 }
 $all = $rows.ToArray()
 
-# Across sessions: per file, in how many sessions it was read, how often in total, and in how many it was
-# read more than once.
+# Across sessions: per repo or plugin file, in how many sessions it was read, how often in total, and in
+# how many it was read more than once.
 $fileStats = @{}
 foreach ($r in $all) {
     foreach ($k in $r.ReadPaths.Keys) {
@@ -341,17 +408,18 @@ $hotFiles = @($fileStats.Values | Sort-Object @{ Expression = 'Sessions'; Descen
 
 $withEdit = @($all | Where-Object { $null -ne $_.LookupsBeforeFirstEdit })
 $summary = [pscustomobject]@{
-    Sessions                    = $all.Count
-    SessionsWithAnEdit          = $withEdit.Count
-    MedianSearches              = Get-Median -Values @($all | ForEach-Object { $_.Searches })
-    MedianReads                 = Get-Median -Values @($all | ForEach-Object { $_.Reads })
-    MedianReReads               = Get-Median -Values @($all | ForEach-Object { $_.ReReads })
+    Sessions                     = $all.Count
+    SessionsWithAnEdit           = $withEdit.Count
+    MedianSearches               = Get-Median -Values @($all | ForEach-Object { $_.Searches })
+    MedianReads                  = Get-Median -Values @($all | ForEach-Object { $_.Reads })
+    MedianReReads                = Get-Median -Values @($all | ForEach-Object { $_.ReReads })
     MedianLookupsBeforeFirstEdit = Get-Median -Values @($withEdit | ForEach-Object { $_.LookupsBeforeFirstEdit })
-    RevertedEdits               = [int](($all | Measure-Object -Property RevertedEdits -Sum).Sum)
-    MedianOutputTokens          = Get-Median -Values @($all | ForEach-Object { $_.OutputTokens })
+    RevertedEdits                = [int](($all | Measure-Object -Property RevertedEdits -Sum).Sum)
+    MedianOutputTokens           = Get-Median -Values @($all | ForEach-Object { $_.OutputTokens })
 }
 
-$costly = @($all | Sort-Object @{ Expression = { if ($null -eq $_.LookupsBeforeFirstEdit) { $_.Searches + $_.Reads + $_.ShellReads } else { $_.LookupsBeforeFirstEdit } }; Descending = $true } | Select-Object -First $Top)
+# Ranked by lookups before the first edit; a session that never edited ranks by all its lookups.
+$costly = @($all | Sort-Object @{ Expression = { if ($null -eq $_.LookupsBeforeFirstEdit) { $_.Searches + $_.Explores + $_.WebLookups + $_.Reads + $_.ShellReads } else { $_.LookupsBeforeFirstEdit } }; Descending = $true } | Select-Object -First $Top)
 
 # ---------------------------------------------------------------------------------------------------
 # Report
@@ -360,9 +428,9 @@ $costly = @($all | Sort-Object @{ Expression = { if ($null -eq $_.LookupsBeforeF
 if ($Json) {
     [pscustomobject]@{
         MeasuredUtc = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
-        Projects    = $patterns
+        Scope       = $scope
         Summary     = $summary
-        Sessions    = @($all | Select-Object Session, LastWrite, Transcript, ToolCalls, Searches, Explores, WebLookups, Reads, DistinctReads, ReReads, ShellReads, Edits, LookupsBeforeFirstEdit, RevertedEdits, InputTokens, OutputTokens)
+        Sessions    = @($all | Select-Object Session, LastWrite, ToolCalls, Searches, Explores, WebLookups, Reads, DistinctReads, ReReads, ShellReads, Edits, LookupsBeforeFirstEdit, RevertedEdits, InputTokens, OutputTokens)
         HotFiles    = $hotFiles
     } | ConvertTo-Json -Depth 5
     exit 0
@@ -370,7 +438,7 @@ if ($Json) {
 
 Write-Host ''
 Write-Host '== retro: what the recent sessions spent looking ==' -ForegroundColor Cyan
-Write-Host "   projects: $($patterns -join ', ')" -ForegroundColor DarkGray
+Write-Host "   scope: $scope" -ForegroundColor DarkGray
 Write-Host "   sessions read: $($all.Count)   without a tool call or unreadable: $skipped" -ForegroundColor DarkGray
 
 if ($all.Count -eq 0) {
@@ -386,7 +454,8 @@ Write-Host ("  reverted edits {0} in total   output tokens {1}" -f $summary.Reve
 
 Write-Host ''
 Write-Host 'The costliest sessions -- open these and read where the looking went' -ForegroundColor Cyan
-Write-Host '  before-edit = searches and reads before the first edit (- = the session never edited)' -ForegroundColor DarkGray
+Write-Host '  before-edit = lookups (searches, explores, web, reads, shell reads) before the first edit in the repo;' -ForegroundColor DarkGray
+Write-Host '  - = the session never edited, and ranks by all its lookups' -ForegroundColor DarkGray
 foreach ($r in $costly) {
     $be = if ($null -eq $r.LookupsBeforeFirstEdit) { '-' } else { $r.LookupsBeforeFirstEdit }
     Write-Host ("  {0}  {1}  before-edit {2,3}  searches {3,3}  explores {4,2}  reads {5,3} (re-reads {6,2})  edits {7,3}  reverted {8,2}" -f $r.Session, $r.LastWrite, $be, $r.Searches, $r.Explores, $r.Reads, $r.ReReads, $r.Edits, $r.RevertedEdits)
@@ -394,12 +463,12 @@ foreach ($r in $costly) {
 
 Write-Host ''
 Write-Host 'The files read most -- a candidate for a pointer, or a summary that should exist' -ForegroundColor Cyan
+if ($hotFiles.Count -eq 0) { Write-Host '  (no repo or plugin file was read)' -ForegroundColor DarkGray }
 foreach ($f in $hotFiles) {
     Write-Host ("  {0,2} sessions  {1,3} reads  re-read in {2,2}  {3}" -f $f.Sessions, $f.Reads, $f.ReReadIn, $f.Path)
 }
 
 Write-Host ''
-$shownRoot = ConvertTo-ReportPath -Path $TranscriptRoot -RepoRoot $repoRoot
-Write-Host "  The transcripts are <session>.jsonl under $shownRoot/<project>; this report quotes none of them." -ForegroundColor DarkGray
+Write-Host '  A session is <session>.jsonl in a project directory under ~/.claude/projects; this report quotes none of it.' -ForegroundColor DarkGray
 Write-Host '  A measurement, not a gate: it reaches no verdict about any session.' -ForegroundColor DarkGray
 exit 0
