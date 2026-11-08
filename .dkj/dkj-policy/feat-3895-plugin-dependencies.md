@@ -39,19 +39,37 @@
 
 ### PLAN
 
+- [x] Follow the owner's decision on #3895 (davekokbwj, 2026-11-08): declare the edges unconstrained,
+  so the lockstep `vX.Y.Z` tag stays the only tag. Verified against
+  code.claude.com/docs/en/plugins/dependencies: a bare plugin name resolves in the same marketplace,
+  and only a version constraint needs `<plugin>--v<version>` tags.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `dependencies: ["dkj-subagents-alpha"]` in the three add-on teams (lifehub, shopify, ecomm).
+- [x] `dependencies: ["dkj-policy"]` in `dkj-solutions`, and in `bwj-development`, its exact analog
+  (both extensions are additive to `dkj-policy`, and their manifests already say so in prose).
+- [x] The `dkj-solutions` README names the declared edge beside the prose requirement.
 
 ### TEST
 
+- [x] `claude plugin validate` passes on the edited manifests; the full gate runs in `ship-pr`.
+
 ### DEPLOY: feat/3895-plugin-dependencies
 
-**Score:**
+The add-on teams now declare `dkj-subagents-alpha` as a dependency in their `plugin.json`, and the
+`dkj-solutions` and `bwj-development` extensions declare `dkj-policy`. Installing one of them now
+installs the plugin it needs, where until now only the prose description asked for it
+([#3895](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3895)). The edges carry no version, so
+the release keeps its one lockstep `vX.Y.Z` tag.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Installing an add-on team or an extension now brings the plugin it needs along with it.
+
+**Score:** 2
 
 #### Pull Request
 
