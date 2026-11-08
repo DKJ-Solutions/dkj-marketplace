@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**0 / 1 patch entry** <!-- pending-tally -->
+**1 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3895-plugin-dependencies · 20261108-231102Z
+
+The add-on teams now declare `dkj-subagents-alpha` as a dependency in their `plugin.json`, and the
+`dkj-solutions` and `bwj-development` extensions declare `dkj-policy`. Installing one of them now
+installs the plugin it needs, where until now only the prose description asked for it
+([#3895](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3895)). The edges carry no version, so
+the release keeps its one lockstep `vX.Y.Z` tag.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Installing an add-on team or an extension now brings the plugin it needs along with it.
+
+**Score:** 2
+
+#### Pull Request
+
+Declare plugin dependencies in plugin.json instead of prose
+
+Plugins: bwj-development, dkj-solutions, dkj-subagents-ecomm, dkj-subagents-lifehub, dkj-subagents-shopify
+
+[PR #3910](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3910)
+
+---
 
 ### DEPLOY: docs/3904-native-worktree-evaluation · 20261108-225933Z
 

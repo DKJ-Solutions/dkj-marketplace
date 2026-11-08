@@ -8,6 +8,7 @@
     "./subagents/specialist-06-28-subagent.md"
   ],
   "version": "6.11.0",
+  "dependencies": ["dkj-subagents-alpha"],
   "author": { "name": "DaveKJohn" },
   "keywords": ["specialists", "team", "claude-code", "ecommerce", "seo", "cro", "sea", "webshop"]
 }
