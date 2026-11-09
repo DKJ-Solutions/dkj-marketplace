@@ -61,12 +61,18 @@ cards: ten items read better compared row by row. The item pages stay as they ar
       `.tooltip--explain` with the item's one line, the idea and why
 - [x] Every column sorts: the house's sortable head (`.sort`/`.arrow` on `aria-sort`), ascending first and
       flipping per click, the Issue column as a number, ties in the page's order (`Get-DocsCoverageSortScript`)
+- [x] Every docs page in the table (the owner: "really everything from the Claude Code docs"): the new
+      `docs-coverage-catalog.ps1` holds the 228 pages of llms.txt (November 9, 2026), each with a fixed status
+      (Covered, Not used, Not relevant), a note, and for Covered the repo paths that show it; five parallel
+      research passes classified them, and every cited path and the key claims were checked against the tree.
+      A page row: its title, its status with a "?" (note and evidence), section and group links, the page with a
+      "?" (the docs' own description), no issue; an empty cell sorts last
 
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: the overview asserts read a table, one row per item, status, docs and issue per
       row, the docs section and group as links, the docs link to its heading, the "?" beside each docs heading, and the
-      one in the status only beside a Declined status with a reason (687/0);
+      one in the status only beside a Declined status with a reason (699/0);
       `check-house-style` OK
 - [x] The product server on 4870 restarted and serves the table
 - [ ] The owner's look at http://localhost:4870/docs-coverage
@@ -75,7 +81,7 @@ cards: ten items read better compared row by row. The item pages stay as they ar
 
 The Docs coverage overview on the product portal is a table now: one row per item with its status, the section and group its Claude Code docs page sits in (each a link into the docs), a link to the
 heading on that page the item is about, and a link to its issue, so the ten compare at a glance. A
-"?" beside each docs heading explains the item on hover or focus, and one beside a Declined status says why the owner declined it. Every column sorts with a click on its head. Each item still opens its own page.
+"?" beside each docs heading explains the item on hover or focus, and one beside a Declined status says why the owner declined it. Every column sorts with a click on its head. Each item still opens its own page. Beside the ten, the table now lists every page of the Claude Code docs with how this repo stands to it: Covered (already used well, with the evidence behind a "?"), Not used, or Not relevant.
 
 **Score:** 2
 

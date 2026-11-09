@@ -1148,7 +1148,7 @@ Assert-True (-not $dcParsed.ByIssue.ContainsKey(3896)) 'an issue the answer coul
 Assert-True ([bool](ConvertFrom-DocsCoverageQuery -Json '').Error) 'an empty answer is an error'
 Assert-True ([bool](ConvertFrom-DocsCoverageQuery -Json 'not json').Error) 'so is one that is not JSON'
 $dcMeta = @{ GeneratedAt = '2026-11-08 12:00:00'; Seconds = 0.4 }
-$dcOver = Format-DocsCoveragePageHtml -Query $dcParsed -Meta $dcMeta
+$dcOver = Format-DocsCoveragePageHtml -Query $dcParsed -Meta $dcMeta -Catalog @()
 Assert-Equal 10 ([regex]::Matches($dcOver, 'href="/docs-coverage/[a-z0-9-]+"')).Count 'the overview links every item''s own page'
 Assert-True ($dcOver -match '<h1[^>]*>Docs coverage</h1>') 'the overview''s h1 is its crumb'
 Assert-True ($dcOver -match '<table class="table" id="items">') 'the overview is a house table, not cards (the owner, November 9, 2026)'
@@ -1166,13 +1166,31 @@ Assert-True ($dcOver -notmatch 'GitHub could not be read') 'a good read raises n
 Assert-Equal 10 ([regex]::Matches($dcOver, 'class="info-button"')).Count 'with nothing declined, the only "?" are the ten beside the docs headings'
 Assert-Equal 2 (@($dcItems | Where-Object { $_.WhyDeclined })).Count 'the two items closed as not planned carry why'
 $dcDeclined = ConvertFrom-DocsCoverageQuery -Json '{"data":{"repository":{"i3898":{"number":3898,"state":"CLOSED","stateReason":"NOT_PLANNED","assignees":{"totalCount":0},"labels":{"nodes":[]}},"i3901":{"number":3901,"state":"CLOSED","stateReason":"NOT_PLANNED","assignees":{"totalCount":0},"labels":{"nodes":[]}}}}}'
-$dcDecl = Format-DocsCoveragePageHtml -Query $dcDeclined -Meta $dcMeta
+$dcDecl = Format-DocsCoveragePageHtml -Query $dcDeclined -Meta $dcMeta -Catalog @()
 Assert-True ($dcDecl -match '<td class="col-start">Declined<button class="info-button" type="button" aria-label="Why Conditional and async hooks was declined" aria-describedby="why-hook-if-async" aria-expanded="false">\?</button></td>') 'a declined item with a reason carries a "?" beside Declined, naming what it explains'
 Assert-True ($dcDecl -match '(?s)</table></div>.*<div class="tooltip tooltip--explain" role="tooltip" id="why-hook-if-async"><b>Why declined</b>Measured: ') 'its reason is a house tooltip after the table, where the text can wrap'
 Assert-True ($dcDecl -match '<td class="col-start">Declined</td>') 'a declined item without a reason stays plain Declined'
 Assert-Equal 1 ([regex]::Matches($dcDecl, 'aria-describedby="why-')).Count 'so only the one with a reason gets a "?" in its status'
 Assert-True ($dcDecl -match 'querySelectorAll\("\.info-button\[aria-describedby\]"\)' -and $dcDecl -match 'mouseenter' -and $dcDecl -match 'Escape') 'a script opens it on hover or focus and closes it on Escape'
-$dcFail = Format-DocsCoveragePageHtml -Query (ConvertFrom-DocsCoverageQuery -Json '') -Meta $dcMeta
+$dcCat = @(Get-DocsCoverageCatalog)
+Assert-True ($dcCat.Count -ge 200) 'the catalog holds every docs page (228 on November 9, 2026)'
+Assert-Equal $dcCat.Count (@($dcCat | ForEach-Object { $_.Path } | Sort-Object -Unique)).Count 'one entry per page'
+Assert-True (@($dcCat | Where-Object { @('Covered', 'Not used', 'Not relevant') -cnotcontains $_.Status }).Count -eq 0) 'every page carries one of the three fixed statuses'
+Assert-True (@($dcCat | Where-Object { $_.Status -ceq 'Covered' -and @($_.Evidence | Where-Object { $_ }).Count -eq 0 }).Count -eq 0) 'a Covered page always names its evidence'
+Assert-True (@($dcCat | Where-Object { -not $_.Note -or -not $_.Section -or -not $_.SectionPath -or ($_.Group -and -not $_.GroupPath) }).Count -eq 0) 'and every page has a note, a section and a link for its section and group'
+Assert-True (@($dcCat | Where-Object { $_.Note -match [string][char]0x2014 }).Count -eq 0) 'no em dash in a note'
+$dcCatRow = @(@{ Path = 'statusline'; Title = 'Customize your status line'; Section = 'Configuration'; SectionPath = 'settings'; Group = 'Interface'; GroupPath = 'terminal-config'
+    Status = 'Covered'; Note = 'settings.json runs show-progress.ps1.'; Evidence = @('.claude/settings.json'); Desc = 'Configure a custom status line.' },
+    @{ Path = 'agent-sdk/overview'; Title = 'Agent SDK overview'; Section = 'Agent SDK'; SectionPath = 'agent-sdk/overview'; Group = ''; GroupPath = ''
+    Status = 'Not relevant'; Note = 'The repo does not build on the Agent SDK.'; Evidence = @(); Desc = 'Build agents.' })
+$dcWithCat = Format-DocsCoveragePageHtml -Query $dcParsed -Meta $dcMeta -Catalog $dcCatRow
+Assert-Equal 12 ([regex]::Matches($dcWithCat, '(?s)<tbody>.*?</tbody>').Value.Split([string[]]@('<tr>'), [StringSplitOptions]::None).Count - 1) 'a row per item and a row per docs page'
+Assert-True ($dcWithCat -match '<tr><td>Customize your status line</td><td class="col-start">Covered<button class="info-button" type="button" aria-label="Why Customize your status line is Covered" aria-describedby="status-statusline" aria-expanded="false">\?</button></td><td class="col-start"><a href="https://code.claude.com/docs/en/settings">Configuration</a></td><td class="col-start"><a href="https://code.claude.com/docs/en/terminal-config">Interface</a></td><td class="col-start"><a href="https://code.claude.com/docs/en/statusline">Customize your status line</a><button [^>]+aria-describedby="page-statusline"[^>]*>\?</button></td><td></td></tr>') 'a docs page row: its title, its status with a "?", its section and group links, the page with a "?", and no issue'
+Assert-True ($dcWithCat -match 'id="status-statusline"><b>Covered</b>settings\.json runs show-progress\.ps1\.<p>Evidence: \.claude/settings\.json</p></div>') 'the status "?" gives the note and the evidence'
+Assert-True ($dcWithCat -match 'id="page-statusline"><b>Customize your status line</b>Configure a custom status line\.</div>') 'the docs "?" gives the docs'' own description'
+Assert-True ($dcWithCat -match '<td class="col-start"><a href="[^"]+">Agent SDK</a></td><td class="col-start"></td>' -and $dcWithCat -match 'id="status-agent-sdk-overview"><b>Not relevant</b>The repo does not build on the Agent SDK\.</div>') 'a page with no group leaves the cell empty, and no evidence adds no line'
+Assert-True ($dcWithCat -match 'if \(x === "" && y !== ""\) return 1') 'an empty cell sorts last in either direction'
+$dcFail = Format-DocsCoveragePageHtml -Query (ConvertFrom-DocsCoverageQuery -Json '') -Meta $dcMeta -Catalog @()
 Assert-True ($dcFail -match 'role="alert">GitHub could not be read') 'a failed read says so above the table'
 Assert-Equal 10 ([regex]::Matches($dcFail, 'href="/docs-coverage/[a-z0-9-]+"')).Count 'and still shows every row'
 $dcPage = Format-DocsCoverageItemPageHtml -Item $dcItems[0] -Issue $dcParsed.ByIssue[3895] -Meta $dcMeta

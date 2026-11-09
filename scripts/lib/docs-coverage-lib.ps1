@@ -11,11 +11,18 @@
     (Get-DocsCoverageQuery), and Get-DocsCoverageStatus turns its state and labels into the one word its row shows.
     A failed read shows the rows without a status and says so, never a blank page.
 
+    BESIDE THE TEN, EVERY DOCS PAGE (the owner, November 9, 2026: "really everything from the Claude Code docs"):
+    Get-DocsCoverageCatalog, in docs-coverage-catalog.ps1 beside this file and loaded with it, holds each page with a
+    fixed status of its own (Covered, Not used, Not relevant) and the note and evidence behind it, so the overview
+    also says what this repo already uses well and needs no attention.
+
     No I/O here: the server (scripts/dashboard/serve-consumer-dashboard.ps1) asks gh and hands the answer in, so every
     rule is tested without a server, in scripts/tests/dev-pages.tests.ps1.
 
     Pure ASCII (repo convention for .ps1).
 #>
+
+. (Join-Path $PSScriptRoot 'docs-coverage-catalog.ps1')
 
 function Get-DocsCoverageItems {
     <#
@@ -197,11 +204,14 @@ function Format-DocsCoveragePageHtml {
         section and group its docs page sits in (each linking the page it opens on), the heading on that page it is
         about, and its issue, so the ten compare at a glance (the owner, November 9, 2026: a table over the cards
         the page first had). A "?" beside the heading explains the item (its one line and the idea), and one beside
-        a Declined status says why. -Query is ConvertFrom-DocsCoverageQuery's result; -Meta @{ GeneratedAt;
-        Seconds } of the read.
+        a Declined status says why. Below the ten, one row per docs page of -Catalog (Get-DocsCoverageCatalog): its
+        title, its fixed status with a "?" giving the note and the evidence, its section and group, the page itself
+        with a "?" giving the docs' own description, and no issue. -Query is ConvertFrom-DocsCoverageQuery's result;
+        -Meta @{ GeneratedAt; Seconds } of the read.
     #>
     param([Parameter(Mandatory = $true)][hashtable]$Query, [Parameter(Mandatory = $true)][hashtable]$Meta,
-        [AllowEmptyCollection()][object[]]$Items = @(Get-DocsCoverageItems))
+        [AllowEmptyCollection()][object[]]$Items = @(Get-DocsCoverageItems),
+        [AllowEmptyCollection()][object[]]$Catalog = @(Get-DocsCoverageCatalog))
     $e = { param($v) ConvertTo-DashboardText $v }
     $sb = New-Object System.Text.StringBuilder
     if ($Query.Error) { [void]$sb.AppendLine('<p class="msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The items are shown without their status.</p>') }
@@ -229,6 +239,22 @@ function Format-DocsCoveragePageHtml {
             '<td class="col-start"><a href="' + (& $e $it.GroupUrl) + '">' + (& $e $it.Group) + '</a></td>' +
             '<td class="col-start"><a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e $it.DocsHeading) + '</a>' + $aboutButton + '</td>' +
             '<td><a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a></td></tr>')
+    }
+    $docsBase = 'https://code.claude.com/docs/en/'
+    foreach ($pg in @($Catalog)) {
+        $id = ($pg.Path -replace '[^a-z0-9-]', '-')
+        $noteHtml = & $e $pg.Note
+        $ev = @($pg.Evidence | Where-Object { $_ })
+        if ($ev.Count) { $noteHtml += '<p>Evidence: ' + ((@($ev) | ForEach-Object { & $e $_ }) -join ', ') + '</p>' }
+        [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="status-' + $id + '"><b>' + (& $e $pg.Status) + '</b>' + $noteHtml + '</div>')
+        [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="page-' + $id + '"><b>' + (& $e $pg.Title) + '</b>' + (& $e $pg.Desc) + '</div>')
+        $groupHtml = if ($pg.Group) { '<a href="' + (& $e ($docsBase + $pg.GroupPath)) + '">' + (& $e $pg.Group) + '</a>' } else { '' }
+        [void]$sb.AppendLine('<tr><td>' + (& $e $pg.Title) + '</td>' +
+            '<td class="col-start">' + (& $e $pg.Status) + '<button class="info-button" type="button" aria-label="Why ' + (& $e $pg.Title) + ' is ' + (& $e $pg.Status) + '" aria-describedby="status-' + $id + '" aria-expanded="false">?</button></td>' +
+            '<td class="col-start"><a href="' + (& $e ($docsBase + $pg.SectionPath)) + '">' + (& $e $pg.Section) + '</a></td>' +
+            '<td class="col-start">' + $groupHtml + '</td>' +
+            '<td class="col-start"><a href="' + (& $e ($docsBase + $pg.Path)) + '">' + (& $e $pg.Title) + '</a><button class="info-button" type="button" aria-label="About ' + (& $e $pg.Title) + '" aria-describedby="page-' + $id + '" aria-expanded="false">?</button></td>' +
+            '<td></td></tr>')
     }
     [void]$sb.AppendLine('</tbody></table></div>')
     [void]$sb.Append($tips.ToString()); [void]$sb.AppendLine((Get-DocsCoverageTipScript)); [void]$sb.AppendLine((Get-DocsCoverageSortScript))
@@ -293,7 +319,8 @@ function Get-DocsCoverageSortScript {
     <#
         Sorts #items by the column whose head is clicked: ascending first, then flipping on each click, the other
         heads back to "none". A cell sorts by its text, as a number where both are one (the Issue column, its "#"
-        dropped), and ties keep the order the page gave, so a sort never shuffles equal rows.
+        dropped), an empty cell (a docs page has no issue, and some no group) goes last in either direction, and ties
+        keep the order the page gave, so a sort never shuffles equal rows.
     #>
     return '<script>(function () { var t = document.getElementById("items"); if (!t) return; var tb = t.tBodies[0];' +
         ' Array.prototype.forEach.call(tb.rows, function (r, i) { r.dataset.i = i; });' +
@@ -302,7 +329,8 @@ function Get-DocsCoverageSortScript {
         ' var dir = th.getAttribute("aria-sort") === "ascending" ? "descending" : "ascending";' +
         ' t.querySelectorAll("thead th").forEach(function (o) { o.setAttribute("aria-sort", "none"); }); th.setAttribute("aria-sort", dir);' +
         ' var m = dir === "ascending" ? 1 : -1, rows = Array.prototype.slice.call(tb.rows);' +
-        ' rows.sort(function (a, b) { var x = key(a, c), y = key(b, c); if (x < y) return -m; if (x > y) return m; return a.dataset.i - b.dataset.i; });' +
+        ' rows.sort(function (a, b) { var x = key(a, c), y = key(b, c); if (x === "" && y !== "") return 1; if (y === "" && x !== "") return -1;' +
+        ' if (x < y) return -m; if (x > y) return m; return a.dataset.i - b.dataset.i; });' +
         ' rows.forEach(function (r) { tb.appendChild(r); }); }); }); })();</script>'
 }
 
@@ -311,6 +339,7 @@ function Get-DocsCoverageFooter {
     param([Parameter(Mandatory = $true)][hashtable]$Meta, [Parameter(Mandatory = $true)][string]$Page)
     $e = { param($v) ConvertTo-DashboardText $v }
     $secs = if ($null -ne $Meta.Seconds) { ' in ' + ([double]$Meta.Seconds).ToString('0.0', [Globalization.CultureInfo]::InvariantCulture) + 's' } else { '' }
-    return 'The ideas and the docs checks are the issues'' own, verified November 8, 2026; the status is read with one <code>gh api graphql</code> call, ' +
-        (& $e $Meta.GeneratedAt) + $secs + ' (<a class="cd-link" href="/refresh?page=' + (& $e $Page) + '">read again</a>). Built by <code>scripts/lib/docs-coverage-lib.ps1</code>.'
+    return 'The ideas and the docs checks are the issues'' own, verified November 8, 2026; their status is read with one <code>gh api graphql</code> call, ' +
+        (& $e $Meta.GeneratedAt) + $secs + ' (<a class="cd-link" href="/refresh?page=' + (& $e $Page) + '">read again</a>). The docs pages are llms.txt as read November 9, 2026, ' +
+        'each classified against this repo that day. Built by <code>scripts/lib/docs-coverage-lib.ps1</code> and <code>docs-coverage-catalog.ps1</code>.'
 }
