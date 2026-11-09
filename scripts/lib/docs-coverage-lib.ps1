@@ -13,7 +13,7 @@
 
     BESIDE THE TEN, EVERY DOCS PAGE (the owner, November 9, 2026: "really everything from the Claude Code docs"):
     Get-DocsCoverageCatalog, in docs-coverage-catalog.ps1 beside this file and loaded with it, holds each page with a
-    fixed status of its own (Covered, Not used, Not relevant) and the note and evidence behind it, so the overview
+    fixed status of its own (Covered, Open, Not relevant) and the note and evidence behind it, so the overview
     also says what this repo already uses well and needs no attention.
 
     No I/O here: the server (scripts/dashboard/serve-consumer-dashboard.ps1) asks gh and hands the answer in, so every
@@ -208,11 +208,14 @@ function Get-DocsCoverageStatusColors {
         status to the house token its dot reads. The house names three dot colours (--good, --warn, --bad), so the
         rest read other house tokens through a class of this page's own; nothing is typed or derived, so every theme
         and the dark mode follow. '--' (not read) has no dot.
+        The way GitHub colours an issue (Dave, November 9, 2026): Open is green, because there is still something to
+        gain there; Covered is purple, done and needing no more attention; Declined and Not relevant are grey, a paper step apart
+        so each still has a colour of its own.
     #>
     [ordered]@{
-        'Covered' = '--positive-3'; 'In progress' = '--graph-1'; 'In review' = '--primary'
-        'Awaiting decision' = '--warning-3'; 'Waiting' = '--primary-muted'; 'Open' = '--fg-4'; 'Declined' = '--negative-3'
-        'Not used' = '--graph-2'; 'Not relevant' = '--bg-4'
+        'Covered' = '--done-3'; 'In progress' = '--graph-1'; 'In review' = '--primary'
+        'Awaiting decision' = '--warning-3'; 'Waiting' = '--primary-muted'; 'Open' = '--positive-3'; 'Declined' = '--bg-5'
+        'Not relevant' = '--bg-4'
     }
 }
 
@@ -352,7 +355,7 @@ function Format-DocsCoveragePageHtml {
         $noteHtml = & $e $pg.Note
         $ev = @($pg.Evidence | Where-Object { $_ })
         if ($ev.Count) { $noteHtml += '<p>Evidence: ' + ((@($ev) | ForEach-Object { & $e $_ }) -join ', ') + '</p>' }
-        # A Not used page says how much value it could have here, and whether this repo should take it up, and why
+        # An Open page says how much value it could have here, and whether this repo should take it up, and why
         # (the owner, November 9, 2026).
         if ($pg.Potential) { $noteHtml += '<p>Potential: ' + [int]$pg.Potential + ' of 4</p>' }
         if ($pg.Advice) { $noteHtml += '<p>Advice: ' + (& $e $pg.Advice) + '. ' + (& $e $pg.AdviceWhy) + '</p>' }

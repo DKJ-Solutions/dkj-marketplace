@@ -1177,7 +1177,7 @@ Assert-True ($dcDecl -match '<td class="col-start"><span class="dot dc-dot--decl
 Assert-Equal 1 ([regex]::Matches($dcDecl, 'aria-describedby="why-')).Count 'so only the one with a reason gets a "?" in its status'
 Assert-True ($dcDecl -match 'querySelectorAll\("\.info-button\[aria-describedby\]"\)' -and $dcDecl -match 'mouseenter' -and $dcDecl -match 'Escape') 'a script opens it on hover or focus and closes it on Escape'
 $dcColors = Get-DocsCoverageStatusColors
-Assert-Equal 'Covered,In progress,In review,Awaiting decision,Waiting,Open,Declined,Not used,Not relevant' (@($dcColors.Keys) -join ',') 'every status a row can show has a colour of its own (the owner, November 9, 2026)'
+Assert-Equal 'Covered,In progress,In review,Awaiting decision,Waiting,Open,Declined,Not relevant' (@($dcColors.Keys) -join ',') 'every status a row can show has a colour of its own (the owner, November 9, 2026)'
 Assert-Equal $dcColors.Count (@($dcColors.Values | Sort-Object -Unique)).Count 'and no two statuses share one'
 Assert-True (@($dcColors.Values | Where-Object { $_ -cnotmatch '^--[a-z0-9-]+\z' }).Count -eq 0) 'each colour is a house token, never a typed code'
 $dcStyle = Get-DocsCoverageStatusStyle
@@ -1188,17 +1188,17 @@ Assert-True ($dcOver -match '\.dc-dot--covered \{' -and $dcOver -notmatch 'dc-do
 $dcCat = @(Get-DocsCoverageCatalog)
 Assert-True ($dcCat.Count -ge 200) 'the catalog holds every docs page (228 on November 9, 2026)'
 Assert-Equal $dcCat.Count (@($dcCat | ForEach-Object { $_.Path } | Sort-Object -Unique)).Count 'one entry per page'
-Assert-True (@($dcCat | Where-Object { @('Covered', 'Not used', 'Not relevant') -cnotcontains $_.Status }).Count -eq 0) 'every page carries one of the three fixed statuses'
+Assert-True (@($dcCat | Where-Object { @('Covered', 'Open', 'Not relevant') -cnotcontains $_.Status }).Count -eq 0) 'every page carries one of the three fixed statuses'
 Assert-True (@($dcCat | Where-Object { $_.Status -ceq 'Covered' -and @($_.Evidence | Where-Object { $_ }).Count -eq 0 }).Count -eq 0) 'a Covered page always names its evidence'
 Assert-True (@($dcCat | Where-Object { -not $_.Note -or -not $_.Section -or -not $_.SectionPath -or ($_.Group -and -not $_.GroupPath) }).Count -eq 0) 'and every page has a note, a section and a link for its section and group'
 Assert-True (@($dcCat | Where-Object { $_.Note -match [string][char]0x2014 }).Count -eq 0) 'no em dash in a note'
-Assert-True (@($dcCat | Where-Object { $_.Status -ceq 'Not used' -and (@('Adopt', 'Consider', 'Skip') -cnotcontains $_.Advice -or -not $_.AdviceWhy) }).Count -eq 0) 'every Not used page says whether to take it up, and why (the owner, November 9, 2026)'
-Assert-True (@($dcCat | Where-Object { $_.Status -cne 'Not used' -and $_.Advice }).Count -eq 0) 'and only a Not used page carries advice'
-Assert-True (@($dcCat | Where-Object { $_.Status -ceq 'Not used' -and @(1, 2, 3, 4) -notcontains $_.Potential }).Count -eq 0) 'every Not used page scores its potential value here from 1 to 4 (the owner, November 9, 2026)'
-Assert-True (@($dcCat | Where-Object { $_.Status -cne 'Not used' -and $null -ne $_.Potential }).Count -eq 0) 'and only a Not used page carries one'
+Assert-True (@($dcCat | Where-Object { $_.Status -ceq 'Open' -and (@('Adopt', 'Consider', 'Skip') -cnotcontains $_.Advice -or -not $_.AdviceWhy) }).Count -eq 0) 'every Open page says whether to take it up, and why (the owner, November 9, 2026)'
+Assert-True (@($dcCat | Where-Object { $_.Status -cne 'Open' -and $_.Advice }).Count -eq 0) 'and only an Open page carries advice'
+Assert-True (@($dcCat | Where-Object { $_.Status -ceq 'Open' -and @(1, 2, 3, 4) -notcontains $_.Potential }).Count -eq 0) 'every Open page scores its potential value here from 1 to 4 (the owner, November 9, 2026)'
+Assert-True (@($dcCat | Where-Object { $_.Status -cne 'Open' -and $null -ne $_.Potential }).Count -eq 0) 'and only an Open page carries one'
 $dcAdv = Format-DocsCoveragePageHtml -Query $dcParsed -Meta $dcMeta -Catalog @(@{ Path = 'sandboxing'; Title = 'Sandboxing'; Section = 'Configuration'; SectionPath = 'settings'; Group = 'Permissions and sandboxing'; GroupPath = 'permissions'
-    Status = 'Not used'; Note = 'No sandbox key in settings.json.'; Evidence = @(); Potential = 2; Advice = 'Skip'; AdviceWhy = 'Native Windows support is limited.'; Desc = 'Isolate Bash.' })
-Assert-True ($dcAdv -match 'id="status-sandboxing"><b>Not used</b>No sandbox key in settings\.json\.<p>Potential: 2 of 4</p><p>Advice: Skip\. Native Windows support is limited\.</p></div>') 'the status "?" of a Not used page gives its potential and then the advice after the note'
+    Status = 'Open'; Note = 'No sandbox key in settings.json.'; Evidence = @(); Potential = 2; Advice = 'Skip'; AdviceWhy = 'Native Windows support is limited.'; Desc = 'Isolate Bash.' })
+Assert-True ($dcAdv -match 'id="status-sandboxing"><b>Open</b>No sandbox key in settings\.json\.<p>Potential: 2 of 4</p><p>Advice: Skip\. Native Windows support is limited\.</p></div>') 'the status "?" of an Open page gives its potential and then the advice after the note'
 $dcCatRow = @(@{ Path = 'statusline'; Title = 'Customize your status line'; Section = 'Configuration'; SectionPath = 'settings'; Group = 'Interface'; GroupPath = 'terminal-config'
     Status = 'Covered'; Impact = 3; Note = 'settings.json runs show-progress.ps1.'; Evidence = @('.claude/settings.json'); Desc = 'Configure a custom status line.' },
     @{ Path = 'agent-sdk/overview'; Title = 'Agent SDK overview'; Section = 'Agent SDK'; SectionPath = 'agent-sdk/overview'; Group = ''; GroupPath = ''
@@ -1213,13 +1213,13 @@ Assert-True ($dcWithCat -match 'if \(x === "" && y !== ""\) return 1') 'an empty
 Assert-True ($dcWithCat -match 'Not relevant<button [^>]+>\?</button></td><td class="col-start">N/A</td><td></td><td class="col-end">') 'a Not relevant page reads N/A in the Impact column (the owner, November 9, 2026)'
 Assert-True ($dcWithCat -match 'if \(s === "N/A" \|\| s === "--"\) return "";' -and $dcWithCat -match 's\.replace\(/\^\(#\|Tier-\)/, ""\)') 'and the Impact column sorts by its tier number, N/A and -- last'
 Assert-True ($dcOver -match '(?s)id="detail-item-plugin-dependencies">.*?<dt>Impact</dt><dd>Tier-5</dd>' -and $dcWithCat -match '(?s)id="detail-page-agent-sdk-overview">.*?<dt>Impact</dt><dd>N/A</dd>') 'the Details popup names the impact under how this repo stands'
-Assert-Equal 'Tier-1' (Format-DocsCoverageImpact -Impact 1 -Status 'Not used') 'an impact reads as its tier'
+Assert-Equal 'Tier-1' (Format-DocsCoverageImpact -Impact 1 -Status 'Open') 'an impact reads as its tier'
 Assert-Equal 'Tier-8' (Format-DocsCoverageImpact -Impact 8 -Status 'Covered') 'up to Tier-8, the most important'
 Assert-Equal 'N/A' (Format-DocsCoverageImpact -Impact 5 -Status 'Not relevant') 'Not relevant is N/A whatever impact it carries'
 Assert-Equal '--' (Format-DocsCoverageImpact -Impact $null -Status 'Covered') 'a relevant row without an impact reads --'
 Assert-Equal '--' (Format-DocsCoverageImpact -Impact 9 -Status 'Open') 'and so does one outside 1 to 8'
 Assert-True (@($dcItems | Where-Object { @(1..8) -notcontains $_.Impact }).Count -eq 0) 'every item carries an impact from 1 to 8'
-Assert-True (@($dcCat | Where-Object { $_.Status -cne 'Not relevant' -and @(1..8) -notcontains $_.Impact }).Count -eq 0) 'every Covered and Not used page carries an impact from 1 to 8'
+Assert-True (@($dcCat | Where-Object { $_.Status -cne 'Not relevant' -and @(1..8) -notcontains $_.Impact }).Count -eq 0) 'every Covered and Open page carries an impact from 1 to 8'
 Assert-True (@($dcCat | Where-Object { $_.Status -ceq 'Not relevant' -and $null -ne $_.Impact }).Count -eq 0) 'and a Not relevant page carries none'
 # The Details column (the owner, November 9, 2026): an icon per row that opens a popup with more about the row.
 Assert-True ($dcOver -match '<th scope="col" class="col-end"><span class="sr-only">Details</span></th></tr></thead>') 'the last column is Details, with no sort and its name for a screen reader only'
@@ -1229,7 +1229,7 @@ Assert-True ((Get-DocsCoverageStatusStyle) -match 'dialog\.dc-detail-dialog \{ w
 Assert-True ($dcOver -match '<template id="detail-item-plugin-dependencies"><div class="dialog__head"><div><h1 id="row-detail-title">Plugin dependencies</h1><p class="dialog__sub">Declare which plugins a plugin needs in its manifest</p></div></div><div class="dc-detail__body"><h2>Where it sits</h2><dl class="facts dc-detail__facts"><div><dt>Section</dt><dd><a href="https://code.claude.com/docs/en/plugins/overview">Plugins</a></dd></div>') 'an item''s popup is in headings (the owner, November 9, 2026): its name the h1 with its one line, then an h2 per block'
 Assert-True ($dcOver -match '(?s)id="detail-item-plugin-dependencies">.*?<h2>How this repo stands</h2><dl [^>]+><div><dt>Status</dt>.*?<dt>Issue</dt><dd><a href="[^"]+/issues/3895">#3895</a></dd>.*?<h2>The idea</h2><h3>What</h3><p>Declare plugin dependencies.*?<h3>Why</h3>.*?<h3>Checked against the docs</h3><ul><li>The dependencies key exists') 'with its status and issue, then the idea, each part an h3, and each point the docs check found'
 Assert-True ($dcDecl -match '(?s)id="detail-item-hook-if-async">.*?<h2>How this repo stands</h2>.*?<h3>Why declined</h3><p>Measured: ') 'a declined item''s popup says why, under how this repo stands'
-Assert-True ($dcAdv -match '(?s)id="detail-page-sandboxing">.*?<h2>How this repo stands</h2>.*?<dt>Potential</dt><dd>2 of 4</dd>.*?<dt>Advice</dt><dd>Skip</dd>.*?<h3>Note</h3><p>No sandbox key.*?<h3>Why skip</h3><p>Native Windows') 'a Not used page''s popup gives its potential, the advice and why'
+Assert-True ($dcAdv -match '(?s)id="detail-page-sandboxing">.*?<h2>How this repo stands</h2>.*?<dt>Potential</dt><dd>2 of 4</dd>.*?<dt>Advice</dt><dd>Skip</dd>.*?<h3>Note</h3><p>No sandbox key.*?<h3>Why skip</h3><p>Native Windows') 'an Open page''s popup gives its potential, the advice and why'
 Assert-True ($dcWithCat -match '(?s)id="detail-page-statusline"><div class="dialog__head"><div><h1 id="row-detail-title">Customize your status line</h1><p class="dialog__sub">Configure a custom status line\.</p>.*?<h3>Evidence</h3><ul><li><code>\.claude/settings\.json</code></li>') 'a docs page''s popup: its title the h1, the docs'' description under it, and its evidence'
 Assert-True ($dcWithCat -notmatch '(?s)id="detail-page-agent-sdk-overview">(?:(?!</template>).)*<dt>Group</dt>' -and $dcWithCat -notmatch '(?s)id="detail-page-agent-sdk-overview">(?:(?!</template>).)*Evidence') 'a page with no group or evidence leaves those out of its popup'
 Assert-True ($dcOver -notmatch 'class="dialog__title" id="row-detail-title"') 'the popup''s title is a heading, not the dialog''s plain title'
