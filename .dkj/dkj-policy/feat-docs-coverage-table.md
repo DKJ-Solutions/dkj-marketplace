@@ -56,7 +56,7 @@ cards: ten items read better compared row by row. The item pages stay as they ar
       page's own `.dc-what`, so seven columns fit the width
 - [x] Section and Group link the page each opens on in the docs navigation (its first link in llms.txt, each
       answering 200); Docs links the heading on its page the item is about (`DocsAnchor`, each checked as an id
-      on the live page)
+      on the live page), named by that heading's text (`DocsHeading`) rather than the page's path
 
 ### TEST
 

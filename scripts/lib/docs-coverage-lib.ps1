@@ -25,7 +25,8 @@ function Get-DocsCoverageItems {
         the docs navigation (read from code.claude.com/docs/llms.txt on November 9, 2026: its ## heading and its ####
         group; plugins-reference is not listed itself and serves the Plugin manifest reference, so it takes that
         page's place). SectionUrl and GroupUrl are the page each opens on in that navigation (its first link), and
-        DocsAnchor the heading on the docs page the item is about, each checked as an id on the live page.
+        DocsAnchor the heading on the docs page the item is about, each checked as an id on the live page, with
+        DocsHeading the heading's text as that page shows it: the Docs column's link text.
         WhyDeclined, on an item the owner closed as not planned, is the decision that closed it, in one or two
         sentences: the overview shows it behind a "?" beside Declined.
     #>
@@ -40,7 +41,7 @@ function Get-DocsCoverageItems {
                'A disabled dependency disables the plugin that depends on it.')
            Section = 'Plugins'; SectionUrl = 'https://code.claude.com/docs/en/plugins/overview'
            Group = 'Create plugins'; GroupUrl = 'https://code.claude.com/docs/en/plugins/create'
-           Docs = 'https://code.claude.com/docs/en/plugins/dependencies'; DocsAnchor = 'declare-dependencies' }
+           Docs = 'https://code.claude.com/docs/en/plugins/dependencies'; DocsAnchor = 'declare-dependencies'; DocsHeading = 'Declare dependencies' }
         @{ Slug = 'behavioural-evals'; Issue = 3896; Label = 'Behavioural evals'
            Sub = 'Prove a skill or specialist still fires on its prompts'
            What = 'Add an evals/ suite per plugin, run with claude plugin eval in CI.'
@@ -50,7 +51,7 @@ function Get-DocsCoverageItems {
                'Every case is a model run, so CI evals draw on the same credential as the review workflow.')
            Section = 'Plugins'; SectionUrl = 'https://code.claude.com/docs/en/plugins/overview'
            Group = 'Create plugins'; GroupUrl = 'https://code.claude.com/docs/en/plugins/create'
-           Docs = 'https://code.claude.com/docs/en/plugin-evals'; DocsAnchor = 'run-evals-in-ci' }
+           Docs = 'https://code.claude.com/docs/en/plugin-evals'; DocsAnchor = 'run-evals-in-ci'; DocsHeading = 'Run evals in CI' }
         @{ Slug = 'subagent-frontmatter'; Issue = 3897; Label = 'Richer subagent frontmatter'
            Sub = 'Effort, turn limit, skills, memory and a model per role'
            What = 'Use effort, maxTurns, skills, memory and a per-role model on the specialist agent definitions.'
@@ -61,7 +62,7 @@ function Get-DocsCoverageItems {
                'memory writes an agent memory store, next to the rule that lessons go into the docs.')
            Section = 'Build with Claude Code'; SectionUrl = 'https://code.claude.com/docs/en/agents'
            Group = 'Agents and parallel work'; GroupUrl = 'https://code.claude.com/docs/en/agents'
-           Docs = 'https://code.claude.com/docs/en/sub-agents'; DocsAnchor = 'supported-frontmatter-fields' }
+           Docs = 'https://code.claude.com/docs/en/sub-agents'; DocsAnchor = 'supported-frontmatter-fields'; DocsHeading = 'Frontmatter reference' }
         @{ Slug = 'hook-if-async'; Issue = 3898; Label = 'Conditional and async hooks'
            Sub = 'Start PowerShell only when a hook has work to do'
            What = 'Use if and async on the hooks in hooks.json.'
@@ -72,7 +73,7 @@ function Get-DocsCoverageItems {
                'The PreToolUse hook is the subagent safety guard, so a best-effort filter in front of it is a trade.')
            Section = 'Reference'; SectionUrl = 'https://code.claude.com/docs/en/cli-reference'
            Group = 'Reference'; GroupUrl = 'https://code.claude.com/docs/en/cli-reference'
-           Docs = 'https://code.claude.com/docs/en/hooks'; DocsAnchor = 'hook-handler-fields'
+           Docs = 'https://code.claude.com/docs/en/hooks'; DocsAnchor = 'hook-handler-fields'; DocsHeading = 'Hook handler fields'
            WhyDeclined = 'Measured: if cannot filter the safety guard or the one thing publish-background-run acts on, and async on the Stop hooks saves no wall-clock. The owner chose a shell-side pre-filter instead (#3920), November 9, 2026.' }
         @{ Slug = 'skill-frontmatter'; Issue = 3899; Label = 'Richer skill frontmatter'
            Sub = 'Tool grants, argument hints and the shell a skill runs in'
@@ -84,7 +85,7 @@ function Get-DocsCoverageItems {
                'argument-hint is harmless and could land on its own.')
            Section = 'Build with Claude Code'; SectionUrl = 'https://code.claude.com/docs/en/agents'
            Group = 'Skills'; GroupUrl = 'https://code.claude.com/docs/en/skills'
-           Docs = 'https://code.claude.com/docs/en/skills'; DocsAnchor = 'frontmatter-reference' }
+           Docs = 'https://code.claude.com/docs/en/skills'; DocsAnchor = 'frontmatter-reference'; DocsHeading = 'Frontmatter reference' }
         @{ Slug = 'plugin-workflows'; Issue = 3900; Label = 'Workflows in a plugin'
            Sub = 'The sweep and the review chains as workflow scripts'
            What = 'Ship workflows/*.js as a plugin component for the sweep and the review chains.'
@@ -95,7 +96,7 @@ function Get-DocsCoverageItems {
                'Dynamic workflows need a paid plan, the API or a supported cloud provider.')
            Section = 'Build with Claude Code'; SectionUrl = 'https://code.claude.com/docs/en/agents'
            Group = 'Agents and parallel work'; GroupUrl = 'https://code.claude.com/docs/en/agents'
-           Docs = 'https://code.claude.com/docs/en/workflows'; DocsAnchor = 'distribute-a-workflow-in-a-plugin'
+           Docs = 'https://code.claude.com/docs/en/workflows'; DocsAnchor = 'distribute-a-workflow-in-a-plugin'; DocsHeading = 'Distribute a workflow in a plugin'
            WhyDeclined = 'Workflows are off by default on Pro, a consumer can switch them off, and each needs approval on its first run. The owner kept the sweep and the review chains as prose plus scripts, November 8, 2026.' }
         @{ Slug = 'deny-ask-rules'; Issue = 3901; Label = 'Hard deny and ask'
            Sub = 'Let the harness enforce the safety rules'
@@ -106,7 +107,7 @@ function Get-DocsCoverageItems {
                'The remedy has to be another route: an adoption step that writes them, a guard hook, or managed settings.')
            Section = 'Plugins'; SectionUrl = 'https://code.claude.com/docs/en/plugins/overview'
            Group = 'Create plugins'; GroupUrl = 'https://code.claude.com/docs/en/plugins/create'
-           Docs = 'https://code.claude.com/docs/en/plugins/components'; DocsAnchor = 'default-settings' }
+           Docs = 'https://code.claude.com/docs/en/plugins/components'; DocsAnchor = 'default-settings'; DocsHeading = 'Default settings' }
         @{ Slug = 'bounded-review'; Issue = 3902; Label = 'Bounded CI review'
            Sub = 'A turn ceiling and its own credential for the review'
            What = 'Pass --max-turns and --model to the Claude review workflow, and evaluate an API key over the OAuth token.'
@@ -116,7 +117,7 @@ function Get-DocsCoverageItems {
                'An API key is the owner''s act and bill; a turn ceiling needs the turn count of past green runs first.')
            Section = 'Getting started'; SectionUrl = 'https://code.claude.com/docs/en/overview'
            Group = 'Code review and pull requests'; GroupUrl = 'https://code.claude.com/docs/en/code-review-local'
-           Docs = 'https://code.claude.com/docs/en/github-actions'; DocsAnchor = 'pass-cli-arguments' }
+           Docs = 'https://code.claude.com/docs/en/github-actions'; DocsAnchor = 'pass-cli-arguments'; DocsHeading = 'Pass CLI arguments' }
         @{ Slug = 'user-config'; Issue = 3903; Label = 'Plugin user configuration'
            Sub = 'Install-time settings, default-off teams, a main agent'
            What = 'Use userConfig, defaultEnabled and a plugin settings.json with agent in the manifests.'
@@ -127,7 +128,7 @@ function Get-DocsCoverageItems {
                'agent runs a plugin agent as the main thread with its own tools and model.')
            Section = 'Plugins'; SectionUrl = 'https://code.claude.com/docs/en/plugins/overview'
            Group = 'Reference'; GroupUrl = 'https://code.claude.com/docs/en/plugins/manifest-reference'
-           Docs = 'https://code.claude.com/docs/en/plugins-reference'; DocsAnchor = 'user-configuration' }
+           Docs = 'https://code.claude.com/docs/en/plugins-reference'; DocsAnchor = 'user-configuration'; DocsHeading = 'User configuration' }
         @{ Slug = 'native-worktrees'; Issue = 3904; Label = 'Native worktrees'
            Sub = 'Claude Code worktrees against worktree-lane.ps1'
            What = 'Evaluate claude --worktree, .worktreeinclude, worktree.baseRef and the WorktreeCreate hook against worktree-lane.ps1.'
@@ -138,7 +139,7 @@ function Get-DocsCoverageItems {
                'A native lane cuts a worktree- branch, which this repo''s branch table refuses.')
            Section = 'Build with Claude Code'; SectionUrl = 'https://code.claude.com/docs/en/agents'
            Group = 'Agents and parallel work'; GroupUrl = 'https://code.claude.com/docs/en/agents'
-           Docs = 'https://code.claude.com/docs/en/worktrees'; DocsAnchor = 'customize-worktree-creation' }
+           Docs = 'https://code.claude.com/docs/en/worktrees'; DocsAnchor = 'customize-worktree-creation'; DocsHeading = 'Customize worktree creation' }
     )
 }
 
@@ -220,7 +221,7 @@ function Format-DocsCoveragePageHtml {
             '<td class="col-start dc-what">' + (& $e $it.Sub) + '</td><td class="col-start">' + $statusHtml + '</td>' +
             '<td class="col-start"><a href="' + (& $e $it.SectionUrl) + '">' + (& $e $it.Section) + '</a></td>' +
             '<td class="col-start"><a href="' + (& $e $it.GroupUrl) + '">' + (& $e $it.Group) + '</a></td>' +
-            '<td class="col-start"><a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e ($it.Docs -replace '^https://code\.claude\.com/docs/en/', '')) + '</a></td>' +
+            '<td class="col-start"><a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e $it.DocsHeading) + '</a></td>' +
             '<td><a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a></td></tr>')
     }
     [void]$sb.AppendLine('</tbody></table></div>')
