@@ -39,19 +39,31 @@
 
 ### PLAN
 
+The owner found the "?" popups hard to read and asked for about eight words to a line and more spacing. The
+popups are the house `.tooltip--explain`, so the change is made in the brand book and lands alone. A visible
+result: the branch waits for the owner's look.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-style.css`: `.tooltip--explain` at body size (`--text-base`), line height 1.6, padding `--spacing-3` by `--spacing-4`, a measure of 46ch plus the padding, and more room under the bold title and between paragraphs
 
 ### TEST
 
+- [x] Measured in the browser over the 468 tooltips of Admin's Docs coverage page: 46ch gives 7.99 words a full line (44ch 7.62, 48ch 8.40)
+- [x] `check-house-style` 168, `house-palette` 161, `dev-pages` 712, `consumer-dashboard` 251 passed, 0 failed; the house-style gate holds
+
 ### DEPLOY: feat/explain-tooltip-readability
 
-**Score:**
+Every explaining "?" tooltip in the brand book reads easier: body-size text at about eight words a line,
+a looser line height, and more air around the title and between paragraphs.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions app that vendors the brand book gets the more readable explaining tooltip once it takes the
+next release's copy; nothing in its markup changes.
+
+**Score:** 2
 
 #### Pull Request
-

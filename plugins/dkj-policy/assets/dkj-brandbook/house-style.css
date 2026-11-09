@@ -504,8 +504,13 @@ p { margin: 0; }
   border: 1px solid var(--bg-3); border-radius: var(--radius-2); padding: var(--spacing-2) var(--spacing-2-5); font-size: var(--text-sm);
   box-shadow: var(--shadow-pop); display: none; max-width: 280px; z-index: 10; }
 .tooltip b { display: block; margin-bottom: var(--spacing-0-5); }
-.tooltip--explain { max-width: 320px; line-height: 1.45; }
-.tooltip--explain p { margin: var(--spacing-1-5) 0 0; }
+/* An explaining tooltip is read, not glanced at (the owner, November 9, 2026): body-size text, about eight words
+   to a line (the measure in ch, plus the padding, as the box is border-box: 46ch measured 7.99 words a full line
+   over the 468 tooltips of Admin's Docs coverage page), a looser line and air between parts. */
+.tooltip--explain { font-size: var(--text-base); line-height: 1.6; padding: var(--spacing-3) var(--spacing-4);
+  max-width: calc(46ch + 2 * var(--spacing-4)); }
+.tooltip--explain b { margin-bottom: var(--spacing-2); }
+.tooltip--explain p { margin: var(--spacing-3) 0 0; }
 /* Open, anchored to a trigger: shown, and hoverable, so the pointer can move onto the text (WCAG 1.4.13).
    A tooltip that follows the pointer (a chart's) is shown by its own script and stays click-through. */
 .tooltip--open { display: block; pointer-events: auto; }
