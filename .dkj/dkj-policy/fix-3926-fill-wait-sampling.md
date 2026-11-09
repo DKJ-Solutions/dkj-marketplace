@@ -39,19 +39,43 @@
 
 ### PLAN
 
+#3926 (split off #3923): each fill-wait sample is a full `theme pull`, so at the 30 s default against a
+910-file theme a wait pulls back to back, and parallel previews broke each other's counts; a resume also
+pulled live again, which is the pull measured to fail. Of the issue's directions, the GraphQL count needs
+credentials the CLI route does not, so it is left out; the two that need nothing are built. Branch
+`fix/3923-preview-fill-wait` (another account) changes only push-preview's default and its doc line, not
+the wait loop.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-ThemeFillSleepSeconds` (theme-lifecycle-rules): the pause is never shorter than the last pull took; used by push-preview and backup-live-theme
+- [x] `Format-PreviewLiveCountRecord` / `Get-PreviewLiveCountFromRecord`: push-preview keeps live's count in `branch.<name>.previewLiveCount` (live id, count, UTC time) and a resume reuses it; a new copy drops it
+- [x] push-preview tries live's count three times before giving up
+- [x] Mirrors rebuilt (`build-shared-scripts.ps1`); push-preview's skill page describes the spacing and the reuse
 
 ### TEST
 
+- [x] `theme-lifecycle-rules.tests.ps1`: the pause (pull quicker/slower than the interval, a fractional pull not truncated), the record and every case it is refused in -- 169 pass
+
 ### DEPLOY: fix/3926-fill-wait-sampling
 
-**Score:**
+`push-preview` and `backup-live-theme` no longer pull a filling theme back to back
+([#3926](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3926)). Every count of a copy is a full
+`theme pull`, and the pause before the next one is now never shorter than that pull took, so a wait spends
+at most half its time pulling. Several previews filling at once space themselves out. `push-preview` also
+keeps live's file count for the copy in `branch.<name>.previewLiveCount` and reuses it on a resume,
+instead of pulling live again, and tries live's count three times before giving up. That pull is the one
+measured to fail while three previews filled side by side (smartwatchbanden#1066).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A store that pushes several previews from live at once no longer has one of them fail its resume on
+live's count. Each wait also pulls about half as often against a large theme. Nothing to do but take the
+version.
+
+**Score:** 3
 
 #### Pull Request
 

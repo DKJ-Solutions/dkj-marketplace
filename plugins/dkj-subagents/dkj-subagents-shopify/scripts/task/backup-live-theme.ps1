@@ -390,7 +390,9 @@ if ($DryRun) {
                 Write-Host "  $TimeoutMinutes min have passed and the copy is $($wait.Reason) -- waiting on, at most until $($hardDeadline.ToString('HH:mm'))." -ForegroundColor Yellow
                 $extended = $true
             }
+            $sampleClock = [System.Diagnostics.Stopwatch]::StartNew()
             $snap = Get-ThemeFileSnapshot -Store $store -ThemeId $backupId
+            $sampleSeconds = $sampleClock.Elapsed.TotalSeconds
             if ($snap.Count -ge 0) { $samples += $snap.Count; $copyPaths = $snap.Paths }
             $verdict = Get-ThemeFillVerdict -Samples $samples -SourceFileCount $sourceCount
             Write-Host "    $($verdict.Count) file(s) -- $($verdict.Verdict)"
@@ -399,7 +401,8 @@ if ($DryRun) {
             # samples inside such a pause read as 'short'; breaking there failed a copy that was still
             # filling. 'short' is judged once the deadline has passed, by the check below the loop.
             if ($verdict.Verdict -eq 'complete') { break }
-            Start-Sleep -Seconds $PollSeconds
+            # Never shorter than the pull just taken, so the wait spends at most half its time pulling (#3926).
+            Start-Sleep -Seconds (Get-ThemeFillSleepSeconds -PollSeconds $PollSeconds -LastSampleSeconds $sampleSeconds)
         }
 
         # A COPY SHORT AFTER THE WHOLE WAIT IS JUDGED BY ITS PATHS, NOT ONLY ITS COUNT (#2568). Only
