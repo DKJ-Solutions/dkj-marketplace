@@ -2,7 +2,30 @@
 
 ## [Unreleased]
 
-**7 / 9 minor entries** <!-- pending-tally -->
+**7 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3902-review-max-turns · 20261109-004215Z
+
+The Claude review workflow now stops a run at 100 turns, so one review cannot drain the subscription
+quota its token shares with interactive work. The bound sits just above the measured ceiling: over the
+last 40 green runs `num_turns` was 4 to 90, median 12. The token stays the OAuth subscription token, as
+the owner chose (#3902).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A: the review workflow runs in this repo's CI only, and nothing a consumer installs changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+The Claude review workflow is bounded at 100 turns
+
+[PR #3917](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3917)
+
+---
 
 ### DEPLOY: feat/3903-addon-teams-default-off · 20261109-002839Z
 

@@ -87,7 +87,15 @@ jobs:
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
           # Already minimal: one tool, and no file-editing or Bash surface.
-          claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment"'
+          #
+          # --max-turns 100 bounds what one run can spend on the subscription quota this token shares
+          # with interactive work (#3902; the quota mechanism is the paragraph further down). Sized from
+          # the measurement, not a guess: num_turns over the last 40 green runs (November 9, 2026) ran
+          # 4 to 90, median 12, and the 90 was a real review of a large PR (#3896's evals), not a runaway,
+          # with 44 the next highest. So 100 sits just above the measured ceiling, as the owner chose. A run
+          # that reaches it fails this check, which is not a required one. Re-measure before lowering it:
+          # read `"num_turns"` from the logs of recent green runs.
+          claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment" --max-turns 100'
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
 
