@@ -351,10 +351,12 @@ function Format-DocsCoveragePageHtml {
         # Impact is the one measure of a page's value (the owner, November 9, 2026: it replaced Potential). The advice
         # is not a fact here: it opens the Advice block below, with its reason.
         $stands = [ordered]@{ 'Status' = Format-DocsCoverageStatusText $pg.Status; 'Impact' = Format-DocsCoverageImpact -Impact $pg.Impact -Status $pg.Status }
-        $body = '<h2>Where it sits</h2>' + (Format-DocsCoverageFacts $where) + '<h2>How this repo stands</h2>' + (Format-DocsCoverageFacts $stands) +
-            '<h3>Note</h3><p>' + (& $e $pg.Note) + '</p>'
-        # Under one Advice heading, the advice itself and then why (the owner, November 9, 2026: not "Why consider").
-        if ($pg.AdviceWhy) { $body += '<h3>Advice</h3><p>' + (& $e $pg.Advice) + '. ' + (& $e $pg.AdviceWhy) + '</p>' }
+        $body = '<h2>Where it sits</h2>' + (Format-DocsCoverageFacts $where) + '<h2>How this repo stands</h2>' + (Format-DocsCoverageFacts $stands)
+        # A page with advice gives its note and the advice under one Advice heading: what the repo has, then the
+        # advice itself and why (the owner, November 9, 2026: not a Note and a "Why consider" apart). A page without
+        # advice keeps its Note.
+        if ($pg.AdviceWhy) { $body += '<h3>Advice</h3><p>' + (& $e $pg.Note) + '</p><p>' + (& $e $pg.Advice) + '. ' + (& $e $pg.AdviceWhy) + '</p>' }
+        else { $body += '<h3>Note</h3><p>' + (& $e $pg.Note) + '</p>' }
         if ($ev.Count) { $body += '<h3>Evidence</h3><ul>' + ((@($ev) | ForEach-Object { '<li><code>' + (& $e $_) + '</code></li>' }) -join '') + '</ul>' }
         [void]$details.AppendLine((Format-DocsCoverageDetailTemplate -Id $detailId -Title $pg.Title -Sub $pg.Desc -BodyHtml $body))
         [void]$sb.AppendLine('<tr><td><a href="' + (& $e ($docsBase + $pg.SectionPath)) + '">' + (& $e $pg.Section) + '</a></td>' +

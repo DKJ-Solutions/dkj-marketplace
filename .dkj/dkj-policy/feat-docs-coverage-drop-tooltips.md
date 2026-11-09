@@ -41,13 +41,14 @@
 
 The owner (November 9, 2026): the "?" icons in the Docs coverage table go, now that each row's info icon opens
 a popup carrying everything they explained. Then: the Potential line goes too, and Impact takes over as the one
-measure of a page's value. And the popup's "Why consider" heading becomes "Advice", with the advice and its reason under it, so the Advice row in the facts above it goes.
+measure of a page's value. And the popup's "Why consider" heading becomes "Advice", with the advice and its reason under it, so the Advice row in the facts above it goes. Last, an Open page's Note joins that Advice block.
 
 ### CREATE
 
 - [x] `docs-coverage-lib.ps1`: drop the "?" beside an item's name, beside a Declined status, beside a docs page's title and beside its status, with their tooltips and the hover script that opened them; the sort no longer strips a "?" from a cell
 - [x] `docs-coverage-catalog.ps1`: drop Potential from all 46 Open pages; `docs-coverage-lib.ps1`: drop its line from the Details popup
 - [x] `docs-coverage-lib.ps1`: the popup's "Why <advice>" heading reads "Advice", and the paragraph under it starts with the advice itself, then why; the Advice row leaves the "How this repo stands" facts
+- [x] `docs-coverage-lib.ps1`: on a page with advice, the Note and the advice are one Advice block (the note, then the advice and why); a page without advice keeps its Note
 - [x] Checked that every tooltip's text is already in the row's Details popup: the one line, the idea and the docs check; why declined; the note, evidence, potential and advice; the docs' own description
 
 ### TEST
@@ -60,7 +61,8 @@ measure of a page's value. And the popup's "Why consider" heading becomes "Advic
 Admin's Docs coverage table no longer puts a "?" beside a row's name or status. Each row's info icon opens one
 popup that already holds everything those tooltips said, so the table reads as plain cells plus that one icon. The popup's Potential line, 1 to 4, is gone with it:
 Impact, Tier-1 to Tier-8, is now the one measure of how much a docs page matters here. An Open page's popup puts its reasoning under one
-Advice heading, starting with Adopt, Consider or Skip, rather than under "Why consider", and no longer repeats it as a row in the facts above.
+Advice heading, starting with Adopt, Consider or Skip, rather than under "Why consider", and no longer repeats it as a row in the facts above. That block also carries the page's note, which was a
+separate Note block, so what the repo has and what to do about it read as one paragraph pair.
 
 **Score:** 2
 
