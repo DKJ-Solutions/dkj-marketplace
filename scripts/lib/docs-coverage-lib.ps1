@@ -1,15 +1,15 @@
 <#
 .SYNOPSIS
     The product's Docs coverage pages (#3906): the ten opportunities a comparison of the official Claude Code docs
-    against this repo (v6.11.0) found, as an overview of cards on /docs-coverage and a page of its own per item on
+    against this repo (v6.11.0) found, as an overview table on /docs-coverage and a page of its own per item on
     /docs-coverage/<slug>, so the owner follows them in one place rather than as ten loose issues.
 
 .DESCRIPTION
     WHAT IS FIXED AND WHAT IS LIVE. An item's idea (what, why) and what was verified about it against the docs are
     fixed text, here in Get-DocsCoverageItems: they are the issue's own content as a sweep checked it on November 8,
     2026, and they do not move while the issue waits. Its STATUS is live: one GraphQL call reads every item's issue
-    (Get-DocsCoverageQuery), and Get-DocsCoverageStatus turns its state and labels into the one word its card shows.
-    A failed read shows the cards without a status and says so, never a blank page.
+    (Get-DocsCoverageQuery), and Get-DocsCoverageStatus turns its state and labels into the one word its row shows.
+    A failed read shows the rows without a status and says so, never a blank page.
 
     No I/O here: the server (scripts/dashboard/serve-consumer-dashboard.ps1) asks gh and hands the answer in, so every
     rule is tested without a server, in scripts/tests/dev-pages.tests.ps1.
@@ -19,8 +19,8 @@
 
 function Get-DocsCoverageItems {
     <#
-        The ten items in the issue's own order (#3906's table). Label is the card's and the page's h1 (five words at
-        most, no code); Sub the card's one line; What and Why the idea; Verified what the docs said when it was
+        The ten items in the issue's own order (#3906's table). Label is the row's link and the page's h1 (five words
+        at most, no code); Sub the row's one line; What and Why the idea; Verified what the docs said when it was
         checked, one string per point; Docs the docs page it rests on.
     #>
     @(
@@ -164,22 +164,27 @@ function Get-DocsCoverageStatus {
 
 function Format-DocsCoveragePageHtml {
     <#
-        /docs-coverage: one card per item in the house card link (Format-AdminCardLinkHtml), three to a row, each
-        opening its own page and carrying its status as its value. -Query is ConvertFrom-DocsCoverageQuery's
-        result; -Meta @{ GeneratedAt; Seconds } of the read.
+        /docs-coverage: one row per item in the house .table, the item linking its own page, then its one line, its
+        status and its issue, so the ten compare at a glance (the owner, November 9, 2026: a table over the cards
+        the page first had). -Query is ConvertFrom-DocsCoverageQuery's result; -Meta @{ GeneratedAt; Seconds } of
+        the read.
     #>
     param([Parameter(Mandatory = $true)][hashtable]$Query, [Parameter(Mandatory = $true)][hashtable]$Meta,
         [AllowEmptyCollection()][object[]]$Items = @(Get-DocsCoverageItems))
     $e = { param($v) ConvertTo-DashboardText $v }
     $sb = New-Object System.Text.StringBuilder
     if ($Query.Error) { [void]$sb.AppendLine('<p class="msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The items are shown without their status.</p>') }
-    [void]$sb.AppendLine('<div class="ph-cards" id="items">')
+    [void]$sb.AppendLine('<div class="table-wrap"><table class="table" id="items">')
+    [void]$sb.AppendLine('<thead><tr><th scope="col">Item</th><th scope="col" class="col-start">What</th><th scope="col" class="col-start">Status</th><th scope="col">Issue</th></tr></thead><tbody>')
     foreach ($it in @($Items)) {
         $status = Get-DocsCoverageStatus $Query.ByIssue[[int]$it.Issue]
-        [void]$sb.AppendLine((Format-AdminCardLinkHtml -Href ('/docs-coverage/' + $it.Slug) -Label $it.Label -Sub $it.Sub -ValueHtml ((& $e $status) + ' &middot; #' + $it.Issue)))
+        $issueUrl = 'https://github.com/DKJ-Solutions/dkj-marketplace/issues/' + [int]$it.Issue
+        [void]$sb.AppendLine('<tr><td><a href="/docs-coverage/' + (& $e $it.Slug) + '">' + (& $e $it.Label) + '</a></td>' +
+            '<td class="col-start">' + (& $e $it.Sub) + '</td><td class="col-start">' + (& $e $status) + '</td>' +
+            '<td><a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a></td></tr>')
     }
-    [void]$sb.AppendLine('</div>')
-    return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() -Style (Get-AdminCardGridStyle) `
+    [void]$sb.AppendLine('</tbody></table></div>')
+    return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() `
         -FooterNote (Get-DocsCoverageFooter -Meta $Meta -Page 'docs-coverage')
 }
 

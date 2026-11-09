@@ -39,19 +39,33 @@
 
 ### PLAN
 
+The owner (Dave, November 9, 2026) asked for the Docs coverage overview (#3906, PR #3922) as a table instead of
+cards: ten items read better compared row by row. The item pages stay as they are.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Format-DocsCoveragePageHtml` draws a house `.table` in a `.table-wrap`: Item (links its page), What,
+      Status, Issue (links GitHub); the card grid style is gone
+- [x] The lib's docstrings say row instead of card
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the overview asserts read a table, one row per item, status and issue per row (674/0)
+- [x] The product server on 4870 restarted and serves the table
+- [ ] The owner's look at http://localhost:4870/docs-coverage
+
 ### DEPLOY: feat/docs-coverage-table
 
-**Score:**
+The Docs coverage overview on the product portal is a table now: one row per item with its one line, its
+status and a link to its issue, so the ten compare at a glance. Each item still opens its own page.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: the Docs coverage pages are this repo's own product portal, which no consumer installs.
+
+**Score:** N/A
 
 #### Pull Request
 
