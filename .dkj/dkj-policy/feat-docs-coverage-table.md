@@ -82,6 +82,8 @@ cards: ten items read better compared row by row. The item pages stay as they ar
       (`Get-DocsCoverageStatusColors`); nothing typed or derived, `check-house-style` OK (703/0)
 - [x] Done is Covered: an issue closed as completed reads Covered, the same state as a docs page the repo
       already uses; the Issue column says which arrived through an issue. Nine statuses, nine colours
+- [x] Held each completed item against its page's catalog row: `plugin-evals` read Not used while #3896 had
+      shipped `plugins/dkj-policy/evals`, so that row is Covered with the folder as evidence; the other eight agree
 
 ### TEST
 

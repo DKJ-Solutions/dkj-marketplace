@@ -251,7 +251,7 @@ function Get-DocsCoverageCatalog {
            Status = 'Covered'; Note = 'The dkj-solutions plugin declares dependencies: ["dkj-policy"] in its plugin.json.'; Evidence = @('plugins/dkj-policy/extensions/dkj-solutions/.claude-plugin/plugin.json')
            Desc = 'Declare the plugins your plugin depends on, with version ranges such as ^1.2, and see how Claude Code installs, resolves, and prunes them.' }
         @{ Path = 'plugin-evals'; Title = 'Test plugins with evals'; Section = 'Plugins'; SectionPath = 'plugins/overview'; Group = 'Create plugins'; GroupPath = 'plugins/create'
-           Status = 'Not used'; Note = 'No claude plugin eval cases and no CI gate on eval scores; the repo gates plugins with its own lint and test suites.'; Evidence = @()
+           Status = 'Covered'; Note = 'dkj-policy ships claude plugin eval suites that prove its key skills still fire (#3896); they run locally, not as a CI gate.'; Evidence = @('plugins/dkj-policy/evals')
            Desc = 'Write eval cases for your Claude Code plugin, run them with claude plugin eval, grade the results, compare against a no-plugin baseline, and gate CI on the score.' }
         @{ Path = 'plugins/publish'; Title = 'Publish and distribute a plugin'; Section = 'Plugins'; SectionPath = 'plugins/overview'; Group = 'Create plugins'; GroupPath = 'plugins/create'
            Status = 'Covered'; Note = 'The repo publishes plugins through its own public marketplace, with lockstep versions and a release cut script.'; Evidence = @('.claude-plugin/marketplace.json')
