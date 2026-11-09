@@ -2037,7 +2037,11 @@ foreach ($af in $auditFiles) {
 # the caller's -TimeoutSeconds -- 0 by hand, 15 from triage-labels-sessioncheck.ps1 at session start. Both are
 # judged only by a POSITIVE `-eq 0`: anything else leaves the slug or the payload empty, which the script reads
 # as an unreadable tracker and reports as [skip], so a capture it could not judge never reads as a missing label.
-Assert-Equal 110 $boundedTotal 'the parser still counts 110 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
+# 110 -> 112 (#3907): claim-issue.ps1's Invoke-ClaimPark $labelEdit (`gh issue edit --add-label`) and $parkNote
+# (`gh issue comment`), -Utf8 and at the shared network bound like the claim's own marker write. Both are judged
+# only after Test-NativeExitMeasured and a POSITIVE `-eq 0`: a label it could not judge is NOT parked and the claim
+# is released, and a comment it could not judge is reported with its paste-ready line, never as posted.
+Assert-Equal 112 $boundedTotal 'the parser still counts 112 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
 Assert-Equal 0 $unguarded.Count `
     ('every bounded capture judged with a NEGATIVE exit-code test either asks Test-NativeExitMeasured/Get-NativeExitLabel about THAT capture or is exempt with a reason (#2081)' +
      $(if ($unguarded.Count) { ' -- unguarded: ' + ($unguarded -join ' | ') } else { '' }))
