@@ -135,6 +135,55 @@
                                         "seconds":  0.845
                                     }
                                 ]
+                 },
+                 {
+                     "id":  "20261109-123424-c98f",
+                     "label":  "release cut",
+                     "start":  "2026-11-09T12:34:24.696Z",
+                     "end":  "2026-11-09T12:37:31.651Z",
+                     "sessions":  1,
+                     "phases":  [
+                                    {
+                                        "name":  "Cut: start",
+                                        "seconds":  0.092
+                                    },
+                                    {
+                                        "name":  "Cut: origin check and guardrails",
+                                        "seconds":  3.895
+                                    },
+                                    {
+                                        "name":  "Cut: origin check after the gates",
+                                        "seconds":  0.634
+                                    },
+                                    {
+                                        "name":  "Cut: notes, overview and version bumps",
+                                        "seconds":  2.751
+                                    },
+                                    {
+                                        "name":  "Cut: commit and tag",
+                                        "seconds":  0.272
+                                    },
+                                    {
+                                        "name":  "Cut: push",
+                                        "seconds":  4.828
+                                    },
+                                    {
+                                        "name":  "Local gates and tests",
+                                        "seconds":  114.341
+                                    },
+                                    {
+                                        "name":  "Other tool calls",
+                                        "seconds":  23.772
+                                    },
+                                    {
+                                        "name":  "Claude thinking and writing",
+                                        "seconds":  35.588
+                                    },
+                                    {
+                                        "name":  "Waiting on you",
+                                        "seconds":  0.783
+                                    }
+                                ]
                  }
              ]
 }
