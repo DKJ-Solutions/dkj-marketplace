@@ -348,10 +348,9 @@ function Format-DocsCoveragePageHtml {
         $where = [ordered]@{ 'Section' = '<a href="' + (& $e ($docsBase + $pg.SectionPath)) + '">' + (& $e $pg.Section) + '</a>' }
         if ($groupHtml) { $where['Group'] = $groupHtml }
         $where['Docs'] = '<a href="' + (& $e ($docsBase + $pg.Path)) + '">' + (& $e $pg.Path) + '</a>'
-        # An Open page says how much value it could have here, and whether this repo should take it up, and why
-        # (the owner, November 9, 2026).
+        # An Open page says whether this repo should take it up, and why; Impact is the one measure of its value
+        # (the owner, November 9, 2026: it replaced Potential).
         $stands = [ordered]@{ 'Status' = Format-DocsCoverageStatusText $pg.Status; 'Impact' = Format-DocsCoverageImpact -Impact $pg.Impact -Status $pg.Status }
-        if ($pg.Potential) { $stands['Potential'] = [string][int]$pg.Potential + ' of 4' }
         if ($pg.Advice) { $stands['Advice'] = & $e $pg.Advice }
         $body = '<h2>Where it sits</h2>' + (Format-DocsCoverageFacts $where) + '<h2>How this repo stands</h2>' + (Format-DocsCoverageFacts $stands) +
             '<h3>Note</h3><p>' + (& $e $pg.Note) + '</p>'
