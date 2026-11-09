@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**6 / 11 minor entries** <!-- pending-tally -->
+**6 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/docs-coverage-drop-tooltips · 20261109-170127Z
+
+Admin's Docs coverage table no longer puts a "?" beside a row's name or status. Each row's info icon opens one
+popup that already holds everything those tooltips said, so the table reads as plain cells plus that one icon. The popup's Potential line, 1 to 4, is gone with it:
+Impact, Tier-1 to Tier-8, is now the one measure of how much a docs page matters here. An Open page's popup puts its reasoning under one
+Advice heading, starting with Adopt, Consider or Skip, rather than under "Why consider", and no longer repeats it as a row in the facts above. That block also carries the page's note, which was a
+separate Note block, so what the repo has, the advice and why read as one running paragraph, under an Advice h2 of its own.
+The popup's "Where it sits" and "How this repo stands" are now one Overview list.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+The Docs coverage page belongs to this repo's own Admin and ships to nobody.
+
+**Score:** N/A
+
+#### Pull Request
+
+Docs coverage: drop the question-mark tooltips, the Details popup carries it all
+
+[PR #3947](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3947)
+
+---
 
 ### DEPLOY: fix/3945-close-when-pr-lands · 20261109-164811Z
 
