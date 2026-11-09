@@ -43,17 +43,28 @@ An h1 inside an open modal dialog no longer counts toward the page's one h1, so 
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The fit alarm's h1 count (`general-pages-lib.ps1`, `judge()`) leaves out an h1 whose nearest `dialog` matches `:modal`.
+- [x] Brand book rule 9 says a modal popup may open on its own h1, and the alarm counts outside an open modal.
+- [x] `dev-pages.tests.ps1` pins the filter.
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: 730 passed, 0 failed.
+
 ### DEPLOY: feat/3937-fit-alarm-modal-h1
 
-**Score:**
+A popup opened as a modal dialog may now open on its own h1: the page shell's fit alarm no longer counts an h1
+inside an open modal as the page's second, so the Docs coverage row popup stops raising "2 h1 on this page".
+The brand book's one-h1 rule says so too.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions app that renders its pages with the shared page shell can give a modal popup its own h1
+without the fit alarm firing, once it takes the next release.
+
+**Score:** 1
 
 #### Pull Request
 
