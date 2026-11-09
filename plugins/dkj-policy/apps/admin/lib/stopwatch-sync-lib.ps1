@@ -365,9 +365,14 @@ function Invoke-StopwatchGit {
 }
 
 function Receive-StopwatchShared {
-    <# Fetches every machine's ref from -Remote into refs/stopwatch-origin/*, pruning the ones origin no longer has. Returns whether the fetch answered. #>
-    param([Parameter(Mandatory = $true)][string]$RepoRoot, [string]$Remote = 'origin')
-    $spec = '+' + $script:StopwatchRefPrefix + '*:' + $script:StopwatchOriginRefPrefix + '*'
+    <#
+        Fetches every machine's ref from -Remote into refs/stopwatch-origin/*, pruning the ones origin no longer has.
+        Returns whether the fetch answered. -RefPrefix and -OriginRefPrefix name another namespace: the day plan's
+        sync (dayplan-sync-lib.ps1, #3924) runs on this same plumbing under refs/dayplan/.
+    #>
+    param([Parameter(Mandatory = $true)][string]$RepoRoot, [string]$Remote = 'origin',
+        [string]$RefPrefix = $script:StopwatchRefPrefix, [string]$OriginRefPrefix = $script:StopwatchOriginRefPrefix)
+    $spec = '+' + $RefPrefix + '*:' + $OriginRefPrefix + '*'
     return (Invoke-StopwatchGit -RepoRoot $RepoRoot -Arguments (@($script:StopwatchGitNetworkBounds) + @('fetch', '--quiet', '--prune', '--no-tags', $Remote, $spec))).Ok
 }
 
@@ -408,22 +413,28 @@ function Publish-StopwatchShared {
         one file, on top of the copy of that ref last fetched, pushed as a fast-forward. Run Receive-StopwatchShared
         first. Returns @{ Status; Message }, Status one of 'unchanged' (origin already holds this text), 'pushed'
         or 'failed'. Touches neither the index nor the working tree: the blob is hashed from a file in -TempDir, and
-        the tree is written through a throwaway index file there.
+        the tree is written through a throwaway index file there. -RefPrefix, -OriginRefPrefix, -FileName, -Subject
+        and -Identity default to the Stopwatch's; the day plan's sync passes its own (#3924).
     #>
     param(
         [Parameter(Mandatory = $true)][string]$RepoRoot,
         [Parameter(Mandatory = $true)][string]$MachineId,
         [Parameter(Mandatory = $true)][string]$Json,
         [Parameter(Mandatory = $true)][string]$TempDir,
-        [string]$Remote = 'origin'
+        [string]$Remote = 'origin',
+        [string]$RefPrefix = $script:StopwatchRefPrefix,
+        [string]$OriginRefPrefix = $script:StopwatchOriginRefPrefix,
+        [string]$FileName = $script:StopwatchSharedFile,
+        [string]$Subject = 'stopwatch: runs of machine',
+        [hashtable]$Identity = $script:StopwatchCommitIdentity
     )
     if (-not ($MachineId -cmatch '^[0-9a-f]{8}\z')) { return @{ Status = 'failed'; Message = 'no machine id' } }
-    $originRef = $script:StopwatchOriginRefPrefix + $MachineId
+    $originRef = $OriginRefPrefix + $MachineId
     $parent = ''
     $r = Invoke-StopwatchGit -RepoRoot $RepoRoot -Arguments @('rev-parse', '--verify', '--quiet', ($originRef + '^{commit}'))
     if ($r.Ok -and $r.Out.Count) { $parent = $r.Out[0].Trim() }
     if ($parent) {
-        $old = Invoke-StopwatchGit -RepoRoot $RepoRoot -Arguments @('cat-file', 'blob', ($parent + ':' + $script:StopwatchSharedFile))
+        $old = Invoke-StopwatchGit -RepoRoot $RepoRoot -Arguments @('cat-file', 'blob', ($parent + ':' + $FileName))
         if ($old.Ok -and (($old.Out -join "`n").Trim() -ceq $Json.Trim())) { return @{ Status = 'unchanged'; Message = '' } }
     }
     if (-not (Test-Path -LiteralPath $TempDir -PathType Container)) { [void](New-Item -ItemType Directory -Path $TempDir -Force) }
@@ -435,19 +446,19 @@ function Publish-StopwatchShared {
         if (-not $b.Ok -or -not $b.Out.Count) { return @{ Status = 'failed'; Message = 'hash-object did not answer' } }
         $blob = $b.Out[0].Trim()
         $envIndex = @{ GIT_INDEX_FILE = $index }
-        $u = Invoke-StopwatchGit -RepoRoot $RepoRoot -Arguments @('update-index', '--add', '--cacheinfo', ('100644,' + $blob + ',' + $script:StopwatchSharedFile)) -Env $envIndex
+        $u = Invoke-StopwatchGit -RepoRoot $RepoRoot -Arguments @('update-index', '--add', '--cacheinfo', ('100644,' + $blob + ',' + $FileName)) -Env $envIndex
         $t = Invoke-StopwatchGit -RepoRoot $RepoRoot -Arguments @('write-tree') -Env $envIndex
         if (-not $u.Ok -or -not $t.Ok -or -not $t.Out.Count) { return @{ Status = 'failed'; Message = 'the tree could not be written' } }
-        $commitArgs = @('commit-tree', $t.Out[0].Trim(), '-m', ('stopwatch: runs of machine ' + $MachineId))
+        $commitArgs = @('commit-tree', $t.Out[0].Trim(), '-m', ($Subject + ' ' + $MachineId))
         if ($parent) { $commitArgs += @('-p', $parent) }
         # A neutral identity and a UTC date, so the commit carries neither this machine's git name and address nor its time zone.
         $when = '@' + [int64]([datetime]::UtcNow - [datetime]::new(1970, 1, 1, 0, 0, 0, [DateTimeKind]::Utc)).TotalSeconds + ' +0000'
-        $who = @{ GIT_AUTHOR_NAME = $script:StopwatchCommitIdentity.Name; GIT_AUTHOR_EMAIL = $script:StopwatchCommitIdentity.Email; GIT_AUTHOR_DATE = $when
-            GIT_COMMITTER_NAME = $script:StopwatchCommitIdentity.Name; GIT_COMMITTER_EMAIL = $script:StopwatchCommitIdentity.Email; GIT_COMMITTER_DATE = $when }
+        $who = @{ GIT_AUTHOR_NAME = $Identity.Name; GIT_AUTHOR_EMAIL = $Identity.Email; GIT_AUTHOR_DATE = $when
+            GIT_COMMITTER_NAME = $Identity.Name; GIT_COMMITTER_EMAIL = $Identity.Email; GIT_COMMITTER_DATE = $when }
         $c = Invoke-StopwatchGit -RepoRoot $RepoRoot -Arguments $commitArgs -Env $who
         if (-not $c.Ok -or -not $c.Out.Count) { return @{ Status = 'failed'; Message = 'commit-tree did not answer' } }
         $commit = $c.Out[0].Trim()
-        $p = Invoke-StopwatchGit -RepoRoot $RepoRoot -Arguments (@($script:StopwatchGitNetworkBounds) + @('push', '--quiet', $Remote, ($commit + ':' + $script:StopwatchRefPrefix + $MachineId)))
+        $p = Invoke-StopwatchGit -RepoRoot $RepoRoot -Arguments (@($script:StopwatchGitNetworkBounds) + @('push', '--quiet', $Remote, ($commit + ':' + $RefPrefix + $MachineId)))
         if (-not $p.Ok) { return @{ Status = 'failed'; Message = 'the push was refused or did not answer' } }
         [void](Invoke-StopwatchGit -RepoRoot $RepoRoot -Arguments @('update-ref', $originRef, $commit))
         return @{ Status = 'pushed'; Message = $commit }
