@@ -70,12 +70,17 @@ cards: ten items read better compared row by row. The item pages stay as they ar
 - [x] No Docs column (it repeated the title on a page row): a page row's title links the docs page with its
       "?", an item's name carries the "?" with the idea, and the heading link moved to the item's own page,
       where the Docs fact now links the heading by its name
+- [x] No page per item (the owner: "without landing pages, then you need no extra link"): an item's name links
+      the docs heading, its "?" adds what the docs check found (the one thing only its page had shown), and the
+      server serves /docs-coverage alone, so an old item URL is a 404; the home card says what the page holds now
+- [x] `consumer-dashboard.tests.ps1`: its three fixtures that copy the docs-coverage lib copy the catalog it
+      loads too (250/0); logbook, stopwatch and stopwatch-sync, which load the same libs, stay green
 
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: the overview asserts read a table, one row per item, status, docs and issue per
       row, the docs section and group as links, the docs link to its heading, the "?" beside each docs heading, and the
-      one in the status only beside a Declined status with a reason (701/0);
+      one in the status only beside a Declined status with a reason (696/0);
       `check-house-style` OK
 - [x] The product server on 4870 restarted and serves the table
 - [ ] The owner's look at http://localhost:4870/docs-coverage
@@ -83,8 +88,8 @@ cards: ten items read better compared row by row. The item pages stay as they ar
 ### DEPLOY: feat/docs-coverage-table
 
 The Docs coverage overview on the product portal is a table now, listing every page of the Claude Code docs
-beside the ten items with an issue. Each row names the topic (an item links its own page, a docs page links the
-docs), its status, the section and group it sits in (each a link into the docs) and its issue. A docs page reads
+beside the ten items with an issue. Each row names the topic, linking the docs (an item its heading, a docs page the page
+itself), its status, the section and group it sits in (each a link into the docs) and its issue. A docs page reads
 Covered (this repo already uses it well), Not used or Not relevant, and a "?" beside a name or a status explains
 it on hover or focus: the idea, the docs' own description, the evidence, or why the owner declined it. Every column
 sorts with a click on its head.

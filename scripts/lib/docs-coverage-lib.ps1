@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
     The product's Docs coverage pages (#3906): the ten opportunities a comparison of the official Claude Code docs
-    against this repo (v6.11.0) found, as an overview table on /docs-coverage and a page of its own per item on
-    /docs-coverage/<slug>, so the owner follows them in one place rather than as ten loose issues.
+    against this repo (v6.11.0) found, and every docs page beside them, as one table on /docs-coverage whose every row
+    links the docs (no page of its own per item since November 9, 2026, the owner).
 
 .DESCRIPTION
     WHAT IS FIXED AND WHAT IS LIVE. An item's idea (what, why) and what was verified about it against the docs are
@@ -26,14 +26,14 @@
 
 function Get-DocsCoverageItems {
     <#
-        The ten items in the issue's own order (#3906's table). Label is the row's link and the page's h1 (five words
-        at most, no code); Sub its one line and What and Why the idea, which the "?" beside its name shows; Verified what the docs said when it was
-        checked, one string per point; Docs the docs page it rests on, and Section and Group where that page sits in
+        The ten items in the issue's own order (#3906's table). Label is the row's name (five words at most, no code),
+        linking the docs heading the item is about; Sub its one line, What and Why the idea, and Verified what the docs
+        said when it was checked, one string per point, all four shown by the "?" beside the name; Docs the docs page it rests on, and Section and Group where that page sits in
         the docs navigation (read from code.claude.com/docs/llms.txt on November 9, 2026: its ## heading and its ####
         group; plugins-reference is not listed itself and serves the Plugin manifest reference, so it takes that
         page's place). SectionUrl and GroupUrl are the page each opens on in that navigation (its first link), and
         DocsAnchor the heading on the docs page the item is about, each checked as an id on the live page, with
-        DocsHeading the heading's text as that page shows it: the link text on the item's own page.
+        DocsHeading the heading's text as that page shows it.
         WhyDeclined, on an item the owner closed as not planned, is the decision that closed it, in one or two
         sentences: the overview shows it behind a "?" beside Declined.
     #>
@@ -200,14 +200,13 @@ function Get-DocsCoverageStatus {
 
 function Format-DocsCoveragePageHtml {
     <#
-        /docs-coverage: one row per item in the house .table, the item linking its own page with a "?" explaining it
-        (its one line and the idea), then its status, the section and group its docs page sits in (each linking the
+        /docs-coverage: one row per item in the house .table, the item's name linking the docs heading it is about,
+        with a "?" explaining it (its one line, the idea and what the docs check found), then its status, the section and group its docs page sits in (each linking the
         page it opens on), and its issue (the owner, November 9, 2026: a table over the cards the page first had). A
         "?" beside a Declined status says why. Below the ten, one row per docs page of -Catalog
         (Get-DocsCoverageCatalog): its title linking the page with a "?" giving the docs' own description, its fixed
-        status with a "?" giving the note and the evidence, its section and group, and no issue. There is no Docs
-        column: on a page row it repeated the title (the owner, November 9, 2026), and an item's heading link is on
-        its own page. -Query is ConvertFrom-DocsCoverageQuery's result; -Meta @{ GeneratedAt; Seconds } of the read.
+        status with a "?" giving the note and the evidence, its section and group, and no issue. Every row links the docs and
+        nothing else: no Docs column (it repeated the title) and no page per item (the owner, November 9, 2026). -Query is ConvertFrom-DocsCoverageQuery's result; -Meta @{ GeneratedAt; Seconds } of the read.
     #>
     param([Parameter(Mandatory = $true)][hashtable]$Query, [Parameter(Mandatory = $true)][hashtable]$Meta,
         [AllowEmptyCollection()][object[]]$Items = @(Get-DocsCoverageItems),
@@ -232,8 +231,9 @@ function Format-DocsCoveragePageHtml {
         }
         $aboutId = 'about-' + $it.Slug
         $aboutButton = '<button class="info-button" type="button" aria-label="About ' + (& $e $it.Label) + '" aria-describedby="' + $aboutId + '" aria-expanded="false">?</button>'
-        [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="' + $aboutId + '"><b>' + (& $e $it.Sub) + '</b>' + (& $e $it.What) + '<p>' + (& $e $it.Why) + '</p></div>')
-        [void]$sb.AppendLine('<tr><td><a href="/docs-coverage/' + (& $e $it.Slug) + '">' + (& $e $it.Label) + '</a>' + $aboutButton + '</td>' +
+        [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="' + $aboutId + '"><b>' + (& $e $it.Sub) + '</b>' + (& $e $it.What) + '<p>' + (& $e $it.Why) + '</p>' +
+            '<p>Checked against the docs: ' + (& $e (@($it.Verified) -join ' ')) + '</p></div>')
+        [void]$sb.AppendLine('<tr><td><a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e $it.Label) + '</a>' + $aboutButton + '</td>' +
             '<td class="col-start">' + $statusHtml + '</td>' +
             '<td class="col-start"><a href="' + (& $e $it.SectionUrl) + '">' + (& $e $it.Section) + '</a></td>' +
             '<td class="col-start"><a href="' + (& $e $it.GroupUrl) + '">' + (& $e $it.Group) + '</a></td>' +
@@ -258,30 +258,6 @@ function Format-DocsCoveragePageHtml {
     [void]$sb.Append($tips.ToString()); [void]$sb.AppendLine((Get-DocsCoverageTipScript)); [void]$sb.AppendLine((Get-DocsCoverageSortScript))
     return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() `
         -FooterNote (Get-DocsCoverageFooter -Meta $Meta -Page 'docs-coverage')
-}
-
-function Format-DocsCoverageItemPageHtml {
-    <#
-        /docs-coverage/<slug>: the trail Home > Docs coverage > the item, its status, issue and docs page in one row of
-        facts, then two cards side by side: the idea, and what was verified against the docs. -Issue is the item's
-        entry in ConvertFrom-DocsCoverageQuery's ByIssue, or $null when it was not read.
-    #>
-    param([Parameter(Mandatory = $true)][hashtable]$Item, [AllowNull()]$Issue, [Parameter(Mandatory = $true)][hashtable]$Meta)
-    $e = { param($v) ConvertTo-DashboardText $v }
-    $issueUrl = 'https://github.com/DKJ-Solutions/dkj-marketplace/issues/' + [int]$Item.Issue
-    $sb = New-Object System.Text.StringBuilder
-    [void]$sb.AppendLine('<dl class="facts facts--row">')
-    [void]$sb.AppendLine('<div><dt>Status</dt><dd>' + (& $e (Get-DocsCoverageStatus $Issue)) + '</dd></div>')
-    [void]$sb.AppendLine('<div><dt>Issue</dt><dd><a href="' + $issueUrl + '">#' + [int]$Item.Issue + '</a></dd></div>')
-    [void]$sb.AppendLine('<div><dt>Docs</dt><dd><a href="' + (& $e ($Item.Docs + '#' + $Item.DocsAnchor)) + '">' + (& $e $Item.DocsHeading) + '</a></dd></div>')
-    [void]$sb.AppendLine('</dl>')
-    [void]$sb.AppendLine('<div class="grid-2">')
-    [void]$sb.AppendLine('<section class="card"><h2>The idea</h2><p>' + (& $e $Item.What) + '</p><p>' + (& $e $Item.Why) + '</p></section>')
-    $points = (@($Item.Verified) | ForEach-Object { '<li>' + (& $e $_) + '</li>' }) -join ''
-    [void]$sb.AppendLine('<section class="card"><h2>What the docs say</h2><ul>' + $points + '</ul></section>')
-    [void]$sb.AppendLine('</div>')
-    return Format-DevPageHtml -Title $Item.Label -Lead '' -Body $sb.ToString() -ParentCrumbs @(@{ Label = 'Docs coverage'; Href = '/docs-coverage' }) `
-        -FooterNote (Get-DocsCoverageFooter -Meta $Meta -Page ('docs-coverage/' + $Item.Slug))
 }
 
 function Get-DocsCoverageTipScript {

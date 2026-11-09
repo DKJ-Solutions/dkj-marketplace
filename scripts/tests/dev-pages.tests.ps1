@@ -1149,14 +1149,16 @@ Assert-True ([bool](ConvertFrom-DocsCoverageQuery -Json '').Error) 'an empty ans
 Assert-True ([bool](ConvertFrom-DocsCoverageQuery -Json 'not json').Error) 'so is one that is not JSON'
 $dcMeta = @{ GeneratedAt = '2026-11-08 12:00:00'; Seconds = 0.4 }
 $dcOver = Format-DocsCoveragePageHtml -Query $dcParsed -Meta $dcMeta -Catalog @()
-Assert-Equal 10 ([regex]::Matches($dcOver, 'href="/docs-coverage/[a-z0-9-]+"')).Count 'the overview links every item''s own page'
+Assert-Equal 10 ([regex]::Matches($dcOver, '<tr><td><a href="https://code\.claude\.com/docs/en/[a-z0-9/-]+#[a-z0-9-]+">')).Count 'every item''s name links the docs heading it is about'
+Assert-True ($dcOver -notmatch 'href="/docs-coverage/') 'and no item has a page of its own (the owner, November 9, 2026)'
 Assert-True ($dcOver -match '<h1[^>]*>Docs coverage</h1>') 'the overview''s h1 is its crumb'
 Assert-True ($dcOver -match '<table class="table" id="items">') 'the overview is a house table, not cards (the owner, November 9, 2026)'
 Assert-True ($dcOver -notmatch 'ph-cards') 'and carries no card grid'
 Assert-Equal 10 ([regex]::Matches($dcOver, '(?s)<tbody>.*?</tbody>').Value.Split([string[]]@('<tr>'), [StringSplitOptions]::None).Count - 1) 'one row per item'
-Assert-True ($dcOver -match '<tr><td><a href="/docs-coverage/plugin-dependencies">Plugin dependencies</a><button class="info-button" type="button" aria-label="About Plugin dependencies" aria-describedby="about-plugin-dependencies" aria-expanded="false">\?</button></td><td class="col-start">Awaiting decision</td><td class="col-start"><a href="https://code.claude.com/docs/en/plugins/overview">Plugins</a></td><td class="col-start"><a href="https://code.claude.com/docs/en/plugins/create">Create plugins</a></td><td><a href="https://github.com/DKJ-Solutions/dkj-marketplace/issues/3895">#3895</a></td></tr>') 'an item row: its name with a "?", its status, the docs section and group as links, and its issue'
+Assert-True ($dcOver -match '<tr><td><a href="https://code.claude.com/docs/en/plugins/dependencies#declare-dependencies">Plugin dependencies</a><button class="info-button" type="button" aria-label="About Plugin dependencies" aria-describedby="about-plugin-dependencies" aria-expanded="false">\?</button></td><td class="col-start">Awaiting decision</td><td class="col-start"><a href="https://code.claude.com/docs/en/plugins/overview">Plugins</a></td><td class="col-start"><a href="https://code.claude.com/docs/en/plugins/create">Create plugins</a></td><td><a href="https://github.com/DKJ-Solutions/dkj-marketplace/issues/3895">#3895</a></td></tr>') 'an item row: its name linking the docs heading, with a "?", its status, the docs section and group as links, and its issue'
 Assert-True ($dcOver -match '<td class="col-start">--</td><td class="col-start"><a href="[^"]+">Build with Claude Code</a></td><td class="col-start"><a href="[^"]+">Agents and parallel work</a></td><td><a href="[^"]+/issues/3897">') 'an issue the answer left out reads --'
-Assert-True ($dcOver -notmatch '>Docs <span class="arrow"' -and $dcOver -notmatch '#declare-dependencies') 'there is no Docs column: on a page row it repeated the title (the owner, November 9, 2026)'
+Assert-True ($dcOver -notmatch '>Docs <span class="arrow"') 'there is no Docs column: on a page row it repeated the title (the owner, November 9, 2026)'
+Assert-True ($dcOver -match 'id="about-plugin-dependencies"><b>Declare which plugins a plugin needs in its manifest</b>.*?<p>Checked against the docs: The dependencies key exists') 'the name "?" also gives what the docs check found, which had its own page before'
 Assert-True (@($dcItems | Where-Object { -not $_.Section -or -not $_.Group }).Count -eq 0) 'every item names the docs section and group its page sits in'
 Assert-True (@($dcItems | Where-Object { $_.SectionUrl -cnotmatch '^https://code\.claude\.com/docs/en/[a-z0-9/-]+\z' -or $_.GroupUrl -cnotmatch '^https://code\.claude\.com/docs/en/[a-z0-9/-]+\z' -or $_.DocsAnchor -cnotmatch '^[a-z0-9-]+\z' -or -not $_.DocsHeading }).Count -eq 0) 'and links each to a docs page, and its docs page to a heading'
 Assert-Equal 'Item,Status,Section,Group,Issue' (([regex]::Matches($dcOver, '<button class="sort" type="button">([A-Za-z]+) <span class="arrow"') | ForEach-Object { $_.Groups[1].Value }) -join ',') 'every column head is the house''s sortable head, in this order'
@@ -1193,16 +1195,8 @@ Assert-True ($dcWithCat -match '<td class="col-start"><a href="[^"]+">Agent SDK<
 Assert-True ($dcWithCat -match 'if \(x === "" && y !== ""\) return 1') 'an empty cell sorts last in either direction'
 $dcFail = Format-DocsCoveragePageHtml -Query (ConvertFrom-DocsCoverageQuery -Json '') -Meta $dcMeta -Catalog @()
 Assert-True ($dcFail -match 'role="alert">GitHub could not be read') 'a failed read says so above the table'
-Assert-Equal 10 ([regex]::Matches($dcFail, 'href="/docs-coverage/[a-z0-9-]+"')).Count 'and still shows every row'
-$dcPage = Format-DocsCoverageItemPageHtml -Item $dcItems[0] -Issue $dcParsed.ByIssue[3895] -Meta $dcMeta
-Assert-True ($dcPage -match '<h1[^>]*>Plugin dependencies</h1>') 'an item page''s h1 is its label'
-Assert-True ($dcPage -match 'href="/docs-coverage"[^>]*>Docs coverage<') 'its trail runs back through Docs coverage'
-Assert-True ($dcPage -match 'href="https://github.com/DKJ-Solutions/dkj-marketplace/issues/3895"') 'it links its issue'
-Assert-True ($dcPage -match '<dd>Awaiting decision</dd>') 'and shows its status'
-Assert-True ($dcPage -match '<h2>The idea</h2>' -and $dcPage -match '<h2>What the docs say</h2>') 'two cards: the idea and what the docs say'
-Assert-True ($dcPage -match 'href="/refresh\?page=docs-coverage/plugin-dependencies"') 'its read-again link comes back to the item'
-Assert-True ($dcPage -match '<dt>Docs</dt><dd><a href="https://code\.claude\.com/docs/en/plugins/dependencies#declare-dependencies">Declare dependencies</a></dd>') 'its Docs fact links the heading by its name'
-Assert-True (($dcOver + $dcPage) -notmatch [string][char]0x2014) 'no em dash anywhere (the brand book)'
+Assert-Equal 10 ([regex]::Matches($dcFail, '<tr><td><a href="https://code\.claude\.com/docs/en/')).Count 'and still shows every row'
+Assert-True (($dcOver + $dcWithCat) -notmatch [string][char]0x2014) 'no em dash anywhere (the brand book)'
 Write-Host ''
 Write-Host "dev-pages: $script:pass passed, $script:fail failed"
 if ($script:fail -gt 0) { exit 1 }
