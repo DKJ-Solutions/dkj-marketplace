@@ -77,12 +77,15 @@ cards: ten items read better compared row by row. The item pages stay as they ar
       loads too (250/0); logbook, stopwatch and stopwatch-sync, which load the same libs, stay green
 - [x] Column order Section, Group, Item, Status, Issue: from the docs' section down to the topic, then how this
       repo stands to it
+- [x] Each status its own colour: a house `.dot` before the word, through a class of the page's own
+      (`.dc-dot--<status>`) that reads a house token, ten statuses on ten tokens
+      (`Get-DocsCoverageStatusColors`); nothing typed or derived, `check-house-style` OK (703/0)
 
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: the overview asserts read a table, one row per item, status, docs and issue per
       row, the docs section and group as links, the docs link to its heading, the "?" beside each docs heading, and the
-      one in the status only beside a Declined status with a reason (696/0);
+      one in the status only beside a Declined status with a reason (703/0);
       `check-house-style` OK
 - [x] The product server on 4870 restarted and serves the table
 - [ ] The owner's look at http://localhost:4870/docs-coverage
@@ -91,7 +94,7 @@ cards: ten items read better compared row by row. The item pages stay as they ar
 
 The Docs coverage overview on the product portal is a table now, listing every page of the Claude Code docs
 beside the ten items with an issue. Each row reads from the docs' section and group (each a link into the docs) to the topic, linking the docs
-(an item its heading, a docs page the page itself), then its status and its issue. A docs page reads
+(an item its heading, a docs page the page itself), then its status, each status in a colour of its own, and its issue. A docs page reads
 Covered (this repo already uses it well), Not used or Not relevant, and a "?" beside a name or a status explains
 it on hover or focus: the idea, the docs' own description, the evidence, or why the owner declined it. Every column
 sorts with a click on its head.

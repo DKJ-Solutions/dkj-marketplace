@@ -198,6 +198,34 @@ function Get-DocsCoverageStatus {
     return 'Open'
 }
 
+function Get-DocsCoverageStatusColors {
+    <#
+        Each status its own colour (the owner, November 9, 2026), as the house .dot before the word: an ordered map of
+        status to the house token its dot reads. The house names three dot colours (--good, --warn, --bad), so the
+        rest read other house tokens through a class of this page's own; nothing is typed or derived, so every theme
+        and the dark mode follow. '--' (not read) has no dot.
+    #>
+    [ordered]@{
+        'Done' = '--positive-3'; 'Covered' = '--graph-3'; 'In progress' = '--graph-1'; 'In review' = '--primary'
+        'Awaiting decision' = '--warning-3'; 'Waiting' = '--graph-2'; 'Open' = '--fg-4'; 'Declined' = '--negative-3'
+        'Not used' = '--primary-muted'; 'Not relevant' = '--bg-4'
+    }
+}
+
+function Format-DocsCoverageStatusText {
+    # A status as its coloured dot and its word; a status with no colour of its own (--) is the word alone.
+    param([AllowEmptyString()][string]$Status)
+    $slug = ($Status.ToLowerInvariant() -replace '[^a-z]+', '-').Trim('-')
+    $dot = if ((Get-DocsCoverageStatusColors).Contains($Status)) { '<span class="dot dc-dot--' + $slug + '" aria-hidden="true"></span>' } else { '' }
+    return $dot + (ConvertTo-DashboardText $Status)
+}
+
+function Get-DocsCoverageStatusStyle {
+    # The page's own layer: one rule per status colour, each reading a house token.
+    $map = Get-DocsCoverageStatusColors
+    return (@($map.Keys | ForEach-Object { '.dc-dot--' + (($_.ToLowerInvariant() -replace '[^a-z]+', '-').Trim('-')) + ' { background: var(' + $map[$_] + '); }' }) -join "`n")
+}
+
 function Format-DocsCoveragePageHtml {
     <#
         /docs-coverage: columns Section, Group, Item, Status, Issue (the owner, November 9, 2026). One row per item
@@ -226,7 +254,7 @@ function Format-DocsCoveragePageHtml {
     foreach ($it in @($Items)) {
         $status = Get-DocsCoverageStatus $Query.ByIssue[[int]$it.Issue]
         $issueUrl = 'https://github.com/DKJ-Solutions/dkj-marketplace/issues/' + [int]$it.Issue
-        $statusHtml = & $e $status
+        $statusHtml = Format-DocsCoverageStatusText $status
         if ($status -ceq 'Declined' -and $it.WhyDeclined) {
             $tipId = 'why-' + $it.Slug
             $statusHtml += '<button class="info-button" type="button" aria-label="Why ' + (& $e $it.Label) + ' was declined" aria-describedby="' + $tipId + '" aria-expanded="false">?</button>'
@@ -254,12 +282,12 @@ function Format-DocsCoveragePageHtml {
         [void]$sb.AppendLine('<tr><td><a href="' + (& $e ($docsBase + $pg.SectionPath)) + '">' + (& $e $pg.Section) + '</a></td>' +
             '<td class="col-start">' + $groupHtml + '</td>' +
             '<td class="col-start"><a href="' + (& $e ($docsBase + $pg.Path)) + '">' + (& $e $pg.Title) + '</a><button class="info-button" type="button" aria-label="About ' + (& $e $pg.Title) + '" aria-describedby="page-' + $id + '" aria-expanded="false">?</button></td>' +
-            '<td class="col-start">' + (& $e $pg.Status) + '<button class="info-button" type="button" aria-label="Why ' + (& $e $pg.Title) + ' is ' + (& $e $pg.Status) + '" aria-describedby="status-' + $id + '" aria-expanded="false">?</button></td>' +
+            '<td class="col-start">' + (Format-DocsCoverageStatusText $pg.Status) + '<button class="info-button" type="button" aria-label="Why ' + (& $e $pg.Title) + ' is ' + (& $e $pg.Status) + '" aria-describedby="status-' + $id + '" aria-expanded="false">?</button></td>' +
             '<td></td></tr>')
     }
     [void]$sb.AppendLine('</tbody></table></div>')
     [void]$sb.Append($tips.ToString()); [void]$sb.AppendLine((Get-DocsCoverageTipScript)); [void]$sb.AppendLine((Get-DocsCoverageSortScript))
-    return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() `
+    return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() -Style (Get-DocsCoverageStatusStyle) `
         -FooterNote (Get-DocsCoverageFooter -Meta $Meta -Page 'docs-coverage')
 }
 
