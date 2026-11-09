@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**2 / 6 minor entries** <!-- pending-tally -->
+**2 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/docs-coverage-github-colours · 20261109-153435Z
+
+The Docs coverage page colours its statuses the way GitHub colours an issue. Open is green, because there is
+still something to gain there, and a catalogue page this repo does not use yet is now Open too, under the same
+word and dot as an open issue. Covered is purple, done and needing no more attention. Declined and Not relevant
+are grey, a paper step apart. The brand book gains the status token `--done-3` for that purple, in light and dark.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A: an Admin page of this repo and one new token nothing outside it reads yet.
+
+**Score:** N/A
+
+#### Pull Request
+
+Docs coverage status colours the GitHub way
+
+Plugins: dkj-policy
+
+[PR #3942](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3942)
+
+---
 
 ### DEPLOY: feat/docs-coverage-impact · 20261109-151956Z
 
