@@ -70,7 +70,7 @@ foreach ($rel in @('README.md', 'WORKFLOW-portable.md', 'SYNC-LOG-portable.md', 
                    'scripts\lib\golive-block-rules.ps1', 'scripts\task\build-golive-block.ps1',
                    'skills\prepare-release\SKILL.md', 'scripts\lib\prepare-release-rules.ps1',
                    'scripts\task\prepare-release.ps1',
-                   'skills\notify-live\SKILL.md', 'scripts\lib\live-message-rules.ps1', 'scripts\lib\live-record-lib.ps1',
+                   'skills\notify-live\SKILL.md', 'scripts\lib\live-message-rules.ps1', 'scripts\lib\live-record-lib.ps1', 'scripts\lib\pull-issue-lib.ps1',
                    'scripts\task\notify-live.ps1',
                    'scripts\lib\asana-task-lib.ps1')) {
     Assert-True (Test-Path -LiteralPath (Join-Path $PluginRoot $rel)) "ships $rel"
@@ -1223,6 +1223,16 @@ $nlDriverCand = [System.IO.File]::ReadAllText((Join-Path $PluginRoot 'scripts\ta
 Assert-True ($nlDriverCand.Contains('Get-PullIssueCandidates') -and $nlDriverCand.Contains('.pull_request == null')) 'the driver reads the candidates through the rule, and asks GitHub whether a named number is an issue'
 Assert-True ($nlDriverCand.Contains('gh api -i') -and $nlDriverCand.Contains('$status -eq 404')) '...with -i, so a 404 (a #<n> from another tracker) is "not an issue" rather than a read failure on every rerun'
 Assert-True $nlDriverCand.Contains('[named by a PR, not closed by one]') 'a row that rests on a mention alone says so, before anybody passes -Post'
+# #3941: ONE RULE FOR BOTH READERS. cut-release's audience note takes the same set notify-live takes, from the
+# one mirrored file, and counts a named issue only once it closed as completed.
+Assert-True (Test-NamedIssueSolved -State 'closed' -StateReason 'completed') 'a named issue closed as completed is solved (REST spelling)'
+Assert-True (Test-NamedIssueSolved -State 'CLOSED' -StateReason 'COMPLETED') '...in the GraphQL spelling too'
+Assert-True (-not (Test-NamedIssueSolved -State 'closed' -StateReason 'not_planned')) 'closed as not planned is not a solved task'
+Assert-True (-not (Test-NamedIssueSolved -State 'open' -StateReason $null)) 'an open named issue is not a solved task'
+$cutSrc = [System.IO.File]::ReadAllText((Join-Path $PSScriptRoot '..\release\cut-release.ps1'))
+Assert-True ($cutSrc.Contains('pull-issue-lib.ps1') -and $cutSrc.Contains('Get-PullIssueCandidates') -and -not $cutSrc.Contains('function Get-PullIssueCandidates')) 'cut-release reads the carried issues through the shared rule, not a copy of it'
+Assert-True ($cutSrc.Contains('no issue it closed or named is linked to a task') -and $cutSrc.Contains('not closed as completed yet')) 'the audience note''s hint tells an open named issue apart from no task at all'
+Assert-True (-not ([System.IO.File]::ReadAllText((Join-Path $PluginRoot 'scripts\lib\live-message-rules.ps1'))).Contains('function Get-PullIssueCandidates')) 'live-message-rules dot-sources the rule rather than defining a second copy'
 Assert-Equal 'v2.9.0' (Get-PreviousReleaseTag -Tags @('v2.9.0', 'v2.44.0', 'v2.45.0', 'v1.0.0-rc1') -Version 'v2.44.0') 'the tag below is compared as a version, not lexically'
 Assert-Equal 'v2.44.0' (Get-PreviousReleaseTag -Tags @('v2.9.0', 'v2.44.0', 'v2.45.0') -Version 'v2.45.0') 'the highest tag below wins'
 Assert-Equal '' (Get-PreviousReleaseTag -Tags @('v1.0.0') -Version 'v1.0.0') 'the first release has no range start'
