@@ -2,7 +2,37 @@
 
 ## [Unreleased]
 
-**10 / 14 minor entries** <!-- pending-tally -->
+**11 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3926-fill-wait-sampling · 20261109-103155Z
+
+`push-preview` and `backup-live-theme` no longer pull a filling theme back to back
+([#3926](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3926)). Every count of a copy is a full
+`theme pull`, and the pause before the next one is now never shorter than that pull took, so a wait spends
+at most half its time pulling. Several previews filling at once space themselves out. `push-preview` also
+keeps live's file count for the copy in `branch.<name>.previewLiveCount` and reuses it on a resume,
+instead of pulling live again, and tries live's count three times before giving up. That pull is the one
+measured to fail while three previews filled side by side (smartwatchbanden#1066).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A store that pushes several previews from live at once no longer has one of them fail its resume on
+live's count. Each wait also pulls about half as often against a large theme. Nothing to do but take the
+version.
+
+**Score:** 3
+
+#### Pull Request
+
+Theme fill wait: space samples by their cost, reuse live's count on a resume (#3926)
+
+Plugins: dkj-subagents-shopify
+
+[PR #3928](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3928)
+
+---
 
 ### DEPLOY: fix/3923-preview-fill-wait · 20261109-101649Z
 
