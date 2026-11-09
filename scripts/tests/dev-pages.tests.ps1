@@ -1193,9 +1193,11 @@ Assert-True (@($dcCat | Where-Object { -not $_.Note -or -not $_.Section -or -not
 Assert-True (@($dcCat | Where-Object { $_.Note -match [string][char]0x2014 }).Count -eq 0) 'no em dash in a note'
 Assert-True (@($dcCat | Where-Object { $_.Status -ceq 'Not used' -and (@('Adopt', 'Consider', 'Skip') -cnotcontains $_.Advice -or -not $_.AdviceWhy) }).Count -eq 0) 'every Not used page says whether to take it up, and why (the owner, November 9, 2026)'
 Assert-True (@($dcCat | Where-Object { $_.Status -cne 'Not used' -and $_.Advice }).Count -eq 0) 'and only a Not used page carries advice'
+Assert-True (@($dcCat | Where-Object { $_.Status -ceq 'Not used' -and @(1, 2, 3, 4) -notcontains $_.Potential }).Count -eq 0) 'every Not used page scores its potential value here from 1 to 4 (the owner, November 9, 2026)'
+Assert-True (@($dcCat | Where-Object { $_.Status -cne 'Not used' -and $null -ne $_.Potential }).Count -eq 0) 'and only a Not used page carries one'
 $dcAdv = Format-DocsCoveragePageHtml -Query $dcParsed -Meta $dcMeta -Catalog @(@{ Path = 'sandboxing'; Title = 'Sandboxing'; Section = 'Configuration'; SectionPath = 'settings'; Group = 'Permissions and sandboxing'; GroupPath = 'permissions'
-    Status = 'Not used'; Note = 'No sandbox key in settings.json.'; Evidence = @(); Advice = 'Skip'; AdviceWhy = 'Native Windows support is limited.'; Desc = 'Isolate Bash.' })
-Assert-True ($dcAdv -match 'id="status-sandboxing"><b>Not used</b>No sandbox key in settings\.json\.<p>Advice: Skip\. Native Windows support is limited\.</p></div>') 'the status "?" of a Not used page gives the advice after the note'
+    Status = 'Not used'; Note = 'No sandbox key in settings.json.'; Evidence = @(); Potential = 2; Advice = 'Skip'; AdviceWhy = 'Native Windows support is limited.'; Desc = 'Isolate Bash.' })
+Assert-True ($dcAdv -match 'id="status-sandboxing"><b>Not used</b>No sandbox key in settings\.json\.<p>Potential: 2 of 4</p><p>Advice: Skip\. Native Windows support is limited\.</p></div>') 'the status "?" of a Not used page gives its potential and then the advice after the note'
 $dcCatRow = @(@{ Path = 'statusline'; Title = 'Customize your status line'; Section = 'Configuration'; SectionPath = 'settings'; Group = 'Interface'; GroupPath = 'terminal-config'
     Status = 'Covered'; Note = 'settings.json runs show-progress.ps1.'; Evidence = @('.claude/settings.json'); Desc = 'Configure a custom status line.' },
     @{ Path = 'agent-sdk/overview'; Title = 'Agent SDK overview'; Section = 'Agent SDK'; SectionPath = 'agent-sdk/overview'; Group = ''; GroupPath = ''
@@ -1211,6 +1213,7 @@ Assert-True ($dcWithCat -match '(?s)<label class="field dc-filter"><span>Status<
 Assert-True ($dcWithCat -match '<select id="status-filter" aria-controls="items"><option value="all" selected>All statuses \(12\)</option><option value="covered">Covered \(2\)</option><option value="awaiting-decision">Awaiting decision \(1\)</option><option value="not-relevant">Not relevant \(1\)</option><option value="">-- \(8\)</option></select>') 'All statuses first and chosen, then each status the table shows with its row count, in the colour order and a status not read last'
 Assert-True ($dcWithCat -notmatch 'type="checkbox"' -and $dcWithCat -notmatch 'filter-chip' -and $dcWithCat -notmatch 'dc-filter__panel') 'no checklist, and none of the chips or the panel it replaces'
 Assert-True ($dcWithCat -match 'getElementById\("status-filter"\)' -and $dcWithCat -match 'r\.hidden = v !== "all" && slug\(r\) !== v;') 'a script shows a row when all is chosen or its status is the one chosen'
+Assert-True ($dcWithCat -match 'localStorage\.setItem\(k, f\.value\)' -and $dcWithCat -match 'try \{ s = localStorage\.getItem\(k\); \} catch' -and $dcWithCat -match 'o\.value === s; \}\)\) \{ f\.value = s; apply\(\); \}') 'and remembers the last choice across a reload, restoring it only while the page still offers it (the owner, November 9, 2026)'
 Assert-True ((Format-DocsCoverageStatusFilter -Statuses @()) -eq '') 'with no rows there is no filter'
 Assert-True ((Get-DocsCoverageStatusStyle) -match '\.dc-filter \{ display: block; max-width: 280px; margin-bottom: var\(--spacing-3\); \}') 'the page sets the filter''s width and its space to the table'
 $dcFail = Format-DocsCoveragePageHtml -Query (ConvertFrom-DocsCoverageQuery -Json '') -Meta $dcMeta -Catalog @()
