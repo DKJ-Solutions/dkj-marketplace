@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**11 / 16 minor entries** <!-- pending-tally -->
+**12 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3924-dayplan-sync · 20261109-111312Z
+
+The `day-plan` script syncs the day plan across machines through Stopwatch-style refs
+(`refs/dayplan/<machine id>`) in one private home repo. The Stopwatch's publish and fetch now take their
+namespace as parameters, so both features share one set of plumbing.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+The day plan now works on several machines at once: set `DKJ_DAYPLAN_REPO` to a private repo in your user
+settings, and a plan made on one machine is the plan on every other. `-Add` is held to the 6-8 h band against
+the whole day, and `-Close` sees the whole day. Sharing goes only to a repo GitHub reports as private, since
+plan titles can be personal. Without the setting nothing changes.
+
+**Score:** 3
+
+#### Pull Request
+
+day-plan: sync the day across machines through refs
+
+Plugins: dkj-policy
+
+[PR #3931](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3931)
+
+---
 
 ### DEPLOY: feat/docs-coverage-table · 20261109-110321Z
 
