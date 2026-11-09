@@ -1191,6 +1191,11 @@ Assert-True (@($dcCat | Where-Object { @('Covered', 'Not used', 'Not relevant') 
 Assert-True (@($dcCat | Where-Object { $_.Status -ceq 'Covered' -and @($_.Evidence | Where-Object { $_ }).Count -eq 0 }).Count -eq 0) 'a Covered page always names its evidence'
 Assert-True (@($dcCat | Where-Object { -not $_.Note -or -not $_.Section -or -not $_.SectionPath -or ($_.Group -and -not $_.GroupPath) }).Count -eq 0) 'and every page has a note, a section and a link for its section and group'
 Assert-True (@($dcCat | Where-Object { $_.Note -match [string][char]0x2014 }).Count -eq 0) 'no em dash in a note'
+Assert-True (@($dcCat | Where-Object { $_.Status -ceq 'Not used' -and (@('Adopt', 'Consider', 'Skip') -cnotcontains $_.Advice -or -not $_.AdviceWhy) }).Count -eq 0) 'every Not used page says whether to take it up, and why (the owner, November 9, 2026)'
+Assert-True (@($dcCat | Where-Object { $_.Status -cne 'Not used' -and $_.Advice }).Count -eq 0) 'and only a Not used page carries advice'
+$dcAdv = Format-DocsCoveragePageHtml -Query $dcParsed -Meta $dcMeta -Catalog @(@{ Path = 'sandboxing'; Title = 'Sandboxing'; Section = 'Configuration'; SectionPath = 'settings'; Group = 'Permissions and sandboxing'; GroupPath = 'permissions'
+    Status = 'Not used'; Note = 'No sandbox key in settings.json.'; Evidence = @(); Advice = 'Skip'; AdviceWhy = 'Native Windows support is limited.'; Desc = 'Isolate Bash.' })
+Assert-True ($dcAdv -match 'id="status-sandboxing"><b>Not used</b>No sandbox key in settings\.json\.<p>Advice: Skip\. Native Windows support is limited\.</p></div>') 'the status "?" of a Not used page gives the advice after the note'
 $dcCatRow = @(@{ Path = 'statusline'; Title = 'Customize your status line'; Section = 'Configuration'; SectionPath = 'settings'; Group = 'Interface'; GroupPath = 'terminal-config'
     Status = 'Covered'; Note = 'settings.json runs show-progress.ps1.'; Evidence = @('.claude/settings.json'); Desc = 'Configure a custom status line.' },
     @{ Path = 'agent-sdk/overview'; Title = 'Agent SDK overview'; Section = 'Agent SDK'; SectionPath = 'agent-sdk/overview'; Group = ''; GroupPath = ''

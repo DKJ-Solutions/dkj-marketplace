@@ -287,6 +287,8 @@ function Format-DocsCoveragePageHtml {
         $noteHtml = & $e $pg.Note
         $ev = @($pg.Evidence | Where-Object { $_ })
         if ($ev.Count) { $noteHtml += '<p>Evidence: ' + ((@($ev) | ForEach-Object { & $e $_ }) -join ', ') + '</p>' }
+        # A Not used page says whether this repo should take it up, and why (the owner, November 9, 2026).
+        if ($pg.Advice) { $noteHtml += '<p>Advice: ' + (& $e $pg.Advice) + '. ' + (& $e $pg.AdviceWhy) + '</p>' }
         [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="status-' + $id + '"><b>' + (& $e $pg.Status) + '</b>' + $noteHtml + '</div>')
         [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="page-' + $id + '"><b>' + (& $e $pg.Title) + '</b>' + (& $e $pg.Desc) + '</div>')
         $groupHtml = if ($pg.Group) { '<a href="' + (& $e ($docsBase + $pg.GroupPath)) + '">' + (& $e $pg.Group) + '</a>' } else { '' }
