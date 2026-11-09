@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**2 / 7 minor entries** <!-- pending-tally -->
+**3 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3935-bwj-development-under-dkj · 20261109-154705Z
+
+bwj-development's sync log now lives at `.dkj/bwj-development/SYNC-LOG.md`, beside `.dkj/dkj-policy/`,
+instead of in the consumer's root: the pages, the `Get-ShopifySyncLogPath` example answer and the
+adopt step all name the new place, and the adopt step moves an older root `bwj-development/` there
+(#3935). No script reads a fixed path, so a repo whose seam still answers the old path keeps working
+until it moves.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A maintainer of a BWJ store repo that still keeps a root `bwj-development/` sees the adopt step
+propose the move; nothing breaks if they leave it.
+
+**Score:** 2
+
+#### Pull Request
+
+bwj-development's sync-log folder moves under .dkj/bwj-development/
+
+Plugins: bwj-development, dkj-subagents-shopify
+
+[PR #3943](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3943)
+
+---
 
 ### DEPLOY: feat/docs-coverage-github-colours · 20261109-153435Z
 
