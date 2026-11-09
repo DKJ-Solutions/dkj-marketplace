@@ -466,6 +466,17 @@ same day brought back **the closed message** (#2818), and the next day **the reo
   posts a one-line record on the issue. The close guard accepts it as this round's block, and the closed
   message posts nothing beside the hand-written one. The issue body is never edited to get past the
   workflow.
+- **An issue closes as completed when its PR lands, always** (Dave, November 9, 2026,
+  [#3945](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3945)): *"De afspraak is altijd geweest
+  dat een issue ALTIJD sluit zodra de PR geland is."* **"Open until live" is not a state.** Going live is
+  told afterwards, by `notify-live` to every block that named a planned release, so nothing waits on the
+  live push. `-LiveSince` is for work that was already live at the close, never a reason to hold the
+  close. An Asana-linked issue ships with `-NoResolves`, so GitHub does not close it at the merge: the
+  block goes on and the issue is closed by hand right after the merge, in the same chain. Measured on
+  smartwatchbanden#1126, November 9, 2026: PR #1144 merged and folded, and the session wrote that the
+  issue "stays open" until the live push. **`closed-message-sessioncheck` now reports such an issue at
+  every session start** for 14 days after the merge, unless an open PR's branch is named after it, because
+  then a further step still changes code (the next rule).
 - **An issue stays open only while it will still change code in the repo** (Maikel, October 16, 2026,
   [#3059](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3059)): *"De enige github issues die
   open blijven staan, zijn issues die echt daadwerkelijk nog iets gaan aanpassen aan de code."* An issue
@@ -804,7 +815,7 @@ September 17, 2026: of 14 open issues, **13** carried an Asana link and **6** ca
 `open-pr.ps1 -Resolves` writes `Closes #<n>` into the pull request body, so GitHub closes the issue at
 the **merge** -- before anybody has written a block, and with nobody's confirmation. So an Asana-linked
 issue ships with **`-NoResolves`** and cites the issue as context, and the task's assignee closes it by
-hand once the block is on it. A third flag that declares the citation deliberately without a closing keyword is named
+hand once the block is on it -- **as soon as the PR lands, never later** (#3945, above). A third flag that declares the citation deliberately without a closing keyword is named
 in #2049 as a larger change and is not assumed here.
 
 **And since inbound
