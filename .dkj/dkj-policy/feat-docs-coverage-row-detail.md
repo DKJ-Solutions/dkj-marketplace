@@ -47,6 +47,9 @@ more about that row. A visible result, so the branch stops for the owner's look 
 - [x] `docs-coverage-lib.ps1`: a last, unsorted Details column; each row's icon opens one house `.dialog`, filled
       from a `<template>` per row (facts list, idea/why/docs points or note/advice/evidence)
 - [x] The page's own layer styles the icon and the popup with house tokens only
+- [x] The popup in headings (the owner, November 9, 2026): the row's name the h1, Where it sits / How this repo
+      stands / The idea as h2, their parts (What, Why, Note, Evidence, ...) as h3; the dialog empties when shut.
+      The fit alarm counts the open popup's h1 as a second one: filed as #3937
 
 ### TEST
 
@@ -58,8 +61,9 @@ more about that row. A visible result, so the branch stops for the owner's look 
 ### DEPLOY: feat/docs-coverage-row-detail
 
 /docs-coverage has a Details column: an info icon on every row opens a popup that gathers everything known about
-that row in one place (its section, group, status, issue and docs link, then the idea, why and the docs check for
-an item, or the note, potential, advice and evidence for a docs page), so it reads without hovering the "?" marks.
+that row in one place, in headings: the row's name as the h1, then where it sits in the docs, how this repo stands
+to it (status, issue, potential, advice, note, evidence) and, for an item, the idea and the docs check, so it
+reads without hovering the "?" marks.
 
 **Score:** 2
 
