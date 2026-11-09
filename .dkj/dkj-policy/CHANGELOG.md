@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**9 / 13 minor entries** <!-- pending-tally -->
+**10 / 14 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3923-preview-fill-wait · 20261109-101649Z
+
+`push-preview` now waits 40 minutes for a fresh copy of live to fill before giving up, instead of 20.
+Past that it still runs on while the copy grows, up to three times that value, so up to two hours.
+A 910-file live theme's copy was measured still filling at ~55 minutes, with the context templates
+arriving last, so the old default's 60-minute cap refused a copy that was not stuck
+([#3923](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3923)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Shopify consumer with a large live theme no longer has to re-run `push-preview` once or twice per new
+preview: the first run waits long enough for the copy to fill.
+
+**Score:** 3
+
+#### Pull Request
+
+push-preview: raise the fill wait's default for a large store's copy of live
+
+Plugins: dkj-subagents-shopify
+
+[PR #3927](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3927)
+
+---
 
 ### DEPLOY: feat/3906-docs-coverage-page · 20261109-090356Z
 

@@ -69,8 +69,12 @@
     How often to count a freshly duplicated preview while it fills (default 30).
 
 .PARAMETER TimeoutMinutes
-    How long to wait for that copy to fill before giving up WITHOUT pushing (default 20). A re-run resumes
-    the wait on the same theme.
+    How long to wait for that copy to fill before giving up WITHOUT pushing (default 40). Past it the wait
+    runs on while the copy still grows, up to three times the value (#3732). A re-run resumes the wait on
+    the same theme. The default was 20 until #3923: measured November 4, 2026 on a 910-file live theme,
+    one copy held 668 files at 20 min and 843 at ~55 min, still rising (the context templates arrive
+    last, alphabetically), so even the 60-minute hard cap of a 20-minute default refused a copy that was
+    not stuck.
 
 .PARAMETER RootOverride
     Fixture root, so a suite can drive this against a scratch tree instead of a real store.
@@ -100,7 +104,7 @@ param(
     [string]$Store = '',
     [string]$Path = '/',
     [int]$PollSeconds = 30,
-    [int]$TimeoutMinutes = 20,
+    [int]$TimeoutMinutes = 40,
     [string]$RootOverride = ''
 )
 $ErrorActionPreference = 'Stop'
