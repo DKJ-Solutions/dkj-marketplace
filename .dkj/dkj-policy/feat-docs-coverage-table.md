@@ -96,12 +96,15 @@ cards: ten items read better compared row by row. The item pages stay as they ar
       product layer's `.check` boxes, one per status the table shows with its dot and row count; unchecking hides
       those rows, the summary counts what shows, a click outside or Escape closes it; the panel floats on the
       tooltip's surface, every value a token; `check-house-style` OK (715/0)
+- [x] No checklist (the owner): the filter is the product layer's `.field` with a `select`, one choice at a
+      time, "All statuses" first and chosen, then each status the table shows with its row count; the
+      dropdown, its checkboxes and its panel are gone; `check-house-style` OK (712/0)
 
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: the overview asserts read a table, one row per item, status, docs and issue per
       row, the docs section and group as links, the docs link to its heading, the "?" beside each docs heading, and the
-      one in the status only beside a Declined status with a reason (715/0);
+      one in the status only beside a Declined status with a reason (712/0);
       `check-house-style` OK
 - [x] The product server on 4870 restarted and serves the table
 - [ ] The owner's look at http://localhost:4870/docs-coverage
@@ -113,7 +116,7 @@ beside the ten items with an issue. Each row reads from the docs' section and gr
 (an item its heading, a docs page the page itself), then its status, each status in a colour of its own, and its issue. A docs page reads
 Covered (this repo already uses it well), Not used or Not relevant, and a "?" beside a name or a status explains
 it on hover or focus: the idea, the docs' own description, the evidence, or why the owner declined it. Every column
-sorts with a click on its head. A Not used page also says whether this repo should take it up, and why. A status dropdown over the table chooses which statuses show.
+sorts with a click on its head. A Not used page also says whether this repo should take it up, and why. A status filter over the table shows one status at a time, or all of them.
 
 **Score:** 2
 
