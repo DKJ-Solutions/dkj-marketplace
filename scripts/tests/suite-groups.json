@@ -237,6 +237,7 @@
                        "suites":  [
                                       "consumer-dashboard.tests.ps1",
                                       "dayplan.tests.ps1",
+                                      "dayplan-sync.tests.ps1",
                                       "dev-pages.tests.ps1",
                                       "dev-preview-sessionstart.tests.ps1",
                                       "goals.tests.ps1",

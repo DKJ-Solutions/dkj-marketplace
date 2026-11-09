@@ -22,7 +22,15 @@
                                    the first one's done items.
       -Week                        the week so far, from the day files and GitHub.
       -Status                      the Today page's model as JSON (#3860): the day file, its live match against
-                                   GitHub, and the week's rows. Writes nothing; a GitHub failure is a field, not an exit.
+                                   GitHub, and the week's rows. Writes no day file; a GitHub failure is a field, not an exit.
+                                   Where the day is shared it may stamp and start a background -Sync, and
+                                   write this machine's id the first time.
+      -Sync                        share the day across machines (#3924): fetch every machine's copy and publish this
+                                   machine's day files, through refs/dayplan/<machine id> in the private repo
+                                   DKJ_DAYPLAN_REPO names (dayplan-sync-lib.ps1). -Context, -Apply, -Add, -Close and
+                                   -Week sync themselves; -Status reads the last fetch and starts this in the
+                                   background when the last one is over five minutes old. Always exits 0.
+      -SyncRemote <path>           the tests' own bare remote in place of DKJ_DAYPLAN_REPO's GitHub repo.
       -Override <reason>           go past the band anyway; the reason is kept in the day file and printed again at
                                    the close-out.
       -Author <login,...>          whose work counts. Default: DKJ_DAYPLAN_AUTHORS (comma-separated), else the login
@@ -47,12 +55,15 @@ param(
     [switch]$Week,
     [switch]$Replace,
     [switch]$Status,
+    [switch]$Sync,
+    [string]$SyncRemote = '',
     [string]$Override = '',
     [string[]]$Author = @(),
     [string]$Date = ''
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\dayplan-lib.ps1')
+. (Join-Path $PSScriptRoot '..\lib\dayplan-sync-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\goals-lib.ps1')
 . (Join-Path $PSScriptRoot '..\..\..\scripts\lib\ref-print-lib.ps1')
 . (Join-Path $PSScriptRoot '..\..\..\scripts\lib\native-capture-lib.ps1')
@@ -72,8 +83,41 @@ $day = if ($Date) {
     $parsed
 } else { (Get-Date).Date }
 
-$modes = @($Context, [bool]$PlanFile, $Add, $Close, $Week, $Status) | Where-Object { $_ }
-if (@($modes).Count -ne 1) { Stop-DayPlan 'name exactly one of -Context, -PlanFile, -Add, -Close, -Week or -Status.' }
+$modes = @($Context, [bool]$PlanFile, $Add, $Close, $Week, $Status, $Sync) | Where-Object { $_ }
+if (@($modes).Count -ne 1) { Stop-DayPlan 'name exactly one of -Context, -PlanFile, -Add, -Close, -Week, -Status or -Sync.' }
+if ($SyncRemote -and ($SyncRemote.StartsWith('-') -or -not (Test-Path -LiteralPath $SyncRemote -PathType Container))) { Stop-DayPlan '-SyncRemote names no directory; it is a bare remote of the tests'' own, never a URL.' }
+
+# ---- the shared copy (#3924) -----------------------------------------------------------------------------------
+$script:ShareRepo = if ($SyncRemote) { '' } else { Get-DayPlanShareRepo }
+$script:ShareOn = [bool]($SyncRemote -or $script:ShareRepo)
+$script:ShareNote = if ($script:ShareOn) { 'not synced in this run' } else { 'not shared: DKJ_DAYPLAN_REPO is not set' }
+$script:SharedCopies = $null
+function Write-DayPlanSyncStamp {
+    <# The moment a sync was started, which Test-StopwatchSyncDue reads to hold the next one back. #>
+    $dir = Get-DayPlanDir
+    if (-not (Test-Path -LiteralPath $dir -PathType Container)) { [void](New-Item -ItemType Directory -Path $dir -Force) }
+    [System.IO.File]::WriteAllText((Join-Path $dir 'sync.stamp'), (Format-DayPlanInstant ([datetime]::UtcNow)))
+}
+function Sync-DayPlanShared {
+    <# Fetches and/or publishes through the home repo, and keeps the outcome as the run's note and in sync.log beside the day files. #>
+    param([switch]$Fetch, [switch]$Publish)
+    if (-not $script:ShareOn) { return }
+    $dir = Get-DayPlanDir
+    # Never fatal: the day file is already written when this runs after -Add or -Close (Victor, #3924).
+    try { Write-DayPlanSyncStamp } catch { }
+    $r = Invoke-DayPlanSync -Repo $script:ShareRepo -Url $SyncRemote -GitDir (Get-DayPlanSyncGitDir) -MachineId (Get-DayPlanMachineId) `
+        -LocalDays $(if ($Publish) { Get-DayPlanLocalDays } else { @{} }) -Fetch:$Fetch -Publish:$Publish
+    $script:ShareNote = $r.Note
+    $script:SharedCopies = $null
+    try { [System.IO.File]::WriteAllText((Join-Path $dir 'sync.log'), ((Format-DayPlanInstant ([datetime]::UtcNow)) + ' ' + $r.Note)) } catch { }
+}
+function Get-SharedCopiesFor {
+    <# The other machines' copies of one day, from the last fetch (no network). #>
+    param([datetime]$On)
+    if (-not $script:ShareOn) { return @() }
+    if ($null -eq $script:SharedCopies) { $script:SharedCopies = (Read-DayPlanSharedCopies -GitDir (Get-DayPlanSyncGitDir) -MachineId (Get-DayPlanMachineId)).Days }
+    return @($script:SharedCopies[$On.ToString('yyyy-MM-dd')] | Where-Object { $_ })
+}
 
 function Write-SafeLines {
     <# Multi-line text to the console, each line stripped on its own: the strip removes control characters, newlines among them. #>
@@ -81,11 +125,16 @@ function Write-SafeLines {
     foreach ($l in ($Text -split "`r?`n")) { Write-Host (ConvertTo-ConsoleStrippedText $l) }
 }
 function Read-DayFile {
-    param([datetime]$On)
+    <# The day as every machine has it (#3924): this machine's day file merged with the other machines' copies from the last fetch. -Lenient skips a local file that does not parse. #>
+    param([datetime]$On, [switch]$Lenient)
     $p = Get-DayPlanPath -Date $On
-    if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { return $null }
-    # A file that does not parse is refused rather than read as no plan: -Apply would otherwise overwrite it.
-    try { return ([System.IO.File]::ReadAllText($p, $utf8) | ConvertFrom-Json) } catch { Stop-DayPlan "the day file $(Get-DisplayPath $p) does not parse; repair or remove it first." }
+    $local = $null
+    if (Test-Path -LiteralPath $p -PathType Leaf) {
+        # A file that does not parse is refused rather than read as no plan: -Apply would otherwise overwrite it.
+        try { $local = [System.IO.File]::ReadAllText($p, $utf8) | ConvertFrom-Json }
+        catch { if (-not $Lenient) { Stop-DayPlan "the day file $(Get-DisplayPath $p) does not parse; repair or remove it first." } }
+    }
+    return (Merge-DayPlanCopies -Copies (@($local) + @(Get-SharedCopiesFor -On $On)))
 }
 function Save-DayFile {
     param($Day, [datetime]$On)
@@ -167,9 +216,21 @@ if (-not (Get-Command gh -CommandType Application -ErrorAction SilentlyContinue)
     Stop-DayPlan 'gh was not found on the PATH.'
 }
 
+# ---- the shared copy, on its own -------------------------------------------------------------------------------
+if ($Sync) {
+    Sync-DayPlanShared -Fetch -Publish
+    Write-Host "Day plan: $(ConvertTo-ConsoleStrippedText $script:ShareNote)"
+    exit 0
+}
+
+# Every mode but -Status reads what the other machines have before it reads or writes the day; -Status stays off the
+# network, because a page load waits on it, and so does a plan only checked, not applied.
+if (-not $Status -and -not ($PlanFile -and -not $Apply)) { Sync-DayPlanShared -Fetch -Publish:([bool]$Context) }
+
 # ---- the morning's input -------------------------------------------------------------------------------------
 if ($Context) {
     $authors = Get-DayPlanAuthors
+    Write-Host "Shared: $(ConvertTo-ConsoleStrippedText $script:ShareNote)"
     Write-Host "Day plan for $($day.ToString('dddd yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture)) -- counting the work of: $((@($authors) | ForEach-Object { Get-DisplayRef $_ }) -join ', ')"
     Write-Host ''
 
@@ -250,9 +311,13 @@ if ($PlanFile) {
     $existing = Read-DayFile -On $day
     if ($existing -and $existing.close) { Stop-DayPlan "$($day.ToString('yyyy-MM-dd')) is already closed; plan another -Date." }
     if ($existing -and -not $Replace) { Stop-DayPlan "$($day.ToString('yyyy-MM-dd')) is already planned. Add to it with -Add, or give -Replace to start the day over (its additions and overrides are dropped)." }
+    # The moment it was planned: the merge's base is the newest plan, so a -Replace on any machine wins (#3924).
+    $dayObj | Add-Member -NotePropertyName planned -NotePropertyValue (Format-DayPlanInstant ([datetime]::UtcNow)) -Force
     $p = Save-DayFile -Day $dayObj -On $day
+    Sync-DayPlanShared -Publish
     $why = if ($b.Verdict -ne 'ok') { "Written on an override: $(ConvertTo-ConsoleStrippedText $Override.Trim())" } else { $b.Message }
     Write-Host "[OK] the plan for $($day.ToString('yyyy-MM-dd')) is written ($(Get-DisplayPath $p)). $why"
+    Write-Host "Shared: $(ConvertTo-ConsoleStrippedText $script:ShareNote)"
     exit 0
 }
 
@@ -268,6 +333,8 @@ if ($Add) {
     }
     $it = ConvertTo-DayPlanItem -Raw ([pscustomobject]@{ title = $Title; hours = $Hours; mode = $Mode; ref = $Ref; added = $true }) -Repo $repo -Index (@($existing.items).Count + 1)
     if ($it -is [string]) { Stop-DayPlan $it }
+    # When it was added: another machine's merge takes an added item only when it is newer than the plan (#3924).
+    $it | Add-Member -NotePropertyName addedAt -NotePropertyValue (Format-DayPlanInstant ([datetime]::UtcNow))
     $items = @($existing.items) + $it
     $b = Test-DayPlanBudget -Items $items
     if ($b.Verdict -eq 'over' -and -not $Override.Trim()) {
@@ -280,10 +347,12 @@ if ($Add) {
     $existing.items = $items
     $existing.overrides = $overrides
     $p = Save-DayFile -Day $existing -On $day
+    Sync-DayPlanShared -Publish
     Write-SafeLines (Format-DayPlanText -Day $existing)
     Write-Host ''
     $why = if ($b.Verdict -eq 'over') { "Added on an override: $(ConvertTo-ConsoleStrippedText $Override.Trim())" } else { $b.Message }
     Write-Host "[OK] added. $why"
+    Write-Host "Shared: $(ConvertTo-ConsoleStrippedText $script:ShareNote)"
     exit 0
 }
 
@@ -308,7 +377,9 @@ if ($Close) {
     }
     $existing | Add-Member -NotePropertyName close -NotePropertyValue $closeRec -Force
     [void](Save-DayFile -Day $existing -On $day)
+    Sync-DayPlanShared -Publish
     Write-SafeLines (Format-DayCloseText -Day $existing)
+    Write-Host "Shared: $(ConvertTo-ConsoleStrippedText $script:ShareNote)"
     exit 0
 }
 
@@ -356,14 +427,28 @@ if ($Status) {
     $monday = $day.AddDays(-$offset)
     for ($d = 0; $d -lt 7; $d++) {
         $on = $monday.AddDays($d)
-        $p = Get-DayPlanPath -Date $on
-        if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { continue }
         # The week reads past a broken day file instead of refusing the page: only today's has to parse.
-        try { $days[$on.ToString('yyyy-MM-dd')] = [System.IO.File]::ReadAllText($p, $utf8) | ConvertFrom-Json } catch { }
+        $f = Read-DayFile -On $on -Lenient
+        if ($f) { $days[$on.ToString('yyyy-MM-dd')] = $f }
     }
     $wk = Get-DayPlanWeek -Date $day -Days $days
     $rows = @($wk.Rows | ForEach-Object { [pscustomobject]@{ date = $_.Date.ToString('yyyy-MM-dd'); goal = $_.Goal; planned = $_.Planned; done = $_.Done; extra = $_.Extra; verdict = $_.Verdict; closed = $_.Closed } })
-    $model = [pscustomobject]@{ date = $day.ToString('yyyy-MM-dd'); day = $existing; live = $live; error = $readError; week = $rows }
+    # The shared copy (#3924): this run stays off the network, so it names what the last sync said and starts the
+    # next one in the background once the last is older than the interval. Nothing waits on it.
+    $shared = $script:ShareNote
+    if ($script:ShareOn) {
+        $dir = Get-DayPlanDir
+        $logPath = Join-Path $dir 'sync.log'
+        $shared = if (Test-Path -LiteralPath $logPath -PathType Leaf) { (([System.IO.File]::ReadAllText($logPath)).Trim() -replace '\A\S+\s+', '') } else { 'not synced yet' }
+        if (Test-StopwatchSyncDue -StampPath (Join-Path $dir 'sync.stamp') -Minutes $script:DayPlanSyncIntervalMinutes) {
+            $syncArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + $PSCommandPath + '"'), '-Sync')
+            if ($SyncRemote) { $syncArgs += @('-SyncRemote', ('"' + $SyncRemote + '"')) }
+            # Stamped HERE, before the child starts, so the page loads in the second it takes to start do not each
+            # start another one (Victor and Sebastian, #3924).
+            try { Write-DayPlanSyncStamp; Start-Process -FilePath 'powershell.exe' -WindowStyle Hidden -ArgumentList $syncArgs | Out-Null } catch { }
+        }
+    }
+    $model = [pscustomobject]@{ date = $day.ToString('yyyy-MM-dd'); day = $existing; live = $live; error = $readError; week = $rows; shared = $shared }
     # ConvertTo-Json writes non-ASCII raw, and a redirected Windows PowerShell writes its stdout in the console code page,
     # which Admin then reads as UTF-8 (Victor, #3860). So every character above ASCII is written as a JSON escape: the
     # line is pure ASCII, which every code page agrees on, and ConvertFrom-Json gives the characters back.
