@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**7 / 10 minor entries** <!-- pending-tally -->
+**8 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3907-park-through-claim · 20261109-010011Z
+
+`claim-issue.ps1 <n> -Tag -Park <awaiting-label> -Reason "<what>"` parks an issue under a claim
+([#3907](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3907)). Only the winner of the claim's read-back
+sets the label and posts `Parked by a sweep: waiting on <what>.`, and the claim is released on every path. A plain
+`-Tag` claim on an issue that another sweep parked after step 1 now refuses instead of warning and printing
+`[OK] claimed`. The assignee route keeps its warning (#2518). `issues-sweep` step 1 parks this way now, and says
+that evaluating and closing an issue starts with a claim.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A repo that runs several sweeps at once no longer gets one issue parked two or three times with comments that
+disagree. `issues-sweep` users park with one command where they used two, and a late claim on a parked issue
+stops rather than taking it.
+
+**Score:** 3
+
+#### Pull Request
+
+issues-sweep parks through claim-issue -Park, so concurrent sweeps cannot park one issue twice
+
+Plugins: dkj-policy
+
+[PR #3915](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3915)
+
+---
 
 ### DEPLOY: feat/3902-review-max-turns · 20261109-004215Z
 
