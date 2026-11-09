@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Closes #3932. The issue asks for a diagnostic, not a repair: make `Get-Raw` say why it returned what it
+did, put that in the failing assert's message, and decide on the cause from the next recurrence. No
+timeout is raised here.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-Raw` records `$script:RawWhy`: the status line, elapsed ms and length on an answer; the
+      exception type, its inner type and elapsed ms on a throw.
+- [x] `Assert-True` takes an optional `-Why`, printed under a `[FAIL]` only.
+- [x] The three group-3 asserts that read `/consumers`, `/consumers/other` and the home page with the
+      admin up pass their fetch's `RawWhy`.
 
 ### TEST
 
+- [x] `consumer-dashboard: 251 passed, 0 failed` locally, with a new assert on `RawWhy`'s shape.
+- [x] The throw path checked in a scratch copy with a 1 s timeout against a listener that never answers:
+      `threw IOException (SocketException) after 1036 ms`.
+
 ### DEPLOY: fix/3932-get-raw-says-why
 
-**Score:**
+When a group-3 page assert in the consumer-dashboard suite fails, it now also prints what the request
+got: the status line and how long it took, or the exception and how long until it was thrown. The next
+CI recurrence can then say whether the page was slow or wrong.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: a test suite of this repo, which no consumer runs.
+
+**Score:** N/A
 
 #### Pull Request
+
+consumer-dashboard tests: a failing page assert says whether the page was slow or wrong
 

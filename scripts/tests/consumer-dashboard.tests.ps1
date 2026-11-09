@@ -31,9 +31,12 @@ $script:fail = 0
 $group2Ran = $false   # group 3 reuses group 2's request helper
 
 function Assert-True {
-    param([bool]$Condition, [string]$Name)
+    param([bool]$Condition, [string]$Name, [string]$Why = '')
     if ($Condition) { $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green }
-    else            { $script:fail++; Write-Host "  [FAIL] $Name" -ForegroundColor Red }
+    else {
+        $script:fail++; Write-Host "  [FAIL] $Name" -ForegroundColor Red
+        if ($Why) { Write-Host "         fetch: $Why" -ForegroundColor Red }
+    }
 }
 function Assert-Equal {
     param($Expected, $Actual, [string]$Name)
@@ -365,15 +368,30 @@ if ([System.Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) {
         Assert-True $up 'the server listens on the port it was given'
 
         $group2Ran = $true
+        # Get-Raw also leaves WHY it returned what it did in $script:RawWhy (#3932): the status line, or the exception
+        # type and its inner one, with the elapsed time either way. A request that timed out under CI load and one
+        # that got the wrong page used to fail an assert identically, so three recurrences could not tell them apart.
+        # A caller whose assert has flaked captures it right after the fetch and passes it to Assert-True's -Why.
+        $script:RawWhy = ''
         function Get-Raw([string]$Method, [string]$Path, [string]$HostHeader, [string]$Extra = '', [int]$OnPort = $port) {
+            $sw = [Diagnostics.Stopwatch]::StartNew()
             $c = New-Object System.Net.Sockets.TcpClient('127.0.0.1', $OnPort)
             $c.ReceiveTimeout = 15000
             try {
                 $s = $c.GetStream()
                 $req = [System.Text.Encoding]::ASCII.GetBytes("$Method $Path HTTP/1.1`r`nHost: $HostHeader`r`n$Extra`r`n")
                 $s.Write($req, 0, $req.Length)
-                return (New-Object System.IO.StreamReader($s)).ReadToEnd()
-            } catch { return '' } finally { $c.Close() }
+                $raw = (New-Object System.IO.StreamReader($s)).ReadToEnd()
+                $line = if ($raw) { ($raw -split "`r`n")[0] } else { 'an empty response' }
+                $script:RawWhy = "$Method $Path answered '$line' after $($sw.ElapsedMilliseconds) ms, $($raw.Length) chars"
+                return $raw
+            } catch {
+                $e = $_.Exception
+                while ($e -is [System.Management.Automation.MethodInvocationException] -and $e.InnerException) { $e = $e.InnerException }
+                $inner = if ($e.InnerException) { " ($($e.InnerException.GetType().Name))" } else { '' }
+                $script:RawWhy = "$Method $Path threw $($e.GetType().Name)$inner after $($sw.ElapsedMilliseconds) ms (the receive timeout is 15000 ms)"
+                return ''
+            } finally { $c.Close() }
         }
         function Get-Status([string]$Method, [string]$Path, [string]$HostHeader, [string]$Extra = '') {
             $raw = Get-Raw $Method $Path $HostHeader $Extra
@@ -382,6 +400,7 @@ if ([System.Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) {
         if ($up) {
             Assert-Equal 200 (Get-Status 'GET' '/house-style.css' "localhost:$port") 'the stylesheet is served'
             Assert-Equal 200 (Get-Status 'GET' '/house-theme.js' "127.0.0.1:$port") 'the theme script is served'
+            Assert-True ($script:RawWhy -match "^GET /house-theme\.js answered 'HTTP/1\.1 200[^']*' after \d+ ms, \d+ chars$") 'Get-Raw says what it got and how long it took, for a failing assert to print (#3932)' $script:RawWhy
             Assert-Equal 403 (Get-Status 'GET' '/house-style.css' "evil.example:$port") 'a foreign Host is refused'
             Assert-Equal 405 (Get-Status 'POST' '/' "localhost:$port") 'a POST is refused'
             Assert-Equal 405 (Get-Status 'POST' '/stopwatch/start?label=x' "localhost:$port" "Sec-Fetch-Site: same-origin`r`n") 'the Stopwatch takes no POST any more (#3323)'
@@ -491,8 +510,10 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
             Assert-True $up 'the group-3 server listens on the port it was given'
             # The fixture's repos are all Org/*, so their details are on the Other group's page (owner, October 26, 2026).
             $page = if ($up) { Get-Raw 'GET' '/consumers/other' "localhost:$port3" '' $port3 } else { '' }
+            $pageWhy = $script:RawWhy
             $overviewPage = if ($up) { Get-Raw 'GET' '/consumers' "localhost:$port3" '' $port3 } else { '' }
-            Assert-True ($page -match 'HTTP/1.1 200') 'the page is served with a checkout that has no upstream'
+            $overviewWhy = $script:RawWhy
+            Assert-True ($page -match 'HTTP/1.1 200') 'the page is served with a checkout that has no upstream' $pageWhy
             Assert-True ($page -match 'Last commit on (master|main) [^:]*: local only') 'and that checkout shows its trunk''s last commit'
             Assert-True ($page -match 'class="msg--warn"') 'a check that could not run is reported, not fatal'
             $at = $page.IndexOf('id="repo-org-far"')
@@ -538,7 +559,7 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
                 Assert-True (Wait-ServerUp $genPort3) 'the fixture''s plugin admin listens'
                 Assert-True ((Get-Raw 'GET' '/brandbook' "localhost:$genPort3" '' $genPort3) -match 'HTTP/1.1 404') 'the plugin admin serves no Brandbook (#3475)'
                 $homeUp = if ($up) { Get-Raw 'GET' '/' "localhost:$port3" '' $port3 } else { '' }
-                Assert-True ($homeUp -match ('<a class="menu-item" href="http://localhost:' + $genPort3 + '">') -and $homeUp -notmatch 'Admin is not running') 'the home page''s first card links the plugin admin, once it answers as this checkout''s'
+                Assert-True ($homeUp -match ('<a class="menu-item" href="http://localhost:' + $genPort3 + '">') -and $homeUp -notmatch 'Admin is not running') 'the home page''s first card links the plugin admin, once it answers as this checkout''s' $script:RawWhy
                 $r = if ($up) { Get-Raw 'GET' '/admin' "localhost:$port3" '' $port3 } else { '' }
                 Assert-True ($r -match 'HTTP/1.1 303' -and $r -match ('Location: http://localhost:' + $genPort3 + '\r')) 'and /admin sends the visitor there'
                 $adminHome = Get-Raw 'GET' '/' "localhost:$genPort3" '' $genPort3
@@ -559,8 +580,8 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
             $homeDown = if ($up) { Get-Raw 'GET' '/' "localhost:$port3" '' $port3 } else { '' }
             Assert-True ($homeDown -match 'HTTP/1.1 200' -and $homeDown -match 'Admin is not running') 'and the Admin card is back to not running once nothing answers there'
             Remove-Item -LiteralPath $srcState -Force -ErrorAction SilentlyContinue
-            Assert-True ($overviewPage -match 'HTTP/1.1 200' -and $overviewPage -match '<h1>Consumers</h1>' -and $overviewPage -match '<a href="/">Home</a>' -and $overviewPage -match 'href="/consumers/other#repo-') '/consumers serves the overview as a page under the product''s home, its repo cards opening their group''s page'
-            Assert-True ($page -match '<h1>Other repos</h1>' -and $page -match '<a href="/consumers">Consumers</a>') '/consumers/other serves that group''s page under the overview'
+            Assert-True ($overviewPage -match 'HTTP/1.1 200' -and $overviewPage -match '<h1>Consumers</h1>' -and $overviewPage -match '<a href="/">Home</a>' -and $overviewPage -match 'href="/consumers/other#repo-') '/consumers serves the overview as a page under the product''s home, its repo cards opening their group''s page' $overviewWhy
+            Assert-True ($page -match '<h1>Other repos</h1>' -and $page -match '<a href="/consumers">Consumers</a>') '/consumers/other serves that group''s page under the overview' $pageWhy
         } finally {
             if (-not $proc3.HasExited) { Stop-Process -Id $proc3.Id -Force -Confirm:$false -ErrorAction SilentlyContinue }
         }
