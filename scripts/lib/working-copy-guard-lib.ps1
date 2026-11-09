@@ -9,7 +9,8 @@
         . (Join-Path $PSScriptRoot '..\lib\working-copy-guard-lib.ps1')
 
     Supplies Get-WorkingCopyViolation (the whole judgement, pure) and the pieces under it --
-    Get-GitInvocation, Test-HasFlag, Remove-TokenQuotes. It dot-sources command-guard-lib.ps1 from its
+    Get-GitInvocation, Test-HasFlag, Remove-TokenQuotes -- and Get-SafetyRuleViolation, the
+    constitution's force-push and hard-reset rule for every thread, built on the same pieces (#3901). It dot-sources command-guard-lib.ps1 from its
     own directory for the false-positive machinery.
 
     WHY THE JUDGEMENT IS SPLIT OFF FROM THE HOOK (issue #1669). Same reason fanout-lib.ps1 states for
@@ -122,12 +123,16 @@ function Get-GitInvocation {
     $s = ([string]$Segment).Trim()
     while ($s -match '^\(?\{?\s*[A-Za-z_][A-Za-z0-9_]*=[^\s]*\s+(.*)$') { $s = $Matches[1].Trim() }
     $s = $s -replace '^[\(\{\s]+', ''
+    # PowerShell's call operator, `& git push -f`, is git-led too -- and is how this repo's own docs spell a
+    # native call (review of #3901). Stripped here so both rules see it.
+    $s = $s -replace '^&\s+', ''
 
     # Tokenise on whitespace, keeping quoted runs together so a quoted pathspec cannot look like a flag.
     $tokens = @([regex]::Matches($s, '"[^"]*"|''[^'']*''|\S+') | ForEach-Object { $_.Value })
     if ($tokens.Count -eq 0) { return $null }
 
-    $lead = ($tokens[0] -replace '.*[\\/]', '').ToLower()
+    # Unquoted before it is compared, so a quoted executable (`"git" push -f`) is still git.
+    $lead = ((Remove-TokenQuotes $tokens[0]) -replace '.*[\\/]', '').ToLower()
     if ($lead -ne 'git' -and $lead -ne 'git.exe') { return $null }
 
     $i = 1
@@ -407,6 +412,115 @@ function Get-WorkingCopyViolation {
                 # expiring it counts here even though it leaves the tree alone.
                 if ($first -eq 'expire' -or $first -eq 'delete') {
                     return @{ Sub = 'reflog'; Segment = $segment; Reason = "``git reflog $first`` destroys the only record by which a discarded commit could still be found. Reading the reflog is not blocked." }
+                }
+            }
+        }
+    }
+
+    return $null
+}
+
+function Test-HasAbbreviatedFlag {
+    <# git accepts any UNIQUE prefix of a long option, so `--force-w` is --force-with-lease and `--ha` is
+       --hard -- measured in a throwaway repo by the security review of #3901, where `git push --force-w`
+       printed "(forced update)". -MinLength is the shortest prefix git reads as unique for that command:
+       `--force-w` (9) for push, whose `--forc` is ambiguous and errors, and `--ha` (4) for reset. #>
+    param([string[]]$Arguments, [string]$Flag, [int]$MinLength)
+
+    foreach ($a in $Arguments) {
+        $bare = ([string]$a -split '=')[0]
+        if ($bare.Length -ge $MinLength -and $bare.Length -le $Flag.Length -and $Flag.StartsWith($bare, [System.StringComparison]::Ordinal)) { return $true }
+    }
+    return $false
+}
+
+function Get-SafetyRuleViolation {
+    <#
+    .SYNOPSIS
+        The constitution's "never without the owner's explicit permission" git commands. Returns $null,
+        or @{ Sub; Reason; Segment } for the first command in this string that breaks one.
+
+    .DESCRIPTION
+        THE OWNER CHOSE THIS ROUTE (#3901, November 8, 2026). A plugin cannot ship `deny` or `ask`
+        permission rules (a plugin settings.json honours only `agent` and `subagentStatusLine`), so the
+        rules sat as a suggestion in specialists-init that a consumer had to apply. Extending this guard
+        makes the enforcement ship with the plugin, with no consumer setting to change.
+
+        WHAT IT JUDGES, FOR EVERY THREAD (the hook asks it before its agent_id gate):
+
+          git push    with -f, --force, --force-with-lease, --mirror, or a `+` refspec (`+main`, `HEAD:+main`)
+          git reset   with --hard
+
+        THE SAME PARSING AS Get-WorkingCopyViolation, and that is the point of putting it here: only a
+        segment LED by git counts, at git's own subcommand position, so a commit message, a heredoc or a
+        grep that names the rule is not refused. The one match-anywhere case is the same narrow one too:
+        text the command itself pipes into an interpreter.
+
+        NO PROJECT SCOPE, which is where it parts from the working-copy rule. That rule protects one
+        checkout from a subagent, so a fixture repo elsewhere is out of its scope. The constitution says
+        `git push --force` "on any branch", in any repo, so a `-C` or a `cd` elsewhere exempts nothing.
+        Fixture tests are not affected: they run git inside a script file, which no hook reads.
+
+        MEASURED BEFORE IT SHIPPED (November 9, 2026): over the 4593 Bash/PowerShell calls in this repo's
+        transcripts, it refused one: a heredoc piped into `python -` that wrote these very test cases, a
+        false positive of the match-anywhere case. Re-run after this branch's own reviews (4638 calls), it
+        refused eight, and every new one was a reviewer probing this rule: seven scripts that wrote the
+        commands as test data and ran them, and one throwaway `mktemp` repo where a force push was tried for
+        real. Outside that, the corpus holds no force push or hard reset at all. The refusal names the
+        Edit/Write tool for the first class. The second is the price of having no project scope.
+
+        IT GUARDS AGAINST A CARELESS CALL, NOT AN ADVERSARY. It shares Get-GitInvocation's limits with the
+        working-copy rule: a wrapper in front of git (`env X=1 git`, `time git`, `sudo git`, `command git`,
+        `cmd /c git`, `wsl git`), a compound keyword (`if ...; then git ...; fi`, `for ...; do`), nested
+        quoting (`bash -lc`, `bash -c "bash -c \"...\""`), `Start-Process git -ArgumentList`, a git alias
+        (`git -c alias.p=push p -f`, or one set with `git config alias.*`), a git held in a variable
+        (`& $g push -f`), and another tool moving the ref (`gh api` on `git/refs`) are not read. Each needs a
+        detour; the residual limits in this file's header apply as well. An abbreviated long option IS
+        read (Test-HasAbbreviatedFlag), because git accepts one and a typo reaches it innocently.
+
+        ON A HOST WITHOUT POWERSHELL IT DOES NOT RUN AT ALL, and on the main thread the hooks.json wrapper
+        lets a call through when PowerShell cannot start. It is a backstop against a session's own slip,
+        enforced where the hook can run, not a security boundary.
+
+        THE MAIN THREAD STAYS UNGUARDED for everything else that discards work -- `git checkout -f`,
+        `git clean -fdx`, `git branch -D`, `git push --delete`, `git update-ref` -- because the
+        constitution names only the force push and the hard reset (and rebase, below).
+
+        AND WHAT IT DELIBERATELY DOES NOT JUDGE: `git rebase` "on a shared branch". Whether a branch is
+        shared is not in the command string, so a rule here would refuse every local rebase or none. For
+        a subagent, Get-WorkingCopyViolation already refuses every rebase.
+    #>
+    param([string]$Command)
+
+    if (-not $Command) { return $null }
+
+    $pushReason = '`git push` with a force flag or a `+` refspec overwrites history on the remote, and the constitution allows it only with the owner''s explicit permission.'
+    $resetReason = '`git reset --hard` discards uncommitted work with no reflog to recover it from, and the constitution allows it only with the owner''s explicit permission.'
+
+    if (Test-CommandExecutesText $Command) {
+        $m = [regex]::Match($Command, '(?i)\bgit\s+push\b[^|;&\r\n]*\s(?:-f\b|--force\b|--force-w[a-z-]*|--mirror\b|\+\S|\S*:\+\S)')
+        if ($m.Success) { return @{ Sub = 'push'; Segment = $m.Value; Reason = $pushReason } }
+        $m = [regex]::Match($Command, '(?i)\bgit\s+reset\b[^|;&\r\n]*\s--ha(?:rd?)?\b')
+        if ($m.Success) { return @{ Sub = 'reset'; Segment = $m.Value; Reason = $resetReason } }
+    }
+
+    foreach ($segment in (Get-GuardSegments -Command $Command -TextTools $script:WcTextTools)) {
+        $git = Get-GitInvocation $segment
+        if ($null -eq $git) { continue }
+
+        switch ($git.Sub) {
+            'push' {
+                # A force refspec carries its `+` at the front (`+main`) or on the destination (`HEAD:+main`).
+                $plusRefspec = @($git.Args | Where-Object { ([string]$_) -match '^\+|:\+' }).Count -gt 0
+                if ($plusRefspec -or (Test-HasFlag -Arguments $git.Args -Flags @('-f', '--force', '--force-with-lease', '--mirror')) -or
+                    (Test-HasAbbreviatedFlag -Arguments $git.Args -Flag '--force-with-lease' -MinLength 9)) {
+                    return @{ Sub = 'push'; Segment = $segment; Reason = $pushReason }
+                }
+            }
+            'reset' {
+                if ((Test-HasFlag -Arguments $git.Args -Flags @('--hard')) -or
+                    (Test-HasAbbreviatedFlag -Arguments $git.Args -Flag '--hard' -MinLength 4)) {
+                    return @{ Sub = 'reset'; Segment = $segment; Reason = $resetReason }
                 }
             }
         }
