@@ -240,6 +240,7 @@
                                       "dev-pages.tests.ps1",
                                       "dev-preview-sessionstart.tests.ps1",
                                       "goals.tests.ps1",
+                                      "handover-page.tests.ps1",
                                       "admin-airsquats.tests.ps1",
                                       "logbook.tests.ps1",
                                       "stopwatch.tests.ps1",

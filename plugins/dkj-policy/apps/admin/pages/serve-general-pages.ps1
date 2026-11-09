@@ -30,6 +30,10 @@
                       Built first, by build-release-notes-page.ps1 (found the way the always-on lib is), where it
                       is absent or older than a file under dkj-policy/releases (#3189): the page is a gitignored
                       snapshot nothing else builds. A 404 text naming why where it cannot be built.
+      /dev/handover, /dev/handover/<name>
+                      the preview handovers built on this machine for this repo (#3925): the model files a store's
+                      builder writes beside the Stopwatch store (Get-HandoverDir, apps/admin/lib/handover-page-lib.ps1),
+                      read per request, each page's QR codes drawn here. No card on Admin: the builder prints the link.
       /dev/sessionstart   (also: scripts/dashboard/session-start-snapshot.json, where the repo keeps one -- the last
                       full session-start measurement, its sections shown after the live table's; absent, nothing
                       is added) one card per section, and /dev/sessionstart/<section> that section's own page
@@ -153,6 +157,8 @@ $ErrorActionPreference = 'Stop'
 # The Goals page (#3816), and the Today page (#3860).
 . (Join-Path $PSScriptRoot '..\lib\goals-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\today-page-lib.ps1')
+# The preview handover pages (#3925).
+. (Join-Path $PSScriptRoot '..\lib\handover-page-lib.ps1')
 
 $pluginRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..\..')).Path
 $root = if ($RepoRootOverride) { [System.IO.Path]::GetFullPath($RepoRootOverride).TrimEnd('\', '/') }
@@ -730,6 +736,16 @@ try {
                 if ($null -eq $html) {
                     Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('No SessionStart section of that name.')) -Method $method
                     continue
+                }
+            } elseif ($ho = Resolve-HandoverRequest -Path $path) {
+                # A preview handover (#3925), or the list of them. A model that cannot be drawn is a warning on the page,
+                # never a closed connection.
+                $hoDir = Get-HandoverDir -RepoRoot $root
+                if (-not $ho.Name) { $html = Format-HandoverIndexHtml -List (Get-HandoverList -Dir $hoDir) -RepoName (Get-RepoIdentity).Name }
+                else {
+                    $hoRead = Read-HandoverModel -Dir $hoDir -Name $ho.Name
+                    try { $html = Format-HandoverPageHtml -Model $hoRead.Model -ReadError $hoRead.Error -RepoName (Get-RepoIdentity).Name }
+                    catch { $html = Format-HandoverPageHtml -Model $null -ReadError ('it could not be drawn: ' + (([string]$_.Exception.Message) -replace '\s+', ' ')) -RepoName (Get-RepoIdentity).Name }
                 }
             } elseif ($rn = Resolve-ReleaseNotesRequest -Path $path -IndexFile $releaseNotesFile) {
                 # The index, or one release's own page beside it (owner, October 25, 2026).
