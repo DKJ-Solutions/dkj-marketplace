@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**8 / 11 minor entries** <!-- pending-tally -->
+**9 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3920-prefilter-background-run · 20261109-085221Z
+
+The PostToolUse hook `publish-background-run` no longer starts PowerShell on a shell call that is not
+backgrounded: a bash `case` in its `hooks.json` command lets only a payload carrying
+`"run_in_background"` through ([#3920](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3920),
+decided in [#3898](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3898)). That was about
+150 ms of the hook's measured cost on every shell call. The filter is coarse on purpose, and the
+script's own precise test still decides.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every shell call in a session running `dkj-policy` gets about 0.15 s faster, roughly 7 s over 50
+calls. Nothing to do but take the version.
+
+**Score:** 2
+
+#### Pull Request
+
+Pre-filter publish-background-run in the shell so not every shell call starts PowerShell
+
+Plugins: dkj-policy
+
+[PR #3921](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3921)
+
+---
 
 ### DEPLOY: fix/3907-park-through-claim · 20261109-010011Z
 
