@@ -45,7 +45,8 @@ cards: ten items read better compared row by row. The item pages stay as they ar
 ### CREATE
 
 - [x] `Format-DocsCoveragePageHtml` draws a house `.table` in a `.table-wrap`: Item (links its page), What,
-      Status, Issue (links GitHub); the card grid style is gone
+      Status, Docs (links the docs page, shown as its path under /docs/en/), Issue (links GitHub); the card
+      grid style is gone
 - [x] The lib's docstrings say row instead of card
 
 ### TEST
@@ -57,7 +58,7 @@ cards: ten items read better compared row by row. The item pages stay as they ar
 ### DEPLOY: feat/docs-coverage-table
 
 The Docs coverage overview on the product portal is a table now: one row per item with its one line, its
-status and a link to its issue, so the ten compare at a glance. Each item still opens its own page.
+status, a link to its Claude Code docs page and a link to its issue, so the ten compare at a glance. Each item still opens its own page.
 
 **Score:** 2
 

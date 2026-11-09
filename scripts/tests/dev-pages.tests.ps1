@@ -1154,8 +1154,8 @@ Assert-True ($dcOver -match '<h1[^>]*>Docs coverage</h1>') 'the overview''s h1 i
 Assert-True ($dcOver -match '<table class="table" id="items">') 'the overview is a house table, not cards (the owner, November 9, 2026)'
 Assert-True ($dcOver -notmatch 'ph-cards') 'and carries no card grid'
 Assert-Equal 10 ([regex]::Matches($dcOver, '(?s)<tbody>.*?</tbody>').Value.Split([string[]]@('<tr>'), [StringSplitOptions]::None).Count - 1) 'one row per item'
-Assert-True ($dcOver -match '<td class="col-start">Awaiting decision</td><td><a href="https://github.com/DKJ-Solutions/dkj-marketplace/issues/3895">#3895</a></td>') 'each row carries its status and links its issue'
-Assert-True ($dcOver -match '<td class="col-start">--</td><td><a href="[^"]+/issues/3897">') 'an issue the answer left out reads --'
+Assert-True ($dcOver -match '<td class="col-start">Awaiting decision</td><td class="col-start"><a href="https://code.claude.com/docs/en/plugins/dependencies">plugins/dependencies</a></td><td><a href="https://github.com/DKJ-Solutions/dkj-marketplace/issues/3895">#3895</a></td>') 'each row carries its status, links its docs page by its path and links its issue'
+Assert-True ($dcOver -match '<td class="col-start">--</td><td class="col-start"><a href="[^"]+">sub-agents</a></td><td><a href="[^"]+/issues/3897">') 'an issue the answer left out reads --'
 Assert-True ($dcOver -notmatch 'GitHub could not be read') 'a good read raises no warning'
 $dcFail = Format-DocsCoveragePageHtml -Query (ConvertFrom-DocsCoverageQuery -Json '') -Meta $dcMeta
 Assert-True ($dcFail -match 'role="alert">GitHub could not be read') 'a failed read says so above the table'

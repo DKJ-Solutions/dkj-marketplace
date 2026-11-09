@@ -165,7 +165,7 @@ function Get-DocsCoverageStatus {
 function Format-DocsCoveragePageHtml {
     <#
         /docs-coverage: one row per item in the house .table, the item linking its own page, then its one line, its
-        status and its issue, so the ten compare at a glance (the owner, November 9, 2026: a table over the cards
+        status, its docs page (shown as its path under /docs/en/) and its issue, so the ten compare at a glance (the owner, November 9, 2026: a table over the cards
         the page first had). -Query is ConvertFrom-DocsCoverageQuery's result; -Meta @{ GeneratedAt; Seconds } of
         the read.
     #>
@@ -175,12 +175,13 @@ function Format-DocsCoveragePageHtml {
     $sb = New-Object System.Text.StringBuilder
     if ($Query.Error) { [void]$sb.AppendLine('<p class="msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The items are shown without their status.</p>') }
     [void]$sb.AppendLine('<div class="table-wrap"><table class="table" id="items">')
-    [void]$sb.AppendLine('<thead><tr><th scope="col">Item</th><th scope="col" class="col-start">What</th><th scope="col" class="col-start">Status</th><th scope="col">Issue</th></tr></thead><tbody>')
+    [void]$sb.AppendLine('<thead><tr><th scope="col">Item</th><th scope="col" class="col-start">What</th><th scope="col" class="col-start">Status</th><th scope="col" class="col-start">Docs</th><th scope="col">Issue</th></tr></thead><tbody>')
     foreach ($it in @($Items)) {
         $status = Get-DocsCoverageStatus $Query.ByIssue[[int]$it.Issue]
         $issueUrl = 'https://github.com/DKJ-Solutions/dkj-marketplace/issues/' + [int]$it.Issue
         [void]$sb.AppendLine('<tr><td><a href="/docs-coverage/' + (& $e $it.Slug) + '">' + (& $e $it.Label) + '</a></td>' +
             '<td class="col-start">' + (& $e $it.Sub) + '</td><td class="col-start">' + (& $e $status) + '</td>' +
+            '<td class="col-start"><a href="' + (& $e $it.Docs) + '">' + (& $e ($it.Docs -replace '^https://code\.claude\.com/docs/en/', '')) + '</a></td>' +
             '<td><a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a></td></tr>')
     }
     [void]$sb.AppendLine('</tbody></table></div>')
