@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**4 / 9 minor entries** <!-- pending-tally -->
+**5 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3944-noresolves-cites-branch-issue · 20261109-163848Z
+
+`open-pr -NoResolves` now cites the issue the branch name carries as a visible `Part of #<n>` line in the
+PR body, unless the body already mentions it. Before, it wrote only the `closes nothing` marker, so a branch
+whose document never named its own issue merged without any link to it (#3944).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a BWJ store repo, an Asana-linked issue ships with `-NoResolves`, and `build-golive-block.ps1 -Post`
+refused afterwards because no pull request closed or referenced the issue. The way past was a hand edit of
+the merged PR's body or `-Force`. The PR now references the issue on its own, so `-Post` finds it.
+
+**Score:** 3
+
+#### Pull Request
+
+open-pr -NoResolves cites the branch's issue as 'Part of #<n>'
+
+Plugins: dkj-policy
+
+[PR #3948](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3948)
+
+---
 
 ### DEPLOY: fix/3941-audience-note-named-issues · 20261109-162740Z
 
