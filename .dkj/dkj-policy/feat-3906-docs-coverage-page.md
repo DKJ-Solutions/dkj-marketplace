@@ -52,7 +52,7 @@ cached like the DKJ repos page.
 - [x] `scripts/lib/docs-coverage-lib.ps1`: the ten items, the status query and its parse, the status word, both pages
 - [x] The product's menu and home card (`Get-ProductPages`), and the server's routes, cache and `/refresh` target
 - [x] Tests in `scripts/tests/dev-pages.tests.ps1`, and the three asserts that pin the product's page list
-- [ ] The owner looks at the pages: a visible result, parked for their eye (the constitution)
+- [~] The owner looks at the pages: not done as a separate look: davekokbwj approved the branch through issues-sweep-reviews on 2026-11-09 without one.
 
 ### TEST
 
