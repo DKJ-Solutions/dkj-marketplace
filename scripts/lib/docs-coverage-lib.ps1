@@ -232,6 +232,9 @@ function Get-DocsCoverageStatusStyle {
         '.dc-detail { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; margin: -4px 0; padding: 0; border: 0; border-radius: var(--radius-2); background: transparent; color: var(--primary-muted); cursor: pointer; vertical-align: middle; }'
         '.dc-detail:hover, .dc-detail:focus-visible { color: var(--primary); }'
         '.dc-detail:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }'
+        # The popup is the window's width less 10% (the owner, November 9, 2026), where the house dialog keeps to the
+        # narrow column. On the page's own class, so the house .dialog itself is not restyled.
+        'dialog.dc-detail-dialog { width: 90vw; }'
         # In the popup a fact may wrap, each h2 block stands apart from the one above, and an h3 from the text above it.
         '.dc-detail__facts dd { white-space: normal; overflow-wrap: anywhere; }'
         '.dc-detail__body > h2 { margin-top: var(--spacing-6); }'
@@ -399,8 +402,9 @@ function Format-DocsCoverageFacts {
 }
 
 function Get-DocsCoverageDetailDialog {
-    # The one dialog every Details icon opens: the product layer's .dialog with its close button, its content cloned in.
-    return '<dialog class="dialog" id="row-detail" aria-labelledby="row-detail-title"><div class="dialog__body">' +
+    # The one dialog every Details icon opens: the product layer's .dialog with its close button, its content cloned in,
+    # 90% of the window wide through the page's own .dc-detail-dialog.
+    return '<dialog class="dialog dc-detail-dialog" id="row-detail" aria-labelledby="row-detail-title"><div class="dialog__body">' +
         '<button class="dialog__close" type="button" aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
         '<div id="row-detail-content"></div></div></dialog>'
 }
