@@ -1050,6 +1050,48 @@ function Remove-NoResolvesMarker {
     })
     return $stripped.TrimEnd() + "`n"
 }
+
+function Add-BranchIssueReference {
+    <#
+    .SYNOPSIS
+        Appends 'Part of #<n>' to a PR body that does not already mention issue <n>. Idempotent.
+
+    .DESCRIPTION
+        A -NoResolves PR SHOULD STILL POINT AT THE ISSUE ITS BRANCH WAS CUT FOR (issue #3944). The
+        resolves gate reads the number off the branch name (#2225), but -NoResolves skips that read and
+        wrote only the "closes nothing" marker, so a PR could merge without its body naming the issue
+        at all. GitHub records a cross-reference only for a mention in the PR body, which means the
+        issue had no link to the PR. Measured on BWJ-Development/smartwatchbanden#1145: an Asana-linked
+        issue (#1088) shipped with -NoResolves, as that extension prescribes, and
+        build-golive-block.ps1 -Post then refused because no PR closed or referenced it. #2957 had
+        taught -Post to accept a referencing PR, but nothing wrote the reference.
+
+        A VISIBLE LINE RATHER THAN A COMMENT, which is where it differs from the marker. GitHub has to
+        see the mention to record the cross-reference, and a mention inside an HTML comment records
+        nothing. 'Part of' is not a closing keyword, so GitHub closes nothing on the merge either.
+
+        Already mentioned means a live mention as Get-IssueMentions reads one: a number inside a code
+        span or a fence does not count, because GitHub does not cross-reference it either.
+
+        Errs the way Get-BranchNameIssue does. 'fix/5-minute-timeout' reads as 5, and the line then
+        mentions #5. A wrong mention costs one stray cross-reference. A missing one costs the
+        refusal above.
+
+    .PARAMETER Issue
+        The number the branch name declares (Get-BranchNameIssue); 0 leaves the body untouched.
+    #>
+    param(
+        [string]$Body,
+        [int]$Issue = 0
+    )
+
+    if ($Issue -le 0) { return $Body }
+    if (@(Get-IssueMentions -Text $Body) -contains $Issue) { return $Body }
+    $line = "Part of #$Issue"
+    if (-not $Body -or -not $Body.Trim()) { return $line }
+    return ($Body.TrimEnd() + "`n`n" + $line + "`n")
+}
+
 function Get-ResolvesDecision {
     <#
     .SYNOPSIS

@@ -585,6 +585,23 @@ Assert-Equal $strippedTwice $stripped 'removing a marker that is not there chang
 # Repeated add/remove must not grow the foot of the body -- this runs on every re-push of a branch.
 Assert-Equal $stripped (Remove-NoResolvesMarker -Body (Add-NoResolvesMarker -Body (Remove-NoResolvesMarker -Body (Add-NoResolvesMarker -Body $stripped)))) 'add/remove cycles do not accumulate whitespace'
 
+# #3944: a -NoResolves PR still names the issue its branch was cut for, so GitHub cross-references it.
+$refBody = "## Description`n`nsome prose citing #1059"
+$referenced = Add-BranchIssueReference -Body $refBody -Issue 1088
+Assert-True ($referenced -match '(?m)^Part of #1088$') 'an unmentioned branch issue is cited as Part of #<n>'
+Assert-True ($referenced -match '(?s)some prose.*Part of #1088') 'and the line goes below the body'
+Assert-Equal $false (Test-HasClosingKeyword -Text $referenced) 'Part of is not a closing keyword'
+Assert-Equal $referenced (Add-BranchIssueReference -Body $referenced -Issue 1088) 'idempotent: the line is not stacked'
+Assert-Equal $refBody (Add-BranchIssueReference -Body $refBody -Issue 1059) 'a body already mentioning the issue is left byte for byte'
+Assert-Equal $refBody (Add-BranchIssueReference -Body $refBody -Issue 0) 'a branch name with no number leaves the body alone'
+Assert-Equal 'Part of #7' (Add-BranchIssueReference -Body '' -Issue 7) 'an empty body becomes the line alone'
+$spanOnly = 'the branch is `#1088`'
+Assert-True ((Add-BranchIssueReference -Body $spanOnly -Issue 1088) -match '(?m)^Part of #1088$') 'a mention inside a code span does not count, GitHub does not link it'
+# The order open-pr writes them in: the reference first, the marker last, and neither swallows the other.
+$both = Add-NoResolvesMarker -Body (Add-BranchIssueReference -Body $refBody -Issue 1088)
+Assert-True ($both -match '(?s)Part of #1088.*resolves: none') 'the reference sits above the marker'
+Assert-Equal $true (Test-NoResolvesMarker -Text $both) 'and the marker still declares closes-nothing'
+
 
 # Remove is a TRUE no-op where there is no live marker: the caller runs it on every -Resolves run and
 # announces a body edit by comparing before with after, so a version that tidied trailing whitespace
