@@ -57,8 +57,9 @@
 - [x] `dayplan-sync.tests.ps1` (new): the payload and its bounds, the merge rules, and two machines planning
   and adding to one day through a bare remote of the test's own. `dayplan.tests.ps1` holds sharing off and
   covers the footer. `stopwatch-sync.tests.ps1` passes unchanged.
-- [ ] The owner looks at the Today page's footer (`/dev/today`): it now says whether the plan is this
-  machine's day file or merged from every machine's.
+- [~] The owner looks at the Today page's footer (`/dev/today`): it now says whether the plan is this
+  machine's day file or merged from every machine's. Not done as a separate look: davekokbwj approved
+  the branch through issues-sweep-reviews on 2026-11-09 without one.
 
 ### DEPLOY: feat/3924-dayplan-sync
 
