@@ -32,6 +32,15 @@
          had never stated it. The seam is proposed rather than placed by adopt-bwj-development, so its
          absence was silent. A repo with no scripts/repo-config.ps1 at all is left out: there is nothing
          to read, and the other session checks already report that.
+      5. no Asana-linked issue is still OPEN after the -NoResolves pull request its branch was named after
+         merged (#3945). Such an issue ships with -NoResolves, so GitHub does not close it, and the hand
+         close was carried by memory alone. Measured on smartwatchbanden#1126 / PR #1144, November 9,
+         2026: merged and folded, and the session wrote that the issue "stays open" until the live push.
+         The owner's rule is that an issue closes when its PR lands, always. Read from the last 30
+         merged PRs whose body carries the -NoResolves declaration and were merged in the last 14 days,
+         the issue their head branch is named after ('<prefix>/<n>-<name>'), and the open issues; an
+         issue that an OPEN PR's branch is also named after is left out, because a further step is still
+         changing code for it (#3059). Three gh reads; any failed read leaves the finding out.
     Anywhere else it is silent: dkj-marketplace runs the ticket chapter without either workflow.
 
     A SECRET IT CANNOT READ IS NOT A MISSING SECRET. Listing secrets needs more than read access, and
@@ -42,7 +51,8 @@
     this family. A finding is an [ERROR] line because that is what the family forwards to the transcript.
 
     Read-only: it reads four files, four templates, scripts/repo-config.ps1 as TEXT (never dot-sourced),
-    the origin URL and (through gh) two secret NAME lists.
+    the origin URL and (through gh) two secret NAME lists, two pull-request lists and the open issues.
+    It prints an issue's and a PR's NUMBER, never a title or a body.
 
 .PARAMETER RepoRootOverride
     (For tests) The repo root to check instead of CLAUDE_PROJECT_DIR or the working directory.
@@ -57,6 +67,11 @@
     (For tests) The secret names visible to the repo, instead of asking gh. Pass the single value
     '<unreadable>' to stand for a read that failed.
 
+.PARAMETER PullDataOverride
+    (For tests) A JSON file standing for finding 5's three gh reads, instead of asking gh:
+    { "merged": [ {number, headRefName, body, mergedAt} ], "open": [ {headRefName} ],
+      "issues": [ {number, body} ] }. The path '<unreadable>' stands for a read that failed.
+
     Pure ASCII (repo convention for .ps1).
 #>
 [CmdletBinding()]
@@ -64,7 +79,8 @@ param(
     [string]$RepoRootOverride = '',
     [string]$TemplateRootOverride = '',
     [string]$RepoSlugOverride = '',
-    [string[]]$SecretNamesOverride = $null
+    [string[]]$SecretNamesOverride = $null,
+    [string]$PullDataOverride = ''
 )
 
 Set-StrictMode -Version Latest
@@ -102,6 +118,57 @@ function Get-VisibleSecretNames {
 function Get-NormalizedText {
     param([string]$Path)
     return ([System.IO.File]::ReadAllText($Path) -replace "`r`n", "`n")
+}
+
+function Get-PullData {
+    <# Finding 5's three reads as @{ merged; open; issues }, or $null when any of them fails. #>
+    param([string]$Slug, [string]$Override)
+    if ($Override) {
+        if ($Override -eq $Unreadable) { return $null }
+        return ([System.IO.File]::ReadAllText($Override) | ConvertFrom-Json)
+    }
+    if (-not (Get-Command gh -ErrorAction SilentlyContinue)) { return $null }
+    $reads = [ordered]@{
+        merged = @('pr', 'list', '--repo', $Slug, '--state', 'merged', '--limit', '30', '--json', 'number,headRefName,body,mergedAt')
+        open   = @('pr', 'list', '--repo', $Slug, '--state', 'open', '--limit', '100', '--json', 'headRefName')
+        issues = @('issue', 'list', '--repo', $Slug, '--state', 'open', '--limit', '300', '--json', 'number,body')
+    }
+    $data = @{}
+    foreach ($k in $reads.Keys) {
+        $a = $reads[$k]
+        $out = & gh @a 2>$null
+        if ($LASTEXITCODE -ne 0) { return $null }
+        $data[$k] = @(($out -join "`n") | ConvertFrom-Json)
+    }
+    return [pscustomobject]$data
+}
+
+function Get-OpenAfterMergeFindings {
+    <#
+        Pure (#3945): the Asana-linked issues still open after the -NoResolves PR named for them merged,
+        as @{ Issue; Pull; MergedAt }. -Now and -Days bound the window, so a finding ages out rather than
+        repeating forever on an issue somebody deliberately keeps.
+    #>
+    param($Data, [datetime]$Now, [int]$Days = 14)
+    $branchIssue = { param($ref) if ([string]$ref -match '^[^/]+/(\d{1,9})-') { [int]$Matches[1] } else { 0 } }
+    $stillBuilding = @{}
+    foreach ($p in @($Data.open)) { if ($p) { $n = & $branchIssue $p.headRefName; if ($n) { $stillBuilding[$n] = $true } } }
+    $openLinked = @{}
+    foreach ($i in @($Data.issues)) {
+        if ($i -and (Resolve-AsanaTaskRef -IssueBody ([string]$i.body)).Gid) { $openLinked[[int]$i.number] = $true }
+    }
+    $found = @{}
+    foreach ($p in @($Data.merged)) {
+        if (-not $p -or [string]$p.body -notmatch '<!--\s*resolves:\s*none\s*-->') { continue }
+        $merged = [datetime]::MinValue
+        if (-not [datetime]::TryParse([string]$p.mergedAt, [Globalization.CultureInfo]::InvariantCulture,
+                [Globalization.DateTimeStyles]::AdjustToUniversal, [ref]$merged)) { continue }
+        if ($merged -lt $Now.ToUniversalTime().AddDays(-$Days)) { continue }
+        $n = & $branchIssue $p.headRefName
+        if (-not $n -or -not $openLinked.ContainsKey($n) -or $stillBuilding.ContainsKey($n) -or $found.ContainsKey($n)) { continue }
+        $found[$n] = [pscustomobject]@{ Issue = $n; Pull = [int]$p.number; MergedAt = $merged }
+    }
+    return @($found.Values | Sort-Object Issue)
 }
 
 try {
@@ -179,6 +246,21 @@ try {
                 "scripts/repo-config.ps1, so open-pr lets a pull request close an Asana-linked issue: the merge " +
                 "closes it before its go-live block is on it, and the closed message reaches the task without " +
                 "one. $remedy (step 2 proposes the two matchers).")
+        }
+    }
+
+    # FINDING 5 (#3945): an issue closes when its PR lands, always -- "open until live" is not a state, and
+    # going live is told afterwards by notify-live. Loaded here, inside the try, so a lib that fails to
+    # load is this check's error line rather than a session-start crash.
+    . (Join-Path $PSScriptRoot '..\scripts\lib\asana-task-lib.ps1')
+    $pullData = Get-PullData -Slug $slug -Override $PullDataOverride
+    if ($null -ne $pullData) {
+        foreach ($f in @(Get-OpenAfterMergeFindings -Data $pullData -Now (Get-Date))) {
+            Write-Host ("[ERROR] bwj-development: $slug#$($f.Issue) links an Asana task and is still open, though " +
+                "PR #$($f.Pull), shipped with -NoResolves, merged on $($f.MergedAt.ToString('yyyy-MM-dd')). An issue " +
+                "closes when its PR lands -- 'open until live' is not a state. Post its go-live block if it has " +
+                "none (the 'golive-block' skill), then close it as completed; notify-live tells the task once it " +
+                "is live. Only another PR that still changes code for it keeps it open.")
         }
     }
 } catch {

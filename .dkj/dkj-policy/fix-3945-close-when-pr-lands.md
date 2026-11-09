@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Inbound #3945: state that an issue closes when its PR lands, and report an Asana-linked issue left open
+after its `-NoResolves` merge. The issue's symptom held: `WORKFLOW-portable.md` said only that an issue
+stays open while it still changes code (#3059), and nothing read an open issue after a merge.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `WORKFLOW-portable.md`: the rule, stated in the extension's own words, and the `-NoResolves` paragraph says when the hand close happens
+- [x] `closed-message-sessioncheck.ps1`: finding 5, from three gh reads, with a test-only data override
+- [x] README hooks row names the new finding
 
 ### TEST
 
+- [x] `closed-message-sessioncheck.tests.ps1`: the measured case, five silent cases, an unreadable read, and the reach (42 passed)
+
 ### DEPLOY: fix/3945-close-when-pr-lands
 
-**Score:**
+In a BWJ store, an Asana-linked issue closes when its pull request lands, always
+([#3945](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3945)). "Open until live" is not a state:
+`notify-live` tells the task once the release is live. The ticket chapter now says so in its own words. The
+`closed-message-sessioncheck` session check reports any Asana-linked issue still open within 14 days after
+the `-NoResolves` pull request named for it merged. It stays quiet where an open pull request's branch is named
+after the same issue, because a further step is still changing code. Measured on smartwatchbanden#1126, whose
+pull request merged while the session kept the issue open for the live push.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A store maintainer now sees a session-start error line for an Asana-linked issue left open after its merge,
+where nothing said anything before. It names the issue, the pull request, and the two steps that end it: the
+go-live block and the close.
+
+**Score:** 3
 
 #### Pull Request
 
