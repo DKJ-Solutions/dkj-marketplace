@@ -216,6 +216,20 @@ function Get-DkjReposModel {
               Meta = @{ GeneratedAt = $started.ToString('yyyy-MM-dd HH:mm:ss'); Seconds = ((Get-Date) - $started).TotalSeconds } }
 }
 
+function Get-DocsCoverageModel {
+    <#
+        The Docs coverage pages' data (#3906): one GraphQL call for the status of every item's issue. Cached like the
+        DKJ repos page, because the call goes over the network.
+    #>
+    $started = Get-Date
+    $ErrorActionPreference = 'Continue'   # the same 5.1 stderr trap as in Invoke-DashboardGit
+    $raw = $null
+    try { $raw = & gh api graphql -f ('query=' + (Get-DocsCoverageQuery)) -f 'owner=DKJ-Solutions' -f 'name=dkj-marketplace' 2>$null } catch { $raw = $null }
+    $query = ConvertFrom-DocsCoverageQuery -Json $(if ($LASTEXITCODE -eq 0 -and $raw) { ($raw -join "`n") } else { '' })
+    return @{ Query = $query; At = Get-Date
+              Meta = @{ GeneratedAt = $started.ToString('yyyy-MM-dd HH:mm:ss'); Seconds = ((Get-Date) - $started).TotalSeconds } }
+}
+
 function Get-SpecialistsModel {
     <#
         Every specialist under plugins/dkj-subagents/, read on every request: about sixty small files. A
@@ -304,6 +318,7 @@ $listener.Start()
 Write-Host "consumer dashboard: http://localhost:$Port/"
 $cache = $null
 $dkjCache = $null
+$docsCache = $null
 # The commit this process loaded its code from; $null outside a git checkout or on an unborn HEAD, and
 # then it never restarts.
 $loaded = Invoke-DashboardGit $root @('rev-parse', 'HEAD')
@@ -374,9 +389,10 @@ try {
             if ($path -eq '/refresh') {
                 # At most one re-run per -MinRefreshSeconds, however often /refresh is asked for. ?page= names
                 # where to go back to, from a fixed list, so the redirect never leaves this server.
-                $page = if ([string]$target -cmatch '[?&]page=(consumers(?:/(?:dkj(?:/[A-Za-z0-9._-]+)?|bwj|other))?)(&|$)') { $Matches[1] } else { '' }
+                $page = if ([string]$target -cmatch '[?&]page=(consumers(?:/(?:dkj(?:/[A-Za-z0-9._-]+)?|bwj|other))?|docs-coverage(?:/[a-z0-9-]+)?)(&|$)') { $Matches[1] } else { '' }
                 if ($cache -and ((Get-Date) - $cache.At).TotalSeconds -ge $MinRefreshSeconds) { $cache = $null }
                 if ($dkjCache -and ((Get-Date) - $dkjCache.At).TotalSeconds -ge $MinRefreshSeconds) { $dkjCache = $null }
+                if ($docsCache -and ((Get-Date) - $docsCache.At).TotalSeconds -ge $MinRefreshSeconds) { $docsCache = $null }
                 Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = "/$page" } -Method $method
                 continue
             }
@@ -435,6 +451,26 @@ try {
                 $reg = @($cache.Consumers | Where-Object { ([string]$_.Repo) -eq [string]$row.Repo })[0]
                 $lensCard = Format-RepoLensesCardHtml -Lenses (Get-CheckoutLenses -Path $(if ($co) { [string]$co.Path } else { '' })) -Names (Get-SpecialistNames)
                 $html = Format-DkjRepoPageHtml -Row $row -Checkout $co -Consumer $reg -LensesHtml $lensCard.Html -LensesStyle $lensCard.Style -Meta $meta
+                Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($html)) -Method $method
+                continue
+            }
+            if ($path -cmatch '^/docs-coverage(?:/([a-z0-9-]+))?\z') {
+                # The Docs coverage overview, or one item's own page (#3906); an unknown slug is a 404, never an empty page.
+                $slug = [string]$Matches[1]
+                if ($null -eq $docsCache -or ((Get-Date) - $docsCache.At).TotalSeconds -ge $CacheSeconds) { $docsCache = Get-DocsCoverageModel }
+                $q = $docsCache.Query; $meta = $docsCache.Meta
+                # A failed read is shown once and not kept, so the next request asks again, as on /consumers/dkj.
+                if ($q.Error) { $docsCache = $null }
+                if ($slug) {
+                    $item = @(Get-DocsCoverageItems | Where-Object { $_.Slug -ceq $slug })[0]
+                    if ($null -eq $item) {
+                        Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('Not found: no Docs coverage item of that name.')) -Method $method
+                        continue
+                    }
+                    $html = Format-DocsCoverageItemPageHtml -Item $item -Issue $q.ByIssue[[int]$item.Issue] -Meta $meta
+                } else {
+                    $html = Format-DocsCoveragePageHtml -Query $q -Meta $meta
+                }
                 Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($html)) -Method $method
                 continue
             }

@@ -150,9 +150,9 @@ Assert-True ($bshell -notmatch 'class="eyebrow"' -and $bshell -notmatch 'theme-s
 
 Write-Host '-- the product: the home page on / (#3540)' -ForegroundColor Cyan
 $pages = @(Get-ProductPages)
-Assert-Equal '/consumers,/marketplace,/settings' (($pages | ForEach-Object { $_.Href }) -join ',') 'the product links its two pages: Consumers and Plugins, Specialists a card on the Plugins page since October 28, 2026 (the owner), the DKJ repos on GitHub a section of /consumers/dkj since #3549; the general pages are the plugin admin''s (#3540)'
+Assert-Equal '/consumers,/marketplace,/docs-coverage,/settings' (($pages | ForEach-Object { $_.Href }) -join ',') 'the product links its two pages: Consumers and Plugins, Specialists a card on the Plugins page since October 28, 2026 (the owner), the DKJ repos on GitHub a section of /consumers/dkj since #3549, and Docs coverage since #3906; the general pages are the plugin admin''s (#3540)'
 Assert-Equal '/dev/issues,/dev/today,/dev/goals,/dev/release-notes,/dev/sessionstart,/dev/test-gate,/dev/stopwatch,/dev/logbook,/dev/plugins,/settings' ((Get-GeneralPages | ForEach-Object { $_.Href }) -join ',') 'the plugin lists the ten general pages, in order: Today first of Admin''s own (#3860), then Goals (#3816), Test gate, Stopwatch and Logbook every repo''s since #3470, Plugins since #3482, Settings last (Dave, November 2, 2026)'
-Assert-Equal 'Admin=/admin,Consumers=/consumers,Marketplace=/marketplace,Settings=/settings' ((@(Get-ProductMenu) | ForEach-Object { $_.Label + '=' + $_.Href }) -join ',') 'the site header menu opens on Admin, through the server''s /admin redirect, then the product''s own pages, in the home page''s card order (Maikel, November 3, 2026)'
+Assert-Equal 'Admin=/admin,Consumers=/consumers,Marketplace=/marketplace,Docs coverage=/docs-coverage,Settings=/settings' ((@(Get-ProductMenu) | ForEach-Object { $_.Label + '=' + $_.Href }) -join ',') 'the site header menu opens on Admin, through the server''s /admin redirect, then the product''s own pages, in the home page''s card order (Maikel, November 3, 2026)'
 # The product has one width, full, as Admin has: another screen is judged in the Simple Browser's own device
 # emulation (Dave, November 4, 2026), so its Settings page carries the theme alone.
 $ps = Format-ProductSettingsHtml
@@ -169,7 +169,7 @@ Assert-True ($ph -notmatch 'class="eyebrow"' -and ([regex]::Matches($ph, '<heade
 Assert-True ($ph -match '<style>\r?\n\.ph-cards \{' -and $ph -notmatch 'class="grid-3"' -and $ph -match '<div class="ph-cards">\r?\n<section class="card card--link"><nav class="menu-list" aria-label="Admin"><a class="menu-item" href="http://localhost:4890">') 'the cards stand in the Admin home''s .ph-cards, never a .grid-3 (Maikel, November 3, 2026), and open on the Admin card, linking the plugin admin'
 $phBody = $ph.Substring($ph.IndexOf('</header>'))   # the cards, not the site header's menu, which lists the same pages
 Assert-True ($phBody.IndexOf('aria-label="Admin"') -ge 0 -and $phBody.IndexOf('aria-label="Admin"') -lt $phBody.IndexOf('href="/consumers"') -and $phBody.IndexOf('href="/consumers"') -lt $phBody.IndexOf('href="/marketplace"') -and $ph -notmatch 'href="/dkj-repos"' -and $ph -notmatch 'href="/specialists"') 'then Consumers and Plugins, in that order, and no DKJ repos (#3549) or Specialists card of its own'
-Assert-Equal 4 ([regex]::Matches($ph, '<section class="card card--link"><nav class="menu-list" aria-label="[^"]+"><a class="menu-item" href="[^"]+"><svg class="menu-item__icon"')).Count 'four cards (Admin, Consumers, Marketplace, Settings), each a .card--link with its icon first'
+Assert-Equal 5 ([regex]::Matches($ph, '<section class="card card--link"><nav class="menu-list" aria-label="[^"]+"><a class="menu-item" href="[^"]+"><svg class="menu-item__icon"')).Count 'five cards (Admin, Consumers, Marketplace, Docs coverage, Settings), each a .card--link with its icon first'
 Assert-True ($ph -notmatch 'href="/(repository|test-gate|stopwatch|logbook|issues|release-notes|sessionstart|brandbook)"') 'and no general page of its own: those are the plugin admin''s (#3540); its /plugins is its own, what the marketplace ships'
 Assert-True ($ph -match 'class="note">[^\n]*serve-consumer-dashboard\.ps1</code>, from <code>abc1234</code>') 'the footer names the server and the commit it loaded'
 Assert-True ((Format-ProductHomeHtml) -notmatch ', from <code>') 'and leaves the commit out when it could not be read'
@@ -1119,6 +1119,52 @@ Assert-Equal '<p>Intro. Two chapters.</p><h3>The house style</h3><p>tokens &lt;b
 Assert-Equal '<p>One sentence. CHECK-HOUSE-STYLE gate holds.</p>' (ConvertTo-PluginDescriptionHtml 'One sentence. CHECK-HOUSE-STYLE gate holds.') 'capitals without a colon start no paragraph'
 $headRow = [regex]::Match($one, '(?s)<div class="toolbar"><h1>alpha</h1>.*?<div class="toolbar__end"><p class="badge-row">.*?Behind</p></div></div>').Success
 Assert-True $headRow 'the plugin page sets its state at the right end of the toolbar, beside the h1 (the owner, October 26, 2026; #3811)'
+
+Write-Host '-- the Docs coverage pages (#3906)' -ForegroundColor Cyan
+$dcItems = @(Get-DocsCoverageItems)
+Assert-Equal 10 $dcItems.Count 'ten items, as #3906 lists them'
+Assert-Equal ((3895..3904) -join ',') (($dcItems | ForEach-Object { $_.Issue }) -join ',') 'in the issue''s own order, one issue each'
+Assert-Equal 10 (@($dcItems | ForEach-Object { $_.Slug } | Sort-Object -Unique)).Count 'every slug is unique'
+Assert-True (@($dcItems | Where-Object { $_.Slug -cnotmatch '^[a-z0-9-]+\z' }).Count -eq 0) 'every slug matches the route''s own pattern'
+Assert-True (@($dcItems | Where-Object { @($_.Label -split ' ').Count -gt 5 }).Count -eq 0) 'every label is five words at most (it is the page''s h1)'
+Assert-True (@($dcItems | Where-Object { $_.Docs -cnotmatch '^https://code\.claude\.com/docs/' }).Count -eq 0) 'every item names its docs page'
+Assert-Equal '--' (Get-DocsCoverageStatus $null) 'a status not read is --'
+Assert-Equal 'Done' (Get-DocsCoverageStatus @{ State = 'CLOSED'; StateReason = 'COMPLETED'; Labels = @(); Assigned = $false }) 'closed as completed is Done'
+Assert-Equal 'Declined' (Get-DocsCoverageStatus @{ State = 'CLOSED'; StateReason = 'NOT_PLANNED'; Labels = @(); Assigned = $false }) 'closed otherwise is Declined'
+Assert-Equal 'In review' (Get-DocsCoverageStatus @{ State = 'OPEN'; Labels = @('prio-2', 'awaiting-review-dev'); Assigned = $true }) 'a look at a result comes first'
+Assert-Equal 'Awaiting decision' (Get-DocsCoverageStatus @{ State = 'OPEN'; Labels = @('awaiting-decision-dev'); Assigned = $false }) 'then a decision'
+Assert-Equal 'Waiting' (Get-DocsCoverageStatus @{ State = 'OPEN'; Labels = @('awaiting-pull'); Assigned = $true }) 'then any other wait, before the assignee'
+Assert-Equal 'In progress' (Get-DocsCoverageStatus @{ State = 'OPEN'; Labels = @('prio-2'); Assigned = $true }) 'an assignee without a wait is In progress'
+Assert-Equal 'Open' (Get-DocsCoverageStatus @{ State = 'OPEN'; Labels = @(); Assigned = $false }) 'and nothing at all is Open'
+$dcQuery = Get-DocsCoverageQuery
+Assert-True ($dcQuery -notmatch '"') 'the query holds no double quote (5.1 would split it on its way to gh)'
+Assert-True ($dcQuery -match 'i3895: issue\(number: 3895\)' -and $dcQuery -match 'i3904: issue\(number: 3904\)') 'the query asks every item''s issue under an alias'
+$dcJson = '{"data":{"repository":{"i3895":{"number":3895,"state":"OPEN","stateReason":null,"assignees":{"totalCount":0},"labels":{"nodes":[{"name":"awaiting-decision-dev"}]}},"i3904":{"number":3904,"state":"CLOSED","stateReason":"COMPLETED","assignees":{"totalCount":1},"labels":{"nodes":[]}},"i3896":null}}}'
+$dcParsed = ConvertFrom-DocsCoverageQuery -Json $dcJson
+Assert-Equal '' $dcParsed.Error 'a well-formed answer has no error'
+Assert-Equal 'Awaiting decision' (Get-DocsCoverageStatus $dcParsed.ByIssue[3895]) 'the answer is read by issue number'
+Assert-Equal 'Done' (Get-DocsCoverageStatus $dcParsed.ByIssue[3904]) 'with its state reason'
+Assert-True (-not $dcParsed.ByIssue.ContainsKey(3896)) 'an issue the answer could not resolve is left out, not a blank entry'
+Assert-True ([bool](ConvertFrom-DocsCoverageQuery -Json '').Error) 'an empty answer is an error'
+Assert-True ([bool](ConvertFrom-DocsCoverageQuery -Json 'not json').Error) 'so is one that is not JSON'
+$dcMeta = @{ GeneratedAt = '2026-11-08 12:00:00'; Seconds = 0.4 }
+$dcOver = Format-DocsCoveragePageHtml -Query $dcParsed -Meta $dcMeta
+Assert-Equal 10 ([regex]::Matches($dcOver, 'href="/docs-coverage/[a-z0-9-]+"')).Count 'the overview links every item''s own page'
+Assert-True ($dcOver -match '<h1[^>]*>Docs coverage</h1>') 'the overview''s h1 is its crumb'
+Assert-True ($dcOver -match 'Awaiting decision &middot; #3895') 'each card carries its status and issue as its value'
+Assert-True ($dcOver -match '-- &middot; #3897') 'an issue the answer left out reads --'
+Assert-True ($dcOver -notmatch 'GitHub could not be read') 'a good read raises no warning'
+$dcFail = Format-DocsCoveragePageHtml -Query (ConvertFrom-DocsCoverageQuery -Json '') -Meta $dcMeta
+Assert-True ($dcFail -match 'role="alert">GitHub could not be read') 'a failed read says so above the cards'
+Assert-Equal 10 ([regex]::Matches($dcFail, 'href="/docs-coverage/[a-z0-9-]+"')).Count 'and still shows every card'
+$dcPage = Format-DocsCoverageItemPageHtml -Item $dcItems[0] -Issue $dcParsed.ByIssue[3895] -Meta $dcMeta
+Assert-True ($dcPage -match '<h1[^>]*>Plugin dependencies</h1>') 'an item page''s h1 is its label'
+Assert-True ($dcPage -match 'href="/docs-coverage"[^>]*>Docs coverage<') 'its trail runs back through Docs coverage'
+Assert-True ($dcPage -match 'href="https://github.com/DKJ-Solutions/dkj-marketplace/issues/3895"') 'it links its issue'
+Assert-True ($dcPage -match '<dd>Awaiting decision</dd>') 'and shows its status'
+Assert-True ($dcPage -match '<h2>The idea</h2>' -and $dcPage -match '<h2>What the docs say</h2>') 'two cards: the idea and what the docs say'
+Assert-True ($dcPage -match 'href="/refresh\?page=docs-coverage/plugin-dependencies"') 'its read-again link comes back to the item'
+Assert-True (($dcOver + $dcPage) -notmatch [string][char]0x2014) 'no em dash anywhere (the brand book)'
 Write-Host ''
 Write-Host "dev-pages: $script:pass passed, $script:fail failed"
 if ($script:fail -gt 0) { exit 1 }
