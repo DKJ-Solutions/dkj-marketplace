@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**1 / 4 minor entries** <!-- pending-tally -->
+**2 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3937-fit-alarm-modal-h1 · 20261109-150742Z
+
+A popup opened as a modal dialog may now open on its own h1: the page shell's fit alarm no longer counts an h1
+inside an open modal as the page's second, so the Docs coverage row popup stops raising "2 h1 on this page".
+The brand book's one-h1 rule says so too.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions app that renders its pages with the shared page shell can give a modal popup its own h1
+without the fit alarm firing, once it takes the next release.
+
+**Score:** 1
+
+#### Pull Request
+
+The fit alarm leaves a modal popup's own h1 out of the page count
+
+Plugins: dkj-policy
+
+[PR #3940](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3940)
+
+---
 
 ### DEPLOY: feat/docs-coverage-row-detail · 20261109-143855Z
 
