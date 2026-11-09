@@ -358,7 +358,8 @@ function Format-FitAlarmHtml {
       said.push("Does not fit one screen: " + past.join(", "));
     }
     var trail = shell ? ".shell__bar .breadcrumbs" : ".breadcrumbs", head = shell ? ".toolbar > h1" : "h1";
-    var h1 = document.querySelectorAll("h1").length, crumbs = document.querySelectorAll(trail + " li").length;
+    // An open modal is its own document to a screen reader, so a popup's own h1 is not the page's second (#3937).
+    var h1 = [].filter.call(document.querySelectorAll("h1"), function (h) { var m = h.closest("dialog"); return !(m && m.matches(":modal")); }).length, crumbs = document.querySelectorAll(trail + " li").length;
     if (h1 > 1 || (h1 === 0 && crumbs !== 1)) { said.push(h1 + " h1 on this page, where a page carries exactly one"); }
     if (shell && h1 === 1 && !document.querySelector(head)) { said.push("The h1 stands in the pane, where Admin's h1 is the toolbar's"); }
     var named = Math.max(words(document.querySelector(head)), words(document.querySelector(trail + " [aria-current=\"page\"]")));
