@@ -121,6 +121,7 @@ an absent link is a fact rather than an oversight.
 | `sync/check-script-contract.ps1` | read-only script-contract drift check | none — invoked by the `script-contract-sessioncheck` SessionStart hook |
 | `lib/release-lib.ps1` | the pure release logic: version bump, changelog transformation, notes construction, `Test-ReleaseBumpEarned` | none — dot-sourced lib |
 | `lib/live-record-lib.ps1` | the live-push record: its `live`/`hold` format and parser, the `merge: <branch> (#NN)` lookup, whether an entry is live, and the audience note's solved-task items. Read by `cut-release` for the GitHub body's `## Not live yet` and the audience note; written by `live-preflight` (mirrored into `dkj-subagents-shopify`) | none — dot-sourced lib |
+| `lib/pull-issue-lib.ps1` | which issues a merged PR carried: its closing references plus the issues it only names (head branch, body), and whether a named one closed as completed. Read by `cut-release` for the audience note's task links; mirrored into `bwj-development`, whose `notify-live` reads the same set (#3941) | none — dot-sourced lib |
 | `lib/entry-scaffold-lib.ps1` | the one definition of the entry format, read by the script that writes it and the gates that refuse it | none — dot-sourced lib |
 | `lib/plugin-tree-lib.ps1` | which plugins this repo publishes and where each folder sits | none — dot-sourced lib |
 | `lib/script-contract-lib.ps1` | the contract registry the check above reads | none — dot-sourced lib |
