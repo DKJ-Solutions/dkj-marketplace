@@ -51,7 +51,7 @@ feature, and N/A where the status is Not relevant (November 9, 2026).
 ### TEST
 
 - [x] dev-pages.tests.ps1: 725 passed, 0 failed, with asserts for the column, N/A, the sort and every row's impact
-- [ ] The owner has looked at http://localhost:4871/docs-coverage
+- [x] The owner has looked at http://localhost:4871/docs-coverage
 
 ### DEPLOY: feat/docs-coverage-impact
 
