@@ -258,14 +258,14 @@ foreach ($n in @(Get-ReleaseRangePullNumbers -Subjects $subjects.Lines)) {
         if (-not $isIssue.ContainsKey($m)) {
             # The issues endpoint answers a PR too, with a pull_request field. A filter with no double
             # quote in it, so Windows PowerShell 5.1's native argument quoting has nothing to mangle.
-            # -i PUTS THE STATUS LINE ON STDOUT, which Invoke-Native keeps while it drops stderr: a 404 is
-            # a definitive "no such issue here" (a '#<n>' copied from another tracker, a deleted issue)
+            # -i PUTS THE STATUS LINE ON STDOUT, which Invoke-Native keeps while it drops stderr: a 404 or a 410 is
+            # a definitive "no such issue here" (a '#<n>' copied from another tracker, a deleted issue, which answers 410, #3941)
             # and must not fail every rerun, while any other failure is still an unread (code review).
             $kind = Invoke-Native { gh api -i "repos/$repoName/issues/$m" --jq '.pull_request == null' }
             $lines = @(@($kind.Lines) | Where-Object { $_.Trim() })
             $status = if ($lines.Count -gt 0 -and $lines[0] -match '^HTTP/\S+\s+(\d{3})') { [int]$Matches[1] } else { 0 }
             $answer = if ($lines.Count -gt 0) { $lines[-1].Trim() } else { '' }
-            $isIssue[$m] = if ($status -eq 404) { $false }
+            $isIssue[$m] = if ($status -eq 404 -or $status -eq 410) { $false }
                            elseif ($kind.Code -ne 0 -or $answer -notin @('true', 'false')) { $null }
                            else { $answer -eq 'true' }
             if ($null -eq $isIssue[$m]) { $readFailures++; Write-Host "  #$m  UNREAD   PR #$n names it, and GitHub could not say whether it is an issue -- not told" -ForegroundColor Yellow }

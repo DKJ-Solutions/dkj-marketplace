@@ -2,7 +2,62 @@
 
 ## [Unreleased]
 
-**3 / 8 minor entries** <!-- pending-tally -->
+**5 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3944-noresolves-cites-branch-issue · 20261109-163848Z
+
+`open-pr -NoResolves` now cites the issue the branch name carries as a visible `Part of #<n>` line in the
+PR body, unless the body already mentions it. Before, it wrote only the `closes nothing` marker, so a branch
+whose document never named its own issue merged without any link to it (#3944).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a BWJ store repo, an Asana-linked issue ships with `-NoResolves`, and `build-golive-block.ps1 -Post`
+refused afterwards because no pull request closed or referenced the issue. The way past was a hand edit of
+the merged PR's body or `-Force`. The PR now references the issue on its own, so `-Post` finds it.
+
+**Score:** 3
+
+#### Pull Request
+
+open-pr -NoResolves cites the branch's issue as 'Part of #<n>'
+
+Plugins: dkj-policy
+
+[PR #3948](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3948)
+
+---
+
+### DEPLOY: fix/3941-audience-note-named-issues · 20261109-162740Z
+
+The release cut's audience note now finds an entry's task through the issues its PR **names** as well as
+the ones it closes, the same set `notify-live` reads (#3941). At BWJ-Development/smartwatchbanden's
+v2.51.0 cut five storefront entries were left out as "no issue it closed is linked to a task" because
+their PRs named the issue without closing it, and `notify-live` then told three of those tasks the release
+was live. The rule is now one file, `pull-issue-lib.ps1`, shared by both plugins. A named issue counts
+only once it has closed as completed, and one that has not is named in the hint instead of read as having
+no task.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A repo that ships its Asana-linked issues with `-NoResolves` gets a cut's audience note with those tasks
+linked, instead of adding the links by hand after the draft.
+
+**Score:** 3
+
+#### Pull Request
+
+cut-release's audience note reads the issues a PR names, not only the ones it closes
+
+Plugins: bwj-development, dkj-policy
+
+[PR #3946](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3946)
+
+---
 
 ### DEPLOY: feat/3935-bwj-development-under-dkj · 20261109-154705Z
 

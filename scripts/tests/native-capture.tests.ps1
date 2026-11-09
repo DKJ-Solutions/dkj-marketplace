@@ -2041,6 +2041,10 @@ foreach ($af in $auditFiles) {
 # (`gh issue comment`), -Utf8 and at the shared network bound like the claim's own marker write. Both are judged
 # only after Test-NativeExitMeasured and a POSITIVE `-eq 0`: a label it could not judge is NOT parked and the claim
 # is released, and a comment it could not judge is reported with its paste-ready line, never as posted.
+# 112 -> 112 (#3941): #2586's pair in cut-release.ps1, now Get-PullRequestCarriedIssues. $prCap also reads
+# headRefName and body; $isCap is `gh api -i repos/<repo>/issues/<n>` in place of `gh issue view`, because a
+# NAMED number may be a pull request. A named number's measured 404 is a definitive "not an issue here" and is
+# skipped; every other failure still THROWS, for #2586's reason.
 Assert-Equal 112 $boundedTotal 'the parser still counts 112 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
 Assert-Equal 0 $unguarded.Count `
     ('every bounded capture judged with a NEGATIVE exit-code test either asks Test-NativeExitMeasured/Get-NativeExitLabel about THAT capture or is exempt with a reason (#2081)' +
