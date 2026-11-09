@@ -41,7 +41,7 @@
 
 The owner (November 9, 2026): the "?" icons in the Docs coverage table go, now that each row's info icon opens
 a popup carrying everything they explained. Then: the Potential line goes too, and Impact takes over as the one
-measure of a page's value. And the popup's "Why consider" heading becomes "Advice", with the advice and its reason under it, so the Advice row in the facts above it goes. Last, an Open page's Note joins that Advice block, as one running paragraph.
+measure of a page's value. And the popup's "Why consider" heading becomes "Advice", with the advice and its reason under it, so the Advice row in the facts above it goes. Last, an Open page's Note joins that Advice block, as one running paragraph. And the popup's two fact lists become one Overview, with Advice an h2 of its own.
 
 ### CREATE
 
@@ -49,6 +49,7 @@ measure of a page's value. And the popup's "Why consider" heading becomes "Advic
 - [x] `docs-coverage-catalog.ps1`: drop Potential from all 46 Open pages; `docs-coverage-lib.ps1`: drop its line from the Details popup
 - [x] `docs-coverage-lib.ps1`: the popup's "Why <advice>" heading reads "Advice", and the paragraph under it starts with the advice itself, then why; the Advice row leaves the "How this repo stands" facts
 - [x] `docs-coverage-lib.ps1`: on a page with advice, the Note and the advice are one Advice paragraph (the note, "Our advice: <advice> it.", then why); a page without advice keeps its Note
+- [x] `docs-coverage-lib.ps1`: "Where it sits" and "How this repo stands" are one Overview h2 with one facts list, for items and docs pages alike; Advice is an h2 after the Note and Evidence
 - [x] Checked that every tooltip's text is already in the row's Details popup: the one line, the idea and the docs check; why declined; the note, evidence, potential and advice; the docs' own description
 
 ### TEST
@@ -62,7 +63,8 @@ Admin's Docs coverage table no longer puts a "?" beside a row's name or status. 
 popup that already holds everything those tooltips said, so the table reads as plain cells plus that one icon. The popup's Potential line, 1 to 4, is gone with it:
 Impact, Tier-1 to Tier-8, is now the one measure of how much a docs page matters here. An Open page's popup puts its reasoning under one
 Advice heading, starting with Adopt, Consider or Skip, rather than under "Why consider", and no longer repeats it as a row in the facts above. That block also carries the page's note, which was a
-separate Note block, so what the repo has, the advice and why read as one running paragraph.
+separate Note block, so what the repo has, the advice and why read as one running paragraph, under an Advice h2 of its own.
+The popup's "Where it sits" and "How this repo stands" are now one Overview list.
 
 **Score:** 2
 

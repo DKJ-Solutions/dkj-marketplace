@@ -319,11 +319,11 @@ function Format-DocsCoveragePageHtml {
         $statusHtml = Format-DocsCoverageStatusText $status
         $detailId = 'detail-item-' + $it.Slug
         # The popup in headings (the owner, November 9, 2026): the item's name the h1, a block per h2, its parts h3.
-        $body = '<h2>Where it sits</h2>' + (Format-DocsCoverageFacts ([ordered]@{
+        # Where it sits and how this repo stands are one Overview list (the owner, November 9, 2026).
+        $body = '<h2>Overview</h2>' + (Format-DocsCoverageFacts ([ordered]@{
                 'Section' = '<a href="' + (& $e $it.SectionUrl) + '">' + (& $e $it.Section) + '</a>'
                 'Group' = '<a href="' + (& $e $it.GroupUrl) + '">' + (& $e $it.Group) + '</a>'
-                'Docs' = '<a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e $it.DocsHeading) + '</a>' })) +
-            '<h2>How this repo stands</h2>' + (Format-DocsCoverageFacts ([ordered]@{
+                'Docs' = '<a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e $it.DocsHeading) + '</a>'
                 'Status' = Format-DocsCoverageStatusText $status
                 'Impact' = Format-DocsCoverageImpact -Impact $it.Impact -Status $status
                 'Issue' = '<a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a>' }))
@@ -348,18 +348,18 @@ function Format-DocsCoveragePageHtml {
         $where = [ordered]@{ 'Section' = '<a href="' + (& $e ($docsBase + $pg.SectionPath)) + '">' + (& $e $pg.Section) + '</a>' }
         if ($groupHtml) { $where['Group'] = $groupHtml }
         $where['Docs'] = '<a href="' + (& $e ($docsBase + $pg.Path)) + '">' + (& $e $pg.Path) + '</a>'
-        # Impact is the one measure of a page's value (the owner, November 9, 2026: it replaced Potential). The advice
-        # is not a fact here: it opens the Advice block below, with its reason.
-        $stands = [ordered]@{ 'Status' = Format-DocsCoverageStatusText $pg.Status; 'Impact' = Format-DocsCoverageImpact -Impact $pg.Impact -Status $pg.Status }
-        $body = '<h2>Where it sits</h2>' + (Format-DocsCoverageFacts $where) + '<h2>How this repo stands</h2>' + (Format-DocsCoverageFacts $stands)
-        # A page with advice gives its note and the advice under one Advice heading, as one running paragraph: what
-        # the repo has, the advice, and why (the owner, November 9, 2026: not a Note and a "Why consider" apart).
-        # A page without advice keeps its Note.
-        if ($pg.AdviceWhy) {
-            $body += '<h3>Advice</h3><p>' + (& $e $pg.Note) + ' Our advice: ' + (& $e ([string]$pg.Advice).ToLowerInvariant()) + ' it. ' + (& $e $pg.AdviceWhy) + '</p>'
-        }
-        else { $body += '<h3>Note</h3><p>' + (& $e $pg.Note) + '</p>' }
+        # Where it sits and how this repo stands are one Overview list (the owner, November 9, 2026). Impact is the
+        # one measure of a page's value (it replaced Potential); the advice is not a fact there but its own block.
+        $where['Status'] = Format-DocsCoverageStatusText $pg.Status
+        $where['Impact'] = Format-DocsCoverageImpact -Impact $pg.Impact -Status $pg.Status
+        $body = '<h2>Overview</h2>' + (Format-DocsCoverageFacts $where)
+        if (-not $pg.AdviceWhy) { $body += '<h3>Note</h3><p>' + (& $e $pg.Note) + '</p>' }
         if ($ev.Count) { $body += '<h3>Evidence</h3><ul>' + ((@($ev) | ForEach-Object { '<li><code>' + (& $e $_) + '</code></li>' }) -join '') + '</ul>' }
+        # A page with advice ends on an Advice h2, one running paragraph: what the repo has, the advice, and why
+        # (the owner, November 9, 2026: not a Note and a "Why consider" apart). A page without advice keeps its Note.
+        if ($pg.AdviceWhy) {
+            $body += '<h2>Advice</h2><p>' + (& $e $pg.Note) + ' Our advice: ' + (& $e ([string]$pg.Advice).ToLowerInvariant()) + ' it. ' + (& $e $pg.AdviceWhy) + '</p>'
+        }
         [void]$details.AppendLine((Format-DocsCoverageDetailTemplate -Id $detailId -Title $pg.Title -Sub $pg.Desc -BodyHtml $body))
         [void]$sb.AppendLine('<tr><td><a href="' + (& $e ($docsBase + $pg.SectionPath)) + '">' + (& $e $pg.Section) + '</a></td>' +
             '<td class="col-start">' + $groupHtml + '</td>' +
