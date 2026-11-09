@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**0 / 2 patch entries** <!-- pending-tally -->
+**1 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/explain-tooltip-readability · 20261109-135046Z
+
+Every explaining "?" tooltip in the brand book reads easier: body-size text at about eight words a line,
+a looser line height, and more air around the title and between paragraphs.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions app that vendors the brand book gets the more readable explaining tooltip once it takes the
+next release's copy; nothing in its markup changes.
+
+**Score:** 2
+
+#### Pull Request
+
+Explaining tooltips: about eight words a line, body-size text and more spacing
+
+Plugins: dkj-policy
+
+[PR #3936](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3936)
+
+---
 
 ### DEPLOY: feat/docs-coverage-potential · 20261109-134441Z
 
