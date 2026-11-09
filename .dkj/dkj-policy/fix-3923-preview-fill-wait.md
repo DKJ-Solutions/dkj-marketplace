@@ -39,19 +39,38 @@
 
 ### PLAN
 
+Inbound #3923 (from BWJ-Development/smartwatchbanden#1066). Verified before repair: #3732 (v6.3.0)
+already lets the wait run on while the copy grows, up to 3x `-TimeoutMinutes`. But the measured copy
+held 843 of 910 files at ~55 min and was still rising, so the 60-minute cap of the 20-minute default
+still refuses it. The default is the part that still stands. The counting method (a full pull per
+sample) is a separate subject, filed as #3926.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `push-preview.ps1`: `-TimeoutMinutes` default 20 -> 40 (hard cap 120 min), docstring cites #3923
+- [x] `skills/push-preview/SKILL.md`: the parameter row says the new default and why
 
 ### TEST
 
+- [x] No suite pins push-preview's default (the script is deliberately not driven, see its NOTES); the
+  wait logic itself is unchanged and stays pinned in `theme-lifecycle-rules.tests.ps1`. ship-pr's gate runs.
+
 ### DEPLOY: fix/3923-preview-fill-wait
 
-**Score:**
+`push-preview` now waits 40 minutes for a fresh copy of live to fill before giving up, instead of 20.
+Past that it still runs on while the copy grows, up to three times that value, so up to two hours.
+A 910-file live theme's copy was measured still filling at ~55 minutes, with the context templates
+arriving last, so the old default's 60-minute cap refused a copy that was not stuck
+([#3923](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3923)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify consumer with a large live theme no longer has to re-run `push-preview` once or twice per new
+preview: the first run waits long enough for the copy to fill.
+
+**Score:** 3
 
 #### Pull Request
 
