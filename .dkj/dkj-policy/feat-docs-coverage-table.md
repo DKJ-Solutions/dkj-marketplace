@@ -107,7 +107,7 @@ cards: ten items read better compared row by row. The item pages stay as they ar
       one in the status only beside a Declined status with a reason (712/0);
       `check-house-style` OK
 - [x] The product server on 4870 restarted and serves the table
-- [ ] The owner's look at http://localhost:4870/docs-coverage
+- [x] The owner's look at http://localhost:4870/docs-coverage: "tevreden nu. ship it" (Dave, November 9, 2026)
 
 ### DEPLOY: feat/docs-coverage-table
 
