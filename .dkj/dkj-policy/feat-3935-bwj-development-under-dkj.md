@@ -39,19 +39,37 @@
 
 ### PLAN
 
+- [x] Verify inbound #3935 still stands: every page named in it still placed the folder in the root,
+  and the adopt step that scaffolds it is prose (step 7 of `adopt-bwj-development`), not a script.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Repoint the documented default and the `Get-ShopifySyncLogPath` example answer to
+  `.dkj/bwj-development/SYNC-LOG.md` in `SYNC-LOG-portable.md`, the extension README, the adopt skill,
+  the marketplace description, the teams README and the example comment in both `sync-main.ps1` copies.
+- [x] Adopt step 7 moves an existing root `bwj-development/` the way `adopt-dkj-policy` Part 1 moves a
+  root `dkj-policy/`, and leaves both folders alone when the new one already exists.
 
 ### TEST
 
+- [x] Docs and one comment line; `ship-pr`'s gates prove the tree.
+
 ### DEPLOY: feat/3935-bwj-development-under-dkj
 
-**Score:**
+bwj-development's sync log now lives at `.dkj/bwj-development/SYNC-LOG.md`, beside `.dkj/dkj-policy/`,
+instead of in the consumer's root: the pages, the `Get-ShopifySyncLogPath` example answer and the
+adopt step all name the new place, and the adopt step moves an older root `bwj-development/` there
+(#3935). No script reads a fixed path, so a repo whose seam still answers the old path keeps working
+until it moves.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A maintainer of a BWJ store repo that still keeps a root `bwj-development/` sees the adopt step
+propose the move; nothing breaks if they leave it.
+
+**Score:** 2
 
 #### Pull Request
 
