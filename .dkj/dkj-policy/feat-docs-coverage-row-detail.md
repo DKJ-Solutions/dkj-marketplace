@@ -39,19 +39,35 @@
 
 ### PLAN
 
+The owner asked (November 9, 2026) for a column on /docs-coverage with an icon per row that opens a popup with
+more about that row. A visible result, so the branch stops for the owner's look before it merges.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `docs-coverage-lib.ps1`: a last, unsorted Details column; each row's icon opens one house `.dialog`, filled
+      from a `<template>` per row (facts list, idea/why/docs points or note/advice/evidence)
+- [x] The page's own layer styles the icon and the popup with house tokens only
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the two pinned row shapes take the new cell, and new asserts cover the column, the
+      popup content for an item, a declined item, a Not used page and a Covered page, the script and the style
+      (727 passed)
+- [x] Checked in the browser on http://localhost:4870/docs-coverage: an item and a docs page popup open, Escape closes
+
 ### DEPLOY: feat/docs-coverage-row-detail
 
-**Score:**
+/docs-coverage has a Details column: an info icon on every row opens a popup that gathers everything known about
+that row in one place (its section, group, status, issue and docs link, then the idea, why and the docs check for
+an item, or the note, potential, advice and evidence for a docs page), so it reads without hovering the "?" marks.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: the Docs coverage page is this repo's own product page and ships to no consumer.
+
+**Score:** N/A
 
 #### Pull Request
 
