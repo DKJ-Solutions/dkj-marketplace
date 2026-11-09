@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**5 / 7 minor entries** <!-- pending-tally -->
+**6 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3911-admin-outside-worktree · 20261109-001641Z
+
+`dkj-policy`'s SessionStart hook no longer starts Admin in a folder that is not a git work tree. Every
+`claude plugin eval` run used to leave an Admin server behind in its temporary workspace, which kept
+the eval CLI from removing that folder (`EBUSY`). An eval run now leaves nothing running, and every
+repo still gets its Admin as before
+([#3911](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3911)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Plugin eval runs no longer leave Admin servers and locked temp folders behind.
+
+**Score:** 2
+
+#### Pull Request
+
+dev-preview starts no Admin outside a git work tree
+
+Plugins: dkj-policy
+
+[PR #3918](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3918)
+
+---
 
 ### DEPLOY: feat/3901-guard-safety-rules · 20261109-000628Z
 
