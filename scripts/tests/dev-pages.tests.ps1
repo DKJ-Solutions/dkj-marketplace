@@ -1193,9 +1193,11 @@ Assert-True (@($dcCat | Where-Object { -not $_.Note -or -not $_.Section -or -not
 Assert-True (@($dcCat | Where-Object { $_.Note -match [string][char]0x2014 }).Count -eq 0) 'no em dash in a note'
 Assert-True (@($dcCat | Where-Object { $_.Status -ceq 'Not used' -and (@('Adopt', 'Consider', 'Skip') -cnotcontains $_.Advice -or -not $_.AdviceWhy) }).Count -eq 0) 'every Not used page says whether to take it up, and why (the owner, November 9, 2026)'
 Assert-True (@($dcCat | Where-Object { $_.Status -cne 'Not used' -and $_.Advice }).Count -eq 0) 'and only a Not used page carries advice'
+Assert-True (@($dcCat | Where-Object { $_.Status -ceq 'Not used' -and @(1, 2, 3, 4) -notcontains $_.Potential }).Count -eq 0) 'every Not used page scores its potential value here from 1 to 4 (the owner, November 9, 2026)'
+Assert-True (@($dcCat | Where-Object { $_.Status -cne 'Not used' -and $null -ne $_.Potential }).Count -eq 0) 'and only a Not used page carries one'
 $dcAdv = Format-DocsCoveragePageHtml -Query $dcParsed -Meta $dcMeta -Catalog @(@{ Path = 'sandboxing'; Title = 'Sandboxing'; Section = 'Configuration'; SectionPath = 'settings'; Group = 'Permissions and sandboxing'; GroupPath = 'permissions'
-    Status = 'Not used'; Note = 'No sandbox key in settings.json.'; Evidence = @(); Advice = 'Skip'; AdviceWhy = 'Native Windows support is limited.'; Desc = 'Isolate Bash.' })
-Assert-True ($dcAdv -match 'id="status-sandboxing"><b>Not used</b>No sandbox key in settings\.json\.<p>Advice: Skip\. Native Windows support is limited\.</p></div>') 'the status "?" of a Not used page gives the advice after the note'
+    Status = 'Not used'; Note = 'No sandbox key in settings.json.'; Evidence = @(); Potential = 2; Advice = 'Skip'; AdviceWhy = 'Native Windows support is limited.'; Desc = 'Isolate Bash.' })
+Assert-True ($dcAdv -match 'id="status-sandboxing"><b>Not used</b>No sandbox key in settings\.json\.<p>Potential: 2 of 4</p><p>Advice: Skip\. Native Windows support is limited\.</p></div>') 'the status "?" of a Not used page gives its potential and then the advice after the note'
 $dcCatRow = @(@{ Path = 'statusline'; Title = 'Customize your status line'; Section = 'Configuration'; SectionPath = 'settings'; Group = 'Interface'; GroupPath = 'terminal-config'
     Status = 'Covered'; Note = 'settings.json runs show-progress.ps1.'; Evidence = @('.claude/settings.json'); Desc = 'Configure a custom status line.' },
     @{ Path = 'agent-sdk/overview'; Title = 'Agent SDK overview'; Section = 'Agent SDK'; SectionPath = 'agent-sdk/overview'; Group = ''; GroupPath = ''
