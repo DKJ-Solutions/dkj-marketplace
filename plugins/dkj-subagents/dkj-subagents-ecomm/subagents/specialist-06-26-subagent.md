@@ -10,6 +10,7 @@ description: >
   preview/live itself.
 tools: Read, Write, Edit, Grep, Glob, Bash, Skill
 model: sonnet
+maxTurns: 120
 color: green
 ---
 

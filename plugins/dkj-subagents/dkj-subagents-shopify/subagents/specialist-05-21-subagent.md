@@ -11,6 +11,7 @@ description: >
   and go back to the Sandra persona.
 tools: Read, Grep, Glob, Skill
 model: sonnet
+maxTurns: 60
 color: pink
 ---
 

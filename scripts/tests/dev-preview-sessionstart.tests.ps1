@@ -756,6 +756,22 @@ try {
         Assert-True $w.WaitForExit(15000) 'and then exits itself'
         & taskkill.exe /T /F /PID $tgt.Id 2>&1 | Out-Null
 
+        # NOT A GIT WORK TREE (#3911): a 'claude plugin eval' workspace is a plain temp folder, and an Admin
+        # started there outlived the run. Driven through CLAUDE_PROJECT_DIR with no -RepoRootOverride, the way a
+        # real session reaches the hook, and before any scenario below has put a server on the general port.
+        $plain = New-Repo 'not-a-work-tree' $null
+        $null = & git -C $plain rev-parse --is-inside-work-tree 2>$null
+        Assert-True ($LASTEXITCODE -ne 0) 'precondition: the fixture folder is not inside a git work tree'
+        $savedProjectDir = $env:CLAUDE_PROJECT_DIR
+        try {
+            $env:CLAUDE_PROJECT_DIR = $plain
+            $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Hook 2>&1 | ForEach-Object { "$_" }
+            $code = $LASTEXITCODE
+        } finally { $env:CLAUDE_PROJECT_DIR = $savedProjectDir }
+        Assert-True ($code -eq 0 -and -not (($out -join '').Trim())) "outside a git work tree the hook exits 0 and prints nothing (got '$($out -join ' ')')"
+        Assert-Equal 0 (Get-Owners $genPort).Count 'and starts no Admin: nothing listens on the general port'
+        Assert-True ($null -eq (Get-AdminState $plain)) 'and writes no state file for that folder'
+
         # NO SEAM (#3245): Admin is the general pages server, and the line hands out its link.
         $noConfig = New-Repo 'no-config' $null
         # A DKJ-Solutions repo, on purpose: even there the servers carry no Brandbook and no card for it, since

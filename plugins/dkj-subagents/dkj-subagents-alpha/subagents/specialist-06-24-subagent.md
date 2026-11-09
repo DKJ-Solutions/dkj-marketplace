@@ -10,6 +10,7 @@ description: >
   and efficient as possible. Delivers the cleaned-up result on the working copy; does not land it.
 tools: Read, Grep, Glob, Edit, Write, Bash, Skill
 model: sonnet
+maxTurns: 120
 color: green
 ---
 

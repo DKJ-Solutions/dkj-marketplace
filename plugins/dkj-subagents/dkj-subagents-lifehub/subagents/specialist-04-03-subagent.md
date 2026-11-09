@@ -9,6 +9,7 @@ description: >
   Guards the active-brain lock (currently Plutchik).
 tools: Read, Write, Edit, Grep, Glob
 model: sonnet
+maxTurns: 80
 color: green
 ---
 

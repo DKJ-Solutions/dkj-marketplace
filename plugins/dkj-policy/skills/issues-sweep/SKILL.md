@@ -123,12 +123,24 @@ light** -- report the number as unjudged and move on.
 ([#2843](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2843)). The wait might be a live
 push, a release, a deletion or a credential (`awaiting-action-dev`), work that may only run inside the
 next release (`awaiting-release`, which the cut lists), a release of another repo (`awaiting-release-external`), another issue's pull request (`awaiting-pull`), a pull request in another repo whose work is not yet available here (`awaiting-pull-external`), an external event or date (`awaiting-action-external`), the owner's choice
-(`awaiting-decision-dev`), or a choice that belongs to the client or requester outside the dev team (`awaiting-decision-client`, #2890), or somebody's look at a result (`awaiting-review-dev` for the owner's, `awaiting-review-client` for the client's or requester's, #2977). Set the matching label and say in one comment what it waits on:
+(`awaiting-decision-dev`), or a choice that belongs to the client or requester outside the dev team (`awaiting-decision-client`, #2890), or somebody's look at a result (`awaiting-review-dev` for the owner's, `awaiting-review-client` for the client's or requester's, #2977). Park it through the claim, with the matching label and what it waits on:
 
 ```powershell
-gh issue edit <n> --add-label <awaiting-label>
-gh issue comment <n> --body "Parked by a sweep: waiting on <what>."
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/claim-issue.ps1" <n> -Tag -Park <awaiting-label> -Reason "<what>"
 ```
+
+It claims the issue as step 2 does, and only the winner of the claim's read-back sets the label, posts
+`Parked by a sweep: waiting on <what>.` and releases its claim. A park is a tracker write like a claim,
+and before `-Park` it took no claim at all
+([#3907](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3907)). Measured November 8, 2026: four
+sweeps on one repo within three minutes parked the same issues, up to three comments each, and the
+verdicts differed in substance. A lost race now refuses with exit 1 and writes nothing. **Never park with
+a bare `gh issue edit` and `gh issue comment`**, because that pair is the race this closes.
+
+**And a verdict that settles an issue is building work, so it starts at step 2.** Evaluating an issue and
+closing it on that evaluation is not triage: claim it first. The same measurement had a sweep post an
+evaluation and close an issue while another tag held its claim and was writing the same verdict on a
+branch.
 
 For `awaiting-pull`, `<what>` names the blocker as `#<n>` or a branch, before any explanation (`waiting
 on #123's pull request -- ...`): that clause is what `stale-park` reads. For `awaiting-pull-external` it
@@ -164,6 +176,11 @@ wrote it: same account is not same session. Measured October 24, 2026
 ([#3386](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3386)): a sweep claimed #3379 an hour
 after step 1, and the other session's branch merged first. Read the branch, and resume your own work
 with `-TakeOver` below.
+
+**And an issue parked since step 1 is refused too** (#3907). Another sweep judged it waiting in between,
+and that claim used to print the PARKED warning followed by `[OK] ... claimed`, which twice had to be
+released by hand. Take the next free number. A label that has gone stale is lifted first, and then the
+claim runs again. The assignee route (no `-Tag`) keeps its warning, for #2518's reason.
 
 **Run the claim on its own and read its whole verdict before step 3.** Never chain it into `new-branch`
 with `;`, and never cut its output with `Select-Object -Last 1`: the last line of a refusal is the issue

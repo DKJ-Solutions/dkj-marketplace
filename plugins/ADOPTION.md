@@ -405,7 +405,7 @@ function in Claude Code and in Cowork, but not in a plain Claude.ai Chat session
 `release-notes-page`, `sync-main`, `push-preview`, `archive-theme`, `theme-lifecycle`, `live-preflight`,
 `check-branch-entry`, `check-policy-drift`,
 `prune-merged`, `tidy-machine`, `plugin-versions`, `update-plugins`, `check-fanout`,
-`measure-skill`, `measure-closeouts`, `measure-session-start`, `record-suite-durations`, `worktree-lane`, `report-issue`, `adopt-bwj-development`, `publish-page`,
+`measure-skill`, `measure-closeouts`, `measure-session-start`, `retro`, `record-suite-durations`, `worktree-lane`, `report-issue`, `adopt-bwj-development`, `publish-page`,
 `build-backlog-page`, `golive-block`,
 `orchestrator`) remain available there.
 
@@ -494,7 +494,9 @@ the team and its playbooks.
 
 The system consists of **teams and a workflow**: the repo-neutral core team `dkj-subagents-alpha` (always
 enable it), three optional add-on teams, and exactly one **way-of-working** plugin, chosen from the two
-the marketplace offers. Which specialists live in which plugin and who they are meant for is covered in
+the marketplace offers. **The add-on teams ship switched off** (`defaultEnabled: false`, #3903): an install
+leaves them disabled until your repo names them `true` in `enabledPlugins`, and a repo that already names
+them keeps its own choice. Which specialists live in which plugin and who they are meant for is covered in
 [`dkj-subagents/README.md`](dkj-subagents/README.md).
 
 **The workflow slot is different in kind, so decide about it deliberately rather than by habit — and

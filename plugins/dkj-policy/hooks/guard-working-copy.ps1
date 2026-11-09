@@ -1,9 +1,18 @@
 <#
 .SYNOPSIS
     PreToolUse hook: stops a DISPATCHED SUBAGENT from running the git commands that discard the
-    working copy it was dispatched into. The main thread is untouched.
+    working copy it was dispatched into, and stops EVERY thread from a force push or a hard reset.
 
 .DESCRIPTION
+    THE SECOND RULE CAME LATER (#3901, November 8, 2026). The constitution names `git push --force` and
+    `git reset --hard` as never without the owner's explicit permission. A plugin cannot ship `deny`
+    permission rules, so the owner chose this guard as the route: Get-SafetyRuleViolation in the same lib
+    judges it, for the main thread as well, before the agent_id gate below. The main thread's fast path
+    therefore has two string tests rather than one. On the main thread the bash wrapper in hooks.json
+    still fails OPEN when PowerShell cannot start, as it always did there.
+
+    Everything below this paragraph is the subagent rule, as first written.
+
     Reads the hook JSON from stdin. Blocks (exit 2) when ALL of these hold:
 
       1. the payload carries agent_id -- i.e. the call comes from within a dispatched subagent; and
@@ -119,7 +128,17 @@ if ([Console]::IsInputRedirected) { $raw = [Console]::In.ReadToEnd() }
 #
 # WHAT THE FIELD MEANS is still stated in exactly one place, Get-HookCommandPayload, and that is what
 # decides. This is a fast path in front of it, not a second opinion.
-if ($raw -notmatch '"agent_id"\s*:') { exit 0 }
+#
+# AND A SECOND STRING TEST, FOR THE ONE RULE THAT HOLDS ON EVERY THREAD (#3901): the constitution's force
+# push and hard reset. Only a payload naming git AND push or reset pays the lib load on the main thread;
+# the rest of the 89% still leaves here. Like the first test, it can only err towards more work.
+#
+# NO \b IN IT, and that is measured rather than tidied (review of #3901): $raw is JSON, where a newline
+# before `git` is the two characters `\n`, so `\bgit` finds no boundary after that `n` and a multi-line
+# command walked past the rule. A bare substring cannot lose a boundary to escaping.
+$isSubagentCall = $raw -match '"agent_id"\s*:'
+$mayBreakSafetyRule = ($raw -match '(?i)git') -and ($raw -match '(?i)push|reset')
+if (-not $isSubagentCall -and -not $mayBreakSafetyRule) { exit 0 }
 
 # $PSScriptRoot-relative, so it resolves the same in the source tree, in the plugin mirror and in a
 # consumer's plugin cache -- the same rule the sibling session checks state for hook-check-lib.ps1.
@@ -140,6 +159,30 @@ try { . $libPath } catch {
 }
 
 $payload = Get-HookCommandPayload $raw
+
+# THE SAFETY RULES, ASKED BEFORE THE GATE BECAUSE THEY BIND EVERY THREAD (#3901). The constitution allows a
+# force push or a hard reset only with the owner's explicit permission, and a tool call cannot carry that
+# permission, so the call is refused and the owner runs the command themselves.
+$safety = Get-SafetyRuleViolation -Command $payload.Command
+if ($null -ne $safety) {
+    [Console]::Error.WriteLine("BLOCKED (guard-working-copy): $($safety.Reason)")
+    [Console]::Error.WriteLine(@(
+        '  No tool call can carry that permission, so this one is refused on every thread, the main one',
+        '  included. Do not rephrase the command to get past this check.',
+        '',
+        '  IF THE OWNER HAS ASKED FOR IT IN SO MANY WORDS: give them the exact command and let them run it',
+        '  themselves, in their own terminal or with the `!` prefix in the prompt.',
+        '',
+        '  IF THEY HAVE NOT: it is their decision, not your command. Ask it as one choice (close-out shape B),',
+        '  and name the safer route where there is one -- a new commit instead of a rewrite, a revert PR',
+        '  instead of a reset. On the main thread, a stash or a branch keeps work before a reset; a',
+        '  dispatched subagent runs neither, and says what it needs in its deliverable instead.',
+        '',
+        '  WRITING THE RULE INTO A FILE through a script piped into an interpreter? Text that a command',
+        "  executes is judged as a command. Use the harness's Edit/Write tool instead."
+    ) -join "`n")
+    exit 2
+}
 
 # THE GATE. No agent_id means the main thread, and the main thread owns this checkout.
 if (-not $payload.AgentId) { exit 0 }

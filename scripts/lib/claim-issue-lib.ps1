@@ -3059,3 +3059,39 @@ function Get-OwnTagClaims {
     }
     return @($out | Sort-Object -Property Number)
 }
+
+function Test-ParkLabel {
+    <#
+        .SYNOPSIS
+            Whether -Park names a label a sweep may park with (issue #3907): a well-formed awaiting-* name
+            that is also in -Allowed, the skip list the sweeps read. A name outside it would park the issue
+            in name only, since -Candidates would still read it as free (Victor, #3907).
+
+        .OUTPUTS
+            $true when both hold; $false otherwise, so the script refuses before it reads.
+    #>
+    param([AllowNull()][AllowEmptyString()][string]$Label, [AllowNull()][string[]]$Allowed = @())
+    if ([string]$Label -cnotmatch '^awaiting-[a-z]+(-[a-z]+)*\z') { return $false }
+    return (@(@($Allowed) | Where-Object { [string]$_ -ceq $Label }).Count -gt 0)
+}
+
+function Format-ParkComment {
+    <#
+        .SYNOPSIS
+            The one comment a -Park run posts (issue #3907): "Parked by a sweep: waiting on <reason>".
+
+        .DESCRIPTION
+            The "waiting on" clause is what -Candidates' stale-park reading parses (#3136, #3572), so the
+            body always carries it exactly once: a reason that already opens with "waiting on" is not given
+            a second one. A trailing full stop is added where the reason has none.
+
+        .OUTPUTS
+            The comment body, a single string.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Reason)
+    # ONE LINE (Sebastian, #3907): a reason pasted with line breaks would post a comment of several paragraphs.
+    $r = ($Reason -replace '\s+', ' ').Trim()
+    $r = $r -replace '^(?i:waiting on)\s+', ''
+    if ($r -notmatch '[.!?]\z') { $r += '.' }
+    return 'Parked by a sweep: waiting on ' + $r
+}
