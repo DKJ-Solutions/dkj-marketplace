@@ -388,6 +388,9 @@ if ($absent.Count -gt 0) {
 # load, not write a GitHub body that calls everything live.
 . (Join-Path $PSScriptRoot '..\lib\live-record-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\git-porcelain-lib.ps1')
+# Which issues a PR carried, closed or only named (#3941) -- the audience note's task form reads the same set
+# bwj-development's notify-live reads, from the one file mirrored into both plugins.
+. (Join-Path $PSScriptRoot '..\lib\pull-issue-lib.ps1')
 # The CI certificate and its wait (#1715, #2317), and the catch-up decision built on them (#3155): the
 # second origin check reads the main-push CI run through the same judging function open-pr uses.
 . (Join-Path $PSScriptRoot '..\lib\gate-lib.ps1')
@@ -1724,28 +1727,50 @@ function Get-EntryNoteName {
     return ((Format-GitHubBodyItem -EntryText $EntryText) -replace '^- \[?', '' -replace '\]\(.*$', '')
 }
 
-function Get-PullRequestClosedIssues {
+function Get-PullRequestCarriedIssues {
     <#
-        The issues a merged PR closed, as { Number; Title; Body } -- two gh reads, bounded. Throws on a
-        failed read: the task form is the audience note's CONTENT, so a draft built past an unreadable PR
-        would silently drop a solved task, and nothing has been written yet when this runs.
+        The issues a merged PR carried, as { Number; Title; Body; Named; Solved } -- the ones it closed and
+        the ones it only names (its head branch's number, a bare '#<n>' in its body), the same set
+        bwj-development's notify-live reads (Get-PullIssueCandidates, #3941). gh reads, bounded.
+
+        A NAMED NUMBER IS ASKED ABOUT, NOT TRUSTED. The issues endpoint answers a pull request too, so a
+        number whose answer carries 'pull_request' is dropped, and a 404 (a '#<n>' copied from another
+        tracker, a deleted issue) is dropped as a definitive "not an issue here". A named issue is returned
+        with Solved set only when it closed as completed (Test-NamedIssueSolved): "follows #12" names work
+        that may still be open, and the caller says so instead of linking it as solved.
+
+        Throws on any other failed read: the task form is the audience note's CONTENT, so a draft built
+        past an unreadable PR or issue would silently drop a solved task, and nothing has been written yet
+        when this runs.
     #>
     param([Parameter(Mandatory)][int]$Number)
     $repoArgs = @()
     $repoName = [string](Get-SeamValue -Name 'Get-RepoName' -Default '')
     if ($repoName.Trim()) { $repoArgs = @('--repo', $repoName.Trim()) }
-    $prCap = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('pr', 'view', "$Number", '--json', 'closingIssuesReferences') + $repoArgs) `
+    # gh api fills {owner}/{repo} from the checkout's remote, the repo `gh pr view` reads without --repo.
+    $repoPath = if ($repoName.Trim()) { $repoName.Trim() } else { '{owner}/{repo}' }
+    $prCap = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('pr', 'view', "$Number", '--json', 'closingIssuesReferences,headRefName,body') + $repoArgs) `
         -Utf8 -DiscardStderr -TimeoutSeconds $script:NativeCaptureNetworkTimeoutSeconds
     if (-not (Test-NativeExitMeasured -Capture $prCap) -or $prCap.ExitCode -ne 0) { throw "gh pr view $Number failed ($(Get-NativeExitLabel -Capture $prCap))." }
-    $refs = @((($prCap.Output | Out-String) | ConvertFrom-Json).closingIssuesReferences | Where-Object { $_ })
+    $pj = ($prCap.Output | Out-String) | ConvertFrom-Json
+    $cand = Get-PullIssueCandidates -PullNumber $Number `
+        -ClosingNumbers @(@($pj.closingIssuesReferences | Where-Object { $_ }) | ForEach-Object { [int]$_.number }) `
+        -HeadRefName ([string]$pj.headRefName) -Body ([string]$pj.body)
     $issues = @()
-    foreach ($r in $refs) {
-        $n = [int]$r.number
-        $isCap = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'view', "$n", '--json', 'number,title,body') + $repoArgs) `
+    foreach ($n in @(@($cand.Closing) + @($cand.Named))) {
+        $named = -not (@($cand.Closing) -contains $n)
+        # -i puts the status line on stdout ahead of the JSON, so a 404 is told apart from an unread.
+        $isCap = Invoke-NativeCapture -FilePath 'gh' -Arguments @('api', '-i', "repos/$repoPath/issues/$n") `
             -Utf8 -DiscardStderr -TimeoutSeconds $script:NativeCaptureNetworkTimeoutSeconds
-        if (-not (Test-NativeExitMeasured -Capture $isCap) -or $isCap.ExitCode -ne 0) { throw "gh issue view $n failed ($(Get-NativeExitLabel -Capture $isCap))." }
-        $j = ($isCap.Output | Out-String) | ConvertFrom-Json
-        $issues += [pscustomobject]@{ Number = $n; Title = [string]$j.title; Body = [string]$j.body }
+        $raw = ($isCap.Output | Out-String)
+        $status = if ($raw -match '^\s*HTTP/\S+\s+(\d{3})') { [int]$Matches[1] } else { 0 }
+        if ($named -and $status -eq 404 -and (Test-NativeExitMeasured -Capture $isCap)) { continue }
+        if (-not (Test-NativeExitMeasured -Capture $isCap) -or $isCap.ExitCode -ne 0 -or $status -ne 200) { throw "gh api issue $n failed ($(Get-NativeExitLabel -Capture $isCap), HTTP $status)." }
+        $parts = [regex]::Split($raw, '\r?\n\r?\n', 2)
+        $j = $(if ($parts.Count -eq 2) { $parts[1] } else { '' }) | ConvertFrom-Json
+        if ($null -ne $j.pull_request) { continue }
+        $solved = (-not $named) -or (Test-NamedIssueSolved -State ([string]$j.state) -StateReason ([string]$j.state_reason))
+        $issues += [pscustomobject]@{ Number = $n; Title = [string]$j.title; Body = [string]$j.body; Named = $named; Solved = $solved }
     }
     return @($issues)
 }
@@ -1771,7 +1796,7 @@ $cutNote = ($consumerBumps -contains $bumpType)
 
 # THE TASK FORM (#2586): one item per solved task, where the repo answered Get-ReleaseNoteTaskLink. An
 # audience entry makes an item only when all three of the owner's rules hold -- it carries a task (an
-# issue it closed has the marker), it is a storefront change (it touched a path in the live-push record),
+# issue it closed, or names and closed as completed, has the marker -- #3941), it is a storefront change (it touched a path in the live-push record),
 # and it is live (none of those paths is held). The last two are only testable with a record; without one
 # (a repo with no live stage, or -NoLivePushRecord) the marker is the whole test.
 $taskItems = $null
@@ -1788,21 +1813,28 @@ if ($cutNote -and $taskLink) {
         $pr = Get-EntryPullRequestLink -EntryText $e
         if (-not $pr) { $leftOut += "$name -- it has no PR link, so its issues could not be read"; continue }
         try {
-            $closed = @(Get-PullRequestClosedIssues -Number $pr.Number)
+            $carried = @(Get-PullRequestCarriedIssues -Number $pr.Number)
         } catch {
             Write-Error "The audience note's task form could not read PR #$($pr.Number): $(Format-SafeProseToken -Value $_.Exception.Message) Nothing was written -- run the cut again once gh answers."
             exit 1
         }
         $withTask = 0
-        foreach ($iss in $closed) {
+        $openNamed = @()
+        foreach ($iss in $carried) {
             $id = Get-TaskMarkerId -Body $iss.Body -Marker $taskLink.Marker
             if (-not $id) { continue }
+            # A named issue with a task that has not closed as completed is not a solved task (#3941), and
+            # the hint names it rather than reading as if no task existed.
+            if (-not $iss.Solved) { $openNamed += "#$($iss.Number)"; continue }
             $withTask++
             if ($seenTask.ContainsKey($id)) { continue }
             $seenTask[$id] = $true
             $items += [pscustomobject]@{ Title = $iss.Title; Url = $taskLink.Url.Replace('{0}', $id) }
         }
-        if ($withTask -eq 0) { $leftOut += "$name -- no issue it closed is linked to a task" }
+        if ($withTask -eq 0) {
+            if ($openNamed.Count -gt 0) { $leftOut += "$name -- the issue(s) it names with a task are not closed as completed yet: $($openNamed -join ', ')" }
+            else { $leftOut += "$name -- no issue it closed or named is linked to a task" }
+        }
     }
     $taskItems = Format-ReleaseTaskItems -Items $items -Label $taskLink.Label -EntryLevel (Get-EntryHeadingLevel)
 } elseif ($unknownEntries.Count -gt 0) {

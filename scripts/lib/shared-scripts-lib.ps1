@@ -1465,6 +1465,24 @@ function Get-SharedScriptPairs {
             LibOnly = $true
         },
         @{
+            # WHICH ISSUES A PR CARRIED (#3941, November 9, 2026): the closing references plus the issues it
+            # only names. cut-release (dkj-policy) builds the audience note's task links from that set and
+            # notify-live (bwj-development) tells the same tasks the release is live; each used to decide it
+            # on its own, and at a BWJ store's v2.51.0 cut the note dropped five tasks notify-live then told.
+            # One file in both plugins, on live-record-lib's reason. Pure, nothing repo-owned.
+            Name    = 'pull-issue-lib'
+            Source  = 'scripts\lib\pull-issue-lib.ps1'
+            Plugin = 'dkj-policy'
+            LibOnly = $true
+        },
+        @{
+            # The same file, for notify-live. See the entry one up.
+            Name    = 'pull-issue-lib-bwj'
+            Source  = 'scripts\lib\pull-issue-lib.ps1'
+            Plugin = 'bwj-development'
+            LibOnly = $true
+        },
+        @{
             # Issue #1069, August 29, 2026. Mirrored because BOTH its callers are: ship-pr.ps1 asks it
             # whether another worktree holds the trunk (before the merge, and again when handing the trunk
             # back afterwards), and prune-merged.ps1 asks it which worktree to name when its fast-forward

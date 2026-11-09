@@ -39,21 +39,43 @@
 
 ### PLAN
 
+- [x] Verify inbound #3941 still stands: `cut-release.ps1`'s task form read `closingIssuesReferences`
+  alone, while `notify-live.ps1` also took the issues a PR names (`Get-PullIssueCandidates`, #3498).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Move `Get-PullIssueCandidates` into `scripts/lib/pull-issue-lib.ps1`, mirrored into dkj-policy and
+  bwj-development and held byte-identical; `live-message-rules.ps1` dot-sources it.
+- [x] `cut-release.ps1`'s task form reads the same set (`Get-PullRequestCarriedIssues`): a named number is
+  asked about through `gh api -i`, a pull request or a 404 is dropped, and a named issue counts only once
+  it closed as completed (`Test-NamedIssueSolved`).
+- [x] The left-out hint tells an open named issue with a task apart from "no issue it closed or named is
+  linked to a task".
 
 ### TEST
 
+- [x] Asserts in `bwj-development.tests.ps1` for the solved test and for both readers using the one rule;
+  the native-capture ledger records the changed `$isCap`. Full gates by `ship-pr`.
+
 ### DEPLOY: fix/3941-audience-note-named-issues
 
-**Score:**
+The release cut's audience note now finds an entry's task through the issues its PR **names** as well as
+the ones it closes, the same set `notify-live` reads (#3941). At BWJ-Development/smartwatchbanden's
+v2.51.0 cut five storefront entries were left out as "no issue it closed is linked to a task" because
+their PRs named the issue without closing it, and `notify-live` then told three of those tasks the release
+was live. The rule is now one file, `pull-issue-lib.ps1`, shared by both plugins. A named issue counts
+only once it has closed as completed, and one that has not is named in the hint instead of read as having
+no task.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A repo that ships its Asana-linked issues with `-NoResolves` gets a cut's audience note with those tasks
+linked, instead of adding the links by hand after the draft.
+
+**Score:** 3
 
 #### Pull Request
 
 cut-release's audience note reads the issues a PR names, not only the ones it closes
-
