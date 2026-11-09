@@ -67,3 +67,5 @@ next release's copy; nothing in its markup changes.
 **Score:** 2
 
 #### Pull Request
+
+Explaining tooltips: about eight words a line, body-size text and more spacing
