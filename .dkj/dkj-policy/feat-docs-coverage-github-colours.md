@@ -39,21 +39,33 @@
 
 ### PLAN
 
-Owner (Dave, November 9, 2026): colour statuses like GitHub. Open work and Not used green (gain to be had), Covered purple (done), Declined and Not relevant grey. New house token --done-3 for the purple.
+Owner (Dave, November 9, 2026): colour statuses like GitHub. Open work green (gain to be had), with Not used renamed Open, Covered purple (done), Declined and Not relevant grey. New house token --done-3 for the purple.
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] New house token `--done-3` (light #8250df, dark #a371f7) in house-style.css, README token tables, specimens
+- [x] Docs coverage: `Not used` renamed `Open` in the catalog, the lib and the suite
+- [x] Status colours: Covered `--done-3`, Open `--positive-3`, Declined `--bg-5`, Not relevant `--bg-4`
 
 ### TEST
 
+- [x] dev-pages, house-palette, check-house-style suites green
+- [ ] The owner has looked at the page
+
 ### DEPLOY: feat/docs-coverage-github-colours
 
-**Score:**
+The Docs coverage page colours its statuses the way GitHub colours an issue. Open is green, because there is
+still something to gain there, and a catalogue page this repo does not use yet is now Open too, under the same
+word and dot as an open issue. Covered is purple, done and needing no more attention. Declined and Not relevant
+are grey, a paper step apart. The brand book gains the status token `--done-3` for that purple, in light and dark.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: an Admin page of this repo and one new token nothing outside it reads yet.
+
+**Score:** N/A
 
 #### Pull Request
 

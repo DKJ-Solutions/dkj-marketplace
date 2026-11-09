@@ -100,6 +100,7 @@
   --warning-3: #e0761a;        /* the warning icon; amber-yellow on the dark themes */
   --warning-5: #a84f00;        /* a warning in text: a step darker than --warning-3, so it reads as text (4.8:1 on the lightest tinted page) */
   --negative-3: #d03b3b;
+  --done-3: #8250df;           /* done: work that is finished and closed, the purple GitHub gives a completed issue (Dave, November 9, 2026) */
 
   --warning-1: #fff4e0;     /* notice background */
   --negative-1: #fde8e8;    /* a background for a negative message: the same lightness as --warning-1, in red */
@@ -171,7 +172,7 @@
   :root:not([data-theme]) {
     color-scheme: dark;
     --graph-1: #3987e5; --graph-2: #d95926; --graph-3: #199e70;
-    --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
+    --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --done-3: #a371f7; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
     --bg-1: #01090b; --bg-2: #021113; --bg-3: #01191c; --bg-4: #002328; --bg-5: #002e33; --primary: #63cfdc; --primary-muted: #6aa3aa; --primary-raised: #54b1bd; --primary-hover: #79d6e1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
   }
 }
@@ -182,7 +183,7 @@
 :root[data-theme="cyan"], :root[data-theme="yellow"], :root[data-theme="orange"] {
   color-scheme: dark;
   --graph-1: #3987e5; --graph-2: #d95926; --graph-3: #199e70;
-  --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
+  --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --done-3: #a371f7; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
   --bg-1: #01090b; --bg-2: #021113; --bg-3: #01191c; --bg-4: #002328; --bg-5: #002e33; --primary: #63cfdc; --primary-muted: #6aa3aa; --primary-raised: #54b1bd; --primary-hover: #79d6e1; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde;
 }
 
