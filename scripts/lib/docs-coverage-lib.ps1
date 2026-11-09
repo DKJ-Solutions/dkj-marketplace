@@ -21,7 +21,9 @@ function Get-DocsCoverageItems {
     <#
         The ten items in the issue's own order (#3906's table). Label is the row's link and the page's h1 (five words
         at most, no code); Sub the row's one line; What and Why the idea; Verified what the docs said when it was
-        checked, one string per point; Docs the docs page it rests on.
+        checked, one string per point; Docs the docs page it rests on. WhyDeclined, on an item the owner closed as
+        not planned, is the decision that closed it, in one or two sentences: the overview shows it behind a "?"
+        beside Declined.
     #>
     @(
         @{ Slug = 'plugin-dependencies'; Issue = 3895; Label = 'Plugin dependencies'
@@ -58,7 +60,8 @@ function Get-DocsCoverageItems {
                'if exists on tool events only, and the docs call it a best-effort filter.'
                'async exists on command hooks; its timeout is not enforced.'
                'The PreToolUse hook is the subagent safety guard, so a best-effort filter in front of it is a trade.')
-           Docs = 'https://code.claude.com/docs/en/hooks' }
+           Docs = 'https://code.claude.com/docs/en/hooks'
+           WhyDeclined = 'Measured: if cannot filter the safety guard or the one thing publish-background-run acts on, and async on the Stop hooks saves no wall-clock. The owner chose a shell-side pre-filter instead (#3920), November 9, 2026.' }
         @{ Slug = 'skill-frontmatter'; Issue = 3899; Label = 'Richer skill frontmatter'
            Sub = 'Tool grants, argument hints and the shell a skill runs in'
            What = 'Use allowed-tools, argument-hint and shell in SKILL.md frontmatter.'
@@ -76,7 +79,8 @@ function Get-DocsCoverageItems {
                'Plugin workflows exist, namespaced as plugin:name.'
                'A workflow script has no file or shell access, so every claim, branch and gate step becomes an agent.'
                'Dynamic workflows need a paid plan, the API or a supported cloud provider.')
-           Docs = 'https://code.claude.com/docs/en/workflows' }
+           Docs = 'https://code.claude.com/docs/en/workflows'
+           WhyDeclined = 'Workflows are off by default on Pro, a consumer can switch them off, and each needs approval on its first run. The owner kept the sweep and the review chains as prose plus scripts, November 8, 2026.' }
         @{ Slug = 'deny-ask-rules'; Issue = 3901; Label = 'Hard deny and ask'
            Sub = 'Let the harness enforce the safety rules'
            What = 'Ship deny and ask permission rules for the constitution''s safety rules.'
@@ -176,15 +180,24 @@ function Format-DocsCoveragePageHtml {
     if ($Query.Error) { [void]$sb.AppendLine('<p class="msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The items are shown without their status.</p>') }
     [void]$sb.AppendLine('<div class="table-wrap"><table class="table" id="items">')
     [void]$sb.AppendLine('<thead><tr><th scope="col">Item</th><th scope="col" class="col-start">What</th><th scope="col" class="col-start">Status</th><th scope="col" class="col-start">Docs</th><th scope="col">Issue</th></tr></thead><tbody>')
+    # A tooltip goes after the table, not in its cell: a .table cell does not wrap, and the text would run on one line.
+    $tips = New-Object System.Text.StringBuilder
     foreach ($it in @($Items)) {
         $status = Get-DocsCoverageStatus $Query.ByIssue[[int]$it.Issue]
         $issueUrl = 'https://github.com/DKJ-Solutions/dkj-marketplace/issues/' + [int]$it.Issue
+        $statusHtml = & $e $status
+        if ($status -ceq 'Declined' -and $it.WhyDeclined) {
+            $tipId = 'why-' + $it.Slug
+            $statusHtml += '<button class="info-button" type="button" aria-label="Why ' + (& $e $it.Label) + ' was declined" aria-describedby="' + $tipId + '" aria-expanded="false">?</button>'
+            [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="' + $tipId + '"><b>Why declined</b>' + (& $e $it.WhyDeclined) + '</div>')
+        }
         [void]$sb.AppendLine('<tr><td><a href="/docs-coverage/' + (& $e $it.Slug) + '">' + (& $e $it.Label) + '</a></td>' +
-            '<td class="col-start">' + (& $e $it.Sub) + '</td><td class="col-start">' + (& $e $status) + '</td>' +
+            '<td class="col-start">' + (& $e $it.Sub) + '</td><td class="col-start">' + $statusHtml + '</td>' +
             '<td class="col-start"><a href="' + (& $e $it.Docs) + '">' + (& $e ($it.Docs -replace '^https://code\.claude\.com/docs/en/', '')) + '</a></td>' +
             '<td><a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a></td></tr>')
     }
     [void]$sb.AppendLine('</tbody></table></div>')
+    if ($tips.Length) { [void]$sb.Append($tips.ToString()); [void]$sb.AppendLine((Get-DocsCoverageTipScript)) }
     return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() `
         -FooterNote (Get-DocsCoverageFooter -Meta $Meta -Page 'docs-coverage')
 }
@@ -211,6 +224,24 @@ function Format-DocsCoverageItemPageHtml {
     [void]$sb.AppendLine('</div>')
     return Format-DevPageHtml -Title $Item.Label -Lead '' -Body $sb.ToString() -ParentCrumbs @(@{ Label = 'Docs coverage'; Href = '/docs-coverage' }) `
         -FooterNote (Get-DocsCoverageFooter -Meta $Meta -Page ('docs-coverage/' + $Item.Slug))
+}
+
+function Get-DocsCoverageTipScript {
+    <#
+        The "?" beside a Declined status: every .info-button opens the .tooltip its aria-describedby names, the way
+        Get-PageInfoScript opens the one beside an h1 (the house .tooltip is position: fixed, so this places it under
+        the button, inside the window). It stays open while the pointer is on the button or on the text (WCAG
+        1.4.13) or while the button has focus; Escape closes it.
+    #>
+    return '<script>(function () { document.querySelectorAll(".info-button[aria-describedby]").forEach(function (b) {' +
+        ' var t = document.getElementById(b.getAttribute("aria-describedby")); if (!t) return; var h;' +
+        ' function show() { clearTimeout(h); t.classList.add("tooltip--open"); b.setAttribute("aria-expanded", "true"); var r = b.getBoundingClientRect();' +
+        ' t.style.top = (r.bottom + 8) + "px"; t.style.left = Math.max(8, Math.min(r.left, window.innerWidth - t.offsetWidth - 8)) + "px"; }' +
+        ' function close() { t.classList.remove("tooltip--open"); b.setAttribute("aria-expanded", "false"); }' +
+        ' function hide() { h = setTimeout(close, 150); }' +
+        ' [b, t].forEach(function (el) { el.addEventListener("mouseenter", show); el.addEventListener("mouseleave", hide); });' +
+        ' b.addEventListener("focus", show); b.addEventListener("blur", hide);' +
+        ' document.addEventListener("keydown", function (e) { if (e.key === "Escape") { clearTimeout(h); close(); } }); }); })();</script>'
 }
 
 function Get-DocsCoverageFooter {

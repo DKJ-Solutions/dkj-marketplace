@@ -1157,6 +1157,15 @@ Assert-Equal 10 ([regex]::Matches($dcOver, '(?s)<tbody>.*?</tbody>').Value.Split
 Assert-True ($dcOver -match '<td class="col-start">Awaiting decision</td><td class="col-start"><a href="https://code.claude.com/docs/en/plugins/dependencies">plugins/dependencies</a></td><td><a href="https://github.com/DKJ-Solutions/dkj-marketplace/issues/3895">#3895</a></td>') 'each row carries its status, links its docs page by its path and links its issue'
 Assert-True ($dcOver -match '<td class="col-start">--</td><td class="col-start"><a href="[^"]+">sub-agents</a></td><td><a href="[^"]+/issues/3897">') 'an issue the answer left out reads --'
 Assert-True ($dcOver -notmatch 'GitHub could not be read') 'a good read raises no warning'
+Assert-True ($dcOver -notmatch 'info-button' -and $dcOver -notmatch 'tooltip') 'with nothing declined there is no "?", no tooltip and no script for one'
+Assert-Equal 2 (@($dcItems | Where-Object { $_.WhyDeclined })).Count 'the two items closed as not planned carry why'
+$dcDeclined = ConvertFrom-DocsCoverageQuery -Json '{"data":{"repository":{"i3898":{"number":3898,"state":"CLOSED","stateReason":"NOT_PLANNED","assignees":{"totalCount":0},"labels":{"nodes":[]}},"i3901":{"number":3901,"state":"CLOSED","stateReason":"NOT_PLANNED","assignees":{"totalCount":0},"labels":{"nodes":[]}}}}}'
+$dcDecl = Format-DocsCoveragePageHtml -Query $dcDeclined -Meta $dcMeta
+Assert-True ($dcDecl -match '<td class="col-start">Declined<button class="info-button" type="button" aria-label="Why Conditional and async hooks was declined" aria-describedby="why-hook-if-async" aria-expanded="false">\?</button></td>') 'a declined item with a reason carries a "?" beside Declined, naming what it explains'
+Assert-True ($dcDecl -match '(?s)</table></div>.*<div class="tooltip tooltip--explain" role="tooltip" id="why-hook-if-async"><b>Why declined</b>Measured: ') 'its reason is a house tooltip after the table, where the text can wrap'
+Assert-True ($dcDecl -match '<td class="col-start">Declined</td>') 'a declined item without a reason stays plain Declined'
+Assert-Equal 1 ([regex]::Matches($dcDecl, 'class="info-button"')).Count 'so only the one with a reason gets a "?"'
+Assert-True ($dcDecl -match 'querySelectorAll\("\.info-button\[aria-describedby\]"\)' -and $dcDecl -match 'mouseenter' -and $dcDecl -match 'Escape') 'a script opens it on hover or focus and closes it on Escape'
 $dcFail = Format-DocsCoveragePageHtml -Query (ConvertFrom-DocsCoverageQuery -Json '') -Meta $dcMeta
 Assert-True ($dcFail -match 'role="alert">GitHub could not be read') 'a failed read says so above the table'
 Assert-Equal 10 ([regex]::Matches($dcFail, 'href="/docs-coverage/[a-z0-9-]+"')).Count 'and still shows every row'

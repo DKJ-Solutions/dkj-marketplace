@@ -48,17 +48,22 @@ cards: ten items read better compared row by row. The item pages stay as they ar
       Status, Docs (links the docs page, shown as its path under /docs/en/), Issue (links GitHub); the card
       grid style is gone
 - [x] The lib's docstrings say row instead of card
+- [x] A Declined status carries the house `.info-button` "?", opening a `.tooltip--explain` with why it was
+      declined: `WhyDeclined` on #3898 and #3900, taken from the decision that closed each issue;
+      `Get-DocsCoverageTipScript` opens it on hover or focus, Escape closes it
 
 ### TEST
 
-- [x] `dev-pages.tests.ps1`: the overview asserts read a table, one row per item, status and issue per row (674/0)
+- [x] `dev-pages.tests.ps1`: the overview asserts read a table, one row per item, status, docs and issue per
+      row, and the "?" only beside a Declined status with a reason (681/0)
 - [x] The product server on 4870 restarted and serves the table
 - [ ] The owner's look at http://localhost:4870/docs-coverage
 
 ### DEPLOY: feat/docs-coverage-table
 
 The Docs coverage overview on the product portal is a table now: one row per item with its one line, its
-status, a link to its Claude Code docs page and a link to its issue, so the ten compare at a glance. Each item still opens its own page.
+status, a link to its Claude Code docs page and a link to its issue, so the ten compare at a glance. A
+Declined status carries a "?" that shows, on hover or focus, why the owner declined it. Each item still opens its own page.
 
 **Score:** 2
 
