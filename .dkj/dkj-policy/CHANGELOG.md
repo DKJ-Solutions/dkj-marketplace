@@ -2,7 +2,30 @@
 
 ## [Unreleased]
 
-**0 / 1 patch entry** <!-- pending-tally -->
+**0 / 2 patch entries** <!-- pending-tally -->
+
+### DEPLOY: feat/docs-coverage-potential · 20261109-134441Z
+
+Admin's Docs coverage page now scores every Not used docs page from 1 to 4 for how much value it could have
+in this repo, in the status "?" popup beside the advice. The score is estimated apart from the advice, so a
+Skip can still score 2 where its cost decided it rather than its value. The page's status filter now keeps
+its last choice across a reload.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A: the page is this repo's own Admin page, and no consumer takes it.
+
+**Score:** N/A
+
+#### Pull Request
+
+Docs coverage: a potential score for every Not used docs page, and the status filter remembered
+
+[PR #3934](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3934)
+
+---
 
 ### DEPLOY: fix/3932-get-raw-says-why · 20261109-124804Z
 
