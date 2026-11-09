@@ -72,3 +72,5 @@ N/A: the page is this repo's own Admin page, and no consumer takes it.
 **Score:** N/A
 
 #### Pull Request
+
+Docs coverage: a potential score for every Not used docs page, and the status filter remembered
