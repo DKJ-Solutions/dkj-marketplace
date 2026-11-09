@@ -247,13 +247,15 @@ function Format-DocsCoveragePageHtml {
     $e = { param($v) ConvertTo-DashboardText $v }
     $sb = New-Object System.Text.StringBuilder
     if ($Query.Error) { [void]$sb.AppendLine('<p class="msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The items are shown without their status.</p>') }
-    # One house filter chip over the table (the owner, November 9, 2026): it hides the Not relevant rows, which are
-    # most of the table and hold nothing to decide. Shown when there is at least one such row.
+    # House filter chips over the table (the owner, November 9, 2026): one hides the Not relevant rows, which are most
+    # of the table and hold nothing to decide; one shows only the Not used rows, the candidates. Each is shown when
+    # there is at least one such row.
     $notRelevant = @($Catalog | Where-Object { $_.Status -ceq 'Not relevant' }).Count
-    if ($notRelevant) {
-        [void]$sb.AppendLine('<div class="filter-chips dc-filters"><button class="filter-chip" type="button" id="hide-not-relevant" aria-controls="items" aria-pressed="false">' +
-            '<span class="filter-chip__dot dc-dot--not-relevant" aria-hidden="true"></span>Hide Not relevant (' + $notRelevant + ')</button></div>')
-    }
+    $notUsed = @($Catalog | Where-Object { $_.Status -ceq 'Not used' }).Count
+    $chips = @()
+    if ($notRelevant) { $chips += '<button class="filter-chip" type="button" id="hide-not-relevant" aria-controls="items" aria-pressed="false"><span class="filter-chip__dot dc-dot--not-relevant" aria-hidden="true"></span>Hide Not relevant (' + $notRelevant + ')</button>' }
+    if ($notUsed) { $chips += '<button class="filter-chip" type="button" id="only-not-used" aria-controls="items" aria-pressed="false"><span class="filter-chip__dot dc-dot--not-used" aria-hidden="true"></span>Only Not used (' + $notUsed + ')</button>' }
+    if ($chips) { [void]$sb.AppendLine('<div class="filter-chips dc-filters">' + ($chips -join '') + '</div>') }
     [void]$sb.AppendLine('<div class="table-wrap"><table class="table" id="items">')
     # Section, Group, Item, then Status (the owner, November 9, 2026): read from the docs' section down to the topic,
     # and then how this repo stands to it.
@@ -300,7 +302,7 @@ function Format-DocsCoveragePageHtml {
     }
     [void]$sb.AppendLine('</tbody></table></div>')
     [void]$sb.Append($tips.ToString()); [void]$sb.AppendLine((Get-DocsCoverageTipScript)); [void]$sb.AppendLine((Get-DocsCoverageSortScript))
-    if ($notRelevant) { [void]$sb.AppendLine((Get-DocsCoverageFilterScript)) }
+    if ($chips) { [void]$sb.AppendLine((Get-DocsCoverageFilterScript)) }
     return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() -Style (Get-DocsCoverageStatusStyle) `
         -FooterNote (Get-DocsCoverageFooter -Meta $Meta -Page 'docs-coverage')
 }
@@ -355,13 +357,16 @@ function Get-DocsCoverageSortScript {
 
 function Get-DocsCoverageFilterScript {
     <#
-        The "Hide Not relevant" chip: each press flips aria-pressed and hides or shows every row whose status carries
-        the Not relevant dot. A row is found by that dot, so the row markup carries nothing for the filter, and a
-        sort moves rows without touching their hidden state.
+        The filter chips: each press flips that chip's aria-pressed, and then every row is judged against both. "Hide
+        Not relevant" hides a row carrying the Not relevant dot; "Only Not used" hides a row not carrying the Not used
+        dot. A row is found by its status dot, so the row markup carries nothing for the filter, and a sort moves rows
+        without touching their hidden state.
     #>
-    return '<script>(function () { var b = document.getElementById("hide-not-relevant"), t = document.getElementById("items"); if (!b || !t) return;' +
-        ' b.addEventListener("click", function () { var on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", on ? "true" : "false");' +
-        ' Array.prototype.forEach.call(t.tBodies[0].rows, function (r) { if (r.querySelector(".dc-dot--not-relevant")) { r.hidden = on; } }); }); })();</script>'
+    return '<script>(function () { var t = document.getElementById("items"), hn = document.getElementById("hide-not-relevant"), on = document.getElementById("only-not-used"); if (!t) return;' +
+        ' function pressed(b) { return !!b && b.getAttribute("aria-pressed") === "true"; }' +
+        ' function apply() { var a = pressed(hn), o = pressed(on); Array.prototype.forEach.call(t.tBodies[0].rows, function (r) {' +
+        ' r.hidden = (a && !!r.querySelector(".dc-dot--not-relevant")) || (o && !r.querySelector(".dc-dot--not-used")); }); }' +
+        ' [hn, on].forEach(function (b) { if (!b) return; b.addEventListener("click", function () { b.setAttribute("aria-pressed", pressed(b) ? "false" : "true"); apply(); }); }); })();</script>'
 }
 
 function Get-DocsCoverageFooter {

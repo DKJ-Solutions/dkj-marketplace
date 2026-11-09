@@ -90,12 +90,14 @@ cards: ten items read better compared row by row. The item pages stay as they ar
 - [x] Every Not used page says whether to take it up and why: `Advice` (Adopt, Consider, Skip) and `AdviceWhy`
       in the catalog, judged by three parallel research passes against this repo's rules and decisions (9
       Consider, 37 Skip), shown in the status "?" after the note (710/0)
+- [x] A second chip, "Only Not used (46)", shows the candidates alone; the filter script judges every row
+      against both chips, so they combine (712/0)
 
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: the overview asserts read a table, one row per item, status, docs and issue per
       row, the docs section and group as links, the docs link to its heading, the "?" beside each docs heading, and the
-      one in the status only beside a Declined status with a reason (710/0);
+      one in the status only beside a Declined status with a reason (712/0);
       `check-house-style` OK
 - [x] The product server on 4870 restarted and serves the table
 - [ ] The owner's look at http://localhost:4870/docs-coverage
@@ -107,7 +109,7 @@ beside the ten items with an issue. Each row reads from the docs' section and gr
 (an item its heading, a docs page the page itself), then its status, each status in a colour of its own, and its issue. A docs page reads
 Covered (this repo already uses it well), Not used or Not relevant, and a "?" beside a name or a status explains
 it on hover or focus: the idea, the docs' own description, the evidence, or why the owner declined it. Every column
-sorts with a click on its head. A Not used page also says whether this repo should take it up, and why. A chip over the table hides the Not relevant rows.
+sorts with a click on its head. A Not used page also says whether this repo should take it up, and why. Two chips over the table hide the Not relevant rows or show only the Not used ones.
 
 **Score:** 2
 
