@@ -50,6 +50,7 @@ more about that row. A visible result, so the branch stops for the owner's look 
 - [x] The popup in headings (the owner, November 9, 2026): the row's name the h1, Where it sits / How this repo
       stands / The idea as h2, their parts (What, Why, Note, Evidence, ...) as h3; the dialog empties when shut.
       The fit alarm counts the open popup's h1 as a second one: filed as #3937
+- [x] The popup is 90% of the window wide (the owner, November 9, 2026), on the page's own `.dc-detail-dialog`
 
 ### TEST
 
