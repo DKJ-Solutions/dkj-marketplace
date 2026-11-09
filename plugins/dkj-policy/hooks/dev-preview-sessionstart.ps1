@@ -41,7 +41,8 @@
 
     SILENCE: a Get-DevPreview that answers nothing used to print nothing. Since #3245 it is a repo that
     states no server, so it gets Admin's line like one with no seam at all. Nothing is silent but a
-    non-Windows host and a missing rules library.
+    non-Windows host, a missing rules library, and a root that is not a git work tree (#3911: a
+    'claude plugin eval' workspace, where a started Admin outlived the run).
 
     IN DKJ-POLICY SINCE #3198 (the owner's decision of October 20, 2026): Admin and its General pages
     are what every repo has, so the hook ships with the plugin every repo runs, BWJ-Development's included.
@@ -138,6 +139,22 @@ $root = if ($RepoRootOverride) { $RepoRootOverride }
         elseif ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR }
         else { (Get-Location).Path }
 $root = [System.IO.Path]::GetFullPath($root).TrimEnd('\', '/')
+
+# NOT A GIT WORK TREE, SO NOT A REPO, SO NO ADMIN (#3911): Admin describes a repository, and a folder that is
+# none has nothing for it to show. Measured November 9, 2026: every 'claude plugin eval' run starts its child
+# in an empty temp workspace, this hook started Admin there, and the server outlived the run and held its
+# folder open (EBUSY, five runs, five servers). Silent, like a non-Windows host. Where git itself is missing
+# the hook carries on as before, so a machine without git does not lose Admin to this guard. -RepoRootOverride
+# skips it: the suite's fixtures are plain folders, and its own scenario drives this guard through
+# CLAUDE_PROJECT_DIR, the way a real session does.
+if (-not $RepoRootOverride -and (Get-Command git -CommandType Application -ErrorAction SilentlyContinue)) {
+    $inWorkTree = & {
+        $ErrorActionPreference = 'Continue'
+        $o = & git -C $root rev-parse --is-inside-work-tree 2>$null
+        ($LASTEXITCODE -eq 0) -and ([string]$o).Trim() -eq 'true'
+    }
+    if (-not $inWorkTree) { exit 0 }
+}
 
 # --- The repo's answer -------------------------------------------------------------------------------
 $configPath = Join-Path $root 'scripts\repo-config.ps1'

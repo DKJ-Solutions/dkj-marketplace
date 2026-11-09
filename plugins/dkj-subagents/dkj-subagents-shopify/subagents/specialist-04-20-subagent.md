@@ -8,6 +8,7 @@ description: >
   theme build work. Checks the style guide (Gwen #12) before visual work. Does not push to preview/live itself.
 tools: Read, Write, Edit, Grep, Glob, Skill
 model: sonnet
+maxTurns: 80
 color: blue
 ---
 

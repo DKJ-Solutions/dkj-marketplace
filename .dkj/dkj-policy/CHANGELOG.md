@@ -2,7 +2,86 @@
 
 ## [Unreleased]
 
-**3 / 5 minor entries** <!-- pending-tally -->
+**6 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3911-admin-outside-worktree · 20261109-001641Z
+
+`dkj-policy`'s SessionStart hook no longer starts Admin in a folder that is not a git work tree. Every
+`claude plugin eval` run used to leave an Admin server behind in its temporary workspace, which kept
+the eval CLI from removing that folder (`EBUSY`). An eval run now leaves nothing running, and every
+repo still gets its Admin as before
+([#3911](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3911)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Plugin eval runs no longer leave Admin servers and locked temp folders behind.
+
+**Score:** 2
+
+#### Pull Request
+
+dev-preview starts no Admin outside a git work tree
+
+Plugins: dkj-policy
+
+[PR #3918](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3918)
+
+---
+
+### DEPLOY: feat/3901-guard-safety-rules · 20261109-000628Z
+
+`guard-working-copy` now refuses a force push (`-f`, `--force`, `--force-with-lease`, `--mirror`, a `+`
+refspec) and `git reset --hard` on every thread, the main one included, abbreviations git accepts as well. It used to guard only dispatched subagents. The
+constitution allows both commands only with the owner's explicit permission, and a plugin cannot ship
+permission rules, so the guard enforces them itself (#3901). The refusal tells the session to give the owner
+the exact command to run themselves. A commit message or grep that names the rule is not refused.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every repo with `dkj-policy` installed gets the refusal at its next plugin update, with no setting to change.
+A session that tries to force-push or hard-reset is stopped and hands the command to its owner instead.
+
+**Score:** 3
+
+#### Pull Request
+
+guard-working-copy refuses a force push and a hard reset on every thread
+
+Plugins: dkj-policy
+
+[PR #3916](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3916)
+
+---
+
+### DEPLOY: feat/3897-agent-maxturns · 20261108-235613Z
+
+Every specialist subagent now carries a `maxTurns` ceiling that matches its role: 60 turns for one
+that only reads and reports, 80 for one that also searches the web or writes files, and 120 for one
+that writes and runs `Bash`. A runaway dispatch now stops at that ceiling and hands back what it has.
+Model, effort and memory stay as they were
+([#3897](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3897)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A specialist that loops now stops and returns its partial work instead of running on.
+
+**Score:** 2
+
+#### Pull Request
+
+Give every specialist subagent a maxTurns ceiling per role
+
+Plugins: dkj-subagents-alpha, dkj-subagents-ecomm, dkj-subagents-lifehub, dkj-subagents-shopify
+
+[PR #3913](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3913)
+
+---
 
 ### DEPLOY: feat/3899-skill-argument-hints · 20261108-234152Z
 

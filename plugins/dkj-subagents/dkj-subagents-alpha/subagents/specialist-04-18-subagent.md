@@ -9,6 +9,7 @@ description: >
   test gap instead of building false confidence. Delivers the test suite, does not land the work itself.
 tools: Read, Write, Edit, Grep, Glob, Bash, Skill
 model: sonnet
+maxTurns: 120
 color: gray
 ---
 
