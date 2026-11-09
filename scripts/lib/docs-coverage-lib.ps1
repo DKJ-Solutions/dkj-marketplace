@@ -224,8 +224,10 @@ function Format-DocsCoverageStatusText {
 
 function Get-DocsCoverageStatusStyle {
     # The page's own layer: one rule per status colour, each reading a house token.
+    # And the space between the filter bar and the table, which the place sets (the brand book: a block has no margin).
     $map = Get-DocsCoverageStatusColors
-    return (@($map.Keys | ForEach-Object { '.dc-dot--' + (($_.ToLowerInvariant() -replace '[^a-z]+', '-').Trim('-')) + ' { background: var(' + $map[$_] + '); }' }) -join "`n")
+    return ((@($map.Keys | ForEach-Object { '.dc-dot--' + (($_.ToLowerInvariant() -replace '[^a-z]+', '-').Trim('-')) + ' { background: var(' + $map[$_] + '); }' }) +
+        '.dc-filters { margin-bottom: var(--spacing-3); }') -join "`n")
 }
 
 function Format-DocsCoveragePageHtml {
@@ -245,6 +247,13 @@ function Format-DocsCoveragePageHtml {
     $e = { param($v) ConvertTo-DashboardText $v }
     $sb = New-Object System.Text.StringBuilder
     if ($Query.Error) { [void]$sb.AppendLine('<p class="msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The items are shown without their status.</p>') }
+    # One house filter chip over the table (the owner, November 9, 2026): it hides the Not relevant rows, which are
+    # most of the table and hold nothing to decide. Shown when there is at least one such row.
+    $notRelevant = @($Catalog | Where-Object { $_.Status -ceq 'Not relevant' }).Count
+    if ($notRelevant) {
+        [void]$sb.AppendLine('<div class="filter-chips dc-filters"><button class="filter-chip" type="button" id="hide-not-relevant" aria-controls="items" aria-pressed="false">' +
+            '<span class="filter-chip__dot dc-dot--not-relevant" aria-hidden="true"></span>Hide Not relevant (' + $notRelevant + ')</button></div>')
+    }
     [void]$sb.AppendLine('<div class="table-wrap"><table class="table" id="items">')
     # Section, Group, Item, then Status (the owner, November 9, 2026): read from the docs' section down to the topic,
     # and then how this repo stands to it.
@@ -289,6 +298,7 @@ function Format-DocsCoveragePageHtml {
     }
     [void]$sb.AppendLine('</tbody></table></div>')
     [void]$sb.Append($tips.ToString()); [void]$sb.AppendLine((Get-DocsCoverageTipScript)); [void]$sb.AppendLine((Get-DocsCoverageSortScript))
+    if ($notRelevant) { [void]$sb.AppendLine((Get-DocsCoverageFilterScript)) }
     return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() -Style (Get-DocsCoverageStatusStyle) `
         -FooterNote (Get-DocsCoverageFooter -Meta $Meta -Page 'docs-coverage')
 }
@@ -339,6 +349,17 @@ function Get-DocsCoverageSortScript {
         ' rows.sort(function (a, b) { var x = key(a, c), y = key(b, c); if (x === "" && y !== "") return 1; if (y === "" && x !== "") return -1;' +
         ' if (x < y) return -m; if (x > y) return m; return a.dataset.i - b.dataset.i; });' +
         ' rows.forEach(function (r) { tb.appendChild(r); }); }); }); })();</script>'
+}
+
+function Get-DocsCoverageFilterScript {
+    <#
+        The "Hide Not relevant" chip: each press flips aria-pressed and hides or shows every row whose status carries
+        the Not relevant dot. A row is found by that dot, so the row markup carries nothing for the filter, and a
+        sort moves rows without touching their hidden state.
+    #>
+    return '<script>(function () { var b = document.getElementById("hide-not-relevant"), t = document.getElementById("items"); if (!b || !t) return;' +
+        ' b.addEventListener("click", function () { var on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", on ? "true" : "false");' +
+        ' Array.prototype.forEach.call(t.tBodies[0].rows, function (r) { if (r.querySelector(".dc-dot--not-relevant")) { r.hidden = on; } }); }); })();</script>'
 }
 
 function Get-DocsCoverageFooter {

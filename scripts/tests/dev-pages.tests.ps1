@@ -1202,6 +1202,10 @@ Assert-True ($dcWithCat -match 'id="status-statusline"><b>Covered</b>settings\.j
 Assert-True ($dcWithCat -match 'id="page-statusline"><b>Customize your status line</b>Configure a custom status line\.</div>') 'the docs "?" gives the docs'' own description'
 Assert-True ($dcWithCat -match '<tr><td><a href="[^"]+">Agent SDK</a></td><td class="col-start"></td>' -and $dcWithCat -match 'id="status-agent-sdk-overview"><b>Not relevant</b>The repo does not build on the Agent SDK\.</div>') 'a page with no group leaves the cell empty, and no evidence adds no line'
 Assert-True ($dcWithCat -match 'if \(x === "" && y !== ""\) return 1') 'an empty cell sorts last in either direction'
+Assert-True ($dcWithCat -match '(?s)<div class="filter-chips dc-filters"><button class="filter-chip" type="button" id="hide-not-relevant" aria-controls="items" aria-pressed="false"><span class="filter-chip__dot dc-dot--not-relevant" aria-hidden="true"></span>Hide Not relevant \(1\)</button></div>\s*<div class="table-wrap">') 'a house filter chip over the table hides the Not relevant rows, counting them (the owner, November 9, 2026)'
+Assert-True ($dcWithCat -match 'getElementById\("hide-not-relevant"\)' -and $dcWithCat -match 'querySelector\("\.dc-dot--not-relevant"\)\) \{ r\.hidden = on;') 'a script hides and shows the rows by their status dot on each press'
+Assert-True ($dcOver -notmatch 'hide-not-relevant') 'with no Not relevant row there is no chip and no script'
+Assert-True ((Get-DocsCoverageStatusStyle) -match '\.dc-filters \{ margin-bottom: var\(--spacing-3\); \}') 'the page sets the space between the filter bar and the table'
 $dcFail = Format-DocsCoveragePageHtml -Query (ConvertFrom-DocsCoverageQuery -Json '') -Meta $dcMeta -Catalog @()
 Assert-True ($dcFail -match 'role="alert">GitHub could not be read') 'a failed read says so above the table'
 Assert-Equal 10 ([regex]::Matches($dcFail, '<tr><td><a href="https://code\.claude\.com/docs/en/')).Count 'and still shows every row'

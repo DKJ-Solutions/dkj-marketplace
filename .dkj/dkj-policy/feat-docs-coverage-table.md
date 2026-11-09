@@ -84,12 +84,15 @@ cards: ten items read better compared row by row. The item pages stay as they ar
       already uses; the Issue column says which arrived through an issue. Nine statuses, nine colours
 - [x] Held each completed item against its page's catalog row: `plugin-evals` read Not used while #3896 had
       shipped `plugins/dkj-policy/evals`, so that row is Covered with the folder as evidence; the other eight agree
+- [x] Not used reads orange (`--graph-2`, Waiting took `--primary-muted`), so the candidates stand out
+- [x] A house filter chip over the table, "Hide Not relevant (148)", hides and shows those rows per press
+      (`Get-DocsCoverageFilterScript`, finding a row by its status dot); `check-house-style` OK (707/0)
 
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: the overview asserts read a table, one row per item, status, docs and issue per
       row, the docs section and group as links, the docs link to its heading, the "?" beside each docs heading, and the
-      one in the status only beside a Declined status with a reason (703/0);
+      one in the status only beside a Declined status with a reason (707/0);
       `check-house-style` OK
 - [x] The product server on 4870 restarted and serves the table
 - [ ] The owner's look at http://localhost:4870/docs-coverage
@@ -101,7 +104,7 @@ beside the ten items with an issue. Each row reads from the docs' section and gr
 (an item its heading, a docs page the page itself), then its status, each status in a colour of its own, and its issue. A docs page reads
 Covered (this repo already uses it well), Not used or Not relevant, and a "?" beside a name or a status explains
 it on hover or focus: the idea, the docs' own description, the evidence, or why the owner declined it. Every column
-sorts with a click on its head.
+sorts with a click on its head. A chip over the table hides the Not relevant rows.
 
 **Score:** 2
 
