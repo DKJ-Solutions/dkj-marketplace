@@ -21,7 +21,10 @@ function Get-DocsCoverageItems {
     <#
         The ten items in the issue's own order (#3906's table). Label is the row's link and the page's h1 (five words
         at most, no code); Sub the row's one line; What and Why the idea; Verified what the docs said when it was
-        checked, one string per point; Docs the docs page it rests on. WhyDeclined, on an item the owner closed as
+        checked, one string per point; Docs the docs page it rests on, and Section and Group where that page sits in
+        the docs navigation (read from code.claude.com/docs/llms.txt on November 9, 2026: its ## heading and its ####
+        group; plugins-reference is not listed itself and serves the Plugin manifest reference, so it takes that
+        page's place). WhyDeclined, on an item the owner closed as
         not planned, is the decision that closed it, in one or two sentences: the overview shows it behind a "?"
         beside Declined.
     #>
@@ -34,6 +37,7 @@ function Get-DocsCoverageItems {
                'The dependencies key exists, and install, enable and auto-update pull in a missing dependency.'
                'Tags of the form plugin--vX.Y.Z are needed only for a version-constrained dependency, beside the lockstep vX.Y.Z tag.'
                'A disabled dependency disables the plugin that depends on it.')
+           Section = 'Plugins'; Group = 'Create plugins'
            Docs = 'https://code.claude.com/docs/en/plugins/dependencies' }
         @{ Slug = 'behavioural-evals'; Issue = 3896; Label = 'Behavioural evals'
            Sub = 'Prove a skill or specialist still fires on its prompts'
@@ -42,6 +46,7 @@ function Get-DocsCoverageItems {
            Verified = @(
                'claude plugin eval exists and runs in CI with --json, --threshold and --trust-plugin.'
                'Every case is a model run, so CI evals draw on the same credential as the review workflow.')
+           Section = 'Plugins'; Group = 'Create plugins'
            Docs = 'https://code.claude.com/docs/en/plugin-evals' }
         @{ Slug = 'subagent-frontmatter'; Issue = 3897; Label = 'Richer subagent frontmatter'
            Sub = 'Effort, turn limit, skills, memory and a model per role'
@@ -51,6 +56,7 @@ function Get-DocsCoverageItems {
                'All five keys exist on subagent frontmatter.'
                'skills preloads skills, not manuals: a manual would first have to become a skill.'
                'memory writes an agent memory store, next to the rule that lessons go into the docs.')
+           Section = 'Build with Claude Code'; Group = 'Agents and parallel work'
            Docs = 'https://code.claude.com/docs/en/sub-agents' }
         @{ Slug = 'hook-if-async'; Issue = 3898; Label = 'Conditional and async hooks'
            Sub = 'Start PowerShell only when a hook has work to do'
@@ -60,6 +66,7 @@ function Get-DocsCoverageItems {
                'if exists on tool events only, and the docs call it a best-effort filter.'
                'async exists on command hooks; its timeout is not enforced.'
                'The PreToolUse hook is the subagent safety guard, so a best-effort filter in front of it is a trade.')
+           Section = 'Reference'; Group = 'Reference'
            Docs = 'https://code.claude.com/docs/en/hooks'
            WhyDeclined = 'Measured: if cannot filter the safety guard or the one thing publish-background-run acts on, and async on the Stop hooks saves no wall-clock. The owner chose a shell-side pre-filter instead (#3920), November 9, 2026.' }
         @{ Slug = 'skill-frontmatter'; Issue = 3899; Label = 'Richer skill frontmatter'
@@ -70,6 +77,7 @@ function Get-DocsCoverageItems {
                'All three keys exist.'
                'allowed-tools grants the tools without a prompt for the invoking turn, so it is a permission shipped to every consumer.'
                'argument-hint is harmless and could land on its own.')
+           Section = 'Build with Claude Code'; Group = 'Skills'
            Docs = 'https://code.claude.com/docs/en/skills' }
         @{ Slug = 'plugin-workflows'; Issue = 3900; Label = 'Workflows in a plugin'
            Sub = 'The sweep and the review chains as workflow scripts'
@@ -79,6 +87,7 @@ function Get-DocsCoverageItems {
                'Plugin workflows exist, namespaced as plugin:name.'
                'A workflow script has no file or shell access, so every claim, branch and gate step becomes an agent.'
                'Dynamic workflows need a paid plan, the API or a supported cloud provider.')
+           Section = 'Build with Claude Code'; Group = 'Agents and parallel work'
            Docs = 'https://code.claude.com/docs/en/workflows'
            WhyDeclined = 'Workflows are off by default on Pro, a consumer can switch them off, and each needs approval on its first run. The owner kept the sweep and the review chains as prose plus scripts, November 8, 2026.' }
         @{ Slug = 'deny-ask-rules'; Issue = 3901; Label = 'Hard deny and ask'
@@ -88,6 +97,7 @@ function Get-DocsCoverageItems {
            Verified = @(
                'A plugin cannot ship permission rules: a plugin settings.json applies only agent and subagentStatusLine.'
                'The remedy has to be another route: an adoption step that writes them, a guard hook, or managed settings.')
+           Section = 'Plugins'; Group = 'Create plugins'
            Docs = 'https://code.claude.com/docs/en/plugins/components' }
         @{ Slug = 'bounded-review'; Issue = 3902; Label = 'Bounded CI review'
            Sub = 'A turn ceiling and its own credential for the review'
@@ -96,6 +106,7 @@ function Get-DocsCoverageItems {
            Verified = @(
                'claude_args takes --max-turns and --model; auth is an API key or the OAuth token.'
                'An API key is the owner''s act and bill; a turn ceiling needs the turn count of past green runs first.')
+           Section = 'Getting started'; Group = 'Code review and pull requests'
            Docs = 'https://code.claude.com/docs/en/github-actions' }
         @{ Slug = 'user-config'; Issue = 3903; Label = 'Plugin user configuration'
            Sub = 'Install-time settings, default-off teams, a main agent'
@@ -105,6 +116,7 @@ function Get-DocsCoverageItems {
                'All three exist, and a CLAUDE.md at a plugin root is not loaded.'
                'This repo does not rely on one: a consumer imports the constitution by path.'
                'agent runs a plugin agent as the main thread with its own tools and model.')
+           Section = 'Plugins'; Group = 'Reference'
            Docs = 'https://code.claude.com/docs/en/plugins-reference' }
         @{ Slug = 'native-worktrees'; Issue = 3904; Label = 'Native worktrees'
            Sub = 'Claude Code worktrees against worktree-lane.ps1'
@@ -114,6 +126,7 @@ function Get-DocsCoverageItems {
                '.worktreeinclude copies gitignored files only, and baseRef takes fresh or head: neither carries uncommitted work.'
                'The worktree path inside the checkout was already ignored here.'
                'A native lane cuts a worktree- branch, which this repo''s branch table refuses.')
+           Section = 'Build with Claude Code'; Group = 'Agents and parallel work'
            Docs = 'https://code.claude.com/docs/en/worktrees' }
     )
 }
@@ -169,7 +182,8 @@ function Get-DocsCoverageStatus {
 function Format-DocsCoveragePageHtml {
     <#
         /docs-coverage: one row per item in the house .table, the item linking its own page, then its one line, its
-        status, its docs page (shown as its path under /docs/en/) and its issue, so the ten compare at a glance (the owner, November 9, 2026: a table over the cards
+        status, the section and group its docs page sits in, the page (shown as its path under /docs/en/) and its
+        issue, so the ten compare at a glance (the owner, November 9, 2026: a table over the cards
         the page first had). -Query is ConvertFrom-DocsCoverageQuery's result; -Meta @{ GeneratedAt; Seconds } of
         the read.
     #>
@@ -179,7 +193,7 @@ function Format-DocsCoveragePageHtml {
     $sb = New-Object System.Text.StringBuilder
     if ($Query.Error) { [void]$sb.AppendLine('<p class="msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The items are shown without their status.</p>') }
     [void]$sb.AppendLine('<div class="table-wrap"><table class="table" id="items">')
-    [void]$sb.AppendLine('<thead><tr><th scope="col">Item</th><th scope="col" class="col-start">What</th><th scope="col" class="col-start">Status</th><th scope="col" class="col-start">Docs</th><th scope="col">Issue</th></tr></thead><tbody>')
+    [void]$sb.AppendLine('<thead><tr><th scope="col">Item</th><th scope="col" class="col-start">What</th><th scope="col" class="col-start">Status</th><th scope="col" class="col-start">Section</th><th scope="col" class="col-start">Group</th><th scope="col" class="col-start">Docs</th><th scope="col">Issue</th></tr></thead><tbody>')
     # A tooltip goes after the table, not in its cell: a .table cell does not wrap, and the text would run on one line.
     $tips = New-Object System.Text.StringBuilder
     foreach ($it in @($Items)) {
@@ -192,13 +206,15 @@ function Format-DocsCoveragePageHtml {
             [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="' + $tipId + '"><b>Why declined</b>' + (& $e $it.WhyDeclined) + '</div>')
         }
         [void]$sb.AppendLine('<tr><td><a href="/docs-coverage/' + (& $e $it.Slug) + '">' + (& $e $it.Label) + '</a></td>' +
-            '<td class="col-start">' + (& $e $it.Sub) + '</td><td class="col-start">' + $statusHtml + '</td>' +
+            '<td class="col-start dc-what">' + (& $e $it.Sub) + '</td><td class="col-start">' + $statusHtml + '</td>' +
+            '<td class="col-start">' + (& $e $it.Section) + '</td><td class="col-start">' + (& $e $it.Group) + '</td>' +
             '<td class="col-start"><a href="' + (& $e $it.Docs) + '">' + (& $e ($it.Docs -replace '^https://code\.claude\.com/docs/en/', '')) + '</a></td>' +
             '<td><a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a></td></tr>')
     }
     [void]$sb.AppendLine('</tbody></table></div>')
     if ($tips.Length) { [void]$sb.Append($tips.ToString()); [void]$sb.AppendLine((Get-DocsCoverageTipScript)) }
-    return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() `
+    # The page's own layer: the What column wraps, so seven columns fit the width (a .table cell does not wrap).
+    return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() -Style '.table td.dc-what { white-space: normal; }' `
         -FooterNote (Get-DocsCoverageFooter -Meta $Meta -Page 'docs-coverage')
 }
 

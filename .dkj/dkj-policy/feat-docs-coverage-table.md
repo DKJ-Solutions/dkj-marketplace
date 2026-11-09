@@ -51,18 +51,22 @@ cards: ten items read better compared row by row. The item pages stay as they ar
 - [x] A Declined status carries the house `.info-button` "?", opening a `.tooltip--explain` with why it was
       declined: `WhyDeclined` on #3898 and #3900, taken from the decision that closed each issue;
       `Get-DocsCoverageTipScript` opens it on hover or focus, Escape closes it
+- [x] Section and Group columns: where each docs page sits in the docs navigation, read from
+      code.claude.com/docs/llms.txt (its `##` section and `####` group); the What column wraps through the
+      page's own `.dc-what`, so seven columns fit the width
 
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: the overview asserts read a table, one row per item, status, docs and issue per
-      row, and the "?" only beside a Declined status with a reason (681/0)
+      row, the docs section and group, and the "?" only beside a Declined status with a reason (684/0);
+      `check-house-style` OK
 - [x] The product server on 4870 restarted and serves the table
 - [ ] The owner's look at http://localhost:4870/docs-coverage
 
 ### DEPLOY: feat/docs-coverage-table
 
 The Docs coverage overview on the product portal is a table now: one row per item with its one line, its
-status, a link to its Claude Code docs page and a link to its issue, so the ten compare at a glance. A
+status, the section and group its Claude Code docs page sits in, a link to that page and a link to its issue, so the ten compare at a glance. A
 Declined status carries a "?" that shows, on hover or focus, why the owner declined it. Each item still opens its own page.
 
 **Score:** 2
