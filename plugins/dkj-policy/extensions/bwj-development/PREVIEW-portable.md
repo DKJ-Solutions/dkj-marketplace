@@ -56,6 +56,16 @@ and the page behind it is the handover.
 
 The second half is what makes the first half reachable, which is why they are one rule and not two.
 
+**The published page is an Admin page, and
+[`build-handover-page.ps1`](scripts/task/build-handover-page.ps1) builds it** (#3925). Since #3772 a
+result someone must judge is never a claude.ai Artifact, and for three days nothing carried this page,
+so a handover went into an issue comment without its QR codes. The builder takes the preview theme, the
+changed page(s) and the three text blocks, builds the cards from `Get-MarketHandoverPairs`, and writes
+the page to `/dev/handover/<name>` on this checkout's Admin. It prints that one link and no URL. Admin
+draws the QR codes on the machine (the mechanism notes below), and the page lives outside the checkout,
+so the parked branch stays clean. Building the same name again replaces the page behind the link the
+reviewer already holds.
+
 **A preview alone shows what a page will look like. It never shows what changed.** Only the reader
 knows the current state, from memory, while looking at something else -- and that is precisely the
 judgement the preview exists to make possible. A handover that skips the control has moved the hard

@@ -625,6 +625,7 @@ function Write-MarketPreviewUrls {
     Write-Host ('  A handover is ONE LINK to a published page, carrying the pages that ACTUALLY ' +
         'changed and the live control beside each one.')
     Write-Host '  The rule: PREVIEW-portable.md, which ships with bwj-development.'
+    Write-Host '  The page: build-handover-page.ps1 in bwj-development builds it on Admin and prints its one link.'
     # The caveat sits in the same output as the URLs it qualifies: a warning one scroll away is one
     # nobody reads on the day it matters.
     Write-Host ('Verifying one of these from a script? A bare curl/fetch of a ?preview_theme_id URL ' +
