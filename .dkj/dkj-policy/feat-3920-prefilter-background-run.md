@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Decided in #3898 (pre-filter only, no `async`): put a bash `case` in front of the PostToolUse hook
+`publish-background-run`, so a shell call whose payload carries no `"run_in_background"` key never
+starts PowerShell.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-policy/hooks/hooks.json`: the PostToolUse command drains the payload, exits 0 unless it carries the key, and pipes it on to the unchanged script
+- [x] `publish-background-run.ps1`: its header says the pre-gate now sits in front of the interpreter too
+- [x] `scripts/tests/hook-fail-closed.tests.ps1`: a group runs the real wrapper with the stub `powershell` -- foreground never starts it, backgrounded gets the payload intact, spaced spelling still passes
 
 ### TEST
 
+- [x] `hook-fail-closed.tests.ps1` standalone: 51 passed, 0 failed
+
 ### DEPLOY: feat/3920-prefilter-background-run
 
-**Score:**
+The PostToolUse hook `publish-background-run` no longer starts PowerShell on a shell call that is not
+backgrounded: a bash `case` in its `hooks.json` command lets only a payload carrying
+`"run_in_background"` through ([#3920](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3920),
+decided in [#3898](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3898)). That was about
+150 ms of the hook's measured cost on every shell call. The filter is coarse on purpose, and the
+script's own precise test still decides.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Every shell call in a session running `dkj-policy` gets about 0.15 s faster, roughly 7 s over 50
+calls. Nothing to do but take the version.
+
+**Score:** 2
 
 #### Pull Request
 
