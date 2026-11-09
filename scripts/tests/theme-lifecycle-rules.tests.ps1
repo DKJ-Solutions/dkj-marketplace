@@ -190,6 +190,20 @@ $w = Get-ThemeFillWaitDecision -Samples @(661) -Now $soft -Deadline $soft -HardD
 Assert-True (-not $w.Continue) 'one sample past the deadline cannot show growth, so the wait ends'
 Assert-Equal 3 $script:ThemeFillHardCapFactor 'the hard cap is three times the wait -- live-preflight bounds its backup run by the same factor'
 
+# #3926: every sample is a full pull, so the pause is never shorter than the pull, and a resume reuses live's count.
+Assert-Equal 30 (Get-ThemeFillSleepSeconds -PollSeconds 30 -LastSampleSeconds 12.4) 'a pull quicker than the poll interval leaves the interval as it was'
+Assert-Equal 75 (Get-ThemeFillSleepSeconds -PollSeconds 30 -LastSampleSeconds 74.2) 'a pull slower than the interval sets the pause, so the wait spends at most half its time pulling'
+Assert-Equal 30 (Get-ThemeFillSleepSeconds -PollSeconds 30) 'without a measured pull the interval holds'
+$now = [datetime]::new(2026, 11, 9, 12, 0, 0, [DateTimeKind]::Utc)
+$rec = Format-PreviewLiveCountRecord -LiveThemeId '1234' -Count 910 -At $now.AddHours(-1)
+Assert-Equal '1234:910:202611091100' $rec 'the live-count record names the live id, the count and when, in UTC'
+Assert-Equal 910 (Get-PreviewLiveCountFromRecord -Record $rec -LiveThemeId '1234' -Now $now) 'a resume an hour later reuses the count the first run took'
+Assert-Equal -1 (Get-PreviewLiveCountFromRecord -Record $rec -LiveThemeId '5678' -Now $now) '...but not once live has been republished under another id'
+Assert-Equal -1 (Get-PreviewLiveCountFromRecord -Record $rec -LiveThemeId '1234' -Now $now.AddHours(30)) '...nor a day later'
+Assert-Equal -1 (Get-PreviewLiveCountFromRecord -Record '1234:0:202611091100' -LiveThemeId '1234' -Now $now) '...nor a count of zero'
+Assert-Equal -1 (Get-PreviewLiveCountFromRecord -Record 'garbage' -LiveThemeId '1234' -Now $now) '...nor a record that does not parse'
+Assert-Equal -1 (Get-PreviewLiveCountFromRecord -Record '' -LiveThemeId '1234' -Now $now) 'no record means live is counted again'
+
 Write-Host ''
 Write-Host 'Has the duplicate finished filling? (the silent half-empty backup, #1965 point 3)' -ForegroundColor Cyan
 

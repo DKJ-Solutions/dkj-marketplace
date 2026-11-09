@@ -464,6 +464,8 @@ if (-not $id) {
     # 'complete' only once verified. A run that dies during the wait leaves the next run knowing it must
     # wait rather than push into a half-filled copy.
     $null = git config "branch.$branch.previewTheme" $id
+    # A new copy is judged against live as it is now, so a count kept for an earlier copy is dropped (#3926).
+    $null = git config --unset "branch.$branch.previewLiveCount"
     $fillState = 'pending'
     Write-Host "Preview theme '$themeName' (id $id) created as a copy of live; id remembered." -ForegroundColor Green
 }
@@ -484,14 +486,28 @@ if ($fillState -eq 'pending') {
         exit 1
     }
     Write-Host "Waiting for the copy of live to fill (every $PollSeconds s, at most $TimeoutMinutes min)..." -ForegroundColor Cyan
-    Write-Host '  each sample pulls the theme and counts files on disk -- heavier than a JSON read.'
-    $sourceCount = Get-ThemeFileCount -Store $store -ThemeId $liveId
-    if ($sourceCount -lt 0) {
-        Write-Error ("Could not count live's files, so the copy cannot be judged filled. Nothing was pushed; " +
-            "re-run this script -- it resumes the wait on the same theme (id $id).")
-        exit 1
+    Write-Host '  each sample pulls the theme and counts files on disk -- heavier than a JSON read -- so the pause is never shorter than the last pull took.'
+    # LIVE IS COUNTED ONCE PER BRANCH, NOT ONCE PER RUN (#3926). A resume reuses the count the first run took
+    # (Get-PreviewLiveCountFromRecord says when it may), and a count that fails is tried twice more before the
+    # run gives up: with several previews filling at once, live's pull is the one measured to fail.
+    $sourceCount = Get-PreviewLiveCountFromRecord -Record "$(git config --get "branch.$branch.previewLiveCount")" -LiveThemeId "$liveId" -Now ([datetime]::UtcNow)
+    if ($sourceCount -gt 0) {
+        Write-Host "  live holds $sourceCount file(s) (counted when this preview was duplicated; not pulled again)."
+    } else {
+        for ($try = 1; $try -le 3; $try++) {
+            $sourceCount = Get-ThemeFileCount -Store $store -ThemeId $liveId
+            if ($sourceCount -ge 0 -or $try -eq 3) { break }
+            Write-Host "  live's files could not be counted (try $try of 3); trying again in $PollSeconds s." -ForegroundColor Yellow
+            Start-Sleep -Seconds $PollSeconds
+        }
+        if ($sourceCount -lt 0) {
+            Write-Error ("Could not count live's files, so the copy cannot be judged filled. Nothing was pushed; " +
+                "re-run this script -- it resumes the wait on the same theme (id $id).")
+            exit 1
+        }
+        $null = git config "branch.$branch.previewLiveCount" (Format-PreviewLiveCountRecord -LiveThemeId "$liveId" -Count $sourceCount -At ([datetime]::UtcNow))
+        Write-Host "  live holds $sourceCount file(s)."
     }
-    Write-Host "  live holds $sourceCount file(s)."
     $samples = @()
     $verdict = $null
     $deadline = [datetime]::Now.AddMinutes($TimeoutMinutes)
@@ -508,14 +524,16 @@ if ($fillState -eq 'pending') {
             Write-Host "  $TimeoutMinutes min have passed and the copy is $($wait.Reason) -- waiting on, at most until $($hardDeadline.ToString('HH:mm'))." -ForegroundColor Yellow
             $extended = $true
         }
+        $sampleClock = [System.Diagnostics.Stopwatch]::StartNew()
         $n = Get-ThemeFileCount -Store $store -ThemeId $id
+        $sampleSeconds = $sampleClock.Elapsed.TotalSeconds
         if ($n -ge 0) { $samples += $n }
         $verdict = Get-ThemeFillVerdict -Samples $samples -SourceFileCount $sourceCount
         Write-Host "    $($verdict.Count) file(s) -- $($verdict.Verdict)"
         # ONLY 'complete' ENDS THE WAIT EARLY. A copy also stands still in its first seconds and between
         # bursts, where it reads as 'short' -- stopping there is exactly the race this step prevents.
         if ($verdict.Verdict -eq 'complete') { break }
-        Start-Sleep -Seconds $PollSeconds
+        Start-Sleep -Seconds (Get-ThemeFillSleepSeconds -PollSeconds $PollSeconds -LastSampleSeconds $sampleSeconds)
     }
     if ($null -eq $verdict -or ($verdict.Verdict -ne 'complete' -and $verdict.Verdict -ne 'short')) {
         $why = if ($null -eq $verdict) { 'no samples were taken' } else { $verdict.Reason }

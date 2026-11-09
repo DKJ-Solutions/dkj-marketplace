@@ -432,6 +432,75 @@ function Get-ThemeFillWaitDecision {
     return [pscustomobject]@{ Continue = $false; Extended = $false; Reason = "no growth over the last $span sample(s) (held at $newest)" }
 }
 
+function Get-ThemeFillSleepSeconds {
+    <#
+    .SYNOPSIS
+        How long a fill wait sleeps before its next sample: -PollSeconds, or as long as the last sample took,
+        whichever is longer.
+
+    .DESCRIPTION
+        EVERY SAMPLE IS A FULL THEME PULL (#3926). No Shopify CLI answer carries a file count, so
+        Get-ThemeFileCount downloads the whole theme to count it. At the 30-second default against a 910-file
+        theme the pull itself takes longer than the pause, so a wait was pulling back to back. With three
+        previews duplicated from live within about 15 minutes, the three waits slowed each other down, and one
+        resume could not count live at all (BWJ-Development/smartwatchbanden#1066, November 4, 2026).
+
+        SO THE PAUSE IS NEVER SHORTER THAN THE SAMPLE. A wait then spends at most half its time pulling, and
+        waits running side by side space themselves out on their own: the more they slow each other's pulls,
+        the longer each one pauses. No count is skipped or guessed, so the verdict reads the same counts as before.
+        Pure.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][int]$PollSeconds,
+        [double]$LastSampleSeconds = 0
+    )
+    # [double] on both: with an int first, PowerShell picks Math.Max(int, int) and truncates 74.2 to 74.
+    return [int][Math]::Max([double]$PollSeconds, [Math]::Ceiling([Math]::Max([double]0, [double]$LastSampleSeconds)))
+}
+
+function Format-PreviewLiveCountRecord {
+    <# The record push-preview keeps of live's file count for a branch (#3926): '<live id>:<count>:<yyyyMMddHHmm UTC>'. Pure. #>
+    param(
+        [Parameter(Mandatory = $true)][string]$LiveThemeId,
+        [Parameter(Mandatory = $true)][int]$Count,
+        [Parameter(Mandatory = $true)][datetime]$At
+    )
+    return ('{0}:{1}:{2}' -f $LiveThemeId, $Count, $At.ToUniversalTime().ToString('yyyyMMddHHmm', [System.Globalization.CultureInfo]::InvariantCulture))
+}
+
+function Get-PreviewLiveCountFromRecord {
+    <#
+    .SYNOPSIS
+        Live's file count from a record Format-PreviewLiveCountRecord wrote, or -1 where it cannot be used.
+
+    .DESCRIPTION
+        A RESUMED WAIT COUNTED LIVE AGAIN, which is one more full pull at the moment parallel waits are
+        busiest, and the measured failure in #3926 was exactly that pull. The count the first run took is
+        the right one to keep, too: the copy was duplicated from live at that moment, so a later recount
+        could only differ by a live push the copy never saw.
+
+        So it is used only when it names the same live theme id (a republished live is a different source),
+        holds a count above zero, and is younger than -MaxAgeHours (default 24) at -Now. Anything else
+        is -1, and the caller counts live again. Pure.
+    #>
+    param(
+        [AllowEmptyString()][string]$Record = '',
+        [Parameter(Mandatory = $true)][string]$LiveThemeId,
+        [Parameter(Mandatory = $true)][datetime]$Now,
+        [int]$MaxAgeHours = 24
+    )
+    $m = [regex]::Match(([string]$Record).Trim(), '\A(\d+):(\d+):(\d{12})\z')
+    if (-not $m.Success -or $m.Groups[1].Value -cne $LiveThemeId) { return -1 }
+    $count = [int]$m.Groups[2].Value
+    if ($count -le 0) { return -1 }
+    $at = [datetime]::MinValue
+    if (-not [datetime]::TryParseExact($m.Groups[3].Value, 'yyyyMMddHHmm', [System.Globalization.CultureInfo]::InvariantCulture,
+            ([System.Globalization.DateTimeStyles]::AssumeUniversal -bor [System.Globalization.DateTimeStyles]::AdjustToUniversal), [ref]$at)) { return -1 }
+    $age = ($Now.ToUniversalTime() - $at).TotalHours
+    if ($age -lt -1 -or $age -gt $MaxAgeHours) { return -1 }
+    return $count
+}
+
 function Get-ThemeShortfallPaths {
     <# The source's paths the copy does not hold, ordinally sorted. Ordinal and case-sensitive, because a
        theme path is a key on the store and 'Foo.json' is not 'foo.json' there. #>
