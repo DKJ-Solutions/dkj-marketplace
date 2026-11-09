@@ -75,6 +75,8 @@ cards: ten items read better compared row by row. The item pages stay as they ar
       server serves /docs-coverage alone, so an old item URL is a 404; the home card says what the page holds now
 - [x] `consumer-dashboard.tests.ps1`: its three fixtures that copy the docs-coverage lib copy the catalog it
       loads too (250/0); logbook, stopwatch and stopwatch-sync, which load the same libs, stay green
+- [x] Column order Section, Group, Item, Status, Issue: from the docs' section down to the topic, then how this
+      repo stands to it
 
 ### TEST
 
@@ -88,8 +90,8 @@ cards: ten items read better compared row by row. The item pages stay as they ar
 ### DEPLOY: feat/docs-coverage-table
 
 The Docs coverage overview on the product portal is a table now, listing every page of the Claude Code docs
-beside the ten items with an issue. Each row names the topic, linking the docs (an item its heading, a docs page the page
-itself), its status, the section and group it sits in (each a link into the docs) and its issue. A docs page reads
+beside the ten items with an issue. Each row reads from the docs' section and group (each a link into the docs) to the topic, linking the docs
+(an item its heading, a docs page the page itself), then its status and its issue. A docs page reads
 Covered (this repo already uses it well), Not used or Not relevant, and a "?" beside a name or a status explains
 it on hover or focus: the idea, the docs' own description, the evidence, or why the owner declined it. Every column
 sorts with a click on its head.

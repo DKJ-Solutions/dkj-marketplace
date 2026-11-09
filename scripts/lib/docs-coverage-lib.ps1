@@ -200,7 +200,8 @@ function Get-DocsCoverageStatus {
 
 function Format-DocsCoveragePageHtml {
     <#
-        /docs-coverage: one row per item in the house .table, the item's name linking the docs heading it is about,
+        /docs-coverage: columns Section, Group, Item, Status, Issue (the owner, November 9, 2026). One row per item
+        in the house .table, the item's name linking the docs heading it is about,
         with a "?" explaining it (its one line, the idea and what the docs check found), then its status, the section and group its docs page sits in (each linking the
         page it opens on), and its issue (the owner, November 9, 2026: a table over the cards the page first had). A
         "?" beside a Declined status says why. Below the ten, one row per docs page of -Catalog
@@ -215,7 +216,9 @@ function Format-DocsCoveragePageHtml {
     $sb = New-Object System.Text.StringBuilder
     if ($Query.Error) { [void]$sb.AppendLine('<p class="msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The items are shown without their status.</p>') }
     [void]$sb.AppendLine('<div class="table-wrap"><table class="table" id="items">')
-    $heads = (@(@('Item', ''), @('Status', 'col-start'), @('Section', 'col-start'), @('Group', 'col-start'), @('Issue', '')) |
+    # Section, Group, Item, then Status (the owner, November 9, 2026): read from the docs' section down to the topic,
+    # and then how this repo stands to it.
+    $heads = (@(@('Section', ''), @('Group', 'col-start'), @('Item', 'col-start'), @('Status', 'col-start'), @('Issue', '')) |
         ForEach-Object { Format-DocsCoverageSortHead -Label $_[0] -Class $_[1] }) -join ''
     [void]$sb.AppendLine('<thead><tr>' + $heads + '</tr></thead><tbody>')
     # A tooltip goes after the table, not in its cell: a .table cell does not wrap, and the text would run on one line.
@@ -233,10 +236,10 @@ function Format-DocsCoveragePageHtml {
         $aboutButton = '<button class="info-button" type="button" aria-label="About ' + (& $e $it.Label) + '" aria-describedby="' + $aboutId + '" aria-expanded="false">?</button>'
         [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="' + $aboutId + '"><b>' + (& $e $it.Sub) + '</b>' + (& $e $it.What) + '<p>' + (& $e $it.Why) + '</p>' +
             '<p>Checked against the docs: ' + (& $e (@($it.Verified) -join ' ')) + '</p></div>')
-        [void]$sb.AppendLine('<tr><td><a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e $it.Label) + '</a>' + $aboutButton + '</td>' +
-            '<td class="col-start">' + $statusHtml + '</td>' +
-            '<td class="col-start"><a href="' + (& $e $it.SectionUrl) + '">' + (& $e $it.Section) + '</a></td>' +
+        [void]$sb.AppendLine('<tr><td><a href="' + (& $e $it.SectionUrl) + '">' + (& $e $it.Section) + '</a></td>' +
             '<td class="col-start"><a href="' + (& $e $it.GroupUrl) + '">' + (& $e $it.Group) + '</a></td>' +
+            '<td class="col-start"><a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e $it.Label) + '</a>' + $aboutButton + '</td>' +
+            '<td class="col-start">' + $statusHtml + '</td>' +
             '<td><a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a></td></tr>')
     }
     $docsBase = 'https://code.claude.com/docs/en/'
@@ -248,10 +251,10 @@ function Format-DocsCoveragePageHtml {
         [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="status-' + $id + '"><b>' + (& $e $pg.Status) + '</b>' + $noteHtml + '</div>')
         [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="page-' + $id + '"><b>' + (& $e $pg.Title) + '</b>' + (& $e $pg.Desc) + '</div>')
         $groupHtml = if ($pg.Group) { '<a href="' + (& $e ($docsBase + $pg.GroupPath)) + '">' + (& $e $pg.Group) + '</a>' } else { '' }
-        [void]$sb.AppendLine('<tr><td><a href="' + (& $e ($docsBase + $pg.Path)) + '">' + (& $e $pg.Title) + '</a><button class="info-button" type="button" aria-label="About ' + (& $e $pg.Title) + '" aria-describedby="page-' + $id + '" aria-expanded="false">?</button></td>' +
-            '<td class="col-start">' + (& $e $pg.Status) + '<button class="info-button" type="button" aria-label="Why ' + (& $e $pg.Title) + ' is ' + (& $e $pg.Status) + '" aria-describedby="status-' + $id + '" aria-expanded="false">?</button></td>' +
-            '<td class="col-start"><a href="' + (& $e ($docsBase + $pg.SectionPath)) + '">' + (& $e $pg.Section) + '</a></td>' +
+        [void]$sb.AppendLine('<tr><td><a href="' + (& $e ($docsBase + $pg.SectionPath)) + '">' + (& $e $pg.Section) + '</a></td>' +
             '<td class="col-start">' + $groupHtml + '</td>' +
+            '<td class="col-start"><a href="' + (& $e ($docsBase + $pg.Path)) + '">' + (& $e $pg.Title) + '</a><button class="info-button" type="button" aria-label="About ' + (& $e $pg.Title) + '" aria-describedby="page-' + $id + '" aria-expanded="false">?</button></td>' +
+            '<td class="col-start">' + (& $e $pg.Status) + '<button class="info-button" type="button" aria-label="Why ' + (& $e $pg.Title) + ' is ' + (& $e $pg.Status) + '" aria-describedby="status-' + $id + '" aria-expanded="false">?</button></td>' +
             '<td></td></tr>')
     }
     [void]$sb.AppendLine('</tbody></table></div>')
