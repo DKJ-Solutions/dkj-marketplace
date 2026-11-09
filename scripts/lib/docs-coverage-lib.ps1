@@ -20,7 +20,7 @@
 function Get-DocsCoverageItems {
     <#
         The ten items in the issue's own order (#3906's table). Label is the row's link and the page's h1 (five words
-        at most, no code); Sub the row's one line; What and Why the idea; Verified what the docs said when it was
+        at most, no code); Sub its one line and What and Why the idea, which the "?" beside its docs heading shows; Verified what the docs said when it was
         checked, one string per point; Docs the docs page it rests on, and Section and Group where that page sits in
         the docs navigation (read from code.claude.com/docs/llms.txt on November 9, 2026: its ## heading and its ####
         group; plugins-reference is not listed itself and serves the Plugin manifest reference, so it takes that
@@ -193,11 +193,12 @@ function Get-DocsCoverageStatus {
 
 function Format-DocsCoveragePageHtml {
     <#
-        /docs-coverage: one row per item in the house .table, the item linking its own page, then its one line, its
-        status, the section and group its docs page sits in, the page (shown as its path under /docs/en/) and its
-        issue, so the ten compare at a glance (the owner, November 9, 2026: a table over the cards
-        the page first had). -Query is ConvertFrom-DocsCoverageQuery's result; -Meta @{ GeneratedAt; Seconds } of
-        the read.
+        /docs-coverage: one row per item in the house .table, the item linking its own page, then its status, the
+        section and group its docs page sits in (each linking the page it opens on), the heading on that page it is
+        about, and its issue, so the ten compare at a glance (the owner, November 9, 2026: a table over the cards
+        the page first had). A "?" beside the heading explains the item (its one line and the idea), and one beside
+        a Declined status says why. -Query is ConvertFrom-DocsCoverageQuery's result; -Meta @{ GeneratedAt;
+        Seconds } of the read.
     #>
     param([Parameter(Mandatory = $true)][hashtable]$Query, [Parameter(Mandatory = $true)][hashtable]$Meta,
         [AllowEmptyCollection()][object[]]$Items = @(Get-DocsCoverageItems))
@@ -205,7 +206,7 @@ function Format-DocsCoveragePageHtml {
     $sb = New-Object System.Text.StringBuilder
     if ($Query.Error) { [void]$sb.AppendLine('<p class="msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The items are shown without their status.</p>') }
     [void]$sb.AppendLine('<div class="table-wrap"><table class="table" id="items">')
-    [void]$sb.AppendLine('<thead><tr><th scope="col">Item</th><th scope="col" class="col-start">What</th><th scope="col" class="col-start">Status</th><th scope="col" class="col-start">Section</th><th scope="col" class="col-start">Group</th><th scope="col" class="col-start">Docs</th><th scope="col">Issue</th></tr></thead><tbody>')
+    [void]$sb.AppendLine('<thead><tr><th scope="col">Item</th><th scope="col" class="col-start">Status</th><th scope="col" class="col-start">Section</th><th scope="col" class="col-start">Group</th><th scope="col" class="col-start">Docs</th><th scope="col">Issue</th></tr></thead><tbody>')
     # A tooltip goes after the table, not in its cell: a .table cell does not wrap, and the text would run on one line.
     $tips = New-Object System.Text.StringBuilder
     foreach ($it in @($Items)) {
@@ -217,17 +218,19 @@ function Format-DocsCoveragePageHtml {
             $statusHtml += '<button class="info-button" type="button" aria-label="Why ' + (& $e $it.Label) + ' was declined" aria-describedby="' + $tipId + '" aria-expanded="false">?</button>'
             [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="' + $tipId + '"><b>Why declined</b>' + (& $e $it.WhyDeclined) + '</div>')
         }
+        $aboutId = 'about-' + $it.Slug
+        $aboutButton = '<button class="info-button" type="button" aria-label="About ' + (& $e $it.Label) + '" aria-describedby="' + $aboutId + '" aria-expanded="false">?</button>'
+        [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="' + $aboutId + '"><b>' + (& $e $it.Sub) + '</b>' + (& $e $it.What) + '<p>' + (& $e $it.Why) + '</p></div>')
         [void]$sb.AppendLine('<tr><td><a href="/docs-coverage/' + (& $e $it.Slug) + '">' + (& $e $it.Label) + '</a></td>' +
-            '<td class="col-start dc-what">' + (& $e $it.Sub) + '</td><td class="col-start">' + $statusHtml + '</td>' +
+            '<td class="col-start">' + $statusHtml + '</td>' +
             '<td class="col-start"><a href="' + (& $e $it.SectionUrl) + '">' + (& $e $it.Section) + '</a></td>' +
             '<td class="col-start"><a href="' + (& $e $it.GroupUrl) + '">' + (& $e $it.Group) + '</a></td>' +
-            '<td class="col-start"><a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e $it.DocsHeading) + '</a></td>' +
+            '<td class="col-start"><a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e $it.DocsHeading) + '</a>' + $aboutButton + '</td>' +
             '<td><a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a></td></tr>')
     }
     [void]$sb.AppendLine('</tbody></table></div>')
-    if ($tips.Length) { [void]$sb.Append($tips.ToString()); [void]$sb.AppendLine((Get-DocsCoverageTipScript)) }
-    # The page's own layer: the What column wraps, so seven columns fit the width (a .table cell does not wrap).
-    return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() -Style '.table td.dc-what { white-space: normal; }' `
+    [void]$sb.Append($tips.ToString()); [void]$sb.AppendLine((Get-DocsCoverageTipScript))
+    return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() `
         -FooterNote (Get-DocsCoverageFooter -Meta $Meta -Page 'docs-coverage')
 }
 
@@ -257,7 +260,7 @@ function Format-DocsCoverageItemPageHtml {
 
 function Get-DocsCoverageTipScript {
     <#
-        The "?" beside a Declined status: every .info-button opens the .tooltip its aria-describedby names, the way
+        The "?" beside a docs heading or a Declined status: every .info-button opens the .tooltip its aria-describedby names, the way
         Get-PageInfoScript opens the one beside an h1 (the house .tooltip is position: fixed, so this places it under
         the button, inside the window). It stays open while the pointer is on the button or on the text (WCAG
         1.4.13) or while the button has focus; Escape closes it.

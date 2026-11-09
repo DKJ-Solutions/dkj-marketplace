@@ -57,22 +57,23 @@ cards: ten items read better compared row by row. The item pages stay as they ar
 - [x] Section and Group link the page each opens on in the docs navigation (its first link in llms.txt, each
       answering 200); Docs links the heading on its page the item is about (`DocsAnchor`, each checked as an id
       on the live page), named by that heading's text (`DocsHeading`) rather than the page's path
+- [x] The What column is gone (with its `.dc-what` wrap); a "?" beside each docs heading opens a
+      `.tooltip--explain` with the item's one line, the idea and why
 
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: the overview asserts read a table, one row per item, status, docs and issue per
-      row, the docs section and group as links, the docs link to its heading, and the "?" only beside a
-      Declined status with a reason (685/0);
+      row, the docs section and group as links, the docs link to its heading, the "?" beside each docs heading, and the
+      one in the status only beside a Declined status with a reason (685/0);
       `check-house-style` OK
 - [x] The product server on 4870 restarted and serves the table
 - [ ] The owner's look at http://localhost:4870/docs-coverage
 
 ### DEPLOY: feat/docs-coverage-table
 
-The Docs coverage overview on the product portal is a table now: one row per item with its one line, its
-status, the section and group its Claude Code docs page sits in (each a link into the docs), a link to the
+The Docs coverage overview on the product portal is a table now: one row per item with its status, the section and group its Claude Code docs page sits in (each a link into the docs), a link to the
 heading on that page the item is about, and a link to its issue, so the ten compare at a glance. A
-Declined status carries a "?" that shows, on hover or focus, why the owner declined it. Each item still opens its own page.
+"?" beside each docs heading explains the item on hover or focus, and one beside a Declined status says why the owner declined it. Each item still opens its own page.
 
 **Score:** 2
 
