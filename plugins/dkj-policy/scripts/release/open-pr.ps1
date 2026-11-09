@@ -2761,6 +2761,12 @@ if ($existingPr) {
     # below it, so anything appended before the refresh is appended into the part being replaced.
     # Add-NoResolvesMarker is idempotent, so this restores a swallowed marker and is a no-op otherwise.
     if ($resolvesDeclaredNone -and $resolveIssues.Count -eq 0) {
+        # CLOSES NOTHING STILL NAMES THE BRANCH'S ISSUE (#3944), and goes on first so the marker stays
+        # the last line. Idempotent: a body that already mentions the number is left alone.
+        $branchIssueRef = Get-BranchNameIssue -Branch $branch
+        $beforeReference = $newBody
+        $newBody = Add-BranchIssueReference -Body $newBody -Issue $branchIssueRef
+        if ($newBody -ne $beforeReference) { $edits += "a 'Part of #$branchIssueRef' reference to the branch's issue" }
         $beforeMarker = $newBody
         $newBody = Add-NoResolvesMarker -Body $newBody
         if ($newBody -ne $beforeMarker) { $edits += 'the "closes nothing" marker, so the next run is not asked again' }
@@ -2967,6 +2973,14 @@ if ($resolveIssues.Count -gt 0) {
     $Body = Remove-NoResolvesMarker -Body $Body
     Write-Host ("resolves gate: the PR body closes " + (($resolveIssues | ForEach-Object { "#$_" }) -join ', ') + " on merge.") -ForegroundColor Green
 } elseif ($resolvesDeclaredNone) {
+    # The branch's own issue is still CITED (#3944), so GitHub links it to this PR even though the
+    # merge closes nothing; a body that already mentions it is left as it is.
+    $branchIssueRef = Get-BranchNameIssue -Branch $branch
+    $beforeReference = $Body
+    $Body = Add-BranchIssueReference -Body $Body -Issue $branchIssueRef
+    if ($Body -ne $beforeReference) {
+        Write-Host "resolves gate: the PR body cites #$branchIssueRef as 'Part of', without closing it." -ForegroundColor DarkGray
+    }
     # The whole of #1912: this is the line that makes "closes nothing" as durable as "closes #n".
     $Body = Add-NoResolvesMarker -Body $Body
     Write-Host "resolves gate: this PR closes no issue -- recorded in the body, so a later run is not asked again." -ForegroundColor DarkGray
