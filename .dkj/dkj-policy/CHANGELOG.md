@@ -2,7 +2,38 @@
 
 ## [Unreleased]
 
-**12 / 17 minor entries** <!-- pending-tally -->
+**13 / 18 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3925-handover-page · 20261109-115526Z
+
+A preview handover in a BWJ store is an Admin page again
+([#3925](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3925)). bwj-development's
+`build-handover-page.ps1` takes the preview theme, the changed page(s) and the three text blocks, and
+writes the page to `/dev/handover/<name>` on the checkout's Admin. It has one card per market, each with a
+QR code to the preview and the live-pinned control beside it, and the go-live block as `build-golive-block`
+wrote it. The script prints that one link. dkj-policy's Admin draws the codes on the machine with a new
+local encoder, so a preview URL never reaches an outside service, and the page lives outside the checkout,
+so the parked branch stays clean.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A store session hands a preview over as one Admin link whose cards a phone can scan, where since #3772 it
+had only an issue comment without QR codes. The session runs `build-handover-page.ps1` after
+`push-preview` and reports the link it prints.
+
+**Score:** 3
+
+#### Pull Request
+
+An Admin page carries the preview handover (#3925)
+
+Plugins: bwj-development, dkj-policy
+
+[PR #3929](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3929)
+
+---
 
 ### DEPLOY: feat/3924-dayplan-sync · 20261109-111312Z
 
