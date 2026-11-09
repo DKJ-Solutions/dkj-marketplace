@@ -2,14 +2,15 @@
 .SYNOPSIS
     Tests for plugins/dkj-policy/extensions/bwj-development/hooks/closed-message-sessioncheck.ps1 -- the session check
     that reports a store whose asana-closed-message copy is missing, stale, or has no ASANA_PAT (#2871),
-    and a store config that states no Get-ResolvesExemptMatchers (#2959).
+    a store config that states no Get-ResolvesExemptMatchers (#2959), and an Asana-linked issue still open
+    after its -NoResolves pull request merged (#3945).
 
 .DESCRIPTION
     What is pinned is WHEN it speaks: only in the two store repos and, for asana-closed-message alone,
     phone-factory (#3518), once per kind of gap, never on a secret
     list it could not read, and never when everything is in place. Each case runs the hook as a child
-    process against a scratch fixture, with the repo slug and the secret names passed in, so nothing here
-    reads a real origin or calls gh.
+    process against a scratch fixture, with the repo slug, the secret names and the pull data passed in,
+    so nothing here calls gh.
 
     Pure ASCII (repo convention for .ps1).
 #>
@@ -49,17 +50,28 @@ function New-Store {
     return $root
 }
 
+function New-PullData {
+    <# Finding 5's three gh reads as a fixture file (#3945). Empty by default, so no case calls gh. #>
+    param([string]$Label, $Merged = @(), $Open = @(), $Issues = @())
+    New-Item -ItemType Directory -Force -Path $Fixture | Out-Null
+    $path = Join-Path $Fixture "pulls-$Label.json"
+    $json = ConvertTo-Json -Depth 5 -InputObject @{ merged = @($Merged); open = @($Open); issues = @($Issues) }
+    [System.IO.File]::WriteAllText($path, $json)
+    return $path
+}
+
 function Invoke-Hook {
     <# ONE secret name: -File does not split a comma list into a [string[]], so two names would arrive as one. #>
-    param([string]$Root, [string]$Slug, [string]$Secret)
+    param([string]$Root, [string]$Slug, [string]$Secret, [string]$Pulls = $script:NoPulls)
     $hookArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $Hook,
         '-RepoRootOverride', $Root, '-TemplateRootOverride', $Templates, '-RepoSlugOverride', $Slug,
-        '-SecretNamesOverride', $Secret)
+        '-SecretNamesOverride', $Secret, '-PullDataOverride', $Pulls)
     $out = & powershell @hookArgs 2>&1 | ForEach-Object { "$_" }
     return [pscustomobject]@{ Text = ($out -join "`n"); Code = $LASTEXITCODE }
 }
 
 try {
+    $script:NoPulls = New-PullData -Label 'none'
     $ok = New-Store -Label 'ok' -Copy
     $r = Invoke-Hook -Root $ok -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT'
     Assert-True ($r.Text.Trim() -eq '') 'a store with both copies and the secret is silent'
@@ -149,12 +161,55 @@ try {
     Assert-True ($r.Text -match 'phone-factory states no Get-ResolvesExemptMatchers') 'and a phone-factory config without the seam is reported'
     Assert-True ($r.Text -notmatch 'asana-prio-label') 'without blaming the prio pair the fixture also holds'
 
+    # OPEN AFTER ITS -NoResolves PR MERGED (#3945): the measured case is smartwatchbanden#1126 / PR #1144.
+    $now = (Get-Date).ToUniversalTime()
+    $recent = $now.AddDays(-1).ToString('yyyy-MM-ddTHH:mm:ssZ')
+    $old = $now.AddDays(-20).ToString('yyyy-MM-ddTHH:mm:ssZ')
+    $linked = "Body.`n<!-- asana-task: 1200000000000001 -->"
+    $declared = "Ships #1126.`n<!-- resolves: none -->"
+    $pulls = New-PullData -Label 'measured' `
+        -Merged @(@{ number = 1144; headRefName = 'fix/1126-cart-badge'; body = $declared; mergedAt = $recent }) `
+        -Issues @(@{ number = 1126; body = $linked })
+    $r = Invoke-Hook -Root $ok -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT' -Pulls $pulls
+    Assert-True ($r.Text -match '\[ERROR\] bwj-development: BWJ-Development/smartwatchbanden#1126 links an Asana task and is still open, though PR #1144') 'the measured case (#3945): an Asana-linked issue open after its -NoResolves PR merged is reported'
+    Assert-True ($r.Text -match 'closes when its PR lands') 'and the finding states the rule'
+    Assert-True ($r.Text -notmatch 'Ships #1126') 'and prints no PR body'
+    Assert-True ($r.Code -eq 0) 'a finding still exits 0'
+
+    $cases = @(
+        @{ Name = 'an issue linking no Asana task closes under the ordinary gate, so it is not this finding'
+           Merged = @(@{ number = 1144; headRefName = 'fix/1126-x'; body = $declared; mergedAt = $recent }); Open = @()
+           Issues = @(@{ number = 1126; body = 'no task here' }) },
+        @{ Name = 'a PR without the -NoResolves declaration is not read'
+           Merged = @(@{ number = 1144; headRefName = 'fix/1126-x'; body = 'Closes #1126'; mergedAt = $recent }); Open = @()
+           Issues = @(@{ number = 1126; body = $linked }) },
+        @{ Name = 'an issue another OPEN PR is named for is still being built (#3059)'
+           Merged = @(@{ number = 1144; headRefName = 'fix/1126-x'; body = $declared; mergedAt = $recent })
+           Open = @(@{ headRefName = 'feat/1126-step-two' }); Issues = @(@{ number = 1126; body = $linked }) },
+        @{ Name = 'a merge older than the window ages out'
+           Merged = @(@{ number = 1144; headRefName = 'fix/1126-x'; body = $declared; mergedAt = $old }); Open = @()
+           Issues = @(@{ number = 1126; body = $linked }) },
+        @{ Name = 'an issue already closed is not in the open list, so nothing is said'
+           Merged = @(@{ number = 1144; headRefName = 'fix/1126-x'; body = $declared; mergedAt = $recent }); Open = @(); Issues = @() }
+    )
+    foreach ($c in $cases) {
+        $p = New-PullData -Label ([guid]::NewGuid().ToString('n')) -Merged $c.Merged -Open $c.Open -Issues $c.Issues
+        $r = Invoke-Hook -Root $ok -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT' -Pulls $p
+        Assert-True ($r.Text.Trim() -eq '') $c.Name
+    }
+
+    $r = Invoke-Hook -Root $ok -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT' -Pulls '<unreadable>'
+    Assert-True ($r.Text.Trim() -eq '') 'a pull or issue list it could not read reports nothing'
+
+    $r = Invoke-Hook -Root $ok -Slug 'DKJ-Solutions/dkj-marketplace' -Secret 'ASANA_PAT' -Pulls $pulls
+    Assert-True ($r.Text.Trim() -eq '') 'and the finding is not asked of a repo outside the reach'
+
     # THE REAL ORIGIN READ, no slug override: an ssh origin naming a store is recognised as that store.
     $ssh = New-Store -Label 'ssh'
     Invoke-FixtureGitIn $ssh init -q
     Invoke-FixtureGitIn $ssh remote add origin 'git@github.com:BWJ-Development/smartwatchbanden.git'
     $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Hook -RepoRootOverride $ssh `
-        -TemplateRootOverride $Templates -SecretNamesOverride 'ASANA_PAT' 2>&1 | ForEach-Object { "$_" }
+        -TemplateRootOverride $Templates -SecretNamesOverride 'ASANA_PAT' -PullDataOverride $script:NoPulls 2>&1 | ForEach-Object { "$_" }
     Assert-True (($out -join "`n") -match 'BWJ-Development/smartwatchbanden has no \.github/workflows') 'an ssh origin is read as owner/name and checked as a store'
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }
