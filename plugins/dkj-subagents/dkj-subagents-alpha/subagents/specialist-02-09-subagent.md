@@ -9,6 +9,7 @@ description: >
   as material for the follow-up; does not land the work itself.
 tools: Read, Grep, Glob, Skill
 model: sonnet
+maxTurns: 60
 color: yellow
 ---
 

@@ -445,8 +445,13 @@ its plugin, and every consuming repo keeps only its repo lens in `.claude/specia
 Every specialist in these plugins consists of two files, each with its own job:
 
 - **`subagents/specialist-<group>-<id>-subagent.md` — the subagent definition**, the executable form. The frontmatter
-  (`name`, `description`, `tools`, `model`) is what Claude Code reads to register the subagent;
-  the `description` is also the routing signal the main loop uses to pick a subagent. The body is
+  (`name`, `description`, `tools`, `model`, `maxTurns`) is what Claude Code reads to register the subagent;
+  the `description` is also the routing signal the main loop uses to pick a subagent. **`maxTurns`
+  is a ceiling per role, read off the `tools` line** (#3897): 60 for a specialist that only reads and
+  reports, 80 for one that also searches the web or writes files without `Bash`, 120 for one that
+  writes and runs `Bash`. It bounds a runaway dispatch, and a run that hits it returns its partial
+  output. A new specialist takes the ceiling its tools put it in. Every def stays on `model: sonnet`,
+  with no `effort`, `memory` or `skills` key, by the owner's decision on that issue. The body is
   deliberately just a compact operational core (working method, boundaries, deliverable format) and
   refers to the playbook for the actual craft.
 - **`manuals/specialist-<group>-<id>-manual.md` — the playbook**, the full description of the craft: the

@@ -11,6 +11,7 @@ description: >
   independent research questions.
 tools: Read, Grep, Glob, WebSearch, WebFetch, Skill
 model: sonnet
+maxTurns: 80
 color: cyan
 ---
 

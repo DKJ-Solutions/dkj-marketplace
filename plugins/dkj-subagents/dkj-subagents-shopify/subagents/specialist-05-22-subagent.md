@@ -8,6 +8,7 @@ description: >
   CLI/auth reference. Reference/overview — does not perform a push or publish itself.
 tools: Read, Grep, Glob, WebFetch, Skill
 model: sonnet
+maxTurns: 80
 color: orange
 ---
 

@@ -9,6 +9,7 @@ description: >
   itself — only the threads.
 tools: Read, Write, Edit, Grep, Glob
 model: sonnet
+maxTurns: 80
 color: purple
 ---
 
