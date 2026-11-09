@@ -59,12 +59,14 @@ cards: ten items read better compared row by row. The item pages stay as they ar
       on the live page), named by that heading's text (`DocsHeading`) rather than the page's path
 - [x] The What column is gone (with its `.dc-what` wrap); a "?" beside each docs heading opens a
       `.tooltip--explain` with the item's one line, the idea and why
+- [x] Every column sorts: the house's sortable head (`.sort`/`.arrow` on `aria-sort`), ascending first and
+      flipping per click, the Issue column as a number, ties in the page's order (`Get-DocsCoverageSortScript`)
 
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: the overview asserts read a table, one row per item, status, docs and issue per
       row, the docs section and group as links, the docs link to its heading, the "?" beside each docs heading, and the
-      one in the status only beside a Declined status with a reason (685/0);
+      one in the status only beside a Declined status with a reason (687/0);
       `check-house-style` OK
 - [x] The product server on 4870 restarted and serves the table
 - [ ] The owner's look at http://localhost:4870/docs-coverage
@@ -73,7 +75,7 @@ cards: ten items read better compared row by row. The item pages stay as they ar
 
 The Docs coverage overview on the product portal is a table now: one row per item with its status, the section and group its Claude Code docs page sits in (each a link into the docs), a link to the
 heading on that page the item is about, and a link to its issue, so the ten compare at a glance. A
-"?" beside each docs heading explains the item on hover or focus, and one beside a Declined status says why the owner declined it. Each item still opens its own page.
+"?" beside each docs heading explains the item on hover or focus, and one beside a Declined status says why the owner declined it. Every column sorts with a click on its head. Each item still opens its own page.
 
 **Score:** 2
 

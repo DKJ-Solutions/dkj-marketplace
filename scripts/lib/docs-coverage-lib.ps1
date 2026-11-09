@@ -206,7 +206,9 @@ function Format-DocsCoveragePageHtml {
     $sb = New-Object System.Text.StringBuilder
     if ($Query.Error) { [void]$sb.AppendLine('<p class="msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The items are shown without their status.</p>') }
     [void]$sb.AppendLine('<div class="table-wrap"><table class="table" id="items">')
-    [void]$sb.AppendLine('<thead><tr><th scope="col">Item</th><th scope="col" class="col-start">Status</th><th scope="col" class="col-start">Section</th><th scope="col" class="col-start">Group</th><th scope="col" class="col-start">Docs</th><th scope="col">Issue</th></tr></thead><tbody>')
+    $heads = (@(@('Item', ''), @('Status', 'col-start'), @('Section', 'col-start'), @('Group', 'col-start'), @('Docs', 'col-start'), @('Issue', '')) |
+        ForEach-Object { Format-DocsCoverageSortHead -Label $_[0] -Class $_[1] }) -join ''
+    [void]$sb.AppendLine('<thead><tr>' + $heads + '</tr></thead><tbody>')
     # A tooltip goes after the table, not in its cell: a .table cell does not wrap, and the text would run on one line.
     $tips = New-Object System.Text.StringBuilder
     foreach ($it in @($Items)) {
@@ -229,7 +231,7 @@ function Format-DocsCoveragePageHtml {
             '<td><a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a></td></tr>')
     }
     [void]$sb.AppendLine('</tbody></table></div>')
-    [void]$sb.Append($tips.ToString()); [void]$sb.AppendLine((Get-DocsCoverageTipScript))
+    [void]$sb.Append($tips.ToString()); [void]$sb.AppendLine((Get-DocsCoverageTipScript)); [void]$sb.AppendLine((Get-DocsCoverageSortScript))
     return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() `
         -FooterNote (Get-DocsCoverageFooter -Meta $Meta -Page 'docs-coverage')
 }
@@ -274,6 +276,34 @@ function Get-DocsCoverageTipScript {
         ' [b, t].forEach(function (el) { el.addEventListener("mouseenter", show); el.addEventListener("mouseleave", hide); });' +
         ' b.addEventListener("focus", show); b.addEventListener("blur", hide);' +
         ' document.addEventListener("keydown", function (e) { if (e.key === "Escape") { clearTimeout(h); close(); } }); }); })();</script>'
+}
+
+function Format-DocsCoverageSortHead {
+    <#
+        One column head in the house's sortable form (house-style.css, "Sortable column header"): a .sort button
+        with its .arrow of two chevrons, on a th that starts at aria-sort="none".
+    #>
+    param([Parameter(Mandatory = $true)][string]$Label, [AllowEmptyString()][string]$Class = '')
+    $cls = if ($Class) { ' class="' + $Class + '"' } else { '' }
+    return '<th scope="col"' + $cls + ' aria-sort="none"><button class="sort" type="button">' + (ConvertTo-DashboardText $Label) +
+        ' <span class="arrow" aria-hidden="true"><svg viewBox="0 0 8 12"><path class="u" d="M1 4.5 4 1.5 7 4.5"/><path class="d" d="M1 7.5 4 10.5 7 7.5"/></svg></span></button></th>'
+}
+
+function Get-DocsCoverageSortScript {
+    <#
+        Sorts #items by the column whose head is clicked: ascending first, then flipping on each click, the other
+        heads back to "none". A cell sorts by its text, as a number where both are one (the Issue column, its "#"
+        dropped), and ties keep the order the page gave, so a sort never shuffles equal rows.
+    #>
+    return '<script>(function () { var t = document.getElementById("items"); if (!t) return; var tb = t.tBodies[0];' +
+        ' Array.prototype.forEach.call(tb.rows, function (r, i) { r.dataset.i = i; });' +
+        ' function key(r, c) { var s = r.cells[c].textContent.replace(/\?/g, "").trim(), n = parseFloat(s.replace(/^#/, "")); return /^#?\d+(\.\d+)?$/.test(s) ? n : s.toLowerCase(); }' +
+        ' t.querySelectorAll("thead th").forEach(function (th, c) { var b = th.querySelector(".sort"); if (!b) return; b.addEventListener("click", function () {' +
+        ' var dir = th.getAttribute("aria-sort") === "ascending" ? "descending" : "ascending";' +
+        ' t.querySelectorAll("thead th").forEach(function (o) { o.setAttribute("aria-sort", "none"); }); th.setAttribute("aria-sort", dir);' +
+        ' var m = dir === "ascending" ? 1 : -1, rows = Array.prototype.slice.call(tb.rows);' +
+        ' rows.sort(function (a, b) { var x = key(a, c), y = key(b, c); if (x < y) return -m; if (x > y) return m; return a.dataset.i - b.dataset.i; });' +
+        ' rows.forEach(function (r) { tb.appendChild(r); }); }); }); })();</script>'
 }
 
 function Get-DocsCoverageFooter {
