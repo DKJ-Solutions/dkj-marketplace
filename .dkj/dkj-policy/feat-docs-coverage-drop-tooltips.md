@@ -39,19 +39,31 @@
 
 ### PLAN
 
+The owner (November 9, 2026): the "?" icons in the Docs coverage table go, now that each row's info icon opens
+a popup carrying everything they explained.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `docs-coverage-lib.ps1`: drop the "?" beside an item's name, beside a Declined status, beside a docs page's title and beside its status, with their tooltips and the hover script that opened them; the sort no longer strips a "?" from a cell
+- [x] Checked that every tooltip's text is already in the row's Details popup: the one line, the idea and the docs check; why declined; the note, evidence, potential and advice; the docs' own description
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the asserts on the "?" and the tooltips now read the Details popup instead, and hold that no cell carries a "?" or a tooltip (739 passed)
+- [x] The product server's /docs-coverage shows 0 "?" buttons and a Details icon on every row
+
 ### DEPLOY: feat/docs-coverage-drop-tooltips
 
-**Score:**
+Admin's Docs coverage table no longer puts a "?" beside a row's name or status. Each row's info icon opens one
+popup that already holds everything those tooltips said, so the table reads as plain cells plus that one icon.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+The Docs coverage page belongs to this repo's own Admin and ships to nobody.
+
+**Score:** N/A
 
 #### Pull Request
 

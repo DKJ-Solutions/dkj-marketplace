@@ -28,14 +28,14 @@ function Get-DocsCoverageItems {
     <#
         The ten items in the issue's own order (#3906's table). Label is the row's name (five words at most, no code),
         linking the docs heading the item is about; Sub its one line, What and Why the idea, and Verified what the docs
-        said when it was checked, one string per point, all four shown by the "?" beside the name; Docs the docs page it rests on, and Section and Group where that page sits in
+        said when it was checked, one string per point, all four shown in the row's Details popup; Docs the docs page it rests on, and Section and Group where that page sits in
         the docs navigation (read from code.claude.com/docs/llms.txt on November 9, 2026: its ## heading and its ####
         group; plugins-reference is not listed itself and serves the Plugin manifest reference, so it takes that
         page's place). SectionUrl and GroupUrl are the page each opens on in that navigation (its first link), and
         DocsAnchor the heading on the docs page the item is about, each checked as an id on the live page, with
         DocsHeading the heading's text as that page shows it.
         WhyDeclined, on an item the owner closed as not planned, is the decision that closed it, in one or two
-        sentences: the overview shows it behind a "?" beside Declined.
+        sentences: the row's Details popup shows it under Declined.
         Impact is how important the item is to this repo, 1 to 8, the higher the more important (the owner, November
         9, 2026): the Impact column shows it as Tier-1 to Tier-8, the same scale as a catalog page's.
     #>
@@ -285,13 +285,12 @@ function Format-DocsCoveragePageHtml {
     <#
         /docs-coverage: columns Section, Group, Item, Status, Impact, Issue (the owner, November 9, 2026; Impact is
         Format-DocsCoverageImpact's Tier-1 to Tier-8, or N/A for a Not relevant page). One row per item
-        in the house .table, the item's name linking the docs heading it is about,
-        with a "?" explaining it (its one line, the idea and what the docs check found), then its status, the section and group its docs page sits in (each linking the
-        page it opens on), and its issue (the owner, November 9, 2026: a table over the cards the page first had). A
-        "?" beside a Declined status says why. Below the ten, one row per docs page of -Catalog
-        (Get-DocsCoverageCatalog): its title linking the page with a "?" giving the docs' own description, its fixed
-        status with a "?" giving the note and the evidence, its section and group, and no issue. Every row links the docs and
-        nothing else: no Docs column (it repeated the title) and no page per item (the owner, November 9, 2026). -Query is ConvertFrom-DocsCoverageQuery's result; -Meta @{ GeneratedAt; Seconds } of the read.
+        in the house .table, the item's name linking the docs heading it is about, then its status, the section and
+        group its docs page sits in (each linking the page it opens on), and its issue (the owner, November 9, 2026: a
+        table over the cards the page first had). Below the ten, one row per docs page of -Catalog
+        (Get-DocsCoverageCatalog): its title linking the page, its fixed status, its section and group, and no issue.
+        No cell carries a "?": the row's Details icon opens one popup with everything those tooltips said (the owner,
+        November 9, 2026). Every row links the docs and nothing else: no Docs column (it repeated the title) and no page per item (the owner, November 9, 2026). -Query is ConvertFrom-DocsCoverageQuery's result; -Meta @{ GeneratedAt; Seconds } of the read.
     #>
     param([Parameter(Mandatory = $true)][hashtable]$Query, [Parameter(Mandatory = $true)][hashtable]$Meta,
         [AllowEmptyCollection()][object[]]$Items = @(Get-DocsCoverageItems),
@@ -311,9 +310,9 @@ function Format-DocsCoveragePageHtml {
         ForEach-Object { Format-DocsCoverageSortHead -Label $_[0] -Class $_[1] }) -join ''
     $heads += '<th scope="col" class="col-end"><span class="sr-only">Details</span></th>'
     [void]$sb.AppendLine('<thead><tr>' + $heads + '</tr></thead><tbody>')
-    # A tooltip goes after the table, not in its cell: a .table cell does not wrap, and the text would run on one line.
-    # A row's details go there too, as a <template> the one dialog takes its content from when the row's icon is clicked.
-    $tips = New-Object System.Text.StringBuilder
+    # A row's details go after the table, as a <template> the one dialog takes its content from when the row's icon is
+    # clicked.
+    $details = New-Object System.Text.StringBuilder
     foreach ($it in @($Items)) {
         $status = Get-DocsCoverageStatus $Query.ByIssue[[int]$it.Issue]
         $issueUrl = 'https://github.com/DKJ-Solutions/dkj-marketplace/issues/' + [int]$it.Issue
@@ -331,19 +330,10 @@ function Format-DocsCoveragePageHtml {
         if ($status -ceq 'Declined' -and $it.WhyDeclined) { $body += '<h3>Why declined</h3><p>' + (& $e $it.WhyDeclined) + '</p>' }
         $body += '<h2>The idea</h2><h3>What</h3><p>' + (& $e $it.What) + '</p><h3>Why</h3><p>' + (& $e $it.Why) + '</p>' +
             '<h3>Checked against the docs</h3><ul>' + ((@($it.Verified) | ForEach-Object { '<li>' + (& $e $_) + '</li>' }) -join '') + '</ul>'
-        [void]$tips.AppendLine((Format-DocsCoverageDetailTemplate -Id $detailId -Title $it.Label -Sub $it.Sub -BodyHtml $body))
-        if ($status -ceq 'Declined' -and $it.WhyDeclined) {
-            $tipId = 'why-' + $it.Slug
-            $statusHtml += '<button class="info-button" type="button" aria-label="Why ' + (& $e $it.Label) + ' was declined" aria-describedby="' + $tipId + '" aria-expanded="false">?</button>'
-            [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="' + $tipId + '"><b>Why declined</b>' + (& $e $it.WhyDeclined) + '</div>')
-        }
-        $aboutId = 'about-' + $it.Slug
-        $aboutButton = '<button class="info-button" type="button" aria-label="About ' + (& $e $it.Label) + '" aria-describedby="' + $aboutId + '" aria-expanded="false">?</button>'
-        [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="' + $aboutId + '"><b>' + (& $e $it.Sub) + '</b>' + (& $e $it.What) + '<p>' + (& $e $it.Why) + '</p>' +
-            '<p>Checked against the docs: ' + (& $e (@($it.Verified) -join ' ')) + '</p></div>')
+        [void]$details.AppendLine((Format-DocsCoverageDetailTemplate -Id $detailId -Title $it.Label -Sub $it.Sub -BodyHtml $body))
         [void]$sb.AppendLine('<tr><td><a href="' + (& $e $it.SectionUrl) + '">' + (& $e $it.Section) + '</a></td>' +
             '<td class="col-start"><a href="' + (& $e $it.GroupUrl) + '">' + (& $e $it.Group) + '</a></td>' +
-            '<td class="col-start"><a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e $it.Label) + '</a>' + $aboutButton + '</td>' +
+            '<td class="col-start"><a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e $it.Label) + '</a></td>' +
             '<td class="col-start">' + $statusHtml + '</td>' +
             '<td class="col-start">' + (Format-DocsCoverageImpact -Impact $it.Impact -Status $status) + '</td>' +
             '<td><a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a></td>' +
@@ -352,20 +342,14 @@ function Format-DocsCoveragePageHtml {
     $docsBase = 'https://code.claude.com/docs/en/'
     foreach ($pg in @($Catalog)) {
         $id = ($pg.Path -replace '[^a-z0-9-]', '-')
-        $noteHtml = & $e $pg.Note
         $ev = @($pg.Evidence | Where-Object { $_ })
-        if ($ev.Count) { $noteHtml += '<p>Evidence: ' + ((@($ev) | ForEach-Object { & $e $_ }) -join ', ') + '</p>' }
-        # An Open page says how much value it could have here, and whether this repo should take it up, and why
-        # (the owner, November 9, 2026).
-        if ($pg.Potential) { $noteHtml += '<p>Potential: ' + [int]$pg.Potential + ' of 4</p>' }
-        if ($pg.Advice) { $noteHtml += '<p>Advice: ' + (& $e $pg.Advice) + '. ' + (& $e $pg.AdviceWhy) + '</p>' }
-        [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="status-' + $id + '"><b>' + (& $e $pg.Status) + '</b>' + $noteHtml + '</div>')
-        [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="page-' + $id + '"><b>' + (& $e $pg.Title) + '</b>' + (& $e $pg.Desc) + '</div>')
         $groupHtml = if ($pg.Group) { '<a href="' + (& $e ($docsBase + $pg.GroupPath)) + '">' + (& $e $pg.Group) + '</a>' } else { '' }
         $detailId = 'detail-page-' + $id
         $where = [ordered]@{ 'Section' = '<a href="' + (& $e ($docsBase + $pg.SectionPath)) + '">' + (& $e $pg.Section) + '</a>' }
         if ($groupHtml) { $where['Group'] = $groupHtml }
         $where['Docs'] = '<a href="' + (& $e ($docsBase + $pg.Path)) + '">' + (& $e $pg.Path) + '</a>'
+        # An Open page says how much value it could have here, and whether this repo should take it up, and why
+        # (the owner, November 9, 2026).
         $stands = [ordered]@{ 'Status' = Format-DocsCoverageStatusText $pg.Status; 'Impact' = Format-DocsCoverageImpact -Impact $pg.Impact -Status $pg.Status }
         if ($pg.Potential) { $stands['Potential'] = [string][int]$pg.Potential + ' of 4' }
         if ($pg.Advice) { $stands['Advice'] = & $e $pg.Advice }
@@ -373,17 +357,17 @@ function Format-DocsCoveragePageHtml {
             '<h3>Note</h3><p>' + (& $e $pg.Note) + '</p>'
         if ($pg.AdviceWhy) { $body += '<h3>Why ' + (& $e $pg.Advice).ToLowerInvariant() + '</h3><p>' + (& $e $pg.AdviceWhy) + '</p>' }
         if ($ev.Count) { $body += '<h3>Evidence</h3><ul>' + ((@($ev) | ForEach-Object { '<li><code>' + (& $e $_) + '</code></li>' }) -join '') + '</ul>' }
-        [void]$tips.AppendLine((Format-DocsCoverageDetailTemplate -Id $detailId -Title $pg.Title -Sub $pg.Desc -BodyHtml $body))
+        [void]$details.AppendLine((Format-DocsCoverageDetailTemplate -Id $detailId -Title $pg.Title -Sub $pg.Desc -BodyHtml $body))
         [void]$sb.AppendLine('<tr><td><a href="' + (& $e ($docsBase + $pg.SectionPath)) + '">' + (& $e $pg.Section) + '</a></td>' +
             '<td class="col-start">' + $groupHtml + '</td>' +
-            '<td class="col-start"><a href="' + (& $e ($docsBase + $pg.Path)) + '">' + (& $e $pg.Title) + '</a><button class="info-button" type="button" aria-label="About ' + (& $e $pg.Title) + '" aria-describedby="page-' + $id + '" aria-expanded="false">?</button></td>' +
-            '<td class="col-start">' + (Format-DocsCoverageStatusText $pg.Status) + '<button class="info-button" type="button" aria-label="Why ' + (& $e $pg.Title) + ' is ' + (& $e $pg.Status) + '" aria-describedby="status-' + $id + '" aria-expanded="false">?</button></td>' +
+            '<td class="col-start"><a href="' + (& $e ($docsBase + $pg.Path)) + '">' + (& $e $pg.Title) + '</a></td>' +
+            '<td class="col-start">' + (Format-DocsCoverageStatusText $pg.Status) + '</td>' +
             '<td class="col-start">' + (Format-DocsCoverageImpact -Impact $pg.Impact -Status $pg.Status) + '</td>' +
             '<td></td>' + (Format-DocsCoverageDetailCell -Id $detailId -Title $pg.Title) + '</tr>')
     }
     [void]$sb.AppendLine('</tbody></table></div>')
-    [void]$sb.Append($tips.ToString()); [void]$sb.AppendLine((Get-DocsCoverageDetailDialog)); [void]$sb.AppendLine((Get-DocsCoverageDetailScript))
-    [void]$sb.AppendLine((Get-DocsCoverageTipScript)); [void]$sb.AppendLine((Get-DocsCoverageSortScript))
+    [void]$sb.Append($details.ToString()); [void]$sb.AppendLine((Get-DocsCoverageDetailDialog)); [void]$sb.AppendLine((Get-DocsCoverageDetailScript))
+    [void]$sb.AppendLine((Get-DocsCoverageSortScript))
     if ($filterHtml) { [void]$sb.AppendLine((Get-DocsCoverageFilterScript)) }
     return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() -Style (Get-DocsCoverageStatusStyle) `
         -FooterNote (Get-DocsCoverageFooter -Meta $Meta -Page 'docs-coverage')
@@ -444,24 +428,6 @@ function Get-DocsCoverageDetailScript {
         ' d.addEventListener("close", function () { c.innerHTML = ""; }); })();</script>'
 }
 
-function Get-DocsCoverageTipScript {
-    <#
-        The "?" beside a row's name or its status: every .info-button opens the .tooltip its aria-describedby names, the way
-        Get-PageInfoScript opens the one beside an h1 (the house .tooltip is position: fixed, so this places it under
-        the button, inside the window). It stays open while the pointer is on the button or on the text (WCAG
-        1.4.13) or while the button has focus; Escape closes it.
-    #>
-    return '<script>(function () { document.querySelectorAll(".info-button[aria-describedby]").forEach(function (b) {' +
-        ' var t = document.getElementById(b.getAttribute("aria-describedby")); if (!t) return; var h;' +
-        ' function show() { clearTimeout(h); t.classList.add("tooltip--open"); b.setAttribute("aria-expanded", "true"); var r = b.getBoundingClientRect();' +
-        ' t.style.top = (r.bottom + 8) + "px"; t.style.left = Math.max(8, Math.min(r.left, window.innerWidth - t.offsetWidth - 8)) + "px"; }' +
-        ' function close() { t.classList.remove("tooltip--open"); b.setAttribute("aria-expanded", "false"); }' +
-        ' function hide() { h = setTimeout(close, 150); }' +
-        ' [b, t].forEach(function (el) { el.addEventListener("mouseenter", show); el.addEventListener("mouseleave", hide); });' +
-        ' b.addEventListener("focus", show); b.addEventListener("blur", hide);' +
-        ' document.addEventListener("keydown", function (e) { if (e.key === "Escape") { clearTimeout(h); close(); } }); }); })();</script>'
-}
-
 function Format-DocsCoverageSortHead {
     <#
         One column head in the house's sortable form (house-style.css, "Sortable column header"): a .sort button
@@ -483,7 +449,7 @@ function Get-DocsCoverageSortScript {
     #>
     return '<script>(function () { var t = document.getElementById("items"); if (!t) return; var tb = t.tBodies[0];' +
         ' Array.prototype.forEach.call(tb.rows, function (r, i) { r.dataset.i = i; });' +
-        ' function key(r, c) { var s = r.cells[c].textContent.replace(/\?/g, "").trim(); if (s === "N/A" || s === "--") return "";' +
+        ' function key(r, c) { var s = r.cells[c].textContent.trim(); if (s === "N/A" || s === "--") return "";' +
         ' var n = parseFloat(s.replace(/^(#|Tier-)/, "")); return /^(#|Tier-)?\d+(\.\d+)?$/.test(s) ? n : s.toLowerCase(); }' +
         ' t.querySelectorAll("thead th").forEach(function (th, c) { var b = th.querySelector(".sort"); if (!b) return; b.addEventListener("click", function () {' +
         ' var dir = th.getAttribute("aria-sort") === "ascending" ? "descending" : "ascending";' +
