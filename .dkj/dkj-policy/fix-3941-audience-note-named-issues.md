@@ -51,6 +51,8 @@
   it closed as completed (`Test-NamedIssueSolved`).
 - [x] The left-out hint tells an open named issue with a task apart from "no issue it closed or named is
   linked to a task".
+- [x] Code review (Victor): a deleted issue answers 410, not 404, so a named `#<n>` pointing at one
+  would have aborted every rerun of the cut; both readers now treat 410 like 404.
 
 ### TEST
 

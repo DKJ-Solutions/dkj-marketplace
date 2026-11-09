@@ -1735,7 +1735,7 @@ function Get-PullRequestCarriedIssues {
 
         A NAMED NUMBER IS ASKED ABOUT, NOT TRUSTED. The issues endpoint answers a pull request too, so a
         number whose answer carries 'pull_request' is dropped, and a 404 (a '#<n>' copied from another
-        tracker, a deleted issue) is dropped as a definitive "not an issue here". A named issue is returned
+        tracker) or a 410 (a deleted issue) is dropped as a definitive "not an issue here". A named issue is returned
         with Solved set only when it closed as completed (Test-NamedIssueSolved): "follows #12" names work
         that may still be open, and the caller says so instead of linking it as solved.
 
@@ -1764,7 +1764,7 @@ function Get-PullRequestCarriedIssues {
             -Utf8 -DiscardStderr -TimeoutSeconds $script:NativeCaptureNetworkTimeoutSeconds
         $raw = ($isCap.Output | Out-String)
         $status = if ($raw -match '^\s*HTTP/\S+\s+(\d{3})') { [int]$Matches[1] } else { 0 }
-        if ($named -and $status -eq 404 -and (Test-NativeExitMeasured -Capture $isCap)) { continue }
+        if ($named -and ($status -eq 404 -or $status -eq 410) -and (Test-NativeExitMeasured -Capture $isCap)) { continue }
         if (-not (Test-NativeExitMeasured -Capture $isCap) -or $isCap.ExitCode -ne 0 -or $status -ne 200) { throw "gh api issue $n failed ($(Get-NativeExitLabel -Capture $isCap), HTTP $status)." }
         $parts = [regex]::Split($raw, '\r?\n\r?\n', 2)
         $j = $(if ($parts.Count -eq 2) { $parts[1] } else { '' }) | ConvertFrom-Json
