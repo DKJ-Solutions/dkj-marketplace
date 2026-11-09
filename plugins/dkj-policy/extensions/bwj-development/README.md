@@ -137,7 +137,7 @@ exempt from the changelog -- that is somebody else's change, not this repo's -- 
 the workflow owing **nothing durable at all**: the sole account of what was taken and what was held
 back was the PR body on GitHub, in two repos whose standing rule is that a sync PR does *not* wait
 for review. So a sync now owes a **sync-log entry** where an ordinary branch owes a changelog entry:
-`bwj-development/SYNC-LOG.md` in the repo's own root, newest at the top, one entry per sync branch, written
+`.dkj/bwj-development/SYNC-LOG.md`, beside `.dkj/dkj-policy/`, newest at the top, one entry per sync branch, written
 and committed by `sync-main.ps1` in the same breath as the branch itself. It is never folded, never
 cut, and never reaches a release note.
 
@@ -327,7 +327,7 @@ Both chapters answer themselves out of your repo-owned `scripts/repo-config.ps1`
 
 **Chapter two needs exactly one function**, and it is the switch that turns the whole chapter on:
 
-- `Get-ShopifySyncLogPath` -- where the log lives, repo-root-relative. Answer it `'bwj-development/SYNC-LOG.md'`
+- `Get-ShopifySyncLogPath` -- where the log lives, repo-root-relative. Answer it `'.dkj/bwj-development/SYNC-LOG.md'`
   in **both** repos. Leave it out and no log is written at all, which is the default every other
   Shopify consumer gets. The machinery is `dkj-subagents-shopify`'s, so it is already present; this answer is
   what asks it to run. `adopt-shopify-floor` lists it among the optional Shopify seams it writes into
@@ -421,7 +421,7 @@ An ordinary plugin change: enable `bwj-development` in `.claude/settings.json` a
 and `dkj-policy`, then run [`adopt-bwj-development`](skills/adopt-bwj-development/SKILL.md) once for
 chapter one, and answer `Get-ShopifySyncLogPath` for chapter two.
 
-**Chapter two needs no skill of its own** -- its one adopt step, scaffolding `bwj-development/SYNC-LOG.md`
+**Chapter two needs no skill of its own** -- its one adopt step, scaffolding `.dkj/bwj-development/SYNC-LOG.md`
 with its masthead, rides along inside `adopt-bwj-development`'s run rather than getting a second skill for a
 single file. There is still no CI to wire: the folder and the file exist from that run on, and every
 sync after it prepends. See [`SYNC-LOG-portable.md`](SYNC-LOG-portable.md#where-the-record-lives) for

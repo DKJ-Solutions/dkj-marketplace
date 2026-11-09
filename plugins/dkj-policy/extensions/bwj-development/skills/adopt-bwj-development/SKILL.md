@@ -7,7 +7,7 @@ description: >-
   propose the Asana config seam for scripts/repo-config.ps1, check that the classification labels
   exist, report the board's numbered sections so the Filed section report-issue writes to can be
   found, write the BWJ extension import into CLAUDE.md, and scaffold chapter two's
-  bwj-development/SYNC-LOG.md with its masthead, ready for the first sync branch. In the two store
+  .dkj/bwj-development/SYNC-LOG.md with its masthead (moving an older root bwj-development/ there), ready for the first sync branch. In the two store
   repos it also copies the asana-closed-message and asana-prio-label workflows into .github/, in
   phone-factory asana-closed-message alone, and names the one repo secret they need, ASANA_PAT.
   Strictly additive and dry-run by default; it never overwrites an existing file, only adds the one
@@ -580,8 +580,15 @@ and chapter two records drift on a live Shopify theme, which neither runs.
 
 Chapter two's record needs somewhere to land before the first `sync/` branch ever runs. If
 `Get-ShopifySyncLogPath` is not yet answered, propose it alongside the Asana seams in step 2, in the
-same `scripts/repo-config.ps1` -- `'bwj-development/SYNC-LOG.md'` in both store repos. Either way, once it is
-answered, create the file it names, with nothing in it but a masthead:
+same `scripts/repo-config.ps1` -- `'.dkj/bwj-development/SYNC-LOG.md'` in both store repos.
+
+**A repo that still has a root `bwj-development/` moves it first** (#3935), the way `adopt-dkj-policy`
+Part 1 moves a root `dkj-policy/` to `.dkj/dkj-policy/`: `git mv bwj-development .dkj/bwj-development`,
+then repoint `Get-ShopifySyncLogPath` if it still answers the old path. Where `.dkj/bwj-development/`
+already exists, move nothing and report both folders, because merging two logs is a person's call.
+
+Either way, once the seam is answered, create the file it names if it is not there yet, with nothing in
+it but a masthead:
 
 ```markdown
 # Sync log

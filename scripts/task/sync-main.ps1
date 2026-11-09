@@ -153,7 +153,7 @@
                                       New-SyncPrBody composes, which names both halves and every path
                                       with its kind.
       Get-ShopifySyncLogPath          where this repo keeps its durable sync record, repo-root-relative
-                                      (e.g. 'bwj-development/SYNC-LOG.md'). Answered: every sync prepends an
+                                      (e.g. '.dkj/bwj-development/SYNC-LOG.md'). Answered: every sync prepends an
                                       entry there and it rides in the branch's own commit. Default:
                                       unanswered, and then nothing is written -- keeping a log is the
                                       repo's policy, not a Shopify fact (inbound #1382).

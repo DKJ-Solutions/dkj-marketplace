@@ -65,15 +65,17 @@ that out in words; so does the log entry, from the same rows.
 
 ## Where the record lives
 
-**`bwj-development/SYNC-LOG.md`, in the repo's own root.** One file, **newest at the top**, one entry per
+**`.dkj/bwj-development/SYNC-LOG.md`.** One file, **newest at the top**, one entry per
 sync branch.
 
 **One file, not one per year.** Start here and split only if it ever gets genuinely unwieldy -- and
 if a repo ever does split it, the other repo splits it the same way on the same day, because the
 point of this plugin is that the two cannot diverge. Stated here so nobody has to decide it twice.
 
-**The folder is `bwj-development/`**, matching the plugin that owns the rule, exactly as
-`.dkj/dkj-policy/` matches the workflow that owns the branch documents.
+**The folder is `.dkj/bwj-development/`**, matching the plugin that owns the rule and sitting beside
+`.dkj/dkj-policy/`, the folder of the workflow it extends. It used to sit in the repo's root, the one
+extension folder that did; a repo that still has a root `bwj-development/` moves it at adopt time
+([#3935](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3935)).
 
 **The file is scaffolded at adopt time, carrying nothing but a masthead** (Dave, September 5, 2026):
 
@@ -226,12 +228,12 @@ already writes the other Shopify seams into, and which lists this one in its com
 optional answers:
 
 ```powershell
-function Get-ShopifySyncLogPath { return 'bwj-development/SYNC-LOG.md' }
+function Get-ShopifySyncLogPath { return '.dkj/bwj-development/SYNC-LOG.md' }
 ```
 
 There is no template to copy and no CI to wire. **There is now a file to scaffold**, and it is
 [`adopt-bwj-development`](skills/adopt-bwj-development/SKILL.md)'s step, not a separate skill of its own: once the
-seam above is answered, that step creates `bwj-development/SYNC-LOG.md` with its masthead and nothing else,
+seam above is answered, that step creates `.dkj/bwj-development/SYNC-LOG.md` with its masthead and nothing else,
 ready for the first sync to prepend under.
 
 **Both repos answer it with the same path.** The two are one business running one procedure; a log at
