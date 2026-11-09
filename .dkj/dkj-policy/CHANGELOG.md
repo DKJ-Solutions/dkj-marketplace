@@ -2,7 +2,30 @@
 
 ## [Unreleased]
 
-**1 / 3 minor entries** <!-- pending-tally -->
+**1 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/docs-coverage-row-detail · 20261109-143855Z
+
+/docs-coverage has a Details column: an info icon on every row opens a popup that gathers everything known about
+that row in one place, in headings: the row's name as the h1, then where it sits in the docs, how this repo stands
+to it (status, issue, potential, advice, note, evidence) and, for an item, the idea and the docs check, so it
+reads without hovering the "?" marks.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A: the Docs coverage page is this repo's own product page and ships to no consumer.
+
+**Score:** N/A
+
+#### Pull Request
+
+Docs coverage: a details column whose icon opens a popup per row
+
+[PR #3938](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3938)
+
+---
 
 ### DEPLOY: feat/explain-tooltip-readability · 20261109-135046Z
 

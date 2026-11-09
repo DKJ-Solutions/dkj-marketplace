@@ -229,7 +229,20 @@ function Get-DocsCoverageStatusStyle {
     # the space between it and the table (the place sets it; a block has no margin).
     $map = Get-DocsCoverageStatusColors
     return ((@($map.Keys | ForEach-Object { '.dc-dot--' + (Get-DocsCoverageStatusSlug $_) + ' { background: var(' + $map[$_] + '); }' }) + @(
-        '.dc-filter { display: block; max-width: 280px; margin-bottom: var(--spacing-3); }')) -join "`n")
+        '.dc-filter { display: block; max-width: 280px; margin-bottom: var(--spacing-3); }'
+        # The Details icon: quiet until hovered or focused, the size of the row's text line rather than a touch target.
+        '.dc-detail { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; margin: -4px 0; padding: 0; border: 0; border-radius: var(--radius-2); background: transparent; color: var(--primary-muted); cursor: pointer; vertical-align: middle; }'
+        '.dc-detail:hover, .dc-detail:focus-visible { color: var(--primary); }'
+        '.dc-detail:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }'
+        # The popup is the window's width less 10% (the owner, November 9, 2026), where the house dialog keeps to the
+        # narrow column. On the page's own class, so the house .dialog itself is not restyled.
+        'dialog.dc-detail-dialog { width: 90vw; }'
+        # In the popup a fact may wrap, each h2 block stands apart from the one above, and an h3 from the text above it.
+        '.dc-detail__facts dd { white-space: normal; overflow-wrap: anywhere; }'
+        '.dc-detail__body > h2 { margin-top: var(--spacing-6); }'
+        '.dc-detail__body > h2:first-child { margin-top: 0; }'
+        '.dc-detail__body > h3 { margin-top: var(--spacing-4); }'
+        '.dc-detail__body p, .dc-detail__body ul { margin: 0 0 var(--spacing-2); }')) -join "`n")
 }
 
 function Format-DocsCoverageImpact {
@@ -289,17 +302,33 @@ function Format-DocsCoveragePageHtml {
     if ($filterHtml) { [void]$sb.AppendLine($filterHtml) }
     [void]$sb.AppendLine('<div class="table-wrap"><table class="table" id="items">')
     # Section, Group, Item, then Status (the owner, November 9, 2026): read from the docs' section down to the topic,
-    # and then how this repo stands to it.
-    # Impact after Status (the owner, November 9, 2026): Tier-1 to Tier-8, N/A for a page that is Not relevant.
+    # and then how this repo stands to it. Impact after Status (the owner, November 9, 2026): Tier-1 to Tier-8, N/A for
+    # a page that is Not relevant. Last, a Details column with no sort: its icon opens the row's popup.
     $heads = (@(@('Section', ''), @('Group', 'col-start'), @('Item', 'col-start'), @('Status', 'col-start'), @('Impact', 'col-start'), @('Issue', '')) |
         ForEach-Object { Format-DocsCoverageSortHead -Label $_[0] -Class $_[1] }) -join ''
+    $heads += '<th scope="col" class="col-end"><span class="sr-only">Details</span></th>'
     [void]$sb.AppendLine('<thead><tr>' + $heads + '</tr></thead><tbody>')
     # A tooltip goes after the table, not in its cell: a .table cell does not wrap, and the text would run on one line.
+    # A row's details go there too, as a <template> the one dialog takes its content from when the row's icon is clicked.
     $tips = New-Object System.Text.StringBuilder
     foreach ($it in @($Items)) {
         $status = Get-DocsCoverageStatus $Query.ByIssue[[int]$it.Issue]
         $issueUrl = 'https://github.com/DKJ-Solutions/dkj-marketplace/issues/' + [int]$it.Issue
         $statusHtml = Format-DocsCoverageStatusText $status
+        $detailId = 'detail-item-' + $it.Slug
+        # The popup in headings (the owner, November 9, 2026): the item's name the h1, a block per h2, its parts h3.
+        $body = '<h2>Where it sits</h2>' + (Format-DocsCoverageFacts ([ordered]@{
+                'Section' = '<a href="' + (& $e $it.SectionUrl) + '">' + (& $e $it.Section) + '</a>'
+                'Group' = '<a href="' + (& $e $it.GroupUrl) + '">' + (& $e $it.Group) + '</a>'
+                'Docs' = '<a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e $it.DocsHeading) + '</a>' })) +
+            '<h2>How this repo stands</h2>' + (Format-DocsCoverageFacts ([ordered]@{
+                'Status' = Format-DocsCoverageStatusText $status
+                'Impact' = Format-DocsCoverageImpact -Impact $it.Impact -Status $status
+                'Issue' = '<a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a>' }))
+        if ($status -ceq 'Declined' -and $it.WhyDeclined) { $body += '<h3>Why declined</h3><p>' + (& $e $it.WhyDeclined) + '</p>' }
+        $body += '<h2>The idea</h2><h3>What</h3><p>' + (& $e $it.What) + '</p><h3>Why</h3><p>' + (& $e $it.Why) + '</p>' +
+            '<h3>Checked against the docs</h3><ul>' + ((@($it.Verified) | ForEach-Object { '<li>' + (& $e $_) + '</li>' }) -join '') + '</ul>'
+        [void]$tips.AppendLine((Format-DocsCoverageDetailTemplate -Id $detailId -Title $it.Label -Sub $it.Sub -BodyHtml $body))
         if ($status -ceq 'Declined' -and $it.WhyDeclined) {
             $tipId = 'why-' + $it.Slug
             $statusHtml += '<button class="info-button" type="button" aria-label="Why ' + (& $e $it.Label) + ' was declined" aria-describedby="' + $tipId + '" aria-expanded="false">?</button>'
@@ -314,7 +343,8 @@ function Format-DocsCoveragePageHtml {
             '<td class="col-start"><a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e $it.Label) + '</a>' + $aboutButton + '</td>' +
             '<td class="col-start">' + $statusHtml + '</td>' +
             '<td class="col-start">' + (Format-DocsCoverageImpact -Impact $it.Impact -Status $status) + '</td>' +
-            '<td><a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a></td></tr>')
+            '<td><a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a></td>' +
+            (Format-DocsCoverageDetailCell -Id $detailId -Title $it.Label) + '</tr>')
     }
     $docsBase = 'https://code.claude.com/docs/en/'
     foreach ($pg in @($Catalog)) {
@@ -329,18 +359,86 @@ function Format-DocsCoveragePageHtml {
         [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="status-' + $id + '"><b>' + (& $e $pg.Status) + '</b>' + $noteHtml + '</div>')
         [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="page-' + $id + '"><b>' + (& $e $pg.Title) + '</b>' + (& $e $pg.Desc) + '</div>')
         $groupHtml = if ($pg.Group) { '<a href="' + (& $e ($docsBase + $pg.GroupPath)) + '">' + (& $e $pg.Group) + '</a>' } else { '' }
+        $detailId = 'detail-page-' + $id
+        $where = [ordered]@{ 'Section' = '<a href="' + (& $e ($docsBase + $pg.SectionPath)) + '">' + (& $e $pg.Section) + '</a>' }
+        if ($groupHtml) { $where['Group'] = $groupHtml }
+        $where['Docs'] = '<a href="' + (& $e ($docsBase + $pg.Path)) + '">' + (& $e $pg.Path) + '</a>'
+        $stands = [ordered]@{ 'Status' = Format-DocsCoverageStatusText $pg.Status; 'Impact' = Format-DocsCoverageImpact -Impact $pg.Impact -Status $pg.Status }
+        if ($pg.Potential) { $stands['Potential'] = [string][int]$pg.Potential + ' of 4' }
+        if ($pg.Advice) { $stands['Advice'] = & $e $pg.Advice }
+        $body = '<h2>Where it sits</h2>' + (Format-DocsCoverageFacts $where) + '<h2>How this repo stands</h2>' + (Format-DocsCoverageFacts $stands) +
+            '<h3>Note</h3><p>' + (& $e $pg.Note) + '</p>'
+        if ($pg.AdviceWhy) { $body += '<h3>Why ' + (& $e $pg.Advice).ToLowerInvariant() + '</h3><p>' + (& $e $pg.AdviceWhy) + '</p>' }
+        if ($ev.Count) { $body += '<h3>Evidence</h3><ul>' + ((@($ev) | ForEach-Object { '<li><code>' + (& $e $_) + '</code></li>' }) -join '') + '</ul>' }
+        [void]$tips.AppendLine((Format-DocsCoverageDetailTemplate -Id $detailId -Title $pg.Title -Sub $pg.Desc -BodyHtml $body))
         [void]$sb.AppendLine('<tr><td><a href="' + (& $e ($docsBase + $pg.SectionPath)) + '">' + (& $e $pg.Section) + '</a></td>' +
             '<td class="col-start">' + $groupHtml + '</td>' +
             '<td class="col-start"><a href="' + (& $e ($docsBase + $pg.Path)) + '">' + (& $e $pg.Title) + '</a><button class="info-button" type="button" aria-label="About ' + (& $e $pg.Title) + '" aria-describedby="page-' + $id + '" aria-expanded="false">?</button></td>' +
             '<td class="col-start">' + (Format-DocsCoverageStatusText $pg.Status) + '<button class="info-button" type="button" aria-label="Why ' + (& $e $pg.Title) + ' is ' + (& $e $pg.Status) + '" aria-describedby="status-' + $id + '" aria-expanded="false">?</button></td>' +
             '<td class="col-start">' + (Format-DocsCoverageImpact -Impact $pg.Impact -Status $pg.Status) + '</td>' +
-            '<td></td></tr>')
+            '<td></td>' + (Format-DocsCoverageDetailCell -Id $detailId -Title $pg.Title) + '</tr>')
     }
     [void]$sb.AppendLine('</tbody></table></div>')
-    [void]$sb.Append($tips.ToString()); [void]$sb.AppendLine((Get-DocsCoverageTipScript)); [void]$sb.AppendLine((Get-DocsCoverageSortScript))
+    [void]$sb.Append($tips.ToString()); [void]$sb.AppendLine((Get-DocsCoverageDetailDialog)); [void]$sb.AppendLine((Get-DocsCoverageDetailScript))
+    [void]$sb.AppendLine((Get-DocsCoverageTipScript)); [void]$sb.AppendLine((Get-DocsCoverageSortScript))
     if ($filterHtml) { [void]$sb.AppendLine((Get-DocsCoverageFilterScript)) }
     return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() -Style (Get-DocsCoverageStatusStyle) `
         -FooterNote (Get-DocsCoverageFooter -Meta $Meta -Page 'docs-coverage')
+}
+
+function Format-DocsCoverageDetailCell {
+    <#
+        A row's Details cell (the owner, November 9, 2026): an info icon that opens the row's popup. It names the
+        template it opens in data-detail and the one dialog in aria-controls; the icon is drawn in currentColor.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Id, [Parameter(Mandatory = $true)][string]$Title)
+    return '<td class="col-end"><button class="dc-detail" type="button" aria-haspopup="dialog" aria-controls="row-detail" data-detail="' +
+        (ConvertTo-DashboardText $Id) + '" aria-label="Details of ' + (ConvertTo-DashboardText $Title) + '">' +
+        '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
+        '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></button></td>'
+}
+
+function Format-DocsCoverageDetailTemplate {
+    <#
+        A row's popup content, as a <template> the dialog clones when the row's icon is clicked. Headings carry its
+        structure (the owner, November 9, 2026): the row's name is the h1 in the product layer's dialog head, with
+        its one line as .dialog__sub under it, and -BodyHtml (already escaped) holds an h2 per block and an h3 per
+        part of one. The h1 is the docs' own title on a docs page row, so it can run past five words.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Id, [Parameter(Mandatory = $true)][string]$Title, [AllowEmptyString()][string]$Sub = '',
+        [AllowEmptyString()][string]$BodyHtml = '')
+    $e = { param($v) ConvertTo-DashboardText $v }
+    $subHtml = if ($Sub) { '<p class="dialog__sub">' + (& $e $Sub) + '</p>' } else { '' }
+    return '<template id="' + (& $e $Id) + '"><div class="dialog__head"><div><h1 id="row-detail-title">' + (& $e $Title) + '</h1>' + $subHtml + '</div></div>' +
+        '<div class="dc-detail__body">' + $BodyHtml + '</div></template>'
+}
+
+function Format-DocsCoverageFacts {
+    # One block's facts in the popup, as a house .facts list: -Facts maps each label to HTML that is already escaped.
+    param([Parameter(Mandatory = $true)][System.Collections.IDictionary]$Facts)
+    return '<dl class="facts dc-detail__facts">' + ((@($Facts.Keys) | ForEach-Object { '<div><dt>' + (ConvertTo-DashboardText $_) + '</dt><dd>' + $Facts[$_] + '</dd></div>' }) -join '') + '</dl>'
+}
+
+function Get-DocsCoverageDetailDialog {
+    # The one dialog every Details icon opens: the product layer's .dialog with its close button, its content cloned in,
+    # 90% of the window wide through the page's own .dc-detail-dialog.
+    return '<dialog class="dialog dc-detail-dialog" id="row-detail" aria-labelledby="row-detail-title"><div class="dialog__body">' +
+        '<button class="dialog__close" type="button" aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
+        '<div id="row-detail-content"></div></div></dialog>'
+}
+
+function Get-DocsCoverageDetailScript {
+    <#
+        Opens the dialog on a Details icon: the template the icon names is cloned into it and shown with showModal, so
+        Escape and the focus return are the browser's. The close button, or a click on the backdrop (the dialog
+        itself, since its padding sits in the body), shuts it, and a shut dialog is emptied, so the popup's h1 is in
+        the page only while the popup is open.
+    #>
+    return '<script>(function () { var d = document.getElementById("row-detail"), c = document.getElementById("row-detail-content"); if (!d || !c || !d.showModal) return;' +
+        ' document.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest(".dc-detail"); if (!b) return;' +
+        ' var t = document.getElementById(b.getAttribute("data-detail")); if (!t) return; c.innerHTML = ""; c.appendChild(t.content.cloneNode(true)); d.showModal(); });' +
+        ' d.addEventListener("click", function (ev) { if (ev.target === d || ev.target.closest(".dialog__close")) d.close(); });' +
+        ' d.addEventListener("close", function () { c.innerHTML = ""; }); })();</script>'
 }
 
 function Get-DocsCoverageTipScript {

@@ -57,7 +57,7 @@ feature, and N/A where the status is Not relevant (November 9, 2026).
 
 Admin's Docs coverage page has a new Impact column after Status: how important each feature is to this repo,
 from Tier-1 to Tier-8, the higher the more important. A Not relevant docs page reads N/A. The column sorts by
-tier, with N/A last.
+tier, with N/A last, and each row's Details popup names its impact too.
 
 **Score:** 2
 
