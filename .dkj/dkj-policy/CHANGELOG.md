@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**11 / 15 minor entries** <!-- pending-tally -->
+**11 / 16 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/docs-coverage-table · 20261109-110321Z
+
+The Docs coverage overview on the product portal is a table now, listing every page of the Claude Code docs
+beside the ten items with an issue. Each row reads from the docs' section and group (each a link into the docs) to the topic, linking the docs
+(an item its heading, a docs page the page itself), then its status, each status in a colour of its own, and its issue. A docs page reads
+Covered (this repo already uses it well), Not used or Not relevant, and a "?" beside a name or a status explains
+it on hover or focus: the idea, the docs' own description, the evidence, or why the owner declined it. Every column
+sorts with a click on its head. A Not used page also says whether this repo should take it up, and why. A status filter over the table shows one status at a time, or all of them.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A: the Docs coverage pages are this repo's own product portal, which no consumer installs.
+
+**Score:** N/A
+
+#### Pull Request
+
+Docs coverage overview as a table instead of cards
+
+[PR #3930](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3930)
+
+---
 
 ### DEPLOY: fix/3926-fill-wait-sampling · 20261109-103155Z
 
