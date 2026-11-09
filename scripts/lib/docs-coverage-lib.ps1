@@ -409,12 +409,14 @@ function Get-DocsCoverageDetailScript {
     <#
         Opens the dialog on a Details icon: the template the icon names is cloned into it and shown with showModal, so
         Escape and the focus return are the browser's. The close button, or a click on the backdrop (the dialog
-        itself, since its padding sits in the body), shuts it.
+        itself, since its padding sits in the body), shuts it, and a shut dialog is emptied, so the popup's h1 is in
+        the page only while the popup is open.
     #>
     return '<script>(function () { var d = document.getElementById("row-detail"), c = document.getElementById("row-detail-content"); if (!d || !c || !d.showModal) return;' +
         ' document.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest(".dc-detail"); if (!b) return;' +
         ' var t = document.getElementById(b.getAttribute("data-detail")); if (!t) return; c.innerHTML = ""; c.appendChild(t.content.cloneNode(true)); d.showModal(); });' +
-        ' d.addEventListener("click", function (ev) { if (ev.target === d || ev.target.closest(".dialog__close")) d.close(); }); })();</script>'
+        ' d.addEventListener("click", function (ev) { if (ev.target === d || ev.target.closest(".dialog__close")) d.close(); });' +
+        ' d.addEventListener("close", function () { c.innerHTML = ""; }); })();</script>'
 }
 
 function Get-DocsCoverageTipScript {
