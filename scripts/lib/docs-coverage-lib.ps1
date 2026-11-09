@@ -354,7 +354,8 @@ function Format-DocsCoveragePageHtml {
         if ($pg.Advice) { $stands['Advice'] = & $e $pg.Advice }
         $body = '<h2>Where it sits</h2>' + (Format-DocsCoverageFacts $where) + '<h2>How this repo stands</h2>' + (Format-DocsCoverageFacts $stands) +
             '<h3>Note</h3><p>' + (& $e $pg.Note) + '</p>'
-        if ($pg.AdviceWhy) { $body += '<h3>Why ' + (& $e $pg.Advice).ToLowerInvariant() + '</h3><p>' + (& $e $pg.AdviceWhy) + '</p>' }
+        # Under one Advice heading, the advice itself and then why (the owner, November 9, 2026: not "Why consider").
+        if ($pg.AdviceWhy) { $body += '<h3>Advice</h3><p>' + (& $e $pg.Advice) + '. ' + (& $e $pg.AdviceWhy) + '</p>' }
         if ($ev.Count) { $body += '<h3>Evidence</h3><ul>' + ((@($ev) | ForEach-Object { '<li><code>' + (& $e $_) + '</code></li>' }) -join '') + '</ul>' }
         [void]$details.AppendLine((Format-DocsCoverageDetailTemplate -Id $detailId -Title $pg.Title -Sub $pg.Desc -BodyHtml $body))
         [void]$sb.AppendLine('<tr><td><a href="' + (& $e ($docsBase + $pg.SectionPath)) + '">' + (& $e $pg.Section) + '</a></td>' +
