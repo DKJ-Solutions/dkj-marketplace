@@ -209,8 +209,8 @@ function Get-DocsCoverageStatusColors {
     #>
     [ordered]@{
         'Covered' = '--positive-3'; 'In progress' = '--graph-1'; 'In review' = '--primary'
-        'Awaiting decision' = '--warning-3'; 'Waiting' = '--graph-2'; 'Open' = '--fg-4'; 'Declined' = '--negative-3'
-        'Not used' = '--primary-muted'; 'Not relevant' = '--bg-4'
+        'Awaiting decision' = '--warning-3'; 'Waiting' = '--primary-muted'; 'Open' = '--fg-4'; 'Declined' = '--negative-3'
+        'Not used' = '--graph-2'; 'Not relevant' = '--bg-4'
     }
 }
 
