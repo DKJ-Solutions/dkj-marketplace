@@ -27,13 +27,13 @@
 function Get-DocsCoverageItems {
     <#
         The ten items in the issue's own order (#3906's table). Label is the row's link and the page's h1 (five words
-        at most, no code); Sub its one line and What and Why the idea, which the "?" beside its docs heading shows; Verified what the docs said when it was
+        at most, no code); Sub its one line and What and Why the idea, which the "?" beside its name shows; Verified what the docs said when it was
         checked, one string per point; Docs the docs page it rests on, and Section and Group where that page sits in
         the docs navigation (read from code.claude.com/docs/llms.txt on November 9, 2026: its ## heading and its ####
         group; plugins-reference is not listed itself and serves the Plugin manifest reference, so it takes that
         page's place). SectionUrl and GroupUrl are the page each opens on in that navigation (its first link), and
         DocsAnchor the heading on the docs page the item is about, each checked as an id on the live page, with
-        DocsHeading the heading's text as that page shows it: the Docs column's link text.
+        DocsHeading the heading's text as that page shows it: the link text on the item's own page.
         WhyDeclined, on an item the owner closed as not planned, is the decision that closed it, in one or two
         sentences: the overview shows it behind a "?" beside Declined.
     #>
@@ -200,14 +200,14 @@ function Get-DocsCoverageStatus {
 
 function Format-DocsCoveragePageHtml {
     <#
-        /docs-coverage: one row per item in the house .table, the item linking its own page, then its status, the
-        section and group its docs page sits in (each linking the page it opens on), the heading on that page it is
-        about, and its issue, so the ten compare at a glance (the owner, November 9, 2026: a table over the cards
-        the page first had). A "?" beside the heading explains the item (its one line and the idea), and one beside
-        a Declined status says why. Below the ten, one row per docs page of -Catalog (Get-DocsCoverageCatalog): its
-        title, its fixed status with a "?" giving the note and the evidence, its section and group, the page itself
-        with a "?" giving the docs' own description, and no issue. -Query is ConvertFrom-DocsCoverageQuery's result;
-        -Meta @{ GeneratedAt; Seconds } of the read.
+        /docs-coverage: one row per item in the house .table, the item linking its own page with a "?" explaining it
+        (its one line and the idea), then its status, the section and group its docs page sits in (each linking the
+        page it opens on), and its issue (the owner, November 9, 2026: a table over the cards the page first had). A
+        "?" beside a Declined status says why. Below the ten, one row per docs page of -Catalog
+        (Get-DocsCoverageCatalog): its title linking the page with a "?" giving the docs' own description, its fixed
+        status with a "?" giving the note and the evidence, its section and group, and no issue. There is no Docs
+        column: on a page row it repeated the title (the owner, November 9, 2026), and an item's heading link is on
+        its own page. -Query is ConvertFrom-DocsCoverageQuery's result; -Meta @{ GeneratedAt; Seconds } of the read.
     #>
     param([Parameter(Mandatory = $true)][hashtable]$Query, [Parameter(Mandatory = $true)][hashtable]$Meta,
         [AllowEmptyCollection()][object[]]$Items = @(Get-DocsCoverageItems),
@@ -216,7 +216,7 @@ function Format-DocsCoveragePageHtml {
     $sb = New-Object System.Text.StringBuilder
     if ($Query.Error) { [void]$sb.AppendLine('<p class="msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The items are shown without their status.</p>') }
     [void]$sb.AppendLine('<div class="table-wrap"><table class="table" id="items">')
-    $heads = (@(@('Item', ''), @('Status', 'col-start'), @('Section', 'col-start'), @('Group', 'col-start'), @('Docs', 'col-start'), @('Issue', '')) |
+    $heads = (@(@('Item', ''), @('Status', 'col-start'), @('Section', 'col-start'), @('Group', 'col-start'), @('Issue', '')) |
         ForEach-Object { Format-DocsCoverageSortHead -Label $_[0] -Class $_[1] }) -join ''
     [void]$sb.AppendLine('<thead><tr>' + $heads + '</tr></thead><tbody>')
     # A tooltip goes after the table, not in its cell: a .table cell does not wrap, and the text would run on one line.
@@ -233,11 +233,10 @@ function Format-DocsCoveragePageHtml {
         $aboutId = 'about-' + $it.Slug
         $aboutButton = '<button class="info-button" type="button" aria-label="About ' + (& $e $it.Label) + '" aria-describedby="' + $aboutId + '" aria-expanded="false">?</button>'
         [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="' + $aboutId + '"><b>' + (& $e $it.Sub) + '</b>' + (& $e $it.What) + '<p>' + (& $e $it.Why) + '</p></div>')
-        [void]$sb.AppendLine('<tr><td><a href="/docs-coverage/' + (& $e $it.Slug) + '">' + (& $e $it.Label) + '</a></td>' +
+        [void]$sb.AppendLine('<tr><td><a href="/docs-coverage/' + (& $e $it.Slug) + '">' + (& $e $it.Label) + '</a>' + $aboutButton + '</td>' +
             '<td class="col-start">' + $statusHtml + '</td>' +
             '<td class="col-start"><a href="' + (& $e $it.SectionUrl) + '">' + (& $e $it.Section) + '</a></td>' +
             '<td class="col-start"><a href="' + (& $e $it.GroupUrl) + '">' + (& $e $it.Group) + '</a></td>' +
-            '<td class="col-start"><a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e $it.DocsHeading) + '</a>' + $aboutButton + '</td>' +
             '<td><a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a></td></tr>')
     }
     $docsBase = 'https://code.claude.com/docs/en/'
@@ -249,11 +248,10 @@ function Format-DocsCoveragePageHtml {
         [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="status-' + $id + '"><b>' + (& $e $pg.Status) + '</b>' + $noteHtml + '</div>')
         [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="page-' + $id + '"><b>' + (& $e $pg.Title) + '</b>' + (& $e $pg.Desc) + '</div>')
         $groupHtml = if ($pg.Group) { '<a href="' + (& $e ($docsBase + $pg.GroupPath)) + '">' + (& $e $pg.Group) + '</a>' } else { '' }
-        [void]$sb.AppendLine('<tr><td>' + (& $e $pg.Title) + '</td>' +
+        [void]$sb.AppendLine('<tr><td><a href="' + (& $e ($docsBase + $pg.Path)) + '">' + (& $e $pg.Title) + '</a><button class="info-button" type="button" aria-label="About ' + (& $e $pg.Title) + '" aria-describedby="page-' + $id + '" aria-expanded="false">?</button></td>' +
             '<td class="col-start">' + (& $e $pg.Status) + '<button class="info-button" type="button" aria-label="Why ' + (& $e $pg.Title) + ' is ' + (& $e $pg.Status) + '" aria-describedby="status-' + $id + '" aria-expanded="false">?</button></td>' +
             '<td class="col-start"><a href="' + (& $e ($docsBase + $pg.SectionPath)) + '">' + (& $e $pg.Section) + '</a></td>' +
             '<td class="col-start">' + $groupHtml + '</td>' +
-            '<td class="col-start"><a href="' + (& $e ($docsBase + $pg.Path)) + '">' + (& $e $pg.Title) + '</a><button class="info-button" type="button" aria-label="About ' + (& $e $pg.Title) + '" aria-describedby="page-' + $id + '" aria-expanded="false">?</button></td>' +
             '<td></td></tr>')
     }
     [void]$sb.AppendLine('</tbody></table></div>')
@@ -275,7 +273,7 @@ function Format-DocsCoverageItemPageHtml {
     [void]$sb.AppendLine('<dl class="facts facts--row">')
     [void]$sb.AppendLine('<div><dt>Status</dt><dd>' + (& $e (Get-DocsCoverageStatus $Issue)) + '</dd></div>')
     [void]$sb.AppendLine('<div><dt>Issue</dt><dd><a href="' + $issueUrl + '">#' + [int]$Item.Issue + '</a></dd></div>')
-    [void]$sb.AppendLine('<div><dt>Docs</dt><dd><a href="' + (& $e $Item.Docs) + '">' + (& $e ($Item.Docs -replace '^https://', '')) + '</a></dd></div>')
+    [void]$sb.AppendLine('<div><dt>Docs</dt><dd><a href="' + (& $e ($Item.Docs + '#' + $Item.DocsAnchor)) + '">' + (& $e $Item.DocsHeading) + '</a></dd></div>')
     [void]$sb.AppendLine('</dl>')
     [void]$sb.AppendLine('<div class="grid-2">')
     [void]$sb.AppendLine('<section class="card"><h2>The idea</h2><p>' + (& $e $Item.What) + '</p><p>' + (& $e $Item.Why) + '</p></section>')
@@ -288,7 +286,7 @@ function Format-DocsCoverageItemPageHtml {
 
 function Get-DocsCoverageTipScript {
     <#
-        The "?" beside a docs heading or a Declined status: every .info-button opens the .tooltip its aria-describedby names, the way
+        The "?" beside a row's name or its status: every .info-button opens the .tooltip its aria-describedby names, the way
         Get-PageInfoScript opens the one beside an h1 (the house .tooltip is position: fixed, so this places it under
         the button, inside the window). It stays open while the pointer is on the button or on the text (WCAG
         1.4.13) or while the button has focus; Escape closes it.
