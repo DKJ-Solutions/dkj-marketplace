@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**2 / 5 minor entries** <!-- pending-tally -->
+**2 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/docs-coverage-impact · 20261109-151956Z
+
+Admin's Docs coverage page has a new Impact column after Status: how important each feature is to this repo,
+from Tier-1 to Tier-8, the higher the more important. A Not relevant docs page reads N/A. The column sorts by
+tier, with N/A last, and each row's Details popup names its impact too.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A: the page is this repo's own Admin page, and no consumer takes it.
+
+**Score:** N/A
+
+#### Pull Request
+
+Docs coverage: an Impact column, Tier-1 to Tier-8
+
+[PR #3939](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3939)
+
+---
 
 ### DEPLOY: feat/3937-fit-alarm-modal-h1 · 20261109-150742Z
 
