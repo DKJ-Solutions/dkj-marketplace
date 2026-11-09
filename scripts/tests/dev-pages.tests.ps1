@@ -1129,7 +1129,7 @@ Assert-True (@($dcItems | Where-Object { $_.Slug -cnotmatch '^[a-z0-9-]+\z' }).C
 Assert-True (@($dcItems | Where-Object { @($_.Label -split ' ').Count -gt 5 }).Count -eq 0) 'every label is five words at most (it is the page''s h1)'
 Assert-True (@($dcItems | Where-Object { $_.Docs -cnotmatch '^https://code\.claude\.com/docs/' }).Count -eq 0) 'every item names its docs page'
 Assert-Equal '--' (Get-DocsCoverageStatus $null) 'a status not read is --'
-Assert-Equal 'Done' (Get-DocsCoverageStatus @{ State = 'CLOSED'; StateReason = 'COMPLETED'; Labels = @(); Assigned = $false }) 'closed as completed is Done'
+Assert-Equal 'Covered' (Get-DocsCoverageStatus @{ State = 'CLOSED'; StateReason = 'COMPLETED'; Labels = @(); Assigned = $false }) 'closed as completed is Covered, the same state as a docs page the repo already uses (the owner, November 9, 2026)'
 Assert-Equal 'Declined' (Get-DocsCoverageStatus @{ State = 'CLOSED'; StateReason = 'NOT_PLANNED'; Labels = @(); Assigned = $false }) 'closed otherwise is Declined'
 Assert-Equal 'In review' (Get-DocsCoverageStatus @{ State = 'OPEN'; Labels = @('prio-2', 'awaiting-review-dev'); Assigned = $true }) 'a look at a result comes first'
 Assert-Equal 'Awaiting decision' (Get-DocsCoverageStatus @{ State = 'OPEN'; Labels = @('awaiting-decision-dev'); Assigned = $false }) 'then a decision'
@@ -1143,7 +1143,7 @@ $dcJson = '{"data":{"repository":{"i3895":{"number":3895,"state":"OPEN","stateRe
 $dcParsed = ConvertFrom-DocsCoverageQuery -Json $dcJson
 Assert-Equal '' $dcParsed.Error 'a well-formed answer has no error'
 Assert-Equal 'Awaiting decision' (Get-DocsCoverageStatus $dcParsed.ByIssue[3895]) 'the answer is read by issue number'
-Assert-Equal 'Done' (Get-DocsCoverageStatus $dcParsed.ByIssue[3904]) 'with its state reason'
+Assert-Equal 'Covered' (Get-DocsCoverageStatus $dcParsed.ByIssue[3904]) 'with its state reason'
 Assert-True (-not $dcParsed.ByIssue.ContainsKey(3896)) 'an issue the answer could not resolve is left out, not a blank entry'
 Assert-True ([bool](ConvertFrom-DocsCoverageQuery -Json '').Error) 'an empty answer is an error'
 Assert-True ([bool](ConvertFrom-DocsCoverageQuery -Json 'not json').Error) 'so is one that is not JSON'
@@ -1176,14 +1176,14 @@ Assert-True ($dcDecl -match '<td class="col-start"><span class="dot dc-dot--decl
 Assert-Equal 1 ([regex]::Matches($dcDecl, 'aria-describedby="why-')).Count 'so only the one with a reason gets a "?" in its status'
 Assert-True ($dcDecl -match 'querySelectorAll\("\.info-button\[aria-describedby\]"\)' -and $dcDecl -match 'mouseenter' -and $dcDecl -match 'Escape') 'a script opens it on hover or focus and closes it on Escape'
 $dcColors = Get-DocsCoverageStatusColors
-Assert-Equal 'Done,Covered,In progress,In review,Awaiting decision,Waiting,Open,Declined,Not used,Not relevant' (@($dcColors.Keys) -join ',') 'every status a row can show has a colour of its own (the owner, November 9, 2026)'
+Assert-Equal 'Covered,In progress,In review,Awaiting decision,Waiting,Open,Declined,Not used,Not relevant' (@($dcColors.Keys) -join ',') 'every status a row can show has a colour of its own (the owner, November 9, 2026)'
 Assert-Equal $dcColors.Count (@($dcColors.Values | Sort-Object -Unique)).Count 'and no two statuses share one'
 Assert-True (@($dcColors.Values | Where-Object { $_ -cnotmatch '^--[a-z0-9-]+\z' }).Count -eq 0) 'each colour is a house token, never a typed code'
 $dcStyle = Get-DocsCoverageStatusStyle
 Assert-True ($dcStyle -match '\.dc-dot--awaiting-decision \{ background: var\(--warning-3\); \}' -and $dcStyle -match '\.dc-dot--not-relevant \{ background: var\(--bg-4\); \}') 'the page''s own layer reads each status''s token through a class of its own'
 Assert-True ($dcStyle -notmatch '#[0-9a-fA-F]{3,8}|rgb|hsl|color-mix') 'and types or derives no colour (the brand book)'
 Assert-Equal '--' (Format-DocsCoverageStatusText '--') 'a status not read has no dot'
-Assert-True ($dcOver -match '\.dc-dot--done \{') 'the overview carries the status colours'
+Assert-True ($dcOver -match '\.dc-dot--covered \{' -and $dcOver -notmatch 'dc-dot--done') 'the overview carries the status colours, and Done is no status of its own any more'
 $dcCat = @(Get-DocsCoverageCatalog)
 Assert-True ($dcCat.Count -ge 200) 'the catalog holds every docs page (228 on November 9, 2026)'
 Assert-Equal $dcCat.Count (@($dcCat | ForEach-Object { $_.Path } | Sort-Object -Unique)).Count 'one entry per page'

@@ -183,13 +183,15 @@ function ConvertFrom-DocsCoverageQuery {
 
 function Get-DocsCoverageStatus {
     <#
-        One issue's status as the one word its card shows. Closed as completed is Done, closed otherwise Declined; an
+        One issue's status as the one word its row shows. Closed as completed is Covered, the word a docs page this
+        repo already uses well reads too: the two are the same state, and the Issue column says which arrived through
+        an issue (the owner, November 9, 2026; it read Done before). Closed otherwise is Declined; an
         open issue reads its parking label first (a look at a result, then a decision, then any other wait), then its
         assignee (In progress), and is Open without either. $null (not read) is '--'.
     #>
     param([AllowNull()]$Issue)
     if ($null -eq $Issue) { return '--' }
-    if ($Issue.State -ceq 'CLOSED') { if ($Issue.StateReason -ceq 'COMPLETED') { return 'Done' } else { return 'Declined' } }
+    if ($Issue.State -ceq 'CLOSED') { if ($Issue.StateReason -ceq 'COMPLETED') { return 'Covered' } else { return 'Declined' } }
     $labels = @($Issue.Labels)
     if ($labels -match '^awaiting-review-') { return 'In review' }
     if ($labels -match '^awaiting-decision-') { return 'Awaiting decision' }
@@ -206,7 +208,7 @@ function Get-DocsCoverageStatusColors {
         and the dark mode follow. '--' (not read) has no dot.
     #>
     [ordered]@{
-        'Done' = '--positive-3'; 'Covered' = '--graph-3'; 'In progress' = '--graph-1'; 'In review' = '--primary'
+        'Covered' = '--positive-3'; 'In progress' = '--graph-1'; 'In review' = '--primary'
         'Awaiting decision' = '--warning-3'; 'Waiting' = '--graph-2'; 'Open' = '--fg-4'; 'Declined' = '--negative-3'
         'Not used' = '--primary-muted'; 'Not relevant' = '--bg-4'
     }

@@ -78,8 +78,10 @@ cards: ten items read better compared row by row. The item pages stay as they ar
 - [x] Column order Section, Group, Item, Status, Issue: from the docs' section down to the topic, then how this
       repo stands to it
 - [x] Each status its own colour: a house `.dot` before the word, through a class of the page's own
-      (`.dc-dot--<status>`) that reads a house token, ten statuses on ten tokens
+      (`.dc-dot--<status>`) that reads a house token, one token per status
       (`Get-DocsCoverageStatusColors`); nothing typed or derived, `check-house-style` OK (703/0)
+- [x] Done is Covered: an issue closed as completed reads Covered, the same state as a docs page the repo
+      already uses; the Issue column says which arrived through an issue. Nine statuses, nine colours
 
 ### TEST
 
