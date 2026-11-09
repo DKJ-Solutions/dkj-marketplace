@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**9 / 12 minor entries** <!-- pending-tally -->
+**9 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3906-docs-coverage-page · 20261109-090356Z
+
+The product's home page has a **Docs coverage** card
+([#3906](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3906)). It opens an overview of the ten Claude
+Code features a comparison of the official docs against v6.11.0 found unused here (#3895 to #3904), one card each
+with its live status (Open, In progress, Awaiting decision, In review, Waiting, Done or Declined). Each card opens
+the item's own page: its idea, and what the docs turned out to say when a sweep checked it, including the
+corrections to what the issue assumed. The status is read from the issues with one GraphQL call. The ideas are
+fixed text, so a later change to an issue's content is copied in by hand.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+N/A: the product portal is this repo's own local server, and no plugin ships it.
+
+**Score:** N/A
+
+#### Pull Request
+
+Product portal page: the ten Claude Code docs-coverage opportunities
+
+[PR #3922](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3922)
+
+---
 
 ### DEPLOY: feat/3920-prefilter-background-run · 20261109-085221Z
 
