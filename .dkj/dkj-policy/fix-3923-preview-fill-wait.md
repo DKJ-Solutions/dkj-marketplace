@@ -47,7 +47,8 @@ sample) is a separate subject, filed as #3926.
 
 ### CREATE
 
-- [x] `push-preview.ps1`: `-TimeoutMinutes` default 20 -> 40 (hard cap 120 min), docstring cites #3923
+- [x] `scripts/task/push-preview.ps1` (the source; its shopify-plugin mirror rebuilt by
+  `build-shared-scripts`): `-TimeoutMinutes` default 20 -> 40 (hard cap 120 min), docstring cites #3923
 - [x] `skills/push-preview/SKILL.md`: the parameter row says the new default and why
 
 ### TEST
