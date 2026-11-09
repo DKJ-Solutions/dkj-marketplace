@@ -217,17 +217,47 @@ function Get-DocsCoverageStatusColors {
 function Format-DocsCoverageStatusText {
     # A status as its coloured dot and its word; a status with no colour of its own (--) is the word alone.
     param([AllowEmptyString()][string]$Status)
-    $slug = ($Status.ToLowerInvariant() -replace '[^a-z]+', '-').Trim('-')
+    $slug = Get-DocsCoverageStatusSlug $Status
     $dot = if ((Get-DocsCoverageStatusColors).Contains($Status)) { '<span class="dot dc-dot--' + $slug + '" aria-hidden="true"></span>' } else { '' }
     return $dot + (ConvertTo-DashboardText $Status)
 }
 
 function Get-DocsCoverageStatusStyle {
-    # The page's own layer: one rule per status colour, each reading a house token.
-    # And the space between the filter bar and the table, which the place sets (the brand book: a block has no margin).
+    # The page's own layer: one rule per status colour, each reading a house token. And the status dropdown: the
+    # space between it and the table (the place sets it; a block has no margin), and its panel floating over the
+    # table on the house tooltip's surface, every value a token.
     $map = Get-DocsCoverageStatusColors
-    return ((@($map.Keys | ForEach-Object { '.dc-dot--' + (($_.ToLowerInvariant() -replace '[^a-z]+', '-').Trim('-')) + ' { background: var(' + $map[$_] + '); }' }) +
-        '.dc-filters { margin-bottom: var(--spacing-3); }') -join "`n")
+    return ((@($map.Keys | ForEach-Object { '.dc-dot--' + (Get-DocsCoverageStatusSlug $_) + ' { background: var(' + $map[$_] + '); }' }) + @(
+        '.dc-filter { position: relative; display: inline-block; margin-bottom: var(--spacing-3); }',
+        '.dc-filter__panel { position: absolute; z-index: 5; top: 100%; left: 0; min-width: 240px; margin-top: var(--spacing-1); padding: var(--spacing-2) var(--spacing-3); background: var(--bg-2); border: 1px solid var(--bg-3); border-radius: var(--radius-2); box-shadow: var(--shadow-pop); }',
+        '.dc-filter__panel .check { align-items: center; }',
+        '.dc-filter__panel .check input { margin: 0; }')) -join "`n")
+}
+
+function Get-DocsCoverageStatusSlug {
+    # A status as the slug its dot class and its filter checkbox carry: 'Not relevant' is 'not-relevant', '--' is ''.
+    param([AllowEmptyString()][string]$Status)
+    return ($Status.ToLowerInvariant() -replace '[^a-z]+', '-').Trim('-')
+}
+
+function Format-DocsCoverageStatusFilter {
+    <#
+        The status dropdown: a house .more disclosure whose summary reads "Status: all" (the script keeps it current),
+        opening a panel of the product layer's .check checkboxes, one per status in -Statuses (the status of every
+        row), in the colour map's order and '--' last, each with its dot and its row count, all checked. Empty when
+        there are no rows.
+    #>
+    param([AllowEmptyCollection()][string[]]$Statuses)
+    if (-not @($Statuses).Count) { return '' }
+    $e = { param($v) ConvertTo-DashboardText $v }
+    $counts = @{}; foreach ($st in @($Statuses)) { $counts[$st] = 1 + [int]$counts[$st] }
+    $order = @(@((Get-DocsCoverageStatusColors).Keys | Where-Object { $counts.ContainsKey($_) }) + @($counts.Keys | Where-Object { -not (Get-DocsCoverageStatusColors).Contains($_) } | Sort-Object))
+    $boxes = foreach ($st in $order) {
+        $slug = Get-DocsCoverageStatusSlug $st
+        $dot = if ($slug) { '<span class="dot dc-dot--' + $slug + '" aria-hidden="true"></span>' } else { '' }
+        '<label class="check"><input type="checkbox" checked value="' + $slug + '"><span>' + $dot + (& $e $st) + ' (' + $counts[$st] + ')</span></label>'
+    }
+    return '<details class="more dc-filter" id="status-filter"><summary>Status: all</summary><div class="dc-filter__panel">' + ($boxes -join '') + '</div></details>'
 }
 
 function Format-DocsCoveragePageHtml {
@@ -247,15 +277,11 @@ function Format-DocsCoveragePageHtml {
     $e = { param($v) ConvertTo-DashboardText $v }
     $sb = New-Object System.Text.StringBuilder
     if ($Query.Error) { [void]$sb.AppendLine('<p class="msg--warn" role="alert">GitHub could not be read: ' + (& $e $Query.Error) + '. The items are shown without their status.</p>') }
-    # House filter chips over the table (the owner, November 9, 2026): one hides the Not relevant rows, which are most
-    # of the table and hold nothing to decide; one shows only the Not used rows, the candidates. Each is shown when
-    # there is at least one such row.
-    $notRelevant = @($Catalog | Where-Object { $_.Status -ceq 'Not relevant' }).Count
-    $notUsed = @($Catalog | Where-Object { $_.Status -ceq 'Not used' }).Count
-    $chips = @()
-    if ($notRelevant) { $chips += '<button class="filter-chip" type="button" id="hide-not-relevant" aria-controls="items" aria-pressed="false"><span class="filter-chip__dot dc-dot--not-relevant" aria-hidden="true"></span>Hide Not relevant (' + $notRelevant + ')</button>' }
-    if ($notUsed) { $chips += '<button class="filter-chip" type="button" id="only-not-used" aria-controls="items" aria-pressed="false"><span class="filter-chip__dot dc-dot--not-used" aria-hidden="true"></span>Only Not used (' + $notUsed + ')</button>' }
-    if ($chips) { [void]$sb.AppendLine('<div class="filter-chips dc-filters">' + ($chips -join '') + '</div>') }
+    # A status dropdown over the table (the owner, November 9, 2026): one checkbox per status the table shows, so any
+    # set of statuses can be shown or hidden. Built from the house .more disclosure and the product layer's .check.
+    $rowStatuses = @(@($Items | ForEach-Object { Get-DocsCoverageStatus $Query.ByIssue[[int]$_.Issue] }) + @($Catalog | ForEach-Object { [string]$_.Status }))
+    $filterHtml = Format-DocsCoverageStatusFilter -Statuses $rowStatuses
+    if ($filterHtml) { [void]$sb.AppendLine($filterHtml) }
     [void]$sb.AppendLine('<div class="table-wrap"><table class="table" id="items">')
     # Section, Group, Item, then Status (the owner, November 9, 2026): read from the docs' section down to the topic,
     # and then how this repo stands to it.
@@ -302,7 +328,7 @@ function Format-DocsCoveragePageHtml {
     }
     [void]$sb.AppendLine('</tbody></table></div>')
     [void]$sb.Append($tips.ToString()); [void]$sb.AppendLine((Get-DocsCoverageTipScript)); [void]$sb.AppendLine((Get-DocsCoverageSortScript))
-    if ($chips) { [void]$sb.AppendLine((Get-DocsCoverageFilterScript)) }
+    if ($filterHtml) { [void]$sb.AppendLine((Get-DocsCoverageFilterScript)) }
     return Format-DevPageHtml -Title 'Docs coverage' -Lead '' -Body $sb.ToString() -Style (Get-DocsCoverageStatusStyle) `
         -FooterNote (Get-DocsCoverageFooter -Meta $Meta -Page 'docs-coverage')
 }
@@ -357,16 +383,21 @@ function Get-DocsCoverageSortScript {
 
 function Get-DocsCoverageFilterScript {
     <#
-        The filter chips: each press flips that chip's aria-pressed, and then every row is judged against both. "Hide
-        Not relevant" hides a row carrying the Not relevant dot; "Only Not used" hides a row not carrying the Not used
-        dot. A row is found by its status dot, so the row markup carries nothing for the filter, and a sort moves rows
-        without touching their hidden state.
+        The status dropdown: on any checkbox change every row is shown only when its status is checked, and the
+        summary says how many statuses show ("all", "none", or "2 of 5"). A row's status is read from the one dot
+        class in it (a row whose status has no dot, '--', is the empty value), so the row markup carries nothing for
+        the filter, and a sort moves rows without touching their hidden state. A click outside the dropdown or Escape
+        closes its panel.
     #>
-    return '<script>(function () { var t = document.getElementById("items"), hn = document.getElementById("hide-not-relevant"), on = document.getElementById("only-not-used"); if (!t) return;' +
-        ' function pressed(b) { return !!b && b.getAttribute("aria-pressed") === "true"; }' +
-        ' function apply() { var a = pressed(hn), o = pressed(on); Array.prototype.forEach.call(t.tBodies[0].rows, function (r) {' +
-        ' r.hidden = (a && !!r.querySelector(".dc-dot--not-relevant")) || (o && !r.querySelector(".dc-dot--not-used")); }); }' +
-        ' [hn, on].forEach(function (b) { if (!b) return; b.addEventListener("click", function () { b.setAttribute("aria-pressed", pressed(b) ? "false" : "true"); apply(); }); }); })();</script>'
+    return '<script>(function () { var t = document.getElementById("items"), f = document.getElementById("status-filter"); if (!t || !f) return;' +
+        ' var boxes = Array.prototype.slice.call(f.querySelectorAll("input[type=checkbox]")), s = f.querySelector("summary");' +
+        ' function slug(r) { var d = r.querySelector("[class*=\"dc-dot--\"]"), m = d && /dc-dot--([a-z-]+)/.exec(d.className); return m ? m[1] : ""; }' +
+        ' function apply() { var on = {}, n = 0; boxes.forEach(function (b) { if (b.checked) { on[b.value] = true; n++; } });' +
+        ' Array.prototype.forEach.call(t.tBodies[0].rows, function (r) { r.hidden = !on[slug(r)]; });' +
+        ' s.textContent = "Status: " + (n === boxes.length ? "all" : n === 0 ? "none" : n + " of " + boxes.length); }' +
+        ' boxes.forEach(function (b) { b.addEventListener("change", apply); });' +
+        ' document.addEventListener("click", function (e) { if (f.open && !f.contains(e.target)) { f.open = false; } });' +
+        ' document.addEventListener("keydown", function (e) { if (e.key === "Escape" && f.open) { f.open = false; s.focus(); } }); })();</script>'
 }
 
 function Get-DocsCoverageFooter {
