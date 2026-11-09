@@ -127,6 +127,7 @@ Assert-True ($html -match 'today-items__done">Script <a class="dp-link" href="ht
 Assert-True ($html -match 'Review <span class="tag tag--warn">added</span>' -and $html -match 'Planned on an override \(start\): short day') 'an item added during the day and the override both show'
 Assert-True ($html -match '<dt>PRs merged</dt><dd class="num">4</dd>' -and $html -match 'Hotfix <a class="dp-link" href="https://github.com/o/r/pull/9"' -and $html -match '<h3>Not today</h3>' -and $html -notmatch '<h[1-3] class=') 'the Done card shows the counts, the extra work linked, and not today'
 Assert-True ($html -match '<td>Fri 6 Nov</td><td class="col-start">Friday</td><td class="num">2 of 3</td>' -and $html -match '<span class="tag tag--info">partly</span>' -and $html -match '<span class="chip">open</span>' -and $html -notmatch 'badge--neutral">[A-Za-z]' -and $html -match '3 planned</td>') 'the week shows a closed day''s result and an open day''s plan'
+Assert-True ($html -match 'The plan is this machine''s day file\. ' -and (Format-TodayPageHtml -Model ([pscustomobject]@{ date = '2026-11-07'; day = $null; week = @(); shared = 'shared through o/days, with 1 other machine(s)' }) -Now $now) -match 'merged from every machine''s day file \(shared through o/days') 'the footer says whose day file the plan is: this machine''s, or every machine''s once shared (#3924)'
 Assert-True ($html -notmatch [char]0x2014 -and ([regex]::Matches($html, 'class="grid__head"')).Count -le 4) 'no em dash, and at most four sections'
 $closedModel = [pscustomobject]@{ date = '2026-11-07'; error = 'gh exited 1'; live = $null; week = @()
     day = [pscustomobject]@{ goal = 'G'; items = @((& $item 'A' 6 'go' '')); notToday = @(); overrides = @(); close = [pscustomobject]@{ done = @(0); carried = @(); unplanned = @(); prs = 1; issues = 0; verdict = 'reached' } } }
@@ -144,6 +145,9 @@ Write-Host '-- the script' -ForegroundColor Cyan
 $state = Join-Path ([System.IO.Path]::GetTempPath()) ('dkj-dayplan-tests-' + [guid]::NewGuid().ToString('N'))
 $prevState = $env:DKJ_ADMIN_STATE_DIR
 $env:DKJ_ADMIN_STATE_DIR = $state
+# 'off' wins over a DKJ_DAYPLAN_REPO in the user's own settings, so no run here reaches a real home repo (#3924).
+$prevShare = $env:DKJ_DAYPLAN_REPO
+$env:DKJ_DAYPLAN_REPO = 'off'
 try {
     [void](New-Item -ItemType Directory -Path $state -Force)
     $planPath = Join-Path $state 'plan.json'
@@ -191,11 +195,13 @@ try {
     $r = & $run @('-Status', '-Date', '2026-11-06')
     $sm = try { $r.Out | ConvertFrom-Json } catch { $null }
     Assert-True ($r.Code -eq 0 -and $r.Out -notmatch '[^\x00-\x7F]' -and $sm -and $null -eq $sm.day -and (@($sm.week | Where-Object { $_.goal -eq $accented }).Count -eq 1)) '-Status writes pure ASCII JSON, and an accent and a dash come back whole through it'
+    Assert-True ($sm -and $sm.shared -match '^not shared: ' -and -not (Test-Path (Join-Path $state 'dayplan\sync.git'))) 'with sharing off, -Status says not shared and sets up no sync dir (#3924)'
 
     $r = & $run @('-Context', '-Close')
     Assert-True ($r.Code -eq 1 -and $r.Out -match 'exactly one') 'two modes at once are refused'
 } finally {
     $env:DKJ_ADMIN_STATE_DIR = $prevState
+    $env:DKJ_DAYPLAN_REPO = $prevShare
     Remove-Item -LiteralPath $state -Recurse -Force -ErrorAction SilentlyContinue
 }
 

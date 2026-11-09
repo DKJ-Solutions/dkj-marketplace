@@ -2,7 +2,116 @@
 
 ## [Unreleased]
 
-**9 / 13 minor entries** <!-- pending-tally -->
+**12 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3924-dayplan-sync · 20261109-111312Z
+
+The `day-plan` script syncs the day plan across machines through Stopwatch-style refs
+(`refs/dayplan/<machine id>`) in one private home repo. The Stopwatch's publish and fetch now take their
+namespace as parameters, so both features share one set of plumbing.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+The day plan now works on several machines at once: set `DKJ_DAYPLAN_REPO` to a private repo in your user
+settings, and a plan made on one machine is the plan on every other. `-Add` is held to the 6-8 h band against
+the whole day, and `-Close` sees the whole day. Sharing goes only to a repo GitHub reports as private, since
+plan titles can be personal. Without the setting nothing changes.
+
+**Score:** 3
+
+#### Pull Request
+
+day-plan: sync the day across machines through refs
+
+Plugins: dkj-policy
+
+[PR #3931](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3931)
+
+---
+
+### DEPLOY: feat/docs-coverage-table · 20261109-110321Z
+
+The Docs coverage overview on the product portal is a table now, listing every page of the Claude Code docs
+beside the ten items with an issue. Each row reads from the docs' section and group (each a link into the docs) to the topic, linking the docs
+(an item its heading, a docs page the page itself), then its status, each status in a colour of its own, and its issue. A docs page reads
+Covered (this repo already uses it well), Not used or Not relevant, and a "?" beside a name or a status explains
+it on hover or focus: the idea, the docs' own description, the evidence, or why the owner declined it. Every column
+sorts with a click on its head. A Not used page also says whether this repo should take it up, and why. A status filter over the table shows one status at a time, or all of them.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A: the Docs coverage pages are this repo's own product portal, which no consumer installs.
+
+**Score:** N/A
+
+#### Pull Request
+
+Docs coverage overview as a table instead of cards
+
+[PR #3930](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3930)
+
+---
+
+### DEPLOY: fix/3926-fill-wait-sampling · 20261109-103155Z
+
+`push-preview` and `backup-live-theme` no longer pull a filling theme back to back
+([#3926](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3926)). Every count of a copy is a full
+`theme pull`, and the pause before the next one is now never shorter than that pull took, so a wait spends
+at most half its time pulling. Several previews filling at once space themselves out. `push-preview` also
+keeps live's file count for the copy in `branch.<name>.previewLiveCount` and reuses it on a resume,
+instead of pulling live again, and tries live's count three times before giving up. That pull is the one
+measured to fail while three previews filled side by side (smartwatchbanden#1066).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A store that pushes several previews from live at once no longer has one of them fail its resume on
+live's count. Each wait also pulls about half as often against a large theme. Nothing to do but take the
+version.
+
+**Score:** 3
+
+#### Pull Request
+
+Theme fill wait: space samples by their cost, reuse live's count on a resume (#3926)
+
+Plugins: dkj-subagents-shopify
+
+[PR #3928](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3928)
+
+---
+
+### DEPLOY: fix/3923-preview-fill-wait · 20261109-101649Z
+
+`push-preview` now waits 40 minutes for a fresh copy of live to fill before giving up, instead of 20.
+Past that it still runs on while the copy grows, up to three times that value, so up to two hours.
+A 910-file live theme's copy was measured still filling at ~55 minutes, with the context templates
+arriving last, so the old default's 60-minute cap refused a copy that was not stuck
+([#3923](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3923)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Shopify consumer with a large live theme no longer has to re-run `push-preview` once or twice per new
+preview: the first run waits long enough for the copy to fill.
+
+**Score:** 3
+
+#### Pull Request
+
+push-preview: raise the fill wait's default for a large store's copy of live
+
+Plugins: dkj-subagents-shopify
+
+[PR #3927](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3927)
+
+---
 
 ### DEPLOY: feat/3906-docs-coverage-page · 20261109-090356Z
 

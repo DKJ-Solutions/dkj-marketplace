@@ -453,8 +453,9 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
         New-Item -ItemType Directory -Force -Path (Join-Path $src 'scripts\lib'), (Join-Path $src 'scripts\dashboard'),(Join-Path $src 'plugins\dkj-policy\assets\dkj-brandbook'), (Join-Path $src 'consumers'), $noup, $outside | Out-Null
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\consumer-dashboard-lib.ps1') (Join-Path $src 'scripts\lib\')
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\dev-pages-lib.ps1') (Join-Path $src 'scripts\lib\')
-        # And the Docs coverage lib dev-pages-lib dot-sources beside itself (#3906).
+        # And the Docs coverage lib dev-pages-lib dot-sources beside itself (#3906), with the catalog it dot-sources.
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\docs-coverage-lib.ps1') (Join-Path $src 'scripts\lib\')
+        Copy-Item (Join-Path $RepoRoot 'scripts\lib\docs-coverage-catalog.ps1') (Join-Path $src 'scripts\lib\')
         # dev-pages-lib reads the plugins' libs from the plugin tree beside scripts/, and the server its state reader.
         New-Item -ItemType Directory -Force -Path (Join-Path $src 'plugins\dkj-policy\apps\admin\lib') | Out-Null
         Copy-Item (Join-Path $PluginLib '*.ps1') (Join-Path $src 'plugins\dkj-policy\apps\admin\lib\')
@@ -590,6 +591,7 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\consumer-dashboard-lib.ps1') (Join-Path $fixture4 'scripts\lib\')
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\dev-pages-lib.ps1') (Join-Path $fixture4 'scripts\lib\')
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\docs-coverage-lib.ps1') (Join-Path $fixture4 'scripts\lib\')
+        Copy-Item (Join-Path $RepoRoot 'scripts\lib\docs-coverage-catalog.ps1') (Join-Path $fixture4 'scripts\lib\')
         New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'plugins\dkj-policy\apps\admin\lib') | Out-Null
         Copy-Item (Join-Path $PluginLib '*.ps1') (Join-Path $fixture4 'plugins\dkj-policy\apps\admin\lib\')
         # And dkj-solutions' product layout (#3831).
@@ -696,7 +698,7 @@ $rsAdmin = Join-Path $rsRoot 'org\admin'
 New-Item -ItemType Directory -Force -Path (Join-Path $rsAdmin 'consumers'), (Join-Path $rsAdmin 'scripts\lib'), (Join-Path $rsRoot 'org\dkj-lifehub') | Out-Null
 # repo-session.ps1 loads Admin's page lib, which loads the consumer lib and the plugin libs beside it
 # (dev-preview-rules.ps1 for the Product card's url rule, #3468; test-gate-lib.ps1, the Test gate's page, #3470; plugins-page-lib.ps1, whose description paragraphs the product's Plugins pages use; and dkj-solutions' product-pages-lib.ps1, the product layout, #3831).
-foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'scripts\lib\dev-pages-lib.ps1', 'scripts\lib\docs-coverage-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\dev-preview-rules.ps1', 'plugins\dkj-policy\apps\admin\lib\test-gate-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\plugins-page-lib.ps1', 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\product-pages-lib.ps1') {
+foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'scripts\lib\dev-pages-lib.ps1', 'scripts\lib\docs-coverage-lib.ps1', 'scripts\lib\docs-coverage-catalog.ps1', 'plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\dev-preview-rules.ps1', 'plugins\dkj-policy\apps\admin\lib\test-gate-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\plugins-page-lib.ps1', 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\product-pages-lib.ps1') {
     $to = Join-Path $rsAdmin (Split-Path -Parent $lib)
     New-Item -ItemType Directory -Force -Path $to | Out-Null
     Copy-Item -LiteralPath (Join-Path $RepoRoot $lib) -Destination $to

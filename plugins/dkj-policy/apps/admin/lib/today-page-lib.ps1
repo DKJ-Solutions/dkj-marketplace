@@ -170,7 +170,12 @@ function Format-TodayPageHtml {
         if ($dd -ne $Now.Date) { $title = $dd.ToString('dddd d MMMM', $inv) }
     }
     $when = if ($GeneratedAt) { ', read ' + (& $e $GeneratedAt) } else { '' }
+    # Where the plan comes from (#3924): every machine's copy when the day is shared, else this machine's file alone.
+    $sharedNote = if ($Model) { [string]$Model.shared } else { '' }
+    $source = if ($sharedNote -like 'shared *') { 'The plan is merged from every machine''s day file (' + (& $e $sharedNote) + ').' }
+              elseif ($sharedNote) { 'The plan is this machine''s day file (' + (& $e $sharedNote) + ').' }
+              else { 'The plan is this machine''s day file.' }
     return Format-GeneralPageHtml -Title $title -Style ($script:TodayPageStyle) -Body $body.ToString() -SiteName $RepoName `
         -Lead 'The day plan: the day goal, the plan and what got done, and the week.' `
-        -FooterNote ('The plan is this machine''s day file. An item is done when GitHub shows its PR merged or its issue closed that day, or when the close-out marked it done' + $when + ' (<a class="dp-link" href="/refresh?page=today">read again</a>).')
+        -FooterNote ($source + ' An item is done when GitHub shows its PR merged or its issue closed that day, or when the close-out marked it done' + $when + ' (<a class="dp-link" href="/refresh?page=today">read again</a>).')
 }

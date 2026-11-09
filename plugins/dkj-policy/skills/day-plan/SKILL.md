@@ -89,9 +89,19 @@ loose ends to it, because what is not done has already been named as tomorrow's.
 - **Whose work counts**: `-Author`, else `DKJ_DAYPLAN_AUTHORS` (comma-separated), else the login `gh` acts
   as plus git's `user.name`. Both, because a checkout can act as one account and commit as another. Measured
   November 7, 2026: the PRs were authored by one account and the issues assigned to the other.
-- **The day file is the machine's**: `%LOCALAPPDATA%\dkj-admin\dayplan\<yyyy-MM-dd>.json`
-  (`DKJ_ADMIN_STATE_DIR` moves it for tests). It is not in any repo, because the day belongs to the person and
-  not to a repo.
+- **The day file lives on the machine**: `%LOCALAPPDATA%\dkj-admin\dayplan\<yyyy-MM-dd>.json`
+  (`DKJ_ADMIN_STATE_DIR` moves it for tests). It is not in any repo's tree, because the day belongs to the
+  person and not to a repo.
+- **One day across several machines** ([#3924](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3924)):
+  set `DKJ_DAYPLAN_REPO` to a **private** repo (`owner/name`) in the `env` block of your user-level
+  `~/.claude/settings.json`, on every machine. Each machine then publishes its recent day files to its own ref,
+  `refs/dayplan/<machine id>`, in that repo, the way the Stopwatch shares its runs. No commit lands on a branch.
+  Every reader merges the copies. The newest plan is the base, items added on any machine after it join once,
+  and a closed day wins whole. The band is held against the merged day. `-Context`, `-Apply`, `-Add`, `-Close`
+  and `-Week` sync themselves. The Today page syncs in the background every five minutes, and its footer says
+  whether the day is shared. A repo GitHub does not report as private is refused, because plan titles can be
+  personal. Offline, or without push rights, the day stays on this machine and every command says
+  `not shared`. `DKJ_DAYPLAN_REPO=off` in the environment turns it off on one machine.
 - **The pace is a context, not a quota.** It counts merged PRs, which vary in size. The hour band is the
   bound.
 - **A closed day is not planned again**: plan another `-Date`.

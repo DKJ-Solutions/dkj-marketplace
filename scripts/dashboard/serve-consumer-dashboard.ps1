@@ -389,7 +389,7 @@ try {
             if ($path -eq '/refresh') {
                 # At most one re-run per -MinRefreshSeconds, however often /refresh is asked for. ?page= names
                 # where to go back to, from a fixed list, so the redirect never leaves this server.
-                $page = if ([string]$target -cmatch '[?&]page=(consumers(?:/(?:dkj(?:/[A-Za-z0-9._-]+)?|bwj|other))?|docs-coverage(?:/[a-z0-9-]+)?)(&|$)') { $Matches[1] } else { '' }
+                $page = if ([string]$target -cmatch '[?&]page=(consumers(?:/(?:dkj(?:/[A-Za-z0-9._-]+)?|bwj|other))?|docs-coverage)(&|$)') { $Matches[1] } else { '' }
                 if ($cache -and ((Get-Date) - $cache.At).TotalSeconds -ge $MinRefreshSeconds) { $cache = $null }
                 if ($dkjCache -and ((Get-Date) - $dkjCache.At).TotalSeconds -ge $MinRefreshSeconds) { $dkjCache = $null }
                 if ($docsCache -and ((Get-Date) - $docsCache.At).TotalSeconds -ge $MinRefreshSeconds) { $docsCache = $null }
@@ -454,23 +454,14 @@ try {
                 Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($html)) -Method $method
                 continue
             }
-            if ($path -cmatch '^/docs-coverage(?:/([a-z0-9-]+))?\z') {
-                # The Docs coverage overview, or one item's own page (#3906); an unknown slug is a 404, never an empty page.
-                $slug = [string]$Matches[1]
+            if ($path -cmatch '^/docs-coverage\z') {
+                # The Docs coverage overview (#3906): one page, every row linking the docs, with no page of its own per
+                # item (the owner, November 9, 2026), so /docs-coverage/<anything> falls through to the 404 below.
                 if ($null -eq $docsCache -or ((Get-Date) - $docsCache.At).TotalSeconds -ge $CacheSeconds) { $docsCache = Get-DocsCoverageModel }
                 $q = $docsCache.Query; $meta = $docsCache.Meta
                 # A failed read is shown once and not kept, so the next request asks again, as on /consumers/dkj.
                 if ($q.Error) { $docsCache = $null }
-                if ($slug) {
-                    $item = @(Get-DocsCoverageItems | Where-Object { $_.Slug -ceq $slug })[0]
-                    if ($null -eq $item) {
-                        Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('Not found: no Docs coverage item of that name.')) -Method $method
-                        continue
-                    }
-                    $html = Format-DocsCoverageItemPageHtml -Item $item -Issue $q.ByIssue[[int]$item.Issue] -Meta $meta
-                } else {
-                    $html = Format-DocsCoveragePageHtml -Query $q -Meta $meta
-                }
+                $html = Format-DocsCoveragePageHtml -Query $q -Meta $meta
                 Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($html)) -Method $method
                 continue
             }

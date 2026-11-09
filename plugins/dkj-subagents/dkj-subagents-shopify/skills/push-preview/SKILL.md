@@ -57,7 +57,10 @@ turns ordinary progress into an error under PowerShell's `Stop` preference.
    complete, and pushing into a copy still filling is a race the copy can win -- it can put live's
    version of a branch file back. So it counts the copy against live (`Get-ThemeFillVerdict`) every
    `-PollSeconds` until it matches, and gives up after `-TimeoutMinutes` **without pushing**; the state
-   sits in `branch.<name>.previewFill`, so a re-run resumes the wait on the same theme.
+   sits in `branch.<name>.previewFill`, so a re-run resumes the wait on the same theme. Every count is a
+   full pull, so the pause between counts is never shorter than the last pull took, and live is counted
+   once per copy (`branch.<name>.previewLiveCount`), tried three times, and reused by a resume (#3926).
+   Several previews filling side by side then space out their pulls on their own.
 6. **Prints the preview URL(s)** to hand over -- but only after reading the push output: the CLI exits 0 when it rejects a file ("pushed with errors"), and the script then exits 1 without URLs (#2624). From two URLs upwards it also prints a note that a list is raw material rather than the handover (see below).
 7. **Says what no push can deliver** -- see the next section.
 
@@ -102,7 +105,7 @@ preview:
 | `-Store` | store domain to push to, overriding the store seam. For a repo whose seam is not answered yet, or a one-off against a second store. |
 | `-Path` | the storefront path to print preview URLs for, e.g. `/products/some-handle`. Default is the home page -- **a home-page link alone is not enough when the change sits on a product page**, which is the one parameter worth reaching for by habit. |
 | `-PollSeconds` | how often a freshly duplicated preview is counted while it fills (default 30). Each count is a full `theme pull` into a scratch directory, since no CLI JSON output carries a file count. |
-| `-TimeoutMinutes` | how long to wait for that copy before giving up without pushing (default 20). |
+| `-TimeoutMinutes` | how long to wait for that copy before giving up without pushing (default 40; past it the wait runs on while the copy still grows, up to three times the value). It was 20 until [#3923](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3923): a 910-file live theme's copy held 843 files at ~55 minutes and was still rising, so even the 60-minute cap refused it. |
 
 ## The seam answers it reads
 
