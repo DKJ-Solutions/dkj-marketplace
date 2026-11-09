@@ -50,7 +50,7 @@ repo and is the constitution's carrier for a result someone must judge.
 - [x] `apps/admin/lib/handover-page-lib.ps1` + the `/dev/handover[/<name>]` route in `serve-general-pages.ps1`: the model (outside the checkout, beside the Stopwatch store), the four-block page and the index
 - [x] bwj-development `scripts/task/build-handover-page.ps1`: the cards from `Get-MarketHandoverPairs`, the go-live block from `build-golive-block -OutFile`, one link printed
 - [x] Docs: PREVIEW-portable.md names the carrier, both READMEs list it, `Write-MarketPreviewUrls` points at it
-- [ ] The owner has looked at a handover page in Admin and scanned its QR codes with a phone (visible result: the encoder is held to published vectors, the whole code only to a scan)
+- [~] The owner has looked at a handover page in Admin and scanned its QR codes with a phone (visible result: the encoder is held to published vectors, the whole code only to a scan). Not done as a separate look: davekokbwj approved the branch through issues-sweep-reviews on 2026-11-09 without one.
 
 ### TEST
 
