@@ -306,7 +306,9 @@ function Format-DocsCoveragePageHtml {
         $noteHtml = & $e $pg.Note
         $ev = @($pg.Evidence | Where-Object { $_ })
         if ($ev.Count) { $noteHtml += '<p>Evidence: ' + ((@($ev) | ForEach-Object { & $e $_ }) -join ', ') + '</p>' }
-        # A Not used page says whether this repo should take it up, and why (the owner, November 9, 2026).
+        # A Not used page says how much value it could have here, and whether this repo should take it up, and why
+        # (the owner, November 9, 2026).
+        if ($pg.Potential) { $noteHtml += '<p>Potential: ' + [int]$pg.Potential + ' of 4</p>' }
         if ($pg.Advice) { $noteHtml += '<p>Advice: ' + (& $e $pg.Advice) + '. ' + (& $e $pg.AdviceWhy) + '</p>' }
         [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="status-' + $id + '"><b>' + (& $e $pg.Status) + '</b>' + $noteHtml + '</div>')
         [void]$tips.AppendLine('<div class="tooltip tooltip--explain" role="tooltip" id="page-' + $id + '"><b>' + (& $e $pg.Title) + '</b>' + (& $e $pg.Desc) + '</div>')
@@ -377,10 +379,17 @@ function Get-DocsCoverageFilterScript {
         The status filter: on a change every row shows when "all" is chosen or its status is the one chosen. A row's
         status is read from the one dot class in it (a row whose status has no dot, '--', is the empty value), so the
         row markup carries nothing for the filter, and a sort moves rows without touching their hidden state.
+        The browser remembers the last choice (the owner, November 9, 2026: a reload must not fall back to all), in
+        localStorage under "docs-coverage-status": restored on load only when the page still offers that status, and
+        every read and write in a try, so a browser that refuses storage just starts on all.
     #>
     return '<script>(function () { var t = document.getElementById("items"), f = document.getElementById("status-filter"); if (!t || !f) return;' +
+        ' var k = "docs-coverage-status";' +
         ' function slug(r) { var d = r.querySelector("[class*=\"dc-dot--\"]"), m = d && /dc-dot--([a-z-]+)/.exec(d.className); return m ? m[1] : ""; }' +
-        ' f.addEventListener("change", function () { var v = f.value; Array.prototype.forEach.call(t.tBodies[0].rows, function (r) { r.hidden = v !== "all" && slug(r) !== v; }); }); })();</script>'
+        ' function apply() { var v = f.value; Array.prototype.forEach.call(t.tBodies[0].rows, function (r) { r.hidden = v !== "all" && slug(r) !== v; }); }' +
+        ' f.addEventListener("change", function () { apply(); try { localStorage.setItem(k, f.value); } catch (e) {} });' +
+        ' var s = null; try { s = localStorage.getItem(k); } catch (e) {}' +
+        ' if (s !== null && Array.prototype.some.call(f.options, function (o) { return o.value === s; })) { f.value = s; apply(); } })();</script>'
 }
 
 function Get-DocsCoverageFooter {
