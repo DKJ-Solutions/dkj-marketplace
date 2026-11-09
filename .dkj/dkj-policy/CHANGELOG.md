@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**4 / 6 minor entries** <!-- pending-tally -->
+**5 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3901-guard-safety-rules · 20261109-000628Z
+
+`guard-working-copy` now refuses a force push (`-f`, `--force`, `--force-with-lease`, `--mirror`, a `+`
+refspec) and `git reset --hard` on every thread, the main one included, abbreviations git accepts as well. It used to guard only dispatched subagents. The
+constitution allows both commands only with the owner's explicit permission, and a plugin cannot ship
+permission rules, so the guard enforces them itself (#3901). The refusal tells the session to give the owner
+the exact command to run themselves. A commit message or grep that names the rule is not refused.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every repo with `dkj-policy` installed gets the refusal at its next plugin update, with no setting to change.
+A session that tries to force-push or hard-reset is stopped and hands the command to its owner instead.
+
+**Score:** 3
+
+#### Pull Request
+
+guard-working-copy refuses a force push and a hard reset on every thread
+
+Plugins: dkj-policy
+
+[PR #3916](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3916)
+
+---
 
 ### DEPLOY: feat/3897-agent-maxturns · 20261108-235613Z
 
