@@ -50,7 +50,7 @@ Owner (Dave, November 9, 2026): colour statuses like GitHub. Open work green (ga
 ### TEST
 
 - [x] dev-pages, house-palette, check-house-style suites green
-- [ ] The owner has looked at the page
+- [x] The owner has looked at the page ("ship it", Dave, November 9, 2026)
 
 ### DEPLOY: feat/docs-coverage-github-colours
 
