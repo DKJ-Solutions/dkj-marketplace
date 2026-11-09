@@ -2,7 +2,59 @@
 
 ## [Unreleased]
 
-**5 / 7 minor entries** <!-- pending-tally -->
+**7 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3903-addon-teams-default-off · 20261109-002839Z
+
+The three add-on teams (`dkj-subagents-ecomm`, `dkj-subagents-lifehub`, `dkj-subagents-shopify`) declare
+`defaultEnabled: false` ([#3903](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3903)). A repo that has not
+named a team in `enabledPlugins` no longer gets it enabled just by installing it. A repo that already names one keeps
+its own choice. The core team and the policy plugins are unchanged.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A fresh install of an add-on team stays off until the repo turns it on with `"<team>@dkj-marketplace": true` in
+`enabledPlugins`. A repo that already lists the team sees no change.
+
+**Score:** 2
+
+#### Pull Request
+
+Add-on teams ship defaultEnabled: false
+
+Plugins: dkj-subagents-ecomm, dkj-subagents-lifehub, dkj-subagents-shopify
+
+[PR #3919](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3919)
+
+---
+
+### DEPLOY: fix/3911-admin-outside-worktree · 20261109-001641Z
+
+`dkj-policy`'s SessionStart hook no longer starts Admin in a folder that is not a git work tree. Every
+`claude plugin eval` run used to leave an Admin server behind in its temporary workspace, which kept
+the eval CLI from removing that folder (`EBUSY`). An eval run now leaves nothing running, and every
+repo still gets its Admin as before
+([#3911](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3911)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Plugin eval runs no longer leave Admin servers and locked temp folders behind.
+
+**Score:** 2
+
+#### Pull Request
+
+dev-preview starts no Admin outside a git work tree
+
+Plugins: dkj-policy
+
+[PR #3918](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3918)
+
+---
 
 ### DEPLOY: feat/3901-guard-safety-rules · 20261109-000628Z
 
