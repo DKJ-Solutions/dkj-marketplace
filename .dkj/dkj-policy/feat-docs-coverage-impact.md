@@ -39,19 +39,33 @@
 
 ### PLAN
 
+The owner asked for an Impact column on /docs-coverage: Tier-1 to Tier-8, the higher the more important the
+feature, and N/A where the status is Not relevant (November 9, 2026).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Every Covered and Not used catalog page and each of the ten items carries an Impact from 1 to 8
+- [x] The page renders an Impact column after Status (Format-DocsCoverageImpact), N/A for a Not relevant page
+- [x] The column sorts by its tier number, with N/A last
 
 ### TEST
 
+- [x] dev-pages.tests.ps1: 725 passed, 0 failed, with asserts for the column, N/A, the sort and every row's impact
+- [ ] The owner has looked at http://localhost:4871/docs-coverage
+
 ### DEPLOY: feat/docs-coverage-impact
 
-**Score:**
+Admin's Docs coverage page has a new Impact column after Status: how important each feature is to this repo,
+from Tier-1 to Tier-8, the higher the more important. A Not relevant docs page reads N/A. The column sorts by
+tier, with N/A last.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: the page is this repo's own Admin page, and no consumer takes it.
+
+**Score:** N/A
 
 #### Pull Request
 

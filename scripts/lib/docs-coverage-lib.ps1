@@ -36,9 +36,11 @@ function Get-DocsCoverageItems {
         DocsHeading the heading's text as that page shows it.
         WhyDeclined, on an item the owner closed as not planned, is the decision that closed it, in one or two
         sentences: the overview shows it behind a "?" beside Declined.
+        Impact is how important the item is to this repo, 1 to 8, the higher the more important (the owner, November
+        9, 2026): the Impact column shows it as Tier-1 to Tier-8, the same scale as a catalog page's.
     #>
     @(
-        @{ Slug = 'plugin-dependencies'; Issue = 3895; Label = 'Plugin dependencies'
+        @{ Slug = 'plugin-dependencies'; Issue = 3895; Impact = 5; Label = 'Plugin dependencies'
            Sub = 'Declare which plugins a plugin needs in its manifest'
            What = 'Declare plugin dependencies in plugin.json (dependencies) instead of in prose checked by a session check.'
            Why = 'Claude Code then installs a missing dependency itself, before any session runs.'
@@ -49,7 +51,7 @@ function Get-DocsCoverageItems {
            Section = 'Plugins'; SectionUrl = 'https://code.claude.com/docs/en/plugins/overview'
            Group = 'Create plugins'; GroupUrl = 'https://code.claude.com/docs/en/plugins/create'
            Docs = 'https://code.claude.com/docs/en/plugins/dependencies'; DocsAnchor = 'declare-dependencies'; DocsHeading = 'Declare dependencies' }
-        @{ Slug = 'behavioural-evals'; Issue = 3896; Label = 'Behavioural evals'
+        @{ Slug = 'behavioural-evals'; Issue = 3896; Impact = 6; Label = 'Behavioural evals'
            Sub = 'Prove a skill or specialist still fires on its prompts'
            What = 'Add an evals/ suite per plugin, run with claude plugin eval in CI.'
            Why = 'The gates measure structure and cost, not behaviour; an eval catches a description shortened past the point where it still fires.'
@@ -59,7 +61,7 @@ function Get-DocsCoverageItems {
            Section = 'Plugins'; SectionUrl = 'https://code.claude.com/docs/en/plugins/overview'
            Group = 'Create plugins'; GroupUrl = 'https://code.claude.com/docs/en/plugins/create'
            Docs = 'https://code.claude.com/docs/en/plugin-evals'; DocsAnchor = 'run-evals-in-ci'; DocsHeading = 'Run evals in CI' }
-        @{ Slug = 'subagent-frontmatter'; Issue = 3897; Label = 'Richer subagent frontmatter'
+        @{ Slug = 'subagent-frontmatter'; Issue = 3897; Impact = 6; Label = 'Richer subagent frontmatter'
            Sub = 'Effort, turn limit, skills, memory and a model per role'
            What = 'Use effort, maxTurns, skills, memory and a per-role model on the specialist agent definitions.'
            Why = 'Every agent runs on sonnet with no effort level and no turn limit, whatever its role.'
@@ -70,7 +72,7 @@ function Get-DocsCoverageItems {
            Section = 'Build with Claude Code'; SectionUrl = 'https://code.claude.com/docs/en/agents'
            Group = 'Agents and parallel work'; GroupUrl = 'https://code.claude.com/docs/en/agents'
            Docs = 'https://code.claude.com/docs/en/sub-agents'; DocsAnchor = 'supported-frontmatter-fields'; DocsHeading = 'Frontmatter reference' }
-        @{ Slug = 'hook-if-async'; Issue = 3898; Label = 'Conditional and async hooks'
+        @{ Slug = 'hook-if-async'; Issue = 3898; Impact = 4; Label = 'Conditional and async hooks'
            Sub = 'Start PowerShell only when a hook has work to do'
            What = 'Use if and async on the hooks in hooks.json.'
            Why = 'Every hook starts a PowerShell process on every matching event.'
@@ -82,7 +84,7 @@ function Get-DocsCoverageItems {
            Group = 'Reference'; GroupUrl = 'https://code.claude.com/docs/en/cli-reference'
            Docs = 'https://code.claude.com/docs/en/hooks'; DocsAnchor = 'hook-handler-fields'; DocsHeading = 'Hook handler fields'
            WhyDeclined = 'Measured: if cannot filter the safety guard or the one thing publish-background-run acts on, and async on the Stop hooks saves no wall-clock. The owner chose a shell-side pre-filter instead (#3920), November 9, 2026.' }
-        @{ Slug = 'skill-frontmatter'; Issue = 3899; Label = 'Richer skill frontmatter'
+        @{ Slug = 'skill-frontmatter'; Issue = 3899; Impact = 5; Label = 'Richer skill frontmatter'
            Sub = 'Tool grants, argument hints and the shell a skill runs in'
            What = 'Use allowed-tools, argument-hint and shell in SKILL.md frontmatter.'
            Why = 'A skill could grant the exact script it runs, and the slash menu would show its arguments.'
@@ -93,7 +95,7 @@ function Get-DocsCoverageItems {
            Section = 'Build with Claude Code'; SectionUrl = 'https://code.claude.com/docs/en/agents'
            Group = 'Skills'; GroupUrl = 'https://code.claude.com/docs/en/skills'
            Docs = 'https://code.claude.com/docs/en/skills'; DocsAnchor = 'frontmatter-reference'; DocsHeading = 'Frontmatter reference' }
-        @{ Slug = 'plugin-workflows'; Issue = 3900; Label = 'Workflows in a plugin'
+        @{ Slug = 'plugin-workflows'; Issue = 3900; Impact = 3; Label = 'Workflows in a plugin'
            Sub = 'The sweep and the review chains as workflow scripts'
            What = 'Ship workflows/*.js as a plugin component for the sweep and the review chains.'
            Why = 'Only the final result would return to the main context, and every run would take the same steps.'
@@ -105,7 +107,7 @@ function Get-DocsCoverageItems {
            Group = 'Agents and parallel work'; GroupUrl = 'https://code.claude.com/docs/en/agents'
            Docs = 'https://code.claude.com/docs/en/workflows'; DocsAnchor = 'distribute-a-workflow-in-a-plugin'; DocsHeading = 'Distribute a workflow in a plugin'
            WhyDeclined = 'Workflows are off by default on Pro, a consumer can switch them off, and each needs approval on its first run. The owner kept the sweep and the review chains as prose plus scripts, November 8, 2026.' }
-        @{ Slug = 'deny-ask-rules'; Issue = 3901; Label = 'Hard deny and ask'
+        @{ Slug = 'deny-ask-rules'; Issue = 3901; Impact = 8; Label = 'Hard deny and ask'
            Sub = 'Let the harness enforce the safety rules'
            What = 'Ship deny and ask permission rules for the constitution''s safety rules.'
            Why = 'The deny rules exist only as a suggested settings file, so a consumer that never applies it has none.'
@@ -115,7 +117,7 @@ function Get-DocsCoverageItems {
            Section = 'Plugins'; SectionUrl = 'https://code.claude.com/docs/en/plugins/overview'
            Group = 'Create plugins'; GroupUrl = 'https://code.claude.com/docs/en/plugins/create'
            Docs = 'https://code.claude.com/docs/en/plugins/components'; DocsAnchor = 'default-settings'; DocsHeading = 'Default settings' }
-        @{ Slug = 'bounded-review'; Issue = 3902; Label = 'Bounded CI review'
+        @{ Slug = 'bounded-review'; Issue = 3902; Impact = 5; Label = 'Bounded CI review'
            Sub = 'A turn ceiling and its own credential for the review'
            What = 'Pass --max-turns and --model to the Claude review workflow, and evaluate an API key over the OAuth token.'
            Why = 'The subscription token shares its quota with interactive use, and the review has failed on every PR several times.'
@@ -125,7 +127,7 @@ function Get-DocsCoverageItems {
            Section = 'Getting started'; SectionUrl = 'https://code.claude.com/docs/en/overview'
            Group = 'Code review and pull requests'; GroupUrl = 'https://code.claude.com/docs/en/code-review-local'
            Docs = 'https://code.claude.com/docs/en/github-actions'; DocsAnchor = 'pass-cli-arguments'; DocsHeading = 'Pass CLI arguments' }
-        @{ Slug = 'user-config'; Issue = 3903; Label = 'Plugin user configuration'
+        @{ Slug = 'user-config'; Issue = 3903; Impact = 5; Label = 'Plugin user configuration'
            Sub = 'Install-time settings, default-off teams, a main agent'
            What = 'Use userConfig, defaultEnabled and a plugin settings.json with agent in the manifests.'
            Why = 'Plain repo-config values would get a settings dialog, add-on teams could start off, and the orchestrator could run without a cache-path import.'
@@ -136,7 +138,7 @@ function Get-DocsCoverageItems {
            Section = 'Plugins'; SectionUrl = 'https://code.claude.com/docs/en/plugins/overview'
            Group = 'Reference'; GroupUrl = 'https://code.claude.com/docs/en/plugins/manifest-reference'
            Docs = 'https://code.claude.com/docs/en/plugins-reference'; DocsAnchor = 'user-configuration'; DocsHeading = 'User configuration' }
-        @{ Slug = 'native-worktrees'; Issue = 3904; Label = 'Native worktrees'
+        @{ Slug = 'native-worktrees'; Issue = 3904; Impact = 3; Label = 'Native worktrees'
            Sub = 'Claude Code worktrees against worktree-lane.ps1'
            What = 'Evaluate claude --worktree, .worktreeinclude, worktree.baseRef and the WorktreeCreate hook against worktree-lane.ps1.'
            Why = 'They looked like they might answer the two objections to dispatching a review into a worktree.'
@@ -230,6 +232,17 @@ function Get-DocsCoverageStatusStyle {
         '.dc-filter { display: block; max-width: 280px; margin-bottom: var(--spacing-3); }')) -join "`n")
 }
 
+function Format-DocsCoverageImpact {
+    <#
+        A row's Impact cell text (the owner, November 9, 2026): Tier-1 to Tier-8, the higher the more important; N/A
+        when the row's status is Not relevant, whatever impact it carries; '--' when a relevant row has none.
+    #>
+    param([AllowNull()]$Impact, [AllowEmptyString()][string]$Status)
+    if ($Status -ceq 'Not relevant') { return 'N/A' }
+    if ($null -eq $Impact -or [int]$Impact -lt 1 -or [int]$Impact -gt 8) { return '--' }
+    return 'Tier-' + [int]$Impact
+}
+
 function Get-DocsCoverageStatusSlug {
     # A status as the slug its dot class and its filter checkbox carry: 'Not relevant' is 'not-relevant', '--' is ''.
     param([AllowEmptyString()][string]$Status)
@@ -254,7 +267,8 @@ function Format-DocsCoverageStatusFilter {
 
 function Format-DocsCoveragePageHtml {
     <#
-        /docs-coverage: columns Section, Group, Item, Status, Issue (the owner, November 9, 2026). One row per item
+        /docs-coverage: columns Section, Group, Item, Status, Impact, Issue (the owner, November 9, 2026; Impact is
+        Format-DocsCoverageImpact's Tier-1 to Tier-8, or N/A for a Not relevant page). One row per item
         in the house .table, the item's name linking the docs heading it is about,
         with a "?" explaining it (its one line, the idea and what the docs check found), then its status, the section and group its docs page sits in (each linking the
         page it opens on), and its issue (the owner, November 9, 2026: a table over the cards the page first had). A
@@ -276,7 +290,8 @@ function Format-DocsCoveragePageHtml {
     [void]$sb.AppendLine('<div class="table-wrap"><table class="table" id="items">')
     # Section, Group, Item, then Status (the owner, November 9, 2026): read from the docs' section down to the topic,
     # and then how this repo stands to it.
-    $heads = (@(@('Section', ''), @('Group', 'col-start'), @('Item', 'col-start'), @('Status', 'col-start'), @('Issue', '')) |
+    # Impact after Status (the owner, November 9, 2026): Tier-1 to Tier-8, N/A for a page that is Not relevant.
+    $heads = (@(@('Section', ''), @('Group', 'col-start'), @('Item', 'col-start'), @('Status', 'col-start'), @('Impact', 'col-start'), @('Issue', '')) |
         ForEach-Object { Format-DocsCoverageSortHead -Label $_[0] -Class $_[1] }) -join ''
     [void]$sb.AppendLine('<thead><tr>' + $heads + '</tr></thead><tbody>')
     # A tooltip goes after the table, not in its cell: a .table cell does not wrap, and the text would run on one line.
@@ -298,6 +313,7 @@ function Format-DocsCoveragePageHtml {
             '<td class="col-start"><a href="' + (& $e $it.GroupUrl) + '">' + (& $e $it.Group) + '</a></td>' +
             '<td class="col-start"><a href="' + (& $e ($it.Docs + '#' + $it.DocsAnchor)) + '">' + (& $e $it.Label) + '</a>' + $aboutButton + '</td>' +
             '<td class="col-start">' + $statusHtml + '</td>' +
+            '<td class="col-start">' + (Format-DocsCoverageImpact -Impact $it.Impact -Status $status) + '</td>' +
             '<td><a href="' + $issueUrl + '">#' + [int]$it.Issue + '</a></td></tr>')
     }
     $docsBase = 'https://code.claude.com/docs/en/'
@@ -317,6 +333,7 @@ function Format-DocsCoveragePageHtml {
             '<td class="col-start">' + $groupHtml + '</td>' +
             '<td class="col-start"><a href="' + (& $e ($docsBase + $pg.Path)) + '">' + (& $e $pg.Title) + '</a><button class="info-button" type="button" aria-label="About ' + (& $e $pg.Title) + '" aria-describedby="page-' + $id + '" aria-expanded="false">?</button></td>' +
             '<td class="col-start">' + (Format-DocsCoverageStatusText $pg.Status) + '<button class="info-button" type="button" aria-label="Why ' + (& $e $pg.Title) + ' is ' + (& $e $pg.Status) + '" aria-describedby="status-' + $id + '" aria-expanded="false">?</button></td>' +
+            '<td class="col-start">' + (Format-DocsCoverageImpact -Impact $pg.Impact -Status $pg.Status) + '</td>' +
             '<td></td></tr>')
     }
     [void]$sb.AppendLine('</tbody></table></div>')
@@ -359,12 +376,14 @@ function Get-DocsCoverageSortScript {
     <#
         Sorts #items by the column whose head is clicked: ascending first, then flipping on each click, the other
         heads back to "none". A cell sorts by its text, as a number where both are one (the Issue column, its "#"
-        dropped), an empty cell (a docs page has no issue, and some no group) goes last in either direction, and ties
+        dropped, and the Impact column, its "Tier-" dropped), an empty cell (a docs page has no issue, and some no
+        group) goes last in either direction, and so do N/A and '--' (an Impact with no tier), and ties
         keep the order the page gave, so a sort never shuffles equal rows.
     #>
     return '<script>(function () { var t = document.getElementById("items"); if (!t) return; var tb = t.tBodies[0];' +
         ' Array.prototype.forEach.call(tb.rows, function (r, i) { r.dataset.i = i; });' +
-        ' function key(r, c) { var s = r.cells[c].textContent.replace(/\?/g, "").trim(), n = parseFloat(s.replace(/^#/, "")); return /^#?\d+(\.\d+)?$/.test(s) ? n : s.toLowerCase(); }' +
+        ' function key(r, c) { var s = r.cells[c].textContent.replace(/\?/g, "").trim(); if (s === "N/A" || s === "--") return "";' +
+        ' var n = parseFloat(s.replace(/^(#|Tier-)/, "")); return /^(#|Tier-)?\d+(\.\d+)?$/.test(s) ? n : s.toLowerCase(); }' +
         ' t.querySelectorAll("thead th").forEach(function (th, c) { var b = th.querySelector(".sort"); if (!b) return; b.addEventListener("click", function () {' +
         ' var dir = th.getAttribute("aria-sort") === "ascending" ? "descending" : "ascending";' +
         ' t.querySelectorAll("thead th").forEach(function (o) { o.setAttribute("aria-sort", "none"); }); th.setAttribute("aria-sort", dir);' +
