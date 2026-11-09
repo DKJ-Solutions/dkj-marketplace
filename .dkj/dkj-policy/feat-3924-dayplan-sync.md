@@ -39,19 +39,43 @@
 
 ### PLAN
 
+- [x] Reuse the Stopwatch's ref plumbing (#3349) rather than a second copy: `Receive-`/`Publish-StopwatchShared`
+  take the ref namespace, file name, subject and identity as parameters, defaulting to the Stopwatch's own.
+- [x] Settle the issue's four design points with its own suggestions: one private home repo
+  (`DKJ_DAYPLAN_REPO`, visibility checked through `gh`), the newest plan as the base plus every later addition
+  (a closed copy wins whole), a sync in every command, and `not shared` offline.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `lib/dayplan-sync-lib.ps1`: the home repo, the bare sync dir, the bounded payload, the merge, the sync.
+- [x] `pages/day-plan.ps1`: the merged read, a sync around every write, `-Sync`, and `-Status` off the network
+  with a background sync every five minutes.
+- [x] The Today page's footer names whose day file the plan is; the skill and the Admin README document it.
 
 ### TEST
 
+- [x] `dayplan-sync.tests.ps1` (new): the payload and its bounds, the merge rules, and two machines planning
+  and adding to one day through a bare remote of the test's own. `dayplan.tests.ps1` holds sharing off and
+  covers the footer. `stopwatch-sync.tests.ps1` passes unchanged.
+- [ ] The owner looks at the Today page's footer (`/dev/today`): it now says whether the plan is this
+  machine's day file or merged from every machine's.
+
 ### DEPLOY: feat/3924-dayplan-sync
 
-**Score:**
+The `day-plan` script syncs the day plan across machines through Stopwatch-style refs
+(`refs/dayplan/<machine id>`) in one private home repo. The Stopwatch's publish and fetch now take their
+namespace as parameters, so both features share one set of plumbing.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+The day plan now works on several machines at once: set `DKJ_DAYPLAN_REPO` to a private repo in your user
+settings, and a plan made on one machine is the plan on every other. `-Add` is held to the 6-8 h band against
+the whole day, and `-Close` sees the whole day. Sharing goes only to a repo GitHub reports as private, since
+plan titles can be personal. Without the setting nothing changes.
+
+**Score:** 3
 
 #### Pull Request
 
