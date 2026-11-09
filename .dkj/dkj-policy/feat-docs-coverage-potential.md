@@ -40,7 +40,8 @@
 ### PLAN
 
 The owner asked for every Not used row on the Docs coverage page to carry a "potential" score of 1 to 4 in
-its status "?" popup: how much value the page's feature could have for this repo. A visible result, so the
+its status "?" popup: how much value the page's feature could have for this repo. Asked next: the browser
+remembers the last status filter, so a reload does not fall back to all. A visible result, so the
 branch waits for the owner's look before it ships.
 
 ### CREATE
@@ -48,17 +49,19 @@ branch waits for the owner's look before it ships.
 - [x] `docs-coverage-catalog.ps1`: a `Potential` (1-4) on all 46 Not used rows, scored apart from the Advice, and the scale in the file's description
 - [x] `docs-coverage-lib.ps1`: the status popup shows "Potential: N of 4" before the Advice
 - [x] `dev-pages.tests.ps1`: every Not used row scores 1-4, only a Not used row carries one, and the popup renders it
+- [x] `docs-coverage-lib.ps1`: the status filter remembers its last choice in localStorage and restores it on load while the page still offers it
 
 ### TEST
 
-- [x] `dev-pages.tests.ps1`: 714 passed, 0 failed
+- [x] `dev-pages.tests.ps1`: 715 passed, 0 failed
 - [x] The running Admin product server shows the line in all 46 popups (32 at 1, 10 at 2, 3 at 3, 1 at 4)
 
 ### DEPLOY: feat/docs-coverage-potential
 
 Admin's Docs coverage page now scores every Not used docs page from 1 to 4 for how much value it could have
 in this repo, in the status "?" popup beside the advice. The score is estimated apart from the advice, so a
-Skip can still score 2 where its cost decided it rather than its value.
+Skip can still score 2 where its cost decided it rather than its value. The page's status filter now keeps
+its last choice across a reload.
 
 **Score:** 2
 
