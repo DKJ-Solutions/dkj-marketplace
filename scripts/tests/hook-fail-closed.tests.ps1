@@ -228,6 +228,39 @@ try {
             -Env @{ CLAUDE_PROJECT_DIR = $RepoRoot }
         Assert-Equal 0 $r.Code 'real guard, real payload it allows: exit 0'
     }
+
+    # THE PostToolUse PRE-FILTER (issue #3920). Not a guard and not fail-closed -- it draws a progress
+    # bar -- but it is the same kind of bash wrapper, so its one claim is held here with the same stub:
+    # a call that is not backgrounded never starts PowerShell (measured in #3898: ~150 ms per shell
+    # call, almost all of it interpreter start-up), and one that is gets its payload intact.
+    Write-Host ""
+    Write-Host "-- publish-background-run pre-filter --" -ForegroundColor Cyan
+    $pjson = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\hooks.json'
+    $post = @((Get-Content -Raw -LiteralPath $pjson | ConvertFrom-Json).hooks.PostToolUse.hooks |
+        Where-Object { $_.command -match 'publish-background-run' })
+    Assert-Equal 1 $post.Count 'exactly one PostToolUse publish-background-run entry'
+    $pcmd = [string]$post[0].command
+    Assert-True ($pcmd -match '-ExecutionPolicy Bypass') 'and it still passes -ExecutionPolicy Bypass'
+
+    $fg = Get-Json 'ls -la'
+    $r = Invoke-Stubbed -Command $pcmd -Payload $fg -StubRc 0
+    Assert-Equal 0 $r.Code 'a foreground call: exit 0'
+    Assert-True (-not (Test-Path -LiteralPath $stdinFile)) 'and PowerShell is never started for it'
+
+    $bgObj = [ordered]@{ tool_name = 'Bash'; tool_input = [ordered]@{ command = 'sleep 30'; run_in_background = $true } }
+    $bg = $bgObj | ConvertTo-Json -Compress -Depth 5
+    $r = Invoke-Stubbed -Command $pcmd -Payload $bg -StubRc 0
+    Assert-Equal 0 $r.Code 'a backgrounded call: exit 0'
+    Assert-True (Test-Path -LiteralPath $stdinFile) 'and PowerShell IS started for it'
+    if (Test-Path -LiteralPath $stdinFile) {
+        Assert-Equal $bg (([System.IO.File]::ReadAllText($stdinFile)).TrimEnd()) 'with the payload intact through the wrapper'
+    }
+
+    # The filter is coarse on purpose: the key alone lets a call through, and the hook's own precise
+    # test (true, any whitespace) decides. Imprecision may only cost a PowerShell start, never a bar.
+    $bgSpaced = '{"tool_name":"Bash","tool_input":{"command":"sleep 30","run_in_background" : true}}'
+    $r = Invoke-Stubbed -Command $pcmd -Payload $bgSpaced -StubRc 0
+    Assert-True (Test-Path -LiteralPath $stdinFile) 'a backgrounded call spelled with spaces around the colon still reaches PowerShell'
 } finally {
     Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue
 }

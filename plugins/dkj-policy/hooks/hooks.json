@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/hooks/publish-background-run.ps1\"",
+            "command": "p=$(cat); case \"$p\" in *'\"run_in_background\"'*) ;; *) exit 0;; esac; printf '%s' \"$p\" | powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/hooks/publish-background-run.ps1\"",
             "timeout": 30
           }
         ]

@@ -45,6 +45,11 @@
     own measured reason: this fires on EVERY Bash and PowerShell call, and the overwhelming majority are
     not backgrounded. Those pay the bare `powershell` launch and nothing else.
 
+    AND SINCE #3920 THEY DO NOT PAY THAT EITHER. The launch was ~150 ms of the hook's cost per shell
+    call (#3898's measurement), so hooks.json now puts a bash `case` in front of it: no
+    "run_in_background" key in the payload, no PowerShell. That filter is coarse on purpose (the key
+    alone passes, whatever its value or spacing), so the test below stays the precise one.
+
     GUARDED, SO IT IS INERT IN A CONSUMER. run-progress-lib.ps1 is source-repo only today (#2103): the
     lib, the statusline command and the settings key are all unmirrored, and #2103 still has an open
     judgement about what to do where a consumer already has a statusLine of its own. So this resolves
