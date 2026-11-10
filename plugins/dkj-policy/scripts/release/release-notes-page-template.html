@@ -277,15 +277,16 @@
   article th { background: var(--code-bg); font-weight: 620; }
 
   /* ---------- a section's points, as a grid ----------
-     THREE COLUMNS AT MOST (owner, October 27, 2026). A note section is a run of independent points -- a
+     TWO COLUMNS AT MOST (owner, November 10, 2026, #3955; three since October 27, 2026, which left a cell about
+     14rem of text -- five words a line -- inside the 52rem wrap). A note section is a run of independent points -- a
      paragraph led by a bold sentence, or a bullet -- so they are laid out as cells side by side rather
      than as one long column. The same max() trick as the index cards: a column is never narrower than
-     14rem and never narrower than a third of the row, so a wide page stops at three and a phone gets one.
+     20rem and never narrower than half the row, so a wide page stops at two and a phone gets one.
      gridNoteSections() below decides which sections qualify; this only says how a qualifying one looks. */
   .note-grid {
     --cell-gap: 1rem;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(max(14rem, (100% - 2 * var(--cell-gap)) / 3), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(max(20rem, (100% - var(--cell-gap)) / 2), 1fr));
     gap: var(--cell-gap);
     margin: .9rem 0 0;
   }
