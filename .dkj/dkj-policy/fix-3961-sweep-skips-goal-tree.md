@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Inbound #3961: `claim-issue -Candidates` read every issue of a plan-goal tree as free. Default chosen,
+following plan-goal's own page: the goal and its milestones are containers, only each goal's Now is a step,
+and an unplanned milestone is the owner's step. Now stays free; a repo whose Now is owner-only parks it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-GoalTreeSkips` in `claim-issue-lib.ps1`, and `Get-SweepCandidates -GoalSkips/-GoalLabel` (a `goal`
+  label alone reads as a container without a tree read)
+- [x] `claim-issue.ps1 -Candidates` reads the tree once through goals-lib's query, only when an open issue is a
+  goal; an unread tree is said and degrades to the label skip
+- [x] `issues-sweep` and `plan-goal` pages name each other and say Now is sweep work by default
+- [x] plugin mirrors copied
 
 ### TEST
 
+- [x] 13 new asserts in `claim-issue.tests.ps1`, run in isolation during the build
+- [x] read-only check against DKJ-Solutions/dkj-recipes's real tree: 31 tree issues, 30 skipped, Now #45 free
+
 ### DEPLOY: fix/3961-sweep-skips-goal-tree
 
-**Score:**
+`claim-issue -Candidates` now reads a plan-goal tree once and skips its goal, its milestones and every task
+but the goal's Now, each with the reason, so a sweep no longer has to park or hold out a whole tree by hand
+(#3961).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A sweep in a repo that plans with `plan-goal` gets one candidate per goal (its Now) instead of the whole
+tree. Measured on a consumer: 31 `free` issues became 1. Where Now is a step only the owner can take, park
+it with its `awaiting-*` label, as the plan-goal page now says.
+
+**Score:** 3
 
 #### Pull Request
 

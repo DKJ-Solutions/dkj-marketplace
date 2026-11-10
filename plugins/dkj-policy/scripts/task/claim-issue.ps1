@@ -148,7 +148,7 @@
     List which open issues a sweep may pick up -- free, this tag's already, held by another tag, or
     skipped with the reason, or 'stale-park' for an awaiting-pull issue whose blocker has landed (#3136),
     or for an awaiting-pull-external / awaiting-release-external issue whose upstream release is out (#3572).
-    Takes no issue number and WRITES NOTHING: choosing is a separate step from
+    A plan-goal tree reads as skipped except each goal's Now task (#3961). Takes no issue number and WRITES NOTHING: choosing is a separate step from
     claiming, because between the two a session may still find the issue is not this repo's work.
 
 .PARAMETER Marker
@@ -696,8 +696,54 @@ if ($Candidates) {
         $remoteBranches = @(Get-RemoteIssueBranches -Text (@($refList.Output) -join "`n") -Remote 'origin')
     }
 
+    # A PLAN-GOAL TREE IS NOT A BACKLOG (#3961): its goal and milestones are containers, and of its tasks
+    # only the goal's Now is a step. The tree is read once, with the query the plan-goal skill and the
+    # Goals page read it with, and only when an open issue carries the goal label -- a repo with no goal
+    # pays nothing. Best-effort like the branch read: an unread tree leaves the label's own skip for the
+    # goal, says so, and the milestones and tasks read as before.
+    $goalSkips = @{}
+    $goalLabel = 'goal'
+    $goalsLib = @((Join-Path $PSScriptRoot '..\..\apps\admin\lib\goals-lib.ps1'),
+        (Join-Path $repoRoot 'plugins\dkj-policy\apps\admin\lib\goals-lib.ps1')) |
+        Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+    if ($goalsLib) { . $goalsLib; $goalLabel = Get-GoalLabel }
+    $hasGoal = $false
+    try {
+        foreach ($i in (ConvertFrom-Json -InputObject (@($list.Output) -join "`n"))) {
+            if ($i -and @(Get-IssueLabelNames -Issue $i | Where-Object { $_ -ieq $goalLabel }).Count -gt 0) { $hasGoal = $true; break }
+        }
+    } catch { }
+    if ($hasGoal) {
+        $goalNote = ''
+        $goalRepo = "$repoName"
+        if (-not $goalRepo) {
+            $rv = Invoke-NativeCapture -FilePath 'gh' -Utf8 -DiscardStderr -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds `
+                -Arguments @('repo', 'view', '--json', 'nameWithOwner', '--jq', '.nameWithOwner')
+            if ($rv -and (Test-NativeExitMeasured -Capture $rv) -and $rv.ExitCode -eq 0) { $goalRepo = (@($rv.Output) -join '').Trim() }
+        }
+        if (-not $goalsLib) {
+            $goalNote = "goals-lib.ps1 was not found beside this script, so only the goal issues themselves read as containers."
+        } elseif ($goalRepo -notmatch '\A([^/\s]+)/([^/\s]+)\z') {
+            $goalNote = "the repo's owner/name is unknown, so only the goal issues themselves read as containers."
+        } else {
+            $gq = Invoke-NativeCapture -FilePath 'gh' -Utf8 -DiscardStderr -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds -Arguments @(
+                'api', 'graphql', '-f', ('query=' + (Get-GoalsGraphQuery)), '-f', ('owner=' + $Matches[1]), '-f', ('name=' + $Matches[2]), '-f', ('label=' + $goalLabel))
+            $goals = $null
+            if ($gq -and (Test-NativeExitMeasured -Capture $gq) -and $gq.ExitCode -eq 0 -and -not $gq.ShortRead) {
+                try { $goals = ConvertFrom-GoalsGraph -Data ((@($gq.Output) -join "`n") | ConvertFrom-Json) } catch { $goals = $null }
+            }
+            if ($null -eq $goals) {
+                $goalNote = "the plan-goal tree could not be read, so its milestones and tasks are judged as ordinary issues below."
+            } else {
+                $goalSkips = Get-GoalTreeSkips -Goals @($goals)
+            }
+        }
+        if ($goalNote) { Write-Host "  [goal scan] $goalNote" -ForegroundColor Yellow }
+    }
+
     $sweepList = @(Get-SweepCandidates -Json (@($list.Output) -join "`n") -Tag $claimTag.Tag `
-                                       -Marker $Marker -SkipLabel $SkipLabel -SkipIssue $skipIssueNumbers -Branches $remoteBranches)
+                                       -Marker $Marker -SkipLabel $SkipLabel -SkipIssue $skipIssueNumbers -Branches $remoteBranches `
+                                       -GoalSkips $goalSkips -GoalLabel $goalLabel)
     # A PARK WHOSE WAIT HAS CLEARED (#3136). Nothing lifts 'awaiting-pull' when its blocker merges, so an
     # issue parked on work that has since landed stayed 'skipped' by every sweep until a person noticed.
     # This reads what the parking comment names and asks the tracker whether each has landed: a number

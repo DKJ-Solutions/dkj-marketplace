@@ -1976,6 +1976,39 @@ $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Pa
 Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'the sweeps skip') 'run: so does an awaiting-* label the sweeps do not skip'
 $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-decision-dev 2>&1 | Out-String
 Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'takes an awaiting-\* label') 'run: and a park without a reason'
+
+Write-Host 'Get-GoalTreeSkips -- a plan-goal tree is not a backlog (#3961)' -ForegroundColor Cyan
+. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\goals-lib.ps1')
+function New-GoalNode { param([int]$N, [string]$State = 'OPEN', [object[]]$Subs = @()) [pscustomobject]@{ number = $N; title = "t$N"; url = ''; state = $State; assignees = @{ nodes = @() }; subIssues = @{ nodes = @($Subs) } } }
+# Goal 10: milestone 11 closed (task 12 left open), milestone 13 with tasks 14 (closed), 15 (Now), 16, and
+# milestone 17 with no tasks. Goal 20: its only milestone 21 has no tasks, so breaking it down is its Now.
+$graph = [pscustomobject]@{ data = [pscustomobject]@{ repository = [pscustomobject]@{ issues = [pscustomobject]@{ nodes = @(
+    (New-GoalNode 10 -Subs @(
+        (New-GoalNode 11 -State 'CLOSED' -Subs @((New-GoalNode 12))),
+        (New-GoalNode 13 -Subs @((New-GoalNode 14 -State 'CLOSED'), (New-GoalNode 15), (New-GoalNode 16))),
+        (New-GoalNode 17))),
+    (New-GoalNode 20 -Subs @((New-GoalNode 21))))
+} } } }
+$gs = Get-GoalTreeSkips -Goals @(ConvertFrom-GoalsGraph -Data $graph)
+Assert-True ($gs[10] -match 'container' -and $gs[20] -match 'container') 'a goal is a container'
+Assert-True ($gs[13] -match 'container: milestone of goal #10') 'a milestone with tasks is a container'
+Assert-True (-not $gs.ContainsKey(15)) "the goal's Now task is left out, so it stays free"
+Assert-True ($gs[16] -match "not yet Now: goal #10's Now is #15") 'a later task is not yet Now, and names the Now'
+Assert-True ($gs[12] -match 'closed milestone #11') "a closed milestone's leftover task is no longer a step"
+Assert-True (-not $gs.ContainsKey(11) -and -not $gs.ContainsKey(14)) 'closed issues are not named'
+Assert-True ($gs[17] -match "owner's step" -and $gs[21] -match "owner's step") 'an unplanned milestone is the owner''s step, even as Now'
+Assert-True ((Get-GoalTreeSkips -Goals @()).Count -eq 0) 'no goals, no skips'
+
+$tree = '[{"number":15,"title":"now","labels":[],"comments":[]},{"number":16,"title":"later","labels":[],"comments":[]},{"number":30,"title":"other goal","labels":[{"name":"Goal"}],"comments":[]},{"number":31,"title":"plain","labels":[],"comments":[]}]'
+$c = @(Get-SweepCandidates -Json $tree -Tag 'HOST-A/dave' -GoalSkips $gs)
+Assert-True (($c | Where-Object Number -eq 15).Verdict -eq 'free' -and ($c | Where-Object Number -eq 31).Verdict -eq 'free') 'sweep: Now and an ordinary issue stay free'
+Assert-True (($c | Where-Object Number -eq 16).Verdict -eq 'skipped' -and ($c | Where-Object Number -eq 16).Reason -match 'not yet Now') 'sweep: a not-yet-Now task is skipped with its reason'
+Assert-True (($c | Where-Object Number -eq 30).Verdict -eq 'skipped' -and ($c | Where-Object Number -eq 30).Reason -match "labelled 'goal'") 'sweep: the goal label alone reads as a container, case-insensitively, without a tree read'
+$c = @(Get-SweepCandidates -Json $tree -Tag 'HOST-A/dave')
+Assert-True (($c | Where-Object Number -eq 16).Verdict -eq 'free') 'sweep: without a map, tasks read as before'
+$body = [IO.File]::ReadAllText($Script)
+Assert-True ($body -match '-GoalSkips \$goalSkips' -and $body -match 'if \(\$hasGoal\)') 'the script reads the tree only when an open issue is a goal, and passes the map on'
+
 if ($script:fail -gt 0) {
     Write-Host "claim-issue.tests: $($script:pass) passed, $($script:fail) FAILED" -ForegroundColor Red
     exit 1
