@@ -61,7 +61,9 @@ The second half is what makes the first half reachable, which is why they are on
 result someone must judge is never a claude.ai Artifact, and for three days nothing carried this page,
 so a handover went into an issue comment without its QR codes. The builder takes the preview theme, the
 changed page(s) and the three text blocks, builds the cards from `Get-MarketHandoverPairs`, and writes
-the page to `/dev/handover/<name>` on this checkout's Admin. It prints that one link and no URL. Admin
+the page to `/dev/handover/<name>` on this checkout's Admin. It prints that one link and no URL, as a
+markdown link the session relays as it stands: printed bare, it reached the owner as text they could not
+click (#3954). Admin
 draws the QR codes on the machine (the mechanism notes below), and the page lives outside the checkout,
 so the parked branch stays clean. Building the same name again replaces the page behind the link the
 reviewer already holds.

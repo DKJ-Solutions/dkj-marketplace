@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Inbound #3954 (smartwatchbanden#1149, November 10, 2026): a preview handover was reported as a bare
+`http://localhost:4891/dev/handover/...` line, exactly as #3819's rule asks, and the owner could not click
+it; the same address as a markdown link worked. Verified at the source: `build-handover-page.ps1` printed
+`$state.Pages + $route` bare, and the constitution's visible-result rule said nothing about clickability.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Format-HandoverLink` in `apps/admin/lib/handover-page-lib.ps1`: `[handover: <name>](<url>)`, the
+  label a slug so it cannot break the brackets
+- [x] `build-handover-page.ps1` prints its one link through it, and says to relay the line as it stands
+- [x] the constitution's visible-result rule, `PREVIEW-portable.md` and `issues-sweep`'s close-out name the
+  markdown-link form
 
 ### TEST
 
+- [x] `handover-page.tests.ps1` asserts the reported line is the markdown link (40 passed, 0 failed)
+
 ### DEPLOY: feat/3954-clickable-handover-link
 
-**Score:**
+A visible result's report now gives its URL as a markdown link `[<label>](<url>)` on its own line, so the
+owner can click it in the terminal: the constitution says so, and `build-handover-page.ps1` prints its one
+link in that form ([#3954](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3954)). A bare URL had
+reached the owner as text they could not open.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Every handover a BWJ store session reports is now one click instead of a copy and paste.
+
+**Score:** 2
 
 #### Pull Request
 
