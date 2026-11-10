@@ -128,6 +128,45 @@ $gp = @(Get-GeneralPages | Where-Object { $_.Href -eq '/dev/goals' })
 Assert-True ($gp.Count -eq 1 -and $gp[0].Label -eq 'Goals' -and -not $gp[0].Group -and -not $gp[0].GitHub -and (Get-AdminIconSvg -Name $gp[0].Icon) -match '<svg') 'Goals is a general page of its own, with an icon'
 Assert-Equal 'Goals' (@(Get-AdminMenu)[2].Label) 'it is the second of Admin''s own items, right after Today (#3860)'
 
+Write-Host '-- plan-goal -Apply in a repo with no goal label (#3959)' -ForegroundColor Cyan
+# THE MEASURED FAILURE: under the script's 'Stop', Windows PowerShell 5.1 turned the label probe's 404 into a
+# terminating error despite 2>$null, so '-Apply' printed '[FAILED] gh: Not Found (HTTP 404)' and filed
+# nothing. Run under powershell.exe (5.1) on purpose: that is the host the defect lives in.
+$pgDir = Join-Path ([System.IO.Path]::GetTempPath()) ('dkj-plan-goal-test-' + [guid]::NewGuid().ToString('N'))
+$pgBin = Join-Path $pgDir 'bin'
+[void](New-Item -ItemType Directory -Path $pgBin -Force)
+$pgUtf8 = New-Object System.Text.UTF8Encoding($false)
+$pgLog = Join-Path $pgDir 'gh-calls.log'
+$pgImpl = @'
+Add-Content -LiteralPath $env:PG_GH_LOG -Value ($args -join ' ')
+if ($args -contains '--silent') { [Console]::Error.WriteLine('gh: Not Found (HTTP 404)'); exit 1 }
+if ($args -contains 'POST' -and ($args | Where-Object { $_ -match '/labels$' })) { Write-Output '{"name":"goal"}'; exit 0 }
+if ($args -contains 'POST' -and ($args | Where-Object { $_ -match '/sub_issues$' })) { Write-Output '{}'; exit 0 }
+if ($args -contains 'POST' -and ($args | Where-Object { $_ -match '/issues$' })) { Write-Output '{"number":101,"id":9001}'; exit 0 }
+exit 1
+'@
+[System.IO.File]::WriteAllText((Join-Path $pgBin 'gh-impl.ps1'), $pgImpl, $pgUtf8)
+[System.IO.File]::WriteAllText((Join-Path $pgBin 'gh.cmd'), "@echo off`r`npowershell -NoProfile -ExecutionPolicy Bypass -File `"%~dp0gh-impl.ps1`" %*`r`nexit /b %ERRORLEVEL%`r`n", $pgUtf8)
+$pgPlan = Join-Path $pgDir 'plan.json'
+[System.IO.File]::WriteAllText($pgPlan, '{"goal":{"title":"A goal","body":"why"},"milestones":[{"title":"A milestone","tasks":[{"title":"A task"}]}]}', $pgUtf8)
+$pgSavedPath = $env:PATH
+try {
+    $env:PATH = "$pgBin;$env:PATH"
+    $env:PG_GH_LOG = $pgLog
+    $pgOut = (& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\pages\plan-goal.ps1') -PlanFile $pgPlan -Apply -Repo 'o/n' 2>&1 | Out-String)
+    $pgExit = $LASTEXITCODE
+} finally {
+    $env:PATH = $pgSavedPath
+    Remove-Item Env:\PG_GH_LOG -ErrorAction SilentlyContinue
+}
+$pgCalls = if (Test-Path -LiteralPath $pgLog) { Get-Content -LiteralPath $pgLog } else { @() }
+Assert-Equal 0 $pgExit 'a 404 on the label probe does not end the run'
+Assert-True ($pgOut -notmatch '\[FAILED\]') 'and nothing is reported as failed'
+Assert-True ($pgOut -match "created the label") 'the missing label is created'
+Assert-True (@($pgCalls | Where-Object { $_ -match 'POST' -and $_ -match 'repos/o/n/labels( |$)' }).Count -eq 1) 'exactly one label create reaches gh'
+Assert-True ($pgOut -match '\[OK\] filed 3 issue') 'and the goal, milestone and task are filed after it'
+Remove-Item -LiteralPath $pgDir -Recurse -Force -ErrorAction SilentlyContinue
+
 Write-Host ''
 Write-Host "goals: $script:pass passed, $script:fail failed"
 if ($script:fail) { exit 1 }
