@@ -41,17 +41,36 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `check-script-contract` evaluates the blueprint's `Get-TriageLabels` record, calls the consumer's own
+  answer in its probe, and reports every canonical name missing from it as `[ERROR]` (option A, decided on #3960)
+- [x] the source's `$script:TriageLabels` is scrubbed around the probe, as the branch table's is (#3886)
+- [x] `CONTRIBUTING-portable.md` step 1 says what a consumer's own answer must carry
+- [x] filed #3966: step 1 of the same page still calls branch prefixes the consumer's own, against #3886
 
 ### TEST
 
+- [x] `script-contract.tests.ps1` case 15: the source's set, a stale pre-rename copy (the measured instance),
+  a recoloured superset, an absent function, a throwing one, a consumer reading a set it never assigns, a
+  missing blueprint and the source repo itself -- 484 pass, 0 fail
+
 ### DEPLOY: fix/3960-triage-labels-drift
 
-**Score:**
+`check-script-contract` now holds a consumer's own `Get-TriageLabels` to the canonical set. Every canonical
+label missing from that answer is an `[ERROR]` naming the missing labels and the repair. Extra labels and the
+consumer's own colours and descriptions stay silent, and a repo that does not define the function is not
+compared, because the built-in fallback is the set. Inbound #3960, measured in a consumer whose copy, taken at
+adoption, still named `needs-decision` and lacked `awaiting-decision-dev`: `adopt-triage-labels` and its
+session check prescribed the retired names, and a sweep there would have failed on its first park.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer whose `scripts/repo-config.ps1` carries an older copy of `Get-TriageLabels` now gets an `[ERROR]`
+from `check-script-contract`, at session start and in its gate, until the copy is replaced with the
+blueprint's text or deleted. Repos that never copied it, or kept it current, notice nothing.
+
+**Score:** 3
 
 #### Pull Request
 
