@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**11 / 17 minor entries** <!-- pending-tally -->
+**12 / 18 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3959-plan-goal-label-probe · 20261110-220451Z
+
+`plan-goal -Apply` creates the `goal` label again in a repo that has none, on Windows PowerShell 5.1. The
+label probe ran under the script's `Stop` preference, and 5.1 turns a native command's stderr into a
+terminating error even through `2>$null`, so the 404 that means "no label yet" ended the run with
+`[FAILED] gh: Not Found (HTTP 404)` and nothing filed. The probe now runs under a local `Continue` and
+reads the exit code. Inbound #3959, measured in `DKJ-Solutions/dkj-recipes`.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Planning the first goal in a repo with `plan-goal` works on the first try, without creating the `goal`
+label by hand first.
+
+**Score:** 3
+
+#### Pull Request
+
+plan-goal -Apply creates the goal label on PowerShell 5.1
+
+Plugins: dkj-policy
+
+[PR #3964](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3964)
+
+---
 
 ### DEPLOY: fix/3958-owner-look-answers-pr-box · 20261110-214811Z
 
