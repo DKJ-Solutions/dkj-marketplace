@@ -104,8 +104,16 @@ look"*, because what was seen goes on the issue (#2977).
 git checkout <branch>
 git pull --ff-only
 # resolve the plan's owner-look step (below), commit it, then:
-powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/release/ship-pr.ps1" -Resolves <n>
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/release/ship-pr.ps1" -Resolves <n> -OwnerLook "approved by <owner> on <date> through issues-sweep-reviews: <comment URL>"
 ```
+
+**`-OwnerLook` carries the approval into the PR body too** (#3958). `gh issue comment` in step 3 prints
+the comment's URL, and that goes in the answer. Where the repo's PR template has a box for the owner's
+look (a Preview section, say) and names it with `Get-PrOwnerLookPattern` in `scripts/repo-config.ps1`,
+`open-pr` ticks that box and writes the answer after it. Measured November 10, 2026: without it every
+ship left the box empty, and a consumer check requiring one ticked box went red on
+BWJ-Development/xoxowildhearts#499. A repo with no such seam is told so and ships as before. Keep the
+answer on one line and free of double quotes.
 
 **First resolve the step in the branch document that waits on the owner's look** (#3829). A parked
 visible result's plan ends on one, `- [ ] The owner looks at ...`, and `open-pr`'s step gate refuses

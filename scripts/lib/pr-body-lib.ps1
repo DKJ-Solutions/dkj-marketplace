@@ -952,6 +952,52 @@ function Complete-SuppliedPrBody {
     return (@($out) -join $nl)
 }
 
+function Set-PrOwnerLookAnswer {
+    <#
+    .SYNOPSIS
+        Ticks the PR body's owner-look box -- the first line matching -Pattern -- and writes -Answer after
+        it. Returns Body, Matched (a line matched) and Changed (the body differs).
+
+    .DESCRIPTION
+        THE OWNER'S APPROVAL NEVER REACHED THE PR (#3958). issues-sweep-reviews and issues-sweep step 6
+        record the owner's look on the issue and in the branch document, and then ship-pr opened the PR
+        from the template with every box empty. A consumer whose template carries a Preview section, and a
+        check that requires one box in it ticked, got a red check on every approved ship: measured on
+        BWJ-Development/xoxowildhearts#499. Nothing between the open and the CI wait could tick it.
+
+        WHICH LINE IS THE REPO'S ANSWER, NOT THIS FUNCTION'S. The template is the consumer's file, so the
+        line is named by its own seam (Get-PrOwnerLookPattern in scripts/repo-config.ps1), and only the
+        first match is touched: a second box answering the same question would contradict the first.
+
+        IDEMPOTENT. A line already ticked that already carries the answer is left alone, so a resumed PR is
+        not edited again; a ticked line without it gets the answer appended. The answer is one line --
+        a line break inside it would start a new list item -- and the body's own newline is kept.
+    #>
+    param(
+        [AllowEmptyString()][string]$Body,
+        [AllowEmptyString()][string]$Pattern,
+        [AllowEmptyString()][string]$Answer
+    )
+    $result = [pscustomobject]@{ Body = $Body; Matched = $false; Changed = $false }
+    if (-not $Body -or -not $Pattern -or -not $Answer -or -not $Answer.Trim()) { return $result }
+    $oneLine = (($Answer -split "\r?\n") | ForEach-Object { $_.Trim() } | Where-Object { $_ }) -join ' '
+    $nl = Get-DocumentNewline -Content $Body
+    $src = @($Body -split "\r?\n")
+    for ($i = 0; $i -lt $src.Count; $i++) {
+        if ($src[$i] -notmatch $Pattern) { continue }
+        $result.Matched = $true
+        $line = $src[$i] -replace '^(\s*[-*+]\s+)\[ \]', '$1[x]'
+        if (-not $line.Contains($oneLine)) { $line = $line.TrimEnd() + ' ' + $oneLine }
+        if ($line -ne $src[$i]) {
+            $src[$i] = $line
+            $result.Body = ($src -join $nl)
+            $result.Changed = $true
+        }
+        break
+    }
+    return $result
+}
+
 function Get-PrDescriptionPlaceholderDefaults {
     <#
     .SYNOPSIS

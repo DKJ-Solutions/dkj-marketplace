@@ -318,6 +318,11 @@
     from the current changelog entry. Opt-in, so a body edited on github.com is never overwritten unasked.
     No effect when the PR is being created in this run.
 
+.PARAMETER OwnerLook
+    Passed through to open-pr.ps1: the owner's recorded look at a visible result, written as the answer
+    to the template's owner-look box that Get-PrOwnerLookPattern names (#3958). issues-sweep-reviews and
+    issues-sweep step 6 pass it. One line, no double quote.
+
 .PARAMETER MaxForwardLaps
     How many times step 3b may bring this branch up to date with the trunk and wait for a fresh
     certificate before it refuses (issue #2087). Default 2.
@@ -399,6 +404,8 @@ param(
     [string]$Resolves = '',
     [switch]$NoResolves,
     [switch]$RefreshBody,
+    # The owner's recorded look, forwarded to open-pr. See .PARAMETER OwnerLook.
+    [string]$OwnerLook = '',
     # Lanes for open-pr's test gate; 0 forwards nothing. See .PARAMETER MaxParallel.
     [int]$MaxParallel = 0,
     # Run open-pr's suites instead of waiting for an in-flight CI certificate. See .PARAMETER NoCiWait.
@@ -1020,6 +1027,8 @@ if ($NoCiWait)    { $openArgs += '-NoCiWait' }
 if ($AllSuites)   { $openArgs += '-AllSuites' }
 if ($Force)       { $openArgs += '-Force' }
 if ($RefreshBody) { $openArgs += '-RefreshBody' }
+# Forwarded only when given, as -BypassNote is (#3958).
+if ($OwnerLook)   { $openArgs += @('-OwnerLook', $OwnerLook) }
 # Handed over as the raw string. open-pr.ps1 parses it itself precisely BECAUSE this hop goes through
 # `powershell -File`, where an [int[]] parameter would silently collapse '331,332' into 331332.
 if ($Resolves) { $openArgs += @('-Resolves', $Resolves) }

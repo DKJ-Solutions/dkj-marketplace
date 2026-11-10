@@ -39,19 +39,44 @@
 
 ### PLAN
 
+Inbound #3958: `issues-sweep-reviews` records the owner's approval on the issue and in the branch
+document, but nothing writes it into the PR, so a consumer template's Preview box stays empty and the
+consumer's own check, which requires one box ticked, goes red. Verified: the Preview section and its
+`preview-answered` job are the consumer's own (4.17.0 declined to ship them), so the source's part is a
+way to carry the approval into the PR body. `Get-PrApprovalPattern` cannot do it: it ticks on every PR.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Set-PrOwnerLookAnswer` in `pr-body-lib.ps1`: tick the first line a pattern matches, append the answer, idempotent
+- [x] `open-pr -OwnerLook` on both paths (fresh PR and already open), the box named by the optional seam `Get-PrOwnerLookPattern`; `ship-pr` forwards it
+- [x] `issues-sweep-reviews` step 4 and `issues-sweep` step 6 pass the approval; the optional-seam lists name the new seam
+- [x] Mirrors rebuilt with `build-shared-scripts.ps1`
 
 ### TEST
 
+- [x] `pr-body.tests.ps1`: tick + answer, other boxes untouched, idempotence, multi-line folding, no match, empty input, CRLF
+- [x] `script-contract.tests.ps1`: the new seam stays outside the contract like the other optional `Get-Pr*`
+
 ### DEPLOY: fix/3958-owner-look-answers-pr-box
 
-**Score:**
+`open-pr` and `ship-pr` take `-OwnerLook "<answer>"`, the owner's recorded look at a visible result. A
+repo whose PR template has a box for that look names it with the optional seam `Get-PrOwnerLookPattern`
+in `scripts/repo-config.ps1`, and `open-pr` ticks that box and writes the answer after it, on a fresh PR
+and on one already open. `issues-sweep-reviews` (step 4) and `issues-sweep` (step 6) now pass the
+approval they recorded, with the link to the approval comment. Inbound #3958, measured on
+BWJ-Development/xoxowildhearts#499: the approval reached the issue and the branch document but never the
+PR, so the consumer's Preview check, which requires one ticked box, went red on every approved ship.
+Without the seam nothing changes except a one-line note that the box was not written.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer whose template carries a Preview box can now ship an approved visible result without editing
+the PR body by hand: define `Get-PrOwnerLookPattern` (a regex for the unticked box line) once, and every
+`issues-sweep-reviews` ship answers it. Repos without such a box notice nothing.
+
+**Score:** 3
 
 #### Pull Request
 

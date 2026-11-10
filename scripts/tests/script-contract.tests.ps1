@@ -370,7 +370,7 @@ try {
     $c = New-FixtureConsumer
     $r = Invoke-Ps @('-ConsumerPathOverride', $c)
     Assert-Equal 0 $r.Code 'optional Get-Pr*: exit-code 0'
-    foreach ($optFn in @('Get-PrDescriptionPlaceholder', 'Get-PrApprovalPattern', 'Get-PrAssignee', 'Get-PrMilestone')) {
+    foreach ($optFn in @('Get-PrDescriptionPlaceholder', 'Get-PrApprovalPattern', 'Get-PrAssignee', 'Get-PrMilestone', 'Get-PrOwnerLookPattern')) {
         Assert-NotMatch $optFn $r.Out "optional Get-Pr*: '$optFn' never mentioned (not in the contract)"
     }
     $okCount6 = @([regex]::Matches($r.Out, '\[OK\]')).Count
