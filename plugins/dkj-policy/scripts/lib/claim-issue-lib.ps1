@@ -3095,3 +3095,36 @@ function Format-ParkComment {
     if ($r -notmatch '[.!?]\z') { $r += '.' }
     return 'Parked by a sweep: waiting on ' + $r
 }
+
+function Test-ParkReasonNamesBlocker {
+    <#
+        .SYNOPSIS
+            Whether a -Park reason names what the three readable waits need (issue #3962): `#<n>` or a branch
+            for awaiting-pull, `owner/repo#n` for awaiting-pull-external, `owner/repo` for
+            awaiting-release-external. Every other label is a wait on a person or an event, and passes.
+
+        .DESCRIPTION
+            A PARK THAT CAN NEVER CLEAR. -Candidates reads stale-park from the parking comment's "waiting
+            on" clause alone (#3136, #3572), so a park whose clause names no blocker stays skipped for good.
+            Measured November 10, 2026 in dkj-recipes: seven issues parked as awaiting-pull with "waiting on
+            . Role-play tasks run in order ...", built from a variable that came through empty, and a later
+            sweep reparked all seven by hand.
+
+            THE READ SIDE'S OWN PARSER, on the comment this run would post. The reason goes through
+            Format-ParkComment and then Get-ParkingWaitReferences, so the write cannot accept a clause the
+            read would not find, and the two cannot drift apart.
+
+        .OUTPUTS
+            $true when the label needs no blocker or the clause names one; $false otherwise.
+    #>
+    param([AllowNull()][AllowEmptyString()][string]$Label, [AllowNull()][AllowEmptyString()][string]$Reason)
+    if ([string]$Label -notin @('awaiting-pull', 'awaiting-pull-external', 'awaiting-release-external')) { return $true }
+    if (-not ([string]$Reason).Trim()) { return $false }
+    $refs = Get-ParkingWaitReferences -Comments @([pscustomobject]@{ body = (Format-ParkComment -Reason $Reason) })
+    switch ([string]$Label) {
+        'awaiting-pull'             { return (@($refs.Issues).Count + @($refs.Branches).Count) -gt 0 }
+        'awaiting-pull-external'    { return @($refs.External).Count -gt 0 }
+        'awaiting-release-external' { return @($refs.Repos).Count -gt 0 }
+    }
+    return $true
+}

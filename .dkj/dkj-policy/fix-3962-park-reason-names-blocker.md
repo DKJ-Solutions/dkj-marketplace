@@ -39,19 +39,40 @@
 
 ### PLAN
 
+Issue #3962: `claim-issue -Park` accepted an `awaiting-pull` reason whose waiting clause names no blocker,
+so the park could never read as `stale-park`. Refuse it at the write, with the read side's own parser.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Test-ParkReasonNamesBlocker` in `claim-issue-lib.ps1`: formats the comment with `Format-ParkComment`
+  and reads it back with `Get-ParkingWaitReferences`, per label
+- [x] `claim-issue.ps1` refuses before anything is read; `.PARAMETER Reason` names the three forms
+- [x] plugin mirrors synced byte-identically
 
 ### TEST
 
+- [x] `claim-issue.tests.ps1`: unit cases for all three labels, the measured dkj-recipes reason, a number
+  after the clause end, and one run case for the refusal
+
 ### DEPLOY: fix/3962-park-reason-names-blocker
 
-**Score:**
+`claim-issue -Tag -Park` now refuses, with exit 1 and nothing written, a reason whose "waiting on" clause
+names no blocker where the label needs one: `#<n>` or a branch for `awaiting-pull`, `owner/repo#n` for
+`awaiting-pull-external`, `owner/repo` for `awaiting-release-external`. The check runs the comment it
+would post through the same parser `-Candidates` reads `stale-park` with, so the write side and the read
+side cannot drift. Inbound #3962, measured November 10, 2026 in DKJ-Solutions/dkj-recipes: seven issues
+were parked `awaiting-pull` with `waiting on . Role-play tasks run in order ...`, built from an empty
+variable, and could never clear by themselves until a later sweep reparked them by hand.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A sweep in a consumer that parks on another issue's pull request gets a park that clears by itself, or a
+refusal naming the form to use, instead of an issue every later sweep skips for good. It prevents a
+failure already measured once, and nobody notices unless a reason comes through without its blocker.
+
+**Score:** 2
 
 #### Pull Request
 

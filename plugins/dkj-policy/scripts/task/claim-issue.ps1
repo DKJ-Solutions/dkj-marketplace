@@ -130,7 +130,9 @@
 
 .PARAMETER Reason
     With -Park: what the issue waits on, the "<what>" of the parking comment. For awaiting-pull it names
-    the blocker as #<n> or a branch first, since that clause is what -Candidates' stale-park reading parses.
+    the blocker as #<n> or a branch first, since that clause is what -Candidates' stale-park reading parses;
+    awaiting-pull-external names owner/repo#<n>, and awaiting-release-external owner/repo. A reason whose
+    clause names none of those is refused before anything is read (#3962), by the same parser.
 
 .PARAMETER ReleaseAll
     With -Tag, and no issue number: release EVERY open issue this tag holds -- its own marker comments
@@ -380,6 +382,19 @@ if (-not $Candidates -and -not $ReleaseAll) {
         if (-not (Test-ParkLabel -Label $Park -Allowed $SkipLabel) -or -not $Reason.Trim()) {
             Write-Host '[ERROR] -Park takes an awaiting-* label the sweeps skip, and -Reason the text of what it waits on -- nothing was read or written.' -ForegroundColor Red
             Write-Host '        claim-issue.ps1 <n> -Tag -Park awaiting-decision-dev -Reason "the owner''s choice of X"' -ForegroundColor Red
+            exit 1
+        }
+        # A READABLE WAIT NAMES ITS BLOCKER (#3962): the clause -Candidates reads stale-park from, read here
+        # by the same parser, or the park never clears by itself.
+        if (-not (Test-ParkReasonNamesBlocker -Label $Park -Reason $Reason)) {
+            $need = switch ($Park) {
+                'awaiting-pull'          { '#<n> or a branch' }
+                'awaiting-pull-external' { 'owner/repo#<n>' }
+                default                  { 'owner/repo' }
+            }
+            Write-Host "[ERROR] -Park $Park needs -Reason to name its blocker as $need at the start of the clause -- nothing was read or written." -ForegroundColor Red
+            Write-Host "        That clause is what -Candidates reads to report stale-park; without it the park never clears (#3962)." -ForegroundColor Red
+            Write-Host "        claim-issue.ps1 <n> -Tag -Park $Park -Reason `"$need -- why`"" -ForegroundColor Red
             exit 1
         }
     }
