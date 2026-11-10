@@ -320,6 +320,16 @@
     exactly this. In the last case nothing is sent to GitHub at all, so a rerun produces no PR activity.
     Ignored on a fresh PR, where the body is generated from the template anyway.
 
+.PARAMETER OwnerLook
+    The owner's recorded look at a visible result, written into the PR body as the answer to the
+    template's owner-look box (#3958): issues-sweep-reviews and issues-sweep step 6 pass the approval they
+    recorded on the issue, with a link to that comment. The box is the line Get-PrOwnerLookPattern in
+    scripts/repo-config.ps1 names -- optional, because the template is the repo's own file. That line is
+    ticked and the answer appended, on a fresh PR and on one already open, both paths and a supplied -Body
+    alike. Without the seam the answer is not written and the run says so; with the seam and no matching
+    line it warns. One line, and no double quote in it: this value crosses `powershell -File` from
+    ship-pr, which does not escape one (#2405).
+
 .PARAMETER GatesOnly
     Run this repo's lint and test gates against the working tree and stop there -- no branch check, no
     push, no PR. Exit 0 when both are green, 1 when either is not. It writes nothing to the working
@@ -505,6 +515,8 @@ param(
     [switch]$NoResolves,
     [switch]$Force,
     [switch]$RefreshBody,
+    # The owner's recorded look, answering the template's owner-look box. See .PARAMETER OwnerLook.
+    [string]$OwnerLook = '',
     # Why a gate was skipped, recorded in the PR body's 'Gate bypass' section. See .PARAMETER BypassNote.
     [string]$BypassNote = '',
     [switch]$GatesOnly,
@@ -700,6 +712,7 @@ if ($GatesOnly) {
     if ($NoResolves)  { $ignored += '-NoResolves' }
     if ($Force)       { $ignored += '-Force' }
     if ($RefreshBody) { $ignored += '-RefreshBody' }
+    if ($OwnerLook)   { $ignored += '-OwnerLook' }
     if ($ignored.Count -gt 0) {
         Write-Warning ("-GatesOnly runs the gates and nothing else, so these were ignored: " + ($ignored -join ', ') + ".")
     }
@@ -954,6 +967,18 @@ $descPlaceholders = if (Test-FunctionDefined 'Get-PrDescriptionPlaceholder') {
     # the reference template the plugin now ships could not be held against the list that has to
     # recognise it, and that gap IS the defect #573 reported.
     @(Get-PrDescriptionPlaceholderDefaults)
+}
+
+# THE OWNER-LOOK BOX (#3958), resolved once like the placeholders above, for the same reason: both body
+# paths below read it. No seam, no box -- the template is the repo's file, and a built-in guess at its
+# wording would tick the wrong line in every repo but the one it was copied from. Said before the gates,
+# so a caller learns it while the answer can still be written by hand.
+$ownerLookPattern = ''
+if ($OwnerLook) {
+    if (Test-FunctionDefined 'Get-PrOwnerLookPattern') { $ownerLookPattern = [string](Get-PrOwnerLookPattern) }
+    if (-not $ownerLookPattern) {
+        Write-Host "-OwnerLook: this repo names no owner-look box (Get-PrOwnerLookPattern in scripts/repo-config.ps1), so the approval is not written into the PR body. It stands on the issue and in the branch document." -ForegroundColor DarkGray
+    }
 }
 
 # --- A supplied -Body must carry the DEPLOY section the lock will read (#2361) ----------------------
@@ -2729,6 +2754,15 @@ if ($existingPr) {
         }
     }
 
+    # THE OWNER'S LOOK (#3958), after the refresh like everything below: a refresh rewrites only the
+    # description, but a body that leads with it is rewritten to its first form heading, and the box sits
+    # in the form. Idempotent, so a PR that already carries the answer is not edited again.
+    if ($ownerLookPattern) {
+        $look = Set-PrOwnerLookAnswer -Body $newBody -Pattern $ownerLookPattern -Answer $OwnerLook
+        if ($look.Changed) { $newBody = $look.Body; $edits += "the owner-look box" }
+        elseif (-not $look.Matched) { Write-Warning "-OwnerLook: no line of PR #$($existingPr.number)'s body matches Get-PrOwnerLookPattern ('$ownerLookPattern'), so the approval was not written there. Tick the box by hand before the merge if this repo's checks read it." }
+    }
+
     # THE GATE-BYPASS SECTION, AFTER THE REFRESH for #919's reason (#2361): the lines the body carried
     # before this run plus this run's own. Add-GateBypassLines is idempotent per line, so a body whose
     # section survived the refresh is a no-op and one whose section was swallowed gets it back.
@@ -2955,6 +2989,18 @@ if (-not $Body) {
                 "  Fix: make the template carry one of those lines verbatim, or define Get-PrDescriptionPlaceholder in scripts/repo-config.ps1 to name your own."
             )
         }
+    }
+}
+
+# The owner's look (#3958), on the create path, whether the body came from the template or from -Body.
+# The already-open path answers it in its own edit above.
+if ($ownerLookPattern -and $Body) {
+    $look = Set-PrOwnerLookAnswer -Body $Body -Pattern $ownerLookPattern -Answer $OwnerLook
+    if ($look.Changed) {
+        $Body = $look.Body
+        Write-Host "owner look: the PR body's owner-look box is ticked and answered." -ForegroundColor DarkGray
+    } elseif (-not $look.Matched) {
+        Write-Warning "-OwnerLook: no line of the PR body matches Get-PrOwnerLookPattern ('$ownerLookPattern'), so the approval was not written there. Tick the box by hand before the merge if this repo's checks read it."
     }
 }
 

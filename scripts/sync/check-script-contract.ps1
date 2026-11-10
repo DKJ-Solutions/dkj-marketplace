@@ -53,7 +53,7 @@
 
     Deliberately OUT of the contract entirely: the optional repo-config functions that open-pr.ps1
     guards via Get-Command (Get-PrDescriptionPlaceholder, Get-PrApprovalPattern, Get-PrAssignee,
-    Get-PrMilestone) -- those are per-repo taste with no wrong-by-default failure mode, so they are
+    Get-PrMilestone, Get-PrOwnerLookPattern) -- those are per-repo taste with no wrong-by-default failure mode, so they are
     never declared here.
     cut-release.ps1 USED TO BE OUT OF SCOPE HERE, described as "genuinely workshop-only... not mirrored
     and not part of the consumer contract" because lockstep across a marketplace's plugins is meaningless

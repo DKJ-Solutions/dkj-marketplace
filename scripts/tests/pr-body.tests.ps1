@@ -981,6 +981,31 @@ Assert-True ($sbNoteLock.Applicable -and -not $sbNoteLock.Locked) 'supplied body
 $sbCrlf = Complete-SuppliedPrBody -Body ($sbBody -replace "`n", "`r`n") -Description $sbDesc -Placeholders @($sbPlaceholder)
 Assert-Equal 0 ([regex]::Matches($sbCrlf, "(?<!`r)`n").Count) 'supplied body: a CRLF body stays CRLF, the description included'
 
+# --- Set-PrOwnerLookAnswer: the owner's approval answers the template's owner-look box (#3958) --------
+# THE MEASURED FAILURE: xoxowildhearts#499 shipped through issues-sweep-reviews with all three Preview boxes
+# empty, and the consumer's check, which requires exactly one ticked, went red. The shape below is that
+# template's section, trimmed.
+$olBody = "## Preview`n`n- [ ] Preview theme pushed, opened and approved -- handover page or issue comment:`n- [ ] n/a -- this branch touches no theme file`n`n## Gates`n`n- [ ] theme check passes"
+$olPattern = '^- \[ \] Preview theme pushed'
+$olAnswer = 'approved by owner on 2026-11-10 through issues-sweep-reviews: https://example.invalid/issues/1#issuecomment-2'
+$ol = Set-PrOwnerLookAnswer -Body $olBody -Pattern $olPattern -Answer $olAnswer
+Assert-True ($ol.Matched -and $ol.Changed) 'owner look: the matching box is found and the body changes'
+Assert-True ($ol.Body -match ('(?m)^- \[x\] Preview theme pushed.*comment: ' + [regex]::Escape($olAnswer) + '$')) 'owner look: the box is ticked and the answer follows its colon on the same line'
+Assert-True ($ol.Body -match '(?m)^- \[ \] n/a -- this branch touches no theme file$') 'owner look: the other boxes stay unticked -- the consumer check wants exactly one'
+Assert-True ($ol.Body -match '(?m)^- \[ \] theme check passes$') 'owner look: a box in another section is not touched'
+$ol2 = Set-PrOwnerLookAnswer -Body $ol.Body -Pattern '^- \[[ x]\] Preview theme pushed' -Answer $olAnswer
+Assert-True ($ol2.Matched -and -not $ol2.Changed) 'owner look: idempotent -- a ticked box already carrying the answer is left alone'
+$olMulti = Set-PrOwnerLookAnswer -Body $olBody -Pattern $olPattern -Answer "line one`r`n  line two"
+Assert-True ($olMulti.Body -match '(?m)comment: line one line two$') 'owner look: a multi-line answer is folded onto the one line'
+$olMiss = Set-PrOwnerLookAnswer -Body $olBody -Pattern '^- \[ \] Nowhere' -Answer $olAnswer
+Assert-True (-not $olMiss.Matched -and -not $olMiss.Changed -and $olMiss.Body -eq $olBody) 'owner look: no matching line returns the body unchanged, reported as unmatched'
+foreach ($olEmpty in @(@{ P = ''; A = $olAnswer }, @{ P = $olPattern; A = '' }, @{ P = $olPattern; A = '   ' })) {
+    $olE = Set-PrOwnerLookAnswer -Body $olBody -Pattern $olEmpty.P -Answer $olEmpty.A
+    Assert-True (-not $olE.Changed -and $olE.Body -eq $olBody) 'owner look: an empty pattern or answer changes nothing'
+}
+$olCrlf = Set-PrOwnerLookAnswer -Body ($olBody -replace "`n", "`r`n") -Pattern $olPattern -Answer $olAnswer
+Assert-Equal 0 ([regex]::Matches($olCrlf.Body, "(?<!`r)`n").Count) 'owner look: a CRLF body stays CRLF'
+
 Write-Host ""
 if ($script:fail -gt 0) {
     Write-Host "FAILS: $($script:fail) failed, $($script:pass) passed." -ForegroundColor Red
