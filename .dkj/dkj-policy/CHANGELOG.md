@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**6 / 12 minor entries** <!-- pending-tally -->
+**7 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3950-trunk-preview-promote-then-cut · 20261110-073511Z
+
+In a Shopify store whose live theme deploys from a branch of its own (`Get-ShopifyLiveDeployBranch`,
+promote-then-cut), `push-preview` now pushes the trunk to a preview theme instead of refusing it
+([#3950](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3950)). There the trunk runs ahead of live
+between promotions, so its preview is the release candidate the owner judges before promoting. The theme
+takes the reserved `<prefix><trunk>` name, which the preview sweep recognises and spares as long as the
+trunk exists. Under push-then-cut the trunk stays refused, and the refusal now says why.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A promote-then-cut store maintainer previews the release candidate with one command, where they used to
+cut a throwaway branch at the trunk's commit only to get past the guard.
+
+**Score:** 3
+
+#### Pull Request
+
+push-preview: allow a trunk preview where live deploys from its own branch
+
+Plugins: bwj-development, dkj-subagents-shopify
+
+[PR #3951](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3951)
+
+---
 
 ### DEPLOY: feat/docs-coverage-drop-tooltips · 20261109-170127Z
 
