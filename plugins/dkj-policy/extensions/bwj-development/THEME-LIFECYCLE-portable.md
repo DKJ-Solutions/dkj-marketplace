@@ -92,8 +92,9 @@ passed. What the sync then rejects anyway is read on the day, from the rule-suit
 
 **#1965 also asked for a preview of the trunk at the cut, and it is deliberately not built.** Under
 push-then-cut the trunk is already live at that moment, so the preview would be byte-identical to the
-live storefront -- a theme slot spent on a review target with nothing to review. It is worth building
-only under the other order, and that is recorded on the issue rather than half-shipped here.
+live storefront -- a theme slot spent on a review target with nothing to review. Under the other order
+(promote-then-cut, `Get-ShopifyLiveDeployBranch` answered) the trunk runs ahead of live, and since #3950
+`push-preview` allows a trunk preview there -- see that skill's page.
 
 ## Deleting a theme: the standing approval, and its bounds
 

@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Inbound #3950: `push-preview` refused the trunk on #1965's premise (push-then-cut: the trunk is live at the
+cut). In a promote-then-cut store the trunk runs ahead of live, so the refusal lifts where
+`Get-ShopifyLiveDeployBranch` names a branch other than the trunk. The trunk preview keeps the reserved
+`<prefix><trunk>` name; the sweep already spares it, because the trunk is always a living branch.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-TrunkPreviewRefusal` in `preview-theme.ps1` (source + mirror): the trunk verdict, pure
+- [x] `push-preview.ps1` (source + mirror) reads `Get-ShopifyLiveDeployBranch` and asks the lib
+- [x] push-preview skill page: the trunk section and the seam row; THEME-LIFECYCLE paragraph updated
 
 ### TEST
 
+- [x] `push-preview.tests.ps1`: the verdict's cases, plus the script reading the seam (155 asserts green)
+
 ### DEPLOY: feat/3950-trunk-preview-promote-then-cut
 
-**Score:**
+In a Shopify store whose live theme deploys from a branch of its own (`Get-ShopifyLiveDeployBranch`,
+promote-then-cut), `push-preview` now pushes the trunk to a preview theme instead of refusing it
+([#3950](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3950)). There the trunk runs ahead of live
+between promotions, so its preview is the release candidate the owner judges before promoting. The theme
+takes the reserved `<prefix><trunk>` name, which the preview sweep recognises and spares as long as the
+trunk exists. Under push-then-cut the trunk stays refused, and the refusal now says why.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A promote-then-cut store maintainer previews the release candidate with one command, where they used to
+cut a throwaway branch at the trunk's commit only to get past the guard.
+
+**Score:** 3
 
 #### Pull Request
 
+push-preview: allow a trunk preview where live deploys from its own branch
