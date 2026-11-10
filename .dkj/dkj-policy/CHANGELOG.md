@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**8 / 14 minor entries** <!-- pending-tally -->
+**9 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3954-clickable-handover-link · 20261110-104810Z
+
+A visible result's report now gives its URL as a markdown link `[<label>](<url>)` on its own line, so the
+owner can click it in the terminal: the constitution says so, and `build-handover-page.ps1` prints its one
+link in that form ([#3954](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3954)). A bare URL had
+reached the owner as text they could not open.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every handover a BWJ store session reports is now one click instead of a copy and paste.
+
+**Score:** 2
+
+#### Pull Request
+
+The handover link is reported as a clickable markdown link
+
+Plugins: bwj-development, dkj-policy
+
+[PR #3956](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3956)
+
+---
 
 ### DEPLOY: feat/3952-theme-prefix-seam · 20261110-081653Z
 
