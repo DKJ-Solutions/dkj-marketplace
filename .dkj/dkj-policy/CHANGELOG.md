@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**14 / 20 minor entries** <!-- pending-tally -->
+**14 / 21 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/3966-step1-prefixes-shared · 20261110-225514Z
+
+Step 1 of `CONTRIBUTING-portable.md` no longer says a repo's branch prefixes are its own and unread by the
+plugin. Since #3886 they are one table every DKJ repo shares, held by `check-script-contract`, as step 2
+already said; the sentence now says so, and keeps the point that no gate compares issue labels with those
+prefixes. Inbound #3966.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A: a sentence corrected to match the rule a page already stated two sections later.
+
+**Score:** N/A
+
+#### Pull Request
+
+CONTRIBUTING-portable step 1 names the branch prefixes as the shared table
+
+Plugins: dkj-policy
+
+[PR #3969](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3969)
+
+---
 
 ### DEPLOY: fix/3960-triage-labels-drift · 20261110-223931Z
 
