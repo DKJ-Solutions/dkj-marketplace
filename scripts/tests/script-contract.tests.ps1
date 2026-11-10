@@ -1335,6 +1335,76 @@ function Get-BranchTypes { return @('Feat', 'Fix', 'Docs', 'Chore') }
     foreach ($name in @('feat/x', 'fix/y/z', 'docs/a-b', 'chore/c', 'feat-x', 'main', 'plain', '/lead', 'a/')) {
         Assert-Equal (Get-BranchPrefix -Branch $name) (Get-BranchInfo -Branch $name).Prefix "Get-BranchInfo's inline prefix agrees with Get-BranchPrefix for '$name'"
     }
+
+    # --- 15. A consumer's copied Get-TriageLabels must still carry the canonical set (#3960, Dave, November 10, 2026) ---
+    # Against the PLUGIN copy for the same reason as 14: the canonical set is read from the shipped blueprint.
+    Write-Host "`n== script-contract.tests: Get-TriageLabels carries the canonical set ==" -ForegroundColor Cyan
+    $triageErr = "Get-TriageLabels in scripts\\repo-config\.ps1 lacks"
+    $triageOk  = "Get-TriageLabels in scripts\\repo-config\.ps1 carries every canonical triage label"
+    # The function AND its top-level $script:TriageLabels, so a replacement cannot read this repo's own set.
+    $withoutFn = Remove-PsFunction -Content $script:RealRepoConfig -FunctionName 'Get-TriageLabels'
+    Assert-True ($withoutFn -ne $script:RealRepoConfig) 'fixture builder: the Get-TriageLabels this scenario replaces is still in repo-config.ps1'
+    $withoutTriage = [regex]::Replace($withoutFn, '(?ms)^\$script:TriageLabels = @\(.*?^\)\r?$', '')
+    Assert-True (($withoutTriage -ne $withoutFn) -and ($withoutTriage -notmatch '\$script:TriageLabels')) 'fixture builder: the $script:TriageLabels assignment is stripped too'
+    function New-TriageConsumer { param([string]$Body) New-FixtureConsumer -RepoConfigContentOverride ($withoutTriage + "`nfunction Get-TriageLabels {`n$Body`n}`n") }
+
+    $c = New-FixtureConsumer
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-Match "\[OK\].*$triageOk" $r.Out 'the source''s own set: reported as carrying every canonical label'
+    Assert-NotMatch $triageErr $r.Out 'the source''s own set: no finding'
+
+    # The measured instance: the set as a consumer adopted it before the renames.
+    $stale = @"
+    @(
+        [pscustomobject]@{ Name = 'prio-1'; Color = 'C5DEF5'; Description = 'x' }
+        [pscustomobject]@{ Name = 'prio-2'; Color = 'FFE033'; Description = 'x' }
+        [pscustomobject]@{ Name = 'prio-3'; Color = 'F9A825'; Description = 'x' }
+        [pscustomobject]@{ Name = 'prio-4'; Color = 'B60205'; Description = 'x' }
+        [pscustomobject]@{ Name = 'dossier'; Color = '5319E7'; Description = 'x' }
+        [pscustomobject]@{ Name = 'needs-decision'; Color = 'D93F0B'; Description = 'x' }
+        [pscustomobject]@{ Name = 'awaiting-recurrence'; Color = 'BFD4F2'; Description = 'x' }
+    )
+"@
+    $c = New-TriageConsumer -Body $stale
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-Equal 1 $r.Code 'a stale copy: exit-code 1'
+    Assert-Match "\[ERROR\].*$triageErr 12 of the 16 canonical triage labels" $r.Out 'a stale copy: [ERROR] with the count'
+    Assert-Match "$triageErr.*awaiting-decision-dev" $r.Out 'a stale copy: names awaiting-decision-dev among the missing'
+    Assert-NotMatch "$triageErr[^\r\n]*needs-decision" $r.Out 'a stale copy: never echoes its own retired names'
+    Assert-Match "$triageErr.*Repair: replace the function" $r.Out 'a stale copy: and the repair'
+
+    # A superset in its own colours is the consumer's own: silent.
+    # Built on this repo's own $script:TriageLabels, which $withoutFn keeps, recoloured and with one extra.
+    $superset = "function Get-TriageLabels {`n" +
+        "    @(`$script:TriageLabels | ForEach-Object { [pscustomobject]@{ Name = `$_.Name; Color = '000000'; Description = 'mine' } }) +`n" +
+        "        [pscustomobject]@{ Name = 'customer-request'; Color = '123456'; Description = 'x' }`n}`n"
+    $c = New-FixtureConsumer -RepoConfigContentOverride ($withoutFn + "`n" + $superset)
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-Match "\[OK\].*$triageOk" $r.Out 'a superset in other colours: reported as carrying every canonical label'
+    Assert-NotMatch $triageErr $r.Out 'a superset in other colours: no finding'
+
+    $c = New-FixtureConsumer -StripFromRepoConfig @('Get-TriageLabels')
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-NotMatch 'Get-TriageLabels in scripts\\repo-config\.ps1' $r.Out 'no Get-TriageLabels: nothing compared, the built-in fallback IS the set'
+
+    $c = New-TriageConsumer -Body "    throw 'a consumer bug in these labels'"
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-NotMatch $triageErr $r.Out 'a throwing Get-TriageLabels: no verdict'
+    Assert-Match '\[INFO\].*triage labels in scripts\\repo-config\.ps1 could not be compared' $r.Out 'a throwing Get-TriageLabels: one [INFO] line'
+    Assert-NotMatch 'a consumer bug in these labels' $r.Out 'a throwing Get-TriageLabels: the consumer''s own message is never printed'
+
+    # Nothing of the SOURCE's set may leak into the probe: this consumer only reads $script:TriageLabels.
+    $c = New-TriageConsumer -Body '    @($script:TriageLabels)'
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
+    Assert-Match "\[ERROR\].*$triageErr 16 of the 16" $r.Out 'a consumer reading a set it never assigns: reported, because the source''s set is NOT in its scope'
+
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c, '-BlueprintPathOverride', (Join-Path $Fixture 'no-such-blueprint.json'))
+    Assert-Match '\[INFO\].*triage labels in scripts\\repo-config\.ps1 were not compared' $r.Out 'missing blueprint: one [INFO] line, no verdict'
+    Assert-NotMatch $triageErr $r.Out 'missing blueprint: no [ERROR] for the labels'
+
+    $r = Invoke-PluginCheck @('-ConsumerPathOverride', $RepoRoot)
+    Assert-NotMatch 'Get-TriageLabels in scripts\\repo-config\.ps1' $r.Out 'run on the source repo itself: silent'
+    Assert-NotMatch 'triage labels in scripts\\repo-config\.ps1' $r.Out 'run on the source repo itself: and no "not compared" line either'
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }
 }
