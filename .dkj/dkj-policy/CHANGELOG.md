@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**14 / 21 minor entries** <!-- pending-tally -->
+**15 / 22 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3961-sweep-skips-goal-tree · 20261110-230903Z
+
+`claim-issue -Candidates` now reads a plan-goal tree once and skips its goal, its milestones and every task
+but the goal's Now, each with the reason, so a sweep no longer has to park or hold out a whole tree by hand
+(#3961).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A sweep in a repo that plans with `plan-goal` gets one candidate per goal (its Now) instead of the whole
+tree. Measured on a consumer: 31 `free` issues became 1. Where Now is a step only the owner can take, park
+it with its `awaiting-*` label, as the plan-goal page now says.
+
+**Score:** 3
+
+#### Pull Request
+
+issues-sweep skips a plan-goal tree except each goal's Now
+
+Plugins: dkj-policy
+
+[PR #3970](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3970)
+
+---
 
 ### DEPLOY: docs/3966-step1-prefixes-shared · 20261110-225514Z
 
