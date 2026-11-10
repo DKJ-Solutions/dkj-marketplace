@@ -179,7 +179,7 @@ $branch = "$(git rev-parse --abbrev-ref HEAD)".Trim()
 # further down, so there is one read of each of the consumer's files per run.
 $seam = & {
     Set-StrictMode -Off
-    $answers = @{ LiveThemeId = ''; StoreDomain = ''; Trunk = ''; DeployBranch = ''; ThemeName = ''; HasPreviewUrls = $false }
+    $answers = @{ LiveThemeId = ''; StoreDomain = ''; Trunk = ''; DeployBranch = ''; ThemePrefix = ''; ThemeName = ''; HasPreviewUrls = $false }
     $root = $args[0]
     $branchName = $args[1]
     $configPath = Join-Path $root 'scripts\repo-config.ps1'
@@ -196,6 +196,7 @@ $seam = & {
     if (-not $answers.StoreDomain -and (Test-FunctionDefined 'Get-ShopifyStoreDomain')) { $answers.StoreDomain = [string](Get-ShopifyStoreDomain) }
     if (Test-FunctionDefined 'Get-TrunkBranchName') { $answers.Trunk       = [string](Get-TrunkBranchName) }
     if (Test-FunctionDefined 'Get-ShopifyLiveDeployBranch') { $answers.DeployBranch = [string](Get-ShopifyLiveDeployBranch) }
+    if (Test-FunctionDefined 'Get-ShopifyThemePrefix') { $answers.ThemePrefix = [string](Get-ShopifyThemePrefix) }
     if (Test-FunctionDefined 'Get-BranchInfo') {
         try { $answers.ThemeName = [string]((Get-BranchInfo -Branch $branchName).SafeName) } catch { }
     }
@@ -210,6 +211,14 @@ if (-not $store -or $store -match 'VUL-IN') {
     exit 1
 }
 $trunk = if (([string]$seam.Trunk).Trim()) { ([string]$seam.Trunk).Trim() } else { 'main' }
+
+# THE RESERVED PREFIX, FROM THE REPO'S OWN SEAM WHERE IT ANSWERS ONE (#3952). Applied before any name is
+# composed or recognised; an answer the lib refuses stops the run, because a theme created under a prefix
+# the sweep cannot trust is an orphan on a finite estate.
+try { Set-RepoThemePrefix -Prefix ([string]$seam.ThemePrefix) } catch {
+    Write-Host "REFUSED: $(Format-SafeProseToken -Value $_.Exception.Message) Nothing was changed." -ForegroundColor Red
+    exit 1
+}
 
 # A NON-NUMERIC LIVE ID COUNTS AS NO ANSWER -- the same rule the guard applies, and for the same reason: a
 # 'VUL-IN' left behind in the seam block reads as answered to anything testing for emptiness.
@@ -263,7 +272,12 @@ $themeName = Get-RepoPreviewThemeName -FlatBranchName $flatName
 # store with a finite ceiling. A legacy theme found this way keeps its own name: renaming it is a
 # separate act, and the sweep leaves it alone either way (it does not carry the prefix), which is the
 # safe direction for a one-time manual cleanup.
-$legacyThemeName = $flatName
+#
+# AND THE SAME NAME UNDER A LEGACY PREFIX (#3952): a store that moved off 'dkj-' still holds its
+# branches' previews under that prefix, so they are looked up too, after the current name and before the
+# bare one. Unlike the bare name, those ARE still ours, and the sweep retires them in time.
+$legacyThemeNames = @(@(Get-RepoPreviewThemeNames -FlatBranchName $flatName) + @($flatName) |
+    Where-Object { $_ -and $_ -ne $themeName } | Select-Object -Unique)
 
 function Write-PreviewUrls {
     <# The seam where the repo has one, the built-in single URL otherwise. A function so that the two exit
@@ -328,12 +342,19 @@ if (-not $id) {
     $theme = Get-ThemeByName -Parsed $parsed -ThemeName $themeName
     # THE RESERVED NAME FIRST, THE LEGACY NAME SECOND, and never the other way round: a branch that has
     # both must resolve to the one this repo now owns, because that is the one the sweep can retire.
-    if (-not $theme -and $legacyThemeName -ne $themeName) {
+    foreach ($legacyThemeName in $legacyThemeNames) {
+        if ($theme) { break }
         $theme = Get-ThemeByName -Parsed $parsed -ThemeName $legacyThemeName
         if ($theme) {
-            Write-Host ("Found this branch's preview under its pre-#1965 name '$legacyThemeName'. Pushing to " +
-                "it as it stands -- it keeps that name, so the sweep will not retire it; renaming or " +
-                "removing it is a separate, deliberate act.") -ForegroundColor Yellow
+            if (Test-RepoOwnedThemeName -Name $legacyThemeName) {
+                Write-Host ("Found this branch's preview under its earlier name '$legacyThemeName'. Pushing to " +
+                    "it as it stands -- it keeps that name, and the sweep still retires it once the branch is " +
+                    "gone.") -ForegroundColor Yellow
+            } else {
+                Write-Host ("Found this branch's preview under its pre-#1965 name '$legacyThemeName'. Pushing to " +
+                    "it as it stands -- it keeps that name, so the sweep will not retire it; renaming or " +
+                    "removing it is a separate, deliberate act.") -ForegroundColor Yellow
+            }
         }
     }
     if ($theme) { $id = [string]$theme.id }

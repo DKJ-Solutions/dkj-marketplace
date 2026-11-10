@@ -500,6 +500,56 @@ $preflightText = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'scripts\tas
 Assert-True ($backupText.Contains('verified WITH EXCEPTIONS:')) 'backup-live-theme prints the WITH EXCEPTIONS sentinel'
 Assert-True ($preflightText.Contains("-match 'verified WITH EXCEPTIONS'")) '...and live-preflight matches that same phrase'
 
+Write-Host ''
+Write-Host 'Set-RepoThemePrefix -- a store names its own themes, and the old prefix stays ours (#3952)' -ForegroundColor Cyan
+# THE DEFAULT IS UNCHANGED, so a repo that answers no seam sees nothing new.
+Assert-Equal 'dkj-' $prefix 'unanswered, the reserved prefix is still dkj-'
+foreach ($bad in @('Smartwatchbanden-', 'smartwatchbanden', 'smart/watch-', '-x-', ('a' * 25 + '-'), 'smart watch-', 'dkj-backup-')) {
+    Assert-True ([bool](Get-ThemePrefixRefusal -Prefix $bad)) "a prefix the sweep could not trust is refused: '$bad'"
+    Assert-Throws { Set-RepoThemePrefix -Prefix $bad } "...and Set-RepoThemePrefix throws on it: '$bad'" -Contains 'not a usable theme prefix'
+}
+Assert-Equal 'dkj-' (Get-RepoThemePrefix) 'a refused prefix leaves the current one standing'
+Assert-True ([bool](Get-ThemePrefixRefusal -Prefix "abc-`n")) 'a trailing newline is refused by the pure check (\z, not $) -- Set-RepoThemePrefix trims it away first'
+Assert-Equal $null (Get-ThemePrefixRefusal -Prefix 'smartwatchbanden-') 'the owner''s choice is a usable prefix'
+
+Set-RepoThemePrefix -Prefix 'smartwatchbanden-'
+try {
+    Assert-Equal 'smartwatchbanden-main' (Get-RepoPreviewThemeName -FlatBranchName 'main') 'the trunk preview carries the store''s own name -- the case #3952 was filed for'
+    Assert-Equal 'smartwatchbanden-fix-x' (Get-RepoPreviewThemeName -FlatBranchName 'fix-x') 'and so does every branch preview'
+    Assert-Equal 'smartwatchbanden-backup-20260914-013000' (Get-BackupThemeName -Timestamp $stamp) 'and the backup'
+    $names = @(Get-RepoPreviewThemeNames -FlatBranchName 'fix-x')
+    Assert-Equal 'smartwatchbanden-fix-x|dkj-fix-x' ($names -join '|') 'a branch''s preview names: the current one first, then the legacy one'
+    Assert-Equal 'dkj-fix-x' (Get-RepoPreviewThemeName -FlatBranchName 'dkj-fix-x') 'a legacy name handed back by a lookup is not prefixed a second time'
+    # OWNERSHIP SPANS BOTH PREFIXES: themes created before the move are still ours.
+    Assert-True (Test-RepoOwnedThemeName -Name 'smartwatchbanden-fix-x') 'a theme under the store prefix is owned'
+    Assert-True (Test-RepoOwnedThemeName -Name 'dkj-fix-x')              'a theme under the legacy prefix is still owned'
+    Assert-True (-not (Test-RepoOwnedThemeName -Name 'smartwatchbanden-')) 'a bare store prefix is not owned'
+    Assert-True (Test-BackupThemeName -Name 'dkj-backup-20260901-000000') 'a legacy backup is still a backup, so rotation retires it'
+    Assert-True (Test-BackupThemeName -Name 'smartwatchbanden-backup-20260914-013000') 'and a new one is a backup'
+    Assert-True (-not (Test-BackupThemeName -Name 'smartwatchbanden-fix-x')) 'a store-prefixed preview is not a backup'
+    # A LONG NAME IS BOUNDED UNDER THE LONGER PREFIX TOO, and the bounded form is still ours.
+    $long = Get-RepoPreviewThemeName -FlatBranchName 'liquid-477-continue-browsing-below-model-picker'
+    Assert-True ($long.Length -le 50) 'a long branch under the store prefix still fits the 50-character ceiling'
+    Assert-True ($long.StartsWith('smartwatchbanden-')) '...and keeps the store prefix'
+    Assert-Equal $long (Get-RepoPreviewThemeName -FlatBranchName $long) '...and composing it again returns it unchanged'
+    # THE SWEEP: a living branch's legacy-named preview is spared, a dead branch's is swept.
+    $moved = @(
+        [pscustomobject]@{ id = '100'; name = 'live';               role = 'main' },
+        [pscustomobject]@{ id = '201'; name = 'dkj-fix-alive';      role = 'unpublished' },
+        [pscustomobject]@{ id = '202'; name = 'dkj-fix-gone';       role = 'unpublished' },
+        [pscustomobject]@{ id = '203'; name = 'smartwatchbanden-fix-gone2'; role = 'unpublished' }
+    )
+    $living = @(Get-RepoPreviewThemeNames -FlatBranchName 'fix-alive')
+    $mp = Get-ThemeSweepPlan -Themes $moved -LiveThemeId '100' -LivingBranchNames $living
+    Assert-True (-not ($mp | Where-Object Id -eq '201').Sweep) 'sweep: a living branch''s preview under the legacy prefix is spared'
+    Assert-True (($mp | Where-Object Id -eq '202').Sweep)      'sweep: a gone branch''s legacy preview is retired'
+    Assert-True (($mp | Where-Object Id -eq '203').Sweep)      'sweep: a gone branch''s store-prefixed preview is retired'
+} finally {
+    Set-RepoThemePrefix -Prefix ''
+}
+Assert-Equal 'dkj-' (Get-RepoThemePrefix) 'a blank answer restores the default'
+Assert-True (-not (Test-RepoOwnedThemeName -Name 'smartwatchbanden-fix-x')) '...and a store prefix is no longer ours once it is unset'
+
 if ($script:fail -eq 0) {
     Write-Host ''
     Write-Host "Result: $($script:pass) pass, 0 fail." -ForegroundColor Green

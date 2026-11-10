@@ -197,7 +197,7 @@ Set-Location -LiteralPath $repoRoot
 # to defaults rather than take this script down.
 $seam = & {
     Set-StrictMode -Off
-    $answers = @{ LiveThemeId = ''; StoreDomain = ''; DeleteMarker = ''; TrunkIsLive = $true; DeployBranch = '' }
+    $answers = @{ LiveThemeId = ''; StoreDomain = ''; DeleteMarker = ''; TrunkIsLive = $true; DeployBranch = ''; ThemePrefix = '' }
     $cfg = Join-Path $repoRoot 'scripts\repo-config.ps1'
     if (Test-Path -LiteralPath $cfg -PathType Leaf) {
         try { . $cfg } catch { Write-Warning "scripts/repo-config.ps1 could not be read: $(Format-SafeProseToken -Value $_.Exception.Message)" }
@@ -212,7 +212,16 @@ $seam = & {
     # OPTIONAL TOO. Named, live deploys from that branch (#2998), and the order warning speaks of a
     # promotion instead of a push (#3013).
     if (Test-FunctionDefined 'Get-ShopifyLiveDeployBranch')  { $answers.DeployBranch = [string](Get-ShopifyLiveDeployBranch) }
+    if (Test-FunctionDefined 'Get-ShopifyThemePrefix')       { $answers.ThemePrefix  = [string](Get-ShopifyThemePrefix) }
     [pscustomobject]$answers
+}
+
+# THE RESERVED PREFIX, FROM THE REPO'S OWN SEAM WHERE IT ANSWERS ONE (#3952). Applied before any name is
+# composed or recognised; an answer the lib refuses stops the run, because a theme created under a prefix
+# the sweep cannot trust is an orphan on a finite estate.
+try { Set-RepoThemePrefix -Prefix ([string]$seam.ThemePrefix) } catch {
+    Write-Host "REFUSED: $(Format-SafeProseToken -Value $_.Exception.Message) Nothing was changed." -ForegroundColor Red
+    exit 1
 }
 
 $store = ([string]$Store).Trim()

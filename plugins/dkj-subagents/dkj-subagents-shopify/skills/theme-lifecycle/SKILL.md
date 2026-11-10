@@ -28,6 +28,20 @@ an irreversible operation.
 So every theme `push-preview` creates now carries a **reserved prefix this repo owns**, and the sweep
 matches on that and on nothing else.
 
+### The prefix is the store's own (#3952)
+
+**It is `dkj-` unless the repo answers `Get-ShopifyThemePrefix`.** A store repo only consumes these
+plugins, so it may name its themes after itself: `'smartwatchbanden-'` gives `smartwatchbanden-main` and
+`smartwatchbanden-backup-<stamp>`. The answer must be lowercase letters, digits and hyphens, end in `-`,
+and be at most 25 characters. Any other answer stops `push-preview`, the sweep and the backup before
+they compose a single name, because a theme created under a prefix the sweep cannot trust becomes an orphan.
+
+**`dkj-` stays this repo's after a move.** Every theme created before it carries `dkj-`, so ownership,
+the sweep's spare sets and backup rotation all read both prefixes. A living branch's `dkj-` preview is
+spared, a gone branch's is retired, a `dkj-backup-` rotates out once its replacement is verified, and
+`push-preview` finds a branch's `dkj-` preview before it would create a second one. Only a **new** name
+takes the store prefix.
+
 **Cross-checking against the repo's branch list is a useful second gate and cannot be the first**: a
 branch deleted after its merge no longer exists locally, which is exactly when its preview becomes due
 for sweeping. A key that goes stale in the direction of *"sweep it"* is the wrong way round.
@@ -274,6 +288,7 @@ rules live.
 | `Get-ShopifyLiveThemeId` | **required** | which theme is live. Both scripts refuse without it rather than guessing. |
 | `Get-ShopifyThemeDeleteMarker` | optional | unanswered, the removals are printed instead of performed. |
 | `Get-ShopifyExternalThemePrefixes` | optional | third-party name prefixes, for the collision refusal. |
+| `Get-ShopifyThemePrefix` | optional | the reserved prefix, `dkj-` by default ([above](#the-prefix-is-the-stores-own-3952)). |
 | `Get-ShopifyTrunkIsLive` | optional | whether the trunk has reached live. Answered `$false`, the backup prints the order warning below. |
 
 ### Why the store is its own seam and not `Get-ShopifyStoreDomain`
