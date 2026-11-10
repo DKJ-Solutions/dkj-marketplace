@@ -111,8 +111,15 @@ function Add-PlanSubIssue {
 
 try {
     # The label first: an issue cannot be labelled with one the repo does not have.
-    & gh api "repos/$Repo/labels/$label" --silent 2>$null
-    if ($LASTEXITCODE -ne 0) {
+    # THE PROBE RUNS UNDER 'Continue' (#3959). Under the script's 'Stop', Windows PowerShell 5.1 turns the
+    # 404's stderr line into a terminating NativeCommandError despite 2>$null, so the catch below took the
+    # run and the create branch was unreachable on exactly the run it exists for: a repo's first goal. The
+    # answer is the exit code, read after the preference is back.
+    $probePreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try { & gh api "repos/$Repo/labels/$label" --silent 2>$null | Out-Null; $probeExit = $LASTEXITCODE }
+    finally { $ErrorActionPreference = $probePreference }
+    if ($probeExit -ne 0) {
         [void](Invoke-GhJson -Method POST -Path "repos/$Repo/labels" -Body @{ name = $label; color = '5319e7'; description = 'A goal: its milestones are its sub-issues, and their tasks are theirs' })
         Write-Host "  created the label '$label'"
     }

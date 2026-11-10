@@ -39,19 +39,34 @@
 
 ### PLAN
 
+Inbound #3959, reason verified in `plan-goal.ps1`: the label probe ran under the script's `Stop`, so on
+Windows PowerShell 5.1 the 404's stderr line became a terminating error despite `2>$null`, and the create
+branch was unreachable on a repo's first goal.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The label probe runs under a local `Continue` and reads the exit code after the preference is restored
 
 ### TEST
 
+- [x] `goals.tests.ps1` runs `-Apply` under `powershell.exe` against a fake `gh` answering 404 on the probe: red before the fix (5 fails), green after
+
 ### DEPLOY: fix/3959-plan-goal-label-probe
 
-**Score:**
+`plan-goal -Apply` creates the `goal` label again in a repo that has none, on Windows PowerShell 5.1. The
+label probe ran under the script's `Stop` preference, and 5.1 turns a native command's stderr into a
+terminating error even through `2>$null`, so the 404 that means "no label yet" ended the run with
+`[FAILED] gh: Not Found (HTTP 404)` and nothing filed. The probe now runs under a local `Continue` and
+reads the exit code. Inbound #3959, measured in `DKJ-Solutions/dkj-recipes`.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Planning the first goal in a repo with `plan-goal` works on the first try, without creating the `goal`
+label by hand first.
+
+**Score:** 3
 
 #### Pull Request
 
