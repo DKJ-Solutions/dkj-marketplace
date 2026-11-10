@@ -54,7 +54,7 @@ the October 27, 2026 three-column decision at the owner's own request.
 
 - [x] page rebuilt locally (`build-release-notes-page.ps1`); Admin's `/dev/release-notes/v6.12.0` serves
   the two-column rule (200)
-- [ ] the owner looks at the page and approves the layout
+- [~] the owner looks at the page and approves the layout -- not done as a separate look: davekokbwj approved the branch through issues-sweep-reviews on 2026-11-10 without one.
 
 ### DEPLOY: feat/3955-note-grid-two-columns
 
