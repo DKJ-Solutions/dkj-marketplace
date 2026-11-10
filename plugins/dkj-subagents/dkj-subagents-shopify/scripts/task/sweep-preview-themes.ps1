@@ -133,7 +133,7 @@ $branch = "$(git rev-parse --abbrev-ref HEAD)".Trim()
 
 $seam = & {
     Set-StrictMode -Off
-    $answers = @{ LiveThemeId = ''; StoreDomain = ''; DeleteMarker = ''; External = @() }
+    $answers = @{ LiveThemeId = ''; StoreDomain = ''; DeleteMarker = ''; External = @(); ThemePrefix = '' }
     $cfg = Join-Path $repoRoot 'scripts\repo-config.ps1'
     if (Test-Path -LiteralPath $cfg -PathType Leaf) {
         try { . $cfg } catch { Write-Warning "scripts/repo-config.ps1 could not be read: $(Format-SafeProseToken -Value $_.Exception.Message)" }
@@ -142,7 +142,16 @@ $seam = & {
     if (Test-FunctionDefined 'Get-ShopifyThemeEstateStore')   { $answers.StoreDomain  = [string](Get-ShopifyThemeEstateStore) }
     if (Test-FunctionDefined 'Get-ShopifyThemeDeleteMarker')  { $answers.DeleteMarker = [string](Get-ShopifyThemeDeleteMarker) }
     if (Test-FunctionDefined 'Get-ShopifyExternalThemePrefixes') { $answers.External  = @(Get-ShopifyExternalThemePrefixes) }
+    if (Test-FunctionDefined 'Get-ShopifyThemePrefix')        { $answers.ThemePrefix  = [string](Get-ShopifyThemePrefix) }
     [pscustomobject]$answers
+}
+
+# THE RESERVED PREFIX, FROM THE REPO'S OWN SEAM WHERE IT ANSWERS ONE (#3952). Applied before any name is
+# composed or recognised; an answer the lib refuses stops the run, because a theme created under a prefix
+# the sweep cannot trust is an orphan on a finite estate.
+try { Set-RepoThemePrefix -Prefix ([string]$seam.ThemePrefix) } catch {
+    Write-Host "REFUSED: $($_.Exception.Message) Nothing was changed." -ForegroundColor Red
+    exit 1
 }
 
 $store = ([string]$Store).Trim()
@@ -173,11 +182,16 @@ if (Test-Path -LiteralPath $biPath -PathType Leaf) {
     try { . $biPath; $hasGetBranchInfo = Test-FunctionDefined 'Get-BranchInfo' } catch { }
 }
 
-# The current branch's own preview, spared by name.
+# The current branch's own preview, spared by name -- under every owned prefix (#3952), so a store that
+# moved off 'dkj-' does not sweep the old-named preview of the branch it is standing on.
 $ownPreview = ''
+$ownPreviews = @()
 if ($branch -and $branch -ne 'HEAD') {
     $flat = if ($hasGetBranchInfo) { [string]((Get-BranchInfo -Branch $branch).SafeName) } else { $branch -replace '/', '-' }
-    if ($flat) { $ownPreview = Get-RepoPreviewThemeName -FlatBranchName $flat }
+    if ($flat) {
+        $ownPreviews = @(Get-RepoPreviewThemeNames -FlatBranchName $flat)
+        $ownPreview = $ownPreviews[0]
+    }
 }
 
 # EVERY OTHER BRANCH THAT IS STILL ALIVE (inbound #2032) -- see the header banner for why this
@@ -225,11 +239,11 @@ if (-not $refListReliable) {
 $livingBranchNames = @(@($remoteBranchNames) + @($localBranchNames) | Where-Object { $_ } | Sort-Object -Unique)
 $livingPreviewNames = @($livingBranchNames | ForEach-Object {
     $flat = if ($hasGetBranchInfo) { [string]((Get-BranchInfo -Branch $_).SafeName) } else { $_ -replace '/', '-' }
-    if ($flat) { Get-RepoPreviewThemeName -FlatBranchName $flat }
+    if ($flat) { Get-RepoPreviewThemeNames -FlatBranchName $flat }
 } | Where-Object { $_ })
 
 $keepNames = @(@($Keep) | Where-Object { $_ } | ForEach-Object { ([string]$_).Trim() })
-if ($ownPreview) { $keepNames += $ownPreview }
+if ($ownPreview) { $keepNames += $ownPreviews }
 
 Write-Host "== sweep-preview-themes -- $store ==" -ForegroundColor Cyan
 if (-not $Execute) { Write-Host '   DRY RUN (the default): every verdict is reported and nothing is removed. -Execute acts.' -ForegroundColor Yellow }

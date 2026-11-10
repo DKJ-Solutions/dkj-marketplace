@@ -186,12 +186,13 @@ id — the other five have defaults that are right for both existing Shopify con
 | `Get-ShopifySyncPrLabels` | *(none)* | the label(s) the sync PR carries — a string or an array of them. Answer it where a guardrail workflow **fails an unlabelled PR**: without one the sync PR goes red on CI and cannot merge. They go on the `gh pr create` *and* on the line the non-merging path prints, so whichever route you take carries them. |
 | `Get-TrunkBranchName` | `main` | the trunk. Not a Shopify seam — the sync simply reads it if your repo has answered it. |
 
-**And one more belongs to the preview push** (`push-preview`), which otherwise reuses the store domain,
+**And two more belong to the preview push** (`push-preview`), which otherwise reuses the store domain,
 the live theme id and the trunk from the two tables above:
 
 | function | default | what it decides |
 |---|---|---|
 | `Get-ShopifyPreviewUrls` | one URL on the store's own domain | the preview URL(s) printed after a push. Answer it in a **multi-market** store to get one per market or locale. |
+| `Get-ShopifyThemePrefix` | `dkj-` | the reserved prefix on every theme these scripts create (previews and backups), e.g. `'mystore-'` gives `mystore-main` ([#3952](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3952)). Lowercase letters, digits and hyphens, ending in `-`, at most 25 characters; anything else is refused. `push-preview`, the sweep and the backup all read it, and `dkj-` stays recognised as this repo's after a move, so no existing theme is orphaned or duplicated. See [`theme-lifecycle`](skills/theme-lifecycle/SKILL.md#the-prefix-is-the-stores-own-3952). |
 
 **That one is a seam because the market table genuinely is per-store, and the rest of the job is not.** One
 consumer runs a single domain with locale-prefixed paths (`/`, `/en`, `/de`, `/nl-gb`, …); another runs five

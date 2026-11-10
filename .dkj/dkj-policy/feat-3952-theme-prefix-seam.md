@@ -55,9 +55,9 @@ a legacy prefix for ownership, the sweep's spare sets, rotation and push-preview
 ### TEST
 
 - [x] `theme-lifecycle-rules.tests.ps1`: validation, the store-prefixed names, legacy ownership and
-  rotation, bounding under the longer prefix, the sweep sparing a living branch's legacy preview (202 green)
+  rotation, bounding under the longer prefix, the sweep sparing a living branch's legacy preview (206 green)
 - [x] `push-preview.tests.ps1` and `stranded-sweep-gate.tests.ps1` still green
-- [ ] Victor's review of the destructive path
+- [x] Victor's review of the destructive path: no spared theme can be swept; four small findings fixed (a legacy name handed back is not prefixed twice, `backup-` refused in a prefix, `z` in the pattern, a comment count)
 
 ### DEPLOY: feat/3952-theme-prefix-seam
 

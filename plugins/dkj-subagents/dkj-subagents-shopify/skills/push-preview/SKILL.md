@@ -111,7 +111,8 @@ then deploys from that branch through a promotion PR, so between promotions the 
 release candidate the owner judges before giving the word to promote. A deploy branch that names the
 trunk itself is a misconfiguration and keeps the refusal.
 
-The trunk preview takes the same reserved name as any branch's (`<prefix><trunk>`, e.g. `dkj-main`), so
+The trunk preview takes the same reserved name as any branch's (`<prefix><trunk>`: `dkj-main`, or
+`smartwatchbanden-main` where the repo answers `Get-ShopifyThemePrefix`), so
 `theme-lifecycle`'s sweep recognises it as this repo's own and spares it for as long as the trunk exists:
 **one standing slot**, remembered in `branch.<trunk>.previewTheme` and refreshed by each push. It was
 copied from live when it was created, so the drift note above applies to it more than to any branch
@@ -139,6 +140,7 @@ running none at all gets identical behaviour.
 | `Get-TrunkBranchName` | optional | the trunk check falls back to `main`. |
 | `Get-ShopifyLiveDeployBranch` | optional | the trunk stays refused. Answered with a branch other than the trunk, a trunk preview is allowed ([#3950](#a-preview-of-the-trunk-promote-then-cut-3950)). |
 | `Get-BranchInfo` | optional | the theme name falls back to the branch with its slashes replaced by dashes -- which is what `SafeName` answers anyway, so a repo without the seam loses nothing. |
+| `Get-ShopifyThemePrefix` | optional | the theme name keeps the default prefix `dkj-`. Answered (e.g. `'mystore-'`), new previews are named `mystore-<branch>`, and a branch's existing `dkj-` preview is still found by name rather than duplicated ([#3952](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3952)). |
 | `Get-ShopifyPreviewUrls` | optional | you get **one** preview URL, on the store's own domain. Answer it in a multi-market store to get one per market or locale. |
 
 ### `Get-ShopifyPreviewUrls` -- the one genuinely per-store half

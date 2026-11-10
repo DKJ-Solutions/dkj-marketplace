@@ -58,12 +58,76 @@
 # in preview-theme.ps1 throws on exactly that, which is why a branch name has to be flattened before it
 # can be one. So the obvious 'dkj/' spelling is unavailable and this is not a style choice.
 #
-# NOT A SEAM, deliberately, and this repo has written that rule down: a seam nobody can be shown to need
-# is a knob every consumer has to read past for an answer they already have. The two stores this serves
-# share one plugin and can share one namespace -- that is what the plugin is FOR -- and a per-store
-# prefix would let the two drift on the one string the whole guard rests on. It comes back as a seam the
-# day somebody measures a store that cannot use it.
-$script:RepoThemePrefix = 'dkj-'
+# A SEAM SINCE #3952, AND THE DEFAULT IS UNCHANGED. Until then this read "NOT A SEAM, deliberately ...
+# It comes back as a seam the day somebody measures a store that cannot use it." That day came on
+# November 10, 2026: the BWJ store repos only CONSUME these plugins, so 'dkj-' on their own themes names
+# a party the store has nothing to do with, and the owner chose the store's own name
+# ('smartwatchbanden-main'). So a consumer may answer Get-ShopifyThemePrefix in scripts/repo-config.ps1,
+# and each script that composes or recognises a reserved name hands that answer to Set-RepoThemePrefix
+# first. Unanswered, the prefix stays 'dkj-' and nothing about that repo changes.
+#
+# THE OLD PREFIX STAYS RECOGNISED where a store has moved off it ($script:LegacyThemePrefixes). Every
+# theme created before the move carries 'dkj-', and forgetting it would fail in both directions at once:
+# push-preview would no longer find a branch's existing preview and would create a second one, and the
+# sweep and rotation would no longer call those themes ours, leaving them standing on a finite estate.
+# A NEW name is only ever composed with the current prefix.
+$script:DefaultThemePrefix = 'dkj-'
+$script:RepoThemePrefix = $script:DefaultThemePrefix
+$script:LegacyThemePrefixes = @()
+
+# A PREFIX IS LOWERCASE LETTERS, DIGITS AND HYPHENS, ENDS IN A HYPHEN, AND IS AT MOST 25 CHARACTERS.
+# Lowercase because ownership is matched case-sensitively (Test-RepoOwnedThemeName says why); no '/'
+# because Shopify refuses it in a theme name; the closing hyphen so the label reads apart from the
+# branch; and 25 so a preview name keeps at least 17 characters of its branch under the 50-character
+# ceiling beside the 7-character discriminator (Get-RepoPreviewThemeName). '\z' and not '$', because
+# '$' also matches before a final newline. And no 'backup-' anywhere in it: a prefix such as
+# 'dkj-backup-' would be the longest match on a legacy backup's name and hide it from rotation.
+$script:ThemePrefixPattern = '^[a-z0-9][a-z0-9-]{0,23}-\z'
+
+function Get-ThemePrefixRefusal {
+    <# Why -Prefix cannot be the reserved prefix, or $null where it can. Pure, so a caller refuses with
+       this sentence before anything is composed under a prefix the sweep could not later trust. #>
+    param([AllowEmptyString()][AllowNull()][string]$Prefix)
+    $p = [string]$Prefix
+    if (($p -cmatch $script:ThemePrefixPattern) -and -not $p.Contains('backup-')) { return $null }
+    return ("Get-ShopifyThemePrefix answers '$p', which is not a usable theme prefix: lowercase letters, " +
+        "digits and hyphens only, ending in '-', at most 25 characters, and not containing 'backup-' " +
+        "(e.g. 'mystore-').")
+}
+
+function Set-RepoThemePrefix {
+    <# Make -Prefix the reserved prefix for this run. Blank restores the default. Any other prefix keeps
+       the default recognised as a legacy one, so themes created before the move stay ours. Throws on a
+       prefix Get-ThemePrefixRefusal refuses, so no name is ever composed under it. #>
+    param([AllowEmptyString()][AllowNull()][string]$Prefix)
+    $p = ([string]$Prefix).Trim()
+    if (-not $p -or $p -ceq $script:DefaultThemePrefix) {
+        $script:RepoThemePrefix = $script:DefaultThemePrefix
+        $script:LegacyThemePrefixes = @()
+        return
+    }
+    $refusal = Get-ThemePrefixRefusal -Prefix $p
+    if ($refusal) { throw $refusal }
+    $script:RepoThemePrefix = $p
+    $script:LegacyThemePrefixes = @($script:DefaultThemePrefix)
+}
+
+function Get-RepoOwnedThemePrefixes {
+    <# Every prefix that marks a theme as this repo's: the current one first, then the legacy ones. #>
+    return @(@($script:RepoThemePrefix) + @($script:LegacyThemePrefixes))
+}
+
+function Get-RepoThemeNamePrefix {
+    <# The owned prefix -Name carries, or '' where it carries none (a bare prefix carries none). The
+       LONGEST match wins, so a store prefix that starts with a legacy one is read as the more specific. #>
+    param([AllowEmptyString()][AllowNull()][string]$Name)
+    $n = ([string]$Name).Trim()
+    $best = ''
+    foreach ($p in (Get-RepoOwnedThemePrefixes)) {
+        if ($n.StartsWith($p, [System.StringComparison]::Ordinal) -and $n.Length -gt $p.Length -and $p.Length -gt $best.Length) { $best = $p }
+    }
+    return $best
+}
 
 function Get-RepoThemePrefix {
     <# The reserved prefix itself, so a test and every caller read one source rather than a copy. #>
@@ -109,10 +173,9 @@ function Test-RepoOwnedThemeName {
     #>
     param([AllowEmptyString()][AllowNull()][string]$Name)
 
-    $n = ([string]$Name).Trim()
-    if (-not $n) { return $false }
-    if (-not $n.StartsWith($script:RepoThemePrefix, [System.StringComparison]::Ordinal)) { return $false }
-    return ($n.Length -gt $script:RepoThemePrefix.Length)
+    # THE CURRENT PREFIX OR A LEGACY ONE (#3952): a theme created before a store moved off 'dkj-' is
+    # still this repo's. Get-RepoThemeNamePrefix already answers '' for a bare prefix.
+    return [bool](Get-RepoThemeNamePrefix -Name $Name)
 }
 
 function Get-RepoPreviewThemeName {
@@ -158,7 +221,10 @@ function Get-RepoPreviewThemeName {
     #>
     param(
         [Parameter(Mandatory = $true)][string]$FlatBranchName,
-        [int]$MaxLength = $script:ShopifyThemeNameMaxLength
+        [int]$MaxLength = $script:ShopifyThemeNameMaxLength,
+        # The prefix to compose under, the current one by default. Get-RepoPreviewThemeNames passes a
+        # legacy one, to name what a branch's preview was called before the store moved (#3952).
+        [string]$Prefix = $script:RepoThemePrefix
     )
 
     $n = ([string]$FlatBranchName).Trim()
@@ -168,7 +234,7 @@ function Get-RepoPreviewThemeName {
             "FLATTENED branch name -- slashes replaced by dashes.")
     }
 
-    $prefix = $script:RepoThemePrefix
+    $prefix = $Prefix
     $hashChars = $script:RepoThemeNameHashChars
     # A CEILING TOO SMALL TO HOLD THE NAMESPACE AND THE DISCRIMINATOR CANNOT BE HONOURED, and silently
     # returning something over it would defeat the whole point of the parameter. At least one character
@@ -184,7 +250,11 @@ function Get-RepoPreviewThemeName {
     # ALREADY-PREFIXED IS NOT PREFIXED TWICE. A caller that has been through a name lookup may hand back
     # the name it found, and 'dkj-dkj-feat-x' would be a theme neither the lookup nor the sweep
     # recognises -- an orphan, on a store with a finite ceiling.
-    $full = if (Test-RepoOwnedThemeName -Name $n) { $n } else { $prefix + $n }
+    # Already prefixed means ANY owned prefix (a legacy one included, #3952) or the -Prefix asked for:
+    # a name found by a lookup comes back unchanged, and is bounded under the prefix it carries.
+    $carried = Get-RepoThemeNamePrefix -Name $n
+    if ($n.StartsWith($prefix, [System.StringComparison]::Ordinal) -and $n.Length -gt $prefix.Length -and $prefix.Length -gt $carried.Length) { $carried = $prefix }
+    if ($carried) { $full = $n; $prefix = $carried } else { $full = $prefix + $n }
     if ($full.Length -le $MaxLength) { return $full }
 
     $keep = $MaxLength - $prefix.Length - 1 - $hashChars
@@ -202,6 +272,19 @@ function Get-RepoPreviewThemeName {
     }
     $hex = -join ($bytes | ForEach-Object { $_.ToString('x2') })
     return ($prefix + $head + '-' + $hex.Substring(0, $hashChars))
+}
+
+function Get-RepoPreviewThemeNames {
+    <# Every name a branch's preview may carry: the current reserved name first, then the same name under
+       each legacy prefix (#3952). The sweep spares all of them for a branch still alive, and push-preview
+       looks each one up before it creates a theme -- so a store moving its prefix neither sweeps a living
+       branch's old preview nor gives that branch a second theme. #>
+    param([Parameter(Mandatory = $true)][string]$FlatBranchName)
+    $names = @()
+    foreach ($p in (Get-RepoOwnedThemePrefixes)) {
+        $names += (Get-RepoPreviewThemeName -FlatBranchName $FlatBranchName -Prefix $p)
+    }
+    return @($names | Select-Object -Unique)
 }
 
 function Get-BackupThemeName {
@@ -233,8 +316,9 @@ function Test-BackupThemeName {
        preview is not a backup and must never rotate out under one. #>
     param([AllowEmptyString()][AllowNull()][string]$Name)
 
-    if (-not (Test-RepoOwnedThemeName -Name $Name)) { return $false }
-    $rest = ([string]$Name).Trim().Substring($script:RepoThemePrefix.Length)
+    $owned = Get-RepoThemeNamePrefix -Name $Name
+    if (-not $owned) { return $false }
+    $rest = ([string]$Name).Trim().Substring($owned.Length)
     return $rest.StartsWith('backup-', [System.StringComparison]::Ordinal)
 }
 
