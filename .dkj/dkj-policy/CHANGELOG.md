@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**7 / 13 minor entries** <!-- pending-tally -->
+**8 / 14 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3952-theme-prefix-seam · 20261110-081653Z
+
+A Shopify store repo can name the themes the plugin creates after itself: answer `Get-ShopifyThemePrefix`
+in `scripts/repo-config.ps1` (e.g. `'smartwatchbanden-'`), and previews and backups are named
+`smartwatchbanden-main`, `smartwatchbanden-fix-x`, `smartwatchbanden-backup-<stamp>` instead of `dkj-...`
+([#3952](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3952)). Unanswered, nothing changes.
+After the move `dkj-` themes stay the repo's own: the sweep still spares a living branch's preview and
+retires a gone one's, rotation still retires an old backup, and `push-preview` finds a branch's existing
+preview instead of creating a second.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store maintainer sees the store's own name on its preview and backup themes instead of a vendor
+label, by answering one seam, with no cleanup of the themes already there.
+
+**Score:** 3
+
+#### Pull Request
+
+dkj-subagents-shopify: the reserved theme prefix becomes a per-repo seam
+
+Plugins: dkj-subagents-shopify
+
+[PR #3953](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3953)
+
+---
 
 ### DEPLOY: feat/3950-trunk-preview-promote-then-cut · 20261110-073511Z
 
