@@ -157,6 +157,7 @@ The six steps, stopping on the first failure:
 | `-MaxForwardLaps` | How many times step 3b may bring the branch up to date with the trunk and wait for a **fresh** certificate before it refuses ([#2087](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2087)). Default `2`. It does **not** weaken the gate — the predicate is unchanged, and what a lap buys is a certificate that is genuinely fresh. `0` restores the behaviour this workflow had before #2087: refuse on the first stale reading and print the manual remedy. See [the forward lap](#the-forward-lap--why-detect-and-rebase-did-not-converge-2087) below. |
 | `-Force` | Passed through to `open-pr`: ship an entry that still carries its scaffold wording. Deliberately separate from `-SkipLint`/`-SkipTests` — those skip a tool, this overrules a judgement about content. |
 | `-RefreshBody` | Passed through to `open-pr`: on a branch whose PR is **already open**, rewrite that PR's description from the current changelog entry. Opt-in, so a body edited on github.com is never overwritten unasked. No effect when the PR is created in this run. |
+| `-OwnerLook` | Passed through to `open-pr`: the owner's recorded look at a visible result, written as the answer to the template box `Get-PrOwnerLookPattern` names (#3958). `issues-sweep-reviews` and `issues-sweep` step 6 pass it. One line, no double quote. |
 | `-PollSeconds` | Poll interval in seconds for the CI wait. Default 15. |
 
 **Reach for `-RefreshBody` on a branch you extended after opening its PR.** Without it the PR keeps

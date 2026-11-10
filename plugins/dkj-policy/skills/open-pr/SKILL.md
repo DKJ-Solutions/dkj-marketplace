@@ -486,6 +486,14 @@ otherwise the PR keeps describing an earlier version of the work while the merge
 one. The `## Resolved issues` block, anything a reviewer added, and any section your template carries that
 the script did not write — "Type of change" boxes, a checklist — all stay exactly as they are.
 
+**`-OwnerLook "<answer>"` writes the owner's recorded look into the box your template keeps for it**
+(#3958). Name that box once with `Get-PrOwnerLookPattern` in `scripts/repo-config.ps1`, a regex for the
+unticked line (for example `'^- \[ \] Preview theme pushed'`). The first matching line is ticked and the
+answer appended, on a new PR and on one already open, whether the body came from the template or from
+`-Body`. Without the seam the answer is not written and the run says so, and with the seam but no
+matching line it warns. `issues-sweep-reviews` and `issues-sweep` step 6 pass the approval they recorded.
+Keep it on one line with no double quote: it crosses `powershell -File` from `ship-pr`.
+
 **Renaming a heading in your template needs no configuration** — the rule below reads a position, not a
 name. One wrinkle worth knowing if you do rename one: a PR opened *before* the rename still holds the old
 heading in its published body. The script therefore falls back to the headings it has shipped before
