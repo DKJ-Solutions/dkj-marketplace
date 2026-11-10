@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**15 / 22 minor entries** <!-- pending-tally -->
+**16 / 23 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/3968-labels-read-and-prescribed · 20261110-233522Z
+
+`CONTRIBUTING-portable.md` stopped saying the plugin reads none of your labels but the reach label, and now
+names the three sets it does read or prescribe (#3968).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+The page that tells a consumer which labels are theirs now lists the ones the workflow owns: the PR label
+per branch prefix, the triage labels (whose `awaiting-*` half the sweep reads to skip parked issues), and
+the reach label. It prevents a consumer from renaming or dropping an `awaiting-*` label on the old page's
+word and then having a sweep claim a parked issue.
+
+**Score:** 1
+
+#### Pull Request
+
+CONTRIBUTING-portable names the labels the plugin reads and prescribes
+
+Plugins: dkj-policy
+
+[PR #3971](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3971)
+
+---
 
 ### DEPLOY: fix/3961-sweep-skips-goal-tree · 20261110-230903Z
 
