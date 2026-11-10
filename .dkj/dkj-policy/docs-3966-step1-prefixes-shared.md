@@ -50,6 +50,9 @@ the plugin, contradicting step 2 since #3886 (one shared table, checked by `chec
 ### TEST
 
 - [x] Verified against step 2's #3886 paragraph; the gates run in `ship-pr`
+- [x] `reach-label.tests.ps1` pins the general labels sentence; the first ship failed on it, so the sentence
+  keeps "nothing in this plugin reads your labels" and the pin follows the new wording (40/40 green). That
+  sentence's own undercount is #3968
 
 ### DEPLOY: docs/3966-step1-prefixes-shared
 

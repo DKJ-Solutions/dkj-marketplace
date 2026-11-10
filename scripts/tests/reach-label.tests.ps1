@@ -64,7 +64,7 @@ Write-Host "`n-- the labels-are-your-tracker exception --" -ForegroundColor Cyan
 # sentence is still true of every label but this one, and a prescription sitting only in RELEASES
 # would contradict it for a reader who never opens that page.
 $contributing = Get-Text 'CONTRIBUTING-portable.md'
-Assert-True ($contributing -match 'nothing in\s*\r?\n?this plugin reads either') `
+Assert-True ($contributing -match 'nothing in\s+this plugin reads your labels') `
     'CONTRIBUTING-portable.md still states the general rule'
 Assert-True ($contributing -match 'the reach label') `
     'CONTRIBUTING-portable.md names the reach label as the exception'
