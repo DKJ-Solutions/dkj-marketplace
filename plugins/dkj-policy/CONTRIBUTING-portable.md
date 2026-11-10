@@ -157,6 +157,10 @@ is missing (the four `prio-1`..`prio-4` rungs, `awaiting-recurrences`, `awaiting
 `awaiting-recurrences-first`), so adopting the convention costs one command instead of sixteen typed by hand.
 A session start says so in one line when any of them is missing or in a non-canonical colour
 (`triage-labels-sessioncheck`, #3882), so the gap shows before a sweep's `gh issue edit --add-label` fails on it.
+Where your `scripts/repo-config.ps1` answers `Get-TriageLabels` itself, that answer must still name every
+canonical label: a copy taken at adoption stops updating while the set does not, and `check-script-contract`
+reports each missing name as an `[ERROR]` (#3960). Labels of your own beside them, and your own colours and
+descriptions, stay yours. Deleting the function also works, because the built-in fallback is the canonical set.
 
 **A parking label goes on when the issue is filed, whichever one it is**
 ([#2796](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2796), October 4, 2026). The twelve

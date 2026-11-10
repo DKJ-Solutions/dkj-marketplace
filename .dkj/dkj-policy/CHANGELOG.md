@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**13 / 19 minor entries** <!-- pending-tally -->
+**14 / 20 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3960-triage-labels-drift · 20261110-223931Z
+
+`check-script-contract` now holds a consumer's own `Get-TriageLabels` to the canonical set. Every canonical
+label missing from that answer is an `[ERROR]` naming the missing labels and the repair. Extra labels and the
+consumer's own colours and descriptions stay silent, and a repo that does not define the function is not
+compared, because the built-in fallback is the set. Inbound #3960, measured in a consumer whose copy, taken at
+adoption, still named `needs-decision` and lacked `awaiting-decision-dev`: `adopt-triage-labels` and its
+session check prescribed the retired names, and a sweep there would have failed on its first park.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A consumer whose `scripts/repo-config.ps1` carries an older copy of `Get-TriageLabels` now gets an `[ERROR]`
+from `check-script-contract`, at session start and in its gate, until the copy is replaced with the
+blueprint's text or deleted. Repos that never copied it, or kept it current, notice nothing.
+
+**Score:** 3
+
+#### Pull Request
+
+check-script-contract reports canonical triage labels missing from a consumer's Get-TriageLabels
+
+Plugins: dkj-policy
+
+[PR #3967](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3967)
+
+---
 
 ### DEPLOY: fix/3962-park-reason-names-blocker · 20261110-221647Z
 

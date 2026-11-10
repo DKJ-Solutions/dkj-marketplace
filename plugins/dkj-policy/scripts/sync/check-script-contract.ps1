@@ -154,6 +154,14 @@
     prefix set cannot be enumerated (its table is not a $script:BranchPrefixTable) is told so rather than
     told it matches. Get-BranchTypes is compared too, in order.
 
+    AND SINCE #3960 (Dave, November 10, 2026) IT HOLDS A CONSUMER'S Get-TriageLabels TO THE CANONICAL SET.
+    That seam is 'copy', so its value is the shared set, yet a consumer's copy froze at adoption and went
+    on prescribing retired label names. Every canonical label MISSING from the consumer's answer is an
+    [ERROR]; extra labels and other colours or descriptions are the consumer's own and stay silent. Same
+    guards as the branch table: names evaluated from the blueprint, never matched as text; silent in the
+    source repo and where the consumer does not define the function (the built-in fallback IS the set);
+    an unreadable blueprint or a throwing function is one [INFO] line.
+
     Soft/read-only, mirroring check-roster-sync.ps1: this script changes nothing, in any repo.
     [OK]/[INFO]/[ERROR] convention shared via check-report-lib.ps1 (issue #114).
 
@@ -372,6 +380,35 @@ function Get-SourceBranchBehaviour {
         })
     } catch { return $null } finally {
         Remove-Variable -Name BranchPrefixTable, BranchTypeOrder -Scope Script -ErrorAction SilentlyContinue
+    }
+}
+
+# --- The canonical triage labels, which a consumer's copied Get-TriageLabels must still carry (#3960) ---
+# Get-TriageLabels is a 'copy' seam: its value is the shared set, not the repo's own, yet a consumer's copy
+# froze at adoption. Measured in a consumer, November 10, 2026: its copy still named the retired
+# 'needs-decision' and 'awaiting-recurrence' and lacked 'awaiting-decision-dev', so adopt-triage-labels and
+# its session check told the session to create retired names, and a sweep there would have failed on its
+# first park. Dave chose the #3886 shape on #3960: a canonical label MISSING from the consumer's answer is
+# an [ERROR]; an extra label, another colour or another description stays the consumer's own (the
+# adopt-triage-labels suite, case 6, holds that override). Names only, evaluated rather than matched as
+# text. $null when the source's set cannot be had. The record text assigns $script:TriageLabels, which
+# lands in THIS script's scope and is removed for the same reason as the branch table above.
+function Get-SourceTriageLabelNames {
+    $bp = if ($BlueprintPathOverride) { $BlueprintPathOverride } else { Join-Path $PSScriptRoot '..\..\blueprint\config-blueprint.json' }
+    if (-not (Test-Path -LiteralPath $bp -PathType Leaf)) { return $null }
+    try {
+        $rec = @((Get-Content -LiteralPath $bp -Raw -Encoding UTF8 | ConvertFrom-Json).records |
+            Where-Object { $_.lib -eq 'scripts\repo-config.ps1' -and $_.function -eq 'Get-TriageLabels' -and $_.text })
+        if ($rec.Count -ne 1) { return $null }
+        $names = @(& {
+            Set-StrictMode -Off
+            . ([scriptblock]::Create($rec[0].text))
+            @(Get-TriageLabels) | ForEach-Object { [string]$_.Name }
+        } | Where-Object { $_ })
+        if ($names.Count -eq 0) { return $null }
+        return ,$names
+    } catch { return $null } finally {
+        Remove-Variable -Name TriageLabels -Scope Script -ErrorAction SilentlyContinue
     }
 }
 
@@ -597,6 +634,9 @@ foreach ($libRel in $contractLibs) {
     # that has something to compare.
     $comparing = ($libRel -eq 'scripts\lib\branch-info.ps1' -and -not $isSourceRepo)
     $sourceBranch = if ($comparing) { Get-SourceBranchBehaviour } else { $null }
+    # The same for the triage labels (#3960): only for repo-config.ps1, only outside the source repo.
+    $comparingTriage = ($libRel -eq 'scripts\repo-config.ps1' -and -not $isSourceRepo)
+    $sourceTriage = if ($comparingTriage) { Get-SourceTriageLabelNames } else { $null }
 
     # Dot-source + probe the consumer lib in a CHILD scope with StrictMode explicitly OFF -- the real
     # runtime callers this check models (open-pr.ps1, new-branch.ps1,
@@ -606,10 +646,10 @@ foreach ($libRel in $contractLibs) {
     # leaks into this script's own strict scope.
     $probe = & {
         Set-StrictMode -Off
-        $result = [pscustomobject]@{ Loaded = $true; Error = $null; Present = @{}; Table = $null; TableThrew = $false }
+        $result = [pscustomobject]@{ Loaded = $true; Error = $null; Present = @{}; Table = $null; TableThrew = $false; Triage = $null; TriageThrew = $false }
         # Nothing of the source's table may be in scope when the consumer's lib loads (see
         # Get-SourceBranchBehaviour): a consumer that does not assign its own would read it.
-        Remove-Variable -Name BranchPrefixTable, BranchTypeOrder -Scope Script -ErrorAction SilentlyContinue
+        Remove-Variable -Name BranchPrefixTable, BranchTypeOrder, TriageLabels -Scope Script -ErrorAction SilentlyContinue
         try {
             . $args[0]
         } catch {
@@ -627,8 +667,13 @@ foreach ($libRel in $contractLibs) {
             try { $result.Table = Get-BranchBehaviour -Prefixes @($args[2].Entries | ForEach-Object { ($_ -split '=')[0] }) }
             catch { $result.TableThrew = $true }
         }
+        # The triage labels (#3960), the same way: a consumer function called, inside its own try.
+        if ($args[3] -and $result.Present['Get-TriageLabels']) {
+            try { $result.Triage = @(@(Get-TriageLabels) | ForEach-Object { [string]$_.Name }) }
+            catch { $result.TriageThrew = $true }
+        }
         return $result
-    } $libPath (@($records.Function)) $sourceBranch
+    } $libPath (@($records.Function)) $sourceBranch $sourceTriage
 
     if (-not $probe.Loaded) {
         foreach ($r in $records) {
@@ -670,6 +715,29 @@ foreach ($libRel in $contractLibs) {
                 "not be listed -- it keeps no `$script:BranchPrefixTable -- so a prefix the source does not have would go unseen. Nothing is claimed beyond that.")
         } else {
             Write-Ok "the branch-prefix table in $libRel matches the source's."
+        }
+    }
+
+    # Only where the consumer answers the seam: an absent Get-TriageLabels runs on the built-in fallback,
+    # which IS the canonical set, and its per-record [INFO] below already says so.
+    if ($comparingTriage -and $probe.Present['Get-TriageLabels']) {
+        if ($null -eq $sourceTriage) {
+            Write-Info "the triage labels in $libRel were not compared with the canonical set: the blueprint that carries it is missing or unreadable here, so nothing is claimed either way."
+        } elseif ($probe.TriageThrew) {
+            Write-Info "the triage labels in $libRel could not be compared with the canonical set: Get-TriageLabels raised an error. Its message is not repeated here -- it is text this repo did not write."
+        } else {
+            # Every name echoed comes from the source's set, never from the consumer's answer.
+            $missingTriage = @($sourceTriage | Where-Object { @($probe.Triage) -notcontains $_ })
+            if ($missingTriage.Count -gt 0) {
+                Write-Failure ("Get-TriageLabels in $libRel lacks $($missingTriage.Count) of the $($sourceTriage.Count) canonical triage labels: " +
+                    ($missingTriage -join ', ') + ". It is a 'copy' seam, so the shared set is its whole point, and this copy has fallen behind it: " +
+                    "adopt-triage-labels and its session check read it and prescribe this repo's stale names, while the sweeps park with the canonical ones (#3960). " +
+                    "Repair: replace the function with the text of its record in the plugin's blueprint (blueprint/config-blueprint.json; adopt-config " +
+                    "places a record only where its function is absent, so it will not overwrite yours), or delete it and let the built-in fallback answer. " +
+                    "Labels of your own beside the canonical ones, and your own colours and descriptions, are fine and stay.")
+            } else {
+                Write-Ok "Get-TriageLabels in $libRel carries every canonical triage label."
+            }
         }
     }
 
