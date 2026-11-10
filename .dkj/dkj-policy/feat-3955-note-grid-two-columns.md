@@ -39,19 +39,38 @@
 
 ### PLAN
 
+Inbound #3955 (the owner, November 10, 2026, from smartwatchbanden's v3.0.0 page): three note cards per row
+leave about 14rem of text per cell inside the 52rem wrap, five words a line. Measured at the source: the
+template's `.note-grid` rule is `minmax(max(14rem, (100% - 2 * gap) / 3), 1fr)`, as reported. This revises
+the October 27, 2026 three-column decision at the owner's own request.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `.note-grid` stops at two columns: `minmax(max(20rem, (100% - gap) / 2), 1fr)`, about 22rem of text
+  per cell on desktop, one column on a phone; the comment above it says why. Both byte-identical copies
+  of `release-notes-page-template.html` (`scripts/release/` and the plugin mirror) carry it
 
 ### TEST
 
+- [x] page rebuilt locally (`build-release-notes-page.ps1`); Admin's `/dev/release-notes/v6.12.0` serves
+  the two-column rule (200)
+- [ ] the owner looks at the page and approves the layout
+
 ### DEPLOY: feat/3955-note-grid-two-columns
 
-**Score:**
+The release-notes page lays a section's note cards out two per row at most instead of three, so a card's
+text gets about 22rem of line width on desktop instead of about 14rem, and a phone still gets one column
+([#3955](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3955)). A consumer's page takes it at
+its next `release-notes-page` run after the plugin release.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A reader of a published release-notes page gets notes that read as paragraphs rather than five-word
+columns.
+
+**Score:** 3
 
 #### Pull Request
 
