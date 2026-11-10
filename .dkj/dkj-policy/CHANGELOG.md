@@ -2,7 +2,37 @@
 
 ## [Unreleased]
 
-**12 / 18 minor entries** <!-- pending-tally -->
+**13 / 19 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3962-park-reason-names-blocker · 20261110-221647Z
+
+`claim-issue -Tag -Park` now refuses, with exit 1 and nothing written, a reason whose "waiting on" clause
+names no blocker where the label needs one: `#<n>` or a branch for `awaiting-pull`, `owner/repo#n` for
+`awaiting-pull-external`, `owner/repo` for `awaiting-release-external`. The check runs the comment it
+would post through the same parser `-Candidates` reads `stale-park` with, so the write side and the read
+side cannot drift. Inbound #3962, measured November 10, 2026 in DKJ-Solutions/dkj-recipes: seven issues
+were parked `awaiting-pull` with `waiting on . Role-play tasks run in order ...`, built from an empty
+variable, and could never clear by themselves until a later sweep reparked them by hand.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A sweep in a consumer that parks on another issue's pull request gets a park that clears by itself, or a
+refusal naming the form to use, instead of an issue every later sweep skips for good. It prevents a
+failure already measured once, and nobody notices unless a reason comes through without its blocker.
+
+**Score:** 2
+
+#### Pull Request
+
+claim-issue -Park refuses an awaiting-pull reason that names no blocker
+
+Plugins: dkj-policy
+
+[PR #3965](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3965)
+
+---
 
 ### DEPLOY: fix/3959-plan-goal-label-probe · 20261110-220451Z
 
