@@ -213,6 +213,18 @@ Assert-Equal $null (Get-PreviewPathRefusal -Path 'products/x') '...nor a relativ
 Assert-Equal $null (Get-PreviewPathRefusal -Path '/') '...nor the default home page'
 
 Write-Host ""
+Write-Host "Get-TrunkPreviewRefusal -- the trunk is previewable only under promote-then-cut (inbound #3950)" -ForegroundColor Cyan
+Assert-Equal $null (Get-TrunkPreviewRefusal -Branch 'fix/x' -Trunk 'main' -DeployBranch '') 'off the trunk nothing is refused'
+Assert-Equal $null (Get-TrunkPreviewRefusal -Branch 'fix/x' -Trunk 'main' -DeployBranch 'live') '...whatever the deploy branch'
+$tr = Get-TrunkPreviewRefusal -Branch 'main' -Trunk 'main' -DeployBranch ''
+Assert-Match $tr 'You are on main' 'on the trunk with no deploy branch (push-then-cut) it still refuses'
+Assert-Match $tr 'Get-ShopifyLiveDeployBranch' '...and names the seam that lifts the refusal'
+Assert-Equal $null (Get-TrunkPreviewRefusal -Branch 'main' -Trunk 'main' -DeployBranch 'live') 'live deploying from its own branch (promote-then-cut) allows the trunk -- the measured case'
+Assert-Equal $null (Get-TrunkPreviewRefusal -Branch 'develop' -Trunk 'develop' -DeployBranch ' live ') '...with a non-default trunk and a padded answer'
+Assert-Match (Get-TrunkPreviewRefusal -Branch 'main' -Trunk 'main' -DeployBranch 'main') 'names the trunk itself' 'a deploy branch naming the trunk is a misconfiguration and does not lift it'
+Assert-Equal $null (Get-TrunkPreviewRefusal -Branch 'main' -Trunk '' -DeployBranch '') 'an unknown trunk refuses nothing here -- the caller defaults it to main first'
+
+Write-Host ""
 Write-Host "Get-PreviewHandoverNote -- a list of URLs is not a handover (inbound #1873)" -ForegroundColor Cyan
 # THE COUNT IS THE TRIGGER, and the boundary is the whole assert: one URL in a terminal genuinely is a
 # usable handover, so a single-market repo must see nothing new at all. Two is where a reader has to
@@ -438,6 +450,9 @@ try {
     $out = Invoke-PushSeam -Config 'function Get-ShopifyStoreDomain { ''domain.myshopify.com'' }'
     Assert-True (($out -notmatch 'No store domain') -and ($out -match 'You are on main')) `
         'store seam: Get-ShopifyStoreDomain alone still answers it, so a consumer answering only that one keeps working'
+    $out = Invoke-PushSeam -Config 'function Get-ShopifyThemeEstateStore { ''estate.myshopify.com'' }; function Get-ShopifyLiveDeployBranch { ''main'' }'
+    Assert-True ($out -match 'names the trunk itself') `
+        'trunk seam (#3950): the script reads Get-ShopifyLiveDeployBranch -- a deploy branch naming the trunk refuses with its own sentence'
     $out = Invoke-PushSeam -Config ''
     Assert-True (($out -match 'No store domain') -and ($out -match 'Get-ShopifyThemeEstateStore')) `
         'store seam: with neither answered it refuses, naming Get-ShopifyThemeEstateStore'

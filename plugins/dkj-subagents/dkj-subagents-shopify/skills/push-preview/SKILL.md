@@ -37,8 +37,10 @@ turns ordinary progress into an error under PowerShell's `Stop` preference.
 
 ## What it does, in order
 
-1. **Refuses on the trunk.** A preview theme belongs to a branch. The trunk's name comes from
-   `Get-TrunkBranchName` where the repo answers it, `main` otherwise.
+1. **Refuses on the trunk -- unless live deploys from a branch of its own.** A preview theme belongs to a
+   branch. The trunk's name comes from `Get-TrunkBranchName` where the repo answers it, `main` otherwise.
+   See [A preview of the trunk](#a-preview-of-the-trunk-promote-then-cut-3950) for the one case where
+   the trunk is allowed.
 2. **Decides which theme to push to**, in four steps and in this order:
    1. an explicit `-ThemeId`;
    2. the id remembered in the branch's own git config (`branch.<name>.previewTheme`), written by an
@@ -97,6 +99,24 @@ preview:
   A dropped template the branch does not touch is missing from the preview, so the preview renders that
   template differently from live.
 
+## A preview of the trunk: promote-then-cut (#3950)
+
+**Under push-then-cut the trunk is refused**, for the reason #1965 recorded: the trunk is what goes live
+at the cut, so its preview only copies what live is about to show, and spends a slot on a finite estate
+doing it.
+
+**Where `Get-ShopifyLiveDeployBranch` names a branch other than the trunk, the trunk is allowed.** Live
+then deploys from that branch through a promotion PR, so between promotions the trunk runs ahead of live
+-- measured in the consumer that filed #3950 at 84 commits and 522 theme files -- and its preview is the
+release candidate the owner judges before giving the word to promote. A deploy branch that names the
+trunk itself is a misconfiguration and keeps the refusal.
+
+The trunk preview takes the same reserved name as any branch's (`<prefix><trunk>`, e.g. `dkj-main`), so
+`theme-lifecycle`'s sweep recognises it as this repo's own and spares it for as long as the trunk exists:
+**one standing slot**, remembered in `branch.<trunk>.previewTheme` and refreshed by each push. It was
+copied from live when it was created, so the drift note above applies to it more than to any branch
+preview -- re-create it when the comparison with live is what is being judged.
+
 ## Parameters
 
 | parameter | what it does |
@@ -117,6 +137,7 @@ running none at all gets identical behaviour.
 | `Get-ShopifyThemeEstateStore` | **required**, or `Get-ShopifyStoreDomain` in its place | it refuses rather than guessing which store to push to. `-Store` gets you through one run; answering the seam is the durable fix. It is the estate seam `backup-live-theme` and `archive-theme` read, and the one to answer: `Get-ShopifyStoreDomain` is read only where it is unanswered, because answering that one also opens `sync-main`'s bare pull-request route ([#2862](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2862)). |
 | `Get-ShopifyLiveThemeId` | recommended | this script can then no longer recognise the live theme **by id**, so one of the two refusals is gone -- **and a new preview has no live theme to be copied from**, so it falls back to a plain `theme push --unpublished` and lacks every per-market settings file (#2348; the notice says so). It warns and continues rather than blocking, because a preview push is aimed at an unpublished theme and the guard hook still stands -- unlike `sync-main`, which reads *from* live and therefore cannot work at all without it. |
 | `Get-TrunkBranchName` | optional | the trunk check falls back to `main`. |
+| `Get-ShopifyLiveDeployBranch` | optional | the trunk stays refused. Answered with a branch other than the trunk, a trunk preview is allowed ([#3950](#a-preview-of-the-trunk-promote-then-cut-3950)). |
 | `Get-BranchInfo` | optional | the theme name falls back to the branch with its slashes replaced by dashes -- which is what `SafeName` answers anyway, so a repo without the seam loses nothing. |
 | `Get-ShopifyPreviewUrls` | optional | you get **one** preview URL, on the store's own domain. Answer it in a multi-market store to get one per market or locale. |
 

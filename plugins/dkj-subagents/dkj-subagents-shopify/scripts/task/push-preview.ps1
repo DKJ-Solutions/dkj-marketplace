@@ -5,8 +5,9 @@
 .DESCRIPTION
     Four steps decide the target theme, in this order: an explicit -ThemeId, else the id remembered in
     the branch's own git config (branch.<name>.previewTheme), else a name lookup through the theme list,
-    and else THIS SCRIPT CREATES THE THEME. Guardrails: it refuses on the trunk and it refuses the live
-    theme outright.
+    and else THIS SCRIPT CREATES THE THEME. Guardrails: it refuses on the trunk -- except where live
+    deploys from a branch of its own (Get-ShopifyLiveDeployBranch), where the trunk is the release
+    candidate (inbound #3950) -- and it refuses the live theme outright.
 
     THE LAZY CREATION IS THE POINT, and it is a measured rule rather than a convenience (Dave,
     2026-08-19). A preview theme used to be created for EVERY branch at the moment the branch was made --
@@ -178,7 +179,7 @@ $branch = "$(git rev-parse --abbrev-ref HEAD)".Trim()
 # further down, so there is one read of each of the consumer's files per run.
 $seam = & {
     Set-StrictMode -Off
-    $answers = @{ LiveThemeId = ''; StoreDomain = ''; Trunk = ''; ThemeName = ''; HasPreviewUrls = $false }
+    $answers = @{ LiveThemeId = ''; StoreDomain = ''; Trunk = ''; DeployBranch = ''; ThemeName = ''; HasPreviewUrls = $false }
     $root = $args[0]
     $branchName = $args[1]
     $configPath = Join-Path $root 'scripts\repo-config.ps1'
@@ -194,6 +195,7 @@ $seam = & {
     if (Test-FunctionDefined 'Get-ShopifyThemeEstateStore') { $answers.StoreDomain = ([string](Get-ShopifyThemeEstateStore)).Trim() }
     if (-not $answers.StoreDomain -and (Test-FunctionDefined 'Get-ShopifyStoreDomain')) { $answers.StoreDomain = [string](Get-ShopifyStoreDomain) }
     if (Test-FunctionDefined 'Get-TrunkBranchName') { $answers.Trunk       = [string](Get-TrunkBranchName) }
+    if (Test-FunctionDefined 'Get-ShopifyLiveDeployBranch') { $answers.DeployBranch = [string](Get-ShopifyLiveDeployBranch) }
     if (Test-FunctionDefined 'Get-BranchInfo') {
         try { $answers.ThemeName = [string]((Get-BranchInfo -Branch $branchName).SafeName) } catch { }
     }
@@ -225,9 +227,19 @@ if ($liveId -notmatch '^\d+$') {
         "the seam to get the second refusal back (see the adopt-shopify-floor skill).")
 }
 
-if ($branch -eq $trunk) {
-    Write-Host "You are on $trunk. A preview theme belongs to a branch -- create one first." -ForegroundColor Red
+# THE TRUNK (inbound #3950): refused under push-then-cut, allowed where live deploys from a branch of its
+# own, because there the trunk is the release candidate and runs ahead of live. The verdict is the lib's.
+$deployBranch = ([string]$seam.DeployBranch).Trim()
+$trunkRefusal = Get-TrunkPreviewRefusal -Branch $branch -Trunk $trunk -DeployBranch $deployBranch
+if ($trunkRefusal) {
+    Write-Host $trunkRefusal -ForegroundColor Red
     exit 1
+}
+if ($branch -eq $trunk) {
+    # Same reserved namespace as any branch ('<prefix><trunk>'), so the sweep recognises it as this repo's
+    # and spares it for as long as the trunk exists -- one standing slot, refreshed by each push.
+    Write-Host ("On the trunk ($trunk), with live deploying from '$deployBranch': this previews the release " +
+        "candidate, ahead of live.") -ForegroundColor Yellow
 }
 
 # THE FLATTENED NAME, from the repo's own seam where it has one. Shopify rejects a theme name containing

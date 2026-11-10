@@ -457,6 +457,45 @@ function Get-PreviewPathRefusal {
         "MSYS_NO_PATHCONV=1. Nothing was pushed.")
 }
 
+function Get-TrunkPreviewRefusal {
+    <# The refusal for a preview pushed from the trunk, or $null where the push may go ahead.
+
+       OFF THE TRUNK there is nothing to refuse: a preview theme belongs to a branch.
+
+       ON THE TRUNK THE ANSWER DEPENDS ON HOW LIVE IS FED (inbound #3950). The one recorded reason for the
+       refusal is #1965's: under push-then-cut the trunk is pushed live at the cut, so a trunk preview is a
+       theme slot spent on a copy of what live is about to show. That holds only where the trunk itself is
+       what goes live. Where Get-ShopifyLiveDeployBranch names a branch of its own -- a Git-connected live
+       theme fed by a promotion PR from the trunk (promote-then-cut) -- the trunk runs ahead of live between
+       promotions (measured in the consumer that filed #3950: 84 commits, 522 theme files), and a preview of
+       it is exactly the release candidate the owner judges before giving the word to promote. So the
+       refusal lifts there, and only there.
+
+       A DEPLOY BRANCH THAT NAMES THE TRUNK ITSELF is a misconfiguration rather than a promotion model --
+       sync-main refuses the same answer -- so it does not lift the refusal.
+
+       Pure: the caller reads the seams and the checked-out branch. #>
+    param(
+        [AllowEmptyString()][string]$Branch,
+        [AllowEmptyString()][string]$Trunk,
+        [AllowEmptyString()][string]$DeployBranch = ''
+    )
+    $b = "$Branch".Trim()
+    $t = "$Trunk".Trim()
+    $d = "$DeployBranch".Trim()
+    if (-not $t -or $b -ne $t) { return $null }
+    if ($d -and $d -ne $t) { return $null }
+    if ($d -eq $t) {
+        return ("You are on $t, and Get-ShopifyLiveDeployBranch names the trunk itself -- it should name the " +
+            "branch the live theme is connected to. A trunk preview is allowed only where live deploys from " +
+            "a branch of its own. Nothing was pushed.")
+    }
+    return ("You are on $t. A preview theme belongs to a branch -- create one first. Under push-then-cut the " +
+        "trunk is what goes live at the cut, so a trunk preview would only copy what live is about to show. " +
+        "Where the live theme deploys from a branch of its own (Get-ShopifyLiveDeployBranch), the trunk runs " +
+        "ahead of live and a trunk preview is allowed (#3950). Nothing was pushed.")
+}
+
 function Get-PreviewHandoverNote {
     <# The closing note a MULTI-URL preview push prints under its list -- inbound #1873.
 
