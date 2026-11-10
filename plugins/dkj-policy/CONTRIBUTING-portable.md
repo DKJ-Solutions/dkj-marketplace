@@ -148,10 +148,14 @@ the branch stays step 2's.
 
 **Whether your issue labels line up with your branch prefixes is decided here rather than at step 2.** An
 issue whose label already names the prefix its branch will get reads as work; one that does not is
-classified twice. Your prefixes are the table every DKJ repo shares (step 2, #3886), and your labels are
-your tracker's — **nothing in this plugin reads your labels**, so that alignment is a convention you keep
-rather than one a gate holds you to.
-Priority is the same kind of label — nothing here reads it either — and `task/adopt-triage-labels.ps1`
+classified twice. Your prefixes are the table every DKJ repo shares (step 2, #3886), and the rest of your
+labels are your tracker's — **nothing in this plugin reads your own labels**, so that alignment is a
+convention you keep rather than one a gate holds you to.
+**Three sets are the workflow's, not your own, and the plugin names them** (#3968): the PR label each
+branch prefix maps to, which `open-pr` applies (step 2); the canonical triage labels below, whose
+`awaiting-*` half `claim-issue` reads to skip a parked issue and `-Park` writes; and the reach label
+(below).
+Priority is one of those triage labels, but nothing here decides anything on it, and `task/adopt-triage-labels.ps1`
 prints (never creates) a `gh label create` line for whichever of the canonical triage labels your tracker
 is missing (the four `prio-1`..`prio-4` rungs, `awaiting-recurrences`, `awaiting-decision-dev`, `awaiting-decision-client`, `awaiting-review-dev`, `awaiting-review-client`, `awaiting-pull`, `awaiting-pull-external`, `awaiting-action-external`, `awaiting-action-dev`, `awaiting-release`, `awaiting-release-external` and
 `awaiting-recurrences-first`), so adopting the convention costs one command instead of sixteen typed by hand.
@@ -398,9 +402,9 @@ run. It is a new label, so no former name is matched for it.
   comment ([#3572](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3572)). It is a new label,
   so no former name is matched for it.
 
-**Exactly one label is the exception, and it is the only one this workflow prescribes: the reach label.**
-An issue that will land above tier 0 carries it, and `minor` is its default name. It is prescribed where
-your other labels are not, because it is not a free-standing convention: it is
+**The reach label is the third of the workflow's own sets, and the only one with an axis of its own.**
+An issue that will land above tier 0 carries it, and `minor` is its default name. It is prescribed beside
+the triage and PR labels rather than among them, because it is not a free-standing convention: it is
 [the tier model](RELEASES-portable.md#the-same-scale-on-an-issue--the-reach-label) — the scale your repo
 already answers on every changelog entry it writes, and the one that already decides patch versus minor —
 read one step earlier, on the issue instead of on the entry. `Get-ReachLabel` states the string GitHub

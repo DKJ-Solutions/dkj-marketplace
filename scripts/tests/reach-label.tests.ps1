@@ -60,12 +60,16 @@ Assert-True ($releases -match '(?s)\| tier 0 \| \*\(none\)\*') `
 # --- the exception is declared where the opposite rule is stated ---------------------------------
 Write-Host "`n-- the labels-are-your-tracker exception --" -ForegroundColor Cyan
 
-# CONTRIBUTING-portable.md tells a consumer that nothing in this plugin reads their labels. That
-# sentence is still true of every label but this one, and a prescription sitting only in RELEASES
-# would contradict it for a reader who never opens that page.
+# CONTRIBUTING-portable.md tells a consumer that nothing in this plugin reads their OWN labels, and
+# names the workflow's three sets beside it -- the PR labels, the triage labels and this one (#3968:
+# the rule once said "your labels" and named only the reach label, while claim-issue read the
+# awaiting-* set). A prescription sitting only in RELEASES would contradict it for a reader who never
+# opens that page.
 $contributing = Get-Text 'CONTRIBUTING-portable.md'
-Assert-True ($contributing -match 'nothing in\s+this plugin reads your labels') `
+Assert-True ($contributing -match 'nothing in\s+this plugin reads your own labels') `
     'CONTRIBUTING-portable.md still states the general rule'
+Assert-True ($contributing -match '(?s)Three sets are the workflow''s.*?PR label.*?triage labels.*?reach label') `
+    'and names the three sets the plugin itself reads or prescribes'
 Assert-True ($contributing -match 'the reach label') `
     'CONTRIBUTING-portable.md names the reach label as the exception'
 Assert-True ($contributing -match 'RELEASES-portable\.md#the-same-scale-on-an-issue') `

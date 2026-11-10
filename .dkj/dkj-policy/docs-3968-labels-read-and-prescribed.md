@@ -39,19 +39,36 @@
 
 ### PLAN
 
+#3968: two sentences in `CONTRIBUTING-portable.md` said the plugin reads none of a consumer's labels and
+prescribes only the reach label, while `claim-issue` reads and writes the `awaiting-*` set and `open-pr`
+applies the prefix table's PR labels. Verified against `Select-ParkingLabels`, `-Park` and `branch-info.ps1`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] step 1 says "your own labels" and names the workflow's three sets: PR labels, triage labels, reach label
+- [x] the reach-label paragraph calls it the third set, not "exactly one exception"
+- [x] `reach-label.tests.ps1` pin repointed to the new wording, plus an assert on the three sets
 
 ### TEST
 
+- [x] `reach-label.tests.ps1` alone: 41 asserts pass
+- [x] no other copy of the old wording in the tree (archived release notes aside)
+
 ### DEPLOY: docs/3968-labels-read-and-prescribed
 
-**Score:**
+`CONTRIBUTING-portable.md` stopped saying the plugin reads none of your labels but the reach label, and now
+names the three sets it does read or prescribe (#3968).
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+The page that tells a consumer which labels are theirs now lists the ones the workflow owns: the PR label
+per branch prefix, the triage labels (whose `awaiting-*` half the sweep reads to skip parked issues), and
+the reach label. It prevents a consumer from renaming or dropping an `awaiting-*` label on the old page's
+word and then having a sweep claim a parked issue.
+
+**Score:** 1
 
 #### Pull Request
 
