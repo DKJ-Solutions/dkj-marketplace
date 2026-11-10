@@ -216,7 +216,7 @@ $trunk = if (([string]$seam.Trunk).Trim()) { ([string]$seam.Trunk).Trim() } else
 # composed or recognised; an answer the lib refuses stops the run, because a theme created under a prefix
 # the sweep cannot trust is an orphan on a finite estate.
 try { Set-RepoThemePrefix -Prefix ([string]$seam.ThemePrefix) } catch {
-    Write-Host "REFUSED: $($_.Exception.Message) Nothing was changed." -ForegroundColor Red
+    Write-Host "REFUSED: $(Format-SafeProseToken -Value $_.Exception.Message) Nothing was changed." -ForegroundColor Red
     exit 1
 }
 
