@@ -2,7 +2,38 @@
 
 ## [Unreleased]
 
-**10 / 16 minor entries** <!-- pending-tally -->
+**11 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3958-owner-look-answers-pr-box · 20261110-214811Z
+
+`open-pr` and `ship-pr` take `-OwnerLook "<answer>"`, the owner's recorded look at a visible result. A
+repo whose PR template has a box for that look names it with the optional seam `Get-PrOwnerLookPattern`
+in `scripts/repo-config.ps1`, and `open-pr` ticks that box and writes the answer after it, on a fresh PR
+and on one already open. `issues-sweep-reviews` (step 4) and `issues-sweep` (step 6) now pass the
+approval they recorded, with the link to the approval comment. Inbound #3958, measured on
+BWJ-Development/xoxowildhearts#499: the approval reached the issue and the branch document but never the
+PR, so the consumer's Preview check, which requires one ticked box, went red on every approved ship.
+Without the seam nothing changes except a one-line note that the box was not written.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A consumer whose template carries a Preview box can now ship an approved visible result without editing
+the PR body by hand: define `Get-PrOwnerLookPattern` (a regex for the unticked box line) once, and every
+`issues-sweep-reviews` ship answers it. Repos without such a box notice nothing.
+
+**Score:** 3
+
+#### Pull Request
+
+The owner's approval answers the PR template's owner-look box
+
+Plugins: dkj-policy, dkj-subagents-alpha
+
+[PR #3963](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3963)
+
+---
 
 ### DEPLOY: feat/3955-note-grid-two-columns · 20261110-120559Z
 
