@@ -1976,6 +1976,21 @@ $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Pa
 Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'the sweeps skip') 'run: so does an awaiting-* label the sweeps do not skip'
 $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-decision-dev 2>&1 | Out-String
 Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'takes an awaiting-\* label') 'run: and a park without a reason'
+
+Write-Host ''
+# --- a readable wait names its blocker (#3962) ---
+Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-pull' -Reason '#123''s pull request -- the tasks run in order') 'awaiting-pull: a #<n> at the start of the clause passes'
+Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-pull' -Reason 'feat/3126-x to land') 'awaiting-pull: so does a branch'
+Assert-True (-not (Test-ParkReasonNamesBlocker -Label 'awaiting-pull' -Reason '. Role-play tasks run in order and every earlier step is itself parked.')) 'awaiting-pull: the measured dkj-recipes reason, built from an empty variable, is refused'
+Assert-True (-not (Test-ParkReasonNamesBlocker -Label 'awaiting-pull' -Reason 'the earlier step -- see #45')) 'awaiting-pull: a number after the clause ends is not read, so it is refused as the read side would'
+Assert-True (-not (Test-ParkReasonNamesBlocker -Label 'awaiting-pull' -Reason '   ')) 'awaiting-pull: a blank reason is refused'
+Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-pull-external' -Reason 'DKJ-Solutions/dkj-lifehub#577 to land') 'awaiting-pull-external: owner/repo#n passes'
+Assert-True (-not (Test-ParkReasonNamesBlocker -Label 'awaiting-pull-external' -Reason '#577 in the lifehub')) 'awaiting-pull-external: a bare #n is not enough'
+Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-release-external' -Reason 'DKJ-Solutions/dkj-lifehub''s next release') 'awaiting-release-external: owner/repo passes'
+Assert-True (-not (Test-ParkReasonNamesBlocker -Label 'awaiting-release-external' -Reason 'the lifehub''s next release')) 'awaiting-release-external: a repo named in prose is refused'
+Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-decision-dev' -Reason 'the owner''s choice of X') 'a wait on a person needs no blocker'
+$out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-pull -SkipLabel awaiting-pull -Reason '. the earlier steps' 2>&1 | Out-String
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'needs -Reason to name its blocker as #<n> or a branch' -and $out -match 'nothing was read or written') 'run: an awaiting-pull park with no blocker refuses before anything is read'
 if ($script:fail -gt 0) {
     Write-Host "claim-issue.tests: $($script:pass) passed, $($script:fail) FAILED" -ForegroundColor Red
     exit 1
