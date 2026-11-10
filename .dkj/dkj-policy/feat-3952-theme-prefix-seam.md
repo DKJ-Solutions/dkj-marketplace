@@ -39,19 +39,45 @@
 
 ### PLAN
 
+#3952: the reserved theme prefix `dkj-` was hard-coded and written onto every theme a BWJ store's scripts
+create, while those repos only consume the plugins. Dave chose `smartwatchbanden-main` (November 10,
+2026). The prefix becomes the optional seam `Get-ShopifyThemePrefix`, default `dkj-`, with `dkj-` kept as
+a legacy prefix for ownership, the sweep's spare sets, rotation and push-preview's lookup.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `theme-lifecycle-rules.ps1` (source + mirror): `Set-RepoThemePrefix`, `Get-ThemePrefixRefusal`,
+  legacy-aware ownership and backup test, `Get-RepoPreviewThemeNames`, `-Prefix` on the name builder
+- [x] `push-preview`, `sweep-preview-themes`, `backup-live-theme` (source + mirror) read the seam and
+  refuse an unusable answer; push-preview looks up legacy names, the sweep spares them
+- [x] README, `theme-lifecycle` and `push-preview` skill pages: the seam and the move
 
 ### TEST
 
+- [x] `theme-lifecycle-rules.tests.ps1`: validation, the store-prefixed names, legacy ownership and
+  rotation, bounding under the longer prefix, the sweep sparing a living branch's legacy preview (202 green)
+- [x] `push-preview.tests.ps1` and `stranded-sweep-gate.tests.ps1` still green
+- [ ] Victor's review of the destructive path
+
 ### DEPLOY: feat/3952-theme-prefix-seam
 
-**Score:**
+A Shopify store repo can name the themes the plugin creates after itself: answer `Get-ShopifyThemePrefix`
+in `scripts/repo-config.ps1` (e.g. `'smartwatchbanden-'`), and previews and backups are named
+`smartwatchbanden-main`, `smartwatchbanden-fix-x`, `smartwatchbanden-backup-<stamp>` instead of `dkj-...`
+([#3952](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3952)). Unanswered, nothing changes.
+After the move `dkj-` themes stay the repo's own: the sweep still spares a living branch's preview and
+retires a gone one's, rotation still retires an old backup, and `push-preview` finds a branch's existing
+preview instead of creating a second.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A store maintainer sees the store's own name on its preview and backup themes instead of a vendor
+label, by answering one seam, with no cleanup of the themes already there.
+
+**Score:** 3
 
 #### Pull Request
 
+dkj-subagents-shopify: the reserved theme prefix becomes a per-repo seam
