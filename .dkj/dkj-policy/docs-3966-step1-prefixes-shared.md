@@ -39,19 +39,32 @@
 
 ### PLAN
 
+Issue #3966: step 1 of `CONTRIBUTING-portable.md` still called branch prefixes the repo's own and unread by
+the plugin, contradicting step 2 since #3886 (one shared table, checked by `check-script-contract`).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Rewrite the step-1 sentence: the prefixes are the shared table (step 2, #3886), the issue labels are
+  the tracker's own, and no gate compares the two
 
 ### TEST
 
+- [x] Verified against step 2's #3886 paragraph; the gates run in `ship-pr`
+
 ### DEPLOY: docs/3966-step1-prefixes-shared
 
-**Score:**
+Step 1 of `CONTRIBUTING-portable.md` no longer says a repo's branch prefixes are its own and unread by the
+plugin. Since #3886 they are one table every DKJ repo shares, held by `check-script-contract`, as step 2
+already said; the sentence now says so, and keeps the point that no gate compares issue labels with those
+prefixes. Inbound #3966.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: a sentence corrected to match the rule a page already stated two sections later.
+
+**Score:** N/A
 
 #### Pull Request
 

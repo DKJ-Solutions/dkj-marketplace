@@ -148,8 +148,9 @@ the branch stays step 2's.
 
 **Whether your issue labels line up with your branch prefixes is decided here rather than at step 2.** An
 issue whose label already names the prefix its branch will get reads as work; one that does not is
-classified twice. Your prefixes are your own (step 2) and your labels are your tracker's — **nothing in
-this plugin reads either**, so that alignment is a convention you keep rather than one a gate holds you to.
+classified twice. Your prefixes are the table every DKJ repo shares (step 2, #3886), and your issue labels
+are your tracker's own — **no gate in this plugin compares the two**, so that alignment is a convention you
+keep rather than one a gate holds you to.
 Priority is the same kind of label — nothing here reads it either — and `task/adopt-triage-labels.ps1`
 prints (never creates) a `gh label create` line for whichever of the canonical triage labels your tracker
 is missing (the four `prio-1`..`prio-4` rungs, `awaiting-recurrences`, `awaiting-decision-dev`, `awaiting-decision-client`, `awaiting-review-dev`, `awaiting-review-client`, `awaiting-pull`, `awaiting-pull-external`, `awaiting-action-external`, `awaiting-action-dev`, `awaiting-release`, `awaiting-release-external` and
