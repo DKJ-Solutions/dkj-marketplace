@@ -2045,7 +2045,11 @@ foreach ($af in $auditFiles) {
 # headRefName and body; $isCap is `gh api -i repos/<repo>/issues/<n>` in place of `gh issue view`, because a
 # NAMED number may be a pull request. A named number's measured 404 is a definitive "not an issue here" and is
 # skipped; every other failure still THROWS, for #2586's reason.
-Assert-Equal 112 $boundedTotal 'the parser still counts 112 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
+# 112 -> 114 (#3961): claim-issue.ps1 -Candidates' $rv (`gh repo view`, only when repo-config names no repo) and
+# $gq (`gh api graphql`, the plan-goal tree), -Utf8 and at the shared network bound like the backlog read. Both
+# are judged only after Test-NativeExitMeasured and a POSITIVE `-eq 0`: an unread tree is said as a [goal scan]
+# line and leaves only the goal label's own skip, so a capture it could not judge never hides an issue.
+Assert-Equal 114 $boundedTotal 'the parser still counts 114 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
 Assert-Equal 0 $unguarded.Count `
     ('every bounded capture judged with a NEGATIVE exit-code test either asks Test-NativeExitMeasured/Get-NativeExitLabel about THAT capture or is exempt with a reason (#2081)' +
      $(if ($unguarded.Count) { ' -- unguarded: ' + ($unguarded -join ' | ') } else { '' }))

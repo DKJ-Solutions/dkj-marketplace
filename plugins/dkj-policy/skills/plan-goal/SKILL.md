@@ -65,6 +65,12 @@ first open task of the first open milestone. An open milestone with no task yet 
 down milestone #n"), so plan its tasks with the same skill. Name Now to the owner. If they want to start on it,
 it is an ordinary issue, so claim it and build it the way this repo builds any issue.
 
+**A sweep sees the same tree** ([`issues-sweep`](../issues-sweep/SKILL.md), #3961). Its candidate list reads
+the goal and each open milestone as `skipped` (containers), every task but Now as `skipped` (not yet Now),
+and an unplanned milestone as `skipped` too, because breaking it down needs the owner. So **Now is sweep
+work by default**. Where Now is a step only the owner can take (a conversation, a role-play, a choice), park
+it with its `awaiting-*` label, and the sweep skips it like any parked issue.
+
 ## What to know
 
 - **A closed milestone is done whole.** Its leftover open tasks no longer count as steps, and its bar

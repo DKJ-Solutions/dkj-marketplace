@@ -2717,6 +2717,69 @@ function Format-ClaimOpening {
     return " -- but read the $leading and $($pending[-1]) verdicts above before you start."
 }
 
+function Get-GoalTreeSkips {
+    <#
+        .SYNOPSIS
+            Which open issues of a plan-goal tree a sweep leaves alone, and why: a map of issue number to
+            reason, read from ConvertFrom-GoalsGraph's model (goals-lib.ps1).
+
+        .DESCRIPTION
+            A PLAN-GOAL TREE IS NOT A BACKLOG (#3961). Measured November 10, 2026 on a consumer: after
+            plan-goal filed one goal with 6 milestones and 24 tasks, -Candidates read all 31 as free, and
+            none of them was sweep work. So:
+
+            - THE GOAL AND ITS MILESTONES ARE CONTAINERS. A milestone is done once its tasks are, and the
+              Goals page reads both as progress bars; there is nothing in them to build.
+            - ONLY A GOAL'S NOW IS A STEP. Every later task depends on the ones before it, so it reads
+              'not yet Now' and names the Now it waits behind. Now itself is left out of the map, which is
+              what keeps it free: plan-goal's page says it is claimed and built like any issue.
+            - AN UNPLANNED MILESTONE IS A STEP FOR THE OWNER, NOT FOR A SWEEP. Breaking it down files issues
+              only on the owner's agreement to the tree, so even as Now it is skipped.
+            - A CLOSED MILESTONE'S LEFTOVER OPEN TASKS no longer count as steps (Get-GoalSteps), so they are
+              skipped with that reason rather than read as free.
+
+            Pure: the caller makes the one GraphQL read.
+
+        .PARAMETER Goals
+            ConvertFrom-GoalsGraph's output.
+
+        .OUTPUTS
+            A hashtable, issue number -> reason. Empty for no goals.
+    #>
+    param([AllowNull()][object[]]$Goals = @())
+
+    $skips = @{}
+    # ConvertFrom-GoalsGraph returns its array whole (a leading comma), so a caller's @() nests it once;
+    # the pipeline unrolls that level again, and a plain list passes through unchanged.
+    foreach ($g in @(@($Goals) | ForEach-Object { $_ } | Where-Object { $_ })) {
+        $gn = [int]$g.Number
+        $nowNumber = if ($g.Now) { [int]$g.Now.Item.Number } else { 0 }
+        $nowText = if ($nowNumber) { "goal #$gn's Now is #$nowNumber" } else { "goal #$gn has no open step" }
+        $skips[$gn] = "plan-goal container: goal #$gn is done once its milestones are"
+        foreach ($m in @(@($g.Milestones) | Where-Object { $_ })) {
+            $mn = [int]$m.Number
+            $tasks = @(@($m.Tasks) | Where-Object { $_ })
+            if (-not $m.Closed) {
+                if ($tasks.Count -eq 0) {
+                    $skips[$mn] = "plan-goal milestone of goal #${gn} with no tasks yet: breaking it down is the owner's step (plan-goal), not a sweep's"
+                } else {
+                    $skips[$mn] = "plan-goal container: milestone of goal #$gn, done once its tasks are"
+                }
+            }
+            foreach ($t in $tasks) {
+                if ($t.Closed) { continue }
+                $tn = [int]$t.Number
+                if ($m.Closed) {
+                    $skips[$tn] = "plan-goal task under closed milestone #$mn of goal #${gn}: no longer a step"
+                } elseif ($tn -ne $nowNumber) {
+                    $skips[$tn] = "plan-goal task, not yet Now: $nowText"
+                }
+            }
+        }
+    }
+    return $skips
+}
+
 function Get-SweepCandidates {
     <#
         .SYNOPSIS
@@ -2765,6 +2828,14 @@ function Get-SweepCandidates {
             the only way to be on an issue. A marker still wins over a branch -- 'mine' and 'held' are the
             stronger statement, and a take-over reads the branch for itself.
 
+        .PARAMETER GoalSkips
+            Get-GoalTreeSkips' map (#3961): the issues of a plan-goal tree that are not sweep work, each
+            read 'skipped' with its reason. An issue labelled -GoalLabel reads as a container even when the
+            map does not name it, because the label alone says so and costs no read.
+
+        .PARAMETER GoalLabel
+            The label that makes an issue a goal (goals-lib's Get-GoalLabel). Default 'goal'.
+
         .PARAMETER NowUnix
             The current time as unix seconds, for the branch's age. Defaults to now; a test pins it.
 
@@ -2780,9 +2851,12 @@ function Get-SweepCandidates {
         [AllowNull()][string[]]$SkipLabel = @(),
         [AllowNull()][int[]]$SkipIssue = @(),
         [AllowNull()][object[]]$Branches = @(),
+        [AllowNull()][hashtable]$GoalSkips = @{},
+        [string]$GoalLabel = 'goal',
         [long]$NowUnix = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
     )
 
+    if ($null -eq $GoalSkips) { $GoalSkips = @{} }
     if (-not $Json -or -not $Json.Trim()) { return @() }
     try { $parsed = $Json | ConvertFrom-Json } catch { return @() }
     if ($null -eq $parsed) { return @() }
@@ -2812,6 +2886,12 @@ function Get-SweepCandidates {
                 $reason = "label '$($hit[0])'"
                 $conflict = Format-ParkingLabelConflict -Labels $hit
                 if ($conflict) { $reason = "$reason; $conflict" }
+            } elseif ($GoalSkips.ContainsKey($number)) {
+                $verdict = 'skipped'
+                $reason = [string]$GoalSkips[$number]
+            } elseif ($GoalLabel -and @($labels | Where-Object { $_ -ieq $GoalLabel }).Count -gt 0) {
+                $verdict = 'skipped'
+                $reason = "plan-goal container: labelled '$GoalLabel'"
             }
         }
 

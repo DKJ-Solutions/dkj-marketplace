@@ -2108,6 +2108,8 @@ function Get-SharedScriptPairs {
             Source = 'scripts\task\claim-issue.ps1'
             Plugin = 'dkj-policy'
             Skill  = 'claim-issue'
+            # #3961: goals-lib lives only under plugins/dkj-policy/apps/admin/, so -Candidates probes it at both depths.
+            MirrorRunExempt = 'both copies probe goals-lib at both depths and resolve the same file, and a missing one only leaves the goal label''s own skip, which -Candidates says out loud, so a mirror run would only re-measure what the source run already did'
             # A fixture root, so the suite can point the repo-config read at a scratch tree. A consumer
             # never types it, and documenting it would invite someone to.
             SkillParamsExempt = @('RootOverride')

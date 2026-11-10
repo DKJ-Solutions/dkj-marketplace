@@ -94,6 +94,14 @@ author, before you claim one. **And `free` still means only what this step can s
 branch named with the number; a branch named for the subject is caught at the claim, by its
 title-overlap scan.
 
+**A [`plan-goal`](../plan-goal/SKILL.md) tree is not a backlog**
+([#3961](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3961)). Measured November 10, 2026: one goal
+with 6 milestones and 24 tasks read as 31 `free` issues, and none was sweep work. So `-Candidates` reads the
+tree once, with the query `plan-goal -Next` uses, and marks the goal and its milestones `skipped` as
+containers, and every task but the goal's **Now** `skipped` as not yet Now. Now stays `free`, and a repo
+whose Now is an owner-only step parks it with its label. An unread tree is said, and leaves only the `goal`
+label's own skip.
+
 **`stale-park` means an `awaiting-pull` issue whose wait has cleared**
 ([#3136](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3136)). Nothing lifts that label at
 the merge, so `-Candidates` reads the `waiting on` clause of the parking comment and asks the tracker
