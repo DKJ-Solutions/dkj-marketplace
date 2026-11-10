@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**9 / 15 minor entries** <!-- pending-tally -->
+**10 / 16 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3955-note-grid-two-columns · 20261110-120559Z
+
+The release-notes page lays a section's note cards out two per row at most instead of three, so a card's
+text gets about 22rem of line width on desktop instead of about 14rem, and a phone still gets one column
+([#3955](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3955)). A consumer's page takes it at
+its next `release-notes-page` run after the plugin release.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A reader of a published release-notes page gets notes that read as paragraphs rather than five-word
+columns.
+
+**Score:** 3
+
+#### Pull Request
+
+Release-notes page: the note grid stops at two columns
+
+Plugins: dkj-policy
+
+[PR #3957](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3957)
+
+---
 
 ### DEPLOY: feat/3954-clickable-handover-link · 20261110-104810Z
 
