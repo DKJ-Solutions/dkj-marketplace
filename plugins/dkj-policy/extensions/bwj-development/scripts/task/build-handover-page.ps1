@@ -16,7 +16,8 @@
     -Name again replaces the page, so the link the reviewer already holds shows the new version.
 
     THE TERMINAL GETS THE LINK, NEVER THE URLS. The cards' URLs are on the page; this prints one line, the page's
-    address, read from this checkout's Admin state file. Where Admin is not running it names the path to open once it is.
+    address, read from this checkout's Admin state file, as a markdown link (Format-HandoverLink) because a bare URL
+    relayed verbatim could not be clicked (#3954). Where Admin is not running it names the path to open once it is.
 
       -ThemeId <id>            the preview theme (required), as push-preview printed it.
       -Path <path,...>         the changed page(s), as Get-MarketUrls takes them (default '/').
@@ -137,8 +138,8 @@ $statePath = Get-RepoAdminStatePath -Root $repoRoot
 if (Test-Path -LiteralPath $statePath -PathType Leaf) { $state = ConvertFrom-RepoAdminState -Text ([System.IO.File]::ReadAllText($statePath, $utf8)) -Root $repoRoot }
 Write-Host "[OK] the handover is built: $(@($model.cards).Count) market card(s), each with a QR code to its preview."
 if ($state.Pages) {
-    Write-Host 'The handover, the one link to report:'
-    Write-Host ($state.Pages + $route)
+    Write-Host 'The handover, the one link to report -- relay this line as it stands, a markdown link, so it can be clicked (#3954):'
+    Write-Host (Format-HandoverLink -Name $Name -Url ($state.Pages + $route))
 } else {
     Write-Host "Admin is not running for this checkout, so there is no address yet. Once it is (the next session start starts it), the page is at $route on Admin."
 }

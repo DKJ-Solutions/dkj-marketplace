@@ -342,7 +342,7 @@ them in one pass; a decided issue comes back here as `free`. What it skipped as 
 
 **The sweep closes out once, after the loop**, in the ordinary receipt shape: the PR number of each issue
 it shipped, each branch it parked for the owner's eye with the `git checkout <branch>` line and, each on
-a line of its own, the URL of every page it changed (#3819), the number and label of each it parked as waiting, and the number of each it held out, with a clause
+a line of its own, the URL of every page it changed as a markdown link `[<label>](<url>)` (#3819, #3954), the number and label of each it parked as waiting, and the number of each it held out, with a clause
 for why.
 
 ## A second sweep beside a running one -- lane mode

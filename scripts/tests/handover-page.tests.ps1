@@ -91,6 +91,9 @@ Assert-Equal '' (Resolve-HandoverRequest '/dev/handover').Name '/dev/handover is
 Assert-Equal 'feat-12-x' (Resolve-HandoverRequest '/dev/handover/feat-12-x/').Name '/dev/handover/<name> is that handover'
 Assert-True ($null -eq (Resolve-HandoverRequest '/dev/handover/../x') -and $null -eq (Resolve-HandoverRequest '/dev/handover/A')) 'a path that is not a slug is no handover'
 
+Write-Host '-- the reported link' -ForegroundColor Cyan
+Assert-Equal '[handover: feat-12-x](http://localhost:4891/dev/handover/feat-12-x)' (Format-HandoverLink -Name 'feat-12-x' -Url 'http://localhost:4891/dev/handover/feat-12-x') 'the handover link is reported as a markdown link, so it can be clicked (#3954)'
+
 Write-Host '-- the builder' -ForegroundColor Cyan
 $fix = Join-Path ([System.IO.Path]::GetTempPath()) ('handover-store-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
 $prevLocal = $env:LOCALAPPDATA

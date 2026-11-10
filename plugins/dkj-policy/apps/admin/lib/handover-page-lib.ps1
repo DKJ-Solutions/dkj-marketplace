@@ -64,6 +64,17 @@ function Get-HandoverDir {
     return (Join-Path (Get-AdminTimingBaseDir) ('repos\' + (Get-AdminRepoKey -RepoRoot $RepoRoot) + '\handover'))
 }
 
+function Format-HandoverLink {
+    <#
+    The line a session reports for the handover at -Url: a markdown link '[handover: <name>](<url>)', on its own line.
+    A bare URL was relayed verbatim and the owner could not click it in the terminal (#3954, smartwatchbanden#1149);
+    the same address as a markdown link was. The label is the handover's name, a slug, so nothing in it can break the
+    link's brackets. Pure.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Name, [Parameter(Mandatory = $true)][string]$Url)
+    return ('[handover: ' + $Name + '](' + $Url + ')')
+}
+
 function Test-HandoverUrl {
     <# Whether -Url may be drawn as a link or a code: an absolute https URL with no space or control character. Pure. #>
     param([AllowEmptyString()][string]$Url = '')
