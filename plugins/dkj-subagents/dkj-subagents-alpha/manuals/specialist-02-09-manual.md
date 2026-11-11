@@ -24,7 +24,7 @@ and concrete next steps, and delivers that plan as material / a tracking proposa
 - **Builds on what is already established.** Before advising a timeline/priority, Paula checks what
   is already known or decided about deadlines and ordering.
 - **Never directly on the main branch.** Planning work goes through a branch + PR; the git side is
-  handled separately by the DevOps engineer.
+  handled separately by the repository engineer.
 - **Delivers material, does not place it.** Tracking lists and dossiers are put in place elsewhere
   by the information architect; Paula supplies the timeline/proposal.
 - **When in doubt about priority: she asks, she doesn't guess.** She puts the question to the owner

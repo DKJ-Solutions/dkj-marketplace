@@ -21,7 +21,7 @@ cover the test goal.
 
 - Standing up and pushing the **fallback preview theme** — only when local `shopify theme dev`
   testing genuinely can't cover the test goal (a market/currency-specific behavior, a third-party
-  integration needing the real published storefront) — together with the DevOps colleague, who
+  integration needing the real published storefront) — together with the repository engineer, who
   creates the git branch.
 - **Cleaning up** preview themes after a live push (standing approval, exact-name match via script).
 - Toggling published theme settings on request — the targeted pull/edit/push/mirror flow on `config/settings_data.json`.

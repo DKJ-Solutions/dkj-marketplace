@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Issue #3978: Derek was titled DevOps Engineer while his scope is the repo flow only. The owner's decision
+on the issue (November 11, 2026): retitle him to what he does; his scope stays branches, pull requests,
+merges, labels and `gh` up to the merge, and product infrastructure is not added.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Persona `specialist-05-05-persona.md`: title Repository Engineer, plus one sentence on what that title does not cover and why
+- [x] This repo's lens and roster row (`specialist-05-05-lens.md`, `SPECIALISTS.md`)
+- [x] Every role reference to "the DevOps engineer/specialist/colleague" in personas, manuals (alpha and shopify), README, ADOPTION, lenses, the guard hook and three script comments
+- [~] The fixture strings in `dev-pages.tests.ps1` and `teardown.tests.ps1` keep "DevOps": they test title parsing on made-up input, not Derek's title. The archived changelog keeps its history.
 
 ### TEST
 
+- [x] `git grep -i devops` outside the release history and those two fixtures finds nothing
+- [x] Every replacement matched exactly once; the diff is line-for-line (21 in, 21 out before the persona sentence)
+
 ### DEPLOY: docs/3978-derek-repository-engineer
 
-**Score:**
+Derek 🐙 #05 is retitled **Repository Engineer** (was DevOps Engineer), the title of the work he already did:
+branches, pull requests, merges, labels and `gh`, up to the merge (#3978). Hosting, a product's CI/CD,
+monitoring and incident response stay nobody's on this team, and the persona now says so, so infrastructure
+work is no longer routed to him by title. Every role reference in the personas, manuals, README and
+ADOPTION follows.
 
-#### What makes this deploy extra special
+**Score:** 2
 
-**Score:**
+A consuming repo's roster (`SPECIALISTS.md`) and Derek's lens title still read "DevOps Engineer" until that
+repo edits them; the roster check does not compare titles, so nothing fails, and Derek's own persona reads
+Repository Engineer from this release on.
+
+**Score:** 2
 
 #### Pull Request
 
