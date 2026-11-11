@@ -640,7 +640,12 @@ if (-not $ResearchArg -and -not $MeasureArg -and -not $ByHandArg -and -not $Alre
         . (Join-Path $PSScriptRoot '..\lib\market-urls.ps1')
         # -GoLiveOnly: a market the store marked GoLive = $false stays in its previews and out of this list (#3327).
         $liveUrls = @(Get-MarketUrls -Path $PathArg -GoLiveOnly)
-        Write-Host "  live urls: $($liveUrls.Count) ($(@($PathArg).Count) page(s) x markets), bare" -ForegroundColor DarkGray
+        # The pages are counted from the URLs, not from -Path (#3997): under 'powershell -File' a list of
+        # pages arrives as ONE comma-separated string, which Get-MarketUrls splits. Every market carries
+        # every page, so the URL count divided by the market count is the page count.
+        $marketCount = @($liveUrls | ForEach-Object { $_.Market } | Sort-Object -Unique).Count
+        $pageCount   = if ($marketCount) { [int]($liveUrls.Count / $marketCount) } else { 0 }
+        Write-Host "  live urls: $($liveUrls.Count) ($pageCount page(s) x $marketCount market(s)), bare" -ForegroundColor DarkGray
     } else {
         Write-Host "  live urls: none -- no -Path given" -ForegroundColor DarkGray
     }
