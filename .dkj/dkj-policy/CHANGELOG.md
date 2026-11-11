@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**7 / 9 minor entries** <!-- pending-tally -->
+**8 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3987-portable-layer-names · 20261111-111453Z
+
+Manuals and personas now follow a rule instead of a measurement: they may cite an issue of this source repo
+as provenance, and name no other repo and no person (#3987). Check 47 of `check-plugin-integrity.ps1`,
+`[portable-names]`, holds the line, after the six person names in the manuals became "the owner". Tessa's
+lens states the rule in place of a table that had been falsified twice (#701, #3987).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Four shipped manuals in `dkj-subagents-alpha` and `dkj-subagents-shopify` attribute a decision to "the
+owner" instead of a named person; the rules themselves are unchanged.
+
+**Score:** 1
+
+#### Pull Request
+
+Manuals and personas may cite an issue number, never a repo or a person, and a lint check holds that line
+
+Plugins: dkj-subagents-alpha, dkj-subagents-shopify
+
+[PR #3992](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3992)
+
+---
 
 ### DEPLOY: feat/3974-uma-ux-designer · 20261111-110007Z
 
