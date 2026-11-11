@@ -39,19 +39,51 @@
 
 ### PLAN
 
+#3974: the owner approved the field (November 11, 2026) and then the person: **Uma** 🖱️, id `04-32`,
+group 04 beside Gwen #12, who stays the visual designer. Boundaries settled in her manual against Gwen,
+Rebecca, Bianca, the product owner, Marlowe and Cody. Built in the shape of #3973's branch (Priya), the
+other new specialist of the same day.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Agent def `specialist-04-32-subagent.md` (Read/Write/Edit for wireframes and prototypes,
+  WebSearch/WebFetch for competitor teardowns, with the web-content, browser-compatibility and
+  no-Artifact shared blocks), filled by `build-agent-defs.ps1`, registered in the core team's
+  `plugin.json`.
+- [x] Manual `specialist-04-32-manual.md`: research prepared and synthesised, teardowns from the
+  user's side, flows with unhappy paths, wireframes and a clickable prototype, severity-ranked
+  findings, the boundaries, hard rules (she never invents users), tone. No issue numbers, per the
+  manual layer's convention.
+- [x] This repo adopts her: empty `VUL-IN` lens, roster line in `SPECIALISTS.md`, the
+  `consumers/dkj-marketplace.json` extensions array, the README's team list.
+- [x] Gwen's manual names the *looks* / *works* boundary from her side.
+- [x] `SPECIALISTS.md` no longer lists Gwen among the specialists with an empty lens: hers has held
+  the brand-book page since #3130.
 
 ### TEST
 
+- [x] `build-agent-defs.ps1`: the new def's shared blocks filled, every other def already in sync.
+- [x] Full gates run by ship-pr.
+
 ### DEPLOY: feat/3974-uma-ux-designer
 
-**Score:**
+The core team has a new specialist: **Uma 🖱️, the UX Designer / UX Researcher** (`04-32`). She owns
+how a product works for its users: she prepares interviews and usability tests and synthesises what
+comes back into findings tied to their evidence, tears competitors down from the user's side, and
+designs user flows (unhappy paths included), wireframes and a clickable prototype. Gwen stays the
+visual designer and takes Uma's tested flow further (#3974).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A repo running the core team gets a specialist for user research and interaction design, where
+before nobody on any team owned either. She never invents users: she prepares the session, the
+owner runs it, and she reads the result. After updating the plugin, the roster check reports her as
+missing from the roster: run `sync-roster` to adopt her, which places an empty lens and proposes the
+roster line.
+
+**Score:** 3
 
 #### Pull Request
 
