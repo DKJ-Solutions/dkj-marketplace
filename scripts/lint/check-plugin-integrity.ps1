@@ -454,6 +454,13 @@
          0x7F-0x9F. Skipped, with a coverage line saying so, where the tree is not a git checkout.
          A tracked file that cannot be READ is a finding, not a warning (a gate that cannot read it
          cannot vouch for it), counted in the coverage line; the line number counts LF only.
+     47. a manual or persona cites an issue number, never a repo or a person (#3987). An issue
+         link to THIS source repo, under its marketplace name or any name Get-RetiredRepoNames
+         gives, is provenance and passes; any other repo named by a GitHub link or an
+         owner/name#n reference is a finding, and so is a name on the check's explicit person
+         list, matched as a whole word once the allowed links are removed. Born green after its
+         own branch replaced six person names with "the owner": 31 files, 0 findings. WHAT IT
+         DOES NOT REACH: a bare repo name with no owner, agent defs and skills, and history.
     <!-- /checks:list -->
 
     Exit code: 0 = no errors. 1 = at least one error (usable as a gate in open-pr.ps1).
@@ -6339,6 +6346,96 @@ Write-Coverage -Category 'control-char' -Checked $ccChecked `
     } else {
         "tracked text file(s) read byte-for-byte for a C0 control character other than TAB, LF and CR -- $ccFindings finding(s), $ccUnreadable of them a tracked file that could not be read (a finding rather than a warning: a gate that cannot read a file cannot vouch for it); $ccSkipped tracked file(s) with a non-text extension were NOT read (the .png images today). The measured defect is #2971 (October 13, 2026): a PowerShell double-quoted string turned a backtick before a label into BEL (U+0007) inside a tracked .md, and every check here reported 0 errors, because check 43 reads names, check 27 allows a control byte as ASCII and the mojibake check reads for mis-decoded UTF-8. Born green: 930 tracked files, 0 control bytes, 0 exemptions. WHAT IT DOES NOT REACH: history, a file with an unlisted extension, and 0x7F-0x9F"
     })
+
+# --- 47. a manual or persona cites an issue number, never a repo or a person ------------------------------
+# THE RULE (#3987, the owner's decision of November 11, 2026). The portable layer -- every manual and persona a
+# plugin ships -- may carry an issue number as PROVENANCE, linked to this source repo's own tracker. It may not
+# carry another repo's name or a person's name: those are repo-specific detail, and they belong in a skill
+# (which carries evidence) or a lens (which carries what is local). Tessa's lens stated a stricter rule, "0
+# issue numbers, 0 repo names, 0 person names", and the tree falsified it twice (#701, then #3987: 49 issue
+# references, 28 owner/repo references and 6 person names across 31 files). The issue numbers stayed by
+# decision, because the always-loaded personas cite them by design and the trail is what the manuals point
+# readers along. Nothing held the other two halves, so this check does.
+#
+# A REPO NAME is a GitHub link (github.com/<owner>/<name>) or a cross-repo reference (<owner>/<name>#<n>)
+# whose NAME half is not this source repo's: the marketplace's own name (.claude-plugin/marketplace.json,
+# which is the repo's name half) or a name Get-RetiredRepoNames says it once had, under any owner, since each
+# retired spelling resolves through a redirect. So a provenance link to this tracker passes under every name
+# it has had, and any other repo is a finding.
+#
+# A PERSON NAME is one of the names below, matched as a whole word after every allowed link has been removed
+# (a retired spelling's owner half is an account name, and the link is still provenance). THE LIST IS
+# EXPLICIT AND SHORT ON PURPOSE: nothing in the tree names "the people" as data, and a pattern that guessed at
+# capitalised words would accuse every specialist's own name. The first two are matched case-sensitively, so
+# the word "dave" in prose is not a finding; the account names in any case. A person the rule should cover
+# and this list does not is a line added here.
+#
+# BORN GREEN, after the same branch replaced the six person names with "the owner": 31 files, 0 findings.
+# WHAT IT DOES NOT REACH: a bare repo name with no owner and no link (no pattern tells it from a word), the
+# agent defs and skills (a skill carries evidence by design), and history.
+$pnPersonExact = @('Dave', 'Maikel')
+$pnPersonAnyCase = @('DaveKJohn', 'maikel-bwj', 'davekokbwj')
+$pnChecked = 0
+$pnFindings = 0
+$pnOwnNames = New-Object System.Collections.Generic.List[string]
+$pnMkt = Join-Path $RepoRoot '.claude-plugin\marketplace.json'
+if (Test-Path -LiteralPath $pnMkt -PathType Leaf) {
+    try {
+        $pnMktName = [string]((Get-Content -LiteralPath $pnMkt -Raw -Encoding UTF8 | ConvertFrom-Json).name)
+        if ($pnMktName) { $pnOwnNames.Add($pnMktName) }
+    } catch { }
+}
+& {
+    $pnCfg = Join-Path $RepoRoot 'scripts\repo-config.ps1'
+    if (Test-Path -LiteralPath $pnCfg) { . $pnCfg }
+    if (Get-Command -Name 'Get-RetiredRepoNames' -CommandType Function -ErrorAction SilentlyContinue) {
+        foreach ($n in @(Get-RetiredRepoNames)) { if ($n) { $pnOwnNames.Add([string]$n) } }
+    }
+}
+$pnLinkRx  = [regex]'github\.com/([A-Za-z0-9-]+)/([A-Za-z0-9._-]+)'
+$pnShortRx = [regex]'(?<![\w./-])([A-Za-z0-9][A-Za-z0-9-]*)/([A-Za-z0-9._-]+)#\d+'
+$pnRoot = Join-Path $RepoRoot 'plugins'
+$pnFiles = if (Test-Path -LiteralPath $pnRoot) {
+    @(Get-ChildItem -LiteralPath $pnRoot -Recurse -File -Filter '*.md' |
+        Where-Object { @('manuals', 'personas') -contains $_.Directory.Name } | Sort-Object FullName)
+} else { @() }
+foreach ($pnFile in $pnFiles) {
+    $pnChecked++
+    $pnRel = $pnFile.FullName.Substring($RepoRoot.Length).TrimStart('\', '/') -replace '\\', '/'
+    $pnLines = [System.IO.File]::ReadAllLines($pnFile.FullName, [System.Text.Encoding]::UTF8)
+    for ($i = 0; $i -lt $pnLines.Count; $i++) {
+        $pnLine = $pnLines[$i]
+        $pnOther = New-Object System.Collections.Generic.List[string]
+        foreach ($rx in @($pnLinkRx, $pnShortRx)) {
+            foreach ($m in $rx.Matches($pnLine)) {
+                $pnName = $m.Groups[2].Value -replace '\.git$', ''
+                $pnOwn = @($pnOwnNames | Where-Object { $_ -ieq $pnName }).Count -gt 0
+                if ($pnOwn) { $pnLine = $pnLine.Replace($m.Value, '') }
+                else { $pnOther.Add("$($m.Groups[1].Value)/$pnName") }
+            }
+        }
+        foreach ($r in ($pnOther | Select-Object -Unique)) {
+            $pnFindings++
+            Add-Error ("[portable-names] ${pnRel}:$($i + 1) names the repo '$r'. A manual or persona may cite an issue of THIS" +
+                ' source repo as provenance, and nothing repo-specific beyond that (#3987): move the evidence to the skill that' +
+                ' carries the procedure, or to the lens of the repo it was measured in, and keep the timeless rule here.')
+        }
+        $pnPeople = @()
+        foreach ($n in $pnPersonExact) { if ($pnLine -cmatch ('\b' + [regex]::Escape($n) + '\b')) { $pnPeople += $n } }
+        foreach ($n in $pnPersonAnyCase) { if ($pnLine -match ('(?<![\w-])' + [regex]::Escape($n) + '(?![\w-])')) { $pnPeople += $n } }
+        foreach ($p in $pnPeople) {
+            $pnFindings++
+            Add-Error ("[portable-names] ${pnRel}:$($i + 1) names the person '$p'. A manual or persona states the craft for every" +
+                " repo, so a decision is attributed to 'the owner' here (#3987); who decided it, by name, belongs in the lens" +
+                ' or the issue the provenance link points at.')
+        }
+    }
+}
+Write-Coverage -Category 'portable-names' -Checked $pnChecked `
+    -Note ("manual(s) and persona(s) under plugins/ read for a repo or a person -- $pnFindings finding(s). An issue number is" +
+        " allowed as provenance, linked to this source repo under any name it has had ($(if ($pnOwnNames.Count) { ($pnOwnNames | Select-Object -Unique) -join ', ' } else { 'none known here, so every repo link is a finding' })); any other repo" +
+        " named by a GitHub link or an owner/name#n reference is a finding, and so is a name on this check's explicit person list (#3987)." +
+        ' WHAT IT DOES NOT REACH: a bare repo name with no owner, the agent defs and skills, and history')
 
 # --- Report ---------------------------------------------------------------------------------------------
 if ($errors.Count -eq 0) {
