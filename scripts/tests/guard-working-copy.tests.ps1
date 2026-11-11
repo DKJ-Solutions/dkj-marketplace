@@ -11,7 +11,7 @@
 
     FIVE GROUPS.
       1. THE GATE, which is the whole design. #1669 raised the objection against itself -- a hook
-         cannot tell the DevOps specialist's legitimate `git checkout` from a dispatched reviewer's
+         cannot tell the repository engineer's legitimate `git checkout` from a dispatched reviewer's
          illegitimate one. It can: agent_id is present only inside a subagent. Both directions are
          asserted on the SAME command, because that is the claim: identical text, opposite verdicts.
       2. agent_type IS NOT THE GATE. Claude Code's schema says it is present on the main thread of an

@@ -2,7 +2,63 @@
 
 ## [Unreleased]
 
-**2 / 4 minor entries** <!-- pending-tally -->
+**5 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3975-tycho-qa-lead · 20261111-102812Z
+
+Tycho, the Test Engineer, now also carries the QA-lead half of the craft: a test plan for a release,
+checking work against its acceptance criteria, manual and exploratory testing written down as
+repeatable steps where automation does not reach, and running a beta through to an explicit go/no-go
+that names every open blocking bug. He reports readiness; the release stays the owner's call. His
+manual has a new section, "The QA-lead half", and his agent description says so (#3975).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A team running the core plugin can hand Tycho a release or a beta and get back a test plan, an
+acceptance check per criterion with evidence, and a go/no-go, where before he only wrote automated
+tests and that half had no owner.
+
+**Score:** 3
+
+#### Pull Request
+
+Tycho: widen the Test Engineer to QA lead work
+
+Plugins: dkj-subagents-alpha
+
+[PR #3982](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3982)
+
+---
+
+### DEPLOY: docs/3978-derek-repository-engineer · 20261111-100459Z
+
+Derek 🐙 #05 is retitled **Repository Engineer** (was DevOps Engineer), the title of the work he already did:
+branches, pull requests, merges, labels and `gh`, up to the merge (#3978). Hosting, a product's CI/CD,
+monitoring and incident response stay nobody's on this team, and the persona now says so, so infrastructure
+work is no longer routed to him by title. Every role reference in the personas, manuals, README and
+ADOPTION follows.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A consuming repo's roster (`SPECIALISTS.md`) and Derek's lens title still read "DevOps Engineer" until that
+repo edits them; the roster check does not compare titles, so nothing fails, and Derek's own persona reads
+Repository Engineer from this release on.
+
+**Score:** 2
+
+#### Pull Request
+
+Derek is retitled Repository Engineer, the title his scope already had
+
+Plugins: dkj-policy, dkj-subagents-alpha, dkj-subagents-shopify
+
+[PR #3988](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3988)
+
+---
 
 ### DEPLOY: fix/3979-update-plugins-key-order · 20261111-093636Z
 

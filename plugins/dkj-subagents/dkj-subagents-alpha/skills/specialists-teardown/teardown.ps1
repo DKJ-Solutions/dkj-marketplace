@@ -815,7 +815,7 @@ foreach ($dir in @('subagents', 'agents', 'personas')) {
         $txt = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)
         $m = [regex]::Match($txt, '(?m)^name:\s*([A-Za-z0-9_-]+)\s*$')
         if ($m.Success) { $knownNames += (Get-DisplayName -RawName $m.Groups[1].Value); continue }
-        # Persona: the display name is the first word of the H1 ('# Derek <emoji> -- the DevOps ...').
+        # Persona: the display name is the first word of the H1 ('# Derek <emoji> -- the Repository ...').
         $h = [regex]::Match($txt, '(?m)^#\s+([A-Za-z][A-Za-z0-9_-]*)')
         if ($h.Success) { $knownNames += (Get-DisplayName -RawName $h.Groups[1].Value) }
     }

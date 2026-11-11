@@ -140,7 +140,7 @@ neither — so the gap was a rule whose subject was the wrong verb. The report p
 that was wrong twice: it counted Marlowe #29, who holds no `Bash`, and **most carriers are not reviewers
 at all** (app developer, test engineer, system administrator, refactoring, and all three
 `dkj-subagents-ecomm` specialists). The first draft of the correction miscounted by craft the same way,
-and only `grep` over `tools:` got it right. The DevOps engineer and the release manager ship as
+and only `grep` over `tools:` got it right. The repository engineer and the release manager ship as
 personas whose craft *is* mutating the working copy, so they are excluded by design. **Because the
 circle is decidable, a check keeps it**: lint check 36 reads `Get-ToolRequiredSharedBlocks` in
 [`subagent-shared-lib.ps1`](../../../scripts/lib/subagent-shared-lib.ps1) — a `tool -> block` table —
