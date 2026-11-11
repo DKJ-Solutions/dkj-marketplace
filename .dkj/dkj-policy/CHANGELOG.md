@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**1 / 2 minor entries** <!-- pending-tally -->
+**2 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3977-sebastian-privacy-check · 20261111-092252Z
+
+Sebastian, the Security Engineer, now also runs a privacy (GDPR) check before a product that collects
+personal data launches, written as a technical check and never as legal advice (#3977).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+You can ask Sebastian for a privacy check on a product that stores data about people. He returns an
+inventory: what personal data it keeps and why, how long, which processors see it, whether the privacy
+statement matches, and whether people can see, correct, export and delete their data. Questions that need
+legal judgment come back marked as open for a lawyer, not answered.
+
+**Score:** 3
+
+#### Pull Request
+
+Sebastian: add a privacy / GDPR check beside the security review
+
+Plugins: dkj-subagents-alpha
+
+[PR #3983](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3983)
+
+---
 
 ### DEPLOY: feat/3976-cody-tech-lead · 20261111-091251Z
 
