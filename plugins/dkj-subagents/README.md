@@ -555,7 +555,7 @@ those blocks in **one place** instead of in every agent def, a **build-and-lint*
   bullet list under **Boundaries**, so its block sits under its own `##` heading instead of dangling as
   a stray bullet — the sentinels and the rule about not editing between them are identical. This is the
   one part of the model that took a widening (August 8, 2026): the two specialists whose craft *is* a
-  way of working, the DevOps engineer and the release manager, ship as personas, so a shared block about
+  way of working, the repository engineer and the release manager, ship as personas, so a shared block about
   process could never have reached its primary readers while the generator walked `agents/` alone. Note
   what did **not** widen with it — the lint's agent-def↔manual coupling still leaves personas alone,
   because that check is about a pairing personas genuinely do not have.
