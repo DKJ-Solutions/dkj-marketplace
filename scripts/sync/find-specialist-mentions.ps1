@@ -128,7 +128,7 @@ function Get-SpecialistRoster {
                 $roster += @{ Name = (Get-DisplayName -RawName $m.Groups[1].Value); Id = $id }
                 continue
             }
-            # Persona: the display name is the first word of the H1 ('# Derek <emoji> -- the DevOps ...').
+            # Persona: the display name is the first word of the H1 ('# Derek <emoji> -- the Repository ...').
             $h = [regex]::Match($txt, '(?m)^#\s+([A-Za-z][A-Za-z0-9_-]*)')
             if ($h.Success) {
                 $roster += @{ Name = (Get-DisplayName -RawName $h.Groups[1].Value); Id = $id }
