@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**2 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3997-golive-page-count · 20261111-163222Z
+
+`build-golive-block`'s console summary now counts the pages a comma-separated `-Path` names, and names
+the market count beside them: `-Path "/products/a,/products/b"` with four markets reads
+`live urls: 8 (2 page(s) x 4 market(s))` where it read `1 page(s)`. Inbound
+[#3997](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3997). The block itself was already
+right. Cosmetic: a console line a session reads, never the block or a URL in it.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+No subscriber reads this line: it is the shipping session's own console, and the block it summarises
+was already correct.
+
+**Score:** N/A
+
+#### Pull Request
+
+build-golive-block: count the pages a comma-separated -Path names
+
+Plugins: bwj-development
+
+[PR #4001](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4001)
+
+---
 
 ### DEPLOY: fix/3996-closed-message-json-array · 20261111-162054Z
 
