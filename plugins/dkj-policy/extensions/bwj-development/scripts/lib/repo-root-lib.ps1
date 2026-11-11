@@ -72,3 +72,53 @@ function Resolve-BwjRepoRoot {
     }
     return (Get-Location).Path
 }
+
+function Resolve-DkjPolicyRoot {
+    <#
+        dkj-policy's own plugin root, seen from this plugin's scripts\task (or scripts\lib) directory,
+        in BOTH layouts this plugin runs from (issue #3993):
+
+          source / marketplace clone   plugins\dkj-policy\extensions\bwj-development\scripts\task
+                                       -> four levels up IS plugins\dkj-policy
+          install cache                cache\<marketplace>\bwj-development\<version>\scripts\task
+                                       -> four levels up is cache\<marketplace>, and dkj-policy sits
+                                          beside this plugin at cache\<marketplace>\dkj-policy\<version>
+
+        Measured 2026-11-11 in a consumer on v6.13.0: the four-levels-up rule alone resolved the cache
+        to cache\<marketplace> and the builder died loading apps\admin\lib before it built anything.
+
+        In the cache the SAME version as this plugin is preferred -- the marketplace releases in
+        lockstep, so that is the copy this plugin was released against -- and otherwise the highest
+        version that carries -Marker. A root is only accepted when -Marker exists under it, so a
+        layout nobody foresaw refuses with the paths it tried rather than failing later on a
+        dot-source.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][string]$From,
+        [string]$Marker = 'apps\admin\lib\handover-page-lib.ps1'
+    )
+    $tried = New-Object System.Collections.Generic.List[string]
+    $up = { param([string]$p, [int]$n) for ($i = 0; $i -lt $n; $i++) { $p = Split-Path -Parent $p }; $p }
+    $start = [System.IO.Path]::GetFullPath($From)
+
+    $source = & $up $start 4
+    $tried.Add($source)
+    if ($source -and (Test-Path -LiteralPath (Join-Path $source $Marker) -PathType Leaf)) { return $source }
+
+    $ownVersion  = Split-Path -Leaf (& $up $start 2)
+    $marketplace = & $up $start 4
+    $policyDir   = $(if ($marketplace) { Join-Path $marketplace 'dkj-policy' } else { '' })
+    if ($policyDir -and (Test-Path -LiteralPath $policyDir -PathType Container)) {
+        $same = Join-Path $policyDir $ownVersion
+        $tried.Add($same)
+        if (Test-Path -LiteralPath (Join-Path $same $Marker) -PathType Leaf) { return $same }
+        $byVersion = @(Get-ChildItem -LiteralPath $policyDir -Directory | Sort-Object -Descending -Property @{
+            Expression = { $v = $null; if ([version]::TryParse($_.Name, [ref]$v)) { $v } else { [version]'0.0' } }
+        })
+        foreach ($d in $byVersion) {
+            $tried.Add($d.FullName)
+            if (Test-Path -LiteralPath (Join-Path $d.FullName $Marker) -PathType Leaf) { return $d.FullName }
+        }
+    }
+    throw "dkj-policy's plugin root was not found from '$start': none of these carries '$Marker': $($tried -join '; ')"
+}

@@ -39,19 +39,34 @@
 
 ### PLAN
 
+Inbound #3993: `build-handover-page.ps1` resolved dkj-policy as four levels above `scripts\task`, which is
+right in the source tree and wrong in the install cache (`cache\<marketplace>\<plugin>\<version>`). Verified
+in the script: four up from the cached copy is `cache\<marketplace>`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Resolve-DkjPolicyRoot` in bwj-development's `scripts\lib\repo-root-lib.ps1`: source layout first, then the sibling `dkj-policy\<own version>` in the cache, then the highest version carrying the marker; refuses with the paths it tried
+- [x] `build-handover-page.ps1` resolves its dkj-policy root through it, after the repo root
 
 ### TEST
 
+- [x] `handover-page.tests.ps1`: four new asserts -- source layout, cache at own version, highest version (by version, not string) when that one is missing, refusal with no dkj-policy
+
 ### DEPLOY: fix/3993-handover-dkj-policy-root
 
-**Score:**
+`build-handover-page.ps1` runs from an installed plugin again. It looked for dkj-policy's Admin libs four
+directories above itself, which only holds in the source tree, so in the plugin cache it failed before
+building anything. It now also finds dkj-policy as the sibling plugin in the cache, at its own version
+(#3993).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A BWJ store repo can build the preview handover page with the script as shipped, instead of copying the
+plugin's files to a temporary folder and running the copy with `-RootOverride`.
+
+**Score:** 3
 
 #### Pull Request
 
