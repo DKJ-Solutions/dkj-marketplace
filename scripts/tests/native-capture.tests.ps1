@@ -2049,7 +2049,11 @@ foreach ($af in $auditFiles) {
 # $gq (`gh api graphql`, the plan-goal tree), -Utf8 and at the shared network bound like the backlog read. Both
 # are judged only after Test-NativeExitMeasured and a POSITIVE `-eq 0`: an unread tree is said as a [goal scan]
 # line and leaves only the goal label's own skip, so a capture it could not judge never hides an issue.
-Assert-Equal 114 $boundedTotal 'the parser still counts 114 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
+# 114 -> 115 (#3979): update-plugins.ps1's Restore-NoMeaningClaudeChange $idx (`git cat-file blob :<path>`, the
+# index copy of a modified .claude/*.json), -Utf8 so its JSON decodes as written. Judged only after
+# Test-NativeExitMeasured and a POSITIVE `-eq 0`: a read it could not judge returns $false, so the file is left
+# as it is -- skipped before the run or named after it -- and never restored on an unmeasured answer.
+Assert-Equal 115 $boundedTotal 'the parser still counts 115 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
 Assert-Equal 0 $unguarded.Count `
     ('every bounded capture judged with a NEGATIVE exit-code test either asks Test-NativeExitMeasured/Get-NativeExitLabel about THAT capture or is exempt with a reason (#2081)' +
      $(if ($unguarded.Count) { ' -- unguarded: ' + ($unguarded -join ' | ') } else { '' }))
