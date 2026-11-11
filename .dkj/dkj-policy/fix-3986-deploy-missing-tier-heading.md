@@ -39,19 +39,39 @@
 
 ### PLAN
 
+- [x] Verify #3986's reason: the branch-document half of `[entry-heading]` never checks which section an
+  entry opens with, and `Read-EntryTierSections` reads a second Score line in one section as text below
+  the first score, so the entry silently declares tier 0 alone
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Refuse a second Score line with no heading between it and the first, in the shared entry parser
+  (both lib copies), so `open-pr` and `check-branch-entry` refuse it before the push
+- [x] Restore #3984's missing heading in `CHANGELOG.md`, identical to the repair on #3974's and #3978's branches
 
 ### TEST
 
+- [x] `entry-scaffold.tests.ps1`: the headless entry is refused and names the heading, and a deeper heading
+  between the two Score lines is not; probed against every entry in `CHANGELOG.md` (only #3984's is refused)
+  and every archived release note (none is)
+
 ### DEPLOY: fix/3986-deploy-missing-tier-heading
 
-**Score:**
+An entry whose audience-tier heading was deleted while both `**Score:**` lines stayed is now refused by
+`open-pr` and `check-branch-entry` before the push (#3986). Until now the shared entry parser read the
+second Score line as text under the first, so the entry declared tier 0 alone with every gate green. The
+fold then wrote it into `CHANGELOG.md`, where `[entry-heading]` refused the next PR on somebody else's
+branch. A second Score line with no heading between it and the first now names the heading to put back.
+#3984's entry, which slipped through that way, gets its heading back here too.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A DEPLOY section that lost its audience-tier heading is refused at your own `open-pr` with the heading to
+restore. It no longer passes your gates and then drops its audience score silently from the release.
+
+**Score:** 2
 
 #### Pull Request
 
