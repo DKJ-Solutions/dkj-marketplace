@@ -39,19 +39,42 @@
 
 ### PLAN
 
+Inbound #3995, verified on pickup: `Invoke-Main` in the template never reads the issue's current
+state, and the workflow's `concurrency` comment assumed the pending run is always the newest event,
+while GitHub serialises runs in the order it created them.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `asana-closed-message.ps1`: `Get-IssueStateApiArgs`, `Read-IssueState`, `Test-SupersededEvent`;
+  `Invoke-Main` posts nothing and moves no card for an event the current state has superseded, and posts
+  as before when the read fails
+- [x] `asana-closed-message.yml`: the `concurrency` comment names the creation-order gap and the guard
+- [x] `bwj-development.tests.ps1`: asserts for the read's arguments and the superseded verdict
 
 ### TEST
 
+- [x] The suites, run by `ship-pr`'s gate
+
 ### DEPLOY: fix/3995-closed-message-superseded-event
 
-**Score:**
+The `asana-closed-message` template no longer posts a stale message when two events on one issue
+arrive out of order. Inbound
+[#3995](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3995): on xoxowildhearts#512 the
+reopen's run was created one second after the close's, so the task was told "back in development" and
+its card moved back while the issue was closed. The script now reads the issue's current state before
+it posts, and an event that state has already moved past (a reopen of a closed issue, a close of an
+open one) posts nothing and moves no card, because the run of the later event carries the current
+state. A failed read posts as before, logged. A consumer takes it by copying the template again
+(`adopt-bwj-development`).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A requester on Asana was told an issue was back in development while it had closed; that message no
+longer goes out.
+
+**Score:** 2
 
 #### Pull Request
 

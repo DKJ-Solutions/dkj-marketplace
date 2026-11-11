@@ -1135,6 +1135,54 @@ function Read-LastReopen {
     return [pscustomobject]@{ Ok = $true; LastReopenedAt = $last; ExitCode = 0; Error = '' }
 }
 
+function Get-IssueStateApiArgs {
+    <#
+        Pure: the gh arguments that read the issue's CURRENT state, 'open' or 'closed' (#3995) -- REST
+        like the other reads, 'gh api repos/<owner>/<repo>/issues/<n>', which 'issues: read' covers.
+    #>
+    param([Parameter(Mandatory = $true)][string]$IssueRef)
+
+    if ($IssueRef -notmatch '\A([^\s#/]+)/([^\s#/]+)#([0-9]+)\z') { throw "IssueRef '$IssueRef' is not 'owner/repo#<n>'." }
+    return @('api', "repos/$($Matches[1])/$($Matches[2])/issues/$($Matches[3])", '--jq', '.state')
+}
+
+function Read-IssueState {
+    <#
+        The issue's current state through gh (Get-IssueStateApiArgs): Ok, State ('open' | 'closed'),
+        ExitCode, Error. Anything else gh prints is a failed read, never a state.
+    #>
+    param([Parameter(Mandatory = $true)][string]$IssueRef)
+
+    $run = Invoke-GhCapture -GhArgs (Get-IssueStateApiArgs -IssueRef $IssueRef)
+    if ($run.ExitCode -ne 0) {
+        return [pscustomobject]@{ Ok = $false; State = ''; ExitCode = $run.ExitCode; Error = $run.Error }
+    }
+    $state = (@($run.Out) -join '').Trim().ToLowerInvariant()
+    if ($state -notin @('open', 'closed')) {
+        return [pscustomobject]@{ Ok = $false; State = ''; ExitCode = 0; Error = 'gh exited 0, but its output was not open or closed.' }
+    }
+    return [pscustomobject]@{ Ok = $true; State = $state; ExitCode = 0; Error = '' }
+}
+
+function Test-SupersededEvent {
+    <#
+        Pure: whether the issue's current state has already moved past this event (#3995) -- a reopen of
+        an issue that is closed now, or a close of one that is open now. The concurrency group serialises
+        runs in the order GitHub CREATED them, not the order the events happened: on xoxowildhearts#512
+        the reopen's run was created one second after the close's, so 'back in development' posted last
+        over an issue that was closed. A superseded event posts nothing, because the run of the later
+        event carries the current state. An unknown state ($null or empty) is not superseded.
+    #>
+    param(
+        [ValidateSet('closed', 'reopened')][string]$Event = 'closed',
+        [AllowEmptyString()][string]$State = ''
+    )
+
+    $now = ([string]$State).Trim().ToLowerInvariant()
+    if ($Event -eq 'reopened') { return $now -eq 'closed' }
+    return $now -eq 'open'
+}
+
 function Get-ClosedMessageBlockPhrase {
     <#
         Pure: the half of the final log line that says what happened to the block. The cases are kept
@@ -1479,6 +1527,18 @@ function Invoke-Main {
         return
     }
     if (-not $AsanaPat) { throw 'ASANA_PAT is not set.' }
+
+    # AN EVENT THE ISSUE HAS ALREADY MOVED PAST POSTS NOTHING, AND MOVES NO CARD (#3995): the run of the
+    # later event tells the task the current state. A FAILED READ POSTS AS BEFORE, logged: the event
+    # in hand is then the best knowledge this run has, and a message that never goes out is the costlier
+    # mistake for the requester.
+    $current = Read-IssueState -IssueRef $IssueRef
+    if (-not $current.Ok) {
+        Write-Host "The current state of $IssueRef could not be read, so this $Event event is posted as it stands: gh exited $($current.ExitCode): $($current.Error)"
+    } elseif (Test-SupersededEvent -Event $Event -State $current.State) {
+        Write-Host "$IssueRef -- this $Event event is superseded: the issue is $($current.State) now, and the run of that later event tells Asana task $($decision.Gid). Nothing was posted and the card was NOT moved."
+        return
+    }
 
     if ($decision.Kind -eq 'reopened') {
         $html = New-ReopenedMessageHtml -IssueRef $IssueRef
