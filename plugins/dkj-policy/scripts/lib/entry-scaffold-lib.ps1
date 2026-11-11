@@ -2413,6 +2413,20 @@ function Read-EntryTierSections {
         $whyLines = New-Object System.Collections.Generic.List[string]
         $belowScoreLines = New-Object System.Collections.Generic.List[string]
         $scoreCell = $null
+        # A SECOND SCORE LINE IN ONE SECTION IS A HEADING THAT WENT MISSING (#3986). Each section carries
+        # exactly one Score line, so a second one means the heading that should have opened its own section
+        # between the two is gone -- measured on #3984's entry, where an edit dropped the audience tier's
+        # heading and kept both Score lines. Read as before, the first score answered tier 0 and the second
+        # sank into WhyBelowScore, so the entry declared tier 0 alone: the audience tier's answer silently
+        # dropped, every gate green, and the fold wrote it into CHANGELOG.md, where [entry-heading] caught it
+        # one PR later on somebody else's branch. Refused here, it is refused by open-pr and check-branch-entry
+        # before the push, because both refuse on these Errors.
+        # ONLY WHEN NO HEADING OF ANY LEVEL STANDS BETWEEN THE TWO. An entry written August 19-23, 2026 nests
+        # its audience heading one level DEEPER than tier 0's section, so that section's boundary runs past it
+        # and both Score lines land here with a heading between them. That is the heading present at a level
+        # this reader does not close on, not a heading gone missing, and 39 archived entries carry it.
+        $extraScoreLine = $null
+        $headingSinceScore = $false
         while ($i -lt $Lines.Count) {
             $line = $Lines[$i]
             if ($line -match $boundary) { break }
@@ -2421,8 +2435,20 @@ function Read-EntryTierSections {
                 if ($Matches[2]) { $belowScoreLines.Add([string]$Matches[2]) }
             }
             elseif ($null -eq $scoreCell) { $whyLines.Add($line) }
-            else { $belowScoreLines.Add($line) }
+            else {
+                if ($line -match '^\s*#+\s') { $headingSinceScore = $true }
+                elseif ($null -eq $extraScoreLine -and -not $headingSinceScore -and $line -match $scoreRx) { $extraScoreLine = $line.Trim() }
+                $belowScoreLines.Add($line)
+            }
             $i++
+        }
+        if ($null -ne $extraScoreLine) {
+            $missingHeading = if (Test-EntryTierSectionsAreNamed) {
+                ('#' * (Get-EntryTierSubLevel)) + ' ' + $script:EntryTierHigherHeading
+            } else {
+                ('#' * (Get-EntryTierSubLevel)) + ' ' + $script:EntryTierSubPrefix + ' N'
+            }
+            $errs += "the section under '$($raw.Trim())' carries a second Score line ('$extraScoreLine') -- each section takes one, so the heading that opens the next section is missing above it. Put '$missingHeading' back above that line's reason; without it the second answer is read as nothing and the entry declares less reach than it states."
         }
 
         # THE GUARD $zeroRx EXISTS FOR. No score label under the opening question means this entry declares
