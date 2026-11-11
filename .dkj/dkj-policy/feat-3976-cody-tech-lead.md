@@ -39,19 +39,36 @@
 
 ### PLAN
 
+#3976: the tech-lead / architect role (the choice before the build, recorded decisions, estimates)
+had no owner. Widen Cody rather than add a specialist, as the owner-approved advice proposes.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Cody's manual: a "Cody as tech lead" section -- decision records in the ADR shape, stack
+  choices argued from the repo's constraints, estimates as a range with assumptions and a spike for
+  the unestimable, and the boundary with the planner and the owner.
+- [x] Cody's subagent description names the tech-lead half, so an estimate or a decision routes to him.
 
 ### TEST
 
+- [x] Docs-only; the gates `ship-pr` runs prove the links and the plugin integrity.
+
 ### DEPLOY: feat/3976-cody-tech-lead
 
-**Score:**
+Cody, the App Developer, is now also the tech lead: he records architecture decisions as ADRs, argues a
+stack choice from the repo's own constraints, and estimates stories as a range with its assumptions
+(#3976).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A team with a backlog to plan had nobody who owned the technical choice before the build or the
+estimate per story: Cody built and Victor reviewed code that already existed. Asking Cody for an
+estimate or a decision record now has a playbook behind it, including a spike where a story is too
+uncertain to estimate.
+
+**Score:** 2
 
 #### Pull Request
 
