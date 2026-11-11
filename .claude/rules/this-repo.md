@@ -101,8 +101,8 @@ this section.
   [Tessa's lens](../specialists/lenses/specialist-06-16-lens.md#the-conventions-she-guards).
 - **Changes to shared agent defs land here first**, and only then reach the consumers. Because this repo
   *is* the source, **the shared source is the default home for a lesson learned here, not the lens**
-  (Dave, August 4, 2026); personas and manuals carry no repo-specific detail at all, while skills carry
-  the evidence behind a procedure:
+  (Dave, August 4, 2026); personas and manuals carry an issue number as provenance and no repo or
+  person name (check 47, #3987), while skills carry the evidence behind a procedure:
   [Tessa's lens](../specialists/lenses/specialist-06-16-lens.md#where-a-new-rule-goes--the-source-is-the-default-the-lens-is-the-exception).
 
 ### The how (the plugin) vs. the what (this repo only)

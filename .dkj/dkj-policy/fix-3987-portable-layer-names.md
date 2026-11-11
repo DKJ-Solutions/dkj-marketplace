@@ -39,19 +39,38 @@
 
 ### PLAN
 
+Issue #3987 and the owner's decision on it (option A): restate the layer rule to what the layer carries --
+an issue number as provenance is allowed in manuals and personas, repo names and person names are not --
+and add a lint check that holds that line. Measured on this branch: the 28 GitHub links in the 31 files all
+point at this source repo (under its current or retired names), and 6 lines named a person.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The six person names in the manuals (Chris 01-01 x4, Paula 02-09, Gwen 04-12, Liam 05-21) become "the owner", with the pronouns that followed them
+- [x] Check 47 `[portable-names]` in `scripts/lint/check-plugin-integrity.ps1`, plus its `checks:list` entry
+- [x] `check-plugin-integrity-docs.tests.ps1`: the allowed shapes stay silent, another repo (link and `owner/name#n`) and a person (by name and by account, any case) are reported, a skill page is not a subject
+- [x] Tessa's lens table restated as the rule, with the two failed measurements as its history; `.claude/rules/this-repo.md`'s one-line summary follows
 
 ### TEST
 
+- [x] `check-plugin-integrity.ps1` on this tree: 0 errors, `[portable-names]` checked 31, 0 findings
+- [x] `check-plugin-integrity-docs.tests.ps1` alone: all 39 asserts pass
+
 ### DEPLOY: fix/3987-portable-layer-names
 
-**Score:**
+Manuals and personas now follow a rule instead of a measurement: they may cite an issue of this source repo
+as provenance, and name no other repo and no person (#3987). Check 47 of `check-plugin-integrity.ps1`,
+`[portable-names]`, holds the line, after the six person names in the manuals became "the owner". Tessa's
+lens states the rule in place of a table that had been falsified twice (#701, #3987).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Four shipped manuals in `dkj-subagents-alpha` and `dkj-subagents-shopify` attribute a decision to "the
+owner" instead of a named person; the rules themselves are unchanged.
+
+**Score:** 1
 
 #### Pull Request
 
