@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**0 / 1 patch entry** <!-- pending-tally -->
+**1 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3976-cody-tech-lead · 20261111-091251Z
+
+Cody, the App Developer, is now also the tech lead: he records architecture decisions as ADRs, argues a
+stack choice from the repo's own constraints, and estimates stories as a range with its assumptions
+(#3976).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A team with a backlog to plan had nobody who owned the technical choice before the build or the
+estimate per story: Cody built and Victor reviewed code that already existed. Asking Cody for an
+estimate or a decision record now has a playbook behind it, including a spike where a story is too
+uncertain to estimate.
+
+**Score:** 2
+
+#### Pull Request
+
+Cody: add architecture decisions and estimates to the App Developer
+
+Plugins: dkj-subagents-alpha
+
+[PR #3981](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3981)
+
+---
 
 ### DEPLOY: fix/3972-repo-session-issue-list · 20261111-090208Z
 
