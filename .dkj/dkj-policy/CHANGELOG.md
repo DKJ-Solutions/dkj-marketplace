@@ -15,6 +15,8 @@ parsed, so it is still skipped or named. `-DryRun` only says the restore would c
 
 **Score:** 3
 
+#### What makes this deploy extra special
+
 `update-plugins -AllCheckouts` in a consumer stops skipping a checkout whose only change is such a
 rewrite, so that repo takes plugin releases again without a hand `git restore`.
 

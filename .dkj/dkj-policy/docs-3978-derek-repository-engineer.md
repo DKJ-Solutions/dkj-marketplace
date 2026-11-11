@@ -48,6 +48,7 @@ merges, labels and `gh` up to the merge, and product infrastructure is not added
 - [x] Persona `specialist-05-05-persona.md`: title Repository Engineer, plus one sentence on what that title does not cover and why
 - [x] This repo's lens and roster row (`specialist-05-05-lens.md`, `SPECIALISTS.md`)
 - [x] Every role reference to "the DevOps engineer/specialist/colleague" in personas, manuals (alpha and shopify), README, ADOPTION, lenses, the guard hook and three script comments
+- [x] `CHANGELOG.md`: #3984's folded entry gets back its `#### What makes this deploy extra special` heading, which the lint gate refused this branch over; the gap that let it through is #3986
 - [~] The fixture strings in `dev-pages.tests.ps1` and `teardown.tests.ps1` keep "DevOps": they test title parsing on made-up input, not Derek's title. The archived changelog keeps its history.
 
 ### TEST
