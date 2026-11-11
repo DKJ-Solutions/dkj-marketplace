@@ -39,19 +39,44 @@
 
 ### PLAN
 
+#3973: the owner approved the field (November 11, 2026) and then the person: **Priya** 🧩, id `02-31`,
+group 02 beside Paula (Paula owns *when*, Priya owns *what and why*). Boundaries settled in her manual
+against Paula, Bianca, `plan-goal`, research and the test engineer.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Agent def `specialist-02-31-subagent.md` (read-only tools, like Paula), shared blocks filled by
+  `build-agent-defs.ps1`, registered in the core team's `plugin.json`.
+- [x] Manual `specialist-02-31-manual.md`: vision and goals, stories with acceptance criteria, backlog
+  order, MoSCoW scope as a budget, the boundaries, hard rules, tone.
+- [x] This repo adopts her: empty `VUL-IN` lens, roster line in `SPECIALISTS.md`, the
+  `consumers/dkj-marketplace.json` extensions array, the README's team list. Until the release reaches
+  the plugin cache, `check-roster-sync` reports `02-31` as an `[INFO]` orphan, not an error.
+- [x] Paula's manual names the *when* / *what* boundary from her side too.
 
 ### TEST
 
+- [x] `check-roster-sync` here: 0 errors (the expected `[INFO]` orphan until the release).
+- [x] `check-consumers`: no error for this repo's record.
+- [x] Full gates run by ship-pr.
+
 ### DEPLOY: feat/3973-priya-product-owner
 
-**Score:**
+The core team has a new specialist: **Priya 🧩, the Product Owner** (`02-31`). She owns the *what* and
+the *why* of a product: its goals, user stories with acceptance criteria, the order of the backlog, and
+scope held as a budget (MoSCoW: something in means something out). She proposes and the owner decides.
+Paula keeps *when*; `plan-goal` stays the mechanism that files an agreed breakdown (#3973).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A repo running the core team gets a specialist who writes stories with checkable acceptance criteria
+and orders the backlog, where before nobody on any team owned scope. After updating the plugin, the
+roster check reports her as missing from the roster: run `sync-roster` to adopt her, which places an
+empty lens and proposes the roster line.
+
+**Score:** 3
 
 #### Pull Request
 
