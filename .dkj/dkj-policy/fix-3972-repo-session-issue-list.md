@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Issue #3972: `repo-session.ps1 <repo>` printed its open issues as one `#System.Object[] System.Object[]` line.
+Cause verified in the code: `@(($raw -join "`n") | ConvertFrom-Json)` -- Windows PowerShell 5.1 emits a JSON
+array as one pipeline object, so `@()` wrapped the whole list into a single element.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `ConvertFrom-IssueListJson` in `scripts/lib/consumer-dashboard-lib.ps1`: parse first, then enumerate, so each issue is its own element in both editions
+- [x] `scripts/dashboard/repo-session.ps1` reads its issue list through it
+- [x] `consumer-dashboard.tests.ps1` asserts two issues, one issue and none -- the two-issue case is the one the old line got wrong
 
 ### TEST
 
+- [x] `repo-session.ps1 recipes -IssueLimit 3` on Windows PowerShell 5.1 prints three separate issues with their numbers and titles
+- [x] `consumer-dashboard.tests.ps1` alone: 255 asserts pass, the four new `ConvertFrom-IssueListJson` cases among them
+
 ### DEPLOY: fix/3972-repo-session-issue-list
 
-**Score:**
+`repo-session.ps1 <repo>` lists a repo's open issues one per line again, with each issue's number and title,
+instead of one `#System.Object[] System.Object[]` line on Windows PowerShell 5.1 (#3972). The JSON from
+`gh issue list` is parsed by `ConvertFrom-IssueListJson` in `scripts/lib/consumer-dashboard-lib.ps1`, which
+enumerates after the parse, because 5.1's `ConvertFrom-Json` emits an array as one object. A suite case with
+two issues now holds it.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A -- `repo-session` is a tool of this hub repo and ships in no plugin.
+
+**Score:** N/A
 
 #### Pull Request
 
