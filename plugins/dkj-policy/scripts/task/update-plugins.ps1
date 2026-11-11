@@ -232,7 +232,8 @@ function Restore-NoMeaningClaudeChange {
         if ($d.ExitCode -eq 0) { continue }
         if ($d.ExitCode -ne 1 -or $rel -notmatch '\.json$') { return $false }
         $idx = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $Path, 'cat-file', 'blob', ":$rel") -DiscardStderr -Utf8
-        if ($idx.ExitCode -ne 0) { return $false }
+        # Judged only by a POSITIVE measured 0 (#2081): a read it could not judge leaves the file as it is.
+        if (-not ((Test-NativeExitMeasured -Capture $idx) -and $idx.ExitCode -eq 0)) { return $false }
         $file = Join-Path $Path $rel
         if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { return $false }
         $work = [System.IO.File]::ReadAllText($file, (New-Object System.Text.UTF8Encoding($false)))

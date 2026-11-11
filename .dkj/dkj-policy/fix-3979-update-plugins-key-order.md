@@ -56,6 +56,7 @@ verified in `Restore-EolOnlyClaudeChange` and the pre-run guard in `scripts/task
 
 - [x] `update-plugins.tests.ps1` alone: 173 pass, 0 fail
 - [x] Negative control: with the JSON comparison forced to "different", 11 asserts in 27-29 go red
+- [x] The first `ship-pr` gate caught the new bounded capture (`$idx`, `git cat-file`) judged by a negative test; it now asks `Test-NativeExitMeasured` first, and `native-capture.tests.ps1` counts it (114 -> 115): 355 pass, 0 fail
 
 ### DEPLOY: fix/3979-update-plugins-key-order
 
