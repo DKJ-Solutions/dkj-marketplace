@@ -71,6 +71,8 @@
     (For tests) A JSON file standing for finding 5's three gh reads, instead of asking gh:
     { "merged": [ {number, headRefName, body, mergedAt} ], "open": [ {headRefName} ],
       "issues": [ {number, body} ] }. The path '<unreadable>' stands for a read that failed.
+    That file is parsed as one object, so it never takes the live path's per-list parse; the suite
+    reaches that path through a stand-in gh on PATH instead (#3996).
 
     Pure ASCII (repo convention for .ps1).
 #>
@@ -138,7 +140,12 @@ function Get-PullData {
         $a = $reads[$k]
         $out = & gh @a 2>$null
         if ($LASTEXITCODE -ne 0) { return $null }
-        $data[$k] = @(($out -join "`n") | ConvertFrom-Json)
+        # Into a variable FIRST, then wrapped (#3996). Windows PowerShell 5.1's ConvertFrom-Json emits a
+        # JSON array as ONE Object[] rather than enumerating it, so @(... | ConvertFrom-Json) is a
+        # one-element array holding the whole list: $i.number then member-enumerates every number and
+        # the [int] cast throws, on every session start in a store. Assigned first, @() unrolls it.
+        $parsed = ($out -join "`n") | ConvertFrom-Json
+        $data[$k] = @($parsed)
     }
     return [pscustomobject]$data
 }

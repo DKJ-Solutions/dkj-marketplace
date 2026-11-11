@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Inbound #3996: the bwj-development `closed-message-sessioncheck` threw `Cannot convert System.Object[] to
+System.Int32` on every session start in xoxowildhearts. The issue's inferred location (the `[int]` casts)
+is where it throws, not why. Reproduced: in `Get-PullData`, `@(... | ConvertFrom-Json)` under Windows
+PowerShell 5.1 yields a one-element array holding the whole list, so `$i.number` is every number at once.
+The suite never saw it because `-PullDataOverride` parses one object and skips that line.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Parse each gh list into a variable first, then wrap it with `@()`.
+- [x] Regression test through the live gh path: a stand-in `gh.cmd` on PATH serving lists of two.
 
 ### TEST
 
+- [x] `closed-message-sessioncheck.tests.ps1`: 44 passed; with the hook fix stashed, the two new asserts fail.
+
 ### DEPLOY: fix/3996-closed-message-json-array
 
-**Score:**
+The bwj-development session check that reports an Asana-linked issue left open after a `-NoResolves`
+merge stopped throwing on session start in the store repos. It read gh's pull and issue lists as one
+element each under Windows PowerShell 5.1, so the first `[int]` cast failed and the check never ran
+(#3996). The suite now runs that live path through a stand-in `gh`.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a BWJ store repo the session start no longer prints `closed-message-sessioncheck skipped due to an
+error`, and an Asana-linked issue still open after its `-NoResolves` PR merged is reported again.
+
+**Score:** 3
 
 #### Pull Request
 

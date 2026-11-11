@@ -204,6 +204,35 @@ try {
     $r = Invoke-Hook -Root $ok -Slug 'DKJ-Solutions/dkj-marketplace' -Secret 'ASANA_PAT' -Pulls $pulls
     Assert-True ($r.Text.Trim() -eq '') 'and the finding is not asked of a repo outside the reach'
 
+    # THE LIVE gh PATH (#3996): -PullDataOverride parses one object, so it never took Get-PullData's
+    # per-list parse, where PS 5.1's ConvertFrom-Json wrapped each list as ONE element and the [int] cast
+    # threw on every store session start. A stand-in gh.cmd first on PATH serves lists of TWO, the shape
+    # that throws; one element would pass either way.
+    $fakeGh = Join-Path $Fixture 'fake-gh'
+    New-Item -ItemType Directory -Force -Path $fakeGh | Out-Null
+    $two = @(
+        @{ number = 1144; headRefName = 'fix/1126-cart-badge'; body = $declared; mergedAt = $recent },
+        @{ number = 1145; headRefName = 'fix/1127-menu'; body = $declared; mergedAt = $recent })
+    [System.IO.File]::WriteAllText((Join-Path $fakeGh 'merged.json'), (ConvertTo-Json -Depth 5 -InputObject $two))
+    [System.IO.File]::WriteAllText((Join-Path $fakeGh 'open.json'),
+        (ConvertTo-Json -Depth 5 -InputObject @(@{ headRefName = 'feat/9-a' }, @{ headRefName = 'feat/10-b' })))
+    [System.IO.File]::WriteAllText((Join-Path $fakeGh 'issues.json'),
+        (ConvertTo-Json -Depth 5 -InputObject @(@{ number = 1126; body = $linked }, @{ number = 1127; body = $linked })))
+    [System.IO.File]::WriteAllText((Join-Path $fakeGh 'gh.cmd'), ("@echo off`r`n" +
+        "if `"%1`"==`"issue`" (type `"%~dp0issues.json`" & exit /b 0)`r`n" +
+        "if `"%6`"==`"merged`" (type `"%~dp0merged.json`" & exit /b 0)`r`n" +
+        "type `"%~dp0open.json`"`r`nexit /b 0`r`n"))
+    $savedPath = $env:PATH
+    try {
+        $env:PATH = "$fakeGh;$savedPath"
+        $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Hook -RepoRootOverride $ok `
+            -TemplateRootOverride $Templates -RepoSlugOverride 'BWJ-Development/xoxowildhearts' `
+            -SecretNamesOverride 'ASANA_PAT' 2>&1 | ForEach-Object { "$_" }
+    } finally { $env:PATH = $savedPath }
+    $text = $out -join "`n"
+    Assert-True ($text -notmatch 'skipped due to an error') 'the live gh path parses lists of two without throwing (#3996)'
+    Assert-True (($text -match 'xoxowildhearts#1126 links') -and ($text -match 'xoxowildhearts#1127 links')) 'and reports each open-after-merge issue it read'
+
     # THE REAL ORIGIN READ, no slug override: an ssh origin naming a store is recognised as that store.
     $ssh = New-Store -Label 'ssh'
     Invoke-FixtureGitIn $ssh init -q
