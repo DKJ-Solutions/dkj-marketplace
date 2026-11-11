@@ -36,6 +36,9 @@ permissions:
 # is never killed half way. A group holds one running and one pending run, and a newer arrival drops the
 # pending one, so a burst of three or more events on one issue posts fewer messages than events. That cap
 # is accepted: the newest event, which is the issue's current state, is always the one still pending.
+# The group orders runs as GitHub CREATED them, which is not always the order the events happened
+# (xoxowildhearts#512: a reopen's run was created after the close's), so the script also reads the issue's
+# current state and posts nothing for an event that state has superseded (#3995).
 concurrency:
   group: asana-closed-message-${{ github.event.issue.number }}
   cancel-in-progress: false
