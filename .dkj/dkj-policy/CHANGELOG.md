@@ -14,6 +14,8 @@ ADOPTION follows.
 
 **Score:** 2
 
+#### What makes this deploy extra special
+
 A consuming repo's roster (`SPECIALISTS.md`) and Derek's lens title still read "DevOps Engineer" until that
 repo edits them; the roster check does not compare titles, so nothing fails, and Derek's own persona reads
 Repository Engineer from this release on.
