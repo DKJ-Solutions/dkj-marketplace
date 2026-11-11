@@ -2464,6 +2464,15 @@ Assert-Equal 0 @($higherRead.Errors).Count 'the current shape parses without com
 Assert-Equal 2 (@($higherRead.Rows | Where-Object { [int]$_.Tier -eq 2 }).Count + 1) 'and resolve to this repo audience tier, so its score is not lost'
 Assert-Equal 4 ([int](@($higherRead.Rows | Where-Object { [int]$_.Tier -eq 2 })[0].Score)) 'with the score the author actually wrote'
 Assert-Equal 1 ([int](@($higherRead.Rows | Where-Object { [int]$_.Tier -eq 0 })[0].Score)) 'and the opening question reads back as tier 0, not as prose'
+# THE SAME ENTRY WITH ITS AUDIENCE HEADING DELETED (#3986), both Score lines kept -- #3984's entry exactly.
+# It read as tier 0 alone, every gate green, and only [entry-heading] caught it in CHANGELOG.md one PR later.
+$headless = Resolve-EntryImpact -EntryText (("#" * (Get-EntryHeadingLevel)) + " DEPLOY: ``feat/a`` " + (Get-EntryIdSeparator) + " 1`n`nwhy`n`n**Score:** 1`n`nreaches them`n`n**Score:** 4`n")
+Assert-Equal 1 @($headless.Errors | Where-Object { $_ -match 'second Score line' }).Count 'a second Score line with no heading between it and the first is refused -- the heading that opens its section is missing'
+Assert-True (@($headless.Errors)[0] -match [regex]::Escape((Get-EntryTierHigherHeading))) 'and the refusal names the heading to put back'
+# AND A HEADING BETWEEN THEM, at a level this reader does not close tier 0 on, is not that defect: entries
+# from August 19-23, 2026 nest the audience heading one level deeper, and 39 archived entries carry it.
+$nested = Resolve-EntryImpact -EntryText (("#" * (Get-EntryHeadingLevel)) + " DEPLOY: ``feat/a`` " + (Get-EntryIdSeparator) + " 1`n`nwhy`n`n**Score:** 1`n`n" + ('#' * ((Get-EntryTierSubLevel) + 2)) + " Some deeper heading`n`nreaches them`n`n**Score:** 4`n")
+Assert-Equal 0 @($nested.Errors | Where-Object { $_ -match 'second Score line' }).Count 'a second Score line under a deeper heading is not reported as a missing heading'
 # THE RETIRED SHAPE IS STILL READ, which is the whole safety of the move: every entry in CHANGELOG.md and on
 # every branch in flight carries the sub-headings right now, and they meet this parser through a plugin update.
 # EVERY RETIRED WORDING, NOT JUST THE NEWEST. This read [0] until August 24, 2026, which asserted only the
