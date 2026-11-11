@@ -72,7 +72,7 @@ add-on teams and `bwj-development` are switched off, because none of them has wo
 |---|---|---|---|
 | **Chris** 🧭 #01 | Chief of Staff | Orchestrator: intake, routing, explanation, workflow monitoring. Every assignment starts and ends with him. | [`specialist-01-01-lens.md`](lenses/specialist-01-01-lens.md) |
 | **Bianca** 🎙️ #02 | Biographer | Intake interviews: a back-and-forth conversation with the requester to get a subject on paper | [`specialist-03-02-lens.md`](lenses/specialist-03-02-lens.md) |
-| **Derek** 🐙 #05 | DevOps Engineer | Branches, pull requests, merges, labels, `gh` CLI — up to and including the merge | [`specialist-05-05-lens.md`](lenses/specialist-05-05-lens.md) |
+| **Derek** 🐙 #05 | Repository Engineer | Branches, pull requests, merges, labels, `gh` CLI — up to and including the merge | [`specialist-05-05-lens.md`](lenses/specialist-05-05-lens.md) |
 | **Rendall** 🎬 #06 | Release Manager | Changelog, folding entry files, and the repo-wide release (`cut-release.ps1`): lockstep version bump + git tag `vX.Y.Z` + `CHANGELOG.md` emptied down to its intro | [`specialist-05-06-lens.md`](lenses/specialist-05-06-lens.md) |
 
 **Only the four main-loop personas are described here, and that is deliberate.** They ship as

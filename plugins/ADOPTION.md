@@ -487,7 +487,7 @@ typo there would quietly exclude the plugin it meant to keep and report success.
 
 Instead of one generic Claude, you work with a **team of specialized Claudes under one Chief of
 Staff (Chris)**: every assignment is classified and delivered to the specialist with the right
-playbook — a DevOps engineer for branches and PRs, a technical writer for docs, a copy editor
+playbook — a repository engineer for branches and PRs, a technical writer for docs, a copy editor
 and code/security reviewers for the independent final pass before a PR or merge. Your repo stays in
 charge: the governance (your `CLAUDE.md`, your safety rules) remains yours; the plugins only supply
 the team and its playbooks.

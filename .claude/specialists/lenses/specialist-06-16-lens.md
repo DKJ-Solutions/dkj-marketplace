@@ -267,7 +267,7 @@ Both stay as they are; what follows is the note that was missing.
 - **The "chore is a contradiction" rule**, stated in full in [`this-repo.md`](../../rules/this-repo.md),
   [Derek's lens](specialist-05-05-lens.md), and once more as a comment in
   [`scripts/lib/branch-info.ps1`](../../../scripts/lib/branch-info.ps1). Three readers, three doors: the
-  constitution, the DevOps specialist opening his own lens, and whoever is editing the prefix table
+  constitution, the repository engineer opening his own lens, and whoever is editing the prefix table
   itself. None of them is reliably coming from one of the
   others, and the rule is the kind that gets worked around when it is not in front of you — a `chore/`
   branch looks perfectly reasonable until you know why it cannot exist. The feat/fix/docs table is
