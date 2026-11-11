@@ -2,7 +2,28 @@
 
 ## [Unreleased]
 
-**6 / 7 minor entries** <!-- pending-tally -->
+**6 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/changelog-heading-3988 · 20261111-104934Z
+
+`CHANGELOG.md`: the pending entry for #3988 gets back the section heading its tier-2 text belongs under, so
+the next pull request is no longer refused by the lint gate's `[entry-heading]` check (#3986).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A -- only this repo's pending changelog changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+Restore the tier-2 heading of #3988's folded changelog entry
+
+[PR #3990](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3990)
+
+---
 
 ### DEPLOY: fix/3986-deploy-missing-tier-heading · 20261111-103650Z
 
