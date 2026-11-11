@@ -594,33 +594,36 @@ that maintains it: measured that day, Rendall #06's portable persona was **1,700
 lens had grown to **26,914** — sixteen times larger, holding the release craft itself rather than
 anything specific to this repo.
 
-**Which of the three layers a rule belongs in follows from what the layer already carries**, a
-convention the repo has held consistently rather than one invented here. Re-measured **August 15,
-2026** across `dkj-subagents-alpha`'s **15 manuals, 4 personas and 4 skills** — count each category with
-`grep -rho` over `manuals/`, `personas/` and `skills/`, and the table reproduces:
+**Which of the three layers a rule belongs in follows from what the layer may carry**, and since
+November 11, 2026 the portable layer's half of that is a rule a gate holds rather than a measurement a
+table reports (#3987, the owner's decision):
 
-| layer | holds | repo-specific detail (measured) |
+| layer | holds | repo-specific detail |
 |---|---|---|
-| **persona / manual** | the craft itself, stated timelessly | **none** across all 19 files — 0 issue numbers, 0 repo names, 0 person names. The one `vX.Y.Z` a regex finds is Rendall's *"How he sounds"* line, an invented example of speech rather than a real version |
-| **skill** | a procedure, with the evidence that shaped it | **yes** — **250** such references across the 4 skills (137 issue numbers, 93 repo names, 15 versions, 5 person names), e.g. a measured character limit attributed to the consumer repo it was hit in |
+| **persona / manual** | the craft itself, stated timelessly | **an issue number as provenance, and nothing else**: a link to this source repo's own tracker (under any name it has had) may say where a rule came from, but no other repo's name and no person's name. A decision is attributed to *"the owner"*. Held by check 47 of `check-plugin-integrity.ps1`, `[portable-names]` |
+| **skill** | a procedure, with the evidence that shaped it | **yes** — issue numbers, repo names, versions and the people who measured them, e.g. a measured character limit attributed to the consumer repo it was hit in |
 | **repo lens** | what this repo does differently, and the local measurement | yes |
 
-**The previous figures are kept here as the thing that went wrong, because the failure is instructive**:
-this table read *"14 manuals, 4 personas and 9 skills"* and *"103 references across the 9 skills"*, and
-by August 15 none of the three counts held — a manual had been added, and the August 8 workflow split
-had moved nine of `dkj-subagents-alpha`'s skills into `dkj-policy`, leaving four. **`.claude/rules/this-repo.md` points at
-this table as the evidence for the whole source-vs-lens doctrine**, so a reader who checked it found the
-numbers wrong and had no way to tell whether the doctrine was wrong with them. The claim itself was
-false too, by exactly two person names — both now moved to the lens that should have held them, which
-is the convention this table describes, applied to itself.
+**Why the issue numbers stayed** when the rule was written down: the always-loaded personas cite them by
+design, and the manuals point readers along that trail to the measurement behind a rule. Stripping them
+would have cost the trail and bought nothing the rule protects. What the rule protects is the other two
+halves: a repo's or a person's name in a file every consumer loads is repo-specific detail travelling to
+repos it says nothing about.
 
-**A measurement in a document that nothing regenerates goes stale silently.** State the date and the
-method, as above, so the next reader can re-run it in one command instead of trusting it.
+**The table was a measurement twice, and false both times, which is why it is a rule now.** Its August
+version read *"none across all 19 files — 0 issue numbers, 0 repo names, 0 person names"*, re-measured
+after the first failure (#701: the counts no longer held, and the claim was false by two person names).
+By November 11, 2026 the tree held 49 issue references, 28 links to the source repo and 6 person names
+across 31 files (#3987), and two sessions placing a rule that same day read the layer two ways — one
+dropped an issue link from a new manual on the strength of this table while the other kept one. **A
+measurement in a document that nothing regenerates goes stale silently**, and when the measurement *is*
+the rule, the rule goes stale with it. So the line is now stated as what may be carried and held by a
+check, and the figures above are history.
 
 So the practical test for a lesson learned: **is it a timeless statement about the craft** → persona or
-manual, stripped of every number. **Is it a procedure step someone will walk, whose reason rests on a
-measurement** → the skill, measurement included; that is why the skills carry evidence and the manuals
-do not. **Is it only true here** → the lens. When the same rule has both a portable half and a local
+manual, with at most an issue number saying where it came from. **Is it a procedure step someone will
+walk, whose reason rests on a measurement** → the skill, measurement included; that is why the skills
+carry the evidence and the manuals only point at it. **Is it only true here** → the lens. When the same rule has both a portable half and a local
 half, split it: the rule and its generic reason go to the source, and the lens keeps a short citation
 naming where it was measured.
 

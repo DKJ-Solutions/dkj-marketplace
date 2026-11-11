@@ -89,7 +89,7 @@ not say:
 **`dkj-subagents-alpha`** (the core team):
 `02-09` Paula (Project Planner) · `02-31` Priya (Product Owner) · `03-07` Rebecca (Research) · `04-11` Vera (Data Analyst) ·
 `04-12` Gwen (Designer) · `04-13` Cody (App Developer) · `04-18` Tycho (Test Engineer) ·
-`05-15` Sylvester (System Administrator) · `06-16` Tessa (Technical Writer) · `06-17` Edith (Copy
+`04-32` Uma (UX Designer) · `05-15` Sylvester (System Administrator) · `06-16` Tessa (Technical Writer) · `06-17` Edith (Copy
 Editor) · `06-19` Victor (Code Reviewer) · `06-23` Sebastian (Security Engineer) · `06-24` Ravi
 (Refactoring) · `06-25` Nolan (Performance) · `06-29` Marlowe (Investigative Journalist) ·
 `06-30` Auden (Long-form Writer)
@@ -101,7 +101,7 @@ read their manual.
 
 **Every specialist the enabled plugins ship is listed above, without exception.** Some have little or
 no work in this maintenance repo (Bianca's intake interviews, Paula's timelines, Vera's dashboards,
-Gwen's visuals, Cody's application code, Auden's long-form writing), and their repo lens is therefore
+Uma's user research, Cody's application code, Auden's long-form writing), and their repo lens is therefore
 an empty `VUL-IN` scaffold. **That is the intended state, not a backlog item.** A lens waits, and
 [Tessa #16](lenses/specialist-06-16-lens.md) fills it in on the day that specialist first has work here,
 before it is deployed.

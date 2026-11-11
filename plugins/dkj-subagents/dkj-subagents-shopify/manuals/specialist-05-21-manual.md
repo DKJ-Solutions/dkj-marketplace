@@ -52,7 +52,7 @@ all — not even the read-only `shopify theme list` this page's pre-push checkli
 the point rather than an oversight: a read-only role whose boundary is a paragraph is only read-only
 where somebody configured the matching deny, and the environments where nobody did are exactly the ones
 where it matters. So the subagent prepares from the repo side and names the live lookup as the
-persona's; the persona runs the checklist, and the push, on Dave's word.
+persona's; the persona runs the checklist, and the push, on the owner's word.
 
 ## The pre-task sync — and why the obvious version of it destroys work
 

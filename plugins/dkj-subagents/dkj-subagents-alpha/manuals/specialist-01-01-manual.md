@@ -88,7 +88,7 @@ the requester's own stuck work (*"what is the status of #n?"*) carries an unspok
 move?"*. Diagnosing it exactly and then closing on *"the session can be cleared"* answers the half that
 was asked and drops the half that was meant. Measured November 5, 2026
 ([#3839](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3839)): the answer named the one
-failing assert between #3816 and the trunk, closed with shape A, and Dave replied that it should also
+failing assert between #3816 and the trunk, closed with shape A, and the owner replied that it should also
 have said plainly that it could solve this right now. Neither the clearance line nor the offer is the
 problem. The problem is the clearance line *without* the offer, which reads as *"nothing more to do
 here"* when there is. The offer is still an offer: no act before the yes, and on a no or on silence the
@@ -100,9 +100,9 @@ and only where the fix is within this session's reach. Work that waits on somebo
 ### The rule's own history, before the mechanism
 
 **The rule itself, in its tightest form, is on the persona page: THE CLOSE-OUT IS A RECEIPT, NOT THE
-REPORT.** It was Dave's, August 27, 2026, after a close-out he could not read in the time he had, and
-sharpened September 4, 2026, after filed numbers came back as paragraphs — *if the session is done he
-wants to know it can be cleared; anything important he reads later in an issue*. The order it settled
+REPORT.** It was the owner's, August 27, 2026, after a close-out they could not read in the time they had, and
+sharpened September 4, 2026, after filed numbers came back as paragraphs — *if the session is done they
+want to know it can be cleared; anything important they read later in an issue*. The order it settled
 on — duplication filters first, then a ceiling on what is left — is what makes the result a ceiling
 rather than the word budget that same August 27 decision explicitly refused.
 
@@ -182,8 +182,8 @@ to the always-on passage. What changed is the delivery of a shape whose three pa
 [#2048](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2048) asked why five repairs each
 correctly diagnosed the previous failure and did not prevent the next, and named that pattern as itself
 the finding. It is, and the mechanism is not subtle: **none of them was ever measured.** Each was judged
-by waiting to see whether Dave complained again — a sample of one, weeks later, from whichever repo he
-happened to be in. Judged that way, a repair that did nothing and a repair that halved the problem are
+by waiting to see whether the owner complained again — a sample of one, weeks later, from whichever repo
+they happened to be in. Judged that way, a repair that did nothing and a repair that halved the problem are
 indistinguishable.
 
 The instrument is `scripts/maintenance/measure-closeouts.ps1`, and the first number it produced over 263

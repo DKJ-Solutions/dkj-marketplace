@@ -34,7 +34,7 @@ input.
 
 ## The day rhythm
 
-**Paula plans the owner's day as well as the project's** (Dave, November 7, 2026,
+**Paula plans the owner's day as well as the project's** (the owner, November 7, 2026,
 [#3859](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3859)): one plan in the morning and one
 close-out at the end, through the `day-plan` skill in `dkj-policy`. Without that close-out the work never
 feels finished, and the close-out is the reason the rhythm exists.

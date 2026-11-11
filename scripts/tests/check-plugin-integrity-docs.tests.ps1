@@ -359,6 +359,52 @@ try {
     Remove-Item -Recurse -Force -LiteralPath (Join-Path $Fixture 'releases\notes') -ErrorAction SilentlyContinue
     Remove-Item -Force -LiteralPath $ctrSeamCfg -ErrorAction SilentlyContinue
 
+    # --- check 47: a manual or persona cites an issue number, never a repo or a person (#3987) -------
+    #     The source repo's name half is the fixture marketplace's own name, 'fixture-marketplace'; the
+    #     fixture has no repo-config, so no retired name is known here.
+    Write-Host '  check 47: a manual or persona cites an issue number, never a repo or a person' -ForegroundColor DarkCyan
+    $pnDir = Join-Path $Fixture 'plugins\probe-team\manuals'
+    New-Item -ItemType Directory -Force -Path $pnDir | Out-Null
+    $pnDoc = Join-Path $pnDir 'specialist-99-99-manual.md'
+    $pnSkillDir = Join-Path $Fixture 'plugins\probe-team\skills\probe'
+    New-Item -ItemType Directory -Force -Path $pnSkillDir | Out-Null
+
+    # A. the allowed shape: an issue of THIS repo as provenance, a bare #n, 'the owner', the word "dave" in
+    #    lower case, and an account name that is only the owner half of an allowed link.
+    $pnClean = "# Probe`n`nDecided by the owner ([#12](https://github.com/Owner/fixture-marketplace/issues/12)), see #34.`n" +
+               "A dave is not a person here. Older link: https://github.com/DaveKJohn/fixture-marketplace/issues/1.`n"
+    [System.IO.File]::WriteAllText($pnDoc, $pnClean, $Utf8NoBom)
+    $pn0 = Invoke-Integrity -FixtureRoot $Fixture
+    Assert-True (-not ($pn0.Out -match '\[portable-names\] plugins/')) `
+        'portable-names: an issue link to this repo, a bare #n, "the owner" and an allowed link''s owner half are not findings'
+    Assert-True ($pn0.Out -match '\[portable-names\] checked [1-9]') `
+        'portable-names: and the pass is not an empty scan -- the probe manual was read'
+
+    # B. another repo, as a link and as an owner/name#n reference, and two people -- one by first name and
+    #    one by account, in another case.
+    [System.IO.File]::WriteAllText($pnDoc, ("# Probe`n`nMeasured in https://github.com/Someone/other-repo/issues/5.`n" +
+        "Also Acme/widgets#7.`nDave decided it.`nAsked by MAIKEL-BWJ.`n"), $Utf8NoBom)
+    $pn1 = Invoke-Integrity -FixtureRoot $Fixture
+    Assert-True ($pn1.Out -match "\[portable-names\] plugins/probe-team/manuals/specialist-99-99-manual\.md:3 names the repo 'Someone/other-repo'") `
+        'portable-names: a GitHub link to another repo is reported with file and line'
+    Assert-True ($pn1.Out -match "\[portable-names\] \S+:4 names the repo 'Acme/widgets'") `
+        'portable-names: and so is an owner/name#n reference'
+    Assert-True ($pn1.Out -match "\[portable-names\] \S+:5 names the person 'Dave'") `
+        'portable-names: a person on the list is reported'
+    Assert-True ($pn1.Out -match "\[portable-names\] \S+:6 names the person 'maikel-bwj'") `
+        'portable-names: and an account name is matched in any case'
+    Assert-True ($pn1.Code -ne 0) `
+        'portable-names: and it fails the gate'
+
+    # C. A SKILL CARRIES EVIDENCE BY DESIGN: the same text in a skill page is not a subject.
+    [System.IO.File]::WriteAllText($pnDoc, $pnClean, $Utf8NoBom)
+    [System.IO.File]::WriteAllText((Join-Path $pnSkillDir 'SKILL.md'), "# Probe`n`nDave measured it in https://github.com/Someone/other-repo/issues/5.`n", $Utf8NoBom)
+    $pn2 = Invoke-Integrity -FixtureRoot $Fixture
+    Assert-True (-not ($pn2.Out -match '\[portable-names\] plugins/')) `
+        'portable-names: a skill page is not held to the portable layer''s rule'
+
+    Remove-Item -Recurse -Force -LiteralPath (Join-Path $Fixture 'plugins\probe-team') -ErrorAction SilentlyContinue
+
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }
 }

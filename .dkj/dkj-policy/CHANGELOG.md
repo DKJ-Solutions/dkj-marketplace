@@ -2,7 +2,84 @@
 
 ## [Unreleased]
 
-**6 / 7 minor entries** <!-- pending-tally -->
+**8 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3987-portable-layer-names · 20261111-111453Z
+
+Manuals and personas now follow a rule instead of a measurement: they may cite an issue of this source repo
+as provenance, and name no other repo and no person (#3987). Check 47 of `check-plugin-integrity.ps1`,
+`[portable-names]`, holds the line, after the six person names in the manuals became "the owner". Tessa's
+lens states the rule in place of a table that had been falsified twice (#701, #3987).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Four shipped manuals in `dkj-subagents-alpha` and `dkj-subagents-shopify` attribute a decision to "the
+owner" instead of a named person; the rules themselves are unchanged.
+
+**Score:** 1
+
+#### Pull Request
+
+Manuals and personas may cite an issue number, never a repo or a person, and a lint check holds that line
+
+Plugins: dkj-subagents-alpha, dkj-subagents-shopify
+
+[PR #3992](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3992)
+
+---
+
+### DEPLOY: feat/3974-uma-ux-designer · 20261111-110007Z
+
+The core team has a new specialist: **Uma 🖱️, the UX Designer / UX Researcher** (`04-32`). She owns
+how a product works for its users: she prepares interviews and usability tests and synthesises what
+comes back into findings tied to their evidence, tears competitors down from the user's side, and
+designs user flows (unhappy paths included), wireframes and a clickable prototype. Gwen stays the
+visual designer and takes Uma's tested flow further (#3974).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A repo running the core team gets a specialist for user research and interaction design, where
+before nobody on any team owned either. She never invents users: she prepares the session, the
+owner runs it, and she reads the result. After updating the plugin, the roster check reports her as
+missing from the roster: run `sync-roster` to adopt her, which places an empty lens and proposes the
+roster line.
+
+**Score:** 3
+
+#### Pull Request
+
+Uma: a UX Designer / UX Researcher specialist in the core team
+
+Plugins: dkj-subagents-alpha
+
+[PR #3989](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3989)
+
+---
+
+### DEPLOY: docs/changelog-heading-3988 · 20261111-104934Z
+
+`CHANGELOG.md`: the pending entry for #3988 gets back the section heading its tier-2 text belongs under, so
+the next pull request is no longer refused by the lint gate's `[entry-heading]` check (#3986).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A -- only this repo's pending changelog changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+Restore the tier-2 heading of #3988's folded changelog entry
+
+[PR #3990](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3990)
+
+---
 
 ### DEPLOY: fix/3986-deploy-missing-tier-heading · 20261111-103650Z
 
