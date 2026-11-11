@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**2 / 3 minor entries** <!-- pending-tally -->
+**2 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3998-register-three-consumers · 20261111-164400Z
+
+`dkj-etf-tracker`, `dkj-music-library` and `dkj-recipes` now have a manifest under `consumers/`, so the
+registry check, the session hook and the registry-driven sweeps reach them (#3998). Each records the
+plugins and lenses measured on that repo's `origin/main`.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A: the register is workshop administration in this repo and does not travel with any plugin.
+
+**Score:** N/A
+
+#### Pull Request
+
+Register dkj-etf-tracker, dkj-music-library and dkj-recipes under consumers/
+
+[PR #4003](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4003)
+
+---
 
 ### DEPLOY: fix/3997-golive-page-count · 20261111-163222Z
 
