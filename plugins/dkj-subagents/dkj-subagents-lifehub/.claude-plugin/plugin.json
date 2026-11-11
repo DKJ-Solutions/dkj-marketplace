@@ -9,7 +9,7 @@
     "./subagents/specialist-04-03-subagent.md",
     "./subagents/specialist-04-04-subagent.md"
   ],
-  "version": "6.13.0",
+  "version": "6.14.0",
   "dependencies": ["dkj-subagents-alpha"],
   "defaultEnabled": false,
   "author": { "name": "DaveKJohn" },
