@@ -435,7 +435,7 @@ the lens in `.claude/specialists/lenses/<group>-<id>-extension.md`. The agent de
 its plugin, and every consuming repo keeps only its repo lens in `.claude/specialists/lenses/`:
 
 - **`dkj-subagents-alpha` (the core team)** → `dkj-subagents-alpha/manuals/` (Paula, Rebecca, Vera, Gwen, Cody, Tycho,
-  Sylvester, Tessa, Edith, Victor, Sebastian, Ravi, Nolan, Marlowe, Auden).
+  Uma, Sylvester, Tessa, Edith, Victor, Sebastian, Ravi, Nolan, Marlowe, Auden).
 - **`dkj-subagents-lifehub` (an add-on team)** → `dkj-subagents-lifehub/manuals/` (Astrid, Fiona, Hugo, Ian, Onyx).
 - **`dkj-subagents-shopify` (an add-on team)** → `dkj-subagents-shopify/manuals/` (Liam, Sandra, Steven).
 - **`dkj-subagents-ecomm` (an add-on team)** → `dkj-subagents-ecomm/manuals/` (Sergio, Craig, Sean).
