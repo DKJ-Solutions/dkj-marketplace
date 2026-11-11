@@ -66,6 +66,9 @@ other new specialist of the same day.
 - [x] The first `ship-pr` was refused by `[entry-heading]` on `CHANGELOG.md:7`, #3984's folded entry
   missing its tier-2 heading (#3986's defect). Repaired here with the same one-heading change #3978's
   branch carries, byte for byte, so the two merge cleanly in either order.
+- [x] CI then refused PR #3989 for the same finding on a NEW entry: #3978's own fold (#3988) had
+  landed without its tier-2 heading too. `origin/main` merged in, and that heading restored as well;
+  all 5 pending entries now scan clean.
 - [x] Full gates run by ship-pr.
 
 ### DEPLOY: feat/3974-uma-ux-designer
