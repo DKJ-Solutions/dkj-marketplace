@@ -56,7 +56,6 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $utf8 = New-Object System.Text.UTF8Encoding($false)
-$dkjPolicy = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..\..\..')).Path
 
 function Stop-Handover {
     param([string]$Message)
@@ -76,6 +75,8 @@ function Read-TextArg {
 $RootArg = $RootOverride
 . (Join-Path $PSScriptRoot '..\lib\repo-root-lib.ps1')
 $repoRoot = Resolve-BwjRepoRoot -Override $RootArg
+# Both layouts -- the source tree and the install cache, where dkj-policy is a sibling plugin (#3993).
+try { $dkjPolicy = Resolve-DkjPolicyRoot -From $PSScriptRoot } catch { Stop-Handover $_.Exception.Message }
 . (Join-Path $PSScriptRoot '..\lib\market-urls.ps1')
 . (Join-Path $dkjPolicy 'apps\admin\lib\handover-page-lib.ps1')
 . (Join-Path $dkjPolicy 'apps\admin\lib\dev-preview-rules.ps1')

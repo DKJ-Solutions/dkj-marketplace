@@ -121,6 +121,28 @@ try {
     Remove-Item -LiteralPath $fix -Recurse -Force -ErrorAction SilentlyContinue
 }
 
+Write-Host '-- finding dkj-policy from the extension (#3993)' -ForegroundColor Cyan
+. (Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development\scripts\lib\repo-root-lib.ps1')
+$marker = 'apps\admin\lib\handover-page-lib.ps1'
+Assert-Equal (Join-Path $RepoRoot 'plugins\dkj-policy') (Resolve-DkjPolicyRoot -From (Split-Path -Parent $Builder)) 'in the source tree the root is four levels up'
+$cache = Join-Path ([System.IO.Path]::GetTempPath()) ('handover-cache-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+try {
+    $task = Join-Path $cache 'mk\bwj-development\6.13.0\scripts\task'
+    [void](New-Item -ItemType Directory -Path $task -Force)
+    foreach ($v in '6.12.0', '6.13.0', '6.9.0') {
+        [void](New-Item -ItemType Directory -Path (Join-Path $cache "mk\dkj-policy\$v\apps\admin\lib") -Force)
+        [System.IO.File]::WriteAllText((Join-Path $cache "mk\dkj-policy\$v\$marker"), '#')
+    }
+    Assert-Equal (Join-Path $cache 'mk\dkj-policy\6.13.0') (Resolve-DkjPolicyRoot -From $task) 'in the install cache it is the sibling dkj-policy at this plugin''s own version'
+    Remove-Item -LiteralPath (Join-Path $cache 'mk\dkj-policy\6.13.0') -Recurse -Force
+    Assert-Equal (Join-Path $cache 'mk\dkj-policy\6.12.0') (Resolve-DkjPolicyRoot -From $task) 'without that version, the highest one present (by version, not by string)'
+    Remove-Item -LiteralPath (Join-Path $cache 'mk\dkj-policy') -Recurse -Force
+    $thrown = ''; try { [void](Resolve-DkjPolicyRoot -From $task) } catch { $thrown = $_.Exception.Message }
+    Assert-True ($thrown -match 'not found' -and $thrown.Contains($marker)) 'with no dkj-policy at all it refuses, naming what it looked for'
+} finally {
+    Remove-Item -LiteralPath $cache -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 Write-Host ''
 Write-Host "handover-page: $script:pass passed, $script:fail failed"
 if ($script:fail) { exit 1 }
