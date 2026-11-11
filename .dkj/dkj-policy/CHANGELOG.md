@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**2 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3996-closed-message-json-array · 20261111-162054Z
+
+The bwj-development session check that reports an Asana-linked issue left open after a `-NoResolves`
+merge stopped throwing on session start in the store repos. It read gh's pull and issue lists as one
+element each under Windows PowerShell 5.1, so the first `[int]` cast failed and the check never ran
+(#3996). The suite now runs that live path through a stand-in `gh`.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a BWJ store repo the session start no longer prints `closed-message-sessioncheck skipped due to an
+error`, and an Asana-linked issue still open after its `-NoResolves` PR merged is reported again.
+
+**Score:** 3
+
+#### Pull Request
+
+closed-message-sessioncheck: parse gh's JSON lists so PS 5.1 does not wrap them
+
+Plugins: bwj-development
+
+[PR #4000](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4000)
+
+---
 
 ### DEPLOY: fix/3995-closed-message-superseded-event · 20261111-161044Z
 
