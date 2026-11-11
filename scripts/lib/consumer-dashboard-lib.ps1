@@ -267,6 +267,20 @@ function Format-RepoSessionCommand {
     return $line
 }
 
+function ConvertFrom-IssueListJson {
+    <#
+        The issues in `gh issue list --json number,title` output, one array element per issue (#3972).
+        Windows PowerShell 5.1's ConvertFrom-Json emits a JSON array as ONE pipeline object, so
+        @(... | ConvertFrom-Json) wraps the whole list into a single element: Count reads 1 and .number
+        member-enumerates into System.Object[]. Enumerating after the parse unrolls it in both editions.
+    #>
+    param([AllowNull()][AllowEmptyCollection()][string[]]$Json)
+    $text = ($Json -join "`n").Trim()
+    if (-not $text) { return , @() }
+    $parsed = $text | ConvertFrom-Json
+    return , @($parsed | ForEach-Object { $_ })
+}
+
 function Get-ConsumerOwnerGroup {
     <#
         The group a repo is shown under, by the owner in its 'owner/name' slug: 'bwj' (BWJ-Development),

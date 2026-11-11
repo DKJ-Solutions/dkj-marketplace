@@ -713,6 +713,14 @@ foreach ($v in "it's", $curly, ([char]0x2018 + 'x' + [char]0x201B), '$(Remove-It
 Assert-Equal "Set-Location -LiteralPath 'C:\x\dkj-lifehub'; claude" (Format-RepoSessionCommand -Path 'C:\x\dkj-lifehub') 'the command without a prompt'
 Assert-Equal "Set-Location -LiteralPath 'C:\x\o''b'; claude 'start it''s dossier'" (Format-RepoSessionCommand -Path "C:\x\o'b" -Prompt "start it's dossier") 'the command quotes the path and the prompt'
 
+# ConvertFrom-IssueListJson (#3972): Windows PowerShell 5.1 emits a JSON array as one object, which once printed
+# every issue list as a single '#System.Object[] System.Object[]' line.
+$il = ConvertFrom-IssueListJson @('[{"number":12,"title":"First"},', '{"number":7,"title":"Second"}]')
+Assert-Equal 2 $il.Count 'a list of two issues parses to two elements'
+Assert-Equal '12|First;7|Second' (($il | ForEach-Object { "$($_.number)|$($_.title)" }) -join ';') 'each element carries its own number and title'
+Assert-Equal 1 (ConvertFrom-IssueListJson '[{"number":3,"title":"Only"}]').Count 'a list of one issue parses to one element'
+Assert-Equal 0 (ConvertFrom-IssueListJson '[]').Count 'an empty list parses to none'
+
 # repo-session.ps1 against a fixture tree: the register resolves, a missing checkout is refused, -WhatIf runs nothing.
 $rsRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('repo-session-' + [guid]::NewGuid().ToString('n'))
 $rsAdmin = Join-Path $rsRoot 'org\admin'
