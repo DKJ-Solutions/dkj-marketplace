@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**9 / 11 minor entries** <!-- pending-tally -->
+**10 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3993-handover-dkj-policy-root · 20261111-125848Z
+
+`build-handover-page.ps1` runs from an installed plugin again. It looked for dkj-policy's Admin libs four
+directories above itself, which only holds in the source tree, so in the plugin cache it failed before
+building anything. It now also finds dkj-policy as the sibling plugin in the cache, at its own version
+(#3993).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A BWJ store repo can build the preview handover page with the script as shipped, instead of copying the
+plugin's files to a temporary folder and running the copy with `-RootOverride`.
+
+**Score:** 3
+
+#### Pull Request
+
+build-handover-page finds dkj-policy's root in the plugin cache
+
+Plugins: bwj-development
+
+[PR #3994](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3994)
+
+---
 
 ### DEPLOY: feat/3973-priya-product-owner · 20261111-124900Z
 
