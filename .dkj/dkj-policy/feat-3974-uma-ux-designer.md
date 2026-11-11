@@ -63,6 +63,9 @@ other new specialist of the same day.
 ### TEST
 
 - [x] `build-agent-defs.ps1`: the new def's shared blocks filled, every other def already in sync.
+- [x] The first `ship-pr` was refused by `[entry-heading]` on `CHANGELOG.md:7`, #3984's folded entry
+  missing its tier-2 heading (#3986's defect). Repaired here with the same one-heading change #3978's
+  branch carries, byte for byte, so the two merge cleanly in either order.
 - [x] Full gates run by ship-pr.
 
 ### DEPLOY: feat/3974-uma-ux-designer
