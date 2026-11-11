@@ -9,7 +9,7 @@
     literally in the agent def (always-loaded, self-contained); this script keeps it in sync.
 
     Runs over all <plugin>/agents/*-agent.md AND all <plugin>/personas/*-persona.md in every plugin.
-    The personas are in scope because the specialists whose craft is itself a way of working (DevOps,
+    The personas are in scope because the specialists whose craft is itself a way of working (the repository engineer,
     release management) ship as personas, so a shared block about process would otherwise never reach
     them. Writes BOM-less, LF, only when something changes.
 
@@ -46,7 +46,7 @@ if (-not (Test-Path -LiteralPath $SharedDir -PathType Container)) {
 Write-Host "== build-agent-defs$(if ($Check) {' -Check'}) -- $RepoRoot ==" -ForegroundColor Cyan
 
 # THE PERSONAS ARE IN SCOPE TOO, and that is not a widening for its own sake. The two specialists whose
-# craft IS a way of working -- the DevOps engineer (branches, PRs, merges) and the release manager
+# craft IS a way of working -- the repository engineer (branches, PRs, merges) and the release manager
 # (changelog, versions, releases) -- ship as PERSONAS, not as agent defs, because they run in the main
 # loop. A shared block about adapting to the repo you are installed in would therefore have missed
 # exactly the two readers it is most for. Foreseen rather than invented: the orchestrator's own routing

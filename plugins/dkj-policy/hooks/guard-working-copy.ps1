@@ -53,7 +53,7 @@
     command -- so the two halves of one hazard live in one plugin.
 
     THE OBJECTION THIS HAD TO ANSWER, AND HOW IT DISSOLVES. #1669 raised it against itself: a hook
-    cannot tell the DevOps specialist's legitimate `git checkout <branch>` from a dispatched
+    cannot tell the repository engineer's legitimate `git checkout <branch>` from a dispatched
     reviewer's illegitimate one, because both arrive through the same tool layer. They do -- and the
     payload says which is which. Claude Code's shipped hook-input schema documents agent_id as
     "Present only when the hook fires from within a subagent (e.g., a tool called by an AgentTool

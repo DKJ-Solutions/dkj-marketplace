@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**2 / 4 minor entries** <!-- pending-tally -->
+**3 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/3978-derek-repository-engineer · 20261111-100459Z
+
+Derek 🐙 #05 is retitled **Repository Engineer** (was DevOps Engineer), the title of the work he already did:
+branches, pull requests, merges, labels and `gh`, up to the merge (#3978). Hosting, a product's CI/CD,
+monitoring and incident response stay nobody's on this team, and the persona now says so, so infrastructure
+work is no longer routed to him by title. Every role reference in the personas, manuals, README and
+ADOPTION follows.
+
+**Score:** 2
+
+A consuming repo's roster (`SPECIALISTS.md`) and Derek's lens title still read "DevOps Engineer" until that
+repo edits them; the roster check does not compare titles, so nothing fails, and Derek's own persona reads
+Repository Engineer from this release on.
+
+**Score:** 2
+
+#### Pull Request
+
+Derek is retitled Repository Engineer, the title his scope already had
+
+Plugins: dkj-policy, dkj-subagents-alpha, dkj-subagents-shopify
+
+[PR #3988](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3988)
+
+---
 
 ### DEPLOY: fix/3979-update-plugins-key-order · 20261111-093636Z
 
@@ -14,6 +40,8 @@ restored before the run instead of skipping the checkout as dirty. A real edit s
 parsed, so it is still skipped or named. `-DryRun` only says the restore would come.
 
 **Score:** 3
+
+#### What makes this deploy extra special
 
 `update-plugins -AllCheckouts` in a consumer stops skipping a checkout whose only change is such a
 rewrite, so that repo takes plugin releases again without a hand `git restore`.
