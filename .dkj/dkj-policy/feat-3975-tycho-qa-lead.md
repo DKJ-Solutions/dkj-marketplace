@@ -39,21 +39,39 @@
 
 ### PLAN
 
+#3975, owner-approved advice (November 11, 2026): widen Tycho's manual and agent def with the QA-lead
+half of the craft rather than add a new specialist. Text only; no script changes.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Agent def: description and compact core name the QA-lead half, plus a working-method step 4 for
+  the QA report's shape.
+- [x] Manual: intro line and a new section "The QA-lead half" -- test plan, acceptance criteria,
+  manual/exploratory testing written as repeatable steps, a beta through to an explicit go/no-go,
+  and the boundaries (reports readiness, does not decide the release or write others' criteria).
 
 ### TEST
 
+- [x] Gates run by ship-pr (integrity, roster sync, suites).
+
 ### DEPLOY: feat/3975-tycho-qa-lead
 
-**Score:**
+Tycho, the Test Engineer, now also carries the QA-lead half of the craft: a test plan for a release,
+checking work against its acceptance criteria, manual and exploratory testing written down as
+repeatable steps where automation does not reach, and running a beta through to an explicit go/no-go
+that names every open blocking bug. He reports readiness; the release stays the owner's call. His
+manual has a new section, "The QA-lead half", and his agent description says so (#3975).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A team running the core plugin can hand Tycho a release or a beta and get back a test plan, an
+acceptance check per criterion with evidence, and a go/no-go, where before he only wrote automated
+tests and that half had no owner.
+
+**Score:** 3
 
 #### Pull Request
 
 Tycho: widen the Test Engineer to QA lead work
-
