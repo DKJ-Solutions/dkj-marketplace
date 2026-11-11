@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**2 / 3 minor entries** <!-- pending-tally -->
+**2 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/3979-update-plugins-key-order · 20261111-093636Z
+
+`update-plugins -AllCheckouts` no longer leaves a checkout behind because `claude plugin install/update`
+re-serialized its `.claude/settings.json` with another key order or a final newline (#3979). A `.json`
+file under `.claude/` whose parsed value is unchanged is now treated like #3792's line-ending-only
+rewrite: restored to the committed bytes after the run instead of named as "review and commit", and
+restored before the run instead of skipping the checkout as dirty. A real edit still differs once
+parsed, so it is still skipped or named. `-DryRun` only says the restore would come.
+
+**Score:** 3
+
+`update-plugins -AllCheckouts` in a consumer stops skipping a checkout whose only change is such a
+rewrite, so that repo takes plugin releases again without a hand `git restore`.
+
+**Score:** 3
+
+#### Pull Request
+
+update-plugins -AllCheckouts restores a .claude/ rewrite that changes key order or a final newline only
+
+Plugins: dkj-policy
+
+[PR #3984](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3984)
+
+---
 
 ### DEPLOY: feat/3977-sebastian-privacy-check · 20261111-092252Z
 
