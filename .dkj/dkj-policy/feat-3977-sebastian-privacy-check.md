@@ -39,19 +39,36 @@
 
 ### PLAN
 
+#3977, approved by the owner on November 11, 2026: nobody owned the privacy-law side of a product
+that collects data about people. Widen Sebastian with a privacy check as a deliverable of its own,
+bounded as a technical check and not legal advice. Two files carry his scope: the manual, and the
+agent-def, whose description loads in every session (only a clause added there).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Manual: a "privacy check" bullet under *What Sebastian covers* (the five-part inventory) and a
+      hard rule that the check is technical, not legal advice, naming legal questions as open for a lawyer.
+- [x] Agent-def: one clause in the description, and working-method step 4 for a privacy-check assignment.
 
 ### TEST
 
+- [x] Doc-only change: no script behaviour. The gates run at `ship-pr`.
+
 ### DEPLOY: feat/3977-sebastian-privacy-check
 
-**Score:**
+Sebastian, the Security Engineer, now also runs a privacy (GDPR) check before a product that collects
+personal data launches, written as a technical check and never as legal advice (#3977).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+You can ask Sebastian for a privacy check on a product that stores data about people. He returns an
+inventory: what personal data it keeps and why, how long, which processors see it, whether the privacy
+statement matches, and whether people can see, correct, export and delete their data. Questions that need
+legal judgment come back marked as open for a lawyer, not answered.
+
+**Score:** 3
 
 #### Pull Request
 
