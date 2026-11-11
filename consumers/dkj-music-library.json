@@ -1,0 +1,24 @@
+{
+  "repo": "DKJ-Solutions/dkj-music-library",
+  "visibility": "public",
+  "localCheckout": "../dkj-music-library",
+  "plugins": [
+    {
+      "id": "dkj-subagents-alpha@dkj-marketplace",
+      "extensions": [
+        "01-01", "02-09", "03-02", "03-07", "04-11", "04-12", "04-13", "04-18",
+        "05-05", "05-06", "05-15", "06-16", "06-17", "06-19", "06-23",
+        "06-24", "06-25", "06-29", "06-30"
+      ]
+    },
+    {
+      "id": "dkj-policy@dkj-marketplace",
+      "extensions": []
+    },
+    {
+      "id": "dkj-solutions@dkj-marketplace",
+      "extensions": []
+    }
+  ],
+  "notes": "Registered 2026-11-11 (#3998): the repo enabled dkj-subagents-alpha, dkj-policy and dkj-solutions without a manifest here, so every registry-driven check and sweep missed it. Measured on origin/main through the GitHub API, not taken from the report: .claude/settings.json enables those three under @dkj-marketplace (bwj-development and dkj-subagents-shopify are set to false, so they have no block), and .claude/specialists/lenses/ holds 19 lenses. The two newer core-team ids, 02-31 and 04-32, have no lens there yet, so the register does not claim them; the check's outbound half will name them once sync-roster places them. dkj-policy and dkj-solutions ship no agents, hence their empty extension lists. NOT MEASURED in this pass: the machine versions and the drift figures."
+}
