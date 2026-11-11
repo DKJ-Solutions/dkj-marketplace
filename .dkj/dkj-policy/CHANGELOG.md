@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**8 / 10 minor entries** <!-- pending-tally -->
+**9 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3973-priya-product-owner · 20261111-124900Z
+
+The core team has a new specialist: **Priya 🧩, the Product Owner** (`02-31`). She owns the *what* and
+the *why* of a product: its goals, user stories with acceptance criteria, the order of the backlog, and
+scope held as a budget (MoSCoW: something in means something out). She proposes and the owner decides.
+Paula keeps *when*; `plan-goal` stays the mechanism that files an agreed breakdown (#3973).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A repo running the core team gets a specialist who writes stories with checkable acceptance criteria
+and orders the backlog, where before nobody on any team owned scope. After updating the plugin, the
+roster check reports her as missing from the roster: run `sync-roster` to adopt her, which places an
+empty lens and proposes the roster line.
+
+**Score:** 3
+
+#### Pull Request
+
+Priya: a Product Owner / Product Manager specialist in the core team
+
+Plugins: dkj-subagents-alpha
+
+[PR #3985](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3985)
+
+---
 
 ### DEPLOY: fix/3987-portable-layer-names · 20261111-111453Z
 
