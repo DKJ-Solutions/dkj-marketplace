@@ -242,6 +242,21 @@ function New-Case {
     }
 }
 
+function Get-OrderRewriteScript {
+    # The script that rewrites a checkout's .claude/settings.json with its top-level keys reversed and a
+    # final newline (#3979). It reads the file from CLAUDE_PROJECT_DIR unless a path is passed.
+    return @'
+param([string]$File = '')
+$f = if ($File) { $File } else { Join-Path $env:CLAUDE_PROJECT_DIR '.claude\settings.json' }
+$j = [System.IO.File]::ReadAllText($f) | ConvertFrom-Json
+$names = @($j.PSObject.Properties | ForEach-Object { $_.Name })
+[array]::Reverse($names)
+$o = [ordered]@{}
+foreach ($n in $names) { $o[$n] = $j.$n }
+[System.IO.File]::WriteAllText($f, (($o | ConvertTo-Json -Depth 10) + "`n"))
+'@
+}
+
 function Set-Enabled {
     param([string]$RepoDir, [string[]]$Ids = @())
     New-Item -ItemType Directory -Path (Join-Path $RepoDir '.claude') -Force | Out-Null
@@ -295,7 +310,12 @@ function New-ClaudeShim {
     # $RewriteMode (empty: never) makes every call rewrite the visited checkout's .claude/settings.json,
     # the way the real CLI does (#3792): 'lf' with line endings only (CRLF -> LF), 'content' with a
     # real change. The checkout is read from CLAUDE_PROJECT_DIR, which the sweep sets per child.
-    if ($RewriteMode) {
+    # 'order' (#3979) re-serializes it with its top-level keys reversed and a final newline added -- the
+    # same value, written the way the CLI moved `enabledPlugins` to the end.
+    if ($RewriteMode -eq 'order') {
+        [System.IO.File]::WriteAllText((Join-Path $BinDir 'rewrite.ps1'), (Get-OrderRewriteScript), $Utf8Ascii)
+        $body += "powershell -NoProfile -ExecutionPolicy Bypass -File `"%~dp0rewrite.ps1`"`r`n"
+    } elseif ($RewriteMode) {
         $helper = "`$f = Join-Path `$env:CLAUDE_PROJECT_DIR '.claude\settings.json'`r`n" +
                   "`$t = [System.IO.File]::ReadAllText(`$f)`r`n" +
                   "if ('$RewriteMode' -eq 'lf') { `$t = `$t -replace ""``r``n"", ""``n"" } else { `$t = `$t -replace 'true', 'false' }`r`n" +
@@ -875,7 +895,7 @@ try {
     $r = Invoke-UPAll
     Assert-CleanExit -Run $r -Label '25: exit 0'
     Assert-Has   $r "CLAUDE-SHIM-CALLED plugin update $ID1 --scope project" '25: the checkout was updated'
-    Assert-Has   $r 'line-ending changes only -- restored to the committed bytes' '25: the restore is said out loud'
+    Assert-Has   $r 'without changing its meaning (line endings, key order or a final newline) -- restored to the committed bytes' '25: the restore is said out loud'
     Assert-Lacks $r 'review and commit' '25: and no commit is asked for'
     Assert-Equal 0 (Get-Porcelain -Dir $eolDir).Count '25: .claude/ reads clean afterwards'
     Assert-Equal $eolBytes ([System.IO.File]::ReadAllText($eolFile)) '25: settings.json holds its committed CRLF bytes again'
@@ -888,6 +908,50 @@ try {
     Assert-Lacks $r 'restored to the committed bytes' '26: and nothing is restored'
     Assert-Equal 1 (Get-Porcelain -Dir $eolDir).Count '26: the change is left in place'
     New-ClaudeShim -BinDir $sweepBin
+
+    # --- 27-29. A rewrite that changes key order or a final newline only (#3979) -------------------
+    #     The CLI moved `enabledPlugins` to the end of the object and added a final newline: the same
+    #     value, a non-empty diff even with CR-at-EOL ignored. Two top-level keys, so the order can move.
+    $ordDir = New-SweepCheckout -Name 'order' -CrlfCommitted
+    $ordFile = Join-Path $ordDir '.claude\settings.json'
+    [System.IO.File]::WriteAllText($ordFile, "{`r`n  `"enabledPlugins`": { `"$ID1`": true },`r`n  `"statusLine`": { `"type`": `"command`", `"command`": `"x`" }`r`n}", $Utf8)
+    $gOrd = @('-C', $ordDir, '-c', 'user.name=t', '-c', 'user.email=t@example.invalid', '-c', 'commit.gpgsign=false')
+    Invoke-NativeCapture -FilePath 'git' -Arguments ($gOrd + @('commit', '-q', '-am', 'two keys')) -DiscardStderr | Out-Null
+    Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $ordDir, 'update-ref', 'refs/remotes/origin/main', 'HEAD') -DiscardStderr | Out-Null
+    $ordBytes = [System.IO.File]::ReadAllText($ordFile)
+    Assert-Equal 0 (Get-Porcelain -Dir $ordDir).Count '27: precondition -- the two-key settings.json is committed'
+    $ordRewrite = Join-Path $sweep 'order-rewrite.ps1'
+    [System.IO.File]::WriteAllText($ordRewrite, (Get-OrderRewriteScript), $Utf8Ascii)
+    Set-InstallRecords -HomeDir $sweepHome -Records @{ $ID1 = @(@{ scope = 'project'; projectPath = $ordDir }) }
+
+    Write-Host "27. -AllCheckouts restores a run's key-order and final-newline rewrite instead of asking for a commit" -ForegroundColor Cyan
+    New-ClaudeShim -BinDir $sweepBin -RewriteMode 'order'
+    $r = Invoke-UPAll
+    Assert-CleanExit -Run $r -Label '27: exit 0'
+    Assert-Has   $r "CLAUDE-SHIM-CALLED plugin update $ID1 --scope project" '27: the checkout was updated'
+    Assert-Has   $r 'without changing its meaning' '27: the restore is said out loud'
+    Assert-Lacks $r 'review and commit' '27: and no commit is asked for'
+    Assert-Equal 0 (Get-Porcelain -Dir $ordDir).Count '27: .claude/ reads clean afterwards'
+    Assert-Equal $ordBytes ([System.IO.File]::ReadAllText($ordFile)) '27: settings.json holds its committed bytes again'
+    New-ClaudeShim -BinDir $sweepBin
+
+    Write-Host "28. -AllCheckouts -DryRun names an earlier key-order rewrite as one it would restore, and writes nothing" -ForegroundColor Cyan
+    & powershell -NoProfile -ExecutionPolicy Bypass -File $ordRewrite -File $ordFile
+    Assert-Equal 1 (Get-Porcelain -Dir $ordDir).Count '28: precondition -- an earlier rewrite left settings.json modified'
+    $r = Invoke-UPAll -DryRun
+    Assert-CleanExit -Run $r -Label '28: exit 0'
+    Assert-Lacks $r "skipped $ordDir" '28: the checkout is not skipped'
+    Assert-Has   $r 'would be restored to the committed bytes before the run' '28: the restore is announced'
+    Assert-Equal 1 (Get-Porcelain -Dir $ordDir).Count '28: and nothing was written'
+
+    Write-Host "29. -AllCheckouts restores an earlier key-order rewrite before the run instead of skipping the checkout" -ForegroundColor Cyan
+    $r = Invoke-UPAll
+    Assert-CleanExit -Run $r -Label '29: exit 0'
+    Assert-Lacks $r "skipped $ordDir" '29: the checkout is not skipped'
+    Assert-Has   $r 'restored to the committed bytes before the run' '29: the restore is said out loud'
+    Assert-Has   $r "CLAUDE-SHIM-CALLED plugin update $ID1 --scope project" '29: and the checkout was updated'
+    Assert-Equal 0 (Get-Porcelain -Dir $ordDir).Count '29: .claude/ reads clean afterwards'
+    Assert-Equal $ordBytes ([System.IO.File]::ReadAllText($ordFile)) '29: settings.json holds its committed bytes again'
 }
 finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }

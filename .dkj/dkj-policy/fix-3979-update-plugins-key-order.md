@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Issue #3979, and the second measurement in its comment: `claude plugin install/update` re-serializes
+`.claude/settings.json` with another key order or a final newline. #3792's restore holds a file to
+`git diff --ignore-cr-at-eol` alone, which such a rewrite does not pass, so the run asked for a commit
+that would only churn the file, and every later `-AllCheckouts` skipped the checkout as dirty. Cause
+verified in `Restore-EolOnlyClaudeChange` and the pre-run guard in `scripts/task/update-plugins.ps1`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Restore-NoMeaningClaudeChange` replaces `Restore-EolOnlyClaudeChange`: per ` M` file, line endings only as before, or a `.json` whose working copy and index copy parse to the same value (`ConvertTo-CanonicalJson`, `Test-JsonMeaningEqual`)
+- [x] The pre-run guard restores such a change instead of skipping the checkout; `-DryRun` only announces it (`-TestOnly`)
+- [x] The plugin mirror `plugins/dkj-policy/scripts/task/update-plugins.ps1` is byte-identical
+- [x] `update-plugins.tests.ps1` scenarios 27-29: a run's key-order rewrite restored, an earlier one announced under `-DryRun` and restored before a real run; 25's message assert follows the new wording
 
 ### TEST
 
+- [x] `update-plugins.tests.ps1` alone: 173 pass, 0 fail
+- [x] Negative control: with the JSON comparison forced to "different", 11 asserts in 27-29 go red
+
 ### DEPLOY: fix/3979-update-plugins-key-order
 
-**Score:**
+`update-plugins -AllCheckouts` no longer leaves a checkout behind because `claude plugin install/update`
+re-serialized its `.claude/settings.json` with another key order or a final newline (#3979). A `.json`
+file under `.claude/` whose parsed value is unchanged is now treated like #3792's line-ending-only
+rewrite: restored to the committed bytes after the run instead of named as "review and commit", and
+restored before the run instead of skipping the checkout as dirty. A real edit still differs once
+parsed, so it is still skipped or named. `-DryRun` only says the restore would come.
 
-#### What makes this deploy extra special
+**Score:** 3
 
-**Score:**
+`update-plugins -AllCheckouts` in a consumer stops skipping a checkout whose only change is such a
+rewrite, so that repo takes plugin releases again without a hand `git restore`.
+
+**Score:** 3
 
 #### Pull Request
 

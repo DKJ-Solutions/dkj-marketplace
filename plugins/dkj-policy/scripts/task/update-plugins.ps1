@@ -84,11 +84,15 @@
     the half of the cost that can still happen is refused per checkout instead of for all of them:
       * a checkout NOT ON ITS TRUNK (origin/HEAD) is skipped -- a mid-work branch is never touched;
       * a checkout with uncommitted changes under .claude/ is skipped -- this run's rewrite would be
-        mixed into somebody's own edit;
+        mixed into somebody's own edit -- unless those changes leave every file meaning what is
+        committed (below), which are restored first, so an earlier CLI rewrite does not hold the
+        checkout back from every later sweep (#3979);
       * a checkout this run DID leave a .claude/ diff in is named in the summary, so the diff is a
-        line to act on rather than a surprise in the next session there -- unless that diff is line
-        endings only (a CRLF file rewritten with LF), which is restored to the committed bytes instead,
-        since there is nothing to review and committing it would only churn line endings (#3792).
+        line to act on rather than a surprise in the next session there -- unless that diff changes no
+        meaning, which is restored to the committed bytes instead, since there is nothing to review and
+        committing it would only churn the file. "No meaning" is line endings only (a CRLF file
+        rewritten with LF, #3792), or a .json file whose parsed value is unchanged: key order,
+        whitespace or a final newline (#3979).
     A record that does not name the root of a git checkout is skipped too, and records whose folder is
     gone are counted into one summary line (tidy-machine owns those records). Each checkout runs this
     same script as a child process, from its own root -- except an unmodified checkout of the source
@@ -163,26 +167,78 @@ function Test-ClaudeDirDirty {
     return (@(@($r.Output) | Where-Object { "$_".Trim() }).Count -gt 0)
 }
 
-function Restore-EolOnlyClaudeChange {
-    # $true when every change under .claude/ in $Path differs from the index only in line endings, and
-    # has been restored to the committed bytes -- and read back clean (#3792). Measured November 3,
-    # 2026: `claude plugin install/update` rewrote a CRLF settings.json with LF, so `git status` said
-    # ` M` while every diff was empty, and the summary asked the owner to review and commit a change
-    # that did not exist. Called ONLY after the run, on a .claude/ the pre-run guard found clean, so
-    # every change there is this run's own and restoring it discards nothing of anybody's. Anything
-    # else -- an untracked or staged file, a content change, a git failure -- returns $false and is
-    # left exactly as the run wrote it, for the summary to name.
-    param([string]$Path)
+function ConvertTo-CanonicalJson {
+    # One string per JSON value that is equal for two values exactly when they mean the same: object
+    # keys sorted ordinally, array order kept, whitespace and line endings gone, and each scalar written
+    # with its type (a string stays quoted, so "1" and 1 differ). Parameters, never the pipeline: on
+    # Windows PowerShell 5.1 the pipeline would unroll an array value into its elements (#3972).
+    param([AllowNull()]$Value)
+    if ($null -eq $Value) { return 'null' }
+    if ($Value -is [string]) { return (ConvertTo-Json -InputObject $Value -Compress) }
+    if ($Value -is [bool]) { return $(if ($Value) { 'true' } else { 'false' }) }
+    if ($Value -is [System.Management.Automation.PSCustomObject]) {
+        $names = [string[]]@($Value.PSObject.Properties | ForEach-Object { $_.Name })
+        if ($names.Count -gt 1) { [array]::Sort($names, [System.StringComparer]::Ordinal) }
+        $parts = foreach ($n in $names) { (ConvertTo-Json -InputObject $n -Compress) + ':' + (ConvertTo-CanonicalJson -Value $Value.$n) }
+        return '{' + (@($parts) -join ',') + '}'
+    }
+    if ($Value -is [System.Collections.IList]) {
+        $parts = foreach ($e in $Value) { ConvertTo-CanonicalJson -Value $e }
+        return '[' + (@($parts) -join ',') + ']'
+    }
+    return [System.Convert]::ToString($Value, [System.Globalization.CultureInfo]::InvariantCulture)
+}
+
+function Test-JsonMeaningEqual {
+    # $true when two JSON texts parse and mean the same, whatever their key order, whitespace, line
+    # endings or final newline (#3979). A text that does not parse is never equal: unknown is a change.
+    param([string]$Left, [string]$Right)
+    try {
+        $a = ConvertTo-CanonicalJson -Value ($Left | ConvertFrom-Json)
+        $b = ConvertTo-CanonicalJson -Value ($Right | ConvertFrom-Json)
+    } catch { return $false }
+    return ($a -ceq $b)
+}
+
+function Restore-NoMeaningClaudeChange {
+    # $true when every change under .claude/ in $Path leaves its meaning as committed, and has been
+    # restored to the committed bytes -- and read back clean. -TestOnly answers without restoring.
+    #
+    # Two shapes have been measured, both from `claude plugin install/update`, which re-serializes
+    # .claude/settings.json: line endings only (November 3, 2026, #3792: a CRLF file rewritten with LF),
+    # and key order or a final newline (November 11, 2026, #3979: `enabledPlugins` moved to the end, or
+    # `statusLine` above it). Either way `git status` says ` M` while nothing means anything else, so the
+    # summary asked for a commit that would only churn the file, and every later sweep skipped the
+    # checkout as dirty. A file is left as it is unless git's diff is empty with CR-at-EOL ignored, or it
+    # is a .json whose working copy and index copy parse to the same value.
+    #
+    # Restoring discards no MEANING, which is why the pre-run guard may call it too, on a change it did
+    # not make. Anything else -- an untracked or staged file, a real change, a quoted path, a git
+    # failure -- returns $false and is left exactly as it is, for the guard to skip or the summary to name.
+    param([string]$Path, [switch]$TestOnly)
     $st = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $Path, 'status', '--porcelain', '--', '.claude') -DiscardStderr
     if ($st.ExitCode -ne 0) { return $false }
     $lines = @(@($st.Output) | ForEach-Object { "$_" } | Where-Object { $_.Trim() })
     if ($lines.Count -eq 0) { return $false }
-    # Only ' M' (modified in the work tree, nothing staged): `git diff` below compares the work tree
-    # with the index, so a staged or untracked file is outside what it can vouch for.
+    # Only ' M' (modified in the work tree, nothing staged): both comparisons below hold the work tree
+    # against the index, so a staged or untracked file is outside what they can vouch for.
     if (@($lines | Where-Object { $_ -notmatch '^ M ' }).Count -gt 0) { return $false }
-    # Exit 0 = no change once CR-at-EOL is ignored, 1 = a real change; anything else is a failure.
-    $d = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $Path, 'diff', '--ignore-cr-at-eol', '--quiet', '--', '.claude') -DiscardStderr
-    if ($d.ExitCode -ne 0) { return $false }
+    foreach ($line in $lines) {
+        $rel = $line.Substring(3)
+        # A quoted path carries a character git escaped; no .claude/ file this run writes has one.
+        if ($rel.StartsWith('"')) { return $false }
+        # Exit 0 = no change once CR-at-EOL is ignored, 1 = a change; anything else is a failure.
+        $d = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $Path, 'diff', '--ignore-cr-at-eol', '--quiet', '--', $rel) -DiscardStderr
+        if ($d.ExitCode -eq 0) { continue }
+        if ($d.ExitCode -ne 1 -or $rel -notmatch '\.json$') { return $false }
+        $idx = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $Path, 'cat-file', 'blob', ":$rel") -DiscardStderr -Utf8
+        if ($idx.ExitCode -ne 0) { return $false }
+        $file = Join-Path $Path $rel
+        if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { return $false }
+        $work = [System.IO.File]::ReadAllText($file, (New-Object System.Text.UTF8Encoding($false)))
+        if (-not (Test-JsonMeaningEqual -Left ((@($idx.Output) | ForEach-Object { "$_" }) -join "`n") -Right $work)) { return $false }
+    }
+    if ($TestOnly) { return $true }
     $co = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $Path, 'checkout', '--', '.claude') -DiscardStderr
     if ($co.ExitCode -ne 0) { return $false }
     return -not (Test-ClaudeDirDirty -Path $Path)
@@ -247,7 +303,14 @@ if ($AllCheckouts) {
                 $shown = if ($branch) { "branch '$branch'" } else { 'a detached HEAD' }
                 $skip = "on $shown, not on its trunk '$trunk' -- a mid-work branch is never touched (#1890)"
             } elseif (Test-ClaudeDirDirty -Path $p) {
-                $skip = 'uncommitted changes under .claude/ (or git could not say) -- this run would mix its rewrite into them'
+                # A change that leaves .claude/ meaning what is committed -- an earlier CLI rewrite -- holds
+                # nothing to protect, so it is restored rather than skipped forever (#3979). -DryRun writes
+                # nothing: it only says the restore would come.
+                if (Restore-NoMeaningClaudeChange -Path $p -TestOnly:$DryRun) {
+                    Write-Host "update-plugins: $p -- .claude/ held a rewrite that changes no meaning (line endings, key order or a final newline) -- $(if ($DryRun) { 'would be restored' } else { 'restored' }) to the committed bytes before the run (#3979)."
+                } else {
+                    $skip = 'uncommitted changes under .claude/ (or git could not say) -- this run would mix its rewrite into them'
+                }
             }
         }
 
@@ -303,8 +366,8 @@ if ($AllCheckouts) {
 
         if ($code -ne 0) {
             $results.Add([pscustomobject]@{ Path = $p; Outcome = 'FAILED'; Detail = "exit $code -- see its run above"; Hint = '' })
-        } elseif (-not $DryRun -and (Test-ClaudeDirDirty -Path $p) -and (Restore-EolOnlyClaudeChange -Path $p)) {
-            Write-Host "update-plugins: the run rewrote .claude/ with line-ending changes only -- restored to the committed bytes (#3792)."
+        } elseif (-not $DryRun -and (Test-ClaudeDirDirty -Path $p) -and (Restore-NoMeaningClaudeChange -Path $p)) {
+            Write-Host "update-plugins: the run rewrote .claude/ without changing its meaning (line endings, key order or a final newline) -- restored to the committed bytes (#3792, #3979)."
             $results.Add([pscustomobject]@{ Path = $p; Outcome = 'updated'; Detail = ''; Hint = '' })
         } elseif (-not $DryRun -and (Test-ClaudeDirDirty -Path $p)) {
             $results.Add([pscustomobject]@{ Path = $p; Outcome = 'updated'; Detail = 'left uncommitted changes under .claude/ (or git could not say) -- review and commit them in that repo'; Hint = '' })
