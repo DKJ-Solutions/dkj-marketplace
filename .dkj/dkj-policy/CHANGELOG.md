@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**3 / 5 minor entries** <!-- pending-tally -->
+**5 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/3975-tycho-qa-lead · 20261111-102812Z
+
+Tycho, the Test Engineer, now also carries the QA-lead half of the craft: a test plan for a release,
+checking work against its acceptance criteria, manual and exploratory testing written down as
+repeatable steps where automation does not reach, and running a beta through to an explicit go/no-go
+that names every open blocking bug. He reports readiness; the release stays the owner's call. His
+manual has a new section, "The QA-lead half", and his agent description says so (#3975).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A team running the core plugin can hand Tycho a release or a beta and get back a test plan, an
+acceptance check per criterion with evidence, and a go/no-go, where before he only wrote automated
+tests and that half had no owner.
+
+**Score:** 3
+
+#### Pull Request
+
+Tycho: widen the Test Engineer to QA lead work
+
+Plugins: dkj-subagents-alpha
+
+[PR #3982](https://github.com/DKJ-Solutions/dkj-marketplace/pull/3982)
+
+---
 
 ### DEPLOY: docs/3978-derek-repository-engineer · 20261111-100459Z
 
