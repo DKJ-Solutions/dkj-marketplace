@@ -41,17 +41,24 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `CHANGELOG.md`: #3988's folded entry gets back its `#### What makes this deploy extra special` heading, the same loss as #3984's; the gate gap behind both is #3986
 
 ### TEST
 
+- [x] `check-plugin-integrity.ps1` alone reports 0 errors, `[entry-heading]` included
+
 ### DEPLOY: docs/changelog-heading-3988
 
-**Score:**
+`CHANGELOG.md`: the pending entry for #3988 gets back the section heading its tier-2 text belongs under, so
+the next pull request is no longer refused by the lint gate's `[entry-heading]` check (#3986).
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A -- only this repo's pending changelog changes.
+
+**Score:** N/A
 
 #### Pull Request
 
