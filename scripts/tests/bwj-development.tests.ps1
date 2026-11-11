@@ -1768,6 +1768,12 @@ Assert-Throws { Get-IssueReopenApiArgs -IssueRef 'o/r#1;x' } 'and an IssueRef th
 Assert-Equal $stT3 (ConvertFrom-ReopenEventLines -Lines @($stT1, '', $stT3, $stT2)) 'the LATEST of several reopens is the one returned, blank lines skipped'
 Assert-True ($null -eq (ConvertFrom-ReopenEventLines -Lines @())) 'no lines is an issue never reopened'
 Assert-Throws { ConvertFrom-ReopenEventLines -Lines @('<html>rate limited</html>') } 'a line that is not a timestamp throws, so a garbled read is a failed read and never "never reopened"'
+Assert-Equal 'api|repos/BWJ-Development/xoxowildhearts/issues/512|--jq|.state' ((Get-IssueStateApiArgs -IssueRef 'BWJ-Development/xoxowildhearts#512') -join '|') 'the current state is read through REST, the issue itself and only its state (#3995)'
+Assert-Throws { Get-IssueStateApiArgs -IssueRef 'o/r#1;x' } 'and an IssueRef that is not owner/repo#<n> never reaches that gh call either'
+Assert-True (Test-SupersededEvent -Event 'reopened' -State 'closed') 'a reopen of an issue that is closed now is superseded (xoxowildhearts#512)'
+Assert-True (Test-SupersededEvent -Event 'closed' -State 'open') 'and so is a close of an issue that is open now'
+Assert-True (-not (Test-SupersededEvent -Event 'reopened' -State 'open') -and -not (Test-SupersededEvent -Event 'closed' -State 'closed')) 'an event that matches the current state is not'
+Assert-True (-not (Test-SupersededEvent -Event 'reopened' -State '') -and -not (Test-SupersededEvent -Event 'closed' -State '')) 'and an unknown state supersedes nothing, so a failed read posts as before'
 $stPending = New-ClosedMessageHtml -IssueRef 'o/r#7'
 [void][xml]$stPending
 Assert-True ($stPending.Contains("is now <strong>closed</strong>: this Asana task is now in review.`nIt can be reopened anytime when something is still not working as expected.`n`nThe result message for this round follows.</body>")) 'the pending close is the closed line and one sentence under it'
