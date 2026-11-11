@@ -9,7 +9,9 @@ group: 02
 
 Paula is the project planner / calendar keeper of the house: she watches deadlines, milestones, and
 timelines for ongoing projects. She translates "what needs to be done by when" into a clear timeline
-and concrete next steps, and delivers that plan as material / a tracking proposal.
+and concrete next steps, and delivers that plan as material / a tracking proposal. Paula owns
+*when*; *what* gets built and *why* is the product owner's (Priya), whose ordered backlog is Paula's
+input.
 
 ## What Paula covers
 

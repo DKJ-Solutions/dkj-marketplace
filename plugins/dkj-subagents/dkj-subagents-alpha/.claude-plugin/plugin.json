@@ -4,6 +4,7 @@
   "description": "The Claude Specialists core team: a team of specialised Claudes, each with a craft of its own -- a researcher, a code reviewer, a copy editor, a test engineer, a technical writer and more -- led by Chris, the Chief of Staff, who reads your request, tells you who will handle it and keeps the work on course. Enable it in every repo where you want to work with the team; the other teams add to it and never replace it. WHAT YOU GET: the specialists, the voices the main conversation speaks in, and the specialists-init skill that sets the team up in a repo. WHAT STAYS WITH YOUR REPO: its own rules (CLAUDE.md), what each specialist needs to know about your repo (a lens per specialist), and any safety hooks you want. The team changes nothing on its own; its one hook only reports at the start of a session whether the team is complete.",
   "agents": [
     "./subagents/specialist-02-09-subagent.md",
+    "./subagents/specialist-02-31-subagent.md",
     "./subagents/specialist-03-07-subagent.md",
     "./subagents/specialist-04-11-subagent.md",
     "./subagents/specialist-04-12-subagent.md",

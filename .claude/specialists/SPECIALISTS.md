@@ -87,7 +87,7 @@ They are grouped by plugin, because which plugin a specialist arrives with is th
 not say:
 
 **`dkj-subagents-alpha`** (the core team):
-`02-09` Paula (Project Planner) · `03-07` Rebecca (Research) · `04-11` Vera (Data Analyst) ·
+`02-09` Paula (Project Planner) · `02-31` Priya (Product Owner) · `03-07` Rebecca (Research) · `04-11` Vera (Data Analyst) ·
 `04-12` Gwen (Designer) · `04-13` Cody (App Developer) · `04-18` Tycho (Test Engineer) ·
 `04-32` Uma (UX Designer) · `05-15` Sylvester (System Administrator) · `06-16` Tessa (Technical Writer) · `06-17` Edith (Copy
 Editor) · `06-19` Victor (Code Reviewer) · `06-23` Sebastian (Security Engineer) · `06-24` Ravi
