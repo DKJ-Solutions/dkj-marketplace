@@ -39,19 +39,36 @@
 
 ### PLAN
 
+#3998: three repos enable `dkj-subagents-alpha` with no manifest under `consumers/`. Verified on each
+repo's `origin/main` through the GitHub API: the plugins enabled, the marketplace name they use, and the
+lens inventory. Each record books what the repo HAS, so each has only the lenses that are actually
+there, and `dkj-etf-tracker` keeps its retired `@dkj-claude-plugins` ids until its own migration
+(dkj-etf-tracker#69) lands.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `consumers/dkj-recipes.json`: 21 core-team lenses, public.
+- [x] `consumers/dkj-music-library.json`: 19 lenses (02-31 and 04-32 not yet placed there), public.
+- [x] `consumers/dkj-etf-tracker.json`: 19 core-team lenses under the retired ids, private, metadata only.
 
 ### TEST
 
+- [x] `check-consumers.ps1 -SkipDrift`: exit 0, 0 errors. `dkj-recipes` reads all 21 registered
+  extensions present. The other two are skipped on this machine, which has no checkout of them.
+
 ### DEPLOY: fix/3998-register-three-consumers
 
-**Score:**
+`dkj-etf-tracker`, `dkj-music-library` and `dkj-recipes` now have a manifest under `consumers/`, so the
+registry check, the session hook and the registry-driven sweeps reach them (#3998). Each records the
+plugins and lenses measured on that repo's `origin/main`.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: the register is workshop administration in this repo and does not travel with any plugin.
+
+**Score:** N/A
 
 #### Pull Request
 

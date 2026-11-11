@@ -1,0 +1,24 @@
+{
+  "repo": "DKJ-Solutions/dkj-etf-tracker",
+  "visibility": "private",
+  "localCheckout": "../dkj-etf-tracker",
+  "plugins": [
+    {
+      "id": "dkj-subagents-alpha@dkj-claude-plugins",
+      "extensions": [
+        "01-01", "02-09", "03-02", "03-07", "04-11", "04-12", "04-13", "04-18",
+        "05-05", "05-06", "05-15", "06-16", "06-17", "06-19", "06-23",
+        "06-24", "06-25", "06-29", "06-30"
+      ]
+    },
+    {
+      "id": "dkj-policy@dkj-claude-plugins",
+      "extensions": []
+    },
+    {
+      "id": "dkj-solutions@dkj-claude-plugins",
+      "extensions": []
+    }
+  ],
+  "notes": "Registered 2026-11-11 (#3998): the repo enabled dkj-subagents-alpha, dkj-policy and dkj-solutions without a manifest here, so every registry-driven check and sweep missed it. Measured on origin/main through the GitHub API, not taken from the report. Its .claude/settings.json still names the retired marketplace, <plugin>@dkj-claude-plugins, and the ids above say so on purpose: the register books what a consumer HAS, and the check reports an id the marketplace no longer declares as [INFO] rather than an error. The migration is filed on the consumer (dkj-etf-tracker#69), and this record changes its ids the day that lands. .claude/specialists/lenses/ holds 22 lenses: the 19 core-team ids above, without 02-31 and 04-32, plus 04-20, 05-21 and 05-22, which dkj-subagents-shopify ships. That plugin is set to false there, so it has no block and those three read as unregistered. dkj-policy-bwj is set to false as well. VISIBILITY: the repo is private and this repo is public, so this record holds metadata only, the same boundary as life-hub.json; the repo's name was already public on this tracker in #3998. NOT MEASURED in this pass: the machine versions and the drift figures."
+}
