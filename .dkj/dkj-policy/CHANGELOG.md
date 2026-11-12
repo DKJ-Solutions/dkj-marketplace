@@ -2,7 +2,27 @@
 
 ## [Unreleased]
 
-**9 / 13 minor entries** <!-- pending-tally -->
+**9 / 14 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4022-house-style-walk-scope · 20261112-122745Z
+
+`open-pr`'s local suite selection now runs the house-style suite whenever a changed file is one the house-style gate reads. Until now the suite's whole-tree self-run went unseen, so a page change could pass locally and fail CI on it ([#4022](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4022)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A test of this repo only; nothing a subscriber takes changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+Local suite selection skips check-house-style.tests.ps1, whose self-run walks the whole tree
+
+[PR #4023](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4023)
+
+---
 
 ### DEPLOY: feat/4011-plugins-route · 20261112-115800Z
 
