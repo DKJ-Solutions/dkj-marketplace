@@ -53,7 +53,7 @@ colour vision, `--graph-3` sat beside `--positive-3` and under 3:1 on a light pa
 - [x] the plain `.btn`, `.seg`, `.info-button`, `.nav-search`, `.toolbar__filter`, `.stepper` and `.combo` take `--border-strong`
 - [x] new graph slots, chosen with the dataviz validator away from the status hues, light and dark
 - [x] the brand book README, the stylesheet's measurement comment and specimens.html name the new token
-- [~] the Figma variables: the write to the Figma file was refused by this session's permission check, so Figma waits for the owner
+- [x] the Figma variables (dkj-brandbook file): all twelve theme modes and the graph slots synced from house-style.css, and `palette/border-strong` with its semantic `color/border-strong` alias added (after the owner allowed the write)
 
 ### TEST
 
