@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**10 / 15 minor entries** <!-- pending-tally -->
+**11 / 16 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/admin-figma-wireframes · 20261112-155732Z
+
+Admin now follows the Figma wireframes, which rank above the brand book for Admin's layout from this release on:
+a full-height sidebar with a brand row and Settings at its foot, a bar over the main pane only, and every page
+opening on a page header. Home shows the repo's name over a framed table of pages; Goals shows each goal as a card
+with one Now step, the next three and its milestones; Today shows the day goal, the plan beside the week, and what
+got done. An empty Goals or Today page says what will appear and offers one button that copies the prompt to fill it.
+**Score:** 3
+
+#### What makes this deploy extra special
+
+The source of truth for Admin's layout moved out of the stylesheet and into Figma, so the next change
+to Admin starts from the wireframe, not from the shell's old "compact, no cards" rule.
+**Score:** 3
+
+#### Pull Request
+
+Admin follows the Figma wireframes: shell, Home, Goals and Today
+
+Plugins: dkj-policy
+
+[PR #4026](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4026)
+
+---
 
 ### DEPLOY: feat/4008-owner-load-signals · 20261112-144317Z
 
