@@ -41,17 +41,24 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Sylvester/Tycho: `check-house-style.tests.ps1` declares the walk its self-run makes (`# gate-selection: walks`): every kind `Get-HouseStyleScanExtensions` reads, `repo-config.ps1` and the brand book skill page.
+- [x] Tycho: an assert holds that declaration to `Get-HouseStyleScanExtensions`, so a kind the gate starts reading cannot fall outside it.
 
 ### TEST
 
+- [x] `check-house-style.tests.ps1`: 169 passed. `Get-AffectedSuiteSelection` for `scripts/lib/dev-pages-lib.ps1` now selects the suite (it did not on PR #4019).
+
 ### DEPLOY: fix/4022-house-style-walk-scope
 
-**Score:**
+`open-pr`'s local suite selection now runs the house-style suite whenever a changed file is one the house-style gate reads. Until now the suite's whole-tree self-run went unseen, so a page change could pass locally and fail CI on it ([#4022](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4022)).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A test of this repo only; nothing a subscriber takes changes.
+
+**Score:** N/A
 
 #### Pull Request
 

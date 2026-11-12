@@ -13,6 +13,11 @@
 
     Pure ASCII (repo convention for .ps1).
 #>
+# The self-run below walks this whole tree through the gate, in a child process the selection cannot follow,
+# so the walk is declared (#4022): every kind Get-HouseStyleScanExtensions reads, the allowlist's seam, and the skill page
+# the pin is read from.
+# A guard below holds the list to that function.
+# gate-selection: walks *.css *.scss *.sass *.less *.styl *.pcss *.html *.htm *.xhtml *.svg *.js *.mjs *.cjs *.ts *.mts *.cts *.jsx *.tsx *.vue *.svelte *.astro *.py *.ps1 *.psm1 *.php *.rb *.erb *.liquid *.njk *.hbs *.ejs *.jinja *.jinja2 *.j2 *.twig *.cshtml *.razor repo-config.ps1 plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/*
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
@@ -434,6 +439,11 @@ Remove-Item Env:\DKJ_HOUSE_STYLE_TAG_PAGE -ErrorAction SilentlyContinue
 # held to no pin, and the page may name the tag's bytes between cuts (#3636).
 $r = Invoke-Child (Join-Path $Plugin 'scripts\lint\check-house-style.ps1') $RepoRoot 'RepoRoot'
 Assert-Equal 0 $r.Code 'this repo passes its own house-style gate'
+# The walk this self-run makes is declared at the top of this file (#4022); a kind the gate starts reading is a
+# change the local selection must select this suite for.
+$declared = [regex]::Match([System.IO.File]::ReadAllText($PSCommandPath), '(?m)^#[ \t]*gate-selection:[ \t]*walks[ \t]+(.+?)[ \t]*$').Groups[1].Value -split '\s+'
+$wanted = @(Get-HouseStyleScanExtensions | ForEach-Object { '*' + $_ }) + 'repo-config.ps1' + 'plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/*'
+Assert-Equal (($wanted | Sort-Object) -join ' ') (($declared | Sort-Object) -join ' ') 'the declared walk scope is every kind the gate reads, plus the allowlist''s seam and the pin''s skill page'
 Assert-True (Test-HouseStyleSourceRepo -RepoRoot $RepoRoot) 'this repo is read as the house style''s source'
 
 # The reusable workflow reads the pin at the tag the page names (#3148), not at the ref it runs from.
