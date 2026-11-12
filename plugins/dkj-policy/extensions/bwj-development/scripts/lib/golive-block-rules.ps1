@@ -339,6 +339,9 @@ function Get-GoLiveBlockText {
             LiveSinceVer = 'It has been live since {0}, as version v{1}.'
             LiveNow      = 'You can see it live here:'
             AskLookLive  = 'Look at the result yourself, at the link above. It is already live, so what you see is what a customer sees.'
+            HotfixWhen   = 'It goes live as a separate hotfix, outside the regular release, once you have approved it.'
+            HotfixBy     = 'The aim is for it to be live by {0} at the latest.'
+            AskLookHotfix = 'Look at the result yourself, at the link above. It goes live only after you approve it, so a customer sees it only once you say it is right.'
             NoStorefront = 'Nothing changes for customers: this change does not show on the storefront.'
             AskNoStorefront = 'There is nothing to look at on the storefront, because nothing changes for customers. Above you can read what is different now.'
             AskYes       = 'Is it right? Say so, and tick off this task.'
@@ -376,6 +379,9 @@ function Get-GoLiveBlockText {
         LiveSinceVer = 'Het staat live sinds {0}, als versie v{1}.'
         LiveNow      = 'Je ziet het hier live:'
         AskLookLive  = 'Bekijk het resultaat zelf, via de link hierboven. Het staat al live, dus wat je ziet is wat een klant ziet.'
+        HotfixWhen   = 'Het gaat live als losse hotfix, buiten de vaste release om, zodra je het hebt goedgekeurd.'
+        HotfixBy     = 'Het streven is dat het uiterlijk {0} live staat.'
+        AskLookHotfix = 'Bekijk het resultaat zelf, via de link hierboven. Het gaat pas live nadat je het hebt goedgekeurd, dus een klant ziet het pas als jij zegt dat het klopt.'
         NoStorefront = 'Voor klanten verandert er niets: op de storefront is deze wijziging niet te zien.'
         AskNoStorefront = 'Op de storefront is niets te bekijken, want voor klanten verandert er niets. Lees hierboven wat er nu anders is.'
         AskYes       = 'Klopt het: laat het weten en vink deze taak af.'
@@ -482,17 +488,22 @@ function Get-GoLiveBlockAsk {
         -NoStorefront: THERE IS NO RESULT ON THE STOREFRONT TO LOOK AT (#3236), and no link either, so
         the ask is written all the same: the requester still answers it, and 'what you see is what a
         customer sees' would be false. It sends them to the prose above instead of to a link.
+
+        -Hotfix: THE CHANGE GOES LIVE ONLY ON APPROVAL (#4017), as a separate hotfix outside the release
+        cadence, so 'it goes live with that release either way' is false twice over: it does not wait for
+        the release, and without approval it is not in it at all. The look IS the gate, and the ask says so.
     #>
     param(
         [string]$ResultLink,
         [ValidateSet('nl', 'en')][string]$Language = 'nl',
         [hashtable]$Text,
         [switch]$Live,
-        [switch]$NoStorefront
+        [switch]$NoStorefront,
+        [switch]$Hotfix
     )
     if (-not $ResultLink -and -not $NoStorefront) { return @() }
     $t = if ($Text) { $Text } else { Get-GoLiveBlockText -Language $Language }
-    $look = if ($NoStorefront) { $t.AskNoStorefront } elseif ($Live) { $t.AskLookLive } else { $t.AskLook }
+    $look = if ($NoStorefront) { $t.AskNoStorefront } elseif ($Live) { $t.AskLookLive } elseif ($Hotfix) { $t.AskLookHotfix } else { $t.AskLook }
     return @('', $t.Ask, '', $look, '', $t.AskYes, '', $t.AskNo)
 }
 
@@ -664,6 +675,16 @@ function Format-GoLiveBlock {
         the prose. It never carries -ReleaseMarker either: 'it becomes visible with the release' is the
         one thing such a change never does. The driver refuses -ResultLink and -LiveUrl beside it.
 
+        -Hotfix: THE CHANGE SHIPS THROUGH THE STORE'S HOTFIX LANE (#4017) -- a pull request to the live
+        branch, merged on approval, outside the release cadence. Measured in
+        BWJ-Development/smartwatchbanden (#1273, PR #1278 to 'live', November 12, 2026): with no form for
+        it, the block planned it for the Monday release and said it went with that release either way,
+        both false -- a hotfix does not wait for the Monday, and unmerged it is not in that release at all,
+        since the trunk carries it only after the back-flow. So 'when it goes live' says it goes live as a
+        separate hotfix once approved, with -LiveBy (the day as Format-GoLiveDate writes it) as the aim
+        where the requester has a deadline, and -GoLiveDate is not read. It never carries -ReleaseMarker:
+        the live message at the next release is owed only to a block that waited on that release.
+
         THE LIVE LIST IS READ BEFORE THE RELEASE, AND A BARE URL LIES THEN (#2477). The result link is
         normally a storefront PREVIEW, which sets a per-domain cookie, and a bare storefront URL keeps
         rendering that preview once it has been opened -- the trap PREVIEW-portable.md measured. So a
@@ -682,7 +703,7 @@ function Format-GoLiveBlock {
     param(
         [Parameter(Mandatory = $true)][string]$Marker,
         [Parameter(Mandatory = $true)][string]$IssueRef,
-        [Parameter(Mandatory = $true)][string]$GoLiveDate,
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$GoLiveDate,
         [string]$ResultLink,
         [string]$Version,
         [object[]]$LiveUrl = @(),
@@ -694,16 +715,24 @@ function Format-GoLiveBlock {
         [ValidateSet('linked', 'none', 'ambiguous', 'unchecked')][string]$AsanaLink = 'linked',
         [switch]$Live,
         [string]$ReleaseMarker = '',
-        [switch]$NoStorefront
+        [switch]$NoStorefront,
+        [switch]$Hotfix,
+        [string]$LiveBy = ''
     )
 
     if ($NoStorefront -and ($ResultLink -or @($LiveUrl | Where-Object { $_ }).Count -gt 0)) {
         throw '-NoStorefront says nothing shows on the storefront, so a -ResultLink or -LiveUrl beside it has nothing to point at.'
     }
+    if ($Hotfix -and ($Live -or $Version)) {
+        throw '-Hotfix goes live on approval, outside a release: -Live (already live) and -Version (a release number) describe something else.'
+    }
+    if ($LiveBy -and -not $Hotfix) { throw '-LiveBy is the aim of a hotfix; it is read only beside -Hotfix.' }
+    if (-not $Hotfix -and -not $GoLiveDate.Trim()) { throw '-GoLiveDate is empty; only a -Hotfix block names no day.' }
     $t    = Get-GoLiveBlockText -Language $Language
     $dash = [string][char]0x2014
     # Visible only after the release: a planned day, and something on the storefront to become visible.
-    $afterRelease = -not $Live -and -not $NoStorefront
+    # A hotfix waits on an approval, not on the release (#4017).
+    $afterRelease = -not $Live -and -not $NoStorefront -and -not $Hotfix
 
     $lines = @($Marker)
     if ($afterRelease -and $ReleaseMarker) { $lines += $ReleaseMarker }
@@ -736,7 +765,8 @@ function Format-GoLiveBlock {
     if ($changedParas.Count -gt 0) { $lines += & $addSection $t.Changed $changedParas }
 
     $whenParas = @(
-        if ($Live) { if ($Version) { $t.LiveSinceVer -f $GoLiveDate, $Version } else { $t.LiveSince -f $GoLiveDate } }
+        if ($Hotfix) { $t.HotfixWhen; if ($LiveBy.Trim()) { $t.HotfixBy -f $LiveBy.Trim() } }
+        elseif ($Live) { if ($Version) { $t.LiveSinceVer -f $GoLiveDate, $Version } else { $t.LiveSince -f $GoLiveDate } }
         elseif ($Version) { $t.ReleaseVer -f $GoLiveDate, $Version } else { $t.ReleaseDay -f $GoLiveDate }
     )
     $rows = @($LiveUrl | Where-Object { $_ })
@@ -756,7 +786,7 @@ function Format-GoLiveBlock {
     $notParas = @($NotIncluded | Where-Object { $_ -and $_.Trim() })
     if ($notParas.Count -gt 0) { $lines += & $addSection $t.NotIncluded $notParas }
 
-    $lines += Get-GoLiveBlockAsk -ResultLink $ResultLink -Text $t -Live:$Live -NoStorefront:$NoStorefront
+    $lines += Get-GoLiveBlockAsk -ResultLink $ResultLink -Text $t -Live:$Live -NoStorefront:$NoStorefront -Hotfix:$Hotfix
     # THE BLANK LINE BEFORE THE CLOSING RULE IS LOAD-BEARING (#2701): a text line directly above '---'
     # is a setext H2 in Markdown, so without it GitHub rendered the block's last paragraph as a heading.
     $lines += ''

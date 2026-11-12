@@ -1076,7 +1076,9 @@ Write-Output "GATE-VERDICT=`$ok"
 
     Assert-True (@($rawRefusal | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }).Count -gt 0) `
         'a raw & call still wraps stderr in ErrorRecords -- the shape the helper exists for has not gone away'
-    $old = ($rawRefusal | Out-String).Trim()
+    # -Width so the 'At <path>:<line>' caret line is never wrapped (#4013): at the default 120 columns a long
+    # checkout root, such as a sweep lane, pushed the file name across a line break and the match below missed.
+    $old = ($rawRefusal | Out-String -Width 4096).Trim()
     # Windows PowerShell 5.1's NormalView is the defect's precondition; pwsh 7 renders ConciseView (#2488).
     $viewReason = 'the exception block is Windows PowerShell 5.1''s NormalView rendering'
     Assert-TrueWindowsOnly ($old -match 'CategoryInfo') 'Out-String really does render the exception block -- the defect reproduces on a raw call' $viewReason

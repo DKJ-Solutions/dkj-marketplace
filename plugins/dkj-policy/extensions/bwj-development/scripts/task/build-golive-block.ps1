@@ -117,6 +117,14 @@
     customers, carries the [where] prose (where it does show) under that, and asks for a read rather
     than a look. It refuses -Link and -Path, and a github.com -Link is refused in every form.
 
+    AND A CHANGE THROUGH THE STORE'S HOTFIX LANE GOES LIVE ON APPROVAL, NOT WITH A RELEASE: -Hotfix
+    (#4017). A pull request to the live branch, merged once the requester approves, outside the release
+    cadence. Measured on smartwatchbanden#1273 (PR #1278 to 'live'): the go-live form planned it for the
+    Monday release and said it went with that release either way, and the only way past was to bend
+    -ReleaseDay to the requester's deadline. -Hotfix says it goes live as a separate hotfix once approved,
+    with -LiveBy as the aim where there is a deadline, asks for the look as the approval it is, and
+    carries no release marker. It refuses -LiveSince, -From, -ReleaseDay and -Version, and the other forms.
+
     A RESULT BLOCK WITHOUT -LiveSince CARRIES Get-AsanaReleaseBlockMarker (#3069): it names a planned
     release day, so its result is visible only once that release is out, and the closed line -- in the
     block and in the closed message -- says so under the intro.
@@ -198,6 +206,15 @@
     parked awaiting-release, or work pushed live on its own (#2943). The block then says 'live since'
     that day instead of naming the next release day, and drops the sentences that only hold before a
     release. A day after today is refused, and so is passing -From or -ReleaseDay beside it.
+
+.PARAMETER Hotfix
+    The go-live form for a change that ships through the store's hotfix lane (#4017): it goes live as a
+    separate hotfix once the requester approves it, not with the next release. Refuses -LiveSince, -From,
+    -ReleaseDay, -Version, -Research, -Measure, -ByHand and -AlreadyFixed; -NoStorefrontResult stays.
+
+.PARAMETER LiveBy
+    With -Hotfix only: the day the hotfix should be live by, the requester's deadline. Written as the aim,
+    never as a promise. A day before today is refused.
 
 .PARAMETER Language
     The language of the Asana task, which is the language of the block between the rules: 'nl' (the
@@ -283,6 +300,8 @@ param(
     [switch]$ByHand,
     [switch]$NoStorefrontResult,
     [switch]$AlreadyFixed,
+    [switch]$Hotfix,
+    [Nullable[datetime]]$LiveBy,
     [string]$FixedIn,
     [Nullable[datetime]]$FixedOn,
     [string]$Story,
@@ -313,6 +332,10 @@ $MeasureArg  = [bool]$Measure
 $ByHandArg   = [bool]$ByHand
 $NoStorefrontArg = [bool]$NoStorefrontResult
 $AlreadyFixedArg = [bool]$AlreadyFixed
+$HotfixArg   = [bool]$Hotfix
+$LiveByArg   = $LiveBy
+# THE PARAMETERS A HOTFIX REFUSES (#4017): each plans or records a release, and a hotfix goes live on approval.
+$HotfixConflicts = @(foreach ($name in @('LiveSince', 'From', 'ReleaseDay', 'Version')) { if ($PSBoundParameters.ContainsKey($name)) { $name } })
 $FixedInArg  = $FixedIn
 $FixedOnArg  = $FixedOn
 $FixedArgsGiven = @(foreach ($name in @('FixedIn', 'FixedOn')) { if ($PSBoundParameters.ContainsKey($name)) { $name } })
@@ -485,6 +508,24 @@ if ($AlreadyFixedArg) {
         exit 1
     }
 }
+if ($null -ne $LiveByArg -and -not $HotfixArg) {
+    Write-Host "[ERROR] -LiveBy is the day a hotfix should be live by, which only -Hotfix writes. Nothing written." -ForegroundColor Red
+    exit 1
+}
+if ($HotfixArg) {
+    if ($ResearchArg -or $MeasureArg -or $ByHandArg -or $AlreadyFixedArg) {
+        Write-Host "[ERROR] -Hotfix is the go-live form for a change that goes live on approval; -Research, -Measure, -ByHand and -AlreadyFixed are other forms. Pass one. Nothing written." -ForegroundColor Red
+        exit 1
+    }
+    if ($HotfixConflicts.Count -gt 0) {
+        Write-Host "[ERROR] -Hotfix goes live as a separate hotfix once approved, not with a release, so -$($HotfixConflicts -join ', -') has nothing to describe. Put the requester's deadline in -LiveBy. Nothing written." -ForegroundColor Red
+        exit 1
+    }
+    if ($null -ne $LiveByArg -and ([datetime]$LiveByArg).Date -lt (Get-Date).Date) {
+        Write-Host "[ERROR] -LiveBy $(([datetime]$LiveByArg).ToString('yyyy-MM-dd')) is before today -- a deadline already passed is no aim. Nothing written." -ForegroundColor Red
+        exit 1
+    }
+}
 if ($NoStorefrontArg) {
     if ($ResearchArg -or $MeasureArg -or $ByHandArg) {
         Write-Host "[ERROR] -NoStorefrontResult is the go-live form for a change that shows nothing on the storefront; -Research, -Measure and -ByHand are other forms. Pass one. Nothing written." -ForegroundColor Red
@@ -575,9 +616,17 @@ if (-not $ResearchArg -and -not $MeasureArg -and -not $ByHandArg -and -not $Alre
         exit 1
     }
     $isLive     = $null -ne $LiveSinceArg
-    $goLive     = if ($isLive) { ([datetime]$LiveSinceArg).Date } else { Get-NextReleaseDate -From $FromArg -ReleaseDay $ReleaseDayArg }
-    $goLiveText = Format-GoLiveDate -Date $goLive -Language $LanguageArg
-    Write-Host "  go live  : $goLiveText$(if ($isLive) { ' (already live -- -LiveSince)' })" -ForegroundColor DarkGray
+    $liveByText = ''
+    if ($HotfixArg) {
+        # A HOTFIX NAMES NO RELEASE DAY (#4017): it goes live on approval, so no date is derived.
+        $goLiveText = ''
+        if ($null -ne $LiveByArg) { $liveByText = Format-GoLiveDate -Date ([datetime]$LiveByArg).Date -Language $LanguageArg }
+        Write-Host "  go live  : as a hotfix, once approved$(if ($liveByText) { " -- aim: $liveByText" }) (-Hotfix)" -ForegroundColor DarkGray
+    } else {
+        $goLive     = if ($isLive) { ([datetime]$LiveSinceArg).Date } else { Get-NextReleaseDate -From $FromArg -ReleaseDay $ReleaseDayArg }
+        $goLiveText = Format-GoLiveDate -Date $goLive -Language $LanguageArg
+        Write-Host "  go live  : $goLiveText$(if ($isLive) { ' (already live -- -LiveSince)' })" -ForegroundColor DarkGray
+    }
 
     # --- The version ------------------------------------------------------------------------------------
     # THE TAG IS THE RECORD OF THE LAST CUT IN EVERY REPO RUNNING THIS WORKFLOW, whether or not it
@@ -591,7 +640,8 @@ if (-not $ResearchArg -and -not $MeasureArg -and -not $ByHandArg -and -not $Alre
     $resolvedVersion = $VersionArg
     $projected       = ''
     $versionWhy      = 'given with -Version'
-    if (-not $resolvedVersion) {
+    if ($HotfixArg) { $versionWhy = 'not projected -- a hotfix ships outside the release that would carry one' }
+    elseif (-not $resolvedVersion) {
         $tagRun = Invoke-Native { git -C $repoRoot tag --list 'v*' --sort=-v:refname }
         $latestTag = if ($tagRun.Code -eq 0 -and $tagRun.Output.Count -gt 0) { ([string]$tagRun.Output[0]).Trim() } else { '' }
 
@@ -763,7 +813,8 @@ if ($ByHandArg) {
     $block = Format-GoLiveBlock -Marker (Get-AsanaPasteBlockMarker) -IssueRef $targetRef `
         -GoLiveDate $goLiveText -ResultLink $LinkArg -Version $resolvedVersion -LiveUrl $liveUrls `
         -Language $LanguageArg -Changed $prose.Changed -WhereToLook $prose.WhereToLook -NotIncluded $prose.NotIncluded `
-        -AsanaLink $asanaLink -Live:$isLive -ReleaseMarker (Get-AsanaReleaseBlockMarker) -NoStorefront:$NoStorefrontArg
+        -AsanaLink $asanaLink -Live:$isLive -ReleaseMarker (Get-AsanaReleaseBlockMarker) -NoStorefront:$NoStorefrontArg `
+        -Hotfix:$HotfixArg -LiveBy $liveByText
 }
 
 Write-Host ""

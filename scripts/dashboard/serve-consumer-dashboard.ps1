@@ -506,7 +506,12 @@ try {
                 try {
                     $spec = Join-HouseStyleSpecimens -Core ([System.IO.File]::ReadAllText((Join-Path $styleDir 'specimens.html'), $utf8)) `n                        -Product ([System.IO.File]::ReadAllText((Join-Path $root 'plugins\dkj-policy\extensions\dkj-solutions\assets\dkj-brandbook-product\specimens.html'), $utf8))
                 } catch { $specError = $_.Exception.Message }
-                $html = Format-ProductHouseStylePageHtml -Body $spec -ReadError $specError -Section $hsAt.Section -Token $hsAt.Token
+                # Which tree these pages show, as a chip at their top (#4009, finding F7 of #4002's wireframe): the
+                # branch and commit this checkout stands on now, asked per request because the checkout moves.
+                $hsBranch = @(Invoke-DashboardGit $root @('rev-parse', '--abbrev-ref', 'HEAD'))[0]
+                $hsSha = @(Invoke-DashboardGit $root @('rev-parse', '--short=8', 'HEAD'))[0]
+                $hsProv = if ($hsBranch -and $hsSha) { [string]$hsBranch + ' @ ' + [string]$hsSha } else { '' }
+                $html = Format-ProductHouseStylePageHtml -Body $spec -ReadError $specError -Section $hsAt.Section -Token $hsAt.Token -Provenance $hsProv
                 if ($null -eq $html) {
                     Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('Not found: no house-style section of that name.')) -Method $method
                 } else {

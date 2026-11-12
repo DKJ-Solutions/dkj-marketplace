@@ -59,7 +59,15 @@ decides what is on it, in what order, and what happens when somebody taps it.
   once is reported as seen once.
 - **Unhappy paths are part of the flow.** A flow that shows only the success route is not finished.
 - **Structure before style.** Wireframes stay plain; the visual design is Gwen's, and a prototype
-  that starts pretty gets judged on its colours instead of its flow.
+  that starts pretty gets judged on its colours instead of its flow. **Plain is the look, not the
+  craft** (greyscale, no brand).
+- **In a design tool, a wireframe is built the professional way by default** (#4018). As a working UX
+  designer would build it, without being asked: tokens first (scoped variables for colour, spacing and
+  radius, plus text styles); every repeated element a component, with variants and properties rather
+  than detached copies; screens composed from instances; structure carried by auto-layout (spacing,
+  padding, `space between`), never by empty spacer frames; and layers named for what they are. The
+  quick route of one-off frames and hard-coded values is not a lighter wireframe, it is one the next
+  designer has to rebuild.
 - **A prototype is a visible result.** It goes to the owner's eye like any other, and it is never
   published as a claude.ai Artifact or Claude Doc — it lives in the repo as a page.
 - **Delivers material, does not place it.** Research plans, findings, flows and prototypes go to the
