@@ -42,6 +42,8 @@ Write-Host '-- group 1: the colour math' -ForegroundColor Cyan
 
 Assert-Near 21 (Get-ContrastRatio '#000000' '#ffffff') 0.001 'black on white is 21:1'
 Assert-Near 1 (Get-ContrastRatio '#777777' '#777777') 0.001 'a colour on itself is 1:1'
+Assert-Near 4.2 (Get-OkLabDeltaE '#e0761a' '#eb6834') 0.05 'OKLab Delta E matches the dataviz validator (the old graph-2 beside warning-3, normal vision)'
+Assert-Near 1.3 (Get-OkLabDeltaE '#e0761a' '#eb6834' 'deutan') 0.05 'and its Machado deutan simulation'
 $blue = ConvertTo-OkLch '#0000ff'
 Assert-Near 0.452 $blue.L 0.001 'OKLCH lightness of pure blue'
 Assert-Near 0.313 $blue.C 0.001 'OKLCH chroma of pure blue'
@@ -67,9 +69,17 @@ Assert-Equal 12 $themes.Count 'twelve themes'
 Assert-Equal 6 @($themes | Where-Object Mode -eq 'light').Count 'six light themes'
 foreach ($th in $themes) {
     $p = Get-HousePalette -Hue $th.Hue -Mode $th.Mode -ChromaMax ([double]$th.ChromaMax)
-    Assert-Equal 14 $p.Count "$($th.Id): fourteen tokens"; Assert-True (-not $p.Contains('--muted-inverse')) "$($th.Id): no --muted-inverse (retired November 1, 2026)"
+    Assert-Equal 17 $p.Count "$($th.Id): seventeen tokens"; Assert-True (-not $p.Contains('--muted-inverse')) "$($th.Id): no --muted-inverse (retired November 1, 2026)"
     $miss = @(Get-HousePaletteContrast $p | Where-Object { $_.Ratio -lt $_.Floor } | ForEach-Object { '{0} {1:N2}' -f $_.Pair, $_.Ratio })
     Assert-Equal '' ($miss -join '; ') "$($th.Id): every pairing reaches its floor"
+    # the graph slots (the owner, November 12, 2026): away from this theme's primary and from the status fills, and apart
+    $r = Get-HouseGraphRules; $gs = @(1..3 | ForEach-Object { $p["--graph-$_"] })
+    $near = @($gs | Where-Object { (Get-OkLabDeltaE $_ $p['--primary']) -lt $r.FromPrimary })
+    Assert-Equal '' ($near -join ' ') "$($th.Id): every graph slot stands $($r.FromPrimary) or more off the primary"
+    $nearStatus = @(foreach ($g in $gs) { foreach ($st in Get-HouseGraphStatus -Mode $th.Mode) { if ((Get-OkLabDeltaE $g $st) -lt $r.FromStatus) { "$g~$st" } } })
+    Assert-Equal '' ($nearStatus -join ' ') "$($th.Id): every graph slot stands $($r.FromStatus) or more off every status fill"
+    $close = @(foreach ($i in 0..1) { foreach ($j in ($i + 1)..2) { if ((Get-OkLabDeltaE $gs[$i] $gs[$j]) -lt $r.FromSlot -or (Get-OkLabCvdDeltaE $gs[$i] $gs[$j]) -lt $r.FromSlotCvd) { "$($gs[$i])~$($gs[$j])" } } })
+    Assert-Equal '' ($close -join ' ') "$($th.Id): the three slots stand apart with full colour vision and for a protan or deutan reader"
     $l1 = (ConvertTo-OkLch $p['--fg-1']).L; $l4 = (ConvertTo-OkLch $p['--fg-4']).L
     Assert-True ([math]::Abs($l4 - $l1) -le 0.13) "$($th.Id): the four text steps lie close together (fg-1 to fg-4 within 0.13 L)"
     $dark = $th.Mode -eq 'dark'
@@ -108,7 +118,7 @@ $css = [System.IO.File]::ReadAllText($Style)
 foreach ($th in $themes) {
     $expected = Format-HousePaletteDeclarations (Get-HousePalette -Hue $th.Hue -Mode $th.Mode -ChromaMax ([double]$th.ChromaMax))
     $line = ([regex]::Match($css, ":root\[data-theme=""$($th.Id)""\], \.theme-swatch\[data-id=""$($th.Id)""\] \{ ([^}]*)\}")).Groups[1].Value
-    Assert-True ($line.StartsWith($expected)) "$($th.Id): its theme line starts with the computed fourteen"
+    Assert-True ($line.StartsWith($expected)) "$($th.Id): its theme line starts with the computed seventeen"
 }
 $blocks = @([regex]::Matches($css, '(?m)^\s+(--bg-1:[^\r\n]*)$') | ForEach-Object { $_.Groups[1].Value.Trim() })
 Assert-Equal 3 $blocks.Count 'three default token lines'

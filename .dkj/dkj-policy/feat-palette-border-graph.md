@@ -53,12 +53,13 @@ colour vision, `--graph-3` sat beside `--positive-3` and under 3:1 on a light pa
 - [x] the dark paper steps widened in the model (bg-1 to bg-2 1.06:1, bg-3 to bg-4 1.12:1); the builder recomputed all twelve themes
 - [x] the plain `.btn`, `.seg`, `.info-button`, `.nav-search`, `.toolbar__filter`, `.stepper` and `.combo` take `--primary-border`
 - [x] new graph slots, chosen with the dataviz validator away from the status hues, light and dark
+- [x] the graph slots computed per theme (the owner: a series must not look like the theme's primary): the model walks a pool per mode and keeps the first three at 18 off the primary, 15 off every status fill, 3:1 on bg-1 and bg-3, and 15 apart (6 for a protan or deutan reader), with the validator's OKLab and Machado math ported into the model and pinned by a test
 - [x] the brand book README, the stylesheet's measurement comment and specimens.html name the new token
 - [x] the Figma variables (dkj-brandbook file): all twelve theme modes and the graph slots synced from house-style.css, and `palette/primary-border` with its semantic `color/primary-border` alias added, renamed from `border-strong` when it moved into the 30 (after the owner allowed the write)
 
 ### TEST
 
-- [x] `house-palette` suite: 161 passed (fourteen tokens, every pairing at its floor, every token on the specimens page)
+- [x] `house-palette` suite: 199 passed (seventeen tokens, every pairing at its floor, every graph rule per theme, the ported Delta E against the validator, every token on the specimens page)
 - [x] `check-house-style`: the brand book holds
 - [x] the branch's Admin (port 4897) and the product (4870) serve the new stylesheet
 
@@ -66,8 +67,8 @@ colour vision, `--graph-3` sat beside `--positive-3` and under 3:1 on a light pa
 
 Controls now show their edge: a plain button, a segmented control, the info button, the search and filter fields
 and the product's stepper and combo field take a new `--primary-border`, a grey of the theme's colour in the 30 group at 3:1 on
-the page and on a card, in all twelve themes. The three graph colours are now blue, purple-magenta and deep teal,
-so a series no longer looks like a warning or a gain. The dark themes' surfaces stand a little further apart.
+the page and on a card, in all twelve themes. The three graph colours are now computed per theme from blue, purple-magenta, deep teal, wine and violet,
+so a series no longer looks like the theme's own colour, a warning or a gain. The dark themes' surfaces stand a little further apart.
 **Score:** 2
 
 #### What makes this deploy extra special
