@@ -328,7 +328,7 @@ function Format-FitAlarmHtml {
         whitespace-separated run holding a letter or a digit, so a hyphenated word counts once and a lone dash between
         a subject and a subtitle counts not at all, while the subtitle's own words do. Not width-gated either.
 
-        IN ADMIN'S DESKTOP SHELL (#3830) it reads the shell's own structure: the h1 is the toolbar's (.toolbar > h1)
+        IN ADMIN'S DESKTOP SHELL (#3830) it reads the shell's own structure: the h1 is the toolbar's (.toolbar > h1) or, since the Figma wireframes (November 12, 2026), the page header's (.page-head h1),
         and the trail the bar's (.shell__bar .breadcrumbs), and the screen it judges is the shell's main pane, which
         scrolls on its own while the window never does. The pane is judged at its own height, so a pane that runs past
         it says so as a page did; a list long by nature (a dense table of runs or releases) scrolls in its pane by design
@@ -357,11 +357,11 @@ function Format-FitAlarmHtml {
       if (wide > 1) { past.push(wide + " px too wide"); }
       said.push("Does not fit one screen: " + past.join(", "));
     }
-    var trail = shell ? ".shell__bar .breadcrumbs" : ".breadcrumbs", head = shell ? ".toolbar > h1" : "h1";
+    var trail = shell ? ".shell__bar .breadcrumbs" : ".breadcrumbs", head = shell ? ".toolbar > h1, .page-head h1" : "h1";
     // An open modal is its own document to a screen reader, so a popup's own h1 is not the page's second (#3937).
     var h1 = [].filter.call(document.querySelectorAll("h1"), function (h) { var m = h.closest("dialog"); return !(m && m.matches(":modal")); }).length, crumbs = document.querySelectorAll(trail + " li").length;
     if (h1 > 1 || (h1 === 0 && crumbs !== 1)) { said.push(h1 + " h1 on this page, where a page carries exactly one"); }
-    if (shell && h1 === 1 && !document.querySelector(head)) { said.push("The h1 stands in the pane, where Admin's h1 is the toolbar's"); }
+    if (shell && h1 === 1 && !document.querySelector(head)) { said.push("The h1 stands loose in the pane, where Admin's h1 is the toolbar's or the page header's"); }
     var named = Math.max(words(document.querySelector(head)), words(document.querySelector(trail + " [aria-current=\"page\"]")));
     if (named > 2) { said.push("The page name runs " + named + " words, where a page name has two at most"); }
     if (!said.length) { alarm.hidden = true; return; }
@@ -436,7 +436,7 @@ function Format-RepoAdminBanner {
         owed is still the server's alone.
     #>
     return @'
-<div class="notice" id="admin-banner" role="region" aria-label="Airsquats" style="position: fixed; left: var(--spacing-4); bottom: var(--spacing-4); z-index: 20; margin: 0; max-width: calc(100vw - 2 * var(--spacing-4)); box-shadow: var(--shadow-pop)" hidden>
+<div class="notice" id="admin-banner" role="region" aria-label="Airsquats" style="position: fixed; left: calc(var(--shell-nav-w, 0px) + var(--spacing-4)); bottom: var(--spacing-4); z-index: 20; margin: 0; max-width: calc(100vw - var(--shell-nav-w, 0px) - 2 * var(--spacing-4)); box-shadow: var(--shadow-pop)" hidden>
 <p>Next airsquats in <strong class="num" data-admin-timer>--:--</strong><span class="msg--warn" data-admin-due hidden> &middot; <label><input type="checkbox" data-admin-done> <span data-admin-count>10</span> due</label></span><span class="msg--warn" data-admin-offline hidden> &middot; admin offline, this hour is not counted</span><span data-admin-owner hidden title="The Windows account Admin runs under"> &middot; <span data-admin-account></span></span><button type="button" class="icon-btn icon-btn--ghost" data-admin-close aria-label="Close" title="Close" style="height: var(--control-h); min-width: var(--control-h); margin-left: var(--spacing-2); vertical-align: middle"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></p>
 </div>
 <script>
@@ -1510,7 +1510,8 @@ function Format-AdminShellOpen {
     $mark = { param($href) if ($href -eq $Current) { ' aria-current="page"' } else { '' } }
     [void]$sb.Append('<nav class="shell__nav" aria-label="Main">')
     if ($null -eq $Nav) { $Nav = @(Get-AdminNav) }
-    # The search field first (#3817): over every section, as the Shopify Admin puts it.
+    # The brand row, then the search field (#3817), over every section: the Figma wireframes' sidebar (November 12, 2026).
+    [void]$sb.Append('<a class="shell__brand" href="' + (& $e $AdminHref) + '"><span class="shell__brand__mark" aria-hidden="true"></span>Admin</a>')
     [void]$sb.Append((Format-AdminNavSearch -Nav $Nav -AdminHref $AdminHref -HomeLabel $HomeLabel))
     $si = 0
     foreach ($s in @($Nav | Where-Object { $_ })) {
@@ -1518,7 +1519,7 @@ function Format-AdminShellOpen {
         $items = @($s.Items | Where-Object { $_ -and $_.Label -and $_.Href })
         if (-not $items.Count) { continue }
         $headId = 'admin-nav-' + $si
-        if ($s.Foot) { [void]$sb.Append('<div class="shell__nav-foot">') }
+        [void]$sb.Append('<div class="nav-section' + $(if ($s.Foot) { ' shell__nav-foot' } else { '' }) + '">')
         if ($s.Heading) { [void]$sb.Append('<p class="pane-head" id="' + $headId + '">' + (& $e $s.Heading) + '</p><ul class="nav-list" aria-labelledby="' + $headId + '">') }
         else { [void]$sb.Append('<ul class="nav-list">') }
         foreach ($i in $items) {
@@ -1530,8 +1531,7 @@ function Format-AdminShellOpen {
             $count = if ($null -ne $n -and [string]$n -match '\A\d{1,9}\z') { '<span class="nav-item__count">' + ([int][string]$n).ToString('N0', [Globalization.CultureInfo]::InvariantCulture) + '</span>' } else { '' }
             [void]$sb.Append('<li><a class="nav-item" href="' + (& $e $href) + '"' + (& $mark $href) + '><span class="nav-item__label">' + (& $e $label) + '</span>' + $count + '</a></li>')
         }
-        [void]$sb.Append('</ul>')
-        if ($s.Foot) { [void]$sb.Append('</div>') }
+        [void]$sb.Append('</ul></div>')
     }
     [void]$sb.AppendLine('</nav>')
     [void]$sb.AppendLine('<div class="shell__main">')

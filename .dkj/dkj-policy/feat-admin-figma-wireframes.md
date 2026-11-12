@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Dave, November 12, 2026: from now on the Figma wireframes rank highest for Admin's layout -- the
+*Wireframes* page of the `dkj-brandbook` Figma file (key `w44J5aQPeST96RJ71vU3ev`, node `5-3`). This
+branch is round 1: the shell every Admin page shares, and the Home page. Goals and Today, which the
+wireframes also draw, follow in their own rounds.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Desktop shell in `house-style.css` rebuilt on the wireframe's structure: full-height sidebar with a brand row, search, sections and Settings at the foot; a bar over the main pane only; a page header (`.page-head`); room around the content; the link table in a rounded, bordered frame
+- [x] `Format-AdminShellOpen` draws the brand row and wraps each nav section in `.nav-section`
+- [x] Home draws the page header (the repo's name and the lead line) and the shorter source note
+- [x] The airsquats toast stands beside the sidebar, as the wireframe places it
+- [x] The fit alarm accepts the page header's `h1`
+- [x] Brand book README states the new hierarchy and the changed layer rules
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: 751 passed, 0 failed
+- [x] Home served from the working tree and compared by eye against the wireframe frame `8:2`: structure matches; the wireframe's grey icon placeholders and two empty bar actions are not drawn, since there is nothing to put in them yet
+
 ### DEPLOY: feat/admin-figma-wireframes
 
-**Score:**
+The Admin shell and its Home page now follow the Figma wireframes, which rank above the brand book for
+Admin's layout from this release on: a full-height sidebar with a brand row and Settings at its foot, a
+bar over the main pane only, and a page header with the repo's name over a framed table of pages.
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+The source of truth for Admin's layout moved out of the stylesheet and into Figma, so the next change
+to Admin starts from the wireframe, not from the shell's old "compact, no cards" rule.
+**Score:** 3
 
 #### Pull Request
 
