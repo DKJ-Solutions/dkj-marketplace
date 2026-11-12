@@ -39,19 +39,33 @@
 
 ### PLAN
 
+The second half of #4029, pushed after that PR had merged (Dave, November 12, 2026, approved both).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] the control edge moved from `--primary-border` in the 30 to `--bg-5` in the 60: a control's edge is a line, and lines are paper; `bg-5` already bordered the Mode toggle and the theme cards. Sixteen tokens per theme; the builder recomputed all twelve
+- [x] every `--primary*` and `--fg-*` token reads on `bg-1` at 4.5:1 or better: a contrast row per token in the model, the README and the skill; a token under the floor gets more contrast or moves to the paper as `--bg-*`. `--primary-raised` steps back from 15% where it fell under (teal, ochre, rust)
+- [x] the Figma variables (dkj-brandbook file): `palette/bg-5` took the control edge's value in all twelve modes, the `primary-border` variables were removed (no node was bound to them), and `palette/primary-raised` synced for teal, ochre and rust
 
 ### TEST
 
+- [x] `house-palette` suite: 199 passed; `check-house-style`: the brand book holds
+
 ### DEPLOY: feat/palette-border-graph-v2
 
-**Score:**
+The control edge introduced by #4029 is now `--bg-5`, a paper token, instead of `--primary-border`: a plain button,
+a segmented control, the info button, the search and filter fields and the product's stepper and combo take
+`--bg-5`, a grey of the theme's colour at 3:1 on the page and on a card. Every primary and text token now reads on
+the page at 4.5:1 or better in every theme; the raised primary of teal, ochre and rust moved a little toward the
+primary for it.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+The brand book now promises that every primary and text colour reads on the page, and says what happens to one that does not.
+
+**Score:** 2
 
 #### Pull Request
 

@@ -72,7 +72,7 @@
      today row, the accent dialog); bg-4 a stronger border (an open card, a selected box). --primary the
      highlight: links (owner's decision, October 15, 2026), the primary button's fill (#109), the picker's dot, h1,
      the states (hover, sorted) and native controls through accent-color. --primary-raised is --primary 15% of the way
-     to bg-1 (the settings cell in a .site-header); --primary-hover is --primary 15% of the way to fg-1 (a .btn--primary
+     to bg-1, or less where that would drop it under 4.5:1 on bg-1 (every --primary* and --fg-* token reads on bg-1, Dave, November 12, 2026) (the settings cell in a .site-header); --primary-hover is --primary 15% of the way to fg-1 (a .btn--primary
      under the pointer, the settings cell's hover and open state). Both are typed per theme, never derived in a rule:
      no color-mix() or other colour function in this file, a gate refuses one (Maikel, November 1, 2026). --primary-muted .note, the card and dialog sub lines,
      the tile label, the fills (switches, info badges, a pressed .seg), most focus
@@ -86,9 +86,9 @@
      16.4:1; a bg-3 line on a bg-2 card 1.05:1 (Pink) to 1.09:1 (Magenta), a bg-4 border on it 1.14:1 to 1.22:1.
      Paper-2 stands a clearer step off the page since November 1, 2026 (Maikel): 1.04:1 to 1.05:1 on dark and 1.09:1
      to 1.10:1 on light, the figures above for bg-2 measured again that day. The dark paper steps widened on November 12,
-     2026: bg-1 to bg-2 1.06:1, bg-2 to bg-3 1.08:1 to 1.09:1, bg-3 to bg-4 1.12:1 to 1.13:1. --primary-border, the edge of a
-     control, reads at 3.05:1 to 3.08:1 on bg-3 in every theme (WCAG 1.4.11), and further from it on bg-1 and bg-2. */
-  --bg-1: #fdfdff; --bg-2: #eff4fd; --bg-3: #e2ecff; --bg-4: #d1e0ff; --bg-5: #c1d5fb; --primary: #0000ff; --primary-muted: #4f5769; --primary-raised: #2626ff; --primary-hover: #0001db; --primary-border: #7d8699; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c; --graph-1: #2574d1; --graph-2: #a63aa8; --graph-3: #007c6e;
+     2026: bg-1 to bg-2 1.06:1, bg-2 to bg-3 1.08:1 to 1.09:1, bg-3 to bg-4 1.12:1 to 1.13:1. --bg-5, the edge of a
+     control (--primary-border until November 12, 2026), reads at 3.05:1 to 3.08:1 on bg-3 in every theme (WCAG 1.4.11), and further from it on bg-1 and bg-2. */
+  --bg-1: #fdfdff; --bg-2: #eff4fd; --bg-3: #e2ecff; --bg-4: #d1e0ff; --bg-5: #7d8699; --primary: #0000ff; --primary-muted: #4f5769; --primary-raised: #2626ff; --primary-hover: #0001db; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c; --graph-1: #2574d1; --graph-2: #a63aa8; --graph-3: #007c6e;
 
 
   /* direction and result semantics */
@@ -171,7 +171,7 @@
   :root:not([data-theme]) {
     color-scheme: dark;
     --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
-    --bg-1: #01090b; --bg-2: #031316; --bg-3: #041e21; --bg-4: #002a2f; --bg-5: #00353b; --primary: #6bd6e3; --primary-muted: #6aa3aa; --primary-raised: #5bb7c3; --primary-hover: #80dce7; --primary-border: #377076; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde; --graph-1: #2f73dd; --graph-2: #e48fe8; --graph-3: #a264b0;
+    --bg-1: #01090b; --bg-2: #031316; --bg-3: #041e21; --bg-4: #002a2f; --bg-5: #377076; --primary: #6bd6e3; --primary-muted: #6aa3aa; --primary-raised: #5bb7c3; --primary-hover: #80dce7; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde; --graph-1: #2f73dd; --graph-2: #e48fe8; --graph-3: #a264b0;
   }
 }
 
@@ -181,7 +181,7 @@
 :root[data-theme="cyan"], :root[data-theme="yellow"], :root[data-theme="orange"] {
   color-scheme: dark;
   --positive-5: #3fc23f; --negative-5: #ff7a7a; --positive-3: #25b225; --negative-3: #e66767; --warning-3: #ffc61a; --warning-5: #ffd75e; --warning-1: #2b1f0c; --negative-1: #3a1414; --positive-1: #133a13;
-  --bg-1: #01090b; --bg-2: #031316; --bg-3: #041e21; --bg-4: #002a2f; --bg-5: #00353b; --primary: #6bd6e3; --primary-muted: #6aa3aa; --primary-raised: #5bb7c3; --primary-hover: #80dce7; --primary-border: #377076; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde; --graph-1: #2f73dd; --graph-2: #e48fe8; --graph-3: #a264b0;
+  --bg-1: #01090b; --bg-2: #031316; --bg-3: #041e21; --bg-4: #002a2f; --bg-5: #377076; --primary: #6bd6e3; --primary-muted: #6aa3aa; --primary-raised: #5bb7c3; --primary-hover: #80dce7; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde; --graph-1: #2f73dd; --graph-2: #e48fe8; --graph-3: #a264b0;
 }
 
 /* ---- Themes: the theme's colour --------------------------------------------- */
@@ -190,18 +190,18 @@
    two whose primary sits next to the warning colour move the warning away from it. No red and
    no green theme: those hues mean bad and good. Order: magenta, purple, blue, teal, ochre, rust (light);
    pink, lilac, sky, cyan, yellow, orange (dark). */
-:root[data-theme="magenta"], .theme-swatch[data-id="magenta"] { --bg-1: #fffdfe; --bg-2: #fbf0f5; --bg-3: #fae4ef; --bg-4: #f7d4e6; --bg-5: #f2c6dc; --primary: #b90085; --primary-muted: #66525d; --primary-raised: #c32697; --primary-hover: #9f0072; --primary-border: #957f8a; --fg-1: #0d0208; --fg-2: #160810; --fg-3: #1f1119; --fg-4: #281a22; --graph-1: #2574d1; --graph-2: #007c6e; --graph-3: #5c2f95; }
-:root[data-theme="purple"], .theme-swatch[data-id="purple"] { --bg-1: #fdfdff; --bg-2: #f4f2fc; --bg-3: #ece8fd; --bg-4: #e1dbfb; --bg-5: #d6cef8; --primary: #7f00ff; --primary-muted: #595568; --primary-raised: #9226ff; --primary-hover: #6d01db; --primary-border: #878397; --fg-1: #060410; --fg-2: #0e0b19; --fg-3: #171422; --fg-4: #201d2b; --graph-1: #2574d1; --graph-2: #007c6e; --graph-3: #8b0f49; }
-:root[data-theme="blue"], .theme-swatch[data-id="blue"] { --bg-1: #fdfdff; --bg-2: #eff4fd; --bg-3: #e2ecff; --bg-4: #d1e0ff; --bg-5: #c1d5fb; --primary: #0000ff; --primary-muted: #4f5769; --primary-raised: #2626ff; --primary-hover: #0001db; --primary-border: #7d8699; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c; --graph-1: #2574d1; --graph-2: #a63aa8; --graph-3: #007c6e; }
-:root[data-theme="teal"], .theme-swatch[data-id="teal"] { --bg-1: #fafeff; --bg-2: #e9f6f8; --bg-3: #d7f1f4; --bg-4: #bee9ef; --bg-5: #a8e0e7; --primary: #006e79; --primary-muted: #435b5f; --primary-raised: #25848d; --primary-hover: #005f68; --primary-border: #728b8f; --fg-1: #000809; --fg-2: #001113; --fg-3: #051a1c; --fg-4: #0f2325; --graph-1: #a63aa8; --graph-2: #8b0f49; --graph-3: #5c2f95; }
-:root[data-theme="ochre"], .theme-swatch[data-id="ochre"] { --bg-1: #fefef9; --bg-2: #f5f4e9; --bg-3: #efecd7; --bg-4: #e6e1bf; --bg-5: #ddd6aa; --primary: #716300; --primary-muted: #5c5845; --primary-raised: #867a25; --primary-hover: #615500; --primary-border: #8a8672; --fg-1: #080600; --fg-2: #100d01; --fg-3: #191607; --fg-4: #222011; --graph-1: #2574d1; --graph-2: #a63aa8; --graph-3: #8b0f49; }
-:root[data-theme="rust"], .theme-swatch[data-id="rust"] { --bg-1: #fffdfc; --bg-2: #fcf1eb; --bg-3: #fce6db; --bg-4: #f9d8c5; --bg-5: #f5cab2; --primary: #9c4b00; --primary-muted: #665449; --primary-raised: #ab6626; --primary-hover: #874000; --primary-border: #958176; --fg-1: #0e0300; --fg-2: #170903; --fg-3: #20120a; --fg-4: #291c14; --graph-1: #2574d1; --graph-2: #a63aa8; --graph-3: #007c6e; --warning-3: #b88a00; }
-:root[data-theme="pink"], .theme-swatch[data-id="pink"] { --bg-1: #0e0507; --bg-2: #190c10; --bg-3: #251319; --bg-4: #351a24; --bg-5: #44212d; --primary: #ffa9d9; --primary-muted: #b78da4; --primary-raised: #db90ba; --primary-hover: #ffb5de; --primary-border: #815a6f; --fg-1: #fffafc; --fg-2: #f6edf0; --fg-3: #ece1e4; --fg-4: #e2d5d9; --graph-1: #2f73dd; --graph-2: #11a3a0; --graph-3: #a264b0; }
-:root[data-theme="lilac"], .theme-swatch[data-id="lilac"] { --bg-1: #08060e; --bg-2: #110e1a; --bg-3: #1a1627; --bg-4: #251f38; --bg-5: #2f2847; --primary: #dab5ff; --primary-muted: #a592b8; --primary-raised: #ba9bdb; --primary-hover: #dfc0ff; --primary-border: #715e83; --fg-1: #fcfbff; --fg-2: #f0eff6; --fg-3: #e5e3ec; --fg-4: #d9d7e2; --graph-1: #2f73dd; --graph-2: #11a3a0; --graph-3: #a264b0; }
-:root[data-theme="sky"], .theme-swatch[data-id="sky"] { --bg-1: #04070f; --bg-2: #0b101b; --bg-3: #121928; --bg-4: #19233a; --bg-5: #202d49; --primary: #bfbfff; --primary-muted: #9596be; --primary-raised: #a3a3db; --primary-hover: #c8c8ff; --primary-border: #636389; --fg-1: #fafcff; --fg-2: #edf0f7; --fg-3: #e0e5ed; --fg-4: #d4d9e3; --graph-1: #2f73dd; --graph-2: #11a3a0; --graph-3: #a264b0; }
-:root[data-theme="cyan"], .theme-swatch[data-id="cyan"] { --bg-1: #01090b; --bg-2: #031316; --bg-3: #041e21; --bg-4: #002a2f; --bg-5: #00353b; --primary: #6bd6e3; --primary-muted: #6aa3aa; --primary-raised: #5bb7c3; --primary-hover: #80dce7; --primary-border: #377076; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde; --graph-1: #2f73dd; --graph-2: #e48fe8; --graph-3: #a264b0; }
-:root[data-theme="yellow"], .theme-swatch[data-id="yellow"] { --bg-1: #0a0701; --bg-2: #151005; --bg-3: #1f1907; --bg-4: #2d2307; --bg-5: #392c07; --primary: #e8c158; --primary-muted: #a8986e; --primary-raised: #c7a54b; --primary-hover: #ebca70; --primary-border: #74653d; --fg-1: #fdfcf7; --fg-2: #f3f0e9; --fg-3: #e8e4dc; --fg-4: #ddd9cf; --graph-1: #2f73dd; --graph-2: #e48fe8; --graph-3: #11a3a0; --warning-3: #f08a24; }
-:root[data-theme="orange"], .theme-swatch[data-id="orange"] { --bg-1: #0e0503; --bg-2: #190d08; --bg-3: #26140d; --bg-4: #361c12; --bg-5: #452417; --primary: #ffb383; --primary-muted: #b99178; --primary-raised: #db9970; --primary-hover: #ffbe95; --primary-border: #835e46; --fg-1: #fffbf9; --fg-2: #f6eeeb; --fg-3: #ece2de; --fg-4: #e2d6d2; --graph-1: #2f73dd; --graph-2: #e48fe8; --graph-3: #11a3a0; }
+:root[data-theme="magenta"], .theme-swatch[data-id="magenta"] { --bg-1: #fffdfe; --bg-2: #fbf0f5; --bg-3: #fae4ef; --bg-4: #f7d4e6; --bg-5: #957f8a; --primary: #b90085; --primary-muted: #66525d; --primary-raised: #c32697; --primary-hover: #9f0072; --fg-1: #0d0208; --fg-2: #160810; --fg-3: #1f1119; --fg-4: #281a22; --graph-1: #2574d1; --graph-2: #007c6e; --graph-3: #5c2f95; }
+:root[data-theme="purple"], .theme-swatch[data-id="purple"] { --bg-1: #fdfdff; --bg-2: #f4f2fc; --bg-3: #ece8fd; --bg-4: #e1dbfb; --bg-5: #878397; --primary: #7f00ff; --primary-muted: #595568; --primary-raised: #9226ff; --primary-hover: #6d01db; --fg-1: #060410; --fg-2: #0e0b19; --fg-3: #171422; --fg-4: #201d2b; --graph-1: #2574d1; --graph-2: #007c6e; --graph-3: #8b0f49; }
+:root[data-theme="blue"], .theme-swatch[data-id="blue"] { --bg-1: #fdfdff; --bg-2: #eff4fd; --bg-3: #e2ecff; --bg-4: #d1e0ff; --bg-5: #7d8699; --primary: #0000ff; --primary-muted: #4f5769; --primary-raised: #2626ff; --primary-hover: #0001db; --fg-1: #020511; --fg-2: #070d1a; --fg-3: #101623; --fg-4: #191f2c; --graph-1: #2574d1; --graph-2: #a63aa8; --graph-3: #007c6e; }
+:root[data-theme="teal"], .theme-swatch[data-id="teal"] { --bg-1: #fafeff; --bg-2: #e9f6f8; --bg-3: #d7f1f4; --bg-4: #bee9ef; --bg-5: #728b8f; --primary: #006e79; --primary-muted: #435b5f; --primary-raised: #1f808a; --primary-hover: #005f68; --fg-1: #000809; --fg-2: #001113; --fg-3: #051a1c; --fg-4: #0f2325; --graph-1: #a63aa8; --graph-2: #8b0f49; --graph-3: #5c2f95; }
+:root[data-theme="ochre"], .theme-swatch[data-id="ochre"] { --bg-1: #fefef9; --bg-2: #f5f4e9; --bg-3: #efecd7; --bg-4: #e6e1bf; --bg-5: #8a8672; --primary: #716300; --primary-muted: #5c5845; --primary-raised: #82761e; --primary-hover: #615500; --fg-1: #080600; --fg-2: #100d01; --fg-3: #191607; --fg-4: #222011; --graph-1: #2574d1; --graph-2: #a63aa8; --graph-3: #8b0f49; }
+:root[data-theme="rust"], .theme-swatch[data-id="rust"] { --bg-1: #fffdfc; --bg-2: #fcf1eb; --bg-3: #fce6db; --bg-4: #f9d8c5; --bg-5: #958176; --primary: #9c4b00; --primary-muted: #665449; --primary-raised: #a96322; --primary-hover: #874000; --fg-1: #0e0300; --fg-2: #170903; --fg-3: #20120a; --fg-4: #291c14; --graph-1: #2574d1; --graph-2: #a63aa8; --graph-3: #007c6e; --warning-3: #b88a00; }
+:root[data-theme="pink"], .theme-swatch[data-id="pink"] { --bg-1: #0e0507; --bg-2: #190c10; --bg-3: #251319; --bg-4: #351a24; --bg-5: #815a6f; --primary: #ffa9d9; --primary-muted: #b78da4; --primary-raised: #db90ba; --primary-hover: #ffb5de; --fg-1: #fffafc; --fg-2: #f6edf0; --fg-3: #ece1e4; --fg-4: #e2d5d9; --graph-1: #2f73dd; --graph-2: #11a3a0; --graph-3: #a264b0; }
+:root[data-theme="lilac"], .theme-swatch[data-id="lilac"] { --bg-1: #08060e; --bg-2: #110e1a; --bg-3: #1a1627; --bg-4: #251f38; --bg-5: #715e83; --primary: #dab5ff; --primary-muted: #a592b8; --primary-raised: #ba9bdb; --primary-hover: #dfc0ff; --fg-1: #fcfbff; --fg-2: #f0eff6; --fg-3: #e5e3ec; --fg-4: #d9d7e2; --graph-1: #2f73dd; --graph-2: #11a3a0; --graph-3: #a264b0; }
+:root[data-theme="sky"], .theme-swatch[data-id="sky"] { --bg-1: #04070f; --bg-2: #0b101b; --bg-3: #121928; --bg-4: #19233a; --bg-5: #636389; --primary: #bfbfff; --primary-muted: #9596be; --primary-raised: #a3a3db; --primary-hover: #c8c8ff; --fg-1: #fafcff; --fg-2: #edf0f7; --fg-3: #e0e5ed; --fg-4: #d4d9e3; --graph-1: #2f73dd; --graph-2: #11a3a0; --graph-3: #a264b0; }
+:root[data-theme="cyan"], .theme-swatch[data-id="cyan"] { --bg-1: #01090b; --bg-2: #031316; --bg-3: #041e21; --bg-4: #002a2f; --bg-5: #377076; --primary: #6bd6e3; --primary-muted: #6aa3aa; --primary-raised: #5bb7c3; --primary-hover: #80dce7; --fg-1: #f7fdfe; --fg-2: #e9f2f3; --fg-3: #dce7e8; --fg-4: #cfdcde; --graph-1: #2f73dd; --graph-2: #e48fe8; --graph-3: #a264b0; }
+:root[data-theme="yellow"], .theme-swatch[data-id="yellow"] { --bg-1: #0a0701; --bg-2: #151005; --bg-3: #1f1907; --bg-4: #2d2307; --bg-5: #74653d; --primary: #e8c158; --primary-muted: #a8986e; --primary-raised: #c7a54b; --primary-hover: #ebca70; --fg-1: #fdfcf7; --fg-2: #f3f0e9; --fg-3: #e8e4dc; --fg-4: #ddd9cf; --graph-1: #2f73dd; --graph-2: #e48fe8; --graph-3: #11a3a0; --warning-3: #f08a24; }
+:root[data-theme="orange"], .theme-swatch[data-id="orange"] { --bg-1: #0e0503; --bg-2: #190d08; --bg-3: #26140d; --bg-4: #361c12; --bg-5: #835e46; --primary: #ffb383; --primary-muted: #b99178; --primary-raised: #db9970; --primary-hover: #ffbe95; --fg-1: #fffbf9; --fg-2: #f6eeeb; --fg-3: #ece2de; --fg-4: #e2d6d2; --graph-1: #2f73dd; --graph-2: #e48fe8; --graph-3: #11a3a0; }
 
 /* ---- Base ---------------------------------------------------------------- */
 * { box-sizing: border-box; }
@@ -473,7 +473,7 @@ p { margin: 0; }
 .badge-list > .badge-row:first-child { margin-top: 0; }
 
 /* ---- Buttons -------------------------------------------------------------- */
-.btn { background: none; border: 1px solid var(--primary-border); color: var(--fg-1); border-radius: var(--radius-2);
+.btn { background: none; border: 1px solid var(--bg-5); color: var(--fg-1); border-radius: var(--radius-2);
   padding: var(--spacing-1) var(--spacing-2-5); font: inherit; font-size: var(--text-sm); cursor: pointer; text-decoration: none; }   /* none: a .btn on an <a> (a link that looks like a button) draws no underline */
 /* Hover and focus: one rule for every .btn variant (#3648). The hover is the house hover tint, --bg-3, with the
    border one step on so the edge stays drawn; .btn--primary darkens its own fill below. */
@@ -484,14 +484,14 @@ p { margin: 0; }
    and keeps a visible outline beside a .btn--primary. */
 :is(.grid-2, .grid-3, .card-grid) > .card .btn:not(.btn--primary) { border-color: var(--primary-muted); }
 /* Segmented switch: <span class="seg" role="group"><button aria-pressed="true">A</button><button aria-pressed="false">B</button></span>. */
-.seg { display: inline-flex; border: 1px solid var(--primary-border); border-radius: var(--radius-2); overflow: hidden; vertical-align: middle; }
+.seg { display: inline-flex; border: 1px solid var(--bg-5); border-radius: var(--radius-2); overflow: hidden; vertical-align: middle; }
 .seg button { background: none; border: 0; color: var(--fg-1); padding: 0 var(--spacing-2-5); height: 100%; font: inherit; font-size: var(--text-sm); cursor: pointer; }
 .seg button + button { border-left: 1px solid var(--bg-3); }
 .seg button[aria-pressed="true"] { background: var(--primary-muted); color: var(--bg-1); }
 .seg button:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }   /* inset: .seg clips its overflow; the primary shows on the page and on a muted fill */
 /* The round "?" button that opens an explanation tooltip. */
 .info-button { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px;
-  margin-left: 5px; padding: 0; border-radius: 50%; border: 1px solid var(--primary-border); background: none;
+  margin-left: 5px; padding: 0; border-radius: 50%; border: 1px solid var(--bg-5); background: none;
   color: var(--fg-1); font-family: system-ui, sans-serif; font-size: var(--text-xs); font-weight: var(--font-weight-bold); line-height: 1; cursor: help; vertical-align: 1px; position: relative; }
 .info-button::after { content: ""; position: absolute; inset: -14px; }  /* a 44px hit target around the 16px mark */
 .info-button:hover, .info-button:focus-visible, .info-button[aria-expanded="true"] { border-color: var(--primary); color: var(--primary); }
@@ -662,7 +662,7 @@ p { margin: 0; }
 /* The search field at the top of the navigation (#3817), after the Shopify Admin's: a box on --bg-1 with the
    field and its shortcut, Ctrl K, at the right. The ring is on the box, so the shortcut sits inside it. */
 .nav-search { display: flex; align-items: center; gap: var(--spacing-2); margin: 0; padding: var(--spacing-2) var(--spacing-3);
-  background: var(--bg-1); border: 1px solid var(--primary-border); border-radius: var(--radius-1-5); }
+  background: var(--bg-1); border: 1px solid var(--bg-5); border-radius: var(--radius-1-5); }
 .nav-search:focus-within { outline: 2px solid var(--primary-muted); outline-offset: 1px; }
 .nav-search__input { flex: 1; min-width: 0; padding: 0; background: none; border: 0; color: var(--fg-1); font: inherit; font-size: var(--text-sm); }
 .nav-search__input:focus { outline: none; }
@@ -677,7 +677,7 @@ p { margin: 0; }
 .toolbar { display: flex; align-items: center; gap: var(--spacing-2); min-width: 0; height: var(--spacing-9); padding: 0 var(--spacing-8); border-bottom: 1px solid var(--bg-3); }
 .toolbar > h1, .toolbar__title { margin: 0; font-size: var(--text-h3); white-space: nowrap; }   /* the page's one h1, set at the toolbar's size: a pane title, not a headline */
 .toolbar__filter { width: var(--spacing-52); max-width: 40%; height: var(--spacing-6); padding: 0 var(--spacing-2); background: var(--bg-1); color: var(--fg-1);
-  border: 1px solid var(--primary-border); border-radius: var(--radius-1-5); font: inherit; font-size: var(--text-sm); }
+  border: 1px solid var(--bg-5); border-radius: var(--radius-1-5); font: inherit; font-size: var(--text-sm); }
 .toolbar__filter:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 1px; }
 .toolbar__end { display: flex; align-items: center; gap: var(--spacing-1); margin-left: auto; }
 /* The list always takes the pane's second, flexible row, so it scrolls whether a .toolbar stands over it or (the

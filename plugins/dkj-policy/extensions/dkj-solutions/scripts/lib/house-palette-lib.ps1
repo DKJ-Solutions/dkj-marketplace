@@ -1,24 +1,25 @@
 <#
 .SYNOPSIS
-    The colour model of the house style (#3235): seventeen tokens per theme, computed from the theme's hue and
+    The colour model of the house style (#3235): sixteen tokens per theme, computed from the theme's hue and
     mode, so a theme is never tuned by hand again.
 
 .DESCRIPTION
     Per theme, in the owner's words (issue #3235, October 21, 2026), on a light theme:
       --primary        ONE colour: the most saturated colour of the theme's HSL hue (saturation 100%) that
                        reads at 4.5:1 on all four paper steps, so white (and every paper step) reads on it too.
-      --bg-1..5     FIVE colours from white towards a little darker: the page, the card, the line, the stronger
-                       border, and one step past it (bg-5, Maikel, November 3, 2026) -- bg-1..4 also the text on a primary fill.
+      --bg-1..4     FOUR colours from white towards a little darker: the page, the card, the line, the stronger
+                       border -- also the text on a primary fill.
+      --bg-5           the edge of a control (a button, a segmented control, a search or filter field), in the 60 group
+                       (Dave, November 12, 2026: a control's edge is a line, not the accent, so it is paper; it was
+                       --primary-border in the 30, and bg-5 one small step past bg-4 from Maikel's November 3, 2026, which
+                       already bordered the Mode toggle and the theme cards): a grey of the primary's own hue, as close
+                       to the paper as 3:1 on bg-3 allows, WCAG 1.4.11's floor for a control's boundary.
       --primary-muted  a grey of the colour that reads extra well (7:1) on the page.
       --primary-raised, --primary-hover  the primary 15% of the way to bg-1 and to fg-1: two fills a rule reads
                        instead of mixing them with color-mix() (Maikel, November 1, 2026).
     There is no grey for the far end (--muted-inverse was retired, Maikel, November 1, 2026): a theme's colours are
     the 60-30-10 groups and nothing else, and no colour reads at 4.5:1 on both bg-4 and fg-1, so it fitted none.
     The quieter line on an inverted surface takes --bg-4.
-      --primary-border the edge of a control (a button, a segmented control, a search or filter field), in the 30 group
-                       beside --primary-muted (the owner, November 12, 2026: every colour token sits in the 60, the 30 or the
-                       10, and a new one joins the group it belongs to): a grey of the primary's own hue, as close to the
-                       paper as 3:1 on bg-3 allows, WCAG 1.4.11's floor for a control's boundary.
       --fg-1..4        FOUR text colours that read on the page, near black, in very small steps: fg-4 is still
                        very dark, only a little less so than fg-1.
     A dark theme is the mirror: the paper runs from black towards a little lighter and the text is near white. Its
@@ -59,10 +60,10 @@ function Get-HousePaletteThemes {
 function Get-HousePaletteSteps {
     param([ValidateSet('light', 'dark')][string]$Mode)
     if ($Mode -eq 'light') {
-        @{ PaperL = @(0.995, 0.965, 0.94, 0.905, 0.87); PaperC = @(0.006, 0.014, 0.028, 0.045, 0.058)
+        @{ PaperL = @(0.995, 0.965, 0.94, 0.905); PaperC = @(0.006, 0.014, 0.028, 0.045)
            FgL    = @(0.12, 0.16, 0.20, 0.24);     FgC    = @(0.030, 0.030, 0.028, 0.026); MutedC = 0.03; PrimaryFloor = 4.55 }
     } else {
-        @{ PaperL = @(0.13, 0.175, 0.215, 0.26, 0.30); PaperC = @(0.020, 0.024, 0.032, 0.045, 0.055)
+        @{ PaperL = @(0.13, 0.175, 0.215, 0.26); PaperC = @(0.020, 0.024, 0.032, 0.045)
            FgL    = @(0.99, 0.955, 0.92, 0.885);   FgC    = @(0.006, 0.010, 0.012, 0.014); MutedC = 0.06; PrimaryFloor = 9.0; PrimaryChromaMax = 0.13 }
     }
 }
@@ -238,12 +239,12 @@ function Get-HouseGraphSlots {
 
 # ---- the palette ----------------------------------------------------------------------------------------------
 function Get-HousePalette {
-    <# The seventeen tokens of one theme, as an ordered map of token name to #rrggbb. #>
+    <# The sixteen tokens of one theme, as an ordered map of token name to #rrggbb. #>
     param([Parameter(Mandatory)][double]$Hue, [Parameter(Mandatory)][ValidateSet('light', 'dark')][string]$Mode, [double]$ChromaMax = 0)
     $steps = Get-HousePaletteSteps -Mode $Mode
     if ($ChromaMax -gt 0) { $steps.PrimaryChromaMax = $ChromaMax }
     $okHue = (ConvertTo-OkLch (ConvertFrom-Hsl $Hue 1 0.5)).H
-    $paper = 0..4 | ForEach-Object { ConvertFrom-OkLch $steps.PaperL[$_] $steps.PaperC[$_] $okHue }
+    $paper = 0..3 | ForEach-Object { ConvertFrom-OkLch $steps.PaperL[$_] $steps.PaperC[$_] $okHue }
     $fg    = 0..3 | ForEach-Object { ConvertFrom-OkLch $steps.FgL[$_] $steps.FgC[$_] $okHue }
 
     # the primary: HSL saturation 100%, the lightness closest to 50% that still reaches the mode's floor on the
@@ -269,21 +270,30 @@ function Get-HousePalette {
         $muted   = Find-LightnessAtContrast $makeMuted $paper[0] 7.05 0 1 'low'
     }
 
+    # bg-5, the control edge, in the 60 (Dave, November 12, 2026; --primary-border in the 30 before): a grey of the
+    # primary's own hue at the muted grey's chroma, as close to the paper as 3:1 on bg-3 allows (WCAG 1.4.11,
+    # non-text contrast), so a button, a segmented control or a search field shows its boundary on the page, on a card
+    # and on a card in a group. bg-3 and bg-4 stay the quiet lines between surfaces.
+    $makeBorder = { param($l) ConvertFrom-OkLch $l $mc $mutedHue }.GetNewClosure()
+    if ($Mode -eq 'light') { $border = Find-LightnessAtContrast $makeBorder $paper[2] 3.05 0 1 'high' }
+    else                   { $border = Find-LightnessAtContrast $makeBorder $paper[2] 3.05 0 1 'low' }
+
     $p = [ordered]@{}
-    for ($i = 0; $i -lt 5; $i++) { $p["--bg-$($i + 1)"] = $paper[$i] }
+    for ($i = 0; $i -lt 4; $i++) { $p["--bg-$($i + 1)"] = $paper[$i] }
+    $p['--bg-5'] = $border
     $p['--primary'] = $primary
     $p['--primary-muted'] = $muted
     # the primary's two shades, fills rather than text (Maikel, November 1, 2026): 15% of the way to the page and to
     # the text. A rule reads them; it never derives them with color-mix().
-    $p['--primary-raised'] = Get-SrgbMix $primary $paper[0] 0.15
+    # Every primary and fg token reads on bg-1 at 4.5:1 or better (Dave, November 12, 2026), so the raised shade
+    # moves less than 15% where the full step would drop it under that (teal, ochre and rust on light).
+    $raised = $primary
+    foreach ($step in 30..0) {
+        $candidate = Get-SrgbMix -From $primary -To $paper[0] -Share ($step * 0.005)
+        if ((Get-ContrastRatio $candidate $paper[0]) -ge 4.55) { $raised = $candidate; break }
+    }
+    $p['--primary-raised'] = $raised
     $p['--primary-hover']  = Get-SrgbMix $primary $fg[0] 0.15
-    # the control edge, a member of the 30 (owner, November 12, 2026): a grey of the primary's own hue at the muted grey's
-    # chroma, as close to the paper as 3:1 on bg-3 allows (WCAG 1.4.11, non-text contrast), so a button, a segmented
-    # control or a search field shows its boundary on the page, on a card and on a card in a group. bg-3 and bg-4 stay
-    # the quiet lines between surfaces.
-    $makeBorder = { param($l) ConvertFrom-OkLch $l $mc $mutedHue }.GetNewClosure()
-    if ($Mode -eq 'light') { $p['--primary-border'] = Find-LightnessAtContrast $makeBorder $paper[2] 3.05 0 1 'high' }
-    else                   { $p['--primary-border'] = Find-LightnessAtContrast $makeBorder $paper[2] 3.05 0 1 'low' }
     for ($i = 0; $i -lt 4; $i++) { $p["--fg-$($i + 1)"] = $fg[$i] }
     # the three series colours, per theme (the owner, November 12, 2026): away from this theme's primary and the status hues
     $g = Get-HouseGraphSlots -Palette $p -Mode $Mode
@@ -292,7 +302,7 @@ function Get-HousePalette {
 }
 
 function Format-HousePaletteDeclarations {
-    <# The seventeen tokens as one line of CSS declarations, in the stylesheet's order. #>
+    <# The sixteen tokens as one line of CSS declarations, in the stylesheet's order. #>
     param([Parameter(Mandatory)]$Palette)
     ($Palette.Keys | ForEach-Object { "$($_): $($Palette[$_]);" }) -join ' '
 }
@@ -308,7 +318,9 @@ function Get-HousePaletteContrast {
     $rows += @{ Pair = 'muted on bg-4'; Ratio = Get-ContrastRatio $Palette['--primary-muted'] $Palette['--bg-4']; Floor = 4.5 }
     $rows += @{ Pair = 'bg-4 on fg-1'; Ratio = Get-ContrastRatio $Palette['--bg-4'] $Palette['--fg-1']; Floor = 7 }
     foreach ($n in 1..3) { foreach ($k in @(1, 3)) { $rows += @{ Pair = "graph-$n on bg-$k"; Ratio = Get-ContrastRatio $Palette["--graph-$n"] $Palette["--bg-$k"]; Floor = 3 } } }
-    foreach ($n in 1..3) { $rows += @{ Pair = "primary-border on bg-$n"; Ratio = Get-ContrastRatio $Palette['--primary-border'] $Palette["--bg-$n"]; Floor = 3 } }
+    foreach ($n in 1..3) { $rows += @{ Pair = "bg-5 on bg-$n"; Ratio = Get-ContrastRatio $Palette['--bg-5'] $Palette["--bg-$n"]; Floor = 3 } }
+    # every primary and fg token reads on bg-1 (Dave, November 12, 2026): the rule a new token in either group meets too
+    foreach ($k in @($Palette.Keys | Where-Object { $_ -match '^--(primary|fg)' })) { $rows += @{ Pair = "$($k.Substring(2)) on bg-1 (the group rule)"; Ratio = Get-ContrastRatio $Palette[$k] $Palette['--bg-1']; Floor = 4.5 } }
     $rows += @{ Pair = 'bg-1 on muted'; Ratio = Get-ContrastRatio $Palette['--bg-1'] $Palette['--primary-muted']; Floor = 4.5 }
     $rows
 }
