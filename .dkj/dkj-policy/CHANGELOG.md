@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**6 / 8 minor entries** <!-- pending-tally -->
+**6 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4013-native-capture-wrap · 20261112-095119Z
+
+The `native-capture` suite no longer fails when it runs from a checkout with a long root path, such
+as a sweep lane: the assert that looks for the file name in the rendered error now reads it unwrapped
+([#4013](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4013)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A test of this repo only; nothing a subscriber takes changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+native-capture suite: match the caret on unwrapped Out-String text
+
+[PR #4015](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4015)
+
+---
 
 ### DEPLOY: feat/4004-progress-page · 20261112-094216Z
 
