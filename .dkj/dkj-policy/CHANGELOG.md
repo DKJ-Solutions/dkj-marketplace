@@ -2,7 +2,37 @@
 
 ## [Unreleased]
 
-**6 / 9 minor entries** <!-- pending-tally -->
+**7 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4018-uma-wireframe-craft · 20261112-110137Z
+
+Uma's portable manual gains a hard rule: a wireframe built in a design tool is built the way a working
+UX designer builds it, by default: scoped tokens and text styles first, repeated elements as
+components with variants and properties, screens composed from instances, structure carried by
+auto-layout instead of empty spacer frames, and layers named for what they are. "Plain" in "structure
+before style" now reads as the look (greyscale, no brand), never as permission for the quick route
+([#4018](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4018);
+[`specialist-04-32-manual.md`](../../plugins/dkj-subagents/dkj-subagents-alpha/manuals/specialist-04-32-manual.md)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A consumer who asks Uma for a wireframe in Figma gets a file built from tokens, components and
+auto-layout without having to ask for it, instead of one-off frames held apart by spacer frames that
+the next designer has to rebuild.
+
+**Score:** 2
+
+#### Pull Request
+
+Uma's manual: a wireframe in a design tool is built the professional way by default
+
+Plugins: dkj-subagents-alpha
+
+[PR #4020](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4020)
+
+---
 
 ### DEPLOY: fix/4013-native-capture-wrap · 20261112-095119Z
 
