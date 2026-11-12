@@ -498,10 +498,24 @@ $script:ProductBrandbookTokenGroups = @(
             @{ Label = 'Tokens'; Cards = @('Font size', 'Font family', 'Font weight') }
             @{ Label = 'Components'; Section = 'text' }
         ) }
-    @{ Slug = 'radius'; Label = 'Radius'; Cards = @('Radius') }
-    @{ Slug = 'spacing'; Label = 'Spacing'; Cards = @('Spacing scale') }
-    @{ Slug = 'size'; Label = 'Size'; Cards = @('Sizes and elevation') }
+    # Radius, spacing and size were a group each, one specimen apiece: a page load for a single scale. They are one
+    # group, Scale, since #4009 (finding F6 of #4002's wireframe), each still under an h2 of its own; their old
+    # addresses redirect here (Resolve-ProductHouseStyleRedirect).
+    @{ Slug = 'scale'; Label = 'Scale'; Cards = @('Radius', 'Spacing scale', 'Sizes and elevation')
+        Headings = @(
+            @{ Label = 'Radius'; Cards = @('Radius') }
+            @{ Label = 'Spacing'; Cards = @('Spacing scale') }
+            @{ Label = 'Size'; Cards = @('Sizes and elevation') }
+        ) }
 )
+
+# What each token group's overview card previews (#4009, finding F2: a card showed a count, not its content): the
+# group's own tokens drawn small, every value a var() so the theme switcher re-renders them.
+$script:ProductBrandbookTokenPreviews = @{
+    color = @('--primary', '--primary-muted', '--bg-1', '--bg-2', '--bg-3', '--bg-4', '--fg-1', '--fg-2', '--fg-3', '--fg-4', '--graph-1', '--graph-2', '--graph-3')
+    text  = @('--text-xs', '--text-sm', '--text-base', '--text-h3', '--text-h2', '--text-h1')
+    scale = @('--radius-1', '--radius-2', '--radius-3', '--radius-4', '--radius-pill')
+}
 
 function Get-ProductBrandbookTokenCards {
     <#
@@ -528,112 +542,408 @@ function Resolve-ProductHouseStyleRedirect {
     # THE TOKENS SECTION HAS NO PAGE OF ITS OWN (Maikel, November 1, 2026): its groups each have one, and the overview
     # opens on them, so /tokens -- under either name, and the address a released Admin sends -- lands there.
     if ($Path -cmatch '^/marketplace/dkj-policy/(?:dkj-brandbook|house-style)/tokens/?\z') { return '/marketplace/dkj-policy/dkj-brandbook#tokens' }
+    # Radius, Spacing and Size are one group, Scale, since #4009: an old link lands on its card there.
+    $merged = @{ radius = 's-radius'; spacing = 's-spacing-scale'; size = 's-sizes-and-elevation' }
+    if ($Path -cmatch '^/marketplace/dkj-policy/dkj-brandbook/tokens/(radius|spacing|size)/?\z') { return '/marketplace/dkj-policy/dkj-brandbook/tokens/scale#' + $merged[$Matches[1]] }
     if ($Path -cnotmatch '^/marketplace/dkj-policy/house-style(?:/([a-z][a-z-]{0,39}))?/?\z') { return '' }
     return '/marketplace/dkj-policy/dkj-brandbook' + $(if ($Matches[1]) { '/' + $Matches[1] })
 }
 
+function ConvertTo-BrandbookAnchor {
+    <#
+        A specimen's anchor on its page, from its title (#4009): 's-' and the title lowercased, every run of other
+        characters one hyphen. The overview's search and its name chips link to it, and the page writes it, through this
+        one function, so the two cannot drift.
+    #>
+    param([AllowEmptyString()][string]$Title = '')
+    $slug = ([regex]::Replace($Title.ToLowerInvariant(), '[^a-z0-9]+', '-')).Trim('-')
+    return 's-' + $(if ($slug) { $slug } else { 'specimen' })
+}
+
+function Add-BrandbookSpecimenAnchors {
+    <#
+        -Html, a page's block of specimen cards, with an id on every column-2 card that has none (#4009), so a search
+        result or a name chip opens the page at that specimen rather than at its top (B2 of #4002's wireframe). Returns
+        @{ Html; Items }, Items @( @{ Title; Id; Classes } ) in page order: Title as text, a badge in the h3 left out;
+        Classes the card's own class names, space-joined, for the overview's search. A title met twice on one page gets
+        -2, -3. Read, never written: specimens.html stays the single source.
+    #>
+    param([AllowEmptyString()][string]$Html = '')
+    $items = New-Object System.Collections.ArrayList
+    $seen = @{}
+    $out = [regex]::Replace($Html, '(?ms)^  <section class="card([^"]*)"(?: id="([^"]+)")?>(.*?)</section>(?=\r?$)', [System.Text.RegularExpressions.MatchEvaluator]{
+        param($m)
+        $h = [regex]::Match($m.Groups[3].Value, '<h3>(.*?)</h3>')
+        $title = ''
+        if ($h.Success) {
+            $t = [regex]::Replace($h.Groups[1].Value, '<span class="badge[^"]*">.*?</span>', '')
+            $title = [System.Net.WebUtility]::HtmlDecode([regex]::Replace($t, '<[^>]+>', '')).Trim()
+        }
+        # A card that names its own id keeps it, and is still a specimen of the page.
+        $own = $m.Groups[2].Success
+        $id = if ($own) { $m.Groups[2].Value } else { ConvertTo-BrandbookAnchor $title }
+        if (-not $own) { if ($seen.ContainsKey($id)) { $seen[$id] = $seen[$id] + 1; $id = $id + '-' + $seen[$id] } else { $seen[$id] = 1 } }
+        $classes = @([regex]::Matches($m.Value, 'class="([^"]+)"') | ForEach-Object { $_.Groups[1].Value -split '\s+' } |
+            Where-Object { $_ -and $_ -cnotmatch '^(card|spec-)' } | Sort-Object -Unique)
+        [void]$items.Add(@{ Title = $title; Id = $id; Classes = ($classes -join ' ') })
+        if ($own) { return $m.Value }
+        $open = '  <section class="card' + $m.Groups[1].Value + '">'
+        return '  <section class="card' + $m.Groups[1].Value + '" id="' + $id + '">' + $m.Value.Substring($open.Length)
+    })
+    return @{ Html = $out; Items = @($items) }
+}
+
+function Get-ProductBrandbookGroupBlock {
+    <#
+        A token group's cards as its page sets them: under the group's own h2s where it has -Headings (a heading with a
+        Section shows all of that section's cards, in that section's grid), otherwise in the Tokens section's grid.
+        $null when the file no longer holds every card the group names, or a heading's section is gone: a 404.
+    #>
+    param([Parameter(Mandatory = $true)][hashtable]$Group, [AllowEmptyCollection()][object[]]$All = @(),
+        [Parameter(Mandatory = $true)][hashtable]$Split, [string]$TokensGrid = 'grid-2')
+    $picked = @(foreach ($title in $Group.Cards) { $All | Where-Object { $_.Title -ceq $title } | Select-Object -First 1 })
+    if ($picked.Count -ne @($Group.Cards).Count) { return $null }
+    if (-not $Group.ContainsKey('Headings')) {
+        return '<div class="' + $TokensGrid + '">' + "`n" + (($picked | ForEach-Object { $_.Html }) -join "`n`n") + "`n" + '</div>'
+    }
+    $blocks = @()
+    foreach ($h in $Group.Headings) {
+        if ($h.ContainsKey('Section')) {
+            $sec = @($Split.Sections | Where-Object { $_.Slug -ceq $h.Section }) | Select-Object -First 1
+            $html = if ($sec) { @(Get-ProductBrandbookTokenCards -Inner $sec.Inner | ForEach-Object { $_.Html }) } else { @() }
+            if (-not $html.Count) { return $null }
+            $grid = $sec.Grid
+        } else {
+            $html = @(foreach ($title in $h.Cards) { ($picked | Where-Object { $_.Title -ceq $title } | Select-Object -First 1).Html })
+            $grid = $TokensGrid
+        }
+        $blocks += '<div class="' + $grid + '">' + "`n" + '  <div class="grid__head"><h2>' + (ConvertTo-GeneralPageText $h.Label) + '</h2></div>' + "`n`n" + ($html -join "`n`n") + "`n" + '</div>'
+    }
+    return $blocks -join "`n`n"
+}
+
+function Get-ProductBrandbookPages {
+    <#
+        Every page of the brand book below its overview, in the order its previous / next bar walks them (#4009, C1.4
+        of #4002's wireframe): the token groups, then every component section, then the themes, the order the overview
+        shows them in. @( @{ Slug; Label; Lead; Href; Group; Token; Html; Items } ): Html is the page's cards, anchored
+        (Add-BrandbookSpecimenAnchors), Items its specimens, Group the overview heading it sits under (Tokens,
+        Components or Themes), Token whether it is a token group. A token group whose cards the file no longer holds
+        is left out, so its page is a 404. A section a group shows (Text) is no page of the walk: its cards are on that
+        group's page. -Split is Split-HouseStyleSpecimens'.
+    #>
+    param([Parameter(Mandatory = $true)][hashtable]$Split)
+    $base = '/marketplace/dkj-policy/dkj-brandbook'
+    $pages = @()
+    $tokens = @($Split.Sections | Where-Object { $_.Slug -ceq 'tokens' }) | Select-Object -First 1
+    if ($tokens) {
+        $all = @(Get-ProductBrandbookTokenCards -Inner $tokens.Inner)
+        foreach ($g in $script:ProductBrandbookTokenGroups) {
+            $block = Get-ProductBrandbookGroupBlock -Group $g -All $all -Split $Split -TokensGrid $tokens.Grid
+            if ($null -eq $block) { continue }
+            $a = Add-BrandbookSpecimenAnchors -Html $block
+            $lead = if ($g.ContainsKey('Headings')) { @($g.Headings | ForEach-Object { $_.Label }) -join ', ' } else { $g.Cards -join ', ' }
+            $pages += @{ Slug = $g.Slug; Label = $g.Label; Lead = (ConvertTo-GeneralPageText $lead); Href = $base + '/tokens/' + $g.Slug
+                Group = 'Tokens'; Token = $true; Html = $a.Html; Items = @($a.Items) }
+        }
+    }
+    $absorbed = @($script:ProductBrandbookTokenGroups | Where-Object { $_.ContainsKey('Headings') } | ForEach-Object { $_.Headings } | Where-Object { $_.ContainsKey('Section') } | ForEach-Object { $_.Section })
+    $rest = @($Split.Sections | Where-Object { $_.Slug -cne 'tokens' -and $absorbed -cnotcontains $_.Slug })
+    $ordered = @($rest | Where-Object { $script:ProductBrandbookPreviewSections -cnotcontains $_.Slug }) + @($rest | Where-Object { $script:ProductBrandbookPreviewSections -ccontains $_.Slug })
+    foreach ($s in $ordered) {
+        $a = Add-BrandbookSpecimenAnchors -Html $s.Inner
+        $pages += @{ Slug = $s.Slug; Label = $s.Title; Lead = $s.Sub; Href = $base + '/' + $s.Slug
+            Group = $(if ($script:ProductBrandbookPreviewSections -ccontains $s.Slug) { 'Themes' } else { 'Components' }); Token = $false
+            Html = '<div class="' + $s.Grid + '">' + "`n" + $a.Html + '</div>'; Items = @($a.Items) }
+    }
+    return $pages
+}
+
+function Format-BrandbookBarHtml {
+    <#
+        The bar every brand book page opens on (#4009), sticky so it stays in reach while the cards scroll (B4): the
+        provenance chip first (B1.2, finding F7 -- which tree is this?), and on the overview (-Overview) the search
+        over every specimen and class name (B1.4), a jump chip per group (B1.5) and the theme switcher (B1.3), which
+        a phone leaves to the header's settings. -Provenance is the branch and commit the server read, escaped here.
+    #>
+    param([AllowEmptyString()][string]$Provenance = '', [switch]$Overview, [AllowEmptyString()][string]$ThemesHref = '')
+    $e = { param($v) ConvertTo-GeneralPageText $v }
+    $sb = New-Object System.Text.StringBuilder
+    [void]$sb.Append('<div class="bb-bar">')
+    if ($Provenance) {
+        [void]$sb.Append('<span class="chip bb-prov" title="Read from this checkout on every request, uncommitted files included">working tree &middot; ' + (& $e $Provenance) + '</span>')
+    }
+    if ($Overview) {
+        [void]$sb.Append('<div class="nav-search" role="search"><input id="bb-q" class="nav-search__input" type="search" placeholder="Search specimens and class names" aria-label="Search the brand book''s specimens and class names" autocomplete="off"><kbd class="nav-search__key">/</kbd></div>')
+        [void]$sb.Append('<nav class="bb-jump" aria-label="Groups"><a class="chip" href="#tokens">Tokens</a><a class="chip" href="#components">Components</a>')
+        if ($ThemesHref) { [void]$sb.Append('<a class="chip" href="' + (& $e $ThemesHref) + '">Themes</a>') }
+        [void]$sb.Append('</nav>')
+        [void]$sb.Append('<details class="bb-theme"><summary class="btn">Theme</summary><div class="bb-theme__panel" id="bb-picker"></div></details>')
+    }
+    [void]$sb.AppendLine('</div>')
+    return $sb.ToString()
+}
+
+function Format-BrandbookWalkHtml {
+    <#
+        The previous / next bar of a brand book page (#4009, C1.4 of #4002's wireframe, finding F3): the page before
+        and after this one in Get-ProductBrandbookPages' order and its position, "6 of 14", so walking every group
+        after a change is one button per page. '' for an -Index outside the walk.
+    #>
+    param([AllowEmptyCollection()][object[]]$Pages = @(), [int]$Index = -1)
+    $n = @($Pages).Count
+    if ($Index -lt 0 -or $Index -ge $n) { return '' }
+    $e = { param($v) ConvertTo-GeneralPageText $v }
+    $prev = if ($Index -gt 0) { '<a class="btn" rel="prev" href="' + (& $e $Pages[$Index - 1].Href) + '">&larr; ' + (& $e $Pages[$Index - 1].Label) + '</a>' } else { '<span></span>' }
+    $next = if ($Index -lt $n - 1) { '<a class="btn" rel="next" href="' + (& $e $Pages[$Index + 1].Href) + '">' + (& $e $Pages[$Index + 1].Label) + ' &rarr;</a>' } else { '<span></span>' }
+    return '<nav class="bb-walk" aria-label="Brand book pages">' + $prev + '<span class="note">' + ($Index + 1) + ' of ' + $n + '</span>' + $next + '</nav>' + "`n"
+}
+
+function Get-BrandbookTokenPreviewHtml {
+    <# A token group's card preview (#4009, F2): its tokens drawn small, each a var() so a theme switch redraws it. '' for a group without one. #>
+    param([AllowEmptyString()][string]$Slug = '')
+    if (-not $script:ProductBrandbookTokenPreviews.ContainsKey($Slug)) { return '' }
+    $marks = foreach ($t in $script:ProductBrandbookTokenPreviews[$Slug]) {
+        switch ($Slug) {
+            'color' { '<span class="bb-dot" style="background: var(' + $t + ')" title="' + $t + '"></span>' }
+            # The prefix is written out, so the house-style gate reads a type-scale step here (its [type] check).
+            'text'  { '<span style="font-size: var(--text-' + ($t -replace '^--text-', '') + ')" title="' + $t + '">Aa</span>' }
+            'scale' { '<span class="bb-radius" style="border-radius: var(' + $t + ')" title="' + $t + '"></span>' }
+        }
+    }
+    return '<div class="bb-preview" aria-hidden="true">' + ($marks -join '') + '</div>'
+}
+
+function Format-BrandbookGroupCardHtml {
+    <#
+        One page of the brand book as an overview card (#4009, B1.7): its name linking the page, how many specimens
+        it holds, a preview where it is a token group, and a chip per specimen linking straight to it on that page.
+        Not Format-AdminCardLinkHtml's card link: that card is one <a>, and these chips are links of their own (#3610).
+    #>
+    param([Parameter(Mandatory = $true)][hashtable]$Page)
+    $e = { param($v) ConvertTo-GeneralPageText $v }
+    $n = @($Page.Items).Count
+    $names = foreach ($it in @($Page.Items | Where-Object { $_.Title })) { '<a class="chip" href="' + (& $e ($Page.Href + '#' + $it.Id)) + '">' + (& $e $it.Title) + '</a>' }
+    return '<section class="card bb-card" id="g-' + (& $e $Page.Slug) + '"><div class="card__head"><h3><a href="' + (& $e $Page.Href) + '">' + (& $e $Page.Label) + '</a></h3>' +
+        '<p class="card__sub">' + $(if ($n -eq 1) { '1 specimen' } else { [string]$n + ' specimens' }) + '</p></div>' +
+        $(if ($Page.Token) { Get-BrandbookTokenPreviewHtml -Slug $Page.Slug } else { '' }) +
+        '<p class="bb-names">' + ($names -join '') + '</p></section>'
+}
+
+function Get-BrandbookPageStyle {
+    <# The brand book pages' own layer (#4009): the bar, the walk, the cards' previews and chips. House tokens only. #>
+    return @'
+.bb-bar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: var(--spacing-2); margin-bottom: var(--spacing-4); padding: var(--spacing-2) 0; background: var(--bg-1); border-bottom: 1px solid var(--bg-3); }
+.bb-bar .nav-search { flex: 1 1 var(--spacing-64); margin: 0; }
+.bb-jump { display: flex; flex-wrap: wrap; gap: var(--spacing-1); }
+.bb-prov { min-width: 0; overflow-wrap: anywhere; }
+#bb-count:empty { display: none; }
+.bb-bar + .bb-walk { margin-top: 0; }
+.bb-jump .chip, .bb-names .chip { text-decoration: none; }
+.bb-theme { position: relative; }
+.bb-theme > summary { list-style: none; cursor: pointer; }
+.bb-theme > summary::-webkit-details-marker { display: none; }
+.bb-theme__panel { position: absolute; right: 0; top: calc(100% + var(--spacing-1)); z-index: 3; width: max-content; max-width: 90vw; padding: var(--spacing-3); background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); }
+.bb-walk { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-2); margin: var(--spacing-4) 0; }
+.bb-preview { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--spacing-2); margin-top: var(--spacing-2); }
+.bb-dot { display: block; width: var(--spacing-5); height: var(--spacing-5); border: 1px solid var(--primary-muted); border-radius: var(--radius-1); }
+.bb-radius { display: block; width: var(--spacing-7); height: var(--spacing-7); border: 2px solid var(--primary); }
+.bb-names { display: flex; flex-wrap: wrap; gap: var(--spacing-1); margin-top: var(--spacing-3); font-size: var(--text-xs); }
+.bb-results { display: grid; gap: var(--spacing-2); margin: 0; padding: 0; list-style: none; }
+.spec-page [id^="s-"] { scroll-margin-top: var(--spacing-20); }
+.spec-page [id^="s-"]:target { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
+@media (max-width: 600px) { .bb-theme { display: none; } }
+'@
+}
+
+function Get-BrandbookOverviewScript {
+    <#
+        The overview's search (#4009, B2 and B3 of #4002's wireframe): it filters as you type over the specimen index
+        the page carries, says how many matches in how many groups, and Escape clears it; '/' focuses it. Nothing
+        matching shows the query, a way to clear it and to browse the groups, and the closest specimen name where one
+        is within two typos. It also mounts the theme switcher (window.DKJTheme.picker, house-theme.js).
+    #>
+    return @'
+<script>
+(function () {
+  var slot = document.getElementById('bb-picker');
+  if (slot && window.DKJTheme && window.DKJTheme.picker) window.DKJTheme.picker(slot, { light: 'Light', dark: 'Dark' });
+  var q = document.getElementById('bb-q'), src = document.getElementById('bb-index');
+  if (!q || !src) return;
+  var idx = JSON.parse(src.textContent || '[]');
+  var grid = document.getElementById('bb-grid'), res = document.getElementById('bb-results'), list = document.getElementById('bb-list');
+  var count = document.getElementById('bb-count'), empty = document.getElementById('bb-empty'), eq = document.getElementById('bb-empty-q');
+  var sugRow = document.getElementById('bb-suggest-row'), sug = document.getElementById('bb-suggest');
+  function lev(a, b) {
+    var p = [], i, j, c;
+    for (j = 0; j <= b.length; j++) p[j] = j;
+    for (i = 1; i <= a.length; i++) {
+      c = [i];
+      for (j = 1; j <= b.length; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1));
+      p = c;
+    }
+    return p[b.length];
+  }
+  function closest(s) {
+    var best = '', d = 3;
+    idx.forEach(function (x) {
+      x.t.toLowerCase().split(/[^a-z0-9-]+/).concat(x.c.split(' ')).forEach(function (w) {
+        if (!w) return;
+        var k = lev(s, w);
+        if (k < d) { d = k; best = w; }
+      });
+    });
+    return best;
+  }
+  function run() {
+    var raw = q.value.trim(), s = raw.toLowerCase();
+    if (!s) { grid.hidden = false; res.hidden = true; empty.hidden = true; count.textContent = ''; return; }
+    var hits = idx.filter(function (x) { return x.t.toLowerCase().indexOf(s) >= 0 || x.c.indexOf(s) >= 0; });
+    var groups = {};
+    list.textContent = '';
+    hits.forEach(function (x) {
+      groups[x.g] = 1;
+      var li = document.createElement('li'), a = document.createElement('a'), n = document.createElement('span');
+      a.href = x.h; a.textContent = x.t; n.className = 'note'; n.textContent = ' ' + x.g;
+      li.appendChild(a); li.appendChild(n); list.appendChild(li);
+    });
+    var g = Object.keys(groups).length;
+    grid.hidden = true;
+    res.hidden = !hits.length;
+    empty.hidden = !!hits.length;
+    count.textContent = hits.length ? hits.length + (hits.length === 1 ? ' match' : ' matches') + ' in ' + g + (g === 1 ? ' group' : ' groups') : '';
+    if (!hits.length) {
+      eq.textContent = raw;
+      var c = closest(s);
+      sugRow.hidden = !c || c === s;
+      sug.textContent = c;
+    }
+  }
+  function clear() { q.value = ''; run(); }
+  q.addEventListener('input', run);
+  q.addEventListener('keydown', function (e) { if (e.key === 'Escape') { clear(); } });
+  document.addEventListener('keydown', function (e) {
+    var t = e.target, tag = t && t.tagName;
+    if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT' && !(t && t.isContentEditable)) { e.preventDefault(); q.focus(); }
+  });
+  document.getElementById('bb-clear').addEventListener('click', function () { clear(); q.focus(); });
+  document.getElementById('bb-browse').addEventListener('click', function () { clear(); grid.scrollIntoView(); });
+  sug.addEventListener('click', function () { q.value = sug.textContent; run(); q.focus(); });
+  run();
+})();
+</script>
+'@
+}
+
+function Get-BrandbookWalkScript {
+    <# Left and right arrow follow the walk's previous and next link (#4009, C1.4), outside a field and without a modifier. #>
+    return @'
+<script>
+(function () {
+  document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+    var t = e.target, tag = t && t.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+    var rel = e.key === 'ArrowLeft' ? 'prev' : e.key === 'ArrowRight' ? 'next' : '';
+    var a = rel && document.querySelector('.bb-walk a[rel="' + rel + '"]');
+    if (a) { e.preventDefault(); window.location.href = a.href; }
+  });
+})();
+</script>
+'@
+}
+
 function Format-ProductHouseStylePageHtml {
     <#
-        The house style's specimens in the product's shell, under Marketplace and dkj-policy, the plugin whose files
-        they document: the same page Admin shows on /plugins/dkj-policy/dkj-brandbook, from the plugin's
-        Get-HouseStyleSpecimensParts, which Admin in this repo now sends here. -Body is this checkout's
+        The house style's specimens in the product's shell, under Marketplace, the brand book a destination of its
+        own (#4009, B1.1 of #4002's wireframe: the dkj-policy crumb is gone). -Body is this checkout's
         plugins/dkj-policy/assets/dkj-brandbook/specimens.html joined with the product layer's own (Join-HouseStyleSpecimens,
-        #3831), so the product shows the whole book where Admin shows the core; -ReadError is why it could not be read. A -Section no
-        section has returns $null, a 404.
+        #3831), so the product shows the whole book where Admin shows the core; -ReadError is why it could not be read.
+        -Provenance is the branch and commit the server read them from, shown as a chip at the top of every page.
 
-        THE OVERVIEW OPENS ON ITS TOKENS (Maikel, October 31, 2026): an h2 Tokens over one card per token group
-        ($script:ProductBrandbookTokenGroups), then a card for every other section, under an h2 Preview (themes) or Components (the rest, November 1, 2026); a section a group shows is on neither. -Token names a group's
-        own page, /tokens/<group>, holding only that group's specimen cards; a group none has, or whose cards the
-        file no longer holds, returns $null. /tokens itself is no page since November 1, 2026 (Maikel): $null here, and
-        the server redirects it to the overview (Resolve-ProductHouseStyleRedirect).
+        THE OVERVIEW PREVIEWS AND SEARCHES (#4009, the owner's pick on #4002's wireframe: B plus C's previous / next
+        bar). It opens on a sticky bar (Format-BrandbookBarHtml), then an h2 Tokens over a card per token group
+        ($script:ProductBrandbookTokenGroups: Color, Text, Scale) and an h2 Components over a card per other section,
+        each card previewing what it holds and naming every specimen as a chip that opens it on its page. The themes
+        are no card: the switcher in the bar redraws every preview, and a chip opens their page. The search filters an
+        index of every specimen the page carries.
+
+        EVERY PAGE BELOW IT WALKS (Format-BrandbookWalkHtml): previous / next and its position, in the overview's order.
+        -Token names a group's page, /tokens/<group>; a group none has, or whose cards the file no longer holds, is
+        $null. -Section names a section's page; one the specimens do not have is $null, a 404. /tokens itself is no
+        page since November 1, 2026 (Maikel): $null here, and the server redirects it to the overview.
     #>
     param(
         [AllowEmptyString()][string]$Body = '',
         [AllowEmptyString()][string]$ReadError = '',
         [AllowEmptyString()][string]$Section = '',
-        [AllowEmptyString()][string]$Token = ''
+        [AllowEmptyString()][string]$Token = '',
+        [AllowEmptyString()][string]$Provenance = ''
     )
+    $e = { param($v) ConvertTo-GeneralPageText $v }
     $base = '/marketplace/dkj-policy/dkj-brandbook'
     $foot = 'Read from this checkout''s <code>plugins/dkj-policy/assets/dkj-brandbook/specimens.html</code> and the product layer''s <code>plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/specimens.html</code> on every request, so it is the tree, not the installed release.'
-    $crumbs = @(@{ Label = 'Marketplace'; Href = '/marketplace' }, @{ Label = 'dkj-policy'; Href = '/marketplace/dkj-policy' })
+    $crumbs = @(@{ Label = 'Marketplace'; Href = '/marketplace' })
+    if ($Section -ceq 'tokens' -and -not $Token) { return $null }
     $split = if ($ReadError) { $null } else { Split-HouseStyleSpecimens -Body $Body }
-    $tokens = if ($split) { @($split.Sections | Where-Object { $_.Slug -ceq 'tokens' }) | Select-Object -First 1 } else { $null }
 
-    if ($Token) {
-        $group = @($script:ProductBrandbookTokenGroups | Where-Object { $_.Slug -ceq $Token }) | Select-Object -First 1
-        if (-not $group -or -not $tokens) { return $null }
-        $all = Get-ProductBrandbookTokenCards -Inner $tokens.Inner
-        $picked = @(foreach ($title in $group.Cards) { $all | Where-Object { $_.Title -ceq $title } | Select-Object -First 1 })
-        if ($picked.Count -ne @($group.Cards).Count) { return $null }
-        $grids = if ($group.ContainsKey('Headings')) {
-            $missing = $false
-            $blocks = @(foreach ($h in $group.Headings) {
-                if ($h.ContainsKey('Section')) {
-                    # Another section's cards, all of them, in that section's own grid; gone from the file is a 404.
-                    $sec = @($split.Sections | Where-Object { $_.Slug -ceq $h.Section }) | Select-Object -First 1
-                    $html = if ($sec) { @(Get-ProductBrandbookTokenCards -Inner $sec.Inner | ForEach-Object { $_.Html }) } else { @() }
-                    if (-not $html.Count) { $missing = $true; continue }
-                    $grid = $sec.Grid
-                } else {
-                    $html = @(foreach ($title in $h.Cards) { ($picked | Where-Object { $_.Title -ceq $title } | Select-Object -First 1).Html })
-                    $grid = $tokens.Grid
-                }
-                '<div class="' + $grid + '">' + "`n" + '  <div class="grid__head"><h2>' + (ConvertTo-GeneralPageText $h.Label) + '</h2></div>' + "`n`n" + ($html -join "`n`n") + "`n" + '</div>'
-            })
-            if ($missing) { return $null }
-            $blocks -join "`n`n"
-        } else {
-            '<div class="' + $tokens.Grid + '">' + "`n" + (($picked | ForEach-Object { $_.Html }) -join "`n`n") + "`n" + '</div>'
+    if (-not $split -or -not @($split.Sections).Count) {
+        # Unreadable, or no section in it: the overview says so, and every page below it is a 404.
+        if ($Section) { return $null }
+        $parts = Get-HouseStyleSpecimensParts -Body $Body -ReadError $ReadError -BasePath $base -Cards
+        return Format-DevPageHtml -Title 'dkj-brandbook' -Lead $parts.Lead -Body $parts.Body -ParentCrumbs $crumbs -FooterNote $foot
+    }
+    $pages = @(Get-ProductBrandbookPages -Split $split)
+    $style = Get-BrandbookPageStyle
+
+    if ($Section) {
+        $at = -1
+        for ($i = 0; $i -lt $pages.Count; $i++) {
+            $p = $pages[$i]
+            if (($Token -and $p.Token -and $p.Slug -ceq $Token) -or (-not $Token -and -not $p.Token -and $p.Slug -ceq $Section)) { $at = $i; break }
         }
-        $content = $split.Head + '<div class="spec-page">' + "`n" + $grids + "`n" + '</div>' + "`n" + $split.Tail
-        # No Tokens crumb: that section has no page of its own any more (Maikel, November 1, 2026).
+        if ($at -ge 0) { $page = $pages[$at] }
+        else {
+            # A section outside the walk -- the Text section, whose cards the Text group shows -- keeps its own page, unwalked.
+            if ($Token) { return $null }
+            $s = @($split.Sections | Where-Object { $_.Slug -ceq $Section }) | Select-Object -First 1
+            if (-not $s) { return $null }
+            $a = Add-BrandbookSpecimenAnchors -Html $s.Inner
+            $page = @{ Label = $s.Title; Lead = $s.Sub; Html = '<div class="' + $s.Grid + '">' + "`n" + $a.Html + '</div>' }
+        }
+        $walk = Format-BrandbookWalkHtml -Pages $pages -Index $at
+        $content = (Format-BrandbookBarHtml -Provenance $Provenance) + $walk + $split.Head + '<div class="spec-page">' + "`n" + $page.Html + "`n" + '</div>' + "`n" +
+            $walk + $split.Tail + $(if ($walk) { Get-BrandbookWalkScript } else { '' })
         $crumbs += @{ Label = 'dkj-brandbook'; Href = $base }
-        $lead = if ($group.ContainsKey('Headings')) { @($group.Headings | ForEach-Object { $_.Label }) -join ', ' } else { $group.Cards -join ', ' }
-        return Format-DevPageHtml -Title $group.Label -Lead $lead -Body $content -ParentCrumbs $crumbs -FooterNote $foot
+        return Format-DevPageHtml -Title $page.Label -Lead $page.Lead -Body $content -ParentCrumbs $crumbs -FooterNote $foot -Style $style
     }
 
-    # The Tokens section itself is no page (Maikel, November 1, 2026): the server redirects its address to the overview.
-    if ($Section -ceq 'tokens') { return $null }
-    $parts = Get-HouseStyleSpecimensParts -Body $Body -ReadError $ReadError -Section $Section -BasePath $base -Cards
-    if ($null -eq $parts) { return $null }
-    if ($parts.Section) {
-        $crumbs += @{ Label = 'dkj-brandbook'; Href = $base }
-        return Format-DevPageHtml -Title $parts.Title -Lead $parts.Lead -Body $parts.Body -ParentCrumbs $crumbs -FooterNote $foot
-    }
-    # The overview's h1 and crumb carry the brand book's name, as its card and its url do (Maikel, October 31, 2026).
-    $overview = $parts.Body
-    if ($tokens) {
-        $all = Get-ProductBrandbookTokenCards -Inner $tokens.Inner
-        $sb = New-Object System.Text.StringBuilder
-        [void]$sb.AppendLine('<div class="grid-3" id="tokens"><div class="grid__head"><h2>' + (ConvertTo-GeneralPageText $tokens.Title) + '</h2></div>')
-        foreach ($g in $script:ProductBrandbookTokenGroups) {
-            $n = @($all | Where-Object { $g.Cards -ccontains $_.Title }).Count
-            # A heading that shows another section counts that section's cards too.
-            foreach ($h in @(if ($g.ContainsKey('Headings')) { $g.Headings | Where-Object { $_.ContainsKey('Section') } })) {
-                $n += [int](@($split.Sections | Where-Object { $_.Slug -ceq $h.Section }) | Select-Object -First 1).Cards
-            }
-            [void]$sb.AppendLine((Format-AdminCardLinkHtml -Href ($base + '/tokens/' + $g.Slug) -Label $g.Label -Heading 3 -Sub $(if ($n -eq 1) { '1 specimen' } else { [string]$n + ' specimens' })))
-        }
+    $themes = @($pages | Where-Object { $_.Group -ceq 'Themes' }) | Select-Object -First 1
+    $sb = New-Object System.Text.StringBuilder
+    [void]$sb.Append((Format-BrandbookBarHtml -Provenance $Provenance -Overview -ThemesHref $(if ($themes) { $themes.Href } else { '' })))
+    [void]$sb.AppendLine('<p class="note" id="bb-count" role="status"></p>')
+    [void]$sb.AppendLine('<section class="card" id="bb-results" hidden><ul class="bb-results" id="bb-list"></ul></section>')
+    [void]$sb.AppendLine('<section class="card" id="bb-empty" hidden><p>Nothing matches &ldquo;<strong id="bb-empty-q"></strong>&rdquo;.</p>' +
+        '<p id="bb-suggest-row" hidden>Did you mean <button class="btn" type="button" id="bb-suggest"></button>?</p>' +
+        '<div class="action-row"><button class="btn" type="button" id="bb-clear">Clear the search</button><button class="btn" type="button" id="bb-browse">Browse the groups</button></div></section>')
+    [void]$sb.AppendLine('<div id="bb-grid">')
+    foreach ($grp in @(@{ Id = 'tokens'; Label = 'Tokens' }, @{ Id = 'components'; Label = 'Components' })) {
+        $in = @($pages | Where-Object { $_.Group -ceq $grp.Label })
+        if (-not $in.Count) { continue }
+        [void]$sb.AppendLine('<div class="grid-3" id="' + $grp.Id + '"><div class="grid__head"><h2>' + $grp.Label + '</h2></div>')
+        foreach ($p in $in) { [void]$sb.AppendLine((Format-BrandbookGroupCardHtml -Page $p)) }
         [void]$sb.AppendLine('</div>')
-        # The other sections under two more h2s, Preview and Components, each card an h3 (Maikel, November 1, 2026).
-        $absorbed = @($script:ProductBrandbookTokenGroups | Where-Object { $_.ContainsKey('Headings') } | ForEach-Object { $_.Headings } | Where-Object { $_.ContainsKey('Section') } | ForEach-Object { $_.Section })
-        $rest = @($split.Sections | Where-Object { $_.Slug -cne 'tokens' -and $absorbed -cnotcontains $_.Slug })
-        $groups = @(
-            @{ Id = 'preview'; Label = 'Preview'; Sections = @($rest | Where-Object { $script:ProductBrandbookPreviewSections -ccontains $_.Slug }) },
-            @{ Id = 'components'; Label = 'Components'; Sections = @($rest | Where-Object { $script:ProductBrandbookPreviewSections -cnotcontains $_.Slug }) }
-        )
-        foreach ($grp in $groups) {
-            if (-not $grp.Sections.Count) { continue }
-            [void]$sb.AppendLine('<div class="grid-3" id="' + $grp.Id + '"><div class="grid__head"><h2>' + $grp.Label + '</h2></div>')
-            foreach ($s in $grp.Sections) {
-                $count = if ($s.Cards -eq 1) { '1 specimen' } else { [string]$s.Cards + ' specimens' }
-                [void]$sb.AppendLine((Format-AdminCardLinkHtml -Href ($base + '/' + $s.Slug) -Label $s.Title -Heading 3 -Sub $count))
-            }
-            [void]$sb.AppendLine('</div>')
-        }
-        $overview = $sb.ToString()
     }
-    return Format-DevPageHtml -Title 'dkj-brandbook' -Lead $parts.Lead -Body $overview -ParentCrumbs $crumbs -FooterNote $foot
+    [void]$sb.AppendLine('</div>')
+    # The search's index: every specimen of every page, its page and its anchor. ConvertTo-Json escapes < and >, so
+    # nothing in it can close the script element.
+    $entries = foreach ($p in $pages) {
+        foreach ($it in $p.Items) { ConvertTo-Json -Compress -InputObject ([ordered]@{ t = $it.Title; g = $p.Label; h = $p.Href + '#' + $it.Id; c = ([string]$it.Classes).ToLowerInvariant() }) }
+    }
+    [void]$sb.AppendLine('<script type="application/json" id="bb-index">[' + (@($entries) -join ',') + ']</script>')
+    [void]$sb.Append((Get-BrandbookOverviewScript))
+    $parts = Get-HouseStyleSpecimensParts -Body $Body -BasePath $base -Cards
+    return Format-DevPageHtml -Title 'dkj-brandbook' -Lead $parts.Lead -Body $sb.ToString() -ParentCrumbs $crumbs -FooterNote $foot -Style $style
 }
 
 function Resolve-MarketplaceAddOnRedirect {

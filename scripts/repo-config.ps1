@@ -1507,6 +1507,7 @@ function Get-HouseStyleAllowlist {
         @{ Path = 'plugins/dkj-policy/skills/*';               Reason = $shared }
         @{ Path = 'plugins/dkj-policy/worker/*';               Reason = $shared }
         @{ Path = 'scripts/tests/release-notes-page.tests.ps1'; Reason = 'fixtures of the release-notes page above' }
+        @{ Path = 'scripts/lib/dev-pages-lib.ps1'; Name = 'var(--text-'; Reason = 'the brand book''s Text card previews each type-scale step (#4009): the var(--text-*) name is joined in at run time, so the gate sees a cut-off value' }
         @{ Path = 'plugins/dkj-policy/apps/admin/lib/general-pages-lib.ps1'; Name = '--ink'; Reason = 'the release-notes template''s own token, which Format-ReleaseNotesDevPage points AT a house token (#3108, moved to the plugin in #3119, to dkj-policy in #3198)' }
         @{ Path = 'scripts/tests/check-house-style.tests.ps1';  Reason = "the gate's own suite: every name in it is a fixture" }
         @{ Path = 'scripts/tests/house-palette.tests.ps1';      Reason = 'the palette suite: every name in it is a pattern or a fixture of the stylesheet it holds' }
