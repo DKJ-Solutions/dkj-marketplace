@@ -27,16 +27,18 @@ function Get-GoalsGraphQuery {
         The one GraphQL query the page and the skill read goals with: every open issue carrying the label in the
         variable $label, oldest first, with its sub-issues (the milestones) and theirs (the tasks), in GitHub's own
         order. $owner, $name and $label are its variables, so the query holds no quote a command line could mangle.
-        The bounds (20 goals, 25 milestones, 50 tasks each) keep it far under GitHub's node limit.
+        The bounds (20 goals, 25 milestones, 50 tasks each) keep it far under GitHub's node limit. A milestone also
+        carries its labels (10 at most), which the Progress page reads its kind from (#4004); a task does not, which
+        keeps the 25,000 tasks the bounds allow from costing ten label nodes each.
     #>
     $issue = 'number title url state assignees(first: 3) { nodes { login } }'
     return 'query($owner: String!, $name: String!, $label: String!) { repository(owner: $owner, name: $name) { ' +
         'issues(first: 20, states: OPEN, labels: [$label], orderBy: { field: CREATED_AT, direction: ASC }) { nodes { ' +
-        $issue + ' subIssues(first: 25) { nodes { ' + $issue + ' subIssues(first: 50) { nodes { ' + $issue + ' } } } } } } } }'
+        $issue + ' subIssues(first: 25) { nodes { ' + $issue + ' labels(first: 10) { nodes { name } } subIssues(first: 50) { nodes { ' + $issue + ' } } } } } } } }'
 }
 
 function ConvertTo-GoalItem {
-    <# Pure: one issue node of the query as @{ Number; Title; Url; Closed; Assignees }. #>
+    <# Pure: one issue node of the query as @{ Number; Title; Url; Closed; Assignees; Labels } (Labels empty where the node carries none). #>
     param($Node)
     $url = [string]$Node.url
     if ($url -notmatch '\Ahttps://github\.com/[^\s"<>]+\z') { $url = '' }
@@ -46,6 +48,7 @@ function ConvertTo-GoalItem {
         Url       = $url
         Closed    = ([string]$Node.state -eq 'CLOSED')
         Assignees = @(@($Node.assignees.nodes) | Where-Object { $_ -and $_.login } | ForEach-Object { [string]$_.login })
+        Labels    = @(if ($Node.PSObject.Properties['labels'] -and $Node.labels) { @($Node.labels.nodes) | Where-Object { $_ -and $_.name } | ForEach-Object { [string]$_.name } })
     }
 }
 

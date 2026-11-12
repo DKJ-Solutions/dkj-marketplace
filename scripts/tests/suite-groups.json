@@ -245,6 +245,7 @@
                                       "handover-page.tests.ps1",
                                       "admin-airsquats.tests.ps1",
                                       "logbook.tests.ps1",
+                                      "progress.tests.ps1",
                                       "stopwatch.tests.ps1",
                                       "stopwatch-sync.tests.ps1"
                                   ],
