@@ -39,7 +39,8 @@ foreach ($t in Get-HousePaletteThemes) {
     foreach ($row in Get-HousePaletteContrast $p) {
         if ($row.Ratio -lt $row.Floor) {
             $failed++
-            Write-Host ("  [FAIL] {0}: {1:N2}:1, floor {2}:1" -f $row.Pair, $row.Ratio, $row.Floor) -ForegroundColor Red
+            if ($row.Unit -eq 'Lc') { Write-Host ("  [FAIL] {0}: Lc {1:N1}, floor Lc {2}" -f $row.Pair, $row.Ratio, $row.Floor) -ForegroundColor Red }
+            else                    { Write-Host ("  [FAIL] {0}: {1:N2}:1, floor {2}:1" -f $row.Pair, $row.Ratio, $row.Floor) -ForegroundColor Red }
         }
     }
 }
