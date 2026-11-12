@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**8 / 11 minor entries** <!-- pending-tally -->
+**9 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4009-brandbook-previewing-overview · 20261112-112521Z
+
+The brand book on the product server previews and searches. Its overview opens on a sticky bar: a chip naming
+the branch and commit the pages were read from, one search over every specimen and class name, a chip per group
+and the theme switcher. Each card shows what it holds: a token group previews its tokens, and every card names its
+specimens as chips that open the specimen itself. Radius, Spacing and Size are one group, Scale. Every page below
+the overview carries previous / next and its position, so walking the whole book after a change is one button per
+page. Built from the structure the owner picked on #4002's wireframe (#4009).
+
+**Score:** 2
+
+N/A: the brand book pages are this repo's own product server; no consumer runs them.
+
+#### What makes this deploy extra special
+
+The first structure the new UX specialist wireframed that made it onto a real page: the owner picked it from three
+rows in Figma, and every finding it answers is named in the code where it lands.
+
+**Score:** 2
+
+#### Pull Request
+
+Brand book overview: search, previews, a provenance chip and previous / next
+
+[PR #4019](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4019)
+
+---
 
 ### DEPLOY: feat/4017-golive-hotfix-form · 20261112-111334Z
 
