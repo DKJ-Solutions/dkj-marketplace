@@ -57,7 +57,7 @@ than guessed at. A visible result, so the branch parks for the owner's look.
 - [x] `scripts/tests/progress.tests.ps1` (30 asserts), registered in the `pages` group; the dev-pages
       asserts that pin the list of general pages and Admin's cards follow the new card.
 - [x] The Admin README names the page, its lib and its suite.
-- [ ] Owner looks at the page and says whether this slice is the right shape.
+- [~] Owner looks at the page and says whether this slice is the right shape. Approved by DaveKJohn on 2026-11-12 through issues-sweep-reviews and confirmed in session the same day, explicitly without a separate look at the page.
 
 ### TEST
 
