@@ -39,19 +39,35 @@
 
 ### PLAN
 
+#4025: `feat/admin-figma-wireframes` (#4026) rebuilt Admin's desktop shell on the Figma wireframes, but the
+brand book's stylesheet-only reference (`patterns/admin-shell.html`) and its "Desktop shell" specimens still drew
+the old markup. Bring both to the markup `Format-AdminShellOpen` serves now. A visible result: parked for the
+owner's look, no PR until then.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `patterns/admin-shell.html`: brand row, every nav group a `.nav-section` (the foot one with `.shell__nav-foot`), the page header (`.page-head`, the `h1` with the filter and button at its right end) inside a `.shell__body` in place of the toolbar; the header comment names the toolbar's one remaining use
+- [x] `specimens.html`: both Desktop shell specimens in the same structure; the page header's title is a `.spec-page-title` paragraph at the h1's size, since the fragment already sits under a page `h1`
+- [x] `house-style.css`: `.shell__list` takes the pane's flexible row (`grid-row: 2`) itself, so a list with no toolbar over it scrolls from the stylesheet alone, as Admin's own `.tb-scroll` already made it do on served pages
 
 ### TEST
 
+- [x] Pattern screenshotted headless at 1300 x 900 and the specimens page on the product (`/plugins/dkj-policy/dkj-brandbook/desktop-shell`): both show the wireframe structure, and the short specimen's list scrolls
+- [ ] The owner's look at the pattern and the specimens
+
 ### DEPLOY: fix/4025-shell-pattern-wireframes
 
-**Score:**
+The brand book's Admin shell reference page and its Desktop shell specimens now show the shell as Admin draws it
+since the Figma wireframes: a brand row at the top of the sidebar, grouped navigation sections, and a page header
+in place of the toolbar. A repo building its own Admin page from the reference gets the current structure, and a
+list in the shell scrolls from the stylesheet alone.
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Closes a gap the wireframes branch itself left: the reference the README points to showed a shell Admin no
+longer draws.
+**Score:** 1
 
 #### Pull Request
 

@@ -36,6 +36,9 @@
 /* The desktop shell's frame: a fixed-height box the shell fits (.shell--fit), as a split view would. */
 .spec-shell { height: 560px; min-width: 0; border: 1px solid var(--bg-4); }
 .spec-shell--short { height: 240px; }
+/* The page header's title in a specimen: this fragment sits in a page that has its own h1, so the shell specimens
+   draw the page header's h1 as a paragraph at the h1's size (.page-head h1 in house-style.css). */
+.spec-page-title { margin: 0; font-size: var(--text-h1); font-weight: var(--font-weight-bold); line-height: 1.2; }
 </style>
 
 <!-- icons, drawn once; the specimens reference them with <use> -->
@@ -398,7 +401,7 @@
 
 <!-- ======================================================== DESKTOP SHELL -->
 <div class="grid-2">
-  <div class="grid__head"><h2 id="hs-desktop-shell">Desktop shell</h2><p class="card__sub">Admin's layer, desktop only: a thin bar, a flat side navigation under section headings, a main pane and a detail pane, told apart by 1px lines. Sample content.</p></div>
+  <div class="grid__head"><h2 id="hs-desktop-shell">Desktop shell</h2><p class="card__sub">Admin's layer, desktop only, in the Figma wireframes' structure: a full-height side navigation with a brand row, a bar over the main pane, a page header, and a detail pane, told apart by 1px lines. Sample content.</p></div>
   <section class="card grid__full">
     <div class="card__head"><h3>Bar, navigation, dense table, details</h3></div>
     <div class="spec-shell">
@@ -408,32 +411,39 @@
           <div class="shell__actions"><button class="btn" type="button">Refresh</button><button class="btn" type="button">Settings</button></div>
         </div>
         <nav class="shell__nav" aria-label="Admin shell specimen">
+          <a class="shell__brand" href="#hs-desktop-shell"><span class="shell__brand__mark" aria-hidden="true"></span>Admin</a>
           <div class="nav-search" role="search"><input class="nav-search__input" type="search" placeholder="Search" aria-label="Search the specimen"><kbd class="nav-search__key">Ctrl K</kbd></div>
-          <ul class="nav-list">
-            <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Home</span></a></li>
-            <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Tracks</span><span class="nav-item__count">1,204</span></a></li>
-            <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Playlists</span><span class="nav-item__count">38</span></a></li>
-          </ul>
-          <p class="pane-head" id="spec-nav-product">Product</p>
-          <ul class="nav-list" aria-labelledby="spec-nav-product">
-            <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Storefront</span></a></li>
-          </ul>
-          <p class="pane-head" id="spec-nav-dev">Development</p>
-          <ul class="nav-list" aria-labelledby="spec-nav-dev">
-            <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">GitHub</span></a></li>
-            <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Release notes</span></a></li>
-            <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Claude</span></a></li>
-            <li><a class="nav-item" href="#hs-desktop-shell" aria-current="page"><span class="nav-item__label">Installed plugins</span><span class="nav-item__count">5</span></a></li>
-          </ul>
-          <div class="shell__nav-foot"><ul class="nav-list"><li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Settings</span></a></li></ul></div>
+          <div class="nav-section">
+            <ul class="nav-list">
+              <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Home</span></a></li>
+              <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Tracks</span><span class="nav-item__count">1,204</span></a></li>
+              <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Playlists</span><span class="nav-item__count">38</span></a></li>
+            </ul>
+          </div>
+          <div class="nav-section">
+            <p class="pane-head" id="spec-nav-product">Product</p>
+            <ul class="nav-list" aria-labelledby="spec-nav-product">
+              <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Storefront</span></a></li>
+            </ul>
+          </div>
+          <div class="nav-section">
+            <p class="pane-head" id="spec-nav-dev">Development</p>
+            <ul class="nav-list" aria-labelledby="spec-nav-dev">
+              <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">GitHub</span></a></li>
+              <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Release notes</span></a></li>
+              <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Claude</span></a></li>
+              <li><a class="nav-item" href="#hs-desktop-shell" aria-current="page"><span class="nav-item__label">Installed plugins</span><span class="nav-item__count">5</span></a></li>
+            </ul>
+          </div>
+          <div class="nav-section shell__nav-foot"><ul class="nav-list"><li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Settings</span></a></li></ul></div>
         </nav>
         <section class="shell__main" aria-label="Plugins specimen">
-          <div class="toolbar">
-            <span class="toolbar__title">Plugins</span>
-            <input class="toolbar__filter" type="search" placeholder="Filter" aria-label="Filter the plugins">
-            <div class="toolbar__end"><button class="btn" type="button">Update all</button></div>
-          </div>
           <div class="shell__list">
+           <div class="shell__body">
+            <div class="page-head">
+              <div class="page-head__title"><p class="spec-page-title">Plugins</p></div>
+              <div class="page-head__end"><input class="toolbar__filter" type="search" placeholder="Filter" aria-label="Filter the plugins"><button class="btn" type="button">Update all</button></div>
+            </div>
             <table class="table table--dense">
               <thead><tr><th class="col-start">Plugin</th><th class="col-start">Status</th><th class="col-start">Version</th><th class="col-start">Updated</th></tr></thead>
               <tbody>
@@ -444,6 +454,7 @@
                 <tr tabindex="0"><td>bwj-development</td><td class="col-start"><span class="dot dot--bad"></span>Problem</td><td class="col-start">6.4.0</td><td class="col-start">Oct 20, 2026</td></tr>
               </tbody>
             </table>
+           </div>
           </div>
         </section>
         <aside class="shell__aside" aria-label="Details specimen">
@@ -469,16 +480,20 @@
           <nav class="breadcrumbs" aria-label="Breadcrumb shell specimen, two panes"><ol><li><a href="#hs-desktop-shell">Home</a></li><li><span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#hs-chev"/></svg></span><span aria-current="page">Test gate</span></li></ol></nav>
         </div>
         <nav class="shell__nav" aria-label="Admin shell specimen, two panes">
-          <ul class="nav-list"><li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Home</span></a></li></ul>
-          <p class="pane-head" id="spec-nav-dev-2">Development</p>
-          <ul class="nav-list" aria-labelledby="spec-nav-dev-2">
-            <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Installed plugins</span></a></li>
-            <li><a class="nav-item" href="#hs-desktop-shell" aria-current="page"><span class="nav-item__label">Test gate</span></a></li>
-          </ul>
+          <a class="shell__brand" href="#hs-desktop-shell"><span class="shell__brand__mark" aria-hidden="true"></span>Admin</a>
+          <div class="nav-section"><ul class="nav-list"><li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Home</span></a></li></ul></div>
+          <div class="nav-section">
+            <p class="pane-head" id="spec-nav-dev-2">Development</p>
+            <ul class="nav-list" aria-labelledby="spec-nav-dev-2">
+              <li><a class="nav-item" href="#hs-desktop-shell"><span class="nav-item__label">Installed plugins</span></a></li>
+              <li><a class="nav-item" href="#hs-desktop-shell" aria-current="page"><span class="nav-item__label">Test gate</span></a></li>
+            </ul>
+          </div>
         </nav>
         <section class="shell__main" aria-label="Test gate specimen">
-          <div class="toolbar"><span class="toolbar__title">Test gate</span></div>
           <div class="shell__list">
+           <div class="shell__body">
+            <div class="page-head"><div class="page-head__title"><p class="spec-page-title">Test gate</p></div></div>
             <table class="table table--dense">
               <thead><tr><th class="col-start">Shard</th><th class="col-start">Result</th><th>Seconds</th></tr></thead>
               <tbody>
@@ -486,6 +501,7 @@
                 <tr tabindex="0"><td>Shard 2</td><td class="col-start"><span class="dot dot--good"></span>Passed</td><td class="num">138</td></tr>
               </tbody>
             </table>
+           </div>
           </div>
         </section>
       </div>

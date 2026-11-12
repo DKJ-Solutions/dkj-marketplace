@@ -2,13 +2,20 @@
 <!--
   The Admin shell, the stylesheet-only reference (Dave, November 4, 2026, #3811; Admin, after the Shopify Admin,
   since #3815): the desktop layer of the brand book, for Admin. It is an Explorer or a task board, not a website:
-  no site header, no breadcrumb bar above a page of cards, only a thin bar, a flat side navigation under section
-  headings, a main pane with a dense list and a detail pane, each scrolling on its own and told apart by 1px lines.
+  no site header and no breadcrumb bar above a page of cards. Its structure is the Figma wireframes' (Dave,
+  November 12, 2026, #4025): a side navigation the full height of the window (a brand row, the search field, flat
+  lists under section headings), a bar over the main pane only, a page header at the top of the pane body, and an
+  optional detail pane, each scrolling on its own and told apart by 1px lines.
   Desktop only, read in VS Code's Simple Browser, about 1300 x 900.
 
   The navigation follows the Shopify Admin: Home and the repo's domain objects at the top level (no "Manage"
   wrapper, since everything in Admin is management), the Product as an entry Admin links to, secondary areas such
-  as Development under a section heading, and Settings pinned to the foot.
+  as Development under a section heading, and Settings pinned to the foot. Every section is a .nav-section, the
+  foot one with .shell__nav-foot beside it, as Format-AdminShellOpen draws them.
+
+  The page's one h1 stands in the page header (.page-head), at --text-h1, with the page's action at its right end
+  (.page-head__end). Only a page that opens no pane body of its own (Admin's release notes) keeps the older
+  .toolbar over the main pane, its h1 at --text-h3.
 
   The whole page is built from ../house-style.css ("Desktop shell: Admin's layer") and ../house-theme.js,
   linked and not inlined, and from nothing else (no other CSS, no external request). The mobile-first product
@@ -20,7 +27,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Reference for the Admin shell: a bar, a flat side navigation under section headings, a dense list and a detail pane.">
+  <meta name="description" content="Reference for the Admin shell: a full-height side navigation with a brand row, a bar over the main pane, a page header, a dense list and a detail pane.">
   <title>Admin -- Plugins</title>
   <link rel="stylesheet" href="../house-style.css">
   <script src="../house-theme.js"></script>
@@ -28,7 +35,7 @@
 <body>
   <div class="shell">
 
-    <!-- 1. The bar: the trail on the left, a few small actions and the settings button on the right. No brand block. -->
+    <!-- 1. The bar, over the main pane only: the trail on the left, a few small actions and the settings button on the right. -->
     <div class="shell__bar">
       <nav class="breadcrumbs" aria-label="Breadcrumb">
         <ol>
@@ -39,51 +46,59 @@
       <div class="shell__actions"><button class="btn" type="button">Refresh</button><div id="settings"></div></div>
     </div>
 
-    <!-- 2. The side navigation: a search field with Ctrl K on top, then flat lists under section headings, the current page marked, a count right, Settings in the foot. -->
+    <!-- 2. The side navigation, the full height of the window: the brand row, the search field with Ctrl K, then a .nav-section per group (flat lists, under a heading where the group has one), the current page marked, a count right, Settings in the foot. -->
     <nav class="shell__nav" aria-label="Main">
+      <a class="shell__brand" href="admin-shell.html"><span class="shell__brand__mark" aria-hidden="true"></span>Admin</a>
       <div class="nav-search" role="search"><input class="nav-search__input" type="search" placeholder="Search" aria-label="Search Admin"><kbd class="nav-search__key">Ctrl K</kbd></div>
-      <ul class="nav-list">
-        <li><a class="nav-item" href="#"><span class="nav-item__label">Home</span></a></li>
-        <li><a class="nav-item" href="#"><span class="nav-item__label">Tracks</span><span class="nav-item__count">1,204</span></a></li>
-        <li><a class="nav-item" href="#"><span class="nav-item__label">Playlists</span><span class="nav-item__count">38</span></a></li>
-        <li><a class="nav-item" href="#"><span class="nav-item__label">Artists</span><span class="nav-item__count">412</span></a></li>
-      </ul>
-      <p class="pane-head" id="nav-product">Product</p>
-      <ul class="nav-list" aria-labelledby="nav-product">
-        <li><a class="nav-item" href="#"><span class="nav-item__label">Storefront</span></a></li>
-      </ul>
-      <p class="pane-head" id="nav-dev">Development</p>
-      <ul class="nav-list" aria-labelledby="nav-dev">
-        <li><a class="nav-item" href="#"><span class="nav-item__label">GitHub</span></a></li>
-        <li><a class="nav-item" href="#"><span class="nav-item__label">Release notes</span></a></li>
-        <li><a class="nav-item" href="#"><span class="nav-item__label">Claude</span></a></li>
-        <li><a class="nav-item" href="#" aria-current="page"><span class="nav-item__label">Installed plugins</span><span class="nav-item__count">5</span></a></li>
-      </ul>
-      <div class="shell__nav-foot">
+      <div class="nav-section">
+        <ul class="nav-list">
+          <li><a class="nav-item" href="#"><span class="nav-item__label">Home</span></a></li>
+          <li><a class="nav-item" href="#"><span class="nav-item__label">Tracks</span><span class="nav-item__count">1,204</span></a></li>
+          <li><a class="nav-item" href="#"><span class="nav-item__label">Playlists</span><span class="nav-item__count">38</span></a></li>
+          <li><a class="nav-item" href="#"><span class="nav-item__label">Artists</span><span class="nav-item__count">412</span></a></li>
+        </ul>
+      </div>
+      <div class="nav-section">
+        <p class="pane-head" id="nav-product">Product</p>
+        <ul class="nav-list" aria-labelledby="nav-product">
+          <li><a class="nav-item" href="#"><span class="nav-item__label">Storefront</span></a></li>
+        </ul>
+      </div>
+      <div class="nav-section">
+        <p class="pane-head" id="nav-dev">Development</p>
+        <ul class="nav-list" aria-labelledby="nav-dev">
+          <li><a class="nav-item" href="#"><span class="nav-item__label">GitHub</span></a></li>
+          <li><a class="nav-item" href="#"><span class="nav-item__label">Release notes</span></a></li>
+          <li><a class="nav-item" href="#"><span class="nav-item__label">Claude</span></a></li>
+          <li><a class="nav-item" href="#" aria-current="page"><span class="nav-item__label">Installed plugins</span><span class="nav-item__count">5</span></a></li>
+        </ul>
+      </div>
+      <div class="nav-section shell__nav-foot">
         <ul class="nav-list">
           <li><a class="nav-item" href="#"><span class="nav-item__label">Settings</span></a></li>
         </ul>
       </div>
     </nav>
 
-    <!-- 3. The main pane: a toolbar (the page's one h1, a filter, small buttons) over a dense table that scrolls. -->
+    <!-- 3. The main pane: the pane body, with the page header (the page's one h1, and a filter and a button at its right end) over a dense table. -->
     <section class="shell__main" aria-label="Plugins">
-      <div class="toolbar">
-        <h1>Plugins</h1>
-        <input class="toolbar__filter" type="search" placeholder="Filter" aria-label="Filter the plugins">
-        <div class="toolbar__end"><button class="btn" type="button">Update all</button></div>
-      </div>
       <div class="shell__list">
-        <table class="table table--dense" id="rows">
-          <thead><tr><th class="col-start">Plugin</th><th class="col-start">Status</th><th class="col-start">Installed</th><th class="col-start">Marketplace</th><th class="col-start">Updated</th></tr></thead>
-          <tbody>
-            <tr tabindex="0" aria-selected="true"><td>dkj-policy</td><td class="col-start"><span class="dot dot--good"></span>Current</td><td class="col-start">6.6.0</td><td class="col-start">6.6.0</td><td class="col-start">Nov 4, 2026</td></tr>
-            <tr tabindex="0"><td>dkj-solutions</td><td class="col-start"><span class="dot dot--good"></span>Current</td><td class="col-start">6.6.0</td><td class="col-start">6.6.0</td><td class="col-start">Nov 4, 2026</td></tr>
-            <tr tabindex="0"><td>dkj-subagents-alpha</td><td class="col-start"><span class="dot dot--warn"></span>Update due</td><td class="col-start">6.5.2</td><td class="col-start">6.6.0</td><td class="col-start">Nov 1, 2026</td></tr>
-            <tr tabindex="0"><td>dkj-policy-bwj</td><td class="col-start"><span class="dot"></span>Off here</td><td class="col-start">6.6.0</td><td class="col-start">6.6.0</td><td class="col-start">Nov 4, 2026</td></tr>
-            <tr tabindex="0"><td>bwj-development</td><td class="col-start"><span class="dot dot--bad"></span>Problem</td><td class="col-start">6.4.0</td><td class="col-start">6.6.0</td><td class="col-start">Oct 20, 2026</td></tr>
-          </tbody>
-        </table>
+        <main class="shell__body">
+          <div class="page-head">
+            <div class="page-head__title"><h1>Plugins</h1></div>
+            <div class="page-head__end"><input class="toolbar__filter" type="search" placeholder="Filter" aria-label="Filter the plugins"><button class="btn" type="button">Update all</button></div>
+          </div>
+          <table class="table table--dense" id="rows">
+            <thead><tr><th class="col-start">Plugin</th><th class="col-start">Status</th><th class="col-start">Installed</th><th class="col-start">Marketplace</th><th class="col-start">Updated</th></tr></thead>
+            <tbody>
+              <tr tabindex="0" aria-selected="true"><td>dkj-policy</td><td class="col-start"><span class="dot dot--good"></span>Current</td><td class="col-start">6.6.0</td><td class="col-start">6.6.0</td><td class="col-start">Nov 4, 2026</td></tr>
+              <tr tabindex="0"><td>dkj-solutions</td><td class="col-start"><span class="dot dot--good"></span>Current</td><td class="col-start">6.6.0</td><td class="col-start">6.6.0</td><td class="col-start">Nov 4, 2026</td></tr>
+              <tr tabindex="0"><td>dkj-subagents-alpha</td><td class="col-start"><span class="dot dot--warn"></span>Update due</td><td class="col-start">6.5.2</td><td class="col-start">6.6.0</td><td class="col-start">Nov 1, 2026</td></tr>
+              <tr tabindex="0"><td>dkj-policy-bwj</td><td class="col-start"><span class="dot"></span>Off here</td><td class="col-start">6.6.0</td><td class="col-start">6.6.0</td><td class="col-start">Nov 4, 2026</td></tr>
+              <tr tabindex="0"><td>bwj-development</td><td class="col-start"><span class="dot dot--bad"></span>Problem</td><td class="col-start">6.4.0</td><td class="col-start">6.6.0</td><td class="col-start">Oct 20, 2026</td></tr>
+            </tbody>
+          </table>
+        </main>
       </div>
     </section>
 

@@ -683,7 +683,9 @@ p { margin: 0; }
   border: 1px solid var(--bg-3); border-radius: var(--radius-1-5); font: inherit; font-size: var(--text-sm); }
 .toolbar__filter:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 1px; }
 .toolbar__end { display: flex; align-items: center; gap: var(--spacing-1); margin-left: auto; }
-.shell__list { min-height: 0; overflow: auto; }
+/* The list always takes the pane's second, flexible row, so it scrolls whether a .toolbar stands over it or (the
+   wireframes' page header, inside the body) none does (#4025). */
+.shell__list { grid-row: 2; min-height: 0; overflow: auto; }
 /* The pane body: a pane's content, stacked, with no column cap and no centring (#3830), and the wireframe's room
    around it. A <main> may take it: the house main's 1080px cap is lifted here, since the pane is the page. It is
    Admin's form of the product's .page-column. */
