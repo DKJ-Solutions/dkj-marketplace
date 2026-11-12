@@ -735,6 +735,9 @@ function Get-BrandbookPageStyle {
 .bb-bar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: var(--spacing-2); margin-bottom: var(--spacing-4); padding: var(--spacing-2) 0; background: var(--bg-1); border-bottom: 1px solid var(--bg-3); }
 .bb-bar .nav-search { flex: 1 1 var(--spacing-64); margin: 0; }
 .bb-jump { display: flex; flex-wrap: wrap; gap: var(--spacing-1); }
+.bb-prov { min-width: 0; overflow-wrap: anywhere; }
+#bb-count:empty { display: none; }
+.bb-bar + .bb-walk { margin-top: 0; }
 .bb-jump .chip, .bb-names .chip { text-decoration: none; }
 .bb-theme { position: relative; }
 .bb-theme > summary { list-style: none; cursor: pointer; }
