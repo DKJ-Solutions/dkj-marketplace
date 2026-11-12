@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**9 / 14 minor entries** <!-- pending-tally -->
+**10 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4008-owner-load-signals · 20261112-144317Z
+
+The Progress page's owner-load signals are recorded. The transcript cache gains a `load` per run, and an
+entry cached before it is read from the transcripts once more; nothing else in the store changes.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+On Admin's Progress page, "Questions asked" and "Steps by hand" now show numbers instead of "not recorded
+yet", and "Waited on you" counts the time you spend reading and deciding before each prompt (up to 15 minutes;
+a longer gap reads as away), so it no longer shows close to 0% when you were the one the work waited on.
+
+**Score:** 3
+
+#### Pull Request
+
+Progress page: record the owner-load signals -- questions asked, steps by hand, and the wait between prompts
+
+Plugins: dkj-policy
+
+[PR #4024](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4024)
+
+---
 
 ### DEPLOY: fix/4022-house-style-walk-scope · 20261112-122745Z
 
