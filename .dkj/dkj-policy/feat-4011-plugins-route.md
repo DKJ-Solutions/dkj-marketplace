@@ -39,19 +39,42 @@
 
 ### PLAN
 
+#4011, as decided on the issue (DaveKJohn, November 12, 2026): the repo and marketplace name stay
+`dkj-marketplace`; only the product server's `/marketplace` route becomes `/plugins`. The url follows
+the h1 (Maikel's October 30, 2026 rule), so the h1, the trail and the menu label go back to Plugins
+with it, and the old `/plugins` -> `/marketplace` redirect turns around.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/lib/dev-pages-lib.ps1`: every product address under `/plugins`, h1 and crumbs `Plugins`;
+  `Resolve-MarketplaceRedirect` now sends `/marketplace[/...]` (up to four levels, so the brand book's
+  token pages too) to the same level under `/plugins`
+- [x] `scripts/lib/consumer-dashboard-lib.ps1`: the menu entry is `Plugins` at `/plugins`
+- [x] `scripts/dashboard/serve-consumer-dashboard.ps1`: comments follow the new address
+- [x] `plugins/dkj-policy/apps/admin/lib/plugins-page-lib.ps1`: Admin in the source repo sends the
+  house style to `/plugins/dkj-policy/dkj-brandbook`; a released Admin's `/marketplace` link is redirected
+- [x] suites `dev-pages`, `consumer-dashboard`, `house-palette` and Uma's lens follow the address
 
 ### TEST
 
+- [ ] the owner's look at http://localhost:4871/plugins and its levels (a visible result)
+
 ### DEPLOY: feat/4011-plugins-route
 
-**Score:**
+The product server's plugin pages moved from `/marketplace` back to `/plugins`, with the h1, the
+trail and the menu label named Plugins again; every old `/marketplace` address, the brand book's
+token pages included, answers with a 303 to the same page under `/plugins`
+([#4011](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4011)). Only the product server in
+this source repo serves these pages.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+No consumer runs the product server, and a consumer's Admin links to it only in the source repo, so
+nothing a subscriber takes changes.
+
+**Score:** N/A
 
 #### Pull Request
 
