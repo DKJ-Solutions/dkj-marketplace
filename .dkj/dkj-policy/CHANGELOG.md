@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**3 / 5 minor entries** <!-- pending-tally -->
+**4 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4002-uma-brandbook-wireframe · 20261112-091821Z
+
+Uma's repo lens is filled in for the first time. It says who the users of this repo's pages are (the
+owners), that a statement about them is a labelled assumption unless confirmed, that her wireframes here
+live in Figma rather than as a page in the repo, and that a wireframe is designed by hand rather than traced
+from the HTML with `figma-generate-design`, which is the route that made the first attempt on #4002 a trace.
+The wireframe itself lives in Figma and is not part of this diff.
+
+**Score:** 2
+
+N/A: the lens is read only inside this repo, and nothing this repo ships changes.
+
+#### What makes this deploy extra special
+
+The first wireframe of the team's new UX specialist that was designed rather than traced: three rows (the
+page as it is, a previewing overview with search, a catalogue shell with previous / next), with seven
+ranked findings and every user statement labelled as an assumption.
+
+**Score:** 1
+
+#### Pull Request
+
+Uma: a real lo-fi wireframe of the brand book overview in Figma
+
+[PR #4010](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4010)
+
+---
 
 ### DEPLOY: feat/4006-working-profile · 20261112-090809Z
 
