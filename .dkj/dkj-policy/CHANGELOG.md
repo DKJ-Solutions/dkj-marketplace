@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**15 / 24 minor entries** <!-- pending-tally -->
+**16 / 25 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/graph-apca-floor · 20261112-223823Z
+
+Every graph token now reads at APCA Lc 45 or more on `bg-1` and `bg-3` in every theme, on top of WCAG's 3:1.
+The ratio could not hold the owner's rule in a dark theme. It scores a mid tone on a near-black page too kindly, so
+the dark blue and violet series passed at 4.4:1 while reading only Lc 30. `build-house-palette.ps1` now lifts each
+candidate to that floor and picks the first trio in pool order that still stands apart. The dark pool is new. Pink,
+lilac, sky and orange get a blue, a teal and an aqua, because their pastel primary rules out the magenta and the
+violet. The light themes are unchanged.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every DKJ-Solutions app that takes this brand book draws its charts in dark mode with new, lighter series colours
+that read clearly on the page.
+
+**Score:** 3
+
+#### Pull Request
+
+Graph series read at APCA Lc 45 on bg-1 and bg-3 in every theme
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4037](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4037)
+
+---
 
 ### DEPLOY: feat/palette-border-graph-v2 · 20261112-210735Z
 
