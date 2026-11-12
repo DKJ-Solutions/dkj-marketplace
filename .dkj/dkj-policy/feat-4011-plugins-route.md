@@ -57,7 +57,7 @@ with it, and the old `/plugins` -> `/marketplace` redirect turns around.
 
 ### TEST
 
-- [ ] the owner's look at http://localhost:4871/plugins and its levels (a visible result)
+- [~] the owner's look at http://localhost:4871/plugins and its levels (a visible result) -- Not done as a separate look: davekokbwj approved the branch through issues-sweep-reviews on 2026-11-12 without one.
 
 ### DEPLOY: feat/4011-plugins-route
 
