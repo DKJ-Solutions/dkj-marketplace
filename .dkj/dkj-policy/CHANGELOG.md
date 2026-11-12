@@ -2,7 +2,75 @@
 
 ## [Unreleased]
 
-**11 / 16 minor entries** <!-- pending-tally -->
+**11 / 19 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4028-stale-park-reads-body · 20261112-171524Z
+
+An issue filed already parked under `awaiting-pull` now comes free on its own once its blocker lands, provided
+its body carries the line `Parked: waiting on <#n or branch>.`. Until now only a parking comment was read, so
+such an issue stayed skipped by every sweep after the merge, and the sweep's message now says which line to add
+where neither names the wait.
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Nothing beyond the repair itself: one more tracker read in a rare case, and one line a filer now writes.
+**Score:** N/A
+
+#### Pull Request
+
+claim-issue: stale-park reads the waiting-on clause from the issue body when no parking comment carries one
+
+Plugins: dkj-policy
+
+[PR #4032](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4032)
+
+---
+
+### DEPLOY: fix/4030-fit-alarm-shell-specimen · 20261112-165310Z
+
+The fit alarm no longer reads a brand book page that shows a Desktop shell specimen as Admin's own shell, so that page's correct h1 is no longer reported as loose in the pane ([#4030](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4030)).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A false warning on a page of this repo's own brand book; nothing a subscriber takes changes in behaviour.
+
+**Score:** N/A
+
+#### Pull Request
+
+Fit alarm ignores a shell specimen when choosing shell mode
+
+Plugins: dkj-policy
+
+[PR #4031](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4031)
+
+---
+
+### DEPLOY: docs/claudeai-connectors-per-checkout · 20261112-161151Z
+
+[Sylvester's lens](../../.claude/specialists/lenses/specialist-05-15-lens.md#the-plugins-enabled-here-and-what-that-costs)
+now records that a claude.ai connector belongs to the account and loads in every repo, and that the way
+to keep one out of this repo is `/mcp` → **Disable**, which is stored per checkout in the machine's
+`~/.claude.json`. Klaviyo and Shopify, BWJ-only, cost 365 deferred tool names per session here.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A — a note in this repo's own lens; nothing a consumer takes changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+Record that claude.ai connectors are switched off per checkout through /mcp
+
+[PR #4027](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4027)
+
+---
 
 ### DEPLOY: feat/admin-figma-wireframes · 20261112-155732Z
 

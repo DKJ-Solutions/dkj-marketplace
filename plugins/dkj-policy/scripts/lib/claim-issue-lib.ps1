@@ -2965,9 +2965,20 @@ function Get-ParkingWaitReferences {
             #577. `awaiting-release-external` names `owner/repo`, which comes back in Repos. Its wait is
             "the next release after the park", so Since carries when the parking comment was written.
 
+            THE BODY, WHEN NO COMMENT PARKS IT (#4028). An issue parked at filing, its label set in the same
+            `gh issue create`, has no parking comment: what it waits on is in its body. Measured November 12,
+            2026: #4025 was filed under `awaiting-pull`, its blocker merged as #4026 the same day, and every
+            sweep still read it as skipped. So -Body is read with the same clause grammar, and only when no
+            comment carries one, since a later parking comment is the newer word. The body needs no
+            authorAssociation check: the label it sits beside can only be set by somebody with a hand on the
+            repo. Since stays '' for a body, so an `awaiting-release-external` parked there is still unread.
+
         .PARAMETER Comments
             The issue's comments as `gh issue list --json comments` returns them (objects with a body, and
             a createdAt the caller dates the park by).
+
+        .PARAMETER Body
+            The issue's own body, read only when no comment parks it.
 
         .OUTPUTS
             @{ Issues = [int[]]; Branches = [string[]]; External = [string[]]; Repos = [string[]];
@@ -2976,7 +2987,7 @@ function Get-ParkingWaitReferences {
             caller reads whichever its label means. Since is the parking comment's createdAt, round-trip
             formatted, or '' where the comment carries none.
     #>
-    param([AllowNull()][object[]]$Comments = @())
+    param([AllowNull()][object[]]$Comments = @(), [AllowNull()][AllowEmptyString()][string]$Body = '')
 
     $issues = New-Object System.Collections.Generic.List[int]
     $branches = New-Object System.Collections.Generic.List[string]
@@ -2997,6 +3008,10 @@ function Get-ParkingWaitReferences {
             $at = if ($c.PSObject.Properties['createdAt']) { $c.createdAt } else { $null }
             $since = if ($at -is [datetime]) { ([DateTimeOffset]$at).ToString('o') } elseif ($at) { [string]$at } else { '' }
         }
+    }
+    if (-not $clause -and $Body) {
+        $m = [regex]::Match($Body, '(?is)\bparked\b.*?\bwaiting on\b(?<w>.*)')
+        if ($m.Success) { $clause = $m.Groups['w'].Value }
     }
     if ($clause) {
         $clause = ([regex]::Split($clause, '(?<=\S)[.;:]\s|\s--\s|\s\(|\r?\n'))[0]
