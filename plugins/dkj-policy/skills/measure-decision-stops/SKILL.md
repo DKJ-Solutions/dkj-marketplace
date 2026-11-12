@@ -13,8 +13,8 @@ argument-hint: "[-Project <wildcard>] [-Since <yyyy-MM-dd>] [-Json]"
 
 A question whose answer is predictable buys little. It costs a wait and an interruption, and it turns
 the owner into an approver. The constitution already says approval questions are rare, and that a
-sensible default is executed and reported. Whether sessions follow that rule could not be checked until
-this script existed ([#4005](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4005)).
+sensible default is executed and reported. Whether sessions ask through `AskUserQuestion` more often
+than that rule allows could not be checked until this script existed ([#4005](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4005)).
 
 **This page costs no always-on tokens.** It carries `disable-model-invocation: true`, so you run it by
 name (`/measure-decision-stops`). The flag removes the page from context. It does not gate the script.
@@ -39,7 +39,8 @@ plugin cache holds the last released mirror, and the script's source-repo guard 
 
 ## How it classifies an answer
 
-Every question in a call is classified separately, because one call can ask two things:
+Every question in a call is classified separately, because one call can ask two things. A rejected or
+interrupted call counts once, as declined:
 
 | verdict | what it means |
 |---|---|
@@ -51,7 +52,8 @@ Every question in a call is classified separately, because one call can ask two 
 | no Recommended offered | counted apart, never in the share: there was nothing predictable to pick |
 
 **The headline is the as-is share**: of the answered questions that offered a Recommended option, how
-many took it unchanged.
+many took it unchanged. The report also prints the share with or without a note, the same share per
+project, and the number of sessions it could not read.
 
 ## What it does not count
 
@@ -72,6 +74,7 @@ reading, not a verdict.
 - **Not a gate.** It always exits 0, and it reaches no verdict on any single question.
 - **Not a reader of your content.** No question, label, answer or note leaves the script. A project is
   named by the part of its directory after `-GitHub-`, and any other project as `(other)`, because the
-  rest of that name encodes a local path.
+  rest of that name encodes a local path. **The repo name itself is printed**, so where a repo is private
+  or named after a client, quote only the totals in a public place.
 - **Per machine, not per person.** It reads this machine's transcripts. Where two people share one
   machine, or one person works on several, the figure mixes or splits them accordingly.

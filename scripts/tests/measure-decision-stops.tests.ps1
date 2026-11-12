@@ -101,6 +101,9 @@ try {
     $q4 = New-Q -Text 'SECRET-Q4' -Labels @('Yes (Recommended)', 'No')
     $q5 = New-Q -Text 'SECRET-Q5' -Labels @('X (Recommended)', 'Y', 'Z') -Multi
     $q6 = New-Q -Text 'SECRET-Q6' -Labels @('Left', 'Right')
+    # A label holding a comma, picked alone in a multi-select, with a stray space after it: still the
+    # Recommended pick as-is, not own words (review finding on the first commit).
+    $q7 = New-Q -Text 'SECRET-Q7' -Labels @('Yes, ship it (Recommended) ', 'No') -Multi
 
     # SESSION ONE (acme-repo): a call with two questions -- Recommended as-is, and Recommended with a
     # note -- then a call answered with another option, then one answered in the owner's own words.
@@ -112,6 +115,8 @@ try {
         (New-Answer -Id 'toolu_02' -Questions @($q3) -Answers @{ 'SECRET-Q3' = 'Drop' })
         (New-Ask -Id 'toolu_03' -Questions @($q4))
         (New-Answer -Id 'toolu_03' -Questions @($q4) -Answers @{ 'SECRET-Q4' = 'SECRET-OWN-WORDS' })
+        (New-Ask -Id 'toolu_07' -Questions @($q7))
+        (New-Answer -Id 'toolu_07' -Questions @($q7) -Answers @{ 'SECRET-Q7' = 'Yes, ship it (Recommended)' })
     ) | Set-Content -LiteralPath (Join-Path $projA 'aaaa1111.jsonl') -Encoding UTF8
 
     # SESSION TWO (a directory outside GitHub): a multi-select holding the Recommended among others, a
@@ -136,16 +141,16 @@ try {
     Assert-Equal 3 $j.Sessions 'three sessions read'
     Assert-Equal 2 $j.SessionsWithStop 'two of them hold a stop'
     Assert-Equal 0 $j.Unreadable 'none was unreadable (the single-answer regression)'
-    Assert-Equal 7 $j.Questions 'seven questions counted, the rejected call as one'
-    Assert-Equal 1 $j.Counts.rec 'Recommended as-is: one'
+    Assert-Equal 8 $j.Questions 'eight questions counted, the rejected call as one'
+    Assert-Equal 2 $j.Counts.rec 'Recommended as-is: two, one of them a label holding a comma'
     Assert-Equal 1 $j.Counts.'rec-note' 'Recommended with a note: one, kept apart from as-is'
     Assert-Equal 2 $j.Counts.other 'another offered option: the plain one and the multi-select'
     Assert-Equal 1 $j.Counts.own 'own words: one'
     Assert-Equal 1 $j.Counts.declined 'a rejected call: declined'
     Assert-Equal 1 $j.Counts.'norec-option' 'a question with no Recommended is counted apart'
-    Assert-Equal 5 $j.Offered 'the share is read over the five that offered a Recommended'
-    Assert-Equal 20 $j.AsIsPct 'as-is share: 1 of 5'
-    Assert-Equal 40 $j.AnyRecPct 'with or without a note: 2 of 5'
+    Assert-Equal 6 $j.Offered 'the share is read over the six that offered a Recommended'
+    Assert-Equal 33 $j.AsIsPct 'as-is share: 2 of 6'
+    Assert-Equal 50 $j.AnyRecPct 'with or without a note: 3 of 6'
     Assert-Equal 'False' $j.ShapeBMeasured 'it says shape B is not measured'
 
     $names = @($j.Projects | ForEach-Object { $_.Project })
@@ -166,7 +171,7 @@ try {
     Write-Host ''
     Write-Host 'The filters' -ForegroundColor Cyan
     $since = (& $ScriptPath -TranscriptRoot $fixtureRoot -Json -Since '2026-11-01' | Out-String) | ConvertFrom-Json
-    Assert-Equal 6 $since.Questions '-Since leaves out the answer dated before it'
+    Assert-Equal 7 $since.Questions '-Since leaves out the answer dated before it'
     $proj = (& $ScriptPath -TranscriptRoot $fixtureRoot -Json -Project '*acme-repo' | Out-String) | ConvertFrom-Json
     Assert-Equal 2 $proj.Sessions '-Project reads only the directories it matches'
 

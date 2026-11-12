@@ -56,7 +56,8 @@
     Limit to project directories whose name matches this wildcard. Default: all of them.
 
 .PARAMETER Since
-    Count only stops answered on or after this date (yyyy-MM-dd). Default: everything recorded.
+    Count only stops answered on or after this date (yyyy-MM-dd, read as UTC midnight). A stop whose
+    timestamp cannot be read is left out under -Since. Default: everything recorded.
 
 .PARAMETER Json
     Emit the result as JSON on stdout instead of the human report.
@@ -83,7 +84,7 @@ if (Test-Path -LiteralPath $guardLib -PathType Leaf) { . $guardLib; Assert-OwnCo
 
 $sinceDate = $null
 if ($Since) {
-    try { $sinceDate = [datetime]::ParseExact($Since, 'yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture) }
+    try { $sinceDate = [datetime]::SpecifyKind([datetime]::ParseExact($Since, 'yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture), [System.DateTimeKind]::Utc) }
     catch { Write-Host "[SKIP] -Since '$Since' is not a yyyy-MM-dd date. Nothing measured." -ForegroundColor Yellow; exit 0 }
 }
 
@@ -106,16 +107,29 @@ function Get-QuestionVerdict {
 
     $labels = @()
     if ($Question.PSObject.Properties.Name -contains 'options' -and $Question.options) {
-        $labels = @($Question.options | ForEach-Object { [string]$_.label })
+        # Trimmed like the answer, or a label with a stray space never matches its own answer.
+        $labels = @($Question.options | ForEach-Object { ([string]$_.label).Trim() })
     }
     $rec = @($labels | Where-Object { $_.Contains($script:RecommendedMark) })
     $multi = ($Question.PSObject.Properties.Name -contains 'multiSelect') -and [bool]$Question.multiSelect
 
     $answer = ([string]$Answer).Trim()
-    # @() around the whole if: an if-statement's value unrolls a one-element array into a bare string,
-    # whose .Count StrictMode refuses.
-    $picked = @(if ($multi) { $answer -split ',\s*' | ForEach-Object { $_.Trim() } | Where-Object { $_ } } else { $answer })
-    $allOffered = ($picked.Count -gt 0) -and (@($picked | Where-Object { $labels -notcontains $_ }).Count -eq 0)
+    $picked = New-Object System.Collections.Generic.List[string]
+    $allOffered = $false
+    if ($labels -contains $answer) {
+        # The whole answer is one label -- checked first, because a label may itself hold a comma
+        # ("Yes, merge it (Recommended)"), and splitting it would read a plain pick as own words.
+        $picked.Add($answer); $allOffered = $true
+    } elseif ($multi -and $answer) {
+        # A multi-select answer joins the picked labels with ', '. Take the offered labels out of it,
+        # longest first so a label containing another is not split, and whatever text is left over
+        # is the owner's own words.
+        $rest = $answer
+        foreach ($l in @($labels | Sort-Object { $_.Length } -Descending)) {
+            if ($l -and $rest.Contains($l)) { $picked.Add($l); $rest = $rest.Replace($l, '') }
+        }
+        $allOffered = ($picked.Count -gt 0) -and (($rest -replace '[,\s]', '') -eq '')
+    }
 
     if ($rec.Count -eq 0) {
         if ($allOffered) { return 'norec-option' } else { return 'norec-own' }
@@ -166,10 +180,14 @@ function Measure-OneTranscript {
             if (-not $pending.ContainsKey($id)) { continue }
             $pending.Remove($id)
 
-            if ($sinceDate -and ($rec.PSObject.Properties.Name -contains 'timestamp')) {
+            # -Since is a UTC midnight, compared with the record's UTC timestamp. A record whose date
+            # cannot be read is left out under -Since rather than counted on a guess.
+            if ($sinceDate) {
                 $when = [datetime]::MinValue
-                if ([datetime]::TryParse([string]$rec.timestamp, [System.Globalization.CultureInfo]::InvariantCulture,
-                        [System.Globalization.DateTimeStyles]::AdjustToUniversal, [ref]$when) -and $when -lt $sinceDate) { continue }
+                $stamp = if ($rec.PSObject.Properties.Name -contains 'timestamp') { [string]$rec.timestamp } else { '' }
+                $ok = [datetime]::TryParse($stamp, [System.Globalization.CultureInfo]::InvariantCulture,
+                        ([System.Globalization.DateTimeStyles]::AdjustToUniversal -bor [System.Globalization.DateTimeStyles]::AssumeUniversal), [ref]$when)
+                if (-not $ok -or $when -lt $sinceDate) { continue }
             }
 
             # The structured answer: toolUseResult.questions (with their options) and .answers, keyed by
@@ -183,7 +201,11 @@ function Measure-OneTranscript {
 
             $notes = $null
             if ($result.PSObject.Properties.Name -contains 'annotations') { $notes = $result.annotations }
+            # Answers are keyed by question text; the tool refuses two questions with the same text in one
+            # call, so the key is unique. A question record missing its text is one declined question,
+            # not a throw that would lose the rest of the session.
             foreach ($q in @($result.questions)) {
+                if (-not ($q.PSObject.Properties.Name -contains 'question')) { $verdicts.Add('declined'); continue }
                 $text = [string]$q.question
                 $answerProp = $result.answers.PSObject.Properties[$text]
                 if (-not $answerProp) { $verdicts.Add('declined'); continue }

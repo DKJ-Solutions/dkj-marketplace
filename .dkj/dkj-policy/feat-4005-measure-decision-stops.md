@@ -71,6 +71,12 @@ setting, which is #4006; the issue stays open for it (`-NoResolves`).
 - [x] Run against this machine's 225 real sessions. The first run read 0 stops because a one-element
   answer unrolled into a string and every session holding a stop threw inside a swallowed catch; fixed,
   and the unreadable count is now printed rather than swallowed.
+- [x] Review chain (Victor, Sebastian, Edith) on the first commit; applied in the second: a whole answer
+  is matched as one label before a multi-select is split (a label holding a comma read as own words),
+  labels are trimmed like answers, `-Since` is a UTC midnight and leaves out an unreadable timestamp, a
+  question record without its text no longer throws the session away, and the page says the repo name is
+  printed, how a declined call counts, and what else the report shows. The suite covers the comma label.
+  The real corpus measured the same after the fixes.
 
 ### DEPLOY: feat/4005-measure-decision-stops
 
