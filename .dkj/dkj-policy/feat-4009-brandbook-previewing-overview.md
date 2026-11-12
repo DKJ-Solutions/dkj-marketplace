@@ -39,19 +39,58 @@
 
 ### PLAN
 
+#### Scope
+
+Issue #4009: the owner picked **B plus C's previous / next bar** from #4002's wireframe (Figma
+`ffJGriv6yREpvkdTysm7mR`, rows B and C1.4) on November 12, 2026. Built on the product server's brand book
+pages (`/marketplace/dkj-policy/dkj-brandbook`), not in Figma: the look comes from house tokens and classes
+(`nav-search`, `chip`, `btn`, `card`), with a small page layer of `bb-*` classes on house tokens only.
+
+Deliberately not built from the wireframe: thumbnails of *components* on their cards (B1.7 says three per
+card). Rendering live specimens small on the overview would pull every section's style block and sprite onto
+one page; the components' cards name every specimen as a chip instead, which answers F2's "is it here?". The
+token groups do get a real preview.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Cody: Radius, Spacing and Size merged into one token group, Scale, each under its own h2; the three old
+      addresses redirect to their card on it (F6).
+- [x] Cody: an anchor on every specimen card (`s-<title>`), written by one function the overview's links use too.
+- [x] Cody: the overview as previewing cards: a token group previews its tokens (var()s, redrawn by a theme
+      switch), every card names its specimens as chips that open them on their page (F2, B1.7).
+- [x] Cody: a sticky bar on every brand book page: a provenance chip (branch @ commit, read per request), and on
+      the overview the search over every specimen and class name with a live count, Escape and `/`, an empty state
+      that clears, browses and suggests the closest name, jump chips, and the theme switcher (F1, F4, F5, F7;
+      B1-B4). The themes are no longer a single-card group.
+- [x] Cody: previous / next with a position ("3 of 13") above and below every page's cards, arrow keys too (F3, C1.4).
+- [x] Cody: the breadcrumb cut to Marketplace, the brand book a destination of its own (B1.1).
+- [ ] Owner looks at the overview and a group page on the product server and approves the structure and look.
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the overview's assertions rewritten for the new shape, and new ones for the chip,
+      the search, the index and its anchors, the previews, the Scale merge and its redirects, and the walk.
+      751 passed, 0 failed.
+
 ### DEPLOY: feat/4009-brandbook-previewing-overview
 
-**Score:**
+The brand book on the product server previews and searches. Its overview opens on a sticky bar: a chip naming
+the branch and commit the pages were read from, one search over every specimen and class name, a chip per group
+and the theme switcher. Each card shows what it holds: a token group previews its tokens, and every card names its
+specimens as chips that open the specimen itself. Radius, Spacing and Size are one group, Scale. Every page below
+the overview carries previous / next and its position, so walking the whole book after a change is one button per
+page. Built from the structure the owner picked on #4002's wireframe (#4009).
+
+**Score:** 2
+
+N/A: the brand book pages are this repo's own product server; no consumer runs them.
 
 #### What makes this deploy extra special
 
-**Score:**
+The first structure the new UX specialist wireframed that made it onto a real page: the owner picked it from three
+rows in Figma, and every finding it answers is named in the code where it lands.
+
+**Score:** 2
 
 #### Pull Request
 
