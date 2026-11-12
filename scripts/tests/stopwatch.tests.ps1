@@ -536,6 +536,35 @@ try {
     Assert-True (@($ev.Tools | Where-Object { $_.Phase -like 'Branch*' })[0].End -eq (& $at 20)) 'a tool result that quotes a notification does not end another call'
     Assert-True (@($ev.Tools | Where-Object { $_.Phase -like 'Other*' })[0].End -eq (& $at 306)) 'a Read whose text says "in the background" is not a background call'
 
+    # THE OWNER-LOAD SIGNALS (#4008). A reply ending in a question at 5, the owner's answer at 65 (60 s on), an
+    # AskUserQuestion at 70 and a closing question in that same turn (not counted twice), a '! git status' at 2000
+    # (1920 s on: away), its output at 2001 (not the owner), a prompt at 2100 (99 s after that output) whose turn
+    # parks an issue for the owner's look, and a task notification at 2200 (not the owner).
+    $lfile = Join-Path $tdir 'load.jsonl'
+    [System.IO.File]::WriteAllText($lfile, (@(
+            (& $rec 0 'user' 'go'),
+            (& $rec 5 'assistant' @(@{ type = 'text'; text = 'Which one?' })),
+            (& $rec 65 'user' 'the first'),
+            (& $use 70 'q1' 'AskUserQuestion' $null), (& $res 71 'q1' 'answered'),
+            (& $rec 80 'assistant' @(@{ type = 'text'; text = 'Done. Shall I ship?' })),
+            (& $rec 2000 'user' '<bash-input>git status</bash-input>'),
+            (& $rec 2001 'user' '<bash-stdout>clean</bash-stdout><bash-stderr></bash-stderr>'),
+            (& $rec 2100 'user' 'park it'),
+            (& $use 2105 'p1' 'PowerShell' 'gh issue edit 5 --add-label "prio-2,awaiting-review-dev"'), (& $res 2106 'p1' 'ok'),
+            (& $use 2107 'p2' 'PowerShell' 'gh issue edit 5 --remove-label awaiting-review-dev'), (& $res 2108 'p2' 'ok'),
+            (& $rec 2110 'assistant' @(@{ type = 'text'; text = 'Parked.' })),
+            (& $rec 2200 'user' "<task-notification>`n<tool-use-id>x</tool-use-id>`n</task-notification>"),
+            (& $rec 2210 'assistant' @(@{ type = 'text'; text = 'Shipped.' }))) -join "`n"), (New-Object System.Text.UTF8Encoding($false)))
+    $lev = Read-StopwatchTranscriptEvents -Path $lfile -From (& $at 0) -To (& $at 2300)
+    Assert-Equal 4 @($lev.Prompts).Count 'the owner''s prompts are the typed ones and the ! command, never a command''s output or a notification'
+    Assert-Equal 'none,60,1920,99' ((@($lev.Prompts) | ForEach-Object { if ($null -eq $_.Gap) { 'none' } else { [Math]::Round($_.Gap) } }) -join ',')'each prompt carries the gap since the turn before it last wrote, the first one none'
+    $ld = Get-StopwatchOwnerLoad -Events @($lev) -From (& $at 0) -To (& $at 2300)
+    Assert-Equal '2/2/159' ("$($ld.Questions)/$($ld.Hand)/$([Math]::Round($ld.Wait))") 'a reply ending in a question and an AskUserQuestion count once each; a ! command and a review park are steps by hand; a gap over 15 minutes is away'
+    $clip = Get-StopwatchOwnerLoad -Events @($lev) -From (& $at 60) -To (& $at 2300)
+    Assert-Equal '1/2/159' ("$($clip.Questions)/$($clip.Hand)/$([Math]::Round($clip.Wait))") 'only what falls inside the window counts'
+    Assert-Equal 2079 ([Math]::Round((Get-StopwatchOwnerLoad -Events @($lev) -From (& $at 0) -To (& $at 2300) -CapSeconds 3000).Wait)) 'the cap decides what reads as away'
+    Remove-Item -LiteralPath $lfile
+
     $tfile2 = Join-Path $tdir 'timeout.jsonl'
     [System.IO.File]::WriteAllText($tfile2, ((& $rec 0 'user' 'go'), (& $use 1 'u1' 'Bash' 'scripts/release/ship-pr.ps1'),
             (& $res 601 'u1' 'Command did not complete within its 600s timeout and was moved to the background (ID: b2).'),
@@ -588,10 +617,13 @@ try {
     (Get-Item -LiteralPath $late).LastWriteTimeUtc = (& $at 330)
     $covered = Get-StopwatchTranscriptCache -Runs @($run) -CachePath $legacyPath -TranscriptDir $pdir
     Assert-Equal 1 $covered.r1.Sessions 'a transcript whose first record lands within a minute of the start covers the run (the prompt hook stamps the start first)'
-    [System.IO.File]::WriteAllText($legacyPath, ('{"r1":{"end":"' + (& $stamp 330) + '","sessions":0,"phases":[{"name":"Waiting on you","seconds":330}]}}'))
+    [System.IO.File]::WriteAllText($legacyPath, ('{"r1":{"end":"' + (& $stamp 330) + '","sessions":0,"phases":[{"name":"Waiting on you","seconds":330}],"load":{"questions":0,"hand":0,"wait":0}}}'))
     $stamped = (Get-Item -LiteralPath $legacyPath).LastWriteTimeUtc
     $quiet = Get-StopwatchTranscriptCache -Runs @($run) -CachePath $legacyPath -TranscriptDir $pdir
     Assert-True ($quiet.r1.Sessions -eq 0 -and (Get-Item -LiteralPath $legacyPath).LastWriteTimeUtc -eq $stamped) 'an entry with no session whose run IS covered is taken from the cache as it stands, not recomputed and rewritten on every load'
+    [System.IO.File]::WriteAllText($legacyPath, ('{"r1":{"end":"' + (& $stamp 330) + '","sessions":1,"phases":[{"name":"Waiting on you","seconds":330}]}}'))
+    $gained = Get-StopwatchTranscriptCache -Runs @($run) -CachePath $legacyPath -TranscriptDir $pdir
+    Assert-True ($null -ne $gained.r1.Load -and $null -ne (Get-Content -LiteralPath $legacyPath -Raw | ConvertFrom-Json).r1.load) 'an entry cached before the owner-load signals is read once more, and written back with them (#4008)'
 
     # One run's page asks for its own run only, and the file is written whole: the others must survive it.
     $twoPath = Join-Path $tdir 'two\stopwatch-phases.json'

@@ -39,19 +39,60 @@
 
 ### PLAN
 
+#### Scope
+
+Issue #4008, on the owner's definitions recorded there (DaveKJohn's account davekokbwj, November 12, 2026).
+The Progress page's three owner-load signals are read from the session transcripts, in the same single pass
+that already splits a run into phases, and cached with them per run:
+
+- **Questions asked:** each `AskUserQuestion` call, or one for a turn that asked none and whose last text
+  ends in a question mark.
+- **Steps by hand:** each `! <command>` the owner typed (a user record opening with `<bash-input>`), plus
+  each shell call that sets `awaiting-review-dev` (a park for the owner's look).
+- **Waited on you:** the gap between a turn's last write and the owner's next prompt in the same transcript,
+  counted whole up to 15 minutes and not at all above (away). The prompt that starts a run brings the gap
+  before it, so the reading-and-deciding time between runs, which the Logbook's in-run idle phase never saw,
+  is counted. A task notification or a command's output is not a prompt.
+
+A visible result, so the branch parks for the owner's look.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `stopwatch-lib.ps1`: `Read-StopwatchTranscriptEvents` also returns the owner's prompts (with their gap
+      and whether they were a `!` command), the questions and the review parks; the new pure
+      `Get-StopwatchOwnerLoad` counts them inside a window; the transcript cache stores them per run as
+      `load`, and reads an entry cached without one once more to gain it.
+- [x] `progress-lib.ps1`: the team's numbers take the Load; "Waited on you" and the chart's waiting are the
+      prompt gaps (the idle time where no Load was read); the two "not recorded yet" tiles carry the counts,
+      and a note says what each signal counts.
+- [x] `serve-general-pages.ps1`: `/dev/progress` hands the cached Load to the page.
+- [x] Tests: `stopwatch.tests.ps1` (a fixture of every signal, the window, the cap, the cache gaining Load;
+      the covered-with-no-session assert now writes its entry with a load), `progress.tests.ps1` (the Load's
+      waiting, the counts, the tiles and the note).
+- [x] The Admin README describes what the three signals count.
+- [ ] Owner looks at the Progress page and says whether the three numbers read right.
 
 ### TEST
 
+- [x] `progress` (35) and `stopwatch` (318) green standalone.
+- [x] Previewed against this repo's own Logbook (an Admin from this branch on port 4896): 22 assignments,
+      6:17:47 worked, 14:02 waited on you (4%), 6 questions asked, 2 steps by hand, 20 chart columns, and the
+      note under the tiles.
+
 ### DEPLOY: feat/4008-owner-load-signals
 
-**Score:**
+The Progress page's owner-load signals are recorded. The transcript cache gains a `load` per run, and an
+entry cached before it is read from the transcripts once more; nothing else in the store changes.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+On Admin's Progress page, "Questions asked" and "Steps by hand" now show numbers instead of "not recorded
+yet", and "Waited on you" counts the time you spend reading and deciding before each prompt (up to 15 minutes;
+a longer gap reads as away), so it no longer shows close to 0% when you were the one the work waited on.
+
+**Score:** 3
 
 #### Pull Request
 

@@ -729,7 +729,8 @@ try {
                 $lb = Read-StopwatchStore -Path $timing.LogbookPath
                 $lbRuns = @(Get-LogbookRuns -Runs (Select-LogbookPage -Runs $lb.Runs -Page 1).Runs -StepLogPath $timing.StepLogPath -RepoRoot $timing.Root | Where-Object { $_ -and $_.End })
                 $lbPhases = Get-StopwatchTranscriptCache -Runs $lbRuns -CachePath $timing.LogbookPhasesPath -TranscriptDir $timing.TranscriptDir -StepLogPath $timing.StepLogPath -RepoRoot $timing.Root
-                $html = Format-ProgressPageHtml -Goals $glCache.Model -GoalsError $glCache.Error -Runs $lbRuns -WorkTimes (Get-LogbookWorkTimes -Runs $lbRuns -Transcript $lbPhases) -LogbookError $lb.Error -RepoName (Get-RepoIdentity).Name
+                $lbLoad = @{}; foreach ($id in $lbPhases.Keys) { if ($lbPhases[$id].Load) { $lbLoad[$id] = $lbPhases[$id].Load } }
+                $html = Format-ProgressPageHtml -Goals $glCache.Model -GoalsError $glCache.Error -Runs $lbRuns -WorkTimes (Get-LogbookWorkTimes -Runs $lbRuns -Transcript $lbPhases) -Load $lbLoad -LogbookError $lb.Error -RepoName (Get-RepoIdentity).Name
             } elseif ($path -cmatch '^/dev/today/?$') {
                 # The day plan (#3860): a day moves faster than the issues, so a minute; a failed run, or one that could not
                 # read GitHub, for 30 s. Bounded at 60 s like the other gh reads, since the loop serves nothing meanwhile.

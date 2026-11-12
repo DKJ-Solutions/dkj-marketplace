@@ -10,9 +10,10 @@
     for every other one. An open milestone is an empty segment, the one holding the goal's Now step outlined.
 
     HOW THE TEAM RAN: the Logbook's finished runs (logbook-lib.ps1, #3364), each one assignment, as how long Claude
-    worked and how long it waited on the owner (Get-LogbookWorkTimes). Two signals the issue names are not recorded
-    anywhere yet -- how many questions the owner was asked and how many steps the owner did by hand -- and the page
-    says so instead of showing a number nobody measured.
+    worked (Get-LogbookWorkTimes) and the owner-load signals the transcripts carry (#4008, Get-StopwatchOwnerLoad):
+    the questions put to the owner, the steps the owner did by hand, and how long the work waited on the owner.
+    That wait is the gap before each of the owner's prompts up to 15 minutes, so the time spent reading and deciding
+    between two runs counts too; the Logbook's own "Waiting on you" phase is only the idle time inside a run.
 
     Pure: the server hands in the goals model, the runs and their work times. Needs general-pages-lib.ps1 and
     stopwatch-lib.ps1 (Format-DevSeconds) loaded beside it, as the server has them. Pure ASCII (repo convention for
@@ -39,21 +40,27 @@ function Get-ProgressMilestoneKind {
 
 function ConvertTo-ProgressTeamStats {
     <#
-        Pure: the finished -Runs (the Logbook's, cut per issue) with their -WorkTimes (Get-LogbookWorkTimes) as
-        @{ Count; Measured; Work; Waiting; Share; Rows }. Only a run with a work time counts towards Work, Waiting and
-        Share, since a run the transcripts did not cover says nothing about who waited. Rows are the newest
-        $script:ProgressRunsShown of those, oldest first, each @{ Label; Work; Waiting }. Share is waiting of the whole,
-        a whole percentage, 0 with nothing measured.
+        Pure: the finished -Runs (the Logbook's, cut per issue) with their -WorkTimes (Get-LogbookWorkTimes) and their
+        -Load (the transcript cache's Load, Get-StopwatchOwnerLoad's, by run id) as
+        @{ Count; Measured; Work; Waiting; Share; Questions; Hand; Rows }. Only a run with a work time counts, since a
+        run the transcripts did not cover says nothing about who waited. Its waiting is its Load's Wait, or the
+        work time's idle where no Load was read; Questions and Hand add up its Load's. Rows are the newest
+        $script:ProgressRunsShown measured runs, oldest first, each @{ Label; Work; Waiting }. Share is waiting of the
+        whole, a whole percentage, 0 with nothing measured.
     #>
-    param([AllowEmptyCollection()][object[]]$Runs = @(), [hashtable]$WorkTimes = @{})
+    param([AllowEmptyCollection()][object[]]$Runs = @(), [hashtable]$WorkTimes = @{}, [hashtable]$Load = @{})
     $done = @($Runs | Where-Object { $_ -and $_.End } | Sort-Object { $_.Start })
     $measured = @($done | Where-Object { $WorkTimes[$_.Id] })
-    $work = 0.0; $wait = 0.0
-    foreach ($r in $measured) { $work += [double]$WorkTimes[$r.Id].Work; $wait += [double]$WorkTimes[$r.Id].Waiting }
+    $waitOf = { param($id) if ($Load[$id]) { [double]$Load[$id].Wait } else { [double]$WorkTimes[$id].Waiting } }
+    $work = 0.0; $wait = 0.0; $questions = 0; $hand = 0
+    foreach ($r in $measured) {
+        $work += [double]$WorkTimes[$r.Id].Work; $wait += (& $waitOf $r.Id)
+        if ($Load[$r.Id]) { $questions += [int]$Load[$r.Id].Questions; $hand += [int]$Load[$r.Id].Hand }
+    }
     $share = if (($work + $wait) -gt 0) { [int][Math]::Round(100.0 * $wait / ($work + $wait)) } else { 0 }
     $tail = if ($measured.Count -gt $script:ProgressRunsShown) { @($measured[($measured.Count - $script:ProgressRunsShown)..($measured.Count - 1)]) } else { $measured }
-    $rows = @($tail | ForEach-Object { @{ Label = [string]$_.Label; Work = [double]$WorkTimes[$_.Id].Work; Waiting = [double]$WorkTimes[$_.Id].Waiting } })
-    return @{ Count = $done.Count; Measured = $measured.Count; Work = $work; Waiting = $wait; Share = $share; Rows = $rows }
+    $rows = @($tail | ForEach-Object { @{ Label = [string]$_.Label; Work = [double]$WorkTimes[$_.Id].Work; Waiting = (& $waitOf $_.Id) } })
+    return @{ Count = $done.Count; Measured = $measured.Count; Work = $work; Waiting = $wait; Share = $share; Questions = $questions; Hand = $hand; Rows = $rows }
 }
 
 $script:ProgressPageStyle = '.progress-goal + .progress-goal { margin-top: var(--spacing-4); }' + "`n" +
@@ -140,7 +147,7 @@ function Format-ProgressRunsChartHtml {
 }
 
 function Format-ProgressTeamHtml {
-    <# The "how the team ran" card: four tiles over the Logbook, the two signals nobody records yet, and the chart. #>
+    <# The "how the team ran" card: six tiles over the Logbook's measured runs, with what each signal counts, and the chart. #>
     param([Parameter(Mandatory = $true)][hashtable]$Stats, [AllowEmptyString()][string]$ReadError = '')
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $tile = { param($label, $value) '<div class="tile"><div class="label">' + $label + '</div><div class="v num">' + $value + '</div></div>' }
@@ -152,9 +159,12 @@ function Format-ProgressTeamHtml {
     [void]$sb.Append((& $tile 'Claude worked' $(if ($Stats.Measured) { Format-DevSeconds $Stats.Work } else { '&ndash;' })))
     [void]$sb.Append((& $tile 'Waited on you' $(if ($Stats.Measured) { Format-DevSeconds $Stats.Waiting } else { '&ndash;' })))
     [void]$sb.Append((& $tile 'Share waiting' $(if ($Stats.Measured) { [string]$Stats.Share + '%' } else { '&ndash;' })))
-    [void]$sb.Append((& $tile 'Questions asked' 'not recorded yet'))
-    [void]$sb.Append((& $tile 'Steps by hand' 'not recorded yet'))
+    [void]$sb.Append((& $tile 'Questions asked' $(if ($Stats.Measured) { [string]$Stats.Questions } else { '&ndash;' })))
+    [void]$sb.Append((& $tile 'Steps by hand' $(if ($Stats.Measured) { [string]$Stats.Hand } else { '&ndash;' })))
     [void]$sb.Append('</div>')
+    [void]$sb.Append('<p class="note">Waited on you is the gap before each of your prompts, counted up to 15 minutes; a longer one reads as away. ' +
+        'A question is an <code>AskUserQuestion</code> call, or a reply ending in a question mark. ' +
+        'A step by hand is a <code>! &lt;command&gt;</code> you typed, or a park for your look (<code>awaiting-review-dev</code>); a test you run outside a session leaves no trace.</p>')
     if (@($Stats.Rows).Count) {
         [void]$sb.Append('<p class="note">The newest ' + @($Stats.Rows).Count + ' assignments the transcripts cover, oldest on the left. Hover a column for its name and times.</p>')
         [void]$sb.Append((Format-ProgressRunsChartHtml -Rows $Stats.Rows))
@@ -168,21 +178,22 @@ function Format-ProgressTeamHtml {
 function Format-ProgressPageHtml {
     <#
         The Progress page on '/dev/progress' (#4004): the two cards side by side, made for Admin's one screen.
-        -Goals is ConvertFrom-GoalsGraph's model (null when unread), -Runs the Logbook's finished runs and -WorkTimes
-        their Get-LogbookWorkTimes.
+        -Goals is ConvertFrom-GoalsGraph's model (null when unread), -Runs the Logbook's finished runs, -WorkTimes
+        their Get-LogbookWorkTimes and -Load their owner-load signals by run id (the transcript cache's Load).
     #>
     param(
         [AllowNull()][object[]]$Goals = $null,
         [AllowEmptyString()][string]$GoalsError = '',
         [AllowEmptyCollection()][object[]]$Runs = @(),
         [hashtable]$WorkTimes = @{},
+        [hashtable]$Load = @{},
         [AllowEmptyString()][string]$LogbookError = '',
         [AllowEmptyString()][string]$RepoName = ''
     )
-    $stats = ConvertTo-ProgressTeamStats -Runs $Runs -WorkTimes $WorkTimes
+    $stats = ConvertTo-ProgressTeamStats -Runs $Runs -WorkTimes $WorkTimes -Load $Load
     $body = '<div class="grid-2">' + (Format-ProgressGoalsHtml -Goals $Goals -ReadError $GoalsError) + (Format-ProgressTeamHtml -Stats $stats -ReadError $LogbookError) + '</div>'
     return Format-GeneralPageHtml -Title 'Progress' -Style ($script:ProgressPageStyle) -Body $body -SiteName $RepoName `
-        -Lead 'How far this repo''s app is, milestone by milestone, and how well the team ran: how long Claude worked and how long it waited on you.' `
-        -FooterNote ('The milestones are read from GitHub as the Goals page reads them; the assignments from this machine''s Logbook, the newest page of it, with the transcripts telling work from waiting. ' +
-            'How many questions you were asked and how many steps you did by hand are not recorded yet. Built by the dkj-policy plugin''s <code>apps/admin/lib/progress-lib.ps1</code>.')
+        -Lead 'How far this repo''s app is, milestone by milestone, and how well the team ran: how long Claude worked, how long it waited on you, and how much it asked of you.' `
+        -FooterNote ('The milestones are read from GitHub as the Goals page reads them; the assignments from this machine''s Logbook, the newest page of it, with the transcripts telling work from waiting and counting the questions and the steps by hand. ' +
+            'Built by the dkj-policy plugin''s <code>apps/admin/lib/progress-lib.ps1</code>.')
 }
