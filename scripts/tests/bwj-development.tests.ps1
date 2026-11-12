@@ -555,6 +555,28 @@ Assert-True ($glNsf.Contains('Het staat gepland voor de release van maandag 26 o
 $glNsfEn = Format-GoLiveBlock -Marker '<!-- m -->' -IssueRef 'o/r#945' -GoLiveDate 'Wednesday 21 October 2026' -NoStorefront -Live -Language en
 Assert-True ($glNsfEn.Contains("WHERE TO LOOK`n`nNothing changes for customers") -and $glNsfEn.Contains('There is nothing to look at on the storefront')) 'in English too, and without [where] the fixed sentence stands alone'
 
+# A HOTFIX GOES LIVE ON APPROVAL, NOT WITH A RELEASE (#4017): smartwatchbanden#1273 (PR #1278 to 'live')
+# was told it was planned for the Monday release and went with it either way -- both false for a hotfix.
+$glHf = Format-GoLiveBlock -Marker '<!-- m -->' -IssueRef 'o/r#1273' -GoLiveDate '' -ResultLink 'https://store.example/p' `
+    -Hotfix -LiveBy 'vrijdag 13 november 2026' -ReleaseMarker (Get-AsanaReleaseBlockMarker)
+Assert-True ($glHf.Contains("WANNEER HET LIVE KOMT`n`nHet gaat live als losse hotfix, buiten de vaste release om, zodra je het hebt goedgekeurd.`n`nHet streven is dat het uiterlijk vrijdag 13 november 2026 live staat.")) '-Hotfix says it goes live on approval, with -LiveBy as the aim'
+Assert-True ($glHf -notmatch 'gepland voor de release|hoe dan ook mee|laatste moment' -and $glHf.Contains('Het gaat pas live nadat je het hebt goedgekeurd')) 'and drops the release day and the ships-with-the-release-anyway ask'
+Assert-True (-not $glHf.Contains((Get-AsanaReleaseBlockMarker)) -and $glHf.Contains('reopened anytime')) 'a hotfix waits on no release, so it never carries the after-release marker'
+$glHfEn = Format-GoLiveBlock -Marker '<!-- m -->' -IssueRef 'o/r#1273' -GoLiveDate '' -ResultLink 'https://store.example/p' -Hotfix -Language en
+Assert-True ($glHfEn.Contains("WHEN IT GOES LIVE`n`nIt goes live as a separate hotfix, outside the regular release, once you have approved it.`n") -and $glHfEn -notmatch 'aim is') 'in English, and without -LiveBy no aim sentence'
+foreach ($glHfBad in @(
+    @{ Name = '-Live'; Args = @{ Live = $true } },
+    @{ Name = '-Version'; Args = @{ Version = '1.2.3' } }
+)) {
+    $hfArgs = @{ Marker = '<!-- m -->'; IssueRef = 'o/r#1'; GoLiveDate = ''; Hotfix = $true } + $glHfBad.Args
+    $hfThrew = $false; try { Format-GoLiveBlock @hfArgs | Out-Null } catch { $hfThrew = $true }
+    Assert-True $hfThrew "-Hotfix refuses $($glHfBad.Name)"
+}
+$hfThrew = $false; try { Format-GoLiveBlock -Marker '<!-- m -->' -IssueRef 'o/r#1' -GoLiveDate 'maandag 16 november 2026' -LiveBy 'vrijdag 13 november 2026' | Out-Null } catch { $hfThrew = $true }
+Assert-True $hfThrew '-LiveBy is refused without -Hotfix'
+$hfThrew = $false; try { Format-GoLiveBlock -Marker '<!-- m -->' -IssueRef 'o/r#1' -GoLiveDate '' | Out-Null } catch { $hfThrew = $true }
+Assert-True $hfThrew 'an empty -GoLiveDate is refused outside -Hotfix'
+
 # THE CLOSING RULE FOLLOWS A BLANK LINE, whichever section ends the block (#2701): a text line directly
 # above '---' is a setext H2, which rendered the block's last paragraph as a heading on GitHub.
 foreach ($glClosed in @(@{ Name = 'the ask section'; Block = $goLiveBlock }, @{ Name = 'the when section'; Block = $goLiveBare }, @{ Name = 'an English block'; Block = $goLiveEn })) {
