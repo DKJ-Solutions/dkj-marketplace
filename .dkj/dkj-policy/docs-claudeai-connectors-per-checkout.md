@@ -41,17 +41,26 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Sylvester's lens records that claude.ai connectors are account-wide and switched off per checkout through `/mcp`
 
 ### TEST
 
+- [x] The claim measured on this machine: `disabledMcpServers` appeared only in this checkout's block of `~/.claude.json`
+
 ### DEPLOY: docs/claudeai-connectors-per-checkout
 
-**Score:**
+[Sylvester's lens](../../.claude/specialists/lenses/specialist-05-15-lens.md#the-plugins-enabled-here-and-what-that-costs)
+now records that a claude.ai connector belongs to the account and loads in every repo, and that the way
+to keep one out of this repo is `/mcp` → **Disable**, which is stored per checkout in the machine's
+`~/.claude.json`. Klaviyo and Shopify, BWJ-only, cost 365 deferred tool names per session here.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A — a note in this repo's own lens; nothing a consumer takes changes.
+
+**Score:** N/A
 
 #### Pull Request
 
