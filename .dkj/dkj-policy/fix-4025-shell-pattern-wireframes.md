@@ -53,7 +53,7 @@ owner's look, no PR until then.
 ### TEST
 
 - [x] Pattern screenshotted headless at 1300 x 900 and the specimens page on the product (`/plugins/dkj-policy/dkj-brandbook/desktop-shell`): both show the wireframe structure, and the short specimen's list scrolls
-- [ ] The owner's look at the pattern and the specimens
+- [~] The owner's look at the pattern and the specimens -- Not done as a separate look: davekokbwj approved the branch through issues-sweep-reviews on 2026-11-12 without one.
 
 ### DEPLOY: fix/4025-shell-pattern-wireframes
 
