@@ -39,21 +39,50 @@
 
 ### PLAN
 
+#### Scope
+
+Issue #4002, scope **B** (decided by the owner on November 12, 2026): the as-is lo-fi analysis plus two
+alternative structures, every assumption about the user labelled rather than asked first. Two parts: Tessa
+fills Uma's repo lens before Uma is deployed, then Uma builds the wireframe in the owner's Figma file
+(`ffJGriv6yREpvkdTysm7mR`). The wireframe is a visible result, so the branch parks for the owner's look.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Tessa: fill `.claude/specialists/lenses/specialist-04-32-lens.md` (who the users are here, assumptions
+      over a question round, wireframes live in Figma, design rather than trace, hand-over to Gwen).
+- [x] Uma: mark the first attempt superseded (renamed, faded, a banner above it).
+- [x] Uma: brief board (assumptions A1-A3, tasks T1-T3, legend) and row A, as-is: desktop overview, desktop
+      detail, the flow between them, phone overview, phone menu open, link-card states, the unhappy path,
+      numbered annotations and findings F1-F7 ranked by severity.
+- [x] Uma: row B, alternative 1 "Previewing overview" (desktop, search state, empty state, phone) and row C,
+      alternative 2 "Catalogue shell" (desktop, phone, drawer open), plus a B-or-C cost note.
+- [ ] Owner looks at the wireframe in Figma and picks a structure.
 
 ### TEST
 
+- [x] Every frame screenshotted after composition; a bounds check finds no overlap between top-level
+      nodes other than an arrowhead on its own line.
+
 ### DEPLOY: docs/4002-uma-brandbook-wireframe
 
-**Score:**
+Uma's repo lens is filled in for the first time. It says who the users of this repo's pages are (the
+owners), that a statement about them is a labelled assumption unless confirmed, that her wireframes here
+live in Figma rather than as a page in the repo, and that a wireframe is designed by hand rather than traced
+from the HTML with `figma-generate-design`, which is the route that made the first attempt on #4002 a trace.
+The wireframe itself lives in Figma and is not part of this diff.
+
+**Score:** 2
+
+N/A: the lens is read only inside this repo, and nothing this repo ships changes.
 
 #### What makes this deploy extra special
 
-**Score:**
+The first wireframe of the team's new UX specialist that was designed rather than traced: three rows (the
+page as it is, a previewing overview with search, a catalogue shell with previous / next), with seven
+ranked findings and every user statement labelled as an assumption.
+
+**Score:** 1
 
 #### Pull Request
 
 Uma: a real lo-fi wireframe of the brand book overview in Figma
-
