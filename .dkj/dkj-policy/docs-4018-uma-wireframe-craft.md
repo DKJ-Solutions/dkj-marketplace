@@ -39,21 +39,39 @@
 
 ### PLAN
 
+- [x] Read #4018 and Uma's portable manual: it says wireframes stay plain (three places) and nothing
+      about how a wireframe is built in a design tool.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Uma's manual: "Structure before style" now says plain is the look, not the craft, and a new
+      hard rule says a wireframe in a design tool is built the professional way by default (tokens,
+      components with variants, instances, auto-layout, no spacer frames, named layers).
 
 ### TEST
 
+- [x] The gates run inside `ship-pr`.
+
 ### DEPLOY: docs/4018-uma-wireframe-craft
 
-**Score:**
+Uma's portable manual gains a hard rule: a wireframe built in a design tool is built the way a working
+UX designer builds it, by default: scoped tokens and text styles first, repeated elements as
+components with variants and properties, screens composed from instances, structure carried by
+auto-layout instead of empty spacer frames, and layers named for what they are. "Plain" in "structure
+before style" now reads as the look (greyscale, no brand), never as permission for the quick route
+([#4018](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4018);
+[`specialist-04-32-manual.md`](../../plugins/dkj-subagents/dkj-subagents-alpha/manuals/specialist-04-32-manual.md)).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer who asks Uma for a wireframe in Figma gets a file built from tokens, components and
+auto-layout without having to ask for it, instead of one-off frames held apart by spacer frames that
+the next designer has to rebuild.
+
+**Score:** 2
 
 #### Pull Request
 
 Uma's manual: a wireframe in a design tool is built the professional way by default
-
