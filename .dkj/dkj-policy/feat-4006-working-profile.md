@@ -39,19 +39,37 @@
 
 ### PLAN
 
+#### The three parts #4006 asks for
+
+The profile lives in the person's own `~/.claude/CLAUDE.md`, so it travels with them and never enters a
+repo. The orchestrator's body gets one short rule, and the template sits on a page beside the orchestrator
+skill. That page loads on demand, so the only always-on cost is the persona's pointer.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `skills/orchestrator/working-profile.md`: where a profile lives, what it may and may not change, and the template
+- [x] Chris's persona: one section, "The person's working profile — how, never what", pointing at that page
 
 ### TEST
 
+- [x] The gates run in `ship-pr`
+
 ### DEPLOY: feat/4006-working-profile
 
-**Score:**
+Inside this repo, nothing changes in how the gates or the release run.
+
+**Score:** N/A
 
 #### What makes this deploy extra special
 
-**Score:**
+A person can now write a working profile once, in their own `~/.claude/CLAUDE.md`, and Chris reads it in
+every repo they work in. It tunes how the team works with them (how long a question is, who tests, how a
+result is shown, how readily a reversible choice is asked about) and never loosens the constitution or the
+safety rules. The template, and why it lives at user level rather than in a repo lens, is on
+[`working-profile.md`](../../plugins/dkj-subagents/dkj-subagents-alpha/skills/orchestrator/working-profile.md)
+([#4006](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4006)).
+
+**Score:** 3
 
 #### Pull Request
 
