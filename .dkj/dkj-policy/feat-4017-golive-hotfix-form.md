@@ -39,21 +39,42 @@
 
 ### PLAN
 
+Inbound #4017 (measured in smartwatchbanden#1273, PR #1278 to `live`): the go-live block has no form for
+a hotfix-lane change, so it planned one for the Monday release and said it went with that release either
+way. Verified against `golive-block-rules.ps1`: `ReleaseDay` and `AskLook` are fixed text and no form
+avoids them. Add `-Hotfix` with an optional `-LiveBy`, as the issue proposes.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `golive-block-rules.ps1`: the hotfix sentences (nl/en), `Format-GoLiveBlock -Hotfix -LiveBy`, the hotfix ask, no release marker
+- [x] `build-golive-block.ps1`: `-Hotfix` and `-LiveBy`, their refusals, no release day or version projection
+- [x] the `golive-block` skill page: step 2 and the parameter table
+- [x] `bwj-development.tests.ps1`: asserts for the form, both languages, the marker and the refusals
 
 ### TEST
 
+- [x] `bwj-development.tests.ps1` green locally (955 asserts); the full gate runs in `ship-pr`
+
 ### DEPLOY: feat/4017-golive-hotfix-form
 
-**Score:**
+[`build-golive-block.ps1`](../../plugins/dkj-policy/extensions/bwj-development/scripts/task/build-golive-block.ps1)
+gains `-Hotfix` for a change that ships through a store's hotfix lane, a pull request to the live branch
+merged once the requester approves it. The block names no release day: it says the change goes live as a
+separate hotfix once approved, with `-LiveBy <date>` as the aim where the requester has a deadline. The ask
+treats the look as that approval and no longer says the change ships with the release either way. The block
+carries no release marker, so no "now live" message follows at the next release. It refuses `-LiveSince`,
+`-From`, `-ReleaseDay`, `-Version` and the other forms
+([#4017](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4017)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A BWJ store that ships a hotfix no longer has to bend `-ReleaseDay` to a deadline and patch the block by hand:
+`-Hotfix` tells the requester the truth, which is that it goes live once they approve it.
+
+**Score:** 3
 
 #### Pull Request
 
 golive-block: a hotfix form for a change that goes live on approval
-
