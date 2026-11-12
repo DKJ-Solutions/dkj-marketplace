@@ -56,9 +56,10 @@ skill. That page loads on demand, so the only always-on cost is the persona's po
 
 ### DEPLOY: feat/4006-working-profile
 
-Inside this repo, nothing changes in how the gates or the release run.
+This repo consumes the core team too, so its maintainers can write a profile the same way. The gates
+and the release run as before.
 
-**Score:** N/A
+**Score:** 2
 
 #### What makes this deploy extra special
 
