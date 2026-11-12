@@ -873,6 +873,15 @@ $script:StopwatchShellTools = '^(Bash|PowerShell)$'
 $script:StopwatchBackgroundTools = '^(Bash|PowerShell|Agent|Task)$'
 $script:StopwatchBackgroundText = '^\s*(Command running in background|Async agent launched)|was moved to the background'
 $script:StopwatchBusyPhase = 'Claude thinking and writing'
+# THE OWNER-LOAD SIGNALS (#4008, the owner's definitions of November 12, 2026). A user record that opens with one of
+# these is the harness speaking, not the owner prompting: a background call's notice, a shell or local command's output.
+$script:StopwatchNotOwnerPrompt = '^\s*<(task-notification|bash-stdout|bash-stderr|local-command-stdout|local-command-caveat)>'
+# A '! <command>' the owner typed: a step by hand.
+$script:StopwatchHandPrompt = '^\s*<bash-input>'
+# A shell command that parks an issue for the owner's look: the other step by hand.
+$script:StopwatchReviewPark = '(--add-label|-Park)\s+[''"]?[\w,-]*awaiting-review-dev'
+# The gap between a turn's end and the owner's next prompt counts as waiting on the owner up to this; a longer one is away.
+$script:StopwatchPromptWaitCapSeconds = 900
 # A SHIP CALL SPLIT BY ITS OWN STEPS (#3338). A ship-pr call is one tool call, and its command line cannot say
 # which of its local gates, its CI wait, a forwarded head's re-certification or its merge and fold a moment
 # belongs to. ship-pr marks each step it enters in the opt-in step log (Add-RunStepMark in run-progress-lib.ps1,
@@ -954,7 +963,14 @@ function Read-StopwatchTranscriptEvents {
         What one transcript (-Path, a .jsonl) holds between -From and -To that the phases are made of: every
         turn's start (a typed prompt or a task notification), every tool call with its result and, for one that
         ran in the background, the notification that it finished, and the last moment each turn wrote anything.
-        Returns @{ Turns = @(@{ Start; End }); Tools = @(@{ Phase; Start; End }) }, the times UTC.
+        Returns @{ Turns = @(@{ Start; End }); Tools = @(@{ Phase; Start; End }); Prompts; Questions; Parks }, the
+        times UTC.
+
+        THE OWNER-LOAD SIGNALS (#4008) come out of the same pass. Prompts are the turns the owner started, as
+        @{ At; Gap; Hand }: Gap the seconds since this transcript's previous turn last wrote ($null for its first turn
+        in the window), Hand a '! <command>'. Questions are @{ At }, one per AskUserQuestion call, or one for a turn
+        that asked none and whose last text ends in a question mark. Parks are @{ At }, one per shell call that sets
+        'awaiting-review-dev'.
 
         CHEAP ON PURPOSE: a transcript runs to tens of megabytes. A line's timestamp is read with a regex and
         compared as a string (ISO 8601 sorts as text), and only a user or assistant line inside the window is
@@ -966,7 +982,13 @@ function Read-StopwatchTranscriptEvents {
     $loText = Format-StopwatchStamp $From.AddHours(-1); $hiText = Format-StopwatchStamp $To
     $turns = New-Object System.Collections.ArrayList
     $calls = @{}; $results = @{}; $done = @{}
+    $prompts = New-Object System.Collections.ArrayList
+    $questions = New-Object System.Collections.ArrayList
+    $parks = New-Object System.Collections.ArrayList
     $turn = $null
+    # The turn's own questions: AskUserQuestion calls, and its last text while no tool call has followed it.
+    $asked = 0; $lastText = $null
+    $closeTurn = { if (-not $asked -and $lastText -and $lastText.Text -match '\?\s*$') { [void]$questions.Add(@{ At = $lastText.At }) } }
     foreach ($line in [IO.File]::ReadLines($Path)) {
         $m = [regex]::Match($line, '"timestamp":"([^"]+)"')
         if (-not $m.Success) { continue }
@@ -982,7 +1004,8 @@ function Read-StopwatchTranscriptEvents {
         if (-not $line.StartsWith('{"parentUuid"') -or $line.Contains('"isSidechain":true')) { continue }
         $isUser = $line.Contains('"type":"user"') -and -not $line.Contains('"isMeta":true')
         $isTool = $line.Contains('"type":"tool_use"')
-        if ($isUser -or $isTool) {
+        $isText = $line.Contains('"role":"assistant"') -and $line.Contains('"type":"text"')
+        if ($isUser -or $isTool -or $isText) {
             try { $rec = $line | ConvertFrom-Json } catch { $rec = $null }
             if ($rec -and $rec.message) {
                 $content = $rec.message.content
@@ -994,19 +1017,31 @@ function Read-StopwatchTranscriptEvents {
                             $results[[string]$c.tool_use_id] = @{ At = $ts; Background = ($text -match $script:StopwatchBackgroundText) }
                         }
                     } else {
+                        $said = if ($content -is [string]) { $content } else { [string](@($content | Where-Object { $_.type -eq 'text' }) | Select-Object -First 1).text }
+                        if ($said -notmatch $script:StopwatchNotOwnerPrompt) {
+                            $gap = if ($turn) { ((ConvertTo-StopwatchTime $ts) - (ConvertTo-StopwatchTime $turn.End)).TotalSeconds } else { $null }
+                            [void]$prompts.Add(@{ At = $ts; Gap = $gap; Hand = ($said -match $script:StopwatchHandPrompt) })
+                        }
+                        & $closeTurn; $asked = 0; $lastText = $null
                         $turn = @{ Start = $ts; End = $ts }; [void]$turns.Add($turn)
                     }
                 } elseif ($rec.type -eq 'assistant' -and $content -is [array]) {
-                    foreach ($c in @($content | Where-Object { $_.type -eq 'tool_use' })) {
+                    foreach ($c in @($content)) {
+                        if ($c.type -eq 'text' -and ([string]$c.text).Trim()) { $lastText = @{ At = $ts; Text = ([string]$c.text).Trim() } }
+                        if ($c.type -ne 'tool_use') { continue }
+                        $lastText = $null
                         $name = [string]$c.name
                         $cmd = if ($name -match $script:StopwatchShellTools -and $c.input) { [string]$c.input.command } else { '' }
                         $calls[[string]$c.id] = @{ Start = $ts; Tool = $name; Phase = (Get-StopwatchToolPhase -Name $name -Command $cmd) }
+                        if ($name -eq 'AskUserQuestion') { $asked++; [void]$questions.Add(@{ At = $ts }) }
+                        if ($cmd -match $script:StopwatchReviewPark) { [void]$parks.Add(@{ At = $ts }) }
                     }
                 }
             }
         }
         if ($turn -and $ts -gt $turn.End) { $turn.End = $ts }
     }
+    & $closeTurn
     $tools = foreach ($id in $calls.Keys) {
         $c = $calls[$id]; $r = $results[$id]
         $background = $r -and $r.Background -and $c.Tool -match $script:StopwatchBackgroundTools
@@ -1017,7 +1052,34 @@ function Read-StopwatchTranscriptEvents {
     return @{
         Turns = @(foreach ($t in $turns) { @{ Start = (ConvertTo-StopwatchTime $t.Start); End = (ConvertTo-StopwatchTime $t.End) } })
         Tools = @($tools | Where-Object { $_ })
+        Prompts = @(foreach ($p in $prompts) { @{ At = (ConvertTo-StopwatchTime $p.At); Gap = $p.Gap; Hand = [bool]$p.Hand } })
+        Questions = @(foreach ($q in $questions) { @{ At = (ConvertTo-StopwatchTime $q.At) } })
+        Parks = @(foreach ($p in $parks) { @{ At = (ConvertTo-StopwatchTime $p.At) } })
     }
+}
+
+function Get-StopwatchOwnerLoad {
+    <#
+        The owner-load signals of a run's window from -From to -To (#4008), out of the events of one or more
+        transcripts (-Events, Read-StopwatchTranscriptEvents'), each counted where its moment falls inside the window:
+        Questions, the questions put to the owner; Hand, the owner's '! <command>' prompts plus the parks for their
+        look; and Wait, in seconds, the gap before each owner prompt, counted whole up to -CapSeconds and not at all
+        above it, where it reads as away. The prompt that starts a run brings the gap before it, so the time the owner
+        spends reading and deciding between two runs is counted for the run it led to. Pure.
+    #>
+    param([AllowEmptyCollection()][object[]]$Events = @(), [Parameter(Mandatory = $true)][datetime]$From, [Parameter(Mandatory = $true)][datetime]$To,
+        [int]$CapSeconds = $script:StopwatchPromptWaitCapSeconds)
+    $in = { param($t) $t -ge $From -and $t -lt $To }
+    $questions = 0; $hand = 0; $wait = 0.0
+    foreach ($ev in @($Events | Where-Object { $_ })) {
+        $questions += @($ev.Questions | Where-Object { $_ -and (& $in $_.At) }).Count
+        $hand += @($ev.Parks | Where-Object { $_ -and (& $in $_.At) }).Count
+        foreach ($p in @($ev.Prompts | Where-Object { $_ -and (& $in $_.At) })) {
+            if ($p.Hand) { $hand++ }
+            if ($null -ne $p.Gap -and $p.Gap -gt 0 -and $p.Gap -le $CapSeconds) { $wait += [double]$p.Gap }
+        }
+    }
+    return @{ Questions = $questions; Hand = $hand; Wait = $wait }
 }
 
 function Get-StopwatchTranscriptPhases {
@@ -1103,6 +1165,9 @@ function Get-StopwatchTranscriptCache {
         cached entry with no session is judged again on the same terms: dropped when nothing covers its run, so
         one filed that way before goes, and kept as it stands when something does.
 
+        EACH ENTRY ALSO CARRIES THE RUN'S OWNER-LOAD SIGNALS as Load (#4008, Get-StopwatchOwnerLoad), from the same
+        read; an entry cached without one is read again, once, to gain it.
+
         A SHIP'S AND A CUT'S STEPS come from the step log at -StepLogPath (#3338, #3646; Read-RunStepMarks): the
         ship-pr and cut-release marks whose checkout is -RepoRoot's, so a run in another checkout on this machine
         never cuts this one's. Without -StepLogPath, or where dkj-policy's scripts/lib/run-progress-lib.ps1 is not
@@ -1115,14 +1180,17 @@ function Get-StopwatchTranscriptCache {
         try {
             $json = [System.IO.File]::ReadAllText($CachePath, (New-Object System.Text.UTF8Encoding($false))) | ConvertFrom-Json
             foreach ($p in @($json.PSObject.Properties)) {
+                $ld = $p.Value.load
                 $cache[$p.Name] = @{ End = [string]$p.Value.end; Sessions = [int]$p.Value.sessions
-                    Phases = @(foreach ($x in @($p.Value.phases)) { if ($x) { @{ Name = [string]$x.name; Seconds = [double]$x.seconds } } }) }
+                    Phases = @(foreach ($x in @($p.Value.phases)) { if ($x) { @{ Name = [string]$x.name; Seconds = [double]$x.seconds } } })
+                    Load = $(if ($ld) { @{ Questions = [int]$ld.questions; Hand = [int]$ld.hand; Wait = [double]$ld.wait } } else { $null }) }
             }
         } catch { $cache = @{} }
     }
     $out = @{}; $missing = @()
     foreach ($r in @($Runs | Where-Object { $_ -and $_.End })) {
-        if ($cache.ContainsKey($r.Id) -and $cache[$r.Id].End -eq (Format-StopwatchStamp $r.End) -and $cache[$r.Id].Sessions) { $out[$r.Id] = $cache[$r.Id] } else { $missing += $r }
+        # An entry written before the owner-load signals (#4008) has no Load, and is read once more to gain it.
+        if ($cache.ContainsKey($r.Id) -and $cache[$r.Id].End -eq (Format-StopwatchStamp $r.End) -and $cache[$r.Id].Sessions -and $cache[$r.Id].Load) { $out[$r.Id] = $cache[$r.Id] } else { $missing += $r }
     }
     if (-not $missing.Count) { return $out }
     # A transcript last written before the earliest missing start holds nothing of any of them.
@@ -1134,7 +1202,7 @@ function Get-StopwatchTranscriptCache {
     $dropped = $false; foreach ($r in $uncovered) { if ($cache.ContainsKey($r.Id)) { $cache.Remove($r.Id); $dropped = $true } }
     # A covered run whose cached entry had no session is taken as it stands: no session of this repo was active.
     $missing = @($missing | Where-Object { $uncovered -notcontains $_ } | Where-Object {
-            if ($cache.ContainsKey($_.Id) -and $cache[$_.Id].End -eq (Format-StopwatchStamp $_.End)) { $out[$_.Id] = $cache[$_.Id]; $false } else { $true } })
+            if ($cache.ContainsKey($_.Id) -and $cache[$_.Id].End -eq (Format-StopwatchStamp $_.End) -and $cache[$_.Id].Load) { $out[$_.Id] = $cache[$_.Id]; $false } else { $true } })
     if ($missing.Count) {
         $from = ($missing | ForEach-Object { $_.Start } | Measure-Object -Minimum).Minimum
         $to = ($missing | ForEach-Object { $_.End } | Measure-Object -Maximum).Maximum
@@ -1149,7 +1217,8 @@ function Get-StopwatchTranscriptCache {
         }
         foreach ($r in $missing) {
             $p = Get-StopwatchTranscriptPhases -Events $events -From $r.Start -To $r.End -StepMarks $marks
-            $out[$r.Id] = @{ End = (Format-StopwatchStamp $r.End); Sessions = $p.Sessions; Phases = $p.Phases }
+            $out[$r.Id] = @{ End = (Format-StopwatchStamp $r.End); Sessions = $p.Sessions; Phases = $p.Phases
+                Load = (Get-StopwatchOwnerLoad -Events $events -From $r.Start -To $r.End) }
         }
     }
     # A covered run means a transcript was read; a dropped entry means the file holds one it must lose.
@@ -1163,7 +1232,9 @@ function Get-StopwatchTranscriptCache {
         foreach ($id in $cache.Keys) { $keep[$id] = $cache[$id] }
         foreach ($id in $out.Keys) { $keep[$id] = $out[$id] }
         foreach ($id in @($keep.Keys | Sort-Object)) {
+            $ld = $keep[$id].Load
             $doc[$id] = [ordered]@{ end = $keep[$id].End; sessions = $keep[$id].Sessions; phases = @(foreach ($x in @($keep[$id].Phases)) { [ordered]@{ name = $x.Name; seconds = [Math]::Round($x.Seconds, 3) } }) }
+            if ($ld) { $doc[$id].load = [ordered]@{ questions = [int]$ld.Questions; hand = [int]$ld.Hand; wait = [Math]::Round([double]$ld.Wait, 3) } }
         }
         try {
             $dir = Split-Path -Parent $CachePath

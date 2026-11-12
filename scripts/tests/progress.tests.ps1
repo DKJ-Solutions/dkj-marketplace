@@ -68,6 +68,11 @@ $many = @(1..25 | ForEach-Object { @{ Id = "r$_"; Label = "run $_"; Start = $t0.
 $manyWork = @{}; 1..25 | ForEach-Object { $manyWork["r$_"] = @{ Work = 200; Waiting = 100 } }
 $sm = ConvertTo-ProgressTeamStats -Runs $many -WorkTimes $manyWork
 Assert-Equal "20/run 6/run 25" ("$(@($sm.Rows).Count)/$($sm.Rows[0].Label)/$($sm.Rows[-1].Label)") 'the chart keeps the newest twenty'
+$load = @{ a = @{ Questions = 2; Hand = 1; Wait = 300 } }
+$sl = ConvertTo-ProgressTeamStats -Runs $runs -WorkTimes $work -Load $load
+Assert-Equal '1500/29' ("$($sl.Waiting)/$($sl.Share)") 'a run with owner-load signals waits by its prompt gaps, one without by its idle time (#4008)'
+Assert-Equal '2/1' ("$($sl.Questions)/$($sl.Hand)") 'the questions and the steps by hand add up over the measured runs'
+Assert-Equal 300 $sl.Rows[0].Waiting 'and the chart draws the same waiting'
 $none = ConvertTo-ProgressTeamStats -Runs @() -WorkTimes @{}
 Assert-Equal '0/0' ("$($none.Count)/$($none.Share)") 'no run is zero, never a division by zero'
 
@@ -80,13 +85,16 @@ Assert-Equal 4 ([regex]::Matches($html, 'role="listitem"')).Count 'one segment p
 Assert-True ($html -match 'class="is-done" style="--c: var\(--graph-2\)"') 'a closed used milestone is filled in the used colour'
 Assert-True ($html -match 'class="is-done" style="--c: var\(--graph-1\)"') 'a closed milestone without a kind label is filled as built'
 Assert-True ($html -match '#13 Item 13: open, the next step is here"[^>]*class="is-now"') 'the open milestone holding Now is outlined, and says so to a screen reader'
-Assert-True ($html -match 'Questions asked</div><div class="v num">not recorded yet') 'a signal nobody records says so instead of showing a number'
+$lhtml = Format-ProgressPageHtml -Goals $goals -Runs $runs -WorkTimes $work -Load $load -RepoName 'demo'
+Assert-True ($lhtml -match 'Questions asked</div><div class="v num">2<' -and $lhtml -match 'Steps by hand</div><div class="v num">1<') 'the questions and the steps by hand are recorded numbers (#4008)'
+Assert-True ($lhtml -notmatch 'not recorded yet') 'and no tile says it is not recorded'
+Assert-True ($lhtml -match 'counted up to 15 minutes' -and $lhtml -match 'awaiting-review-dev') 'the card says what each signal counts'
 Assert-True ($html -match '33%') 'the share waiting is shown'
 Assert-Equal 2 ([regex]::Matches($html, '<g class="bar"')).Count 'one chart column per measured run'
 Assert-True ($html -notmatch [char]0x2014) 'no em dash anywhere on the page (the brand book)'
 $empty = Format-ProgressPageHtml -Goals @() -Runs @() -WorkTimes @{}
 Assert-True ($empty -match 'No goal yet' -and $empty -match 'No finished assignment') 'with nothing to show, both cards say so'
-Assert-True ($empty -match 'Claude worked</div><div class="v num">&ndash;') 'and a time nothing measured is a dash, not 0s'
+Assert-True ($empty -match 'Claude worked</div><div class="v num">&ndash;' -and $empty -match 'Questions asked</div><div class="v num">&ndash;') 'and a time or a count nothing measured is a dash, not 0'
 $err = Format-ProgressPageHtml -Goals $null -GoalsError 'gh exited 1' -LogbookError 'the store is not JSON'
 Assert-True ($err -match 'could not be read from GitHub: gh exited 1' -and $err -match 'The Logbook could not be read: the store is not JSON') 'a read error is shown on its card, never a blank page'
 $evil = ConvertFrom-GoalsGraph -Data ([pscustomobject]@{ data = [pscustomobject]@{ repository = [pscustomobject]@{ issues = [pscustomobject]@{ nodes = @(
