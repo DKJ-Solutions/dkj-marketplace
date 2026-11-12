@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    The colour model of the house style (#3235): thirteen tokens per theme, computed from the theme's hue and
+    The colour model of the house style (#3235): seventeen tokens per theme, computed from the theme's hue and
     mode, so a theme is never tuned by hand again.
 
 .DESCRIPTION
@@ -15,6 +15,10 @@
     There is no grey for the far end (--muted-inverse was retired, Maikel, November 1, 2026): a theme's colours are
     the 60-30-10 groups and nothing else, and no colour reads at 4.5:1 on both bg-4 and fg-1, so it fitted none.
     The quieter line on an inverted surface takes --bg-4.
+      --primary-border the edge of a control (a button, a segmented control, a search or filter field), in the primary group (the 10)
+                       beside --primary-muted (the owner, November 12, 2026: every colour token sits in the 60, the 30 or the
+                       10, and a new one joins the group it belongs to): a grey of the primary's own hue, as close to the
+                       paper as 3:1 on bg-3 allows, WCAG 1.4.11's floor for a control's boundary.
       --fg-1..4        FOUR text colours that read on the page, near black, in very small steps: fg-4 is still
                        very dark, only a little less so than fg-1.
     A dark theme is the mirror: the paper runs from black towards a little lighter and the text is near white. Its
@@ -58,7 +62,7 @@ function Get-HousePaletteSteps {
         @{ PaperL = @(0.995, 0.965, 0.94, 0.905, 0.87); PaperC = @(0.006, 0.014, 0.028, 0.045, 0.058)
            FgL    = @(0.12, 0.16, 0.20, 0.24);     FgC    = @(0.030, 0.030, 0.028, 0.026); MutedC = 0.03; PrimaryFloor = 4.55 }
     } else {
-        @{ PaperL = @(0.13, 0.165, 0.195, 0.235, 0.275); PaperC = @(0.020, 0.024, 0.032, 0.045, 0.055)
+        @{ PaperL = @(0.13, 0.175, 0.215, 0.26, 0.30); PaperC = @(0.020, 0.024, 0.032, 0.045, 0.055)
            FgL    = @(0.99, 0.955, 0.92, 0.885);   FgC    = @(0.006, 0.010, 0.012, 0.014); MutedC = 0.06; PrimaryFloor = 9.0; PrimaryChromaMax = 0.13 }
     }
 }
@@ -164,9 +168,77 @@ function Find-LightnessAtContrast {
     & $Make $(if ($Toward -eq 'high') { $Lo } else { $Hi })
 }
 
+# ---- the graph slots: computed per theme, away from the primary and the status hues --------------------------
+# (the owner, November 12, 2026: a series colour that looks like the theme's own colour, as the magenta series did in
+# the magenta theme, or like a status, as the orange series looked like a warning, reads as that meaning.)
+# Distance is OKLab Delta E x100, the dataviz validator's measure; colour-vision deficiency is simulated with the
+# Machado, Oliveira and Fernandes (2009) transforms at severity 1.0, the model the validator's thresholds are set for.
+function Get-OkLab {
+    param([string]$Hex, [ValidateSet('', 'protan', 'deutan')][string]$Kind = '')
+    $lin = @(ConvertFrom-HexColor $Hex | ForEach-Object { ConvertTo-LinearChannel $_ })
+    if ($Kind) {
+        $m = @{ protan = @(@(0.152286, 1.052583, -0.204868), @(0.114503, 0.786281, 0.099216), @(-0.003882, -0.048116, 1.051998))
+                deutan = @(@(0.367322, 0.860646, -0.227968), @(0.280085, 0.672501, 0.047413), @(-0.011820, 0.042940, 0.968881)) }[$Kind]
+        $lin = @(0..2 | ForEach-Object { [math]::Min(1.0, [math]::Max(0.0, $m[$_][0] * $lin[0] + $m[$_][1] * $lin[1] + $m[$_][2] * $lin[2])) })
+    }
+    $l = [math]::Pow(0.4122214708 * $lin[0] + 0.5363325363 * $lin[1] + 0.0514459929 * $lin[2], 1 / 3)
+    $mm = [math]::Pow(0.2119034982 * $lin[0] + 0.6806995451 * $lin[1] + 0.1073969566 * $lin[2], 1 / 3)
+    $s = [math]::Pow(0.0883024619 * $lin[0] + 0.2817188376 * $lin[1] + 0.6299787005 * $lin[2], 1 / 3)
+    @((0.2104542553 * $l + 0.7936177850 * $mm - 0.0040720468 * $s), (1.9779984951 * $l - 2.4285922050 * $mm + 0.4505937099 * $s), (0.0259040371 * $l + 0.7827717662 * $mm - 0.8086757660 * $s))
+}
+
+function Get-OkLabDeltaE {
+    <# OKLab Delta E x100 between two colours; with -Kind, as a protan or deutan reader sees them. #>
+    param([string]$A, [string]$B, [ValidateSet('', 'protan', 'deutan')][string]$Kind = '')
+    $p = Get-OkLab $A $Kind; $q = Get-OkLab $B $Kind
+    100 * [math]::Sqrt([math]::Pow($p[0] - $q[0], 2) + [math]::Pow($p[1] - $q[1], 2) + [math]::Pow($p[2] - $q[2], 2))
+}
+
+function Get-OkLabCvdDeltaE { param([string]$A, [string]$B) [math]::Min((Get-OkLabDeltaE $A $B 'protan'), (Get-OkLabDeltaE $A $B 'deutan')) }
+
+function Get-HouseGraphRules {
+    <# The floors a graph slot must reach, per theme. #>
+    @{ FromPrimary = 18; FromStatus = 15; FromSlot = 15; FromSlotCvd = 6; OnPaper = 3 }
+}
+
+function Get-HouseGraphPool {
+    <# The candidates, in order of preference: the first three a theme accepts are its --graph-1..3. Blue, purple-magenta
+       and deep teal first, then a wine and a violet for the themes whose primary sits on one of them. None is red, orange,
+       yellow or green: those hues are the status colours. Searched with the dataviz validator's measures (November 12,
+       2026) so that every theme gets three. #>
+    param([ValidateSet('light', 'dark')][string]$Mode)
+    if ($Mode -eq 'light') { @('#2574d1', '#a63aa8', '#007c6e', '#8b0f49', '#5c2f95') }
+    else                   { @('#2f73dd', '#e48fe8', '#11a3a0', '#b1667e', '#a264b0') }
+}
+
+function Get-HouseGraphStatus {
+    <# The status fills a graph slot must stay away from: positive, negative and warning, the theme overrides of the
+       warning included (#b88a00 in rust, #f08a24 in yellow). #>
+    param([ValidateSet('light', 'dark')][string]$Mode)
+    if ($Mode -eq 'light') { @('#0ca30c', '#d03b3b', '#e0761a', '#b88a00') } else { @('#25b225', '#e66767', '#ffc61a', '#f08a24') }
+}
+
+function Get-HouseGraphSlots {
+    <# The three graph slots of a theme: the pool walked in order, each candidate kept when it stands FromPrimary off the
+       primary, FromStatus off every status fill, reads at OnPaper on bg-1 and bg-3, and stands FromSlot (and FromSlotCvd
+       for a protan or deutan reader) off every slot already kept. Throws when fewer than three remain. #>
+    param([Parameter(Mandatory)]$Palette, [Parameter(Mandatory)][ValidateSet('light', 'dark')][string]$Mode)
+    $r = Get-HouseGraphRules; $status = Get-HouseGraphStatus -Mode $Mode; $kept = @()
+    foreach ($c in Get-HouseGraphPool -Mode $Mode) {
+        if ($kept.Count -eq 3) { break }
+        if ((Get-OkLabDeltaE $c $Palette['--primary']) -lt $r.FromPrimary) { continue }
+        if (@($status | Where-Object { (Get-OkLabDeltaE $c $_) -lt $r.FromStatus }).Count) { continue }
+        if ((Get-ContrastRatio $c $Palette['--bg-1']) -lt $r.OnPaper -or (Get-ContrastRatio $c $Palette['--bg-3']) -lt $r.OnPaper) { continue }
+        if (@($kept | Where-Object { (Get-OkLabDeltaE $c $_) -lt $r.FromSlot -or (Get-OkLabCvdDeltaE $c $_) -lt $r.FromSlotCvd }).Count) { continue }
+        $kept += $c
+    }
+    if ($kept.Count -lt 3) { throw "only $($kept.Count) graph slot(s) pass for primary $($Palette['--primary']) ($Mode)" }
+    $kept
+}
+
 # ---- the palette ----------------------------------------------------------------------------------------------
 function Get-HousePalette {
-    <# The thirteen tokens of one theme, as an ordered map of token name to #rrggbb. #>
+    <# The seventeen tokens of one theme, as an ordered map of token name to #rrggbb. #>
     param([Parameter(Mandatory)][double]$Hue, [Parameter(Mandatory)][ValidateSet('light', 'dark')][string]$Mode, [double]$ChromaMax = 0)
     $steps = Get-HousePaletteSteps -Mode $Mode
     if ($ChromaMax -gt 0) { $steps.PrimaryChromaMax = $ChromaMax }
@@ -205,12 +277,22 @@ function Get-HousePalette {
     # the text. A rule reads them; it never derives them with color-mix().
     $p['--primary-raised'] = Get-SrgbMix $primary $paper[0] 0.15
     $p['--primary-hover']  = Get-SrgbMix $primary $fg[0] 0.15
+    # the control edge, a member of the primary group (the 10) (owner, November 12, 2026): a grey of the primary's own hue at the muted grey's
+    # chroma, as close to the paper as 3:1 on bg-3 allows (WCAG 1.4.11, non-text contrast), so a button, a segmented
+    # control or a search field shows its boundary on the page, on a card and on a card in a group. bg-3 and bg-4 stay
+    # the quiet lines between surfaces.
+    $makeBorder = { param($l) ConvertFrom-OkLch $l $mc $mutedHue }.GetNewClosure()
+    if ($Mode -eq 'light') { $p['--primary-border'] = Find-LightnessAtContrast $makeBorder $paper[2] 3.05 0 1 'high' }
+    else                   { $p['--primary-border'] = Find-LightnessAtContrast $makeBorder $paper[2] 3.05 0 1 'low' }
     for ($i = 0; $i -lt 4; $i++) { $p["--fg-$($i + 1)"] = $fg[$i] }
+    # the three series colours, per theme (the owner, November 12, 2026): away from this theme's primary and the status hues
+    $g = Get-HouseGraphSlots -Palette $p -Mode $Mode
+    for ($i = 0; $i -lt 3; $i++) { $p["--graph-$($i + 1)"] = $g[$i] }
     $p
 }
 
 function Format-HousePaletteDeclarations {
-    <# The thirteen tokens as one line of CSS declarations, in the stylesheet's order. #>
+    <# The seventeen tokens as one line of CSS declarations, in the stylesheet's order. #>
     param([Parameter(Mandatory)]$Palette)
     ($Palette.Keys | ForEach-Object { "$($_): $($Palette[$_]);" }) -join ' '
 }
@@ -225,6 +307,8 @@ function Get-HousePaletteContrast {
     $rows += @{ Pair = 'muted on bg-2'; Ratio = Get-ContrastRatio $Palette['--primary-muted'] $Palette['--bg-2']; Floor = 4.5 }
     $rows += @{ Pair = 'muted on bg-4'; Ratio = Get-ContrastRatio $Palette['--primary-muted'] $Palette['--bg-4']; Floor = 4.5 }
     $rows += @{ Pair = 'bg-4 on fg-1'; Ratio = Get-ContrastRatio $Palette['--bg-4'] $Palette['--fg-1']; Floor = 7 }
+    foreach ($n in 1..3) { foreach ($k in @(1, 3)) { $rows += @{ Pair = "graph-$n on bg-$k"; Ratio = Get-ContrastRatio $Palette["--graph-$n"] $Palette["--bg-$k"]; Floor = 3 } } }
+    foreach ($n in 1..3) { $rows += @{ Pair = "primary-border on bg-$n"; Ratio = Get-ContrastRatio $Palette['--primary-border'] $Palette["--bg-$n"]; Floor = 3 } }
     $rows += @{ Pair = 'bg-1 on muted'; Ratio = Get-ContrastRatio $Palette['--bg-1'] $Palette['--primary-muted']; Floor = 4.5 }
     $rows
 }

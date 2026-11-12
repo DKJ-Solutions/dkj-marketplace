@@ -312,7 +312,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
    one for a dialog. The number input shows no spin buttons. */
 .stepper { display: grid; grid-template-columns: var(--tap) 3.5rem var(--tap); gap: var(--spacing-1); }
 .stepper--lg { grid-template-columns: var(--control-lg) 5rem var(--control-lg); gap: var(--spacing-2); }
-.stepper :is(button, input) { height: var(--tap); margin: 0; padding: 0; font: inherit; font-size: var(--text-h3); color: var(--fg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); }
+.stepper :is(button, input) { height: var(--tap); margin: 0; padding: 0; font: inherit; font-size: var(--text-h3); color: var(--fg-1); border: 1px solid var(--primary-border); border-radius: var(--radius-2); }
 .stepper button { line-height: 1; background: var(--bg-2); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .stepper input { display: block; padding: 0 var(--spacing-1); text-align: center; font-variant-numeric: tabular-nums; background: var(--bg-1); -moz-appearance: textfield; appearance: textfield; }
 .stepper input::-webkit-inner-spin-button, .stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -326,7 +326,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
    right while there is something to tap. An option is .combo__option, active on aria-selected="true" (a tint and a
    bar at the left), --own the "add what I typed" option and --more a line that is not an option. */
 .combo { display: grid; grid-template-columns: minmax(0, 1fr); }
-.combo__input, .combo__picked { grid-row: 1; grid-column: 1; min-height: var(--tap); font: inherit; color: var(--fg-1); background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); }
+.combo__input, .combo__picked { grid-row: 1; grid-column: 1; min-height: var(--tap); font: inherit; color: var(--fg-1); background: var(--bg-1); border: 1px solid var(--primary-border); border-radius: var(--radius-2); }
 .combo__input { width: 100%; padding: var(--spacing-2-5) var(--spacing-3); font-size: var(--text-h3); }   /* 16px or more: iOS zooms in below it */
 .combo__input:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; border-color: var(--primary-muted); }
 .combo__input--under { opacity: 0; pointer-events: none; }

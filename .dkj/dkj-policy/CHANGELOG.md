@@ -2,7 +2,54 @@
 
 ## [Unreleased]
 
-**11 / 19 minor entries** <!-- pending-tally -->
+**13 / 21 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4025-shell-pattern-wireframes · 20261112-195748Z
+
+The brand book's Admin shell reference page and its Desktop shell specimens now show the shell as Admin draws it
+since the Figma wireframes: a brand row at the top of the sidebar, grouped navigation sections, and a page header
+in place of the toolbar. A repo building its own Admin page from the reference gets the current structure, and a
+list in the shell scrolls from the stylesheet alone.
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Closes a gap the wireframes branch itself left: the reference the README points to showed a shell Admin no
+longer draws.
+**Score:** 1
+
+#### Pull Request
+
+Brand book: admin-shell pattern and Desktop shell specimens follow the Figma wireframe structure
+
+Plugins: dkj-policy
+
+[PR #4033](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4033)
+
+---
+
+### DEPLOY: feat/palette-border-graph · 20261112-194630Z
+
+Controls now show their edge: a plain button, a segmented control, the info button, the search and filter fields
+and the product's stepper and combo field take a new `--primary-border`, a grey of the theme's colour in the 30 group at 3:1 on
+the page and on a card, in all twelve themes. The three graph colours are now computed per theme from blue, purple-magenta, deep teal, wine and violet,
+so a series no longer looks like the theme's own colour, a warning or a gain. The dark themes' surfaces stand a little further apart.
+**Score:** 2
+
+#### What makes this deploy extra special
+
+The house palette now promises non-text contrast for controls, computed per theme rather than typed, and the brand book states that every theme colour belongs to the 60, the 30 or the 10.
+**Score:** 2
+
+#### Pull Request
+
+Palette: a 3:1 control border, wider dark paper steps, colour-blind-safe graph slots
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4029](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4029)
+
+---
 
 ### DEPLOY: fix/4028-stale-park-reads-body · 20261112-171524Z
 
