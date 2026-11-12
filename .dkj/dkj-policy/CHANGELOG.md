@@ -2,7 +2,30 @@
 
 ## [Unreleased]
 
-**11 / 18 minor entries** <!-- pending-tally -->
+**11 / 19 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4028-stale-park-reads-body · 20261112-171524Z
+
+An issue filed already parked under `awaiting-pull` now comes free on its own once its blocker lands, provided
+its body carries the line `Parked: waiting on <#n or branch>.`. Until now only a parking comment was read, so
+such an issue stayed skipped by every sweep after the merge, and the sweep's message now says which line to add
+where neither names the wait.
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Nothing beyond the repair itself: one more tracker read in a rare case, and one line a filer now writes.
+**Score:** N/A
+
+#### Pull Request
+
+claim-issue: stale-park reads the waiting-on clause from the issue body when no parking comment carries one
+
+Plugins: dkj-policy
+
+[PR #4032](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4032)
+
+---
 
 ### DEPLOY: fix/4030-fit-alarm-shell-specimen · 20261112-165310Z
 
