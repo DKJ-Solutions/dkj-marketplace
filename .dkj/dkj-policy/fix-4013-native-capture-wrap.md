@@ -39,19 +39,32 @@
 
 ### PLAN
 
+#4013: the caret assert in `native-capture.tests.ps1` failed from a long checkout root. Verified before
+repairing: Windows PowerShell 5.1's `Out-String` wraps the NormalView `At <path>:<line>` line at 120
+columns, and with a 96-character directory the wrap fell inside the path; `Out-String -Width 4096`
+keeps that line whole.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/tests/native-capture.tests.ps1`: render the raw refusal with `Out-String -Width 4096`
 
 ### TEST
 
+- [x] the gate's own run of the suite (ship-pr)
+
 ### DEPLOY: fix/4013-native-capture-wrap
 
-**Score:**
+The `native-capture` suite no longer fails when it runs from a checkout with a long root path, such
+as a sweep lane: the assert that looks for the file name in the rendered error now reads it unwrapped
+([#4013](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4013)).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A test of this repo only; nothing a subscriber takes changes.
+
+**Score:** N/A
 
 #### Pull Request
 
