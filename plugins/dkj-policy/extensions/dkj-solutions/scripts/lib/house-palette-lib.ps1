@@ -15,7 +15,7 @@
     There is no grey for the far end (--muted-inverse was retired, Maikel, November 1, 2026): a theme's colours are
     the 60-30-10 groups and nothing else, and no colour reads at 4.5:1 on both bg-4 and fg-1, so it fitted none.
     The quieter line on an inverted surface takes --bg-4.
-      --primary-border the edge of a control (a button, a segmented control, a search or filter field), in the 30 group
+      --primary-border the edge of a control (a button, a segmented control, a search or filter field), in the primary group (the 10)
                        beside --primary-muted (the owner, November 12, 2026: every colour token sits in the 60, the 30 or the
                        10, and a new one joins the group it belongs to): a grey of the primary's own hue, as close to the
                        paper as 3:1 on bg-3 allows, WCAG 1.4.11's floor for a control's boundary.
@@ -277,7 +277,7 @@ function Get-HousePalette {
     # the text. A rule reads them; it never derives them with color-mix().
     $p['--primary-raised'] = Get-SrgbMix $primary $paper[0] 0.15
     $p['--primary-hover']  = Get-SrgbMix $primary $fg[0] 0.15
-    # the control edge, a member of the 30 (owner, November 12, 2026): a grey of the primary's own hue at the muted grey's
+    # the control edge, a member of the primary group (the 10) (owner, November 12, 2026): a grey of the primary's own hue at the muted grey's
     # chroma, as close to the paper as 3:1 on bg-3 allows (WCAG 1.4.11, non-text contrast), so a button, a segmented
     # control or a search field shows its boundary on the page, on a card and on a card in a group. bg-3 and bg-4 stay
     # the quiet lines between surfaces.
