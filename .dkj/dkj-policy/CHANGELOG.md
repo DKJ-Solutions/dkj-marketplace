@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**2 / 4 minor entries** <!-- pending-tally -->
+**3 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4006-working-profile · 20261112-090809Z
+
+This repo consumes the core team too, so its maintainers can write a profile the same way. The gates
+and the release run as before.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A person can now write a working profile once, in their own `~/.claude/CLAUDE.md`, and Chris reads it in
+every repo they work in. It tunes how the team works with them (how long a question is, who tests, how a
+result is shown, how readily a reversible choice is asked about) and never loosens the constitution or the
+safety rules. The template, and why it lives at user level rather than in a repo lens, is on
+[`working-profile.md`](../../plugins/dkj-subagents/dkj-subagents-alpha/skills/orchestrator/working-profile.md)
+([#4006](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4006)).
+
+**Score:** 3
+
+#### Pull Request
+
+A per-person working profile the specialists read in every repo
+
+Plugins: dkj-subagents-alpha
+
+[PR #4007](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4007)
+
+---
 
 ### DEPLOY: fix/3998-register-three-consumers · 20261111-164400Z
 
