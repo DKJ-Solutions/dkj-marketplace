@@ -2,7 +2,37 @@
 
 ## [Unreleased]
 
-**7 / 10 minor entries** <!-- pending-tally -->
+**8 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4017-golive-hotfix-form · 20261112-111334Z
+
+[`build-golive-block.ps1`](../../plugins/dkj-policy/extensions/bwj-development/scripts/task/build-golive-block.ps1)
+gains `-Hotfix` for a change that ships through a store's hotfix lane, a pull request to the live branch
+merged once the requester approves it. The block names no release day: it says the change goes live as a
+separate hotfix once approved, with `-LiveBy <date>` as the aim where the requester has a deadline. The ask
+treats the look as that approval and no longer says the change ships with the release either way. The block
+carries no release marker, so no "now live" message follows at the next release. It refuses `-LiveSince`,
+`-From`, `-ReleaseDay`, `-Version` and the other forms
+([#4017](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4017)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A BWJ store that ships a hotfix no longer has to bend `-ReleaseDay` to a deadline and patch the block by hand:
+`-Hotfix` tells the requester the truth, which is that it goes live once they approve it.
+
+**Score:** 3
+
+#### Pull Request
+
+golive-block: a hotfix form for a change that goes live on approval
+
+Plugins: bwj-development
+
+[PR #4021](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4021)
+
+---
 
 ### DEPLOY: docs/4018-uma-wireframe-craft · 20261112-110137Z
 
