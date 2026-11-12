@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**9 / 12 minor entries** <!-- pending-tally -->
+**9 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4011-plugins-route · 20261112-115800Z
+
+The product server's plugin pages moved from `/marketplace` back to `/plugins`, with the h1, the
+trail and the menu label named Plugins again; every old `/marketplace` address, the brand book's
+token pages included, answers with a 303 to the same page under `/plugins`
+([#4011](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4011)). Only the product server in
+this source repo serves these pages.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+No consumer runs the product server, and a consumer's Admin links to it only in the source repo, so
+nothing a subscriber takes changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+Product server: rename the /marketplace route to /plugins
+
+Plugins: dkj-policy
+
+[PR #4016](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4016)
+
+---
 
 ### DEPLOY: feat/4009-brandbook-previewing-overview · 20261112-112521Z
 
