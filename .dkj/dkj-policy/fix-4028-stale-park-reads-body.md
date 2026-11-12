@@ -39,19 +39,32 @@
 
 ### PLAN
 
+#4028: `-Candidates` read an `awaiting-pull` wait only from a parking comment, so an issue parked at filing
+(label in the same `gh issue create`) was never unparked. Read the body as a fallback with the same clause
+grammar, and make the filing rule write that clause, so it does not recur.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-ParkingWaitReferences` takes `-Body`, read with the same `Parked ... waiting on` grammar only when no comment carries one
+- [x] `claim-issue.ps1 -Candidates` fetches the body (one `gh issue view` per such issue) when no comment names the wait, and its unread reason says which line to add
+- [x] `issues-sweep` skill and Chris's lens: filing under `awaiting-pull` writes `Parked: waiting on <#n or branch>.` in the body
+- [x] Plugin mirrors of the lib and the script kept byte-identical
 
 ### TEST
 
+- [x] `claim-issue.tests.ps1`: the body clause is read, a comment outranks it, prose citing a branch is not read, and `-Candidates` hands the body over
+
 ### DEPLOY: fix/4028-stale-park-reads-body
 
-**Score:**
+An issue filed already parked under `awaiting-pull` now comes free on its own once its blocker lands, provided
+its body carries the line `Parked: waiting on <#n or branch>.`. Until now only a parking comment was read, so
+such an issue stayed skipped by every sweep after the merge, and the sweep's message now says which line to add
+where neither names the wait.
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+**Score:** N/A
 
 #### Pull Request
 

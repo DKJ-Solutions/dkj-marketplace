@@ -72,7 +72,10 @@ is small and focused on maintaining this product — agent defs, manuals, docs, 
   recurrence), or `awaiting-recurrences` (a record). It goes in the same `gh issue create` as the
   `prio-N`, because an unparked waiting issue reads as free work to every pickup route
   ([#2796](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2796): #2795 was filed waiting on
-  CI runs and had to be parked by hand). What each label means is in
+  CI runs and had to be parked by hand). **Under `awaiting-pull` the body carries the line
+  `Parked: waiting on <#n or branch>.`**, the clause a sweep reads to unpark it once the blocker lands
+  ([#4028](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4028): #4025 named its branch only in
+  prose, and stayed parked after the merge). What each label means is in
   [`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portable.md#1-new-issue-or-task--where-the-work-comes-from).
 
 ### The gatekeepers, as implemented here
