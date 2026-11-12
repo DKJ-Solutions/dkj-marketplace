@@ -39,21 +39,41 @@
 
 ### PLAN
 
+#### Why
+
+A UX and design review of the palette (November 12, 2026) found the gains outside text: a control's edge
+(`--bg-3`) read at about 1.1:1, under WCAG 1.4.11's 3:1; `--graph-2` was ΔE 4.2 from `--warning-3` with full
+colour vision, `--graph-3` sat beside `--positive-3` and under 3:1 on a light page; the dark paper steps were
+1.04:1 apart. The owner asked for these two points as one small round, then a look.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `--border-strong`, a fourteenth computed token: a grey of the theme's hue at 3:1 on bg-3, in the palette model and builder
+- [x] the dark paper steps widened in the model (bg-1 to bg-2 1.06:1, bg-3 to bg-4 1.12:1); the builder recomputed all twelve themes
+- [x] the plain `.btn`, `.seg`, `.info-button`, `.nav-search`, `.toolbar__filter`, `.stepper` and `.combo` take `--border-strong`
+- [x] new graph slots, chosen with the dataviz validator away from the status hues, light and dark
+- [x] the brand book README, the stylesheet's measurement comment and specimens.html name the new token
+- [~] the Figma variables: the write to the Figma file was refused by this session's permission check, so Figma waits for the owner
 
 ### TEST
 
+- [x] `house-palette` suite: 161 passed (fourteen tokens, every pairing at its floor, every token on the specimens page)
+- [x] `check-house-style`: the brand book holds
+- [x] the branch's Admin (port 4897) and the product (4870) serve the new stylesheet
+
 ### DEPLOY: feat/palette-border-graph
 
-**Score:**
+Controls now show their edge: a plain button, a segmented control, the info button, the search and filter fields
+and the product's stepper and combo field take a new `--border-strong`, a grey of the theme's colour at 3:1 on
+the page and on a card, in all twelve themes. The three graph colours are now blue, purple-magenta and deep teal,
+so a series no longer looks like a warning or a gain. The dark themes' surfaces stand a little further apart.
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+The house palette now promises non-text contrast for controls, computed per theme rather than typed.
+**Score:** 2
 
 #### Pull Request
 
 Palette: a 3:1 control border, wider dark paper steps, colour-blind-safe graph slots
-
