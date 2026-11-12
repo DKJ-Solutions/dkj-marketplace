@@ -712,7 +712,7 @@ numerals), `.delta` (with `--up`/`--down`; its aliases `.pos`/`.neg` are gone, M
 [its README][product-readme] under "Reserved names": the app components (`.container--narrow`/`main.narrow`,
 `.field`, `.btn--touch`, `.btn--block`, `.dialog`, `.topbar`, `.breadcrumbs-bar`, `.site-header`) and the
 brand-book components that are not shared. The desktop shell ([below](#two-layers)) reserves these too: `.shell` (with `--fit`, `--no-aside`,
-`__bar`, `__actions`, `__nav`, `__nav-foot`, `__main`, `__list`, `__aside`, `__aside-body`), `.nav-list`, `.nav-item`
+`__bar`, `__actions`, `__nav`, `__brand`, `__brand__mark`, `__nav-foot`, `__main`, `__list`, `__aside`, `__aside-body`, `__body`), `.page-head` (with `__title`, `__meta`, `__lead`, `__end`), `.empty-state` (with `__mark`, `__text`), `.admin-cols`, `.nav-section`, `.nav-list`, `.nav-item`
 (with `__label`, `__count`), `.toolbar` (with `__title`, `__filter`, `__end`), `.pane-head`, `.table--dense` and `.dot`
 (with `--good`, `--warn`, `--bad`). The shared brand-book components ([below](#shared-components)) reserve these too: `.alert` (`__title`, `__icon`), `.banner` (`--accent`, `__lead`), `.panel` (`--accent`, `--positive`, `--button`, `__label`, `__value`), `.chip` (`--yes`, `--no`, `--todo`), `.tag` (`--info`, `--warn`), `.filter-chips`/`.filter-chip` (`__check`, `__dot`, and `.filter-chips__clear`), and the additions to existing classes: `.card--open`, `.card--invalid`, `.msg--error`, `.table .row-negative`/`.row-positive`/`.row-warn`, `.table .col-start`/`.col-end`, `.facts__detail`, `.facts__total` and `.chart .bar--active`. Each is commented in the file.
 
@@ -722,7 +722,7 @@ smaller: the `.info-button`'s 16px mark, the `.table` header's `.sort` and the `
 ([#19](https://github.com/DKJ-Solutions/dkj-brandbook/issues/19)). **The 44px is the product layer's and the
 shared core's, not the desktop shell's** (Dave, November 5, 2026,
 [#3811](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3811)): Admin is worked with a mouse,
-so its rows, navigation items and bar buttons are 28px (`--shell-row-h`), which is still above the 24px a pointer
+so its dense rows are 28px (`--shell-row-h`) and its navigation items and bar buttons about 32 to 36px, all above the 24px a pointer
 target needs (WCAG 2.5.8). A `.sort` header inside a `.table--dense` takes the row's height as its hit area,
 so it does not reach over the rows under it. A tooltip opened from a trigger takes
 `.tooltip--open`, which shows it and lets the pointer move onto its text; a chart tooltip that follows the
@@ -778,8 +778,7 @@ shared; the desktop shell is a part of [`house-style.css`](house-style.css), and
 [`house-product.css`](../../extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css) in the `dkj-solutions`
 plugin ([`README.md`][product-readme] beside it, #3831):
 
-- **Desktop shell** (in [`house-style.css`](house-style.css), the part "Desktop shell: Admin's layer"): a thin bar, a flat side navigation under section headings (Home and the domain objects on top, then Product and Development, Settings in the foot, after the Shopify Admin, #3815), a main pane with a dense
-  list and an optional detail pane, no site header and no cards. A pane's content stands in a `.shell__body`, and a
+- **Desktop shell** (in [`house-style.css`](house-style.css), the part "Desktop shell: Admin's layer"). **Its structure is the Figma wireframes'** (Dave, November 12, 2026): the *Wireframes* page of the `dkj-brandbook` Figma file (key `w44J5aQPeST96RJ71vU3ev`, node `5-3`) is the highest source for how Admin is laid out, above this README and the stylesheet. The brand book puts its tokens on top of that structure, and where the two disagree the wireframe wins and this layer changes. So: a side navigation the full height of the window (a brand row, the search field, a flat list under section headings with Home and the domain objects on top, then Product and Development, Settings in the foot, after the Shopify Admin, #3815), a bar over the main pane with the trail and a few small actions, a page header (`.page-head`: the one `h1`, an optional lead, an action at its right end) and the content under it with room around it, an optional detail pane, and no site header. A pane's content stands in a `.shell__body`, and a
   set of links is an `.admin-list`: an `h2` over a `.table--dense`, a row per link (#3830). Desktop only, with no phone query. Reference:
   [`patterns/admin-shell.html`](patterns/admin-shell.html) and the "Desktop shell" specimens.
 - **Mobile-first app** (`house-product.css`, the part "App components"): the narrow column, touch targets,
@@ -801,15 +800,15 @@ here is the shared core's and holds in both.
 
 | Rule | Product (mobile-first) | Admin (desktop shell) |
 |---|---|---|
-| The `h1`'s size ([Type](#what-it-holds)) | `--text-h1`, standing apart by size and colour | `--text-h3`, in the `.toolbar` over the main pane (`.toolbar > h1`): a pane title, not a headline |
-| One `h1`, at most two words, reading what the current crumb reads (rules 8 and 9 under [How to use it](#how-to-use-it), [the bar][product-bar]) | holds | holds: the toolbar's `h1` and the last crumb in the `.shell__bar` are the same words |
-| No intro under the `h1`, and the `h1` never framed (rules 5 and 6) | holds | holds: the toolbar is a row with a line under it, not a box |
+| The `h1`'s size ([Type](#what-it-holds)) | `--text-h1`, standing apart by size and colour | `--text-h1` in the wireframes' page header (`.page-head h1`) at the top of the pane body, an action or a figure at its right end (`.page-head__end`) and a date beside it, outside the `h1` (`.page-head__meta`, Today's); only a page that opens no pane body of its own (the release notes) keeps `--text-h3` in the `.toolbar` over the main pane |
+| One `h1`, at most two words, reading what the current crumb reads (rules 8 and 9 under [How to use it](#how-to-use-it), [the bar][product-bar]) | holds | holds: the page header's `h1` and the last crumb in the `.shell__bar` are the same words, which is why Today's date stands beside its `h1` and not in it |
+| No intro under the `h1`, and the `h1` never framed (rules 5 and 6) | holds | the `h1` is never framed; **one lead line under it is allowed where the wireframe draws one** (`.page-head__lead`, Home's *Admin is for managing, the product for using.*) |
 | [The breadcrumb bar][product-bar]: a `.breadcrumbs-bar` above `<main>`, one `--tap` high, on `--primary` | holds | **does not apply.** The trail sits in the `.shell__bar` (the same `nav.breadcrumbs` markup, starting at **Home**), and the shell takes no `.breadcrumbs-bar`. A `<main>` is no pane of the grid: where a pane holds one, its 1080px cap is lifted |
 | [The site header][product-header] and [its menu][product-menu] | holds | **does not apply**: the shell's bar and side navigation replace both |
-| [Which shape a page's cards take][product-shape], [a long page becomes cards][product-long] and Admin's [card overview](#admin) | holds | **does not apply**: the side navigation is how Admin gets you somewhere, so an overview of card links in the pane repeats it, and a list Admin manages is a `.table--dense`, not cards. Where a page still lists the pages under it, it is an `.admin-list`, a row per page with its description (#3830) |
-| The 44px target ([Focus and targets](#components)) | holds | **does not apply**: 28px rows, above the 24px a pointer needs |
+| [Which shape a page's cards take][product-shape], [a long page becomes cards][product-long] and Admin's [card overview](#admin) | holds | **does not apply as written**: the side navigation is how Admin gets you somewhere, so an overview of card links in the pane repeats it, and a list Admin manages is a `.table--dense`. Cards are back where the wireframes draw them (Goals, Today): a `.card` in the shell is the wireframes' card, on `--bg-1` with a line around it, and `.admin-cols` sets two columns of them. A page with nothing to show draws the `.empty-state` with one copy-prompt action (`Format-AdminEmptyStateHtml`), never a blank page. Where a page still lists the pages under it, it is an `.admin-list`, a row per page with its description (#3830) |
+| The 44px target ([Focus and targets](#components)) | holds | **does not apply**: the wireframe's navigation rows (about 36px) and a `.table--dense`'s 28px rows, all above the 24px a pointer needs |
 | The page width (`data-width`, `full`/`fluid`/`phone`), `.page-column` and the settings panel's Width control | holds | **does not apply**: the panes fill the window, so the shell mounts `DKJTheme.settings` with `widths: false`, and a pane's content stands in a `.shell__body` |
-| Admin's fit alarm | reads the page: the document past the window, the `h1`, the bar's trail | reads the shell (#3830): the main pane past its own height (a pane holding a `.table--dense` scrolls by design), the `.toolbar > h1` and the `.shell__bar` trail |
+| Admin's fit alarm | reads the page: the document past the window, the `h1`, the bar's trail | reads the shell (#3830): the main pane past its own height (a pane holding a `.table--dense` scrolls by design), the `.toolbar > h1` or the `.page-head h1`, and the `.shell__bar` trail |
 
 
 ## Page patterns
@@ -860,7 +859,7 @@ navigation cannot carry, each page's description.
 
 | # | Block | House class | Fixed, or the repo's own |
 |---|---|---|---|
-| 0 | The shell, opened for the home page: the bar with the one crumb **Home**, and the side navigation with **Home** marked. There is **no toolbar and no `h1`**: the shell names the repo, so the home page has no intro | `.shell.shell--no-aside`, `.shell__bar` holding `nav.breadcrumbs`, `.shell__nav` (`Format-RepoHomeHeadHtml`, which opens `Format-AdminShellOpen -Current '/' -Bare`) | fixed |
+| 0 | The shell, opened for the home page: the bar with the one crumb **Home**, and the side navigation with **Home** marked. There is **no toolbar**: the page header the wireframe draws (`.page-head`) holds the `h1`, the repo's name, and one lead line, *Admin is for managing, the product for using.* | `.shell.shell--no-aside`, `.shell__bar` holding `nav.breadcrumbs`, `.shell__nav` (`Format-RepoHomeHeadHtml`, which opens `Format-AdminShellOpen -Current '/' -Bare`) | fixed |
 | 1 | The general banner, the first thing in the main pane's scroll area, with no margin, border or radius (owner, October 24, 2026): a countdown to the next full hour, and once an hour has passed a tone and a **10 airsquats** checkbox that shows the total owed ([#3250](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3250)), the same on every machine ([#3438](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3438)) | a `.notice` holding one `.msg` line, written by `Format-RepoAdminBanner` in `dkj-policy`'s `apps/admin/lib/general-pages-lib.ps1` | fixed: an Admin a repo builds itself carries it only if it calls that function |
 | 2 | Only where a server the page links is not running (the repo's product, or the general pages server): one line saying so, where its row would be | `.msg--warn` with `role="status"` | the plugin's own text |
 | 3 | **The pages**, a row each with its description, in this order: the repo's product where it states one, **GitHub**, and the general pages but those on the GitHub page (Issues, the Test gate), a group's pages behind its one row (below) | one `.table--dense` with no heading (`Format-AdminLinkTableHtml`) | fixed form; the product is the repo's own |

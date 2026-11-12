@@ -219,14 +219,38 @@ function Format-GoalPlanText {
     return ($lines -join "`n")
 }
 
-$script:GoalsPageStyle = '.goal-now { border-left: 4px solid var(--primary-muted); }' + "`n" +
-    '.goal-now .goal-now__title { margin: 0; font-size: var(--text-h3); }' + "`n" +
-    '.goal-steps { margin: 0; padding: 0; list-style: none; }' + "`n" +
+$script:GoalsPageStyle = '.goal { display: grid; gap: var(--spacing-4); }' + "`n" +
+    '.goal__head { display: flex; align-items: center; gap: var(--spacing-3); }' + "`n" +
+    '.goal__head h2 { margin: 0; font-size: var(--text-title); }' + "`n" +
+    '.goal__head h2 > a { margin-right: var(--spacing-1); }' + "`n" +
+    '.goal .chip { color: var(--primary-muted); font-size: var(--text-xs); font-weight: var(--font-weight-regular); }' + "`n" +
+    '.goal-progress__bar { display: flex; gap: var(--spacing-3); align-items: center; color: var(--primary-muted); font-size: var(--text-sm); }' + "`n" +
+    '.goal-progress__bar > .meter { flex: 1; min-width: 80px; }' + "`n" +
+    '.goal-progress > .goal-progress__bar > .meter { flex: 0 1 60%; }' + "`n" +
+    '.goal-now { display: grid; gap: var(--spacing-2); justify-items: start; padding: var(--spacing-4) var(--spacing-5); background: var(--bg-2); border: 2px solid var(--primary); border-radius: var(--radius-2); }' + "`n" +
+    '.goal-now__pill { padding: var(--spacing-0-5) var(--spacing-2); border-radius: var(--radius-pill); background: var(--primary); color: var(--bg-1); font-size: var(--text-xs); font-weight: var(--font-weight-bold); text-transform: uppercase; }' + "`n" +
+    '.goal-now .goal-now__title { margin: 0; font-size: var(--text-h3); font-weight: var(--font-weight-bold); }' + "`n" +
+    '.goal-now .goal-now__sub { margin: 0; color: var(--primary-muted); font-size: var(--text-sm); }' + "`n" +
+    '.goal-block { display: grid; gap: var(--spacing-2); }' + "`n" +
+    '.goal-block > h3 { margin: 0; font-size: var(--text-xs); font-weight: var(--font-weight-bold); letter-spacing: 0.06em; text-transform: uppercase; color: var(--primary-muted); }' + "`n" +
+    '.goal-next { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-3); margin: 0; padding: 0; list-style: none; }' + "`n" +
+    '.goal-next > li { display: grid; gap: var(--spacing-1); padding: var(--spacing-3) var(--spacing-4); border: 1px solid var(--bg-4); border-radius: var(--radius-2); }' + "`n" +
+    '.goal-next__title { font-weight: var(--font-weight-bold); }' + "`n" +
+    '.goal-next__meta { color: var(--primary-muted); font-size: var(--text-sm); }' + "`n" +
+    '.goal-milestones { display: grid; gap: var(--spacing-2); }' + "`n" +
+    '.goal-milestone { border: 1px solid var(--bg-3); border-radius: var(--radius-1-5); }' + "`n" +
+    '.goal-milestone[open] { background: var(--bg-2); }' + "`n" +
+    '.goal-milestone > summary { display: flex; gap: var(--spacing-4); align-items: center; padding: var(--spacing-3); cursor: pointer; list-style: none; }' + "`n" +
+    '.goal-milestone > summary::-webkit-details-marker { display: none; }' + "`n" +
+    '.goal-milestone > summary::before { content: "\25B8"; color: var(--primary-muted); font-size: var(--text-sm); }' + "`n" +
+    '.goal-milestone[open] > summary::before { content: "\25BE"; }' + "`n" +
+    '.goal-milestone__name { flex: none; width: var(--spacing-56); font-weight: var(--font-weight-bold); }' + "`n" +
+    '.goal-milestone > summary > .goal-progress__bar { flex: 1; }' + "`n" +
+    '.goal-milestone > .goal-steps, .goal-milestone > .note { margin: 0; padding: 0 var(--spacing-3) var(--spacing-3) var(--spacing-8); }' + "`n" +
+    '.goal-steps { list-style: none; }' + "`n" +
     '.goal-steps > li { display: flex; gap: var(--spacing-2); align-items: baseline; padding: var(--spacing-1) 0; border-top: 1px solid var(--bg-4); }' + "`n" +
     '.goal-steps > li:first-child { border-top: 0; }' + "`n" +
-    '.goal-steps .goal-steps__done { color: var(--primary-muted); text-decoration: line-through; }' + "`n" +
-    '.goal-progress { display: flex; gap: var(--spacing-2); align-items: center; }' + "`n" +
-    '.goal-progress > .meter { flex: 1; min-width: 80px; }'
+    '.goal-steps .goal-steps__done { color: var(--primary-muted); text-decoration: line-through; }'
 
 function Format-GoalItemLink {
     <# One issue as '#n title', the number a link to it where the model holds its url; escaped here. #>
@@ -238,12 +262,17 @@ function Format-GoalItemLink {
 }
 
 function Format-GoalProgressHtml {
-    <# A meter and 'x of y' for -Done of -Total. #>
-    param([int]$Done, [int]$Total)
+    <#
+        A meter and 'x of y' for -Done of -Total; -Noun follows the count ('2 of 5 milestones'), and -Short writes
+        'x/y' instead, with a check mark once all are done (the wireframes' milestone rows).
+    #>
+    param([int]$Done, [int]$Total, [string]$Noun = '', [switch]$Short)
     $pct = Get-GoalPercent -Done $Done -Total $Total
     $tone = if ($Total -gt 0 -and $Done -ge $Total) { 'good' } else { 'info' }
-    return '<span class="goal-progress"><span class="meter meter--' + $tone + '" role="img" aria-label="' + $pct + '% done"><span style="width: ' + $pct + '%"></span></span>' +
-        '<span class="num">' + $Done + ' of ' + $Total + '</span></span>'
+    $count = if ($Short) { [string]$Done + '/' + $Total + $(if ($Total -gt 0 -and $Done -ge $Total) { ' &#10003;' } else { '' }) }
+             else { [string]$Done + ' of ' + $Total + $(if ($Noun) { ' ' + $Noun } else { '' }) }
+    return '<span class="goal-progress__bar"><span class="meter meter--' + $tone + '" role="img" aria-label="' + $pct + '% done"><span style="width: ' + $pct + '%"></span></span>' +
+        '<span class="num">' + $count + '</span></span>'
 }
 
 function Format-GoalsPageHtml {
@@ -267,44 +296,50 @@ function Format-GoalsPageHtml {
     }
     $goals = @($Model | Where-Object { $_ })
     if ($null -ne $Model -and -not $goals.Count) {
-        [void]$body.AppendLine('<section class="card"><div class="card__head"><h2>No goal yet</h2></div>' +
-            '<p>A goal is an open issue labelled <code>' + (& $e $label) + '</code>; its milestones are its sub-issues, and their tasks are theirs. ' +
-            'Ask Claude to plan one (the <code>plan-goal</code> skill): it asks a few questions, proposes the milestones and tasks, and files them once you agree.</p></section>')
+        [void]$body.AppendLine((Format-AdminEmptyStateHtml -Title 'No goal yet' -Prompt 'plan a goal' -TextHtml (
+            'A goal is an open issue labelled <code>' + (& $e $label) + '</code>; its milestones are its sub-issues, and their tasks are theirs. ' +
+            'Ask Claude to plan one (the <code>plan-goal</code> skill): it asks a few questions, proposes the milestones and tasks, and files them once you agree.')))
     }
-    $gi = 0
+    # Per goal one card, as the Figma wireframes draw it (November 12, 2026): the goal and its progress, one prominent
+    # Now box, a row of Next cards, and the milestones as rows, each with a bar and its tasks inside.
     foreach ($g in $goals) {
-        $gi++
-        [void]$body.AppendLine('<div class="grid-2" id="goal-' + [int]$g.Number + '">')
-        [void]$body.AppendLine('<div class="grid__head"><h2>' + (Format-GoalItemLink $g) + '</h2><p class="card__sub">' + (Format-GoalProgressHtml -Done $g.Done -Total $g.Total) + '</p></div>')
-        # Now: the one step to take. Prominent, the whole row.
-        [void]$body.Append('<section class="card grid__full goal-now"><div class="card__head"><h3>Now</h3></div>')
+        [void]$body.AppendLine('<section class="card goal" id="goal-' + [int]$g.Number + '">')
+        [void]$body.AppendLine('<div class="goal__head"><h2>' + (Format-GoalItemLink $g) + '</h2><span class="chip">' + (& $e $label) + '</span></div>')
+        # The wireframes count milestones here ('2 of 5 milestones'): one is done once all its items are. The goal's own
+        # Done and Total count items, so they are not the figure this line names.
+        $ms = @($g.Milestones | Where-Object { $_ })
+        $msDone = @($ms | Where-Object { [int]$_.Total -gt 0 -and [int]$_.Done -ge [int]$_.Total }).Count
+        [void]$body.AppendLine('<div class="goal-progress">' + (Format-GoalProgressHtml -Done $msDone -Total $ms.Count -Noun 'milestones') + '</div>')
+        # Now: the one step to take.
+        [void]$body.Append('<div class="goal-now"><span class="goal-now__pill">Now</span>')
         if (-not @($g.Milestones).Count) {
-            [void]$body.Append('<p class="goal-now__title">Break this goal down</p><p class="card__sub">It has no milestone yet. Ask Claude to plan it (<code>plan-goal</code>).</p>')
+            [void]$body.Append('<p class="goal-now__title">Break this goal down</p><p class="goal-now__sub">It has no milestone yet. Ask Claude to plan it (<code>plan-goal</code>).</p>')
         } elseif (-not $g.Now) {
-            [void]$body.Append('<p class="goal-now__title">Every milestone is done</p><p class="card__sub">Close the goal, or add the milestone that is still missing.</p>')
+            [void]$body.Append('<p class="goal-now__title">Every milestone is done</p><p class="goal-now__sub">Close the goal, or add the milestone that is still missing.</p>')
         } else {
             $n = $g.Now
             $title = if ($n.Unplanned) { 'Break down ' + (Format-GoalItemLink $n.Item) } else { Format-GoalItemLink $n.Item }
-            $sub = if ($n.Unplanned) { 'This milestone has no task yet: plan its tasks first.' } else { 'In milestone ' + (Format-GoalItemLink $n.Milestone) }
+            $sub = if ($n.Unplanned) { 'This milestone has no task yet: plan its tasks first.' } else { 'Milestone: ' + (& $e $n.Milestone.Title) + ' &middot; the one step to take now' }
             if (@($n.Item.Assignees).Count) { $sub += ' &middot; claimed by ' + (& $e (@($n.Item.Assignees) -join ', ')) }
-            [void]$body.Append('<p class="goal-now__title">' + $title + '</p><p class="card__sub">' + $sub + '</p>')
+            [void]$body.Append('<p class="goal-now__title">' + $title + '</p><p class="goal-now__sub">' + $sub + '</p>')
         }
-        [void]$body.AppendLine('</section>')
-        # Next: a short row of what follows, so the step after this one is never a question.
+        [void]$body.AppendLine('</div>')
+        # Next: a row of what follows, so the step after this one is never a question.
         if (@($g.Next).Count) {
-            [void]$body.Append('<section class="card grid__full"><div class="card__head"><h3>Next</h3></div><ul class="goal-steps">')
+            [void]$body.Append('<div class="goal-block"><h3>Next</h3><ul class="goal-next">')
             foreach ($s in @($g.Next)) {
                 $t = if ($s.Unplanned) { 'Break down ' + (Format-GoalItemLink $s.Item) } else { Format-GoalItemLink $s.Item }
-                [void]$body.Append('<li><span>' + $t + '</span></li>')
+                $m = if ($s.Milestone -and -not $s.Unplanned) { '<span class="goal-next__meta">Milestone: ' + (& $e $s.Milestone.Title) + '</span>' } else { '' }
+                [void]$body.Append('<li><span class="goal-next__title">' + $t + '</span>' + $m + '</li>')
             }
-            [void]$body.AppendLine('</ul></section>')
+            [void]$body.AppendLine('</ul></div>')
         }
-        # The milestones, collapsed: a bar each, the tasks inside.
+        # The milestones: a row each with a bar, the tasks inside.
         if (@($g.Milestones).Count) {
-            [void]$body.Append('<section class="card grid__full"><div class="card__head"><h3>Milestones</h3></div>')
+            [void]$body.Append('<div class="goal-block"><h3>Milestones</h3><div class="goal-milestones">')
             foreach ($m in @($g.Milestones)) {
-                [void]$body.Append('<details class="more more--structured"><summary><span class="more__title">' + (& $e ('#' + [int]$m.Number + ' ' + $m.Title)) + '</span>' +
-                    '<span class="more__trailing">' + (Format-GoalProgressHtml -Done $m.Done -Total $m.Total) + '</span></summary>')
+                [void]$body.Append('<details class="goal-milestone"><summary><span class="goal-milestone__name">' + (& $e $m.Title) + '</span>' +
+                    (Format-GoalProgressHtml -Done $m.Done -Total $m.Total -Short) + '</summary>')
                 if (@($m.Tasks).Count) {
                     [void]$body.Append('<ul class="goal-steps">')
                     foreach ($t in @($m.Tasks)) {
@@ -318,13 +353,16 @@ function Format-GoalsPageHtml {
                 }
                 [void]$body.Append('</details>')
             }
-            [void]$body.AppendLine('</section>')
+            [void]$body.AppendLine('</div></div>')
         }
-        [void]$body.AppendLine('</div>')
+        [void]$body.AppendLine('</section>')
     }
     $when = if ($GeneratedAt) { ', read ' + (& $e $GeneratedAt) } else { '' }
     $whose = if ($RepoName) { 'The goals of <code>' + (& $e $RepoName) + '</code>' } else { 'This repo''s goals' }
-    return Format-GeneralPageHtml -Title 'Goals' -Style ($script:GoalsPageStyle) -Body $body.ToString() -SiteName $RepoName `
+    # The page header's one action (the wireframes' '+ Plan a goal'), shown once there is a goal: with none, the empty
+    # state carries the same prompt.
+    $aside = if ($goals.Count) { Format-AdminCopyPromptButton -Prompt 'plan a goal' -Label '+ Plan a goal' } else { '' }
+    return Format-GeneralPageHtml -Title 'Goals' -Style ($script:GoalsPageStyle) -Body $body.ToString() -SiteName $RepoName -HeadAside $aside `
         -Lead ($whose + ': each broken into milestones and tasks, with the one step to take now.') `
         -FooterNote ('Read from GitHub: the open issues labelled <code>' + (& $e $label) + '</code> and their sub-issues, as the account <code>gh</code> is logged in as on this machine' + $when + ' (<a class="dp-link" href="/refresh?page=goals">read again</a>).')
 }

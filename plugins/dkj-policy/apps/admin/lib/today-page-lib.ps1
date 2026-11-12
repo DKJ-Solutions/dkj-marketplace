@@ -15,16 +15,24 @@
 
 . (Join-Path $PSScriptRoot 'dayplan-lib.ps1')
 
-$script:TodayPageStyle = '.today-goal { border-left: 4px solid var(--primary-muted); }' + "`n" +
-    '.today-goal .today-goal__title { display: flex; gap: var(--spacing-3); align-items: center; justify-content: space-between; margin: 0 0 var(--spacing-2); font-size: var(--text-h3); }' + "`n" +
-    '.today-done h3 { margin: var(--spacing-4) 0 var(--spacing-1); }' + "`n" +
+$script:TodayPageStyle = '.today-goal { display: grid; gap: var(--spacing-2); }' + "`n" +
+    '.shell__body .today-goal > h2 { margin: 0; font-size: var(--text-xs); font-weight: var(--font-weight-bold); letter-spacing: 0.06em; text-transform: uppercase; color: var(--primary-muted); }' + "`n" +
+    '.today-goal .today-goal__title { display: flex; gap: var(--spacing-3); align-items: center; margin: 0; font-size: var(--text-title); font-weight: var(--font-weight-bold); }' + "`n" +
+    '.today-progress { display: flex; gap: var(--spacing-3); align-items: center; margin: 0; color: var(--primary-muted); font-size: var(--text-sm); }' + "`n" +
+    '.today-progress > .meter { flex: 0 1 65%; }' + "`n" +
+    '.shell__body .card > h2 + * { margin-top: var(--spacing-2); }' + "`n" +
     '.today-items { margin: 0; padding: 0; list-style: none; }' + "`n" +
-    '.today-items > li { display: flex; gap: var(--spacing-2); align-items: baseline; padding: var(--spacing-1) 0; border-top: 1px solid var(--bg-4); }' + "`n" +
-    '.today-items > li:first-child { border-top: 0; }' + "`n" +
-    '.today-items .today-items__title { flex: 1; }' + "`n" +
-    '.today-items .today-items__done { color: var(--primary-muted); text-decoration: line-through; }' + "`n" +
-    '.today-progress { display: flex; gap: var(--spacing-2); align-items: center; }' + "`n" +
-    '.today-progress > .meter { flex: 1; min-width: 80px; }'
+    '.today-items > li { display: flex; gap: var(--spacing-3); align-items: center; padding: var(--spacing-3) 0; border-top: 1px solid var(--bg-3); }' + "`n" +
+    '.today-items .today-items__mark { flex: none; width: var(--spacing-4); color: var(--primary-muted); text-align: center; }' + "`n" +
+    '.today-items .today-items__title { flex: 1; min-width: 0; font-weight: var(--font-weight-bold); }' + "`n" +
+    '.today-items .today-items__done { color: var(--primary-muted); font-weight: var(--font-weight-regular); }' + "`n" +
+    '.today-items .num { color: var(--primary-muted); font-size: var(--text-sm); }' + "`n" +
+    '.today-items .chip { color: var(--primary-muted); font-size: var(--text-xs); font-weight: var(--font-weight-regular); }' + "`n" +
+    '.today-list { display: grid; gap: var(--spacing-2); margin: 0; padding-left: var(--spacing-5); color: var(--primary-muted); font-size: var(--text-sm); }' + "`n" +
+    '.today-week { display: grid; gap: var(--spacing-2); margin: 0; padding: 0; list-style: none; }' + "`n" +
+    '.today-week > li { display: flex; gap: var(--spacing-3); align-items: center; }' + "`n" +
+    '.today-week__day { flex: none; width: var(--spacing-8); color: var(--primary-muted); font-size: var(--text-sm); font-weight: var(--font-weight-bold); }' + "`n" +
+    '.today-week > li > .meter { flex: 1; }'
 
 function Get-TodayRefUrl {
     <# An item's ref as a GitHub link; GitHub sends an issue URL that is a pull request on to the pull request. #>
@@ -72,10 +80,16 @@ function Format-TodayPageHtml {
     $day = if ($Model) { $Model.day } else { $null }
     $live = if ($Model) { $Model.live } else { $null }
 
+    $hours = 0.0
     if ($Model -and -not $day) {
-        [void]$body.AppendLine('<section class="card"><div class="card__head"><h2>No plan yet</h2></div>' +
-            '<p>Ask Claude to plan the day (the <code>day-plan</code> skill). Paula proposes one goal and the items for it, each with an hour estimate, inside a day of 6 to 8 hours, and writes it once you agree.</p></section>')
+        [void]$body.AppendLine((Format-AdminEmptyStateHtml -Title 'No plan yet' -Prompt 'plan my day' -TextHtml (
+            'Ask Claude to plan the day (the <code>day-plan</code> skill). Paula proposes one goal and the items for it, each with an hour estimate, inside a day of ' +
+            $script:DayPlanMinHours + ' to ' + $script:DayPlanBudgetHours + ' hours, and writes it once you agree.')))
     }
+    # The layout is the Figma wireframes' (November 12, 2026): the day goal across the page, then two columns -- the
+    # plan and what got done on the left, what is not for today and the week on the right.
+    $left = New-Object System.Text.StringBuilder
+    $right = New-Object System.Text.StringBuilder
     if ($day) {
         # Not filtered: an item's index is its number in the plan, which the close-out's done list counts by.
         $items = @($day.items)
@@ -94,88 +108,94 @@ function Format-TodayPageHtml {
                 'partly'  { '<span class="tag tag--info">Partly reached</span>' }
                 default   { '<span class="tag tag--warn">Not reached</span>' }
             }
-        } elseif ($allDone) { '<span class="tag">All done</span>' } else { '<span class="chip">In progress</span>' }
+        } elseif ($allDone) { '<span class="tag">All done</span>' } else { '' }
         $tone = if ($allDone) { 'good' } else { 'info' }
 
-        [void]$body.AppendLine('<div class="grid-2">')
-        [void]$body.Append('<section class="card grid__full today-goal"><div class="card__head"><h2>Day goal</h2></div>')
+        [void]$body.Append('<section class="card today-goal"><h2>Day goal</h2>')
         [void]$body.Append('<p class="today-goal__title"><span>' + (& $e $day.goal) + '</span>' + $badge + '</p>')
-        [void]$body.Append('<p class="card__sub"><span class="today-progress"><span class="meter meter--' + $tone + '" role="img" aria-label="' + $pct + '% of the planned hours done"><span style="width: ' + $pct + '%"></span></span>' +
-            '<span class="num">' + $doneSet.Count + ' of ' + $items.Count + ' done, ' + (& $e (Format-DayPlanHours $doneHours)) + ' of ' + (& $e (Format-DayPlanHours $hours)) + ' planned in a ' + $script:DayPlanBudgetHours + ' h day</span></span></p>')
+        [void]$body.Append('<p class="today-progress"><span class="meter meter--' + $tone + '" role="img" aria-label="' + $pct + '% of the planned hours done"><span style="width: ' + $pct + '%"></span></span>' +
+            '<span class="num">' + $doneSet.Count + ' of ' + $items.Count + ' items &middot; ' + (& $e (Format-DayPlanHours $doneHours)) + ' of ' + (& $e (Format-DayPlanHours $hours)) + '</span></p>')
         foreach ($o in @($day.overrides | Where-Object { $_ })) { [void]$body.Append('<p class="note">Planned on an override (' + (& $e $o.at) + '): ' + (& $e $o.reason) + '</p>') }
         [void]$body.AppendLine('</section>')
 
-        [void]$body.Append('<section class="card"><div class="card__head"><h2>Plan</h2></div><ul class="today-items">')
+        [void]$left.Append('<section class="card"><h2>The plan</h2><ul class="today-items">')
         for ($i = 0; $i -lt $items.Count; $i++) {
             $it = $items[$i]
             $isDone = [bool]$doneSet[$i]
-            $state = if ($isDone) { '<span class="badge badge--sm badge--good" aria-label="done">&#10003;</span>' } else { '<span class="badge badge--sm badge--neutral" aria-label="open"></span>' }
-            $mode = if ($it.mode -eq 'plan') { '<span class="tag tag--info">plan first</span>' } else { '<span class="tag">go</span>' }
+            $mark = if ($isDone) { '<span class="today-items__mark" aria-label="done">&#10003;</span>' } else { '<span class="today-items__mark" aria-label="open">&#9675;</span>' }
+            $mode = if ($it.mode -eq 'plan') { '<span class="chip">plan first</span>' } else { '<span class="chip">go</span>' }
+            $state = if ($isDone) { '<span class="chip">done</span>' } else { '<span class="chip">open</span>' }
             $cls = if ($isDone) { 'today-items__title today-items__done' } else { 'today-items__title' }
             $ref = Format-TodayRefHtml -Ref ([string]$it.ref)
             $added = if ($it.added) { ' <span class="tag tag--warn">added</span>' } else { '' }
-            [void]$body.Append('<li>' + $state + '<span class="' + $cls + '">' + (& $e $it.title) + $(if ($ref) { ' ' + $ref }) + $added + '</span>' + $mode +
-                '<span class="num">' + (& $e (Format-DayPlanHours ([double]$it.hours))) + '</span></li>')
+            [void]$left.Append('<li>' + $mark + '<span class="' + $cls + '">' + $(if ($ref) { $ref + ' ' }) + (& $e $it.title) + $added + '</span>' + $mode +
+                '<span class="num">' + (& $e (Format-DayPlanHours ([double]$it.hours))) + '</span>' + $state + '</li>')
         }
-        [void]$body.AppendLine('</ul></section>')
+        [void]$left.AppendLine('</ul></section>')
 
+        # What got done: the plan's done items, then the work outside the plan, and the day's PR and issue count.
         $unplanned = @($(if ($live) { @($live.unplanned) } elseif ($closed) { @($day.close.unplanned) }) | Where-Object { $_ })
         $prs = if ($live) { [int]$live.prs } elseif ($closed) { [int]$day.close.prs } else { 0 }
         $issues = if ($live) { [int]$live.issues } elseif ($closed) { [int]$day.close.issues } else { 0 }
-        [void]$body.Append('<section class="card today-done"><div class="card__head"><h2>Done</h2></div>')
-        [void]$body.Append('<dl class="facts facts--row"><dt>PRs merged</dt><dd class="num">' + $prs + '</dd><dt>Issues closed</dt><dd class="num">' + $issues + '</dd></dl>')
-        if ($unplanned.Count) {
-            [void]$body.Append('<h3>Extra</h3><ul class="today-items">')
-            foreach ($u in $unplanned) {
-                [void]$body.Append('<li><span class="today-items__title">' + (& $e $u.title) + ' ' + (Format-TodayRefHtml -Ref ([string]$u.ref) -Url ([string]$u.url)) + '</span><span class="tag">' + (& $e $u.kind) + '</span></li>')
-            }
-            [void]$body.Append('</ul>')
-        } else {
-            [void]$body.Append('<p class="note">No work outside the plan.</p>')
+        [void]$left.Append('<section class="card today-done"><h2>What got done</h2>')
+        $got = @()
+        for ($i = 0; $i -lt $items.Count; $i++) {
+            if (-not $doneSet[$i]) { continue }
+            $ref = Format-TodayRefHtml -Ref ([string]$items[$i].ref)
+            $got += '<li>' + $(if ($ref) { $ref + ' ' }) + (& $e $items[$i].title) + '</li>'
         }
+        foreach ($u in $unplanned) {
+            $got += '<li>' + (Format-TodayRefHtml -Ref ([string]$u.ref) -Url ([string]$u.url)) + ' ' + (& $e $u.title) + ' &middot; extra, not planned (' + (& $e $u.kind) + ')</li>'
+        }
+        if ($got.Count) { [void]$left.Append('<ul class="today-list">' + ($got -join '') + '</ul>') } else { [void]$left.Append('<p class="note">Nothing yet.</p>') }
+        [void]$left.Append('<p class="note">' + $prs + ' PR(s) merged, ' + $issues + ' issue(s) closed today.</p>')
+        [void]$left.AppendLine('</section>')
+
         $notToday = @($day.notToday | Where-Object { $_ })
         if ($notToday.Count) {
-            [void]$body.Append('<h3>Not today</h3><ul class="today-items">')
-            foreach ($n in $notToday) { [void]$body.Append('<li><span class="today-items__title">' + (& $e $n) + '</span></li>') }
-            [void]$body.Append('</ul>')
+            [void]$right.Append('<section class="card"><h2>Not today</h2><ul class="today-list">')
+            foreach ($n in $notToday) { [void]$right.Append('<li>' + (& $e $n) + '</li>') }
+            [void]$right.AppendLine('</ul></section>')
         }
-        [void]$body.AppendLine('</section>')
     }
 
+    # The week: a row per planned day, its bar the share of its items done.
     $rows = if ($Model) { @($Model.week | Where-Object { $_ }) } else { @() }
     if ($rows.Count) {
-        $wrap = if ($day) { 'card grid__full' } else { 'card' }
-        [void]$body.Append('<section class="' + $wrap + '"><div class="card__head"><h2>This week</h2></div><div class="table-wrap"><table class="table table--dense"><thead><tr><th>Day</th><th class="col-start">Goal</th><th class="num">Done</th><th class="num">Extra</th><th>Result</th></tr></thead><tbody>')
+        [void]$right.Append('<section class="card"><h2>The week</h2><ul class="today-week">')
         foreach ($r in $rows) {
             $d = ConvertTo-TodayDate $r.date
-            $v = if (-not $r.closed) { '<span class="chip">open</span>' } else {
-                switch ([string]$r.verdict) {
-                    'reached' { '<span class="tag">reached</span>' }
-                    'partly'  { '<span class="tag tag--info">partly</span>' }
-                    default   { '<span class="tag tag--warn">not reached</span>' }
-                } }
-            $doneCell = if ($r.closed) { [string]$r.done + ' of ' + [string]$r.planned } else { [string]$r.planned + ' planned' }
-            $extraCell = if ($r.closed) { [string]$r.extra } else { '' }
-            [void]$body.Append('<tr><td>' + (& $e $d.ToString('ddd d MMM', $inv)) + '</td><td class="col-start">' + (& $e $r.goal) + '</td><td class="num">' + (& $e $doneCell) + '</td><td class="num">' + (& $e $extraCell) + '</td><td>' + $v + '</td></tr>')
+            $planned = [int]$r.planned; $doneN = [int]$r.done
+            $wp = if ($planned -gt 0) { [int][math]::Round(100 * [math]::Min($doneN, $planned) / $planned) } else { 0 }
+            $v = if (-not $r.closed) { 'open' } else { switch ([string]$r.verdict) { 'reached' { 'reached' } 'partly' { 'partly reached' } default { 'not reached' } } }
+            $tip = (& $e $r.goal) + ' &middot; ' + $doneN + ' of ' + $planned + ' done &middot; ' + $v
+            [void]$right.Append('<li title="' + $tip + '"><span class="today-week__day">' + (& $e $d.ToString('ddd', $inv)) + '</span>' +
+                '<span class="meter meter--' + $(if ($r.closed -and [string]$r.verdict -eq 'reached') { 'good' } else { 'info' }) + '" role="img" aria-label="' + (& $e $d.ToString('dddd', $inv)) + ': ' + $tip + '"><span style="width: ' + $wp + '%"></span></span></li>')
         }
-        [void]$body.AppendLine('</tbody></table></div></section>')
+        [void]$right.AppendLine('</ul></section>')
     }
-    if ($day) { [void]$body.AppendLine('</div>') }
+    if ($left.Length -or $right.Length) {
+        if ($day) { [void]$body.AppendLine('<div class="admin-cols"><div>' + $left.ToString() + '</div><div>' + $right.ToString() + '</div></div>') }
+        else { [void]$body.AppendLine($right.ToString()) }
+    }
 
-    # The crumb and the h1 read 'Today' on today; another day (a -Date the server never asks for, a page left open
-    # past midnight) names its date, so the page never claims a day it is not showing.
+    # The crumb and the h1 read 'Today'; the date stands beside the h1, outside it (the wireframes' 'Today - Thursday
+    # 12 November'). Another day (a -Date the server never asks for, a page left open past midnight) names its date as
+    # the title, so the page never claims a day it is not showing.
     $title = 'Today'
+    $meta = '<span class="page-head__meta">&middot; ' + (& $e $Now.ToString('dddd d MMMM', $inv)) + '</span>'
     if ($Model -and $Model.date) {
         $dd = ConvertTo-TodayDate $Model.date
-        if ($dd -ne $Now.Date) { $title = $dd.ToString('dddd d MMMM', $inv) }
+        if ($dd -ne $Now.Date) { $title = $dd.ToString('dddd d MMMM', $inv); $meta = '' }
     }
+    $planned = if ($day) { (& $e (Format-DayPlanHours $hours)) + ' of ' + $script:DayPlanMinHours + '&ndash;' + $script:DayPlanBudgetHours + ' h planned' } else { '0 h planned' }
     $when = if ($GeneratedAt) { ', read ' + (& $e $GeneratedAt) } else { '' }
     # Where the plan comes from (#3924): every machine's copy when the day is shared, else this machine's file alone.
     $sharedNote = if ($Model) { [string]$Model.shared } else { '' }
     $source = if ($sharedNote -like 'shared *') { 'The plan is merged from every machine''s day file (' + (& $e $sharedNote) + ').' }
               elseif ($sharedNote) { 'The plan is this machine''s day file (' + (& $e $sharedNote) + ').' }
               else { 'The plan is this machine''s day file.' }
-    return Format-GeneralPageHtml -Title $title -Style ($script:TodayPageStyle) -Body $body.ToString() -SiteName $RepoName `
+    return Format-GeneralPageHtml -Title $title -TitleMetaHtml $meta -HeadAside $planned -Style ($script:TodayPageStyle) -Body $body.ToString() -SiteName $RepoName `
         -Lead 'The day plan: the day goal, the plan and what got done, and the week.' `
         -FooterNote ($source + ' An item is done when GitHub shows its PR merged or its issue closed that day, or when the close-out marked it done' + $when + ' (<a class="dp-link" href="/refresh?page=today">read again</a>).')
 }

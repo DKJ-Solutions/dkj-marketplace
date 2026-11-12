@@ -96,6 +96,9 @@ function Format-PluginRepoAdminHtml {
             else { 'The way in to this repo. It states no dev server of its own yet, so there is no product to link.' }
     # The site header on the home page too (October 22, 2026): it names the repo, so the page has no intro of its own.
     [void]$sb.Append((Format-RepoHomeHeadHtml -RepoName $n -Lead $lead -Brand (ConvertTo-SiteHeaderName -RepoName (ConvertTo-PluginRepoAdminName $RepoName)) -BrandTag 'admin'))
+    # The page header the Figma wireframes give Home (November 12, 2026): the repo's name as the one h1, and the line
+    # that tells Admin from the product.
+    [void]$sb.AppendLine('<div class="page-head"><div><h1>' + $n + '</h1><p class="page-head__lead">Admin is for managing, the product for using.</p></div></div>')
 
     # Every page a row of its own (#3830, Admin's form of #3383's cards): the product first, then the GitHub page, and
     # the General pages but Issues (the GitHub page's), one .table--dense, which adds to the side navigation what it
@@ -144,7 +147,7 @@ function Format-PluginRepoAdminHtml {
         [void]$sb.AppendLine('</div>')
     }
 
-    [void]$sb.AppendLine('<p class="note">Each page names its own source. Served on 127.0.0.1 only, by the dkj-policy plugin''s <code>apps/admin/pages/serve-general-pages.ps1</code>.</p>')
+    [void]$sb.AppendLine('<p class="note">Each page names its own source. Served on 127.0.0.1 only.</p>')
     [void]$sb.AppendLine((Format-AdminShellClose))
     # The fit alarm, as Format-GeneralPageHtml closes every page below this one (#3558).
     [void]$sb.AppendLine((Format-FitAlarmHtml))
