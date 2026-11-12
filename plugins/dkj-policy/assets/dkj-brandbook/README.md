@@ -124,8 +124,14 @@ already has, not a new colour:
 | Share | Group | Tokens | What it is |
 |---|---|---|---|
 | **60%** | Paper | `--bg-1` … `--bg-5` | the ground: the page, the cards, the lines |
-| **30%** | Primary | `--primary`, with `--primary-muted` (its grey), `--primary-raised` and `--primary-hover` (its two shades) | the theme's colour: `h1` and `h2`, links, the breadcrumb bar, `.btn--primary`, the states; `--primary-raised` is the settings cell in a site header, `--primary-hover` a primary button under the pointer |
+| **30%** | Primary | `--primary`, with `--primary-muted` (its grey), `--primary-raised` and `--primary-hover` (its two shades) and `--primary-border` (its control edge) | the theme's colour: `h1` and `h2`, links, the breadcrumb bar, `.btn--primary`, the states; `--primary-raised` is the settings cell in a site header, `--primary-hover` a primary button under the pointer, `--primary-border` the edge of a control |
 | **10%** | Text | `--fg-1` … `--fg-4` | what sits on the paper: every paragraph, label and quiet icon |
+
+**Every colour token of a theme sits in one of the three groups, and a new one joins the group it belongs to**
+(the owner, November 12, 2026). A token that fits none is not added: its role is taken by a token that does, or the
+need is brought to the owner. It takes the group's name and is computed in the group's way, so a new 30 colour is
+`--primary-<role>`, in the primary's own hue. `--primary-border` was proposed as a free-standing `--border-strong`
+and moved into the 30 the same day for exactly this reason.
 
 **A rule reads a colour only as a token, never derives one** (Maikel, a strict rule, November 1, 2026): no
 `color-mix()`, no relative colour (`rgb(from …)`), no `oklch()` or other colour function, **a token's own value
@@ -152,7 +158,8 @@ primary outweighs its paper has spent the 30% as ground.
 | Group | Tokens | Meaning |
 |---|---|---|
 | Paper | `--bg-1` … `--bg-5` | what sits **behind** the text, in very small steps, each only just darker on light (lighter on dark) than the one before: the page (`bg-1`), cards and tiles (`bg-2`), every line and the tinted surfaces (`bg-3`: borders, row dividers, grid lines, the meter track, an accent table head, a hover, the accent dialog), a stronger border (`bg-4`: an open card, a selected box), and one step past it (`bg-5`, Maikel, November 3, 2026). **`bg-1` to `bg-4` read on `--primary`** (4.55:1 or better, #3235; the primary is measured against `bg-4`, so `bg-5` is not promised there), so they are also the text on a primary fill (`.fill-primary`), `bg-1` the text on a `--primary-muted` fill and the mark inside a status icon, and the paper steps the text on an inverted (`--fg-1`) surface |
-| Categorical | `--graph-1`, `--graph-2`, `--graph-3` | one series each. Never two meanings for one slot in a view. Named `--cat-1` to `--cat-3` until November 1, 2026 (Maikel) |
+| Control edge (30) | `--primary-border` | the boundary of a control: a plain `.btn`, `.seg`, `.info-button`, `.nav-search`, `.toolbar__filter`, and in the product layer `.stepper` and `.combo`. A grey of the primary's own hue, at `--primary-muted`'s chroma, as close to the paper as **3:1 on `bg-3`** allows (WCAG 1.4.11), computed per theme (November 12, 2026). `bg-3` and `bg-4` stay the quiet lines between surfaces, which need not reach 3:1 |
+| Categorical | `--graph-1`, `--graph-2`, `--graph-3` | one series each. Never two meanings for one slot in a view. Named `--cat-1` to `--cat-3` until November 1, 2026 (Maikel). **Computed per theme since November 12, 2026** (the owner): a series must not look like the theme's own colour, as the magenta series did in the magenta theme, nor like a status, as the old orange `--graph-2` looked like `--warning-3` (ΔE 4.2). `build-house-palette.ps1` walks a pool per mode (light: blue, purple-magenta, deep teal, wine, violet; dark: their light tints) and keeps the first three that stand 18 or more off the theme's primary and 15 off every status fill (OKLab ΔE x100, the dataviz validator's measure), read at 3:1 on `bg-1` and `bg-3`, and stand 15 apart with full colour vision and 6 for a protan or deutan reader (the validator's floor, legal because a chart labels its series directly). No slot is red, orange, yellow or green: those hues are the status colours |
 | Direction | `--positive-3` and `--negative-3` (also the gain and the loss in charts, so a direction chart can share a view with any series), `--positive-5`, `--negative-5` (numbers in text) | result and direction, never a category. `--positive-5`/`--negative-5` are the text versions of `--positive-3`/`--negative-3`, a step more contrast so a number reads as text: darker on light, lighter on dark |
 | Status | `--positive-3`, `--warning-3`, `--negative-3`, `--done-3`, `--warning-5`, `--warning-1`, `--negative-1`, `--positive-1` | badges, meters, notices. `--warning-1`, `--negative-1` and `--positive-1` are the backgrounds of a warning, negative or positive message. `--done-3` is done: work that is finished and closed, the purple GitHub gives a completed issue (Dave, November 9, 2026). The mark inside a status icon (check, cross, "!") is `--bg-1` |
 | Primary | `--primary` | the theme's colour, **one** step (owner, #3235, October 21, 2026): the most saturated colour of the theme's hue that reads on all four paper steps, so the paper reads on it too. **The highlight**: `h1`, the fill of `.btn--primary` (a filled main action, like the filled icon button; #109) and of `.fill-primary`, a state (hover, pressed, sorted, active, today), `strong`, list markers, links, a value meant to stand out, the accent dialog's title and the settings panel's title, and native controls through `accent-color` |
@@ -324,7 +331,7 @@ section uses):
 | A switch … | Tokens | Why |
 |---|---|---|
 | to any other theme changes them | `--primary`, `--primary-muted`, `--bg-1` … `--bg-4`, `--fg-1` … `--fg-4` | each theme sets all ten as fixed values, computed from its own hue; the House style page lists them as the three groups of the 60-30-10 rule |
-| changes them only between light and dark: categories | `--graph-1`, `--graph-2`, `--graph-3` | series slots, set once in the light block and once in the dark block, a shade apart |
+| to any other theme changes them: categories | `--graph-1`, `--graph-2`, `--graph-3` | series slots, computed per theme away from its primary and the status hues (November 12, 2026); set once per mode until then |
 | changes them only between light and dark: status colours | `--done-3`, `--negative-1`, `--negative-3`, `--negative-5`, `--positive-1`, `--positive-3`, `--positive-5`, `--warning-1`, `--warning-3`, `--warning-5` | set once in the light block and once in the dark block, a shade apart. One exception: `--warning-3` also moves in Roest and Geel ([below](#themes-the-user-picks-the-colour)) |
 
 **The spacing and type scales have a source: the Figma library** *Shopify Theme - LIBRARY*, variable
@@ -670,7 +677,8 @@ out). Three more things follow it by default, in light and in dark (and a measur
 - **On a fill the text switches** (#3235, the owner: *"h2 heeft niet altijd dezelfde kleur"*, an h2 does not always have the same colour). See
   [Fills](#fills-the-text-switches-with-the-ground).
 - **Status, direction and categorical colours** (`--positive-3`, `--negative-3`, `--warning-3`, `--graph-*`,
-  `--positive-5`, `--negative-5`) are never tinted.
+  `--positive-5`, `--negative-5`) are never tinted. The graph slots differ per theme, but only to stay clear of its primary: each is
+  picked from a fixed pool, never mixed with the theme's colour.
 
 ### Fills: the text switches with the ground
 

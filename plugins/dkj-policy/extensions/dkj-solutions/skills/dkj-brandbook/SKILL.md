@@ -118,6 +118,10 @@ appears, or the fetch fails, stop and report. The same holds for `house-product.
    app is fixed in this plugin, through an inbound issue on the source repo, so that every app gets the fix. A
    value that is wrong for one app is a new domain token in that app, not an override. Extend, never
    override.
+4. **Every theme colour sits in the 60, the 30 or the 10** (the owner, November 12, 2026): the paper
+   (`--bg-*`), the primary (`--primary*`) or the text (`--fg-*`). A colour token you propose for a theme
+   joins one of the three, under that group's name and in its hue (a new 30 colour is `--primary-<role>`);
+   one that fits none is not proposed as a fourth kind. The core README's "What it holds" has the groups.
 
 ## Density: one screen, the full width, nothing unasked
 
