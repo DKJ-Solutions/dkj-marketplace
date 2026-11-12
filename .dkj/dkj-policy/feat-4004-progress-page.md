@@ -39,21 +39,50 @@
 
 ### PLAN
 
+#### Scope
+
+Issue #4004, a first working slice rather than the whole idea: one Admin page that answers both of the
+issue's questions from what is already recorded. How far: the goals of the Goals page (#3816), each as a bar
+of its milestones, a closed one filled by its kind (built, or `used` / `measured` by label). How the team
+ran: the Logbook's newest page of assignments, work against waiting on the owner. The owner-load signals
+nothing records yet (questions asked, steps by hand, the wait between prompts) are filed as #4008 rather
+than guessed at. A visible result, so the branch parks for the owner's look.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `apps/admin/lib/progress-lib.ps1`: the milestone kind, the team's numbers, the two cards and the page.
+- [x] `goals-lib.ps1`: the query reads a milestone's labels (ten at most, not a task's), and the model carries them.
+- [x] `serve-general-pages.ps1`: the `/dev/progress` route, sharing the Goals page's cache and reading the
+      Logbook as `/dev/logbook` does; `general-pages-lib.ps1`: the Progress card beside Goals, and its icon.
+- [x] `scripts/tests/progress.tests.ps1` (30 asserts), registered in the `pages` group; the dev-pages
+      asserts that pin the list of general pages and Admin's cards follow the new card.
+- [x] The Admin README names the page, its lib and its suite.
+- [ ] Owner looks at the page and says whether this slice is the right shape.
 
 ### TEST
 
+- [x] `progress`, `goals`, `dev-pages` and `logbook` suites green standalone.
+- [x] Previewed against dkj-recipes (an Admin on port 4895 with `-RepoRootOverride`): goal #121 at 1 of 3
+      milestones, 20 assignments, 18 chart columns. At 1300 x 900 it fits one screen, one h1, the fit alarm
+      silent.
+
 ### DEPLOY: feat/4004-progress-page
 
-**Score:**
+A new Admin page, Progress, on `/dev/progress`, beside Goals. It reads what the Goals page and the Logbook
+already hold, so nothing new is recorded and no store changes; the Goals query gains one field, a
+milestone's labels.
+
+**Score:** 3
+
+Every repo's Admin gains a Progress card. A repo with a goal sees, on one screen, how far its milestones are,
+each marked built, used or measured (a closed milestone carrying the label `used` or `measured`), and how the
+team ran: its assignments, how long Claude worked, how long it waited on you, and a column per assignment.
+Questions asked and steps by hand read "not recorded yet" until #4008 records them.
 
 #### What makes this deploy extra special
 
-**Score:**
+**Score:** 3
 
 #### Pull Request
 
 Admin: a Progress page -- how far the app is, and how the team ran
-
