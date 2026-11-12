@@ -110,6 +110,14 @@ their blockers had merged. When all of them have landed, unpark the issue with t
 prints, and it is free for this same sweep. A parking comment that names no number or branch is read as
 before, and its reason says so.
 
+**An issue parked at filing is read from its body**
+([#4028](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4028)). A label set in the same
+`gh issue create` leaves no parking comment, so where no comment names the wait, `-Candidates` reads the
+same clause in the body. Measured November 12, 2026: #4025 named its blocking branch only in prose, and
+stayed `skipped` after that branch merged. **So whoever files an issue under `awaiting-pull` writes the
+line `Parked: waiting on <#n or branch>.` in its body**, in the clause form above; prose that merely cites
+the branch is never read, because a body citing numbers is not a statement of what it waits on.
+
 **The two external waits can also read as `stale-park`**
 ([#3572](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3572)), each by what clears it.
 `awaiting-pull-external` clears once every `owner/repo#n` its clause names has landed *and* that repo has

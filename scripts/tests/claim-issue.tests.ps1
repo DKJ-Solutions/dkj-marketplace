@@ -1635,7 +1635,15 @@ Assert-True (($rLast.Issues -join ',') -eq '2') 'the last parking comment is the
 $rNone = & $w @('Parked by a sweep: waiting on the owner to look.', 'just a comment')
 Assert-True ($rNone.Issues.Count -eq 0 -and $rNone.Branches.Count -eq 0) 'a parking comment naming nothing yields nothing'
 Assert-True ((Get-ParkingWaitReferences -Comments @()).Issues.Count -eq 0) 'and so do no comments'
+# #4028: an issue parked at filing carries its wait in the body, not in a comment
+$rBody = Get-ParkingWaitReferences -Comments @() -Body "Some context.`n`nParked: waiting on feat/admin-figma-wireframes -- the shell it rebuilds."
+Assert-True (($rBody.Branches -join ',') -eq 'feat/admin-figma-wireframes' -and $rBody.Since -eq '') 'with no parking comment, the body''s clause is read, and it dates nothing (#4028)'
+$rBoth = Get-ParkingWaitReferences -Comments @([pscustomobject]@{ body = 'Parked by a sweep: waiting on #2.' }) -Body 'Parked: waiting on #1.'
+Assert-True (($rBoth.Issues -join ',') -eq '2') 'a parking comment outranks the body, as the newer word'
+$rProse = Get-ParkingWaitReferences -Comments @() -Body 'Branch `feat/x` rebuilt the shell; bring both files over once the branch lands (#4025).'
+Assert-True ($rProse.Issues.Count -eq 0 -and $rProse.Branches.Count -eq 0) 'a body without the parking clause yields nothing, so prose citing numbers never clears a wait'
 $cand = Get-Content -LiteralPath (Join-Path $repoRoot 'scripts\task\claim-issue.ps1') -Raw
+Assert-True ($cand -match "'--json', 'body'" -and $cand -match '-Body ') '-Candidates fetches the body only for a park no comment names, and hands it over (#4028)'
 Assert-True ($cand -match "Verdict = 'stale-park'" -and $cand -match '--remove-label \$sLabel') '-Candidates reads a cleared park as stale-park and prints the unpark line for the label it read'
 
 # #3572: the two external waits read the same clause -- cross-repo numbers apart, and the park's own date

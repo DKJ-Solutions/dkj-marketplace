@@ -825,6 +825,14 @@ if ($Candidates) {
             $issueObj = $issuesByNumber[[int]$c.Number]
             $comments = if ($issueObj -and $issueObj.PSObject.Properties['comments']) { @($issueObj.comments) } else { @() }
             $refs = Get-ParkingWaitReferences -Comments $comments
+            # Parked at filing (#4028): no comment names the wait, so read the body, one call for this issue alone.
+            if (-not ($refs.Issues.Count + $refs.Branches.Count + $refs.External.Count + $refs.Repos.Count)) {
+                $bq = Invoke-NativeCapture -FilePath 'gh' -Utf8 -DiscardStderr -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds `
+                    -Arguments (@('issue', 'view', "$($c.Number)") + $repoArgs + @('--json', 'body', '--jq', '.body'))
+                if ($bq -and (Test-NativeExitMeasured -Capture $bq) -and $bq.ExitCode -eq 0) {
+                    $refs = Get-ParkingWaitReferences -Comments $comments -Body ((@($bq.Output) -join "`n"))
+                }
+            }
             $label = ([regex]::Match($c.Reason, "^label '([^']+)'")).Groups[1].Value
             if ($label -eq 'awaiting-pull-external') {
                 if ($refs.External.Count -eq 0) {
@@ -863,7 +871,7 @@ if ($Candidates) {
             }
             $named = @(@($refs.Issues | ForEach-Object { @{ Kind = 'issue'; Ref = "$_"; Show = "#$_" } }) + @($refs.Branches | ForEach-Object { @{ Kind = 'branch'; Ref = $_; Show = $_ } }))
             if ($named.Count -eq 0) {
-                $c.Reason = "$($c.Reason); its parking comment names no #<n> or branch, so whether the wait has cleared is not read"
+                $c.Reason = "$($c.Reason); neither a parking comment nor the body names a #<n> or branch after 'Parked: waiting on', so whether the wait has cleared is not read -- add that line as a comment to have it read"
                 continue
             }
             # An issue read answers its landing time rather than $true, so anything but $false/$null is landed.

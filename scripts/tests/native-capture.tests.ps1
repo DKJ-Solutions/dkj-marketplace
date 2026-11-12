@@ -2055,7 +2055,10 @@ foreach ($af in $auditFiles) {
 # index copy of a modified .claude/*.json), -Utf8 so its JSON decodes as written. Judged only after
 # Test-NativeExitMeasured and a POSITIVE `-eq 0`: a read it could not judge returns $false, so the file is left
 # as it is -- skipped before the run or named after it -- and never restored on an unmeasured answer.
-Assert-Equal 115 $boundedTotal 'the parser still counts 115 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
+# 115 -> 116 (#4028): claim-issue.ps1 -Candidates' $bq (`gh issue view <n> --json body`), -Utf8 at the shared
+# network bound, read only for an awaiting-* park no comment names. Judged only after Test-NativeExitMeasured and a
+# POSITIVE `-eq 0`: an unread body leaves the references as the comments gave them, so the issue stays skipped.
+Assert-Equal 116 $boundedTotal 'the parser still counts 116 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
 Assert-Equal 0 $unguarded.Count `
     ('every bounded capture judged with a NEGATIVE exit-code test either asks Test-NativeExitMeasured/Get-NativeExitLabel about THAT capture or is exempt with a reason (#2081)' +
      $(if ($unguarded.Count) { ' -- unguarded: ' + ($unguarded -join ' | ') } else { '' }))
