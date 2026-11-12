@@ -64,7 +64,7 @@ token groups do get a real preview.
       B1-B4). The themes are no longer a single-card group.
 - [x] Cody: previous / next with a position ("3 of 13") above and below every page's cards, arrow keys too (F3, C1.4).
 - [x] Cody: the breadcrumb cut to Marketplace, the brand book a destination of its own (B1.1).
-- [ ] Owner looks at the overview and a group page on the product server and approves the structure and look.
+- [~] Owner looks at the overview and a group page on the product server and approves the structure and look. Not done as a separate look: davekokbwj approved the branch through issues-sweep-reviews on 2026-11-12 without one.
 
 ### TEST
 
