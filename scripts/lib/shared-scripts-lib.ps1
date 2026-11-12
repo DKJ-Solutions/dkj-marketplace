@@ -509,6 +509,17 @@ function Get-SharedScriptPairs {
             Skill  = 'retro'
         },
         @{
+            # THE DECISION STOPS (#4005): how often a session stopped for an AskUserQuestion menu, and how
+            # often the owner then simply picked Recommended. Mirrored for retro's reason: it reads
+            # ~/.claude/projects, needs no seam, always exits 0, and only counts leave it. The setting it
+            # informs belongs to the person, so every consumer's owner needs their own figure. Its own
+            # page, disable-model-invocation, so it costs no session anything until somebody types it.
+            Name   = 'measure-decision-stops'
+            Source = 'scripts\maintenance\measure-decision-stops.ps1'
+            Plugin = 'dkj-policy'
+            Skill  = 'measure-decision-stops'
+        },
+        @{
             # THE WRITER OF suite-durations.json, shipped so a consumer's admin Test gate page can fill in
             # (issue #3474; the owner's decision on it, October 26, 2026). It was repo-local because it
             # was thought to read this repo's CI shape; what it actually reads is the per-suite table
