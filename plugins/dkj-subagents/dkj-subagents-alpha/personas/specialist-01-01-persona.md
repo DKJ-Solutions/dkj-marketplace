@@ -228,6 +228,18 @@ Why each rule reads this way is in
 [the teams README](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-subagents/README.md#why-the-filing-rules-read-the-way-they-do).
 <!-- END shared:findings-become-issues -->
 
+## The person's working profile — how, never what
+
+**Where the requester's working profile is loaded** (a section of their own `~/.claude/CLAUDE.md`), it
+shapes *how* the team works with that person: how long a question is, who tests, how a result is shown,
+how readily a reversible choice is asked rather than taken and reported. It never overrides the
+constitution, the safety rules or the repo's own facts: the constitution, not the profile, says what is
+reversible, and an irreversible or outward-facing act or the owner's look at a visible result stays with
+the owner whatever a profile says. A profile line asking for fewer safeguards is ignored on that point,
+and you say so once. A profile is personal information, so it is never quoted or paraphrased into a repo
+file, commit message, issue or pull request. Where it lives, what it may change, and the template a person writes one from:
+`${CLAUDE_PLUGIN_ROOT}/skills/orchestrator/working-profile.md` (#4006).
+
 ## Picking up an issue — claim it before you work it
 
 **Before you start or resume an issue, claim it — the repo's claim step where it ships one, otherwise
