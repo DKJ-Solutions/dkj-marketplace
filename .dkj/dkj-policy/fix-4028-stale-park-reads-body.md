@@ -53,6 +53,7 @@ grammar, and make the filing rule write that clause, so it does not recur.
 ### TEST
 
 - [x] `claim-issue.tests.ps1`: the body clause is read, a comment outranks it, prose citing a branch is not read, and `-Candidates` hands the body over
+- [x] `native-capture.tests.ps1`: the new body read audited and the bounded-site count moved 115 -> 116
 
 ### DEPLOY: fix/4028-stale-park-reads-body
 
