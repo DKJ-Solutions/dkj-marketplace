@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**5 / 7 minor entries** <!-- pending-tally -->
+**6 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4004-progress-page · 20261112-094216Z
+
+A new Admin page, Progress, on `/dev/progress`, beside Goals. It reads what the Goals page and the Logbook
+already hold, so nothing new is recorded and no store changes; the Goals query gains one field, a
+milestone's labels.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every repo's Admin gains a Progress card. A repo with a goal sees, on one screen, how far its milestones are,
+each marked built, used or measured (a closed milestone carrying the label `used` or `measured`), and how the
+team ran: its assignments, how long Claude worked, how long it waited on you, and a column per assignment.
+Questions asked and steps by hand read "not recorded yet" until #4008 records them.
+
+**Score:** 3
+
+#### Pull Request
+
+Admin: a Progress page -- how far the app is, and how the team ran
+
+Plugins: dkj-policy
+
+[PR #4014](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4014)
+
+---
 
 ### DEPLOY: feat/4005-measure-decision-stops · 20261112-093010Z
 

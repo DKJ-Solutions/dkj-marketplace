@@ -539,6 +539,8 @@ $script:AdminIcons = @{
     'today'         = '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'
     # A flag (Feather's 'flag', MIT), for the Goals card.
     'goals'         = '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>'
+    # A bar chart (Feather's 'bar-chart-2' on an axis), for the Progress card.
+    'progress'      = '<path d="M3 3v18h18"/><path d="M7 16v-4"/><path d="M12 16V8"/><path d="M17 16v-7"/>'
     'pull-request'  = '<circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M6 8v8M18 16V9a3 3 0 0 0-3-3h-4M13 4l-2 2 2 2"/>'
     'actions'       = '<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>'
     'release-notes' = '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/>'
@@ -610,6 +612,8 @@ function Get-GeneralPages {
         # then the goals and the one step to take now (#3816).
         @{ Href = '/dev/today';         Label = 'Today';         Sub = 'The day goal, the plan and what got done, and the week'; Icon = 'today' },
         @{ Href = '/dev/goals';         Label = 'Goals';         Sub = 'Each goal broken into milestones and tasks, and the one step to take now'; Icon = 'goals' },
+        # How far the app is and how the team ran, side by side (#4004).
+        @{ Href = '/dev/progress';      Label = 'Progress';      Sub = 'How far the app is, milestone by milestone, and how long the team waited on you'; Icon = 'progress' },
         @{ Href = '/dev/release-notes'; Label = 'Release notes'; Sub = 'What each released version of the plugins changed'; Icon = 'release-notes' },
         @{ Href = '/dev/sessionstart';  Label = 'SessionStart';  Sub = 'The always-on path every session loads before its first turn'; Icon = 'sessionstart'; Group = '/dev/performance/context' },
         # Every repo's since #3470 (the owner, October 25, 2026): the source repo's own pages until then.
