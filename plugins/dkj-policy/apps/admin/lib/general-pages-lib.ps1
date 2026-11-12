@@ -336,7 +336,8 @@ function Format-FitAlarmHtml {
         and the trail the bar's (.shell__bar .breadcrumbs), and the screen it judges is the shell's main pane, which
         scrolls on its own while the window never does. The pane is judged at its own height, so a pane that runs past
         it says so as a page did; a list long by nature (a dense table of runs or releases) scrolls in its pane by design
-        and is exempt, since the shell is an Explorer, not a page of one screen.
+        and is exempt, since the shell is an Explorer, not a page of one screen. Only a shell that is the page's own
+        frame counts: a .shell--fit is a specimen set in a box, so a brand book page showing one keeps its own h1 (#4030).
     #>
     return @'
 <p class="msg--warn" id="fit-alarm" role="alert" hidden style="position: fixed; right: 16px; bottom: 16px; margin: 0; z-index: 50; box-shadow: var(--shadow-pop)"></p>
@@ -348,7 +349,8 @@ function Format-FitAlarmHtml {
     return el ? el.textContent.trim().split(/\s+/).filter(function (w) { return /[\p{L}\p{N}]/u.test(w); }).length : 0;
   }
   function judge() {
-    var d = document.documentElement, said = [], shell = document.querySelector(".shell__list");
+    // Only the page's own frame is Admin's shell: a .shell--fit is a specimen of it set in a box (#4030).
+    var d = document.documentElement, said = [], shell = document.querySelector(".shell:not(.shell--fit) .shell__list");
     var tall = d.scrollHeight - window.innerHeight, wide = d.scrollWidth - d.clientWidth;
     if (shell) {
       // Admin's shell (#3830): the window never scrolls, its main pane does. A pane holding a dense table scrolls by design.
