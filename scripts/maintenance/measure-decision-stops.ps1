@@ -90,6 +90,21 @@ if ($Since) {
 
 $script:RecommendedMark = '(Recommended)'
 
+# THE CHECKOUT THIS RUNS FROM, dual-context like measure-closeouts.ps1: CLAUDE_PROJECT_DIR for a consumer
+# running the mirror, otherwise the git root. It is used for one thing only, marking that checkout's row
+# in the per-project report, and a run outside any repository simply marks none.
+$thisProject = $null
+try {
+    $repoRoot = $null
+    if ($env:CLAUDE_PROJECT_DIR) { $repoRoot = $env:CLAUDE_PROJECT_DIR }
+    else {
+        . (Join-Path $PSScriptRoot '..\lib\repo-root-lib.ps1')
+        $repoRoot = (Get-GitTopLevelPath).Path
+    }
+    # Claude Code names a project directory after its path, every non-alphanumeric character a '-'.
+    if ($repoRoot) { $thisProject = ([System.IO.Path]::GetFullPath($repoRoot.Trim()) -replace '[^A-Za-z0-9]', '-') }
+} catch { $thisProject = $null }
+
 function Get-ProjectLabel {
     <# The reportable part of a project directory name -- never the local path it encodes. #>
     param([string]$DirName)
@@ -241,11 +256,13 @@ $sessionsWithStop = 0
 # Counted and PRINTED rather than swallowed: the first run of this script read 0 stops in 225 sessions
 # because every session holding one threw inside the classifier, and nothing said so.
 $unreadable = 0
+$thisLabel = $null
 $stopsPerSession = New-Object System.Collections.Generic.List[int]
 
 foreach ($dir in Get-ChildItem -LiteralPath $TranscriptRoot -Directory -ErrorAction SilentlyContinue) {
     if ($dir.Name -notlike $Project) { continue }
     $label = Get-ProjectLabel -DirName $dir.Name
+    if ($thisProject -and $dir.Name -eq $thisProject) { $thisLabel = $label }
     foreach ($file in Get-ChildItem -LiteralPath $dir.FullName -Filter *.jsonl -ErrorAction SilentlyContinue) {
         $sessions++
         $v = @()
@@ -282,7 +299,7 @@ $median = if ($sorted.Count) { $sorted[[int][math]::Floor(0.5 * ($sorted.Count -
 if ($Json) {
     $projects = @(foreach ($p in $byProject.Keys) {
         $s = Get-Share -Tally $byProject[$p]
-        [pscustomobject]@{ Project = $p; Counts = [pscustomobject]$byProject[$p]; Offered = $s.Offered; AsIsPct = $s.AsIsPct; AnyRecPct = $s.AnyRecPct }
+        [pscustomobject]@{ Project = $p; ThisCheckout = ($p -eq $thisLabel); Counts = [pscustomobject]$byProject[$p]; Offered = $s.Offered; AsIsPct = $s.AsIsPct; AnyRecPct = $s.AnyRecPct }
     })
     [pscustomobject]@{
         MeasuredUtc       = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
@@ -333,7 +350,8 @@ if ($byProject.Count -gt 0) {
     $rows = @(foreach ($p in $byProject.Keys) { $s = Get-Share -Tally $byProject[$p]; [pscustomobject]@{ P = $p; S = $s } })
     foreach ($r in ($rows | Sort-Object { $_.S.Offered } -Descending)) {
         $pct = if ($null -eq $r.S.AsIsPct) { '-' } else { "$($r.S.AsIsPct)%" }
-        Write-Host ("    {0,-42} n={1,-5} as-is={2}" -f $r.P, $r.S.Offered, $pct)
+        $mark = if ($thisLabel -and $r.P -eq $thisLabel) { '  <- this checkout' } else { '' }
+        Write-Host ("    {0,-42} n={1,-5} as-is={2}{3}" -f $r.P, $r.S.Offered, $pct, $mark)
     }
 }
 

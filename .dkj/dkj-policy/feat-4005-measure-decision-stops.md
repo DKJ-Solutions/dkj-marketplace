@@ -77,6 +77,9 @@ setting, which is #4006; the issue stays open for it (`-NoResolves`).
   question record without its text no longer throws the session away, and the page says the repo name is
   printed, how a declined call counts, and what else the report shows. The suite covers the comma label.
   The real corpus measured the same after the fixes.
+- [x] The first `ship-pr` stopped at `shared-scripts.tests.ps1`: every shared entry point must resolve the
+  repo root dual-context. The script now does, and uses it to mark the row of the checkout it runs from in
+  the per-project report (`ThisCheckout` in the JSON); the suite asserts the mark (35 asserts).
 
 ### DEPLOY: feat/4005-measure-decision-stops
 

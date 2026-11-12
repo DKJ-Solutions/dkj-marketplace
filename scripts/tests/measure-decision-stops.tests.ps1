@@ -157,6 +157,13 @@ try {
     Assert-True ($names -contains 'acme-repo') 'a GitHub project is reported by its repo part'
     Assert-True ($names -contains '(other)') 'a project outside GitHub is reported as (other)'
 
+    $env:CLAUDE_PROJECT_DIR = 'C:\Users\someone\Documents\GitHub\acme-repo'
+    $mine = (& $ScriptPath -TranscriptRoot $fixtureRoot -Json | Out-String) | ConvertFrom-Json
+    $acme = @($mine.Projects | Where-Object { $_.Project -eq 'acme-repo' })[0]
+    $other = @($mine.Projects | Where-Object { $_.Project -eq '(other)' })[0]
+    Assert-True ([bool]$acme.ThisCheckout) 'the checkout it runs from (CLAUDE_PROJECT_DIR) is marked'
+    Assert-True (-not [bool]$other.ThisCheckout) 'and no other project is'
+
     Write-Host ''
     Write-Host 'The privacy boundary' -ForegroundColor Cyan
     $human = (& $ScriptPath -TranscriptRoot $fixtureRoot *>&1 | Out-String)
@@ -181,6 +188,7 @@ try {
     Assert-Equal 0 $LASTEXITCODE 'a missing transcript root is a skip, still exit 0'
 }
 finally {
+    Remove-Item Env:\CLAUDE_PROJECT_DIR -ErrorAction SilentlyContinue
     if (Test-Path -LiteralPath $fixtureRoot) { Remove-Item -LiteralPath $fixtureRoot -Recurse -Force -ErrorAction SilentlyContinue }
 }
 
