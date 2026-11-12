@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**12 / 20 minor entries** <!-- pending-tally -->
+**13 / 21 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4025-shell-pattern-wireframes · 20261112-195748Z
+
+The brand book's Admin shell reference page and its Desktop shell specimens now show the shell as Admin draws it
+since the Figma wireframes: a brand row at the top of the sidebar, grouped navigation sections, and a page header
+in place of the toolbar. A repo building its own Admin page from the reference gets the current structure, and a
+list in the shell scrolls from the stylesheet alone.
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Closes a gap the wireframes branch itself left: the reference the README points to showed a shell Admin no
+longer draws.
+**Score:** 1
+
+#### Pull Request
+
+Brand book: admin-shell pattern and Desktop shell specimens follow the Figma wireframe structure
+
+Plugins: dkj-policy
+
+[PR #4033](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4033)
+
+---
 
 ### DEPLOY: feat/palette-border-graph · 20261112-194630Z
 
