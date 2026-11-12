@@ -2,7 +2,30 @@
 
 ## [Unreleased]
 
-**11 / 19 minor entries** <!-- pending-tally -->
+**12 / 20 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/palette-border-graph · 20261112-194630Z
+
+Controls now show their edge: a plain button, a segmented control, the info button, the search and filter fields
+and the product's stepper and combo field take a new `--primary-border`, a grey of the theme's colour in the 30 group at 3:1 on
+the page and on a card, in all twelve themes. The three graph colours are now computed per theme from blue, purple-magenta, deep teal, wine and violet,
+so a series no longer looks like the theme's own colour, a warning or a gain. The dark themes' surfaces stand a little further apart.
+**Score:** 2
+
+#### What makes this deploy extra special
+
+The house palette now promises non-text contrast for controls, computed per theme rather than typed, and the brand book states that every theme colour belongs to the 60, the 30 or the 10.
+**Score:** 2
+
+#### Pull Request
+
+Palette: a 3:1 control border, wider dark paper steps, colour-blind-safe graph slots
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4029](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4029)
+
+---
 
 ### DEPLOY: fix/4028-stale-park-reads-body · 20261112-171524Z
 
