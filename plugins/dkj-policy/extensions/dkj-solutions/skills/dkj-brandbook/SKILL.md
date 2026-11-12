@@ -122,6 +122,10 @@ appears, or the fetch fails, stop and report. The same holds for `house-product.
    (`--bg-*`), the primary (`--primary*`) or the text (`--fg-*`). A colour token you propose for a theme
    joins one of the three, under that group's name and in its hue (a new 30 colour is `--primary-<role>`);
    one that fits none is not proposed as a fourth kind. The core README's "What it holds" has the groups.
+5. **Every `--primary*` and `--fg-*` token reads on `bg-1` at 4.5:1 or better** (Dave, November 12, 2026), fills
+   included, in every theme. A token you propose for either group meets it, and `build-house-palette.ps1` refuses
+   a palette that does not. One that falls under it either gets more contrast or moves to the paper as a `--bg-*`
+   token; it never stays in its group below the floor.
 
 ## Density: one screen, the full width, nothing unasked
 

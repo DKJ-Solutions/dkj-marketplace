@@ -1256,7 +1256,7 @@ function Get-SettingsPageParts {
         # theme's --primary border still wins, its rule being the more specific.
         '.hs-theme > .hs-reset { border-color: var(--bg-5); }' + "`n" +
         '.hs-swatches > .card .theme-swatch { border-color: var(--bg-4); }' + "`n" +
-        # The Mode toggle stands --spacing-11 tall on a --bg-5 border, a step past the cards' --bg-4, the line between
+        # The Mode toggle stands --spacing-11 tall on a --bg-5 border, the control edge (since November 12, 2026), the line between
         # its buttons too (Maikel, November 3, 2026). Scoped to this page's groups, so the house .controls .seg keeps its
         # 30px everywhere else.
         '.hs-theme .controls .seg { height: var(--spacing-11); border-color: var(--bg-5); }' + "`n" +
