@@ -165,7 +165,7 @@ Assert-Equal '' (@([regex]::Matches($css, '(?m)\bh[1-3]\.[a-z][\w-]*') | ForEach
 
 Write-Host '-- every token is on the brand book page' -ForegroundColor Cyan
 # Maikel, November 1, 2026: a token that is added is always seen on the product's brand book pages
-# (/marketplace/dkj-policy/dkj-brandbook/tokens/<group>), which read their cards from specimens.html. So every custom
+# (/plugins/dkj-policy/dkj-brandbook/tokens/<group>), which read their cards from specimens.html. So every custom
 # property a token block declares -- :root and the theme lines; a component's own variable, such as --gutter, is not a
 # token -- is named on that page.
 $specimens = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'plugins\dkj-policy\assets\dkj-brandbook\specimens.html'))

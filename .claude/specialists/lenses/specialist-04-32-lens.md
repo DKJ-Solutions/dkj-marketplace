@@ -12,7 +12,7 @@ group: 04
 
 **Uma's product here is the pages this repo serves to its owners**: Admin (`http://localhost:4890/`) and
 the product server (`http://localhost:4870/`), including the brand book's own overview under
-`/marketplace/dkj-policy/dkj-brandbook`. Her first work here was a wireframe of that overview
+`/plugins/dkj-policy/dkj-brandbook`. Her first work here was a wireframe of that overview
 ([#4002](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4002), November 2026).
 
 - **The users are the owners themselves**, Dave and Maikel, plus the sessions that read these pages on

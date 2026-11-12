@@ -155,7 +155,7 @@ function ConvertTo-SpecialistRow {
         manual and the lens are read on demand.
 
         THE DETAIL PAGE'S PARTS (#3551) ride along: Slug, the name lowercased, which is the route segment of
-        /marketplace/dkj-subagents/<team>/<slug> (the id where the name is not a plain word); Description and Body, the
+        /plugins/dkj-subagents/<team>/<slug> (the id where the name is not a plain word); Description and Body, the
         listing and the definition as text; and -DefinitionPath, -ManualPath and -LensPath, repo-relative paths
         the page names ('' where there is no such file).
     #>
@@ -254,7 +254,7 @@ function Get-SpecialistPlugins {
 
 function Format-SpecialistPageHtml {
     <#
-        One specialist's own page, /marketplace/dkj-subagents/<team>/<slug> (#3551; under its team since the owner's
+        One specialist's own page, /plugins/dkj-subagents/<team>/<slug> (#3551; under its team since the owner's
         October 28, 2026): the trail Home > Plugins > dkj-subagents > team > name; the specialist's tiles (its four parts and the full read, in tokens); a facts card saying what it
         is, when it loads and where each of its files is; its listing; and its definition, folded, because it
         runs to pages. -Row is ConvertTo-SpecialistRow's shape, -Pick Get-SpecialistPlugins' entry for its plugin.
@@ -309,9 +309,9 @@ function Format-SpecialistPageHtml {
         '<details class="more"><summary>Show the definition</summary><pre class="sp-text">' + (& $e $r.Body) + '</pre></details></section>')
     [void]$body.AppendLine('</div>')
 
-    $team = '/marketplace/dkj-subagents/' + $Pick.Plugin
+    $team = '/plugins/dkj-subagents/' + $Pick.Plugin
     return Format-DevPageHtml -Title $label -Style (Get-SpecialistStyle) -Body $body.ToString() -FooterNote (Get-SpecialistsFooter -CharsPerToken $CharsPerToken) `
-        -ParentCrumbs @(@{ Label = 'Marketplace'; Href = '/marketplace' }, @{ Label = 'dkj-subagents'; Href = '/marketplace/dkj-subagents' }, @{ Label = $Pick.Plugin; Href = $team }) `
+        -ParentCrumbs @(@{ Label = 'Plugins'; Href = '/plugins' }, @{ Label = 'dkj-subagents'; Href = '/plugins/dkj-subagents' }, @{ Label = $Pick.Plugin; Href = $team }) `
         -Lead ((& $e $r.Title) + $(if ($r.Title) { ' &middot; ' } else { '' }) + 'a ' + (& $e $r.Form) + ' in the <code>' + (& $e $Pick.Plugin) + '</code> plugin.')
 }
 
@@ -335,7 +335,7 @@ function Get-SpecialistStyle {
 
 function Format-SpecialistTeamHtml {
     <#
-        The specialists of one team, as its own page on /marketplace/dkj-subagents/<team> shows them under the plugin's
+        The specialists of one team, as its own page on /plugins/dkj-subagents/<team> shows them under the plugin's
         facts (the owner, October 28, 2026: the Specialists pages and the dkj-subagents pages were two doors to the
         same four teams, so they became one). -Pick is Get-SpecialistPlugins' entry for the team; -BaseHref the
         team page's route, under which each specialist's own page sits. One card per specialist, in roster order,
@@ -422,12 +422,12 @@ function Resolve-SpecialistsRedirect {
     <#
         Where an old Specialists address now lives (the owner, October 28, 2026): /specialists is the teams' page,
         /specialists/<short> a team's page and /specialists/<short>/<slug> a specialist's, all under
-        /marketplace/dkj-subagents. Anything else -- not a Specialists address -- is ''. The server answers a hit with a
+        /plugins/dkj-subagents. Anything else -- not a Specialists address -- is ''. The server answers a hit with a
         303, so an old link or bookmark still lands; a team or specialist that does not exist is the new page's 404.
     #>
     param([AllowEmptyString()][string]$Path)
     if ($Path -cnotmatch '^/specialists(?:/([a-z0-9-]+)(?:/([a-z0-9-]+))?)?/?\z') { return '' }
-    $to = '/marketplace/dkj-subagents'
+    $to = '/plugins/dkj-subagents'
     if ($Matches[1]) { $to += '/dkj-subagents-' + $Matches[1] }
     if ($Matches[2]) { $to += '/' + $Matches[2] }
     return $to
@@ -435,24 +435,27 @@ function Resolve-SpecialistsRedirect {
 
 function Resolve-MarketplaceRedirect {
     <#
-        Where an old Plugins address now lives (Maikel, October 30, 2026: a page's url always matches its h1, and
-        that h1 is Marketplace): /plugins and everything under it, the same levels kept under /marketplace.
-        Anything else is ''. The server answers a hit with a 303, so an old link or bookmark still lands.
+        Where an old Marketplace address now lives: /marketplace and everything under it, the same levels kept
+        under /plugins (#4011, November 12, 2026). The pages were /plugins until Maikel moved them to /marketplace on
+        October 30, 2026 so the url would follow the h1; #4011 moves url and h1 back together, so that rule still
+        holds. Four levels, so the brand book's token pages (/marketplace/dkj-policy/dkj-brandbook/tokens/<group>)
+        land too. Anything else is ''. The server answers a hit with a 303, so an old link or bookmark still lands,
+        and so does the address a released Admin sends the house style to.
     #>
     param([AllowEmptyString()][string]$Path)
-    if ($Path -cnotmatch '^/plugins((?:/[a-z0-9-]+){0,3})/?\z') { return '' }
-    return '/marketplace' + $Matches[1]
+    if ($Path -cnotmatch '^/marketplace((?:/[a-z0-9-]+){0,4})/?\z') { return '' }
+    return '/plugins' + $Matches[1]
 }
 
 function Resolve-MarketplaceAddress {
     <#
-        The levels a /marketplace address names, as Format-MarketplacePluginsPageHtml takes them: @{ Group; Plugin;
-        Specialist }, each '' where the address does not reach it, or $null for no /marketplace address at all.
-        /marketplace/dkj-subagents alone is the teams' group page, never a plugin of that name -- the address the
+        The levels a /plugins address names, as Format-MarketplacePluginsPageHtml takes them: @{ Group; Plugin;
+        Specialist }, each '' where the address does not reach it, or $null for no /plugins address at all.
+        /plugins/dkj-subagents alone is the teams' group page, never a plugin of that name -- the address the
         add-ons' move (October 30, 2026) briefly turned into a 404.
     #>
     param([AllowEmptyString()][string]$Path)
-    if ($Path -cnotmatch '^/marketplace(?:/([a-z0-9-]+)(?:/([a-z0-9-]+)(?:/([a-z0-9-]+))?)?)?/?\z') { return $null }
+    if ($Path -cnotmatch '^/plugins(?:/([a-z0-9-]+)(?:/([a-z0-9-]+)(?:/([a-z0-9-]+))?)?)?/?\z') { return $null }
     $first = [string]$Matches[1]; $second = [string]$Matches[2]
     $group = if ($second -or $first -ceq 'dkj-subagents') { $first } else { '' }
     return @{ Group = $group; Plugin = $(if ($group) { $second } else { $first }); Specialist = [string]$Matches[3] }
@@ -461,15 +464,15 @@ function Resolve-MarketplaceAddress {
 function Resolve-ProductHouseStyleRequest {
     <#
         The house style's specimens on the product (Maikel, October 31, 2026), named after the brand book whose files
-        they document: /marketplace/dkj-policy/dkj-brandbook is @{ Section = '' },
-        /marketplace/dkj-policy/dkj-brandbook/<section> @{ Section = '<section>' }, anything else $null. Asked before
+        they document: /plugins/dkj-policy/dkj-brandbook is @{ Section = '' },
+        /plugins/dkj-policy/dkj-brandbook/<section> @{ Section = '<section>' }, anything else $null. Asked before
         Resolve-MarketplaceAddress, which would read 'dkj-brandbook' as a plugin's name.
     #>
     param([AllowEmptyString()][string]$Path)
-    # A token group is one slug below the Tokens section, /marketplace/dkj-policy/dkj-brandbook/tokens/<group>, and
+    # A token group is one slug below the Tokens section, /plugins/dkj-policy/dkj-brandbook/tokens/<group>, and
     # comes back as @{ Section = 'tokens'; Token = '<group>' }; every other address carries Token ''.
-    if ($Path -cmatch '^/marketplace/dkj-policy/dkj-brandbook/tokens/([a-z][a-z-]{0,39})/?\z') { return @{ Section = 'tokens'; Token = [string]$Matches[1] } }
-    if ($Path -cnotmatch '^/marketplace/dkj-policy/dkj-brandbook(?:/([a-z][a-z-]{0,39}))?/?\z') { return $null }
+    if ($Path -cmatch '^/plugins/dkj-policy/dkj-brandbook/tokens/([a-z][a-z-]{0,39})/?\z') { return @{ Section = 'tokens'; Token = [string]$Matches[1] } }
+    if ($Path -cnotmatch '^/plugins/dkj-policy/dkj-brandbook(?:/([a-z][a-z-]{0,39}))?/?\z') { return $null }
     return @{ Section = [string]$Matches[1]; Token = '' }
 }
 
@@ -534,19 +537,19 @@ function Get-ProductBrandbookTokenCards {
 
 function Resolve-ProductHouseStyleRedirect {
     <#
-        Where the specimens' first product address now lives: /marketplace/dkj-policy/house-style[/<section>] until
+        Where the specimens' first product address now lives: /plugins/dkj-policy/house-style[/<section>] until
         the page took the brand book's name (Maikel, October 31, 2026), and the address a released Admin still
         sends them to. '' for any other path.
     #>
     param([AllowEmptyString()][string]$Path)
     # THE TOKENS SECTION HAS NO PAGE OF ITS OWN (Maikel, November 1, 2026): its groups each have one, and the overview
     # opens on them, so /tokens -- under either name, and the address a released Admin sends -- lands there.
-    if ($Path -cmatch '^/marketplace/dkj-policy/(?:dkj-brandbook|house-style)/tokens/?\z') { return '/marketplace/dkj-policy/dkj-brandbook#tokens' }
+    if ($Path -cmatch '^/plugins/dkj-policy/(?:dkj-brandbook|house-style)/tokens/?\z') { return '/plugins/dkj-policy/dkj-brandbook#tokens' }
     # Radius, Spacing and Size are one group, Scale, since #4009: an old link lands on its card there.
     $merged = @{ radius = 's-radius'; spacing = 's-spacing-scale'; size = 's-sizes-and-elevation' }
-    if ($Path -cmatch '^/marketplace/dkj-policy/dkj-brandbook/tokens/(radius|spacing|size)/?\z') { return '/marketplace/dkj-policy/dkj-brandbook/tokens/scale#' + $merged[$Matches[1]] }
-    if ($Path -cnotmatch '^/marketplace/dkj-policy/house-style(?:/([a-z][a-z-]{0,39}))?/?\z') { return '' }
-    return '/marketplace/dkj-policy/dkj-brandbook' + $(if ($Matches[1]) { '/' + $Matches[1] })
+    if ($Path -cmatch '^/plugins/dkj-policy/dkj-brandbook/tokens/(radius|spacing|size)/?\z') { return '/plugins/dkj-policy/dkj-brandbook/tokens/scale#' + $merged[$Matches[1]] }
+    if ($Path -cnotmatch '^/plugins/dkj-policy/house-style(?:/([a-z][a-z-]{0,39}))?/?\z') { return '' }
+    return '/plugins/dkj-policy/dkj-brandbook' + $(if ($Matches[1]) { '/' + $Matches[1] })
 }
 
 function ConvertTo-BrandbookAnchor {
@@ -633,7 +636,7 @@ function Get-ProductBrandbookPages {
         group's page. -Split is Split-HouseStyleSpecimens'.
     #>
     param([Parameter(Mandatory = $true)][hashtable]$Split)
-    $base = '/marketplace/dkj-policy/dkj-brandbook'
+    $base = '/plugins/dkj-policy/dkj-brandbook'
     $pages = @()
     $tokens = @($Split.Sections | Where-Object { $_.Slug -ceq 'tokens' }) | Select-Object -First 1
     if ($tokens) {
@@ -881,9 +884,9 @@ function Format-ProductHouseStylePageHtml {
         [AllowEmptyString()][string]$Provenance = ''
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
-    $base = '/marketplace/dkj-policy/dkj-brandbook'
+    $base = '/plugins/dkj-policy/dkj-brandbook'
     $foot = 'Read from this checkout''s <code>plugins/dkj-policy/assets/dkj-brandbook/specimens.html</code> and the product layer''s <code>plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/specimens.html</code> on every request, so it is the tree, not the installed release.'
-    $crumbs = @(@{ Label = 'Marketplace'; Href = '/marketplace' })
+    $crumbs = @(@{ Label = 'Plugins'; Href = '/plugins' })
     if ($Section -ceq 'tokens' -and -not $Token) { return $null }
     $split = if ($ReadError) { $null } else { Split-HouseStyleSpecimens -Body $Body }
 
@@ -949,13 +952,13 @@ function Format-ProductHouseStylePageHtml {
 function Resolve-MarketplaceAddOnRedirect {
     <#
         Where an add-on of dkj-policy's top-level address now lives (Maikel, October 30, 2026: the add-ons stand on
-        dkj-policy's page): /marketplace/dkj-policy/<name> for a -Name in -Plugins whose kind is 'add-on to
+        dkj-policy's page): /plugins/dkj-policy/<name> for a -Name in -Plugins whose kind is 'add-on to
         dkj-policy', and '' for anything else, so every other plugin keeps its own address.
     #>
     param([AllowEmptyCollection()][object[]]$Plugins = @(), [AllowEmptyString()][string]$Name)
     $p = @(@($Plugins) | Where-Object { $_ -and [string]$_.Name -ceq $Name })[0]
     if (-not $p -or (Get-MarketplacePluginKind -Name ([string]$p.Name) -Source ([string]$p.Source)) -cne 'add-on to dkj-policy') { return '' }
-    return '/marketplace/dkj-policy/' + $Name
+    return '/plugins/dkj-policy/' + $Name
 }
 
 function Get-MarketplacePluginKind {
@@ -981,21 +984,21 @@ function Format-MarketplacePluginsPageHtml {
 
         THE LEVELS (the owner, October 27, 2026: the cards were crammed, so the detail goes a level deeper, as on
         the Specialists pages; and the four specialist teams share one card). Without -Plugin or -Group it is
-        /marketplace: one link card per plugin saying what it is, its version and whether it is on here -- except the
+        /plugins: one link card per plugin saying what it is, its version and whether it is on here -- except the
         teams (dkj-subagents-*), which stand as ONE card, 'dkj-subagents', in the place of the first of them. With
         -Group 'dkj-subagents' alone it is that card's page, one link card per team. With -Plugin it is one
-        plugin's page -- /marketplace/<name>, or /marketplace/dkj-subagents/<name> for a team, so a team is reachable only
+        plugin's page -- /plugins/<name>, or /plugins/dkj-subagents/<name> for a team, so a team is reachable only
         under its group: the marketplace's line as the lead, a facts card, and the full description as paragraphs (Admin's
         ConvertTo-PluginDescriptionHtml) behind the "?" right of the h1 (Maikel, October 31, 2026: no Description card since). A -Group or -Plugin that names nothing, or a plugin under the
         wrong level, returns $null, so the server answers 404 rather than an empty page. dkj-policy's add-ons
         (Maikel, October 30, 2026) are not on the overview: dkj-policy's page carries them as cards, and each is
-        -Group 'dkj-policy' -Plugin <name>, /marketplace/dkj-policy/<name>.
+        -Group 'dkj-policy' -Plugin <name>, /plugins/dkj-policy/<name>.
 
         THE SPECIALISTS LIVE ON THEIR TEAMS' PAGES (the owner, October 28, 2026: the Specialists pages and these
         were two doors to the same four teams). -SpecialistRows is ConvertTo-SpecialistRow's shape and
         -CharsPerToken its factor: a team's card counts its specialists and their full read, a team's page shows
         them under its facts (Format-SpecialistTeamHtml), and -Specialist with a team is that specialist's own page,
-        /marketplace/dkj-subagents/<team>/<slug> -- $null where the team does not ship it. -SpecialistReadError is a
+        /plugins/dkj-subagents/<team>/<slug> -- $null where the team does not ship it. -SpecialistReadError is a
         warning on the pages that show them.
     #>
     param(
@@ -1014,7 +1017,7 @@ function Format-MarketplacePluginsPageHtml {
     $isTeam = { param($p) [string]$p.Name -like ($teamGroup + '-*') }
     $teams = @($all | Where-Object { & $isTeam $_ })
     # dkj-policy's add-ons stand on dkj-policy's own page, not the overview (Maikel, October 30, 2026), so each
-    # is reached under it, /marketplace/dkj-policy/<name>, as a team is under its group.
+    # is reached under it, /plugins/dkj-policy/<name>, as a team is under its group.
     $addOnParent = 'dkj-policy'
     $isAddOn = { param($p) (Get-MarketplacePluginKind -Name ([string]$p.Name) -Source ([string]$p.Source)) -ceq 'add-on to dkj-policy' }
     $addOns = @($all | Where-Object { & $isAddOn $_ })
@@ -1043,18 +1046,18 @@ function Format-MarketplacePluginsPageHtml {
                 $teamsDone = $true
                 $on = @($teams | Where-Object { $_.Enabled }).Count
                 $sub = [string]$teams.Count + ' specialist team' + $(if ($teams.Count -ne 1) { 's' } else { '' }) + ' &middot; ' + $on + ' enabled here'
-                [void]$body.AppendLine((Format-AdminCardLinkHtml -Href ('/marketplace/' + $teamGroup) -Label $teamGroup -SubHtml $sub -Heading 2 `
+                [void]$body.AppendLine((Format-AdminCardLinkHtml -Href ('/plugins/' + $teamGroup) -Label $teamGroup -SubHtml $sub -Heading 2 `
                     -Id ('group-' + $teamGroup) -Class ('pl-card' + $(if ($on) { '' } else { ' pl-card--off' }))))
                 continue
             }
             if (& $isAddOn $p) { continue }
-            [void]$body.AppendLine((& $card $p ('/marketplace/' + $p.Name) 2))
+            [void]$body.AppendLine((& $card $p ('/plugins/' + $p.Name) 2))
         }
         if (-not $all.Count) {
             [void]$body.AppendLine('<section class="card grid__full"><p class="note">No plugin was found.</p></section>')
         }
         [void]$body.AppendLine('</div>')
-        return Format-DevPageHtml -Title 'Marketplace' -Style $style -Body $body.ToString() -FooterNote $footer -Lead ''
+        return Format-DevPageHtml -Title 'Plugins' -Style $style -Body $body.ToString() -FooterNote $footer -Lead ''
     }
 
     if (-not $Plugin) {
@@ -1070,13 +1073,13 @@ function Format-MarketplacePluginsPageHtml {
                 # A team's card also counts its specialists and what reading all of them costs.
                 $sp = & $spOf $p.Name
                 $sub = @(& $state $p) + $(if ($sp) { @(([string]$sp.Rows.Count + ' specialist' + $(if ($sp.Rows.Count -ne 1) { 's' } else { '' })), ('full read ' + (& $tok $sp.TotalBytes))) } else { @() })
-                [void]$body.AppendLine((Format-AdminCardLinkHtml -Href ('/marketplace/' + $teamGroup + '/' + $p.Name) -Label $p.Name -SubHtml ($sub -join ' &middot; ') -Heading 3 `
+                [void]$body.AppendLine((Format-AdminCardLinkHtml -Href ('/plugins/' + $teamGroup + '/' + $p.Name) -Label $p.Name -SubHtml ($sub -join ' &middot; ') -Heading 3 `
                     -Id ('plugin-' + $p.Name) -Class ('pl-card' + $(if ($p.Enabled) { '' } else { ' pl-card--off' }))))
             }
             [void]$body.AppendLine('</div>')
         }
         return Format-DevPageHtml -Title $teamGroup -Style $style -Body $body.ToString() -FooterNote $footer `
-            -ParentCrumbs @(@{ Label = 'Marketplace'; Href = '/marketplace' }) -Lead ''
+            -ParentCrumbs @(@{ Label = 'Plugins'; Href = '/plugins' }) -Lead ''
     }
 
     $p = @($all | Where-Object { $_.Name -ceq $Plugin })[0]
@@ -1090,8 +1093,8 @@ function Format-MarketplacePluginsPageHtml {
         if (-not $one) { return $null }
         return Format-SpecialistPageHtml -Row $one -Pick $sp -CharsPerToken $CharsPerToken -ReadError $SpecialistReadError
     }
-    $crumbs = @(@{ Label = 'Marketplace'; Href = '/marketplace' })
-    if ($Group) { $crumbs += @{ Label = $Group; Href = '/marketplace/' + $Group } }
+    $crumbs = @(@{ Label = 'Plugins'; Href = '/plugins' })
+    if ($Group) { $crumbs += @{ Label = $Group; Href = '/plugins/' + $Group } }
     # '' rather than no output for a zero: in 5.1 a call that writes nothing empties the whole @(a, b, ...) it stands in.
     $count = { param($n, $word) if ([int]$n -gt 0) { [string]$n + ' ' + $word + $(if ([int]$n -ne 1) { 's' } else { '' }) } else { '' } }
     $holds = @((& $count $p.Subagents 'subagent'), (& $count $p.Personas 'persona'), (& $count $p.Skills 'skill'), (& $count $p.Hooks 'hook')) | Where-Object { $_ }
@@ -1107,7 +1110,7 @@ function Format-MarketplacePluginsPageHtml {
         # What dkj-policy ships that can be looked at: the house style's specimens (Maikel, October 31, 2026).
         # It opens the page, above the add-ons, under the heading Assets, its card named dkj-brandbook (Maikel, October 31, 2026).
         [void]$body.AppendLine('<div class="grid-3" id="assets"><div class="grid__head"><h2>Assets (Always on)</h2></div>')
-        [void]$body.AppendLine((Format-AdminCardLinkHtml -Href '/marketplace/dkj-policy/dkj-brandbook' -Label 'dkj-brandbook' -Heading 3 `
+        [void]$body.AppendLine((Format-AdminCardLinkHtml -Href '/plugins/dkj-policy/dkj-brandbook' -Label 'dkj-brandbook' -Heading 3 `
             -Sub 'Every token, the twelve themes and every component, with their variants and states' -Icon 'house-style'))
         [void]$body.AppendLine('</div>')
     }
@@ -1115,7 +1118,7 @@ function Format-MarketplacePluginsPageHtml {
         # dkj-policy's add-ons, below its house style and above its facts (Maikel, October 30, 2026): one card
         # each, h3s under the section's h2.
         [void]$body.AppendLine('<div class="grid-3" id="add-ons"><div class="grid__head"><h2>Add-ons (Optional)</h2></div>')
-        foreach ($a in $addOns) { [void]$body.AppendLine((& $card $a ('/marketplace/' + $addOnParent + '/' + $a.Name) 3)) }
+        foreach ($a in $addOns) { [void]$body.AppendLine((& $card $a ('/plugins/' + $addOnParent + '/' + $a.Name) 3)) }
         [void]$body.AppendLine('</div>')
     }
     [void]$body.AppendLine('<div class="grid-2" id="about">')
@@ -1131,7 +1134,7 @@ function Format-MarketplacePluginsPageHtml {
     if ($Group -ceq $teamGroup) {
         # A team's page: its specialists under its facts.
         $pick = if ($sp) { $sp } else { @{ Plugin = $p.Name; Rows = @() } }
-        [void]$body.Append((Format-SpecialistTeamHtml -Pick $pick -CharsPerToken $CharsPerToken -BaseHref ('/marketplace/' + $teamGroup + '/' + $p.Name) -ReadError $SpecialistReadError))
+        [void]$body.Append((Format-SpecialistTeamHtml -Pick $pick -CharsPerToken $CharsPerToken -BaseHref ('/plugins/' + $teamGroup + '/' + $p.Name) -ReadError $SpecialistReadError))
         $style = (Get-SpecialistStyle) + "`n" + $style
         $footer += ' ' + (Get-SpecialistsFooter -CharsPerToken $CharsPerToken)
     }
