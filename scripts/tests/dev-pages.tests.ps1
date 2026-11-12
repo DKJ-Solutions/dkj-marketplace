@@ -66,12 +66,9 @@ Assert-True ($gshell -notmatch 'dkj-claude-plugins') 'and nothing of this repo i
 $gIntro = $gshell.IndexOf('<h1>')
 $gScroll = $gshell.IndexOf('<div class="shell__list tb-scroll">')
 Assert-True ($gshell.Contains((Format-RepoAdminBanner)) -and $gScroll -ge 0 -and $gshell.IndexOf('id="admin-banner"') -gt $gScroll -and $gshell.IndexOf('id="admin-banner"') -lt $gshell.IndexOf('<main class="shell__body">') -and $gshell.IndexOf('<main class="shell__body">') -lt $gshell.IndexOf('<p>body</p>') -and ([regex]::Matches($gshell, 'id="admin-banner"')).Count -eq 1) 'every page carries the general banner once, as the first thing in the scroll pane, above its own blocks, in the pane body (#3297; owner, October 24, 2026; in the shell, #3811)'
-Assert-True ($gshell -match '<div class="shell__list tb-scroll">
-?
-<div class="notice" id="admin-banner"' -and $gshell -match '<main class="shell__body">
-?
-<div class="page-head"><div class="page-head__title"><h1>An &lt;i&gt;issue</h1></div></div>
-?
+Assert-True ($gshell -match '<div class="shell__list tb-scroll">?
+<div class="notice" id="admin-banner"' -and $gshell -match '<main class="shell__body">?
+<div class="page-head"><div class="page-head__title"><h1>An &lt;i&gt;issue</h1></div></div>?
 <p>body</p>' -and $gshell.IndexOf('<h1>') -gt $gshell.IndexOf('id="admin-banner"') -and $gshell -notmatch 'class="toolbar"') 'the page''s h1 is the page header''s, the first thing in the pane body after the banner, with its own blocks beneath, and no toolbar above the pane (the Figma wireframes, November 12, 2026)'
 # THE SITE HEADER (October 22, 2026): only where a caller asks for it with -Brand, so every other repo's pages stay as they were.
 $anon = Format-GeneralPageHtml -Title 'T' -Lead 'L' -Body ''
