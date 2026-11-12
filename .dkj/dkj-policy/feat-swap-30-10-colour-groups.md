@@ -39,19 +39,32 @@
 
 ### PLAN
 
+Dave, November 12, 2026: swap the 30 and the 10 of the 60-30-10 rule, so primary is the accent (10) and text the 30.
+A visible result: parked for the owner's look, not merged.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] README: the group table swapped, the reason written under it, the 30/10 references around it renamed.
+- [x] specimens.html: the 30 card shows the text steps, the 10 card the primary group.
+- [x] house-style.css: h2 to --fg-2, h3 to --fg-3, h1 stays --primary; the stale breadcrumb-bar-on-primary comments removed (the bar stands on --bg-1).
 
 ### TEST
 
+- [x] Lint and test gates through open-pr.
+
 ### DEPLOY: feat/swap-30-10-colour-groups
 
-**Score:**
+The brand book's 60-30-10 groups are swapped: primary is the 10, the accent, and text is the 30. `h2` and `h3` move
+from `--primary` to `--fg-2` and `--fg-3`; `h1`, links, the main button and the states keep the theme's colour.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Every DKJ-Solutions app that takes this brand book sees its section headings turn from the theme colour to the text
+colour, the moment it updates.
+
+**Score:** 3
 
 #### Pull Request
 

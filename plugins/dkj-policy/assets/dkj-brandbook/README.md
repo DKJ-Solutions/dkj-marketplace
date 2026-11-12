@@ -124,8 +124,14 @@ already has, not a new colour:
 | Share | Group | Tokens | What it is |
 |---|---|---|---|
 | **60%** | Paper | `--bg-1` … `--bg-5` | the ground: the page, the cards, the lines |
-| **30%** | Primary | `--primary`, with `--primary-muted` (its grey), `--primary-raised` and `--primary-hover` (its two shades) | the theme's colour: `h1` and `h2`, links, the breadcrumb bar, `.btn--primary`, the states; `--primary-raised` is the settings cell in a site header, `--primary-hover` a primary button under the pointer |
-| **10%** | Text | `--fg-1` … `--fg-4` | what sits on the paper: every paragraph, label and quiet icon |
+| **30%** | Text | `--fg-1` … `--fg-4` | what sits on the paper: every paragraph, label and quiet icon, and `h2` (`--fg-2`) and `h3` (`--fg-3`) |
+| **10%** | Primary | `--primary`, with `--primary-muted` (its grey), `--primary-raised` and `--primary-hover` (its two shades) | the accent, the theme's colour: `h1`, links, `.btn--primary`, the states; `--primary-raised` is the settings cell in a site header, `--primary-hover` a primary button under the pointer |
+
+**Primary is the 10, text the 30** (Dave, November 12, 2026; from October 28 it was the other way round). The 10 of
+the rule is the accent, and the theme's colour is the most saturated colour a theme has, so it stays the scarcest:
+it marks what the eye is meant to find (the page's `h1`, a link, the main action, a state) and nothing else. Text
+carries the content on every page, so it is the larger share. That moved `h2` and `h3` from `--primary` to the
+text steps: a heading below the `h1` in the accent spends the 10 on every section.
 
 **A rule reads a colour only as a token, never derives one** (Maikel, a strict rule, November 1, 2026): no
 `color-mix()`, no relative colour (`rgb(from …)`), no `oklch()` or other colour function, **a token's own value
@@ -134,18 +140,18 @@ needs is a new token, typed into every theme line, and `check-colour-literals.mj
 anywhere before it lands. `--primary-raised` and `--primary-hover` were added that way the same day:
 `--primary` 15% of the way to `--bg-1`, and to `--fg-1`, the exact values the two `color-mix()` rules had computed.
 
-**Everything in the 30% reads on all four paper steps**, as the 10% does (Maikel, November 1, 2026): `--primary`
+**Everything in the primary group reads on all four paper steps**, as the text does (Maikel, November 1, 2026): `--primary`
 4.56:1 or better on `bg-4`, `--primary-muted` 5.30:1 or better (WCAG, the worst of the twelve themes); `--primary-raised` and `--primary-hover` are
 fills rather than text, so this is not asked of them. **And a theme has
 these three groups and no fourth**: a colour that fits none of them is not a theme colour. That retired
 `--muted-inverse` the same day. It was the grey of an inverted surface, 7:1 on `--fg-1`, and fitted no group: on the
-paper it read at 2.1:1 to 2.3:1 on `bg-4`, so not the 30; on `--primary` at 2.1:1 to 4.0:1, so not the 60; and
+paper it read at 2.1:1 to 2.3:1 on `bg-4`, so not the primary group; on `--primary` at 2.1:1 to 4.0:1, so not the 60; and
 no colour at all reaches 4.5:1 on both `bg-4` and `--fg-1` (the best grey reaches 3.9:1 to 4.05:1), so no
-change of value could have moved it into the 30. The quieter line on `.fill-inverse` takes `--bg-4` (15:1 or
+change of value could have moved it into the primary group. The quieter line on `.fill-inverse` takes `--bg-4` (15:1 or
 better on `--fg-1`), and the house-style gate reports `--muted-inverse` as a retired token.
 
 A repo layer keeps to the same shares: what it adds lands in one of the three groups, and a page whose
-primary outweighs its paper has spent the 30% as ground.
+primary outweighs its text has spent the accent as ground.
 
 **Tokens**, each in light and dark:
 
