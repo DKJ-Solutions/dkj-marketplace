@@ -48,12 +48,13 @@ colour vision, `--graph-3` sat beside `--positive-3` and under 3:1 on a light pa
 
 ### CREATE
 
-- [x] `--border-strong`, a fourteenth computed token: a grey of the theme's hue at 3:1 on bg-3, in the palette model and builder
+- [x] `--primary-border`, a fourteenth computed token in the 30 group: a grey of the primary's hue at 3:1 on bg-3, in the palette model and builder (first proposed as a free-standing `--border-strong`; the owner moved it into the 30 the same day)
+- [x] the 60-30-10 membership rule written into the brand book README and the `dkj-brandbook` skill, so a new colour token joins a group rather than standing beside them
 - [x] the dark paper steps widened in the model (bg-1 to bg-2 1.06:1, bg-3 to bg-4 1.12:1); the builder recomputed all twelve themes
-- [x] the plain `.btn`, `.seg`, `.info-button`, `.nav-search`, `.toolbar__filter`, `.stepper` and `.combo` take `--border-strong`
+- [x] the plain `.btn`, `.seg`, `.info-button`, `.nav-search`, `.toolbar__filter`, `.stepper` and `.combo` take `--primary-border`
 - [x] new graph slots, chosen with the dataviz validator away from the status hues, light and dark
 - [x] the brand book README, the stylesheet's measurement comment and specimens.html name the new token
-- [x] the Figma variables (dkj-brandbook file): all twelve theme modes and the graph slots synced from house-style.css, and `palette/border-strong` with its semantic `color/border-strong` alias added (after the owner allowed the write)
+- [x] the Figma variables (dkj-brandbook file): all twelve theme modes and the graph slots synced from house-style.css, and `palette/primary-border` with its semantic `color/primary-border` alias added, renamed from `border-strong` when it moved into the 30 (after the owner allowed the write)
 
 ### TEST
 
@@ -64,14 +65,14 @@ colour vision, `--graph-3` sat beside `--positive-3` and under 3:1 on a light pa
 ### DEPLOY: feat/palette-border-graph
 
 Controls now show their edge: a plain button, a segmented control, the info button, the search and filter fields
-and the product's stepper and combo field take a new `--border-strong`, a grey of the theme's colour at 3:1 on
+and the product's stepper and combo field take a new `--primary-border`, a grey of the theme's colour in the 30 group at 3:1 on
 the page and on a card, in all twelve themes. The three graph colours are now blue, purple-magenta and deep teal,
 so a series no longer looks like a warning or a gain. The dark themes' surfaces stand a little further apart.
 **Score:** 2
 
 #### What makes this deploy extra special
 
-The house palette now promises non-text contrast for controls, computed per theme rather than typed.
+The house palette now promises non-text contrast for controls, computed per theme rather than typed, and the brand book states that every theme colour belongs to the 60, the 30 or the 10.
 **Score:** 2
 
 #### Pull Request
