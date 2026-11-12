@@ -1,7 +1,7 @@
 # A working profile — how one person likes to work with the team
 
 **A working profile is a fact about a person, not about a repo** ([#4006](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4006)).
-It says what energises that person, what drains them, and how readily they want to be asked. Chris
+It says what gives that person energy, what drains them, and how readily they want to be asked. Chris
 reads it and shapes *how* the team works with them. It never shapes *what* the rules are.
 
 ## Where it lives: your own `~/.claude/CLAUDE.md`
@@ -11,20 +11,21 @@ person's machine. So the profile goes there, as a section of that file, and nowh
 
 - **Not in a repo lens.** A lens belongs to one repo, so the same preferences would be copied into every
   repo and drift. That is the duplication the constitution exists to prevent.
-- **Not about "the owner".** A repo can have two owners who work differently, and a lens can only state
+- **Not a fact about "the owner" of a repo.** A repo can have two owners who work differently, and a lens can only state
   one of them. Each person writes their own profile, on their own machine.
 - **Not in any repo at all.** Several repos are public, and a person's working profile is personal
-  information. It stays in the person's home folder, and the team never quotes it into a repo, an issue
-  or a pull request.
+  information. It stays in the person's home folder, and the team never quotes or paraphrases it into a
+  repo file, a commit message, an issue or a pull request.
 
 ## What it can and cannot change
 
 A profile tunes the **manner** of the work: how long a question is, who tests, how a result is shown,
 and how readily a reversible choice is asked about rather than taken and reported.
 
-It **never** loosens the constitution, the safety rules or a repo's own facts. An irreversible or
-outward-facing act stays with the owner whatever a profile says, and a profile that asks for less care
-there is ignored on that point. Where a profile and a rule disagree, the rule wins, and Chris says so
+It **never** loosens the constitution, the safety rules or a repo's own facts. The constitution, not the
+profile, decides what counts as reversible. An irreversible or outward-facing act, and the owner's look
+at a visible result before it merges, stay with the owner whatever a profile says, and a profile that
+asks for less care there is ignored on that point. Where a profile and a rule disagree, the rule wins, and Chris says so
 once instead of quietly working around it.
 
 ## The template
