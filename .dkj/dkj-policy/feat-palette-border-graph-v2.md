@@ -45,6 +45,7 @@ The second half of #4029, pushed after that PR had merged (Dave, November 12, 20
 
 - [x] the control edge moved from `--primary-border` in the 30 to `--bg-5` in the 60: a control's edge is a line, and lines are paper; `bg-5` already bordered the Mode toggle and the theme cards. Sixteen tokens per theme; the builder recomputed all twelve
 - [x] every `--primary*` and `--fg-*` token reads on `bg-1` at 4.5:1 or better: a contrast row per token in the model, the README and the skill; a token under the floor gets more contrast or moves to the paper as `--bg-*`. `--primary-raised` steps back from 15% where it fell under (teal, ochre, rust)
+- [x] main merged in after #4034 (primary the 10): the README table keeps the swap with the control edge in the 60, and the docs-coverage dots follow the edge: Waiting `--bg-5`, Declined `--bg-4`, Not relevant `--bg-3`
 - [x] the Figma variables (dkj-brandbook file): `palette/bg-5` took the control edge's value in all twelve modes, the `primary-border` variables were removed (no node was bound to them), and `palette/primary-raised` synced for teal, ochre and rust
 
 ### TEST

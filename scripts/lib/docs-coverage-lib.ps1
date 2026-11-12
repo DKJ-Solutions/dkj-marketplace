@@ -209,13 +209,14 @@ function Get-DocsCoverageStatusColors {
         rest read other house tokens through a class of this page's own; nothing is typed or derived, so every theme
         and the dark mode follow. '--' (not read) has no dot.
         The way GitHub colours an issue (Dave, November 9, 2026): Open is green, because there is still something to
-        gain there; Covered is done and needing no more attention, in the theme's own grey (--primary-muted; GitHub's purple --done-3 until November 12, 2026), and Waiting the lighter grey of the control edge (--primary-border); Declined and Not relevant are grey, a paper step apart
-        so each still has a colour of its own.
+        gain there; Covered is done and needing no more attention, in the theme's own grey (--primary-muted; GitHub's purple --done-3 until November 12, 2026), and Waiting the lighter grey of the control edge (--bg-5 since November 12, 2026, when --primary-border became it); Declined
+        and Not relevant are grey, a paper step apart (--bg-4 and --bg-3 since the same day, a step up each, because bg-5
+        became that edge) so each still has a colour of its own.
     #>
     [ordered]@{
         'Covered' = '--primary-muted'; 'In progress' = '--graph-1'; 'In review' = '--primary'
-        'Awaiting decision' = '--warning-3'; 'Waiting' = '--primary-border'; 'Open' = '--positive-3'; 'Declined' = '--bg-5'
-        'Not relevant' = '--bg-4'
+        'Awaiting decision' = '--warning-3'; 'Waiting' = '--bg-5'; 'Open' = '--positive-3'; 'Declined' = '--bg-4'
+        'Not relevant' = '--bg-3'
     }
 }
 

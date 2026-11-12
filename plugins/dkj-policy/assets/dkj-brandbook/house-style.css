@@ -20,12 +20,12 @@
 
    How far a theme reaches: every use of --primary-muted (a grey of the colour: the pressed .seg, .badge--info,
    .meter--info, focus rings, a plain .btn's edge on a card inside a grid), the text caret and the selection; --primary, the colour itself,
-   for links, titles and values, the breadcrumb bar (#3235), .btn--primary (a filled main action, owner's decision, October 15, 2026, #109) and
+   for links, the page's h1 and values, .btn--primary (a filled main action, owner's decision, October 15, 2026, #109) and
    native checkboxes, radios, sliders and progress bars through accent-color. Beyond that, by default: the page,
    the cards and tiles stand on the paper (--bg-1, --bg-2), every line and tinted surface is --bg-3, and
    the text on them is --fg-1 to --fg-4. There are no untinted neutrals: text is --fg-1, and --primary is the
    highlight (h1, a state, a value that stands out) (owner's decisions, October 14 and 15, 2026; h2 is --fg-2 and
-   h3 --fg-3, #3235).
+   h3 --fg-3, #3235 and again since November 12, 2026, when primary became the 10 of the 60-30-10 rule).
    Status, direction and categorical colours are never tinted. The
    --accent modifiers (header, table) carry it further where an app opts in.
 
@@ -77,7 +77,7 @@
      no color-mix() or other colour function in this file, a gate refuses one (Maikel, November 1, 2026). --primary-muted .note, the card and dialog sub lines,
      the tile label, the fills (switches, info badges, a pressed .seg), most focus
      rings and meters (a ring on a sort header, a .seg button, a chart bar or the read-more toggle is --primary). fg-1 every paragraph and an inverted surface (.fill-inverse, the showcase's panel); fg-2 h2 and .meta on a span; fg-3 h3;
-     fg-4 no role yet. The breadcrumb bar stands on --primary, with the paper steps as its text. On a fill the text switches: on .fill-primary the paper is the text, so an h2
+     fg-4 no role yet. On a fill the text switches: on .fill-primary the paper is the text, so an h2
      is --bg-1 there and --fg-2 on the page (owner, #3235: "h2 heeft niet altijd dezelfde kleur", an h2 does not always have the same colour).
      Measured (WCAG relative luminance, October 21, 2026), worst and best over the twelve themes: primary on bg-1
      5.9:1 to 8.5:1 on light and 10.7:1 to 13.6:1 on dark, on bg-4 4.56:1 to 6.5:1 on light and 9.0:1 to 11.2:1 on
@@ -271,15 +271,16 @@ body > header, main > header { display: flex; justify-content: space-between; al
    November 1, 2026). */
 h1 { font-weight: var(--font-weight-bold); letter-spacing: -0.01em; }
 h2 { font-weight: var(--font-weight-bold); }   /* semibold since November 1, 2026 (Maikel); bold from October 24 */
-/* h1, h2 and h3 are --primary (h3 since November 1, 2026, Maikel; it was --fg-3) (owner, October 24, 2026: h2 back in the colour, now 24px in the sans under
-   the h1; from October 19 it was --fg-2, because an h2 in the h1's colour read too much like it, and #3235 moved h2
-   and h3 to the text steps). On a fill the paper is the text: .fill-primary and
+/* h1 is --primary, h2 --fg-2 and h3 --fg-3 (Dave, November 12, 2026: primary became the 10 of the 60-30-10 rule, the
+   accent, and text the 30, so only the page's h1 spends the accent). Before that h1, h2 and h3 were all --primary (h3
+   from November 1, 2026, Maikel; h2 from October 24, the owner, after --fg-2 from October 19, when #3235 moved h2 and
+   h3 to the text steps). On a fill the paper is the text: .fill-primary and
    .fill-inverse at the end of this file switch every heading to --bg-1, so an h2 reads on the page and on the
    primary alike (owner, #3235). :where() keeps them at
    zero specificity, so a heading inside a coloured container (or one an app colours itself) wins without an override. */
 :where(h1) { color: var(--primary); }
-:where(h2) { color: var(--primary); }
-:where(h3) { color: var(--primary); }
+:where(h2) { color: var(--fg-2); }
+:where(h3) { color: var(--fg-3); }
 /* h1 is in its own case (owner, October 24, 2026; it was set in capitals from #3247). */
 h1 { font-size: var(--text-h1); margin: 0; }
 /* The h1 is never framed (owner, October 28, 2026): no border, outline, shadow or background of its own, and the

@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**13 / 22 minor entries** <!-- pending-tally -->
+**14 / 23 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/swap-30-10-colour-groups · 20261112-203710Z
+
+The brand book's 60-30-10 groups are swapped: primary is the 10, the accent, and text is the 30. `h2` and `h3` move
+from `--primary` to `--fg-2` and `--fg-3`; `h1`, links, the main button and the states keep the theme's colour.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every DKJ-Solutions app that takes this brand book sees its section headings turn from the theme colour to the text
+colour, the moment it updates.
+
+**Score:** 3
+
+#### Pull Request
+
+Brand book: primary becomes the 10, text the 30
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4034](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4034)
+
+---
 
 ### DEPLOY: feat/done-follows-primary · 20261112-201244Z
 

@@ -124,16 +124,22 @@ already has, not a new colour:
 | Share | Group | Tokens | What it is |
 |---|---|---|---|
 | **60%** | Paper | `--bg-1` … `--bg-5` | the ground: the page, the cards, the lines, and the edge of a control (`bg-5`) |
-| **30%** | Primary | `--primary`, with `--primary-muted` (its grey), `--primary-raised` and `--primary-hover` (its two shades) | the theme's colour: `h1` and `h2`, links, the breadcrumb bar, `.btn--primary`, the states; `--primary-raised` is the settings cell in a site header, `--primary-hover` a primary button under the pointer |
-| **10%** | Text | `--fg-1` … `--fg-4` | what sits on the paper: every paragraph, label and quiet icon |
+| **30%** | Text | `--fg-1` … `--fg-4` | what sits on the paper: every paragraph, label and quiet icon, and `h2` (`--fg-2`) and `h3` (`--fg-3`) |
+| **10%** | Primary | `--primary`, with `--primary-muted` (its grey), `--primary-raised` and `--primary-hover` (its two shades) | the accent, the theme's colour: `h1`, links, `.btn--primary`, the states; `--primary-raised` is the settings cell in a site header, `--primary-hover` a primary button under the pointer |
+
+**Primary is the 10, text the 30** (Dave, November 12, 2026; from October 28 it was the other way round). The 10 of
+the rule is the accent, and the theme's colour is the most saturated colour a theme has, so it stays the scarcest:
+it marks what the eye is meant to find (the page's `h1`, a link, the main action, a state) and nothing else. Text
+carries the content on every page, so it is the larger share. That moved `h2` and `h3` from `--primary` to the
+text steps: a heading below the `h1` in the accent spends the 10 on every section.
 
 **Every colour token of a theme sits in one of the three groups, and a new one joins the group it belongs to**
 (the owner, November 12, 2026). A token that fits none is not added: its role is taken by a token that does, or the
-need is brought to the owner. It takes the group's name and is computed in the group's way, so a new 30 colour is
+need is brought to the owner. It takes the group's name and is computed in the group's way, so a new primary colour is
 `--primary-<role>`, in the primary's own hue. The control edge was proposed as a free-standing `--border-strong`
-and moved into the 30 as `--primary-border` the same day for exactly this reason; it then moved again, to the 60 as
-`--bg-5` (Dave, November 12, 2026), because a control's edge is a line, and the lines are paper, not the theme's
-colour. `bg-5` already bordered the Mode toggle and the theme cards, so one token now holds the one role.
+and moved into the primary group as `--primary-border` the same day for exactly this reason; it then moved again, to
+the 60 as `--bg-5` (Dave, November 12, 2026), because a control's edge is a line, and the lines are paper, not the
+accent. `bg-5` already bordered the Mode toggle and the theme cards, so one token now holds the one role.
 
 **A rule reads a colour only as a token, never derives one** (Maikel, a strict rule, November 1, 2026): no
 `color-mix()`, no relative colour (`rgb(from …)`), no `oklch()` or other colour function, **a token's own value
@@ -142,7 +148,7 @@ needs is a new token, typed into every theme line, and `check-colour-literals.mj
 anywhere before it lands. `--primary-raised` and `--primary-hover` were added that way the same day:
 `--primary` 15% of the way to `--bg-1` (less where that would drop it under 4.5:1 on `bg-1`, below), and to `--fg-1`, the exact values the two `color-mix()` rules had computed.
 
-**Everything in the 30% reads on all four paper steps**, as the 10% does (Maikel, November 1, 2026): `--primary`
+**Everything in the primary group reads on all four paper steps**, as the text does (Maikel, November 1, 2026): `--primary`
 4.56:1 or better on `bg-4`, `--primary-muted` 5.30:1 or better (WCAG, the worst of the twelve themes); `--primary-raised` and `--primary-hover` are
 fills rather than text, so this is not asked of them.
 
@@ -159,20 +165,20 @@ which were at 4.30:1 to 4.44:1). The worst case now: `--primary-raised` 4.55:1 (
 **And a theme has
 these three groups and no fourth**: a colour that fits none of them is not a theme colour. That retired
 `--muted-inverse` the same day. It was the grey of an inverted surface, 7:1 on `--fg-1`, and fitted no group: on the
-paper it read at 2.1:1 to 2.3:1 on `bg-4`, so not the 30; on `--primary` at 2.1:1 to 4.0:1, so not the 60; and
+paper it read at 2.1:1 to 2.3:1 on `bg-4`, so not the primary group; on `--primary` at 2.1:1 to 4.0:1, so not the 60; and
 no colour at all reaches 4.5:1 on both `bg-4` and `--fg-1` (the best grey reaches 3.9:1 to 4.05:1), so no
-change of value could have moved it into the 30. The quieter line on `.fill-inverse` takes `--bg-4` (15:1 or
+change of value could have moved it into the primary group. The quieter line on `.fill-inverse` takes `--bg-4` (15:1 or
 better on `--fg-1`), and the house-style gate reports `--muted-inverse` as a retired token.
 
 A repo layer keeps to the same shares: what it adds lands in one of the three groups, and a page whose
-primary outweighs its paper has spent the 30% as ground.
+primary outweighs its text has spent the accent as ground.
 
 **Tokens**, each in light and dark:
 
 | Group | Tokens | Meaning |
 |---|---|---|
 | Paper | `--bg-1` … `--bg-5` | what sits **behind** the text, in very small steps, each only just darker on light (lighter on dark) than the one before: the page (`bg-1`), cards and tiles (`bg-2`), every line and the tinted surfaces (`bg-3`: borders, row dividers, grid lines, the meter track, an accent table head, a hover, the accent dialog), a stronger border (`bg-4`: an open card, a selected box), and the edge of a control (`bg-5`, below; one small step past `bg-4` from November 3, 2026, Maikel, until November 12). **`bg-1` to `bg-4` read on `--primary`** (4.55:1 or better, #3235; the primary is measured against `bg-4`, so `bg-5` is not promised there), so they are also the text on a primary fill (`.fill-primary`), `bg-1` the text on a `--primary-muted` fill and the mark inside a status icon, and the paper steps the text on an inverted (`--fg-1`) surface |
-| Control edge (60) | `--bg-5` | the boundary of a control: a plain `.btn`, `.seg`, `.info-button`, `.nav-search`, `.toolbar__filter`, and in the product layer `.stepper` and `.combo`. A grey of the primary's own hue, at `--primary-muted`'s chroma, as close to the paper as **3:1 on `bg-3`** allows (WCAG 1.4.11), computed per theme (November 12, 2026; `--primary-border` in the 30 until it became `bg-5` the same day, Dave). Not a small paper step like `bg-1` to `bg-4`, but a clear one. `bg-3` and `bg-4` stay the quiet lines between surfaces, which need not reach 3:1 |
+| Control edge (60) | `--bg-5` | the boundary of a control: a plain `.btn`, `.seg`, `.info-button`, `.nav-search`, `.toolbar__filter`, and in the product layer `.stepper` and `.combo`. A grey of the primary's own hue, at `--primary-muted`'s chroma, as close to the paper as **3:1 on `bg-3`** allows (WCAG 1.4.11), computed per theme (November 12, 2026; `--primary-border` in the primary group until it became `bg-5` the same day, Dave). Not a small paper step like `bg-1` to `bg-4`, but a clear one. `bg-3` and `bg-4` stay the quiet lines between surfaces, which need not reach 3:1 |
 | Categorical | `--graph-1`, `--graph-2`, `--graph-3` | one series each. Never two meanings for one slot in a view. Named `--cat-1` to `--cat-3` until November 1, 2026 (Maikel). **Computed per theme since November 12, 2026** (the owner): a series must not look like the theme's own colour, as the magenta series did in the magenta theme, nor like a status, as the old orange `--graph-2` looked like `--warning-3` (ΔE 4.2). `build-house-palette.ps1` walks a pool per mode (light: blue, purple-magenta, deep teal, wine, violet; dark: their light tints) and keeps the first three that stand 18 or more off the theme's primary and 15 off every status fill (OKLab ΔE x100, the dataviz validator's measure), read at 3:1 on `bg-1` and `bg-3`, and stand 15 apart with full colour vision and 6 for a protan or deutan reader (the validator's floor, legal because a chart labels its series directly). No slot is red, orange, yellow or green: those hues are the status colours |
 | Direction | `--positive-3` and `--negative-3` (also the gain and the loss in charts, so a direction chart can share a view with any series), `--positive-5`, `--negative-5` (numbers in text) | result and direction, never a category. `--positive-5`/`--negative-5` are the text versions of `--positive-3`/`--negative-3`, a step more contrast so a number reads as text: darker on light, lighter on dark |
 | Status | `--positive-3`, `--warning-3`, `--negative-3`, `--warning-5`, `--warning-1`, `--negative-1`, `--positive-1` | badges, meters, notices. `--warning-1`, `--negative-1` and `--positive-1` are the backgrounds of a warning, negative or positive message. Done (work that is finished and closed) takes `--primary-muted`, a variant of the theme's own colour; it was `--done-3`, the purple GitHub gives a completed issue (Dave, November 9, 2026), the same in every theme, until November 12, 2026 (the owner), and the house-style gate reports `--done-3` as a retired token. The mark inside a status icon (check, cross, "!") is `--bg-1` |
