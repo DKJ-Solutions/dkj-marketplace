@@ -2,7 +2,115 @@
 
 ## [Unreleased]
 
-**4 / 6 minor entries** <!-- pending-tally -->
+**7 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4018-uma-wireframe-craft · 20261112-110137Z
+
+Uma's portable manual gains a hard rule: a wireframe built in a design tool is built the way a working
+UX designer builds it, by default: scoped tokens and text styles first, repeated elements as
+components with variants and properties, screens composed from instances, structure carried by
+auto-layout instead of empty spacer frames, and layers named for what they are. "Plain" in "structure
+before style" now reads as the look (greyscale, no brand), never as permission for the quick route
+([#4018](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4018);
+[`specialist-04-32-manual.md`](../../plugins/dkj-subagents/dkj-subagents-alpha/manuals/specialist-04-32-manual.md)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A consumer who asks Uma for a wireframe in Figma gets a file built from tokens, components and
+auto-layout without having to ask for it, instead of one-off frames held apart by spacer frames that
+the next designer has to rebuild.
+
+**Score:** 2
+
+#### Pull Request
+
+Uma's manual: a wireframe in a design tool is built the professional way by default
+
+Plugins: dkj-subagents-alpha
+
+[PR #4020](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4020)
+
+---
+
+### DEPLOY: fix/4013-native-capture-wrap · 20261112-095119Z
+
+The `native-capture` suite no longer fails when it runs from a checkout with a long root path, such
+as a sweep lane: the assert that looks for the file name in the rendered error now reads it unwrapped
+([#4013](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4013)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A test of this repo only; nothing a subscriber takes changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+native-capture suite: match the caret on unwrapped Out-String text
+
+[PR #4015](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4015)
+
+---
+
+### DEPLOY: feat/4004-progress-page · 20261112-094216Z
+
+A new Admin page, Progress, on `/dev/progress`, beside Goals. It reads what the Goals page and the Logbook
+already hold, so nothing new is recorded and no store changes; the Goals query gains one field, a
+milestone's labels.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every repo's Admin gains a Progress card. A repo with a goal sees, on one screen, how far its milestones are,
+each marked built, used or measured (a closed milestone carrying the label `used` or `measured`), and how the
+team ran: its assignments, how long Claude worked, how long it waited on you, and a column per assignment.
+Questions asked and steps by hand read "not recorded yet" until #4008 records them.
+
+**Score:** 3
+
+#### Pull Request
+
+Admin: a Progress page -- how far the app is, and how the team ran
+
+Plugins: dkj-policy
+
+[PR #4014](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4014)
+
+---
+
+### DEPLOY: feat/4005-measure-decision-stops · 20261112-093010Z
+
+A new skill, [`measure-decision-stops`](../../plugins/dkj-policy/skills/measure-decision-stops/SKILL.md),
+counts how often sessions on this machine stopped to ask the owner a menu question (`AskUserQuestion`)
+and how each question was answered: the option marked Recommended as-is, the same with a note, another
+option, the owner's own words, or declined. The headline is the share of questions that offered a
+Recommended option and got it unchanged. Like `measure-closeouts`, it reads transcripts in place and emits
+only counts. Close-outs of shape B, a menu written in prose, are not counted, and the report says so. On
+the day it was written it measured 17 of 23 (74%), against the owner's estimate of about 90% (#4005).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer's owner can run `/measure-decision-stops` to see how predictable their own answers are before
+deciding how readily sessions should ask them. It costs nothing until typed (`disable-model-invocation`).
+
+**Score:** 2
+
+#### Pull Request
+
+measure-decision-stops: count decision stops and how often the owner picks Recommended
+
+Plugins: dkj-policy
+
+[PR #4012](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4012)
+
+---
 
 ### DEPLOY: docs/4002-uma-brandbook-wireframe · 20261112-091821Z
 

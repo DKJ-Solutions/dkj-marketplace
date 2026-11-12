@@ -31,7 +31,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
    -- an issue closing after its release, the normal case for one parked `awaiting-release`, or work
    pushed live on its own -- pass `-LiveSince <date>`: the block then says *live since* that day and
    drops the sentences that only hold before a release
-   ([#2943](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2943)).
+   ([#2943](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2943)). **Where the change ships
+   through the store's hotfix lane** -- a pull request to the live branch, merged once the requester
+   approves, outside the release cadence -- pass `-Hotfix`: the block names no release day, says it goes
+   live as a separate hotfix once approved, and asks for the look as that approval rather than saying it
+   ships with the release either way. `-LiveBy <date>` adds the requester's deadline as the aim. Never
+   bend `-ReleaseDay` to a deadline for it ([#4017](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4017)).
 3. **The version** -- **only when you pass `-Version`.** The newest `vX.Y.Z` tag stepped by the bump
    the changelog's pending tally names today is printed on the console as a projection for you, and
    left out of the block: every entry still to land before release day can raise it, and the requester
@@ -351,6 +356,8 @@ command encodes as ASCII, which is why `-Post` sends the body through a UTF-8 fi
 | `-ReleaseDay <day>` | the weekday releases are cut on. `Monday` |
 | `-From <date>` | the day the next release day is counted from. Today |
 | `-LiveSince <date>` | the day the change went live, for a block written after it did (#2943). Refused when it is after today, or beside `-From` / `-ReleaseDay` |
+| `-Hotfix` | the go-live form for a change through the hotfix lane: it goes live once approved, not with a release, and carries no release marker (#4017). Refuses `-LiveSince`, `-From`, `-ReleaseDay`, `-Version` and the other forms |
+| `-LiveBy <date>` | with `-Hotfix` only: the requester's deadline, written as the aim. Refused when it is before today |
 | `-Language nl\|en` | the language of the Asana task, and so of the block between the rules. Omitted, the repo's own `Get-GoLiveBlockLanguage` in `scripts/repo-config.ps1` (returning `nl` or `en`) answers it, so a store that writes GitHub in English states that once ([#2830](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2830)); without that seam, `nl` |
 | `-ProseFile <path>` | your prose for the `[changed]`, `[where]` and `[not-included]` sections -- see below -- or, with `-Research`, the `[outcome]` section, or, with `-AlreadyFixed`, the `[fixed]` and `[where]` sections |
 | `-Research` | the research form, for a ticket that changed nothing on the store (#3004) -- see above |

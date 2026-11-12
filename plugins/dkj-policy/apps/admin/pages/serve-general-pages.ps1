@@ -18,6 +18,7 @@
                       for --repo <owner/name> parsed from the origin remote when that is on github.com, else
                       for the repo gh finds from the working directory. Kept for -IssuesCacheSeconds; a failed
                       read for 30 s only. A gh that fails or is missing is a warning on the page, never a blank.
+      /dev/progress   the goals as /dev/goals reads them and the newest page of the Logbook (progress-lib.ps1, #4004)
       /dev/goals      `gh api graphql`, one call: the open issues labelled goal, their sub-issues (the milestones) and
                       theirs (the tasks), for owner/name from the origin remote (Get-GoalsModel, apps/admin/lib/goals-lib.ps1,
                       #3816). Kept as the issues are; a repo whose origin is not on GitHub, or a gh that fails, is a
@@ -156,6 +157,8 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\plugins-page-lib.ps1')
 # The Goals page (#3816), and the Today page (#3860).
 . (Join-Path $PSScriptRoot '..\lib\goals-lib.ps1')
+# The Progress page (#4004): the goals' milestones and the Logbook's runs on one screen.
+. (Join-Path $PSScriptRoot '..\lib\progress-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\today-page-lib.ps1')
 # The preview handover pages (#3925).
 . (Join-Path $PSScriptRoot '..\lib\handover-page-lib.ps1')
@@ -718,6 +721,15 @@ try {
                 $glAge = if ($glCache) { ((Get-Date) - $glCache.At).TotalSeconds } else { 0 }
                 if ($null -eq $glCache -or $glAge -ge $IssuesCacheSeconds -or ($glCache.Error -and $glAge -ge 30)) { $glCache = Get-GoalsModel }
                 $html = Format-GoalsPageHtml -Model $glCache.Model -ReadError $glCache.Error -GeneratedAt $glCache.GeneratedAt -RepoName (Get-RepoIdentity).Name
+            } elseif ($path -cmatch '^/dev/progress/?$') {
+                # How far the app is and how the team ran (#4004): the goals as /dev/goals reads them, sharing its cache, and
+                # the newest page of the Logbook with the transcripts telling work from waiting, as /dev/logbook reads them.
+                $glAge = if ($glCache) { ((Get-Date) - $glCache.At).TotalSeconds } else { 0 }
+                if ($null -eq $glCache -or $glAge -ge $IssuesCacheSeconds -or ($glCache.Error -and $glAge -ge 30)) { $glCache = Get-GoalsModel }
+                $lb = Read-StopwatchStore -Path $timing.LogbookPath
+                $lbRuns = @(Get-LogbookRuns -Runs (Select-LogbookPage -Runs $lb.Runs -Page 1).Runs -StepLogPath $timing.StepLogPath -RepoRoot $timing.Root | Where-Object { $_ -and $_.End })
+                $lbPhases = Get-StopwatchTranscriptCache -Runs $lbRuns -CachePath $timing.LogbookPhasesPath -TranscriptDir $timing.TranscriptDir -StepLogPath $timing.StepLogPath -RepoRoot $timing.Root
+                $html = Format-ProgressPageHtml -Goals $glCache.Model -GoalsError $glCache.Error -Runs $lbRuns -WorkTimes (Get-LogbookWorkTimes -Runs $lbRuns -Transcript $lbPhases) -LogbookError $lb.Error -RepoName (Get-RepoIdentity).Name
             } elseif ($path -cmatch '^/dev/today/?$') {
                 # The day plan (#3860): a day moves faster than the issues, so a minute; a failed run, or one that could not
                 # read GitHub, for 30 s. Bounded at 60 s like the other gh reads, since the loop serves nothing meanwhile.
