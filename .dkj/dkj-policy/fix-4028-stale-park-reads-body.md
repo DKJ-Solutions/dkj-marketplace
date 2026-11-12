@@ -64,6 +64,7 @@ where neither names the wait.
 
 #### What makes this deploy extra special
 
+Nothing beyond the repair itself: one more tracker read in a rare case, and one line a filer now writes.
 **Score:** N/A
 
 #### Pull Request
