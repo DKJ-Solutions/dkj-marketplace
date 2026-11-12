@@ -74,12 +74,12 @@ milestone's labels.
 
 **Score:** 3
 
+#### What makes this deploy extra special
+
 Every repo's Admin gains a Progress card. A repo with a goal sees, on one screen, how far its milestones are,
 each marked built, used or measured (a closed milestone carrying the label `used` or `measured`), and how the
 team ran: its assignments, how long Claude worked, how long it waited on you, and a column per assignment.
 Questions asked and steps by hand read "not recorded yet" until #4008 records them.
-
-#### What makes this deploy extra special
 
 **Score:** 3
 
