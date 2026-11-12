@@ -349,7 +349,7 @@ function Format-FitAlarmHtml {
     return el ? el.textContent.trim().split(/\s+/).filter(function (w) { return /[\p{L}\p{N}]/u.test(w); }).length : 0;
   }
   function judge() {
-    // Only the page's own frame is Admin's shell: a .shell--fit is a specimen of it set in a box (the brand book's Desktop shell page, #4030).
+    // Only the page's own frame is Admin's shell: a .shell--fit is a specimen of it set in a box (#4030).
     var d = document.documentElement, said = [], shell = document.querySelector(".shell:not(.shell--fit) .shell__list");
     var tall = d.scrollHeight - window.innerHeight, wide = d.scrollWidth - d.clientWidth;
     if (shell) {
