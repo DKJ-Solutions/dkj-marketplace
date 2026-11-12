@@ -41,17 +41,24 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Sylvester: `Format-FitAlarmHtml` enters shell mode on `.shell:not(.shell--fit) .shell__list` instead of any `.shell__list`. The issue named `.shell`, but the alarm keyed on `.shell__list`, which both brand book specimens carry; a `.shell--fit` is by the house's own definition a shell set in a box rather than the window, and Admin's own shell never takes it.
+- [x] Tycho: an assert in `dev-pages.tests.ps1` holds the selector, and the #3830 assert reads the new one.
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: 753 passed, 0 failed.
+
 ### DEPLOY: fix/4030-fit-alarm-shell-specimen
 
-**Score:**
+The fit alarm no longer reads a brand book page that shows a Desktop shell specimen as Admin's own shell, so that page's correct h1 is no longer reported as loose in the pane ([#4030](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4030)).
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A false warning on a page of this repo's own brand book; nothing a subscriber takes changes in behaviour.
+
+**Score:** N/A
 
 #### Pull Request
 
