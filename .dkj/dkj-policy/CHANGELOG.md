@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**11 / 17 minor entries** <!-- pending-tally -->
+**11 / 18 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4030-fit-alarm-shell-specimen · 20261112-165310Z
+
+The fit alarm no longer reads a brand book page that shows a Desktop shell specimen as Admin's own shell, so that page's correct h1 is no longer reported as loose in the pane ([#4030](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4030)).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A false warning on a page of this repo's own brand book; nothing a subscriber takes changes in behaviour.
+
+**Score:** N/A
+
+#### Pull Request
+
+Fit alarm ignores a shell specimen when choosing shell mode
+
+Plugins: dkj-policy
+
+[PR #4031](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4031)
+
+---
 
 ### DEPLOY: docs/claudeai-connectors-per-checkout · 20261112-161151Z
 
