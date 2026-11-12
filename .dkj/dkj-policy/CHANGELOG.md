@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**4 / 6 minor entries** <!-- pending-tally -->
+**5 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4005-measure-decision-stops · 20261112-093010Z
+
+A new skill, [`measure-decision-stops`](../../plugins/dkj-policy/skills/measure-decision-stops/SKILL.md),
+counts how often sessions on this machine stopped to ask the owner a menu question (`AskUserQuestion`)
+and how each question was answered: the option marked Recommended as-is, the same with a note, another
+option, the owner's own words, or declined. The headline is the share of questions that offered a
+Recommended option and got it unchanged. Like `measure-closeouts`, it reads transcripts in place and emits
+only counts. Close-outs of shape B, a menu written in prose, are not counted, and the report says so. On
+the day it was written it measured 17 of 23 (74%), against the owner's estimate of about 90% (#4005).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer's owner can run `/measure-decision-stops` to see how predictable their own answers are before
+deciding how readily sessions should ask them. It costs nothing until typed (`disable-model-invocation`).
+
+**Score:** 2
+
+#### Pull Request
+
+measure-decision-stops: count decision stops and how often the owner picks Recommended
+
+Plugins: dkj-policy
+
+[PR #4012](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4012)
+
+---
 
 ### DEPLOY: docs/4002-uma-brandbook-wireframe · 20261112-091821Z
 
