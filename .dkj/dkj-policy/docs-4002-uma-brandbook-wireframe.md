@@ -56,7 +56,7 @@ fills Uma's repo lens before Uma is deployed, then Uma builds the wireframe in t
       numbered annotations and findings F1-F7 ranked by severity.
 - [x] Uma: row B, alternative 1 "Previewing overview" (desktop, search state, empty state, phone) and row C,
       alternative 2 "Catalogue shell" (desktop, phone, drawer open), plus a B-or-C cost note.
-- [ ] Owner looks at the wireframe in Figma and picks a structure.
+- [~] Owner looks at the wireframe in Figma and picks a structure. Not done as a separate look: DaveKJohn approved the branch through issues-sweep-reviews on 2026-11-12 without one; the pick between B and C is still the owner's.
 
 ### TEST
 
