@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**14 / 23 minor entries** <!-- pending-tally -->
+**15 / 24 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/palette-border-graph-v2 · 20261112-210735Z
+
+The control edge introduced by #4029 is now `--bg-5`, a paper token, instead of `--primary-border`: a plain button,
+a segmented control, the info button, the search and filter fields and the product's stepper and combo take
+`--bg-5`, a grey of the theme's colour at 3:1 on the page and on a card. Every primary and text token now reads on
+the page at 4.5:1 or better in every theme; the raised primary of teal, ochre and rust moved a little toward the
+primary for it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+The brand book now promises that every primary and text colour reads on the page, and says what happens to one that does not.
+
+**Score:** 2
+
+#### Pull Request
+
+Palette: the control edge becomes bg-5, and every primary and text token reads on bg-1
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4036](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4036)
+
+---
 
 ### DEPLOY: feat/swap-30-10-colour-groups · 20261112-203710Z
 
