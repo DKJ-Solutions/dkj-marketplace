@@ -70,7 +70,8 @@ A visible result, so the branch parks for the owner's look.
       the covered-with-no-session assert now writes its entry with a load), `progress.tests.ps1` (the Load's
       waiting, the counts, the tiles and the note).
 - [x] The Admin README describes what the three signals count.
-- [ ] Owner looks at the Progress page and says whether the three numbers read right.
+- [~] Owner looks at the Progress page and says whether the three numbers read right. Not done as a
+      separate look: davekokbwj approved the branch through issues-sweep-reviews on 2026-11-12 without one.
 
 ### TEST
 
