@@ -609,7 +609,7 @@ p { margin: 0; }
    fills (--positive-3, --warning-3, --negative-3) as a dot that always sits beside a text label.
    Lines are --bg-3 inside a pane and --bg-4 between panes. The classes are .shell (with --fit and
    --no-aside), .shell__bar, .shell__actions, .shell__nav, .shell__brand (with __mark), .shell__main, .shell__list,
-   .shell__nav-foot, .shell__aside, .shell__aside-body, .shell__body, .page-head (with __title, __meta, __lead, __end), .empty-state (with __mark, __title, __text), .admin-cols, .admin-list, .nav-search (with __input, __key),
+   .shell__nav-foot, .shell__aside, .shell__aside-body, .shell__body, .page-head (with __title, __meta, __lead, __end), .empty-state (with __mark, __text), .admin-cols, .admin-list, .nav-search (with __input, __key),
    .nav-section, .nav-list, .nav-item (with __label, __count), .toolbar (with __title, __filter, __end), .pane-head, .table--dense and .dot (with --good, --warn, --bad).
    ========================================================================== */
 
@@ -691,7 +691,7 @@ p { margin: 0; }
 .shell__body > .card, .shell__body > .tiles, .shell__body > .notice, .shell__body > .note { margin-top: 0; }
 /* A card in the shell is the wireframes' card: the page's own ground with a line around it, a smaller radius and less room. */
 .shell__body .card { margin-top: 0; padding: var(--spacing-4) var(--spacing-5); background: var(--bg-1); border-color: var(--bg-4); border-radius: var(--radius-2); }
-.shell__body .card > h2:not(.pane-head), .shell__body .card > .card__head > h2 { margin: 0; font-size: var(--text-h3); }
+.shell__body .card > h2, .shell__body .card > .card__head > h2 { margin: 0; font-size: var(--text-h3); }
 /* Two columns, the wireframes' Today: a wide one and a 360px one beside it, each a stack of cards. */
 .admin-cols { display: grid; grid-template-columns: minmax(0, 1fr) var(--spacing-96); gap: var(--spacing-6); align-items: start; }
 .admin-cols > div { display: grid; gap: var(--spacing-4); align-content: start; }
@@ -708,7 +708,7 @@ p { margin: 0; }
 .empty-state { display: flex; flex-direction: column; align-items: center; gap: var(--spacing-4); padding: var(--spacing-8); text-align: center;
   background: var(--bg-2); border: 1px dashed var(--bg-4); border-radius: var(--radius-2); }
 .empty-state__mark { width: var(--spacing-14); height: var(--spacing-14); border-radius: var(--radius-pill); background: var(--bg-3); }
-.empty-state__title { margin: 0; font-size: var(--text-title); }
+.empty-state > h2 { margin: 0; font-size: var(--text-title); }
 .empty-state__text { max-width: var(--spacing-96); margin: 0; color: var(--primary-muted); }
 /* A set of links, Admin's form of a card overview (#3830): a .pane-head over a .table--dense, the table in a
    rounded, bordered frame with a tinted head row, as the wireframe's pages table. */

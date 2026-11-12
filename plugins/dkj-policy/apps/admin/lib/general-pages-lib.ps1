@@ -1021,7 +1021,7 @@ function Format-AdminEmptyStateHtml {
     param([Parameter(Mandatory = $true)][string]$Title, [Parameter(Mandatory = $true)][string]$TextHtml, [Parameter(Mandatory = $true)][string]$Prompt)
     $e = { param($v) ConvertTo-GeneralPageText $v }
     return '<section class="empty-state" role="status"><span class="empty-state__mark" aria-hidden="true"></span>' +
-        '<h2 class="empty-state__title">' + (& $e $Title) + '</h2><p class="empty-state__text">' + $TextHtml + '</p>' +
+        '<h2>' + (& $e $Title) + '</h2><p class="empty-state__text">' + $TextHtml + '</p>' +
         (Format-AdminCopyPromptButton -Prompt $Prompt -Label ('Copy prompt: ' + $Prompt)) + '</section>'
 }
 

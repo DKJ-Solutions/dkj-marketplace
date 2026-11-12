@@ -232,7 +232,7 @@ $script:GoalsPageStyle = '.goal { display: grid; gap: var(--spacing-4); }' + "`n
     '.goal-now .goal-now__title { margin: 0; font-size: var(--text-h3); font-weight: var(--font-weight-bold); }' + "`n" +
     '.goal-now .goal-now__sub { margin: 0; color: var(--primary-muted); font-size: var(--text-sm); }' + "`n" +
     '.goal-block { display: grid; gap: var(--spacing-2); }' + "`n" +
-    '.goal-block > .pane-head { height: auto; padding: 0; }' + "`n" +
+    '.goal-block > h3 { margin: 0; font-size: var(--text-xs); font-weight: var(--font-weight-bold); letter-spacing: 0.06em; text-transform: uppercase; color: var(--primary-muted); }' + "`n" +
     '.goal-next { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-3); margin: 0; padding: 0; list-style: none; }' + "`n" +
     '.goal-next > li { display: grid; gap: var(--spacing-1); padding: var(--spacing-3) var(--spacing-4); border: 1px solid var(--bg-4); border-radius: var(--radius-2); }' + "`n" +
     '.goal-next__title { font-weight: var(--font-weight-bold); }' + "`n" +
@@ -326,7 +326,7 @@ function Format-GoalsPageHtml {
         [void]$body.AppendLine('</div>')
         # Next: a row of what follows, so the step after this one is never a question.
         if (@($g.Next).Count) {
-            [void]$body.Append('<div class="goal-block"><h3 class="pane-head">Next</h3><ul class="goal-next">')
+            [void]$body.Append('<div class="goal-block"><h3>Next</h3><ul class="goal-next">')
             foreach ($s in @($g.Next)) {
                 $t = if ($s.Unplanned) { 'Break down ' + (Format-GoalItemLink $s.Item) } else { Format-GoalItemLink $s.Item }
                 $m = if ($s.Milestone -and -not $s.Unplanned) { '<span class="goal-next__meta">Milestone: ' + (& $e $s.Milestone.Title) + '</span>' } else { '' }
@@ -336,7 +336,7 @@ function Format-GoalsPageHtml {
         }
         # The milestones: a row each with a bar, the tasks inside.
         if (@($g.Milestones).Count) {
-            [void]$body.Append('<div class="goal-block"><h3 class="pane-head">Milestones</h3><div class="goal-milestones">')
+            [void]$body.Append('<div class="goal-block"><h3>Milestones</h3><div class="goal-milestones">')
             foreach ($m in @($g.Milestones)) {
                 [void]$body.Append('<details class="goal-milestone"><summary><span class="goal-milestone__name">' + (& $e $m.Title) + '</span>' +
                     (Format-GoalProgressHtml -Done $m.Done -Total $m.Total -Short) + '</summary>')

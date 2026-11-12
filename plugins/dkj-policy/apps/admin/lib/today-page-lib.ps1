@@ -16,7 +16,7 @@
 . (Join-Path $PSScriptRoot 'dayplan-lib.ps1')
 
 $script:TodayPageStyle = '.today-goal { display: grid; gap: var(--spacing-2); }' + "`n" +
-    '.today-goal > .pane-head { height: auto; padding: 0; }' + "`n" +
+    '.shell__body .today-goal > h2 { margin: 0; font-size: var(--text-xs); font-weight: var(--font-weight-bold); letter-spacing: 0.06em; text-transform: uppercase; color: var(--primary-muted); }' + "`n" +
     '.today-goal .today-goal__title { display: flex; gap: var(--spacing-3); align-items: center; margin: 0; font-size: var(--text-title); font-weight: var(--font-weight-bold); }' + "`n" +
     '.today-progress { display: flex; gap: var(--spacing-3); align-items: center; margin: 0; color: var(--primary-muted); font-size: var(--text-sm); }' + "`n" +
     '.today-progress > .meter { flex: 0 1 65%; }' + "`n" +
@@ -111,7 +111,7 @@ function Format-TodayPageHtml {
         } elseif ($allDone) { '<span class="tag">All done</span>' } else { '' }
         $tone = if ($allDone) { 'good' } else { 'info' }
 
-        [void]$body.Append('<section class="card today-goal"><h2 class="pane-head">Day goal</h2>')
+        [void]$body.Append('<section class="card today-goal"><h2>Day goal</h2>')
         [void]$body.Append('<p class="today-goal__title"><span>' + (& $e $day.goal) + '</span>' + $badge + '</p>')
         [void]$body.Append('<p class="today-progress"><span class="meter meter--' + $tone + '" role="img" aria-label="' + $pct + '% of the planned hours done"><span style="width: ' + $pct + '%"></span></span>' +
             '<span class="num">' + $doneSet.Count + ' of ' + $items.Count + ' items &middot; ' + (& $e (Format-DayPlanHours $doneHours)) + ' of ' + (& $e (Format-DayPlanHours $hours)) + '</span></p>')
