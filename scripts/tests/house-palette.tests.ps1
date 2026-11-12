@@ -80,7 +80,7 @@ Assert-Equal 12 $themes.Count 'twelve themes'
 Assert-Equal 6 @($themes | Where-Object Mode -eq 'light').Count 'six light themes'
 foreach ($th in $themes) {
     $p = Get-HousePalette -Hue $th.Hue -Mode $th.Mode -ChromaMax ([double]$th.ChromaMax)
-    Assert-Equal 17 $p.Count "$($th.Id): seventeen tokens"; Assert-True (-not $p.Contains('--muted-inverse')) "$($th.Id): no --muted-inverse (retired November 1, 2026)"
+    Assert-Equal 16 $p.Count "$($th.Id): sixteen tokens"; Assert-True (-not $p.Contains('--muted-inverse')) "$($th.Id): no --muted-inverse (retired November 1, 2026)"
     $miss = @(Get-HousePaletteContrast $p | Where-Object { $_.Ratio -lt $_.Floor } | ForEach-Object { '{0} {1:N2}' -f $_.Pair, $_.Ratio })
     Assert-Equal '' ($miss -join '; ') "$($th.Id): every pairing reaches its floor"
     # the graph slots (the owner, November 12, 2026): away from this theme's primary and from the status fills, and apart
@@ -131,7 +131,7 @@ $css = [System.IO.File]::ReadAllText($Style)
 foreach ($th in $themes) {
     $expected = Format-HousePaletteDeclarations (Get-HousePalette -Hue $th.Hue -Mode $th.Mode -ChromaMax ([double]$th.ChromaMax))
     $line = ([regex]::Match($css, ":root\[data-theme=""$($th.Id)""\], \.theme-swatch\[data-id=""$($th.Id)""\] \{ ([^}]*)\}")).Groups[1].Value
-    Assert-True ($line.StartsWith($expected)) "$($th.Id): its theme line starts with the computed seventeen"
+    Assert-True ($line.StartsWith($expected)) "$($th.Id): its theme line starts with the computed sixteen"
 }
 $blocks = @([regex]::Matches($css, '(?m)^\s+(--bg-1:[^\r\n]*)$') | ForEach-Object { $_.Groups[1].Value.Trim() })
 Assert-Equal 3 $blocks.Count 'three default token lines'

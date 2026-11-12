@@ -1205,7 +1205,7 @@ Assert-Equal 'Covered,In progress,In review,Awaiting decision,Waiting,Open,Decli
 Assert-Equal $dcColors.Count (@($dcColors.Values | Sort-Object -Unique)).Count 'and no two statuses share one'
 Assert-True (@($dcColors.Values | Where-Object { $_ -cnotmatch '^--[a-z0-9-]+\z' }).Count -eq 0) 'each colour is a house token, never a typed code'
 $dcStyle = Get-DocsCoverageStatusStyle
-Assert-True ($dcStyle -match '\.dc-dot--awaiting-decision \{ background: var\(--warning-3\); \}' -and $dcStyle -match '\.dc-dot--not-relevant \{ background: var\(--bg-4\); \}') 'the page''s own layer reads each status''s token through a class of its own'
+Assert-True ($dcStyle -match '\.dc-dot--awaiting-decision \{ background: var\(--warning-3\); \}' -and $dcStyle -match '\.dc-dot--not-relevant \{ background: var\(--bg-3\); \}') 'the page''s own layer reads each status''s token through a class of its own'
 Assert-True ($dcStyle -notmatch '#[0-9a-fA-F]{3,8}|rgb|hsl|color-mix') 'and types or derives no colour (the brand book)'
 Assert-Equal '--' (Format-DocsCoverageStatusText '--') 'a status not read has no dot'
 Assert-True ($dcOver -match '\.dc-dot--covered \{' -and $dcOver -notmatch 'dc-dot--done') 'the overview carries the status colours, and Done is no status of its own any more'
