@@ -238,7 +238,8 @@ function Format-GeneralPageHtml {
         and the <title>. -Lead may then be empty.
         -ParentCrumbs are the crumbs between Home and the page, in order, each @{ Label; Href }: a page nested under
         another (the Stopwatch's run pages) names its parent so the trail reads Home > parent > the page.
-        -HeadAside is markup the caller has escaped, set at the far right of the toolbar.
+        -HeadAside is markup the caller has escaped, set at the far right of the page header (.page-head__end).
+        -TitleMetaHtml is markup the caller has escaped, set beside the h1 and outside it (.page-head__meta).
         -Info is markup the caller has escaped: what the page is about, behind a drawn "?" (.page-info-button), shown as
         a .tooltip--explain only while the pointer is on the button or the tooltip, or the button has focus (Maikel,
         October 31, 2026, for a plugin's page). Nothing is on screen until then, so #3585 holds.
@@ -265,7 +266,8 @@ function Format-GeneralPageHtml {
         [AllowEmptyString()][string]$HeadAside = '',
         [string]$HomeLabel = 'Home',
         [AllowEmptyString()][string]$Info = '',
-        [AllowNull()][object[]]$Menu = $null
+        [AllowNull()][object[]]$Menu = $null,
+        [AllowEmptyString()][string]$TitleMetaHtml = ''
     )
     if ((ConvertTo-AdminBrandTag $BrandTag) -eq 'product') {
         throw "Format-GeneralPageHtml draws Admin pages only: a product page (-BrandTag 'product') is the dkj-solutions plugin's Format-ProductPageHtml (scripts/lib/product-pages-lib.ps1, #3831)."
@@ -292,6 +294,8 @@ function Format-GeneralPageHtml {
         '<button class="page-info-button" type="button" id="page-info-button" aria-label="About ' + (& $e $Title) + '" aria-describedby="page-info" aria-expanded="false">' + (Get-PageInfoGlyph) + '</button>' +
         '<div class="tooltip tooltip--explain" id="page-info" role="tooltip">' + $Info + '</div>'
     } else { '' }
+    # -TitleMetaHtml stands beside the h1 and outside it (a date, as Today's), so the h1 still reads what the crumb reads.
+    if ($TitleMetaHtml -and -not $Bare) { $infoHtml = $TitleMetaHtml + $infoHtml }
     $trail = @(@($ParentCrumbs | Where-Object { $_ }) + @(@{ Label = $Title; Href = '' }))
     $nav = @(Get-AdminNav)
     [void]$sb.Append((Format-AdminShellOpen -Title $Title -Current (Get-AdminCurrentHref -Title $Title -ParentCrumbs $ParentCrumbs -Nav $nav) -Nav $nav -Trail $trail -HomeLabel $HomeLabel -AdminHref $AdminHref -Bare:$Bare -InfoHtml $infoHtml -HeadAside $HeadAside))
@@ -1006,6 +1010,34 @@ function Format-AdminCardLinkHtml {
         '><nav class="menu-list" aria-label="' + (& $e $Label) + '"><a class="menu-item" href="' + (& $e $Href) + '">' + $mark + $labelHtml + $script:RepoAdminChevron + '</a></nav></section>'
 }
 
+function Format-AdminEmptyStateHtml {
+    <#
+        An Admin page's empty state, as the Figma wireframes draw it (November 12, 2026; the brand book's .empty-state):
+        a round mark, -Title, -TextHtml (markup the caller has escaped) and one button that puts -Prompt on the
+        clipboard, labelled 'Copy prompt: <-Prompt>', so the one action that fills the page is a paste into Claude.
+        The button says 'Copied' for two seconds after; without a clipboard it does nothing and the prompt stays
+        readable on the button itself.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Title, [Parameter(Mandatory = $true)][string]$TextHtml, [Parameter(Mandatory = $true)][string]$Prompt)
+    $e = { param($v) ConvertTo-GeneralPageText $v }
+    return '<section class="empty-state" role="status"><span class="empty-state__mark" aria-hidden="true"></span>' +
+        '<h2 class="empty-state__title">' + (& $e $Title) + '</h2><p class="empty-state__text">' + $TextHtml + '</p>' +
+        (Format-AdminCopyPromptButton -Prompt $Prompt -Label ('Copy prompt: ' + $Prompt)) + '</section>'
+}
+
+function Format-AdminCopyPromptButton {
+    <#
+        A primary button that puts -Prompt on the clipboard (the wireframes' page actions: '+ Plan a goal', 'Copy prompt:
+        plan my day'), labelled -Label. It carries its own small script, so it works wherever it is placed; the script
+        reads only its own button, says 'Copied' for two seconds, and does nothing without a clipboard.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Prompt, [Parameter(Mandatory = $true)][string]$Label)
+    $e = { param($v) ConvertTo-GeneralPageText $v }
+    return '<button type="button" class="btn btn--primary" data-copy-prompt="' + (& $e $Prompt) + '" onclick="var b=this,t=b.textContent;' +
+        'if(navigator.clipboard){navigator.clipboard.writeText(b.getAttribute(&quot;data-copy-prompt&quot;)).then(function(){b.textContent=&quot;Copied&quot;;setTimeout(function(){b.textContent=t;},2000);});}">' +
+        (& $e $Label) + '</button>'
+}
+
 function Format-AdminLinkTableHtml {
     <#
         A set of links as Admin draws it (#3830): a .table--dense, one row per link, in the desktop shell's own form,
@@ -1535,7 +1567,11 @@ function Format-AdminShellOpen {
     }
     [void]$sb.AppendLine('</nav>')
     [void]$sb.AppendLine('<div class="shell__main">')
-    if (-not $Bare -and $Title) {
+    # The title: the Figma wireframes' page header (.page-head, November 12, 2026) at the top of the page body, the h1
+    # with -InfoHtml beside it and -HeadAside at its right end. Only a -NoColumn page, which opens no body of its own,
+    # keeps the older toolbar over the pane.
+    $head = -not $Bare -and $Title
+    if ($head -and $NoColumn) {
         [void]$sb.Append('<div class="toolbar"><h1>' + (& $e $Title) + '</h1>')
         [void]$sb.Append($InfoHtml)
         if ($HeadAside) { [void]$sb.Append('<div class="toolbar__end">' + $HeadAside + '</div>') }
@@ -1544,7 +1580,14 @@ function Format-AdminShellOpen {
     [void]$sb.AppendLine('<div class="shell__list tb-scroll">')
     [void]$sb.AppendLine((Format-RepoAdminBanner))
     # -NoColumn: the content brings its own column (the release notes' template), so no <main> is opened for it.
-    if (-not $NoColumn) { [void]$sb.AppendLine('<main class="shell__body">') }
+    if (-not $NoColumn) {
+        [void]$sb.AppendLine('<main class="shell__body">')
+        if ($head) {
+            [void]$sb.Append('<div class="page-head"><div class="page-head__title"><h1>' + (& $e $Title) + '</h1>' + $InfoHtml + '</div>')
+            if ($HeadAside) { [void]$sb.Append('<div class="page-head__end">' + $HeadAside + '</div>') }
+            [void]$sb.AppendLine('</div>')
+        }
+    }
     return $sb.ToString()
 }
 

@@ -59,7 +59,7 @@ filled and empty), both judged together before the merge.
 
 ### TEST
 
-- [ ] Every suite touching the Admin renderers green (dev-pages, dev-preview-sessionstart, goals, dayplan, stopwatch)
+- [x] Every suite touching the Admin renderers green: dayplan 74, dev-pages 752, dev-preview-sessionstart 390, goals 62, stopwatch 318, 0 failed; check-plugin-integrity 0 errors. The goals suite caught the goal line counting items under a "milestones" label; it now counts milestones done, as the wireframe does
 - [x] Goals and Today, filled (sample model) and empty (this machine), screenshotted headless at 1440 wide and compared against wireframe frames 8:174, 8:328, 9:395 and 9:514
 - [x] Home served from the working tree and compared by eye against the wireframe frame `8:2`: structure matches; the wireframe's grey icon placeholders and two empty bar actions are not drawn, since there is nothing to put in them yet
 
