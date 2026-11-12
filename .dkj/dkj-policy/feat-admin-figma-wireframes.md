@@ -41,8 +41,8 @@
 
 Dave, November 12, 2026: from now on the Figma wireframes rank highest for Admin's layout -- the
 *Wireframes* page of the `dkj-brandbook` Figma file (key `w44J5aQPeST96RJ71vU3ev`, node `5-3`). This
-branch is round 1: the shell every Admin page shares, and the Home page. Goals and Today, which the
-wireframes also draw, follow in their own rounds.
+branch carries round 1 (the shell every Admin page shares, and the Home page) and round 2 (Goals and Today,
+filled and empty), both judged together before the merge.
 
 ### CREATE
 
@@ -52,17 +52,24 @@ wireframes also draw, follow in their own rounds.
 - [x] The airsquats toast stands beside the sidebar, as the wireframe places it
 - [x] The fit alarm accepts the page header's `h1`
 - [x] Brand book README states the new hierarchy and the changed layer rules
+- [x] Round 2: every Admin page's title is the page header (.page-head) at the top of the pane body; only a -NoColumn page keeps the toolbar
+- [x] Round 2: .empty-state and Format-AdminEmptyStateHtml with a copy-prompt button; Goals and Today draw it when empty
+- [x] Round 2: Goals rebuilt on the wireframe (goal card, Now box, Next cards, milestone rows, '+ Plan a goal')
+- [x] Round 2: Today rebuilt on the wireframe (date beside the h1, hours planned at the right, day goal card, two columns with The plan, What got done, Not today, The week)
 
 ### TEST
 
-- [x] `dev-pages.tests.ps1`: 751 passed, 0 failed
+- [ ] Every suite touching the Admin renderers green (dev-pages, dev-preview-sessionstart, goals, dayplan, stopwatch)
+- [x] Goals and Today, filled (sample model) and empty (this machine), screenshotted headless at 1440 wide and compared against wireframe frames 8:174, 8:328, 9:395 and 9:514
 - [x] Home served from the working tree and compared by eye against the wireframe frame `8:2`: structure matches; the wireframe's grey icon placeholders and two empty bar actions are not drawn, since there is nothing to put in them yet
 
 ### DEPLOY: feat/admin-figma-wireframes
 
-The Admin shell and its Home page now follow the Figma wireframes, which rank above the brand book for
-Admin's layout from this release on: a full-height sidebar with a brand row and Settings at its foot, a
-bar over the main pane only, and a page header with the repo's name over a framed table of pages.
+Admin now follows the Figma wireframes, which rank above the brand book for Admin's layout from this release on:
+a full-height sidebar with a brand row and Settings at its foot, a bar over the main pane only, and every page
+opening on a page header. Home shows the repo's name over a framed table of pages; Goals shows each goal as a card
+with one Now step, the next three and its milestones; Today shows the day goal, the plan beside the week, and what
+got done. An empty Goals or Today page says what will appear and offers one button that copies the prompt to fill it.
 **Score:** 3
 
 #### What makes this deploy extra special
@@ -73,5 +80,5 @@ to Admin starts from the wireframe, not from the shell's old "compact, no cards"
 
 #### Pull Request
 
-Admin follows the Figma wireframes: shell and Home
+Admin follows the Figma wireframes: shell, Home, Goals and Today
 
