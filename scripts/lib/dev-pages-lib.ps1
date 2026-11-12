@@ -706,7 +706,8 @@ function Get-BrandbookTokenPreviewHtml {
     $marks = foreach ($t in $script:ProductBrandbookTokenPreviews[$Slug]) {
         switch ($Slug) {
             'color' { '<span class="bb-dot" style="background: var(' + $t + ')" title="' + $t + '"></span>' }
-            'text'  { '<span style="font-size: var(' + $t + ')" title="' + $t + '">Aa</span>' }
+            # The prefix is written out, so the house-style gate reads a type-scale step here (its [type] check).
+            'text'  { '<span style="font-size: var(--text-' + ($t -replace '^--text-', '') + ')" title="' + $t + '">Aa</span>' }
             'scale' { '<span class="bb-radius" style="border-radius: var(' + $t + ')" title="' + $t + '"></span>' }
         }
     }
