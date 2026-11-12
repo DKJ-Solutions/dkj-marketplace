@@ -2,7 +2,75 @@
 
 ## [Unreleased]
 
-**11 / 17 minor entries** <!-- pending-tally -->
+**12 / 20 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/palette-border-graph · 20261112-194630Z
+
+Controls now show their edge: a plain button, a segmented control, the info button, the search and filter fields
+and the product's stepper and combo field take a new `--primary-border`, a grey of the theme's colour in the 30 group at 3:1 on
+the page and on a card, in all twelve themes. The three graph colours are now computed per theme from blue, purple-magenta, deep teal, wine and violet,
+so a series no longer looks like the theme's own colour, a warning or a gain. The dark themes' surfaces stand a little further apart.
+**Score:** 2
+
+#### What makes this deploy extra special
+
+The house palette now promises non-text contrast for controls, computed per theme rather than typed, and the brand book states that every theme colour belongs to the 60, the 30 or the 10.
+**Score:** 2
+
+#### Pull Request
+
+Palette: a 3:1 control border, wider dark paper steps, colour-blind-safe graph slots
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4029](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4029)
+
+---
+
+### DEPLOY: fix/4028-stale-park-reads-body · 20261112-171524Z
+
+An issue filed already parked under `awaiting-pull` now comes free on its own once its blocker lands, provided
+its body carries the line `Parked: waiting on <#n or branch>.`. Until now only a parking comment was read, so
+such an issue stayed skipped by every sweep after the merge, and the sweep's message now says which line to add
+where neither names the wait.
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Nothing beyond the repair itself: one more tracker read in a rare case, and one line a filer now writes.
+**Score:** N/A
+
+#### Pull Request
+
+claim-issue: stale-park reads the waiting-on clause from the issue body when no parking comment carries one
+
+Plugins: dkj-policy
+
+[PR #4032](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4032)
+
+---
+
+### DEPLOY: fix/4030-fit-alarm-shell-specimen · 20261112-165310Z
+
+The fit alarm no longer reads a brand book page that shows a Desktop shell specimen as Admin's own shell, so that page's correct h1 is no longer reported as loose in the pane ([#4030](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4030)).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A false warning on a page of this repo's own brand book; nothing a subscriber takes changes in behaviour.
+
+**Score:** N/A
+
+#### Pull Request
+
+Fit alarm ignores a shell specimen when choosing shell mode
+
+Plugins: dkj-policy
+
+[PR #4031](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4031)
+
+---
 
 ### DEPLOY: docs/claudeai-connectors-per-checkout · 20261112-161151Z
 
