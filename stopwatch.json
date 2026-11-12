@@ -6,278 +6,48 @@
                      "label":  "CSS comment, start to end",
                      "start":  "2026-10-23T15:22:37.328Z",
                      "end":  "2026-10-23T15:37:21.064Z",
-                     "sessions":  1,
-                     "phases":  [
-                                    {
-                                        "name":  "Ship: checks before the PR",
-                                        "seconds":  3.078
-                                    },
-                                    {
-                                        "name":  "Ship: local gates and opening the PR",
-                                        "seconds":  607.51
-                                    },
-                                    {
-                                        "name":  "Ship: CI wait",
-                                        "seconds":  10.056
-                                    },
-                                    {
-                                        "name":  "Ship: merge",
-                                        "seconds":  5.838
-                                    },
-                                    {
-                                        "name":  "Ship: fold and close-out",
-                                        "seconds":  10.978
-                                    },
-                                    {
-                                        "name":  "Local gates and tests",
-                                        "seconds":  160.223
-                                    },
-                                    {
-                                        "name":  "Branch and claim",
-                                        "seconds":  6.081
-                                    },
-                                    {
-                                        "name":  "Other tool calls",
-                                        "seconds":  26.169
-                                    },
-                                    {
-                                        "name":  "Claude thinking and writing",
-                                        "seconds":  53.387
-                                    },
-                                    {
-                                        "name":  "Waiting on you",
-                                        "seconds":  0.416
-                                    }
-                                ]
+                     "sessions":  null,
+                     "phases":  null
                  },
                  {
                      "id":  "20261024-093305-33ab",
                      "label":  "CSS comment, start to end",
                      "start":  "2026-10-24T09:33:05.812Z",
                      "end":  "2026-10-24T09:45:49.572Z",
-                     "sessions":  1,
-                     "phases":  [
-                                    {
-                                        "name":  "Ship: checks before the PR",
-                                        "seconds":  2.921
-                                    },
-                                    {
-                                        "name":  "Ship: local gates and opening the PR",
-                                        "seconds":  532.199
-                                    },
-                                    {
-                                        "name":  "Ship: CI wait",
-                                        "seconds":  9.285
-                                    },
-                                    {
-                                        "name":  "Ship: merge",
-                                        "seconds":  4.523
-                                    },
-                                    {
-                                        "name":  "Ship: fold and close-out",
-                                        "seconds":  11.153
-                                    },
-                                    {
-                                        "name":  "Local gates and tests",
-                                        "seconds":  158.154
-                                    },
-                                    {
-                                        "name":  "Branch and claim",
-                                        "seconds":  5.746
-                                    },
-                                    {
-                                        "name":  "Other tool calls",
-                                        "seconds":  6.814
-                                    },
-                                    {
-                                        "name":  "Claude thinking and writing",
-                                        "seconds":  32.344
-                                    },
-                                    {
-                                        "name":  "Waiting on you",
-                                        "seconds":  0.622
-                                    }
-                                ]
+                     "sessions":  null,
+                     "phases":  null
                  },
                  {
                      "id":  "20261024-101414-610e",
                      "label":  "CSS comment, start to end",
                      "start":  "2026-10-24T10:14:14.736Z",
                      "end":  "2026-10-24T10:25:58.780Z",
-                     "sessions":  1,
-                     "phases":  [
-                                    {
-                                        "name":  "Ship: checks before the PR",
-                                        "seconds":  3.759
-                                    },
-                                    {
-                                        "name":  "Ship: local gates and opening the PR",
-                                        "seconds":  467.029
-                                    },
-                                    {
-                                        "name":  "Ship: CI wait",
-                                        "seconds":  10.383
-                                    },
-                                    {
-                                        "name":  "Ship: merge",
-                                        "seconds":  4.911
-                                    },
-                                    {
-                                        "name":  "Ship: fold and close-out",
-                                        "seconds":  11.775
-                                    },
-                                    {
-                                        "name":  "Local gates and tests",
-                                        "seconds":  158.705
-                                    },
-                                    {
-                                        "name":  "Branch and claim",
-                                        "seconds":  5.724
-                                    },
-                                    {
-                                        "name":  "Other tool calls",
-                                        "seconds":  9.397
-                                    },
-                                    {
-                                        "name":  "Claude thinking and writing",
-                                        "seconds":  31.758
-                                    },
-                                    {
-                                        "name":  "Waiting on you",
-                                        "seconds":  0.603
-                                    }
-                                ]
+                     "sessions":  null,
+                     "phases":  null
                  },
                  {
                      "id":  "20261024-124804-b732",
                      "label":  "CSS comment, start to end",
                      "start":  "2026-10-24T12:48:04.839Z",
                      "end":  "2026-10-24T12:56:08.876Z",
-                     "sessions":  1,
-                     "phases":  [
-                                    {
-                                        "name":  "Ship: checks before the PR",
-                                        "seconds":  2.518
-                                    },
-                                    {
-                                        "name":  "Ship: local gates and opening the PR",
-                                        "seconds":  206.591
-                                    },
-                                    {
-                                        "name":  "Ship: CI wait",
-                                        "seconds":  9.138
-                                    },
-                                    {
-                                        "name":  "Ship: merge",
-                                        "seconds":  5.04
-                                    },
-                                    {
-                                        "name":  "Ship: fold and close-out",
-                                        "seconds":  10.943
-                                    },
-                                    {
-                                        "name":  "Local gates and tests",
-                                        "seconds":  158.248
-                                    },
-                                    {
-                                        "name":  "Branch and claim",
-                                        "seconds":  7.166
-                                    },
-                                    {
-                                        "name":  "Other tool calls",
-                                        "seconds":  20.015
-                                    },
-                                    {
-                                        "name":  "Claude thinking and writing",
-                                        "seconds":  63.676
-                                    },
-                                    {
-                                        "name":  "Waiting on you",
-                                        "seconds":  0.702
-                                    }
-                                ]
+                     "sessions":  null,
+                     "phases":  null
                  },
                  {
                      "id":  "20261025-090710-dc49",
                      "label":  "h2 fontsize",
                      "start":  "2026-10-25T09:07:10.771Z",
                      "end":  "2026-10-25T09:26:09.662Z",
-                     "sessions":  1,
-                     "phases":  [
-                                    {
-                                        "name":  "Ship: CI wait, merge, fold",
-                                        "seconds":  3.305
-                                    },
-                                    {
-                                        "name":  "Ship: checks before the PR",
-                                        "seconds":  5.384
-                                    },
-                                    {
-                                        "name":  "Ship: local gates and opening the PR",
-                                        "seconds":  218.368
-                                    },
-                                    {
-                                        "name":  "Ship: CI wait",
-                                        "seconds":  135.496
-                                    },
-                                    {
-                                        "name":  "Ship: forwarded head, re-certified",
-                                        "seconds":  621.198
-                                    },
-                                    {
-                                        "name":  "Ship: merge",
-                                        "seconds":  4.376
-                                    },
-                                    {
-                                        "name":  "Ship: fold and close-out",
-                                        "seconds":  11.002
-                                    },
-                                    {
-                                        "name":  "Local gates and tests",
-                                        "seconds":  63.929
-                                    },
-                                    {
-                                        "name":  "Branch and claim",
-                                        "seconds":  5.828
-                                    },
-                                    {
-                                        "name":  "Other tool calls",
-                                        "seconds":  9.661
-                                    },
-                                    {
-                                        "name":  "Claude thinking and writing",
-                                        "seconds":  59.652
-                                    },
-                                    {
-                                        "name":  "Waiting on you",
-                                        "seconds":  0.692
-                                    }
-                                ]
+                     "sessions":  null,
+                     "phases":  null
                  },
                  {
                      "id":  "20261028-152014-d240",
                      "label":  "release cut",
                      "start":  "2026-10-28T15:20:14.359Z",
                      "end":  "2026-10-28T15:35:17.262Z",
-                     "sessions":  1,
-                     "phases":  [
-                                    {
-                                        "name":  "Local gates and tests",
-                                        "seconds":  59.621
-                                    },
-                                    {
-                                        "name":  "Other tool calls",
-                                        "seconds":  753.136
-                                    },
-                                    {
-                                        "name":  "Claude thinking and writing",
-                                        "seconds":  89.185
-                                    },
-                                    {
-                                        "name":  "Waiting on you",
-                                        "seconds":  0.961
-                                    }
-                                ]
+                     "sessions":  null,
+                     "phases":  null
                  },
                  {
                      "id":  "20261103-163117-5c66",
@@ -332,11 +102,7 @@
                                     },
                                     {
                                         "name":  "Claude thinking and writing",
-                                        "seconds":  43.441
-                                    },
-                                    {
-                                        "name":  "Waiting on you",
-                                        "seconds":  0.484
+                                        "seconds":  43.925
                                     }
                                 ]
                  },
@@ -389,11 +155,7 @@
                                     },
                                     {
                                         "name":  "Claude thinking and writing",
-                                        "seconds":  50.272
-                                    },
-                                    {
-                                        "name":  "Waiting on you",
-                                        "seconds":  0.475
+                                        "seconds":  50.747
                                     }
                                 ]
                  },
@@ -405,48 +167,8 @@
                      "sessions":  1,
                      "phases":  [
                                     {
-                                        "name":  "Cut: start",
-                                        "seconds":  0.06
-                                    },
-                                    {
-                                        "name":  "Cut: origin check and guardrails",
-                                        "seconds":  2.479
-                                    },
-                                    {
-                                        "name":  "Cut: lint gate",
-                                        "seconds":  0.002
-                                    },
-                                    {
-                                        "name":  "Cut: test gate",
-                                        "seconds":  0.001
-                                    },
-                                    {
-                                        "name":  "Cut: origin check after the gates",
-                                        "seconds":  0.574
-                                    },
-                                    {
-                                        "name":  "Cut: notes, overview and version bumps",
-                                        "seconds":  1.055
-                                    },
-                                    {
-                                        "name":  "Cut: commit and tag",
-                                        "seconds":  0.188
-                                    },
-                                    {
-                                        "name":  "Cut: push",
-                                        "seconds":  4.566
-                                    },
-                                    {
-                                        "name":  "Other tool calls",
-                                        "seconds":  24.491
-                                    },
-                                    {
-                                        "name":  "Claude thinking and writing",
-                                        "seconds":  29.51
-                                    },
-                                    {
-                                        "name":  "Waiting on you",
-                                        "seconds":  0.501
+                                        "name":  "Ship: fold and close-out",
+                                        "seconds":  63.426
                                     }
                                 ]
                  },
@@ -458,56 +180,8 @@
                      "sessions":  1,
                      "phases":  [
                                     {
-                                        "name":  "Cut: start",
-                                        "seconds":  0.093
-                                    },
-                                    {
-                                        "name":  "Cut: origin check and guardrails",
-                                        "seconds":  2.183
-                                    },
-                                    {
-                                        "name":  "Cut: lint gate",
-                                        "seconds":  0.002
-                                    },
-                                    {
-                                        "name":  "Cut: test gate",
-                                        "seconds":  0.002
-                                    },
-                                    {
-                                        "name":  "Cut: origin check after the gates",
-                                        "seconds":  0.566
-                                    },
-                                    {
-                                        "name":  "Cut: release builds",
-                                        "seconds":  0.007
-                                    },
-                                    {
-                                        "name":  "Cut: notes, overview and version bumps",
-                                        "seconds":  0.77
-                                    },
-                                    {
-                                        "name":  "Cut: commit and tag",
-                                        "seconds":  0.184
-                                    },
-                                    {
-                                        "name":  "Cut: push",
-                                        "seconds":  4.459
-                                    },
-                                    {
-                                        "name":  "Local gates and tests",
-                                        "seconds":  60.36
-                                    },
-                                    {
-                                        "name":  "Other tool calls",
-                                        "seconds":  23.053
-                                    },
-                                    {
-                                        "name":  "Claude thinking and writing",
-                                        "seconds":  35.782
-                                    },
-                                    {
-                                        "name":  "Waiting on you",
-                                        "seconds":  0.529
+                                        "name":  "Ship: fold and close-out",
+                                        "seconds":  127.989
                                     }
                                 ]
                  },
@@ -519,56 +193,8 @@
                      "sessions":  1,
                      "phases":  [
                                     {
-                                        "name":  "Cut: start",
-                                        "seconds":  0.095
-                                    },
-                                    {
-                                        "name":  "Cut: origin check and guardrails",
-                                        "seconds":  2.869
-                                    },
-                                    {
-                                        "name":  "Cut: lint gate",
-                                        "seconds":  0.001
-                                    },
-                                    {
-                                        "name":  "Cut: test gate",
-                                        "seconds":  0.004
-                                    },
-                                    {
-                                        "name":  "Cut: origin check after the gates",
-                                        "seconds":  0.585
-                                    },
-                                    {
-                                        "name":  "Cut: release builds",
-                                        "seconds":  0.001
-                                    },
-                                    {
-                                        "name":  "Cut: notes, overview and version bumps",
-                                        "seconds":  1.643
-                                    },
-                                    {
-                                        "name":  "Cut: commit and tag",
-                                        "seconds":  0.181
-                                    },
-                                    {
-                                        "name":  "Cut: push",
-                                        "seconds":  4.973
-                                    },
-                                    {
-                                        "name":  "Local gates and tests",
-                                        "seconds":  65.857
-                                    },
-                                    {
-                                        "name":  "Other tool calls",
-                                        "seconds":  20.99
-                                    },
-                                    {
-                                        "name":  "Claude thinking and writing",
-                                        "seconds":  40.006
-                                    },
-                                    {
-                                        "name":  "Waiting on you",
-                                        "seconds":  1.1
+                                        "name":  "Ship: fold and close-out",
+                                        "seconds":  138.304
                                     }
                                 ]
                  },
@@ -580,56 +206,8 @@
                      "sessions":  1,
                      "phases":  [
                                     {
-                                        "name":  "Cut: start",
-                                        "seconds":  0.092
-                                    },
-                                    {
-                                        "name":  "Cut: origin check and guardrails",
-                                        "seconds":  3.207
-                                    },
-                                    {
-                                        "name":  "Cut: lint gate",
-                                        "seconds":  0.001
-                                    },
-                                    {
-                                        "name":  "Cut: test gate",
-                                        "seconds":  0.001
-                                    },
-                                    {
-                                        "name":  "Cut: origin check after the gates",
-                                        "seconds":  0.889
-                                    },
-                                    {
-                                        "name":  "Cut: release builds",
-                                        "seconds":  0.003
-                                    },
-                                    {
-                                        "name":  "Cut: notes, overview and version bumps",
-                                        "seconds":  1.399
-                                    },
-                                    {
-                                        "name":  "Cut: commit and tag",
-                                        "seconds":  0.2
-                                    },
-                                    {
-                                        "name":  "Cut: push",
-                                        "seconds":  4.945
-                                    },
-                                    {
-                                        "name":  "Local gates and tests",
-                                        "seconds":  71.187
-                                    },
-                                    {
-                                        "name":  "Other tool calls",
-                                        "seconds":  26.894
-                                    },
-                                    {
-                                        "name":  "Claude thinking and writing",
-                                        "seconds":  34.51
-                                    },
-                                    {
-                                        "name":  "Waiting on you",
-                                        "seconds":  1.184
+                                        "name":  "Ship: fold and close-out",
+                                        "seconds":  144.512
                                     }
                                 ]
                  }
