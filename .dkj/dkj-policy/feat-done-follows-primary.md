@@ -69,7 +69,7 @@ no longer looks like the primary in the purple and magenta themes. `--done-3` is
 #### What makes this deploy extra special
 
 N/A
-**Score:** 0
+**Score:** N/A
 
 #### Pull Request
 
