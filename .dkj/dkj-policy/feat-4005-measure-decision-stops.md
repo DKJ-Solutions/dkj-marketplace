@@ -39,19 +39,57 @@
 
 ### PLAN
 
+Picked up by a sweep (#4005). This branch is the issue's step 1, the measurement. Step 2, a per-person
+dial on how readily a session stops, is conditional on this number and needs a home for a per-person
+setting, which is #4006; the issue stays open for it (`-NoResolves`).
+
+#### What the transcripts hold, verified before building
+
+- The call is a `tool_use` named `AskUserQuestion`; its answer is the `user` record whose `tool_result`
+  carries that id, with a structured `toolUseResult` holding `questions` (with their options), `answers`
+  (keyed by question text) and `annotations` (notes).
+- A rejected call carries a string in `toolUseResult`, and no answers.
+- An `attachment` record listing deferred tools also names `AskUserQuestion`. Most of the 211 files that
+  mention the name contain no call at all; 31 do (37 calls, cross-checked by regex).
+- Shape B (a menu in prose) leaves no structured trace, so it is not counted and the report says so.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/maintenance/measure-decision-stops.ps1`: per question, recommended as-is, recommended with
+  a note, another option, own words, declined, and no-Recommended-offered counted apart; the as-is share,
+  per project; `-Project`, `-Since`, `-Json`. Only lines that can carry a stop are parsed (3s over 225
+  sessions). Counts only; a project outside a `-GitHub-` path is `(other)`.
+- [x] Registered in `shared-scripts-lib.ps1` and mirrored into `dkj-policy`.
+- [x] The `measure-decision-stops` skill page, `disable-model-invocation: true`, with the day's figures.
+- [x] Listed in the scripts README and the ADOPTION skill list.
 
 ### TEST
 
+- [x] `scripts/tests/measure-decision-stops.tests.ps1` (in the `tools` suite group): every verdict, the
+  share's denominator, the single-answer regression, no transcript text or local path in either output,
+  the filters, exit 0. 33 asserts.
+- [x] Run against this machine's 225 real sessions. The first run read 0 stops because a one-element
+  answer unrolled into a string and every session holding a stop threw inside a swallowed catch; fixed,
+  and the unreadable count is now printed rather than swallowed.
+
 ### DEPLOY: feat/4005-measure-decision-stops
 
-**Score:**
+A new skill, [`measure-decision-stops`](../../plugins/dkj-policy/skills/measure-decision-stops/SKILL.md),
+counts how often sessions on this machine stopped to ask the owner a menu question (`AskUserQuestion`)
+and how each question was answered: the option marked Recommended as-is, the same with a note, another
+option, the owner's own words, or declined. The headline is the share of questions that offered a
+Recommended option and got it unchanged. Like `measure-closeouts`, it reads transcripts in place and emits
+only counts. Close-outs of shape B, a menu written in prose, are not counted, and the report says so. On
+the day it was written it measured 17 of 23 (74%), against the owner's estimate of about 90% (#4005).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer's owner can run `/measure-decision-stops` to see how predictable their own answers are before
+deciding how readily sessions should ask them. It costs nothing until typed (`disable-model-invocation`).
+
+**Score:** 2
 
 #### Pull Request
 

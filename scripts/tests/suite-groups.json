@@ -215,6 +215,7 @@
                                       "fanout-lib.tests.ps1",
                                       "find-specialist-mentions.tests.ps1",
                                       "measure-always-on.tests.ps1",
+                                      "measure-decision-stops.tests.ps1",
                                       "measure-session-start.tests.ps1",
                                       "measure-skill.tests.ps1",
                                       "plugin-versions.tests.ps1",
@@ -228,7 +229,7 @@
                        "tips":  [
                                     "Most of these run only when somebody asks for them, so a regression here goes unnoticed in daily work until the suite catches it."
                                 ],
-                       "split":  "the measure skills (measure-always-on, measure-session-start, measure-skill, closeout-measure, retro); machine upkeep (tidy-lib, prune-merged, plugin-versions, update-plugins); and the cross-repo checks (consumers, the sibling checks, policy-drift, find-specialist-mentions, fanout)."
+                       "split":  "the measure skills (measure-always-on, measure-session-start, measure-skill, closeout-measure, retro, measure-decision-stops); machine upkeep (tidy-lib, prune-merged, plugin-versions, update-plugins); and the cross-repo checks (consumers, the sibling checks, policy-drift, find-specialist-mentions, fanout)."
                    },
                    {
                        "key":  "pages",
