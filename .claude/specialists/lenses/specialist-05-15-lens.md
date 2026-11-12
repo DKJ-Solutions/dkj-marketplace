@@ -1035,6 +1035,18 @@ September 8 all six had been on, for validation. Before changing this, know:
   with no frontend to work on. The key is not redundant: removing it as redundant switched figma back on
   everywhere until it was restored
   ([#2978](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2978)).
+- **claude.ai connectors are switched off per checkout, through `/mcp`, and never in this repo's
+  files** (November 12, 2026). A connector linked on claude.ai (Klaviyo, Shopify, Figma, …) belongs to
+  the *account*, so Claude Code loads it in every repo on every machine signed in to it: no file in this
+  repo enables one, and `.claude/settings.json` holds no key that switches one off by name. Each loaded
+  connector puts its deferred tool names and its server instructions into every session; Klaviyo and
+  Shopify, which only the BWJ repos use, were 365 deferred tool names per session here (323 + 42). **Off here:** `/mcp` → the
+  connector → **Disable**, which records `disabledMcpServers` in this checkout's own block of the
+  machine's `~/.claude.json` and nowhere else — measured: after disabling both, no other checkout's block
+  carried the key, so the BWJ repos keep them. **So it is per machine and per checkout**: a fresh clone
+  or another machine loads them again until the same step is taken there. The Figma *connector* stays on
+  here (unlike the Figma plugin in the bullet above), because
+  [Uma's](specialist-04-32-lens.md) wireframes live in Figma.
 - **What switching a plugin off removes**: its blocks in
   [`consumers/dkj-marketplace.json`](../../../consumers/dkj-marketplace.json) (`consumers.tests.ps1`'s
   self-manifest case fails on a registered plugin that is not enabled), the add-on teams' 11 empty lenses
