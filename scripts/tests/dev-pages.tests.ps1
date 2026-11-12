@@ -66,9 +66,12 @@ Assert-True ($gshell -notmatch 'dkj-claude-plugins') 'and nothing of this repo i
 $gIntro = $gshell.IndexOf('<h1>')
 $gScroll = $gshell.IndexOf('<div class="shell__list tb-scroll">')
 Assert-True ($gshell.Contains((Format-RepoAdminBanner)) -and $gScroll -ge 0 -and $gshell.IndexOf('id="admin-banner"') -gt $gScroll -and $gshell.IndexOf('id="admin-banner"') -lt $gshell.IndexOf('<main class="shell__body">') -and $gshell.IndexOf('<main class="shell__body">') -lt $gshell.IndexOf('<p>body</p>') -and ([regex]::Matches($gshell, 'id="admin-banner"')).Count -eq 1) 'every page carries the general banner once, as the first thing in the scroll pane, above its own blocks, in the pane body (#3297; owner, October 24, 2026; in the shell, #3811)'
-Assert-True ($gshell -match '<div class="shell__list tb-scroll">?
-<div class="notice" id="admin-banner"' -and $gshell -match '<main class="shell__body">?
-<div class="page-head"><div class="page-head__title"><h1>An &lt;i&gt;issue</h1></div></div>?
+Assert-True ($gshell -match '<div class="shell__list tb-scroll">
+?
+<div class="notice" id="admin-banner"' -and $gshell -match '<main class="shell__body">
+?
+<div class="page-head"><div class="page-head__title"><h1>An &lt;i&gt;issue</h1></div></div>
+?
 <p>body</p>' -and $gshell.IndexOf('<h1>') -gt $gshell.IndexOf('id="admin-banner"') -and $gshell -notmatch 'class="toolbar"') 'the page''s h1 is the page header''s, the first thing in the pane body after the banner, with its own blocks beneath, and no toolbar above the pane (the Figma wireframes, November 12, 2026)'
 # THE SITE HEADER (October 22, 2026): only where a caller asks for it with -Brand, so every other repo's pages stay as they were.
 $anon = Format-GeneralPageHtml -Title 'T' -Lead 'L' -Body ''
@@ -1205,7 +1208,7 @@ Assert-Equal 'Covered,In progress,In review,Awaiting decision,Waiting,Open,Decli
 Assert-Equal $dcColors.Count (@($dcColors.Values | Sort-Object -Unique)).Count 'and no two statuses share one'
 Assert-True (@($dcColors.Values | Where-Object { $_ -cnotmatch '^--[a-z0-9-]+\z' }).Count -eq 0) 'each colour is a house token, never a typed code'
 $dcStyle = Get-DocsCoverageStatusStyle
-Assert-True ($dcStyle -match '\.dc-dot--awaiting-decision \{ background: var\(--warning-3\); \}' -and $dcStyle -match '\.dc-dot--not-relevant \{ background: var\(--bg-4\); \}') 'the page''s own layer reads each status''s token through a class of its own'
+Assert-True ($dcStyle -match '\.dc-dot--awaiting-decision \{ background: var\(--warning-3\); \}' -and $dcStyle -match '\.dc-dot--not-relevant \{ background: var\(--bg-3\); \}') 'the page''s own layer reads each status''s token through a class of its own'
 Assert-True ($dcStyle -notmatch '#[0-9a-fA-F]{3,8}|rgb|hsl|color-mix') 'and types or derives no colour (the brand book)'
 Assert-Equal '--' (Format-DocsCoverageStatusText '--') 'a status not read has no dot'
 Assert-True ($dcOver -match '\.dc-dot--covered \{' -and $dcOver -notmatch 'dc-dot--done') 'the overview carries the status colours, and Done is no status of its own any more'
