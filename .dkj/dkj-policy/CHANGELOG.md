@@ -2,7 +2,30 @@
 
 ## [Unreleased]
 
-**11 / 16 minor entries** <!-- pending-tally -->
+**11 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/claudeai-connectors-per-checkout · 20261112-161151Z
+
+[Sylvester's lens](../../.claude/specialists/lenses/specialist-05-15-lens.md#the-plugins-enabled-here-and-what-that-costs)
+now records that a claude.ai connector belongs to the account and loads in every repo, and that the way
+to keep one out of this repo is `/mcp` → **Disable**, which is stored per checkout in the machine's
+`~/.claude.json`. Klaviyo and Shopify, BWJ-only, cost 365 deferred tool names per session here.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A — a note in this repo's own lens; nothing a consumer takes changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+Record that claude.ai connectors are switched off per checkout through /mcp
+
+[PR #4027](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4027)
+
+---
 
 ### DEPLOY: feat/admin-figma-wireframes · 20261112-155732Z
 
