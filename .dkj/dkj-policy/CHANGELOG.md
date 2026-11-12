@@ -2,7 +2,28 @@
 
 ## [Unreleased]
 
-**13 / 21 minor entries** <!-- pending-tally -->
+**13 / 22 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/done-follows-primary · 20261112-201244Z
+
+Done (finished and closed work) now takes the theme's own grey, `--primary-muted`, instead of one purple in every theme, so it
+no longer looks like the primary in the purple and magenta themes. `--done-3` is retired: a page that still reads it is reported by the house-style gate and should switch to `--primary-muted`.
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A
+**Score:** N/A
+
+#### Pull Request
+
+Done follows the theme: --done-3 becomes --primary-muted
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4035](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4035)
+
+---
 
 ### DEPLOY: fix/4025-shell-pattern-wireframes · 20261112-195748Z
 
