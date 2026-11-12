@@ -39,19 +39,41 @@
 
 ### PLAN
 
+The owner's rule (November 12, 2026): a graph token must ALWAYS read well on `bg-1`. Measured first: every theme
+already passed the 3:1 ratio (lowest 4.42 in the dark themes, 4.60 in the light ones), but APCA put the dark themes'
+`--graph-1` and `--graph-3` at Lc ~30 against Lc ~71 in the light ones. The owner chose Lc 45 as the floor.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-ApcaContrast` (SAPC 0.0.98G) in `house-palette-lib.ps1`, and `OnPaperLc = 45` in `Get-HouseGraphRules`
+- [x] `Get-HouseGraphLifted`: a candidate below Lc 45 on `bg-1` or `bg-3` moves away from the paper, hue and chroma held, by the least that reaches it
+- [x] `Get-HouseGraphSlots` takes the first trio in pool order that stands apart, instead of a first-come walk that cannot go back
+- [x] the dark pool searched again for Lc 45; the light pool and every light theme are unchanged
+- [x] the contrast table carries the Lc rows, the build script prints them in Lc, and `house-style.css` is rebuilt with `-Apply`
+- [x] the brand book README and the stylesheet's header state the rule
 
 ### TEST
 
+- [x] `house-palette.tests.ps1`: APCA on known values, the lift (reaches the floor, by no more, hue held, no-op where it already reads), and every slot at Lc 45 on `bg-1` and `bg-3` in all twelve themes -- 219 passed
+- [~] the owner looks at the dark themes' charts in Admin's brand book -- not a pre-PR step: the PR waits for that look before it merges (visible result)
+
 ### DEPLOY: feat/graph-apca-floor
 
-**Score:**
+Every graph token now reads at APCA Lc 45 or more on `bg-1` and `bg-3` in every theme, on top of WCAG's 3:1.
+The ratio could not hold the owner's rule in a dark theme. It scores a mid tone on a near-black page too kindly, so
+the dark blue and violet series passed at 4.4:1 while reading only Lc 30. `build-house-palette.ps1` now lifts each
+candidate to that floor and picks the first trio in pool order that still stands apart. The dark pool is new. Pink,
+lilac, sky and orange get a blue, a teal and an aqua, because their pastel primary rules out the magenta and the
+violet. The light themes are unchanged.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Every DKJ-Solutions app that takes this brand book draws its charts in dark mode with new, lighter series colours
+that read clearly on the page.
+
+**Score:** 3
 
 #### Pull Request
 

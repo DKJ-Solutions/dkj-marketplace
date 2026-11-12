@@ -103,6 +103,25 @@ function Get-ContrastRatio {
     ([math]::Max($la, $lb) + 0.05) / ([math]::Min($la, $lb) + 0.05)
 }
 
+# APCA lightness contrast (SAPC 0.0.98G, the WCAG 3 draft's measure) of $Text on $Background, as its absolute Lc.
+# WCAG 2's ratio flatters a mid tone on a near-black page: the dark themes' blue series read 4.4:1 there and only Lc 30,
+# where the same slot reads Lc 71 in a light theme. The graph slots are held to Lc on top of the ratio (the owner,
+# November 12, 2026: a series must ALWAYS read well on bg-1).
+function Get-ApcaContrast {
+    param([string]$Text, [string]$Background)
+    $y = foreach ($hex in @($Text, $Background)) {
+        $c = ConvertFrom-HexColor $hex | ForEach-Object { [math]::Pow($_, 2.4) }
+        $v = 0.2126729 * $c[0] + 0.7151522 * $c[1] + 0.0721750 * $c[2]
+        if ($v -lt 0.022) { $v += [math]::Pow(0.022 - $v, 1.414) }
+        $v
+    }
+    $t = $y[0]; $b = $y[1]
+    if ($b -gt $t) { $s = ([math]::Pow($b, 0.56) - [math]::Pow($t, 0.57)) * 1.14; if ($s -lt 0.1) { return 0.0 }; return ($s - 0.027) * 100 }
+    $s = ([math]::Pow($b, 0.65) - [math]::Pow($t, 0.62)) * 1.14
+    if ($s -gt -0.1) { return 0.0 }
+    - ($s + 0.027) * 100
+}
+
 function ConvertFrom-Hsl {
     param([double]$H, [double]$S, [double]$L)
     $c = (1 - [math]::Abs(2 * $L - 1)) * $S
@@ -198,17 +217,37 @@ function Get-OkLabCvdDeltaE { param([string]$A, [string]$B) [math]::Min((Get-OkL
 
 function Get-HouseGraphRules {
     <# The floors a graph slot must reach, per theme. #>
-    @{ FromPrimary = 18; FromStatus = 15; FromSlot = 15; FromSlotCvd = 6; OnPaper = 3 }
+    @{ FromPrimary = 18; FromStatus = 15; FromSlot = 15; FromSlotCvd = 6; OnPaper = 3; OnPaperLc = 45 }
+}
+
+function Get-HouseGraphLifted {
+    <# A pool candidate moved away from the paper -- lighter on dark, darker on light, its OKLCH hue and chroma held
+       (chroma reduced where the gamut ends) -- by the least that brings it to OnPaperLc on both bg-1 and bg-3. A
+       candidate that already reads is returned unchanged. #>
+    param([Parameter(Mandatory)][string]$Hex, [Parameter(Mandatory)]$Palette, [Parameter(Mandatory)][ValidateSet('light', 'dark')][string]$Mode)
+    $floor = (Get-HouseGraphRules).OnPaperLc
+    $reads = { param($c) (Get-ApcaContrast $c $Palette['--bg-1']) -ge $floor -and (Get-ApcaContrast $c $Palette['--bg-3']) -ge $floor }
+    if (& $reads $Hex) { return $Hex }
+    $o = ConvertTo-OkLch $Hex
+    if ($Mode -eq 'dark') { $lo = $o.L; $hi = 1.0 } else { $lo = 0.0; $hi = $o.L }
+    for ($i = 0; $i -lt 30; $i++) {
+        $mid = ($lo + $hi) / 2
+        $ok = & $reads (ConvertFrom-OkLch $mid $o.C $o.H)
+        if ($Mode -eq 'dark') { if ($ok) { $hi = $mid } else { $lo = $mid } } else { if ($ok) { $lo = $mid } else { $hi = $mid } }
+    }
+    ConvertFrom-OkLch $(if ($Mode -eq 'dark') { $hi } else { $lo }) $o.C $o.H
 }
 
 function Get-HouseGraphPool {
     <# The candidates, in order of preference: the first three a theme accepts are its --graph-1..3. Blue, purple-magenta
        and deep teal first, then a wine and a violet for the themes whose primary sits on one of them. None is red, orange,
        yellow or green: those hues are the status colours. Searched with the dataviz validator's measures (November 12,
-       2026) so that every theme gets three. #>
+       2026) so that every theme gets three. The dark pool was searched again for APCA Lc 45 on bg-1 and bg-3 the same
+       day: a blue, a pink-magenta far enough from the blue for a protan or deutan reader, a teal, then a mauve, a
+       periwinkle, an aqua, a light pink and a light sky for the themes whose pastel primary rules out the first ones. #>
     param([ValidateSet('light', 'dark')][string]$Mode)
     if ($Mode -eq 'light') { @('#2574d1', '#a63aa8', '#007c6e', '#8b0f49', '#5c2f95') }
-    else                   { @('#2f73dd', '#e48fe8', '#11a3a0', '#b1667e', '#a264b0') }
+    else                   { @('#1f8fff', '#ff9ee0', '#00beae', '#c190cc', '#9499fa', '#52fce8', '#ffcafc', '#a2ecff') }
 }
 
 function Get-HouseGraphStatus {
@@ -219,21 +258,30 @@ function Get-HouseGraphStatus {
 }
 
 function Get-HouseGraphSlots {
-    <# The three graph slots of a theme: the pool walked in order, each candidate kept when it stands FromPrimary off the
-       primary, FromStatus off every status fill, reads at OnPaper on bg-1 and bg-3, and stands FromSlot (and FromSlotCvd
-       for a protan or deutan reader) off every slot already kept. Throws when fewer than three remain. #>
+    <# The three graph slots of a theme: the pool walked in order, each candidate first lifted to OnPaperLc on bg-1 and
+       bg-3 (Get-HouseGraphLifted), then kept when it stands FromPrimary off the primary, FromStatus off every status
+       fill, reads at OnPaper on bg-1 and bg-3, and stands FromSlot (and FromSlotCvd for a protan or deutan reader) off
+       every slot already kept. Throws when fewer than three remain. #>
     param([Parameter(Mandatory)]$Palette, [Parameter(Mandatory)][ValidateSet('light', 'dark')][string]$Mode)
-    $r = Get-HouseGraphRules; $status = Get-HouseGraphStatus -Mode $Mode; $kept = @()
-    foreach ($c in Get-HouseGraphPool -Mode $Mode) {
-        if ($kept.Count -eq 3) { break }
+    $r = Get-HouseGraphRules; $status = Get-HouseGraphStatus -Mode $Mode
+    # every candidate, lifted, that passes on its own; then the first trio in pool order whose members stand apart.
+    # A first-come walk kept the first that fit and could not go back, which strands a theme once lifting brings the
+    # candidates closer together: the earliest pair can rule out every third while a later pair has room for one.
+    $ok = @(foreach ($pc in Get-HouseGraphPool -Mode $Mode) {
+        $c = Get-HouseGraphLifted -Hex $pc -Palette $Palette -Mode $Mode
         if ((Get-OkLabDeltaE $c $Palette['--primary']) -lt $r.FromPrimary) { continue }
         if (@($status | Where-Object { (Get-OkLabDeltaE $c $_) -lt $r.FromStatus }).Count) { continue }
         if ((Get-ContrastRatio $c $Palette['--bg-1']) -lt $r.OnPaper -or (Get-ContrastRatio $c $Palette['--bg-3']) -lt $r.OnPaper) { continue }
-        if (@($kept | Where-Object { (Get-OkLabDeltaE $c $_) -lt $r.FromSlot -or (Get-OkLabCvdDeltaE $c $_) -lt $r.FromSlotCvd }).Count) { continue }
-        $kept += $c
-    }
-    if ($kept.Count -lt 3) { throw "only $($kept.Count) graph slot(s) pass for primary $($Palette['--primary']) ($Mode)" }
-    $kept
+        $c
+    })
+    $apart = { param($x, $y) (Get-OkLabDeltaE $x $y) -ge $r.FromSlot -and (Get-OkLabCvdDeltaE $x $y) -ge $r.FromSlotCvd }
+    for ($i = 0; $i -lt $ok.Count; $i++) { for ($j = $i + 1; $j -lt $ok.Count; $j++) {
+        if (-not (& $apart $ok[$i] $ok[$j])) { continue }
+        for ($k = $j + 1; $k -lt $ok.Count; $k++) {
+            if ((& $apart $ok[$i] $ok[$k]) -and (& $apart $ok[$j] $ok[$k])) { return @($ok[$i], $ok[$j], $ok[$k]) }
+        }
+    } }
+    throw "no three graph slots stand apart for primary $($Palette['--primary']) ($Mode); $($ok.Count) candidate(s) pass on their own"
 }
 
 # ---- the palette ----------------------------------------------------------------------------------------------
@@ -308,6 +356,8 @@ function Get-HousePaletteContrast {
     $rows += @{ Pair = 'muted on bg-4'; Ratio = Get-ContrastRatio $Palette['--primary-muted'] $Palette['--bg-4']; Floor = 4.5 }
     $rows += @{ Pair = 'bg-4 on fg-1'; Ratio = Get-ContrastRatio $Palette['--bg-4'] $Palette['--fg-1']; Floor = 7 }
     foreach ($n in 1..3) { foreach ($k in @(1, 3)) { $rows += @{ Pair = "graph-$n on bg-$k"; Ratio = Get-ContrastRatio $Palette["--graph-$n"] $Palette["--bg-$k"]; Floor = 3 } } }
+    $lc = (Get-HouseGraphRules).OnPaperLc
+    foreach ($n in 1..3) { foreach ($k in @(1, 3)) { $rows += @{ Pair = "graph-$n on bg-$k (APCA)"; Ratio = Get-ApcaContrast $Palette["--graph-$n"] $Palette["--bg-$k"]; Floor = $lc; Unit = 'Lc' } } }
     foreach ($n in 1..3) { $rows += @{ Pair = "primary-border on bg-$n"; Ratio = Get-ContrastRatio $Palette['--primary-border'] $Palette["--bg-$n"]; Floor = 3 } }
     $rows += @{ Pair = 'bg-1 on muted'; Ratio = Get-ContrastRatio $Palette['--bg-1'] $Palette['--primary-muted']; Floor = 4.5 }
     $rows

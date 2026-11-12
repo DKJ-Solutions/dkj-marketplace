@@ -44,6 +44,17 @@ Assert-Near 21 (Get-ContrastRatio '#000000' '#ffffff') 0.001 'black on white is 
 Assert-Near 1 (Get-ContrastRatio '#777777' '#777777') 0.001 'a colour on itself is 1:1'
 Assert-Near 4.2 (Get-OkLabDeltaE '#e0761a' '#eb6834') 0.05 'OKLab Delta E matches the dataviz validator (the old graph-2 beside warning-3, normal vision)'
 Assert-Near 1.3 (Get-OkLabDeltaE '#e0761a' '#eb6834' 'deutan') 0.05 'and its Machado deutan simulation'
+Assert-Near 106.04 (Get-ApcaContrast '#000000' '#ffffff') 0.05 'APCA: black text on white is Lc 106'
+Assert-Near 107.88 (Get-ApcaContrast '#ffffff' '#000000') 0.05 'APCA: white text on black is Lc 108 (reported as an absolute value)'
+Assert-Equal 0 (Get-ApcaContrast '#777777' '#777777') 'APCA: a colour on itself is Lc 0'
+Assert-True ((Get-ContrastRatio '#2f73dd' '#01090b') -ge 4.4 -and (Get-ApcaContrast '#2f73dd' '#01090b') -lt 31) 'APCA sees what the ratio misses: the old dark blue series reads 4.4:1 and only Lc 30 on the cyan page (the owner, November 12, 2026)'
+$liftPal = @{ '--bg-1' = '#01090b'; '--bg-3' = '#041e21' }
+$lifted = Get-HouseGraphLifted -Hex '#2f73dd' -Palette $liftPal -Mode dark
+Assert-True ((Get-ApcaContrast $lifted '#01090b') -ge 45 -and (Get-ApcaContrast $lifted '#041e21') -ge 45) 'a dark candidate below Lc 45 is lifted until it reads on bg-1 and bg-3'
+Assert-True ((Get-ApcaContrast (ConvertFrom-OkLch ((ConvertTo-OkLch $lifted).L - 0.01) (ConvertTo-OkLch $lifted).C (ConvertTo-OkLch $lifted).H) '#041e21') -lt 45) 'and lifted by no more than that'
+Assert-Near (ConvertTo-OkLch '#2f73dd').H (ConvertTo-OkLch $lifted).H 2 'lifting keeps the hue'
+Assert-Equal '#2574d1' (Get-HouseGraphLifted -Hex '#2574d1' -Palette @{ '--bg-1' = '#fdfdff'; '--bg-3' = '#e2ecff' } -Mode light) 'a candidate that already reads is returned unchanged'
+
 $blue = ConvertTo-OkLch '#0000ff'
 Assert-Near 0.452 $blue.L 0.001 'OKLCH lightness of pure blue'
 Assert-Near 0.313 $blue.C 0.001 'OKLCH chroma of pure blue'
@@ -78,6 +89,8 @@ foreach ($th in $themes) {
     Assert-Equal '' ($near -join ' ') "$($th.Id): every graph slot stands $($r.FromPrimary) or more off the primary"
     $nearStatus = @(foreach ($g in $gs) { foreach ($st in Get-HouseGraphStatus -Mode $th.Mode) { if ((Get-OkLabDeltaE $g $st) -lt $r.FromStatus) { "$g~$st" } } })
     Assert-Equal '' ($nearStatus -join ' ') "$($th.Id): every graph slot stands $($r.FromStatus) or more off every status fill"
+    $faint = @(foreach ($g in $gs) { foreach ($k in 1, 3) { if ((Get-ApcaContrast $g $p["--bg-$k"]) -lt $r.OnPaperLc) { "$g on bg-$k" } } })
+    Assert-Equal '' ($faint -join ' ') "$($th.Id): every graph slot reads at APCA Lc $($r.OnPaperLc) or more on bg-1 and bg-3 (the owner, November 12, 2026)"
     $close = @(foreach ($i in 0..1) { foreach ($j in ($i + 1)..2) { if ((Get-OkLabDeltaE $gs[$i] $gs[$j]) -lt $r.FromSlot -or (Get-OkLabCvdDeltaE $gs[$i] $gs[$j]) -lt $r.FromSlotCvd) { "$($gs[$i])~$($gs[$j])" } } })
     Assert-Equal '' ($close -join ' ') "$($th.Id): the three slots stand apart with full colour vision and for a protan or deutan reader"
     $l1 = (ConvertTo-OkLch $p['--fg-1']).L; $l4 = (ConvertTo-OkLch $p['--fg-4']).L
