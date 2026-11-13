@@ -494,7 +494,9 @@ function Format-ConsumerPageStart {
     # The house site header, holding the settings button, then the breadcrumb bar under it: its trail from Home to this page.
     # Tagged 'product': this page is the product's, beside the plugin's admin (#3540).
     # The menu is the product's pages (Get-ProductMenu), the Consumers page marked.
-    [void]$sb.Append((Format-SiteHeaderHtml -Name 'dkj-marketplace' -Href '/' -Tag 'product' -Menu @(Get-ProductMenu) -Current '/consumers'))
+    # On a phone the header carries a back cell and the page's name instead of the bar (#4048).
+    [void]$sb.Append((Format-SiteHeaderHtml -Name 'dkj-marketplace' -Href '/' -Tag 'product' -Menu @(Get-ProductMenu) -Current '/consumers' `
+        -Back (Get-SiteHeaderBack -Trail @($Trail | Where-Object { $_ })) -PageTitle $PageName))
     [void]$sb.Append((Format-ProductBreadcrumbBarHtml -Trail @($Trail | Where-Object { $_ }) -Current $PageName))
     [void]$sb.AppendLine('<main class="page-column">')
 

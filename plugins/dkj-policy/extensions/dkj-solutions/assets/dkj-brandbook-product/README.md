@@ -172,6 +172,12 @@ its own. **An Admin page in the desktop shell carries its trail in the `.shell__
 trail is the core's ("Shared components", [core README][core-shared]), because the shell's bar uses it; the
 `.breadcrumbs-bar` that stands above `<main>` is this layer's.
 
+**On a phone, a bar under a site header gives way to a back cell and the page's name** (owner, November 13,
+2026, [#4048](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4048)): a trail is a desktop aid, and on a
+phone it does not fit, its crumbs are small tap targets and the sticky bar costs a row of screen. How the header
+carries it is under [On a phone: back and title](#on-a-phone-back-and-title). A bar with **no** site header above
+it stays at every width, because nothing else would carry the way back.
+
 - **Place:** the first element in `<body>` above `<main>` and
   outside it, so it spans the full width. Its trail lines up with the page column.
 - **Always visible:** the bar sticks to the top of the screen while the page scrolls. It is one `--tap`
@@ -268,6 +274,45 @@ one keeps the bar as described above.
 
 **What this changes for an app that takes the update:** nothing, unless it adds a `.site-header`; the
 bar's own colours change only right under one.
+
+#### On a phone: back and title
+
+**Where the header is narrower than 48rem, a page below home shows a back cell and its own name in the header,
+and the breadcrumb bar under the header is hidden** (owner, November 13, 2026,
+[#4048](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4048)). 48rem is the width the menu folds at, so
+the two change together.
+
+- **The back cell**, `a.site-header__back`, comes first in the header's `.container`: a cell the full height of the
+  bar, as wide as the menu toggle, holding the house chevron mirrored to point left, with the same `--primary-hover`
+  hover. It links **one level up**, the page the bar's last linked crumb names (home on a page one level down), and
+  its `aria-label` reads `Back to <that page>`.
+- **The title**, `span.site-header__title` right after the brand, is the page's own name, the same text as its
+  current crumb and its `h1`, at `--text-title`. It is `aria-hidden`, because the `h1` already says it to a screen
+  reader. **The brand gives way to it**, so the row reads back, title, then the menu toggle.
+- **A wide header hides both**, and the bar is back. The home page has neither, so on a phone it keeps its brand.
+- **The bar's hide reads the window** (`@media (max-width: 48rem)`) and the Phone width in the settings
+  (`:root[data-width="phone"]`): the header's own fold is a container query, and a container query cannot reach the
+  bar beside it.
+- **No path on demand yet.** The full trail on a phone (a sheet behind the title, say) is not part of this; the back
+  cell goes one level up and the menu reaches the main pages.
+
+`Format-SiteHeaderHtml -Back @{ Label; Href } -PageTitle <name>` draws both, and `Get-SiteHeaderBack` picks the
+page one level up from the trail; `Format-ProductPageHtml` passes them on every page below home.
+
+```html
+<header class="site-header"><div class="container">
+  <a class="site-header__back" href="/projects" aria-label="Back to Projects">(chevron, mirrored)</a>
+  <a class="site-header__brand" href="/" aria-label="my-app, home"><span class="site-header__name">my-app</span></a>
+  <span class="site-header__title" aria-hidden="true">Project X</span>
+  <nav class="site-header__nav" aria-label="Main">...</nav>
+</div></header>
+<div class="breadcrumbs-bar">...</div>
+```
+
+**What this changes for an app that takes the update:** on a phone, a page whose header carries no back cell loses
+its bar and has no way up but the browser's own back, so add `.site-header__back` and `.site-header__title` to every
+page below home in the same update. An app that keeps its sticky elements at `top: var(--tap)` under the bar moves
+them to `top: 0` below 48rem.
 
 #### The menu in the header
 

@@ -23,9 +23,12 @@
   <script src="../house-theme.js"></script>
 </head>
 <body>
-  <!-- The site header, as on the home page, with the menu item this page sits under marked aria-current. -->
+  <!-- The site header, as on the home page, with the menu item this page sits under marked aria-current. On a phone
+       the back cell and the title replace the brand, and the breadcrumb bar below goes (#4048). -->
   <header class="site-header"><div class="container">
+    <a class="site-header__back" href="product-home.html" aria-label="Back to Home"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path transform="matrix(-1 0 0 1 24 0)" fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
     <a class="site-header__brand" href="product-home.html" aria-label="my-app, home"><span class="site-header__name">my-app</span></a>
+    <span class="site-header__title" aria-hidden="true">Projects</span>
     <nav class="site-header__nav" aria-label="Main">
       <ul class="site-header__menu"><li><a href="product-page.html" aria-current="page">Projects</a></li><li><a href="#">Reports</a></li><li><a href="#">Settings</a></li></ul>
       <button class="site-header__menu-toggle" type="button" aria-controls="site-menu" aria-expanded="false" aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>

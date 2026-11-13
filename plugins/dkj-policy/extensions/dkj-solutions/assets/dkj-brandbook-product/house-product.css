@@ -217,6 +217,35 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 }
 .site-menu .menu-item[aria-current="page"] { font-weight: var(--font-weight-bold); color: var(--primary); }
 
+/* ---- Site header on a phone: back and title, no breadcrumb bar (#4048) ------------------------------------- */
+/* A breadcrumb trail is a desktop aid (owner, November 13, 2026): on a phone it does not fit, its crumbs are small tap
+   targets and the sticky bar costs a row of screen. So where the header is narrower than 48rem, the width the menu
+   folds at, a page below home shows a back cell and its own name in the header instead, and the bar under the header
+   goes. <a class="site-header__back" href="(the parent page)" aria-label="Back to (parent)">(chevron left)</a> first
+   in the header's .container, and <span class="site-header__title" aria-hidden="true">(the page's name)</span> right
+   after the brand; the home page has neither and keeps its brand. A wide header hides both. The bar's hide reads the
+   window (48rem) and the Phone width, since a container query cannot reach a sibling; a bar with no header above it
+   stays, because nothing else would carry the way back. */
+.site-header__back, .site-header__title { display: none; }
+.site-header__back { flex: none; align-items: center; justify-content: center; width: calc(var(--text-h1) + 2 * var(--spacing-1) + 2 * var(--spacing-3));
+  color: var(--bg-1); text-decoration: none; -webkit-tap-highlight-color: transparent; }   /* as wide as the menu toggle */
+.site-header__back:hover { background: var(--primary-hover); }
+.site-header__back:focus-visible { outline: 2px solid var(--bg-1); outline-offset: -4px; }
+.site-header__back svg { width: var(--spacing-6); height: var(--spacing-6); }
+.site-header__title { align-items: center; flex: 1 1 auto; min-width: 0; overflow: hidden; font-size: var(--text-title); font-weight: var(--font-weight-bold);
+  white-space: nowrap; text-overflow: ellipsis; }
+@container site-header (max-width: 48rem) {
+  .site-header__back, .site-header__title { display: flex; }
+  .site-header > .container:has(.site-header__back) .site-header__brand { display: none; }
+  .site-header > .container:has(.site-header__back) .site-header__nav { flex: none; }
+}
+@media (max-width: 48rem) {
+  .site-header + .breadcrumbs-bar { display: none; }
+  html:has(.site-header + .breadcrumbs-bar) { scroll-padding-top: 0; }
+}
+:root[data-width="phone"] .site-header + .breadcrumbs-bar { display: none; }
+:root[data-width="phone"]:has(.site-header + .breadcrumbs-bar) { scroll-padding-top: 0; }
+
 /* ---- Fills ---------------------------------------------------------------- */
 /* A block on the theme's colour, or on the far end (#3235). The text switches with the ground. On .fill-primary the
    paper steps are the text, because all four read on the primary (4.55:1 or better): an h2 is --bg-1 there and

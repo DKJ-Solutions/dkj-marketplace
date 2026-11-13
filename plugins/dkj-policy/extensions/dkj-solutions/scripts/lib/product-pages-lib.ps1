@@ -55,10 +55,21 @@ function Format-SiteHeaderHtml {
         -Menu is the app's main pages, each @{ Label; Href }, in order (house-product.css, "Site header menu"; Maikel,
         November 2, 2026): drawn after the brand, and again as the drawer a phone opens from
         the toggle. -Current is the Href of the one the page sits under, marked aria-current. No -Menu, no menu.
+        -Back (@{ Label; Href }, the parent page) and -PageTitle (the page's own name) are what a phone shows in place
+        of the breadcrumb bar (#4048, house-product.css "Site header on a phone"): a back cell first in the header and
+        the title after the brand, both hidden on a wide header. A page below home passes both; home passes neither.
     #>
     param([Parameter(Mandatory = $true)][string]$Name, [string]$Href = '/', [AllowEmptyString()][string]$Tag = '',
-        [AllowEmptyCollection()][object[]]$Menu = @(), [AllowEmptyString()][string]$Current = '')
+        [AllowEmptyCollection()][object[]]$Menu = @(), [AllowEmptyString()][string]$Current = '',
+        [object]$Back = $null, [AllowEmptyString()][string]$PageTitle = '')
     $e = { param($v) ConvertTo-GeneralPageText $v }
+    $backHtml = ''; $titleHtml = ''
+    if ($Back -and $Back.Href) {
+        # The house chevron, mirrored: the same path the trail and the menu rows draw, pointing left.
+        $backHtml = '<a class="site-header__back" href="' + (& $e $Back.Href) + '" aria-label="Back to ' + (& $e $Back.Label) + '">' +
+            '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path transform="matrix(-1 0 0 1 24 0)" fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>'
+        if ($PageTitle) { $titleHtml = '<span class="site-header__title" aria-hidden="true">' + (& $e $PageTitle) + '</span>' }
+    }
     $label = if ($Tag) { "$Name $Tag" } else { $Name }
     $tagHtml = if ($Tag) { ' <span class="site-header__tag">' + (& $e $Tag) + '</span>' } else { '' }
     $items = @($Menu | Where-Object { $_ -and $_.Label -and $_.Href })
@@ -76,9 +87,20 @@ function Format-SiteHeaderHtml {
             '<button class="dialog__close" type="button" aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
             '<nav class="menu-list" aria-label="Main">' + $rows + '</nav></div></dialog>'
     }
-    return '<header class="site-header"><div class="container"><a class="site-header__brand" href="' + (& $e $Href) + '" aria-label="' +
+    return '<header class="site-header"><div class="container">' + $backHtml + '<a class="site-header__brand" href="' + (& $e $Href) + '" aria-label="' +
         (& $e $label) + ', home"><span class="site-header__name">' + (& $e $Name) +
-        $tagHtml + '</span></a>' + $nav + '</div>' + $drawer + '</header>' + "`n"
+        $tagHtml + '</span></a>' + $titleHtml + $nav + '</div>' + $drawer + '</header>' + "`n"
+}
+
+function Get-SiteHeaderBack {
+    <#
+        The page a phone's back cell goes to (#4048): the last crumb of -Trail, else home (-HomeLabel at -HomeHref) --
+        one level up, as the breadcrumb bar it replaces would.
+    #>
+    param([string]$HomeHref = '/', [string]$HomeLabel = 'Home', [AllowEmptyCollection()][object[]]$Trail = @())
+    $last = @($Trail | Where-Object { $_ -and $_.Href }) | Select-Object -Last 1
+    if ($last) { return @{ Label = [string]$last.Label; Href = [string]$last.Href } }
+    return @{ Label = $HomeLabel; Href = $HomeHref }
 }
 
 function Get-SiteHeaderMenuCurrent {
@@ -128,7 +150,8 @@ function Format-ProductPageHtml {
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $sb = New-Object System.Text.StringBuilder
     [void]$sb.Append((Format-GeneralPageHeadHtml -Title $Title -Lead $Lead -Style $Style -ThemeKey $ThemeKey -SiteName $SiteName -Stylesheets (Get-ProductStylesheets)))
-    if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href $AdminHref -Tag $BrandTag -Menu $Menu -Current (Get-SiteHeaderMenuCurrent -Menu $Menu -Title $Title -ParentCrumbs $ParentCrumbs))) }
+    if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href $AdminHref -Tag $BrandTag -Menu $Menu -Current (Get-SiteHeaderMenuCurrent -Menu $Menu -Title $Title -ParentCrumbs $ParentCrumbs) `
+        -Back (Get-SiteHeaderBack -HomeHref $AdminHref -HomeLabel $HomeLabel -Trail $ParentCrumbs) -PageTitle $Title)) }
     [void]$sb.Append((Format-ProductBreadcrumbBarHtml -HomeHref $AdminHref -HomeLabel $HomeLabel -Trail $ParentCrumbs -Current $Title))
     if (-not $Brand) { [void]$sb.AppendLine('<div id="settings" class="theme-settings--floating"></div>') }
     [void]$sb.AppendLine('<main class="page-column">')
