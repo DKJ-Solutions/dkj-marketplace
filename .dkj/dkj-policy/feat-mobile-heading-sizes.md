@@ -51,7 +51,7 @@ a phone. Breakpoint reused from the grids (760px); body sizes stay put.
 ### TEST
 
 - [x] Measured on this branch's Admin: an iframe of 1300 and 761px renders h1 36 / h2 20 / title 20; 760 and 390px render 28 / 18 / 18; h3 16 and body 14 at every width
-- [ ] Owner's look at a phone width (visible result)
+- [x] Owner's look at a phone width (visible result) -- approved: "ship it"
 
 ### DEPLOY: feat/mobile-heading-sizes
 
