@@ -39,21 +39,49 @@
 
 ### PLAN
 
+Inbound #4048 from dkj-lifehub: the owner decided (November 13, 2026) that breadcrumbs are a desktop
+aid. On a phone the product layer's breadcrumb bar under a site header gives way to a back cell and
+the page's name in the header. A bar with no site header above it stays, since nothing else would
+carry the way back. The fold point is the header's own 48rem, where the menu already folds; the bar's
+hide reads the window and the Phone width, because a container query cannot reach a sibling.
+
+The Figma frames (Product · mobile) are not edited on this branch: they follow once the owner has
+judged the look here.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-product.css`: `.site-header__back` and `.site-header__title`, shown below 48rem; the bar under a header hidden there and at the Phone width
+- [x] `product-pages-lib.ps1`: `Format-SiteHeaderHtml -Back -PageTitle`, `Get-SiteHeaderBack`, passed by `Format-ProductPageHtml`
+- [x] `consumer-dashboard-lib.ps1`: the Consumers pages pass the same
+- [x] Product-layer README: the bar rule scoped, and a new "On a phone: back and title" section
+- [x] `patterns/product-page.html`: carries the back cell and the title
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: 758 asserts pass, five new ones on the back cell, the title, the one-level-up pick and the CSS hide
+- [ ] The owner's look at a product page at phone width (Admin's Phone width or a narrow window)
+
 ### DEPLOY: feat/4048-mobile-back-header
 
-**Score:**
+The product layer of the brand book no longer shows the breadcrumb bar on a phone under a site
+header. Below 48rem, the width the header menu folds at, the header shows a back cell
+(`.site-header__back`, one level up) and the page's own name (`.site-header__title`) in place of the
+brand, and the bar beneath it is hidden, also at the Phone width. A wide screen is unchanged, and a
+bar with no site header above it stays at every width. `Format-SiteHeaderHtml` takes `-Back` and
+`-PageTitle`, `Get-SiteHeaderBack` picks the parent page, and `Format-ProductPageHtml` passes both on
+every page below home.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions product that takes this release gets a phone layout with a back button and the page
+title instead of a breadcrumb trail that does not fit. An app that draws its own site header must add
+the back cell and title to every page below home in the same update, or its phone pages lose their
+way up.
+
+**Score:** 3
 
 #### Pull Request
 
 Brand book (product layer): no breadcrumb bar on mobile, back button and title instead
-
