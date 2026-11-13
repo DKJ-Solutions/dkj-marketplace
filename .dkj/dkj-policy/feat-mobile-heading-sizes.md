@@ -39,19 +39,34 @@
 
 ### PLAN
 
+The owner asked for a desktop and a mobile size for the headings, since they should be smaller on
+a phone. Breakpoint reused from the grids (760px); body sizes stay put.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-style.css`: a `:root` override under `@media (max-width: 760px)` -- h1 28px, h2 and title 18px
+- [x] README: the type scale names the phone step and the Figma `Desktop`/`Mobile` modes
+- [x] Figma `Scale`: `text/` and `font-weight/` variables, a `Mobile` mode with the same values, every text style bound (done in Figma, outside the tree)
 
 ### TEST
 
+- [x] Measured on this branch's Admin: an iframe of 1300 and 761px renders h1 36 / h2 20 / title 20; 760 and 390px render 28 / 18 / 18; h3 16 and body 14 at every width
+- [ ] Owner's look at a phone width (visible result)
+
 ### DEPLOY: feat/mobile-heading-sizes
 
-**Score:**
+On a phone (760px and narrower) the headings step down a size: `--text-h1` 36 → 28px, `--text-h2`
+and `--text-title` 20 → 18px. `--text-h3` and the body sizes do not move. The Figma library carries
+the same pair as the `Desktop` and `Mobile` modes of its `Scale` collection.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Every DKJ-Solutions app that takes this brand book shows smaller headings on a phone, so more of a
+page fits on the first screen.
+
+**Score:** 3
 
 #### Pull Request
 
