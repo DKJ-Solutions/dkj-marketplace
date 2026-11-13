@@ -102,6 +102,7 @@
                     "git-porcelain-lib.tests.ps1":  4.4,
                     "guard-asana-mirror.tests.ps1":  4.2,
                     "guard-live-theme.tests.ps1":  250.3,
+                    "guard-reach-reason.tests.ps1":  20,
                     "guard-stale-paste-block.tests.ps1":  50,
                     "guard-working-copy.tests.ps1":  16,
                     "hash-hex-lib.tests.ps1":  1.3,

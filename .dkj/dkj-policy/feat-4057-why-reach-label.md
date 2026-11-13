@@ -55,7 +55,8 @@ from `stale-paste-block-rules.ps1`, and the label's name `Get-ProjectReachLabel`
 
 ### TEST
 
-- [x] `guard-reach-reason.tests.ps1`: 49 passed, 0 failed
+- [x] Victor's review: two false refusals found and repaired -- a body built at run time (`$body`, `"$(cat b.md)"`, `(Get-Content ...)`) and a create whose body comes from `--template`, `--recover`, `--web` or `--editor` now pass with a warning instead of being refused; both are regression cases in the suite
+- [x] `guard-reach-reason.tests.ps1`: 58 passed, 0 failed
 
 ### DEPLOY: feat/4057-why-reach-label
 
@@ -64,7 +65,8 @@ from `stale-paste-block-rules.ps1`, and the label's name `Get-ProjectReachLabel`
 reach label now says why in a `## Why <reach label>` section: who notices the defect, and what they
 notice. A new PreToolUse hook, `guard-reach-reason`, refuses a `gh issue create` or `gh issue edit` that
 adds the label on an admitted repo while the body the call leaves has no such section. It judges
-`--body`, `--body-file`, or the issue's current body, and it lets a body it cannot read through with a
+`--body`, `--body-file`, or the issue's current body. A body it cannot read -- one built at run time,
+taken from a template, the browser or an editor, or held by an unreachable tracker -- passes with a
 warning. Measured in `smartwatchbanden`: 35 issues were filed with `minor` between November 1 and 13,
 2026, and none said why.
 
