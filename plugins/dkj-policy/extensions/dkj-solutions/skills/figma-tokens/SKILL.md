@@ -13,7 +13,7 @@ Figma would bypass both. **Nothing here writes a Figma value back into the style
 Figma is a brand book change: an issue here, then the build, then this sync.
 
 **The scope is the colour tokens only** (the owner, November 13, 2026, on #4038): every custom property whose
-value is a `#rrggbb` colour, which is the 25 of today. Spacing, radius and type are not mirrored.
+value is a `#rrggbb` colour, which is the 22 of today (25 until fg-2..4 were retired, #4046). Spacing, radius and type are not mirrored.
 
 ## What the Figma file holds
 

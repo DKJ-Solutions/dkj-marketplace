@@ -211,7 +211,7 @@ function Format-GeneralPageHeadHtml {
     [void]$sb.AppendLine((Get-AdminWidthScript))
     # The page layer: only names the house file does not define (.dp-*).
     [void]$sb.AppendLine('<style>')
-    [void]$sb.AppendLine('.dp-link { color: var(--fg-3); text-decoration: none; text-underline-offset: 2px; }')
+    [void]$sb.AppendLine('.dp-link { color: var(--fg-1); text-decoration: none; text-underline-offset: 2px; }')
     [void]$sb.AppendLine('.dp-link:hover, .dp-link:focus-visible { text-decoration: underline; }')
     [void]$sb.AppendLine('.dp-thead th { background: var(--bg-3); }')
     [void]$sb.AppendLine('.table td.dp-left, .table th.dp-left { text-align: left; }')
@@ -2308,7 +2308,7 @@ function Format-ReleaseNotesEmptyPageHtml {
 }
 
 $script:ReleaseNotesHouseColors = [ordered]@{
-    'bg' = 'bg-1'; 'panel' = 'bg-2'; 'ink' = 'fg-1'; 'ink-soft' = 'fg-2'; 'ink-faint' = 'primary-muted'
+    'bg' = 'bg-1'; 'panel' = 'bg-2'; 'ink' = 'fg-1'; 'ink-soft' = 'fg-1'; 'ink-faint' = 'primary-muted'
     'line' = 'bg-3'; 'accent' = 'primary'; 'accent-soft' = 'bg-2'; 'code-bg' = 'bg-1'
 }
 

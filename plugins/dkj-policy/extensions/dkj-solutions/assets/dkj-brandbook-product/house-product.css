@@ -220,7 +220,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 /* ---- Fills ---------------------------------------------------------------- */
 /* A block on the theme's colour, or on the far end (#3235). The text switches with the ground. On .fill-primary the
    paper steps are the text, because all four read on the primary (4.55:1 or better): an h2 is --bg-1 there and
-   --fg-2 on the page (the owner: an h2 does not always have the same colour), a quieter line --bg-3. On
+   --fg-1 on the page (the owner: an h2 does not always have the same colour), a quieter line --bg-3. On
    .fill-inverse the ground is --fg-1, the paper is the text and --bg-4 the quieter line (15:1 or better on it).
    The text and the quieter lines weigh (0,2,0): :is() takes the weight of its strongest argument, a class, so they
    beat .note, p.meta and the zero-weight headings, and the quieter line wins over the text because it comes
@@ -521,7 +521,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .figure__placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-2); padding: var(--spacing-2); text-align: center; color: var(--fg-1); }
 .figure__glyph { flex: none; }
 .figure__label { font-size: var(--text-sm); color: var(--fg-1); overflow-wrap: break-word; }
-.figure__caption { margin-top: var(--spacing-2); font-size: var(--text-sm); line-height: 1.35; color: var(--fg-2); text-align: left; overflow-wrap: break-word; }
+.figure__caption { margin-top: var(--spacing-2); font-size: var(--text-sm); line-height: 1.35; color: var(--fg-1); text-align: left; overflow-wrap: break-word; }
 
 /* ---- Chart extras --------------------------------------------------------------- */
 /* In a chart's tooltip and its table: a second line under a label, and a series row (a swatch in the series colour --

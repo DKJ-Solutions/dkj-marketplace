@@ -515,7 +515,7 @@ $script:ProductBrandbookTokenGroups = @(
 # What each token group's overview card previews (#4009, finding F2: a card showed a count, not its content): the
 # group's own tokens drawn small, every value a var() so the theme switcher re-renders them.
 $script:ProductBrandbookTokenPreviews = @{
-    color = @('--primary', '--primary-muted', '--bg-1', '--bg-2', '--bg-3', '--bg-4', '--fg-1', '--fg-2', '--fg-3', '--fg-4', '--graph-1', '--graph-2', '--graph-3')
+    color = @('--primary', '--primary-muted', '--bg-1', '--bg-2', '--bg-3', '--bg-4', '--fg-1', '--graph-1', '--graph-2', '--graph-3')
     text  = @('--text-xs', '--text-sm', '--text-base', '--text-h3', '--text-h2', '--text-h1')
     scale = @('--radius-1', '--radius-2', '--radius-3', '--radius-pill')
 }

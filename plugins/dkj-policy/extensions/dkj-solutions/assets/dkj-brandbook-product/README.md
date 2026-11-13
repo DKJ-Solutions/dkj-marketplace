@@ -254,7 +254,7 @@ one keeps the bar as described above.
   intro at all** (owner, October 22, 2026): its `h1` and lead only repeated the header, so `<main>` opens on its first
   block.
 - **The bar under it leaves the primary to the header:** `.site-header + .breadcrumbs-bar` stands on
-  `--bg-1` with a `--bg-3` line under it, and the trail is in the text steps (links `--fg-3`, the
+  `--bg-1` with a `--bg-3` line under it, and the trail is quiet (links `--primary-muted` since November 1, 2026, Maikel; `--fg-3` before; the
   chevron `--primary-muted`, the current page `--primary`, since October 24, 2026, the owner; it was `--fg-1`). The header
   scrolls away; the bar still sticks to the top.
 
