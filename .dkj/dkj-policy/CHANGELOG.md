@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**12 / 14 minor entries** <!-- pending-tally -->
+**13 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4066-awaiting-session-dev · 20261113-203817Z
+
+A new parking label, `awaiting-session-dev`, for an issue that can be worked on but is too large for
+one sweep turn: several independent measurements, or more than one branch. `issues-sweep` parks such an
+issue with `claim-issue -Tag -Park awaiting-session-dev -Reason "<the steps left>"` instead of holding it
+out with `-SkipIssue`, which wrote nothing, read to the owner as skipped, and made every later sweep judge it
+again. Both pickup routes skip it, a claim warns on it, and a person or a session told to work it lifts it.
+`adopt-triage-labels` now prints it among the canonical labels ([#4066](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4066)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+An owner reading a sweep's close-out sees an oversized issue parked under a label that says what it
+needs, with the steps still to do in its parking comment, rather than an issue that looks skipped. Each consumer's
+session-start check reports the new label as missing until `adopt-triage-labels` has created it.
+
+**Score:** 2
+
+#### Pull Request
+
+issues-sweep: the awaiting-session-dev parking label
+
+Plugins: dkj-policy
+
+[PR #4069](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4069)
+
+---
 
 ### DEPLOY: fix/4067-reviews-noresolves-mirrored · 20261113-173722Z
 
