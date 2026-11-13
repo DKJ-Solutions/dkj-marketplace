@@ -2,7 +2,39 @@
 
 ## [Unreleased]
 
-**8 / 10 minor entries** <!-- pending-tally -->
+**9 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4057-why-reach-label · 20261113-134758Z
+
+`bwj-development` gives the reach label a written reason
+([#4057](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4057)). An issue that carries the
+reach label now says why in a `## Why <reach label>` section: who notices the defect, and what they
+notice. A new PreToolUse hook, `guard-reach-reason`, refuses a `gh issue create` or `gh issue edit` that
+adds the label on an admitted repo while the body the call leaves has no such section. It judges
+`--body`, `--body-file`, or the issue's current body. A body it cannot read -- one built at run time,
+taken from a template, the browser or an editor, or held by an unreachable tracker -- passes with a
+warning. Measured in `smartwatchbanden`: 35 issues were filed with `minor` between November 1 and 13,
+2026, and none said why.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A session in a store repo that labels an issue `minor` without a written reason is now stopped and shown
+the section to write, so every reach-labelled issue a colleague later reads on the board can be checked
+against its stated reason.
+
+**Score:** 4
+
+#### Pull Request
+
+bwj-development: the reach label needs a written Why section, and a guard refuses it without one
+
+Plugins: bwj-development, dkj-policy
+
+[PR #4062](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4062)
+
+---
 
 ### DEPLOY: feat/4056-asana-open-section · 20261113-133714Z
 
