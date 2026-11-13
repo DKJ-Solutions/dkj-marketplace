@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**5 / 7 minor entries** <!-- pending-tally -->
+**6 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4051-content-product-lead · 20261113-130659Z
+
+Brand-book rule 5 (no intro paragraph under a page's `h1`) gains one opt-in exception: a **content
+product**, whose pages brief a reader as a news app does, may carry one plain `<p>` of one or two
+sentences under the `h1` where the page sums up content for a reader. Its tool and admin pages keep the
+strict rule. A repo opts in with the line `Content product (brand-book rule 5): yes.` in its own facts
+rule; without it the strict rule holds. The core README's rule 5 and the `dkj-brandbook` skill both
+carry it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions product built as a reader's briefing, such as dkj-lifehub, may now open a summary page
+with a short lead, once its repo declares itself a content product.
+
+**Score:** 2
+
+#### Pull Request
+
+Brand book rule 5: a content product may carry a short lead under its h1
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4055](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4055)
+
+---
 
 ### DEPLOY: feat/drop-sessionstart-timing-line · 20261113-120126Z
 
