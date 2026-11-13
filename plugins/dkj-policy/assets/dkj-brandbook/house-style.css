@@ -166,6 +166,14 @@
   caret-color: var(--primary-muted);
 }
 
+/* ---- Tokens: a phone (the 760px breakpoint the grids below use) -------------- */
+/* The headings step down a size on a phone, the body sizes do not: h1 36 -> 28, h2 and the
+   header name 20 -> 18, h3 stays 16, just above the body. The Figma library's Scale collection
+   carries the same values as its Mobile mode (Dave, November 13, 2026). */
+@media (max-width: 760px) {
+  :root { --text-h1: 28px; --text-h2: 18px; --text-title: 18px; }
+}
+
 /* ---- Tokens: dark, following the OS unless the page forces a theme -------- */
 /* An app that sets no data-theme follows the OS: light gives the default
    light theme above (Blauw), dark gives the default dark theme (Cyaan). */
