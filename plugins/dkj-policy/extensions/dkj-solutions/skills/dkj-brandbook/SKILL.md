@@ -282,7 +282,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File plugins/dkj-policy/extension
 Without `-Apply` it prints every theme's declarations and each pairing that misses its floor, and writes
 nothing; with `-Apply` it rewrites the twelve theme lines and the three default blocks, and refuses to write
 when a floor is missed. The `house-palette` test suite holds the stylesheet to the computed values, so a hand
-edit to a colour goes red. The checksum in the table above follows at the next release cut.
+edit to a colour goes red. The checksum in the table above follows at the next release cut. **The Figma
+file's colour variables follow by hand**: the [`figma-tokens`](../figma-tokens/SKILL.md) skill checks them
+against the stylesheet and syncs them from it, never the other way (#4038).
 
 **A merged change reaches the apps only once it is released.** The brand book has no version of its
 own: it ships with the plugin and follows its lockstep release. The cut repoints the consumer URLs above

@@ -39,19 +39,43 @@
 
 ### PLAN
 
+#### Decided on #4038 (the owner, November 13, 2026)
+
+Colour tokens only; the target file is `w44J5aQPeST96RJ71vU3ev`; light and dark as separate collections.
+Building it, a read of the file found that it already held exactly that layout (`House / Palette light`,
+`House / Palette dark`, six modes each, and a semantic `House / Theme` aliasing them), so the sync keeps that
+layout instead of adding a parallel one, and six modes per collection is measured on the owner's plan.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `figma-tokens-lib.ps1`: resolve every theme's colour tokens from `house-style.css` as the browser does, the model of the three collections, the drift comparison, and the read and sync Plugin API scripts
+- [x] `figma-tokens.ps1`: `-Emit model|read-js|sync-js` and `-Compare <file>` (exit 1 on drift)
+- [x] the `figma-tokens` skill page, a row in the extension README, and a pointer from the `dkj-brandbook` skill
+- [x] the `figma-tokens` test suite
 
 ### TEST
 
+- [x] `figma-tokens.tests.ps1`: 42 passed, 0 failed
+- [x] the read script run through `use_figma` on the real file, and `-Compare` on its result: `[OK]`, 3 collections, 75 variables, in sync today
+- [~] the sync script not run against the file: it writes, and #4038 says on request only; the file was already in sync, so it had nothing to write
+
 ### DEPLOY: feat/4038-figma-token-sync
 
-**Score:**
+A new `figma-tokens` skill keeps the brand book's colour variables in Figma in step with `house-style.css`,
+in one direction ([#4038](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4038)). A read-only drift
+check runs a script through the Figma MCP's `use_figma` on the brand book's Figma file and compares what it
+returns with the stylesheet, per theme: missing, extra and differing collections, modes, values and aliases.
+On request, a sync script writes the stylesheet's values into the file's existing layout (`House / Palette
+light`, `House / Palette dark` and the aliasing `House / Theme`), creating and overwriting but never deleting.
+Colour tokens only. The first check found the file in sync: 3 collections, 75 variables.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: the skill runs in this repo against the brand book's own Figma file, and nothing a consumer runs changes.
+
+**Score:** N/A
 
 #### Pull Request
 
