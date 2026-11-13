@@ -2,7 +2,38 @@
 
 ## [Unreleased]
 
-**10 / 12 minor entries** <!-- pending-tally -->
+**11 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4048-mobile-back-header · 20261113-153249Z
+
+The product layer of the brand book no longer shows the breadcrumb bar on a phone under a site
+header. Below 48rem, the width the header menu folds at, the header shows a back cell
+(`.site-header__back`, one level up) and the page's own name (`.site-header__title`) in place of the
+brand, and the bar beneath it is hidden, also at the Phone width. A wide screen is unchanged, and a
+bar with no site header above it stays at every width. `Format-SiteHeaderHtml` takes `-Back` and
+`-PageTitle`, `Get-SiteHeaderBack` picks the parent page, and `Format-ProductPageHtml` passes both on
+every page below home.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions product that takes this release gets a phone layout with a back button and the page
+title instead of a breadcrumb trail that does not fit. An app that draws its own site header must add
+the back cell and title to every page below home in the same update, or its phone pages lose their
+way up.
+
+**Score:** 3
+
+#### Pull Request
+
+Brand book (product layer): no breadcrumb bar on mobile, back button and title instead
+
+Plugins: dkj-solutions
+
+[PR #4063](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4063)
+
+---
 
 ### DEPLOY: feat/4054-asana-prio-score · 20261113-140315Z
 
