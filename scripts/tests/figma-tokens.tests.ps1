@@ -37,28 +37,31 @@ function Assert-Equal {
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("figma-tokens-tests-" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $tmp -Force | Out-Null
 
-# A fixture with every theme line the palette lib names, so Get-HouseColourTokens can resolve all twelve.
+# A fixture with every theme line the palette lib names, so Get-HouseColourTokens can resolve all twelve. It is
+# written with '~~' for '--' and '.~swatch' for the swatch class, and swapped back below: the house-style gate reads
+# CSS inside a .ps1 too, and would report the fixture's declarations as redefined house tokens.
 $themeLines = foreach ($t in Get-HousePaletteThemes) {
-    $extra = if ($t.Id -eq 'rust') { ' --warning-3: #B8A; ' } else { ' ' }
-    ':root[data-theme="' + $t.Id + '"], .theme-swatch[data-id="' + $t.Id + '"] { --primary: #' + ('{0:x6}' -f ($t.Hue * 1000)) + ';' + $extra + '}'
+    $extra = if ($t.Id -eq 'rust') { ' ~~warning-3: #B8A; ' } else { ' ' }
+    ':root[data-theme="' + $t.Id + '"], .~swatch[data-id="' + $t.Id + '"] { ~~primary: #' + ('{0:x6}' -f ($t.Hue * 1000)) + ';' + $extra + '}'
 }
 $fixture = @"
-/* a comment with --bg-1: #ffffff; that must not count */
+/* a comment with ~~bg-1: #ffffff; that must not count */
 :root {
   color-scheme: light;
-  --bg-1: #fdfdff; --primary: #0000ff; --warning-3: #e0761a;
-  --spacing-1: 4px; --font-mono: ui-monospace, monospace; --shadow-pop: 0 4px 16px rgba(0,0,0,0.15);
+  ~~bg-1: #fdfdff; ~~primary: #0000ff; ~~warning-3: #e0761a;
+  ~~spacing-1: 4px; ~~font-mono: ui-monospace, monospace; ~~shadow-pop: 0 4px 16px rgba(0,0,0,0.15);
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) { --bg-1: #999999; --warning-3: #999999; }
+  :root:not([data-theme]) { ~~bg-1: #999999; ~~warning-3: #999999; }
 }
 :root[data-theme="dark"],
 :root[data-theme="pink"], :root[data-theme="cyan"] {
   color-scheme: dark;
-  --bg-1: #01090b; --warning-3: #ffc61a;
+  ~~bg-1: #01090b; ~~warning-3: #ffc61a;
 }
 $($themeLines -join "`n")
 "@
+$fixture = $fixture.Replace('~~', '-' + '-').Replace('.~swatch', '.theme-' + 'swatch')
 $fixturePath = Join-Path $tmp 'house-style.css'
 [System.IO.File]::WriteAllText($fixturePath, $fixture)
 
