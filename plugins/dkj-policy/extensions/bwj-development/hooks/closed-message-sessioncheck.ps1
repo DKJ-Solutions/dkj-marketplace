@@ -41,6 +41,15 @@
          the issue their head branch is named after ('<prefix>/<n>-<name>'), and the open issues; an
          issue that an OPEN PR's branch is also named after is left out, because a further step is still
          changing code for it (#3059). Three gh reads; any failed read leaves the finding out.
+      6. no OPEN issue carries the reach label (Get-ReachLabel, default 'minor') without linking an Asana
+         task (#4053). report-issue step 2 gives every such issue a card, and guard-asana-mirror holds
+         only the other direction (no card without the label, #2482), so a session that filed with a
+         plain `gh issue create`, or dropped step 2 when Asana was out of reach, left nothing behind to
+         say so. Measured in smartwatchbanden, November 13, 2026: 34 of 35 reach-labelled issues filed
+         since November 1 had no card, and the colleagues the label marks them for never saw them.
+         build-backlog-page already lists these, but only when somebody runs it. An issue whose body
+         names an Asana task in any form Resolve-AsanaTaskRef reads (one task or several) has a card and
+         is left out. Read from finding 5's open-issue list, so it costs no gh call of its own.
     Anywhere else it is silent: dkj-marketplace runs the ticket chapter without either workflow.
 
     IT READS THE TREE AFTER THE TRUNK SYNC, NOT BESIDE IT (inbound #4041, November 13, 2026). This hook is
@@ -59,8 +68,11 @@
     IT NEVER BLOCKS. Always exit 0, and silent when everything is in place, like every session check in
     this family. A finding is an [ERROR] line because that is what the family forwards to the transcript.
 
-    Read-only: it reads four files, four templates, scripts/repo-config.ps1 as TEXT (never dot-sourced),
-    the origin URL and (through gh) two secret NAME lists, two pull-request lists and the open issues.
+    Read-only: it reads four files, four templates, scripts/repo-config.ps1 as TEXT for finding 4, the
+    origin URL and (through gh) two secret NAME lists, two pull-request lists and the open issues. The one
+    exception to reading the config as text is finding 6's reach label, read through asana-mirror-gate's
+    Get-ProjectReachLabel -- the definition guard-asana-mirror and asana-link-pickupcheck already run on
+    the same file -- so the three hooks cannot read two names for one label.
     It prints an issue's and a PR's NUMBER, never a title or a body.
 
 .PARAMETER RepoRootOverride
@@ -175,7 +187,7 @@ function Get-PullData {
     $reads = [ordered]@{
         merged = @('pr', 'list', '--repo', $Slug, '--state', 'merged', '--limit', '30', '--json', 'number,headRefName,body,mergedAt')
         open   = @('pr', 'list', '--repo', $Slug, '--state', 'open', '--limit', '100', '--json', 'headRefName')
-        issues = @('issue', 'list', '--repo', $Slug, '--state', 'open', '--limit', '300', '--json', 'number,body')
+        issues = @('issue', 'list', '--repo', $Slug, '--state', 'open', '--limit', '300', '--json', 'number,body,labels')
     }
     $data = @{}
     foreach ($k in $reads.Keys) {
@@ -218,6 +230,25 @@ function Get-OpenAfterMergeFindings {
         $found[$n] = [pscustomobject]@{ Issue = $n; Pull = [int]$p.number; MergedAt = $merged }
     }
     return @($found.Values | Sort-Object Issue)
+}
+
+function Get-ReachWithoutCardFindings {
+    <#
+        Pure (#4053): the numbers of the open issues that carry -ReachLabel and name no Asana task at all,
+        ascending. An issue read without a labels field carries no label, so it is never a finding.
+    #>
+    param($Issues, [string]$ReachLabel)
+    $found = @()
+    foreach ($i in @($Issues)) {
+        if (-not $i) { continue }
+        $prop = $i.PSObject.Properties['labels']
+        if (-not $prop -or $null -eq $prop.Value) { continue }
+        $names = @(@($prop.Value) | ForEach-Object { if ($_ -is [string]) { $_ } elseif ($_) { [string]$_.name } })
+        if (-not (@($names | Where-Object { $_ -and $_.Trim() -ieq $ReachLabel }).Count)) { continue }
+        if ((Resolve-AsanaTaskRef -IssueBody ([string]$i.body)).Source -ne 'none') { continue }
+        $found += [int]$i.number
+    }
+    return @($found | Sort-Object)
 }
 
 try {
@@ -312,6 +343,22 @@ try {
                 "closes when its PR lands -- 'open until live' is not a state. Post its go-live block if it has " +
                 "none (the 'golive-block' skill), then close it as completed; notify-live tells the task once it " +
                 "is live. Only another PR that still changes code for it keeps it open.")
+        }
+
+        # FINDING 6 (#4053): the label -> card direction. A config that cannot be read leaves it out, since
+        # the label's name is then unknown and a default would blame issues under the wrong name.
+        . (Join-Path $PSScriptRoot '..\scripts\lib\asana-mirror-gate.ps1')
+        $reach = Get-ProjectReachLabel -ProjectDir $root
+        if (-not $reach.ReadFailed) {
+            $bare = @(Get-ReachWithoutCardFindings -Issues $pullData.issues -ReachLabel $reach.Label)
+            if ($bare.Count -gt 0) {
+                $shown = @($bare | Select-Object -First 15 | ForEach-Object { "#$_" })
+                $more = if ($bare.Count -gt $shown.Count) { " and $($bare.Count - $shown.Count) more" } else { '' }
+                Write-Host ("[ERROR] bwj-development: $slug has $($bare.Count) open issue(s) carrying the reach label " +
+                    "'$($reach.Label)' with no Asana task linked: $($shown -join ', ')$more. The label means a colleague " +
+                    "follows the issue on the board, and none of these has a card there. Run the 'report-issue' skill's " +
+                    "steps 2-3 for each, or take the label off where it was wrong.")
+            }
         }
     }
 } catch {
