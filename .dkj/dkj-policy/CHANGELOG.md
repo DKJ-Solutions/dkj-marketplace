@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**2 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4041-closed-message-waits-for-trunk-sync · 20261113-012644Z
+
+`closed-message-sessioncheck` now waits for dkj-policy's trunk sync before it reads a store's tree
+([#4041](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4041)). It ran as its own SessionStart
+entry beside the dispatcher, so in xoxowildhearts it reported the prio-label pair and
+`Get-ResolvesExemptMatchers` missing, and the same session start then fast-forwarded `main` by 34
+commits that brought both in. It now waits up to 20 s for the dispatcher's prep-done mark, as the
+dev-preview hook does (#3657), with `session-cache-lib` and `hash-hex-lib` mirrored into bwj-development.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A maintainer of a BWJ store stops getting `[ERROR]` lines at session start for files the same
+session start brings in. Those lines made them re-run `adopt-bwj-development` for work already merged,
+and taught them to skip the one error that was real.
+
+**Score:** 2
+
+#### Pull Request
+
+closed-message-sessioncheck waits for the trunk sync before it reads the tree
+
+Plugins: bwj-development
+
+[PR #4043](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4043)
+
+---
 
 ### DEPLOY: feat/radius-three-steps · 20261113-011101Z
 
