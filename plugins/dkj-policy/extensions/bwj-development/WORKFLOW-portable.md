@@ -167,6 +167,19 @@ leaving it at neither is not. So **read `Get-ReachLabel` from your own `scripts/
 literal**: `gh issue create` fails outright on a label the repo does not have, so a typed default gets you
 an error instead of an issue.
 
+**The label is given with its reason written into the issue** (the owner, November 13, 2026,
+[#4057](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4057)). Its body carries a section
+headed `## Why <reach label>`: who notices the defect -- management, the commissioner, or a customer they
+answer for -- and what they notice, in one or two sentences. The label decides whether an Asana card
+exists and whether the work reaches the business-facing worklist, so a label given without thought puts
+noise on the management board, and a label with no written reason cannot be checked afterwards. Measured
+in `smartwatchbanden`: 35 issues filed with `minor` between November 1 and 13, 2026, and not one body said
+why. "Visible on the storefront" alone does not answer it, because the test is whether the reader notices
+the **defect**. An issue that gains the label later gets the section in the same move. **The plugin's
+`guard-reach-reason` hook holds this**: it refuses a `gh issue create` or `gh issue edit` that adds the
+reach label on an admitted repo where the body the call leaves has no such section, and lets a body it
+cannot read through with a warning.
+
 #### The CRO label -- retired
 
 **There is no `CRO` label any more, in any repo** (Dave, October 7, 2026,
