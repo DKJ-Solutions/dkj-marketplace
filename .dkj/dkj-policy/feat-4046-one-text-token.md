@@ -53,12 +53,13 @@ the owner's look before the merge.
 - [x] `house-product.css`, `general-pages-lib.ps1`, `dev-pages-lib.ps1`, both `specimens.html`: the remaining uses move to `--fg-1`
 - [x] `Get-HouseStyleRetiredTokens`: `--fg-2`, `--fg-3`, `--fg-4` retired, so a consumer's leftover use is reported
 - [x] Brand book README, product README, `dkj-brandbook` and `figma-tokens` skills: current-state text follows; the migration history is kept
-- [ ] Figma: remove `palette/fg-2..4` and `color/fg-2..4` from the three `House` collections, after the owner's look
+- [x] Figma: remove `palette/fg-2..4` and `color/fg-2..4` from the three `House` collections, after the owner's look; the six Visual design headings and the House `Title` component that were bound to `color/fg-2`/`fg-3` rebound to `color/fg-1` first, as `h2`/`h3` moved in the CSS
 
 ### TEST
 
 - [x] `house-palette` (219), `check-house-style` (169) and `figma-tokens` (42) suites green; the house-style lint green
-- [ ] Owner looks at the result in Admin before the merge
+- [x] Owner looks at the result in Admin before the merge (approved November 13, 2026)
+- [x] `figma-tokens -Compare` after the removal: `[OK]`, 3 collections, 66 variables
 
 ### DEPLOY: feat/4046-one-text-token
 
