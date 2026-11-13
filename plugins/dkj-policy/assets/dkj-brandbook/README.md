@@ -826,6 +826,33 @@ plugin ([`README.md`][product-readme] beside it, #3831):
 - **Desktop shell** (in [`house-style.css`](house-style.css), the part "Desktop shell: Admin's layer"). **Its structure is the Figma wireframes'** (Dave, November 12, 2026): the *Wireframes* page of the `dkj-brandbook` Figma file (key `w44J5aQPeST96RJ71vU3ev`, node `5-3`) is the highest source for how Admin is laid out, above this README and the stylesheet. The brand book puts its tokens on top of that structure, and where the two disagree the wireframe wins and this layer changes. So: a side navigation the full height of the window (a brand row, the search field, a flat list under section headings with Home and the domain objects on top, then Product and Development, Settings in the foot, after the Shopify Admin, #3815), a bar over the main pane with the trail and a few small actions, a page header (`.page-head`: the one `h1`, an optional lead, an action at its right end) and the content under it with room around it, an optional detail pane, and no site header. A pane's content stands in a `.shell__body`, and a
   set of links is an `.admin-list`: an `h2` over a `.table--dense`, a row per link (#3830). Desktop only, with no phone query. Reference:
   [`patterns/admin-shell.html`](patterns/admin-shell.html) and the "Desktop shell" specimens.
+
+  **The wireframe greys become house tokens by role, and they are never aliased** (#4040, November 13,
+  2026). The wireframes' `Wireframe` colour collection stays grey (`#ffffff` to `#262626`), because a
+  wireframe is judged on structure and a themed one implies a theme choice. Each of its 13 variables
+  names its house token in its Figma **description**, and this table is the same mapping, so the
+  translation from wireframe to visual design is read, not guessed:
+
+  | Wireframe | House token | Role |
+  |---|---|---|
+  | `color/bg` | `--bg-1` | the page |
+  | `color/surface` | `--bg-2` | a card or group |
+  | `color/surface-subtle` | `--bg-3` | an area inside a card |
+  | `color/surface-active` | `--bg-4` | active or hover |
+  | `color/border`, `color/divider` | `--bg-3` | a card edge, a rule between rows |
+  | `color/placeholder` | `--bg-5` | a control edge |
+  | `color/fill-strong` | `--primary` | the main action (the 10 of 60-30-10) |
+  | `color/fill-accent` | `--primary-muted` | a quiet fill: a progress fill, as `.meter--info` |
+  | `color/text-secondary`, `color/text-muted` | `--primary-muted` | quiet text, as `.note` |
+  | `color/text` | `--fg-1` | body text |
+  | `color/on-strong` | `--bg-1` | text on the main action |
+
+  **Two wireframe text greys become one token on purpose.** The wireframe draws secondary text
+  (`#666666`, the breadcrumbs, a table row's description) a step darker than muted text (`#8c8c8c`, a
+  section label, a search placeholder). The brand book has one tone for what may recede,
+  `--primary-muted`, and its `--fg-*` steps are kept nearly equal (#3235), so both map to it. The
+  wireframe keeps its two greys: they are a nuance of the sketch that the visual design does not carry.
+  A page that needs the difference asks for a second quiet tone as a brand book change.
 - **Mobile-first app** (`house-product.css`, the part "App components"): the narrow column, touch targets,
   dialogs, the top bar, and the site header and breadcrumb bar under "Page patterns", both in the
   [product README][product-readme].

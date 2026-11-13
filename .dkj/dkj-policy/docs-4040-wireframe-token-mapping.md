@@ -39,19 +39,36 @@
 
 ### PLAN
 
+#4040: give each `Wireframe` colour variable in the `dkj-brandbook` Figma file a documented mapping to
+one house token, in its description and in the brand book README, without aliasing or changing a value.
+The open point (three wireframe roles onto `--primary-muted`) is settled in the README: the two quiet
+text greys are a nuance of the sketch the brand book deliberately does not carry.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Figma: the 13 `Wireframe` colour variables carry their house token and role in `description`
+  (written November 13, 2026 via the Figma MCP; values unchanged, read back after the write)
+- [x] README: the mapping table and the settled open point, under the "Desktop shell" rule
 
 ### TEST
 
+- [~] No script or test changes; the docs gates run in `ship-pr`. Dropped as a separate step.
+
 ### DEPLOY: docs/4040-wireframe-token-mapping
 
-**Score:**
+The brand book README now maps every colour of the Figma `Wireframe` collection to the house token it
+becomes, and each variable carries the same mapping in its Figma description
+([#4040](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4040)). The wireframes stay grey and
+are not aliased. The two wireframe text greys both become `--primary-muted`, because the brand book has
+one tone for what may recede.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: the mapping guides how Admin's visual design is made in this repo, and nothing a consumer runs changes.
+
+**Score:** N/A
 
 #### Pull Request
 
