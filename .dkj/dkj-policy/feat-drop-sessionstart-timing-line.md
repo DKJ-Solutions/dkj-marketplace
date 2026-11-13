@@ -39,19 +39,33 @@
 
 ### PLAN
 
+The owner asked (Dave, November 13, 2026) that a session start show the person only whether the
+plugins are up to date and which local server ports are up -- everything else goes. The timing line
+the dispatcher appended since #3659 is the one such line this plugin produces.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `sessioncheck-dispatch.ps1`: drop the timing line and the clocks that only fed it; docstring says why
+- [x] `sessioncheck-dispatch.tests.ps1`: assert no timing line, and silence when there is nothing to say
 
 ### TEST
 
+- [x] `sessioncheck-dispatch.tests.ps1`: 57 asserts pass
+
 ### DEPLOY: feat/drop-sessionstart-timing-line
 
-**Score:**
+The session-start dispatcher no longer appends its `sessionstart: N s in the dispatcher -- ...` timing
+line to the message the person sees. What a session start shows is now the release check's line and
+the dev-preview hook's server ports; a start with nothing to say prints nothing at all. A check that
+hangs past the deadline is still named in the session's context.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A user of the plugin sees one line fewer at every session start, `/clear` and compaction.
+
+**Score:** 2
 
 #### Pull Request
 
