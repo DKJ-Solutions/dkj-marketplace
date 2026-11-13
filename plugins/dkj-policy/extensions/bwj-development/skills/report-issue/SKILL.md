@@ -40,6 +40,8 @@ rather than by this page**: the reach-label gate in step 2 below. The full rule 
 - Read `Get-AsanaTypeOptionMap` from the same file, where `Get-AsanaTypeFieldGid` is answered -- the
   option NAME each kind label is written as on that board. Optional, and `$null` by default, which
   keeps the default names step 2 gives.
+- Read `Get-AsanaPrioFieldGid` from the same file -- the GID of the board's `Prio-Score` number field
+  (#4054). Optional, `$null` by default, and then step 2 sets no score.
 - Read `Get-AsanaDefaultAssignee` from the same file too -- the user GID a task this procedure
   creates is assigned to. Optional, `$null` by default, and then step 2 assigns nobody.
 - Read **`Get-ReachLabel`** from the same file -- **the name GitHub stores for the reach label**, which
@@ -243,6 +245,24 @@ nothing and say which option was missing** -- that is a board somebody has rebui
 guessing puts a wrong type on a card a colleague reads as authoritative.
 
 Where it is `$null` -- the default -- skip it silently, exactly as for `Github Issue` above.
+
+**Where `Get-AsanaPrioFieldGid` returns a GID, set the board's `Prio-Score` on the same `create task`
+call, from the `How urgent` line you just wrote** (Dave, November 13, 2026,
+[#4054](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4054)), so the card is never unscored
+and its issue gets its `prio-N` from `asana-prio-label` the same day. It is a number field, and the
+value follows from the line rather than from a fresh judgement:
+
+| How urgent | Prio-Score | label it syncs to |
+|---|---|---|
+| blocking a sale | `4` | `prio-4` |
+| visible but not blocking | `3` | `prio-3` |
+| cosmetic | `2` | `prio-2` |
+| not customer-facing | `1` | `prio-1` |
+
+**`guard-asana-mirror` refuses a mirror that leaves it unset** where the seam is answered. The score is
+the first proposal, not the last word: the team changes it in Asana, and the label follows Asana.
+**A ticket that came from Asana keeps the score it has**; where it has none, set it on that task with the
+same table, in the writes below. Where the seam is `$null` -- the default -- skip it silently.
 
 **Where `Get-AsanaDefaultAssignee` returns a user GID, pass it as `assignee` on the same `create task`
 call.** An unassigned card reaches nobody's *My Tasks*, so it waits on the board until somebody

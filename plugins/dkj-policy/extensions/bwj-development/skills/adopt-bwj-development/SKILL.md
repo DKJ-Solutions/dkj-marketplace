@@ -187,6 +187,11 @@ function Get-AsanaTypeFieldGid { $null }
 # Example: @{ bug = 'Dev (Feature / Bug)'; feature = 'Dev (Feature / Bug)' }
 function Get-AsanaTypeOptionMap { $null }
 
+# The GID of the board's 'Prio-Score' number custom field, so report-issue scores every task it creates
+# from its How urgent line and guard-asana-mirror refuses one without a score (#4054). Optional: $null
+# (the default) means the board carries no such field, and nothing is set or required.
+function Get-AsanaPrioFieldGid { $null }
+
 # The Asana user GID a task report-issue CREATES is assigned to, so the card lands in that person's
 # My Tasks instead of only on the board. Optional: $null (the default) means the task is created
 # unassigned. A colleague's existing task that report-issue moves keeps its own assignee.

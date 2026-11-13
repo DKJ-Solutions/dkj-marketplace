@@ -952,6 +952,14 @@ issue chooses which task is read, which is acceptable because the store repos ar
 `ASANA_PAT` only. It mirrors the team's call, made in Asana, and makes none. The source repo's own
 tracker still ranks its issues on the same four labels, typed by whoever files.
 
+**The first score is the filing session's, and the team's edits win** (Dave, November 13, 2026,
+[#4054](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4054)). On a board whose
+`Get-AsanaPrioFieldGid` names its `Prio-Score` field, every task `report-issue` creates carries a score
+from the card's own `How urgent` line (blocking a sale 4, visible but not blocking 3, cosmetic 2, not
+customer-facing 1), so its issue gets its `prio-N` the same day instead of waiting for somebody to score
+it. `guard-asana-mirror` refuses a mirror that leaves the field unset. The team changes the score in Asana
+as before, and the label follows whatever Asana says.
+
 ### 6. (Retired October 5, 2026; three moves back October 21 and 27 and November 13, 2026) The board's sections are moved automatically only into InReview, InDevelopment and Filed
 
 The board's numbered sections are still the stages a colleague reads, from *a colleague put this on your
@@ -1069,7 +1077,9 @@ colleague with an open question in front of them reads as finished.
   whether the request can proceed -- and it is one act with writing the question, in the form step 6
   prescribes; taking it off says the answer arrived.
 - **Scoring the ticket.** A priority is the team's call, made in Asana; `asana-prio-label` carries it onto
-  the issue (step 5), and a person types the matching `prio-N` only for a ticket not scored there.
+  the issue (step 5), and a person types the matching `prio-N` only for a ticket not scored there. On a
+  board with the `Prio-Score` seam answered, `report-issue` proposes the first score (step 5) and the team
+  changes it there.
 - **A token that can reach the tickets, locally.** `ASANA_PAT` is a *user* token: it can only see the
   workspaces that user is a member of. It is still what [`build-backlog-page`](skills/build-backlog-page/SKILL.md)
   reads the tasks with, from the session's environment, and an imported ticket often lives in the

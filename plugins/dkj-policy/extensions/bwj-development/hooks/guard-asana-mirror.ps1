@@ -17,6 +17,12 @@
     alone pass by construction -- a ticket that came FROM Asana already has its card and creates none,
     and an issue that gains the label later is mirrored after it has it.
 
+    AND A MIRROR WITHOUT A PRIO-SCORE (#4054). Where the project's Get-AsanaPrioFieldGid names the
+    board's Prio-Score field, a mirror whose custom_fields leaves that field unset is refused too --
+    before the tracker is asked, because that check needs no tracker. The owner's rule (Dave, November
+    13, 2026): every task report-issue creates carries a score, so its issue gets its prio-N label from
+    asana-prio-label the same day. Unset, the seam requires nothing: most boards carry no such field.
+
     THE REACH LABEL'S NAME is the project's Get-ReachLabel from scripts/repo-config.ps1, defaulting to
     'minor' -- the same read, and the same default, report-issue's own "Before you start" prescribes.
 
@@ -60,15 +66,41 @@ if (-not (Test-Path -LiteralPath $libPath -PathType Leaf)) {
 # exits 1 -- non-blocking to the harness, so the call still went through -- but with a raw stack trace
 # carrying local paths and none of the "not checked" warning this design relies on (#2482's review).
 trap {
-    [Console]::Error.WriteLine('guard-asana-mirror: an unexpected error stopped the check -- the reach-label gate did NOT judge this call. Confirm by hand that the issue it mirrors carries the reach label.')
+    [Console]::Error.WriteLine('guard-asana-mirror: an unexpected error stopped the check -- neither the reach-label gate nor the Prio-Score gate judged this call. Confirm by hand that the issue it mirrors carries the reach label and the card a score.')
     exit 0
 }
 
-$refs = @(Get-MirroredIssueRefs -Text (Get-AsanaMirrorToolInputText -Raw $raw))
+$toolInput = Get-AsanaMirrorToolInputText -Raw $raw
+$refs = @(Get-MirroredIssueRefs -Text $toolInput)
 if ($refs.Count -eq 0) { exit 0 }
 
-# --- The reach label's name: the project's own answer, else the prescribed default -----------------
 $projectDir = if ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR } else { (Get-Location).Path }
+
+# --- The Prio-Score: required where the board names its field (#4054) --------------------------------
+# Judged before the tracker is asked, because it needs no tracker: a mirror that leaves the field unset
+# is refused whatever its labels say. A board without the field (the seam unset) requires nothing, and a
+# custom_fields string that does not parse, or a config that cannot be read, takes the warned fail-open.
+$prio = Get-ProjectAsanaPrioFieldGid -ProjectDir $projectDir
+if ($prio.ReadFailed) {
+    [Console]::Error.WriteLine('guard-asana-mirror: scripts\repo-config.ps1 could not be read -- the Prio-Score gate did NOT check this call.')
+} elseif ($prio.Gid) {
+    switch (Get-AsanaMirrorFieldState -ToolInputJson $toolInput -FieldGid $prio.Gid) {
+        'unknown' {
+            [Console]::Error.WriteLine('guard-asana-mirror: custom_fields could not be read -- the Prio-Score gate did NOT check this call. Confirm by hand that the card carries a Prio-Score.')
+        }
+        'missing' {
+            [Console]::Error.WriteLine("BLOCKED (guard-asana-mirror): this task mirrors $(@($refs | ForEach-Object { $_.Ref }) -join ', ') and sets no Prio-Score.")
+            [Console]::Error.WriteLine(@(
+                '  Every task report-issue creates carries the board''s Prio-Score (report-issue step 2, #4054).',
+                '  Set the custom field Get-AsanaPrioFieldGid names on this same call, from the card''s How urgent line:',
+                '  blocking a sale 4, visible but not blocking 3, cosmetic 2, not customer-facing 1.'
+            ) -join "`n")
+            exit 2
+        }
+    }
+}
+
+# --- The reach label's name: the project's own answer, else the prescribed default -----------------
 $reach = Get-ProjectReachLabel -ProjectDir $projectDir
 $reachLabel = $reach.Label
 if ($reach.ReadFailed) {
