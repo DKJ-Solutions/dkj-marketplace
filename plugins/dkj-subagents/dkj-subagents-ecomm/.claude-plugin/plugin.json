@@ -7,7 +7,7 @@
     "./subagents/specialist-06-27-subagent.md",
     "./subagents/specialist-06-28-subagent.md"
   ],
-  "version": "6.14.0",
+  "version": "6.15.0",
   "dependencies": ["dkj-subagents-alpha"],
   "defaultEnabled": false,
   "author": { "name": "DaveKJohn" },

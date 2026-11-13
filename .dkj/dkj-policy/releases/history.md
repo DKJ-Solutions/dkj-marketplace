@@ -4,6 +4,7 @@
 
 | Version | Date | Type | Title |
 |---|---|---|---|
+| [6.15.0](audience/6.x/6.15.0.md) | 2026-11-13 | Minor | The brand book's colours are computed per theme and every series reads in every theme |
 | [6.14.0](audience/6.x/6.14.0.md) | 2026-11-11 | Minor | Minor release |
 | [6.13.0](audience/6.x/6.13.0.md) | 2026-11-11 | Minor | Minor release |
 | [6.12.0](audience/6.x/6.12.0.md) | 2026-11-09 | Minor | Minor release |

@@ -44,9 +44,9 @@ always pins the release that carries the bytes its checksums name.
 
 | File | Fetch from | sha256 |
 |---|---|---|
-| `house-style.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.14.0/plugins/dkj-policy/assets/dkj-brandbook/house-style.css` | `53d850ce0d4cee3d6732db295bc72d7b5f18feed469ba96b4c90af2a4cea78e8` |
-| `house-theme.js` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.14.0/plugins/dkj-policy/assets/dkj-brandbook/house-theme.js` | `5b58c4c99e8408eff9abad1929c47a2b3138a0dfb37dba6bb24dfd7f2963847a` |
-| `house-product.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.14.0/plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css` | `344e38dfd6aa8acd7805dd8372ff62aa37ceb74208410438cc5f8ebdd3c74078` |
+| `house-style.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.15.0/plugins/dkj-policy/assets/dkj-brandbook/house-style.css` | `8a8b41eb1dc155a0ecd1b57dc7d120245ecd0bd5a996e65b483803e722d18ad4` |
+| `house-theme.js` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.15.0/plugins/dkj-policy/assets/dkj-brandbook/house-theme.js` | `5b58c4c99e8408eff9abad1929c47a2b3138a0dfb37dba6bb24dfd7f2963847a` |
+| `house-product.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.15.0/plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css` | `83f5963900d0d792be26af7e3511217fc38b7d9583d5c338d1a21cdbd4111385` |
 
 **A product page vendors and links all three files, `house-style.css` first and `house-product.css` after it**
 (the product file is never loaded alone), with `house-theme.js` where the app lets the user pick a theme. **An

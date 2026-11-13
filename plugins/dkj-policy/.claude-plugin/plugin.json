@@ -2,7 +2,7 @@
   "name": "dkj-policy",
   "displayName": "Claude Specialists — DKJ policy (policy scaffold, DaveKJohn's contributing rules)",
   "description": "One particular way of working, which you choose to adopt: how work moves from a task to a release. Every change gets a branch with a short plan and a changelog entry; checks run before a pull request opens and again before it merges; the entry lands in the changelog at the merge; and a release bundles those entries into release notes and a new version. It also brings Admin, a local page in your browser with your repo's issues, release notes, tests and more. It changes how the specialists work, not who they are, and it is not the default: enable it only if you want this way of working. Requires the core team 'dkj-subagents-alpha', and two small configuration files in your repo (scripts/repo-config.ps1 and scripts/lib/branch-info.ps1), which the plugin helps you set up.",
-  "version": "6.14.0",
+  "version": "6.15.0",
   "author": { "name": "DaveKJohn" },
   "keywords": ["specialists", "policy", "contributing", "workflow", "claude-code", "changelog", "release", "pull-request", "opt-in"]
 }
