@@ -40,7 +40,8 @@ function New-Store {
     New-Item -ItemType Directory -Force -Path (Join-Path $root '.github\workflows'), (Join-Path $root '.github\scripts') | Out-Null
     if ($Copy) {
         foreach ($p in @(@('asana-closed-message.yml', '.github\workflows'), @('asana-closed-message.ps1', '.github\scripts'),
-                         @('asana-prio-label.yml', '.github\workflows'), @('asana-prio-label.ps1', '.github\scripts'))) {
+                         @('asana-prio-label.yml', '.github\workflows'), @('asana-prio-label.ps1', '.github\scripts'),
+                         @('asana-open-section.yml', '.github\workflows'), @('asana-open-section.ps1', '.github\scripts'))) {
             $text = [System.IO.File]::ReadAllText((Join-Path $Templates $p[0])) -replace "`r`n", "`n"
             if ($Crlf) { $text = $text -replace "`n", "`r`n" }
             if ($Stale -and $p[0] -like '*.ps1') { $text += "`n# an older copy`n" }
@@ -105,6 +106,17 @@ try {
     $r = Invoke-Hook -Root $stalePrio -Slug 'BWJ-Development/xoxowildhearts' -Secret 'ASANA_PAT'
     Assert-True ($r.Text -match '\.github/scripts/asana-prio-label\.ps1 in BWJ-Development/xoxowildhearts differs from the template') 'a prio script that differs from the template is reported'
     Assert-True ($r.Text -notmatch 'asana-closed-message' -and $r.Text -notmatch 'workflows/asana-prio-label\.yml in') 'and only that file is named'
+
+    # THE OPEN-SECTION PAIR (#4056): asked of smartwatchbanden alone.
+    $noOs = New-Store -Label 'no-open-section' -Copy
+    Remove-Item -LiteralPath (Join-Path $noOs '.github\workflows\asana-open-section.yml'), (Join-Path $noOs '.github\scripts\asana-open-section.ps1')
+    $r = Invoke-Hook -Root $noOs -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT'
+    Assert-True ($r.Text -match '\[ERROR\] bwj-development: BWJ-Development/smartwatchbanden has no \.github/workflows/asana-open-section\.yml and \.github/scripts/asana-open-section\.ps1') 'smartwatchbanden missing the open-section pair is reported'
+    Assert-True ($r.Text -notmatch 'asana-closed-message|asana-prio-label') 'and the pairs in place are not named'
+    $r = Invoke-Hook -Root $noOs -Slug 'BWJ-Development/xoxowildhearts' -Secret 'ASANA_PAT'
+    Assert-True ($r.Text.Trim() -eq '') 'xoxowildhearts, which did not decide it, is never asked for the open-section pair'
+    $r = Invoke-Hook -Root $noOs -Slug 'BWJ-Development/smartwatchbanden' -Secret 'CLAUDE_CODE_OATH_TOKEN'
+    Assert-True ($r.Text -match 'and asana-open-section cannot move a card') 'and its missing secret names the open-section sweep too'
 
     # THE RESOLVES-EXEMPT SEAM (#2959): a store config without Get-ResolvesExemptMatchers is reported; one
     # that defines it, or a store with no repo-config at all (every case above), is not.

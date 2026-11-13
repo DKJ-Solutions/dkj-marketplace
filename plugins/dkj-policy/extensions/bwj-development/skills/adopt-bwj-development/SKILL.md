@@ -8,8 +8,8 @@ description: >-
   exist, report the board's numbered sections so the Filed section report-issue writes to can be
   found, write the BWJ extension import into CLAUDE.md, and scaffold chapter two's
   .dkj/bwj-development/SYNC-LOG.md with its masthead (moving an older root bwj-development/ there), ready for the first sync branch. In the two store
-  repos it also copies the asana-closed-message and asana-prio-label workflows into .github/, in
-  phone-factory asana-closed-message alone, and names the one repo secret they need, ASANA_PAT.
+  repos it also copies the asana-closed-message and asana-prio-label workflows into .github/ (in
+  smartwatchbanden the asana-open-section sweep too), in phone-factory asana-closed-message alone, and names the one repo secret they need, ASANA_PAT.
   Strictly additive and dry-run by default; it never overwrites an existing file, only adds the one
   import line to CLAUDE.md, and it renames nothing on the board.
   Run this right after enabling the plugin, or when report-issue reports the Asana config seam
@@ -24,7 +24,9 @@ side, across both chapters: the config functions the skill reads, the labels, an
 `asana-closed-message`, the closed message on the Asana task (#2818) and, since #2854, the reopened
 message beside it, and `asana-prio-label`, the Prio-Score -> `prio-N` label sync (#2945). They are the
 parts of the retired asana-mirror mechanism that came back (Dave, October 5, 6 and 12, 2026).
-**In `phone-factory` it copies `asana-closed-message` alone** (#3518).
+**In `smartwatchbanden` it also copies `asana-open-section`**, the daily sweep that keeps an open
+issue's card out of the sections before `Filed` (#4056, Dave, November 13, 2026). **In `phone-factory`
+it copies `asana-closed-message` alone** (#3518).
 
 ## 0 -- establish that this repo is a permitted adoption target
 
@@ -92,6 +94,8 @@ GitHub only runs a workflow from a repo's own `.github/`, so these are copied, n
 | `templates/asana-closed-message.ps1` | `.github/scripts/asana-closed-message.ps1` |
 | `templates/asana-prio-label.yml` | `.github/workflows/asana-prio-label.yml` |
 | `templates/asana-prio-label.ps1` | `.github/scripts/asana-prio-label.ps1` |
+| `templates/asana-open-section.yml` | `.github/workflows/asana-open-section.yml` (smartwatchbanden) |
+| `templates/asana-open-section.ps1` | `.github/scripts/asana-open-section.ps1` (smartwatchbanden) |
 
 Copy them verbatim. If a file already exists at the target, **stop and diff** rather than overwriting:
 report the difference and let the maintainer decide. **All four in `smartwatchbanden` and
@@ -99,7 +103,8 @@ report the difference and let the maintainer decide. **All four in `smartwatchba
 whose owner decided to adopt that workflow on October 26, 2026
 ([BWJ-Development/phone-factory#15](https://github.com/BWJ-Development/phone-factory/issues/15),
 [#3518](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3518)); `asana-prio-label` was not
-decided there. The source repo adopts this plugin for ticket handling alone, and neither workflow was
+decided there. **The two `asana-open-section` files in `smartwatchbanden` alone**, where it was asked for
+(#4056); `xoxowildhearts` has not decided it. The source repo adopts this plugin for ticket handling alone, and neither workflow was
 asked for there. Wherever a pair is copied, the plugin's `closed-message-sessioncheck` hook reports at
 every session start when one of that pair's files is missing or differs from the template, and when
 `ASANA_PAT` (step 3) is absent ([#2871](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2871)),
@@ -124,6 +129,9 @@ in [`WORKFLOW-portable.md`, step 4](../../WORKFLOW-portable.md#4-write-the-go-li
 The `asana-prio-label` pair reads the linked task's `Prio-Score` and sets one `prio-N` label on the issue
 when it is opened or edited and in a daily sweep; its behaviour is in
 [`WORKFLOW-portable.md`, step 5](../../WORKFLOW-portable.md#5-retired-october-5-2026-back-october-12-2026-the-asana-prio-score-comes-back-as-a-label).
+The `asana-open-section` pair sweeps every open issue once a day and moves a card that sits before
+`Filed` into `Filed`; it moves nothing on a board whose `Filed` shares the inbox section. Its behaviour is
+in `WORKFLOW-portable.md`, step 6.
 
 **A repo that adopted before October 5, 2026 still has `asana-mirror.yml` and `asana-mirror.ps1`**, which
 the plugin no longer maintains: report them to the maintainer, who can delete
@@ -143,8 +151,10 @@ function Get-AsanaProjectGid   { '<the Asana project a mirrored task lands in>' 
 # built-in map is used, which is right only if your board is numbered the same way. report-issue reads
 # it for the Filed section a new card lands in; asana-closed-message reads the Completed, InReview and
 # InDevelopment codes as text (#3017, #3248, #3562). It moves a card into InReview on a completed close
-# with a block, and into InDevelopment on a reopen; the other stages are the board's sections that a
-# person moves cards through.
+# with a block, and into InDevelopment on a reopen; asana-open-section (#4056) reads the whole map and
+# moves an open issue's card that sits before Filed into Filed. Answer Filed with InDevelopment's code to
+# show every open issue as in progress. The other stages are the board's sections that a person moves
+# cards through.
 function Get-AsanaStageMap {
     return @{
         Requests       = 1   # the submitter's inbox

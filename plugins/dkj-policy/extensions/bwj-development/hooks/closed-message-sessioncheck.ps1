@@ -22,7 +22,8 @@
     asana-prio-label was not decided there):
       1. .github/workflows/asana-closed-message.yml and .github/scripts/asana-closed-message.ps1 exist,
          and, in the two stores, so do the asana-prio-label.yml / asana-prio-label.ps1 pair beside them
-         (#2945), each pair reported on its own line with what its absence costs;
+         (#2945), and in smartwatchbanden the asana-open-section pair (#4056), each pair reported on its
+         own line with what its absence costs;
       2. each is identical to its template, line endings aside -- git may check a file out with CRLF;
       3. an ASANA_PAT secret is visible to the repo, as a repo secret or an organisation secret;
       4. scripts/repo-config.ps1 defines Get-ResolvesExemptMatchers (#2959) -- the seam dkj-policy's
@@ -123,6 +124,8 @@ Set-StrictMode -Version Latest
 
 $StoreRepos = @('smartwatchbanden', 'xoxowildhearts')
 $ClosedMessageRepos = $StoreRepos + @('phone-factory')
+# asana-open-section (#4056) was asked for in smartwatchbanden alone; xoxowildhearts did not decide it.
+$OpenSectionRepos = @('smartwatchbanden')
 $Unreadable = '<unreadable>'
 
 function Get-OriginSlug {
@@ -281,7 +284,13 @@ try {
            StaleEffect = "an issue's prio label may be set from its Asana task's Prio-Score by outdated rules"
            Pairs = @(
                @{ Repo = '.github/workflows/asana-prio-label.yml'; Template = 'asana-prio-label.yml' },
-               @{ Repo = '.github/scripts/asana-prio-label.ps1';   Template = 'asana-prio-label.ps1' }) }
+               @{ Repo = '.github/scripts/asana-prio-label.ps1';   Template = 'asana-prio-label.ps1' }) },
+        @{ Name = 'asana-open-section'; Repos = $OpenSectionRepos
+           Effect = "an open issue's Asana card dragged back before the Filed section is never put back"
+           StaleEffect = "an open issue's Asana card may be moved by outdated rules"
+           Pairs = @(
+               @{ Repo = '.github/workflows/asana-open-section.yml'; Template = 'asana-open-section.yml' },
+               @{ Repo = '.github/scripts/asana-open-section.ps1';   Template = 'asana-open-section.ps1' }) }
     ) | Where-Object { $_.Repos -contains $name })
     foreach ($g in $groups) {
         $missing = @()
@@ -313,6 +322,7 @@ try {
     if ($readable -and -not (@($secrets) -contains 'ASANA_PAT')) {
         $cost = 'the asana-closed-message workflow cannot post on the Asana task'
         if (@($groups | ForEach-Object { $_.Name }) -contains 'asana-prio-label') { $cost += ' and asana-prio-label cannot read its score' }
+        if (@($groups | ForEach-Object { $_.Name }) -contains 'asana-open-section') { $cost += ', and asana-open-section cannot move a card' }
         Write-Host ("[ERROR] bwj-development: $slug has no ASANA_PAT secret, so $cost. The repo's maintainer " +
             "sets it -- see step 3 of the 'adopt-bwj-development' skill.")
     }

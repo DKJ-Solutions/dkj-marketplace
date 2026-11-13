@@ -2102,6 +2102,90 @@ Assert-True ($plRun -ne '') 'the run block was found'
 Assert-True ($plRun -notmatch '\$\{\{') 'and no expression is interpolated inside run:'
 Assert-True ($plYml -notmatch '-IssueBody') 'the body is never on the command line'
 
+# --- the open-section sweep (templates/asana-open-section.ps1, #4056) ------------------------------
+Write-Host "`n-- the open-section template (#4056) --" -ForegroundColor Cyan
+$osTemplate = Join-Path $PluginRoot 'templates\asana-open-section.ps1'
+$osYmlPath  = Join-Path $PluginRoot 'templates\asana-open-section.yml'
+foreach ($rel in @('templates\asana-open-section.yml', 'templates\asana-open-section.ps1')) {
+    Assert-True (Test-Path -LiteralPath (Join-Path $PluginRoot $rel)) "ships $rel"
+}
+# THE COPIED HELPERS EQUAL THEIR SOURCE (read before loading, so nothing loaded can mask a drift).
+foreach ($fn in @('Get-AsanaGidsFromText', 'Get-AsanaHeaderRowText', 'Resolve-AsanaTaskRef')) {
+    Assert-Equal (Get-FunctionSourceText -Path $plLib -Name $fn) (Get-FunctionSourceText -Path $osTemplate -Name $fn) "the open-section template's $fn equals asana-task-lib.ps1's"
+}
+foreach ($fn in @('Invoke-GhCapture', 'ConvertFrom-IssueListJson')) {
+    Assert-Equal (Get-FunctionSourceText -Path $plTemplate -Name $fn) (Get-FunctionSourceText -Path $osTemplate -Name $fn) "the open-section template's $fn equals asana-prio-label.ps1's"
+}
+foreach ($fn in @('Get-RepoStageCode', 'Get-SectionCode', 'Read-AsanaTaskBoard', 'New-AsanaMoveRequest', 'Invoke-AsanaWrite', 'Read-RepoConfigText')) {
+    Assert-Equal (Get-FunctionSourceText -Path $cmTemplate -Name $fn) (Get-FunctionSourceText -Path $osTemplate -Name $fn) "the open-section template's $fn equals asana-closed-message.ps1's"
+}
+. $osTemplate
+
+# THE STAGE MAP, read as text: smartwatchbanden's measured map with its local Filed = '2' (#4056).
+$osCfg = "function Get-AsanaStageMap {`n    <# Filed = 9 #>`n    return @{`n        Requests = '1'`n        NeedsInfo = '1'`n        Filed = '2'`n        InDevelopment = '2'`n        InReview = '3'`n        ReadyToTest = '3'`n        Completed = '4'`n        NeedsInfoLabel = 'awaiting-more-info'`n    }`n}`nfunction Get-Other { @{ NeedsInfoLabel = 'nope' } }"
+$osCodes = Read-StageCodes -ConfigText $osCfg
+Assert-Equal '2' $osCodes['Filed'] 'the Filed code is read from the map, not from a comment'
+Assert-Equal 'awaiting-more-info' (Get-RepoStageLabel -ConfigText $osCfg) 'the NeedsInfoLabel is read from the map'
+Assert-Equal '' (Get-RepoStageLabel -ConfigText "function Get-AsanaStageMap { @{ Filed = 1 } }") 'and is empty where the map names none'
+Assert-Equal '1' ((Get-EarlierStageCodes -StageCodes $osCodes) -join ',') 'with Filed at 2, code 1 is the one earlier section'
+$osDefault = Read-StageCodes -ConfigText "function Get-AsanaStageMap { @{`nRequests = '1'`nNeedsInfo = '1'`nFiled = '1'`nInDevelopment = '2'`nCompleted = '4'`n} }"
+Assert-Equal 0 @(Get-EarlierStageCodes -StageCodes $osDefault).Count 'a board whose Filed shares the inbox section has no earlier section -- the sweep moves nothing'
+$osMixed = Read-StageCodes -ConfigText "function Get-AsanaStageMap { @{`nRequests = '1'`nNeedsInfo = '3'`nFiled = '2'`nInReview = '3'`n} }"
+Assert-Equal '1' ((Get-EarlierStageCodes -StageCodes $osMixed) -join ',') 'a code a later stage also carries is never earlier (fails closed)'
+
+# THE MOVE.
+$osSections = @([pscustomobject]@{ Gid = '11'; Name = '1. Todo' }, [pscustomobject]@{ Gid = '22'; Name = '2. In Progress' },
+                [pscustomobject]@{ Gid = '33'; Name = '3. Waiting for review' }, [pscustomobject]@{ Gid = '44'; Name = '4. Done' })
+function New-OsMember([string]$Section, [string]$Project = '900') { [pscustomobject]@{ Project = $Project; SectionName = $Section } }
+$m = Select-OpenSectionMove -Memberships @(New-OsMember '1. Todo') -Sections $osSections -StageCodes $osCodes
+Assert-Equal '22' $m.SectionGid 'a card in 1. Todo on an open issue moves into 2. In Progress'
+foreach ($case in @(@('2. In Progress', 'already in Filed'), @('3. Waiting for review', 'a later section'), @('4. Done', 'the done section'), @('Untitled section', 'a section without a code'))) {
+    $m = Select-OpenSectionMove -Memberships @(New-OsMember $case[0]) -Sections $osSections -StageCodes $osCodes
+    Assert-Equal '' $m.SectionGid "never moved from $($case[1])"
+}
+$m = Select-OpenSectionMove -Memberships @(New-OsMember '1. Todo') -Sections $osSections -StageCodes $osCodes -Completed $true
+Assert-Equal '' $m.SectionGid 'never a completed task'
+$m = Select-OpenSectionMove -Memberships @(New-OsMember '1. Todo') -Sections $osSections -StageCodes $osCodes -Labels @('bug', 'awaiting-more-info') -NeedsInfoLabels @('awaiting-more-info', 'awaiting-info-client')
+Assert-Equal '' $m.SectionGid 'never a card in NeedsInfo while the needs-info label is on'
+Assert-True ($m.Why -match 'awaiting-more-info') 'and the log says which label held it'
+$m = Select-OpenSectionMove -Memberships @(New-OsMember '1. Todo') -Sections $osSections -StageCodes $osCodes -Labels @('awaiting-decision-client') -NeedsInfoLabels @('awaiting-more-info')
+Assert-Equal '22' $m.SectionGid 'another awaiting-* label does not hold it'
+$m = Select-OpenSectionMove -Memberships @((New-OsMember '1. Todo'), (New-OsMember '1. Todo' '901')) -Sections $osSections -StageCodes $osCodes
+Assert-Equal '' $m.SectionGid 'never a task on several boards'
+$m = Select-OpenSectionMove -Memberships @(New-OsMember '1. Todo') -Sections @($osSections[0], $osSections[2]) -StageCodes $osCodes
+Assert-Equal '' $m.SectionGid 'never where the board has no section with the Filed code'
+$m = Select-OpenSectionMove -Memberships @(New-OsMember '1. Todo') -Sections $osSections -StageCodes $osDefault
+Assert-Equal '' $m.SectionGid 'and nothing on a board whose Filed is the inbox section'
+$m = Select-OpenSectionMove -Memberships @(New-OsMember '1. Todo') -Sections $osSections -StageCodes @{ Filed = '' }
+Assert-Equal '' $m.SectionGid 'nor where the map states no Filed stage'
+Assert-True ($m.Why -notmatch 'Todo|Progress') 'and no Why ever carries a section name'
+
+# THE SCRIPT'S SHAPE: one Asana write (a move), nothing written on GitHub.
+$osSrc = [System.IO.File]::ReadAllText($osTemplate)
+Assert-Equal 1 ([regex]::Matches($osSrc, 'New-AsanaMoveRequest -Gid')).Count 'the only request it builds is the move'
+Assert-True ($osSrc -notmatch 'New-AsanaCommentRequest|New-AsanaUncompleteRequest|completed\s*=\s*\$true') 'it never comments, unticks or completes a task'
+Assert-True ($osSrc -notmatch "'issue', '(edit|comment|close)'|gh label") 'and writes nothing on GitHub'
+
+# NO ASANA_PAT: said, and not a failure.
+$osSavedPat = $env:ASANA_PAT
+try {
+    $env:ASANA_PAT = ''
+    $osOut = & powershell -NoProfile -ExecutionPolicy Bypass -File $osTemplate -Repo 'o/r' 2>&1 | ForEach-Object { "$_" }
+    Assert-Equal 0 $LASTEXITCODE 'with no ASANA_PAT the sweep exits 0'
+    Assert-True (($osOut -join "`n") -match 'ASANA_PAT is not set') 'and says why'
+} finally { $env:ASANA_PAT = $osSavedPat }
+
+# THE WORKFLOW.
+$osYml = [System.IO.File]::ReadAllText($osYmlPath)
+Assert-True ($osYml -match '(?m)^\s*schedule:' -and $osYml -match 'cron:\s*"[^"]+"' -and $osYml -match '(?m)^\s*workflow_dispatch:') 'it runs on a daily schedule and a manual dispatch'
+Assert-True ($osYml -notmatch '(?m)^\s*(issues|pull_request|pull_request_target|push|issue_comment):\s*$') 'with no other trigger'
+$osPermBlock = [regex]::Match($osYml, '(?ms)^permissions:\s*\r?\n((?:[ \t]+[^\r\n]*\r?\n|[ \t]*\r?\n)+)').Groups[1].Value
+$osPerms = @([regex]::Matches($osPermBlock, '(?m)^\s+([a-z-]+):\s*(\S+)') | ForEach-Object { "$($_.Groups[1].Value)=$($_.Groups[2].Value)" } | Sort-Object)
+Assert-Equal 'contents=read,issues=read' ($osPerms -join ',') 'the token reads and writes nothing on GitHub'
+Assert-True ($osYml -match '(?m)^\s*timeout-minutes:\s*\d+' -and $osYml -match 'persist-credentials:\s*false') 'a timeout, and no token left behind'
+Assert-Equal 'ASANA_PAT' (@([regex]::Matches($osYml, 'secrets\.([A-Za-z0-9_]+)') | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique) -join ',') 'ASANA_PAT is the only secret'
+Assert-True ([regex]::Match($osYml, '(?ms)^\s*run:\s*\|\s*\r?\n(.*)\z').Groups[1].Value -notmatch '\$\{\{') 'and no expression is interpolated inside run:'
+
 # --- done ---------------------------------------------------------------------------------------
 Write-Host ""
 if (Write-FixtureGitSummary -Subject 'build-golive-block.ps1') { $script:fail++ }

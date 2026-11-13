@@ -939,14 +939,14 @@ issue chooses which task is read, which is acceptable because the store repos ar
 `ASANA_PAT` only. It mirrors the team's call, made in Asana, and makes none. The source repo's own
 tracker still ranks its issues on the same four labels, typed by whoever files.
 
-### 6. (Retired October 5, 2026; two moves back October 21 and 27, 2026) The board's sections are moved automatically only into InReview and InDevelopment
+### 6. (Retired October 5, 2026; three moves back October 21 and 27 and November 13, 2026) The board's sections are moved automatically only into InReview, InDevelopment and Filed
 
 The board's numbered sections are still the stages a colleague reads, from *a colleague put this on your
 name* to *tested and good*, and `Get-AsanaStageMap` still names what each number means. **But no workflow
 sweeps a card between them any more** (Dave, October 5, 2026): the stage sweep, the three GitHub Project
 statuses that drove it, the `ReadyToTest` promotion on feedback and the terminal-stage guard are retired
-with the mirror, and `Get-GithubStatusMap` is no longer read. **The tooling writes three sections, and
-each on one event only.** `report-issue` creates the card in `Filed` and reads the stage map to find it.
+with the mirror, and `Get-GithubStatusMap` is no longer read. **The tooling writes three sections, each
+on named events only.** `report-issue` creates the card in `Filed` and reads the stage map to find it.
 **A close as completed that carries this round's go-live, research, measurement or already-fixed block
 moves the card into `InReview`** (#3248, Maikel, October 21, 2026), after the closed message has posted,
 because that message tells the requester the task is now in review. It is never made on a `-ByHand` close,
@@ -957,7 +957,18 @@ incomplete where it is completed** (#3562, Dave, October 27, 2026), after the re
 posted, because that message tells the requester the task is back in development. Unlike the review move
 it does take a card out of `Completed`: a reopen is exactly the case where the done card is wrong. Where
 the task is on several boards, or its board has no single section with the `InDevelopment` code, the move
-is skipped, and the message and the untick still go out. Every other move is a person dragging the card.
+is skipped, and the message and the untick still go out. **And while an issue is open, its card is kept
+out of the sections before `Filed`** (#4056, Dave, November 13, 2026): the copied `asana-open-section`
+workflow sweeps every open issue once a day and moves a card that sits in a section only stages before
+`Filed` carry (the inbox, `NeedsInfo`) into `Filed`. It never moves a card that sits later, a completed
+task, a task on several boards, or a card in `NeedsInfo` while the issue carries the map's
+`NeedsInfoLabel` or `awaiting-info-client`, because that card waits on its requester. **On a board where
+`Filed` shares its section with the inbox, which is the default, there is no earlier section and the
+sweep moves nothing.** A board that wants every open issue shown as in progress answers `Filed` with the
+same code as `InDevelopment` in `Get-AsanaStageMap`: `report-issue` then places a new card in progress,
+and the sweep keeps it there when a person drags it back. Like the other workflows it needs `ASANA_PAT`
+only, because the Asana MCP has no call that moves a task between sections. Every other move is a person
+dragging the card.
 
 The two ends were always the submitter's -- their untriaged inbox at one end and `Completed` at the other
 -- and that is unchanged: **this plugin never ticks a task off** (step 4). The reopen's untick only ever
@@ -1274,7 +1285,8 @@ matters, more than one market.
   message came back (#2818): it is the one moment the
   requester has something to do, and the block it carries is already written by then. The reopened
   message came back beside it (#2854), because without it a requester goes on testing a result that is
-  being reworked.
+  being reworked. The open-section sweep came back on November 13 (#4056), narrowed to one direction:
+  it keeps an open issue's card from sitting before `Filed`, and moves nothing anywhere else.
 - **The block before the close, and not at it**, because the close is the only event a person in this
   chain actually performs, and hanging the composition on it put the paragraph underneath an item that
   had already left every open-issue view. Writing it first turns the close into a **receipt** -- the
