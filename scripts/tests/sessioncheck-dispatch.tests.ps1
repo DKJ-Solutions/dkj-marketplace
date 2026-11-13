@@ -112,11 +112,8 @@ if ($r.Json) {
     Assert-Equal 'SessionStart' $r.Json.hookSpecificOutput.hookEventName 'hookSpecificOutput names the SessionStart event'
     $sys = @(([string]$r.Json.systemMessage) -split "`n")
     Assert-Equal 'b shown to the user' $sys[0] 'a JSON check''s systemMessage is passed on as the systemMessage'
-    Assert-Equal 2 $sys.Count 'and the timing line is the one line after it'
-    Assert-True ($sys[-1] -match '^sessionstart: \d+\.\d s in the dispatcher -- checks \d+\.\d s \(slowest: ') 'the timing line names the total and the checks'' share'
-    Assert-True (($sys[-1] -split 'slowest: ')[1] -match '^[a-z]-[a-z]+ \d+\.\d s, [a-z]-[a-z]+ \d+\.\d s, [a-z]-[a-z]+ \d+\.\d s\)$') 'with the three slowest checks by their short name'
-    Assert-True ($sys[-1] -notmatch 'sessioncheck') 'and no -sessioncheck suffix'
-    Assert-True ($ctx -notmatch 'sessionstart: ') 'the timing line stays out of the model''s context'
+    Assert-Equal 1 $sys.Count 'and it is the only line the person sees -- no timing line after it'
+    Assert-True ($ctx -notmatch 'sessionstart: ') 'no timing line reaches the model''s context either'
     Assert-True ($ctx -match 'b-json: for the model') 'and its additionalContext joins the context'
     Assert-True ($ctx -notmatch 'systemMessage') 'the JSON check''s raw object is not forwarded as text'
     Assert-True ($ctx -match 'a-plain: first line' -and $ctx -match 'a-plain: second line') 'a plain check''s lines reach the context'
@@ -183,21 +180,21 @@ Write-Host 'nothing to report' -ForegroundColor Cyan
 $empty = New-Tree -Label empty -Files @{ 'quiet-sessioncheck.ps1' = "exit 0`n" }
 $r = Invoke-Dispatch -Dir $empty
 Assert-Equal 0 $r.Code 'exit 0'
-Assert-True ($null -ne $r.Json -and -not $r.Json.PSObject.Properties['hookSpecificOutput']) 'no context at all when no check has anything to say'
-Assert-True ($null -ne $r.Json -and [string]$r.Json.systemMessage -match '^sessionstart: \d+\.\d s in the dispatcher -- checks \d+\.\d s \(slowest: quiet \d+\.\d s\)$') 'only the timing line, for the person'
+Assert-Equal '' $r.Text 'no output at all when no check has anything to say -- no context, no line for the person'
 $none = New-Tree -Label none
 $r = Invoke-Dispatch -Dir $none
-Assert-True ($r.Code -eq 0 -and $null -ne $r.Json -and [string]$r.Json.systemMessage -match '^sessionstart: \d+\.\d s in the dispatcher$') 'an empty directory: exit 0, the bare timing line'
+Assert-True ($r.Code -eq 0 -and $r.Text -eq '') 'an empty directory: exit 0, and silence'
 
-# --- the timing line names the prep steps ----------------------------------------------------------
+# --- a prep step reports as context, and adds no line for the person -----------------------------
 Write-Host ''
-Write-Host 'a prep step in the timing line' -ForegroundColor Cyan
+Write-Host 'a prep step' -ForegroundColor Cyan
 $prepTree = New-Tree -Label prep -Files @{
     'sync-sessionprep.ps1'  = "Write-Host 'sync: done'`n"
     'look-sessioncheck.ps1' = "Write-Host 'look: done'`n"
 }
 $r = Invoke-Dispatch -Dir $prepTree
-Assert-True ($null -ne $r.Json -and [string]$r.Json.systemMessage -match '^sessionstart: \d+\.\d s in the dispatcher -- prep \d+\.\d s \(sync\), checks \d+\.\d s \(slowest: look \d+\.\d s\)$') 'the prep step is named before the checks'
+Assert-True ($null -ne $r.Json -and [string]$r.Json.hookSpecificOutput.additionalContext -match '(?s)sync: done.*look: done') 'the prep step''s lines come before the checks'' in the context'
+Assert-True ($null -ne $r.Json -and -not $r.Json.PSObject.Properties['systemMessage']) 'and plain checks put no line on the person''s screen'
 
 # --- the deadline ----------------------------------------------------------------------------------
 Write-Host ''
@@ -214,7 +211,6 @@ if ($r.Json) {
     Assert-True ($ctx -match 'fast: done') 'the checks that finished are still reported'
     Assert-True ($ctx -match 'slow-sessioncheck: did not finish within 3 s -- skipped\.') 'the hung check is named'
     Assert-True ($ctx -notmatch 'too late') 'and nothing it writes afterwards appears'
-    Assert-True ([string]$r.Json.systemMessage -match '\(slowest: slow >3 s, fast \d+\.\d s\)$') 'the timing line names the hung check first, as past the deadline'
 } else {
     Assert-True $false 'the deadline run produced its JSON report'
 }
