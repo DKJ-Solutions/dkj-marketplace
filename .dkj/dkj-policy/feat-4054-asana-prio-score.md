@@ -39,21 +39,44 @@
 
 ### PLAN
 
+Inbound #4054: the owner (Dave, November 13, 2026) requires a Prio-Score on every Asana task
+`report-issue` creates. A new optional seam `Get-AsanaPrioFieldGid` names the board's number field (a GID,
+like the two other field seams, rather than a lookup by name). Step 2 sets it from the card's `How
+urgent` line, and `guard-asana-mirror` refuses a mirror that leaves it unset where the seam is answered.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `asana-mirror-gate.ps1`: `Read-ProjectConfigSeam` (one reader, `Get-ProjectReachLabel` now uses it), `Get-ProjectAsanaPrioFieldGid`, `Get-AsanaMirrorFieldState` (object or JSON-string `custom_fields`, per task in a batch)
+- [x] `guard-asana-mirror.ps1`: the Prio-Score refusal, before the tracker is asked; warned fail-open on an unreadable config or `custom_fields`
+- [x] `Get-AsanaMirrorToolInputText` drops a BOM before the opening brace: the suite's hook runs wrote one, so they never parsed
+- [x] `report-issue` step 2 and "Before you start", the adopt template, the README seam list, `WORKFLOW-portable.md` step 5 and step 7
 
 ### TEST
 
+- [x] `guard-asana-mirror.tests.ps1`: 64 pass, 13 new (field states, batch, seam reads, the hook's refusal)
+- [x] `asana-link-pickupcheck.tests.ps1`: 50 pass, the shared seam reader unchanged for the reach label
+- [ ] Victor's and Sebastian's reviews
+
 ### DEPLOY: feat/4054-asana-prio-score
 
-**Score:**
+`report-issue` now scores every Asana task it creates. A new optional seam, `Get-AsanaPrioFieldGid`,
+names the board's `Prio-Score` number field; where it is answered, step 2 sets the score on the same
+`create task` call from the card's `How urgent` line (blocking a sale 4, visible but not blocking 3,
+cosmetic 2, not customer-facing 1), and `guard-asana-mirror` refuses a mirror that leaves it unset. A
+ticket that came from Asana keeps its score, or gets one where it has none. Unset, the seam requires
+nothing. The guard's payload read also drops a byte-order mark before the JSON, which had made its own
+test runs pass without parsing.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A store repo that answers `Get-AsanaPrioFieldGid` gets every new card scored at filing, so its issue
+carries a `prio-N` label the same day instead of waiting for somebody to score it in Asana. Add the seam
+to `scripts/repo-config.ps1` to take it.
+
+**Score:** 3
 
 #### Pull Request
 
 bwj-development: report-issue sets the Asana Prio-Score on every task it creates, and the mirror guard refuses one without it
-
