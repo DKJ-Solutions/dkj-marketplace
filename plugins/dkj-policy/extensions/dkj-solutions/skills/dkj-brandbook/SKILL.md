@@ -150,6 +150,11 @@ page and dashboard is designed to that screen first:
   scarce. What the page is for goes in its `<meta name="description">`. An empty state that says a list is
   empty is content, not an intro, and stays. More than that, such as a plugin's description, goes behind a
   `.page-info-button` right of the `h1` (`.page-title`), shown on hover or focus (Maikel, October 31, 2026).
+  **Except in a content product** (Dave, November 13, 2026,
+  [#4051](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4051)): where the repo's own facts carry the
+  line `Content product (brand-book rule 5): yes.`, a page that sums up content for a reader may carry one plain
+  `<p>` under its `h1`, one or two sentences, no box. Its tool and admin pages keep the strict rule. The full
+  terms are rule 5 in the core README.
 - **The `h1` is never framed** (the owner, October 28, 2026): no border, outline, shadow or background
   on it, and the page's `h1` never sits inside a card, panel or bordered box. It stands on the page.
 - **No `code` element inside an `h1`, `h2` or `h3`** (Maikel, November 2, 2026): the fixed-width run

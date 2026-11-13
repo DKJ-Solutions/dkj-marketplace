@@ -39,21 +39,38 @@
 
 ### PLAN
 
+Inbound #4051 from dkj-lifehub: the owner set a news app as that product's model and decided an intro
+paragraph is allowed there (November 13, 2026). Rule 5 (#3585) forbade one in every DKJ-Solutions
+product. No lint reads rule 5, so the exception is text: the rule in the core README and its restatement
+in the `dkj-brandbook` skill. A repo opts in with one line in its own facts rule.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Core brand-book README, rule 5: the content-product exception, its terms, and how a repo declares it
+- [x] `dkj-brandbook` skill: the same exception, pointing at rule 5
 
 ### TEST
 
+- [x] The gates `ship-pr` runs (docs only; no lint reads rule 5)
+
 ### DEPLOY: docs/4051-content-product-lead
 
-**Score:**
+Brand-book rule 5 (no intro paragraph under a page's `h1`) gains one opt-in exception: a **content
+product**, whose pages brief a reader as a news app does, may carry one plain `<p>` of one or two
+sentences under the `h1` where the page sums up content for a reader. Its tool and admin pages keep the
+strict rule. A repo opts in with the line `Content product (brand-book rule 5): yes.` in its own facts
+rule; without it the strict rule holds. The core README's rule 5 and the `dkj-brandbook` skill both
+carry it.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions product built as a reader's briefing, such as dkj-lifehub, may now open a summary page
+with a short lead, once its repo declares itself a content product.
+
+**Score:** 2
 
 #### Pull Request
 
 Brand book rule 5: a content product may carry a short lead under its h1
-
