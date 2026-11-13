@@ -65,7 +65,7 @@ function Invoke-Hook {
     param([string]$Root, [string]$Slug, [string]$Secret, [string]$Pulls = $script:NoPulls)
     $hookArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $Hook,
         '-RepoRootOverride', $Root, '-TemplateRootOverride', $Templates, '-RepoSlugOverride', $Slug,
-        '-SecretNamesOverride', $Secret, '-PullDataOverride', $Pulls)
+        '-SecretNamesOverride', $Secret, '-PullDataOverride', $Pulls, '-PrepWaitSeconds', '0')
     $out = & powershell @hookArgs 2>&1 | ForEach-Object { "$_" }
     return [pscustomobject]@{ Text = ($out -join "`n"); Code = $LASTEXITCODE }
 }
@@ -227,18 +227,47 @@ try {
         $env:PATH = "$fakeGh;$savedPath"
         $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Hook -RepoRootOverride $ok `
             -TemplateRootOverride $Templates -RepoSlugOverride 'BWJ-Development/xoxowildhearts' `
-            -SecretNamesOverride 'ASANA_PAT' 2>&1 | ForEach-Object { "$_" }
+            -SecretNamesOverride 'ASANA_PAT' -PrepWaitSeconds 0 2>&1 | ForEach-Object { "$_" }
     } finally { $env:PATH = $savedPath }
     $text = $out -join "`n"
     Assert-True ($text -notmatch 'skipped due to an error') 'the live gh path parses lists of two without throwing (#3996)'
     Assert-True (($text -match 'xoxowildhearts#1126 links') -and ($text -match 'xoxowildhearts#1127 links')) 'and reports each open-after-merge issue it read'
+
+    # THE TREE IS READ AFTER THE TRUNK SYNC (#4041). The measured case: the files arrive in the same session
+    # start's fast-forward, which dkj-policy's dispatcher runs beside this hook and marks done in the session
+    # cache. The hook starts on a tree that lacks them; they land, then the mark, and nothing may be blamed.
+    . (Join-Path $RepoRoot 'scripts\lib\session-cache-lib.ps1')
+    $cacheRoot = Join-Path $Fixture 'session-cache'
+    $sid = [guid]::NewGuid().ToString()
+    $late = New-Store -Label 'late'
+    $hookArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $Hook, '-RepoRootOverride', $late,
+        '-TemplateRootOverride', $Templates, '-RepoSlugOverride', 'BWJ-Development/xoxowildhearts',
+        '-SecretNamesOverride', 'ASANA_PAT', '-PullDataOverride', $script:NoPulls, '-PrepWaitSeconds', '20',
+        '-SessionIdOverride', $sid, '-SessionCacheRootOverride', $cacheRoot)
+    $job = Start-Job -ScriptBlock { param($a) & powershell @a 2>&1 | ForEach-Object { "$_" } } -ArgumentList (, $hookArgs)
+    Start-Sleep -Seconds 3
+    $synced = New-Store -Label 'late' -Copy
+    $marked = Set-SessionPrepDone -SessionId $sid -Root $cacheRoot
+    $text = (@(Receive-Job -Job $job -Wait -AutoRemoveJob) -join "`n")
+    Assert-True $marked 'the fixture wrote the prep-done mark'
+    Assert-True ($text.Trim() -eq '') 'the measured case (#4041): files the trunk sync brings in are not reported missing'
+
+    # And the wait is bounded: no mark in time, and the tree is checked as it stands.
+    $clock = [System.Diagnostics.Stopwatch]::StartNew()
+    $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Hook -RepoRootOverride $none `
+        -TemplateRootOverride $Templates -RepoSlugOverride 'BWJ-Development/xoxowildhearts' -SecretNamesOverride 'ASANA_PAT' `
+        -PullDataOverride $script:NoPulls -PrepWaitSeconds 1 -SessionIdOverride ([guid]::NewGuid().ToString()) `
+        -SessionCacheRootOverride $cacheRoot 2>&1 | ForEach-Object { "$_" }
+    $clock.Stop()
+    Assert-True (($out -join "`n") -match 'xoxowildhearts has no \.github/workflows/asana-closed-message\.yml') 'no mark within the wait: the tree is checked as it stands'
+    Assert-True ($clock.Elapsed.TotalSeconds -lt 15) "and the wait ends at its cap ($([int]$clock.Elapsed.TotalSeconds) s)"
 
     # THE REAL ORIGIN READ, no slug override: an ssh origin naming a store is recognised as that store.
     $ssh = New-Store -Label 'ssh'
     Invoke-FixtureGitIn $ssh init -q
     Invoke-FixtureGitIn $ssh remote add origin 'git@github.com:BWJ-Development/smartwatchbanden.git'
     $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Hook -RepoRootOverride $ssh `
-        -TemplateRootOverride $Templates -SecretNamesOverride 'ASANA_PAT' -PullDataOverride $script:NoPulls 2>&1 | ForEach-Object { "$_" }
+        -TemplateRootOverride $Templates -SecretNamesOverride 'ASANA_PAT' -PullDataOverride $script:NoPulls -PrepWaitSeconds 0 2>&1 | ForEach-Object { "$_" }
     Assert-True (($out -join "`n") -match 'BWJ-Development/smartwatchbanden has no \.github/workflows') 'an ssh origin is read as owner/name and checked as a store'
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }
