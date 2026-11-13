@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**4 / 6 minor entries** <!-- pending-tally -->
+**5 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/drop-sessionstart-timing-line · 20261113-120126Z
+
+The session-start dispatcher no longer appends its `sessionstart: N s in the dispatcher -- ...` timing
+line to the message the person sees. What a session start shows is now the release check's line and
+the dev-preview hook's server ports; a start with nothing to say prints nothing at all. A check that
+hangs past the deadline is still named in the session's context.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A user of the plugin sees one line fewer at every session start, `/clear` and compaction.
+
+**Score:** 2
+
+#### Pull Request
+
+Session start shows only the release check and the local server ports
+
+Plugins: dkj-policy
+
+[PR #4050](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4050)
+
+---
 
 ### DEPLOY: feat/mobile-heading-sizes · 20261113-114737Z
 
