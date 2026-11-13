@@ -7,7 +7,7 @@ description: Check whether the brand book's colour variables in Figma still matc
 
 **The repo is the source and Figma is a mirror** (Dave, issue
 [#4038](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4038), November 12, 2026). Most of the colours
-in [`house-style.css`](../../../../assets/dkj-brandbook/house-style.css) are computed by
+in [`house-style.css`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/house-style.css) are computed by
 `build-house-palette.ps1` and held to their contrast floors by the `house-palette` suite, so an edit made in
 Figma would bypass both. **Nothing here writes a Figma value back into the stylesheet.** A colour wanted in
 Figma is a brand book change: an issue here, then the build, then this sync.
