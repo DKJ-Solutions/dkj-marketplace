@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**11 / 13 minor entries** <!-- pending-tally -->
+**12 / 14 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4067-reviews-noresolves-mirrored · 20261113-173722Z
+
+`issues-sweep-reviews` now tells a pass what to do with a parked issue the repo closes by hand: step 4
+says `open-pr` refuses `-Resolves` for an issue matching `Get-ResolvesExemptMatchers`, so that issue ships
+with `-NoResolves`, gets the mirror plugin's handover (`golive-block -Post` in `bwj-development`) while
+still open, and is then closed as completed. Step 6's receipt names it as closed by hand. Before this,
+every Asana-mirrored issue in a pass failed its first ship ([#4067](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4067)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+An owner running `/issues-sweep-reviews` in a store repo no longer meets a refused ship on every mirrored
+issue and has to work out the route from the refusal text.
+
+**Score:** 2
+
+#### Pull Request
+
+issues-sweep-reviews names the -NoResolves route for an issue the repo closes by hand
+
+Plugins: dkj-policy
+
+[PR #4068](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4068)
+
+---
 
 ### DEPLOY: feat/4048-mobile-back-header · 20261113-153249Z
 
