@@ -39,19 +39,41 @@
 
 ### PLAN
 
+Inbound #4067. Verified before the repair: `open-pr`'s resolves gate refuses `-Resolves` for an issue
+whose body matches `Get-ResolvesExemptMatchers` (`open-pr.ps1`, resolves-exempt gate), and
+`issues-sweep-reviews` step 4 prescribes `-Resolves` and states that the merge closes the issue, with no
+word on that route. `issues-sweep` step 6 already says the mirror's message comes before the close, so
+the gap is in the reviews skill alone.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `issues-sweep-reviews` step 4: a paragraph naming the `-NoResolves` route for an issue the repo
+      closes by hand, the mirror plugin's handover step (`golive-block -Post` in `bwj-development`)
+      before the hand close, where the preview link comes from, and that such a refusal is not a
+      held-out ship.
+- [x] Step 6's receipt names an issue closed by hand after a `-NoResolves` ship.
 
 ### TEST
 
+- [x] No gate pre-run (`issues-sweep` step 4): `ship-pr` runs the full gate before the push, and the
+      required CI check runs before the merge.
+
 ### DEPLOY: fix/4067-reviews-noresolves-mirrored
 
-**Score:**
+`issues-sweep-reviews` now tells a pass what to do with a parked issue the repo closes by hand: step 4
+says `open-pr` refuses `-Resolves` for an issue matching `Get-ResolvesExemptMatchers`, so that issue ships
+with `-NoResolves`, gets the mirror plugin's handover (`golive-block -Post` in `bwj-development`) while
+still open, and is then closed as completed. Step 6's receipt names it as closed by hand. Before this,
+every Asana-mirrored issue in a pass failed its first ship ([#4067](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4067)).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+An owner running `/issues-sweep-reviews` in a store repo no longer meets a refused ship on every mirrored
+issue and has to work out the route from the refusal text.
+
+**Score:** 2
 
 #### Pull Request
 

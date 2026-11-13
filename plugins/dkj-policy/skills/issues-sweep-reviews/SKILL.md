@@ -129,6 +129,18 @@ resolves it, and `ship-pr` verifies the close. Read the run's **last line**, nev
 exit code through a pipe ([`ship-pr`](../ship-pr/SKILL.md)). `ship-pr`'s own close-out is this issue's
 receipt, not the sweep's (#2562), so go on to step 5.
 
+**Where the repo closes an issue by hand, `-Resolves` is refused, so ship that one with `-NoResolves`**
+(#4067). A repo that mirrors its issues into a second tracker names them in `Get-ResolvesExemptMatchers`,
+and `open-pr`'s resolves gate then refuses any merge that would close one: *"close it by hand once the
+handover is on it"*. Read the issue's body before the ship. Where it carries what the refusal names (in
+`bwj-development`, an Asana task marker or link), run `ship-pr -NoResolves` with the same `-OwnerLook`.
+Then run the handover step of the plugin that owns the mirror, while the issue is still open: in
+`bwj-development` that is [`golive-block`](../../extensions/bwj-development/skills/golive-block/SKILL.md)
+with `-Post`. Take its preview link and path from the issue's thread or the branch document. Only then
+close the issue as completed. Measured November 13, 2026: in a pass over four parked issues, three carried
+an Asana marker, and the first ship was refused until it took this route. A refusal that says so is this
+route and not a refused ship in the sense below: the issue is not held out.
+
 **A refused ship holds the issue out, and does not put the label back.** A red gate or a conflict is not
 waiting on a look any more: it is work. Say on the issue in one comment what refused and where, leave
 the branch on `origin`, and let the next `issues-sweep` pick the issue up as `free`.
@@ -144,7 +156,8 @@ Then the next issue from step 0's list, in the same turn, until the list is empt
 
 ### 6. Close out once, after the list
 
-In the ordinary receipt shape: the PR number of each issue shipped, and the number of each one held out
+In the ordinary receipt shape: the PR number of each issue shipped (with a clause where the issue was
+closed by hand after a `-NoResolves` ship), and the number of each one held out
 with a clause for why (no branch, two branches, a claim that would not move, a refused ship).
 
 ## What it never does
