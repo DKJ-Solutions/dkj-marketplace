@@ -39,19 +39,44 @@
 
 ### PLAN
 
+Inbound #4057, the owner's own request: the reach label is given only with its reason written into the
+issue. Verified on pickup: report-issue step 1 asks for no written reason, and no hook reads a
+`gh issue create` / `gh issue edit` at all, so the proposal's three parts all stand. Built as proposed: a
+`## Why <reach label>` section in step 1, and a PreToolUse guard beside `guard-asana-mirror` that fails
+open where it cannot read the body (#2482's precedent). The parser reuses `ConvertTo-ShellSegments`
+from `stale-paste-block-rules.ps1`, and the label's name `Get-ProjectReachLabel`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/lib/reach-reason-rules.ps1`: `Get-ReachLabelInvocation`, `Test-ReachReasonSection`
+- [x] `hooks/guard-reach-reason.ps1` and its `hooks.json` entry behind a `gh issue create|edit` pre-filter
+- [x] `scripts/tests/guard-reach-reason.tests.ps1`, registered in `suite-groups.json` and `suite-durations.json`
+- [x] `report-issue` step 1, `WORKFLOW-portable.md`'s reach-label section, the README hook row, and the `Get-ReachLabel` consumer list in both copies of `script-contract-lib.ps1`
 
 ### TEST
 
+- [x] `guard-reach-reason.tests.ps1`: 49 passed, 0 failed
+
 ### DEPLOY: feat/4057-why-reach-label
 
-**Score:**
+`bwj-development` gives the reach label a written reason
+([#4057](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4057)). An issue that carries the
+reach label now says why in a `## Why <reach label>` section: who notices the defect, and what they
+notice. A new PreToolUse hook, `guard-reach-reason`, refuses a `gh issue create` or `gh issue edit` that
+adds the label on an admitted repo while the body the call leaves has no such section. It judges
+`--body`, `--body-file`, or the issue's current body, and it lets a body it cannot read through with a
+warning. Measured in `smartwatchbanden`: 35 issues were filed with `minor` between November 1 and 13,
+2026, and none said why.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A session in a store repo that labels an issue `minor` without a written reason is now stopped and shown
+the section to write, so every reach-labelled issue a colleague later reads on the board can be checked
+against its stated reason.
+
+**Score:** 4
 
 #### Pull Request
 
