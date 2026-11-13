@@ -40,7 +40,8 @@ function New-Store {
     New-Item -ItemType Directory -Force -Path (Join-Path $root '.github\workflows'), (Join-Path $root '.github\scripts') | Out-Null
     if ($Copy) {
         foreach ($p in @(@('asana-closed-message.yml', '.github\workflows'), @('asana-closed-message.ps1', '.github\scripts'),
-                         @('asana-prio-label.yml', '.github\workflows'), @('asana-prio-label.ps1', '.github\scripts'))) {
+                         @('asana-prio-label.yml', '.github\workflows'), @('asana-prio-label.ps1', '.github\scripts'),
+                         @('asana-open-section.yml', '.github\workflows'), @('asana-open-section.ps1', '.github\scripts'))) {
             $text = [System.IO.File]::ReadAllText((Join-Path $Templates $p[0])) -replace "`r`n", "`n"
             if ($Crlf) { $text = $text -replace "`n", "`r`n" }
             if ($Stale -and $p[0] -like '*.ps1') { $text += "`n# an older copy`n" }
@@ -105,6 +106,17 @@ try {
     $r = Invoke-Hook -Root $stalePrio -Slug 'BWJ-Development/xoxowildhearts' -Secret 'ASANA_PAT'
     Assert-True ($r.Text -match '\.github/scripts/asana-prio-label\.ps1 in BWJ-Development/xoxowildhearts differs from the template') 'a prio script that differs from the template is reported'
     Assert-True ($r.Text -notmatch 'asana-closed-message' -and $r.Text -notmatch 'workflows/asana-prio-label\.yml in') 'and only that file is named'
+
+    # THE OPEN-SECTION PAIR (#4056): asked of smartwatchbanden alone.
+    $noOs = New-Store -Label 'no-open-section' -Copy
+    Remove-Item -LiteralPath (Join-Path $noOs '.github\workflows\asana-open-section.yml'), (Join-Path $noOs '.github\scripts\asana-open-section.ps1')
+    $r = Invoke-Hook -Root $noOs -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT'
+    Assert-True ($r.Text -match '\[ERROR\] bwj-development: BWJ-Development/smartwatchbanden has no \.github/workflows/asana-open-section\.yml and \.github/scripts/asana-open-section\.ps1') 'smartwatchbanden missing the open-section pair is reported'
+    Assert-True ($r.Text -notmatch 'asana-closed-message|asana-prio-label') 'and the pairs in place are not named'
+    $r = Invoke-Hook -Root $noOs -Slug 'BWJ-Development/xoxowildhearts' -Secret 'ASANA_PAT'
+    Assert-True ($r.Text.Trim() -eq '') 'xoxowildhearts, which did not decide it, is never asked for the open-section pair'
+    $r = Invoke-Hook -Root $noOs -Slug 'BWJ-Development/smartwatchbanden' -Secret 'CLAUDE_CODE_OATH_TOKEN'
+    Assert-True ($r.Text -match 'and asana-open-section cannot move a card') 'and its missing secret names the open-section sweep too'
 
     # THE RESOLVES-EXEMPT SEAM (#2959): a store config without Get-ResolvesExemptMatchers is reported; one
     # that defines it, or a store with no repo-config at all (every case above), is not.
@@ -204,6 +216,41 @@ try {
     $r = Invoke-Hook -Root $ok -Slug 'DKJ-Solutions/dkj-marketplace' -Secret 'ASANA_PAT' -Pulls $pulls
     Assert-True ($r.Text.Trim() -eq '') 'and the finding is not asked of a repo outside the reach'
 
+    # A REACH-LABELLED ISSUE WITHOUT A CARD (#4053). The measured case: smartwatchbanden, 34 of 35 reach-labelled
+    # issues filed since November 1 named no Asana task; #1224, which came from a ticket, did.
+    $reachIssues = @(
+        @{ number = 1283; body = 'Belgium pop-up.'; labels = @(@{ name = 'bug' }, @{ name = 'minor' }) },
+        @{ number = 1257; body = 'Klarna button.'; labels = @(@{ name = 'Minor' }) },
+        @{ number = 1224; body = $linked; labels = @(@{ name = 'minor' }) },
+        @{ number = 1300; body = 'Developer-only.'; labels = @(@{ name = 'bug' }) },
+        @{ number = 1301; body = 'Two tasks: https://app.asana.com/0/1/1200000000000001 https://app.asana.com/0/1/1200000000000002'; labels = @(@{ name = 'minor' }) },
+        @{ number = 1302; body = 'Read without labels.' })
+    $p = New-PullData -Label 'reach' -Issues $reachIssues
+    $r = Invoke-Hook -Root $ok -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT' -Pulls $p
+    Assert-True ($r.Text -match "\[ERROR\] bwj-development: BWJ-Development/smartwatchbanden has 2 open issue\(s\) carrying the reach label 'minor' with no Asana task linked: #1257, #1283\.") 'the measured case (#4053): reach-labelled issues with no card are reported, ascending, the label matched case-insensitively'
+    Assert-True ($r.Text -notmatch '#1224|#1300|#1301|#1302') 'an issue with a card, without the label, naming several tasks, or read without labels is left out'
+    Assert-True ($r.Text -notmatch 'Belgium|Klarna') 'and no issue body is printed'
+    Assert-True ($r.Code -eq 0) 'the finding still exits 0'
+
+    $seamed = New-Store -Label 'seamed' -Copy
+    New-Item -ItemType Directory -Force -Path (Join-Path $seamed 'scripts') | Out-Null
+    [System.IO.File]::WriteAllText((Join-Path $seamed 'scripts\repo-config.ps1'),
+        "function Get-ResolvesExemptMatchers { @() }`nfunction Get-ReachLabel { 'tier-1' }`n")
+    $p = New-PullData -Label 'tier' -Issues @(
+        @{ number = 7; body = 'x'; labels = @(@{ name = 'minor' }) }, @{ number = 8; body = 'y'; labels = @(@{ name = 'tier-1' }) })
+    $r = Invoke-Hook -Root $seamed -Slug 'BWJ-Development/xoxowildhearts' -Secret 'ASANA_PAT' -Pulls $p
+    Assert-True (($r.Text -match "has 1 open issue\(s\) carrying the reach label 'tier-1'[^\n]*: #8\.") -and ($r.Text -notmatch '#7')) 'the label is the one Get-ReachLabel answers, not the default'
+
+    [System.IO.File]::WriteAllText((Join-Path $seamed 'scripts\repo-config.ps1'),
+        "function Get-ResolvesExemptMatchers { @() }`nthrow 'broken config'`n")
+    $r = Invoke-Hook -Root $seamed -Slug 'BWJ-Development/xoxowildhearts' -Secret 'ASANA_PAT' -Pulls $p
+    Assert-True (($r.Text -notmatch 'reach label') -and ($r.Text -notmatch 'skipped due to an error')) 'a config that cannot be read leaves the finding out rather than guessing the name'
+
+    $many = @(1..17 | ForEach-Object { @{ number = 2000 + $_; body = 'z'; labels = @(@{ name = 'minor' }) } })
+    $p = New-PullData -Label 'many' -Issues $many
+    $r = Invoke-Hook -Root $ok -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT' -Pulls $p
+    Assert-True (($r.Text -match 'has 17 open issue\(s\)') -and ($r.Text -match '#2015 and 2 more\.') -and ($r.Text -notmatch '#2016')) 'a long list names the first fifteen and counts the rest'
+
     # THE LIVE gh PATH (#3996): -PullDataOverride parses one object, so it never took Get-PullData's
     # per-list parse, where PS 5.1's ConvertFrom-Json wrapped each list as ONE element and the [int] cast
     # threw on every store session start. A stand-in gh.cmd first on PATH serves lists of TWO, the shape
@@ -217,7 +264,8 @@ try {
     [System.IO.File]::WriteAllText((Join-Path $fakeGh 'open.json'),
         (ConvertTo-Json -Depth 5 -InputObject @(@{ headRefName = 'feat/9-a' }, @{ headRefName = 'feat/10-b' })))
     [System.IO.File]::WriteAllText((Join-Path $fakeGh 'issues.json'),
-        (ConvertTo-Json -Depth 5 -InputObject @(@{ number = 1126; body = $linked }, @{ number = 1127; body = $linked })))
+        (ConvertTo-Json -Depth 5 -InputObject @(@{ number = 1126; body = $linked; labels = @(@{ name = 'minor' }) },
+            @{ number = 1127; body = 'no task'; labels = @(@{ name = 'minor' }, @{ name = 'bug' }) })))
     [System.IO.File]::WriteAllText((Join-Path $fakeGh 'gh.cmd'), ("@echo off`r`n" +
         "if `"%1`"==`"issue`" (type `"%~dp0issues.json`" & exit /b 0)`r`n" +
         "if `"%6`"==`"merged`" (type `"%~dp0merged.json`" & exit /b 0)`r`n" +
@@ -231,7 +279,8 @@ try {
     } finally { $env:PATH = $savedPath }
     $text = $out -join "`n"
     Assert-True ($text -notmatch 'skipped due to an error') 'the live gh path parses lists of two without throwing (#3996)'
-    Assert-True (($text -match 'xoxowildhearts#1126 links') -and ($text -match 'xoxowildhearts#1127 links')) 'and reports each open-after-merge issue it read'
+    Assert-True ($text -match 'xoxowildhearts#1126 links') 'and reports the open-after-merge issue it read'
+    Assert-True ($text -match "has 1 open issue\(s\) carrying the reach label 'minor' with no Asana task linked: #1127\.") 'and the live path reads each issue''s labels list (#4053)'
 
     # THE TREE IS READ AFTER THE TRUNK SYNC (#4041). The measured case: the files arrive in the same session
     # start's fast-forward, which dkj-policy's dispatcher runs beside this hook and marks done in the session

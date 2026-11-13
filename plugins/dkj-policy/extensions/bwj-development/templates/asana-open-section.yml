@@ -1,0 +1,46 @@
+# Copied from bwj-development/templates/asana-open-section.yml into
+# .github/workflows/asana-open-section.yml, beside .github/scripts/asana-open-section.ps1.
+#
+# Keeps the Asana task of every OPEN issue out of the sections that come before the board's Filed
+# section (#4056, Dave, November 13, 2026): a card a person dragged back into an earlier section while its
+# issue is still open is moved into Filed again. It never moves a card that sits later, a completed task,
+# or one in NeedsInfo while the issue carries the needs-info label. It writes nothing on GitHub. See
+# bwj-development/WORKFLOW-portable.md, step 6.
+name: asana-open-section
+
+on:
+  schedule:
+    # Once a day, after asana-prio-label's sweep (06:17).
+    - cron: "37 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  # READ: the script file and the repo's own scripts/repo-config.ps1, whose stage map it reads as text.
+  contents: read
+  # READ: the open issues and their labels. Nothing is written on GitHub.
+  issues: read
+
+# One sweep at a time; a newer arrival waits rather than racing the running one over the same cards.
+concurrency:
+  group: asana-open-section
+  cancel-in-progress: false
+
+jobs:
+  open-section:
+    runs-on: ubuntu-latest
+    # A job with no timeout-minutes runs to GitHub's six-hour default (#2296), holding ASANA_PAT.
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The job needs the script and the seam file and nothing else from git, so the token is not
+          # left in .git/config.
+          persist-credentials: false
+
+      - name: Move the card of an open issue that sits before Filed into Filed
+        shell: pwsh
+        env:
+          ASANA_PAT: ${{ secrets.ASANA_PAT }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ./.github/scripts/asana-open-section.ps1

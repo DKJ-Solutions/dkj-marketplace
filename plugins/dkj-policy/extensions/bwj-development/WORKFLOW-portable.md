@@ -947,14 +947,14 @@ customer-facing 1), so its issue gets its `prio-N` the same day instead of waiti
 it. `guard-asana-mirror` refuses a mirror that leaves the field unset. The team changes the score in Asana
 as before, and the label follows whatever Asana says.
 
-### 6. (Retired October 5, 2026; two moves back October 21 and 27, 2026) The board's sections are moved automatically only into InReview and InDevelopment
+### 6. (Retired October 5, 2026; three moves back October 21 and 27 and November 13, 2026) The board's sections are moved automatically only into InReview, InDevelopment and Filed
 
 The board's numbered sections are still the stages a colleague reads, from *a colleague put this on your
 name* to *tested and good*, and `Get-AsanaStageMap` still names what each number means. **But no workflow
 sweeps a card between them any more** (Dave, October 5, 2026): the stage sweep, the three GitHub Project
 statuses that drove it, the `ReadyToTest` promotion on feedback and the terminal-stage guard are retired
-with the mirror, and `Get-GithubStatusMap` is no longer read. **The tooling writes three sections, and
-each on one event only.** `report-issue` creates the card in `Filed` and reads the stage map to find it.
+with the mirror, and `Get-GithubStatusMap` is no longer read. **The tooling writes three sections, each
+on named events only.** `report-issue` creates the card in `Filed` and reads the stage map to find it.
 **A close as completed that carries this round's go-live, research, measurement or already-fixed block
 moves the card into `InReview`** (#3248, Maikel, October 21, 2026), after the closed message has posted,
 because that message tells the requester the task is now in review. It is never made on a `-ByHand` close,
@@ -965,7 +965,18 @@ incomplete where it is completed** (#3562, Dave, October 27, 2026), after the re
 posted, because that message tells the requester the task is back in development. Unlike the review move
 it does take a card out of `Completed`: a reopen is exactly the case where the done card is wrong. Where
 the task is on several boards, or its board has no single section with the `InDevelopment` code, the move
-is skipped, and the message and the untick still go out. Every other move is a person dragging the card.
+is skipped, and the message and the untick still go out. **And while an issue is open, its card is kept
+out of the sections before `Filed`** (#4056, Dave, November 13, 2026): the copied `asana-open-section`
+workflow sweeps every open issue once a day and moves a card that sits in a section only stages before
+`Filed` carry (the inbox, `NeedsInfo`) into `Filed`. It never moves a card that sits later, a completed
+task, a task on several boards, or a card in `NeedsInfo` while the issue carries the map's
+`NeedsInfoLabel` or `awaiting-info-client`, because that card waits on its requester. **On a board where
+`Filed` shares its section with the inbox, which is the default, there is no earlier section and the
+sweep moves nothing.** A board that wants every open issue shown as in progress answers `Filed` with the
+same code as `InDevelopment` in `Get-AsanaStageMap`: `report-issue` then places a new card in progress,
+and the sweep keeps it there when a person drags it back. Like the other workflows it needs `ASANA_PAT`
+only, because the Asana MCP has no call that moves a task between sections. Every other move is a person
+dragging the card.
 
 The two ends were always the submitter's -- their untriaged inbox at one end and `Completed` at the other
 -- and that is unchanged: **this plugin never ticks a task off** (step 4). The reopen's untick only ever
@@ -1152,6 +1163,14 @@ the other direction -- no card without the label -- and since
 [#2940](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2940) `asana-link-pickupcheck` names
 a linked issue that lacks it, with the line that adds it.
 
+**And a reach-labelled issue that never got its card is named at every session start**
+([#4053](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4053)). `guard-asana-mirror` fires only
+on a create-task call, so a session that filed with a plain `gh issue create`, or dropped step 2 when
+Asana was out of reach, left nothing behind to say so. Measured in `smartwatchbanden`, November 13, 2026:
+34 of 35 reach-labelled issues filed since November 1 had no card. `closed-message-sessioncheck` now lists
+the open issues that carry the reach label and link no task; the remedy is `report-issue`'s steps 2-3, or
+taking the label off where it was wrong.
+
 After filing, only a completed close with a block moves the card, and only into `InReview` (step 6), so a
 person moves it through the other sections as the ticket progresses.
 
@@ -1276,7 +1295,8 @@ matters, more than one market.
   message came back (#2818): it is the one moment the
   requester has something to do, and the block it carries is already written by then. The reopened
   message came back beside it (#2854), because without it a requester goes on testing a result that is
-  being reworked.
+  being reworked. The open-section sweep came back on November 13 (#4056), narrowed to one direction:
+  it keeps an open issue's card from sitting before `Filed`, and moves nothing anywhere else.
 - **The block before the close, and not at it**, because the close is the only event a person in this
   chain actually performs, and hanging the composition on it put the paragraph underneath an item that
   had already left every open-issue view. Writing it first turns the close into a **receipt** -- the

@@ -140,6 +140,11 @@ what was missing: add it, then create the task again. Where `gh` cannot answer, 
 through with a warning naming the issue it could not check. A wrong card is cheap to remove, while a
 board that stalls whenever the tracker is unreachable costs the whole colleague-facing half.
 
+**The other direction -- a reach label with no card -- is caught after the fact, not at the call**
+([#4053](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4053)). A hook can only stop a call
+that is made, and a skipped step 2 makes none. So `closed-message-sessioncheck` lists, at every session
+start, the open issues that carry the reach label and link no task. Each one is this step still owed.
+
 **Removing a wrong card means reading it first, and sometimes only unlinking it** (inbound
 [#2508](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2508)). Before you offer or run a
 delete, read the task on the Asana side: whether it is completed, whether it has human comments, which
