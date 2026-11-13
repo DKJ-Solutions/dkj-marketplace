@@ -1142,6 +1142,14 @@ the other direction -- no card without the label -- and since
 [#2940](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2940) `asana-link-pickupcheck` names
 a linked issue that lacks it, with the line that adds it.
 
+**And a reach-labelled issue that never got its card is named at every session start**
+([#4053](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4053)). `guard-asana-mirror` fires only
+on a create-task call, so a session that filed with a plain `gh issue create`, or dropped step 2 when
+Asana was out of reach, left nothing behind to say so. Measured in `smartwatchbanden`, November 13, 2026:
+34 of 35 reach-labelled issues filed since November 1 had no card. `closed-message-sessioncheck` now lists
+the open issues that carry the reach label and link no task; the remedy is `report-issue`'s steps 2-3, or
+taking the label off where it was wrong.
+
 After filing, only a completed close with a block moves the card, and only into `InReview` (step 6), so a
 person moves it through the other sections as the ticket progresses.
 

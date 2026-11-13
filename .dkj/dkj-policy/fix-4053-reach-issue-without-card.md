@@ -39,19 +39,43 @@
 
 ### PLAN
 
+Inbound #4053: a reach-labelled issue that never got its Asana card goes undetected. Verified on
+pickup: `guard-asana-mirror` holds only issue -> card at the create-task call (#2482), and
+`asana-link-pickupcheck` only card -> issue (#2940). `build-backlog-page` does list an open reach issue
+with no mirrored task, but only when somebody runs it, so the report's "nothing detects it" is true of
+everything that runs on its own. The report's second ask, a loud report when step 2 cannot reach Asana,
+is already prescribed by report-issue ("still do step 1, then stop with a clear note"), so this branch
+does not touch it. Repair: a sixth finding in `closed-message-sessioncheck`, read from the open-issue
+list finding 5 already fetches.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `closed-message-sessioncheck.ps1`: finding 6 (`Get-ReachWithoutCardFindings`), issues read with `labels`, reach label read through `Get-ProjectReachLabel`
+- [x] `closed-message-sessioncheck.tests.ps1`: the measured case, the seam's label, an unreadable config, the fifteen-number cap, and the live gh path's labels list
+- [x] README hook row, `WORKFLOW-portable.md` and `report-issue` name the label -> card check
 
 ### TEST
 
+- [x] `closed-message-sessioncheck.tests.ps1`: 56 passed, 0 failed
+
 ### DEPLOY: fix/4053-reach-issue-without-card
 
-**Score:**
+`bwj-development`'s session check `closed-message-sessioncheck` now names, at every session start in a
+store or `phone-factory`, the open issues that carry the reach label and link no Asana task
+([#4053](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4053)). Until now nothing that runs on
+its own noticed a skipped `report-issue` step 2: `guard-asana-mirror` stops only a card without the
+label, and only at the call. Measured in `smartwatchbanden`: 34 of 35 reach-labelled issues filed since
+November 1 had no card. The finding reuses the open-issue list the check already reads, so it costs no
+extra `gh` call.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A store's maintainer sees a new `[ERROR]` line at session start, listing every open reach-labelled issue
+whose card is still owed, until `report-issue`'s steps 2-3 have run for each of them.
+
+**Score:** 3
 
 #### Pull Request
 
