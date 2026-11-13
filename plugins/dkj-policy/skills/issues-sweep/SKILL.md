@@ -74,7 +74,7 @@ disagree you follow it and say so.
 ### 1. Choose -- and it writes nothing
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/claim-issue.ps1" -Candidates -SkipLabel awaiting-info-client,awaiting-decision-dev,awaiting-decision-client,awaiting-review-dev,awaiting-review-client,awaiting-pull,awaiting-pull-external,awaiting-action-external,awaiting-action-dev,awaiting-release,awaiting-release-external,awaiting-recurrences-first,awaiting-recurrences,awaiting-first-recurrence,awaiting-more-recurrences,awaiting-more-info,needs-info,needs-decision,awaiting-decision,awaiting-recurrence,record,dossier,awaiting-owner-act,awaiting-event
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/claim-issue.ps1" -Candidates -SkipLabel awaiting-info-client,awaiting-decision-dev,awaiting-decision-client,awaiting-review-dev,awaiting-review-client,awaiting-pull,awaiting-pull-external,awaiting-action-external,awaiting-action-dev,awaiting-release,awaiting-release-external,awaiting-recurrences-first,awaiting-session-dev,awaiting-recurrences,awaiting-first-recurrence,awaiting-more-recurrences,awaiting-more-info,needs-info,needs-decision,awaiting-decision,awaiting-recurrence,record,dossier,awaiting-owner-act,awaiting-event
 ```
 
 It prints every open issue as `free`, `mine`, `held`, `branch`, `stale-park` or `skipped` with the reason, and names
@@ -168,12 +168,25 @@ Where an installed extension closes an act-only issue instead of parking it (`bw
 #3062), that extension's close applies in place of `awaiting-action-dev`, under that extension's own
 conditions and with the act, and who performs it, recorded on the issue.
 
+**A `free` issue that is workable but too large for one sweep turn is parked as `awaiting-session-dev`**
+([#4066](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4066)). It waits on nothing outside,
+only on a session of its own. The test: the remaining work cannot finish within one sweep turn, because
+it needs several independent measurements or more than one branch. **Work that only needs a capability
+the session lacks does not qualify**; verify first that the capability really is missing (a missing
+capability is usually a default). Park it the same way, with a `-Reason` that names the remaining steps
+(`-Park awaiting-session-dev -Reason "a dedicated session -- <the steps left>"`), so the next session reads
+that comment and not the whole thread. A sweep never lifts this label: a person, or a session told to work
+that issue, removes it and claims it. Measured November 13, 2026 (BWJ-Development/smartwatchbanden#1306):
+a site-speed issue with three measurements left was released and held out with `-SkipIssue`, and the owner
+read it as skipped, when it was waiting on a session.
+
 `-SkipIssue` lasts one run and writes nothing, so a wait held out that way is judged again by every
 sweep after it. Measured October 6, 2026
 ([xoxowildhearts](https://github.com/BWJ-Development/xoxowildhearts)): five of six `free` issues
 were held out for the same reasons the previous day's sweep had held them out for. With the label, the
 next sweep's step 1 reads them as `skipped`. **`-SkipIssue` stays for a hold-out that is not a wait**,
-such as a source ticket you could not read. Where the tracker does not carry the label yet,
+such as a source ticket you could not read; an issue too large for the turn is not one, and takes
+`awaiting-session-dev` above. Where the tracker does not carry the label yet,
 `adopt-triage-labels` prints the line that creates it.
 
 ### 2. Claim it

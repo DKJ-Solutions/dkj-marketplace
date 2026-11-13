@@ -157,8 +157,8 @@ branch prefix maps to, which `open-pr` applies (step 2); the canonical triage la
 (below).
 Priority is one of those triage labels, but nothing here decides anything on it, and `task/adopt-triage-labels.ps1`
 prints (never creates) a `gh label create` line for whichever of the canonical triage labels your tracker
-is missing (the four `prio-1`..`prio-4` rungs, `awaiting-recurrences`, `awaiting-decision-dev`, `awaiting-decision-client`, `awaiting-review-dev`, `awaiting-review-client`, `awaiting-pull`, `awaiting-pull-external`, `awaiting-action-external`, `awaiting-action-dev`, `awaiting-release`, `awaiting-release-external` and
-`awaiting-recurrences-first`), so adopting the convention costs one command instead of sixteen typed by hand.
+is missing (the four `prio-1`..`prio-4` rungs, `awaiting-recurrences`, `awaiting-decision-dev`, `awaiting-decision-client`, `awaiting-review-dev`, `awaiting-review-client`, `awaiting-pull`, `awaiting-pull-external`, `awaiting-action-external`, `awaiting-action-dev`, `awaiting-release`, `awaiting-release-external`,
+`awaiting-recurrences-first` and `awaiting-session-dev`), so adopting the convention costs one command instead of seventeen typed by hand.
 A session start says so in one line when any of them is missing or in a non-canonical colour
 (`triage-labels-sessioncheck`, #3882), so the gap shows before a sweep's `gh issue edit --add-label` fails on it.
 Where your `scripts/repo-config.ps1` answers `Get-TriageLabels` itself, that answer must still name every
@@ -242,8 +242,8 @@ label's name moved. Six things follow from being a record:
   the one recurrence that reopens is `awaiting-recurrences-first`'s, below, which takes the label off.
 - **A record is parked** (Dave, September 30, 2026). It waits on its next instance or its root cause,
   and no single repair closes it, so a sweep that picks one up finds nothing to build. Both pickup routes
-  skip `awaiting-recurrences` by default, exactly as they skip `awaiting-decision-dev`, `awaiting-decision-client`, `awaiting-review-dev`, `awaiting-review-client`, `awaiting-pull`, `awaiting-pull-external`, `awaiting-action-external`, `awaiting-action-dev`, `awaiting-release`, `awaiting-release-external` and
-  `awaiting-recurrences-first`. Working a
+  skip `awaiting-recurrences` by default, exactly as they skip `awaiting-decision-dev`, `awaiting-decision-client`, `awaiting-review-dev`, `awaiting-review-client`, `awaiting-pull`, `awaiting-pull-external`, `awaiting-action-external`, `awaiting-action-dev`, `awaiting-release`, `awaiting-release-external`,
+  `awaiting-recurrences-first` and `awaiting-session-dev`. Working a
   record is a deliberate assignment, named by its number.
 
 **`awaiting-decision-dev` parks an issue that ends in the owner's choice, and it is set when the issue is filed**
@@ -401,6 +401,17 @@ run. It is a new label, so no former name is matched for it.
   comment's `waiting on` clause and reports `stale-park` once that repo has published a release after the
   comment ([#3572](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3572)). It is a new label,
   so no former name is matched for it.
+
+**`awaiting-session-dev` parks an issue that is workable but too large for one sweep turn**
+([#4066](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4066), Dave, November 13, 2026). Nothing
+outside is awaited, only a session of its own: the remaining work needs several independent measurements or
+more than one branch. Held out with `-SkipIssue` instead, it wrote nothing, read as skipped to the owner,
+and was judged again from zero by every sweep after. Work that only needs a capability the session lacks
+does not qualify. The parking comment names the remaining steps, both pickup routes skip it, and
+`claim-issue <n>` warns on it. **A sweep never lifts it**: a person, or a session told to work that issue,
+removes the label and claims it. The name stretches *awaiting*, and the owner chose it over
+`needs-own-session` and `too-big-for-sweep` to keep the `awaiting-<what>-<who>` family whole. It is a new
+label, so no former name is matched for it.
 
 **The reach label is the third of the workflow's own sets, and the only one with an axis of its own.**
 An issue that will land above tier 0 carries it, and `minor` is its default name. It is prescribed beside

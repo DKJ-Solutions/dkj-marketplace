@@ -39,19 +39,42 @@
 
 ### PLAN
 
+Issue #4066, name decided by the owner on the issue (davekokbwj, 2026-11-13): `awaiting-session-dev`.
+Land it where #3515 landed `awaiting-release-external`: the canonical set, both pickup routes' skip
+lists (so `-Park` accepts it), the docs that enumerate the family, and the issues-sweep skill's test for
+when to use it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `awaiting-session-dev` added to `Get-TriageLabels` (`scripts/repo-config.ps1`) and to `adopt-triage-labels.ps1`'s built-in fallback, both mirrors
+- [x] Added to the `-Candidates` skip list and the single-issue route's default `$SkipLabel` in `claim-issue.ps1`, so a sweep skips it, a claim warns on it, and `-Park` accepts it
+- [x] `issues-sweep` SKILL: the label, the test for using it (too large for one turn, not a missing capability), the park line, and who lifts it
+- [x] Docs that list the family: `claim-issue` SKILL, `CONTRIBUTING-portable.md`, `scripts/README.md`, the script-contract text, the blueprint (rebuilt), Chris's and Derek's lenses
+- [x] `repo-config.tests.ps1` now holds every canonical description to GitHub's 100-character limit: the first draft of this label's description was 109 characters, and `gh label create` refused it with HTTP 422
+- [x] Tests: label counts and the expected set in `adopt-triage-labels.tests.ps1` and `repo-config.tests.ps1`; the `$SkipLabel` literal in `claim-issue.tests.ps1`
 
 ### TEST
 
+The gates run inside `ship-pr`.
+
 ### DEPLOY: feat/4066-awaiting-session-dev
 
-**Score:**
+A new parking label, `awaiting-session-dev`, for an issue that can be worked on but is too large for
+one sweep turn: several independent measurements, or more than one branch. `issues-sweep` parks such an
+issue with `claim-issue -Tag -Park awaiting-session-dev -Reason "<the steps left>"` instead of holding it
+out with `-SkipIssue`, which wrote nothing, read to the owner as skipped, and made every later sweep judge it
+again. Both pickup routes skip it, a claim warns on it, and a person or a session told to work it lifts it.
+`adopt-triage-labels` now prints it among the canonical labels ([#4066](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4066)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+An owner reading a sweep's close-out sees an oversized issue parked under a label that says what it
+needs, with the steps still to do in its parking comment, rather than an issue that looks skipped. Each consumer's
+session-start check reports the new label as missing until `adopt-triage-labels` has created it.
+
+**Score:** 2
 
 #### Pull Request
 

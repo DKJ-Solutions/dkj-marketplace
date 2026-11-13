@@ -1345,6 +1345,14 @@ function Get-ExpectedRepoSettings {
 # the release, and the label comes off once that release is out and the step has run. Nothing lists it
 # on its own: the other repo's cut reads only its own tracker. New, so no former name; same purple, same
 # 'copy' reasoning.
+# AND A SEVENTEENTH, A TWELFTH PARKING LABEL: 'awaiting-session-dev' (issue #4066, Dave November 13, 2026).
+# An issue that IS workable but is too large for one sweep turn -- several independent measurements, or
+# more than one branch -- waits on nothing outside, so none of the others fits; held out with -SkipIssue it
+# wrote nothing, read as "skipped" to the owner, and was judged again from zero by every sweep after. The
+# sweep route skips it, and a person (or a session told to work that issue) lifts it and claims it. The
+# name stretches 'awaiting' -- what it waits on is a dedicated session -- and the owner chose it over
+# 'needs-own-session' and 'too-big-for-sweep' to keep the awaiting-<what>-<who> family whole. New, so no
+# former name; same purple, same 'copy' reasoning.
 $script:TriageLabels = @(
     [pscustomobject]@{ Name = 'prio-1'; Color = 'FFA726'; Description = 'Priority 1 of 4 (lowest) -- nobody is waiting for it' }
     [pscustomobject]@{ Name = 'prio-2'; Color = 'F57C00'; Description = 'Priority 2 of 4 -- worth doing, no pressure' }
@@ -1362,16 +1370,17 @@ $script:TriageLabels = @(
     [pscustomobject]@{ Name = 'awaiting-release'; Color = '5319E7'; Description = 'Waiting on the next release -- parks the issue so no session picks it up' }
     [pscustomobject]@{ Name = 'awaiting-release-external'; Color = '5319E7'; Description = 'Waiting on a release of another repo -- parks the issue so no session picks it up' }
     [pscustomobject]@{ Name = 'awaiting-recurrences-first'; Color = '5319E7'; Description = 'Waiting on a first reproducible recurrence -- parks the issue so no session picks it up' }
+    [pscustomobject]@{ Name = 'awaiting-session-dev'; Color = '5319E7'; Description = 'Workable, but needs a dedicated session -- parks the issue so no sweep picks it up' }
 )
 
 function Get-TriageLabels {
     <# The canonical triage labels this workflow's consumers are invited to share -- the four
        priority rungs 'prio-1' (lowest) through 'prio-4' (highest), plus 'awaiting-recurrences', the kind label for
-       a collecting issue, and the eleven parking labels 'awaiting-decision-dev' (an issue awaiting the owner's
+       a collecting issue, and the twelve parking labels 'awaiting-decision-dev' (an issue awaiting the owner's
        choice), 'awaiting-decision-client' (an issue awaiting a choice from the client or requester outside the
        dev team), 'awaiting-review-dev' (an issue awaiting the dev's look at a visible result), 'awaiting-review-client' (an issue awaiting the client's look), 'awaiting-pull' (an issue awaiting another issue's pull request), 'awaiting-pull-external' (an issue awaiting a pull request outside this repo until its work is available here), 'awaiting-action-external' (an issue
        awaiting an external event or date), 'awaiting-action-dev' (an issue awaiting an act only the owner
-       performs), 'awaiting-release' (an issue awaiting the next release), 'awaiting-release-external' (an issue awaiting a release of another repo) and 'awaiting-recurrences-first' (an issue awaiting its first reproducible recurrence) -- as an array of objects with Name, Color and Description (the exact fields
+       performs), 'awaiting-release' (an issue awaiting the next release), 'awaiting-release-external' (an issue awaiting a release of another repo), 'awaiting-recurrences-first' (an issue awaiting its first reproducible recurrence) and 'awaiting-session-dev' (a workable issue too large for one sweep turn, awaiting a dedicated session) -- as an array of objects with Name, Color and Description (the exact fields
        a `gh label create` call needs). Read by adopt-triage-labels.ps1, which composes and prints the
        create command for whichever of them this repo's tracker is missing; it never creates a label
        itself. Optional in the script contract -- a consumer that has not answered this seam gets the
