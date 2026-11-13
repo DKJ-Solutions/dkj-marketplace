@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Six radius steps had three within 4px of each other; the owner chose one step per role (Dave, November 13,
+2026): small element 4px, control 8px, container 12px, plus the pill. Visible result: parked for the owner's
+look before the merge.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-style.css`: drop `--radius-1-5`, `--radius-2-5`, `--radius-4`; every use moves to `--radius-2` / `--radius-3`
+- [x] `house-product.css`, `goals-lib.ps1`, `specimens.html`, `dev-pages-lib.ps1`: the same moves
+- [x] `Get-HouseStyleRetiredTokens`: the three names retired, so a consumer's leftover use is reported
+- [x] Brand book README: the token row and a migration section with the table
+- [x] Figma `Scale`: the three variables rebound to `radius/2` / `radius/3` on every page and removed
 
 ### TEST
 
+- [x] `dev-pages` (753) and `check-house-style` (169) suites green; the house-style lint green
+- [ ] Owner looks at the result in Admin before the merge
+
 ### DEPLOY: feat/radius-three-steps
 
-**Score:**
+The brand book's radius scale is cut from six steps to three plus the pill, one per role: `--radius-1` (4px)
+for a small element, `--radius-2` (8px) for a control, `--radius-3` (12px) for a container. `--radius-1-5`
+folds into `--radius-2`, and `--radius-2-5` and `--radius-4` into `--radius-3`; the three old names are
+retired tokens, so the house-style gate reports a use left behind. The migration table is in the brand book
+README, and the Figma library's `Scale` collection carries the same four steps.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+An app that takes this brand book renames each use of the three retired radius tokens in its own layer, and
+its controls, small cards and dialogs change their corners (6 to 8px, 10 to 12px, 16 to 12px).
+
+**Score:** 4
 
 #### Pull Request
 

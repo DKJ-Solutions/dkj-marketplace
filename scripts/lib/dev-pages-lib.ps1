@@ -517,7 +517,7 @@ $script:ProductBrandbookTokenGroups = @(
 $script:ProductBrandbookTokenPreviews = @{
     color = @('--primary', '--primary-muted', '--bg-1', '--bg-2', '--bg-3', '--bg-4', '--fg-1', '--fg-2', '--fg-3', '--fg-4', '--graph-1', '--graph-2', '--graph-3')
     text  = @('--text-xs', '--text-sm', '--text-base', '--text-h3', '--text-h2', '--text-h1')
-    scale = @('--radius-1', '--radius-2', '--radius-3', '--radius-4', '--radius-pill')
+    scale = @('--radius-1', '--radius-2', '--radius-3', '--radius-pill')
 }
 
 function Get-ProductBrandbookTokenCards {

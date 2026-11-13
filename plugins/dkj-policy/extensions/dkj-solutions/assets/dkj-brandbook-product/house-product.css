@@ -58,7 +58,7 @@
    on top of a dialog sets --dialog-scale smaller. The page behind stands still while one is open. */
 .dialog { width: calc(min(100vw, var(--column-narrow)) * var(--dialog-scale, 0.95)); max-width: none; max-height: calc(100% - var(--spacing-8));
   margin: auto; padding: 0; overflow-y: auto; overscroll-behavior: contain; text-align: left;
-  color: var(--fg-1); background: var(--bg-2); border: 1px solid var(--bg-3); border-radius: var(--radius-4); }
+  color: var(--fg-1); background: var(--bg-2); border: 1px solid var(--bg-3); border-radius: var(--radius-3); }
 .dialog::backdrop { background: var(--bg-1); opacity: 0.45; }
 html:has(dialog:modal) { overflow: hidden; }
 /* The padding sits in the body, so a tap on empty space in the dialog never counts as a tap outside it. */
@@ -93,7 +93,7 @@ html:has(dialog:modal) { overflow: hidden; }
    the left only. Its head is as tall as the top bar, with a line under it across the full width,
    and the close button sits in the middle of that head. */
 .dialog--drawer { width: min(352px, calc(100% - 48px)); height: 100%; max-height: 100%; margin: 0 0 0 auto;
-  border-width: 0 0 0 1px; border-radius: var(--radius-4) 0 0 var(--radius-4); touch-action: pan-y; animation: house-drawer-in 220ms ease-out; }
+  border-width: 0 0 0 1px; border-radius: var(--radius-3) 0 0 var(--radius-3); touch-action: pan-y; animation: house-drawer-in 220ms ease-out; }
 .dialog--drawer .dialog__body { display: flex; flex-direction: column; min-height: 100%; box-sizing: border-box;
   padding-top: calc(var(--spacing-4) + env(safe-area-inset-top)); padding-bottom: calc(var(--spacing-4) + env(safe-area-inset-bottom)); }
 .dialog--drawer .dialog__head { box-sizing: border-box; height: var(--topbar-h); min-height: 0; margin: calc(-1 * var(--spacing-4)) calc(-1 * var(--spacing-4)) 0;
@@ -287,7 +287,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .question-head + p { margin: 0 0 var(--spacing-1-5); }
 /* .amount is gone into .num (Maikel, November 1, 2026): a figure with a small icon beside it is a .num with the svg in it. */
 /* Answer box: the result of a calculation, a label and the figure in --primary on the tint. */
-.answer { display: flex; align-items: center; gap: var(--spacing-3); margin-top: var(--spacing-2); padding: var(--spacing-2) var(--spacing-3); border-radius: var(--radius-2-5); background: var(--bg-3); }
+.answer { display: flex; align-items: center; gap: var(--spacing-3); margin-top: var(--spacing-2); padding: var(--spacing-2) var(--spacing-3); border-radius: var(--radius-3); background: var(--bg-3); }
 .answer__label { flex: 1; font-weight: var(--font-weight-bold); }
 .answer__value { font-size: var(--text-h3); font-weight: var(--font-weight-bold); color: var(--primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
 /* A value the app changed for you flashes once, in --primary-muted and fading out. */
@@ -336,7 +336,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .combo__glass { grid-row: 1; grid-column: 1; z-index: 2; justify-self: end; align-self: center; margin-right: var(--spacing-3); color: var(--fg-1); pointer-events: none; }
 .combo__input:focus ~ .combo__glass { display: none; }
 .combo__list { grid-row: 2; margin: var(--spacing-1-5) 0 0; padding: var(--spacing-1); list-style: none; background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); }
-.combo__option { display: flex; flex-direction: column; justify-content: center; min-height: var(--tap); padding: var(--spacing-1-5) var(--spacing-2-5); border-radius: var(--radius-1-5);
+.combo__option { display: flex; flex-direction: column; justify-content: center; min-height: var(--tap); padding: var(--spacing-1-5) var(--spacing-2-5); border-radius: var(--radius-2);
   font-size: var(--text-base); line-height: 1.3; overflow-wrap: anywhere; cursor: pointer; }
 .combo__name { color: var(--fg-1); }
 .combo__meta { font-size: var(--text-sm); color: var(--fg-1); }
@@ -468,7 +468,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .calc--boxed .calc__what { padding-left: var(--spacing-2); }
 .calc--boxed .calc__op { padding-inline: var(--spacing-1); }
 .calc--boxed .calc__num { padding-inline: var(--spacing-2); }
-.calc__box { margin: 0; padding: var(--gutter, var(--spacing-1-5)) 0; border: 1.5px solid var(--bg-4); border-radius: var(--radius-2-5); }
+.calc__box { margin: 0; padding: var(--gutter, var(--spacing-1-5)) 0; border: 1.5px solid var(--bg-4); border-radius: var(--radius-3); }
 .calc--boxed .calc__box > .calc__row, .calc--boxed .calc__box > .calc__box { grid-column: 2 / -2; }   /* boxes only exist in a boxed calculation */
 .calc__box > .calc__row:last-child { border-bottom: 0; }
 .calc__result { border-bottom: 0; }
