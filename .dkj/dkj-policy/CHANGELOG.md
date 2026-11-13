@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**2 / 3 minor entries** <!-- pending-tally -->
+**2 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4038-figma-token-sync · 20261113-090937Z
+
+A new `figma-tokens` skill keeps the brand book's colour variables in Figma in step with `house-style.css`,
+in one direction ([#4038](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4038)). A read-only drift
+check runs a script through the Figma MCP's `use_figma` on the brand book's Figma file and compares what it
+returns with the stylesheet, per theme: missing, extra and differing collections, modes, values and aliases.
+On request, a sync script writes the stylesheet's values into the file's existing layout (`House / Palette
+light`, `House / Palette dark` and the aliasing `House / Theme`), creating and overwriting but never deleting.
+Colour tokens only. The first check found the file in sync: 3 collections, 75 variables.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+N/A: the skill runs in this repo against the brand book's own Figma file, and nothing a consumer runs changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+Skill: check and sync brand book colour tokens to Figma variables
+
+Plugins: dkj-solutions
+
+[PR #4045](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4045)
+
+---
 
 ### DEPLOY: docs/4040-wireframe-token-mapping · 20261113-015209Z
 
