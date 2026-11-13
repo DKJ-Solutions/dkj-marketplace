@@ -364,6 +364,10 @@ Two departures from the library followed on October 20, 2026: its `h0` was retir
 and its 24px `h3` was retired with every level below it moving up one.
 **No heading is larger than 36px** (owner's decision, October 22, 2026, at 32px; 36px since November 1, 2026, Maikel): every pixel of a 900px-high screen goes to content,
 so `h1` came down from 48px to `h2`'s 32px, and the hero figure with it. The target screen is now about 1300 x 900 (the owner, October 27, 2026, after 1400 x 600 from October 26; rule 4 under [How to use it](#how-to-use-it)), which makes the reason stronger.
+**On a phone the headings step down a size** (Dave, November 13, 2026): below the 760px breakpoint the
+grids already use, `--text-h1` is 28px, `--text-h2` and `--text-title` 18px; `--text-h3` stays 16px and the
+body sizes do not move. The Figma library's `Scale` collection carries the same pair as its `Desktop` and
+`Mobile` modes, with the `text/` and `font-weight/` variables the text styles bind to.
 **The `h1` is in the body sans and its own case, at the bold weight** (`--font-weight-bold`; it was `--font-weight-black` for part of November 1, 2026, until every black rule moved to bold the same day, Maikel) (owner's decision, October 24, 2026). From
 October 21, 2026 ([#3247](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3247)) it was set in
 capitals, and before that day in `--font-serif`; both went, so it stands apart from the `h2` by its size and

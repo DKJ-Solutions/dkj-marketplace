@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**3 / 5 minor entries** <!-- pending-tally -->
+**4 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/mobile-heading-sizes · 20261113-114737Z
+
+On a phone (760px and narrower) the headings step down a size: `--text-h1` 36 → 28px, `--text-h2`
+and `--text-title` 20 → 18px. `--text-h3` and the body sizes do not move. The Figma library carries
+the same pair as the `Desktop` and `Mobile` modes of its `Scale` collection.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every DKJ-Solutions app that takes this brand book shows smaller headings on a phone, so more of a
+page fits on the first screen.
+
+**Score:** 3
+
+#### Pull Request
+
+Headings step down a size on a phone
+
+Plugins: dkj-policy
+
+[PR #4049](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4049)
+
+---
 
 ### DEPLOY: feat/4046-one-text-token · 20261113-105442Z
 
