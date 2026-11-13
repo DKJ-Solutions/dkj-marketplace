@@ -57,6 +57,7 @@ from `stale-paste-block-rules.ps1`, and the label's name `Get-ProjectReachLabel`
 
 - [x] Victor's review: two false refusals found and repaired -- a body built at run time (`$body`, `"$(cat b.md)"`, `(Get-Content ...)`) and a create whose body comes from `--template`, `--recover`, `--web` or `--editor` now pass with a warning instead of being refused; both are regression cases in the suite
 - [x] `guard-reach-reason.tests.ps1`: 58 passed, 0 failed
+- [x] `guard-stale-paste-block.tests.ps1` counted the shell-tool PreToolUse entries at two; the gate caught it, and the count is now three (156 passed)
 
 ### DEPLOY: feat/4057-why-reach-label
 
