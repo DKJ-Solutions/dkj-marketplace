@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**2 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4040-wireframe-token-mapping · 20261113-015209Z
+
+The brand book README now maps every colour of the Figma `Wireframe` collection to the house token it
+becomes, and each variable carries the same mapping in its Figma description
+([#4040](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4040)). The wireframes stay grey and
+are not aliased. The two wireframe text greys both become `--primary-muted`, because the brand book has
+one tone for what may recede.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A: the mapping guides how Admin's visual design is made in this repo, and nothing a consumer runs changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+Wireframe colour variables: the role mapping to the house tokens, in Figma and in the brand book README
+
+Plugins: dkj-policy
+
+[PR #4044](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4044)
+
+---
 
 ### DEPLOY: fix/4041-closed-message-waits-for-trunk-sync · 20261113-012644Z
 
