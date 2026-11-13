@@ -43,6 +43,15 @@
          changing code for it (#3059). Three gh reads; any failed read leaves the finding out.
     Anywhere else it is silent: dkj-marketplace runs the ticket chapter without either workflow.
 
+    IT READS THE TREE AFTER THE TRUNK SYNC, NOT BESIDE IT (inbound #4041, November 13, 2026). This hook is
+    its own SessionStart entry, so the harness runs it beside dkj-policy's sessioncheck-dispatch.ps1, whose
+    trunk-sync-sessionprep fast-forwards the trunk. Measured in xoxowildhearts: this check reported the prio
+    pair and Get-ResolvesExemptMatchers missing, and the same session start then fast-forwarded main by 34
+    commits that brought both in. So in a repo it checks, it first waits (at most -PrepWaitSeconds) for the
+    dispatcher's prep-done mark in the session cache, as dev-preview-sessionstart.ps1 does for the product
+    server (#3657). No session id, no cache library in this plugin's payload, or no mark in time: it checks
+    the tree as it stands, as before. Silent repos are left before the wait, so they pay nothing.
+
     A SECRET IT CANNOT READ IS NOT A MISSING SECRET. Listing secrets needs more than read access, and
     gh may be absent or offline. Any failed read leaves finding 3 out, rather than reporting a gap
     that may not exist.
@@ -74,6 +83,16 @@
     That file is parsed as one object, so it never takes the live path's per-list parse; the suite
     reaches that path through a stand-in gh on PATH instead (#3996).
 
+.PARAMETER PrepWaitSeconds
+    How long to wait for the trunk sync's prep-done mark (#4041); 0 checks at once and reads no stdin.
+    Default 20, the dev-preview hook's own cap, well inside this hook's 60 s timeout.
+
+.PARAMETER SessionIdOverride
+    (For tests) The session id instead of the one in the hook's stdin payload.
+
+.PARAMETER SessionCacheRootOverride
+    (For tests) The session cache folder instead of the per-user one.
+
     Pure ASCII (repo convention for .ps1).
 #>
 [CmdletBinding()]
@@ -82,7 +101,10 @@ param(
     [string]$TemplateRootOverride = '',
     [string]$RepoSlugOverride = '',
     [string[]]$SecretNamesOverride = $null,
-    [string]$PullDataOverride = ''
+    [string]$PullDataOverride = '',
+    [ValidateRange(0, 50)][int]$PrepWaitSeconds = 20,
+    [string]$SessionIdOverride = '',
+    [string]$SessionCacheRootOverride = ''
 )
 
 Set-StrictMode -Version Latest
@@ -120,6 +142,26 @@ function Get-VisibleSecretNames {
 function Get-NormalizedText {
     param([string]$Path)
     return ([System.IO.File]::ReadAllText($Path) -replace "`r`n", "`n")
+}
+
+function Wait-TrunkSyncPrep {
+    <#
+        Waits until dkj-policy's dispatcher marks its prep steps (the trunk fast-forward) done for this
+        session, or -Seconds pass (#4041). Advisory, like the mark itself: a missing lib, an unreadable
+        payload or no mark in time ends the wait, never the check.
+    #>
+    param([int]$Seconds, [string]$SessionId, [string]$CacheRoot)
+    if ($Seconds -le 0) { return }
+    try {
+        . (Join-Path $PSScriptRoot '..\scripts\lib\session-cache-lib.ps1')
+        if (-not $SessionId) { $SessionId = Get-HookSessionId }
+        if (-not $SessionId) { return }
+        $until = (Get-Date).AddSeconds($Seconds)
+        while (-not (Test-SessionPrepDone -SessionId $SessionId -Root $CacheRoot)) {
+            if ((Get-Date) -ge $until) { return }
+            Start-Sleep -Milliseconds 250
+        }
+    } catch { }
 }
 
 function Get-PullData {
@@ -190,6 +232,8 @@ try {
     if (-not $slug) { exit 0 }
     $name = ($slug -split '/')[-1].ToLowerInvariant()
     if ($ClosedMessageRepos -notcontains $name) { exit 0 }
+
+    Wait-TrunkSyncPrep -Seconds $PrepWaitSeconds -SessionId $SessionIdOverride -CacheRoot $SessionCacheRootOverride
 
     $remedy = "Run the 'adopt-bwj-development' skill"
     # One group per workflow, so a finding names the files of ONE workflow and says what that workflow's

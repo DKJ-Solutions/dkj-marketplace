@@ -1022,6 +1022,27 @@ function Get-SharedScriptPairs {
             LibOnly = $true
         },
         @{
+            # THE PREP-DONE MARK, READ FROM A SECOND PLUGIN (inbound #4041, November 13, 2026).
+            # bwj-development's closed-message-sessioncheck.ps1 is its own SessionStart entry, so the
+            # harness runs it beside dkj-policy's dispatcher, and it read a store's .github/ and
+            # repo-config.ps1 before trunk-sync-sessionprep fast-forwarded them in: measured in
+            # xoxowildhearts, two of three [ERROR]s were about files the same session start brought in.
+            # It now waits for the dispatcher's mark, as dev-preview-sessionstart.ps1 does (#3657), so it
+            # needs the reader in ITS OWN plugin: a mirror resolves its siblings inside the plugin it
+            # landed in. The hook loads it guarded, so an older payload without it checks at once, as
+            # before. hash-hex-lib-bwj below is its unguarded sibling, for the reason hash-hex-lib gives.
+            Name    = 'session-cache-lib-bwj'
+            Source  = 'scripts\lib\session-cache-lib.ps1'
+            Plugin  = 'bwj-development'
+            LibOnly = $true
+        },
+        @{
+            Name    = 'hash-hex-lib-bwj'
+            Source  = 'scripts\lib\hash-hex-lib.ps1'
+            Plugin  = 'bwj-development'
+            LibOnly = $true
+        },
+        @{
             # DOES A CI RUNNER FOLD OFF A PUSH TO THE TRUNK? (issue #2087, September 17, 2026) -- the
             # question that decides whether a shipping session which cannot fold locally has LOST the
             # fold or handed it over. ship-pr.ps1 step 0a refused every ship while another worktree held

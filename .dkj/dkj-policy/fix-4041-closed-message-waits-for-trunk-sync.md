@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Inbound #4041: `closed-message-sessioncheck` (bwj-development) reported files missing that the same
+session start's trunk fast-forward then brought in. Cause verified: it is a separate SessionStart
+entry, so the harness runs it beside dkj-policy's dispatcher, whose prep step does the fast-forward.
+Repair: wait for the dispatcher's prep-done mark, the mechanism #3657 built for the dev-preview hook.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Mirror `session-cache-lib.ps1` and `hash-hex-lib.ps1` into bwj-development (registry + generator)
+- [x] `closed-message-sessioncheck.ps1` waits (at most 20 s, store repos only) for the prep-done mark
 
 ### TEST
 
+- [x] `closed-message-sessioncheck.tests.ps1`: the measured case (files land, then the mark) is silent;
+  no mark in time checks the tree as it stands, within the cap. 48 passed, 0 failed.
+
 ### DEPLOY: fix/4041-closed-message-waits-for-trunk-sync
 
-**Score:**
+`closed-message-sessioncheck` now waits for dkj-policy's trunk sync before it reads a store's tree
+([#4041](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4041)). It ran as its own SessionStart
+entry beside the dispatcher, so in xoxowildhearts it reported the prio-label pair and
+`Get-ResolvesExemptMatchers` missing, and the same session start then fast-forwarded `main` by 34
+commits that brought both in. It now waits up to 20 s for the dispatcher's prep-done mark, as the
+dev-preview hook does (#3657), with `session-cache-lib` and `hash-hex-lib` mirrored into bwj-development.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A maintainer of a BWJ store stops getting `[ERROR]` lines at session start for files the same
+session start brings in. Those lines made them re-run `adopt-bwj-development` for work already merged,
+and taught them to skip the one error that was real.
+
+**Score:** 2
 
 #### Pull Request
 
