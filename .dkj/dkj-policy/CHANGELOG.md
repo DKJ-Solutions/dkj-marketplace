@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**6 / 8 minor entries** <!-- pending-tally -->
+**7 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4053-reach-issue-without-card · 20261113-132840Z
+
+`bwj-development`'s session check `closed-message-sessioncheck` now names, at every session start in a
+store or `phone-factory`, the open issues that carry the reach label and link no Asana task
+([#4053](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4053)). Until now nothing that runs on
+its own noticed a skipped `report-issue` step 2: `guard-asana-mirror` stops only a card without the
+label, and only at the call. Measured in `smartwatchbanden`: 34 of 35 reach-labelled issues filed since
+November 1 had no card. The finding reuses the open-issue list the check already reads, so it costs no
+extra `gh` call.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A store's maintainer sees a new `[ERROR]` line at session start, listing every open reach-labelled issue
+whose card is still owed, until `report-issue`'s steps 2-3 have run for each of them.
+
+**Score:** 3
+
+#### Pull Request
+
+bwj-development: report an open reach-labelled issue that has no Asana card at session start
+
+Plugins: bwj-development
+
+[PR #4058](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4058)
+
+---
 
 ### DEPLOY: docs/4051-content-product-lead · 20261113-130659Z
 
