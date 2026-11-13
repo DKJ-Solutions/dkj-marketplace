@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**2 / 4 minor entries** <!-- pending-tally -->
+**3 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4046-one-text-token · 20261113-105442Z
+
+The brand book has one text colour: `--fg-1`. `--fg-2`, `--fg-3` and `--fg-4` were steps so close to it that
+they could not be told apart, and the Figma wireframes already map all text to one token. `h2`, `h3` and
+`.meta` move to `--fg-1`; a quieter text stays `--primary-muted`. The three old names are retired tokens, so
+the house-style gate reports a use left behind. The README's stale line that `h2` and `h3` are `--primary` is
+corrected ([#4046](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4046)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+An app that takes this brand book renames each use of `--fg-2`, `--fg-3` or `--fg-4` in its own layer to
+`--fg-1` (or `--primary-muted` for a quiet text); its `h2`, `h3` and `.meta` become a shade stronger.
+
+**Score:** 3
+
+#### Pull Request
+
+Brand book: one text colour, fg-2..4 retired
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4047](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4047)
+
+---
 
 ### DEPLOY: feat/4038-figma-token-sync · 20261113-090937Z
 
