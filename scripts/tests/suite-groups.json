@@ -115,6 +115,7 @@
                                       "check-plugin-integrity-skill-spans.tests.ps1",
                                       "fix-mojibake.tests.ps1",
                                       "house-palette.tests.ps1",
+                                      "figma-tokens.tests.ps1",
                                       "param-binding-strictness.tests.ps1",
                                       "roster-sync.tests.ps1",
                                       "script-contract.tests.ps1",
