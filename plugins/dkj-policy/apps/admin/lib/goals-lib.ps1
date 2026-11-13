@@ -238,7 +238,7 @@ $script:GoalsPageStyle = '.goal { display: grid; gap: var(--spacing-4); }' + "`n
     '.goal-next__title { font-weight: var(--font-weight-bold); }' + "`n" +
     '.goal-next__meta { color: var(--primary-muted); font-size: var(--text-sm); }' + "`n" +
     '.goal-milestones { display: grid; gap: var(--spacing-2); }' + "`n" +
-    '.goal-milestone { border: 1px solid var(--bg-3); border-radius: var(--radius-1-5); }' + "`n" +
+    '.goal-milestone { border: 1px solid var(--bg-3); border-radius: var(--radius-2); }' + "`n" +
     '.goal-milestone[open] { background: var(--bg-2); }' + "`n" +
     '.goal-milestone > summary { display: flex; gap: var(--spacing-4); align-items: center; padding: var(--spacing-3); cursor: pointer; list-style: none; }' + "`n" +
     '.goal-milestone > summary::-webkit-details-marker { display: none; }' + "`n" +

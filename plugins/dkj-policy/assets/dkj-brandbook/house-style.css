@@ -149,10 +149,11 @@
   --control-lg: 52px;     /* the large stepper in a dialog (.stepper--lg) */
   --datecol: 10ch;        /* the fixed date column of .date-row: fits "09:00-10:30" at 12px, so titles line up down a list */
 
-  /* corner radii, same in both modes, named like the spacing scale: --radius-N is N x 4px, a half step adds 2px
-     (owner, October 31, 2026); --radius-pill rounds the ends fully. The Brand-book components use these
+  /* corner radii, same in both modes, named like the spacing scale: --radius-N is N x 4px (owner, October 31, 2026).
+     Three steps, one per role, since November 13, 2026 (Dave): --radius-1 a small element, --radius-2 a control,
+     --radius-3 a container; --radius-pill rounds the ends fully. The Brand-book components use these
      (the older classes above keep their literals) */
-  --radius-1: 4px; --radius-1-5: 6px; --radius-2: 8px; --radius-2-5: 10px; --radius-3: 12px; --radius-4: 16px; --radius-pill: 999px;
+  --radius-1: 4px; --radius-2: 8px; --radius-3: 12px; --radius-pill: 999px;
   /* the face of code and pre */
   --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
   /* the four font weights, same in both modes (Maikel, November 1, 2026): light 300, regular 500, bold 700,
@@ -376,7 +377,7 @@ p { margin: 0; }
 .tile { background: var(--bg-2); border: 1px solid var(--bg-3); border-radius: var(--radius-3); padding: var(--spacing-3-5) var(--spacing-4); }
 .tile .label { color: var(--primary-muted); font-size: var(--text-sm); }   /* a quiet grey, as .note: the figure leads (owner, October 20, 2026) */
 .tile .v { font-size: var(--text-h3); font-weight: var(--font-weight-bold); margin-top: var(--spacing-0-5); }
-.mini-card { border: 1px solid var(--bg-3); border-radius: var(--radius-2-5); padding: var(--spacing-3) var(--spacing-3-5); }
+.mini-card { border: 1px solid var(--bg-3); border-radius: var(--radius-3); padding: var(--spacing-3) var(--spacing-3-5); }
 .mini-card--highlight { border-color: var(--warning-3); }
 .mini-card__label { font-size: var(--text-sm); color: var(--fg-1); }
 .mini-card__value { font-size: var(--text-h3); font-weight: var(--font-weight-bold); margin: var(--spacing-0-5) 0 var(--spacing-2); font-variant-numeric: tabular-nums; }
@@ -636,9 +637,9 @@ p { margin: 0; }
 .shell__bar .breadcrumbs [aria-current='page'] { color: var(--primary-muted); }
 .shell__actions { display: flex; align-items: center; gap: var(--spacing-2); flex: none; }
 /* The settings button, small: the 44px touch size is for a phone, and Admin has none. */
-.shell__bar .theme-settings__toggle { width: var(--spacing-8); height: var(--spacing-8); border-radius: var(--radius-1-5); }
+.shell__bar .theme-settings__toggle { width: var(--spacing-8); height: var(--spacing-8); border-radius: var(--radius-2); }
 .shell__bar .theme-settings__toggle svg { width: var(--spacing-4-5); height: var(--spacing-4-5); }
-.shell .btn { padding: var(--spacing-0-5) var(--spacing-2); line-height: var(--spacing-5); border-radius: var(--radius-1-5); }
+.shell .btn { padding: var(--spacing-0-5) var(--spacing-2); line-height: var(--spacing-5); border-radius: var(--radius-2); }
 
 /* ---- The side navigation: flat, under section headings (#3815) ------------------- */
 /* After the Shopify Admin and the wireframe's sidebar: a brand row, the search field, Home and the domain
@@ -647,11 +648,11 @@ p { margin: 0; }
 .shell__nav { grid-column: 1; grid-row: 1 / -1; display: flex; flex-direction: column; gap: var(--spacing-5); min-width: 0; overflow-y: auto;
   padding: var(--spacing-5) var(--spacing-4); background: var(--bg-2); border-right: 1px solid var(--bg-4); }
 .shell__brand { display: flex; align-items: center; gap: var(--spacing-2); padding-left: var(--spacing-1); color: var(--fg-1); font-size: var(--text-h3); font-weight: var(--font-weight-bold); text-decoration: none; }
-.shell__brand__mark { flex: none; width: var(--spacing-7); height: var(--spacing-7); border-radius: var(--radius-1-5); background: var(--primary); }
+.shell__brand__mark { flex: none; width: var(--spacing-7); height: var(--spacing-7); border-radius: var(--radius-2); background: var(--primary); }
 .nav-section { display: flex; flex-direction: column; gap: var(--spacing-0-5); }
 .nav-list { display: flex; flex-direction: column; gap: var(--spacing-0-5); margin: 0; padding: 0; list-style: none; }
 .nav-item { display: flex; align-items: center; gap: var(--spacing-2); width: 100%; padding: var(--spacing-2) var(--spacing-3);
-  background: none; border: 0; border-radius: var(--radius-1-5); color: var(--fg-1); font: inherit; text-align: left; text-decoration: none; white-space: nowrap; cursor: pointer; }
+  background: none; border: 0; border-radius: var(--radius-2); color: var(--fg-1); font: inherit; text-align: left; text-decoration: none; white-space: nowrap; cursor: pointer; }
 .nav-item:hover { background: var(--bg-3); }
 .nav-item:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: -2px; }
 .nav-item[aria-current="page"] { background: var(--bg-3); color: var(--primary); font-weight: var(--font-weight-bold); }
@@ -664,7 +665,7 @@ p { margin: 0; }
 /* The search field at the top of the navigation (#3817), after the Shopify Admin's: a box on --bg-1 with the
    field and its shortcut, Ctrl K, at the right. The ring is on the box, so the shortcut sits inside it. */
 .nav-search { display: flex; align-items: center; gap: var(--spacing-2); margin: 0; padding: var(--spacing-2) var(--spacing-3);
-  background: var(--bg-1); border: 1px solid var(--bg-5); border-radius: var(--radius-1-5); }
+  background: var(--bg-1); border: 1px solid var(--bg-5); border-radius: var(--radius-2); }
 .nav-search:focus-within { outline: 2px solid var(--primary-muted); outline-offset: 1px; }
 .nav-search__input { flex: 1; min-width: 0; padding: 0; background: none; border: 0; color: var(--fg-1); font: inherit; font-size: var(--text-sm); }
 .nav-search__input:focus { outline: none; }
@@ -679,7 +680,7 @@ p { margin: 0; }
 .toolbar { display: flex; align-items: center; gap: var(--spacing-2); min-width: 0; height: var(--spacing-9); padding: 0 var(--spacing-8); border-bottom: 1px solid var(--bg-3); }
 .toolbar > h1, .toolbar__title { margin: 0; font-size: var(--text-h3); white-space: nowrap; }   /* the page's one h1, set at the toolbar's size: a pane title, not a headline */
 .toolbar__filter { width: var(--spacing-52); max-width: 40%; height: var(--spacing-6); padding: 0 var(--spacing-2); background: var(--bg-1); color: var(--fg-1);
-  border: 1px solid var(--bg-5); border-radius: var(--radius-1-5); font: inherit; font-size: var(--text-sm); }
+  border: 1px solid var(--bg-5); border-radius: var(--radius-2); font: inherit; font-size: var(--text-sm); }
 .toolbar__filter:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 1px; }
 .toolbar__end { display: flex; align-items: center; gap: var(--spacing-1); margin-left: auto; }
 /* The list always takes the pane's second, flexible row, so it scrolls whether a .toolbar stands over it or (the

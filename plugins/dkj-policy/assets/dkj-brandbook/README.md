@@ -190,7 +190,7 @@ primary outweighs its text has spent the accent as ground.
 | Type | `--text-h1` … `--text-h3`, `--text-base`, `--text-sm`, `--text-xs`, `--text-title` | the type scale, same in both modes. `--text-title` (20px, the `h2` size since November 2, 2026) is the site header's name alone, a step of its own so the header can be tuned without moving every `h2` (Dave, November 2, 2026; it was `--text-h3`). The rest: 36/20/16 for the headings since November 2, 2026 (Maikel; [below](#more-room-and-a-smaller-h2-november-2-2026)), 36/22/16 from November 1 ([below](#the-type-scale-of-november-1-2026)), 32/18/14 before (`h3` at 14px, the body size, and no `h4` or `h5` since October 25, 2026, the owner: [below](#the-heading-cut-of-october-25-2026)) (`h2` 18px since October 25, 2026, the owner; it went from 32 at weight 600 to 24 at 700 on October 24, and keeps the 700), and `.lead` was `--text-base` from the same day (it was `--text-lg`) until it was retired on November 1, 2026 (Maikel), 14/12/11 for running text (`--text-lg`, 18px, was retired on November 1, 2026). `h1`–`h3` each take the token of their own level, body text is `--text-base`. No heading is larger than 32px (owner's decision, October 22, 2026: as much content as possible on a 900px-high screen, since October 27 one of about 1300 x 900), so `h1` stands apart by its size and colour (by its capitals too until October 24, 2026); it was 48px from October 20, when `--text-h0` was retired. The hero figure is set at `--text-h1`. There is no `h6` either: the 24px `h3` was retired the same day, because it stood too close to `h2`, and every level below moved up one ([below](#the-heading-shift-of-october-20-2026)). The section label (`GroupHeading`), a heading at `--text-base`, uppercase and muted (owner's decision, October 15, 2026), was the one exception until November 1, 2026, when it went (Maikel): the house has one `h3`. `--font-serif` was the face of `h1` and `h2` until October 24, 2026, when the owner moved both to the sans; it stayed for a title that kept that face, none did, and it was retired on November 1, 2026 (Maikel) |
 | Font family | `--font-mono` | a typeface, not a size: the fixed-width face the house sets `code` and `pre` in, and an app takes for figures or ids that must line up by character. The body face is not a token; it is set on `body` |
 | Font weight | `--font-weight-light` 300, `--font-weight-regular` 500, `--font-weight-bold` 700, `--font-weight-black` 900 | the four weights, same in both modes (Maikel, November 1, 2026; bold and black were named semibold and bold until the same day): raised the same day from 400, 600 and 700/800. A rule sets a weight only through one of these four, never a number: what was 300 is light, 400 regular (body text too), 600 semibold, 700 and 800 bold. No house rule sets `--font-weight-black` since the same day: every rule that did now sets `--font-weight-bold` (Maikel), and the token stays for an app that wants it |
-| Radius | `--radius-1` … `--radius-4`, `--radius-pill` | the corner radii, same in both modes and named like the spacing scale: `--radius-N` is N × 4px, a half step adds 2px, so `--radius-1` 4px, `--radius-1-5` 6px, `--radius-2` 8px, `--radius-2-5` 10px, `--radius-3` 12px; `--radius-pill` rounds the ends fully. Named `xs` to `lg` with a `md-plus` until October 31, 2026 ([below](#the-radius-rename-of-october-31-2026)) |
+| Radius | `--radius-1` … `--radius-3`, `--radius-pill` | the corner radii, same in both modes and named like the spacing scale: `--radius-N` is N × 4px, one step per role: `--radius-1` 4px for a small element, `--radius-2` 8px for a control, `--radius-3` 12px for a container; `--radius-pill` rounds the ends fully. Named `xs` to `lg` with a `md-plus` until October 31, 2026 ([below](#the-radius-rename-of-october-31-2026)), and cut to three steps on November 13, 2026 ([below](#the-radius-scale-of-november-13-2026)) |
 | App shell | `--control-h`, `--tap`, `--topbar-h`, `--column-narrow` | sizes for a mobile-first app, same in both modes: 38px for a value field and the button beside it, 44px as the smallest touch target, 56px for the top bar, 512px for the narrow app column |
 
 `--gain` was removed (October 14, 2026). A gain in a chart is `--positive-3` (owner's decision, October 15, 2026, #131); before that it was `--cat-1`.
@@ -426,6 +426,23 @@ half step adds 2px, so a name says its size and a new step has an obvious name. 
 **An app that takes this update renames each use in its own layer** by the table. The old names are retired
 tokens, so the gate reports a use left behind; one that slips past renders with square corners rather than an
 error.
+
+### The radius scale of November 13, 2026
+
+**Three radius steps, one per role, plus the pill** (Dave, November 13, 2026). Six steps had three of them
+within 4px of each other (4, 6 and 8px) and two more 2px apart (10 and 12px), which nobody can tell apart on
+screen; `--radius-2-5` was bound nowhere in the Figma file at all. So each role keeps one radius: a small
+element `--radius-1` (4px), a control `--radius-2` (8px), a container `--radius-3` (12px).
+
+| Retired | Now | What changes on screen |
+|---|---|---|
+| `--radius-1-5`, 6px | `--radius-2`, 8px | the bar's theme toggle, the brand mark, the nav search, the toolbar filter, a combo option, a goal milestone |
+| `--radius-2-5`, 10px | `--radius-3`, 12px | the mini card, the answer row, the calculator box |
+| `--radius-4`, 16px | `--radius-3`, 12px | the dialog and the drawer |
+
+**An app that takes this update renames each use in its own layer** by the table. The three old names are
+retired tokens, so the gate reports a use left behind. The Figma library's `Scale` collection carries the same
+four steps.
 
 ### The type scale of November 1, 2026
 
