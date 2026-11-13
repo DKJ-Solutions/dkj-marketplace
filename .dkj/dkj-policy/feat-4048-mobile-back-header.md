@@ -59,6 +59,7 @@ judged the look here.
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: 758 asserts pass, five new ones on the back cell, the title, the one-level-up pick and the CSS hide
+- [x] `consumer-dashboard.tests.ps1`: the Admin-frame assert pinned the brand as the header's first child; it now pins the back cell to Consumers first and the title after the brand (255 pass)
 - [~] The owner's look at a product page at phone width (Admin's Phone width or a narrow window). Not done as a separate look: davekokbwj approved the branch through issues-sweep-reviews on 2026-11-13 without one.
 
 ### DEPLOY: feat/4048-mobile-back-header
