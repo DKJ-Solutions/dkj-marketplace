@@ -87,7 +87,22 @@ gh issue create --repo <owner>/<repo> --title "<precise technical title>" --body
 | what to set | how to decide it |
 |---|---|
 | the kind (`--label bug`, `--label feature` or `--label research`) | **always exactly one of the three** (#2783, #3006): **`feature`** for something new being added, **`bug`** for something that exists and has to change, **`research`** for a research, test or decision ticket that changes nothing on the store. A doc finding is a `bug` or a `feature` -- a missing page is a `feature`, a wrong one a `bug`. A ticket that researches first and then builds is not `research`. There is no fourth kind and no `documentation` label |
-| the reach label (`Get-ReachLabel`, default `minor`) | **only** where management or the commissioner would notice it. The test is whether that reader notices the **defect**, not whether the file renders to them: a customer-facing template with a developer-only defect is tier 0, and a build script whose breakage stops a release the business is waiting on is not. **In doubt, leave it off** |
+| the reach label (`Get-ReachLabel`, default `minor`) | **only** where management or the commissioner would notice it. The test is whether that reader notices the **defect**, not whether the file renders to them: a customer-facing template with a developer-only defect is tier 0, and a build script whose breakage stops a release the business is waiting on is not. **In doubt, leave it off.** Where you set it, the body carries the `## Why <reach label>` section below, which answers that test in words |
+
+**The reach label comes with its reason, written into the body** (#4057). Wherever the label goes on,
+the body carries this section, named after `Get-ReachLabel`'s answer:
+
+```markdown
+## Why minor
+<who notices it -- management, the commissioner, or a customer they answer for -- and what they notice; one or two sentences>
+```
+
+"Visible on the storefront" alone does not pass: a customer-facing template with a developer-only defect
+is tier 0. If you cannot name who notices the defect, that is the answer, and the label stays off.
+**`hooks/guard-reach-reason.ps1` refuses** a `gh issue create` or `gh issue edit` that adds the reach
+label on an admitted repo while the body the call leaves has no such section. It judges `--body` or
+`--body-file` where the call passes one, and the issue's current body otherwise. Where it cannot read the
+body, it lets the call through with a warning.
 
 **Never set `CRO`.** That label was retired on October 7, 2026
 ([#2869](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2869)): an issue raised by the CRO
@@ -109,10 +124,11 @@ Note the issue number and URL. If the finding collapses on verification, stop he
 not file a weakened version, and do not create an Asana task for a non-issue.
 
 **On an issue that is already filed** -- yours from an earlier run, or somebody else's -- the same
-labels are added afterwards:
+labels are added afterwards, and the reach label takes its `## Why` section in the same move:
 
 ```bash
-gh issue edit <n> --repo <owner>/<repo> --add-label bug --add-label "<reach label>"
+gh issue edit <n> --repo <owner>/<repo> --add-label bug
+gh issue edit <n> --repo <owner>/<repo> --body "<current body + the ## Why section>" --add-label "<reach label>"
 ```
 
 ## Step 2 -- the Asana task (a translation, not a copy)

@@ -519,7 +519,7 @@ Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
 Write-Host 'the registration' -ForegroundColor Cyan
 $hooks = Get-Content -LiteralPath $HooksJson -Raw | ConvertFrom-Json
 $shell = @($hooks.hooks.PreToolUse | Where-Object { $_.matcher -eq 'Bash|PowerShell' })
-Assert-Equal 2 $shell.Count 'hooks.json has two PreToolUse entries on the shell tools: the block guard and the reopen guard (#3076)'
+Assert-Equal 3 $shell.Count 'hooks.json has three PreToolUse entries on the shell tools: the block guard, the reopen guard (#3076) and the reach-reason guard (#4057, asserted in its own suite)'
 $entry = @($shell | Where-Object { [string]$_.hooks[0].command -match 'guard-stale-paste-block\.ps1' })
 Assert-Equal 1 $entry.Count 'one of them runs the block guard'
 $cmd = [string]$entry[0].hooks[0].command
