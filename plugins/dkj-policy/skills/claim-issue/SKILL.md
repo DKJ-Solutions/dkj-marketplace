@@ -52,7 +52,7 @@ The script:
    anything the issue names sits there and not on the trunk (below). A warning, never a refusal, and
    no git call at all where nothing was surfaced.
 7. **Warns when the issue carries a parking label** -- `awaiting-info-client`, `awaiting-decision-dev`, `awaiting-decision-client`, `awaiting-review-dev`, `awaiting-review-client`, `awaiting-pull`, `awaiting-pull-external`,
-   `awaiting-action-external`, `awaiting-action-dev`, `awaiting-release`, `awaiting-recurrences-first` and `awaiting-recurrences` by default, plus the former names
+   `awaiting-action-external`, `awaiting-action-dev`, `awaiting-release`, `awaiting-release-external`, `awaiting-recurrences-first`, `awaiting-session-dev` and `awaiting-recurrences` by default, plus the former names
    `awaiting-first-recurrence`, `awaiting-more-recurrences`, `awaiting-more-info`, `needs-info`, `needs-decision`, `awaiting-decision`, `awaiting-recurrence`, `record`, `dossier`, `awaiting-owner-act` and `awaiting-event`, the labels a sweep skips on (below). A warning,
    never a refusal.
 8. Writes the assignee, then **reads the claim back** and fails if it did not land.
@@ -564,7 +564,7 @@ question the owner is for.
 ## A parking label: the issue waits on an answer, not a builder
 
 **The sweep route and this route used to disagree about one label.** [`issues-sweep`](../issues-sweep/SKILL.md)
-chooses with `-Candidates -SkipLabel awaiting-info-client,awaiting-decision-dev,awaiting-decision-client,awaiting-review-dev,awaiting-review-client,awaiting-pull,awaiting-pull-external,awaiting-action-external,awaiting-action-dev,awaiting-release,awaiting-release-external,awaiting-recurrences-first,awaiting-recurrences,awaiting-first-recurrence,awaiting-more-recurrences,awaiting-more-info,needs-info,needs-decision,awaiting-decision,awaiting-recurrence,record,dossier,awaiting-owner-act,awaiting-event`, so an issue parked with somebody else is
+chooses with `-Candidates -SkipLabel awaiting-info-client,awaiting-decision-dev,awaiting-decision-client,awaiting-review-dev,awaiting-review-client,awaiting-pull,awaiting-pull-external,awaiting-action-external,awaiting-action-dev,awaiting-release,awaiting-release-external,awaiting-recurrences-first,awaiting-session-dev,awaiting-recurrences,awaiting-first-recurrence,awaiting-more-recurrences,awaiting-more-info,needs-info,needs-decision,awaiting-decision,awaiting-recurrence,record,dossier,awaiting-owner-act,awaiting-event`, so an issue parked with somebody else is
 skipped there. This route read no labels at all, so the same issue came back `[OK] ... the work starts here`
 the moment a person named it. Measured in a consumer, September 26, 2026
 ([#2518](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2518)): an issue ending in an open
@@ -572,7 +572,7 @@ choice for the owner was left alone by a sweep, and claimed through this route b
 picked one of the two options itself and shipped it.
 
 **So the issue read asks for `labels` too, and holds them against `-SkipLabel`** -- `awaiting-info-client`,
-`awaiting-decision-dev` (the owner's choice), `awaiting-decision-client` (#2890, a choice from the client or requester outside the dev team), `awaiting-review-dev` and `awaiting-review-client` (#2977, a look at a result, the owner's or the client's), `awaiting-pull` (#2757, waiting on another issue's pull request), `awaiting-pull-external` (#3044, waiting on a pull request in another repo until its work is available here), `awaiting-action-external` (#2784, waiting on an external event or date), `awaiting-action-dev` (#2828, waiting on an act only the owner performs) `awaiting-release` (#2851, waiting on the next release) and `awaiting-release-external` (#3515, waiting on a release of another repo) by default on this route, plus `awaiting-recurrences-first` since
+`awaiting-decision-dev` (the owner's choice), `awaiting-decision-client` (#2890, a choice from the client or requester outside the dev team), `awaiting-review-dev` and `awaiting-review-client` (#2977, a look at a result, the owner's or the client's), `awaiting-pull` (#2757, waiting on another issue's pull request), `awaiting-pull-external` (#3044, waiting on a pull request in another repo until its work is available here), `awaiting-action-external` (#2784, waiting on an external event or date), `awaiting-action-dev` (#2828, waiting on an act only the owner performs), `awaiting-release` (#2851, waiting on the next release), `awaiting-release-external` (#3515, waiting on a release of another repo) and `awaiting-session-dev` (#4066, workable but too large for one sweep turn, waiting on a dedicated session) by default on this route, plus `awaiting-recurrences-first` since
 [#2587](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2587) and `awaiting-recurrences`, and
 each former name too -- the labels the sweep skips on; passing `-SkipLabel` replaces
 the default. On a claim or a resume where one matches, it prints a `PARKED:` verdict naming the label, the closing

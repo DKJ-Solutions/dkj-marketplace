@@ -2,7 +2,7 @@
 .SYNOPSIS
     Reports which of this workflow's canonical triage labels (the priority rungs 'prio-1' through
     'prio-4', plus the 'awaiting-recurrences' kind label, #2462 (named 'dossier' until #2683, 'record'
-    until #2723 and 'awaiting-more-recurrences' until #2904), and the 'awaiting-decision-dev', 'awaiting-decision-client', 'awaiting-review-dev', 'awaiting-review-client', 'awaiting-pull', 'awaiting-pull-external', 'awaiting-action-external', 'awaiting-action-dev', 'awaiting-release', 'awaiting-release-external' and 'awaiting-recurrences-first' parking labels, #2519, #2890, #2977, #2757, #3044, #2784, #2828, #2851, #3515 and #2587
+    until #2723 and 'awaiting-more-recurrences' until #2904), and the 'awaiting-decision-dev', 'awaiting-decision-client', 'awaiting-review-dev', 'awaiting-review-client', 'awaiting-pull', 'awaiting-pull-external', 'awaiting-action-external', 'awaiting-action-dev', 'awaiting-release', 'awaiting-release-external', 'awaiting-recurrences-first' and 'awaiting-session-dev' parking labels, #2519, #2890, #2977, #2757, #3044, #2784, #2828, #2851, #3515, #2587 and #4066
     ('awaiting-recurrence' until #2723 and 'awaiting-first-recurrence' until #2904, 'awaiting-decision' and before it 'needs-decision' until #2890 and #2741)) this repository's tracker is missing, and prints a paste-ready `gh label create` line for each one
     -- never creates a label itself. Issue #1895, split from #1843.
 
@@ -172,6 +172,8 @@ $builtInTriageLabels = @(
     [pscustomobject]@{ Name = 'awaiting-release-external'; Color = '5319E7'; Description = 'Waiting on a release of another repo -- parks the issue so no session picks it up' }
     # And the parking label for an issue waiting on its first reproducible recurrence (#2587).
     [pscustomobject]@{ Name = 'awaiting-recurrences-first'; Color = '5319E7'; Description = 'Waiting on a first reproducible recurrence -- parks the issue so no session picks it up' }
+    # And the parking label for a workable issue too large for one sweep turn, waiting on a dedicated session (#4066).
+    [pscustomobject]@{ Name = 'awaiting-session-dev'; Color = '5319E7'; Description = 'Workable, but needs a dedicated session -- parks the issue so no sweep picks it up' }
 )
 
 # @(...) WRAPS THE WHOLE if/else, NOT JUST EACH BRANCH -- the trap this repo's own manual catalogues
