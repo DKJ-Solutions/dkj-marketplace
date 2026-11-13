@@ -104,6 +104,39 @@ $ti = Get-AsanaMirrorToolInputText -Raw '{"tool_name":"x","tool_input":{"tasks":
 Assert-Equal 1 @(Get-MirroredIssueRefs -Text $ti).Count 'an escaped URL in the payload is matched in its decoded form'
 Assert-Equal '' (Get-AsanaMirrorToolInputText -Raw '{broken') 'an unparseable payload yields no text to search'
 
+# THE PRIO-SCORE (#4054): the field state of a create-task call, and the seam it is judged against.
+$u = 'https://github.com/a/smartwatchbanden/issues/9'
+Assert-Equal 'set'     (Get-AsanaMirrorFieldState -ToolInputJson ('{"notes":"' + $u + '","custom_fields":{"77":4}}') -FieldGid '77') 'a number on the field is set'
+Assert-Equal 'set'     (Get-AsanaMirrorFieldState -ToolInputJson ('{"notes":"' + $u + '","custom_fields":"{\"77\":3}"}') -FieldGid '77') 'custom_fields as one JSON string is read too'
+Assert-Equal 'missing' (Get-AsanaMirrorFieldState -ToolInputJson ('{"notes":"' + $u + '"}') -FieldGid '77') 'no custom_fields at all is missing'
+Assert-Equal 'missing' (Get-AsanaMirrorFieldState -ToolInputJson ('{"notes":"' + $u + '","custom_fields":{"88":"x"}}') -FieldGid '77') 'other fields but not this one is missing'
+Assert-Equal 'missing' (Get-AsanaMirrorFieldState -ToolInputJson ('{"notes":"' + $u + '","custom_fields":{"77":null}}') -FieldGid '77') 'a null value is missing'
+Assert-Equal 'missing' (Get-AsanaMirrorFieldState -ToolInputJson ('{"notes":"' + $u + '","custom_fields":{"77":""}}') -FieldGid '77') 'an empty string is missing'
+Assert-Equal 'unknown' (Get-AsanaMirrorFieldState -ToolInputJson ('{"notes":"' + $u + '","custom_fields":"{broken"}') -FieldGid '77') 'a custom_fields string that does not parse is unknown, never missing'
+$batch = '{"tasks":[{"name":"plain","notes":"no link"},{"name":"m","notes":"' + $u + '","custom_fields":{"77":2}}]}'
+Assert-Equal 'set'     (Get-AsanaMirrorFieldState -ToolInputJson $batch -FieldGid '77') 'in a batch only the task that cites an issue must carry it'
+$batchMiss = '{"tasks":[{"name":"m1","notes":"' + $u + '","custom_fields":{"77":2}},{"name":"m2","notes":"https://github.com/a/xoxowildhearts/issues/3"}]}'
+Assert-Equal 'missing' (Get-AsanaMirrorFieldState -ToolInputJson $batchMiss -FieldGid '77') 'and one mirror in the batch without it is missing'
+$batchOuter = '{"notes":"' + $u + '","tasks":[{"name":"a","custom_fields":{"77":1}}]}'
+Assert-Equal 'set'     (Get-AsanaMirrorFieldState -ToolInputJson $batchOuter -FieldGid '77') 'a batch whose URL sits outside its tasks judges every task, not the wrapper (Victor''s review)'
+Assert-Equal 'missing' (Get-AsanaMirrorFieldState -ToolInputJson ('{"notes":"' + $u + '","custom_fields":{"77":[]}}') -FieldGid '77') 'an empty array is no score'
+Assert-Equal 'missing' (Get-AsanaMirrorFieldState -ToolInputJson ('{"notes":"' + $u + '","custom_fields":{"77":{}}}') -FieldGid '77') 'nor is an empty object'
+Assert-Equal 'missing' (Get-AsanaMirrorFieldState -ToolInputJson ('{"notes":"' + $u + '","custom_fields":5}') -FieldGid '77') 'custom_fields as a number is missing, never a throw (Sebastian''s review)'
+Set-StrictMode -Version Latest
+try { $strict = Get-AsanaMirrorFieldState -ToolInputJson ('{"notes":"' + $u + '","custom_fields":true}') -FieldGid '77' } catch { $strict = 'threw' }
+Set-StrictMode -Off
+Assert-Equal 'missing' $strict 'and a boolean under StrictMode is missing too, so the hook''s trap is never the route past both gates'
+$bomJson = '{"tool_name":"x","tool_input":{"notes":"' + $u + '"}}'
+Assert-Equal 1 @(Get-MirroredIssueRefs -Text (Get-AsanaMirrorToolInputText -Raw ([string][char]0xFEFF + $bomJson))).Count 'a payload behind a BOM is still parsed (#4054)'
+Assert-Equal 1 @(Get-MirroredIssueRefs -Text (Get-AsanaMirrorToolInputText -Raw (([string][char]0x00EF) + [char]0x00BB + [char]0x00BF + $bomJson))).Count 'and behind the BOM''s three bytes decoded as cp1252'
+
+$cfgDir = Join-Path ([IO.Path]::GetTempPath()) ('gam-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Force -Path (Join-Path $cfgDir 'scripts') | Out-Null
+Assert-Equal '' (Get-ProjectAsanaPrioFieldGid -ProjectDir $cfgDir).Gid 'no repo-config means no Prio-Score field, so nothing is required'
+Set-Content -LiteralPath (Join-Path $cfgDir 'scripts\repo-config.ps1') -Value "function Get-AsanaPrioFieldGid { '1216777665779947' }`nfunction Get-ReachLabel { 'tier-1' }" -Encoding ASCII
+Assert-Equal '1216777665779947' (Get-ProjectAsanaPrioFieldGid -ProjectDir $cfgDir).Gid 'the seam''s answer is the field GID'
+Assert-Equal 'tier-1' (Get-ProjectReachLabel -ProjectDir $cfgDir).Label 'and the reach label is read through the same reader'
+
 # --- 2. The hook, on the paths that make no network call --------------------------------------------
 Write-Host 'the hook, network-free paths' -ForegroundColor Cyan
 
@@ -120,6 +153,21 @@ Assert-Equal 0 $r.Code 'an unparseable payload passes rather than blocking every
 $r = Invoke-Hook '{"tool_name":"mcp__claude_ai_Asana__create_tasks","tool_input":{"tasks":[{"name":"x","notes":"https://github.com/a/smartwatchbanden/issues/12345678901234567890"}]}}'
 Assert-Equal 0 $r.Code 'an oversized issue number exits 0, not the crash exit 1 (#2482 review)'
 Assert-True ($r.Err -notmatch 'at line|\.ps1:') 'and prints no stack trace'
+
+# The Prio-Score refusal needs no tracker, so it runs here: a project whose seam names the field, and a
+# mirror that does not set it (#4054).
+$savedProjectDir = $env:CLAUDE_PROJECT_DIR
+$env:CLAUDE_PROJECT_DIR = $cfgDir
+try {
+    $r = Invoke-Hook '{"tool_name":"mcp__claude_ai_Asana__create_task","tool_input":{"name":"x","notes":"https://github.com/a/smartwatchbanden/issues/9"}}'
+    Assert-Equal 2 $r.Code 'a mirror without the Prio-Score is refused where the seam names the field (#4054)'
+    Assert-True ($r.Err -match 'sets no Prio-Score' -and $r.Err -match 'a/smartwatchbanden#9') 'and the refusal names the issue and the missing score'
+    # A call that passes this check goes on to ask gh about the issue, so it is not run here; the lib's
+    # 'set' and 'unknown' asserts above are that half.
+} finally {
+    $env:CLAUDE_PROJECT_DIR = $savedProjectDir
+    Remove-Item -Recurse -Force -LiteralPath $cfgDir -ErrorAction SilentlyContinue
+}
 
 # The pre-gate runs on the RAW payload, before any decode, so it is read out of the hook's source and
 # held against both spellings. A process run cannot show it: past the pre-gate, a real issue costs a gh

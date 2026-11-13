@@ -53,9 +53,9 @@ urgent` line, and `guard-asana-mirror` refuses a mirror that leaves it unset whe
 
 ### TEST
 
-- [x] `guard-asana-mirror.tests.ps1`: 64 pass, 13 new (field states, batch, seam reads, the hook's refusal)
+- [x] `guard-asana-mirror.tests.ps1`: 71 pass, 20 new (field states, batch, empty and non-object values, StrictMode, the BOM, seam reads, the hook's refusal)
 - [x] `asana-link-pickupcheck.tests.ps1`: 50 pass, the shared seam reader unchanged for the reach label
-- [ ] Victor's and Sebastian's reviews
+- [x] Victor's and Sebastian's reviews: a batch with its URL outside its tasks, empty values counted as a score, a StrictMode throw that would reach the trap, and the trap's wording, all fixed; no security finding
 
 ### DEPLOY: feat/4054-asana-prio-score
 

@@ -355,6 +355,10 @@ skill needs to know which workspace and project a mirrored task lands in:
   `$null` -- the default -- is the common answer: most boards carry neither, and `report-issue`
   skips whichever is unset without saying anything. Where a board does carry one, leaving it unset is
   the state that costs something, because the field is then filled by hand or not at all.
+- `Get-AsanaPrioFieldGid` -- the GID of the board's `Prio-Score` number field
+  ([#4054](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4054)). Answered, every task
+  `report-issue` creates carries a score from its `How urgent` line, and `guard-asana-mirror` refuses a
+  mirror without one. **Optional**, `$null` by default: nothing is set and nothing is required.
 - `Get-AsanaTypeOptionMap` -- the option **name** each kind label is written as on that `Type` field,
   for a board whose options are not called `Bug`, `Feature` and `Task`
   ([#3170](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3170)). **Optional**, `$null` by

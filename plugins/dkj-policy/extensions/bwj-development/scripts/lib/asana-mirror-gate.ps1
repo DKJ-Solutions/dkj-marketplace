@@ -64,6 +64,12 @@ function Get-AsanaMirrorToolInputText {
     #>
     param([string]$Raw)
     if (-not $Raw) { return '' }
+    # A leading BOM makes ConvertFrom-Json throw, and the gate then passes the call silently. A .NET
+    # StreamWriter on a child's stdin writes one (measured, #4054: the suite's hook runs never parsed),
+    # and the child decodes its three bytes under the console code page -- one U+FEFF, or three
+    # characters of mojibake -- so whatever stands before the opening brace in that span is dropped.
+    $brace = $Raw.IndexOf('{')
+    if ($brace -gt 0 -and $brace -le 3) { $Raw = $Raw.Substring($brace) }
     try { $payload = $Raw | ConvertFrom-Json } catch { return '' }
     if ($null -eq $payload -or $null -eq $payload.tool_input) { return '' }
     return ($payload.tool_input | ConvertTo-Json -Depth 20 -Compress)
@@ -95,20 +101,104 @@ function Get-ProjectReachLabel {
         asana-link-pickupcheck (card -> issue, #2940) -- so the two directions cannot read two names.
     #>
     param([Parameter(Mandatory = $true)][string]$ProjectDir)
-    $result = @{ Label = 'minor'; ReadFailed = $false }
+    $seam = Read-ProjectConfigSeam -ProjectDir $ProjectDir -Name 'Get-ReachLabel'
+    $label = if ($seam.Value) { $seam.Value } else { 'minor' }
+    return @{ Label = $label; ReadFailed = $seam.ReadFailed }
+}
+
+function Get-ProjectAsanaPrioFieldGid {
+    <#
+        The GID of the board's Prio-Score custom field for the project at -ProjectDir: its
+        scripts\repo-config.ps1's Get-AsanaPrioFieldGid, else '' -- the board carries no such field and
+        nothing is required (#4054). Returns @{ Gid; ReadFailed }.
+    #>
+    param([Parameter(Mandatory = $true)][string]$ProjectDir)
+    $seam = Read-ProjectConfigSeam -ProjectDir $ProjectDir -Name 'Get-AsanaPrioFieldGid'
+    return @{ Gid = $seam.Value; ReadFailed = $seam.ReadFailed }
+}
+
+function Read-ProjectConfigSeam {
+    <#
+        One seam's answer from the project's scripts\repo-config.ps1, trimmed, as @{ Value; ReadFailed }.
+        Value is '' when the file or the function is absent or answers nothing; ReadFailed is set when
+        the file was there and could not be read. Read in a child scope with StrictMode off, the way
+        build-backlog-page.ps1 reads the same file: it is the consumer's own and is written on the
+        assumption that StrictMode is off. One reader for every seam the two hooks judge, so they
+        cannot read the file two ways.
+    #>
+    param([Parameter(Mandatory = $true)][string]$ProjectDir, [Parameter(Mandatory = $true)][string]$Name)
+    $result = @{ Value = ''; ReadFailed = $false }
     $configPath = Join-Path $ProjectDir 'scripts\repo-config.ps1'
     if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) { return $result }
     try {
         $answer = & {
             Set-StrictMode -Off
+            # Captured before the dot-source: the consumer's file runs in this scope and may reset $args.
+            $__seamName = $args[1]
             . $args[0]
-            if (@($ExecutionContext.InvokeCommand.GetCommands('Get-ReachLabel', 'Function', $false)).Count) { Get-ReachLabel }
-        } $configPath
-        if ($answer -and ([string]$answer).Trim()) { $result.Label = ([string]@($answer)[-1]).Trim() }
+            if (@($ExecutionContext.InvokeCommand.GetCommands($__seamName, 'Function', $false)).Count) { & $__seamName }
+        } $configPath $Name
+        if ($answer -and ([string]@($answer)[-1]).Trim()) { $result.Value = ([string]@($answer)[-1]).Trim() }
     } catch {
         $result.ReadFailed = $true
     }
     return $result
+}
+
+function Get-AsanaMirrorFieldState {
+    <#
+        Whether a create-task call's tool_input sets the custom field -FieldGid (#4054): 'set' (a value
+        that is not null and not an empty string), 'missing' (custom_fields absent, or present without
+        that key or with an empty value) or 'unknown' (custom_fields is a string that does not parse).
+        The Asana tools take custom_fields as an object or as one JSON string holding the same map, so
+        both are read. -ToolInputJson is Get-AsanaMirrorToolInputText's output.
+        A batch tool (tool_input.tasks, one object per task) is judged per task, and only a task that
+        itself cites an issue on an admitted repo must carry the field: 'missing' if any such task lacks
+        it, else 'unknown' if any could not be read, else 'set'.
+    #>
+    param([AllowEmptyString()][string]$ToolInputJson, [Parameter(Mandatory = $true)][string]$FieldGid)
+    if (-not $ToolInputJson) { return 'unknown' }
+    try { $ti = $ToolInputJson | ConvertFrom-Json } catch { return 'unknown' }
+    if ($null -eq $ti) { return 'unknown' }
+    $tasks = @($ti)
+    if ($ti.PSObject.Properties.Name -contains 'tasks' -and @($ti.tasks | Where-Object { $_ }).Count) {
+        # The tasks that cite an issue themselves; where none does, the URL sits outside them and every
+        # task is the mirror (Victor's review, #4054: judging the wrapper then refused a scored batch).
+        $all = @($ti.tasks | Where-Object { $_ })
+        $mirrors = @($all | Where-Object { @(Get-MirroredIssueRefs -Text ($_ | ConvertTo-Json -Depth 20 -Compress)).Count -gt 0 })
+        $tasks = if ($mirrors.Count) { $mirrors } else { $all }
+    }
+    $states = @($tasks | ForEach-Object { Get-AsanaTaskFieldState -Task $_ -FieldGid $FieldGid })
+    if ($states -contains 'missing') { return 'missing' }
+    if ($states -contains 'unknown') { return 'unknown' }
+    return 'set'
+}
+
+function Get-AsanaTaskFieldState {
+    <# One task object's state for -FieldGid: 'set', 'missing' or 'unknown'; see Get-AsanaMirrorFieldState. #>
+    param($Task, [Parameter(Mandatory = $true)][string]$FieldGid)
+    # Every property read sits in the try: a number or a boolean where an object belongs makes a read
+    # throw under StrictMode, and a throw would reach the hook's trap, which passes the call unjudged --
+    # reach label included (Sebastian's review, #4054). Such a shape is no score, so it is 'missing'.
+    try {
+        if ($null -eq $Task -or $Task -is [ValueType] -or $Task -is [string] -or
+            -not ($Task.PSObject.Properties.Name -contains 'custom_fields')) { return 'missing' }
+        $cf = $Task.custom_fields
+        if ($cf -is [string]) {
+            if (-not $cf.Trim()) { return 'missing' }
+            try { $cf = $cf | ConvertFrom-Json } catch { return 'unknown' }
+        }
+        if ($null -eq $cf -or $cf -is [ValueType] -or $cf -is [string] -or $cf -is [array] -or
+            -not ($cf.PSObject.Properties.Name -contains $FieldGid)) { return 'missing' }
+        $v = $cf.$FieldGid
+        if ($null -eq $v -or ($v -is [string] -and -not $v.Trim())) { return 'missing' }
+        # An empty array or object is no score either (Victor's and Sebastian's reviews).
+        if ($v -is [array] -and @($v).Count -eq 0) { return 'missing' }
+        if ($v -is [pscustomobject] -and @($v.PSObject.Properties).Count -eq 0) { return 'missing' }
+        return 'set'
+    } catch {
+        return 'missing'
+    }
 }
 
 function ConvertFrom-GhIssueLabels {
