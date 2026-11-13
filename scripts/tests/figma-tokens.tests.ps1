@@ -123,7 +123,7 @@ Assert-True (@(Compare-FigmaTokenModel -Expected $m -Actual ($same + $other)).Co
 Write-Host '-- group 4: the real stylesheet and the script' -ForegroundColor Cyan
 $real = Get-FigmaTokenModel -StylePath $Style
 Assert-Equal 3 $real.Count 'the real stylesheet yields three collections'
-Assert-True ($real[0].variables.Count -ge 25 -and $real[0].variables.Count -eq $real[1].variables.Count -and $real[2].variables.Count -eq $real[0].variables.Count) "both palettes and the semantic layer hold the same tokens ($($real[0].variables.Count))"
+Assert-True ($real[0].variables.Count -ge 22 -and $real[0].variables.Count -eq $real[1].variables.Count -and $real[2].variables.Count -eq $real[0].variables.Count) "both palettes and the semantic layer hold the same tokens ($($real[0].variables.Count))"
 $hexOnly = @($real[0].variables.Values + $real[1].variables.Values | ForEach-Object { $_.Values } | Where-Object { $_ -notmatch '^#[0-9a-f]{6}$' })
 Assert-Equal 0 $hexOnly.Count 'every palette value is a lowercase #rrggbb'
 $palette = Get-HousePalette -Hue 317 -Mode light

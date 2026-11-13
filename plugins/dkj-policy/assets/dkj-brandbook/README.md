@@ -124,7 +124,7 @@ already has, not a new colour:
 | Share | Group | Tokens | What it is |
 |---|---|---|---|
 | **60%** | Paper | `--bg-1` … `--bg-5` | the ground: the page, the cards, the lines, and the edge of a control (`bg-5`) |
-| **30%** | Text | `--fg-1` … `--fg-4` | what sits on the paper: every paragraph, label and quiet icon, and `h2` (`--fg-2`) and `h3` (`--fg-3`) |
+| **30%** | Text | `--fg-1` | what sits on the paper: every paragraph, label, quiet icon, `h2` and `h3` (one text colour since #4046; `fg-2` … `fg-4` were steps too small to tell apart) |
 | **10%** | Primary | `--primary`, with `--primary-muted` (its grey), `--primary-raised` and `--primary-hover` (its two shades) | the accent, the theme's colour: `h1`, links, `.btn--primary`, the states; `--primary-raised` is the settings cell in a site header, `--primary-hover` a primary button under the pointer |
 
 **Primary is the 10, text the 30** (Dave, November 12, 2026; from October 28 it was the other way round). The 10 of
@@ -160,7 +160,7 @@ ways out, and only two**: its contrast is raised until it reads, or it is not a 
 the paper as a `--bg-*` token. It never stays in its group below the floor. It moved one token: `--primary-raised`
 goes 15% of the way to `bg-1` where that stays at 4.55:1 or better, and less where it would not (teal, ochre and rust,
 which were at 4.30:1 to 4.44:1). The worst case now: `--primary-raised` 4.55:1 (ochre), `--primary` 5.90:1 (teal),
-`--primary-hover` 7.29:1, `--primary-muted` 7.05:1, `--fg-4` 14.1:1.
+`--primary-hover` 7.29:1, `--primary-muted` 7.05:1, `--fg-1` well above all of them (`--fg-4`, 14.1:1, was the lowest text step until #4046).
 
 **And a theme has
 these three groups and no fourth**: a colour that fits none of them is not a theme colour. That retired
@@ -184,7 +184,7 @@ primary outweighs its text has spent the accent as ground.
 | Status | `--positive-3`, `--warning-3`, `--negative-3`, `--warning-5`, `--warning-1`, `--negative-1`, `--positive-1` | badges, meters, notices. `--warning-1`, `--negative-1` and `--positive-1` are the backgrounds of a warning, negative or positive message. Done (work that is finished and closed) takes `--primary-muted`, a variant of the theme's own colour; it was `--done-3`, the purple GitHub gives a completed issue (Dave, November 9, 2026), the same in every theme, until November 12, 2026 (the owner), and the house-style gate reports `--done-3` as a retired token. The mark inside a status icon (check, cross, "!") is `--bg-1` |
 | Primary | `--primary` | the theme's colour, **one** step (owner, #3235, October 21, 2026): the most saturated colour of the theme's hue that reads on all four paper steps, so the paper reads on it too. **The highlight**: `h1`, the fill of `.btn--primary` (a filled main action, like the filled icon button; #109) and of `.fill-primary`, a state (hover, pressed, sorted, active, today), `strong`, list markers, links, a value meant to stand out, the accent dialog's title and the settings panel's title, and native controls through `accent-color` |
 | Grey | `--primary-muted` | a grey of the theme's colour, for what may recede: it reads extra well (7:1) on the page. `--primary-muted` is every sub line (`.dialog__sub`, a component's `-sub`), every note (`.note`, on a `<p>` too, the line under a heading included), the tile label, the pressed `.seg` button, `.badge--info`, `.meter--info`, done (finished and closed work, `--done-3` until November 12, 2026), focus rings, meters and the `--accent` modifiers ([below](#how-far-a-theme-reaches)); on an inverted surface (`.fill-inverse`) those roles take `--bg-4` (`--muted-inverse` until November 1, 2026). Never a status or a number |
-| Text | `--fg-1` … `--fg-4` | what sits **on** the paper: four colours near black on light (near white on dark), in **very small** steps, so `fg-4` is still very dark, only a little less so than `fg-1` (owner, #3235). `fg-1` is **all text**, every paragraph and everything else: labels, table heads, legends, quiet icons, the text on a tinted surface, and the ground of an inverted surface; `fg-2` is `h2` and `.meta` on a span; `fg-3` is the card title (`h3` until November 1, 2026); `fg-4` has no role yet (the breadcrumb's current page took it until the bar turned `--primary`, #3235). On a fill the text switches to the paper ([Fills](#fills-the-text-switches-with-the-ground)) |
+| Text | `--fg-1` | what sits **on** the paper: one colour near black on light (near white on dark). It is **all text**: every paragraph, `h2`, `h3`, `.meta`, labels, table heads, legends, quiet icons, the text on a tinted surface, and the ground of an inverted surface. A quieter text is `--primary-muted`. Until #4046 (November 13, 2026) there were four steps, `fg-1` … `fg-4`, so small that `fg-4` was still very dark (owner, #3235); they were retired because nobody could tell them apart and the wireframes map all text to one token (#4040). On a fill the text switches to the paper ([Fills](#fills-the-text-switches-with-the-ground)) |
 | Elevation | `--shadow-pop` | tooltips |
 | Spacing | `--spacing-0-5` … `--spacing-96` | the spacing scale, same in both modes: `--spacing-N` is N × 4px, a half step (`-0-5`, `-1-5`, …) adds 2px. Every gap, margin and padding uses one, and a repo layer spaces its own components from the same scale |
 | Type | `--text-h1` … `--text-h3`, `--text-base`, `--text-sm`, `--text-xs`, `--text-title` | the type scale, same in both modes. `--text-title` (20px, the `h2` size since November 2, 2026) is the site header's name alone, a step of its own so the header can be tuned without moving every `h2` (Dave, November 2, 2026; it was `--text-h3`). The rest: 36/20/16 for the headings since November 2, 2026 (Maikel; [below](#more-room-and-a-smaller-h2-november-2-2026)), 36/22/16 from November 1 ([below](#the-type-scale-of-november-1-2026)), 32/18/14 before (`h3` at 14px, the body size, and no `h4` or `h5` since October 25, 2026, the owner: [below](#the-heading-cut-of-october-25-2026)) (`h2` 18px since October 25, 2026, the owner; it went from 32 at weight 600 to 24 at 700 on October 24, and keeps the 700), and `.lead` was `--text-base` from the same day (it was `--text-lg`) until it was retired on November 1, 2026 (Maikel), 14/12/11 for running text (`--text-lg`, 18px, was retired on November 1, 2026). `h1`–`h3` each take the token of their own level, body text is `--text-base`. No heading is larger than 32px (owner's decision, October 22, 2026: as much content as possible on a 900px-high screen, since October 27 one of about 1300 x 900), so `h1` stands apart by its size and colour (by its capitals too until October 24, 2026); it was 48px from October 20, when `--text-h0` was retired. The hero figure is set at `--text-h1`. There is no `h6` either: the 24px `h3` was retired the same day, because it stood too close to `h2`, and every level below moved up one ([below](#the-heading-shift-of-october-20-2026)). The section label (`GroupHeading`), a heading at `--text-base`, uppercase and muted (owner's decision, October 15, 2026), was the one exception until November 1, 2026, when it went (Maikel): the house has one `h3`. `--font-serif` was the face of `h1` and `h2` until October 24, 2026, when the owner moved both to the sans; it stayed for a title that kept that face, none did, and it was retired on November 1, 2026 (Maikel) |
@@ -338,8 +338,8 @@ gate tells `--primary-9` from it.
 `--negative-*`, `--positive-*` and `--warning-*` that is `-1`, `-3`, `-5`: `-1` is light on the light themes and dark
 on the dark themes (the ground end) and `-5` the opposite (the text end). The theme's own colour has two numbered
 groups (#3235), and each counts from its own start: `--bg-1` … `--bg-4` from the page outward (page, cards,
-lines and tinted surfaces, a stronger border), and `--fg-1` … `--fg-4` from the strongest text outward (all text,
-`h2`, `h3`, and one step with no role yet), both in very small steps. `--primary` and `--primary-muted` carry no
+lines and tinted surfaces, a stronger border), in very small steps, and `--fg-1`, the one text colour (four steps
+until #4046). `--primary` and `--primary-muted` carry no
 number: there is one of each. There are no untinted neutrals: the
 greys are the theme's own, a greyed step of its colour. For the status families:
 `-1` is the background of a message, `-3` the fill (icon, badge, meter, a
@@ -350,7 +350,7 @@ section uses):
 
 | A switch … | Tokens | Why |
 |---|---|---|
-| to any other theme changes them | `--primary`, `--primary-muted`, `--bg-1` … `--bg-4`, `--fg-1` … `--fg-4` | each theme sets all ten as fixed values, computed from its own hue; the House style page lists them as the three groups of the 60-30-10 rule |
+| to any other theme changes them | `--primary`, `--primary-muted`, `--bg-1` … `--bg-5`, `--fg-1` | each theme sets them as fixed values, computed from its own hue; the House style page lists them as the three groups of the 60-30-10 rule |
 | to any other theme changes them: categories | `--graph-1`, `--graph-2`, `--graph-3` | series slots, computed per theme away from its primary and the status hues (November 12, 2026); set once per mode until then |
 | changes them only between light and dark: status colours | `--negative-1`, `--negative-3`, `--negative-5`, `--positive-1`, `--positive-3`, `--positive-5`, `--warning-1`, `--warning-3`, `--warning-5` | set once in the light block and once in the dark block, a shade apart. One exception: `--warning-3` also moves in Roest and Geel ([below](#themes-the-user-picks-the-colour)) |
 
@@ -656,8 +656,8 @@ sliders turn the theme's colour. Links an app already styles through a class kee
 **The theme now colours the ground too** (owner's request: the themes were visible but did not stand
 out). Three more things follow it by default, in light and in dark (and a measurement):
 
-- **Every theme writes out its own ten values**, computed rather than tuned (owner, #3235, October 21, 2026).
-  `--primary`, `--primary-muted`, `--bg-1` … `--bg-4` and `--fg-1` … `--fg-4` are fixed hex values
+- **Every theme writes out its own values**, computed rather than tuned (owner, #3235, October 21, 2026).
+  `--primary`, `--primary-muted`, `--bg-1` … `--bg-5` and `--fg-1` are fixed hex values
   in each theme's block, not mixes (owner's decision, October 14, 2026: the percentages were too hard to follow), and
   `scripts/build/build-house-palette.ps1` in the `dkj-solutions` plugin computes them from the theme's hue and mode, checks every
   contrast below and writes them in with `-Apply`. A theme is changed there, never by hand in the stylesheet.
@@ -682,8 +682,8 @@ out). Three more things follow it by default, in light and in dark (and a measur
     0.94 and 0.905 on light (0.13, 0.165, 0.195 and 0.235 on dark), with the chroma rising from 0.006 to 0.045. The
     eye is most sensitive to the first tint off white or black, so the card is only a little lifted off the page;
     since November 1, 2026 that step is wider than the rest (Maikel: bg-2 was barely visible in some themes).
-  - **Four colours that read on the paper**: the text, near black, in very small steps, OKLCH L 0.12, 0.16, 0.20
-    and 0.24 at chroma 0.03 on light (0.99, 0.955, 0.92 and 0.885 on dark), so `fg-4` is still very dark.
+  - **One colour that reads on the paper**: the text, near black, OKLCH L 0.12 at chroma 0.03 on light (0.99 at
+    0.006 on dark). Three more steps at L 0.16, 0.20 and 0.24 were retired with #4046: too close to tell apart.
 
   **A role takes the same step in both modes** (owner's decision, October 15, 2026): never `light-dark()` between
   two steps, and no dark-only rule that picks another step. Meters, the fills and most focus rings are `--primary-muted`
@@ -697,7 +697,7 @@ out). Three more things follow it by default, in light and in dark (and a measur
   `bg-1` 5.9:1 to 8.5:1 on light and 10.7:1 to 13.6:1 on dark, on `bg-4` 4.56:1 to 6.5:1 on light and 9.0:1 to
   11.2:1 on dark, the same both ways round. On dark the primary sits close to the text (1.4:1 to 1.8:1 against
   `fg-1`), so `h1` and links stand out from the text by colour rather than by lightness; `fg-1` on
-  `bg-1` 19.5:1 to 20.1:1 and `fg-4` on `bg-4` 11.8:1 to 12.5:1; `--primary-muted` on `bg-1` 7.05:1 to 7.13:1 and on
+  `bg-1` 19.5:1 to 20.1:1; `--primary-muted` on `bg-1` 7.05:1 to 7.13:1 and on
   a card 6.45:1 to 6.8:1 (measured again November 1, 2026); `bg-4` on `fg-1` 15.1:1 to 16.4:1. Nothing in the model is below 4.5:1, which
   the paper-and-ink model of October 20 missed for `ink-1` on a card in Magenta, Roest and Lila. A `bg-3` line
   on a card is faint: 1.05:1 (Pink) to 1.09:1 (Magenta); a `bg-4` border on it 1.14:1 to 1.22:1. The card on the
@@ -708,9 +708,11 @@ out). Three more things follow it by default, in light and in dark (and a measur
 - **Lines are tinted.** `--bg-3` is every line: borders, row dividers, grid lines and the meter track
   (a separate grid colour was dropped on October 14, 2026: it was too close to the border to tell apart).
 - **The theme picker previews it:** each swatch shows its own theme's page, with the primary as the dot.
-- **Links are the theme's colour**, as `--primary` (owner's decision, October 15, 2026). **`h1`, `h2` and `h3` are
-  `--primary`, and `.meta` on a span is `--fg-2`** (Maikel, November 1, 2026, for `h3`, which was `--fg-3`; the owner, October 24, 2026, for `h2`:
-  from #3235 until then it was `--fg-2`, and before #3235 `h2` and `h3`–`h5` were steps of the colour).
+- **Links are the theme's colour**, as `--primary` (owner's decision, October 15, 2026). **`h1` is
+  `--primary`; `h2`, `h3` and `.meta` are `--fg-1`, the text** (#4046, November 13, 2026: they were `--fg-2` and
+  `--fg-3`, steps too small to tell from `--fg-1`; Dave, November 12, 2026, took `h2` and `h3` off `--primary` when
+  primary became the 10 of the 60-30-10 rule; before that they were `--primary` from October 24 and November 1, 2026,
+  and before #3235 `h2` and `h3`–`h5` were steps of the colour).
 - **On a fill the text switches** (#3235, the owner: *"h2 heeft niet altijd dezelfde kleur"*, an h2 does not always have the same colour). See
   [Fills](#fills-the-text-switches-with-the-ground).
 - **Status, direction and categorical colours** (`--positive-3`, `--negative-3`, `--warning-3`, `--graph-*`,
@@ -720,7 +722,7 @@ out). Three more things follow it by default, in light and in dark (and a measur
 ### Fills: the text switches with the ground
 
 **A block can stand on the theme's colour or on the far end, and its text then takes the paper** (#3235). An `h2`
-reads on the page and on the primary alike, so it is not one colour: `--fg-2` on the page, `--bg-1` on a
+reads on the page and on the primary alike, so it is not one colour: `--fg-1` on the page, `--bg-1` on a
 primary fill.
 
 | Class | Ground | Text | A quieter line (`.note`, `.card__sub`) |

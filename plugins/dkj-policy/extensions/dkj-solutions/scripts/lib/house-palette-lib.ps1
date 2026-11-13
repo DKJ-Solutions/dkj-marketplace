@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    The colour model of the house style (#3235): sixteen tokens per theme, computed from the theme's hue and
+    The colour model of the house style (#3235): thirteen tokens per theme, computed from the theme's hue and
     mode, so a theme is never tuned by hand again.
 
 .DESCRIPTION
@@ -20,8 +20,9 @@
     There is no grey for the far end (--muted-inverse was retired, Maikel, November 1, 2026): a theme's colours are
     the 60-30-10 groups and nothing else, and no colour reads at 4.5:1 on both bg-4 and fg-1, so it fitted none.
     The quieter line on an inverted surface takes --bg-4.
-      --fg-1..4        FOUR text colours that read on the page, near black, in very small steps: fg-4 is still
-                       very dark, only a little less so than fg-1.
+      --fg-1           ONE text colour that reads on the page, near black. There were four (fg-1..4) in steps too
+                       small to tell apart; fg-2..4 were retired (#4046, November 13, 2026): the wireframes map all
+                       text to one token, and a quiet text is --primary-muted.
     A dark theme is the mirror: the paper runs from black towards a little lighter and the text is near white. Its
     primary is much lighter than a mirror would give (owner, October 21, 2026): it reaches 9:1 on all four paper
     steps, not 4.55:1, so it is a light tint of the colour rather than the colour at full strength, and the dark paper
@@ -53,7 +54,7 @@ function Get-HousePaletteThemes {
     )
 }
 
-# The steps, per mode: OKLCH lightness and chroma of the four paper and the four text colours. Paper-1 and fg-1
+# The steps, per mode: OKLCH lightness and chroma of the four paper colours and the one text colour. Paper-1 and fg-1
 # keep the anchors of October 20, 2026 (the edge of white and black); the steps after them are small by design, but
 # bg-2 stands a clear step off the page (Maikel, November 1, 2026: it was barely visible in some themes), and
 # bg-3 moves along so the card in a group keeps its own step. bg-5 is one step past bg-4, a little lighter on a dark theme and a little darker on a light one (Maikel, November 3, 2026); the primary is still measured against bg-4, so no theme colour moved for it.
@@ -61,10 +62,10 @@ function Get-HousePaletteSteps {
     param([ValidateSet('light', 'dark')][string]$Mode)
     if ($Mode -eq 'light') {
         @{ PaperL = @(0.995, 0.965, 0.94, 0.905); PaperC = @(0.006, 0.014, 0.028, 0.045)
-           FgL    = @(0.12, 0.16, 0.20, 0.24);     FgC    = @(0.030, 0.030, 0.028, 0.026); MutedC = 0.03; PrimaryFloor = 4.55 }
+           FgL    = @(0.12);                       FgC    = @(0.030); MutedC = 0.03; PrimaryFloor = 4.55 }
     } else {
         @{ PaperL = @(0.13, 0.175, 0.215, 0.26); PaperC = @(0.020, 0.024, 0.032, 0.045)
-           FgL    = @(0.99, 0.955, 0.92, 0.885);   FgC    = @(0.006, 0.010, 0.012, 0.014); MutedC = 0.06; PrimaryFloor = 9.0; PrimaryChromaMax = 0.13 }
+           FgL    = @(0.99);                       FgC    = @(0.006); MutedC = 0.06; PrimaryFloor = 9.0; PrimaryChromaMax = 0.13 }
     }
 }
 
@@ -287,13 +288,13 @@ function Get-HouseGraphSlots {
 
 # ---- the palette ----------------------------------------------------------------------------------------------
 function Get-HousePalette {
-    <# The sixteen tokens of one theme, as an ordered map of token name to #rrggbb. #>
+    <# The thirteen tokens of one theme, as an ordered map of token name to #rrggbb. #>
     param([Parameter(Mandatory)][double]$Hue, [Parameter(Mandatory)][ValidateSet('light', 'dark')][string]$Mode, [double]$ChromaMax = 0)
     $steps = Get-HousePaletteSteps -Mode $Mode
     if ($ChromaMax -gt 0) { $steps.PrimaryChromaMax = $ChromaMax }
     $okHue = (ConvertTo-OkLch (ConvertFrom-Hsl $Hue 1 0.5)).H
     $paper = 0..3 | ForEach-Object { ConvertFrom-OkLch $steps.PaperL[$_] $steps.PaperC[$_] $okHue }
-    $fg    = 0..3 | ForEach-Object { ConvertFrom-OkLch $steps.FgL[$_] $steps.FgC[$_] $okHue }
+    $fg    = @(ConvertFrom-OkLch $steps.FgL[0] $steps.FgC[0] $okHue)
 
     # the primary: HSL saturation 100%, the lightness closest to 50% that still reaches the mode's floor on the
     # furthest paper step (4.55:1 on light, 9:1 on dark)
@@ -342,7 +343,7 @@ function Get-HousePalette {
     }
     $p['--primary-raised'] = $raised
     $p['--primary-hover']  = Get-SrgbMix $primary $fg[0] 0.15
-    for ($i = 0; $i -lt 4; $i++) { $p["--fg-$($i + 1)"] = $fg[$i] }
+    $p['--fg-1'] = $fg[0]
     # the three series colours, per theme (the owner, November 12, 2026): away from this theme's primary and the status hues
     $g = Get-HouseGraphSlots -Palette $p -Mode $Mode
     for ($i = 0; $i -lt 3; $i++) { $p["--graph-$($i + 1)"] = $g[$i] }
@@ -350,7 +351,7 @@ function Get-HousePalette {
 }
 
 function Format-HousePaletteDeclarations {
-    <# The sixteen tokens as one line of CSS declarations, in the stylesheet's order. #>
+    <# The thirteen tokens as one line of CSS declarations, in the stylesheet's order. #>
     param([Parameter(Mandatory)]$Palette)
     ($Palette.Keys | ForEach-Object { "$($_): $($Palette[$_]);" }) -join ' '
 }
@@ -360,7 +361,7 @@ function Get-HousePaletteContrast {
     param([Parameter(Mandatory)]$Palette)
     $rows = @()
     foreach ($n in 1..4) { $rows += @{ Pair = "primary on bg-$n"; Ratio = Get-ContrastRatio $Palette['--primary'] $Palette["--bg-$n"]; Floor = 4.5 } }
-    foreach ($n in 1..4) { foreach ($k in 1..4) { $rows += @{ Pair = "fg-$n on bg-$k"; Ratio = Get-ContrastRatio $Palette["--fg-$n"] $Palette["--bg-$k"]; Floor = 7 } } }
+    foreach ($k in 1..4) { $rows += @{ Pair = "fg-1 on bg-$k"; Ratio = Get-ContrastRatio $Palette['--fg-1'] $Palette["--bg-$k"]; Floor = 7 } }
     $rows += @{ Pair = 'muted on bg-1'; Ratio = Get-ContrastRatio $Palette['--primary-muted'] $Palette['--bg-1']; Floor = 7 }
     $rows += @{ Pair = 'muted on bg-2'; Ratio = Get-ContrastRatio $Palette['--primary-muted'] $Palette['--bg-2']; Floor = 4.5 }
     $rows += @{ Pair = 'muted on bg-4'; Ratio = Get-ContrastRatio $Palette['--primary-muted'] $Palette['--bg-4']; Floor = 4.5 }
