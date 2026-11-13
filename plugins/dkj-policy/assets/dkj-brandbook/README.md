@@ -85,6 +85,16 @@ that checks the stylesheet's syntax and tokens; the page is the look.
    `<meta name="description">`, not on screen. Real content is not an intro: an empty state that says a list
    is empty stays. Where a page does want to say more, as a plugin's page does with its description, it goes behind a
    `.page-info-button` right of the `h1` (`.page-title`), shown only on hover or focus (Maikel, October 31, 2026).
+   **One exception, which a repo opts into: a content product may carry a short lead** (Dave, November 13, 2026,
+   [#4051](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4051)). A content product is one whose pages
+   brief a reader, as a news app does: a lot of information made digestible, and a dossier summed up before it
+   is opened. There a short lead under the `h1` is part of making it digestible, so it is allowed: **one plain
+   `<p>` directly under the `h1`, one or two sentences, no box, no class of its own, and only where the page sums
+   up content for a reader.** A tool or admin page in that same product keeps the strict rule, and so does a page
+   whose lead would only restate its name. **A repo declares it in its own facts** (the unscoped rule its tooling
+   loads every session, such as `.claude/rules/this-repo.md`), with the line
+   `Content product (brand-book rule 5): yes.` and why. Without that line the strict rule holds, and no lint
+   reads the line: it is for the session writing the page.
 6. **The `h1` is never framed** (the owner, October 28, 2026). It gets no border, outline, shadow or
    background of its own, and the page's `h1` stands on the page itself, never inside a card, a panel or
    any other bordered box. `house-style.css` clears all four on every `h1`. The rest is a layout rule: the
