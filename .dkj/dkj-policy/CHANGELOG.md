@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**7 / 9 minor entries** <!-- pending-tally -->
+**8 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4056-asana-open-section · 20261113-133714Z
+
+The new `asana-open-section` template ships with its suite cases and a session-check group, and step 6 of
+[`WORKFLOW-portable.md`](../../plugins/dkj-policy/extensions/bwj-development/WORKFLOW-portable.md) now names a third automated move.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A store whose board shows every open issue as in progress can now keep it that way: copy the new
+`asana-open-section` workflow (smartwatchbanden's session check asks for it) and a card dragged back into
+`1. Todo` while its issue is open returns to `2. In Progress` the next morning. On a board whose `Filed`
+is the inbox column it moves nothing.
+
+**Score:** 3
+
+#### Pull Request
+
+bwj-development: a daily sweep keeps the Asana task of an open issue in the Filed section
+
+Plugins: bwj-development
+
+[PR #4060](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4060)
+
+---
 
 ### DEPLOY: fix/4053-reach-issue-without-card · 20261113-132840Z
 
