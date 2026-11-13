@@ -54,7 +54,7 @@ look before the merge.
 ### TEST
 
 - [x] `dev-pages` (753) and `check-house-style` (169) suites green; the house-style lint green
-- [ ] Owner looks at the result in Admin before the merge
+- [x] Owner looks at the result in Admin before the merge (Dave: "merge", November 13, 2026)
 
 ### DEPLOY: feat/radius-three-steps
 
