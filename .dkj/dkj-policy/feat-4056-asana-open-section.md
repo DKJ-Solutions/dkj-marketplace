@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Inbound #4056: the owner's rule is that an open issue's Asana task sits in `2. In Progress`. The
+consumer's half (`Filed = '2'` in smartwatchbanden's stage map) is local; the plugin's half is a daily
+sweep that holds the rule when a person drags a card back. Checked before building: smartwatchbanden's
+map ranks `Requests` and `NeedsInfo` on code `1` before `Filed`, so the sweep acts there once the local
+answer lands; xoxowildhearts answers `Filed = '1'`, where the sweep finds no earlier section and moves
+nothing. The reopen case stays with `asana-closed-message` (#3562).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `templates/asana-open-section.ps1` + `.yml`: the sweep, its helpers copied verbatim from the two sibling templates
+- [x] `closed-message-sessioncheck.ps1`: the pair is asked of smartwatchbanden alone
+- [x] `WORKFLOW-portable.md` step 6, the adopt skill and the README describe it
 
 ### TEST
 
+- [x] `bwj-development.tests.ps1`: copy-equality pins, the earlier-code rule, every skip, the script's and workflow's shape
+- [x] `closed-message-sessioncheck.tests.ps1`: missing pair reported in smartwatchbanden, never asked of xoxowildhearts
+
 ### DEPLOY: feat/4056-asana-open-section
 
-**Score:**
+The new `asana-open-section` template ships with its suite cases and a session-check group, and step 6 of
+[`WORKFLOW-portable.md`](../../plugins/dkj-policy/extensions/bwj-development/WORKFLOW-portable.md) now names a third automated move.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A store whose board shows every open issue as in progress can now keep it that way: copy the new
+`asana-open-section` workflow (smartwatchbanden's session check asks for it) and a card dragged back into
+`1. Todo` while its issue is open returns to `2. In Progress` the next morning. On a board whose `Filed`
+is the inbox column it moves nothing.
+
+**Score:** 3
 
 #### Pull Request
 
