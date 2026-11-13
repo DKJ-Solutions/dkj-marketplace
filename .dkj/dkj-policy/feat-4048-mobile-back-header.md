@@ -59,7 +59,7 @@ judged the look here.
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: 758 asserts pass, five new ones on the back cell, the title, the one-level-up pick and the CSS hide
-- [ ] The owner's look at a product page at phone width (Admin's Phone width or a narrow window)
+- [~] The owner's look at a product page at phone width (Admin's Phone width or a narrow window). Not done as a separate look: davekokbwj approved the branch through issues-sweep-reviews on 2026-11-13 without one.
 
 ### DEPLOY: feat/4048-mobile-back-header
 
