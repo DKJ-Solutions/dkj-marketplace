@@ -166,7 +166,7 @@ try {
     Assert-True ($r.Flat -like "*gh label create 'prio-2' --color 'F57C00' --description 'Priority 2 of 4 -- worth doing, no pressure' --repo fixture-org/fixture-repo*") `
         "all missing: the composed command for 'prio-2' is exact and paste-ready, including --repo"
     Assert-Equal 0 (@([regex]::Matches($r.Out, '\[ok\]')).Count) 'all missing: zero [ok] lines'
-    Assert-True ($r.Flat -like '*16 of 16 canonical triage label(s) missing*') 'all missing: the summary line counts 16 of 16'
+    Assert-True ($r.Flat -like '*17 of 17 canonical triage label(s) missing*') 'all missing: the summary line counts 17 of 17'
 
     # --- 3. All seventeen present (two in a different case): all [ok], nothing printed to create ------
     Write-Host '-- 3. all seventeen already exist (two case-differently) --' -ForegroundColor Cyan
@@ -177,7 +177,7 @@ try {
         Assert-True ($r.Out -like "*[ok]*'$name' already exists*") "all present: '$name' reported [ok]"
     }
     Assert-Equal 0 (@([regex]::Matches($r.Out, '\[missing\]')).Count) 'all present: zero [missing] lines'
-    Assert-True ($r.Flat -like '*Done: all 16 canonical triage label(s) already exist*') 'all present: the summary line says done'
+    Assert-True ($r.Flat -like '*Done: all 17 canonical triage label(s) already exist*') 'all present: the summary line says done'
     # THE CASE-INSENSITIVE MATCH, explicitly: 'PRIO-3' in the payload must satisfy 'prio-3' in the
     # canonical set -- GitHub itself treats the two as the same label, and a case-sensitive compare
     # here would print a create command gh would refuse as a duplicate.
@@ -197,7 +197,7 @@ try {
     Assert-Equal 1 (@([regex]::Matches($r.Out, '\[drift\]')).Count) 'drift: exactly one [drift] line -- the sixteen matching labels stay [ok]'
     Assert-True ($r.Out -notmatch "\[ok\]\s+'awaiting-action-external'") 'drift: and the drifted label is no longer reported [ok]'
     Assert-True ($r.Flat -notlike '*Done:*') 'drift: the summary does not say done'
-    Assert-True ($r.Flat -like '*All 16 canonical triage label(s) exist*1 of them in a colour other than the canonical one*nothing was changed*') 'drift: the summary counts the drifted label'
+    Assert-True ($r.Flat -like '*All 17 canonical triage label(s) exist*1 of them in a colour other than the canonical one*nothing was changed*') 'drift: the summary counts the drifted label'
 
     # --- 4. Two of seventeen present: a mixed report, correct counts ----------------------------------
     Write-Host '-- 4. two of seventeen already exist --' -ForegroundColor Cyan
@@ -210,7 +210,7 @@ try {
     foreach ($name in @('prio-2', 'prio-4', 'awaiting-recurrences', 'awaiting-decision-dev', 'awaiting-decision-client', 'awaiting-review-dev', 'awaiting-review-client', 'awaiting-pull', 'awaiting-pull-external', 'awaiting-action-external', 'awaiting-action-dev', 'awaiting-release', 'awaiting-release-external', 'awaiting-recurrences-first', 'awaiting-session-dev')) {
         Assert-True ($r.Out -like "*[missing]*'$name'*") "partial: '$name' reported [missing]"
     }
-    Assert-True ($r.Flat -like '*14 of 16 canonical triage label(s) missing*2 already exist*') 'partial: the summary line counts both halves'
+    Assert-True ($r.Flat -like '*15 of 17 canonical triage label(s) missing*2 already exist*') 'partial: the summary line counts both halves'
 
     # --- 4b. A tracker still carrying the FORMER name: a rename, never a create beside it (#2683) ----
     Write-Host '-- 4b. the former name dossier is renamed to awaiting-recurrences, not duplicated --' -ForegroundColor Cyan
@@ -222,7 +222,7 @@ try {
     Assert-True ($r.Flat -like "*gh label edit 'dossier' --name 'awaiting-recurrences' --color '5319E7' --description 'Collects every instance of one recurring problem until its root cause is fixed' --repo fixture-org/fixture-repo*") `
         'legacy name: the composed command is a paste-ready gh label edit, which keeps every issue on the label'
     Assert-True ($r.Flat -notlike "*gh label create 'awaiting-recurrences'*") 'legacy name: and no create is printed beside it'
-    Assert-True ($r.Flat -like '*15 of 16 canonical triage label(s) missing*1 already exist*') 'legacy name: the rename still counts as a to-do in the summary'
+    Assert-True ($r.Flat -like '*16 of 17 canonical triage label(s) missing*1 already exist*') 'legacy name: the rename still counts as a to-do in the summary'
 
     # --- 4c. The #2723 former names: 'record' and 'awaiting-recurrence', each renamed in place ------
     Write-Host '-- 4c. the former names record and awaiting-recurrence are renamed, not duplicated (#2723) --' -ForegroundColor Cyan

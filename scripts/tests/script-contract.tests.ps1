@@ -1368,7 +1368,7 @@ function Get-BranchTypes { return @('Feat', 'Fix', 'Docs', 'Chore') }
     $c = New-TriageConsumer -Body $stale
     $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
     Assert-Equal 1 $r.Code 'a stale copy: exit-code 1'
-    Assert-Match "\[ERROR\].*$triageErr 12 of the 16 canonical triage labels" $r.Out 'a stale copy: [ERROR] with the count'
+    Assert-Match "\[ERROR\].*$triageErr 13 of the 17 canonical triage labels" $r.Out 'a stale copy: [ERROR] with the count'
     Assert-Match "$triageErr.*awaiting-decision-dev" $r.Out 'a stale copy: names awaiting-decision-dev among the missing'
     Assert-NotMatch "$triageErr[^\r\n]*needs-decision" $r.Out 'a stale copy: never echoes its own retired names'
     Assert-Match "$triageErr.*Repair: replace the function" $r.Out 'a stale copy: and the repair'
@@ -1396,7 +1396,7 @@ function Get-BranchTypes { return @('Feat', 'Fix', 'Docs', 'Chore') }
     # Nothing of the SOURCE's set may leak into the probe: this consumer only reads $script:TriageLabels.
     $c = New-TriageConsumer -Body '    @($script:TriageLabels)'
     $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c)
-    Assert-Match "\[ERROR\].*$triageErr 16 of the 16" $r.Out 'a consumer reading a set it never assigns: reported, because the source''s set is NOT in its scope'
+    Assert-Match "\[ERROR\].*$triageErr 17 of the 17" $r.Out 'a consumer reading a set it never assigns: reported, because the source''s set is NOT in its scope'
 
     $r = Invoke-PluginCheck @('-ConsumerPathOverride', $c, '-BlueprintPathOverride', (Join-Path $Fixture 'no-such-blueprint.json'))
     Assert-Match '\[INFO\].*triage labels in scripts\\repo-config\.ps1 were not compared' $r.Out 'missing blueprint: one [INFO] line, no verdict'
