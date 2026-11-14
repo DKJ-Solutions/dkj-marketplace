@@ -47,9 +47,11 @@ Closes #4070: the owner wants one family on every device, Inter (the Figma `font
 - [x] `house-style.css`: an `@font-face` for Inter, `--font-sans` next to `--font-mono`, and `var(--font-sans)` at the four hard-coded `system-ui` sites
 - [x] `serve-general-pages.ps1` and `serve-consumer-dashboard.ps1` serve `/InterVariable.woff2` beside the stylesheet
 - [x] Brand-book README: the font-family row and how-to-use step 1
+- [x] `specimens.html` shows `--font-sans`, and `house-palette.tests.ps1`'s weight check skips an `@font-face` block, whose `font-weight` is the file's range and cannot take a token (the first ship's refusal)
 
 ### TEST
 
+- [x] `house-palette.tests.ps1`: 219 passed, 0 failed
 - [x] Browser on the House style page: `body` and `h1` compute to `--font-sans`, `document.fonts` reports Inter `loaded`, `/InterVariable.woff2` 200 `font/woff2`
 - [~] The owner looks at the House style page in Inter -- not done as a separate look: davekokbwj approved the branch through issues-sweep-reviews on 2026-11-14 without one.
 

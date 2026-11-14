@@ -167,6 +167,8 @@ $weightFiles = @('plugins\dkj-policy\assets\dkj-brandbook\house-style.css', 'plu
     'plugins\dkj-policy\apps\admin\lib\stopwatch-lib.ps1', 'scripts\lib\consumer-dashboard-lib.ps1')
 foreach ($wf in $weightFiles) {
     $wText = [System.IO.File]::ReadAllText((Join-Path $RepoRoot $wf))
+    # An @font-face states the weight RANGE a font file covers (#4070), a descriptor that cannot take a var(), not a rule's weight.
+    $wText = $wText -replace '(?s)@font-face\s*\{[^}]*\}', ''
     $literal = @([regex]::Matches($wText, 'font-weight:(?>\s*)(?!var\(--font-weight-(light|regular|bold|black)\))[^;}''"]+') | ForEach-Object { $_.Value })
     Assert-Equal '' ($literal -join ', ') "$wf sets no font weight but through a token"
 }
