@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**14 / 18 minor entries** <!-- pending-tally -->
+**15 / 19 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4070-font-sans-inter · 20261114-102445Z
+
+The house stylesheet now sets all text in Inter, the same family on every device, through a new `--font-sans` token; it was the device's own system font (Roboto, Segoe UI or SF). The font ships as `InterVariable.woff2` beside `house-style.css`, and where the file is absent the system stack takes over ([#4070](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4070)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every page Admin renders reads in Inter after taking this version, so a Figma design and the screen show the same letters. An app that vendors the brand book keeps the system font until it copies the font file too (#4075).
+
+**Score:** 3
+
+#### Pull Request
+
+house-style: Inter as the house family, behind a --font-sans token
+
+Plugins: dkj-policy
+
+[PR #4077](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4077)
+
+---
 
 ### DEPLOY: fix/element-typography-css · 20261114-092452Z
 
