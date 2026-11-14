@@ -39,19 +39,34 @@
 
 ### PLAN
 
+- [x] Scope from #4095 and its two comments: the full-screen phone menu, `.dialog--sheet`, its two header triggers (the path title and a More cell), renderer support, README, specimens and tests; then park for the owner's look.
+- [x] Built after the Figma file's `Product / Menu row`, `Menu section head`, `Menu footer`, `Product / Sheet` and the `Product / Site header` variants (Path sheet, More), and the `Menu open`, `Path sheet` and `More menu` phone frames.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-product.css`: `.dialog--screen` (the full-screen menu, with `.menu-section`, `.menu-footer` and `.menu-item__aside`), `.dialog--sheet` with `.dialog__handle`, and the header's `button.site-header__title` and `.site-header__more`.
+- [x] `house-theme.js`: the path title and the More cell open their sheets as the menu toggle opens the menu; a backdrop tap shuts a sheet.
+- [x] `Format-SiteHeaderHtml`: `-Path`, `-Actions`, `-SettingsHref`, `-MenuNote`; the menu is `dialog--screen` with Pages, Display and About. `Format-ProductPageHtml` passes the trail as the path and the new parameters on; the Consumers page passes its path.
+- [x] Product README (reserved names, the phone section, the menu, a new "The sheet: path and actions") and the product specimens (a phone header, a static sheet and menu, two live modals).
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the full-screen menu and its sections, the path sheet, the More cell and its sheet, their absence without input, the product page wiring, the `house-theme.js` triggers -- 768 passed, 0 failed.
+- [x] `consumer-dashboard.tests.ps1` (the Consumers page's path title) 255 passed; `check-house-style` 175, `house-palette` 219, `check-house-style.ps1` and `check-plugin-integrity.ps1` clean.
+- [x] Rendered headless in Edge at phone width (dark and light) and at 1280: the header, the open menu, the path sheet and the actions sheet match the Figma frames.
+
 ### DEPLOY: feat/4095-menu-and-sheet
 
-**Score:**
+Inside this repo, the product server's own pages (Consumers, Plugins, Docs coverage) open their phone menu full screen and offer their path behind the title, so the brand book's new parts are exercised on a live page before any consumer takes them.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+On a phone the product header gains the two things the Figma file already showed: a tap on the page title opens the whole path as a bottom sheet, and a More cell opens the page's own actions as one. The menu behind the hamburger now opens full screen, like a phone's settings screen, with Pages, Display and About sections, in place of the side drawer. A product that renders its pages with `Format-ProductPageHtml` gets the path sheet with the update, and passes `-Actions` and `-SettingsHref` to fill the rest.
+
+**Score:** 3
 
 #### Pull Request
 
+house-product.css: full-screen menu, the sheet, and the header's path and More triggers
