@@ -382,7 +382,7 @@ states its value), with `font-weight/` beside them.
 Which size an element takes is the `Element` collection's: `text/h1` to `text/xs` and `text/title`, named and
 coded as the tokens here, alias a `font-size/` step in each of its `Desktop` and `Mobile` modes (Dave,
 November 14, 2026), and the text styles bind to those.
-**The `h1` is in the body sans and its own case, at the bold weight** (`--font-weight-bold`; it was `--font-weight-black` for part of November 1, 2026, until every black rule moved to bold the same day, Maikel) (owner's decision, October 24, 2026). From
+**The `h1` is in the body sans and its own case, at the black weight** (`--font-weight-black` since November 14, 2026, #4073, to match the Figma Element `h1`; it was bold from November 1, Maikel) (owner's decision, October 24, 2026). From
 October 21, 2026 ([#3247](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3247)) it was set in
 capitals, and before that day in `--font-serif`; both went, so it stands apart from the `h2` by its size and
 weight (`h2` is bold, `--font-weight-bold`, since November 1, 2026, Maikel).
