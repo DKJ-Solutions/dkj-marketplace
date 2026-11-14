@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**13 / 17 minor entries** <!-- pending-tally -->
+**14 / 18 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/element-typography-css · 20261114-092452Z
+
+The brand book's type now matches the Figma Element collection again: the `h1` is set in the black weight, `.note` is light, and `.meta` is light at `--text-xs` (it was regular at `--text-sm`) ([#4073](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4073)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every app that renders with the house stylesheet shows a heavier page title and quieter notes and meta lines after taking this version; nothing to migrate.
+
+**Score:** 2
+
+#### Pull Request
+
+Align house-style.css with the Figma Element typography
+
+Plugins: dkj-policy
+
+[PR #4074](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4074)
+
+---
 
 ### DEPLOY: docs/figma-font-size-scale · 20261114-012328Z
 
