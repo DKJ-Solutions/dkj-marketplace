@@ -2745,6 +2745,13 @@ function Get-GoalTreeSkips {
               parked tasks are left out of the map, so their own label skips them. An unplanned milestone
               still stops the walk: breaking it down is the owner's step, and what lies behind it is not
               planned yet. plan-goal -Next keeps the goal's own Now, since that view is the owner's.
+            - A NOW IN FLIGHT ELSEWHERE DOES NOT HOLD THE GOAL EITHER (#4105). A task another sweep has claimed
+              ('held') or pushed a branch for ('branch') is walked past the same way, so a second sweep beside
+              a running one takes the next task in order. Measured November 14, 2026: goal #4081's Now had
+              advanced past a parked task to #4086, a sweep on another machine had claimed it two minutes
+              earlier, and the second sweep read 0 free. Each sweep still gets one task per goal; this tag's
+              own claim is not in -InFlightNumbers, so it stays this sweep's Now. Accepted by the owner: a task
+              that depends on the one before it can be built early.
 
             Pure: the caller makes the one GraphQL read.
 
@@ -2754,12 +2761,17 @@ function Get-GoalTreeSkips {
         .PARAMETER ParkedNumbers
             The open issues the sweep skips by a parking label. Empty keeps the goal's own Now.
 
+        .PARAMETER InFlightNumbers
+            The open issues another session is on: 'held' by another tag, or 'branch' on the remote without
+            a marker (#4105). Never this tag's own 'mine'. Empty changes nothing.
+
         .OUTPUTS
             A hashtable, issue number -> reason. Empty for no goals.
     #>
-    param([AllowNull()][object[]]$Goals = @(), [AllowNull()][int[]]$ParkedNumbers = @())
+    param([AllowNull()][object[]]$Goals = @(), [AllowNull()][int[]]$ParkedNumbers = @(), [AllowNull()][int[]]$InFlightNumbers = @())
 
     $parked = @(@($ParkedNumbers) | Where-Object { $_ })
+    $inFlight = @(@($InFlightNumbers) | Where-Object { $_ })
     $skips = @{}
     # ConvertFrom-GoalsGraph returns its array whole (a leading comma), so a caller's @() nests it once;
     # the pipeline unrolls that level again, and a plain list passes through unchanged.
@@ -2767,16 +2779,18 @@ function Get-GoalTreeSkips {
         $gn = [int]$g.Number
         $nowNumber = 0
         $passed = New-Object System.Collections.Generic.List[int]
+        $passedNotes = New-Object System.Collections.Generic.List[string]
         # Get-GoalSteps returns its array whole, so it is iterated as it comes.
         foreach ($step in (Get-GoalSteps -Goal $g)) {
             $sn = [int]$step.Item.Number
-            if (-not $step.Unplanned -and $parked -contains $sn) { $passed.Add($sn) | Out-Null; continue }
+            if (-not $step.Unplanned -and $parked -contains $sn) { $passed.Add($sn) | Out-Null; $passedNotes.Add("#$sn parked") | Out-Null; continue }
+            if (-not $step.Unplanned -and $inFlight -contains $sn) { $passed.Add($sn) | Out-Null; $passedNotes.Add("#$sn held") | Out-Null; continue }
             $nowNumber = $sn
             break
         }
-        $parkedNote = if ($passed.Count -gt 0) { " ($(($passed | ForEach-Object { "#$_" }) -join ', ') parked)" } else { '' }
+        $parkedNote = if ($passedNotes.Count -gt 0) { " ($($passedNotes -join ', '))" } else { '' }
         $nowText = if ($nowNumber) { "goal #$gn's Now is #$nowNumber$parkedNote" }
-                   elseif ($passed.Count -gt 0) { "every open step of goal #$gn is parked" }
+                   elseif ($passed.Count -gt 0) { "every open step of goal #$gn is parked or in flight$parkedNote" }
                    else { "goal #$gn has no open step" }
         $skips[$gn] = "plan-goal container: goal #$gn is done once its milestones are"
         foreach ($m in @(@($g.Milestones) | Where-Object { $_ })) {

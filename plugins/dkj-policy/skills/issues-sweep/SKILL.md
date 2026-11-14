@@ -107,9 +107,16 @@ label's own skip.
 task that carries none of the `-SkipLabel` labels, so a task parked for the owner's look lets the next task in
 order go free, and the reason names what it passed (`Now is #4086 (#4085 parked)`). Measured November 14,
 2026: goal #4081's Now was parked as `awaiting-review-dev`, and its 18 other issues read `0 free` for every
-sweep, against the visible park above that exists so a sweep goes on. One task per goal is still free at a
-time, and an unplanned milestone still stops the walk. `plan-goal -Next` keeps showing the goal's own Now,
+sweep, against the visible park above that exists so a sweep goes on. One task per goal is still free per sweep,
+and an unplanned milestone still stops the walk. `plan-goal -Next` keeps showing the goal's own Now,
 since that view is the owner's.
+
+**Nor does a Now another sweep is on**
+([#4105](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4105)). A task `held` by another tag, or
+with a `branch` pushed for it, is walked past the same way, so a second sweep beside a running one takes the
+next task in order (`Now is #4088 (#4085 parked, #4086 parked, #4087 held)`); this tag's own `mine` stays its
+Now. Measured November 14, 2026: the second of two sweeps on goal #4081 read `0 free` while the first held
+its Now. The owner accepted that a task depending on the one before it can be built early.
 
 **`stale-park` means an `awaiting-pull` issue whose wait has cleared**
 ([#3136](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3136)). Nothing lifts that label at

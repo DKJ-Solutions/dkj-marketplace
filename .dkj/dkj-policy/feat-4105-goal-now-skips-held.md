@@ -39,19 +39,30 @@
 
 ### PLAN
 
+- [x] Owner's decision (November 14, 2026): a Now another sweep is on advances the sweep's Now, like a parked one (#4105).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-GoalTreeSkips` takes `-InFlightNumbers` and walks past them; the reason names each passed task as parked or held.
+- [x] `claim-issue.ps1 -Candidates` reads the `held` and `branch` verdicts in one pure pass before the goal walk, never `mine`.
+- [x] Both mirrors, and the `issues-sweep` skill paragraph.
 
 ### TEST
 
+- [x] `claim-issue.tests.ps1`: a held Now advancing, parked then held, all parked or held, a held task behind a free Now, an unplanned milestone still stopping the walk, the sweep verdicts, and the script wiring -- 690 passed, 0 failed.
+- [x] Live `-Candidates` on goal #4081: `Now is #4088 (#4085 parked, #4086 parked, #4087 held)`, 1 free.
+
 ### DEPLOY: feat/4105-goal-now-skips-held
 
-**Score:**
+Inside this repo, a second sweep beside a running one now takes a plan-goal's next task instead of reading `0 free` while the other sweep holds the goal's Now: goal #4081 read `0 free` because #4086 was claimed by another machine two minutes earlier.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Two sweeps can now work one plan-goal at once: when the goal's Now is claimed by another sweep, or has a branch pushed for it, `issues-sweep` takes the next task in order, and its reason names what it passed (`Now is #4088 (#4085 parked, #4086 parked, #4087 held)`). Each sweep still takes one task per goal; a task that depends on the one before it can now be built early.
+
+**Score:** 3
 
 #### Pull Request
 
