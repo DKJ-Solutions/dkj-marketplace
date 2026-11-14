@@ -146,9 +146,9 @@
      colour. The hero figure takes it too. --text-lg went the same day: what was set in it takes --text-h3. */
   --text-h1: 36px; --text-h2: 20px; --text-h3: 16px;
   --text-base: 14px; --text-sm: 12px; --text-xs: 11px;
-  /* The site header's name (.site-header__name): a step of its own, the h2 size since November 2, 2026, so the header can be tuned
-     without moving every h2 (Dave, November 2, 2026; it was --text-h3). */
-  --text-title: 20px;
+  /* The site header's name takes --text-h2. It had a step of its own, --text-title, from November 2, 2026 (Dave)
+     until November 14, 2026, when it was retired (#4078): the Figma library dropped the step, and it
+     always carried the h2 size. */
 
   /* app-shell sizes, same in both modes (built from the spacing scale; see "App components" in house-product.css):
      the height of a value field and of the button beside it, the minimum touch target, the height of
@@ -181,11 +181,11 @@
 }
 
 /* ---- Tokens: a phone (the 760px breakpoint the grids below use) -------------- */
-/* The headings step down a size on a phone, the body sizes do not: h1 36 -> 28, h2 and the
-   header name 20 -> 18, h3 stays 16, just above the body. The Figma library's Scale collection
+/* The headings step down a size on a phone, the body sizes do not: h1 36 -> 28, h2 (and so the
+   header name) 20 -> 18, h3 stays 16, just above the body. The Figma library's Scale collection
    carries the same values as its Mobile mode (Dave, November 13, 2026). */
 @media (max-width: 760px) {
-  :root { --text-h1: 28px; --text-h2: 18px; --text-title: 18px; }
+  :root { --text-h1: 28px; --text-h2: 18px; }
 }
 
 /* ---- Tokens: dark, following the OS unless the page forces a theme -------- */
@@ -735,7 +735,7 @@ p { margin: 0; }
 .empty-state { display: flex; flex-direction: column; align-items: center; gap: var(--spacing-4); padding: var(--spacing-8); text-align: center;
   background: var(--bg-2); border: 1px dashed var(--bg-4); border-radius: var(--radius-2); }
 .empty-state__mark { width: var(--spacing-14); height: var(--spacing-14); border-radius: var(--radius-pill); background: var(--bg-3); }
-.empty-state > h2 { margin: 0; font-size: var(--text-title); }
+.empty-state > h2 { margin: 0; font-size: var(--text-h2); }
 .empty-state__text { max-width: var(--spacing-96); margin: 0; color: var(--primary-muted); }
 /* A set of links, Admin's form of a card overview (#3830): a .pane-head over a .table--dense, the table in a
    rounded, bordered frame with a tinted head row, as the wireframe's pages table. */

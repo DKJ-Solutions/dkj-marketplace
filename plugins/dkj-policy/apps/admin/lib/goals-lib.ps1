@@ -221,7 +221,7 @@ function Format-GoalPlanText {
 
 $script:GoalsPageStyle = '.goal { display: grid; gap: var(--spacing-4); }' + "`n" +
     '.goal__head { display: flex; align-items: center; gap: var(--spacing-3); }' + "`n" +
-    '.goal__head h2 { margin: 0; font-size: var(--text-title); }' + "`n" +
+    '.goal__head h2 { margin: 0; font-size: var(--text-h2); }' + "`n" +
     '.goal__head h2 > a { margin-right: var(--spacing-1); }' + "`n" +
     '.goal .chip { color: var(--primary-muted); font-size: var(--text-xs); font-weight: var(--font-weight-regular); }' + "`n" +
     '.goal-progress__bar { display: flex; gap: var(--spacing-3); align-items: center; color: var(--primary-muted); font-size: var(--text-sm); }' + "`n" +

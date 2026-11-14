@@ -98,7 +98,7 @@ function Get-HouseStyleRetiredTokens {
         '--neutral-5', '--on-primary', '--on-warn', '--page', '--page-base', '--primary-1', '--primary-2',
         '--primary-3', '--primary-4', '--primary-5', '--primary-6', '--primary-7', '--primary-8', '--primary-9',
         '--primary-10', '--primary-11', '--primary-12', '--primary-ink',
-        '--primary-soft', '--prose-h1', '--prose-h2', '--prose-h3', '--radius-1-5', '--radius-2-5', '--radius-4', '--radius-lg', '--radius-md', '--radius-md-plus', '--radius-sm', '--radius-xs', '--status-mark', '--surface', '--surface-base', '--text-h0', '--text-h4', '--text-h5', '--text-h6', '--up', '--warn', '--warn-bg'
+        '--primary-soft', '--prose-h1', '--prose-h2', '--prose-h3', '--radius-1-5', '--radius-2-5', '--radius-4', '--radius-lg', '--radius-md', '--radius-md-plus', '--radius-sm', '--radius-xs', '--status-mark', '--surface', '--surface-base', '--text-h0', '--text-h4', '--text-h5', '--text-h6', '--text-title', '--up', '--warn', '--warn-bg'
     )
 }
 
