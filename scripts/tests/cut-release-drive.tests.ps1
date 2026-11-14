@@ -285,9 +285,9 @@ A fixture release page.
 $HistoryMajors
 "@
     # The file this repo's Get-ReleaseVersionPins names (#3133), so the verbatim seam has something to
-    # repoint: three pinned URLs, and one under another prefix that the cut must leave alone. Each pinned URL
-    # carries a stale sha256 cell, and the three files its Checksums names exist, LF-only (#3636; the product
-    # layer's house-product.css in dkj-solutions since #3831).
+    # repoint: four pinned URLs, and one under another prefix that the cut must leave alone. Each pinned URL
+    # carries a stale sha256 cell, and the four files its Checksums names exist, LF-only (#3636; the product
+    # layer's house-product.css in dkj-solutions since #3831; the house font since #4075, a binary file).
     $zeros = '0' * 64
     Write-Utf8 (Join-Path $root 'plugins\dkj-policy\extensions\dkj-solutions\skills\dkj-brandbook\SKILL.md') @"
 # A fixture pin page
@@ -295,12 +295,14 @@ $HistoryMajors
 | ``house-style.css`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-policy/assets/dkj-brandbook/house-style.css`` | ``$zeros`` |
 | ``house-theme.js`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-policy/assets/dkj-brandbook/house-theme.js`` | ``$zeros`` |
 | ``house-product.css`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css`` | ``$zeros`` |
+| ``InterVariable.woff2`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-policy/assets/dkj-brandbook/InterVariable.woff2`` | ``$zeros`` |
 https://raw.githubusercontent.com/DKJ-Solutions/other-repo/v0.1.0/a/file.css
 "@
     $assets = Join-Path $root 'plugins\dkj-policy\assets\dkj-brandbook'
     New-Item -ItemType Directory -Path $assets -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $assets 'house-style.css'), ":root { --x: 1; }`n")
     [System.IO.File]::WriteAllText((Join-Path $assets 'house-theme.js'), "// fixture`n")
+    [System.IO.File]::WriteAllBytes((Join-Path $assets 'InterVariable.woff2'), [byte[]](0x77, 0x4F, 0x46, 0x32, 0x00, 0xFF))
     $productAssets = Join-Path $root 'plugins\dkj-policy\extensions\dkj-solutions\assets\dkj-brandbook-product'
     New-Item -ItemType Directory -Path $productAssets -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $productAssets 'house-product.css'), ".y { color: var(--x); }`n")
@@ -367,14 +369,14 @@ try {
 
     # The version pins (#3133): every URL under the pinned prefix names the new tag, and nothing else moved.
     $pinPage = Get-Content -LiteralPath (Join-Path $root 'plugins\dkj-policy\extensions\dkj-solutions\skills\dkj-brandbook\SKILL.md') -Raw
-    Assert-Equal 3 ([regex]::Matches($pinPage, 'dkj-marketplace/v1\.4\.1/')).Count 'happy path: all three pinned URLs name the tag the cut made'
+    Assert-Equal 4 ([regex]::Matches($pinPage, 'dkj-marketplace/v1\.4\.1/')).Count 'happy path: all four pinned URLs name the tag the cut made'
     Assert-NotMatch 'dkj-marketplace/v1\.4\.0/' $pinPage 'happy path: no pinned URL is left on the old tag'
     Assert-Match 'other-repo/v0\.1\.0/' $pinPage 'happy path: a URL under another prefix is left alone'
-    Assert-Says 'repinned: plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/SKILL.md -> v1.4.1 (3 URL(s))' $r.Out 'happy path: the run says what it repinned'
+    Assert-Says 'repinned: plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/SKILL.md -> v1.4.1 (4 URL(s))' $r.Out 'happy path: the run says what it repinned'
     Assert-NotMatch '\?\? .*SKILL\.md|M .*SKILL\.md' (Get-GitOut -Root $root -GitArgs @('status', '--porcelain')) 'happy path: the repinned page is inside the release commit'
     # The checksums (#3636): each cell beside a pinned URL is the sha256 of the bytes that tag serves.
     $sha = [System.Security.Cryptography.SHA256]::Create()
-    foreach ($pinned in 'assets\dkj-brandbook\house-style.css', 'assets\dkj-brandbook\house-theme.js', 'extensions\dkj-solutions\assets\dkj-brandbook-product\house-product.css') {
+    foreach ($pinned in 'assets\dkj-brandbook\house-style.css', 'assets\dkj-brandbook\house-theme.js', 'extensions\dkj-solutions\assets\dkj-brandbook-product\house-product.css', 'assets\dkj-brandbook\InterVariable.woff2') {
         $leaf = Split-Path -Leaf $pinned
         $want = ([System.BitConverter]::ToString($sha.ComputeHash([System.IO.File]::ReadAllBytes((Join-Path $root "plugins\dkj-policy\$pinned")))) -replace '-', '').ToLowerInvariant()
         Assert-Match ([regex]::Escape("/$leaf``") + '.*' + $want) $pinPage "happy path: the cut wrote the sha256 of $leaf beside its URL"
