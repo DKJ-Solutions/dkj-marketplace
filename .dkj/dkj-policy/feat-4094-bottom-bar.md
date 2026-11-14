@@ -39,19 +39,33 @@
 
 ### PLAN
 
+The scope on #4094 (its two comments), after the Figma `Product / Bottom bar` and `Product / Bottom bar item` (#4084, #4091): a phone-only bar of four or five slots, More last, and the header's toggle dropped where a bar is drawn. A visible result, so the branch parks for the owner's look.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `.bottom-bar` in `house-product.css`: fixed bottom below 48rem and at the Phone width, hairline on top, safe-area padding, equal slots (16px icon over a 12px label, 44px target), `aria-current` bold in `--fg-1`, the rest `--primary-muted`; the body padded by the bar's height.
+- [x] `house-theme.js` opens the drawer from `.bottom-bar__more` as from the toggle, and shuts it when the bar goes.
+- [x] `Format-BottomBarHtml` (3 or 4 sections, then More), `Format-SiteHeaderHtml -NoMenuToggle`, and `-BottomBar`/`-MoreLabel` on `Format-ProductPageHtml` and `Format-ProductHomeHeadHtml`, refused without `-Brand` and `-Menu`.
+- [x] Product README: the reserved names and "The bottom bar, on a phone"; `patterns/product-bottom-bar.html`; a Bottom bar specimen (four and five slots) under Navigation.
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the bar's markup, the five-slot bar, the 2/5-section refusals, `-NoMenuToggle`, the page and home wiring, the no-menu refusal, the CSS and the `house-theme.js` wiring -- 769 passed, 0 failed.
+- [x] `check-house-style` OK, `check-plugin-integrity` 0 errors.
+
 ### DEPLOY: feat/4094-bottom-bar
 
-**Score:**
+Inside this repo, the product layer's renderer can draw a phone's bottom bar: `Format-ProductPageHtml -BottomBar` draws it and leaves the header's toggle out, and the brand-book specimens show it in four and five slots.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions product can now put its sections in the thumb zone on a phone: `.bottom-bar` in `house-product.css` is a bar fixed to the bottom with four or five slots, the last always More, which opens the site menu, so the header drops its three-line toggle. It is gone on a wide window, where the menu sits in the header. dkj-lifehub's Agenda (Home, To-do, Tijdlijn, Agenda, Meer) is the first to use it.
+
+**Score:** 3
 
 #### Pull Request
+
+house-product.css: a bottom bar for a phone, with More opening the site menu
 

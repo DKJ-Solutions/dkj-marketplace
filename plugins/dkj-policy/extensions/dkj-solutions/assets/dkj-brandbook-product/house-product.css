@@ -246,6 +246,37 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 :root[data-width="phone"] .site-header + .breadcrumbs-bar { display: none; }
 :root[data-width="phone"]:has(.site-header + .breadcrumbs-bar) { scroll-padding-top: 0; }
 
+/* ---- Bottom bar (#4094) --------------------------------------------------------------------------------- */
+/* The app's sections in the thumb zone, on a phone only (Figma Product / Bottom bar, #4084): fixed to the bottom, a
+   hairline on top, the safe area padded below. Four slots, or five; each is an icon over a 12px label, a 44px tap
+   target, and the section you are in is bold in the text colour (aria-current="page"), the others regular and muted.
+   The last slot is always More: a button opening the site menu's drawer, so a page with a bottom bar leaves the
+   header's three-line toggle out (Figma Menu toggle=false). house-theme.js wires More as it wires that toggle.
+   <nav class="bottom-bar" aria-label="Sections"><a class="bottom-bar__item" href aria-current="page"><span
+   class="bottom-bar__icon">(svg)</span><span class="bottom-bar__label">..</span></a> .. <button class="bottom-bar__item
+   bottom-bar__more" type="button" aria-controls="site-menu" aria-expanded="false">..</button></nav>
+   No bottom bar on a wide window: the menu sits in the header there. It shows at the width the header folds its menu
+   at (48rem), and at the Phone width, where it is as wide as the page column; the body gets its height as padding
+   below, so the bar never covers the end of the page. */
+.bottom-bar { display: none; }
+@media (max-width: 48rem) { .bottom-bar { display: flex; } }
+:root[data-width="phone"] .bottom-bar { display: flex; max-width: 360px; margin-inline: auto; }
+.bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; align-items: flex-start;
+  padding: var(--spacing-2) 0 max(var(--spacing-5), env(safe-area-inset-bottom));
+  background: var(--bg-1); border-top: 1px solid var(--bg-3); }
+@media (max-width: 48rem) { body:has(> .bottom-bar) { padding-bottom: calc(var(--spacing-2) + var(--spacing-11) + max(var(--spacing-5), env(safe-area-inset-bottom)) + 1px); } }
+:root[data-width="phone"] body:has(> .bottom-bar) { padding-bottom: calc(var(--spacing-2) + var(--spacing-11) + max(var(--spacing-5), env(safe-area-inset-bottom)) + 1px); }
+.bottom-bar__item { display: flex; flex: 1 1 0; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-1);
+  min-width: 0; min-height: var(--spacing-11); padding: 0 var(--spacing-1); border: 0; background: transparent;
+  color: var(--primary-muted); font: inherit; font-size: var(--text-sm); font-weight: var(--font-weight-regular); line-height: 1.4;
+  text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.bottom-bar__item:hover { color: var(--fg-1); }
+.bottom-bar__item[aria-current="page"] { color: var(--fg-1); font-weight: var(--font-weight-bold); }
+.bottom-bar__item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.bottom-bar__icon { display: flex; }
+.bottom-bar__icon svg { width: var(--spacing-4); height: var(--spacing-4); }
+.bottom-bar__label { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
 /* ---- Fills ---------------------------------------------------------------- */
 /* A block on the theme's colour, or on the far end (#3235). The text switches with the ground. On .fill-primary the
    paper steps are the text, because all four read on the primary (4.55:1 or better): an h2 is --bg-1 there and
