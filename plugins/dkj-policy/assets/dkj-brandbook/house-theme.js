@@ -218,12 +218,13 @@
   /* The site header's menu (house-style.css, "Site header menu"): its toggle opens the drawer it controls as a modal,
      so Escape, the focus trap and the return of focus to the toggle are the browser's. Listening on the document
      means a header drawn after this script ran needs no call. A click on the close button or on the backdrop shuts it,
-     and so does the header growing wide enough to show its links again, which hides the toggle. */
+     and so does the header growing wide enough to show its links again, which hides the toggle. A bottom bar's More
+     (house-product.css, "Bottom bar", #4094) is such a toggle too, and the window outgrowing the bar shuts it the same way. */
   function menuOf(toggle) { var d = document.getElementById(toggle.getAttribute('aria-controls') || ''); return d && d.showModal ? d : null; }
   document.addEventListener('click', function (e) {
     var t = e.target && e.target.closest ? e.target : null;
     if (!t) return;
-    var toggle = t.closest('.site-header__menu-toggle');
+    var toggle = t.closest('.site-header__menu-toggle, .bottom-bar__more');
     if (toggle) {
       var d = menuOf(toggle);
       if (!d || d.open) return;
@@ -236,7 +237,7 @@
     if (menu && (t === menu || t.closest('.dialog__close'))) menu.close();
   });
   window.addEventListener('resize', function () {
-    var toggles = document.querySelectorAll('.site-header__menu-toggle[aria-expanded="true"]');
+    var toggles = document.querySelectorAll('.site-header__menu-toggle[aria-expanded="true"], .bottom-bar__more[aria-expanded="true"]');
     for (var i = 0; i < toggles.length; i++) {
       var d = menuOf(toggles[i]);
       if (d && d.open && !toggles[i].offsetParent) d.close();

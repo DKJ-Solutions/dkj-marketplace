@@ -44,8 +44,9 @@ knows what not to redefine. The product layer reserves these too:
   (with `__error`), `.btn--touch`, `.btn--block`, `.dialog` (with `__body`, `__head` (with `--two`, `--back`),
   `__title`, `__sub`, `__close` (with `--save`, `--cancel`, `--back`), and `--drawer`), `.topbar` (with
   `__inner`, `__brand`, `__name`), `.breadcrumbs-bar` ([below](#every-page-the-breadcrumb-bar)) and the site
-  header, `.site-header` (with `__brand`, `__name`, `__tag`, `__nav`, `__menu`, `__menu-toggle`;
-  [below](#the-site-header-above-the-bar)).
+  header, `.site-header` (with `__brand`, `__name`, `__tag`, `__nav`, `__menu`, `__menu-toggle`, `__back`, `__title`;
+  [below](#the-site-header-above-the-bar)), and the bottom bar, `.bottom-bar` (with `__item`, `__more`, `__icon`,
+  `__label`; [below](#the-bottom-bar-on-a-phone)).
 - **The brand-book components** ([below](#brandbook-app-components)): `.round-toggle`, `.badge-toggle`, `.help`,
   `.more--structured` (`.more__title`, `__meta`, `__trailing`, `__version`), `.question-head` (the answer line
   under it is a plain `<p>`; `.verdict` is gone, Maikel, November 1, 2026), `.answer` (`__label`, `__value`),
@@ -347,6 +348,36 @@ where you can go, the trail where you are.
 </div></dialog></header>
 ```
 
+#### The bottom bar, on a phone
+
+**A product may put its sections in the thumb zone** (#4094, after the Figma `Product / Bottom bar`, #4084): a bar
+fixed to the bottom of a phone, a hairline on top and the safe area padded below. It has **four slots or five**:
+three or four sections, then **More**, always last, a button that opens the site menu's drawer.
+
+- **Each slot** is a 16px icon over a 12px label, a 44px tap target, all equally wide. The section you are in
+  carries `aria-current="page"` and is bold in the text colour; the others are regular and muted. The icon is the
+  app's own.
+- **Phone only.** It shows below 48rem, the width the header folds its menu at, and at the Phone width, where it is
+  as wide as the page column. On a wide window it is gone and the menu sits in the header.
+- **More replaces the header's toggle**, so a page with a bottom bar leaves `.site-header__menu-toggle` out (Figma
+  `Menu toggle=false`) and keeps the header's links and its drawer. `house-theme.js` wires More as it wires the
+  toggle.
+- **It is a direct child of `<body>`**, so the page gets the bar's height as padding below and its last line is
+  never under the bar.
+- **The renderer** is `Format-BottomBarHtml` in this plugin's `scripts/lib/product-pages-lib.ps1`, and
+  `Format-ProductPageHtml -BottomBar` / `Format-ProductHomeHeadHtml -BottomBar` draw it and drop the toggle. A bar
+  needs a `-Menu`, because More opens the drawer the header draws from it.
+  [`patterns/product-bottom-bar.html`][pattern-bottom-bar] is the stylesheet-only reference.
+
+```html
+<nav class="bottom-bar" aria-label="Sections">
+  <a class="bottom-bar__item" href="/"><span class="bottom-bar__icon">(svg)</span><span class="bottom-bar__label">Home</span></a>
+  <a class="bottom-bar__item" href="/agenda" aria-current="page"><span class="bottom-bar__icon">(svg)</span><span class="bottom-bar__label">Agenda</span></a>
+  ..
+  <button class="bottom-bar__item bottom-bar__more" type="button" aria-controls="site-menu" aria-expanded="false"><span class="bottom-bar__icon">(three lines)</span><span class="bottom-bar__label">More</span></button>
+</nav>
+```
+
 **In Admin** there is no site header menu: Admin draws its side navigation instead (`Get-AdminNav`), whose Development section is its home page's cards in their order (GitHub, Release notes, Claude, Installed plugins: `Get-AdminMenu`, from the same list the cards come from). A product's menu is its own pages.
 
 ## Changing this layer
@@ -365,3 +396,4 @@ the `house-style-css` gate parses `house-product.css` as it does the core's.
 [core-admin]: https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md#admin
 [core-changing]: https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md#changing-the-brand-book
 [pattern-page]: patterns/product-page.html
+[pattern-bottom-bar]: patterns/product-bottom-bar.html
