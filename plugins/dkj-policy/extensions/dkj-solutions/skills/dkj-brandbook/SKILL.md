@@ -47,11 +47,19 @@ always pins the release that carries the bytes its checksums name.
 | `house-style.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.15.0/plugins/dkj-policy/assets/dkj-brandbook/house-style.css` | `8a8b41eb1dc155a0ecd1b57dc7d120245ecd0bd5a996e65b483803e722d18ad4` |
 | `house-theme.js` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.15.0/plugins/dkj-policy/assets/dkj-brandbook/house-theme.js` | `5b58c4c99e8408eff9abad1929c47a2b3138a0dfb37dba6bb24dfd7f2963847a` |
 | `house-product.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.15.0/plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css` | `83f5963900d0d792be26af7e3511217fc38b7d9583d5c338d1a21cdbd4111385` |
+| `InterVariable.woff2` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.15.0/plugins/dkj-policy/assets/dkj-brandbook/InterVariable.woff2` | `693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3` |
 
 **A product page vendors and links all three files, `house-style.css` first and `house-product.css` after it**
 (the product file is never loaded alone), with `house-theme.js` where the app lets the user pick a theme. **An
 Admin-only repo needs only the first two.** The third row is optional for the gate, so a page at an older tag
 that has only two rows is still a complete pin.
+
+**The house family, Inter, is the fourth row** (#4070, #4075). `house-style.css` loads `InterVariable.woff2`
+by an `@font-face` URL relative to itself, so **vendor the font in the same folder as `house-style.css`**,
+unrenamed, and copy its license, `LICENSE-Inter.txt`, beside it (the same URL with that file name; it is
+reference text, not pinned). Its row is optional for the gate like the third: a page at a tag before #4075
+has none. **An inlined `<style>` block (a local report, an e-mail) leaves the font out** and falls back to the
+system font stack, which is the stylesheet's own fallback and costs nothing; do not embed the font as a data URI.
 
 The full rules are in two READMEs, one per file group. The core's
 [`assets/dkj-brandbook/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md)
@@ -69,8 +77,8 @@ match either, stop and report it to the owner.** Never inline a mismatched file,
 on this page rather than beside the files because a checksum stored next to the file guards nothing
 against a change to that file.
 
-**The sha256 pin covers `house-style.css`, `house-theme.js` and `house-product.css`** (the last only where the
-table has its row). The two READMEs are not integrity-pinned: they are reference text that travels with the
+**The sha256 pin covers `house-style.css`, `house-theme.js`, `house-product.css` and `InterVariable.woff2`** (the
+last two only where the table has their rows). The two READMEs are not integrity-pinned: they are reference text that travels with the
 plugin release.
 
 **Read the core README before visual work, and the product README too for a product page, as reference material.** It describes the tokens and classes;
@@ -92,7 +100,9 @@ appears, or the fetch fails, stop and report. The same holds for `house-product.
    the app lets the user pick a theme. Where the output must make no external requests (a local report,
    an e-mail), inline it in a `<style>` block. Where the app has a build, vendor it as a file. Either
    way it is a copy of the house-style file, never a retyped version. **A product page copies and links
-   `house-product.css` after it**, never alone; an Admin-only repo does not need it. An app that offers a theme choice
+   `house-product.css` after it**, never alone; an Admin-only repo does not need it. **A vendored
+   `house-style.css` gets `InterVariable.woff2` and `LICENSE-Inter.txt` in its own folder**; an inlined copy
+   goes without them (see the pin table above). An app that offers a theme choice
    uses `DKJTheme.settings(el)` from that script, the round settings button with the picker inside,
    instead of building its own toggle around `DKJTheme.picker`; the core README has its options.
    **Admin** (Admin, the dkj-policy plugin's dev server in every repo, with no opt-out since #3643)
