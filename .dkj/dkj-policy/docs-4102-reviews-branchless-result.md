@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Resolves #4102: `issues-sweep-reviews` step 1 held every branch-less issue out, so an approved result made
+outside the repo (Figma) could never be cleared by the owner's typed approval.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Step 1 of `plugins/dkj-policy/skills/issues-sweep-reviews/SKILL.md` gives a branch-less issue whose
+  thread places the result outside the repo the approval comment, the label removal and a close; a
+  branch-less issue without such a place keeps the hold-out.
+- [x] The description and the close-out (step 6) name the new outcome.
 
 ### TEST
 
+- [x] Docs only; the gates run in `ship-pr`.
+
 ### DEPLOY: docs/4102-reviews-branchless-result
 
-**Score:**
+`issues-sweep-reviews` now clears a visible result that lives outside the repo
+([#4102](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4102)). A parked issue with no branch, whose
+thread says the result is in Figma, a design file or an external page, gets the approval comment and loses
+its label, and is closed as completed instead of being held out. A branch-less issue whose thread names no
+such place is still held out as a defect of whatever parked it. Measured November 14, 2026: a Figma task
+that was a plan-goal's Now stayed parked after the owner typed the command.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+An owner who runs `/issues-sweep-reviews` after design work in Figma now sees those issues closed, instead
+of left waiting under a label that the command was meant to lift.
+
+**Score:** 2
 
 #### Pull Request
 
