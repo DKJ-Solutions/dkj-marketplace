@@ -377,7 +377,8 @@ so `h1` came down from 48px to `h2`'s 32px, and the hero figure with it. The tar
 **On a phone the headings step down a size** (Dave, November 13, 2026): below the 760px breakpoint the
 grids already use, `--text-h1` is 28px, `--text-h2` and `--text-title` 18px; `--text-h3` stays 16px and the
 body sizes do not move. In the Figma library the `Scale` collection holds only the sizes, in one mode:
-`font-size/11` to `font-size/36`, named by their pixel value like `spacing/`, with `font-weight/` beside them.
+`font-size/1` to `font-size/8`, numbered smallest first like `radius/` (11px to 36px; a step's name never
+states its value), with `font-weight/` beside them.
 Which size an element takes is the `Element` collection's: `text/h1` to `text/xs` and `text/title`, named and
 coded as the tokens here, alias a `font-size/` step in each of its `Desktop` and `Mobile` modes (Dave,
 November 14, 2026), and the text styles bind to those.

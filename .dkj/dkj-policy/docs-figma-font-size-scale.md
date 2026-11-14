@@ -40,7 +40,8 @@
 ### PLAN
 
 The owner wants the Figma `Scale` collection to be a plain scale, with no element names in it. Its font
-sizes are now `font-size/11` to `font-size/36` in one `Default` mode, and the code-named `text/h1` to
+sizes are now `font-size/1` to `font-size/8` (11px to 36px, numbered so a name never states its value)
+in one `Default` mode, and the code-named `text/h1` to
 `text/xs` and `text/title` moved to the `Element` collection, which carries the `Desktop` and `Mobile`
 modes and aliases a step per mode. The README still described the old layout.
 
@@ -58,7 +59,7 @@ modes and aliases a step per mode. The README still described the old layout.
 ### DEPLOY: docs/figma-font-size-scale
 
 The brand book README describes the Figma library's type layers as they are now: `Scale` holds the
-sizes `font-size/11` to `font-size/36` in one mode, and `Element` maps each code token (`text/h1` to
+sizes `font-size/1` to `font-size/8` in one mode, and `Element` maps each code token (`text/h1` to
 `text/xs`, `text/title`) to a size per `Desktop` and `Mobile` mode.
 
 **Score:** 1
