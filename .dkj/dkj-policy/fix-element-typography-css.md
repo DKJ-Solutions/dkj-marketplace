@@ -39,19 +39,28 @@
 
 ### PLAN
 
+Closes #4073: the Figma brand book binds all type to one Element (size + weight). Three CSS rules differed; the owner asked to make them equal, the CSS following Figma.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-style.css`: `h1` black, `.note` light, `.meta` at `--text-xs` and light
+- [x] Brand-book README `h1` rule and the Admin masthead `h1` follow
 
 ### TEST
 
+- [x] `house-palette` (219) and `check-house-style` (169) suites pass
+
 ### DEPLOY: fix/element-typography-css
 
-**Score:**
+The brand book's type now matches the Figma Element collection again: the `h1` is set in the black weight, `.note` is light, and `.meta` is light at `--text-xs` (it was regular at `--text-sm`) ([#4073](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4073)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Every app that renders with the house stylesheet shows a heavier page title and quieter notes and meta lines after taking this version; nothing to migrate.
+
+**Score:** 2
 
 #### Pull Request
 
