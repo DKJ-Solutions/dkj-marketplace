@@ -6,17 +6,8 @@
                      "label":  "release cut",
                      "start":  "2026-10-29T13:27:38.348Z",
                      "end":  "2026-10-29T13:29:10.000Z",
-                     "sessions":  1,
-                     "phases":  [
-                                    {
-                                        "name":  "Other tool calls",
-                                        "seconds":  45.565
-                                    },
-                                    {
-                                        "name":  "Claude thinking and writing",
-                                        "seconds":  46.087
-                                    }
-                                ]
+                     "sessions":  null,
+                     "phases":  null
                  },
                  {
                      "id":  "20261104-150325-48f6",
@@ -67,11 +58,7 @@
                                     },
                                     {
                                         "name":  "Claude thinking and writing",
-                                        "seconds":  50.671
-                                    },
-                                    {
-                                        "name":  "Waiting on you",
-                                        "seconds":  0.815
+                                        "seconds":  51.486
                                     }
                                 ]
                  },
@@ -124,15 +111,7 @@
                                     },
                                     {
                                         "name":  "Other tool calls",
-                                        "seconds":  38.983
-                                    },
-                                    {
-                                        "name":  "Claude thinking and writing",
-                                        "seconds":  38.782
-                                    },
-                                    {
-                                        "name":  "Waiting on you",
-                                        "seconds":  0.845
+                                        "seconds":  78.61
                                     }
                                 ]
                  },
@@ -173,15 +152,7 @@
                                     },
                                     {
                                         "name":  "Other tool calls",
-                                        "seconds":  23.772
-                                    },
-                                    {
-                                        "name":  "Claude thinking and writing",
-                                        "seconds":  35.588
-                                    },
-                                    {
-                                        "name":  "Waiting on you",
-                                        "seconds":  0.783
+                                        "seconds":  60.143
                                     }
                                 ]
                  },
@@ -238,15 +209,52 @@
                                     },
                                     {
                                         "name":  "Other tool calls",
-                                        "seconds":  22.691
+                                        "seconds":  91.499
+                                    }
+                                ]
+                 },
+                 {
+                     "id":  "20261114-152808-6fbd",
+                     "label":  "release cut",
+                     "start":  "2026-11-14T15:28:08.128Z",
+                     "end":  "2026-11-14T15:31:27.347Z",
+                     "sessions":  1,
+                     "phases":  [
+                                    {
+                                        "name":  "Cut: start",
+                                        "seconds":  0.132
                                     },
                                     {
-                                        "name":  "Claude thinking and writing",
-                                        "seconds":  67.998
+                                        "name":  "Cut: origin check and guardrails",
+                                        "seconds":  3.736
                                     },
                                     {
-                                        "name":  "Waiting on you",
-                                        "seconds":  0.81
+                                        "name":  "Cut: origin check after the gates",
+                                        "seconds":  0.675
+                                    },
+                                    {
+                                        "name":  "Cut: release builds",
+                                        "seconds":  0.001
+                                    },
+                                    {
+                                        "name":  "Cut: notes, overview and version bumps",
+                                        "seconds":  3.036
+                                    },
+                                    {
+                                        "name":  "Cut: commit and tag",
+                                        "seconds":  0.273
+                                    },
+                                    {
+                                        "name":  "Cut: push",
+                                        "seconds":  5.179
+                                    },
+                                    {
+                                        "name":  "Local gates and tests",
+                                        "seconds":  127.865
+                                    },
+                                    {
+                                        "name":  "Other tool calls",
+                                        "seconds":  58.323
                                     }
                                 ]
                  }
