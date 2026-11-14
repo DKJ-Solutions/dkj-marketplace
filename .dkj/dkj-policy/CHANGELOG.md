@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**13 / 16 minor entries** <!-- pending-tally -->
+**13 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/figma-font-size-scale · 20261114-012328Z
+
+The brand book README describes the Figma library's type layers as they are now: `Scale` holds the
+sizes `font-size/1` to `font-size/8` in one mode, and `Element` maps each code token (`text/h1` to
+`text/xs`, `text/title`) to a size per `Desktop` and `Mobile` mode.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A: the CSS tokens a consumer reads are unchanged; only the description of the Figma file moved.
+
+**Score:** N/A
+
+#### Pull Request
+
+The brand book README describes Figma's font-size scale and the Element text tokens
+
+Plugins: dkj-policy
+
+[PR #4072](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4072)
+
+---
 
 ### DEPLOY: feat/figma-color-collections · 20261114-011330Z
 
