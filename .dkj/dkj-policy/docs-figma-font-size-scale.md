@@ -39,19 +39,35 @@
 
 ### PLAN
 
+The owner wants the Figma `Scale` collection to be a plain scale, with no element names in it. Its font
+sizes are now `font-size/11` to `font-size/36` in one `Default` mode, and the code-named `text/h1` to
+`text/xs` and `text/title` moved to the `Element` collection, which carries the `Desktop` and `Mobile`
+modes and aliases a step per mode. The README still described the old layout.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The Figma file (done outside the tree): fixed `font-size/` steps in `Scale`, its `Mobile` mode
+  removed; `Element` holds the seven text tokens with `Desktop`/`Mobile`, and its `element/*` group is
+  gone, with its uses bound to `text/h2` or `text/sm`; text styles and 15 mobile frames follow.
+- [x] The brand book README's typography paragraph describes that split.
 
 ### TEST
 
+- [x] Docs only; every node and text style was checked for a binding left on a removed variable (0).
+
 ### DEPLOY: docs/figma-font-size-scale
 
-**Score:**
+The brand book README describes the Figma library's type layers as they are now: `Scale` holds the
+sizes `font-size/11` to `font-size/36` in one mode, and `Element` maps each code token (`text/h1` to
+`text/xs`, `text/title`) to a size per `Desktop` and `Mobile` mode.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: the CSS tokens a consumer reads are unchanged; only the description of the Figma file moved.
+
+**Score:** N/A
 
 #### Pull Request
 
