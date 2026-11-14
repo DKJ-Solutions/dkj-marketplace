@@ -39,19 +39,31 @@
 
 ### PLAN
 
+Closes #4070: the owner wants one family on every device, Inter (the Figma `font-family/sans`), self-hosted, behind a `--font-sans` token. Vendoring the font into consumer copies (pin, checksum, skill table) is #4075.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `InterVariable.woff2` (rsms/inter v4.1, weights 100 to 900) and `LICENSE-Inter.txt` (SIL OFL 1.1) beside `house-style.css`
+- [x] `house-style.css`: an `@font-face` for Inter, `--font-sans` next to `--font-mono`, and `var(--font-sans)` at the four hard-coded `system-ui` sites
+- [x] `serve-general-pages.ps1` and `serve-consumer-dashboard.ps1` serve `/InterVariable.woff2` beside the stylesheet
+- [x] Brand-book README: the font-family row and how-to-use step 1
 
 ### TEST
 
+- [x] Browser on the House style page: `body` and `h1` compute to `--font-sans`, `document.fonts` reports Inter `loaded`, `/InterVariable.woff2` 200 `font/woff2`
+- [ ] The owner looks at the House style page in Inter
+
 ### DEPLOY: feat/4070-font-sans-inter
 
-**Score:**
+The house stylesheet now sets all text in Inter, the same family on every device, through a new `--font-sans` token; it was the device's own system font (Roboto, Segoe UI or SF). The font ships as `InterVariable.woff2` beside `house-style.css`, and where the file is absent the system stack takes over ([#4070](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4070)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Every page Admin renders reads in Inter after taking this version, so a Figma design and the screen show the same letters. An app that vendors the brand book keeps the system font until it copies the font file too (#4075).
+
+**Score:** 3
 
 #### Pull Request
 
