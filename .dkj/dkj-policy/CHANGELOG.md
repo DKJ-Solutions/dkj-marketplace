@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**3 / 3 minor entries** <!-- pending-tally -->
+**4 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4094-bottom-bar · 20261114-235527Z
+
+Inside this repo, the product layer's renderer can draw a phone's bottom bar: `Format-ProductPageHtml -BottomBar` draws it and leaves the header's toggle out, and the brand-book specimens show it in four and five slots.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions product can now put its sections in the thumb zone on a phone: `.bottom-bar` in `house-product.css` is a bar fixed to the bottom with four or five slots, the last always More, which opens the site menu, so the header drops its three-line toggle. It is gone on a wide window, where the menu sits in the header. dkj-lifehub's Agenda (Home, To-do, Tijdlijn, Agenda, Meer) is the first to use it.
+
+**Score:** 3
+
+#### Pull Request
+
+house-product.css: a bottom bar for a phone, with More opening the site menu
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4107](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4107)
+
+---
 
 ### DEPLOY: feat/4105-goal-now-skips-held · 20261114-185123Z
 
