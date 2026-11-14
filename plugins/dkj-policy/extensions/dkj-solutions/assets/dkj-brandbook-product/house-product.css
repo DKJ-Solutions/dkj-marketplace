@@ -277,6 +277,32 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .bottom-bar__icon svg { width: var(--spacing-4); height: var(--spacing-4); }
 .bottom-bar__label { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
+/* ---- Status card (#4096) ------------------------------------------------------------------------------------ */
+/* Where something stands, on the page (Figma Product / Status card, #4087): a block on --bg-3 with a kicker, an h2,
+   an optional progress bar and the facts as one row. It IS the surface, so it never sits inside a .card.
+   <section class="status-card"><p class="status-card__kicker">Dossier</p><h2>Heading</h2><div class="meter
+   meter--info" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" aria-label="..">
+   <span style="width: 40%"></span></div><dl class="facts facts--row">..</dl></section>
+   The progress bar is the core's .meter.meter--info, no class of its own: its fill is --primary-muted, the Figma
+   fill-accent, where a native <progress> takes --primary through accent-color and draws its own track. On the
+   card's --bg-3 the meter's track is drawn a step darker so it still shows. */
+.status-card { display: flex; flex-direction: column; gap: var(--spacing-2); padding: var(--spacing-4);
+  background: var(--bg-3); border-radius: var(--radius-2); }
+.status-card__kicker { margin: 0; font-size: var(--text-xs); font-weight: var(--font-weight-bold); letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--primary-muted); }
+.status-card > h2 { margin: 0; }
+.status-card .meter { background: var(--bg-4); }
+.status-card > .facts { margin-top: var(--spacing-1); }
+
+/* ---- Error state (#4096) ------------------------------------------------------------------------------------ */
+/* The core .empty-state when something failed rather than came back empty (Figma Product / Error state, #4087): the
+   same frame, title, text and one action, with the mark in --negative-1 holding a "!" in --negative-5, and the
+   action a retry. <div class="empty-state error-state" role="alert"><span class="empty-state__mark"
+   aria-hidden="true">!</span><h2>Could not load</h2><p class="empty-state__text">..</p><button class="btn"
+   type="button">Try again</button></div> */
+.error-state .empty-state__mark { display: flex; align-items: center; justify-content: center; background: var(--negative-1);
+  color: var(--negative-5); font-size: var(--text-h2); font-weight: var(--font-weight-bold); line-height: 1; }
+
 /* ---- Fills ---------------------------------------------------------------- */
 /* A block on the theme's colour, or on the far end (#3235). The text switches with the ground. On .fill-primary the
    paper steps are the text, because all four read on the primary (4.55:1 or better): an h2 is --bg-1 there and

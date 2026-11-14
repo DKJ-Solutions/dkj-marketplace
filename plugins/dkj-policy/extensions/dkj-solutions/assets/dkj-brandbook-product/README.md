@@ -46,7 +46,8 @@ knows what not to redefine. The product layer reserves these too:
   `__inner`, `__brand`, `__name`), `.breadcrumbs-bar` ([below](#every-page-the-breadcrumb-bar)) and the site
   header, `.site-header` (with `__brand`, `__name`, `__tag`, `__nav`, `__menu`, `__menu-toggle`, `__back`, `__title`;
   [below](#the-site-header-above-the-bar)), and the bottom bar, `.bottom-bar` (with `__item`, `__more`, `__icon`,
-  `__label`; [below](#the-bottom-bar-on-a-phone)).
+  `__label`; [below](#the-bottom-bar-on-a-phone)), the status card, `.status-card` (with `__kicker`), and the error state,
+  `.error-state` on an `.empty-state` ([below](#status-card-and-error-state)).
 - **The brand-book components** ([below](#brandbook-app-components)): `.round-toggle`, `.badge-toggle`, `.help`,
   `.more--structured` (`.more__title`, `__meta`, `__trailing`, `__version`), `.question-head` (the answer line
   under it is a plain `<p>`; `.verdict` is gone, Maikel, November 1, 2026), `.answer` (`__label`, `__value`),
@@ -114,6 +115,37 @@ generic `.chip`, the stat rows and the stepper are house classes since the
 - **Markup contracts.** The combobox marks its active option with `aria-selected="true"`, not a class. A stat row's button is an `.icon-btn` made `--control-h` square.
 
 **What this changes for an app that takes the update:** nothing that exists, only additions. But an app that defines its own `.chip`, `.help`, `.amount`, `.calc`, `.verdict`, `.question-head` (all measured in MesoWise) or `.tag`, `.panel`, `.banner`, `.alert`, `.check`, `.answer`, `.flash`, `.figure`, `.stepper`, `.combo`, `.bill`, `.compare` now collides with a house name, and renames its class or adopts the house one. MesoWise's `.value` and `.input` do not collide (the value box is `.value-box`, and the standalone input class was not ported: `.field` styles its input).
+
+## Status card and error state
+
+**Two components after the Figma `Product / Status card` and `Product / Error state`** (#4096, drawn under #4087).
+
+- **The status card** says where something stands: a kicker, an `h2`, an optional progress bar and the facts as one
+  row (`.facts.facts--row`), on `--bg-3` with an 8px corner. **It is the surface itself, so it never sits inside a
+  `.card`**: a card in a card is the frame twice.
+- **The progress bar is the core's `.meter.meter--info`, with no class of its own.** A native `<progress>` takes
+  `--primary` through `accent-color` and draws the browser's own track, while the Figma bar fills in `fill-accent`,
+  which is `--primary-muted`: exactly `.meter--info`. Give it `role="progressbar"` and its `aria-value*`. Inside a
+  status card its track is drawn on `--bg-4`, so it shows on the card's `--bg-3`.
+- **The error state is the core's `.empty-state` with `.error-state` beside it**: the same frame, title, line and
+  one action, the mark in `--negative-1` holding a `!` in `--negative-5`, and the action a retry. Give it
+  `role="alert"` where it replaces content the user was waiting for.
+
+```html
+<section class="status-card">
+  <p class="status-card__kicker">Dossier</p>
+  <h2>Moving house</h2>
+  <div class="meter meter--info" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" aria-label="Progress"><span style="width: 40%"></span></div>
+  <dl class="facts facts--row"><div><dt>Open</dt><dd>6</dd></div><div><dt>Done</dt><dd>4</dd></div></dl>
+</section>
+
+<div class="empty-state error-state" role="alert">
+  <span class="empty-state__mark" aria-hidden="true">!</span>
+  <h2>Could not load</h2>
+  <p class="empty-state__text">The list did not come back. Check the connection and try again.</p>
+  <button class="btn" type="button">Try again</button>
+</div>
+```
 
 ## Page patterns
 

@@ -39,19 +39,37 @@
 
 ### PLAN
 
+The scope on #4096 (its sweep comment), after the Figma `Product / Status card` (297:1444) and `Product / Error state` (297:1462) approved under #4087: a status card, the progress bar question, an error state beside `.empty-state`, then README, specimen and tests. A visible result, so the branch parks for the owner's look.
+
+#### Two calls made here, for the owner's look
+
+- **The progress bar gets no class.** A native `<progress>` with `accent-color` fills in `--primary` and keeps the browser's track, while the Figma bar fills in `fill-accent` (`--primary-muted`), which is exactly the core `.meter.meter--info`. So the card uses that, with its track on `--bg-4` inside the card's `--bg-3`.
+- **The facts are `.facts--row`, as the issue asks**, where the Figma stacks them as stat rows: one row is the density rule, and `.facts` dividers would vanish on `--bg-3`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `.status-card` (with `__kicker`) in `house-product.css`: `--bg-3`, `--radius-2`, padding `--spacing-4`, gap `--spacing-2`; the kicker in the pane-head type; `.status-card .meter` on `--bg-4`.
+- [x] `.error-state` on an `.empty-state`: the mark in `--negative-1` with a `!` in `--negative-5`, a retry `.btn`.
+- [x] Product README: the reserved names and "Status card and error state"; both specimens under "Status and charts".
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the card's surface and meter, the kicker type, the error mark, the specimens -- 773 passed, 0 failed.
+- [x] `check-house-style` OK.
+
 ### DEPLOY: feat/4096-progress-status-error-states
 
-**Score:**
+Inside this repo, the product layer's specimens show a status card and an error state, and its README documents both.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions product can now show where something stands and say that something failed in the house look: `.status-card` is a block with a kicker, a heading, the core meter as its progress bar and the facts in one row, and `.error-state` turns the empty state into a failure with a red mark and a retry button.
+
+**Score:** 3
 
 #### Pull Request
+
+house-product.css: a status card and an error state
 
