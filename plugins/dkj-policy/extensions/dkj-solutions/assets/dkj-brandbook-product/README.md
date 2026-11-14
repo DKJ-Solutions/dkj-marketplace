@@ -253,7 +253,7 @@ one keeps the bar as described above.
   the far right, **where the app offers its theme there**, the settings button, `DKJTheme.settings` mounted in a
   plain `#settings` inside the header, so nothing floats. **The button is optional.** The dev servers this
   marketplace ships mount none (Maikel, November 3, 2026): a product's theme is chosen on its own Settings page, and
-  the `.site-header .theme-settings` rules stay for an app that still mounts it. The name, `.site-header__name`, is set at `--text-title` (20px); `.site-header__tag` sets a quieter word after the name (`product`).
+  the `.site-header .theme-settings` rules stay for an app that still mounts it. The name, `.site-header__name`, is set at `--text-h2` (`--text-title` until November 14, 2026, #4078); `.site-header__tag` sets a quieter word after the name (`product`).
   **The header carries no mark** (Dave, November 2, 2026): `.site-header__mark`, the organisation's initials on
   `--bg-1` (#3301), is retired, so an app that takes this update drops that `<span>` from its header.
 - **No eyebrow under it:** the header already names the site, so the intro opens with the `h1`. **A home page has no
@@ -287,7 +287,7 @@ the two change together.
   hover. It links **one level up**, the page the bar's last linked crumb names (home on a page one level down), and
   its `aria-label` reads `Back to <that page>`.
 - **The title**, `span.site-header__title` right after the brand, is the page's own name, the same text as its
-  current crumb and its `h1`, at `--text-title`. It is `aria-hidden`, because the `h1` already says it to a screen
+  current crumb and its `h1`, at `--text-h2`. It is `aria-hidden`, because the `h1` already says it to a screen
   reader. **The brand gives way to it**, so the row reads back, title, then the menu toggle.
 - **A wide header hides both**, and the bar is back. The home page has neither, so on a phone it keeps its brand.
 - **The bar's hide reads the window** (`@media (max-width: 48rem)`) and the Phone width in the settings

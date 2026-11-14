@@ -17,7 +17,7 @@
 
 $script:TodayPageStyle = '.today-goal { display: grid; gap: var(--spacing-2); }' + "`n" +
     '.shell__body .today-goal > h2 { margin: 0; font-size: var(--text-xs); font-weight: var(--font-weight-bold); letter-spacing: 0.06em; text-transform: uppercase; color: var(--primary-muted); }' + "`n" +
-    '.today-goal .today-goal__title { display: flex; gap: var(--spacing-3); align-items: center; margin: 0; font-size: var(--text-title); font-weight: var(--font-weight-bold); }' + "`n" +
+    '.today-goal .today-goal__title { display: flex; gap: var(--spacing-3); align-items: center; margin: 0; font-size: var(--text-h2); font-weight: var(--font-weight-bold); }' + "`n" +
     '.today-progress { display: flex; gap: var(--spacing-3); align-items: center; margin: 0; color: var(--primary-muted); font-size: var(--text-sm); }' + "`n" +
     '.today-progress > .meter { flex: 0 1 65%; }' + "`n" +
     '.shell__body .card > h2 + * { margin-top: var(--spacing-2); }' + "`n" +

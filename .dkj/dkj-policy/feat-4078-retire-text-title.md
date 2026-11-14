@@ -39,19 +39,40 @@
 
 ### PLAN
 
+The Figma brand book dropped its `text/title` step: the site header has its own element pair there, and every
+element has its own text style. `--text-title` never left the `h2` size (20px desktop, 18px under the 760px query,
+both declared beside `--text-h2`), so every use moves to `--text-h2` with no change on screen, and the name joins
+the retired tokens ([#4078](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4078)). The issue listed five
+places; the tree had more (two Admin page libs, a second `house-product.css` rule, two README passages), and all
+move. Not a visible result: the computed size is identical in both modes, so it ships.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-style.css`: the declaration and its mobile override removed, `.empty-state > h2` on `--text-h2`
+- [x] `house-product.css` (`.site-header__name`, `.site-header__title`), `goals-lib.ps1`, `today-page-lib.ps1`: on `--text-h2`
+- [x] `specimens.html`: the `--text-title` specimen removed; the stale `--text-h2 (22px)` label corrected to 20px
+- [x] `Get-HouseStyleRetiredTokens`: `--text-title` retired, so a consumer's leftover use is reported
+- [x] Brand book README: the token row, the phone sizes and the `Element` collection follow; a dated section with the rename table. Product README follows
 
 ### TEST
 
+- [~] No pre-run: `ship-pr` runs the gate and the suites before the push (issues-sweep step 4)
+
 ### DEPLOY: feat/4078-retire-text-title
 
-**Score:**
+`--text-title` is retired: the site header's name, the empty state's title and the two Admin titles that used it
+take `--text-h2`, the size it always had (20px, 18px on a phone), so nothing changes on screen. The Figma brand
+book had already dropped the step. The name joins the retired tokens, so the house-style gate reports a use left
+behind ([#4078](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4078)).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+An app that takes this brand book renames each use of `--text-title` in its own layer to `--text-h2`; the gate
+names any it missed, and the size is the same.
+
+**Score:** 2
 
 #### Pull Request
 
