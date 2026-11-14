@@ -2057,6 +2057,22 @@ $c2 = @(Get-SweepCandidates -Json $tree2 -Tag 'HOST-A/dave' -SkipLabel @('awaiti
 Assert-True (($c2 | Where-Object Number -eq 42).Reason -match "label 'awaiting-review-dev'" -and ($c2 | Where-Object Number -eq 43).Verdict -eq 'free' -and ($c2 | Where-Object Number -eq 44).Verdict -eq 'skipped') 'sweep: the parked Now is skipped by its label, the next task is free, the one after waits'
 Assert-True ($body -match '-ParkedNumbers \$parkedNumbers' -and $body -match 'Select-ParkingLabels -Labels @\(Get-IssueLabelNames -Issue \$i\) -SkipLabel \$SkipLabel') 'the script hands the tree the numbers this run parks, read with the same skip list'
 
+Write-Host 'Get-GoalTreeSkips -- a Now in flight elsewhere does not hold the goal (#4105)' -ForegroundColor Cyan
+$gh1 = Get-GoalTreeSkips -Goals $g2 -InFlightNumbers @(42)
+Assert-True (-not $gh1.ContainsKey(42) -and -not $gh1.ContainsKey(43) -and $gh1[44] -match "Now is #43 \(#42 held\)") 'a held Now lets the next task go free, and a later task names what it passed'
+$gh2 = Get-GoalTreeSkips -Goals $g2 -ParkedNumbers @(42) -InFlightNumbers @(43)
+Assert-True (-not $gh2.ContainsKey(44) -and $gh2.Count -ge 1) 'a parked Now then a held task: the third task is the Now'
+$gh3 = Get-GoalTreeSkips -Goals $g2 -ParkedNumbers @(42) -InFlightNumbers @(43, 44)
+Assert-True (-not $gh3.ContainsKey(42) -and -not $gh3.ContainsKey(43) -and -not $gh3.ContainsKey(44)) 'every task parked or held: none is in the map'
+$gh4 = Get-GoalTreeSkips -Goals $g2 -InFlightNumbers @(43)
+Assert-True ($gh4[43] -match "not yet Now: goal #40's Now is #42$" -and $gh4[44] -match "Now is #42$") 'a held task behind a free Now changes nothing: it waits behind the Now like any task'
+$gh5 = Get-GoalTreeSkips -Goals $goals -InFlightNumbers @(15, 16)
+Assert-True ($gh5[17] -match "owner's step") 'an unplanned milestone still stops the walk past held tasks'
+$tree3 = '[{"number":42,"title":"a","labels":[],"comments":[{"id":"IC_1","createdAt":"2026-11-14T18:00:00Z","author":{"login":"x"},"body":"<!-- claim-tag: OTHER/x -->"}]},{"number":43,"title":"b","labels":[],"comments":[]},{"number":44,"title":"c","labels":[],"comments":[]}]'
+$c3 = @(Get-SweepCandidates -Json $tree3 -Tag 'HOST-A/dave' -GoalSkips $gh1)
+Assert-True (($c3 | Where-Object Number -eq 42).Verdict -eq 'held' -and ($c3 | Where-Object Number -eq 43).Verdict -eq 'free' -and ($c3 | Where-Object Number -eq 44).Verdict -eq 'skipped') 'sweep: the held Now reads held, the next task is free, the one after waits'
+Assert-True ($body -match "-InFlightNumbers \`$inFlightNumbers" -and $body -match "Verdict -eq 'held' -or \`$_\.Verdict -eq 'branch'") 'the script hands the tree the held and branch numbers, never mine'
+
 if ($script:fail -gt 0) {
     Write-Host "claim-issue.tests: $($script:pass) passed, $($script:fail) FAILED" -ForegroundColor Red
     exit 1

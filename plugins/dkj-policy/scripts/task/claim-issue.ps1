@@ -757,7 +757,13 @@ if ($Candidates) {
                         if ($i -and @(Select-ParkingLabels -Labels @(Get-IssueLabelNames -Issue $i) -SkipLabel $SkipLabel).Count -gt 0) { [int]$i.number }
                     })
                 } catch { $parkedNumbers = @() }
-                $goalSkips = Get-GoalTreeSkips -Goals @($goals) -ParkedNumbers $parkedNumbers
+                # A Now another session is on lets the next task go free too (#4105): one pass without the
+                # map reads every 'held' and 'branch' verdict; Get-SweepCandidates is pure, so it costs no call.
+                $inFlightNumbers = @(Get-SweepCandidates -Json (@($list.Output) -join "`n") -Tag $claimTag.Tag `
+                                         -Marker $Marker -SkipLabel $SkipLabel -SkipIssue $skipIssueNumbers -Branches $remoteBranches `
+                                         -GoalLabel '' |
+                                     Where-Object { $_.Verdict -eq 'held' -or $_.Verdict -eq 'branch' } | ForEach-Object { [int]$_.Number })
+                $goalSkips = Get-GoalTreeSkips -Goals @($goals) -ParkedNumbers $parkedNumbers -InFlightNumbers $inFlightNumbers
             }
         }
         if ($goalNote) { Write-Host "  [goal scan] $goalNote" -ForegroundColor Yellow }
