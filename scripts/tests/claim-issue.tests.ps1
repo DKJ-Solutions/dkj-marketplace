@@ -2032,6 +2032,31 @@ Assert-True (($c | Where-Object Number -eq 16).Verdict -eq 'free') 'sweep: witho
 $body = [IO.File]::ReadAllText($Script)
 Assert-True ($body -match '-GoalSkips \$goalSkips' -and $body -match 'if \(\$hasGoal\)') 'the script reads the tree only when an open issue is a goal, and passes the map on'
 
+Write-Host 'Get-GoalTreeSkips -- a parked Now does not hold the goal (#4101)' -ForegroundColor Cyan
+$goals = @(ConvertFrom-GoalsGraph -Data $graph)
+$gp = Get-GoalTreeSkips -Goals $goals -ParkedNumbers @(15)
+Assert-True (-not $gp.ContainsKey(16)) 'a parked Now lets the next task in order go free'
+Assert-True (-not $gp.ContainsKey(15)) 'the parked task is left out of the map, so its own label skips it'
+Assert-True ($gp[17] -match "owner's step" -and $gp[20] -match 'container') 'containers and the unplanned milestone read as before'
+$gq = Get-GoalTreeSkips -Goals $goals -ParkedNumbers @(15, 16)
+Assert-True (-not $gq.ContainsKey(15) -and -not $gq.ContainsKey(16) -and $gq[17] -match "owner's step") 'every task parked: the walk stops at the unplanned milestone, which stays the owner''s step'
+$graph2 = [pscustomobject]@{ data = [pscustomobject]@{ repository = [pscustomobject]@{ issues = [pscustomobject]@{ nodes = @(
+    (New-GoalNode 40 -Subs @((New-GoalNode 41 -Subs @((New-GoalNode 42), (New-GoalNode 43), (New-GoalNode 44))))))
+} } } }
+$g2 = @(ConvertFrom-GoalsGraph -Data $graph2)
+$gr = Get-GoalTreeSkips -Goals $g2 -ParkedNumbers @(42)
+Assert-True (-not $gr.ContainsKey(43) -and $gr[44] -match "not yet Now: goal #40's Now is #43 \(#42 parked\)") 'one task per goal stays free, and a later task names the advanced Now and what it passed'
+$ga = Get-GoalTreeSkips -Goals $g2 -ParkedNumbers @(42, 43, 44)
+Assert-True (-not $ga.ContainsKey(42) -and -not $ga.ContainsKey(43) -and -not $ga.ContainsKey(44)) 'every task parked: none is in the map, each is skipped by its own label'
+$gm = Get-GoalTreeSkips -Goals $g2 -ParkedNumbers @(43)
+Assert-True (-not $gm.ContainsKey(42) -and $gm[43] -match "Now is #42" -and $gm[44] -match "Now is #42") 'a parked task behind an unparked Now changes nothing'
+$gn = Get-GoalTreeSkips -Goals $g2
+Assert-True ($gn[43] -match "Now is #42" -and $gn[43] -notmatch 'parked') 'no parked numbers: the goal''s own Now, as before'
+$tree2 = '[{"number":42,"title":"a","labels":[{"name":"awaiting-review-dev"}],"comments":[]},{"number":43,"title":"b","labels":[],"comments":[]},{"number":44,"title":"c","labels":[],"comments":[]}]'
+$c2 = @(Get-SweepCandidates -Json $tree2 -Tag 'HOST-A/dave' -SkipLabel @('awaiting-review-dev') -GoalSkips $gr)
+Assert-True (($c2 | Where-Object Number -eq 42).Reason -match "label 'awaiting-review-dev'" -and ($c2 | Where-Object Number -eq 43).Verdict -eq 'free' -and ($c2 | Where-Object Number -eq 44).Verdict -eq 'skipped') 'sweep: the parked Now is skipped by its label, the next task is free, the one after waits'
+Assert-True ($body -match '-ParkedNumbers \$parkedNumbers' -and $body -match 'Select-ParkingLabels -Labels @\(Get-IssueLabelNames -Issue \$i\) -SkipLabel \$SkipLabel') 'the script hands the tree the numbers this run parks, read with the same skip list'
+
 if ($script:fail -gt 0) {
     Write-Host "claim-issue.tests: $($script:pass) passed, $($script:fail) FAILED" -ForegroundColor Red
     exit 1

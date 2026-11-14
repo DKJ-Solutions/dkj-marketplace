@@ -2737,24 +2737,47 @@ function Get-GoalTreeSkips {
               only on the owner's agreement to the tree, so even as Now it is skipped.
             - A CLOSED MILESTONE'S LEFTOVER OPEN TASKS no longer count as steps (Get-GoalSteps), so they are
               skipped with that reason rather than read as free.
+            - A PARKED NOW DOES NOT HOLD THE GOAL (#4101). The sweep's Now is the first open step that is not
+              in -ParkedNumbers, so a task waiting on the owner's look lets the next task in order go free.
+              Measured November 14, 2026: goal #4081's Now was parked as awaiting-review-dev, and every task
+              behind it read 'not yet Now' -- 0 free for every sweep, against the visible-park carve-out
+              (#3552) that exists so a sweep goes on. The order holds and one task per goal stays free; the
+              parked tasks are left out of the map, so their own label skips them. An unplanned milestone
+              still stops the walk: breaking it down is the owner's step, and what lies behind it is not
+              planned yet. plan-goal -Next keeps the goal's own Now, since that view is the owner's.
 
             Pure: the caller makes the one GraphQL read.
 
         .PARAMETER Goals
             ConvertFrom-GoalsGraph's output.
 
+        .PARAMETER ParkedNumbers
+            The open issues the sweep skips by a parking label. Empty keeps the goal's own Now.
+
         .OUTPUTS
             A hashtable, issue number -> reason. Empty for no goals.
     #>
-    param([AllowNull()][object[]]$Goals = @())
+    param([AllowNull()][object[]]$Goals = @(), [AllowNull()][int[]]$ParkedNumbers = @())
 
+    $parked = @(@($ParkedNumbers) | Where-Object { $_ })
     $skips = @{}
     # ConvertFrom-GoalsGraph returns its array whole (a leading comma), so a caller's @() nests it once;
     # the pipeline unrolls that level again, and a plain list passes through unchanged.
     foreach ($g in @(@($Goals) | ForEach-Object { $_ } | Where-Object { $_ })) {
         $gn = [int]$g.Number
-        $nowNumber = if ($g.Now) { [int]$g.Now.Item.Number } else { 0 }
-        $nowText = if ($nowNumber) { "goal #$gn's Now is #$nowNumber" } else { "goal #$gn has no open step" }
+        $nowNumber = 0
+        $passed = New-Object System.Collections.Generic.List[int]
+        # Get-GoalSteps returns its array whole, so it is iterated as it comes.
+        foreach ($step in (Get-GoalSteps -Goal $g)) {
+            $sn = [int]$step.Item.Number
+            if (-not $step.Unplanned -and $parked -contains $sn) { $passed.Add($sn) | Out-Null; continue }
+            $nowNumber = $sn
+            break
+        }
+        $parkedNote = if ($passed.Count -gt 0) { " ($(($passed | ForEach-Object { "#$_" }) -join ', ') parked)" } else { '' }
+        $nowText = if ($nowNumber) { "goal #$gn's Now is #$nowNumber$parkedNote" }
+                   elseif ($passed.Count -gt 0) { "every open step of goal #$gn is parked" }
+                   else { "goal #$gn has no open step" }
         $skips[$gn] = "plan-goal container: goal #$gn is done once its milestones are"
         foreach ($m in @(@($g.Milestones) | Where-Object { $_ })) {
             $mn = [int]$m.Number
@@ -2771,7 +2794,7 @@ function Get-GoalTreeSkips {
                 $tn = [int]$t.Number
                 if ($m.Closed) {
                     $skips[$tn] = "plan-goal task under closed milestone #$mn of goal #${gn}: no longer a step"
-                } elseif ($tn -ne $nowNumber) {
+                } elseif ($tn -ne $nowNumber -and -not $passed.Contains($tn)) {
                     $skips[$tn] = "plan-goal task, not yet Now: $nowText"
                 }
             }
