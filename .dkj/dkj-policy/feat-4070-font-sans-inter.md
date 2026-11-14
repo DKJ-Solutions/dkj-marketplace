@@ -51,7 +51,7 @@ Closes #4070: the owner wants one family on every device, Inter (the Figma `font
 ### TEST
 
 - [x] Browser on the House style page: `body` and `h1` compute to `--font-sans`, `document.fonts` reports Inter `loaded`, `/InterVariable.woff2` 200 `font/woff2`
-- [ ] The owner looks at the House style page in Inter
+- [~] The owner looks at the House style page in Inter -- not done as a separate look: davekokbwj approved the branch through issues-sweep-reviews on 2026-11-14 without one.
 
 ### DEPLOY: feat/4070-font-sans-inter
 
