@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**2 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4101-goal-now-skips-parked · 20261114-172814Z
+
+Inside this repo, the sweep walks a plan-goal past a task parked for the owner's look instead of stopping the whole goal at it: goal #4081 read `0 free` for every sweep while its Now waited on a review.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer sweeping a goal tree no longer stalls on a task that waits for the owner: when a goal's Now carries a parking label, `issues-sweep` takes the next task in order instead, and its reason names what it passed (`Now is #4086 (#4085 parked)`). One task per goal is still free at a time; `plan-goal -Next` still shows the goal's own Now.
+
+**Score:** 3
+
+#### Pull Request
+
+issues-sweep: a parked plan-goal Now no longer blocks the goal's next task
+
+Plugins: dkj-policy
+
+[PR #4104](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4104)
+
+---
 
 ### DEPLOY: docs/4102-reviews-branchless-result · 20261114-170821Z
 
