@@ -170,6 +170,8 @@ $styleDir = Get-HouseStyleDir -PluginRoot $pluginRoot
 $static = @{
     '/house-style.css' = @{ File = (Join-Path $styleDir 'house-style.css'); Type = 'text/css; charset=utf-8' }
     '/house-theme.js'  = @{ File = (Join-Path $styleDir 'house-theme.js');  Type = 'text/javascript; charset=utf-8' }
+    # The house font (#4070): house-style.css names it by a URL relative to itself, so it is served beside it.
+    '/InterVariable.woff2' = @{ File = (Join-Path $styleDir 'InterVariable.woff2'); Type = 'font/woff2' }
 }
 # The workflow folder is read off this tree (#3870): '.dkj/dkj-policy' once a repo has moved, 'dkj-policy' before.
 . (Join-Path $pluginRoot 'scripts\lib\workflow-folder-lib.ps1')

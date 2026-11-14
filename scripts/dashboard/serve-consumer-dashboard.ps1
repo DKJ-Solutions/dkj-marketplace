@@ -110,6 +110,8 @@ $styleDir = Join-Path $root 'plugins\dkj-policy\assets\dkj-brandbook'
 $static = @{
     '/house-style.css' = @{ File = (Join-Path $styleDir 'house-style.css'); Type = 'text/css; charset=utf-8' }
     '/house-theme.js'  = @{ File = (Join-Path $styleDir 'house-theme.js');  Type = 'text/javascript; charset=utf-8' }
+    # The house font (#4070): house-style.css names it by a URL relative to itself, so it is served beside it.
+    '/InterVariable.woff2' = @{ File = (Join-Path $styleDir 'InterVariable.woff2'); Type = 'font/woff2' }
     # The product layer, on top of the core on every page this server renders: it ships with dkj-solutions (#3831).
     '/house-product.css' = @{ File = (Join-Path $root 'plugins\dkj-policy\extensions\dkj-solutions\assets\dkj-brandbook-product\house-product.css'); Type = 'text/css; charset=utf-8' }
 }
