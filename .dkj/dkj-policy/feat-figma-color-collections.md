@@ -40,7 +40,7 @@
 ### PLAN
 
 The owner renamed the three colour collections in the brand book's Figma file from `House / ...` to
-`Color / ...`: a collection name says what it holds, and `House` said only whose it was. The
+`Color Modus ...`: a collection name says what it holds, and `House` said only whose it was. The
 `figma-tokens` sync finds its collections by name and creates any it does not find, so its names
 follow the file, or the next sync would write three new `House / ...` collections beside the renamed
 ones.
@@ -48,8 +48,8 @@ ones.
 ### CREATE
 
 - [x] The Figma file: `House / Theme`, `House / Palette light` and `House / Palette dark` renamed to
-  `Color / Theme`, `Color / Palette light` and `Color / Palette dark` (ids unchanged, so every binding holds).
-- [x] `figma-tokens-lib.ps1` names the three collections `Color / ...`, and its header comment with it.
+  `Color Modus`, `Color Modus Light` and `Color Modus Dark` (ids unchanged, so every binding holds).
+- [x] `figma-tokens-lib.ps1` names the three collections `Color Modus ...`, and its header comment with it.
 - [x] The `figma-tokens` skill's collection table, and `figma-tokens.tests.ps1`'s asserts.
 
 ### TEST
@@ -59,7 +59,7 @@ ones.
 ### DEPLOY: feat/figma-color-collections
 
 The `figma-tokens` sync writes the brand book's colour tokens into the Figma collections
-`Color / Palette light`, `Color / Palette dark` and `Color / Theme`, the names the file now carries,
+`Color Modus Light`, `Color Modus Dark` and `Color Modus`, the names the file now carries,
 instead of `House / ...`. A collection name now says what it holds.
 
 **Score:** 1
