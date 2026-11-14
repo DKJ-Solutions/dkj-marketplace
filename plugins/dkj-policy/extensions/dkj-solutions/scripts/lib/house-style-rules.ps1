@@ -15,8 +15,8 @@
     added by #3720, the fifth by #3778). An earlier fourth, `heading` (no h2 inside a card, Maikel, October 19, 2026, on
     #3175), was retired by Maikel on October 24, 2026: an h2 may title a card.
 
-      1. pin      -- every tracked file named house-style.css, house-theme.js or house-product.css (the product
-                     layer, #3831) hashes to the sha256 the skill page pins. The copies are FOUND (a discovery over the tracked files), not
+      1. pin      -- every tracked file named house-style.css, house-theme.js, house-product.css (the product
+                     layer, #3831) or InterVariable.woff2 (the house font, #4075) hashes to the sha256 the skill page pins. The copies are FOUND (a discovery over the tracked files), not
                      declared, so no repo falls outside the gate by leaving a seam unfilled. A repo with
                      no house-style.css at all is a finding too: a repo running this gate renders a UI.
       2. redefine -- the repo's own layer defines no house token (`--x:`) and styles no house class as
@@ -106,9 +106,11 @@ function Get-HouseStyleCopyNames {
     <#
         The leaf names a vendored copy carries. A renamed copy is not found, and is not a copy. house-product.css is
         the product layer, in the dkj-solutions plugin since the split (#3831): a product repo vendors it beside the
-        core, and an Admin-only repo does not.
+        core, and an Admin-only repo does not. InterVariable.woff2 is the house family (#4070), vendored beside
+        house-style.css (#4075); a binary file, which check 1 hashes as bytes like the rest. Matched without regard
+        to case, as every name here is.
     #>
-    return [string[]]@('house-style.css', 'house-theme.js', 'house-product.css')
+    return [string[]]@('house-style.css', 'house-theme.js', 'house-product.css', 'InterVariable.woff2')
 }
 
 function Get-HouseStylePinRequiredNames {
@@ -132,6 +134,8 @@ function Get-HouseStyleCanonicalPath {
     #>
     param([Parameter(Mandatory)][string]$Leaf)
     if ($Leaf -ceq 'house-product.css') { return 'plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css' }
+    # Check 1 passes a lowercased leaf, and the font's file name is mixed case (#4075).
+    if ($Leaf -ieq 'InterVariable.woff2') { return (Get-HouseStyleCanonicalDir) + '/InterVariable.woff2' }
     return (Get-HouseStyleCanonicalDir) + '/' + $Leaf
 }
 
@@ -205,7 +209,7 @@ function Get-HouseStylePin {
     $hashes = @{}
     $tag = $null
     foreach ($line in ($SkillText -split "`r?`n")) {
-        $m = [regex]::Match($line, '^\|\s*`(?<file>house-style\.css|house-theme\.js|house-product\.css)`\s*\|\s*`(?<url>[^`]+)`\s*\|\s*`(?<sha>[0-9a-f]{64})`\s*\|')
+        $m = [regex]::Match($line, '^\|\s*`(?<file>house-style\.css|house-theme\.js|house-product\.css|InterVariable\.woff2)`\s*\|\s*`(?<url>[^`]+)`\s*\|\s*`(?<sha>[0-9a-f]{64})`\s*\|')
         if (-not $m.Success) { continue }
         $hashes[$m.Groups['file'].Value] = $m.Groups['sha'].Value
         $t = [regex]::Match($m.Groups['url'].Value, '/(?:dkj-marketplace|dkj-claude-plugins)/(?<tag>[^/]+)/plugins/dkj-policy/(?:(?:extensions/)?dkj-solutions/)?assets/(?:dkj-brandbook-product|dkj-brandbook|house-style)/')

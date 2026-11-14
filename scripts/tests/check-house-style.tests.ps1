@@ -95,6 +95,16 @@ Assert-True ($null -eq (Get-HouseStylePin -SkillText (($newRow -f 'house-style.c
 Assert-Equal 'plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css' (Get-HouseStyleCanonicalPath -Leaf 'house-product.css') 'the source repo''s canonical product layer is the dkj-solutions plugin''s'
 Assert-Equal 'plugins/dkj-policy/assets/dkj-brandbook/house-theme.js' (Get-HouseStyleCanonicalPath -Leaf 'house-theme.js') 'and the core files stay dkj-policy''s'
 
+Write-Host '-- group 1c: the house font, pinned beside the core (#4075)' -ForegroundColor Cyan
+Assert-True ($pin.Hashes.ContainsKey('InterVariable.woff2')) 'the skill page pins the house font'
+Assert-True (@($skillPins | ForEach-Object { $_.Checksums }) -contains 'plugins/dkj-policy/assets/dkj-brandbook/InterVariable.woff2') '...and the cut writes the checksum of the canonical InterVariable.woff2 beside its URL'
+Assert-True ((Get-HouseStyleCopyNames) -contains 'intervariable.woff2') 'check 1 finds a vendored font whatever the case of its name'
+# Check 1 lowercases the leaf before it asks for the canonical path, and the canonical name is mixed case.
+Assert-Equal 'plugins/dkj-policy/assets/dkj-brandbook/InterVariable.woff2' (Get-HouseStyleCanonicalPath -Leaf 'intervariable.woff2') 'the canonical font keeps its mixed-case name, so the source repo''s own copy is read as canonical'
+$fontPin = Get-HouseStylePin -SkillText ($newPage + "`n" + ($newRow -f 'InterVariable.woff2', ('d' * 64), 'assets/dkj-brandbook'))
+Assert-True ($fontPin.Tag -eq 'v7.0.0' -and $fontPin.Hashes['intervariable.woff2'] -eq ('d' * 64)) 'a page with the font row reads it, under the lowercased leaf check 1 looks it up by'
+Assert-True (-not $newPin.Hashes.ContainsKey('InterVariable.woff2')) 'a page at a tag before #4075, with no font row, is still a complete pin'
+
 # The page at the tag (#3588): taken only when it pins the same tag the installed page names.
 $installed = @{ Tag = 'v5.32.0'; Hashes = @{} }
 Assert-Equal ('a' * 64) (Get-HouseStyleTagPin -Pin $installed -TagPageText $oldPage).Hashes['house-style.css'] 'the page at the tag yields its own checksums'
