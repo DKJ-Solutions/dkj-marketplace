@@ -4,7 +4,8 @@ description: >-
   Approve and ship every open issue parked on awaiting-review-dev in ONE pass -- the visible results
   issues-sweep parked for the owner's eye. Typing the command IS the owner's word for every issue it
   lists: each one gets an approval comment, loses the label, and its parked branch ships through
-  ship-pr (open, merge, fold). It never touches awaiting-review-client, and never runs unasked.
+  ship-pr (open, merge, fold), or, where the result lives outside the repo (Figma), the issue is closed.
+  It never touches awaiting-review-client, and never runs unasked.
 disable-model-invocation: true
 ---
 
@@ -56,10 +57,17 @@ A parked branch is named after its issue (`<prefix>/<n>-<slug>`):
 git ls-remote --heads origin "refs/heads/*/<n>-*"
 ```
 
-**Exactly one branch is the only case that ships.** No branch means there is nothing to merge, so hold
-the issue out. A label without a branch is a defect in whatever parked it: say so in the close-out and
-leave the label on. Two or more branches is a question this skill cannot answer: hold it out and name
-both. A branch whose pull request is already open still ships the same way, because `ship-pr` picks up
+**Exactly one branch is the only case that ships.** Two or more branches is a question this skill
+cannot answer: hold it out and name both.
+
+**No branch has two readings, and the thread tells them apart** (#4102). Where the issue's thread says the
+result lives outside the repo (a Figma node, a design file, an external page), nothing was ever meant to
+merge. The look is all that was waiting, and typing the command gave it. So skip steps 2 and 4: record the
+approval as in step 3, with *"Closing: the result lives in <where>, outside the repo"* in place of
+*"Shipping <branch>"*, take the label off, and close the issue as completed. Measured November 14, 2026:
+#4085, a Figma task and a plan-goal's Now, was held out as branch-less, so the owner's typed approval
+could not clear it. Where the thread names no such place, nothing was built that this skill can find. That
+is a defect in whatever parked it: hold the issue out, say so in the close-out, and leave the label on. A branch whose pull request is already open still ships the same way, because `ship-pr` picks up
 the existing PR.
 
 ### 2. Verify that the claim is this machine's
@@ -157,7 +165,8 @@ Then the next issue from step 0's list, in the same turn, until the list is empt
 ### 6. Close out once, after the list
 
 In the ordinary receipt shape: the PR number of each issue shipped (with a clause where the issue was
-closed by hand after a `-NoResolves` ship), and the number of each one held out
+closed by hand after a `-NoResolves` ship), the number of each one closed without a ship because its
+result lives outside the repo, and the number of each one held out
 with a clause for why (no branch, two branches, a claim that would not move, a refused ship).
 
 ## What it never does
