@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**15 / 19 minor entries** <!-- pending-tally -->
+**16 / 20 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4075-vendor-inter-font · 20261114-145747Z
+
+The `dkj-brandbook` skill now pins the house font, `InterVariable.woff2`, beside the three stylesheet files: the release cut writes its tag URL and sha256, and `check-house-style` holds a vendored copy to that checksum like the others. The skill tells an app to put the font and its license in the same folder as `house-style.css`; an inlined `<style>` block keeps the system-font fallback ([#4075](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4075)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions app that vendors the brand book can now take Inter too, from the same pinned table, so its pages show the same letters as Admin and Figma. Taking it is optional: an app without the font keeps the system font, and the gate does not ask for it.
+
+**Score:** 2
+
+#### Pull Request
+
+Vendor InterVariable.woff2 with the pinned brand book files
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4079](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4079)
+
+---
 
 ### DEPLOY: feat/4070-font-sans-inter · 20261114-102445Z
 
