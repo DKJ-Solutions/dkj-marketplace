@@ -23,9 +23,9 @@ the source for Admin's layout). It already held this layout when the skill was b
 
 | Collection | Modes | Variables |
 |---|---|---|
-| `House / Palette light` | one per light theme: `magenta` ... `rust` | `palette/<token>`, the resolved hex, hidden from the pickers |
-| `House / Palette dark` | one per dark theme: `pink` ... `orange` | the same |
-| `House / Theme` | `Light`, `Dark` | `color/<token>`, an alias to `palette/<token>` in the palette of that mode, with scopes and `var(--<token>)` as WEB code syntax |
+| `Color Modus Light` | one per light theme: `magenta` ... `rust` | `palette/<token>`, the resolved hex, hidden from the pickers |
+| `Color Modus Dark` | one per dark theme: `pink` ... `orange` | the same |
+| `Color Modus` | `Light`, `Dark` | `color/<token>`, an alias to `palette/<token>` in the palette of that mode, with scopes and `var(--<token>)` as WEB code syntax |
 
 A design binds to `color/*` and picks a theme by setting the palette collection's mode on a frame. **Six modes
 in one collection is measured, not assumed**: the file holds two such collections on the owner's Professional

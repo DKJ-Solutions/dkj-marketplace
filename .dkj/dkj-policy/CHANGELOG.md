@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**13 / 15 minor entries** <!-- pending-tally -->
+**13 / 16 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/figma-color-collections · 20261114-011330Z
+
+The `figma-tokens` sync writes the brand book's colour tokens into the Figma collections
+`Color Modus Light`, `Color Modus Dark` and `Color Modus`, the names the file now carries,
+instead of `House / ...`, and the brand book README calls the wireframes' grey collection
+`Color Wireframe`. A collection name now says what it holds.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A: the Figma file and the sync are this repo's own design tooling, and nothing a consumer takes
+changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+Figma colour collections are named Color, not House
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4071](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4071)
+
+---
 
 ### DEPLOY: feat/4066-awaiting-session-dev · 20261113-203817Z
 
