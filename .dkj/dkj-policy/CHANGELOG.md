@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**3 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4105-goal-now-skips-held · 20261114-185123Z
+
+Inside this repo, a second sweep beside a running one now takes a plan-goal's next task instead of reading `0 free` while the other sweep holds the goal's Now: goal #4081 read `0 free` because #4086 was claimed by another machine two minutes earlier.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Two sweeps can now work one plan-goal at once: when the goal's Now is claimed by another sweep, or has a branch pushed for it, `issues-sweep` takes the next task in order, and its reason names what it passed (`Now is #4088 (#4085 parked, #4086 parked, #4087 held)`). Each sweep still takes one task per goal; a task that depends on the one before it can now be built early.
+
+**Score:** 3
+
+#### Pull Request
+
+issues-sweep: a plan-goal Now claimed by another sweep no longer blocks the goal's next task
+
+Plugins: dkj-policy
+
+[PR #4106](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4106)
+
+---
 
 ### DEPLOY: feat/4101-goal-now-skips-parked · 20261114-172814Z
 
