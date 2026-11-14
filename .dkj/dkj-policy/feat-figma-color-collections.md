@@ -48,7 +48,9 @@ ones.
 ### CREATE
 
 - [x] The Figma file: `House / Theme`, `House / Palette light` and `House / Palette dark` renamed to
-  `Color Modus`, `Color Modus Light` and `Color Modus Dark` (ids unchanged, so every binding holds).
+  `Color Modus`, `Color Modus Light` and `Color Modus Dark`, and `Wireframe` to `Color Wireframe`
+  (ids unchanged, so every binding holds).
+- [x] The brand book README names the wireframe collection `Color Wireframe`.
 - [x] `figma-tokens-lib.ps1` names the three collections `Color Modus ...`, and its header comment with it.
 - [x] The `figma-tokens` skill's collection table, and `figma-tokens.tests.ps1`'s asserts.
 
@@ -60,7 +62,8 @@ ones.
 
 The `figma-tokens` sync writes the brand book's colour tokens into the Figma collections
 `Color Modus Light`, `Color Modus Dark` and `Color Modus`, the names the file now carries,
-instead of `House / ...`. A collection name now says what it holds.
+instead of `House / ...`, and the brand book README calls the wireframes' grey collection
+`Color Wireframe`. A collection name now says what it holds.
 
 **Score:** 1
 

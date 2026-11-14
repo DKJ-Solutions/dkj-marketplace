@@ -844,7 +844,7 @@ plugin ([`README.md`][product-readme] beside it, #3831):
   [`patterns/admin-shell.html`](patterns/admin-shell.html) and the "Desktop shell" specimens.
 
   **The wireframe greys become house tokens by role, and they are never aliased** (#4040, November 13,
-  2026). The wireframes' `Wireframe` colour collection stays grey (`#ffffff` to `#262626`), because a
+  2026). The wireframes' `Color Wireframe` collection stays grey (`#ffffff` to `#262626`), because a
   wireframe is judged on structure and a themed one implies a theme choice. Each of its 13 variables
   names its house token in its Figma **description**, and this table is the same mapping, so the
   translation from wireframe to visual design is read, not guessed:
