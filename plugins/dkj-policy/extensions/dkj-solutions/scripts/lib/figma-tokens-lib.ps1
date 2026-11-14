@@ -17,9 +17,9 @@
 
     The layout is the one the brand book's Figma file (w44J5aQPeST96RJ71vU3ev) already held when this was built,
     measured November 13, 2026, so the sync keeps it rather than inventing a parallel one:
-      House / Palette light, House / Palette dark   primitives: one mode per theme, palette/<token>, hidden from
+      Color / Palette light, Color / Palette dark   primitives: one mode per theme, palette/<token>, hidden from
                                                     the pickers (no scope), no code syntax
-      House / Theme                                 the semantic layer: modes Light and Dark, color/<token>, each an
+      Color / Theme                                 the semantic layer: modes Light and Dark, color/<token>, each an
                                                     alias to palette/<token> in the palette of that mode, with the
                                                     token's scopes and var(--<token>) as WEB code syntax
     Six modes in one collection is therefore measured on the owner's plan, not assumed (#4038's question 1).
@@ -30,7 +30,7 @@
 . (Join-Path $PSScriptRoot 'house-palette-lib.ps1')
 
 function Get-FigmaTokenNames {
-    @{ Palette = @{ light = 'House / Palette light'; dark = 'House / Palette dark' }; Theme = 'House / Theme'; ThemeModes = @{ light = 'Light'; dark = 'Dark' } }
+    @{ Palette = @{ light = 'Color / Palette light'; dark = 'Color / Palette dark' }; Theme = 'Color / Theme'; ThemeModes = @{ light = 'Light'; dark = 'Dark' } }
 }
 
 # The scopes a semantic variable carries, by token family -- the file's own convention: paper is a fill, a

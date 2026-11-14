@@ -79,12 +79,12 @@ Assert-Equal 'bg-1,primary,warning-3' ($t['blue'].Tokens.Keys -join ',') 'the co
 
 Write-Host '-- group 2: the model is the Figma file''s layout' -ForegroundColor Cyan
 $m = Get-FigmaTokenModel -StylePath $fixturePath
-Assert-Equal 'House / Palette light|House / Palette dark|House / Theme' (($m | ForEach-Object { $_.name }) -join '|') 'two palettes first, the semantic layer after them'
+Assert-Equal 'Color / Palette light|Color / Palette dark|Color / Theme' (($m | ForEach-Object { $_.name }) -join '|') 'two palettes first, the semantic layer after them'
 Assert-Equal 'magenta,purple,blue,teal,ochre,rust' ($m[0].modes -join ',') 'the light palette has one mode per light theme'
 Assert-Equal 'pink,lilac,sky,cyan,yellow,orange' ($m[1].modes -join ',') 'and the dark palette one per dark theme'
 Assert-Equal '#ffc61a' $m[1].variables['palette/warning-3']['cyan'] 'a palette value is the resolved hex under palette/<token>'
 Assert-Equal 'Light,Dark' ($m[2].modes -join ',') 'the semantic layer has the modes Light and Dark'
-Assert-Equal 'alias:House / Palette dark::palette/primary' $m[2].variables['color/primary']['Dark'] 'color/<token> aliases the palette of its mode'
+Assert-Equal 'alias:Color / Palette dark::palette/primary' $m[2].variables['color/primary']['Dark'] 'color/<token> aliases the palette of its mode'
 Assert-Equal 'FRAME_FILL,SHAPE_FILL,TEXT_FILL,STROKE_COLOR' ((Get-FigmaTokenScopes 'bg-3') -join ',') 'paper is a fill, a stroke and text on a primary fill'
 Assert-Equal 'TEXT_FILL' ((Get-FigmaTokenScopes 'fg-1') -join ',') 'ink is text only'
 Assert-Equal 'ALL_FILLS,STROKE_COLOR' ((Get-FigmaTokenScopes 'graph-2') -join ',') 'the rest fill and stroke'
@@ -105,7 +105,7 @@ $o.collections[0].variables.'palette/bg-1'.PSObject.Properties.Remove('teal')
 $o.collections[0].variables | Add-Member -NotePropertyName 'palette/old' -NotePropertyValue ([pscustomobject]@{ blue = '#000000' })
 $o.collections[1].variables.PSObject.Properties.Remove('palette/primary')
 $o.collections[1].modes = @($o.collections[1].modes | Where-Object { $_ -ne 'sky' }) + 'neon'
-$o.collections[2].variables.'color/primary'.Light = 'alias:House / Palette dark::palette/primary'
+$o.collections[2].variables.'color/primary'.Light = 'alias:Color / Palette dark::palette/primary'
 $drift = ConvertFrom-FigmaTokenJson -Json (ConvertTo-Json -InputObject @{ collections = @($o.collections[0], $o.collections[1], $o.collections[2]) } -Depth 6 -Compress)
 $f = @(Compare-FigmaTokenModel -Expected $m -Actual $drift)
 $kinds = ($f | ForEach-Object { $_.Kind } | Sort-Object) -join ','
@@ -130,7 +130,7 @@ $palette = Get-HousePalette -Hue 317 -Mode light
 Assert-Equal $palette['--primary'] $real[0].variables['palette/primary']['magenta'] "the palette holds what build-house-palette computes (magenta's primary)"
 
 $readJs = (& powershell -NoProfile -ExecutionPolicy Bypass -File $Script -Emit read-js) -join "`n"
-Assert-True ($readJs -match [regex]::Escape('const names = ["House / Palette light","House / Palette dark","House / Theme"];')) 'the read script names the three collections'
+Assert-True ($readJs -match [regex]::Escape('const names = ["Color / Palette light","Color / Palette dark","Color / Theme"];')) 'the read script names the three collections'
 Assert-True ($readJs -match 'return \{ collections: out \};' -and $readJs -notmatch 'setValueForMode|createVariable') 'the read script returns the shape -Compare reads, and writes nothing'
 $syncJs = (& powershell -NoProfile -ExecutionPolicy Bypass -File $Script -Emit sync-js) -join "`n"
 Assert-True ($syncJs -match 'createVariableAlias' -and $syncJs -match 'setVariableCodeSyntax\(''WEB''') 'the sync script writes aliases and the WEB code syntax'
