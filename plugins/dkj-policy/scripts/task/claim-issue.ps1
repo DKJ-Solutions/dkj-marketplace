@@ -750,7 +750,14 @@ if ($Candidates) {
             if ($null -eq $goals) {
                 $goalNote = "the plan-goal tree could not be read, so its milestones and tasks are judged as ordinary issues below."
             } else {
-                $goalSkips = Get-GoalTreeSkips -Goals @($goals)
+                # A parked Now lets the next task go free (#4101): the numbers this run skips by label.
+                $parkedNumbers = @()
+                try {
+                    $parkedNumbers = @(foreach ($i in (ConvertFrom-Json -InputObject (@($list.Output) -join "`n"))) {
+                        if ($i -and @(Select-ParkingLabels -Labels @(Get-IssueLabelNames -Issue $i) -SkipLabel $SkipLabel).Count -gt 0) { [int]$i.number }
+                    })
+                } catch { $parkedNumbers = @() }
+                $goalSkips = Get-GoalTreeSkips -Goals @($goals) -ParkedNumbers $parkedNumbers
             }
         }
         if ($goalNote) { Write-Host "  [goal scan] $goalNote" -ForegroundColor Yellow }

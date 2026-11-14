@@ -39,19 +39,31 @@
 
 ### PLAN
 
+- [x] Owner's decision (November 14, 2026, in session): a parked plan-goal Now advances the sweep's Now to the next open task in order (#4101).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-GoalTreeSkips` takes `-ParkedNumbers` and walks past parked tasks to the first unparked step; an unplanned milestone still stops the walk.
+- [x] `claim-issue.ps1 -Candidates` hands it the numbers this run skips by a parking label, read with the same skip list.
+- [x] Mirrors under `plugins/dkj-policy/scripts/` synced; the `issues-sweep` skill page says it.
+- [~] `plan-goal -Next` left unchanged: that view is the owner's, and the owner's next step on a parked Now is still the look.
 
 ### TEST
 
+- [x] `claim-issue.tests.ps1`: a parked Now advancing, every task parked, a parked task behind an unparked Now, no parked numbers, and the sweep path end to end -- 683 passed, 0 failed.
+- [x] Live `-Candidates` on this tracker: `goal #4081's Now is #4086 (#4085 parked)`, where it read 0 free before.
+
 ### DEPLOY: feat/4101-goal-now-skips-parked
 
-**Score:**
+Inside this repo, the sweep walks a plan-goal past a task parked for the owner's look instead of stopping the whole goal at it: goal #4081 read `0 free` for every sweep while its Now waited on a review.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer sweeping a goal tree no longer stalls on a task that waits for the owner: when a goal's Now carries a parking label, `issues-sweep` takes the next task in order instead, and its reason names what it passed (`Now is #4086 (#4085 parked)`). One task per goal is still free at a time; `plan-goal -Next` still shows the goal's own Now.
+
+**Score:** 3
 
 #### Pull Request
 
