@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**16 / 20 minor entries** <!-- pending-tally -->
+**17 / 21 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4078-retire-text-title · 20261114-150738Z
+
+`--text-title` is retired: the site header's name, the empty state's title and the two Admin titles that used it
+take `--text-h2`, the size it always had (20px, 18px on a phone), so nothing changes on screen. The Figma brand
+book had already dropped the step. The name joins the retired tokens, so the house-style gate reports a use left
+behind ([#4078](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4078)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+An app that takes this brand book renames each use of `--text-title` in its own layer to `--text-h2`; the gate
+names any it missed, and the size is the same.
+
+**Score:** 2
+
+#### Pull Request
+
+Brand book: retire --text-title
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4080](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4080)
+
+---
 
 ### DEPLOY: feat/4075-vendor-inter-font · 20261114-145747Z
 
