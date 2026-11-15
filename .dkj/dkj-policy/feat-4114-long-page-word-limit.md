@@ -39,19 +39,40 @@
 
 ### PLAN
 
+Inbound #4114: the brand book's long-page rule (#3563) counts sections only, so a page of a few very long
+sections never splits. The threshold the issue left open is set at the consumer's 1,500 words, and a page with
+one long section and no subheadings warns too (its remedy is headings).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-PageWordCount` and a word-limit half in `Get-LongPageWarningHtml` (`general-pages-lib.ps1`)
+- [x] the rule's length trigger and its recursion in the product README, and the threshold in the `dkj-brandbook` skill
 
 ### TEST
 
+- [x] asserts in `dev-pages.tests.ps1`: what a word of reading is, both limits apart and together
+- [x] measured Admin's 19 pages: a count of every word put `/dev/release-notes` at 1,755, so the guard counts prose only; no page's prose passes 201
+
 ### DEPLOY: feat/4114-long-page-word-limit
 
-**Score:**
+A page now splits on length as well as on section count: the brand book's long-page rule
+([#3563](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3563)) only ever counted sections, so a
+page of three sections and 7,797 words stayed one column. Over **1,500 words of reading** a page becomes an
+overview of its sections, and a section page still over the limit splits at its next heading level
+([#4114](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4114)). The page shell's guard,
+`Get-LongPageWarningHtml`, warns on the word limit too, through a new `Get-PageWordCount` that counts the
+text of paragraphs, list items, quotes and code blocks and leaves tables and navigation out, because a list
+is not a long page: a plain count put Admin's release-notes list at 1,755 words, its prose at 15.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions app that renders long content (a dossier, a guide) now gets a warning at the top of any
+page over 1,500 words of reading, through the shared page shell, and the `dkj-brandbook` skill names the
+threshold before such a page is written. Admin's own pages are all far below it, so nothing changes there.
+
+**Score:** 3
 
 #### Pull Request
 

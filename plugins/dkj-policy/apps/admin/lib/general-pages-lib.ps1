@@ -158,16 +158,47 @@ function Get-PageInfoGlyph {
         '<path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5M12 17.5v.01" /></svg>'
 }
 
-function Get-LongPageWarningHtml {
+# The most words of reading one page may hold before it splits, whatever its section count (#4114): about seven
+# minutes of reading, the figure the first consumer to need it chose. A section page obeys the same limit.
+$script:LongPageWordLimit = 1500
+
+function Get-PageWordCount {
     <#
-        The long-page warning (#3563) a page with too many sections carries at its top, or '' when -Body holds no more
-        than the limit: the rule was applied page by page and written down nowhere, so a page that breaks it says so itself.
+        How many words of reading -Body holds (#4114): the text of its p, li, blockquote, dd and pre elements, outside
+        any table, nav, header, footer, script or style, with HTML comments dropped. Tables and card rows are left out
+        because a list is not a long page (the house style README): measured on Admin's 19 pages, November 15, 2026, a
+        count of every word put the release-notes list at 1,755 while its prose is 15, and no page's prose passed 201.
+        A link's URL sits in an attribute, so it is never counted.
     #>
     param([AllowEmptyString()][string]$Body = '')
+    $text = [regex]::Replace($Body, '(?s)<!--.*?-->|<(script|style|table|nav|header|footer)\b.*?</\1>', ' ')
+    $count = 0
+    foreach ($m in [regex]::Matches($text, '(?s)<(p|li|blockquote|dd|pre)\b[^>]*>(.*?)</\1>')) {
+        $inner = [regex]::Replace($m.Groups[2].Value, '<[^>]+>', ' ')
+        $count += [regex]::Matches($inner, ("[\p{L}\p{N}][\p{L}\p{N}'" + [char]0x2019 + "-]*")).Count
+    }
+    return $count
+}
+
+function Get-LongPageWarningHtml {
+    <#
+        The long-page warning a page breaking the house style's page rule carries at its top, or '' when it keeps it:
+        more than the section limit (#3563), or more than the word limit (#4114), one warning per limit it breaks. The
+        rule was applied page by page and written down nowhere, so a page that breaks it says so itself.
+    #>
+    param([AllowEmptyString()][string]$Body = '')
+    $warn = ''
     $sections = Get-PageSectionCount -Body $Body
-    if ($sections -le $script:LongPageSectionLimit) { return '' }
-    return '<p class="msg--warn" role="alert">This page holds ' + $sections + ' sections in one column. A page with more than ' +
-        $script:LongPageSectionLimit + ' becomes an overview of cards, each opening a page of its own: the house style''s page rule (#3563).</p>'
+    if ($sections -gt $script:LongPageSectionLimit) {
+        $warn += '<p class="msg--warn" role="alert">This page holds ' + $sections + ' sections in one column. A page with more than ' +
+            $script:LongPageSectionLimit + ' becomes an overview of cards, each opening a page of its own: the house style''s page rule (#3563).</p>'
+    }
+    $words = Get-PageWordCount -Body $Body
+    if ($words -gt $script:LongPageWordLimit) {
+        $warn += '<p class="msg--warn" role="alert">This page holds ' + $words + ' words of reading. A page over ' + $script:LongPageWordLimit +
+            ' becomes an overview of its sections, and a section page still over it splits at its next heading level: the house style''s page rule (#4114).</p>'
+    }
+    return $warn
 }
 
 function Format-GeneralPageHeadHtml {
