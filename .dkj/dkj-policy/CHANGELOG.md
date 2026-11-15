@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**8 / 10 minor entries** <!-- pending-tally -->
+**8 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4123-single-header-action · 20261115-194435Z
+
+A product page with a single action, such as *Save as PDF*, now shows that action as its own icon in the site
+header, instead of three dots that open a sheet holding one item. The three dots and the sheet appear only when a
+page has two actions or more. An app drawing its header with `Format-SiteHeaderHtml` gets this with the update.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+Product header: a page with one action shows it directly
+
+Plugins: dkj-solutions
+
+[PR #4134](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4134)
+
+---
 
 ### DEPLOY: fix/4111-docs-coverage-scroll · 20261115-193008Z
 
