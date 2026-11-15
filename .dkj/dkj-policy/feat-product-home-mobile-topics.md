@@ -39,21 +39,49 @@
 
 ### PLAN
 
+#### Where this comes from
+
+The product home on `http://localhost:4870/` read as a stack of five large cards on a phone. The owner asked for it
+to follow the mobile wireframes in the brand book's Figma file, as dkj-lifehub's home already does: the frame
+"H1 - Home (mobiel)" (a list of topics, each a heading with its initial in a badge and its sections under it) and
+the navigation frames' bottom bar. The house product layer already ships the bottom bar (`Format-BottomBarHtml`,
+#4094); this product had not taken it yet.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-ProductPages`: each page's sections as `Items` -- the owner groups under Consumers, the two top-level
+      entries under Plugins
+- [x] `Format-ProductHomeHtml`: below 48rem the cards and their note give way to a topic list
+      (`Get-ProductHomeTopicsStyle`, house tokens only, neutral as the wireframe draws it); Admin is a heading
+      without a link while it is not running
+- [x] `Get-ProductBottomBar`: Home, Consumers, Plugins, then More; on the home page, every `Format-DevPageHtml`
+      page and the Consumers page, whose header then drops its toggle
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the topic list's headings, badges, links and sections, its breakpoint, tokens only,
+      escaping (a badge is the label's first letter as written, escaped on its own), and the bottom bar on the
+      home page, the Settings page and a page under Plugins; two existing asserts follow the new markup
+- [x] `consumer-dashboard.tests.ps1`: the Consumers page's bar with Consumers current, and the bar's three sections
+- [x] Seen at 390px and 1280px in a headless browser: the phone shows the topic list and the bar, the desktop is
+      unchanged
+
 ### DEPLOY: feat/product-home-mobile-topics
 
-**Score:**
+On a phone the product follows the mobile wireframes. The home page is a list of topics instead of five cards:
+Admin, Consumers (with DKJ, BWJ and Other under it), Plugins (with dkj-subagents and dkj-policy), Docs coverage and
+Settings, each a heading with its initial in a badge. Every product page carries the house bottom bar -- Home,
+Consumers, Plugins, and More, which opens the site menu -- so the header leaves its menu toggle out. A wide
+screen is unchanged.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A -- the product server is this repo's own maintenance view, under `scripts/`; nothing a plugin ships changes.
+
+**Score:** N/A
 
 #### Pull Request
 
-The product home as a list of topics on a phone, after the mobile wireframe
-
+The product on a phone, after the mobile wireframes: the home page as a list of topics and a bottom bar on every page

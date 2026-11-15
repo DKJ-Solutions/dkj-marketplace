@@ -250,6 +250,8 @@ $three = @(
     @{ Repo = 'DKJ-Solutions/y'; Status = 'good'; Plugins = @(); Signals = @(); Present = $false; Git = $null },
     @{ Repo = 'DKJ-Solutions/w'; Status = 'bad'; Plugins = @(); Signals = @(); Present = $false; Git = $null })
 $overview = Format-ConsumerDashboardHtml -Consumers $three -Meta @{ GeneratedAt = 'now' }
+Assert-True ($overview -match '<nav class="bottom-bar" aria-label="Sections"><a class="bottom-bar__item" href="/">' -and $overview -match '<a class="bottom-bar__item" href="/consumers" aria-current="page">' -and $overview -match 'bottom-bar__more" type="button" aria-controls="site-menu"' -and $overview -notmatch 'site-header__menu-toggle') 'the Consumers page carries the product''s bottom bar with Consumers current, and its header no toggle (#4094)'
+Assert-Equal 'Home,Consumers,Plugins' ((@(Get-ProductBottomBar) | ForEach-Object { $_.Label }) -join ',') 'the bottom bar is Home and the two pages with sections of their own; More holds the rest'
 Assert-True ($overview -match '<h1>Consumers</h1>' -and $overview -match 'site-header__name">dkj-marketplace <span class="site-header__tag">product</span></span>' -and $overview -match '<span aria-current="page">Consumers</span>') 'the overview''s h1 is Consumers, and the site header names this repo''s product, whose page it is (#3540)'
 $cD = $overview.IndexOf('<div class="grid__head"><h2>DKJ</h2>'); $cB = $overview.IndexOf('<div class="grid__head"><h2>BWJ</h2>'); $cO = $overview.IndexOf('<div class="grid__head"><h2>Other</h2>')
 Assert-True ($cD -ge 0 -and $cD -lt $cB -and $cB -lt $cO) 'the overview has an h2 section per owner group, DKJ, BWJ, Other (Maikel, October 30, 2026)'
