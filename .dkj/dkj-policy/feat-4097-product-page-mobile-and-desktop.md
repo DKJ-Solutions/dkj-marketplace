@@ -61,7 +61,7 @@ and the error state are already in the layer.
 - [x] By eye, headless Edge: the pattern at 1280 matches the Figma desktop frame; at phone width the title stands
   once in the header, the breadcrumb bar is gone, the rows are compact and the sidebar stacks under the column.
   The specimens render at `/plugins/dkj-policy/dkj-brandbook/nav` on the product server.
-- [ ] The owner's look (a visible result).
+- [x] The owner's look (a visible result): approved by the owner, November 15, 2026.
 
 ### DEPLOY: feat/4097-product-page-mobile-and-desktop
 
