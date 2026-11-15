@@ -56,6 +56,9 @@ the navigation frames' bottom bar. The house product layer already ships the bot
       without a link while it is not running
 - [x] `Get-ProductBottomBar`: Home, Consumers, Plugins, then More; on the home page, every `Format-DevPageHtml`
       page and the Consumers page, whose header then drops its toggle
+- [x] `/consumers` and `/consumers/dkj` no longer overflow a phone: `.dr-repos`' single column is
+      `minmax(0, 1fr)`, not `1fr` (442px wide at a 375px viewport); `/docs-coverage`'s table overflow is a
+      design question, filed as #4111
 
 ### TEST
 
@@ -63,6 +66,8 @@ the navigation frames' bottom bar. The house product layer already ships the bot
       escaping (a badge is the label's first letter as written, escaped on its own), and the bottom bar on the
       home page, the Settings page and a page under Plugins; two existing asserts follow the new markup
 - [x] `consumer-dashboard.tests.ps1`: the Consumers page's bar with Consumers current, and the bar's three sections
+- [x] `dev-pages.tests.ps1`: the `.dr-repos` phone column is `minmax(0, 1fr)`
+- [x] Every product page measured at 375px for a page wider than the screen: only `/docs-coverage` (#4111)
 - [x] Seen at 390px and 1280px in a headless browser: the phone shows the topic list and the bar, the desktop is
       unchanged
 
@@ -71,8 +76,8 @@ the navigation frames' bottom bar. The house product layer already ships the bot
 On a phone the product follows the mobile wireframes. The home page is a list of topics instead of five cards:
 Admin, Consumers (with DKJ, BWJ and Other under it), Plugins (with dkj-subagents and dkj-policy), Docs coverage and
 Settings, each a heading with its initial in a badge. Every product page carries the house bottom bar -- Home,
-Consumers, Plugins, and More, which opens the site menu -- so the header leaves its menu toggle out. A wide
-screen is unchanged.
+Consumers, Plugins, and More, which opens the site menu -- so the header leaves its menu toggle out. The Consumers pages no
+longer scroll sideways on a phone. A wide screen is unchanged.
 
 **Score:** 3
 

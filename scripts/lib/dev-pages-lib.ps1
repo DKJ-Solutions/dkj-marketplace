@@ -1410,7 +1410,7 @@ function Get-DkjRepoCardStyle {
         '.dr-repos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--spacing-3); }',
         '.dr-repos > .card { margin-top: 0; }',
         '@media (max-width: 720px) { .dr-repos { grid-template-columns: repeat(3, minmax(0, 1fr)); } }',
-        '@media (max-width: 520px) { .dr-repos { grid-template-columns: 1fr; } }',
+        '@media (max-width: 520px) { .dr-repos { grid-template-columns: minmax(0, 1fr); } }',
         # Each card three lines at most: the name, the facts and the checkout. The name a size down, to fit four to a
         # row; the house style cuts it off where it still does not fit and keeps the status mark after it in its
         # place, and .dr-clip does the same for the facts and the checkout (Maikel, October 28, 2026).
