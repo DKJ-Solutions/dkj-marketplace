@@ -496,7 +496,8 @@ function Format-ConsumerPageStart {
     # The menu is the product's pages (Get-ProductMenu), the Consumers page marked.
     # On a phone the header carries a back cell and the page's name instead of the bar (#4048).
     [void]$sb.Append((Format-SiteHeaderHtml -Name 'dkj-marketplace' -Href '/' -Tag 'product' -Menu @(Get-ProductMenu) -Current '/consumers' `
-        -Back (Get-SiteHeaderBack -Trail @($Trail | Where-Object { $_ })) -PageTitle $PageName))
+        -Back (Get-SiteHeaderBack -Trail @($Trail | Where-Object { $_ })) -PageTitle $PageName `
+        -Path (@(@{ Label = 'Home'; Href = '/' }) + @($Trail | Where-Object { $_ }) + @(@{ Label = $PageName; Href = '' }))))
     [void]$sb.Append((Format-ProductBreadcrumbBarHtml -Trail @($Trail | Where-Object { $_ }) -Current $PageName))
     [void]$sb.AppendLine('<main class="page-column">')
 
