@@ -39,21 +39,47 @@
 
 ### PLAN
 
+#### The reported cause did not hold
+
+#4111 read the overflow as a table with no scrolling container. The table already sat in a `.table-wrap`
+(`overflow-x: auto`), and at 375 px it did scroll inside it (343 px wide, 1316 px of content). What widened
+the page was the `.sr-only` "Details" column head: absolute, and with no positioned ancestor before `<body>`,
+so the wrap's overflow never clipped it, and its static position at the table's right edge (x = 1322) set the
+document width. Hiding that one span brought `scrollWidth` to 375; `overflow: hidden` on the wrap did not,
+while `contain: paint` did.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `.table-wrap` gains `position: relative` in `house-style.css`, so it is the containing block of what is
+  absolute inside it and its scroll clips that too. The Consumers group pages had no such span, which is why
+  theirs never overflowed.
 
 ### TEST
 
+- [x] Measured in headless Chrome at a 375 px mobile viewport, fresh profile: `/docs-coverage` 1322 → 375
+  (`.table-wrap` 343 wide, 1316 of content, scrolling), `/consumers/bwj` and `/consumers/other` stay 375,
+  `/consumers` and `/` stay 375, and the fit alarm stays hidden.
+- [ ] The owner's look: `/docs-coverage` on a phone, the page at screen width and the table scrolling sideways
+  inside its own box.
+
 ### DEPLOY: fix/4111-docs-coverage-scroll
 
-**Score:**
+A wide house table no longer widens the whole page on a phone. Its scroll container, `.table-wrap`, is now
+the containing block of what is positioned inside it, so a visually hidden column head at the table's far
+edge (the Docs coverage page's Details column) is clipped with the rest of the table instead of setting the
+document's width. On the product's `/docs-coverage` at 375 px the page measured 1322 px wide and now measures
+375, with the table scrolling inside its own box (#4111).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Any page in a consuming repo that puts a `.sr-only` element, or anything else absolute, inside a wide
+`.table-wrap` stops scrolling sideways as a whole on a phone once it takes this brand book.
+
+**Score:** 2
 
 #### Pull Request
 
-Docs coverage table scrolls inside its own container on a phone
+A wide table's hidden column head no longer widens the page on a phone
 
