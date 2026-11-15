@@ -880,6 +880,21 @@ a.menu-item:hover { background: var(--bg-3); }
 .table .row-warn { background: var(--warning-1); }
 .table .col-start { text-align: left; }
 .table .col-end, .table .col-end:first-child { text-align: right; }
+/* A table that stacks on a phone (#4129): .table-wrap--stack around a .table. Where the wrap is narrower than 48rem (a phone,
+   the Phone width, a narrow column) each row becomes a block: the first cell its heading, every other cell its column's
+   name over its value. The name is the cell's data-label, which house-theme.js copies from the column head, so a
+   rendered markdown table needs nothing but the wrap; a page without the script writes data-label itself. The head row
+   stays for a screen reader only. Wider, it is the ordinary table. */
+.table-wrap--stack { container-type: inline-size; }
+@container (max-width: 48rem) {
+  .table-wrap--stack .table, .table-wrap--stack .table tbody, .table-wrap--stack .table tr, .table-wrap--stack .table td { display: block; }
+  .table-wrap--stack .table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+  .table-wrap--stack .table tr { padding: var(--spacing-3) 0; border-bottom: 1px solid var(--bg-3); }
+  .table-wrap--stack .table td { padding: 0; border-bottom: 0; text-align: left; white-space: normal; min-width: 0; }
+  .table-wrap--stack .table td:first-child { font-size: var(--text-base); font-weight: var(--font-weight-bold); color: var(--fg-1); }
+  .table-wrap--stack .table td + td { margin-top: var(--spacing-2); }
+  .table-wrap--stack .table td[data-label]:not(:first-child)::before { content: attr(data-label); display: block; font-size: var(--text-xs); color: var(--primary-muted); }
+}
 /* Facts: a muted line under a term, and a last row that sums up (bold, no rule under it). */
 .facts__detail { display: block; margin-top: var(--spacing-0-5); font-size: var(--text-sm); color: var(--fg-1); }
 .facts > .facts__total { border-bottom: 0; font-weight: var(--font-weight-bold); }

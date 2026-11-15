@@ -264,6 +264,32 @@
     var onChange = function () { if (!byId(stored())) apply(); };
     if (mq.addEventListener) mq.addEventListener('change', onChange); else if (mq.addListener) mq.addListener(onChange);
   }
+  /* A table that stacks on a phone (house-style.css, ".table-wrap--stack", #4129): each body cell gets its column
+     head's text as data-label, the name the stacked row shows above its value. A cell that has one keeps it. */
+  function labelStackTables() {
+    var tables = document.querySelectorAll('.table-wrap--stack table');
+    for (var i = 0; i < tables.length; i++) {
+      var head = tables[i].tHead && tables[i].tHead.rows.length ? tables[i].tHead.rows[tables[i].tHead.rows.length - 1] : null;
+      if (!head) continue;
+      var names = [];
+      for (var h = 0; h < head.cells.length; h++) {
+        for (var s = 0; s < (head.cells[h].colSpan || 1); s++) names.push((head.cells[h].textContent || '').replace(/\s+/g, ' ').trim());
+      }
+      for (var b = 0; b < tables[i].tBodies.length; b++) {
+        var rows = tables[i].tBodies[b].rows;
+        for (var r = 0; r < rows.length; r++) {
+          var col = 0;
+          for (var c = 0; c < rows[r].cells.length; c++) {
+            var cell = rows[r].cells[c];
+            if (!cell.hasAttribute('data-label') && names[col]) cell.setAttribute('data-label', names[col]);
+            col += cell.colSpan || 1;
+          }
+        }
+      }
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', labelStackTables); else labelStackTables();
+
   apply();
   applyWidth();
   window.DKJTheme = { themes: THEMES.slice(), set: set, reset: reset, picker: picker, settings: settings, current: function () { return root.getAttribute('data-theme'); },
