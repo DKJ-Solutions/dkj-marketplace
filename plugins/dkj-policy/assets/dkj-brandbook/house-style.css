@@ -448,11 +448,13 @@ p { margin: 0; }
 
 /* Facts list (#141): <dl class="facts"><div><dt>Term</dt><dd>Value</dd></div>...</dl>. A term on the left in the text
    colour, its value on the right in bold and tabular figures, a --bg-3 rule under every row. Put it in a
-   .card whose .card__head sits above it. */
+   .card whose .card__head sits above it. The term keeps its width and a value too long for the rest of the row wraps
+   under itself, right-aligned, breaking a path or an id anywhere: on a phone a long value used to stay on one line,
+   squeeze the term to nothing and run over it or past the card (#4113). */
 .facts { margin: 0; font-variant-numeric: tabular-nums; }
 .facts > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--spacing-4); padding: var(--spacing-1-5) 0; border-bottom: 1px solid var(--bg-3); }
-.facts dt { min-width: 0; color: var(--fg-1); }
-.facts dd { margin: 0; white-space: nowrap; font-weight: var(--font-weight-bold); text-align: right; }
+.facts dt { flex: none; color: var(--fg-1); }
+.facts dd { min-width: 0; margin: 0; overflow-wrap: anywhere; font-weight: var(--font-weight-bold); text-align: right; }
 /* .facts--row: the same list as one row on the page, not in a card (owner, October 22, 2026): each fact its label
    small and muted over its value, no surface and no lines, so it reads as information and never as a link. It wraps. */
 .facts--row { display: flex; flex-wrap: wrap; gap: var(--spacing-3) var(--spacing-8); }
