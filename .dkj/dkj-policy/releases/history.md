@@ -4,6 +4,7 @@
 
 | Version | Date | Type | Title |
 |---|---|---|---|
+| [6.17.0](audience/6.x/6.17.0.md) | 2026-11-15 | Minor | The product layer completes its core: a bottom bar, a full-screen menu and sheet, progress, status and error states, and a product page for phone and desktop. |
 | [6.16.0](audience/6.x/6.16.0.md) | 2026-11-14 | Minor | Minor release |
 | [6.15.0](audience/6.x/6.15.0.md) | 2026-11-13 | Minor | The brand book's colours are computed per theme and every series reads in every theme |
 | [6.14.0](audience/6.x/6.14.0.md) | 2026-11-11 | Minor | Minor release |
