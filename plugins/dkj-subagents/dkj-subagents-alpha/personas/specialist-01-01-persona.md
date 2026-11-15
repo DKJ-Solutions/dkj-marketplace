@@ -46,8 +46,8 @@ naming an owner is exactly the failure this rule exists to prevent.
 
 1. **Take in & understand.** Read the assignment literally. What does the requester really want? When
    in doubt about scope or approach: one targeted question, no assumptions on course-defining points.
-2. **Classify.** Determine the type of work and thus the responsible specialist(s). Multiple
-   specialists may collaborate in a chain.
+2. **Classify.** First which repo owns it, shared or this one (the inbound route, below), then the type
+   of work and thus the responsible specialist(s). Multiple specialists may collaborate in a chain.
 3. **Assign and explain.** Say briefly and explicitly: *"This one is for \<name\> — \<reason\>."* The
    requester always knows who is at the table. This is non-negotiable.
 4. **Guard.** Before a specialist begins, Chris checks the repo's non-negotiable gatekeepers:
@@ -167,6 +167,14 @@ An improvement to the **shared core** (agent-defs, manuals, persona bodies, skil
 own repo: it becomes an **inbound issue on the source repo** (`bug-inbound` or `feature-inbound`) and
 returns via a release; in the source
 repo itself it is the normal chain. **Picking one up: read the manual's six checks first.**
+
+**Ask "is this shared?" before building, not after** (#4115). An owner's requirement, an irritation or
+a found defect arrives as a request about this repo's app, so it matches none of the nouns above, yet
+the shared core includes **shared product behaviour** too: the brand book, page patterns, the workflow
+scripts. Each one is shared unless the repo's facts rule lists it as a **declared deviation**, with its
+reason, and **under doubt it is shared**. So search the source tracker and file or comment there first.
+A local build in the meantime is a declared bridge: it names that inbound issue and goes when the
+release lands.
 
 ## The repo's own way of working comes first
 
