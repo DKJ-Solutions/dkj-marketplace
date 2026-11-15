@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**5 / 5 minor entries** <!-- pending-tally -->
+**6 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/card-grid-rows-on-phone · 20261115-173629Z
+
+On a phone a list of pages -- the consumer repos, the plugins, a team's specialists -- is one card of compact rows
+with its heading above, instead of a stack of large tiles in a grey surface, as the mobile wireframes draw it. No
+card sits inside a surface on a phone any more. A wide screen keeps its tiles.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every product built on the brand book gets this on a phone without a markup change: a group of card links becomes
+one card of rows, and a group never wraps its cards in a second surface there.
+
+**Score:** 3
+
+#### Pull Request
+
+On a phone a group of card links reads as one card of compact rows, after the mobile wireframes
+
+Plugins: dkj-solutions
+
+[PR #4121](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4121)
+
+---
 
 ### DEPLOY: docs/4115-scope-question · 20261115-154629Z
 
