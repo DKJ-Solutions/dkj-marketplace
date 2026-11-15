@@ -489,10 +489,9 @@ function Format-ConsumerPageStart {
     [void]$sb.AppendLine('<style>')
     # The links take the house highlight (--primary), the tinted head and the lines --bg-3, and the notes --primary-muted.
     [void]$sb.AppendLine('.cd-link { color: var(--primary); text-underline-offset: 2px; }')
-    [void]$sb.AppendLine('.cd-thead th { background: var(--bg-3); }')
-    [void]$sb.AppendLine('.cd-table-gap { margin-top: var(--spacing-4); }')
-    [void]$sb.AppendLine('.cd-repo-card { margin-top: var(--spacing-3); background: var(--bg-1); }')
-    [void]$sb.AppendLine('.cd-group-summary { margin: 0 0 var(--spacing-1); }')
+    # A repo's card on its own page: its paths and plugin ids wrap rather than run past it on a phone (#4113).
+    [void]$sb.AppendLine('.cd-card { overflow-wrap: anywhere; }')
+    [void]$sb.AppendLine('.cd-group-summary { margin: 0 0 var(--spacing-3); }')
     [void]$sb.AppendLine('.cd-repo { display: flex; align-items: center; gap: var(--spacing-2); }')
     [void]$sb.AppendLine('.cd-repo__name { margin: 0; font-weight: var(--font-weight-bold); }')
     [void]$sb.AppendLine('.cd-signals { list-style: none; padding: 0; margin: var(--spacing-2) 0 0; }')
@@ -501,12 +500,7 @@ function Format-ConsumerPageStart {
     [void]$sb.AppendLine('.cd-signals code, .cd-plugins code { font-size: var(--text-xs); }')
     [void]$sb.AppendLine('.cd-plugins { display: flex; flex-wrap: wrap; gap: var(--spacing-1-5) var(--spacing-4); margin-top: var(--spacing-2); font-size: var(--text-sm); color: var(--primary-muted); }')
     [void]$sb.AppendLine('.cd-status { display: inline-flex; align-items: center; gap: var(--spacing-1-5); }')
-    [void]$sb.AppendLine('.table td.cd-left, .table th.cd-left { text-align: left; }')
-    # Fixed layout, so the table takes these widths rather than sizing to its own content; the min-width keeps them readable, scrolling inside .table-wrap on a narrow screen.
-    [void]$sb.AppendLine('.cd-overview { table-layout: fixed; width: 100%; min-width: 860px; }')
-    [void]$sb.AppendLine('.cd-overview td { overflow-wrap: anywhere; }')
     if ($Style) { [void]$sb.AppendLine($Style) }
-    [void]$sb.AppendLine('.cd-col-repo { width: 36%; } .cd-col-status { width: 24%; } .cd-col-vis { width: 14%; } .cd-col-num { width: 10%; } .cd-col-ver { width: 16%; }')
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
     [void]$sb.AppendLine('<body>')
@@ -545,12 +539,74 @@ function Format-ConsumerPageEnd {
     return $sb.ToString()
 }
 
-function Format-ConsumerRepoMiniCardHtml {
+function Get-ConsumerRepoSlug {
     <#
-        One registered repo's details as a house mini-card: its status, visibility, checkout, GitHub link and
-        manifest, and what the check says about it (Format-ConsumerRepoDetailsHtml). A group's Issues card holds one
-        per repo, and a DKJ repo's own page holds its own (Format-DkjRepoPageHtml). -Consumer is one of
-        Format-ConsumerDashboardHtml's -Consumers.
+        The last segment of a registered repo's own page, /consumers/<group>/<slug> (#4113): its name, or
+        'owner--name' where another repo of -Members (its group's) has the same name, which only Other can hold, its
+        repos having many owners. Neither a GitHub owner nor a repo name can hold a '/', and an owner no '--'.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Repo, [AllowEmptyCollection()][object[]]$Members = @())
+    $name = $Repo -replace '^.*/', ''
+    $twins = @($Members | Where-Object { $_ -and ((([string]$_.Repo) -replace '^.*/', '') -ieq $name) -and ([string]$_.Repo) -ine $Repo }).Count
+    if ($twins) { return ($Repo -replace '/', '--') }
+    return $name
+}
+
+function Format-ConsumerRepoCardLinkHtml {
+    <#
+        A registered repo's card, opening its own page (/consumers/<group>/<slug>; a DKJ repo's is Format-DkjRepoPageHtml's,
+        a BWJ or Other repo's Format-ConsumerRepoPageHtml's, #4113): its name without its owner, its status mark after the
+        name, and a line of visibility, plugins and installed version. -Members is its group's repos, for the slug;
+        -Heading the card's heading level. Its id is the anchor the group page's details once had, so an old link still
+        lands on its card.
+    #>
+    param([Parameter(Mandatory = $true)][hashtable]$Consumer, [AllowEmptyCollection()][object[]]$Members = @(), [ValidateSet(2, 3)][int]$Heading = 3)
+    $e = { param($v) ConvertTo-DashboardText $v }
+    $c = $Consumer
+    $b = Get-DashboardStatusBadge ([string]$c.Status)
+    $badge = '<span class="badge badge--sm ' + $b.Class + '" title="' + $b.Word + '" aria-label="' + $b.Word + '">' + $b.Mark + '</span>'
+    $n = @($c.Plugins).Count
+    $sub = (& $e $c.Visibility) + ' &#183; ' + $n + ' plugin' + $(if ($n -ne 1) { 's' } else { '' }) + ' &#183; ' + (Format-DashboardInstalledVersion $c)
+    $href = '/consumers/' + (Get-ConsumerOwnerGroup ([string]$c.Repo)) + '/' + (& $e (Get-ConsumerRepoSlug -Repo ([string]$c.Repo) -Members $Members))
+    $id = 'repo-' + (([string]$c.Repo) -replace '[^A-Za-z0-9]+', '-').ToLowerInvariant()
+    return (Format-AdminCardLinkHtml -Href $href -Label (([string]$c.Repo) -replace '^.*/', '') -SubHtml $sub -TitleBadgeHtml $badge -Heading $Heading -Id $id)
+}
+
+function Format-ConsumerRepoPageHtml {
+    <#
+        A BWJ or Other repo's own page, /consumers/<group>/<slug> (#4113): the trail Home > Consumers > its group's
+        page > the repo, then its card (Format-ConsumerRepoCardHtml). The group's page is a card per repo opening this
+        one, as the DKJ group's is, so on a phone the group reads as compact rows and a repo's report has a page of its
+        own. -Members is its group's repos (for the slug), -Meta Format-ConsumerDashboardHtml's.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][hashtable]$Consumer,
+        [AllowEmptyCollection()][object[]]$Members = @(),
+        [Parameter(Mandatory = $true)][hashtable]$Meta
+    )
+    $e = { param($v) ConvertTo-DashboardText $v }
+    $key = Get-ConsumerOwnerGroup ([string]$Consumer.Repo)
+    $g = @(Get-DashboardOwnerGroups | Where-Object { $_.Key -eq $key })[0]
+    $slug = Get-ConsumerRepoSlug -Repo ([string]$Consumer.Repo) -Members $Members
+    $sb = New-Object System.Text.StringBuilder
+    [void]$sb.Append((Format-ConsumerPageStart -PageName (([string]$Consumer.Repo) -replace '^.*/', '') -Trail @(@{ Href = '/consumers'; Label = 'Consumers' }, @{ Href = '/consumers/' + $key; Label = $g.Title })))
+    if ($Meta.CheckFailed) {
+        [void]$sb.AppendLine('<p class="msg--warn" role="alert">check-consumers.ps1 could not be run: ' + (& $e $Meta.CheckFailed) + '. The register is shown without its signals.</p>')
+    }
+    [void]$sb.AppendLine('<div class="grid-2" id="repo">')
+    [void]$sb.Append((Format-ConsumerRepoCardHtml -Consumer $Consumer))
+    [void]$sb.AppendLine('</div>')
+    $secs = if ($null -ne $Meta.Seconds) { ' in ' + ([double]$Meta.Seconds).ToString('0.0', [Globalization.CultureInfo]::InvariantCulture) + 's' } else { '' }
+    [void]$sb.Append((Format-ConsumerPageEnd -FooterHtml ('Read from <code>check-consumers.ps1</code>, checked ' + (& $e $Meta.GeneratedAt) + $secs + ' (<a class="cd-link" href="/refresh?page=consumers/' + $key + '/' + (& $e $slug) + '">re-run the check</a>). Served on 127.0.0.1 only, by <code>scripts/dashboard/serve-consumer-dashboard.ps1</code>.')))
+    return $sb.ToString()
+}
+
+function Format-ConsumerRepoCardHtml {
+    <#
+        One registered repo's details as a house card headed This machine, on its own page (Format-ConsumerRepoPageHtml,
+        #4113): its full name and status, its visibility, checkout, GitHub link and manifest, and what the check says
+        about it (Format-ConsumerRepoDetailsHtml). Its long paths and plugin ids wrap rather than run past the card on a
+        phone (.cd-card). -Consumer is one of Format-ConsumerDashboardHtml's -Consumers.
     #>
     param([Parameter(Mandatory = $true)][hashtable]$Consumer)
     $e = { param($v) ConvertTo-DashboardText $v }
@@ -558,7 +614,8 @@ function Format-ConsumerRepoMiniCardHtml {
     $sb = New-Object System.Text.StringBuilder
     $b = Get-DashboardStatusBadge ([string]$c.Status)
     $anchor = 'repo-' + (([string]$c.Repo) -replace '[^A-Za-z0-9]+', '-').ToLowerInvariant()
-    [void]$sb.AppendLine('<section class="mini-card cd-repo-card" id="' + $anchor + '">')
+    [void]$sb.AppendLine('<section class="card grid__full cd-card" id="' + $anchor + '">')
+    [void]$sb.AppendLine('<div class="card__head"><h2>This machine</h2></div>')
     [void]$sb.AppendLine('<div class="cd-repo"><span class="badge ' + $b.Class + '" aria-hidden="true">' + $b.Mark + '</span><p class="cd-repo__name">' + (& $e $c.Repo) + '</p></div>')
     $where = (@(Get-ConsumerCheckoutCandidates $c.Checkout) | ForEach-Object { '<code>' + (& $e $_) + '</code>' }) -join ' or '
     $ghUrl = 'https://github.com/' + (& $e $c.Repo)
@@ -574,7 +631,7 @@ function Format-ConsumerRepoDetailsHtml {
         What the register's check says about one repo, under the line that names it: its trunk's last commit, its
         plugins with their lens counts, the drift, and the check's findings (or that every check passes). The register's
         notes are not shown: they are the register's own log, for whoever keeps it (consumers/README.md), and run to
-        tens of kilobytes a repo (Maikel, October 28, 2026). A group's mini-card (Format-ConsumerRepoMiniCardHtml) holds it; a DKJ repo's own Repo
+        tens of kilobytes a repo (Maikel, October 28, 2026). A BWJ or Other repo's card (Format-ConsumerRepoCardHtml) holds it; a DKJ repo's own Repo
         card lays the same facts out as a facts list of its own (Format-DkjRepoCardHtml).
     #>
     param([Parameter(Mandatory = $true)][hashtable]$Consumer)
@@ -620,12 +677,17 @@ function Format-ConsumerDashboardHtml {
         -Group splits it in two (owner, October 26, 2026). Empty, it is /consumers: a section per owner group
         (Get-DashboardOwnerGroups) holding that group's repo cards, the DKJ ones handed in as -DkjCardsHtml with their
         -Style and any warning about reading them as -NoticeHtml (Maikel, October 30, 2026). A group's Key, it is
-        /consumers/<Key>: a three-crumb trail, the tiles over that group, its overview table and its repo cards.
+        /consumers/<Key>: a three-crumb trail, that group's summary line and its repo cards.
 
         The server serves the DKJ group its own page instead (Format-DkjReposPageHtml, Maikel, October 28, 2026):
         a card per DKJ repo, each opening that repo's page. -Group 'dkj' still renders here, as any group does.
         The frame -- head, banner, header, trail, h1 and the closing lines -- is Format-ConsumerPageStart and
-        Format-ConsumerPageEnd, which the DKJ pages share. A repo's mini-card is Format-ConsumerRepoMiniCardHtml.
+        Format-ConsumerPageEnd, which the DKJ pages share.
+
+        A group's page is its summary line and a card per repo, each opening that repo's own page (#4113): the DKJ
+        group's form, so on a phone the house rule draws a group as one card of compact rows, where its table and its
+        report of every repo ran past the screen. A repo's card is Format-ConsumerRepoCardLinkHtml, its page
+        Format-ConsumerRepoPageHtml.
     #>
     param(
         [AllowEmptyCollection()][Parameter(Mandatory = $true)][object[]]$Consumers,
@@ -669,15 +731,7 @@ function Format-ConsumerDashboardHtml {
             } elseif (-not $members.Count) {
                 [void]$sb.AppendLine('<p class="note grid__full">No repo ' + $g.Owner + ' is registered under <code>consumers/</code>.</p>')
             } else {
-                foreach ($c in $members) {
-                    $b = Get-DashboardStatusBadge ([string]$c.Status)
-                    $badge = '<span class="badge badge--sm ' + $b.Class + '" title="' + $b.Word + '" aria-label="' + $b.Word + '">' + $b.Mark + '</span>'
-                    $anchor = 'repo-' + (([string]$c.Repo) -replace '[^A-Za-z0-9]+', '-').ToLowerInvariant()
-                    $n = @($c.Plugins).Count
-                    $sub = (& $e $c.Visibility) + ' &#183; ' + $n + ' plugin' + $(if ($n -ne 1) { 's' } else { '' }) + ' &#183; ' + (Format-DashboardInstalledVersion $c)
-                    $name = ([string]$c.Repo) -replace '^.*/', ''
-                    [void]$sb.AppendLine((Format-AdminCardLinkHtml -Href ('/consumers/' + $g.Key + '#' + $anchor) -Label $name -SubHtml $sub -TitleBadgeHtml $badge -Heading 3))
-                }
+                foreach ($c in $members) { [void]$sb.AppendLine((Format-ConsumerRepoCardLinkHtml -Consumer $c -Members $members -Heading 3)) }
             }
             [void]$sb.AppendLine('</div>')
         }
@@ -687,43 +741,14 @@ function Format-ConsumerDashboardHtml {
         $members = @($all | Sort-Object @{ Expression = { $rank[[string]$_.Status] } }, @{ Expression = { [string]$_.Repo } })
         $g = $groupDef
 
-        # The overview (headed Connected repos): one card holding the group's table, the group named in its first column head.
-        [void]$sb.AppendLine('<div class="grid-2" id="overview">')
-        [void]$sb.AppendLine('<div class="grid__head"><h2>Connected repos</h2><p class="card__sub">Worst first</p></div>')
-        [void]$sb.AppendLine('<section class="card grid__full">')
-        [void]$sb.AppendLine('<div>')
+        # The group's summary line, then a card per repo opening its own page, an h2 each under the page's h1 (#4113).
+        # No table and no report of every repo: each repo's report is its own page.
         if (-not $members.Count) {
             [void]$sb.AppendLine('<p class="note">No repo ' + $g.Owner + ' is registered under <code>consumers/</code>.</p>')
         } else {
-            # A fixed column set, so the widths hold whatever the repo names are.
-            [void]$sb.AppendLine('<div class="table-wrap cd-table-gap"><table class="table cd-overview" id="overview-' + $g.Key + '"><colgroup><col class="cd-col-repo"><col class="cd-col-status"><col class="cd-col-vis"><col class="cd-col-num"><col class="cd-col-ver"></colgroup><thead class="cd-thead"><tr><th>' + $g.Title + '</th><th class="cd-left">Status</th><th>Visibility</th><th>Plugins</th><th class="cd-left">Installed</th></tr></thead><tbody>')
-            foreach ($c in $members) {
-                $b = Get-DashboardStatusBadge ([string]$c.Status)
-                $anchor = 'repo-' + (([string]$c.Repo) -replace '[^A-Za-z0-9]+', '-').ToLowerInvariant()
-                [void]$sb.AppendLine('<tr><td><a class="cd-link" href="#' + $anchor + '">' + (& $e $c.Repo) + '</a></td>' +
-                    '<td class="cd-left"><span class="cd-status"><span class="badge badge--sm ' + $b.Class + '" aria-hidden="true">' + $b.Mark + '</span>' + $b.Word + '</span></td>' +
-                    '<td>' + (& $e $c.Visibility) + '</td>' +
-                    '<td>' + @($c.Plugins).Count + '</td>' +
-                    '<td class="cd-left">' + (Format-DashboardInstalledVersion $c) + '</td></tr>')
-            }
-            [void]$sb.AppendLine('</tbody></table></div>')
-        }
-        [void]$sb.AppendLine('</div>')
-        [void]$sb.AppendLine('</section>')
-        [void]$sb.AppendLine('</div>')
-
-        # The per-repo details, a card of their own beside Connected repos, headed Issues: an h2, the group's summary line,
-        # and a house mini-card per repo (a card inside a card). The overview links down to it, so its head carries the way
-        # back. A group with no repo has no details.
-        if ($members.Count) {
-            [void]$sb.AppendLine('<div class="grid-2" id="issues">')
-            [void]$sb.AppendLine('<div class="grid__head"><h2>Issues</h2><p class="card__sub">What the check reports per repo</p><a class="btn" href="#overview">Back to overview</a></div>')
-            [void]$sb.AppendLine('<section class="card grid__full">')
-            [void]$sb.AppendLine('<div id="group-' + $g.Key + '">')
             [void]$sb.AppendLine('<p class="note cd-group-summary">' + (Format-DashboardGroupSummary $members) + '</p>')
-            foreach ($c in $members) { [void]$sb.Append((Format-ConsumerRepoMiniCardHtml -Consumer $c)) }
-            [void]$sb.AppendLine('</div>')
-            [void]$sb.AppendLine('</section>')
+            [void]$sb.AppendLine('<div class="card-grid" id="group-' + $g.Key + '">')
+            foreach ($c in $members) { [void]$sb.AppendLine((Format-ConsumerRepoCardLinkHtml -Consumer $c -Members $members -Heading 2)) }
             [void]$sb.AppendLine('</div>')
         }
     }

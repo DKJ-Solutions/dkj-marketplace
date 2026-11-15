@@ -7,7 +7,8 @@
     DKJ-Solutions repo on GitHub or checked out here (#3231; its own page at /dkj-repos until #3549, which now
     redirects there), each opening a page of its own at /consumers/dkj/<name>: the repo, what the register's
     check reports for it, a session to open there, and what its checkout's specialist lenses hold (October 28,
-    2026); and
+    2026); the BWJ and Other ones a card per registered repo, each opening /consumers/<group>/<name>, what
+    the register's check reports for it (#4113); and
     /plugins, every plugin .claude-plugin/marketplace.json lists, each with a page of its own at /plugins/<name>,
     the specialist teams (dkj-subagents-*) one card whose page is /plugins/dkj-subagents; a team's own page shows
     its specialists and the context each one costs, read from this tree, and each has a page of its own under it
@@ -391,7 +392,7 @@ try {
             if ($path -eq '/refresh') {
                 # At most one re-run per -MinRefreshSeconds, however often /refresh is asked for. ?page= names
                 # where to go back to, from a fixed list, so the redirect never leaves this server.
-                $page = if ([string]$target -cmatch '[?&]page=(consumers(?:/(?:dkj(?:/[A-Za-z0-9._-]+)?|bwj|other))?|docs-coverage)(&|$)') { $Matches[1] } else { '' }
+                $page = if ([string]$target -cmatch '[?&]page=(consumers(?:/(?:dkj|bwj|other)(?:/[A-Za-z0-9._-]+)?)?|docs-coverage)(&|$)') { $Matches[1] } else { '' }
                 if ($cache -and ((Get-Date) - $cache.At).TotalSeconds -ge $MinRefreshSeconds) { $cache = $null }
                 if ($dkjCache -and ((Get-Date) - $dkjCache.At).TotalSeconds -ge $MinRefreshSeconds) { $dkjCache = $null }
                 if ($docsCache -and ((Get-Date) - $docsCache.At).TotalSeconds -ge $MinRefreshSeconds) { $docsCache = $null }
@@ -453,6 +454,21 @@ try {
                 $reg = @($cache.Consumers | Where-Object { ([string]$_.Repo) -eq [string]$row.Repo })[0]
                 $lensCard = Format-RepoLensesCardHtml -Lenses (Get-CheckoutLenses -Path $(if ($co) { [string]$co.Path } else { '' })) -Names (Get-SpecialistNames)
                 $html = Format-DkjRepoPageHtml -Row $row -Checkout $co -Consumer $reg -LensesHtml $lensCard.Html -LensesStyle $lensCard.Style -Meta $meta
+                Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($html)) -Method $method
+                continue
+            }
+            if ($path -cmatch '^/consumers/(bwj|other)/([A-Za-z0-9._-]+)\z') {
+                # A BWJ or Other repo's own page (#4113): its group's page is a card per repo opening this one. A slug no
+                # registered repo of that group has is a 404, never an empty page.
+                $group = [string]$Matches[1]; $want = [string]$Matches[2]
+                if ($null -eq $cache -or ((Get-Date) - $cache.At).TotalSeconds -ge $CacheSeconds) { $cache = Get-DashboardModel }
+                $members = @($cache.Consumers | Where-Object { (Get-ConsumerOwnerGroup ([string]$_.Repo)) -eq $group })
+                $c = @($members | Where-Object { (Get-ConsumerRepoSlug -Repo ([string]$_.Repo) -Members $members) -ceq $want })[0]
+                if ($null -eq $c) {
+                    Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('Not found: no registered repo of that name in this group.')) -Method $method
+                    continue
+                }
+                $html = Format-ConsumerRepoPageHtml -Consumer $c -Members $members -Meta $cache.Meta
                 Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($html)) -Method $method
                 continue
             }
