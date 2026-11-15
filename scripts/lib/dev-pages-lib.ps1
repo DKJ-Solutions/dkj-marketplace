@@ -1420,7 +1420,7 @@ function Get-DkjRepoCardStyle {
         # whole text on hover where it can be cut. The two cards stand side by side, which keeps the page short.
         '.dr-card > .dr-facts, .dr-card > .cd-signals { margin-top: var(--spacing-3); }',
         '.dr-facts dt { flex: none; white-space: nowrap; }',
-        '.dr-facts dd { min-width: 0; overflow: hidden; text-overflow: ellipsis; }',
+        '.dr-facts dd { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }',
         # The session command in the Stopwatch card's sizes: one line ending in an ellipsis, copied whole by its button.
         '.dr-line { font-size: var(--text-sm); }',
         '.dr-muted { color: var(--primary-muted); }',

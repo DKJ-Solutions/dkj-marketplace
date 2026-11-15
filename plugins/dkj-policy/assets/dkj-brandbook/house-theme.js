@@ -235,6 +235,19 @@
       d.addEventListener('close', function () { toggle.setAttribute('aria-expanded', 'false'); }, { once: true });
       return;
     }
+    /* A device preview's version toggle (house-product.css, "Device preview", #4112): the pressed button's
+       data-variant is shown, every other [data-variant] of the same stage hidden. */
+    var pick = t.closest('.device-stage .seg button[data-variant]');
+    if (pick) {
+      var stage = pick.closest('.device-stage'), v = pick.getAttribute('data-variant');
+      var parts = stage.querySelectorAll('[data-variant]');
+      for (var i = 0; i < parts.length; i++) {
+        if (parts[i].closest('.device-stage') !== stage) continue;
+        var on = parts[i].getAttribute('data-variant') === v;
+        if (parts[i].tagName === 'BUTTON') parts[i].setAttribute('aria-pressed', String(on)); else parts[i].hidden = !on;
+      }
+      return;
+    }
     var menu = t.closest('dialog.site-menu, dialog.dialog--sheet');
     if (menu && (t === menu || t.closest('.dialog__close'))) menu.close();
   });
