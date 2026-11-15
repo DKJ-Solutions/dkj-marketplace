@@ -60,6 +60,10 @@ the navigation frames' bottom bar. The house product layer already ships the bot
       drifted from lifehub (a neutral badge) because each repo kept its own copy
 - [x] `Get-ProductBottomBar`: Home, Consumers, Plugins, then More; on the home page, every `Format-DevPageHtml`
       page and the Consumers page, whose header then drops its toggle
+- [x] The phone header's path sheet is gone from the brand book (Dave, November 15, 2026, as dkj-lifehub's header
+      has none): `Format-SiteHeaderHtml` draws the title as plain text and accepts `-Path` without drawing it,
+      `Format-ProductPageHtml` and the Consumers page stop passing it, and `house-product.css`, `house-theme.js`,
+      the README and the specimen lose the button and the sheet
 - [x] `/consumers` and `/consumers/dkj` no longer overflow a phone: `.dr-repos`' single column is
       `minmax(0, 1fr)`, not `1fr` (442px wide at a 375px viewport); `/docs-coverage`'s table overflow is a
       design question, filed as #4111
@@ -71,6 +75,8 @@ the navigation frames' bottom bar. The house product layer already ships the bot
       home page, the Settings page and a page under Plugins; two existing asserts follow the new markup
 - [x] `dev-pages.tests.ps1`: the brand book's topic list -- badge on the primary, rows pressable, tokens only;
       `check-house-style.tests.ps1` green, so no page restyles a house class
+- [x] The path-sheet asserts in `dev-pages.tests.ps1` and `consumer-dashboard.tests.ps1` now hold the opposite: a
+      plain title, no `site-path`, and `house-theme.js` with no title trigger
 - [x] `consumer-dashboard.tests.ps1`: the Consumers page's bar with Consumers current, and the bar's three sections
 - [x] `dev-pages.tests.ps1`: the `.dr-repos` phone column is `minmax(0, 1fr)`
 - [x] Every product page measured at 375px for a page wider than the screen: only `/docs-coverage` (#4111)
@@ -83,7 +89,7 @@ On a phone the product follows the mobile wireframes. The home page is a list of
 Admin, Consumers (with DKJ, BWJ and Other under it), Plugins (with dkj-subagents and dkj-policy), Docs coverage and
 Settings, each a heading with its initial in a badge -- the brand book's new topic list. Every product page carries the house bottom bar -- Home,
 Consumers, Plugins, and More, which opens the site menu -- so the header leaves its menu toggle out. The Consumers pages no
-longer scroll sideways on a phone. A wide screen is unchanged.
+longer scroll sideways on a phone, and the phone header's title is plain text, with no path menu behind it. A wide screen is unchanged.
 
 **Score:** 3
 
@@ -91,7 +97,9 @@ longer scroll sideways on a phone. A wide screen is unchanged.
 
 The brand book's product layer gains the topic list, `.topic-list` in `house-product.css`: a home page on a phone as
 topics with an initial on the primary and their sections under them, the whole row pressable. A product that built
-its own copy -- dkj-lifehub's `hub-rubriek` -- can drop it for this one once it takes the release.
+its own copy -- dkj-lifehub's `hub-rubriek` -- can drop it for this one once it takes the release. And the
+phone's site header loses its path sheet: the page title is plain text again, the back cell is the way up, and
+`Format-SiteHeaderHtml -Path` is still accepted but draws nothing, so a caller that passes it keeps working.
 
 **Score:** 2
 

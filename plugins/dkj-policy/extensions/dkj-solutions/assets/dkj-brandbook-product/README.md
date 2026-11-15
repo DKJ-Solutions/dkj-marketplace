@@ -329,24 +329,20 @@ the two change together.
 - **The bar's hide reads the window** (`@media (max-width: 48rem)`) and the Phone width in the settings
   (`:root[data-width="phone"]`): the header's own fold is a container query, and a container query cannot reach the
   bar beside it.
-- **The path on demand** (#4095, Figma `Product / Site header`, Path sheet=true): the title is a button with a small
-  chevron after it, and a tap opens the whole trail as a [sheet](#the-sheet-path-and-actions), Home first and the page
-  itself last, current and unlinked. It replaced the line here that said the full trail on a phone was not part of
-  #4048.
+- **The title is never a button.** A phone has no path on demand: the back cell is the way up, one level at a time
+  (Dave, November 15, 2026, as dkj-lifehub's header does; the path sheet #4095 added is gone).
 
-`Format-SiteHeaderHtml -Back @{ Label; Href } -PageTitle <name> -Path <trail>` draws all three, and
-`Get-SiteHeaderBack` picks the page one level up from the trail; `Format-ProductPageHtml` passes them on every page
-below home, the path being the same trail the breadcrumb bar draws. Without `-Path` the title stays a plain,
-`aria-hidden` span.
+`Format-SiteHeaderHtml -Back @{ Label; Href } -PageTitle <name>` draws both, and `Get-SiteHeaderBack` picks the page
+one level up from the trail; `Format-ProductPageHtml` passes them on every page below home. `-Path` is still accepted,
+so a caller that passes it does not fail, and draws nothing.
 
 ```html
 <header class="site-header"><div class="container">
   <a class="site-header__back" href="/projects" aria-label="Back to Projects">(chevron, mirrored)</a>
   <a class="site-header__brand" href="/" aria-label="my-app, home"><span class="site-header__name">my-app</span></a>
-  <button class="site-header__title" type="button" aria-controls="site-path" aria-expanded="false" aria-haspopup="dialog" aria-label="Path to Project X"><span>Project X</span>(chevron down)</button>
+  <span class="site-header__title" aria-hidden="true">Project X</span>
   <nav class="site-header__nav" aria-label="Main">...</nav>
-</div>
-<dialog class="dialog dialog--sheet" id="site-path" aria-label="Path">...</dialog></header>
+</div></header>
 <div class="breadcrumbs-bar">...</div>
 ```
 
@@ -408,15 +404,13 @@ drawer. An app that draws the menu by hand swaps `dialog--drawer` for `dialog--s
 its close into the back cell; one that draws it with `Format-SiteHeaderHtml` gets it with the update. The drawer
 itself stays a house class for an app's own use.
 
-#### The sheet: path and actions
+#### The sheet: actions
 
 **A short list of choices on a phone rises from the bottom as a sheet** (#4095, Figma `Product / Sheet`):
 `dialog.dialog--sheet`, the paper, rounded at the top only and the narrow column wide, over the page dimmed in the
 primary. It holds a grab handle (`span.dialog__handle`), an optional `p.dialog__title`, and `.menu-item` rows with no
 line between them, the page you are on bold in the primary. A tap on the dimmed page shuts it, as Escape does.
 
-- **The path sheet** opens from the phone's title ([above](#on-a-phone-back-and-title)): the whole trail, as the
-  breadcrumb bar would show it on a computer.
 - **The actions sheet** opens from a **More cell**, `button.site-header__more` (three dots, as wide as the menu
   toggle, Figma `Product / Site header`, More=true), and lists the page's own actions (the lifehub's *Save as PDF*,
   say), titled with the page's name. On a phone it stands before the menu toggle; on a wide header at the far right,
@@ -518,7 +512,7 @@ gutter, every tap target 44px or more. [`patterns/product-page.html`][pattern-pa
 
 **On a computer, a main column and a sidebar**: `main.page-layout`, holding a `.page-layout__main` (640px) and an
 `aside.page-layout__side` (320px), each also a `.page-column`, 48px apart and centred, under the site header with
-its menu and the breadcrumb bar. The breadcrumb bar is for the computer only; a phone has the path sheet. The
+its menu and the breadcrumb bar. The breadcrumb bar is for the computer only; a phone has the back cell. The
 sidebar holds what stands beside the work (a status card, card links elsewhere), each part under its own `h2`.
 Narrower than 48rem, and at the Phone width, the two stack: the sidebar comes after the main column. The bottom bar
 and the sheets do not appear on a computer.

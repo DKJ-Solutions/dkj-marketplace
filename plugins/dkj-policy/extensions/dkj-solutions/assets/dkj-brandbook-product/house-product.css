@@ -305,19 +305,13 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 @keyframes house-sheet-in { from { transform: translateY(100%); } }
 @media (prefers-reduced-motion: reduce) { .dialog--sheet, .dialog--sheet::backdrop { animation: none; } }
 
-/* ---- The header's two sheet triggers (#4095) ------------------------------------------------------------------- */
-/* The path: on a phone the title is a button, <button class="site-header__title" aria-controls="site-path"
-   aria-haspopup="dialog"><span>(the page's name)</span>(chevron down)</button>, that opens the whole trail as a sheet,
-   Home first and the page itself last (Figma Site header, Path sheet=true). It lifts #4048's "no path on demand".
+/* ---- The header's sheet trigger (#4095) ------------------------------------------------------------------------ */
+/* The title is never a trigger: on a phone it is plain text and the back cell is the way up, with no path sheet
+   (Dave, November 15, 2026, as in dkj-lifehub; the Path sheet of #4095 is gone).
    The actions: <button class="site-header__more" aria-controls="site-actions" aria-haspopup="dialog" aria-label="More
    actions">(three dots)</button> before the menu, a cell as wide as the toggle (Figma Site header, More=true), opening
    the page's own actions as a sheet. It stands on a wide header too, at the far right, since the actions are the
    page's and must not vanish on a computer; on a phone it sits before the menu toggle. */
-button.site-header__title { gap: var(--spacing-1); padding: 0; border: 0; background: transparent; color: var(--bg-1); font: inherit;
-  font-size: var(--text-h2); font-weight: var(--font-weight-bold); text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-button.site-header__title > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-button.site-header__title > svg { flex: none; width: var(--spacing-4); height: var(--spacing-4); }
-button.site-header__title:focus-visible { outline: 2px solid var(--bg-1); outline-offset: -4px; }
 .site-header__more { display: inline-flex; flex: none; order: 1; align-items: center; justify-content: center;
   width: calc(var(--text-h1) + 2 * var(--spacing-1) + 2 * var(--spacing-3)); padding: 0; border: 0; color: var(--bg-1); background: transparent;
   cursor: pointer; -webkit-tap-highlight-color: transparent; }
