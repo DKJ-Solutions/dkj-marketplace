@@ -48,7 +48,8 @@ knows what not to redefine. The product layer reserves these too:
   `__nav`, `__menu`, `__menu-toggle`, `__back`, `__title`, `__more`; [below](#the-site-header-above-the-bar)),
   the full-screen menu's parts, `.menu-section`, `.menu-footer` (with `__name`, `__note`) and `.menu-item__aside`
   ([below](#the-menu-in-the-header)), and the bottom bar, `.bottom-bar` (with `__item`, `__more`, `__icon`,
-  `__label`; [below](#the-bottom-bar-on-a-phone)), the status card, `.status-card` (with `__kicker`), and the error state,
+  `__label`; [below](#the-bottom-bar-on-a-phone)), the topic list, `.topic-list` (`.topic`, with `__head`, `__link`,
+  `__badge`, `__items`, `__item`; [below](#the-topic-list-a-home-page-on-a-phone)), the status card, `.status-card` (with `__kicker`), and the error state,
   `.error-state` on an `.empty-state` ([below](#status-card-and-error-state)).
 - **The brand-book components** ([below](#brandbook-app-components)): `.round-toggle`, `.badge-toggle`, `.help`,
   `.more--structured` (`.more__title`, `__meta`, `__trailing`, `__version`), `.question-head` (the answer line
@@ -463,6 +464,29 @@ three or four sections, then **More**, always last, a button that opens the site
   <a class="bottom-bar__item" href="/agenda" aria-current="page"><span class="bottom-bar__icon">(svg)</span><span class="bottom-bar__label">Agenda</span></a>
   ..
   <button class="bottom-bar__item bottom-bar__more" type="button" aria-controls="site-menu" aria-expanded="false"><span class="bottom-bar__icon">(three lines)</span><span class="bottom-bar__label">More</span></button>
+</nav>
+```
+
+#### The topic list, a home page on a phone
+
+**A product's home page on a phone is a list of topics, not a stack of cards** (Figma wireframe `H1 - Home
+(mobiel)`; first built in dkj-lifehub, where its shape was settled): each topic a heading with its initial in a round
+badge, the topic's sections under it, a thin rule between topics, indented to the heading's text.
+
+- **The badge is on the primary.** A small mark beside a heading is an accent, as the current bottom-bar slot is,
+  so it does not break the rule that the theme colour is never a fill for content (Dave, November 13, 2026).
+- **The whole row is the tap target**, with a press state across the full width, for the heading and each section.
+- **A topic without a page of its own** puts a `span.topic__link` in its heading instead of a link.
+- **The list is always drawn.** A home page that keeps its cards on a wide screen hides one of the two forms
+  itself, at 48rem, the width the header folds its menu at.
+
+```html
+<nav class="topic-list" aria-label="Pages">
+  <section class="topic">
+    <h2 class="topic__head"><a class="topic__link" href="/brain"><span class="topic__badge" aria-hidden="true">B</span>Brain</a></h2>
+    <ul class="topic__items"><li><a class="topic__item" href="/brain/work">Work</a></li></ul>
+  </section>
+  ..
 </nav>
 ```
 

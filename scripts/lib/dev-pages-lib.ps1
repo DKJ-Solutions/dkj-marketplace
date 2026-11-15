@@ -85,23 +85,15 @@ function Format-ProductSettingsHtml {
 
 function Get-ProductHomeTopicsStyle {
     <#
-        The product home's topic list (Format-ProductHomeHtml), the repo's own domain layer on house tokens only: below
-        the product layer's mobile breakpoint (48rem, where the site header folds into its menu) it replaces the
-        cards, above it it does not exist. Neutral, as the wireframe draws it: the badge is the text colour, with a
-        thin rule between topics, indented to the heading's text.
+        Which of the product home's two forms shows (Format-ProductHomeHtml): the cards on a wide screen, the brand
+        book's topic list (house-product.css, "Topic list") below the product layer's mobile breakpoint, 48rem, where
+        the site header folds into its menu. The list's look is the brand book's alone; this only hides one form.
     #>
     return @(
         '.ph-topics { display: none; }',
         '@media (max-width: 48rem) {',
         '  .ph-wide { display: none; }',
         '  .ph-topics { display: block; }',
-        '  .ph-topic { position: relative; padding-block: var(--spacing-3); }',
-        '  .ph-topic + .ph-topic::before { content: ""; position: absolute; top: 0; left: var(--spacing-11); right: 0; border-top: 1px solid var(--bg-3); }',
-        '  .ph-topic__head { margin: 0; font-size: var(--text-h2); font-weight: var(--font-weight-bold); }',
-        '  .ph-topic__link { display: flex; align-items: center; gap: var(--spacing-4); min-height: var(--tap); color: var(--fg-1); text-decoration: none; }',
-        '  .ph-topic__badge { display: inline-grid; place-items: center; flex: none; width: var(--spacing-7); height: var(--spacing-7); border-radius: 50%; background: var(--fg-1); color: var(--bg-1); font-size: var(--text-sm); }',
-        '  .ph-topic__list { margin: 0; padding: 0; list-style: none; }',
-        '  .ph-topic__item { display: flex; align-items: center; min-height: var(--tap); padding-left: var(--spacing-11); font-size: var(--text-h3); font-weight: var(--font-weight-bold); color: var(--fg-1); text-decoration: none; }',
         '}'
     ) -join "`n"
 }
@@ -160,21 +152,21 @@ function Format-ProductHomeHtml {
     $at = if ($SourceCommit) { ', from <code>' + (& $e $SourceCommit) + '</code>' } else { '' }
     [void]$sb.AppendLine('<p class="note">Each page names its own source. Served on 127.0.0.1 only, by <code>scripts/dashboard/serve-consumer-dashboard.ps1</code>' + $at + '.</p>')
     [void]$sb.AppendLine('</div>')
-    # On a phone the same pages as a list of topics, after the mobile home wireframe (Figma "H1 - Home (mobiel)"): each
-    # page a heading with its initial in a badge, its sub-pages (Items) under it. Admin is a heading without a link
+    # On a phone the same pages as the brand book's topic list (house-product.css), after the mobile home wireframe
+    # (Figma "H1 - Home (mobiel)"): each page a heading with its initial in a badge, its sub-pages (Items) under it. Admin is a heading without a link
     # while it is not running, as its card says.
     $topics = @(@{ Href = $(if ($adminLinked) { $AdminUrl } else { '' }); Label = 'Admin'; Items = @() }) + @($Pages)
-    [void]$sb.AppendLine('<nav class="ph-topics" aria-label="Pages">')
+    [void]$sb.AppendLine('<nav class="topic-list ph-topics" aria-label="Pages">')
     foreach ($t in $topics) {
         $raw = [string]$t.Label
         $label = & $e $raw
-        $badge = '<span class="ph-topic__badge" aria-hidden="true">' + $(if ($raw) { & $e $raw.Substring(0, 1).ToUpperInvariant() }) + '</span>'
-        $head = if ($t.Href) { '<a class="ph-topic__link" href="' + (& $e ([string]$t.Href)) + '">' + $badge + $label + '</a>' } else { '<span class="ph-topic__link">' + $badge + $label + '</span>' }
-        [void]$sb.Append('<section class="ph-topic"><h2 class="ph-topic__head">' + $head + '</h2>')
+        $badge = '<span class="topic__badge" aria-hidden="true">' + $(if ($raw) { & $e $raw.Substring(0, 1).ToUpperInvariant() }) + '</span>'
+        $head = if ($t.Href) { '<a class="topic__link" href="' + (& $e ([string]$t.Href)) + '">' + $badge + $label + '</a>' } else { '<span class="topic__link">' + $badge + $label + '</span>' }
+        [void]$sb.Append('<section class="topic"><h2 class="topic__head">' + $head + '</h2>')
         $items = @($t.Items | Where-Object { $_ })
         if ($items.Count) {
-            [void]$sb.Append('<ul class="ph-topic__list">')
-            foreach ($i in $items) { [void]$sb.Append('<li><a class="ph-topic__item" href="' + (& $e ([string]$i.Href)) + '">' + (& $e ([string]$i.Label)) + '</a></li>') }
+            [void]$sb.Append('<ul class="topic__items">')
+            foreach ($i in $items) { [void]$sb.Append('<li><a class="topic__item" href="' + (& $e ([string]$i.Href)) + '">' + (& $e ([string]$i.Label)) + '</a></li>') }
             [void]$sb.Append('</ul>')
         }
         [void]$sb.AppendLine('</section>')

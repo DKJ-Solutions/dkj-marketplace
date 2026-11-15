@@ -357,6 +357,30 @@ button.site-header__title:focus-visible { outline: 2px solid var(--bg-1); outlin
 .bottom-bar__icon svg { width: var(--spacing-4); height: var(--spacing-4); }
 .bottom-bar__label { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
+/* ---- Topic list -------------------------------------------------------------------------------------------- */
+/* A product's pages as a list of topics, its home page on a phone (Figma wireframe "H1 - Home (mobiel)"; first built
+   in dkj-lifehub, which is where its shape was settled): each topic a heading with its initial in a badge, its
+   sections under it, a thin rule between topics, indented to the heading's text. The whole row is the tap target,
+   with a press state across the full width. The badge is on the primary: a small mark beside a heading is an accent,
+   as the current bottom-bar slot is, never a block of content on the primary (Dave, November 13, 2026).
+   <nav class="topic-list" aria-label="Pages"><section class="topic"><h2 class="topic__head"><a class="topic__link"
+   href><span class="topic__badge" aria-hidden="true">B</span>Brain</a></h2><ul class="topic__items"><li><a
+   class="topic__item" href>Werk</a></li></ul></section> .. </nav>
+   A topic without a page of its own puts a span.topic__link in the heading. The list is always drawn: a page that
+   shows cards on a wide screen and this list on a phone hides one of the two itself, at 48rem. */
+.topic { position: relative; padding-block: var(--spacing-3); }
+.topic + .topic::before { content: ""; position: absolute; top: 0; left: var(--spacing-11); right: 0; border-top: 1px solid var(--bg-3); }
+.topic__head { display: flex; margin: 0; font-size: var(--text-h2); font-weight: var(--font-weight-bold); color: var(--fg-1); }
+.topic__link { display: flex; flex: 1; align-items: center; gap: var(--spacing-4); min-height: var(--control-lg); color: inherit; text-decoration: none; }
+.topic__badge { display: inline-grid; place-items: center; flex: none; width: var(--spacing-7); height: var(--spacing-7); border-radius: 50%;
+  background: var(--primary); color: var(--bg-1); font-size: var(--text-sm); font-weight: var(--font-weight-bold); }
+.topic__items { margin: 0; padding: 0; list-style: none; }
+.topic__item { display: flex; align-items: center; min-height: var(--spacing-12); padding-left: var(--spacing-11); font-size: var(--text-h3);
+  color: var(--fg-1); text-decoration: none; }
+a.topic__link, .topic__item { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+a.topic__link:hover, a.topic__link:active, .topic__item:hover, .topic__item:active { background: var(--bg-3); }
+a.topic__link:focus-visible, .topic__item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+
 /* ---- Status card (#4096) ------------------------------------------------------------------------------------ */
 /* Where something stands, on the page (Figma Product / Status card, #4087): a block on --bg-3 with a kicker, an h2,
    an optional progress bar and the facts as one row. It IS the surface, so it never sits inside a .card.

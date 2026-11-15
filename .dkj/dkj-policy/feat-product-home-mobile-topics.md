@@ -54,6 +54,10 @@ the navigation frames' bottom bar. The house product layer already ships the bot
 - [x] `Format-ProductHomeHtml`: below 48rem the cards and their note give way to a topic list
       (`Get-ProductHomeTopicsStyle`, house tokens only, neutral as the wireframe draws it); Admin is a heading
       without a link while it is not running
+- [x] The topic list moves into the brand book as a product component, `.topic-list` in `house-product.css`
+      (specimen and README section), in dkj-lifehub's settled shape: the badge on `--primary`, the whole row the
+      tap target with a press state. The product home renders it and only chooses which form shows; it had
+      drifted from lifehub (a neutral badge) because each repo kept its own copy
 - [x] `Get-ProductBottomBar`: Home, Consumers, Plugins, then More; on the home page, every `Format-DevPageHtml`
       page and the Consumers page, whose header then drops its toggle
 - [x] `/consumers` and `/consumers/dkj` no longer overflow a phone: `.dr-repos`' single column is
@@ -65,6 +69,8 @@ the navigation frames' bottom bar. The house product layer already ships the bot
 - [x] `dev-pages.tests.ps1`: the topic list's headings, badges, links and sections, its breakpoint, tokens only,
       escaping (a badge is the label's first letter as written, escaped on its own), and the bottom bar on the
       home page, the Settings page and a page under Plugins; two existing asserts follow the new markup
+- [x] `dev-pages.tests.ps1`: the brand book's topic list -- badge on the primary, rows pressable, tokens only;
+      `check-house-style.tests.ps1` green, so no page restyles a house class
 - [x] `consumer-dashboard.tests.ps1`: the Consumers page's bar with Consumers current, and the bar's three sections
 - [x] `dev-pages.tests.ps1`: the `.dr-repos` phone column is `minmax(0, 1fr)`
 - [x] Every product page measured at 375px for a page wider than the screen: only `/docs-coverage` (#4111)
@@ -75,7 +81,7 @@ the navigation frames' bottom bar. The house product layer already ships the bot
 
 On a phone the product follows the mobile wireframes. The home page is a list of topics instead of five cards:
 Admin, Consumers (with DKJ, BWJ and Other under it), Plugins (with dkj-subagents and dkj-policy), Docs coverage and
-Settings, each a heading with its initial in a badge. Every product page carries the house bottom bar -- Home,
+Settings, each a heading with its initial in a badge -- the brand book's new topic list. Every product page carries the house bottom bar -- Home,
 Consumers, Plugins, and More, which opens the site menu -- so the header leaves its menu toggle out. The Consumers pages no
 longer scroll sideways on a phone. A wide screen is unchanged.
 
@@ -83,10 +89,12 @@ longer scroll sideways on a phone. A wide screen is unchanged.
 
 #### What makes this deploy extra special
 
-N/A -- the product server is this repo's own maintenance view, under `scripts/`; nothing a plugin ships changes.
+The brand book's product layer gains the topic list, `.topic-list` in `house-product.css`: a home page on a phone as
+topics with an initial on the primary and their sections under them, the whole row pressable. A product that built
+its own copy -- dkj-lifehub's `hub-rubriek` -- can drop it for this one once it takes the release.
 
-**Score:** N/A
+**Score:** 2
 
 #### Pull Request
 
-The product on a phone, after the mobile wireframes: the home page as a list of topics and a bottom bar on every page
+The product on a phone, after the mobile wireframes: the brand book's topic list on the home page and a bottom bar on every page
