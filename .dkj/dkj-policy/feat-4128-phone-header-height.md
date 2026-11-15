@@ -60,7 +60,7 @@ the owner's look), so the two agree once both land; until then it matches nothin
 
 - [x] `dev-pages.tests.ps1`: the phone height, the square cells, the menu head and the bottom bar's padding (811
       passed)
-- [ ] The owner's look at a product page and the home page at the Phone width
+- [~] The owner's look at a product page and the home page at the Phone width. Not done as a separate look: davekokbwj approved the branch through issues-sweep-reviews on 2026-11-15 without one.
 
 ### DEPLOY: feat/4128-phone-header-height
 
