@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**6 / 6 minor entries** <!-- pending-tally -->
+**6 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4113-phone-page-furniture · 20261115-174831Z
+
+On a phone a product page no longer shows a lone "?" at the top left or a long note of source paths at its foot,
+and a row of figure tiles, such as a specialist's token costs, reads as one card of compact rows. That matches the
+mobile wireframes. A wide screen is unchanged.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+On a phone, no lone '?', no source note, and the stat tiles as one card of rows
+
+Plugins: dkj-solutions
+
+[PR #4122](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4122)
+
+---
 
 ### DEPLOY: feat/card-grid-rows-on-phone · 20261115-173629Z
 
