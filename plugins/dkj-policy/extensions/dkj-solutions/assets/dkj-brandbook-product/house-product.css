@@ -440,6 +440,35 @@ a.topic__link:focus-visible, .topic__item:focus-visible { outline: 2px solid var
 :root[data-width="phone"] body:has(.site-header__back) main h1 { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
+/* ---- Device preview: a phone frame with an A/B toggle (#4112) -------------------------------------------------------- */
+/* A page shown at phone width inside a phone (a mockup of a product page, a storefront, an e-mail, a design proposal),
+   with a .seg above it that switches between versions and a .note that says what the current one shows. The frame is
+   the house's; the page inside keeps its own look. That is why the screen holds an <iframe>: a document of its own is
+   the one boundary the house element rules (h1-h3, p, main, button) do not cross, where a <div> would inherit every one.
+   <div class="device-stage">
+     <div class="seg" role="group" aria-label="Version"><button type="button" data-variant="a" aria-pressed="true">Control
+     </button><button type="button" data-variant="b" aria-pressed="false">Variant</button></div>
+     <p class="note" data-variant="a">..</p><p class="note" data-variant="b" hidden>..</p>
+     <div class="device"><div class="device__screen"><iframe data-variant="a" src=".." title=".."></iframe><iframe
+     data-variant="b" src=".." title=".." hidden></iframe></div></div>
+   </div>
+   house-theme.js switches it: a press marks its button pressed and shows every [data-variant] of the stage with the
+   same value, hiding the rest. A stage with one version leaves the .seg out. The screen is 390 wide, the phone's own
+   width, and scrolls on its own; narrower than 30rem the bezel goes and the screen reaches the window's edges. */
+.device-stage { display: flex; flex-direction: column; align-items: center; gap: var(--spacing-3); }
+.device-stage > .note { max-width: 390px; margin: 0; text-align: center; }
+.device-stage [hidden] { display: none; }
+.device { box-sizing: content-box; width: 390px; max-width: calc(100% - 2 * var(--spacing-3)); padding: var(--spacing-3);
+  background: var(--bg-5); border-radius: calc(var(--radius-3) * 4); }
+.device__screen { width: 100%; height: min(844px, calc(100svh - 5 * var(--spacing-16))); overflow: auto; overscroll-behavior: contain;
+  background: var(--bg-1); border-radius: calc(var(--radius-3) * 3); }
+.device__screen > iframe { display: block; width: 100%; height: 100%; border: 0; }
+.device__screen > iframe[hidden] { display: none; }
+@media (max-width: 30rem) {
+  .device { width: 100vw; max-width: none; margin-inline: calc(50% - 50vw); padding: 0; border-radius: 0; }
+  .device__screen { height: calc(100svh - 2 * var(--spacing-16)); border-radius: 0; }
+}
+
 /* ---- Fills ---------------------------------------------------------------- */
 /* A block on the theme's colour, or on the far end (#3235). The text switches with the ground. On .fill-primary the
    paper steps are the text, because all four read on the primary (4.55:1 or better): an h2 is --bg-1 there and
