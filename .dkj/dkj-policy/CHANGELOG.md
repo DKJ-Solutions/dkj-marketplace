@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**6 / 7 minor entries** <!-- pending-tally -->
+**6 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4113-consumer-group-rows · 20261115-182852Z
+
+The BWJ and Other repos on the Consumers pages read like the DKJ ones: a group's page is a card per repo -- on a
+phone one card of compact rows -- and each repo's report is a page of its own, where its long paths and plugin ids
+wrap inside the card. The table and the one long report of every repo are gone.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+Consumer group pages as rows with a page per repo
+
+[PR #4130](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4130)
+
+---
 
 ### DEPLOY: feat/4113-phone-page-furniture · 20261115-174831Z
 
