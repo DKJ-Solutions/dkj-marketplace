@@ -405,6 +405,23 @@ its bar and has no way up but the browser's own back, so add `.site-header__back
 page below home in the same update. An app that keeps its sticky elements at `top: var(--tap)` under the bar moves
 them to `top: 0` below 48rem.
 
+#### The icon grammar: one meaning per icon
+
+**Every DKJ product gives each of three icons one meaning, wherever it stands** (#4124, after a walk through
+dkj-lifehub on a phone beside LinkedIn, nu.nl and Teams):
+
+- **Three lines (hamburger): more pages.** The header's menu toggle, or the bottom bar's **More**, far right.
+- **Three dots: actions on this page.** The header's More cell, opening the actions sheet. Never pages.
+- **Gear: settings.** On a computer the header's settings button; on a phone **one Settings row inside the menu**,
+  never an icon of its own in the header. A profile avatar does not stand in for it, because these products have no
+  user account, and the header's top-left cell is already the back cell on every page below home.
+
+An icon is never borrowed for another meaning: a product that needs a fourth kind of control draws a fourth icon.
+
+**What this changes for an app that takes the update:** the menu's **Display** section now reads **Settings**, and its
+row carries the gear. An app that draws its menu with `Format-SiteHeaderHtml` gets that with the update, and one that
+draws it by hand renames the section and adds the gear as a `.menu-item__icon`.
+
 #### The menu in the header
 
 **A site header may carry the app's main pages after the brand, before the settings button where there is one** (Maikel, November 2,
@@ -422,8 +439,8 @@ where you can go, the trail where you are.
   as tall, the back cell at the left closing it, and the title `Menu`. Under it three sections, each a
   `p.menu-section` (small, uppercase, `--primary-muted`): **Pages**, the menu's items as `.menu-item` rows (an optional
   `.menu-item__icon`, the label with an optional `.menu-item__sub` line, an optional `.menu-item__aside` value at the
-  right, the chevron; a `--bg-3` line under each); **Display**, one row to the app's settings page, in the place the
-  gear takes on a computer, drawn only where the app has one (`-SettingsHref`); and **About**, closed by a
+  right, the chevron; a `--bg-3` line under each); **Settings**, one row with the house gear to the app's settings
+  page, in the place the gear takes on a computer, drawn only where the app has one (`-SettingsHref`); and **About**, closed by a
   `.menu-footer`: the app's name and a quieter line such as the brand book version (`-MenuNote`). The content keeps
   the narrow column, so at the Phone width on a computer it lines up with the header.
 - **`house-theme.js` wires it** with no call of its own: the toggle opens the dialog its `aria-controls` names as a
@@ -446,7 +463,7 @@ where you can go, the trail where you are.
   <button class="dialog__close dialog__close--back" type="button" aria-label="Close the menu">(chevron left)</button>
   <nav class="menu-list" aria-label="Main">
     <p class="menu-section">Pages</p><a class="menu-item" href="/a" aria-current="page">..</a><a class="menu-item" href="/b">..</a>
-    <p class="menu-section">Display</p><a class="menu-item" href="/settings">..</a>
+    <p class="menu-section">Settings</p><a class="menu-item" href="/settings">(gear)..</a>
     <p class="menu-section">About</p>
   </nav>
   <div class="menu-footer"><p class="menu-footer__name">my-app</p><p class="menu-footer__note">Brand book v6.16.0</p></div>
