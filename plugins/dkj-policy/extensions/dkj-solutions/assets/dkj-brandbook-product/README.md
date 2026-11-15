@@ -380,6 +380,9 @@ the two change together.
   current crumb and its `h1`, at `--text-h2`. It is `aria-hidden`, because the `h1` already says it to a screen
   reader. **The brand gives way to it**, so the row reads back, title, then the menu toggle.
 - **A wide header hides both**, and the bar is back. The home page has neither, so on a phone it keeps its brand.
+- **On a phone the header has a height of its own** (#4128): `--topbar-h`, 56px, where a wide header is 68px, and
+  its cells (back, actions, menu toggle) stay square at that height, as does the full-screen menu's head. The bottom
+  bar pads `--spacing-2` below its slots, or the safe area where the phone has one, so it is 61px where it was 73px.
 - **The bar's hide reads the window** (`@media (max-width: 48rem)`) and the Phone width in the settings
   (`:root[data-width="phone"]`): the header's own fold is a container query, and a container query cannot reach the
   bar beside it.
