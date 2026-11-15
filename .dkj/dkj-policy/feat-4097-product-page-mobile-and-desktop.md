@@ -80,3 +80,4 @@ it (`.page-layout`), on a phone one column with its title once, in the header. A
 
 #### Pull Request
 
+Product page: main column and sidebar, compact rows, title once on a phone
