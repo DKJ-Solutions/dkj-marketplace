@@ -64,7 +64,7 @@ Two lines deliberately stay: an `hr` (a rule is its whole meaning) and the opt-i
 
 - [x] `dev-pages.tests.ps1`: the two #4113 phone asserts follow the gap instead of the hairline (811 passed); `check-house-style` (175), `house-palette` (219) green; `check-house-style.ps1` OK
 - [x] computed styles read in the browser: this branch's Admin on port 4893 draws the home table with alternating rows and no lines; the product on 4870 has borderless cards on `--bg-2` and borderless bars
-- [ ] the owner looks at Admin and a product at both widths
+- [x] the owner looked at Admin and a product at both widths and approved (November 15, 2026)
 
 ### DEPLOY: feat/4127-borders-only-on-buttons
 
