@@ -53,7 +53,7 @@ The More-as-a-page half is #4125.
 ### TEST
 
 - [x] asserts in `dev-pages.tests.ps1`: the Settings section, its gear before the label, no Display section left (810 passed)
-- [ ] the owner looks at the full-screen menu on a phone width: the Settings section and its gear
+- [~] the owner looks at the full-screen menu on a phone width: the Settings section and its gear. Not done as a separate look: davekokbwj approved the branch through issues-sweep-reviews on 2026-11-15 without one.
 
 ### DEPLOY: feat/4124-icon-grammar
 
