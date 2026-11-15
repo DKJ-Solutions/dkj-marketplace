@@ -354,15 +354,12 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 /* ---- A group of card links on a phone (#4113) -------------------------------------------------------------- */
 /* The mobile wireframes draw a list as one card of compact rows with a line between, and the README says the same
    ("Compact rows of about 52px instead of large tiles"). A wide screen keeps its group of tiles, but below 48rem a
-   group of card links (.grid-2, .grid-3 or .card-grid holding .card--link) reads as that one card: the group's own
-   surface and padding go, so no surface sits in a surface, its .grid__head stands above as the section's heading, and
-   each link is a row of about 52px. It weighs more than a page's own grid layer (.sp-grid, .dr-repos), so a page
-   needs no rule of its own for it. A card in a group that is not a link stays a card, now a plain one on the page:
-   every group loses its surface on a phone, so a card never sits in a surface there either. */
+   group of card links (.grid-2, .grid-3 or .card-grid holding .card--link) reads as that one card: its .grid__head
+   stands above as the section's heading, and each link is a row of about 52px. It weighs more than a page's own grid
+   layer (.sp-grid, .dr-repos), so a page needs no rule of its own for it. A card in a group that is not a link stays
+   the plain card it is. A group has no surface at any width since #4126, so nothing here takes one away. */
 @media (max-width: 48rem) {
-  :is(.grid-2, .grid-3, .card-grid) { grid-template-columns: minmax(0, 1fr); padding: 0; background: none; border-radius: 0; }
-  :is(.grid-2, .grid-3, .card-grid) > .card { background: var(--bg-2); border-color: var(--bg-3); }
-  :is(.grid-2, .grid-3, .card-grid) > .card > * { --bg-3: inherit; }
+  :is(.grid-2, .grid-3, .card-grid) { grid-template-columns: minmax(0, 1fr); }
   :is(.grid-2, .grid-3, .card-grid) > .grid__head { margin-bottom: var(--spacing-2); }
   :is(.grid-2, .grid-3, .card-grid):has(> .card--link) { gap: 0; }
   :is(.grid-2, .grid-3, .card-grid) > .card--link { margin: 0; padding: 0 var(--spacing-4); border: 1px solid var(--bg-3); border-top-width: 0;

@@ -39,21 +39,40 @@
 
 ### PLAN
 
+Inbound #4126: a card group (`.grid-2`, `.grid-3`, `.card-grid`) drew a tray of its own (`--bg-2`, a radius,
+`--spacing-5` of padding), and the cards in it took `--bg-3` with their lines moved to `--bg-4`. The owner reverses
+the November 2, 2026 padding decision: the cards are the group, at every width. With the tray gone a card in a group
+is the plain `.card` on `--bg-2` against the page, so the descendant fill rules and the #3697 button edge, which
+existed only because of that remap, go with it, and the phone block (#4113) no longer has a surface to remove.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-style.css`: the group's padding, background and radius gone, with the `> .card` fill, line remap, hover and #3697 button-edge rules
+- [x] `house-product.css`: the phone block keeps only its one column; the two READMEs say a group has no surface
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the phone assert follows, and a new one holds every group rule free of padding, background, radius and a card fill (811 passed)
+- [ ] the owner looks at a page of card groups on a wide screen and on a phone
+
 ### DEPLOY: feat/4126-no-group-surface
 
-**Score:**
+A card group is no longer a surface of its own
+([#4126](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4126)): `.grid-2`, `.grid-3` and `.card-grid`
+lose the `--bg-2` tray, its radius and its padding at every width, so a card in a group is the same plain card it is
+anywhere else, on `--bg-2` against the page. That reverses the padded tray of November 2, 2026, and takes with it
+the darker card fill inside a group and the button edge #3697 gave it.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Every DKJ-Solutions app that takes the update loses the frame around its card groups: the cards stand on the page
+directly, one step lighter or darker than it, and on a phone they gain the width the padding took on both sides.
+No markup changes; an app whose own layer leaned on the group's padding checks its spacing.
+
+**Score:** 3
 
 #### Pull Request
 
 Brand book: a card group is no surface of its own
-
