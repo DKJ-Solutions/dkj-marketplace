@@ -1218,6 +1218,17 @@ Assert-True ((Format-GeneralPageHtml -Title 't' -Lead '' -Body (& $secs 4)) -not
 $long = Format-GeneralPageHtml -Title 't' -Lead '' -Body (& $secs 5)
 Assert-True ($long -match '<p class="msg--warn" role="alert">This page holds 5 sections in one column\. A page with more than 4 becomes an overview of cards, each opening a page of its own: the house style''s page rule \(#3563\)\.</p>') 'five puts a warning on the page itself, naming the count and the rule'
 Assert-True ($long.IndexOf('This page holds 5') -lt $long.IndexOf('<h2>S1</h2>')) 'above the first section, where it cannot be scrolled past'
+Write-Host '-- and on length too, not only on section count (#4114)' -ForegroundColor Cyan
+$prose = { param($n) '<p>' + ((1..$n | ForEach-Object { 'word' }) -join ' ') + '</p>' }
+Assert-Equal 6 (Get-PageWordCount -Body '<p>One <a href="https://example.com/a/long/url">two</a> three.</p><ul><li>four-five six''s</li></ul><!-- <p>hidden words here</p> --><pre>seven</pre>') 'reading words are the text of p, li and pre: a link URL, a comment and a hyphen do not add one'
+Assert-Equal 0 (Get-PageWordCount -Body '<table><tr><td><p>a cell</p></td></tr></table><nav><ul><li>Home</li></ul></nav><script>var p = "<p>x</p>";</script><h2>Heading</h2>') 'a table, a nav, a script and a heading hold no reading: a list is not a long page'
+Assert-Equal 2 (Get-PageWordCount -Body ('<p>don' + [char]0x2019 + 't stop</p>')) 'a typographic apostrophe keeps a word whole'
+Assert-True ((Format-GeneralPageHtml -Title 't' -Lead '' -Body (& $prose 1500)) -notmatch 'words of reading') '1,500 words is within the rule, whatever the section count'
+$wordy = Format-GeneralPageHtml -Title 't' -Lead '' -Body ((& $secs 3) + (& $prose 1501))
+Assert-True ($wordy -match '<p class="msg--warn" role="alert">This page holds 1501 words of reading\. A page over 1500 becomes an overview of its sections, and a section page still over it splits at its next heading level: the house style''s page rule \(#4114\)\.</p>') 'three sections and 1,501 words warns: the count, the limit and the recursion'
+Assert-True ($wordy -notmatch 'sections in one column') 'and only the limit it breaks'
+$both = Get-LongPageWarningHtml -Body ((& $secs 5) + (& $prose 1501))
+Assert-Equal 2 ([regex]::Matches($both, 'class="msg--warn"')).Count 'a page breaking both limits carries both warnings'
 Assert-True ($one.Contains('<p class="badge-row"><span class="badge badge--sm badge--bad" aria-hidden="true">&#10007;</span>Behind</p>') -and $one -notmatch 'aria-hidden="true">Behind') 'the plugin page shows its state as the house badge row: the mark, then the word'
 Assert-Equal '<p>Intro. Two chapters.</p><h3>The house style</h3><p>tokens &lt;b&gt;.</p><h3>The tracker labels</h3><p>feature. Requires X.</p>' (ConvertTo-PluginDescriptionHtml 'Intro. Two chapters. THE HOUSE STYLE: tokens <b>. THE TRACKER LABELS: feature. Requires X.') 'a description is split into escaped paragraphs at each capitals lead-in, the lead-in an h3 in sentence case'
 Assert-Equal '<p>One sentence. CHECK-HOUSE-STYLE gate holds.</p>' (ConvertTo-PluginDescriptionHtml 'One sentence. CHECK-HOUSE-STYLE gate holds.') 'capitals without a colon start no paragraph'

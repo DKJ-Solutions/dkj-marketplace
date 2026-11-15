@@ -2,7 +2,38 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**2 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4114-long-page-word-limit · 20261115-150505Z
+
+A page now splits on length as well as on section count: the brand book's long-page rule
+([#3563](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3563)) only ever counted sections, so a
+page of three sections and 7,797 words stayed one column. Over **1,500 words of reading** a page becomes an
+overview of its sections, and a section page still over the limit splits at its next heading level
+([#4114](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4114)). The page shell's guard,
+`Get-LongPageWarningHtml`, warns on the word limit too, through a new `Get-PageWordCount` that counts the
+text of paragraphs, list items, quotes and code blocks and leaves tables and navigation out, because a list
+is not a long page: a plain count put Admin's release-notes list at 1,755 words, its prose at 15.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions app that renders long content (a dossier, a guide) now gets a warning at the top of any
+page over 1,500 words of reading, through the shared page shell, and the `dkj-brandbook` skill names the
+threshold before such a page is written. Admin's own pages are all far below it, so nothing changes there.
+
+**Score:** 3
+
+#### Pull Request
+
+A long page splits on length too, not only on section count
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4117](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4117)
+
+---
 
 ### DEPLOY: feat/product-home-mobile-topics · 20261115-145440Z
 

@@ -180,14 +180,17 @@ page and dashboard is designed to that screen first:
 - **Drill down rather than scroll.** Where a page holds more than one screen, split it: an overview of
   cards, each linking its own page one level down, with the breadcrumbs as the way back. Go as many
   levels deep as the content needs; every level fits one screen. **More than four sections**
-  (`.grid__head` blocks with an `h2`) is a long page too, whatever the window (#3563). Each overview card is
+  (`.grid__head` blocks with an `h2`) is a long page too, whatever the window (#3563), and so is **more than
+  1,500 words of reading**, whatever the section count; a section page still over it splits at its next
+  heading level (#4114). Each overview card is
   the house's one card link (`Format-AdminCardLinkHtml`, the core README's "The card" under "Admin"), never a variant written by
   hand, carrying the section's headline figure as its one line.
 - **Check it before handing it over**: in a window of about 1300 x 900, does it fit without scrolling,
-  does it hold four sections or fewer, and is every element there because the brief needs it? An
+  does it hold four sections or fewer and 1,500 words of reading or fewer, and is every element there because
+  the brief needs it? An
   element that fails the last question goes, however good it looks. An Admin page answers the first question itself: `dkj-policy`'s page shell carries
   a fit alarm, a warning at the bottom right the moment the page runs past the window it is read in, and
-  a warning at the top of any page holding more than four sections.
+  a warning at the top of any page holding more than four sections or more than 1,500 words of reading.
 
 ## The gate: `check-house-style`
 
