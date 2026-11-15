@@ -257,6 +257,63 @@
                                         "seconds":  58.323
                                     }
                                 ]
+                 },
+                 {
+                     "id":  "20261115-111126-ace8",
+                     "label":  "release cut",
+                     "start":  "2026-11-15T11:11:26.271Z",
+                     "end":  "2026-11-15T11:15:35.711Z",
+                     "sessions":  1,
+                     "phases":  [
+                                    {
+                                        "name":  "Cut: start",
+                                        "seconds":  0.126
+                                    },
+                                    {
+                                        "name":  "Cut: origin check and guardrails",
+                                        "seconds":  3.158
+                                    },
+                                    {
+                                        "name":  "Cut: lint gate",
+                                        "seconds":  0.004
+                                    },
+                                    {
+                                        "name":  "Cut: test gate",
+                                        "seconds":  0.037
+                                    },
+                                    {
+                                        "name":  "Cut: origin check after the gates",
+                                        "seconds":  0.673
+                                    },
+                                    {
+                                        "name":  "Cut: release builds",
+                                        "seconds":  0.002
+                                    },
+                                    {
+                                        "name":  "Cut: notes, overview and version bumps",
+                                        "seconds":  1.478
+                                    },
+                                    {
+                                        "name":  "Cut: commit and tag",
+                                        "seconds":  1.403
+                                    },
+                                    {
+                                        "name":  "Local gates and tests",
+                                        "seconds":  159.678
+                                    },
+                                    {
+                                        "name":  "Other tool calls",
+                                        "seconds":  44.347
+                                    },
+                                    {
+                                        "name":  "Claude thinking and writing",
+                                        "seconds":  37.729
+                                    },
+                                    {
+                                        "name":  "Waiting on you",
+                                        "seconds":  0.805
+                                    }
+                                ]
                  }
              ]
 }
