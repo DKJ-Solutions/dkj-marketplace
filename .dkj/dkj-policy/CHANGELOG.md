@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**5 / 5 minor entries** <!-- pending-tally -->
+**6 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4096-progress-status-error-states · 20261115-002808Z
+
+Inside this repo, the product layer's specimens show a status card and an error state, and its README documents both.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions product can now show where something stands and say that something failed in the house look: `.status-card` is a block with a kicker, a heading, the core meter as its progress bar and the facts in one row, and `.error-state` turns the empty state into a failure with a red mark and a retry button.
+
+**Score:** 3
+
+#### Pull Request
+
+house-product.css: a status card and an error state
+
+Plugins: dkj-solutions
+
+[PR #4109](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4109)
+
+---
 
 ### DEPLOY: feat/4095-menu-and-sheet · 20261115-001351Z
 
