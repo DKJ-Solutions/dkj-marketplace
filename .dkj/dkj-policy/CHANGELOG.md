@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**8 / 11 minor entries** <!-- pending-tally -->
+**8 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4129-phone-table-rows · 20261115-195943Z
+
+A table of sentences can now stack on a phone: wrap it in `.table-wrap--stack` and each row becomes a block, its
+first cell the heading and every other cell its column's name over its value, with no markup per table, so a rendered
+markdown table takes it too. Wider than 48rem it stays the ordinary table, and a table without the class is unchanged.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+Brand book: a phone pattern for tables (rows as stacked blocks)
+
+Plugins: dkj-policy
+
+[PR #4135](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4135)
+
+---
 
 ### DEPLOY: feat/4123-single-header-action · 20261115-194435Z
 
