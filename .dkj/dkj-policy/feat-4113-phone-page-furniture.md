@@ -43,17 +43,39 @@ Cause 4 of #4113: page furniture the mobile wireframes do not have
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-product.css`: below 48rem the h1's "?" leaves with the h1 (both of the h1's conditions, the Phone
+      width included), `main > .page-source` is hidden, and a `.tiles` row is one card of rows of about 52px, label
+      left and figure right with a hairline between. A wide screen is unchanged
+- [x] `product-pages-lib.ps1`: the footer note carries `.page-source` beside `.note`
+- [x] The product README names the three under "On a phone"
+
+#### Not in this branch
+
+Causes 1 to 3 of #4113 are #4118 (merged) and `feat/card-grid-rows-on-phone` (parked for the owner's look). Cause 5
+is the report pages `/consumers/bwj` and `/consumers/other`, which no wireframe covers yet, and `/docs-coverage`,
+which is #4111.
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the `.page-source` class on the footer note, and the phone rule's shape, tokens only
+      but the hairline; the shell's footer assert follows the new class
+- [x] `consumer-dashboard`, `dev-preview-sessionstart`, `stopwatch` suites green
+- [x] Seen at phone width (headless Chrome, 500px, its narrowest): `/plugins/dkj-policy` (no lone "?", no source
+      note) and `/plugins/dkj-subagents/dkj-subagents-alpha/rebecca` (the five figures as one card of rows)
+
 ### DEPLOY: feat/4113-phone-page-furniture
 
-**Score:**
+On a phone a product page no longer shows a lone "?" at the top left or a long note of source paths at its foot,
+and a row of figure tiles, such as a specialist's token costs, reads as one card of compact rows. That matches the
+mobile wireframes. A wide screen is unchanged.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 

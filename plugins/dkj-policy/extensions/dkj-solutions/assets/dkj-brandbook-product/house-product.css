@@ -440,6 +440,25 @@ a.topic__link:focus-visible, .topic__item:focus-visible { outline: 2px solid var
 :root[data-width="phone"] body:has(.site-header__back) main h1 { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
+/* ---- No furniture the mobile wireframes do not draw (#4113, cause 4) ------------------------------------------------- */
+/* Three things a phone page carried that the wireframes have no place for. The h1's "?" leaves with the h1 above, under
+   the same two conditions: without its heading it stood alone at the top left, explaining nothing beside it. The page's
+   source note (.page-source, the footer line naming the files a page is read from) is a desk reader's note, four to six
+   lines of paths on a phone, so it goes there too. And a row of figure tiles (.tiles) reads as one card of compact rows,
+   label left and figure right with a line between, as the wireframes draw every list, instead of a two-column grid of
+   boxes above the content. */
+@media (max-width: 48rem) {
+  body:has(.site-header__back) main .page-title .page-info-button { display: none; }
+  main > .page-source { display: none; }
+  .tiles { grid-template-columns: minmax(0, 1fr); gap: 0; background: var(--bg-2); border: 1px solid var(--bg-3); border-radius: var(--radius-3);
+    overflow: hidden; }
+  .tiles > .tile { display: flex; align-items: baseline; justify-content: space-between; gap: var(--spacing-3); min-height: var(--control-lg);
+    padding: var(--spacing-2) var(--spacing-4); border: 0; border-radius: 0; background: none; }
+  .tiles > .tile + .tile { border-top: 1px solid var(--bg-3); }
+  .tiles > .tile .v { margin-top: 0; }
+}
+:root[data-width="phone"] body:has(.site-header__back) main .page-title .page-info-button { display: none; }
+
 /* ---- Device preview: a phone frame with an A/B toggle (#4112) -------------------------------------------------------- */
 /* A page shown at phone width inside a phone (a mockup of a product page, a storefront, an e-mail, a design proposal),
    with a .seg above it that switches between versions and a .note that says what the current one shows. The frame is
