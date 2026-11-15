@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**4 / 4 minor entries** <!-- pending-tally -->
+**5 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4115-scope-question · 20261115-154629Z
+
+Chris now asks whether a piece of work is shared before he routes it. An owner's requirement, an
+irritation or a found defect counts as shared product behaviour (the brand book, page patterns, the
+workflow scripts) unless the repo's facts rule lists it as a declared deviation with its reason, and
+under doubt it is shared. So it is filed or commented on the source tracker first, and any local build
+in the meantime is a declared bridge that names that inbound issue and is removed when the release
+lands. The constitution now lists those declared deviations among a repo's facts (#4115).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+In every consuming repo, a requirement that holds for every DKJ repo is now reported at the source before
+it is built, instead of being built locally and then again in each of the other repos. A repo that really
+does differ writes the deviation and its reason into its facts rule.
+
+**Score:** 3
+
+#### Pull Request
+
+Chris asks 'is this shared?' before building
+
+Plugins: dkj-policy, dkj-subagents-alpha
+
+[PR #4120](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4120)
+
+---
 
 ### DEPLOY: fix/facts-long-value · 20261115-153440Z
 
