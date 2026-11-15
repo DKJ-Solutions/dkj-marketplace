@@ -1,0 +1,66 @@
+<!doctype html>
+<!--
+  A device preview, the stylesheet-only reference (#4112): a page shown at phone width inside a phone frame, with a
+  segmented toggle above it that switches between two versions (Control and Variant) and a note that says what the
+  current version shows. Use it for a mobile mockup, an A/B variant or a design proposal, instead of writing a phone
+  frame of your own.
+
+  The frame is the house's; the page inside keeps its own look. That is why each version is an <iframe>: a document
+  of its own does not take the house element rules, where a <div> would. Here the two versions are srcdoc pages with
+  no stylesheet at all, so they show in the browser's own defaults, which is the point: nothing of the house reaches
+  them. A real mockup points src at its own file.
+
+  Like the other references it is built from ../house-style.css, ../house-product.css and ../house-theme.js and
+  nothing else. house-theme.js does the switching. The rules are in the product README beside this folder,
+  "Device preview".
+-->
+<html lang="en" data-theme-light="blue" data-theme-dark="cyan">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>my-app -- Preview</title>
+  <meta name="description" content="A product page at phone width, its control and its variant side by side behind one toggle.">
+  <link rel="stylesheet" href="../house-style.css">
+  <link rel="stylesheet" href="../house-product.css">
+  <script src="../house-theme.js"></script>
+</head>
+<body>
+  <!-- The site header, as on product-page.html but without a menu: back cell, brand and the title a phone shows. -->
+  <header class="site-header"><div class="container">
+    <a class="site-header__back" href="product-home.html" aria-label="Back to Home"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path transform="matrix(-1 0 0 1 24 0)" fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+    <a class="site-header__brand" href="product-home.html" aria-label="my-app, home"><span class="site-header__name">my-app</span></a>
+    <span class="site-header__title" aria-hidden="true">Preview</span>
+  </div></header>
+
+  <div class="breadcrumbs-bar">
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+          <li><a href="product-home.html">Home</a></li>
+          <li><span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span><span aria-current="page">Preview</span></li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <main class="page-column">
+    <h1>Preview</h1>
+
+    <!-- The stage: the toggle, the note for the current version, and the phone. Every [data-variant] that is not the
+         pressed one starts hidden, so the page reads right before the script runs. -->
+    <div class="device-stage">
+      <div class="seg" role="group" aria-label="Version">
+        <button type="button" data-variant="a" aria-pressed="true">Control</button><button type="button" data-variant="b" aria-pressed="false">Variant</button>
+      </div>
+      <p class="note" data-variant="a">Control: the product page as it is live, the price under the title.</p>
+      <p class="note" data-variant="b" hidden>Variant: the price beside the button, so it stays in view when you scroll.</p>
+      <div class="device">
+        <div class="device__screen">
+          <iframe data-variant="a" title="Control" srcdoc="<!doctype html><meta name=viewport content='width=device-width'><h1>Linen shirt</h1><p>EUR 59</p><p>A loose shirt in washed linen, cut long at the back.</p><p><button>Add to cart</button></p>"></iframe>
+          <iframe data-variant="b" title="Variant" hidden srcdoc="<!doctype html><meta name=viewport content='width=device-width'><h1>Linen shirt</h1><p>A loose shirt in washed linen, cut long at the back.</p><p><button>Add to cart</button> EUR 59</p>"></iframe>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

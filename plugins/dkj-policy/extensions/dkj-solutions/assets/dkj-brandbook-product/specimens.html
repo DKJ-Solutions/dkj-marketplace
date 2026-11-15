@@ -313,6 +313,20 @@
       </div>
     </div>
   </section>
+  <section class="card grid__full">
+    <div class="card__head"><h3>Device preview</h3></div>
+    <div class="spec-stage">
+      <div class="device-stage">
+        <div class="seg" role="group" aria-label="Version"><button type="button" data-variant="a" aria-pressed="true">Control</button><button type="button" data-variant="b" aria-pressed="false">Variant</button></div>
+        <p class="note" data-variant="a">Control: the price under the title.</p>
+        <p class="note" data-variant="b" hidden>Variant: the price beside the button.</p>
+        <div class="device"><div class="device__screen">
+          <iframe data-variant="a" title="Control" srcdoc="<!doctype html><meta name=viewport content='width=device-width'><h1>Linen shirt</h1><p>EUR 59</p><p>A loose shirt in washed linen.</p><p><button>Add to cart</button></p>"></iframe>
+          <iframe data-variant="b" title="Variant" hidden srcdoc="<!doctype html><meta name=viewport content='width=device-width'><h1>Linen shirt</h1><p>A loose shirt in washed linen.</p><p><button>Add to cart</button> EUR 59</p>"></iframe>
+        </div></div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <!-- ======================================================== OVERLAYS -->

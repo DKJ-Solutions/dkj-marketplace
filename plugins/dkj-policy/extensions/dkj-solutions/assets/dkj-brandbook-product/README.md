@@ -49,7 +49,8 @@ knows what not to redefine. The product layer reserves these too:
   the full-screen menu's parts, `.menu-section`, `.menu-footer` (with `__name`, `__note`) and `.menu-item__aside`
   ([below](#the-menu-in-the-header)), and the bottom bar, `.bottom-bar` (with `__item`, `__more`, `__icon`,
   `__label`; [below](#the-bottom-bar-on-a-phone)), the status card, `.status-card` (with `__kicker`), and the error state,
-  `.error-state` on an `.empty-state` ([below](#status-card-and-error-state)).
+  `.error-state` on an `.empty-state` ([below](#status-card-and-error-state)), and the device preview,
+  `.device-stage`, `.device` (with `__screen`; [below](#device-preview)).
 - **The brand-book components** ([below](#brandbook-app-components)): `.round-toggle`, `.badge-toggle`, `.help`,
   `.more--structured` (`.more__title`, `__meta`, `__trailing`, `__version`), `.question-head` (the answer line
   under it is a plain `<p>`; `.verdict` is gone, Maikel, November 1, 2026), `.answer` (`__label`, `__value`),
@@ -148,6 +149,40 @@ generic `.chip`, the stat rows and the stepper are house classes since the
   <button class="btn" type="button">Try again</button>
 </div>
 ```
+
+## Device preview
+
+**A page shown at phone width inside a phone, with a toggle between its versions** (#4112): a mobile mockup, an A/B
+variant or a design proposal. Every repo that presents one takes this frame instead of writing its own phone.
+[`patterns/device-preview.html`][pattern-device] is the stylesheet-only reference.
+
+- **The frame is the house's, the page inside keeps its own look.** So each version is an `<iframe>` in
+  `.device__screen`, with `src` pointing at the mockup's own file (or `srcdoc`). A document of its own is the one
+  boundary the house element rules (`h1`–`h3`, `p`, `main`, `button`) do not cross; markup placed straight in the
+  screen inherits every one of them, so do that only for a page in the house's own look.
+- **The parts.** `.device-stage` is the column: the `.seg` toggle, a `.note` per version saying what it shows, and
+  the `.device`. `.device` is the bezel, `.device__screen` the 390px screen with a scroll of its own, at most 844px
+  high and never taller than the window. Narrower than 30rem the bezel goes and the screen reaches the window's edges.
+- **The toggle needs no script of the page's own.** Each button carries `data-variant`, and so does each note and
+  iframe that belongs to that version; `house-theme.js` marks the pressed button and shows every `[data-variant]` of
+  the stage with the same value, hiding the rest. Mark the starting version in the markup (its button
+  `aria-pressed="true"`, the others' parts `hidden`), so the page reads right before the script runs. One version
+  leaves the `.seg` out.
+
+```html
+<div class="device-stage">
+  <div class="seg" role="group" aria-label="Version"><button type="button" data-variant="a" aria-pressed="true">Control</button><button type="button" data-variant="b" aria-pressed="false">Variant</button></div>
+  <p class="note" data-variant="a">Control: the price under the title.</p>
+  <p class="note" data-variant="b" hidden>Variant: the price beside the button.</p>
+  <div class="device"><div class="device__screen">
+    <iframe data-variant="a" src="control.html" title="Control"></iframe>
+    <iframe data-variant="b" src="variant.html" title="Variant" hidden></iframe>
+  </div></div>
+</div>
+```
+
+**What this changes for an app that takes the update:** nothing that exists. An app with its own `.device` or
+`.device-stage` now collides with a house name, and renames its class or adopts the house one.
 
 ## Page patterns
 
@@ -536,3 +571,4 @@ the `house-style-css` gate parses `house-product.css` as it does the core's.
 [core-changing]: https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md#changing-the-brand-book
 [pattern-page]: patterns/product-page.html
 [pattern-bottom-bar]: patterns/product-bottom-bar.html
+[pattern-device]: patterns/device-preview.html

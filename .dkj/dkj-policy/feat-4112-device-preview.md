@@ -39,19 +39,46 @@
 
 ### PLAN
 
+#4112 (inbound from dkj-lifehub#715): a brand-book device preview, a phone frame with an A/B toggle, so a repo
+presenting a mobile mockup stops writing its own phone. The issue asks for the content inside the screen to be
+isolated from the house element rules; CSS cannot fence a subtree off from element selectors, so each version is an
+`<iframe>`, a document of its own. The toggle is wired in `house-theme.js` (document-level, like the header's
+dialogs), so a page needs no script of its own and the pattern stays stylesheet-only.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-product.css`: "Device preview" -- `.device-stage`, `.device`, `.device__screen` (390 wide, at most 844
+  high and never taller than the window, its own scroll; full-bleed narrower than 30rem).
+- [x] `house-theme.js`: a press on a `.device-stage .seg button[data-variant]` marks that button and shows the
+  stage's parts of the same version, hiding the rest.
+- [x] `patterns/device-preview.html` beside `product-page.html`, and a "Device preview" specimen under Navigation and
+  shell.
+- [x] Product README: the reserved names and a "Device preview" section.
+- [x] `dev-pages.tests.ps1`: the frame, the full-bleed rule, the switch and the pattern.
 
 ### TEST
 
+- [x] `dev-pages` suite alone: 787 passed, 0 failed.
+- [x] By eye, headless Edge on a vendored copy: at 1280x900 the phone fits the window under the toggle and note; at a
+  true 390 (inside a 390px iframe) the bezel goes and the screen meets the edges; the Variant state shows its note
+  and frame; the mockup keeps the browser's own type, so no house rule reaches it. The specimen renders at
+  `/plugins/dkj-policy/dkj-brandbook/nav` on the product server.
+- [ ] The owner's look (a visible result).
+
 ### DEPLOY: feat/4112-device-preview
 
-**Score:**
+Inside this repo, the product layer gains a device-preview pattern and specimen, and `house-theme.js` switches its
+versions.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions product that shows a mobile mockup, an A/B variant or a design proposal takes the brand book's phone
+frame (`.device-stage`, `.device`, `.device__screen`) instead of writing its own: an iframe per version keeps the
+mockup's own look, and a `.seg` above it switches versions with no script of the page's own.
+
+**Score:** 3
 
 #### Pull Request
 
