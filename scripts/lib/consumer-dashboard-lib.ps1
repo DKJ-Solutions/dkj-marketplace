@@ -52,10 +52,15 @@ function Get-ProductPages {
         them: the specialists are the dkj-subagents teams', so they live on those teams' own Plugins pages.
         Here rather than in dev-pages-lib (which loads this lib) because the Consumers page below draws them as its
         header's menu (Get-ProductMenu).
+        Items are the sub-pages the home page lists under a page on a phone (Format-ProductHomeHtml), each
+        @{ Href; Label }: the owner groups under Consumers, and under Plugins its two top-level entries -- the
+        dkj-subagents teams' group and dkj-policy, which carries the add-ons -- as /plugins lists them.
     #>
+    $groups = @(Get-DashboardOwnerGroups | ForEach-Object { @{ Href = '/consumers/' + $_.Key; Label = $_.Label } })
     @(
-        @{ Href = '/consumers';  Label = 'Consumers';   Sub = 'Every repo that installs plugins from this marketplace, registered under consumers/ and checked by check-consumers.ps1 on this machine'; Icon = 'consumers' }
-        @{ Href = '/plugins';     Label = 'Plugins'; Sub = 'Every plugin this marketplace ships, its version and what it holds'; Icon = 'marketplace' }
+        @{ Href = '/consumers';  Label = 'Consumers';   Sub = 'Every repo that installs plugins from this marketplace, registered under consumers/ and checked by check-consumers.ps1 on this machine'; Icon = 'consumers'; Items = $groups }
+        @{ Href = '/plugins';     Label = 'Plugins'; Sub = 'Every plugin this marketplace ships, its version and what it holds'; Icon = 'marketplace'
+            Items = @(@{ Href = '/plugins/dkj-subagents'; Label = 'dkj-subagents' }, @{ Href = '/plugins/dkj-policy'; Label = 'dkj-policy' }) }
         # The ten opportunities a comparison of the Claude Code docs against this repo found, one page each (#3906).
         @{ Href = '/docs-coverage'; Label = 'Docs coverage'; Sub = 'Every Claude Code docs page and how this repo stands to it'; Icon = 'claude' }
         # The product's own Settings, last as on Admin (Maikel, November 4, 2026): its theme. No width, which is full
@@ -72,6 +77,21 @@ function Get-ProductMenu {
         menu drawn on every page should not ask it each time.
     #>
     @(@{ Label = 'Admin'; Href = '/admin' }) + @(Get-ProductPages | ForEach-Object { @{ Label = $_.Label; Href = $_.Href } })
+}
+
+function Get-ProductBottomBar {
+    <#
+        The product's bottom bar on a phone (Format-BottomBarHtml, house-product.css "Bottom bar"), after the mobile
+        navigation wireframe: Home and the two pages with sections of their own, Consumers and Plugins; More, which
+        the bar adds itself, opens the site menu with everything else (Admin, Docs coverage, Settings). Each icon is a
+        line drawing at the bar's own size: Home a house, the other two their home-page card's (Admin's icon set).
+    #>
+    $svg = { param($d) '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + $d + '</svg>' }
+    @(
+        @{ Label = 'Home'; Href = '/'; Icon = (& $svg '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>') }
+        @{ Label = 'Consumers'; Href = '/consumers'; Icon = (& $svg '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M17 11l2 2 4-4"/>') }
+        @{ Label = 'Plugins'; Href = '/plugins'; Icon = (& $svg '<path d="M4 4h16l1 5H3z"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/>') }
+    )
 }
 
 function ConvertFrom-ConsumerCheckOutput {
@@ -496,9 +516,10 @@ function Format-ConsumerPageStart {
     # The menu is the product's pages (Get-ProductMenu), the Consumers page marked.
     # On a phone the header carries a back cell and the page's name instead of the bar (#4048).
     [void]$sb.Append((Format-SiteHeaderHtml -Name 'dkj-marketplace' -Href '/' -Tag 'product' -Menu @(Get-ProductMenu) -Current '/consumers' `
-        -Back (Get-SiteHeaderBack -Trail @($Trail | Where-Object { $_ })) -PageTitle $PageName `
-        -Path (@(@{ Label = 'Home'; Href = '/' }) + @($Trail | Where-Object { $_ }) + @(@{ Label = $PageName; Href = '' }))))
+        -Back (Get-SiteHeaderBack -Trail @($Trail | Where-Object { $_ })) -PageTitle $PageName -NoMenuToggle))
     [void]$sb.Append((Format-ProductBreadcrumbBarHtml -Trail @($Trail | Where-Object { $_ }) -Current $PageName))
+    # On a phone the product's bottom bar, Consumers current; its More opens the menu, so the header has no toggle.
+    [void]$sb.Append((Format-BottomBarHtml -Items @(Get-ProductBottomBar) -Current '/consumers'))
     [void]$sb.AppendLine('<main class="page-column">')
 
     # The intro is a <div>, never a <header>, which the house style lays out as a flex row.

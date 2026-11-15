@@ -219,9 +219,9 @@
      toggle, the path title and the More cell each open the dialog they control as a modal, so Escape, the focus trap
      and the return of focus to the trigger are the browser's. Listening on the document means a header drawn after
      this script ran needs no call. A click on the close button or on the backdrop shuts it, and so does its trigger
-     disappearing as the header grows wide (#4095 added the two sheets). A bottom bar's More
+     disappearing as the header grows wide (#4095 added the actions sheet; its path sheet is gone). A bottom bar's More
      (house-product.css, "Bottom bar", #4094) is such a toggle too, and the window outgrowing the bar shuts it the same way. */
-  var TRIGGERS = '.site-header__menu-toggle, .site-header__title[aria-controls], .site-header__more, .bottom-bar__more';
+  var TRIGGERS = '.site-header__menu-toggle, .site-header__more, .bottom-bar__more';
   function menuOf(toggle) { var d = document.getElementById(toggle.getAttribute('aria-controls') || ''); return d && d.showModal ? d : null; }
   document.addEventListener('click', function (e) {
     var t = e.target && e.target.closest ? e.target : null;
