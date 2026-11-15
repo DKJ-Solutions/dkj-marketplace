@@ -562,10 +562,10 @@ gutter, every tap target 44px or more. [`patterns/product-page.html`][pattern-pa
 - **Compact rows of about 52px instead of large tiles**: `.card.card--rows.menu-list`, one `a.menu-item` per item
   (the title, its meta line in `.menu-item__sub`, an optional value in `.menu-item__aside`, the chevron), a line
   between the rows. **A group of tiles becomes that card by itself on a phone**: below 48rem a `.grid-2`, `.grid-3`
-  or `.card-grid` holding `.card--link` tiles drops its surface, keeps its `.grid__head` above as the section's
+  or `.card-grid` holding `.card--link` tiles keeps its `.grid__head` above as the section's
   heading and draws each link as a row of about 52px (#4113). A wide screen keeps the tiles.
-- **No surface in a surface on a phone**: below 48rem every group loses its own surface and padding, so a card in
-  it stands on the page as a plain card.
+- **No surface in a surface, at any width**: a group (`.grid-2`, `.grid-3`, `.card-grid`) has no background,
+  radius or padding of its own, so a card in it stands on the page as a plain card (#4126).
 - **An empty message is dropped rather than shown**, unless the empty list is the page itself, where the empty
   state is the content.
 - **The theme colour is an accent, never a fill**: the current bottom-bar slot, the progress bar, the current menu
