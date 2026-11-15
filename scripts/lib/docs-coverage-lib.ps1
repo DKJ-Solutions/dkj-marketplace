@@ -241,8 +241,8 @@ function Get-DocsCoverageStatusStyle {
         # The popup is the window's width less 10% (the owner, November 9, 2026), where the house dialog keeps to the
         # narrow column. On the page's own class, so the house .dialog itself is not restyled.
         'dialog.dc-detail-dialog { width: 90vw; }'
-        # In the popup a fact may wrap, each h2 block stands apart from the one above, and an h3 from the text above it.
-        '.dc-detail__facts dd { white-space: normal; overflow-wrap: anywhere; }'
+        # In the popup each h2 block stands apart from the one above, and an h3 from the text above it. A long fact
+        # wraps by the house .facts rule itself (#4113).
         '.dc-detail__body > h2 { margin-top: var(--spacing-6); }'
         '.dc-detail__body > h2:first-child { margin-top: 0; }'
         '.dc-detail__body > h3 { margin-top: var(--spacing-4); }'
