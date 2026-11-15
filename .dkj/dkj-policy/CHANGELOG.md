@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**6 / 6 minor entries** <!-- pending-tally -->
+**7 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4097-product-page-mobile-and-desktop · 20261115-110046Z
+
+Inside this repo, the product layer's page pattern follows the approved desktop wireframe, its specimens show the
+row list and the page layout, and its README lays down the phone rules.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions product page now has one shape on both screens: on a computer a main column with a sidebar beside
+it (`.page-layout`), on a phone one column with its title once, in the header. A list is one card of compact rows
+(`.card--rows`) instead of a card per item.
+
+**Score:** 3
+
+#### Pull Request
+
+Product page: main column and sidebar, compact rows, title once on a phone
+
+Plugins: dkj-solutions
+
+[PR #4110](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4110)
+
+---
 
 ### DEPLOY: feat/4096-progress-status-error-states · 20261115-002808Z
 
