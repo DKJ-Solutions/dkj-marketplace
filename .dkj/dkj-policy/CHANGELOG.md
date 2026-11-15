@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**8 / 12 minor entries** <!-- pending-tally -->
+**9 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4124-icon-grammar · 20261115-214107Z
+
+Every DKJ product now reads three icons one way on a phone: **three lines** for more pages, **three dots** for the
+page's own actions, and the **gear** for settings
+([#4124](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4124)). The product README writes that grammar
+down, and the full-screen menu's **Display** section becomes **Settings**, its one row carrying the house gear, so
+on a phone settings sit inside the menu rather than as an icon in the header.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions product that draws its header with `Format-SiteHeaderHtml` and passes `-SettingsHref` shows a
+**Settings** section with a gear in its phone menu where it showed **Display**, with no change of its own. One that
+draws the menu by hand renames the section and adds the gear, as the README says.
+
+**Score:** 3
+
+#### Pull Request
+
+Product on a phone: one icon grammar, and settings as a row in More
+
+Plugins: dkj-solutions
+
+[PR #4136](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4136)
+
+---
 
 ### DEPLOY: feat/4129-phone-table-rows · 20261115-195943Z
 
