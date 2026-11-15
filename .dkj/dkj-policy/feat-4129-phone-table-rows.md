@@ -39,19 +39,35 @@
 
 ### PLAN
 
+#4129: a brand book pattern that stacks a table's rows on a phone instead of scrolling sideways, with no markup per table.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-style.css`: `.table-wrap--stack`, a container query on the wrap; below 48rem each row is a block, the
+      first cell its heading, every other cell its `data-label` over its value, the head row kept for a screen reader
+- [x] `house-theme.js`: copies each column head's text onto the body cells as `data-label` (colspan-aware; a cell
+      that has one keeps it)
+- [x] The core README's "A table on a phone: rows as blocks", and a specimen card under Tables
+- [ ] The owner's look at the specimen at phone and wide width
 
 ### TEST
 
+- [x] Seen in headless Chrome: the Tables specimens at 390px (the new card stacks, labels filled by the script) and at
+      1300px (the ordinary table)
+
 ### DEPLOY: feat/4129-phone-table-rows
 
-**Score:**
+A table of sentences can now stack on a phone: wrap it in `.table-wrap--stack` and each row becomes a block, its
+first cell the heading and every other cell its column's name over its value, with no markup per table, so a rendered
+markdown table takes it too. Wider than 48rem it stays the ordinary table, and a table without the class is unchanged.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
