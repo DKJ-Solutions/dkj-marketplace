@@ -5,7 +5,7 @@
 repo's own `CLAUDE.md` holds **only** the `@`-import lines — this file, plus a companion extension
 `CLAUDE.md` where one is installed, plus any other plugin import — **and nothing else**. It carries no
 rules of its own, and no facts about the repo either: **facts about the repo (its trunk, whether it is
-public, who owns it, what it is for) go in an unscoped rule your own tooling loads every session** —
+public, who owns it, what it is for, where it deliberately deviates from the shared behaviour and why) go in an unscoped rule your own tooling loads every session** —
 e.g. `.claude/rules/<name>.md` — **and a fact that belongs to one specialist alone goes in that
 specialist's own lens.** That split exists because a consumer's hand-written constitution kept
 contradicting the plugin it had installed, and two copies of one rule always drift; keeping `CLAUDE.md`

@@ -39,19 +39,44 @@
 
 ### PLAN
 
+#4115's two open questions were settled on the issue (November 15, 2026): under doubt a requirement or
+defect is shared, so it is filed first, and the declared-deviation list lives in the repo's facts rule.
+Proposal items 1 to 3 are built. Item 4, an optional close-out check, is not: the scope step at Classify
+already asks the question before anything is built, and a gate for it would be new machinery the issue
+did not settle.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Chris's persona, ritual step 2 (Classify): first which repo owns the work, shared or this one.
+- [x] Chris's persona, the inbound route: the scope question before building, with "shared product
+  behaviour" (brand book, page patterns, workflow scripts) inside the shared core, "shared" as the
+  default under doubt, file or comment at the source first, and a local build only as a declared bridge
+  naming that issue.
+- [x] The constitution names a repo's declared deviations, with their reasons, among the facts its facts
+  rule holds.
 
 ### TEST
 
+- [x] Text only. The gates `ship-pr` runs cover the persona and the always-on budget.
+
 ### DEPLOY: docs/4115-scope-question
 
-**Score:**
+Chris now asks whether a piece of work is shared before he routes it. An owner's requirement, an
+irritation or a found defect counts as shared product behaviour (the brand book, page patterns, the
+workflow scripts) unless the repo's facts rule lists it as a declared deviation with its reason, and
+under doubt it is shared. So it is filed or commented on the source tracker first, and any local build
+in the meantime is a declared bridge that names that inbound issue and is removed when the release
+lands. The constitution now lists those declared deviations among a repo's facts (#4115).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+In every consuming repo, a requirement that holds for every DKJ repo is now reported at the source before
+it is built, instead of being built locally and then again in each of the other repos. A repo that really
+does differ writes the deviation and its reason into its facts rule.
+
+**Score:** 3
 
 #### Pull Request
 
