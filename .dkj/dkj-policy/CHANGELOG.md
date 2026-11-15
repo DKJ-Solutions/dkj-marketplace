@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**3 / 3 minor entries** <!-- pending-tally -->
+**4 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/facts-long-value · 20261115-153440Z
+
+On a phone a fact row's long value -- a source path, a plugin with its note, a sentence -- no longer runs over its
+label or past the card: the label keeps its width and the value wraps under itself, right-aligned. A short value
+reads as before.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every product built on the brand book shows its `.facts` lists readably on a phone: a long value wraps instead of
+covering its term. A page that wants one-line facts now says `white-space: nowrap` in its own layer.
+
+**Score:** 2
+
+#### Pull Request
+
+A fact row's long value wraps under its label instead of running over it on a phone
+
+Plugins: dkj-policy
+
+[PR #4118](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4118)
+
+---
 
 ### DEPLOY: feat/4112-device-preview · 20261115-151812Z
 
