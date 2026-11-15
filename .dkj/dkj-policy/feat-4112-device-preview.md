@@ -63,7 +63,7 @@ dialogs), so a page needs no script of its own and the pattern stays stylesheet-
   true 390 (inside a 390px iframe) the bezel goes and the screen meets the edges; the Variant state shows its note
   and frame; the mockup keeps the browser's own type, so no house rule reaches it. The specimen renders at
   `/plugins/dkj-policy/dkj-brandbook/nav` on the product server.
-- [ ] The owner's look (a visible result).
+- [~] The owner's look (a visible result): approved by the owner, November 15, 2026 ("gezien en akkoord"), after the Device preview specimen on the product server.
 
 ### DEPLOY: feat/4112-device-preview
 
