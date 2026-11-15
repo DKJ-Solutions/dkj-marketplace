@@ -551,7 +551,12 @@ gutter, every tap target 44px or more. [`patterns/product-page.html`][pattern-pa
 - **The title appears once**: in the site header, beside the back cell ([above](#on-a-phone-back-and-title)). The
   page's `h1` stays in the markup for a screen reader, since the header's title is `aria-hidden`, but leaves the
   screen: `house-product.css` hides it wherever the window is narrower than 48rem, or the width is Phone, and the
-  page has a `.site-header__back`. Keep the `h1` a direct child of its column, so it leaves no gap.
+  page has a `.site-header__back`. Keep the `h1` a direct child of its column, so it leaves no gap. Its "?"
+  (`.page-info-button`) leaves with it, under the same conditions, so it never stands alone (#4113).
+- **No source note**: a page's footer line naming the files it is read from carries `.page-source` beside `.note`,
+  and leaves the screen below 48rem (#4113). Four to six lines of paths are a desk reader's note.
+- **Figure tiles read as rows**: a `.tiles` row is one card on a phone, each `.tile` a row of about 52px with its
+  label left and its figure right, a line between (#4113).
 - **No card inside a card.** A list is one card of rows; a status card and a details card stand one under the other,
   never nested. A `.status-card` is a surface itself and never sits in a `.card`.
 - **Compact rows of about 52px instead of large tiles**: `.card.card--rows.menu-list`, one `a.menu-item` per item

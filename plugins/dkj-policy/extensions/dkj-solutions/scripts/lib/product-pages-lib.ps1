@@ -263,7 +263,8 @@ function Format-ProductPageHtml {
     $longWarn = Get-LongPageWarningHtml -Body $Body
     if ($longWarn) { [void]$sb.AppendLine($longWarn) }
     [void]$sb.Append($Body)
-    if ($FooterNote) { [void]$sb.AppendLine('<p class="note">' + $FooterNote + '</p>') }
+    # .page-source: the source note leaves a phone, where the wireframes draw none (#4113).
+    if ($FooterNote) { [void]$sb.AppendLine('<p class="note page-source">' + $FooterNote + '</p>') }
     [void]$sb.AppendLine('</main>')
     [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", widths: false });</script>')
     if ($Info -and -not $Bare) { [void]$sb.AppendLine((Get-PageInfoScript)) }
