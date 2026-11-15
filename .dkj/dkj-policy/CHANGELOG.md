@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**4 / 4 minor entries** <!-- pending-tally -->
+**5 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4095-menu-and-sheet · 20261115-001351Z
+
+Inside this repo, the product server's own pages (Consumers, Plugins, Docs coverage) open their phone menu full screen and offer their path behind the title, so the brand book's new parts are exercised on a live page before any consumer takes them.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+On a phone the product header gains the two things the Figma file already showed: a tap on the page title opens the whole path as a bottom sheet, and a More cell opens the page's own actions as one. The menu behind the hamburger now opens full screen, like a phone's settings screen, with Pages, Display and About sections, in place of the side drawer. A product that renders its pages with `Format-ProductPageHtml` gets the path sheet with the update, and passes `-Actions` and `-SettingsHref` to fill the rest.
+
+**Score:** 3
+
+#### Pull Request
+
+house-product.css: full-screen menu, the sheet, and the header's path and More triggers
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4108](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4108)
+
+---
 
 ### DEPLOY: feat/4094-bottom-bar · 20261114-235527Z
 

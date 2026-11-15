@@ -42,10 +42,12 @@ knows what not to redefine. The product layer reserves these too:
 
 - **The app components** ([below](#app-components-from-mesowise)): `.container--narrow`/`main.narrow`, `.field`
   (with `__error`), `.btn--touch`, `.btn--block`, `.dialog` (with `__body`, `__head` (with `--two`, `--back`),
-  `__title`, `__sub`, `__close` (with `--save`, `--cancel`, `--back`), and `--drawer`), `.topbar` (with
-  `__inner`, `__brand`, `__name`), `.breadcrumbs-bar` ([below](#every-page-the-breadcrumb-bar)) and the site
-  header, `.site-header` (with `__brand`, `__name`, `__tag`, `__nav`, `__menu`, `__menu-toggle`, `__back`, `__title`;
-  [below](#the-site-header-above-the-bar)), and the bottom bar, `.bottom-bar` (with `__item`, `__more`, `__icon`,
+  `__title`, `__sub`, `__close` (with `--save`, `--cancel`, `--back`), `__handle`, `--drawer`, `--screen` and
+  `--sheet`), `.topbar` (with `__inner`, `__brand`, `__name`), `.breadcrumbs-bar`
+  ([below](#every-page-the-breadcrumb-bar)), the site header, `.site-header` (with `__brand`, `__name`, `__tag`,
+  `__nav`, `__menu`, `__menu-toggle`, `__back`, `__title`, `__more`; [below](#the-site-header-above-the-bar)),
+  the full-screen menu's parts, `.menu-section`, `.menu-footer` (with `__name`, `__note`) and `.menu-item__aside`
+  ([below](#the-menu-in-the-header)), and the bottom bar, `.bottom-bar` (with `__item`, `__more`, `__icon`,
   `__label`; [below](#the-bottom-bar-on-a-phone)), the status card, `.status-card` (with `__kicker`), and the error state,
   `.error-state` on an `.empty-state` ([below](#status-card-and-error-state)).
 - **The brand-book components** ([below](#brandbook-app-components)): `.round-toggle`, `.badge-toggle`, `.help`,
@@ -326,19 +328,24 @@ the two change together.
 - **The bar's hide reads the window** (`@media (max-width: 48rem)`) and the Phone width in the settings
   (`:root[data-width="phone"]`): the header's own fold is a container query, and a container query cannot reach the
   bar beside it.
-- **No path on demand yet.** The full trail on a phone (a sheet behind the title, say) is not part of this; the back
-  cell goes one level up and the menu reaches the main pages.
+- **The path on demand** (#4095, Figma `Product / Site header`, Path sheet=true): the title is a button with a small
+  chevron after it, and a tap opens the whole trail as a [sheet](#the-sheet-path-and-actions), Home first and the page
+  itself last, current and unlinked. It replaced the line here that said the full trail on a phone was not part of
+  #4048.
 
-`Format-SiteHeaderHtml -Back @{ Label; Href } -PageTitle <name>` draws both, and `Get-SiteHeaderBack` picks the
-page one level up from the trail; `Format-ProductPageHtml` passes them on every page below home.
+`Format-SiteHeaderHtml -Back @{ Label; Href } -PageTitle <name> -Path <trail>` draws all three, and
+`Get-SiteHeaderBack` picks the page one level up from the trail; `Format-ProductPageHtml` passes them on every page
+below home, the path being the same trail the breadcrumb bar draws. Without `-Path` the title stays a plain,
+`aria-hidden` span.
 
 ```html
 <header class="site-header"><div class="container">
   <a class="site-header__back" href="/projects" aria-label="Back to Projects">(chevron, mirrored)</a>
   <a class="site-header__brand" href="/" aria-label="my-app, home"><span class="site-header__name">my-app</span></a>
-  <span class="site-header__title" aria-hidden="true">Project X</span>
+  <button class="site-header__title" type="button" aria-controls="site-path" aria-expanded="false" aria-haspopup="dialog" aria-label="Path to Project X"><span>Project X</span>(chevron down)</button>
   <nav class="site-header__nav" aria-label="Main">...</nav>
-</div></header>
+</div>
+<dialog class="dialog dialog--sheet" id="site-path" aria-label="Path">...</dialog></header>
 <div class="breadcrumbs-bar">...</div>
 ```
 
@@ -356,13 +363,23 @@ where you can go, the trail where you are.
 - **On a wide header** the links stand in the middle of the space between the name and the button, each a cell the
   full height of the bar with the `--primary-hover` hover the settings button has; the page you are under carries a
   `--bg-1` bar along its bottom (`aria-current="page"`).
-- **Narrower than 48rem** the links fold away and a three-line toggle beside the settings button opens them as the
-  house drawer (`dialog.dialog--drawer`, a `.menu-list` of `.menu-item` rows). The width is the **header's own**,
-  through a container query, so the Phone width in the settings folds it as a phone does.
+- **Narrower than 48rem** the links fold away and a three-line toggle opens them as a **full-screen menu**,
+  `dialog.dialog--screen.site-menu` (#4095, Figma `Product / Menu row`, `Menu section head` and `Menu footer`; it was
+  the side drawer, `dialog.dialog--drawer`, until then). The width is the **header's own**, through a container
+  query, so the Phone width in the settings folds it as a phone does.
+- **The full-screen menu** reads like a phone's settings screen. Its head is the site header's own bar: the primary,
+  as tall, the back cell at the left closing it, and the title `Menu`. Under it three sections, each a
+  `p.menu-section` (small, uppercase, `--primary-muted`): **Pages**, the menu's items as `.menu-item` rows (an optional
+  `.menu-item__icon`, the label with an optional `.menu-item__sub` line, an optional `.menu-item__aside` value at the
+  right, the chevron; a `--bg-3` line under each); **Display**, one row to the app's settings page, in the place the
+  gear takes on a computer, drawn only where the app has one (`-SettingsHref`); and **About**, closed by a
+  `.menu-footer`: the app's name and a quieter line such as the brand book version (`-MenuNote`). The content keeps
+  the narrow column, so at the Phone width on a computer it lines up with the header.
 - **`house-theme.js` wires it** with no call of its own: the toggle opens the dialog its `aria-controls` names as a
   modal (so Escape and the focus return are the browser's), and a click on the close button or the backdrop, or the
   header growing wide again, shuts it.
-- **The drawer sits inside the header, after its `.container`**, so `.site-header + .breadcrumbs-bar` still matches.
+- **The menu sits inside the header, after its `.container`**, as the sheets do, so `.site-header + .breadcrumbs-bar`
+  still matches.
 
 ```html
 <header class="site-header"><div class="container">
@@ -373,18 +390,57 @@ where you can go, the trail where you are.
   </nav>
   <div id="settings"></div>
 </div>
-<dialog class="dialog dialog--drawer site-menu" id="site-menu" aria-label="Menu"><div class="dialog__body">
-  <div class="dialog__head"><p class="dialog__title">Menu</p></div>
-  <button class="dialog__close" type="button" aria-label="Close">(x)</button>
-  <nav class="menu-list" aria-label="Main"><a class="menu-item" href="/a" aria-current="page">..</a><a class="menu-item" href="/b">..</a></nav>
+<dialog class="dialog dialog--screen site-menu" id="site-menu" aria-label="Menu"><div class="dialog__body">
+  <div class="dialog__head dialog__head--back"><p class="dialog__title">Menu</p></div>
+  <button class="dialog__close dialog__close--back" type="button" aria-label="Close the menu">(chevron left)</button>
+  <nav class="menu-list" aria-label="Main">
+    <p class="menu-section">Pages</p><a class="menu-item" href="/a" aria-current="page">..</a><a class="menu-item" href="/b">..</a>
+    <p class="menu-section">Display</p><a class="menu-item" href="/settings">..</a>
+    <p class="menu-section">About</p>
+  </nav>
+  <div class="menu-footer"><p class="menu-footer__name">my-app</p><p class="menu-footer__note">Brand book v6.16.0</p></div>
 </div></dialog></header>
 ```
+
+**What this changes for an app that takes the update** (#4095): its phone menu opens full screen instead of as a
+drawer. An app that draws the menu by hand swaps `dialog--drawer` for `dialog--screen`, adds the sections, and turns
+its close into the back cell; one that draws it with `Format-SiteHeaderHtml` gets it with the update. The drawer
+itself stays a house class for an app's own use.
+
+#### The sheet: path and actions
+
+**A short list of choices on a phone rises from the bottom as a sheet** (#4095, Figma `Product / Sheet`):
+`dialog.dialog--sheet`, the paper, rounded at the top only and the narrow column wide, over the page dimmed in the
+primary. It holds a grab handle (`span.dialog__handle`), an optional `p.dialog__title`, and `.menu-item` rows with no
+line between them, the page you are on bold in the primary. A tap on the dimmed page shuts it, as Escape does.
+
+- **The path sheet** opens from the phone's title ([above](#on-a-phone-back-and-title)): the whole trail, as the
+  breadcrumb bar would show it on a computer.
+- **The actions sheet** opens from a **More cell**, `button.site-header__more` (three dots, as wide as the menu
+  toggle, Figma `Product / Site header`, More=true), and lists the page's own actions (the lifehub's *Save as PDF*,
+  say), titled with the page's name. On a phone it stands before the menu toggle; on a wide header at the far right,
+  because the actions are the page's and must not vanish on a computer. `Format-SiteHeaderHtml -Actions` (each
+  `@{ Label; Href }`) draws the cell and its sheet, and `Format-ProductPageHtml -Actions` passes them on.
+- **`house-theme.js` wires both** as it wires the menu: the trigger opens the dialog its `aria-controls` names as a
+  modal and sets `aria-expanded`; a tap on the backdrop, or the trigger vanishing as the header grows wide, shuts it.
+
+```html
+<button class="site-header__more" type="button" aria-controls="site-actions" aria-expanded="false" aria-haspopup="dialog" aria-label="More actions">(three dots)</button>
+...
+<dialog class="dialog dialog--sheet" id="site-actions" aria-label="Actions"><div class="dialog__body">
+  <span class="dialog__handle" aria-hidden="true"></span><p class="dialog__title">Page name</p>
+  <nav class="menu-list" aria-label="Actions"><a class="menu-item" href="/pdf"><span class="menu-item__label">Save as PDF</span>(chevron)</a></nav>
+</div></dialog>
+```
+
+**What this changes for an app that takes the update:** nothing, unless it passes `-Path` or `-Actions` or draws the
+sheet itself.
 
 #### The bottom bar, on a phone
 
 **A product may put its sections in the thumb zone** (#4094, after the Figma `Product / Bottom bar`, #4084): a bar
 fixed to the bottom of a phone, a hairline on top and the safe area padded below. It has **four slots or five**:
-three or four sections, then **More**, always last, a button that opens the site menu's drawer.
+three or four sections, then **More**, always last, a button that opens the site menu.
 
 - **Each slot** is a 16px icon over a 12px label, a 44px tap target, all equally wide. The section you are in
   carries `aria-current="page"` and is bold in the text colour; the others are regular and muted. The icon is the
@@ -392,13 +448,13 @@ three or four sections, then **More**, always last, a button that opens the site
 - **Phone only.** It shows below 48rem, the width the header folds its menu at, and at the Phone width, where it is
   as wide as the page column. On a wide window it is gone and the menu sits in the header.
 - **More replaces the header's toggle**, so a page with a bottom bar leaves `.site-header__menu-toggle` out (Figma
-  `Menu toggle=false`) and keeps the header's links and its drawer. `house-theme.js` wires More as it wires the
+  `Menu toggle=false`) and keeps the header's links and its menu. `house-theme.js` wires More as it wires the
   toggle.
 - **It is a direct child of `<body>`**, so the page gets the bar's height as padding below and its last line is
   never under the bar.
 - **The renderer** is `Format-BottomBarHtml` in this plugin's `scripts/lib/product-pages-lib.ps1`, and
   `Format-ProductPageHtml -BottomBar` / `Format-ProductHomeHeadHtml -BottomBar` draw it and drop the toggle. A bar
-  needs a `-Menu`, because More opens the drawer the header draws from it.
+  needs a `-Menu`, because More opens the menu the header draws from it.
   [`patterns/product-bottom-bar.html`][pattern-bottom-bar] is the stylesheet-only reference.
 
 ```html

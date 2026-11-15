@@ -2,7 +2,7 @@
 <!--
   A product page with a bottom bar (#4094), the stylesheet-only reference: product-page.html beside this file with
   the app's sections in the thumb zone. On a phone (narrower than 48rem, or the Phone width) the bar sits fixed at
-  the bottom with four slots or five, the last always More, which opens the site menu's drawer; so the header carries
+  the bottom with four slots or five, the last always More, which opens the site menu; so the header carries
   no three-line toggle. On a wide window the bar is gone and the menu sits in the header, as on every product page.
 
   Built from ../house-style.css, ../house-product.css and ../house-theme.js and nothing else (#3831). The rules are in
@@ -20,7 +20,7 @@
 </head>
 <body>
   <!-- The site header, as on product-page.html but with no menu toggle: on a phone the bottom bar's More opens the
-       drawer instead (#4094). -->
+       menu instead (#4094). -->
   <header class="site-header"><div class="container">
     <a class="site-header__back" href="product-home.html" aria-label="Back to Home"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path transform="matrix(-1 0 0 1 24 0)" fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
     <a class="site-header__brand" href="product-home.html" aria-label="my-app, home"><span class="site-header__name">my-app</span></a>
@@ -29,14 +29,17 @@
       <ul class="site-header__menu"><li><a href="product-page.html">Projects</a></li><li><a href="#">Reports</a></li><li><a href="#">Settings</a></li></ul>
     </nav>
   </div>
-  <dialog class="dialog dialog--drawer site-menu" id="site-menu" aria-label="Menu"><div class="dialog__body">
-    <div class="dialog__head"><p class="dialog__title">Menu</p></div>
-    <button class="dialog__close" type="button" aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  <dialog class="dialog dialog--screen site-menu" id="site-menu" aria-label="Menu"><div class="dialog__body">
+    <div class="dialog__head dialog__head--back"><p class="dialog__title">Menu</p></div>
+    <button class="dialog__close dialog__close--back" type="button" aria-label="Close the menu"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path transform="matrix(-1 0 0 1 24 0)" fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></button>
     <nav class="menu-list" aria-label="Main">
+      <p class="menu-section">Pages</p>
       <a class="menu-item" href="product-page.html"><span class="menu-item__label">Projects</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
       <a class="menu-item" href="#"><span class="menu-item__label">Reports</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
       <a class="menu-item" href="#"><span class="menu-item__label">Settings</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+      <p class="menu-section">About</p>
     </nav>
+    <div class="menu-footer"><p class="menu-footer__name">my-app</p></div>
   </div></dialog></header>
 
   <!-- The breadcrumb bar: Home, then this page, unlinked. -->
