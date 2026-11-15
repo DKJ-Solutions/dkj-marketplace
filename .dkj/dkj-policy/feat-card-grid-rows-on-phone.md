@@ -39,21 +39,40 @@
 
 ### PLAN
 
+Causes 2 and 3 of the phone inventory #4113: lists drawn as large tiles inside a grey group surface, where the
+mobile wireframes draw one card of compact rows, and a card inside a surface inside the page. Both come from the
+groups (`.grid-2`, `.grid-3`, `.card-grid`), so the repair is one phone rule in the product layer rather than an
+edit to every page.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-product.css`: below 48rem every group drops its surface and padding, a card in it stands as a plain
+      card, and a group of `.card--link` tiles reads as one card of rows of about 52px with its `.grid__head` above
+      as the heading; it outweighs a page's own grid layer (`.sp-grid`, `.dr-repos`). A wide screen is unchanged
+- [x] The product README says it beside its "compact rows" rule
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the phone rule's shape, tokens only but the hairline
+- [x] `check-house-style`, `house-palette` green
+- [x] Seen at 390px: `/consumers`, `/plugins/dkj-policy`, `/plugins/dkj-subagents/dkj-subagents-alpha`,
+      `/consumers/dkj/dkj-lifehub`
+
 ### DEPLOY: feat/card-grid-rows-on-phone
 
-**Score:**
+On a phone a list of pages -- the consumer repos, the plugins, a team's specialists -- is one card of compact rows
+with its heading above, instead of a stack of large tiles in a grey surface, as the mobile wireframes draw it. No
+card sits inside a surface on a phone any more. A wide screen keeps its tiles.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Every product built on the brand book gets this on a phone without a markup change: a group of card links becomes
+one card of rows, and a group never wraps its cards in a second surface there.
+
+**Score:** 3
 
 #### Pull Request
 
 On a phone a group of card links reads as one card of compact rows, after the mobile wireframes
-
