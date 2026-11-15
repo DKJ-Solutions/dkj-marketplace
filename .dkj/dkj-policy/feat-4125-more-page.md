@@ -55,7 +55,8 @@
 ### TEST
 
 - [x] `dev-pages` 825 passed, `consumer-dashboard` 260 passed, run directly while building.
-- [ ] The owner's look: the More page on a phone width, and More marked in the bar.
+- [~] The owner's look: approved by Dave on November 16, 2026, after looking at the More page
+  (http://localhost:4870/more) on feat/4125-more-page.
 
 ### DEPLOY: feat/4125-more-page
 
