@@ -53,7 +53,7 @@ existed only because of that remap, go with it, and the phone block (#4113) no l
 ### TEST
 
 - [x] `dev-pages.tests.ps1`: the phone assert follows, and a new one holds every group rule free of padding, background, radius and a card fill (811 passed)
-- [ ] the owner looks at a page of card groups on a wide screen and on a phone
+- [~] the owner looks at a page of card groups on a wide screen and on a phone. Not done as a separate look: davekokbwj approved the branch through issues-sweep-reviews on 2026-11-15 without one.
 
 ### DEPLOY: feat/4126-no-group-surface
 
