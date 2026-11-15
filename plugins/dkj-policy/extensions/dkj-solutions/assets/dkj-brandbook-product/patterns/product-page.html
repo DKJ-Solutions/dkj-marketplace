@@ -1,8 +1,10 @@
 <!doctype html>
 <!--
   A page one level below a product's home, the stylesheet-only reference (#3849): product-home.html beside this
-  file is its home. It shows the blocks a product page stacks in its page column: the h1, a row of facts, the
-  stat tiles, the loading or warning line, and a group of data cards under one h2.
+  file is its home. Since #4097 it follows the Figma frame "List (desktop)" on Wireframes · Product (#4088): a main
+  column (640) with the h1, a search field, filter chips and the list as one card of compact rows, and a sidebar
+  (320) with a status card and card links elsewhere. Narrower than 48rem the two stack, the breadcrumb bar gives way
+  to the back cell and the title in the header, and the h1 leaves the screen, so the title appears once.
 
   Until #3849 this file was repo-repository.html, Admin's Repository page, which Admin's desktop shell replaced
   in #3830 (its reference is dkj-policy's assets/dkj-brandbook/patterns/admin-shell.html).
@@ -16,8 +18,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>my-app -- Projects</title>
-  <meta name="description" content="Every project, with what is in flight.">
+  <title>my-app -- Items</title>
+  <meta name="description" content="Every item, with where the work stands beside it.">
   <link rel="stylesheet" href="../house-style.css">
   <link rel="stylesheet" href="../house-product.css">
   <script src="../house-theme.js"></script>
@@ -28,9 +30,9 @@
   <header class="site-header"><div class="container">
     <a class="site-header__back" href="product-home.html" aria-label="Back to Home"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path transform="matrix(-1 0 0 1 24 0)" fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
     <a class="site-header__brand" href="product-home.html" aria-label="my-app, home"><span class="site-header__name">my-app</span></a>
-    <span class="site-header__title" aria-hidden="true">Projects</span>
+    <span class="site-header__title" aria-hidden="true">Items</span>
     <nav class="site-header__nav" aria-label="Main">
-      <ul class="site-header__menu"><li><a href="product-page.html" aria-current="page">Projects</a></li><li><a href="#">Reports</a></li><li><a href="#">Settings</a></li></ul>
+      <ul class="site-header__menu"><li><a href="product-page.html" aria-current="page">Items</a></li><li><a href="#">Lists</a></li><li><a href="#">Insights</a></li><li><a href="#">Settings</a></li></ul>
       <button class="site-header__menu-toggle" type="button" aria-controls="site-menu" aria-expanded="false" aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
     </nav>
   </div>
@@ -39,77 +41,67 @@
     <button class="dialog__close dialog__close--back" type="button" aria-label="Close the menu"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path transform="matrix(-1 0 0 1 24 0)" fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></button>
     <nav class="menu-list" aria-label="Main">
       <p class="menu-section">Pages</p>
-      <a class="menu-item" href="product-page.html" aria-current="page"><span class="menu-item__label">Projects</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
-      <a class="menu-item" href="#"><span class="menu-item__label">Reports</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
-      <a class="menu-item" href="#"><span class="menu-item__label">Settings</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+      <a class="menu-item" href="product-page.html" aria-current="page"><span class="menu-item__label">Items</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+      <a class="menu-item" href="#"><span class="menu-item__label">Lists</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+      <a class="menu-item" href="#"><span class="menu-item__label">Insights</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+      <p class="menu-section">Display</p>
+      <a class="menu-item" href="#"><span class="menu-item__label">Settings<span class="menu-item__sub">Light or dark, theme, width</span></span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
       <p class="menu-section">About</p>
     </nav>
     <div class="menu-footer"><p class="menu-footer__name">my-app</p></div>
   </div></dialog></header>
 
-  <!-- The breadcrumb bar: Home, then this page, unlinked. -->
+  <!-- The breadcrumb bar: Home, then this page, unlinked. A computer only under a site header (#4048). -->
   <div class="breadcrumbs-bar">
     <div class="container">
       <nav class="breadcrumbs" aria-label="Breadcrumb">
         <ol>
           <li><a href="product-home.html">Home</a></li>
-          <li><span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span><span aria-current="page">Projects</span></li>
+          <li><span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span><span aria-current="page">Items</span></li>
         </ol>
       </nav>
     </div>
   </div>
 
-  <main class="page-column">
+  <!-- The page layout (#4097): the main column and the sidebar, stacked on a phone. -->
+  <main class="page-layout">
+    <div class="page-layout__main page-column">
+      <!-- The h1 reads exactly what the current crumb reads, with no lead under it (#3585). It is a direct child of the
+           column, so on a phone, where the header already names the page, it leaves the screen without a gap. -->
+      <h1>Items</h1>
 
-    <!-- 0. The intro, as on every page below the home page: the h1 alone, reading exactly what the current crumb
-         reads, with no lead under it (#3585); the page's line is its meta description. -->
-    <div>
-      <h1>Projects</h1>
-    </div>
+      <label class="nav-search"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="sr-only">Search items</span><input class="nav-search__input" type="search" placeholder="Search items"></label>
 
-    <!-- 1. The facts, as one row on the page rather than in a card: label over value. -->
-    <dl class="facts facts--row">
-      <div><dt>Owner</dt><dd>Example team</dd></div>
-      <div><dt>Since</dt><dd>March 2026</dd></div>
-      <div><dt>Updated</dt><dd>5 Nov</dd></div>
-    </dl>
-
-    <!-- 2. The stat tiles: one figure each, which does not respond, so it is never mistaken for a card link. -->
-    <div class="tiles">
-      <div class="tile"><div class="label">Active projects</div><div class="v">3</div></div>
-      <div class="tile"><div class="label">Due this week</div><div class="v">2</div></div>
-    </div>
-
-    <!-- The loading line takes role="status", the warning role="alert"; a page with its data in hand leaves it out. -->
-    <p class="msg--warn" role="alert">The projects could not be read: this is the placeholder state of the reference page.</p>
-
-    <!-- 3. A grouped list: one grid per group, its first child a .grid__head holding the group's h2, each card titled
-         h3 under its .card__head. -->
-    <div class="grid-2">
-      <div class="grid__head">
-        <h2>In flight</h2>
-        <p class="card__sub">Everything open right now</p>
+      <div class="filter-chips" role="group" aria-label="Filter by group">
+        <button class="filter-chip" type="button" aria-pressed="true">All</button><button class="filter-chip" type="button" aria-pressed="false">Group A</button><button class="filter-chip" type="button" aria-pressed="false">Group B</button><button class="filter-chip" type="button" aria-pressed="false">Group C</button>
       </div>
-      <section class="card grid__full">
-        <div class="card__head">
-          <h3>Projects</h3>
-          <p class="card__sub">Active, due date first</p>
-        </div>
-        <div class="table-wrap" role="region" aria-label="Active projects" tabindex="0">
-          <table class="table">
-            <thead><tr><th scope="col">Project</th><th scope="col">Lead</th><th scope="col">Due</th></tr></thead>
-            <tbody>
-              <tr><td><a href="#">Spring catalogue</a><div class="note">Design review pending</div></td><td>Anna</td><td>7 Nov</td></tr>
-              <tr><td><a href="#">Warehouse move</a><div class="note">Planning</div></td><td>Ben</td><td>9 Nov</td></tr>
-              <tr><td><a href="#">New supplier</a></td><td>Chris</td><td>28 Nov</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+
+      <!-- The list: one card of compact rows (.card--rows), never a card per item. -->
+      <nav class="card card--rows menu-list" aria-label="Items">
+        <a class="menu-item" href="#"><span class="menu-item__label">Item one<span class="menu-item__sub">Group A · 25 min</span></span><span class="menu-item__aside">4.5</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+        <a class="menu-item" href="#"><span class="menu-item__label">Item two<span class="menu-item__sub">Group B · 40 min</span></span><span class="menu-item__aside">12</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+        <a class="menu-item" href="#"><span class="menu-item__label">Item three<span class="menu-item__sub">Group A · 15 min</span></span><span class="menu-item__aside">3</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+        <a class="menu-item" href="#"><span class="menu-item__label">Item four<span class="menu-item__sub">Group C · 1 h</span></span><span class="menu-item__aside">7.2</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+        <a class="menu-item" href="#"><span class="menu-item__label">Item five<span class="menu-item__sub">Group B · 30 min</span></span><span class="menu-item__aside">9</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+        <a class="menu-item" href="#"><span class="menu-item__label">Item six<span class="menu-item__sub">Group A · 20 min</span></span><span class="menu-item__aside">1.8</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+      </nav>
     </div>
 
-    <!-- 4. The footer note: where the data comes from. -->
-    <p class="note">Placeholder data in this reference page; a real page names its source here.</p>
+    <!-- The sidebar: what stands beside the work, each part under its own h2. The status card IS a surface, so it
+         sits on the column, never in a card. -->
+    <aside class="page-layout__side page-column" aria-label="Beside the items">
+      <h2>Status</h2>
+      <section class="status-card">
+        <p class="status-card__kicker">Status · 15 Nov 2026</p>
+        <h2>42 items, 8 open</h2>
+        <div class="meter meter--info" role="progressbar" aria-valuenow="81" aria-valuemin="0" aria-valuemax="100" aria-label="Done"><span style="width: 81%"></span></div>
+        <dl class="facts facts--row"><div><dt>Deadline</dt><dd>17 Nov 2026</dd></div><div><dt>Submission</dt><dd>Ready</dd></div></dl>
+      </section>
+
+      <h2>Elsewhere</h2>
+      <section class="card card--link"><a class="menu-item" href="#"><span class="menu-item__label">Lists<span class="menu-item__sub">3 lists, 8 open</span></span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a></section>
+      <section class="card card--link"><a class="menu-item" href="#"><span class="menu-item__label">Insights<span class="menu-item__sub">Updated 5 Nov</span></span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a></section>
+    </aside>
   </main>
 </body>
 </html>

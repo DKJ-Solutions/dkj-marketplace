@@ -468,6 +468,57 @@ three or four sections, then **More**, always last, a button that opens the site
 
 **In Admin** there is no site header menu: Admin draws its side navigation instead (`Get-AdminNav`), whose Development section is its home page's cards in their order (GitHub, Release notes, Claude, Installed plugins: `Get-AdminMenu`, from the same list the cards come from). A product's menu is its own pages.
 
+### The product page: the phone rules and the computer layout
+
+**One shell, every app** (#4097, after the Figma `Wireframes · Product` frames and their notes, #4088, for the goal
+in [#4081](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4081)). Phone first at 390 wide with a 16px
+gutter, every tap target 44px or more. [`patterns/product-page.html`][pattern-page] carries all of it.
+
+**On a phone:**
+
+- **The title appears once**: in the site header, beside the back cell ([above](#on-a-phone-back-and-title)). The
+  page's `h1` stays in the markup for a screen reader, since the header's title is `aria-hidden`, but leaves the
+  screen: `house-product.css` hides it wherever the window is narrower than 48rem, or the width is Phone, and the
+  page has a `.site-header__back`. Keep the `h1` a direct child of its column, so it leaves no gap.
+- **No card inside a card.** A list is one card of rows; a status card and a details card stand one under the other,
+  never nested. A `.status-card` is a surface itself and never sits in a `.card`.
+- **Compact rows of about 52px instead of large tiles**: `.card.card--rows.menu-list`, one `a.menu-item` per item
+  (the title, its meta line in `.menu-item__sub`, an optional value in `.menu-item__aside`, the chevron), a line
+  between the rows.
+- **An empty message is dropped rather than shown**, unless the empty list is the page itself, where the empty
+  state is the content.
+- **The theme colour is an accent, never a fill**: the current bottom-bar slot, the progress bar, the current menu
+  item. A block on the primary (`.fill-primary`) is not for a product page's content.
+- **A failure shows the [error state](#status-card-and-error-state)** beside the empty state: what failed, what you
+  can do, a retry.
+
+**On a computer, a main column and a sidebar**: `main.page-layout`, holding a `.page-layout__main` (640px) and an
+`aside.page-layout__side` (320px), each also a `.page-column`, 48px apart and centred, under the site header with
+its menu and the breadcrumb bar. The breadcrumb bar is for the computer only; a phone has the path sheet. The
+sidebar holds what stands beside the work (a status card, card links elsewhere), each part under its own `h2`.
+Narrower than 48rem, and at the Phone width, the two stack: the sidebar comes after the main column. The bottom bar
+and the sheets do not appear on a computer.
+
+```html
+<main class="page-layout">
+  <div class="page-layout__main page-column">
+    <h1>Items</h1>
+    <nav class="card card--rows menu-list" aria-label="Items">
+      <a class="menu-item" href="/items/1"><span class="menu-item__label">Item one<span class="menu-item__sub">Group A · 25 min</span></span><span class="menu-item__aside">4.5</span>(chevron)</a>
+    </nav>
+  </div>
+  <aside class="page-layout__side page-column" aria-label="Beside the items">
+    <h2>Status</h2><section class="status-card">..</section>
+    <h2>Elsewhere</h2><section class="card card--link">..</section>
+  </aside>
+</main>
+```
+
+**What this changes for an app that takes the update:** on a phone, every page below home that has a back cell
+loses its visible `h1`, so a page that relied on it alone to say where you are gains nothing to do: the header
+already says it. A page that put anything else in a wrapper around its `h1` keeps that wrapper's space; move the
+`h1` out of it. `.page-layout` and `.card--rows` are new, so nothing else changes until a page uses them.
+
 ## Changing this layer
 
 **The process is the core's** ([Changing the brand book][core-changing]): a change here is a **visible result**, it

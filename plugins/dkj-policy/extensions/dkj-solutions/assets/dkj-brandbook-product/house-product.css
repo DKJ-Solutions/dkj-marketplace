@@ -383,6 +383,45 @@ button.site-header__title:focus-visible { outline: 2px solid var(--bg-1); outlin
 .error-state .empty-state__mark { display: flex; align-items: center; justify-content: center; background: var(--negative-1);
   color: var(--negative-5); font-size: var(--text-h2); font-weight: var(--font-weight-bold); line-height: 1; }
 
+/* ---- Page layout: a main column and a sidebar (#4097) ---------------------------------------------------------- */
+/* A product page on a computer (Figma frame "List (desktop)" on Wireframes · Product, #4088): a main column of 640px and a sidebar of 320px,
+   48px apart and centred, under the site header with its menu and the breadcrumb bar. The sidebar holds what stands
+   beside the work (a status card, card links elsewhere), each part under its own h2. Narrower than 48rem, and at the
+   Phone width, the two stack into one column, the sidebar after the main column.
+   <main class="page-layout"><div class="page-layout__main page-column"><h1>..</h1>..</div><aside class="page-layout__side
+   page-column" aria-label="..">..</aside></main>. The h1 is a direct child of the main column, so on a phone it can leave
+   the screen without leaving a gap (below). */
+.page-layout { display: grid; grid-template-columns: minmax(0, 640px) 320px; justify-content: center; align-items: start;
+  column-gap: var(--spacing-12); row-gap: var(--spacing-8); padding: var(--spacing-8) var(--spacing-4) var(--spacing-12); }
+.page-layout > .page-column { gap: var(--spacing-4); padding: 0; }
+.page-layout > .page-column > :is(h1, h2) { margin: 0; }
+@media (max-width: 48rem) { .page-layout { grid-template-columns: minmax(0, 1fr); padding-top: var(--spacing-5); } }
+:root[data-width="phone"] .page-layout { grid-template-columns: minmax(0, 1fr); padding-top: var(--spacing-5); }
+
+/* ---- Row list: compact rows in one card (#4097) ------------------------------------------------------------------ */
+/* A list of items as one card of rows (Figma Product / List row): about 52px a row, a title with a meta line under it,
+   an optional value at the right and the chevron, a line between the rows. Compact rows rather than large tiles, and
+   the rows sit in the one card rather than each being a card: no card in a card.
+   <nav class="card card--rows menu-list" aria-label=".."><a class="menu-item" href><span class="menu-item__label">Title
+   <span class="menu-item__sub">Meta</span></span><span class="menu-item__aside">4.5</span>(chevron)</a> ..</nav> */
+.card--rows { padding: 0; overflow: hidden; }
+.card--rows > .menu-item { gap: var(--spacing-3); min-height: var(--control-lg); padding: var(--spacing-2) var(--spacing-4); border-radius: 0;
+  font-weight: var(--font-weight-bold); }
+.card--rows > .menu-item .menu-item__sub { margin-top: var(--spacing-0-5); }
+.card--rows .menu-item__aside { color: var(--fg-1); font-weight: var(--font-weight-bold); }
+.card--rows .menu-item__chevron { color: var(--primary-muted); }
+
+/* ---- The title once, on a phone (#4097) ---------------------------------------------------------------------------- */
+/* On a phone a page below home names itself in the site header, beside the back cell (#4048), so its h1 leaves the
+   screen there and the title appears once. It stays for a screen reader, because the header's title is aria-hidden.
+   It reads the window and the Phone width, as the breadcrumb bar's hide does. */
+@media (max-width: 48rem) {
+  body:has(.site-header__back) main h1 { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+    clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+}
+:root[data-width="phone"] body:has(.site-header__back) main h1 { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
 /* ---- Fills ---------------------------------------------------------------- */
 /* A block on the theme's colour, or on the far end (#3235). The text switches with the ground. On .fill-primary the
    paper steps are the text, because all four read on the primary (4.55:1 or better): an h2 is --bg-1 there and
