@@ -48,7 +48,7 @@ knows what not to redefine. The product layer reserves these too:
   `__nav`, `__menu`, `__menu-toggle`, `__back`, `__title`, `__more`; [below](#the-site-header-above-the-bar)),
   the full-screen menu's parts, `.menu-section`, `.menu-footer` (with `__name`, `__note`) and `.menu-item__aside`
   ([below](#the-menu-in-the-header)), and the bottom bar, `.bottom-bar` (with `__item`, `__more`, `__icon`,
-  `__label`; [below](#the-bottom-bar-on-a-phone)), the topic list, `.topic-list` (`.topic`, with `__head`, `__link`,
+  `__label`; [below](#the-bottom-bar-on-a-phone)), the topic list, `.topic-list` (`.topic` around a plain `h2`, with `__link`,
   `__badge`, `__items`, `__item`; [below](#the-topic-list-a-home-page-on-a-phone)), the status card, `.status-card` (with `__kicker`), and the error state,
   `.error-state` on an `.empty-state` ([below](#status-card-and-error-state)).
 - **The brand-book components** ([below](#brandbook-app-components)): `.round-toggle`, `.badge-toggle`, `.help`,
@@ -477,7 +477,7 @@ badge, the topic's sections under it, a thin rule between topics, indented to th
 ```html
 <nav class="topic-list" aria-label="Pages">
   <section class="topic">
-    <h2 class="topic__head"><a class="topic__link" href="/brain"><span class="topic__badge" aria-hidden="true">B</span>Brain</a></h2>
+    <h2><a class="topic__link" href="/brain"><span class="topic__badge" aria-hidden="true">B</span>Brain</a></h2>
     <ul class="topic__items"><li><a class="topic__item" href="/brain/work">Work</a></li></ul>
   </section>
   ..

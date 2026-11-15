@@ -162,7 +162,7 @@ function Format-ProductHomeHtml {
         $label = & $e $raw
         $badge = '<span class="topic__badge" aria-hidden="true">' + $(if ($raw) { & $e $raw.Substring(0, 1).ToUpperInvariant() }) + '</span>'
         $head = if ($t.Href) { '<a class="topic__link" href="' + (& $e ([string]$t.Href)) + '">' + $badge + $label + '</a>' } else { '<span class="topic__link">' + $badge + $label + '</span>' }
-        [void]$sb.Append('<section class="topic"><h2 class="topic__head">' + $head + '</h2>')
+        [void]$sb.Append('<section class="topic"><h2>' + $head + '</h2>')
         $items = @($t.Items | Where-Object { $_ })
         if ($items.Count) {
             [void]$sb.Append('<ul class="topic__items">')
