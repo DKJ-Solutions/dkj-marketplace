@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**9 / 13 minor entries** <!-- pending-tally -->
+**9 / 14 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4128-phone-header-height · 20261115-221833Z
+
+On a phone a product's site header is 56px tall instead of 68px, with its back, actions and menu cells still square,
+and the full-screen menu's head matches it. The bottom bar is 61px instead of 73px on a phone without a home
+indicator, and keeps the safe area on one that has it. Together they give about 24px of the screen back to the page.
+A wide screen is unchanged.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+On a phone, the site header is 56px and the bottom bar 61px
+
+Plugins: dkj-solutions
+
+[PR #4137](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4137)
+
+---
 
 ### DEPLOY: feat/4124-icon-grammar · 20261115-214107Z
 
