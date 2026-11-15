@@ -65,7 +65,7 @@ function Format-DevPageHtml {
     # -Bare: no h1 above the body (Format-ProductPageHtml's own switch), for a page that opens on its content.
     # -Info: what a plugin's page is about, behind the "?" right of its h1 (Format-ProductPageHtml's own, escaped by the caller).
     return Format-ProductPageHtml -Title $Title -Lead $Lead -Body $Body -Style $Style -FooterNote $FooterNote -ThemeKey $ThemeKey `
-        -Brand 'dkj-marketplace' -SiteName 'dkj-marketplace' -AdminHref '/' -HomeLabel 'Home' -Bare:$Bare -ParentCrumbs $ParentCrumbs -Info $Info -Menu @(Get-ProductMenu)
+        -Brand 'dkj-marketplace' -SiteName 'dkj-marketplace' -AdminHref '/' -HomeLabel 'Home' -Bare:$Bare -ParentCrumbs $ParentCrumbs -Info $Info -Menu @(Get-ProductMenu) -BottomBar @(Get-ProductBottomBar)
 }
 
 function Format-ProductSettingsHtml {
@@ -82,6 +82,21 @@ function Format-ProductSettingsHtml {
 
 # Get-ProductPages and Get-ProductMenu live in consumer-dashboard-lib.ps1, loaded above: the Consumers page draws the
 # product's menu in its own header, and that lib is loaded alone by its suite.
+
+function Get-ProductHomeTopicsStyle {
+    <#
+        Which of the product home's two forms shows (Format-ProductHomeHtml): the cards on a wide screen, the brand
+        book's topic list (house-product.css, "Topic list") below the product layer's mobile breakpoint, 48rem, where
+        the site header folds into its menu. The list's look is the brand book's alone; this only hides one form.
+    #>
+    return @(
+        '.ph-topics { display: none; }',
+        '@media (max-width: 48rem) {',
+        '  .ph-wide { display: none; }',
+        '  .ph-topics { display: block; }',
+        '}'
+    ) -join "`n"
+}
 
 function Format-ProductHomeHtml {
     <#
@@ -115,15 +130,19 @@ function Format-ProductHomeHtml {
     # November 3, 2026).
     [void]$sb.AppendLine('<style>')
     [void]$sb.AppendLine((Get-AdminCardGridStyle))
+    [void]$sb.AppendLine((Get-ProductHomeTopicsStyle))
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
     [void]$sb.AppendLine('<body>')
-    [void]$sb.Append((Format-ProductHomeHeadHtml -RepoName 'dkj-marketplace' -Brand 'dkj-marketplace' -HomeLabel 'Home' -Menu @(Get-ProductMenu)))
+    [void]$sb.Append((Format-ProductHomeHeadHtml -RepoName 'dkj-marketplace' -Brand 'dkj-marketplace' -HomeLabel 'Home' -Menu @(Get-ProductMenu) -BottomBar @(Get-ProductBottomBar)))
     # Every page a card of its own, three to a row, with no heading above them (the house admin form, #3383): the
     # admin first, so the way back is where the eye starts, then this repo's own pages. On the page itself, in the
     # Admin home's .ph-cards rather than a .grid-3, whose surface frames an h2 over h3 cards (November 2, 2026).
+    $adminLinked = $AdminUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z'
+    # The cards and their note are the wide screen's; on a phone the topic list below stands in for them.
+    [void]$sb.AppendLine('<div class="ph-wide">')
     [void]$sb.AppendLine('<div class="ph-cards">')
-    if ($AdminUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
+    if ($adminLinked) {
         [void]$sb.AppendLine((Format-AdminCardLinkHtml -Href $AdminUrl -Label 'Admin' -Sub 'The dkj-policy Admin: its Development section holds GitHub, Issues, Release notes, the Test gate and every other general page' -Icon 'repository'))
     } else {
         [void]$sb.AppendLine('<section class="card"><p role="status">Admin is not running. The dkj-policy dev-preview hook starts it at the next session start.</p></section>')
@@ -132,6 +151,27 @@ function Format-ProductHomeHtml {
     [void]$sb.AppendLine('</div>')
     $at = if ($SourceCommit) { ', from <code>' + (& $e $SourceCommit) + '</code>' } else { '' }
     [void]$sb.AppendLine('<p class="note">Each page names its own source. Served on 127.0.0.1 only, by <code>scripts/dashboard/serve-consumer-dashboard.ps1</code>' + $at + '.</p>')
+    [void]$sb.AppendLine('</div>')
+    # On a phone the same pages as the brand book's topic list (house-product.css), after the mobile home wireframe
+    # (Figma "H1 - Home (mobiel)"): each page a heading with its initial in a badge, its sub-pages (Items) under it. Admin is a heading without a link
+    # while it is not running, as its card says.
+    $topics = @(@{ Href = $(if ($adminLinked) { $AdminUrl } else { '' }); Label = 'Admin'; Items = @() }) + @($Pages)
+    [void]$sb.AppendLine('<nav class="topic-list ph-topics" aria-label="Pages">')
+    foreach ($t in $topics) {
+        $raw = [string]$t.Label
+        $label = & $e $raw
+        $badge = '<span class="topic__badge" aria-hidden="true">' + $(if ($raw) { & $e $raw.Substring(0, 1).ToUpperInvariant() }) + '</span>'
+        $head = if ($t.Href) { '<a class="topic__link" href="' + (& $e ([string]$t.Href)) + '">' + $badge + $label + '</a>' } else { '<span class="topic__link">' + $badge + $label + '</span>' }
+        [void]$sb.Append('<section class="topic"><h2>' + $head + '</h2>')
+        $items = @($t.Items | Where-Object { $_ })
+        if ($items.Count) {
+            [void]$sb.Append('<ul class="topic__items">')
+            foreach ($i in $items) { [void]$sb.Append('<li><a class="topic__item" href="' + (& $e ([string]$i.Href)) + '">' + (& $e ([string]$i.Label)) + '</a></li>') }
+            [void]$sb.Append('</ul>')
+        }
+        [void]$sb.AppendLine('</section>')
+    }
+    [void]$sb.AppendLine('</nav>')
     [void]$sb.AppendLine('</main>')
     [void]$sb.AppendLine('<script>DKJTheme.settings(document.getElementById("settings"), { label: "Settings", title: "Settings", theme: "Theme", reset: "Reset theme", light: "Light", dark: "Dark", widths: false });</script>')
     # The fit alarm, as the plugin's page shell closes every admin page (#3558).
@@ -1362,7 +1402,7 @@ function Get-DkjRepoCardStyle {
         '.dr-repos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--spacing-3); }',
         '.dr-repos > .card { margin-top: 0; }',
         '@media (max-width: 720px) { .dr-repos { grid-template-columns: repeat(3, minmax(0, 1fr)); } }',
-        '@media (max-width: 520px) { .dr-repos { grid-template-columns: 1fr; } }',
+        '@media (max-width: 520px) { .dr-repos { grid-template-columns: minmax(0, 1fr); } }',
         # Each card three lines at most: the name, the facts and the checkout. The name a size down, to fit four to a
         # row; the house style cuts it off where it still does not fit and keeps the status mark after it in its
         # place, and .dr-clip does the same for the facts and the checkout (Maikel, October 28, 2026).
