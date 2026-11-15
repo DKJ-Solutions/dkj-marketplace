@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**6 / 8 minor entries** <!-- pending-tally -->
+**7 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4126-no-group-surface · 20261115-191324Z
+
+A card group is no longer a surface of its own
+([#4126](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4126)): `.grid-2`, `.grid-3` and `.card-grid`
+lose the `--bg-2` tray, its radius and its padding at every width, so a card in a group is the same plain card it is
+anywhere else, on `--bg-2` against the page. That reverses the padded tray of November 2, 2026, and takes with it
+the darker card fill inside a group and the button edge #3697 gave it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every DKJ-Solutions app that takes the update loses the frame around its card groups: the cards stand on the page
+directly, one step lighter or darker than it, and on a phone they gain the width the padding took on both sides.
+No markup changes; an app whose own layer leaned on the group's padding checks its spacing.
+
+**Score:** 3
+
+#### Pull Request
+
+Brand book: a card group is no surface of its own
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4132](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4132)
+
+---
 
 ### DEPLOY: feat/4113-consumer-group-rows · 20261115-182852Z
 
