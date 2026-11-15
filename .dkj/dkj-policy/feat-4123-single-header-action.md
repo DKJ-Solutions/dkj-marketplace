@@ -54,7 +54,8 @@ item. The three dots and the sheet appear only from two actions up.
 - [x] `dev-pages.tests.ps1`: one action draws the icon cell and no sheet, `Icon = 'print'` picks the print glyph,
       and two actions still draw the More cell and the sheet (812 passed)
 - [x] The new specimen card is served at `/plugins/dkj-policy/dkj-brandbook/nav`
-- [ ] The owner's look at the one-action header on the specimen page
+- [~] The owner's look at the one-action header on the specimen page. Not done as a separate look: DaveKJohn
+  approved the branch through issues-sweep-reviews on 2026-11-15 without one.
 
 ### DEPLOY: feat/4123-single-header-action
 
