@@ -311,14 +311,16 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
    The actions: <button class="site-header__more" aria-controls="site-actions" aria-haspopup="dialog" aria-label="More
    actions">(three dots)</button> before the menu, a cell as wide as the toggle (Figma Site header, More=true), opening
    the page's own actions as a sheet. It stands on a wide header too, at the far right, since the actions are the
-   page's and must not vanish on a computer; on a phone it sits before the menu toggle. */
-.site-header__more { display: inline-flex; flex: none; order: 1; align-items: center; justify-content: center;
+   page's and must not vanish on a computer; on a phone it sits before the menu toggle.
+   The three dots appear only from two actions up (#4123): a page with one action shows it directly, as
+   <a class="site-header__action" href="..." aria-label="Save as PDF">(icon)</a> in the same place and size, no sheet. */
+.site-header__more, .site-header__action { display: inline-flex; flex: none; order: 1; align-items: center; justify-content: center;
   width: calc(var(--text-h1) + 2 * var(--spacing-1) + 2 * var(--spacing-3)); padding: 0; border: 0; color: var(--bg-1); background: transparent;
   cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.site-header__more:hover, .site-header__more[aria-expanded="true"] { background: var(--primary-hover); }
-.site-header__more:focus-visible { outline: 2px solid var(--bg-1); outline-offset: -4px; }
-.site-header__more svg { width: var(--spacing-6); height: var(--spacing-6); }
-@container site-header (max-width: 48rem) { .site-header__more { order: 0; } }
+.site-header__more:hover, .site-header__more[aria-expanded="true"], .site-header__action:hover { background: var(--primary-hover); }
+.site-header__more:focus-visible, .site-header__action:focus-visible { outline: 2px solid var(--bg-1); outline-offset: -4px; }
+.site-header__more svg, .site-header__action svg { width: var(--spacing-6); height: var(--spacing-6); }
+@container site-header (max-width: 48rem) { .site-header__more, .site-header__action { order: 0; } }
 
 /* ---- Bottom bar (#4094) --------------------------------------------------------------------------------- */
 /* The app's sections in the thumb zone, on a phone only (Figma Product / Bottom bar, #4084): fixed to the bottom, a

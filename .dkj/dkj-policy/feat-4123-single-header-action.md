@@ -39,19 +39,36 @@
 
 ### PLAN
 
+#4123: a page with exactly one action shows it directly in the header, not behind three dots and a sheet of one
+item. The three dots and the sheet appear only from two actions up.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `product-pages-lib.ps1`: `Format-SiteHeaderHtml` draws a single action as `a.site-header__action`, an icon
+      cell labelled with the action's name; its optional `Icon` is `download` (the default) or `print`
+- [x] `house-product.css`: `.site-header__action` takes the More cell's place, size and states
+- [x] The product README states the rule under "The sheet: actions"; the specimens show a one-action phone header
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: one action draws the icon cell and no sheet, `Icon = 'print'` picks the print glyph,
+      and two actions still draw the More cell and the sheet (812 passed)
+- [x] The new specimen card is served at `/plugins/dkj-policy/dkj-brandbook/nav`
+- [ ] The owner's look at the one-action header on the specimen page
+
 ### DEPLOY: feat/4123-single-header-action
 
-**Score:**
+A product page with a single action, such as *Save as PDF*, now shows that action as its own icon in the site
+header, instead of three dots that open a sheet holding one item. The three dots and the sheet appear only when a
+page has two actions or more. An app drawing its header with `Format-SiteHeaderHtml` gets this with the update.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 

@@ -63,7 +63,9 @@ function Format-SiteHeaderHtml {
         to -SettingsHref where the app has a settings page (the gear's place on a phone), and an About section ending in
         the app's -Name and -MenuNote (e.g. the brand book version), each left out when its input is.
         THE ACTIONS SHEET (#4095, Figma Product / Sheet): -Actions, the page's own actions (each @{ Label; Href }),
-        adds a More cell that opens them as a sheet titled -PageTitle.
+        adds a More cell that opens them as a sheet titled -PageTitle, from two actions up. A single action is drawn
+        directly as its own icon cell, a.site-header__action, with no sheet (#4123); its optional Icon is 'download'
+        (the default) or 'print'.
         -Path is accepted and does nothing: the phone's title is plain text, never a button opening the path as a
         sheet (Dave, November 15, 2026; dkj-lifehub's header has none). Kept so a caller that still passes it does not
         fail on a parameter that is gone; the back cell is the way up.
@@ -101,7 +103,16 @@ function Format-SiteHeaderHtml {
     $tagHtml = if ($Tag) { ' <span class="site-header__tag">' + (& $e $Tag) + '</span>' } else { '' }
     $acts = @($Actions | Where-Object { $_ -and $_.Label -and $_.Href })
     $moreHtml = ''
-    if ($acts.Count) {
+    if ($acts.Count -eq 1) {
+        # One action is shown directly, as its own icon cell: three dots opening a sheet of one item is an extra tap
+        # and an empty promise (#4123). The action's Icon names the glyph, 'download' (the default) or 'print'.
+        $a = $acts[0]
+        $glyph = if ("$($a.Icon)" -eq 'print') {
+            'M7 3h10v4h2a2 2 0 0 1 2 2v7h-4v5H7v-5H3V9a2 2 0 0 1 2-2h2zm2 2v2h6V5zm0 10v4h6v-4z'
+        } else { 'M11 4h2v8.586l3.293-3.293 1.414 1.414L12 16.414l-5.707-5.707 1.414-1.414L11 12.586zM5 18h14v2H5z' }
+        $moreHtml = '<a class="site-header__action" href="' + (& $e $a.Href) + '" aria-label="' + (& $e $a.Label) + '" title="' + (& $e $a.Label) + '">' +
+            '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="' + $glyph + '"/></svg></a>'
+    } elseif ($acts.Count) {
         $moreHtml = '<button class="site-header__more" type="button" aria-controls="site-actions" aria-expanded="false" aria-haspopup="dialog" aria-label="More actions">' +
             '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>'
         $dialogs += & $sheet 'site-actions' 'Actions' $PageTitle (($acts | ForEach-Object { & $row $_ '' }) -join '')
