@@ -488,7 +488,7 @@ sheet itself.
 #### The bottom bar, on a phone
 
 **A product may put its sections in the thumb zone** (#4094, after the Figma `Product / Bottom bar`, #4084): a bar
-fixed to the bottom of a phone, a hairline on top and the safe area padded below. It has **four slots or five**:
+fixed to the bottom of a phone, on `--bg-2` against the page (a hairline on top until #4127), and the safe area padded below. It has **four slots or five**:
 three or four sections, then **More**, always last, a button that opens the site menu.
 
 - **Each slot** is a 16px icon over a 12px label, a 44px tap target, all equally wide. The section you are in
@@ -519,7 +519,7 @@ three or four sections, then **More**, always last, a button that opens the site
 
 **A product's home page on a phone is a list of topics, not a stack of cards** (Figma wireframe `H1 - Home
 (mobiel)`; first built in dkj-lifehub, where its shape was settled): each topic a heading with its initial in a round
-badge, the topic's sections under it, a thin rule between topics, indented to the heading's text.
+badge, the topic's sections under it, the topics set apart by their spacing (a thin rule between them until #4127).
 
 - **The badge is on the primary.** A small mark beside a heading is an accent, as the current bottom-bar slot is,
   so it does not break the rule that the theme colour is never a fill for content (Dave, November 13, 2026).
@@ -556,12 +556,12 @@ gutter, every tap target 44px or more. [`patterns/product-page.html`][pattern-pa
 - **No source note**: a page's footer line naming the files it is read from carries `.page-source` beside `.note`,
   and leaves the screen below 48rem (#4113). Four to six lines of paths are a desk reader's note.
 - **Figure tiles read as rows**: a `.tiles` row is one card on a phone, each `.tile` a row of about 52px with its
-  label left and its figure right, a line between (#4113).
+  label left and its figure right, each on its own fill with a `--spacing-0-5` gap of page between (#4113; a line between until #4127).
 - **No card inside a card.** A list is one card of rows; a status card and a details card stand one under the other,
   never nested. A `.status-card` is a surface itself and never sits in a `.card`.
 - **Compact rows of about 52px instead of large tiles**: `.card.card--rows.menu-list`, one `a.menu-item` per item
-  (the title, its meta line in `.menu-item__sub`, an optional value in `.menu-item__aside`, the chevron), a line
-  between the rows. **A group of tiles becomes that card by itself on a phone**: below 48rem a `.grid-2`, `.grid-3`
+  (the title, its meta line in `.menu-item__sub`, an optional value in `.menu-item__aside`, the chevron), each row on
+  its own fill with a `--spacing-0-5` gap of page between the rows (a line until #4127). **A group of tiles becomes that card by itself on a phone**: below 48rem a `.grid-2`, `.grid-3`
   or `.card-grid` holding `.card--link` tiles keeps its `.grid__head` above as the section's
   heading and draws each link as a row of about 52px (#4113). A wide screen keeps the tiles.
 - **No surface in a surface, at any width**: a group (`.grid-2`, `.grid-3`, `.card-grid`) has no background,

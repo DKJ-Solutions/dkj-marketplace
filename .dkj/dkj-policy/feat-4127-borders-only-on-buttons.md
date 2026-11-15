@@ -39,21 +39,51 @@
 
 ### PLAN
 
-Apply the brand book principle that a border means 'you can press this': remove borders from cards, rows, tables, notices, chips and bars, separating with fills instead; keep buttons, input recognisability and focus rings.
+Inbound #4127: a border means "you can press this", so it stays on buttons and nowhere else; a surface is told
+apart by its fill. Stacked on `feat/4126-no-group-surface` (a card is told apart by its fill alone only once the
+group tray is gone), with `origin/main` merged in.
+
+#### The three open cases, settled
+
+- **Inputs keep their border**: a field is something you press to type in, so it is inside the principle, not an
+  exception to it (`.field`, `.nav-search`, `.toolbar__filter`, `.stepper`, `.combo`).
+- **Row dividers go**: rows inside one surface are set apart by their spacing; a `.table` alternates its body
+  rows' fill; a list that must read as one block (`.card--rows`, a phone's card-link group and `.tiles`) puts each
+  row on its own fill a `--spacing-0-5` gap apart; a total is a tinted band, not a rule.
+- **Focus rings stay**, untouched.
+
+Two lines deliberately stay: an `hr` (a rule is its whole meaning) and the opt-in `.header--accent`.
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-style.css`: borders off cards, tiles, mini-cards, notices, alerts, banners, panels, chips, tooltips, the settings panel, `pre`, `blockquote`, facts, items, menu rows and items, tables, the shell's bar, nav, toolbar, detail pane and empty state; state borders become tints; `.panel--button` gains a button edge
+- [x] `house-product.css`: borders off dialogs, drawer and sheet, the breadcrumb bar, the bottom bar (now `--bg-2`), topics, stat, bill, compare, calc and date rows, `.field__fixed`, the combo list, value box and figure; `.card--rows`, phone card-link groups and phone `.tiles` become rows a `--spacing-0-5` gap apart
+- [x] both READMEs state the principle and drop the lines they described; #4131 filed for the Admin and dashboard domain layers
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the two #4113 phone asserts follow the gap instead of the hairline (811 passed); `check-house-style` (175), `house-palette` (219) green; `check-house-style.ps1` OK
+- [x] computed styles read in the browser: this branch's Admin on port 4893 draws the home table with alternating rows and no lines; the product on 4870 has borderless cards on `--bg-2` and borderless bars
+- [ ] the owner looks at Admin and a product at both widths
+
 ### DEPLOY: feat/4127-borders-only-on-buttons
 
-**Score:**
+The brand book now draws a border only where something can be pressed
+([#4127](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4127)): buttons, fields, the controls a person
+types in, and the focus ring keep theirs; cards, notices, alerts, panels, chips, tooltips, dialogs, bars and code
+blocks stand on their own fill, rows inside a surface are set apart by spacing (a table by alternating fills), and a
+state that was a coloured edge is a tint. The README states the rule.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Every DKJ-Solutions app that takes the update loses almost every line on its pages: cards, notices and the header
+and bottom bars stand on their fill alone, tables stripe instead of ruling, and lists of rows become rows of fill a
+hairline of page apart. No markup changes; an app whose own layer draws borders of its own keeps them until it
+follows the rule.
+
+**Score:** 3
 
 #### Pull Request
 

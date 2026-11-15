@@ -58,7 +58,7 @@
    on top of a dialog sets --dialog-scale smaller. The page behind stands still while one is open. */
 .dialog { width: calc(min(100vw, var(--column-narrow)) * var(--dialog-scale, 0.95)); max-width: none; max-height: calc(100% - var(--spacing-8));
   margin: auto; padding: 0; overflow-y: auto; overscroll-behavior: contain; text-align: left;
-  color: var(--fg-1); background: var(--bg-2); border: 1px solid var(--bg-3); border-radius: var(--radius-3); }
+  color: var(--fg-1); background: var(--bg-2); border: 0; border-radius: var(--radius-3); }
 .dialog::backdrop { background: var(--bg-1); opacity: 0.45; }
 html:has(dialog:modal) { overflow: hidden; }
 /* The padding sits in the body, so a tap on empty space in the dialog never counts as a tap outside it. */
@@ -90,14 +90,13 @@ html:has(dialog:modal) { overflow: hidden; }
 
 /* ---- Drawer: a dialog that slides in from the right ------------------------------ */
 /* <dialog class="dialog dialog--drawer">: full height, 352px or the screen minus 48px, rounded on
-   the left only. Its head is as tall as the top bar, with a line under it across the full width,
-   and the close button sits in the middle of that head. */
+   the left only. Its head is as tall as the top bar, and the close button sits in the middle of that head. */
 .dialog--drawer { width: min(352px, calc(100% - 48px)); height: 100%; max-height: 100%; margin: 0 0 0 auto;
-  border-width: 0 0 0 1px; border-radius: var(--radius-3) 0 0 var(--radius-3); touch-action: pan-y; animation: house-drawer-in 220ms ease-out; }
+  border-radius: var(--radius-3) 0 0 var(--radius-3); touch-action: pan-y; animation: house-drawer-in 220ms ease-out; }
 .dialog--drawer .dialog__body { display: flex; flex-direction: column; min-height: 100%; box-sizing: border-box;
   padding-top: calc(var(--spacing-4) + env(safe-area-inset-top)); padding-bottom: calc(var(--spacing-4) + env(safe-area-inset-bottom)); }
 .dialog--drawer .dialog__head { box-sizing: border-box; height: var(--topbar-h); min-height: 0; margin: calc(-1 * var(--spacing-4)) calc(-1 * var(--spacing-4)) 0;
-  padding: 0 calc(var(--spacing-4) + var(--tap) + var(--spacing-2)) 0 var(--spacing-4); border-bottom: 1px solid var(--bg-3); }
+  padding: 0 calc(var(--spacing-4) + var(--tap) + var(--spacing-2)) 0 var(--spacing-4); }
 .dialog--drawer .dialog__head--two { padding-right: calc(var(--spacing-4) + 2 * var(--tap) + var(--spacing-4)); }
 .dialog--drawer .dialog__head--back { padding: 0 var(--spacing-4) 0 calc(var(--spacing-4) + var(--tap) + var(--spacing-2)); }
 .dialog--drawer :is(.dialog__head h3, .dialog__title) { font-weight: var(--font-weight-bold); }   /* as the name in the top bar */
@@ -170,7 +169,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .site-header .theme-settings__toggle[aria-expanded="true"] { background: var(--primary-hover); }
 .site-header .theme-settings__toggle svg { width: var(--spacing-6); height: var(--spacing-6); }
 .site-header .theme-settings__toggle:focus-visible { outline-color: var(--bg-1); outline-offset: -4px; }
-.site-header + .breadcrumbs-bar { background: var(--bg-1); border-bottom: 1px solid var(--bg-3); }
+.site-header + .breadcrumbs-bar { background: var(--bg-1); }
 .site-header + .breadcrumbs-bar .breadcrumbs a { color: var(--primary-muted); }   /* Maikel, November 1, 2026; it was --fg-3 */
 .site-header + .breadcrumbs-bar .breadcrumbs a:focus-visible { outline-color: var(--primary-muted); }
 .site-header + .breadcrumbs-bar .breadcrumbs__sep { color: var(--primary-muted); }
@@ -253,7 +252,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
    #4095. Its head is the site header's own bar: the primary, as tall, a back cell at the left that closes it (a
    .dialog__close--back) and the title in the header's type. Under it a .menu-list of sections: a p.menu-section (a small
    uppercase head), then .menu-item rows (an optional .menu-item__icon, the label with an optional .menu-item__sub, an
-   optional .menu-item__aside value at the right, the chevron), a --bg-3 line under each row; and at the foot a
+   optional .menu-item__aside value at the right, the chevron), set apart by their height with no line (#4127); and at the foot a
    .menu-footer (the app's name, __name, and a quieter line, __note). The content keeps the narrow column, so at the
    Phone width on a computer it lines up with the header. */
 .dialog--screen { width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; border: 0; border-radius: 0; background: var(--bg-1);
@@ -271,8 +270,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .dialog--screen .dialog__close:focus-visible { outline-color: var(--bg-1); outline-offset: -4px; }
 .dialog--screen .dialog__close svg { width: var(--spacing-6); height: var(--spacing-6); }
 .dialog--screen .menu-item { gap: var(--spacing-4); min-height: var(--spacing-16); padding: var(--spacing-3) var(--spacing-4); border-radius: 0;
-  border-bottom: 1px solid var(--bg-3); font-size: var(--text-h3); }
-.dialog--screen .menu-item + .menu-item { border-top: 0; }
+  font-size: var(--text-h3); }
 .dialog--screen .menu-item__icon { width: var(--spacing-6); height: var(--spacing-6); }
 .dialog--screen .menu-item__sub { margin-top: var(--spacing-1); }
 .dialog--screen .menu-item[aria-current="page"] { font-weight: var(--font-weight-bold); color: var(--primary); }
@@ -291,7 +289,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
    the narrow column wide; a grab handle (span.dialog__handle), an optional p.dialog__title, and .menu-item rows with no
    line between them, the page you are on in the primary. A tap on the dimmed page shuts it (house-theme.js). The
    backdrop is the header's own strong fill, the primary, as in the Figma. */
-.dialog--sheet { width: min(100%, var(--column-narrow)); max-height: 85%; margin: auto auto 0; border-width: 1px 1px 0;
+.dialog--sheet { width: min(100%, var(--column-narrow)); max-height: 85%; margin: auto auto 0;
   border-radius: var(--radius-3) var(--radius-3) 0 0; background: var(--bg-1); animation: house-sheet-in 200ms ease-out; }
 .dialog--sheet::backdrop { background: var(--primary); opacity: 0.6; animation: house-backdrop-in 200ms ease-out; }
 .dialog--sheet .dialog__body { display: flex; flex-direction: column; gap: var(--spacing-1);
@@ -299,7 +297,6 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .dialog__handle { align-self: center; width: var(--spacing-10); height: var(--spacing-1); border-radius: var(--radius-pill); background: var(--bg-3); }
 .dialog--sheet .dialog__title { font-size: var(--text-h3); font-weight: var(--font-weight-bold); overflow-wrap: anywhere; }
 .dialog--sheet .menu-item { gap: var(--spacing-3); padding: var(--spacing-3) var(--spacing-4); font-size: var(--text-base); }
-.dialog--sheet .menu-item + .menu-item { border-top: 0; }
 .dialog--sheet .menu-item__chevron { color: var(--primary-muted); }
 .dialog--sheet .menu-item[aria-current="page"] { font-weight: var(--font-weight-bold); color: var(--primary); cursor: default; }
 @keyframes house-sheet-in { from { transform: translateY(100%); } }
@@ -322,7 +319,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 
 /* ---- Bottom bar (#4094) --------------------------------------------------------------------------------- */
 /* The app's sections in the thumb zone, on a phone only (Figma Product / Bottom bar, #4084): fixed to the bottom, a
-   hairline on top, the safe area padded below. Four slots, or five; each is an icon over a 12px label, a 44px tap
+   on --bg-2 against the page (a hairline on top until #4127), the safe area padded below. Four slots, or five; each is an icon over a 12px label, a 44px tap
    target, and the section you are in is bold in the text colour (aria-current="page"), the others regular and muted.
    The last slot is always More: a button opening the site menu, so a page with a bottom bar leaves the
    header's three-line toggle out (Figma Menu toggle=false). house-theme.js wires More as it wires that toggle.
@@ -337,7 +334,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 :root[data-width="phone"] .bottom-bar { display: flex; max-width: 360px; margin-inline: auto; }
 .bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; align-items: flex-start;
   padding: var(--spacing-2) 0 max(var(--spacing-5), env(safe-area-inset-bottom));
-  background: var(--bg-1); border-top: 1px solid var(--bg-3); }
+  background: var(--bg-2); }
 @media (max-width: 48rem) { body:has(> .bottom-bar) { padding-bottom: calc(var(--spacing-2) + var(--spacing-11) + max(var(--spacing-5), env(safe-area-inset-bottom)) + 1px); } }
 :root[data-width="phone"] body:has(> .bottom-bar) { padding-bottom: calc(var(--spacing-2) + var(--spacing-11) + max(var(--spacing-5), env(safe-area-inset-bottom)) + 1px); }
 .bottom-bar__item { display: flex; flex: 1 1 0; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-1);
@@ -352,19 +349,19 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .bottom-bar__label { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
 /* ---- A group of card links on a phone (#4113) -------------------------------------------------------------- */
-/* The mobile wireframes draw a list as one card of compact rows with a line between, and the README says the same
+/* The mobile wireframes draw a list as one card of compact rows, and the README says the same
    ("Compact rows of about 52px instead of large tiles"). A wide screen keeps its group of tiles, but below 48rem a
    group of card links (.grid-2, .grid-3 or .card-grid holding .card--link) reads as that one card: its .grid__head
-   stands above as the section's heading, and each link is a row of about 52px. It weighs more than a page's own grid
+   stands above as the section's heading, and each link is a row of about 52px on its own fill, the rows a --spacing-0-5
+   gap of page apart (a line between them until #4127). It weighs more than a page's own grid
    layer (.sp-grid, .dr-repos), so a page needs no rule of its own for it. A card in a group that is not a link stays
    the plain card it is. A group has no surface at any width since #4126, so nothing here takes one away. */
 @media (max-width: 48rem) {
   :is(.grid-2, .grid-3, .card-grid) { grid-template-columns: minmax(0, 1fr); }
   :is(.grid-2, .grid-3, .card-grid) > .grid__head { margin-bottom: var(--spacing-2); }
-  :is(.grid-2, .grid-3, .card-grid):has(> .card--link) { gap: 0; }
-  :is(.grid-2, .grid-3, .card-grid) > .card--link { margin: 0; padding: 0 var(--spacing-4); border: 1px solid var(--bg-3); border-top-width: 0;
-    border-radius: 0; background: var(--bg-2); }
-  :is(.grid-2, .grid-3, .card-grid) > .card--link:not(.card--link ~ .card--link) { border-top-width: 1px; border-top-left-radius: var(--radius-3); border-top-right-radius: var(--radius-3); }
+  :is(.grid-2, .grid-3, .card-grid):has(> .card--link) { gap: var(--spacing-0-5); }
+  :is(.grid-2, .grid-3, .card-grid) > .card--link { margin: 0; padding: 0 var(--spacing-4); border-radius: 0; background: var(--bg-2); }
+  :is(.grid-2, .grid-3, .card-grid) > .card--link:not(.card--link ~ .card--link) { border-top-left-radius: var(--radius-3); border-top-right-radius: var(--radius-3); }
   :is(.grid-2, .grid-3, .card-grid) > .card--link:not(:has(~ .card--link)) { border-bottom-left-radius: var(--radius-3); border-bottom-right-radius: var(--radius-3); }
   :is(.grid-2, .grid-3, .card-grid) > .card--link:hover { background: var(--bg-3); }
   :is(.grid-2, .grid-3, .card-grid) > .card--link .menu-item { gap: var(--spacing-3); min-height: var(--control-lg); padding: var(--spacing-2) 0; }
@@ -375,7 +372,7 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 /* ---- Topic list -------------------------------------------------------------------------------------------- */
 /* A product's pages as a list of topics, its home page on a phone (Figma wireframe "H1 - Home (mobiel)"; first built
    in dkj-lifehub, which is where its shape was settled): each topic a heading with its initial in a badge, its
-   sections under it, a thin rule between topics, indented to the heading's text. The whole row is the tap target,
+   sections under it, the topics set apart by their spacing (a thin rule between them until #4127). The whole row is the tap target,
    with a press state across the full width. The badge is on the primary: a small mark beside a heading is an accent,
    as the current bottom-bar slot is, never a block of content on the primary (Dave, November 13, 2026).
    <nav class="topic-list" aria-label="Pages"><section class="topic"><h2><a class="topic__link"
@@ -384,7 +381,6 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
    A topic without a page of its own puts a span.topic__link in the heading. The list is always drawn: a page that
    shows cards on a wide screen and this list on a phone hides one of the two itself, at 48rem. */
 .topic { position: relative; padding-block: var(--spacing-3); }
-.topic + .topic::before { content: ""; position: absolute; top: 0; left: var(--spacing-11); right: 0; border-top: 1px solid var(--bg-3); }
 .topic > h2 { display: flex; margin: 0; font-size: var(--text-h2); font-weight: var(--font-weight-bold); color: var(--fg-1); }
 .topic__link { display: flex; flex: 1; align-items: center; gap: var(--spacing-4); min-height: var(--control-lg); color: inherit; text-decoration: none; }
 .topic__badge { display: inline-grid; place-items: center; flex: none; width: var(--spacing-7); height: var(--spacing-7); border-radius: 50%;
@@ -439,11 +435,14 @@ a.topic__link:focus-visible, .topic__item:focus-visible { outline: 2px solid var
 
 /* ---- Row list: compact rows in one card (#4097) ------------------------------------------------------------------ */
 /* A list of items as one card of rows (Figma Product / List row): about 52px a row, a title with a meta line under it,
-   an optional value at the right and the chevron, a line between the rows. Compact rows rather than large tiles, and
+   an optional value at the right and the chevron, each row on its own fill and a --spacing-0-5 gap of page between the
+   rows (a line until #4127). Compact rows rather than large tiles, and
    the rows sit in the one card rather than each being a card: no card in a card.
    <nav class="card card--rows menu-list" aria-label=".."><a class="menu-item" href><span class="menu-item__label">Title
    <span class="menu-item__sub">Meta</span></span><span class="menu-item__aside">4.5</span>(chevron)</a> ..</nav> */
-.card--rows { padding: 0; overflow: hidden; }
+.card--rows { display: flex; flex-direction: column; gap: var(--spacing-0-5); padding: 0; overflow: hidden; background: none; }
+.card--rows > .menu-item { background: var(--bg-2); }
+.card--rows > a.menu-item:hover { background: var(--bg-3); }
 .card--rows > .menu-item { gap: var(--spacing-3); min-height: var(--control-lg); padding: var(--spacing-2) var(--spacing-4); border-radius: 0;
   font-weight: var(--font-weight-bold); }
 .card--rows > .menu-item .menu-item__sub { margin-top: var(--spacing-0-5); }
@@ -466,16 +465,15 @@ a.topic__link:focus-visible, .topic__item:focus-visible { outline: 2px solid var
    the same two conditions: without its heading it stood alone at the top left, explaining nothing beside it. The page's
    source note (.page-source, the footer line naming the files a page is read from) is a desk reader's note, four to six
    lines of paths on a phone, so it goes there too. And a row of figure tiles (.tiles) reads as one card of compact rows,
-   label left and figure right with a line between, as the wireframes draw every list, instead of a two-column grid of
+   label left and figure right, each on its own fill a --spacing-0-5 gap apart (a line between until #4127), instead of a two-column grid of
    boxes above the content. */
 @media (max-width: 48rem) {
   body:has(.site-header__back) main .page-title .page-info-button { display: none; }
   main > .page-source { display: none; }
-  .tiles { grid-template-columns: minmax(0, 1fr); gap: 0; background: var(--bg-2); border: 1px solid var(--bg-3); border-radius: var(--radius-3);
+  .tiles { grid-template-columns: minmax(0, 1fr); gap: var(--spacing-0-5); border-radius: var(--radius-3);
     overflow: hidden; }
   .tiles > .tile { display: flex; align-items: baseline; justify-content: space-between; gap: var(--spacing-3); min-height: var(--control-lg);
-    padding: var(--spacing-2) var(--spacing-4); border: 0; border-radius: 0; background: none; }
-  .tiles > .tile + .tile { border-top: 1px solid var(--bg-3); }
+    padding: var(--spacing-2) var(--spacing-4); border-radius: 0; }
   .tiles > .tile .v { margin-top: 0; }
 }
 :root[data-width="phone"] body:has(.site-header__back) main .page-title .page-info-button { display: none; }
@@ -592,7 +590,7 @@ a.topic__link:focus-visible, .topic__item:focus-visible { outline: 2px solid var
 /* ---- Form parts: checkbox, stepper, search combobox ----------------------------- */
 /* A read-only value in a .field's place, as tall as a tap target: <p class="field__fixed">. */
 .field__fixed { margin: 0; display: flex; align-items: center; min-height: var(--tap); padding: var(--spacing-1) var(--spacing-3); font-size: var(--text-base); font-weight: var(--font-weight-bold); line-height: 1.2;
-  overflow-wrap: anywhere; background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); }
+  overflow-wrap: anywhere; background: var(--bg-3); border-radius: var(--radius-2); }
 /* Checkbox: <label class="check"><input type="checkbox"><span>Label</span><small>help</small></label>. The box is the native
    one, so it takes the theme through accent-color; 24px, in a 44px row. */
 .check { display: flex; align-items: flex-start; gap: var(--spacing-2-5); min-height: var(--tap); font-size: var(--text-base); font-weight: var(--font-weight-bold); color: var(--fg-1); cursor: pointer; }
@@ -627,7 +625,7 @@ a.topic__link:focus-visible, .topic__item:focus-visible { outline: 2px solid var
 .combo__input:not(:focus), .combo__picked { padding-right: var(--spacing-10); }
 .combo__glass { grid-row: 1; grid-column: 1; z-index: 2; justify-self: end; align-self: center; margin-right: var(--spacing-3); color: var(--fg-1); pointer-events: none; }
 .combo__input:focus ~ .combo__glass { display: none; }
-.combo__list { grid-row: 2; margin: var(--spacing-1-5) 0 0; padding: var(--spacing-1); list-style: none; background: var(--bg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-2); }
+.combo__list { grid-row: 2; margin: var(--spacing-1-5) 0 0; padding: var(--spacing-1); list-style: none; background: var(--bg-2); border-radius: var(--radius-2); box-shadow: var(--shadow-pop); }
 .combo__option { display: flex; flex-direction: column; justify-content: center; min-height: var(--tap); padding: var(--spacing-1-5) var(--spacing-2-5); border-radius: var(--radius-2);
   font-size: var(--text-base); line-height: 1.3; overflow-wrap: anywhere; cursor: pointer; }
 .combo__name { color: var(--fg-1); }
@@ -642,9 +640,9 @@ a.topic__link:focus-visible, .topic__item:focus-visible { outline: 2px solid var
 /* ---- Value box and stat rows -------------------------------------------------- */
 /* Value box: a figure in a box as tall as a control (--control-h), so it lines up with the button beside it. __num is the
    figure (--regular, --lg, --negative, --positive), __was the old value, __unit the unit; --changed marks a value the
-   user changed (a --primary-muted border on the tint), --flush drops the side padding. */
+   user changed (the tint, with a --primary-muted border until #4127), --flush drops the side padding. */
 .value-box { display: flex; align-items: center; justify-content: center; gap: var(--spacing-1-5); min-width: var(--spacing-12); height: var(--control-h); padding: var(--spacing-1) var(--spacing-2-5);
-  border: 1px solid transparent; border-radius: var(--radius-2); font-variant-numeric: tabular-nums; }
+  border-radius: var(--radius-2); font-variant-numeric: tabular-nums; }
 .value-box__num { display: flex; align-items: baseline; gap: var(--spacing-1); font-size: var(--text-base); font-weight: var(--font-weight-bold); line-height: 1.2; color: var(--fg-1); }
 .value-box__num--regular { font-weight: var(--font-weight-regular); }
 .value-box__num--lg { font-size: var(--text-h3); }
@@ -652,15 +650,14 @@ a.topic__link:focus-visible, .topic__item:focus-visible { outline: 2px solid var
 .value-box__num--positive { color: var(--positive-5); }
 .value-box__was { font-size: var(--text-sm); font-weight: var(--font-weight-regular); color: var(--fg-1); }
 .value-box__unit { font-size: var(--text-sm); font-weight: var(--font-weight-bold); color: var(--fg-1); }
-.value-box--changed { border: 2px solid var(--primary-muted); background: var(--bg-3); }
+.value-box--changed { background: var(--bg-3); }
 .value-box--flush { padding-left: 0; padding-right: 0; }
 /* Stat rows: <div class="stat-rows"><div class="stat-row"><span class="stat-row__name">Name<span class="stat-row__sub">..</span></span>
-   a .value-box and an .icon-btn</div>..</div>. Name, value, action, a --bg-3 rule between rows; the button is
+   a .value-box and an .icon-btn</div>..</div>. Name, value, action, the rows set apart by their spacing (#4127); the button is
    --control-h square, as the box. --help adds a column for a .round-toggle (on one row, or on all of them through
    .stat-rows--help, so the values stay in line); --formula is name, a + b = total and the button; --head a row of
    column heads. */
-.stat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--control-h); column-gap: var(--spacing-3); align-items: center; padding: var(--spacing-2) 0; border-bottom: 1px solid var(--bg-3); }
-.stat-rows > .stat-row:last-child { border-bottom: 0; }
+.stat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--control-h); column-gap: var(--spacing-3); align-items: center; padding: var(--spacing-2) 0; }
 .stat-row .icon-btn { width: var(--control-h); min-width: var(--control-h); height: var(--control-h); }
 .stat-row__name { min-width: 0; font-size: var(--text-base); color: var(--fg-1); overflow-wrap: anywhere; }
 .stat-row__sub { display: block; font-size: var(--text-sm); color: var(--primary-muted); font-variant-numeric: tabular-nums; }
@@ -672,7 +669,7 @@ a.topic__link:focus-visible, .topic__item:focus-visible { outline: 2px solid var
 .stat-row--formula .value-box { min-width: 0; padding: var(--spacing-1); }
 .stat-row--formula > .icon-btn { justify-self: end; }
 .stat-row__op { text-align: center; font-weight: var(--font-weight-bold); color: var(--fg-1); }
-.stat-row--head { padding-bottom: 0; border-bottom: 0; font-size: var(--text-sm); font-weight: var(--font-weight-bold); color: var(--fg-1); text-align: center; }
+.stat-row--head { padding-bottom: 0; font-size: var(--text-sm); font-weight: var(--font-weight-bold); color: var(--fg-1); text-align: center; }
 /* Step header: a previous button, a large value (an h1-size figure, trimmed to its cap height so the box centre is the
    letters' centre) and a next button, on 5.5rem columns. The buttons are .btn. */
 .step-head { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) 5.5rem; align-items: center; gap: var(--spacing-2); }
@@ -705,21 +702,18 @@ a.topic__link:focus-visible, .topic__item:focus-visible { outline: 2px solid var
 
 /* ---- Tables: bill, comparison, calculation ------------------------------------ */
 /* Bill: one table per invoice: small uppercase column heads, a row per line (a __slot, an item __name that truncates, an
-   optional quantity, a price at the right, an action), groups that close with a __subtotal between stronger rules, and a
-   __total under a --primary rule. Add --qty when there is a quantity column, and .num to the figures' cells. */
+   optional quantity, a price at the right, an action), groups that close with a __subtotal on the tint, and a __total on
+   the tint too (each between rules until #4127). Add --qty when there is a quantity column, and .num to the figures' cells. */
 .bill, .compare { width: 100%; border-collapse: collapse; }
 .bill { table-layout: fixed; }
 .bill .num, .compare .num { text-align: right; white-space: nowrap; }
 .bill th, .bill td { height: 2.25rem; padding: var(--spacing-0-5) 0 var(--spacing-0-5) var(--spacing-1); vertical-align: middle; text-align: left; }
 .bill tr > :first-child { padding-left: 0; }
-.bill thead tr { border-bottom: 1px solid var(--bg-3); }
 .bill .bill__head > * { height: auto; padding-top: 0; padding-bottom: var(--spacing-1); vertical-align: bottom; font-size: var(--text-sm); font-weight: var(--font-weight-bold); letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-1); }
 .bill__head > :nth-child(1) { width: 4.75rem; }
 .bill__head > :nth-last-child(2) { width: 5rem; }
 .bill__head > :last-child { width: calc(var(--control-h) + var(--spacing-1)); }
 .bill--qty .bill__head > :nth-child(3) { width: var(--spacing-10); }
-.bill tbody tr { border-bottom: 1px solid var(--bg-3); }
-.bill tbody:last-of-type tr:last-child { border-bottom: 0; }
 .bill__slot { font-size: var(--text-base); font-weight: var(--font-weight-bold); color: var(--fg-1); }
 .bill__name { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-base); line-height: 1.3; }
 .bill__qty { font-size: var(--text-base); color: var(--fg-1); }
@@ -727,31 +721,31 @@ a.topic__link:focus-visible, .topic__item:focus-visible { outline: 2px solid var
 .bill__action { text-align: right; }
 .bill__action .icon-btn { width: var(--control-h); min-width: var(--control-h); height: var(--control-h); margin-left: auto; }
 .bill__action .round-toggle { margin: calc(-1 * var(--spacing-2)) calc(-1 * var(--spacing-2)) calc(-1 * var(--spacing-2)) auto; }
-.bill .bill__subtotal { border-top: 2px solid var(--primary-muted); border-bottom: 2px solid var(--primary-muted); }
+.bill .bill__subtotal { background: var(--bg-3); }
 .bill .bill__subtotal > * { height: auto; padding-top: var(--spacing-1-5); padding-bottom: var(--spacing-1-5); vertical-align: baseline; }
 .bill__subtotal th, .bill__total th { padding-right: var(--spacing-4); font-size: var(--text-base); font-weight: var(--font-weight-bold); text-align: right; }
 .bill__subtotal strong, .bill__total strong { font-size: var(--text-base); font-variant-numeric: tabular-nums; }
-.bill tfoot tr { border-top: 1px solid var(--primary); }
+.bill tfoot tr { background: var(--bg-3); }
 .bill .bill__total > * { height: auto; padding-top: var(--spacing-2); padding-bottom: var(--spacing-2); vertical-align: baseline; }
 .bill__total strong { color: var(--primary-muted); }
-/* Comparison: row labels at the left and a column of figures per option, the closing row (a tfoot) large over a --primary-muted rule. */
+/* Comparison: row labels at the left and a column of figures per option, the closing row (a tfoot) large on the tint. */
 .compare { font-variant-numeric: tabular-nums; }
-.compare th, .compare td { padding: var(--spacing-2) 0; border-bottom: 1px solid var(--bg-3); vertical-align: baseline; }
+.compare th, .compare td { padding: var(--spacing-2) 0; vertical-align: baseline; }
 .compare tbody th { text-align: left; font-weight: var(--font-weight-regular); overflow-wrap: anywhere; }
 .compare td.num { padding-left: var(--spacing-2); }
 .compare thead th { padding: 0 0 var(--spacing-2) var(--spacing-2); font-size: var(--text-sm); font-weight: var(--font-weight-bold); line-height: 1.2; color: var(--fg-1); text-align: right; vertical-align: bottom; }
 .compare thead td { padding: 0; }
-.compare tbody tr:last-child > * { padding-bottom: var(--spacing-3); border-bottom: 0; }
-.compare tfoot th, .compare tfoot td { padding-top: var(--spacing-3-5); border-bottom: 0; border-top: 2px solid var(--primary-muted); font-weight: var(--font-weight-bold); font-size: var(--text-h3); text-align: left; }
+.compare tbody tr:last-child > * { padding-bottom: var(--spacing-3); }
+.compare tfoot th, .compare tfoot td { padding-top: var(--spacing-3-5); padding-bottom: var(--spacing-3-5); background: var(--bg-3); font-weight: var(--font-weight-bold); font-size: var(--text-h3); text-align: left; }
 .compare tfoot td { text-align: right; }
 /* Calculation: a grid of rows (a subgrid, so the columns line up through every box), each a __what, an __op (+ - x =)
-   and a __num; a __box rings a group of rows and nests; --boxed lets boxes span in from an edge column; a __result row
+   and a __num; a __box sets a group of rows on the tint and nests, one step further each level (a ring until #4127); --boxed lets boxes span in from an edge column; a __result row
    sums up, large in --primary-muted. A .calc-section holds one question's calculation (its __question) and an .answer. */
 .calc { display: grid; grid-template-columns: [what] minmax(0, 1fr) [op] auto [num] auto; font-variant-numeric: tabular-nums; }
 .calc__row, .calc__box { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; }
-.calc__row { align-items: baseline; border-bottom: 1px solid var(--bg-3); line-height: 1.35; }
+.calc__row { align-items: baseline; line-height: 1.35; }
 .calc__row > * { padding: var(--spacing-2) 0; }
-.calc__row:has(+ .calc__result) { margin-bottom: var(--spacing-2); border-bottom: 0; }
+.calc__row:has(+ .calc__result) { margin-bottom: var(--spacing-2); }
 .calc__what { grid-column: what; padding-left: var(--spacing-3); font-size: var(--text-base); overflow-wrap: anywhere; }
 .calc__sub { display: block; font-size: var(--text-sm); color: var(--primary-muted); }
 .calc__op { grid-column: op; min-width: 1rem; padding-inline: var(--spacing-2); font-size: var(--text-base); text-align: center; color: var(--fg-1); }
@@ -760,10 +754,9 @@ a.topic__link:focus-visible, .topic__item:focus-visible { outline: 2px solid var
 .calc--boxed .calc__what { padding-left: var(--spacing-2); }
 .calc--boxed .calc__op { padding-inline: var(--spacing-1); }
 .calc--boxed .calc__num { padding-inline: var(--spacing-2); }
-.calc__box { margin: 0; padding: var(--gutter, var(--spacing-1-5)) 0; border: 1.5px solid var(--bg-4); border-radius: var(--radius-3); }
+.calc__box { margin: 0; padding: var(--gutter, var(--spacing-1-5)) 0; border-radius: var(--radius-3); background: var(--bg-3); }
+.calc__box .calc__box { background: var(--bg-4); }
 .calc--boxed .calc__box > .calc__row, .calc--boxed .calc__box > .calc__box { grid-column: 2 / -2; }   /* boxes only exist in a boxed calculation */
-.calc__box > .calc__row:last-child { border-bottom: 0; }
-.calc__result { border-bottom: 0; }
 .calc__result .calc__num { font-size: var(--text-h3); font-weight: var(--font-weight-bold); color: var(--primary-muted); }
 .calc-section + .calc-section { margin-top: var(--spacing-6); }
 .calc-section__question { margin: 0 0 var(--spacing-0-5); font-size: var(--text-h3); font-weight: var(--font-weight-bold); color: var(--fg-1); }
@@ -776,8 +769,7 @@ a.topic__link:focus-visible, .topic__item:focus-visible { outline: 2px solid var
    <div class="date-row__body"><span class="date-row__title">..</span><span class="date-row__sub">..</span></div>
    <span class="date-row__trailing">..</span></div></li></ul>. */
 .date-list { list-style: none; margin: 0; padding: 0; }
-.date-row { position: relative; display: grid; grid-template-columns: var(--datecol) minmax(0, 1fr); column-gap: var(--spacing-3); align-items: start; min-height: var(--tap); padding: var(--spacing-2) var(--spacing-3); border-top: 1px solid var(--bg-3); }
-.date-list > .date-row:first-child { border-top: 0; }
+.date-row { position: relative; display: grid; grid-template-columns: var(--datecol) minmax(0, 1fr); column-gap: var(--spacing-3); align-items: start; min-height: var(--tap); padding: var(--spacing-2) var(--spacing-3); }
 .date-row__when { display: flex; flex-direction: column; align-items: flex-start; gap: var(--spacing-1); font-size: var(--text-sm); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--fg-1); }
 .date-row__main { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--spacing-1) var(--spacing-3); min-width: 0; }
 .date-row__body { display: flex; flex-direction: column; flex: 1 1 10rem; min-width: 0; }
@@ -802,7 +794,7 @@ a.topic__link:focus-visible, .topic__item:focus-visible { outline: 2px solid var
    and, where there is no image yet, a __placeholder (a __glyph and a __label). The image covers the frame, or --contain
    fits inside it. <figure class="figure"><div class="figure__frame"><img ...></div><figcaption class="figure__caption">. */
 .figure { margin: 0; min-width: 0; }
-.figure__frame { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--bg-3); border-radius: var(--radius-3); background: var(--bg-3); }
+.figure__frame { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--radius-3); background: var(--bg-3); }
 .figure--ratio-4-3 .figure__frame { aspect-ratio: 4 / 3; }
 .figure--ratio-3-2 .figure__frame { aspect-ratio: 3 / 2; }
 .figure--ratio-1-1 .figure__frame { aspect-ratio: 1 / 1; }
