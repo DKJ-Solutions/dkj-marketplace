@@ -59,8 +59,8 @@ function Format-SiteHeaderHtml {
         of the breadcrumb bar (#4048, house-product.css "Site header on a phone"): a back cell first in the header and
         the title after the brand, both hidden on a wide header. A page below home passes both; home passes neither.
         THE MENU (#4095) opens full screen (dialog.dialog--screen.site-menu, Figma Product / Menu row, Menu section head
-        and Menu footer): a Pages section with -Menu's items (each may carry a Sub line), a Display section with one row
-        to -SettingsHref where the app has a settings page (the gear's place on a phone), and an About section ending in
+        and Menu footer): a Pages section with -Menu's items (each may carry a Sub line), a Settings section with one
+        gear row to -SettingsHref where the app has a settings page (the gear's place on a phone, #4124), and an About section ending in
         the app's -Name and -MenuNote (e.g. the brand book version), each left out when its input is.
         THE ACTIONS SHEET (#4095, Figma Product / Sheet): -Actions, the page's own actions (each @{ Label; Href }),
         adds a More cell that opens them as a sheet titled -PageTitle.
@@ -84,7 +84,9 @@ function Format-SiteHeaderHtml {
         param($i, [string]$cur)
         $sub = if ($i.Sub) { '<span class="menu-item__sub">' + (& $e $i.Sub) + '</span>' } else { '' }
         $aside = if ($i.Value) { '<span class="menu-item__aside">' + (& $e $i.Value) + '</span>' } else { '' }
-        '<a class="menu-item" href="' + (& $e $i.Href) + '"' + $cur + '><span class="menu-item__label">' + (& $e $i.Label) + $sub + '</span>' + $aside + $chevron + '</a>'
+        # Icon is markup this function drew itself (the gear below), never caller text.
+        $icon = if ($i.Icon) { [string]$i.Icon } else { '' }
+        '<a class="menu-item" href="' + (& $e $i.Href) + '"' + $cur + '>' + $icon + '<span class="menu-item__label">' + (& $e $i.Label) + $sub + '</span>' + $aside + $chevron + '</a>'
     }
     $sheet = {
         param([string]$Id, [string]$Label, [string]$Title, [string]$Rows)
@@ -116,7 +118,13 @@ function Format-SiteHeaderHtml {
         $nav = '<nav class="site-header__nav" aria-label="Main"><ul class="site-header__menu">' + $links + '</ul>' + $toggle + '</nav>'
         $sections = '<p class="menu-section">Pages</p>' + (($items | ForEach-Object { & $row $_ (& $cur $_) }) -join '')
         if ($SettingsHref) {
-            $sections += '<p class="menu-section">Display</p>' + (& $row @{ Label = 'Display'; Sub = 'Light or dark, theme, width'; Href = $SettingsHref } '')
+            # The gear means settings in every DKJ product (#4124), so the row carries the house gear house-theme.js draws.
+            $gear = '<svg class="menu-item__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="currentColor"><path fill-rule="evenodd" d="' +
+                'M9.79 4.31L10.55 1.7L13.45 1.7L14.21 4.31A8 8 0 0 1 15.88 5L18.26 3.69L20.31 5.74L19 8.12A8 8 0 0 1 19.69 9.79L22.3 10.55L22.3 13.45L19.69 14.21' +
+                'A8 8 0 0 1 19 15.88L20.31 18.26L18.26 20.31L15.88 19A8 8 0 0 1 14.21 19.69L13.45 22.3L10.55 22.3L9.79 19.69A8 8 0 0 1 8.12 19L5.74 20.31L3.69 18.26' +
+                'L5 15.88A8 8 0 0 1 4.31 14.21L1.7 13.45L1.7 10.55L4.31 9.79A8 8 0 0 1 5 8.12L3.69 5.74L5.74 3.69L8.12 5A8 8 0 0 1 9.79 4.31Z' +
+                'M16.85 12a4.85 4.85 0 1 0-9.7 0a4.85 4.85 0 1 0 9.7 0z"/></svg>'
+            $sections += '<p class="menu-section">Settings</p>' + (& $row @{ Label = 'Settings'; Sub = 'Light or dark, theme, width'; Href = $SettingsHref; Icon = $gear } '')
         }
         $sections += '<p class="menu-section">About</p>'
         $footer = '<div class="menu-footer"><p class="menu-footer__name">' + (& $e $Name) + '</p>' +
@@ -206,7 +214,7 @@ function Format-ProductPageHtml {
         right of the h1's row, which is then the house page-header row (main > header). -Info is what the page is
         about, behind a drawn "?" right of the h1 (Get-PageInfoScript places its tooltip).
         -Actions, -SettingsHref and -MenuNote go to the site header as they are (#4095): the page's own actions behind
-        the More cell, the Display row of the full-screen menu, and the menu's foot line.
+        the More cell, the Settings row of the full-screen menu, and the menu's foot line.
         -BottomBar is the app's sections for a phone's bottom bar (Format-BottomBarHtml, #4094), three or four, with
         -MoreLabel naming its last slot; the header then leaves its toggle out, since More opens the menu. It needs
         -Brand and -Menu, because More opens the menu the header draws from -Menu.

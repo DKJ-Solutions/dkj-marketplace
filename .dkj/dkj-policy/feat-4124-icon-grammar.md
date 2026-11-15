@@ -39,21 +39,40 @@
 
 ### PLAN
 
+Inbound #4124: one meaning per icon across DKJ products on a phone (three lines = more pages, three dots = page
+actions, gear = settings), and settings as a single gear row inside More. The header already followed the grammar;
+what was left was writing it down and turning the menu's Display section into a Settings row with the gear. The
+Figma half (aligning `Product / Menu`, #4085) is not in this branch: it goes on the issue for the owner's look.
+The More-as-a-page half is #4125.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Format-SiteHeaderHtml` draws a Settings section whose row carries the house gear (`product-pages-lib.ps1`)
+- [x] the icon grammar and the Settings row in the product README; the product-page pattern and the specimens follow
 
 ### TEST
 
+- [x] asserts in `dev-pages.tests.ps1`: the Settings section, its gear before the label, no Display section left (810 passed)
+- [ ] the owner looks at the full-screen menu on a phone width: the Settings section and its gear
+
 ### DEPLOY: feat/4124-icon-grammar
 
-**Score:**
+Every DKJ product now reads three icons one way on a phone: **three lines** for more pages, **three dots** for the
+page's own actions, and the **gear** for settings
+([#4124](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4124)). The product README writes that grammar
+down, and the full-screen menu's **Display** section becomes **Settings**, its one row carrying the house gear, so
+on a phone settings sit inside the menu rather than as an icon in the header.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions product that draws its header with `Format-SiteHeaderHtml` and passes `-SettingsHref` shows a
+**Settings** section with a gear in its phone menu where it showed **Display**, with no change of its own. One that
+draws the menu by hand renames the section and adds the gear, as the README says.
+
+**Score:** 3
 
 #### Pull Request
 
 Product on a phone: one icon grammar, and settings as a row in More
-
