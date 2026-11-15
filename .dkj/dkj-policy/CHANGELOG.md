@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**3 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4112-device-preview · 20261115-151812Z
+
+Inside this repo, the product layer gains a device-preview pattern and specimen, and `house-theme.js` switches its
+versions.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions product that shows a mobile mockup, an A/B variant or a design proposal takes the brand book's phone
+frame (`.device-stage`, `.device`, `.device__screen`) instead of writing its own: an iframe per version keeps the
+mockup's own look, and a `.seg` above it switches versions with no script of the page's own.
+
+**Score:** 3
+
+#### Pull Request
+
+Brand book: a device preview with an A/B toggle
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4119](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4119)
+
+---
 
 ### DEPLOY: feat/4114-long-page-word-limit · 20261115-150505Z
 
