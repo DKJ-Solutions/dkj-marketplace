@@ -39,19 +39,43 @@
 
 ### PLAN
 
+#4128: on a phone the site header took 68px and the bottom bar 73px, 141px of a 844px screen. Give the header its
+own phone height, independent of the desktop line, and trim the bottom bar in the same move.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-product.css`: below 48rem and at the Phone width the header's `.container` is `--topbar-h` (56px) tall,
+      and the back, actions (`__more`, `__action`) and menu-toggle cells are `--topbar-h` wide, so they stay square
+- [x] The full-screen menu's head and its back cell follow the same `--topbar-h`
+- [x] The bottom bar pads `--spacing-2` below its slots, or the safe area where there is one (was a 20px floor), and
+      the body's bottom padding follows: 61px instead of 73px
+- [x] The product README states the phone height under "On a phone: back and title"
+
+#### Not in this branch
+
+The `.site-header__action` selector names the one-action cell of `feat/4123-single-header-action` (#4123, parked for
+the owner's look), so the two agree once both land; until then it matches nothing.
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the phone height, the square cells, the menu head and the bottom bar's padding (811
+      passed)
+- [ ] The owner's look at a product page and the home page at the Phone width
+
 ### DEPLOY: feat/4128-phone-header-height
 
-**Score:**
+On a phone a product's site header is 56px tall instead of 68px, with its back, actions and menu cells still square,
+and the full-screen menu's head matches it. The bottom bar is 61px instead of 73px on a phone without a home
+indicator, and keeps the safe area on one that has it. Together they give about 24px of the screen back to the page.
+A wide screen is unchanged.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 

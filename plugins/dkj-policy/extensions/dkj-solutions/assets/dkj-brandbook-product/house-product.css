@@ -240,6 +240,14 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
   .site-header > .container:has(.site-header__back) .site-header__brand { display: none; }
   .site-header > .container:has(.site-header__back) .site-header__nav { flex: none; }
 }
+/* On a phone the header has a height of its own, the house top bar's --topbar-h (56px), not the 68px a desktop line
+   gives it (#4128): an iOS navigation bar is 44pt and a Material top app bar 64dp, and a phone's height is scarce. Its
+   cells stay square at that height: the back cell, the actions, the menu toggle. */
+@container site-header (max-width: 48rem) {
+  .site-header__back, .site-header__more, .site-header__action, .site-header__menu-toggle { width: var(--topbar-h); }
+}
+@media (max-width: 48rem) { .site-header > .container { min-height: var(--topbar-h); } }
+:root[data-width="phone"] .site-header > .container { min-height: var(--topbar-h); }
 @media (max-width: 48rem) {
   .site-header + .breadcrumbs-bar { display: none; }
   html:has(.site-header + .breadcrumbs-bar) { scroll-padding-top: 0; }
@@ -259,14 +267,15 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .dialog--screen { width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; border: 0; border-radius: 0; background: var(--bg-1);
   animation: house-backdrop-in 160ms ease-out; }
 .dialog--screen .dialog__body { max-width: var(--column-narrow); min-height: 100%; margin: 0 auto; padding: 0 0 env(safe-area-inset-bottom); box-sizing: border-box; }
-.dialog--screen .dialog__head { box-sizing: border-box; min-height: calc(var(--spacing-11) + 2 * var(--spacing-3)); margin: 0;
-  padding: env(safe-area-inset-top) var(--spacing-4) 0 calc(var(--text-h1) + 2 * var(--spacing-1) + 3 * var(--spacing-3));   /* the back cell, then the header's own gap */
+/* The full-screen menu opens on a phone only, so its head has the phone header's height, --topbar-h (#4128). */
+.dialog--screen .dialog__head { box-sizing: border-box; min-height: var(--topbar-h); margin: 0;
+  padding: env(safe-area-inset-top) var(--spacing-4) 0 calc(var(--topbar-h) + var(--spacing-3));   /* the back cell, then the header's own gap */
   background: var(--primary); color: var(--bg-1); }
 .dialog--screen :is(.dialog__head h3, .dialog__title) { font-size: var(--text-h2); font-weight: var(--font-weight-bold); color: var(--bg-1);
   overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 /* The close is the header's back cell: the full height of the bar, as wide, the chevron in the header's colour. */
-.dialog--screen .dialog__close { top: env(safe-area-inset-top); left: 0; right: auto; width: calc(var(--text-h1) + 2 * var(--spacing-1) + 2 * var(--spacing-3));
-  height: calc(var(--spacing-11) + 2 * var(--spacing-3)); color: var(--bg-1); border: 0; border-radius: 0; }
+.dialog--screen .dialog__close { top: env(safe-area-inset-top); left: 0; right: auto; width: var(--topbar-h);
+  height: var(--topbar-h); color: var(--bg-1); border: 0; border-radius: 0; }
 .dialog--screen .dialog__close:hover { background: var(--primary-hover); }
 .dialog--screen .dialog__close:focus-visible { outline-color: var(--bg-1); outline-offset: -4px; }
 .dialog--screen .dialog__close svg { width: var(--spacing-6); height: var(--spacing-6); }
@@ -335,11 +344,13 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .bottom-bar { display: none; }
 @media (max-width: 48rem) { .bottom-bar { display: flex; } }
 :root[data-width="phone"] .bottom-bar { display: flex; max-width: 360px; margin-inline: auto; }
+/* Its padding is --spacing-2 above and below, or the safe area where a phone has one, so the bar is 61px where it was
+   73px (#4128): the 20px floor below the slots added height on a phone without a home indicator, where nothing needs it. */
 .bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; align-items: flex-start;
-  padding: var(--spacing-2) 0 max(var(--spacing-5), env(safe-area-inset-bottom));
+  padding: var(--spacing-2) 0 max(var(--spacing-2), env(safe-area-inset-bottom));
   background: var(--bg-1); border-top: 1px solid var(--bg-3); }
-@media (max-width: 48rem) { body:has(> .bottom-bar) { padding-bottom: calc(var(--spacing-2) + var(--spacing-11) + max(var(--spacing-5), env(safe-area-inset-bottom)) + 1px); } }
-:root[data-width="phone"] body:has(> .bottom-bar) { padding-bottom: calc(var(--spacing-2) + var(--spacing-11) + max(var(--spacing-5), env(safe-area-inset-bottom)) + 1px); }
+@media (max-width: 48rem) { body:has(> .bottom-bar) { padding-bottom: calc(var(--spacing-2) + var(--spacing-11) + max(var(--spacing-2), env(safe-area-inset-bottom)) + 1px); } }
+:root[data-width="phone"] body:has(> .bottom-bar) { padding-bottom: calc(var(--spacing-2) + var(--spacing-11) + max(var(--spacing-2), env(safe-area-inset-bottom)) + 1px); }
 .bottom-bar__item { display: flex; flex: 1 1 0; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-1);
   min-width: 0; min-height: var(--spacing-11); padding: 0 var(--spacing-1); border: 0; background: transparent;
   color: var(--primary-muted); font: inherit; font-size: var(--text-sm); font-weight: var(--font-weight-regular); line-height: 1.4;
