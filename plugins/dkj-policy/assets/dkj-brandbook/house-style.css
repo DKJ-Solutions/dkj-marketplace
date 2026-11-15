@@ -408,7 +408,10 @@ p { margin: 0; }
 .item p { margin: 0; font-size: var(--text-sm); color: var(--fg-1); }
 
 /* ---- Tables --------------------------------------------------------------- */
-.table-wrap { overflow-x: auto; }
+/* position: relative makes the wrap the containing block of what is absolute inside it, so its scroll clips that too:
+   without it, a .sr-only column head at the far edge of a wide table (positioned against <body>) widened the whole
+   page on a phone while the table itself scrolled (#4111). */
+.table-wrap { overflow-x: auto; position: relative; }
 .table { border-collapse: collapse; width: 100%; font-size: var(--text-sm); }
 .table th, .table td { padding: var(--spacing-2) var(--spacing-2-5); text-align: right; border-bottom: 1px solid var(--bg-3); white-space: nowrap; }
 .table th { color: var(--fg-1); font-weight: var(--font-weight-bold); }
