@@ -470,6 +470,10 @@ line between them, the page you are on bold in the primary. A tap on the dimmed 
   say), titled with the page's name. On a phone it stands before the menu toggle; on a wide header at the far right,
   because the actions are the page's and must not vanish on a computer. `Format-SiteHeaderHtml -Actions` (each
   `@{ Label; Href }`) draws the cell and its sheet, and `Format-ProductPageHtml -Actions` passes them on.
+- **One action is not a sheet** (#4123). Three dots promise more options, so they appear only from two actions up. A
+  page with exactly one action shows it directly, as its own icon cell in the same place and size:
+  `a.site-header__action`, labelled with the action's name, no sheet. `Format-SiteHeaderHtml` does this by itself;
+  the action's optional `Icon` picks the glyph, `download` (the default, for *Save as PDF*) or `print`.
 - **`house-theme.js` wires both** as it wires the menu: the trigger opens the dialog its `aria-controls` names as a
   modal and sets `aria-expanded`; a tap on the backdrop, or the trigger vanishing as the header grows wide, shuts it.
 
