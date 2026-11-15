@@ -48,7 +48,8 @@ knows what not to redefine. The product layer reserves these too:
   `__nav`, `__menu`, `__menu-toggle`, `__back`, `__title`, `__more`; [below](#the-site-header-above-the-bar)),
   the full-screen menu's parts, `.menu-section`, `.menu-footer` (with `__name`, `__note`) and `.menu-item__aside`
   ([below](#the-menu-in-the-header)), and the bottom bar, `.bottom-bar` (with `__item`, `__more`, `__icon`,
-  `__label`; [below](#the-bottom-bar-on-a-phone)), the status card, `.status-card` (with `__kicker`), and the error state,
+  `__label`; [below](#the-bottom-bar-on-a-phone)), the topic list, `.topic-list` (`.topic` around a plain `h2`, with `__link`,
+  `__badge`, `__items`, `__item`; [below](#the-topic-list-a-home-page-on-a-phone)), the status card, `.status-card` (with `__kicker`), and the error state,
   `.error-state` on an `.empty-state` ([below](#status-card-and-error-state)).
 - **The brand-book components** ([below](#brandbook-app-components)): `.round-toggle`, `.badge-toggle`, `.help`,
   `.more--structured` (`.more__title`, `__meta`, `__trailing`, `__version`), `.question-head` (the answer line
@@ -328,24 +329,20 @@ the two change together.
 - **The bar's hide reads the window** (`@media (max-width: 48rem)`) and the Phone width in the settings
   (`:root[data-width="phone"]`): the header's own fold is a container query, and a container query cannot reach the
   bar beside it.
-- **The path on demand** (#4095, Figma `Product / Site header`, Path sheet=true): the title is a button with a small
-  chevron after it, and a tap opens the whole trail as a [sheet](#the-sheet-path-and-actions), Home first and the page
-  itself last, current and unlinked. It replaced the line here that said the full trail on a phone was not part of
-  #4048.
+- **The title is never a button.** A phone has no path on demand: the back cell is the way up, one level at a time
+  (Dave, November 15, 2026, as dkj-lifehub's header does; the path sheet #4095 added is gone).
 
-`Format-SiteHeaderHtml -Back @{ Label; Href } -PageTitle <name> -Path <trail>` draws all three, and
-`Get-SiteHeaderBack` picks the page one level up from the trail; `Format-ProductPageHtml` passes them on every page
-below home, the path being the same trail the breadcrumb bar draws. Without `-Path` the title stays a plain,
-`aria-hidden` span.
+`Format-SiteHeaderHtml -Back @{ Label; Href } -PageTitle <name>` draws both, and `Get-SiteHeaderBack` picks the page
+one level up from the trail; `Format-ProductPageHtml` passes them on every page below home. `-Path` is still accepted,
+so a caller that passes it does not fail, and draws nothing.
 
 ```html
 <header class="site-header"><div class="container">
   <a class="site-header__back" href="/projects" aria-label="Back to Projects">(chevron, mirrored)</a>
   <a class="site-header__brand" href="/" aria-label="my-app, home"><span class="site-header__name">my-app</span></a>
-  <button class="site-header__title" type="button" aria-controls="site-path" aria-expanded="false" aria-haspopup="dialog" aria-label="Path to Project X"><span>Project X</span>(chevron down)</button>
+  <span class="site-header__title" aria-hidden="true">Project X</span>
   <nav class="site-header__nav" aria-label="Main">...</nav>
-</div>
-<dialog class="dialog dialog--sheet" id="site-path" aria-label="Path">...</dialog></header>
+</div></header>
 <div class="breadcrumbs-bar">...</div>
 ```
 
@@ -407,15 +404,13 @@ drawer. An app that draws the menu by hand swaps `dialog--drawer` for `dialog--s
 its close into the back cell; one that draws it with `Format-SiteHeaderHtml` gets it with the update. The drawer
 itself stays a house class for an app's own use.
 
-#### The sheet: path and actions
+#### The sheet: actions
 
 **A short list of choices on a phone rises from the bottom as a sheet** (#4095, Figma `Product / Sheet`):
 `dialog.dialog--sheet`, the paper, rounded at the top only and the narrow column wide, over the page dimmed in the
 primary. It holds a grab handle (`span.dialog__handle`), an optional `p.dialog__title`, and `.menu-item` rows with no
 line between them, the page you are on bold in the primary. A tap on the dimmed page shuts it, as Escape does.
 
-- **The path sheet** opens from the phone's title ([above](#on-a-phone-back-and-title)): the whole trail, as the
-  breadcrumb bar would show it on a computer.
 - **The actions sheet** opens from a **More cell**, `button.site-header__more` (three dots, as wide as the menu
   toggle, Figma `Product / Site header`, More=true), and lists the page's own actions (the lifehub's *Save as PDF*,
   say), titled with the page's name. On a phone it stands before the menu toggle; on a wide header at the far right,
@@ -466,6 +461,29 @@ three or four sections, then **More**, always last, a button that opens the site
 </nav>
 ```
 
+#### The topic list, a home page on a phone
+
+**A product's home page on a phone is a list of topics, not a stack of cards** (Figma wireframe `H1 - Home
+(mobiel)`; first built in dkj-lifehub, where its shape was settled): each topic a heading with its initial in a round
+badge, the topic's sections under it, a thin rule between topics, indented to the heading's text.
+
+- **The badge is on the primary.** A small mark beside a heading is an accent, as the current bottom-bar slot is,
+  so it does not break the rule that the theme colour is never a fill for content (Dave, November 13, 2026).
+- **The whole row is the tap target**, with a press state across the full width, for the heading and each section.
+- **A topic without a page of its own** puts a `span.topic__link` in its heading instead of a link.
+- **The list is always drawn.** A home page that keeps its cards on a wide screen hides one of the two forms
+  itself, at 48rem, the width the header folds its menu at.
+
+```html
+<nav class="topic-list" aria-label="Pages">
+  <section class="topic">
+    <h2><a class="topic__link" href="/brain"><span class="topic__badge" aria-hidden="true">B</span>Brain</a></h2>
+    <ul class="topic__items"><li><a class="topic__item" href="/brain/work">Work</a></li></ul>
+  </section>
+  ..
+</nav>
+```
+
 **In Admin** there is no site header menu: Admin draws its side navigation instead (`Get-AdminNav`), whose Development section is its home page's cards in their order (GitHub, Release notes, Claude, Installed plugins: `Get-AdminMenu`, from the same list the cards come from). A product's menu is its own pages.
 
 ### The product page: the phone rules and the computer layout
@@ -494,7 +512,7 @@ gutter, every tap target 44px or more. [`patterns/product-page.html`][pattern-pa
 
 **On a computer, a main column and a sidebar**: `main.page-layout`, holding a `.page-layout__main` (640px) and an
 `aside.page-layout__side` (320px), each also a `.page-column`, 48px apart and centred, under the site header with
-its menu and the breadcrumb bar. The breadcrumb bar is for the computer only; a phone has the path sheet. The
+its menu and the breadcrumb bar. The breadcrumb bar is for the computer only; a phone has the back cell. The
 sidebar holds what stands beside the work (a status card, card links elsewhere), each part under its own `h2`.
 Narrower than 48rem, and at the Phone width, the two stack: the sidebar comes after the main column. The bottom bar
 and the sheets do not appear on a computer.
