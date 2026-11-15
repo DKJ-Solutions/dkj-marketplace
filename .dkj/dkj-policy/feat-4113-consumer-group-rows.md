@@ -39,19 +39,46 @@
 
 ### PLAN
 
+Cause 5's first bullet of #4113: `/consumers/bwj` and `/consumers/other` were one long report -- a table of repos,
+then every repo's check report with a "Back to overview" button -- which ran past a phone's screen, and no mobile
+wireframe draws that form. The owner chose the DKJ group's form (November 15, 2026): the group page is a card per
+repo, which the phone rule of #4121 draws as one card of compact rows, and each repo's report is a page of its own
+at `/consumers/<group>/<name>`. `/docs-coverage` is #4111 and stays out of this branch.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `consumer-dashboard-lib.ps1`: a group page is its summary line and a `card-grid` of repo cards
+  (`Format-ConsumerRepoCardLinkHtml`, shared with the Consumers overview); the table, the Issues card and its
+  mini-cards are gone, with their styles
+- [x] a repo's own page, `Format-ConsumerRepoPageHtml`, holding one card headed This machine
+  (`Format-ConsumerRepoCardHtml`) whose paths and plugin ids wrap (`.cd-card`); `Get-ConsumerRepoSlug` names it
+  `owner--name` where Other holds two repos of one name
+- [x] `serve-consumer-dashboard.ps1`: the route `/consumers/(bwj|other)/<slug>`, a 404 for an unknown one, and
+  `/refresh` coming back to it
+- [x] a card's id is the old details anchor, so an old `#repo-...` link still lands on its card
 
 ### TEST
 
+- [x] `consumer-dashboard.tests.ps1`: 260 passed, 0 failed -- the group page's cards, the repo page's frame and card,
+  the slug and its twin rule, and the live server serving every linked repo page and a 404 for an unknown one
+- [x] `dev-pages.tests.ps1`: 810 passed, 0 failed
+- [x] seen at 390 px in headless Chromium: `/consumers/bwj` is one card of two rows, and
+  `/consumers/bwj/smartwatchbanden` and `/consumers/other/djcylow-react` fit the screen, their long paths wrapping
+  inside the card
+
 ### DEPLOY: feat/4113-consumer-group-rows
 
-**Score:**
+The BWJ and Other repos on the Consumers pages read like the DKJ ones: a group's page is a card per repo -- on a
+phone one card of compact rows -- and each repo's report is a page of its own, where its long paths and plugin ids
+wrap inside the card. The table and the one long report of every repo are gone.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
