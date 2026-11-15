@@ -1524,5 +1524,8 @@ function Get-HouseStyleAllowlist {
         @{ Path = 'plugins/dkj-policy/extensions/bwj-development/*';       Reason = 'the BWJ-Development extension: its pages carry BWJ''s own styling, outside the house style by design' }
         @{ Path = 'scripts/tests/stopwatch.tests.ps1';          Reason = 'regex patterns that read font-size declarations out of rendered pages, not declarations of their own' }
         @{ Path = 'scripts/tests/consumer-dashboard.tests.ps1'; Name = 'var\(--font-weight-bold\)'; Reason = 'a regex pattern that reads a house-weight declaration out of the rendered dashboard, not a declaration of its own (#3784)' }
+        @{ Path = 'scripts/tests/dev-pages.tests.ps1'; Name = '.site-header__back';   Reason = 'a regex pattern that reads the phone header''s square cells out of house-product.css, not a declaration of its own (#4128)' }
+        @{ Path = 'scripts/tests/dev-pages.tests.ps1'; Name = '.site-header__more';   Reason = 'the same #4128 pattern' }
+        @{ Path = 'scripts/tests/dev-pages.tests.ps1'; Name = '.site-header__action'; Reason = 'the same #4128 pattern' }
     )
 }
