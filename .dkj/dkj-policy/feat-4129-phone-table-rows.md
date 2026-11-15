@@ -48,7 +48,8 @@
 - [x] `house-theme.js`: copies each column head's text onto the body cells as `data-label` (colspan-aware; a cell
       that has one keeps it)
 - [x] The core README's "A table on a phone: rows as blocks", and a specimen card under Tables
-- [ ] The owner's look at the specimen at phone and wide width
+- [~] The owner's look at the specimen at phone and wide width. Not done as a separate look: DaveKJohn
+  approved the branch through issues-sweep-reviews on 2026-11-15 without one.
 
 ### TEST
 
