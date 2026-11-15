@@ -59,8 +59,9 @@ while `contain: paint` did.
 - [x] Measured in headless Chrome at a 375 px mobile viewport, fresh profile: `/docs-coverage` 1322 → 375
   (`.table-wrap` 343 wide, 1316 of content, scrolling), `/consumers/bwj` and `/consumers/other` stay 375,
   `/consumers` and `/` stay 375, and the fit alarm stays hidden.
-- [ ] The owner's look: `/docs-coverage` on a phone, the page at screen width and the table scrolling sideways
-  inside its own box.
+- [~] The owner's look: `/docs-coverage` on a phone, the page at screen width and the table scrolling sideways
+  inside its own box. Not done as a separate look: DaveKJohn approved the branch through
+  issues-sweep-reviews on 2026-11-15 without one.
 
 ### DEPLOY: fix/4111-docs-coverage-scroll
 
