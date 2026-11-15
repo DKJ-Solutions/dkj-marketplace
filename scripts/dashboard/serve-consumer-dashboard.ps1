@@ -405,6 +405,11 @@ try {
                 Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($html)) -Method $method
                 continue
             }
+            if ($path -eq '/more') {
+                # The bottom bar's More as a page of its own (#4125): the pages the bar does not carry, and Settings.
+                Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes((Format-ProductMoreHtml))) -Method $method
+                continue
+            }
             if ($path -eq '/settings') {
                 # The product's own Settings, theme and width (Maikel, November 4, 2026).
                 Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes((Format-ProductSettingsHtml))) -Method $method

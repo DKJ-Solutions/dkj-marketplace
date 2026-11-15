@@ -83,7 +83,7 @@ function Get-ProductBottomBar {
     <#
         The product's bottom bar on a phone (Format-BottomBarHtml, house-product.css "Bottom bar"), after the mobile
         navigation wireframe: Home and the two pages with sections of their own, Consumers and Plugins; More, which
-        the bar adds itself, opens the site menu with everything else (Admin, Docs coverage, Settings). Each icon is a
+        the bar adds itself, links the /more page with everything else (Admin, Docs coverage, Settings; #4125). Each icon is a
         line drawing at the bar's own size: Home a house, the other two their home-page card's (Admin's icon set).
     #>
     $svg = { param($d) '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + $d + '</svg>' }
@@ -510,10 +510,11 @@ function Format-ConsumerPageStart {
     # The menu is the product's pages (Get-ProductMenu), the Consumers page marked.
     # On a phone the header carries a back cell and the page's name instead of the bar (#4048).
     [void]$sb.Append((Format-SiteHeaderHtml -Name 'dkj-marketplace' -Href '/' -Tag 'product' -Menu @(Get-ProductMenu) -Current '/consumers' `
-        -Back (Get-SiteHeaderBack -Trail @($Trail | Where-Object { $_ })) -PageTitle $PageName -NoMenuToggle))
+        -Back (Get-SiteHeaderBack -Trail @($Trail | Where-Object { $_ })) -PageTitle $PageName -NoMenuToggle -NoMenuDialog))
     [void]$sb.Append((Format-ProductBreadcrumbBarHtml -Trail @($Trail | Where-Object { $_ }) -Current $PageName))
-    # On a phone the product's bottom bar, Consumers current; its More opens the menu, so the header has no toggle.
-    [void]$sb.Append((Format-BottomBarHtml -Items @(Get-ProductBottomBar) -Current '/consumers'))
+    # On a phone the product's bottom bar, Consumers current; its More is the /more page (#4125), so the header has no
+    # toggle and draws no menu dialog.
+    [void]$sb.Append((Format-BottomBarHtml -Items @(Get-ProductBottomBar) -Current '/consumers' -MoreHref '/more'))
     [void]$sb.AppendLine('<main class="page-column">')
 
     # The intro is a <div>, never a <header>, which the house style lays out as a flex row.

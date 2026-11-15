@@ -65,7 +65,20 @@ function Format-DevPageHtml {
     # -Bare: no h1 above the body (Format-ProductPageHtml's own switch), for a page that opens on its content.
     # -Info: what a plugin's page is about, behind the "?" right of its h1 (Format-ProductPageHtml's own, escaped by the caller).
     return Format-ProductPageHtml -Title $Title -Lead $Lead -Body $Body -Style $Style -FooterNote $FooterNote -ThemeKey $ThemeKey `
-        -Brand 'dkj-marketplace' -SiteName 'dkj-marketplace' -AdminHref '/' -HomeLabel 'Home' -Bare:$Bare -ParentCrumbs $ParentCrumbs -Info $Info -Menu @(Get-ProductMenu) -BottomBar @(Get-ProductBottomBar)
+        -Brand 'dkj-marketplace' -SiteName 'dkj-marketplace' -AdminHref '/' -HomeLabel 'Home' -Bare:$Bare -ParentCrumbs $ParentCrumbs -Info $Info -Menu @(Get-ProductMenu) -BottomBar @(Get-ProductBottomBar) -MoreHref '/more'
+}
+
+function Format-ProductMoreHtml {
+    <#
+        The product's More page on /more (#4125): the bottom bar's last slot as a page of its own, so it has a URL and
+        the bar marks it. It holds the site menu's sections (Format-ProductMoreBodyHtml): the pages the bar does not
+        carry, then the Settings row with its gear, and the product's name at the foot.
+    #>
+    $barHrefs = @(Get-ProductBottomBar | ForEach-Object { $_.Href })
+    $rest = @(Get-ProductMenu | Where-Object { $barHrefs -notcontains $_.Href -and $_.Href -ne '/settings' })
+    return Format-DevPageHtml -Title 'More' -Lead 'Every page of this product the bottom bar does not carry, and its settings.' `
+        -Body (Format-ProductMoreBodyHtml -Name 'dkj-marketplace' -Menu $rest -SettingsHref '/settings') `
+        -FooterNote 'Built by <code>scripts/lib/dev-pages-lib.ps1</code>, from the dkj-solutions plugin''s site menu.'
 }
 
 function Format-ProductSettingsHtml {
@@ -134,7 +147,7 @@ function Format-ProductHomeHtml {
     [void]$sb.AppendLine('</style>')
     [void]$sb.AppendLine('</head>')
     [void]$sb.AppendLine('<body>')
-    [void]$sb.Append((Format-ProductHomeHeadHtml -RepoName 'dkj-marketplace' -Brand 'dkj-marketplace' -HomeLabel 'Home' -Menu @(Get-ProductMenu) -BottomBar @(Get-ProductBottomBar)))
+    [void]$sb.Append((Format-ProductHomeHeadHtml -RepoName 'dkj-marketplace' -Brand 'dkj-marketplace' -HomeLabel 'Home' -Menu @(Get-ProductMenu) -BottomBar @(Get-ProductBottomBar) -MoreHref '/more'))
     # Every page a card of its own, three to a row, with no heading above them (the house admin form, #3383): the
     # admin first, so the way back is where the eye starts, then this repo's own pages. On the page itself, in the
     # Admin home's .ph-cards rather than a .grid-3, whose surface frames an h2 over h3 cards (November 2, 2026).

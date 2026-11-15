@@ -529,13 +529,22 @@ three or four sections, then **More**, always last, a button that opens the site
   `Format-ProductPageHtml -BottomBar` / `Format-ProductHomeHeadHtml -BottomBar` draw it and drop the toggle. A bar
   needs a `-Menu`, because More opens the menu the header draws from it.
   [`patterns/product-bottom-bar.html`][pattern-bottom-bar] is the stylesheet-only reference.
+- **More can be a page, and should be** (#4125). As a button More is the one slot with no URL: it cannot be
+  refreshed, linked or returned to, the phone's back gesture leaves the page under it instead of closing it, and the
+  bar never marks it. So a product gives it a page of its own (`/more`, or the product's own word): pass `-MoreHref`
+  and More becomes `<a class="bottom-bar__item" href="/more">` like the other slots, current on that page and on any
+  page whose first parent crumb is it. The page's body is `Format-ProductMoreBodyHtml`, the site menu's own sections
+  (the pages the bar does not carry, the Settings row, the app's name) in a `.menu-page`, whose rows read as the
+  full-screen menu's; `Format-SiteMenuSectionsHtml` renders both, so the two cannot drift. With `-MoreHref` the header
+  draws no menu dialog, since nothing opens it. [`patterns/product-more.html`][pattern-more] is the stylesheet-only
+  reference. Without `-MoreHref` More stays the button, and the dialog stays for products without a bottom bar.
 
 ```html
 <nav class="bottom-bar" aria-label="Sections">
   <a class="bottom-bar__item" href="/"><span class="bottom-bar__icon">(svg)</span><span class="bottom-bar__label">Home</span></a>
   <a class="bottom-bar__item" href="/agenda" aria-current="page"><span class="bottom-bar__icon">(svg)</span><span class="bottom-bar__label">Agenda</span></a>
   ..
-  <button class="bottom-bar__item bottom-bar__more" type="button" aria-controls="site-menu" aria-expanded="false"><span class="bottom-bar__icon">(three lines)</span><span class="bottom-bar__label">More</span></button>
+  <a class="bottom-bar__item" href="/more"><span class="bottom-bar__icon">(three lines)</span><span class="bottom-bar__label">More</span></a>
 </nav>
 ```
 
@@ -641,4 +650,5 @@ the `house-style-css` gate parses `house-product.css` as it does the core's.
 [core-changing]: https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md#changing-the-brand-book
 [pattern-page]: patterns/product-page.html
 [pattern-bottom-bar]: patterns/product-bottom-bar.html
+[pattern-more]: patterns/product-more.html
 [pattern-device]: patterns/device-preview.html

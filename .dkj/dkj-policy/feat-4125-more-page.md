@@ -39,19 +39,40 @@
 
 ### PLAN
 
+- [x] Make the bottom bar's More a page with its own URL (#4125), rendered from the same menu sections as the
+  full-screen dialog, and keep the dialog for products without a bottom bar.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `product-pages-lib.ps1`: the menu's sections and row lifted into `Format-SiteMenuSectionsHtml` and
+  `Format-MenuItemHtml`, shared by the dialog and the new `Format-ProductMoreBodyHtml`; `-MoreHref` on
+  `Format-BottomBarHtml`, `Format-ProductPageHtml` and `Format-ProductHomeHeadHtml`; `-NoMenuDialog` on the header.
+- [x] `house-product.css`: the dialog's row rules also read `.menu-page`; the bottom bar's comment names the link form.
+- [x] This repo's product: `/more` (`Format-ProductMoreHtml`), linked from the bar on every product page.
+- [x] `patterns/product-more.html` added, `product-bottom-bar.html` links it; the product README's bottom bar section.
+- [x] `dev-pages` and `consumer-dashboard` suites: the link form, the current marking, the shared renderer.
 
 ### TEST
 
+- [x] `dev-pages` 825 passed, `consumer-dashboard` 260 passed, run directly while building.
+- [ ] The owner's look: the More page on a phone width, and More marked in the bar.
+
 ### DEPLOY: feat/4125-more-page
 
-**Score:**
+Inside this repo, the product layer's renderer lifts the site menu's sections into one function,
+`Format-SiteMenuSectionsHtml`, which both the full-screen dialog and a new More page body
+(`Format-ProductMoreBodyHtml`) render, and this repo's product serves `/more` with the bottom bar's More linking it.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions product's bottom bar can now make More a page like its other slots: pass `-MoreHref` and More becomes
+a link to that page, with a URL that can be refreshed, linked and returned to. The phone's back gesture leaves it as
+it leaves any page, and the bar marks More as where you are. The page holds the same sections as the menu, and the
+full-screen dialog stays for products without a bottom bar.
+
+**Score:** 3
 
 #### Pull Request
 
