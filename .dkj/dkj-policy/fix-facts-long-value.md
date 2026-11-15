@@ -39,21 +39,39 @@
 
 ### PLAN
 
+Cause 1 of the phone inventory #4113: a fact row's long value ran over its term or past the card. The reason was
+read in the house rule before the repair: `.facts dt { min-width: 0 }` let the term shrink to nothing and
+`.facts dd { white-space: nowrap }` held the value to one line.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `house-style.css`: the term keeps its width (`flex: none`) and the value wraps under itself
+      (`min-width: 0; overflow-wrap: anywhere`), right-aligned as before
+- [x] `/consumers/dkj/<repo>` keeps its one-line facts with an ellipsis (Maikel, October 28, 2026): `.dr-facts dd`
+      now states the `nowrap` it had borrowed from the house rule
+- [x] Docs coverage's popup drops `.dc-detail__facts dd`, a local copy of what the house rule now does
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: the house rule's shape, `.dr-facts` still one line, no local copy in docs coverage
+- [x] `check-house-style`, `house-palette` green
+- [x] Seen at 390px: the specialist page's "What it is" and "Its files", the team page's "Holds" and "Source"
+
 ### DEPLOY: fix/facts-long-value
 
-**Score:**
+On a phone a fact row's long value -- a source path, a plugin with its note, a sentence -- no longer runs over its
+label or past the card: the label keeps its width and the value wraps under itself, right-aligned. A short value
+reads as before.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Every product built on the brand book shows its `.facts` lists readably on a phone: a long value wraps instead of
+covering its term. A page that wants one-line facts now says `white-space: nowrap` in its own layer.
+
+**Score:** 2
 
 #### Pull Request
 
 A fact row's long value wraps under its label instead of running over it on a phone
-
