@@ -219,10 +219,12 @@ $consumers = @(
 )
 # Both repos are owned by neither DKJ nor BWJ, so their details are the Other group's page (owner, October 26, 2026).
 $html = Format-ConsumerDashboardHtml -Consumers $consumers -Meta @{ GeneratedAt = 'now'; SourceCommit = 'abc1234'; Seconds = 1.25; CheckFailed = $null } -Group 'other'
-Assert-True ($html -notmatch '<script>alert') 'a git subject is shown as text, never as markup'
-Assert-True ($html -match '&lt;script&gt;alert') 'and it is still shown'
-Assert-True ($html -notmatch 'a&quot;note' -and $html -notmatch 'a"note' -and $html -notmatch 'Register notes') 'the register notes are not on the page at all (October 28, 2026), so they need no escaping'
-Assert-True ($html -match 'Last commit on main 2 days ago: ' -and $html -notmatch 'feat/y') 'the card states the trunk''s last commit, never the checked-out branch'
+# A repo's report is its own page since #4113, so what the check says about it is asserted there.
+$repoHtml = Format-ConsumerRepoPageHtml -Consumer $consumers[0] -Members $consumers -Meta @{ GeneratedAt = 'now'; Seconds = 1.25; CheckFailed = $null }
+Assert-True ($repoHtml -notmatch '<script>alert' -and $html -notmatch '<script>alert') 'a git subject is shown as text, never as markup'
+Assert-True ($repoHtml -match '&lt;script&gt;alert') 'and it is still shown, on the repo''s own page'
+Assert-True ($repoHtml -notmatch 'a&quot;note' -and $repoHtml -notmatch 'a"note' -and $repoHtml -notmatch 'Register notes' -and $html -notmatch 'a"note') 'the register notes are not on the page at all (October 28, 2026), so they need no escaping'
+Assert-True ($repoHtml -match 'Last commit on main 2 days ago: ' -and $repoHtml -notmatch 'feat/y') 'the card states the trunk''s last commit, never the checked-out branch'
 Assert-True ($html -match 'not on this machine') 'an absent checkout says so'
 Assert-True ($html.IndexOf('id="repo-org-beta"') -lt $html.IndexOf('id="repo-org-gamma"')) 'a repo that needs action comes before a skipped one'
 Assert-True ($html -match 'href="/refresh\?page=consumers/other"') 'a group page''s re-run comes back to that same group page'
@@ -230,15 +232,21 @@ Assert-True ($html -match 'href="/house-style.css"' -and $html -match 'src="/hou
 Assert-True ($html -match 'DKJTheme\.settings\(' -and $html -notmatch 'DKJTheme\.picker\(') 'the page keeps the house settings call (a no-op with no mount), never a hand-built picker card'
 Assert-True ($html -notmatch 'id="settings"' -and $html -notmatch 'theme-settings--floating') 'the page draws no settings button, in the site header or floating (Maikel, November 3, 2026)'
 Assert-True ($html -match '<li><a href="/consumers" aria-current="page">Consumers</a></li><li><a href="/plugins">Plugins</a></li>') 'the header carries the product''s pages as its menu, Consumers marked'
-# Five since the register notes' style went with them (October 28, 2026).
-Assert-True (([regex]::Matches($html, 'var\(--(primary|fg-|bg-)')).Count -ge 5 -and $html -match 'class="cd-link"') 'the chosen theme reaches the page beyond its buttons, through the repo layer''s own theme-colour accents'
+# Five since the register notes' style went with them (October 28, 2026); three since the group table's head and the
+# mini-card's surface went with the table (#4113): the links, the signal lines and the plugin line.
+Assert-True (([regex]::Matches($html, 'var\(--(primary|fg-|bg-)')).Count -ge 3 -and $html -match 'class="cd-link"') 'the chosen theme reaches the page beyond its buttons, through the repo layer''s own theme-colour accents'
 Assert-True ($html -notmatch 'class="eyebrow"' -and $html -match '<header class="site-header"><div class="container"><a class="site-header__back" href="/consumers" aria-label="Back to Consumers">.*?</a><a class="site-header__brand" href="/"' -and $html -match '<span class="site-header__title" aria-hidden="true">Other repos</span>' -and $html -notmatch 'site-path' -and $html -match '<h1>Other repos</h1>' -and $html -match '<main class="page-column">') 'the page keeps the Admin frame: the site header in place of the eyebrow (a phone''s back cell to Consumers first, its title after the brand as plain text, with no path sheet, #4048), its own h1, the page column'
 Assert-True ($html -match 'house-theme\.js"></script>\s*<script>DKJTheme\.setWidth\("full"\);</script>' -and $html -notmatch 'width-bar') 'the page pins the width to full, as Admin does, and draws no width bar (Dave, November 4, 2026)'
 Assert-True ($html -match '(?s)<body>\s*<header class="site-header">.*?</header>\s*<div class="breadcrumbs-bar"><div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><ol>\s*<li><a href="/">Home</a></li>\s*<li><span class="breadcrumbs__sep" aria-hidden="true"><svg\ viewBox="0\ 0\ 24\ 24"><path\ fill="currentColor"\ fill-rule="evenodd"\ d="M9\.793\ 16\.707a1\ 1\ 0\ 0\ 1\ 0-1\.414L13\.086\ 12\ 9\.793\ 8\.707a1\ 1\ 0\ 0\ 1\ 1\.414-1\.414l4\ 4a1\ 1\ 0\ 0\ 1\ 0\ 1\.414l-4\ 4a1\ 1\ 0\ 0\ 1-1\.414\ 0"\ clip-rule="evenodd"/></svg></span><a href="/consumers">Consumers</a></li>\s*<li><span class="breadcrumbs__sep" aria-hidden="true"><svg[^>]*><path[^>]*/></svg></span><span aria-current="page">Other repos</span></li>') 'the site header opens <body> and the breadcrumb bar, its trail from Admin through Consumers to the group (#3090, #3097)'
 Assert-True (([regex]::Matches($html, '<header')).Count -eq 1 -and $html -notmatch 'cd-band|cd-accent') 'and its intro is no <header> (the one is the site header), and no decoration the form does not carry'
-Assert-True ($html -notmatch 'About this repo</h2>' -and $html -match 'href="#overview">Back to overview') 'the facts card is Admin''s, and the card the overview links down to carries the way back'
+Assert-True ($html -notmatch 'About this repo</h2>' -and $html -notmatch 'Back to overview' -and $html -notmatch '<table' -and $html -notmatch 'id="issues"') 'the facts card is Admin''s, and a group page holds no table and no report of every repo: each repo opens its own page (#4113)'
+Assert-True ($html -match '<div class="card-grid" id="group-other">' -and ([regex]::Matches($html, 'menu-item__label"><h2>')).Count -eq 2 -and $html.IndexOf('href="/consumers/other/beta"') -ge 0 -and $html.IndexOf('href="/consumers/other/beta"') -lt $html.IndexOf('href="/consumers/other/gamma"')) 'a group page is a card per repo, an h2 each, opening its own page, worst first, so a phone draws them as compact rows (#4113)'
+Assert-True ($repoHtml -match '<h1>beta</h1>' -and $repoHtml -match '<a href="/consumers/other">Other repos</a>' -and $repoHtml -match '<a class="site-header__back" href="/consumers/other"' -and $repoHtml -match '<section class="card grid__full cd-card" id="repo-org-beta">\r?\n<div class="card__head"><h2>This machine</h2></div>' -and $repoHtml -match '<p class="cd-repo__name">Org/beta</p>') 'a repo''s own page is headed by its name under its group, its back cell to the group, and holds one card, This machine (#4113)'
+Assert-True ($repoHtml -match '\.cd-card \{ overflow-wrap: anywhere; \}' -and $repoHtml -match 'href="/refresh\?page=consumers/other/beta"') 'its paths and plugin ids wrap inside the card on a phone, and its re-run comes back to the same page'
+Assert-Equal 'x' (Get-ConsumerRepoSlug -Repo 'Someone/x' -Members @(@{ Repo = 'Someone/x' }, @{ Repo = 'Other/y' })) 'a repo''s page is named by its name alone'
+Assert-Equal 'Someone--x' (Get-ConsumerRepoSlug -Repo 'Someone/x' -Members @(@{ Repo = 'Someone/x' }, @{ Repo = 'Else/X' })) 'and by owner--name where another repo of its group has the same name, so no two share a page'
 Assert-True ($html -notmatch 'id="admin-banner"') 'the page carries no airsquats banner: that is Admin''s alone, never a product page''s (Dave, November 4, 2026)'
-$ix = @('class="site-header"', 'class="breadcrumbs-bar"', '<h1>', 'Connected repos</h2>', 'Issues</h2>', 'class="note"') | ForEach-Object { $html.IndexOf($_) }
+$ix = @('class="site-header"', 'class="breadcrumbs-bar"', '<h1>', 'class="note cd-group-summary"', 'class="card-grid"', 'class="note"') | ForEach-Object { $html.IndexOf($_) }
 Assert-True ((@($ix | Where-Object { $_ -lt 0 }).Count -eq 0) -and ((($ix | Sort-Object) -join ',') -eq ($ix -join ','))) 'and its blocks stand in the form''s order'
 Assert-True ($html -match '1\.3s|1\.2s') 'the run time is printed with an invariant decimal point'
 Assert-Equal 'bwj' (Get-ConsumerOwnerGroup 'BWJ-Development/shop') 'a BWJ-Development repo is in the BWJ group'
@@ -256,11 +264,11 @@ Assert-True ($overview -match '<h1>Consumers</h1>' -and $overview -match 'site-h
 $cD = $overview.IndexOf('<div class="grid__head"><h2>DKJ</h2>'); $cB = $overview.IndexOf('<div class="grid__head"><h2>BWJ</h2>'); $cO = $overview.IndexOf('<div class="grid__head"><h2>Other</h2>')
 Assert-True ($cD -ge 0 -and $cD -lt $cB -and $cB -lt $cO) 'the overview has an h2 section per owner group, DKJ, BWJ, Other (Maikel, October 30, 2026)'
 Assert-True ($overview -match '<div class="grid-3" id="group-dkj">' -and $overview.Contains('<div class="grid__head"><h2>DKJ</h2></div>') -and $overview -notmatch 'card__sub' -and $overview -notmatch 'class="btn"') 'each section heads with its h2 alone: no sub line and no button under it (Maikel, October 30, 2026)'
-Assert-Equal 3 ([regex]::Matches($overview, '<section class="card card--link">')).Count 'its repos'' cards sit one level up from the group pages, one per registered repo'
+Assert-Equal 3 ([regex]::Matches($overview, '<section class="card card--link"[ >]')).Count 'its repos'' cards sit one level up from the group pages, one per registered repo'
 Assert-Equal 3 ([regex]::Matches($overview, 'menu-item__label"><h3>')).Count 'each card an h3 under its group''s h2'
 Assert-Equal 0 ([regex]::Matches($overview, 'menu-item__label"><h2>')).Count 'and no card is an h2 any more'
-Assert-True ($overview.IndexOf('href="/consumers/dkj#repo-dkj-solutions-w"') -ge 0 -and $overview.IndexOf('href="/consumers/dkj#repo-dkj-solutions-w"') -lt $overview.IndexOf('href="/consumers/dkj#repo-dkj-solutions-y"')) 'a registered repo''s card opens its details on the group''s page, worst first'
-Assert-True ($overview.Contains('<span>w</span><span class="badge badge--sm badge--bad"') -and $overview -match 'href="/consumers/other#repo-someone-x"') 'the card names the repo without its owner, its status mark after the name'
+Assert-True ($overview.IndexOf('href="/consumers/dkj/w"') -ge 0 -and $overview.IndexOf('href="/consumers/dkj/w"') -lt $overview.IndexOf('href="/consumers/dkj/y"')) 'a registered repo''s card opens its own page, worst first (#4113)'
+Assert-True ($overview.Contains('<span>w</span><span class="badge badge--sm badge--bad"') -and $overview -match 'href="/consumers/other/x"' -and $overview -match 'id="repo-someone-x"') 'the card names the repo without its owner, its status mark after the name, and keeps the old details anchor as its id'
 Assert-True ($overview -match '<h2>BWJ</h2></div>' -and $overview -match 'No repo owned by BWJ-Development is registered') 'an empty group keeps its section and says so'
 Assert-True ($overview -notmatch 'Connected repos</h2>' -and $overview -notmatch '<section class="mini-card' -and $overview -notmatch 'id="issues"') 'the overview holds no table and no details: those are the group pages'
 $withDkj = Format-ConsumerDashboardHtml -Consumers $three -Meta @{ GeneratedAt = 'now' } -DkjCardsHtml ((Format-AdminCardLinkHtml -Href '/a' -Label 'a' -Heading 3) + (Format-AdminCardLinkHtml -Href '/b' -Label 'b' -Heading 3)) -Style '.dr-x { }' -NoticeHtml '<p>n</p>'
@@ -269,25 +277,20 @@ Assert-True ($overview -notmatch 'class="tiles"' -and $overview -notmatch 'class
 Assert-True ($html -notmatch 'class="tiles"' -and $html -notmatch 'class="lead"') 'and neither has a group''s page'
 $dkj = Format-ConsumerDashboardHtml -Consumers $three -Meta @{ GeneratedAt = 'now' } -Group 'dkj'
 Assert-True ($dkj -match '<h1>DKJ repos</h1>' -and $dkj -match '<title>dkj-marketplace -- DKJ repos</title>') 'a group page is headed by its group'
-Assert-True (([regex]::Matches($dkj, '<section class="mini-card cd-repo-card"')).Count -eq 2 -and $dkj -notmatch 'Someone/x') 'and holds that group''s repos alone'
+Assert-True (([regex]::Matches($dkj, '<section class="card card--link"[ >]')).Count -eq 2 -and $dkj -notmatch 'Someone/x' -and $dkj -notmatch '/consumers/other/') 'and holds that group''s repos alone'
 Assert-True ($dkj.IndexOf('id="repo-dkj-solutions-w"') -lt $dkj.IndexOf('id="repo-dkj-solutions-y"')) 'inside a group, worst first'
-Assert-Equal 1 ([regex]::Matches($dkj, '<div class="grid-2" id="overview">\r?\n<div class="grid__head"><h2>Connected repos</h2>')).Count 'the group''s overview is one card, its h2 Connected repos above it (#3175)'
-Assert-True ($dkj -match '<table class="table cd-overview" id="overview-dkj">' -and $dkj -match '<th>DKJ repos</th>' -and $dkj -notmatch '<th>Repo</th>' -and $dkj -match '\.cd-overview \{ table-layout: fixed;') 'one fixed-layout table, its group named in its first column head'
-$iS = $dkj.IndexOf('<div class="grid-2" id="issues">')
-Assert-True ($dkj.IndexOf('id="overview-dkj"') -lt $iS -and $dkj -match '<div id="group-dkj">\r?\n<p class="note cd-group-summary">2 repos &#183; 1 needs action &#183; 1 in sync</p>' -and $dkj -match '<p class="cd-repo__name">DKJ-Solutions/w</p>' -and $dkj -notmatch '<h3') 'the details sit beside Connected repos: an h2 Issues, the group''s summary line, no h3 repeating the page''s own heading'
-Assert-True (([regex]::Matches($dkj, 'class="card grid__full"')).Count -eq 2 -and $dkj -notmatch 'card__head.{0,2}<h2' -and ([regex]::Matches($dkj, '<section class="mini-card cd-repo-card"')).Count -eq 2) 'Connected repos and Issues are a card each, and each repo a house mini-card inside Issues'
+Assert-True ($dkj -match '<p class="note cd-group-summary">2 repos &#183; 1 needs action &#183; 1 in sync</p>\r?\n<div class="card-grid" id="group-dkj">' -and $dkj -notmatch 'Connected repos' -and $dkj -notmatch '<h3' -and $dkj -notmatch 'mini-card') 'the group''s summary line, then its cards, an h2 each: no table, no Issues card, no mini-cards (#4113)'
 $bwj = Format-ConsumerDashboardHtml -Consumers $three -Meta @{ GeneratedAt = 'now' } -Group 'bwj'
-Assert-True ($bwj -match '<h1>BWJ repos</h1>' -and $bwj -match 'No repo owned by BWJ-Development is registered' -and $bwj -notmatch 'id="issues"') 'an empty group''s page says so, and has no details card'
+Assert-True ($bwj -match '<h1>BWJ repos</h1>' -and $bwj -match 'No repo owned by BWJ-Development is registered' -and $bwj -notmatch 'class="card-grid"' -and $bwj -notmatch 'class="note cd-group-summary"') 'an empty group''s page says so, and has no cards'
 Assert-Equal '3 repos &#183; 1 needs action &#183; 2 in sync' (Format-DashboardGroupSummary @(@{ Status = 'good' }, @{ Status = 'bad' }, @{ Status = 'good' })) 'a group summary counts its repos, then each status worst first'
 Assert-Equal '1 repo &#183; 1 not on this machine' (Format-DashboardGroupSummary @(@{ Status = 'skip' })) 'one repo is singular'
 Assert-Equal '2 repos &#183; 2 need action' (Format-DashboardGroupSummary @(@{ Status = 'bad' }, @{ Status = 'bad' })) 'and several agree with their verb'
 Assert-True ($html -match '\.cd-repo__name \{ margin: 0; font-weight: var\(--font-weight-bold\); \}' -and $html -notmatch '<h4') 'a repo name is a bold line, not a heading: the house style has no h4 (October 25, 2026)'
-Assert-True ($html -notmatch '<th>Errors</th>' -and $html -notmatch '<th>Notes</th>' -and ([regex]::Match($html, '<colgroup>.*?</colgroup>').Value -split '<col ').Count -eq 6) 'the overview has no Errors or Notes column: five columns, five widths'
-Assert-True ($html -notmatch '>Main</th>' -and $html -notmatch '>Checkout</th>' -and $html -notmatch 'behind') 'the overview has no Main or Checkout column, and nothing measures a trunk against origin'
+Assert-True ($html -notmatch '<colgroup>' -and $html -notmatch 'cd-overview' -and $html -notmatch 'behind' -and $repoHtml -notmatch 'behind') 'a group page has no table (#4113), and nothing measures a trunk against origin'
 $failed = Format-ConsumerDashboardHtml -Consumers @() -Meta @{ GeneratedAt = 'now'; SourceCommit = ''; Seconds = $null; CheckFailed = 'boom <b>' }
 Assert-True ($failed -match 'class="msg--warn" role="alert"' -and $failed -match 'boom &lt;b&gt;') 'a check that could not run is the form''s warning line, escaped'
 
-$noted = Format-ConsumerRepoMiniCardHtml -Consumer @{ Repo = 'Org/n'; Status = 'good'; Visibility = 'public'; File = 'n.json'; Checkout = @('../n'); Plugins = @(); Signals = @(); Present = $true; Git = $null; Notes = 'REGISTERED on 2026-08-20, a long log' }
+$noted = Format-ConsumerRepoCardHtml -Consumer @{ Repo = 'Org/n'; Status = 'good'; Visibility = 'public'; File = 'n.json'; Checkout = @('../n'); Plugins = @(); Signals = @(); Present = $true; Git = $null; Notes = 'REGISTERED on 2026-08-20, a long log' }
 Assert-True ($noted -notmatch 'Register notes' -and $noted -notmatch 'a long log' -and $noted -notmatch 'cd-notes') 'the register''s notes are not shown: they are its keeper''s log, not something to read on a page (October 28, 2026)'
 # The Lenses card on a DKJ repo's own page, /consumers/dkj/<name> (Maikel, October 28, 2026).
 $scaffold = "---`nid: 17`ngroup: 06`n---`n`n# 06-17 - repo lens`n`n> Created by specialists-init as an empty template.`n`n## Specific to this repo (VUL-IN)`n`n<!-- TODO: describe what this specialist does`n     in THIS repo. -->`n"
@@ -513,10 +516,16 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
             # The fixture's repos are all Org/*, so their details are on the Other group's page (owner, October 26, 2026).
             $page = if ($up) { Get-Raw 'GET' '/consumers/other' "localhost:$port3" '' $port3 } else { '' }
             $pageWhy = $script:RawWhy
+            # Each repo's report is its own page since #4113: read every one the group page links.
+            $repoLinks = @([regex]::Matches($page, 'href="(/consumers/other/[A-Za-z0-9._-]+)"') | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique)
+            $repoPages = (@($repoLinks | ForEach-Object { if ($up) { Get-Raw 'GET' $_ "localhost:$port3" '' $port3 } }) -join "`n")
+            $missing = if ($up) { Get-Raw 'GET' '/consumers/other/no-such-repo' "localhost:$port3" '' $port3 } else { '' }
             $overviewPage = if ($up) { Get-Raw 'GET' '/consumers' "localhost:$port3" '' $port3 } else { '' }
             $overviewWhy = $script:RawWhy
             Assert-True ($page -match 'HTTP/1.1 200') 'the page is served with a checkout that has no upstream' $pageWhy
-            Assert-True ($page -match 'Last commit on (master|main) [^:]*: local only') 'and that checkout shows its trunk''s last commit'
+            Assert-True ($repoLinks.Count -ge 1 -and $repoPages -match 'HTTP/1.1 200' -and $repoPages -notmatch 'HTTP/1.1 404') 'every repo the group page links has a page of its own (#4113)'
+            Assert-True ($missing -match 'HTTP/1.1 404') 'a repo no group member is named for is a 404, never an empty page'
+            Assert-True ($repoPages -match 'Last commit on (master|main) [^:]*: local only') 'and that checkout shows its trunk''s last commit, on the repo''s own page'
             Assert-True ($page -match 'class="msg--warn"') 'a check that could not run is reported, not fatal'
             $at = $page.IndexOf('id="repo-org-far"')
             $far = if ($at -ge 0) { $page.Substring($at, $page.IndexOf('</section>', $at) - $at) } else { '' }
@@ -582,7 +591,7 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
             $homeDown = if ($up) { Get-Raw 'GET' '/' "localhost:$port3" '' $port3 } else { '' }
             Assert-True ($homeDown -match 'HTTP/1.1 200' -and $homeDown -match 'Admin is not running') 'and the Admin card is back to not running once nothing answers there'
             Remove-Item -LiteralPath $srcState -Force -ErrorAction SilentlyContinue
-            Assert-True ($overviewPage -match 'HTTP/1.1 200' -and $overviewPage -match '<h1>Consumers</h1>' -and $overviewPage -match '<a href="/">Home</a>' -and $overviewPage -match 'href="/consumers/other#repo-') '/consumers serves the overview as a page under the product''s home, its repo cards opening their group''s page' $overviewWhy
+            Assert-True ($overviewPage -match 'HTTP/1.1 200' -and $overviewPage -match '<h1>Consumers</h1>' -and $overviewPage -match '<a href="/">Home</a>' -and $overviewPage -match 'href="/consumers/other/') '/consumers serves the overview as a page under the product''s home, its repo cards opening their own pages (#4113)' $overviewWhy
             Assert-True ($page -match '<h1>Other repos</h1>' -and $page -match '<a href="/consumers">Consumers</a>') '/consumers/other serves that group''s page under the overview' $pageWhy
         } finally {
             if (-not $proc3.HasExited) { Stop-Process -Id $proc3.Id -Force -Confirm:$false -ErrorAction SilentlyContinue }
