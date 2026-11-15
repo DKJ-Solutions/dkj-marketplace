@@ -259,6 +259,23 @@ scrolling past the rest. This was decided one page at a time (the Stopwatch, Ses
 brand book's own specimens in #3563, the Specialists in #3551) and is written down here once, so a new or
 growing page gets this shape without anyone having to point it out.
 
+**Length is a second trigger, beside the section count** (owner, November 15, 2026,
+[#4114](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4114)). A page holding **more than 1,500 words
+of reading** (about seven minutes) becomes the same overview of its sections, even with two to four of them,
+because a few very long sections read as one endless column just as many short ones do. Measured in the first
+consumer to need it: a page of 7,797 words in three sections stayed one column under the section count alone.
+
+- **The rule is recursive.** A section's page obeys the same limit: still over it, that page becomes an
+  overview of its next heading level (`h3`, then `h4`), at `<page>/<section>/<part>`, each level one more
+  crumb. One section measured 3,569 words on its own, so splitting at the sections alone does not settle it.
+- **Every heading that becomes a page becomes a crumb**, so the rule that a page name is short now reaches
+  headings that were never page titles. Shorten them as they turn into pages.
+- **A word of reading** is the text of a paragraph, a list item, a quote, a definition or a code block. A table,
+  the navigation, the header and the footer are not reading, nor is a comment or a link's URL, for the same
+  reason a list is not sections (below): a release list or a logbook runs long by nature.
+- **A page with one long section and no subheadings still breaks the rule**, and it warns. It cannot be split
+  mechanically, so the remedy is to give it headings it can split at.
+
 - **The overview card is THE card**: Admin's one card link ([The card][core-admin], a `.card.card--link`
   holding one `.menu-item` row, written by `Format-AdminCardLinkHtml`), three to a row in a `.grid-3`. Its
   label is the section's name, and its one-line description is the section's **headline**: the figure
@@ -273,7 +290,9 @@ growing page gets this shape without anyone having to point it out.
   section. The rule counts `.grid__head` blocks, not cards or rows.
 - **Where it holds itself:** the product's page shell (`Format-ProductPageHtml`, through dkj-policy's `Get-LongPageWarningHtml`) counts the sections of
   every page it renders, and above four it puts a warning at the top of that page naming the count and
-  this rule. A page that breaks the rule says so on its own, instead of waiting to be spotted.
+  this rule; it counts the words of reading too, and above 1,500 it puts a second warning there
+  (`Get-PageWordCount`, #4114). A page that breaks the rule says so on its own, instead of waiting to be
+  spotted.
 
 ### The site header, above the bar
 
