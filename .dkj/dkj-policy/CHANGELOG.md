@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**7 / 9 minor entries** <!-- pending-tally -->
+**8 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4111-docs-coverage-scroll · 20261115-193008Z
+
+A wide house table no longer widens the whole page on a phone. Its scroll container, `.table-wrap`, is now
+the containing block of what is positioned inside it, so a visually hidden column head at the table's far
+edge (the Docs coverage page's Details column) is clipped with the rest of the table instead of setting the
+document's width. On the product's `/docs-coverage` at 375 px the page measured 1322 px wide and now measures
+375, with the table scrolling inside its own box (#4111).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Any page in a consuming repo that puts a `.sr-only` element, or anything else absolute, inside a wide
+`.table-wrap` stops scrolling sideways as a whole on a phone once it takes this brand book.
+
+**Score:** 2
+
+#### Pull Request
+
+A wide table's hidden column head no longer widens the page on a phone
+
+Plugins: dkj-policy
+
+[PR #4133](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4133)
+
+---
 
 ### DEPLOY: feat/4126-no-group-surface · 20261115-191324Z
 
