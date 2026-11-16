@@ -284,6 +284,10 @@ function Format-ReleaseRunbook {
         THE APP DEPLOY (#3174). With -AppFiles under a printable -AppRoot, the runbook gains a step 2b
         with the `shopify app deploy` command (Format-ShopifyAppDeployCommand, in the mirrored live-push-rules),
         in either mode: no push or promotion carries an app's files. A person runs it, as the push.
+
+        THE TASK FORM (#4156). With -TaskForm (the repo answers Get-ReleaseNoteTaskLink), cut-release drafts
+        the audience note itself from the live-push record, so step 6 names -LivePushRecord and says to review
+        the draft after the cut, instead of asking for a note written before anyone knows what went live.
     #>
     param(
         [string]$Store = '',
@@ -296,7 +300,8 @@ function Format-ReleaseRunbook {
         [string]$DeployBranch = '',
         [string]$Trunk = 'main',
         [string]$AppRoot = '',
-        [AllowNull()][AllowEmptyCollection()][string[]]$AppFiles = @()
+        [AllowNull()][AllowEmptyCollection()][string[]]$AppFiles = @(),
+        [switch]$TaskForm
     )
 
     $connected = [bool]([string]$DeployBranch).Trim()
@@ -394,7 +399,10 @@ function Format-ReleaseRunbook {
     $out += ''
     $bumpText = if ($Bump) { " -Bump $Bump" } else { '' }
     $out += "6. The cut -- the dkj-policy ``cut-release`` skill$(if ($Bump) { ", with$bumpText" } else { ' (the bump could not be read from the pending tally)' })."
-    if ($Bump -eq 'minor') { $out += '   A minor owes the hand-written audience note (audience/<dir>/<X.Y.Z>.md) -- draft it before the day.' }
+    if ($Bump -eq 'minor' -and $TaskForm) {
+        $out += '   The cut drafts the audience note itself, as solved tasks, from the live-push record: pass -LivePushRecord'
+        $out += '   (the cut refuses a task-form note without one), and review the draft after the cut. Write nothing ahead.'
+    } elseif ($Bump -eq 'minor') { $out += '   A minor owes the hand-written audience note (audience/<dir>/<X.Y.Z>.md) -- draft it before the day.' }
     $out += ''
     # THE LIVE MESSAGE, RIGHT AFTER THE CUT (#3070): the push (or the promotion) has happened and the tag
     # exists, so this is the first moment 'live as of vX.Y.Z' is true -- and printing it here is what

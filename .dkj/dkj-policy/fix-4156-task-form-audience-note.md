@@ -39,21 +39,36 @@
 
 ### PLAN
 
+`prepare-release` reads the seam `cut-release` reads to choose the task form, `Get-ReleaseNoteTaskLink`, through
+its own `Get-Seam`, so the two cannot disagree about which form a repo is in. The entries form keeps its
+sentence unchanged.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `prepare-release.ps1`: step 2 says the cut drafts the note from the live-push record in a task-form repo; the runbook gets `-TaskForm`
+- [x] `Format-ReleaseRunbook` (`prepare-release-rules.ps1`): step 6 in the task form names `-LivePushRecord` and the review after the cut
+- [x] The skill page names the task-form answer
 
 ### TEST
 
+- [x] `bwj-development.tests.ps1`: the entries form still asks for the note ahead, the task form does not and names `-LivePushRecord`, and the driver reads the seam
+
 ### DEPLOY: fix/4156-task-form-audience-note
 
-**Score:**
+`prepare-release` (bwj-development) no longer asks a repo that drafts its audience note as solved tasks
+(`Get-ReleaseNoteTaskLink`) to write that note before the day
+([#4156](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4156)). Step 2 and the runbook's cut step say the
+cut drafts it from the live-push record, name `-LivePushRecord` as required, and ask for a review after the cut.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A BWJ store repo whose release note lists solved tasks is no longer told to write a note the cut would replace.
+That note would list work before anyone knew it was live. Its runbook now names the record the cut needs.
+
+**Score:** 2
 
 #### Pull Request
 
 prepare-release tells a task-form repo that the cut drafts the audience note
-
