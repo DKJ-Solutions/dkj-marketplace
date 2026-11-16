@@ -859,10 +859,16 @@ function Format-ShopifyAppDeployCommand {
         so it runs from the repo root, where every other release-day command is run. A root that is not
         printable is a throw, the backstop Format-LivePushCommand keeps for an unsafe path: a caller
         checks Test-ShopifyAppRoot first and reports instead.
+
+        --allow-updates IS PART OF THE COMMAND (#4154). The CLI refuses a deploy in a non-interactive shell
+        unless one of --allow-updates, --allow-deletes or --no-release is given, and a session's '!' prefix
+        is such a shell: the printed line failed there on a release day. --allow-updates releases the
+        changed extensions without a prompt and still refuses to delete one, so a deletion stays a
+        separate, deliberate act (--allow-deletes).
     #>
     param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$AppRoot)
     if (-not (Test-ShopifyAppRoot -AppRoot $AppRoot)) {
         throw 'Format-ShopifyAppDeployCommand: the app root is not safe to print in a command; check it with Test-ShopifyAppRoot first.'
     }
-    return "shopify app deploy --path $(ConvertTo-ShopifyAppRootText -AppRoot $AppRoot)"
+    return "shopify app deploy --path $(ConvertTo-ShopifyAppRootText -AppRoot $AppRoot) --allow-updates"
 }
