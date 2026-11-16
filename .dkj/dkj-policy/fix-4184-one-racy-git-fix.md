@@ -39,21 +39,33 @@
 
 ### PLAN
 
+Before the cut, the premise was measured: does the post-checkout move add anything? A scratch repo built as the
+fixture builds it, with only the #4176 block, read ` M crlf.txt` 2 s after the checkout and again 7 s after it,
+past that block's own +5 s mtime. The checkout did not rewrite the file, so the forward move survives it. The
+block from PR #4179 is therefore redundant, and it is removed together with its competing comment.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `git-porcelain-lib.tests.ps1`: the second racy-git block (its comment and the `AddHours(1)` move) removed; the measured #4176 block stays
 
 ### TEST
 
+- [x] The suite run three times locally: 60 pass, 0 fail each
+
 ### DEPLOY: fix/4184-one-racy-git-fix
 
-**Score:**
+Inside this repo, the EOL fixture in `git-porcelain-lib.tests.ps1` keeps one racy-git fix, the measured one from
+#4176 ([#4184](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4184)). The parallel second fix and its
+contradicting comment are gone.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
 The EOL fixture keeps one racy-git fix, the measured one
-
