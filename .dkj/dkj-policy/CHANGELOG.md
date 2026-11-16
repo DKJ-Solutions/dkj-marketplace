@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**37 / 47 minor entries** <!-- pending-tally -->
+**38 / 48 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4197-guard-kind-label · 20261116-163203Z
+
+Inside this repo, `guard-reach-reason`'s command parser is now the shared `Get-GhIssueLabelCall`, which
+both guards read a `gh issue` call with.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+In a BWJ store, a `gh issue create` without exactly one of `bug`, `feature` or `research` is now
+refused before it runs, naming the three
+([#4197](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4197)). Sessions had filed 11
+consecutive issues with no kind while the rule was loaded. Labels set in a template, the browser or an
+editor pass with a warning, and an inbound issue on the source repo is not judged at all.
+
+**Score:** 3
+
+#### Pull Request
+
+bwj-development: guard-kind-label refuses a gh issue create with no (or several) bug/feature/research labels
+
+Plugins: bwj-development
+
+[PR #4200](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4200)
+
+---
 
 ### DEPLOY: feat/4162-consumer-health-task · 20261116-162040Z
 
