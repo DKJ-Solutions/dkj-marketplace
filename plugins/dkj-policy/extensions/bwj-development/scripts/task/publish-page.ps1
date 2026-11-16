@@ -92,6 +92,11 @@
 .PARAMETER ShowUrl
     Print this kind's link and stop. Publishes nothing.
 
+.PARAMETER CheckAuth
+    Print this kind's link, then prove a route to KV exists -- CLOUDFLARE_API_TOKEN, or a wrangler login to
+    the seam's account -- and stop. Publishes nothing. prepare-release runs it days ahead (#4155), so a missing
+    login is found before the release day instead of at the publish.
+
 .PARAMETER DryRun
     Do everything except the upload -- resolve the seam, read the page, name the key and the URL.
 
@@ -121,6 +126,7 @@ param(
     [string]$Token,
     [switch]$EmitWorker,
     [switch]$ShowUrl,
+    [switch]$CheckAuth,
     [switch]$DryRun,
     [switch]$All,
     [string]$RootOverride
@@ -485,6 +491,16 @@ $url   = Get-BwjPageUrl -BaseUrl $pages.BaseUrl -Kind $Kind -Token $token
 
 if ($ShowUrl) {
     Write-Host "  url      : $url" -ForegroundColor Green
+    exit 0
+}
+
+# THE LOGIN, PROVED AHEAD OF THE DAY (#4155). Measured at a consumer's v3.1.0: the publish refused on release
+# day for want of a login, a fact that was true and checkable days before. Connect-BwjKv is the publish's own
+# check, so this cannot disagree with it; a refusal throws, and the caller reads the non-zero exit.
+if ($CheckAuth) {
+    Write-Host "  url      : $url" -ForegroundColor Green
+    Connect-BwjKv
+    Write-Host '  auth     : a route to KV is ready' -ForegroundColor Green
     exit 0
 }
 

@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**20 / 25 minor entries** <!-- pending-tally -->
+**21 / 26 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4155-notes-share-link · 20261116-100413Z
+
+Inside this repo, `publish-page.ps1` gains `-CheckAuth` and `prepare-release` calls it
+([#4155](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4155)). Both suites cover the new lines.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A BWJ store's release runbook now names the release-notes publish it actually runs, `publish-page -Kind notes`.
+It also prints the page's shareable link and says the close-out leads with it, so the owner gets the note they
+read instead of the GitHub Release. `prepare-release` checks the Cloudflare login days ahead, where it used to
+fail only on the release day.
+
+**Score:** 3
+
+#### Pull Request
+
+The release runbook names the shareable release-notes link and checks the page login ahead
+
+Plugins: bwj-development
+
+[PR #4170](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4170)
+
+---
 
 ### DEPLOY: fix/4147-notify-live-no-access · 20261116-095135Z
 
