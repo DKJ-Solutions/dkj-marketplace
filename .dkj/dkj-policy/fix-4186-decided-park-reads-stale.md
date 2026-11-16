@@ -43,7 +43,7 @@ Issue #4186 offers a recording route, a safety net, or both. This branch builds 
 the route the issue measured: an answer posted from a session where the plugin is not loaded at all, which no new
 tool reaches. It reuses the `stale-park` reading `-Candidates` already does for `awaiting-pull`. A
 `Decision (` comment after the last parking comment, from somebody with a hand on the repo, reads the park as
-cleared, and the run prints the two unpark lines. The recording route (`record-decision`) stays open on the issue.
+cleared, and the run prints the two unpark lines. The recording route (`record-decision`) is not built: the issue asked for either one, and a tool would only help where the plugin is loaded.
 
 ### CREATE
 
