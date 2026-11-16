@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**25 / 34 minor entries** <!-- pending-tally -->
+**26 / 35 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4186-decided-park-reads-stale · 20261116-121444Z
+
+`claim-issue -Candidates` reads an `awaiting-decision-dev` or `awaiting-decision-client` issue as `stale-park` once
+a comment opening `Decision (` follows its last parking comment
+([#4186](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4186)). The comment must come from somebody with a
+hand on the repo. The run prints the lines that lift the label, so a decision posted without removing it no
+longer leaves the issue skipped by every sweep.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In every repo running the sweeps, a client's or owner's decision posted as a comment, from any session, now
+surfaces at the next sweep as a park to lift. Until now the issue sat skipped until somebody noticed the label.
+
+**Score:** 3
+
+#### Pull Request
+
+A decision park with a posted decision reads as stale-park
+
+Plugins: dkj-policy
+
+[PR #4187](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4187)
+
+---
 
 ### DEPLOY: fix/4184-one-racy-git-fix · 20261116-115516Z
 
