@@ -443,7 +443,7 @@ if (-not $sinceTag) {
             $recWalk = Invoke-Git @('log', '--no-merges', '--topo-order', '--no-renames', '--format=COMMIT%x09%H%x09%s', '--name-only', "$sinceTag..HEAD")
             $owedRec = @(Get-ReconciliationOwedPaths -WalkLines @($recWalk.Lines | ForEach-Object { Convert-GitQuotedPath -Path $_ }) -Paths $pushFiles)
             if ($owedRec.Count -gt 0) {
-                Add-Step -Name 'reconciliation' -State 'attention' -Detail "$($owedRec.Count) path(s) end on a sync-main reconciliation base nobody has reconciled since, so the drift check reads them as safe while the trunk lacks live's content: $(@($owedRec | ForEach-Object { ConvertTo-ConsoleStrippedText -Text $_ }) -join ', '). Reconcile them in an ordinary commit before the day; live-preflight refuses them."
+                Add-Step -Name 'reconciliation' -State 'attention' -Detail "$($owedRec.Count) path(s) end on a sync-main reconciliation base nobody has reconciled since, so the drift check reads them as safe while the trunk lacks live's content: $(@($owedRec | ForEach-Object { ConvertTo-ConsoleStrippedText -Text $_ }) -join ', '). Where live's content should win, reconcile the path in an ordinary commit before the day. Where the trunk's version is meant to win, there is nothing to commit: once those are the only paths left here, pass -AcceptOwedReconciliation to live-preflight on the day, which accepts every path still listed. Otherwise live-preflight refuses them."
             }
         }
     }
