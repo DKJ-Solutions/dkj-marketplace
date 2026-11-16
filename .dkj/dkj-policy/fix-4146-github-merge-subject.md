@@ -39,21 +39,36 @@
 
 ### PLAN
 
+Issue #4146 also proposed the fold commit `fold: <branch> changelog (#NN)` as a third anchor. This branch leaves it
+out. A fold commit's diff is the changelog fold and not the branch's change, so it cannot answer which paths the
+entry touched. GitHub's merge commit can, the same way ship-pr's does.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Find-BranchMergeCommit` (`live-record-lib.ps1`, all four byte-identical copies) also matches `Merge pull request #<n> from <owner>/<branch>`
+- [x] `cut-release.ps1`'s comment and its unknown-entry warning name both shapes (mirror kept identical)
 
 ### TEST
 
+- [x] `live-record-lib.tests.ps1`: a GitHub UI merge subject is matched, a prefix-sharing branch and a near miss are not, a trunk merge into a branch is not, and the newest match wins across the two shapes
+
 ### DEPLOY: fix/4146-github-merge-subject
 
-**Score:**
+Inside this repo, `Find-BranchMergeCommit` in `live-record-lib.ps1` also recognises GitHub's default merge subject,
+`Merge pull request #<n> from <owner>/<branch>`, beside ship-pr's `merge: <branch> (#<n>)`
+([#4146](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4146)). `cut-release.ps1`'s warning for an
+unmatched entry names both.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify repo cutting a release with `-LivePushRecord` gets entries merged through the GitHub UI checked against
+the live-push record automatically. They no longer count as unknown, each to be checked by hand. Measured in a
+consumer's cut, that was 58 of 82 entries. Only squash merges still need the check by hand.
+
+**Score:** 3
 
 #### Pull Request
 
 The cut finds an entry's merge under GitHub's default merge subject too
-

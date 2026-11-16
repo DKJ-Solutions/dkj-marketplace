@@ -226,6 +226,12 @@ function Find-BranchMergeCommit {
         merge, a merge through the GitHub UI, or an entry with no branch leaves no such line, and the
         caller reports that entry as UNKNOWN rather than guessing.
 
+        GITHUB'S OWN MERGE SUBJECT IS THE SECOND SHAPE (#4146): 'Merge pull request #<n> from
+        <owner>/<branch>', which a merge through the GitHub UI writes. It names the branch just as exactly,
+        and its diff against the first parent is the branch's net change in the same way. Measured in a
+        consumer's cut: 58 of 82 entries had been merged that way and fell to UNKNOWN, each one a check by
+        hand. A squash merge still leaves no branch in its subject and stays UNKNOWN.
+
         THE NEWEST MATCH WINS: a branch merged twice in one range (a revert and a re-land) is live or
         not by its last landing. git log prints newest first, so that is the first line that matches.
     #>
@@ -235,7 +241,8 @@ function Find-BranchMergeCommit {
     )
     $b = ([string]$Branch).Trim()
     if (-not $b) { return '' }
-    $rx = [regex]('^merge:\s+' + [regex]::Escape($b) + '\s+\(#\d+\)\s*$')
+    $eb = [regex]::Escape($b)
+    $rx = [regex]('^(?:merge:\s+' + $eb + '\s+\(#\d+\)|Merge pull request #\d+ from [^/\s]+/' + $eb + ')\s*$')
     foreach ($l in @($LogLines)) {
         if ($null -eq $l) { continue }
         $parts = ([string]$l) -split "`t", 2
