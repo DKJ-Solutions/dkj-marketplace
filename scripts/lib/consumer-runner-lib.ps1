@@ -491,6 +491,32 @@ function Get-SharedScriptPin {
     return @($pins)
 }
 
+function Get-SharedScriptLayoutFloor {
+    <#
+        The oldest release whose shared scripts can read a consumer that has adopted the CURRENT workflow
+        folder layout (#4148). Returns @{ Version; Folder; Issue }.
+
+        WHY A PIN BEHIND THIS IS WORSE THAN "BEHIND". v6.10.0 moved the workflow folder from dkj-policy/
+        to .dkj/dkj-policy/ (#3870). A runner pinned below that release looks for per-branch documents in
+        the old place, finds none, and reports success. Measured in a consumer, November 2026: two UI
+        merges each ran fold-on-merge at v5.18.0, both printed "[OK] no unfolded changelog entry on the
+        trunk" and finished green, while the merged branch's document sat on the trunk unfolded. A gate
+        that fails GREEN is a gate nobody learns about until a release cut misses the entry.
+
+        THE FLOOR ONLY BITES WHERE THE CONSUMER HAS MOVED. A consumer still on the root dkj-policy/ folder
+        is read correctly by an old pin, so there the pin stays an ordinary "behind". The caller decides
+        that from the consumer's tree; this function only names the line.
+
+        RAISE IT WHEN A RELEASE MOVES A PATH THE PINNED RUNNERS READ. One record, not a table, because
+        one layout move has happened; a second one is the moment to make it a list.
+    #>
+    return [pscustomobject]@{
+        Version = '6.10.0'
+        Folder  = '.dkj/dkj-policy'
+        Issue   = '#3870'
+    }
+}
+
 function Get-RunnerRecordField {
     <#
         One field of a workflow record, whichever of the two shapes its caller built (#1850) -- a
