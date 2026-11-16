@@ -48,6 +48,7 @@
 
 - [x] `sync-rules.tests.ps1`: trunk ahead on a CRLF copy of older lines, a foreign line counted, an empty live file never trunk ahead, the editor banner stripped, live-only / trunk-only / changed keys named, reformatting alone said to be formatting, a string and a number kept apart, an unparseable side yields no key hint, and which paths take the key hint (225 asserts, green)
 - [x] `sync-main.tests.ps1`: through a real dry run, a Liquid path reads `trunk ahead` and a template reads its key summary, both still refusing (179 asserts, green)
+- [x] `native-capture.tests.ps1`: the audited site count moves 116 -> 118 for the two new captures, each judged by `Test-NativeExitMeasured` first (355 asserts, green)
 
 ### DEPLOY: feat/4150-sync-conflict-classes
 

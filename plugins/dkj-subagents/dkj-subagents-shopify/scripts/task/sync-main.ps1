@@ -619,6 +619,8 @@ function Get-SyncConflictHintLine {
 
         $ids = New-Object System.Collections.Generic.List[string]
         $log = Invoke-NativeCapture -Utf8 -DiscardStderr -FilePath 'git' -Arguments @('log', '--full-history', '--format=%H', '--raw', '--no-abbrev', '-m', 'HEAD', '--', $Path)
+        # JUDGED BEFORE IT IS READ (#2081): an unmeasured walk is said, never read as a path with no history.
+        if (-not (Test-NativeExitMeasured -Capture $log) -or $log.ExitCode -ne 0) { return 'no hint: the trunk history of this path could not be read' }
         foreach ($line in @($log.Output)) {
             $text = "$line"
             if ($text -notmatch '^:') { continue }
@@ -632,7 +634,7 @@ function Get-SyncConflictHintLine {
         $history = @()
         foreach ($id in $ids) {
             $blob = Invoke-NativeCapture -Utf8 -DiscardStderr -FilePath 'git' -Arguments @('cat-file', 'blob', $id)
-            if ($blob.ExitCode -eq 0) { $history += ((@($blob.Output) | ForEach-Object { "$_" }) -join "`n") }
+            if ((Test-NativeExitMeasured -Capture $blob) -and $blob.ExitCode -eq 0) { $history += ((@($blob.Output) | ForEach-Object { "$_" }) -join "`n") }
         }
         $ahead = Get-SyncTrunkAheadHint -LiveText $liveText -TrunkText $trunkText -HistoryTexts $history
         return (Format-SyncConflictHint -TrunkAhead $ahead)

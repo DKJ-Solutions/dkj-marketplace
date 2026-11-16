@@ -2058,7 +2058,11 @@ foreach ($af in $auditFiles) {
 # 115 -> 116 (#4028): claim-issue.ps1 -Candidates' $bq (`gh issue view <n> --json body`), -Utf8 at the shared
 # network bound, read only for an awaiting-* park no comment names. Judged only after Test-NativeExitMeasured and a
 # POSITIVE `-eq 0`: an unread body leaves the references as the comments gave them, so the issue stays skipped.
-Assert-Equal 116 $boundedTotal 'the parser still counts 116 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
+# 116 -> 118 (#4150): sync-main.ps1's Get-SyncConflictHintLine $log (`git log --raw` over one conflicted path) and
+# $blob (`git cat-file blob <id>`), -Utf8 because they are file content. $log is judged by Test-NativeExitMeasured
+# before its exit code and an unread walk prints 'no hint'; $blob only by a POSITIVE `-eq 0` after the same test, so
+# a revision it could not read is left out of a HINT, never read into a verdict -- the conflict refuses either way.
+Assert-Equal 118 $boundedTotal 'the parser still counts 118 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
 Assert-Equal 0 $unguarded.Count `
     ('every bounded capture judged with a NEGATIVE exit-code test either asks Test-NativeExitMeasured/Get-NativeExitLabel about THAT capture or is exempt with a reason (#2081)' +
      $(if ($unguarded.Count) { ' -- unguarded: ' + ($unguarded -join ' | ') } else { '' }))
