@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**36 / 46 minor entries** <!-- pending-tally -->
+**37 / 47 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4162-consumer-health-task · 20261116-162040Z
+
+Inside this repo nothing changes but the `scheduled-tasks` skill's prompt folder and its task table; no
+script, gate or registry moves.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+The `scheduled-tasks` skill ships a second kind of task: `consumer-health-sweep`, every Monday at 07:37
+from the dkj-marketplace checkout, reads every registered consumer's plugin lag, CI pins, release cadence,
+unlabelled issues and red scheduled runs, and reports them in one place, where until now each surfaced
+only when a session happened to open the right repo. It files only what the marketplace itself must
+repair, after searching its tracker.
+
+**Score:** 3
+
+#### Pull Request
+
+Scheduled tasks: the weekly consumer health sweep
+
+Plugins: dkj-policy
+
+[PR #4199](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4199)
+
+---
 
 ### DEPLOY: feat/4162-scheduled-tasks-skill · 20261116-155856Z
 
