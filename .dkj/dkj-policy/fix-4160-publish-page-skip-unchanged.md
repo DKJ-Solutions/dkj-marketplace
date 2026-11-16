@@ -39,19 +39,40 @@
 
 ### PLAN
 
+Inbound #4160: `publish-page -Kind notes` re-uploads every release page on every publish, two npx
+processes each (the put and the SHA-256 read-back), and ran for over five minutes on 56 pages. A bulk put
+would still need a read-back per key, so skip what this machine already verified instead.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `page-publish-rules.ps1`: `Get-BwjSha256Hex`, `Get-BwjPagePublishRecordPath` (LocalApplicationData,
+  a digest file name, `BWJ_PAGE_RECORD_DIR` for suites), `ConvertFrom-BwjPagePublishRecord`,
+  `Test-BwjPageUnchanged`
+- [x] `publish-page.ps1`: skip a page whose bytes were verified under the same key, write the record
+  after each read-back, `-All` to upload everything; the skill page says so
 
 ### TEST
 
+- [x] `bwj-page-publish.tests.ps1`: the record's rules, and end to end through the wrangler shim (second
+  run uploads nothing, `-All` does, a failed read-back records nothing, no token on disk); every fixture
+  run gets its own record folder (210 asserts green standalone)
+
 ### DEPLOY: fix/4160-publish-page-skip-unchanged
 
-**Score:**
+`publish-page` uploads only the pages whose bytes changed since this machine last verified them
+([#4160](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4160)). After each SHA-256 read-back it
+records the page's hash under a digest of its key, in the user's LocalApplicationData rather than the repo,
+because a key carries the path token. A release day then uploads the new release page and the index instead
+of every page again. `-All` uploads everything, for a key changed or deleted in KV from elsewhere.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Publishing the release notes on release day takes seconds instead of more than five minutes. The first
+publish on each machine still uploads every page once.
+
+**Score:** 2
 
 #### Pull Request
 

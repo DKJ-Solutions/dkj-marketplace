@@ -95,6 +95,11 @@
 .PARAMETER DryRun
     Do everything except the upload -- resolve the seam, read the page, name the key and the URL.
 
+.PARAMETER All
+    Upload every page, whatever this machine's record of the last verified publish says. By default a
+    page whose bytes this machine already verified under the same key is skipped (#4160); -All is for
+    a key that was changed or deleted in KV from somewhere else.
+
 .PARAMETER RootOverride
     The repo root, when this is not run from inside the checkout.
 
@@ -117,6 +122,7 @@ param(
     [switch]$EmitWorker,
     [switch]$ShowUrl,
     [switch]$DryRun,
+    [switch]$All,
     [string]$RootOverride
 )
 
@@ -622,16 +628,36 @@ function Publish-BwjKvValue {
     }
 }
 
+# WHAT THIS MACHINE LAST VERIFIED, read once (#4160). A page whose bytes were verified under the same key
+# is skipped, so a release day uploads its own page and the index instead of every page again. The record
+# holds key DIGESTS, never keys (a key carries the token), and an unreadable one is simply empty.
+$recordPath = Get-BwjPagePublishRecordPath -AccountId $pages.AccountId -NamespaceId $pages.NamespaceId
+$record = @{}
+if (-not $All -and (Test-Path -LiteralPath $recordPath -PathType Leaf)) {
+    $record = ConvertFrom-BwjPagePublishRecord -Json ([System.IO.File]::ReadAllText($recordPath, [System.Text.Encoding]::UTF8))
+}
+function Save-BwjPagePublishRecord {
+    # Written after EACH verified page, so a failure halfway keeps what already landed. A record that
+    # cannot be written costs the next run a full upload, never a wrong skip, so it is a warning.
+    try {
+        $dir = Split-Path -Parent $recordPath
+        if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+        $ordered = [ordered]@{}
+        foreach ($k in @($record.Keys | Sort-Object)) { $ordered[$k] = $record[$k] }
+        [System.IO.File]::WriteAllText($recordPath, (ConvertTo-Json -InputObject $ordered -Compress), $Utf8NoBom)
+    } catch {
+        Write-Warning "The record of verified pages could not be written ($($_.Exception.GetType().Name)); the next publish uploads every page again."
+    }
+}
+
 # A paged kind's pages carry their rewritten links, so they are written once to a private folder of
 # their own and uploaded from there; the folder goes in the finally, warned about if it stays.
 $stage = $null
+$skipped = 0
 try {
     $n = 0
     foreach ($u in $uploads) {
         $n++
-        # A line per page: through a wrangler login each one is two npx calls, so a long history runs for
-        # minutes, and a failure names its key while this line shows which ones already landed.
-        if ($uploads.Count -gt 1) { Write-Host "  upload   : $n/$($uploads.Count) $($u.Key)" -ForegroundColor DarkGray }
         if ($null -eq $u.Path) {
             if (-not $stage) {
                 $stage = Join-Path ([System.IO.Path]::GetTempPath()) ("bwj-page-stage-" + [guid]::NewGuid().ToString('N'))
@@ -640,7 +666,14 @@ try {
             $u.Path = Join-Path $stage ([System.IO.Path]::GetFileName($u.From))
             [System.IO.File]::WriteAllText($u.Path, $u.Text, $Utf8NoBom)
         }
+        $contentHash = (Get-FileHash -LiteralPath $u.Path -Algorithm SHA256).Hash
+        if (Test-BwjPageUnchanged -Record $record -Key $u.Key -ContentHash $contentHash) { $skipped++; continue }
+        # A line per page: through a wrangler login each one is two npx calls, so a long history runs for
+        # minutes, and a failure names its key while this line shows which ones already landed.
+        if ($uploads.Count -gt 1) { Write-Host "  upload   : $n/$($uploads.Count) $($u.Key)" -ForegroundColor DarkGray }
         Publish-BwjKvValue -Key $u.Key -Path $u.Path
+        $record[(Get-BwjSha256Hex -Text $u.Key)] = $contentHash.ToUpperInvariant()
+        Save-BwjPagePublishRecord
     }
 } finally {
     if ($stage) {
@@ -652,6 +685,9 @@ try {
     }
 }
 Write-Host "  verified : KV holds the same $([math]::Round($totalBytes / 1KB)) KB, $($uploads.Count) page(s), that were built (SHA-256 matches)" -ForegroundColor Green
+if ($skipped -gt 0) {
+    Write-Host "  skipped  : $skipped page(s) this machine already verified with these exact bytes (-All uploads them anyway)" -ForegroundColor DarkGray
+}
 
 Write-Host ""
 Write-Host "  $url" -ForegroundColor Cyan

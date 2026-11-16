@@ -236,6 +236,15 @@ Two limits it does not pretend to cover:
   deployed and bound to the namespace the seam names, which is exactly what `-EmitWorker`'s two
   drift warnings are about.
 
+**A page this machine already verified is not uploaded again**
+([#4160](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4160)). After each read-back the script
+records the page's SHA-256 under a digest of its key, in the user's LocalApplicationData and never in the
+repo, because a key carries the path token. A later publish skips every page whose bytes match that
+record under the same key, so a release day uploads the new release page and the index rather than every
+page again. Measured on a store's v3.1.0: 55 release pages plus the index, two `npx` processes each,
+ran for more than five minutes. Another machine, a lost record or a new token simply uploads everything
+once. Pass `-All` when a key was changed or deleted in KV from somewhere else.
+
 ## Parameters
 
 | parameter | what it does |
@@ -249,6 +258,7 @@ Two limits it does not pretend to cover:
 | `-EmitWorker` | write `worker.js` and (only when absent) `wrangler.toml` for the one-time deploy |
 | `-ShowUrl` | print this kind's link and stop |
 | `-DryRun` | resolve the seam, read the page, name the key and the URL — upload nothing |
+| `-All` | upload every page, whatever this machine's record of the last verified publish says |
 | `-RootOverride <path>` | the repo root, when the run does not start inside the checkout |
 
 ## Requirements in the store repo

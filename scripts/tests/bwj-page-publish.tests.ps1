@@ -241,9 +241,14 @@ function Set-FixtureConfig {
 # script wrote them; the whitespace is then collapsed so an assertion can quote one sentence of a
 # refusal without also having to reproduce where the script chose to break its lines.
 function Invoke-PublishPage {
-    param([string[]]$ScriptArgs)
+    # -RecordDir: the folder the record of verified pages goes in (#4160). Fresh per call unless given, so
+    # no scenario skips an upload on a record an earlier one left, and nothing reaches the user's profile.
+    param([string[]]$ScriptArgs, [string]$RecordDir = '')
     $errFile = Join-Path $Fixture "stderr-$([guid]::NewGuid().ToString('n')).txt"
     $all = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $ScriptPath, '-RootOverride', $Fixture) + $ScriptArgs
+    if (-not $RecordDir) { $RecordDir = Join-Path $Fixture "record-$([guid]::NewGuid().ToString('n'))" }
+    $savedRecordDir = $env:BWJ_PAGE_RECORD_DIR
+    $env:BWJ_PAGE_RECORD_DIR = $RecordDir
     $prev = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
@@ -251,6 +256,7 @@ function Invoke-PublishPage {
         $code = $LASTEXITCODE
     } finally {
         $ErrorActionPreference = $prev
+        $env:BWJ_PAGE_RECORD_DIR = $savedRecordDir
     }
     $err = ''
     if (Test-Path -LiteralPath $errFile) {
@@ -348,7 +354,7 @@ $shim = "@echo off`r`n" +
 function Invoke-WranglerRoute {
     # -ScriptArgs replaces the publish's own arguments, for the -RetireToken cases (#3506); -Keep makes the
     # shim's delete leave the listing as it was, the lagging-listing case.
-    param([string]$Account, [string]$Tamper = '', [string]$HtmlPath = '', [string[]]$ScriptArgs = @(), [string]$Keep = '')
+    param([string]$Account, [string]$Tamper = '', [string]$HtmlPath = '', [string[]]$ScriptArgs = @(), [string]$Keep = '', [string]$RecordDir = '')
     $saved = @{}
     foreach ($n in 'PATH', 'CLOUDFLARE_API_TOKEN', 'FAKE_WRANGLER_ACCOUNT', 'FAKE_WRANGLER_STORE', 'FAKE_WRANGLER_LOG', 'FAKE_WRANGLER_TAMPER', 'FAKE_WRANGLER_LISTFILE', 'FAKE_WRANGLER_KEEP') {
         $saved[$n] = [Environment]::GetEnvironmentVariable($n, 'Process')
@@ -366,7 +372,7 @@ function Invoke-WranglerRoute {
         $a = @('-Kind', 'notes')
         if ($HtmlPath) { $a += @('-Html', $HtmlPath) }
         if ($ScriptArgs.Count) { $a = $ScriptArgs }
-        return (Invoke-PublishPage -ScriptArgs $a)
+        return (Invoke-PublishPage -ScriptArgs $a -RecordDir $RecordDir)
     } finally {
         foreach ($n in $saved.Keys) { [Environment]::SetEnvironmentVariable($n, $saved[$n], 'Process') }
     }
@@ -390,6 +396,25 @@ Assert-True ($log -notlike '*kv key put*') '...before anything was uploaded'
 $tampered = Invoke-WranglerRoute -Account $HexA -Tamper '1'
 Assert-True ($tampered.ExitCode -ne 0) 'a read-back through wrangler that differs from the upload fails the publish'
 Assert-True ($tampered.Text -like '*different bytes than were uploaded*') '...naming both hashes, as the API route does'
+
+# #4160, END TO END: one record folder across runs. The second publish of the same bytes uploads nothing,
+# -All uploads anyway, and a failed read-back records nothing, so the next run uploads again.
+$sharedRecord = Join-Path $Fixture 'record-shared'
+$firstRun = Invoke-WranglerRoute -Account $HexA -RecordDir $sharedRecord
+Assert-Equal 0 $firstRun.ExitCode 'a first publish with an empty record uploads and verifies'
+$secondRun = Invoke-WranglerRoute -Account $HexA -RecordDir $sharedRecord
+$log = if (Test-Path -LiteralPath $shimLog) { [System.IO.File]::ReadAllText($shimLog) -replace '"', '' } else { '' }
+Assert-Equal 0 $secondRun.ExitCode 'the same bytes again: the publish succeeds'
+Assert-True ($log -notlike '*kv key put*' -and $secondRun.Text -like '*skipped : 1 page(s)*') '...without uploading the page this machine already verified, and says so'
+$allRun = Invoke-WranglerRoute -Account $HexA -RecordDir $sharedRecord -ScriptArgs @('-Kind', 'notes', '-All')
+$log = if (Test-Path -LiteralPath $shimLog) { [System.IO.File]::ReadAllText($shimLog) -replace '"', '' } else { '' }
+Assert-True ($allRun.ExitCode -eq 0 -and $log -like '*kv key put*') '-All uploads it anyway'
+$tamperRecord = Join-Path $Fixture 'record-tamper'
+$null = Invoke-WranglerRoute -Account $HexA -Tamper '1' -RecordDir $tamperRecord
+$afterTamper = Invoke-WranglerRoute -Account $HexA -RecordDir $tamperRecord
+$log = if (Test-Path -LiteralPath $shimLog) { [System.IO.File]::ReadAllText($shimLog) -replace '"', '' } else { '' }
+Assert-True ($log -like '*kv key put*') 'a failed read-back records nothing, so the next publish uploads that page again'
+Assert-True (-not (Get-ChildItem -LiteralPath $sharedRecord -Recurse -File | Where-Object { ([System.IO.File]::ReadAllText($_.FullName)).Contains($writtenToken) })) 'the record on disk carries no token'
 
 # THE CMD.EXE LINE (Sebastian, on this branch): a legal file name with '&' and no space once ran a
 # second command. Every argument is now quoted, so the publish from such a path must simply succeed.
@@ -425,7 +450,7 @@ Assert-Equal 0 $stages.Count '...and no staged copy of a private page is left in
 
 Remove-Item -LiteralPath (Join-Path $setDir 'release-notes\v1.0.0.html') -Force
 $broken = Invoke-WranglerRoute -Account $HexA -HtmlPath $setIndex
-$log = if (Test-Path -LiteralPath $shimLog) { [System.IO.File]::ReadAllText($shimLog) } else { '' }
+$log = if (Test-Path -LiteralPath $shimLog) { [System.IO.File]::ReadAllText($shimLog) -replace '"', '' } else { '' }
 Assert-True ($broken.ExitCode -ne 0) 'an index whose release page is missing is refused -- the 404 #3500 measured'
 Assert-True ($broken.Text -like "*/notes/$writtenToken/v1.0.0*") '...naming the link that would have led nowhere'
 Assert-True ($log -notlike '*kv key put*') '...before anything was uploaded'
@@ -588,6 +613,32 @@ Assert-True ($scriptText -match '-UseBasicParsing') 'the read-back does not rout
 foreach ($text in @($libText, $scriptText)) {
     Assert-True ($text -notmatch '(?<![0-9a-z])[0-9a-f]{32}(?![0-9a-z])') 'no 32-hex identifier is written into the shipped source'
 }
+
+Write-Host ''
+Write-Host 'The record of verified pages -- skip what this machine already proved (#4160)' -ForegroundColor Cyan
+$recKey = 'tok/v1.2.3'
+$recHash = (Get-BwjSha256Hex -Text '<html>v1.2.3</html>')
+Assert-Equal 64 $recHash.Length 'a SHA-256 is 64 hex characters'
+Assert-Equal $recHash (Get-BwjSha256Hex -Text '<html>v1.2.3</html>') 'and the same text gives the same digest'
+$rec = @{ (Get-BwjSha256Hex -Text $recKey) = $recHash }
+Assert-True (Test-BwjPageUnchanged -Record $rec -Key $recKey -ContentHash $recHash) 'the same bytes under the same key are skipped'
+Assert-True (Test-BwjPageUnchanged -Record $rec -Key $recKey -ContentHash $recHash.ToLowerInvariant()) '...whatever case the hash is spelled in'
+Assert-True (-not (Test-BwjPageUnchanged -Record $rec -Key $recKey -ContentHash (Get-BwjSha256Hex -Text 'changed'))) 'changed bytes are uploaded'
+Assert-True (-not (Test-BwjPageUnchanged -Record $rec -Key 'newtok/v1.2.3' -ContentHash $recHash)) 'the same bytes under a new token are uploaded -- a retired token leaves nothing to skip'
+Assert-True (-not (Test-BwjPageUnchanged -Record @{} -Key $recKey -ContentHash $recHash)) 'an empty record skips nothing'
+$recJson = ConvertTo-Json -InputObject $rec -Compress
+Assert-True (-not $recJson.Contains('tok/')) 'the record holds key digests, never a key -- a key carries the token'
+Assert-Equal 1 (ConvertFrom-BwjPagePublishRecord -Json $recJson).Count 'a written record reads back'
+Assert-Equal 0 (ConvertFrom-BwjPagePublishRecord -Json '').Count 'an empty file is an empty record'
+Assert-Equal 0 (ConvertFrom-BwjPagePublishRecord -Json '{not json').Count 'a corrupt record is empty, never an error -- it only costs a full upload'
+Assert-Equal 0 (ConvertFrom-BwjPagePublishRecord -Json '["a"]').Count 'a record of the wrong shape is empty'
+Assert-Equal 0 (ConvertFrom-BwjPagePublishRecord -Json '{"k":"v"}').Count 'entries that are not two SHA-256 digests are dropped'
+$recPath = Get-BwjPagePublishRecordPath -AccountId 'acct' -NamespaceId 'ns' -Base 'C:\base'
+Assert-True ($recPath.StartsWith('C:\base\dkj-policy\publish-page\') -and $recPath.EndsWith('.json')) 'the record lives under the user''s own folder, not in the repo'
+Assert-True (-not $recPath.Contains('acct') -and -not $recPath.Contains('ns.json')) '...and its name is a digest, naming neither the account nor the namespace'
+Assert-True ($recPath -ne (Get-BwjPagePublishRecordPath -AccountId 'acct' -NamespaceId 'other' -Base 'C:\base')) 'one record per namespace'
+Assert-True ($scriptText -match '(?s)Publish-BwjKvValue -Key \$u\.Key -Path \$u\.Path\s+\$record\[') 'the record is written AFTER the read-back, so a skip rests on the same proof an upload ends in'
+Assert-True ($scriptText -match '(?s)if \(-not \$All -and \(Test-Path -LiteralPath \$recordPath') '-All ignores the record'
 
 if (Test-Path -LiteralPath $Fixture) { Remove-Item -LiteralPath $Fixture -Recurse -Force -ErrorAction SilentlyContinue }
 
