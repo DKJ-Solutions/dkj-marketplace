@@ -31,7 +31,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 1. **Trunk** -- on the trunk, clean, level with origin, no branch document left unfolded beside the
    changelog, and every check run on the head green.
 2. **Scope** -- every pending entry, the bump the fold's pending tally names, the version that makes,
-   and whether a minor owes the hand-written audience note.
+   and whether a minor owes the hand-written audience note -- or, in a repo that answers `Get-ReleaseNoteTaskLink`, that the cut drafts it from the live-push record (#4156).
 3. **Scores** -- in a repo whose audience is tier 1, a `fix/` entry that scores its reach is flagged
    for a second look. Advisory: the cut's tier gate decides.
 4. **Push list** -- the range's theme files, by the **same rules** `live-preflight` uses
