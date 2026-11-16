@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**39 / 49 minor entries** <!-- pending-tally -->
+**40 / 50 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4201-machine-upkeep-task · 20261116-165601Z
+
+Inside this repo nothing changes but the `scheduled-tasks` skill's prompt folder and its page; no script,
+gate or registry moves.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+The `scheduled-tasks` skill ships `machine-upkeep`: every weekday at 07:17, from the dkj-marketplace
+checkout, it updates the plugins in every checkout on the machine, fast-forwards every clean trunk and
+reports what `tidy-machine` finds, so the "behind on plugins" and "trunk behind origin" findings are
+closed before a working session starts instead of reported in it. It is the first task that changes
+state, only locally and only through commands that skip a checkout not clean on its trunk; nothing is
+deleted, pushed or published.
+
+**Score:** 3
+
+#### Pull Request
+
+Scheduled tasks: the weekday morning machine upkeep
+
+Plugins: dkj-policy
+
+[PR #4203](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4203)
+
+---
 
 ### DEPLOY: fix/4198-merge-on-green-redispatch · 20261116-164427Z
 
