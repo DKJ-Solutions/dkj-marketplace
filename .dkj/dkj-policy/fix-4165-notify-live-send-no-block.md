@@ -39,19 +39,40 @@
 
 ### PLAN
 
+The owner decided on #4165 (davekokbwj, 2026-11-16): **send it**. PR #4178 only named a solved issue with
+no go-live block as `NO BLOCK`; this branch makes it owed the plain live message.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-LiveMessageVerdict` (live-message-rules.ps1): a closed-as-completed issue linking one task, not
+  told yet, with no go-live block, is `Owed` with `NoBlock = $true` and language `en`
+- [x] notify-live.ps1: no-block issues join the owed list (row reads `no block`); the `NO BLOCK` row and
+  the "tell them by hand" summary line are gone
+- [x] notify-live SKILL.md step 4 and both docstrings say the same
+- [x] bwj-development.tests.ps1: the NoBlock asserts pin owed, its task, `en`, the refusals that still
+  hold (open, not planned, no task, -LiveSince block, already told), and the driver's row
 
 ### TEST
 
+- [x] the gate (`ship-pr` runs it)
+
 ### DEPLOY: fix/4165-notify-live-send-no-block
 
-**Score:**
+`notify-live` now tells the task of a solved issue that carries no go-live block
+([#4165](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4165)), instead of only naming it as
+`NO BLOCK`. An issue closed as completed, linking one task and not told yet, gets the same plain "now live
+as version vX.Y.Z" message as a block waiting on the release, and its dry-run row reads `no block`. That
+is the set the cut's audience note counts as solved, so the two readers share one definition. The marker
+comment still keeps it from being told twice.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+On release day every task the release notes call solved now hears on the task itself that its work is
+live, with no by-hand messages left for the issues whose close carried no go-live block.
+
+**Score:** 3
 
 #### Pull Request
 
