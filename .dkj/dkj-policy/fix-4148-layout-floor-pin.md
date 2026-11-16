@@ -39,19 +39,44 @@
 
 ### PLAN
 
+#4148: a credential-holding runner pinned below the release that moved the workflow folder to
+`.dkj/dkj-policy/` (v6.10.0, #3870) looks in the old place and reports OK. The reason was verified, not
+inferred: v5.18.0's `Get-BranchFilePaths` names `Directory = 'dkj-policy'`.
+
+#### Decided in this branch
+
+- `check-unfolded-entry` does NOT fail loud on a missing workflow folder. The copy that failed green is the
+  pinned old one, which no change here can reach, and a repo with no workflow folder yet is a legitimate state.
+  The floor below is what catches the next layout move: raise it in the release that moves a path.
+- Re-pinning the consumers is work in their own repos; the register now names each one as an `[ERROR]`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-SharedScriptLayoutFloor` in `consumer-runner-lib.ps1`: v6.10.0, `.dkj/dkj-policy`, #3870
+- [x] Check 6d (`Write-RunnerPinFinding`) reports a pin below the floor as `[ERROR]` where the consumer carries the folder, `[INFO]` otherwise, never escalating on an unknown
+- [x] The local read tests the checkout; the `-RemoteRunners` read asks for the folder in the same GraphQL call
 
 ### TEST
 
+- [x] `consumers.tests.ps1`: 12u-12w (local: moved, not moved, at the floor) and 13c3 (remote: moved, not moved, field absent); 431 pass, 0 fail
+- [x] Measured against the real register with `-RemoteRunners`: `[ERROR]` on mesowise (v5.13.0), music-library (v5.8.0), recipes (v5.11.0) and xoxowildhearts (v5.18.0); smartwatchbanden (v6.12.0) stays `[INFO]`
+
 ### DEPLOY: fix/4148-layout-floor-pin
 
-**Score:**
+The consumer register (`check-consumers.ps1`, check 6d) now reports a write runner pinned below v6.10.0 as an
+`[ERROR]` when the consumer already carries `.dkj/dkj-policy/` ([#4148](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4148)).
+Such a pin's fold and unfolded-entry scripts look for branch documents in the old `dkj-policy/` folder, find
+none, and report OK: measured in a consumer, two merges went green over an entry that was never folded. Run
+with `-RemoteRunners` it flags four consumers today; a pin that is merely behind stays `[INFO]`.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A -- the register runs in this repo only; nothing a consumer installs changes.
+
+**Score:** N/A
 
 #### Pull Request
 
+The consumer register flags a write runner pinned below the .dkj/ layout floor as an error

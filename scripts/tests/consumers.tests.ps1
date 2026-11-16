@@ -1667,6 +1667,45 @@ try {
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-NotMatch 'holds a write credential' $r.Out 'bare SHA pin: no finding either way'
 
+    # --- 12u-12w. Check 6d's LAYOUT FLOOR (#4148) ---------------------------------------------------
+    # A pin below the release that moved the workflow folder to .dkj/dkj-policy/ looks in the old place
+    # and reports OK -- measured: fold-on-merge at v5.18.0 went green twice over an unfolded entry. In a
+    # consumer that has moved, that is an [ERROR]; in one that has not, the old pin still reads it right.
+    . (Join-Path $RepoRoot 'scripts\lib\consumer-runner-lib.ps1')
+    $floor = Get-SharedScriptLayoutFloor
+    $belowFloor = '5.18.0'
+    Assert-Equal $true ([version]$belowFloor -lt [version]$floor.Version) 'layout floor: the fixture pin really is below it'
+
+    # 12u. Below the floor, consumer already on .dkj/dkj-policy/ -> [ERROR], non-zero exit.
+    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-Item -ItemType Directory -Force -Path (Join-Path $Fixture '.dkj\dkj-policy') | Out-Null
+    New-FixtureWorkflow -Name 'fold-on-merge.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath $pinScript -Credential -Ref "$pinSha # v$belowFloor"
+    $mf = New-FixtureManifest -Extensions @('06-16')
+    $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
+    Assert-Equal $true ($r.Code -ne 0) 'below the layout floor after the move: a red register'
+    Assert-Match "\[ERROR\].*fold-on-merge\.yml line \d+ .*pinned at v$([regex]::Escape($belowFloor)), below v$([regex]::Escape($floor.Version))" $r.Out 'below the layout floor after the move: an ERROR naming the pin and the floor'
+    Assert-Match 'report OK' $r.Out 'below the layout floor after the move: says why -- the check fails green'
+
+    # 12v. Below the floor, consumer still on the root folder -> the ordinary [INFO] behind.
+    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureWorkflow -Name 'fold-on-merge.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath $pinScript -Credential -Ref "$pinSha # v$belowFloor"
+    $mf = New-FixtureManifest -Extensions @('06-16')
+    $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
+    Assert-Equal 0 $r.Code 'below the layout floor, not moved: exit code 0'
+    Assert-Match "\[INFO\].*pinned at v$([regex]::Escape($belowFloor)), behind" $r.Out 'below the layout floor, not moved: the ordinary behind INFO'
+    Assert-NotMatch '\[ERROR\].*holds a write credential' $r.Out 'below the layout floor, not moved: no ERROR'
+
+    # 12w. At the floor, after the move -> behind is still only [INFO]: it reads the new folder.
+    if ([version]$floor.Version -lt [version]$pinVersion) {
+        New-FixtureConsumer -ExtensionIds @('06-16')
+        New-Item -ItemType Directory -Force -Path (Join-Path $Fixture '.dkj\dkj-policy') | Out-Null
+        New-FixtureWorkflow -Name 'fold-on-merge.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath $pinScript -Credential -Ref "$pinSha # v$($floor.Version)"
+        $mf = New-FixtureManifest -Extensions @('06-16')
+        $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
+        Assert-Equal 0 $r.Code 'at the layout floor after the move: exit code 0'
+        Assert-Match "\[INFO\].*pinned at v$([regex]::Escape($floor.Version)), behind" $r.Out 'at the layout floor after the move: the ordinary behind INFO'
+    }
+
     # --- 13. Check 6b: -RemoteRunners reads an ABSENT consumer's runners over the API (#1808) ------
     # Check 6 reads the consumer's local checkout, so it inherited check 1: an absent consumer was
     # [SKIP] and its runners were not read at all -- and the consumers most likely to carry a stale
@@ -1795,6 +1834,27 @@ exit 1
     $r = Invoke-Absent -ManifestPath $mf -Remote
     Assert-Equal 0 $r.Code 'remote read, write runner on main: exit code 0'
     Assert-Match "fold-on-merge\.yml line \d+ holds a write credential .*a moving ref.*read from main over the API" $r.Out 'remote read, write runner on main: the pin finding, naming the branch it read'
+
+    # 13c3. THE LAYOUT FLOOR OVER THE NETWORK (#4148) -- the four consumers measured were all ones
+    #       nobody had checked out, so the escalation must reach this route. The folder is read in the
+    #       same GraphQL call ('dot'); a response without that field stays unknown and never escalates.
+    New-FixtureConsumer -ExtensionIds @('06-16')
+    $oldPinYml = New-FixtureWorkflowText -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-policy/scripts/release/fold-changelog-entry.ps1' -Credential -Ref "0123456789abcdef0123456789abcdef01234567 # v5.18.0"
+    $answer = New-GraphQlAnswer -Files @(@{ Name = 'fold-on-merge.yml'; Text = $oldPinYml })
+    $env:GH_GRAPHQL_BODY = $answer -replace '"defaultBranchRef"', '"dot":{"__typename":"Tree"},"defaultBranchRef"'
+    $mf = New-FixtureManifest -Extensions @('06-16')
+    $r = Invoke-Absent -ManifestPath $mf -Remote
+    Assert-Match '\[ERROR\].*fold-on-merge\.yml line \d+ .*pinned at v5\.18\.0, below v' $r.Out 'remote read, below the layout floor after the move: an ERROR'
+    Assert-Match 'dotExpr=HEAD:\.dkj/dkj-policy' $r.Calls 'remote read: the folder was asked for in the same call'
+
+    $env:GH_GRAPHQL_BODY = $answer -replace '"defaultBranchRef"', '"dot":null,"defaultBranchRef"'
+    $r = Invoke-Absent -ManifestPath $mf -Remote
+    Assert-NotMatch '\[ERROR\].*holds a write credential' $r.Out 'remote read, below the floor, not moved: no ERROR'
+    Assert-Match '\[INFO\].*pinned at v5\.18\.0, behind' $r.Out 'remote read, below the floor, not moved: the ordinary behind INFO'
+
+    $env:GH_GRAPHQL_BODY = $answer
+    $r = Invoke-Absent -ManifestPath $mf -Remote
+    Assert-NotMatch '\[ERROR\].*holds a write credential' $r.Out 'remote read, folder unknown: never escalates'
 
     # 13d. THE THIRD STATE, AND THE WHOLE REASON THIS IS WORTH A SWITCH. A repository the credential
     #      cannot see comes back as HTTP 200 with a null repository, an errors[] block, and exit 1 from
