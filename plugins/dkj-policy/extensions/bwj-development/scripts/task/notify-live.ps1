@@ -45,11 +45,17 @@
     before -Post.
 
     IT PRINTS NOTHING ANOTHER PERSON WROTE beyond an issue's number: a title, a body or an Asana error
-    message is not printed, and a failed post reports its HTTP status alone -- the rule the closed
-    message keeps (asana-closed-message.ps1).
+    message is not printed, and a failed Asana call reports a verdict rather than Asana's words -- the rule
+    the closed message keeps (asana-closed-message.ps1). The verdict (Get-AsanaFailureVerdict, #4147) says
+    whether a rerun can help: NO ACCESS (the token cannot see the task), TOKEN, REJECTED, or FAILED for a
+    network failure, a rate limit or a 5xx -- the only kind the summary sends back to "run it again".
+
+    EVERY OWED TASK IS READ ONCE BEFORE ANYTHING IS SENT, in the dry run too (#4147), so a task the token
+    cannot see is named before -Post rather than after it.
 
     Auth: ASANA_PAT in the session's environment (or -AsanaPat), the personal token build-backlog-page
-    reads too. Asked for only by -Post, and only when at least one task is owed the message.
+    reads too. Required by -Post when at least one task is owed the message; the dry run uses it when it is
+    set, to read the owed tasks, and says so when it is not.
 
     Pure ASCII (repo convention for .ps1).
 
@@ -149,6 +155,19 @@ function Invoke-Native {
         $ErrorActionPreference = $prev
     }
     return [pscustomobject]@{ Lines = @(@($out) | ForEach-Object { "$_" }); Code = $code }
+}
+
+# Per Asana failure kind (Get-AsanaFailureVerdict, #4147): the issue numbers it hit. Only 'transient' is
+# worth another run; the others each need a person to do something different, and the summary says what.
+$asanaFails = @{ 'no-access' = @(); 'token' = @(); 'rejected' = @(); 'transient' = @() }
+function Get-AsanaCallVerdict {
+    <# A caught Invoke-RestMethod failure as Get-AsanaFailureVerdict's verdict: the status, and the reply's
+       errors[].message read for classification only (Windows PowerShell 5.1 carries the body in
+       ErrorDetails). #>
+    param($ErrorRecord)
+    $status = try { [int]$ErrorRecord.Exception.Response.StatusCode } catch { 0 }
+    $body = try { if ($ErrorRecord.ErrorDetails) { [string]$ErrorRecord.ErrorDetails.Message } else { '' } } catch { '' }
+    return (Get-AsanaFailureVerdict -Status $status -Messages @(Get-AsanaErrorMessages -Body $body))
 }
 
 $repoName = ([string]$RepoArg).Trim()
@@ -316,6 +335,28 @@ foreach ($num in $issueNumbers) {
     }
 }
 
+# EVERY OWED TASK IS READ ONCE BEFORE ANYTHING IS SENT (#4147), in the dry run too: a task the token cannot
+# see used to surface only as a failed post, after the person had run -Post on a dry run that looked clean.
+# A GET of the task's gid is the whole read; a task that fails it is not sent to, and its row says why.
+if ($owed.Count -gt 0) {
+    if ($PatArg) {
+        $reachable = @()
+        foreach ($o in $owed) {
+            try {
+                Invoke-RestMethod -Method GET -Uri "$script:AsanaApiBase/tasks/$($o.Gid)?opt_fields=gid" -Headers @{ Authorization = "Bearer $PatArg" } | Out-Null
+                $reachable += $o
+            } catch {
+                $v = Get-AsanaCallVerdict -ErrorRecord $_
+                $asanaFails[$v.Kind] += $o.Number
+                Write-Host "  #$($o.Number)  $($v.Label)  task $($o.Gid): $($v.Advice) -- not told" -ForegroundColor Red
+            }
+        }
+        $owed = $reachable
+    } elseif (-not $PostArg) {
+        Write-Host '  (ASANA_PAT is not set, so the tasks were not read: a task the token cannot see shows only at -Post)' -ForegroundColor Yellow
+    }
+}
+
 # === 5/5 -- the post ===============================================================================
 Write-Host "[5/5] post -- $($owed.Count) task(s) owed the live message" -ForegroundColor Cyan
 if ($owed.Count -gt 0 -and -not $PostArg) {
@@ -340,9 +381,9 @@ if ($PostArg -and $owed.Count -gt 0) {
                 Invoke-RestMethod -Method POST -Uri "$script:AsanaApiBase/tasks/$($o.Gid)/stories" -Headers @{ Authorization = "Bearer $PatArg" } `
                     -ContentType 'application/json; charset=utf-8' -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) | Out-Null
             } catch {
-                $postFailures++
-                $status = try { [int]$_.Exception.Response.StatusCode } catch { 0 }
-                Write-Host "  #$($o.Number)  FAILED   Asana answered $(if ($status) { "HTTP $status" } else { 'no status' }) -- not told, and no marker written" -ForegroundColor Red
+                $v = Get-AsanaCallVerdict -ErrorRecord $_
+                $asanaFails[$v.Kind] += $o.Number
+                Write-Host "  #$($o.Number)  $($v.Label)  $($v.Advice) -- not told, and no marker written" -ForegroundColor Red
                 continue
             }
             # THE MARKER AFTER THE POST, never before: a marker for a post that failed would hold the
@@ -362,9 +403,27 @@ if ($PostArg -and $owed.Count -gt 0) {
 }
 
 Write-Host ''
-if ($readFailures -gt 0 -or $postFailures -gt 0) {
-    Write-Host "$readFailures read(s) and $postFailures post(s) failed -- the issues named above were not told. Run it again once gh and Asana answer." -ForegroundColor Red
-    exit 1
+# ONE LINE PER KIND OF FAILURE, each with the act that actually fixes it (#4147): "run it again" only where a
+# rerun can succeed, which is a gh read, a marker comment or a transient Asana answer.
+$failed = $false
+$fmtNums = { param($nums) (@($nums) | ForEach-Object { "#$_" }) -join ', ' }
+if (@($asanaFails['no-access']).Count -gt 0) {
+    $failed = $true
+    Write-Host "$(@($asanaFails['no-access']).Count) task(s) the token cannot see ($(& $fmtNums $asanaFails['no-access'])) -- tell those requesters by hand, or ask for access to the task. A rerun will not reach them." -ForegroundColor Red
 }
+if (@($asanaFails['rejected']).Count -gt 0) {
+    $failed = $true
+    Write-Host "Asana refused the request for $(& $fmtNums $asanaFails['rejected']) -- a rerun sends the same request; open the task by hand." -ForegroundColor Red
+}
+if (@($asanaFails['token']).Count -gt 0) {
+    $failed = $true
+    Write-Host "Asana did not accept the token ($(& $fmtNums $asanaFails['token'])) -- renew ASANA_PAT, then run it again." -ForegroundColor Red
+}
+$transient = @($asanaFails['transient']).Count
+if ($readFailures -gt 0 -or $postFailures -gt 0 -or $transient -gt 0) {
+    $failed = $true
+    Write-Host "$readFailures read(s), $postFailures marker comment(s) and $transient Asana call(s) failed -- the issues named above were not told. Run it again once gh and Asana answer." -ForegroundColor Red
+}
+if ($failed) { exit 1 }
 Write-Host $(if ($PostArg) { "Done: $($owed.Count) task(s) told $version is live." } else { "Dry run: $($owed.Count) task(s) would be told. Nothing was written." }) -ForegroundColor Green
 exit 0

@@ -56,6 +56,16 @@ refuses the run, and a merge whose files cannot be read leaves its issue unread 
 
 **Read the dry run before `-Post`.** It names every issue and why it is owed, held or skipped, and prints
 the message the first one would receive. Without a record, hold an issue out by hand with `-SkipIssue`.
+With `ASANA_PAT` set, the dry run also reads every owed task once, so a task the token cannot see shows
+as `NO ACCESS` before `-Post`, not after it
+([#4147](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4147)).
+
+**A failed Asana call gets a verdict, and only one kind is worth a rerun.** `NO ACCESS`: the token cannot
+see the task (a private task, or a project the account is not in), so tell that requester by hand or ask
+for access. `TOKEN`: Asana did not accept `ASANA_PAT`, so renew it. `REJECTED`: Asana refused the request
+itself. `FAILED`: a network failure, a rate limit or a 5xx, and only this kind ends in *"run it again"*.
+Measured on a store's v3.1.0: a task the account could not see answered HTTP 400, and the old advice to
+retry could not succeed.
 
 ## The message
 
@@ -88,8 +98,9 @@ not be read is named and not told, never guessed at.
 ## What it deliberately does not do
 
 - **It writes nothing but the two comments.** No push, cut, tag, card move, task completion or label.
-- **It prints nothing another person wrote** beyond an issue number. A failed post reports its HTTP
-  status alone, the rule the closed message keeps.
+- **It prints nothing another person wrote** beyond an issue number. A failed Asana call reports its
+  verdict, never Asana's message, the rule the closed message keeps; the message is read only to tell a
+  task the token cannot see from another refusal.
 - **It does not write the live-push record or decide its format.** live-preflight writes it, and its
   parser is `live-record-lib`, mirrored into this plugin byte-identical, so this script and the cut read
   one record the same way.
@@ -97,8 +108,8 @@ not be read is named and not told, never guessed at.
 ## Requirements in the consumer
 
 `git` and `gh`, authenticated. **`ASANA_PAT` in the session's environment** (or `-AsanaPat`) -- the
-personal token [`build-backlog-page`](../build-backlog-page/SKILL.md) reads too -- asked for only by
-`-Post`, and only when a task is owed the message. It reads `Get-RepoName` from `scripts/repo-config.ps1`
+personal token [`build-backlog-page`](../build-backlog-page/SKILL.md) reads too -- required by `-Post`
+when a task is owed the message, and used by the dry run when it is set, to read the owed tasks. It reads `Get-RepoName` from `scripts/repo-config.ps1`
 where the repo answers it. It refuses to run in this plugin's own source repo, which has no release to
 announce.
 
