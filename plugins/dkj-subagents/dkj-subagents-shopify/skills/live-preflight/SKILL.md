@@ -153,11 +153,11 @@ held, goes through the same control-character strip.
 | 2 | **gates** -- the repo's own lint and tests | one of them fails. |
 | 3 | **push list** -- derived from the range | nothing in the range lives on a theme and no app file changed, or a theme path is not safe to paste (failure 3 above). Where `Get-ShopifyAppRoot` is named, it also carries an `app deploy` check, which refuses an app root that cannot be printed. |
 | 4 | **version** -- what the pending entries owe, and the target | never; it reports. |
-| 5 | **live theme** -- by configured **id** and by the **role** the store reports | the two disagree, or the id is not in the list. |
+| 5 | **live theme** -- by configured **id** and by the **role** the store reports; from the same list, the **theme slots** | the two disagree, or the id is not in the list. The slots refuse a full store (20/20), whose backup could not duplicate live, and warn within two free slots (#4157). |
 | 6 | **drift** -- the check, with the list as an array, and again with the deletions | the check says the live files about to be overwritten are not what this repo thinks. On the deletions alone it withholds the deletion command instead. |
 | 7 | **backup** -- one verified copy of live | the backup cannot be proven complete. |
 | 8 | **the push command, the deletion command and, where `Get-ShopifyAppRoot` is named, the app deploy command** -- all without the marker | never; with no list there is simply no command. |
-| 9 | **aftercare** -- what the sweep would take | never; the sweep's dry run is its default and no `-Execute` is passed. |
+| 9 | **aftercare** -- what the sweep would take | never; the sweep's dry run is its default and no `-Execute` is passed. At or near the theme limit it warns that these candidates are not aftercare: sweep them before the next preflight. |
 
 **The order is cost-ordered and that was asked for.** The backup polls until the copy is provably
 complete, which took roughly **eight minutes** in that store, so it runs after every cheap gate has

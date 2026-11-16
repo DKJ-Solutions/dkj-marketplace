@@ -16,7 +16,7 @@ It adds four chapters. Each chapter's page states its own reach, and that reach 
 - **The preview handover** — [`PREVIEW-portable.md`](PREVIEW-portable.md). This is what a preview
   handover owes, and how it reaches the reviewer.
 - **The theme lifecycle** — [`THEME-LIFECYCLE-portable.md`](THEME-LIFECYCLE-portable.md). A verified
-  backup of the live theme is rotated at the cut, and spent previews are swept after the live push.
+  backup of the live theme is rotated at the cut, and spent previews are swept after the live push (before the preflight, at or near the theme limit).
 
 **The safety rules of the constitution hold here unchanged, and one of them bites hardest in a store
 repo:** a push to the live theme is outward-facing, so it waits for the owner's word.

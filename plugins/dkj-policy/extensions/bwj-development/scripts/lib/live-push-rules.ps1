@@ -872,3 +872,43 @@ function Format-ShopifyAppDeployCommand {
     }
     return "shopify app deploy --path $(ConvertTo-ShopifyAppRootText -AppRoot $AppRoot) --allow-updates"
 }
+
+function Get-ThemeSweepOrder {
+    <#
+        Pure: whether the spent-preview sweep must run BEFORE the backup, as { SweepFirst; Full; Count;
+        Limit; Free; Message }. Count below 0 means the theme list was not read: SweepFirst is then $false
+        and Message says the count is unknown, so a caller can never read silence as room.
+
+        WHY (#4157, November 16, 2026). Measured in a consumer: the store held 20 themes, Shopify's
+        per-store limit, so backup-live-theme could not duplicate live and live-preflight refused the push
+        -- while the runbook swept spent previews only AFTER that push. No backup without a free slot, no
+        push without a backup. backup-live-theme already refuses a full store (Get-ThemeSlotVerdict, in
+        theme-lifecycle-rules); this is the ORDER half, read by live-preflight on the day and by
+        bwj-development's prepare-release days ahead.
+
+        NEAR COUNTS, NOT ONLY FULL. The backup takes one slot before it rotates the previous one out, and
+        prepare-release runs days before the day, while preview pushes keep adding themes. So within
+        -Margin free slots (default 2) the sweep moves forward too. The limit is Shopify's 20, the same
+        default Get-ThemeSlotVerdict states; this lib is mirrored into a plugin that cannot load that one.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][int]$Count,
+        [int]$Limit = 20,
+        [int]$Margin = 2
+    )
+    if ($Count -lt 0) {
+        return [pscustomobject]@{ SweepFirst = $false; Full = $false; Count = $Count; Limit = $Limit; Free = -1
+            Message = "the store's theme count could not be read, so whether the sweep must come before the backup is unknown." }
+    }
+    $free = [Math]::Max(0, $Limit - $Count)
+    $full = $Count -ge $Limit
+    $first = $free -le $Margin
+    $message = if ($full) {
+        "the store is full ($Count/$Limit themes): the backup cannot duplicate live. Sweep spent previews FIRST (sweep-preview-themes -Execute), then run the preflight."
+    } elseif ($first) {
+        "the store is near its limit ($Count/$Limit themes, $free free): sweep spent previews BEFORE the preflight's backup, not after the push."
+    } else {
+        "$Count/$Limit themes, $free free: the sweep stays aftercare, after the push."
+    }
+    return [pscustomobject]@{ SweepFirst = $first; Full = $full; Count = $Count; Limit = $Limit; Free = $free; Message = $message }
+}

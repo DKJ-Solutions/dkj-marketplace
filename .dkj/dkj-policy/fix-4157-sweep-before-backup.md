@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Part 2 of #4157 (parts 1 and 3 shipped in #4180): at or near Shopify's theme limit, `prepare-release`
+and `live-preflight` put the preview sweep before the backup.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-ThemeSweepOrder` in `live-push-rules.ps1` (and its two mirrors): sweep first when 2 or fewer slots are free
+- [x] `live-preflight`: a `theme slots` step off step 5's list -- refuses a full store, warns near it; step 9 says the candidates are not aftercare then
+- [x] `prepare-release`: reads the theme count (a read, skipped with `-SkipDrift`), and the runbook gains a step 0 sweep
+- [x] Docs: THEME-LIFECYCLE-portable.md, the bwj-development CLAUDE.md line, the live-preflight step table
 
 ### TEST
 
+- [x] `live-push-rules.tests.ps1` (211 pass) and `bwj-development.tests.ps1` (1040 pass)
+
 ### DEPLOY: fix/4157-sweep-before-backup
 
-**Score:**
+`live-preflight` counts the store's themes off the list it already reads
+([#4157](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4157)). It refuses a full store (20/20)
+before the backup and warns within two free slots. `prepare-release` reads the same count, and when the
+store is at or near the limit its runbook puts the preview sweep first, as step 0, ahead of the preflight
+whose backup needs the slot.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A store at the theme limit no longer deadlocks on release day. The runbook prepared days ahead already
+says to sweep spent previews before the preflight, so the backup has a slot to duplicate live into.
+
+**Score:** 3
 
 #### Pull Request
 

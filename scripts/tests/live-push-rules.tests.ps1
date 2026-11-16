@@ -484,6 +484,19 @@ $threw = $false
 try { [void](Format-ShopifyAppDeployCommand -AppRoot 'ext;calc') } catch { $threw = $true }
 Assert-True $threw 'an unprintable root is a throw, never a command'
 
+# THE SWEEP'S PLACE IN THE ORDER (#4157): at or near Shopify's theme limit it moves before the backup.
+$so = Get-ThemeSweepOrder -Count 20
+Assert-True ($so.Full -and $so.SweepFirst) 'a full store (20/20) sweeps first'
+Assert-True $so.Message.Contains('20/20') 'and the message names the count'
+Assert-True ((Get-ThemeSweepOrder -Count 18).SweepFirst -and -not (Get-ThemeSweepOrder -Count 18).Full) 'two free slots is near: the sweep still moves first'
+Assert-True (-not (Get-ThemeSweepOrder -Count 17).SweepFirst) 'three free slots: the sweep stays aftercare'
+$soUnknown = Get-ThemeSweepOrder -Count -1
+Assert-True (-not $soUnknown.SweepFirst -and $soUnknown.Message.Contains('could not be read')) 'an unread list is said to be unknown, never read as room'
+Assert-True (Get-ThemeSweepOrder -Count 5 -Limit 5 -Margin 0).Full 'the limit and the margin are parameters'
+Assert-True (-not (Get-ThemeSweepOrder -Count 4 -Limit 5 -Margin 0).SweepFirst) '...and a margin of 0 moves the sweep only when full'
+$pfSrc = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'scripts\task\live-preflight.ps1'))
+Assert-True ($pfSrc.IndexOf('Get-ThemeSweepOrder -Count') -gt 0 -and $pfSrc.IndexOf('Get-ThemeSweepOrder -Count') -lt $pfSrc.IndexOf('[7/9] backup')) 'live-preflight reads the sweep order before its backup step'
+
 if ($script:fail -eq 0) {
     Write-Host ''
     Write-Host "Result: $($script:pass) pass, 0 fail." -ForegroundColor Green

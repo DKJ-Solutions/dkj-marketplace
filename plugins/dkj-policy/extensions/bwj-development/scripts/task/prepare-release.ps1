@@ -574,10 +574,41 @@ if (@($ExecutionContext.InvokeCommand.GetCommands('Get-BwjPagesConfig', 'Functio
         Add-Step -Name 'release-notes page' -State 'attention' -Detail "publish-page -Kind notes -CheckAuth refused (exit $($chk.Code)) -- no path token, or no CLOUDFLARE_API_TOKEN and no wrangler login to the pages account. Run it to see which; it writes nothing."
     }
 }
+
+# THE STORE'S THEME COUNT, SO THE RUNBOOK PUTS THE SWEEP WHERE IT CAN STILL HELP (#4157). At or near
+# Shopify's limit the preflight's backup has no slot to duplicate into, so a sweep printed after the push
+# deadlocks the day. A read only (theme list), skipped with -SkipDrift like the other CLI read. Connected
+# stores are read too: their preflight takes the same backup.
+$themeCount = -1
+if (-not $SkipDriftArg -and $store) {
+    $list = Invoke-Native { & shopify theme list --store $store --json }
+    if ($list.Code -eq 0) {
+        # The CLI can print a hint line beside the JSON, so only the JSON span is parsed.
+        $text = ($list.Lines -join "`n")
+        $start = $text.IndexOfAny([char[]]'[{')
+        try {
+            $parsed = if ($start -ge 0) { $text.Substring($start) | ConvertFrom-Json } else { $null }
+            if ($null -ne $parsed) {
+                $themeCount = if ($parsed -isnot [System.Array] -and $parsed.PSObject.Properties.Name -contains 'themes') { @($parsed.themes).Count } else { @($parsed).Count }
+            }
+        } catch { $themeCount = -1 }
+    }
+}
+$sweepOrder = Get-ThemeSweepOrder -Count $themeCount
+if ($SkipDriftArg -or -not $store) {
+    Add-Step -Name 'theme slots' -State 'skip' -Detail "the store's theme count was not read$(if ($SkipDriftArg) { ' (-SkipDrift)' } else { ' (no store domain)' }), so the runbook keeps the sweep after the push. live-preflight counts again on the day."
+} elseif ($themeCount -lt 0) {
+    Add-Step -Name 'theme slots' -State 'skip' -Detail "$($sweepOrder.Message) live-preflight counts again on the day."
+} elseif ($sweepOrder.SweepFirst) {
+    Add-Step -Name 'theme slots' -State 'attention' -Detail "$($sweepOrder.Message) The runbook puts the sweep first."
+} else {
+    Add-Step -Name 'theme slots' -State 'ready' -Detail $sweepOrder.Message
+}
 Write-Host ''
 
 $runbook = @(Format-ReleaseRunbook -Store $store -LiveThemeId $liveId -PushFiles $pushFiles -Bump "$bump" `
-    -TargetVersion $targetVersion -ReleaseDate $releaseDate -Obligations $obligations -DeployBranch $deployBranch -Trunk $trunk -AppRoot $appRoot -AppFiles $appFiles -NotesUrl $notesUrl -TaskForm:$taskForm)
+    -TargetVersion $targetVersion -ReleaseDate $releaseDate -Obligations $obligations -DeployBranch $deployBranch -Trunk $trunk -AppRoot $appRoot -AppFiles $appFiles -NotesUrl $notesUrl -TaskForm:$taskForm `
+    -SweepFirst:$sweepOrder.SweepFirst -SweepReason $(if ($sweepOrder.SweepFirst) { $sweepOrder.Message } else { '' }))
 foreach ($l in $runbook) { Write-Host "  $l" }
 if ($OutFileArg) {
     $outFull = if ([System.IO.Path]::IsPathRooted($OutFileArg)) { $OutFileArg } else { Join-Path $repoRoot $OutFileArg }

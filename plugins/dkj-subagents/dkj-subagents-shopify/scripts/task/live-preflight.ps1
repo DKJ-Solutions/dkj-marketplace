@@ -718,6 +718,15 @@ if ($null -eq $themes) {
     }
 }
 
+# THE SWEEP'S PLACE IN THE ORDER, read off the same list (#4157). At or near Shopify's theme limit the sweep
+# is not aftercare: the backup at step 7 needs a free slot, so the sweep has to run before this preflight.
+$sweepOrder = Get-ThemeSweepOrder -Count $(if ($null -eq $themes) { -1 } else { @($themes).Count })
+if ($sweepOrder.Full) {
+    Add-Step -Name 'theme slots' -State 'refuse' -Detail $sweepOrder.Message
+} elseif ($sweepOrder.SweepFirst) {
+    Add-Step -Name 'theme slots' -State 'warn' -Detail $sweepOrder.Message
+}
+
 # === 6/9 -- the drift check, with the list AS AN ARRAY =============================================
 Write-Host ''
 if ($connected) {
@@ -991,7 +1000,11 @@ if (-not (Test-Path -LiteralPath $sweepScript -PathType Leaf)) {
     # SHOW what the aftercare would take, and a preflight that quietly deleted themes would be acting.
     $sweep = Invoke-NativeCapture -FilePath 'powershell' -Arguments @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $sweepScript, '-Store', $store) -TimeoutSeconds 600
     Write-Host ($sweep.Output | Out-String)
-    if ((Test-NativeExitMeasured -Capture $sweep) -and $sweep.ExitCode -eq 0) {
+    # AT OR NEAR THE LIMIT THESE CANDIDATES ARE NOT AFTERCARE (#4157): they are what frees the slot the
+    # backup needs, so the step says to sweep them before the next preflight rather than after the push.
+    if ($sweepOrder.SweepFirst -and (Test-NativeExitMeasured -Capture $sweep) -and $sweep.ExitCode -eq 0) {
+        Add-Step -Name 'aftercare' -State 'warn' -Detail "previewed above, and NOT aftercare this time: $($sweepOrder.Message)"
+    } elseif ((Test-NativeExitMeasured -Capture $sweep) -and $sweep.ExitCode -eq 0) {
         Add-Step -Name 'aftercare' -State 'pass' -Detail 'previewed above -- nothing was removed, because the sweep only removes with -Execute.'
     } else {
         Add-Step -Name 'aftercare' -State 'warn' -Detail "the sweep preview: $(Get-NativeExitLabel -Capture $sweep). It changes nothing either way; the aftercare is simply unlisted."

@@ -1192,6 +1192,14 @@ foreach ($badBranch in @('main', '-live', "live`n")) {
     $prBadConn = (Format-ReleaseRunbook -PushFiles @() -DeployBranch $badBranch -Trunk 'main') -join "`n"
     Assert-True ($prBadConn -notmatch 'gh pr create') "connected: no promotion is composed for deploy branch '$($badBranch -replace "`n", '\n')'"
 }
+# THE SWEEP FIRST (#4157): at or near the theme limit the runbook sweeps before the preflight's backup.
+$prSweep = (Format-ReleaseRunbook -Store 's.myshopify.com' -LiveThemeId '42' -PushFiles @('sections/a.liquid') -SweepFirst -SweepReason "the store is full (20/20 themes)$([char]27)[2J") -join "`n"
+Assert-True ($prSweep.IndexOf('0. Preview sweep FIRST') -ge 0 -and $prSweep.IndexOf('0. Preview sweep FIRST') -lt $prSweep.IndexOf('1. Preflight')) 'sweep-first puts the sweep before the preflight'
+Assert-True ($prSweep.Contains('20/20') -and -not $prSweep.Contains([char]27)) '...with the reason, control characters stripped'
+Assert-True $prSweep.Contains('5. Preview sweep -- done as step 0') 'and step 5 says it was done as step 0'
+Assert-True ($prBook -notmatch '0\. Preview sweep') 'without it, the sweep stays at step 5, after the push'
+$prDrvSweep = [System.IO.File]::ReadAllText((Join-Path $PluginRoot 'scripts\task\prepare-release.ps1'))
+Assert-True ($prDrvSweep.Contains('Get-ThemeSweepOrder -Count') -and $prDrvSweep.Contains('-SweepFirst:$sweepOrder.SweepFirst')) 'prepare-release reads the theme count and hands the verdict to the runbook'
 $prCtl = @([pscustomobject]@{ Branch = 'feat/1-x'; Sentence = "Once live, stop it.$([char]27)[2J" })
 Assert-True (-not ((Format-ReleaseRunbook -Obligations $prCtl) -join "`n").Contains([char]27)) 'entry prose reaches the runbook with its control characters stripped'
 
