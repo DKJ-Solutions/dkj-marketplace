@@ -1338,6 +1338,14 @@ Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -State 'OPEN' -Com
 Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Reason 'NOT_PLANNED' -Comments @(New-NlBlockComment -Kinds @('after-release')))).Owed) 'a close as not planned is skipped'
 Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Body 'no task' -Comments @(New-NlBlockComment -Kinds @('after-release')))).Owed) 'an issue linking no task is skipped'
 Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue)).Owed) 'an issue with no block is skipped'
+# #4165: ...but NAMED, because the cut's audience note can list it as solved while its task hears nothing.
+$nlNoBlock = Get-LiveMessageVerdict -Issue (New-NlIssue)
+Assert-True ($nlNoBlock.NoBlock -and $nlNoBlock.Gid -eq '1201') 'a solved issue linking one task with no block is marked NoBlock, with its task'
+Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -State 'OPEN')).NoBlock) '...but an open issue is not -- it was never solved'
+Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Body 'no task')).NoBlock) '...nor one linking no task -- there is nobody to tell'
+Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Comments @(New-NlBlockComment))).NoBlock) '...nor one whose block was told live at the close'
+$nlNbDriver = [System.IO.File]::ReadAllText((Join-Path $PluginRoot 'scripts\task\notify-live.ps1'))
+Assert-True ($nlNbDriver.Contains('elseif ($verdict.NoBlock)') -and $nlNbDriver.Contains('NO BLOCK')) 'the driver prints such an issue as NO BLOCK rather than a plain skip'
 $nlTold = [pscustomobject]@{ Body = (Format-LiveMessageIssueComment -Version 'v1.3.0' -Gid '1201'); CreatedAt = '2026-10-12T10:00:00Z' }
 Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Comments @((New-NlBlockComment -Kinds @('after-release')), $nlTold))).Owed) 'an issue already told is not told twice'
 $nlRound2 = @((New-NlBlockComment -Kinds @('after-release') -CreatedAt '2026-10-01T10:00:00Z'), $nlTold, (New-NlBlockComment -Kinds @('after-release') -CreatedAt '2026-10-14T10:00:00Z'))
