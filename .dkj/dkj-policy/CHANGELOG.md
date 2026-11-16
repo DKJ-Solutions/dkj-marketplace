@@ -2,7 +2,59 @@
 
 ## [Unreleased]
 
-**21 / 26 minor entries** <!-- pending-tally -->
+**23 / 28 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4156-task-form-audience-note · 20261116-103028Z
+
+`prepare-release` (bwj-development) no longer asks a repo that drafts its audience note as solved tasks
+(`Get-ReleaseNoteTaskLink`) to write that note before the day
+([#4156](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4156)). Step 2 and the runbook's cut step say the
+cut drafts it from the live-push record, name `-LivePushRecord` as required, and ask for a review after the cut.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A BWJ store repo whose release note lists solved tasks is no longer told to write a note the cut would replace.
+That note would list work before anyone knew it was live. Its runbook now names the record the cut needs.
+
+**Score:** 2
+
+#### Pull Request
+
+prepare-release tells a task-form repo that the cut drafts the audience note
+
+Plugins: bwj-development
+
+[PR #4172](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4172)
+
+---
+
+### DEPLOY: fix/4154-app-deploy-allow-updates · 20261116-101810Z
+
+The app deploy that `live-preflight` and `prepare-release` print now reads
+`shopify app deploy --path <folder> --allow-updates`
+([#4154](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4154)), so it runs in a non-interactive shell.
+A deletion still needs `--allow-deletes`, which remains a deliberate separate act.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+On release day in a Shopify store repo that ships an app, the printed app deploy runs as printed through a
+session's `!` prefix. Before, the Shopify CLI refused it there and the owner had to look up the missing flag.
+
+**Score:** 3
+
+#### Pull Request
+
+The printed app deploy carries --allow-updates, so it runs in a non-interactive shell
+
+Plugins: bwj-development, dkj-subagents-shopify
+
+[PR #4169](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4169)
+
+---
 
 ### DEPLOY: feat/4155-notes-share-link · 20261116-100413Z
 

@@ -474,8 +474,8 @@ Assert-Equal 0 @(Get-ShopifyAppDeployPaths -ChangedPaths $range -AppRoot '').Cou
 Assert-Equal 0 @(Get-ShopifyAppDeployPaths -ChangedPaths $range -AppRoot '../extensions').Count 'an unprintable root lists nothing'
 Assert-Equal 1 @(Get-ShopifyAppDeployPaths -ChangedPaths @('apps\d\run.js', $null, '') -AppRoot 'apps/d').Count 'either separator, and empty entries are skipped'
 
-Assert-Equal 'shopify app deploy --path extensions' (Format-ShopifyAppDeployCommand -AppRoot 'extensions/') 'the command names the root, without its trailing slash'
-Assert-Equal 'shopify app deploy --path apps/d' (Format-ShopifyAppDeployCommand -AppRoot 'apps\d') 'with forward slashes'
+Assert-Equal 'shopify app deploy --path extensions --allow-updates' (Format-ShopifyAppDeployCommand -AppRoot 'extensions/') 'the command names the root, without its trailing slash'
+Assert-Equal 'shopify app deploy --path apps/d --allow-updates' (Format-ShopifyAppDeployCommand -AppRoot 'apps\d') 'with forward slashes'
 $threw = $false
 try { [void](Format-ShopifyAppDeployCommand -AppRoot 'ext;calc') } catch { $threw = $true }
 Assert-True $threw 'an unprintable root is a throw, never a command'
