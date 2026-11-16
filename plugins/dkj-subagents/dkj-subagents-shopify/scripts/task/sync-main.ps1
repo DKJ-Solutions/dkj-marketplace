@@ -804,9 +804,9 @@ function Complete-SyncPullRequest {
     #>
     param(
         [Parameter(Mandatory = $true)][string]$trunk,
-        [Parameter(Mandatory = $true)][string]$trunkShown,
+        [Parameter(Mandatory = $true)][string]$TrunkShown,
         [Parameter(Mandatory = $true)][string]$branch,
-        [Parameter(Mandatory = $true)][string]$branchShown,
+        [Parameter(Mandatory = $true)][string]$BranchShown,
         [Parameter(Mandatory = $true)][object]$branchPaste,
         [Parameter(Mandatory = $true)][string]$msg,
         [Parameter(Mandatory = $true)][string]$body,
@@ -879,7 +879,7 @@ function Complete-SyncPullRequest {
         if ($prView.TimedOut) {
             Write-Host "  'gh pr view' did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- see the [timeout] lines above." -ForegroundColor Red
         }
-        Write-Host "  Nothing is lost; the PR is open on $branchShown. Merge it yourself once CI is green." -ForegroundColor Red
+        Write-Host "  Nothing is lost; the PR is open on $BranchShown. Merge it yourself once CI is green." -ForegroundColor Red
         return $false
     }
     Write-Host "Sync PR #$pr opened; waiting up to $ChecksTimeoutMinutes min for CI." -ForegroundColor Cyan
@@ -981,14 +981,14 @@ function Complete-SyncPullRequest {
                                  -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
     $post.Output | ForEach-Object { Write-Host $_ }
     if ($post.ExitCode -ne 0) {
-        Write-Host "Sync PR #$pr IS MERGED, but $trunkShown could not be fast-forwarded, so this checkout does not have it yet." -ForegroundColor Red
+        Write-Host "Sync PR #$pr IS MERGED, but $TrunkShown could not be fast-forwarded, so this checkout does not have it yet." -ForegroundColor Red
         if ($post.TimedOut) {
             Write-Host "  'git pull' did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- see the [timeout] lines above." -ForegroundColor Red
         }
         Write-Host '  Nothing is lost; pull by hand: git pull --ff-only' -ForegroundColor Red
         return $false
     }
-    Write-Host "Done -- sync PR #$pr merged into $trunkShown." -ForegroundColor Green
+    Write-Host "Done -- sync PR #$pr merged into $TrunkShown." -ForegroundColor Green
     return $true
 }
 
