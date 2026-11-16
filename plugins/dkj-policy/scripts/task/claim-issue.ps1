@@ -149,7 +149,8 @@
 .PARAMETER Candidates
     List which open issues a sweep may pick up -- free, this tag's already, held by another tag, or
     skipped with the reason, or 'stale-park' for an awaiting-pull issue whose blocker has landed (#3136),
-    or for an awaiting-pull-external / awaiting-release-external issue whose upstream release is out (#3572).
+    or for an awaiting-pull-external / awaiting-release-external issue whose upstream release is out (#3572),
+    or for an awaiting-decision-dev / awaiting-decision-client issue with a 'Decision (' comment after its park (#4186).
     A plan-goal tree reads as skipped except each goal's Now task (#3961). Takes no issue number and WRITES NOTHING: choosing is a separate step from
     claiming, because between the two a session may still find the issue is not this repo's work.
 
@@ -896,6 +897,31 @@ if ($Candidates) {
         }
     }
 
+    # A DECISION PARK WHOSE DECISION IS ON THE ISSUE (#4186). Nothing lifts 'awaiting-decision-client' when the
+    # client answers -- the answer arrives as a comment, often from a session without this plugin -- so the
+    # issue stayed skipped by every sweep. A 'Decision (' comment after the last parking comment reads
+    # 'stale-park'; the sweep lifts the label in its own step, and reads the decision before it builds.
+    # 'awaiting-decision-dev' is read the same way, for an answer posted outside issues-sweep-decisions.
+    $parkedDecision = @($sweepList | Where-Object { $_.Verdict -eq 'skipped' -and $_.Reason -match "^label 'awaiting-decision-(dev|client)'" })
+    if ($parkedDecision.Count -gt 0) {
+        $decisionIssues = @{}
+        try {
+            $parsedForDecision = ConvertFrom-Json -InputObject (@($list.Output) -join "`n")
+            foreach ($i in $parsedForDecision) { if ($i) { $decisionIssues[[int]$i.number] = $i } }
+        } catch { }
+        foreach ($c in $parkedDecision) {
+            $issueObj = $decisionIssues[[int]$c.Number]
+            $comments = if ($issueObj -and $issueObj.PSObject.Properties['comments']) { @($issueObj.comments) } else { @() }
+            $decided = Get-ParkDecisionAnswer -Comments $comments
+            if ($decided) {
+                $label = ([regex]::Match($c.Reason, "^label '([^']+)'")).Groups[1].Value
+                $by = if ($decided.Author) { " by $($decided.Author)" } else { '' }
+                $c.Verdict = 'stale-park'
+                $c.Reason = "label '$label', but a decision was posted after the park$by$(if ($decided.At) { " at $($decided.At)" }) -- read it before you build"
+            }
+        }
+    }
+
     if ($branchNote) { Write-Host "  [branch scan] $(Format-ForConsole -Text $branchNote)" -ForegroundColor Yellow }
     if ($sweepList.Count -eq 0) {
         Write-Host '[OK] no open issues on this tracker.' -ForegroundColor Green
@@ -934,7 +960,7 @@ if ($Candidates) {
     foreach ($s in $stale) {
         # NAMED, NOT LIFTED: this mode writes nothing, so the unpark is the sweep's own step (#3136).
         $sLabel = ([regex]::Match($s.Reason, "^label '([^']+)'")).Groups[1].Value
-        $sWhat = if ($sLabel -eq 'awaiting-pull') { 'has landed' } else { 'has been released' }
+        $sWhat = if ($sLabel -eq 'awaiting-pull') { 'has landed' } elseif ($sLabel -like 'awaiting-decision-*') { 'has been decided' } else { 'has been released' }
         Write-Host "     #$($s.Number) waits on nothing any more -- unpark it, and it is free:" -ForegroundColor Yellow
         Write-Host "       gh issue edit $($s.Number) --remove-label $sLabel" -ForegroundColor Yellow
         Write-Host "       gh issue comment $($s.Number) --body `"Unparked: what it waited on $sWhat.`"" -ForegroundColor Yellow
