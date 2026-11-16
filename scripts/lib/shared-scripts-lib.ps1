@@ -47,6 +47,11 @@ function Get-SharedScriptPairs {
         pushed -- was among them. Same reasoning as LibOnly: declared next to the registration, so a
         newly shared script cannot fall out of the check silently.
 
+        RepoRootExempt = '<reason>' marks an ENTRY POINT that resolves no repo root at all, because it
+        never reads or writes a repo (#4162's place-scheduled-tasks writes only under ~/.claude). The
+        dual-context invariant asks how a script finds its repo; for such a script the honest answer
+        is the reason, not a resolver called for show. Declared here for the same reason as LibOnly.
+
         SkillParamsExempt lists parameters that deliberately do NOT belong in a skill, each with a
         reason at the registration. Without it the check would be bypassed wholesale the first time it
         fired on a test-only override, and a gate that gets bypassed guards nothing.
@@ -215,6 +220,23 @@ function Get-SharedScriptPairs {
             SkillParamsExempt = @('RootOverride', 'UserHomeOverride')
             # -DryRun fetches and measures and moves nothing.
             MeasureArgs = @('-DryRun')
+        },
+        @{
+            # #4162: the Desktop scheduled-task prompts are versioned in the scheduled-tasks skill's
+            # tasks/ folder, and this places them into ~/.claude/scheduled-tasks/ and refreshes every
+            # placed copy by its marker line. Reads only its own skill folder; carries no lib.
+            Name   = 'place-scheduled-tasks'
+            Source = 'scripts\task\place-scheduled-tasks.ps1'
+            Plugin = 'dkj-policy'
+            Skill  = 'scheduled-tasks'
+            # Fixtures: a scratch tasks folder and a scratch ~/.claude home. A consumer never types either.
+            SkillParamsExempt = @('TasksRoot', 'UserHomeOverride')
+            # Its default tasks folder ascends two levels: the repo root here, the plugin root in the
+            # mirror. The suite runs both copies without -TasksRoot.
+            MirrorRun = 'place-scheduled-tasks.tests.ps1'
+            RepoRootExempt = 'it reads its own skill folder and writes under ~/.claude; no repo is involved'
+            # A dry run by default: it reads and prints and writes nothing.
+            MeasureArgs = @()
         },
         @{
             # The one definition of "fast-forward only where it cannot touch anybody's work" (#3605):
@@ -2590,6 +2612,8 @@ function Get-SharedScriptPairs {
             # tells those two apart rather than treating both as nothing to do.
             Skill      = if ($p.ContainsKey('Skill')) { [string]$p.Skill } else { $null }
             SkillParamsExempt = if ($p.ContainsKey('SkillParamsExempt')) { [string[]]$p.SkillParamsExempt } else { @() }
+            # WHY an entry point resolves no repo root, or '' (#4162). Normalized like LibOnly.
+            RepoRootExempt = if ($p.ContainsKey('RepoRootExempt')) { [string]$p.RepoRootExempt } else { '' }
             # HOW THIS SCRIPT MAY BE INVOKED HARMLESSLY, for measure-skill.ps1's wall-clock pass. Three
             # states, and the middle one is why this is $null rather than @() when absent: $null means
             # "no read-only invocation is declared, so it is NEVER RUN to be timed", while @() means
