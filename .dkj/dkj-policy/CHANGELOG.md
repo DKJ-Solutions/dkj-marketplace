@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**23 / 28 minor entries** <!-- pending-tally -->
+**24 / 29 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4165-notify-live-no-block-row · 20261116-104334Z
+
+`notify-live` names a solved issue that carries no go-live block instead of skipping it silently
+([#4165](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4165)). An issue closed as completed and
+linking one task, with no block, prints as `NO BLOCK` with its task, and the run ends with a line listing
+them: the cut's audience note can call such an issue solved while nothing here tells its task, so a person
+tells it by hand. Nothing more is sent than before.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+On release day the dry run shows which requesters the release notes call solved but whose task this run
+will not tell, so nobody reads in the notes that their task shipped without hearing it on the task itself.
+
+**Score:** 2
+
+#### Pull Request
+
+notify-live: name an issue that is solved but has no go-live block, instead of skipping it silently
+
+Plugins: bwj-development
+
+[PR #4178](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4178)
+
+---
 
 ### DEPLOY: fix/4156-task-form-audience-note · 20261116-103028Z
 
