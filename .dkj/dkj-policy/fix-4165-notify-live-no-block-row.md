@@ -39,19 +39,39 @@
 
 ### PLAN
 
+#4165: the cut's audience note listed an issue as solved while `notify-live` skipped it as `carries no
+go-live block`, so its task was never told. This branch is the half that needs no decision: name such an
+issue instead of skipping it silently. Whether `notify-live` should also SEND those tasks a plain live
+message changes who is messaged, and stays on the issue as the owner's decision.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-LiveMessageVerdict` marks `NoBlock` (with the task) on a solved issue linking one task, not
+  told yet, with no go-live block
+- [x] `notify-live.ps1` prints it as `NO BLOCK` with its task and a summary line, not exit 1; the skill
+  page says so
 
 ### TEST
 
+- [x] `bwj-development.tests.ps1`: `NoBlock` only for that case (not open, not task-less, not a
+  -LiveSince block), and the driver's row (1029 asserts green standalone)
+
 ### DEPLOY: fix/4165-notify-live-no-block-row
 
-**Score:**
+`notify-live` names a solved issue that carries no go-live block instead of skipping it silently
+([#4165](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4165)). An issue closed as completed and
+linking one task, with no block, prints as `NO BLOCK` with its task, and the run ends with a line listing
+them: the cut's audience note can call such an issue solved while nothing here tells its task, so a person
+tells it by hand. Nothing more is sent than before.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+On release day the dry run shows which requesters the release notes call solved but whose task this run
+will not tell, so nobody reads in the notes that their task shipped without hearing it on the task itself.
+
+**Score:** 2
 
 #### Pull Request
 
