@@ -39,19 +39,38 @@
 
 ### PLAN
 
+#4162's third proposal, decided on #4201 (November 16, 2026): build the morning machine upkeep only, and
+let an unattended run change local state through commands that guard themselves. Proposals 4 and 5 are
+not taken up.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `tasks/machine-upkeep.md`: weekdays 07:17 from the dkj-marketplace checkout -- `update-plugins -AllCheckouts`, `sync-trunk -AllCheckouts`, `tidy-machine -DryRun`, reported in at most fifteen lines
+- [x] the skill's task table names it, and a paragraph says it is the one task that changes state, and how far
 
 ### TEST
 
+- [x] `place-scheduled-tasks.tests.ps1`: 61 passed, 0 failed, the new file held to the shipped shape
+- [x] dry-run placement prints its schedule (`17 7 * * 1-5`), folder and permission hint
+- [x] the three commands run from this checkout with `-DryRun`: update-plugins 5 run, 1 skipped (this branch), exit 0; sync-trunk 2 would move, 3 current, 1 skipped, exit 0; tidy-machine exit 0 with 502 items handed over, which is why step 4 reports counts per lane rather than items
+
 ### DEPLOY: feat/4201-machine-upkeep-task
 
-**Score:**
+Inside this repo nothing changes but the `scheduled-tasks` skill's prompt folder and its page; no script,
+gate or registry moves.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+The `scheduled-tasks` skill ships `machine-upkeep`: every weekday at 07:17, from the dkj-marketplace
+checkout, it updates the plugins in every checkout on the machine, fast-forwards every clean trunk and
+reports what `tidy-machine` finds, so the "behind on plugins" and "trunk behind origin" findings are
+closed before a working session starts instead of reported in it. It is the first task that changes
+state, only locally and only through commands that skip a checkout not clean on its trunk; nothing is
+deleted, pushed or published.
+
+**Score:** 3
 
 #### Pull Request
 
