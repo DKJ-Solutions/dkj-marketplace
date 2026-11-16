@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**24 / 30 minor entries** <!-- pending-tally -->
+**24 / 31 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4176-eol-fixture-racy-git · 20261116-111147Z
+
+The CRLF-index assert in `git-porcelain-lib.tests.ps1` no longer depends on how fast the runner is
+([#4176](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4176)). Git trusts an index entry's stat
+data unless the file was written in the same second as the index, so a slow runner read the fixture's
+CRLF file as clean. The fixture now moves the file's mtime back before the first add and forward before the
+checkout, so every run takes the same path.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A -- a test fixture in this repo; nothing a consumer runs changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+git-porcelain-lib tests: make the CRLF-index fixture independent of how fast the runner is
+
+[PR #4181](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4181)
+
+---
 
 ### DEPLOY: fix/4143-eol-fixture-race · 20261116-110015Z
 
