@@ -49,7 +49,11 @@
          checking the trunk out over it -- the same reading Get-TrunkReturnDecision already makes at step
          2b, which step 5 made after the merge instead of before it -- while a tree already ON the trunk
          stays exempt (git refuses `worktree add` there), the ordinary clean run still folds in place, and
-         the sentence each arm prints says which of the three reasons it was rather than asserting one.
+         the sentence each arm prints says which of the three reasons it was rather than asserting one;
+     12. Get-EolOnlyRestorePlan (inbound #4144) lets the fold's fast-forward take its blockers from
+         origin/main only where every modified path equals it modulo line endings -- one real edit, an
+         add, a delete, a rename, a conflict or a quoted path means no restore at all -- and, against a
+         real repo holding a CRLF-index file under eol=lf, the retried fast-forward lands.
 
     Pure ASCII (repo convention for .ps1).
 #>
@@ -506,6 +510,79 @@ Assert-True (Get-FoldTreeDecision -Head $Ship -ShipBranch $Ship -TrunkBranch 'ma
 $shipText = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'scripts\release\ship-pr.ps1'))
 Assert-True ($shipText -match 'Get-FoldTreeDecision') 'ship-pr chooses its fold tree through this function'
 Assert-True ($shipText -match [regex]::Escape('if ($foldDecision.InPlace) {')) 'and branches on its answer rather than on HEAD alone'
+
+Write-Host "11. Get-EolOnlyRestorePlan -- may the fold's fast-forward take its blockers from the target? (inbound #4144)" -ForegroundColor Cyan
+$eolYes = { param($p) $true }
+$eolNo = { param($p) $false }
+$eolOnlyA = { param($p) $p -eq 'a.liquid' }
+
+$ep = Get-EolOnlyRestorePlan -StatusLines @(' M a.liquid', 'M  b.liquid', 'MM c.liquid') -TestEolOnly $eolYes
+Assert-True ($ep.Restore -and $ep.Paths.Count -eq 3) 'every plain modification that is EOL-only is restored'
+Assert-True ($ep.Paths[0] -eq 'a.liquid' -and $ep.Paths[2] -eq 'c.liquid') 'and the paths are read past the two status columns and the space'
+Assert-True (-not (Get-EolOnlyRestorePlan -StatusLines @(' M a.liquid', ' M b.liquid') -TestEolOnly $eolOnlyA).Restore) `
+    'one path that differs beyond its line endings means no restore at all -- the refusal stays as it was'
+Assert-True (-not (Get-EolOnlyRestorePlan -StatusLines @(' M a.liquid') -TestEolOnly $eolNo).Restore) 'a real content change is never restored'
+foreach ($xy in @(' D', 'D ', 'A ', 'R ', 'UU', 'AA')) {
+    Assert-True (-not (Get-EolOnlyRestorePlan -StatusLines @("$xy a.liquid") -TestEolOnly $eolYes).Restore) `
+        "a '$xy' line is not a plain modification, so nothing is restored"
+}
+Assert-True (-not (Get-EolOnlyRestorePlan -StatusLines @(' M "caf\303\251.liquid"') -TestEolOnly $eolYes).Restore) `
+    'a quoted path is not decoded, so it is never restored'
+$epUntracked = Get-EolOnlyRestorePlan -StatusLines @('?? notes.txt', ' M a.liquid') -TestEolOnly $eolYes
+Assert-True ($epUntracked.Restore -and $epUntracked.Paths.Count -eq 1) 'an untracked line is skipped, not counted and not restored'
+Assert-True (-not (Get-EolOnlyRestorePlan -StatusLines @('?? notes.txt') -TestEolOnly $eolYes).Restore) 'only untracked lines: nothing to restore'
+Assert-True (-not (Get-EolOnlyRestorePlan -StatusLines @() -TestEolOnly $eolYes).Restore) 'a clean status: nothing to restore'
+Assert-True (-not (Get-EolOnlyRestorePlan -StatusLines @('', '  ') -TestEolOnly $eolYes).Restore) 'blank lines are not paths'
+Assert-True (-not (Get-EolOnlyRestorePlan -StatusLines @(' M') -TestEolOnly $eolYes).Restore) 'a truncated line answers rather than throwing'
+$epSeen = New-Object System.Collections.Generic.List[string]
+$null = Get-EolOnlyRestorePlan -StatusLines @(' M a.liquid', '?? n.txt', ' M b.liquid') -TestEolOnly { param($p) $epSeen.Add($p); $true }
+Assert-True ($epSeen.Count -eq 2 -and -not $epSeen.Contains('n.txt')) 'the injected test is asked about modified paths only'
+
+# THE GIT HALF, AGAINST A REAL REPO IN THE MEASURED STATE: a file committed with CRLF despite eol=lf on
+# the old main, renormalized on origin/main. The fast-forward refuses, the plan restores, the retry lands.
+$eolRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("wt-eol-" + [guid]::NewGuid().ToString('N').Substring(0, 8))
+try {
+    $null = New-Item -ItemType Directory -Path $eolRoot
+    $bare = Join-Path $eolRoot 'origin.git'; $work = Join-Path $eolRoot 'w'
+    function Invoke-EolGit { param([string[]]$GitArgs) Invoke-NativeCapture -FilePath 'git' -Arguments (@('-C', $work, '-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'core.autocrlf=false') + $GitArgs) }
+    $null = Invoke-NativeCapture -FilePath 'git' -Arguments @('init', '-q', '--bare', '-b', 'main', $bare)
+    $null = Invoke-NativeCapture -FilePath 'git' -Arguments @('clone', '-q', $bare, $work)
+    [System.IO.File]::WriteAllText((Join-Path $work 't.liquid'), "a`r`nb`r`n")
+    [System.IO.File]::WriteAllText((Join-Path $work 'ok.txt'), "x`n")
+    $null = Invoke-EolGit @('add', '.'); $null = Invoke-EolGit @('commit', '-qm', 'init')
+    [System.IO.File]::WriteAllText((Join-Path $work '.gitattributes'), "*.liquid text eol=lf`n")
+    $null = Invoke-EolGit @('add', '.gitattributes'); $null = Invoke-EolGit @('commit', '-qm', 'attrs')
+    $null = Invoke-EolGit @('push', '-q', 'origin', 'main')
+    $null = Invoke-EolGit @('checkout', '-q', '-b', 'fix')
+    $null = Invoke-EolGit @('add', '--renormalize', '.'); $null = Invoke-EolGit @('commit', '-qm', 'renorm')
+    $null = Invoke-EolGit @('push', '-q', 'origin', 'fix:main')
+    $null = Invoke-EolGit @('checkout', '-q', 'main'); $null = Invoke-EolGit @('branch', '-q', '-D', 'fix')
+    Remove-Item -LiteralPath (Join-Path $work 't.liquid'); $null = Invoke-EolGit @('checkout', '--', 't.liquid')
+    $null = Invoke-EolGit @('fetch', '-q', 'origin')
+    $ffBefore = Invoke-EolGit @('merge', '--ff-only', '-q', 'origin/main')
+    Assert-True ($ffBefore.ExitCode -ne 0) 'premise: the CRLF-index file blocks the fast-forward on the old main'
+    $st = Invoke-EolGit @('-c', 'core.quotePath=true', 'status', '--porcelain')
+    $realPlan = Get-EolOnlyRestorePlan -StatusLines @($st.Output) -TestEolOnly {
+        param($p)
+        if ((Invoke-EolGit @('cat-file', '-e', "origin/main:$p")).ExitCode -ne 0) { return $false }
+        return ((Invoke-EolGit @('diff', '--ignore-cr-at-eol', '--quiet', 'origin/main', '--', $p)).ExitCode -eq 0)
+    }
+    Assert-True ($realPlan.Restore -and $realPlan.Paths -contains 't.liquid') 'git reads the blocker as EOL-only against origin/main'
+    $null = Invoke-EolGit (@('checkout', 'origin/main', '--') + @($realPlan.Paths))
+    Assert-True ((Invoke-EolGit @('merge', '--ff-only', '-q', 'origin/main')).ExitCode -eq 0) 'and the retried fast-forward lands'
+    [System.IO.File]::WriteAllText((Join-Path $work 'ok.txt'), "changed`n")
+    $st2 = Invoke-EolGit @('-c', 'core.quotePath=true', 'status', '--porcelain')
+    $planReal = Get-EolOnlyRestorePlan -StatusLines @($st2.Output) -TestEolOnly {
+        param($p) (Invoke-EolGit @('diff', '--ignore-cr-at-eol', '--quiet', 'origin/main', '--', $p)).ExitCode -eq 0
+    }
+    Assert-True (-not $planReal.Restore) 'a real content edit is read as one, so it would never be overwritten'
+    Assert-True ((Invoke-EolGit @('diff', '--ignore-cr-at-eol', '--quiet', 'origin/main', '--', 'no-such-file')).ExitCode -eq 0) `
+        'premise for ship-pr''s cat-file guard: diff --quiet exits 0 on a path that matches nothing'
+} finally {
+    Remove-Item -LiteralPath $eolRoot -Recurse -Force -ErrorAction SilentlyContinue
+}
+Assert-True ($shipText -match 'Get-EolOnlyRestorePlan') 'ship-pr retries its fast-forward through this function'
+Assert-True ($shipText -match [regex]::Escape("'cat-file', '-e', `"origin/main:`$p`"")) 'and confirms each path exists on origin/main before trusting the diff'
 
 Write-Host ""
 if ($script:fail -gt 0) {
