@@ -2,7 +2,30 @@
 
 ## [Unreleased]
 
-**24 / 29 minor entries** <!-- pending-tally -->
+**24 / 30 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4143-eol-fixture-race · 20261116-110015Z
+
+The `git-porcelain-lib` suite's line-ending fixture from [#4143](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4143)
+no longer depends on timing: after `git checkout --` the file's stat matched its index entry and git could
+trust it unread, so the test went red on CI while passing locally. It now sets the file's mtime apart from
+the index, as a consumer's checkout is.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+git-porcelain-lib's EOL fixture no longer depends on racy-git timing
+
+[PR #4179](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4179)
+
+---
 
 ### DEPLOY: fix/4165-notify-live-no-block-row · 20261116-104334Z
 
