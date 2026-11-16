@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**33 / 43 minor entries** <!-- pending-tally -->
+**34 / 44 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4193-parking-verdict-per-label · 20261116-144724Z
+
+`claim-issue` now gives each parking label its own verdict. Before, every label printed the same
+"waiting on an ANSWER ... not yours to give" text. A session claiming an `awaiting-session-dev` issue
+(#4066) was told to stop, even when it was the session that issue had been parked for. Now that label
+says to lift it and carry on. A wait on a pull request, a release, an act, a look or a recurrence is
+named as a wait. The decision and information labels keep the original text (#4193).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A session the owner opens to work an issue parked under `awaiting-session-dev` is now told to go ahead
+instead of stopping.
+
+**Score:** 2
+
+#### Pull Request
+
+claim-issue: the parking verdict reads per label, so awaiting-session-dev is not told it waits on an answer
+
+Plugins: dkj-policy
+
+[PR #4196](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4196)
+
+---
 
 ### DEPLOY: fix/4165-notify-live-send-no-block · 20261116-143606Z
 
