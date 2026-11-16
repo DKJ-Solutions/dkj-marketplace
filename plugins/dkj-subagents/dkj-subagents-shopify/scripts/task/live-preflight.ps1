@@ -363,7 +363,14 @@ if ($branch -ne $trunk) {
     Add-Step -Name 'trunk' -State 'refuse' -Detail "on '$branch', not on the trunk '$trunk'. A live push ships what is MERGED, so this runs from the trunk."
 } else {
     $dirty = @(Get-GitLines (Invoke-Git -Arguments @('status', '--porcelain')))
-    if ($dirty.Count -gt 0) {
+    # LINE ENDINGS ARE NAMED APART (#4143): a file committed with CRLF under 'eol=lf' reads as modified on
+    # every checkout and `git checkout --` cannot clean it, so 'uncommitted' points at a remedy that fails.
+    $eolSplit = if ($dirty.Count -gt 0 -and (Test-FunctionDefined 'Get-GitEolOnlySplit')) { Get-GitEolOnlySplit -RepoRoot $repoRoot } else { $null }
+    if ($eolSplit -and $eolSplit.Known -and $eolSplit.EolOnly.Count -gt 0) {
+        $eolPaths = @($eolSplit.EolOnly)
+        $rest = if ($eolSplit.Other.Count -gt 0) { " Besides them, $($eolSplit.Other.Count) uncommitted change(s)." } else { '' }
+        Add-Step -Name 'trunk' -State 'refuse' -Detail "EOL-ONLY: $($eolPaths.Count) file(s) committed with CRLF despite eol=lf ($($eolPaths -join ', ')). A checkout cannot clean them; renormalize on a branch: git add --renormalize $($eolPaths -join ' ').$rest"
+    } elseif ($dirty.Count -gt 0) {
         Add-Step -Name 'trunk' -State 'refuse' -Detail "the working copy holds $($dirty.Count) uncommitted change(s). What is about to reach live must be what is committed on '$trunk'."
     } else {
         # THE FETCH IS READ-ONLY AND IT IS THE POINT. 'level with origin' asked of a stale ref answers
