@@ -305,6 +305,16 @@ Assert-Equal 0 $dry.ExitCode '-DryRun resolves everything and uploads nothing'
 Assert-True ($dry.Text -like "*notes:$writtenToken*") '...naming the KV key the page would land on'
 Assert-True ($dry.Text -like '*nothing was uploaded*') '...and saying so'
 
+# -CheckAuth (#4155): the link and the route, nothing written. Only the token route is asserted here;
+# the wrangler route is the same Connect-BwjKv the publish runs, whose decision is asserted below.
+$prevCf = $env:CLOUDFLARE_API_TOKEN
+$env:CLOUDFLARE_API_TOKEN = 'fixture-token-not-a-secret'
+try { $chk = Invoke-PublishPage -ScriptArgs @('-Kind', 'notes', '-CheckAuth') } finally { $env:CLOUDFLARE_API_TOKEN = $prevCf }
+Assert-Equal 0 $chk.ExitCode '-CheckAuth passes where a route to KV exists'
+Assert-True ($chk.Text -like "*https://bwj-pages.acme.workers.dev/notes/$writtenToken*") '...and prints the shareable link the close-out leads with'
+Assert-True ($chk.Text -like '*a route to KV is ready*') '...and says the route is ready'
+Assert-True ($chk.Text -notlike '*uploaded*') '...and uploads nothing'
+
 Write-Host ''
 Write-Host 'The wrangler route, when CLOUDFLARE_API_TOKEN is absent (#2569)' -ForegroundColor Cyan
 

@@ -1138,6 +1138,15 @@ Assert-True ($prBook -cnotmatch '[A-Z]+-[A-Z-]*AUTHORI[SZ]ED') 'and no marker-sh
 Assert-True $prBook.Contains('-Bump minor') 'the cut is named with the bump the tally gave'
 Assert-True $prBook.Contains('audience note') 'a minor names the audience note it owes'
 Assert-True $prBook.Contains('- [ ] feat/12-strap-filter: Once this is live') 'the obligations become a checklist'
+# STEP 9 NAMES THE PUBLISH A STORE RUNS, AND THE LINK THE CLOSE-OUT LEADS WITH (#4155).
+Assert-True $prBook.Contains('publish-page.ps1 -Kind notes.') 'step 9 names publish-page -Kind notes, the publish a store actually runs'
+Assert-True $prBook.Contains('(without -Worker)') '...and not the -Worker deploy a store refuses'
+Assert-True $prBook.Contains('-Kind notes -ShowUrl prints') 'without a known link, it says which command prints it'
+Assert-True $prBook.Contains('GitHub Release second') '...and that the close-out names the GitHub Release second'
+$prUrl = (Format-ReleaseRunbook -PushFiles @() -NotesUrl "https://bwj-pages.acme.workers.dev/notes/abc$([char]27)[2K") -join "`n"
+Assert-True $prUrl.Contains('   https://bwj-pages.acme.workers.dev/notes/abc') 'a known link is printed on a line of its own'
+Assert-True (-not $prUrl.Contains([char]27)) '...with its control characters stripped'
+Assert-True (-not $prUrl.Contains('-ShowUrl prints')) '...in place of the pointer to -ShowUrl'
 $prEmpty = (Format-ReleaseRunbook -Store 's.myshopify.com' -LiveThemeId '42' -PushFiles @()) -join "`n"
 Assert-True ($prEmpty -notmatch 'shopify theme (push|pull)') 'an empty push list composes no push and no pull -- a bare push is the whole theme'
 $prNoId = (Format-ReleaseRunbook -Store 's.myshopify.com' -PushFiles @('sections/a.liquid')) -join "`n"

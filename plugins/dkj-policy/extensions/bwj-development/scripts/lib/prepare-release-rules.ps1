@@ -284,6 +284,11 @@ function Format-ReleaseRunbook {
         THE APP DEPLOY (#3174). With -AppFiles under a printable -AppRoot, the runbook gains a step 2b
         with the `shopify app deploy` command (Format-ShopifyAppDeployCommand, in the mirrored live-push-rules),
         in either mode: no push or promotion carries an app's files. A person runs it, as the push.
+
+        THE RELEASE-NOTES PAGE (#4155). Step 9 names the publish a store actually runs -- bwj-development's
+        publish-page -Kind notes, not the builder's -Worker deploy, which a store refuses by design -- and
+        says the close-out leads with the page's SHAREABLE link, the document the owner reads, before the
+        GitHub Release. -NotesUrl is that link where the caller could read it (publish-page -CheckAuth).
     #>
     param(
         [string]$Store = '',
@@ -296,7 +301,8 @@ function Format-ReleaseRunbook {
         [string]$DeployBranch = '',
         [string]$Trunk = 'main',
         [string]$AppRoot = '',
-        [AllowNull()][AllowEmptyCollection()][string[]]$AppFiles = @()
+        [AllowNull()][AllowEmptyCollection()][string[]]$AppFiles = @(),
+        [string]$NotesUrl = ''
     )
 
     $connected = [bool]([string]$DeployBranch).Trim()
@@ -407,6 +413,11 @@ function Format-ReleaseRunbook {
     $out += ''
     $out += '8. Backup -- the `theme-lifecycle` skill, backup-live-theme, at the moment THEME-LIFECYCLE-portable.md names.'
     $out += ''
-    $out += '9. Release-notes page -- the dkj-policy `release-notes-page` skill: rebuild, then deploy as its own step.'
+    $out += '9. Release-notes page -- rebuild it with the dkj-policy `release-notes-page` skill (without -Worker), then publish'
+    $out += '   it with the `publish-page` skill: publish-page.ps1 -Kind notes. The close-out leads with the page''s shareable link,'
+    # The link is a URL from the repo's own seam and token, so it is stripped like any other foreign text.
+    $link = ([string]$NotesUrl).Trim()
+    if ($link) { $out += "   $(ConvertTo-ConsoleStrippedText -Text $link)" } else { $out += '   which publish-page.ps1 -Kind notes -ShowUrl prints,' }
+    $out += '   and names the GitHub Release second -- the note is the document the owner reads.'
     return @($out)
 }

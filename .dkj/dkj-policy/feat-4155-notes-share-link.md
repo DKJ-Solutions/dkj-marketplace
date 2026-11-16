@@ -39,19 +39,37 @@
 
 ### PLAN
 
+The issue's first proposal (cut-release's close-out naming the note) was corrected by the owner on the issue: the link
+wanted is the shareable page URL that only bwj-development's `publish-page` knows. So all three asks land in that
+extension: the runbook `prepare-release` prints, and a read-only check it runs days ahead.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `publish-page.ps1 -CheckAuth`: prints the shareable link, runs the publish's own `Connect-BwjKv`, writes nothing
+- [x] `prepare-release.ps1`: where the repo answers `Get-BwjPagesConfig`, step 8 runs `-CheckAuth` -- READY with the link, or ATTENTION when the token or the login is missing
+- [x] `Format-ReleaseRunbook` step 9: names `publish-page.ps1 -Kind notes` (not `-Worker`), and that the close-out leads with the shareable link (printed when known) and names the GitHub Release second
+- [x] `publish-page` skill: the `-CheckAuth` row
 
 ### TEST
 
+- [x] `bwj-page-publish.tests.ps1`: `-CheckAuth` passes on the token route, prints the link, uploads nothing (190 asserts, green)
+- [x] `bwj-development.tests.ps1`: step 9 names the publish, the `-ShowUrl` pointer, the Release second, and a known link on its own line with control characters stripped (1007+ asserts, green)
+
 ### DEPLOY: feat/4155-notes-share-link
 
-**Score:**
+Inside this repo, `publish-page.ps1` gains `-CheckAuth` and `prepare-release` calls it
+([#4155](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4155)). Both suites cover the new lines.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A BWJ store's release runbook now names the release-notes publish it actually runs, `publish-page -Kind notes`.
+It also prints the page's shareable link and says the close-out leads with it, so the owner gets the note they
+read instead of the GitHub Release. `prepare-release` checks the Cloudflare login days ahead, where it used to
+fail only on the release day.
+
+**Score:** 3
 
 #### Pull Request
 
