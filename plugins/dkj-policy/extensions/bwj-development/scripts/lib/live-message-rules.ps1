@@ -270,6 +270,51 @@ function ConvertTo-AsanaXmlText {
     return $clean.Replace('&', '&amp;').Replace('<', '&lt;').Replace('>', '&gt;').Replace('"', '&quot;')
 }
 
+function Get-AsanaErrorMessages {
+    <#
+        Pure: the errors[].message strings of an Asana error reply, or none where the text is not that JSON.
+        Read to CLASSIFY a failure (Get-AsanaFailureVerdict), never printed: notify-live prints nothing
+        another party wrote beyond an issue number.
+    #>
+    param([AllowEmptyString()][string]$Body)
+    if (-not ([string]$Body).Trim()) { return @() }
+    try { $j = ConvertFrom-Json -InputObject $Body } catch { return @() }
+    if ($null -eq $j -or -not $j.PSObject.Properties['errors']) { return @() }
+    return @(@($j.errors) | Where-Object { $_ -and $_.PSObject.Properties['message'] } | ForEach-Object { [string]$_.message })
+}
+
+function Get-AsanaFailureVerdict {
+    <#
+        Pure: what one failed Asana call means for the person running notify-live (inbound #4147). Kind is
+        'no-access', 'token', 'rejected' or 'transient'; Label is the row's word; Advice the clause after it.
+
+        MEASURED NOVEMBER 16, 2026, in a store's v3.1.0: four of five tasks were told, the fifth answered
+        HTTP 400, and the run said "Run it again once gh and Asana answer". Read through another client the
+        same task answered "forbidden: You do not have access to this task" -- the token cannot see it, so a
+        rerun fails the same way. Only a network failure, a timeout, a rate limit or a 5xx is worth another
+        run; everything else needs a person to do something different, and the verdict says what.
+
+        A 400 IS CLASSIFIED BY ITS MESSAGE, because Asana answers a task the token cannot see with a 400 as
+        well as a 403 or 404. The message is matched, never printed.
+    #>
+    param(
+        [int]$Status = 0,
+        [AllowEmptyCollection()][string[]]$Messages = @()
+    )
+    $noAccess = [pscustomobject]@{ Kind = 'no-access'; Label = 'NO ACCESS'; Advice = 'the token cannot see this task -- tell the requester by hand, or ask for access to the task; a rerun will not reach it' }
+    if ($Status -eq 403 -or $Status -eq 404) { return $noAccess }
+    $text = (@($Messages) -join ' ')
+    if ($Status -eq 400 -and $text -match '(?i)forbidden|not have access|no access|not authori[sz]ed|unknown object|not a recognized id|does not exist') { return $noAccess }
+    if ($Status -eq 401) {
+        return [pscustomobject]@{ Kind = 'token'; Label = 'TOKEN'; Advice = 'Asana did not accept the token -- renew ASANA_PAT, then run it again' }
+    }
+    if ($Status -eq 0 -or $Status -eq 408 -or $Status -eq 429 -or $Status -ge 500) {
+        $what = if ($Status) { "HTTP $Status" } else { 'no answer' }
+        return [pscustomobject]@{ Kind = 'transient'; Label = 'FAILED'; Advice = "Asana answered $what -- run it again once Asana answers" }
+    }
+    return [pscustomobject]@{ Kind = 'rejected'; Label = 'REJECTED'; Advice = "Asana refused the request (HTTP $Status) -- a rerun sends the same request, so it will not help" }
+}
+
 function Format-LiveMessageIssueComment {
     <#
         Pure: the GitHub comment notify-live.ps1 -Post leaves on the issue once its task was told --

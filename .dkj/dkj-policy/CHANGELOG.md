@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**19 / 24 minor entries** <!-- pending-tally -->
+**20 / 25 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4147-notify-live-no-access · 20261116-095135Z
+
+`notify-live` now tells a task the Asana token cannot see apart from a failure a rerun can fix
+([#4147](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4147)). With `ASANA_PAT` set, the dry
+run reads every owed task once, so an inaccessible one shows as `NO ACCESS` before `-Post`. A failed
+call is reported as `NO ACCESS`, `TOKEN`, `REJECTED` or `FAILED`, and only `FAILED` (network, rate
+limit, 5xx) ends in "run it again".
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+On release day the person running `notify-live` learns from the dry run which requesters the token
+cannot reach and must be told by hand, instead of retrying a post that fails the same way every time.
+
+**Score:** 2
+
+#### Pull Request
+
+notify-live: name an inaccessible Asana task as no access, and check access in the dry run
+
+Plugins: bwj-development
+
+[PR #4164](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4164)
+
+---
 
 ### DEPLOY: feat/4150-sync-conflict-classes · 20261116-093148Z
 

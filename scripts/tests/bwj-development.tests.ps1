@@ -1281,6 +1281,26 @@ Assert-Equal 0 @((Get-PullChangedPaths -DiffPaths @() -PullFiles @() -ChangedFil
 $nlDriverText = [System.IO.File]::ReadAllText((Join-Path $PluginRoot 'scripts\task\notify-live.ps1'))
 Assert-True ($nlDriverText -match 'closingIssuesReferences,files,changedFiles' -and $nlDriverText.Contains('Get-PullChangedPaths')) 'the driver asks gh for the PR''s files in the same call, and joins them through the rule'
 
+# #4147: A FAILED ASANA CALL GETS A VERDICT, and only one kind sends the person back to "run it again". Measured:
+# a task the token could not see answered HTTP 400, and the advice to retry could not succeed.
+$nlForbidden = '{"errors":[{"message":"forbidden: You do not have access to this task","help":"x"}]}'
+Assert-Equal 'forbidden: You do not have access to this task' (@(Get-AsanaErrorMessages -Body $nlForbidden) -join '|') 'the errors[].message of an Asana reply is read'
+Assert-Equal 0 @(Get-AsanaErrorMessages -Body '<html>gateway</html>').Count '...and a reply that is not Asana''s JSON gives none, rather than throwing'
+Assert-Equal 0 @(Get-AsanaErrorMessages -Body '').Count '...nor does an empty one'
+Assert-Equal 'no-access' (Get-AsanaFailureVerdict -Status 400 -Messages @(Get-AsanaErrorMessages -Body $nlForbidden)).Kind 'the measured 400 on a task the token cannot see is NO ACCESS'
+Assert-Equal 'no-access' (Get-AsanaFailureVerdict -Status 403).Kind 'a 403 is NO ACCESS'
+Assert-Equal 'no-access' (Get-AsanaFailureVerdict -Status 404).Kind 'a 404 is NO ACCESS -- deleted, or invisible to this token'
+Assert-Equal 'rejected' (Get-AsanaFailureVerdict -Status 400 -Messages @('html_text: XML is invalid')).Kind 'any other 400 is REJECTED, not a retry'
+Assert-Equal 'token' (Get-AsanaFailureVerdict -Status 401).Kind 'a 401 is the token'
+foreach ($nlTransient in @(0, 408, 429, 500, 503)) {
+    Assert-Equal 'transient' (Get-AsanaFailureVerdict -Status $nlTransient).Kind "status $nlTransient is the one kind a rerun can fix"
+}
+$nlNoAccess = Get-AsanaFailureVerdict -Status 403
+Assert-True ($nlNoAccess.Label -eq 'NO ACCESS' -and $nlNoAccess.Advice -match 'by hand' -and $nlNoAccess.Advice -notmatch 'run it again') 'the NO ACCESS row says what to do instead of retrying'
+Assert-True ((Get-AsanaFailureVerdict -Status 400 -Messages @('forbidden: secret task name')).Advice -notmatch 'secret') 'Asana''s message is matched, never printed'
+Assert-True ($nlDriverText.Contains('Get-AsanaCallVerdict') -and $nlDriverText.Contains('?opt_fields=gid')) 'the driver classifies every Asana failure, and reads each owed task before anything is sent'
+Assert-True ($nlDriverText -match "(?s)tasks/\`$\(\`$o\.Gid\)\?opt_fields=gid.*?-not \`$PostArg") 'the read runs in the dry run, and says so when there is no token to read with'
+
 $nlDash = [string][char]0x2014
 function New-NlBlockComment {
     param([string[]]$Kinds = @(), [string]$CreatedAt = '2026-10-10T10:00:00Z', [string]$Heading = 'WAT WE VAN JE VRAGEN')
