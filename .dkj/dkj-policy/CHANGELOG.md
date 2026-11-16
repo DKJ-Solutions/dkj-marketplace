@@ -2,7 +2,30 @@
 
 ## [Unreleased]
 
-**24 / 31 minor entries** <!-- pending-tally -->
+**24 / 32 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4171-case-sensitive-mirror-compare · 20261116-112727Z
+
+Inside this repo, the shared-script mirror build, the integrity gate's `[shared-script]` check and the
+consumer-drift check compare case-sensitively
+([#4171](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4171)). An edit that changes only letter case
+is now copied into the mirror and reported as drift, where before it read as in sync.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+Mirror comparisons are case-sensitive, so a case-only edit is mirrored and flagged
+
+[PR #4183](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4183)
+
+---
 
 ### DEPLOY: fix/4176-eol-fixture-racy-git · 20261116-111147Z
 

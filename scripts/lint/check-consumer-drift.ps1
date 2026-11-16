@@ -259,7 +259,8 @@ if ($personaDirs.Count -gt 0) {
                 $personaResults.Add([pscustomobject]@{ Name = $_.Name; Status = 'LENS-ONLY'; Path = $consumerExt })
             } else {
                 $localBody = Get-PortableBody $consumerExt
-                $status = if ($localBody -eq $srcBody) { 'IDENTICAL' } else { 'DRIFTED' }
+                # -ceq, NOT -eq (#4171): a body that differs from its source only in letter case has drifted.
+                $status = if ($localBody -ceq $srcBody) { 'IDENTICAL' } else { 'DRIFTED' }
                 $personaResults.Add([pscustomobject]@{ Name = $_.Name; Status = $status; Path = $consumerExt })
             }
         }
