@@ -26,8 +26,9 @@
       * The Shopify pull. It needs a store, credentials and a network, so every case passes -MirrorPath
         and stands in for live with a directory of its own. The pull is one line; every line after it is
         what these cases exercise.
-      * The PR and the merge, which need a 'gh' that talks to GitHub. The seam defaults to not merging, so
-        these cases never enter that branch.
+      * The PR and the merge against GitHub. The seam defaults to not merging, so the plain cases never
+        enter that branch; the -ReconcileBase cases do (#4152), through a stand-in gh on PATH
+        (Invoke-SyncWithFakeGh) that proves which calls were made, not what GitHub does with them.
       * The push is not ASSERTED, though it does run: the fixture's origin is a local bare repo, so the
         drift case genuinely pushes a sync branch into it. An assert on that would prove git can write to
         a directory, which is not a claim about this script.
@@ -261,6 +262,33 @@ function Invoke-Sync {
         $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script -RootOverride $Dir @Extra 2>&1
     } finally { $ErrorActionPreference = $prevEap }
     return @{ Out = ($out | Out-String); Code = $LASTEXITCODE }
+}
+
+function Invoke-SyncWithFakeGh {
+    <# Invoke-Sync with a stand-in gh first on PATH (#4152): it opens PR 7, reports its checks green and
+       accepts the merge, logging '%1 %2 %4' of every call -- so a merge reads 'pr merge --merge'. No
+       network: anything else it is asked exits 1. Returns Invoke-Sync's hash plus Calls, the log lines. #>
+    param([Parameter(Mandatory = $true)][string]$Dir, [string]$Mirror = '', [string[]]$Extra = @())
+    # BESIDE the fixture, not in it: an untracked directory in the working copy is a dirty tree to the sync.
+    $ghDir = "$Dir-fakegh"
+    New-Item -ItemType Directory -Path $ghDir -Force | Out-Null
+    $log = Join-Path $ghDir 'calls.log'
+    [System.IO.File]::WriteAllText((Join-Path $ghDir 'gh.cmd'), (
+        "@echo off`r`n" +
+        "echo %1 %2 %4>>`"%~dp0calls.log`"`r`n" +
+        "if `"%1 %2`"==`"pr create`" (echo https://example.invalid/pull/7& exit /b 0)`r`n" +
+        "if `"%1 %2`"==`"pr view`" (echo 7& exit /b 0)`r`n" +
+        "if `"%1 %2`"==`"pr checks`" (echo SUCCESS& exit /b 0)`r`n" +
+        "if `"%1 %2`"==`"pr merge`" (exit /b 0)`r`n" +
+        "exit /b 1`r`n"), (New-Object System.Text.UTF8Encoding $false))
+    $prevPath = $env:PATH
+    try {
+        $env:PATH = "$ghDir;$prevPath"
+        $r = Invoke-Sync -Dir $Dir -Mirror $Mirror -Extra $Extra
+    } finally { $env:PATH = $prevPath }
+    $r.Calls = if (Test-Path -LiteralPath $log) { @(Get-Content -LiteralPath $log | ForEach-Object { $_.Trim() }) } else { @() }
+    Remove-Item -LiteralPath $ghDir -Recurse -Force -ErrorAction SilentlyContinue
+    return $r
 }
 
 function Invoke-LabelSeamRun {
@@ -633,21 +661,23 @@ try {
     Assert-True ($r.Out -match 'DRY RUN -- -ReconcileBase would put') 'recbase/dry: a dry run reports the base it would write'
     Assert-True ((([string](& git -C $rec rev-parse --abbrev-ref HEAD)).Trim()) -eq 'main') 'recbase/dry: and writes no branch'
 
-    $r = Invoke-Sync -Dir $rec -Mirror $recMirror -Extra @('-ReconcileBase')
+    $r = Invoke-SyncWithFakeGh -Dir $rec -Mirror $recMirror -Extra @('-ReconcileBase')
     Assert-True ($r.Code -eq 1) 'recbase: the run still refuses -- nothing was taken from live'
-    $recBranch = ([string](& git -C $rec rev-parse --abbrev-ref HEAD)).Trim()
-    Assert-True ($recBranch -like 'sync/live-*') 'recbase: and it leaves the operator on the sync branch it wrote'
-    $subjects = @(& git -C $rec log --format='%s' 'main..HEAD')
+    $recBranch = ([string](& git -C $rec branch --list 'sync/live-*' --format='%(refname:short)')).Trim()
+    Assert-True ($recBranch -like 'sync/live-*') 'recbase: it wrote a sync branch'
+    # IT FINISHES THE PR ITSELF (#4152): open, wait, merge -- and with a merge commit, never the seam's.
+    Assert-True (@($r.Calls | Where-Object { $_ -like 'pr create*' }).Count -eq 1) 'recbase: it opens the PR itself'
+    Assert-True (@($r.Calls | Where-Object { $_ -like 'pr checks*' }).Count -ge 1) 'recbase: waits for its checks'
+    Assert-True (@($r.Calls | Where-Object { $_ -eq 'pr merge --merge' }).Count -eq 1) 'recbase: and merges it with a merge commit'
+    Assert-True ($r.Out -notmatch '--watch') 'recbase: and prints no watch command for the operator to run'
+    Assert-True ((([string](& git -C $rec rev-parse --abbrev-ref HEAD)).Trim()) -eq 'main') 'recbase: and leaves the checkout on the trunk, as the plain sync does'
+    $subjects = @(& git -C $rec log --format='%s' "main..$recBranch")
     Assert-True ($subjects.Count -eq 2) 'recbase: two commits, not one -- the half-written pair is the way this fails'
     Assert-True ($subjects[1] -match '^sync: live verbatim as the reconciliation base') 'recbase: the first takes live verbatim, spelled as the agreement point it genuinely is'
     Assert-True ($subjects[0] -match '^fix: put the trunk content back') 'recbase: the second puts the trunk content back'
     # NO FILE CHANGES AT ALL, which is what makes merging it safe at every point.
     Assert-True ([System.IO.File]::ReadAllText((Join-Path $rec 'sections\both.liquid')) -eq 'trunk-b2') 'recbase: the trunk''s content is what sits on disk afterwards'
-    Assert-True (@(& git -C $rec diff --name-only 'main..HEAD').Where({ $_ }).Count -eq 0) 'recbase: so the branch changes no file against the trunk'
-    # THE WHOLE FINISH IS PRINTED (#2925): the create, the wait and the merge, and who does it.
-    Assert-True ($r.Out -match "gh pr checks $([regex]::Escape($recBranch)) --watch") 'recbase: it prints the wait for the checks'
-    Assert-True ($r.Out -match "gh pr merge $([regex]::Escape($recBranch)) --merge") 'recbase: and the merge, as a merge commit'
-    Assert-True ($r.Out -match 'you, now\. It needs no' -and $r.Out -match 'review: the branch changes no file') 'recbase: and that the operator merges it, with no review to wait for'
+    Assert-True (@(& git -C $rec diff --name-only "main..$recBranch").Where({ $_ }).Count -eq 0) 'recbase: so the branch changes no file against the trunk'
 
     # AND THE POINT OF ALL OF IT. Merge the pair and re-run the very run that refused: the path is settled
     # by provenance, so it reads as held back rather than as the same conflict or as drift to take.
@@ -681,10 +711,15 @@ try {
         'sections/theme.liquid' = 'v1'
         'sections/both.liquid'  = 'a third party changed it as well'
     }
-    $r = Invoke-Sync -Dir $sq -Mirror $sqMirror -Extra @('-ReconcileBase')
-    Assert-True ($r.Out -match 'Get-PrMergeMethod answers "squash"') 'recbase/squash: the warning names the seam by the name it actually has'
-    Assert-True ($r.Out -notmatch 'Get-ShopifySyncMergeMethod') 'recbase/squash: and not one that exists nowhere in the tree'
-    Assert-True ($r.Out -match 'Merge THIS branch with a merge commit') 'recbase/squash: with the instruction for this one branch, not a seam change'
+    # SINCE #4152 THE RUN MERGES THE BRANCH ITSELF, so a squash seam is overridden rather than warned about:
+    # the merge is a merge commit, and the warning is left for the printed fallback (a push that failed).
+    $r = Invoke-SyncWithFakeGh -Dir $sq -Mirror $sqMirror -Extra @('-ReconcileBase')
+    Assert-True (@($r.Calls | Where-Object { $_ -eq 'pr merge --merge' }).Count -eq 1) 'recbase/squash: a squash seam still merges this branch with a merge commit'
+    Assert-True (@($r.Calls | Where-Object { $_ -like 'pr merge*' -and $_ -ne 'pr merge --merge' }).Count -eq 0) 'recbase/squash: and never with the seam''s squash'
+    $sqSrc = Get-Content -LiteralPath $Script -Raw
+    Assert-True ($sqSrc -match 'Get-PrMergeMethod answers "squash"') 'recbase/squash: the fallback warning names the seam by the name it actually has'
+    $sqPrinted = @($sqSrc -split "`n" | Where-Object { $_ -match 'Write-Host' -and $_ -match 'Get-ShopifySyncMergeMethod' })
+    Assert-True ($sqPrinted.Count -eq 0) 'recbase/squash: and no printed line names one that exists nowhere in the tree'
 
     # --- Nothing foreign at all --------------------------------------------------------------------
     Write-Host ''

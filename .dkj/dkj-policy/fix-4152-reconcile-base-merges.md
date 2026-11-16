@@ -39,19 +39,36 @@
 
 ### PLAN
 
+#4152: `-ReconcileBase` finishes its PR the way the plain merging sync does, instead of printing three
+commands that failed when run back to back. The second comment's claim that the plain sync waits on the
+required checks only does not hold in the source; filed apart as #4168.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The plain sync's open / wait / merge / fast-forward moved into `Complete-SyncPullRequest`, unchanged but for its exits
+- [x] `Write-SyncReconciliationBase` calls it after a landed push, always with a merge commit; the commands are printed only when the push failed
+- [x] The `sync-main` skill page says so
 
 ### TEST
 
+- [x] `sync-main.tests.ps1`: the recbase and squash cases run against a stand-in `gh` and assert the create, the checks poll and `pr merge --merge`; 178 asserts pass
+
 ### DEPLOY: fix/4152-reconcile-base-merges
 
-**Score:**
+`sync-main -ReconcileBase` now opens its PR, waits for the checks and merges it with a merge commit itself,
+the same finish the plain merging sync runs ([#4152](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4152)).
+It used to print `gh pr create`, `gh pr checks --watch` and `gh pr merge`, and run back to back they failed: the
+watch returned before the checks had registered, and the merge was refused. The commands are still printed when
+the push does not land.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify store that reconciles a sync conflict no longer finishes the reconciliation base by hand: the run
+merges it, with a merge commit even where the repo squashes by default, and leaves the checkout on the trunk.
+
+**Score:** 3
 
 #### Pull Request
 

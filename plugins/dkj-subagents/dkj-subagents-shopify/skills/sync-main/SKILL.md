@@ -412,11 +412,13 @@ added, which is true wherever you started it from.)
 1. **live verbatim** -- the only thing that puts live's content into the path's history;
 2. **the trunk's content straight back on top** -- so the branch changes no file at all.
 
-**The run pushes that branch and stops with exit 1, and the merge is yours, now.** It prints the whole
-finish -- `gh pr create`, `gh pr checks <branch> --watch`, `gh pr merge <branch> --merge` -- and the PR
-needs no review, because the branch changes no file and there is nothing to judge by eye. Left as a
-comment for somebody else, it stays open and blocks whatever waits on it (#2925, measured at
-smartwatchbanden#892).
+**The run pushes that branch, opens its PR, waits for the checks and merges it with a merge commit**,
+the same finish the plain merging sync runs (#4152), and then still exits 1, because nothing was taken
+from live. The PR needs no review: the branch changes no file, so there is nothing to judge by eye. It
+merges with a merge commit whatever `Get-PrMergeMethod` says, because a squash would keep live's bytes
+out of the history. Run back to back by hand, the printed commands failed twice in one release (a watch
+started before the checks had registered, then a merge the branch policy refused), so they are printed
+only when the push did not land.
 
 Merge that branch and the path reads `keep-trunk` from then on: *"live holds a version this repo has had
 before; the trunk has moved on since"* -- the same state every ordinary held-back file is in. **Your own
