@@ -1646,6 +1646,23 @@ $cand = Get-Content -LiteralPath (Join-Path $repoRoot 'scripts\task\claim-issue.
 Assert-True ($cand -match "'--json', 'body'" -and $cand -match '-Body ') '-Candidates fetches the body only for a park no comment names, and hands it over (#4028)'
 Assert-True ($cand -match "Verdict = 'stale-park'" -and $cand -match '--remove-label \$sLabel') '-Candidates reads a cleared park as stale-park and prints the unpark line for the label it read'
 
+# #4186: a decision park whose decision was posted as a comment. Measured: two issues parked
+# awaiting-decision-client got the client's answer as a comment and stayed skipped by every route.
+$dc = { param([object[]]$C) Get-ParkDecisionAnswer -Comments $C }
+$mk = { param($Body, $Assoc = 'MEMBER', $Login = 'dave', $At = '2026-11-16T10:00:00Z') [pscustomobject]@{ body = $Body; authorAssociation = $Assoc; author = [pscustomobject]@{ login = $Login }; createdAt = $At } }
+$park = & $mk 'Parked by a sweep: waiting on the client''s choice between the two layouts.'
+$dec  = & $mk 'Decision (the client, 2026-11-16): option 1.' 'MEMBER' 'dave' '2026-11-16T11:00:00Z'
+$ans = & $dc @($park, $dec)
+Assert-True ($null -ne $ans -and $ans.Author -eq 'dave' -and $ans.At -eq '2026-11-16T11:00:00Z') 'a Decision comment after the parking comment is the answer, with who and when'
+Assert-True ($null -eq (& $dc @($dec, $park))) 'a decision BEFORE the latest park does not count -- parked again on a new question, it stays parked'
+Assert-True ($null -ne (& $dc @($dec))) 'parked at filing (no parking comment), any decision comment counts'
+Assert-True ($null -eq (& $dc @($park, (& $mk 'Decision (x): y' 'NONE' 'stranger')))) 'a decision from somebody without a hand on the repo does not unpark it'
+Assert-True ($null -eq (& $dc @($park, (& $mk 'We will need a decision (soon).')))) 'prose that mentions a decision is not one -- it has to open with "Decision ("'
+Assert-True ($null -eq (& $dc @())) 'no comments, no answer'
+$cdc = @(Get-SweepCandidates -Json '[{"number":7,"title":"t","labels":[{"name":"awaiting-decision-client"}],"comments":[]}]' -SkipLabel @('awaiting-decision-client'))
+Assert-True ($cdc[0].Reason -match "^label 'awaiting-decision-client'") 'the skip reason starts with the label, which is what -Candidates matches the decision reading on'
+Assert-True ($cand -match 'Get-ParkDecisionAnswer -Comments' -and $cand -match "awaiting-decision-\(dev\|client\)" -and $cand -match 'has been decided') '-Candidates reads both decision labels and says the wait was decided'
+
 # #3572: the two external waits read the same clause -- cross-repo numbers apart, and the park's own date
 $rExt = & $w @('Parked by a sweep: waiting on DKJ-Solutions/dkj-lifehub#577 and dkj-recipes#29 and #12.')
 Assert-True (($rExt.External -join ',') -eq 'DKJ-Solutions/dkj-lifehub#577') 'an owner/repo#n is read as an external reference'

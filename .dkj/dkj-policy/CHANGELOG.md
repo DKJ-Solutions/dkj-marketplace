@@ -2,7 +2,58 @@
 
 ## [Unreleased]
 
-**25 / 34 minor entries** <!-- pending-tally -->
+**26 / 36 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4148-layout-floor-pin · 20261116-122616Z
+
+The consumer register (`check-consumers.ps1`, check 6d) now reports a write runner pinned below v6.10.0 as an
+`[ERROR]` when the consumer already carries `.dkj/dkj-policy/` ([#4148](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4148)).
+Such a pin's fold and unfolded-entry scripts look for branch documents in the old `dkj-policy/` folder, find
+none, and report OK: measured in a consumer, two merges went green over an entry that was never folded. Run
+with `-RemoteRunners` it flags four consumers today; a pin that is merely behind stays `[INFO]`.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+N/A -- the register runs in this repo only; nothing a consumer installs changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+The consumer register flags a write runner pinned below the .dkj/ layout floor as an error
+
+[PR #4188](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4188)
+
+---
+
+### DEPLOY: fix/4186-decided-park-reads-stale · 20261116-121444Z
+
+`claim-issue -Candidates` reads an `awaiting-decision-dev` or `awaiting-decision-client` issue as `stale-park` once
+a comment opening `Decision (` follows its last parking comment
+([#4186](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4186)). The comment must come from somebody with a
+hand on the repo. The run prints the lines that lift the label, so a decision posted without removing it no
+longer leaves the issue skipped by every sweep.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In every repo running the sweeps, a client's or owner's decision posted as a comment, from any session, now
+surfaces at the next sweep as a park to lift. Until now the issue sat skipped until somebody noticed the label.
+
+**Score:** 3
+
+#### Pull Request
+
+A decision park with a posted decision reads as stale-park
+
+Plugins: dkj-policy
+
+[PR #4187](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4187)
+
+---
 
 ### DEPLOY: fix/4184-one-racy-git-fix · 20261116-115516Z
 

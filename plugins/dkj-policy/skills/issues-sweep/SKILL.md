@@ -139,8 +139,15 @@ the branch is never read, because a body citing numbers is not a statement of wh
 `awaiting-pull-external` clears once every `owner/repo#n` its clause names has landed *and* that repo has
 published a release since. `awaiting-release-external` clears once the `owner/repo` its clause names has
 published a release after the parking comment was written. What is left after either is this repo's own
-work, so the issue is free. **No other parking label is read**: each waits on a person, or on something no
-tracker records, and `awaiting-release` already surfaces at this repo's own cut.
+work, so the issue is free.
+
+**The two decision waits can read as `stale-park` too**
+([#4186](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4186)). `awaiting-decision-dev` and
+`awaiting-decision-client` clear once a comment opening `Decision (` follows the last parking comment, written by
+somebody with a hand on the repo. Measured November 16, 2026: two issues got their client's answer as a comment,
+from a session without this plugin, and stayed skipped until the owner asked why. Read that decision before you
+build. **No other parking label is read**: each waits on a person, or on something no tracker records, and
+`awaiting-release` already surfaces at this repo's own cut.
 
 **Choosing and claiming are two steps on purpose.** Between them you still have to ask whether the
 issue is this repo's work at all. A tracker carrying an issue means the work is TRACKED here, not that
