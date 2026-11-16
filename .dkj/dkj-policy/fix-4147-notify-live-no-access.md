@@ -39,19 +39,38 @@
 
 ### PLAN
 
+Inbound #4147: notify-live answered a task the token cannot see with "HTTP 400 ... Run it again", which
+cannot succeed, and the dry run gave no warning.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-AsanaErrorMessages` and `Get-AsanaFailureVerdict` in `live-message-rules.ps1`: NO ACCESS,
+  TOKEN, REJECTED or FAILED, the message matched and never printed
+- [x] `notify-live.ps1`: every owed task read once before anything is sent (dry run too), each Asana
+  failure reported by its verdict, and "run it again" kept for the kinds a rerun can fix
+- [x] The script header and the skill page say so
 
 ### TEST
 
+- [x] `bwj-development.tests.ps1`: the verdict per status and message, the measured 400, and the driver
+  wiring (1016 asserts green standalone)
+
 ### DEPLOY: fix/4147-notify-live-no-access
 
-**Score:**
+`notify-live` now tells a task the Asana token cannot see apart from a failure a rerun can fix
+([#4147](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4147)). With `ASANA_PAT` set, the dry
+run reads every owed task once, so an inaccessible one shows as `NO ACCESS` before `-Post`. A failed
+call is reported as `NO ACCESS`, `TOKEN`, `REJECTED` or `FAILED`, and only `FAILED` (network, rate
+limit, 5xx) ends in "run it again".
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+On release day the person running `notify-live` learns from the dry run which requesters the token
+cannot reach and must be told by hand, instead of retrying a post that fails the same way every time.
+
+**Score:** 2
 
 #### Pull Request
 
