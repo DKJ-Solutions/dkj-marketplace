@@ -39,19 +39,31 @@
 
 ### PLAN
 
+The #4143 fixture in `git-porcelain-lib.tests.ps1` went red on PR #4174's CI: `git status` did not list the
+CRLF-index file, because `git checkout --` had just recorded its stat in the index.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The fixture sets the file's mtime apart from the index after the checkout, so git compares the content every time
 
 ### TEST
 
+- [x] `git-porcelain-lib.tests.ps1`: 60 pass, 0 fail, three runs in a row
+
 ### DEPLOY: fix/4143-eol-fixture-race
 
-**Score:**
+The `git-porcelain-lib` suite's line-ending fixture from [#4143](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4143)
+no longer depends on timing: after `git checkout --` the file's stat matched its index entry and git could
+trust it unread, so the test went red on CI while passing locally. It now sets the file's mtime apart from
+the index, as a consumer's checkout is.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
