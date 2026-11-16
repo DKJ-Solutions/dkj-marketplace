@@ -1142,6 +1142,39 @@ finally {
 }
 
 Write-Host ''
+Write-Host 'Get-SyncRequiredCheckNames / Get-SyncCheckVerdict -- the required checks only (#4168)' -ForegroundColor Cyan
+
+# The shape of `gh api repos/o/r/rules/branches/main`: one rule per entry, the required checks under
+# parameters.required_status_checks[].context. Two names, so a 5.1 collapse into 'a b' would show.
+$rulesJson = '[{"type":"deletion"},{"type":"required_status_checks","parameters":{"strict_required_status_checks_policy":false,"required_status_checks":[{"context":"lint-en-tests"},{"context":"build"}]}}]'
+Assert-Equal 'build,lint-en-tests' ((Get-SyncRequiredCheckNames -RulesJson $rulesJson) -join ',') 'rules: both required names, sorted'
+Assert-Equal 0 @(Get-SyncRequiredCheckNames -RulesJson '[{"type":"deletion"}]').Count 'rules: a trunk that requires no check names none'
+Assert-Equal 0 @(Get-SyncRequiredCheckNames -RulesJson 'not json').Count 'rules: an unreadable answer names none rather than throwing'
+Assert-Equal 0 @(Get-SyncRequiredCheckNames -RulesJson '').Count 'rules: an empty answer names none'
+
+function New-Check { param([string]$Name, [string]$State) [pscustomobject]@{ name = $Name; state = $State } }
+$req = @('lint-en-tests')
+# THE MEASURED CASE: the required check green, a non-required one pending for ten minutes.
+$v = Get-SyncCheckVerdict -Checks @((New-Check 'lint-en-tests' 'SUCCESS'), (New-Check 'Theme Check Report' 'PENDING')) -Required $req
+Assert-Equal 'green' $v.State 'verdict: a pending non-required check does not hold a green required one'
+# THE #4152 CASE: other checks green, the required one not registered yet -- pending, never green.
+$v = Get-SyncCheckVerdict -Checks @((New-Check 'Theme Check Report' 'SUCCESS')) -Required $req
+Assert-Equal 'pending' $v.State 'verdict: a required check that has not appeared yet is pending'
+$v = Get-SyncCheckVerdict -Checks @((New-Check 'lint-en-tests' 'FAILURE'), (New-Check 'other' 'SUCCESS')) -Required $req
+Assert-Equal 'red' $v.State 'verdict: a failed required check is red'
+Assert-True ($v.Bad -join ',' -match 'lint-en-tests') 'verdict: and names it'
+$v = Get-SyncCheckVerdict -Checks @((New-Check 'lint-en-tests' 'SUCCESS'), (New-Check 'other' 'FAILURE')) -Required $req
+Assert-Equal 'green' $v.State 'verdict: a failed non-required check does not block'
+# NO REQUIRED NAMES: the old rule, every check counts.
+$v = Get-SyncCheckVerdict -Checks @((New-Check 'a' 'SUCCESS'), (New-Check 'b' 'PENDING'))
+Assert-Equal 'pending' $v.State 'verdict/all: with no required names, any pending check holds it'
+$v = Get-SyncCheckVerdict -Checks @((New-Check 'a' 'SUCCESS'), (New-Check 'b' 'FAILURE'))
+Assert-Equal 'red' $v.State 'verdict/all: and any failure is red'
+$v = Get-SyncCheckVerdict -Checks @((New-Check 'a' 'SUCCESS'), (New-Check 'b' 'SKIPPED'))
+Assert-Equal 'green' $v.State 'verdict/all: all finished and none failed is green'
+Assert-Equal 'pending' (Get-SyncCheckVerdict -Checks @()).State 'verdict: an empty poll is pending -- checks register after the PR opens'
+
+Write-Host ''
 # A BROKEN FIXTURE IS SAID BEFORE THE VERDICT AND FAILS THE RUN (issue #1635) -- including when every
 # assert passed, because a clean sweep over a repo that was never built proves less than it appears to.
 $fixtureBroken = Write-FixtureGitSummary -Subject 'sync-rules.ps1'

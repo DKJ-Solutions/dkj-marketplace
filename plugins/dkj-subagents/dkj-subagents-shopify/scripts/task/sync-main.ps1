@@ -937,6 +937,23 @@ function Complete-SyncPullRequest {
     }
     Write-Host "Sync PR #$pr opened; waiting up to $ChecksTimeoutMinutes min for CI." -ForegroundColor Cyan
 
+    # THE REQUIRED CHECKS, READ ONCE FROM THE TRUNK'S RULES (#4168). Waiting on every check let a pending
+    # non-required one hold the merge until the deadline; the rules name the required checks before any of
+    # them has registered, which `gh pr checks --required` cannot. Unreadable, or naming none: every check
+    # counts, as before -- Get-SyncRequiredCheckNames' docstring has the reasoning.
+    $rulesRead = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr `
+                                      -Arguments @('api', "repos/{owner}/{repo}/rules/branches/$trunk") `
+                                      -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    $requiredChecks = @()
+    if ((Test-NativeExitMeasured -Capture $rulesRead) -and $rulesRead.ExitCode -eq 0) {
+        $requiredChecks = @(Get-SyncRequiredCheckNames -RulesJson (@($rulesRead.Output) -join "`n"))
+    }
+    if ($requiredChecks.Count -gt 0) {
+        Write-Host "  Blocking on the required check(s) only: $($requiredChecks -join ', ')." -ForegroundColor DarkGray
+    } else {
+        Write-Host '  No required check could be read from the trunk''s rules, so every check is waited for.' -ForegroundColor DarkGray
+    }
+
     $deadline = (Get-Date).AddMinutes($ChecksTimeoutMinutes)
     while ((Get-Date) -lt $deadline) {
         # BOUNDED PER CALL, WHICH IS NOT THE BOUND THE LOOP ALREADY HAD (inbound #1187).
@@ -956,7 +973,7 @@ function Complete-SyncPullRequest {
         # poll that answers in seconds and sleeps 15 between tries. The loop's deadline and the call's
         # bound answer different questions, and both are wanted.
         $poll = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr `
-                                     -Arguments @('pr', 'checks', $pr, '--json', 'state', '--jq', '.[].state') `
+                                     -Arguments @('pr', 'checks', $pr, '--json', 'name,state') `
                                      -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
         # A TIMEOUT IS 'THIS POLL DID NOT ANSWER', NOT A RED CHECK, so the run keeps polling until the
         # deadline: a slow answer is not a verdict. Its Output is discarded rather than parsed, and that
@@ -967,21 +984,25 @@ function Complete-SyncPullRequest {
         # exits 8 while checks are pending and 1 when one has failed, and this loop has always read the
         # STATES rather than the code. Gating on ExitCode -eq 0 would throw away a real failure's states
         # and sit out the whole of -ChecksTimeoutMinutes before reporting 'not green' for a PR that is red.
+        # PARSED AS JSON, name AND state, so the verdict can tell a required check from the rest (#4168).
+        # An unparseable answer is an empty poll, which the verdict reads as pending: same as no checks yet.
+        $checks = @()
         if ($poll.TimedOut) {
             Write-Host "  'gh pr checks' did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- polling again until the $ChecksTimeoutMinutes min deadline." -ForegroundColor Yellow
-            $states = @()
         } else {
-            $states = @($poll.Output | ForEach-Object { ([string]$_).Trim() } | Where-Object { $_ })
+            $pollText = (@($poll.Output) -join "`n").Trim()
+            # ASSIGN FIRST, WRAP SECOND: in 5.1 `@($json | ConvertFrom-Json)` is a one-element array holding
+            # the whole parsed array, and this loop then read no state at all and waited out the deadline.
+            if ($pollText) { try { $parsedChecks = $pollText | ConvertFrom-Json; $checks = @($parsedChecks) } catch { $checks = @() } }
         }
-        if ($states.Count -eq 0) { Start-Sleep -Seconds 15; continue }
-        $bad = @($states | Where-Object { $_ -notin @('SUCCESS', 'NEUTRAL', 'SKIPPED', 'PENDING', 'QUEUED', 'IN_PROGRESS') })
-        if ($bad.Count -gt 0) {
-            Write-Host "CI failed on sync PR #$pr ($($bad -join ', ')) -- NOT merged." -ForegroundColor Red
+        $verdict = Get-SyncCheckVerdict -Checks $checks -Required $requiredChecks
+        if ($verdict.State -eq 'red') {
+            Write-Host "CI failed on sync PR #$pr ($($verdict.Bad -join ', ')) -- NOT merged." -ForegroundColor Red
             Write-Host "  $CiFailHint" -ForegroundColor Red
             Write-Host "  named change, then: gh pr merge $pr --$mergeMethod" -ForegroundColor Red
             return $false
         }
-        if (@($states | Where-Object { $_ -in @('PENDING', 'QUEUED', 'IN_PROGRESS') }).Count -eq 0) { break }
+        if ($verdict.State -eq 'green') { break }
         Start-Sleep -Seconds 15
     }
 

@@ -39,19 +39,37 @@
 
 ### PLAN
 
+#4168: `Complete-SyncPullRequest` waited on every check, so a pending non-required check held the merge
+until the deadline. Read the required checks from the trunk's branch rules (they name a check before it
+registers, which `gh pr checks --required` cannot) and judge only those; keep the old rule where none can be read.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-SyncRequiredCheckNames` and `Get-SyncCheckVerdict` in `sync-rules.ps1`, pure and mirrored
+- [x] `Complete-SyncPullRequest` reads `rules/branches/<trunk>` once and judges each poll with the verdict
+- [x] The `sync-main` skill page's `-ChecksTimeoutMinutes` row says which checks are waited for
 
 ### TEST
 
+- [x] `sync-rules.tests.ps1`: the measured case, a required check not yet registered, red and green on both sides, no required names; 238 asserts pass
+- [x] `sync-main.tests.ps1`: the stand-in gh answers JSON and the bounded-call count is sixteen; 182 asserts pass
+
 ### DEPLOY: fix/4168-sync-required-checks
 
-**Score:**
+`sync-main` no longer holds its PR when a check the trunk does not require stays pending
+([#4168](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4168)): it reads the required checks from the
+trunk's branch rules and merges once those are green, as `ship-pr` does. A required check that has not
+registered yet still counts as pending, and where the rules cannot be read or require nothing every check is
+waited for, as before.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify store whose sync PR carries a slow, non-required check (a theme-check report, measured pending for
+ten minutes over green required checks) gets the sync merged instead of `NOT merged` after the timeout.
+
+**Score:** 2
 
 #### Pull Request
 
