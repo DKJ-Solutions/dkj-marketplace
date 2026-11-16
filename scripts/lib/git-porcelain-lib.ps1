@@ -322,3 +322,62 @@ function Get-GitPorcelainStatus {
     }
     return [pscustomobject]@{ Entries = @($entries); Known = $true }
 }
+
+function Get-GitEolOnlySplit {
+    <#
+    .SYNOPSIS
+        The working copy's uncommitted changes, split into the paths that differ from -Against ONLY by
+        line endings and everything else: {Known, EolOnly (paths), Other (porcelain entries)}.
+
+    .DESCRIPTION
+        WHY THIS EXISTS (inbound #4143, November 16, 2026). A file committed with CRLF in the index while
+        .gitattributes pins it 'eol=lf' shows as modified on every checkout, and `git checkout -- <path>`
+        does not clean it: the checkout writes the index blob back, and that blob IS the CRLF the
+        attribute rejects. Measured on a BWJ store's v3.1.0 release: prepare-release reported '5
+        uncommitted change(s)', live-preflight refused on the same state, the owner ran the obvious
+        checkout and `git status` did not move. The remedy is `git add --renormalize <paths>` on a branch,
+        and a report that says 'uncommitted' points at the one remedy that cannot work.
+
+        THE TEST IS `git diff --ignore-cr-at-eol --quiet <Against> -- <path>`: exit 0 means nothing but a
+        CR at line end separates the working copy from -Against. Measured on git 2.55 against a scratch
+        repo holding one CRLF-index file and one real edit under 'eol=lf': 0 for the first, 1 for the
+        second, and both still listed by `git status` after `git checkout --`.
+
+        UNTRACKED AND RENAMED ENTRIES ARE NEVER EOL-ONLY. An untracked file is work nobody committed, and
+        a rename moved a file -- neither is a line-ending artefact, so both go to Other without a diff.
+        A diff that fails or cannot run also goes to Other: the safe direction is the existing verdict.
+
+        ITS OWN `& git` RATHER THAN Get-GitPorcelainStatus, because bwj-development's mirror of this file
+        has no native-capture-lib beside it, and Invoke-NativeCapture is that lib's. The read keeps the
+        two flags Get-GitPorcelainStatus documents (quotePath forced on, untracked per file) so both
+        readings of one working copy list the same paths.
+
+        KNOWN IS $false WHEN THE STATUS READ FAILED, for Get-GitPorcelainStatus's reason: an empty split
+        from a failed read would report a clean working copy.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][string]$RepoRoot,
+        [string]$Against = 'HEAD'
+    )
+
+    $eolOnly = @()
+    $other = @()
+    $prevEap = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $lines = @(& git -c core.quotePath=true -C $RepoRoot status --porcelain --untracked-files=all 2>$null)
+        if ($LASTEXITCODE -ne 0) {
+            return [pscustomobject]@{ Known = $false; EolOnly = @(); Other = @() }
+        }
+        foreach ($line in $lines) {
+            $e = ConvertFrom-GitPorcelainLine -Line ([string]$line)
+            if (-not $e) { continue }
+            if ($e.Index -eq '?' -or $e.From) { $other += $e; continue }
+            & git -C $RepoRoot diff --ignore-cr-at-eol --quiet $Against -- $e.Path 2>$null | Out-Null
+            if ($LASTEXITCODE -eq 0) { $eolOnly += $e.Path } else { $other += $e }
+        }
+    } finally {
+        $ErrorActionPreference = $prevEap
+    }
+    return [pscustomobject]@{ Known = $true; EolOnly = @($eolOnly); Other = @($other) }
+}
