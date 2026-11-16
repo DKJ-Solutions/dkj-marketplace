@@ -100,5 +100,3 @@ deletion command it used to withhold.
 #### Pull Request
 
 sync-main -Only is a drift check, and the release steps fall back to it
-
-Plugins: bwj-development, dkj-subagents-shopify
