@@ -118,8 +118,8 @@ So every label goes on the `gh issue create` itself.
 **The plugin's `guard-kind-label` hook holds the kind** (#4197). It refuses a `gh issue create` on a
 store repo whose labels hold none, or more than one, of the three. Measured in `smartwatchbanden`: 11
 consecutive issues filed by sessions on November 13 and 14, 2026 carried no kind, with this page loaded.
-It does not judge labels set in a template, the browser or an editor, or labels built at run time, and
-it lets them through with a warning. It does not judge an edit, because giving an old issue its kind is
+It does not judge labels set in a template, the browser or an editor, or labels built at run time, or a
+create on a repo it cannot name, and it lets them through with a warning. It does not judge an edit, because giving an old issue its kind is
 the repair this page asks for. Nor does it judge an inbound issue on the plugin's source repo, which
 carries `feature-inbound` or `bug-inbound` instead.
 

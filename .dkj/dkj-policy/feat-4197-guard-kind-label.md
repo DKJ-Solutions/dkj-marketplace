@@ -75,7 +75,7 @@ In a BWJ store, a `gh issue create` without exactly one of `bug`, `feature` or `
 refused before it runs, naming the three
 ([#4197](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4197)). Sessions had filed 11
 consecutive issues with no kind while the rule was loaded. Labels set in a template, the browser or an
-editor pass with a warning, and so does an inbound issue on the source repo.
+editor pass with a warning, and an inbound issue on the source repo is not judged at all.
 
 **Score:** 3
 
