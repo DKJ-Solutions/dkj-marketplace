@@ -278,7 +278,7 @@ function Invoke-SyncWithFakeGh {
         "echo %1 %2 %4>>`"%~dp0calls.log`"`r`n" +
         "if `"%1 %2`"==`"pr create`" (echo https://example.invalid/pull/7& exit /b 0)`r`n" +
         "if `"%1 %2`"==`"pr view`" (echo 7& exit /b 0)`r`n" +
-        "if `"%1 %2`"==`"pr checks`" (echo SUCCESS& exit /b 0)`r`n" +
+        "if `"%1 %2`"==`"pr checks`" (echo [{`"name`":`"ci`",`"state`":`"SUCCESS`"}]& exit /b 0)`r`n" +
         "if `"%1 %2`"==`"pr merge`" (exit /b 0)`r`n" +
         "exit /b 1`r`n"), (New-Object System.Text.UTF8Encoding $false))
     $prevPath = $env:PATH
@@ -1053,12 +1053,12 @@ try {
     # top of the script names the function in prose -- and a bare-name count read 6 against 5 real calls.
     # WAS FIVE UNTIL #1184 added the four gh calls, NINE UNTIL #1187 routed the poll, TEN UNTIL #1945
     # added -ReconcileBase's push, ELEVEN UNTIL #2829 gave the namer its PR-head probe, and TWELVE UNTIL
-    # #3010's connected mode added its fetch, its open-PR read and its create; the git half is otherwise
-    # unchanged throughout.
+    # #3010's connected mode added its fetch, its open-PR read and its create, and FIFTEEN UNTIL #4168 read
+    # the trunk's rules for the required checks; the git half is otherwise unchanged throughout.
     $calls  = @([regex]::Matches($src, 'Invoke-NativeCapture\s+-FilePath\b')).Count
     $bounds = @([regex]::Matches($src, [regex]::Escape('-TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds'))).Count
-    Assert-True ($calls -eq 15) "net: fifteen network calls go through the lib (found $calls)"
-    Assert-True ($bounds -eq 15) "net: and all fifteen pass the shared bound (found $bounds)"
+    Assert-True ($calls -eq 16) "net: sixteen network calls go through the lib (found $calls)"
+    Assert-True ($bounds -eq 16) "net: and all sixteen pass the shared bound (found $bounds)"
 
     # THE NAMER ASKS FOR A PR IN ANY STATE (inbound #2829). '--state all' is the whole repair: the default
     # state is 'open', and the PR that made the reused name collide was MERGED, so the default would read

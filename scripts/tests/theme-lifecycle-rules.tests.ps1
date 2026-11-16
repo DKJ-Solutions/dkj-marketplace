@@ -166,6 +166,20 @@ Assert-True ($older -lt $newer) 'backup names sort lexically in time order'
 Assert-True (-not (Test-BackupThemeName -Name (Get-RepoPreviewThemeName -FlatBranchName 'feat-x'))) 'a repo-owned PREVIEW is not a backup, so rotation can never take one'
 Assert-True (-not (Test-BackupThemeName -Name 'backup-20260914-013000'))                            'and an unprefixed theme called backup-... is not ours to rotate'
 
+# A FULL STORE IS REFUSED BEFORE THE DUPLICATE (#4157). Measured: 20 themes, the duplicate failed, and the
+# runbook swept previews only after the push the missing backup blocked.
+$slotFull = Get-ThemeSlotVerdict -Count 20
+Assert-True $slotFull.Full 'at Shopify''s 20-theme limit the store has no slot for a backup'
+Assert-True ($slotFull.Message -match '20/20' -and $slotFull.Message -match 'sweep-preview-themes') 'and the refusal names the count and the sweep that frees a slot'
+Assert-True (-not (Get-ThemeSlotVerdict -Count 19).Full) 'one below the limit there is room'
+Assert-Equal '' (Get-ThemeSlotVerdict -Count 19).Message 'and nothing is said'
+Assert-True (Get-ThemeSlotVerdict -Count 5 -Limit 5).Full 'the limit is a parameter, so a changed number is one argument'
+$backupSrc = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'scripts\task\backup-live-theme.ps1'))
+$slotAt = $backupSrc.IndexOf('Get-ThemeSlotVerdict -Count')
+$dupAt  = $backupSrc.IndexOf('Invoke-ShopifyCli -Arguments $dupArgs')
+Assert-True ($slotAt -gt 0 -and $dupAt -gt $slotAt) 'backup-live-theme asks for a slot before it runs the duplicate'
+Assert-True ($backupSrc -notmatch 'The duplicate was created but') 'and never again claims a duplicate it cannot find was created'
+
 # ---------------------------------------------------------------------------------------------------
 Write-Host ''
 Write-Host 'Does the fill wait take another sample? (the still-filling copy refused at a fixed clock, #3732)' -ForegroundColor Cyan

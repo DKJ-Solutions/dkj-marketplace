@@ -2,7 +2,88 @@
 
 ## [Unreleased]
 
-**27 / 37 minor entries** <!-- pending-tally -->
+**30 / 40 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4157-backup-full-store · 20261116-135148Z
+
+`backup-live-theme` counts the store's themes before it duplicates live
+([#4157](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4157)). At Shopify's limit of 20 it refuses, and
+names `sweep-preview-themes` as the step that frees a slot. When the duplicate leaves no copy in the theme list,
+it now says so, instead of claiming the copy was created.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+On release day in a Shopify store repo holding 20 themes, the backup step stops with "the store is full (20/20)
+... sweep spent previews first", instead of a misleading message and a push the preflight then refuses. Sweeping
+and re-running clears it.
+
+**Score:** 3
+
+#### Pull Request
+
+backup-live-theme refuses a full store before duplicating, and stops claiming a failed duplicate was created
+
+Plugins: dkj-subagents-shopify
+
+[PR #4180](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4180)
+
+---
+
+### DEPLOY: fix/4160-publish-page-skip-unchanged · 20261116-133301Z
+
+`publish-page` uploads only the pages whose bytes changed since this machine last verified them
+([#4160](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4160)). After each SHA-256 read-back it
+records the page's hash under a digest of its key, in the user's LocalApplicationData rather than the repo,
+because a key carries the path token. A release day then uploads the new release page and the index instead
+of every page again. `-All` uploads everything, for a key changed or deleted in KV from elsewhere.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Publishing the release notes on release day takes seconds instead of more than five minutes. The first
+publish on each machine still uploads every page once.
+
+**Score:** 2
+
+#### Pull Request
+
+publish-page: upload only the pages whose verified bytes changed since the last publish
+
+Plugins: bwj-development
+
+[PR #4175](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4175)
+
+---
+
+### DEPLOY: fix/4168-sync-required-checks · 20261116-132206Z
+
+`sync-main` no longer holds its PR when a check the trunk does not require stays pending
+([#4168](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4168)): it reads the required checks from the
+trunk's branch rules and merges once those are green, as `ship-pr` does. A required check that has not
+registered yet still counts as pending, and where the rules cannot be read or require nothing every check is
+waited for, as before.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A Shopify store whose sync PR carries a slow, non-required check (a theme-check report, measured pending for
+ten minutes over green required checks) gets the sync merged instead of `NOT merged` after the timeout.
+
+**Score:** 2
+
+#### Pull Request
+
+sync-main waits on the required checks only, where the repo has any
+
+Plugins: dkj-subagents-shopify
+
+[PR #4191](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4191)
+
+---
 
 ### DEPLOY: feat/4149-sync-main-as-drift-check · 20261116-123740Z
 

@@ -514,6 +514,68 @@ function Resolve-BwjPagesConfig {
     }
 }
 
+function Get-BwjSha256Hex {
+    <# Pure: the SHA-256 of a string's UTF-8 bytes, as upper-case hex (Get-FileHash's spelling). #>
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Text)
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try { return (($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($Text)) | ForEach-Object { $_.ToString('X2') }) -join '') }
+    finally { $sha.Dispose() }
+}
+
+function Get-BwjPagePublishRecordPath {
+    <#
+        Where this machine keeps the record of what it last VERIFIED in one namespace (inbound #4160): under
+        the user's LocalApplicationData, never in the repo. A record in the repo would be committed beside
+        the token file, and its keys carry the token path, which is the only lock on the page. The file name
+        is a digest of the account and namespace, so it names neither. BWJ_PAGE_RECORD_DIR replaces the
+        base, which is how a test suite keeps its fixture publishes out of the user's own profile.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$AccountId,
+        [Parameter(Mandatory)][string]$NamespaceId,
+        [string]$Base = ''
+    )
+    if (-not $Base) { $Base = [string]$env:BWJ_PAGE_RECORD_DIR }
+    if (-not $Base) { $Base = [Environment]::GetFolderPath('LocalApplicationData') }
+    $name = (Get-BwjSha256Hex -Text "$AccountId/$NamespaceId").Substring(0, 24).ToLowerInvariant() + '.json'
+    return (Join-Path (Join-Path (Join-Path $Base 'dkj-policy') 'publish-page') $name)
+}
+
+function ConvertFrom-BwjPagePublishRecord {
+    <#
+        Pure: a record's JSON as a hashtable of key digest -> content SHA-256. Anything that is not that
+        shape is an EMPTY record, never an error: an unreadable record only costs a full upload.
+    #>
+    param([AllowEmptyString()][string]$Json)
+    $record = @{}
+    if (-not ([string]$Json).Trim()) { return $record }
+    try { $j = ConvertFrom-Json -InputObject $Json } catch { return $record }
+    if ($null -eq $j -or $j -isnot [System.Management.Automation.PSCustomObject]) { return $record }
+    foreach ($p in $j.PSObject.Properties) {
+        if ($p.Name -match '\A[0-9A-F]{64}\z' -and [string]$p.Value -match '\A[0-9A-F]{64}\z') { $record[$p.Name] = [string]$p.Value }
+    }
+    return $record
+}
+
+function Test-BwjPageUnchanged {
+    <#
+        Pure: may this page skip its upload (inbound #4160)? Only where this machine's record says it
+        VERIFIED exactly these bytes under exactly this key. The record is written after the SHA-256
+        read-back, never after an accepted upload, so a skip rests on the same proof an upload ends in.
+
+        MEASURED NOVEMBER 16, 2026, in a store's v3.1.0: 55 release pages plus the index, each uploaded and
+        read back through its own two npx processes on every publish, took more than five minutes -- while
+        only the new release's page and the index had changed.
+    #>
+    param(
+        [Parameter(Mandatory)][hashtable]$Record,
+        [Parameter(Mandatory)][string]$Key,
+        [Parameter(Mandatory)][string]$ContentHash
+    )
+    $digest = Get-BwjSha256Hex -Text $Key
+    return ($Record.ContainsKey($digest) -and $Record[$digest] -eq $ContentHash.ToUpperInvariant())
+}
+
 function Test-BwjPageSize {
     <#
         Is this page small enough for one KV value? Returns $true, or throws naming both numbers.
