@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**22 / 27 minor entries** <!-- pending-tally -->
+**23 / 28 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4156-task-form-audience-note · 20261116-103028Z
+
+`prepare-release` (bwj-development) no longer asks a repo that drafts its audience note as solved tasks
+(`Get-ReleaseNoteTaskLink`) to write that note before the day
+([#4156](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4156)). Step 2 and the runbook's cut step say the
+cut drafts it from the live-push record, name `-LivePushRecord` as required, and ask for a review after the cut.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A BWJ store repo whose release note lists solved tasks is no longer told to write a note the cut would replace.
+That note would list work before anyone knew it was live. Its runbook now names the record the cut needs.
+
+**Score:** 2
+
+#### Pull Request
+
+prepare-release tells a task-form repo that the cut drafts the audience note
+
+Plugins: bwj-development
+
+[PR #4172](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4172)
+
+---
 
 ### DEPLOY: fix/4154-app-deploy-allow-updates · 20261116-101810Z
 
