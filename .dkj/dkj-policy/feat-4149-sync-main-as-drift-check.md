@@ -73,7 +73,7 @@ deletion command.
 
 ### TEST
 
-- [x] `sync-main.tests.ps1`: ten new `-Only` asserts (conflict, held, take, implied dry run, nothing written, comma-joined list, deletion, unlisted drift, empty list, `-ReconcileBase`, connected); 193/193
+- [x] `sync-main.tests.ps1`: eleven new `-Only` asserts (conflict, held, take, implied dry run, nothing written, comma-joined list, deletion, unlisted drift, empty list, `-ReconcileBase`, connected); 193/193
 - [x] `live-push-rules.tests.ps1`: the fallback and its trigger pinned on the source; 203/203
 - [x] `bwj-development.tests.ps1`: prepare-release's fallback, and that it never reaches into the shopify plugin; 1035/1035
 

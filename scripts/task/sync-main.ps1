@@ -216,8 +216,9 @@
     held back -- safe to delete -- only where live's bytes are a version the trunk once held.
 
     One comma-joined string is split on commas, because a list that crossed a 'powershell -File' boundary
-    arrives as one (#2228); a theme path never carries a comma. Refused on a Git-connected store, where
-    the back-flow check replaces the drift check, and together with -ReconcileBase, which writes.
+    arrives as one (#2228); a theme path never carries a comma. Refused -- exit 1, nothing written -- on
+    a list that splits to nothing, on a Git-connected store, where the back-flow check replaces the drift
+    check, and together with -ReconcileBase, which writes.
 
 .PARAMETER ChecksTimeoutMinutes
     How long to wait for CI on the sync PR before giving up and leaving it unmerged. Only used when the
