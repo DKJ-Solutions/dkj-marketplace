@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**26 / 35 minor entries** <!-- pending-tally -->
+**26 / 36 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4148-layout-floor-pin · 20261116-122616Z
+
+The consumer register (`check-consumers.ps1`, check 6d) now reports a write runner pinned below v6.10.0 as an
+`[ERROR]` when the consumer already carries `.dkj/dkj-policy/` ([#4148](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4148)).
+Such a pin's fold and unfolded-entry scripts look for branch documents in the old `dkj-policy/` folder, find
+none, and report OK: measured in a consumer, two merges went green over an entry that was never folded. Run
+with `-RemoteRunners` it flags four consumers today; a pin that is merely behind stays `[INFO]`.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+N/A -- the register runs in this repo only; nothing a consumer installs changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+The consumer register flags a write runner pinned below the .dkj/ layout floor as an error
+
+[PR #4188](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4188)
+
+---
 
 ### DEPLOY: fix/4186-decided-park-reads-stale · 20261116-121444Z
 
