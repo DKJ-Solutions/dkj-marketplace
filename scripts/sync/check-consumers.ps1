@@ -554,11 +554,20 @@ function Write-RunnerPinFinding {
         is exposed. It is also the state every consumer's own scaffolder writes until a release carries
         #2333, so an [ERROR] would stand at every session start with no repair that consumer's tooling
         offers yet. The message names the repair anyway: one `ref:` line, which a person can edit today.
+
+        EXCEPT BELOW THE LAYOUT FLOOR, WHERE IT IS AN [ERROR] (#4148). A pin older than the release that
+        moved the workflow folder (Get-SharedScriptLayoutFloor), in a consumer whose tree already carries
+        the new folder, is not merely exposed: its fold and unfolded-entry checks look in the old place,
+        find nothing, and pass. That is a runner that fails green on every merge, and its repair is the
+        same one `ref:` line, so the register's [ERROR] doctrine covers it. $UsesDotFolder is $true or
+        $false where the caller read the consumer's tree, and $null where it could not; $null keeps [INFO],
+        because an escalation must rest on a measurement.
     #>
     param(
         [Parameter(Mandatory = $true)][string]$WorkflowName,
         [Parameter(Mandatory = $true)][AllowEmptyString()][AllowNull()][string]$WorkflowText,
-        [string]$Where = ''
+        [string]$Where = '',
+        [AllowNull()][object]$UsesDotFolder = $null
     )
 
     if (-not (Test-WorkflowHoldsWriteCredential -WorkflowText $WorkflowText)) { return }
@@ -575,7 +584,12 @@ function Write-RunnerPinFinding {
                 Write-Info "$wfName line $($pin.Line) holds a write credential and fetches this repo's scripts at $shown -- a moving ref, so a change on this repo's trunk runs there with that credential before any release (#2333). Pin that ref: line to $target.$suffix"
             }
             'behind' {
-                Write-Info "$wfName line $($pin.Line) holds a write credential and fetches this repo's scripts pinned at v$($pin.Version), behind v$WorkflowPluginVersion. Move that ref: line to $target.$suffix"
+                $floor = Get-SharedScriptLayoutFloor
+                if ($UsesDotFolder -eq $true -and [version]$pin.Version -lt [version]$floor.Version) {
+                    Write-Failure "$wfName line $($pin.Line) holds a write credential and fetches this repo's scripts pinned at v$($pin.Version), below v$($floor.Version) -- the release that moved the workflow folder to $($floor.Folder)/ ($($floor.Issue)), which this consumer already carries. Its scripts look in the old place, find no branch document, and report OK: the fold never runs and the check stays green. Move that ref: line to $target.$suffix"
+                } else {
+                    Write-Info "$wfName line $($pin.Line) holds a write credential and fetches this repo's scripts pinned at v$($pin.Version), behind v$WorkflowPluginVersion. Move that ref: line to $target.$suffix"
+                }
             }
         }
     }
@@ -719,9 +733,9 @@ function Get-RemoteConsumerWorkflow {
     $owner = $Repo.Substring(0, $slash)
     $name  = $Repo.Substring($slash + 1)
 
-    $query = 'query($owner:String!,$name:String!,$expr:String!){repository(owner:$owner,name:$name){defaultBranchRef{name} object(expression:$expr){... on Tree{entries{name type object{... on Blob{text}}}}}}}'
+    $query = 'query($owner:String!,$name:String!,$expr:String!,$dotExpr:String!){repository(owner:$owner,name:$name){defaultBranchRef{name} dot:object(expression:$dotExpr){__typename} object(expression:$expr){... on Tree{entries{name type object{... on Blob{text}}}}}}}'
     $call = Invoke-NativeCapture -FilePath 'gh' `
-        -Arguments @('api', 'graphql', '-f', "query=$query", '-f', "owner=$owner", '-f', "name=$name", '-f', 'expr=HEAD:.github/workflows') `
+        -Arguments @('api', 'graphql', '-f', "query=$query", '-f', "owner=$owner", '-f', "name=$name", '-f', 'expr=HEAD:.github/workflows', '-f', "dotExpr=HEAD:$((Get-SharedScriptLayoutFloor).Folder)") `
         -DiscardStderr -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
 
     if ($call.TimedOut) {
@@ -788,9 +802,14 @@ function Get-RemoteConsumerWorkflow {
     }
 
     $branch = [string](Get-JsonField -Object (Get-JsonField -Object $repoNode -Name 'defaultBranchRef' -Default $null) -Name 'name' -Default '')
+    # Check 6d's layout floor (#4148), read in the same call: a non-null 'dot' is the folder present on the
+    # default branch, a null one is absent, and a response without the field at all stays $null -- unknown,
+    # which never escalates.
+    $usesDotFolder = $null
+    if ($repoNode.PSObject.Properties.Name -contains 'dot') { $usesDotFolder = ($null -ne $repoNode.dot) }
     $tree = Get-JsonField -Object $repoNode -Name 'object' -Default $null
     if ($null -eq $tree) {
-        return @{ Status = 'no-workflows'; Reason = ''; Branch = $branch; Files = @() }
+        return @{ Status = 'no-workflows'; Reason = ''; Branch = $branch; Files = @(); UsesDotFolder = $usesDotFolder }
     }
 
     $files = @()
@@ -806,7 +825,7 @@ function Get-RemoteConsumerWorkflow {
         $files += @{ Name = $entryName; Text = $(if ($null -eq $text) { $null } else { [string]$text }) }
     }
 
-    return @{ Status = 'read'; Reason = ''; Branch = $branch; Files = @($files) }
+    return @{ Status = 'read'; Reason = ''; Branch = $branch; Files = @($files); UsesDotFolder = $usesDotFolder }
 }
 
 # WHICH SOURCE TREE THE VERSION VERDICTS BELOW WERE READ FROM (#533).
@@ -947,7 +966,7 @@ foreach ($mf in $manifestFiles) {
                                 continue
                             }
                             Write-RunnerPathFinding -WorkflowName $rf.Name -WorkflowText $rf.Text -Where $onBranch
-                            Write-RunnerPinFinding -WorkflowName $rf.Name -WorkflowText $rf.Text -Where $onBranch
+                            Write-RunnerPinFinding -WorkflowName $rf.Name -WorkflowText $rf.Text -Where $onBranch -UsesDotFolder $remote.UsesDotFolder
                         }
 
                         # --- 6c OVER THE NETWORK (#1850) ------------------------------------------
@@ -1616,12 +1635,14 @@ foreach ($mf in $manifestFiles) {
         # exactly the call this block always made.
         $localWorkflows = @()
         $workflowDir = Join-Path $checkout '.github\workflows'
+        # Check 6d's layout floor (#4148): has this consumer already moved to the folder the floor names?
+        $usesDotFolder = Test-Path -LiteralPath (Join-Path $checkout ((Get-SharedScriptLayoutFloor).Folder -replace '/', '\')) -PathType Container
         if (Test-Path -LiteralPath $workflowDir -PathType Container) {
             foreach ($wf in @(Get-ChildItem -LiteralPath $workflowDir -File -ErrorAction SilentlyContinue |
                               Where-Object { $_.Extension -in @('.yml', '.yaml') } | Sort-Object Name)) {
                 $wfText = [System.IO.File]::ReadAllText($wf.FullName)
                 Write-RunnerPathFinding -WorkflowName $wf.Name -WorkflowText $wfText
-                Write-RunnerPinFinding -WorkflowName $wf.Name -WorkflowText $wfText
+                Write-RunnerPinFinding -WorkflowName $wf.Name -WorkflowText $wfText -UsesDotFolder $usesDotFolder
                 $localWorkflows += [pscustomobject]@{ Name = $wf.Name; Text = $wfText }
             }
         }
