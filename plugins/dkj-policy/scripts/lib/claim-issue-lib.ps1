@@ -3072,6 +3072,46 @@ function Get-ParkingWaitReferences {
               Repos = [string[]]@($repos); Since = $since }
 }
 
+function Get-ParkDecisionAnswer {
+    <#
+        .SYNOPSIS
+            The decision comment posted on an `awaiting-decision-*` issue after it was parked, as
+            @{ Author; At }, or $null when there is none.
+
+        .DESCRIPTION
+            NOTHING TOOK THE LABEL OFF (#4186). CONTRIBUTING-portable says `awaiting-decision-client` comes off
+            when that person answers, and nothing made that happen: measured November 16, 2026 in a BWJ store,
+            two issues got their client's answer as a comment and stayed skipped by every pickup route until the
+            owner asked why. The answer was posted from a session without the plugin loaded, which is the normal
+            route for a client's word, so a safety net has to read the tracker rather than wait for a tool.
+
+            A DECISION IS A COMMENT OPENING 'Decision (' -- the form issues-sweep-decisions writes ("Decision
+            (<who>, <date>): <the answer>"), and the one the issue's own decisions were posted in. It counts only
+            AFTER the last parking comment (the one saying "parked" and "waiting on"), so an issue decided once
+            and parked again on a new question stays parked. With no parking comment (parked at filing) any
+            decision comment counts.
+
+            THE SAME TRUST RULE AS A PARKING COMMENT: only somebody with a hand on the repo (OWNER, MEMBER,
+            COLLABORATOR) records a decision, since this turns a parked issue into work. A comment without the
+            field (a fixture) is read as before. A client outside the repo has their answer relayed by one.
+    #>
+    param([AllowNull()][object[]]$Comments = @())
+
+    $answer = $null
+    foreach ($c in @(@($Comments) | Where-Object { $_ })) {
+        if ($c.PSObject.Properties['authorAssociation'] -and [string]$c.authorAssociation -notin @('OWNER', 'MEMBER', 'COLLABORATOR')) { continue }
+        $body = if ($c.PSObject.Properties['body']) { [string]$c.body } else { '' }
+        if ([regex]::IsMatch($body, '(?is)\bparked\b.*?\bwaiting on\b')) { $answer = $null; continue }
+        if ($body.TrimStart() -cmatch '^Decision \(') {
+            $who = if ($c.PSObject.Properties['author'] -and $c.author -and $c.author.PSObject.Properties['login']) { [string]$c.author.login } else { '' }
+            $at = if ($c.PSObject.Properties['createdAt']) { $c.createdAt } else { $null }
+            $atText = if ($at -is [datetime]) { ([DateTimeOffset]$at).ToString('o') } elseif ($at) { [string]$at } else { '' }
+            $answer = @{ Author = $who; At = $atText }
+        }
+    }
+    return $answer
+}
+
 function Test-PublishedSince {
     <#
         .SYNOPSIS
