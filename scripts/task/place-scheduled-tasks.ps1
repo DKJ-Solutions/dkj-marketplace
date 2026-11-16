@@ -27,7 +27,7 @@
 
     A CHANGED LOCAL COPY IS KEPT, NOT LOST. Where the placed file differs from what this run would write
     (an edit made in the Desktop app, or an older release), the old file is saved beside it as
-    SKILL.md.previous before it is replaced. The versioned prompt wins: a change worth keeping is made in
+    SKILL.md.previous-<yyyyMMdd-HHmmss> before it is replaced, so no backup overwrites another. The versioned prompt wins: a change worth keeping is made in
     the skill, through a branch.
 
     A DRY RUN BY DEFAULT, like every command in this family that writes outside the repo: without
@@ -100,14 +100,14 @@ function Read-TaskSource {
 function Format-PlacedTask {
     # The file Desktop reads: name and description only, the prompt, and the marker line.
     param($Source, [string]$TaskName, [string]$SourceName)
-    $desc = if ($Source.Keys.ContainsKey('description')) { $Source.Keys['description'] } else { '' }
-    return "---`nname: $TaskName`ndescription: $desc`n---`n`n$($Source.Body)`n`n$MarkerPrefix$SourceName -->`n"
+    return "---`nname: $TaskName`ndescription: $($Source.Keys['description'])`n---`n`n$($Source.Body)`n`n$MarkerPrefix$SourceName -->`n"
 }
 
 function Get-PlacedSourceName {
-    # The source task a placed SKILL.md names in its marker line, or '' when it carries none.
+    # The source task a placed SKILL.md names in its marker line, or '' when it carries none. Only a
+    # marker on the LAST line counts, so a hand-written task that quotes the marker is not taken over.
     param([string]$Path)
-    $m = [regex]::Match([System.IO.File]::ReadAllText($Path, $Utf8), '<!-- placed by dkj-policy scheduled-tasks: (?<n>[a-z0-9-]+) -->')
+    $m = [regex]::Match([System.IO.File]::ReadAllText($Path, $Utf8), '\n<!-- placed by dkj-policy scheduled-tasks: (?<n>[a-z0-9-]+) -->\s*\z')
     if ($m.Success) { return $m.Groups['n'].Value } else { return '' }
 }
 
@@ -134,6 +134,10 @@ foreach ($f in @(Get-ChildItem -LiteralPath $TasksRoot -Filter '*.md' -File | So
     $s = Read-TaskSource -Path $f.FullName
     $id = [System.IO.Path]::GetFileNameWithoutExtension($f.Name)
     if (-not $s) { Write-Host "place-scheduled-tasks: $($f.Name) has no frontmatter with a name -- skipped." -ForegroundColor Yellow; continue }
+    if ($id -notmatch '^[a-z0-9]+(-[a-z0-9]+)*$') { Write-Host "place-scheduled-tasks: $($f.Name) is not lowercase kebab-case, the form a marker and a Desktop folder take; skipped." -ForegroundColor Yellow; continue }
+    # The description is written into YAML unquoted, so a value YAML would read differently is refused.
+    $d = if ($s.Keys.ContainsKey('description')) { $s.Keys['description'] } else { '' }
+    if ($d -notmatch '^[A-Za-z0-9(]' -or $d -match ': | #') { Write-Host "place-scheduled-tasks: $($f.Name) needs a description that starts with a letter or digit and holds no ': ' or ' #'; skipped." -ForegroundColor Yellow; continue }
     if ($s.Keys['name'] -ne $id) { Write-Host "place-scheduled-tasks: $($f.Name) names itself '$($s.Keys['name'])' -- the file name and the name must agree; skipped." -ForegroundColor Yellow; continue }
     $sources[$id] = $s
 }
@@ -146,6 +150,7 @@ function Write-Schedule {
     if ($k.ContainsKey('schedule')) { Write-Host "             schedule: $($k['schedule'])$(if ($k.ContainsKey('cron')) { "  (custom cron: $($k['cron']))" })" }
     if ($k.ContainsKey('folder'))   { Write-Host "             folder:   $($k['folder'])" }
     if ($k.ContainsKey('requires')) { Write-Host "             requires: the '$($k['requires'])' plugin enabled in that folder" }
+    Write-Host "           Give it a permission mode that cannot push or publish: otherwise the prompt is the run's only limit."
     Write-Host "           Creating it there may write its own prompt over this file: run this command with -Apply again afterwards."
 }
 
@@ -168,8 +173,10 @@ function Invoke-Place {
     if ($Apply) {
         if (-not (Test-Path -LiteralPath $dir -PathType Container)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
         if ($exists) {
-            [System.IO.File]::WriteAllText("$file.previous", $have, $Utf8)
-            Write-Host "           the previous file is kept as SKILL.md.previous"
+            # Timestamped, so the second -Apply after registering a task does not overwrite the first backup.
+            $backup = "$file.previous-$((Get-Date).ToString('yyyyMMdd-HHmmss'))"
+            [System.IO.File]::WriteAllText($backup, $have, $Utf8)
+            Write-Host "           the previous file is kept as $([System.IO.Path]::GetFileName($backup))"
         }
         [System.IO.File]::WriteAllText($file, $want, $Utf8)
     }

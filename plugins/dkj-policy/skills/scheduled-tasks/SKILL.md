@@ -21,7 +21,7 @@ places them (decision on #4162, November 16, 2026).
 **Why desktop tasks and not cloud routines.** A desktop task runs on the owner's machine with the local
 plugins, PowerShell, `gh` and the live guard, which is the toolchain these tasks call. A cloud routine runs
 on a fresh VM without the enabled plugins and without `pwsh`, and its GitHub proxy refuses `gh issue` and
-`gh pr`. So a task that runs this workflow's scripts is a desktop task. Deterministic sweeps stay GitHub
+`gh pr` (the cloud documentation, as cited on #4162). So a task that runs this workflow's scripts is a desktop task. Deterministic sweeps stay GitHub
 Actions crons.
 
 **What the file can hold, and what it cannot.** Per the
@@ -49,7 +49,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 ```
 
 Then, for a task placed for the first time, register it in Claude Desktop (**Scheduled -> New task**, or
-ask Claude in a Desktop session) under the **same name**, with the schedule and folder the run printed.
+ask Claude in a Desktop session) under the **same name**, with the schedule and folder the run printed,
+and a permission mode that cannot push or publish, because otherwise the prompt is the run's only limit.
 Registering it may write the app's own prompt over the file, so run the command with `-Apply` once more
 afterwards. That run puts the versioned prompt back.
 
@@ -63,12 +64,14 @@ afterwards. That run puts the versioned prompt back.
 
 Every placed file ends with a marker line naming the task it came from
 (`<!-- placed by dkj-policy scheduled-tasks: <task> -->`). A run without `-Task` reads every folder under
-`scheduled-tasks/`, refreshes each file whose marker names a task this release ships, and reports an
-**orphan** where the marker names one it no longer ships (delete that task in Desktop, and its folder by
-hand). A task created in the app without this command carries no marker and is never touched.
+`scheduled-tasks/`, refreshes each file whose **last line** is a marker naming a task this release ships,
+and reports an **orphan** where the marker names one it no longer ships (delete that task in Desktop, and
+its folder by hand). A task created in the app without this command carries no such last line and is never
+touched.
 
 **A changed copy is kept, not lost.** Where a placed file differs from what the run writes (an edit in the
-app, or an older release), the old file is saved as `SKILL.md.previous` beside it. The versioned prompt
+app, or an older release), the old file is saved beside it as `SKILL.md.previous-<yyyyMMdd-HHmmss>`, so a
+second refresh never overwrites the first backup. The versioned prompt
 wins: a change worth keeping is made in `tasks/`, through a branch.
 
 ## The tasks
@@ -84,7 +87,9 @@ because the prompt is all the run reads.
 
 ## Adding a task
 
-A file `tasks/<name>.md` whose name matches its `name:` key, with frontmatter `name`, `description`, and
+A file `tasks/<name>.md`, its name in lowercase kebab-case and matching its `name:` key, with frontmatter
+`name`, `description` (starting with a letter or digit, with no `: ` or ` #`, because it is written into
+YAML unquoted), and
 for the print `schedule` (as the app's presets word it), `cron` (5 fields, local time), `folder` and
 `requires` (a plugin the folder must enable). Only `name` and `description` reach the placed file. The
 prompt states what the run may not do, and reports facts in a few lines.

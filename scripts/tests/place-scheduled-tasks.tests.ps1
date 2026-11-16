@@ -80,7 +80,7 @@ try {
     Assert-True ($r.Text -match 'current\s+alpha-store1') 'the placed copy is current'
     Assert-True ($r.Text -notmatch 'unplaced alpha') 'alpha is no longer listed as unplaced'
     Assert-True ($r.Text -match 'unplaced beta') 'beta still is'
-    Assert-True (-not (Test-Path -LiteralPath (Join-Path $fx.Dir 'alpha-store1\SKILL.md.previous'))) 'a current copy leaves no .previous file'
+    Assert-True (@(Get-ChildItem -LiteralPath (Join-Path $fx.Dir 'alpha-store1') -Filter 'SKILL.md.previous-*').Count -eq 0) 'a current copy leaves no backup'
 
     Write-Host 'Case 4: a changed copy is refreshed by marker, and the old file is kept'
     $file = Join-Path $fx.Dir 'alpha-store1\SKILL.md'
@@ -92,7 +92,8 @@ try {
     $r = Invoke-Place $fx @('-Apply')
     Assert-True ($r.Text -match 'updated\s+alpha-store1') 'the apply run updates it'
     Assert-True ((Read-Placed $fx 'alpha-store1') -match 'Do the alpha thing\.') 'the versioned prompt is back'
-    Assert-True ([System.IO.File]::ReadAllText("$file.previous", $Utf8) -match 'Edited in the app\.') 'the edited copy is kept as SKILL.md.previous'
+    $backups = @(Get-ChildItem -LiteralPath (Join-Path $fx.Dir 'alpha-store1') -Filter 'SKILL.md.previous-*')
+    Assert-True ($backups.Count -eq 1 -and [System.IO.File]::ReadAllText($backups[0].FullName, $Utf8) -match 'Edited in the app\.') 'the edited copy is kept as a timestamped SKILL.md.previous-* backup'
     Assert-True ($r.Text -notmatch 'register it once') 'an update prints no registration step'
 
     Write-Host 'Case 5: an orphan marker and an unmarked task are left untouched'
@@ -100,7 +101,8 @@ try {
     $orphanText = "---`nname: gone-task`ndescription: x`n---`n`nold`n`n<!-- placed by dkj-policy scheduled-tasks: gone -->`n"
     [System.IO.File]::WriteAllText((Join-Path $orphan 'SKILL.md'), $orphanText, $Utf8)
     $own = Join-Path $fx.Dir 'my-own-task'; New-Item -ItemType Directory -Path $own -Force | Out-Null
-    $ownText = "---`nname: my-own-task`ndescription: mine`n---`n`nDo the alpha thing differently.`n"
+    # It even quotes the marker mid-file -- only a marker on the last line makes a copy ours.
+    $ownText = "---`nname: my-own-task`ndescription: mine`n---`n`nDo the alpha thing differently.`n<!-- placed by dkj-policy scheduled-tasks: alpha -->`nMy own last line.`n"
     [System.IO.File]::WriteAllText((Join-Path $own 'SKILL.md'), $ownText, $Utf8)
     $r = Invoke-Place $fx @('-Apply')
     Assert-True ($r.Text -match 'orphan\s+gone-task') 'the orphan is reported'
@@ -122,6 +124,14 @@ try {
     $r = Invoke-Place $fx
     Assert-True ($r.Text -match "gamma\.md names itself 'delta'") 'the mismatch is reported'
     Assert-True ($r.Text -notmatch 'unplaced (gamma|delta)') 'and the task is not offered'
+    [System.IO.File]::WriteAllText((Join-Path $fx.Tasks 'Foo_bar.md'), "---`nname: Foo_bar`ndescription: d`n---`n`nbody`n", $Utf8)
+    [System.IO.File]::WriteAllText((Join-Path $fx.Tasks 'nodesc.md'), "---`nname: nodesc`n---`n`nbody`n", $Utf8)
+    [System.IO.File]::WriteAllText((Join-Path $fx.Tasks 'yamlish.md'), "---`nname: yamlish`ndescription: Note: this breaks YAML`n---`n`nbody`n", $Utf8)
+    $r = Invoke-Place $fx
+    Assert-True ($r.Exit -eq 0) 'malformed task files do not stop the run'
+    Assert-True ($r.Text -match 'Foo_bar\.md is not lowercase kebab-case') 'a non-kebab file name is skipped, since its marker could never be matched'
+    Assert-True ($r.Text -match 'nodesc\.md needs a description' -and $r.Text -match 'yamlish\.md needs a description') 'a missing description and one YAML would misread are skipped'
+    Assert-True ($r.Text -notmatch 'unplaced (Foo_bar|nodesc|yamlish)') 'none of them is offered'
 
     Write-Host 'Case 8: both copies find the shipped tasks folder from their own depth'
     # The default -TasksRoot ascends two levels, which is the repo root in the source copy and the

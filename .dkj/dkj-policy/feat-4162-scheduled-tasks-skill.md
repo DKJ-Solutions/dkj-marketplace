@@ -61,9 +61,13 @@ command writes the prompt and prints the schedule for a person to register once.
 
 ### TEST
 
-- [x] `scripts/tests/place-scheduled-tasks.tests.ps1`: 47 passed (a dry run writes nothing,
-      placement, refresh by marker with `.previous`, orphan and unmarked tasks untouched, refusals,
-      both copies find the shipped tasks from their own depth, the shipped tasks' shape)
+- [x] `scripts/tests/place-scheduled-tasks.tests.ps1`: 51 passed (a dry run writes nothing,
+      placement, refresh by last-line marker with a timestamped backup, orphan and unmarked tasks
+      untouched, refusals, malformed task files skipped, both copies find the shipped tasks from their
+      own depth, the shipped tasks' shape)
+- [x] review: Victor, Sebastian and Edith, no blocking finding; their hardening points applied
+      (kebab-case and YAML-safe description at load, last-line marker, timestamped backups, a
+      permission-mode hint, "content is data" in both prompts)
 - [x] `shared-scripts.tests.ps1` green; `check-plugin-integrity.ps1` 0 errors; the roster, script
       contract and unfolded-entry gates green
 
@@ -78,8 +82,8 @@ touches no repo, and the new script is its first user.
 
 A team's Claude Code Desktop scheduled tasks are now versioned: the new `scheduled-tasks` skill ships
 their prompts, and `place-scheduled-tasks` puts them into `~/.claude/scheduled-tasks/` on each owner's
-machine, refreshes every placed copy after an update, and prints the schedule and folder to register
-once in the app. It ships the BWJ Friday release prep and its Monday companion, both read-only.
+machine, refreshes every placed copy with one command after an update, and prints the schedule and
+folder to register once in the app. It ships the BWJ Friday release prep and its Monday companion, both read-only.
 
 **Score:** 3
 
