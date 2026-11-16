@@ -2,7 +2,65 @@
 
 ## [Unreleased]
 
-**37 / 47 minor entries** <!-- pending-tally -->
+**39 / 49 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4198-merge-on-green-redispatch · 20261116-164427Z
+
+When GitHub answers a merge with a 5xx and does not confirm it within a minute, `ship-pr` now exits 75
+instead of 1 ([#4198](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4198)). The merge-on-green
+runner reads that code and wakes its own next sweep: it waits 5, 10 and then 15 minutes, and dispatches
+itself again with a retry counter, at most three times. It used to wait for a CI completion or a schedule
+that, after a 5xx, does not come. The dispatch runs in a job of its own, which holds `actions: write` and
+checks nothing out. `adopt-ci-floor` places the same job in a consumer's runner and flags an existing
+runner that lacks it with `[redispatch]`.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+An armed pull request whose merge hit a server error now lands within about half an hour on its own.
+Before this, it sat green until someone shipped it by hand: on November 16 that took over an hour, for
+two pull requests. A consumer gets this by re-placing its merge-on-green runner. Moving the `ref:` pin
+alone does not add the new job.
+
+**Score:** 3
+
+#### Pull Request
+
+merge-on-green: re-dispatch the sweep after a held merge
+
+Plugins: dkj-policy
+
+[PR #4202](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4202)
+
+---
+
+### DEPLOY: feat/4197-guard-kind-label · 20261116-163203Z
+
+Inside this repo, `guard-reach-reason`'s command parser is now the shared `Get-GhIssueLabelCall`, which
+both guards read a `gh issue` call with.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+In a BWJ store, a `gh issue create` without exactly one of `bug`, `feature` or `research` is now
+refused before it runs, naming the three
+([#4197](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4197)). Sessions had filed 11
+consecutive issues with no kind while the rule was loaded. Labels set in a template, the browser or an
+editor pass with a warning, and an inbound issue on the source repo is not judged at all.
+
+**Score:** 3
+
+#### Pull Request
+
+bwj-development: guard-kind-label refuses a gh issue create with no (or several) bug/feature/research labels
+
+Plugins: bwj-development
+
+[PR #4200](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4200)
+
+---
 
 ### DEPLOY: feat/4162-consumer-health-task · 20261116-162040Z
 

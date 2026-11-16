@@ -91,6 +91,11 @@ gh issue create --repo <owner>/<repo> --title "<precise technical title>" --body
 | the kind (`--label bug`, `--label feature` or `--label research`) | **always exactly one of the three** (#2783, #3006): **`feature`** for something new being added, **`bug`** for something that exists and has to change, **`research`** for a research, test or decision ticket that changes nothing on the store. A doc finding is a `bug` or a `feature` -- a missing page is a `feature`, a wrong one a `bug`. A ticket that researches first and then builds is not `research`. There is no fourth kind and no `documentation` label |
 | the reach label (`Get-ReachLabel`, default `minor`) | **only** where management or the commissioner would notice it. The test is whether that reader notices the **defect**, not whether the file renders to them: a customer-facing template with a developer-only defect is tier 0, and a build script whose breakage stops a release the business is waiting on is not. **In doubt, leave it off.** Where you set it, the body carries the `## Why <reach label>` section below, which answers that test in words |
 
+**`hooks/guard-kind-label.ps1` refuses** a `gh issue create` on a store repo that carries none, or
+more than one, of the three kinds (#4197). Labels set in a template, the browser or an editor,
+labels built at run time, or a repo it cannot name pass with a warning. An inbound issue on the plugin's
+source repo is not judged.
+
 **The reach label comes with its reason, written into the body** (#4057). Wherever the label goes on,
 the body carries this section, named after `Get-ReachLabel`'s answer:
 
