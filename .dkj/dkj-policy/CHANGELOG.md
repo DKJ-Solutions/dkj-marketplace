@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**12 / 17 minor entries** <!-- pending-tally -->
+**13 / 18 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4131-domain-borders · 20261116-072904Z
+
+Admin's own pages and this repo's consumer dashboard follow the brand book's rule from #4127, that a border marks
+something you can press ([#4131](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4131)): the Goals page's
+Now card, next tasks and milestones, the Today page's items, the repository page's code block, the release page's
+sheet, the notice above a toolbar pane and the dashboard's signal rows stand on fills instead of lines.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Admin, which every repo running this workflow opens, now reads like the rest of the brand book after #4127: no
+lines left on its Goals and Today pages, the current task marked by a stronger fill rather than a coloured frame.
+
+**Score:** 2
+
+#### Pull Request
+
+Admin and dashboard domain layers drop their decorative borders
+
+Plugins: dkj-policy
+
+[PR #4142](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4142)
+
+---
 
 ### DEPLOY: docs/4139-storage-neutral-brain · 20261116-014548Z
 
