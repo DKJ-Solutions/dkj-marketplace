@@ -365,7 +365,7 @@ if ($branch -ne $trunk) {
     $dirty = @(Get-GitLines (Invoke-Git -Arguments @('status', '--porcelain')))
     # LINE ENDINGS ARE NAMED APART (#4143): a file committed with CRLF under 'eol=lf' reads as modified on
     # every checkout and `git checkout --` cannot clean it, so 'uncommitted' points at a remedy that fails.
-    $eolSplit = if ($dirty.Count -gt 0 -and (Get-Command Get-GitEolOnlySplit -ErrorAction SilentlyContinue)) { Get-GitEolOnlySplit -RepoRoot $repoRoot } else { $null }
+    $eolSplit = if ($dirty.Count -gt 0 -and (Test-FunctionDefined 'Get-GitEolOnlySplit')) { Get-GitEolOnlySplit -RepoRoot $repoRoot } else { $null }
     if ($eolSplit -and $eolSplit.Known -and $eolSplit.EolOnly.Count -gt 0) {
         $eolPaths = @($eolSplit.EolOnly)
         $rest = if ($eolSplit.Other.Count -gt 0) { " Besides them, $($eolSplit.Other.Count) uncommitted change(s)." } else { '' }
