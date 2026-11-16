@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**14 / 19 minor entries** <!-- pending-tally -->
+**15 / 20 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4145-fold-demotes-body-headings · 20261116-083903Z
+
+Inside this repo, `fold-changelog-entry.ps1` runs every folded entry through a new `Limit-EntryBodyHeadings`
+([#4145](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4145)). Any heading in the entry's body at or
+above the entry's own level becomes a section one level below it, and the fold prints how many it moved.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a repo that has taken this update, a `##` heading written inside a DEPLOY section can no longer close
+`## [Unreleased]` at the fold and hide the entries below it from the next cut. Measured in a consumer, the cut saw
+2 of 31 pending entries. A `###` there no longer splits one change into two entries either. The fold demotes such
+headings and names the document to repair.
+
+**Score:** 3
+
+#### Pull Request
+
+The fold demotes headings in a DEPLOY body that would close [Unreleased] or split the entry
+
+Plugins: dkj-policy
+
+[PR #4158](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4158)
+
+---
 
 ### DEPLOY: fix/4144-eol-only-trunk-return · 20261116-082801Z
 
