@@ -656,6 +656,42 @@ try {
     Assert-True ($r.Out -match '-> trunk ahead: all 2 line\(s\)') 'conflict/hint: live holding only lines our history held reads as trunk ahead'
     Assert-True ($r.Out -match '-> settings: 1 live-only, 0 trunk-only, 1 changed -- live-only: s\.banner; changed: s\.code') 'conflict/hint: a template is summarised at key level, by name'
 
+    # --- -Only: the drift-check mode (inbound #4149) -------------------------------------------------
+    # The contract live-preflight and prepare-release call: '& <check> -Only <paths>', exit 0 = safe to
+    # push these, anything else = drift. A plain dry run exits 0 on a take-live path, which is the sync
+    # working; under -Only that same path is a third party's edit a push would destroy.
+    Write-Host ''
+    Write-Host 'the drift-check mode (-Only, #4149)'
+    $r = Invoke-Sync -Dir $clash -Mirror $clashMirror -Extra @('-Only', 'sections/both.liquid')
+    Assert-True ($r.Code -eq 1 -and $r.Out -match 'CONFLICTS') 'only/conflict: a conflicted path on the list fails the check'
+    $only = New-Consumer -Label 'only' -ThemeId '123456' -StoreDomain 'a-store.myshopify.com'
+    Add-FixtureCommit -Dir $only -Message 'sync: the floor' -Write @{ 'sections/editor.liquid' = 'e1'; 'sections/dropped.liquid' = 'was here once' }
+    Add-FixtureCommit -Dir $only -Message 'fix: the trunk changes a file' -Write @{ 'sections/theme.liquid' = 'trunk-v2' }
+    Add-FixtureCommit -Dir $only -Message 'chore: the trunk drops a file' -Delete @('sections/dropped.liquid')
+    $onlyMirror = New-Mirror -Label 'only' -Files @{
+        'sections/theme.liquid'   = 'v1'
+        'sections/editor.liquid'  = 'a third party wrote this'
+        'sections/dropped.liquid' = 'was here once'
+    }
+    $r = Invoke-Sync -Dir $only -Mirror $onlyMirror -Extra @('-Only', 'sections/theme.liquid')
+    Assert-True ($r.Code -eq 0) 'only/held: a path where the trunk wins passes -- live holds an older version of our own'
+    $r = Invoke-Sync -Dir $only -Mirror $onlyMirror -Extra @('-Only', 'sections/editor.liquid')
+    Assert-True ($r.Code -eq 1 -and $r.Out -match 'DRIFT:') 'only/take: a take-live path fails the check, where a plain dry run would exit 0'
+    Assert-True ($r.Out -match 'DRY RUN') 'only/take: -Only implies -DryRun'
+    Assert-True (@(& git -C $only branch --list 'sync/*').Count -eq 0) 'only/take: and nothing is written -- no sync branch'
+    $r = Invoke-Sync -Dir $only -Mirror $onlyMirror -Extra @('-Only', 'sections/theme.liquid,sections/editor.liquid')
+    Assert-True ($r.Code -eq 1 -and $r.Out -match '-Only: 2 of the 3 differing') 'only/joined: a comma-joined list (one string across -File) is split, not read as one path'
+    $r = Invoke-Sync -Dir $only -Mirror $onlyMirror -Extra @('-Only', 'sections/dropped.liquid')
+    Assert-True ($r.Code -eq 0) 'only/deletion: a path the trunk deleted, whose live content we once held, is safe to delete'
+    $r = Invoke-Sync -Dir $only -Mirror $onlyMirror -Extra @('-Only', 'sections/elsewhere.liquid')
+    Assert-True ($r.Code -eq 0 -and $r.Out -match 'No drift on the 1 listed') 'only/unlisted: drift off the list does not move the exit code'
+    $r = Invoke-Sync -Dir $only -Mirror $onlyMirror -Extra @('-Only', ',')
+    Assert-True ($r.Code -eq 1 -and $r.Out -match 'no path in it') 'only/empty: a list that splits to nothing refuses, never passes'
+    $r = Invoke-Sync -Dir $only -Mirror $onlyMirror -Extra @('-Only', 'sections/editor.liquid', '-ReconcileBase')
+    Assert-True ($r.Code -eq 1 -and $r.Out -match 'do not combine') 'only/reconcile: the read-only check refuses the one switch that writes'
+    $r = Invoke-Sync -Dir $conn -Extra @('-Only', 'sections/theme.liquid')
+    Assert-True ($r.Code -eq 1 -and $r.Out -match 'Git-connected') 'only/connected: a connected store refuses -- the back-flow check replaces the drift check'
+
     # --- -ReconcileBase: the durable shape, written --------------------------------------------------
     # THE ASSERT THAT MATTERS IS THE LAST ONE: after this branch, the same run that refused reports the
     # path as held back. Everything above it is there because the way this repair fails is by writing a

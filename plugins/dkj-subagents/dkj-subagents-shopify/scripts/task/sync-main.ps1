@@ -198,6 +198,27 @@
     longer drift, so this run never captures it, and the predecessor holds the only copy. The run then
     still prints the per-branch verdict, so the second candidate is a decision rather than an accident.
 
+.PARAMETER Only
+    Run as a DRIFT CHECK over these paths (inbound #4149): implies -DryRun, so nothing is written, judges
+    only the listed paths, and exits 1 when any of them is take-live or a conflict -- a third party's
+    content on live that a push of the trunk's version would overwrite -- and 0 when every one is held
+    back or matches. That is the drift-check contract live-preflight and prepare-release call
+    (`& <check> -Only <paths>`), so a repo whose only drift check is this script can answer
+    Get-ShopifyDriftCheckPath with it, and both fall back to it where nothing is answered.
+
+    WHY THE EXIT CODE DIFFERS FROM A PLAIN -DryRun. A plain dry run asks "would the sync fail?", and a
+    take-live path is the sync working, so it exits 0. A drift check asks "is it safe to push these?",
+    and a take-live path is exactly the third-party edit a push would destroy. Measured in a consumer:
+    -DryRun found 12 conflicted paths, 9 on the release's push list, while prepare-release had skipped
+    the step for want of a check that takes a list.
+
+    A DELETION IS JUDGED TOO. A path the trunk deleted and live still has reads as new on live, and it is
+    held back -- safe to delete -- only where live's bytes are a version the trunk once held.
+
+    One comma-joined string is split on commas, because a list that crossed a 'powershell -File' boundary
+    arrives as one (#2228); a theme path never carries a comma. Refused on a Git-connected store, where
+    the back-flow check replaces the drift check, and together with -ReconcileBase, which writes.
+
 .PARAMETER ChecksTimeoutMinutes
     How long to wait for CI on the sync PR before giving up and leaving it unmerged. Only used when the
     seam says to merge. Default: 15.
@@ -247,6 +268,7 @@ param(
     # for by name rather than offered as a default helpfulness. Under -DryRun it reports what it would
     # write and writes nothing, like every other write on this page.
     [switch]$ReconcileBase,
+    [string[]]$Only = @(),
     [int]$ChecksTimeoutMinutes = 15,
     [string]$RootOverride = '',
     # RETIRED, AND ACCEPTED ONLY TO REFUSE IT BY NAME. -SkipPull meant "run the rule over whatever is
@@ -266,6 +288,29 @@ if ($SkipPull) {
     Write-Host '  Use -DryRun to see every verdict without writing anything, or -MirrorPath <dir> to run'
     Write-Host '  against a mirror you already have. Nothing was changed.'
     exit 1
+}
+
+# THE DRIFT-CHECK MODE (inbound #4149) -- see .PARAMETER Only. The list is normalised before anything else
+# runs, so an empty list after the split is a refusal rather than a check that judged zero paths as safe.
+$onlyMode = $false
+$onlySet  = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+if ($PSBoundParameters.ContainsKey('Only')) {
+    foreach ($o in @($Only)) {
+        foreach ($p in ([string]$o -split ',')) {
+            $p = ($p.Trim() -replace '\\', '/')
+            if ($p) { [void]$onlySet.Add($p) }
+        }
+    }
+    if ($onlySet.Count -eq 0) {
+        Write-Host '-Only was passed with no path in it, so there is nothing to check. Nothing was changed.' -ForegroundColor Red
+        exit 1
+    }
+    if ($ReconcileBase) {
+        Write-Host '-Only is a read-only drift check and -ReconcileBase writes, so they do not combine. Nothing was changed.' -ForegroundColor Red
+        exit 1
+    }
+    $onlyMode = $true
+    $DryRun = [switch]$true
 }
 
 # THE SOURCE-REPO GUARD: refuses this script when it is a released copy running in the repo that
@@ -1203,6 +1248,14 @@ if ($DryRun) {
 # promotion, because the promotion's merge commit lives on the deploy branch alone -- the reasoning of
 # Get-LivePromotionStep in live-push-rules.ps1, which live-preflight refuses on with this same diff.
 #
+# -Only HAS NO MEANING HERE (inbound #4149): a connected store has no CLI drift check to stand in for --
+# the back-flow check replaces it in live-preflight and prepare-release -- so it is refused rather than
+# answered with a back-flow report the caller would read as a drift verdict.
+if ($connected -and $onlyMode) {
+    Write-Host '-Only is the CLI drift check, and this store is Git-connected: the back-flow check replaces it. Nothing was changed.' -ForegroundColor Red
+    exit 1
+}
+#
 # THE STANDING-PREDECESSOR GUARD BECOMES "AN OPEN PR WITH THAT HEAD": the PR follows the branch, so a new
 # bot commit is already in it, and opening a second one is the pile #1021 measured. It is reported, and
 # the run ends.
@@ -1768,6 +1821,19 @@ try {
         $differing += [pscustomobject]@{ Status = 'D'; Path = $rel; Bytes = (New-Object byte[] 0); Source = '' }
     }
 
+    # THE DRIFT-CHECK MODE JUDGES ONLY ITS LIST (inbound #4149). Filtered before the verdict, so a path off
+    # the list costs no 'git log' and cannot move the exit code.
+    if ($onlyMode) {
+        $allDiffering = $differing.Count
+        $differing = @($differing | Where-Object { $onlySet.Contains($_.Path) })
+        Write-Host "      -Only: $($differing.Count) of the $allDiffering differing path(s) are among the $($onlySet.Count) listed"
+        if ($differing.Count -eq 0) {
+            Write-Host ''
+            Write-Host "No drift on the $($onlySet.Count) listed path(s) -- each matches live, or live does not differ there." -ForegroundColor Green
+            exit 0
+        }
+    }
+
     if ($differing.Count -eq 0) {
         Write-Host ''
         Write-Host "No differences at all -- $trunkShown already matches live." -ForegroundColor Green
@@ -1941,6 +2007,15 @@ try {
         # line the run reads as "all clear" to the one operator who most needs to go and merge something.
         Write-SyncPredecessorVerdict -Standing $standing -TakePaths @()
         exit 0
+    }
+
+    # A TAKE-LIVE PATH ON THE LIST IS DRIFT (inbound #4149): live holds a third party's content there, and
+    # pushing the trunk's version would overwrite it. The sync would take it; a push must not.
+    if ($onlyMode) {
+        Write-Host ''
+        Write-Host "DRIFT: $($take.Count) listed path(s) hold content on live this repo has never had. Pushing the" -ForegroundColor Red
+        Write-Host "trunk's version would overwrite a third party's edit -- sync it first. Nothing written." -ForegroundColor Red
+        exit 1
     }
 
     if ($DryRun) {
