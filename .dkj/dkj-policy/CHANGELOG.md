@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**18 / 23 minor entries** <!-- pending-tally -->
+**19 / 24 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4150-sync-conflict-classes · 20261116-093148Z
+
+Inside this repo, `sync-main.ps1` prints a one-line reading under each conflicted path's diff command
+([#4150](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4150)). New pure functions in `sync-rules.ps1`
+compute it, and both suites cover them.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A Shopify repo whose sync refuses on conflicts gets a first reading of each conflicted path, so nobody has to diff
+them all by hand. A Liquid or other text path reads `trunk ahead` when every line live holds is one the trunk's
+history has held. A `templates/` or `sections/` JSON file gets its live-only, trunk-only and changed settings,
+by key. Measured in a consumer, those were the two readings that settled twelve conflicts, and they took most of a
+session to work out by hand. The conflict still refuses: the person decides.
+
+**Score:** 3
+
+#### Pull Request
+
+sync-main gives each conflicted path a first reading
+
+Plugins: dkj-subagents-shopify
+
+[PR #4167](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4167)
+
+---
 
 ### DEPLOY: fix/4151-prepare-release-names-accept-switch · 20261116-092108Z
 
