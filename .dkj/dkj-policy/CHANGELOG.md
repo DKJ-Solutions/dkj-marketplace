@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**32 / 42 minor entries** <!-- pending-tally -->
+**33 / 43 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4165-notify-live-send-no-block · 20261116-143606Z
+
+`notify-live` now tells the task of a solved issue that carries no go-live block
+([#4165](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4165)), instead of only naming it as
+`NO BLOCK`. An issue closed as completed, linking one task and not told yet, gets the same plain "now live
+as version vX.Y.Z" message as a block waiting on the release, and its dry-run row reads `no block`. That
+is the set the cut's audience note counts as solved, so the two readers share one definition. The marker
+comment still keeps it from being told twice.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+On release day every task the release notes call solved now hears on the task itself that its work is
+live, with no by-hand messages left for the issues whose close carried no go-live block.
+
+**Score:** 3
+
+#### Pull Request
+
+notify-live: send the plain live message to a solved issue with no go-live block
+
+Plugins: bwj-development
+
+[PR #4190](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4190)
+
+---
 
 ### DEPLOY: fix/4163-comment-named-issues · 20261116-142518Z
 
