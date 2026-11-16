@@ -2641,13 +2641,73 @@ function Format-ParkingLabelNote {
     $hit = @(@($Labels) | Where-Object { $_ })
     if ($hit.Count -eq 0) { return @() }
     $named = (@($hit | ForEach-Object { "'$(Format-ForConsole -Text ([string]$_))'" }) -join ', ')
-    return @(
-        "PARKED: #$Issue carries $named -- a label that parks an issue with somebody else, and the"
-        'label a sweep skips this issue on. It is waiting on an ANSWER, not on a builder: read the'
-        'issue for the open question and who it is addressed to. Where the answer is not on the'
-        'thread yet, it is not yours to give -- do not pick one of the options and build it.'
-        'If the label is stale (the answer is already there), remove it, then carry on.'
+    switch (Get-ParkingWaitKind -Labels $hit) {
+        'session' {
+            return @(
+                "PARKED: #$Issue carries $named -- the issue is workable and was parked for a dedicated"
+                'session, not with somebody else. Read the last parking comment for the steps left. When'
+                'this session is that session (you were told to work this issue), remove the label and'
+                'carry on; a sweep leaves it alone.'
+            )
+        }
+        'other' {
+            return @(
+                "PARKED: #$Issue carries $named -- a label that parks an issue on something outside this"
+                'session (a pull request, a release, an act, a look, a recurrence), and the label a sweep'
+                'skips this issue on. Read the parking comment for what it waits on. Until that has'
+                'happened, it is not yours to build. If the label is stale (the wait is over), remove it,'
+                'then carry on.'
+            )
+        }
+        default {
+            return @(
+                "PARKED: #$Issue carries $named -- a label that parks an issue with somebody else, and the"
+                'label a sweep skips this issue on. It is waiting on an ANSWER, not on a builder: read the'
+                'issue for the open question and who it is addressed to. Where the answer is not on the'
+                'thread yet, it is not yours to give -- do not pick one of the options and build it.'
+                'If the label is stale (the answer is already there), remove it, then carry on.'
+            )
+        }
+    }
+}
+
+function Get-ParkingWaitKind {
+    <#
+        .SYNOPSIS
+            What a set of matched parking labels waits on: 'answer', 'other' or 'session' (issue #4193).
+
+        .DESCRIPTION
+            THE PARKING VERDICT USED TO BE ONE TEXT FOR EVERY LABEL, written when every parking label
+            waited on somebody else's answer (#2518). Measured November 16, 2026: a claim on an issue
+            carrying `awaiting-session-dev` (#4066 -- workable, waiting on a session of its own) told the
+            session the owner had opened for exactly that work to stop and wait for an answer.
+
+            - 'answer'  -- a decision or information label, current or former name: somebody else's word
+                           is owed first, and it is not the claimant's to give.
+            - 'session' -- `awaiting-session-dev` and nothing else: the work is ready and waits on a
+                           builder, so a session told to work it lifts the label and carries on.
+            - 'other'   -- every other parking label: a pull request, a release, an act, a look or a
+                           recurrence, none of which an answer settles.
+
+            WHERE SEVERAL MATCH, THE STRICTEST WINS -- answer over other over session -- because an issue
+            carries at most one `awaiting-*` label (#2936) and a second is a conflict the claim reports
+            separately (Format-ParkingLabelConflict); the verdict must not lift a wait the other label
+            still names.
+
+        .OUTPUTS
+            'answer', 'other' or 'session'; 'answer' when no label is given, the reading #2518 shipped.
+    #>
+    param(
+        [AllowNull()][string[]]$Labels = @()
     )
+
+    $answer = @('awaiting-decision-dev', 'awaiting-decision-client', 'awaiting-info-client',
+        'awaiting-decision', 'awaiting-more-info', 'needs-decision', 'needs-info')
+    $hit = @(@($Labels) | Where-Object { $_ } | ForEach-Object { ([string]$_).Trim().ToLowerInvariant() })
+    if ($hit.Count -eq 0) { return 'answer' }
+    if (@($hit | Where-Object { $answer -contains $_ }).Count -gt 0) { return 'answer' }
+    if (@($hit | Where-Object { $_ -ne 'awaiting-session-dev' }).Count -gt 0) { return 'other' }
+    return 'session'
 }
 
 function Format-ParkingLabelConflict {

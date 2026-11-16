@@ -1584,6 +1584,20 @@ $note = @(Format-ParkingLabelNote -Issue 12 -Labels @('needs-info'))
 Assert-True ($note.Count -gt 0 -and $note[0] -match "^PARKED: #12 carries 'needs-info'") 'a parked issue gets the verdict, naming the label'
 Assert-True (($note -join ' ') -match 'not yours to give') 'and it says the answer is not the claimant''s to give -- the measured failure was a session choosing between the owner''s options'
 Assert-True ((@(Format-ParkingLabelNote -Issue 12 -Labels @())).Count -eq 0) 'no label, no note -- the common case stays silent'
+
+# THE VERDICT READS PER LABEL (#4193): awaiting-session-dev waits on a builder, not on an answer.
+$sessionNote = (@(Format-ParkingLabelNote -Issue 12 -Labels @('awaiting-session-dev')) -join ' ')
+Assert-True ($sessionNote -match 'dedicated' -and $sessionNote -match 'remove the label') 'an awaiting-session-dev issue is told it waits on a session, and that session lifts the label'
+Assert-True ($sessionNote -notmatch 'ANSWER' -and $sessionNote -notmatch 'not yours to give') 'and it is NOT told it waits on an answer -- the measured failure of #4193'
+$pullNote = (@(Format-ParkingLabelNote -Issue 12 -Labels @('awaiting-pull')) -join ' ')
+Assert-True ($pullNote -notmatch 'ANSWER' -and $pullNote -match 'not yours to build') 'a wait on a pull request is a wait, not an answer'
+Assert-True ((Get-ParkingWaitKind -Labels @('Awaiting-Decision-Dev')) -eq 'answer') 'a decision label owes an answer, matched case-insensitively'
+Assert-True ((Get-ParkingWaitKind -Labels @('needs-info')) -eq 'answer') 'and so does a former information label'
+Assert-True ((Get-ParkingWaitKind -Labels @('awaiting-release')) -eq 'other') 'a release wait is neither an answer nor a session'
+Assert-True ((Get-ParkingWaitKind -Labels @('awaiting-session-dev')) -eq 'session') 'awaiting-session-dev alone is a session wait'
+Assert-True ((Get-ParkingWaitKind -Labels @('awaiting-session-dev', 'awaiting-pull')) -eq 'other') 'beside another wait, the stricter label wins'
+Assert-True ((Get-ParkingWaitKind -Labels @('awaiting-pull', 'awaiting-decision-dev')) -eq 'answer') 'and an answer is the strictest'
+Assert-True ((Get-ParkingWaitKind -Labels @()) -eq 'answer') 'no label reads as #2518 shipped it'
 $esc = [string][char]0x1b
 Assert-True (-not ((@(Format-ParkingLabelNote -Issue 12 -Labels @("x${esc}[31m")) -join ' ').Contains($esc))) 'a label name is tracker text and is stripped before printing'
 
