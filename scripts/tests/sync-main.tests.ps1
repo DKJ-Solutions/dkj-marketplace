@@ -675,7 +675,7 @@ try {
     }
     $r = Invoke-Sync -Dir $only -Mirror $onlyMirror -Extra @('-Only', 'sections/theme.liquid')
     Assert-True ($r.Code -eq 0) 'only/held: a path where the trunk wins passes -- live holds an older version of our own'
-    $r = Invoke-Sync -Dir $only -Mirror $onlyMirror -Extra @('-Only', 'sections/editor.liquid')
+    $r = Invoke-Sync -Dir $only -Mirror $onlyMirror -Extra @('-Only', './sections/editor.liquid')
     Assert-True ($r.Code -eq 1 -and $r.Out -match 'DRIFT:') 'only/take: a take-live path fails the check, where a plain dry run would exit 0'
     Assert-True ($r.Out -match 'DRY RUN') 'only/take: -Only implies -DryRun'
     Assert-True (@(& git -C $only branch --list 'sync/*').Count -eq 0) 'only/take: and nothing is written -- no sync branch'

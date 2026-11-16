@@ -298,7 +298,9 @@ $onlySet  = New-Object 'System.Collections.Generic.HashSet[string]' ([System.Str
 if ($PSBoundParameters.ContainsKey('Only')) {
     foreach ($o in @($Only)) {
         foreach ($p in ([string]$o -split ',')) {
-            $p = ($p.Trim() -replace '\\', '/')
+            # git's spelling, which is the only one the filter below matches: a './' prefix would match
+            # nothing and read as "no drift" (#4149's review).
+            $p = (($p.Trim() -replace '\\', '/') -replace '^(\./)+', '')
             if ($p) { [void]$onlySet.Add($p) }
         }
     }
