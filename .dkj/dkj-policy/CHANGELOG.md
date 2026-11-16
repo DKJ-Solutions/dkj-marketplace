@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**35 / 45 minor entries** <!-- pending-tally -->
+**36 / 46 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4162-scheduled-tasks-skill · 20261116-155856Z
+
+Inside this repo, the shared-scripts registry gains a `RepoRootExempt` key for an entry point that
+touches no repo, and the new script is its first user.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A team's Claude Code Desktop scheduled tasks are now versioned: the new `scheduled-tasks` skill ships
+their prompts, and `place-scheduled-tasks` puts them into `~/.claude/scheduled-tasks/` on each owner's
+machine, refreshes every placed copy with one command after an update, and prints the schedule and
+folder to register once in the app. It ships the BWJ Friday release prep and its Monday companion, both read-only.
+
+**Score:** 3
+
+#### Pull Request
+
+Scheduled tasks: versioned Desktop task prompts and a command that places them
+
+Plugins: dkj-policy
+
+[PR #4194](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4194)
+
+---
 
 ### DEPLOY: fix/4157-sweep-before-backup · 20261116-154821Z
 
