@@ -81,11 +81,17 @@ wins: a change worth keeping is made in `tasks/`, through a branch.
 | [`bwj-release-prep`](tasks/bwj-release-prep.md) | Friday 14:07 | each BWJ store repo | runs `prepare-release` read-only on the trunk (in a throwaway worktree when the checkout is busy) and reports the exit code, the flagged items and the runbook path |
 | [`bwj-release-prep-monday`](tasks/bwj-release-prep-monday.md) | Monday 08:07 | each BWJ store repo | re-runs it with `-SkipDrift` and names what moved since Friday's runbook |
 | [`consumer-health-sweep`](tasks/consumer-health-sweep.md) | Monday 07:37 | the dkj-marketplace checkout | reads every registered consumer's plugin lag, CI pins, release cadence, unlabelled issues and red scheduled runs, and reports them; files only what this repo must repair |
+| [`machine-upkeep`](tasks/machine-upkeep.md) | Weekdays 07:17 | the dkj-marketplace checkout | runs `update-plugins -AllCheckouts` and `sync-trunk -AllCheckouts`, then `tidy-machine -DryRun`, and reports what each changed, skipped and found |
 
 **No task cuts, tags or pushes, and none posts anywhere but this repo's own tracker**, where
 `consumer-health-sweep` files or comments on a finding whose repair lives here. A release is cut only on a
 person's explicit request, so a schedule prepares the release and never performs it. A task file states its own limits in its prompt,
 because the prompt is all the run reads.
+
+**`machine-upkeep` is the one task that changes state, and only on this machine** (decision on #4201,
+November 16, 2026): it updates plugins and fast-forwards trunks, through two commands that each skip a
+checkout that is not clean on its trunk, and it runs `tidy-machine` with `-DryRun`, so nothing is
+deleted. Its permission mode may let those commands write locally, and still never push or publish.
 
 ## Adding a task
 
