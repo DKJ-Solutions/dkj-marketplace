@@ -241,6 +241,13 @@ try {
     [System.IO.File]::WriteAllText((Join-Path $eolRepo 'new.txt'), "n`n")
     & git -C $eolRepo checkout -- crlf.txt 2>$null
     $ErrorActionPreference = $prevEap
+    # NOT LEFT TO TIMING. `git checkout --` writes the file and records its stat in the index, and a file
+    # whose stat matches its index entry is trusted as unchanged unless git judges the entry racy -- which
+    # depends on timestamps. Measured on PR #4174's CI (shard 5): Other came back as exactly 'new.txt,
+    # real.txt' and EolOnly empty, so status had not listed crlf.txt at all; locally it was listed in all
+    # but one of six runs. A stat that differs from the index makes git compare the content every time,
+    # which is the state a consumer's checkout is in, so the fixture sets one.
+    (Get-Item -LiteralPath (Join-Path $eolRepo 'crlf.txt')).LastWriteTimeUtc = [DateTime]::UtcNow.AddHours(1)
 
     $split = Get-GitEolOnlySplit -RepoRoot $eolRepo
     Assert-True $split.Known 'a readable repo reports Known true'
