@@ -59,7 +59,7 @@ only findings whose repair lives in this repo, and reports a consumer's own stat
 Inside this repo nothing changes but the `scheduled-tasks` skill's prompt folder and its task table; no
 script, gate or registry moves.
 
-**Score:** N/A
+**Score:** 1
 
 #### What makes this deploy extra special
 
