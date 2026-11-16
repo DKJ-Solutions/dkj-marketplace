@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**15 / 20 minor entries** <!-- pending-tally -->
+**16 / 21 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4146-github-merge-subject · 20261116-085837Z
+
+Inside this repo, `Find-BranchMergeCommit` in `live-record-lib.ps1` also recognises GitHub's default merge subject,
+`Merge pull request #<n> from <owner>/<branch>`, beside ship-pr's `merge: <branch> (#<n>)`
+([#4146](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4146)). `cut-release.ps1`'s warning for an
+unmatched entry names both.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A Shopify repo cutting a release with `-LivePushRecord` gets entries merged through the GitHub UI checked against
+the live-push record automatically. They no longer count as unknown, each to be checked by hand. Measured in a
+consumer's cut, that was 58 of 82 entries. Only squash merges still need the check by hand.
+
+**Score:** 3
+
+#### Pull Request
+
+The cut finds an entry's merge under GitHub's default merge subject too
+
+Plugins: bwj-development, dkj-policy, dkj-subagents-shopify
+
+[PR #4159](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4159)
+
+---
 
 ### DEPLOY: fix/4145-fold-demotes-body-headings · 20261116-083903Z
 
