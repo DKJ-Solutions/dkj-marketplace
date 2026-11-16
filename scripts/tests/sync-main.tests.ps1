@@ -639,6 +639,22 @@ try {
     # single reconciliation commit fails -- in one of two ways chosen by nothing but its subject.
     Assert-True ($r.Out -match 'NOT DURABLE, IN EITHER SPELLING') 'conflict: and it warns that one reconciliation commit settles nothing'
     Assert-True ($r.Out -match '-ReconcileBase') 'conflict: and names the switch that writes the durable shape'
+    Assert-True ($r.Out -match '-> foreign lines: 1 of 1') 'conflict/hint: a path with a line no revision held says so under its diff (inbound #4150)'
+
+    # THE TWO SHAPES THE HINT EXISTS FOR, through the real run (inbound #4150): a Liquid file live holds
+    # an older mix of our own lines of, and an editor-saved template whose difference is settings.
+    $hinted = New-Consumer -Label 'hint' -ThemeId '123456' -StoreDomain 'a-store.myshopify.com'
+    Add-FixtureCommit -Dir $hinted -Message 'sync: the floor' -Write @{ 'sections/old.liquid' = "a`nb`n"; 'templates/index.json' = '{"s":{"code":"A"}}' }
+    Add-FixtureCommit -Dir $hinted -Message 'fix: two trunk fixes' -Write @{ 'sections/old.liquid' = "x`na`nb`nc`n"; 'templates/index.json' = '{"s":{"code":"B"}}' }
+    $hintMirror = New-Mirror -Label 'hint' -Files @{
+        'sections/theme.liquid' = 'v1'
+        'sections/old.liquid'   = "a`r`nc`r`n"
+        'templates/index.json'  = "/* written by the editor */`n{`"s`":{`"code`":`"C`",`"banner`":true}}"
+    }
+    $r = Invoke-Sync -Dir $hinted -Mirror $hintMirror -Extra @('-DryRun')
+    Assert-True ($r.Code -eq 1 -and $r.Out -match 'REFUSING TO SYNC') 'conflict/hint: both paths still refuse -- a hint decides nothing'
+    Assert-True ($r.Out -match '-> trunk ahead: all 2 line\(s\)') 'conflict/hint: live holding only lines our history held reads as trunk ahead'
+    Assert-True ($r.Out -match '-> settings: 1 live-only, 0 trunk-only, 1 changed -- live-only: s\.banner; changed: s\.code') 'conflict/hint: a template is summarised at key level, by name'
 
     # --- -ReconcileBase: the durable shape, written --------------------------------------------------
     # THE ASSERT THAT MATTERS IS THE LAST ONE: after this branch, the same run that refused reports the

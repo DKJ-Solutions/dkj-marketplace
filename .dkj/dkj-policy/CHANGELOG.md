@@ -2,7 +2,114 @@
 
 ## [Unreleased]
 
-**17 / 22 minor entries** <!-- pending-tally -->
+**21 / 26 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4155-notes-share-link · 20261116-100413Z
+
+Inside this repo, `publish-page.ps1` gains `-CheckAuth` and `prepare-release` calls it
+([#4155](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4155)). Both suites cover the new lines.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A BWJ store's release runbook now names the release-notes publish it actually runs, `publish-page -Kind notes`.
+It also prints the page's shareable link and says the close-out leads with it, so the owner gets the note they
+read instead of the GitHub Release. `prepare-release` checks the Cloudflare login days ahead, where it used to
+fail only on the release day.
+
+**Score:** 3
+
+#### Pull Request
+
+The release runbook names the shareable release-notes link and checks the page login ahead
+
+Plugins: bwj-development
+
+[PR #4170](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4170)
+
+---
+
+### DEPLOY: fix/4147-notify-live-no-access · 20261116-095135Z
+
+`notify-live` now tells a task the Asana token cannot see apart from a failure a rerun can fix
+([#4147](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4147)). With `ASANA_PAT` set, the dry
+run reads every owed task once, so an inaccessible one shows as `NO ACCESS` before `-Post`. A failed
+call is reported as `NO ACCESS`, `TOKEN`, `REJECTED` or `FAILED`, and only `FAILED` (network, rate
+limit, 5xx) ends in "run it again".
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+On release day the person running `notify-live` learns from the dry run which requesters the token
+cannot reach and must be told by hand, instead of retrying a post that fails the same way every time.
+
+**Score:** 2
+
+#### Pull Request
+
+notify-live: name an inaccessible Asana task as no access, and check access in the dry run
+
+Plugins: bwj-development
+
+[PR #4164](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4164)
+
+---
+
+### DEPLOY: feat/4150-sync-conflict-classes · 20261116-093148Z
+
+Inside this repo, `sync-main.ps1` prints a one-line reading under each conflicted path's diff command
+([#4150](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4150)). New pure functions in `sync-rules.ps1`
+compute it, and both suites cover them.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A Shopify repo whose sync refuses on conflicts gets a first reading of each conflicted path, so nobody has to diff
+them all by hand. A Liquid or other text path reads `trunk ahead` when every line live holds is one the trunk's
+history has held. A `templates/` or `sections/` JSON file gets its live-only, trunk-only and changed settings,
+by key. Measured in a consumer, those were the two readings that settled twelve conflicts, and they took most of a
+session to work out by hand. The conflict still refuses: the person decides.
+
+**Score:** 3
+
+#### Pull Request
+
+sync-main gives each conflicted path a first reading
+
+Plugins: dkj-subagents-shopify
+
+[PR #4167](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4167)
+
+---
+
+### DEPLOY: fix/4151-prepare-release-names-accept-switch · 20261116-092108Z
+
+`prepare-release`'s reconciliation step (bwj-development) now says what to do with an owed path where the trunk is
+meant to win ([#4151](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4151)): pass
+`-AcceptOwedReconciliation` to `live-preflight` on the day, once those are the only paths left. A path where
+live's content should win still takes an ordinary commit.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A BWJ store repo preparing a release after `sync-main -ReconcileBase` learns on the Friday how to let the trunk win
+on a path. Until now that only surfaced as `live-preflight`'s refusal on the day.
+
+**Score:** 2
+
+#### Pull Request
+
+prepare-release names -AcceptOwedReconciliation for paths where the trunk is meant to win
+
+Plugins: bwj-development
+
+[PR #4166](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4166)
+
+---
 
 ### DEPLOY: fix/4143-eol-only-dirty · 20261116-090900Z
 

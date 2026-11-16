@@ -760,6 +760,197 @@ function Get-SyncFileVerdict {
     return [pscustomobject]@{ Action = 'take-live'; Reason = 'content this repo has never held for this path: a third party wrote it on live' }
 }
 
+# --- THE CONFLICT CLASS (inbound #4150) ---------------------------------------------------------------
+# A conflict is a refusal, and it stays one: nothing below decides a path. What it adds is the first
+# reading a person would otherwise do by hand. Measured in a consumer: twelve conflicted paths, each
+# printed as a bare 'git diff --no-index', and deciding them took most of the session. Two throwaway
+# scripts settled all twelve -- a CR-insensitive line compare and a flattened JSON key compare -- and
+# these two functions are those scripts, so the next dry run prints the answer they gave.
+#
+# BOTH ARE HINTS, AND THEY ARE WORDED AS HINTS. 'trunk ahead' means every line live holds is a line this
+# path has held in the trunk's history; it does not prove live holds no third-party ORDERING change, which
+# is why the conflict still refuses and the person still decides.
+
+function Get-SyncTextLines {
+    <#
+    .SYNOPSIS
+        A text as its non-blank lines, CR removed and trailing whitespace trimmed -- the unit both conflict
+        hints compare in.
+    #>
+    param([AllowNull()][AllowEmptyString()][string]$Text)
+
+    if ($null -eq $Text) { return ,@() }
+    $lines = @(($Text -replace "`r", '') -split "`n" | ForEach-Object { $_.TrimEnd() } | Where-Object { $_ -ne '' })
+    return ,$lines
+}
+
+function Get-SyncTrunkAheadHint {
+    <#
+    .SYNOPSIS
+        Does every line live holds for a conflicted path appear somewhere in that path's trunk history?
+
+    .DESCRIPTION
+        The 'trunk ahead' shape inbound #4150 measured on three Liquid files: live held an OLDER copy of
+        the repo's own content, not byte-identical to any one revision (so Test-LiveContentIsOurs read it
+        as foreign), but every one of its lines appears in earlier trunk revisions. Live only lacked later
+        merged fixes. Returns Lines (live's line count), Unknown (how many of them no trunk revision ever
+        held) and TrunkOnly (lines the trunk's CURRENT copy has that live lacks).
+
+        -HistoryTexts is every revision of the path the trunk has held, the current one included; the
+        caller reads them, so this stays pure. Lines are compared as a SET: a repeated line counts once,
+        which is the right weight for 'has this line ever been ours'.
+    #>
+    param(
+        [AllowNull()][AllowEmptyString()][string]$LiveText,
+        [AllowNull()][AllowEmptyString()][string]$TrunkText,
+        [AllowEmptyCollection()][string[]]$HistoryTexts = @()
+    )
+
+    $known = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+    foreach ($t in (@($HistoryTexts) + @($TrunkText))) {
+        foreach ($l in (Get-SyncTextLines -Text $t)) { [void]$known.Add($l) }
+    }
+    $liveLines = Get-SyncTextLines -Text $LiveText
+    $liveSet = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+    $unknown = 0
+    foreach ($l in $liveLines) {
+        [void]$liveSet.Add($l)
+        if (-not $known.Contains($l)) { $unknown++ }
+    }
+    $trunkOnly = 0
+    foreach ($l in (Get-SyncTextLines -Text $TrunkText)) { if (-not $liveSet.Contains($l)) { $trunkOnly++ } }
+
+    return [pscustomobject]@{
+        Lines      = $liveLines.Count
+        Unknown    = $unknown
+        TrunkOnly  = $trunkOnly
+        TrunkAhead = ($liveLines.Count -gt 0 -and $unknown -eq 0)
+    }
+}
+
+function ConvertTo-SyncFlatJson {
+    <#
+    .SYNOPSIS
+        A Shopify JSON template as a flat map of 'a.b.0.c' -> scalar value, or $null when it does not parse.
+
+    .DESCRIPTION
+        Shopify writes a '/* ... */' banner above every template and section group the theme editor saves,
+        which ConvertFrom-Json refuses, so a LEADING block comment is removed first. Nothing else is
+        stripped: a comment anywhere else is not something the editor writes, and a parse failure is
+        reported rather than guessed around. Values are rendered with ConvertTo-Json -Compress so a
+        string and a number holding the same digits stay different.
+    #>
+    param([AllowNull()][AllowEmptyString()][string]$Text)
+
+    if ([string]::IsNullOrWhiteSpace($Text)) { return $null }
+    $body = [regex]::Replace($Text, '^\s*/\*[\s\S]*?\*/', '')
+    try { $obj = $body | ConvertFrom-Json -ErrorAction Stop } catch { return $null }
+
+    $map = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+    $walk = {
+        param($node, [string]$prefix)
+        if ($null -eq $node) { $map[$prefix] = 'null'; return }
+        if ($node -is [System.Management.Automation.PSCustomObject]) {
+            $props = @($node.PSObject.Properties)
+            if ($props.Count -eq 0) { $map[$prefix] = '{}'; return }
+            foreach ($p in $props) {
+                $key = if ($prefix) { "$prefix.$($p.Name)" } else { $p.Name }
+                & $walk $p.Value $key
+            }
+            return
+        }
+        if ($node -is [System.Array]) {
+            if ($node.Count -eq 0) { $map[$prefix] = '[]'; return }
+            for ($i = 0; $i -lt $node.Count; $i++) { & $walk $node[$i] "$prefix.$i" }
+            return
+        }
+        $map[$prefix] = (ConvertTo-Json -InputObject $node -Compress)
+    }
+    & $walk $obj ''
+    return ,$map
+}
+
+function Get-SyncJsonKeyDiff {
+    <#
+    .SYNOPSIS
+        Settings the trunk alone has, live alone has, and both have with different values -- the key-level
+        summary inbound #4150 asked for on templates/*.json and sections/*.json.
+
+    .DESCRIPTION
+        Measured on nine templates: line diffs of an editor-saved JSON file are unreadable (the editor
+        reorders and reindents), while a flattened key compare showed at once that live held new editor
+        content and the trunk only old campaign values. Returns $null when either side does not parse;
+        otherwise the three counts and up to -Sample key names of each, sorted, so a reader sees WHICH
+        settings without opening the file.
+    #>
+    param(
+        [AllowNull()][AllowEmptyString()][string]$TrunkText,
+        [AllowNull()][AllowEmptyString()][string]$LiveText,
+        [int]$Sample = 3
+    )
+
+    $t = ConvertTo-SyncFlatJson -Text $TrunkText
+    $l = ConvertTo-SyncFlatJson -Text $LiveText
+    if ($null -eq $t -or $null -eq $l) { return $null }
+
+    $trunkOnly = @($t.Keys | Where-Object { -not $l.ContainsKey($_) } | Sort-Object)
+    $liveOnly  = @($l.Keys | Where-Object { -not $t.ContainsKey($_) } | Sort-Object)
+    $changed   = @($t.Keys | Where-Object { $l.ContainsKey($_) -and $l[$_] -cne $t[$_] } | Sort-Object)
+
+    return [pscustomobject]@{
+        TrunkOnly       = $trunkOnly.Count
+        LiveOnly        = $liveOnly.Count
+        Changed         = $changed.Count
+        TrunkOnlySample = @($trunkOnly | Select-Object -First $Sample)
+        LiveOnlySample  = @($liveOnly | Select-Object -First $Sample)
+        ChangedSample   = @($changed | Select-Object -First $Sample)
+    }
+}
+
+function Test-SyncJsonTemplatePath {
+    <# Is this a theme-editor JSON file the key-level hint applies to: templates/**/*.json or sections/*.json? #>
+    param([Parameter(Mandatory = $true)][string]$Path)
+    $p = $Path -replace '\\', '/'
+    return ($p -match '^(templates|sections)/.+\.json$')
+}
+
+function Format-SyncConflictHint {
+    <#
+    .SYNOPSIS
+        The one line a dry run prints under a conflicted path's diff command, from the two hints above.
+
+    .DESCRIPTION
+        JSON first where the path is a template or section group and both sides parse, because a line hint
+        on an editor-saved JSON file measures indentation rather than settings. Otherwise the line hint.
+        The wording names a LEANING, never a verdict: the conflict still refuses.
+    #>
+    param(
+        [AllowNull()]$TrunkAhead,
+        [AllowNull()]$JsonDiff
+    )
+
+    if ($null -ne $JsonDiff) {
+        $parts = @("$($JsonDiff.LiveOnly) live-only", "$($JsonDiff.TrunkOnly) trunk-only", "$($JsonDiff.Changed) changed")
+        $line = "settings: " + ($parts -join ', ')
+        $samples = @()
+        if ($JsonDiff.LiveOnly -gt 0)  { $samples += ('live-only: ' + ($JsonDiff.LiveOnlySample -join ', ')) }
+        if ($JsonDiff.TrunkOnly -gt 0) { $samples += ('trunk-only: ' + ($JsonDiff.TrunkOnlySample -join ', ')) }
+        if ($JsonDiff.Changed -gt 0)   { $samples += ('changed: ' + ($JsonDiff.ChangedSample -join ', ')) }
+        if ($samples.Count -gt 0) { $line += ' -- ' + ($samples -join '; ') }
+        if ($JsonDiff.LiveOnly + $JsonDiff.TrunkOnly + $JsonDiff.Changed -eq 0) {
+            $line = 'settings: identical at key level -- the difference is formatting or order only'
+        }
+        return $line
+    }
+    if ($null -ne $TrunkAhead) {
+        if ($TrunkAhead.TrunkAhead) {
+            return "trunk ahead: all $($TrunkAhead.Lines) line(s) live holds appear in this path's trunk history; live lacks $($TrunkAhead.TrunkOnly) line(s) the trunk has now -- leans trunk"
+        }
+        return "foreign lines: $($TrunkAhead.Unknown) of $($TrunkAhead.Lines) line(s) live holds were never in this path's trunk history -- read those"
+    }
+    return 'no hint: a side could not be read as text'
+}
+
 # --- THE PR BODY -----------------------------------------------------------------------------------
 # The one thing the sync produces that a HUMAN reads, and the only record that drift was ever inspected
 # in a repo whose policy is that the sync PR does not wait for a review (inbound #1000). It lives here
