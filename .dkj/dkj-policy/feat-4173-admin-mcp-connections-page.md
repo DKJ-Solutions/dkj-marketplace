@@ -39,19 +39,40 @@
 
 ### PLAN
 
+#4173: an MCP connections page on `/dev/claude/mcp`, listed on the Claude page. Measured first: `claude mcp list`
+takes about 15 s for 36 servers (November 16, 2026), so the page reads a cache and never the health check itself.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `apps/admin/lib/mcp-page-lib.ps1`: parse `claude mcp list` (source, host only, state), the cache file per checkout under `%LOCALAPPDATA%\dkj-admin`, and the page
+- [x] `serve-general-pages.ps1`: the `/dev/claude/mcp` route, and `/refresh?page=mcp` as the one cache writer
+- [x] `general-pages-lib.ps1`: the page in `Get-GeneralPages` under Claude, with an `mcp` icon
+- [x] `apps/admin/README.md`: the page's row
 
 ### TEST
 
+- [x] `scripts/tests/mcp-page.tests.ps1` (new, in the pages group): parser, host-only guarantee, cache round trip, page
+- [x] `dev-pages.tests.ps1`: the general-pages list and the Claude page's rows take the new page
+- [x] Run against a server started from this tree: empty state, refresh in 9.8 s, 36 servers (10 connected, 23 needing authentication, 3 switched off), no URL in the page or the cache file
+
 ### DEPLOY: feat/4173-admin-mcp-connections-page
 
-**Score:**
+Admin has an **MCP connections** page on `/dev/claude/mcp`, listed on the Claude page
+([#4173](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4173)). One row per MCP server a session in
+the checkout can reach: where it comes from (claude.ai connector, plugin, the project's `.mcp.json`, user
+config), its host, whether it is connected, needs authentication or failed, and whether this project has
+switched it off. The page reads a cache that its own **Read the connections** button fills by running
+`claude mcp list` (about 15 s); it keeps only each server's host, never a full URL.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Until now the only answer to "which connectors can Claude use here, and which still need a login" was
+`/mcp` inside a session or a 15-second `claude mcp list` in a terminal. Admin now shows it on one page,
+next to the rules, skills and specialists.
+
+**Score:** 2
 
 #### Pull Request
 
