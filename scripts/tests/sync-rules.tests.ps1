@@ -1096,6 +1096,42 @@ sync-main.tests.ps1 goes from 20 to 32 asserts. One earns its place twice: the
     Assert-True $blanks[0].Superseded 'report/blanks: so it cannot deny a supersession that holds'
     Assert-Equal 0 (@(Get-SyncPredecessorReport -Predecessors @() -TakePaths @('x'))).Count 'report: no standing branches is an empty report'
     Assert-Equal 0 (@(Get-SyncPredecessorReport -Predecessors @($null) -TakePaths @('x'))).Count 'report: a $null row is dropped rather than reported as a branch'
+
+    # --- THE CONFLICT HINT (inbound #4150) -----------------------------------------------------------
+    # Both shapes the consumer measured: a Liquid file where live is an older copy of our own lines, and
+    # an editor-saved JSON template whose line diff is noise while its key diff is three settings.
+    $v1 = "{% if a %}`n  one`n{% endif %}`n"
+    $v2 = "{% if a %}`n  one`n  fix-one`n{% endif %}`n"
+    $v3 = "{% if a %}`n  one`n  fix-one`n  fix-two`n{% endif %}`n"
+    $liveOld = "{% if a %}`r`n  one`r`n{% endif %}`r`n"
+    $ahead = Get-SyncTrunkAheadHint -LiveText $liveOld -TrunkText $v3 -HistoryTexts @($v1, $v2, $v3)
+    Assert-True $ahead.TrunkAhead 'hint: live holding an older copy of our lines (CRLF) reads as trunk ahead'
+    Assert-Equal 2 $ahead.TrunkOnly 'hint: trunk ahead counts the trunk lines live lacks'
+    $foreign = Get-SyncTrunkAheadHint -LiveText "{% if a %}`n  injected`n{% endif %}`n" -TrunkText $v3 -HistoryTexts @($v1)
+    Assert-True (-not $foreign.TrunkAhead) 'hint: a line no revision ever held is not trunk ahead'
+    Assert-Equal 1 $foreign.Unknown 'hint: it counts exactly the foreign line'
+    Assert-True (-not (Get-SyncTrunkAheadHint -LiveText '' -TrunkText $v3).TrunkAhead) 'hint: an empty live file is never trunk ahead (nothing proves it)'
+    Assert-True ((Format-SyncConflictHint -TrunkAhead $ahead) -like 'trunk ahead:*leans trunk') 'hint: trunk ahead is worded as a leaning'
+    Assert-True ((Format-SyncConflictHint -TrunkAhead $foreign) -like 'foreign lines: 1 of 3*') 'hint: foreign lines are counted in the line'
+
+    $trunkJson = "/*`n * banner the editor writes`n */`n{`"sections`":{`"hero`":{`"settings`":{`"code`":`"OLD10`",`"size`":2}},`"gone`":{`"type`":`"x`"}},`"order`":[`"hero`",`"gone`"]}"
+    $liveJson  = "/* banner */`n{`n  `"sections`": {`n    `"hero`": { `"settings`": { `"code`": `"WINTER25`", `"size`": 2, `"banner`": true } }`n  },`n  `"order`": [`"hero`"]`n}"
+    $jd = Get-SyncJsonKeyDiff -TrunkText $trunkJson -LiveText $liveJson
+    Assert-True ($null -ne $jd) 'json: a leading /* */ banner is stripped and both sides parse'
+    Assert-Equal 1 $jd.LiveOnly 'json: the one setting only live has'
+    Assert-Equal 'sections.hero.settings.banner' ($jd.LiveOnlySample -join ',') 'json: and it is named by its flattened key'
+    Assert-Equal 2 $jd.TrunkOnly 'json: the removed section and the dropped order entry are trunk-only'
+    Assert-Equal 'sections.hero.settings.code' ($jd.ChangedSample -join ',') 'json: a changed value is changed, not trunk-only plus live-only'
+    $same = Get-SyncJsonKeyDiff -TrunkText '{"a":{"b":1}}' -LiveText "{`n  `"a`": { `"b`": 1 }`n}"
+    Assert-True ((Format-SyncConflictHint -JsonDiff $same) -like '*identical at key level*') 'json: reformatting alone is said to be formatting'
+    $typed = Get-SyncJsonKeyDiff -TrunkText '{"a":"1"}' -LiveText '{"a":1}'
+    Assert-Equal 1 $typed.Changed 'json: a string and a number with the same digits differ'
+    Assert-True ($null -eq (Get-SyncJsonKeyDiff -TrunkText '{"a":1}' -LiveText '{ not json')) 'json: an unparseable side yields no key hint rather than a guess'
+    Assert-True (Test-SyncJsonTemplatePath -Path 'templates/product.json') 'json: templates/*.json takes the key hint'
+    Assert-True (Test-SyncJsonTemplatePath -Path 'templates/customers/account.json') 'json: and nested templates too'
+    Assert-True (Test-SyncJsonTemplatePath -Path 'sections/header-group.json') 'json: and section groups'
+    Assert-True (-not (Test-SyncJsonTemplatePath -Path 'locales/en.default.json')) 'json: a locale file does not (its keys are copy, not editor settings)'
+    Assert-True (-not (Test-SyncJsonTemplatePath -Path 'sections/hero.liquid')) 'json: nor a Liquid section'
 }
 finally {
     foreach ($d in $script:trees) {
