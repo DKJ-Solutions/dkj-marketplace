@@ -39,19 +39,35 @@
 
 ### PLAN
 
+The report left its cause open. Measured on the consumer's tracker: its PR template carries, inside an HTML comment,
+the sentence "#383's handover asked the reviewer to tick a collection metafield ...". Every PR body inherits it, so
+`Get-PullIssueCandidates` read #383 as named by every PR in the range, and #383 closed as completed, so it counted as
+solved. The issue's suggested `git tag --contains` filter is left out: it would hide this instance while the
+template kept naming #383 to notify-live, which reads the same rule. Its other suggestion, tracing each drafted item
+to its PR, is moot once the cause is gone and can be filed on its own if a stray item recurs.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `pull-issue-lib.ps1` (all three byte-identical copies): an HTML comment, an unclosed one included, is removed before the body is read for `#<n>`
 
 ### TEST
 
+- [x] `bwj-development.tests.ps1`: the measured template shape names only the prose outside its comment, an unclosed comment hides the rest, text between two comments is still read (1027 asserts, green)
+
 ### DEPLOY: fix/4163-comment-named-issues
 
-**Score:**
+Inside this repo, `Get-PullIssueCandidates` in `pull-issue-lib.ps1` skips HTML comments when it reads a PR body for
+named issues ([#4163](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4163)).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A store whose PR template mentions an issue number inside its guidance comment no longer gets that issue in every
+release. Before, the cut's task-form audience note drafted it as solved, and notify-live could tell its task again
+that it was live. Measured in a consumer's v1.8.0 cut: a task that had shipped three releases earlier.
+
+**Score:** 3
 
 #### Pull Request
 
