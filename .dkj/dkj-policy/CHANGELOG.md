@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**31 / 41 minor entries** <!-- pending-tally -->
+**32 / 42 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4163-comment-named-issues · 20261116-142518Z
+
+Inside this repo, `Get-PullIssueCandidates` in `pull-issue-lib.ps1` skips HTML comments when it reads a PR body for
+named issues ([#4163](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4163)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store whose PR template mentions an issue number inside its guidance comment no longer gets that issue in every
+release. Before, the cut's task-form audience note drafted it as solved, and notify-live could tell its task again
+that it was live. Measured in a consumer's v1.8.0 cut: a task that had shipped three releases earlier.
+
+**Score:** 3
+
+#### Pull Request
+
+A PR template's HTML comment no longer names an issue to the task form and notify-live
+
+Plugins: bwj-development, dkj-policy
+
+[PR #4177](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4177)
+
+---
 
 ### DEPLOY: feat/4173-admin-mcp-connections-page · 20261116-140843Z
 
