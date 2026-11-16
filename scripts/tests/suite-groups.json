@@ -244,6 +244,7 @@
                                       "dev-pages.tests.ps1",
                                       "dev-preview-sessionstart.tests.ps1",
                                       "goals.tests.ps1",
+                                      "mcp-page.tests.ps1",
                                       "handover-page.tests.ps1",
                                       "admin-airsquats.tests.ps1",
                                       "logbook.tests.ps1",
