@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**17 / 22 minor entries** <!-- pending-tally -->
+**18 / 23 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4151-prepare-release-names-accept-switch · 20261116-092108Z
+
+`prepare-release`'s reconciliation step (bwj-development) now says what to do with an owed path where the trunk is
+meant to win ([#4151](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4151)): pass
+`-AcceptOwedReconciliation` to `live-preflight` on the day, once those are the only paths left. A path where
+live's content should win still takes an ordinary commit.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A BWJ store repo preparing a release after `sync-main -ReconcileBase` learns on the Friday how to let the trunk win
+on a path. Until now that only surfaced as `live-preflight`'s refusal on the day.
+
+**Score:** 2
+
+#### Pull Request
+
+prepare-release names -AcceptOwedReconciliation for paths where the trunk is meant to win
+
+Plugins: bwj-development
+
+[PR #4166](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4166)
+
+---
 
 ### DEPLOY: fix/4143-eol-only-dirty · 20261116-090900Z
 
