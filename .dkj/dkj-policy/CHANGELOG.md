@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**9 / 14 minor entries** <!-- pending-tally -->
+**10 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4125-more-page · 20261116-000103Z
+
+Inside this repo, the product layer's renderer lifts the site menu's sections into one function,
+`Format-SiteMenuSectionsHtml`, which both the full-screen dialog and a new More page body
+(`Format-ProductMoreBodyHtml`) render, and this repo's product serves `/more` with the bottom bar's More linking it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions product's bottom bar can now make More a page like its other slots: pass `-MoreHref` and More becomes
+a link to that page, with a URL that can be refreshed, linked and returned to. The phone's back gesture leaves it as
+it leaves any page, and the bar marks More as where you are. The page holds the same sections as the menu, and the
+full-screen dialog stays for products without a bottom bar.
+
+**Score:** 3
+
+#### Pull Request
+
+Bottom bar: More opens a page with its own URL
+
+Plugins: dkj-solutions
+
+[PR #4138](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4138)
+
+---
 
 ### DEPLOY: feat/4128-phone-header-height · 20261115-221833Z
 
