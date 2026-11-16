@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**10 / 15 minor entries** <!-- pending-tally -->
+**11 / 16 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4127-borders-only-on-buttons · 20261116-011737Z
+
+The brand book now draws a border only where something can be pressed
+([#4127](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4127)): buttons, fields, the controls a person
+types in, and the focus ring keep theirs; cards, notices, alerts, panels, chips, tooltips, dialogs, bars and code
+blocks stand on their own fill, rows inside a surface are set apart by spacing (a table by alternating fills), and a
+state that was a coloured edge is a tint. The README states the rule.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every DKJ-Solutions app that takes the update loses almost every line on its pages: cards, notices and the header
+and bottom bars stand on their fill alone, tables stripe instead of ruling, and lists of rows become rows of fill a
+hairline of page apart. No markup changes; an app whose own layer draws borders of its own keeps them until it
+follows the rule.
+
+**Score:** 3
+
+#### Pull Request
+
+Borders only on buttons; separate with fills
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4140](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4140)
+
+---
 
 ### DEPLOY: feat/4125-more-page · 20261116-000103Z
 
