@@ -170,7 +170,9 @@ function Get-LiveMessageVerdict {
     #>
     param([Parameter(Mandatory = $true)]$Issue)
 
-    $no = { param($why) [pscustomobject]@{ Owed = $false; Gid = $null; Language = ''; Reason = $why } }
+    # NoBlock (#4165): closed as completed, one task, not told yet -- and no go-live block, so nothing tells
+    # that task it is live. The cut's audience note can still list it as solved; the driver names the gap.
+    $no = { param($why, $gid = $null, [bool]$noBlock = $false) [pscustomobject]@{ Owed = $false; Gid = $gid; Language = ''; Reason = $why; NoBlock = $noBlock } }
 
     if ([string]$Issue.State -ne 'CLOSED' -or ([string]$Issue.StateReason -and [string]$Issue.StateReason -ne 'COMPLETED')) {
         return (& $no 'not closed as completed')
@@ -189,7 +191,7 @@ function Get-LiveMessageVerdict {
     }
 
     $verdict = Get-AsanaPasteBlockVerdict -Comments $comments -LastReopenedAt $Issue.LastReopenedAt
-    if ($verdict -eq 'none') { return (& $no 'carries no go-live block') }
+    if ($verdict -eq 'none') { return (& $no 'carries no go-live block' $ref.Gid $true) }
     if ($verdict -ne 'fresh' -and $verdict -ne 'not-reopened') { return (& $no "its newest go-live block is not this round's ($verdict)") }
 
     $chosen = $null
