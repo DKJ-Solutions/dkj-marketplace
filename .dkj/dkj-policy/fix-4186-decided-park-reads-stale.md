@@ -39,21 +39,41 @@
 
 ### PLAN
 
+Issue #4186 offers a recording route, a safety net, or both. This branch builds the safety net, because it covers
+the route the issue measured: an answer posted from a session where the plugin is not loaded at all, which no new
+tool reaches. It reuses the `stale-park` reading `-Candidates` already does for `awaiting-pull`. A
+`Decision (` comment after the last parking comment, from somebody with a hand on the repo, reads the park as
+cleared, and the run prints the two unpark lines. The recording route (`record-decision`) stays open on the issue.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-ParkDecisionAnswer` in `claim-issue-lib.ps1`: the decision comment after the last park, with the parking comment's trust rule
+- [x] `claim-issue.ps1 -Candidates` reads `awaiting-decision-dev` and `awaiting-decision-client` as `stale-park` when one exists, and says the wait was decided
+- [x] The issues-sweep skill page, the script help and CONTRIBUTING-portable name the reading
+- [x] dkj-policy mirrors kept byte-identical
 
 ### TEST
 
+- [x] `claim-issue.tests.ps1`: after the park counts, before a re-park does not, parked at filing counts, an outside author and prose do not, and `-Candidates` matches both labels
+- [x] A live `-Candidates` run on this tracker completes
+
 ### DEPLOY: fix/4186-decided-park-reads-stale
 
-**Score:**
+`claim-issue -Candidates` reads an `awaiting-decision-dev` or `awaiting-decision-client` issue as `stale-park` once
+a comment opening `Decision (` follows its last parking comment
+([#4186](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4186)). The comment must come from somebody with a
+hand on the repo. The run prints the lines that lift the label, so a decision posted without removing it no
+longer leaves the issue skipped by every sweep.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In every repo running the sweeps, a client's or owner's decision posted as a comment, from any session, now
+surfaces at the next sweep as a park to lift. Until now the issue sat skipped until somebody noticed the label.
+
+**Score:** 3
 
 #### Pull Request
 
 A decision park with a posted decision reads as stale-park
-
