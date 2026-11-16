@@ -83,7 +83,7 @@
     THE APP DEPLOY (#3174), in either mode. Where Get-ShopifyAppRoot names the folder of a Shopify app the
     store repo also ships (smartwatchbanden: 'extensions'), step 3 lists the range's files under it as
     'app' and reports them as their own step, and the end of a green run prints `shopify app deploy
-    --path <root>` (Format-ShopifyAppDeployCommand) for a person to run. No theme push or promotion carries
+    --path <root> --allow-updates` (Format-ShopifyAppDeployCommand) for a person to run. No theme push or promotion carries
     those files, and a release whose only change is the app is a note rather than "nothing to push".
     Unanswered, nothing about the run changes.
 
