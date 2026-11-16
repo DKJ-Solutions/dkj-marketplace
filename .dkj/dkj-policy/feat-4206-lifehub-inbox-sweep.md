@@ -39,19 +39,35 @@
 
 ### PLAN
 
+Issue #4206: move the `inbox-sweep` skill from a life-hub consumer into `dkj-subagents-lifehub`, the
+same way `agenda-sync` moved (#4204), with every personal value read from a Notion settings page.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-subagents/dkj-subagents-lifehub/skills/inbox-sweep/SKILL.md`, generic: owner,
+  private-Gmail check, hub and conventions pages, the Dossiers, Agenda and task data sources, the label
+  names, the AI destination and the language come from **Instellingen inbox-sweep** in Notion.
+- [x] Astrid's manual names the skill beside `agenda-sync`.
 
 ### TEST
 
+- [x] The skill carries no personal value: no Notion ID, address, person's name or label name of the
+  consumer.
+
 ### DEPLOY: feat/4206-lifehub-inbox-sweep
 
-**Score:**
+A life hub gets `/dkj-subagents-lifehub:inbox-sweep`: the Gmail inbox processed into the Notion hub by
+the specialist each thread belongs to, and a thread archived only once its fact is verifiably there,
+with the personal settings kept in the owner's own Notion
+([#4206](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4206)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 

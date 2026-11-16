@@ -19,7 +19,10 @@ appointments**, **official documents** (municipal matters, contracts, insurance,
   Calendar, unattended, with its personal settings in the owner's Notion rather than here (#4204).
 - Organizing official documents and making them retrievable: municipal matters, contracts, insurance,
   subscriptions.
-- Overseeing correspondence and general administration.
+- Overseeing correspondence and general administration. The
+  [`inbox-sweep`](../skills/inbox-sweep/SKILL.md) skill processes the owner's Gmail inbox into their
+  Notion hub and archives a thread only once it is there, with its personal settings in the owner's
+  Notion rather than here (#4206).
 
 ## Astrid's hard rules
 
