@@ -248,6 +248,7 @@ Two limits it does not pretend to cover:
 | `-Token <32 hex>` | with `-RetireToken`: retire this token instead of the one on file, and leave the file alone |
 | `-EmitWorker` | write `worker.js` and (only when absent) `wrangler.toml` for the one-time deploy |
 | `-ShowUrl` | print this kind's link and stop |
+| `-CheckAuth` | print the link, then prove a route to KV (the token or the login below) and stop; `prepare-release` runs it days ahead (#4155) |
 | `-DryRun` | resolve the seam, read the page, name the key and the URL — upload nothing |
 | `-RootOverride <path>` | the repo root, when the run does not start inside the checkout |
 

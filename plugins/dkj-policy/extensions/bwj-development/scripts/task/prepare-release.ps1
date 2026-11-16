@@ -544,10 +544,26 @@ if ($prs.Code -ne 0) {
 # === 8/8 -- the runbook ============================================================================
 Write-Host ''
 Write-Host '[8/8] runbook -- the day, in order' -ForegroundColor Cyan
+
+# THE RELEASE-NOTES PAGE'S LINK AND LOGIN, DAYS AHEAD (#4155). Measured at a consumer's v3.1.0: the publish
+# refused on release day for want of a Cloudflare login, and the close-out shared the GitHub Release
+# because nothing had printed the page's shareable link. publish-page -CheckAuth answers both with the
+# publish's own check and writes nothing. Only where this repo publishes the page at all.
+$notesUrl = ''
+if (@($ExecutionContext.InvokeCommand.GetCommands('Get-BwjPagesConfig', 'Function', $false)).Count -gt 0) {
+    $publishPage = Join-Path $PSScriptRoot 'publish-page.ps1'
+    $chk = Invoke-Native { & powershell -NoProfile -ExecutionPolicy Bypass -File $publishPage -Kind notes -CheckAuth -RootOverride $repoRoot }
+    foreach ($l in $chk.Lines) { if ($l -match '^url\s*:\s*(https://\S+)$') { $notesUrl = $Matches[1] } }
+    if ($chk.Code -eq 0) {
+        Add-Step -Name 'release-notes page' -State 'ready' -Detail "the page can be published, and its shareable link is $(if ($notesUrl) { ConvertTo-ConsoleStrippedText -Text $notesUrl } else { '(not printed)' })."
+    } else {
+        Add-Step -Name 'release-notes page' -State 'attention' -Detail "publish-page -Kind notes -CheckAuth refused (exit $($chk.Code)) -- no path token, or no CLOUDFLARE_API_TOKEN and no wrangler login to the pages account. Run it to see which; it writes nothing."
+    }
+}
 Write-Host ''
 
 $runbook = @(Format-ReleaseRunbook -Store $store -LiveThemeId $liveId -PushFiles $pushFiles -Bump "$bump" `
-    -TargetVersion $targetVersion -ReleaseDate $releaseDate -Obligations $obligations -DeployBranch $deployBranch -Trunk $trunk -AppRoot $appRoot -AppFiles $appFiles -TaskForm:$taskForm)
+    -TargetVersion $targetVersion -ReleaseDate $releaseDate -Obligations $obligations -DeployBranch $deployBranch -Trunk $trunk -AppRoot $appRoot -AppFiles $appFiles -NotesUrl $notesUrl -TaskForm:$taskForm)
 foreach ($l in $runbook) { Write-Host "  $l" }
 if ($OutFileArg) {
     $outFull = if ([System.IO.Path]::IsPathRooted($OutFileArg)) { $OutFileArg } else { Join-Path $repoRoot $OutFileArg }

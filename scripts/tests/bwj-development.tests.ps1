@@ -1146,6 +1146,15 @@ Assert-True ($prTask.Contains('-LivePushRecord') -and $prTask.Contains('review t
 $prDriverTask = [System.IO.File]::ReadAllText((Join-Path $PluginRoot 'scripts\task\prepare-release.ps1'))
 Assert-True $prDriverTask.Contains("Get-Seam 'Get-ReleaseNoteTaskLink'") 'the driver reads the same seam the cut drafts the task form from'
 Assert-True $prBook.Contains('- [ ] feat/12-strap-filter: Once this is live') 'the obligations become a checklist'
+# STEP 9 NAMES THE PUBLISH A STORE RUNS, AND THE LINK THE CLOSE-OUT LEADS WITH (#4155).
+Assert-True $prBook.Contains('publish-page.ps1 -Kind notes.') 'step 9 names publish-page -Kind notes, the publish a store actually runs'
+Assert-True $prBook.Contains('(without -Worker)') '...and not the -Worker deploy a store refuses'
+Assert-True $prBook.Contains('-Kind notes -ShowUrl prints') 'without a known link, it says which command prints it'
+Assert-True $prBook.Contains('GitHub Release second') '...and that the close-out names the GitHub Release second'
+$prUrl = (Format-ReleaseRunbook -PushFiles @() -NotesUrl "https://bwj-pages.acme.workers.dev/notes/abc$([char]27)[2K") -join "`n"
+Assert-True $prUrl.Contains('   https://bwj-pages.acme.workers.dev/notes/abc') 'a known link is printed on a line of its own'
+Assert-True (-not $prUrl.Contains([char]27)) '...with its control characters stripped'
+Assert-True (-not $prUrl.Contains('-ShowUrl prints')) '...in place of the pointer to -ShowUrl'
 $prEmpty = (Format-ReleaseRunbook -Store 's.myshopify.com' -LiveThemeId '42' -PushFiles @()) -join "`n"
 Assert-True ($prEmpty -notmatch 'shopify theme (push|pull)') 'an empty push list composes no push and no pull -- a bare push is the whole theme'
 $prNoId = (Format-ReleaseRunbook -Store 's.myshopify.com' -PushFiles @('sections/a.liquid')) -join "`n"
@@ -1279,6 +1288,26 @@ Assert-True (Get-PullChangedPaths -DiffPaths @('a') -PullFiles @('a') -ChangedFi
 Assert-Equal 0 @((Get-PullChangedPaths -DiffPaths @() -PullFiles @() -ChangedFiles 0).Paths).Count 'an empty PR changes nothing'
 $nlDriverText = [System.IO.File]::ReadAllText((Join-Path $PluginRoot 'scripts\task\notify-live.ps1'))
 Assert-True ($nlDriverText -match 'closingIssuesReferences,files,changedFiles' -and $nlDriverText.Contains('Get-PullChangedPaths')) 'the driver asks gh for the PR''s files in the same call, and joins them through the rule'
+
+# #4147: A FAILED ASANA CALL GETS A VERDICT, and only one kind sends the person back to "run it again". Measured:
+# a task the token could not see answered HTTP 400, and the advice to retry could not succeed.
+$nlForbidden = '{"errors":[{"message":"forbidden: You do not have access to this task","help":"x"}]}'
+Assert-Equal 'forbidden: You do not have access to this task' (@(Get-AsanaErrorMessages -Body $nlForbidden) -join '|') 'the errors[].message of an Asana reply is read'
+Assert-Equal 0 @(Get-AsanaErrorMessages -Body '<html>gateway</html>').Count '...and a reply that is not Asana''s JSON gives none, rather than throwing'
+Assert-Equal 0 @(Get-AsanaErrorMessages -Body '').Count '...nor does an empty one'
+Assert-Equal 'no-access' (Get-AsanaFailureVerdict -Status 400 -Messages @(Get-AsanaErrorMessages -Body $nlForbidden)).Kind 'the measured 400 on a task the token cannot see is NO ACCESS'
+Assert-Equal 'no-access' (Get-AsanaFailureVerdict -Status 403).Kind 'a 403 is NO ACCESS'
+Assert-Equal 'no-access' (Get-AsanaFailureVerdict -Status 404).Kind 'a 404 is NO ACCESS -- deleted, or invisible to this token'
+Assert-Equal 'rejected' (Get-AsanaFailureVerdict -Status 400 -Messages @('html_text: XML is invalid')).Kind 'any other 400 is REJECTED, not a retry'
+Assert-Equal 'token' (Get-AsanaFailureVerdict -Status 401).Kind 'a 401 is the token'
+foreach ($nlTransient in @(0, 408, 429, 500, 503)) {
+    Assert-Equal 'transient' (Get-AsanaFailureVerdict -Status $nlTransient).Kind "status $nlTransient is the one kind a rerun can fix"
+}
+$nlNoAccess = Get-AsanaFailureVerdict -Status 403
+Assert-True ($nlNoAccess.Label -eq 'NO ACCESS' -and $nlNoAccess.Advice -match 'by hand' -and $nlNoAccess.Advice -notmatch 'run it again') 'the NO ACCESS row says what to do instead of retrying'
+Assert-True ((Get-AsanaFailureVerdict -Status 400 -Messages @('forbidden: secret task name')).Advice -notmatch 'secret') 'Asana''s message is matched, never printed'
+Assert-True ($nlDriverText.Contains('Get-AsanaCallVerdict') -and $nlDriverText.Contains('?opt_fields=gid')) 'the driver classifies every Asana failure, and reads each owed task before anything is sent'
+Assert-True ($nlDriverText -match "(?s)tasks/\`$\(\`$o\.Gid\)\?opt_fields=gid.*?-not \`$PostArg") 'the read runs in the dry run, and says so when there is no token to read with'
 
 $nlDash = [string][char]0x2014
 function New-NlBlockComment {
