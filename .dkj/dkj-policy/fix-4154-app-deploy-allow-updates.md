@@ -39,21 +39,35 @@
 
 ### PLAN
 
+One formatter prints the command for both scripts (`Format-ShopifyAppDeployCommand`), so the flag goes there,
+and the pages that quote the command follow it. `--no-release` was not added: its deploy uploads a version
+without releasing it, so the release day would still owe a second step.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Format-ShopifyAppDeployCommand` (`live-push-rules.ps1`, all three identical copies) appends `--allow-updates`
+- [x] The `prepare-release` and `live-preflight` skill pages, the shopify README and `live-preflight`'s help quote the new command
 
 ### TEST
 
+- [x] `live-push-rules.tests.ps1` and `bwj-development.tests.ps1` assert the command with `--allow-updates`
+
 ### DEPLOY: fix/4154-app-deploy-allow-updates
 
-**Score:**
+The app deploy that `live-preflight` and `prepare-release` print now reads
+`shopify app deploy --path <folder> --allow-updates`
+([#4154](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4154)), so it runs in a non-interactive shell.
+A deletion still needs `--allow-deletes`, which remains a deliberate separate act.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+On release day in a Shopify store repo that ships an app, the printed app deploy runs as printed through a
+session's `!` prefix. Before, the Shopify CLI refused it there and the owner had to look up the missing flag.
+
+**Score:** 3
 
 #### Pull Request
 
 The printed app deploy carries --allow-updates, so it runs in a non-interactive shell
-

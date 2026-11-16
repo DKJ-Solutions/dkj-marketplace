@@ -1155,7 +1155,7 @@ Assert-True ($evilBook.Contains('cannot be pasted safely')) 'the refusal says wh
 Assert-True (-not $evilBook.Contains([char]27)) 'and the path it names has its control characters stripped'
 # THE APP DEPLOY (#3174): printed beside the push where the range changed the app, and never otherwise.
 $appBook = (Format-ReleaseRunbook -Store 's.myshopify.com' -LiveThemeId '42' -PushFiles @('sections/a.liquid') -AppRoot 'extensions' -AppFiles @('extensions/d/run.js')) -join "`n"
-Assert-True $appBook.Contains('shopify app deploy --path extensions') 'an app change prints the app deploy'
+Assert-True $appBook.Contains('shopify app deploy --path extensions --allow-updates') 'an app change prints the app deploy'
 Assert-True ($appBook.IndexOf('2b. The app deploy') -gt $appBook.IndexOf('2. The push')) 'beside the push, as step 2b'
 Assert-True ($prBook -notmatch 'app deploy') 'a range with no app change prints no app deploy'
 $appOnly = (Format-ReleaseRunbook -Store 's.myshopify.com' -LiveThemeId '42' -PushFiles @() -AppRoot 'extensions' -AppFiles @('extensions/d/run.js')) -join "`n"
