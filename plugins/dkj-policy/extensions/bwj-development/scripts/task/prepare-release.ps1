@@ -64,7 +64,8 @@
 
 .PARAMETER DriftCheckPath
     The repo's drift check, relative to the root. Default Get-ShopifyDriftCheckPath, then
-    'scripts/theme/live-snapshot.ps1' -- the same default live-preflight uses.
+    'scripts/theme/live-snapshot.ps1' -- the same default live-preflight uses -- and where that file is
+    absent too, the repo's 'scripts/task/sync-main.ps1', whose -Only is the same contract (#4149).
 
 .PARAMETER SkipDrift
     Do not run the early drift read. For a run with no Shopify CLI at hand, or a second run the same day.
@@ -458,9 +459,22 @@ Write-Host ''
 Write-Host '[5/8] early drift -- third-party edits on live, found before the day' -ForegroundColor Cyan
 
 $driftRel = ([string]$DriftArg).Trim()
-if (-not $driftRel) { $driftRel = ([string](Get-Seam 'Get-ShopifyDriftCheckPath')).Trim() }
+$driftSeam = ([string](Get-Seam 'Get-ShopifyDriftCheckPath')).Trim()
+if (-not $driftRel) { $driftRel = $driftSeam }
 if (-not $driftRel) { $driftRel = 'scripts/theme/live-snapshot.ps1' }
 $driftFull = Join-Path $repoRoot ($driftRel -replace '/', '\')
+# THE FALLBACK IS THE REPO'S OWN sync-main (inbound #4149). Measured in a consumer whose only drift check
+# was 'sync-main -DryRun': this step skipped for want of live-snapshot.ps1, while that dry run found 12
+# conflicted paths, 9 on the push list -- the real blocker of the release. sync-main -Only is the
+# drift-check contract, so where nothing is answered and the repo carries scripts/task/sync-main.ps1 it
+# stands in. Not the shopify plugin's copy reached across: a cross-plugin path breaks silently on a
+# version mismatch, which is why live-push-rules.ps1 is mirrored here rather than reached.
+if (-not ([string]$DriftArg).Trim() -and -not $driftSeam -and
+    -not (Test-Path -LiteralPath $driftFull -PathType Leaf)) {
+    $syncMainRel = 'scripts/task/sync-main.ps1'
+    $syncMainFull = Join-Path $repoRoot ($syncMainRel -replace '/', '\')
+    if (Test-Path -LiteralPath $syncMainFull -PathType Leaf) { $driftRel = $syncMainRel; $driftFull = $syncMainFull }
+}
 
 if ($connected) {
     # THE BACK-FLOW CHECK REPLACES THE CLI DRIFT CHECK (#3012). Connected, a third-party edit on live is a
@@ -489,7 +503,7 @@ if ($connected) {
 } elseif ($pushFiles.Count -eq 0) {
     Add-Step -Name 'drift' -State 'skip' -Detail 'there is no push list to check.'
 } elseif (-not (Test-Path -LiteralPath $driftFull -PathType Leaf)) {
-    Add-Step -Name 'drift' -State 'skip' -Detail "no drift check at '$driftRel'. Pass -DriftCheckPath, or answer Get-ShopifyDriftCheckPath."
+    Add-Step -Name 'drift' -State 'skip' -Detail "no drift check at '$driftRel', and no scripts/task/sync-main.ps1 to stand in. Pass -DriftCheckPath, or answer Get-ShopifyDriftCheckPath -- a repo whose drift check is sync-main answers it with its sync-main forwarder, which takes -Only."
 } else {
     # IN THIS PROCESS, WITH A REAL ARRAY -- the measured #2228 failure was this list crossing a
     # `powershell -File` boundary as one string, and the check reading zero files as "safe to push".

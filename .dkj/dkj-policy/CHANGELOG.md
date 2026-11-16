@@ -2,7 +2,37 @@
 
 ## [Unreleased]
 
-**26 / 36 minor entries** <!-- pending-tally -->
+**27 / 37 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4149-sync-main-as-drift-check · 20261116-123740Z
+
+`sync-main` takes `-Only <paths>` and runs as a drift check over them
+([#4149](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4149)). It writes nothing and exits 1
+when a listed path holds content on live this repo never had, or was changed on both sides. Where no
+drift check is answered and `scripts/theme/live-snapshot.ps1` is absent, `live-preflight` and
+`prepare-release` now use it. Until now they skipped the step, and with it `live-preflight`'s deletion
+command.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A store whose only drift check is `sync-main` now learns from `prepare-release`, days ahead, which paths on
+its push list a third party has changed on live. Measured in a consumer: 12 conflicted paths, 9 on the push
+list, while the step read as skipped. On the day, `live-preflight` checks the same paths and prints the
+deletion command it used to withhold.
+
+**Score:** 3
+
+#### Pull Request
+
+sync-main -Only is a drift check, and the release steps fall back to it
+
+Plugins: bwj-development, dkj-subagents-shopify
+
+[PR #4189](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4189)
+
+---
 
 ### DEPLOY: fix/4148-layout-floor-pin · 20261116-122616Z
 

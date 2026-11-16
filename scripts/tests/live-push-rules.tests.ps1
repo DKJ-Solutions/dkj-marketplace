@@ -179,7 +179,11 @@ foreach ($reader in @('scripts\task\live-preflight.ps1', 'scripts\lib\theme-life
 Assert-True ($pfSrc -match '\$deleteCommand = Format-LivePushCommand [^\r\n]*-Only \$deleteFiles') 'live-preflight composes the deletion command from the deleted paths'
 Assert-True ($pfSrc -match 'Invoke-DriftCheck -Paths \$deleteFiles') 'live-preflight runs the drift check on the deleted paths'
 Assert-True ($pfSrc -match 'if \(-not \$deleteWithheld\)') 'a drift refusal on the deletions withholds the deletion command'
-Assert-True ($pfSrc -match '& \$driftFull -Only \$Paths \| Out-Host') "the drift check's own output goes to the host, never into the exit code Invoke-DriftCheck returns"
+Assert-True ($pfSrc -match '& \$driftFull -Only \$Paths @driftExtra \| Out-Host') "the drift check's own output goes to the host, never into the exit code Invoke-DriftCheck returns"
+# Inbound #4149: with nothing answered and no live-snapshot.ps1, this plugin's own sync-main -Only is the check,
+# so the deletions are no longer withheld for want of one.
+Assert-True ($pfSrc -match "(?s)\`$syncMain = Join-Path \`$PSScriptRoot 'sync-main\.ps1'.{0,300}\`$driftExtra = @\{ RootOverride = \`$repoRoot \}") 'live-preflight falls back to its sibling sync-main, judged against the same root'
+Assert-True ($pfSrc -match "(?s)-not \(\[string\]\`$DriftCheckPath\)\.Trim\(\) -and -not \(\[string\]\`$seam\.DriftCheck\)\.Trim\(\) -and\s+-not \(Test-Path -LiteralPath \`$driftFull") '...only where no drift check was answered and the default is absent'
 Assert-Equal 2 ([regex]::Matches($pfSrc, '\$deleteWithheld = \$true')).Count 'a deletion is withheld both on a drift refusal and when there is no drift check at all'
 Assert-True ($pfSrc -match '-DeletionsCarried:\(\[bool\]\$deleteCommand\)') 'the record marks deletions live only when the command was composed'
 
