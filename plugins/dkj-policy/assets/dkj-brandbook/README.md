@@ -740,8 +740,22 @@ out). Three more things follow it by default, in light and in dark (and a measur
 - **The page and the cards are tinted.** On light the page is the whitest layer and a card sits a shade off it;
   on dark the card is a shade lighter than the page. Either way the page is the ground end (owner's decision,
   October 14, 2026: it used to be the other way round on light).
-- **Lines are tinted.** `--bg-3` is every line: borders, row dividers, grid lines and the meter track
+- **Lines are tinted.** `--bg-3` is every line that is left: grid lines, the meter track and the rule of an `hr`
   (a separate grid colour was dropped on October 14, 2026: it was too close to the border to tell apart).
+- **A border means "you can press this"** (the owner, #4127, November 15, 2026). It stays on what a person presses
+  or types in: a `.btn` and its variants, `.seg`, `.info-button`, `.filter-chip`, a `.panel--button`, a theme
+  swatch, the badge toggle, the dialog's close plates and the fields (`.field` inputs, `.nav-search`,
+  `.toolbar__filter`, `.stepper`, `.combo`). The focus ring stays too: it is keyboard accessibility, not decoration.
+  Everything else is separated by a **fill**: a card, tile, mini-card, notice, alert, banner, panel, chip, tooltip,
+  dialog, empty state and figure stand on their own surface with no edge; the shell's bar, navigation, toolbar and
+  detail pane are told apart by `--bg-2` against `--bg-1`; a state that was a border colour is a tint now
+  (`.card--open` `--bg-3`, `.card--invalid` and `.alert` `--negative-1`, `.mini-card--highlight` `--warning-1`).
+  **Rows inside one surface are set apart by their spacing** (`.facts`, `.item`, `.menu-row`, `.menu-item`, the
+  product's stat, date, bill, comparison and calculation rows), a `.table` by **alternating fills** (`--bg-3` on
+  every even body row), and a total by a tinted band instead of a rule. A list of rows that must read as one
+  block (the product's `.card--rows`, a phone's group of card links, a phone's `.tiles`) puts each row on its own
+  fill with a `--spacing-0-5` gap of page between them. Two lines deliberately stay: an `hr`, whose whole meaning
+  is a rule, and the opt-in `.header--accent`, an accent rather than a separator.
 - **The theme picker previews it:** each swatch shows its own theme's page, with the primary as the dot.
 - **Links are the theme's colour**, as `--primary` (owner's decision, October 15, 2026). **`h1` is
   `--primary`; `h2`, `h3` and `.meta` are `--fg-1`, the text** (#4046, November 13, 2026: they were `--fg-2` and
@@ -902,7 +916,7 @@ plugin ([`README.md`][product-readme] beside it, #3831):
   | `color/surface` | `--bg-2` | a card or group |
   | `color/surface-subtle` | `--bg-3` | an area inside a card |
   | `color/surface-active` | `--bg-4` | active or hover |
-  | `color/border`, `color/divider` | `--bg-3` | a card edge, a rule between rows |
+  | `color/border`, `color/divider` | `--bg-3` | a grid line or an `hr` (a card edge and a rule between rows until #4127) |
   | `color/placeholder` | `--bg-5` | a control edge |
   | `color/fill-strong` | `--primary` | the main action (the 10 of 60-30-10) |
   | `color/fill-accent` | `--primary-muted` | a quiet fill: a progress fill, as `.meter--info` |

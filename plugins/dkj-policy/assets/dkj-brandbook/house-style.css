@@ -368,14 +368,17 @@ p { margin: 0; }
 :where(li)::marker { color: var(--primary); }
 :where(code, pre) { font-family: var(--font-mono); }
 :where(code) { font-size: 0.9em; padding: 0.1em 0.35em; border-radius: var(--radius-1); background: var(--bg-3); }
-:where(pre) { margin: 0; font-size: var(--text-sm); padding: var(--spacing-3) var(--spacing-4); border: 1px solid var(--bg-3); border-radius: var(--radius-2); background: var(--bg-3); overflow-x: auto; white-space: pre; tab-size: 2; }
+:where(pre) { margin: 0; font-size: var(--text-sm); padding: var(--spacing-3) var(--spacing-4); border-radius: var(--radius-2); background: var(--bg-3); overflow-x: auto; white-space: pre; tab-size: 2; }
 :where(pre code) { padding: 0; border-radius: 0; background: none; font-size: inherit; }
 :where(pre):focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
-:where(blockquote) { margin: 0; padding-left: var(--spacing-4); border-left: 3px solid var(--bg-3); color: var(--fg-1); }
+:where(blockquote) { margin: 0; padding: var(--spacing-3) var(--spacing-4); border-radius: var(--radius-2); background: var(--bg-3); color: var(--fg-1); }
 :where(hr) { border: 0; border-top: 1px solid var(--bg-3); margin-block: var(--spacing-6); }
 
 /* ---- Surfaces ------------------------------------------------------------- */
-.card { background: var(--bg-2); border: 1px solid var(--bg-3); border-radius: var(--radius-3); padding: var(--spacing-6); margin-top: var(--spacing-4); }
+/* A border means "you can press this" (owner, #4127, November 15, 2026): it stays on buttons, the controls a person types
+   in and the focus ring, and nowhere else. A surface is told apart by its own fill, and rows inside one surface by their
+   spacing (or, in a .table, by alternating fills), never by a line. */
+.card { background: var(--bg-2); border-radius: var(--radius-3); padding: var(--spacing-6); margin-top: var(--spacing-4); }
 /* Data-card head (#141): <section class="card"><div class="card__head"><h3>Title</h3>
    <p class="card__sub">Sub line</p></div> a .table-wrap or .facts</section>. The head is left-aligned, with no rule between it
    and the body; whatever follows it sits --spacing-4 below. The title is a plain <h3>, set like every h3 (.card__title,
@@ -390,20 +393,20 @@ p { margin: 0; }
 .card > .card__head + * { margin-top: var(--spacing-4); }   /* (0,2,0): beats a body's own margin: 0, such as .facts */
 .hero { display: flex; flex-wrap: wrap; gap: var(--spacing-6) var(--spacing-12); align-items: flex-end; }   /* use with .card */
 .hero .value { font-size: var(--text-h1); font-weight: var(--font-weight-bold); line-height: 1.1; color: var(--fg-1); }
-.tile { background: var(--bg-2); border: 1px solid var(--bg-3); border-radius: var(--radius-3); padding: var(--spacing-3-5) var(--spacing-4); }
+.tile { background: var(--bg-2); border-radius: var(--radius-3); padding: var(--spacing-3-5) var(--spacing-4); }
 .tile .label { color: var(--primary-muted); font-size: var(--text-sm); }   /* a quiet grey, as .note: the figure leads (owner, October 20, 2026) */
 .tile .v { font-size: var(--text-h3); font-weight: var(--font-weight-bold); margin-top: var(--spacing-0-5); }
-.mini-card { border: 1px solid var(--bg-3); border-radius: var(--radius-3); padding: var(--spacing-3) var(--spacing-3-5); }
-.mini-card--highlight { border-color: var(--warning-3); }
+.mini-card { background: var(--bg-2); border-radius: var(--radius-3); padding: var(--spacing-3) var(--spacing-3-5); }
+.mini-card--highlight { background: var(--warning-1); }
 .mini-card__label { font-size: var(--text-sm); color: var(--fg-1); }
 .mini-card__value { font-size: var(--text-h3); font-weight: var(--font-weight-bold); margin: var(--spacing-0-5) 0 var(--spacing-2); font-variant-numeric: tabular-nums; }
-.notice { background: var(--warning-1); border: 1px solid var(--bg-3); border-radius: var(--radius-3); padding: var(--spacing-3) var(--spacing-4); margin-top: var(--spacing-4); }
+.notice { background: var(--warning-1); border-radius: var(--radius-3); padding: var(--spacing-3) var(--spacing-4); margin-top: var(--spacing-4); }
 /* Message line: one plain line for a state, a loading line or a warning that data could not be read (#141), is a plain
    <p> (.msg, which was that <p> with no margin, is gone since every <p> has none: Maikel, November 1, 2026).
    .msg--warn is the warning in text, --warning-5, bold, and .msg--error the error; a link in either is an ordinary
    house link. For a boxed message use .notice. */
 .msg--warn { color: var(--warning-5); font-weight: var(--font-weight-bold); }
-.item { border-top: 1px solid var(--bg-3); padding: var(--spacing-2-5) 0; }
+.item { padding: var(--spacing-2-5) 0; }
 .item b { display: block; font-size: var(--text-sm); margin-bottom: var(--spacing-0-5); }
 .item p { margin: 0; font-size: var(--text-sm); color: var(--fg-1); }
 
@@ -413,11 +416,14 @@ p { margin: 0; }
    page on a phone while the table itself scrolled (#4111). */
 .table-wrap { overflow-x: auto; position: relative; }
 .table { border-collapse: collapse; width: 100%; font-size: var(--text-sm); }
-.table th, .table td { padding: var(--spacing-2) var(--spacing-2-5); text-align: right; border-bottom: 1px solid var(--bg-3); white-space: nowrap; }
+.table th, .table td { padding: var(--spacing-2) var(--spacing-2-5); text-align: right; white-space: nowrap; }
+/* Rows alternate their fill instead of drawing a rule (#4127); a status row's tint and a dense table's hover and
+   selection outweigh it, as their selectors carry more weight than this one. */
+.table :where(tbody tr:nth-child(even)) { background: var(--bg-3); }
 .table th { color: var(--fg-1); font-weight: var(--font-weight-bold); }
 .table th:first-child, .table td:first-child { text-align: left; white-space: normal; min-width: 180px; }
 .table td { font-variant-numeric: tabular-nums; }
-.table .row-total td { font-weight: var(--font-weight-bold); border-bottom: none; }
+.table .row-total td { font-weight: var(--font-weight-bold); }
 /* Sortable column header: <th aria-sort="none|ascending|descending"><button class="sort">Label
    <span class="arrow" aria-hidden="true"><svg viewBox="0 0 8 12"><path class="u" d="M1 4.5 4 1.5 7 4.5"/>
    <path class="d" d="M1 7.5 4 10.5 7 7.5"/></svg></span></button></th>. The hit area grows beyond the
@@ -441,18 +447,18 @@ p { margin: 0; }
 @media (prefers-reduced-motion: reduce) { .table th .sort::after, .table th .arrow path { transition: none; } }
 
 /* Facts list (#141): <dl class="facts"><div><dt>Term</dt><dd>Value</dd></div>...</dl>. A term on the left in the text
-   colour, its value on the right in bold and tabular figures, a --bg-3 rule under every row. Put it in a
+   colour, its value on the right in bold and tabular figures, the rows set apart by their spacing (no rule since #4127). Put it in a
    .card whose .card__head sits above it. The term keeps its width and a value too long for the rest of the row wraps
    under itself, right-aligned, breaking a path or an id anywhere: on a phone a long value used to stay on one line,
    squeeze the term to nothing and run over it or past the card (#4113). */
 .facts { margin: 0; font-variant-numeric: tabular-nums; }
-.facts > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--spacing-4); padding: var(--spacing-1-5) 0; border-bottom: 1px solid var(--bg-3); }
+.facts > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--spacing-4); padding: var(--spacing-2) 0; }
 .facts dt { flex: none; color: var(--fg-1); }
 .facts dd { min-width: 0; margin: 0; overflow-wrap: anywhere; font-weight: var(--font-weight-bold); text-align: right; }
 /* .facts--row: the same list as one row on the page, not in a card (owner, October 22, 2026): each fact its label
    small and muted over its value, no surface and no lines, so it reads as information and never as a link. It wraps. */
 .facts--row { display: flex; flex-wrap: wrap; gap: var(--spacing-3) var(--spacing-8); }
-.facts--row > div { flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: var(--spacing-0-5); padding: 0; border-bottom: 0; }
+.facts--row > div { flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: var(--spacing-0-5); padding: 0; }
 .facts--row dt { font-size: var(--text-sm); color: var(--primary-muted); }
 .facts--row dd { text-align: left; }
 
@@ -500,7 +506,8 @@ p { margin: 0; }
 .btn { background: none; border: 1px solid var(--bg-5); color: var(--fg-1); border-radius: var(--radius-2);
   padding: var(--spacing-1) var(--spacing-2-5); font: inherit; font-size: var(--text-sm); cursor: pointer; text-decoration: none; }   /* none: a .btn on an <a> (a link that looks like a button) draws no underline */
 /* Hover and focus: one rule for every .btn variant (#3648). The hover is the house hover tint, --bg-3, with the
-   border one step on so the edge stays drawn; .btn--primary darkens its own fill below. */
+   border one step on so the edge stays drawn; .btn--primary darkens its own fill below. The border is what says a
+   .btn can be pressed (#4127), so a button keeps it on every surface. */
 .btn:hover:not(:disabled) { background: var(--bg-3); }
 .btn:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
 /* Segmented switch: <span class="seg" role="group"><button aria-pressed="true">A</button><button aria-pressed="false">B</button></span>. */
@@ -519,7 +526,7 @@ p { margin: 0; }
 
 /* ---- Tooltip -------------------------------------------------------------- */
 .tooltip { position: fixed; pointer-events: none; background: var(--bg-2); color: var(--fg-1);
-  border: 1px solid var(--bg-3); border-radius: var(--radius-2); padding: var(--spacing-2) var(--spacing-2-5); font-size: var(--text-sm);
+  border-radius: var(--radius-2); padding: var(--spacing-2) var(--spacing-2-5); font-size: var(--text-sm);
   box-shadow: var(--shadow-pop); display: none; max-width: 280px; z-index: 10; }
 .tooltip b { display: block; margin-bottom: var(--spacing-0-5); }
 /* An explaining tooltip is read, not glanced at (the owner, November 9, 2026): body-size text, about eight words
@@ -597,11 +604,11 @@ p { margin: 0; }
 .theme-settings__open { fill: currentColor; stroke: currentColor; stroke-width: 1.2; stroke-linejoin: round; }   /* a solid gear; the stroke only rounds its corners (Maikel, November 1, 2026; an outline until then) */
 .theme-settings__panel { position: absolute; top: calc(100% + var(--spacing-2)); right: 0; z-index: 20; display: grid; gap: var(--spacing-4);
   width: max-content; max-width: calc(100vw - 2 * var(--spacing-4)); max-height: calc(100dvh - var(--tap) - 2 * var(--spacing-5));
-  overflow-y: auto; padding: var(--spacing-4); text-align: left; background: var(--bg-2); border: 1px solid var(--bg-3);
+  overflow-y: auto; padding: var(--spacing-4); text-align: left; background: var(--bg-2);
   border-radius: var(--radius-3); box-shadow: var(--shadow-pop); }
 .theme-settings__panel[hidden] { display: none; }
 .theme-settings__title { margin: 0; font-size: var(--text-h3); font-weight: var(--font-weight-bold); color: var(--primary); }   /* the highlight, as an h2 */
-.theme-settings__group { display: grid; gap: var(--spacing-2); padding-top: var(--spacing-4); border-top: 1px solid var(--bg-3); }
+.theme-settings__group { display: grid; gap: var(--spacing-2); }
 .theme-settings__label { font-size: var(--text-sm); font-weight: var(--font-weight-bold); letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-1); }
 .theme-settings__foot { display: flex; flex-wrap: wrap; align-items: end; gap: var(--spacing-4); }
 .theme-settings__extra:empty { display: none; }
@@ -644,7 +651,7 @@ p { margin: 0; }
 
 /* ---- The bar: where you are, and a few small actions ---------------------------- */
 .shell__bar { grid-column: 2 / -1; grid-row: 1; display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-3); min-width: 0;
-  padding: 0 var(--spacing-8); background: var(--bg-1); border-bottom: 1px solid var(--bg-3); }
+  padding: 0 var(--spacing-8); background: var(--bg-1); }
 .shell__bar .breadcrumbs { min-width: 0; overflow: hidden; }
 .shell__bar .breadcrumbs ol { font-size: var(--text-sm); font-weight: var(--font-weight-bold); gap: var(--spacing-0-5); }
 .shell__bar .breadcrumbs a { color: var(--primary-muted); }
@@ -663,7 +670,7 @@ p { margin: 0; }
    objects at the top level, secondary areas in a .nav-section under a .pane-head heading, never a tree, and
    Settings pinned to the foot. Rows are rounded blocks inside the pane's padding. */
 .shell__nav { grid-column: 1; grid-row: 1 / -1; display: flex; flex-direction: column; gap: var(--spacing-5); min-width: 0; overflow-y: auto;
-  padding: var(--spacing-5) var(--spacing-4); background: var(--bg-2); border-right: 1px solid var(--bg-4); }
+  padding: var(--spacing-5) var(--spacing-4); background: var(--bg-2); }
 .shell__brand { display: flex; align-items: center; gap: var(--spacing-2); padding-left: var(--spacing-1); color: var(--fg-1); font-size: var(--text-h3); font-weight: var(--font-weight-bold); text-decoration: none; }
 .shell__brand__mark { flex: none; width: var(--spacing-7); height: var(--spacing-7); border-radius: var(--radius-2); background: var(--primary); }
 .nav-section { display: flex; flex-direction: column; gap: var(--spacing-0-5); }
@@ -694,7 +701,7 @@ p { margin: 0; }
 
 /* ---- The main pane: the page under the bar --------------------------------------------- */
 .shell__main { grid-column: 2; grid-row: 2; display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; min-height: 0; background: var(--bg-1); }
-.toolbar { display: flex; align-items: center; gap: var(--spacing-2); min-width: 0; height: var(--spacing-9); padding: 0 var(--spacing-8); border-bottom: 1px solid var(--bg-3); }
+.toolbar { display: flex; align-items: center; gap: var(--spacing-2); min-width: 0; height: var(--spacing-9); padding: 0 var(--spacing-8); }
 .toolbar > h1, .toolbar__title { margin: 0; font-size: var(--text-h3); white-space: nowrap; }   /* the page's one h1, set at the toolbar's size: a pane title, not a headline */
 .toolbar__filter { width: var(--spacing-52); max-width: 40%; height: var(--spacing-6); padding: 0 var(--spacing-2); background: var(--bg-1); color: var(--fg-1);
   border: 1px solid var(--bg-5); border-radius: var(--radius-2); font: inherit; font-size: var(--text-sm); }
@@ -708,8 +715,9 @@ p { margin: 0; }
    Admin's form of the product's .page-column. */
 .shell__body { display: grid; gap: var(--spacing-6); align-content: start; max-width: none; margin: 0; padding: var(--spacing-8); }
 .shell__body > .card, .shell__body > .tiles, .shell__body > .notice, .shell__body > .note { margin-top: 0; }
-/* A card in the shell is the wireframes' card: the page's own ground with a line around it, a smaller radius and less room. */
-.shell__body .card { margin-top: 0; padding: var(--spacing-4) var(--spacing-5); background: var(--bg-1); border-color: var(--bg-4); border-radius: var(--radius-2); }
+/* A card in the shell is the wireframes' card, a smaller radius and less room; it stands on its own fill, --bg-2 against
+   the pane's --bg-1, where it was the page's own ground with a line around it until #4127. */
+.shell__body .card { margin-top: 0; padding: var(--spacing-4) var(--spacing-5); border-radius: var(--radius-2); }
 .shell__body .card > h2, .shell__body .card > .card__head > h2 { margin: 0; font-size: var(--text-h3); }
 /* Two columns, the wireframes' Today: a wide one and a 360px one beside it, each a stack of cards. */
 .admin-cols { display: grid; grid-template-columns: minmax(0, 1fr) var(--spacing-96); gap: var(--spacing-6); align-items: start; }
@@ -723,35 +731,35 @@ p { margin: 0; }
 /* A date or a qualifier set beside the h1 at its size, outside it, so the h1 still reads what the crumb reads. */
 .page-head__meta { font-size: var(--text-h1); font-weight: var(--font-weight-bold); line-height: 1.2; color: var(--primary); white-space: nowrap; }
 /* The empty state (the wireframes' "Empty state" component): what will appear here, and the one action that gets it
-   there. A dashed frame on --bg-2, centred, a round mark, a title, a line of text and one button. Never a blank page. */
+   there. A block on --bg-2 (a dashed frame until #4127), centred, a round mark, a title, a line of text and one button. Never a blank page. */
 .empty-state { display: flex; flex-direction: column; align-items: center; gap: var(--spacing-4); padding: var(--spacing-8); text-align: center;
-  background: var(--bg-2); border: 1px dashed var(--bg-4); border-radius: var(--radius-2); }
+  background: var(--bg-2); border-radius: var(--radius-2); }
 .empty-state__mark { width: var(--spacing-14); height: var(--spacing-14); border-radius: var(--radius-pill); background: var(--bg-3); }
 .empty-state > h2 { margin: 0; font-size: var(--text-h2); }
 .empty-state__text { max-width: var(--spacing-96); margin: 0; color: var(--primary-muted); }
-/* A set of links, Admin's form of a card overview (#3830): a .pane-head over a .table--dense, the table in a
-   rounded, bordered frame with a tinted head row, as the wireframe's pages table. */
+/* A set of links, Admin's form of a card overview (#3830): a .pane-head over a .table--dense, the table a rounded
+   block on --bg-2 with its rows alternating, as the wireframe's pages table (a bordered frame until #4127). */
 .admin-list > h2 { padding: 0; }
-.admin-list > .table--dense { border: 1px solid var(--bg-4); border-radius: var(--radius-2); border-collapse: separate; border-spacing: 0; overflow: hidden; font-size: var(--text-base); }
-.admin-list > .table--dense th { height: auto; padding: var(--spacing-3) var(--spacing-4); font-size: var(--text-sm); color: var(--primary-muted); border-bottom: 0; }
-.admin-list > .table--dense td { height: auto; padding: var(--spacing-3) var(--spacing-4); border-top: 1px solid var(--bg-3); border-bottom: 0; }
+.admin-list > .table--dense { background: var(--bg-2); border-radius: var(--radius-2); border-collapse: separate; border-spacing: 0; overflow: hidden; font-size: var(--text-base); }
+.admin-list > .table--dense th { height: auto; padding: var(--spacing-3) var(--spacing-4); font-size: var(--text-sm); color: var(--primary-muted); }
+.admin-list > .table--dense td { height: auto; padding: var(--spacing-3) var(--spacing-4); }
 .admin-list > .table--dense td:first-child { width: var(--spacing-48); }
 .admin-list > .table--dense td:first-child a { color: var(--fg-1); font-weight: var(--font-weight-bold); text-decoration: none; }
 .admin-list > .table--dense td:first-child a:hover { color: var(--primary); text-decoration: underline; }
 .admin-list > .table--dense td + td { color: var(--primary-muted); }
 
 /* ---- The detail pane -------------------------------------------------------------------- */
-.shell__aside { grid-column: 3; grid-row: 2; min-width: 0; overflow-y: auto; background: var(--bg-2); border-left: 1px solid var(--bg-4); }
+.shell__aside { grid-column: 3; grid-row: 2; min-width: 0; overflow-y: auto; background: var(--bg-2); }
 .shell__aside-body { padding: 0 var(--spacing-3) var(--spacing-3); }
 
 /* ---- Dense table: ~28px rows, hover, a selected row ------------------------------------------ */
 /* Add to .table. Plain text columns take .col-start; the head stays in view while the list scrolls. */
 .table--dense { font-size: var(--text-sm); }
 .table--dense th, .table--dense td { height: var(--shell-row-h); padding: 0 var(--spacing-3); }
-.table--dense th { position: sticky; top: 0; z-index: 1; background: var(--bg-2); border-bottom: 1px solid var(--bg-4); }
+.table--dense th { position: sticky; top: 0; z-index: 1; background: var(--bg-2); }
 /* A sortable header's hit area is the row, not the 44px --tap: a mouse needs no more, and 44px would reach over the rows under it. */
 .table--dense th .sort::before { height: var(--shell-row-h, var(--spacing-7)); }
-.table--dense tbody tr:hover { background: var(--bg-2); }
+.table--dense tbody tr:hover { background: var(--bg-4); }
 .table--dense tbody tr:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: -2px; }
 .table--dense tbody tr[aria-selected="true"] { background: var(--bg-3); }
 .table--dense tbody tr[aria-selected="true"] td:first-child { box-shadow: inset 2px 0 0 var(--primary); color: var(--primary); font-weight: var(--font-weight-bold); }
@@ -809,20 +817,18 @@ p { margin: 0; }
 
 /* ---- Menu list and menu item ---------------------------------------------------- */
 /* Settings as rows: <ul class="menu-list"><li class="menu-row"><span class="menu-row__label">..</span>
-   <span class="menu-row__value">..</span> an .icon-btn</li></ul>. A line between rows, not above or below. */
+   <span class="menu-row__value">..</span> an .icon-btn</li></ul>. The rows are set apart by their height, with no line (#4127). */
 .menu-list { margin: 0; padding: 0; list-style: none; }
 .menu-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: var(--spacing-3); min-height: var(--tap); padding: var(--spacing-2); }
-.menu-row + .menu-row { border-top: 1px solid var(--bg-3); }
 .menu-row__label { font-size: var(--text-base); font-weight: var(--font-weight-bold); }
 .menu-row__value { min-width: 0; font-size: var(--text-base); text-align: right; overflow-wrap: anywhere; }
 /* A button at the end of the row is control-h tall and its centre sits under a close button's. */
 .menu-row .icon-btn { height: var(--control-h); margin-right: calc((var(--tap) - var(--control-h)) / 2); }
-/* A navigation row: a full-width button with icon, label and chevron; a line between items.
+/* A navigation row: a full-width button with icon, label and chevron; no line between items (#4127).
    <button class="menu-item"><svg class="menu-item__icon"/><span class="menu-item__label">..</span><svg class="menu-item__chevron"/></button> */
 /* Its gap is --spacing-6 between icon, label and chevron (Maikel, November 2, 2026; it was --spacing-4). */
 .menu-item { display: flex; align-items: center; gap: var(--spacing-6); width: 100%; min-height: var(--tap); margin: 0; padding: 0;
   border: 0; border-radius: var(--radius-2); background: none; font: inherit; text-align: left; text-decoration: none; color: var(--fg-1); cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.menu-item + .menu-item { border-top: 1px solid var(--bg-3); border-top-left-radius: 0; border-top-right-radius: 0; }
 .menu-item:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: -2px; }   /* inset, so the ring is not cut off by the panel */
 .menu-item__icon, .menu-item__chevron { flex: none; }
 .menu-item__label { flex: 1; min-width: 0; }
@@ -864,9 +870,10 @@ a.menu-item:hover { background: var(--bg-3); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
 /* ---- Additions to existing classes ------------------------------------------- */
-/* A card the user has opened (the stronger border, --bg-4) or one whose content is invalid (--negative-3). */
-.card--open { border-color: var(--bg-4); }
-.card--invalid { border-color: var(--negative-3); }
+/* A card the user has opened (a fill one step on, --bg-3) or one whose content is invalid (the negative tint), each
+   told by its fill since #4127, where it was a border. */
+.card--open { background: var(--bg-3); }
+.card--invalid { background: var(--negative-1); }
 /* A message line that reports an error, in the text colour of a negative (beside .msg--warn). */
 .msg--error { color: var(--negative-5); }
 /* A message line that reports something that went well, in the text colour of a positive (Maikel, November 1, 2026). */
@@ -889,49 +896,50 @@ a.menu-item:hover { background: var(--bg-3); }
 @container (max-width: 48rem) {
   .table-wrap--stack .table, .table-wrap--stack .table tbody, .table-wrap--stack .table tr, .table-wrap--stack .table td { display: block; }
   .table-wrap--stack .table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
-  .table-wrap--stack .table tr { padding: var(--spacing-3) 0; border-bottom: 1px solid var(--bg-3); }
-  .table-wrap--stack .table td { padding: 0; border-bottom: 0; text-align: left; white-space: normal; min-width: 0; }
+  .table-wrap--stack .table tr { padding: var(--spacing-3) var(--spacing-2-5); }
+  .table-wrap--stack .table td { padding: 0; text-align: left; white-space: normal; min-width: 0; }
   .table-wrap--stack .table td:first-child { font-size: var(--text-base); font-weight: var(--font-weight-bold); color: var(--fg-1); }
   .table-wrap--stack .table td + td { margin-top: var(--spacing-2); }
   .table-wrap--stack .table td[data-label]:not(:first-child)::before { content: attr(data-label); display: block; font-size: var(--text-xs); color: var(--primary-muted); }
 }
-/* Facts: a muted line under a term, and a last row that sums up (bold, no rule under it). */
+/* Facts: a muted line under a term, and a last row that sums up (bold). */
 .facts__detail { display: block; margin-top: var(--spacing-0-5); font-size: var(--text-sm); color: var(--fg-1); }
-.facts > .facts__total { border-bottom: 0; font-weight: var(--font-weight-bold); }
+.facts > .facts__total { font-weight: var(--font-weight-bold); }
 /* A chart bar the pointer or the keyboard is on, driven by the script: the same look as .bar:hover. */
 .chart .bar--active { opacity: 0.8; }
 
 /* ---- Alert, banner, panel ------------------------------------------------------ */
-/* Alert: a danger box, a 2px --negative-3 border on --negative-1 with an icon and a title in --negative-5. */
-.alert { padding: var(--spacing-4); border: 2px solid var(--negative-3); border-radius: var(--radius-3); background: var(--negative-1); color: var(--fg-1); }
+/* Alert: a danger box on --negative-1 with an icon and a title in --negative-5 (its 2px border went with #4127). */
+.alert { padding: var(--spacing-4); border-radius: var(--radius-3); background: var(--negative-1); color: var(--fg-1); }
 .alert__title { display: flex; align-items: center; gap: var(--spacing-2); margin: 0 0 var(--spacing-1); font-size: var(--text-h3); color: var(--negative-5); }
 .alert__icon { flex: none; }
 .alert > :last-child { margin-bottom: 0; }
-/* Banner: a bordered line or two of text; --accent is a centred statement on the tint, its <strong> the highlight.
+/* Banner: a line or two of text on --bg-2; --accent is a centred statement on the tint, its <strong> the highlight.
    A boxed warning is the house .notice. */
-.banner { margin: 0; padding: var(--spacing-3) var(--spacing-4); line-height: 1.35; color: var(--fg-1); border: 1px solid var(--bg-3); border-radius: var(--radius-3); }
-.banner--accent { font-size: var(--text-h3); text-align: center; background: var(--bg-3); border-color: var(--bg-4); }
+.banner { margin: 0; padding: var(--spacing-3) var(--spacing-4); line-height: 1.35; color: var(--fg-1); background: var(--bg-2); border-radius: var(--radius-3); }
+.banner--accent { font-size: var(--text-h3); text-align: center; background: var(--bg-3); }
 .banner--accent strong { color: var(--primary); white-space: nowrap; }
 .banner__lead { display: inline-flex; align-items: center; gap: var(--spacing-1-5); font-weight: var(--font-weight-bold); }
-/* Panel: a tinted box (--bg-3) with a --bg-4 border; --accent a --primary-muted border, --positive the green message
-   colours, --button a panel that is one full-width button (<button class="panel panel--button">). Inside, __label is a
+/* Panel: a tinted box (--bg-3); --accent one step further (--bg-4), --positive the green message colours (each a
+   border until #4127), --button a panel that is one full-width button, and the one panel with a border, as a button (<button class="panel panel--button">). Inside, __label is a
    small uppercase line and __value the figure. */
-.panel { padding: var(--spacing-3); border: 1px solid var(--bg-4); border-radius: var(--radius-3); background: var(--bg-3); color: var(--fg-1); }
-.panel--accent { border-color: var(--primary-muted); }
-.panel--positive { border-color: var(--positive-3); background: var(--positive-1); }
+.panel { padding: var(--spacing-3); border: 0; border-radius: var(--radius-3); background: var(--bg-3); color: var(--fg-1); }
+.panel--accent { background: var(--bg-4); }
+.panel--positive { background: var(--positive-1); }
 .panel--button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-0-5); width: 100%; min-height: var(--tap);
-  padding: var(--spacing-2-5) var(--spacing-2); border-radius: var(--radius-2); font: inherit; font-weight: var(--font-weight-bold); cursor: pointer; }
+  padding: var(--spacing-2-5) var(--spacing-2); border: 1px solid var(--bg-5); border-radius: var(--radius-2); font: inherit; font-weight: var(--font-weight-bold); cursor: pointer; }
 .panel--button:focus-visible { outline: 2px solid var(--primary-muted); outline-offset: 2px; }
 .panel__label { font-size: var(--text-sm); font-weight: var(--font-weight-bold); letter-spacing: 0.03em; text-transform: uppercase; color: var(--fg-1); }
 .panel__value { font-size: var(--text-h3); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ---- Chip, tag, filter chips -------------------------------------------------- */
-/* Chip: a pill that states an answer: --yes filled, --no on the page, --todo dashed. */
-.chip { display: inline-block; max-width: 100%; padding: var(--spacing-0-5) var(--spacing-3); border: 1px solid var(--bg-3); border-radius: var(--radius-pill);
+/* Chip: a pill that states an answer: --yes filled, --no on the tint, --todo no fill and muted (a dashed edge until
+   #4127: a chip is not pressed, so it has no border). */
+.chip { display: inline-block; max-width: 100%; padding: var(--spacing-0-5) var(--spacing-3); border-radius: var(--radius-pill); background: var(--bg-3);
   font-size: var(--text-base); font-weight: var(--font-weight-bold); overflow-wrap: anywhere; }
-.chip--yes { background: var(--primary-muted); border-color: var(--primary-muted); color: var(--bg-1); }
-.chip--no { background: var(--bg-1); }
-.chip--todo { color: var(--fg-1); border-style: dashed; }
+.chip--yes { background: var(--primary-muted); color: var(--bg-1); }
+.chip--no { background: var(--bg-3); }
+.chip--todo { background: none; color: var(--primary-muted); }
 /* Tag: a small uppercase pill above a title; --primary-muted fill, --info on --graph-1, --warn in text on the warning tint. */
 .tag { display: inline-block; padding: var(--spacing-0-5) var(--spacing-2); border-radius: var(--radius-pill); background: var(--primary-muted); color: var(--bg-1);
   font-size: var(--text-xs); font-weight: var(--font-weight-bold); line-height: 1.2; letter-spacing: 0.06em; text-transform: uppercase; }
