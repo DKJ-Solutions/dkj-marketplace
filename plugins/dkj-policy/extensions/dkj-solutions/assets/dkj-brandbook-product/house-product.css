@@ -279,12 +279,15 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
 .dialog--screen .dialog__close:hover { background: var(--primary-hover); }
 .dialog--screen .dialog__close:focus-visible { outline-color: var(--bg-1); outline-offset: -4px; }
 .dialog--screen .dialog__close svg { width: var(--spacing-6); height: var(--spacing-6); }
-.dialog--screen .menu-item { gap: var(--spacing-4); min-height: var(--spacing-16); padding: var(--spacing-3) var(--spacing-4); border-radius: 0;
+/* The More page (#4125): <div class="menu-page"> holds the same sections on a page of its own, the destination a bottom
+   bar's More links to, so it has a URL, the back gesture leaves it as any page, and the bar marks it. Its rows read as
+   the dialog's. */
+:is(.dialog--screen, .menu-page) .menu-item { gap: var(--spacing-4); min-height: var(--spacing-16); padding: var(--spacing-3) var(--spacing-4); border-radius: 0;
   border-bottom: 1px solid var(--bg-3); font-size: var(--text-h3); }
-.dialog--screen .menu-item + .menu-item { border-top: 0; }
-.dialog--screen .menu-item__icon { width: var(--spacing-6); height: var(--spacing-6); }
-.dialog--screen .menu-item__sub { margin-top: var(--spacing-1); }
-.dialog--screen .menu-item[aria-current="page"] { font-weight: var(--font-weight-bold); color: var(--primary); }
+:is(.dialog--screen, .menu-page) .menu-item + .menu-item { border-top: 0; }
+:is(.dialog--screen, .menu-page) .menu-item__icon { width: var(--spacing-6); height: var(--spacing-6); }
+:is(.dialog--screen, .menu-page) .menu-item__sub { margin-top: var(--spacing-1); }
+:is(.dialog--screen, .menu-page) .menu-item[aria-current="page"] { font-weight: var(--font-weight-bold); color: var(--primary); }
 .menu-item__aside { flex: none; font-size: var(--text-base); color: var(--primary-muted); white-space: nowrap; }
 .menu-section { margin: 0; padding: var(--spacing-6) var(--spacing-4) var(--spacing-2); font-size: var(--text-xs); font-weight: var(--font-weight-bold);
   letter-spacing: 0.06em; text-transform: uppercase; color: var(--primary-muted); }
@@ -337,6 +340,8 @@ html:has(.breadcrumbs-bar) .theme-settings--floating { top: calc(var(--tap) + va
    target, and the section you are in is bold in the text colour (aria-current="page"), the others regular and muted.
    The last slot is always More: a button opening the site menu, so a page with a bottom bar leaves the
    header's three-line toggle out (Figma Menu toggle=false). house-theme.js wires More as it wires that toggle.
+   Or, where the product has a More page (#4125), More is a link like the others, <a class="bottom-bar__item"
+   href="/more">, current on that page; the page holds the menu's sections in a .menu-page, and no dialog is drawn.
    <nav class="bottom-bar" aria-label="Sections"><a class="bottom-bar__item" href aria-current="page"><span
    class="bottom-bar__icon">(svg)</span><span class="bottom-bar__label">..</span></a> .. <button class="bottom-bar__item
    bottom-bar__more" type="button" aria-controls="site-menu" aria-expanded="false">..</button></nav>
