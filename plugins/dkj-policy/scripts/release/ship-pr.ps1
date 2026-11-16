@@ -3775,7 +3775,10 @@ land on its own, or the lock may expire and leave the PR open.
 PR #$pr stays armed '$armLabel', so the merge-on-green sweep lands and folds it if this session does
 not. Or re-run ship-pr later: a merge that landed reads back MERGED and step 5 folds against it.
 "@
-    exit 1
+    # ITS OWN EXIT CODE, NOT 1 (issue #4198): the merge-on-green runner reads this one code as "wake the
+    # next sweep yourself", because after a 5xx no CI completion comes to wake it and the schedule arrives
+    # hours late (#3807). Every other refusal keeps exit 1.
+    exit (Get-MergeHeldExitCode)
 } elseif ($mergedState -ne 'MERGED') {
     # A MERGE QUEUE IS NAMED AS THE CAUSE ONLY WHERE THE TRUNK'S RULES WERE NOT READ (issue #3802). When
     # they were read and carry no merge_queue rule, a queue is the one cause already ruled out, and naming

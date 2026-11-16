@@ -1197,6 +1197,7 @@ $mergeOnGreenRunner = @(
     '  checks: read',
     '  statuses: read',
     '  actions: read',
+    '# The redispatch job at the bottom adds actions: write in its own block, for gh workflow run alone (#4198).',
     '',
     'on:'
 ) + $mogWakeLines + @(
@@ -1210,7 +1211,14 @@ $mergeOnGreenRunner = @(
     '    # there is 48 jobs/day, roughly 1,440 billed minutes/month; every 3 hours is 8/day, roughly',
     '    # 240/month.',
     '    - cron: ''0 */3 * * *''',
+    '  # The hand valve, and since #4198 also the runner''s own wake: the redispatch job below dispatches',
+    '  # this workflow again after a held merge, with the retry counter as this input.',
     '  workflow_dispatch:',
+    '    inputs:',
+    '      retry:',
+    '        description: ''Retry counter after a held merge (#4198); leave at 0 when dispatching by hand.''',
+    '        required: false',
+    '        default: ''0''',
     '',
     'concurrency:',
     '  group: merge-on-green',
@@ -1219,6 +1227,15 @@ $mergeOnGreenRunner = @(
     'jobs:',
     '  merge-on-green:',
     '    runs-on: ubuntu-latest',
+    '    # Read by the redispatch job below (#4198); written before the ship step exits non-zero.',
+    '    outputs:',
+    '      held: ${{ steps.ship.outputs.held }}',
+    '      redispatch: ${{ steps.plan.outputs.redispatch }}',
+    '      next: ${{ steps.plan.outputs.next }}',
+    '      delay: ${{ steps.plan.outputs.delay }}',
+    '      workflow: ${{ steps.plan.outputs.workflow }}',
+    '      ref: ${{ steps.plan.outputs.ref }}',
+    '      reason: ${{ steps.plan.outputs.reason }}',
     '    # 45 minutes, longer than the other runners because this one waits on CI on purpose: ship-pr may',
     '    # bring a stale branch forward and re-certify it, and each lap is a full CI cycle. Re-size it to',
     '    # this repo''s own CI duration; the cap is a wedge detector, against GitHub''s six-hour default.',
@@ -1292,6 +1309,7 @@ $mergeOnGreenRunner = @(
     '      # BRANCH''S OWN COMMIT exactly as a live session would; -TrustedRoot is what keeps its seams and',
     '      # its fold on trusted-main.',
     '      - name: Ship it',
+    '        id: ship',
     '        if: ${{ steps.pick.outputs.picked == ''true'' }}',
     '        shell: pwsh',
     '        env:',
@@ -1343,6 +1361,66 @@ $mergeOnGreenRunner = @(
     '          # merge is allowed on. Re-running the local gates here would prove nothing it does not carry.',
     '          Write-Host "merge-on-green: running ship-pr.ps1 (trusted-tree mode) on ''$env:SHIP_BRANCH'' for PR #$env:SHIP_PR"',
     ('          powershell -NoProfile -ExecutionPolicy Bypass -File ' + $pluginDir + '/release/ship-pr.ps1 -TrustedRoot (Join-Path $env:GITHUB_WORKSPACE ''trusted-main'') -SkipLint -SkipTests'),
+    '          $shipExit = $LASTEXITCODE',
+    '          # 75 is ship-pr''s held-merge refusal (Get-MergeHeldExitCode, #4198): GitHub did not confirm the',
+    '          # merge after a 5xx or a held lock. The step still fails; held=true asks the job below to retry.',
+    '          if ($shipExit -eq 75) { ''held=true'' | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8 }',
+    '          exit $shipExit',
+    '',
+    '      # The next sweep is planned here, out of the pinned plugin tree this job already holds, so the',
+    '      # redispatch job below needs no checkout (#4198). No token, no gh; the counter arrives through env:',
+    '      # and the verdict refuses anything that is not a small whole number.',
+    '      - name: Held merge -- plan the next sweep',
+    '        id: plan',
+    '        if: ${{ always() && steps.ship.outputs.held == ''true'' }}',
+    '        shell: pwsh',
+    '        env:',
+    '          SWEEP_RETRY: ${{ inputs.retry }}',
+    '        run: |',
+    ('          . ./' + $pluginDir + '/lib/merge-on-green-lib.ps1'),
+    '          $v = Get-MergeOnGreenRedispatchVerdict -Retry $env:SWEEP_RETRY -WorkflowRef $env:GITHUB_WORKFLOW_REF',
+    '          $lines = @(',
+    '            "redispatch=$($v.Redispatch.ToString().ToLowerInvariant())",',
+    '            "next=$($v.Next)", "delay=$($v.DelaySeconds)",',
+    '            "workflow=$($v.Workflow)", "ref=$($v.Ref)", "reason=$($v.Reason)"',
+    '          )',
+    '          $lines | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8',
+    '',
+    '  # THE SWEEP WAKES ITSELF AFTER A HELD MERGE (issue #4198). After a 5xx on the merge ship-pr hands the',
+    '  # pull request back armed, but this run''s CI wake is spent and the schedule is hours away. So this',
+    '  # job waits 5, 10, then 15 minutes and dispatches this workflow again with a retry counter, at most',
+    '  # three times per held merge; past that it fails loudly and the pull request waits for the next CI',
+    '  # wake, as before. On a private repo the wait is billed -- at most about 30 minutes, and only after a',
+    '  # server error on a merge. Its own permissions block gives actions: write to this job alone, and it',
+    '  # checks nothing out: it acts only on the plan step''s outputs, through env:. A dispatch made with',
+    '  # GITHUB_TOKEN does start a run, and it queues behind this one in the concurrency group.',
+    '  redispatch:',
+    '    needs: merge-on-green',
+    '    if: ${{ always() && needs.merge-on-green.outputs.held == ''true'' }}',
+    '    runs-on: ubuntu-latest',
+    '    timeout-minutes: 20',
+    '    permissions:',
+    '      actions: write',
+    '    steps:',
+    '      - name: Wait, then wake the sweep again',
+    '        shell: pwsh',
+    '        env:',
+    '          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}',
+    '          GH_REPO: ${{ github.repository }}',
+    '          PLAN_REDISPATCH: ${{ needs.merge-on-green.outputs.redispatch }}',
+    '          PLAN_NEXT: ${{ needs.merge-on-green.outputs.next }}',
+    '          PLAN_DELAY: ${{ needs.merge-on-green.outputs.delay }}',
+    '          PLAN_WORKFLOW: ${{ needs.merge-on-green.outputs.workflow }}',
+    '          PLAN_REF: ${{ needs.merge-on-green.outputs.ref }}',
+    '          PLAN_REASON: ${{ needs.merge-on-green.outputs.reason }}',
+    '        run: |',
+    '          if ($env:PLAN_REDISPATCH -ne ''true'') {',
+    '            Write-Error "merge-on-green: not waking another sweep -- $env:PLAN_REASON."',
+    '            exit 1',
+    '          }',
+    '          Write-Host "merge-on-green: held merge, $env:PLAN_REASON -- waiting $($env:PLAN_DELAY)s, then dispatching $env:PLAN_WORKFLOW on $env:PLAN_REF."',
+    '          Start-Sleep -Seconds ([int]$env:PLAN_DELAY)',
+    '          gh workflow run $env:PLAN_WORKFLOW --ref $env:PLAN_REF -f "retry=$($env:PLAN_NEXT)"',
     '          exit $LASTEXITCODE'
 )
 
@@ -1615,6 +1693,28 @@ function Write-MergeOnGreenSettleVerdict {
     Write-Host '            LAST is refused by the 10-minute settle window and waits for the next schedule or a hand' -ForegroundColor Yellow
     Write-Host '            dispatch (#3809). A newer ref: alone does not fix it: append -WaitForSettleSeconds 660 to the' -ForegroundColor Yellow
     Write-Host '            pick-merge-on-green.ps1 line, or delete this file and re-run adopt-ci-floor -Apply.' -ForegroundColor Yellow
+}
+
+function Write-MergeOnGreenRedispatchVerdict {
+    <#
+        One line about an existing merge-on-green.yml that has no redispatch job (#4198): placed before
+        this scaffolder wrote one. It prints nothing when the job is there.
+
+        WHY THIS IS SAID AT ALL -- #2449's reason, for a correction that lives in the YAML. ship-pr exits
+        75 on a merge GitHub did not confirm after a 5xx, and only the job reads that code; without it
+        the pull request stays armed until the next CI wake or schedule, hours later. A newer ref: pin
+        does not deliver it. The file is never rewritten, so a re-run of this command is the one moment
+        anything looks at it again.
+
+        READ IN THE SHAPE THIS SCAFFOLDER WRITES, AND NO FURTHER: a line calling
+        Get-MergeOnGreenRedispatchVerdict. Its absence is reported, never judged clean.
+    #>
+    param([string]$Text)
+
+    if ($Text -match '(?m)^[^\n#]*Get-MergeOnGreenRedispatchVerdict\b') { return }
+    Write-Host '            [redispatch] it has no redispatch job, so after a 5xx on a merge the pull request stays armed' -ForegroundColor Yellow
+    Write-Host '            until the next CI wake or schedule, hours later (#4198). A newer ref: alone does not add it:' -ForegroundColor Yellow
+    Write-Host '            delete this file and re-run adopt-ci-floor -Apply, or copy the redispatch job from the template.' -ForegroundColor Yellow
 }
 
 function Write-RunnerGroupVerdict {
@@ -1911,6 +2011,7 @@ foreach ($t in $targets) {
                 Write-MergeOnGreenShapeVerdict -Text $existing
                 Write-MergeOnGreenScopeVerdict -Text $existing
                 Write-MergeOnGreenSettleVerdict -Text $existing
+                Write-MergeOnGreenRedispatchVerdict -Text $existing
             }
             else { Write-RunnerGroupVerdict -Rel $t.Rel -Text $existing -TemplateText $t.Content }
         }

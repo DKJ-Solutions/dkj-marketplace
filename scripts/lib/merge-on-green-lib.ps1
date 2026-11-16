@@ -82,6 +82,92 @@ function Get-MergeOnGreenSettleMinutes {
     return 10
 }
 
+# THE HELD-MERGE EXIT CODE IS A HANDSHAKE, LIKE THE LABEL ABOVE (issue #4198). ship-pr.ps1 writes it on
+# the one refusal that means "GitHub did not confirm the merge after a 5xx or a held lock, try again
+# later" (#1916, #3802); the merge-on-green runner reads it to wake its own next sweep. 75 is sysexits'
+# EX_TEMPFAIL -- "temporary failure, retry later" -- and no script ship-pr launches exits with it, so a
+# child's code can never be mistaken for it. The runner's YAML spells the number out, because a workflow
+# step cannot call this function before it has run ship-pr; the tests hold the two to each other.
+$script:MergeHeldExitCode = 75
+
+function Get-MergeHeldExitCode {
+    <#
+    .SYNOPSIS
+        The exit code ship-pr.ps1 uses for a merge GitHub has not confirmed after a 5xx or a held merge
+        lock -- the one refusal the merge-on-green runner answers by re-dispatching itself (#4198).
+    #>
+    return $script:MergeHeldExitCode
+}
+
+function Get-MergeOnGreenRedispatchVerdict {
+    <#
+    .SYNOPSIS
+        Whether a merge-on-green run whose ship ended in a held merge may wake its own next sweep, and
+        how -- issue #4198.
+
+    .DESCRIPTION
+        WHAT THIS CLOSES. ship-pr's held-merge refusal (#3802) leaves the pull request armed and says the
+        sweep lands it. But the sweep is woken by a CI completion or by the schedule, and after a 5xx on
+        the merge neither comes: the CI run that woke this sweep has already been spent, and GitHub
+        delivers the */30 schedule every 4 to 8 hours here (#3807). Measured November 16, 2026: two
+        sweeps 21 minutes apart both got 502 on PR #4194's merge, and both armed pull requests then sat
+        green for over an hour until a person shipped them by hand. So the runner wakes itself: it
+        dispatches its own workflow again, after a wait, with a counter.
+
+        THE BOUND, AND WHY A WAIT AT ALL. An immediate re-run meets the same outage, and the measured
+        one lasted at least 21 minutes. So retry N waits N x 5 minutes before dispatching -- 5, 10, 15 --
+        and at most three retries follow one held merge: about 30 minutes plus three short sweeps, which
+        covers the measured outage with room. Past the bound the run fails loudly and the pull request
+        stays armed for the next CI wake or schedule, which is where it stood before this existed. A
+        counter that does not read as a small whole number is refused rather than read as zero, because
+        a workflow_dispatch input can be typed by hand.
+
+        WHERE TO DISPATCH IS READ OFF GITHUB_WORKFLOW_REF, not typed: owner/repo/.github/workflows/
+        <file>@refs/heads/<branch>. A consumer may have renamed the file, and the ref is the branch the
+        running copy came from -- the default branch, for every trigger this runner has. Anything outside
+        that shape refuses, because both halves reach a gh command line.
+
+        PURE: it decides and returns; the waiting and the gh call are the runner's.
+
+    .OUTPUTS
+        [pscustomobject] Redispatch (bool), Next (int), DelaySeconds (int), Workflow, Ref, Reason.
+    #>
+    param(
+        [AllowEmptyString()][AllowNull()][string]$Retry,
+        [AllowEmptyString()][AllowNull()][string]$WorkflowRef,
+        [int]$MaxRetries = 3,
+        [int]$DelayStepSeconds = 300
+    )
+
+    $refuse = { param($why) [pscustomobject]@{ Redispatch = $false; Next = 0; DelaySeconds = 0; Workflow = ''; Ref = ''; Reason = $why } }
+
+    $current = 0
+    if (-not [string]::IsNullOrWhiteSpace($Retry)) {
+        if ($Retry.Trim() -notmatch '^\d{1,2}$') {
+            return & $refuse "the retry counter '$Retry' is not a small whole number, so this run does not wake another sweep"
+        }
+        $current = [int]$Retry.Trim()
+    }
+    if ($current -ge $MaxRetries) {
+        return & $refuse "this was retry $current of $MaxRetries after a held merge; the pull request stays armed for the next CI wake or schedule"
+    }
+
+    $m = [regex]::Match([string]$WorkflowRef, '^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+/\.github/workflows/(?<file>[A-Za-z0-9._-]+\.ya?ml)@refs/heads/(?<ref>[A-Za-z0-9._/-]+)$')
+    if (-not $m.Success) {
+        return & $refuse "GITHUB_WORKFLOW_REF '$WorkflowRef' is not a workflow file on a branch, so there is nothing safe to dispatch"
+    }
+
+    $next = $current + 1
+    return [pscustomobject]@{
+        Redispatch   = $true
+        Next         = $next
+        DelaySeconds = $DelayStepSeconds * $next
+        Workflow     = $m.Groups['file'].Value
+        Ref          = $m.Groups['ref'].Value
+        Reason       = "retry $next of $MaxRetries after a held merge"
+    }
+}
+
 function Get-RequiredGreenAgeMinutes {
     <#
     .SYNOPSIS

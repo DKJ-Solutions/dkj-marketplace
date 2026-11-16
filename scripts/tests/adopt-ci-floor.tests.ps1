@@ -584,6 +584,14 @@ try {
     Assert-True ($mergeOnGreen -notmatch '\*/30 \* \* \* \*') 'and never the source repo''s own half-hourly cadence'
     # THE LAST GREEN PR WAITS NO SCHEDULE OUT (#3809): the picker gets the same settle-wait cap as the source's own runner.
     Assert-True ($mergeOnGreen -match 'pick-merge-on-green\.ps1 -WaitForSettleSeconds 660') 'the consumer template passes the picker a settle-wait cap'
+    # A HELD MERGE WAKES THE NEXT SWEEP (#4198), in the consumer template as in the source's own runner.
+    Assert-True ($mergeOnGreen -match '\$shipExit -eq 75\b') 'the consumer ship step reads ship-pr''s held-merge code'
+    Assert-True ($mergeOnGreen -match '(?m)^  redispatch:\s*$') 'and a redispatch job answers it'
+    Assert-Equal 1 ([regex]::Matches($mergeOnGreen, '(?m)^\s+actions: write\s*$')).Count 'actions: write is in that job alone'
+    Assert-True ($mergeOnGreen -match '(?m)^\s+\. \./\.workflow-scripts/[^\n]*/lib/merge-on-green-lib\.ps1\s*$') 'it reads the verdict from the pinned plugin tree'
+    Assert-True ($mergeOnGreen -match 'SWEEP_RETRY: \$\{\{ inputs\.retry \}\}') 'and takes the counter through env:'
+    Assert-True ([regex]::Match($mergeOnGreen, '(?ms)^  redispatch:.*\z').Value -notmatch 'actions/checkout@') 'and the redispatch job checks nothing out'
+    Assert-True ($mergeOnGreen -match '(?m)^\s+retry:\s*$') 'workflow_dispatch declares the retry input'
     # THE WAKE LIST IS READ OFF THE TREE: the fixture's own ci.yml is `name: CI`.
     Assert-True ($mergeOnGreen -match '(?m)^\s+workflows:\s*\["CI"\]\s*$') `
         'workflow_run names this repo''s own pull_request workflow, read off its top-level name:'
@@ -1383,6 +1391,10 @@ try {
     [System.IO.File]::WriteAllText($mogPath, "name: Merge on green`n        run: |`n$pickerLine -WaitForSettleSeconds 660`n")
     $rSettleOk = Invoke-Adopt -Dir $pinDir -ScriptArgs @('-RulesJsonOverride', $rulesOff, '-Apply')
     Assert-True ($rSettleOk.Flat -notlike '*`[settle`]*') 'and the same line with the flag draws none'
+
+    # A RUNNER PLACED BEFORE #4198 IS NAMED ON A RE-RUN: it has no redispatch job, and a newer pin cannot add one.
+    Assert-True ($rPin.Flat -notlike '*`[redispatch`]*') 'a merge-on-green.yml with the redispatch job draws no redispatch advisory'
+    Assert-True ($rSettleOk.Flat -like '*`[redispatch`] it has no redispatch job*') 'a runner without it is reported (#4198)'
 
     # THE PRE-#2813 CONCURRENCY GROUP IS NAMED ON A RE-RUN TOO (#2816), and the runners this floor just
     # placed carry the current one, so the pin-rerun pass above already proved the silent case.

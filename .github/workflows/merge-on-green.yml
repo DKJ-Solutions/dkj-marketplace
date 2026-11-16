@@ -8,7 +8,8 @@ name: Merge on green
 # THE JOB TOKEN ONLY READS, AND THE MERGE IS NOT ITS WORK. The picker lists pull requests and their
 # required checks; nothing here writes with this token. Declaring a permissions block at all sets every
 # unlisted scope to none, which is the point -- the write half arrives as FOLD_PUSH_TOKEN, on the one
-# step that needs it, and never through this block.
+# step that needs it, and never through this block. The one exception is the redispatch job at the
+# bottom (#4198), whose own block adds actions: write for `gh workflow run` and for nothing else.
 #
 # checks: AND statuses: ARE THE PICKER'S, NOT A WIDENING (#3491). It reads the required checks with
 # `gh pr checks --required`. This repo is public, so check runs read without them; a private consumer's
@@ -66,7 +67,15 @@ on:
     # or not anything is owed a merge -- so on a private consumer the latency is worth giving up:
     # half-hourly is 48 billed jobs/day, every 3 hours is 8.
     - cron: '*/30 * * * *'
+  # THE HAND VALVE, AND SINCE #4198 ALSO THE RUNNER'S OWN WAKE: the redispatch job at the bottom of this
+  # file dispatches this workflow again after a held merge, carrying the retry counter as this input. A
+  # person dispatching by hand leaves it at 0.
   workflow_dispatch:
+    inputs:
+      retry:
+        description: 'Retry counter after a held merge (#4198); leave at 0 when dispatching by hand.'
+        required: false
+        default: '0'
 
 # ONE SWEEP AT A TIME, REPO-WIDE, AND NOT CANCELLED. cancel-in-progress: false because this job MERGES
 # and FOLDS: dropping an in-flight run is the silent skip the whole family of merger-independent runners
@@ -89,6 +98,17 @@ jobs:
     # ship-pr's merge path under pwsh on ubuntu-latest. After it, the first sweep that ships an armed PR
     # is the live run, and a workflow_dispatch run with nothing armed exercises the pick step on its own.
     runs-on: ubuntu-latest
+    # held IS THE SHIP STEP'S ANSWER TO "did ship-pr hand the merge back after a 5xx?" (#4198), read by the
+    # redispatch job below. It is written before that step exits non-zero, and GitHub records a step's
+    # outputs whatever its conclusion.
+    outputs:
+      held: ${{ steps.ship.outputs.held }}
+      redispatch: ${{ steps.plan.outputs.redispatch }}
+      next: ${{ steps.plan.outputs.next }}
+      delay: ${{ steps.plan.outputs.delay }}
+      workflow: ${{ steps.plan.outputs.workflow }}
+      ref: ${{ steps.plan.outputs.ref }}
+      reason: ${{ steps.plan.outputs.reason }}
     # 45 MINUTES, WHICH IS LONGER THAN EVERY OTHER JOB HERE BECAUSE THIS ONE WAITS ON CI ON PURPOSE.
     # ship-pr's step 3b may bring a stale branch up to date and re-certify it, up to -MaxForwardLaps
     # times, and each lap is a full CI cycle (310-461s over the last 40 paired runs, per ci.yml's own
@@ -218,6 +238,7 @@ jobs:
       # file. pick-merge-on-green.ps1 has already refused any name outside a plain charset; this is the
       # second half of that same guard, and neither is load-bearing alone.
       - name: Ship it
+        id: ship
         if: ${{ steps.pick.outputs.picked == 'true' }}
         shell: pwsh
         env:
@@ -306,4 +327,79 @@ jobs:
           # this same commit -- it is the certificate, not a local copy, the merge is allowed on.
           Write-Host "merge-on-green: running ship-pr.ps1 (trusted-tree mode) on '$env:SHIP_BRANCH' for PR #$env:SHIP_PR"
           powershell -NoProfile -ExecutionPolicy Bypass -File trusted-main/scripts/release/ship-pr.ps1 -TrustedRoot (Join-Path $env:GITHUB_WORKSPACE 'trusted-main') -SkipLint -SkipTests
+          $shipExit = $LASTEXITCODE
+          # 75 IS ship-pr's HELD-MERGE REFUSAL (Get-MergeHeldExitCode, #4198): GitHub did not confirm the
+          # merge after a 5xx or a held lock, and nothing else will wake the next sweep. The step still
+          # fails, loudly; held=true only asks the redispatch job below to try again later.
+          if ($shipExit -eq 75) { 'held=true' | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8 }
+          exit $shipExit
+
+
+      # THE NEXT SWEEP IS PLANNED HERE, IN THE TRUSTED TREE, AND ONLY WOKEN BELOW (#4198). This step runs
+      # the lib out of 'trusted-main', which this job already holds, so the redispatch job needs no
+      # checkout of its own. It holds no token and runs no gh. The retry counter arrives through env:,
+      # never through ${{ }} inside run:, because a dispatch input can be typed by hand, and the verdict
+      # refuses anything that is not a small whole number.
+      - name: Held merge -- plan the next sweep
+        id: plan
+        if: ${{ always() && steps.ship.outputs.held == 'true' }}
+        shell: pwsh
+        working-directory: trusted-main
+        env:
+          SWEEP_RETRY: ${{ inputs.retry }}
+        run: |
+          . ./scripts/lib/merge-on-green-lib.ps1
+          $v = Get-MergeOnGreenRedispatchVerdict -Retry $env:SWEEP_RETRY -WorkflowRef $env:GITHUB_WORKFLOW_REF
+          $lines = @(
+            "redispatch=$($v.Redispatch.ToString().ToLowerInvariant())",
+            "next=$($v.Next)", "delay=$($v.DelaySeconds)",
+            "workflow=$($v.Workflow)", "ref=$($v.Ref)", "reason=$($v.Reason)"
+          )
+          $lines | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+  # THE SWEEP WAKES ITSELF AFTER A HELD MERGE (issue #4198). After a 5xx on the merge, ship-pr hands the
+  # pull request back armed and promises the sweep lands it -- but this run's CI wake is spent and the
+  # schedule arrives hours late (#3807). Measured November 16, 2026: two sweeps got 502 on PR #4194's
+  # merge 21 minutes apart, and both armed pull requests sat green for over an hour. So this job waits,
+  # then dispatches this workflow again with a retry counter: 5, 10 and 15 minutes, at most three times
+  # per held merge (Get-MergeOnGreenRedispatchVerdict). Past that it fails loudly and the pull request
+  # waits for the next CI wake, as before. One merge that lands pushes to main, whose CI wakes the
+  # sweep for every other armed pull request, so retrying the held one is enough.
+  #
+  # A JOB OF ITS OWN, BECAUSE IT IS THE ONLY ONE THAT WRITES WITH THE JOB TOKEN. actions: write is what
+  # `gh workflow run` needs, and a job-level permissions block replaces the read-only top-level one for
+  # this job alone -- the ship job keeps its read-only token. A workflow_dispatch made with GITHUB_TOKEN
+  # does start a run, the documented exception to "a GITHUB_TOKEN event starts no workflow". The new run
+  # queues behind this one in the merge-on-green concurrency group, so it cannot race the sweep.
+  #
+  # NO CHECKOUT AND NO SCRIPT FROM ANY TREE: everything it acts on is the plan step's output, computed in
+  # the trusted trunk, and it reaches the shell through env:.
+  redispatch:
+    needs: merge-on-green
+    if: ${{ always() && needs.merge-on-green.outputs.held == 'true' }}
+    runs-on: ubuntu-latest
+    # The longest wait is 15 minutes; the cap is a wedge detector above it.
+    timeout-minutes: 20
+    permissions:
+      actions: write
+    steps:
+      - name: Wait, then wake the sweep again
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PLAN_REDISPATCH: ${{ needs.merge-on-green.outputs.redispatch }}
+          PLAN_NEXT: ${{ needs.merge-on-green.outputs.next }}
+          PLAN_DELAY: ${{ needs.merge-on-green.outputs.delay }}
+          PLAN_WORKFLOW: ${{ needs.merge-on-green.outputs.workflow }}
+          PLAN_REF: ${{ needs.merge-on-green.outputs.ref }}
+          PLAN_REASON: ${{ needs.merge-on-green.outputs.reason }}
+        run: |
+          if ($env:PLAN_REDISPATCH -ne 'true') {
+            Write-Error "merge-on-green: not waking another sweep -- $env:PLAN_REASON."
+            exit 1
+          }
+          Write-Host "merge-on-green: held merge, $env:PLAN_REASON -- waiting $($env:PLAN_DELAY)s, then dispatching $env:PLAN_WORKFLOW on $env:PLAN_REF."
+          Start-Sleep -Seconds ([int]$env:PLAN_DELAY)
+          gh workflow run $env:PLAN_WORKFLOW --ref $env:PLAN_REF -f "retry=$($env:PLAN_NEXT)"
           exit $LASTEXITCODE

@@ -39,19 +39,47 @@
 
 ### PLAN
 
+Option B, as decided on #4198 by the owner (November 16, 2026): on ship-pr's held-merge refusal the
+merge-on-green runner re-dispatches itself, with a bound.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `merge-on-green-lib.ps1`: `Get-MergeHeldExitCode` (75, EX_TEMPFAIL) and the pure
+  `Get-MergeOnGreenRedispatchVerdict` (retry counter, 5/10/15-minute waits, at most three retries,
+  workflow and branch read off `GITHUB_WORKFLOW_REF`)
+- [x] `ship-pr.ps1`: the #3802 held-merge refusal exits 75 instead of 1; every other refusal keeps 1
+- [x] `.github/workflows/merge-on-green.yml`: a `retry` dispatch input, a `held` output from the ship
+  step, a plan step in the trusted tree, and a checkout-free `redispatch` job with `actions: write` alone
+- [x] `adopt-ci-floor.ps1`: the same in the consumer template, plus a `[redispatch]` advisory for a
+  runner placed before it
+- [x] plugin mirrors of the three shared scripts
 
 ### TEST
 
+- [x] `merge-on-green-lib.tests.ps1` and `adopt-ci-floor.tests.ps1` green locally; the full gate runs
+  in ship-pr. The runner itself is proved only by its first held merge after the merge, like every
+  workflow_run runner here.
+
 ### DEPLOY: fix/4198-merge-on-green-redispatch
 
-**Score:**
+When GitHub answers a merge with a 5xx and does not confirm it within a minute, `ship-pr` now exits 75
+instead of 1 ([#4198](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4198)). The merge-on-green
+runner reads that code and wakes its own next sweep: it waits 5, 10 and then 15 minutes, and dispatches
+itself again with a retry counter, at most three times. It used to wait for a CI completion or a schedule
+that, after a 5xx, does not come. The dispatch runs in a job of its own, which holds `actions: write` and
+checks nothing out. `adopt-ci-floor` places the same job in a consumer's runner and flags an existing
+runner that lacks it with `[redispatch]`.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+An armed pull request whose merge hit a server error now lands within about half an hour on its own.
+Before this, it sat green until someone shipped it by hand: on November 16 that took over an hour, for
+two pull requests. A consumer gets this by re-placing its merge-on-green runner. Moving the `ref:` pin
+alone does not add the new job.
+
+**Score:** 3
 
 #### Pull Request
 
