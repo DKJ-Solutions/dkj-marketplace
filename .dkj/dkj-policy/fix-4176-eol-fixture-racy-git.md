@@ -39,19 +39,37 @@
 
 ### PLAN
 
+#4176: the CRLF-index assert in `git-porcelain-lib.tests.ps1` went red on CI on three PRs that never
+touched it, with `got: ''` and the other paths intact, so git read `crlf.txt` as CLEAN. The issue
+inferred racy-git; a delay before `git status` did not reproduce it, a delay before the first `git add`
+did: a slow runner stores trusted stat data, and git then skips the content compare.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The fixture sets `crlf.txt`'s mtime into the past before the first `git add` (every run gets the
+  slow runner's state) and forward before `git checkout --` (git compares content), with the measurement
+  in a comment
 
 ### TEST
 
+- [x] Without the forward move the assert fails 3 of 3 runs (the CI failure, now deterministic); with
+  both moves the suite passes 5 of 5 (60 asserts)
+
 ### DEPLOY: fix/4176-eol-fixture-racy-git
 
-**Score:**
+The CRLF-index assert in `git-porcelain-lib.tests.ps1` no longer depends on how fast the runner is
+([#4176](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4176)). Git trusts an index entry's stat
+data unless the file was written in the same second as the index, so a slow runner read the fixture's
+CRLF file as clean. The fixture now moves the file's mtime back before the first add and forward before the
+checkout, so every run takes the same path.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A -- a test fixture in this repo; nothing a consumer runs changes.
+
+**Score:** N/A
 
 #### Pull Request
 
