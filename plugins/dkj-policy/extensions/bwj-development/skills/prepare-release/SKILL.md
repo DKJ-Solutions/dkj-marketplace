@@ -62,7 +62,7 @@ could not measure is reported as skipped and named, never counted as passing.
 |---|---|
 | `-Store <domain>` | the store domain. Defaults to `Get-ShopifyThemeEstateStore` |
 | `-SinceTag <vX.Y.Z>` | derive the push list from this tag instead of the highest release tag |
-| `-DriftCheckPath <path>` | the repo's drift check. Defaults to `Get-ShopifyDriftCheckPath`, then `scripts/theme/live-snapshot.ps1` |
+| `-DriftCheckPath <path>` | the repo's drift check. Defaults to `Get-ShopifyDriftCheckPath`, then `scripts/theme/live-snapshot.ps1`, then the repo's own `scripts/task/sync-main.ps1`, whose `-Only` is the same contract ([#4149](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4149)) |
 | `-SkipDrift` | skip the early drift read -- no Shopify CLI at hand, or a second run the same day |
 | `-ReleaseDay <day>` | the weekday releases are cut on. `Monday` |
 | `-ObligationPattern <regex[]>` | the phrases that mark a go-live obligation, **replacing** the English defaults -- for entries written in another language |
