@@ -52,7 +52,7 @@
 
 - [x] `git grep` for a `<n>px solid|dashed` border in the five files finds none
 - [x] this tree's Admin on port 4910 serves the new rules on `/dev/today` and `/dev/goals`
-- [ ] the owner looks at Admin's Today, Goals and Repository pages and the consumer dashboard
+- [~] the owner looks at Admin's Today, Goals and Repository pages and the consumer dashboard -- Not done as a separate look: davekokbwj approved the branch through issues-sweep-reviews on 2026-11-16 without one.
 
 ### DEPLOY: feat/4131-domain-borders
 
