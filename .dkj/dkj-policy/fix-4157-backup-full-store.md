@@ -39,21 +39,40 @@
 
 ### PLAN
 
+Issue #4157 has three parts. This branch takes two of them, both in `backup-live-theme`: the count before the
+duplicate, and the message after it. The full-store refusal names the preview sweep, so the deadlock the issue
+measured already resolves at the step that hit it. The third part stays open on the issue: `prepare-release` and
+`live-preflight` would order the sweep before the backup when the store is near the limit. That needs a theme-list
+read in two more scripts.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-ThemeSlotVerdict` in `theme-lifecycle-rules.ps1`: pure, Shopify's limit of 20 as a parameter default
+- [x] `backup-live-theme.ps1` refuses a full store before the duplicate (a dry run reports it), naming the count and `sweep-preview-themes`
+- [x] Its post-duplicate message no longer claims a copy it cannot find was created
+- [x] Shopify-plugin mirrors kept byte-identical
 
 ### TEST
 
+- [x] `theme-lifecycle-rules.tests.ps1`: the verdict at, below and with a stated limit, and that the script asks before it duplicates and no longer carries the false claim
+
 ### DEPLOY: fix/4157-backup-full-store
 
-**Score:**
+`backup-live-theme` counts the store's themes before it duplicates live
+([#4157](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4157)). At Shopify's limit of 20 it refuses, and
+names `sweep-preview-themes` as the step that frees a slot. When the duplicate leaves no copy in the theme list,
+it now says so, instead of claiming the copy was created.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+On release day in a Shopify store repo holding 20 themes, the backup step stops with "the store is full (20/20)
+... sweep spent previews first", instead of a misleading message and a push the preflight then refuses. Sweeping
+and re-running clears it.
+
+**Score:** 3
 
 #### Pull Request
 
 backup-live-theme refuses a full store before duplicating, and stops claiming a failed duplicate was created
-
