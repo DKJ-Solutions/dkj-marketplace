@@ -1680,8 +1680,9 @@ $noteWithheldNote = Format-RetractionWithheldNote -Retractions $retractions -Rem
 # when a record was given; without one, every entry keeps the reading it had before this block existed.
 #
 # AN ENTRY'S PATHS ARE ITS MERGE COMMIT'S DIFF AGAINST ITS FIRST PARENT, found by the 'merge: <branch>
-# (#NN)' subject ship-pr writes. That is the branch's net change, a trunk merge into it included, and it
-# asks nothing of GitHub. An entry with no such commit (a squash, a UI merge) is 'unknown', named on the
+# (#NN)' subject ship-pr writes, or GitHub's own 'Merge pull request #NN from <owner>/<branch>' (#4146).
+# That is the branch's net change, a trunk merge into it included, and it
+# asks nothing of GitHub. An entry with no such commit (a squash) is 'unknown', named on the
 # console, and kept in both lists: dropping it would be a guess in the other direction.
 $entryStates = @{}
 $unknownEntries = @()
@@ -1851,7 +1852,7 @@ if ($leftOut.Count -gt 0) {
 }
 if ($liveRecord) {
     Write-Host "  live-push record: $($notLive.Count) of $($entries.Count) entries not live (listed under 'Not live yet'), $($unknownEntries.Count) not matched to a merge commit." -ForegroundColor DarkGray
-    foreach ($e in $unknownEntries) { Write-Warning "no 'merge: <branch> (#NN)' commit found for $(Get-EntryNoteName -EntryText $e) -- it stays under 'What landed'; check by hand that it is live." }
+    foreach ($e in $unknownEntries) { Write-Warning "no 'merge: <branch> (#NN)' or 'Merge pull request #NN from <owner>/<branch>' commit found for $(Get-EntryNoteName -EntryText $e) -- it stays under 'What landed'; check by hand that it is live." }
 }
 
 $noteRelPath = "$noteRootRelPath/$notesDirName/$new.md"
