@@ -30,7 +30,9 @@
     Get-AsanaReleaseBlockMarker. That one marker is what made the closed message say the result becomes
     visible with the release, so it is exactly the set of requesters waiting for this message. It skips
     the rest by construction: a -LiveSince block (already told 'live' at the close, 1a), a research
-    block (nothing changed), and a block from before the marker existed.
+    block (nothing changed), and a block from before the marker existed. AN ISSUE WITH NO BLOCK AT ALL IS
+    OWED TOO (#4165, the owner's decision): the cut's audience note counts it as solved, so its task is told
+    rather than left to read in the release notes what nobody said to it.
 
     WHOSE BLOCK IT JUDGES (security review, #3070). Any commenter's, unlike the closed message, which
     carries a block only from a trusted author: the session-side read (Read-AsanaIssueBlockState) returns
@@ -153,7 +155,7 @@ function Get-LiveMessageLanguage {
 
 function Get-LiveMessageVerdict {
     <#
-        Pure: is this issue owed the live message? Returns { Owed; Gid; Language; Reason }. -Issue is an
+        Pure: is this issue owed the live message? Returns { Owed; Gid; Language; Reason; NoBlock }. -Issue is an
         object with Number, State ('OPEN'/'CLOSED'), StateReason ('COMPLETED', 'NOT_PLANNED', ...),
         Body, Comments (Body, CreatedAt, oldest first) and LastReopenedAt, as the driver read them.
 
@@ -163,16 +165,16 @@ function Get-LiveMessageVerdict {
           - no single task: the same Resolve-AsanaTaskRef the closed message found the task with, so the
             live message goes to the task that message went to, and never to a guessed one;
           - already told: Get-LiveMessageMarker is on the issue after its last reopen;
-          - no block, or a block from before the last reopen: the closed message carried no block for
-            this round, so what the requester was told cannot be read here;
+          - NO block at all is OWED, not refused (#4165): the plain message goes to the task, marked
+            NoBlock so the dry run says which rows rest on that rule;
+          - a block from before the last reopen: the closed message carried no block for this round,
+            so what the requester was told cannot be read here;
           - a block without the after-release marker: a -LiveSince block was told 'live' at the close,
             a research block changed nothing, and an older block never said it was waiting on a release.
     #>
     param([Parameter(Mandatory = $true)]$Issue)
 
-    # NoBlock (#4165): closed as completed, one task, not told yet -- and no go-live block, so nothing tells
-    # that task it is live. The cut's audience note can still list it as solved; the driver names the gap.
-    $no = { param($why, $gid = $null, [bool]$noBlock = $false) [pscustomobject]@{ Owed = $false; Gid = $gid; Language = ''; Reason = $why; NoBlock = $noBlock } }
+    $no = { param($why) [pscustomobject]@{ Owed = $false; Gid = $null; Language = ''; Reason = $why; NoBlock = $false } }
 
     if ([string]$Issue.State -ne 'CLOSED' -or ([string]$Issue.StateReason -and [string]$Issue.StateReason -ne 'COMPLETED')) {
         return (& $no 'not closed as completed')
@@ -191,7 +193,11 @@ function Get-LiveMessageVerdict {
     }
 
     $verdict = Get-AsanaPasteBlockVerdict -Comments $comments -LastReopenedAt $Issue.LastReopenedAt
-    if ($verdict -eq 'none') { return (& $no 'carries no go-live block' $ref.Gid $true) }
+    # NO BLOCK AT ALL IS OWED THE PLAIN MESSAGE (#4165, the owner's decision): closed as completed, one task,
+    # not told yet -- exactly what the cut's audience note counts as solved, so the two readers share one
+    # definition and a task never reads in the release notes what nobody told it. The message is fixed text,
+    # so the block it lacks was never an input to it; 'en' because the header is the same in both languages.
+    if ($verdict -eq 'none') { return [pscustomobject]@{ Owed = $true; Gid = $ref.Gid; Language = 'en'; Reason = 'solved with no go-live block -- the plain live message'; NoBlock = $true } }
     if ($verdict -ne 'fresh' -and $verdict -ne 'not-reopened') { return (& $no "its newest go-live block is not this round's ($verdict)") }
 
     $chosen = $null
@@ -202,7 +208,7 @@ function Get-LiveMessageVerdict {
         return (& $no $why)
     }
     $lang = Get-LiveMessageLanguage -Sections (Get-PasteBlockSections -Body $body)
-    return [pscustomobject]@{ Owed = $true; Gid = $ref.Gid; Language = $lang; Reason = 'told it becomes visible with the release' }
+    return [pscustomobject]@{ Owed = $true; Gid = $ref.Gid; Language = $lang; Reason = 'told it becomes visible with the release'; NoBlock = $false }
 }
 
 function Get-LiveMessageLines {

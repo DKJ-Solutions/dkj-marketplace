@@ -26,8 +26,10 @@
       4 the verdict   Get-LiveMessageVerdict: owed only where the issue is closed as completed, links one
                       task, has not been told yet, and its newest go-live block is this round's and
                       carries the after-release marker (#3069) -- the requesters told "visible with the
-                      release", and no others. A -LiveSince block (told 'live' at the close) and a
-                      research block are skipped by that same marker.
+                      release". A -LiveSince block (told 'live' at the close) and a research block are
+                      skipped by that same marker. An issue with NO go-live block at all is owed the
+                      same plain message (#4165): the cut's audience note counts it as solved, so its
+                      task is told too, and its row reads 'no block'.
       5 the post      -Post only: one html_text comment per owed task, then the marker comment on the
                       issue (Get-LiveMessageMarker), so a second run tells nobody twice.
 
@@ -301,7 +303,6 @@ Write-Host "[2/5] pull requests -- $prsKept merged in the range, carrying $($iss
 # === 3/5 + 4/5 -- the issues and the verdict =======================================================
 Write-Host '[3/5] issues, [4/5] verdict' -ForegroundColor Cyan
 $owed = @()
-$noBlock = @()
 foreach ($num in $issueNumbers) {
     if ($SkipArg -contains $num) { Write-Host "  #$num  held     -SkipIssue" -ForegroundColor DarkGray; continue }
     if ($heldCount[$num] -lt 0) {
@@ -330,13 +331,10 @@ foreach ($num in $issueNumbers) {
     $source = if ($closedByPr.ContainsKey($num)) { '' } else { ' [named by a PR, not closed by one]' }
     if ($verdict.Owed) {
         $owed += [pscustomobject]@{ Number = $num; Gid = $verdict.Gid; Language = $verdict.Language }
-        Write-Host "  #$num  OWED     $($verdict.Reason) ($($verdict.Language))$source" -ForegroundColor Green
-    } elseif ($verdict.NoBlock) {
-        # NOT A SKIP LIKE THE OTHERS (#4165): the issue is solved and links one task, so the cut's audience
-        # note lists it, yet without a go-live block nothing here may say what its requester was told. It is
-        # named, with its task, so a person tells it by hand rather than learning of the gap from the task.
-        $noBlock += $num
-        Write-Host "  #$num  NO BLOCK solved and linked to task $($verdict.Gid), but it carries no go-live block -- nothing tells that task it is live; tell it by hand$source" -ForegroundColor Yellow
+        # A NO-BLOCK ROW SAYS SO (#4165): it is owed on the owner's rule that every issue the cut's audience
+        # note counts as solved is told, not on a block, so the person reading the dry run sees which is which.
+        $lang = if ($verdict.NoBlock) { 'no block' } else { $verdict.Language }
+        Write-Host "  #$num  OWED     $($verdict.Reason) ($lang)$source" -ForegroundColor Green
     } else {
         Write-Host "  #$num  skipped  $($verdict.Reason)$source" -ForegroundColor DarkGray
     }
@@ -410,11 +408,6 @@ if ($PostArg -and $owed.Count -gt 0) {
 }
 
 Write-Host ''
-# NOT A FAILURE, AND NOT EXIT 1 (#4165): nothing here could tell these tasks, so the run is right to send
-# nothing. But the audience note can list them as solved, so a person tells them by hand.
-if ($noBlock.Count -gt 0) {
-    Write-Host "$($noBlock.Count) solved issue(s) carry no go-live block ($((@($noBlock) | ForEach-Object { "#$_" }) -join ', ')) -- their tasks are not told by this run; tell them by hand." -ForegroundColor Yellow
-}
 # ONE LINE PER KIND OF FAILURE, each with the act that actually fixes it (#4147): "run it again" only where a
 # rerun can succeed, which is a gh read, a marker comment or a transient Asana answer.
 $failed = $false
