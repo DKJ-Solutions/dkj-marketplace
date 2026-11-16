@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**30 / 40 minor entries** <!-- pending-tally -->
+**31 / 41 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4173-admin-mcp-connections-page · 20261116-140843Z
+
+Admin has an **MCP connections** page on `/dev/claude/mcp`, listed on the Claude page
+([#4173](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4173)). One row per MCP server a session in
+the checkout can reach: where it comes from (claude.ai connector, plugin, the project's `.mcp.json`, user
+config), its host, whether it is connected, needs authentication or failed, and whether this project has
+switched it off. The page reads a cache that its own **Read the connections** button fills by running
+`claude mcp list` (about 15 s); it keeps only each server's host, never a full URL.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Until now the only answer to "which connectors can Claude use here, and which still need a login" was
+`/mcp` inside a session or a 15-second `claude mcp list` in a terminal. Admin now shows it on one page,
+next to the rules, skills and specialists.
+
+**Score:** 2
+
+#### Pull Request
+
+Admin: an MCP connections page under Claude
+
+Plugins: dkj-policy
+
+[PR #4192](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4192)
+
+---
 
 ### DEPLOY: fix/4157-backup-full-store · 20261116-135148Z
 
