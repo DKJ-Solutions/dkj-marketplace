@@ -460,6 +460,23 @@ Assert-True ($foldSrcText -match 'Format-EntryFoldFooter') 'the closing line is 
 Assert-True ($foldSrcText -match 'Set-EntryMergeStamp') 'and the merge moment is stamped on the Pull Request heading beside it'
 Assert-True ($foldSrcText -notmatch '\$entryHashes #\$num') 'and the heading prepend is gone from the source, not merely unused'
 
+# --- a body heading at or above the entry's level is demoted, not pasted (#4145) --------------------
+# Measured in a consumer: four '## ' headings in a DEPLOY body folded verbatim, the first closed
+# '## [Unreleased]', and the cut counted 2 of 31 pending entries. An entry-level heading in the body is the
+# quieter half: Split-EntryBlocks reads it as a second entry.
+Write-Host "fold -- headings inside a body cannot close [Unreleased] or split the entry (#4145)" -ForegroundColor Cyan
+$bhDir = New-FoldFixture -Label 'bodyheads'
+$shallowH = '#' * ((Get-EntryHeadingLevel) - 1)
+New-EntryFile -Dir $bhDir -Name 'feat-body-heads.md' -Title 'Body heads' -ExtraBody ("$shallowH Preview 2026-11-13`n`nround one`n`n$foldEntryH Round 2`n`nround two")
+$bhRun = Invoke-Fold -Dir $bhDir
+$bhText = Get-Changelog -Dir $bhDir
+Assert-True ($bhRun.ExitCode -eq 0) 'body heads: the fold exits 0'
+Assert-Equal 1 @(Get-EntryOrder -Changelog $bhText).Count 'body heads: the entry is still ONE entry -- its entry-level body heading did not start a second'
+Assert-True ($bhText -notmatch ('(?m)^' + $shallowH + ' Preview')) 'body heads: no heading above the entry level reached the changelog'
+Assert-True ($bhText -match ('(?m)^' + $foldSectH + ' Preview 2026-11-13\s*$')) 'body heads: the shallow heading landed as a section of the entry'
+Assert-True ($bhText -match ('(?m)^' + $foldSectH + ' Round 2\s*$')) 'body heads: the entry-level heading landed as a section too'
+Assert-True ($bhRun.Output -match 'demoted') 'body heads: and the fold said so, because the author''s document is what to repair'
+
 # --- the tracked/untracked split reads PATHS, so its wire is held to ASCII (issue #2110) -------------
 # SOURCE PINS, and they are the honest instrument here rather than a second-best one. The failure this
 # repairs is LATENT: everything that comparison tests is $writtenPaths -- the entry files and the legacy

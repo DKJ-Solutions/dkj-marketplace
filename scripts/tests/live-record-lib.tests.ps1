@@ -208,6 +208,20 @@ Assert-Equal '' (Find-BranchMergeCommit -LogLines $nearMiss -Branch 'fix/a') 'th
 # WHITESPACE AROUND THE SUBJECT AND THE SHA IS TRIMMED before either is compared or returned.
 Assert-Equal 'sha7' (Find-BranchMergeCommit -LogLines @("  sha7  `t  merge: fix/a (#9)  ") -Branch 'fix/a') 'leading/trailing whitespace on either field is trimmed'
 
+# GITHUB'S DEFAULT MERGE SUBJECT IS THE SECOND SHAPE (#4146). Measured in a consumer's cut: 58 of 82 entries
+# had been merged through the GitHub UI and all 58 fell to 'unknown'.
+$ghLines = @(
+    "shaG`tMerge pull request #1177 from BWJ-Development/fix/1171-menu-experts-usp-centre",
+    "shaH`tMerge pull request #12 from someone/fix/a-longer",
+    "shaI`tMerge pull request #13 from org/fix/b extra",
+    "shaJ`tMerge branch 'main' into fix/c"
+)
+Assert-Equal 'shaG' (Find-BranchMergeCommit -LogLines $ghLines -Branch 'fix/1171-menu-experts-usp-centre') 'a GitHub UI merge subject names its branch exactly as well'
+Assert-Equal '' (Find-BranchMergeCommit -LogLines $ghLines -Branch 'fix/a') 'and a branch that only shares a prefix is not matched in that shape either'
+Assert-Equal '' (Find-BranchMergeCommit -LogLines $ghLines -Branch 'fix/b') 'a near miss of the GitHub shape is not matched'
+Assert-Equal '' (Find-BranchMergeCommit -LogLines $ghLines -Branch 'fix/c') 'a trunk merge INTO a branch is not the merge that landed it'
+Assert-Equal 'shaK' (Find-BranchMergeCommit -LogLines @("shaK`tMerge pull request #3 from o/fix/a", "shaL`tmerge: fix/a (#2)") -Branch 'fix/a') 'across the two shapes the newest still wins'
+
 # ---------------------------------------------------------------------------------------------------
 Write-Host ''
 Write-Host 'Get-EntryLiveState -- whether one entry is live, from its changed paths against a parsed record' -ForegroundColor Cyan

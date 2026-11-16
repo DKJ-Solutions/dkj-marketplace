@@ -4135,6 +4135,37 @@ that output -- then fold by hand from a tree standing on an up-to-date main:
 
     $ff = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $foldRoot, 'merge', '--ff-only', 'origin/main')
     $ff.Output | ForEach-Object { Write-Host $_ }
+    # A FAST-FORWARD BLOCKED ONLY BY LINE ENDINGS IS RETRIED ONCE (inbound #4144). The trunk arm folds in
+    # place whatever the tree holds, and a file committed with CRLF despite `eol=lf` reads as modified on
+    # every checkout of the old main -- so the PR that renormalizes such files trapped its own fold here.
+    # Where every modified path equals origin/main modulo line endings, taking those paths from origin/main
+    # loses nothing, and the retry goes through; anything else leaves the refusal below exactly as it was.
+    # The decision is Get-EolOnlyRestorePlan's, and asserted in worktree-lib.tests.ps1.
+    if ($ff.ExitCode -ne 0) {
+        $eolStatus = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $foldRoot, '-c', 'core.quotePath=true', 'status', '--porcelain')
+        if ($eolStatus.ExitCode -eq 0) {
+            $eolPlan = Get-EolOnlyRestorePlan -StatusLines @($eolStatus.Output) -TestEolOnly {
+                param($p)
+                # EXISTS ON THE TARGET FIRST: `git diff --quiet <ref> -- <path>` exits 0 for a pathspec
+                # that matches nothing, which would read as "identical".
+                $onTarget = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $foldRoot, 'cat-file', '-e', "origin/main:$p") -DiscardStderr
+                if ($onTarget.ExitCode -ne 0) { return $false }
+                $same = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $foldRoot, 'diff', '--ignore-cr-at-eol', '--quiet', 'origin/main', '--', $p) -DiscardStderr
+                return ($same.ExitCode -eq 0)
+            }
+            if ($eolPlan.Restore) {
+                Write-Host "ship-pr: the fast-forward was blocked only by line endings -- $($eolPlan.Paths.Count) path(s) equal origin/main once CR is ignored (#4144):" -ForegroundColor Yellow
+                $eolPlan.Paths | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
+                Write-Host '  Taking them from origin/main and fast-forwarding again; nothing but line endings is replaced.' -ForegroundColor DarkGray
+                $eolRestore = Invoke-NativeCapture -FilePath 'git' -Arguments (@('-C', $foldRoot, 'checkout', 'origin/main', '--') + @($eolPlan.Paths))
+                $eolRestore.Output | ForEach-Object { Write-Host $_ }
+                if ($eolRestore.ExitCode -eq 0) {
+                    $ff = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $foldRoot, 'merge', '--ff-only', 'origin/main')
+                    $ff.Output | ForEach-Object { Write-Host $_ }
+                }
+            }
+        }
+    }
     if ($ff.ExitCode -ne 0) {
         Remove-ShipFoldWorktree -Path $foldTree -NotOwned:(-not $foldTreeIsOwned)
         # BEFORE SAYING THE FOLD IS OWED, LOOK WHETHER IT IS (inbound #3078). The ff-only merge fails on a

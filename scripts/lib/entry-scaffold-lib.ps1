@@ -4489,6 +4489,47 @@ function Set-EntryHeadingLevel {
     return ($lines -join "`n")
 }
 
+function Limit-EntryBodyHeadings {
+    <#
+        Pure: demotes every non-fenced heading INSIDE an entry block (every heading after the block's own
+        opening one) that sits at or above the entry's own level to one level below it. Returns an object
+        with Text (LF newlines) and Demoted (how many headings moved).
+
+        WHY (#4145, November 16, 2026). Set-EntryHeadingLevel shifts the whole block by one delta, which
+        keeps the author's structure -- including a structure that breaks the changelog. Measured in a
+        consumer: a DEPLOY body carried four '## ' headings ('## Preview ...', '## Live ...'); the delta
+        was 0, so they folded verbatim, the first one closed '## [Unreleased]', and prepare-release counted
+        2 pending entries where there were 31. At the entry level a body heading is just as wrong in a
+        quieter way: Split-EntryBlocks starts a new entry at it, so one change reads as several.
+
+        ONE LEVEL BELOW THE ENTRY, NOT A DELTA. A heading this high has no place in the entry's structure
+        to be preserved, so it becomes a section of the entry -- the level the entry's own sections use.
+
+        FENCE-AWARE like every reader in this file: a body quoting a '## ' line inside a fence is an
+        example, not structure, and is left alone.
+    #>
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$EntryText,
+        [Parameter(Mandatory)][int]$EntryLevel
+    )
+    $lines = @(($EntryText -replace "`r`n", "`n") -split "`n")
+    $fenced = Get-FencedLineFlags -Lines $lines
+    $section = [Math]::Min(6, $EntryLevel + 1)
+    $seenOwn = $false
+    $demoted = 0
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($fenced[$i]) { continue }
+        $m = [regex]::Match($lines[$i], '^(#{1,6})(\s.*)$')
+        if (-not $m.Success) { continue }
+        if (-not $seenOwn) { $seenOwn = $true; continue }
+        if ($m.Groups[1].Value.Length -le $EntryLevel) {
+            $lines[$i] = ('#' * $section) + $m.Groups[2].Value
+            $demoted++
+        }
+    }
+    return [pscustomobject]@{ Text = ($lines -join "`n"); Demoted = $demoted }
+}
+
 function Split-EntryBlocks {
     <#
         Turns a run of lines into entry blocks. A new block starts at every entry heading
