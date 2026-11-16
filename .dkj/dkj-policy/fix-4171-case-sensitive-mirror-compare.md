@@ -39,21 +39,35 @@
 
 ### PLAN
 
+The issue names two sites. A search for the same comparison shape found a third: `check-consumer-drift.ps1`,
+which compares a consumer's persona body with its source using `-eq`. The two in `open-pr.ps1` compare a PR body,
+not a mirror, and stay as they are. With the stricter compare, `build-shared-scripts -Check` and the integrity
+gate are both still clean on the trunk.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `build-shared-scripts.ps1` and `check-plugin-integrity.ps1`'s `[shared-script]` check use `-cne`
+- [x] `check-consumer-drift.ps1` uses `-ceq` for the persona body
 
 ### TEST
 
+- [x] `shared-scripts.tests.ps1` demonstrates the case-insensitive `-eq` and pins the case-sensitive operator at all three sites
+
 ### DEPLOY: fix/4171-case-sensitive-mirror-compare
 
-**Score:**
+Inside this repo, the shared-script mirror build, the integrity gate's `[shared-script]` check and the
+consumer-drift check compare case-sensitively
+([#4171](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4171)). An edit that changes only letter case
+is now copied into the mirror and reported as drift, where before it read as in sync.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
 Mirror comparisons are case-sensitive, so a case-only edit is mirrored and flagged
-
