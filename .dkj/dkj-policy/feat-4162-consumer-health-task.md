@@ -39,19 +39,34 @@
 
 ### PLAN
 
+#4162's second task, decided on the issue (November 16, 2026): the weekly consumer health sweep, as a
+versioned prompt in the `scheduled-tasks` skill that #4194 shipped. Read-only on every repo; it files
+only findings whose repair lives in this repo, and reports a consumer's own state instead of filing it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `tasks/consumer-health-sweep.md`: Monday 07:37 from the dkj-marketplace checkout -- `check-consumers`, BWJ release cadence, unlabelled issues, red scheduled/fold/merge runs
+- [x] the skill's task table names it, and its "no task posts" line now names the one tracker it may write to
 
 ### TEST
 
+- [x] `place-scheduled-tasks.tests.ps1`: 56 passed, 0 failed, the new file held to the shipped shape
+- [x] dry-run placement prints its schedule, cron and folder
+- [x] steps 3-5's `gh` commands run against BWJ-Development/xoxowildhearts (tag v1.8.0, its date, its release object, the issue list, the failed-run list)
+
 ### DEPLOY: feat/4162-consumer-health-task
 
-**Score:**
+**Score:** N/A
 
 #### What makes this deploy extra special
 
-**Score:**
+The `scheduled-tasks` skill ships a second kind of task: `consumer-health-sweep`, every Monday at 07:37
+from the dkj-marketplace checkout, reads every registered consumer's plugin lag, CI pins, release cadence,
+unlabelled issues and red scheduled runs, and reports them in one place, where until now each surfaced
+only when a session happened to open the right repo. It files only what the marketplace itself must
+repair, after searching its tracker.
+
+**Score:** 3
 
 #### Pull Request
 
