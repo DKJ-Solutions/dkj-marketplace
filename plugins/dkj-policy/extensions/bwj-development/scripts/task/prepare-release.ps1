@@ -231,7 +231,17 @@ $branch = @((Invoke-Git @('rev-parse', '--abbrev-ref', 'HEAD')).Lines) | Select-
 $problems = @()
 if ("$branch" -ne $trunk) { $problems += "on '$branch', not on the trunk '$trunk'" }
 $dirty = @((Invoke-Git @('status', '--porcelain')).Lines)
-if ($dirty.Count -gt 0) { $problems += "$($dirty.Count) uncommitted change(s)" }
+if ($dirty.Count -gt 0) {
+    # LINE ENDINGS ARE NAMED APART (#4143): a file committed with CRLF under 'eol=lf' reads as modified on
+    # every checkout and `git checkout --` cannot clean it, so 'uncommitted' points at a remedy that fails.
+    $split = if (Get-Command Get-GitEolOnlySplit -ErrorAction SilentlyContinue) { Get-GitEolOnlySplit -RepoRoot $repoRoot } else { $null }
+    if ($split -and $split.Known -and $split.EolOnly.Count -gt 0) {
+        $problems += "EOL-ONLY: $($split.EolOnly.Count) file(s) committed with CRLF despite eol=lf ($(@($split.EolOnly) -join ', ')) -- a checkout cannot clean them; renormalize on a branch: git add --renormalize $(@($split.EolOnly) -join ' ')"
+        if ($split.Other.Count -gt 0) { $problems += "$($split.Other.Count) uncommitted change(s)" }
+    } else {
+        $problems += "$($dirty.Count) uncommitted change(s)"
+    }
+}
 $fetch = Invoke-Git @('fetch', 'origin', $trunk)
 $counts = Invoke-Git @('rev-list', '--left-right', '--count', "origin/$trunk...$trunk")
 $countLine = @($counts.Lines) | Select-Object -First 1

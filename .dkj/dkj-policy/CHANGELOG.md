@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**16 / 21 minor entries** <!-- pending-tally -->
+**17 / 22 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4143-eol-only-dirty · 20261116-090900Z
+
+`prepare-release` and `live-preflight` no longer count a file committed with CRLF despite `eol=lf` as an
+uncommitted change ([#4143](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4143)): step 1 names such
+files as `EOL-ONLY`, says a checkout cannot clean them, and prints the `git add --renormalize` line that does.
+The shared `git-porcelain-lib` gains `Get-GitEolOnlySplit` for it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store repo whose theme files were committed with the wrong line endings gets the remedy on release day
+instead of a refusal that `git checkout --` cannot clear. The verdict is the same, ATTENTION or a refusal,
+and only the message is new.
+
+**Score:** 2
+
+#### Pull Request
+
+prepare-release and live-preflight name EOL-only changes instead of counting them as uncommitted
+
+Plugins: bwj-development, dkj-policy, dkj-subagents-shopify
+
+[PR #4161](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4161)
+
+---
 
 ### DEPLOY: fix/4146-github-merge-subject · 20261116-085837Z
 

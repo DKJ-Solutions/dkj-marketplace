@@ -217,6 +217,49 @@ Assert-True (-not $st.Known) 'a directory outside any repository reports Known f
 Assert-Equal 0 (@($st.Entries).Count) '...and hands back no entries rather than a guess'
 
 Write-Host ''
+Write-Host 'Get-GitEolOnlySplit -- line endings named apart (#4143)' -ForegroundColor Cyan
+
+# THE ONE FIXTURE REPO IN THIS SUITE, because the state is git's and not a string: a file committed with
+# CRLF in the index, then pinned 'eol=lf', reads as modified and survives `git checkout --`. Placed by
+# New-ScratchPath, the #1659 helper, so it adds nothing to the predictable-temp-path class the header
+# names, and removed at the end.
+$eolRepo = New-ScratchPath -Label 'eol-split' -Directory
+try {
+    $prevEap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+    & git -C $eolRepo init -q 2>$null
+    & git -C $eolRepo config core.autocrlf false 2>$null
+    & git -C $eolRepo config user.email 'fixture@example.invalid' 2>$null
+    & git -C $eolRepo config user.name 'fixture' 2>$null
+    [System.IO.File]::WriteAllText((Join-Path $eolRepo 'crlf.txt'), "a`r`nb`r`n")
+    [System.IO.File]::WriteAllText((Join-Path $eolRepo 'real.txt'), "x`ny`n")
+    & git -C $eolRepo add . 2>$null
+    & git -C $eolRepo commit -qm init 2>$null
+    [System.IO.File]::WriteAllText((Join-Path $eolRepo '.gitattributes'), "*.txt text eol=lf`n")
+    & git -C $eolRepo add .gitattributes 2>$null
+    & git -C $eolRepo commit -qm attrs 2>$null
+    [System.IO.File]::WriteAllText((Join-Path $eolRepo 'real.txt'), "x`nz`n")
+    [System.IO.File]::WriteAllText((Join-Path $eolRepo 'new.txt'), "n`n")
+    & git -C $eolRepo checkout -- crlf.txt 2>$null
+    $ErrorActionPreference = $prevEap
+
+    $split = Get-GitEolOnlySplit -RepoRoot $eolRepo
+    Assert-True $split.Known 'a readable repo reports Known true'
+    Assert-Equal 'crlf.txt' (@($split.EolOnly) -join ',') 'the CRLF-index file is EOL-only, even after `git checkout --`'
+    $otherPaths = @($split.Other | ForEach-Object { $_.Path } | Sort-Object) -join ','
+    Assert-Equal 'new.txt,real.txt' $otherPaths 'a real edit and an untracked file stay ordinary changes'
+} finally {
+    Remove-Item -LiteralPath $eolRepo -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+$split = Get-GitEolOnlySplit -RepoRoot $notARepo
+Assert-True (-not $split.Known) 'outside a repository the split reports Known false, never a clean copy'
+
+foreach ($caller in @('scripts\task\live-preflight.ps1', 'plugins\dkj-policy\extensions\bwj-development\scripts\task\prepare-release.ps1')) {
+    $text = Get-Content -LiteralPath (Join-Path $RepoRoot $caller) -Raw
+    Assert-True ($text -match 'Get-GitEolOnlySplit') "$(Split-Path -Leaf $caller) names EOL-only paths apart from uncommitted ones"
+}
+
+Write-Host ''
 Write-Host 'The callers actually dot-source it -- the structural half' -ForegroundColor Cyan
 
 # The lib is correct and unreachable if a caller still carries its own parse. Asserted on the source
