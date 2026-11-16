@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Issue #4145 offered two fixes. This branch takes the first one, in the fold, because the fold is the one place
+every repo's entries pass through, whatever gate that repo runs. A refusal at `open-pr` would also have to reach
+repos that open PRs outside it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Limit-EntryBodyHeadings` in `entry-scaffold-lib.ps1`: a pure, fence-aware function that demotes every body heading at or above the entry's level to one level below it
+- [x] `fold-changelog-entry.ps1` calls it after the re-level and names how many headings it demoted
+- [x] Mirrors under `plugins/dkj-policy/scripts/` kept byte-identical
 
 ### TEST
 
+- [x] `entry-scaffold.tests.ps1`: the H2 and the H3 inside the body are demoted; the entry's own heading, a section already below it and a fenced example stay where they are
+- [x] `fold-changelog.tests.ps1`: a real fold of a body carrying an H2 and an H3 lands as one entry with both headings as sections, and the fold says what it demoted
+
 ### DEPLOY: fix/4145-fold-demotes-body-headings
 
-**Score:**
+Inside this repo, `fold-changelog-entry.ps1` runs every folded entry through a new `Limit-EntryBodyHeadings`
+([#4145](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4145)). Any heading in the entry's body at or
+above the entry's own level becomes a section one level below it, and the fold prints how many it moved.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a repo that has taken this update, a `##` heading written inside a DEPLOY section can no longer close
+`## [Unreleased]` at the fold and hide the entries below it from the next cut. Measured in a consumer, the cut saw
+2 of 31 pending entries. A `###` there no longer splits one change into two entries either. The fold demotes such
+headings and names the document to repair.
+
+**Score:** 3
 
 #### Pull Request
 
