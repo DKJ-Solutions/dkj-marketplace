@@ -143,8 +143,10 @@ function Get-MergeOnGreenRedispatchVerdict {
 
     $current = 0
     if (-not [string]::IsNullOrWhiteSpace($Retry)) {
-        if ($Retry.Trim() -notmatch '^\d{1,2}$') {
-            return & $refuse "the retry counter '$Retry' is not a small whole number, so this run does not wake another sweep"
+        if ($Retry.Trim() -notmatch '\A\d{1,2}\z') {
+            # THE VALUE IS NOT ECHOED: Reason is written to GITHUB_OUTPUT as one key=value line, so a
+            # hand-typed counter carrying a newline would add keys of its own (Sebastian #23, Victor #19).
+            return & $refuse 'the retry counter is not a small whole number, so this run does not wake another sweep'
         }
         $current = [int]$Retry.Trim()
     }
@@ -152,9 +154,10 @@ function Get-MergeOnGreenRedispatchVerdict {
         return & $refuse "this was retry $current of $MaxRetries after a held merge; the pull request stays armed for the next CI wake or schedule"
     }
 
-    $m = [regex]::Match([string]$WorkflowRef, '^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+/\.github/workflows/(?<file>[A-Za-z0-9._-]+\.ya?ml)@refs/heads/(?<ref>[A-Za-z0-9._/-]+)$')
-    if (-not $m.Success) {
-        return & $refuse "GITHUB_WORKFLOW_REF '$WorkflowRef' is not a workflow file on a branch, so there is nothing safe to dispatch"
+    # \A AND \z, NOT ^ AND $: in .NET $ also matches before a trailing newline. And no '..' in the branch.
+    $m = [regex]::Match([string]$WorkflowRef, '\A[A-Za-z0-9._-]+/[A-Za-z0-9._-]+/\.github/workflows/(?<file>[A-Za-z0-9_-][A-Za-z0-9._-]*\.ya?ml)@refs/heads/(?<ref>[A-Za-z0-9_-][A-Za-z0-9._/-]*)\z')
+    if (-not $m.Success -or $m.Groups['ref'].Value -match '\.\.|//|/\z') {
+        return & $refuse 'GITHUB_WORKFLOW_REF is not a workflow file on a plain branch, so there is nothing safe to dispatch'
     }
 
     $next = $current + 1

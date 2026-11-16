@@ -915,10 +915,37 @@ foreach ($badRef in @('', 'acme/shop/.github/workflows/sweep.yml@refs/tags/v1', 
     Assert-True (-not (Get-MergeOnGreenRedispatchVerdict -Retry '0' -WorkflowRef $badRef).Redispatch) "a workflow ref outside the plain shape ('$badRef') dispatches nothing"
 }
 
-# WIRED: ship-pr exits the code on the held refusal, and the runner's literal matches it.
+foreach ($inj in @("x`nredispatch=true", "1`nx")) {
+    $vi = Get-MergeOnGreenRedispatchVerdict -Retry $inj -WorkflowRef $wfRef
+    Assert-True (-not $vi.Redispatch -and $vi.Reason -notmatch '[\r\n]') 'a counter carrying a newline is refused, and the reason echoes none of it into GITHUB_OUTPUT'
+}
+$vr = Get-MergeOnGreenRedispatchVerdict -Retry '0' -WorkflowRef "$wfRef`nredispatch=true"
+Assert-True (-not $vr.Redispatch -and $vr.Reason -notmatch '[\r\n]') 'a workflow ref carrying a newline is refused the same way'
+foreach ($dotRef in @('acme/shop/.github/workflows/x.yml@refs/heads/a/../b', 'acme/shop/.github/workflows/x.yml@refs/heads/a/')) {
+    Assert-True (-not (Get-MergeOnGreenRedispatchVerdict -Retry '0' -WorkflowRef $dotRef).Redispatch) "a branch that is not plain ('$dotRef') dispatches nothing"
+}
+
+# WIRED THROUGH THE TRAP (Victor #19). Under ship-pr's 'Stop', the held refusal's Write-Error ends the run
+# in the script-scope trap, so an exit written beneath it is dead code; the code has to reach the trap.
 $shipRaw = Get-Content -LiteralPath $ShipPath -Raw
-Assert-True ($shipRaw -match '(?s)NOT a failed merge \(issues #1916, #3802\).*?exit \(Get-MergeHeldExitCode\)') 'ship-pr exits Get-MergeHeldExitCode on the held-merge refusal'
-Assert-Equal 1 ([regex]::Matches($shipRaw, 'exit \(Get-MergeHeldExitCode\)')).Count 'and on that refusal alone'
+Assert-True ($shipRaw -match '(?s)\$shipExitCode = Get-MergeHeldExitCode\s*\n\s*Write-Error @"\s*\n\$mergeHeldLead') 'the held refusal sets its code BEFORE the Write-Error that ends the run'
+Assert-Equal 1 ([regex]::Matches($shipRaw, '\$shipExitCode = Get-MergeHeldExitCode')).Count 'and only that refusal sets it'
+# EXECUTED, not only read: ship-pr's own trap text, run under 'Stop' with a terminating Write-Error.
+$trapText = [regex]::Match($shipRaw, '(?ms)^trap \{.*?^\}').Value
+Assert-True ($trapText -match 'exit \$shipExitCode') 'the trap exits with the code the refusal set'
+$trapDir = Join-Path ([System.IO.Path]::GetTempPath()) ("mog-trap-" + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $trapDir | Out-Null
+try {
+    foreach ($case in @(@{ Code = 75; Label = 'a held merge exits 75 through the trap' }, @{ Code = 1; Label = 'every other refusal still exits 1' })) {
+        $probe = Join-Path $trapDir "probe-$($case.Code).ps1"
+        $body = "`$ErrorActionPreference = 'Stop'`n`$shipMergeLanded = `$false`n`$shipExitCode = $($case.Code)`n$trapText`nWrite-Error 'held'`nexit 99`n"
+        [System.IO.File]::WriteAllText($probe, $body)
+        # 'Continue' in a child scope: under the suite's 'Stop', Windows PowerShell 5.1 turns the probe's
+        # stderr line into a terminating error of THIS script, which is the probe working, not failing.
+        & { $ErrorActionPreference = 'Continue'; $null = & powershell -NoProfile -ExecutionPolicy Bypass -File $probe 2>&1 }
+        Assert-Equal $case.Code $LASTEXITCODE $case.Label
+    }
+} finally { Remove-Item -LiteralPath $trapDir -Recurse -Force -ErrorAction SilentlyContinue }
 Assert-True ($flowRaw -match ('\$shipExit -eq ' + (Get-MergeHeldExitCode) + '\b')) 'merge-on-green.yml reads the same code ship-pr writes'
 Assert-True ($flowRaw -match '(?m)^\s+id: ship\s*$' -and $flowRaw -match '(?m)^\s+held: \$\{\{ steps\.ship\.outputs\.held \}\}\s*$') 'the ship step''s held output is the job''s output'
 Assert-True ($flowRaw -match '(?m)^  redispatch:\s*$' -and $flowRaw -match "needs\.merge-on-green\.outputs\.held == 'true'") 'a redispatch job runs on held alone'

@@ -53,10 +53,19 @@ merge-on-green runner re-dispatches itself, with a bound.
 - [x] `adopt-ci-floor.ps1`: the same in the consumer template, plus a `[redispatch]` advisory for a
   runner placed before it
 - [x] plugin mirrors of the three shared scripts
+- [x] review fixes. Victor #19: under ship-pr's 'Stop', the held refusal's Write-Error ends the run in the
+  #2283 trap, so the first draft's `exit 75` was dead code. The code now reaches the trap as
+  `$shipExitCode`. Victor #19 and Sebastian #23: the verdict no longer echoes a hand-typed counter or ref
+  into `Reason`, where a newline could have added `GITHUB_OUTPUT` keys, and it anchors with `\A`/`\z`
+  and refuses `..`.
+- [~] Victor #19's concurrency note, kept as a known trade rather than changed. The redispatch job
+  sleeps inside the merge-on-green concurrency group, so for up to 15 minutes other wakes queue behind
+  it. That happens only after a held merge, and before this the wait was hours.
 
 ### TEST
 
-- [x] `merge-on-green-lib.tests.ps1` and `adopt-ci-floor.tests.ps1` green locally; the full gate runs
+- [x] `merge-on-green-lib.tests.ps1` (including a probe that EXECUTES ship-pr's own trap text and reads
+  back 75 / 1), `adopt-ci-floor.tests.ps1` and `closeout-lib.tests.ps1` green locally; the full gate runs
   in ship-pr. The runner itself is proved only by its first held merge after the merge, like every
   workflow_run runner here.
 
