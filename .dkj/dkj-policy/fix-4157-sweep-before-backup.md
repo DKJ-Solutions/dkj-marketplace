@@ -47,6 +47,7 @@ and `live-preflight` put the preview sweep before the backup.
 - [x] `Get-ThemeSweepOrder` in `live-push-rules.ps1` (and its two mirrors): sweep first when 2 or fewer slots are free
 - [x] `live-preflight`: a `theme slots` step off step 5's list -- refuses a full store, warns near it; step 9 says the candidates are not aftercare then
 - [x] `prepare-release`: reads the theme count (a read, skipped with `-SkipDrift`), and the runbook gains a step 0 sweep
+- [x] `shopify-cli-lib.ps1` mirrored into bwj-development (`shopify-cli-lib-bwj`), because check 31 holds every CLI call to the wrapper
 - [x] Docs: THEME-LIFECYCLE-portable.md, the bwj-development CLAUDE.md line, the live-preflight step table
 
 ### TEST

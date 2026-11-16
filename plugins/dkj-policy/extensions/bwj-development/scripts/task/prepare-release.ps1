@@ -115,6 +115,8 @@ $ReleaseDayArg = $ReleaseDay; $PatternArg = @($ObligationPattern); $OutFileArg =
 . (Join-Path $PSScriptRoot '..\lib\ref-print-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\golive-block-rules.ps1')
 . (Join-Path $PSScriptRoot '..\lib\prepare-release-rules.ps1')
+# The Shopify CLI wrapper, for the theme count (#4157); a registered mirror (shopify-cli-lib-bwj).
+. (Join-Path $PSScriptRoot '..\lib\shopify-cli-lib.ps1')
 
 $repoRoot = Resolve-BwjRepoRoot -Override $RootArg
 # gh resolves its repo from the CURRENT directory, so a run started elsewhere -- or through -RootOverride
@@ -581,10 +583,11 @@ if (@($ExecutionContext.InvokeCommand.GetCommands('Get-BwjPagesConfig', 'Functio
 # stores are read too: their preflight takes the same backup.
 $themeCount = -1
 if (-not $SkipDriftArg -and $store) {
-    $list = Invoke-Native { & shopify theme list --store $store --json }
-    if ($list.Code -eq 0) {
+    $list = $null
+    try { $list = Invoke-ShopifyCli -Arguments @('theme', 'list', '--store', $store, '--json') -Quiet -DiscardStderr } catch { $list = $null }
+    if ($null -ne $list -and $list.ExitCode -eq 0) {
         # The CLI can print a hint line beside the JSON, so only the JSON span is parsed.
-        $text = ($list.Lines -join "`n")
+        $text = ($list.Output | Out-String)
         $start = $text.IndexOfAny([char[]]'[{')
         try {
             $parsed = if ($start -ge 0) { $text.Substring($start) | ConvertFrom-Json } else { $null }

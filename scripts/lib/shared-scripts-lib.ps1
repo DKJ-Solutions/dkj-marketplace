@@ -2440,6 +2440,15 @@ function Get-SharedScriptPairs {
             LibOnly = $true
         },
         @{
+            # THE CLI WRAPPER, MIRRORED FOR prepare-release's THEME COUNT (#4157). It reads the store's theme
+            # list days ahead so the runbook can put the sweep before the backup, and check 31 holds every
+            # Shopify CLI call to this wrapper. Mirrored on live-push-rules-bwj's reason.
+            Name    = 'shopify-cli-lib-bwj'
+            Source  = 'scripts\lib\shopify-cli-lib.ps1'
+            Plugin  = 'bwj-development'
+            LibOnly = $true
+        },
+        @{
             # The live-theme BACKUP and its rotation (inbound #1965). Exactly one backup is retained and
             # the run that takes the release's backup rotates it.
             #
