@@ -232,6 +232,15 @@ try {
     & git -C $eolRepo config user.name 'fixture' 2>$null
     [System.IO.File]::WriteAllText((Join-Path $eolRepo 'crlf.txt'), "a`r`nb`r`n")
     [System.IO.File]::WriteAllText((Join-Path $eolRepo 'real.txt'), "x`ny`n")
+    # THE TWO MTIME MOVES ARE THE FIXTURE, NOT DECORATION (#4176). Git trusts an index entry's stat data
+    # unless the file was written in the same second as the index ("racily clean"), and only then compares
+    # content. Written and added within one second -- a fast machine -- the entry is racy, so `git status`
+    # re-reads crlf.txt and reports it modified; a slow CI runner crossing a second boundary in between
+    # stores trusted stat data, and the same file reads as CLEAN. Measured: a 2 s pause before the first
+    # `git add` turned ' M crlf.txt' into an empty status, which is the red run's `got: ''`. So this file's
+    # mtime is set into the PAST before the add, giving every run the slow runner's state, and moved
+    # FORWARD before the checkout, so git compares content and the file reads modified on every run.
+    (Get-Item -LiteralPath (Join-Path $eolRepo 'crlf.txt')).LastWriteTimeUtc = [DateTime]::UtcNow.AddSeconds(-10)
     & git -C $eolRepo add . 2>$null
     & git -C $eolRepo commit -qm init 2>$null
     [System.IO.File]::WriteAllText((Join-Path $eolRepo '.gitattributes'), "*.txt text eol=lf`n")
@@ -239,8 +248,16 @@ try {
     & git -C $eolRepo commit -qm attrs 2>$null
     [System.IO.File]::WriteAllText((Join-Path $eolRepo 'real.txt'), "x`nz`n")
     [System.IO.File]::WriteAllText((Join-Path $eolRepo 'new.txt'), "n`n")
+    (Get-Item -LiteralPath (Join-Path $eolRepo 'crlf.txt')).LastWriteTimeUtc = [DateTime]::UtcNow.AddSeconds(5)
     & git -C $eolRepo checkout -- crlf.txt 2>$null
     $ErrorActionPreference = $prevEap
+    # NOT LEFT TO TIMING. `git checkout --` writes the file and records its stat in the index, and a file
+    # whose stat matches its index entry is trusted as unchanged unless git judges the entry racy -- which
+    # depends on timestamps. Measured on PR #4174's CI (shard 5): Other came back as exactly 'new.txt,
+    # real.txt' and EolOnly empty, so status had not listed crlf.txt at all; locally it was listed in all
+    # but one of six runs. A stat that differs from the index makes git compare the content every time,
+    # which is the state a consumer's checkout is in, so the fixture sets one.
+    (Get-Item -LiteralPath (Join-Path $eolRepo 'crlf.txt')).LastWriteTimeUtc = [DateTime]::UtcNow.AddHours(1)
 
     $split = Get-GitEolOnlySplit -RepoRoot $eolRepo
     Assert-True $split.Known 'a readable repo reports Known true'

@@ -2,7 +2,133 @@
 
 ## [Unreleased]
 
-**21 / 26 minor entries** <!-- pending-tally -->
+**24 / 31 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4176-eol-fixture-racy-git · 20261116-111147Z
+
+The CRLF-index assert in `git-porcelain-lib.tests.ps1` no longer depends on how fast the runner is
+([#4176](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4176)). Git trusts an index entry's stat
+data unless the file was written in the same second as the index, so a slow runner read the fixture's
+CRLF file as clean. The fixture now moves the file's mtime back before the first add and forward before the
+checkout, so every run takes the same path.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A -- a test fixture in this repo; nothing a consumer runs changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+git-porcelain-lib tests: make the CRLF-index fixture independent of how fast the runner is
+
+[PR #4181](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4181)
+
+---
+
+### DEPLOY: fix/4143-eol-fixture-race · 20261116-110015Z
+
+The `git-porcelain-lib` suite's line-ending fixture from [#4143](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4143)
+no longer depends on timing: after `git checkout --` the file's stat matched its index entry and git could
+trust it unread, so the test went red on CI while passing locally. It now sets the file's mtime apart from
+the index, as a consumer's checkout is.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+git-porcelain-lib's EOL fixture no longer depends on racy-git timing
+
+[PR #4179](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4179)
+
+---
+
+### DEPLOY: fix/4165-notify-live-no-block-row · 20261116-104334Z
+
+`notify-live` names a solved issue that carries no go-live block instead of skipping it silently
+([#4165](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4165)). An issue closed as completed and
+linking one task, with no block, prints as `NO BLOCK` with its task, and the run ends with a line listing
+them: the cut's audience note can call such an issue solved while nothing here tells its task, so a person
+tells it by hand. Nothing more is sent than before.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+On release day the dry run shows which requesters the release notes call solved but whose task this run
+will not tell, so nobody reads in the notes that their task shipped without hearing it on the task itself.
+
+**Score:** 2
+
+#### Pull Request
+
+notify-live: name an issue that is solved but has no go-live block, instead of skipping it silently
+
+Plugins: bwj-development
+
+[PR #4178](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4178)
+
+---
+
+### DEPLOY: fix/4156-task-form-audience-note · 20261116-103028Z
+
+`prepare-release` (bwj-development) no longer asks a repo that drafts its audience note as solved tasks
+(`Get-ReleaseNoteTaskLink`) to write that note before the day
+([#4156](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4156)). Step 2 and the runbook's cut step say the
+cut drafts it from the live-push record, name `-LivePushRecord` as required, and ask for a review after the cut.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A BWJ store repo whose release note lists solved tasks is no longer told to write a note the cut would replace.
+That note would list work before anyone knew it was live. Its runbook now names the record the cut needs.
+
+**Score:** 2
+
+#### Pull Request
+
+prepare-release tells a task-form repo that the cut drafts the audience note
+
+Plugins: bwj-development
+
+[PR #4172](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4172)
+
+---
+
+### DEPLOY: fix/4154-app-deploy-allow-updates · 20261116-101810Z
+
+The app deploy that `live-preflight` and `prepare-release` print now reads
+`shopify app deploy --path <folder> --allow-updates`
+([#4154](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4154)), so it runs in a non-interactive shell.
+A deletion still needs `--allow-deletes`, which remains a deliberate separate act.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+On release day in a Shopify store repo that ships an app, the printed app deploy runs as printed through a
+session's `!` prefix. Before, the Shopify CLI refused it there and the owner had to look up the missing flag.
+
+**Score:** 3
+
+#### Pull Request
+
+The printed app deploy carries --allow-updates, so it runs in a non-interactive shell
+
+Plugins: bwj-development, dkj-subagents-shopify
+
+[PR #4169](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4169)
+
+---
 
 ### DEPLOY: feat/4155-notes-share-link · 20261116-100413Z
 

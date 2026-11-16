@@ -31,7 +31,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 1. **Trunk** -- on the trunk, clean, level with origin, no branch document left unfolded beside the
    changelog, and every check run on the head green.
 2. **Scope** -- every pending entry, the bump the fold's pending tally names, the version that makes,
-   and whether a minor owes the hand-written audience note.
+   and whether a minor owes the hand-written audience note -- or, in a repo that answers `Get-ReleaseNoteTaskLink`, that the cut drafts it from the live-push record (#4156).
 3. **Scores** -- in a repo whose audience is tier 1, a `fix/` entry that scores its reach is flagged
    for a second look. Advisory: the cut's tier gate decides.
 4. **Push list** -- the range's theme files, by the **same rules** `live-preflight` uses
@@ -95,7 +95,7 @@ could not measure is reported as skipped and named, never counted as passing.
 
 **Where `Get-ShopifyAppRoot` names the folder of a Shopify app the store also ships** (e.g.
 `extensions`), step 4 lists the range's files under it, which no theme push or promotion carries, and the
-runbook gains a step **2b** with `shopify app deploy --path <folder>`, for a person to run. It is printed
+runbook gains a step **2b** with `shopify app deploy --path <folder> --allow-updates`, for a person to run. It is printed
 and never run, like the push, and `live-preflight` prints it again on the day. Unanswered, nothing changes.
 
 ## The Git-connected mode (#2998, #3012)

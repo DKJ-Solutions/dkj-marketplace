@@ -1137,6 +1137,14 @@ Assert-True ($prBook -notmatch '(?m)--allow-live\s+#') 'no command line carries 
 Assert-True ($prBook -cnotmatch '[A-Z]+-[A-Z-]*AUTHORI[SZ]ED') 'and no marker-shaped token (e.g. <STORE>-LIVE-PUSH-AUTHORIZED) appears anywhere in the runbook'
 Assert-True $prBook.Contains('-Bump minor') 'the cut is named with the bump the tally gave'
 Assert-True $prBook.Contains('audience note') 'a minor names the audience note it owes'
+Assert-True $prBook.Contains('draft it before the day') 'in the entries form, the note is written ahead'
+# Inbound #4156: in a task-form repo the cut drafts the note from the live-push record, so a note written ahead
+# would list work before anyone knows it went live.
+$prTask = (Format-ReleaseRunbook -Store 's.myshopify.com' -LiveThemeId '42' -PushFiles @('sections/a.liquid') -Bump 'minor' -TaskForm) -join "`n"
+Assert-True ($prTask -notmatch 'draft it before the day') 'in the task form, nobody is asked to write the note ahead'
+Assert-True ($prTask.Contains('-LivePushRecord') -and $prTask.Contains('review the draft after the cut')) 'it names -LivePushRecord for the cut and the review after it'
+$prDriverTask = [System.IO.File]::ReadAllText((Join-Path $PluginRoot 'scripts\task\prepare-release.ps1'))
+Assert-True $prDriverTask.Contains("Get-Seam 'Get-ReleaseNoteTaskLink'") 'the driver reads the same seam the cut drafts the task form from'
 Assert-True $prBook.Contains('- [ ] feat/12-strap-filter: Once this is live') 'the obligations become a checklist'
 # STEP 9 NAMES THE PUBLISH A STORE RUNS, AND THE LINK THE CLOSE-OUT LEADS WITH (#4155).
 Assert-True $prBook.Contains('publish-page.ps1 -Kind notes.') 'step 9 names publish-page -Kind notes, the publish a store actually runs'
@@ -1164,7 +1172,7 @@ Assert-True ($evilBook.Contains('cannot be pasted safely')) 'the refusal says wh
 Assert-True (-not $evilBook.Contains([char]27)) 'and the path it names has its control characters stripped'
 # THE APP DEPLOY (#3174): printed beside the push where the range changed the app, and never otherwise.
 $appBook = (Format-ReleaseRunbook -Store 's.myshopify.com' -LiveThemeId '42' -PushFiles @('sections/a.liquid') -AppRoot 'extensions' -AppFiles @('extensions/d/run.js')) -join "`n"
-Assert-True $appBook.Contains('shopify app deploy --path extensions') 'an app change prints the app deploy'
+Assert-True $appBook.Contains('shopify app deploy --path extensions --allow-updates') 'an app change prints the app deploy'
 Assert-True ($appBook.IndexOf('2b. The app deploy') -gt $appBook.IndexOf('2. The push')) 'beside the push, as step 2b'
 Assert-True ($prBook -notmatch 'app deploy') 'a range with no app change prints no app deploy'
 $appOnly = (Format-ReleaseRunbook -Store 's.myshopify.com' -LiveThemeId '42' -PushFiles @() -AppRoot 'extensions' -AppFiles @('extensions/d/run.js')) -join "`n"
@@ -1330,6 +1338,14 @@ Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -State 'OPEN' -Com
 Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Reason 'NOT_PLANNED' -Comments @(New-NlBlockComment -Kinds @('after-release')))).Owed) 'a close as not planned is skipped'
 Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Body 'no task' -Comments @(New-NlBlockComment -Kinds @('after-release')))).Owed) 'an issue linking no task is skipped'
 Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue)).Owed) 'an issue with no block is skipped'
+# #4165: ...but NAMED, because the cut's audience note can list it as solved while its task hears nothing.
+$nlNoBlock = Get-LiveMessageVerdict -Issue (New-NlIssue)
+Assert-True ($nlNoBlock.NoBlock -and $nlNoBlock.Gid -eq '1201') 'a solved issue linking one task with no block is marked NoBlock, with its task'
+Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -State 'OPEN')).NoBlock) '...but an open issue is not -- it was never solved'
+Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Body 'no task')).NoBlock) '...nor one linking no task -- there is nobody to tell'
+Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Comments @(New-NlBlockComment))).NoBlock) '...nor one whose block was told live at the close'
+$nlNbDriver = [System.IO.File]::ReadAllText((Join-Path $PluginRoot 'scripts\task\notify-live.ps1'))
+Assert-True ($nlNbDriver.Contains('elseif ($verdict.NoBlock)') -and $nlNbDriver.Contains('NO BLOCK')) 'the driver prints such an issue as NO BLOCK rather than a plain skip'
 $nlTold = [pscustomobject]@{ Body = (Format-LiveMessageIssueComment -Version 'v1.3.0' -Gid '1201'); CreatedAt = '2026-10-12T10:00:00Z' }
 Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Comments @((New-NlBlockComment -Kinds @('after-release')), $nlTold))).Owed) 'an issue already told is not told twice'
 $nlRound2 = @((New-NlBlockComment -Kinds @('after-release') -CreatedAt '2026-10-01T10:00:00Z'), $nlTold, (New-NlBlockComment -Kinds @('after-release') -CreatedAt '2026-10-14T10:00:00Z'))

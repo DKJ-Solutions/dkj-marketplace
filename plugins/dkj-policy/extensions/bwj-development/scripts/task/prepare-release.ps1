@@ -303,6 +303,8 @@ $entries = @()
 $bump = $null
 $sinceTag = ([string]$SinceTagArg).Trim()
 if (-not $sinceTag) { $sinceTag = Get-HighestReleaseTag -Tags (Invoke-Git @('tag', '--list')).Lines }
+# The same seam cut-release reads to draft the audience note as solved tasks (Get-ReleaseNoteTaskLink, #2586).
+$taskForm = $null -ne (Get-Seam 'Get-ReleaseNoteTaskLink' -Default $null)
 $targetVersion = ''
 if (-not (Test-Path -LiteralPath $changelogFull -PathType Leaf)) {
     Add-Step -Name 'scope' -State 'skip' -Detail "no changelog at '$changelogRel', so nothing pending could be read."
@@ -317,7 +319,9 @@ if (-not (Test-Path -LiteralPath $changelogFull -PathType Leaf)) {
     } elseif (-not $bump) {
         Add-Step -Name 'scope' -State 'attention' -Detail "$($entries.Count) pending entr(y/ies), and the pending tally could not be read -- so the bump is unknown. The fold writes that tally; run it."
     } else {
-        $owed = if ($bump -eq 'minor') { ' A minor owes the hand-written audience note -- draft it before the day.' } else { '' }
+        # A TASK-FORM REPO IS NOT ASKED TO WRITE ITS NOTE AHEAD (#4156): there cut-release drafts the audience note itself,
+        # from the live-push record, and a note written before the day would list work before anyone knows it went live.
+        $owed = if ($bump -ne 'minor') { '' } elseif ($taskForm) { ' A minor owes the audience note, and in this repo the cut drafts it from the live-push record -- review it after the cut.' } else { ' A minor owes the hand-written audience note -- draft it before the day.' }
         Add-Step -Name 'scope' -State 'ready' -Detail "$($entries.Count) pending entr(y/ies): a $bump$(if ($targetVersion) { ", $sinceTag -> v$targetVersion" }).$owed"
     }
 }
@@ -559,7 +563,7 @@ if (@($ExecutionContext.InvokeCommand.GetCommands('Get-BwjPagesConfig', 'Functio
 Write-Host ''
 
 $runbook = @(Format-ReleaseRunbook -Store $store -LiveThemeId $liveId -PushFiles $pushFiles -Bump "$bump" `
-    -TargetVersion $targetVersion -ReleaseDate $releaseDate -Obligations $obligations -DeployBranch $deployBranch -Trunk $trunk -AppRoot $appRoot -AppFiles $appFiles -NotesUrl $notesUrl)
+    -TargetVersion $targetVersion -ReleaseDate $releaseDate -Obligations $obligations -DeployBranch $deployBranch -Trunk $trunk -AppRoot $appRoot -AppFiles $appFiles -NotesUrl $notesUrl -TaskForm:$taskForm)
 foreach ($l in $runbook) { Write-Host "  $l" }
 if ($OutFileArg) {
     $outFull = if ([System.IO.Path]::IsPathRooted($OutFileArg)) { $OutFileArg } else { Join-Path $repoRoot $OutFileArg }
