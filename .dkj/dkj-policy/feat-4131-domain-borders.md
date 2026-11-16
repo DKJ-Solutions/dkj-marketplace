@@ -39,19 +39,36 @@
 
 ### PLAN
 
+- [x] the nine decorative borders #4131 measured, each called the way #4127 called its own: none marks something pressable or typeable, so all nine go
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `goals-lib.ps1`: the Now card stands out by a `--bg-3` fill instead of a 2px primary edge; the next tasks and every milestone (open or not) stand on `--bg-2`; the steps inside a milestone lose their rules
+- [x] `today-page-lib.ps1` and `consumer-dashboard-lib.ps1`: the day's items and a repo's signals become rows of `--bg-3` fill a `--spacing-0-5` gap apart, as `.card--rows` does
+- [x] `general-pages-lib.ps1`: the toolbar pane's notice loses its bottom rule (its tint separates it); the release page's `.sheet` stands on `--bg-2`
+- [x] `repo-admin-page.ps1`: the code block stands on `--bg-3`, as a panel does
 
 ### TEST
 
+- [x] `git grep` for a `<n>px solid|dashed` border in the five files finds none
+- [x] this tree's Admin on port 4910 serves the new rules on `/dev/today` and `/dev/goals`
+- [ ] the owner looks at Admin's Today, Goals and Repository pages and the consumer dashboard
+
 ### DEPLOY: feat/4131-domain-borders
 
-**Score:**
+Admin's own pages and this repo's consumer dashboard follow the brand book's rule from #4127, that a border marks
+something you can press ([#4131](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4131)): the Goals page's
+Now card, next tasks and milestones, the Today page's items, the repository page's code block, the release page's
+sheet, the notice above a toolbar pane and the dashboard's signal rows stand on fills instead of lines.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Admin, which every repo running this workflow opens, now reads like the rest of the brand book after #4127: no
+lines left on its Goals and Today pages, the current task marked by a stronger fill rather than a coloured frame.
+
+**Score:** 2
 
 #### Pull Request
 

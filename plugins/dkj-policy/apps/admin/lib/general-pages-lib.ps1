@@ -1343,7 +1343,7 @@ function Get-AdminShellStyle {
         house's .shell__body (#3830), not the product's .page-column.
     #>
     '.tb-scroll { grid-row: 2; }' + "`n" +
-    '.tb-scroll > .notice { margin: 0; border: 0; border-radius: 0; border-bottom: 1px solid var(--bg-3); }'
+    '.tb-scroll > .notice { margin: 0; border-radius: 0; }'
 }
 
 # The product's address, for Admin's Product section (#3815): set per request by the server from the state file the
@@ -2416,7 +2416,7 @@ function Format-ReleaseNotesDevPage {
         'header.masthead { padding: 0; }'
         'header.masthead h1 { font-family: inherit; font-size: var(--text-h1); font-weight: var(--font-weight-black); letter-spacing: -0.01em; line-height: normal; text-transform: none; color: var(--primary); }'
         'header.masthead p { margin: var(--spacing-1) 0 0; color: var(--primary-muted); font-size: var(--text-sm); }'
-        '.sheet { border: 1px solid var(--bg-3); border-radius: var(--radius-3); padding: var(--spacing-2) var(--spacing-6) var(--spacing-4); }'
+        '.sheet { background: var(--bg-2); border-radius: var(--radius-3); padding: var(--spacing-2) var(--spacing-6) var(--spacing-4); }'
         '.noscript { margin: 0; }'
         '/* The release cards carry no icon, so they take a tighter padding than the house .card Admin''s icon cards keep (owner, October 25, 2026); the grid''s gap is their spacing. */'
         '.cards > .card { padding: var(--spacing-3) var(--spacing-4); margin-top: 0; }'
