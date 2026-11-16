@@ -199,6 +199,17 @@ Write-Host "build-shared-scripts.ps1 -Check -- repo in sync" -ForegroundColor Cy
 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepoRoot 'scripts\sync\build-shared-scripts.ps1') -Check | Out-Null
 Assert-Equal 0 $LASTEXITCODE 'generator -Check green on the repo'
 
+# A CASE-ONLY EDIT IS DRIFT (#4171). PowerShell's -ne is case-insensitive on strings, so a mirror differing from
+# its source only in letter case was neither copied nor flagged -- measured on a sync-main.ps1 rename of
+# $branchShown to $BranchShown: '0 mirror(s) updated' while the file hashes differed. Pinned on the operator,
+# because the defect is the operator: the demonstration first, then every site that compares a mirror.
+Assert-True ('$branchShown' -eq '$BranchShown') 'the defect, demonstrated: -eq calls two spellings that differ only in case equal'
+foreach ($site in @('scripts\sync\build-shared-scripts.ps1', 'scripts\lint\check-plugin-integrity.ps1')) {
+    $siteText = [System.IO.File]::ReadAllText((Join-Path $RepoRoot $site))
+    Assert-True ($siteText.Contains('$src -cne $mirror') -and -not $siteText.Contains('$src -ne $mirror')) "$site compares a mirror with its source case-sensitively"
+}
+$driftText = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'scripts\lint\check-consumer-drift.ps1'))
+Assert-True ($driftText.Contains('$localBody -ceq $srcBody')) 'check-consumer-drift compares a persona body with its source case-sensitively too'
 Write-Host "Pre-flight (#86): missing repo-config stops with a clear pointer" -ForegroundColor Cyan
 # Run every source against an EMPTY repo root (via CLAUDE_PROJECT_DIR) -- without repo-config/branch-info
 # the pre-flight should stop with a pointer instead of a raw dot-source error. Child process, because
