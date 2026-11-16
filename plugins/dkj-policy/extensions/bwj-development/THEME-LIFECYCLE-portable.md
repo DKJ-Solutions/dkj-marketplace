@@ -20,7 +20,11 @@ repo runs none, and there is nothing here for it to owe. See
 
 A Shopify store's theme ceiling is finite and its themes accumulate from both ends: previews pile up
 as branches ship, and nobody ever quite gets round to taking a backup. So **two moments in the cycle
-own the estate**. The **live push** is followed by a sweep of the spent previews this repo created.
+own the estate**. The **live push** is followed by a sweep of the spent previews this repo created --
+except at or near Shopify's 20-theme limit, where the sweep runs **before the preflight**, because the
+backup needs a free slot to duplicate live into
+([#4157](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4157)); `prepare-release` and
+`live-preflight` count the themes and say so.
 **Once per release** a fresh backup of live is taken, verified actually complete, and only then is the
 previous one rotated out. Exactly one backup is retained at a time. *When* in the release that backup
 is taken is each store's own choice, and the next section says what each moment makes it.
@@ -107,7 +111,8 @@ There are now **three** standing approvals, and nothing else:
 
 1. **The preview theme of a branch that has just shipped live** -- the pre-existing exception, via an
    exact-name-match script that refuses anything live or not `unpublished`.
-2. **The sweep of this repo's spent preview themes, after a live push.**
+2. **The sweep of this repo's spent preview themes, after a live push** -- or before the preflight,
+   when the store is at or near its theme limit (#4157). It is the same sweep over the same set, run earlier.
 3. **The rotation of the previous backup, when the release's backup is taken** -- and *only* after its replacement has
    been created **and verified complete**. That includes a copy **verified WITH EXCEPTIONS**, where
    every file Shopify would not duplicate is held by the trunk exactly as live holds it
