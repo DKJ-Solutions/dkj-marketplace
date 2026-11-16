@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**28 / 38 minor entries** <!-- pending-tally -->
+**29 / 39 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4160-publish-page-skip-unchanged · 20261116-133301Z
+
+`publish-page` uploads only the pages whose bytes changed since this machine last verified them
+([#4160](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4160)). After each SHA-256 read-back it
+records the page's hash under a digest of its key, in the user's LocalApplicationData rather than the repo,
+because a key carries the path token. A release day then uploads the new release page and the index instead
+of every page again. `-All` uploads everything, for a key changed or deleted in KV from elsewhere.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Publishing the release notes on release day takes seconds instead of more than five minutes. The first
+publish on each machine still uploads every page once.
+
+**Score:** 2
+
+#### Pull Request
+
+publish-page: upload only the pages whose verified bytes changed since the last publish
+
+Plugins: bwj-development
+
+[PR #4175](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4175)
+
+---
 
 ### DEPLOY: fix/4168-sync-required-checks · 20261116-132206Z
 
