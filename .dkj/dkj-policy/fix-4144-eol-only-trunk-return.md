@@ -39,19 +39,38 @@
 
 ### PLAN
 
+Inbound #4144: `ship-pr`'s fold fast-forward refuses over files committed with CRLF despite `eol=lf`,
+which the merged PR itself renormalized. Retry once, taking those paths from `origin/main`, only where
+every modified path equals it modulo line endings.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-EolOnlyRestorePlan` in `worktree-lib.ps1` (both mirrors): the pure decision
+- [x] `ship-pr.ps1` step 5 (both mirrors): on a failed fast-forward, read the status, check each path
+  exists on `origin/main` and differs only by line endings, restore those paths, retry once
 
 ### TEST
 
+- [x] `worktree-lib.tests.ps1` section 11: the decision's cases, plus a real repo in the measured
+  CRLF-index state where the fast-forward refuses, the plan restores and the retry lands (124 asserts
+  green standalone)
+
 ### DEPLOY: fix/4144-eol-only-trunk-return
 
-**Score:**
+`ship-pr` no longer traps the fold when the trunk's fast-forward is blocked only by line endings
+([#4144](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4144)): where every modified path equals
+`origin/main` once CR is ignored (a file committed with CRLF despite `eol=lf`, which the merged PR itself
+renormalized), it takes those paths from `origin/main`, fast-forwards again and folds. Any other change in
+the tree leaves the refusal exactly as it was.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+The PR that renormalizes CRLF-committed files ships and folds in one run, instead of stopping with "the
+FOLD IS STILL OWED" and a manual `git checkout origin/main -- <paths>` plus a hand fold.
+
+**Score:** 2
 
 #### Pull Request
 
