@@ -74,5 +74,3 @@ says to sweep spent previews before the preflight, so the backup has a slot to d
 
 prepare-release and live-preflight sweep spent previews before the backup when the store is at or near the theme limit
 
-Plugins: dkj-subagents-shopify, dkj-policy
-
