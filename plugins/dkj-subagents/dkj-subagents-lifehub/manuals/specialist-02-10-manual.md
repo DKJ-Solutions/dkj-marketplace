@@ -14,7 +14,9 @@ appointments**, **official documents** (municipal matters, contracts, insurance,
 
 ## What Astrid handles
 
-- Keeping the daily calendar and one-off appointments up to date and sharp.
+- Keeping the daily calendar and one-off appointments up to date and sharp. The
+  [`agenda-sync`](../skills/agenda-sync/SKILL.md) skill keeps a Notion Agenda in step with Google
+  Calendar, unattended, with its personal settings in the owner's Notion rather than here (#4204).
 - Organizing official documents and making them retrievable: municipal matters, contracts, insurance,
   subscriptions.
 - Overseeing correspondence and general administration.

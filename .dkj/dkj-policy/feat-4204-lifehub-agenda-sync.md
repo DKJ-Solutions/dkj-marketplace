@@ -39,19 +39,35 @@
 
 ### PLAN
 
+Move a life-hub consumer's local `agenda-sync` skill into `dkj-subagents-lifehub` (#4204), generic:
+every personal value is read at run time from a Notion page the consumer keeps private.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-subagents/dkj-subagents-lifehub/skills/agenda-sync/SKILL.md`: the sync procedure, with
+  the settings read from the Notion page **Instellingen agenda-sync** and the hard limits for an
+  unattended run.
+- [x] Astrid's manual names the skill under what she handles.
 
 ### TEST
 
+- [x] The skill carries no person name, no Notion ID and no event title from the consumer.
+- [x] The gates run through open-pr.
+
 ### DEPLOY: feat/4204-lifehub-agenda-sync
 
-**Score:**
+A life hub gets `/dkj-subagents-lifehub:agenda-sync`: Google Calendar synced into the Notion Agenda
+every day, unattended, also as a cloud routine, with the personal settings kept in the owner's own
+Notion ([#4204](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4204)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A life-hub owner can run the calendar sync in the cloud without their PC on, and the same skill works
+on every machine.
+
+**Score:** 3
 
 #### Pull Request
 
