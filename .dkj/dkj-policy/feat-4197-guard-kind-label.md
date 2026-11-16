@@ -39,19 +39,45 @@
 
 ### PLAN
 
+#### Scope
+
+Inbound #4197: a PreToolUse guard holding the kind-label rule on `gh issue create`, beside
+`guard-reach-reason`. The optional session-check line the issue names is left out: the guard closes the
+gap at the moment of filing, and the measured case is the create.
+
+The issue proposed the admitted-repo list as the guard's reach. That list includes the source repo, where
+a store session files inbound issues under `feature-inbound`/`bug-inbound`, so the guard judges the
+stores only.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `reach-reason-rules.ps1`: the command parser becomes `Get-GhIssueLabelCall`, returning every
+  create/edit call with its labels; `Get-ReachLabelInvocation` filters it, unchanged in shape
+- [x] `kind-label-rules.ps1` (the verdict and the repo list) and `hooks/guard-kind-label.ps1`,
+  registered in `hooks.json`
+- [x] WORKFLOW-portable, report-issue and the README name the guard
 
 ### TEST
 
+- [x] `guard-kind-label.tests.ps1` (new, in the bwj suite group), `guard-reach-reason.tests.ps1` green
+  on the shared parser, and the hooks.json count in `guard-stale-paste-block.tests.ps1` moved to four
+
 ### DEPLOY: feat/4197-guard-kind-label
 
-**Score:**
+Inside this repo, `guard-reach-reason`'s command parser is now the shared `Get-GhIssueLabelCall`, which
+both guards read a `gh issue` call with.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+In a BWJ store, a `gh issue create` without exactly one of `bug`, `feature` or `research` is now
+refused before it runs, naming the three
+([#4197](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4197)). Sessions had filed 11
+consecutive issues with no kind while the rule was loaded. Labels set in a template, the browser or an
+editor pass with a warning, and so does an inbound issue on the source repo.
+
+**Score:** 3
 
 #### Pull Request
 

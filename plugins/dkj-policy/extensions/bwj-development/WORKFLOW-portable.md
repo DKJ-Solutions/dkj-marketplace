@@ -115,6 +115,14 @@ So every label goes on the `gh issue create` itself.
 | **`bug`, `feature` or `research`** | the kind | **always exactly one of the three.** `--label feature` for something new being added, `--label bug` for something that exists and has to change, `--label research` for a research, test or decision ticket that changes nothing on the store. A doc finding is a `bug` or a `feature`: a missing page is a `feature`, a wrong one a `bug` |
 | **the reach label** | how far the issue reaches | one `--label`, and only where it reaches the audience tier. Absence is the answer for tier 0 and is not a missing field. Its **name** is `Get-ReachLabel`'s, default `minor` -- see below |
 
+**The plugin's `guard-kind-label` hook holds the kind** (#4197). It refuses a `gh issue create` on a
+store repo whose labels hold none, or more than one, of the three. Measured in `smartwatchbanden`: 11
+consecutive issues filed by sessions on November 13 and 14, 2026 carried no kind, with this page loaded.
+It does not judge labels set in a template, the browser or an editor, or labels built at run time, and
+it lets them through with a warning. It does not judge an edit, because giving an old issue its kind is
+the repair this page asks for. Nor does it judge an inbound issue on the plugin's source repo, which
+carries `feature-inbound` or `bug-inbound` instead.
+
 **`research` is the third kind, and there is no fourth** (Dave, October 14, 2026,
 [#3006](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3006)). A ticket that only measures,
 tests or gathers what a decision needs builds nothing, so `feature` misnamed it: measured on

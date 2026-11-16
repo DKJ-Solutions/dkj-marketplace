@@ -39,14 +39,28 @@
 
 function Get-ReachLabelInvocation {
     <#
-        Pure: the gh issue create / edit calls in -Command that put -ReachLabel on an issue, each as
-        Kind ('create' | 'edit'), Numbers (the issues an edit names, empty on a create), Repo (--repo/-R,
-        else the repo of an issue URL, else ''), BodySource ('inline' | 'file' | 'stdin' | 'elsewhere' --
-        a create's --template, --recover, --web or --editor -- | 'none'), Body (the inline text), BodyFile
-        (the path) and BodyDynamic ($true where the inline text holds a '$' or opens with '(', so it is
-        built at run time and is not what gh receives). An empty list where no call adds the label.
+        Pure: the gh issue create / edit calls in -Command that put -ReachLabel on an issue, in
+        Get-GhIssueLabelCall's shape. An empty list where no call adds the label.
     #>
     param([AllowEmptyString()][string]$Command = '', [Parameter(Mandatory = $true)][string]$ReachLabel)
+
+    $want = $ReachLabel.Trim()
+    return @(Get-GhIssueLabelCall -Command $Command | Where-Object { @($_.Labels) -icontains $want })
+}
+
+function Get-GhIssueLabelCall {
+    <#
+        Pure: every gh issue create / edit call in -Command, each as Kind ('create' | 'edit'), Labels (the
+        labels it adds: --label/-l on a create, --add-label on an edit, split on commas and trimmed),
+        LabelsDynamic ($true where a label value holds a '$' or opens with '(', so it is built at run
+        time), Numbers (the issues an edit names, empty on a create), Repo (--repo/-R, else the repo of
+        an issue URL, else ''), BodySource ('inline' | 'file' | 'stdin' | 'elsewhere' -- a create's
+        --template, --recover, --web or --editor -- | 'none'), Body (the inline text), BodyFile (the path)
+        and BodyDynamic ($true where the inline text holds a '$' or opens with '(', so it is built at run
+        time and is not what gh receives). The one parser both guard-reach-reason and guard-kind-label
+        read the command with (#4197).
+    #>
+    param([AllowEmptyString()][string]$Command = '')
 
     $valueFlags = @{
         create = @('--assignee', '-a', '--body', '-b', '--body-file', '-F', '--label', '-l', '--milestone', '-m',
@@ -68,7 +82,8 @@ function Get-ReachLabelInvocation {
         $kind = $tok[$at + 2].Text
         if ($kind -cne 'create' -and $kind -cne 'edit') { continue }
 
-        $adds = $false
+        $labels = New-Object System.Collections.Generic.List[string]
+        $labelsDynamic = $false
         $repo = ''
         $source = 'none'
         $body = ''
@@ -90,7 +105,8 @@ function Get-ReachLabelInvocation {
                 if (-not ($valueFlags[$kind] -ccontains $flag)) { continue }
                 if ($null -eq $value) { if ($k + 1 -lt $tok.Count) { $k++; $value = $tok[$k].Text } else { $value = '' } }
                 if ($labelFlags[$kind] -ccontains $flag) {
-                    foreach ($l in ([string]$value -split ',')) { if ($l.Trim() -ieq $ReachLabel) { $adds = $true } }
+                    if (([string]$value).Contains('$') -or ([string]$value).TrimStart().StartsWith('(')) { $labelsDynamic = $true }
+                    foreach ($l in ([string]$value -split ',')) { if ($l.Trim()) { $labels.Add($l.Trim()) } }
                 } elseif ($flag -ceq '--repo' -or $flag -ceq '-R') {
                     $repo = ([string]$value).Trim()
                 } elseif ($flag -ceq '--body' -or $flag -ceq '-b') {
@@ -111,7 +127,6 @@ function Get-ReachLabelInvocation {
                 }
             }
         }
-        if (-not $adds) { continue }
         if ($repo -and $repo -notmatch '\A[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9._-]+\z') { $repo = '' }
         $dynamic = $false
         if ($source -eq 'inline') {
@@ -121,7 +136,8 @@ function Get-ReachLabelInvocation {
             $dynamic = ($body.Contains('$') -or $body.TrimStart().StartsWith('('))
         }
         $found.Add([pscustomobject]@{
-            Kind = $kind; Numbers = @($numbers.ToArray()); Repo = $repo
+            Kind = $kind; Labels = @($labels.ToArray()); LabelsDynamic = $labelsDynamic
+            Numbers = @($numbers.ToArray()); Repo = $repo
             BodySource = $source; Body = $body; BodyFile = $bodyFile; BodyDynamic = $dynamic
         })
     }
