@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**21 / 26 minor entries** <!-- pending-tally -->
+**22 / 27 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4154-app-deploy-allow-updates · 20261116-101810Z
+
+The app deploy that `live-preflight` and `prepare-release` print now reads
+`shopify app deploy --path <folder> --allow-updates`
+([#4154](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4154)), so it runs in a non-interactive shell.
+A deletion still needs `--allow-deletes`, which remains a deliberate separate act.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+On release day in a Shopify store repo that ships an app, the printed app deploy runs as printed through a
+session's `!` prefix. Before, the Shopify CLI refused it there and the owner had to look up the missing flag.
+
+**Score:** 3
+
+#### Pull Request
+
+The printed app deploy carries --allow-updates, so it runs in a non-interactive shell
+
+Plugins: bwj-development, dkj-subagents-shopify
+
+[PR #4169](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4169)
+
+---
 
 ### DEPLOY: feat/4155-notes-share-link · 20261116-100413Z
 
