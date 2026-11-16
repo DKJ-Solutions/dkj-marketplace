@@ -298,6 +298,59 @@ function Get-FoldTreeDecision {
     }
     return [pscustomobject]@{ InPlace = $true; Reason = '' }
 }
+# MAY THE FOLD'S FAST-FORWARD TAKE ITS BLOCKERS FROM THE TARGET? (inbound #4144, November 16, 2026.)
+#
+# THE TRUNK ARM ABOVE FOLDS IN PLACE WHATEVER THE TREE HOLDS, and one thing it can hold is not anybody's
+# work: a file committed with CRLF in the index while .gitattributes pins it `eol=lf` shows as modified on
+# every checkout, and `git checkout -- <path>` cannot clean it, because the index blob itself is the CRLF
+# one. Measured in a consumer on November 16, 2026: the PR that renormalized five such files merged, the
+# trunk return stood on the OLD main where those five still read as modified, and `git merge --ff-only
+# origin/main` refused to overwrite them -- merged, not folded, on exactly the PR that repairs the
+# condition. The hand recovery was `git checkout origin/main -- <paths>` and the fast-forward again.
+#
+# SO THE RETRY TAKES EXACTLY THAT STEP, AND ONLY WHERE IT PROVABLY LOSES NOTHING: every path the status
+# names must be a plain tracked modification whose working copy equals origin/main once line endings are
+# ignored. One path that fails either test -- real content, an add, a delete, a rename, a conflict, a
+# quoted (non-ASCII or special) name this function will not try to decode -- and the plan is no restore
+# at all, so the refusal stays exactly what it was. Untracked lines are skipped rather than counted: they
+# are not what `checkout -- <path>` could restore, and if one is what blocks the merge the retry simply
+# fails and the run refuses as before.
+#
+# PURE APART FROM THE INJECTED TEST, so the decision is asserted in worktree-lib.tests.ps1 with a fake
+# test and the git half stays in ship-pr.ps1 -- which must ALSO confirm that each path exists on the
+# target, because `git diff --quiet <ref> -- <path>` exits 0 for a path that matches nothing.
+function Get-EolOnlyRestorePlan {
+    param(
+        # `git -c core.quotePath=true status --porcelain` lines, as printed.
+        [string[]]$StatusLines,
+        # Given one path, $true when its working copy equals the target modulo line endings.
+        [Parameter(Mandatory = $true)][scriptblock]$TestEolOnly
+    )
+    $paths = New-Object System.Collections.Generic.List[string]
+    foreach ($line in @(@($StatusLines) | Where-Object { $_ -and "$_".Trim() })) {
+        $text = "$line"
+        if ($text.Length -lt 4) {
+            return [pscustomobject]@{ Restore = $false; Paths = @(); Reason = "an unreadable status line: '$text'" }
+        }
+        $xy = $text.Substring(0, 2)
+        $path = $text.Substring(3)
+        if ($xy -eq '??' -or $xy -eq '!!') { continue }
+        if ($xy -notin @(' M', 'M ', 'MM')) {
+            return [pscustomobject]@{ Restore = $false; Paths = @(); Reason = "'$path' is not a plain modification ($($xy.Trim()))" }
+        }
+        if ($path.StartsWith('"')) {
+            return [pscustomobject]@{ Restore = $false; Paths = @(); Reason = "a quoted path is not decoded here: $path" }
+        }
+        if (-not (& $TestEolOnly $path)) {
+            return [pscustomobject]@{ Restore = $false; Paths = @(); Reason = "'$path' differs from the target beyond its line endings" }
+        }
+        $paths.Add($path)
+    }
+    if ($paths.Count -eq 0) {
+        return [pscustomobject]@{ Restore = $false; Paths = @(); Reason = 'no modified tracked path to restore' }
+    }
+    return [pscustomobject]@{ Restore = $true; Paths = @($paths); Reason = '' }
+}
 # IS ANY WORKTREE STANDING INSIDE THE ONE WE ARE ABOUT TO WALK? (issue #1673, September 8, 2026.)
 #
 # THE HARNESS PLACES ITS OWN WORKTREE INSIDE THE REPO, at .claude/worktrees/agent-<id>, and nothing

@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**13 / 18 minor entries** <!-- pending-tally -->
+**14 / 19 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4144-eol-only-trunk-return · 20261116-082801Z
+
+`ship-pr` no longer traps the fold when the trunk's fast-forward is blocked only by line endings
+([#4144](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4144)): where every modified path equals
+`origin/main` once CR is ignored (a file committed with CRLF despite `eol=lf`, which the merged PR itself
+renormalized), it takes those paths from `origin/main`, fast-forwards again and folds. Any other change in
+the tree leaves the refusal exactly as it was.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+The PR that renormalizes CRLF-committed files ships and folds in one run, instead of stopping with "the
+FOLD IS STILL OWED" and a manual `git checkout origin/main -- <paths>` plus a hand fold.
+
+**Score:** 2
+
+#### Pull Request
+
+ship-pr: retry the trunk fast-forward past EOL-only blockers
+
+Plugins: dkj-policy
+
+[PR #4153](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4153)
+
+---
 
 ### DEPLOY: feat/4131-domain-borders · 20261116-072904Z
 
