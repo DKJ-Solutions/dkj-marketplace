@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Resolves #4193. The issue names `Format-ParkingLabelVerdict`, but the function is `Format-ParkingLabelNote`
+in `scripts/lib/claim-issue-lib.ps1`. The cause it states still holds: one fixed "waiting on an ANSWER"
+text for every parking label, plus two follow-up lines in `claim-issue.ps1` that say the same thing.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-ParkingWaitKind` classifies the matched labels as `answer` (the decision and information labels,
+      including their former names), `session` (`awaiting-session-dev` alone) or `other` (everything else);
+      where several labels match, the strictest wins
+- [x] `Format-ParkingLabelNote` and the two follow-up lines in `claim-issue.ps1` read per kind
+- [x] Plugin mirrors of the lib and the script kept byte-identical
+- [x] Asserts in `claim-issue.tests.ps1` for every kind and for precedence
 
 ### TEST
 
+- [x] `claim-issue.tests.ps1` on its own: 708 passed, 0 failed (11 new asserts)
+
 ### DEPLOY: fix/4193-parking-verdict-per-label
 
-**Score:**
+`claim-issue` now gives each parking label its own verdict. Before, every label printed the same
+"waiting on an ANSWER ... not yours to give" text. A session claiming an `awaiting-session-dev` issue
+(#4066) was told to stop, even when it was the session that issue had been parked for. Now that label
+says to lift it and carry on. A wait on a pull request, a release, an act, a look or a recurrence is
+named as a wait. The decision and information labels keep the original text (#4193).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A session the owner opens to work an issue parked under `awaiting-session-dev` is now told to go ahead
+instead of stopping.
+
+**Score:** 2
 
 #### Pull Request
 

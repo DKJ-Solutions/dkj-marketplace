@@ -1789,8 +1789,10 @@ if ($verdict.Action -eq 'claim' -or $verdict.Action -eq 'skip') {
 # kind of issue, printed "the work starts here", and the session chose between the options itself.
 # Only 'claim' and 'skip' reach it -- a closed or taken issue is not going to be worked either way.
 $parked = $false
+$parkingWaitKind = 'answer'
 if (($verdict.Action -eq 'claim' -or $verdict.Action -eq 'skip') -and $parkingLabels.Count -gt 0) {
     $parked = $true
+    $parkingWaitKind = Get-ParkingWaitKind -Labels $parkingLabels
     foreach ($line in @(Format-ParkingLabelNote -Issue ([int]$number) -Labels $parkingLabels)) {
         Write-Host "  $line" -ForegroundColor Yellow
     }
@@ -1865,8 +1867,17 @@ switch ($verdict.Code) {
             Write-Host '     does not -- see the prerequisite verdict before you carry this any further.' -ForegroundColor Yellow
         }
         if ($parked) {
-            Write-Host '     AND IT IS PARKED: see the parking-label verdict above -- the answer is owed before' -ForegroundColor Yellow
-            Write-Host '     you carry this any further, and it is not yours to give.' -ForegroundColor Yellow
+            # Per label (#4193): only a decision or information label owes an answer.
+            if ($parkingWaitKind -eq 'session') {
+                Write-Host '     AND IT IS PARKED FOR A SESSION: see the parking-label verdict above -- remove the' -ForegroundColor Yellow
+                Write-Host '     label when this is the session it waits on.' -ForegroundColor Yellow
+            } elseif ($parkingWaitKind -eq 'other') {
+                Write-Host '     AND IT IS PARKED: see the parking-label verdict above -- what it waits on comes' -ForegroundColor Yellow
+                Write-Host '     first, before you carry this any further.' -ForegroundColor Yellow
+            } else {
+                Write-Host '     AND IT IS PARKED: see the parking-label verdict above -- the answer is owed before' -ForegroundColor Yellow
+                Write-Host '     you carry this any further, and it is not yours to give.' -ForegroundColor Yellow
+            }
         }
         Write-Host "     $($facts.url)"
         exit 0
@@ -2248,9 +2259,17 @@ if ($foreignParked) {
     Write-Host '     expensive place to find that out.' -ForegroundColor Yellow
 } elseif ($parked) {
     # NOT "open the branch in this same turn": that line is right for a free issue and is exactly the
-    # sentence #2518 measured a session acting on for a parked one.
-    Write-Host '     Read the issue for the open question. Where it is answered, remove the label and open' -ForegroundColor Yellow
-    Write-Host '     the branch (new-branch); where it is not, the answer is owed first, and it is not yours.' -ForegroundColor Yellow
+    # sentence #2518 measured a session acting on for a parked one. Per label since #4193.
+    if ($parkingWaitKind -eq 'session') {
+        Write-Host '     Read the last parking comment for the steps left. Where this is the session it was' -ForegroundColor Yellow
+        Write-Host '     parked for, remove the label and open the branch (new-branch) in this same turn.' -ForegroundColor Yellow
+    } elseif ($parkingWaitKind -eq 'other') {
+        Write-Host '     Read the parking comment for what it waits on. Where that has happened, remove the' -ForegroundColor Yellow
+        Write-Host '     label and open the branch (new-branch); where it has not, the wait comes first.' -ForegroundColor Yellow
+    } else {
+        Write-Host '     Read the issue for the open question. Where it is answered, remove the label and open' -ForegroundColor Yellow
+        Write-Host '     the branch (new-branch); where it is not, the answer is owed first, and it is not yours.' -ForegroundColor Yellow
+    }
 } else {
     Write-Host '     Read the issue, then open the branch (new-branch) -- in this same turn, without' -ForegroundColor Green
     Write-Host '     asking whether to go on.' -ForegroundColor Green
