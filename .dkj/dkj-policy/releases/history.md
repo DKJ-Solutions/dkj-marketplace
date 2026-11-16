@@ -4,6 +4,7 @@
 
 | Version | Date | Type | Title |
 |---|---|---|---|
+| [6.18.0](audience/6.x/6.18.0.md) | 2026-11-16 | Minor | A weekday machine-upkeep task, a kind-label guard for BWJ issues, and merge-on-green recovering from a failed merge |
 | [6.17.0](audience/6.x/6.17.0.md) | 2026-11-15 | Minor | The product layer completes its core: a bottom bar, a full-screen menu and sheet, progress, status and error states, and a product page for phone and desktop. |
 | [6.16.0](audience/6.x/6.16.0.md) | 2026-11-14 | Minor | Minor release |
 | [6.15.0](audience/6.x/6.15.0.md) | 2026-11-13 | Minor | The brand book's colours are computed per theme and every series reads in every theme |

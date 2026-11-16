@@ -44,10 +44,10 @@ always pins the release that carries the bytes its checksums name.
 
 | File | Fetch from | sha256 |
 |---|---|---|
-| `house-style.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.17.0/plugins/dkj-policy/assets/dkj-brandbook/house-style.css` | `f7876ae568473439b46fff8116ac188c45dbf6caa5ee436945baa36df5e57e28` |
-| `house-theme.js` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.17.0/plugins/dkj-policy/assets/dkj-brandbook/house-theme.js` | `f9048ca7a7ac35633cb6a0bbbfbf868c1f398de9cca1d55634772130623d378d` |
-| `house-product.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.17.0/plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css` | `d36f4ca6d9c6113c8da91c57b451183b0bfd31af355d3e13a4120c7774497d6a` |
-| `InterVariable.woff2` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.17.0/plugins/dkj-policy/assets/dkj-brandbook/InterVariable.woff2` | `693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3` |
+| `house-style.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.18.0/plugins/dkj-policy/assets/dkj-brandbook/house-style.css` | `ea9190222f5a93b52012cdd7c8431689830cea114c65cad70ed4de95fe4f1e5f` |
+| `house-theme.js` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.18.0/plugins/dkj-policy/assets/dkj-brandbook/house-theme.js` | `c1e15beca3c764a18033909e417306e8eefd264f1c8a1bd189dcf34452404e6a` |
+| `house-product.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.18.0/plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css` | `3dc56f1f4a005a08bae03f47c69d28b48ccadb09c5eb6ae6dac78baf676084ce` |
+| `InterVariable.woff2` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.18.0/plugins/dkj-policy/assets/dkj-brandbook/InterVariable.woff2` | `693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3` |
 
 **A product page vendors and links all three files, `house-style.css` first and `house-product.css` after it**
 (the product file is never loaded alone), with `house-theme.js` where the app lets the user pick a theme. **An
