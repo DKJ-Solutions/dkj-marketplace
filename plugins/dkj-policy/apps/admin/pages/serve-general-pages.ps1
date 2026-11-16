@@ -68,8 +68,11 @@
                       OwnHub opt-out, which sent '/admin' on to a repo's own admin, went with #3643.
       /dev/repository     Admin's Repository page (Format-PluginRepoRepositoryHtml, #3383): the facts the home page
                       held until the house admin became a grid of card links, and the Issues page's card.
+      /dev/claude/mcp the MCP connections (#4173): a cache file under %LOCALAPPDATA%\dkj-admin (Get-McpCachePath,
+                      apps/admin/lib/mcp-page-lib.ps1), never the health check itself, which takes about 15 s.
       /refresh        ?page=issues, ?page=goals, ?page=today or ?page=sessionstart drops that page's cache (at most once per
-                      -MinRefreshSeconds, and per 60 s for issues) and goes back to the page.
+                      -MinRefreshSeconds, and per 60 s for issues) and goes back to the page. ?page=mcp runs
+                      `claude mcp list` (bounded at 60 s) and writes the MCP page's cache, at most once per -MinRefreshSeconds.
       /api/airsquats  the banner's state as JSON (GET), and POST /api/airsquats/clear ticks its box off (#3438):
                       the machine's file under %LOCALAPPDATA%\dkj-admin, synced with a private gist by a child
                       (sync-airsquats.ps1) where DKJ_ADMIN_AIRSQUATS_GIST opts in (#3439). The one route that
@@ -162,6 +165,8 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\today-page-lib.ps1')
 # The preview handover pages (#3925).
 . (Join-Path $PSScriptRoot '..\lib\handover-page-lib.ps1')
+# The MCP connections page (#4173).
+. (Join-Path $PSScriptRoot '..\lib\mcp-page-lib.ps1')
 
 $pluginRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..\..')).Path
 $root = if ($RepoRootOverride) { [System.IO.Path]::GetFullPath($RepoRootOverride).TrimEnd('\', '/') }
@@ -465,6 +470,29 @@ $json = $o | ConvertTo-Json -Compress -Depth 4
     }
 }
 
+function Update-McpCache {
+    <#
+        Runs `claude mcp list` in this checkout, bounded at 60 s, and writes what it found to the MCP page's cache
+        (Get-McpCachePath, #4173): about 15 s, which is why only /refresh?page=mcp calls it and never a page view. A
+        failure is written too, as the cache's Error, so the page says the last read failed instead of going blank.
+    #>
+    $started = Get-Date
+    $rows = @(); $err = ''
+    try {
+        $claude = Get-ExecutablePath 'claude'
+        if (-not $claude) { throw 'claude was not found on the PATH' }
+        $q = Invoke-BoundedProcess -FilePath $claude -Arguments @('mcp', 'list') -TimeoutSeconds 60 -WorkingDirectory $root
+        if ($q.TimedOut) { throw 'claude mcp list did not answer within 60 s' }
+        if ($q.ExitCode -ne 0) { throw "claude mcp list exited $($q.ExitCode)" }
+        $rows = @(ConvertFrom-McpListOutput -Text $q.Output -ProjectNames @(Get-McpProjectNames -RepoRoot $root))
+    } catch {
+        $err = ([string]$_.Exception.Message) -replace '\s+', ' '
+    }
+    try {
+        Write-McpCache -Path (Get-McpCachePath -Root $root) -Rows $rows -GeneratedAt $started.ToString('yyyy-MM-dd HH:mm:ss') -Seconds ((Get-Date) - $started).TotalSeconds -ReadError $err
+    } catch { }
+}
+
 function Get-AdminObjectsModel {
     <#
         The repo's domain objects for Admin's navigation (#3818): what Get-AdminObjects in its scripts/repo-config.ps1
@@ -589,7 +617,16 @@ try {
             if ($path -eq '/refresh') {
                 # At most one re-run per -MinRefreshSeconds, however often /refresh is asked for. ?page= names
                 # where to go back to, from a fixed list, so the redirect never leaves this server.
-                $page = if ([string]$target -match '[?&]page=(sessionstart|issues|goals|today)(&|$)') { $Matches[1] } else { '' }
+                $page = if ([string]$target -match '[?&]page=(sessionstart|issues|goals|today|mcp)(&|$)') { $Matches[1] } else { '' }
+                if ($page -eq 'mcp') {
+                    # The MCP page reads a cache only (#4173); this is the one place that fills it, about 15 s, at most
+                    # once per -MinRefreshSeconds.
+                    $mc = Read-McpCache -Path (Get-McpCachePath -Root $root)
+                    $mcAge = if ($mc -and $mc.GeneratedAt) { try { ((Get-Date) - [datetime]::ParseExact($mc.GeneratedAt, 'yyyy-MM-dd HH:mm:ss', [Globalization.CultureInfo]::InvariantCulture)).TotalSeconds } catch { [double]::MaxValue } } else { [double]::MaxValue }
+                    if ($mcAge -ge $MinRefreshSeconds) { Update-McpCache }
+                    Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = '/dev/claude/mcp' } -Method $method
+                    continue
+                }
                 if ($page -eq 'sessionstart') {
                     if ($ssCache -and ((Get-Date) - $ssCache.At).TotalSeconds -ge $MinRefreshSeconds) { $ssCache = $null }
                 } elseif ($page -eq 'issues') {
@@ -644,6 +681,9 @@ try {
                     Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('No lens of that name in this repo.')) -Method $method
                     continue
                 }
+            } elseif ($path -cmatch '^/dev/claude/mcp/?$') {
+                # The MCP connections (#4173): the cache /refresh?page=mcp writes, read per request; never the health check itself.
+                $html = Format-AdminMcpPageHtml -Cache (Read-McpCache -Path (Get-McpCachePath -Root $root)) -RepoName (Get-RepoIdentity).Name
             } elseif ($path -cmatch '^/dev/claude/rules/([A-Za-z0-9._-]{1,80})/?$') {
                 # One .claude/rules file's page, read from this checkout (Maikel, November 3, 2026); a name that folder
                 # has no file of is a 404.

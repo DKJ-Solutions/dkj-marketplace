@@ -604,6 +604,8 @@ $script:AdminIcons = @{
     'lens'          = '<circle cx="11" cy="11" r="6"/><path d="M15.5 15.5L21 21"/>'
     # Settings: a gear (Feather's 'settings', MIT).
     'settings'      = '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>'
+    # MCP connections (#4173): two nodes joined by a link (Feather's 'share-2' turned on its side).
+    'mcp'           = '<circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7.2 10.8l9.6-4.6M7.2 13.2l9.6 4.6"/>'
     'skills'        = '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'
 }
 
@@ -658,6 +660,8 @@ function Get-GeneralPages {
         @{ Href = '/dev/stopwatch';     Label = 'Stopwatch';     Sub = 'How long an assignment takes, timed from a stopwatch: prompt, or from the start of a release cut, to back on the trunk, with the transcript phases'; Icon = 'stopwatch'; Group = '/dev/clock' },
         @{ Href = '/dev/logbook';       Label = 'Logbook';       Sub = 'Every assignment of a clean session, timed by itself: first prompt to back on the trunk, with the transcript phases'; Icon = 'logbook'; Group = '/dev/clock' },
         # #3482: plugin-versions' verdict per enabled plugin, so a problem with one is visible from Admin.
+        # The MCP servers a session can reach (#4173), on the Claude page beside Rules, Skills and Specialists.
+        @{ Href = '/dev/claude/mcp';    Label = 'MCP connections'; Sub = 'The MCP servers a session can reach, and whether each one answers'; Icon = 'mcp'; Group = '/dev/claude' },
         @{ Href = '/dev/plugins';       Label = 'Installed plugins'; Sub = 'Every plugin this repo enables, and any problem with one on this machine'; Icon = 'plugins' },
         # Admin's own settings, on a page of their own (Dave, November 2, 2026): the Theme first.
         @{ Href = '/settings';      Label = 'Settings';      Sub = 'How Admin looks on this device: its theme'; Icon = 'settings' }
