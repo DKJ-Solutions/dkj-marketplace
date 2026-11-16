@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**29 / 39 minor entries** <!-- pending-tally -->
+**30 / 40 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4157-backup-full-store · 20261116-135148Z
+
+`backup-live-theme` counts the store's themes before it duplicates live
+([#4157](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4157)). At Shopify's limit of 20 it refuses, and
+names `sweep-preview-themes` as the step that frees a slot. When the duplicate leaves no copy in the theme list,
+it now says so, instead of claiming the copy was created.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+On release day in a Shopify store repo holding 20 themes, the backup step stops with "the store is full (20/20)
+... sweep spent previews first", instead of a misleading message and a push the preflight then refuses. Sweeping
+and re-running clears it.
+
+**Score:** 3
+
+#### Pull Request
+
+backup-live-theme refuses a full store before duplicating, and stops claiming a failed duplicate was created
+
+Plugins: dkj-subagents-shopify
+
+[PR #4180](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4180)
+
+---
 
 ### DEPLOY: fix/4160-publish-page-skip-unchanged · 20261116-133301Z
 
