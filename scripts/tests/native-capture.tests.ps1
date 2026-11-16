@@ -2062,7 +2062,8 @@ foreach ($af in $auditFiles) {
 # $blob (`git cat-file blob <id>`), -Utf8 because they are file content. $log is judged by Test-NativeExitMeasured
 # before its exit code and an unread walk prints 'no hint'; $blob only by a POSITIVE `-eq 0` after the same test, so
 # a revision it could not read is left out of a HINT, never read into a verdict -- the conflict refuses either way.
-Assert-Equal 118 $boundedTotal 'the parser still counts 118 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
+# 118 -> 119 (#4168): sync-main.ps1's Complete-SyncPullRequest reads the trunk's rules once (`gh api .../rules/branches/<trunk>`) for the required checks.
+Assert-Equal 119 $boundedTotal 'the parser still counts 119 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
 Assert-Equal 0 $unguarded.Count `
     ('every bounded capture judged with a NEGATIVE exit-code test either asks Test-NativeExitMeasured/Get-NativeExitLabel about THAT capture or is exempt with a reason (#2081)' +
      $(if ($unguarded.Count) { ' -- unguarded: ' + ($unguarded -join ' | ') } else { '' }))

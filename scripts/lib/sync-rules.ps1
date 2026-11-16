@@ -1495,3 +1495,85 @@ function Select-SyncBranchName {
     }
     return $name
 }
+
+function Get-SyncRequiredCheckNames {
+    <#
+    .SYNOPSIS
+        The check names a trunk's branch rules REQUIRE, from `gh api repos/{owner}/{repo}/rules/branches/<trunk>`.
+        Sorted and unique; empty when the payload is absent, unparseable, or requires no check.
+
+    .DESCRIPTION
+        WHY sync-main READS THE RULES (#4168, November 16, 2026). Its PR finish polled every check on
+        the PR and waited while any was pending, so a non-required check that stayed pending held the
+        merge until -ChecksTimeoutMinutes ran out. Measured at BWJ-Development/xoxowildhearts PR #539: a
+        'Theme Check Report' sat pending 10+ minutes over green required checks. ship-pr reads the same
+        endpoint for the same reason (#1602).
+
+        NOT `gh pr checks --required`, because an empty answer from it means two different things: a
+        repo that requires nothing, and a required check that has not registered yet. Waiting on the
+        first never ends; merging on the second is the refusal #4152 measured. The rules name the
+        checks before any of them has registered, so the poll can wait for those names to appear.
+
+        EMPTY MEANS "WAIT ON EVERY CHECK", the caller's old behaviour, never "nothing to wait for".
+
+        Pure and dependency-free, which is this file's registry condition: the caller does the read.
+    #>
+    param([string]$RulesJson)
+
+    if (-not $RulesJson -or -not $RulesJson.Trim()) { return @() }
+    try { $parsed = $RulesJson | ConvertFrom-Json } catch { return @() }
+    $names = @()
+    foreach ($rule in @($parsed)) {
+        if (-not $rule -or -not $rule.PSObject.Properties['type'] -or $rule.type -ne 'required_status_checks') { continue }
+        if (-not $rule.PSObject.Properties['parameters'] -or -not $rule.parameters) { continue }
+        if (-not $rule.parameters.PSObject.Properties['required_status_checks']) { continue }
+        foreach ($c in @($rule.parameters.required_status_checks)) {
+            if ($c -and $c.PSObject.Properties['context'] -and ([string]$c.context).Trim()) { $names += ([string]$c.context).Trim() }
+        }
+    }
+    return @($names | Sort-Object -Unique)
+}
+
+function Get-SyncCheckVerdict {
+    <#
+    .SYNOPSIS
+        One poll of a sync PR's checks, judged: 'green', 'red' or 'pending', with the names that are
+        neither green nor pending (Bad).
+
+    .DESCRIPTION
+        THE POLL'S RULE, MOVED OUT OF sync-main SO IT CAN BE TESTED (#4168). Checks is the poll's
+        records, {name, state}. With Required empty every check counts, which is the rule sync-main has
+        always had. With Required named only those count, and a required name that has not appeared
+        yet is PENDING, never green: that is the moment the printed `gh pr checks --watch` mistook for
+        done in #4152.
+
+        An empty poll is pending, for the same reason: checks register after the PR is opened.
+    #>
+    param(
+        [object[]]$Checks = @(),
+        [string[]]$Required = @()
+    )
+
+    $okStates      = @('SUCCESS', 'NEUTRAL', 'SKIPPED')
+    $pendingStates = @('PENDING', 'QUEUED', 'IN_PROGRESS')
+    $records = @(@($Checks) | Where-Object { $_ -and $_.PSObject.Properties['state'] })
+    $req = @(@($Required) | Where-Object { $_ -and ([string]$_).Trim() })
+
+    if ($req.Count -gt 0) {
+        $counted = @($records | Where-Object { $_.PSObject.Properties['name'] -and ([string]$_.name) -in $req })
+        $missing = @($req | Where-Object { $n = $_; -not @($counted | Where-Object { [string]$_.name -eq $n }).Count })
+    } else {
+        $counted = $records
+        $missing = @()
+    }
+
+    $bad = @($counted | Where-Object { ([string]$_.state).ToUpperInvariant() -notin ($okStates + $pendingStates) })
+    if ($bad.Count -gt 0) {
+        return [pscustomobject]@{ State = 'red'; Bad = @($bad | ForEach-Object { "$($_.name) ($($_.state))" }) }
+    }
+    $pending = @($counted | Where-Object { ([string]$_.state).ToUpperInvariant() -in $pendingStates })
+    if ($counted.Count -eq 0 -or $missing.Count -gt 0 -or $pending.Count -gt 0) {
+        return [pscustomobject]@{ State = 'pending'; Bad = @() }
+    }
+    return [pscustomobject]@{ State = 'green'; Bad = @() }
+}

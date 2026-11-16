@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**27 / 37 minor entries** <!-- pending-tally -->
+**28 / 38 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4168-sync-required-checks · 20261116-132206Z
+
+`sync-main` no longer holds its PR when a check the trunk does not require stays pending
+([#4168](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4168)): it reads the required checks from the
+trunk's branch rules and merges once those are green, as `ship-pr` does. A required check that has not
+registered yet still counts as pending, and where the rules cannot be read or require nothing every check is
+waited for, as before.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A Shopify store whose sync PR carries a slow, non-required check (a theme-check report, measured pending for
+ten minutes over green required checks) gets the sync merged instead of `NOT merged` after the timeout.
+
+**Score:** 2
+
+#### Pull Request
+
+sync-main waits on the required checks only, where the repo has any
+
+Plugins: dkj-subagents-shopify
+
+[PR #4191](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4191)
+
+---
 
 ### DEPLOY: feat/4149-sync-main-as-drift-check · 20261116-123740Z
 
