@@ -95,7 +95,7 @@ could not measure is reported as skipped and named, never counted as passing.
 
 **Where `Get-ShopifyAppRoot` names the folder of a Shopify app the store also ships** (e.g.
 `extensions`), step 4 lists the range's files under it, which no theme push or promotion carries, and the
-runbook gains a step **2b** with `shopify app deploy --path <folder>`, for a person to run. It is printed
+runbook gains a step **2b** with `shopify app deploy --path <folder> --allow-updates`, for a person to run. It is printed
 and never run, like the push, and `live-preflight` prints it again on the day. Unanswered, nothing changes.
 
 ## The Git-connected mode (#2998, #3012)

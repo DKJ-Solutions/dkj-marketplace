@@ -43,7 +43,7 @@ mode:
   deploy` check inside step 3. A folder that is not a relative path of letters, digits, `.`, `_`, `/` and `-` without a
   `..` segment refuses, because no command could be printed around it.
 - **A release whose only change is the app** is a note rather than "nothing to push".
-- **A green run ends with** `shopify app deploy --path <folder>`, run from the repo root. Like the push, it
+- **A green run ends with** `shopify app deploy --path <folder> --allow-updates`, run from the repo root. Like the push, it
   is **printed and never run**: it releases a new app version to the store, so it waits for the owner's
   word. A theme that places a block this deploy adds needs the deploy first.
 - **The live-push record lists those files as `live` lines** (#3176), written even when the app is the
