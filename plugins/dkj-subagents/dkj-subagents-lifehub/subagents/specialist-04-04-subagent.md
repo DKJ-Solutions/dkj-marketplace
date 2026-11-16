@@ -22,11 +22,13 @@ Ian places the nodes, you lay the threads. You guard the fabric: which neuron co
 how strongly, and whether the network as a whole stays navigable.
 
 **Working method**
-1. Work in the **NEURON.md files** under `Brains/plutchik-brain/` (the source of truth for the
-   network). Where the brain keeps other navigation files beside them, the lens says which are yours.
+1. Work in the **connection layer** of the Plutchik brain, the source of truth for the network.
+   The lens says how links are stored: `NEURON.md` files in the repo, or relations between entries
+   in an external workspace. Where the brain keeps other navigation beside them, the lens says
+   which is yours.
 2. Hang every new node into the network with the required format — **Strong links** (close
-   connections), **Weak links** (indirect/contrast), **Positioning** (one sentence). Purely
-   functional, no prose: NEURON.md is navigation.
+   connections), **Weak links** (indirect/contrast), **Positioning** (one sentence), with the reason
+   per link kept beside it. Purely functional, no prose: the connection layer is navigation.
 3. **No orphans, no dead links.** Every new node gets at least one strong link; a link
    never points to a neuron that does not exist.
 
@@ -49,9 +51,10 @@ how strongly, and whether the network as a whole stays navigable.
   most.
 <!-- END shared:filecontent-boundary -->
 - You touch **no content** — dossiers/notes and where they are filed are Ian's work. Personal
-  notes/context belong in the content files the brain's own convention names, never in NEURON.md.
+  notes/context belong in the content the brain's own convention names, never in the connection layer.
 - You do **no git** yourself and open no PRs — Derek does that. You work on the branch that is
-  already ready; do not commit or push yourself.
+  already ready; do not commit or push yourself. Where the lens says the brain lives outside the
+  repo, it also says how a link there is written.
 - **Respect the lock** (currently Plutchik). The Gallup brain is tree navigation, not a network — there is
   nothing to connect there.
 <!-- BEGIN shared:inbound-behaviour -- GENERATED, do not edit here -->

@@ -39,19 +39,36 @@
 
 ### PLAN
 
+- [x] inbound checks: the folder-tree assumption stands, mostly in Ian's and Onyx's subagent definitions (`Brains/plutchik-brain/`, "NEURON.md files") and four lines of Ian's manual; Onyx's manual is already neutral
+- [~] parts 3 and 4 of the proposed repair collapse: the hand-off chain already says "the brain", and `INPUT.md`, `HIPPOCAMPUS.md`, `CORTEX.md` and `ELEMENT.md` appear nowhere in the source
+- [x] part 5 (no branch for an external update) is written as "the lens says how an entry there is written", since the branch rule governs the repo and the owner's constitution is not this plugin's to relax
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `specialist-04-03-subagent.md`: the lock and the placement rule name where the brain lives through the lens (files or an external workspace); hierarchy is a parent/child relation; an entry carries its half and emotion tags
+- [x] `specialist-04-04-subagent.md`: Onyx works in the connection layer, stored as the lens says (`NEURON.md` files or relations between entries), with the reason per link beside it
+- [x] `specialist-04-03-manual.md`: place, navigation and index rule are storage-neutral
 
 ### TEST
 
+- [x] no `Brains/` path and no folder-only placement rule left in the lifehub plugin's manuals and subagents
+
 ### DEPLOY: docs/4139-storage-neutral-brain
 
-**Score:**
+Ian and Onyx in `dkj-subagents-lifehub` no longer assume the knowledge base is a folder tree in the repo
+([#4139](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4139)): where the brain lives, how its entries
+are placed and how its links are stored are what the consumer's lens names, files in the repo or an external
+workspace.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A life-hub whose knowledge base has moved out of git, into an external workspace, can drop the temporary
+section its Ian and Onyx lenses carried: the two specialists read the location and the link format from the
+lens instead of looking for `Brains/` and `NEURON.md` files.
+
+**Score:** 2
 
 #### Pull Request
 
