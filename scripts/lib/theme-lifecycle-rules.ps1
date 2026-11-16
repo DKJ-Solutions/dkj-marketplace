@@ -379,6 +379,30 @@ function Get-ExistingBackupVerdict {
     return [pscustomobject]@{ Accepted = $true; Id = $id; Name = $name; Reason = "theme $id is one of this repo's backups and not live" }
 }
 
+function Get-ThemeSlotVerdict {
+    <#
+        Pure: whether the store has room for one more theme, as { Full; Count; Limit; Message }.
+
+        WHY (#4157, November 16, 2026). Shopify holds at most 20 themes per store, and at that limit
+        'shopify theme duplicate' fails ('Failed to duplicate theme.'), so backup-live-theme's step 1 cannot
+        succeed. Measured in a consumer: the store held 20 themes, the duplicate failed, and live-preflight
+        refused the push for want of a backup -- while the runbook swept spent previews only AFTER the push.
+        No backup without a free slot, no push without a backup. Counting first turns that deadlock into a
+        refusal that names the step which frees a slot.
+
+        THE LIMIT IS A PARAMETER WITH SHOPIFY'S NUMBER AS ITS DEFAULT, so a test can state it and a change on
+        Shopify's side is one argument, not a hunt.
+    #>
+    param(
+        [Parameter(Mandatory)][int]$Count,
+        [int]$Limit = 20
+    )
+    $full = $Count -ge $Limit
+    $message = if ($full) {
+        "the store is full ($Count/$Limit themes), so Shopify cannot duplicate live into a backup. Sweep spent previews first (the theme-lifecycle skill, sweep-preview-themes), then run this again."
+    } else { '' }
+    return [pscustomobject]@{ Full = $full; Count = $Count; Limit = $Limit; Message = $message }
+}
 function Get-ThemeFillVerdict {
     <#
     .SYNOPSIS

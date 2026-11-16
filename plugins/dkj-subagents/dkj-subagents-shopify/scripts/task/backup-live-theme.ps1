@@ -322,6 +322,21 @@ if ($adopted) {
 # read the flag as decoration and take it out.
 $dupArgs = @('theme', 'duplicate', '--store', $store, '--theme', $liveId, '--name', $backupName, '--force')
 
+# A FULL STORE IS REFUSED BEFORE THE DUPLICATE, NOT DISCOVERED AFTER IT (#4157). At Shopify's theme limit
+# the duplicate cannot succeed, and the run used to learn that only from a missing theme afterwards -- and
+# then blamed the list. The refusal names the sweep, the one step that frees a slot. An adopted copy takes
+# no slot, so it is not asked; a dry run reports the same verdict without refusing.
+$slots = Get-ThemeSlotVerdict -Count @($themes).Count
+if ($slots.Full -and -not $adopted) {
+    if ($DryRun) {
+        Write-Host "  DRY RUN: a real run would refuse here -- $($slots.Message)" -ForegroundColor Yellow
+    } else {
+        Write-Host "REFUSED: $($slots.Message)" -ForegroundColor Red
+        Write-Host 'Nothing was created or rotated; the previous backup is still standing.'
+        exit 1
+    }
+}
+
 if ($adopted) {
     Write-Host '  nothing is duplicated: the verify and the rotation below run against this copy.'
 } elseif ($DryRun) {
@@ -346,7 +361,11 @@ if ($adopted) {
     $hit = @($after | Where-Object { $_ -and ([string]$_.name).Trim() -eq $backupName })
     if ($hit.Count -eq 1) { $backupId = ([string]$hit[0].id).Trim() }
     if (-not $backupId) {
-        Write-Error ("The duplicate was created but no theme called '$backupName' is in the theme list. " +
+        # THE CLI'S EXIT CODE IS NOT PROOF OF A COPY (#4157): measured, 'Failed to duplicate theme.' came back
+        # beside a zero exit, and this line then said the duplicate WAS created. What is known is only that
+        # the list holds no such theme, so that is all it says -- the CLI's own output above says why.
+        Write-Error ("The duplicate command returned, but no theme called '$backupName' is in the theme list " +
+            "($(@($after).Count) theme(s)) -- the duplicate did not happen; read the CLI's output above for why. " +
             'Nothing was rotated; the previous backup is still standing.')
         exit 1
     }
