@@ -479,6 +479,10 @@ $ErrorActionPreference = 'Stop'
 # the expensive one, and the opposite of "nothing happened". $shipMergeLanded is set at exactly one place,
 # the line that reports the merge, so the verdict states what this run actually knows and nothing more.
 $shipMergeLanded = $false
+# THE ONE REFUSAL WITH A CODE OF ITS OWN (issue #4198). The held merge below sets this to 75 just before its
+# Write-Error, because under the 'Stop' above that Write-Error ends the run HERE, in the trap -- an exit
+# written beneath it is never reached. Every other refusal leaves it at 1.
+$shipExitCode = 1
 trap {
     $shipRefusal = $_
     $host.UI.WriteErrorLine(($shipRefusal | Out-String).TrimEnd())
@@ -491,6 +495,7 @@ trap {
     }
     $host.UI.WriteErrorLine('          THIS LINE IS THE SIGNAL, NOT THE EXIT CODE (#2283): a pipe (`| tail -n`, `| Select-Object -Last n`)')
     $host.UI.WriteErrorLine('          or any wrapper ending in a second command hands its caller ITS status -- 0 -- and never this run''s.')
+    if ($shipExitCode -ne 1) { exit $shipExitCode }
     exit 1
 }
 
@@ -3766,6 +3771,10 @@ if (-not $mergedState) {
         "gh reported a 5xx/transport failure on the merge and PR #$pr still reads '$mergedState' after about a minute"
     }
     $armLabel = Get-MergeOnGreenArmLabel
+    # SET BEFORE THE Write-Error, BECAUSE THAT LINE ENDS THE RUN IN THE TRAP (#4198): the trap exits with
+    # this, and the merge-on-green runner reads it as "wake the next sweep yourself" -- after a 5xx no CI
+    # completion comes to wake it, and the schedule arrives hours late (#3807).
+    $shipExitCode = Get-MergeHeldExitCode
     Write-Error @"
 $mergeHeldLead -- NOT folded, and NOT a failed merge (issues #1916, #3802).
 
@@ -3775,7 +3784,7 @@ land on its own, or the lock may expire and leave the PR open.
 PR #$pr stays armed '$armLabel', so the merge-on-green sweep lands and folds it if this session does
 not. Or re-run ship-pr later: a merge that landed reads back MERGED and step 5 folds against it.
 "@
-    exit 1
+    exit $shipExitCode
 } elseif ($mergedState -ne 'MERGED') {
     # A MERGE QUEUE IS NAMED AS THE CAUSE ONLY WHERE THE TRUNK'S RULES WERE NOT READ (issue #3802). When
     # they were read and carry no merge_queue rule, a queue is the one cause already ruled out, and naming

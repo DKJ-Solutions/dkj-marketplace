@@ -890,6 +890,75 @@ Assert-True ($pickRaw -match 'Get-MergeOnGreenSettleWaitSeconds' -and ([regex]::
     'the picker asks the lib how long to wait and re-reads the tracker for its second look'
 
 Write-Host ''
+Write-Host 'A held merge wakes the next sweep itself (#4198)' -ForegroundColor Cyan
+
+$wfRef = 'DKJ-Solutions/dkj-marketplace/.github/workflows/merge-on-green.yml@refs/heads/main'
+Assert-Equal 75 (Get-MergeHeldExitCode) 'the held-merge exit code is EX_TEMPFAIL, 75'
+
+$v0 = Get-MergeOnGreenRedispatchVerdict -Retry '' -WorkflowRef $wfRef
+Assert-True $v0.Redispatch 'a first held merge (no counter: workflow_run or schedule) re-dispatches'
+Assert-Equal 1 $v0.Next 'as retry 1'
+Assert-Equal 300 $v0.DelaySeconds 'after 5 minutes'
+Assert-Equal 'merge-on-green.yml' $v0.Workflow 'the workflow file is read off GITHUB_WORKFLOW_REF'
+Assert-Equal 'main' $v0.Ref 'and so is the branch to dispatch on'
+$v2 = Get-MergeOnGreenRedispatchVerdict -Retry '2' -WorkflowRef $wfRef
+Assert-True ($v2.Redispatch -and $v2.Next -eq 3 -and $v2.DelaySeconds -eq 900) 'retry 2 dispatches retry 3 after 15 minutes'
+$v3 = Get-MergeOnGreenRedispatchVerdict -Retry '3' -WorkflowRef $wfRef
+Assert-True (-not $v3.Redispatch) 'retry 3 is the bound: no fourth dispatch'
+Assert-True ($v3.Reason -like '*stays armed*') 'and the refusal says the pull request stays armed'
+$renamed = Get-MergeOnGreenRedispatchVerdict -Retry '0' -WorkflowRef 'acme/shop/.github/workflows/sweep.yaml@refs/heads/trunk'
+Assert-True ($renamed.Redispatch -and $renamed.Workflow -eq 'sweep.yaml' -and $renamed.Ref -eq 'trunk') 'a renamed runner on another trunk is dispatched by its own name'
+foreach ($bad in @('-1', '1; rm -rf /', 'abc', '100', ' 1e3')) {
+    Assert-True (-not (Get-MergeOnGreenRedispatchVerdict -Retry $bad -WorkflowRef $wfRef).Redispatch) "a hand-typed counter '$bad' is refused, never read as zero"
+}
+foreach ($badRef in @('', 'acme/shop/.github/workflows/sweep.yml@refs/tags/v1', 'acme/shop/.github/workflows/a b.yml@refs/heads/main', 'acme/shop/.github/workflows/x.yml@refs/heads/main;echo')) {
+    Assert-True (-not (Get-MergeOnGreenRedispatchVerdict -Retry '0' -WorkflowRef $badRef).Redispatch) "a workflow ref outside the plain shape ('$badRef') dispatches nothing"
+}
+
+foreach ($inj in @("x`nredispatch=true", "1`nx")) {
+    $vi = Get-MergeOnGreenRedispatchVerdict -Retry $inj -WorkflowRef $wfRef
+    Assert-True (-not $vi.Redispatch -and $vi.Reason -notmatch '[\r\n]') 'a counter carrying a newline is refused, and the reason echoes none of it into GITHUB_OUTPUT'
+}
+$vr = Get-MergeOnGreenRedispatchVerdict -Retry '0' -WorkflowRef "$wfRef`nredispatch=true"
+Assert-True (-not $vr.Redispatch -and $vr.Reason -notmatch '[\r\n]') 'a workflow ref carrying a newline is refused the same way'
+foreach ($dotRef in @('acme/shop/.github/workflows/x.yml@refs/heads/a/../b', 'acme/shop/.github/workflows/x.yml@refs/heads/a/')) {
+    Assert-True (-not (Get-MergeOnGreenRedispatchVerdict -Retry '0' -WorkflowRef $dotRef).Redispatch) "a branch that is not plain ('$dotRef') dispatches nothing"
+}
+
+# WIRED THROUGH THE TRAP (Victor #19). Under ship-pr's 'Stop', the held refusal's Write-Error ends the run
+# in the script-scope trap, so an exit written beneath it is dead code; the code has to reach the trap.
+$shipRaw = Get-Content -LiteralPath $ShipPath -Raw
+Assert-True ($shipRaw -match '(?s)\$shipExitCode = Get-MergeHeldExitCode\s*\n\s*Write-Error @"\s*\n\$mergeHeldLead') 'the held refusal sets its code BEFORE the Write-Error that ends the run'
+Assert-Equal 1 ([regex]::Matches($shipRaw, '\$shipExitCode = Get-MergeHeldExitCode')).Count 'and only that refusal sets it'
+# EXECUTED, not only read: ship-pr's own trap text, run under 'Stop' with a terminating Write-Error.
+$trapText = [regex]::Match($shipRaw, '(?ms)^trap \{.*?^\}').Value
+Assert-True ($trapText -match 'exit \$shipExitCode') 'the trap exits with the code the refusal set'
+$trapDir = Join-Path ([System.IO.Path]::GetTempPath()) ("mog-trap-" + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $trapDir | Out-Null
+try {
+    foreach ($case in @(@{ Code = 75; Label = 'a held merge exits 75 through the trap' }, @{ Code = 1; Label = 'every other refusal still exits 1' })) {
+        $probe = Join-Path $trapDir "probe-$($case.Code).ps1"
+        $body = "`$ErrorActionPreference = 'Stop'`n`$shipMergeLanded = `$false`n`$shipExitCode = $($case.Code)`n$trapText`nWrite-Error 'held'`nexit 99`n"
+        [System.IO.File]::WriteAllText($probe, $body)
+        # 'Continue' in a child scope: under the suite's 'Stop', Windows PowerShell 5.1 turns the probe's
+        # stderr line into a terminating error of THIS script, which is the probe working, not failing.
+        & { $ErrorActionPreference = 'Continue'; $null = & powershell -NoProfile -ExecutionPolicy Bypass -File $probe 2>&1 }
+        Assert-Equal $case.Code $LASTEXITCODE $case.Label
+    }
+} finally { Remove-Item -LiteralPath $trapDir -Recurse -Force -ErrorAction SilentlyContinue }
+Assert-True ($flowRaw -match ('\$shipExit -eq ' + (Get-MergeHeldExitCode) + '\b')) 'merge-on-green.yml reads the same code ship-pr writes'
+Assert-True ($flowRaw -match '(?m)^\s+id: ship\s*$' -and $flowRaw -match '(?m)^\s+held: \$\{\{ steps\.ship\.outputs\.held \}\}\s*$') 'the ship step''s held output is the job''s output'
+Assert-True ($flowRaw -match '(?m)^  redispatch:\s*$' -and $flowRaw -match "needs\.merge-on-green\.outputs\.held == 'true'") 'a redispatch job runs on held alone'
+Assert-Equal 1 ([regex]::Matches($flowRaw, '(?m)^\s+actions: write\s*$')).Count 'actions: write appears once -- in the redispatch job, not the ship job'
+Assert-True ($flowRaw -match '(?ms)^  redispatch:.*?permissions:\s*\n\s+actions: write\s*\n\s+steps:') 'and it is that job''s own permissions block, holding nothing else'
+$redispatchJob = [regex]::Match($flowRaw, '(?ms)^  redispatch:.*\z').Value
+Assert-True ($redispatchJob -notmatch 'actions/checkout@') 'the redispatch job checks nothing out -- it acts on the plan step''s outputs alone'
+Assert-True ($flowRaw -match '(?ms)id: plan.*?working-directory: trusted-main.*?\. \./scripts/lib/merge-on-green-lib\.ps1') 'the plan step reads the verdict out of the trusted trunk'
+Assert-True ($flowRaw -match 'SWEEP_RETRY: \$\{\{ inputs\.retry \}\}' -and $flowRaw -notmatch 'run:[^\n]*inputs\.retry') 'the counter reaches the script through env:, never spliced into run:'
+Assert-True ([regex]::Match($redispatchJob, '(?s)run: \|.*\z').Value -notmatch '\$\{\{') 'and no plan output is spliced into the redispatch job''s run: either'
+Assert-True ($flowRaw -match '(?m)^\s+retry:\s*$') 'workflow_dispatch declares the retry input'
+
+Write-Host ''
 Write-Host 'The lib, the script and the runner are ASCII' -ForegroundColor Cyan
 
 $rawLib = Get-Content -LiteralPath $LibPath -Raw
