@@ -44,7 +44,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 4. **The verdict** -- an issue is owed the message only where it is closed as completed, links exactly
    one Asana task (the same matchers the closed message uses, so it is the same task), has not been told
    yet, and its newest go-live block is this round's and carries the after-release marker. Every other
-   issue is listed with the reason it is skipped.
+   issue is listed with the reason it is skipped. **One skip is named instead** (#4165): an issue closed
+   as completed, linking one task, with no go-live block at all, prints as `NO BLOCK` with its task. The
+   cut's audience note can list it as solved while nothing here may tell its task, so tell it by hand.
 5. **The post** -- with `-Post` only: one comment per owed task, then a marker comment on the GitHub
    issue, so a second run tells nobody twice.
 
