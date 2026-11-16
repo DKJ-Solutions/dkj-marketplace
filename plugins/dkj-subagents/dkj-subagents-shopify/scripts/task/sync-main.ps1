@@ -590,6 +590,57 @@ function Write-SyncLogEntry {
     }
 }
 
+function Get-SyncConflictHintLine {
+    <#
+    .SYNOPSIS
+        The one-line reading of a conflicted path (inbound #4150): what the two hints in sync-rules.ps1
+        say about it, so a person does not have to diff every path by hand to know where to look first.
+
+    .DESCRIPTION
+        The reading half of those pure functions: the trunk's current text, every revision the path has
+        held (the same '--full-history -m' walk Test-LiveContentIsOurs reads, capped at -MaxRevisions), and
+        live's bytes as UTF-8. Every git read goes through Invoke-NativeCapture -Utf8, because these are
+        DATA rather than progress (.claude/rules/language-layers.md). A hint that cannot be computed says
+        so; it never fails the run, because the refusal it annotates is the run's real answer.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [AllowEmptyCollection()][byte[]]$LiveBytes = @(),
+        [int]$MaxRevisions = 50
+    )
+
+    try {
+        $liveText = [System.Text.Encoding]::UTF8.GetString($LiveBytes).TrimStart([char]0xFEFF)
+        $trunkText = Get-GitFileTextAtRef -Ref 'HEAD' -Path $Path
+        if (Test-SyncJsonTemplatePath -Path $Path) {
+            $json = Get-SyncJsonKeyDiff -TrunkText $trunkText -LiveText $liveText
+            if ($null -ne $json) { return (Format-SyncConflictHint -JsonDiff $json) }
+        }
+
+        $ids = New-Object System.Collections.Generic.List[string]
+        $log = Invoke-NativeCapture -Utf8 -DiscardStderr -FilePath 'git' -Arguments @('log', '--full-history', '--format=%H', '--raw', '--no-abbrev', '-m', 'HEAD', '--', $Path)
+        foreach ($line in @($log.Output)) {
+            $text = "$line"
+            if ($text -notmatch '^:') { continue }
+            $m = [regex]::Matches((($text -split "`t", 2)[0]), '[0-9a-f]{40}')
+            if ($m.Count -lt 1) { continue }
+            $id = $m[$m.Count - 1].Value
+            if ($id -match '^0{40}$' -or $ids.Contains($id)) { continue }
+            $ids.Add($id)
+            if ($ids.Count -ge $MaxRevisions) { break }
+        }
+        $history = @()
+        foreach ($id in $ids) {
+            $blob = Invoke-NativeCapture -Utf8 -DiscardStderr -FilePath 'git' -Arguments @('cat-file', 'blob', $id)
+            if ($blob.ExitCode -eq 0) { $history += ((@($blob.Output) | ForEach-Object { "$_" }) -join "`n") }
+        }
+        $ahead = Get-SyncTrunkAheadHint -LiveText $liveText -TrunkText $trunkText -HistoryTexts $history
+        return (Format-SyncConflictHint -TrunkAhead $ahead)
+    } catch {
+        return "no hint: $(Format-SafeProseToken -Value $_.Exception.Message)"
+    }
+}
+
 function Write-SyncReconciliationBase {
     <#
     .SYNOPSIS
@@ -1522,7 +1573,7 @@ try {
             $v = Get-SyncFileVerdict -Status $f.Status -LiveContentIsOurs $ours `
                     -MainTouchedSinceFloor $touched -PathAgreementKnown ([bool]$pathBase)
         }
-        $row = [pscustomobject]@{ Status = $f.Status; Path = $f.Path; Source = $f.Source; Reason = $v.Reason }
+        $row = [pscustomobject]@{ Status = $f.Status; Path = $f.Path; Source = $f.Source; Reason = $v.Reason; Bytes = $f.Bytes }
         switch ($v.Action) {
             'take-live' { $take     += $row }
             'conflict'  { $conflict += $row }
@@ -1585,6 +1636,12 @@ try {
             # above is. The repo operand needs none for the same reason it is safe at all.
             Write-Host "  git diff --no-index -- $($pathPaste.Token) `"$mirrorFile`"" -ForegroundColor Yellow
             if (-not $pathPaste.IsSafe) { Write-Host $pathPaste.Note -ForegroundColor DarkYellow }
+            # THE FIRST READING, PRINTED RATHER THAN LEFT TO THE PERSON (inbound #4150). A hint, never a
+            # verdict: the refusal below stands. Stripped, because a JSON key on live is foreign text.
+            if ($r.Status -eq 'M') {
+                $hint = Get-SyncConflictHintLine -Path $r.Path -LiveBytes $r.Bytes
+                Write-Host "      -> $(ConvertTo-ConsoleStrippedText -Text $hint)" -ForegroundColor DarkCyan
+            }
         }
 
         # WHAT TO DO WITH THE MERGE ONCE IT IS MADE, WHICH THE REFUSAL ABOVE USED TO LEAVE OUT

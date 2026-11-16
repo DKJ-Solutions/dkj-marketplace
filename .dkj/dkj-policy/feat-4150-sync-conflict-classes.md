@@ -41,19 +41,33 @@
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `sync-rules.ps1` (both byte-identical copies): `Get-SyncTrunkAheadHint`, `Get-SyncJsonKeyDiff` (with `ConvertTo-SyncFlatJson`), `Test-SyncJsonTemplatePath` and `Format-SyncConflictHint` -- pure, so the suite walks them without a sync
+- [x] `sync-main.ps1` (both copies): `Get-SyncConflictHintLine` reads the trunk's revisions of a conflicted path and prints one `->` line under its `git diff --no-index` command; the refusal is unchanged
 
 ### TEST
 
+- [x] `sync-rules.tests.ps1`: trunk ahead on a CRLF copy of older lines, a foreign line counted, an empty live file never trunk ahead, the editor banner stripped, live-only / trunk-only / changed keys named, reformatting alone said to be formatting, a string and a number kept apart, an unparseable side yields no key hint, and which paths take the key hint (225 asserts, green)
+- [x] `sync-main.tests.ps1`: through a real dry run, a Liquid path reads `trunk ahead` and a template reads its key summary, both still refusing (179 asserts, green)
+
 ### DEPLOY: feat/4150-sync-conflict-classes
 
-**Score:**
+Inside this repo, `sync-main.ps1` prints a one-line reading under each conflicted path's diff command
+([#4150](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4150)). New pure functions in `sync-rules.ps1`
+compute it, and both suites cover them.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify repo whose sync refuses on conflicts gets a first reading of each conflicted path, so nobody has to diff
+them all by hand. A Liquid or other text path reads `trunk ahead` when every line live holds is one the trunk's
+history has held. A `templates/` or `sections/` JSON file gets its live-only, trunk-only and changed settings,
+by key. Measured in a consumer, those were the two readings that settled twelve conflicts, and they took most of a
+session to work out by hand. The conflict still refuses: the person decides.
+
+**Score:** 3
 
 #### Pull Request
 
-sync-main classifies each conflicted path
+sync-main gives each conflicted path a first reading
 
