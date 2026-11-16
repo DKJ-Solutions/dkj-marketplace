@@ -56,6 +56,9 @@ only findings whose repair lives in this repo, and reports a consumer's own stat
 
 ### DEPLOY: feat/4162-consumer-health-task
 
+Inside this repo nothing changes but the `scheduled-tasks` skill's prompt folder and its task table; no
+script, gate or registry moves.
+
 **Score:** N/A
 
 #### What makes this deploy extra special
