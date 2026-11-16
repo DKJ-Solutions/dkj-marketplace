@@ -948,6 +948,25 @@ Assert-True ($relLibText -notmatch '(?m)^function Set-EntryHeadingLevel') 'one o
 Assert-True ($relLibText -match 'Set-EntryHeadingLevel') 'one owner: but it still calls it from the lib it dot-sources'
 Assert-Equal 1 (@([regex]::Matches($escLibText, '(?m)^function Set-EntryHeadingLevel')).Count) 'one owner: and this lib defines it exactly once'
 Assert-Equal 1 (@([regex]::Matches($escLibText, '(?m)^function Get-EntryBlockHeadingLevel')).Count) 'one owner: and the level READER it measures with lives beside it, once'
+
+# A BODY HEADING AT OR ABOVE THE ENTRY'S LEVEL IS DEMOTED BELOW IT (#4145). Measured in a consumer: four
+# '## ' headings in a DEPLOY body folded verbatim, the first closed '## [Unreleased]', and the cut saw 2 of
+# 31 pending entries. The entry's own heading, a section already below it, and a fenced example stay put.
+$bodyIn = @(
+    '### DEPLOY: `fix/x`', '', 'Body.', '', '## Preview 2026-11-13', 'a', '', '### Round 2', 'b', '',
+    '#### Pull Request', 'c', '', '```', '## quoted', '```'
+) -join "`n"
+$bodyOut = Limit-EntryBodyHeadings -EntryText $bodyIn -EntryLevel 3
+$bodyLines = @($bodyOut.Text -split "`n")
+Assert-Equal 2 $bodyOut.Demoted 'body headings: the H2 and the H3 inside the body are both counted as demoted'
+Assert-Equal '### DEPLOY: `fix/x`' $bodyLines[0] 'body headings: the entry''s own opening heading keeps its level'
+Assert-Equal '#### Preview 2026-11-13' $bodyLines[4] 'body headings: an H2 in the body becomes a section of the entry, not a sibling of [Unreleased]'
+Assert-Equal '#### Round 2' $bodyLines[7] 'body headings: an H3 in the body becomes a section, not a second entry'
+Assert-Equal '#### Pull Request' $bodyLines[10] 'body headings: a section already below the entry is left alone'
+Assert-Equal '## quoted' $bodyLines[14] 'body headings: a heading quoted inside a fence is an example, not structure'
+Assert-Equal 0 (Limit-EntryBodyHeadings -EntryText "### E`n`n#### S`nx" -EntryLevel 3).Demoted 'body headings: a well-formed entry demotes nothing'
+$foldTextForBody = [System.IO.File]::ReadAllText((Join-Path $PSScriptRoot '..\release\fold-changelog-entry.ps1'), [System.Text.Encoding]::UTF8)
+Assert-True ($foldTextForBody -match 'Limit-EntryBodyHeadings -EntryText') 'body headings: and the fold calls the limiter on every entry it folds'
 # AND THE FOLD MUST NOT GO BACK TO DERIVING A LEGACY RANGE FROM TODAY'S LEVEL -- that is the defect itself,
 # not a style point: '#{level,level+1}' was correct while the entry level was 2 and silently wrong the day it
 # moved to 3.

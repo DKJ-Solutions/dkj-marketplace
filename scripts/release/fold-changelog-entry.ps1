@@ -933,6 +933,16 @@ foreach ($file in $entryFiles) {
     }
     $entryContent = $promoted
 
+    # A HEADING INSIDE THE BODY AT OR ABOVE THE ENTRY'S OWN LEVEL BREAKS THE LIST (#4145): an H2 closes
+    # '## [Unreleased]' and hides every entry below it from the cut, an H3 splits this entry in two. The
+    # re-level above preserves the author's structure by design, so this is the step that refuses to
+    # preserve that one part of it -- and says so, because the author's document is what to repair.
+    $limited = Limit-EntryBodyHeadings -EntryText $entryContent -EntryLevel (Get-EntryHeadingLevel)
+    if ($limited.Demoted -gt 0) {
+        Write-Host "  ($file carried $($limited.Demoted) heading(s) in its body at or above the entry's own level -- demoted to '$entryHashes#' so they stay sections of this entry instead of closing [Unreleased] or starting a new entry.)" -ForegroundColor DarkYellow
+        $entryContent = $limited.Text -replace "`n", $nl
+    }
+
     # THE HEADING IS JUST THE TITLE (Dave, August 5, 2026). The fold adds the PR link as the entry's
     # closing line -- it used to also prepend '#NN <midDot> ' to the title, and that prepend is gone.
     # THE MERGE STAMP DOES TOUCH THIS HEADING NOW, since August 23, 2026 (Set-EntryMergeStamp); it sat on
