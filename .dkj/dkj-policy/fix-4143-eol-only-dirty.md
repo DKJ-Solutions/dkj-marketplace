@@ -39,19 +39,35 @@
 
 ### PLAN
 
+Inbound #4143: name the files that differ only by line endings apart from uncommitted work, in
+prepare-release and live-preflight, so the report points at `git add --renormalize` and not at a checkout.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-GitEolOnlySplit` in `scripts/lib/git-porcelain-lib.ps1`, mirrored into its three plugin copies
+- [x] prepare-release and live-preflight step 1 report EOL-only paths as their own verdict
 
 ### TEST
 
+- [x] `git-porcelain-lib.tests.ps1`: a fixture repo with a CRLF-index file under `eol=lf`, a real edit and an
+  untracked file; 60 pass, 0 fail
+
 ### DEPLOY: fix/4143-eol-only-dirty
 
-**Score:**
+`prepare-release` and `live-preflight` no longer count a file committed with CRLF despite `eol=lf` as an
+uncommitted change ([#4143](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4143)): step 1 names such
+files as `EOL-ONLY`, says a checkout cannot clean them, and prints the `git add --renormalize` line that does.
+The shared `git-porcelain-lib` gains `Get-GitEolOnlySplit` for it.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A store repo whose theme files were committed with the wrong line endings gets the remedy on release day
+instead of a refusal that `git checkout --` cannot clear. The verdict is the same, ATTENTION or a refusal,
+and only the message is new.
+
+**Score:** 2
 
 #### Pull Request
 
