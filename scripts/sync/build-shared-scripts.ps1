@@ -42,7 +42,8 @@ foreach ($pair in $pairs) {
         continue
     }
     $mirror = Get-NormalizedScriptContent -Path $pair.MirrorPath
-    if ($src -ne $mirror) {
+    # -cne, NOT -ne (#4171): -ne is case-insensitive, so a case-only edit read as in sync and was neither mirrored nor flagged.
+    if ($src -cne $mirror) {
         $changed++
         if ($Check) {
             Write-Host "  [drift]      $($pair.MirrorRel) -- deviates from $($pair.SourceRel) (run build-shared-scripts.ps1)" -ForegroundColor Red

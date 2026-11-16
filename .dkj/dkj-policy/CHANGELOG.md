@@ -2,7 +2,79 @@
 
 ## [Unreleased]
 
-**24 / 31 minor entries** <!-- pending-tally -->
+**25 / 34 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4184-one-racy-git-fix · 20261116-115516Z
+
+Inside this repo, the EOL fixture in `git-porcelain-lib.tests.ps1` keeps one racy-git fix, the measured one from
+#4176 ([#4184](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4184)). The parallel second fix and its
+contradicting comment are gone.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+The EOL fixture keeps one racy-git fix, the measured one
+
+[PR #4185](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4185)
+
+---
+
+### DEPLOY: fix/4152-reconcile-base-merges · 20261116-114450Z
+
+`sync-main -ReconcileBase` now opens its PR, waits for the checks and merges it with a merge commit itself,
+the same finish the plain merging sync runs ([#4152](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4152)).
+It used to print `gh pr create`, `gh pr checks --watch` and `gh pr merge`, and run back to back they failed: the
+watch returned before the checks had registered, and the merge was refused. The commands are still printed when
+the push does not land.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Shopify store that reconciles a sync conflict no longer finishes the reconciliation base by hand: the run
+merges it, with a merge commit even where the repo squashes by default, and leaves the checkout on the trunk.
+
+**Score:** 3
+
+#### Pull Request
+
+sync-main -ReconcileBase opens, waits for and merges its own PR
+
+Plugins: dkj-subagents-shopify
+
+[PR #4174](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4174)
+
+---
+
+### DEPLOY: fix/4171-case-sensitive-mirror-compare · 20261116-112727Z
+
+Inside this repo, the shared-script mirror build, the integrity gate's `[shared-script]` check and the
+consumer-drift check compare case-sensitively
+([#4171](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4171)). An edit that changes only letter case
+is now copied into the mirror and reported as drift, where before it read as in sync.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+Mirror comparisons are case-sensitive, so a case-only edit is mirrored and flagged
+
+[PR #4183](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4183)
+
+---
 
 ### DEPLOY: fix/4176-eol-fixture-racy-git · 20261116-111147Z
 
