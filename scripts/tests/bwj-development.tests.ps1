@@ -1265,6 +1265,12 @@ $nlCand = Get-PullIssueCandidates -PullNumber 20 -ClosingNumbers @(12) -HeadRefN
 Assert-Equal '12' (@($nlCand.Closing) -join ',') 'a closing reference stays a closing reference'
 Assert-Equal '13' (@($nlCand.Named) -join ',') '...and is not repeated among the named numbers'
 Assert-Equal 0 @((Get-PullIssueCandidates -PullNumber 5 -HeadRefName 'main' -Body $null).Named).Count 'a branch with no number and no body name nothing'
+# A TEMPLATE'S HTML COMMENT NAMES NOTHING (#4163): the measured shape, a template citing an old issue as
+# its example, carried into every PR body.
+$tplBody = "Ships #540.`n`n## Store-admin prerequisites`n`n<!-- Name each one on the`n     second box ...:`n     #383's handover asked the reviewer to tick a collection metafield (issue #399). -->`n`n- [x] none"
+Assert-Equal '540' (@((Get-PullIssueCandidates -PullNumber 541 -HeadRefName 'feat/upsell-ab' -Body $tplBody).Named) -join ',') 'a number inside a template''s HTML comment is not named -- only the prose outside it'
+Assert-Equal 0 @((Get-PullIssueCandidates -PullNumber 9 -HeadRefName 'main' -Body "Body text.`n<!-- an unclosed comment, as GitHub hides it: #383").Named).Count 'an unclosed comment hides the rest of the body, as GitHub renders it'
+Assert-Equal '12' (@((Get-PullIssueCandidates -PullNumber 9 -HeadRefName 'main' -Body "<!-- a --> Fixes #12 <!-- b #13 -->").Named) -join ',') 'text between two comments is still read'
 $nlDriverCand = [System.IO.File]::ReadAllText((Join-Path $PluginRoot 'scripts\task\notify-live.ps1'))
 Assert-True ($nlDriverCand.Contains('Get-PullIssueCandidates') -and $nlDriverCand.Contains('.pull_request == null')) 'the driver reads the candidates through the rule, and asks GitHub whether a named number is an issue'
 Assert-True ($nlDriverCand.Contains('gh api -i') -and $nlDriverCand.Contains('$status -eq 404')) '...with -i, so a 404 (a #<n> from another tracker) is "not an issue" rather than a read failure on every rerun'

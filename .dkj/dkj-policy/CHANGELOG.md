@@ -2,7 +2,142 @@
 
 ## [Unreleased]
 
-**27 / 37 minor entries** <!-- pending-tally -->
+**32 / 42 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4163-comment-named-issues · 20261116-142518Z
+
+Inside this repo, `Get-PullIssueCandidates` in `pull-issue-lib.ps1` skips HTML comments when it reads a PR body for
+named issues ([#4163](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4163)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store whose PR template mentions an issue number inside its guidance comment no longer gets that issue in every
+release. Before, the cut's task-form audience note drafted it as solved, and notify-live could tell its task again
+that it was live. Measured in a consumer's v1.8.0 cut: a task that had shipped three releases earlier.
+
+**Score:** 3
+
+#### Pull Request
+
+A PR template's HTML comment no longer names an issue to the task form and notify-live
+
+Plugins: bwj-development, dkj-policy
+
+[PR #4177](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4177)
+
+---
+
+### DEPLOY: feat/4173-admin-mcp-connections-page · 20261116-140843Z
+
+Admin has an **MCP connections** page on `/dev/claude/mcp`, listed on the Claude page
+([#4173](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4173)). One row per MCP server a session in
+the checkout can reach: where it comes from (claude.ai connector, plugin, the project's `.mcp.json`, user
+config), its host, whether it is connected, needs authentication or failed, and whether this project has
+switched it off. The page reads a cache that its own **Read the connections** button fills by running
+`claude mcp list` (about 15 s); it keeps only each server's host, never a full URL.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Until now the only answer to "which connectors can Claude use here, and which still need a login" was
+`/mcp` inside a session or a 15-second `claude mcp list` in a terminal. Admin now shows it on one page,
+next to the rules, skills and specialists.
+
+**Score:** 2
+
+#### Pull Request
+
+Admin: an MCP connections page under Claude
+
+Plugins: dkj-policy
+
+[PR #4192](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4192)
+
+---
+
+### DEPLOY: fix/4157-backup-full-store · 20261116-135148Z
+
+`backup-live-theme` counts the store's themes before it duplicates live
+([#4157](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4157)). At Shopify's limit of 20 it refuses, and
+names `sweep-preview-themes` as the step that frees a slot. When the duplicate leaves no copy in the theme list,
+it now says so, instead of claiming the copy was created.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+On release day in a Shopify store repo holding 20 themes, the backup step stops with "the store is full (20/20)
+... sweep spent previews first", instead of a misleading message and a push the preflight then refuses. Sweeping
+and re-running clears it.
+
+**Score:** 3
+
+#### Pull Request
+
+backup-live-theme refuses a full store before duplicating, and stops claiming a failed duplicate was created
+
+Plugins: dkj-subagents-shopify
+
+[PR #4180](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4180)
+
+---
+
+### DEPLOY: fix/4160-publish-page-skip-unchanged · 20261116-133301Z
+
+`publish-page` uploads only the pages whose bytes changed since this machine last verified them
+([#4160](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4160)). After each SHA-256 read-back it
+records the page's hash under a digest of its key, in the user's LocalApplicationData rather than the repo,
+because a key carries the path token. A release day then uploads the new release page and the index instead
+of every page again. `-All` uploads everything, for a key changed or deleted in KV from elsewhere.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Publishing the release notes on release day takes seconds instead of more than five minutes. The first
+publish on each machine still uploads every page once.
+
+**Score:** 2
+
+#### Pull Request
+
+publish-page: upload only the pages whose verified bytes changed since the last publish
+
+Plugins: bwj-development
+
+[PR #4175](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4175)
+
+---
+
+### DEPLOY: fix/4168-sync-required-checks · 20261116-132206Z
+
+`sync-main` no longer holds its PR when a check the trunk does not require stays pending
+([#4168](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4168)): it reads the required checks from the
+trunk's branch rules and merges once those are green, as `ship-pr` does. A required check that has not
+registered yet still counts as pending, and where the rules cannot be read or require nothing every check is
+waited for, as before.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A Shopify store whose sync PR carries a slow, non-required check (a theme-check report, measured pending for
+ten minutes over green required checks) gets the sync merged instead of `NOT merged` after the timeout.
+
+**Score:** 2
+
+#### Pull Request
+
+sync-main waits on the required checks only, where the repo has any
+
+Plugins: dkj-subagents-shopify
+
+[PR #4191](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4191)
+
+---
 
 ### DEPLOY: feat/4149-sync-main-as-drift-check · 20261116-123740Z
 

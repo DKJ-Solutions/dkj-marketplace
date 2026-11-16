@@ -39,9 +39,15 @@ function Get-PullIssueCandidates {
         candidate costs nothing as long as each caller still demands a closed-as-completed issue before
         it counts a named one.
 
-        Not read as mentions: the PR's own number, anything inside a code span or fence, 'PR #<n>' /
+        Not read as mentions: the PR's own number, anything inside an HTML comment (#4163), anything inside a code span or fence, 'PR #<n>' /
         'pull request #<n>', and 'owner/repo#<n>' (another repo's issue -- the lookbehind refuses a word
         character before the '#').
+
+        THE HTML COMMENT IS TEMPLATE TEXT, NOT A REFERENCE (#4163). A PR template's guidance sits in
+        '<!-- -->' and is carried into EVERY body. Measured in BWJ-Development/xoxowildhearts: its template
+        cites '#383' as the example of a missed store prerequisite, so every PR named #383 -- closed as
+        completed five weeks earlier -- and the v1.8.0 audience note drafted it as solved again. An unclosed
+        '<!--' hides the rest of the body, the way GitHub renders it.
     #>
     param(
         [int]$PullNumber = 0,
@@ -58,7 +64,8 @@ function Get-PullIssueCandidates {
     if ($HeadRefName -and ([string]$HeadRefName) -match '^[^/]+/(\d{1,9})-') { & $add ([int]$Matches[1]) }
 
     if ($Body) {
-        $text = [regex]::Replace([string]$Body, '(?s)```.*?```', ' ')
+        $text = [regex]::Replace([string]$Body, '(?s)<!--.*?(-->|\z)', ' ')
+        $text = [regex]::Replace($text, '(?s)```.*?```', ' ')
         $text = [regex]::Replace($text, '`[^`]*`', ' ')
         $text = [regex]::Replace($text, '(?i)\b(pull\s*requests?|PRs?)\s*#\s*\d+', ' ')
         foreach ($m in [regex]::Matches($text, '(?<![\w/])#(\d{1,9})\b')) { & $add ([int]$m.Groups[1].Value) }
