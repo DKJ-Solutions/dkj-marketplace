@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**25 / 33 minor entries** <!-- pending-tally -->
+**25 / 34 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4184-one-racy-git-fix · 20261116-115516Z
+
+Inside this repo, the EOL fixture in `git-porcelain-lib.tests.ps1` keeps one racy-git fix, the measured one from
+#4176 ([#4184](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4184)). The parallel second fix and its
+contradicting comment are gone.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+The EOL fixture keeps one racy-git fix, the measured one
+
+[PR #4185](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4185)
+
+---
 
 ### DEPLOY: fix/4152-reconcile-base-merges · 20261116-114450Z
 
