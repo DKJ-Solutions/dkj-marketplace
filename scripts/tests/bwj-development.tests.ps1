@@ -1273,6 +1273,12 @@ $nlCand = Get-PullIssueCandidates -PullNumber 20 -ClosingNumbers @(12) -HeadRefN
 Assert-Equal '12' (@($nlCand.Closing) -join ',') 'a closing reference stays a closing reference'
 Assert-Equal '13' (@($nlCand.Named) -join ',') '...and is not repeated among the named numbers'
 Assert-Equal 0 @((Get-PullIssueCandidates -PullNumber 5 -HeadRefName 'main' -Body $null).Named).Count 'a branch with no number and no body name nothing'
+# A TEMPLATE'S HTML COMMENT NAMES NOTHING (#4163): the measured shape, a template citing an old issue as
+# its example, carried into every PR body.
+$tplBody = "Ships #540.`n`n## Store-admin prerequisites`n`n<!-- Name each one on the`n     second box ...:`n     #383's handover asked the reviewer to tick a collection metafield (issue #399). -->`n`n- [x] none"
+Assert-Equal '540' (@((Get-PullIssueCandidates -PullNumber 541 -HeadRefName 'feat/upsell-ab' -Body $tplBody).Named) -join ',') 'a number inside a template''s HTML comment is not named -- only the prose outside it'
+Assert-Equal 0 @((Get-PullIssueCandidates -PullNumber 9 -HeadRefName 'main' -Body "Body text.`n<!-- an unclosed comment, as GitHub hides it: #383").Named).Count 'an unclosed comment hides the rest of the body, as GitHub renders it'
+Assert-Equal '12' (@((Get-PullIssueCandidates -PullNumber 9 -HeadRefName 'main' -Body "<!-- a --> Fixes #12 <!-- b #13 -->").Named) -join ',') 'text between two comments is still read'
 $nlDriverCand = [System.IO.File]::ReadAllText((Join-Path $PluginRoot 'scripts\task\notify-live.ps1'))
 Assert-True ($nlDriverCand.Contains('Get-PullIssueCandidates') -and $nlDriverCand.Contains('.pull_request == null')) 'the driver reads the candidates through the rule, and asks GitHub whether a named number is an issue'
 Assert-True ($nlDriverCand.Contains('gh api -i') -and $nlDriverCand.Contains('$status -eq 404')) '...with -i, so a 404 (a #<n> from another tracker) is "not an issue" rather than a read failure on every rerun'
@@ -1349,15 +1355,20 @@ Assert-True ((-not $nlHand.Owed) -and $nlHand.Reason -match 'by-hand') 'a by-han
 Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -State 'OPEN' -Comments @(New-NlBlockComment -Kinds @('after-release')))).Owed) 'an issue reopened since is back in development -- skipped'
 Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Reason 'NOT_PLANNED' -Comments @(New-NlBlockComment -Kinds @('after-release')))).Owed) 'a close as not planned is skipped'
 Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Body 'no task' -Comments @(New-NlBlockComment -Kinds @('after-release')))).Owed) 'an issue linking no task is skipped'
-Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue)).Owed) 'an issue with no block is skipped'
-# #4165: ...but NAMED, because the cut's audience note can list it as solved while its task hears nothing.
+# #4165 (the owner's decision): an issue with NO block is OWED the plain message, because the cut's audience
+# note counts it as solved -- the two readers share one definition.
 $nlNoBlock = Get-LiveMessageVerdict -Issue (New-NlIssue)
-Assert-True ($nlNoBlock.NoBlock -and $nlNoBlock.Gid -eq '1201') 'a solved issue linking one task with no block is marked NoBlock, with its task'
-Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -State 'OPEN')).NoBlock) '...but an open issue is not -- it was never solved'
-Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Body 'no task')).NoBlock) '...nor one linking no task -- there is nobody to tell'
-Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Comments @(New-NlBlockComment))).NoBlock) '...nor one whose block was told live at the close'
+Assert-True ($nlNoBlock.Owed -and $nlNoBlock.NoBlock -and $nlNoBlock.Gid -eq '1201') 'a solved issue linking one task with no block is owed, marked NoBlock, on its task'
+Assert-Equal 'en' $nlNoBlock.Language '...in English, since there is no block to read a language from'
+Assert-True (-not $nlOwed.NoBlock) 'an issue owed on its block is not marked NoBlock'
+Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -State 'OPEN')).Owed) '...but an open issue with no block is not owed -- it was never solved'
+Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Reason 'NOT_PLANNED')).Owed) '...nor one closed as not planned'
+Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Body 'no task')).Owed) '...nor one linking no task -- there is nobody to tell'
+Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Comments @(New-NlBlockComment))).Owed) '...nor one whose block was told live at the close'
+$nlNoBlockTold = [pscustomobject]@{ Body = (Format-LiveMessageIssueComment -Version 'v1.3.0' -Gid '1201'); CreatedAt = '2026-10-12T10:00:00Z' }
+Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Comments @($nlNoBlockTold))).Owed) '...nor one with no block that was already told -- never twice'
 $nlNbDriver = [System.IO.File]::ReadAllText((Join-Path $PluginRoot 'scripts\task\notify-live.ps1'))
-Assert-True ($nlNbDriver.Contains('elseif ($verdict.NoBlock)') -and $nlNbDriver.Contains('NO BLOCK')) 'the driver prints such an issue as NO BLOCK rather than a plain skip'
+Assert-True ($nlNbDriver.Contains("if (`$verdict.NoBlock) { 'no block' }") -and -not $nlNbDriver.Contains('elseif ($verdict.NoBlock)')) 'the driver sends a no-block issue with the owed ones, and its row reads no block'
 $nlTold = [pscustomobject]@{ Body = (Format-LiveMessageIssueComment -Version 'v1.3.0' -Gid '1201'); CreatedAt = '2026-10-12T10:00:00Z' }
 Assert-True (-not (Get-LiveMessageVerdict -Issue (New-NlIssue -Comments @((New-NlBlockComment -Kinds @('after-release')), $nlTold))).Owed) 'an issue already told is not told twice'
 $nlRound2 = @((New-NlBlockComment -Kinds @('after-release') -CreatedAt '2026-10-01T10:00:00Z'), $nlTold, (New-NlBlockComment -Kinds @('after-release') -CreatedAt '2026-10-14T10:00:00Z'))

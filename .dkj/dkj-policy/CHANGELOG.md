@@ -2,7 +2,89 @@
 
 ## [Unreleased]
 
-**30 / 40 minor entries** <!-- pending-tally -->
+**33 / 43 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4165-notify-live-send-no-block · 20261116-143606Z
+
+`notify-live` now tells the task of a solved issue that carries no go-live block
+([#4165](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4165)), instead of only naming it as
+`NO BLOCK`. An issue closed as completed, linking one task and not told yet, gets the same plain "now live
+as version vX.Y.Z" message as a block waiting on the release, and its dry-run row reads `no block`. That
+is the set the cut's audience note counts as solved, so the two readers share one definition. The marker
+comment still keeps it from being told twice.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+On release day every task the release notes call solved now hears on the task itself that its work is
+live, with no by-hand messages left for the issues whose close carried no go-live block.
+
+**Score:** 3
+
+#### Pull Request
+
+notify-live: send the plain live message to a solved issue with no go-live block
+
+Plugins: bwj-development
+
+[PR #4190](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4190)
+
+---
+
+### DEPLOY: fix/4163-comment-named-issues · 20261116-142518Z
+
+Inside this repo, `Get-PullIssueCandidates` in `pull-issue-lib.ps1` skips HTML comments when it reads a PR body for
+named issues ([#4163](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4163)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store whose PR template mentions an issue number inside its guidance comment no longer gets that issue in every
+release. Before, the cut's task-form audience note drafted it as solved, and notify-live could tell its task again
+that it was live. Measured in a consumer's v1.8.0 cut: a task that had shipped three releases earlier.
+
+**Score:** 3
+
+#### Pull Request
+
+A PR template's HTML comment no longer names an issue to the task form and notify-live
+
+Plugins: bwj-development, dkj-policy
+
+[PR #4177](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4177)
+
+---
+
+### DEPLOY: feat/4173-admin-mcp-connections-page · 20261116-140843Z
+
+Admin has an **MCP connections** page on `/dev/claude/mcp`, listed on the Claude page
+([#4173](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4173)). One row per MCP server a session in
+the checkout can reach: where it comes from (claude.ai connector, plugin, the project's `.mcp.json`, user
+config), its host, whether it is connected, needs authentication or failed, and whether this project has
+switched it off. The page reads a cache that its own **Read the connections** button fills by running
+`claude mcp list` (about 15 s); it keeps only each server's host, never a full URL.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Until now the only answer to "which connectors can Claude use here, and which still need a login" was
+`/mcp` inside a session or a 15-second `claude mcp list` in a terminal. Admin now shows it on one page,
+next to the rules, skills and specialists.
+
+**Score:** 2
+
+#### Pull Request
+
+Admin: an MCP connections page under Claude
+
+Plugins: dkj-policy
+
+[PR #4192](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4192)
+
+---
 
 ### DEPLOY: fix/4157-backup-full-store · 20261116-135148Z
 
