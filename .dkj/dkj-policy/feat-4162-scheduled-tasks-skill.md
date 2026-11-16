@@ -39,19 +39,51 @@
 
 ### PLAN
 
+#4162, first of its two branches: version the Desktop scheduled-task prompts in a dkj-policy skill
+(decision on the thread, November 16, 2026) and give each owner's machine one command to place them.
+The tested local prompt is absent on this machine, so task 1 is rebuilt from the issue's own
+description. Task 2 (the weekly consumer health sweep) is the second branch.
+
+The Desktop docs (code.claude.com/docs/en/desktop-scheduled-tasks) set the shape: SKILL.md holds only
+`name`, `description` and the prompt; schedule, folder and enabled state live in the app. So the
+command writes the prompt and prints the schedule for a person to register once.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-policy/skills/scheduled-tasks/`: the skill page and `tasks/bwj-release-prep.md` +
+      `tasks/bwj-release-prep-monday.md`
+- [x] `scripts/task/place-scheduled-tasks.ps1` + its plugin mirror, registered in
+      `Get-SharedScriptPairs` (MirrorRun, and a new `RepoRootExempt` key with a reason), and a row in
+      the plugin's scripts README
+- [x] `shared-scripts.tests.ps1` holds a `RepoRootExempt` entry to a reason and to resolving no root
+- [x] dropped from the Monday task: the issue's `notify-live` dry run, because `notify-live.ps1`
+      refuses a version that has no tag yet, and on Monday morning the cut has not happened
 
 ### TEST
 
+- [x] `scripts/tests/place-scheduled-tasks.tests.ps1`: 47 passed (a dry run writes nothing,
+      placement, refresh by marker with `.previous`, orphan and unmarked tasks untouched, refusals,
+      both copies find the shipped tasks from their own depth, the shipped tasks' shape)
+- [x] `shared-scripts.tests.ps1` green; `check-plugin-integrity.ps1` 0 errors; the roster, script
+      contract and unfolded-entry gates green
+
 ### DEPLOY: feat/4162-scheduled-tasks-skill
 
-**Score:**
+Inside this repo, the shared-scripts registry gains a `RepoRootExempt` key for an entry point that
+touches no repo, and the new script is its first user.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A team's Claude Code Desktop scheduled tasks are now versioned: the new `scheduled-tasks` skill ships
+their prompts, and `place-scheduled-tasks` puts them into `~/.claude/scheduled-tasks/` on each owner's
+machine, refreshes every placed copy after an update, and prints the schedule and folder to register
+once in the app. It ships the BWJ Friday release prep and its Monday companion, both read-only.
+
+**Score:** 3
 
 #### Pull Request
+
+Scheduled tasks: versioned Desktop task prompts and a command that places them
 

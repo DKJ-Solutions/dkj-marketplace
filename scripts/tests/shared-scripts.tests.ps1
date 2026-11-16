@@ -157,7 +157,14 @@ Assert-True ($libOnlyPairs.Count -ge 1) 'the registry declares at least one dot-
 # report HOW the root was resolved). A bare '-match CLAUDE_PROJECT_DIR' would still pass on the two
 # checks purely because their COMMENTS name the env var -- the assertion has to look for an actual
 # call, otherwise it silently stops guarding anything the day the code moves out.
-foreach ($pair in ($pairs | Where-Object { $libOnlyPairs -notcontains $_.Name })) {
+# An entry point that touches no repo declares why (RepoRootExempt, #4162) and is held to a reason
+# rather than to a resolver.
+foreach ($pair in @($pairs | Where-Object { $_.RepoRootExempt })) {
+    Assert-True ($pair.RepoRootExempt.Trim().Length -ge 20) "$($pair.Name): RepoRootExempt states a reason"
+    $exemptSrc = Get-NormalizedScriptContent -Path $pair.SourcePath
+    Assert-True ($exemptSrc -notmatch 'Resolve-RepoRootOrFail|Resolve-CheckRoot|CLAUDE_PROJECT_DIR') "$($pair.Name): RepoRootExempt holds -- the source resolves no repo root"
+}
+foreach ($pair in ($pairs | Where-Object { $libOnlyPairs -notcontains $_.Name -and -not $_.RepoRootExempt })) {
     $src = Get-NormalizedScriptContent -Path $pair.SourcePath
     $inline   = $src -match '\$env:CLAUDE_PROJECT_DIR'
     $delegate = $src -match 'Resolve-CheckRoot\s+-Override'
