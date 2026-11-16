@@ -380,6 +380,9 @@ the two change together.
   current crumb and its `h1`, at `--text-h2`. It is `aria-hidden`, because the `h1` already says it to a screen
   reader. **The brand gives way to it**, so the row reads back, title, then the menu toggle.
 - **A wide header hides both**, and the bar is back. The home page has neither, so on a phone it keeps its brand.
+- **On a phone the header has a height of its own** (#4128): `--topbar-h`, 56px, where a wide header is 68px, and
+  its cells (back, actions, menu toggle) stay square at that height, as does the full-screen menu's head. The bottom
+  bar pads `--spacing-2` below its slots, or the safe area where the phone has one, so it is 61px where it was 73px.
 - **The bar's hide reads the window** (`@media (max-width: 48rem)`) and the Phone width in the settings
   (`:root[data-width="phone"]`): the header's own fold is a container query, and a container query cannot reach the
   bar beside it.
@@ -405,6 +408,23 @@ its bar and has no way up but the browser's own back, so add `.site-header__back
 page below home in the same update. An app that keeps its sticky elements at `top: var(--tap)` under the bar moves
 them to `top: 0` below 48rem.
 
+#### The icon grammar: one meaning per icon
+
+**Every DKJ product gives each of three icons one meaning, wherever it stands** (#4124, after a walk through
+dkj-lifehub on a phone beside LinkedIn, nu.nl and Teams):
+
+- **Three lines (hamburger): more pages.** The header's menu toggle, or the bottom bar's **More**, far right.
+- **Three dots: actions on this page.** The header's More cell, opening the actions sheet. Never pages.
+- **Gear: settings.** On a computer the header's settings button; on a phone **one Settings row inside the menu**,
+  never an icon of its own in the header. A profile avatar does not stand in for it, because these products have no
+  user account, and the header's top-left cell is already the back cell on every page below home.
+
+An icon is never borrowed for another meaning: a product that needs a fourth kind of control draws a fourth icon.
+
+**What this changes for an app that takes the update:** the menu's **Display** section now reads **Settings**, and its
+row carries the gear. An app that draws its menu with `Format-SiteHeaderHtml` gets that with the update, and one that
+draws it by hand renames the section and adds the gear as a `.menu-item__icon`.
+
 #### The menu in the header
 
 **A site header may carry the app's main pages after the brand, before the settings button where there is one** (Maikel, November 2,
@@ -422,8 +442,8 @@ where you can go, the trail where you are.
   as tall, the back cell at the left closing it, and the title `Menu`. Under it three sections, each a
   `p.menu-section` (small, uppercase, `--primary-muted`): **Pages**, the menu's items as `.menu-item` rows (an optional
   `.menu-item__icon`, the label with an optional `.menu-item__sub` line, an optional `.menu-item__aside` value at the
-  right, the chevron; a `--bg-3` line under each); **Display**, one row to the app's settings page, in the place the
-  gear takes on a computer, drawn only where the app has one (`-SettingsHref`); and **About**, closed by a
+  right, the chevron; a `--bg-3` line under each); **Settings**, one row with the house gear to the app's settings
+  page, in the place the gear takes on a computer, drawn only where the app has one (`-SettingsHref`); and **About**, closed by a
   `.menu-footer`: the app's name and a quieter line such as the brand book version (`-MenuNote`). The content keeps
   the narrow column, so at the Phone width on a computer it lines up with the header.
 - **`house-theme.js` wires it** with no call of its own: the toggle opens the dialog its `aria-controls` names as a
@@ -446,7 +466,7 @@ where you can go, the trail where you are.
   <button class="dialog__close dialog__close--back" type="button" aria-label="Close the menu">(chevron left)</button>
   <nav class="menu-list" aria-label="Main">
     <p class="menu-section">Pages</p><a class="menu-item" href="/a" aria-current="page">..</a><a class="menu-item" href="/b">..</a>
-    <p class="menu-section">Display</p><a class="menu-item" href="/settings">..</a>
+    <p class="menu-section">Settings</p><a class="menu-item" href="/settings">(gear)..</a>
     <p class="menu-section">About</p>
   </nav>
   <div class="menu-footer"><p class="menu-footer__name">my-app</p><p class="menu-footer__note">Brand book v6.16.0</p></div>
@@ -470,6 +490,10 @@ line between them, the page you are on bold in the primary. A tap on the dimmed 
   say), titled with the page's name. On a phone it stands before the menu toggle; on a wide header at the far right,
   because the actions are the page's and must not vanish on a computer. `Format-SiteHeaderHtml -Actions` (each
   `@{ Label; Href }`) draws the cell and its sheet, and `Format-ProductPageHtml -Actions` passes them on.
+- **One action is not a sheet** (#4123). Three dots promise more options, so they appear only from two actions up. A
+  page with exactly one action shows it directly, as its own icon cell in the same place and size:
+  `a.site-header__action`, labelled with the action's name, no sheet. `Format-SiteHeaderHtml` does this by itself;
+  the action's optional `Icon` picks the glyph, `download` (the default, for *Save as PDF*) or `print`.
 - **`house-theme.js` wires both** as it wires the menu: the trigger opens the dialog its `aria-controls` names as a
   modal and sets `aria-expanded`; a tap on the backdrop, or the trigger vanishing as the header grows wide, shuts it.
 
@@ -505,13 +529,22 @@ three or four sections, then **More**, always last, a button that opens the site
   `Format-ProductPageHtml -BottomBar` / `Format-ProductHomeHeadHtml -BottomBar` draw it and drop the toggle. A bar
   needs a `-Menu`, because More opens the menu the header draws from it.
   [`patterns/product-bottom-bar.html`][pattern-bottom-bar] is the stylesheet-only reference.
+- **More can be a page, and should be** (#4125). As a button More is the one slot with no URL: it cannot be
+  refreshed, linked or returned to, the phone's back gesture leaves the page under it instead of closing it, and the
+  bar never marks it. So a product gives it a page of its own (`/more`, or the product's own word): pass `-MoreHref`
+  and More becomes `<a class="bottom-bar__item" href="/more">` like the other slots, current on that page and on any
+  page whose first parent crumb is it. The page's body is `Format-ProductMoreBodyHtml`, the site menu's own sections
+  (the pages the bar does not carry, the Settings row, the app's name) in a `.menu-page`, whose rows read as the
+  full-screen menu's; `Format-SiteMenuSectionsHtml` renders both, so the two cannot drift. With `-MoreHref` the header
+  draws no menu dialog, since nothing opens it. [`patterns/product-more.html`][pattern-more] is the stylesheet-only
+  reference. Without `-MoreHref` More stays the button, and the dialog stays for products without a bottom bar.
 
 ```html
 <nav class="bottom-bar" aria-label="Sections">
   <a class="bottom-bar__item" href="/"><span class="bottom-bar__icon">(svg)</span><span class="bottom-bar__label">Home</span></a>
   <a class="bottom-bar__item" href="/agenda" aria-current="page"><span class="bottom-bar__icon">(svg)</span><span class="bottom-bar__label">Agenda</span></a>
   ..
-  <button class="bottom-bar__item bottom-bar__more" type="button" aria-controls="site-menu" aria-expanded="false"><span class="bottom-bar__icon">(three lines)</span><span class="bottom-bar__label">More</span></button>
+  <a class="bottom-bar__item" href="/more"><span class="bottom-bar__icon">(three lines)</span><span class="bottom-bar__label">More</span></a>
 </nav>
 ```
 
@@ -617,4 +650,5 @@ the `house-style-css` gate parses `house-product.css` as it does the core's.
 [core-changing]: https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md#changing-the-brand-book
 [pattern-page]: patterns/product-page.html
 [pattern-bottom-bar]: patterns/product-bottom-bar.html
+[pattern-more]: patterns/product-more.html
 [pattern-device]: patterns/device-preview.html

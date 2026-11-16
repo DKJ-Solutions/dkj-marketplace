@@ -851,6 +851,32 @@ box, the bill and calculation tables, the date list, the figure) is the product 
 [its README][product-readme] under "App components" and "Brandbook-app components". The corner radii, `--control-lg`,
 `--datecol` and `--font-mono` those components brought are tokens and stay in the core ([Tokens](#what-it-holds)).
 
+### A table on a phone: rows as blocks
+
+**A table of sentences stacks on a phone instead of scrolling sideways** (#4129). Put it in a
+`.table-wrap--stack` in place of the plain `.table-wrap`, and where the wrap is narrower than 48rem each row
+becomes a block: the first cell its heading, in bold, and every other cell its column's name, small and in
+`--primary-muted`, over its value, with a `--bg-3` line between rows. Wider, it is the ordinary table.
+
+- **No markup per table.** `house-theme.js` copies each column head's text onto the body cells as `data-label`,
+  which the stacked row shows, so a rendered markdown table needs only the wrap. A cell that already has a
+  `data-label` keeps it, and a page without the script writes them itself.
+- **The width is the wrap's own**, through a container query, so the Phone width in the settings stacks it as a
+  phone does, and so does a column narrower than 48rem on a computer. That is the point: a narrow column squeezes
+  a table of sentences just as a phone does.
+- **The head row stays for a screen reader**, hidden from view; the cells keep their table roles only where the
+  browser keeps them under `display: block`, so a table a screen reader must navigate by column keeps the plain wrap.
+- **Opt in per table.** A table of figures, whose columns are read across, keeps `.table-wrap` and scrolls.
+
+```html
+<div class="table-wrap table-wrap--stack"><table class="table">
+  <thead><tr><th>Date</th><th>What happened</th><th>What I noticed</th></tr></thead>
+  <tbody><tr><td>Monday</td><td>..</td><td>..</td></tr></tbody>
+</table></div>
+```
+
+**What this changes for an app that takes the update:** nothing, until it adds `--stack` to a wrap.
+
 ## The product layer
 
 **The mobile-first product has a stylesheet of its own** (Maikel, [#3831](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3831),

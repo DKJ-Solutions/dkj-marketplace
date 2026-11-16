@@ -2,7 +2,190 @@
 
 ## [Unreleased]
 
-**6 / 8 minor entries** <!-- pending-tally -->
+**10 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4125-more-page · 20261116-000103Z
+
+Inside this repo, the product layer's renderer lifts the site menu's sections into one function,
+`Format-SiteMenuSectionsHtml`, which both the full-screen dialog and a new More page body
+(`Format-ProductMoreBodyHtml`) render, and this repo's product serves `/more` with the bottom bar's More linking it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions product's bottom bar can now make More a page like its other slots: pass `-MoreHref` and More becomes
+a link to that page, with a URL that can be refreshed, linked and returned to. The phone's back gesture leaves it as
+it leaves any page, and the bar marks More as where you are. The page holds the same sections as the menu, and the
+full-screen dialog stays for products without a bottom bar.
+
+**Score:** 3
+
+#### Pull Request
+
+Bottom bar: More opens a page with its own URL
+
+Plugins: dkj-solutions
+
+[PR #4138](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4138)
+
+---
+
+### DEPLOY: feat/4128-phone-header-height · 20261115-221833Z
+
+On a phone a product's site header is 56px tall instead of 68px, with its back, actions and menu cells still square,
+and the full-screen menu's head matches it. The bottom bar is 61px instead of 73px on a phone without a home
+indicator, and keeps the safe area on one that has it. Together they give about 24px of the screen back to the page.
+A wide screen is unchanged.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+On a phone, the site header is 56px and the bottom bar 61px
+
+Plugins: dkj-solutions
+
+[PR #4137](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4137)
+
+---
+
+### DEPLOY: feat/4124-icon-grammar · 20261115-214107Z
+
+Every DKJ product now reads three icons one way on a phone: **three lines** for more pages, **three dots** for the
+page's own actions, and the **gear** for settings
+([#4124](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4124)). The product README writes that grammar
+down, and the full-screen menu's **Display** section becomes **Settings**, its one row carrying the house gear, so
+on a phone settings sit inside the menu rather than as an icon in the header.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions product that draws its header with `Format-SiteHeaderHtml` and passes `-SettingsHref` shows a
+**Settings** section with a gear in its phone menu where it showed **Display**, with no change of its own. One that
+draws the menu by hand renames the section and adds the gear, as the README says.
+
+**Score:** 3
+
+#### Pull Request
+
+Product on a phone: one icon grammar, and settings as a row in More
+
+Plugins: dkj-solutions
+
+[PR #4136](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4136)
+
+---
+
+### DEPLOY: feat/4129-phone-table-rows · 20261115-195943Z
+
+A table of sentences can now stack on a phone: wrap it in `.table-wrap--stack` and each row becomes a block, its
+first cell the heading and every other cell its column's name over its value, with no markup per table, so a rendered
+markdown table takes it too. Wider than 48rem it stays the ordinary table, and a table without the class is unchanged.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+Brand book: a phone pattern for tables (rows as stacked blocks)
+
+Plugins: dkj-policy
+
+[PR #4135](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4135)
+
+---
+
+### DEPLOY: feat/4123-single-header-action · 20261115-194435Z
+
+A product page with a single action, such as *Save as PDF*, now shows that action as its own icon in the site
+header, instead of three dots that open a sheet holding one item. The three dots and the sheet appear only when a
+page has two actions or more. An app drawing its header with `Format-SiteHeaderHtml` gets this with the update.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+Product header: a page with one action shows it directly
+
+Plugins: dkj-solutions
+
+[PR #4134](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4134)
+
+---
+
+### DEPLOY: fix/4111-docs-coverage-scroll · 20261115-193008Z
+
+A wide house table no longer widens the whole page on a phone. Its scroll container, `.table-wrap`, is now
+the containing block of what is positioned inside it, so a visually hidden column head at the table's far
+edge (the Docs coverage page's Details column) is clipped with the rest of the table instead of setting the
+document's width. On the product's `/docs-coverage` at 375 px the page measured 1322 px wide and now measures
+375, with the table scrolling inside its own box (#4111).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Any page in a consuming repo that puts a `.sr-only` element, or anything else absolute, inside a wide
+`.table-wrap` stops scrolling sideways as a whole on a phone once it takes this brand book.
+
+**Score:** 2
+
+#### Pull Request
+
+A wide table's hidden column head no longer widens the page on a phone
+
+Plugins: dkj-policy
+
+[PR #4133](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4133)
+
+---
+
+### DEPLOY: feat/4126-no-group-surface · 20261115-191324Z
+
+A card group is no longer a surface of its own
+([#4126](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4126)): `.grid-2`, `.grid-3` and `.card-grid`
+lose the `--bg-2` tray, its radius and its padding at every width, so a card in a group is the same plain card it is
+anywhere else, on `--bg-2` against the page. That reverses the padded tray of November 2, 2026, and takes with it
+the darker card fill inside a group and the button edge #3697 gave it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every DKJ-Solutions app that takes the update loses the frame around its card groups: the cards stand on the page
+directly, one step lighter or darker than it, and on a phone they gain the width the padding took on both sides.
+No markup changes; an app whose own layer leaned on the group's padding checks its spacing.
+
+**Score:** 3
+
+#### Pull Request
+
+Brand book: a card group is no surface of its own
+
+Plugins: dkj-policy, dkj-solutions
+
+[PR #4132](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4132)
+
+---
 
 ### DEPLOY: feat/4113-consumer-group-rows · 20261115-182852Z
 

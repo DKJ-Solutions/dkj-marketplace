@@ -59,33 +59,30 @@ function Format-SiteHeaderHtml {
         of the breadcrumb bar (#4048, house-product.css "Site header on a phone"): a back cell first in the header and
         the title after the brand, both hidden on a wide header. A page below home passes both; home passes neither.
         THE MENU (#4095) opens full screen (dialog.dialog--screen.site-menu, Figma Product / Menu row, Menu section head
-        and Menu footer): a Pages section with -Menu's items (each may carry a Sub line), a Display section with one row
-        to -SettingsHref where the app has a settings page (the gear's place on a phone), and an About section ending in
+        and Menu footer): a Pages section with -Menu's items (each may carry a Sub line), a Settings section with one
+        gear row to -SettingsHref where the app has a settings page (the gear's place on a phone, #4124), and an About section ending in
         the app's -Name and -MenuNote (e.g. the brand book version), each left out when its input is.
         THE ACTIONS SHEET (#4095, Figma Product / Sheet): -Actions, the page's own actions (each @{ Label; Href }),
-        adds a More cell that opens them as a sheet titled -PageTitle.
+        adds a More cell that opens them as a sheet titled -PageTitle, from two actions up. A single action is drawn
+        directly as its own icon cell, a.site-header__action, with no sheet (#4123); its optional Icon is 'download'
+        (the default) or 'print'.
         -Path is accepted and does nothing: the phone's title is plain text, never a button opening the path as a
         sheet (Dave, November 15, 2026; dkj-lifehub's header has none). Kept so a caller that still passes it does not
         fail on a parameter that is gone; the back cell is the way up.
         -NoMenuToggle leaves the three-line toggle out while the links and the menu stay (#4094): a page with a bottom
         bar opens the menu from its More instead (Figma Menu toggle=false).
+        -NoMenuDialog leaves the full-screen menu out too (#4125): a page whose bottom bar's More is a page of its own
+        (Format-BottomBarHtml -MoreHref) has nothing to open it, so the dialog would be dead markup. The links stay.
     #>
     param([Parameter(Mandatory = $true)][string]$Name, [string]$Href = '/', [AllowEmptyString()][string]$Tag = '',
         [AllowEmptyCollection()][object[]]$Menu = @(), [AllowEmptyString()][string]$Current = '',
         [object]$Back = $null, [AllowEmptyString()][string]$PageTitle = '',
         [AllowEmptyCollection()][object[]]$Path = @(), [AllowEmptyCollection()][object[]]$Actions = @(),
-        [AllowEmptyString()][string]$SettingsHref = '', [AllowEmptyString()][string]$MenuNote = '', [switch]$NoMenuToggle)
+        [AllowEmptyString()][string]$SettingsHref = '', [AllowEmptyString()][string]$MenuNote = '', [switch]$NoMenuToggle, [switch]$NoMenuDialog)
     $e = { param($v) ConvertTo-GeneralPageText $v }
-    $chevPath = 'M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0'
     # The house chevron, mirrored to point left (back).
-    $chevLeft = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path transform="matrix(-1 0 0 1 24 0)" fill="currentColor" fill-rule="evenodd" d="' + $chevPath + '" clip-rule="evenodd"/></svg>'
-    $chevron = '<svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="' + $chevPath + '" clip-rule="evenodd"/></svg>'
-    $row = {
-        param($i, [string]$cur)
-        $sub = if ($i.Sub) { '<span class="menu-item__sub">' + (& $e $i.Sub) + '</span>' } else { '' }
-        $aside = if ($i.Value) { '<span class="menu-item__aside">' + (& $e $i.Value) + '</span>' } else { '' }
-        '<a class="menu-item" href="' + (& $e $i.Href) + '"' + $cur + '><span class="menu-item__label">' + (& $e $i.Label) + $sub + '</span>' + $aside + $chevron + '</a>'
-    }
+    $chevLeft = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path transform="matrix(-1 0 0 1 24 0)" fill="currentColor" fill-rule="evenodd" d="' + (Get-MenuChevronPath) + '" clip-rule="evenodd"/></svg>'
+    $row = { param($i, [string]$cur) Format-MenuItemHtml -Item $i -Current $cur }
     $sheet = {
         param([string]$Id, [string]$Label, [string]$Title, [string]$Rows)
         '<dialog class="dialog dialog--sheet" id="' + $Id + '" aria-label="' + (& $e $Label) + '"><div class="dialog__body"><span class="dialog__handle" aria-hidden="true"></span>' +
@@ -101,7 +98,16 @@ function Format-SiteHeaderHtml {
     $tagHtml = if ($Tag) { ' <span class="site-header__tag">' + (& $e $Tag) + '</span>' } else { '' }
     $acts = @($Actions | Where-Object { $_ -and $_.Label -and $_.Href })
     $moreHtml = ''
-    if ($acts.Count) {
+    if ($acts.Count -eq 1) {
+        # One action is shown directly, as its own icon cell: three dots opening a sheet of one item is an extra tap
+        # and an empty promise (#4123). The action's Icon names the glyph, 'download' (the default) or 'print'.
+        $a = $acts[0]
+        $glyph = if ("$($a.Icon)" -eq 'print') {
+            'M7 3h10v4h2a2 2 0 0 1 2 2v7h-4v5H7v-5H3V9a2 2 0 0 1 2-2h2zm2 2v2h6V5zm0 10v4h6v-4z'
+        } else { 'M11 4h2v8.586l3.293-3.293 1.414 1.414L12 16.414l-5.707-5.707 1.414-1.414L11 12.586zM5 18h14v2H5z' }
+        $moreHtml = '<a class="site-header__action" href="' + (& $e $a.Href) + '" aria-label="' + (& $e $a.Label) + '" title="' + (& $e $a.Label) + '">' +
+            '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="' + $glyph + '"/></svg></a>'
+    } elseif ($acts.Count) {
         $moreHtml = '<button class="site-header__more" type="button" aria-controls="site-actions" aria-expanded="false" aria-haspopup="dialog" aria-label="More actions">' +
             '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>'
         $dialogs += & $sheet 'site-actions' 'Actions' $PageTitle (($acts | ForEach-Object { & $row $_ '' }) -join '')
@@ -114,21 +120,65 @@ function Format-SiteHeaderHtml {
         $toggle = if ($NoMenuToggle) { '' } else {
             '<button class="site-header__menu-toggle" type="button" aria-controls="site-menu" aria-expanded="false" aria-label="Menu">' + (Get-MenuLinesGlyph) + '</button>' }
         $nav = '<nav class="site-header__nav" aria-label="Main"><ul class="site-header__menu">' + $links + '</ul>' + $toggle + '</nav>'
-        $sections = '<p class="menu-section">Pages</p>' + (($items | ForEach-Object { & $row $_ (& $cur $_) }) -join '')
-        if ($SettingsHref) {
-            $sections += '<p class="menu-section">Display</p>' + (& $row @{ Label = 'Display'; Sub = 'Light or dark, theme, width'; Href = $SettingsHref } '')
+        if (-not $NoMenuDialog) {
+            $dialogs = '<dialog class="dialog dialog--screen site-menu" id="site-menu" aria-label="Menu"><div class="dialog__body">' +
+                '<div class="dialog__head dialog__head--back"><p class="dialog__title">Menu</p></div>' +
+                '<button class="dialog__close dialog__close--back" type="button" aria-label="Close the menu">' + $chevLeft + '</button>' +
+                (Format-SiteMenuSectionsHtml -Name $Name -Menu $items -Current $Current -SettingsHref $SettingsHref -MenuNote $MenuNote) + '</div></dialog>' + $dialogs
         }
-        $sections += '<p class="menu-section">About</p>'
-        $footer = '<div class="menu-footer"><p class="menu-footer__name">' + (& $e $Name) + '</p>' +
-            $(if ($MenuNote) { '<p class="menu-footer__note">' + (& $e $MenuNote) + '</p>' } else { '' }) + '</div>'
-        $dialogs = '<dialog class="dialog dialog--screen site-menu" id="site-menu" aria-label="Menu"><div class="dialog__body">' +
-            '<div class="dialog__head dialog__head--back"><p class="dialog__title">Menu</p></div>' +
-            '<button class="dialog__close dialog__close--back" type="button" aria-label="Close the menu">' + $chevLeft + '</button>' +
-            '<nav class="menu-list" aria-label="Main">' + $sections + '</nav>' + $footer + '</div></dialog>' + $dialogs
     }
     return '<header class="site-header"><div class="container">' + $backHtml + '<a class="site-header__brand" href="' + (& $e $Href) + '" aria-label="' +
         (& $e $label) + ', home"><span class="site-header__name">' + (& $e $Name) +
         $tagHtml + '</span></a>' + $titleHtml + $moreHtml + $nav + '</div>' + $dialogs + '</header>' + "`n"
+}
+
+function Get-MenuChevronPath {
+    <# The house chevron's path, pointing right: a menu row's end, and mirrored, the header's back cell. #>
+    return 'M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0'
+}
+
+function Format-MenuItemHtml {
+    <#
+        One .menu-item row (house-product.css, "Full-screen dialog" and "Sheet"): -Item is @{ Label; Href; Sub; Value;
+        Icon }, the label, sub line and value escaped here; Icon is markup this lib drew itself (the gear), never caller
+        text. -Current is the attribute text that marks the page it sits under (' aria-current="page"'), or ''.
+    #>
+    param([Parameter(Mandatory = $true)][object]$Item, [AllowEmptyString()][string]$Current = '')
+    $e = { param($v) ConvertTo-GeneralPageText $v }
+    $sub = if ($Item.Sub) { '<span class="menu-item__sub">' + (& $e $Item.Sub) + '</span>' } else { '' }
+    $aside = if ($Item.Value) { '<span class="menu-item__aside">' + (& $e $Item.Value) + '</span>' } else { '' }
+    $icon = if ($Item.Icon) { [string]$Item.Icon } else { '' }
+    $chevron = '<svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="' + (Get-MenuChevronPath) + '" clip-rule="evenodd"/></svg>'
+    return '<a class="menu-item" href="' + (& $e $Item.Href) + '"' + $Current + '>' + $icon + '<span class="menu-item__label">' + (& $e $Item.Label) + $sub + '</span>' + $aside + $chevron + '</a>'
+}
+
+function Format-SiteMenuSectionsHtml {
+    <#
+        The site menu's sections (#4095), one renderer for its two places (#4125): inside the full-screen dialog the
+        header draws, and on the More page a bottom bar links to (Format-ProductMoreBodyHtml). A Pages section with
+        -Menu's items (each @{ Label; Href }, optionally Sub), the one whose Href is -Current marked; a Settings section
+        with one gear row to -SettingsHref (#4124); an About section; and the foot with the app's -Name and -MenuNote.
+        Each is left out when its input is. Every label is escaped here.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyCollection()][object[]]$Menu = @(), [AllowEmptyString()][string]$Current = '',
+        [AllowEmptyString()][string]$SettingsHref = '', [AllowEmptyString()][string]$MenuNote = '')
+    $e = { param($v) ConvertTo-GeneralPageText $v }
+    $items = @($Menu | Where-Object { $_ -and $_.Label -and $_.Href })
+    $sections = '<p class="menu-section">Pages</p>' + (($items | ForEach-Object {
+        Format-MenuItemHtml -Item $_ -Current $(if ($Current -and $_.Href -eq $Current) { ' aria-current="page"' } else { '' }) }) -join '')
+    if ($SettingsHref) {
+        # The gear means settings in every DKJ product (#4124), so the row carries the house gear house-theme.js draws.
+        $gear = '<svg class="menu-item__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="currentColor"><path fill-rule="evenodd" d="' +
+            'M9.79 4.31L10.55 1.7L13.45 1.7L14.21 4.31A8 8 0 0 1 15.88 5L18.26 3.69L20.31 5.74L19 8.12A8 8 0 0 1 19.69 9.79L22.3 10.55L22.3 13.45L19.69 14.21' +
+            'A8 8 0 0 1 19 15.88L20.31 18.26L18.26 20.31L15.88 19A8 8 0 0 1 14.21 19.69L13.45 22.3L10.55 22.3L9.79 19.69A8 8 0 0 1 8.12 19L5.74 20.31L3.69 18.26' +
+            'L5 15.88A8 8 0 0 1 4.31 14.21L1.7 13.45L1.7 10.55L4.31 9.79A8 8 0 0 1 5 8.12L3.69 5.74L5.74 3.69L8.12 5A8 8 0 0 1 9.79 4.31Z' +
+            'M16.85 12a4.85 4.85 0 1 0-9.7 0a4.85 4.85 0 1 0 9.7 0z"/></svg>'
+        $sections += '<p class="menu-section">Settings</p>' + (Format-MenuItemHtml -Item @{ Label = 'Settings'; Sub = 'Light or dark, theme, width'; Href = $SettingsHref; Icon = $gear })
+    }
+    $sections += '<p class="menu-section">About</p>'
+    $footer = '<div class="menu-footer"><p class="menu-footer__name">' + (& $e $Name) + '</p>' +
+        $(if ($MenuNote) { '<p class="menu-footer__note">' + (& $e $MenuNote) + '</p>' } else { '' }) + '</div>'
+    return '<nav class="menu-list" aria-label="Main">' + $sections + '</nav>' + $footer
 }
 
 function Get-MenuLinesGlyph {
@@ -144,9 +194,13 @@ function Format-BottomBarHtml {
         section the page sits under, marked aria-current. Icon is optional markup the caller supplies (an inline <svg>,
         not escaped); a label is escaped here. -MoreLabel and -MoreIcon name and draw More (the menu's three lines by
         default). Any other count of items throws: the bar has no room for a sixth slot, and two slots are no bar.
+        -MoreHref makes More a destination like the other slots (#4125): a link to the product's More page
+        (Format-ProductMoreBodyHtml), marked aria-current where -Current is that Href, so it has a URL, the phone's back
+        gesture leaves it as it leaves any page, and the bar says where you are. Without it More stays the button that
+        opens the full-screen menu.
     #>
     param([Parameter(Mandatory = $true)][object[]]$Items, [AllowEmptyString()][string]$Current = '',
-        [string]$MoreLabel = 'More', [AllowEmptyString()][string]$MoreIcon = '')
+        [string]$MoreLabel = 'More', [AllowEmptyString()][string]$MoreIcon = '', [AllowEmptyString()][string]$MoreHref = '')
     $e = { param($v) ConvertTo-GeneralPageText $v }
     $list = @($Items | Where-Object { $_ -and $_.Label -and $_.Href })
     if ($list.Count -lt 3 -or $list.Count -gt 4) { throw "Format-BottomBarHtml: a bottom bar takes 3 or 4 sections before More (4 or 5 slots), got $($list.Count)." }
@@ -156,8 +210,13 @@ function Format-BottomBarHtml {
         '<a class="bottom-bar__item" href="' + (& $e $_.Href) + '"' + $cur + '>' + (& $icon ([string]$_.Icon)) + '<span class="bottom-bar__label">' + (& $e $_.Label) + '</span></a>'
     }) -join ''
     $moreSvg = if ($MoreIcon) { $MoreIcon } else { Get-MenuLinesGlyph }
-    $more = '<button class="bottom-bar__item bottom-bar__more" type="button" aria-controls="site-menu" aria-expanded="false">' +
-        (& $icon $moreSvg) + '<span class="bottom-bar__label">' + (& $e $MoreLabel) + '</span></button>'
+    $more = if ($MoreHref) {
+        $moreCur = if ($Current -and $MoreHref -eq $Current) { ' aria-current="page"' } else { '' }
+        '<a class="bottom-bar__item" href="' + (& $e $MoreHref) + '"' + $moreCur + '>' + (& $icon $moreSvg) + '<span class="bottom-bar__label">' + (& $e $MoreLabel) + '</span></a>'
+    } else {
+        '<button class="bottom-bar__item bottom-bar__more" type="button" aria-controls="site-menu" aria-expanded="false">' +
+            (& $icon $moreSvg) + '<span class="bottom-bar__label">' + (& $e $MoreLabel) + '</span></button>'
+    }
     return '<nav class="bottom-bar" aria-label="Sections">' + $slots + $more + '</nav>' + "`n"
 }
 
@@ -185,7 +244,7 @@ function Get-SiteHeaderMenuCurrent {
 }
 
 function Assert-BottomBarHasMenu {
-    <# A bottom bar's More opens the menu the site header draws from -Menu, so a bar without both has a dead More (#4094). #>
+    <# A bottom bar's More opens the menu the site header draws from -Menu, or links to the page that renders it (#4125), so a bar without both has a dead More (#4094). #>
     param([AllowEmptyCollection()][object[]]$BottomBar = @(), [AllowEmptyString()][string]$Brand = '', [AllowEmptyCollection()][object[]]$Menu = @())
     if (@($BottomBar).Count -and -not ($Brand -and @($Menu | Where-Object { $_ -and $_.Label -and $_.Href }).Count)) {
         throw 'A -BottomBar needs -Brand and -Menu: its More opens the site menu the header draws from -Menu.'
@@ -206,10 +265,13 @@ function Format-ProductPageHtml {
         right of the h1's row, which is then the house page-header row (main > header). -Info is what the page is
         about, behind a drawn "?" right of the h1 (Get-PageInfoScript places its tooltip).
         -Actions, -SettingsHref and -MenuNote go to the site header as they are (#4095): the page's own actions behind
-        the More cell, the Display row of the full-screen menu, and the menu's foot line.
+        the More cell, the Settings row of the full-screen menu, and the menu's foot line.
         -BottomBar is the app's sections for a phone's bottom bar (Format-BottomBarHtml, #4094), three or four, with
         -MoreLabel naming its last slot; the header then leaves its toggle out, since More opens the menu. It needs
         -Brand and -Menu, because More opens the menu the header draws from -Menu.
+        -MoreHref makes More a link to the product's More page (#4125, Format-ProductMoreBodyHtml), which renders that
+        same menu; the header then leaves the dialog out as well, and More is current on the More page (the page whose
+        -Title is -MoreLabel) and on every page whose first parent crumb is it.
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Title,
@@ -232,7 +294,8 @@ function Format-ProductPageHtml {
         [AllowEmptyString()][string]$SettingsHref = '',
         [AllowEmptyString()][string]$MenuNote = '',
         [AllowEmptyCollection()][object[]]$BottomBar = @(),
-        [string]$MoreLabel = 'More'
+        [string]$MoreLabel = 'More',
+        [AllowEmptyString()][string]$MoreHref = ''
     )
     Assert-BottomBarHasMenu -BottomBar $BottomBar -Brand $Brand -Menu $Menu
     $e = { param($v) ConvertTo-GeneralPageText $v }
@@ -240,9 +303,13 @@ function Format-ProductPageHtml {
     [void]$sb.Append((Format-GeneralPageHeadHtml -Title $Title -Lead $Lead -Style $Style -ThemeKey $ThemeKey -SiteName $SiteName -Stylesheets (Get-ProductStylesheets)))
     if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href $AdminHref -Tag $BrandTag -Menu $Menu -Current (Get-SiteHeaderMenuCurrent -Menu $Menu -Title $Title -ParentCrumbs $ParentCrumbs) `
         -Back (Get-SiteHeaderBack -HomeHref $AdminHref -HomeLabel $HomeLabel -Trail $ParentCrumbs) -PageTitle $Title `
-        -Actions $Actions -SettingsHref $SettingsHref -MenuNote $MenuNote -NoMenuToggle:([bool]@($BottomBar).Count))) }
+        -Actions $Actions -SettingsHref $SettingsHref -MenuNote $MenuNote -NoMenuToggle:([bool]@($BottomBar).Count) -NoMenuDialog:([bool](@($BottomBar).Count -and $MoreHref)))) }
     [void]$sb.Append((Format-ProductBreadcrumbBarHtml -HomeHref $AdminHref -HomeLabel $HomeLabel -Trail $ParentCrumbs -Current $Title))
-    if (@($BottomBar).Count) { [void]$sb.Append((Format-BottomBarHtml -Items $BottomBar -MoreLabel $MoreLabel -Current (Get-SiteHeaderMenuCurrent -Menu $BottomBar -Title $Title -ParentCrumbs $ParentCrumbs))) }
+    if (@($BottomBar).Count) {
+        # More counts as a section of its own once it is a page (#4125), so the More page and the pages under it mark it.
+        $slots = @($BottomBar) + $(if ($MoreHref) { @(@{ Label = $MoreLabel; Href = $MoreHref }) } else { @() })
+        [void]$sb.Append((Format-BottomBarHtml -Items $BottomBar -MoreLabel $MoreLabel -MoreHref $MoreHref -Current (Get-SiteHeaderMenuCurrent -Menu $slots -Title $Title -ParentCrumbs $ParentCrumbs)))
+    }
     if (-not $Brand) { [void]$sb.AppendLine('<div id="settings" class="theme-settings--floating"></div>') }
     [void]$sb.AppendLine('<main class="page-column">')
     if (-not $Bare) {
@@ -283,15 +350,17 @@ function Format-ProductHomeHeadHtml {
         2026). Without -Brand the settings button floats and the intro is the h1 -RepoName (escaped by the caller), in
         a <div>, never a <header>, which the house style lays out as a flex row. The caller writes the <head> and
         '<body>' before it, linking /house-style.css and then /house-product.css, and the sections and </main> after it.
-        -BottomBar and -MoreLabel are Format-ProductPageHtml's (#4094); the home section is current where its Href is '/'.
+        -BottomBar, -MoreLabel and -MoreHref are Format-ProductPageHtml's (#4094, #4125); the home section is current where
+        its Href is '/'.
     #>
     param([Parameter(Mandatory = $true)][string]$RepoName, [AllowEmptyString()][string]$Brand = '', [AllowEmptyString()][string]$BrandTag = 'product',
-        [string]$HomeLabel = 'Home', [AllowEmptyCollection()][object[]]$Menu = @(), [AllowEmptyCollection()][object[]]$BottomBar = @(), [string]$MoreLabel = 'More')
+        [string]$HomeLabel = 'Home', [AllowEmptyCollection()][object[]]$Menu = @(), [AllowEmptyCollection()][object[]]$BottomBar = @(), [string]$MoreLabel = 'More',
+        [AllowEmptyString()][string]$MoreHref = '')
     Assert-BottomBarHasMenu -BottomBar $BottomBar -Brand $Brand -Menu $Menu
     $sb = New-Object System.Text.StringBuilder
-    if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href '/' -Tag $BrandTag -Menu $Menu -NoMenuToggle:([bool]@($BottomBar).Count))) }
+    if ($Brand) { [void]$sb.Append((Format-SiteHeaderHtml -Name $Brand -Href '/' -Tag $BrandTag -Menu $Menu -NoMenuToggle:([bool]@($BottomBar).Count) -NoMenuDialog:([bool](@($BottomBar).Count -and $MoreHref)))) }
     [void]$sb.Append((Format-ProductBreadcrumbBarHtml -HomeLabel $HomeLabel))
-    if (@($BottomBar).Count) { [void]$sb.Append((Format-BottomBarHtml -Items $BottomBar -MoreLabel $MoreLabel -Current '/')) }
+    if (@($BottomBar).Count) { [void]$sb.Append((Format-BottomBarHtml -Items $BottomBar -MoreLabel $MoreLabel -MoreHref $MoreHref -Current '/')) }
     if (-not $Brand) { [void]$sb.AppendLine('<div id="settings" class="theme-settings--floating"></div>') }
     [void]$sb.AppendLine('<main class="page-column">')
     if (-not $Brand) {
@@ -301,6 +370,18 @@ function Format-ProductHomeHeadHtml {
     }
     return $sb.ToString()
 }
+function Format-ProductMoreBodyHtml {
+    <#
+        The body of a product's More page (#4125): the page a bottom bar's More links to (Format-BottomBarHtml
+        -MoreHref), holding the site menu's own sections (Format-SiteMenuSectionsHtml) in a .menu-page, so they read as
+        they do in the full-screen dialog. The caller wraps it with Format-ProductPageHtml -Title <its More label>
+        -MoreHref <this page>, which marks More current. Arguments as Format-SiteMenuSectionsHtml's.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyCollection()][object[]]$Menu = @(), [AllowEmptyString()][string]$Current = '',
+        [AllowEmptyString()][string]$SettingsHref = '', [AllowEmptyString()][string]$MenuNote = '')
+    return '<div class="menu-page">' + (Format-SiteMenuSectionsHtml -Name $Name -Menu $Menu -Current $Current -SettingsHref $SettingsHref -MenuNote $MenuNote) + '</div>' + "`n"
+}
+
 function Join-HouseStyleSpecimens {
     <#
         The whole brand book's specimens as one body (#3831): dkj-policy's assets/dkj-brandbook/specimens.html (-Core)
