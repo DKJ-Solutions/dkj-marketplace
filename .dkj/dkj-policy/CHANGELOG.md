@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**24 / 32 minor entries** <!-- pending-tally -->
+**25 / 33 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4152-reconcile-base-merges · 20261116-114450Z
+
+`sync-main -ReconcileBase` now opens its PR, waits for the checks and merges it with a merge commit itself,
+the same finish the plain merging sync runs ([#4152](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4152)).
+It used to print `gh pr create`, `gh pr checks --watch` and `gh pr merge`, and run back to back they failed: the
+watch returned before the checks had registered, and the merge was refused. The commands are still printed when
+the push does not land.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Shopify store that reconciles a sync conflict no longer finishes the reconciliation base by hand: the run
+merges it, with a merge commit even where the repo squashes by default, and leaves the checkout on the trunk.
+
+**Score:** 3
+
+#### Pull Request
+
+sync-main -ReconcileBase opens, waits for and merges its own PR
+
+Plugins: dkj-subagents-shopify
+
+[PR #4174](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4174)
+
+---
 
 ### DEPLOY: fix/4171-case-sensitive-mirror-compare · 20261116-112727Z
 
