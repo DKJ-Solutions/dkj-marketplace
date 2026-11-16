@@ -286,7 +286,8 @@ staring at four sync PRs needs answered. A refusal there would withhold it.
 | `-StopBeforeMerge` | push the sync branch and stop, even where `Get-ShopifySyncMerges` says to merge. The escape valve runs in the **safe direction only**: there is no switch that forces a merge the seam has not asked for. |
 | `-AllowStacking` | run even though a sync branch from a previous run is still standing. Without it such a run is refused before the pull. What it is *for* is the one case where the two branches are genuinely independent -- a path a third party **reverted on live** between the runs is no longer drift, so this run never captures it and that branch holds the only copy. The run then still prints the per-branch verdict, so a second candidate is a decision rather than an accident. See [Why a standing sync branch stops the run](#why-a-standing-sync-branch-stops-the-run). |
 | `-ReconcileBase` | on a run that **refuses for conflicts**, write the reconciliation base for those paths instead of only printing the diff commands: a sync branch carrying live's bytes verbatim and then the trunk's own bytes straight back on top. No file changes, and the run still exits 1 -- nothing was taken from live. See [A conflict you reconcile by hand](#a-conflict-you-reconcile-by-hand) for why one commit cannot do this. Under `-DryRun` it reports the base it would write and writes nothing. |
-| `-ChecksTimeoutMinutes` | how long to wait for CI on the sync PR before giving up and leaving it unmerged. Only used when the seam says to merge. Default: `15`. |
+| `-Only <paths>` | run as a **drift check** over those paths ([#4149](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4149)): implies `-DryRun`, judges only the listed paths, and exits **1** when any of them is `take-live` or a conflict, **0** when every one is held back or matches. A plain `-DryRun` exits 0 on a `take-live` path, because that is the sync working; a push of the trunk's version would destroy that third-party edit, so a drift check must fail on it. A path the trunk deleted is safe only where live's bytes are a version the trunk once held. This is the contract `live-preflight` and `prepare-release` call (`& <check> -Only <paths>`), and both fall back to `sync-main` where no drift check is answered. A comma-joined single string is split. It refuses an empty list, `-ReconcileBase` (which writes) and a Git-connected store, each with exit 1 and nothing written. |
+| `-ChecksTimeoutMinutes` | how long to wait for CI on the sync PR before giving up and leaving it unmerged. Only used when the seam says to merge, and by `-ReconcileBase`. The wait covers the checks the trunk's branch rules require, and every check only where those rules cannot be read or require none (#4168). Default: `15`. |
 | `-SkipPull` | **retired.** It meant "run the rule over the working tree", which cannot mean anything now that the pull goes to a mirror and the tree is written only for `take-live` paths. It is still accepted, purely so the refusal can name what replaced it: `-DryRun` or `-MirrorPath`. |
 
 ## The seam answers it reads
@@ -412,11 +413,13 @@ added, which is true wherever you started it from.)
 1. **live verbatim** -- the only thing that puts live's content into the path's history;
 2. **the trunk's content straight back on top** -- so the branch changes no file at all.
 
-**The run pushes that branch and stops with exit 1, and the merge is yours, now.** It prints the whole
-finish -- `gh pr create`, `gh pr checks <branch> --watch`, `gh pr merge <branch> --merge` -- and the PR
-needs no review, because the branch changes no file and there is nothing to judge by eye. Left as a
-comment for somebody else, it stays open and blocks whatever waits on it (#2925, measured at
-smartwatchbanden#892).
+**The run pushes that branch, opens its PR, waits for the checks and merges it with a merge commit**,
+the same finish the plain merging sync runs (#4152), and then still exits 1, because nothing was taken
+from live. The PR needs no review: the branch changes no file, so there is nothing to judge by eye. It
+merges with a merge commit whatever `Get-PrMergeMethod` says, because a squash would keep live's bytes
+out of the history. Run back to back by hand, the printed commands failed twice in one release (a watch
+started before the checks had registered, then a merge the branch policy refused), so they are printed
+only when the push did not land.
 
 Merge that branch and the path reads `keep-trunk` from then on: *"live holds a version this repo has had
 before; the trunk has moved on since"* -- the same state every ordinary held-back file is in. **Your own

@@ -1205,6 +1205,10 @@ Assert-True ($prDriver -notmatch "(?m)^[^#]*(--jq|-q)'?,?\s+'[^']*""") 'no jq fi
 # Inbound #4151: an owed path where the trunk is the right side takes no content commit, so the step has to
 # name the answer live-preflight accepts for it, or the person learns the switch only from the refusal.
 Assert-True ($prDriver -match "Add-Step -Name 'reconciliation'[^\r\n]*-AcceptOwedReconciliation") 'the reconciliation step names -AcceptOwedReconciliation for paths where the trunk is meant to win'
+# Inbound #4149: a repo whose only drift check is sync-main had step 5 skipped. Where nothing is answered and
+# live-snapshot.ps1 is absent, the repo's own scripts/task/sync-main.ps1 stands in -- its -Only is the contract.
+Assert-True ($prDriver -match "(?s)-not \(\[string\]\`$DriftArg\)\.Trim\(\) -and -not \`$driftSeam -and.{0,200}\`$syncMainRel = 'scripts/task/sync-main\.ps1'") 'step 5 falls back to the repo''s sync-main only where no drift check is answered'
+Assert-True ($prDriver -notmatch 'dkj-subagents-shopify') '...and never reaches across into the shopify plugin for it'
 $prRun = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PluginRoot 'scripts\task\prepare-release.ps1') 2>&1
 Assert-Equal 1 $LASTEXITCODE 'run in the plugin''s own source repo, the driver refuses'
 Assert-True ((@($prRun | ForEach-Object { "$_" }) -join "`n").Contains('publishes plugins')) '...and says why'

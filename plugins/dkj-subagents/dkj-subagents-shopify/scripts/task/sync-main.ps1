@@ -198,6 +198,28 @@
     longer drift, so this run never captures it, and the predecessor holds the only copy. The run then
     still prints the per-branch verdict, so the second candidate is a decision rather than an accident.
 
+.PARAMETER Only
+    Run as a DRIFT CHECK over these paths (inbound #4149): implies -DryRun, so nothing is written, judges
+    only the listed paths, and exits 1 when any of them is take-live or a conflict -- a third party's
+    content on live that a push of the trunk's version would overwrite -- and 0 when every one is held
+    back or matches. That is the drift-check contract live-preflight and prepare-release call
+    (`& <check> -Only <paths>`), so a repo whose only drift check is this script can answer
+    Get-ShopifyDriftCheckPath with it, and both fall back to it where nothing is answered.
+
+    WHY THE EXIT CODE DIFFERS FROM A PLAIN -DryRun. A plain dry run asks "would the sync fail?", and a
+    take-live path is the sync working, so it exits 0. A drift check asks "is it safe to push these?",
+    and a take-live path is exactly the third-party edit a push would destroy. Measured in a consumer:
+    -DryRun found 12 conflicted paths, 9 on the release's push list, while prepare-release had skipped
+    the step for want of a check that takes a list.
+
+    A DELETION IS JUDGED TOO. A path the trunk deleted and live still has reads as new on live, and it is
+    held back -- safe to delete -- only where live's bytes are a version the trunk once held.
+
+    One comma-joined string is split on commas, because a list that crossed a 'powershell -File' boundary
+    arrives as one (#2228); a theme path never carries a comma. Refused -- exit 1, nothing written -- on
+    a list that splits to nothing, on a Git-connected store, where the back-flow check replaces the drift
+    check, and together with -ReconcileBase, which writes.
+
 .PARAMETER ChecksTimeoutMinutes
     How long to wait for CI on the sync PR before giving up and leaving it unmerged. Only used when the
     seam says to merge. Default: 15.
@@ -247,6 +269,7 @@ param(
     # for by name rather than offered as a default helpfulness. Under -DryRun it reports what it would
     # write and writes nothing, like every other write on this page.
     [switch]$ReconcileBase,
+    [string[]]$Only = @(),
     [int]$ChecksTimeoutMinutes = 15,
     [string]$RootOverride = '',
     # RETIRED, AND ACCEPTED ONLY TO REFUSE IT BY NAME. -SkipPull meant "run the rule over whatever is
@@ -266,6 +289,31 @@ if ($SkipPull) {
     Write-Host '  Use -DryRun to see every verdict without writing anything, or -MirrorPath <dir> to run'
     Write-Host '  against a mirror you already have. Nothing was changed.'
     exit 1
+}
+
+# THE DRIFT-CHECK MODE (inbound #4149) -- see .PARAMETER Only. The list is normalised before anything else
+# runs, so an empty list after the split is a refusal rather than a check that judged zero paths as safe.
+$onlyMode = $false
+$onlySet  = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+if ($PSBoundParameters.ContainsKey('Only')) {
+    foreach ($o in @($Only)) {
+        foreach ($p in ([string]$o -split ',')) {
+            # git's spelling, which is the only one the filter below matches: a './' prefix would match
+            # nothing and read as "no drift" (#4149's review).
+            $p = (($p.Trim() -replace '\\', '/') -replace '^(\./)+', '')
+            if ($p) { [void]$onlySet.Add($p) }
+        }
+    }
+    if ($onlySet.Count -eq 0) {
+        Write-Host '-Only was passed with no path in it, so there is nothing to check. Nothing was changed.' -ForegroundColor Red
+        exit 1
+    }
+    if ($ReconcileBase) {
+        Write-Host '-Only is a read-only drift check and -ReconcileBase writes, so they do not combine. Nothing was changed.' -ForegroundColor Red
+        exit 1
+    }
+    $onlyMode = $true
+    $DryRun = [switch]$true
 }
 
 # THE SOURCE-REPO GUARD: refuses this script when it is a released copy running in the repo that
@@ -678,10 +726,14 @@ function Write-SyncReconciliationBase {
         one of the two matches either way. That is the same pair of candidates that makes the ordinary
         take-live path work.
 
-        IT NEITHER MERGES NOR OPENS A PR. The content reconciliation is the operator's next commit and
-        this switch has no opinion about it; what it does is make the ground durable first. A PR command
-        is printed rather than run for the same reason the refusing run prints diffs rather than running
-        them: the operator is mid-decision, not mid-pipeline.
+        IT OPENS, WAITS FOR AND MERGES ITS OWN PR, since #4152, through Complete-SyncPullRequest -- the
+        plain sync's finish. It used to print the three commands, and run back to back they failed twice
+        in one release (the checks had not registered when the watch started, so the merge was refused).
+        The branch changes no file, so there is nothing to judge by eye and no review to wait for, and the
+        merge is ALWAYS a merge commit whatever Get-PrMergeMethod says: a squash would collapse both commits
+        into the trunk's blob and the conflict would return. The commands are printed only when the push
+        did not land. The content reconciliation stays the operator's next commit; this switch has no
+        opinion about it.
 
         NO SYNC-LOG ENTRY, deliberately. The log records what was taken from live and what was held back,
         and this branch does neither -- it takes nothing and changes no file. An entry claiming otherwise
@@ -694,6 +746,10 @@ function Write-SyncReconciliationBase {
         [Parameter(Mandatory = $true)][string]$BranchShown,
         [Parameter(Mandatory = $true)][object]$BranchPaste,
         [Parameter(Mandatory = $true)][object]$TrunkPaste,
+        [Parameter(Mandatory = $true)][string]$Trunk,
+        [Parameter(Mandatory = $true)][string]$TrunkShown,
+        [object[]]$PrLabels = @(),
+        [int]$ChecksTimeoutMinutes = 15,
         [string]$MergeMethod = 'merge',
         [switch]$DryRun
     )
@@ -778,20 +834,33 @@ function Write-SyncReconciliationBase {
 
     Write-Host ''
     Write-Host "$BranchShown holds two commits and changes no file: live verbatim, then the trunk content back on top." -ForegroundColor Green
-    # THE WHOLE FINISH, NOT ITS FIRST LINE (inbound #2925). This is the one sync path whose merge is
-    # always done by hand, and the one a squash defeats -- and it printed only the create. Measured at
-    # smartwatchbanden#892 (October 12, 2026): a colleague opened the PR with the line below, waited
-    # for green, and left "Merge with a merge commit" as a comment for somebody else; it stayed open and
-    # blocked the follow-up. So the merge is printed too, and who does it: whoever runs this sync, with
-    # no review to wait for, because the branch changes no file and there is nothing to judge by eye.
-    Write-Host '  Open it, wait for its checks, and merge it with a MERGE COMMIT -- you, now. It needs no' -ForegroundColor Green
-    Write-Host '  review: the branch changes no file, so there is nothing to judge.' -ForegroundColor Green
-    Write-Host "  gh pr create --base $($TrunkPaste.Token) --head $($BranchPaste.Token) --title `"sync: reconciliation base for $($Conflict.Count) conflicted path(s)`"" -ForegroundColor Cyan
-    Write-Host "  gh pr checks $($BranchPaste.Token) --watch" -ForegroundColor Cyan
-    Write-Host "  gh pr merge $($BranchPaste.Token) --merge" -ForegroundColor Cyan
-    if ($TrunkPaste.Note)  { Write-Host $TrunkPaste.Note -ForegroundColor DarkYellow }
-    if ($BranchPaste.Note) { Write-Host $BranchPaste.Note -ForegroundColor DarkYellow }
-    if ($MergeMethod -eq 'squash') {
+    $title = "sync: reconciliation base for $($Conflict.Count) conflicted path(s)"
+    $pushed = (Test-NativeExitMeasured -Capture $push) -and $push.ExitCode -eq 0
+    if ($pushed) {
+        # THE FINISH IS RUN, NOT PRINTED (#4152), and always with a merge commit -- see the docstring.
+        Write-Host '  Opening its PR, waiting for its checks and merging it with a MERGE COMMIT: it changes no file,' -ForegroundColor Green
+        Write-Host '  so there is nothing to judge and no review to wait for.' -ForegroundColor Green
+        $prBody = "Reconciliation base for $($Conflict.Count) conflicted path(s), written by sync-main -ReconcileBase: live verbatim, then the trunk content straight back on top. The branch changes no file.`n`nMerged with a merge commit on purpose: a squash would keep live's bytes out of the trunk's history and the conflict would return.`n`n" +
+                  (($basePaths | ForEach-Object { "- ``$_``" }) -join "`n") + "`n"
+        $labelArgs = @(); foreach ($lbl in $PrLabels) { $labelArgs += @('--label', $lbl) }
+        [void](Complete-SyncPullRequest -trunk $Trunk -trunkShown $TrunkShown -branch $Branch -branchShown $BranchShown `
+                                        -branchPaste $BranchPaste -msg $title -body $prBody -labelArgs $labelArgs `
+                                        -prLabels $PrLabels -mergeMethod 'merge' -ChecksTimeoutMinutes $ChecksTimeoutMinutes `
+                                        -CiFailHint 'The branch changes no file, so a red check is about the trunk or the CI itself; fix it as its own')
+    } else {
+        # THE WHOLE FINISH, NOT ITS FIRST LINE (inbound #2925), now only where the push did not land: a branch
+        # that is not on origin cannot be opened, so the operator gets the three lines and does them after
+        # pushing. Measured at smartwatchbanden#892 (October 12, 2026): printing only the create left the
+        # merge to somebody else, and it stayed open.
+        Write-Host '  Once it is pushed: open it, wait for its checks, and merge it with a MERGE COMMIT -- you, now.' -ForegroundColor Green
+        Write-Host '  It needs no review: the branch changes no file, so there is nothing to judge.' -ForegroundColor Green
+        Write-Host "  gh pr create --base $($TrunkPaste.Token) --head $($BranchPaste.Token) --title `"$title`"" -ForegroundColor Cyan
+        Write-Host "  gh pr checks $($BranchPaste.Token) --watch" -ForegroundColor Cyan
+        Write-Host "  gh pr merge $($BranchPaste.Token) --merge" -ForegroundColor Cyan
+        if ($TrunkPaste.Note)  { Write-Host $TrunkPaste.Note -ForegroundColor DarkYellow }
+        if ($BranchPaste.Note) { Write-Host $BranchPaste.Note -ForegroundColor DarkYellow }
+    }
+    if (-not $pushed -and $MergeMethod -eq 'squash') {
         # SAID OUT LOUD BECAUSE THIS REPO HAS ASKED FOR THE ONE METHOD THAT DEFEATS THE REPAIR. A squash
         # collapses both commits into one whose blob is the trunk's content, so live's bytes never enter
         # the trunk's history and the next run reports the same conflict. It costs the repair, not the
@@ -813,6 +882,236 @@ function Write-SyncReconciliationBase {
     Write-Host '  THAT COMMIT IS REQUIRED BEFORE ANY LIVE PUSH OF THESE PATHS. After the merge the drift check' -ForegroundColor Red
     Write-Host '  reads them as safe while the trunk still lacks live''s content, so a push would revert it.' -ForegroundColor Red
     Write-Host '  live-preflight refuses a push over an unreconciled base, and prepare-release flags one.' -ForegroundColor Red
+}
+
+function Complete-SyncPullRequest {
+    <#
+    .SYNOPSIS
+        Open the sync PR, wait for its checks, merge it, and fast-forward the trunk: $true once the merge
+        has landed in this checkout, $false after printing what is left to do by hand.
+
+    .DESCRIPTION
+        ONE FINISH FOR BOTH SYNC BRANCHES (#4152, November 16, 2026). The plain merging sync has done this
+        since #536; -ReconcileBase printed three commands instead, and run back to back they failed twice
+        in one release: 'gh pr checks --watch' returned at once with 'no checks reported' because the
+        checks had not registered yet, and 'gh pr merge' was refused by the branch policy. The poll below
+        already sits out that first moment -- an empty state list is slept through, not read as green --
+        so the reconciliation base now takes the same road instead of a second copy of it.
+
+        THE PARAMETERS KEEP THE CALLER'S VARIABLE NAMES, so the body moved here from the merging variant
+        unchanged apart from its exits: every 'exit 1' is 'return $false' and the one 'exit 0' is
+        'return $true'. The caller turns the answer back into its exit code, and each message is still
+        printed where the failure is found.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][string]$trunk,
+        [Parameter(Mandatory = $true)][string]$TrunkShown,
+        [Parameter(Mandatory = $true)][string]$branch,
+        [Parameter(Mandatory = $true)][string]$BranchShown,
+        [Parameter(Mandatory = $true)][object]$branchPaste,
+        [Parameter(Mandatory = $true)][string]$msg,
+        [Parameter(Mandatory = $true)][string]$body,
+        [object[]]$labelArgs = @(),
+        [object[]]$prLabels = @(),
+        [string]$mergeMethod = 'merge',
+        [int]$ChecksTimeoutMinutes = 15,
+        # What a red check usually means for THIS branch -- the plain sync's hint names theme-check over a
+        # third party's edit, which a reconciliation base, changing no file, cannot be.
+        [string]$CiFailHint = 'In a Shopify repo this is usually theme-check over a third party''s edit. Fix it as its own'
+    )
+
+    # BOUNDED, AND THIS IS THE ONE THE REPORT ARGUED FROM (inbound #1184). It runs directly after the
+    # push, so a stall here leaves the branch on origin with NO PR -- a state nothing in this family
+    # reports and no later step goes looking for. The bound turns it into the message below, which
+    # already says the right thing: the branch is pushed, open it by hand.
+    #
+    # STDERR MERGED, unlike the two --json reads, because this output is PROGRESS: gh writes the PR URL
+    # there and that URL is the one thing the operator wants off this line. It is echoed rather than
+    # printed by gh directly, which is what routing through the lib costs and all it costs.
+    $create = Invoke-NativeCapture -FilePath 'gh' `
+                                   -Arguments (@('pr', 'create', '--base', $trunk, '--head', $branch,
+                                                 '--title', $msg, '--body', $body) + $labelArgs) `
+                                   -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    $create.Output | ForEach-Object { Write-Host $_ }
+    # THE SEVENTH WRITE, AND THE ONE WHOSE OLD REMEDY WAS ACTIVELY WRONG (issue #1931, audited under
+    # #2081; found by the code review on this branch after the first pass missed this site entirely --
+    # the regex that enumerated the family could not see a call that opens `@(` without a trailing
+    # backtick, which is exactly how this one is written). `$null -ne 0` is true, so an unmeasurable code
+    # printed "Could not open the PR ... open it by hand" -- over a create that may have landed, which is
+    # an instruction to open a second pull request for the same branch. open-pr.ps1 met the identical
+    # shape at its own create and answers it by RE-CHECKING; there is no re-check here to route into, so
+    # this reports the state as itself and hands over the one read that settles it.
+    if (-not (Test-NativeExitMeasured -Capture $create)) {
+        Write-Host 'gh pr create ran with an exit code that could not be measured (issue #1931), so THIS RUN DOES NOT KNOW whether the PR was opened.' -ForegroundColor Red
+        Write-Host '  The branch IS on origin and nothing was lost. Do NOT open a second one until you have looked:' -ForegroundColor Red
+        Write-Host "    gh pr view $($branchPaste.Token) --json number,state" -ForegroundColor Red
+        if ($branchPaste.Note) { Write-Host $branchPaste.Note -ForegroundColor Red }
+        return $false
+    }
+    if ($create.ExitCode -ne 0) {
+        Write-Host 'Could not open the PR. The branch is pushed; open it by hand.' -ForegroundColor Red
+        if ($create.TimedOut) {
+            Write-Host "  'gh pr create' did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- see the [timeout] lines above." -ForegroundColor Red
+            Write-Host '  The branch IS on origin. Check whether the PR exists before opening a second one.' -ForegroundColor Red
+        }
+        if ($prLabels.Count -gt 0) {
+            Write-Host "  If it named a label: gh refuses a label this repo does not have. Answered: $($prLabels -join ', ')" -ForegroundColor Red
+            Write-Host '  Create the label, or correct Get-ShopifySyncPrLabels in scripts/repo-config.ps1.' -ForegroundColor Red
+        }
+        return $false
+    }
+
+    # BOUNDED, AND IT HAD NO EXIT-CODE CHECK AT ALL, which the report did not name (inbound #1184). The
+    # output went straight into .Trim(), so a failed read produced an EMPTY $pr rather than a message --
+    # and then 'gh pr checks' below was called with no PR number, found no states, and slept its way
+    # through the whole of -ChecksTimeoutMinutes before printing 'gh pr merge  --squash' for the operator
+    # to run. The PR was open and green the entire time. That is the same shape #1181 named on the trunk
+    # pull: the one failure nobody would go looking for.
+    #
+    # -DiscardStderr BECAUSE THE OUTPUT IS DATA -- a PR number that a stderr line would corrupt into
+    # something .Trim() still returns happily. First non-empty line rather than the whole capture, since
+    # the bounded arm returns an ARRAY of lines (the [timeout] note is appended to it on a stall).
+    $prView = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr `
+                                   -Arguments @('pr', 'view', $branch, '--json', 'number', '--jq', '.number') `
+                                   -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    $pr = ([string](@($prView.Output | Where-Object { ([string]$_).Trim() }) | Select-Object -First 1)).Trim()
+    if ($prView.ExitCode -ne 0 -or -not $pr) {
+        Write-Host 'The PR was opened, but its number could not be read -- so CI is NOT being waited on.' -ForegroundColor Red
+        if ($prView.TimedOut) {
+            Write-Host "  'gh pr view' did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- see the [timeout] lines above." -ForegroundColor Red
+        }
+        Write-Host "  Nothing is lost; the PR is open on $BranchShown. Merge it yourself once CI is green." -ForegroundColor Red
+        return $false
+    }
+    Write-Host "Sync PR #$pr opened; waiting up to $ChecksTimeoutMinutes min for CI." -ForegroundColor Cyan
+
+    # THE REQUIRED CHECKS, READ ONCE FROM THE TRUNK'S RULES (#4168). Waiting on every check let a pending
+    # non-required one hold the merge until the deadline; the rules name the required checks before any of
+    # them has registered, which `gh pr checks --required` cannot. Unreadable, or naming none: every check
+    # counts, as before -- Get-SyncRequiredCheckNames' docstring has the reasoning.
+    $rulesRead = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr `
+                                      -Arguments @('api', "repos/{owner}/{repo}/rules/branches/$trunk") `
+                                      -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    $requiredChecks = @()
+    if ((Test-NativeExitMeasured -Capture $rulesRead) -and $rulesRead.ExitCode -eq 0) {
+        $requiredChecks = @(Get-SyncRequiredCheckNames -RulesJson (@($rulesRead.Output) -join "`n"))
+    }
+    if ($requiredChecks.Count -gt 0) {
+        Write-Host "  Blocking on the required check(s) only: $($requiredChecks -join ', ')." -ForegroundColor DarkGray
+    } else {
+        Write-Host '  No required check could be read from the trunk''s rules, so every check is waited for.' -ForegroundColor DarkGray
+    }
+
+    $deadline = (Get-Date).AddMinutes($ChecksTimeoutMinutes)
+    while ((Get-Date) -lt $deadline) {
+        # BOUNDED PER CALL, WHICH IS NOT THE BOUND THE LOOP ALREADY HAD (inbound #1187).
+        # -ChecksTimeoutMinutes is re-read only at the top of this while, so it bounds the number of
+        # ITERATIONS over wall clock and not any single call: one 'gh pr checks' that never returns
+        # never reaches the condition again, and the deadline below is never evaluated. That is the
+        # class #1179 and #1181 named, arriving through the one call that looked already bounded.
+        #
+        # -DiscardStderr IS THE HAND-ROLLED EAP BRACKET THIS REPLACES, and it does both halves of what
+        # that bracket did. 'gh pr checks' writes to stderr while a run is still pending -- exactly the
+        # state this loop exists to sit through -- so the noise must be SWALLOWED while states are still
+        # read off stdout. The flag drops stderr at the capture rather than merging it, and the child
+        # runs under EAP=Continue inside the lib's own scope, which is the other half.
+        #
+        # NOT THE 'gh pr checks --watch' CASE the lib's docstring warns about, which is why a bound is
+        # right here. That call blocks for as long as CI takes BY DESIGN (ship-pr.ps1); this one is a
+        # poll that answers in seconds and sleeps 15 between tries. The loop's deadline and the call's
+        # bound answer different questions, and both are wanted.
+        $poll = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr `
+                                     -Arguments @('pr', 'checks', $pr, '--json', 'name,state') `
+                                     -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+        # A TIMEOUT IS 'THIS POLL DID NOT ANSWER', NOT A RED CHECK, so the run keeps polling until the
+        # deadline: a slow answer is not a verdict. Its Output is discarded rather than parsed, and that
+        # is load-bearing -- the bounded arm APPENDS two '[timeout]' lines to Output, which would arrive
+        # here as two states matching nothing and be reported as CI failure on the next line.
+        #
+        # A NON-ZERO EXIT IS NOT A VERDICT EITHER, which is why only TimedOut is judged. 'gh pr checks'
+        # exits 8 while checks are pending and 1 when one has failed, and this loop has always read the
+        # STATES rather than the code. Gating on ExitCode -eq 0 would throw away a real failure's states
+        # and sit out the whole of -ChecksTimeoutMinutes before reporting 'not green' for a PR that is red.
+        # PARSED AS JSON, name AND state, so the verdict can tell a required check from the rest (#4168).
+        # An unparseable answer is an empty poll, which the verdict reads as pending: same as no checks yet.
+        $checks = @()
+        if ($poll.TimedOut) {
+            Write-Host "  'gh pr checks' did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- polling again until the $ChecksTimeoutMinutes min deadline." -ForegroundColor Yellow
+        } else {
+            $pollText = (@($poll.Output) -join "`n").Trim()
+            # ASSIGN FIRST, WRAP SECOND: in 5.1 `@($json | ConvertFrom-Json)` is a one-element array holding
+            # the whole parsed array, and this loop then read no state at all and waited out the deadline.
+            if ($pollText) { try { $parsedChecks = $pollText | ConvertFrom-Json; $checks = @($parsedChecks) } catch { $checks = @() } }
+        }
+        $verdict = Get-SyncCheckVerdict -Checks $checks -Required $requiredChecks
+        if ($verdict.State -eq 'red') {
+            Write-Host "CI failed on sync PR #$pr ($($verdict.Bad -join ', ')) -- NOT merged." -ForegroundColor Red
+            Write-Host "  $CiFailHint" -ForegroundColor Red
+            Write-Host "  named change, then: gh pr merge $pr --$mergeMethod" -ForegroundColor Red
+            return $false
+        }
+        if ($verdict.State -eq 'green') { break }
+        Start-Sleep -Seconds 15
+    }
+
+    if ((Get-Date) -ge $deadline) {
+        Write-Host "CI on sync PR #$pr was not green within $ChecksTimeoutMinutes min -- NOT merged." -ForegroundColor Red
+        Write-Host "  Merge it yourself once it is: gh pr merge $pr --$mergeMethod" -ForegroundColor Red
+        return $false
+    }
+
+    # --subject gives the merge commit the same shape as every other line in the graph. On a squash or
+    # rebase method gh has no merge commit to name and ignores the flag.
+    #
+    # BOUNDED, AND THROUGH THE LIB (inbound #1184). Stderr stays merged because this output is progress,
+    # and it is echoed for the same reason the push above is. A stall here is the one place in this
+    # script where the operator cannot tell from the message alone whether the work landed -- gh may have
+    # merged and then failed to report -- so the timeout line says to LOOK rather than to retry, which
+    # is the opposite of what the unbounded shape's silence invited.
+    $merge = Invoke-NativeCapture -FilePath 'gh' `
+                                  -Arguments @('pr', 'merge', "$pr", "--$mergeMethod",
+                                               '--subject', "merge: $branch (#$pr)") `
+                                  -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    $merge.Output | ForEach-Object { Write-Host $_ }
+    # AND THE EIGHTH, WHICH THE SAME REGEX MISSED FOR THE SAME REASON (issue #1931, audited under #2081).
+    # This is the sharpest write in the file: `gh pr merge` on an unmeasurable code printed "The merge
+    # failed. PR #$pr is open and green; merge it by hand" over a merge that may already have landed, and
+    # its own TIMEOUT arm twelve lines down has said the right thing all along -- check whether it landed
+    # before retrying. The two states are the same state, so they now get the same sentence.
+    if (-not (Test-NativeExitMeasured -Capture $merge)) {
+        Write-Host "gh pr merge ran with an exit code that could not be measured (issue #1931), so THIS RUN DOES NOT KNOW whether PR #$pr was merged." -ForegroundColor Red
+        Write-Host '  It is NOT evidence that the merge was refused. Check whether it landed before retrying:' -ForegroundColor Red
+        Write-Host "    gh pr view $pr --json state" -ForegroundColor Red
+        return $false
+    }
+    if ($merge.ExitCode -ne 0) {
+        Write-Host "The merge failed. PR #$pr is open and green; merge it by hand." -ForegroundColor Red
+        if ($merge.TimedOut) {
+            Write-Host "  'gh pr merge' did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- see the [timeout] lines above." -ForegroundColor Red
+            Write-Host "  Check whether it landed before retrying: gh pr view $pr --json state" -ForegroundColor Red
+        }
+        return $false
+    }
+
+    # BOUNDED, AND JUDGED, WHICH IT WAS NOT BEFORE (inbound #1181). The PR is already merged by the time
+    # this line runs, so this pull is all that stands between the operator and a trunk that does not
+    # contain the sync they were just told landed. It had no exit-code check at all: the 'Done' line
+    # below printed whether or not the pull worked, which is the one shape of this failure nobody would
+    # go looking for.
+    & git checkout $trunk | Out-Null
+    $post = Invoke-NativeCapture -FilePath 'git' -Arguments @('pull', '--ff-only') `
+                                 -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    $post.Output | ForEach-Object { Write-Host $_ }
+    if ($post.ExitCode -ne 0) {
+        Write-Host "Sync PR #$pr IS MERGED, but $TrunkShown could not be fast-forwarded, so this checkout does not have it yet." -ForegroundColor Red
+        if ($post.TimedOut) {
+            Write-Host "  'git pull' did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- see the [timeout] lines above." -ForegroundColor Red
+        }
+        Write-Host '  Nothing is lost; pull by hand: git pull --ff-only' -ForegroundColor Red
+        return $false
+    }
+    Write-Host "Done -- sync PR #$pr merged into $TrunkShown." -ForegroundColor Green
+    return $true
 }
 
 function Write-SyncPredecessorVerdict {
@@ -972,6 +1271,14 @@ if ($DryRun) {
 # deploy branch changed since the two last met. A commit count would never read zero again after the first
 # promotion, because the promotion's merge commit lives on the deploy branch alone -- the reasoning of
 # Get-LivePromotionStep in live-push-rules.ps1, which live-preflight refuses on with this same diff.
+#
+# -Only HAS NO MEANING HERE (inbound #4149): a connected store has no CLI drift check to stand in for --
+# the back-flow check replaces it in live-preflight and prepare-release -- so it is refused rather than
+# answered with a back-flow report the caller would read as a drift verdict.
+if ($connected -and $onlyMode) {
+    Write-Host '-Only is the CLI drift check, and this store is Git-connected: the back-flow check replaces it. Nothing was changed.' -ForegroundColor Red
+    exit 1
+}
 #
 # THE STANDING-PREDECESSOR GUARD BECOMES "AN OPEN PR WITH THAT HEAD": the PR follows the branch, so a new
 # bot commit is already in it, and opening a second one is the pile #1021 measured. It is reported, and
@@ -1538,6 +1845,19 @@ try {
         $differing += [pscustomobject]@{ Status = 'D'; Path = $rel; Bytes = (New-Object byte[] 0); Source = '' }
     }
 
+    # THE DRIFT-CHECK MODE JUDGES ONLY ITS LIST (inbound #4149). Filtered before the verdict, so a path off
+    # the list costs no 'git log' and cannot move the exit code.
+    if ($onlyMode) {
+        $allDiffering = $differing.Count
+        $differing = @($differing | Where-Object { $onlySet.Contains($_.Path) })
+        Write-Host "      -Only: $($differing.Count) of the $allDiffering differing path(s) are among the $($onlySet.Count) listed"
+        if ($differing.Count -eq 0) {
+            Write-Host ''
+            Write-Host "No drift on the $($onlySet.Count) listed path(s) -- each matches live, or live does not differ there." -ForegroundColor Green
+            exit 0
+        }
+    }
+
     if ($differing.Count -eq 0) {
         Write-Host ''
         Write-Host "No differences at all -- $trunkShown already matches live." -ForegroundColor Green
@@ -1686,7 +2006,11 @@ try {
         Write-Host '  same state every ordinary held-back file is in. Your own reconciliation is then' -ForegroundColor Yellow
         Write-Host '  ordinary work in an ordinary commit, whatever its subject says.' -ForegroundColor Yellow
 
-        if ($ReconcileBase) { Write-SyncReconciliationBase -Conflict $conflict -RepoRoot $repoRoot -Branch $branch -BranchShown $branchShown -BranchPaste $branchPaste -TrunkPaste $trunkPaste -MergeMethod $mergeMethod -DryRun:$DryRun }
+        if ($ReconcileBase) {
+            Write-SyncReconciliationBase -Conflict $conflict -RepoRoot $repoRoot -Branch $branch -BranchShown $branchShown `
+                                         -BranchPaste $branchPaste -TrunkPaste $trunkPaste -Trunk $trunk -TrunkShown $trunkShown `
+                                         -PrLabels $prLabels -ChecksTimeoutMinutes $ChecksTimeoutMinutes -MergeMethod $mergeMethod -DryRun:$DryRun
+        }
 
         # The mirror is what those commands read, so a refused run keeps it whatever the switch says.
         $KeepMirror = $true
@@ -1707,6 +2031,15 @@ try {
         # line the run reads as "all clear" to the one operator who most needs to go and merge something.
         Write-SyncPredecessorVerdict -Standing $standing -TakePaths @()
         exit 0
+    }
+
+    # A TAKE-LIVE PATH ON THE LIST IS DRIFT (inbound #4149): live holds a third party's content there, and
+    # pushing the trunk's version would overwrite it. The sync would take it; a push must not.
+    if ($onlyMode) {
+        Write-Host ''
+        Write-Host "DRIFT: $($take.Count) listed path(s) hold content on live this repo has never had. Pushing the" -ForegroundColor Red
+        Write-Host "trunk's version would overwrite a third party's edit -- sync it first. Nothing written." -ForegroundColor Red
+        exit 1
     }
 
     if ($DryRun) {
@@ -1864,177 +2197,12 @@ try {
     # double quotes and a trailing backslash intact. So '--body' stays inline here and does not need the
     # '--body-file' the printed path uses -- that file exists because a console PASTE cannot carry
     # newlines, which is a different problem from CreateProcess's.
-    # BOUNDED, AND THIS IS THE ONE THE REPORT ARGUED FROM (inbound #1184). It runs directly after the
-    # push, so a stall here leaves the branch on origin with NO PR -- a state nothing in this family
-    # reports and no later step goes looking for. The bound turns it into the message below, which
-    # already says the right thing: the branch is pushed, open it by hand.
-    #
-    # STDERR MERGED, unlike the two --json reads, because this output is PROGRESS: gh writes the PR URL
-    # there and that URL is the one thing the operator wants off this line. It is echoed rather than
-    # printed by gh directly, which is what routing through the lib costs and all it costs.
-    $create = Invoke-NativeCapture -FilePath 'gh' `
-                                   -Arguments (@('pr', 'create', '--base', $trunk, '--head', $branch,
-                                                 '--title', $msg, '--body', $body) + $labelArgs) `
-                                   -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
-    $create.Output | ForEach-Object { Write-Host $_ }
-    # THE SEVENTH WRITE, AND THE ONE WHOSE OLD REMEDY WAS ACTIVELY WRONG (issue #1931, audited under
-    # #2081; found by the code review on this branch after the first pass missed this site entirely --
-    # the regex that enumerated the family could not see a call that opens `@(` without a trailing
-    # backtick, which is exactly how this one is written). `$null -ne 0` is true, so an unmeasurable code
-    # printed "Could not open the PR ... open it by hand" -- over a create that may have landed, which is
-    # an instruction to open a second pull request for the same branch. open-pr.ps1 met the identical
-    # shape at its own create and answers it by RE-CHECKING; there is no re-check here to route into, so
-    # this reports the state as itself and hands over the one read that settles it.
-    if (-not (Test-NativeExitMeasured -Capture $create)) {
-        Write-Host 'gh pr create ran with an exit code that could not be measured (issue #1931), so THIS RUN DOES NOT KNOW whether the PR was opened.' -ForegroundColor Red
-        Write-Host '  The branch IS on origin and nothing was lost. Do NOT open a second one until you have looked:' -ForegroundColor Red
-        Write-Host "    gh pr view $($branchPaste.Token) --json number,state" -ForegroundColor Red
-        if ($branchPaste.Note) { Write-Host $branchPaste.Note -ForegroundColor Red }
-        exit 1
-    }
-    if ($create.ExitCode -ne 0) {
-        Write-Host 'Could not open the PR. The branch is pushed; open it by hand.' -ForegroundColor Red
-        if ($create.TimedOut) {
-            Write-Host "  'gh pr create' did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- see the [timeout] lines above." -ForegroundColor Red
-            Write-Host '  The branch IS on origin. Check whether the PR exists before opening a second one.' -ForegroundColor Red
-        }
-        if ($prLabels.Count -gt 0) {
-            Write-Host "  If it named a label: gh refuses a label this repo does not have. Answered: $($prLabels -join ', ')" -ForegroundColor Red
-            Write-Host '  Create the label, or correct Get-ShopifySyncPrLabels in scripts/repo-config.ps1.' -ForegroundColor Red
-        }
-        exit 1
-    }
-
-    # BOUNDED, AND IT HAD NO EXIT-CODE CHECK AT ALL, which the report did not name (inbound #1184). The
-    # output went straight into .Trim(), so a failed read produced an EMPTY $pr rather than a message --
-    # and then 'gh pr checks' below was called with no PR number, found no states, and slept its way
-    # through the whole of -ChecksTimeoutMinutes before printing 'gh pr merge  --squash' for the operator
-    # to run. The PR was open and green the entire time. That is the same shape #1181 named on the trunk
-    # pull: the one failure nobody would go looking for.
-    #
-    # -DiscardStderr BECAUSE THE OUTPUT IS DATA -- a PR number that a stderr line would corrupt into
-    # something .Trim() still returns happily. First non-empty line rather than the whole capture, since
-    # the bounded arm returns an ARRAY of lines (the [timeout] note is appended to it on a stall).
-    $prView = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr `
-                                   -Arguments @('pr', 'view', $branch, '--json', 'number', '--jq', '.number') `
-                                   -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
-    $pr = ([string](@($prView.Output | Where-Object { ([string]$_).Trim() }) | Select-Object -First 1)).Trim()
-    if ($prView.ExitCode -ne 0 -or -not $pr) {
-        Write-Host 'The PR was opened, but its number could not be read -- so CI is NOT being waited on.' -ForegroundColor Red
-        if ($prView.TimedOut) {
-            Write-Host "  'gh pr view' did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- see the [timeout] lines above." -ForegroundColor Red
-        }
-        Write-Host "  Nothing is lost; the PR is open on $branchShown. Merge it yourself once CI is green." -ForegroundColor Red
-        exit 1
-    }
-    Write-Host "Sync PR #$pr opened; waiting up to $ChecksTimeoutMinutes min for CI." -ForegroundColor Cyan
-
-    $deadline = (Get-Date).AddMinutes($ChecksTimeoutMinutes)
-    while ((Get-Date) -lt $deadline) {
-        # BOUNDED PER CALL, WHICH IS NOT THE BOUND THE LOOP ALREADY HAD (inbound #1187).
-        # -ChecksTimeoutMinutes is re-read only at the top of this while, so it bounds the number of
-        # ITERATIONS over wall clock and not any single call: one 'gh pr checks' that never returns
-        # never reaches the condition again, and the deadline below is never evaluated. That is the
-        # class #1179 and #1181 named, arriving through the one call that looked already bounded.
-        #
-        # -DiscardStderr IS THE HAND-ROLLED EAP BRACKET THIS REPLACES, and it does both halves of what
-        # that bracket did. 'gh pr checks' writes to stderr while a run is still pending -- exactly the
-        # state this loop exists to sit through -- so the noise must be SWALLOWED while states are still
-        # read off stdout. The flag drops stderr at the capture rather than merging it, and the child
-        # runs under EAP=Continue inside the lib's own scope, which is the other half.
-        #
-        # NOT THE 'gh pr checks --watch' CASE the lib's docstring warns about, which is why a bound is
-        # right here. That call blocks for as long as CI takes BY DESIGN (ship-pr.ps1); this one is a
-        # poll that answers in seconds and sleeps 15 between tries. The loop's deadline and the call's
-        # bound answer different questions, and both are wanted.
-        $poll = Invoke-NativeCapture -FilePath 'gh' -DiscardStderr `
-                                     -Arguments @('pr', 'checks', $pr, '--json', 'state', '--jq', '.[].state') `
-                                     -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
-        # A TIMEOUT IS 'THIS POLL DID NOT ANSWER', NOT A RED CHECK, so the run keeps polling until the
-        # deadline: a slow answer is not a verdict. Its Output is discarded rather than parsed, and that
-        # is load-bearing -- the bounded arm APPENDS two '[timeout]' lines to Output, which would arrive
-        # here as two states matching nothing and be reported as CI failure on the next line.
-        #
-        # A NON-ZERO EXIT IS NOT A VERDICT EITHER, which is why only TimedOut is judged. 'gh pr checks'
-        # exits 8 while checks are pending and 1 when one has failed, and this loop has always read the
-        # STATES rather than the code. Gating on ExitCode -eq 0 would throw away a real failure's states
-        # and sit out the whole of -ChecksTimeoutMinutes before reporting 'not green' for a PR that is red.
-        if ($poll.TimedOut) {
-            Write-Host "  'gh pr checks' did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- polling again until the $ChecksTimeoutMinutes min deadline." -ForegroundColor Yellow
-            $states = @()
-        } else {
-            $states = @($poll.Output | ForEach-Object { ([string]$_).Trim() } | Where-Object { $_ })
-        }
-        if ($states.Count -eq 0) { Start-Sleep -Seconds 15; continue }
-        $bad = @($states | Where-Object { $_ -notin @('SUCCESS', 'NEUTRAL', 'SKIPPED', 'PENDING', 'QUEUED', 'IN_PROGRESS') })
-        if ($bad.Count -gt 0) {
-            Write-Host "CI failed on sync PR #$pr ($($bad -join ', ')) -- NOT merged." -ForegroundColor Red
-            Write-Host '  In a Shopify repo this is usually theme-check over a third party''s edit. Fix it as its own' -ForegroundColor Red
-            Write-Host "  named change, then: gh pr merge $pr --$mergeMethod" -ForegroundColor Red
-            exit 1
-        }
-        if (@($states | Where-Object { $_ -in @('PENDING', 'QUEUED', 'IN_PROGRESS') }).Count -eq 0) { break }
-        Start-Sleep -Seconds 15
-    }
-
-    if ((Get-Date) -ge $deadline) {
-        Write-Host "CI on sync PR #$pr was not green within $ChecksTimeoutMinutes min -- NOT merged." -ForegroundColor Red
-        Write-Host "  Merge it yourself once it is: gh pr merge $pr --$mergeMethod" -ForegroundColor Red
-        exit 1
-    }
-
-    # --subject gives the merge commit the same shape as every other line in the graph. On a squash or
-    # rebase method gh has no merge commit to name and ignores the flag.
-    #
-    # BOUNDED, AND THROUGH THE LIB (inbound #1184). Stderr stays merged because this output is progress,
-    # and it is echoed for the same reason the push above is. A stall here is the one place in this
-    # script where the operator cannot tell from the message alone whether the work landed -- gh may have
-    # merged and then failed to report -- so the timeout line says to LOOK rather than to retry, which
-    # is the opposite of what the unbounded shape's silence invited.
-    $merge = Invoke-NativeCapture -FilePath 'gh' `
-                                  -Arguments @('pr', 'merge', "$pr", "--$mergeMethod",
-                                               '--subject', "merge: $branch (#$pr)") `
-                                  -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
-    $merge.Output | ForEach-Object { Write-Host $_ }
-    # AND THE EIGHTH, WHICH THE SAME REGEX MISSED FOR THE SAME REASON (issue #1931, audited under #2081).
-    # This is the sharpest write in the file: `gh pr merge` on an unmeasurable code printed "The merge
-    # failed. PR #$pr is open and green; merge it by hand" over a merge that may already have landed, and
-    # its own TIMEOUT arm twelve lines down has said the right thing all along -- check whether it landed
-    # before retrying. The two states are the same state, so they now get the same sentence.
-    if (-not (Test-NativeExitMeasured -Capture $merge)) {
-        Write-Host "gh pr merge ran with an exit code that could not be measured (issue #1931), so THIS RUN DOES NOT KNOW whether PR #$pr was merged." -ForegroundColor Red
-        Write-Host '  It is NOT evidence that the merge was refused. Check whether it landed before retrying:' -ForegroundColor Red
-        Write-Host "    gh pr view $pr --json state" -ForegroundColor Red
-        exit 1
-    }
-    if ($merge.ExitCode -ne 0) {
-        Write-Host "The merge failed. PR #$pr is open and green; merge it by hand." -ForegroundColor Red
-        if ($merge.TimedOut) {
-            Write-Host "  'gh pr merge' did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- see the [timeout] lines above." -ForegroundColor Red
-            Write-Host "  Check whether it landed before retrying: gh pr view $pr --json state" -ForegroundColor Red
-        }
-        exit 1
-    }
-
-    # BOUNDED, AND JUDGED, WHICH IT WAS NOT BEFORE (inbound #1181). The PR is already merged by the time
-    # this line runs, so this pull is all that stands between the operator and a trunk that does not
-    # contain the sync they were just told landed. It had no exit-code check at all: the 'Done' line
-    # below printed whether or not the pull worked, which is the one shape of this failure nobody would
-    # go looking for.
-    & git checkout $trunk | Out-Null
-    $post = Invoke-NativeCapture -FilePath 'git' -Arguments @('pull', '--ff-only') `
-                                 -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
-    $post.Output | ForEach-Object { Write-Host $_ }
-    if ($post.ExitCode -ne 0) {
-        Write-Host "Sync PR #$pr IS MERGED, but $trunkShown could not be fast-forwarded, so this checkout does not have it yet." -ForegroundColor Red
-        if ($post.TimedOut) {
-            Write-Host "  'git pull' did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- see the [timeout] lines above." -ForegroundColor Red
-        }
-        Write-Host '  Nothing is lost; pull by hand: git pull --ff-only' -ForegroundColor Red
-        exit 1
-    }
-    Write-Host "Done -- sync PR #$pr merged into $trunkShown." -ForegroundColor Green
-    exit 0
+    # THE FINISH IS ONE FUNCTION SINCE #4152, shared with -ReconcileBase; its comments moved with it.
+    $finished = Complete-SyncPullRequest -trunk $trunk -trunkShown $trunkShown -branch $branch -branchShown $branchShown `
+                                         -branchPaste $branchPaste -msg $msg -body $body -labelArgs $labelArgs `
+                                         -prLabels $prLabels -mergeMethod $mergeMethod -ChecksTimeoutMinutes $ChecksTimeoutMinutes
+    if ($finished) { exit 0 }
+    exit 1
 }
 finally {
     if ($pulledMirror -and -not $KeepMirror -and (Test-Path -LiteralPath $mirror)) {

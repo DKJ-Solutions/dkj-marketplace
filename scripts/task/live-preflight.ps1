@@ -97,7 +97,8 @@
     for a store whose last release was not the last tag.
 
 .PARAMETER DriftCheckPath
-    The consumer's drift check, relative to the repo root. Default 'scripts/theme/live-snapshot.ps1'.
+    The consumer's drift check, relative to the repo root. Default 'scripts/theme/live-snapshot.ps1', and
+    where neither that file nor an answer exists, this plugin's own 'sync-main.ps1 -Only' (#4149).
     See the note on Get-ShopifyDriftCheckPath below: this is the one place #2228's "it would introduce
     no new seam" did not hold, and the default is what keeps it optional.
 
@@ -729,6 +730,22 @@ $driftRel = ([string]$DriftCheckPath).Trim()
 if (-not $driftRel) { $driftRel = ([string]$seam.DriftCheck).Trim() }
 if (-not $driftRel) { $driftRel = 'scripts/theme/live-snapshot.ps1' }
 $driftFull = Join-Path $repoRoot $driftRel
+# THE FALLBACK IS THIS PLUGIN'S OWN sync-main (inbound #4149). A repo that answers nothing and has no
+# live-snapshot.ps1 used to skip the step -- measured in a consumer whose only drift check was
+# 'sync-main -DryRun', which found 12 conflicted paths, 9 of them on the push list, while this step was
+# skipped and, with it, every deletion command. sync-main -Only is the same contract, so it stands in.
+# Only where nothing was answered: an answered path that is missing is a misconfiguration, reported as one.
+# -RootOverride because it resolves its own root, and must judge the repo this run is judging.
+$driftExtra = @{}
+if (-not ([string]$DriftCheckPath).Trim() -and -not ([string]$seam.DriftCheck).Trim() -and
+    -not (Test-Path -LiteralPath $driftFull -PathType Leaf)) {
+    $syncMain = Join-Path $PSScriptRoot 'sync-main.ps1'
+    if (Test-Path -LiteralPath $syncMain -PathType Leaf) {
+        $driftFull  = $syncMain
+        $driftRel   = 'sync-main.ps1 (this plugin''s, as the drift check)'
+        $driftExtra = @{ RootOverride = $repoRoot }
+    }
+}
 
 function Invoke-DriftCheck {
     # CALLED IN THIS PROCESS WITH A REAL ARRAY, AND THAT IS THE ENTIRE POINT OF THE STEP. The measured
@@ -744,7 +761,7 @@ function Invoke-DriftCheck {
     Write-Host "  $driftRel -Only <$($Paths.Count) $What paths, as an array>"
     try {
         $global:LASTEXITCODE = 0
-        & $driftFull -Only $Paths | Out-Host
+        & $driftFull -Only $Paths @driftExtra | Out-Host
         if ($null -eq $LASTEXITCODE) { return 0 }
         return [int]$LASTEXITCODE
     } catch {
@@ -816,7 +833,7 @@ if ($connected) {
 } elseif ($pushFiles.Count -eq 0 -and $deleteFiles.Count -eq 0) {
     Add-Step -Name 'drift' -State 'skip' -Detail 'there is no push list to check.'
 } elseif (-not (Test-Path -LiteralPath $driftFull -PathType Leaf)) {
-    Add-Step -Name 'drift' -State 'skip' -Detail "no drift check at '$driftRel'. The push list is derived and UNCHECKED against what a third party may have written on live since; pass -DriftCheckPath, or answer Get-ShopifyDriftCheckPath."
+    Add-Step -Name 'drift' -State 'skip' -Detail "no drift check at '$driftRel', and no sync-main beside this script to stand in. The push list is derived and UNCHECKED against what a third party may have written on live since; pass -DriftCheckPath, or answer Get-ShopifyDriftCheckPath."
     # AN UNCHECKED DELETION IS NOT PRINTED, where an unchecked upload still is: removing a file leaves
     # nothing on live to compare against afterwards, so the one guard against destroying a third party's
     # content there has to have run first (#2641).

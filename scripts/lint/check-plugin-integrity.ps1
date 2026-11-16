@@ -1855,7 +1855,8 @@ if (Test-CheckEnabled 'shared-script') {
         $mirror = Get-NormalizedScriptContent -Path $pair.MirrorPath
         if ($null -eq $mirror) {
             Add-Error "[shared-script] mirror is missing: $($pair.MirrorRel) -- run scripts/sync/build-shared-scripts.ps1."
-        } elseif ($src -ne $mirror) {
+        } elseif ($src -cne $mirror) {
+            # -cne, NOT -ne (#4171): -ne is case-insensitive, so a case-only edit read as in sync and was neither mirrored nor flagged.
             Add-Error "[shared-script] $($pair.MirrorRel) deviates from $($pair.SourceRel) -- run scripts/sync/build-shared-scripts.ps1."
         }
     }

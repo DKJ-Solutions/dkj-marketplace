@@ -232,6 +232,15 @@ try {
     & git -C $eolRepo config user.name 'fixture' 2>$null
     [System.IO.File]::WriteAllText((Join-Path $eolRepo 'crlf.txt'), "a`r`nb`r`n")
     [System.IO.File]::WriteAllText((Join-Path $eolRepo 'real.txt'), "x`ny`n")
+    # THE TWO MTIME MOVES ARE THE FIXTURE, NOT DECORATION (#4176). Git trusts an index entry's stat data
+    # unless the file was written in the same second as the index ("racily clean"), and only then compares
+    # content. Written and added within one second -- a fast machine -- the entry is racy, so `git status`
+    # re-reads crlf.txt and reports it modified; a slow CI runner crossing a second boundary in between
+    # stores trusted stat data, and the same file reads as CLEAN. Measured: a 2 s pause before the first
+    # `git add` turned ' M crlf.txt' into an empty status, which is the red run's `got: ''`. So this file's
+    # mtime is set into the PAST before the add, giving every run the slow runner's state, and moved
+    # FORWARD before the checkout, so git compares content and the file reads modified on every run.
+    (Get-Item -LiteralPath (Join-Path $eolRepo 'crlf.txt')).LastWriteTimeUtc = [DateTime]::UtcNow.AddSeconds(-10)
     & git -C $eolRepo add . 2>$null
     & git -C $eolRepo commit -qm init 2>$null
     [System.IO.File]::WriteAllText((Join-Path $eolRepo '.gitattributes'), "*.txt text eol=lf`n")
@@ -239,6 +248,7 @@ try {
     & git -C $eolRepo commit -qm attrs 2>$null
     [System.IO.File]::WriteAllText((Join-Path $eolRepo 'real.txt'), "x`nz`n")
     [System.IO.File]::WriteAllText((Join-Path $eolRepo 'new.txt'), "n`n")
+    (Get-Item -LiteralPath (Join-Path $eolRepo 'crlf.txt')).LastWriteTimeUtc = [DateTime]::UtcNow.AddSeconds(5)
     & git -C $eolRepo checkout -- crlf.txt 2>$null
     $ErrorActionPreference = $prevEap
 

@@ -21,7 +21,7 @@ spell the plugin cache path out.
 |---|---|
 | `-Store` | overrides `Get-ShopifyThemeEstateStore` for this run. |
 | `-SinceTag` | derive the push list from this tag instead of the highest `vX.Y.Z` in the repo. For a re-cut, or where the last release was not the last tag. |
-| `-DriftCheckPath` | the repo's drift check, relative to the root. Default `scripts/theme/live-snapshot.ps1`. |
+| `-DriftCheckPath` | the repo's drift check, relative to the root. Default `scripts/theme/live-snapshot.ps1`; where that is absent and nothing is answered, this plugin's own `sync-main.ps1 -Only` stands in ([#4149](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4149)), so a repo whose only drift check is `sync-main` gets the step, and its deletion command, too. |
 | `-SkipGates` | do not re-run the repo's own lint and tests. For a second run where nothing has been committed since. |
 | `-SkipBackup` | do not take the backup. Only correct when a **verified** backup of this same live stand already exists. |
 | `-BackupTimeoutMinutes` | how long the backup waits for the copy of live to fill, passed to `backup-live-theme` as its `-TimeoutMinutes`. Default 20; past it the wait runs on while the copy still grows, up to three times the value ([#3732](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3732)). Raise it for a large theme: a 909-file live theme's copy was still filling after 20 minutes ([#3729](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3729)). |

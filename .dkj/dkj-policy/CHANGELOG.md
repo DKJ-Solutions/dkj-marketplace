@@ -2,7 +2,261 @@
 
 ## [Unreleased]
 
-**24 / 29 minor entries** <!-- pending-tally -->
+**29 / 39 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4160-publish-page-skip-unchanged · 20261116-133301Z
+
+`publish-page` uploads only the pages whose bytes changed since this machine last verified them
+([#4160](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4160)). After each SHA-256 read-back it
+records the page's hash under a digest of its key, in the user's LocalApplicationData rather than the repo,
+because a key carries the path token. A release day then uploads the new release page and the index instead
+of every page again. `-All` uploads everything, for a key changed or deleted in KV from elsewhere.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Publishing the release notes on release day takes seconds instead of more than five minutes. The first
+publish on each machine still uploads every page once.
+
+**Score:** 2
+
+#### Pull Request
+
+publish-page: upload only the pages whose verified bytes changed since the last publish
+
+Plugins: bwj-development
+
+[PR #4175](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4175)
+
+---
+
+### DEPLOY: fix/4168-sync-required-checks · 20261116-132206Z
+
+`sync-main` no longer holds its PR when a check the trunk does not require stays pending
+([#4168](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4168)): it reads the required checks from the
+trunk's branch rules and merges once those are green, as `ship-pr` does. A required check that has not
+registered yet still counts as pending, and where the rules cannot be read or require nothing every check is
+waited for, as before.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A Shopify store whose sync PR carries a slow, non-required check (a theme-check report, measured pending for
+ten minutes over green required checks) gets the sync merged instead of `NOT merged` after the timeout.
+
+**Score:** 2
+
+#### Pull Request
+
+sync-main waits on the required checks only, where the repo has any
+
+Plugins: dkj-subagents-shopify
+
+[PR #4191](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4191)
+
+---
+
+### DEPLOY: feat/4149-sync-main-as-drift-check · 20261116-123740Z
+
+`sync-main` takes `-Only <paths>` and runs as a drift check over them
+([#4149](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4149)). It writes nothing and exits 1
+when a listed path holds content on live this repo never had, or was changed on both sides. Where no
+drift check is answered and `scripts/theme/live-snapshot.ps1` is absent, `live-preflight` and
+`prepare-release` now use it. Until now they skipped the step, and with it `live-preflight`'s deletion
+command.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A store whose only drift check is `sync-main` now learns from `prepare-release`, days ahead, which paths on
+its push list a third party has changed on live. Measured in a consumer: 12 conflicted paths, 9 on the push
+list, while the step read as skipped. On the day, `live-preflight` checks the same paths and prints the
+deletion command it used to withhold.
+
+**Score:** 3
+
+#### Pull Request
+
+sync-main -Only is a drift check, and the release steps fall back to it
+
+Plugins: bwj-development, dkj-subagents-shopify
+
+[PR #4189](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4189)
+
+---
+
+### DEPLOY: fix/4148-layout-floor-pin · 20261116-122616Z
+
+The consumer register (`check-consumers.ps1`, check 6d) now reports a write runner pinned below v6.10.0 as an
+`[ERROR]` when the consumer already carries `.dkj/dkj-policy/` ([#4148](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4148)).
+Such a pin's fold and unfolded-entry scripts look for branch documents in the old `dkj-policy/` folder, find
+none, and report OK: measured in a consumer, two merges went green over an entry that was never folded. Run
+with `-RemoteRunners` it flags four consumers today; a pin that is merely behind stays `[INFO]`.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+N/A -- the register runs in this repo only; nothing a consumer installs changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+The consumer register flags a write runner pinned below the .dkj/ layout floor as an error
+
+[PR #4188](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4188)
+
+---
+
+### DEPLOY: fix/4186-decided-park-reads-stale · 20261116-121444Z
+
+`claim-issue -Candidates` reads an `awaiting-decision-dev` or `awaiting-decision-client` issue as `stale-park` once
+a comment opening `Decision (` follows its last parking comment
+([#4186](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4186)). The comment must come from somebody with a
+hand on the repo. The run prints the lines that lift the label, so a decision posted without removing it no
+longer leaves the issue skipped by every sweep.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In every repo running the sweeps, a client's or owner's decision posted as a comment, from any session, now
+surfaces at the next sweep as a park to lift. Until now the issue sat skipped until somebody noticed the label.
+
+**Score:** 3
+
+#### Pull Request
+
+A decision park with a posted decision reads as stale-park
+
+Plugins: dkj-policy
+
+[PR #4187](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4187)
+
+---
+
+### DEPLOY: fix/4184-one-racy-git-fix · 20261116-115516Z
+
+Inside this repo, the EOL fixture in `git-porcelain-lib.tests.ps1` keeps one racy-git fix, the measured one from
+#4176 ([#4184](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4184)). The parallel second fix and its
+contradicting comment are gone.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+The EOL fixture keeps one racy-git fix, the measured one
+
+[PR #4185](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4185)
+
+---
+
+### DEPLOY: fix/4152-reconcile-base-merges · 20261116-114450Z
+
+`sync-main -ReconcileBase` now opens its PR, waits for the checks and merges it with a merge commit itself,
+the same finish the plain merging sync runs ([#4152](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4152)).
+It used to print `gh pr create`, `gh pr checks --watch` and `gh pr merge`, and run back to back they failed: the
+watch returned before the checks had registered, and the merge was refused. The commands are still printed when
+the push does not land.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Shopify store that reconciles a sync conflict no longer finishes the reconciliation base by hand: the run
+merges it, with a merge commit even where the repo squashes by default, and leaves the checkout on the trunk.
+
+**Score:** 3
+
+#### Pull Request
+
+sync-main -ReconcileBase opens, waits for and merges its own PR
+
+Plugins: dkj-subagents-shopify
+
+[PR #4174](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4174)
+
+---
+
+### DEPLOY: fix/4171-case-sensitive-mirror-compare · 20261116-112727Z
+
+Inside this repo, the shared-script mirror build, the integrity gate's `[shared-script]` check and the
+consumer-drift check compare case-sensitively
+([#4171](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4171)). An edit that changes only letter case
+is now copied into the mirror and reported as drift, where before it read as in sync.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+Mirror comparisons are case-sensitive, so a case-only edit is mirrored and flagged
+
+[PR #4183](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4183)
+
+---
+
+### DEPLOY: fix/4176-eol-fixture-racy-git · 20261116-111147Z
+
+The CRLF-index assert in `git-porcelain-lib.tests.ps1` no longer depends on how fast the runner is
+([#4176](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4176)). Git trusts an index entry's stat
+data unless the file was written in the same second as the index, so a slow runner read the fixture's
+CRLF file as clean. The fixture now moves the file's mtime back before the first add and forward before the
+checkout, so every run takes the same path.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A -- a test fixture in this repo; nothing a consumer runs changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+git-porcelain-lib tests: make the CRLF-index fixture independent of how fast the runner is
+
+[PR #4181](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4181)
+
+---
+
+### DEPLOY: fix/4143-eol-fixture-race · 20261116-110015Z
+
+The `git-porcelain-lib` suite's line-ending fixture from [#4143](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4143)
+no longer depends on timing: after `git checkout --` the file's stat matched its index entry and git could
+trust it unread, so the test went red on CI while passing locally. It now sets the file's mtime apart from
+the index, as a consumer's checkout is.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+git-porcelain-lib's EOL fixture no longer depends on racy-git timing
+
+[PR #4179](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4179)
+
+---
 
 ### DEPLOY: fix/4165-notify-live-no-block-row · 20261116-104334Z
 
