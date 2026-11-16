@@ -293,6 +293,10 @@ function Format-ReleaseRunbook {
         publish-page -Kind notes, not the builder's -Worker deploy, which a store refuses by design -- and
         says the close-out leads with the page's SHAREABLE link, the document the owner reads, before the
         GitHub Release. -NotesUrl is that link where the caller could read it (publish-page -CheckAuth).
+
+        THE SWEEP FIRST (#4157). With -SweepFirst (Get-ThemeSweepOrder found the store at or near Shopify's
+        theme limit), a step 0 puts the preview sweep before the preflight, whose backup needs a free slot.
+        -SweepReason is that verdict's message, printed under it.
     #>
     param(
         [string]$Store = '',
@@ -307,7 +311,9 @@ function Format-ReleaseRunbook {
         [string]$AppRoot = '',
         [AllowNull()][AllowEmptyCollection()][string[]]$AppFiles = @(),
         [string]$NotesUrl = '',
-        [switch]$TaskForm
+        [switch]$TaskForm,
+        [switch]$SweepFirst,
+        [string]$SweepReason = ''
     )
 
     $connected = [bool]([string]$DeployBranch).Trim()
@@ -326,6 +332,14 @@ function Format-ReleaseRunbook {
     $out += ''
     $out += 'Prepared ahead of the day. Every step below re-checks on the day; nothing here is authorised.'
     $out += ''
+
+    # THE SWEEP MOVES IN FRONT OF THE PREFLIGHT AT OR NEAR THE THEME LIMIT (#4157): the preflight's backup
+    # needs a free slot, so a sweep after the push would come too late. The reason is the store's count.
+    if ($SweepFirst) {
+        $out += '0. Preview sweep FIRST -- the `theme-lifecycle` skill, sweep-preview-themes (dry run, then -Execute).'
+        if (([string]$SweepReason).Trim()) { $out += "   $(ConvertTo-ConsoleStrippedText -Text $SweepReason)" }
+        $out += ''
+    }
 
     if ($connected) {
         $out += '1. Preflight, on the trunk -- the dkj-subagents-shopify `live-preflight` skill. It re-derives what'
@@ -401,7 +415,11 @@ function Format-ReleaseRunbook {
     if ($obl.Count -eq 0) { $out += '   (none found -- read the entries before assuming there are none)' }
     $out += ''
 
-    $out += '5. Preview sweep -- the `theme-lifecycle` skill, sweep-preview-themes (dry run first).'
+    if ($SweepFirst) {
+        $out += '5. Preview sweep -- done as step 0. Run it again (dry run first) only for the previews this release made spent.'
+    } else {
+        $out += '5. Preview sweep -- the `theme-lifecycle` skill, sweep-preview-themes (dry run first).'
+    }
     $out += ''
     $bumpText = if ($Bump) { " -Bump $Bump" } else { '' }
     $out += "6. The cut -- the dkj-policy ``cut-release`` skill$(if ($Bump) { ", with$bumpText" } else { ' (the bump could not be read from the pending tally)' })."
