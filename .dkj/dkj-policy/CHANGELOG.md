@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**11 / 16 minor entries** <!-- pending-tally -->
+**12 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4139-storage-neutral-brain · 20261116-014548Z
+
+Ian and Onyx in `dkj-subagents-lifehub` no longer assume the knowledge base is a folder tree in the repo
+([#4139](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4139)): where the brain lives, how its entries
+are placed and how its links are stored are what the consumer's lens names, files in the repo or an external
+workspace.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A life-hub whose knowledge base has moved out of git, into an external workspace, can drop the temporary
+section its Ian and Onyx lenses carried: the two specialists read the location and the link format from the
+lens instead of looking for `Brains/` and `NEURON.md` files.
+
+**Score:** 2
+
+#### Pull Request
+
+Lifehub: Ian and Onyx no longer assume the knowledge base is a folder tree
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4141](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4141)
+
+---
 
 ### DEPLOY: feat/4127-borders-only-on-buttons · 20261116-011737Z
 
