@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**11 / 15 minor entries** <!-- pending-tally -->
+**12 / 16 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4235-restore-house-style-redirects · 20261117-160516Z
+
+The brand book's older Admin and product addresses (`/dev/plugins/dkj-solutions/house-style`,
+`/dev/plugins/dkj-policy/house-style`, `/plugins/dkj-policy/house-style`) redirect to the brand book
+again. #4209's rename had rewritten the redirect patterns themselves, so the old names no longer
+matched. The brand book's own address from before #4209, under `dkj-policy`, now redirects too, so a
+link from a released Admin still lands. The tests pin the real older names again.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+An Admin user who follows a bookmark, or a link from an Admin on v6.18.0 or older, lands on the brand book again instead of a 404.
+
+**Score:** 2
+
+#### Pull Request
+
+The older house-style and brand-book addresses redirect again after the #4209 rename
+
+Plugins: dkj-repo-workflow
+
+[PR #4239](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4239)
+
+---
 
 ### DEPLOY: fix/4222-restore-dated-plugin-names · 20261117-153843Z
 
