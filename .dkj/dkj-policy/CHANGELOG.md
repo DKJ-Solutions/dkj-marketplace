@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**3 / 6 minor entries** <!-- pending-tally -->
+**4 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4219-kind-label-sessioncheck · 20261117-112709Z
+
+Inside this repo, `closed-message-sessioncheck` gains a seventh finding with its own cases in the
+suite, and finding 6 now shares its label read and number list with it.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A store session (smartwatchbanden, xoxowildhearts, phone-factory) now starts with an `[ERROR]` line
+naming every open issue that carries no kind label, or more than one, with the `gh issue edit` line
+that repairs it. An issue that slipped past `guard-kind-label` -- a label built at run time, a
+template, or a checkout that had not updated yet -- is caught at the next session start instead of
+only when somebody notices, as #1390, #1391 and #1394 in smartwatchbanden were not.
+
+**Score:** 3
+
+#### Pull Request
+
+bwj-development: catch a kind-less issue after the fact
+
+Plugins: bwj-development
+
+[PR #4223](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4223)
+
+---
 
 ### DEPLOY: feat/4211-split-developers-team · 20261117-110234Z
 
