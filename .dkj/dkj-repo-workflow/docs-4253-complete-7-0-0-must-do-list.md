@@ -39,19 +39,40 @@
 
 ### PLAN
 
+Inbound #4253: the first consumer to run the v7.0.0 note end to end found its "You must" sections short
+by eight steps and wrong in one statement ("Lenses ... need no change").
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Correct the lens statement: two lenses name a body under `dkj-subagents-alpha/personas/`, and
+  `sync-roster` never rewrites an existing lens (verified in its script header).
+- [x] Add the missing steps: the marketplace refresh, `permissions.allow` patterns, every CI runner
+  (verified against the runner names `adopt-ci-floor` places), `Get-MojibakePaths`, repo-local helpers,
+  the statusline shim (#4252), the Part 1 ordering workaround (#4251), the `dkj-subagents-alpha` update,
+  the consumer register and the old install record.
+- [~] The GitHub release body (`releases/github/7.x/7.0.0.md`) is left as it is: republishing a release
+  is outward-facing, and it only lists what landed.
 
 ### TEST
 
+- [x] Read back against the issue: all ten items are answered, and none of the old steps were lost.
+
 ### DEPLOY: docs/4253-complete-7-0-0-must-do-list
 
-**Score:**
+The v7.0.0 release note now lists every step a migration needs (#4253): refreshing the marketplace clone,
+rewriting `permissions.allow` patterns, repointing all seven CI runners, re-adopting `Get-MojibakePaths`,
+updating the core team past 6.x, the statusline shim, the Part 1 ordering workaround, and who updates the
+consumer register. It no longer says lenses need no change: two lens headers point at a moved persona body
+and have to be corrected by hand.
+
+**Score:** 4
 
 #### What makes this deploy extra special
 
-**Score:**
+A maintainer migrating a repo can follow the note alone and finish, rather than finding eight more
+steps through failures.
+
+**Score:** 4
 
 #### Pull Request
 
