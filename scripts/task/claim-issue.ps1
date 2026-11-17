@@ -134,6 +134,12 @@
     awaiting-pull-external names owner/repo#<n>, and awaiting-release-external owner/repo. A reason whose
     clause names none of those is refused before anything is read (#3962), by the same parser.
 
+.PARAMETER Decider
+    With -Park and an awaiting-*-dev label: the GitHub login of the developer the issue waits on, when that
+    is not the repo's named owner (issue #4208). The parking comment then ends "Decider: @<login>.", the
+    owner sweeps put the issue only to that account, and -Candidates prints it beside the label. The
+    assignee is left alone: the sweep claim writes and removes it. Without -Decider the owner decides, as before.
+
 .PARAMETER ReleaseAll
     With -Tag, and no issue number: release EVERY open issue this tag holds -- its own marker comments
     and the assignee written beside them, and nothing else (issue #2395). The tidy-up before a PLANNED
@@ -217,6 +223,7 @@ param(
     [Parameter(ParameterSetName = 'Issue')][switch]$Parked,
     [Parameter(ParameterSetName = 'Issue')][string]$Park = '',
     [Parameter(ParameterSetName = 'Issue')][string]$Reason = '',
+    [Parameter(ParameterSetName = 'Issue')][string]$Decider = '',
     [Parameter(Mandatory = $true, ParameterSetName = 'Candidates')][switch]$Candidates,
     [Parameter(ParameterSetName = 'Candidates')]
     [Parameter(ParameterSetName = 'Issue')][string[]]$SkipLabel = @(),
@@ -372,7 +379,14 @@ if (-not $Candidates -and -not $ReleaseAll) {
     }
     # -Park IS A CLAIM THAT ENDS IN A LABEL (issue #3907), so it takes the claim's own tag and nothing that
     # reads or moves another claim. Refused before anything is read, like the two checks above.
-    if ($Park -or $Reason) {
+    if ($Park -or $Reason -or $Decider) {
+        # A DECIDER IS A DEVELOPER (#4208): it names whose answer a -dev park waits on, so it rides only on
+        # such a park, and it is posted on the tracker, so it is a login and nothing else.
+        if ($Decider -and (-not $Park -or $Park -notlike 'awaiting-*-dev' -or -not (Test-DeciderLogin -Login $Decider))) {
+            Write-Host '[ERROR] -Decider takes a GitHub login, and only with -Park and an awaiting-*-dev label -- nothing was read or written.' -ForegroundColor Red
+            Write-Host '        claim-issue.ps1 <n> -Tag -Park awaiting-decision-dev -Decider <login> -Reason "<login>''s choice of X"' -ForegroundColor Red
+            exit 1
+        }
         if (-not $Tag -or $Verify -or $Release -or $TakeOver) {
             Write-Host '[ERROR] -Park needs -Tag, and cannot be combined with -Verify, -Release or -TakeOver -- nothing was read or written.' -ForegroundColor Red
             Write-Host '        It parks a free issue under a claim of this tag, so the claim''s read-back settles a race between sweeps.' -ForegroundColor Red
@@ -436,7 +450,7 @@ function Invoke-ClaimPark {
         [void](& $release)
         exit 1
     }
-    $parkBody = Format-ParkComment -Reason $Reason
+    $parkBody = Format-ParkComment -Reason $Reason -Decider $Decider
     $parkNote = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'comment', $number) + $repoArgs + @('--body', $parkBody)) -Utf8 `
                                      -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
     $noteLanded = ($parkNote -and (Test-NativeExitMeasured -Capture $parkNote) -and $parkNote.ExitCode -eq 0)

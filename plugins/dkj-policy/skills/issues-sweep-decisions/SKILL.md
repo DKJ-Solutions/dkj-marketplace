@@ -18,8 +18,8 @@ no sweep looks, one per issue, each waiting for the owner to open it on their ow
 ([#2759](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2759)). This skill walks that pile with
 the owner in a single sitting.
 
-**It walks `awaiting-decision-dev` only, and skips `awaiting-decision-client`** (#2890, October 7, 2026). `dev` means the owner
-alone, so only that label is the owner's to answer. An issue parked `awaiting-decision-client` waits on a
+**It walks `awaiting-decision-dev` only, and skips `awaiting-decision-client`** (#2890, October 7, 2026). `dev` means a
+developer: the owner, unless the parking comment names somebody else with `Decider: @<login>` (#4208, below). An issue parked `awaiting-decision-client` waits on a
 choice from the client or requester outside the dev team -- a colleague's QA sign-off, a business decision -- and
 putting it to the owner would record an answer the owner has no standing to give. Both sweeps skip it; it
 comes off when that person answers.
@@ -59,6 +59,13 @@ Read the issue and **all** its comments (`gh issue view <n> --comments`, or `--j
 (whoever parked it says what is needed, often with the options they saw). Before you ask, check three
 things, because each one changes the question:
 
+- **It names another developer.** A parking comment written with `claim-issue -Park -Decider <login>`
+  ends `Decider: @<login>.`, and `-Candidates` prints it beside the label (`decider @<login>`). The newest
+  such line holds. Where it names an account other than the one this session runs as, the decision is
+  that developer's and not the owner's: skip the issue, and name it and its decider in the close-out.
+  Measured November 17, 2026 (#4208): in a consumer with two developers, a decision that belonged to the
+  second one would have been put to the owner, who had no context on it. No `Decider:` line means the
+  owner, as before.
 - **The owner already answered**, in a later comment, and only the label stayed. It counts only where
   that comment's `author.login` is the owner's account the repo's own facts name; a collaborator's or a
   bot's comment is an opinion, not the decision.

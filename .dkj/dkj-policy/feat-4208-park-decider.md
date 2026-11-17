@@ -39,19 +39,40 @@
 
 ### PLAN
 
+#4208, as decided by the owner on the issue (November 17, 2026): the decider goes in a
+`Decider: @login` clause in the parking comment, not in the assignee, which the sweep claim writes and
+removes. The writer is `claim-issue -Park -Decider`, a reader is `-Candidates`, and the two owner sweeps
+skip an issue whose decider is another account.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `claim-issue-lib.ps1`: `Format-ParkComment -Decider`, `Test-DeciderLogin`, `Get-ParkDecider`; `Get-SweepCandidates` prints `decider @<login>` beside a `-dev` label.
+- [x] `claim-issue.ps1`: `-Decider`, refused off an `awaiting-*-dev` park or when it is not a login, before anything is read.
+- [x] The three `-dev` label descriptions (seam, fallback, blueprint rebuilt) and their docstrings now read "a developer's ... the named decider, else the owner".
+- [x] `issues-sweep`, `issues-sweep-decisions`, `issues-sweep-reviews` and `CONTRIBUTING-portable.md` say how it is written and read.
+- [x] Mirrors copied byte-identical.
 
 ### TEST
 
+- [x] `claim-issue.tests.ps1` gained 17 asserts (comment form, login validation, newest decider, body fallback, `-Candidates` reason, two refusing runs); the suite ran 723 passed, 0 failed. The full gate runs in `ship-pr`.
+
 ### DEPLOY: feat/4208-park-decider
 
-**Score:**
+A `-dev` parking label no longer means "the owner alone". `claim-issue -Park <label> -Decider <login>`
+names the developer an issue waits on, as `Decider: @<login>.` in the parking comment. `-Candidates`
+prints it beside the label, and `issues-sweep-decisions` and `issues-sweep-reviews` put the issue only to
+that account (#4208).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A repo with more than one developer can park a decision, a look or an act on the one it belongs to,
+instead of in front of the owner, who may have no context on it. Without `-Decider` nothing changes. The
+three `-dev` label descriptions changed for a tracker adopting them fresh. An existing tracker keeps its
+own wording, because `adopt-triage-labels` does not compare descriptions (#2942).
+
+**Score:** 3
 
 #### Pull Request
 

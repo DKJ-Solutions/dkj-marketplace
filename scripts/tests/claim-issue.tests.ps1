@@ -2017,6 +2017,31 @@ $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Pa
 Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'takes an awaiting-\* label') 'run: and a park without a reason'
 
 Write-Host ''
+# --- a -dev park names its decider (#4208) ---
+Assert-True ((Format-ParkComment -Reason 'the choice of X' -Decider 'alejandro-x') -ceq 'Parked by a sweep: waiting on the choice of X. Decider: @alejandro-x.') 'a decider is a sentence after the clause'
+Assert-True ((Format-ParkComment -Reason 'the choice of X' -Decider '@alejandro-x') -ceq 'Parked by a sweep: waiting on the choice of X. Decider: @alejandro-x.') 'with or without its @'
+Assert-True ((Format-ParkComment -Reason 'the choice of X' -Decider '') -ceq 'Parked by a sweep: waiting on the choice of X.') 'no decider leaves the comment as before'
+$deciderRefs = Get-ParkingWaitReferences -Comments @([pscustomobject]@{ body = (Format-ParkComment -Reason '#12''s pull request' -Decider 'some-dev') })
+Assert-True (@($deciderRefs.Issues).Count -eq 1) 'the decider sentence is outside the clause stale-park reads'
+Assert-True (Test-DeciderLogin -Login 'DaveKJohn') 'a login passes'
+Assert-True (Test-DeciderLogin -Login '@maikel-bwj') 'so does one with its @'
+Assert-True (-not (Test-DeciderLogin -Login 'a--b') -and -not (Test-DeciderLogin -Login '-ab') -and -not (Test-DeciderLogin -Login 'ab-')) 'a double, leading or trailing hyphen is refused'
+Assert-True (-not (Test-DeciderLogin -Login 'x y') -and -not (Test-DeciderLogin -Login '') -and -not (Test-DeciderLogin -Login ('a' * 40))) 'a space, nothing, or a 40-character name is refused'
+$older = [pscustomobject]@{ body = 'Parked by a sweep: waiting on X. Decider: @first-dev.'; createdAt = '2026-11-01T10:00:00Z' }
+$newer = [pscustomobject]@{ body = 'Parked by a sweep: waiting on X. Decider: @second-dev.'; createdAt = '2026-11-02T10:00:00Z' }
+Assert-True ((Get-ParkDecider -Comments @($older, $newer)) -ceq 'second-dev') 'the newest decider holds'
+Assert-True ((Get-ParkDecider -Comments @() -Body "Filed parked.`nDecider: @body-dev") -ceq 'body-dev') 'an issue parked at filing names it in its body'
+Assert-True ((Get-ParkDecider -Comments @([pscustomobject]@{ body = 'no clause'; createdAt = '2026-11-01T10:00:00Z' })) -ceq '') 'no clause means the owner'
+$candJson = '[{"number":7,"title":"t","labels":[{"name":"awaiting-decision-dev"}],"comments":[{"body":"Parked by a sweep: waiting on X. Decider: @second-dev.","createdAt":"2026-11-02T10:00:00Z"}]}]'
+$candRow = @(Get-SweepCandidates -Json $candJson -SkipLabel @('awaiting-decision-dev'))[0]
+Assert-True ($candRow.Verdict -eq 'skipped' -and $candRow.Reason -match "label 'awaiting-decision-dev'; decider @second-dev") '-Candidates names the decider beside a -dev label'
+Assert-True ($body -match "Format-ParkComment -Reason \`$Reason -Decider \`$Decider") 'the park posts the decider it was given'
+$out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-pull -Reason '#3 to land' -Decider 'some-dev' 2>&1 | Out-String
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-Decider takes a GitHub login, and only with -Park and an awaiting-\*-dev label') 'run: a decider on a non -dev park refuses before anything is read'
+$out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-decision-dev -Reason 'x' -Decider 'not a login' 2>&1 | Out-String
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-Decider takes a GitHub login') 'run: so does a decider that is not a login'
+
+Write-Host ''
 # --- a readable wait names its blocker (#3962) ---
 Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-pull' -Reason '#123''s pull request -- the tasks run in order') 'awaiting-pull: a #<n> at the start of the clause passes'
 Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-pull' -Reason 'feat/3126-x to land') 'awaiting-pull: so does a branch'

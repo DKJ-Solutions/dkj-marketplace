@@ -254,7 +254,7 @@ try {
     $r = Invoke-Adopt -Dir $dir -LabelJsonPath $fLegacy3
     Assert-Equal 0 $r.Code 'needs-decision: exit-code 0'
     Assert-True ($r.Out -like "*[rename]*'needs-decision' -> 'awaiting-decision-dev'*") "needs-decision: 'awaiting-decision-dev' is reported as a rename of 'needs-decision'"
-    Assert-True ($r.Flat -like "*gh label edit 'needs-decision' --name 'awaiting-decision-dev' --color '5319E7' --description 'Waiting on the owner''s choice -- parks the issue so no session picks it up' --repo fixture-org/fixture-repo*") `
+    Assert-True ($r.Flat -like "*gh label edit 'needs-decision' --name 'awaiting-decision-dev' --color '5319E7' --description 'Waiting on a developer''s choice: the named decider, else the owner -- no session picks it up' --repo fixture-org/fixture-repo*") `
         'needs-decision: the composed rename is paste-ready'
     Assert-True ($r.Flat -notlike "*gh label create 'awaiting-decision-dev'*") 'needs-decision: and no create is printed beside it'
     # THE COLOUR TRAVELS WITH THE RENAME (#2810): the fixture's old label is BFD4F2, and the rename must move it
@@ -268,7 +268,7 @@ try {
     $r = Invoke-Adopt -Dir $dir -LabelJsonPath $fLegacy4
     Assert-Equal 0 $r.Code 'awaiting-decision: exit-code 0'
     Assert-True ($r.Out -like "*[rename]*'awaiting-decision' -> 'awaiting-decision-dev'*") "awaiting-decision: 'awaiting-decision-dev' is reported as a rename of 'awaiting-decision'"
-    Assert-True ($r.Flat -like "*gh label edit 'awaiting-decision' --name 'awaiting-decision-dev' --color '5319E7' --description 'Waiting on the owner''s choice -- parks the issue so no session picks it up' --repo fixture-org/fixture-repo*") `
+    Assert-True ($r.Flat -like "*gh label edit 'awaiting-decision' --name 'awaiting-decision-dev' --color '5319E7' --description 'Waiting on a developer''s choice: the named decider, else the owner -- no session picks it up' --repo fixture-org/fixture-repo*") `
         'awaiting-decision: the composed rename is paste-ready'
     Assert-True ($r.Flat -notlike "*gh label create 'awaiting-decision-dev'*") 'awaiting-decision: and no create is printed beside the rename'
     # The client label is NEW, so it is created, never renamed: it has no former name to be mistaken for.
@@ -284,7 +284,7 @@ try {
     Assert-Equal 0 $r.Code 'awaiting-action: exit-code 0'
     Assert-True ($r.Out -like "*[rename]*'awaiting-owner-act' -> 'awaiting-action-dev'*") "awaiting-action: 'awaiting-action-dev' is reported as a rename of 'awaiting-owner-act'"
     Assert-True ($r.Out -like "*[rename]*'awaiting-event' -> 'awaiting-action-external'*") "awaiting-action: 'awaiting-action-external' is reported as a rename of 'awaiting-event'"
-    Assert-True ($r.Flat -like "*gh label edit 'awaiting-owner-act' --name 'awaiting-action-dev' --color '5319E7' --description 'Waiting on an act only the owner performs -- parks the issue so no session picks it up' --repo fixture-org/fixture-repo*") `
+    Assert-True ($r.Flat -like "*gh label edit 'awaiting-owner-act' --name 'awaiting-action-dev' --color '5319E7' --description 'Waiting on a developer''s act: the named decider, else the owner -- no session picks it up' --repo fixture-org/fixture-repo*") `
         'awaiting-action: the composed rename is paste-ready'
     Assert-True ($r.Flat -notlike "*gh label create 'awaiting-action-dev'*") 'awaiting-action: and no create is printed beside the dev rename'
     Assert-True ($r.Flat -notlike "*gh label create 'awaiting-action-external'*") 'awaiting-action: and none beside the external rename'
