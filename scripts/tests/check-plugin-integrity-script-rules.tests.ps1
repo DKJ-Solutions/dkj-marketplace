@@ -158,7 +158,7 @@ try {
     #     this check in silence.
     Write-Host "check 33 -- history is not rewritten, so it is not a subject" -ForegroundColor Cyan
     [System.IO.File]::WriteAllText((Join-Path $Fixture 'CONTRIBUTING.md'), "# Contributing`n`nNothing here.`n", $Utf8NoBom)
-    $s50Path = Join-Path $Fixture 'dkj-repo-workflow\CHANGELOG.md'
+    $s50Path = Join-Path $Fixture '.dkj\dkj-repo-workflow\CHANGELOG.md'
     $s50Prev = if (Test-Path -LiteralPath $s50Path) { [System.IO.File]::ReadAllText($s50Path, [System.Text.Encoding]::UTF8) } else { $null }
     $s50Lines = @(
         '# Changelog'

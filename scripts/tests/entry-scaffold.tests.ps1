@@ -356,7 +356,7 @@ Assert-Equal $stepsBefore @(Get-BranchProgressFindings -Text $withProse).Count '
 # made to write and refresh them. Inbound #810 is what the arrangement still cost: the guidance was in the
 # file NEXT TO the one you write in. The merged document carries its own, so the reference is gone and this
 # assert is that it stays gone -- a directory nobody maintains is a directory that drifts.
-Assert-True (-not (Test-Path -LiteralPath (Join-Path $fixture 'dkj-repo-workflow\branch'))) 'the writer creates no branch/ directory -- the document carries its own guidance'
+Assert-True (-not (Test-Path -LiteralPath (Join-Path $fixture '.dkj\dkj-repo-workflow\branch'))) 'the writer creates no branch/ directory -- the document carries its own guidance'
 
 # AND THE GUIDANCE IS IN THE FILE A BRANCH ACTUALLY GETS, which is the half #810 reported. Asserted on one
 # of the blocks the report named rather than on "some comment exists": a document that kept the headings and

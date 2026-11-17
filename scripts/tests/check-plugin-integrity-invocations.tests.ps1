@@ -136,7 +136,7 @@ try {
     # 55c. History is excluded, via check 11's set rather than a rule of its own: an archived release note
     #      quotes the form that was current when it was written and is never rewritten.
     Write-EpSkill 'powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/claim-issue.ps1"'
-    $epNote = Join-Path $Fixture 'dkj-repo-workflow\releases\audience\4.x\4.2.0.md'
+    $epNote = Join-Path $Fixture '.dkj\dkj-repo-workflow\releases\audience\4.x\4.2.0.md'
     New-Item -ItemType Directory -Path (Split-Path -Parent $epNote) -Force | Out-Null
     [System.IO.File]::WriteAllText($epNote,
         "# 4.2.0`n`n``````powershell`npowershell -NoProfile -File `"scripts/release/open-pr.ps1`"`n```````n", $Utf8NoBom)
