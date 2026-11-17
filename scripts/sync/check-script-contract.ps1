@@ -465,20 +465,27 @@ if ($contractLibs.Count -gt 0 -and $presentLibs.Count -eq 0) {
 # THE NAMES COME FROM workflow-folder-lib.ps1 SINCE #3870, which seam-lib.ps1 above already loads -- the
 # trade the note above weighed (a dependency for one line) flipped the day the folder moved under '.dkj/',
 # because a fourth copy of the list is exactly what would let this check and the scripts disagree.
+# AND SINCE #4209 AN OLDER NAME IS NO LONGER READ (the owner's hard cut, November 17, 2026), so a repo
+# still holding one is broken, not merely unmigrated: its gates find no branch document. That is an
+# [ERROR] now, naming the old folder and the one move that repairs it -- the loudest signal is the right
+# one here, because the scripts will otherwise fail quietly on a folder that is sitting right there.
 $workflowFolderNames = @(Get-WorkflowFolderNames)
-$foundWorkflowFolder = $workflowFolderNames | Where-Object {
-    Test-Path -LiteralPath (Join-Path $repoRoot ($_ -replace '/', '\')) -PathType Container
-} | Select-Object -First 1
-if (-not $foundWorkflowFolder) {
-    Write-Failure ("the workflow folder '$($workflowFolderNames[0])/' does not exist in this repo -- the " +
+$currentWorkflowFolder = $workflowFolderNames[0]
+$legacyWorkflowFolder = Find-LegacyWorkflowFolder -RepoRoot $repoRoot
+# Read by the adoption block below too: only the current folder counts as having one.
+$foundWorkflowFolder = if (Test-Path -LiteralPath (Join-Path $repoRoot ($currentWorkflowFolder -replace '/', '\')) -PathType Container) { $currentWorkflowFolder } else { '' }
+if ($foundWorkflowFolder) {
+    Write-Ok "workflow folder: $currentWorkflowFolder/ exists."
+} elseif ($legacyWorkflowFolder) {
+    Write-Failure ("the workflow folder is still at its older name '$legacyWorkflowFolder/', which the shared " +
+        "scripts no longer read since #4209 -- they read '$currentWorkflowFolder/' only, so the branch " +
+        "documents, the changelog and the release roots are invisible to them. Part 1 of the " +
+        "'adopt-dkj-repo-workflow' skill moves it in one git mv and repoints the seam paths; commit that on a branch.")
+} else {
+    Write-Failure ("the workflow folder '$currentWorkflowFolder/' does not exist in this repo -- the " +
         "changelog, the release roots and the branch documents live there, and the shared scripts read " +
         "only that location. Run the 'adopt-dkj-repo-workflow' skill to scaffold it (dry-run by default, " +
         "additive, never overwrites).")
-} elseif ($foundWorkflowFolder -ne $workflowFolderNames[0]) {
-    Write-Ok ("workflow folder: $foundWorkflowFolder/ exists -- a PRE-MOVE name, still read. Part 1 of the " +
-        "'adopt-dkj-repo-workflow' skill moves it to $($workflowFolderNames[0])/ in one git mv (#3870).")
-} else {
-    Write-Ok "workflow folder: $foundWorkflowFolder/ exists."
 }
 
 # --- Which adopt-* commands' files this tree is missing (issue #2236) -----------------------------

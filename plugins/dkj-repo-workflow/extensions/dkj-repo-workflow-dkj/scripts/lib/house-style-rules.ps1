@@ -199,7 +199,7 @@ function Get-HouseStylePin {
         carries no complete table.
         The URL path is read in every spelling it has had: plugins/dkj-repo-workflow/assets/dkj-brandbook/ since
         the rename to dkj-brandbook, plugins/dkj-repo-workflow/assets/house-style/ from #3531 until then, and
-        plugins/dkj-policy/dkj-solutions/assets/house-style/ before that, which every page at an earlier tag
+        plugins/dkj-policy/dkj-solutions/assets/house-style/ before that (and the plugin and extension were dkj-policy and dkj-solutions until #4209, which the pattern reads too), which every page at an earlier tag
         still carries -- and the reusable gate reads the page AT the pinned tag. The product layer's URL
         has its own two depths: plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/ since #3871, and
         plugins/dkj-policy/dkj-solutions/ before it.
@@ -212,7 +212,7 @@ function Get-HouseStylePin {
         $m = [regex]::Match($line, '^\|\s*`(?<file>house-style\.css|house-theme\.js|house-product\.css|InterVariable\.woff2)`\s*\|\s*`(?<url>[^`]+)`\s*\|\s*`(?<sha>[0-9a-f]{64})`\s*\|')
         if (-not $m.Success) { continue }
         $hashes[$m.Groups['file'].Value] = $m.Groups['sha'].Value
-        $t = [regex]::Match($m.Groups['url'].Value, '/(?:dkj-marketplace|dkj-claude-plugins)/(?<tag>[^/]+)/plugins/dkj-repo-workflow/(?:(?:extensions/)?dkj-repo-workflow-dkj/)?assets/(?:dkj-brandbook-product|dkj-brandbook|house-style)/')
+        $t = [regex]::Match($m.Groups['url'].Value, '/(?:dkj-marketplace|dkj-claude-plugins)/(?<tag>[^/]+)/plugins/(?:dkj-repo-workflow|dkj-policy)/(?:(?:extensions/)?(?:dkj-repo-workflow-dkj|dkj-solutions)/)?assets/(?:dkj-brandbook-product|dkj-brandbook|house-style)/')
         if ($t.Success) { $tag = $t.Groups['tag'].Value }
     }
     foreach ($name in (Get-HouseStylePinRequiredNames)) { if (-not $hashes.ContainsKey($name)) { return $null } }

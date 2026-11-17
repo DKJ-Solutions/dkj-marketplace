@@ -207,7 +207,7 @@ $(if ($MastheadBody) { "function Get-ReleasePageMasthead { $MastheadBody }" } el
 |---|---|---|---|
 | [1.0.0](audience/1.x/1.0.0.md) | 2026-07-01 | Major | Older than any note |
 "@
-    $historyRel = if ($NoHistorySeam) { 'dkj-repo-workflow\releases\history.md' } else { 'releases\README.md' }
+    $historyRel = if ($NoHistorySeam) { '.dkj\dkj-repo-workflow\releases\history.md' } else { 'releases\README.md' }
     Write-FixtureFile (Join-Path $root $historyRel) $history
 
     $folder = { param($v) if ($Grouping -eq 'minor') { ($v.Split('.')[0..1] -join '.') } else { "$($v.Split('.')[0]).x" } }
@@ -516,7 +516,7 @@ try {
     Write-Host "build -- an unanswered Get-ReleaseHistoryPath reads the computed default" -ForegroundColor Cyan
     $r10b = New-FixtureRepo -Label 'historydefault' -NoHistorySeam
     $b10b = Invoke-Build -Root $r10b
-    Assert-Equal 0 $b10b.Code 'history default: builds from dkj-policy/releases/history.md'
+    Assert-Equal 0 $b10b.Code 'history default: builds from .dkj/dkj-repo-workflow/releases/history.md'
     Assert-True (Test-Path -LiteralPath (Join-Path $r10b 'releases\page\release-notes.html') -PathType Leaf) 'history default: the page is written'
 
     # --- 11. The palette seam (inbound #759) -------------------------------------------------------

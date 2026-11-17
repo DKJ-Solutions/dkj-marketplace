@@ -250,7 +250,7 @@ $ix = @('class="site-header"', 'class="breadcrumbs-bar"', '<h1>', 'class="note c
 Assert-True ((@($ix | Where-Object { $_ -lt 0 }).Count -eq 0) -and ((($ix | Sort-Object) -join ',') -eq ($ix -join ','))) 'and its blocks stand in the form''s order'
 Assert-True ($html -match '1\.3s|1\.2s') 'the run time is printed with an invariant decimal point'
 Assert-Equal 'bwj' (Get-ConsumerOwnerGroup 'BWJ-Development/shop') 'a BWJ-Development repo is in the BWJ group'
-Assert-Equal 'dkj' (Get-ConsumerOwnerGroup 'dkj-repo-workflow-dkj/admin') 'a DKJ-Solutions repo is in the DKJ group, whatever the case'
+Assert-Equal 'dkj' (Get-ConsumerOwnerGroup 'dkj-solutions/admin') 'a DKJ-Solutions repo is in the DKJ group, whatever the case'
 Assert-Equal 'other' (Get-ConsumerOwnerGroup 'DaveKJohn/djcylow-react') 'any other owner is Other'
 Assert-Equal 'other' (Get-ConsumerOwnerGroup '') 'no slug is Other, not an error'
 $three = @(
@@ -278,7 +278,7 @@ Assert-True ($html -notmatch 'class="tiles"' -and $html -notmatch 'class="lead"'
 $dkj = Format-ConsumerDashboardHtml -Consumers $three -Meta @{ GeneratedAt = 'now' } -Group 'dkj'
 Assert-True ($dkj -match '<h1>DKJ repos</h1>' -and $dkj -match '<title>dkj-marketplace -- DKJ repos</title>') 'a group page is headed by its group'
 Assert-True (([regex]::Matches($dkj, '<section class="card card--link"[ >]')).Count -eq 2 -and $dkj -notmatch 'Someone/x' -and $dkj -notmatch '/consumers/other/') 'and holds that group''s repos alone'
-Assert-True ($dkj.IndexOf('id="repo-dkj-repo-workflow-dkj-w"') -lt $dkj.IndexOf('id="repo-dkj-repo-workflow-dkj-y"')) 'inside a group, worst first'
+Assert-True ($dkj.IndexOf('id="repo-dkj-solutions-w"') -lt $dkj.IndexOf('id="repo-dkj-solutions-y"')) 'inside a group, worst first'
 Assert-True ($dkj -match '<p class="note cd-group-summary">2 repos &#183; 1 needs action &#183; 1 in sync</p>\r?\n<div class="card-grid" id="group-dkj">' -and $dkj -notmatch 'Connected repos' -and $dkj -notmatch '<h3' -and $dkj -notmatch 'mini-card') 'the group''s summary line, then its cards, an h2 each: no table, no Issues card, no mini-cards (#4113)'
 $bwj = Format-ConsumerDashboardHtml -Consumers $three -Meta @{ GeneratedAt = 'now' } -Group 'bwj'
 Assert-True ($bwj -match '<h1>BWJ repos</h1>' -and $bwj -match 'No repo owned by BWJ-Development is registered' -and $bwj -notmatch 'class="card-grid"' -and $bwj -notmatch 'class="note cd-group-summary"') 'an empty group''s page says so, and has no cards'
@@ -777,7 +777,7 @@ try {
 # its shape, the inbox holds only unjudged items, -All holds them all, and a missing checkout is refused.
 $arRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('ai-radar-' + [guid]::NewGuid().ToString('n'))
 $arAdmin = Join-Path $arRoot 'org\admin'
-$arAi = Join-Path $arRoot 'org\dkj-lifehub\Brains\b\x\dkj-repo-workflow-dkj\ai'
+$arAi = Join-Path $arRoot 'org\dkj-lifehub\Brains\b\x\dkj-solutions\ai'
 New-Item -ItemType Directory -Force -Path (Join-Path $arAdmin 'consumers'), (Join-Path $arAi 'claude'), (Join-Path $arAi 'ecosysteem') | Out-Null
 foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'plugins\dkj-repo-workflow\apps\admin\lib\general-pages-lib.ps1', 'plugins\dkj-repo-workflow\apps\admin\lib\dev-preview-rules.ps1', 'plugins\dkj-repo-workflow\apps\admin\lib\test-gate-lib.ps1', 'plugins\dkj-repo-workflow\apps\admin\lib\plugins-page-lib.ps1', 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\scripts\lib\product-pages-lib.ps1') {
     $to = Join-Path $arAdmin (Split-Path -Parent $lib)

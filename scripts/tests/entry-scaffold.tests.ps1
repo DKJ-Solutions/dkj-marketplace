@@ -1872,7 +1872,7 @@ Assert-True ($bfp.OlderDeployment.EndsWith('branch-changelog.md')) 'and its entr
 # work right now: every branch open on the day of the rename has development-cycle.md and not
 # development.md. Asserted on the current folder, because that pair is the one that existed -- there was
 # never a workflow-davekjohn/development.md, the folder having been renamed the day before.
-Assert-True ($bfp.PriorNameFile.EndsWith('dkj-policy/development-cycle.md')) 'the pre-#963 filename is still named, under the CURRENT folder'
+Assert-True ($bfp.PriorNameFile.EndsWith('.dkj/dkj-repo-workflow/development-cycle.md')) 'the pre-#963 filename is still named, under the CURRENT folder'
 Assert-True ($bfp.PriorFolderFile.EndsWith('workflow-davekjohn/development-cycle.md')) 'and the pre-#886 folder still carries the pre-#963 filename, which is the pair that really existed'
 Assert-True (-not (@($bfp.PSObject.Properties.Value) -contains 'workflow-davekjohn/development.md')) 'and the pair that never existed is NOT in the table -- a name to read that nothing can have written'
 # THE PRE-#1437 FOLDER IS THE MIRROR IMAGE OF THAT LAST ONE (September 5, 2026). 'development.md' DID exist

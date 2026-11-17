@@ -802,7 +802,7 @@ Assert-Equal $known[$known.Count - 1] (Get-PrTemplateCanonicalPlaceholder) `
 # literal path -- a template is scaffolded once and read on every branch, so it cannot name one branch's
 # document. The assert follows the shape for the same reason it followed the name before: to catch a
 # placeholder left describing a document that no longer exists.
-Assert-True ((Get-PrTemplateCanonicalPlaceholder) -match 'dkj-policy/<branch>\.md') `
+Assert-True ((Get-PrTemplateCanonicalPlaceholder) -match '\.dkj/dkj-repo-workflow/<branch>\.md') `
     'and it names the document by its current filename shape'
 # THE PRE-#1335 FORM IS STILL RECOGNISED, and that is the append-only rule this list exists for: a template
 # scaffolded on the day the prefix went is still carrying it, and dropping the form is exactly the defect

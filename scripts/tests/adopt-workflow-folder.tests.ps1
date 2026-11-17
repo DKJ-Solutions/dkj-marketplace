@@ -826,23 +826,23 @@ try {
     # move and moves nothing; -Apply moves the folder and repoints exactly the quoted path and the line
     # that START with the old folder -- prose naming it is history and stays.
     $cMv = New-FixtureConsumer -Label 'move-dotfolder'
-    New-Item -ItemType Directory -Path (Join-Path $cMv 'dkj-repo-workflow') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $cMv 'dkj-policy') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $cMv 'scripts') -Force | Out-Null
     $mvChangelog = "# Changelog`n`nOur history.`n"
-    [System.IO.File]::WriteAllText((Join-Path $cMv 'dkj-repo-workflow\CHANGELOG.md'), $mvChangelog)
+    [System.IO.File]::WriteAllText((Join-Path $cMv 'dkj-policy\CHANGELOG.md'), $mvChangelog)
     [System.IO.File]::WriteAllText((Join-Path $cMv 'scripts\repo-config.ps1'),
         ("`$script:ChangelogPath = 'dkj-policy/CHANGELOG.md'`nfunction Get-ChangelogPath { `$script:ChangelogPath }`n# the dkj-policy/ folder, in prose`n" +
          "  # was 'dkj-policy/releases/README.md' until #885`n<#`n  history: `"dkj-policy/old.md`"`n#>`n"))
-    [System.IO.File]::WriteAllText((Join-Path $cMv '.gitignore'), "/dkj-repo-workflow/dashboard/`nnode_modules/`n")
+    [System.IO.File]::WriteAllText((Join-Path $cMv '.gitignore'), "/dkj-policy/dashboard/`nnode_modules/`n")
     New-Item -ItemType Directory -Path (Join-Path $cMv '.github') -Force | Out-Null
     $mvTpl = "<!-- Filled from the DEPLOY section of dkj-policy/<branch>.md, heading and all. -->`n`nOur notes on dkj-policy/ stay.`n"
     [System.IO.File]::WriteAllText((Join-Path $cMv '.github\pull_request_template.md'), $mvTpl)
     $rMvDry = Invoke-Adopt -Dir $cMv
     Assert-Match '\[move\]\s+dkj-policy/ -> \.dkj/dkj-repo-workflow/' $rMvDry.Flat 'move: the dry run names the move'
-    Assert-True (Test-Path -LiteralPath (Join-Path $cMv 'dkj-repo-workflow\CHANGELOG.md')) 'move: and the dry run moved nothing'
+    Assert-True (Test-Path -LiteralPath (Join-Path $cMv 'dkj-policy\CHANGELOG.md')) 'move: and the dry run moved nothing'
     $rMv = Invoke-Adopt -Dir $cMv -ScriptArgs @('-Apply')
     Assert-Equal 0 $rMv.Code 'move: -Apply exits 0'
-    Assert-True (-not (Test-Path -LiteralPath (Join-Path $cMv 'dkj-repo-workflow'))) 'move: the root folder is gone'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $cMv 'dkj-policy'))) 'move: the root folder is gone'
     Assert-Equal $mvChangelog ([System.IO.File]::ReadAllText((Join-Path $cMv '.dkj\dkj-repo-workflow\CHANGELOG.md'))) 'move: the changelog arrived byte for byte'
     $mvCfg = [System.IO.File]::ReadAllText((Join-Path $cMv 'scripts\repo-config.ps1'))
     Assert-Match "ChangelogPath = '\.dkj/dkj-repo-workflow/CHANGELOG\.md'" $mvCfg 'move: the quoted seam answer is repointed'
@@ -859,6 +859,17 @@ try {
     Assert-Match 'Our notes on dkj-policy/ stay\.' $mvTplAfter 'move: and the template body below it is left as written'
     Assert-Match '\[repoint\]\s+\.github/pull_request_template\.md' $rMvDry.Flat 'move: the dry run names the template repoint'
     Assert-Match '\[exists\]\s+\.dkj/dkj-repo-workflow/CHANGELOG\.md' $rMv.Out 'move: and the scaffold that follows reads the moved folder'
+
+    # THE HARD CUT (#4209, November 17, 2026): the folder that was '.dkj/dkj-policy/' until today is a
+    # legacy name too, and the adopt move carries it to '.dkj/dkj-repo-workflow/'.
+    $cDk = New-FixtureConsumer -Label 'move-dkj-policy'
+    New-Item -ItemType Directory -Path (Join-Path $cDk '.dkj\dkj-policy') -Force | Out-Null
+    $dkChangelog = "# Changelog`n`nHistory under the old dot folder.`n"
+    [System.IO.File]::WriteAllText((Join-Path $cDk '.dkj\dkj-policy\CHANGELOG.md'), $dkChangelog)
+    $rDk = Invoke-Adopt -Dir $cDk -ScriptArgs @('-Apply')
+    Assert-Equal 0 $rDk.Code 'move .dkj/dkj-policy: -Apply exits 0'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $cDk '.dkj\dkj-policy'))) 'move .dkj/dkj-policy: the old dot folder is gone (#4209)'
+    Assert-Equal $dkChangelog ([System.IO.File]::ReadAllText((Join-Path $cDk '.dkj\dkj-repo-workflow\CHANGELOG.md'))) 'move .dkj/dkj-policy: the changelog arrived in .dkj/dkj-repo-workflow/ byte for byte (#4209)'
 
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }

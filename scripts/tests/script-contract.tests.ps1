@@ -166,7 +166,7 @@ function New-FixtureConsumer {
     # testing the record it is about -- the check reports the folder missing as its own [ERROR], which
     # would otherwise leak into every fixture. -OmitWorkflowFolder is the dedicated negative case.
     if (-not $OmitWorkflowFolder) {
-        New-Item -ItemType Directory -Path (Join-Path $root 'dkj-repo-workflow') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $root '.dkj/dkj-repo-workflow') -Force | Out-Null
     }
 
     # Empty files: the adoption inventory answers on PRESENCE only, exactly as the workflow-folder line
@@ -220,7 +220,7 @@ try {
     # tightening, never required maintenance.
     $okCount = @([regex]::Matches($r.Out, '\[OK\]')).Count
     Assert-True ($okCount -ge 27) 'happy path: at least twenty-seven [OK] lines -- every declared record this repo defines (four mandatory functions plus every optional: Get-LiveStage, the two Get-Roster* made optional by #445, the four Get-Entry* stub-wording knobs, Get-PrMergeMethod, Get-MojibakePaths, the cut-release knobs from #417 plus Get-ReleaseMajorMinMinors, Get-ReleaseHistoryPath and Get-ReleaseNoteRoot (inbound #616), BOTH note-wording maps (Get-ReleaseNoteWording, which the cut reads first, and Get-InternalNoteWording, its fallback -- inbound #605), Get-BranchTypes from inbound #580, Get-ReleaseAudienceTier from inbound #620, and the two release-notes-page knobs from August 15, 2026 -- Get-ReleasePageTitle and Get-ReleasePageWorkerName, both answered here) plus the workflow-folder existence line (August 14, 2026), nothing else'
-    Assert-Match '\[OK\]\s+workflow folder: dkj-policy/ exists' $r.Out 'happy path: the workflow folder is reported present'
+    Assert-Match '\[OK\]\s+workflow folder: .dkj/dkj-repo-workflow/ exists' $r.Out 'happy path: the workflow folder is reported present'
     # inbound #203: the run names the root it inspected and how it resolved it. Asserted on the clean
     # run too, not only on a drifted one -- the [SCOPE] line is context that must always be emitted, so
     # that the hook has something to surface the moment a finding does appear.
@@ -256,6 +256,17 @@ try {
     Assert-Match 'adopt-dkj-repo-workflow' $r.Out 'missing workflow folder: the finding names the skill that scaffolds it'
     $errCountWf = @([regex]::Matches($r.Out, '\[ERROR\]')).Count
     Assert-Equal 1 $errCountWf 'missing workflow folder: exactly one error -- every contract record is still satisfied'
+
+    # --- 1c. The folder is still at an older name -> an [ERROR] naming the move (#4209) ----------
+    #     (November 17, 2026.) The hard cut stopped every reader from reading '.dkj/dkj-policy/', so a
+    #     repo still holding it is broken rather than unmigrated, and this line is how it learns so.
+    $c = New-FixtureConsumer -OmitWorkflowFolder
+    New-Item -ItemType Directory -Path (Join-Path $c '.dkj\dkj-policy') -Force | Out-Null
+    $r = Invoke-Ps @('-ConsumerPathOverride', $c)
+    Assert-Equal 1 $r.Code 'pre-#4209 workflow folder: exit-code 1'
+    Assert-Match "\[ERROR\].*older name '\.dkj/dkj-policy/'" $r.Out 'pre-#4209 workflow folder: the ERROR names the old folder'
+    Assert-Match 'no longer read since #4209' $r.Out 'pre-#4209 workflow folder: and says the scripts no longer read it'
+    Assert-Match 'adopt-dkj-repo-workflow' $r.Out 'pre-#4209 workflow folder: and names the skill whose Part 1 moves it'
 
     # --- 2. Missing function in branch-info.ps1 (the exact #147 incident): Test-BranchName ---------
     #     new-branch crashed at runtime with "The term 'Test-BranchName' is not recognized" because

@@ -478,7 +478,7 @@ try {
     New-Item -ItemType Directory -Path $PathFix -Force | Out-Null
 
     $seamRel = '.claude\specialists\always-on-baseline.json'
-    $legacyRel = 'dkj-repo-workflow\always-on-baseline.json'
+    $legacyRel = '.dkj\dkj-repo-workflow\always-on-baseline.json'  # one workflow-folder name since the #4209 hard cut (November 17, 2026)
 
     # 1. Neither present: the answer a WRITER creates from nothing, and it must be the seam -- this is
     #    the only assert that decides where a fresh consumer's file is born.
@@ -486,7 +486,7 @@ try {
 
     # 2. Only the legacy file: an un-migrated consumer. The gate has to keep reading and writing THEIR
     #    copy, or their history is dropped without a word.
-    New-Item -ItemType Directory -Path (Join-Path $PathFix 'dkj-repo-workflow') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $PathFix '.dkj\dkj-repo-workflow') -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $PathFix $legacyRel), "{}`n", $Utf8NoBom)
     Assert-Equal (Join-Path $PathFix $legacyRel) (Get-AlwaysOnBaselinePath -RepoRoot $PathFix) 'an un-migrated consumer keeps their workflow-folder baseline'
 

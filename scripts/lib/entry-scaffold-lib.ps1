@@ -6424,9 +6424,9 @@ function Get-BranchFilePaths {
         OlderDeployment  = "$dir/branch/branch-changelog.md"
         # THE PRE-#3870 FOLDER, read and never written -- 'dkj-policy/' at the repo root, which every branch
         # open on November 7, 2026 is standing in. Only the per-branch name: every older shape under it was
-        # retired before that folder existed (see Get-BranchFileLegacyNames). Empty where $dir IS that
-        # folder -- a repo that has not moved yet -- because there the current rows above already name it.
-        PolicyFolderPerBranch         = if ($slug -and $dir -ne 'dkj-repo-workflow') { "dkj-policy/$slug.md" } else { '' }
+        # retired before that folder existed (see Get-BranchFileLegacyNames). Its guard against $dir BEING that
+        # folder went with #4209's hard cut, since $dir is always the current folder now.
+        PolicyFolderPerBranch         = if ($slug) { "dkj-policy/$slug.md" } else { '' }
         # THE PRE-#1437 FOLDER, read and never written -- 'contributing-davekjohn/', which every branch open
         # on September 5, 2026 is standing in, here and in every consumer. ContribFolder* mirrors the whole
         # set above one directory over, PER-BRANCH NAME INCLUDED, and that last part is what makes it

@@ -597,9 +597,12 @@ Chapter two's record needs somewhere to land before the first `sync/` branch eve
 `Get-ShopifySyncLogPath` is not yet answered, propose it alongside the Asana seams in step 2, in the
 same `scripts/repo-config.ps1` -- `'.dkj/dkj-repo-workflow-bwj/SYNC-LOG.md'` in both store repos.
 
-**A repo that still has a root `dkj-repo-workflow-bwj/` moves it first** (#3935), the way `adopt-dkj-repo-workflow`
-Part 1 moves a root `dkj-policy/` to `.dkj/dkj-repo-workflow/`: `git mv dkj-repo-workflow-bwj .dkj/dkj-repo-workflow-bwj`,
-then repoint `Get-ShopifySyncLogPath` if it still answers the old path. Where `.dkj/dkj-repo-workflow-bwj/`
+**A repo that still has an older folder moves it first** -- `.dkj/bwj-development/` (the name until
+#4209) or a root `bwj-development/` (until #3935) -- the way `adopt-dkj-repo-workflow` Part 1 moves
+`.dkj/dkj-policy/` to `.dkj/dkj-repo-workflow/`: `git mv .dkj/bwj-development .dkj/dkj-repo-workflow-bwj`
+(or `git mv bwj-development .dkj/dkj-repo-workflow-bwj`), then repoint `Get-ShopifySyncLogPath` if it
+still answers the old path. Until then the log keeps working where the seam points, because the path is
+the repo's own answer and no script reads the folder by name. Where `.dkj/dkj-repo-workflow-bwj/`
 already exists, move nothing and report both folders, because merging two logs is a person's call.
 
 Either way, once the seam is answered, create the file it names if it is not there yet, with nothing in

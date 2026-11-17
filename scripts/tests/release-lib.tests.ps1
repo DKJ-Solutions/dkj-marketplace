@@ -959,9 +959,9 @@ Assert-Equal '../../releases/development/4.x/4.9.0.md' (Get-RelativeLinkPath -Fr
 # before: the history stayed at releases/README.md while all three note trees moved into
 # dkj-policy/releases/, so every one of the 102 rows climbs out of releases/ and back down.
 # The two cases above it are the pre-#914 layouts and are kept -- a consumer may still have either.
-Assert-Equal '../dkj-repo-workflow/releases/changelog/4.x/4.9.0.md' (Get-RelativeLinkPath -FromDir 'releases' -To 'dkj-policy/releases/changelog/4.x/4.9.0.md') `
+Assert-Equal '../.dkj/dkj-repo-workflow/releases/changelog/4.x/4.9.0.md' (Get-RelativeLinkPath -FromDir 'releases' -To '.dkj/dkj-repo-workflow/releases/changelog/4.x/4.9.0.md') `
     'this repo since #914: the history stays at the root and the notes moved into the folder, so the row climbs out'
-Assert-Equal '../dkj-repo-workflow/releases/audience/4.x/4.9.0.md' (Get-RelativeLinkPath -FromDir 'releases' -To 'dkj-policy/releases/audience/4.x/4.9.0.md') `
+Assert-Equal '../.dkj/dkj-repo-workflow/releases/audience/4.x/4.9.0.md' (Get-RelativeLinkPath -FromDir 'releases' -To '.dkj/dkj-repo-workflow/releases/audience/4.x/4.9.0.md') `
     'and the same for a release that has a hand-written note -- the shape 30 rows already had'
 Assert-Equal 'CHANGELOG.md' (Get-RelativeLinkPath -FromDir '' -To 'CHANGELOG.md') `
     'an empty from-dir returns the path itself'

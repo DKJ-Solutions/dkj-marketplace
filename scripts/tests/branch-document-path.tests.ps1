@@ -127,34 +127,36 @@ Write-Host ""
 Write-Host "layer 2 -- the predicate the two lint checks read"
 Assert-True (Test-IsPerBranchDocumentPath -RelativePath '.dkj/dkj-repo-workflow/fix-x-v1.md') 'a per-branch document in the moved folder is recognised, its leading dot kept (#3870)'
 Assert-True (Test-IsPerBranchDocumentPath -RelativePath './.dkj/dkj-repo-workflow/fix-x-v1.md') 'and a leading ./ is stripped as a prefix, not the dot after it'
-Assert-True (Test-IsPerBranchDocumentPath -RelativePath 'dkj-policy/fix-x-v1.md') 'and one in the pre-#3870 root folder still is, for a repo that has not moved'
-Assert-True (Test-IsPerBranchDocumentPath -RelativePath '\dkj-repo-workflow\fix-x-v1.md') 'separators are normalised -- one check builds its path from a Windows path, the other from the seam'
-Assert-True (Test-IsPerBranchDocumentPath -RelativePath './dkj-repo-workflow/fix-x-v1.md') 'and a leading ./ does not hide it'
-Assert-True (Test-IsPerBranchDocumentPath -RelativePath 'dkj-policy/development-fix-x-v1.md') 'the pre-#1335 prefixed name still matches, so a branch open across the rename keeps its exclusions'
+# Inverted by #4209 (November 17, 2026): the pre-#3870 root folder and the '.dkj/dkj-policy' folder were read here until the hard cut; neither is a workflow folder any more.
+Assert-True (-not (Test-IsPerBranchDocumentPath -RelativePath 'dkj-policy/fix-x-v1.md')) 'the pre-#3870 root folder is NOT read any more since #4209''s hard cut'
+Assert-True (-not (Test-IsPerBranchDocumentPath -RelativePath '.dkj/dkj-policy/fix-x-v1.md')) 'and neither is the pre-#4209 .dkj/dkj-policy folder'
+Assert-True (Test-IsPerBranchDocumentPath -RelativePath '\.dkj\dkj-repo-workflow\fix-x-v1.md') 'separators are normalised -- one check builds its path from a Windows path, the other from the seam'
+Assert-True (Test-IsPerBranchDocumentPath -RelativePath '.\.dkj/dkj-repo-workflow/fix-x-v1.md') 'and a leading ./ does not hide it'
+Assert-True (Test-IsPerBranchDocumentPath -RelativePath '.dkj/dkj-repo-workflow/development-fix-x-v1.md') 'the pre-#1335 prefixed name still matches, so a branch open across the rename keeps its exclusions'
 # THE SHARED NAME FALLS INSIDE THE PATTERN SINCE #1335, where the prefixed glob excluded it, and that is
 # accepted rather than special-cased back out. It is a branch development document -- the pre-#1255 one --
 # and both callers of this predicate use it to exempt exactly that kind of file; both also list the shared
 # name themselves, so nothing downstream changes either way. Asserted so the widening is a decision on the
 # record rather than a side effect nobody noticed.
-Assert-True (Test-IsPerBranchDocumentPath -RelativePath 'dkj-policy/development.md') 'the pre-#1255 shared name now falls inside the pattern too, which costs nothing at either caller'
+Assert-True (Test-IsPerBranchDocumentPath -RelativePath '.dkj/dkj-repo-workflow/development.md') 'the pre-#1255 shared name now falls inside the pattern too, which costs nothing at either caller'
 Assert-True (-not (Test-IsPerBranchDocumentPath -RelativePath 'docs/fix-x-v1.md')) 'a same-named file elsewhere in the tree is not swept in'
 Assert-True (-not (Test-IsPerBranchDocumentPath -RelativePath '')) 'an empty path is not a document'
 # THE THREE PERMANENT PAGES, and this is the half the widened pattern made necessary. Both callers use this
 # predicate to EXEMPT a file from a check, so a wrong true is silence rather than noise.
 foreach ($reserved in @('CHANGELOG.md', 'README.md', 'CONTRIBUTING.md')) {
-    Assert-True (-not (Test-IsPerBranchDocumentPath -RelativePath "dkj-policy/$reserved")) "the folder's own $reserved is not a branch document"
+    Assert-True (-not (Test-IsPerBranchDocumentPath -RelativePath ".dkj/dkj-repo-workflow/$reserved")) "the folder's own $reserved is not a branch document"
 }
 # THE SUBDIRECTORY, MEASURED RATHER THAN IMAGINED. '*' in -like matches a '/' like any other character, so
-# the anchored form 'dkj-policy/*.md' also matched 'dkj-policy/releases/history.md'
+# the anchored form '.dkj/dkj-repo-workflow/*.md' also matched '.dkj/dkj-repo-workflow/releases/history.md'
 # -- which then resolved its links from the wrong base and reported 26 of them dead. Caught by the lint gate
 # on this change's first run.
-Assert-True (-not (Test-IsPerBranchDocumentPath -RelativePath 'dkj-policy/releases/history.md')) 'a file in a SUBDIRECTORY of the folder is not a branch document'
-Assert-True (-not (Test-IsPerBranchDocumentPath -RelativePath 'dkj-policy/releases/audience/4.x/4.0.0.md')) 'and neither is one further down'
+Assert-True (-not (Test-IsPerBranchDocumentPath -RelativePath '.dkj/dkj-repo-workflow/releases/history.md')) 'a file in a SUBDIRECTORY of the folder is not a branch document'
+Assert-True (-not (Test-IsPerBranchDocumentPath -RelativePath '.dkj/dkj-repo-workflow/releases/audience/4.x/4.0.0.md')) 'and neither is one further down'
 
 Write-Host ""
 Write-Host "layer 3 -- the resolver, against a real tree"
 $fx = Join-Path ([System.IO.Path]::GetTempPath()) ("bdp-" + [guid]::NewGuid().ToString('N'))
-$fxDir = Join-Path $fx 'dkj-repo-workflow'
+$fxDir = Join-Path $fx '.dkj\dkj-repo-workflow'
 $null = New-Item -ItemType Directory -Path $fxDir -Force
 try {
     $mine   = Join-Path $fxDir 'fix-mine-v1.md'
@@ -163,12 +165,12 @@ try {
     $shared = Join-Path $fxDir 'development.md'
 
     # Nothing written yet: a writer must be sent to the name it should CREATE, not to a path that exists.
-    Assert-Equal 'dkj-policy/fix-mine-v1.md' `
+    Assert-Equal '.dkj/dkj-repo-workflow/fix-mine-v1.md' `
         (Resolve-BranchFilePath -Kind Deployment -RepoRoot $fx -Branch 'fix/mine-v1') `
         'an empty tree sends the caller to this branch own name'
 
     New-BranchDoc -Path $mine -Branch 'fix/mine-v1'
-    Assert-Equal 'dkj-policy/fix-mine-v1.md' `
+    Assert-Equal '.dkj/dkj-repo-workflow/fix-mine-v1.md' `
         (Resolve-BranchFilePath -Kind Deployment -RepoRoot $fx -Branch 'fix/mine-v1') `
         'the branch own document is found'
 
@@ -177,10 +179,10 @@ try {
     # non-trunk branch -- on that trunk, whichever sorted first -- and the fold would then fold somebody
     # else's entry under this branch's name. That is the stranding hazard reported on #1255.
     New-BranchDoc -Path $other -Branch 'fix/other-v1'
-    Assert-Equal 'dkj-policy/fix-mine-v1.md' `
+    Assert-Equal '.dkj/dkj-repo-workflow/fix-mine-v1.md' `
         (Resolve-BranchFilePath -Kind Deployment -RepoRoot $fx -Branch 'fix/mine-v1') `
         'with another branch document beside it, the exact branch still wins'
-    Assert-Equal 'dkj-policy/fix-other-v1.md' `
+    Assert-Equal '.dkj/dkj-repo-workflow/fix-other-v1.md' `
         (Resolve-BranchFilePath -Kind Deployment -RepoRoot $fx -Branch 'fix/other-v1') `
         'and the other branch gets its own, from the same tree'
 
@@ -192,20 +194,20 @@ try {
     [System.IO.File]::WriteAllText((Join-Path $fxDir 'CHANGELOG.md'),
         "# Changelog`r`n`r`n## [Unreleased]`r`n`r`n### DEPLOY: fix/already-folded-v1 * 20260903-101010`r`n`r`nbody`r`n",
         (New-Object System.Text.UTF8Encoding($false)))
-    Assert-Equal 'dkj-policy/fix-mine-v1.md' `
+    Assert-Equal '.dkj/dkj-repo-workflow/fix-mine-v1.md' `
         (Resolve-BranchFilePath -Kind Deployment -RepoRoot $fx -Branch 'fix/mine-v1') `
         'a changelog full of folded entries is never mistaken for a branch document'
     # The any-branch pass takes the first candidate declaring A branch, and the sweep is sorted -- so
     # 'CHANGELOG.md' would come before every real document if it were in the sweep at all. It is not, so
     # what answers is a real one. The assert is on what it is NOT, because which of the two real documents
     # wins is the renamed-branch behaviour asserted a few lines down and not this test's subject.
-    Assert-True ((Resolve-BranchFilePath -Kind Deployment -RepoRoot $fx -Branch 'fix/nothing-here-v1') -ne 'dkj-policy/CHANGELOG.md') `
+    Assert-True ((Resolve-BranchFilePath -Kind Deployment -RepoRoot $fx -Branch 'fix/nothing-here-v1') -ne '.dkj/dkj-repo-workflow/CHANGELOG.md') `
         'and a branch with no document of its own is not handed the changelog by the any-branch pass'
 
     # A branch RENAMED after its document was written declares its old name. Refusing to see it would
     # strand exactly the half-finished work the dual-read exists to protect, so the any-branch pass stays.
     Remove-Item -LiteralPath $mine -Force
-    Assert-Equal 'dkj-policy/fix-other-v1.md' `
+    Assert-Equal '.dkj/dkj-repo-workflow/fix-other-v1.md' `
         (Resolve-BranchFilePath -Kind Deployment -RepoRoot $fx -Branch 'fix/renamed-v1') `
         'no document names this branch, so one naming A branch is still found -- the renamed-branch case'
     Remove-Item -LiteralPath $other -Force
@@ -214,14 +216,14 @@ try {
     # and it has to keep resolving or its entry is stranded unfolded. The document is in the LEGACY shape
     # too, headings and all, because that is what such a branch actually carries.
     New-LegacyBranchDoc -Path $prior -Branch 'fix/inflight-v1'
-    Assert-Equal 'dkj-policy/development-fix-inflight-v1.md' `
+    Assert-Equal '.dkj/dkj-repo-workflow/development-fix-inflight-v1.md' `
         (Resolve-BranchFilePath -Kind Deployment -RepoRoot $fx -Branch 'fix/inflight-v1') `
         'a branch still on the pre-#1335 prefixed name resolves to it'
     Remove-Item -LiteralPath $prior -Force
 
     # THE #1255 MIGRATION ARM, unchanged: the shared name, one rename further back.
     New-LegacyBranchDoc -Path $shared -Branch 'fix/older-v1'
-    Assert-Equal 'dkj-policy/development.md' `
+    Assert-Equal '.dkj/dkj-repo-workflow/development.md' `
         (Resolve-BranchFilePath -Kind Deployment -RepoRoot $fx -Branch 'fix/older-v1') `
         'a branch still on the pre-#1255 shared name resolves to it'
 
@@ -233,7 +235,7 @@ try {
     # has to argue with a test rather than with a comment.
     Remove-Item -LiteralPath $shared -Force
     New-BranchDoc -Path $shared -Branch (Get-BranchTrunkName)
-    Assert-Equal 'dkj-policy/development.md' `
+    Assert-Equal '.dkj/dkj-repo-workflow/development.md' `
         (Resolve-BranchFilePath -Kind Deployment -RepoRoot $fx -Branch 'fix/mine-v1') `
         'a trunk-declaring leftover claims no branch, so the reader is sent to the file that at least exists'
 
@@ -243,13 +245,13 @@ try {
     # IT CANNOT SWEEP A DIRECTORY, which is why the prefixed predecessor is NAMED in the legacy list rather
     # than left to the Pattern -- the second assert here is that half.
     Remove-Item -LiteralPath $shared -Force
-    $readerDocs = @{ 'dkj-policy/fix-mine-v1.md' = '## fix/mine-v1' }
+    $readerDocs = @{ '.dkj/dkj-repo-workflow/fix-mine-v1.md' = '## fix/mine-v1' }
     $reader = {
         param([string]$Rel)
         if ($readerDocs.ContainsKey($Rel)) { return $readerDocs[$Rel] }
         return $null
     }
-    Assert-Equal 'dkj-policy/fix-mine-v1.md' `
+    Assert-Equal '.dkj/dkj-repo-workflow/fix-mine-v1.md' `
         (Resolve-BranchFilePath -Kind Cycle -Reader $reader -Branch 'fix/mine-v1') `
         'the Reader arm finds the per-branch document when the caller names the branch'
     $readerDocs = @{ '.dkj/dkj-repo-workflow/development-fix-mine-v1.md' = ('## Development: ' + $BT + 'fix/mine-v1' + $BT) }
@@ -257,7 +259,7 @@ try {
         (Resolve-BranchFilePath -Kind Cycle -Reader $reader -Branch 'fix/mine-v1') `
         'and it finds the pre-#1335 name too, which only the named candidate can reach on this arm'
 
-    # THIS FIXTURE IS AN UNMOVED CONSUMER -- a root 'dkj-policy/' folder -- AND THAT IS WHERE #3881 BIT.
+    # THIS FIXTURE IS AN UNMOVED CONSUMER -- a root '.dkj/dkj-repo-workflow/' folder -- AND THAT IS WHERE #3881 BIT.
     # PolicyFolderPerBranch answers '' there by design, the legacy list carried that '' through, and
     # new-branch.ps1 binds the list to a Mandatory [string[]] -Legacy whose AllowEmptyCollection does not
     # cover an empty ELEMENT: the branch was created and its document never written. The second assert
@@ -275,7 +277,7 @@ finally {
 Write-Host ""
 Write-Host "layer 4 -- the sweep, and what it refuses to see"
 $sx = Join-Path ([System.IO.Path]::GetTempPath()) ("bdp-sweep-" + [guid]::NewGuid().ToString('N'))
-$sxDir = Join-Path $sx 'dkj-repo-workflow'
+$sxDir = Join-Path $sx '.dkj\dkj-repo-workflow'
 $null = New-Item -ItemType Directory -Path $sxDir -Force
 $null = New-Item -ItemType Directory -Path (Join-Path $sxDir 'releases') -Force
 try {
@@ -289,8 +291,8 @@ try {
 
     $swept = @(Get-PerBranchDocumentRels -RepoRoot $sx)
     Assert-Equal 2 $swept.Count 'the sweep sees both branch documents and none of the permanent pages'
-    Assert-True ($swept -contains 'dkj-policy/feat-one-v1.md') 'today name is swept'
-    Assert-True ($swept -contains 'dkj-policy/development-feat-two-v1.md') 'and so is the pre-#1335 one, at no extra cost'
+    Assert-True ($swept -contains '.dkj/dkj-repo-workflow/feat-one-v1.md') 'today name is swept'
+    Assert-True ($swept -contains '.dkj/dkj-repo-workflow/development-feat-two-v1.md') 'and so is the pre-#1335 one, at no extra cost'
     Assert-Equal 0 @(Get-PerBranchDocumentRels -RepoRoot (Join-Path $sx 'nowhere')).Count 'a tree with no workflow folder answers empty rather than throwing'
 }
 finally {

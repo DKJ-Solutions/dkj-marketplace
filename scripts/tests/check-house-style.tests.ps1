@@ -460,7 +460,7 @@ Assert-True (Test-HouseStyleSourceRepo -RepoRoot $RepoRoot) 'this repo is read a
 $wf = [System.IO.File]::ReadAllText((Join-Path $RepoRoot '.github\workflows\reusable-house-style.yml'))
 Assert-True ($wf -match 'ref: \$\{\{ steps\.pin\.outputs\.tag \}\}') 'the reusable gate checks out the skill page at the pinned tag'
 Assert-True ($wf -match "\.workflow-pin/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook/SKILL\.md'" -and $wf -match 'check-house-style\.ps1 -SkillPath \$skill') '...and hands that page to the gate'
-Assert-True ($wf -match 'sparse-checkout: \|\s+plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook\s+plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/house-style') '...fetching the pre-rename skill folder too, since a tag cut before the rename carries the page there'
+Assert-True ($wf -match 'sparse-checkout: \|\s+plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook\s+plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook\s+plugins/dkj-policy/extensions/dkj-solutions/skills/house-style\s+plugins/dkj-policy/dkj-solutions/skills/dkj-brandbook\s+plugins/dkj-policy/dkj-solutions/skills/house-style') '...fetching the pre-#4209, pre-#3871 and pre-rename skill folders too, since a tag cut before any of those carries the page there'
 
 Write-Host ''
 # A broken fixture fails the run even when every assert passed (issue #1635).

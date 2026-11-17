@@ -68,20 +68,51 @@ to be merged right before the release cut that carries it.
 - [x] Brand book: the reusable gate and the local tag-page fetch try the pre-#4209 paths for a tag cut before it
 - [x] `check-plugin-integrity`: `*-repo-workflow` / `*-repo-workflow-*` accepted as the policy family
 - [x] Shared-script mirrors rebuilt
-- [ ] Test fixtures that modelled an unmoved consumer or the old names brought to the hard cut
+- [x] Test fixtures that modelled an unmoved consumer or the old names brought to the hard cut (16 suites)
+- [x] Two org-name comparisons the bulk rewrite had broken restored: `Get-ConsumerOwnerGroup` (BWJ-Development / DKJ-Solutions) and `ai-radar.ps1`'s `dkj-solutions/ai` dossier folder
+- [x] `pr-body-lib.ps1`'s append-only placeholder list keeps the `.dkj/dkj-policy/` line and appends the new one
+- [x] `check-script-contract.ps1`: a repo still on an older folder is an `[ERROR]` naming the move, since nothing else reads it any more
+- [x] `adopt-workflow-folder.tests.ps1` proves `.dkj/dkj-policy/` is moved; `script-contract.tests.ps1` proves the new error
 
 ### TEST
 
-- [ ] The four gates green (`check-roster-sync`, `check-plugin-integrity`, `check-script-contract`, `check-unfolded-entry`)
-- [ ] The full suite gate green
+- [x] The four gates green (`check-roster-sync`, `check-plugin-integrity`, `check-script-contract`, `check-unfolded-entry`)
+- [x] The 16 suites that failed after the rename re-run green standalone; the full pool runs in open-pr's gate
 
 ### DEPLOY: feat/4209-rename-dkj-repo-workflow
 
-**Score:**
+Inside this repo the workflow plugin and its two extensions carry new names, and so does every path,
+id, skill and test that named them: `plugins/dkj-repo-workflow/`, `.dkj/dkj-repo-workflow/`, and the
+retired-name machinery that maps the old ids.
+
+**Score:** 4
 
 #### What makes this deploy extra special
 
-**Score:**
+**Every consumer has to migrate, once, and it is a hard cut** (#4209). The workflow plugin `dkj-policy`
+is now `dkj-repo-workflow`, `dkj-solutions` is `dkj-repo-workflow-dkj` and `bwj-development` is
+`dkj-repo-workflow-bwj`, and the workflow folder `.dkj/dkj-policy/` is now `.dkj/dkj-repo-workflow/`.
+The shared scripts read the new folder only, so a repo that has not moved finds no branch document.
+
+To migrate a consumer, on a branch:
+
+1. In `.claude/settings.json`, replace each `enabledPlugins` key: `dkj-policy@dkj-marketplace` with
+   `dkj-repo-workflow@dkj-marketplace`, `dkj-solutions@...` with `dkj-repo-workflow-dkj@...`,
+   `bwj-development@...` with `dkj-repo-workflow-bwj@...`; then `claude plugin install <id> --scope project`
+   for each. `plugin-versions` and `update-plugins` name every retired id with this repair.
+2. Run Part 1 of `adopt-dkj-repo-workflow` with `-Apply`. It moves `.dkj/dkj-policy/` to
+   `.dkj/dkj-repo-workflow/` in one `git mv`, repoints the quoted seam paths in `scripts/repo-config.ps1`,
+   the `.gitignore` lines and the PR template's first line, and rewrites the `CLAUDE.md` imports of the
+   constitution and the extensions to their new paths.
+3. Move the `ref:` pin in `fold-on-merge.yml` and `merge-on-green.yml` to the release that ships this
+   (`adopt-ci-floor` prints the line); a pin below it reads the old folder and fails green.
+4. A BWJ store repo may move `.dkj/bwj-development/` to `.dkj/dkj-repo-workflow-bwj/` and repoint
+   `Get-ShopifySyncLogPath`, as `adopt-dkj-repo-workflow-bwj` describes. It is optional: the sync log
+   lives wherever that seam points.
+
+Until step 2 runs, `script-contract-sessioncheck` reports the old folder as an `[ERROR]` naming the move.
+
+**Score:** 5
 
 #### Pull Request
 

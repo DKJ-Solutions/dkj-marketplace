@@ -310,8 +310,8 @@ function Get-ConsumerOwnerGroup {
     param([AllowNull()][AllowEmptyString()][string]$Repo)
     $owner = if ($Repo -and $Repo.Contains('/')) { $Repo.Split('/')[0].ToLowerInvariant() } else { '' }
     switch ($owner) {
-        'dkj-repo-workflow-bwj' { return 'bwj' }
-        'dkj-repo-workflow-dkj'   { return 'dkj' }
+        'bwj-development' { return 'bwj' }
+        'dkj-solutions'   { return 'dkj' }
         default           { return 'other' }
     }
 }

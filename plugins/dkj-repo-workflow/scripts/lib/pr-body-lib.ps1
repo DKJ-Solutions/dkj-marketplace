@@ -1082,6 +1082,9 @@ function Get-PrDescriptionPlaceholderDefaults {
         # AND THE FOLDER MOVED UNDER '.dkj/' (#3870, November 7, 2026). Appended for #952's reason once more:
         # every consumer's template still carries the line above, and it stays recognised. The last line is
         # the one that is WRITTEN.
+        "<!-- Filled from the DEPLOY section of .dkj/dkj-policy/<branch>.md, heading and all. Opening a PR by hand? Paste that whole section here, starting at its '### DEPLOY:' line. -->",
+        # AND THE FOLDER WAS RENAMED WITH THE PLUGIN (#4209, November 17, 2026). Appended for #952's reason:
+        # a template scaffolded between #3870 and #4209 carries the line above, and it stays recognised.
         "<!-- Filled from the DEPLOY section of .dkj/dkj-repo-workflow/<branch>.md, heading and all. Opening a PR by hand? Paste that whole section here, starting at its '### DEPLOY:' line. -->"
     )
 }

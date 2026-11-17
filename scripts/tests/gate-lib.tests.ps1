@@ -1164,12 +1164,12 @@ exit __EXIT__
     # THE RESOLVER READS TWO OPTIONAL SEAMS AND NEITHER IS REQUIRED. With neither defined it must hand
     # back an EMPTY list -- which the verdict above refuses on -- rather than a default anybody inherits.
     Assert-Equal 0 (@(Get-ReleaseNoteTreeRoots -RepoRoot $rN)).Count 'with neither seam defined the resolver returns nothing to hold anything to'
-    function Get-ReleaseNoteRoot { return 'dkj-policy/releases/audience/' }
-    Assert-Equal 'dkj-policy/releases/audience' (@(Get-ReleaseNoteTreeRoots -RepoRoot $rN))[0] 'a trailing slash is normalised away, so the caller never has to'
-    function Get-ReleaseInternalNotesRoot { return 'dkj-repo-workflow\releases\internal' }
+    function Get-ReleaseNoteRoot { return '.dkj/dkj-repo-workflow/releases/audience/' }
+    Assert-Equal '.dkj/dkj-repo-workflow/releases/audience' (@(Get-ReleaseNoteTreeRoots -RepoRoot $rN))[0] 'a trailing slash is normalised away, so the caller never has to'
+    function Get-ReleaseInternalNotesRoot { return '.dkj\dkj-repo-workflow\releases\internal' }
     $bothRoots = @(Get-ReleaseNoteTreeRoots -RepoRoot $rN)
     Assert-Equal 2 $bothRoots.Count 'both seams are read when both are defined'
-    Assert-True ($bothRoots -contains 'dkj-policy/releases/internal') 'and a backslashed answer is forward-slashed, so it matches what git reports'
+    Assert-True ($bothRoots -contains '.dkj/dkj-repo-workflow/releases/internal') 'and a backslashed answer is forward-slashed, so it matches what git reports'
     Remove-Item -LiteralPath 'function:Get-ReleaseNoteRoot', 'function:Get-ReleaseInternalNotesRoot' -ErrorAction SilentlyContinue
 
     # THE SKIP MUST WRITE NOTHING, on -SkipTests' own rule: this run did not measure the suites, so

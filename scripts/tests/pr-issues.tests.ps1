@@ -3073,8 +3073,8 @@ Assert-True ($shipText -like '*exit 1*') 'a stale certificate is a hard refusal 
 Write-Host ""
 Write-Host "Test-IsFoldOnlyCommit -- the fold's two-path shape, read off the diff (issue #1592)" -ForegroundColor Cyan
 
-$clog = 'dkj-policy/CHANGELOG.md'
-$edir = 'dkj-repo-workflow'
+$clog = '.dkj/dkj-repo-workflow/CHANGELOG.md'
+$edir = '.dkj/dkj-repo-workflow'
 $reserved = @('README.md', 'CONTRIBUTING.md', 'CHANGELOG.md')
 function Test-Fold {
     param([string[]]$Lines, [string]$Changelog = $clog, [string]$Dir = $edir)
@@ -3082,28 +3082,28 @@ function Test-Fold {
 }
 
 # The real thing: 4ea4f31b, one of the three commits that voided PR #1571's refused certificates.
-$realFold = @("M`tdkj-repo-workflow/CHANGELOG.md", "D`tdkj-repo-workflow/feat-consumer-readme-update-topup.md")
+$realFold = @("M`t.dkj/dkj-repo-workflow/CHANGELOG.md", "D`t.dkj/dkj-repo-workflow/feat-consumer-readme-update-topup.md")
 Assert-Equal $true (Test-Fold -Lines $realFold) 'the measured fold commit (changelog modified + branch document deleted) reads as a fold'
 
 # A multi-branch fold: fold-changelog-entry.ps1 folds several entries in one commit.
-Assert-Equal $true (Test-Fold -Lines @("M`t$clog", "D`tdkj-repo-workflow/fix-a.md", "D`tdkj-repo-workflow/fix-b.md")) 'a fold of several branches at once still reads as a fold'
+Assert-Equal $true (Test-Fold -Lines @("M`t$clog", "D`t.dkj/dkj-repo-workflow/fix-a.md", "D`t.dkj/dkj-repo-workflow/fix-b.md")) 'a fold of several branches at once still reads as a fold'
 
 # A repo folding for the first time ADDS the changelog rather than modifying it.
-Assert-Equal $true (Test-Fold -Lines @("A`t$clog", "D`tdkj-repo-workflow/fix-a.md")) 'an added changelog (a repo folding for the first time) still reads as a fold'
+Assert-Equal $true (Test-Fold -Lines @("A`t$clog", "D`t.dkj/dkj-repo-workflow/fix-a.md")) 'an added changelog (a repo folding for the first time) still reads as a fold'
 
 # THE DELETION IS THE SIGNATURE, and without it an ordinary changelog-only pull request would be
 # exempted -- this repo's own suites assert on that file's intro, so its reach is not vouchable.
 Assert-Equal $false (Test-Fold -Lines @("M`t$clog")) 'the changelog alone is NOT a fold -- no branch document was removed'
-Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "M`tdkj-repo-workflow/fix-a.md")) 'a changelog beside an EDITED branch document is not a fold either'
+Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "M`t.dkj/dkj-repo-workflow/fix-a.md")) 'a changelog beside an EDITED branch document is not a fold either'
 
 # And a branch document removed without the changelog being written is not the fold's shape.
-Assert-Equal $false (Test-Fold -Lines @("D`tdkj-repo-workflow/fix-a.md")) 'a branch-document deletion alone is NOT a fold'
+Assert-Equal $false (Test-Fold -Lines @("D`t.dkj/dkj-repo-workflow/fix-a.md")) 'a branch-document deletion alone is NOT a fold'
 
 # THE BOUND IS TWO PATHS. Anything else in the diff disqualifies the commit, which is what keeps the
 # exemption exactly the size the fold exception was granted at.
-Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`tdkj-repo-workflow/fix-a.md", "M`tscripts/lib/pr-issues-lib.ps1")) 'a script riding along disqualifies the commit -- this is the case #1292 was filed on'
-Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`tdkj-repo-workflow/fix-a.md", "M`tscripts/tests/new-branch.tests.ps1")) 'and so does a test file, which is #1292''s own instance verbatim'
-Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`tdkj-repo-workflow/fix-a.md", "M`tREADME.md")) 'a root doc riding along disqualifies it too -- the bound is the two paths, not "docs only"'
+Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`t.dkj/dkj-repo-workflow/fix-a.md", "M`tscripts/lib/pr-issues-lib.ps1")) 'a script riding along disqualifies the commit -- this is the case #1292 was filed on'
+Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`t.dkj/dkj-repo-workflow/fix-a.md", "M`tscripts/tests/new-branch.tests.ps1")) 'and so does a test file, which is #1292''s own instance verbatim'
+Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`t.dkj/dkj-repo-workflow/fix-a.md", "M`tREADME.md")) 'a root doc riding along disqualifies it too -- the bound is the two paths, not "docs only"'
 
 # AND THE BOUND HOLDS INSIDE THE FOLDER TOO -- the hole the pre-merge code review found. The three asserts
 # above all disqualify on the PATH; these two disqualify on the STATUS, which the first build did not do:
@@ -3112,30 +3112,30 @@ Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`tdkj-repo-workflow/fix-a.
 # cannot write that shape -- every path it names beside the changelog is one it has just removed -- and
 # that is the point: this function's job is to PROVE the fold wrote a commit, so a shape it accepts
 # without proof is the false positive it exists to refuse.
-Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`tdkj-repo-workflow/fix-a.md", "A`tdkj-repo-workflow/sneaky.md")) 'an ADDED markdown file in the entry folder riding along disqualifies the commit'
-Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`tdkj-repo-workflow/fix-a.md", "M`tdkj-repo-workflow/unrelated.md")) 'and so does an EDITED one -- every branch document in a fold is a deletion, not merely one of them'
+Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`t.dkj/dkj-repo-workflow/fix-a.md", "A`t.dkj/dkj-repo-workflow/sneaky.md")) 'an ADDED markdown file in the entry folder riding along disqualifies the commit'
+Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`t.dkj/dkj-repo-workflow/fix-a.md", "M`t.dkj/dkj-repo-workflow/unrelated.md")) 'and so does an EDITED one -- every branch document in a fold is a deletion, not merely one of them'
 
 # THE FOLDER'S OWN PERMANENT PAGES ARE NOT BRANCH DOCUMENTS, matched case-insensitively for the reason
 # Get-BranchFilePaths.ReservedNames itself gives (Windows hands back 'Readme.md' for 'README.md').
-Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`tdkj-repo-workflow/README.md")) 'the folder''s README is not a branch document'
-Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`tdkj-repo-workflow/Contributing.md")) 'nor its contributing page, whatever its casing'
+Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`t.dkj/dkj-repo-workflow/README.md")) 'the folder''s README is not a branch document'
+Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`t.dkj/dkj-repo-workflow/Contributing.md")) 'nor its contributing page, whatever its casing'
 
 # A DELETED CHANGELOG IS NOT A FOLD -- reading it as one would exempt the single commit that could take
 # the file this whole cycle depends on off the trunk.
-Assert-Equal $false (Test-Fold -Lines @("D`t$clog", "D`tdkj-repo-workflow/fix-a.md")) 'a DELETED changelog is not a fold, however fold-shaped the rest looks'
+Assert-Equal $false (Test-Fold -Lines @("D`t$clog", "D`t.dkj/dkj-repo-workflow/fix-a.md")) 'a DELETED changelog is not a fold, however fold-shaped the rest looks'
 
 # Structure the fold does not produce: a nested path, a non-markdown file, a rename or a copy.
-Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`tdkj-repo-workflow/releases/history.md")) 'a path NESTED below the entry folder is not a branch document'
+Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`t.dkj/dkj-repo-workflow/releases/history.md")) 'a path NESTED below the entry folder is not a branch document'
 
 # THE ONE KNOWN FALSE NEGATIVE, ASSERTED SO IT IS A DECISION AND NOT A SURPRISE. Folding a branch cut
 # before the August 23, 2026 document merge can also remove Get-BranchFilePaths' LegacyCycle, which is
 # nested -- so that fold is NOT exempted and its ship gets the ordinary pre-#1592 refusal. Left as it is
 # on purpose: admitting a subfolder to buy back a vanishingly rare shape widens the bound for every
 # commit, and the bound is the whole of what this function has to offer.
-Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`tdkj-repo-workflow/fix-a.md", "D`tdkj-repo-workflow/branch/branch-cycle.md")) 'a legacy fold that also removes the nested branch-cycle file is NOT exempted -- a false negative, which is the safe direction'
-Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`tdkj-repo-workflow/fix-a.txt")) 'a non-markdown file in the folder is not a branch document'
-Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "R100`tdkj-repo-workflow/fix-a.md`tdkj-repo-workflow/fix-b.md")) 'a rename (three fields) disqualifies rather than being half-read'
-Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "C`tdkj-repo-workflow/fix-a.md`tdkj-repo-workflow/fix-b.md")) 'and so does a copy'
+Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`t.dkj/dkj-repo-workflow/fix-a.md", "D`t.dkj/dkj-repo-workflow/branch/branch-cycle.md")) 'a legacy fold that also removes the nested branch-cycle file is NOT exempted -- a false negative, which is the safe direction'
+Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "D`t.dkj/dkj-repo-workflow/fix-a.txt")) 'a non-markdown file in the folder is not a branch document'
+Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "R100`t.dkj/dkj-repo-workflow/fix-a.md`t.dkj/dkj-repo-workflow/fix-b.md")) 'a rename (three fields) disqualifies rather than being half-read'
+Assert-Equal $false (Test-Fold -Lines @("M`t$clog", "C`t.dkj/dkj-repo-workflow/fix-a.md`t.dkj/dkj-repo-workflow/fix-b.md")) 'and so does a copy'
 
 # FAILS CLOSED ON EVERY MISSING INPUT. An unresolved seam must leave the commit counted exactly as it
 # was before this function existed, never exempted by default.
@@ -3143,7 +3143,7 @@ Assert-Equal $false (Test-IsFoldOnlyCommit -NameStatusLines $realFold -Changelog
 Assert-Equal $false (Test-IsFoldOnlyCommit -NameStatusLines $realFold -ChangelogPath $clog -EntryDirectory '') 'no entry directory -> not a fold (fails closed)'
 Assert-Equal $false (Test-IsFoldOnlyCommit -ChangelogPath $clog -EntryDirectory $edir) 'no diff at all -> not a fold, never a vacuous yes'
 Assert-Equal $false (Test-Fold -Lines @('', '   ', $null)) 'a diff of blank lines only -> not a fold'
-Assert-Equal $false (Test-Fold -Lines @('M dkj-policy/CHANGELOG.md')) 'a SPACE-separated line (not git''s tab form) is not parsed into a fold'
+Assert-Equal $false (Test-Fold -Lines @('M .dkj/dkj-repo-workflow/CHANGELOG.md')) 'a SPACE-separated line (not git''s tab form) is not parsed into a fold'
 
 # A repo still carrying a pre-rename folder name simply gets no exemption -- the same refusal it gets
 # today, which is why the folder is a parameter rather than a literal.
@@ -3152,7 +3152,7 @@ Assert-Equal $true (Test-IsFoldOnlyCommit -NameStatusLines @("M`tcontributing-da
 
 # NORMALISATION: git reports forward slashes, a Windows seam may answer with backslashes. Comparing the
 # two spellings is the one way this could silently drop a real path out of the fold's bound.
-Assert-Equal $true (Test-IsFoldOnlyCommit -NameStatusLines $realFold -ChangelogPath 'dkj-repo-workflow\CHANGELOG.md' -EntryDirectory 'dkj-repo-workflow\' -ReservedNames $reserved) 'a backslash-spelled seam answer matches git''s forward-slash paths'
+Assert-Equal $true (Test-IsFoldOnlyCommit -NameStatusLines $realFold -ChangelogPath '.dkj\dkj-repo-workflow\CHANGELOG.md' -EntryDirectory '.dkj\dkj-repo-workflow\' -ReservedNames $reserved) 'a backslash-spelled seam answer matches git''s forward-slash paths'
 
 
 # --- Get-StaleCertificateVerdict: the fold exemption, subtracted (issue #1592) ---------------------

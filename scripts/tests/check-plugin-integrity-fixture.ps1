@@ -308,9 +308,9 @@ function New-IntegrityFixture {
     New-Item -ItemType Directory -Path (Join-Path $Fixture '.claude-plugin') -Force | Out-Null
     # THE WORKFLOW FOLDER, since issue #998 (August 27, 2026). This fixture publishes
     # dkj-repo-workflow, so it IS this workflow's source -- and #998 retired the source branch from
-    # Get-DefaultChangelogPath, so its changelog resolves to dkj-policy/CHANGELOG.md like
+    # Get-DefaultChangelogPath, so its changelog resolves to .dkj/dkj-repo-workflow/CHANGELOG.md (#4209) like
     # every other repo's. The three suites that write a changelog into this fixture write it there.
-    New-Item -ItemType Directory -Path (Join-Path $Fixture 'dkj-repo-workflow') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $Fixture '.dkj\dkj-repo-workflow') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-alpha\.claude-plugin') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-shopify\.claude-plugin') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-repo-workflow\.claude-plugin') -Force | Out-Null
