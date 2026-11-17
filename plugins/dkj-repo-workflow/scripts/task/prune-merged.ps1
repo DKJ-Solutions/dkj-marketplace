@@ -67,6 +67,11 @@
               command, not git's message relayed. Asked before the -DryRun branch, so a look-first run
               stops promising a delete the real run cannot perform.
 
+            e. and, after the reap, the branch documents a Get-ChangelogMode 'none' repo keeps untracked
+              and named in .git/info/exclude: one whose branch is gone locally and on the remote is
+              deleted with its exclude line (issue #4228), because ship-pr removes them only on the
+              exits that see the merge.
+
         A branch with neither proof is KEPT and reported with the reason. That is the whole safety
          property: a parked branch (`park-branch.ps1`), unfinished work, or a branch pushed from
          another machine is never lost, because none of them has either proof.
@@ -242,6 +247,9 @@ if (Test-Path -LiteralPath $repoConfigPath -PathType Leaf) {
 # the other keyed its map ordinally and said why. It is one file now, mirrored into both plugins. Same
 # plugin-payload sibling as the three above.
 . (Join-Path $PSScriptRoot '..\lib\merged-pr-lib.ps1')
+# For step 4e (issue #4228): the sweep of branch documents a 'none' repo left behind. Same plugin-payload
+# sibling; it needs entry-scaffold-lib above, which is why it comes after it.
+. (Join-Path $PSScriptRoot '..\lib\changelog-mode-lib.ps1')
 $trunk = Get-BranchTrunkName
 
 function Invoke-Git {
@@ -710,6 +718,34 @@ if ($branches.Count -gt 0) {
     if ($DryRun -and $deleted.Count -gt 0) {
         Write-Host "Nothing was deleted -- rerun without -DryRun to reap them." -ForegroundColor DarkGray
     }
+}
+
+# --- 4e. Branch documents nobody owns any more (issue #4228) ------------------------------------------
+# Under Get-ChangelogMode 'none' a branch document is untracked and named in .git/info/exclude, and ship-pr
+# removes both only on the exits that see the merge. Every other exit leaves them, so this sweeps what no
+# live branch -- local, or on $Remote after step 3's prune -- still owns. Asked AFTER the reap, so a branch
+# this run just deleted counts as gone; under -DryRun the would-be deletions count as gone too, so the look-
+# first run names the same documents the real one removes. A failed prune leaves stale remote refs, which
+# only makes more branches look live: the safe direction. Silent where there is nothing to sweep, which is
+# every repo that answers 'fold'.
+$liveRes = Invoke-Git -Arguments @('for-each-ref', '--format=%(refname)', 'refs/heads', "refs/remotes/$Remote")
+if ($liveRes.ExitCode -eq 0) {
+    $gone = @($deleted | ForEach-Object { $_.Branch })
+    $live = @(($liveRes.Output | Out-String) -split '\r?\n' | ForEach-Object { $_.Trim() } | Where-Object { $_ } | ForEach-Object {
+        if ($_.StartsWith('refs/heads/')) { $_.Substring('refs/heads/'.Length) }
+        elseif ($_.StartsWith("refs/remotes/$Remote/")) { $_.Substring("refs/remotes/$Remote/".Length) }
+    } | Where-Object { $_ -and $_ -ne 'HEAD' -and ($gone -notcontains $_) })
+    $swept = @(Remove-OrphanBranchDocumentExclude -RepoRoot $repoRoot -LiveBranches $live -DryRun:$DryRun)
+    $verb = if ($DryRun) { 'Would remove' } else { 'Removed' }
+    foreach ($s in $swept) {
+        if ($s.What -eq 'document') {
+            Write-Host "  $verb the local branch document $($s.Path) -- '$($s.Branch)' is gone locally and on $Remote." -ForegroundColor Green
+        } else {
+            Write-Host "  $verb the .git/info/exclude line /$($s.Path) -- no live branch owns that document." -ForegroundColor Green
+        }
+    }
+} else {
+    Write-Warning "could not list the live branches -- left branch documents and their .git/info/exclude lines alone. ($(Get-NativeOutputText $liveRes.Output))"
 }
 
 # --- 5. The remote heads, classified and handed over -- never touched (issue #1042) -----------------

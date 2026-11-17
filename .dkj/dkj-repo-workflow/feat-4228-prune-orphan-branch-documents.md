@@ -39,19 +39,43 @@
 
 ### PLAN
 
+Issue #4228: under `Get-ChangelogMode 'none'`, ship-pr removes the untracked branch document and its
+`.git/info/exclude` line only on its ordinary end and the "already merged" exit. Verified in
+`ship-pr.ps1`: `Remove-ShipNoneBranchDocument` has exactly those two call sites. The issue's proposal is
+followed: prune-merged (which tidy-machine delegates to) sweeps what no live branch owns.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Remove-OrphanBranchDocumentExclude` in `changelog-mode-lib.ps1`: per exclude line naming a
+  per-branch document, delete an untracked document whose declared branch is not live, then its line;
+  drop a line whose document is gone; leave tracked documents, undeclared ones and the user's own lines.
+- [x] `prune-merged.ps1` step 4e calls it after the reap, with local branches plus `refs/remotes/<remote>`
+  as the live set (under `-DryRun` the would-be reaps count as gone), and prints each removal.
+- [x] Both files mirrored into `plugins/dkj-repo-workflow/scripts/`.
 
 ### TEST
 
+- [x] `changelog-mode.tests.ps1` section 4: after section 3's merge, `-DryRun` names the orphan and
+  changes nothing; the real run removes the merged branch's document and line and a dangling line, and
+  keeps a live branch's document and line and the user's own `*.tmp` line (57 pass).
+- [x] `prune-merged.tests.ps1` unchanged and green (128 pass).
+
 ### DEPLOY: feat/4228-prune-orphan-branch-documents
 
-**Score:**
+`prune-merged` (and so `tidy-machine`) gained step 4e and `changelog-mode-lib.ps1` the function behind
+it; a repo answering `'fold'` has no such exclude lines, so the step stays silent there.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+In a repo that answers `Get-ChangelogMode` with `'none'`, `prune-merged` now removes a local branch
+document and its `.git/info/exclude` line once the branch is gone locally and on the remote (#4228).
+Before, a ship that stopped early (merge queue, a held merge, a failure after the merge) left both
+behind for good. It prevents a failure that has not happened yet: an exclude file growing one line
+per such branch.
+
+**Score:** 1
 
 #### Pull Request
 

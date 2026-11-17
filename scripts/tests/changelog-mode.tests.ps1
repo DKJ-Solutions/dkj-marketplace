@@ -216,6 +216,45 @@ try {
     Assert-True ($cut.ExitCode -ne 0) "cut-release refuses (exit $($cut.ExitCode))"
     Assert-True ($cut.Output -match 'Get-ChangelogMode') 'and names the seam'
     Assert-True (((Invoke-Git $repo rev-parse HEAD) -join '') -eq $mainBefore) 'and changes nothing'
+
+    # --- 4. prune-merged sweeps what a ship's early exit left behind (#4228) ---------------------------
+    # Section 3 ends where the issue starts: feat/7 is merged, and nothing ran ship-pr's cleanup, so its
+    # document and exclude line are still here. Beside it: a live branch's document, which must stay; a
+    # line whose document is already gone, which must go; and a line of the user's own, which is never read.
+    Write-Host ''
+    Write-Host 'prune-merged removes a none branch document no live branch owns, with its exclude line'
+    $exFile = Get-GitInfoExcludePath -RepoRoot $repo
+    $doc7 = @(Get-ChildItem -LiteralPath (Join-Path $repo '.dkj\dkj-repo-workflow') -Filter 'feat-7-*.md')[0].FullName
+    $rel7 = '.dkj/dkj-repo-workflow/' + (Split-Path -Leaf $doc7)
+    $rel8 = '.dkj/dkj-repo-workflow/feat-8-live.md'
+    $rel9 = '.dkj/dkj-repo-workflow/feat-9-gone.md'
+    # A commit of its own, or prune-merged would rightly reap it as an ancestor of the trunk.
+    Invoke-Git $repo checkout -q -b 'feat/8-live' | Out-Null
+    Invoke-Git $repo commit -q --allow-empty -m 'feat: unfinished work' | Out-Null
+    Invoke-Git $repo checkout -q main | Out-Null
+    Set-Content -LiteralPath (Join-Path $repo ($rel8 -replace '/', '\')) -Value @('# Live', '', '**Branch:** `feat/8-live`') -Encoding ASCII
+    Add-BranchDocumentLocalExclude -RepoRoot $repo -RelPath $rel8 | Out-Null
+    Add-BranchDocumentLocalExclude -RepoRoot $repo -RelPath $rel9 | Out-Null
+    [System.IO.File]::AppendAllText($exFile, "*.tmp`n")
+    $exLines = { @([System.IO.File]::ReadAllText($exFile) -split "`r?`n") }
+    Assert-True ((& $exLines) -contains "/$rel7") 'precondition: the merged branch still has its exclude line'
+
+    $dry = Invoke-Child -Script (Join-Path $repo 'scripts\task\prune-merged.ps1') -WorkDir $repo -ScriptArgs @('-DryRun')
+    Assert-True ($dry.ExitCode -eq 0) "prune-merged -DryRun exits 0 (exit $($dry.ExitCode))"
+    if ($dry.ExitCode -ne 0) { Write-Host $dry.Output -ForegroundColor DarkGray }
+    Assert-True ($dry.Output -match ('Would remove the local branch document ' + [regex]::Escape($rel7))) '-DryRun names the orphaned document'
+    Assert-True ((Test-Path -LiteralPath $doc7) -and ((& $exLines) -contains "/$rel7")) 'and changes nothing'
+
+    $pm = Invoke-Child -Script (Join-Path $repo 'scripts\task\prune-merged.ps1') -WorkDir $repo
+    Assert-True ($pm.ExitCode -eq 0) "prune-merged exits 0 (exit $($pm.ExitCode))"
+    if ($pm.ExitCode -ne 0) { Write-Host $pm.Output -ForegroundColor DarkGray }
+    Assert-True (-not (Test-Path -LiteralPath $doc7)) 'the merged branch''s document is deleted'
+    Assert-True ((& $exLines) -notcontains "/$rel7") 'and its exclude line with it'
+    Assert-True ((& $exLines) -notcontains "/$rel9") 'a line whose document is already gone is removed'
+    Assert-True ((Test-Path -LiteralPath (Join-Path $repo ($rel8 -replace '/', '\'))) -and ((& $exLines) -contains "/$rel8")) 'a live branch keeps its document and its line'
+    Assert-True ((& $exLines) -contains '*.tmp') 'the user''s own line is untouched'
+    $status = (Invoke-Git $repo status --porcelain) -join "`n"
+    Assert-True ($status -notmatch 'feat-8-live') 'and the live document stays invisible to git'
 }
 finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -LiteralPath $Fixture -Recurse -Force -ErrorAction SilentlyContinue }
