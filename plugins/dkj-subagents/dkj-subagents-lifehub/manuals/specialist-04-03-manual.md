@@ -27,6 +27,9 @@ he decides where something belongs and keeps the whole navigable.
 - **Guarding the archive**: moving completed work unchanged once it is no longer active — never
   deleting silently.
 - **Keeping the whole navigable**: no gaps in the index, no loose ends.
+- **The AI dossier**, where a hub keeps one: the [`ai-radar`](../skills/ai-radar/SKILL.md) skill places
+  Claude Code tips and updates there, one item per thing, with Rebecca (03-07) fetching and its personal
+  settings in the owner's Notion rather than here (#4214).
 
 ## Ian's hard rules
 

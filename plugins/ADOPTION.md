@@ -436,7 +436,14 @@ in order:
 
 1. **Does it ship an executable** — a `.ps1` in its own folder, or a `hooks.json` that invokes one?
 2. **Do its instructions send the reader to run one, or to read or write a path in the consuming repo?**
-3. Otherwise it is portable.
+3. **Is its craft itself work on a checkout** — branches and pull requests, a changelog and its tags,
+   the harness's own config, a theme's code — so that without a repository it has nothing to work on?
+4. Otherwise it is portable.
+
+Test 3 was added on November 17, 2026
+([#4210](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4210)): tests 1 and 2 only ask
+whether a script is *named*, so a persona whose whole craft is a pull request passed both as portable.
+A specialist's manual takes its specialist's verdict.
 
 Three candidate rules were weighed and this one was kept because it is the only one that can be
 *checked*: "does it shell out" misses the wrappers that shell out one level down, and "does it assume a
@@ -450,11 +457,20 @@ git branch" is a judgement about prose. Test 1 is a directory listing; test 2 is
 run, or out of their team, losing a whole specialist over one line. Neither is right, because a
 specialist's *craft* is portable and one step of one procedure is not. So:
 
-| verdict | meaning | who |
-|---|---|---|
-| **portable** | works with no repository | the personas, manuals, and 13 of 15 `dkj-subagents-alpha` agent defs; the shared blocks in `subagent-shared/`; the `orchestrator` skill |
-| **degraded** | works, minus a named step | Ravi `06-24` and Liam `04-20` — one step each, both of them a script |
-| **repo-bound** | cannot function at all | both workflow plugins whole; `dkj-subagents-alpha`'s three PowerShell skills and its one SessionStart hook; `dkj-subagents-shopify`'s `start-task` |
+Re-run over every item the marketplace ships on November 17, 2026 (#4210), per plugin:
+
+| plugin | **portable** — works with no repository | **degraded** — works, minus a named step | **repo-bound** — cannot function at all |
+|---|---|---|---|
+| `dkj-subagents-alpha` | personas Chris `01-01` and Bianca `03-02`; 15 of 17 agent defs; the shared blocks in `subagent-shared/`; the `orchestrator` skill | Ravi `06-24` — his agent def names the shared-block generator and the lint gate, both of this source repo | personas Derek `05-05` and Rendall `05-06` (test 3); Sylvester `05-15` (test 3 — his manual names a script 13 times); the skills `specialists-init`, `specialists-teardown` and `sync-roster`; the `roster-sessioncheck` hook |
+| `dkj-subagents-lifehub` | all five agent defs (Astrid `02-10`, Fiona `03-08`, Hugo `03-14`, Ian `04-03`, Onyx `04-04`); the skills `agenda-sync` and `inbox-sweep`, which work through connectors only | — | — |
+| `dkj-subagents-ecomm` | — | Sergio `06-26`, Craig `06-27` and Sean `06-28` — the audit and the advice travel, implementing in the storefront's theme code does not | — |
+| `dkj-subagents-shopify` | — | Steven `05-22` — the CLI and auth reference travel, an estate overview needs the Shopify CLI | Liam `04-20` and Sandra `05-21` (test 3 — theme code and theme files in a checkout); all nine skills, each of which names a script or the Shopify CLI; both hooks |
+
+
+`dkj-policy`, `dkj-solutions` and `bwj-development` are not in the table: they are not published to the
+App target at all (below), so nothing there can offer them. Liam was the second degraded item until test
+3 existed. The one step named in his agent def was never the whole story, because the theme code he builds
+in only exists in a checkout.
 
 **What the Claude App package is: a filtered publication, not a second repository.**
 `publish-to-business.ps1` overwrites a business marketplace repo from the source on every run; since
@@ -469,7 +485,7 @@ not travel cannot be offered by anything.
 marketplace with fewer entries, not a second one under a new key.
 
 **The unit is the plugin, and the degraded items travel.** `dkj-subagents-alpha`'s three PowerShell skills and
-two hooks go to the App target along with everything else in that plugin, because the plugin published
+its one hook go to the App target along with everything else in that plugin, because the plugin published
 there has to be byte-identical to the plugin released here — otherwise its version number stops meaning
 one thing. They are handled where they can be handled without forking: the hooks are simply inert in a
 plain Chat session, and `v4.9.0` ([#672](https://github.com/DaveKJohn/claude-code-specialists/issues/672))
