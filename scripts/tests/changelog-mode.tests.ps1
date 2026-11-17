@@ -99,6 +99,10 @@ try {
     $ex = Join-Path $Fixture 'exclude'
     New-Item -ItemType Directory -Path $ex -Force | Out-Null
     Invoke-Git $ex init -q | Out-Null
+    # A CI runner has no global identity, so the fixture states its own (the worktree case commits below).
+    Invoke-Git $ex config user.name 'fixture' | Out-Null
+    Invoke-Git $ex config user.email 'fixture@example.invalid' | Out-Null
+    Invoke-Git $ex config commit.gpgsign false | Out-Null
     $excludeFile = Join-Path $ex '.git\info\exclude'
     $before = if (Test-Path -LiteralPath $excludeFile) { [System.IO.File]::ReadAllText($excludeFile) } else { '' }
     $rel = '.dkj/dkj-policy/feat-1-x.md'
