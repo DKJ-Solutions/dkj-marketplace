@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**4 / 4 minor entries** <!-- pending-tally -->
+**5 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4248-candidates-default-skiplabel · 20261117-202420Z
+
+`claim-issue -Candidates` skips parked issues again when no `-SkipLabel` is passed, which is how the `issues-sweep` skill has run it since #4233. In v7.0.0 every parked issue read `free`, and a cleared wait never showed as `stale-park`. The claim's own parking check was the only backstop.
+
+**Score:** 4
+
+#### What makes this deploy extra special
+
+A consumer running `issues-sweep` on v7.0.0 sees every parked issue offered as `free`, and the claim then refuses it. After this release, parked issues are skipped again and cleared waits print as `stale-park`.
+
+**Score:** 3
+
+#### Pull Request
+
+claim-issue -Candidates applies the default parking-label list
+
+Plugins: dkj-repo-workflow
+
+[PR #4250](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4250)
+
+---
 
 ### DEPLOY: fix/4246-pin-house-style-caller · 20261117-201426Z
 
