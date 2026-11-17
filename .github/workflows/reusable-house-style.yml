@@ -13,7 +13,9 @@
 #     contents: read
 #   jobs:
 #     house-style:
-#       uses: DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-house-style.yml@main
+#       uses: DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-house-style.yml@vX.Y.Z
+#       with:
+#         scripts-ref: vX.Y.Z
 #
 # NEVER CALL IT FROM pull_request_target. The gate dot-sources the PR's own scripts/repo-config.ps1 (for
 # its allowlist), so under that trigger a fork's code would run with a privileged token. For the same
@@ -21,13 +23,14 @@
 #
 # WHY A CHECKOUT OF THIS REPO AND NOT A VENDORED SCRIPT: one definition of the gate, as with the
 # branch-entry and always-on gates. And the pinned checksums are read from the skill page -- at the tag
-# that page pins, see below -- so a change of the skill's pin reaches every caller with no change on its
-# side.
+# that page pins, see below -- so a gate pinned at a tag reads the table of that same tag.
 #
-# `scripts-ref` DEFAULTS TO main, and the caller the dkj-brandbook skill gives still calls @main: a pinned
-# gate keeps enforcing the tag it was pinned at, while the copies it checks follow the skill. The two PR
-# gates adopt-workflow-folder places are pinned since #4237 (reusable-branch-entry.yml states why); this
-# one is not scaffolded by that command, and pinning it is a question of its own.
+# THE CALLER IS PINNED TO THE RELEASE THE REPO ADOPTED (#4246): `@vX.Y.Z` plus `with: scripts-ref: vX.Y.Z`, the
+# same tag twice, exactly as the two gates adopt-workflow-folder places since #4237 (reusable-branch-entry.yml
+# states why). Left on @main, a script moved on the trunk before any release turned every consumer's gate red.
+# The release cut writes both tags on the skill page beside its checksum table's tag, so a repo moves its caller
+# when it takes a new copy. `scripts-ref` still DEFAULTS TO main, so a caller that passes nothing keeps today's
+# behaviour.
 #
 # LINUX, UNDER PWSH 7, with the same `powershell` shim as the other reusable gates (issue #2616).
 name: House style (reusable)

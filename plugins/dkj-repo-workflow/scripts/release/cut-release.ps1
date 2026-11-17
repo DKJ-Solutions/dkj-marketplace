@@ -461,7 +461,9 @@ function Get-ReleaseBlobSha256 {
 }
 
 # The version pins the cut repoints at the new tag (#3133), each @{ Path; Prefix } and optionally Checksums, the
-# files whose sha256 the pin carries beside the URL (#3636). Read, checked and hashed HERE,
+# files whose sha256 the pin carries beside the URL (#3636), and optionally Refs (#4246): literal prefixes after
+# each of which a BARE tag (vX.Y.Z, not followed by '/' or a further digit or dot) is repointed too -- the
+# `@vX.Y.Z` of a caller and the `scripts-ref: vX.Y.Z` beside it. Read, checked and hashed HERE,
 # before anything is written, because a bad entry found at the bump would abort a cut that has already
 # written to the trunk. Empty by default: a repo that names no pin is untouched.
 $versionPins = @(foreach ($pin in @(Get-SeamValue -Name 'Get-ReleaseVersionPins' -Default @())) {
@@ -470,8 +472,17 @@ $versionPins = @(foreach ($pin in @(Get-SeamValue -Name 'Get-ReleaseVersionPins'
     $pinAbs = Join-Path $repoRoot ($pin.Path -replace '/', '\')
     if (-not (Test-Path -LiteralPath $pinAbs)) { Write-Error "Get-ReleaseVersionPins names '$($pin.Path)', which does not exist -- release aborted."; exit 1 }
     $pattern = [regex]::Escape($pin.Prefix) + 'v\d+\.\d+\.\d+/'
-    $hits = [regex]::Matches([System.IO.File]::ReadAllText($pinAbs, [System.Text.Encoding]::UTF8), $pattern).Count
+    $pinText0 = [System.IO.File]::ReadAllText($pinAbs, [System.Text.Encoding]::UTF8)
+    $hits = [regex]::Matches($pinText0, $pattern).Count
     if ($hits -eq 0) { Write-Error "Get-ReleaseVersionPins: '$($pin.Path)' carries no '$($pin.Prefix)vX.Y.Z/' -- release aborted."; exit 1 }
+    # Optional Refs (#4246): each must hit at least once, like the URL prefix, so a prefix the page lost refuses the cut.
+    $refs = @(if ($pin -is [hashtable] -and $pin.ContainsKey('Refs')) { @($pin.Refs | Where-Object { $_ }) })
+    $refPins = @(foreach ($ref in $refs) {
+        $refPattern = [regex]::Escape([string]$ref) + 'v\d+\.\d+\.\d+(?![\d./])'
+        $refHits = [regex]::Matches($pinText0, $refPattern).Count
+        if ($refHits -eq 0) { Write-Error "Get-ReleaseVersionPins: '$($pin.Path)' carries no '${ref}vX.Y.Z' -- release aborted."; exit 1 }
+        [pscustomobject]@{ Ref = [string]$ref; Pattern = $refPattern; Hits = $refHits }
+    })
     # Optional Checksums (#3636): files whose sha256 the pin file carries on the one line that names the file's
     # path. Each must exist and be named on exactly one line that holds a sha256, so the rewrite has one cell.
     $sums = @(if ($pin -is [hashtable] -and $pin.ContainsKey('Checksums')) { @($pin.Checksums | Where-Object { $_ }) })
@@ -488,7 +499,7 @@ $versionPins = @(foreach ($pin in @(Get-SeamValue -Name 'Get-ReleaseVersionPins'
         if (-not $hash) { Write-Error "Get-ReleaseVersionPins: '$rel' is not committed at HEAD, so no tag would serve it -- release aborted."; exit 1 }
         [pscustomobject]@{ File = $rel; LinePattern = $linePattern; Hash = $hash }
     })
-    [pscustomobject]@{ Path = $pin.Path; Prefix = $pin.Prefix; Abs = $pinAbs; Pattern = $pattern; Hits = $hits; Checksums = $checksums }
+    [pscustomobject]@{ Path = $pin.Path; Prefix = $pin.Prefix; Abs = $pinAbs; Pattern = $pattern; Hits = $hits; Refs = $refPins; Checksums = $checksums }
 })
 
 # The builds the cut ships (#3210), each @{ Name; WorkingDirectory; Commands; Output; Target }: the commands run
@@ -2069,12 +2080,16 @@ foreach ($p in $manifests) {
 #
 # AND THE CHECKSUMS BESIDE THOSE URLS (#3636), hashed in the preflight above: each named line's sha256 becomes
 # the hash of the bytes the new tag serves. The line already passed its one-cell check there, so this cannot miss.
+# AND THE BARE TAGS AFTER THE Refs PREFIXES (#4246), the caller's `@vX.Y.Z` and `scripts-ref: vX.Y.Z`, written beside
+# the URL tag in the same pass so a caller never names a different release than the table beside it.
 foreach ($pin in $versionPins) {
     $raw = [System.IO.File]::ReadAllText($pin.Abs, [System.Text.Encoding]::UTF8)
     $raw = [regex]::Replace($raw, $pin.Pattern, ($pin.Prefix + "v$new/").Replace('$', '$$'))
+    foreach ($r in $pin.Refs) { $raw = [regex]::Replace($raw, $r.Pattern, ($r.Ref + "v$new").Replace('$', '$$')) }
     foreach ($c in $pin.Checksums) { $raw = [regex]::Replace($raw, $c.LinePattern, ('${1}' + $c.Hash)) }
     Write-Utf8NoBom -Path $pin.Abs -Content $raw
     Write-Host "  repinned: $($pin.Path) -> v$new ($($pin.Hits) URL(s))" -ForegroundColor DarkGray
+    foreach ($r in $pin.Refs) { Write-Host "  repinned: $($pin.Path) -> '$($r.Ref)v$new' ($($r.Hits) ref(s))" -ForegroundColor DarkGray }
     foreach ($c in $pin.Checksums) { Write-Host "  checksummed: $($c.File) -> $($c.Hash.Substring(0, 12))" -ForegroundColor DarkGray }
 }
 
