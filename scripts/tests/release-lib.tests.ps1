@@ -1969,6 +1969,10 @@ Assert-Equal "3" ((Get-OverviewSectionHeading -ReadmeContent $tiers) -replace '^
 #
 # '5' -> '6' ON OCTOBER 29, 2026, when the 6.x section was opened to cut v6.0.0: the rename to
 # dkj-marketplace (#3660) breaks every existing install, which is what a major is for.
+#
+# '6' -> '7' ON NOVEMBER 17, 2026, when the 7.x section was opened to cut v7.0.0: the rename of
+# dkj-policy to dkj-repo-workflow (#4209) and the developers-team split (#4211) change the plugin names
+# every consumer enables, which is what a major is for.
 # The path comes from the repo's own Get-ReleaseHistoryPath rather than being written out again here, and
 # that choice has now paid off TWICE IN OPPOSITE DIRECTIONS on the same day (August 4, 2026): the overview
 # moved out of releases/README.md into its own HISTORY.md, and then back again when the pages were merged.
@@ -1983,7 +1987,7 @@ $liveReadme = Join-Path $PSScriptRoot ('..\..\' + ((& {
     if (Test-FunctionDefined 'Get-ReleaseHistoryPath') { Get-ReleaseHistoryPath } else { 'releases/README.md' }
 }) -replace '/', '\'))
 if (Test-Path -LiteralPath $liveReadme) {
-    Assert-Equal '6' (Get-OverviewTargetMajor -ReadmeContent (Get-Content -LiteralPath $liveReadme -Raw -Encoding UTF8)) "this repo's own overview now targets 6.x -- a 6.0.0 cut lands under its own major, and a 5.x cut would be refused"
+    Assert-Equal '7' (Get-OverviewTargetMajor -ReadmeContent (Get-Content -LiteralPath $liveReadme -Raw -Encoding UTF8)) "this repo's own overview now targets 7.x -- a 7.0.0 cut lands under its own major, and a 6.x cut would be refused"
 }
 
 Write-Host "Get-OverviewLatestVersion -- the release the overview RECORDS as newest (inbound #802)" -ForegroundColor Cyan
