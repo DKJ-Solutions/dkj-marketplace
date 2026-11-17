@@ -163,27 +163,80 @@ $nl = "`n"
 # together and no reader ever sees half of them in each place. Only where the new folder does not exist
 # yet -- a repo holding both is mid-move by hand, and moving onto it would merge two trees nobody has
 # compared. A dry run says what it would move and moves nothing, like every other step here.
+#
+# ONE EXCEPTION TO "THE NEW FOLDER DOES NOT EXIST", AND IT IS #4251. The 7.0.0 migration is done on a
+# branch, and new-branch writes that branch's document into the NEW folder before this part runs -- so the
+# folder always exists, the move was always skipped, and the run then died on the seam asserts below because
+# the seams still named the old folder. So a new folder holding NOTHING BUT branch documents (top-level
+# '*.md' files, no subdirectory, no CHANGELOG.md or README.md, no name the legacy folder also holds) is not
+# a hand mid-move: it is new-branch's own output, and the legacy folder's children move INTO it, item by
+# item, each tracked or not on its own. Anything else in there keeps the skip above, and says so.
 $currentFolderName = @(Get-WorkflowFolderNames)[0]
 $foundFolderName   = Find-LegacyWorkflowFolder -RepoRoot $repoRoot
 $currentFolderAbs  = Join-Path $repoRoot ($currentFolderName -replace '/', '\')
-if ($foundFolderName -and -not (Test-Path -LiteralPath $currentFolderAbs)) {
+$movePending = $false   # a move this run makes (-Apply) or would make (dry run)
+$moveInto    = $false   # ... into a new folder that already holds branch documents (#4251)
+if ($foundFolderName) {
+    if (-not (Test-Path -LiteralPath $currentFolderAbs)) {
+        $movePending = $true
+    } elseif (Test-Path -LiteralPath $currentFolderAbs -PathType Container) {
+        $legacyAbsProbe = Join-Path $repoRoot ($foundFolderName -replace '/', '\')
+        $newItems    = @(Get-ChildItem -LiteralPath $currentFolderAbs -Force)
+        $legacyNames = @(Get-ChildItem -LiteralPath $legacyAbsProbe -Force | ForEach-Object { $_.Name })
+        $notBranchDocs = @($newItems | Where-Object { $_.PSIsContainer -or $_.Extension -ne '.md' -or @('CHANGELOG.md', 'README.md') -contains $_.Name })
+        $collisions    = @($newItems | Where-Object { $legacyNames -contains $_.Name })
+        if ($notBranchDocs.Count -gt 0) {
+            Write-Host "  [skip]    $foundFolderName/ not moved: $currentFolderName/ already holds more than branch documents ($(@($notBranchDocs | ForEach-Object { $_.Name }) -join ', ')) -- a move by hand? Merge the two by hand (#4251)." -ForegroundColor Yellow
+        } elseif ($collisions.Count -gt 0) {
+            Write-Host "  [skip]    $foundFolderName/ not moved: $currentFolderName/ and $foundFolderName/ both hold $(@($collisions | ForEach-Object { $_.Name }) -join ', ') -- merge the two by hand (#4251)." -ForegroundColor Yellow
+        } else {
+            $movePending = $true
+            $moveInto    = $true
+        }
+    } else {
+        Write-Host "  [skip]    $foundFolderName/ not moved: $currentFolderName is a file, not a folder (#4251)." -ForegroundColor Yellow
+    }
+}
+if ($movePending) {
     $legacyAbs = Join-Path $repoRoot ($foundFolderName -replace '/', '\')
     if ($Apply) {
         $parentAbs = Split-Path -Path $currentFolderAbs -Parent
         if (-not (Test-Path -LiteralPath $parentAbs)) { New-Item -ItemType Directory -Force -Path $parentAbs | Out-Null }
-        $tracked = @(& git -C $repoRoot ls-files -- $foundFolderName)
-        if ($tracked.Count -gt 0) {
-            & git -C $repoRoot mv -- $foundFolderName $currentFolderName
-            if ($LASTEXITCODE -ne 0) {
-                Write-Host "  [ERROR]   could not move $foundFolderName/ to $currentFolderName/ (git mv exited $LASTEXITCODE). Nothing else was written." -ForegroundColor Red
-                exit 1
+        if ($moveInto) {
+            # Child by child: a whole-folder 'git mv' cannot land on a folder that exists. Tracked-ness is
+            # asked per item, because a branch document is often untracked while the changelog is not.
+            foreach ($child in @(Get-ChildItem -LiteralPath $legacyAbs -Force)) {
+                $srcRel = "$foundFolderName/$($child.Name)"
+                $dstRel = "$currentFolderName/$($child.Name)"
+                $tracked = @(& git -C $repoRoot ls-files -- $srcRel)
+                if ($tracked.Count -gt 0) {
+                    & git -C $repoRoot mv -- $srcRel $dstRel
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Host "  [ERROR]   could not move $srcRel to $dstRel (git mv exited $LASTEXITCODE). Nothing else was written." -ForegroundColor Red
+                        exit 1
+                    }
+                } else {
+                    Move-Item -LiteralPath $child.FullName -Destination (Join-Path $currentFolderAbs $child.Name)
+                }
             }
+            if (@(Get-ChildItem -LiteralPath $legacyAbs -Force).Count -eq 0) { Remove-Item -LiteralPath $legacyAbs -Force }
+            Write-Host "  [moved]   $foundFolderName/ -> $currentFolderName/ (#4209, into the folder new-branch had already created, #4251): commit the move on a branch." -ForegroundColor Green
         } else {
-            Move-Item -LiteralPath $legacyAbs -Destination $currentFolderAbs
+            $tracked = @(& git -C $repoRoot ls-files -- $foundFolderName)
+            if ($tracked.Count -gt 0) {
+                & git -C $repoRoot mv -- $foundFolderName $currentFolderName
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "  [ERROR]   could not move $foundFolderName/ to $currentFolderName/ (git mv exited $LASTEXITCODE). Nothing else was written." -ForegroundColor Red
+                    exit 1
+                }
+            } else {
+                Move-Item -LiteralPath $legacyAbs -Destination $currentFolderAbs
+            }
+            Write-Host "  [moved]   $foundFolderName/ -> $currentFolderName/ (#4209): commit the move on a branch." -ForegroundColor Green
         }
-        Write-Host "  [moved]   $foundFolderName/ -> $currentFolderName/ (#4209): commit the move on a branch." -ForegroundColor Green
     } else {
-        Write-Host "  [move]    $foundFolderName/ -> $currentFolderName/ (#4209) -- re-run with -Apply to move it." -ForegroundColor Yellow
+        $intoNote = if ($moveInto) { " (into the folder new-branch already created, #4251)" } else { '' }
+        Write-Host "  [move]    $foundFolderName/ -> $currentFolderName/ (#4209)$intoNote -- re-run with -Apply to move it." -ForegroundColor Yellow
     }
     # AND THE PATHS THAT NAME IT MOVE WITH IT. A consumer that adopted the config states its seam answers
     # as literals -- $script:ChangelogPath = 'dkj-policy/CHANGELOG.md' -- copied from the source's own
@@ -251,6 +304,31 @@ if ($foundFolderName -and -not (Test-Path -LiteralPath $currentFolderAbs)) {
             Write-Host "  [repoint] $($rw.Rel): $count path(s) from $foundFolderName/ to $currentFolderName/." -ForegroundColor Yellow
         }
     }
+    # AND THE GUIDANCE LINE IN A BRANCH DOCUMENT (#4251). new-branch writes 'Relative links in that text
+    # resolve FROM `<folder>/`, where CHANGELOG.md sits --' into every branch document (entry-scaffold-lib),
+    # so a document created before the move names the old folder in exactly that token, and a reader following
+    # it would resolve links from a folder that is gone. Only that token is touched, in the top-level '*.md'
+    # of the moved folder. A dry run reads both the new folder's documents and the ones still in the legacy
+    # folder, because after the move they are one set.
+    $guideOld = 'FROM `' + $foundFolderName + '/`'
+    $guideNew = 'FROM `' + $currentFolderName + '/`'
+    $guideDirs = @(@{ Abs = $currentFolderAbs; Rel = $currentFolderName })
+    if (-not $Apply) { $guideDirs += @{ Abs = $legacyAbs; Rel = $foundFolderName } }
+    foreach ($gd in $guideDirs) {
+        if (-not (Test-Path -LiteralPath $gd.Abs -PathType Container)) { continue }
+        foreach ($doc in @(Get-ChildItem -LiteralPath $gd.Abs -Filter '*.md' -File)) {
+            $docText  = [System.IO.File]::ReadAllText($doc.FullName)
+            $docCount = ([regex]::Matches($docText, [regex]::Escape($guideOld))).Count
+            if ($docCount -eq 0) { continue }
+            $docRel = "$($gd.Rel)/$($doc.Name)"
+            if ($Apply) {
+                [System.IO.File]::WriteAllText($doc.FullName, $docText.Replace($guideOld, $guideNew), $Utf8NoBom)
+                Write-Host "  [repointed] ${docRel}: $docCount guidance line(s) from $foundFolderName/ to $currentFolderName/." -ForegroundColor Green
+            } else {
+                Write-Host "  [repoint] ${docRel}: $docCount guidance line(s) from $foundFolderName/ to $currentFolderName/." -ForegroundColor Yellow
+            }
+        }
+    }
     if ($Apply) {
         # Read the folder and the repointed seams again, so everything below this point scaffolds into the
         # moved folder and names the paths the fold will actually use.
@@ -277,10 +355,25 @@ if ($foundFolderName -and -not (Test-Path -LiteralPath $currentFolderAbs)) {
 # page somebody writes needed different names to share one directory. The answers page is retired now
 # (see the legacy block below) and the list keeps the name it was given.
 $historyRelPath = Get-SeamValue -Name 'Get-ReleaseHistoryPath' -Default (Get-DefaultReleaseHistoryPath -RepoRoot $repoRoot)
+# A DRY RUN DOES NOT REPOINT THE SEAMS, so with a move pending they still name the old folder and the asserts
+# below would refuse exactly the repos a dry run exists for (#4251). It asserts, and plans, against the paths
+# the -Apply run WOULD leave behind.
+function ConvertTo-PendingMovePath {
+    param([string]$Path, [string]$From, [string]$To)
+    $norm = $Path -replace '\\', '/'
+    if ($norm.StartsWith("$From/", [System.StringComparison]::OrdinalIgnoreCase)) { return "$To/" + $norm.Substring($From.Length + 1) }
+    return $Path
+}
+if ($movePending -and -not $Apply) {
+    $historyRelPath = ConvertTo-PendingMovePath -Path ([string]$historyRelPath) -From $foundFolderName -To $currentFolderName
+}
 Assert-WorkflowIsolatedSeamPath -RepoRoot $repoRoot -RelativePath $historyRelPath -SeamName 'Get-ReleaseHistoryPath'
 # WHERE THIS REPO KEEPS ITS CHANGELOG (issue #885, group A). Same reasoning: the scaffold below has to
 # name the same path the cut/fold seam resolves to, not a literal that can drift from it.
 $changelogRel = Get-SeamValue -Name 'Get-ChangelogPath' -Default (Get-DefaultChangelogPath -RepoRoot $repoRoot)
+if ($movePending -and -not $Apply) {
+    $changelogRel = ConvertTo-PendingMovePath -Path ([string]$changelogRel) -From $foundFolderName -To $currentFolderName
+}
 Assert-WorkflowIsolatedSeamPath -RepoRoot $repoRoot -RelativePath $changelogRel -SeamName 'Get-ChangelogPath'
 
 # WHERE THE HAND-WRITTEN RELEASE NOTE WILL LAND (issue #1150), resolved here for the same reason the two
