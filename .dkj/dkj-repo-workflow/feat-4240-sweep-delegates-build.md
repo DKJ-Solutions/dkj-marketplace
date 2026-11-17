@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Issue #4240, decided by the owner on November 17, 2026: delegate the build. The main loop keeps
+choosing and judging, and step 3's build goes to a subagent on `sonnet`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `skills/issues-sweep/SKILL.md` step 3: the build goes to the craft's subagent (or `general-purpose`
+  on `sonnet`), never a fork, with a brief that forbids commit, push, PR and tracker writes; the main loop
+  reads the diff and writes the branch document itself; inline where the brief outgrows the edit
 
 ### TEST
 
+- [x] Doc-only change; `ship-pr`'s gate covers the skill's links and shape
+
 ### DEPLOY: feat/4240-sweep-delegates-build
 
-**Score:**
+`issues-sweep` step 3 now hands the build to a fresh subagent (#4240): the specialist whose craft the
+change is, or `general-purpose` on `sonnet`, never a `fork`. Its brief forbids committing, pushing,
+opening a PR and writing to the tracker. The sweep's main loop keeps the choosing, parking and
+judging. It reads the returned diff before anything ships, and writes the branch document itself. A
+change whose brief would be longer than the edit is still built inline.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+For whoever runs a sweep: the build, the bulk of a sweep's tokens, now runs on the cheaper subagent
+model instead of the session's main model, while the judgement that needs the stronger model stays in
+the main loop. Follow-up to #4233, whose page split cut what the skill loads per run.
+
+**Score:** 3
 
 #### Pull Request
 
