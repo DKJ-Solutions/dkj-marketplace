@@ -2,7 +2,39 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**3 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4237-pin-read-only-runners · 20261117-173035Z
+
+Both adoption scaffolders now pin every CI runner they place to the dkj-repo-workflow release they came
+from (#4237). The branch-entry and always-on-budget callers from `adopt-workflow-folder` call
+`@vX.Y.Z` and pass `scripts-ref: vX.Y.Z`. The repo-settings runner from `adopt-ci-floor` fetches the
+shared scripts at the same release, as the write runners have since #2333. This reverses #1805's
+choice to keep the read-only runners on main. The #4209 rename moved every script path on main a day
+before any release carried it, and every consumer runner on `ref: main` went red at once. Internally,
+the register's check 6d reports a read-only runner still on main as an `[INFO]`, and the new
+`release-pin-lib.ps1` holds the version read both scaffolders share.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+For the maintainer of a repo that adopts the workflow: a newly adopted repo's CI gates no longer go red
+when the source moves a script on main before a release. They move when you adopt the release. A
+repo adopted earlier keeps its `@main` callers. A re-run of `adopt-workflow-folder` or `adopt-ci-floor`
+names the line to change.
+
+**Score:** 3
+
+#### Pull Request
+
+Pin the read-only consumer runners to the adopted release, not main
+
+Plugins: dkj-repo-workflow
+
+[PR #4247](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4247)
+
+---
 
 ### DEPLOY: fix/4234-fast-session-start · 20261117-171654Z
 
