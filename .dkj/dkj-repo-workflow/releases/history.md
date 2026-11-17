@@ -1,5 +1,10 @@
 # Release history
 
+### 7.x
+
+| Version | Date | Type | Title |
+|---|---|---|---|
+
 ### 6.x
 
 | Version | Date | Type | Title |
