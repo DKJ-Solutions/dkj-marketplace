@@ -39,19 +39,41 @@
 
 ### PLAN
 
+Inbound #4219: a kind-less issue that slips past `guard-kind-label` (#4197) is never caught afterwards.
+Verified on the tree: `closed-message-sessioncheck` holds the reach label after the fact (finding 6,
+#4053) and nothing holds the kind. Repair: a finding 7 in that same hook, read from the open-issue list
+it already fetches, with the kinds and repos taken from `kind-label-rules.ps1` so the guard and the
+check cannot disagree.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Finding 7 in `hooks/closed-message-sessioncheck.ps1`: open issues with none, or more than one, of
+  `bug` / `feature` / `research`, in every repo `guard-kind-label` judges, with the repair line
+- [x] Shared the label read and the fifteen-number list between findings 6 and 7
+- [x] Docs: `WORKFLOW-portable.md`, `report-issue` skill, the plugin README's hook row
 
 ### TEST
 
+- [x] `closed-message-sessioncheck.tests.ps1`: the measured case (#1390, #1391, #1394), two kinds as
+  its own finding, case-insensitive match, unread labels left out, phone-factory checked, source repo
+  silent; the earlier reach fixtures given a kind so each case isolates its own finding -- 67 passed
+
 ### DEPLOY: feat/4219-kind-label-sessioncheck
 
-**Score:**
+Inside this repo, `closed-message-sessioncheck` gains a seventh finding with its own cases in the
+suite, and finding 6 now shares its label read and number list with it.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A store session (smartwatchbanden, xoxowildhearts, phone-factory) now starts with an `[ERROR]` line
+naming every open issue that carries no kind label, or more than one, with the `gh issue edit` line
+that repairs it. An issue that slipped past `guard-kind-label` -- a label built at run time, a
+template, or a checkout that had not updated yet -- is caught at the next session start instead of
+only when somebody notices, as #1390, #1391 and #1394 in smartwatchbanden were not.
+
+**Score:** 3
 
 #### Pull Request
 
