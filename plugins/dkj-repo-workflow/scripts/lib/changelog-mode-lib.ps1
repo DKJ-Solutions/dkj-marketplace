@@ -19,7 +19,8 @@
       * open-pr's branch-entry gates and the CI 'Branch entry' check stand down -- the record moves into
         the PR body rather than into a changelog;
       * the fold ship-pr runs is a no-op (the fold script stands down), so nothing lands on the trunk after the merge, and deletes the local
-        document and its exclude line once the merge is in;
+        document and its exclude line once the merge is in -- and where a ship exits before that,
+        prune-merged sweeps what no live branch owns (Remove-OrphanBranchDocumentExclude, #4228);
       * fold-changelog-entry, check-unfolded-entry (and its session check) stand down;
       * cut-release refuses, naming this seam.
 
@@ -138,4 +139,65 @@ function Remove-BranchDocumentLocalExclude {
     $rx = '(?m)^' + [regex]::Escape($line) + '(\r?\n|\z)'
     if (-not [regex]::IsMatch($raw, $rx)) { return }
     [System.IO.File]::WriteAllText($excludePath, [regex]::Replace($raw, $rx, ''), (New-Object System.Text.UTF8Encoding($false)))
+}
+
+function Remove-OrphanBranchDocumentExclude {
+    <#
+        The sweep behind ship-pr's own cleanup (issue #4228). ship-pr removes a 'none' branch document and
+        its exclude line on two exits only -- its ordinary end and "already merged -- nothing to ship" --
+        so the merge-queue exit, the merge-held exit and an `exit 1` after the merge leave both behind, and
+        info/exclude grows one line per such branch. prune-merged calls this after its reap, with every
+        branch still standing locally or on the remote, and it removes what no live branch owns.
+
+        ONE EXCLUDE LINE AT A TIME, AND ONLY A BRANCH DOCUMENT'S. A line is considered only when its path
+        is a per-branch development document (Test-IsPerBranchDocumentPath); every other line in the file
+        is the user's and is never read further. Then:
+
+          * the document exists, is UNTRACKED, declares a branch, and that branch is in -LiveBranches
+            -> kept: work in flight;
+          * the same, but the declared branch is NOT live -> the document is deleted, then its line;
+          * the document is tracked, or declares no branch -> kept: not ours to judge;
+          * the document is gone -> the line goes: it excludes nothing, and new-branch writes it again
+            should the document ever come back.
+
+        Returns one object per removal ({ Path; Branch; What = 'document' | 'line' }), so the caller
+        prints and the suite asserts on the same answer. -DryRun returns the same list and changes nothing.
+
+        NEEDS entry-scaffold-lib (the path predicate and the declared-branch reader). Where either is not
+        loaded it returns nothing rather than guessing -- this file stays a leaf for park-cycle's sake.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$RepoRoot,
+        [Parameter(Mandatory)][AllowEmptyCollection()][string[]]$LiveBranches,
+        [switch]$DryRun
+    )
+    $removed = New-Object System.Collections.Generic.List[object]
+    if (-not (Test-FunctionDefined 'Test-IsPerBranchDocumentPath') -or -not (Test-FunctionDefined 'Get-BranchFileDeclaredBranch')) { return @() }
+    $excludePath = Get-GitInfoExcludePath -RepoRoot $RepoRoot
+    if (-not $excludePath -or -not (Test-Path -LiteralPath $excludePath -PathType Leaf)) { return @() }
+    $live = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+    foreach ($b in $LiveBranches) { if ($b) { [void]$live.Add($b.Trim()) } }
+
+    foreach ($line in @([System.IO.File]::ReadAllText($excludePath) -split "`r?`n")) {
+        if (-not $line.StartsWith('/')) { continue }
+        $rel = $line.Substring(1)
+        if (-not $rel -or -not (Test-IsPerBranchDocumentPath -RelativePath $rel)) { continue }
+        $full = Join-Path $RepoRoot ($rel -replace '/', '\')
+        $declared = ''
+        if (Test-Path -LiteralPath $full -PathType Leaf) {
+            $declared = [string](Get-BranchFileDeclaredBranch -Text ([System.IO.File]::ReadAllText($full)))
+            if (-not $declared -or $live.Contains($declared)) { continue }
+            # Tracked means somebody committed it: an exclude line has no effect on it, and deleting it
+            # would leave a dirty tree. ls-files prints the path only when it is tracked.
+            $prev = $ErrorActionPreference
+            $ErrorActionPreference = 'Continue'
+            try { $tracked = @(& git -C $RepoRoot ls-files -- $rel 2>$null) -join '' } finally { $ErrorActionPreference = $prev }
+            if ($tracked) { continue }
+            if (-not $DryRun) { Remove-Item -LiteralPath $full -Force }
+            $removed.Add([pscustomobject]@{ Path = $rel; Branch = $declared; What = 'document' })
+        }
+        if (-not $DryRun) { Remove-BranchDocumentLocalExclude -RepoRoot $RepoRoot -RelPath $rel }
+        $removed.Add([pscustomobject]@{ Path = $rel; Branch = $declared; What = 'line' })
+    }
+    return @($removed.ToArray())
 }
