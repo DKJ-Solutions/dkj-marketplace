@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**5 / 8 minor entries** <!-- pending-tally -->
+**6 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4220-filed-with-stamp · 20261117-114823Z
+
+Every issue a session files with `gh issue create` on a BWJ store repo now carries, at the end of its body, a hidden comment naming the plugin versions that session ran -- `<!-- filed-with: dkj-policy 6.18.0, bwj-development 6.18.0 -->` -- read from this checkout's install record. When an issue arrives malformed, the tracker itself answers whether the guard that should have caught it was installed ([#4220](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4220)). It is a PostToolUse hook rather than a step of `report-issue`, because a bare create is the case that slips past the procedure. It fails open: the issue always stands as created, and a body it cannot edit is named to the session. An inbound issue on the source repo is not stamped.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A maintainer of a BWJ store repo can answer *which version filed this?* with `gh search issues filed-with` instead of asking the colleague who filed it to run `plugin-versions`. Issues filed before the update carry no stamp, and cannot be given one after the fact.
+
+**Score:** 2
+
+#### Pull Request
+
+bwj-development: stamp the filing session's plugin versions on every issue it creates
+
+Plugins: bwj-development
+
+[PR #4225](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4225)
+
+---
 
 ### DEPLOY: feat/4216-companion-plugin-check · 20261117-113943Z
 
