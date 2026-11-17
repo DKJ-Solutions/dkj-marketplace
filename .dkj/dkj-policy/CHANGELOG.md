@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**1 / 4 minor entries** <!-- pending-tally -->
+**2 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4208-park-decider · 20261117-104330Z
+
+A `-dev` parking label no longer means "the owner alone". `claim-issue -Park <label> -Decider <login>`
+names the developer an issue waits on, as `Decider: @<login>.` in the parking comment. `-Candidates`
+prints it beside the label, and `issues-sweep-decisions` and `issues-sweep-reviews` put the issue only to
+that account (#4208).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A repo with more than one developer can park a decision, a look or an act on the one it belongs to,
+instead of in front of the owner, who may have no context on it. Without `-Decider` nothing changes. The
+three `-dev` label descriptions changed for a tracker adopting them fresh. An existing tracker keeps its
+own wording, because `adopt-triage-labels` does not compare descriptions (#2942).
+
+**Score:** 3
+
+#### Pull Request
+
+A named decider on a -dev park: claim-issue -Park -Decider, read by the owner sweeps
+
+Plugins: dkj-policy
+
+[PR #4217](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4217)
+
+---
 
 ### DEPLOY: feat/4214-lifehub-agenda-ai-radar · 20261117-101853Z
 
