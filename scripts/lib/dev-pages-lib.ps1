@@ -297,12 +297,13 @@ function Get-SpecialistPlugins {
         foreach ($r in $mine) { $listing += [int64]$r.ListingBytes; $full += [int64]$r.TotalBytes }
         $out += @{
             Plugin = $pl; Short = ($pl -replace '^dkj-subagents-', '')
-            Kind = $(if ($pl -eq 'dkj-subagents-alpha') { 'core team' } else { 'add-on team' })
+            Kind = $(if ($pl -eq 'dkj-subagents-alpha') { 'core team' } elseif ($pl -eq 'dkj-subagents-developers') { 'developers team' } else { 'add-on team' })
             Enabled = [bool]@($mine | Where-Object { $_.Enabled }).Count
             Rows = $mine; ListingBytes = $listing; TotalBytes = $full
         }
     }
-    return @($out | Sort-Object @{ Expression = { $_.Plugin -ne 'dkj-subagents-alpha' } }, @{ Expression = { -not $_.Enabled } }, @{ Expression = { $_.Plugin } })
+    # The two base teams first (#4211): the core team, then the developers team split off it.
+    return @($out | Sort-Object @{ Expression = { $_.Plugin -ne 'dkj-subagents-alpha' } }, @{ Expression = { $_.Plugin -ne 'dkj-subagents-developers' } }, @{ Expression = { -not $_.Enabled } }, @{ Expression = { $_.Plugin } })
 }
 
 function Format-SpecialistPageHtml {
@@ -1022,6 +1023,7 @@ function Get-MarketplacePluginKind {
     #>
     param([Parameter(Mandatory = $true)][string]$Name, [AllowEmptyString()][string]$Source = '')
     if ($Name -eq 'dkj-subagents-alpha') { return 'core team' }
+    if ($Name -eq 'dkj-subagents-developers') { return 'developers team' }
     if ($Name -like 'dkj-subagents-*') { return 'add-on team' }
     if ($Name -eq 'dkj-policy') { return 'workflow' }
     if ($Source -like './plugins/dkj-policy/*') { return 'add-on to dkj-policy' }
@@ -1114,12 +1116,13 @@ function Format-MarketplacePluginsPageHtml {
     }
 
     if (-not $Plugin) {
-        # The teams' own page: the core team under 'Alpha', every other team under 'Extensions', each an h2 over
-        # h3 cards in the marketplace's order (Maikel, October 30, 2026).
+        # The teams' own page: the base teams under 'Alpha', every other team under 'Extensions', each an h2 over
+        # h3 cards in the marketplace's order (Maikel, October 30, 2026). The base is the core team plus the
+        # developers team split off it (#4211), because every repo enables the two together.
         if (-not $teams.Count) { return $null }
-        $core = 'dkj-subagents-alpha'
-        foreach ($sec in @(@{ Id = 'alpha'; Title = 'Alpha'; Teams = @($teams | Where-Object { $_.Name -ceq $core }) },
-                @{ Id = 'extensions'; Title = 'Extensions'; Teams = @($teams | Where-Object { $_.Name -cne $core }) })) {
+        $core = @('dkj-subagents-alpha', 'dkj-subagents-developers')
+        foreach ($sec in @(@{ Id = 'alpha'; Title = 'Alpha'; Teams = @($teams | Where-Object { $core -ccontains $_.Name }) },
+                @{ Id = 'extensions'; Title = 'Extensions'; Teams = @($teams | Where-Object { $core -cnotcontains $_.Name }) })) {
             if (-not $sec.Teams.Count) { continue }
             [void]$body.AppendLine('<div class="grid-3" id="' + $sec.Id + '"><div class="grid__head"><h2>' + $sec.Title + '</h2></div>')
             foreach ($p in $sec.Teams) {

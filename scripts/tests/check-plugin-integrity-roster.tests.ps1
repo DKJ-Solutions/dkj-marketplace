@@ -243,6 +243,7 @@ try {
   "name": "fixture-marketplace",
   "plugins": [
     { "name": "dkj-subagents-alpha",         "source": "./plugins/dkj-subagents/dkj-subagents-alpha" },
+    { "name": "dkj-subagents-developers",    "source": "./plugins/dkj-subagents/dkj-subagents-developers" },
     { "name": "dkj-subagents-shopify",       "source": "./plugins/dkj-subagents/dkj-subagents-shopify" },
     { "name": "dkj-policy", "source": "./plugins/dkj-policy" },
     { "name": "bwj-development", "source": "./plugins/dkj-policy/extensions/bwj-development" }
