@@ -111,8 +111,21 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 ```
 
 The prefix table is this repo's own (`scripts/lib/branch-info.ps1`) -- read it rather than guessing.
-Fill the `### DEPLOY:` section of `.dkj/dkj-repo-workflow/<branch>.md`: that section IS the changelog entry. The
-change and its entry go in **one** commit.
+
+**The build goes to a fresh subagent on `sonnet`; the judgement stays here**
+([#4240](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4240)). A sweep's main loop runs on the
+session's model, and building is the bulk of its tokens, while choosing, parking and judging the result
+are the part that needs it. So once the branch is open, hand the edit to the subagent whose craft it is (a
+script to the system administrator, a doc to the technical writer, application code to the app
+developer), or to `general-purpose` with `model: sonnet` where none fits. Never a `fork`: it inherits
+the sweep and commits on its behalf. The brief carries the issue's ask and the measurements in it, the
+files to touch, the repo's rules that bind them, and **"edit the working copy; do not commit, push, open
+a PR or touch the tracker"**. When it returns, read the diff yourself: it is your claim, and a delegated
+mistake ships under it. Then fill the branch document's `### CREATE`, `### TEST` and `### DEPLOY:`
+sections yourself. Build it inline instead where the brief would be longer than the edit.
+
+The `### DEPLOY:` section of `.dkj/dkj-repo-workflow/<branch>.md` IS the changelog entry. The change and
+its entry go in **one** commit.
 
 ### 4. The gates -- `ship-pr` runs them, not you
 

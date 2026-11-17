@@ -286,6 +286,8 @@ function Invoke-Child([string]$Script, [string]$Dir, [string]$ParamName) {
 # A drifted copy makes the gate and the hook ask for the page at the tag (#3588); a name with no file behind
 # it keeps every child offline and reads as an unreadable page, unless a case below points it at one.
 $env:DKJ_HOUSE_STYLE_TAG_PAGE = Join-Path $Fixture 'no-tag-page.md'
+# The hook's scan cache (#4234) stays inside the fixture, so a run leaves nothing in the real temp directory.
+$env:DKJ_HOUSE_STYLE_CACHE_DIR = Join-Path $Fixture 'cache'
 
 try {
     # The gate and the hook run from a copy of the plugin whose skill page pins THIS tree's canonical files
@@ -384,6 +386,33 @@ try {
     Assert-True ($r.Out -match '\[type\] web/domain\.scss:3 font-size: types the size 15px' -and $r.Out -notmatch 'domain\.scss:4') 'check 5: a typed font size in a rule, and a domain step read with var() is free'
     $r = Invoke-Child $Hook $drift 'RepoRootOverride'
     Assert-True ($r.Code -eq 0 -and $r.Out -match '\[WARN\] 6 finding') 'the session check reports the findings and still exits 0'
+    $r2 = Invoke-Child $Hook $drift 'RepoRootOverride'
+    Assert-Equal $r.Out $r2.Out 'a second session start, served from the scan cache, reports exactly the same (#4234)'
+
+    # The scan cache (#4234), in process: a hit is reused while the file is unchanged, and read again once it is not.
+    $cachePath = Get-HouseStyleCachePath -RepoRoot $drift
+    Assert-True ($cachePath.StartsWith($env:DKJ_HOUSE_STYLE_CACHE_DIR)) 'the cache path honours DKJ_HOUSE_STYLE_CACHE_DIR'
+    $full = Invoke-HouseStyleCheck -RepoRoot $drift -Pin $pin
+    $warm = Invoke-HouseStyleCheck -RepoRoot $drift -Pin $pin -CachePath $cachePath
+    $show = { param($res) (@($res.Findings) | ForEach-Object { "$($_.Check) $($_.Path):$($_.Line) $($_.Name)" } | Sort-Object) -join '; ' }
+    Assert-Equal (& $show $full) (& $show $warm) 'the cached scan finds exactly what the full scan finds'
+    # Prove the reuse: a marker written into the cache comes back, which a fresh read of the file could not produce.
+    $raw = [System.IO.File]::ReadAllText($cachePath)
+    [System.IO.File]::WriteAllText($cachePath, $raw.Replace('defines the house token --primary', 'CACHED-MARKER'))
+    $again = Invoke-HouseStyleCheck -RepoRoot $drift -Pin $pin -CachePath $cachePath
+    Assert-True (@($again.Findings | Where-Object { $_.Text -like 'CACHED-MARKER*' }).Count -eq 1) 'an unchanged file gives back its hits from the cache'
+    Set-Content -LiteralPath (Join-Path $drift 'web\page.py') -Value "PAGE = '''<style>p { color: var(--fg-1); }</style>'''" -Encoding ascii
+    $changed = Invoke-HouseStyleCheck -RepoRoot $drift -Pin $pin -CachePath $cachePath
+    Assert-True (-not @($changed.Findings | Where-Object { $_.Path -eq 'web/page.py' }).Count) '...and a changed file is read again, its old hits gone'
+    $other = @{ Tag = 'v0.0.1'; Hashes = $pin.Hashes }
+    [System.IO.File]::WriteAllText($cachePath, ([System.IO.File]::ReadAllText($cachePath)).Replace('types the size 15px', 'CACHED-MARKER'))
+    $rekeyed = Invoke-HouseStyleCheck -RepoRoot $drift -Pin $other -CachePath $cachePath
+    Assert-True (-not @($rekeyed.Findings | Where-Object { $_.Text -like 'CACHED-MARKER*' }).Count) 'a cache written under another key (here: another tag) is not used'
+    [System.IO.File]::WriteAllText($cachePath, '{ broken')
+    $broken = Invoke-HouseStyleCheck -RepoRoot $drift -Pin $pin -CachePath $cachePath
+    Assert-True (@($broken.Findings).Count -gt 0 -and (& $show $broken) -match 'domain\.scss') 'an unreadable cache is no cache: the scan runs in full'
+    Set-Content -LiteralPath (Join-Path $drift 'web\page.py') -Value $py -Encoding ascii
+    Invoke-FixtureGitIn $drift add -A
 
     New-Item -ItemType Directory -Force -Path (Join-Path $drift 'scripts') | Out-Null
     $config = "function Get-HouseStyleAllowlist { @(@{ Path = 'web/page.py'; Reason = 'a fixture' }, @{ Path = 'web/house-theme.js'; Reason = 'no use: a pin is never answered here' }) }"
@@ -444,6 +473,7 @@ try {
     Remove-Item -LiteralPath $Fixture -Recurse -Force -ErrorAction SilentlyContinue
 }
 Remove-Item Env:\DKJ_HOUSE_STYLE_TAG_PAGE -ErrorAction SilentlyContinue
+Remove-Item Env:\DKJ_HOUSE_STYLE_CACHE_DIR -ErrorAction SilentlyContinue
 
 # The self-run, with the real gate and the real page: the canonical copy is the source here (#3637), so it is
 # held to no pin, and the page may name the tag's bytes between cuts (#3636).
