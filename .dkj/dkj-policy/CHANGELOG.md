@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**1 / 3 minor entries** <!-- pending-tally -->
+**1 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4214-lifehub-agenda-ai-radar · 20261117-101853Z
+
+A life hub gets two more skills: `/dkj-subagents-lifehub:agenda` walks the coming weeks of the Notion
+Agenda and proposes one action per date, and `/dkj-subagents-lifehub:ai-radar` collects Claude Code
+tips and updates into the hub's AI dossier without duplicates, both with the personal settings kept in
+the owner's own Notion ([#4214](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4214)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+Add the agenda and ai-radar skills to dkj-subagents-lifehub
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4215](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4215)
+
+---
 
 ### DEPLOY: docs/4210-claude-app-map · 20261117-100824Z
 
