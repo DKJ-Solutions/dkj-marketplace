@@ -39,19 +39,35 @@
 
 ### PLAN
 
+Inbound #4254: `--text-lg` was retired on November 1, 2026 and the brand book README says the gate
+reports it, but `Get-HouseStyleRetiredTokens` never listed it. A consumer read it four times and passed.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Add `--text-lg` to `Get-HouseStyleRetiredTokens`. A sweep of every README rename table against the
+  list found it to be the only one missing.
+- [x] A new assert in `check-house-style.tests.ps1` holds the list to every token a README rename table
+  retires, so the next omission fails this suite instead of passing in a consumer.
 
 ### TEST
 
+- [x] `check-house-style.tests.ps1` standalone: 191 passed, 0 failed. With only the rules file reverted, both
+  new asserts fail (`got '--text-lg'`).
+
 ### DEPLOY: fix/4254-gate-reports-text-lg
 
-**Score:**
+The house-style gate now reports `--text-lg` as a retired token (#4254). It was retired on November 1, 2026
+for `--text-h3`, but the gate never listed it, so a page reading it passed while its text fell back to
+the inherited size. A test now holds the gate's list to the brand book's rename tables.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions app that still reads `--text-lg` gets a `[retired]` finding naming the line, instead of
+quietly losing its size.
+
+**Score:** 3
 
 #### Pull Request
 
