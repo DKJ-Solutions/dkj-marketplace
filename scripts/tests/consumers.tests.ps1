@@ -43,7 +43,9 @@ $NestedFixtureRoot = Join-Path ([System.IO.Path]::GetTempPath()) "consumers-nest
 # states -- which is the whole subject of 14. So it sits BESIDE the repo, two levels up: inside the allowed
 # scope, outside the work tree (so 'git status' is untouched), and removed in the closing finally.
 $LensFixtureRoot = Join-Path (Resolve-Path -LiteralPath (Join-Path $RepoRoot '..\..')).Path "consumers-lens-fixture-$PID-$([guid]::NewGuid().ToString('n'))"
-# Scenario 12x's two-commit git repo, whose second commit moves a script (#4236).
+# Scenario 12x's two-commit git repo, whose second commit moves a script (#4236), built through the
+# judged fixture-git helpers (#1635).
+. (Join-Path $PSScriptRoot '..\lib\fixture-git-lib.ps1')
 $PinRepo = Join-Path ([System.IO.Path]::GetTempPath()) "consumers-pin-repo-$PID-$([guid]::NewGuid().ToString('n'))"
 $PrevPath = $env:PATH
 
@@ -1714,15 +1716,15 @@ try {
     # broken all five. A two-commit repo whose second commit moves the script is that shape in miniature.
     New-Item -ItemType Directory -Force -Path (Join-Path $PinRepo 'plugins\old\scripts') | Out-Null
     $gitId = @('-c', 'user.name=fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', '-c', 'core.autocrlf=false', '-c', 'core.safecrlf=false', '-c', 'init.defaultBranch=main')
-    & git @gitId -C $PinRepo init --quiet 2>$null | Out-Null
+    Invoke-FixtureGitJudged ($gitId + @('-C', $PinRepo, 'init', '--quiet'))
     [System.IO.File]::WriteAllText((Join-Path $PinRepo 'plugins\old\scripts\run.ps1'), "'x'`n")
-    & git @gitId -C $PinRepo add -A 2>$null | Out-Null
-    & git @gitId -C $PinRepo commit --quiet -m one 2>$null | Out-Null
-    & git @gitId -C $PinRepo tag v1.2.3 2>$null | Out-Null
+    Invoke-FixtureGitJudged ($gitId + @('-C', $PinRepo, 'add', '-A'))
+    Invoke-FixtureGitJudged ($gitId + @('-C', $PinRepo, 'commit', '--quiet', '-m', 'one'))
+    Invoke-FixtureGitJudged ($gitId + @('-C', $PinRepo, 'tag', 'v1.2.3'))
     $oldSha = (& git -C $PinRepo rev-parse HEAD).Trim()
     New-Item -ItemType Directory -Force -Path (Join-Path $PinRepo 'plugins\new\scripts') | Out-Null
-    & git @gitId -C $PinRepo mv plugins/old/scripts/run.ps1 plugins/new/scripts/run.ps1 2>$null | Out-Null
-    & git @gitId -C $PinRepo commit --quiet -m two 2>$null | Out-Null
+    Invoke-FixtureGitJudged ($gitId + @('-C', $PinRepo, 'mv', 'plugins/old/scripts/run.ps1', 'plugins/new/scripts/run.ps1'))
+    Invoke-FixtureGitJudged ($gitId + @('-C', $PinRepo, 'commit', '--quiet', '-m', 'two'))
 
     $oldPath = 'plugins/old/scripts/run.ps1'
     $mk = { param($Ref) [pscustomobject]@{ Path = $oldPath; Prefix = '.w'; Repository = 'o/r'; Line = 1; Kind = 'checkout'; Ref = $Ref } }
@@ -2144,6 +2146,7 @@ exit 1
     }
 }
 
+$fixtureBroken = Write-FixtureGitSummary -Subject 'check-consumers.ps1'
 Write-Host "`nResult: $($script:pass) pass, $($script:fail) fail." -ForegroundColor $(if ($script:fail -gt 0) { 'Red' } else { 'Green' })
-if ($script:fail -gt 0) { exit 1 }
+if ($script:fail -gt 0 -or $fixtureBroken) { exit 1 }
 exit 0
