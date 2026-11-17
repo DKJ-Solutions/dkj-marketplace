@@ -744,17 +744,20 @@ function Get-ReleasePluginTier {
 # writes it, in the release commit beside the plugin.json bumps. The owner chose this over pinning by hand
 # (Dave, October 19, 2026, on #3133). The checksums beside those URLs are the cut's to write too (#3636, the
 # owner's choice of October 28, 2026): a cell every house-style branch rewrote by hand conflicted between any two
-# of them, and between releases it named bytes the tag beside it does not serve.
+# of them, and between releases it named bytes the tag beside it does not serve. And the same page's house-style
+# caller (#4246): its `@vX.Y.Z` and `scripts-ref: vX.Y.Z` name the release whose brand book the repo adopts, so the
+# cut writes those bare tags too (Refs), beside the table's tag, and never by hand.
 $script:ReleaseVersionPins = @(
     @{ Path = 'plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook/SKILL.md'
        Prefix = 'https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/'
        Checksums = @('plugins/dkj-repo-workflow/assets/dkj-brandbook/house-style.css', 'plugins/dkj-repo-workflow/assets/dkj-brandbook/house-theme.js',
                      'plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product/house-product.css',
-                     'plugins/dkj-repo-workflow/assets/dkj-brandbook/InterVariable.woff2') }
+                     'plugins/dkj-repo-workflow/assets/dkj-brandbook/InterVariable.woff2')
+       Refs = @('DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-house-style.yml@', 'scripts-ref: ') }
 )
 
 function Get-ReleaseVersionPins {
-    <# The files whose '<Prefix>vX.Y.Z/' URLs, and the sha256 beside each Checksums file, cut-release rewrites at the tag it cuts. #>
+    <# The files whose '<Prefix>vX.Y.Z/' URLs, the sha256 beside each Checksums file, and the bare 'vX.Y.Z' after each Refs prefix (#4246), cut-release rewrites at the tag it cuts. #>
     return $script:ReleaseVersionPins
 }
 

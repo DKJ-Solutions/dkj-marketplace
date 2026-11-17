@@ -297,6 +297,10 @@ $HistoryMajors
 | ``house-product.css`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product/house-product.css`` | ``$zeros`` |
 | ``InterVariable.woff2`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-repo-workflow/assets/dkj-brandbook/InterVariable.woff2`` | ``$zeros`` |
 https://raw.githubusercontent.com/DKJ-Solutions/other-repo/v0.1.0/a/file.css
+
+    uses: DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-house-style.yml@v$PluginVersion
+    with:
+      scripts-ref: v$PluginVersion
 "@
     $assets = Join-Path $root 'plugins\dkj-repo-workflow\assets\dkj-brandbook'
     New-Item -ItemType Directory -Path $assets -Force | Out-Null
@@ -374,6 +378,11 @@ try {
     Assert-Match 'other-repo/v0\.1\.0/' $pinPage 'happy path: a URL under another prefix is left alone'
     Assert-Says 'repinned: plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook/SKILL.md -> v1.4.1 (4 URL(s))' $r.Out 'happy path: the run says what it repinned'
     Assert-NotMatch '\?\? .*SKILL\.md|M .*SKILL\.md' (Get-GitOut -Root $root -GitArgs @('status', '--porcelain')) 'happy path: the repinned page is inside the release commit'
+    # The Refs (#4246): the caller's bare `@vX.Y.Z` and `scripts-ref: vX.Y.Z` follow the cut too, and the run says so.
+    Assert-Match 'reusable-house-style\.yml@v1\.4\.1\s' $pinPage 'happy path: the caller @ ref names the tag the cut made'
+    Assert-Match 'scripts-ref: v1\.4\.1\s*$' $pinPage 'happy path: scripts-ref names the tag the cut made'
+    Assert-NotMatch '(?m)(@|scripts-ref: )v1\.4\.0\s*$' $pinPage 'happy path: no bare ref is left on the old tag'
+    Assert-Says "-> 'scripts-ref: v1.4.1' (1 ref(s))" $r.Out 'happy path: the run says what it repinned by Refs'
     # The checksums (#3636): each cell beside a pinned URL is the sha256 of the bytes that tag serves.
     $sha = [System.Security.Cryptography.SHA256]::Create()
     foreach ($pinned in 'assets\dkj-brandbook\house-style.css', 'assets\dkj-brandbook\house-theme.js', 'extensions\dkj-repo-workflow-dkj\assets\dkj-brandbook-product\house-product.css', 'assets\dkj-brandbook\InterVariable.woff2') {
@@ -887,6 +896,19 @@ $cutSectH11 Pull Request
     Assert-Says "names 'plugins/dkj-repo-workflow/assets/dkj-brandbook/house-theme.js' beside a sha256 on 0 line(s)" $r17b.Out 'checksum cell missing: the refusal names the file and the count'
     $v17b = (Get-Content -LiteralPath (Join-Path $root17b 'plugins\dkj-subagents\team-fixture\.claude-plugin\plugin.json') -Raw | ConvertFrom-Json).version
     Assert-Equal '1.4.0' $v17b 'checksum cell missing: nothing was written'
+
+    # A Ref the page no longer carries refuses the same way (#4246): the caller would otherwise stay on the old tag.
+    $root17c = New-CutFixture -Name 'ref-missing'
+    $page17c = Join-Path $root17c 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\skills\dkj-brandbook\SKILL.md'
+    Write-Utf8 $page17c (((Get-Content -LiteralPath $page17c -Raw) -split "`r?`n" | Where-Object { $_ -notmatch 'scripts-ref:' }) -join "`n")
+    Push-Location $root17c
+    try { Invoke-NativeCapture -FilePath 'git' -Arguments @('commit', '--quiet', '-am', 'fixture: drop the scripts-ref line') | Out-Null }
+    finally { Pop-Location }
+    $r17c = Invoke-Cut -Root $root17c -Arguments @('-Bump', 'patch', '-NoPush', '-SkipLint', '-SkipTests')
+    Assert-True ($r17c.Code -ne 0) 'ref missing: refused with a non-zero exit'
+    Assert-Says "carries no 'scripts-ref: vX.Y.Z'" $r17c.Out 'ref missing: the refusal names the ref'
+    $v17c = (Get-Content -LiteralPath (Join-Path $root17c 'plugins\dkj-subagents\team-fixture\.claude-plugin\plugin.json') -Raw | ConvertFrom-Json).version
+    Assert-Equal '1.4.0' $v17c 'ref missing: nothing was written'
 
     # --- 14. A release build that fails, or builds where git can see it, refuses the cut (#3210) -------
     Write-Host ""

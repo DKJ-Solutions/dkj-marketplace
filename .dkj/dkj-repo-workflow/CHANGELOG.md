@@ -2,7 +2,37 @@
 
 ## [Unreleased]
 
-**3 / 3 minor entries** <!-- pending-tally -->
+**4 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4246-pin-house-style-caller · 20261117-201426Z
+
+The house-style caller in the `dkj-brandbook` skill is now pinned to the release a repo adopted:
+`reusable-house-style.yml@vX.Y.Z` plus `scripts-ref: vX.Y.Z`. #4237 had already pinned the branch-entry,
+always-on and repo-settings runners this way (#4246). Before this, a script moved on `main` before a
+release turned that gate red in every consumer. The release cut writes both tags beside the checksum
+table's tag. To make that possible, a `Get-ReleaseVersionPins` entry takes an optional `Refs` list: the
+cut repoints the bare tag after each prefix, and refuses to cut when a prefix has gone missing from the
+file.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+For the maintainer of a DKJ-Solutions repo with a UI: the brand-book CI gate the skill hands you no
+longer goes red when the source moves a script on `main`. It moves when you take a new brand-book
+copy. A caller already on `@main` keeps working as before. Copy the new snippet to pin it.
+
+**Score:** 2
+
+#### Pull Request
+
+Pin the house-style caller the dkj-brandbook skill gives to the release, as #4237 pinned the other read-only gates
+
+Plugins: dkj-repo-workflow, dkj-repo-workflow-dkj
+
+[PR #4249](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4249)
+
+---
 
 ### DEPLOY: fix/4237-pin-read-only-runners · 20261117-173035Z
 
