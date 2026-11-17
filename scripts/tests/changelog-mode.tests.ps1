@@ -119,6 +119,29 @@ try {
     Remove-BranchDocumentLocalExclude -RepoRoot $ex -RelPath $rel
     Assert-True ($true) 'removing an absent line is silent'
 
+    # CRLF is the user's choice and survives a round trip; only the one line comes and goes.
+    $crlf = "# a comment`r`n*.tmp`r`n"
+    [System.IO.File]::WriteAllText($excludeFile, $crlf)
+    Add-BranchDocumentLocalExclude -RepoRoot $ex -RelPath $rel | Out-Null
+    Assert-True ([System.IO.File]::ReadAllText($excludeFile) -eq ($crlf + "/$rel`r`n")) 'a CRLF exclude file gets a CRLF line'
+    Remove-BranchDocumentLocalExclude -RepoRoot $ex -RelPath $rel
+    Assert-True ([System.IO.File]::ReadAllText($excludeFile) -eq $crlf) 'and removing it leaves the file byte-identical'
+
+    # A linked worktree: .git is a FILE, and the exclude that counts is the common directory's. Under a
+    # non-ASCII path, which is what reading rev-parse output got wrong (#4213 review).
+    Invoke-Git $ex commit -q --allow-empty -m 'base' | Out-Null
+    $wt = Join-Path $Fixture ('lane-' + [char]0x00EB)
+    Invoke-Git $ex worktree add -q $wt -b lane | Out-Null
+    Assert-True ((Get-GitInfoExcludePath -RepoRoot $wt) -eq [System.IO.Path]::GetFullPath($excludeFile)) 'a linked worktree under a non-ASCII path resolves to the common exclude file'
+    Assert-True (Add-BranchDocumentLocalExclude -RepoRoot $wt -RelPath $rel) 'and writes the line there'
+    Assert-True (@([System.IO.File]::ReadAllText($excludeFile) -split "`r?`n") -contains "/$rel") 'which the common exclude file now carries'
+    Remove-BranchDocumentLocalExclude -RepoRoot $wt -RelPath $rel
+    Assert-True ([System.IO.File]::ReadAllText($excludeFile) -eq $crlf) 'and removes it again'
+    $nogit = Join-Path $Fixture 'not-a-repo'
+    New-Item -ItemType Directory -Path $nogit -Force | Out-Null
+    Assert-True (-not (Add-BranchDocumentLocalExclude -RepoRoot $nogit -RelPath $rel)) 'outside a repo it returns false and creates nothing'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $nogit '.git'))) 'no .git directory is invented'
+
     # --- 3. A consumer answering none, end to end ----------------------------------------------------
     Write-Host ''
     Write-Host "A consumer answering 'none': one work commit, no park, no fold, and quiet gates"

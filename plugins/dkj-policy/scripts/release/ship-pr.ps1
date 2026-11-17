@@ -558,6 +558,32 @@ if (-not (Test-Path -LiteralPath $configPath)) {
 # script stands down itself) and step 5n removes the uncommitted branch document after the merge.
 . (Join-Path $PSScriptRoot '..\lib\changelog-mode-lib.ps1')
 $changelogModeNone = Test-ChangelogModeNone
+function Remove-ShipNoneBranchDocument {
+    <# Step 5n's cleanup (issue #4213), a function because two exits need it: the ordinary end of a ship,
+       and the early "already merged -- nothing to ship" exit, which a re-run after a CI-side merge takes. #>
+    $noneDocRel = $null
+    try { $noneDocRel = [string](Resolve-BranchFilePath -Kind Cycle -RepoRoot $repoRoot -Branch $branch) } catch { $noneDocRel = $null }
+    if ($noneDocRel) {
+        $noneDocPath = Join-Path $repoRoot ($noneDocRel -replace '/', '\')
+        try {
+            $noneDocText = if (Test-Path -LiteralPath $noneDocPath -PathType Leaf) { [System.IO.File]::ReadAllText($noneDocPath) } else { $null }
+            # Only THIS branch's document (the resolver falls back to a path that merely exists), and only
+            # an UNTRACKED one: a tracked document is somebody's committed file, and deleting it here would
+            # leave a dirty tree rather than a clean one.
+            $noneDocTracked = (Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'ls-files', '--error-unmatch', '--', $noneDocRel) -DiscardStderr).ExitCode -eq 0
+            if ($noneDocText -and -not $noneDocTracked -and (Get-BranchFileDeclaredBranch -Text $noneDocText) -eq $branch) {
+                Remove-Item -LiteralPath $noneDocPath -Force
+                Write-Host "ship-pr: no changelog in this repo (Get-ChangelogMode 'none') -- removed the local branch document '$noneDocRel'; the PR body is the record." -ForegroundColor DarkGray
+            }
+            # The exclude line goes only once the file is gone: a kept file must stay invisible to `git add -A`.
+            if (-not (Test-Path -LiteralPath $noneDocPath)) {
+                Remove-BranchDocumentLocalExclude -RepoRoot $repoRoot -RelPath $noneDocRel
+            }
+        } catch {
+            Write-Warning "ship-pr: could not remove the local branch document '$noneDocRel' -- delete it by hand; nothing on the trunk depends on it."
+        }
+    }
+}
 # For every printed remedy below that puts the branch name into a command the reader runs verbatim
 # (issue #1594): Get-PasteableRef decides whether the name may go in at all, and supplies the placeholder
 # plus the explaining line when it may not. Same plugin-payload sibling and the same unguarded
@@ -1113,6 +1139,7 @@ if ($null -eq $prRecord) {
     if ($mergedRecord) {
         Write-Host "ship-pr: PR #$($mergedRecord.number) for '$branchShown' is already merged -- nothing to ship. $($mergedRecord.url)" -ForegroundColor Green
         Write-Host "ship-pr: this checkout is still on '$branchShown' -- the merge deleted the remote branch, not the local one. 'git checkout main' (or prune-merged) clears it up." -ForegroundColor DarkGray
+        if ($changelogModeNone) { Remove-ShipNoneBranchDocument }
         exit 0
     }
     Write-Error "No open PR to main found for '$branchShown' after open-pr -- stopping."
@@ -4360,24 +4387,7 @@ if (-not $foldDeferredToCi -and -not $foldTree -and -not $shipTreeIsPrimary) {
 #
 # RESOLVED AGAINST THE WORKING TREE, NOT THE BRANCH'S COMMIT the way $shipProgressRel is: the commit never
 # carried this document, so that reader finds nothing here by design.
-if ($changelogModeNone) {
-    $noneDocRel = $null
-    try { $noneDocRel = [string](Resolve-BranchFilePath -Kind Cycle -RepoRoot $repoRoot -Branch $branch) } catch { $noneDocRel = $null }
-    if ($noneDocRel) {
-        $noneDocPath = Join-Path $repoRoot ($noneDocRel -replace '/', '\')
-        try {
-            $noneDocText = if (Test-Path -LiteralPath $noneDocPath -PathType Leaf) { [System.IO.File]::ReadAllText($noneDocPath) } else { $null }
-            # Only THIS branch's document: the resolver falls back to a path that merely exists.
-            if ($noneDocText -and (Get-BranchFileDeclaredBranch -Text $noneDocText) -eq $branch) {
-                Remove-Item -LiteralPath $noneDocPath -Force
-                Write-Host "ship-pr: no changelog in this repo (Get-ChangelogMode 'none') -- removed the local branch document '$noneDocRel'; the PR body is the record." -ForegroundColor DarkGray
-            }
-            Remove-BranchDocumentLocalExclude -RepoRoot $repoRoot -RelPath $noneDocRel
-        } catch {
-            Write-Warning "ship-pr: could not remove the local branch document '$noneDocRel' -- delete it by hand; nothing on the trunk depends on it."
-        }
-    }
-}
+if ($changelogModeNone) { Remove-ShipNoneBranchDocument }
 
 # --- Step 5c: the redundant fold commit this run lost the race with (issue #1792) -----------------
 #

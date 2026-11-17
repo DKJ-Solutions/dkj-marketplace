@@ -821,10 +821,10 @@ fixed head, #2486.)
 
 ### A repo whose changelog has no reader: `Get-ChangelogMode 'none'`
 
-Steps 2, 4 and 6 above put a `park:` commit on every branch and a `fold:` commit on the trunk after every
+Steps 2, 3 and 6 above put `park:` commits on every branch and a `fold:` commit on the trunk after every
 merge. Where nobody reads the changelog (no plugin, no live stage, no reader of the release notes), that is
 ceremony without a reader: measured on one such consumer, 55% of its commits over 30 days were `park:`,
-`fold:` or `merge:` (#4213). **Answer `Get-ChangelogMode` with `'none'`** in `scripts/repo-config.ps1` and
+`fold:` or `merge:` (#4213), and this answer removes the `park:` and `fold:` ones. **Answer `Get-ChangelogMode` with `'none'`** in `scripts/repo-config.ps1` and
 the route gets lighter:
 
 - `new-branch` still writes the branch document, because the plan is still useful to the session. It
@@ -837,7 +837,10 @@ the route gets lighter:
 - `cut-release` refuses and names the seam: a release is cut from the changelog this repo does not keep.
 
 The default is `'fold'`, and any answer other than `'none'` reads as `'fold'`. The trade is real: a branch
-reaches `origin` only with its first work commit, so work in progress is not backed up until then.
+reaches `origin` only when `open-pr` pushes it, so work in progress is not backed up until then. And the
+CI check reads the seam from the pull request's own `scripts/repo-config.ps1`, so a PR that changes the
+answer switches the `Branch entry` check off for itself. That is the same trust as any change to that file,
+so review it as you would any change that loosens a gate.
 
 ---
 

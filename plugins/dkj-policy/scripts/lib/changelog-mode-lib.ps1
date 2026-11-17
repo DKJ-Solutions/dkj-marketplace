@@ -18,7 +18,7 @@
       * park-cycle (the cycle-autopark Stop hook) parks nothing;
       * open-pr's branch-entry gates and the CI 'Branch entry' check stand down -- the record moves into
         the PR body rather than into a changelog;
-      * ship-pr skips the fold, so nothing lands on the trunk after the merge, and deletes the local
+      * the fold ship-pr runs is a no-op (the fold script stands down), so nothing lands on the trunk after the merge, and deletes the local
         document and its exclude line once the merge is in;
       * fold-changelog-entry, check-unfolded-entry (and its session check) stand down;
       * cut-release refuses, naming this seam.
@@ -61,21 +61,36 @@ function Get-ChangelogModeNoneNote {
 
 function Get-GitInfoExcludePath {
     <#
-        The absolute path of this checkout's info/exclude, asked of git so a worktree (whose .git is a
-        file) resolves to the common directory's copy. $null where git does not answer.
+        The absolute path of this checkout's info/exclude, or $null. A primary checkout's .git is the
+        directory; a linked worktree's .git is a FILE naming its gitdir, whose 'commondir' file names the
+        shared directory that holds info/exclude.
+
+        READ FROM THOSE FILES, NEVER FROM `git rev-parse` OUTPUT. In a linked worktree rev-parse answers an
+        absolute path, which Windows PowerShell 5.1 decodes with the console code page -- so under a
+        non-ASCII path (C:\Users\Zoe-with-a-diaeresis\...) it named a directory that does not exist, and the
+        exclude silently went nowhere (measured in review, #4213). The two files are read as UTF-8 and every
+        path is joined onto $RepoRoot, which PowerShell already holds correctly.
     #>
     param([Parameter(Mandatory)][string]$RepoRoot)
-    $prevEap = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    try {
-        $out = & git -C $RepoRoot rev-parse --git-common-dir 2>$null
-        $code = $LASTEXITCODE
-    } finally { $ErrorActionPreference = $prevEap }
-    if ($code -ne 0 -or -not $out) { return $null }
-    $dir = ([string]@($out)[0]).Trim()
-    if (-not $dir) { return $null }
-    if (-not [System.IO.Path]::IsPathRooted($dir)) { $dir = Join-Path $RepoRoot $dir }
-    return (Join-Path (Join-Path $dir 'info') 'exclude')
+    $dotGit = Join-Path $RepoRoot '.git'
+    $common = $null
+    if (Test-Path -LiteralPath $dotGit -PathType Container) {
+        $common = $dotGit
+    } elseif (Test-Path -LiteralPath $dotGit -PathType Leaf) {
+        $m = [regex]::Match([System.IO.File]::ReadAllText($dotGit, [System.Text.Encoding]::UTF8), '(?m)^gitdir:\s*(.+?)\s*$')
+        if (-not $m.Success) { return $null }
+        $gitDir = $m.Groups[1].Value
+        if (-not [System.IO.Path]::IsPathRooted($gitDir)) { $gitDir = Join-Path $RepoRoot $gitDir }
+        $commonFile = Join-Path $gitDir 'commondir'
+        $common = $gitDir
+        if (Test-Path -LiteralPath $commonFile -PathType Leaf) {
+            $c = ([System.IO.File]::ReadAllText($commonFile, [System.Text.Encoding]::UTF8)).Trim()
+            if ($c) { $common = if ([System.IO.Path]::IsPathRooted($c)) { $c } else { Join-Path $gitDir $c } }
+        }
+    }
+    # The common directory must already exist: this never creates a git directory, only a file inside one.
+    if (-not $common -or -not (Test-Path -LiteralPath $common -PathType Container)) { return $null }
+    return [System.IO.Path]::GetFullPath((Join-Path (Join-Path $common 'info') 'exclude'))
 }
 
 function ConvertTo-ExcludeLine {
@@ -87,36 +102,38 @@ function Add-BranchDocumentLocalExclude {
     <#
         Keep the branch document out of every commit by naming it in info/exclude -- local to this clone,
         never committed, so the repo's tree is unchanged. Idempotent; $true when the line is present
-        afterwards. $RelPath is repo-relative.
+        afterwards, $false where the exclude file could not be resolved (the caller warns).
+
+        ONE TREE ONLY, by construction: the document is untracked, so it exists in the working tree that
+        new-branch wrote it in. A second worktree of the same branch has none, and open-pr there names the
+        PR from -Title instead.
     #>
     param([Parameter(Mandatory)][string]$RepoRoot, [Parameter(Mandatory)][string]$RelPath)
     $excludePath = Get-GitInfoExcludePath -RepoRoot $RepoRoot
     if (-not $excludePath) { return $false }
     $line = ConvertTo-ExcludeLine -RelPath $RelPath
     $dir = Split-Path -Parent $excludePath
-    if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+    if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
     $raw = if (Test-Path -LiteralPath $excludePath) { [System.IO.File]::ReadAllText($excludePath) } else { '' }
-    $lines = @($raw -split "`r?`n")
-    if ($lines -contains $line) { return $true }
-    $prefix = if ($raw.Length -gt 0 -and -not $raw.EndsWith("`n")) { "`n" } else { '' }
-    [System.IO.File]::AppendAllText($excludePath, $prefix + $line + "`n", (New-Object System.Text.UTF8Encoding($false)))
+    if (@($raw -split "`r?`n") -contains $line) { return $true }
+    $nl = if ($raw.Contains("`r`n")) { "`r`n" } else { "`n" }
+    $prefix = if ($raw.Length -gt 0 -and -not $raw.EndsWith("`n")) { $nl } else { '' }
+    [System.IO.File]::AppendAllText($excludePath, $prefix + $line + $nl, (New-Object System.Text.UTF8Encoding($false)))
     return $true
 }
 
 function Remove-BranchDocumentLocalExclude {
     <#
         The inverse, run once the branch has shipped, so info/exclude does not grow by one line per
-        branch. Silent where there is nothing to remove.
+        branch. Removes that one line with its own terminator and touches nothing else -- the file is the
+        user's, so its line endings and blank lines stay as they were. Silent where there is nothing to remove.
     #>
     param([Parameter(Mandatory)][string]$RepoRoot, [Parameter(Mandatory)][string]$RelPath)
     $excludePath = Get-GitInfoExcludePath -RepoRoot $RepoRoot
     if (-not $excludePath -or -not (Test-Path -LiteralPath $excludePath)) { return }
     $line = ConvertTo-ExcludeLine -RelPath $RelPath
     $raw = [System.IO.File]::ReadAllText($excludePath)
-    $lines = @($raw -split "`r?`n")
-    if ($lines -notcontains $line) { return }
-    $kept = @($lines | Where-Object { $_ -ne $line })
-    $text = ($kept -join "`n").TrimEnd("`n")
-    if ($text) { $text += "`n" }
-    [System.IO.File]::WriteAllText($excludePath, $text, (New-Object System.Text.UTF8Encoding($false)))
+    $rx = '(?m)^' + [regex]::Escape($line) + '(\r?\n|\z)'
+    if (-not [regex]::IsMatch($raw, $rx)) { return }
+    [System.IO.File]::WriteAllText($excludePath, [regex]::Replace($raw, $rx, ''), (New-Object System.Text.UTF8Encoding($false)))
 }

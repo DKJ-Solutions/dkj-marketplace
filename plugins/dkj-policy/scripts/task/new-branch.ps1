@@ -1415,7 +1415,7 @@ if ($Park) {
 # UNDER Get-ChangelogMode 'none' (issue #4213) THERE IS NOTHING TO PARK. The document is this session's
 # plan and the PR body's source, not a record, so it is named in this clone's .git/info/exclude and never
 # committed: no 'park:' commit here, none from park-cycle after a turn, and nothing for a fold to remove
-# from the trunk. The branch reaches origin with its first work commit, through open-pr.
+# from the trunk. The branch first reaches origin when open-pr pushes it.
 if (Test-ChangelogModeNone) {
     if (Add-BranchDocumentLocalExclude -RepoRoot $repoRoot -RelPath $cycleRel) {
         Write-Host "new-branch: $(Get-ChangelogModeNoneNote) '$cycleRel' stays local and uncommitted (named in .git/info/exclude); no park commit, nothing pushed." -ForegroundColor DarkGray
