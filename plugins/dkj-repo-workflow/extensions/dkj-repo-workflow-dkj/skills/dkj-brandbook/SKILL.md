@@ -251,8 +251,15 @@ permissions:
   contents: read
 jobs:
   house-style:
-    uses: DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-house-style.yml@main
+    uses: DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-house-style.yml@v7.0.0
+    with:
+      scripts-ref: v7.0.0
 ```
+
+Both tags name the release whose brand book the repo adopts, the one in the checksum table above. The release cut
+writes them beside the table's tag, never by hand, and a repo moves its caller when it takes a new copy: a
+source-side move on `main` no longer reaches its CI first
+([#4246](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4246), as #4237 did for the other read-only gates).
 
 **At session start**, the plugin's `house-style-sessioncheck` hook runs the same checks and reports them.
 It is read-only, and in a repo with no brand book at all it prints one line saying there is nothing to check.

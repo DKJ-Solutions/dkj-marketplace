@@ -64,6 +64,19 @@ Assert-True (Test-Path -LiteralPath (Join-Path $Vendored 'README.md')) 'the READ
 . (Join-Path $RepoRoot 'scripts\repo-config.ps1')
 $skillPins = @(Get-ReleaseVersionPins | Where-Object { $_.Path -eq 'plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook/SKILL.md' })
 Assert-Equal 1 $skillPins.Count 'the cut repoints the skill page (Get-ReleaseVersionPins)'
+# The caller on that page (#4246): the cut writes its `@vX.Y.Z` and `scripts-ref: vX.Y.Z` through Refs, so the
+# caller and the checksum table never name different releases.
+$skillRefs = @($skillPins[0].Refs)
+Assert-True ($skillRefs -contains 'DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-house-style.yml@') 'the skill-page pin carries the caller @ Ref (#4246)'
+Assert-True ($skillRefs -contains 'scripts-ref: ') 'the skill-page pin carries the scripts-ref Ref (#4246)'
+$skillText = [System.IO.File]::ReadAllText($Skill)
+$callerTags = @([regex]::Matches($skillText, 'reusable-house-style\.yml@(v\d+\.\d+\.\d+)(?![\d./])') | ForEach-Object { $_.Groups[1].Value })
+$refTags = @([regex]::Matches($skillText, '(?m)^\s+scripts-ref: (v\d+\.\d+\.\d+)\s*$') | ForEach-Object { $_.Groups[1].Value })
+Assert-Equal 1 $callerTags.Count 'the page carries exactly one caller @vX.Y.Z'
+Assert-Equal 1 $refTags.Count 'and exactly one scripts-ref: vX.Y.Z, only in that snippet'
+Assert-Equal $pin.Tag $callerTags[0] 'the caller names the release the checksum table pins'
+Assert-Equal $pin.Tag $refTags[0] 'and so does its scripts-ref'
+Assert-Equal 1 ([regex]::Matches($skillText, 'scripts-ref: ').Count - 0 - ([regex]::Matches($skillText, 'scripts-ref: (?!v\d)').Count)) 'every scripts-ref: on the page is a tag'
 foreach ($leaf in 'house-style.css', 'house-theme.js') {
     Assert-True (@($skillPins | ForEach-Object { $_.Checksums }) -contains "plugins/dkj-repo-workflow/assets/dkj-brandbook/$leaf") "...and writes the checksum of the canonical $leaf beside its URL"
 }

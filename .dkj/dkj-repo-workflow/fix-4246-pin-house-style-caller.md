@@ -47,20 +47,34 @@ prefixes after which a bare tag is repointed.
 
 ### CREATE
 
-- [ ] `cut-release.ps1` (source and plugin mirror): optional `Refs` on a version pin, validated in the preflight and rewritten at the bump
-- [ ] `repo-config.ps1` and its blueprint text: the dkj-brandbook pin names the caller's two refs
-- [ ] The skill page's caller and `reusable-house-style.yml`'s header: pinned, with the reason
-- [ ] Tests: the caller and the table name the same release; a Ref is rewritten, and a missing one refuses the cut
+- [x] `cut-release.ps1` (source and plugin mirror): optional `Refs` on a version pin, validated in the preflight and rewritten at the bump
+- [x] `repo-config.ps1` and its blueprint text: the dkj-brandbook pin names the caller's two refs (the blueprint regenerated with `build-config-blueprint.ps1`)
+- [x] The skill page's caller and `reusable-house-style.yml`'s header: pinned, with the reason
+- [x] Tests: the caller and the table name the same release; a Ref is rewritten, and a missing one refuses the cut
 
 ### TEST
 
+- [x] Affected suites green standalone: `check-house-style` (189), `cut-release-drive` (140), `script-contract` (516), `config-blueprint` (239); `check-plugin-integrity` 0 errors. The full gate runs in `ship-pr`.
+
 ### DEPLOY: fix/4246-pin-house-style-caller
 
-**Score:**
+The house-style caller in the `dkj-brandbook` skill is now pinned to the release a repo adopted:
+`reusable-house-style.yml@vX.Y.Z` plus `scripts-ref: vX.Y.Z`. #4237 had already pinned the branch-entry,
+always-on and repo-settings runners this way (#4246). Before this, a script moved on `main` before a
+release turned that gate red in every consumer. The release cut writes both tags beside the checksum
+table's tag. To make that possible, a `Get-ReleaseVersionPins` entry takes an optional `Refs` list: the
+cut repoints the bare tag after each prefix, and refuses to cut when a prefix has gone missing from the
+file.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+For the maintainer of a DKJ-Solutions repo with a UI: the brand-book CI gate the skill hands you no
+longer goes red when the source moves a script on `main`. It moves when you take a new brand-book
+copy. A caller already on `@main` keeps working as before. Copy the new snippet to pin it.
+
+**Score:** 2
 
 #### Pull Request
 
