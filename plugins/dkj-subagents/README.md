@@ -22,7 +22,8 @@ skills-design philosophy — retired in turn on October 2, 2026, its versioning 
 
 | Folder | The specialists it adds |
 |---|---|
-| [`dkj-subagents-alpha/`](dkj-subagents-alpha/) | The **core team** — the repo-neutral specialists who work the same way in every repo, plus the persona templates of the main loop and the bootstrap skill `specialists-init`. |
+| [`dkj-subagents-alpha/`](dkj-subagents-alpha/) | The **core team** — the specialists who work anywhere, with or without a repository, plus the orchestrator's persona and the `orchestrator` skill. The one team the Claude App gets. |
+| [`dkj-subagents-developers/`](dkj-subagents-developers/) | The **developers team** — the specialists whose craft needs a repository (Derek, Rendall, Sylvester, Cody, Tycho, Victor, Sebastian, Ravi, Nolan, Tessa), plus `specialists-init`, `specialists-teardown`, `sync-roster` and the roster hook. Split off the core team in [#4211](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4211). |
 | [`dkj-subagents-lifehub/`](dkj-subagents-lifehub/) | An **add-on team** for a personal information hub / brain-based knowledge repo. |
 | [`dkj-subagents-shopify/`](dkj-subagents-shopify/) | An **add-on team** for a Shopify store repo: theme code, store management, configuration. |
 | [`dkj-subagents-ecomm/`](dkj-subagents-ecomm/) | An **add-on team** for a commercial webshop of any platform: SEO, CRO, performance/SEA. |
@@ -36,7 +37,8 @@ invisible, since nobody reads both copies in one sitting.
 
 ## Teams stack; a repo enables as many as its domain calls for
 
-`dkj-subagents-alpha` is the foundation and belongs in every consuming repo. Each further team **adds
+`dkj-subagents-alpha` and `dkj-subagents-developers` are the foundation and belong in every consuming
+repo, together: the core team is the half that also works without one. Each further team **adds
 specialists**, so enabling two of them raises no conflict — a Shopify store repo that is also a
 commercial webshop legitimately enables `dkj-subagents-shopify` and `dkj-subagents-ecomm` alongside the core. That is
 the property that separates this directory from `../dkj-policy/`: a team hands the repo more
@@ -91,8 +93,9 @@ the page a reader consults precisely because they assume the two halves match.
   split between the two, and the repo lens that completes it on the consumer's side, is described under
   [Manuals — the split model](#manuals--the-split-model).
 - **`skills/`, `hooks/`, `scripts/`, `personas/`** — optional, and only where a team genuinely needs
-  them. In practice `dkj-subagents-alpha` is the one carrying all four, because the adoption path, the roster
-  and workflow session checks and the sync scripts belong to the core rather than to any domain team;
+  them. In practice `dkj-subagents-developers` is the one carrying all four, because the adoption path, the roster
+  session check and the sync scripts belong to the base team rather than to any domain team, and to its
+  repo-bound half (#4211), so the core team ships none;
   `dkj-subagents-shopify` ships four domain skills, and the other two teams are specialists and manuals only.
 
 ## `subagent-shared/` — in this directory, and not a team
@@ -129,7 +132,7 @@ into a pack of its own — the packaging consequence of
 [the plugin serves the consumer's repo](#the-plugin-serves-the-consumers-repo), below. Read the table
 with that split in mind: `dkj-subagents-lifehub`, `dkj-subagents-shopify` and `dkj-subagents-ecomm` are
 add-on teams, `dkj-policy` is the one answer offered to the workflow question, and only the core team
-is for everyone. **Teams stack** — a consuming repo enables `dkj-subagents-alpha` plus as many add-on
+is for everyone. **Teams stack** — a consuming repo enables `dkj-subagents-alpha` and `dkj-subagents-developers` plus as many add-on
 teams as its domain calls for. **Workflows are opt-in** — a repo that enables none keeps the way of
 working it already had. There is one general workflow, `dkj-policy`, plus one deliberately narrow,
 additive one — see below.
@@ -191,14 +194,15 @@ the directory rule rides along with the name, unaffected, exactly as this paragr
 
 | Plugin | What it is | Who it's for |
 |---|---|---|
-| [`dkj-subagents-alpha/`](dkj-subagents-alpha/) | **The core team.** Fifteen repo-neutral specialists who work the same way in *every* repo (research, systems administration, technical writing, copy editing, code review, security review, and testing, among others). Also carries the persona templates of the main loop (Chris/Bianca/Derek/Rendall) and the bootstrap skill `specialists-init`. | **Every** consuming repo — this is the foundation, always enable it. |
+| [`dkj-subagents-alpha/`](dkj-subagents-alpha/) | **The core team.** Nine specialists who work anywhere, with or without a repository (research, planning, product ownership, data analysis, design, UX, copy editing, long-form writing, and the investigative red-team), plus the personas Chris and Bianca and the `orchestrator` skill. | **Every** consuming repo, and the Claude App — always enable it. |
+| [`dkj-subagents-developers/`](dkj-subagents-developers/) | **The developers team.** The eight specialists whose craft needs a repository (app development, testing, systems administration, technical writing, code review, security review, refactoring, performance), the personas Derek and Rendall, and the skills `specialists-init`, `specialists-teardown` and `sync-roster`. Requires the core team (#4211). | **Every** consuming repo, beside the core team — never the Claude App. |
 | [`dkj-subagents-lifehub/`](dkj-subagents-lifehub/) | **An add-on team.** Five specialists for a personal information hub / brain-based knowledge repo (Astrid, Fiona, Hugo, Ian, Onyx). Deliberately domain-flavored: they know their repo and teammates by name. | Only a life-hub-style repo. |
 | [`dkj-subagents-shopify/`](dkj-subagents-shopify/) | **An add-on team.** Three specialists for a Shopify store repo (Liam · Liquid, Sandra · store management, Steven · configuration) plus four domain skills of its own (`adopt-shopify-floor`, `push-preview`, `start-task`, `sync-main`). Also deliberately domain-flavored. | Only a Shopify repo (e.g. smartwatchbanden). |
 | [`dkj-subagents-ecomm/`](dkj-subagents-ecomm/) | **An add-on team.** E-commerce specialists for a commercial webshop repo of any platform (Sergio · SEO, Craig · CRO, Sean · performance/SEA). Platform-agnostic, and complementary to a platform team rather than exclusive. | Any commercial webshop repo — including a Shopify repo alongside `dkj-subagents-shopify`. |
 | [`dkj-policy/`](../dkj-policy/) | **The workflow — a way of working, not a team.** DaveKJohn's own branch-and-entry model, packaged so a repo can *choose* it: the workflow skills (`new-branch`, `open-pr`, `ship-pr`, `fold-changelog`, `cut-release`, `park`, `fix-mojibake`, `adopt-dkj-policy` and the rest — the plugin's own README carries the full list), their shared scripts, the session hooks that belong to running this across several repos, and one Stop hook that keeps a branch's development document on `origin` (#900). Also ships a **config blueprint** — the source's own answers to the repo-owned seam, with the reasoning behind each — which `adopt-dkj-policy`'s Part 2 places or proposes (see below). Carries **no specialists** — it changes how the existing ones work, not who they are. | Only a repo that deliberately wants *this* way of working on top of its own. |
 | [`bwj-development/`](../dkj-policy/extensions/bwj-development/) | **A narrow, additive workflow.** BWJ's codex — the binding rules its two Shopify store repos operate under. Four chapters: **ticket handling** — a discovered issue is filed on GitHub first, mirrored to Asana as a colleague-friendly variant that lands in the board's `Filed` section; afterwards the `asana-closed-message` workflow a store copies posts on the task when the issue is closed, reopened or parked on hold, while the card moving and the reconciliation sweep of the old CI mirror stay retired, so a person moves the card and the plugin never resolves the task itself; and **the sync log** — a `sync/` branch is exempt from the changelog by design and owes `.dkj/bwj-development/SYNC-LOG.md` instead, written by `dkj-subagents-shopify`'s `sync-main.ps1`; and **the preview handover** — where a preview is owed, the handover is a pair per market, the preview beside the live control, whose URL pins the live theme id because `preview_theme_id` sets a cookie and the bare URL then keeps serving the preview, and that pair travels as one link to a published page with a QR code per market, never as a table of URLs a terminal wraps past selecting and a phone cannot scan; and **the theme lifecycle** — added September 13, 2026: the release cut backs the live theme up as a verified baseline and rotates the previous one out, and a live push is followed by a sweep of the spent preview themes this repo created, both keyed on a reserved name prefix so a theme somebody else created is never touched and the live theme is refused by id and by role. Skills (`report-issue`, `adopt-bwj-development`, `publish-page`, `build-backlog-page`, `golive-block`, `prepare-release`, `notify-live`), five hooks (the gate on the Asana create-task call by the reach label, the stale go-live block guard before a ship or close, the question before a reopen of an Asana-linked issue, the pickup check for an issue with no Asana link, and the closed-message session check), no specialists. Extends only the ticket-work step of `dkj-policy`, what a sync branch owes, what a preview handover contains and how it travels, and what the theme estate owes at a push and a cut; contradicts nothing it decides. | BWJ's two store repos for all four chapters, or this plugin's own source repo for ticket handling alone (admitted September 14, 2026, commit `b9b2a65a`); requires `dkj-subagents-alpha` **and** `dkj-policy` — the sync and theme-lifecycle chapters also expect `dkj-subagents-shopify`. |
 
-In short: **`dkj-subagents-alpha` is the foundation; everything else is optional, along two different axes.**
+In short: **`dkj-subagents-alpha` and `dkj-subagents-developers` are the foundation; everything else is optional, along two different axes.**
 `dkj-subagents-lifehub` and `dkj-subagents-shopify` describe what *kind* of repo it is, so a repo
 enables at most one of those; `dkj-subagents-ecomm` is orthogonal — it applies to any commercial
 webshop regardless of platform, so a webshop repo can enable it *on top of* a platform team (a
@@ -434,8 +438,10 @@ the lens in `.claude/specialists/lenses/<group>-<id>-extension.md`. The agent de
 **All four teams have now been migrated** — every handbook lives here in the `manuals/` folder of
 its plugin, and every consuming repo keeps only its repo lens in `.claude/specialists/lenses/`:
 
-- **`dkj-subagents-alpha` (the core team)** → `dkj-subagents-alpha/manuals/` (Paula, Priya, Rebecca, Vera, Gwen, Cody, Tycho,
-  Uma, Sylvester, Tessa, Edith, Victor, Sebastian, Ravi, Nolan, Marlowe, Auden).
+- **`dkj-subagents-alpha` (the core team)** → `dkj-subagents-alpha/manuals/` (Chris, Paula, Priya, Rebecca, Vera, Gwen,
+  Uma, Edith, Marlowe, Auden).
+- **`dkj-subagents-developers` (the developers team)** → `dkj-subagents-developers/manuals/` (Cody, Tycho, Sylvester,
+  Tessa, Victor, Sebastian, Ravi, Nolan).
 - **`dkj-subagents-lifehub` (an add-on team)** → `dkj-subagents-lifehub/manuals/` (Astrid, Fiona, Hugo, Ian, Onyx).
 - **`dkj-subagents-shopify` (an add-on team)** → `dkj-subagents-shopify/manuals/` (Liam, Sandra, Steven).
 - **`dkj-subagents-ecomm` (an add-on team)** → `dkj-subagents-ecomm/manuals/` (Sergio, Craig, Sean).
@@ -523,7 +529,8 @@ been in [`specialists-init`'s page](dkj-subagents-developers/skills/specialists-
 that decision, and this sentence was the copy it never reached). An intake conversation moreover
 requires direct back-and-forth with the client. They therefore
 deliberately have **no** agent def; their portable source lives in
-`dkj-subagents-alpha/personas/specialist-<group>-<id>-persona.md` as a **self-contained template** (portable body
+`dkj-subagents-alpha/personas/specialist-<group>-<id>-persona.md` (Chris, Bianca) or
+`dkj-subagents-developers/personas/` (Derek, Rendall) as a **self-contained template** (portable body
 + a repo-lens placeholder). The consumer loads the **portable body straight from the plugin install**
 via an `@` import in its `CLAUDE.md` (the orchestrator always, the other personas on demand). The
 local extension `.claude/specialists/lenses/<group>-<id>-extension.md` is

@@ -164,7 +164,7 @@ param(
 . (Join-Path $PSScriptRoot '..\lib\command-probe-lib.ps1')
 
 # Get-NextFenceState (issue #2536): the import scan skips fenced blocks the CommonMark way. Mirrored
-# beside this script into dkj-subagents-alpha, so the relative path resolves there too.
+# beside this script into dkj-subagents-developers, so the relative path resolves there too.
 . (Join-Path $PSScriptRoot '..\lib\fence-lib.ps1')
 
 Set-StrictMode -Version Latest
@@ -1313,7 +1313,7 @@ if ($suppressedForBootstrap -gt 0) {
     # "Ask the user to run ..." -- correct for the model and odd for the OWNER, who reads this same line
     # on their own terminal and is not a third party to themselves. Naming the command and stating who
     # must type it serves both: the owner reads an instruction they can follow, the model reads a
-    # handover it can make. The '/dkj-subagents-alpha:' prefix is deliberate and load-bearing -- before this fix
+    # handover it can make. The '/dkj-subagents-developers:' prefix is deliberate and load-bearing -- before this fix
     # that string appeared in no shipped file in either plugin, so a model that correctly gave up had to
     # reconstruct the command it was handing over.
     #

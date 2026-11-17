@@ -6,15 +6,15 @@ description: >-
   body from the plugin install + his lens-only repo lens), put the plugin's other main-loop personas
   and the subagents in place as lens-only scaffolds in the seam plus the script-config scaffolds, and
   deliver a governance/safety-hooks proposal.
-  Use this when the shared `dkj-subagents-alpha` plugin is installed and enabled but the conductor and the
+  Use this when the shared `dkj-subagents-alpha` and `dkj-subagents-developers` plugins are installed and enabled but the conductor and the
   governance layer are still missing ("the workers are there, Chris is not").
 disable-model-invocation: true
 ---
 
 # specialists-init — the adoption path for a new consumer
 
-The shared `dkj-subagents-alpha` plugin delivers the **worker subagents** (Sylvester, Tessa, Edith, Victor,
-Tycho, …). What a plugin **cannot** do is edit a consumer's `CLAUDE.md`. That is exactly where the gap
+The shared `dkj-subagents-alpha` and `dkj-subagents-developers` plugins deliver the **worker subagents** (Sylvester, Tessa, Edith, Victor,
+Tycho, …), the core team's half and the repo-bound half (#4211). What a plugin **cannot** do is edit a consumer's `CLAUDE.md`. That is exactly where the gap
 sits: **Chris** (the orchestrator) is loaded via an `@`-import in the repo `CLAUDE.md`; the plugin's
 **other personas** stand ready as lens-only files in the seam and are read on demand. This skill sets
 that up, plus the governance and safety layer that differs per repo.
@@ -30,7 +30,7 @@ that up, plus the governance and safety layer that differs per repo.
 
 ## Chicken-and-egg — step 0 is done by the user
 
-This skill lives inside the `dkj-subagents-alpha` plugin, so it only becomes available once the plugin is
+This skill lives inside the `dkj-subagents-developers` plugin and reads Chris from `dkj-subagents-alpha` beside it, so it only becomes available once both plugins are
 **installed for this repo** and the session has been restarted. The skill cannot hook itself up. Step 0
 is therefore manual, and it is **six acts, in this order** — enable, restart, refresh, install, restart,
 verify — grouped below as `0a` (acts 1 and 2), `0b` (acts 3 and 4) and `0c` (acts 5 and 6).
@@ -101,7 +101,8 @@ line) and `script-contract-sessioncheck.ps1` (through `check-script-contract.ps1
   "dkj-marketplace": { "source": { "source": "github", "repo": "DKJ-Solutions/dkj-marketplace" } }
 },
 "enabledPlugins": {
-  "dkj-subagents-alpha@dkj-marketplace": true
+  "dkj-subagents-alpha@dkj-marketplace": true,
+  "dkj-subagents-developers@dkj-marketplace": true
   // plus a domain plugin of choice, e.g. "dkj-subagents-shopify@dkj-marketplace": true
 }
 ```
@@ -126,6 +127,7 @@ So run, from the root of the consuming repo, one command per plugin listed in `e
 ```powershell
 claude plugin marketplace update dkj-marketplace   # first: refresh the cached marketplace
 claude plugin install dkj-subagents-alpha@dkj-marketplace --scope project
+claude plugin install dkj-subagents-developers@dkj-marketplace --scope project
 # plus each domain plugin, e.g.:
 claude plugin install dkj-subagents-shopify@dkj-marketplace --scope project
 ```
@@ -222,6 +224,7 @@ flag instead, from the consuming repo's root, one command per plugin:
 ```powershell
 claude plugin marketplace update dkj-marketplace
 claude plugin update dkj-subagents-alpha@dkj-marketplace --scope project
+claude plugin update dkj-subagents-developers@dkj-marketplace --scope project
 ```
 
 Both lines — but the reason is stated per command now, because the shared version of it was tested and

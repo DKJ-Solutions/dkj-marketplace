@@ -1194,7 +1194,7 @@ $settingsPath = Join-Path $claudeDir 'settings.json'
 # five things the workflow must never do and PERMITS nothing it must do. Under a prompting mode that
 # is a prompt per step; under auto mode the classifier can refuse outright, with no prompt to approve.
 # And the gap can only be closed from OUTSIDE a session: a permissions file is never agent-editable
-# (dkj-subagents-alpha's own settings manual says so, and that boundary is correct), so the human is the only
+# (dkj-subagents-developers' own settings manual says so, and that boundary is correct), so the human is the only
 # one who can paste the lines -- which makes shipping them more important, not less.
 #
 # THE PATHS ARE WILDCARDED, AND THAT IS THE FIX RATHER THAN A SHORTCUT. The report proposed writing
@@ -1440,7 +1440,7 @@ function Format-JsonIndented {
 # second route.
 #
 # And it lands there in the ONE ACT THIS FAMILY RESERVES FOR THE HUMAN. A session may not widen a
-# permissions file -- dkj-subagents-alpha's own settings manual says so and that boundary is right -- so this
+# permissions file -- dkj-subagents-developers' own settings manual says so and that boundary is right -- so this
 # paste cannot be delegated: it is performed once per repo, by the person least practised at it, and it
 # fails silently and totally. The instruction that stood here, 'copy what fits', asked that person to
 # invent a hand-merge against a destination the page never mentioned already held something load-bearing.

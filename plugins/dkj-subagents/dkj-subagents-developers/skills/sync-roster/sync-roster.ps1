@@ -70,7 +70,7 @@ $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 # 5.1 decodes with [Console]::OutputEncoding, so in a consumer whose checkout sits under an accented
 # directory name the Resolve-Path below threw on a root that was really there. Get-GitTopLevelPath is
 # this plugin's OWN mirrored copy of the shared lib -- ..\..\scripts\lib\ resolves inside
-# dkj-subagents-alpha, so this crosses no plugin boundary.
+# dkj-subagents-developers, so this crosses no plugin boundary.
 . (Join-Path $PSScriptRoot '..\..\scripts\lib\repo-root-lib.ps1')
 
 $repoRoot = if ($ConsumerPathOverride) { $ConsumerPathOverride }
