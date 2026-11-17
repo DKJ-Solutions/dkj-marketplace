@@ -588,15 +588,16 @@ numbers from before the point where the four steps start.
 > of the gates, or hesitating over the only commit that can possibly happen next.
 
 **What it should report, so you can check it rather than trust it** (inbound
-[#337](https://github.com/DaveKJohn/claude-code-specialists/issues/337)). With only the core `dkj-subagents-alpha`
-plugin enabled, the closing line reads:
+[#337](https://github.com/DaveKJohn/claude-code-specialists/issues/337)). With the two base teams enabled
+(`dkj-subagents-alpha` and `dkj-subagents-developers`) and nothing else, the closing line reads (measured
+November 17, 2026, #4211):
 
 ```
-Done: 4 persona-lens(es) created, 0 already present; 15 lens-scaffold(s) created, 0 already present;
-2 script-scaffold(s) created, 0 already present.
+Done: 4 persona-lens(es) created, 0 already present; 17 lens-scaffold(s) created, 0 already present;
+1 script-scaffold(s) created, 0 already present.
 ```
 
-**4 personas + 15 subagent scaffolds = 19 lens files** in `.claude/specialists/lenses/`, plus 2 script
+**4 personas + 17 subagent scaffolds = 21 lens files** in `.claude/specialists/lenses/`, plus the script
 scaffolds and 1 `@`-import. Those figures used to appear only in the skill's own `SKILL.md`, which a reader
 sees *after* invoking it — i.e. after the moment they would have needed them. This page is meticulous about
 counting everywhere else (*"the count is part of the check, not a detail"*, as the install verification below puts it), and this was the

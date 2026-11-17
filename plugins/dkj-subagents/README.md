@@ -95,7 +95,7 @@ the page a reader consults precisely because they assume the two halves match.
 - **`skills/`, `hooks/`, `scripts/`, `personas/`** — optional, and only where a team genuinely needs
   them. In practice `dkj-subagents-developers` is the one carrying all four, because the adoption path, the roster
   session check and the sync scripts belong to the base team rather than to any domain team, and to its
-  repo-bound half (#4211), so the core team ships none;
+  repo-bound half (#4211); the core team ships only `personas/` (Chris, Bianca) and the `orchestrator` skill;
   `dkj-subagents-shopify` ships four domain skills, and the other two teams are specialists and manuals only.
 
 ## `subagent-shared/` — in this directory, and not a team
@@ -378,8 +378,9 @@ neither vocabulary has to give way to the other.
   review: a document saying *in situation X, do Y* is a policy in either sense.
 
 **`specialist`** is this repo's own word and has no equivalent in either vocabulary: a subagent
-definition carrying a persona, a craft and a repo lens. The core team is nineteen of them — fifteen that
-ship as subagents in `subagents/`, and four main-loop personas in `personas/`.
+definition carrying a persona, a craft and a repo lens. The base team is twenty-one of them, in two
+plugins since #4211: the core team ships nine as subagents and two main-loop personas (Chris, Bianca), the
+developers team eight subagents and two personas (Derek, Rendall).
 
 ### Three plugin-id renames declined, one carried out (Dave, September 9, 2026)
 

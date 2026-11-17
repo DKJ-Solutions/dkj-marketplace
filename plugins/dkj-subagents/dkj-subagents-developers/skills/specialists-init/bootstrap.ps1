@@ -116,8 +116,12 @@ function Get-LensWriteName {
 $script:CorePluginName = 'dkj-subagents-alpha'
 $ownPersonaDir = Join-Path $PSScriptRoot '../../personas'
 function Test-HasOrchestratorPersona([string]$Dir) {
+    # Exact names, the same candidates the body import is chosen from, so a stray '*01-01-persona.md'
+    # cannot make a directory pass here and then leave the import without a file to name.
     if (-not (Test-Path -LiteralPath $Dir -PathType Container)) { return $false }
-    return @(Get-ChildItem -LiteralPath $Dir -Filter '*01-01-persona.md' -File -ErrorAction SilentlyContinue).Count -gt 0
+    $names = if ($script:specialistLib) { @(Get-SpecialistFileNameCandidates -Kind Persona -Id '01-01') }
+             else { @('specialist-01-01-persona.md', '01-01-persona.md') }
+    return @($names | Where-Object { Test-Path -LiteralPath (Join-Path $Dir $_) -PathType Leaf }).Count -gt 0
 }
 function Resolve-CorePersonaDir {
     if (Test-HasOrchestratorPersona $ownPersonaDir) { return $ownPersonaDir }
@@ -366,6 +370,15 @@ $personaFiles = foreach ($src in $personaSources) {
              Add-Member -NotePropertyName SourceTilde -NotePropertyValue $src.Tilde -Force -PassThru
     }
 }
+# One file per id, the core team's first: a pre-split core payload cached beside a post-split developers
+# one carries Derek and Rendall in both, and the first source is the one this run's import names.
+$seenPersonaIds = @{}
+$personaFiles = @(foreach ($f in $personaFiles) {
+    $key = ($f.Name -replace '^specialist-', '')
+    if ($seenPersonaIds.ContainsKey($key)) { continue }
+    $seenPersonaIds[$key] = $true
+    $f
+})
 $personaFiles | Sort-Object Name | ForEach-Object {
     $personaPluginOfFile = $_.SourcePlugin
     # The SOURCE side reads both spellings through the layer where it is available; the fallback is the

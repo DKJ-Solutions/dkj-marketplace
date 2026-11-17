@@ -820,8 +820,12 @@ if ((Split-Path $ownPayload -Leaf) -match '^\d+\.\d+\.\d+') {
     # Cache layout: the plugin directory is one level further up, and each sibling has version directories.
     $marketDir = Split-Path $familyDir -Parent
     foreach ($sib in @(Get-ChildItem -LiteralPath $marketDir -Directory -ErrorAction SilentlyContinue)) {
+        # The running payload is already first in the list; its other cached versions add nothing.
+        if ($sib.FullName -eq $familyDir) { continue }
         $newest = @(Get-ChildItem -LiteralPath $sib.FullName -Directory -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -match '^\d+\.\d+\.\d+' } | Sort-Object Name -Descending | Select-Object -First 1)
+            Where-Object { $_.Name -match '^\d+\.\d+\.\d+' } |
+            Sort-Object { try { [version](($_.Name -split '[-+]')[0]) } catch { [version]'0.0.0' } } -Descending |
+            Select-Object -First 1)
         if ($newest.Count -gt 0) { $payloadRoots += $newest[0].FullName }
     }
 } else {

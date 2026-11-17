@@ -39,7 +39,7 @@ The Claude Specialists **do not stand above the safety rules — they work under
 routes; every specialist executes according to the shared safety rules and their own craft rules.
 
 **Where this actually runs.** This roster is a set of Claude Code subagents plus the informational
-SessionStart hooks the enabled plugins ship -- `roster-sessioncheck` in the core team and the rest in
+SessionStart hooks the enabled plugins ship -- `roster-sessioncheck` in the developers team and the rest in
 `dkj-policy`, all read-only but one -- `claude-home-sessioncheck` snapshots your `~/.claude` plugin
 administration while it reads healthy, so a clobber of it can be restored rather than re-installed
 (#1609); it touches nothing in any repo -- and two Stop hooks that act: `cycle-autopark` (#900) pushes
