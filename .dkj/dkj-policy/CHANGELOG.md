@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**6 / 9 minor entries** <!-- pending-tally -->
+**7 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4226-park-move-release-external · 20261117-120836Z
+
+`claim-issue -Candidates` now reads an `awaiting-pull-external` issue as `relabel` once everything it waits on has merged upstream but no release has followed: it waits on a release from then on, and the label said otherwise ([#4226](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4226)). The line it prints moves the issue in one step, `claim-issue.ps1 <n> -Tag -Park awaiting-release-external -Reason "<owner/repo>'s next release"`: `-Park` now lifts `awaiting-pull-external` in the same edit that adds its successor, and posts the dated parking comment the release-external stale-park reads. A hand swap with `gh issue edit` left a park that never cleared, because nothing dated it. Any other already-parked issue is refused by `-Park` as before.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A sweep in a consumer repo sees the merged-upstream wait named, with the paste-ready move, instead of an owner spotting the stale label by hand.
+
+**Score:** 2
+
+#### Pull Request
+
+claim-issue: an awaiting-pull-external issue whose upstream landed reads 'relabel', and -Park moves it to awaiting-release-external in one step
+
+Plugins: dkj-policy
+
+[PR #4227](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4227)
+
+---
 
 ### DEPLOY: feat/4220-filed-with-stamp · 20261117-114823Z
 
