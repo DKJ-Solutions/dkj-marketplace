@@ -67,6 +67,8 @@ Sylvester, Liam, Sandra) is repo-bound even when no script is named (#4210).
 
 #### What makes this deploy extra special
 
+A correction to a reference map; nothing a user of the plugins runs or installs changes.
+
 **Score:** N/A
 
 #### Pull Request
