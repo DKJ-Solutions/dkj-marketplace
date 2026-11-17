@@ -591,11 +591,20 @@ function Get-ProductBrandbookTokenCards {
 
 function Resolve-ProductHouseStyleRedirect {
     <#
-        Where the specimens' first product address now lives: /plugins/dkj-repo-workflow/house-style[/<section>] until
+        Where the specimens' first product address now lives: /plugins/dkj-policy/house-style[/<section>] until
         the page took the brand book's name (Maikel, October 31, 2026), and the address a released Admin still
-        sends them to. '' for any other path.
+        sends them to. '' for any other path. Every address under /plugins/dkj-policy/, the plugin's name until
+        #4209, is read as the same address under /plugins/dkj-repo-workflow/ (#4235): a released Admin links it,
+        and a page that exists under the new name is a redirect to it.
     #>
     param([AllowEmptyString()][string]$Path)
+    if ($Path -cmatch '^/plugins/dkj-policy(/.*)\z') {
+        $renamed = '/plugins/dkj-repo-workflow' + $Matches[1]
+        $to = Resolve-ProductHouseStyleRedirect -Path $renamed
+        if ($to) { return $to }
+        if (Resolve-ProductHouseStyleRequest -Path $renamed) { return $renamed }
+        return ''
+    }
     # THE TOKENS SECTION HAS NO PAGE OF ITS OWN (Maikel, November 1, 2026): its groups each have one, and the overview
     # opens on them, so /tokens -- under either name, and the address a released Admin sends -- lands there.
     if ($Path -cmatch '^/plugins/dkj-repo-workflow/(?:dkj-brandbook|house-style)/tokens/?\z') { return '/plugins/dkj-repo-workflow/dkj-brandbook#tokens' }

@@ -39,19 +39,35 @@
 
 ### PLAN
 
+#4209's bulk rename rewrote the redirect patterns that keep the brand book's older addresses alive, so
+they matched addresses that never existed. Match the real older names again, keep the new ones (harmless),
+and also redirect the page's own pre-#4209 address under `dkj-policy`, which a released Admin still links.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Resolve-PluginsPageRequest` redirects `/dev/plugins/{dkj-solutions,dkj-policy}/house-style[/<section>]` and `/dev/plugins/dkj-policy/dkj-brandbook[/<section>]` again
+- [x] `Resolve-ProductHouseStyleRedirect` reads any `/plugins/dkj-policy/...` address as the same address under `dkj-repo-workflow`
+- [x] The comments and the `dev-pages.tests.ps1` asserts carry the real older names again, plus new asserts for the pre-#4209 addresses
 
 ### TEST
 
+- [x] `dev-pages.tests.ps1`: 829 passed, 0 failed
+
 ### DEPLOY: fix/4235-restore-house-style-redirects
 
-**Score:**
+The brand book's older Admin and product addresses (`/dev/plugins/dkj-solutions/house-style`,
+`/dev/plugins/dkj-policy/house-style`, `/plugins/dkj-policy/house-style`) redirect to the brand book
+again. #4209's rename had rewritten the redirect patterns themselves, so the old names no longer
+matched. The brand book's own address from before #4209, under `dkj-policy`, now redirects too, so a
+link from a released Admin still lands. The tests pin the real older names again.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+An Admin user who follows a bookmark, or a link from an Admin on v6.18.0 or older, lands on the brand book again instead of a 404.
+
+**Score:** 2
 
 #### Pull Request
 

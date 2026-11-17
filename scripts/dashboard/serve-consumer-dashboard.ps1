@@ -14,7 +14,8 @@
     its specialists and the context each one costs, read from this tree, and each has a page of its own under it
     (/specialists, their own pages until October 28, 2026, redirects there); and the house style's specimens
     under dkj-repo-workflow, /plugins/dkj-repo-workflow/dkj-brandbook[/<section>] (Maikel, October 31, 2026; the older
-    /plugins/dkj-repo-workflow/house-style redirects there). The rules of
+    /plugins/dkj-policy/house-style, and every brand-book address under /plugins/dkj-policy/ from before #4209,
+    redirect there, #4235). The rules of
     each page are in scripts/lib/dev-pages-lib.ps1. The server takes no POST but the banner's.
 
     EVERY REPO HAS A PRODUCT PORT (Maikel, October 26, 2026, #3540). This server was this repo's own admin
