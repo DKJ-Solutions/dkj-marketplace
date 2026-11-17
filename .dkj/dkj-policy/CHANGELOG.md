@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**4 / 7 minor entries** <!-- pending-tally -->
+**5 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4216-companion-plugin-check · 20261117-113943Z
+
+A repo that enables the core team (`dkj-subagents-alpha`) without the developers team
+(`dkj-subagents-developers`) now hears it at session start: `companion-plugin-sessioncheck` prints an
+`[ERROR]` with the `enabledPlugins` line to add and the `claude plugin install ... --scope project` command
+([#4216](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4216)). Before, the split in #4211 left such
+a repo with eleven specialists and no word about it.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+The check that would have reported the gap shipped inside the plugin that was missing; this one lives in the
+workflow plugin, which nearly every repo enables. A repo without `dkj-policy` stays uncovered.
+
+**Score:** 2
+
+#### Pull Request
+
+A session check names a required companion plugin that is not enabled
+
+Plugins: dkj-policy
+
+[PR #4224](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4224)
+
+---
 
 ### DEPLOY: feat/4219-kind-label-sessioncheck · 20261117-112709Z
 
