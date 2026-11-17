@@ -2,7 +2,38 @@
 
 ## [Unreleased]
 
-**7 / 10 minor entries** <!-- pending-tally -->
+**8 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4213-changelog-mode-seam · 20261117-124945Z
+
+Inside this repo, a new leaf lib (`changelog-mode-lib.ps1`) and one contract record (now fifty) carry
+the seam. This repo states `'fold'`, and the fixtures that copy libs one by one now copy the new lib too.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A repo whose changelog nobody reads can now drop the ceremony around it. Add
+`function Get-ChangelogMode { 'none' }` to `scripts/repo-config.ps1`, and from then on a branch carries
+its work commits and nothing else: no `park:` commit at creation or after a turn, and no `fold:` commit on
+the trunk after the merge. The branch document is still written for the session and still names and
+describes the PR, but it is never committed, and the PR body becomes the record. The entry gates, the CI
+`Branch entry` check and the unfolded-entry session check stand down. `cut-release` refuses and names the
+seam. The trade-off: work in progress reaches `origin` only when `open-pr` pushes it, so until then it is
+not backed up. Every other repo keeps the full route without changing anything
+([#4213](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4213)).
+
+**Score:** 3
+
+#### Pull Request
+
+A Get-ChangelogMode seam: a consumer with no changelog reader skips the park and fold commits
+
+Plugins: dkj-policy
+
+[PR #4229](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4229)
+
+---
 
 ### DEPLOY: feat/4226-park-move-release-external · 20261117-120836Z
 
