@@ -226,6 +226,11 @@ try {
         $calls = @(Get-SharedScriptReference -WorkflowText $gateText -RepositoryName 'dkj-marketplace')
         Assert-Equal 1 $calls.Count "-Apply: the $gate caller reaches exactly one path into this repo"
         Assert-Equal 'call' ([string]@($calls | ForEach-Object { $_.Kind })[0]) "-Apply: the $gate caller reaches it by a reusable-workflow CALL, not a checkout of its own"
+        # PINNED TO THE RELEASE THIS SCAFFOLDER CAME FROM (#4237), in `uses:` AND in scripts-ref, because a
+        # called workflow cannot read its own @ref -- a pinned runner around scripts at main is still on main.
+        $wantTag = 'v' + [string]((Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\.claude-plugin\plugin.json') -Raw | ConvertFrom-Json).version)
+        Assert-Equal $wantTag ([string]@($calls | ForEach-Object { $_.Ref })[0]) "-Apply: the $gate caller calls the gate at this plugin's release tag, not @main (#4237)"
+        Assert-True ($gateText -match "(?m)^\s+scripts-ref: $([regex]::Escape($wantTag))\s*$") "-Apply: the $gate caller passes the same tag as scripts-ref, so the runner and its script are one release"
         # GitHub refuses timeout-minutes (and runs-on/steps) on a job that calls a reusable workflow, so a
         # caller carrying one is a workflow that fails to load in every consumer.
         Assert-True ($gateText -notmatch '(?m)^\s*(timeout-minutes|runs-on|steps):') "-Apply: the $gate caller carries no runner keys a calling job may not have"
@@ -255,6 +260,19 @@ try {
             }
         }
     }
+
+    # A CALLER ADOPTED BEFORE #4237 IS STILL ON @main, and a re-run is the one moment anything reads it
+    # again: it is left as it is, and the run says what to change. A pinned caller beside it says nothing.
+    $pinDir = New-FixtureConsumer -Label 'pin-rerun'
+    $null = Invoke-Adopt -Dir $pinDir -ScriptArgs @('-Apply')
+    $entryAbs = Join-Path $pinDir '.github\workflows\branch-entry.yml'
+    $oldCaller = [regex]::Replace([System.IO.File]::ReadAllText($entryAbs), '(?m)^(\s+uses: \S+\.yml)@\S+$', '$1@main')
+    $oldCaller = [regex]::Replace($oldCaller, '(?m)^\s+with:\r?\n\s+scripts-ref: \S+\r?\n?', '')
+    [System.IO.File]::WriteAllText($entryAbs, $oldCaller)
+    $rPin = Invoke-Adopt -Dir $pinDir
+    Assert-Equal 1 ([regex]::Matches($rPin.Flat, '\[pin\] it calls the gate at @main')).Count 're-run: exactly the caller still on @main is reported -- not the pinned always-on-budget caller'
+    Assert-True ($rPin.Flat -like '*(#4237)*') 're-run: the advisory names why'
+    Assert-Equal $oldCaller ([System.IO.File]::ReadAllText($entryAbs)) 're-run: and the file itself is left exactly as it was'
 
     # --- THE PR TEMPLATE, THE SECOND FILE PLACED OUTSIDE THE FOLDER (#1843) -----------------------
     # It is a COPY where the gate above is a call, because GitHub reads a PR template only from this path

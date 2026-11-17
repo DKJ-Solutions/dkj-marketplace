@@ -20,7 +20,8 @@
 # document on the path by its import target, and the check carries the recorded figure for anything it
 # cannot resolve here -- the orchestrator persona most of all.
 #
-# `scripts-ref` DEFAULTS TO main, for the reason reusable-branch-entry.yml states.
+# THE CALLER PASSES `scripts-ref`, the same tag as its `uses:` (#4237); the default stays main only for
+# callers scaffolded before that. reusable-branch-entry.yml states the reason.
 #
 # LINUX, UNDER PWSH 7 (issue #2616, after #2488): ubuntu-latest and `shell: pwsh`, because on a private
 # repo a Windows minute is billed above a Linux one. The shared scripts start children by the literal

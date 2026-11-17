@@ -1257,6 +1257,14 @@ function Get-SharedScriptPairs {
             LibOnly = $true
         },
         @{
+            # WHICH RELEASE A SCAFFOLDER CAME FROM (#4237) -- the ref adopt-ci-floor and
+            # adopt-workflow-folder pin every runner they place to. A leaf with no dependencies.
+            Name    = 'release-pin-lib'
+            Source  = 'scripts\lib\release-pin-lib.ps1'
+            Plugin  = 'dkj-repo-workflow'
+            LibOnly = $true
+        },
+        @{
             # THE SECOND MIRROR OF THE SAME SOURCE, on native-capture-lib-shopify's precedent -- read its
             # banner for why a second entry rather than a list of mirrors, and why the name carries the
             # plugin. sync-main.ps1 is the caller here: two of #1594's seven sites are its own printed

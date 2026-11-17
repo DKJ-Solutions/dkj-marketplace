@@ -39,19 +39,54 @@
 
 ### PLAN
 
+Issue #4237, the pin half (the owner chose both halves; the release cut is a separate owner act). The
+#4209 rename moved script paths on main before any release, and every consumer runner on `ref: main`
+went red. Pin the read-only runners to the release a consumer adopts, as the write runners already are
+(#2333), which reverses #1805's choice for them.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `release-pin-lib.ps1` (new, mirrored): `Get-ScaffoldingPluginVersion` moved out of adopt-ci-floor,
+  plus `Get-ScaffoldingReleaseTag`, so both scaffolders read the release from one place
+- [x] `adopt-workflow-folder.ps1`: the branch-entry and always-on-budget callers call `@vX.Y.Z` and pass
+  `scripts-ref: vX.Y.Z`; a re-run names an existing caller still on `@main`; an unreadable version falls
+  back to main, loudly
+- [x] `adopt-ci-floor.ps1`: repo-settings.yml fetches the shared scripts at the same pinned ref as the
+  write runners; a re-run reports it on main or behind, with the read-only reason
+- [x] `check-consumers.ps1` check 6d: a read-only runner or gate caller on a moving ref is an `[INFO]`
+  with the #4237 reason, never the credential one
+- [x] The three reusable workflows' `scripts-ref` commentary, the adopt skill page and Sylvester's lens
+  updated; the default stays `main` only so callers placed before this still start
+- [x] Filed #4246: the house-style caller the dkj-brandbook skill gives still calls `@main`
 
 ### TEST
 
+- [x] adopt-workflow-folder.tests 188/0 (pinned `uses:` + `scripts-ref`, re-run advisory), adopt-ci-floor.tests
+  334/0 (repo-settings pinned, read-only re-run verdict), consumers.tests 445/0 (scenario 12s, 12s2)
+
 ### DEPLOY: fix/4237-pin-read-only-runners
 
-**Score:**
+Both adoption scaffolders now pin every CI runner they place to the dkj-repo-workflow release they came
+from (#4237). The branch-entry and always-on-budget callers from `adopt-workflow-folder` call
+`@vX.Y.Z` and pass `scripts-ref: vX.Y.Z`. The repo-settings runner from `adopt-ci-floor` fetches the
+shared scripts at the release's commit, as the write runners have since #2333. This reverses #1805's
+choice to keep the read-only runners on main. The #4209 rename moved every script path on main a day
+before any release carried it, and every consumer runner on `ref: main` went red at once. A re-run of
+either scaffolder names a runner still on main without touching it, and the register's check 6d
+reports one as an `[INFO]`. The new `release-pin-lib.ps1` holds the version read that both scaffolders
+share.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+For the maintainer of a repo that adopts the workflow: a newly adopted repo's CI gates no longer go red
+when the source moves a script on main before a release. They move when you adopt the release. A
+repo adopted earlier keeps its `@main` callers. A re-run of `adopt-workflow-folder` or `adopt-ci-floor`
+names the line to change.
+
+**Score:** 3
 
 #### Pull Request
 
+Pin the read-only consumer runners to the adopted release, not main

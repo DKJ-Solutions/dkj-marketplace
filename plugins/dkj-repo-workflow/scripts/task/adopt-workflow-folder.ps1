@@ -336,7 +336,15 @@ $noteRootRelPath = ($noteRootRelPath -replace '\\', '/').TrimEnd('/')
 # gate ships as a script and this places the few lines that call it (a caller since #2422). Precedent for a plugin placing a
 # workflow: adopt-shopify-floor writes .github/workflows/theme-check.yml.
 #
-# IT TRACKS main RATHER THAN A TAG, which is the one choice here worth arguing. A pinned gate keeps
+# IT IS PINNED TO THE RELEASE THIS SCAFFOLDER CAME FROM SINCE #4237, which reverses the choice argued in
+# the next four paragraphs -- kept because the trade they weigh is still the trade. The #4209 rename moved
+# every script path on the source's main a day before any release carried it, and every consumer gate on
+# @main went red at once. A pin moves when the consumer adopts the next release, which is the moment its
+# own tree takes the matching shape; a re-run of this command says when an existing caller is still on
+# @main. The tag goes in `uses:` AND in `scripts-ref:`, because a called workflow cannot read its own
+# @ref -- without the input it would run a pinned runner around scripts at main.
+#
+# IT TRACKED main RATHER THAN A TAG until then, and this was the argument. A pinned gate keeps
 # enforcing the shape it was pinned at -- and the entry's own path has moved twice already, so a stale pin
 # does not fail loudly, it fails the wrong way: refusing branches that do carry an entry at the current
 # path. Tracking the tip means the gate follows the convention it enforces. A consumer who needs
@@ -371,6 +379,11 @@ $noteRootRelPath = ($noteRootRelPath -replace '\\', '/').TrimEnd('/')
 # NO timeout-minutes IN THE CALLER, and that is GitHub's rule rather than a gap: a job that calls a
 # reusable workflow may carry only the keys a call takes, and timeout-minutes is not one. The cap lives in
 # the called job, where workflow-timeouts.tests.ps1 holds it.
+# The ref both callers below pin to (release-pin-lib, shared with adopt-ci-floor): 'vX.Y.Z', or 'main'
+# when this plugin's version cannot be read, which the run then says out loud.
+. (Join-Path $PSScriptRoot '..\lib\release-pin-lib.ps1')
+$gateRef = Get-ScaffoldingReleaseTag
+
 $entryGateWorkflow = @(
     '# Every PR into the trunk carries a WRITTEN changelog entry.',
     '#',
@@ -381,8 +394,9 @@ $entryGateWorkflow = @(
     '# WHICH BRANCHES OWE NOTHING: answer Get-EntryGateExemptPrefixes in scripts/repo-config.ps1. It',
     '# defaults to ''sync'' -- a mirror branch carries somebody else''s work, so it has nothing to declare.',
     '#',
-    '# @main IS DELIBERATE: a pinned gate enforces the shape it was pinned at, and the entry path has moved',
-    '# twice. To pin, name a tag in `uses:` AND pass the same tag as `with: scripts-ref:`.',
+    '# PINNED TO A RELEASE (#4237): a script moved on the source''s main would otherwise turn this gate red',
+    '# before this repo adopts the release carrying the move. When you update the dkj-repo-workflow plugin,',
+    '# move the tag in `uses:` AND in `scripts-ref:` together -- re-running adopt-workflow-folder says when.',
     'name: Branch entry',
     '',
     '# pull-requests: read AND edited HOLD THE DEPLOY LOCK: the runner reads the PR body to refuse a DEPLOY',
@@ -398,7 +412,9 @@ $entryGateWorkflow = @(
     '',
     'jobs:',
     '  branch-entry:',
-    '    uses: DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-branch-entry.yml@main'
+    ('    uses: DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-branch-entry.yml@' + $gateRef),
+    '    with:',
+    ('      scripts-ref: ' + $gateRef)
 )
 
 # THE SECOND PR GATE THIS COMMAND PLACES (issue #2037): a PR may not grow what every session pays before
@@ -433,8 +449,8 @@ $alwaysOnGateWorkflow = @(
     '# WHAT THE CEILING IS: answer Get-AlwaysOnBudget in scripts/repo-config.ps1, in BYTES. Unanswered,',
     '# it is 100,000. A repo already over it is held at a recorded baseline rather than refused.',
     '#',
-    '# @main IS DELIBERATE, for the reason branch-entry.yml states. To pin, name a tag in `uses:` AND',
-    '# pass the same tag as `with: scripts-ref:`.',
+    '# PINNED TO A RELEASE, for the reason branch-entry.yml states (#4237). Move the tag in `uses:` AND',
+    '# in `scripts-ref:` together.',
     'name: Always-on budget',
     '',
     'permissions:',
@@ -446,7 +462,9 @@ $alwaysOnGateWorkflow = @(
     '',
     'jobs:',
     '  always-on-budget:',
-    '    uses: DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-always-on-budget.yml@main'
+    ('    uses: DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-always-on-budget.yml@' + $gateRef),
+    '    with:',
+    ('      scripts-ref: ' + $gateRef)
 )
 
 # CHANGELOG.md (issue #885, group A): this folder's own pending-changes list, isolated from any
@@ -515,6 +533,7 @@ if ($prTemplateRef) {
         '  Everything else below is unaffected. Copy it by hand from the plugin''s templates/ folder, or open-pr builds PR bodies with no description at all.')
 }
 
+$gateCallerRels = @('.github/workflows/branch-entry.yml', '.github/workflows/always-on-budget.yml')
 $targets = @(
     @{ Rel = '.github/workflows/branch-entry.yml';     Content = (($entryGateWorkflow -join $nl) + $nl) },
     @{ Rel = '.github/workflows/always-on-budget.yml'; Content = (($alwaysOnGateWorkflow -join $nl) + $nl) }
@@ -564,6 +583,16 @@ foreach ($t in $targets) {
     if (Test-Path -LiteralPath $abs) {
         $kept++
         Write-Host "  [exists]  $($t.Rel) -- left as it is" -ForegroundColor DarkGray
+        # AN EXISTING GATE CALLER IS READ FOR ITS PIN (#4237), because this is the only moment anything
+        # looks at it again: a caller adopted on @main stays there until somebody is told. Advisory.
+        if ($gateCallerRels -contains $t.Rel -and $gateRef -ne 'main') {
+            $existing = [System.IO.File]::ReadAllText($abs)
+            if ($existing -match '(?m)^\s*uses:\s*\S+/\.github/workflows/reusable-[\w-]+\.yml@main\s*$') {
+                Write-Host "            [pin] it calls the gate at @main, so a script moved on the source's main turns it red" -ForegroundColor Yellow
+                Write-Host "            before you adopt that release (#4237). Change @main to @$gateRef and add" -ForegroundColor Yellow
+                Write-Host "            'with: scripts-ref: $gateRef' under it." -ForegroundColor Yellow
+            }
+        }
         continue
     }
     $created++
@@ -574,6 +603,11 @@ foreach ($t in $targets) {
         Write-Host "  [created] $($t.Rel)" -ForegroundColor Green
     } else {
         Write-Host "  [create]  $($t.Rel)" -ForegroundColor Green
+    }
+    if ($gateCallerRels -contains $t.Rel -and $gateRef -eq 'main') {
+        Write-Host '            [pin] this plugin''s version could not be read, so it calls the gate at @main -- a script' -ForegroundColor Yellow
+        Write-Host '            moved on the source''s main turns it red before you adopt that release (#4237). Pin both' -ForegroundColor Yellow
+        Write-Host '            @main and scripts-ref: main to a release tag of the dkj-repo-workflow plugin by hand.' -ForegroundColor Yellow
     }
 }
 

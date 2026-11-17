@@ -494,8 +494,9 @@ function Test-WorkflowHoldsWriteCredential {
         checkout of exactly the three runners that hold one (fold-on-merge: FOLD_PUSH_TOKEN,
         verify-resolved: issues: write, merge-on-green: FOLD_PUSH_TOKEN) and left branch-entry,
         unfolded-entry and repo-settings on ref: main on the #1805 argument: they hold nothing, and a
-        pinned gate goes on enforcing a stale convention. A check that flagged every moving ref would
-        report those three in every consumer as defects the scaffolder writes on purpose.
+        pinned gate goes on enforcing a stale convention. #4237 pinned those too, for a different reason
+        (a script moved on this repo's trunk reached them before any release), so check 6d now names a
+        moving ref on either kind -- and this test is what picks which of the two reasons it gives.
 
         READ OFF THE CONTENT, NOT THE FILENAME. The scaffolder's names are the usual case, but a consumer
         may rename a runner, and what makes a moving ref dangerous is the credential beside it rather

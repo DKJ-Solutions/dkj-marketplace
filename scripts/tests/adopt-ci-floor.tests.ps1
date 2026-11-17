@@ -1297,7 +1297,7 @@ try {
         'and declines the auto-fill identically, which is the behaviour CRLF was measured against'
 
     # --- 11. The shared scripts are pinned where the credential is, and only there (#2333) -----------
-    Write-Host '-- 11. the write runners pin the shared scripts; the read-only one tracks main --' -ForegroundColor Cyan
+    Write-Host '-- 11. every runner pins the shared scripts, the read-only one too since #4237 --' -ForegroundColor Cyan
     # The ref of the checkout that brings THIS repo's tree in, one per runner -- not the trunk checkout
     # above it, which legitimately says ref: <trunk>.
     function Get-SharedRefLine {
@@ -1309,7 +1309,8 @@ try {
         Assert-Equal $TestSharedPin (Get-SharedRefLine -Text $w.Text) "$($w.Name) fetches the shared scripts at the pin, not at main"
         Assert-True ($w.Text -like '*PINNED TO A RELEASE, NOT ref: main (issue #2333)*') "$($w.Name) argues the pin where it sits"
     }
-    Assert-Equal 'main' (Get-SharedRefLine -Text $repoSettings) 'repo-settings.yml, which holds no write scope, still tracks main (#1805)'
+    Assert-Equal $TestSharedPin (Get-SharedRefLine -Text $repoSettings) 'repo-settings.yml, which holds no write scope, is pinned too -- a script moved on main must not reach it before a release (#4237)'
+    Assert-True ($repoSettings -like '*PINNED TO A RELEASE, NOT main (#4237)*') 'repo-settings.yml argues its pin where it sits'
     Assert-True ($rApply.Flat -like '*`[pin`]*fetch the shared scripts at*(-SharedRefOverride)*') 'the run says which pin it wrote'
 
     # THE READER AGREES WITH THE WRITER (#2337). check-consumers judges a registered consumer's runners
@@ -1323,7 +1324,7 @@ try {
         Assert-Equal 'current' $pins[0].State "$($w.Name) reads back as pinned at the release it was written with"
         Assert-Equal 'behind' (@(Get-SharedScriptPin -WorkflowText $w.Text -RepositoryName 'dkj-marketplace' -CurrentVersion '1.2.4'))[0].State "$($w.Name) reads back as behind once a newer release exists"
     }
-    Assert-True (-not (Test-WorkflowHoldsWriteCredential -WorkflowText $repoSettings)) 'repo-settings.yml reads back as holding no write credential, so its ref: main is never judged'
+    Assert-True (-not (Test-WorkflowHoldsWriteCredential -WorkflowText $repoSettings)) 'repo-settings.yml reads back as holding no write credential, so check 6d gives it the read-only reason (#4237)'
 
     # A RE-RUN IS THE ONLY MOMENT AN EXISTING RUNNER IS LOOKED AT AGAIN, so it is where a stale pin is
     # reported. Three existing shapes: an adoption from before #2333 (main), one pinned at an older
@@ -1335,6 +1336,7 @@ try {
         'fold-on-merge.yml'   = 'main'
         'verify-resolved.yml' = '0123456789abcdef0123456789abcdef01234567 # v0.0.1'
         'merge-on-green.yml'  = ('0123456789abcdef0123456789abcdef01234567 # v' + $pluginVersion)
+        'repo-settings.yml'   = 'main'
     }
     foreach ($name in $pinPath.Keys) {
         $p = Join-Path $pinDir ".github\workflows\$name"
@@ -1346,7 +1348,8 @@ try {
     Assert-True ($rPin.Flat -like "*at 'main' -- a moving ref, beside a write credential*") 'a write runner still on main is reported as a moving ref'
     Assert-True ($rPin.Flat -like "*at v0.0.1, behind v$pluginVersion which this run came from*") 'a write runner pinned at an older release is reported as behind'
     Assert-True ($rPin.Flat -notlike "*at v$pluginVersion, behind*") 'a write runner pinned at this release says nothing'
-    Assert-Equal 2 ([regex]::Matches($rPin.Flat, '\[pin\] it fetches')).Count 'exactly the two stale runners are reported -- not the current one, not repo-settings'
+    Assert-True ($rPin.Flat -like "*at 'main' -- a moving ref, so a script moved on the*(#4237)*") 'a repo-settings.yml still on main is reported with the read-only reason, not the credential one'
+    Assert-Equal 3 ([regex]::Matches($rPin.Flat, '\[pin\] it fetches')).Count 'exactly the three stale runners are reported -- not the current one'
     Assert-Equal $before ([System.IO.File]::ReadAllText((Join-Path $pinDir '.github\workflows\fold-on-merge.yml'))) 'and the file itself is left exactly as it was'
     Assert-True ($rPin.Flat -notlike '*`[shape`]*') 'a merge-on-green.yml of the current three-checkout shape draws no shape advisory'
 
