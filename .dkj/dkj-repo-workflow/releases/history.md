@@ -1,5 +1,11 @@
 # Release history
 
+### 7.x
+
+| Version | Date | Type | Title |
+|---|---|---|---|
+| [7.0.0](audience/7.x/7.0.0.md) | 2026-11-17 | Major | The workflow plugin becomes dkj-repo-workflow, the developers team splits off the core team, and issues-sweep loads only the step in hand |
+
 ### 6.x
 
 | Version | Date | Type | Title |
