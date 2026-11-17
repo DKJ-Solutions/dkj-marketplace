@@ -105,13 +105,48 @@ function Get-LensWriteName {
     return "specialist-$Id-lens.md"
 }
 
-# The persona source is two levels above this script: <plugin>/skills/specialists-init/ -> <plugin>/personas/
-$personaDir = Join-Path $PSScriptRoot '../../personas'
-if (-not (Test-Path -LiteralPath $personaDir -PathType Container)) {
-    Write-Host "Cannot find the persona source ($personaDir) -- stopping." -ForegroundColor Red
+# TWO PERSONA SOURCES SINCE THE SPLIT (#4211). This script ships in dkj-subagents-developers, whose own
+# personas/ holds the repo-bound main-loop voices (Derek, Rendall), while the orchestrator -- the one body
+# CLAUDE.md imports -- and the other portable voices stay in the core team, dkj-subagents-alpha. So
+# $personaDir below is the CORE plugin's persona directory (where Chris lives, and what the body import
+# names), and $ownPersonaDir is this plugin's. The core one is found in the first of three places that
+# carries the orchestrator: this plugin's own personas/ (a pre-split payload, where the two are one), the
+# sibling plugin directory (the source tree and the marketplace clone, both '<...>/dkj-subagents/<plugin>/'),
+# and the plugin cache ('<cache>/<marketplace>/<plugin>/<version>/', newest version first).
+$script:CorePluginName = 'dkj-subagents-alpha'
+$ownPersonaDir = Join-Path $PSScriptRoot '../../personas'
+function Test-HasOrchestratorPersona([string]$Dir) {
+    # Exact names, the same candidates the body import is chosen from, so a stray '*01-01-persona.md'
+    # cannot make a directory pass here and then leave the import without a file to name.
+    if (-not (Test-Path -LiteralPath $Dir -PathType Container)) { return $false }
+    $names = if ($script:specialistLib) { @(Get-SpecialistFileNameCandidates -Kind Persona -Id '01-01') }
+             else { @('specialist-01-01-persona.md', '01-01-persona.md') }
+    return @($names | Where-Object { Test-Path -LiteralPath (Join-Path $Dir $_) -PathType Leaf }).Count -gt 0
+}
+function Resolve-CorePersonaDir {
+    if (Test-HasOrchestratorPersona $ownPersonaDir) { return $ownPersonaDir }
+    $sibling = Join-Path $PSScriptRoot "../../../$($script:CorePluginName)/personas"
+    if (Test-HasOrchestratorPersona $sibling) { return $sibling }
+    $cachePlugin = Join-Path $PSScriptRoot "../../../../$($script:CorePluginName)"
+    if (Test-Path -LiteralPath $cachePlugin -PathType Container) {
+        $versions = @(Get-ChildItem -LiteralPath $cachePlugin -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match '^\d+\.\d+\.\d+' } |
+            Sort-Object { try { [version](($_.Name -split '[-+]')[0]) } catch { [version]'0.0.0' } } -Descending)
+        foreach ($v in $versions) {
+            $candidate = Join-Path $v.FullName 'personas'
+            if (Test-HasOrchestratorPersona $candidate) { return $candidate }
+        }
+    }
+    return $null
+}
+$personaDir = Resolve-CorePersonaDir
+if (-not $personaDir) {
+    Write-Host "Cannot find the orchestrator's persona source -- '$($script:CorePluginName)' is not beside this plugin. Install the core team (claude plugin install $($script:CorePluginName)@<marketplace>) and run this again -- stopping." -ForegroundColor Red
     exit 1
 }
 $personaDir = (Resolve-Path -LiteralPath $personaDir).Path
+$ownPersonaDir = if (Test-Path -LiteralPath $ownPersonaDir -PathType Container) { (Resolve-Path -LiteralPath $ownPersonaDir).Path } else { $null }
+if ($ownPersonaDir -and ($ownPersonaDir -eq $personaDir)) { $ownPersonaDir = $null }
 if (-not (Test-Path -LiteralPath $ConsumerRoot -PathType Container)) {
     Write-Host "ConsumerRoot '$ConsumerRoot' does not exist -- stopping." -ForegroundColor Red
     exit 1
@@ -141,12 +176,13 @@ $ConsumerRoot = (Resolve-Path -LiteralPath $ConsumerRoot).Path
 # path. The family is a property of the plugin family, not of the marketplace it came from, so it now
 # comes from Get-LensFamily in check-report-lib.ps1: one value, shared by this writer, sync-roster.ps1
 # and the check.
-$pdParent = Split-Path $personaDir -Parent
-if ((Split-Path $pdParent -Leaf) -match '^\d+\.\d+\.\d+') {
-    $personaPlugin = Split-Path (Split-Path $pdParent -Parent) -Leaf
-} else {
-    $personaPlugin = Split-Path $pdParent -Leaf
+function Get-PersonaPluginName([string]$Dir) {
+    $pdParent = Split-Path $Dir -Parent
+    if ((Split-Path $pdParent -Leaf) -match '^\d+\.\d+\.\d+') { return (Split-Path (Split-Path $pdParent -Parent) -Leaf) }
+    return (Split-Path $pdParent -Leaf)
 }
+$personaPlugin = Get-PersonaPluginName $personaDir
+$ownPersonaPlugin = if ($ownPersonaDir) { Get-PersonaPluginName $ownPersonaDir } else { $null }
 # check-report-lib.ps1 travels in the same plugin payload as this skill, so a $PSScriptRoot-relative
 # dot-source resolves from the source repo, the marketplace clone and the plugin cache alike (the same
 # reasoning sync-roster.ps1 relies on). A missing lib must never stop a bootstrap -- this is the script
@@ -191,7 +227,7 @@ $family = if (Get-Command Get-LensFamily -ErrorAction SilentlyContinue) { Get-Le
 # (${CLAUDE_PLUGIN_ROOT} etc. do not work there), so we write a fixed, versionless path. If bootstrap already
 # runs from the marketplaces clone or a non-cache location (e.g. source repo consuming itself), $personaDir
 # is already durable and nothing changes.
-function Get-DurablePersonaDir([string]$PersonaDir, [string]$Plugin) {
+function Get-DurablePersonaDir([string]$PersonaDir, [string]$Plugin, [string[]]$AnchorNames = @()) {
     $parts = ($PersonaDir -replace '/', '\') -split '\\' | Where-Object { $_ }
     $cacheIdx = [array]::IndexOf([string[]]$parts, 'cache')
     # Only intervene on real cache layout .../plugins/cache/<mp>/<plugin>/<version>/personas.
@@ -205,7 +241,9 @@ function Get-DurablePersonaDir([string]$PersonaDir, [string]$Plugin) {
     # the orchestrator body is the import target -- it must actually exist. Under either spelling
     # (#2130): the clone this searches is the MARKETPLACE clone, which tracks the source's tip and can
     # therefore be a rename ahead of the installed payload running this line.
-    $orchestratorNames = if ($script:specialistLib) { @(Get-SpecialistFileNameCandidates -Kind Persona -Id '01-01') }
+    # The anchor defaults to the orchestrator; the developers plugin's own personas pass one of theirs (#4211).
+    $orchestratorNames = if ($AnchorNames.Count -gt 0) { $AnchorNames }
+                         elseif ($script:specialistLib) { @(Get-SpecialistFileNameCandidates -Kind Persona -Id '01-01') }
                          else { @('01-01-persona.md') }
     $hit = Get-ChildItem -LiteralPath $clone -Recurse -Directory -Filter 'personas' -ErrorAction SilentlyContinue |
         Where-Object {
@@ -225,6 +263,15 @@ if ($durablePersonaDir.StartsWith($homeDir, [System.StringComparison]::OrdinalIg
     $personaTilde = $durablePersonaDir
 }
 $personaTilde = $personaTilde -replace '\\', '/'
+
+# The same durable ~ path for this plugin's own personas (#4211), anchored on a file that directory holds.
+$ownPersonaTilde = $null
+if ($ownPersonaDir) {
+    $ownAnchor = @(Get-ChildItem -LiteralPath $ownPersonaDir -Filter '*-persona.md' -File -ErrorAction SilentlyContinue | Select-Object -First 1 | ForEach-Object { $_.Name })
+    $ownDurable = Get-DurablePersonaDir -PersonaDir $ownPersonaDir -Plugin $ownPersonaPlugin -AnchorNames $ownAnchor
+    $ownPersonaTilde = if ($ownDurable.StartsWith($homeDir, [System.StringComparison]::OrdinalIgnoreCase)) { '~' + $ownDurable.Substring($homeDir.Length) } else { $ownDurable }
+    $ownPersonaTilde = $ownPersonaTilde -replace '\\', '/'
+}
 
 # Plugin path in the consumer (the PRE-SEAM location for lenses; still written for a consumer that
 # already has a lens tree there).
@@ -311,9 +358,29 @@ $personaDest = Split-Path (Get-LensDest -Plugin $personaPlugin -Id '01-01') -Par
 New-DirectoryInside $personaDest
 
 $copied = 0; $kept = 0
-$personaFiles = if ($script:specialistLib) { @(Get-SpecialistFiles -Path $personaDir -Kind Persona) }
-                else { @(Get-ChildItem -Path $personaDir -Filter '*-persona.md' -File) }
+# Both persona sources (#4211): the core team's and, where it is a separate plugin, this one's. Each file
+# carries the plugin it came from and the durable ~ path its body is read from, so a lens names the right one.
+$personaSources = @(@{ Dir = $personaDir; Plugin = $personaPlugin; Tilde = $personaTilde })
+if ($ownPersonaDir) { $personaSources += @{ Dir = $ownPersonaDir; Plugin = $ownPersonaPlugin; Tilde = $ownPersonaTilde } }
+$personaFiles = foreach ($src in $personaSources) {
+    $files = if ($script:specialistLib) { @(Get-SpecialistFiles -Path $src.Dir -Kind Persona) }
+             else { @(Get-ChildItem -Path $src.Dir -Filter '*-persona.md' -File) }
+    foreach ($f in $files) {
+        $f | Add-Member -NotePropertyName SourcePlugin -NotePropertyValue $src.Plugin -Force -PassThru |
+             Add-Member -NotePropertyName SourceTilde -NotePropertyValue $src.Tilde -Force -PassThru
+    }
+}
+# One file per id, the core team's first: a pre-split core payload cached beside a post-split developers
+# one carries Derek and Rendall in both, and the first source is the one this run's import names.
+$seenPersonaIds = @{}
+$personaFiles = @(foreach ($f in $personaFiles) {
+    $key = ($f.Name -replace '^specialist-', '')
+    if ($seenPersonaIds.ContainsKey($key)) { continue }
+    $seenPersonaIds[$key] = $true
+    $f
+})
 $personaFiles | Sort-Object Name | ForEach-Object {
+    $personaPluginOfFile = $_.SourcePlugin
     # The SOURCE side reads both spellings through the layer where it is available; the fallback is the
     # anchor this loop always had, so a payload without the lib behaves exactly as before (#2130).
     $personaId = if ($script:specialistLib) { Get-SpecialistFileId -Kind Persona -Name $_.Name }
@@ -321,10 +388,10 @@ $personaFiles | Sort-Object Name | ForEach-Object {
                  else { '' }
     if (-not $personaId) { return }
     $g, $id = $personaId.Split('-')
-    $dest = Get-LensDest -Plugin $personaPlugin -Id $personaId
-    Add-RegisterId -Inventory $registerInventory -Plugin $personaPlugin -Id $personaId
+    $dest = Get-LensDest -Plugin $personaPluginOfFile -Id $personaId
+    Add-RegisterId -Inventory $registerInventory -Plugin $personaPluginOfFile -Id $personaId
     if (Test-WriteRefused -Path $dest -Label "lens-only $lensRelDisplay/$(Split-Path $dest -Leaf)") { return }
-    $existing = Get-ExistingLensPath -Plugin $personaPlugin -Id $personaId
+    $existing = Get-ExistingLensPath -Plugin $personaPluginOfFile -Id $personaId
     if ($existing) {
         Write-Host "  [keep]  $(Split-Path $existing -Leaf) already exists -- not overwritten." -ForegroundColor DarkGray
         $script:kept++
@@ -337,7 +404,7 @@ $personaFiles | Sort-Object Name | ForEach-Object {
         if ($line -match '^#\s') { $title = $line.TrimEnd(); break }
     }
     if (-not $title) { $title = "# $g-$id" }
-    $bodyPath = "$personaTilde/$($_.Name)"
+    $bodyPath = "$($_.SourceTilde)/$($_.Name)"
     if ($g -eq '01' -and $id -eq '01') {
         $loadNote = if ($script:seamMode) {
             'Chris loads his body automatically -- `CLAUDE.md` imports `.claude/specialists/SPECIALISTS.md`, which imports this lens and the body; other personas are read on-demand from this path.'
@@ -438,9 +505,11 @@ $ownPluginRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).P
 $ownPluginName = Get-OwnPluginName $ownPluginRoot
 
 # Enabled plugins from the consumer's whole settings chain (inbound #294 -- Get-EnabledPlugins carries
-# the measurement and the reasoning). Without an 'enabledPlugins' key anywhere: only own plugin.
-# Plugin names validated as slugs before converting to paths.
+# the measurement and the reasoning). Without an 'enabledPlugins' key anywhere: the own plugin, plus the
+# core team it reads the orchestrator from where that is a separate plugin (#4211) -- the two are one base
+# team, and a consumer enables both. Plugin names validated as slugs before converting to paths.
 $pluginNames = @($ownPluginName)
+if ($personaPlugin -and ($personaPlugin -ne $ownPluginName)) { $pluginNames += $personaPlugin }
 # The FULL plugin ids ('<name>@<marketplace>'), kept alongside the bare names: the workshop's
 # consumer manifest identifies a plugin by its full id, so the register proposal at the end of this
 # script needs the '@marketplace' part that the name-only list above deliberately drops.
@@ -1138,7 +1207,7 @@ $settingsPath = Join-Path $claudeDir 'settings.json'
 # five things the workflow must never do and PERMITS nothing it must do. Under a prompting mode that
 # is a prompt per step; under auto mode the classifier can refuse outright, with no prompt to approve.
 # And the gap can only be closed from OUTSIDE a session: a permissions file is never agent-editable
-# (dkj-subagents-alpha's own settings manual says so, and that boundary is correct), so the human is the only
+# (dkj-subagents-developers' own settings manual says so, and that boundary is correct), so the human is the only
 # one who can paste the lines -- which makes shipping them more important, not less.
 #
 # THE PATHS ARE WILDCARDED, AND THAT IS THE FIX RATHER THAN A SHORTCUT. The report proposed writing
@@ -1384,7 +1453,7 @@ function Format-JsonIndented {
 # second route.
 #
 # And it lands there in the ONE ACT THIS FAMILY RESERVES FOR THE HUMAN. A session may not widen a
-# permissions file -- dkj-subagents-alpha's own settings manual says so and that boundary is right -- so this
+# permissions file -- dkj-subagents-developers' own settings manual says so and that boundary is right -- so this
 # paste cannot be delegated: it is performed once per repo, by the person least practised at it, and it
 # fails silently and totally. The instruction that stood here, 'copy what fits', asked that person to
 # invent a hand-merge against a destination the page never mentioned already held something load-bearing.

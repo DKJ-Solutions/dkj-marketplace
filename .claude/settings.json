@@ -79,6 +79,7 @@
   "enabledPlugins": {
     "dkj-policy@dkj-marketplace": true,
     "dkj-subagents-alpha@dkj-marketplace": true,
+    "dkj-subagents-developers@dkj-marketplace": true,
     "bwj-development@dkj-marketplace": false,
     "dkj-solutions@dkj-marketplace": true,
     "dkj-subagents-ecomm@dkj-marketplace": false,

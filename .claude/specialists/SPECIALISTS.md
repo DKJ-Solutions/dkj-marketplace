@@ -39,7 +39,7 @@ The Claude Specialists **do not stand above the safety rules — they work under
 routes; every specialist executes according to the shared safety rules and their own craft rules.
 
 **Where this actually runs.** This roster is a set of Claude Code subagents plus the informational
-SessionStart hooks the enabled plugins ship -- `roster-sessioncheck` in the core team and the rest in
+SessionStart hooks the enabled plugins ship -- `roster-sessioncheck` in the developers team and the rest in
 `dkj-policy`, all read-only but one -- `claude-home-sessioncheck` snapshots your `~/.claude` plugin
 administration while it reads healthy, so a clobber of it can be restored rather than re-installed
 (#1609); it touches nothing in any repo -- and two Stop hooks that act: `cycle-autopark` (#900) pushes
@@ -63,7 +63,7 @@ checkout's plugins current, in
 
 ### The team: roster & routing
 
-Small and maintenance-focused — **only the core team, `dkj-policy` and `dkj-solutions` are enabled here**. The three
+Small and maintenance-focused — **only the core team, the developers team, `dkj-policy` and `dkj-solutions` are enabled here**. The three
 add-on teams and `bwj-development` are switched off, because none of them has work here (Dave, September
 30 and October 1, 2026).
 [`.claude/rules/this-repo.md`](../rules/this-repo.md) states the fact, and why.
@@ -86,13 +86,15 @@ are for **you** and for the roster-sync check. Each one's lens is `lenses/specia
 They are grouped by plugin, because which plugin a specialist arrives with is the one thing the id does
 not say:
 
-**`dkj-subagents-alpha`** (the core team):
+**`dkj-subagents-alpha`** (the core team, Chris and Bianca included):
 `02-09` Paula (Project Planner) · `02-31` Priya (Product Owner) · `03-07` Rebecca (Research) · `04-11` Vera (Data Analyst) ·
-`04-12` Gwen (Designer) · `04-13` Cody (App Developer) · `04-18` Tycho (Test Engineer) ·
-`04-32` Uma (UX Designer) · `05-15` Sylvester (System Administrator) · `06-16` Tessa (Technical Writer) · `06-17` Edith (Copy
-Editor) · `06-19` Victor (Code Reviewer) · `06-23` Sebastian (Security Engineer) · `06-24` Ravi
-(Refactoring) · `06-25` Nolan (Performance) · `06-29` Marlowe (Investigative Journalist) ·
-`06-30` Auden (Long-form Writer)
+`04-12` Gwen (Designer) · `04-32` Uma (UX Designer) · `06-17` Edith (Copy Editor) · `06-29` Marlowe (Investigative
+Journalist) · `06-30` Auden (Long-form Writer)
+
+**`dkj-subagents-developers`** (the repo-bound half, Derek and Rendall included):
+`04-13` Cody (App Developer) · `04-18` Tycho (Test Engineer) · `05-15` Sylvester (System Administrator) ·
+`06-16` Tessa (Technical Writer) · `06-19` Victor (Code Reviewer) · `06-23` Sebastian (Security Engineer) ·
+`06-24` Ravi (Refactoring) · `06-25` Nolan (Performance)
 
 `dkj-policy` and `dkj-solutions` are the other enabled plugins and ship **no** agents at all — it carries skills, hooks and
 scripts — so the roster check skips it by design rather than for want of a row.

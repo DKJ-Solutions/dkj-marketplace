@@ -25,8 +25,9 @@ them, and this file points there
 - **The home repo of one product** — the Claude Specialists system — and the **single source of truth**
   for every shareable subagent definition. One product, one repository, one marketplace, and lockstep
   versioning *within* it is correct: [Tessa's lens](../specialists/lenses/specialist-06-16-lens.md#one-product-one-repository).
-- **It consumes itself, with three of the seven plugins enabled** in
-  [`.claude/settings.json`](../settings.json): the core team, `dkj-policy` and `dkj-solutions`, the last
+- **It consumes itself, with four of the eight plugins enabled** in
+  [`.claude/settings.json`](../settings.json): the core team, the developers team split off it (#4211),
+  `dkj-policy` and `dkj-solutions`, the last
   for the brand book and its session check (#2976, #3198; Admin's DKJ-Solutions card it also gave
   ended with #3475). The three add-on teams
   (Dave, September 30, 2026) and the BWJ extension, then `dkj-policy-bwj` (October 1), are set to `false`. That reverses the
@@ -46,7 +47,7 @@ them, and this file points there
 separate and follows the user.** The per-layer detail and its deliberate exceptions are in
 [`language-layers.md`](language-layers.md), path-scoped so it loads only when you touch one of those
 layers; the system-wide norm is in
-[the technical writer's portable manual](../../plugins/dkj-subagents/dkj-subagents-alpha/manuals/specialist-06-16-manual.md#what-tessa-covers).
+[the technical writer's portable manual](../../plugins/dkj-subagents/dkj-subagents-developers/manuals/specialist-06-16-manual.md#what-tessa-covers).
 
 ### Repo citation — one owner name
 

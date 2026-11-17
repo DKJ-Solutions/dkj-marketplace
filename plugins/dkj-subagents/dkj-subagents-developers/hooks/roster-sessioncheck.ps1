@@ -276,7 +276,7 @@ try {
         # own terminal and is not a third party to themselves. That is the reasoning check-roster-sync's
         # [BOOTSTRAP] marker carries in full; these two lines are the same message at the hook layer, so
         # they take the same form rather than a second one.
-        Write-Host '  (run /dkj-subagents-alpha:sync-roster to stage the catch-up -- that command must be TYPED'
+        Write-Host '  (run /dkj-subagents-developers:sync-roster to stage the catch-up -- that command must be TYPED'
         Write-Host '   by the repo owner, because the skill is reserved for explicit user invocation.)'
     } elseif ($bootstrapLines.Count -gt 0) {
         # Its own verdict, not folded under the in-sync line and not under drift: "not set up yet" is a
@@ -353,7 +353,7 @@ try {
         if ($orphanLines.Count -gt 0) {
             # Same handover as the drift branch above, in the same words and for the same reason: this is
             # a SessionStart hook, so the reader is the model, and 'sync-roster' is barred to it.
-            Write-Host '  (run /dkj-subagents-alpha:sync-roster to stage the catch-up -- that command must be'
+            Write-Host '  (run /dkj-subagents-developers:sync-roster to stage the catch-up -- that command must be'
             Write-Host '   TYPED by the repo owner: the skill is reserved for explicit user invocation.)'
         }
     } else {

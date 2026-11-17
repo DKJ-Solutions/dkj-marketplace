@@ -807,9 +807,33 @@ $auditRoots = @(
 # plugin and can only see that plugin's specialists. A consumer that also enables a domain plugin has
 # names this scan does not know. The ID scan below is the general net -- '<gg>-<ii>' tokens are
 # name-independent and catch a specialist from any plugin -- and the name scan is the extra pass on top.
+#
+# SINCE THE SPLIT (#4211) THIS PLUGIN IS NOT THE WHOLE BASE TEAM: Chris, Bianca and the portable
+# subagents ship in the core team, dkj-subagents-alpha. So the scan reads this plugin's payload AND its
+# siblings' -- '<...>/dkj-subagents/<plugin>/' in the source tree and the marketplace clone, and
+# '<cache>/<marketplace>/<plugin>/<version>/' in the plugin cache -- which also widens the name pass to
+# any add-on team installed beside it.
+$ownPayload = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
+$payloadRoots = @($ownPayload)
+$familyDir = Split-Path $ownPayload -Parent
+if ((Split-Path $ownPayload -Leaf) -match '^\d+\.\d+\.\d+') {
+    # Cache layout: the plugin directory is one level further up, and each sibling has version directories.
+    $marketDir = Split-Path $familyDir -Parent
+    foreach ($sib in @(Get-ChildItem -LiteralPath $marketDir -Directory -ErrorAction SilentlyContinue)) {
+        # The running payload is already first in the list; its other cached versions add nothing.
+        if ($sib.FullName -eq $familyDir) { continue }
+        $newest = @(Get-ChildItem -LiteralPath $sib.FullName -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match '^\d+\.\d+\.\d+' } |
+            Sort-Object { try { [version](($_.Name -split '[-+]')[0]) } catch { [version]'0.0.0' } } -Descending |
+            Select-Object -First 1)
+        if ($newest.Count -gt 0) { $payloadRoots += $newest[0].FullName }
+    }
+} else {
+    $payloadRoots += @(Get-ChildItem -LiteralPath $familyDir -Directory -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })
+}
+$payloadRoots = @($payloadRoots | Sort-Object -Unique)
 $knownNames = @()
-foreach ($dir in @('subagents', 'agents', 'personas')) {
-    $srcDir = Join-Path $PSScriptRoot "../../$dir"
+foreach ($srcDir in @(foreach ($payloadRoot in $payloadRoots) { foreach ($dir in @('subagents', 'agents', 'personas')) { Join-Path $payloadRoot $dir } })) {
     if (-not (Test-Path -LiteralPath $srcDir)) { continue }
     foreach ($f in @(Get-ChildItem -LiteralPath $srcDir -Filter '*.md' -File -ErrorAction SilentlyContinue)) {
         $txt = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)

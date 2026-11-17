@@ -12,7 +12,7 @@
 $ErrorActionPreference = 'Stop'
 
 $RepoRoot  = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Plugin    = Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-alpha'
+$Plugin    = Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-developers'
 $Bootstrap = Join-Path $Plugin 'skills\specialists-init\bootstrap.ps1'
 $Teardown  = Join-Path $Plugin 'skills\specialists-teardown\teardown.ps1'
 $Fixture   = Join-Path ([System.IO.Path]::GetTempPath()) "specialists-teardown-fixture-$PID-$([guid]::NewGuid().ToString('n'))"
@@ -71,7 +71,7 @@ function New-BootstrappedConsumer {
         if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
         New-Item -ItemType Directory -Path (Join-Path $Fixture '.claude') -Force | Out-Null
         [System.IO.File]::WriteAllText((Join-Path $Fixture '.claude\settings.json'),
-            '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }')
+            '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-developers@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }')
         $md = @('# CLAUDE.md - my own project', '', '## Conventions', '', '- Feature work goes on a branch.') + $ExtraClaudeMdLines
         [System.IO.File]::WriteAllLines((Join-Path $Fixture 'CLAUDE.md'), $md)
         $prevPlugin = $env:CLAUDE_PLUGIN_ROOT
@@ -698,7 +698,7 @@ function Get-LintScript { return `$script:LintScript }
     New-Item -ItemType Directory -Path (Join-Path $Fixture '.claude') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'scripts\lib') -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $Fixture '.claude\settings.json'),
-        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }')
+        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-developers@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }')
     # The consumer's OWN CLAUDE.md, which is also what triggers the report path that used to be broken:
     # this block only runs when a CLAUDE.md exists and does not yet carry the guard import.
     [System.IO.File]::WriteAllLines((Join-Path $Fixture 'CLAUDE.md'), @(
@@ -867,7 +867,7 @@ function Get-LintScript { return `$script:LintScript }
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
     New-Item -ItemType Directory -Path (Join-Path $Fixture '.claude') -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $Fixture '.claude\settings.json'),
-        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }')
+        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-developers@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }')
     # Deliberately NO CLAUDE.md. That is the whole fixture.
     $prevPlugin = $env:CLAUDE_PLUGIN_ROOT
     $env:CLAUDE_PLUGIN_ROOT = $Plugin

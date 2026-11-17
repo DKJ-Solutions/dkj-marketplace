@@ -82,11 +82,11 @@ Assert-True  $p.Parsed               'a well-formed payload reports Parsed'
 
 $subPayload = @{
     hook_event_name = 'PreToolUse'; session_id = 's1'; cwd = 'C:\repo'; agent_id = 'a1'
-    agent_type = 'dkj-subagents-alpha:victor'; tool_name = 'Bash'; tool_input = @{ command = 'git status' }
+    agent_type = 'dkj-subagents-developers:victor'; tool_name = 'Bash'; tool_input = @{ command = 'git status' }
 } | ConvertTo-Json -Compress -Depth 5
 $p = Get-HookCommandPayload $subPayload
 Assert-Equal 'a1' $p.AgentId 'a dispatched subagent carries agent_id -- the gate'
-Assert-Equal 'dkj-subagents-alpha:victor' $p.AgentType 'agent_type is read too, to NAME who was stopped'
+Assert-Equal 'dkj-subagents-developers:victor' $p.AgentType 'agent_type is read too, to NAME who was stopped'
 
 # THE --agent SESSION, which is the whole reason agent_type is not the gate. Claude Code's own schema:
 # agent_type is present "on the main thread of a session started with --agent (without agent_id)".

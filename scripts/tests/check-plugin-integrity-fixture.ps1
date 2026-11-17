@@ -312,6 +312,7 @@ function New-IntegrityFixture {
     # every other repo's. The three suites that write a changelog into this fixture write it there.
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'dkj-policy') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-alpha\.claude-plugin') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-developers\.claude-plugin') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-shopify\.claude-plugin') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-policy\.claude-plugin') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-policy\extensions\bwj-development\.claude-plugin') -Force | Out-Null
@@ -320,6 +321,7 @@ function New-IntegrityFixture {
   "name": "fixture-marketplace",
   "plugins": [
     { "name": "dkj-subagents-alpha",         "source": "./plugins/dkj-subagents/dkj-subagents-alpha" },
+    { "name": "dkj-subagents-developers",    "source": "./plugins/dkj-subagents/dkj-subagents-developers" },
     { "name": "dkj-subagents-shopify",       "source": "./plugins/dkj-subagents/dkj-subagents-shopify" },
     { "name": "dkj-policy", "source": "./plugins/dkj-policy" },
     { "name": "bwj-development",              "source": "./plugins/dkj-policy/extensions/bwj-development" }
@@ -328,6 +330,11 @@ function New-IntegrityFixture {
 '@), $Utf8NoBom)
     [System.IO.File]::WriteAllText((Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-alpha\.claude-plugin\plugin.json'),
         "{ `"name`": `"dkj-subagents-alpha`", `"version`": `"0.0.1`" }`n", $Utf8NoBom)
+    # dkj-subagents-developers joined with the split of the core team (#4211): the roster check, sync-roster and
+    # the bootstrap moved there with their lib mirrors, so the registry names it -- the fourth instance of the
+    # failure the paragraph below describes.
+    [System.IO.File]::WriteAllText((Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-developers\.claude-plugin\plugin.json'),
+        "{ `"name`": `"dkj-subagents-developers`", `"version`": `"0.0.1`" }`n", $Utf8NoBom)
     # dkj-subagents-shopify joined the registry on August 20, 2026 with adopt-shopify-floor and its copy of the
     # source-repo guard lib. It is here for exactly the reason the paragraph above gives, and it cost
     # 22 unrelated failures across this suite's siblings before the list grew with it -- the second

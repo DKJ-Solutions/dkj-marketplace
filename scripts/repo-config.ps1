@@ -138,14 +138,14 @@ function Get-BusinessMarketplaceRepo {
 # because it is not there -- the mechanism this repo already has, and the one that cannot be
 # misconfigured into offering the thing anyway.
 #
-# THE UNIT IS THE PLUGIN, NOT THE ITEM, AND THAT IS DELIBERATE. dkj-subagents-alpha ships three PowerShell
-# skills (specialists-init, specialists-teardown, sync-roster) and one SessionStart hook that a Claude
-# App user cannot run either. They travel anyway: the plugin published here has to be byte-identical to
-# the plugin released here, or its version number stops meaning one thing. Those four items are already
-# handled where they can be handled without forking the plugin -- the hook is inert in a plain Chat
-# session, and v4.9.0 (#672) made all three skills non-model-invocable and had each name its PowerShell
-# dependency in its own description, so the model cannot walk a user into one. Per-item filtering would
-# buy a little tidiness and cost the single-source-of-truth guarantee.
+# THE UNIT IS THE PLUGIN, NOT THE ITEM, AND THAT IS DELIBERATE. The plugin published here has to be
+# byte-identical to the plugin released here, or its version number stops meaning one thing, so an item
+# that cannot work in the Claude App is kept out by living in a plugin that does not travel. That is why
+# the base team is two plugins (#4211): dkj-subagents-alpha, the core team, works without a checkout and
+# travels; dkj-subagents-developers holds the specialists whose craft needs a repository, the three
+# PowerShell skills (specialists-init, specialists-teardown, sync-roster) and the roster hook, and is
+# left out here by not being named. Before that split those items travelled inside the core team, made
+# non-model-invocable (#672) so the model could not walk an App user into one.
 #
 # AN UNSTATED SEAM MEANS WHAT IT MEANT YESTERDAY. Absent, empty or $null answers "every plugin in the
 # manifest", which is what the script did before this function existed -- so a consumer that has never

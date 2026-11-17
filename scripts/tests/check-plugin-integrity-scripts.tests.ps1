@@ -277,7 +277,7 @@ try {
     #        names that layer explicitly, and a SessionStart hook that does not parse fails silently --
     #        the harness reports it and the session simply continues without what the hook was there to
     #        say. A parse error there was invisible to this gate for as long as the hooks were out.
-    $hookProbe = Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-alpha\hooks\probe-sessioncheck.ps1'
+    $hookProbe = Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-developers\hooks\probe-sessioncheck.ps1'
     New-Item -ItemType Directory -Path (Split-Path -Parent $hookProbe) -Force | Out-Null
     [System.IO.File]::WriteAllText($hookProbe, ($asciiCleanBody + '$sep = ' + "'" + [char]0x00B7 + "'`n"), $Utf8NoBom)
     $sa4 = Invoke-Integrity -FixtureRoot $Fixture
@@ -485,6 +485,7 @@ try {
   "lspServers": { "clangd": { "extensionToLanguage": { ".c": "c", ".C": "cpp" } } },
   "plugins": [
     { "name": "dkj-subagents-alpha",         "source": "./plugins/dkj-subagents/dkj-subagents-alpha" },
+    { "name": "dkj-subagents-developers",    "source": "./plugins/dkj-subagents/dkj-subagents-developers" },
     { "name": "dkj-subagents-shopify",       "source": "./plugins/dkj-subagents/dkj-subagents-shopify" },
     { "name": "dkj-policy", "source": "./plugins/dkj-policy" },
     { "name": "bwj-development",              "source": "./plugins/dkj-policy/extensions/bwj-development" }

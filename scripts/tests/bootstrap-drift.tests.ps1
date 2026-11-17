@@ -26,7 +26,7 @@ $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 # JUDGING THIS SUITE'S OWN FIXTURE git CALLS -- issue #1635. See the lib for why an unjudged fixture
 # command is worse than an unjudged production one, and why the count decides the exit code.
 . (Join-Path $PSScriptRoot '..\lib\fixture-git-lib.ps1')
-$Bootstrap  = Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-alpha\skills\specialists-init\bootstrap.ps1'
+$Bootstrap  = Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-developers\skills\specialists-init\bootstrap.ps1'
 $DriftLint  = Join-Path $RepoRoot 'scripts\lint\check-consumer-drift.ps1'
 $Fixture    = Join-Path ([System.IO.Path]::GetTempPath()) "specialists-init-test-fixture-$PID-$([guid]::NewGuid().ToString('n'))"
 # Where a FRESH consumer's lenses land as of the seam (issue #221): one flat directory, no per-plugin
@@ -373,7 +373,7 @@ try {
     # Without this, a file the bootstrap just wrote is classified as authored and kept forever --
     # adoption exactly as irreversible as specialists-teardown promises it is not.
     Write-Host "bootstrap.ps1 -- the core-only scaffold stays removable by the teardown" -ForegroundColor Cyan
-    $teardownScript = Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-alpha\skills\specialists-teardown\teardown.ps1'
+    $teardownScript = Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-developers\skills\specialists-teardown\teardown.ps1'
     function Test-TeardownSeesGenerated {
         param([string]$Path)
         # The classifier alone, lifted out of the script text: running the whole teardown here would
@@ -408,7 +408,7 @@ try {
     if (Test-Path -LiteralPath $FixtureWf) { Remove-Item -Recurse -Force -LiteralPath $FixtureWf }
     New-Item -ItemType Directory -Path (Join-Path $FixtureWf '.claude') -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $FixtureWf '.claude\settings.json'),
-        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }', $Utf8NoBom)
+        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-developers@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }', $Utf8NoBom)
     $rWf = Invoke-Script -Path $Bootstrap -ScriptArgs @('-ConsumerRoot', $FixtureWf)
     Assert-Equal 0 $rWf.Code 'workflow plugin: bootstrap exit 0'
     $rcScaffold = Join-Path $FixtureWf 'scripts\repo-config.ps1'
@@ -572,7 +572,7 @@ try {
     if (Test-Path -LiteralPath $FixtureMp) { Remove-Item -Recurse -Force -LiteralPath $FixtureMp }
     New-Item -ItemType Directory -Path (Join-Path $FixtureMp '.claude') -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $FixtureMp '.claude\settings.json'),
-        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true, "somewidget@some-other-marketplace": true } }', $Utf8NoBom)
+        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-developers@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true, "somewidget@some-other-marketplace": true } }', $Utf8NoBom)
     $rMp = Invoke-Script -Path $Bootstrap -ScriptArgs @('-ConsumerRoot', $FixtureMp)
     Assert-Equal 0 $rMp.Code 'marketplace scope: bootstrap exit 0 with a foreign plugin enabled'
     Assert-True ($rMp.Out -match 'dkj-subagents-alpha@dkj-marketplace') 'marketplace scope: our own plugins are in the proposal'
@@ -604,7 +604,7 @@ try {
     $hookCmd = 'powershell -File C:\uadded\check.ps1 && echo <done>'
     [System.IO.File]::WriteAllText((Join-Path $FixtureEsc '.claude\settings.json'), (@'
 {
-  "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true },
+  "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-developers@dkj-marketplace": true },
   "permissions": { "allow": null },
   "hooks": { "Stop": [ { "hooks": [ { "type": "command", "command": "HOOKCMD" } ] } ] }
 }
@@ -637,7 +637,7 @@ try {
     Invoke-FixtureGitIn $FixtureIgn init --quiet
     [System.IO.File]::WriteAllText((Join-Path $FixtureIgn '.gitignore'), ".claude/settings.json`n", $Utf8NoBom)
     [System.IO.File]::WriteAllText((Join-Path $FixtureIgn '.claude\settings.json'),
-        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true }, "env": { "SOME_TOKEN": "x" } }', $Utf8NoBom)
+        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-developers@dkj-marketplace": true }, "env": { "SOME_TOKEN": "x" } }', $Utf8NoBom)
     $rIgn = Invoke-Script -Path $Bootstrap -ScriptArgs @('-ConsumerRoot', $FixtureIgn)
     Assert-Equal 0 $rIgn.Code 'ignore-gap: bootstrap exit 0'
     Assert-True ($rIgn.Out -match 'gitignored here and the merged copy beside it is NOT') `
@@ -760,7 +760,7 @@ try {
             # below would pass or fail for the wrong reason.
             New-Item -ItemType Directory -Path (Join-Path $gitFix '.claude') -Force | Out-Null
             [System.IO.File]::WriteAllText((Join-Path $gitFix '.claude\settings.json'),
-                '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }', $Utf8NoBom)
+                '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-developers@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }', $Utf8NoBom)
             $rg = Invoke-Script -Path $Bootstrap -ScriptArgs @('-ConsumerRoot', $gitFix)
             Assert-Equal 0 $rg.Code "git derivation ($Label): bootstrap exit 0"
             $txt = [System.IO.File]::ReadAllText((Join-Path $gitFix 'scripts\repo-config.ps1'), [System.Text.Encoding]::UTF8)
@@ -803,12 +803,13 @@ try {
     #     a persona.
     Write-Host "bootstrap.ps1 -- the skill doc lists every persona the payload ships (inbound #275)" -ForegroundColor Cyan
     $personaIds = @(
-        Get-ChildItem -LiteralPath (Split-Path $PersonaSrc -Parent) -Filter '*-persona.md' -File |
+        # Both persona sources since the split (#4211): the core team's and the developers team's.
+        Get-ChildItem -LiteralPath @((Split-Path $PersonaSrc -Parent), (Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-developers\personas')) -Filter '*-persona.md' -File |
             ForEach-Object { if ($_.BaseName -match '^specialist-(\d{2}-\d{2})-persona$') { $Matches[1] } }
     )
     Assert-True ($personaIds.Count -gt 0) "payload ships personas ($($personaIds.Count))"
     $initSkill = [System.IO.File]::ReadAllText(
-        (Join-Path (Split-Path (Split-Path $PersonaSrc -Parent) -Parent) 'skills\specialists-init\SKILL.md'),
+        (Join-Path (Split-Path $Bootstrap -Parent) 'SKILL.md'),
         [System.Text.Encoding]::UTF8)
     # NOT $pid: that is a read-only automatic variable (the process id), and assigning it in a foreach
     # aborts the suite with a runtime error rather than a failed assertion.
@@ -839,7 +840,11 @@ try {
     $cacheRoot = Join-Path $Fixture 'cache\dkj-marketplace'
     $ownCache  = Join-Path $cacheRoot 'specialists\1.4.0'
     New-Item -ItemType Directory -Path $ownCache -Force | Out-Null
-    Copy-Item -Path (Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-alpha\*') -Destination $ownCache -Recurse
+    Copy-Item -Path (Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-developers\*') -Destination $ownCache -Recurse
+    # The core team sits beside it, as a real install has it (#4211): the bootstrap reads Chris from there.
+    $coreCache = Join-Path $cacheRoot 'dkj-subagents-alpha\1.4.0'
+    New-Item -ItemType Directory -Path $coreCache -Force | Out-Null
+    Copy-Item -Path (Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-alpha\*') -Destination $coreCache -Recurse
     foreach ($v in '1.9.0', '1.10.0') {
         New-Item -ItemType Directory -Path (Join-Path $cacheRoot "dkj-subagents-lifehub\$v\agents") -Force | Out-Null
     }
@@ -847,7 +852,7 @@ try {
     [System.IO.File]::WriteAllText((Join-Path $cacheRoot 'dkj-subagents-lifehub\1.10.0\agents\04-99-agent.md'), "---`nname: newest`nid: 99`ngroup: 04`n---`nfixture")
     $cacheConsumer = Join-Path $Fixture 'cache-consumer'
     New-Item -ItemType Directory -Path (Join-Path $cacheConsumer '.claude') -Force | Out-Null
-    [System.IO.File]::WriteAllText((Join-Path $cacheConsumer '.claude\settings.json'), '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-lifehub@dkj-marketplace": true } }')
+    [System.IO.File]::WriteAllText((Join-Path $cacheConsumer '.claude\settings.json'), '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-developers@dkj-marketplace": true, "dkj-subagents-lifehub@dkj-marketplace": true } }')
     $cachedBootstrap = Join-Path $ownCache 'skills\specialists-init\bootstrap.ps1'
     $rc = Invoke-Script -Path $cachedBootstrap -ScriptArgs @('-ConsumerRoot', $cacheConsumer)
     Assert-Equal 0 $rc.Code 'version cache: bootstrap exit 0'
@@ -876,9 +881,17 @@ try {
     # while the clone said 'dkj-subagents-alpha' for the length of one rename sweep, and the symptom was precisely
     # what this scenario exists to catch: the @-import fell back to the version-pinned cache path,
     # because the durable clone it was looking for was under a name nothing had put there.
-    $cacheInit = Join-Path $pluginsRoot "cache\$mp\dkj-subagents-alpha\9.9.9"
+    # Since the split (#4211) the bootstrap runs from the developers team and reads Chris from the core team
+    # beside it, so both are cached and both are in the clone.
+    $cacheInit = Join-Path $pluginsRoot "cache\$mp\dkj-subagents-developers\9.9.9"
     New-Item -ItemType Directory -Path $cacheInit -Force | Out-Null
-    Copy-Item -Path (Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-alpha\*') -Destination $cacheInit -Recurse
+    Copy-Item -Path (Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-developers\*') -Destination $cacheInit -Recurse
+    $cacheCore = Join-Path $pluginsRoot "cache\$mp\dkj-subagents-alpha\9.9.9"
+    New-Item -ItemType Directory -Path $cacheCore -Force | Out-Null
+    Copy-Item -Path (Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-alpha\*') -Destination $cacheCore -Recurse
+    $cloneDevP = Join-Path $pluginsRoot "marketplaces\$mp\plugins\dkj-subagents\dkj-subagents-developers\personas"
+    New-Item -ItemType Directory -Path $cloneDevP -Force | Out-Null
+    Copy-Item -Path (Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-developers\personas\*') -Destination $cloneDevP -Recurse
     # Versionless marketplaces clone with (at minimum) the personas under plugins/<plugin>/.
     $cloneP = Join-Path $pluginsRoot "marketplaces\$mp\plugins\dkj-subagents\dkj-subagents-alpha\personas"
     New-Item -ItemType Directory -Path $cloneP -Force | Out-Null
@@ -910,15 +923,17 @@ try {
     # fail under the pre-#2426 code, confirmed by running this suite against a throwaway copy of the tree
     # with `git show HEAD:<path>` of the pre-fix bootstrap.ps1 swapped in, and observing this block go red.
     Write-Host "bootstrap.ps1 -- own-plugin dual-version cache: the RUNNING payload wins, not the highest (#2426)" -ForegroundColor Cyan
-    $dualOld = Join-Path $cacheRoot 'dkj-subagents-alpha\1.4.0'
-    $dualNew = Join-Path $cacheRoot 'dkj-subagents-alpha\1.10.0'
+    # The running plugin is the developers team since the split (#4211); 04-18 ships there. The core team
+    # it reads Chris from is the 1.4.0 copy 2b placed.
+    $dualOld = Join-Path $cacheRoot 'dkj-subagents-developers\1.4.0'
+    $dualNew = Join-Path $cacheRoot 'dkj-subagents-developers\1.10.0'
     New-Item -ItemType Directory -Path $dualOld -Force | Out-Null
-    Copy-Item -Path (Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-alpha\*') -Destination $dualOld -Recurse
+    Copy-Item -Path (Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-developers\*') -Destination $dualOld -Recurse
     New-Item -ItemType Directory -Path (Join-Path $dualNew 'subagents') -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $dualNew 'subagents\specialist-04-99-subagent.md'), "---`nname: fictional`nid: 99`ngroup: 04`n---`nfixture: the higher-numbered, non-running cached version")
     $dualConsumer = Join-Path $Fixture 'own-dual-version-consumer'
     New-Item -ItemType Directory -Path (Join-Path $dualConsumer '.claude') -Force | Out-Null
-    [System.IO.File]::WriteAllText((Join-Path $dualConsumer '.claude\settings.json'), '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true } }')
+    [System.IO.File]::WriteAllText((Join-Path $dualConsumer '.claude\settings.json'), '{ "enabledPlugins": { "dkj-subagents-developers@dkj-marketplace": true } }')
     $dualBootstrap = Join-Path $dualOld 'skills\specialists-init\bootstrap.ps1'
     $rdual = Invoke-Script -Path $dualBootstrap -ScriptArgs @('-ConsumerRoot', $dualConsumer)
     Assert-Equal 0 $rdual.Code 'own dual-version cache: bootstrap exit 0'

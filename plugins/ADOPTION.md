@@ -27,7 +27,7 @@ Three things have to be true, and only the first one might not be:
 
 1. **The plugins are installed *and* enabled for this repo — two acts, not one.** If you install
    them yourself, that is [Installing it yourself](#installing-it-yourself). If they arrived through your organisation, this
-   is already done — the specialists appear in your session as `@dkj-subagents-alpha:<name>` subagents.
+   is already done — the specialists appear in your session as `@dkj-subagents-alpha:<name>` and `@dkj-subagents-developers:<name>` subagents.
 2. **You have restarted the session since that happened.** A skill that ships inside a plugin only
    becomes available once the session has loaded the plugin.
 3. **`specialists-init` is in your slash list.** That is the check for both of the above at once: if it
@@ -70,9 +70,10 @@ ships Git Bash, before you adopt.
 does not fail loudly, it quietly adds a second channel pointing somewhere else.
 
 **1. Write your repo's own `.claude/settings.json`** (create `.claude/` beside your `README.md` if it is
-not there). Strict JSON; if you already have one, merge these two keys into it. `dkj-subagents-alpha` is
-the only plugin you need — add a line per add-on team you want, and `dkj-policy` only if you deliberately
-want that workflow.
+not there). Strict JSON; if you already have one, merge these two keys into it. `dkj-subagents-alpha` (the core team) and
+`dkj-subagents-developers` (the specialists whose craft needs a repository, and the skill that sets the team
+up) are the two plugins every repo needs — add a line per add-on team you want, and `dkj-policy` only if you
+deliberately want that workflow.
 
 ```json
 {
@@ -82,7 +83,8 @@ want that workflow.
     }
   },
   "enabledPlugins": {
-    "dkj-subagents-alpha@dkj-marketplace": true
+    "dkj-subagents-alpha@dkj-marketplace": true,
+    "dkj-subagents-developers@dkj-marketplace": true
   }
 }
 ```
@@ -94,7 +96,8 @@ the next command fails with `Marketplace … not found`.
 
 ```powershell
 claude plugin marketplace update dkj-marketplace                             # never skip: install does not refresh
-claude plugin install dkj-subagents-alpha@dkj-marketplace --scope project    # once per plugin
+claude plugin install dkj-subagents-alpha@dkj-marketplace --scope project         # once per plugin
+claude plugin install dkj-subagents-developers@dkj-marketplace --scope project
 ```
 
 `--scope project` is not optional — without it the install goes machine-wide and writes no
@@ -121,6 +124,7 @@ slash list, and the four steps below start.
 ```powershell
 claude plugin marketplace update dkj-marketplace
 claude plugin update dkj-subagents-alpha@dkj-marketplace --scope project
+claude plugin update dkj-subagents-developers@dkj-marketplace --scope project
 ```
 
 ### Why six acts, and the measurements behind each
@@ -128,7 +132,7 @@ claude plugin update dkj-subagents-alpha@dkj-marketplace --scope project
 **Step 0 above is six acts in order, and here is why there are six rather than a shorter guess** (inbound
 [#297](https://github.com/DaveKJohn/claude-code-specialists/issues/297)). This procedure used to be
 described at three entry points with three different counts — *four acts* on this page, *three acts* in
-[`specialists-init`](dkj-subagents/dkj-subagents-alpha/skills/specialists-init/SKILL.md#chicken-and-egg--step-0-is-done-by-the-user)
+[`specialists-init`](dkj-subagents/dkj-subagents-developers/skills/specialists-init/SKILL.md#chicken-and-egg--step-0-is-done-by-the-user)
 and *three steps* in an earlier version of this page — the same path, no step missing anywhere, three
 different numbers. A reader following it for the first time has the count as their only check on whether
 they skipped something, and three counts remove exactly that. Two of the three were also counting
@@ -381,7 +385,7 @@ skill counters `/reload-plugins`/`/reload-skills` print are not reliable evidenc
 ## Invocation
 
 Once enabled, the specialists can be invoked with the **plugin name as namespace**:
-`@dkj-subagents-alpha:<name>`, `@dkj-subagents-lifehub:<name>`, `@dkj-subagents-shopify:<name>`, or `@dkj-subagents-ecomm:<name>`.
+`@dkj-subagents-alpha:<name>`, `@dkj-subagents-developers:<name>`, `@dkj-subagents-lifehub:<name>`, `@dkj-subagents-shopify:<name>`, or `@dkj-subagents-ecomm:<name>`.
 
 ## Where this runs: Chat, Cowork, and Claude Code
 
@@ -461,21 +465,26 @@ Re-run over every item the marketplace ships on November 17, 2026 (#4210), per p
 
 | plugin | **portable** — works with no repository | **degraded** — works, minus a named step | **repo-bound** — cannot function at all |
 |---|---|---|---|
-| `dkj-subagents-alpha` | personas Chris `01-01` and Bianca `03-02`; 15 of 17 agent defs; the shared blocks in `subagent-shared/`; the `orchestrator` skill | Ravi `06-24` — his agent def names the shared-block generator and the lint gate, both of this source repo | personas Derek `05-05` and Rendall `05-06` (test 3); Sylvester `05-15` (test 3 — his manual names a script 13 times); the skills `specialists-init`, `specialists-teardown` and `sync-roster`; the `roster-sessioncheck` hook |
+| `dkj-subagents-alpha` | personas Chris `01-01` and Bianca `03-02`; all nine agent defs; the shared blocks in `subagent-shared/`; the `orchestrator` skill | — | — |
+| `dkj-subagents-developers` | — not published to the App (below); measured, Cody `04-13`, Tycho `04-18`, Tessa `06-16`, Victor `06-19`, Sebastian `06-23` and Nolan `06-25` pass tests 1 and 2 | Ravi `06-24` — his agent def names the shared-block generator and the lint gate, both of this source repo | personas Derek `05-05` and Rendall `05-06` (test 3); Sylvester `05-15` (test 3 — his manual names a script 13 times); the skills `specialists-init`, `specialists-teardown` and `sync-roster`; the `roster-sessioncheck` hook |
 | `dkj-subagents-lifehub` | all five agent defs (Astrid `02-10`, Fiona `03-08`, Hugo `03-14`, Ian `04-03`, Onyx `04-04`); the skills `agenda-sync` and `inbox-sweep`, which work through connectors only | — | — |
 | `dkj-subagents-ecomm` | — | Sergio `06-26`, Craig `06-27` and Sean `06-28` — the audit and the advice travel, implementing in the storefront's theme code does not | — |
 | `dkj-subagents-shopify` | — | Steven `05-22` — the CLI and auth reference travel, an estate overview needs the Shopify CLI | Liam `04-20` and Sandra `05-21` (test 3 — theme code and theme files in a checkout); all nine skills, each of which names a script or the Shopify CLI; both hooks |
 
 
 `dkj-policy`, `dkj-solutions` and `bwj-development` are not in the table: they are not published to the
-App target at all (below), so nothing there can offer them. Liam was the second degraded item until test
+App target at all (below), so nothing there can offer them. **Neither is `dkj-subagents-developers`**, which is
+in the table because it was cut out of the core team by this map
+([#4211](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4211), November 17, 2026): its specialists
+are the ones whose *craft* is work on a repository, so the six of them that pass tests 1 and 2 moved with
+their craft rather than with their test result, and the core team travels whole. Liam was the second degraded item until test
 3 existed. The one step named in his agent def was never the whole story, because the theme code he builds
 in only exists in a checkout.
 
 **What the Claude App package is: a filtered publication, not a second repository.**
 `publish-to-business.ps1` overwrites a business marketplace repo from the source on every run; since
 [#683](https://github.com/DaveKJohn/claude-code-specialists/issues/683) it publishes the subset
-`Get-BusinessMarketplacePlugins` names — the four teams — and rebuilds the
+`Get-BusinessMarketplacePlugins` names — the four portable teams, so not the developers team — and rebuilds the
 manifest to match. The workflow is not offered there because it is not there. No per-entry hide flag was
 invented: the manifest format has none, and one would need Claude to honour it, while a plugin that did
 not travel cannot be offered by anything.
@@ -484,13 +493,14 @@ not travel cannot be offered by anything.
 `enabledPlugins` (`dkj-subagents-alpha@dkj-marketplace`), so the filtered marketplace is the *same*
 marketplace with fewer entries, not a second one under a new key.
 
-**The unit is the plugin, and the degraded items travel.** `dkj-subagents-alpha`'s three PowerShell skills and
-its one hook go to the App target along with everything else in that plugin, because the plugin published
-there has to be byte-identical to the plugin released here — otherwise its version number stops meaning
-one thing. They are handled where they can be handled without forking: the hooks are simply inert in a
-plain Chat session, and `v4.9.0` ([#672](https://github.com/DaveKJohn/claude-code-specialists/issues/672))
-made all three skills non-model-invocable and had each name its PowerShell dependency in its own
-description, so the model cannot walk a user into one.
+**The unit is the plugin, so a repo-bound item is kept out by the plugin it lives in.** The plugin
+published there has to be byte-identical to the plugin released here — otherwise its version number stops
+meaning one thing — so nothing is filtered out of a plugin. That is why the base team is two plugins
+since [#4211](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4211): the three PowerShell skills
+and the roster hook used to travel inside `dkj-subagents-alpha`, made non-model-invocable in `v4.9.0`
+([#672](https://github.com/DaveKJohn/claude-code-specialists/issues/672)) so the model could not walk a
+user into one, and now live in `dkj-subagents-developers`, which does not travel. The degraded items left
+in the add-on teams still travel, for the same byte-identity reason.
 
 **How the sync stays honest.** The publication has always refused a manifest naming a folder that did
 not travel. Filtering makes the *reverse* possible — a plugin folder that travels while the manifest
@@ -508,8 +518,8 @@ and code/security reviewers for the independent final pass before a PR or merge.
 charge: the governance (your `CLAUDE.md`, your safety rules) remains yours; the plugins only supply
 the team and its playbooks.
 
-The system consists of **teams and a workflow**: the repo-neutral core team `dkj-subagents-alpha` (always
-enable it), three optional add-on teams, and exactly one **way-of-working** plugin, chosen from the two
+The system consists of **teams and a workflow**: the repo-neutral core team `dkj-subagents-alpha` and
+the repo-bound developers team `dkj-subagents-developers` (always enable both), three optional add-on teams, and exactly one **way-of-working** plugin, chosen from the two
 the marketplace offers. **The add-on teams ship switched off** (`defaultEnabled: false`, #3903): an install
 leaves them disabled until your repo names them `true` in `enabledPlugins`, and a repo that already names
 them keeps its own choice. Which specialists live in which plugin and who they are meant for is covered in
@@ -578,15 +588,16 @@ numbers from before the point where the four steps start.
 > of the gates, or hesitating over the only commit that can possibly happen next.
 
 **What it should report, so you can check it rather than trust it** (inbound
-[#337](https://github.com/DaveKJohn/claude-code-specialists/issues/337)). With only the core `dkj-subagents-alpha`
-plugin enabled, the closing line reads:
+[#337](https://github.com/DaveKJohn/claude-code-specialists/issues/337)). With the two base teams enabled
+(`dkj-subagents-alpha` and `dkj-subagents-developers`) and nothing else, the closing line reads (measured
+November 17, 2026, #4211):
 
 ```
-Done: 4 persona-lens(es) created, 0 already present; 15 lens-scaffold(s) created, 0 already present;
-2 script-scaffold(s) created, 0 already present.
+Done: 4 persona-lens(es) created, 0 already present; 17 lens-scaffold(s) created, 0 already present;
+1 script-scaffold(s) created, 0 already present.
 ```
 
-**4 personas + 15 subagent scaffolds = 19 lens files** in `.claude/specialists/lenses/`, plus 2 script
+**4 personas + 17 subagent scaffolds = 21 lens files** in `.claude/specialists/lenses/`, plus the script
 scaffolds and 1 `@`-import. Those figures used to appear only in the skill's own `SKILL.md`, which a reader
 sees *after* invoking it — i.e. after the moment they would have needed them. This page is meticulous about
 counting everywhere else (*"the count is part of the check, not a detail"*, as the install verification below puts it), and this was the
@@ -695,7 +706,7 @@ before you write anything, because every gate stays green while your lenses are 
 `Get-RosterIgnoredIds`), which `scripts/sync/check-script-contract.ps1` reports for you and step 3's
 `adopt-dkj-policy` (Part 2) is what answers.
 
-The worker specialists can be invoked directly as `@dkj-subagents-alpha:<name>` from the moment Step 2 is
+The worker specialists can be invoked directly as `@dkj-subagents-alpha:<name>` or `@dkj-subagents-developers:<name>` from the moment Step 2 is
 done — with an empty lens they simply answer out of their portable playbook.
 
 > **Do not attribute this half hour to the installer.** `specialists-init` places the seam, 25 lens
@@ -705,8 +716,8 @@ done — with an empty lens they simply answer out of their portable playbook.
 ## Delivering the orchestrator from the plugin — verified, deliberately not switched on
 
 Enabling the plugin delivers the **worker subagents**, but not the **conductor** (Chris) or the
-governance/hooks layer, so the skill **`specialists-init`** above (from `dkj-subagents-alpha`, the core
-team) closes that gap in a consuming repo. Because a plugin skill cannot hook itself in, the path has to
+governance/hooks layer, so the skill **`specialists-init`** above (from `dkj-subagents-developers`, the
+developers team) closes that gap in a consuming repo. Because a plugin skill cannot hook itself in, the path has to
 be two-stage — install, then bootstrap — rather than one.
 
 > **One half of the old reason for this is false, and it matters for
@@ -844,7 +855,7 @@ cannot be removed cleanly; one import pointing at one directory can.
 
 **Built July 29, 2026** — the third item of the target shape below, and the half that could be built
 and tested without restructuring anything first.
-[`specialists-teardown`](dkj-subagents/dkj-subagents-alpha/skills/specialists-teardown/SKILL.md)
+[`specialists-teardown`](dkj-subagents/dkj-subagents-developers/skills/specialists-teardown/SKILL.md)
 is the bootstrap's mirror image: where `specialists-init` is strictly **additive** and never
 overwrites, the teardown is strictly **subtractive** and never deletes what the owner wrote.
 
@@ -1046,6 +1057,7 @@ uninstalling. From your repo's root, once per plugin, then remove the `enabledPl
 `extraKnownMarketplaces` key lets a session start rebuild the install by itself:
 
 ```powershell
+claude plugin uninstall dkj-subagents-developers@dkj-marketplace --scope project
 claude plugin uninstall dkj-subagents-alpha@dkj-marketplace --scope project
 ```
 

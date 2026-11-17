@@ -1265,7 +1265,7 @@ try {
     Assert-Match 'Summary: \d+ error\(s\)' $r.Out 'crafted id: the check still ran to completion'
 
     # --- Hook (roster-sessioncheck.ps1): soft, surfaces only [ERROR], always exit 0 ---------------
-    $Hook = Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-alpha\hooks\roster-sessioncheck.ps1'
+    $Hook = Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-developers\hooks\roster-sessioncheck.ps1'
     # A stub "check" script with fixed output + exit code, so the hook is tested in isolation.
     function New-StubCheck {
         param([string]$Name, [string[]]$OutputLines, [int]$ExitCode)
@@ -1447,7 +1447,7 @@ try {
     # disable-model-invocation, and the reader of a SessionStart hook is the model, which cannot invoke it
     # and cannot even read the page saying so. So the assert is on the slash-command AND on the handover
     # -- a hint the reader cannot act on is the same failure #225 was about, one layer further in.
-    Assert-Match '/dkj-subagents-alpha:sync-roster' $r.Out 'hook orphans-clean: points at the recovery command, not a repo path a consumer lacks'
+    Assert-Match '/dkj-subagents-developers:sync-roster' $r.Out 'hook orphans-clean: points at the recovery command, not a repo path a consumer lacks'
     Assert-Match 'TYPED by the repo owner' $r.Out 'hook orphans-clean: and says whose command it is, since the model reading this may not run it'
     Assert-NotMatch 'scripts/sync/check-roster-sync' $r.Out 'hook orphans-clean: no workshop-shaped path in a consumer-facing message'
 
@@ -1825,7 +1825,7 @@ try {
     #      the bootstrap wrote, and reporting either would train the reader to ignore this check.
     $c = New-FixtureConsumer -RosterIds @('06-16') -LensIds @('06-16') -ExtraRosterLines @(
         '',
-        '@dkj-subagents-alpha:tessa',
+        '@dkj-subagents-developers:tessa',
         'Invoke them directly as `@dkj-subagents-alpha:<name>`.',
         '```',
         '@this/is/an/example.md',
