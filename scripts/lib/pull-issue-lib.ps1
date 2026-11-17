@@ -6,8 +6,8 @@
 .DESCRIPTION
     Dot-sourced by two readers that must agree on that set:
 
-      - dkj-policy's cut-release.ps1, whose audience note links every solved task (#2586);
-      - bwj-development's notify-live.ps1 (through live-message-rules.ps1), which tells those same
+      - dkj-repo-workflow's cut-release.ps1, whose audience note links every solved task (#2586);
+      - dkj-repo-workflow-bwj's notify-live.ps1 (through live-message-rules.ps1), which tells those same
         tasks that the release is live (#3070, #3498).
 
     ONE FILE, MIRRORED INTO BOTH PLUGINS (#3941, November 9, 2026). Each reader used to decide the set

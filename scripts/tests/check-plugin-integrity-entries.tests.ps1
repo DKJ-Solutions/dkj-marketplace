@@ -184,7 +184,9 @@ try {
 
     # The CHANGELOG half, which is what cut-release actually parses -- and the half that catches damage
     # arriving through the fold, the one write that happens directly on main past every PR gate.
-    $s34Cl = Join-Path $Fixture 'dkj-policy\CHANGELOG.md'
+    $s34Cl = Join-Path $Fixture '.dkj\dkj-repo-workflow\CHANGELOG.md'
+    # The shared fixture still creates a root 'dkj-repo-workflow' folder; since #4209 (November 17, 2026) the changelog lives under .dkj/, so the folder is made here.
+    $null = New-Item -ItemType Directory -Path (Split-Path $s34Cl) -Force
     $s34ClGood = @(
         '# Changelog'
         ''

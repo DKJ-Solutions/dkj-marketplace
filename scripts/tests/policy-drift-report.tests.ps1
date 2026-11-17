@@ -15,7 +15,7 @@
       1. IT NEVER REFUSES. Report-only is the whole design -- an exit code would be a verdict it has not
          earned, and a gate here would be #1380's declined check wearing a different hat. Every fixture
          asserts the code as well as the text, including the empty tree and the tree with findings.
-      2. THE RANK-1 ORDER. dkj-policy before a companion plugin is the top rung's own internal
+      2. THE RANK-1 ORDER. dkj-repo-workflow before a companion plugin is the top rung's own internal
          order out of "A third rank sits above both". A sort that lost it would still print every page
          and read as correct.
       3. THE SOURCE-REPO SKIP IS THE HOOK'S SKIP. The two detector FUNCTIONS carry no skip -- it lives in
@@ -48,8 +48,8 @@ $ErrorActionPreference = 'Stop'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $Script   = Join-Path $RepoRoot 'scripts\task\check-policy-drift.ps1'
-$Skill    = Join-Path $RepoRoot 'plugins\dkj-policy\skills\check-policy-drift\SKILL.md'
-$Mirror   = Join-Path $RepoRoot 'plugins\dkj-policy\scripts\task\check-policy-drift.ps1'
+$Skill    = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\skills\check-policy-drift\SKILL.md'
+$Mirror   = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\task\check-policy-drift.ps1'
 . (Join-Path $RepoRoot 'scripts\lib\shared-scripts-lib.ps1')
 . (Join-Path $RepoRoot 'scripts\lib\entry-scaffold-lib.ps1')
 # For Get-LensFamily: the pre-seam lens path is composed from the constant rather than typed, so a
@@ -163,7 +163,7 @@ try {
     Assert-True ($r.Out -match 'REPORT ONLY') 'the hand-over states that nothing was edited'
 
     # --- The rank-1 order -------------------------------------------------------------------------
-    # A companion plugin sorts before dkj-policy alphabetically, which is the whole point of
+    # A companion plugin sorts before dkj-repo-workflow alphabetically, which is the whole point of
     # pinning this: a plain Sort-Object would print the order upside down and still look right.
     Write-Host ''
     Write-Host 'Rank 1 -- the top rung has an internal order'
@@ -173,28 +173,28 @@ try {
 {
   "name": "fixture",
   "plugins": [
-    { "name": "dkj-policy", "source": "./plugins/dkj-policy" },
-    { "name": "bwj-development", "source": "./plugins/dkj-policy/extensions/bwj-development" }
+    { "name": "dkj-repo-workflow", "source": "./plugins/dkj-repo-workflow" },
+    { "name": "dkj-repo-workflow-bwj", "source": "./plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj" }
   ]
 }
 '@
-    Add-FixturePlugin -Dir $source -Root './plugins/dkj-policy' -Name 'dkj-policy' -Page 'CONTRIBUTING-portable.md'
-    Add-FixturePlugin -Dir $source -Root './plugins/dkj-policy/extensions/bwj-development' -Name 'bwj-development' -Page 'WORKFLOW-portable.md'
+    Add-FixturePlugin -Dir $source -Root './plugins/dkj-repo-workflow' -Name 'dkj-repo-workflow' -Page 'CONTRIBUTING-portable.md'
+    Add-FixturePlugin -Dir $source -Root './plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj' -Name 'dkj-repo-workflow-bwj' -Page 'WORKFLOW-portable.md'
     Set-Text -Dir $source -Rel '.claude/settings.json' -Text @'
 {
   "enabledPlugins": {
-    "bwj-development@fixture": true,
-    "dkj-policy@fixture": true
+    "dkj-repo-workflow-bwj@fixture": true,
+    "dkj-repo-workflow@fixture": true
   }
 }
 '@
     $r = Invoke-Report -Dir $source
-    $atPrime = $r.Out.IndexOf('dkj-policy', [System.StringComparison]::Ordinal)
-    $atCompanion = $r.Out.IndexOf('bwj-development', [System.StringComparison]::Ordinal)
+    $atPrime = $r.Out.IndexOf('dkj-repo-workflow', [System.StringComparison]::Ordinal)
+    $atCompanion = $r.Out.IndexOf('dkj-repo-workflow-bwj', [System.StringComparison]::Ordinal)
     Assert-True ($r.Code -eq 0) 'a tree publishing both plugins -- exit 0'
     Assert-True ($atPrime -ge 0 -and $atCompanion -ge 0) 'both plugins are located and printed'
     Assert-True ($atPrime -ge 0 -and $atCompanion -gt $atPrime) `
-        'dkj-policy is printed BEFORE the companion, against the alphabetical order'
+        'dkj-repo-workflow is printed BEFORE the companion, against the alphabetical order'
     Assert-True ($r.Out -match 'CONTRIBUTING-portable\.md' -and $r.Out -match 'WORKFLOW-portable\.md') `
         "each plugin's own portable page is named, discovered rather than listed"
 
@@ -267,7 +267,7 @@ try {
     # candidate Get-LensDirCandidates can only compose once it has been given a plugin NAME. A consumer
     # bootstrapped before #221 keeps its lenses there and is never relocated, so a rank that read only
     # the seam would be blind in exactly the repos that have been running this longest.
-    $legacyLens = ".claude/plugins/$(Get-LensFamily)/dkj-policy/specialist-05-15-lens.md"
+    $legacyLens = ".claude/plugins/$(Get-LensFamily)/dkj-repo-workflow/specialist-05-15-lens.md"
     Set-Text -Dir $source -Rel $legacyLens -Text '# A pre-seam lens'
     $r = Invoke-Report -Dir $source
     $rank2 = $r.Out.IndexOf('RANK 2', [System.StringComparison]::Ordinal)
@@ -340,8 +340,8 @@ try {
         'the mirror exits the same as the root copy on the same tree'
     Assert-True ($rMirror.Out -match 'RANK 1' -and $rMirror.Out -match 'RANK 2' -and $rMirror.Out -match 'RANK 3') `
         'the mirror prints all three ranks, so its own $PSScriptRoot-relative dot-sources resolved from the plugin tree'
-    $mPrime = $rMirror.Out.IndexOf('dkj-policy', [System.StringComparison]::Ordinal)
-    $mCompanion = $rMirror.Out.IndexOf('bwj-development', [System.StringComparison]::Ordinal)
+    $mPrime = $rMirror.Out.IndexOf('dkj-repo-workflow', [System.StringComparison]::Ordinal)
+    $mCompanion = $rMirror.Out.IndexOf('dkj-repo-workflow-bwj', [System.StringComparison]::Ordinal)
     Assert-True ($mPrime -ge 0 -and $mCompanion -gt $mPrime) `
         'the mirror locates both plugins and keeps the rank-1 order -- step 4a resolved from its own depth'
 }

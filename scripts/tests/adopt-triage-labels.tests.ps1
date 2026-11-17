@@ -42,7 +42,7 @@ $ErrorActionPreference = 'Stop'
 
 $RepoRoot     = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $Script       = Join-Path $RepoRoot 'scripts\task\adopt-triage-labels.ps1'
-$MirrorScript = Join-Path $RepoRoot 'plugins\dkj-policy\scripts\task\adopt-triage-labels.ps1'
+$MirrorScript = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\task\adopt-triage-labels.ps1'
 $RepoConfigSrc = Join-Path $RepoRoot 'scripts\repo-config.ps1'
 $Fixture      = Join-Path ([System.IO.Path]::GetTempPath()) "adopt-triage-labels-test-fixture-$PID-$([guid]::NewGuid().ToString('n'))"
 
@@ -440,7 +440,7 @@ try {
     #         on one. The hook runs this script in-process and prints ONE line naming the counts and the
     #         command, or nothing. Same fixtures and payloads as above, so it stays network-free.
     Write-Host '-- 10. triage-labels-sessioncheck.ps1 -- one line on a gap, silent otherwise --' -ForegroundColor Cyan
-    $Hook = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\triage-labels-sessioncheck.ps1'
+    $Hook = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\triage-labels-sessioncheck.ps1'
     function Invoke-Hook {
         param([string]$Dir, [string]$LabelJsonPath, [string]$CheckScript = $Script)
         $prevPd = $env:CLAUDE_PROJECT_DIR

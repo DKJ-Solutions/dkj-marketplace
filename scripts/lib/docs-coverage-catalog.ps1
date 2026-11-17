@@ -167,7 +167,7 @@ function Get-DocsCoverageCatalog {
            Status = 'Not relevant'; Note = 'GitLab CI; the repo is on GitHub.'; Evidence = @()
            Desc = 'Learn about integrating Claude Code into your development workflow with GitLab CI/CD' }
         @{ Path = 'agents'; Title = 'Run agents in parallel'; Section = 'Build with Claude Code'; SectionPath = 'agents'; Group = 'Agents and parallel work'; GroupPath = 'agents'
-           Status = 'Covered'; Impact = 6; Note = 'Parallel work is done with subagents and worktree lanes (worktree-lane and issues-sweep skills), not agent view or teams.'; Evidence = @('plugins/dkj-policy/skills/issues-sweep/SKILL.md', 'plugins/dkj-subagents/dkj-subagents-alpha/subagents/specialist-03-07-subagent.md')
+           Status = 'Covered'; Impact = 6; Note = 'Parallel work is done with subagents and worktree lanes (worktree-lane and issues-sweep skills), not agent view or teams.'; Evidence = @('plugins/dkj-repo-workflow/skills/issues-sweep/SKILL.md', 'plugins/dkj-subagents/dkj-subagents-alpha/subagents/specialist-03-07-subagent.md')
            Desc = 'Compare the ways Claude Code can take on multiple tasks at once: subagents, agent view, agent teams, dynamic workflows, and projects.' }
         @{ Path = 'sub-agents'; Title = 'Create custom subagents'; Section = 'Build with Claude Code'; SectionPath = 'agents'; Group = 'Agents and parallel work'; GroupPath = 'agents'
            Status = 'Covered'; Impact = 8; Note = 'The core team ships 15 custom subagent definitions, one file per specialist.'; Evidence = @('plugins/dkj-subagents/dkj-subagents-alpha/subagents/specialist-03-07-subagent.md', 'plugins/dkj-subagents/dkj-subagents-developers/subagents/specialist-06-19-subagent.md')
@@ -185,7 +185,7 @@ function Get-DocsCoverageCatalog {
            Status = 'Open'; Impact = 1; Note = 'No dynamic workflow scripts in the repo; a workflow-authoring skill exists only in the harness.'; Evidence = @(); Advice = 'Skip'; AdviceWhy = 'Plugin workflows were declined in #3900: off by default on Pro, opt-in, approval on first run. Nothing here needs script-driven subagent fan-out.'
            Desc = 'Dynamic workflows orchestrate many subagents from a script Claude writes and you can rerun. Use them for codebase audits, large migrations, and cross-checked research.' }
         @{ Path = 'worktrees'; Title = 'Run parallel sessions with worktrees'; Section = 'Build with Claude Code'; SectionPath = 'agents'; Group = 'Agents and parallel work'; GroupPath = 'agents'
-           Status = 'Covered'; Impact = 6; Note = 'The repo has a worktree-lane skill, tidy-machine cleans stale lanes, and claim-issue handles worktrees.'; Evidence = @('plugins/dkj-policy/skills/worktree-lane', 'plugins/dkj-policy/scripts/lib/claim-issue-lib.ps1')
+           Status = 'Covered'; Impact = 6; Note = 'The repo has a worktree-lane skill, tidy-machine cleans stale lanes, and claim-issue handles worktrees.'; Evidence = @('plugins/dkj-repo-workflow/skills/worktree-lane', 'plugins/dkj-repo-workflow/scripts/lib/claim-issue-lib.ps1')
            Desc = 'Isolate parallel Claude Code sessions in separate git worktrees so changes don''t collide. Covers the `--worktree` flag, subagent isolation, `.worktreeinclude`, cleanup, and non-git VCS hooks.' }
         @{ Path = 'mcp-quickstart'; Title = 'Connect to MCP servers'; Section = 'Build with Claude Code'; SectionPath = 'agents'; Group = 'MCP'; GroupPath = 'mcp-quickstart'
            Status = 'Open'; Impact = 1; Note = 'No .mcp.json or project MCP servers configured here.'; Evidence = @(); Advice = 'Skip'; AdviceWhy = 'The gh CLI and the PowerShell scripts cover every tool need. An MCP server adds always-on tool context, which the token budget gate polices.'
@@ -194,13 +194,13 @@ function Get-DocsCoverageCatalog {
            Status = 'Open'; Impact = 1; Note = 'No project MCP servers; MCP appears only as tool names in the CI review workflows.'; Evidence = @(); Advice = 'Skip'; AdviceWhy = 'No tool here lacks a CLI route, and a plugin cannot ship permission rules for MCP tools. Always-on tool definitions would raise every session''s context cost.'
            Desc = 'Learn how to connect Claude Code to your tools with the Model Context Protocol.' }
         @{ Path = 'skills'; Title = 'Extend Claude with skills'; Section = 'Build with Claude Code'; SectionPath = 'agents'; Group = 'Skills'; GroupPath = 'skills'
-           Status = 'Covered'; Impact = 8; Note = 'dkj-policy and dkj-solutions ship many skills, such as new-branch, claim-issue and tidy-machine.'; Evidence = @('plugins/dkj-policy/skills/issues-sweep/SKILL.md', 'plugins/dkj-policy/skills/plan-goal/SKILL.md')
+           Status = 'Covered'; Impact = 8; Note = 'dkj-repo-workflow and dkj-repo-workflow-dkj ship many skills, such as new-branch, claim-issue and tidy-machine.'; Evidence = @('plugins/dkj-repo-workflow/skills/issues-sweep/SKILL.md', 'plugins/dkj-repo-workflow/skills/plan-goal/SKILL.md')
            Desc = 'Create, manage, and share skills to extend Claude''s capabilities in Claude Code. Includes custom commands and bundled skills.' }
         @{ Path = 'artifacts'; Title = 'Share session output as artifacts'; Section = 'Build with Claude Code'; SectionPath = 'agents'; Group = 'Artifacts'; GroupPath = 'artifacts'
            Status = 'Open'; Impact = 1; Note = 'Deliberately avoided: the constitution forbids claude.ai Artifacts, pages become Admin pages instead.'; Evidence = @(); Advice = 'Skip'; AdviceWhy = 'Hard rule: no claude.ai Artifacts. Pages are local Admin pages, and this public repo''s output must not go to claude.ai links.'
            Desc = 'Artifacts turn Claude Code''s work into live, interactive pages on claude.ai that you can keep private, share with your organization, or publish to a public link.' }
         @{ Path = 'hooks-guide'; Title = 'Automate actions with hooks'; Section = 'Build with Claude Code'; SectionPath = 'agents'; Group = 'Automation'; GroupPath = 'hooks-guide'
-           Status = 'Covered'; Impact = 7; Note = 'The dkj-policy plugin ships SessionStart and Stop hooks, and settings.json defines a statusLine command.'; Evidence = @('plugins/dkj-policy/hooks/hooks.json', '.claude/settings.json')
+           Status = 'Covered'; Impact = 7; Note = 'The dkj-repo-workflow plugin ships SessionStart and Stop hooks, and settings.json defines a statusLine command.'; Evidence = @('plugins/dkj-repo-workflow/hooks/hooks.json', '.claude/settings.json')
            Desc = 'Run shell commands automatically when Claude Code edits files, finishes tasks, or needs input. Format code, send notifications, validate commands, and enforce project rules.' }
         @{ Path = 'channels'; Title = 'Push events into a running session with channels'; Section = 'Build with Claude Code'; SectionPath = 'agents'; Group = 'Automation'; GroupPath = 'hooks-guide'
            Status = 'Open'; Impact = 1; Note = 'No channels or MCP push servers configured.'; Evidence = @(); Advice = 'Skip'; AdviceWhy = 'Pushing CI or webhook events into a session needs an MCP push server. GitHub-side labels, auto-merge and the closeout flow already handle CI results.'
@@ -233,7 +233,7 @@ function Get-DocsCoverageCatalog {
            Status = 'Not relevant'; Note = 'Runtime error lookup reference, troubleshooting only.'; Evidence = @()
            Desc = 'Look up Claude Code runtime error messages with what each one means and how to fix it.' }
         @{ Path = 'plugins/overview'; Title = 'Plugins overview'; Section = 'Plugins'; SectionPath = 'plugins/overview'; Group = 'Plugins'; GroupPath = 'plugins/overview'
-           Status = 'Covered'; Impact = 8; Note = 'The repo is a plugin marketplace whose plugins bundle agents, skills, hooks and scripts.'; Evidence = @('.claude-plugin/marketplace.json', 'plugins/dkj-policy/.claude-plugin/plugin.json')
+           Status = 'Covered'; Impact = 8; Note = 'The repo is a plugin marketplace whose plugins bundle agents, skills, hooks and scripts.'; Evidence = @('.claude-plugin/marketplace.json', 'plugins/dkj-repo-workflow/.claude-plugin/plugin.json')
            Desc = 'Understand what a Claude Code plugin is, when you need one instead of a standalone skill or MCP server, and which page to read to install or create one.' }
         @{ Path = 'plugins/install'; Title = 'Install and manage plugins'; Section = 'Plugins'; SectionPath = 'plugins/overview'; Group = 'Use plugins'; GroupPath = 'plugins/install'
            Status = 'Covered'; Impact = 6; Note = 'The repo enables its own plugins via enabledPlugins at project scope and ships update/version skills for them.'; Evidence = @('.claude/settings.json')
@@ -248,22 +248,22 @@ function Get-DocsCoverageCatalog {
            Status = 'Open'; Impact = 3; Note = 'No trust or review guidance is adopted from this page; security review is done by a specialist agent (Sebastian) instead.'; Evidence = @(); Advice = 'Consider'; AdviceWhy = 'Our marketplace is public and consumers install its hooks and scripts, so a short README link to this trust and review guide helps them. It does not replace Sebastian''s review, so do not duplicate it.'
            Desc = 'Decide whether to trust a plugin before you install it, from what a plugin can do on your machine to how to review one and remove it.' }
         @{ Path = 'plugins/create'; Title = 'Create a Claude Code plugin'; Section = 'Plugins'; SectionPath = 'plugins/overview'; Group = 'Create plugins'; GroupPath = 'plugins/create'
-           Status = 'Covered'; Impact = 7; Note = 'Plugins are built with .claude-plugin/plugin.json, agents, skills and hooks, and the repo builds on this page''s layout.'; Evidence = @('plugins/dkj-policy/.claude-plugin/plugin.json', 'plugins/dkj-subagents/dkj-subagents-alpha/.claude-plugin/plugin.json')
+           Status = 'Covered'; Impact = 7; Note = 'Plugins are built with .claude-plugin/plugin.json, agents, skills and hooks, and the repo builds on this page''s layout.'; Evidence = @('plugins/dkj-repo-workflow/.claude-plugin/plugin.json', 'plugins/dkj-subagents/dkj-subagents-alpha/.claude-plugin/plugin.json')
            Desc = 'Build your first Claude Code plugin from an empty directory, test it without a marketplace, and convert an existing .claude/ setup.' }
         @{ Path = 'plugins/components'; Title = 'Add components to a plugin'; Section = 'Plugins'; SectionPath = 'plugins/overview'; Group = 'Create plugins'; GroupPath = 'plugins/create'
-           Status = 'Covered'; Impact = 7; Note = 'Plugins ship skills, hooks (hooks/hooks.json) and agents as components.'; Evidence = @('plugins/dkj-policy/hooks', 'plugins/dkj-subagents/dkj-subagents-alpha')
+           Status = 'Covered'; Impact = 7; Note = 'Plugins ship skills, hooks (hooks/hooks.json) and agents as components.'; Evidence = @('plugins/dkj-repo-workflow/hooks', 'plugins/dkj-subagents/dkj-subagents-alpha')
            Desc = 'Add skills, hooks, MCP servers, and every other component type to a Claude Code plugin, with an example that validates for each.' }
         @{ Path = 'plugins/dependencies'; Title = 'Plugin dependencies'; Section = 'Plugins'; SectionPath = 'plugins/overview'; Group = 'Create plugins'; GroupPath = 'plugins/create'
-           Status = 'Covered'; Impact = 5; Note = 'The dkj-solutions plugin declares dependencies: ["dkj-policy"] in its plugin.json.'; Evidence = @('plugins/dkj-policy/extensions/dkj-solutions/.claude-plugin/plugin.json')
+           Status = 'Covered'; Impact = 5; Note = 'The dkj-repo-workflow-dkj plugin declares dependencies: ["dkj-repo-workflow"] in its plugin.json.'; Evidence = @('plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/.claude-plugin/plugin.json')
            Desc = 'Declare the plugins your plugin depends on, with version ranges such as ^1.2, and see how Claude Code installs, resolves, and prunes them.' }
         @{ Path = 'plugin-evals'; Title = 'Test plugins with evals'; Section = 'Plugins'; SectionPath = 'plugins/overview'; Group = 'Create plugins'; GroupPath = 'plugins/create'
-           Status = 'Covered'; Impact = 5; Note = 'dkj-policy ships claude plugin eval suites that prove its key skills still fire (#3896); they run locally, not as a CI gate.'; Evidence = @('plugins/dkj-policy/evals')
+           Status = 'Covered'; Impact = 5; Note = 'dkj-repo-workflow ships claude plugin eval suites that prove its key skills still fire (#3896); they run locally, not as a CI gate.'; Evidence = @('plugins/dkj-repo-workflow/evals')
            Desc = 'Write eval cases for your Claude Code plugin, run them with claude plugin eval, grade the results, compare against a no-plugin baseline, and gate CI on the score.' }
         @{ Path = 'plugins/publish'; Title = 'Publish and distribute a plugin'; Section = 'Plugins'; SectionPath = 'plugins/overview'; Group = 'Create plugins'; GroupPath = 'plugins/create'
            Status = 'Covered'; Impact = 7; Note = 'The repo publishes plugins through its own public marketplace, with lockstep versions and a release cut script.'; Evidence = @('.claude-plugin/marketplace.json')
            Desc = 'Publish a Claude Code plugin through your own marketplace or Anthropic''s directory, with a pre-release checklist and how users get updates.' }
         @{ Path = 'plugins/measure'; Title = 'Measure plugin cost and usage'; Section = 'Plugins'; SectionPath = 'plugins/overview'; Group = 'Create plugins'; GroupPath = 'plugins/create'
-           Status = 'Covered'; Impact = 5; Note = 'The measure-skill skill measures a plugin''s always-on and on-invoke token cost via claude plugin details.'; Evidence = @('plugins/dkj-policy/skills')
+           Status = 'Covered'; Impact = 5; Note = 'The measure-skill skill measures a plugin''s always-on and on-invoke token cost via claude plugin details.'; Evidence = @('plugins/dkj-repo-workflow/skills')
            Desc = 'Measure a Claude Code plugin''s token cost, find out whether people still use it, and pick the telemetry events for organization-wide plugin questions.' }
         @{ Path = 'plugins/cli-hints'; Title = 'Recommend your plugin from your CLI'; Section = 'Plugins'; SectionPath = 'plugins/overview'; Group = 'Create plugins'; GroupPath = 'plugins/create'
            Status = 'Not relevant'; Note = 'Applies to CLIs and SDKs recommending an official-marketplace plugin; this repo has no such CLI.'; Evidence = @()
@@ -317,13 +317,13 @@ function Get-DocsCoverageCatalog {
            Status = 'Not relevant'; Note = 'Troubleshooting-oriented reference on how plugins load; the repo only documents its own update channels.'; Evidence = @()
            Desc = 'Trace where Claude Code loads each plugin from, which settings file decides whether it loads, and why an update changed nothing.' }
         @{ Path = 'plugins/manifest-reference'; Title = 'Plugin manifest reference'; Section = 'Plugins'; SectionPath = 'plugins/overview'; Group = 'Reference'; GroupPath = 'plugins/manifest-reference'
-           Status = 'Covered'; Impact = 6; Note = 'Every plugin ships a plugin.json with name, version, description and dependencies, and the integrity gate checks them.'; Evidence = @('plugins/dkj-policy/.claude-plugin/plugin.json', 'plugins/dkj-policy/extensions/dkj-solutions/.claude-plugin/plugin.json', 'scripts/lint/check-plugin-integrity.ps1')
+           Status = 'Covered'; Impact = 6; Note = 'Every plugin ships a plugin.json with name, version, description and dependencies, and the integrity gate checks them.'; Evidence = @('plugins/dkj-repo-workflow/.claude-plugin/plugin.json', 'plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/.claude-plugin/plugin.json', 'scripts/lint/check-plugin-integrity.ps1')
            Desc = 'Complete reference for plugin.json: every field with its type and default, accepted path forms, and the userConfig and environment variable schemas.' }
         @{ Path = 'plugins/marketplace-reference'; Title = 'Marketplace reference'; Section = 'Plugins'; SectionPath = 'plugins/overview'; Group = 'Reference'; GroupPath = 'plugins/manifest-reference'
            Status = 'Covered'; Impact = 6; Note = 'The repo''s marketplace.json lists the plugins and their sources, and the integrity check validates it.'; Evidence = @('.claude-plugin/marketplace.json', 'scripts/lint/check-plugin-integrity.ps1')
            Desc = 'Complete reference for marketplace.json fields, plugin entries, and the plugin and marketplace source objects, with where each is valid.' }
         @{ Path = 'plugins/cli-reference'; Title = 'Plugin commands reference'; Section = 'Plugins'; SectionPath = 'plugins/overview'; Group = 'Reference'; GroupPath = 'plugins/manifest-reference'
-           Status = 'Covered'; Impact = 4; Note = 'Scripts and skills use claude plugin update, marketplace update and details, and the lint refers to claude plugin validate.'; Evidence = @('scripts/lint/check-plugin-integrity.ps1', 'plugins/dkj-policy/skills')
+           Status = 'Covered'; Impact = 4; Note = 'Scripts and skills use claude plugin update, marketplace update and details, and the lint refers to claude plugin validate.'; Evidence = @('scripts/lint/check-plugin-integrity.ps1', 'plugins/dkj-repo-workflow/skills')
            Desc = 'Reference for the claude plugin shell commands, /plugin and /reload-plugins in a session, and the flags that load a plugin for one session.' }
         @{ Path = 'admin-setup'; Title = 'Set up Claude Code for your organization'; Section = 'Administration'; SectionPath = 'admin-setup'; Group = 'Setup and access'; GroupPath = 'admin-setup'
            Status = 'Not relevant'; Note = 'Org administrator decision map; this is not an enterprise deployment.'; Evidence = @()
@@ -515,7 +515,7 @@ function Get-DocsCoverageCatalog {
            Status = 'Covered'; Impact = 4; Note = 'CI passes --allowedTools and --max-turns to the Claude action, and scripts use gh and claude plugin commands.'; Evidence = @('.github/workflows/claude-code-review.yml', '.github/workflows/claude.yml')
            Desc = 'Complete reference for Claude Code command-line interface, including commands and flags.' }
         @{ Path = 'commands'; Title = 'Commands'; Section = 'Reference'; SectionPath = 'cli-reference'; Group = 'Reference'; GroupPath = 'cli-reference'
-           Status = 'Covered'; Impact = 4; Note = 'Skills reference built-in commands, and the plugin skills are invoked as slash commands.'; Evidence = @('plugins/dkj-policy/skills/plan-goal/SKILL.md')
+           Status = 'Covered'; Impact = 4; Note = 'Skills reference built-in commands, and the plugin skills are invoked as slash commands.'; Evidence = @('plugins/dkj-repo-workflow/skills/plan-goal/SKILL.md')
            Desc = 'Complete reference for commands available in Claude Code, including built-in commands and bundled skills.' }
         @{ Path = 'env-vars'; Title = 'Environment variables'; Section = 'Reference'; SectionPath = 'cli-reference'; Group = 'Reference'; GroupPath = 'cli-reference'
            Status = 'Covered'; Impact = 3; Note = 'settings.json sets env vars DKJ_RUN_STEP_LOG and DKJ_STOPWATCH_SHARE for sessions.'; Evidence = @('.claude/settings.json')
@@ -530,7 +530,7 @@ function Get-DocsCoverageCatalog {
            Status = 'Open'; Impact = 2; Note = 'No repo configuration relies on checkpointing or rewind; work is protected through git branches.'; Evidence = @(); Advice = 'Skip'; AdviceWhy = 'Git branches, PRs and the check-fanout skill already protect work; checkpoints do not track Bash changes and add nothing to the repo''s workflow.'
            Desc = 'Track, rewind, and summarize Claude''s edits and conversation to manage session state.' }
         @{ Path = 'hooks'; Title = 'Hooks reference'; Section = 'Reference'; SectionPath = 'cli-reference'; Group = 'Reference'; GroupPath = 'cli-reference'
-           Status = 'Covered'; Impact = 8; Note = 'hooks.json defines SessionStart and Stop hook entries that run PowerShell session checks and gates.'; Evidence = @('plugins/dkj-policy/hooks/hooks.json')
+           Status = 'Covered'; Impact = 8; Note = 'hooks.json defines SessionStart and Stop hook entries that run PowerShell session checks and gates.'; Evidence = @('plugins/dkj-repo-workflow/hooks/hooks.json')
            Desc = 'Reference for Claude Code hook events, configuration schema, JSON input/output formats, exit codes, async hooks, HTTP hooks, prompt hooks, and MCP tool hooks.' }
         @{ Path = 'channels-reference'; Title = 'Channels reference'; Section = 'Reference'; SectionPath = 'cli-reference'; Group = 'Reference'; GroupPath = 'cli-reference'
            Status = 'Open'; Impact = 1; Note = 'No channel MCP server built or used here.'; Evidence = @(); Advice = 'Skip'; AdviceWhy = 'No MCP server is built or used here; pushing webhooks into sessions has no use case, and the CI review and issue tracker already cover alerts.'

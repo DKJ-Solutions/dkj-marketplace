@@ -123,7 +123,7 @@ $script:NativeCaptureNetworkTimeoutSeconds = 120
 # above is PER CALL, and per-call bounds DO NOT COMPOSE: a script making three of them in sequence may
 # legitimately spend 360 seconds, which is fine in a script somebody typed and fatal in one a hook
 # invoked. A hook has a CEILING -- cycle-autopark.ps1 is registered at 60 seconds in
-# plugins/dkj-policy/hooks/hooks.json -- and past it the harness kills the process FROM OUTSIDE.
+# plugins/dkj-repo-workflow/hooks/hooks.json -- and past it the harness kills the process FROM OUTSIDE.
 #
 # THAT IS THE WORST WAY FOR THESE SCRIPTS TO END, and it is why this is a defect rather than a slow run.
 # park-cycle.ps1's header promises it ALWAYS EXITS 0, because a hook that fails interrupts the work it

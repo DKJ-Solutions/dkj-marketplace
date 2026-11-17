@@ -149,7 +149,7 @@ function Test-IsWorkflowSourceRepo {
     param([Parameter(Mandatory)][string]$RepoRoot)
     $manifest = Join-Path $RepoRoot '.claude-plugin\marketplace.json'
     if (-not (Test-Path -LiteralPath $manifest -PathType Leaf)) { return $false }
-    # THE LEAF, NOT THE PATH (#3870): the folder is '.dkj/dkj-policy' now, and what names the plugin is its
+    # THE LEAF, NOT THE PATH (#3870): the folder is '.dkj/dkj-repo-workflow' now, and what names the plugin is its
     # last segment -- the folder is named after the plugin that legislates it, inside the '.dkj/' home.
     $workflow = (Get-WorkflowFolderName -RepoRoot $RepoRoot) -replace '^.*/', ''
     try {
@@ -169,7 +169,7 @@ function Test-IsWorkflowSourceRepo {
     return $false
 }
 # Get-WorkflowFolderName lives in workflow-folder-lib.ps1 since #3870, so entry-scaffold-lib.ps1 reads the
-# same list for the branch documents -- see that file for why the folder is '.dkj/dkj-policy' now.
+# same list for the branch documents -- see that file for why the folder is '.dkj/dkj-repo-workflow' now.
 
 function Get-DefaultReleaseHistoryPath {
     <#
@@ -366,7 +366,7 @@ function Assert-WorkflowIsolatedSeamPath {
     # only the new name would turn this guard from an isolation check into a hard stop on every seam call in
     # every unmigrated consumer, and it REFUSES with exit 1 rather than warning. Same answer as
     # Get-BranchFilePaths gives for the documents inside it: recognise the old name, write the new one.
-    # '.dkj/dkj-policy' joined the list under #3870, read from the one list in workflow-folder-lib.ps1.
+    # '.dkj/dkj-policy' joined the list under #3870; since #4209's hard cut the list holds '.dkj/dkj-repo-workflow' alone, read from workflow-folder-lib.ps1.
     $allowedRoots = @(Get-WorkflowFolderNames)
     foreach ($root in $allowedRoots) {
         if ($normalized -eq $root -or $normalized -like "$root/*") { return }

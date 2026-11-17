@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/hooks/consumer-sessioncheck.ps1's #1591 fallback: what a SESSION
+    Tests for plugins/dkj-repo-workflow/hooks/consumer-sessioncheck.ps1's #1591 fallback: what a SESSION
     SEES on a machine with no sibling source checkout (the ordinary state of a consumer), now that
     the hook runs plugin-versions.ps1 -Brief instead of printing "check skipped" unconditionally.
 
@@ -57,8 +57,8 @@
         directly. WHICH real copy is not a free choice, and naming it precisely is the point: the
         hook has exactly ONE engine candidate -- ($PSScriptRoot/../scripts/task/plugin-versions.ps1)
         relative to the HOOK FILE'S OWN location -- and $Hook below is the plugin mirror's copy
-        (plugins/dkj-policy/hooks/), so the engine these two branches measure is
-        plugins/dkj-policy/scripts/task/plugin-versions.ps1. THE MIRROR, never this repo's root
+        (plugins/dkj-repo-workflow/hooks/), so the engine these two branches measure is
+        plugins/dkj-repo-workflow/scripts/task/plugin-versions.ps1. THE MIRROR, never this repo's root
         scripts/task/ copy. The drift lint holds the two byte-identical, so the assertions below
         read the same either way; the ORDER of two commands does not.
         AFTER EDITING scripts/task/plugin-versions.ps1, RUN scripts/sync/build-shared-scripts.ps1
@@ -108,7 +108,7 @@ $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 # during LOAD. The hook's own sibling loads are GUARDED, which is why this is dormant today rather than
 # redundant: it catches the first unguarded one, which is exactly how #1917 produced the class.
 . (Join-Path $PSScriptRoot '..\lib\fixture-script-lib.ps1')
-$Hook     = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\consumer-sessioncheck.ps1'
+$Hook     = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\consumer-sessioncheck.ps1'
 $Fixture  = Join-Path ([System.IO.Path]::GetTempPath()) "consumer-sessioncheck-test-$PID-$([guid]::NewGuid().ToString('n'))"
 $Utf8     = New-Object System.Text.UTF8Encoding $false
 
@@ -236,7 +236,7 @@ function Invoke-Hook {
 
         THE ENGINE IT REACHES IS THE MIRROR BESIDE THAT HOOK FILE, and the pushed location has
         nothing to do with it: the hook's one engine candidate is $PSScriptRoot-relative, so what
-        these callers measure is plugins/dkj-policy/scripts/task/plugin-versions.ps1 whatever the
+        these callers measure is plugins/dkj-repo-workflow/scripts/task/plugin-versions.ps1 whatever the
         working directory is. This helper pushed to $RepoRoot back when $cwd WAS the hook's first
         engine candidate and that push was what found the root copy. THE PUSH IS NOW INERT for
         these scenarios and is kept only as belt-and-braces isolation: the hook's remaining reads of

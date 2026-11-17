@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/hooks/cycle-autopark.ps1 -- the Stop hook that runs park-cycle.ps1
+    Tests for plugins/dkj-repo-workflow/hooks/cycle-autopark.ps1 -- the Stop hook that runs park-cycle.ps1
     after every turn, and what it does with the two streams that come back.
 
 .DESCRIPTION
@@ -41,7 +41,7 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Hook     = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\cycle-autopark.ps1'
+$Hook     = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\cycle-autopark.ps1'
 # $PID in the fixture path: the gate is a throttled PARALLEL scheduler, so two runs at one fixed temp
 # path tear down each other's tree mid-assert. Same reasoning as the sibling hook suites.
 $Fixture  = Join-Path ([System.IO.Path]::GetTempPath()) "cycle-autopark-tests-$PID-$([guid]::NewGuid().ToString('n'))"
@@ -267,7 +267,7 @@ Write-Output 'an output object nobody used to see'
     # seconds is the floor on that margin, comfortably under the 15 the constant currently leaves.
     Write-Host "cycle-autopark.ps1 -- the network budget fits inside the registered hook timeout" -ForegroundColor Cyan
     . (Join-Path $RepoRoot 'scripts\lib\native-capture-lib.ps1')
-    $hooksJson = Get-Content -Raw -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\hooks\hooks.json') | ConvertFrom-Json
+    $hooksJson = Get-Content -Raw -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\hooks.json') | ConvertFrom-Json
     $stopEntry = @($hooksJson.hooks.Stop.hooks | Where-Object { $_.command -match 'cycle-autopark\.ps1' })
     Assert-True ($stopEntry.Count -eq 1) 'budget: cycle-autopark is registered exactly once as a Stop hook'
     $ceiling = [int]$stopEntry[0].timeout

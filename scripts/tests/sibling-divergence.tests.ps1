@@ -19,7 +19,7 @@
     THE PROPERTY THAT WOULD BREAK SILENTLY IS THE GROUPING BEING DECLARED. Inferring a sibling group
     is the change somebody will reach for the first time a manifest is added without the field, and
     it is wrong for a reason no error message would ever show: every consumer of this marketplace
-    shares dkj-policy, so an inferred grouping puts a personal-life repo in a group with a Shopify
+    shares dkj-repo-workflow, so an inferred grouping puts a personal-life repo in a group with a Shopify
     store and reports it as missing a theme-archive mechanism. Case 4 is that assert, and case 5 is
     the other half -- a group of one is not a finding.
 
@@ -272,8 +272,8 @@ Write-Host '-- case 11: the shipped index is bounded to .ps1, and that bound is 
 $index = Get-ShippedScriptIndex -Shipped @(
     [pscustomobject]@{ Plugin = 'dkj-subagents-shopify'; Path = 'plugins/dkj-subagents/dkj-subagents-shopify/scripts/task/push-preview.ps1' }
     [pscustomobject]@{ Plugin = 'dkj-subagents-shopify'; Path = 'plugins\dkj-subagents\dkj-subagents-shopify\scripts\lib\sync-rules.ps1' }
-    [pscustomobject]@{ Plugin = 'dkj-policy';            Path = 'plugins/dkj-policy/README.md' }
-    [pscustomobject]@{ Plugin = 'dkj-policy';            Path = 'plugins/dkj-policy/skills/new-branch/SKILL.md' }
+    [pscustomobject]@{ Plugin = 'dkj-repo-workflow';            Path = 'plugins/dkj-repo-workflow/README.md' }
+    [pscustomobject]@{ Plugin = 'dkj-repo-workflow';            Path = 'plugins/dkj-repo-workflow/skills/new-branch/SKILL.md' }
 )
 
 Assert-True  ($index.ContainsKey('push-preview.ps1')) 'a shipped .ps1 is indexed under its lower-cased basename'
@@ -285,15 +285,15 @@ Assert-Equal 2 (@($index.Keys).Count)                 'only the two .ps1 names a
 # ONE NAME, TWO SITES. A registered mirror and the plugin file it mirrors to are the same script by
 # construction, and naming only one of them sends the reader looking for the other.
 $twoSites = Get-ShippedScriptIndex -Shipped @(
-    [pscustomobject]@{ Plugin = 'dkj-policy'; Path = 'plugins/dkj-policy/scripts/task/new-branch.ps1' }
-    [pscustomobject]@{ Plugin = 'dkj-policy'; Path = 'scripts/task/new-branch.ps1' }
+    [pscustomobject]@{ Plugin = 'dkj-repo-workflow'; Path = 'plugins/dkj-repo-workflow/scripts/task/new-branch.ps1' }
+    [pscustomobject]@{ Plugin = 'dkj-repo-workflow'; Path = 'scripts/task/new-branch.ps1' }
 )
 Assert-Equal 2 (@($twoSites['new-branch.ps1']).Count) 'one name can be shipped from two sites'
 
 # The same site twice -- a path registered AND walked -- is one site, not two.
 $dupe = Get-ShippedScriptIndex -Shipped @(
-    [pscustomobject]@{ Plugin = 'dkj-policy'; Path = 'plugins/dkj-policy/scripts/task/new-branch.ps1' }
-    [pscustomobject]@{ Plugin = 'dkj-policy'; Path = 'plugins\dkj-policy\scripts\task\new-branch.ps1' }
+    [pscustomobject]@{ Plugin = 'dkj-repo-workflow'; Path = 'plugins/dkj-repo-workflow/scripts/task/new-branch.ps1' }
+    [pscustomobject]@{ Plugin = 'dkj-repo-workflow'; Path = 'plugins\dkj-repo-workflow\scripts\task\new-branch.ps1' }
 )
 Assert-Equal 1 (@($dupe['new-branch.ps1']).Count) 'the same site under two slash spellings is deduplicated'
 

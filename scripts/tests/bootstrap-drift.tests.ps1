@@ -367,7 +367,7 @@ try {
     # teardown's classification turns on exactly that, and the case below proves it still recognises
     # this shape as generated rather than authored.
     Assert-True (-not ($rcText -match "=\s*'[^']*VUL-IN")) 'core-only: no placeholder value -- the roster half is complete as generated'
-    Assert-True ($r1.Out -match 'dkj-policy') 'core-only: the run NAMES the pack the missing half belongs to, so the absence is legible'
+    Assert-True ($r1.Out -match 'dkj-repo-workflow') 'core-only: the run NAMES the pack the missing half belongs to, so the absence is legible'
 
     # --- 1c0. The core-only scaffold must stay REMOVABLE by the teardown ---------------------------
     # Without this, a file the bootstrap just wrote is classified as authored and kept forever --
@@ -408,7 +408,7 @@ try {
     if (Test-Path -LiteralPath $FixtureWf) { Remove-Item -Recurse -Force -LiteralPath $FixtureWf }
     New-Item -ItemType Directory -Path (Join-Path $FixtureWf '.claude') -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $FixtureWf '.claude\settings.json'),
-        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-developers@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }', $Utf8NoBom)
+        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-developers@dkj-marketplace": true, "dkj-repo-workflow@dkj-marketplace": true } }', $Utf8NoBom)
     $rWf = Invoke-Script -Path $Bootstrap -ScriptArgs @('-ConsumerRoot', $FixtureWf)
     Assert-Equal 0 $rWf.Code 'workflow plugin: bootstrap exit 0'
     $rcScaffold = Join-Path $FixtureWf 'scripts\repo-config.ps1'
@@ -426,9 +426,9 @@ try {
     # what stays literal around the wildcards, anchoring it (#2746).
     $sugWf = [System.IO.File]::ReadAllText((Join-Path $FixtureWf '.claude\settings.suggested.jsonc'))
     foreach ($entry in @('new-branch.ps1', 'open-pr.ps1', 'ship-pr.ps1')) {
-        Assert-True ($sugWf -match [regex]::Escape("`"Bash(powershell -NoProfile -ExecutionPolicy Bypass -File *.claude*plugins*cache*dkj-policy*scripts*$entry*)`"")) `
+        Assert-True ($sugWf -match [regex]::Escape("`"Bash(powershell -NoProfile -ExecutionPolicy Bypass -File *.claude*plugins*cache*dkj-repo-workflow*scripts*$entry*)`"")) `
             "workflow plugin: allow half covers $entry through the Bash tool (#1075)"
-        Assert-True ($sugWf -match [regex]::Escape("`"PowerShell(powershell -NoProfile -ExecutionPolicy Bypass -File *.claude*plugins*cache*dkj-policy*scripts*$entry*)`"")) `
+        Assert-True ($sugWf -match [regex]::Escape("`"PowerShell(powershell -NoProfile -ExecutionPolicy Bypass -File *.claude*plugins*cache*dkj-repo-workflow*scripts*$entry*)`"")) `
             "workflow plugin: allow half covers $entry through the PowerShell tool (#1075)"
     }
     Assert-True ($sugWf -match [regex]::Escape('"Bash(gh repo edit --delete-branch-on-merge)"')) 'workflow plugin: allow half covers the one gh repo edit the workflow assumes, EXACTLY (#2746)'
@@ -438,14 +438,14 @@ try {
     $nbRule = ([regex]::Match($sugWf, '"Bash\((powershell[^"]*new-branch\.ps1\*)\)"')).Groups[1].Value
     Assert-True ($nbRule -ne '') 'workflow plugin: the new-branch rule is extracted (guard on the extraction itself)'
     $nbGlob = '^' + ([regex]::Escape($nbRule) -replace '\\\*', '.*') + '$'
-    $installed = 'powershell -NoProfile -ExecutionPolicy Bypass -File "C:/Users/someone/.claude/plugins/cache/dkj-marketplace/dkj-policy/5.13.0/scripts/task/new-branch.ps1" -Name fix/1-x -Title "x"'
+    $installed = 'powershell -NoProfile -ExecutionPolicy Bypass -File "C:/Users/someone/.claude/plugins/cache/dkj-marketplace/dkj-repo-workflow/5.13.0/scripts/task/new-branch.ps1" -Name fix/1-x -Title "x"'
     Assert-True ($installed -match $nbGlob) 'workflow plugin: the anchored rule still matches the installed copy, forward slashes (#2746)'
     Assert-True (($installed -replace '/', '\') -match $nbGlob) 'workflow plugin: and with backslashes (#2746)'
     Assert-True (-not ('powershell -NoProfile -ExecutionPolicy Bypass -File dkj-policy/new-branch.ps1' -match $nbGlob)) `
         "workflow plugin: the rule no longer matches a new-branch.ps1 in the consumer's own dkj-policy/ folder (#2746)"
-    Assert-True (-not ('powershell -NoProfile -ExecutionPolicy Bypass -File dkj-policy/scripts/new-branch.ps1' -match $nbGlob)) `
-        "workflow plugin: nor one under dkj-policy/scripts/ in the consumer's own tree (#2746)"
-    Assert-True (-not ('powershell -NoProfile -ExecutionPolicy Bypass -File .claude/plugins/dkj-policy/scripts/new-branch.ps1' -match $nbGlob)) `
+    Assert-True (-not ('powershell -NoProfile -ExecutionPolicy Bypass -File dkj-repo-workflow/scripts/new-branch.ps1' -match $nbGlob)) `
+        "workflow plugin: nor one under dkj-repo-workflow/scripts/ in the consumer's own tree (#2746)"
+    Assert-True (-not ('powershell -NoProfile -ExecutionPolicy Bypass -File .claude/plugins/dkj-repo-workflow/scripts/new-branch.ps1' -match $nbGlob)) `
         'workflow plugin: nor a .claude/plugins/ path outside the install cache (#2746; the class is #2752)'
     # THE EXCLUSION IS THE POINT, so it is pinned rather than left to the comment beside it: a release
     # is irreversible and outward-facing, and the whole value of a narrow allow half is that a reader
@@ -476,7 +476,7 @@ try {
         # THE DEFECT ITSELF. Without this the paste produces a valid settings file with no plugin
         # surface at all -- 3 -> 0 SessionStart hooks, 6 -> 0 skills, 15 -> 0 subagents, and no message
         # (the state #1076 measured). Both plugins, because losing one is the same failure for that one.
-        foreach ($id in @('dkj-subagents-alpha@dkj-marketplace', 'dkj-policy@dkj-marketplace')) {
+        foreach ($id in @('dkj-subagents-alpha@dkj-marketplace', 'dkj-repo-workflow@dkj-marketplace')) {
             Assert-True (@($wfObj.enabledPlugins.PSObject.Properties | Where-Object { $_.Name -eq $id }).Count -eq 1) `
                 "workflow plugin: the merged file KEEPS enabledPlugins['$id'] -- the key a whole-file paste deleted (#1124)"
         }
@@ -521,13 +521,13 @@ try {
     # exists to catch a stale consumer cannot fire for a plugin nobody listed. This fixture is the
     # exact shape that produced it, which is why the assertion lives here rather than in a fixture
     # written for it.
-    Assert-True ($rWf.Out -match '(?s)"id":\s*"dkj-policy@dkj-marketplace",\s*\r?\n\s*"extensions":\s*\[\s*\]') `
+    Assert-True ($rWf.Out -match '(?s)"id":\s*"dkj-repo-workflow@dkj-marketplace",\s*\r?\n\s*"extensions":\s*\[\s*\]') `
         'workflow plugin: the agent-less plugin IS in the register proposal, with an empty extensions array (#1084)'
     Assert-True ($rWf.Out -match '(?s)"id":\s*"dkj-subagents-alpha@dkj-marketplace",\s*\r?\n\s*"extensions":\s*\["01-01"') `
         'workflow plugin: and the agent-bearing plugin still carries its ids -- the widening did not flatten the inventory'
     # The notice is the other half of the repair: it was worded as a missing DIRECTORY, so the reader
     # had to infer several hundred lines later what it meant for the manifest they were about to paste.
-    Assert-True ($rWf.Out -match "plugin 'dkj-policy' has no agents/ directory.*register proposal below, with an empty") `
+    Assert-True ($rWf.Out -match "plugin 'dkj-repo-workflow' has no agents/ directory.*register proposal below, with an empty") `
         'workflow plugin: the skip notice names what it means for the manifest, not just what was missing'
 
     $rcText = [System.IO.File]::ReadAllText($rcScaffold, [System.Text.Encoding]::UTF8)
@@ -572,11 +572,11 @@ try {
     if (Test-Path -LiteralPath $FixtureMp) { Remove-Item -Recurse -Force -LiteralPath $FixtureMp }
     New-Item -ItemType Directory -Path (Join-Path $FixtureMp '.claude') -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $FixtureMp '.claude\settings.json'),
-        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-developers@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true, "somewidget@some-other-marketplace": true } }', $Utf8NoBom)
+        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-developers@dkj-marketplace": true, "dkj-repo-workflow@dkj-marketplace": true, "somewidget@some-other-marketplace": true } }', $Utf8NoBom)
     $rMp = Invoke-Script -Path $Bootstrap -ScriptArgs @('-ConsumerRoot', $FixtureMp)
     Assert-Equal 0 $rMp.Code 'marketplace scope: bootstrap exit 0 with a foreign plugin enabled'
     Assert-True ($rMp.Out -match 'dkj-subagents-alpha@dkj-marketplace') 'marketplace scope: our own plugins are in the proposal'
-    Assert-True ($rMp.Out -match 'dkj-policy@dkj-marketplace') 'marketplace scope: including the agent-less one (#1084)'
+    Assert-True ($rMp.Out -match 'dkj-repo-workflow@dkj-marketplace') 'marketplace scope: including the agent-less one (#1084)'
     Assert-True (-not ($rMp.Out -match 'somewidget@some-other-marketplace')) 'marketplace scope: a plugin of ANOTHER marketplace is NOT in the proposal'
     # And it says so where the reader is, rather than dropping it in silence -- the same rule the skip
     # notice above follows: name the consequence for the manifest, not just the missing directory.
@@ -704,14 +704,14 @@ try {
     $rc = Invoke-Script -Path $contractCheck -ScriptArgs @('-ConsumerPathOverride', $FixtureWf)
     # ONE [ERROR] IS THE DESIGNED STATE SINCE AUGUST 14, 2026, and it is not about anything the
     # bootstrap wrote: the workflow folder (dkj-policy/) arrives through the workflow plugin's
-    # own adopt-dkj-policy skill (Part 1), a step AFTER the bootstrap -- the same split that keeps
+    # own adopt-dkj-repo-workflow skill (Part 1), a step AFTER the bootstrap -- the same split that keeps
     # specialists-init (dkj-subagents-alpha) out of workflow-specific territory. So the guarantee #226 bought is
     # asserted at its true width: every FUNCTION the bootstrap scaffolds satisfies the contract, and
     # the single finding left is the pointer at that next step.
     Assert-Equal 1 $rc.Code 'scaffolds vs contract: exit-code 1 -- the one finding is the workflow-folder pointer, by design'
     $rcErrors = @([regex]::Matches($rc.Out, '\[ERROR\]')).Count
     Assert-Equal 1 $rcErrors 'scaffolds vs contract: exactly one [ERROR] -- nothing about a file the bootstrap just wrote'
-    Assert-True ($rc.Out -match "\[ERROR\].*'.dkj/dkj-policy/' does not exist") 'scaffolds vs contract: and it is the workflow-folder pointer, naming the adopt-dkj-policy step'
+    Assert-True ($rc.Out -match "\[ERROR\].*'.dkj/dkj-repo-workflow/' does not exist") 'scaffolds vs contract: and it is the workflow-folder pointer, naming the adopt-dkj-repo-workflow step'
     # And it must be reaching the real per-function verdicts, not passing because the [BOOTSTRAP]
     # short-circuit from #225 swallowed the run -- that would make this assertion worthless.
     Assert-True (-not ($rc.Out -match '\[BOOTSTRAP\]')) 'scaffolds vs contract: the libs exist, so the check really did probe them'
@@ -760,7 +760,7 @@ try {
             # below would pass or fail for the wrong reason.
             New-Item -ItemType Directory -Path (Join-Path $gitFix '.claude') -Force | Out-Null
             [System.IO.File]::WriteAllText((Join-Path $gitFix '.claude\settings.json'),
-                '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-developers@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }', $Utf8NoBom)
+                '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-subagents-developers@dkj-marketplace": true, "dkj-repo-workflow@dkj-marketplace": true } }', $Utf8NoBom)
             $rg = Invoke-Script -Path $Bootstrap -ScriptArgs @('-ConsumerRoot', $gitFix)
             Assert-Equal 0 $rg.Code "git derivation ($Label): bootstrap exit 0"
             $txt = [System.IO.File]::ReadAllText((Join-Path $gitFix 'scripts\repo-config.ps1'), [System.Text.Encoding]::UTF8)

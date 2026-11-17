@@ -12,13 +12,13 @@
       ]
     },
     {
-      "id": "dkj-policy@dkj-marketplace",
+      "id": "dkj-repo-workflow@dkj-marketplace",
       "extensions": []
     },
     {
-      "id": "dkj-solutions@dkj-marketplace",
+      "id": "dkj-repo-workflow-dkj@dkj-marketplace",
       "extensions": []
     }
   ],
-  "notes": "Registered 2026-11-11 (#3998): the repo enabled dkj-subagents-alpha, dkj-policy and dkj-solutions without a manifest here, so every registry-driven check and sweep missed it. Measured on origin/main through the GitHub API, not taken from the report: .claude/settings.json enables exactly those three under @dkj-marketplace, and .claude/specialists/lenses/ holds 21 lenses, the full core-team set including 02-31 and 04-32. dkj-policy and dkj-solutions ship no agents, hence their empty extension lists. NOT MEASURED in this pass: the machine versions and the drift figures."
+  "notes": "Registered 2026-11-11 (#3998): the repo enabled dkj-subagents-alpha, dkj-repo-workflow and dkj-repo-workflow-dkj without a manifest here, so every registry-driven check and sweep missed it. Measured on origin/main through the GitHub API, not taken from the report: .claude/settings.json enables exactly those three under @dkj-marketplace, and .claude/specialists/lenses/ holds 21 lenses, the full core-team set including 02-31 and 04-32. dkj-repo-workflow and dkj-repo-workflow-dkj ship no agents, hence their empty extension lists. NOT MEASURED in this pass: the machine versions and the drift figures."
 }

@@ -40,13 +40,13 @@ routes; every specialist executes according to the shared safety rules and their
 
 **Where this actually runs.** This roster is a set of Claude Code subagents plus the informational
 SessionStart hooks the enabled plugins ship -- `roster-sessioncheck` in the developers team and the rest in
-`dkj-policy`, all read-only but one -- `claude-home-sessioncheck` snapshots your `~/.claude` plugin
+`dkj-repo-workflow`, all read-only but one -- `claude-home-sessioncheck` snapshots your `~/.claude` plugin
 administration while it reads healthy, so a clobber of it can be restored rather than re-installed
 (#1609); it touches nothing in any repo -- and two Stop hooks that act: `cycle-autopark` (#900) pushes
 the branch's cycle to origin until a PR does; `closeout-gate` (#2050) BLOCKS a close-out past this
 repo's band. **The set is NOT listed here**: it was named as three, went stale twice inside two days
 as hooks were added, and each plugin's own `hooks/hooks.json` is the one place that cannot -- so read
-it there, and for `dkj-policy`'s session checks read its `hooks/*-sessioncheck.ps1`, which one
+it there, and for `dkj-repo-workflow`'s session checks read its `hooks/*-sessioncheck.ps1`, which one
 dispatcher entry runs (#3472). They run in Claude Code and in Cowork, but not in a plain Claude.ai Chat session (there they
 show up grayed out); only the skills stay available in Chat. See the adoption page's
 [Where this runs](../../plugins/ADOPTION.md#where-this-runs-chat-cowork-and-claude-code) section for the sourced
@@ -63,8 +63,8 @@ checkout's plugins current, in
 
 ### The team: roster & routing
 
-Small and maintenance-focused — **only the core team, the developers team, `dkj-policy` and `dkj-solutions` are enabled here**. The three
-add-on teams and `bwj-development` are switched off, because none of them has work here (Dave, September
+Small and maintenance-focused — **only the core team, the developers team, `dkj-repo-workflow` and `dkj-repo-workflow-dkj` are enabled here**. The three
+add-on teams and `dkj-repo-workflow-bwj` are switched off, because none of them has work here (Dave, September
 30 and October 1, 2026).
 [`.claude/rules/this-repo.md`](../rules/this-repo.md) states the fact, and why.
 
@@ -96,7 +96,7 @@ Journalist) · `06-30` Auden (Long-form Writer)
 `06-16` Tessa (Technical Writer) · `06-19` Victor (Code Reviewer) · `06-23` Sebastian (Security Engineer) ·
 `06-24` Ravi (Refactoring) · `06-25` Nolan (Performance)
 
-`dkj-policy` and `dkj-solutions` are the other enabled plugins and ship **no** agents at all — it carries skills, hooks and
+`dkj-repo-workflow` and `dkj-repo-workflow-dkj` are the other enabled plugins and ship **no** agents at all — it carries skills, hooks and
 scripts — so the roster check skips it by design rather than for want of a row.
 For a full description of any specialist, run `claude plugin details <plugin>@dkj-marketplace` or
 read their manual.

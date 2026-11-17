@@ -373,7 +373,7 @@ function Get-MojibakePaths {
     # EVERY NAME IS SCANNED, and the reason is what this check is for: a repo mid-rename has prose in
     # whichever folder it still uses, and a mojibake check that silently skips the folder a consumer
     # actually has is worse than no check -- it reports a clean run over nothing.
-    foreach ($workflowFolderName in @('.dkj/dkj-policy', 'dkj-policy', 'contributing-davekjohn', 'workflow-davekjohn')) {
+    foreach ($workflowFolderName in @('.dkj/dkj-repo-workflow', 'dkj-repo-workflow', 'contributing-davekjohn', 'workflow-davekjohn')) {
         $workflowDir = Join-Path $RepoRoot ($workflowFolderName -replace '/', '\')
         if (Test-Path -LiteralPath $workflowDir) {
             $paths += @(Get-ChildItem -LiteralPath $workflowDir -Recurse -Filter '*.md' -File |
@@ -628,7 +628,7 @@ function Get-ReleaseNotesGrouping {
 # AND UNDER dkj-policy/ SINCE SEPTEMBER 5, 2026 (#1437), when the folder renamed with the plugin it is
 # named after. The seam VALUES below carry today's name; every dated sentence around them keeps the name
 # it was written with, which is the #952 rule.
-$script:ReleaseHistoryPath = '.dkj/dkj-policy/releases/history.md'
+$script:ReleaseHistoryPath = '.dkj/dkj-repo-workflow/releases/history.md'
 
 function Get-ReleaseHistoryPath {
     <# Repo-root-relative path to the file that lists every release this repo has cut. #>
@@ -650,7 +650,7 @@ function Get-ReleaseHistoryPath {
 # than from the repo root, because that is where the fold pastes it. new-branch composes the branch
 # document's guidance from this very seam, so a writer is told the right thing without having to know it,
 # and check-plugin-integrity validates each entry's links against the same resolved location.
-$script:ChangelogPath = '.dkj/dkj-policy/CHANGELOG.md'
+$script:ChangelogPath = '.dkj/dkj-repo-workflow/CHANGELOG.md'
 
 function Get-ChangelogPath {
     <# Repo-root-relative path to the changelog the fold writes into and the cut empties. #>
@@ -662,7 +662,7 @@ function Get-ChangelogPath {
 # default -- and recreate a root releases/ directory the August 27, 2026 move above just emptied. The
 # other two generated roots (changelog/, github/) need no statement: their defaults stopped branching on
 # the source at #914 and already point into this folder.
-$script:ReleaseInternalNotesRoot = '.dkj/dkj-policy/releases/internal'
+$script:ReleaseInternalNotesRoot = '.dkj/dkj-repo-workflow/releases/internal'
 
 function Get-ReleaseInternalNotesRoot {
     <# Repo-root-relative directory the generated internal (tier 1) note is written into. #>
@@ -714,7 +714,7 @@ function Get-ReleaseInternalNotesRoot {
 # That reasoning was about durability rather than ownership, and Get-ReleaseHistoryPath's own record above
 # is where it is answered. The history-table row and the note's link prefix are both computed from these seam values, which is
 # what makes each of these repointings a few lines rather than a dead-link generator.
-$script:ReleaseNoteRoot = '.dkj/dkj-policy/releases/audience'
+$script:ReleaseNoteRoot = '.dkj/dkj-repo-workflow/releases/audience'
 
 function Get-ReleaseNoteRoot {
     <# Repo-root-relative directory the hand-written release note is written into and read back from. #>
@@ -746,11 +746,11 @@ function Get-ReleasePluginTier {
 # owner's choice of October 28, 2026): a cell every house-style branch rewrote by hand conflicted between any two
 # of them, and between releases it named bytes the tag beside it does not serve.
 $script:ReleaseVersionPins = @(
-    @{ Path = 'plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/SKILL.md'
+    @{ Path = 'plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook/SKILL.md'
        Prefix = 'https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/'
-       Checksums = @('plugins/dkj-policy/assets/dkj-brandbook/house-style.css', 'plugins/dkj-policy/assets/dkj-brandbook/house-theme.js',
-                     'plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css',
-                     'plugins/dkj-policy/assets/dkj-brandbook/InterVariable.woff2') }
+       Checksums = @('plugins/dkj-repo-workflow/assets/dkj-brandbook/house-style.css', 'plugins/dkj-repo-workflow/assets/dkj-brandbook/house-theme.js',
+                     'plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product/house-product.css',
+                     'plugins/dkj-repo-workflow/assets/dkj-brandbook/InterVariable.woff2') }
 )
 
 function Get-ReleaseVersionPins {
@@ -759,7 +759,7 @@ function Get-ReleaseVersionPins {
 }
 
 # The builds cut-release ships (#3210): none. The brandbook/ app's build was the one entry, copied into the
-# dkj-solutions plugin for consumer Admin servers to serve at /brandbook/; once no consumer admin served it (#3475), the cut
+# dkj-repo-workflow-dkj plugin for consumer Admin servers to serve at /brandbook/; once no consumer admin served it (#3475), the cut
 # stopped paying npm ci and a build for a folder nothing read (#3477). An empty list is a valid answer, and the
 # literal keeps its two-line shape because cut-release-drive.tests.ps1's fixture rewrites it by that shape. A build
 # added here again runs its commands with --ignore-scripts on npm: no dependency's install script runs in the shell
@@ -1202,11 +1202,11 @@ function Get-ExpectedRepoSettings {
     return $script:ExpectedRepoSettings
 }
 
-# --- The triage-priority labels every dkj-policy consumer is invited to share (issue #1895) ---------
+# --- The triage-priority labels every dkj-repo-workflow consumer is invited to share (issue #1895) ---------
 #
 # THE GAP. `.claude/specialists/lenses/specialist-01-01-lens.md` already prescribes a priority label on
 # every issue filed HERE -- 'prio-1' (lowest) through 'prio-4' (highest) -- but until now that scale
-# was prose in one family's page and `dkj-policy` itself knew none of it. #1895 (split from #1843)
+# was prose in one family's page and `dkj-repo-workflow` itself knew none of it. #1895 (split from #1843)
 # asked three questions, and Dave answered all three on September 12, 2026:
 #
 #   1. Apply or print?  PRINT. adopt-triage-labels.ps1 composes the exact `gh label create` a person
@@ -1222,15 +1222,15 @@ function Get-ExpectedRepoSettings {
 # a different policy would impose it on them. 'prio-1' through 'prio-4' assert nothing about the
 # adopting repo at all: they are four rungs of urgency, and the rungs mean the same thing in every
 # repo that adopts them -- the shared WAY OF WORKING Get-ReachLabel's own AdoptWhy already argues for
-# the neighbouring axis. Refusing to share them would leave every dkj-policy consumer to reinvent four
+# the neighbouring axis. Refusing to share them would leave every dkj-repo-workflow consumer to reinvent four
 # names and four colours on their own, which is the exact "prose in one family's page" #1895 was filed
 # about.
 #
 # NOT THE SAME QUESTION AS #1686, AND NOT A REVERSAL OF IT. #1686 (closed September 9, 2026) kept this
 # repo's `prio-*` rungs and the BWJ tracker's own reach BUCKETS deliberately disjoint, in both
 # directions, so a session crossing families gets a refused label rather than one that quietly means
-# something else there. This seam does not touch bwj-development's buckets or Get-ReachLabel's reach
-# axis at all -- it only offers the priority axis to an ORDINARY dkj-policy consumer, one with no BWJ
+# something else there. This seam does not touch dkj-repo-workflow-bwj's buckets or Get-ReachLabel's reach
+# axis at all -- it only offers the priority axis to an ORDINARY dkj-repo-workflow consumer, one with no BWJ
 # board of its own, which is a question #1686 never asked.
 #
 # THE VALUES ARE THIS REPO'S OWN LIVE LABELS, read back from `gh label list` rather than invented for
@@ -1265,7 +1265,7 @@ function Get-ExpectedRepoSettings {
 # AND A SIXTH, A PARKING LABEL: 'awaiting-decision-dev' (issue #2519, Dave September 26, 2026; 'awaiting-decision' until #2890, October 7, 2026, when it was split in two and 'dev' came to mean the owner alone; 'needs-decision' until #2741, October 3, 2026, when it joined the purple awaiting-* family and took that colour). An issue that
 # ends in an open choice for the owner is not work anybody can pick up yet, and the claim and sweep
 # routes skip it by default. It is deliberately NOT 'awaiting-info-client' ('awaiting-more-info' until #2917, 'needs-info' until #2723): in
-# bwj-development that label means
+# dkj-repo-workflow-bwj that label means
 # blocked on the SUBMITTER -- it moves the mirrored Asana card to the blocked column and obliges a
 # question comment to the person who filed it -- and neither is true of a decision that is the owner's.
 # Same 'copy' reasoning: "waiting on the owner" asserts nothing about the adopting repo.
@@ -1320,7 +1320,7 @@ function Get-ExpectedRepoSettings {
 # the dev team -- is not free work either, and 'awaiting-decision-dev' says the opposite: that label is answered
 # by the owner alone, so 'issues-sweep-decisions' puts it to the owner, while this one both 'issues-sweep' and
 # 'issues-sweep-decisions' skip. It is deliberately NOT 'awaiting-info-client': that label means blocked on information
-# the SUBMITTER has not given and, in bwj-development, moves the mirrored Asana card. New, so no former name;
+# the SUBMITTER has not given and, in dkj-repo-workflow-bwj, moves the mirrored Asana card. New, so no former name;
 # same purple, same 'copy' reasoning: "waiting on the client's choice" asserts nothing about the adopting repo.
 # AND A THIRTEENTH AND A FOURTEENTH, AN EIGHTH AND A NINTH PARKING LABEL: 'awaiting-review-dev' and 'awaiting-review-client'
 # (issue #2977, Dave October 13, 2026). An issue whose next step is somebody LOOKING at a visible result -- a preview, rendered
@@ -1464,7 +1464,7 @@ function Get-ResolvesExemptMatchers {
 }
 
 function Get-BranchClosingSteps {
-    <# No closing steps (#2655): the one caller today is bwj-development's preview question, and its reach
+    <# No closing steps (#2655): the one caller today is dkj-repo-workflow-bwj's preview question, and its reach
        is the two store repos. This repo runs no theme, so the question would be '- [~]' on every branch. #>
     return @()
 }
@@ -1493,11 +1493,11 @@ function Get-ChangelogMode {
     return 'fold'
 }
 
-# --- The dev-preview seam (dkj-policy since #3198, #2967; this repo's answer since #2976) ---------------
+# --- The dev-preview seam (dkj-repo-workflow since #3198, #2967; this repo's answer since #2976) ---------------
 
 function Get-DevPreview {
     <# This repo's PRODUCT: the consumer dashboard server, home of Consumers and Specialists.
-       The dkj-policy dev-preview hook starts it (or reuses it) at session start beside the plugin's admin,
+       The dkj-repo-workflow dev-preview hook starts it (or reuses it) at session start beside the plugin's admin,
        and hands out both links. Every repo has a product port (Maikel, October 26, 2026, #3540), so this
        repo no longer opts out with OwnHub: Admin is the plugin's, as in every consumer (#3245), and the
        general pages are its. (OwnHub held from #3245 until #3540, with the brandbook/ app as the Product
@@ -1510,25 +1510,25 @@ function Get-DevPreview {
     }
 }
 
-# --- The house-style gate seam (dkj-solutions, #3035) ---------------------------------------------------
+# --- The house-style gate seam (dkj-repo-workflow-dkj, #3035) ---------------------------------------------------
 
 function Get-HouseStyleAllowlist {
     <# What check-house-style may leave alone here, each with its reason. The consumer dashboard is this
-       repo's one page on the house style, and the gate holds it. The pages below belong to dkj-policy,
+       repo's one page on the house style, and the gate holds it. The pages below belong to dkj-repo-workflow,
        which BWJ-Development runs too, with its own styling: they stay on their own tokens by design, so
        a house-style name in them is not drift. And the gate's own suite writes the names as fixtures. #>
-    $shared = 'a dkj-policy page: BWJ-Development runs it too, with its own styling, so it is outside the house style by design'
+    $shared = 'a dkj-repo-workflow page: BWJ-Development runs it too, with its own styling, so it is outside the house style by design'
     @(
-        @{ Path = 'plugins/dkj-policy/scripts/release/*';      Reason = $shared }
+        @{ Path = 'plugins/dkj-repo-workflow/scripts/release/*';      Reason = $shared }
         @{ Path = 'scripts/release/*';                         Reason = "$shared (the source repo's mirror)" }
-        @{ Path = 'plugins/dkj-policy/skills/*';               Reason = $shared }
-        @{ Path = 'plugins/dkj-policy/worker/*';               Reason = $shared }
+        @{ Path = 'plugins/dkj-repo-workflow/skills/*';               Reason = $shared }
+        @{ Path = 'plugins/dkj-repo-workflow/worker/*';               Reason = $shared }
         @{ Path = 'scripts/tests/release-notes-page.tests.ps1'; Reason = 'fixtures of the release-notes page above' }
         @{ Path = 'scripts/lib/dev-pages-lib.ps1'; Name = 'var(--text-'; Reason = 'the brand book''s Text card previews each type-scale step (#4009): the var(--text-*) name is joined in at run time, so the gate sees a cut-off value' }
-        @{ Path = 'plugins/dkj-policy/apps/admin/lib/general-pages-lib.ps1'; Name = '--ink'; Reason = 'the release-notes template''s own token, which Format-ReleaseNotesDevPage points AT a house token (#3108, moved to the plugin in #3119, to dkj-policy in #3198)' }
+        @{ Path = 'plugins/dkj-repo-workflow/apps/admin/lib/general-pages-lib.ps1'; Name = '--ink'; Reason = 'the release-notes template''s own token, which Format-ReleaseNotesDevPage points AT a house token (#3108, moved to the plugin in #3119, to dkj-repo-workflow in #3198)' }
         @{ Path = 'scripts/tests/check-house-style.tests.ps1';  Reason = "the gate's own suite: every name in it is a fixture" }
         @{ Path = 'scripts/tests/house-palette.tests.ps1';      Reason = 'the palette suite: every name in it is a pattern or a fixture of the stylesheet it holds' }
-        @{ Path = 'plugins/dkj-policy/extensions/bwj-development/*';       Reason = 'the BWJ-Development extension: its pages carry BWJ''s own styling, outside the house style by design' }
+        @{ Path = 'plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/*';       Reason = 'the BWJ-Development extension: its pages carry BWJ''s own styling, outside the house style by design' }
         @{ Path = 'scripts/tests/stopwatch.tests.ps1';          Reason = 'regex patterns that read font-size declarations out of rendered pages, not declarations of their own' }
         @{ Path = 'scripts/tests/consumer-dashboard.tests.ps1'; Name = 'var\(--font-weight-bold\)'; Reason = 'a regex pattern that reads a house-weight declaration out of the rendered dashboard, not a declaration of its own (#3784)' }
         @{ Path = 'scripts/tests/dev-pages.tests.ps1'; Name = '.site-header__back';   Reason = 'a regex pattern that reads the phone header''s square cells out of house-product.css, not a declaration of its own (#4128)' }

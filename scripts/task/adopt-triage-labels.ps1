@@ -9,7 +9,7 @@
 .DESCRIPTION
     THE GAP THIS CLOSES. `.claude/specialists/lenses/specialist-01-01-lens.md` (this workflow's own source
     repo) prescribes a priority label on every issue it files -- 'prio-1' (lowest) through 'prio-4'
-    (highest) -- but until now that scale was PROSE in one family's page and nothing in `dkj-policy`
+    (highest) -- but until now that scale was PROSE in one family's page and nothing in `dkj-repo-workflow`
     itself knew the four names, so a consumer adopting the convention had to read that page, retype
     four names and guess at four colours. #1895 (split from #1843) asked three questions and Dave
     answered all three on 2026-09-12: apply or print (PRINT, see below), is there a shared set at all
@@ -42,8 +42,8 @@
     NOT THE SAME QUESTION AS #1686, AND NOT A REVERSAL OF IT. #1686 (closed 2026-09-09) kept this
     repo's `prio-*` rungs and the BWJ tracker's own reach BUCKETS deliberately disjoint -- a different
     axis, so a session crossing families gets a refused label rather than one that quietly means
-    something else there. This script never touches bwj-development's buckets or `Get-ReachLabel`'s
-    reach axis; it only offers the priority axis to an ordinary dkj-policy consumer that has no BWJ
+    something else there. This script never touches dkj-repo-workflow-bwj's buckets or `Get-ReachLabel`'s
+    reach axis; it only offers the priority axis to an ordinary dkj-repo-workflow consumer that has no BWJ
     board of its own.
 
     NEITHER OF THE TWO SOURCE-REPO GUARDS, SINCE #3882. `source-repo-guard-lib.ps1`'s `Assert-OwnCopy` is

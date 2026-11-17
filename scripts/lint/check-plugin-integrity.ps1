@@ -164,7 +164,7 @@
          the '-File' argument rather than paths in general, because a tree-wide rule would be born
          accusing three correct comments that quote a user path to explain a path-mangling bug.
      23. a plugin's name says which kind it is, and where that name claims a directory it must sit
-         there: 'team-*' under plugins/dkj-subagents/, and '*-policy' / '*-policy-*' under plugins/dkj-policy/.
+         there: 'team-*' under plugins/dkj-subagents/, and '*-policy' / '*-policy-*' under plugins/dkj-repo-workflow/.
          'workflow-*', 'contributing-*' and '*-codex' are accepted names held to no directory since
          #1467, because plugins/workflows/ -- which used to name their kind -- is gone. Every plugin is
          still one or the other BY NAME. The directory rule is DERIVED from the
@@ -174,7 +174,7 @@
          prefix; that hook was retired with workflow-default and the argument above is the one that
          survives it.)
      24. the PR template keeps the two promises open-pr makes about it: the shipped reference under
-         plugins/dkj-policy/templates/ byte for byte against Get-PrTemplateReference,
+         plugins/dkj-repo-workflow/templates/ byte for byte against Get-PrTemplateReference,
          and THIS repo's own .github/pull_request_template.md only to the contract (one placeholder line
          the matcher recognises). Deliberately weaker for the second, which is genuinely repo-owned: a
          byte rule would refuse a correct change the day it grows a section. A heading is no longer part
@@ -245,7 +245,7 @@
          the page from the model's context entirely, so a session cannot follow the instruction -- and the
          reader who CAN, the person at the keyboard, is never told the line is theirs to type. The correct
          form names the slash-command and the actor, or names the script. FRONTMATTER-DRIVEN, not a
-         phrasing rule: check-script-contract names the UNFLAGGED 'adopt-dkj-policy' with the same
+         phrasing rule: check-script-contract names the UNFLAGGED 'adopt-dkj-repo-workflow' with the same
          bare imperative and is correct to, so a grep for the wording would be born with a false finding.
          The discriminator is the word 'skill' after the name, measured: without it 8 unique sites of which
          4 are wrong (three name the SCRIPT, one is prose offering a choice); with it 11 hits over 7 sites,
@@ -1147,7 +1147,7 @@ $linkFiles += @(Get-ChildItem -Path $RepoRoot -Filter '*.md' -File |
 # a consumer reads, its links never once validated. Measured on the day this was widened: six such files,
 # five of them already in the tree (plugins\dkj-subagents\README.md, plugins\workflows\README.md -- the latter
 # merged into the plugin's own page by #1467 -- both workflow
-# plugin READMEs, and dkj-policy\scripts\README.md) and the sixth the portable contribution guide
+# plugin READMEs, and dkj-repo-workflow\scripts\README.md) and the sixth the portable contribution guide
 # added by that same change -- a consumer-facing page whose whole purpose is to be copied, and whose dead
 # links would therefore be copied with it. All six were clean, so this arrives green; the point is that
 # nothing would have said otherwise.
@@ -1492,7 +1492,7 @@ function Get-PsScriptFiles {
     # (exec-policy/script) had each been silent about it since the day it was written.
     #
     # WHY THAT FILE WAS NOT AN INERT TEMPLATE, which is the reading its directory invited and the reason
-    # this was worth inverting rather than exempting. adopt-bwj-development COPIED it into a BWJ store repo
+    # this was worth inverting rather than exempting. adopt-dkj-repo-workflow-bwj COPIED it into a BWJ store repo
     # as .github/scripts/asana-mirror.ps1, where it ran in that consumer's CI holding `issues: write`, so a
     # parse error in it reached them and not us. The file was retired with its workflow on October 5,
     # 2026; the inversion stays, because the argument below is about the next subtree, not that file.
@@ -2198,7 +2198,7 @@ $lifecycleFiles = @($linkFiles | Where-Object {
     if ($rel -match '(^|\\)RELEASE\.md$') { return $false }
     if ($rel -match '^releases\\') { return $false }
     # The moved release pages are the same history at their workflow-folder address (August 14, 2026).
-    if ($rel -match '^(\.dkj\\)?dkj-policy\\releases\\') { return $false }
+    if ($rel -match '^(\.dkj\\)?dkj-repo-workflow\\releases\\') { return $false }
     # A root <branch-name>.md entry file is history in the making; same reasoning as CHANGELOG.md.
     if (($rel -notmatch '\\') -and (Test-IsChangelogEntryFile -Path $_)) { return $false }
     # branch/ is the same subject at its new address. Both files: the entry is history in the making, and
@@ -3203,7 +3203,7 @@ $scFiles = @($linkFiles | Where-Object {
     if ($rel -match '(^|\\)RELEASE\.md$') { return $false }
     if ($rel -match '^releases\\') { return $false }
     # The moved release pages are the same history at their workflow-folder address (August 14, 2026).
-    if ($rel -match '^(\.dkj\\)?dkj-policy\\releases\\') { return $false }
+    if ($rel -match '^(\.dkj\\)?dkj-repo-workflow\\releases\\') { return $false }
     if (($rel -notmatch '\\') -and (Test-IsChangelogEntryFile -Path $_)) { return $false }
     # The branch's own document only -- NOT the whole folder. It is history in the making above and a scratch
     # pad below; the folder's own pages are the convention itself and are checked.
@@ -3376,21 +3376,23 @@ Write-Coverage -Category 'skill-command' -Checked $skillCmdChecked `
 # says which ministry under it. THE RETIRED SHAPES STAY ACCEPTED rather than being swapped out, which is
 # this repo's standing answer to a rename (#952): a consumer who has not migrated still resolves a
 # 'contributing-*' plugin, and a check that recognised only today's spelling would report their working
-# install as unclassifiable.
+# install as unclassifiable. '*-repo-workflow' / '*-repo-workflow-*' joined on November 17, 2026 (#4209),
+# when 'dkj-policy' became 'dkj-repo-workflow': the name now says what the plugin is for, and the policy
+# shapes stay accepted under the same rule.
 #
 # THE DIRECTORY NO LONGER NAMES THE KIND, AND ONLY THE POLICY FAMILY HAS A DIRECTORY RULE LEFT
 # (#1467, September 5, 2026). plugins/workflows/ used to hold the KIND -- a way of working -- with the
 # rest of the name saying whose it is, and Dave kept that directory name through #886 (decision A on that
-# issue). #1467 renamed it to plugins/dkj-policy/ and lifted the prime ministry's own files to its root,
-# so the directory now names the GOVERNMENT: 'dkj-policy' at plugins\dkj-policy, and every other ministry
-# one level inside it ('bwj-development' at plugins\dkj-policy\extensions\bwj-development). That is what the anchored
-# '^plugins\\dkj-policy($|\\)' below says, and the '($|\\)' is load-bearing rather than tidy: a bare
+# issue). #1467 renamed it to plugins/dkj-repo-workflow/ and lifted the prime ministry's own files to its root,
+# so the directory now names the GOVERNMENT: 'dkj-repo-workflow' at plugins\dkj-repo-workflow, and every other ministry
+# one level inside it ('dkj-repo-workflow-bwj' at plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj). That is what the anchored
+# '^plugins\\dkj-repo-workflow($|\\)' below says, and the '($|\\)' is load-bearing rather than tidy: a bare
 # prefix would also accept a sibling directory merely beginning with the same characters, which is a
 # different plugin family and not a ministry.
 #
 # AND THE OTHER THREE SHAPES KEEP THE NAMING HALF ONLY, because there is no directory left to hold them
 # to. 'workflow-*' is what a plugin from anybody else would be called, and refusing it would make this
-# family's renames somebody else's problem -- but pointing it at plugins/dkj-policy/ would be worse than
+# family's renames somebody else's problem -- but pointing it at plugins/dkj-repo-workflow/ would be worse than
 # saying nothing: it would order a stranger's workflow into this government. So they fall through with no
 # location check, DELIBERATELY, which is a real narrowing of this check and is recorded as one. The
 # else-branch below is untouched: a name matching none of the shapes is still an error, because the
@@ -3416,9 +3418,9 @@ Write-Coverage -Category 'skill-command' -Checked $skillCmdChecked `
 # publishes a plugin literally named 'team-something', which is the one case the rule exists for.
 #
 # THE POLICY EXTENSIONS ARE CLASSIFIED BY LIST SINCE OCTOBER 4, 2026 (#2788), when 'dkj-policy-bwj' became
-# 'bwj-development' and 'dkj-policy-dkjs' became 'dkj-solutions'. Each is named after its organisation, so
-# no name shape covers both. Get-PolicyExtensionList (claude-md-import-lib.ps1) is the one list the import
-# machinery already reads, and a listed extension is held to plugins/dkj-policy/extensions/ since #3871.
+# 'bwj-development' and 'dkj-policy-dkjs' became 'dkj-solutions' (renamed 'dkj-repo-workflow-bwj' and
+# 'dkj-repo-workflow-dkj' on #4209, which kept the list rather than returning to prefix matching). Get-PolicyExtensionList (claude-md-import-lib.ps1) is the one list the import
+# machinery already reads, and a listed extension is held to plugins/dkj-repo-workflow/extensions/ since #3871.
 . (Join-Path $PSScriptRoot '..\lib\claude-md-import-lib.ps1')
 $policyExtensions = @(Get-PolicyExtensionList)
 $kindChecked = 0
@@ -3430,21 +3432,21 @@ foreach ($p in $publishedPlugins) {
             Add-Error "[plugin-kind] '$($p.Name)' is one of this family's teams by its name but its source is '$rel' -- 'dkj-subagents-*' belongs under plugins/dkj-subagents/."
         }
     } elseif ($policyExtensions -ccontains $p.Name) {
-        if ($rel -notmatch '^plugins\\dkj-policy\\extensions\\[^\\]+$') {
-            Add-Error "[plugin-kind] '$($p.Name)' is a dkj-policy extension (Get-PolicyExtensionList) but its source is '$rel' -- an extension belongs one level inside plugins/dkj-policy/extensions/ (#3871)."
+        if ($rel -notmatch '^plugins\\dkj-repo-workflow\\extensions\\[^\\]+$') {
+            Add-Error "[plugin-kind] '$($p.Name)' is a dkj-repo-workflow extension (Get-PolicyExtensionList) but its source is '$rel' -- an extension belongs one level inside plugins/dkj-repo-workflow/extensions/ (#3871)."
         }
-    } elseif ($p.Name -like '*-policy' -or $p.Name -like '*-policy-*') {
-        if ($rel -notmatch '^plugins\\dkj-policy($|\\)') {
-            Add-Error "[plugin-kind] '$($p.Name)' is a ministry of the policy by its name but its source is '$rel' -- '*-policy' and '*-policy-*' belong under plugins/dkj-policy/, the prime ministry at its root and every other ministry one level inside it."
+    } elseif ($p.Name -like '*-policy' -or $p.Name -like '*-policy-*' -or $p.Name -like '*-repo-workflow' -or $p.Name -like '*-repo-workflow-*') {
+        if ($rel -notmatch '^plugins\\dkj-repo-workflow($|\\)') {
+            Add-Error "[plugin-kind] '$($p.Name)' is a ministry of the policy by its name but its source is '$rel' -- '*-repo-workflow', '*-repo-workflow-*', '*-policy' and '*-policy-*' belong under plugins/dkj-repo-workflow/, the prime ministry at its root and every other ministry one level inside it."
         }
     } elseif ($p.Name -like 'dkj-team-*' -or $p.Name -like 'team-*' -or $p.Name -like 'workflow-*' -or $p.Name -like 'contributing-*' -or $p.Name -like '*-codex') {
         # Accepted by name, held to no location: see the retired-shapes note above.
     } else {
-        Add-Error "[plugin-kind] '$($p.Name)' is none of 'dkj-subagents-*', 'dkj-team-*', 'team-*', 'workflow-*', 'contributing-*', '*-codex', '*-policy', '*-policy-*' or a listed dkj-policy extension. Every plugin here is a team or a way of working, and the name is what says which: the directory rule is DERIVED from the name, so a plugin whose name matches none of them has its location held against nothing at all -- this check switches itself off for it."
+        Add-Error "[plugin-kind] '$($p.Name)' is none of 'dkj-subagents-*', 'dkj-team-*', 'team-*', 'workflow-*', 'contributing-*', '*-codex', '*-repo-workflow', '*-repo-workflow-*', '*-policy', '*-policy-*' or a listed dkj-repo-workflow extension. Every plugin here is a team or a way of working, and the name is what says which: the directory rule is DERIVED from the name, so a plugin whose name matches none of them has its location held against nothing at all -- this check switches itself off for it."
     }
 }
 Write-Coverage -Category 'plugin-kind' -Checked $kindChecked `
-    -Note $(if ($kindChecked -eq 0) { 'no published plugin was read, so neither the naming rule nor the directory rule could be applied' } else { "every published plugin is a team or a way of working by name. Two name shapes still carry a directory rule: 'dkj-subagents-*' maps to plugins/dkj-subagents/, and '*-policy' / '*-policy-*' map to plugins/dkj-policy/ -- the government, with the prime ministry at its root and every other ministry one level inside it. 'workflow-*', 'contributing-*' and '*-codex' are accepted by name and held to no location since #1467, because the directory that used to name their kind is gone; bare 'team-*' joined them on #1480, when this family's own teams took the owner prefix and a prefixless team became what SOMEBODY ELSE's team is called, and 'dkj-team-*' joined them on #1698, when those teams were renamed again and the directory it pointed at was gone. The naming half is the one that cannot be seen by reading the tree: a directory rule is derived from the name, so an unclassifiable plugin is silently held to nothing" })
+    -Note $(if ($kindChecked -eq 0) { 'no published plugin was read, so neither the naming rule nor the directory rule could be applied' } else { "every published plugin is a team or a way of working by name. Two name shapes still carry a directory rule: 'dkj-subagents-*' maps to plugins/dkj-subagents/, and '*-policy' / '*-policy-*' map to plugins/dkj-repo-workflow/ -- the government, with the prime ministry at its root and every other ministry one level inside it. 'workflow-*', 'contributing-*' and '*-codex' are accepted by name and held to no location since #1467, because the directory that used to name their kind is gone; bare 'team-*' joined them on #1480, when this family's own teams took the owner prefix and a prefixless team became what SOMEBODY ELSE's team is called, and 'dkj-team-*' joined them on #1698, when those teams were renamed again and the directory it pointed at was gone. The naming half is the one that cannot be seen by reading the tree: a directory rule is derived from the name, so an unclassifiable plugin is silently held to nothing" })
 
 # --- 24. the PR template keeps the two promises open-pr makes about it ------------------------------------
 # WHAT THIS IS FOR, measured at a consumer rather than imagined (#573). open-pr fills the PR body's
@@ -3478,7 +3480,7 @@ Write-Coverage -Category 'plugin-kind' -Checked $kindChecked `
 # repo that does not define it is correct, exactly the shape recorded for Get-BranchTypes.
 $prtChecked = 0
 $prtNote = ''
-$prtRefRel = 'plugins\dkj-policy\templates\pull_request_template.md'
+$prtRefRel = 'plugins\dkj-repo-workflow\templates\pull_request_template.md'
 $prtRefPath = Join-Path $RepoRoot $prtRefRel
 $prtExpected = ((Get-PrTemplateReference) -join "`n").TrimEnd()
 if (-not (Test-Path -LiteralPath $prtRefPath)) {
@@ -3626,7 +3628,7 @@ Write-Coverage -Category 'consumer-tier' -Checked $ctrChecked `
 # findable by neither reading nor this gate, and the first three bytes are the only vantage point from which
 # it exists at all.
 #
-# A REPAIR, NOT A PRECAUTION. plugins/dkj-policy/skills/adopt-config/SKILL.md shipped with
+# A REPAIR, NOT A PRECAUTION. plugins/dkj-repo-workflow/skills/adopt-config/SKILL.md shipped with
 # EF BB BF in 4.1.0 -- the only one of the eleven skills across the two shipped plugins to carry it, and the
 # only model-invocable one absent from the agent's skill listing. A frontmatter parser that wants '---' at
 # offset 0 sees a BOM in front of it and reads the file as having no frontmatter, so the skill has no name
@@ -3851,7 +3853,7 @@ Write-Coverage -Category 'import' -Checked $importScanFiles.Count `
 # wrong instrument for a document that claims to list every skill of ONE plugin:
 #
 #   * its canonical set is repo-wide -- built from Get-PluginSubdirs over every published plugin -- so a
-#     span in plugins/dkj-policy/README.md (retired October 2, 2026), which enumerated the 16 that
+#     span in plugins/dkj-repo-workflow/README.md (retired October 2, 2026), which enumerated the 16 that
 #     plugin shipped, would report the team plugins' skills as 'missing';
 #   * every backtick-quoted token inside its span is a claimed name, which is why its own author
 #     condition is 'wrap tightly'. That table is two columns and three of its rows carry a backticked
@@ -3885,7 +3887,7 @@ Write-Coverage -Category 'import' -Checked $importScanFiles.Count `
 #
 # WHY IT MUST STAY OPT-IN, measured across all four plugins before it was proposed (#920): a generic
 # rule -- 'a plugin README lists every skill it ships' -- would be born needing an exemption list.
-# dkj-policy ships 16 and lists 16; dkj-subagents-alpha ships 4 and lists 0; dkj-subagents-shopify ships 4
+# dkj-repo-workflow ships 16 and lists 16; dkj-subagents-alpha ships 4 and lists 0; dkj-subagents-shopify ships 4
 # and lists 0; dkj-subagents-ecomm ships 0. So a non-opt-in version produces 8 findings on two documents that
 # never claimed to enumerate anything, which is the shape this repo has scar tissue from (check 10's
 # own prose scan rejected at 147 hits, the stale-path check declined at 124, check 27's exemption
@@ -4248,7 +4250,7 @@ if (Test-CheckEnabled 'shopify-cli') {
 }
 
 # --- 32. a mirror table's rows against the shared-scripts registry ----------------------------------------
-# THE FOURTH OCCURRENCE THIS EXISTS TO PREVENT (issue #1491). plugins/dkj-policy/scripts/README.md holds
+# THE FOURTH OCCURRENCE THIS EXISTS TO PREVENT (issue #1491). plugins/dkj-repo-workflow/scripts/README.md holds
 # a hand-written table of the shared scripts that land in that plugin, beside Get-SharedScriptPairs, which
 # can simply be asked. It has gone stale against that registry three times: August 15, 2026 (three rows
 # missing -- adopt-workflow-folder, session-status, source-repo-guard-lib), August 26, 2026 (the header,
@@ -4398,7 +4400,7 @@ Write-Coverage -Category 'shared-script-list' -Checked $mirrorSpanCount `
 # a class rather than a risk.
 #
 # IT IS FRONTMATTER-DRIVEN, NOT A PHRASING RULE, and that is what keeps it honest. check-script-contract
-# names 'adopt-dkj-policy' with exactly this bare imperative and is CORRECT to: that skill carries
+# names 'adopt-dkj-repo-workflow' with exactly this bare imperative and is CORRECT to: that skill carries
 # no flag, so its page is in context and a session can invoke it. A grep for "run the '...' skill" would
 # have been born with that false finding. Only the barred set below is a subject.
 #
@@ -4526,7 +4528,7 @@ Write-Coverage -Category 'barred-skill' -Checked $barredChecked `
     -Note $(if ($barredSkills.Count -eq 0) {
         'no shipped skill carries disable-model-invocation: true, so there is no barred name a printed instruction could misuse -- nothing about printed routes is being asserted'
     } else {
-        "script file(s) and markdown file(s) held against the $($barredSkills.Count) skill(s) whose frontmatter bars model invocation -- $barredFindings printed instruction(s) naming one with a bare imperative. Frontmatter-driven rather than a phrasing rule: the same wording about an UNFLAGGED skill (check-script-contract's 'adopt-dkj-policy') is correct and passes"
+        "script file(s) and markdown file(s) held against the $($barredSkills.Count) skill(s) whose frontmatter bars model invocation -- $barredFindings printed instruction(s) naming one with a bare imperative. Frontmatter-driven rather than a phrasing rule: the same wording about an UNFLAGGED skill (check-script-contract's 'adopt-dkj-repo-workflow') is correct and passes"
     })
 
 
@@ -5055,8 +5057,8 @@ Write-Coverage -Category 'check-list' -Checked $clChecked `
 # Dave's chosen repair actually needs -- and it would put a CLI on this gate's critical path, in CI and in
 # every consumer, for an answer thirty lines of PowerShell give offline.
 #
-# A NESTED PLUGIN ROOT IS NOT ITS PARENT'S CONTENT. plugins/dkj-policy/extensions/bwj-development sits inside
-# plugins/dkj-policy, so a plain recursive scan would credit the child's files to the parent and demand the
+# A NESTED PLUGIN ROOT IS NOT ITS PARENT'S CONTENT. plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj sits inside
+# plugins/dkj-repo-workflow, so a plain recursive scan would credit the child's files to the parent and demand the
 # parent declare them. Neither ships an agent def today, so nothing bites -- which is exactly why it is
 # handled now rather than after it does.
 #
@@ -5297,7 +5299,7 @@ if (Test-CheckEnabled 'mirror-depth') {
 #
 # MEASURED, September 13, 2026, on the #1917 branch: adopt-shopify-floor.ps1, archive-theme.ps1,
 # push-preview.ps1 and sync-main.ps1 each gained '. (Join-Path $PSScriptRoot ''..\lib\check-report-lib.ps1'')',
-# check-report-lib was registered for dkj-policy and dkj-subagents-alpha, and those four mirror into
+# check-report-lib was registered for dkj-repo-workflow and dkj-subagents-alpha, and those four mirror into
 # dkj-subagents-shopify, whose scripts\lib\ held no such file. All four would have died ON LOAD in a
 # consumer, at their first statement, before any of their own logic ran -- and this gate reported
 # 0 error(s) over them.

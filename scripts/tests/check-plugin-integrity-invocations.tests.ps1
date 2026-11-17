@@ -50,7 +50,7 @@ try {
     # absolute path reads as a line to paste. A test that only pinned the positive would pass against a
     # stricter check that starts accusing the teardown page and needs a list to quiet it back down.
     Write-Host "check 22: a skill's command must not point at the author's disk" -ForegroundColor Cyan
-    $cmdSkill = Join-Path $Fixture 'plugins\dkj-policy\skills\adopt-config\SKILL.md'
+    $cmdSkill = Join-Path $Fixture 'plugins\dkj-repo-workflow\skills\adopt-config\SKILL.md'
     New-Item -ItemType Directory -Path (Split-Path -Parent $cmdSkill) -Force | Out-Null
     function Write-CmdSkill([string]$Path) {
         [System.IO.File]::WriteAllText($cmdSkill,
@@ -107,7 +107,7 @@ try {
     # findings and all 12 are correct sentences. The fourth pins the check's deliberate weakness: the VALUE
     # is not this gate's to choose, so 'RemoteSigned' clears it too.
     Write-Host "check 42: a printed powershell command carries -ExecutionPolicy Bypass" -ForegroundColor Cyan
-    $epSkill = Join-Path $Fixture 'plugins\dkj-policy\skills\claim-issue\SKILL.md'
+    $epSkill = Join-Path $Fixture 'plugins\dkj-repo-workflow\skills\claim-issue\SKILL.md'
     New-Item -ItemType Directory -Path (Split-Path -Parent $epSkill) -Force | Out-Null
     function Write-EpSkill([string]$Command) {
         [System.IO.File]::WriteAllText($epSkill,
@@ -136,12 +136,12 @@ try {
     # 55c. History is excluded, via check 11's set rather than a rule of its own: an archived release note
     #      quotes the form that was current when it was written and is never rewritten.
     Write-EpSkill 'powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/claim-issue.ps1"'
-    $epNote = Join-Path $Fixture 'dkj-policy\releases\audience\4.x\4.2.0.md'
+    $epNote = Join-Path $Fixture '.dkj\dkj-repo-workflow\releases\audience\4.x\4.2.0.md'
     New-Item -ItemType Directory -Path (Split-Path -Parent $epNote) -Force | Out-Null
     [System.IO.File]::WriteAllText($epNote,
         "# 4.2.0`n`n``````powershell`npowershell -NoProfile -File `"scripts/release/open-pr.ps1`"`n```````n", $Utf8NoBom)
     $p3 = Invoke-Integrity -FixtureRoot $Fixture
-    Assert-True (-not ($p3.Out -match '\[exec-policy\] dkj-policy')) `
+    Assert-True (-not ($p3.Out -match '\[exec-policy\] dkj-repo-workflow')) `
         'exec-policy: an archived release note keeps the old form -- history is never rewritten to satisfy a gate'
 
     # 55d. And the value is NOT pinned. The rule is that the policy be answered; a repo answering it with
@@ -253,7 +253,7 @@ Write-Host 'fixture'
     #        the contract. That contract is ONE promise since issue #865: a placeholder line the matcher
     #        recognises. Scenario 57 is where the retired half is written down.
     Write-Host "  check 24: the PR template's two promises" -ForegroundColor DarkCyan
-    $prtRefFixture = Join-Path $Fixture 'plugins\dkj-policy\templates\pull_request_template.md'
+    $prtRefFixture = Join-Path $Fixture 'plugins\dkj-repo-workflow\templates\pull_request_template.md'
     $prtOwnFixture = Join-Path $Fixture '.github\pull_request_template.md'
     New-Item -ItemType Directory -Path (Join-Path $Fixture '.github') -Force | Out-Null
 

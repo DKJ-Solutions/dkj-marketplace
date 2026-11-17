@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for the house-style colour model (#3235): plugins/dkj-policy/extensions/dkj-solutions/scripts/lib/house-palette-lib.ps1
+    Tests for the house-style colour model (#3235): plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/scripts/lib/house-palette-lib.ps1
     and the build script beside it, scripts/build/build-house-palette.ps1.
 
 .DESCRIPTION
@@ -15,9 +15,9 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Plugin   = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\dkj-solutions'
+$Plugin   = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj'
 $Build    = Join-Path $Plugin 'scripts\build\build-house-palette.ps1'
-$Style    = Join-Path $RepoRoot 'plugins\dkj-policy\assets\dkj-brandbook\house-style.css'
+$Style    = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\assets\dkj-brandbook\house-style.css'
 
 . (Join-Path $Plugin 'scripts\lib\house-palette-lib.ps1')
 
@@ -163,8 +163,8 @@ Remove-Item -LiteralPath $scratch -ErrorAction SilentlyContinue
 Write-Host '-- the font weights: only the four tokens' -ForegroundColor Cyan
 # Maikel, November 1, 2026: a rule sets a weight through --font-weight-light/-regular/-bold/-black, never a number.
 # The stylesheet and Admin's own domain layers on top of it are held to that; the four definitions are the one exception.
-$weightFiles = @('plugins\dkj-policy\assets\dkj-brandbook\house-style.css', 'plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1',
-    'plugins\dkj-policy\apps\admin\lib\stopwatch-lib.ps1', 'scripts\lib\consumer-dashboard-lib.ps1')
+$weightFiles = @('plugins\dkj-repo-workflow\assets\dkj-brandbook\house-style.css', 'plugins\dkj-repo-workflow\apps\admin\lib\general-pages-lib.ps1',
+    'plugins\dkj-repo-workflow\apps\admin\lib\stopwatch-lib.ps1', 'scripts\lib\consumer-dashboard-lib.ps1')
 foreach ($wf in $weightFiles) {
     $wText = [System.IO.File]::ReadAllText((Join-Path $RepoRoot $wf))
     # An @font-face states the weight RANGE a font file covers (#4070), a descriptor that cannot take a var(), not a rule's weight.
@@ -189,10 +189,10 @@ Assert-Equal '' (@([regex]::Matches($css, '(?m)\bh[1-3]\.[a-z][\w-]*') | ForEach
 
 Write-Host '-- every token is on the brand book page' -ForegroundColor Cyan
 # Maikel, November 1, 2026: a token that is added is always seen on the product's brand book pages
-# (/plugins/dkj-policy/dkj-brandbook/tokens/<group>), which read their cards from specimens.html. So every custom
+# (/plugins/dkj-repo-workflow/dkj-brandbook/tokens/<group>), which read their cards from specimens.html. So every custom
 # property a token block declares -- :root and the theme lines; a component's own variable, such as --gutter, is not a
 # token -- is named on that page.
-$specimens = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'plugins\dkj-policy\assets\dkj-brandbook\specimens.html'))
+$specimens = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'plugins\dkj-repo-workflow\assets\dkj-brandbook\specimens.html'))
 $bare = $css -replace '(?s)/\*.*?\*/', ''
 $tokens = @(foreach ($b in [regex]::Matches($bare, '(?s):root[^{]*\{([^}]*)\}')) {
     foreach ($d in [regex]::Matches($b.Groups[1].Value, '(--[a-z][\w-]*)\s*:')) { $d.Groups[1].Value }

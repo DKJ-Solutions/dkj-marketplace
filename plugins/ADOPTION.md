@@ -13,7 +13,7 @@ document rather than as the back half of an install manual.
 
 **Why the procedure is what it is** — which step was added when, and what was measured to justify it —
 is not on this page. It lives in the release record:
-[`releases/history.md`](../.dkj/dkj-policy/releases/history.md) indexes every version with the changes
+[`releases/history.md`](../.dkj/dkj-repo-workflow/releases/history.md) indexes every version with the changes
 behind it. This page tells you what to do; that one tells you why it changed.
 
 > **Budget most of the time for the last step.** The bootstrap places the whole seam in seconds and the
@@ -72,7 +72,7 @@ does not fail loudly, it quietly adds a second channel pointing somewhere else.
 **1. Write your repo's own `.claude/settings.json`** (create `.claude/` beside your `README.md` if it is
 not there). Strict JSON; if you already have one, merge these two keys into it. `dkj-subagents-alpha` (the core team) and
 `dkj-subagents-developers` (the specialists whose craft needs a repository, and the skill that sets the team
-up) are the two plugins every repo needs — add a line per add-on team you want, and `dkj-policy` only if you
+up) are the two plugins every repo needs — add a line per add-on team you want, and `dkj-repo-workflow` only if you
 deliberately want that workflow.
 
 ```json
@@ -119,7 +119,7 @@ $root = (Get-Location).Path
 **One** `project` line per plugin, ending in `payload present`. Then `/specialists-init` must be in your
 slash list, and the four steps below start.
 
-**Staying up to date** afterwards is the `update-plugins` skill (with `dkj-policy` enabled), or by hand:
+**Staying up to date** afterwards is the `update-plugins` skill (with `dkj-repo-workflow` enabled), or by hand:
 
 ```powershell
 claude plugin marketplace update dkj-marketplace
@@ -250,10 +250,10 @@ version and still report success.
 
 **Seeing which release you're on — `plugin.json`.** Each plugin folder carries a `.claude-plugin/plugin.json`
 whose `version` is the release it belongs to, bumped in lockstep across every plugin — see
-[Cutting a release](dkj-policy/RELEASES-portable.md#cutting-a-release) for the lockstep mechanics. Because
+[Cutting a release](dkj-repo-workflow/RELEASES-portable.md#cutting-a-release) for the lockstep mechanics. Because
 `claude plugin update` pins the cache to a specific version, the
 cached `version` is *exactly* the installed release. The full history of that release lives in the source
-repo's `CHANGELOG.md` and `.dkj/dkj-policy/releases/` — and a consumer has both, because
+repo's `CHANGELOG.md` and `.dkj/dkj-repo-workflow/releases/` — and a consumer has both, because
 the marketplace source is a git clone of the whole repository at
 `~/.claude/plugins/marketplaces/<marketplace>/`, not a per-plugin extract.
 
@@ -277,19 +277,19 @@ own), so an install on that channel silently yields an older plugin version. If 
 update the marketplace registration (a marketplace update) or re-add it under `dkj-marketplace` — a
 fresh install should always use `DKJ-Solutions/dkj-marketplace`.
 
-**The two `dkj-policy` extensions were renamed** on October 4, 2026
+**The two `dkj-repo-workflow` extensions were renamed** on October 4, 2026
 ([#2788](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2788)): `dkj-policy-bwj` is
-`bwj-development` and `dkj-policy-dkjs` is `dkj-solutions`. The marketplace no longer declares the old
+`dkj-repo-workflow-bwj` and `dkj-policy-dkjs` is `dkj-repo-workflow-dkj`. The marketplace no longer declares the old
 ids, so a repo that enabled one loads nothing of it until it migrates. Nothing fails loudly, and the
 session-start check warns once for each old name. Migrating takes three steps, run from the repo's root:
 
 1. In `.claude/settings.json`, replace the old key in `enabledPlugins` with the new one, e.g.
-   `"bwj-development@dkj-marketplace": true`.
+   `"dkj-repo-workflow-bwj@dkj-marketplace": true`.
 2. Install it: `claude plugin marketplace update dkj-marketplace`, then
-   `claude plugin install bwj-development@dkj-marketplace --scope project`, and
+   `claude plugin install dkj-repo-workflow-bwj@dkj-marketplace --scope project`, and
    `claude plugin uninstall dkj-policy-bwj@dkj-claude-plugins --scope project` for the stale record.
-3. Rewrite the `CLAUDE.md` import with the `adopt-dkj-policy` skill's `adopt-workflow-folder.ps1 -Apply`.
-   It replaces the old `.../dkj-policy/dkj-policy-bwj/CLAUDE.md` line in place.
+3. Rewrite the `CLAUDE.md` import with the `adopt-dkj-repo-workflow` skill's `adopt-workflow-folder.ps1 -Apply`.
+   It replaces the old `.../dkj-repo-workflow/dkj-policy-bwj/CLAUDE.md` line in place.
 
 ### Moving to `dkj-marketplace`
 
@@ -375,7 +375,7 @@ Read the `version` in your cached `<plugin>/.claude-plugin/plugin.json`. It trav
 cache, so once `claude plugin update` has pinned your install to a version, that number is exactly the
 release you are on. Every plugin bumps in lockstep, so any one of them answers the question.
 
-For **what changed** in that release, read the source repo's `CHANGELOG.md` and `.dkj/dkj-policy/releases/`
+For **what changed** in that release, read the source repo's `CHANGELOG.md` and `.dkj/dkj-repo-workflow/releases/`
 in the marketplace clone you already have — `~/.claude/plugins/marketplaces/dkj-marketplace/`. See
 [Consumption](#consumption) above for the mechanics.
 
@@ -405,11 +405,11 @@ hand-written list here was named as three and went stale twice inside two days) 
 function in Claude Code and in Cowork, but not in a plain Claude.ai Chat session — only the skills
 (`fold-changelog`, `open-pr`, `ship-pr`, `new-branch`, `claim-issue`, `issues-sweep`, `issues-sweep-decisions`, `issues-sweep-reviews`, `park`, `fix-mojibake`,
 `specialists-init`, `specialists-teardown`, `sync-roster`, `start-task`, `adopt-shopify-floor`,
-`cut-release`, `adopt-dkj-policy`,
+`cut-release`, `adopt-dkj-repo-workflow`,
 `release-notes-page`, `sync-main`, `push-preview`, `archive-theme`, `theme-lifecycle`, `live-preflight`,
 `check-branch-entry`, `check-policy-drift`,
 `prune-merged`, `tidy-machine`, `plugin-versions`, `update-plugins`, `check-fanout`,
-`measure-skill`, `measure-closeouts`, `measure-session-start`, `retro`, `measure-decision-stops`, `record-suite-durations`, `worktree-lane`, `report-issue`, `adopt-bwj-development`, `publish-page`,
+`measure-skill`, `measure-closeouts`, `measure-session-start`, `retro`, `measure-decision-stops`, `record-suite-durations`, `worktree-lane`, `report-issue`, `adopt-dkj-repo-workflow-bwj`, `publish-page`,
 `build-backlog-page`, `golive-block`,
 `orchestrator`) remain available there.
 
@@ -472,7 +472,7 @@ Re-run over every item the marketplace ships on November 17, 2026 (#4210), per p
 | `dkj-subagents-shopify` | — | Steven `05-22` — the CLI and auth reference travel, an estate overview needs the Shopify CLI | Liam `04-20` and Sandra `05-21` (test 3 — theme code and theme files in a checkout); all nine skills, each of which names a script or the Shopify CLI; both hooks |
 
 
-`dkj-policy`, `dkj-solutions` and `bwj-development` are not in the table: they are not published to the
+`dkj-repo-workflow`, `dkj-repo-workflow-dkj` and `dkj-repo-workflow-bwj` are not in the table: they are not published to the
 App target at all (below), so nothing there can offer them. **Neither is `dkj-subagents-developers`**, which is
 in the table because it was cut out of the core team by this map
 ([#4211](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4211), November 17, 2026): its specialists
@@ -527,7 +527,7 @@ them keeps its own choice. Which specialists live in which plugin and who they a
 
 **The workflow slot is different in kind, so decide about it deliberately rather than by habit — and
 "decide" now means deciding whether to fill it at all.** One plugin answers "how does work move through
-this repo": `dkj-policy`, which carries no specialists at all but is DaveKJohn's own branch,
+this repo": `dkj-repo-workflow`, which carries no specialists at all but is DaveKJohn's own branch,
 changelog and release method as skills plus scripts (`new-branch`, `open-pr`, `ship-pr`,
 `fold-changelog`, `cut-release`, `park`, `fix-mojibake` among others). **Leaving the slot empty is what
 this page's default settings block does, and it is a complete answer** — your repo keeps the way of
@@ -572,7 +572,7 @@ numbers from before the point where the four steps start.
 > **The adoption commit lands on the trunk, and it is the one exception — it is spent by using it**
 > (inbound [#1085](https://github.com/DaveKJohn/claude-code-specialists/issues/1085)). Everything this
 > step and the next two write — the seam, the lenses, the two script scaffolds, the `@`-import, and the
-> whole `.dkj/dkj-policy/` folder if you enabled that workflow — is one sizeable commit, and it
+> whole `.dkj/dkj-repo-workflow/` folder if you enabled that workflow — is one sizeable commit, and it
 > **cannot** go through the branch-and-PR cycle it is installing. That is not a preference: `new-branch`
 > refuses without `scripts/lib/branch-info.ps1`, which is one of the files this step writes, so before it
 > there is no branch to put the work on. The gates are downstream of the same commit for the same reason
@@ -581,7 +581,7 @@ numbers from before the point where the four steps start.
 >
 > So commit it directly, **say so in the commit message**, and let the cycle start with the *next*
 > change. Worth writing down because the documents you are handed on the same day say the opposite as a
-> rule: `dkj-policy`'s contribution page describes a cycle in which every change goes
+> rule: `dkj-repo-workflow`'s contribution page describes a cycle in which every change goes
 > through a branch and a PR, and a `CLAUDE.md` written from this family's scaffolding carries "never
 > directly on `main`" as a safety rule. A reader who takes those literally on day one has a
 > contradiction with two exits, and both are wrong — hand-building a branch and a PR that can meet none
@@ -609,7 +609,7 @@ gets everything under `created`, which is the sample above. A repo that already 
 `scripts/repo-config.ps1` sees that one move to `already present` instead. So a figure that is *higher*
 than the sample is not an error, and neither is one that is lower: what matters is that each pair adds up
 and that the skill names anything it skipped. If you enabled an add-on team as well, expect its
-specialists on top of these. `dkj-policy`, on the other hand, changes nothing here: it carries no
+specialists on top of these. `dkj-repo-workflow`, on the other hand, changes nothing here: it carries no
 specialists, so this sample's numbers hold whether or not it is enabled alongside `dkj-subagents-alpha`.
 
 > The sample above was itself the finding: until August 2, 2026 it showed `0 script-scaffold(s) created,
@@ -651,7 +651,7 @@ The set as of this release:
 
 | skill | shipped by | what your repo lacks without it | what reports it |
 |---|---|---|---|
-| `adopt-dkj-policy` | `dkj-policy` | two independent things, either order: **Part 1** — `.dkj/dkj-policy/` itself, the only location the shared scripts read the branch dossier and the release documents from; **Part 2** — the seam values that state the shared way of working, answering what step 1 only *scaffolded* (`scripts/repo-config.ps1` and `scripts/lib/branch-info.ps1`) | `script-contract-sessioncheck` |
+| `adopt-dkj-repo-workflow` | `dkj-repo-workflow` | two independent things, either order: **Part 1** — `.dkj/dkj-repo-workflow/` itself, the only location the shared scripts read the branch dossier and the release documents from; **Part 2** — the seam values that state the shared way of working, answering what step 1 only *scaffolded* (`scripts/repo-config.ps1` and `scripts/lib/branch-info.ps1`) | `script-contract-sessioncheck` |
 | `adopt-shopify-floor` | `dkj-subagents-shopify` | the live-theme guard's id half, a starter `.theme-check.yml`, and the CI gate that runs it | `shopify-floor-sessioncheck` |
 
 **Enumerate it from your own slash list rather than from this table.** A plugin added after this release
@@ -663,7 +663,7 @@ exception that shows the shape: its adopt skill **is** `specialists-init`, which
 
 **All of them are additive and a dry run by default** — each prints exactly what it would do and writes
 nothing until you add `-Apply`, so reading the plan first costs you nothing and none of them can
-overwrite work of yours. `adopt-dkj-policy`'s Part 2 and `adopt-shopify-floor` both **append to
+overwrite work of yours. `adopt-dkj-repo-workflow`'s Part 2 and `adopt-shopify-floor` both **append to
 `scripts/repo-config.ps1` and need it to exist**, which is what step 1 placed. And this step is yours
 whichever channel the plugins arrived on: an adopt skill writes into *your repo*, not onto the machine,
 so a centrally published install does not cover it.
@@ -704,7 +704,7 @@ diagnose them: a `.gitignore` that excludes `.claude/` and therefore the whole s
 before you write anything, because every gate stays green while your lenses are untracked — and a
 `scripts/repo-config.ps1` older than the current script contract (`Get-RosterPath`,
 `Get-RosterIgnoredIds`), which `scripts/sync/check-script-contract.ps1` reports for you and step 3's
-`adopt-dkj-policy` (Part 2) is what answers.
+`adopt-dkj-repo-workflow` (Part 2) is what answers.
 
 The worker specialists can be invoked directly as `@dkj-subagents-alpha:<name>` or `@dkj-subagents-developers:<name>` from the moment Step 2 is
 done — with an empty lens they simply answer out of their portable playbook.

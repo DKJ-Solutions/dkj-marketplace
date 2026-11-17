@@ -8,8 +8,8 @@
 
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/reach-label.tests.ps1
 
-    WHAT THIS SUITE IS FOR. The axis moved out of bwj-development (then dkj-policy-bwj) on September 11, 2026 and became a
-    dkj-policy rule, with 'minor' as the name and Get-ReachLabel as the seam for a repo that spells it
+    WHAT THIS SUITE IS FOR. The axis moved out of dkj-repo-workflow-bwj (then dkj-policy-bwj) on September 11, 2026 and became a
+    dkj-repo-workflow rule, with 'minor' as the name and Get-ReachLabel as the seam for a repo that spells it
     otherwise. Four documents now have to agree about that, and none of them is executable -- so the
     failure they can produce is the silent one: a default stated as 'minor' in one page and 'tier-1' in
     the next, which a reader resolves by typing whichever they read last, and 'gh issue create' then
@@ -20,7 +20,7 @@
 
 $ErrorActionPreference = 'Stop'
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$PolicyRoot = Join-Path $RepoRoot 'plugins\dkj-policy'
+$PolicyRoot = Join-Path $RepoRoot 'plugins\dkj-repo-workflow'
 
 $script:pass = 0
 $script:fail = 0
@@ -76,14 +76,14 @@ Assert-True ($contributing -match 'RELEASES-portable\.md#the-same-scale-on-an-is
     'the exception links to the definition rather than restating it'
 
 # --- adopt places it, and says which wording belongs to which audience ---------------------------
-Write-Host "`n-- adopt-dkj-policy part 4 --" -ForegroundColor Cyan
+Write-Host "`n-- adopt-dkj-repo-workflow part 4 --" -ForegroundColor Cyan
 
 # A label is a row in a tracker's settings, so nothing in this plugin can write it. Part 4 is the
 # step that hands a person the command -- and the audience wordings matter: tier 1 and tier 2 are two
 # KINDS of reader, so a repo copying the other one's description names an audience it does not have.
-$adopt = Get-Text 'skills\adopt-dkj-policy\SKILL.md'
+$adopt = Get-Text 'skills\adopt-dkj-repo-workflow\SKILL.md'
 Assert-True ($adopt -match '##\s+Part 4') `
-    'adopt-dkj-policy carries Part 4'
+    'adopt-dkj-repo-workflow carries Part 4'
 Assert-True ($adopt -match 'gh label create') `
     'Part 4 gives the create command'
 Assert-True ($adopt -match 'management and the commissioner notice it') `
@@ -132,7 +132,7 @@ Write-Host "`n-- no stale default --" -ForegroundColor Cyan
 #   * WORD ORDER. 'defaulting to tier-1' was the only shape matched, so 'tier-1 is the default' passed
 #     -- and that is not hypothetical phrasing: report-issue/SKILL.md carried exactly it until this
 #     branch happened to reword that line for an unrelated reason.
-#   * A SENTENCE THAT NEVER SAYS 'DEFAULT'. adopt-bwj-development said "check for THAT name -- 'tier-1'
+#   * A SENTENCE THAT NEVER SAYS 'DEFAULT'. adopt-dkj-repo-workflow-bwj said "check for THAT name -- 'tier-1'
 #     where the repo has never answered it", which is the same claim with the word absent. That file
 #     was also missing from the list, so the drift survived in the one document #1841 had named as a
 #     call site, while the branch's own step list ticked the box.
@@ -141,17 +141,17 @@ Write-Host "`n-- no stale default --" -ForegroundColor Cyan
 #
 # MEASURED AGAINST THE PRE-BRANCH TREE rather than asserted: run over 'main', the three patterns hit
 # 5 times across 4 of these 7 files -- and two of those hits are shapes the first draft could not see
-# (report-issue's 'tier-1 is the default' and adopt-bwj-development's 'never answered'). A sweep that
+# (report-issue's 'tier-1 is the default' and adopt-dkj-repo-workflow-bwj's 'never answered'). A sweep that
 # is green on the tree it was written for proves nothing about the tree it was written against.
 $defaultClaims = @(
     @{ Pattern = 'default(?:ing to)?\s+`?tier-1';                       What = "states tier-1 as the default" }
     @{ Pattern = '`?tier-1`?\s+is\s+the\s+default';                     What = "states tier-1 is the default, in the other word order" }
     @{ Pattern = '`?tier-1`?[^.\r\n]{0,80}never\s+answered';            What = "calls tier-1 what an unanswered repo gets" }
 )
-foreach ($rel in @('RELEASES-portable.md', 'CONTRIBUTING-portable.md', 'skills\adopt-dkj-policy\SKILL.md',
-                   'extensions\bwj-development\WORKFLOW-portable.md', 'extensions\bwj-development\README.md',
-                   'extensions\bwj-development\skills\report-issue\SKILL.md',
-                   'extensions\bwj-development\skills\adopt-bwj-development\SKILL.md')) {
+foreach ($rel in @('RELEASES-portable.md', 'CONTRIBUTING-portable.md', 'skills\adopt-dkj-repo-workflow\SKILL.md',
+                   'extensions\dkj-repo-workflow-bwj\WORKFLOW-portable.md', 'extensions\dkj-repo-workflow-bwj\README.md',
+                   'extensions\dkj-repo-workflow-bwj\skills\report-issue\SKILL.md',
+                   'extensions\dkj-repo-workflow-bwj\skills\adopt-dkj-repo-workflow-bwj\SKILL.md')) {
     $txt = Get-Text $rel
     foreach ($claim in $defaultClaims) {
         Assert-True (-not [regex]::IsMatch($txt, $claim.Pattern)) `

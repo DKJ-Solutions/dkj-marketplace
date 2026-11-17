@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/hooks/dev-preview-sessionstart.ps1 and its rules,
-    apps/admin/lib/dev-preview-rules.ps1 in the same plugin -- the shared dev-preview hook (#2967), in dkj-policy
+    Tests for plugins/dkj-repo-workflow/hooks/dev-preview-sessionstart.ps1 and its rules,
+    apps/admin/lib/dev-preview-rules.ps1 in the same plugin -- the shared dev-preview hook (#2967), in dkj-repo-workflow
     since #3198, and the Admin the plugin serves in every repo (#3245).
 
 .DESCRIPTION
@@ -27,15 +27,15 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Hook     = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\dev-preview-sessionstart.ps1'
-$Lib      = Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\dev-preview-rules.ps1'
-$StateLib = Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\general-pages-state.ps1'
+$Hook     = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\dev-preview-sessionstart.ps1'
+$Lib      = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\dev-preview-rules.ps1'
+$StateLib = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\general-pages-state.ps1'
 # $PID and a guid in the fixture path: the test gate runs suites in parallel.
 $Fixture  = Join-Path ([System.IO.Path]::GetTempPath()) "dev-preview-$PID-$([guid]::NewGuid().ToString('n'))"
 
 . $Lib
 . $StateLib
-. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\loopback-server-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\loopback-server-lib.ps1')
 
 $script:pass = 0
 $script:fail = 0
@@ -312,10 +312,10 @@ $pick = Select-DevPreviewRestartPort -Port 5174 -Ports @(5174) -Listeners @((& $
 Assert-True ($pick.Action -eq 'none' -and $pick.Port -eq 5174) 'with its one port still held, nothing is started and the port is named'
 
 # #3275: an admin of this checkout that runs from another plugin version is stopped, not reused.
-$srv = 'C:\Users\x\.claude\plugins\cache\dkj-marketplace\dkj-policy\5.27.0\apps\admin\pages\serve-general-pages.ps1'
+$srv = 'C:\Users\x\.claude\plugins\cache\dkj-marketplace\dkj-repo-workflow\5.27.0\apps\admin\pages\serve-general-pages.ps1'
 $adminProcs = @{
-    600 = @{ CommandLine = 'powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Users\x\.claude\plugins\cache\dkj-marketplace\dkj-policy\5.26.0\hub\pages\serve-general-pages.ps1" -Port 4895'; ParentId = 100 }
-    601 = @{ CommandLine = 'powershell -NoProfile -ExecutionPolicy Bypass -File "c:/users/X/.claude/plugins/cache/dkj-marketplace/dkj-policy/5.27.0/apps/admin/pages/serve-general-pages.ps1" -Port 4896'; ParentId = 100 }
+    600 = @{ CommandLine = 'powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Users\x\.claude\plugins\cache\dkj-marketplace\dkj-repo-workflow\5.26.0\hub\pages\serve-general-pages.ps1" -Port 4895'; ParentId = 100 }
+    601 = @{ CommandLine = 'powershell -NoProfile -ExecutionPolicy Bypass -File "c:/users/X/.claude/plugins/cache/dkj-marketplace/dkj-repo-workflow/5.27.0/apps/admin/pages/serve-general-pages.ps1" -Port 4896'; ParentId = 100 }
     602 = @{ CommandLine = 'powershell -File apps\admin\pages\serve-general-pages.ps1 -Port 4897'; ParentId = 100 }
 }
 Assert-Equal '600' ((Get-DevPreviewStaleAdminOwners -Port 4895 -Listeners @((& $L 4895 600), (& $L 4895 600)) -Processes $adminProcs -Server $srv) -join ',') 'an admin run from another version''s payload is stale, once per process'
@@ -394,10 +394,10 @@ Assert-True (Test-CommandLineNamesRoot -CommandLine "cmd.exe $line" -Root $root)
 
 Write-Host '-- group 1d: the plugin''s Repository page, and the Simple Browser route (#3245, #3047)' -ForegroundColor Cyan
 
-# The hook, the servers and the Admin page are dkj-policy's (#3198); the house style they serve is the
-# dkj-solutions extension's, inside dkj-policy's own payload.
-$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy'
-$SolutionsRoot = Join-Path $PluginRoot 'extensions\dkj-solutions'
+# The hook, the servers and the Admin page are dkj-repo-workflow's (#3198); the house style they serve is the
+# dkj-repo-workflow-dkj extension's, inside dkj-repo-workflow's own payload.
+$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-repo-workflow'
+$SolutionsRoot = Join-Path $PluginRoot 'extensions\dkj-repo-workflow-dkj'
 . (Join-Path $PluginRoot 'apps\admin\lib\repo-admin-page.ps1')
 
 # The placeholder is retired (#3245): Admin is the general pages server, so nothing of it ships any more.
@@ -467,7 +467,7 @@ Assert-True ((Format-PluginRepoAdminHtml -RepoName 'r' -PagesUrl '') -match 'The
 # The Repository page (#3383): the facts and Issues the home page no longer holds.
 $repo = Format-PluginRepoRepositoryHtml -RepoName 'DKJ-Solutions/dkj-recipes' -Folder 'recipes-checkout' -Slug 'DKJ-Solutions/dkj-recipes' -Mode 'product' -ProductUrl 'http://localhost:4321/dkj-recipes/' -PagesUrl 'http://localhost:4890'
 Assert-True ($repo -match '<span aria-current="page">GitHub</span>' -and $repo -match '<title>DKJ-Solutions/dkj-recipes -- GitHub</title>') 'the GitHub page is an admin page of its own, its crumb and title GitHub'
-Assert-True ($repo -match '<dl class="facts facts--row">' -and $repo -match '<dt>Folder</dt><dd>recipes-checkout</dd>' -and $repo -match '<dt>Dev preview</dt><dd>http://localhost:4321/dkj-recipes/</dd>' -and $repo -match '<dt>Admin served by</dt><dd>the dkj-policy plugin, on a port from 4890 to 4899</dd>') 'its facts are a row: the folder, the product and who serves Admin'
+Assert-True ($repo -match '<dl class="facts facts--row">' -and $repo -match '<dt>Folder</dt><dd>recipes-checkout</dd>' -and $repo -match '<dt>Dev preview</dt><dd>http://localhost:4321/dkj-recipes/</dd>' -and $repo -match '<dt>Admin served by</dt><dd>the dkj-repo-workflow plugin, on a port from 4890 to 4899</dd>') 'its facts are a row: the folder, the product and who serves Admin'
 Assert-True ($repo -match '<dd><a href="https://github.com/DKJ-Solutions/dkj-recipes">DKJ-Solutions/dkj-recipes</a></dd>' -and $repo -match 'href="https://github.com/DKJ-Solutions/dkj-recipes/pulls"' -and $repo -match 'href="https://github.com/DKJ-Solutions/dkj-recipes/actions"') 'a GitHub slug is a fact and two cards, its pull requests and its CI runs'
 Assert-True ($repo -match '<tbody><tr><td class="col-start"><a href="/dev/issues">Issues</a></td>' -and $repo -notmatch 'card--link|grid-3') 'and Issues is its first row, by bare path'
 Assert-True ($repo -match '<a href="/dev/test-gate">Test gate</a>' -and $repo.IndexOf('href="/dev/issues"') -lt $repo.IndexOf('href="/dev/test-gate"') -and $repo.IndexOf('href="/dev/test-gate"') -lt $repo.IndexOf('/actions"')) 'and the Test gate its second, by bare path, before the Actions whose runs it measures (the owner, November 2, 2026)'
@@ -569,15 +569,15 @@ Remove-Item Env:\DKJ_GENERAL_PAGES_PORTS -ErrorAction SilentlyContinue
 $enRoot = Join-Path $Fixture 'enabled-check'
 New-Item -ItemType Directory -Force -Path (Join-Path $enRoot '.claude') | Out-Null
 Assert-True (-not (Test-DkjSolutionsEnabled -Root $enRoot)) 'a checkout with no settings file is no DKJ-Solutions repo'
-[System.IO.File]::WriteAllText((Join-Path $enRoot '.claude\settings.json'), '{ "enabledPlugins": { "dkj-policy@dkj-marketplace": true, "dkj-solutions@dkj-marketplace": true } }')
-Assert-True (Test-DkjSolutionsEnabled -Root $enRoot) 'one whose settings.json enables dkj-solutions is'
-[System.IO.File]::WriteAllText((Join-Path $enRoot '.claude\settings.local.json'), '{ "enabledPlugins": { "dkj-solutions@dkj-marketplace": false } }')
+[System.IO.File]::WriteAllText((Join-Path $enRoot '.claude\settings.json'), '{ "enabledPlugins": { "dkj-repo-workflow@dkj-marketplace": true, "dkj-repo-workflow-dkj@dkj-marketplace": true } }')
+Assert-True (Test-DkjSolutionsEnabled -Root $enRoot) 'one whose settings.json enables dkj-repo-workflow-dkj is'
+[System.IO.File]::WriteAllText((Join-Path $enRoot '.claude\settings.local.json'), '{ "enabledPlugins": { "dkj-repo-workflow-dkj@dkj-marketplace": false } }')
 Assert-True (-not (Test-DkjSolutionsEnabled -Root $enRoot)) 'and settings.local.json wins where it names the plugin too'
 [System.IO.File]::WriteAllText((Join-Path $enRoot '.claude\settings.local.json'), '{ not json')
 Assert-True (Test-DkjSolutionsEnabled -Root $enRoot) 'while a settings.local.json that is not JSON says nothing'
-[System.IO.File]::WriteAllText((Join-Path $enRoot '.claude\settings.json'), '{ "enabledPlugins": { "dkj-policy@dkj-marketplace": true, "dkj-solutions@dkj-marketplace": false } }')
+[System.IO.File]::WriteAllText((Join-Path $enRoot '.claude\settings.json'), '{ "enabledPlugins": { "dkj-repo-workflow@dkj-marketplace": true, "dkj-repo-workflow-dkj@dkj-marketplace": false } }')
 Assert-True (-not (Test-DkjSolutionsEnabled -Root $enRoot)) 'a repo that sets it false, as the BWJ-Development repos do, is none'
-Assert-True ((Get-HouseStyleDir -PluginRoot $PluginRoot).EndsWith('\dkj-policy\assets\dkj-brandbook')) 'the house style is read from dkj-policy''s own assets folder, which every install carries'
+Assert-True ((Get-HouseStyleDir -PluginRoot $PluginRoot).EndsWith('\dkj-repo-workflow\assets\dkj-brandbook')) 'the house style is read from dkj-repo-workflow''s own assets folder, which every install carries'
 # The Sec-Fetch rule both plugin servers share (#3119). Ports do not count toward "site", so Admin's link, the
 # 303 hop and the crumb back all arrive same-site, as top-level navigations.
 Assert-True (-not (Test-LoopbackCrossSite -SecFetchSite 'same-site' -SecFetchMode 'navigate' -Method 'GET')) 'a same-site top-level GET navigation is served'
@@ -709,7 +709,7 @@ try {
         # tree once the grace has passed; an active one leaves it, and the watcher leaves with the server; one
         # disconnected from the start leaves it too (#3595); a pid whose start time is not the server's is never
         # stopped.
-        $Watch = Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\pages\dev-preview-watch.ps1'
+        $Watch = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\pages\dev-preview-watch.ps1'
         # -ForceState skips the P/Invoke, so it is compiled and called here: a disconnect read is cross-checked
         # against the console session and the session list (#3597), and a broken definition would only ever
         # surface as a silent -1 inside the watcher's catch.
@@ -777,7 +777,7 @@ try {
         # A DKJ-Solutions repo, on purpose: even there the servers carry no Brandbook and no card for it, since
         # the brand book is the source repo's product (#3475).
         New-Item -ItemType Directory -Force -Path (Join-Path $noConfig '.claude') | Out-Null
-        [System.IO.File]::WriteAllText((Join-Path $noConfig '.claude\settings.json'), '{ "enabledPlugins": { "dkj-solutions@dkj-marketplace": true } }')
+        [System.IO.File]::WriteAllText((Join-Path $noConfig '.claude\settings.json'), '{ "enabledPlugins": { "dkj-repo-workflow-dkj@dkj-marketplace": true } }')
         $r = Invoke-Hook $noConfig
         $m = Get-Message $r.Text
         Assert-True ($r.Code -eq 0 -and $m -match "^Admin: http://localhost:$genPort/ \(started\) -- this repo states no Get-DevPreview yet") "a repo without scripts/repo-config.ps1 gets the plugin's admin, started (got '$m')"
@@ -798,7 +798,7 @@ try {
             $page = Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:$genPort/" -TimeoutSec 15
             Assert-True ($page.StatusCode -eq 200 -and $page.Content -match '<title>no-config -- Tools</title>' -and $page.Content -match 'class="shell shell--no-aside"') 'the home page is served on /, in the shell, naming the repo it was started in (its title)'
             Assert-True ($page.Content -match '<h2>Set up a product</h2>' -and $page.Content -notmatch '<h2>Products</h2>') 'with the setup cards and no Products section, since the repo states no Get-DevPreview'
-            Assert-True ($page.Content -match 'href="/dev/release-notes"' -and $page.Content -match 'href="/dev/repository"' -and $page.Content -notmatch 'href="/brandbook' -and $page.Content -notmatch '<h2>Facts</h2>' -and $page.Content -notmatch 'href="/about"') 'one page of card links (#3289, #3383): the General pages by bare path and the Repository page, and no Brandbook even where the repo enables dkj-solutions (#3475)'
+            Assert-True ($page.Content -match 'href="/dev/release-notes"' -and $page.Content -match 'href="/dev/repository"' -and $page.Content -notmatch 'href="/brandbook' -and $page.Content -notmatch '<h2>Facts</h2>' -and $page.Content -notmatch 'href="/about"') 'one page of card links (#3289, #3383): the General pages by bare path and the Repository page, and no Brandbook even where the repo enables dkj-repo-workflow-dkj (#3475)'
             $repoPage = Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:$genPort/repository" -TimeoutSec 15
             Assert-True ($repoPage.StatusCode -eq 200 -and $repoPage.Content -match '<dl class="facts facts--row">' -and $repoPage.Content -match '<dt>Folder</dt><dd>no-config</dd>' -and $repoPage.Content -match 'href="/dev/issues"') '/dev/repository serves the Repository page: the facts and the Issues card (#3383)'
             $aboutPage = Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:$genPort/about" -TimeoutSec 15
@@ -847,17 +847,17 @@ try {
         Assert-True ((& $getRaw $genPort '/admin' 'evil.example') -match 'HTTP/1.1 403') 'a foreign Host is refused'
         $r2 = & $getRaw $genPort '/artifacts'
         Assert-True ($r2 -match 'HTTP/1.1 303' -and $r2 -match 'Location: /') '/artifacts, the page retired with the claude.ai Artifacts, answers 303 to the home page like /about (#3772)'
-        Assert-True ((& $getRaw $genPort '/brandbook') -match 'HTTP/1.1 404' -and (& $getRaw $genPort '/brandbook/') -match 'HTTP/1.1 404') '/brandbook and /brandbook/ are not found, in a repo that enables dkj-solutions too (#3475)'
+        Assert-True ((& $getRaw $genPort '/brandbook') -match 'HTTP/1.1 404' -and (& $getRaw $genPort '/brandbook/') -match 'HTTP/1.1 404') '/brandbook and /brandbook/ are not found, in a repo that enables dkj-repo-workflow-dkj too (#3475)'
         $r2 = & $getRaw $genPort '/dev/release-notes'
         # A repo with no release yet (this fixture has no history) is an empty state, not a build error (#3580).
         Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match '<h1>Release notes</h1>' -and $r2 -match 'No release has been cut yet') '/dev/release-notes tries to build a page that is absent, and before the first cut answers with an empty state (#3189, #3580)'
         $r2 = & $getRaw $genPort '/dev/release-notes/v1.0'
         Assert-True ($r2 -match 'HTTP/1.1 404' -and $r2 -match 'Not built yet' -and $r2 -match 'no release has been cut yet') 'while a release''s own page is a 404 text naming why'
-        New-Item -ItemType Directory -Force -Path (Join-Path $noConfig '.dkj\dkj-policy\releases\page') | Out-Null
-        [System.IO.File]::WriteAllText((Join-Path $noConfig '.dkj\dkj-policy\releases\page\release-notes.html'), '<html lang="en"><head><style>a{}</style></head><body>shaped notes</body></html>')
+        New-Item -ItemType Directory -Force -Path (Join-Path $noConfig '.dkj\dkj-repo-workflow\releases\page') | Out-Null
+        [System.IO.File]::WriteAllText((Join-Path $noConfig '.dkj\dkj-repo-workflow\releases\page\release-notes.html'), '<html lang="en"><head><style>a{}</style></head><body>shaped notes</body></html>')
         $r2 = & $getRaw $genPort '/dev/release-notes'
         Assert-True ($r2 -match 'HTTP/1.1 200' -and $r2 -match 'shaped notes' -and $r2 -match '<li><a href="/">Home</a></li>' -and $r2 -match 'href="/house-style.css"') 'and dressed in the house style once it is, its Home crumb on /'
-        $newerNote = Join-Path $noConfig '.dkj\dkj-policy\releases\notes\9.9.9.md'
+        $newerNote = Join-Path $noConfig '.dkj\dkj-repo-workflow\releases\notes\9.9.9.md'
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $newerNote) | Out-Null
         [System.IO.File]::WriteAllText($newerNote, '# 9.9.9')
         (Get-Item -LiteralPath $newerNote).LastWriteTimeUtc = (Get-Date).ToUniversalTime().AddMinutes(5)
@@ -895,7 +895,7 @@ try {
         Use-GeneralPort (New-FreePort)
         $g = [int]$env:DKJ_GENERAL_PAGES_PORTS
         $staleRepo = [System.IO.Path]::GetFullPath((New-Repo 'stale-admin' $null))
-        $oldAdmin = "powershell -NoProfile -Command `"`$l = New-Object System.Net.Sockets.TcpListener ([System.Net.IPAddress]::Loopback), {port}; `$l.Start(); Start-Sleep 60 # C:\old\dkj-policy\5.26.0\hub\pages\serve-general-pages.ps1`""
+        $oldAdmin = "powershell -NoProfile -Command `"`$l = New-Object System.Net.Sockets.TcpListener ([System.Net.IPAddress]::Loopback), {port}; `$l.Start(); Start-Sleep 60 # C:\old\dkj-repo-workflow\5.26.0\hub\pages\serve-general-pages.ps1`""
         $null = Start-Process -FilePath 'cmd.exe' -WorkingDirectory $staleRepo -WindowStyle Hidden -PassThru `
             -ArgumentList (Get-DevPreviewStartLine -Root $staleRepo -Command $oldAdmin -Port $g -LogPath (Join-Path $Fixture 'old-admin.log'))
         $until = (Get-Date).AddSeconds(20)

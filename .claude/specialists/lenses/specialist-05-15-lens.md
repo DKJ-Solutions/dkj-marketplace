@@ -15,7 +15,7 @@ infrastructure.
 
 ### What Sylvester owns here
 
-- **`plugins/dkj-policy/hooks/guard-working-copy.ps1`** — the second `PreToolUse` guard in this
+- **`plugins/dkj-repo-workflow/hooks/guard-working-copy.ps1`** — the second `PreToolUse` guard in this
   marketplace (#1669): a dispatched subagent may not run the git commands that discard the checkout it
   was dispatched into. Its judgement is `scripts/lib/working-copy-guard-lib.ps1` and its
   false-positive machinery `scripts/lib/command-guard-lib.ps1`, both mirrored into the plugin. Before
@@ -100,7 +100,7 @@ infrastructure.
     declaring *no* skill is reported in the coverage line, not as an error.
   - **Check 23, `[plugin-kind]`**: every published plugin must be `team-*` under `plugins/dkj-subagents/`
     or a way of working by name. Only `*-policy` / `*-policy-*` carry a directory rule on the workflow
-    side (`plugins/dkj-policy/`, see
+    side (`plugins/dkj-repo-workflow/`, see
     [#1467](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1467)); `workflow-*`,
     `contributing-*` and `*-codex` are accepted by name and held to no location. The directory half is
     *derived* from the name, so **an unprefixed name switches the check off for itself, silently**. Its
@@ -566,7 +566,7 @@ infrastructure.
     the whole script, silently dropping every block below it while still exiting `0`; the degrade path is
     an `else`.
 - **`scripts/lib/release-lib.ps1`** — the pure release helpers (version bump, emptying `CHANGELOG.md` down
-  to its intro, and the assembly of the changelog notes under `.dkj/dkj-policy/releases/changelog/`)
+  to its intro, and the assembly of the changelog notes under `.dkj/dkj-repo-workflow/releases/changelog/`)
   that [`cut-release.ps1`](../../../scripts/release/cut-release.ps1) dot-sources; deliberately
   pure so [Tycho #18](specialist-04-18-lens.md) can test them in isolation. The release *process* is
   [Rendall #06](specialist-05-06-lens.md)'s domain; Sylvester guards the script mechanics underneath.
@@ -607,7 +607,7 @@ copies, `check-consumers.ps1` against a consumer's register record).
 inside one consumer cannot see the sibling repo it never opens, whose names have drifted apart. Before
 changing it, know:
 
-- **The grouping is declared (`siblingGroup`), never inferred.** Every consumer shares `dkj-policy`, so a
+- **The grouping is declared (`siblingGroup`), never inferred.** Every consumer shares `dkj-repo-workflow`, so a
   plugin-set inference would group a personal-life repo with a Shopify store. The reasoning is in
   [the register's page](../../../consumers/README.md#the-manifest-format); case 4 of
   [`sibling-divergence.tests.ps1`](../../../scripts/tests/sibling-divergence.tests.ps1) holds it, and it
@@ -628,17 +628,17 @@ changing it, know:
 
 #### The ruling that followed, and the first thing moved under it (September 11, 2026, #1881)
 
-**Anything the two stores share goes to `bwj-development`, unless it is obviously universal** (Dave, on
+**Anything the two stores share goes to `dkj-repo-workflow-bwj`, unless it is obviously universal** (Dave, on
 [#1881](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1881)). The portable statement, the
 price it accepts and the second question a store has to ask before building anything are in
-[that plugin's own README](../../../plugins/dkj-policy/extensions/bwj-development/README.md#what-this-plugin-owns),
+[that plugin's own README](../../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/README.md#what-this-plugin-owns),
 because they are read in a store repo rather than here. What belongs in this lens is the part that is
 this repo's:
 
 - **The line "policy, never mechanism" was widened**, not broken: the distinction that survives in
-  `bwj-development` is copy-vs-dot-source (a consumer **copies** `templates/`, **dot-sources** a lib), not
+  `dkj-repo-workflow-bwj` is copy-vs-dot-source (a consumer **copies** `templates/`, **dot-sources** a lib), not
   prose-vs-code.
-- **The first increment is [`scripts/tests/test-lib.ps1`](../../../plugins/dkj-policy/extensions/bwj-development/scripts/tests/test-lib.ps1)**,
+- **The first increment is [`scripts/tests/test-lib.ps1`](../../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/scripts/tests/test-lib.ps1)**,
   the superset of the two stores' diverged copies, in English.
 - **It has a suite here though nothing here uses it**:
   [`bwj-test-lib.tests.ps1`](../../../scripts/tests/bwj-test-lib.tests.ps1), because a mechanism with no
@@ -782,7 +782,7 @@ and are only pointed at below.
 
 - **A refusal reading "auto mode cannot determine the safety" is retried, not routed around through
   another tool** — it is transient, and the detour turns a refusal into a bypass.
-- **Before writing "this was never recorded", grep `CHANGELOG.md` and `.dkj/dkj-policy/releases/**` too** —
+- **Before writing "this was never recorded", grep `CHANGELOG.md` and `.dkj/dkj-repo-workflow/releases/**` too** —
   an entry is where a finding lands first.
 - This repo is **public**: config never contains secrets.
 
@@ -797,8 +797,8 @@ folder by folder:
   holds it, are under
   [Teams and workflows — what's the difference?](../../../plugins/dkj-subagents/README.md#teams-and-workflows--whats-the-difference)): the teams under
   [`plugins/dkj-subagents/`](../../../plugins/dkj-subagents/) (`dkj-subagents-alpha`, `dkj-subagents-lifehub`, `dkj-subagents-shopify`, `dkj-subagents-ecomm`) and
-  the policy at [`plugins/dkj-policy/`](../../../plugins/dkj-policy/) — the prime ministry's own files at that
-  root, and its one ministry `bwj-development` a level inside it — each of those two directories carrying
+  the policy at [`plugins/dkj-repo-workflow/`](../../../plugins/dkj-repo-workflow/) — the prime ministry's own files at that
+  root, and its one ministry `dkj-repo-workflow-bwj` a level inside it — each of those two directories carrying
   its own README for what belongs in it
   and the rules that govern it. One folder per plugin, each carrying
   `agents/`/`manuals/`/`personas/`/`skills/` plus its own `plugin.json` — and beside the four teams
@@ -829,29 +829,29 @@ folder by folder:
   What each script does is on the page of the skill that runs it; the conventions for the directory
   itself are in [the section right below](#the-scripts-directory-is-the-source). A
   mirrored copy for consumers lives inside the plugins — the sync/check scripts in `dkj-subagents-alpha`, the
-  branch/release workflow in `dkj-policy` — see its own
-  [README](../../../plugins/dkj-policy/scripts/README.md).
-- **`.dkj/dkj-policy/`** — the workflow's own root folder (named `contributing-davekjohn/` from August 27
+  branch/release workflow in `dkj-repo-workflow` — see its own
+  [README](../../../plugins/dkj-repo-workflow/scripts/README.md).
+- **`.dkj/dkj-repo-workflow/`** — the workflow's own root folder (named `contributing-davekjohn/` from August 27
   until September 5, 2026, #1437, and `dkj-policy/` at the root until November 7, 2026, #3870), and since August 27, 2026 the home of
   every document the contribution cycle produces or governs. **It carries no prose pages of its own**
   — a `CONTRIBUTING.md` and a `README.md` sat here until
   [#2171](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2171), September 20, 2026, when a
   per-repo restatement beside
-  [`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portable.md) was retired and this repo's
+  [`CONTRIBUTING-portable.md`](../../../plugins/dkj-repo-workflow/CONTRIBUTING-portable.md) was retired and this repo's
   own answers moved into the specialist lenses. What is here is
-  [`CHANGELOG.md`](../../../.dkj/dkj-policy/CHANGELOG.md), the open branch's
+  [`CHANGELOG.md`](../../../.dkj/dkj-repo-workflow/CHANGELOG.md), the open branch's
   `<branch>.md` while one is open, and `releases/` — what a cut *generated*
   (`changelog/<X>.x/<X.Y.Z>.md`, the complete note per version, and `github/<X>.x/<X.Y.Z>.md`, that
   version's GitHub Release body), the hand-written note per version under `audience/`, the dated list of
   every release ever cut in
-  [`releases/history.md`](../../../.dkj/dkj-policy/releases/history.md). **The folder carries no prose page of its
+  [`releases/history.md`](../../../.dkj/dkj-repo-workflow/releases/history.md). **The folder carries no prose page of its
   own** — this repo's seam answers sat in a `releases/README.md` until #2196 retired it, and they are in
   the lenses of the specialists who own them:
   [Rendall](specialist-05-06-lens.md#versioning--releases) for the release
   decisions, [the release-notes section below](#the-release-notes-page-and-the-worker-that-serves-it)
   for the hosted notes page. The cutting process itself travels
   with the plugin as
-  [`RELEASES-portable.md`](../../../plugins/dkj-policy/RELEASES-portable.md).
+  [`RELEASES-portable.md`](../../../plugins/dkj-repo-workflow/RELEASES-portable.md).
 - **`.claude/`** — the repo layer: `specialists/SPECIALISTS.md` (the inclusion carrying the
   body import, the lens import and the roster), `specialists/lenses/` (this repo's own repo lenses),
   `rules/` (path-scoped rules), and
@@ -867,7 +867,7 @@ folder by folder:
 
 **Moved here from the root `README.md` on September 24, 2026, condensed rather than moved verbatim**:
 its hook-by-hook detail already lived a second time in
-`plugins/dkj-policy/README.md`'s `hooks/` row (a genuine duplicate — the root page and the plugin page
+`plugins/dkj-repo-workflow/README.md`'s `hooks/` row (a genuine duplicate — the root page and the plugin page
 described the same set in the same words), so that duplicate is dropped here and only the frame is kept.
 That plugin page was retired in turn on October 2, 2026.
 
@@ -888,7 +888,7 @@ cache rather than against a way of working — everything else in the read-only 
 (`consumer-sessioncheck`, `script-contract-sessioncheck`, `consumer-prose-sessioncheck`) and the two
 hooks that go beyond reporting (`cycle-autopark`, which commits and pushes a branch's development
 document until a PR publishes it, #900; `closeout-gate`, which blocks a close-out past this repo's
-stated band, #2050) ship with `dkj-policy`. **The set is not enumerated in full anywhere**: it was, as three, and went stale twice inside two
+stated band, #2050) ship with `dkj-repo-workflow`. **The set is not enumerated in full anywhere**: it was, as three, and went stale twice inside two
 days as hooks were added; each plugin's own `hooks/hooks.json` is the one place that cannot.
 
 ### Updating the plugins — in every other checkout of this repo
@@ -908,7 +908,7 @@ That is what makes the update a step of its own rather than something a merge do
 whole reason the procedure is written down here.
 
 **First, whether an update is even due in this checkout.** The
-[`plugin-versions`](../../../plugins/dkj-policy/skills/plugin-versions/SKILL.md) skill — run
+[`plugin-versions`](../../../plugins/dkj-repo-workflow/skills/plugin-versions/SKILL.md) skill — run
 `scripts/task/plugin-versions.ps1` from a checkout of this repo, or invoke the skill by name — prints,
 per enabled plugin, the version and commit *this* checkout installed against the version and HEAD of
 the local marketplace clone, with a per-plugin verdict — up to date, update this plugin, or refresh
@@ -924,7 +924,7 @@ enabled plugin:
 ```powershell
 claude plugin marketplace update dkj-marketplace                            # 1. refresh the clone
 claude plugin update dkj-subagents-alpha@dkj-marketplace --scope project         # 2. then update, per plugin
-claude plugin update dkj-policy@dkj-marketplace --scope project
+claude plugin update dkj-repo-workflow@dkj-marketplace --scope project
 ```
 
 **The set step 2 walks is [`settings.json`](../../settings.json)'s own, and a plugin left off it simply
@@ -959,7 +959,7 @@ else waits for the cut. Between two releases **no version check can tell you eit
 behind it at all** ([#1851](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1851),
 September 11, 2026). Everything above is the **plugin payload**: agent defs, hooks, skills, manuals,
 personas, gated by a release and a version bump, landing in a *session* after `plugin update`. But the
-runners `adopt-dkj-policy` scaffolds into a consumer do not travel that way. They check this repository
+runners `adopt-dkj-repo-workflow` scaffolds into a consumer do not travel that way. They check this repository
 out beside the consumer's own tree and run a path into it — the read-only gates at `ref: main`, so a
 change to `check-branch-entry.ps1` is live in **every adopted consumer's next CI run**: no tag, no bump,
 no refresh, no session restart. The write runners pin a release commit instead (#2333). Strictly the
@@ -968,7 +968,7 @@ propagation model, so a reader reasoning from it concludes that a shared gate sc
 consumer before a cut — which is the opposite of what happens.
 
 **Neither the pin nor the release doctrine is the defect; the missing sentence was.** `ref: main` is
-argued by name in [`adopt-dkj-policy`'s skill page](../../../plugins/dkj-policy/skills/adopt-dkj-policy/SKILL.md):
+argued by name in [`adopt-dkj-repo-workflow`'s skill page](../../../plugins/dkj-repo-workflow/skills/adopt-dkj-repo-workflow/SKILL.md):
 a pinned gate goes on enforcing the shape it was pinned at, and since the entry's own path has moved
 twice, a stale pin does not fail loudly — it refuses branches that *do* carry an entry at the current
 path. That reasoning stands, and
@@ -1012,9 +1012,9 @@ Moved here from `.claude/rules/this-repo.md` under
 [#2448](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2448); the rule keeps the one-line
 fact of which plugins are enabled, and this is the harness consequence behind it.
 
-**Three of the seven are enabled: the core team, `dkj-policy` and `dkj-solutions`.** `dkj-solutions` came
+**Three of the seven are enabled: the core team, `dkj-repo-workflow` and `dkj-repo-workflow-dkj`.** `dkj-repo-workflow-dkj` came
 in on October 13, 2026 (Maikel, [#2976](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2976))
-for its dev-preview hook, which is `dkj-policy`'s since
+for its dev-preview hook, which is `dkj-repo-workflow`'s since
 [#3198](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3198); it stays for the brand book,
 and its session check (Admin's DKJ-Solutions card it also gave ended with
 [#3475](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3475)). The hook starts the consumer dashboard
@@ -1052,14 +1052,14 @@ September 8 all six had been on, for validation. Before changing this, know:
   self-manifest case fails on a registered plugin that is not enabled), the add-on teams' 11 empty lenses
   and roster rows (else an `[ORPHANS]` line at every session start), and the root `CLAUDE.md`'s import of
   the BWJ extension.
-- **Only the core team, `dkj-policy` and `dkj-solutions` describe this repo**; the add-on teams have no
-  work here (not a webshop, a Shopify store or a personal-life repo). `bwj-development`'s ticket-handling
+- **Only the core team, `dkj-repo-workflow` and `dkj-repo-workflow-dkj` describe this repo**; the add-on teams have no
+  work here (not a webshop, a Shopify store or a personal-life repo). `dkj-repo-workflow-bwj`'s ticket-handling
   chapter admits this repo as a permitted target (Dave, September 14, 2026; per-chapter reach closed
   [#1982](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1982)), and that stays in the plugin
   source, but this repo does not use it: an issue here is filed with a plain `gh issue create`, carrying
   `prio-N` and, where it applies, `minor` ([Chris's lens](specialist-01-01-lens.md)).
-  `adopt-bwj-development` was never run here. To use the chapter again, set the plugin to `true`, restore
-  the import and the consumer block, and run `adopt-bwj-development`.
+  `adopt-dkj-repo-workflow-bwj` was never run here. To use the chapter again, set the plugin to `true`, restore
+  the import and the consumer block, and run `adopt-dkj-repo-workflow-bwj`.
 - **What is given up is the early warning.** The add-on teams were on so that a broken agent def,
   manifest, frontmatter or hook surfaced at this repo's own session start; it cost every session ~2.9k
   tokens for three teams with no work here. A broken add-on plugin now surfaces in a consumer that runs
@@ -1106,7 +1106,7 @@ layer states the current answer once, in `scripts/repo-config.ps1`. Before chang
   `check-consumers.ps1` matches them alongside the current one. **The list only grows.**
 - **Existing citations are corrected when a file is edited for other reasons, not swept**
   ([#1526](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1526)): both spellings resolve, and a
-  sweep is a diff nobody can review. The archived release history under `.dkj/dkj-policy/releases/**` stays as
+  sweep is a diff nobody can review. The archived release history under `.dkj/dkj-repo-workflow/releases/**` stays as
   written, the carve-out [`language-layers.md`](../../rules/language-layers.md) makes too.
 - **Every place the name is read rather than displayed must be current**: `Get-RepoName`, the
   `repository:` line the consumer scaffolders write, the matcher that finds it, and the marketplace source
@@ -1134,7 +1134,7 @@ stayed **inside** `plugins/` because it *is* plugin source, and was moved twice:
 `plugins/dkj-subagents/subagent-shared/` under
 [#1698](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1698). **No tooling had to learn an
 address**: every script that asks which plugins exist reads `marketplace.json` through
-[`plugin-tree-lib.ps1`](../../../scripts/lib/plugin-tree-lib.ps1). The workflow folder `.dkj/dkj-policy/` was
+[`plugin-tree-lib.ps1`](../../../scripts/lib/plugin-tree-lib.ps1). The workflow folder `.dkj/dkj-repo-workflow/` was
 `contributing-davekjohn/` until September 5, 2026 (#1437), and `dkj-policy/` at the root until November 7, 2026 (#3870).
 
 ### Why `Get-RosterIgnoredIds` is empty
@@ -1156,7 +1156,7 @@ a check made quiet by a list that cites a document which does not say what it is
 [`build-shared-scripts.ps1`](../../../scripts/sync/build-shared-scripts.ps1) generates from it and lint
 check 8 holds the mirrors to it. **No count of it is stated here, deliberately** — a prose tally of a
 machine-held list is wrong when typed and wrong again after the next entry (#897). The consumer-facing
-page for the copy is [`plugins/dkj-policy/scripts/README.md`](../../../plugins/dkj-policy/scripts/README.md).
+page for the copy is [`plugins/dkj-repo-workflow/scripts/README.md`](../../../plugins/dkj-repo-workflow/scripts/README.md).
 This section is what `scripts/README.md` carried until September 23, 2026, when that page was removed
 as rarely read; its directory map and entry-point table were dropped rather than moved, because each
 script's skill page is where a reader actually looks for it, and each plugin's `hooks/hooks.json` is the
@@ -1185,7 +1185,7 @@ the shared scripts read.
   `build-shared-scripts.ps1`; check 8 reports a hand-edited mirror as drift.
 - **CI runs from a bare checkout with no plugin cache**, so anything the lint gate or a suite reaches
   has to resolve from `scripts/` alone — which is why a few files
-  [deliberately cannot move](../../../plugins/dkj-policy/scripts/README.md#what-deliberately-stays-in-the-consumers-root-cannot-move-here)
+  [deliberately cannot move](../../../plugins/dkj-repo-workflow/scripts/README.md#what-deliberately-stays-in-the-consumers-root-cannot-move-here)
   into a plugin.
 
 #### Temp paths in a shipping script: New-ScratchPath
@@ -1279,14 +1279,14 @@ Kept as an anchor. See the table row above and [#1802](https://github.com/DKJ-So
 This was `dkj-policy/CONTRIBUTING.md`'s DEVELOPMENT step until #2179 retired that page
 ([where it went](specialist-06-16-lens.md#the-two-pages-the-workflow-folder-used-to-carry-and-why-they-are-gone)).
 The cycle — phases, step marks, what DEPLOY is for — is in
-[`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md); only this repo's own
+[`DEVELOPMENT-portable.md`](../../../plugins/dkj-repo-workflow/DEVELOPMENT-portable.md); only this repo's own
 answers stay here.
 
 #### The document and its name
 
 The document, its per-branch name (#1255, #1335, with the merge-conflict measurement), the `-v<N>` suffix
 (inbound #1224), the re-read after `new-branch`, the HTML-comment guidance and the absence of any template are
-all in [`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md#why-the-name-carries-the-branch).
+all in [`DEVELOPMENT-portable.md`](../../../plugins/dkj-repo-workflow/DEVELOPMENT-portable.md#why-the-name-carries-the-branch).
 This repo's own facts: **nothing identifies a document by its filename** — the fold and every gate read the
 branch out of the document's own heading — and `ReservedNames` in `Get-BranchFilePaths` keeps the folder's
 own pages out of the document glob. **Four `###` headings and never a fifth** (Dave, August 26, 2026) is
@@ -1296,18 +1296,18 @@ what changes, not by which files move — [Derek's](specialist-05-05-lens.md#cla
 #### What does NOT go into the phases as a step
 
 The repo's standing gates are not written as steps (#1060, August 29, 2026): the rule and its measurement
-are in [`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md#the-four-phases-and-why-one-of-them-takes-no-steps).
+are in [`DEVELOPMENT-portable.md`](../../../plugins/dkj-repo-workflow/DEVELOPMENT-portable.md#the-four-phases-and-why-one-of-them-takes-no-steps).
 Here the hand-run overran the 120s foreground timeout while `open-pr`'s own gate ran the same 54 suites in
 59s and 60s; the mechanism is in the slowest-single-suite paragraph above.
 
 #### DEPLOY: folder-relative links, and audience tier 2
 
-**Links are written folder-relative to `.dkj/dkj-policy/`**, because the changelog sits there: `../../scripts/x.ps1` (one `../` more since #3870 moved it under `.dkj/`),
+**Links are written folder-relative to `.dkj/dkj-repo-workflow/`**, because the changelog sits there: `../../scripts/x.ps1` (one `../` more since #3870 moved it under `.dkj/`),
 never `scripts/x.ps1`, which is dead once it lands, and `open-pr`'s link gate refuses it
-([`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md#the-deploy-section--the-changelog-entry)).
+([`DEVELOPMENT-portable.md`](../../../plugins/dkj-repo-workflow/DEVELOPMENT-portable.md#the-deploy-section--the-changelog-entry)).
 **This repo answers audience tier 2**, so the entry is the `### DEPLOY: <branch>` section (tier 0, its answer
 directly underneath) plus `#### What makes this deploy extra special`, both beside `#### Pull Request`
-([the two tiers](../../../plugins/dkj-policy/DEVELOPMENT-portable.md#the-two-tiers)). **In each tier the
+([the two tiers](../../../plugins/dkj-repo-workflow/DEVELOPMENT-portable.md#the-two-tiers)). **In each tier the
 reason goes ABOVE the `**Score:**` line** — anything below it is discarded.
 
 ### The gates on the branch document, and the ones that fire beside them
@@ -1315,8 +1315,8 @@ reason goes ABOVE the `**Score:**` line** — anything below it is discarded.
 This was `dkj-policy/CONTRIBUTING.md`'s PULL REQUEST step until #2179 retired that page
 ([where it went](specialist-06-16-lens.md#the-two-pages-the-workflow-folder-used-to-carry-and-why-they-are-gone)).
 The cycle, the gates in run order and the escape valves (`-SkipLint`, `-SkipTests`, `-MaxParallel`) are in
-[`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portable.md#4-open-the-pr) and the
-[`open-pr` skill](../../../plugins/dkj-policy/skills/open-pr/SKILL.md); the `-MaxParallel` measurement is in
+[`CONTRIBUTING-portable.md`](../../../plugins/dkj-repo-workflow/CONTRIBUTING-portable.md#4-open-the-pr) and the
+[`open-pr` skill](../../../plugins/dkj-repo-workflow/skills/open-pr/SKILL.md); the `-MaxParallel` measurement is in
 [#1443](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1443) and this file's git history. This repo's own lint gate is
 [`check-plugin-integrity.ps1`](../../../scripts/lint/check-plugin-integrity.ps1), followed by every
 `scripts/tests/*.tests.ps1` ([`this-repo.md`](../../rules/this-repo.md)). Each gate below keeps only what this
@@ -1328,27 +1328,27 @@ Inbound [#1221](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1221)
 label comes from this repo's prefix table in
 [`branch-info.ps1`](../../../scripts/lib/branch-info.ps1); the gate, its refusals and why it is not
 `-Force`-able are on the
-[`open-pr` skill page](../../../plugins/dkj-policy/skills/open-pr/SKILL.md#the-label-gate-does-the-label-your-seam-names-still-exist).
+[`open-pr` skill page](../../../plugins/dkj-repo-workflow/skills/open-pr/SKILL.md#the-label-gate-does-the-label-your-seam-names-still-exist).
 
 #### Before any gate, one thing that is not a gate: the document commit
 
 [#1269](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1269), September 3, 2026 (PR #1267):
 the mechanics, the bound and why it commits rather than refuses are on the
-[`open-pr` skill page](../../../plugins/dkj-policy/skills/open-pr/SKILL.md#the-document-commit-what-the-pr-says-is-what-the-branch-carries).
+[`open-pr` skill page](../../../plugins/dkj-repo-workflow/skills/open-pr/SKILL.md#the-document-commit-what-the-pr-says-is-what-the-branch-carries).
 
 #### the entry gate, on whether there is an entry at all
 
 September 8, 2026, [#1632](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1632) (documents #1632
 and #1644 shipped without a DEPLOY section). The gate (`Test-DevelopmentEntryMissing`), why it is separate
 from the scaffold gate, `-Force` and the `new-branch` remedy are on the
-[`open-pr` skill page](../../../plugins/dkj-policy/skills/open-pr/SKILL.md#the-entry-gate-is-there-an-entry-at-all);
+[`open-pr` skill page](../../../plugins/dkj-repo-workflow/skills/open-pr/SKILL.md#the-entry-gate-is-there-an-entry-at-all);
 the same predicate runs in CI from [`entry-scaffold-lib.ps1`](../../../scripts/lib/entry-scaffold-lib.ps1).
 
 #### the scaffold gate, on the changelog entry itself
 
 August 3, 2026 (measured on v3.2.0: three of twenty-one entries shipped the scaffold heading). The gate, the
 invisible window and the fenced-code and `-Force` rules are on the
-[`open-pr` skill page](../../../plugins/dkj-policy/skills/open-pr/SKILL.md#the-scaffold-gate-has-the-entry-actually-been-written).
+[`open-pr` skill page](../../../plugins/dkj-repo-workflow/skills/open-pr/SKILL.md#the-scaffold-gate-has-the-entry-actually-been-written).
 The wording lives in **one** shared source,
 [`entry-scaffold-lib.ps1`](../../../scripts/lib/entry-scaffold-lib.ps1), read by the script that writes it and
 the gate that refuses it. **Two of the three strings are now recognised without being written** (August 6,
@@ -1359,10 +1359,10 @@ consumer, may still carry one, so the gate keeps refusing the retired wording. *
 
 Dave, August 6, 2026; at the merge the gate reads `refs/heads/<branch>` and not the checkout, #970,
 August 27, 2026. The gate, the three marks, the scaffold-placeholder case and the no-step-list case are on the
-[`open-pr` skill page](../../../plugins/dkj-policy/skills/open-pr/SKILL.md#the-step-list-gate-is-the-branchs-own-plan-finished)
-and in [`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md#rules); why the merge
+[`open-pr` skill page](../../../plugins/dkj-repo-workflow/skills/open-pr/SKILL.md#the-step-list-gate-is-the-branchs-own-plan-finished)
+and in [`DEVELOPMENT-portable.md`](../../../plugins/dkj-repo-workflow/DEVELOPMENT-portable.md#rules); why the merge
 reads the branch's commit, and why refusing once `HEAD` moved was declined, is on the
-[`ship-pr` skill page](../../../plugins/dkj-policy/skills/ship-pr/SKILL.md#the-two-merge-gates-read-the-branchs-commit-and-why-they-used-to-read-the-tree).
+[`ship-pr` skill page](../../../plugins/dkj-repo-workflow/skills/ship-pr/SKILL.md#the-two-merge-gates-read-the-branchs-commit-and-why-they-used-to-read-the-tree).
 One thing neither states: **the path is resolved against that same commit** — `Resolve-BranchFilePath`
 chooses between candidate names by reading each, and resolving against the checkout would fail silently (a
 name the branch does not carry reads as *no document at all*).
@@ -1373,9 +1373,9 @@ name the branch does not carry reads as *no document at all*).
 August 28, 2026.** The step-list gate asks whether the plan is *finished*; **none of the paperwork gates
 reads the diff**. So `open-pr.ps1` refuses a plan reading as finished with **nothing committed on the branch
 besides this document**. The `open-pr` skill names this gate but has no section for it
-([page](../../../plugins/dkj-policy/skills/open-pr/SKILL.md)); the park-commit `Backing:` note it shares a
+([page](../../../plugins/dkj-repo-workflow/skills/open-pr/SKILL.md)); the park-commit `Backing:` note it shares a
 function with is in
-[`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md#the-park-commit-says-what-is-behind-the-plan--read-it-before-you-rebuild-anything).
+[`DEVELOPMENT-portable.md`](../../../plugins/dkj-repo-workflow/DEVELOPMENT-portable.md#the-park-commit-says-what-is-behind-the-plan--read-it-before-you-rebuild-anything).
 
 - **Measured on PR #1025:** it merged an entry describing two new rules in a manual whose edit was never
   committed; the whole diff was `<branch>.md`, which the fold then removes, so the merge delivered no
@@ -1399,9 +1399,9 @@ function with is in
 **Dave, issue [#884](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/884), August 25, 2026.** The
 lock itself — the DEPLOY section is fixed when the PR opens, `ship-pr` refuses a diverged one, an unreadable
 body is not a finding — is in the
-[`check-branch-entry` skill](../../../plugins/dkj-policy/skills/check-branch-entry/SKILL.md#what-it-is-for-and-why-it-ships)
+[`check-branch-entry` skill](../../../plugins/dkj-repo-workflow/skills/check-branch-entry/SKILL.md#what-it-is-for-and-why-it-ships)
 (the `-Pr` paragraph); which copy of the document it reads is
-[`ship-pr`'s](../../../plugins/dkj-policy/skills/ship-pr/SKILL.md#the-two-merge-gates-read-the-branchs-commit-and-why-they-used-to-read-the-tree).
+[`ship-pr`'s](../../../plugins/dkj-repo-workflow/skills/ship-pr/SKILL.md#the-two-merge-gates-read-the-branchs-commit-and-why-they-used-to-read-the-tree).
 What neither page carries:
 
 - **The PR is the recorded copy, so the lock stores nothing.** Three mechanisms were weighed and Dave chose
@@ -1417,9 +1417,9 @@ What neither page carries:
 
 The gate, its `-Force`, and why it fires before the push rather than only in CI (#1650, September 8, 2026;
 the measured instance was this repo's PR #1644) are on the
-[`open-pr` skill page](../../../plugins/dkj-policy/skills/open-pr/SKILL.md#the-shape-gate-does-the-document-around-the-entry-still-hold-its-form);
+[`open-pr` skill page](../../../plugins/dkj-repo-workflow/skills/open-pr/SKILL.md#the-shape-gate-does-the-document-around-the-entry-still-hold-its-form);
 the two rules are in
-[`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md#the-four-phases-and-why-one-of-them-takes-no-steps).
+[`DEVELOPMENT-portable.md`](../../../plugins/dkj-repo-workflow/DEVELOPMENT-portable.md#the-four-phases-and-why-one-of-them-takes-no-steps).
 Here: both rules are one function, `Get-DevelopmentShapeFindings` in `entry-scaffold-lib.ps1`, which the CI
 gate below reports from too. **The heading count is this source repo's own rule**, so it runs behind
 `Test-IsWorkflowSourceRepo` (the caller passes that answer in), and **four `###` headings and never a fifth**
@@ -1430,8 +1430,8 @@ is refused here (Dave, August 26, 2026). The preamble rule holds everywhere. `br
 
 Why it exists (inbound [#789](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/789)), that it
 calls the same functions `open-pr` and `ship-pr` call, and why it reports significance instead of refusing
-are in the [`check-branch-entry` skill](../../../plugins/dkj-policy/skills/check-branch-entry/SKILL.md#what-it-is-for-and-why-it-ships)
-and [`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portable.md#4-open-the-pr). Here:
+are in the [`check-branch-entry` skill](../../../plugins/dkj-repo-workflow/skills/check-branch-entry/SKILL.md#what-it-is-for-and-why-it-ships)
+and [`CONTRIBUTING-portable.md`](../../../plugins/dkj-repo-workflow/CONTRIBUTING-portable.md#4-open-the-pr). Here:
 [`check-branch-entry.ps1`](../../../scripts/lint/check-branch-entry.ps1), called on every PR by
 [`.github/workflows/branch-entry.yml`](../../../.github/workflows/branch-entry.yml).
 
@@ -1453,10 +1453,10 @@ and [`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portab
 Where every gate above judges the branch, this one judges the **always-on document path** — `CLAUDE.md` plus
 everything it `@`-imports. The ratchet (growth refused over the ceiling, crossing refused at or under it),
 the unit being the whole import closure, the destinations the refusal names and `-Raise -Reason` are in
-[`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portable.md#4-open-the-pr); the three
+[`CONTRIBUTING-portable.md`](../../../plugins/dkj-repo-workflow/CONTRIBUTING-portable.md#4-open-the-pr); the three
 carriers (`open-pr` with `-Record`, `.github/workflows/always-on-budget.yml`, the `always-on-sessioncheck`
 hook) are in the
-[scripts README](../../../plugins/dkj-policy/scripts/README.md). What the portable pages do not carry:
+[scripts README](../../../plugins/dkj-repo-workflow/scripts/README.md). What the portable pages do not carry:
 
 - **Only `open-pr` writes the baseline.** CI and the hook never pass `-Record`: a read-only carrier that
   rewrote the ratchet's own memory would be the one thing able to raise it with nothing in any diff to say
@@ -1471,7 +1471,7 @@ hook) are in the
 - **Like `branch-entry`, it is not in the `main` ruleset** — a required check is the owner's act, not a
   script's.
 
-### The `.dkj/dkj-policy/` folder, and this repo's answers to the portable seams
+### The `.dkj/dkj-repo-workflow/` folder, and this repo's answers to the portable seams
 
 The workflow occupies one folder in the repo root (Dave, August 14, 2026); the conventions travel with the
 plugin, and what follows is **this repo's own set of answers** to them. The folder's `README.md` and
@@ -1483,9 +1483,9 @@ plugin, and what follows is **this repo's own set of answers** to them. The fold
 
 | here | what it holds | portable half |
 |---|---|---|
-| [`CHANGELOG.md`](../../../.dkj/dkj-policy/CHANGELOG.md) | what is pending for the next release: one `##` entry per merged branch, folded in at the merge and emptied by a cut (`Get-ChangelogPath`) | *(the format travels in [`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md))* |
-| `<branch>.md` | the branch's own document, one per branch and present only while that branch is open: its plan, and the DEPLOY section that folds into the changelog | [`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md) |
-| [`releases/`](../../../.dkj/dkj-policy/releases/) | the dated list of every release ever cut ([`history.md`](../../../.dkj/dkj-policy/releases/history.md)), the published audience notes, and the generated changelog and GitHub-Release trees. The release seam answers are [Rendall's](specialist-05-06-lens.md#versioning--releases) | [`RELEASES-portable.md`](../../../plugins/dkj-policy/RELEASES-portable.md) |
+| [`CHANGELOG.md`](../../../.dkj/dkj-repo-workflow/CHANGELOG.md) | what is pending for the next release: one `##` entry per merged branch, folded in at the merge and emptied by a cut (`Get-ChangelogPath`) | *(the format travels in [`DEVELOPMENT-portable.md`](../../../plugins/dkj-repo-workflow/DEVELOPMENT-portable.md))* |
+| `<branch>.md` | the branch's own document, one per branch and present only while that branch is open: its plan, and the DEPLOY section that folds into the changelog | [`DEVELOPMENT-portable.md`](../../../plugins/dkj-repo-workflow/DEVELOPMENT-portable.md) |
+| [`releases/`](../../../.dkj/dkj-repo-workflow/releases/) | the dated list of every release ever cut ([`history.md`](../../../.dkj/dkj-repo-workflow/releases/history.md)), the published audience notes, and the generated changelog and GitHub-Release trees. The release seam answers are [Rendall's](specialist-05-06-lens.md#versioning--releases) | [`RELEASES-portable.md`](../../../plugins/dkj-repo-workflow/RELEASES-portable.md) |
 
 In this repo the portable pages resolve as relative links because this is the plugin's **source**; in a
 consumer they live in the plugin install instead. The folder moved in whole on August 27, 2026 (Dave): every
@@ -1508,15 +1508,15 @@ are Rendall's to explain ([lens](specialist-05-06-lens.md#versioning--releases))
 | your entry's section headings | the English defaults — nothing is overridden | *(no override defined)* |
 | the wording inside the development document | the English defaults | `Get-BranchFileWordingOverrides` *(none)* |
 | your significance rubric | the shared default, 1–5 | *(no override defined)* |
-| your permanent root docs | `CHANGELOG` · `CLAUDE` · `README` · `LICENSE` · `CONTRIBUTING` · `SECURITY` · `INSTALL` · `UNINSTALL` — **`CHANGELOG` and `CONTRIBUTING` no longer sit at the root and stay on the list**: it names permanent documents, not what the root holds today, and the portable `cut-release` reads it (the comment above `$script:ReservedRootMd` in [`repo-config.ps1`](../../../scripts/repo-config.ps1) has the reasoning; `ReservedNames` in [`Get-BranchFilePaths`](../../../scripts/lib/entry-scaffold-lib.ps1) is the same rule for the `.dkj/dkj-policy/` folder's own pages) | `Get-ReservedRootMd` |
-| where your changelog lives | `.dkj/dkj-policy/CHANGELOG.md` — the consumer default | `Get-ChangelogPath` |
-| where the release list lives | `.dkj/dkj-policy/releases/history.md` | `Get-ReleaseHistoryPath` |
-| where the generated internal note goes | `.dkj/dkj-policy/releases/internal` | `Get-ReleaseInternalNotesRoot` |
+| your permanent root docs | `CHANGELOG` · `CLAUDE` · `README` · `LICENSE` · `CONTRIBUTING` · `SECURITY` · `INSTALL` · `UNINSTALL` — **`CHANGELOG` and `CONTRIBUTING` no longer sit at the root and stay on the list**: it names permanent documents, not what the root holds today, and the portable `cut-release` reads it (the comment above `$script:ReservedRootMd` in [`repo-config.ps1`](../../../scripts/repo-config.ps1) has the reasoning; `ReservedNames` in [`Get-BranchFilePaths`](../../../scripts/lib/entry-scaffold-lib.ps1) is the same rule for the `.dkj/dkj-repo-workflow/` folder's own pages) | `Get-ReservedRootMd` |
+| where your changelog lives | `.dkj/dkj-repo-workflow/CHANGELOG.md` — the consumer default | `Get-ChangelogPath` |
+| where the release list lives | `.dkj/dkj-repo-workflow/releases/history.md` | `Get-ReleaseHistoryPath` |
+| where the generated internal note goes | `.dkj/dkj-repo-workflow/releases/internal` | `Get-ReleaseInternalNotesRoot` |
 | your merge method | `merge` — a merge commit, not a squash | `Get-PrMergeMethod` |
 | whether you have a plugin tier | yes — the `Plugins:` line is derived | `Get-ReleasePluginTier` |
 | whether you have a separate live stage | **no** — which is what makes the cycle's live step a no-op here | `Get-LiveStage` |
 | how release notes are foldered | per **major** (`3.x`) | `Get-ReleaseNotesGrouping` |
-| where the hand-written notes live | `.dkj/dkj-policy/releases/audience` | `Get-ReleaseNoteRoot` |
+| where the hand-written notes live | `.dkj/dkj-repo-workflow/releases/audience` | `Get-ReleaseNoteRoot` |
 
 All of them live in [`scripts/repo-config.ps1`](../../../scripts/repo-config.ps1) except the prefix table,
 which is its own repo-owned lib. Where the table says *no override defined*, this repo deliberately runs on
@@ -1527,16 +1527,16 @@ the shared default — that is an answer, not an omission.
 The hosting is machinery and so is here; the release *answers* are Rendall's
 ([lens](specialist-05-06-lens.md#versioning--releases)). What the page is, why it is generated, and what
 hosting it decides are in
-[`RELEASES-portable.md`](../../../plugins/dkj-policy/RELEASES-portable.md#giving-that-note-a-reader-shaped-home--the-release-notes-page);
-[`build-release-notes-page.ps1`](../../../plugins/dkj-policy/scripts/release/build-release-notes-page.ps1)
+[`RELEASES-portable.md`](../../../plugins/dkj-repo-workflow/RELEASES-portable.md#giving-that-note-a-reader-shaped-home--the-release-notes-page);
+[`build-release-notes-page.ps1`](../../../plugins/dkj-repo-workflow/scripts/release/build-release-notes-page.ps1)
 builds it. This repo's answers:
 
 | | |
 |---|---|
 | `Get-ReleasePageTitle` | `Claude Specialists` — the **product's** name, not the repository's; it is the masthead eyebrow and half the window title (the heading is the template's own *Release notes*) |
 | `Get-ReleasePageWorkerName` | `''` — hosted nowhere (below) |
-| where the output lands | `.dkj/dkj-policy/releases/page/`, derived from `Get-ReleaseNoteRoot` rather than configured |
-| where it is read | the dkj-policy general pages server serves it at `http://localhost:<port>/release-notes` (a port from 4890 to 4899; the Admin the session start prints links it from its General card, and the repo's own server redirects `/release-notes` there), which opens in VS Code's Simple Browser |
+| where the output lands | `.dkj/dkj-repo-workflow/releases/page/`, derived from `Get-ReleaseNoteRoot` rather than configured |
+| where it is read | the dkj-repo-workflow general pages server serves it at `http://localhost:<port>/release-notes` (a port from 4890 to 4899; the Admin the session start prints links it from its General card, and the repo's own server redirects `/release-notes` there), which opens in VS Code's Simple Browser |
 | what is committed | **nothing from that directory.** The page is a derivative of the tracked documents, and a 400 KB file changing every release would dirty the tree `cut-release.ps1` refuses to run on |
 
 **Only BWJ-Development hosts its release notes on Cloudflare** (Maikel, October 17, 2026,
@@ -1549,7 +1549,7 @@ history: [#2868](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2868
 #### Where the rest lives
 
 - The document a branch works in, its four phases and the three step marks:
-  [`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md). **This repo keeps no
+  [`DEVELOPMENT-portable.md`](../../../plugins/dkj-repo-workflow/DEVELOPMENT-portable.md). **This repo keeps no
   local half of it** (Dave, August 23, 2026): a portable formatter cannot generate repo-specific prose into
   every branch's document, so the file rules are in the development section above and the seam answers in
   the table above.
@@ -1560,7 +1560,7 @@ history: [#2868](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2868
   section count the scaffolder writes; and the heading-level rules are enforced against the DEPLOY section,
   read out of the document with its line offset.
 - The cycle as a portable page, with the seams named:
-  [`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portable.md)
+  [`CONTRIBUTING-portable.md`](../../../plugins/dkj-repo-workflow/CONTRIBUTING-portable.md)
   (why the split exists: [inbound #566](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/566)).
 
 In short: the **how** (managing the harness, scripts, config, safety guards) is portable; the **what**

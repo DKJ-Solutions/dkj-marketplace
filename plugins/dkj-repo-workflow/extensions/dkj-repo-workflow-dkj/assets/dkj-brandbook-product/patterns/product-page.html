@@ -1,0 +1,107 @@
+<!doctype html>
+<!--
+  A page one level below a product's home, the stylesheet-only reference (#3849): product-home.html beside this
+  file is its home. Since #4097 it follows the Figma frame "List (desktop)" on Wireframes · Product (#4088): a main
+  column (640) with the h1, a search field, filter chips and the list as one card of compact rows, and a sidebar
+  (320) with a status card and card links elsewhere. Narrower than 48rem the two stack, the breadcrumb bar gives way
+  to the back cell and the title in the header, and the h1 leaves the screen, so the title appears once.
+
+  Until #3849 this file was repo-repository.html, Admin's Repository page, which Admin's desktop shell replaced
+  in #3830 (its reference is dkj-repo-workflow's assets/dkj-brandbook/patterns/admin-shell.html).
+
+  Like the home page's reference, it is built from ../house-style.css, ../house-product.css and ../house-theme.js
+  and nothing else, as a repo vendors them side by side (#3831). The rules are in the product README beside this
+  folder, "Page patterns". The data below is static placeholder data. A real page reads its own data, or writes
+  it in when it is built.
+-->
+<html lang="en" data-theme-light="blue" data-theme-dark="cyan">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>my-app -- Items</title>
+  <meta name="description" content="Every item, with where the work stands beside it.">
+  <link rel="stylesheet" href="../house-style.css">
+  <link rel="stylesheet" href="../house-product.css">
+  <script src="../house-theme.js"></script>
+</head>
+<body>
+  <!-- The site header, as on the home page, with the menu item this page sits under marked aria-current. On a phone
+       the back cell and the title replace the brand, and the breadcrumb bar below goes (#4048). -->
+  <header class="site-header"><div class="container">
+    <a class="site-header__back" href="product-home.html" aria-label="Back to Home"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path transform="matrix(-1 0 0 1 24 0)" fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+    <a class="site-header__brand" href="product-home.html" aria-label="my-app, home"><span class="site-header__name">my-app</span></a>
+    <span class="site-header__title" aria-hidden="true">Items</span>
+    <nav class="site-header__nav" aria-label="Main">
+      <ul class="site-header__menu"><li><a href="product-page.html" aria-current="page">Items</a></li><li><a href="#">Lists</a></li><li><a href="#">Insights</a></li><li><a href="#">Settings</a></li></ul>
+      <button class="site-header__menu-toggle" type="button" aria-controls="site-menu" aria-expanded="false" aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    </nav>
+  </div>
+  <dialog class="dialog dialog--screen site-menu" id="site-menu" aria-label="Menu"><div class="dialog__body">
+    <div class="dialog__head dialog__head--back"><p class="dialog__title">Menu</p></div>
+    <button class="dialog__close dialog__close--back" type="button" aria-label="Close the menu"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path transform="matrix(-1 0 0 1 24 0)" fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></button>
+    <nav class="menu-list" aria-label="Main">
+      <p class="menu-section">Pages</p>
+      <a class="menu-item" href="product-page.html" aria-current="page"><span class="menu-item__label">Items</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+      <a class="menu-item" href="#"><span class="menu-item__label">Lists</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+      <a class="menu-item" href="#"><span class="menu-item__label">Insights</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+      <p class="menu-section">Settings</p>
+      <a class="menu-item" href="#"><svg class="menu-item__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="currentColor"><path fill-rule="evenodd" d="M9.79 4.31L10.55 1.7L13.45 1.7L14.21 4.31A8 8 0 0 1 15.88 5L18.26 3.69L20.31 5.74L19 8.12A8 8 0 0 1 19.69 9.79L22.3 10.55L22.3 13.45L19.69 14.21A8 8 0 0 1 19 15.88L20.31 18.26L18.26 20.31L15.88 19A8 8 0 0 1 14.21 19.69L13.45 22.3L10.55 22.3L9.79 19.69A8 8 0 0 1 8.12 19L5.74 20.31L3.69 18.26L5 15.88A8 8 0 0 1 4.31 14.21L1.7 13.45L1.7 10.55L4.31 9.79A8 8 0 0 1 5 8.12L3.69 5.74L5.74 3.69L8.12 5A8 8 0 0 1 9.79 4.31ZM16.85 12a4.85 4.85 0 1 0-9.7 0a4.85 4.85 0 1 0 9.7 0z"/></svg><span class="menu-item__label">Settings<span class="menu-item__sub">Light or dark, theme, width</span></span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+      <p class="menu-section">About</p>
+    </nav>
+    <div class="menu-footer"><p class="menu-footer__name">my-app</p></div>
+  </div></dialog></header>
+
+  <!-- The breadcrumb bar: Home, then this page, unlinked. A computer only under a site header (#4048). -->
+  <div class="breadcrumbs-bar">
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+          <li><a href="product-home.html">Home</a></li>
+          <li><span class="breadcrumbs__sep" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></span><span aria-current="page">Items</span></li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <!-- The page layout (#4097): the main column and the sidebar, stacked on a phone. -->
+  <main class="page-layout">
+    <div class="page-layout__main page-column">
+      <!-- The h1 reads exactly what the current crumb reads, with no lead under it (#3585). It is a direct child of the
+           column, so on a phone, where the header already names the page, it leaves the screen without a gap. -->
+      <h1>Items</h1>
+
+      <label class="nav-search"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="sr-only">Search items</span><input class="nav-search__input" type="search" placeholder="Search items"></label>
+
+      <div class="filter-chips" role="group" aria-label="Filter by group">
+        <button class="filter-chip" type="button" aria-pressed="true">All</button><button class="filter-chip" type="button" aria-pressed="false">Group A</button><button class="filter-chip" type="button" aria-pressed="false">Group B</button><button class="filter-chip" type="button" aria-pressed="false">Group C</button>
+      </div>
+
+      <!-- The list: one card of compact rows (.card--rows), never a card per item. -->
+      <nav class="card card--rows menu-list" aria-label="Items">
+        <a class="menu-item" href="#"><span class="menu-item__label">Item one<span class="menu-item__sub">Group A · 25 min</span></span><span class="menu-item__aside">4.5</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+        <a class="menu-item" href="#"><span class="menu-item__label">Item two<span class="menu-item__sub">Group B · 40 min</span></span><span class="menu-item__aside">12</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+        <a class="menu-item" href="#"><span class="menu-item__label">Item three<span class="menu-item__sub">Group A · 15 min</span></span><span class="menu-item__aside">3</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+        <a class="menu-item" href="#"><span class="menu-item__label">Item four<span class="menu-item__sub">Group C · 1 h</span></span><span class="menu-item__aside">7.2</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+        <a class="menu-item" href="#"><span class="menu-item__label">Item five<span class="menu-item__sub">Group B · 30 min</span></span><span class="menu-item__aside">9</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+        <a class="menu-item" href="#"><span class="menu-item__label">Item six<span class="menu-item__sub">Group A · 20 min</span></span><span class="menu-item__aside">1.8</span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a>
+      </nav>
+    </div>
+
+    <!-- The sidebar: what stands beside the work, each part under its own h2. The status card IS a surface, so it
+         sits on the column, never in a card. -->
+    <aside class="page-layout__side page-column" aria-label="Beside the items">
+      <h2>Status</h2>
+      <section class="status-card">
+        <p class="status-card__kicker">Status · 15 Nov 2026</p>
+        <h2>42 items, 8 open</h2>
+        <div class="meter meter--info" role="progressbar" aria-valuenow="81" aria-valuemin="0" aria-valuemax="100" aria-label="Done"><span style="width: 81%"></span></div>
+        <dl class="facts facts--row"><div><dt>Deadline</dt><dd>17 Nov 2026</dd></div><div><dt>Submission</dt><dd>Ready</dd></div></dl>
+      </section>
+
+      <h2>Elsewhere</h2>
+      <section class="card card--link"><a class="menu-item" href="#"><span class="menu-item__label">Lists<span class="menu-item__sub">3 lists, 8 open</span></span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a></section>
+      <section class="card card--link"><a class="menu-item" href="#"><span class="menu-item__label">Insights<span class="menu-item__sub">Updated 5 Nov</span></span><svg class="menu-item__chevron" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M9.793 16.707a1 1 0 0 1 0-1.414L13.086 12 9.793 8.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0" clip-rule="evenodd"/></svg></a></section>
+    </aside>
+  </main>
+</body>
+</html>

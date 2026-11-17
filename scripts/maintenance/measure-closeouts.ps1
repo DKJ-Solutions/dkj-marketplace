@@ -200,7 +200,7 @@ if ($repoRoot) { $repoRoot = [System.IO.Path]::GetFullPath($repoRoot.Trim()) }
 if ($BaselinePath) {
     $script:BaselinePath = [System.IO.Path]::GetFullPath($BaselinePath)
 } elseif ($repoRoot -and -not $PSScriptRoot.StartsWith($repoRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
-    # The workflow folder is read off the consumer's tree (#3870): '.dkj/dkj-policy' once it has moved.
+    # The workflow folder is read off the consumer's tree (#3870): '.dkj/dkj-repo-workflow' since #4209.
     . (Join-Path $PSScriptRoot '..\lib\workflow-folder-lib.ps1')
     $script:BaselinePath = Join-Path $repoRoot (((Get-WorkflowFolderName -RepoRoot $repoRoot) -replace '/', '\') + '\baselines\closeout-ceiling.json')
 } else {

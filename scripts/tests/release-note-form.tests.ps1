@@ -47,7 +47,7 @@ function New-Draft {
 
 function Invoke-Check {
     param([string]$Root, [string[]]$Extra = @())
-    # An empty home, always: whether dkj-solutions is enabled must be the fixture's answer, never this machine's (#3752).
+    # An empty home, always: whether dkj-repo-workflow-dkj is enabled must be the fixture's answer, never this machine's (#3752).
     $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script -RootOverride $Root -UserHomeOverride $script:emptyHome @Extra 2>&1
     return [pscustomobject]@{ Exit = $LASTEXITCODE; Text = ($out | Out-String) }
 }
@@ -134,7 +134,7 @@ try {
     Assert-True ($r.Exit -eq 0 -and $r.Text -match 'nothing to judge') 'an empty note tree exits 0 and says why'
 
     Write-Host "`n== 7. open-pr -GatesOnly -NoteTreeOnly runs it ==" -ForegroundColor Cyan
-    foreach ($copy in @('scripts/release/open-pr.ps1', 'plugins/dkj-policy/scripts/release/open-pr.ps1')) {
+    foreach ($copy in @('scripts/release/open-pr.ps1', 'plugins/dkj-repo-workflow/scripts/release/open-pr.ps1')) {
         $src = [System.IO.File]::ReadAllText((Join-Path $RepoRoot $copy))
         $start = $src.IndexOf('if ($GatesOnly) {')
         $end = $src.IndexOf('(-GatesOnly)."', $start)
@@ -142,7 +142,7 @@ try {
         Assert-True ($region -match 'if \(\$NoteTreeOnly\) \{[\s\S]*check-release-note-form\.ps1') "$copy runs the form check inside -GatesOnly, under -NoteTreeOnly"
     }
 
-    Write-Host "`n== 8. the brand book's heading rules, where dkj-solutions is enabled (#3752) ==" -ForegroundColor Cyan
+    Write-Host "`n== 8. the brand book's heading rules, where dkj-repo-workflow-dkj is enabled (#3752) ==" -ForegroundColor Cyan
     Assert-True (@(Get-ReleaseNoteHeadingFindings -Text (New-Draft)).Count -eq 0) 'the drafted form keeps both rules by itself'
     $bt = [string][char]0x60
     $codeHead = (New-Draft) -replace '### Something shipped', ('### Drop ' + $bt + '.prose' + $bt)
@@ -157,9 +157,9 @@ try {
 
     $t5 = New-Tree -Label 'brand'
     Set-Note -Dir $t5 -Version '1.0.0' -Text $codeHead
-    Assert-True ((Invoke-Check -Root $t5).Exit -eq 0) 'without dkj-solutions enabled the heading rules say nothing -- a BWJ repo keeps its own styling'
+    Assert-True ((Invoke-Check -Root $t5).Exit -eq 0) 'without dkj-repo-workflow-dkj enabled the heading rules say nothing -- a BWJ repo keeps its own styling'
     New-Item -ItemType Directory -Path (Join-Path $t5 '.claude') -Force | Out-Null
-    [System.IO.File]::WriteAllText((Join-Path $t5 '.claude\settings.json'), '{ "enabledPlugins": { "dkj-solutions@dkj-marketplace": true } }')
+    [System.IO.File]::WriteAllText((Join-Path $t5 '.claude\settings.json'), '{ "enabledPlugins": { "dkj-repo-workflow-dkj@dkj-marketplace": true } }')
     $r = Invoke-Check -Root $t5
     Assert-True ($r.Exit -eq 1 -and $r.Text -match '\[HEADING\]' -and $r.Text -match 'rule 7' -and $r.Text -notmatch '\[DRIFT\]') 'with it enabled the same note is refused under [HEADING], and its form is not called drift'
     Set-Note -Dir $t5 -Version '1.1.0' -Text (New-Draft)

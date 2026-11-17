@@ -281,7 +281,7 @@ try {
     #     own argument for existing. The real asana-mirror.ps1 that surfaced the gap was retired on
     #     October 5, 2026; the property outlives it, so the scenarios run on a synthetic template.
     Write-Host "the shared script set -- a .ps1 under a plugin's templates/ is read (#1998)" -ForegroundColor Cyan
-    $tplDir = Join-Path $Fixture 'plugins\dkj-policy\templates'
+    $tplDir = Join-Path $Fixture 'plugins\dkj-repo-workflow\templates'
     New-Item -ItemType Directory -Path $tplDir -Force | Out-Null
 
     # Scenario 80: check 5 reaches it. An unclosed brace, so the parser has something to object to.

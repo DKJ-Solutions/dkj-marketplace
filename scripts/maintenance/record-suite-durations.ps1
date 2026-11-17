@@ -36,7 +36,7 @@
     gate (#1033), so one run is one draw; two or three is enough to pack from. The `recordedFrom` block
     records which runs produced the numbers, so a later reader can re-derive them or notice they are old.
 
-    IT SHIPS IN dkj-policy, AND THIS IS THE CI CONTRACT IT READS (issue #3474). Until then only the source
+    IT SHIPS IN dkj-repo-workflow, AND THIS IS THE CI CONTRACT IT READS (issue #3474). Until then only the source
     repo could write the file, so every consumer's Test gate page in Admin showed its empty state. What
     a consumer's CI has to do for this script to read it is three things, and nothing about job names or
     shards is among them:
@@ -198,7 +198,7 @@ $doc = [ordered]@{
         'is no ratio to divide out and the sign is not even fixed. One suite ran 2.6x SLOWER solo on an',
         '18-thread workstation than on a 4-lane runner, where this note claimed 3.6-4.0x faster until',
         'issue #1713. So a local reading would pack worse than no reading at all. Refresh with',
-        'record-suite-durations.ps1 (the dkj-policy plugin''s record-suite-durations skill).'
+        'record-suite-durations.ps1 (the dkj-repo-workflow plugin''s record-suite-durations skill).'
     )
     recordedFrom = [ordered]@{
         runs    = @($runIds)

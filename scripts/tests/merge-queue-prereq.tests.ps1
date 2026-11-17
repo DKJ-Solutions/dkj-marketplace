@@ -87,7 +87,7 @@ function Assert-True {
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $ciPath = Join-Path $repoRoot '.github\workflows\ci.yml'
 $shipPath = Join-Path $repoRoot 'scripts\release\ship-pr.ps1'
-$shipMirror = Join-Path $repoRoot 'plugins\dkj-policy\scripts\release\ship-pr.ps1'
+$shipMirror = Join-Path $repoRoot 'plugins\dkj-repo-workflow\scripts\release\ship-pr.ps1'
 
 $ci = Get-Content -LiteralPath $ciPath -Raw
 $ship = Get-Content -LiteralPath $shipPath -Raw
@@ -264,7 +264,7 @@ Write-Host "== the policy travels: what a CONSUMER under a queue needs (#1516) =
 #    THE CONDITION IS NOW THE SHARED VERDICT, NOT A LITERAL FILE TEST (issue #2087). It was
 #    `Test-Path -LiteralPath $foldRunner` against the literal name .github/workflows/fold-on-merge.yml,
 #    and that answers a narrower question than the one being asked: a consumer may rename the runner --
-#    adopt-dkj-policy places it under that name without promising it forever -- so the name-only test
+#    adopt-dkj-repo-workflow places it under that name without promising it forever -- so the name-only test
 #    reads "nothing folds here" on a repo that folds perfectly well, and the arm then hands over a hand
 #    repair nobody needs. Get-CiFoldRecoveryVerdict matches on the trigger and the script the runner has
 #    to RUN, neither of which a rename touches. What this assert pins is unchanged: the arm asks before

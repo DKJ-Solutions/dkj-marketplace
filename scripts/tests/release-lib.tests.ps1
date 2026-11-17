@@ -938,8 +938,8 @@ Assert-Equal '' (Get-EntryLinkPrefix -NoteRelPath 'dkj-policy/4.23.0.md' `
         -ChangelogRelPath 'dkj-policy/CHANGELOG.md') `
     'a note in the changelog OWN directory needs no prefix at all'
 # Windows separators reach this from Get-ChangelogPath in some repos, so both are accepted.
-Assert-Equal '../../../' (Get-EntryLinkPrefix -NoteRelPath 'dkj-policy\releases\changelog\4.x\4.23.0.md' `
-        -ChangelogRelPath 'dkj-policy\CHANGELOG.md') `
+Assert-Equal '../../../' (Get-EntryLinkPrefix -NoteRelPath 'dkj-repo-workflow\releases\changelog\4.x\4.23.0.md' `
+        -ChangelogRelPath 'dkj-repo-workflow\CHANGELOG.md') `
     'backslashed paths answer identically'
 
 # --- Get-RelativeLinkPath: the history row's anchor (August 14, 2026) ------------------------------
@@ -959,9 +959,9 @@ Assert-Equal '../../releases/development/4.x/4.9.0.md' (Get-RelativeLinkPath -Fr
 # before: the history stayed at releases/README.md while all three note trees moved into
 # dkj-policy/releases/, so every one of the 102 rows climbs out of releases/ and back down.
 # The two cases above it are the pre-#914 layouts and are kept -- a consumer may still have either.
-Assert-Equal '../dkj-policy/releases/changelog/4.x/4.9.0.md' (Get-RelativeLinkPath -FromDir 'releases' -To 'dkj-policy/releases/changelog/4.x/4.9.0.md') `
+Assert-Equal '../.dkj/dkj-repo-workflow/releases/changelog/4.x/4.9.0.md' (Get-RelativeLinkPath -FromDir 'releases' -To '.dkj/dkj-repo-workflow/releases/changelog/4.x/4.9.0.md') `
     'this repo since #914: the history stays at the root and the notes moved into the folder, so the row climbs out'
-Assert-Equal '../dkj-policy/releases/audience/4.x/4.9.0.md' (Get-RelativeLinkPath -FromDir 'releases' -To 'dkj-policy/releases/audience/4.x/4.9.0.md') `
+Assert-Equal '../.dkj/dkj-repo-workflow/releases/audience/4.x/4.9.0.md' (Get-RelativeLinkPath -FromDir 'releases' -To '.dkj/dkj-repo-workflow/releases/audience/4.x/4.9.0.md') `
     'and the same for a release that has a hand-written note -- the shape 30 rows already had'
 Assert-Equal 'CHANGELOG.md' (Get-RelativeLinkPath -FromDir '' -To 'CHANGELOG.md') `
     'an empty from-dir returns the path itself'
@@ -1070,7 +1070,7 @@ $dossier = @(
     ''
     '### Pull Request'
     ''
-    'Plugins: dkj-policy'
+    'Plugins: dkj-repo-workflow'
     ''
     '[PR #99](https://example.test/99) - merged 2026-08-10'
 ) -join "`n"
@@ -1645,22 +1645,22 @@ Write-Host "Get-TouchedPlugins -- a nested plugin tree" -ForegroundColor Cyan
 $nestedRoots = @(Get-PluginRoots -RepoRoot $fakeRoot -MarketplaceJson (@'
 {"plugins": [
   {"name": "dkj-subagents-alpha",         "source": "./plugins/dkj-subagents/dkj-subagents-alpha"},
-  {"name": "dkj-policy", "source": "./plugins/dkj-policy"}
+  {"name": "dkj-repo-workflow", "source": "./plugins/dkj-repo-workflow"}
 ]}
 '@))
 $nestedTouched = @(Get-TouchedPlugins -PluginRoots $nestedRoots -Files @(
     'plugins/dkj-subagents/dkj-subagents-alpha/agents/06-16-agent.md',
-    'plugins/dkj-policy/skills/open-pr/SKILL.md',
+    'plugins/dkj-repo-workflow/skills/open-pr/SKILL.md',
     'plugins/dkj-subagents/subagent-shared/inbound-behaviour.md',
     'README.md'
 ))
 Assert-Equal 2 $nestedTouched.Count 'a plugin two levels down is found'
 # THE ORDER IS ALPHABETICAL, NOT INSERTION ORDER, and the #886 rename is what made that visible:
-# 'dkj-policy' sorted after 'dkj-subagents-alpha' and 'dkj-policy' sorts before it, so these
+# 'dkj-repo-workflow' sorted after 'dkj-subagents-alpha' and 'dkj-repo-workflow' sorts before it, so these
 # two asserts swapped places without Get-TouchedPlugins changing at all. Left as index asserts rather
 # than turned into a set comparison: the ordering IS part of what the function returns, and a set
 # comparison would have passed through the rename and told nobody.
-Assert-Equal 'dkj-policy' $nestedTouched[0] 'the NAME comes from the marketplace, not from the folder above it'
+Assert-Equal 'dkj-repo-workflow' $nestedTouched[0] 'the NAME comes from the marketplace, not from the folder above it'
 Assert-Equal 'dkj-subagents-alpha' $nestedTouched[1] 'and so does the second'
 Assert-Equal $false ([bool]($nestedTouched -contains 'dkj-subagents')) 'plugin source nested INSIDE a grouping directory is not read as a plugin named after that directory'
 Assert-Equal 0 (@(Get-TouchedPlugins -PluginRoots $nestedRoots -Files @('plugins/dkj-subagents/subagent-shared/lens-optional.md'))).Count 'subagent-shared beside the teams it feeds is still under no plugin root'
@@ -1820,7 +1820,7 @@ $akLibText = [System.IO.File]::ReadAllText((Join-Path $akRepoRoot 'scripts\lib\p
 Assert-Equal 1 (@([regex]::Matches($akLibText, '\.agents -is \[string\]'))).Count 'the normaliser holds exactly one such reading'
 
 Write-Host "Get-PluginRootByName" -ForegroundColor Cyan
-Assert-Equal 'plugins\dkj-policy' (Get-PluginRootByName -PluginRoots $nestedRoots -Name 'dkj-policy').RelativeRoot 'resolves a name to its root'
+Assert-Equal 'plugins\dkj-repo-workflow' (Get-PluginRootByName -PluginRoots $nestedRoots -Name 'dkj-repo-workflow').RelativeRoot 'resolves a name to its root'
 Assert-Equal $null (Get-PluginRootByName -PluginRoots $nestedRoots -Name 'workflow-nobody') 'an unknown name resolves to $null rather than a guessed path'
 Assert-Equal $null (Get-PluginRootByName -PluginRoots $nestedRoots -Name 'Team-Alpha') 'the lookup is case-sensitive -- a name is a path segment and an install id'
 Assert-Equal $null (Get-PluginRootByName -PluginRoots @() -Name 'dkj-subagents-alpha') 'an empty set resolves to $null, it does not throw'

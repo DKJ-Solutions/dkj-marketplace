@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/hooks/house-style-sessioncheck.ps1\"",
+            "timeout": 120,
+            "statusMessage": "dkj-repo-workflow-dkj: checking the brand book..."
+          }
+        ]
+      }
+    ]
+  }
+}

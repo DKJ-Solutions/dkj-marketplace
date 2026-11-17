@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/extensions/bwj-development/hooks/asana-link-pickupcheck.ps1 and its lib,
+    Tests for plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/hooks/asana-link-pickupcheck.ps1 and its lib,
     scripts/lib/asana-pickup-rules.ps1 -- the PostToolUse hook that warns at pickup when an issue names
     Asana but links no task (inbound #2919).
 
@@ -22,7 +22,7 @@
 #>
 $ErrorActionPreference = 'Continue'
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development'
+$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj'
 $Hook       = Join-Path $PluginRoot 'hooks\asana-link-pickupcheck.ps1'
 $HooksJson  = Join-Path $PluginRoot 'hooks\hooks.json'
 
@@ -65,7 +65,7 @@ function Invoke-Hook {
 Write-Host ''
 Write-Host 'The lib -- which command picks up which issue' -ForegroundColor Cyan
 
-$cache = 'C:/Users/x/.claude/plugins/cache/dkj-marketplace/dkj-policy/5.17.0/scripts/task'
+$cache = 'C:/Users/x/.claude/plugins/cache/dkj-marketplace/dkj-repo-workflow/5.17.0/scripts/task'
 Assert-Equal 404 (Get-PickupIssueNumber -Command "powershell -File `"$cache/claim-issue.ps1`" 404 -Tag") 'a sweep claim through the plugin cache, the path quoted'
 Assert-Equal 404 (Get-PickupIssueNumber -Command 'pwsh scripts/task/claim-issue.ps1 #404') 'a plain claim with a hash'
 Assert-Equal 404 (Get-PickupIssueNumber -Command 'claim-issue.ps1 404 -Tag -TakeOver') 'a take-over picks the work up too'

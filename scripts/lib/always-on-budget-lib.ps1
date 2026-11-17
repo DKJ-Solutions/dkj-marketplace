@@ -222,7 +222,7 @@ function Read-AlwaysOnBaseline {
     if ($schema -gt $script:AlwaysOnBaselineSchema) {
         return [pscustomobject]@{
             Path       = $path
-            Unreadable = "schema $schema, and this copy understands $($script:AlwaysOnBaselineSchema) -- update the dkj-policy plugin"
+            Unreadable = "schema $schema, and this copy understands $($script:AlwaysOnBaselineSchema) -- update the dkj-repo-workflow plugin"
             Bytes      = $null
             Recorded   = ''
             Reason     = ''

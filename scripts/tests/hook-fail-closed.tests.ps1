@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Tests for the fail-closed wrapper around the two PreToolUse guards this workflow ships --
-    guard-live-theme.ps1 (dkj-subagents-shopify) and guard-working-copy.ps1 (dkj-policy) -- as their
+    guard-live-theme.ps1 (dkj-subagents-shopify) and guard-working-copy.ps1 (dkj-repo-workflow) -- as their
     hooks.json entries wire them (issue #2217).
 
 .DESCRIPTION
@@ -162,8 +162,8 @@ try {
         },
         @{
             Name = 'guard-working-copy'
-            Json = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\hooks.json'
-            Root = Join-Path $RepoRoot 'plugins\dkj-policy'
+            Json = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\hooks.json'
+            Root = Join-Path $RepoRoot 'plugins\dkj-repo-workflow'
             Subject = (Get-Json 'git checkout main' -Agent)
             SubjectDesc = 'a subagent running git'
             Other = @(
@@ -235,7 +235,7 @@ try {
     # call, almost all of it interpreter start-up), and one that is gets its payload intact.
     Write-Host ""
     Write-Host "-- publish-background-run pre-filter --" -ForegroundColor Cyan
-    $pjson = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\hooks.json'
+    $pjson = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\hooks.json'
     $post = @((Get-Content -Raw -LiteralPath $pjson | ConvertFrom-Json).hooks.PostToolUse.hooks |
         Where-Object { $_.command -match 'publish-background-run' })
     Assert-Equal 1 $post.Count 'exactly one PostToolUse publish-background-run entry'

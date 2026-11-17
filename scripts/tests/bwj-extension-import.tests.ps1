@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Regression tests for bwj-development's adopt-extension-import.ps1 and the shared writer behind it,
+    Regression tests for dkj-repo-workflow-bwj's adopt-extension-import.ps1 and the shared writer behind it,
     Add-ClaudeMdImportLine in scripts/lib/claude-md-import-lib.ps1 (issue #2532).
 
 .DESCRIPTION
@@ -17,12 +17,12 @@
     Pure ASCII (repo convention for .ps1).
 #>
 
-# What this suite's live-tree walks read (#3309): the plugin folders under plugins/dkj-policy/extensions/ (#3871), told apart by their manifest, and each one's CLAUDE.md.
-# gate-selection: walks plugins/dkj-policy/*/plugin.json plugins/dkj-policy/*/CLAUDE.md
+# What this suite's live-tree walks read (#3309): the plugin folders under plugins/dkj-repo-workflow/extensions/ (#3871), told apart by their manifest, and each one's CLAUDE.md.
+# gate-selection: walks plugins/dkj-repo-workflow/*/plugin.json plugins/dkj-repo-workflow/*/CLAUDE.md
 $ErrorActionPreference = 'Stop'
 
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$ScriptPath = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development\scripts\task\adopt-extension-import.ps1'
+$ScriptPath = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\scripts\task\adopt-extension-import.ps1'
 $Fixture    = Join-Path ([System.IO.Path]::GetTempPath()) "bwj-extension-import-$PID-$([guid]::NewGuid().ToString('n'))"
 
 . (Join-Path $RepoRoot 'scripts\lib\claude-md-import-lib.ps1')
@@ -39,8 +39,8 @@ function Assert-Equal($Expected, $Actual, [string]$Message) {
     Assert-True $ok $Message
 }
 
-$Const = '@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-policy/CLAUDE.md'
-$Ext   = '@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-policy/extensions/bwj-development/CLAUDE.md'
+$Const = '@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-repo-workflow/CLAUDE.md'
+$Ext   = '@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/CLAUDE.md'
 
 function New-Consumer([string]$Label) {
     $d = Join-Path $Fixture $Label
@@ -58,81 +58,81 @@ try {
 
     Write-Host ''
     Write-Host 'The line'
-    Assert-Equal $Ext (Get-ExtensionImportLine -Extension 'bwj-development' -LibDir (Join-Path $RepoRoot 'scripts\lib')) 'the source tree builds the canonical line'
-    Assert-Equal '@~/.claude/plugins/marketplaces/claude-code-specialists/plugins/dkj-policy/extensions/bwj-development/CLAUDE.md' `
-        (Get-ExtensionImportLine -Extension 'bwj-development' -LibDir 'C:\Users\x\.claude\plugins\cache\claude-code-specialists\bwj-development\5.8.0\scripts\lib') `
+    Assert-Equal $Ext (Get-ExtensionImportLine -Extension 'dkj-repo-workflow-bwj' -LibDir (Join-Path $RepoRoot 'scripts\lib')) 'the source tree builds the canonical line'
+    Assert-Equal '@~/.claude/plugins/marketplaces/claude-code-specialists/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/CLAUDE.md' `
+        (Get-ExtensionImportLine -Extension 'dkj-repo-workflow-bwj' -LibDir 'C:\Users\x\.claude\plugins\cache\claude-code-specialists\dkj-repo-workflow-bwj\5.8.0\scripts\lib') `
         'a bwj payload under an older marketplace name keeps that name'
-    Assert-Equal '@~/.claude/plugins/marketplaces/claude-code-specialists/plugins/dkj-policy/extensions/dkj-solutions/CLAUDE.md' `
-        (Get-ExtensionImportLine -Extension 'dkj-solutions' -LibDir 'C:\Users\x\.claude\plugins\cache\claude-code-specialists\dkj-policy\5.8.0\scripts\lib') `
+    Assert-Equal '@~/.claude/plugins/marketplaces/claude-code-specialists/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/CLAUDE.md' `
+        (Get-ExtensionImportLine -Extension 'dkj-repo-workflow-dkj' -LibDir 'C:\Users\x\.claude\plugins\cache\claude-code-specialists\dkj-repo-workflow\5.8.0\scripts\lib') `
         'any extension builds its line, under the marketplace name read off the payload (#2697)'
-    Assert-Equal '@~/.claude/plugins/marketplaces/old-mkt/plugins/dkj-policy/CLAUDE.md' `
-        (Get-ConstitutionImportLine -LibDir 'C:\Users\x\.claude\plugins\cache\old-mkt\dkj-solutions\1.0.0\scripts\lib') `
+    Assert-Equal '@~/.claude/plugins/marketplaces/old-mkt/plugins/dkj-repo-workflow/CLAUDE.md' `
+        (Get-ConstitutionImportLine -LibDir 'C:\Users\x\.claude\plugins\cache\old-mkt\dkj-repo-workflow-dkj\1.0.0\scripts\lib') `
         'the marketplace segment is read off any extension payload, not bwj alone (#2697)'
-    Assert-Equal '@~/.claude/plugins/marketplaces/old-mkt/plugins/dkj-policy/CLAUDE.md' `
+    Assert-Equal '@~/.claude/plugins/marketplaces/old-mkt/plugins/dkj-repo-workflow/CLAUDE.md' `
         (Get-ConstitutionImportLine -LibDir 'C:\Users\x\.claude\plugins\cache\old-mkt\dkj-policy-bwj\5.14.0\scripts\lib') `
         'and off a payload still under a retired extension name (#2788)'
-    Assert-Equal '@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-policy/CLAUDE.md' `
+    Assert-Equal '@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-repo-workflow/CLAUDE.md' `
         (Get-ConstitutionImportLine -LibDir 'C:\Users\x\.claude\plugins\cache\old-mkt\dkj-subagents-alpha\5.14.0\scripts\lib') `
-        'but not off a payload that is no dkj-policy plugin at all'
+        'but not off a payload that is no dkj-repo-workflow plugin at all'
 
     Write-Host ''
     Write-Host 'Which plugins are extensions (#2697, #2788)'
-    Assert-Equal 'bwj-development|dkj-solutions' ((Get-PolicyExtensionNames -PluginIds @(
-        'dkj-solutions@dkj-marketplace', 'dkj-policy@dkj-marketplace', 'dkj-subagents-alpha@dkj-marketplace',
-        'bwj-development@claude-code-specialists', 'dkj-solutions@other', 'dkj-policy-Evil/../x@m')) -join '|') `
+    Assert-Equal 'dkj-repo-workflow-bwj|dkj-repo-workflow-dkj' ((Get-PolicyExtensionNames -PluginIds @(
+        'dkj-repo-workflow-dkj@dkj-marketplace', 'dkj-repo-workflow@dkj-marketplace', 'dkj-subagents-alpha@dkj-marketplace',
+        'dkj-repo-workflow-bwj@claude-code-specialists', 'dkj-repo-workflow-dkj@other', 'dkj-repo-workflow-Evil/../x@m')) -join '|') `
         'only listed extension ids, de-duplicated and sorted; the constitution, a team and a non-slug are not'
     Assert-Equal '' ((Get-PolicyExtensionNames -PluginIds @()) -join '|') 'no ids, no extensions'
-    Assert-Equal 'bwj-development|dkj-solutions' ((Get-PolicyExtensionNames -PluginIds @(
+    Assert-Equal 'dkj-repo-workflow-bwj|dkj-repo-workflow-dkj' ((Get-PolicyExtensionNames -PluginIds @(
         'dkj-policy-bwj@dkj-marketplace', 'dkj-policy-dkjs@dkj-marketplace')) -join '|') `
         'a retired id counts as the extension it became, so an unmigrated consumer is still owed the current line (#2788)'
     Assert-True (-not (Test-PolicyExtensionName 'dkj-policy-bwj')) 'a retired name is not itself an extension name'
-    Assert-True (-not (Test-PolicyExtensionName 'dkj-policy-other')) 'and the old prefix alone makes nothing an extension any more'
-    Assert-True ('@~/.claude/plugins/marketplaces/m/plugins/dkj-policy/dkj-policy-dkjs/CLAUDE.md' -match (Get-RetiredExtensionImportPattern -Extension 'dkj-solutions')) `
-        'the retired-line pattern of dkj-solutions matches the dkj-policy-dkjs line'
-    Assert-True (-not ('@~/.claude/plugins/marketplaces/m/plugins/dkj-policy/extensions/dkj-solutions/CLAUDE.md' -match (Get-RetiredExtensionImportPattern -Extension 'dkj-solutions'))) `
+    Assert-True (-not (Test-PolicyExtensionName 'dkj-repo-workflow-other')) 'and the old prefix alone makes nothing an extension any more'
+    Assert-True ('@~/.claude/plugins/marketplaces/m/plugins/dkj-repo-workflow/dkj-policy-dkjs/CLAUDE.md' -match (Get-RetiredExtensionImportPattern -Extension 'dkj-repo-workflow-dkj')) `
+        'the retired-line pattern of dkj-repo-workflow-dkj matches the dkj-policy-dkjs line'
+    Assert-True (-not ('@~/.claude/plugins/marketplaces/m/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/CLAUDE.md' -match (Get-RetiredExtensionImportPattern -Extension 'dkj-repo-workflow-dkj'))) `
         'and not the current line'
     $retiredRows = @(Get-RetiredExtensionImports -Documents @(
-        [pscustomobject]@{ Path = 'C:\h\.claude\plugins\marketplaces\m\plugins\dkj-policy\dkj-policy-bwj\CLAUDE.md' },
-        [pscustomobject]@{ Path = 'C:\h\.claude\plugins\marketplaces\m\plugins\dkj-policy\extensions\bwj-development\CLAUDE.md' }))
-    Assert-Equal 'dkj-policy-bwj>bwj-development' (($retiredRows | ForEach-Object { "$($_.Retired)>$($_.Current)" }) -join '|') `
+        [pscustomobject]@{ Path = 'C:\h\.claude\plugins\marketplaces\m\plugins\dkj-repo-workflow\dkj-policy-bwj\CLAUDE.md' },
+        [pscustomobject]@{ Path = 'C:\h\.claude\plugins\marketplaces\m\plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\CLAUDE.md' }))
+    Assert-Equal 'dkj-policy-bwj>dkj-repo-workflow-bwj' (($retiredRows | ForEach-Object { "$($_.Retired)>$($_.Current)" }) -join '|') `
         'Get-RetiredExtensionImports finds the retired row only, with the name it became'
-    # THE DEPTH #3871 RETIRED. Before the move an extension sat at plugins/dkj-policy/<name>/, so a consumer
+    # THE DEPTH #3871 RETIRED. Before the move an extension sat at plugins/dkj-repo-workflow/<name>/, so a consumer
     # that adopted then imports a path the clone no longer has: it is a retired line like a retired name.
-    Assert-True ('@~/.claude/plugins/marketplaces/m/plugins/dkj-policy/dkj-solutions/CLAUDE.md' -match (Get-RetiredExtensionImportPattern -Extension 'dkj-solutions')) `
+    Assert-True ('@~/.claude/plugins/marketplaces/m/plugins/dkj-policy/dkj-solutions/CLAUDE.md' -match (Get-RetiredExtensionImportPattern -Extension 'dkj-repo-workflow-dkj')) `
         'the retired-line pattern matches the current name at the old depth (#3871)'
-    Assert-True ('@~/.claude/plugins/marketplaces/m/plugins/dkj-policy/bwj-development/CLAUDE.md' -match (Get-RetiredExtensionImportPattern -Extension 'bwj-development')) `
-        '...for bwj-development too'
-    Assert-True (-not ('@~/.claude/plugins/marketplaces/m/plugins/dkj-policy/bwj-development/CLAUDE.md' -match (Get-RetiredExtensionImportPattern -Extension 'dkj-solutions'))) `
+    Assert-True ('@~/.claude/plugins/marketplaces/m/plugins/dkj-policy/bwj-development/CLAUDE.md' -match (Get-RetiredExtensionImportPattern -Extension 'dkj-repo-workflow-bwj')) `
+        '...for dkj-repo-workflow-bwj too'
+    Assert-True (-not ('@~/.claude/plugins/marketplaces/m/plugins/dkj-policy/bwj-development/CLAUDE.md' -match (Get-RetiredExtensionImportPattern -Extension 'dkj-repo-workflow-dkj'))) `
         '...and never another extension''s line'
-    Assert-True (-not (Test-ExtensionImported -Extension 'dkj-solutions' -Documents @([pscustomobject]@{ Path = 'C:\h\.claude\plugins\marketplaces\m\plugins\dkj-policy\dkj-solutions\CLAUDE.md' }))) `
+    Assert-True (-not (Test-ExtensionImported -Extension 'dkj-repo-workflow-dkj' -Documents @([pscustomobject]@{ Path = 'C:\h\.claude\plugins\marketplaces\m\plugins\dkj-repo-workflow\dkj-repo-workflow-dkj\CLAUDE.md' }))) `
         'an import at the old depth does not count as imported'
     $depthRows = @(Get-RetiredExtensionImports -Documents @(
-        [pscustomobject]@{ Path = 'C:\h\.claude\plugins\marketplaces\m\plugins\dkj-policy\dkj-solutions\CLAUDE.md' }))
-    Assert-Equal 'dkj-solutions>dkj-solutions' (($depthRows | ForEach-Object { "$($_.Retired)>$($_.Current)" }) -join '|') `
+        [pscustomobject]@{ Path = 'C:\h\.claude\plugins\marketplaces\m\plugins\dkj-repo-workflow\dkj-repo-workflow-dkj\CLAUDE.md' }))
+    Assert-Equal 'dkj-repo-workflow-dkj>dkj-repo-workflow-dkj' (($depthRows | ForEach-Object { "$($_.Retired)>$($_.Current)" }) -join '|') `
         'Get-RetiredExtensionImports reports an old-depth row, with the current extension to import'
 
-    # The list is the whole set: every plugin under plugins/dkj-policy/extensions/ (#3871) is an
+    # The list is the whole set: every plugin under plugins/dkj-repo-workflow/extensions/ (#3871) is an
     # extension, and nothing else is (#2788). A new extension that is not listed fails here instead of
     # silently never being imported.
-    $pluginDirs = @(Get-ChildItem -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\extensions') -Directory |
+    $pluginDirs = @(Get-ChildItem -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions') -Directory |
         Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName '.claude-plugin\plugin.json') -PathType Leaf } |
         ForEach-Object { $_.Name } | Sort-Object)
     Assert-Equal ((@(Get-PolicyExtensionList) | Sort-Object) -join '|') ($pluginDirs -join '|') `
-        'Get-PolicyExtensionList names exactly the plugin folders under plugins/dkj-policy/extensions/'
+        'Get-PolicyExtensionList names exactly the plugin folders under plugins/dkj-repo-workflow/extensions/'
     $threw = $false
-    try { Get-ExtensionImportLine -Extension 'dkj-policy-../x' | Out-Null } catch { $threw = $true }
+    try { Get-ExtensionImportLine -Extension 'dkj-repo-workflow-../x' | Out-Null } catch { $threw = $true }
     Assert-True $threw 'a name that is not a slug is refused rather than built into a line'
-    Assert-True (Test-ExtensionImported -Extension 'dkj-solutions' -Documents @([pscustomobject]@{ Path = 'C:\h\.claude\plugins\marketplaces\m\plugins\dkj-policy\extensions\dkj-solutions\CLAUDE.md' })) `
+    Assert-True (Test-ExtensionImported -Extension 'dkj-repo-workflow-dkj' -Documents @([pscustomobject]@{ Path = 'C:\h\.claude\plugins\marketplaces\m\plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\CLAUDE.md' })) `
         'Test-ExtensionImported matches its own extension'
-    Assert-True (-not (Test-ExtensionImported -Extension 'dkj-solutions' -Documents @([pscustomobject]@{ Path = 'C:\h\plugins\dkj-policy\extensions\bwj-development\CLAUDE.md' }))) `
+    Assert-True (-not (Test-ExtensionImported -Extension 'dkj-repo-workflow-dkj' -Documents @([pscustomobject]@{ Path = 'C:\h\plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\CLAUDE.md' }))) `
         'and not another extension'
 
     # Every extension in the source tree ships the CLAUDE.md its import line points at.
     foreach ($name in @(Get-PolicyExtensionList)) {
-        Assert-True (Test-Path -LiteralPath (Join-Path $RepoRoot "plugins\dkj-policy\extensions\$name\CLAUDE.md") -PathType Leaf) "extension $name ships a CLAUDE.md"
+        Assert-True (Test-Path -LiteralPath (Join-Path $RepoRoot "plugins\dkj-repo-workflow\extensions\$name\CLAUDE.md") -PathType Leaf) "extension $name ships a CLAUDE.md"
     }
-    Assert-Equal '@~/.claude/plugins/marketplaces/claude-code-specialists/plugins/dkj-policy/CLAUDE.md' `
-        (Get-ConstitutionImportLine -LibDir 'C:\Users\x\.claude\plugins\cache\claude-code-specialists\bwj-development\5.8.0\scripts\lib') `
+    Assert-Equal '@~/.claude/plugins/marketplaces/claude-code-specialists/plugins/dkj-repo-workflow/CLAUDE.md' `
+        (Get-ConstitutionImportLine -LibDir 'C:\Users\x\.claude\plugins\cache\claude-code-specialists\dkj-repo-workflow-bwj\5.8.0\scripts\lib') `
         'the constitution line built from the bwj mirror reads the same segment'
 
     Write-Host ''
@@ -179,9 +179,9 @@ try {
     Invoke-Script -Dir $c4 -ScriptArgs @('-Apply') | Out-Null
     $c4Lines = Get-Lines $c4Md
     Assert-Equal $Ext $c4Lines[2] 'the extension lands above the first import, where the constitution would'
-    # The other order of the two adoptions: adopt-dkj-policy running afterwards must still put the
+    # The other order of the two adoptions: adopt-dkj-repo-workflow running afterwards must still put the
     # constitution first. Same call adopt-workflow-folder.ps1 makes.
-    Add-ClaudeMdImportLine -Path $c4Md -Root $c4 -Line $Const -ImportedPattern '^\s*@\S*/plugins/dkj-policy/CLAUDE\.md\s*$' -Apply | Out-Null
+    Add-ClaudeMdImportLine -Path $c4Md -Root $c4 -Line $Const -ImportedPattern '^\s*@\S*/plugins/dkj-repo-workflow/CLAUDE\.md\s*$' -Apply | Out-Null
     $c4Lines = Get-Lines $c4Md
     Assert-Equal "$Const|$Ext" (($c4Lines[2], $c4Lines[3]) -join '|') 'a later constitution write lands directly above the extension'
 
@@ -189,7 +189,7 @@ try {
     Write-Host 'Imported under the retired name dkj-policy-bwj (#2788)'
     $c9 = New-Consumer 'retired-name'
     $c9Md = Join-Path $c9 'CLAUDE.md'
-    $c9Old = '@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-policy/dkj-policy-bwj/CLAUDE.md'
+    $c9Old = '@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-repo-workflow/dkj-policy-bwj/CLAUDE.md'
     [System.IO.File]::WriteAllText($c9Md, "# T`r`n$Const`r`n$c9Old`r`n@~/.claude/other.md`r`n", (New-Object System.Text.UTF8Encoding($false)))
     $r9 = Invoke-Script -Dir $c9 -ScriptArgs @('-Apply')
     Assert-True ($r9.Flat -match '\[renamed\]') 'reports the retired line as renamed'
@@ -228,7 +228,7 @@ try {
     Write-Host 'Already imported, and quoted in a fence'
     $c5 = New-Consumer 'old-name'
     $c5Md = Join-Path $c5 'CLAUDE.md'
-    $c5Text = "$Const`n@~/.claude/plugins/marketplaces/claude-code-specialists/plugins/dkj-policy/extensions/bwj-development/CLAUDE.md`n"
+    $c5Text = "$Const`n@~/.claude/plugins/marketplaces/claude-code-specialists/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/CLAUDE.md`n"
     [System.IO.File]::WriteAllText($c5Md, $c5Text, (New-Object System.Text.UTF8Encoding($false)))
     $r5 = Invoke-Script -Dir $c5 -ScriptArgs @('-Apply')
     Assert-Equal $c5Text ([System.IO.File]::ReadAllText($c5Md)) 'imported under an older marketplace name: untouched'

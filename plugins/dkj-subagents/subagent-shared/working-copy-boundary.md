@@ -18,7 +18,7 @@
   checkout in another state, that is a sentence in your deliverable, not a command you run: say what
   you need and stop.
 - **This is enforced now, and knowing that changes what a refusal means to you.** Since issue
-  [#1669](https://github.com/DKJ-Solutions/claude-code-specialists/issues/1669) the `dkj-policy` plugin
+  [#1669](https://github.com/DKJ-Solutions/claude-code-specialists/issues/1669) the `dkj-repo-workflow` plugin
   ships a `PreToolUse` hook that refuses those commands when the call comes from a dispatched
   subagent — the payload says which you are, so the dispatching session's own `git checkout` is
   untouched. **A `BLOCKED (guard-working-copy)` message is therefore not a tool malfunction and not

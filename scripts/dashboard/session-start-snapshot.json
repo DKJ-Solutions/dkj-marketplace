@@ -65,8 +65,8 @@
       "previousTokens": 19027
     },
     {
-      "id": "plugin-dkj-policy",
-      "name": "dkj-policy skill listing",
+      "id": "plugin-dkj-repo-workflow",
+      "name": "dkj-repo-workflow skill listing",
       "sub": "11 skills in the session, 12 excluded",
       "influence": "direct",
       "tokens": 3010,
@@ -220,13 +220,13 @@
         "caveat": "Account-wide: whatever the BWJ repos use costs functionality there."
       },
       {
-        "id": "adopt-dkj-policy-dmi",
+        "id": "adopt-dkj-repo-workflow-dmi",
         "influence": "direct",
         "done": false,
         "tokens": 850,
         "saveSub": "measured, and in every consumer",
-        "title": "`adopt-dkj-policy` behind disable-model-invocation",
-        "text": "Still the most expensive skill description in dkj-policy (850 tokens), measured. It is a one-time adoption step, but it sits in every session of every consumer.",
+        "title": "`adopt-dkj-repo-workflow` behind disable-model-invocation",
+        "text": "Still the most expensive skill description in dkj-repo-workflow (850 tokens), measured. It is a one-time adoption step, but it sits in every session of every consumer.",
         "how": "`disable-model-invocation: true` in the SKILL.md, and have the session check that points to the skill name the command.",
         "caveat": "The model then no longer triggers it on its own when a session check reports a missing folder."
       },
@@ -328,9 +328,9 @@
         "previousBytes": 7338
       },
       {
-        "id": "plugins/dkj-policy/CLAUDE.md",
+        "id": "plugins/dkj-repo-workflow/CLAUDE.md",
         "name": "CLAUDE.md",
-        "sub": "plugins/dkj-policy/CLAUDE.md",
+        "sub": "plugins/dkj-repo-workflow/CLAUDE.md",
         "bytes": 8150,
         "previousBytes": 8150
       },
@@ -387,7 +387,7 @@
         "text": "The biggest open item, but it is an **estimate**. One pass through claude.ai \u2192 Connectors, without changing a single line in the repo. It is account-wide, so check first what the BWJ repos still use. If you get it wrong, it only costs a reconnection."
       },
       {
-        "title": "2 \u00b7 `adopt-dkj-policy` behind disable-model-invocation (850, measured)",
+        "title": "2 \u00b7 `adopt-dkj-repo-workflow` behind disable-model-invocation (850, measured)",
         "text": "The biggest **measured** and direct lever, and the only one that counts in every consumer. It runs through the usual chain. The risk: a session check that reports a missing `dkj-policy/` folder can no longer have the skill trigger on its own. So have that check name the command."
       },
       {

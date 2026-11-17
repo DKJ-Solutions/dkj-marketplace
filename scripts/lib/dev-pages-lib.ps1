@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     This repo's PRODUCT (#3540): the home page on '/' and its own pages -- Consumers and Plugins, the specialists on their teams' Plugins pages.
-    Admin is the dkj-policy plugin's, as in every other repo (#3245): this repo states its dev server as
+    Admin is the dkj-repo-workflow plugin's, as in every other repo (#3245): this repo states its dev server as
     its product and no longer opts out with OwnHub, so the general pages -- Repository, Issues,
     Release notes, SessionStart, Test gate, Stopwatch, Logbook and Plugins -- are the plugin admin's, and the
     product's home page links back to it. No I/O -- the server (scripts/dashboard/serve-consumer-dashboard.ps1)
@@ -36,19 +36,19 @@
 #>
 
 . (Join-Path $PSScriptRoot 'consumer-dashboard-lib.ps1')
-# The plugin's lib: this repo is its source, so it reads it from its own tree -- dkj-policy's page shell and
+# The plugin's lib: this repo is its source, so it reads it from its own tree -- dkj-repo-workflow's page shell and
 # card (#3198).
-. (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1')
+. (Join-Path $PSScriptRoot '..\..\plugins\dkj-repo-workflow\apps\admin\lib\general-pages-lib.ps1')
 # And Admin's Plugins page lib, for ConvertTo-PluginDescriptionHtml (a plugin's description as paragraphs) and the house
 # style's specimens (Get-HouseStyleSpecimensParts).
-. (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\apps\admin\lib\plugins-page-lib.ps1')
+. (Join-Path $PSScriptRoot '..\..\plugins\dkj-repo-workflow\apps\admin\lib\plugins-page-lib.ps1')
 # The Docs coverage pages (#3906), which use this file's page shell.
 . (Join-Path $PSScriptRoot 'docs-coverage-lib.ps1')
 
 function Format-DevPageHtml {
     <#
         The whole page around -Body, for this repo's own pages (Consumers, Specialists, Plugins): the
-        dkj-solutions plugin's product layout (Format-ProductPageHtml, #3831) with this repo's site header, tagged
+        dkj-repo-workflow-dkj plugin's product layout (Format-ProductPageHtml, #3831) with this repo's site header, tagged
         'product' (#3540), its title and theme key, and the Home crumb on '/', the product's home page.
     #>
     param(
@@ -78,7 +78,7 @@ function Format-ProductMoreHtml {
     $rest = @(Get-ProductMenu | Where-Object { $barHrefs -notcontains $_.Href -and $_.Href -ne '/settings' })
     return Format-DevPageHtml -Title 'More' -Lead 'Every page of this product the bottom bar does not carry, and its settings.' `
         -Body (Format-ProductMoreBodyHtml -Name 'dkj-marketplace' -Menu $rest -SettingsHref '/settings') `
-        -FooterNote 'Built by <code>scripts/lib/dev-pages-lib.ps1</code>, from the dkj-solutions plugin''s site menu.'
+        -FooterNote 'Built by <code>scripts/lib/dev-pages-lib.ps1</code>, from the dkj-repo-workflow-dkj plugin''s site menu.'
 }
 
 function Format-ProductSettingsHtml {
@@ -90,7 +90,7 @@ function Format-ProductSettingsHtml {
     #>
     $parts = Get-SettingsPageParts
     return Format-DevPageHtml -Title 'Settings' -Lead 'How this product looks on this device: its theme.' -Body $parts.Body -Style $parts.Style `
-        -FooterNote 'Built by <code>scripts/lib/dev-pages-lib.ps1</code>, from the dkj-policy plugin''s Settings page.'
+        -FooterNote 'Built by <code>scripts/lib/dev-pages-lib.ps1</code>, from the dkj-repo-workflow plugin''s Settings page.'
 }
 
 # Get-ProductPages and Get-ProductMenu live in consumer-dashboard-lib.ps1, loaded above: the Consumers page draws the
@@ -156,9 +156,9 @@ function Format-ProductHomeHtml {
     [void]$sb.AppendLine('<div class="ph-wide">')
     [void]$sb.AppendLine('<div class="ph-cards">')
     if ($adminLinked) {
-        [void]$sb.AppendLine((Format-AdminCardLinkHtml -Href $AdminUrl -Label 'Admin' -Sub 'The dkj-policy Admin: its Development section holds GitHub, Issues, Release notes, the Test gate and every other general page' -Icon 'repository'))
+        [void]$sb.AppendLine((Format-AdminCardLinkHtml -Href $AdminUrl -Label 'Admin' -Sub 'The dkj-repo-workflow Admin: its Development section holds GitHub, Issues, Release notes, the Test gate and every other general page' -Icon 'repository'))
     } else {
-        [void]$sb.AppendLine('<section class="card"><p role="status">Admin is not running. The dkj-policy dev-preview hook starts it at the next session start.</p></section>')
+        [void]$sb.AppendLine('<section class="card"><p role="status">Admin is not running. The dkj-repo-workflow dev-preview hook starts it at the next session start.</p></section>')
     }
     foreach ($p in @($Pages)) { [void]$sb.AppendLine((Format-AdminCardLinkHtml -Href $p.Href -Label $p.Label -Sub $p.Sub -Icon $p.Icon)) }
     [void]$sb.AppendLine('</div>')
@@ -492,7 +492,7 @@ function Resolve-MarketplaceRedirect {
         Where an old Marketplace address now lives: /marketplace and everything under it, the same levels kept
         under /plugins (#4011, November 12, 2026). The pages were /plugins until Maikel moved them to /marketplace on
         October 30, 2026 so the url would follow the h1; #4011 moves url and h1 back together, so that rule still
-        holds. Four levels, so the brand book's token pages (/marketplace/dkj-policy/dkj-brandbook/tokens/<group>)
+        holds. Four levels, so the brand book's token pages (/marketplace/dkj-repo-workflow/dkj-brandbook/tokens/<group>)
         land too. Anything else is ''. The server answers a hit with a 303, so an old link or bookmark still lands,
         and so does the address a released Admin sends the house style to.
     #>
@@ -518,15 +518,15 @@ function Resolve-MarketplaceAddress {
 function Resolve-ProductHouseStyleRequest {
     <#
         The house style's specimens on the product (Maikel, October 31, 2026), named after the brand book whose files
-        they document: /plugins/dkj-policy/dkj-brandbook is @{ Section = '' },
-        /plugins/dkj-policy/dkj-brandbook/<section> @{ Section = '<section>' }, anything else $null. Asked before
+        they document: /plugins/dkj-repo-workflow/dkj-brandbook is @{ Section = '' },
+        /plugins/dkj-repo-workflow/dkj-brandbook/<section> @{ Section = '<section>' }, anything else $null. Asked before
         Resolve-MarketplaceAddress, which would read 'dkj-brandbook' as a plugin's name.
     #>
     param([AllowEmptyString()][string]$Path)
-    # A token group is one slug below the Tokens section, /plugins/dkj-policy/dkj-brandbook/tokens/<group>, and
+    # A token group is one slug below the Tokens section, /plugins/dkj-repo-workflow/dkj-brandbook/tokens/<group>, and
     # comes back as @{ Section = 'tokens'; Token = '<group>' }; every other address carries Token ''.
-    if ($Path -cmatch '^/plugins/dkj-policy/dkj-brandbook/tokens/([a-z][a-z-]{0,39})/?\z') { return @{ Section = 'tokens'; Token = [string]$Matches[1] } }
-    if ($Path -cnotmatch '^/plugins/dkj-policy/dkj-brandbook(?:/([a-z][a-z-]{0,39}))?/?\z') { return $null }
+    if ($Path -cmatch '^/plugins/dkj-repo-workflow/dkj-brandbook/tokens/([a-z][a-z-]{0,39})/?\z') { return @{ Section = 'tokens'; Token = [string]$Matches[1] } }
+    if ($Path -cnotmatch '^/plugins/dkj-repo-workflow/dkj-brandbook(?:/([a-z][a-z-]{0,39}))?/?\z') { return $null }
     return @{ Section = [string]$Matches[1]; Token = '' }
 }
 
@@ -591,19 +591,19 @@ function Get-ProductBrandbookTokenCards {
 
 function Resolve-ProductHouseStyleRedirect {
     <#
-        Where the specimens' first product address now lives: /plugins/dkj-policy/house-style[/<section>] until
+        Where the specimens' first product address now lives: /plugins/dkj-repo-workflow/house-style[/<section>] until
         the page took the brand book's name (Maikel, October 31, 2026), and the address a released Admin still
         sends them to. '' for any other path.
     #>
     param([AllowEmptyString()][string]$Path)
     # THE TOKENS SECTION HAS NO PAGE OF ITS OWN (Maikel, November 1, 2026): its groups each have one, and the overview
     # opens on them, so /tokens -- under either name, and the address a released Admin sends -- lands there.
-    if ($Path -cmatch '^/plugins/dkj-policy/(?:dkj-brandbook|house-style)/tokens/?\z') { return '/plugins/dkj-policy/dkj-brandbook#tokens' }
+    if ($Path -cmatch '^/plugins/dkj-repo-workflow/(?:dkj-brandbook|house-style)/tokens/?\z') { return '/plugins/dkj-repo-workflow/dkj-brandbook#tokens' }
     # Radius, Spacing and Size are one group, Scale, since #4009: an old link lands on its card there.
     $merged = @{ radius = 's-radius'; spacing = 's-spacing-scale'; size = 's-sizes-and-elevation' }
-    if ($Path -cmatch '^/plugins/dkj-policy/dkj-brandbook/tokens/(radius|spacing|size)/?\z') { return '/plugins/dkj-policy/dkj-brandbook/tokens/scale#' + $merged[$Matches[1]] }
-    if ($Path -cnotmatch '^/plugins/dkj-policy/house-style(?:/([a-z][a-z-]{0,39}))?/?\z') { return '' }
-    return '/plugins/dkj-policy/dkj-brandbook' + $(if ($Matches[1]) { '/' + $Matches[1] })
+    if ($Path -cmatch '^/plugins/dkj-repo-workflow/dkj-brandbook/tokens/(radius|spacing|size)/?\z') { return '/plugins/dkj-repo-workflow/dkj-brandbook/tokens/scale#' + $merged[$Matches[1]] }
+    if ($Path -cnotmatch '^/plugins/dkj-repo-workflow/house-style(?:/([a-z][a-z-]{0,39}))?/?\z') { return '' }
+    return '/plugins/dkj-repo-workflow/dkj-brandbook' + $(if ($Matches[1]) { '/' + $Matches[1] })
 }
 
 function ConvertTo-BrandbookAnchor {
@@ -690,7 +690,7 @@ function Get-ProductBrandbookPages {
         group's page. -Split is Split-HouseStyleSpecimens'.
     #>
     param([Parameter(Mandatory = $true)][hashtable]$Split)
-    $base = '/plugins/dkj-policy/dkj-brandbook'
+    $base = '/plugins/dkj-repo-workflow/dkj-brandbook'
     $pages = @()
     $tokens = @($Split.Sections | Where-Object { $_.Slug -ceq 'tokens' }) | Select-Object -First 1
     if ($tokens) {
@@ -913,8 +913,8 @@ function Get-BrandbookWalkScript {
 function Format-ProductHouseStylePageHtml {
     <#
         The house style's specimens in the product's shell, under Marketplace, the brand book a destination of its
-        own (#4009, B1.1 of #4002's wireframe: the dkj-policy crumb is gone). -Body is this checkout's
-        plugins/dkj-policy/assets/dkj-brandbook/specimens.html joined with the product layer's own (Join-HouseStyleSpecimens,
+        own (#4009, B1.1 of #4002's wireframe: the dkj-repo-workflow crumb is gone). -Body is this checkout's
+        plugins/dkj-repo-workflow/assets/dkj-brandbook/specimens.html joined with the product layer's own (Join-HouseStyleSpecimens,
         #3831), so the product shows the whole book where Admin shows the core; -ReadError is why it could not be read.
         -Provenance is the branch and commit the server read them from, shown as a chip at the top of every page.
 
@@ -938,8 +938,8 @@ function Format-ProductHouseStylePageHtml {
         [AllowEmptyString()][string]$Provenance = ''
     )
     $e = { param($v) ConvertTo-GeneralPageText $v }
-    $base = '/plugins/dkj-policy/dkj-brandbook'
-    $foot = 'Read from this checkout''s <code>plugins/dkj-policy/assets/dkj-brandbook/specimens.html</code> and the product layer''s <code>plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/specimens.html</code> on every request, so it is the tree, not the installed release.'
+    $base = '/plugins/dkj-repo-workflow/dkj-brandbook'
+    $foot = 'Read from this checkout''s <code>plugins/dkj-repo-workflow/assets/dkj-brandbook/specimens.html</code> and the product layer''s <code>plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product/specimens.html</code> on every request, so it is the tree, not the installed release.'
     $crumbs = @(@{ Label = 'Plugins'; Href = '/plugins' })
     if ($Section -ceq 'tokens' -and -not $Token) { return $null }
     $split = if ($ReadError) { $null } else { Split-HouseStyleSpecimens -Body $Body }
@@ -1005,14 +1005,14 @@ function Format-ProductHouseStylePageHtml {
 
 function Resolve-MarketplaceAddOnRedirect {
     <#
-        Where an add-on of dkj-policy's top-level address now lives (Maikel, October 30, 2026: the add-ons stand on
-        dkj-policy's page): /plugins/dkj-policy/<name> for a -Name in -Plugins whose kind is 'add-on to
-        dkj-policy', and '' for anything else, so every other plugin keeps its own address.
+        Where an add-on of dkj-repo-workflow's top-level address now lives (Maikel, October 30, 2026: the add-ons stand on
+        dkj-repo-workflow's page): /plugins/dkj-repo-workflow/<name> for a -Name in -Plugins whose kind is 'add-on to
+        dkj-repo-workflow', and '' for anything else, so every other plugin keeps its own address.
     #>
     param([AllowEmptyCollection()][object[]]$Plugins = @(), [AllowEmptyString()][string]$Name)
     $p = @(@($Plugins) | Where-Object { $_ -and [string]$_.Name -ceq $Name })[0]
-    if (-not $p -or (Get-MarketplacePluginKind -Name ([string]$p.Name) -Source ([string]$p.Source)) -cne 'add-on to dkj-policy') { return '' }
-    return '/plugins/dkj-policy/' + $Name
+    if (-not $p -or (Get-MarketplacePluginKind -Name ([string]$p.Name) -Source ([string]$p.Source)) -cne 'add-on to dkj-repo-workflow') { return '' }
+    return '/plugins/dkj-repo-workflow/' + $Name
 }
 
 function Get-MarketplacePluginKind {
@@ -1025,8 +1025,8 @@ function Get-MarketplacePluginKind {
     if ($Name -eq 'dkj-subagents-alpha') { return 'core team' }
     if ($Name -eq 'dkj-subagents-developers') { return 'developers team' }
     if ($Name -like 'dkj-subagents-*') { return 'add-on team' }
-    if ($Name -eq 'dkj-policy') { return 'workflow' }
-    if ($Source -like './plugins/dkj-policy/*') { return 'add-on to dkj-policy' }
+    if ($Name -eq 'dkj-repo-workflow') { return 'workflow' }
+    if ($Source -like './plugins/dkj-repo-workflow/*') { return 'add-on to dkj-repo-workflow' }
     return 'plugin'
 }
 
@@ -1045,9 +1045,9 @@ function Format-MarketplacePluginsPageHtml {
         plugin's page -- /plugins/<name>, or /plugins/dkj-subagents/<name> for a team, so a team is reachable only
         under its group: the marketplace's line as the lead, a facts card, and the full description as paragraphs (Admin's
         ConvertTo-PluginDescriptionHtml) behind the "?" right of the h1 (Maikel, October 31, 2026: no Description card since). A -Group or -Plugin that names nothing, or a plugin under the
-        wrong level, returns $null, so the server answers 404 rather than an empty page. dkj-policy's add-ons
-        (Maikel, October 30, 2026) are not on the overview: dkj-policy's page carries them as cards, and each is
-        -Group 'dkj-policy' -Plugin <name>, /plugins/dkj-policy/<name>.
+        wrong level, returns $null, so the server answers 404 rather than an empty page. dkj-repo-workflow's add-ons
+        (Maikel, October 30, 2026) are not on the overview: dkj-repo-workflow's page carries them as cards, and each is
+        -Group 'dkj-repo-workflow' -Plugin <name>, /plugins/dkj-repo-workflow/<name>.
 
         THE SPECIALISTS LIVE ON THEIR TEAMS' PAGES (the owner, October 28, 2026: the Specialists pages and these
         were two doors to the same four teams). -SpecialistRows is ConvertTo-SpecialistRow's shape and
@@ -1071,10 +1071,10 @@ function Format-MarketplacePluginsPageHtml {
     $teamGroup = 'dkj-subagents'
     $isTeam = { param($p) [string]$p.Name -like ($teamGroup + '-*') }
     $teams = @($all | Where-Object { & $isTeam $_ })
-    # dkj-policy's add-ons stand on dkj-policy's own page, not the overview (Maikel, October 30, 2026), so each
-    # is reached under it, /plugins/dkj-policy/<name>, as a team is under its group.
-    $addOnParent = 'dkj-policy'
-    $isAddOn = { param($p) (Get-MarketplacePluginKind -Name ([string]$p.Name) -Source ([string]$p.Source)) -ceq 'add-on to dkj-policy' }
+    # dkj-repo-workflow's add-ons stand on dkj-repo-workflow's own page, not the overview (Maikel, October 30, 2026), so each
+    # is reached under it, /plugins/dkj-repo-workflow/<name>, as a team is under its group.
+    $addOnParent = 'dkj-repo-workflow'
+    $isAddOn = { param($p) (Get-MarketplacePluginKind -Name ([string]$p.Name) -Source ([string]$p.Source)) -ceq 'add-on to dkj-repo-workflow' }
     $addOns = @($all | Where-Object { & $isAddOn $_ })
     if ($Group -and $Group -cne $teamGroup -and -not ($Group -ceq $addOnParent -and $Plugin)) { return $null }
     $spPlugins = @(Get-SpecialistPlugins -Rows @($SpecialistRows))
@@ -1140,7 +1140,7 @@ function Format-MarketplacePluginsPageHtml {
 
     $p = @($all | Where-Object { $_.Name -ceq $Plugin })[0]
     if (-not $p) { return $null }
-    # Each plugin at its one level: a team under its group, an add-on under dkj-policy, any other at the top.
+    # Each plugin at its one level: a team under its group, an add-on under dkj-repo-workflow, any other at the top.
     $parent = if (& $isTeam $p) { $teamGroup } elseif (& $isAddOn $p) { $addOnParent } else { '' }
     if ($Group -cne $parent) { return $null }
     $sp = if ($Group -ceq $teamGroup) { & $spOf $p.Name } else { $null }
@@ -1163,15 +1163,15 @@ function Format-MarketplacePluginsPageHtml {
         [void]$body.AppendLine('<p role="status">Not enabled in this repo''s <code>.claude/settings.json</code>: no session here loads it.</p>')
     }
     if ($p.Name -ceq $addOnParent) {
-        # What dkj-policy ships that can be looked at: the house style's specimens (Maikel, October 31, 2026).
+        # What dkj-repo-workflow ships that can be looked at: the house style's specimens (Maikel, October 31, 2026).
         # It opens the page, above the add-ons, under the heading Assets, its card named dkj-brandbook (Maikel, October 31, 2026).
         [void]$body.AppendLine('<div class="grid-3" id="assets"><div class="grid__head"><h2>Assets (Always on)</h2></div>')
-        [void]$body.AppendLine((Format-AdminCardLinkHtml -Href '/plugins/dkj-policy/dkj-brandbook' -Label 'dkj-brandbook' -Heading 3 `
+        [void]$body.AppendLine((Format-AdminCardLinkHtml -Href '/plugins/dkj-repo-workflow/dkj-brandbook' -Label 'dkj-brandbook' -Heading 3 `
             -Sub 'Every token, the twelve themes and every component, with their variants and states' -Icon 'house-style'))
         [void]$body.AppendLine('</div>')
     }
     if ($p.Name -ceq $addOnParent -and $addOns.Count) {
-        # dkj-policy's add-ons, below its house style and above its facts (Maikel, October 30, 2026): one card
+        # dkj-repo-workflow's add-ons, below its house style and above its facts (Maikel, October 30, 2026): one card
         # each, h3s under the section's h2.
         [void]$body.AppendLine('<div class="grid-3" id="add-ons"><div class="grid__head"><h2>Add-ons (Optional)</h2></div>')
         foreach ($a in $addOns) { [void]$body.AppendLine((& $card $a ('/plugins/' + $addOnParent + '/' + $a.Name) 3)) }

@@ -1,0 +1,449 @@
+<#
+.SYNOPSIS
+    The decisions behind prepare-release.ps1 -- what is pending, what each entry obliges once it is
+    live, which entries' scores are worth a second look, and the release-day runbook the whole run
+    prints. Pure: no network, no filesystem, no repo-config, no gh, no git.
+
+.DESCRIPTION
+    Dot-sourced by prepare-release.ps1 beside it, for the split golive-block-rules.ps1 and
+    backlog-page-rules.ps1 already make in this plugin: everything that touches git, gh or the Shopify
+    CLI cannot be exercised by a suite, while the parts that can be WRONG -- which entries are pending,
+    which sentence is a go-live obligation, which command reaches live -- are pure functions over values
+    the caller has already read.
+
+    INBOUND #2509 (from BWJ-Development/smartwatchbanden, September 26, 2026). The chain had tools for
+    the moment of release -- live-preflight, the push, cut-release, theme-lifecycle, golive-block -- and
+    nothing for "release is on Monday, get me ready now". Measured in that store on the Friday before:
+    21 pending entries, 3 of them touching the theme, 15 theme files in the range, and at least two
+    go-live obligations (stop an experiment in the CRO tool) buried in entry prose. Answering the
+    question meant reading five lens sections and running the diff by hand.
+
+    WHAT THIS FILE DOES NOT DECIDE, AND WHERE THAT LIVES INSTEAD:
+
+      the bump      the fold's pending tally already names it (Get-PendingBumpFromTally, in
+                    golive-block-rules.ps1). Re-deriving it would be a second copy of a release gate's
+                    arithmetic, and the tier parser that produces it lives in dkj-repo-workflow's libs, which
+                    this plugin's scripts may not reach.
+      the push list live-push-rules.ps1, mirrored into this plugin from its one source (#2509) so the
+                    list prepared on Friday is derived by the same rules as the one pushed on Monday.
+
+    NEEDS ref-print-lib.ps1 LOADED FIRST -- the driver and the suite both dot-source it -- for
+    Test-PathPasteSafe and ConvertTo-ConsoleStrippedText, which the runbook applies to every path and
+    every piece of entry prose it prints.
+
+    Pure ASCII (repo convention for .ps1).
+#>
+
+# The one heading word the machine reads in a pending entry. Every entry opens with it; see
+# entry-scaffold-lib.ps1 in dkj-repo-workflow, which writes it.
+$script:PrepareDeployWord = 'DEPLOY:'
+
+function Get-PendingChangelogEntries {
+    <#
+        Pure: the entries under a changelog's pending heading, one row each -- Branch, Heading, Body,
+        Tier0Score, HigherScore.
+
+        THE PENDING SECTION IS STRUCTURAL: the first '## ' heading that reads '[Unreleased]', up to the
+        next '## ' heading. Each '### ' heading under it opens one entry. That is the shape the fold
+        writes, and it is the same boundary entry-scaffold-lib reads -- restated structurally rather than
+        borrowed, because that lib is dkj-repo-workflow's.
+
+        THE TWO SCORES ARE READ BY POSITION, NOT BY HEADING TEXT. The audience section's heading has
+        been retexted several times and every retired wording is still in somebody's changelog, so the
+        text before the first '####' is the entry's own tier and the first '####' that is not the Pull
+        Request section is its reach. Each score is the first '**Score:**' line in its section, trimmed;
+        '' where the section or the line is absent.
+
+        THE BRANCH IS WHAT FOLLOWS 'DEPLOY:', up to the timestamp's middle dot. Backticks are stripped:
+        an older heading form quoted the branch name.
+    #>
+    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Changelog)
+
+    $inPending = $false
+    $entries = New-Object System.Collections.Generic.List[object]
+    $body = $null
+    foreach ($line in @($Changelog -split "`r?`n")) {
+        if ($line -match '^##\s+(?!#)') {
+            if ($inPending) { break }
+            if ($line -match '^##\s+\[Unreleased\]') { $inPending = $true }
+            continue
+        }
+        if (-not $inPending) { continue }
+        if ($line -match '^###\s+(?!#)(.*)$') {
+            $heading = $Matches[1].Trim()
+            $branch = $heading
+            $at = $branch.IndexOf($script:PrepareDeployWord)
+            if ($at -ge 0) { $branch = $branch.Substring($at + $script:PrepareDeployWord.Length) }
+            $dot = $branch.IndexOf([char]0x00B7)
+            if ($dot -ge 0) { $branch = $branch.Substring(0, $dot) }
+            $body = New-Object System.Collections.Generic.List[string]
+            $entries.Add([pscustomobject]@{
+                Branch = ($branch -replace '`', '').Trim(); Heading = $heading; Lines = $body
+                Body = ''; Tier0Score = ''; HigherScore = ''
+            })
+            continue
+        }
+        if ($null -ne $body) { $body.Add($line) }
+    }
+
+    foreach ($e in $entries) {
+        $e.Body = ($e.Lines -join "`n").Trim()
+        $e.PSObject.Properties.Remove('Lines')
+        $sections = @([regex]::Split($e.Body, '(?m)^####\s+'))
+        $e.Tier0Score = Get-FirstScore -Text $sections[0]
+        for ($i = 1; $i -lt $sections.Count; $i++) {
+            $title = ($sections[$i] -split "`n", 2)[0].Trim()
+            if ($title -match '^(?i)pull request\b') { continue }
+            $e.HigherScore = Get-FirstScore -Text $sections[$i]
+            break
+        }
+    }
+    return @($entries.ToArray())
+}
+
+function Get-FirstScore {
+    <# Pure: the value on the first '**Score:**' line of -Text, trimmed; '' where there is none. #>
+    param([AllowEmptyString()][string]$Text)
+    $m = [regex]::Match([string]$Text, '(?m)^\*\*Score:\*\*[ \t]*(.*?)[ \t]*$')
+    if ($m.Success) { return $m.Groups[1].Value.Trim() }
+    return ''
+}
+
+function Test-ScoreIsNone {
+    <# Pure: true where a score says the tier is not reached -- N/A in any spelling, or nothing at all. #>
+    param([AllowEmptyString()][string]$Score)
+    $s = ([string]$Score).Trim()
+    if (-not $s) { return $true }
+    return [bool]($s -match '^(?i)n\s*/?\s*a\b')
+}
+
+function Get-EntryScoreNotes {
+    <#
+        Pure: the pending entries whose score is worth a second look before the cut, one row each --
+        Branch, Note.
+
+        ONE RULE, AND IT IS A QUESTION RATHER THAN A VERDICT. In a repo whose audience is tier 1 --
+        management and the employer, which is what a store answers -- a fix/ branch that scores its reach
+        is flagged: a fix normally restores what that audience already had, so a reach score on one is
+        either a deliberate call or a copy-paste from a feature entry, and the Friday is when that costs a
+        sentence to settle rather than a mis-sized release. It is ADVISORY -- the release's tier gate is
+        cut-release's, and a fix that genuinely reaches management is legitimate.
+
+        ONLY AT AUDIENCE TIER 1, AND THAT WAS MEASURED. In a tier-2 repo a fix reaches the subscriber the
+        moment they upgrade, so a reach score on one is ordinary: run over this plugin's own source repo
+        (audience 2) on September 26, 2026, the rule flagged 6 of 23 pending entries, every one of them
+        correctly scored. So -AudienceTier other than 1 -- or unstated -- returns nothing.
+
+        WHAT #2509 ALSO ASKED, AND WHY IT IS NOT HERE. It proposed flagging "a tier-2 score where the seam
+        says tier 2 is off". An entry does not carry a tier number this file can read: there is ONE
+        reach section, and whether a score there counts as tier 1 or tier 2 is decided by
+        Get-ReleaseAudienceTier inside dkj-repo-workflow's parser. Guessing that here would be a second copy of
+        the rule, so the fold's tally stays the authority on what the pending entries add up to.
+    #>
+    param(
+        [AllowNull()][AllowEmptyCollection()]$Entries,
+        [AllowNull()]$AudienceTier = $null
+    )
+    $notes = @()
+    if ("$AudienceTier" -ne '1') { return $notes }
+    foreach ($e in @($Entries)) {
+        if ($null -eq $e) { continue }
+        if ($e.Branch -match '^fix/' -and -not (Test-ScoreIsNone -Score $e.HigherScore)) {
+            $notes += [pscustomobject]@{
+                Branch = $e.Branch
+                Note   = "a fix/ entry scores its reach beyond the repo ('$($e.HigherScore)') -- a fix usually restores what that audience already had; confirm the score is deliberate before the cut."
+            }
+        }
+    }
+    return @($notes)
+}
+
+# THE PHRASES THAT MARK A GO-LIVE OBLIGATION. English, because the repo's own language rule covers the
+# script layer; a store whose entries are written in another language passes its own with
+# -ObligationPattern on the driver, which REPLACES this list rather than extending it -- a repo knows its
+# own wording better than a default does.
+#
+# NO BARE 'go-live' PHRASE, and that was measured: against this repo's own pending entries it matched the
+# skill NAME golive-block twice, in sentences obliging nobody to do anything. 'after go-live' is still
+# caught, by the 'after' phrase.
+$script:GoLiveObligationPatterns = @(
+    '(?i)\bonce\s+(this|it)\s+(is|goes)\s+live\b',
+    '(?i)\bonce\s+live\b',
+    '(?i)\bafter\s+(the\s+)?(live\s+push|go-?live|release)\b',
+    '(?i)\bwhen\s+(this|it)\s+goes\s+live\b',
+    '(?i)\bon\s+release\s+day\b',
+    '(?i)\b(stop|pause|end|disable)\b[^.]{0,60}\b(experience|experiment|campaign|test)\b',
+    '(?i)\b(switch|turn)\s+(off|on)\b',
+    '(?i)\bapp\s+setting'
+)
+
+function Get-GoLiveObligationPatterns {
+    <# The default obligation phrases, so the driver and the suite read one list. #>
+    return @($script:GoLiveObligationPatterns)
+}
+
+function Get-GoLiveObligations {
+    <#
+        Pure: the sentences in the pending entries that read as something that must happen once the
+        release is live, one row each -- Branch, Sentence.
+
+        A CANDIDATE LIST, AND IT SAYS SO. The obligations #2509 measured -- "stop Convert experience
+        1004205630", "change an app setting" -- are free prose, not a field, so this matches phrases
+        and cannot be complete. What it buys is that 21 entries of prose become a short list somebody
+        reads on Friday instead of rediscovering on Monday. The driver prints it under that caveat.
+
+        EVERY SECTION IS READ BUT THE PULL REQUEST ONE, which is a title and a link. The reach section
+        was skipped once, on the assumption that it only argues a score, and that was measured wrong
+        (#2911, smartwatchbanden v2.47.0, October 12, 2026): in a tier-1 store that section is where an
+        author writes what management must do, and "Once this is live, test 0212-26 can be switched off
+        in Convert." sat there while the run reported 0 obligations across 37 entries. The Pull Request
+        section is recognised by its title, the same rule Get-PendingChangelogEntries reads the reach
+        score by. Section titles and '**Score:**' lines are dropped, each section is split into sentences
+        on its own so none runs into the next, markdown is stripped to the words, and a sentence is
+        matched at most once, however many phrases hit it.
+    #>
+    param(
+        [AllowNull()][AllowEmptyCollection()]$Entries,
+        [AllowNull()][AllowEmptyCollection()][string[]]$Patterns = $null
+    )
+    $pats = @($Patterns | Where-Object { $_ })
+    if ($pats.Count -eq 0) { $pats = Get-GoLiveObligationPatterns }
+
+    $rows = @()
+    foreach ($e in @($Entries)) {
+        if ($null -eq $e) { continue }
+        $sections = @([regex]::Split([string]$e.Body, '(?m)^####\s+'))
+        for ($i = 0; $i -lt $sections.Count; $i++) {
+            $lines = @($sections[$i] -split "`r?`n")
+            if ($i -gt 0) {
+                if ($lines[0].Trim() -match '^(?i)pull request\b') { continue }
+                $lines = @($lines | Select-Object -Skip 1)
+            }
+            $text = ($lines | Where-Object { $_ -notmatch '^\*\*Score:\*\*' }) -join ' '
+            $text = $text -replace '\[([^\]]*)\]\([^)]*\)', '$1'
+            $text = $text -replace '[`*]', ''
+            $text = ($text -replace '\s+', ' ').Trim()
+            if (-not $text) { continue }
+            foreach ($sentence in ([regex]::Split($text, '(?<=[.!?])\s+(?=[A-Z(])'))) {
+                $s = $sentence.Trim()
+                if (-not $s) { continue }
+                foreach ($p in $pats) {
+                    if ($s -match $p) { $rows += [pscustomobject]@{ Branch = $e.Branch; Sentence = $s }; break }
+                }
+            }
+        }
+    }
+    return @($rows)
+}
+
+function Format-VerificationPullCommand {
+    <#
+        Pure: the `shopify theme pull` that reads the pushed files back off live into a FRESH folder, so
+        what landed can be compared with what was meant to. '' for an empty list.
+
+        A PULL, NEVER A PUSH, AND NEVER WITHOUT --only. A pull from live changes nothing on the store,
+        which is why it may be printed without the authorisation marker. It is bounded to the push list
+        for the same reason the push is: a whole-theme pull is minutes of files nobody asked about.
+        THE FOLDER IS FRESH so that nothing already in it can pass for something the pull wrote.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][string]$Store,
+        [Parameter(Mandatory = $true)][string]$ThemeId,
+        [Parameter(Mandatory = $true)][string]$Path,
+        [AllowNull()][AllowEmptyCollection()][string[]]$Only
+    )
+    $files = @(@($Only) | ForEach-Object { if ($null -ne $_) { ([string]$_).Trim() } } | Where-Object { $_ })
+    if ($files.Count -eq 0) { return '' }
+    $parts = @('shopify', 'theme', 'pull', '--store', $Store, '--theme', $ThemeId, '--path', $Path)
+    foreach ($f in $files) { $parts += @('--only', $f) }
+    return ($parts -join ' ')
+}
+
+function Format-ReleaseRunbook {
+    <#
+        Pure: the release-day runbook, as lines -- the sequence #2509 asked for, with every fact this run
+        could derive filled in and every fact it could not named as missing rather than guessed.
+
+        THE PUSH COMMAND CARRIES NO MARKER, and neither does anything else here. It is composed by
+        Format-LivePushCommand, which cannot produce one; the runbook says the marker is a human act and
+        never names it -- the same rule live-preflight's own closing lines keep.
+
+        THE ORDER IS BWJ'S RELEASE DAY, and each step names the tool that owns it rather than restating
+        what that tool does: preflight -> push -> verification pull -> go-live obligations -> preview
+        sweep -> cut -> live message (#3070) -> backup -> release-notes page. The preflight re-derives the push list and runs the
+        drift check for real on the day; what this run printed on the Friday is the plan, not the proof.
+
+        THE GIT-CONNECTED MODE (#2998, #3012). With -DeployBranch, the live theme deploys from that branch
+        through Shopify's GitHub integration, so going live is the PROMOTION PR (trunk into the deploy
+        branch) and there is no push to print. Step 2 prints that PR, composed by Format-LivePromotionCommand
+        -- the same function live-preflight prints it with -- and merging it is the act that goes live,
+        which the runbook says belongs to a person. No theme PATH is printed in a command in this mode, so
+        the paste-safety refusal of the push list does not apply; the verification pull still names the
+        files and keeps that refusal. The order stays promote-then-cut, as #2998 decided.
+
+        THE APP DEPLOY (#3174). With -AppFiles under a printable -AppRoot, the runbook gains a step 2b
+        with the `shopify app deploy` command (Format-ShopifyAppDeployCommand, in the mirrored live-push-rules),
+        in either mode: no push or promotion carries an app's files. A person runs it, as the push.
+
+        THE TASK FORM (#4156). With -TaskForm (the repo answers Get-ReleaseNoteTaskLink), cut-release drafts
+        the audience note itself from the live-push record, so step 6 names -LivePushRecord and says to review
+        the draft after the cut, instead of asking for a note written before anyone knows what went live.
+
+        THE RELEASE-NOTES PAGE (#4155). Step 9 names the publish a store actually runs -- dkj-repo-workflow-bwj's
+        publish-page -Kind notes, not the builder's -Worker deploy, which a store refuses by design -- and
+        says the close-out leads with the page's SHAREABLE link, the document the owner reads, before the
+        GitHub Release. -NotesUrl is that link where the caller could read it (publish-page -CheckAuth).
+
+        THE SWEEP FIRST (#4157). With -SweepFirst (Get-ThemeSweepOrder found the store at or near Shopify's
+        theme limit), a step 0 puts the preview sweep before the preflight, whose backup needs a free slot.
+        -SweepReason is that verdict's message, printed under it.
+    #>
+    param(
+        [string]$Store = '',
+        [string]$LiveThemeId = '',
+        [AllowNull()][AllowEmptyCollection()][string[]]$PushFiles = @(),
+        [string]$Bump = '',
+        [string]$TargetVersion = '',
+        [string]$ReleaseDate = '',
+        [AllowNull()][AllowEmptyCollection()]$Obligations = @(),
+        [string]$DeployBranch = '',
+        [string]$Trunk = 'main',
+        [string]$AppRoot = '',
+        [AllowNull()][AllowEmptyCollection()][string[]]$AppFiles = @(),
+        [string]$NotesUrl = '',
+        [switch]$TaskForm,
+        [switch]$SweepFirst,
+        [string]$SweepReason = ''
+    )
+
+    $connected = [bool]([string]$DeployBranch).Trim()
+    $files = @(@($PushFiles) | Where-Object { $_ })
+    # NO COMMAND IS COMPOSED AROUND A PATH THAT IS NOT PASTE-SAFE (this branch's security review). The
+    # paths come out of git diff, and a theme file can reach the repo through a sync from the theme
+    # editor, so a name holding `;` or `$(...)` would run the moment a person pastes the line. #1594
+    # measured that quoting does not close that class in every shell; Test-PathPasteSafe (ref-print-lib,
+    # which the driver loads) refuses the path instead. An accented theme name is refused too -- the
+    # safe direction, since live-preflight composes the real command on the day.
+    $unsafe = @($files | Where-Object { -not (Test-PathPasteSafe -Path $_) })
+    $haveTarget = [bool]($Store -and $LiveThemeId -and $unsafe.Count -eq 0)
+    $ver = if ($TargetVersion) { "v$TargetVersion" } else { 'the next version' }
+    $out = @()
+    $out += "# Release-day runbook -- $ver$(if ($ReleaseDate) { ", $ReleaseDate" })"
+    $out += ''
+    $out += 'Prepared ahead of the day. Every step below re-checks on the day; nothing here is authorised.'
+    $out += ''
+
+    # THE SWEEP MOVES IN FRONT OF THE PREFLIGHT AT OR NEAR THE THEME LIMIT (#4157): the preflight's backup
+    # needs a free slot, so a sweep after the push would come too late. The reason is the store's count.
+    if ($SweepFirst) {
+        $out += '0. Preview sweep FIRST -- the `theme-lifecycle` skill, sweep-preview-themes (dry run, then -Execute).'
+        if (([string]$SweepReason).Trim()) { $out += "   $(ConvertTo-ConsoleStrippedText -Text $SweepReason)" }
+        $out += ''
+    }
+
+    if ($connected) {
+        $out += '1. Preflight, on the trunk -- the dkj-subagents-shopify `live-preflight` skill. It re-derives what'
+        $out += '   goes live, refuses while the deploy branch holds live edits the trunk lacks, reads the rule-suite'
+        $out += '   log for rejected write-backs, takes the rollback backup, and prints the promotion PR.'
+    } else {
+        $out += '1. Preflight, on the trunk -- the dkj-subagents-shopify `live-preflight` skill. It re-derives the push'
+        $out += '   list, runs the drift check for real, takes the rollback backup, and prints the push command.'
+    }
+    $out += ''
+
+    if ($connected) {
+        $out += "2. The promotion -- the trunk into the deploy branch, as a pull request; $($files.Count) theme file(s) changed in the range:"
+        $promotion = ''
+        if ((Test-LivePromotionRef $Trunk) -and (Test-LivePromotionRef $DeployBranch) -and $Trunk -ine $DeployBranch) {
+            try { $promotion = Format-LivePromotionCommand -Trunk $Trunk -DeployBranch $DeployBranch -Version $TargetVersion } catch { $promotion = '' }
+        }
+        if ($promotion) {
+            $out += "   $promotion"
+            $out += '   Merging that PR is what goes live: Shopify deploys the branch to the live theme. A person opens'
+            $out += '   and merges it; use the one live-preflight prints on the day.'
+        } else {
+            $out += '   (not composed -- the trunk or the deploy branch has a name that is not safe to print, or they are'
+            $out += '    the same branch; live-preflight names which)'
+        }
+        $out += ''
+    } else {
+        $out += "2. The push -- $($files.Count) theme file(s), one --only each:"
+        $push = ''
+        if ($haveTarget) { $push = Format-LivePushCommand -Store $Store -ThemeId $LiveThemeId -Only $files }
+        if ($push) {
+            $out += "   $push"
+            $out += '   Refused as it stands: the authorisation marker your repo states is added by a person, to this'
+            $out += '   exact command, and no script writes it. Use the command live-preflight prints on the day.'
+        } elseif ($unsafe.Count -gt 0) {
+            $out += "   (not composed -- $($unsafe.Count) path(s) cannot be pasted safely into a command line:"
+            foreach ($u in $unsafe) { $out += "    $(ConvertTo-ConsoleStrippedText -Text $u)" }
+            $out += '    read them before the day; a name like that on a theme is itself worth a question)'
+        } elseif (-not $haveTarget) {
+            $out += '   (not composed -- no store domain or no live theme id is known to this run)'
+        } else {
+            $out += "   (nothing to push -- no theme file in the range$(if (@($AppFiles | Where-Object { $_ }).Count -eq 0) { '; this release is code and docs only' }))"
+        }
+        $out += ''
+    }
+
+    # THE APP DEPLOY (#3174), beside step 2 because it is the other half of going live. Printed only.
+    $apps = @(@($AppFiles) | Where-Object { $_ })
+    if ($apps.Count -gt 0) {
+        $out += "2b. The app deploy -- $($apps.Count) file(s) under the app root changed, and no $(if ($connected) { 'promotion' } else { 'theme push' }) carries them:"
+        if (Test-ShopifyAppRoot -AppRoot $AppRoot) {
+            $out += "   $(Format-ShopifyAppDeployCommand -AppRoot $AppRoot)"
+            $out += '   It releases a new version of the app to the store, so a person runs it, from the repo root. A theme'
+            $out += '   that places a block this deploy adds needs the deploy first; live-preflight prints it again on the day.'
+        } else {
+            $out += '   (not composed -- Get-ShopifyAppRoot does not name a printable relative folder; live-preflight refuses it)'
+        }
+        $out += ''
+    }
+
+    $out += "3. Verification pull -- read the $(if ($connected) { 'promoted' } else { 'pushed' }) files back off live, into a folder nothing else wrote:"
+    $pull = ''
+    if ($haveTarget) { $pull = Format-VerificationPullCommand -Store $Store -ThemeId $LiveThemeId -Path "`$env:TEMP\live-verify-$($ver -replace '\s', '-')" -Only $files }
+    $pullWhy = if ($unsafe.Count -gt 0) { "$($unsafe.Count) path(s) cannot be pasted safely" } elseif (-not $haveTarget) { 'no store domain or no live theme id is known to this run' } else { 'no theme file in the range' }
+    $out += $(if ($pull) { "   $pull" } elseif ($connected) { "   (not composed -- $pullWhy)" } else { '   (not composed -- see step 2)' })
+    $out += ''
+
+    $obl = @($Obligations | Where-Object { $_ })
+    $out += "4. Go-live obligations -- $($obl.Count) candidate(s) found in the entries' prose (a candidate list, not a complete one):"
+    # Entry prose is foreign text in a document meant to be read beside commands, so a control or format
+    # character is stripped before it can repaint what the reader sees (ref-print-lib, #2024).
+    foreach ($o in $obl) { $out += "   - [ ] $(ConvertTo-ConsoleStrippedText -Text $o.Branch): $(ConvertTo-ConsoleStrippedText -Text $o.Sentence)" }
+    if ($obl.Count -eq 0) { $out += '   (none found -- read the entries before assuming there are none)' }
+    $out += ''
+
+    if ($SweepFirst) {
+        $out += '5. Preview sweep -- done as step 0. Run it again (dry run first) only for the previews this release made spent.'
+    } else {
+        $out += '5. Preview sweep -- the `theme-lifecycle` skill, sweep-preview-themes (dry run first).'
+    }
+    $out += ''
+    $bumpText = if ($Bump) { " -Bump $Bump" } else { '' }
+    $out += "6. The cut -- the dkj-repo-workflow ``cut-release`` skill$(if ($Bump) { ", with$bumpText" } else { ' (the bump could not be read from the pending tally)' })."
+    if ($Bump -eq 'minor' -and $TaskForm) {
+        $out += '   The cut drafts the audience note itself, as solved tasks, from the live-push record: pass -LivePushRecord'
+        $out += '   (the cut refuses a task-form note without one), and review the draft after the cut. Write nothing ahead.'
+    } elseif ($Bump -eq 'minor') { $out += '   A minor owes the hand-written audience note (audience/<dir>/<X.Y.Z>.md) -- draft it before the day.' }
+    $out += ''
+    # THE LIVE MESSAGE, RIGHT AFTER THE CUT (#3070): the push (or the promotion) has happened and the tag
+    # exists, so this is the first moment 'live as of vX.Y.Z' is true -- and printing it here is what
+    # keeps a hand step from being forgotten (Maikel's choice on #3070).
+    $out += "7. Tell the requesters -- the ``notify-live`` skill$(if ($TargetVersion) { ", -Version v$TargetVersion" }): a dry run, then -Post. It tells the"
+    $out += '   Asana task of every issue this release carried, and was told "visible with the release", that it is live.'
+    # The record the cut read (#3176), so an issue whose files were held -- or whose app deploy did not run
+    # -- is not told either.
+    $out += '   Pass it the same -LivePushRecord the cut read: an issue whose files are "hold" there is not told.'
+    $out += ''
+    $out += '8. Backup -- the `theme-lifecycle` skill, backup-live-theme, at the moment THEME-LIFECYCLE-portable.md names.'
+    $out += ''
+    $out += '9. Release-notes page -- rebuild it with the dkj-repo-workflow `release-notes-page` skill (without -Worker), then publish'
+    $out += '   it with the `publish-page` skill: publish-page.ps1 -Kind notes. The close-out leads with the page''s shareable link,'
+    # The link is a URL from the repo's own seam and token, so it is stripped like any other foreign text.
+    $link = ([string]$NotesUrl).Trim()
+    if ($link) { $out += "   $(ConvertTo-ConsoleStrippedText -Text $link)" } else { $out += '   which publish-page.ps1 -Kind notes -ShowUrl prints,' }
+    $out += '   and names the GitHub Release second -- the note is the document the owner reads.'
+    return @($out)
+}

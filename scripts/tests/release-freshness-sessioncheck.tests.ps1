@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Regression tests for the SessionStart hook plugins/dkj-policy/hooks/release-freshness-sessioncheck.ps1
+    Regression tests for the SessionStart hook plugins/dkj-repo-workflow/hooks/release-freshness-sessioncheck.ps1
     (issue #2673): a visible warning when the marketplace's origin carries a newer release than the
     plugin version this session runs.
 
@@ -18,8 +18,8 @@
 $ErrorActionPreference = 'Stop'
 
 $RepoRoot  = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Hook      = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\release-freshness-sessioncheck.ps1'
-$HooksJson = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\hooks.json'
+$Hook      = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\release-freshness-sessioncheck.ps1'
+$HooksJson = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\hooks.json'
 
 $script:pass  = 0
 $script:fail  = 0
@@ -74,7 +74,7 @@ function New-Fixture {
     }
 
     $pj = Join-Path $dir 'plugin.json'
-    [System.IO.File]::WriteAllText($pj, "{`"name`":`"dkj-policy`",`"version`":`"$Running`"}", (New-Object System.Text.UTF8Encoding($false)))
+    [System.IO.File]::WriteAllText($pj, "{`"name`":`"dkj-repo-workflow`",`"version`":`"$Running`"}", (New-Object System.Text.UTF8Encoding($false)))
 
     # The mix check's two reads (#3273), ALWAYS pinned to the fixture: an unpinned run would read this
     # machine's own install records and turn every scenario above into whatever this machine holds.
@@ -206,13 +206,13 @@ Assert-True ($r3.Out -eq '') 'a new session id measures afresh -- and an unreach
 
 # --- mixed versions across the enabled plugins (#3273) --------------------------------------------
 $mp = 'dkj-marketplace'
-$ids = @("dkj-policy@$mp", "dkj-solutions@$mp", "other@elsewhere")
-# The measured shape: dkj-policy at user scope on the newer release (the copy this hook ran from) and
-# at project scope on the older one, dkj-solutions at project scope only, on the older one.
+$ids = @("dkj-repo-workflow@$mp", "dkj-repo-workflow-dkj@$mp", "other@elsewhere")
+# The measured shape: dkj-repo-workflow at user scope on the newer release (the copy this hook ran from) and
+# at project scope on the older one, dkj-repo-workflow-dkj at project scope only, on the older one.
 $f = New-Fixture -Label mixed -Tags @('v5.26.0', 'v5.27.0') -Running '5.27.0' -Enabled $ids -Records @(
-    @{ Id = "dkj-policy@$mp"; Scope = 'user'; Version = '5.27.0' },
-    @{ Id = "dkj-policy@$mp"; Scope = 'project'; Version = '5.26.0' },
-    @{ Id = "dkj-solutions@$mp"; Scope = 'project'; Version = '5.26.0' },
+    @{ Id = "dkj-repo-workflow@$mp"; Scope = 'user'; Version = '5.27.0' },
+    @{ Id = "dkj-repo-workflow@$mp"; Scope = 'project'; Version = '5.26.0' },
+    @{ Id = "dkj-repo-workflow-dkj@$mp"; Scope = 'project'; Version = '5.26.0' },
     @{ Id = "other@elsewhere"; Scope = 'project'; Version = '1.0.0' })
 $r = Invoke-Hook -Fixture $f
 $json = $null
@@ -221,26 +221,26 @@ Assert-True ($r.Code -eq 0 -and $null -ne $json) 'mixed -- exit 0 and one JSON o
 if ($json) {
     $m = [string]$json.systemMessage
     Assert-True ($m -match 'mixed versions' -and $m -notmatch 'up to date') 'mixed -- never confirms "up to date" off the one copy that is current'
-    Assert-True ($m -match 'dkj-policy v5\.26\.0 \(project\) and v5\.27\.0 \(user\)') 'mixed -- a plugin with two disagreeing records names both, this checkout''s own record first'
-    Assert-True ($m -match 'dkj-solutions v5\.26\.0 \(project\)') 'mixed -- the project-only plugin on the older release is named'
+    Assert-True ($m -match 'dkj-repo-workflow v5\.26\.0 \(project\) and v5\.27\.0 \(user\)') 'mixed -- a plugin with two disagreeing records names both, this checkout''s own record first'
+    Assert-True ($m -match 'dkj-repo-workflow-dkj v5\.26\.0 \(project\)') 'mixed -- the project-only plugin on the older release is named'
     Assert-True ($m -notmatch 'other@elsewhere' -and $m -notmatch '1\.0\.0') 'mixed -- a plugin of another marketplace is not part of the dkj mix'
     Assert-True ($m -match 'update-plugins') 'mixed with a record behind origin -- names the command that closes the gap'
     Assert-True ([string]$json.hookSpecificOutput.additionalContext -match '\[MIXED\]' -and [string]$json.hookSpecificOutput.additionalContext -match 'lowest is v5\.26\.0') 'mixed -- the model is told under a marker, with the lowest version'
 }
 
 $f = New-Fixture -Label mixedahead -Tags @('v5.27.0') -Running '5.28.0' -Enabled $ids -Records @(
-    @{ Id = "dkj-solutions@$mp"; Scope = 'project'; Version = '5.27.0' })
+    @{ Id = "dkj-repo-workflow-dkj@$mp"; Scope = 'project'; Version = '5.27.0' })
 $r = Invoke-Hook -Fixture $f
 Assert-True ($r.Out -match '\[MIXED\]' -and $r.Out -notmatch 'update-plugins') 'mixed with nothing behind origin -- reported, but no update is asked for'
 
 $f = New-Fixture -Label agree -Tags @('v5.27.0') -Running '5.27.0' -Enabled $ids -Records @(
-    @{ Id = "dkj-policy@$mp"; Scope = 'project'; Version = '5.27.0' },
-    @{ Id = "dkj-solutions@$mp"; Scope = 'user'; Version = '5.27.0' })
+    @{ Id = "dkj-repo-workflow@$mp"; Scope = 'project'; Version = '5.27.0' },
+    @{ Id = "dkj-repo-workflow-dkj@$mp"; Scope = 'user'; Version = '5.27.0' })
 $r = Invoke-Hook -Fixture $f
 Assert-True ($r.Out -match '\[CURRENT\]' -and $r.Out -notmatch 'MIXED') 'every record agrees with the running version -- the lockstep verdict stands'
 
-$f = New-Fixture -Label notenabled -Tags @('v5.27.0') -Running '5.27.0' -Enabled @("dkj-policy@$mp") -Records @(
-    @{ Id = "dkj-solutions@$mp"; Scope = 'project'; Version = '5.20.0' })
+$f = New-Fixture -Label notenabled -Tags @('v5.27.0') -Running '5.27.0' -Enabled @("dkj-repo-workflow@$mp") -Records @(
+    @{ Id = "dkj-repo-workflow-dkj@$mp"; Scope = 'project'; Version = '5.20.0' })
 $r = Invoke-Hook -Fixture $f
 Assert-True ($r.Out -match '\[CURRENT\]') 'a record for a plugin this checkout does not enable is not part of the mix'
 
@@ -262,8 +262,8 @@ Assert-True ($r.Code -eq 0 -and $r.Out -match '\[CURRENT\]' -and $r.Out -notmatc
 # The measured shape: update-plugins moved both records to the newest release INSIDE a process that had
 # loaded an older payload, then /clear. Every record agrees, so without the restart check this is [CURRENT].
 $f = New-Fixture -Label restart -Tags @('v5.23.0', 'v5.33.0') -Running '5.33.0' -Enabled $ids -Records @(
-    @{ Id = "dkj-policy@$mp"; Scope = 'project'; Version = '5.33.0'; LastUpdated = '2026-10-26T21:30:59.000Z' },
-    @{ Id = "dkj-solutions@$mp"; Scope = 'project'; Version = '5.33.0'; LastUpdated = '2026-10-26T21:31:00.000Z' },
+    @{ Id = "dkj-repo-workflow@$mp"; Scope = 'project'; Version = '5.33.0'; LastUpdated = '2026-10-26T21:30:59.000Z' },
+    @{ Id = "dkj-repo-workflow-dkj@$mp"; Scope = 'project'; Version = '5.33.0'; LastUpdated = '2026-10-26T21:31:00.000Z' },
     @{ Id = "other@elsewhere"; Scope = 'project'; Version = '1.0.0'; LastUpdated = '2026-10-26T21:40:00.000Z' })
 $r = Invoke-Hook -Fixture $f -ProcessStart '2026-10-26T20:22:49Z'
 $json = $null
@@ -272,7 +272,7 @@ Assert-True ($r.Code -eq 0 -and $null -ne $json) 'restart -- exit 0 and one JSON
 if ($json) {
     $m = [string]$json.systemMessage
     Assert-True ($m -notmatch 'up to date') 'restart -- never confirms "up to date" off records rewritten after the process started'
-    Assert-True ($m -match 'dkj-policy, dkj-solutions' -and $m -match 'Restart Claude Code' -and $m -match '/clear is not enough') 'restart -- names the updated plugins and says a restart, not /clear, loads them'
+    Assert-True ($m -match 'dkj-repo-workflow, dkj-repo-workflow-dkj' -and $m -match 'Restart Claude Code' -and $m -match '/clear is not enough') 'restart -- names the updated plugins and says a restart, not /clear, loads them'
     Assert-True ($m -notmatch 'other') 'restart -- a plugin of another marketplace is not named'
     Assert-True ([string]$json.hookSpecificOutput.additionalContext -match '\[RESTART\]') 'restart -- the model is told under a marker'
 }
@@ -281,14 +281,14 @@ $r = Invoke-Hook -Fixture $f -ProcessStart '2026-10-26T22:00:00Z'
 Assert-True ($r.Out -match '\[CURRENT\]' -and $r.Out -notmatch 'RESTART') 'records updated BEFORE the process started -- the ordinary verdict stands'
 
 $f = New-Fixture -Label restartmixed -Tags @('v5.33.0') -Running '5.33.0' -Enabled $ids -Records @(
-    @{ Id = "dkj-policy@$mp"; Scope = 'user'; Version = '5.33.0'; LastUpdated = '2026-10-26T21:30:59Z' },
-    @{ Id = "dkj-solutions@$mp"; Scope = 'project'; Version = '5.23.0'; LastUpdated = '2026-10-01T08:00:00Z' })
+    @{ Id = "dkj-repo-workflow@$mp"; Scope = 'user'; Version = '5.33.0'; LastUpdated = '2026-10-26T21:30:59Z' },
+    @{ Id = "dkj-repo-workflow-dkj@$mp"; Scope = 'project'; Version = '5.23.0'; LastUpdated = '2026-10-01T08:00:00Z' })
 $r = Invoke-Hook -Fixture $f -ProcessStart '2026-10-26T20:22:49Z'
-Assert-True ($r.Out -match '\[RESTART\]' -and $r.Out -notmatch 'MIXED' -and $r.Out -match 'dkj-policy' -and $r.Out -notmatch 'dkj-solutions\)') 'restart outranks mixed, and names only the plugin whose record moved'
+Assert-True ($r.Out -match '\[RESTART\]' -and $r.Out -notmatch 'MIXED' -and $r.Out -match 'dkj-repo-workflow' -and $r.Out -notmatch 'dkj-repo-workflow-dkj\)') 'restart outranks mixed, and names only the plugin whose record moved'
 
 $f = New-Fixture -Label nostamp -Tags @('v5.33.0') -Running '5.33.0' -Enabled $ids -Records @(
-    @{ Id = "dkj-policy@$mp"; Scope = 'project'; Version = '5.33.0' },
-    @{ Id = "dkj-solutions@$mp"; Scope = 'project'; Version = '5.33.0'; LastUpdated = 'not a time' })
+    @{ Id = "dkj-repo-workflow@$mp"; Scope = 'project'; Version = '5.33.0' },
+    @{ Id = "dkj-repo-workflow-dkj@$mp"; Scope = 'project'; Version = '5.33.0'; LastUpdated = 'not a time' })
 $r = Invoke-Hook -Fixture $f
 Assert-True ($r.Code -eq 0 -and $r.Out -match '\[CURRENT\]') 'a record with no or an unparseable lastUpdated -- nothing is guessed, the ordinary verdict stands'
 

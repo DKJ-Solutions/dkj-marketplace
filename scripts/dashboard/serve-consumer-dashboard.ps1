@@ -13,14 +13,14 @@
     the specialist teams (dkj-subagents-*) one card whose page is /plugins/dkj-subagents; a team's own page shows
     its specialists and the context each one costs, read from this tree, and each has a page of its own under it
     (/specialists, their own pages until October 28, 2026, redirects there); and the house style's specimens
-    under dkj-policy, /plugins/dkj-policy/dkj-brandbook[/<section>] (Maikel, October 31, 2026; the older
-    /plugins/dkj-policy/house-style redirects there). The rules of
+    under dkj-repo-workflow, /plugins/dkj-repo-workflow/dkj-brandbook[/<section>] (Maikel, October 31, 2026; the older
+    /plugins/dkj-repo-workflow/house-style redirects there). The rules of
     each page are in scripts/lib/dev-pages-lib.ps1. The server takes no POST but the banner's.
 
     EVERY REPO HAS A PRODUCT PORT (Maikel, October 26, 2026, #3540). This server was this repo's own admin
     under OwnHub (#3245), with the brandbook/ app's Vite dev server as the product beside it (#3283).
     Retiring the app (#3493) took the product port with it, which was never the intent. So Admin is the
-    dkj-policy plugin's now, as in every other repo, and this server is the product: the general pages --
+    dkj-repo-workflow plugin's now, as in every other repo, and this server is the product: the general pages --
     Repository, Issues, Release notes, SessionStart, Test gate, Stopwatch, Logbook and Plugins --
     are the plugin admin's, on its own port, and no longer relayed or built here. The house style's specimens
     are the one exception, back here since October 31, 2026 (Maikel): this repo is their source, so its
@@ -28,7 +28,7 @@
     (Get-GeneralPagesUrl), and '/admin' sends there too ('/hub' before #3873, which moves there).
 
 .DESCRIPTION
-    Normally started by the dkj-policy dev-preview SessionStart hook, through this repo's
+    Normally started by the dkj-repo-workflow dev-preview SessionStart hook, through this repo's
     Get-DevPreview in scripts/repo-config.ps1, as the repo's product beside the plugin's admin (#3540); it can
     be started by hand the same way:
 
@@ -98,23 +98,23 @@ $root = if ($RepoRootOverride) { [System.IO.Path]::GetFullPath($RepoRootOverride
 . (Join-Path $root 'scripts\lib\dev-pages-lib.ps1')
 # The state file the hook writes, and the probe of the plugin's admin server (#3119), whose url the home page links
 # (#3540): the plugin's, read from this repo's own tree because this repo is the plugin's source.
-. (Join-Path $root 'plugins\dkj-policy\apps\admin\lib\general-pages-state.ps1')
+. (Join-Path $root 'plugins\dkj-repo-workflow\apps\admin\lib\general-pages-state.ps1')
 # The request reader, the response writer and the two refusals: the same ones the plugin's servers use, so a
 # fix to any of them lands in all three (#3163).
-. (Join-Path $root 'plugins\dkj-policy\apps\admin\lib\loopback-server-lib.ps1')
+. (Join-Path $root 'plugins\dkj-repo-workflow\apps\admin\lib\loopback-server-lib.ps1')
 # The banner's airsquats state, the same file and gist as every other admin's (#3438).
-. (Join-Path $root 'plugins\dkj-policy\apps\admin\lib\airsquats-lib.ps1')
+. (Join-Path $root 'plugins\dkj-repo-workflow\apps\admin\lib\airsquats-lib.ps1')
 
 $scopeRoot = [System.IO.Path]::GetFullPath((Join-Path $root '..\..'))
 # The canonical copy lives in the plugin (#3130); Admin no longer vendors its own.
-$styleDir = Join-Path $root 'plugins\dkj-policy\assets\dkj-brandbook'
+$styleDir = Join-Path $root 'plugins\dkj-repo-workflow\assets\dkj-brandbook'
 $static = @{
     '/house-style.css' = @{ File = (Join-Path $styleDir 'house-style.css'); Type = 'text/css; charset=utf-8' }
     '/house-theme.js'  = @{ File = (Join-Path $styleDir 'house-theme.js');  Type = 'text/javascript; charset=utf-8' }
     # The house font (#4070): house-style.css names it by a URL relative to itself, so it is served beside it.
     '/InterVariable.woff2' = @{ File = (Join-Path $styleDir 'InterVariable.woff2'); Type = 'font/woff2' }
-    # The product layer, on top of the core on every page this server renders: it ships with dkj-solutions (#3831).
-    '/house-product.css' = @{ File = (Join-Path $root 'plugins\dkj-policy\extensions\dkj-solutions\assets\dkj-brandbook-product\house-product.css'); Type = 'text/css; charset=utf-8' }
+    # The product layer, on top of the core on every page this server renders: it ships with dkj-repo-workflow-dkj (#3831).
+    '/house-product.css' = @{ File = (Join-Path $root 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\assets\dkj-brandbook-product\house-product.css'); Type = 'text/css; charset=utf-8' }
 }
 
 function Invoke-DashboardGit {
@@ -522,12 +522,12 @@ try {
             }
             $hsAt = Resolve-ProductHouseStyleRequest -Path $path
             if ($hsAt) {
-                # The house style's specimens under dkj-policy (Maikel, October 31, 2026), read from this tree per
+                # The house style's specimens under dkj-repo-workflow (Maikel, October 31, 2026), read from this tree per
                 # request; Admin in this repo sends its own house-style pages here. A section none has is a 404. The product
-                # layer's specimens are dkj-solutions' (#3831), joined to the core's so this page shows the whole book.
+                # layer's specimens are dkj-repo-workflow-dkj' (#3831), joined to the core's so this page shows the whole book.
                 $specError = ''; $spec = ''
                 try {
-                    $spec = Join-HouseStyleSpecimens -Core ([System.IO.File]::ReadAllText((Join-Path $styleDir 'specimens.html'), $utf8)) `n                        -Product ([System.IO.File]::ReadAllText((Join-Path $root 'plugins\dkj-policy\extensions\dkj-solutions\assets\dkj-brandbook-product\specimens.html'), $utf8))
+                    $spec = Join-HouseStyleSpecimens -Core ([System.IO.File]::ReadAllText((Join-Path $styleDir 'specimens.html'), $utf8)) `n                        -Product ([System.IO.File]::ReadAllText((Join-Path $root 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\assets\dkj-brandbook-product\specimens.html'), $utf8))
                 } catch { $specError = $_.Exception.Message }
                 # Which tree these pages show, as a chip at their top (#4009, finding F7 of #4002's wireframe): the
                 # branch and commit this checkout stands on now, asked per request because the checkout moves.
@@ -547,13 +547,13 @@ try {
                 # Every plugin this marketplace ships, the specialist teams' page, or one plugin's own page (the
                 # owner, October 27, 2026): /plugins/dkj-subagents[/<team>[/<specialist>]] or /plugins/<name>, a team's
                 # page carrying its specialists since October 28, 2026. Anything the marketplace or the team does not
-                # list is a 404, never an empty page. dkj-policy's add-ons are /plugins/dkj-policy/<name> since
+                # list is a 404, never an empty page. dkj-repo-workflow's add-ons are /plugins/dkj-repo-workflow/<name> since
                 # October 30, 2026 (Maikel); the lib decides which group a plugin may stand under.
                 $plGroup = $mpAt.Group; $plName = $mpAt.Plugin; $plThird = $mpAt.Specialist
                 $pl = Get-PluginsModel
                 $aoTo = if (-not $plGroup) { Resolve-MarketplaceAddOnRedirect -Plugins $pl.Plugins -Name $plName } else { '' }
                 if ($aoTo) {
-                    # An add-on's address before it moved under dkj-policy: an old link lands on its page there.
+                    # An add-on's address before it moved under dkj-repo-workflow: an old link lands on its page there.
                     Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = $aoTo } -Method $method
                     continue
                 }
@@ -580,7 +580,7 @@ try {
                 if ($adminUrl -cmatch '^http://localhost:[0-9]{4,5}/?\z') {
                     Send-LoopbackResponse $stream 303 'See Other' 'text/plain; charset=utf-8' ([byte[]]@()) @{ Location = $adminUrl } -Method $method
                 } else {
-                    Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('The dkj-policy Admin is not running for this repo: the dev-preview hook starts it at the next session start.')) -Method $method
+                    Send-LoopbackResponse $stream 404 'Not Found' 'text/plain; charset=utf-8' ($utf8.GetBytes('The dkj-repo-workflow Admin is not running for this repo: the dev-preview hook starts it at the next session start.')) -Method $method
                 }
                 continue
             }

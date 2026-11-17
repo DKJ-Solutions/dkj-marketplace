@@ -105,8 +105,8 @@ try {
     Invoke-Git $ex config commit.gpgsign false | Out-Null
     $excludeFile = Join-Path $ex '.git\info\exclude'
     $before = if (Test-Path -LiteralPath $excludeFile) { [System.IO.File]::ReadAllText($excludeFile) } else { '' }
-    $rel = '.dkj/dkj-policy/feat-1-x.md'
-    New-Item -ItemType Directory -Path (Join-Path $ex '.dkj\dkj-policy') -Force | Out-Null
+    $rel = '.dkj/dkj-repo-workflow/feat-1-x.md'
+    New-Item -ItemType Directory -Path (Join-Path $ex '.dkj\dkj-repo-workflow') -Force | Out-Null
     Set-Content -LiteralPath (Join-Path $ex ($rel -replace '/', '\')) -Value 'doc'
     Assert-True (Add-BranchDocumentLocalExclude -RepoRoot $ex -RelPath $rel) 'the line is written'
     Assert-True (Add-BranchDocumentLocalExclude -RepoRoot $ex -RelPath $rel) 'a second call is idempotent'
@@ -174,7 +174,7 @@ try {
     Assert-True ($branchNow -eq 'feat/7-light-route') 'the branch is checked out'
     $headNow = (Invoke-Git $repo rev-parse HEAD) -join ''
     Assert-True ($headNow -eq $trunkTip) 'no park commit: the branch still points at the trunk tip'
-    $docs = @(Get-ChildItem -LiteralPath (Join-Path $repo '.dkj\dkj-policy') -Filter 'feat-7-*.md' -ErrorAction SilentlyContinue)
+    $docs = @(Get-ChildItem -LiteralPath (Join-Path $repo '.dkj\dkj-repo-workflow') -Filter 'feat-7-*.md' -ErrorAction SilentlyContinue)
     Assert-True ($docs.Count -eq 1) 'the branch document is written'
     $status = (Invoke-Git $repo status --porcelain --untracked-files=all) -join "`n"
     Assert-True ($status -notmatch 'feat-7-') 'and git does not see it'
@@ -208,7 +208,7 @@ try {
     Assert-True ($fold.ExitCode -eq 0) "fold-changelog-entry exits 0 (exit $($fold.ExitCode))"
     Assert-True ($fold.Output -match 'nothing to fold') 'and says there is nothing to fold'
     Assert-True (((Invoke-Git $repo rev-parse HEAD) -join '') -eq $mainBefore) 'no fold: commit lands on the trunk'
-    Assert-True (-not (Test-Path -LiteralPath (Join-Path $repo '.dkj\dkj-policy\CHANGELOG.md'))) 'and no CHANGELOG.md is created'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $repo '.dkj\dkj-repo-workflow\CHANGELOG.md'))) 'and no CHANGELOG.md is created'
     $mainSubjects = (Invoke-Git $repo log --format=%s "$trunkTip..main") -join "`n"
     Assert-True ($mainSubjects -notmatch '(?m)^(park|fold):') 'the trunk carries no park: and no fold: commit'
 

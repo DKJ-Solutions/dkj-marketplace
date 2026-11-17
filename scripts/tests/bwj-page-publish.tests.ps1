@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Regression tests for the shared BWJ pages worker that bwj-development ships -- its route, its
+    Regression tests for the shared BWJ pages worker that dkj-repo-workflow-bwj ships -- its route, its
     publish rules and the script that drives them (issue #1977).
 
 .DESCRIPTION
@@ -41,7 +41,7 @@
 $ErrorActionPreference = 'Stop'
 
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development'
+$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj'
 $LibPath    = Join-Path $PluginRoot 'scripts\lib\page-publish-rules.ps1'
 $ScriptPath = Join-Path $PluginRoot 'scripts\task\publish-page.ps1'
 $WorkerPath = Join-Path $PluginRoot 'worker\bwj-pages-worker.js'
@@ -84,9 +84,9 @@ $HexB = 'b' * 32
 Write-Host ''
 Write-Host 'The shared BWJ pages worker -- what the plugin ships (#1977)' -ForegroundColor Cyan
 
-Assert-True (Test-Path -LiteralPath $WorkerPath) 'bwj-development ships worker/bwj-pages-worker.js'
-Assert-True (Test-Path -LiteralPath $LibPath)    'bwj-development ships scripts/lib/page-publish-rules.ps1'
-Assert-True (Test-Path -LiteralPath $ScriptPath) 'bwj-development ships scripts/task/publish-page.ps1'
+Assert-True (Test-Path -LiteralPath $WorkerPath) 'dkj-repo-workflow-bwj ships worker/bwj-pages-worker.js'
+Assert-True (Test-Path -LiteralPath $LibPath)    'dkj-repo-workflow-bwj ships scripts/lib/page-publish-rules.ps1'
+Assert-True (Test-Path -LiteralPath $ScriptPath) 'dkj-repo-workflow-bwj ships scripts/task/publish-page.ps1'
 
 . $LibPath
 $workerJs = [System.IO.File]::ReadAllText($WorkerPath, [System.Text.Encoding]::UTF8)
@@ -94,14 +94,14 @@ $workerJs = [System.IO.File]::ReadAllText($WorkerPath, [System.Text.Encoding]::U
 Write-Host ''
 Write-Host 'The worker carries no content and no identifiers' -ForegroundColor Cyan
 
-# THE DEFECT #1977 WAS FILED ABOUT, asserted as an absence. dkj-policy's worker writes
+# THE DEFECT #1977 WAS FILED ABOUT, asserted as an absence. dkj-repo-workflow's worker writes
 # `const HTML = "<!doctype html>..."` into the bundle, which is exactly why two repos cannot share
 # it: wrangler deploy replaces the whole script.
 Assert-True ($workerJs -cnotmatch '(?m)^const\s+HTML\s*=') 'no page is baked into the bundle -- that is what lets both stores deploy it'
 Assert-True ($workerJs -notmatch '<!doctype|</html>')      '...and no markup of any kind sits in the shipped source'
 Assert-True ($workerJs -match 'BWJ_PAGES')                    '...because it reads the pages out of KV instead'
 Assert-True ($workerJs -notmatch '[0-9a-f]{32}')              'no 32-hex identifier is in the shipped source -- no account id, namespace id or token'
-Assert-True ($workerJs -match 'x-robots-tag')                 'the response carries noindex, like dkj-policy page worker'
+Assert-True ($workerJs -match 'x-robots-tag')                 'the response carries noindex, like dkj-repo-workflow page worker'
 Assert-True ($workerJs -match 'no-store')                     'and no-store, because the page is a snapshot of documents that move'
 
 Write-Host ''
@@ -191,7 +191,7 @@ Assert-Equal "https://p.workers.dev/notes/$HexA" (Get-BwjPageUrl -BaseUrl 'https
 $coUrl = "https://p.workers.dev/notes/$HexA"
 Assert-True ((Format-BwjPageCloseOut -Kind 'notes' -Url $coUrl) -like "Close-out:*$coUrl") 'a verified notes publish prints the close-out line ending in the URL'
 Assert-Equal '' (Format-BwjPageCloseOut -Kind 'backlog' -Url $coUrl) 'the backlog page is no cut''s receipt, so it prints none'
-$ppSrc = Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development\scripts\task\publish-page.ps1') -Raw
+$ppSrc = Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\scripts\task\publish-page.ps1') -Raw
 Assert-Equal 1 ([regex]::Matches($ppSrc, 'Format-BwjPageCloseOut -Kind \$Kind -Url \$url')).Count 'one verified exit path, shared by wrangler and the KV API, prints it'
 
 $apiUrl = Get-BwjPageKvApiUrl -AccountId $HexA -NamespaceId $HexB -Key "notes:$HexA"
@@ -582,7 +582,7 @@ Write-Host 'The stray-token search -- #1444 lesson, ported from the sibling scri
 # THE HAZARD THIS GUARDS, in one move: the page directory is derived from the note root and is
 # gitignored, so repointing that folder leaves the token behind where nothing points at it. A guard
 # that asks "is there a token HERE" then finds nothing and mints a second one happily -- which 404s
-# every link already sent, while reporting success. dkj-policy's own page learned this as #1444; the
+# every link already sent, while reporting success. dkj-repo-workflow's own page learned this as #1444; the
 # new script derives its directory from the identical seam, so it inherits the identical hazard.
 $strayDir = Join-Path $Fixture 'old-releases\page'
 New-Item -ItemType Directory -Path $strayDir -Force | Out-Null
@@ -644,7 +644,7 @@ Assert-Equal 0 (ConvertFrom-BwjPagePublishRecord -Json '{not json').Count 'a cor
 Assert-Equal 0 (ConvertFrom-BwjPagePublishRecord -Json '["a"]').Count 'a record of the wrong shape is empty'
 Assert-Equal 0 (ConvertFrom-BwjPagePublishRecord -Json '{"k":"v"}').Count 'entries that are not two SHA-256 digests are dropped'
 $recPath = Get-BwjPagePublishRecordPath -AccountId 'acct' -NamespaceId 'ns' -Base 'C:\base'
-Assert-True ($recPath.StartsWith('C:\base\dkj-policy\publish-page\') -and $recPath.EndsWith('.json')) 'the record lives under the user''s own folder, not in the repo'
+Assert-True ($recPath.StartsWith('C:\base\dkj-repo-workflow\publish-page\') -and $recPath.EndsWith('.json')) 'the record lives under the user''s own folder, not in the repo'
 Assert-True (-not $recPath.Contains('acct') -and -not $recPath.Contains('ns.json')) '...and its name is a digest, naming neither the account nor the namespace'
 Assert-True ($recPath -ne (Get-BwjPagePublishRecordPath -AccountId 'acct' -NamespaceId 'other' -Base 'C:\base')) 'one record per namespace'
 Assert-True ($scriptText -match '(?s)Publish-BwjKvValue -Key \$u\.Key -Path \$u\.Path\s+\$record\[') 'the record is written AFTER the read-back, so a skip rests on the same proof an upload ends in'

@@ -49,8 +49,8 @@
     THE PLUGIN SIDE IS DISCOVERED, NOT LISTED. Every plugin this repo has ENABLED (Get-EnabledPlugins,
     which reads the whole settings chain rather than settings.json alone) is probed for '*-portable.md'
     pages; a plugin that ships none is not a legislator and drops out on its own. That is why no
-    companion is named here by hand: bwj-development is today's second workflow plugin and a hard-coded list
-    would be one more thing to update on the day there is a third. dkj-policy is printed
+    companion is named here by hand: dkj-repo-workflow-bwj is today's second workflow plugin and a hard-coded list
+    would be one more thing to update on the day there is a third. dkj-repo-workflow is printed
     first because the top rung has an internal order -- see that same section: where two plugin pages
     speak to the same question, its page wins and a companion's is an extension, never an override.
 
@@ -315,9 +315,9 @@ if ($isSourceRepo) {
 $enabled = Get-EnabledPlugins -RepoRoot $repoRoot
 $ids = @($enabled.Ids)
 
-# dkj-policy first: the top rung's own internal order, per "A third rank sits above both".
-$ordered = @($ids | Where-Object { $_ -like 'dkj-policy@*' }) +
-           @($ids | Where-Object { $_ -notlike 'dkj-policy@*' } | Sort-Object)
+# dkj-repo-workflow first: the top rung's own internal order, per "A third rank sits above both".
+$ordered = @($ids | Where-Object { $_ -like 'dkj-repo-workflow@*' }) +
+           @($ids | Where-Object { $_ -notlike 'dkj-repo-workflow@*' } | Sort-Object)
 
 $rank1 = New-Object System.Collections.Generic.List[object]
 $unlocated = New-Object System.Collections.Generic.List[string]
@@ -509,8 +509,8 @@ Write-Host '    Where a restatement CONTRADICTS the page above it, say which sid
 Write-Host '    and quote both lines. Rank 1 beats rank 2 beats rank 3 where rank 2 has anything in it --'
 Write-Host '    a repo scaffolded since #2171 carries no dkj-policy/CONTRIBUTING.md, so there rank 2 is'
 Write-Host '    whatever its lenses hold, and only where rank 2 holds nothing at all does rank 1 sit'
-Write-Host '    directly above rank 3. Inside rank 1, dkj-policy beats a companion plugin such as'
-Write-Host '    bwj-development.'
+Write-Host '    directly above rank 3. Inside rank 1, dkj-repo-workflow beats a companion plugin such as'
+Write-Host '    dkj-repo-workflow-bwj.'
 Write-Host ''
 Write-Host '    A law a RANK 1 page explicitly DECLINES to answer is the fourth move and not a copy --'
 Write-Host '    cut-release''s "No seam, deliberately" is the measured instance. Read that block before'

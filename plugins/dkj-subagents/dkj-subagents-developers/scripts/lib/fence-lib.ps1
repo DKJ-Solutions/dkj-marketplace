@@ -11,7 +11,7 @@
     alone -- a PR-body lib, the roster check -- does not pull a 36 KB measuring lib in with it.
 
     A LEAF WITH NO DEPENDENCIES, mirrored into every plugin that carries one of its readers --
-    dkj-policy, bwj-development and dkj-subagents-developers -- because a script may only dot-source a lib
+    dkj-repo-workflow, dkj-repo-workflow-bwj and dkj-subagents-developers -- because a script may only dot-source a lib
     that ships in its own plugin.
 
     Pure ASCII, per this repo's script-layer convention.
@@ -37,7 +37,7 @@ function Get-NextFenceState {
         -AnyIndent LIFTS THE THREE-SPACE LIMIT on both opener and closer (#2536). CommonMark counts that
         limit from the enclosing CONTAINER, and this function sees no containers: a fence inside a list
         item sits at the item's indent plus up to three. Measured on the #2536 branch:
-        plugins/dkj-policy/skills/cut-release/SKILL.md fences a '### DEPLOY:' example at five spaces
+        plugins/dkj-repo-workflow/skills/cut-release/SKILL.md fences a '### DEPLOY:' example at five spaces
         inside a numbered item, and without the switch that line reads as a heading. The readers #2536
         moved here always accepted any indent, so they pass it and keep that; the always-on walk does not,
         and keeps #2534's rule that a four-space line is an indented code block rather than a fence.

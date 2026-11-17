@@ -71,9 +71,9 @@ jobs:
         id: pin
         shell: pwsh
         run: |
-          . .workflow-scripts/plugins/dkj-policy/extensions/dkj-solutions/scripts/lib/house-style-rules.ps1
-          $pagePath = '.workflow-scripts/plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/SKILL.md'
-          if (-not (Test-Path -LiteralPath $pagePath)) { $pagePath = '.workflow-scripts/plugins/dkj-policy/extensions/dkj-solutions/skills/house-style/SKILL.md' }
+          . .workflow-scripts/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/scripts/lib/house-style-rules.ps1
+          $pagePath = '.workflow-scripts/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook/SKILL.md'
+          if (-not (Test-Path -LiteralPath $pagePath)) { $pagePath = '.workflow-scripts/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/house-style/SKILL.md' }
           $page = Get-Content -Raw -LiteralPath $pagePath
           $tag = (Get-HouseStylePin -SkillText $page).Tag
           if ("$tag" -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+$') {
@@ -88,11 +88,12 @@ jobs:
           repository: DKJ-Solutions/dkj-marketplace
           ref: ${{ steps.pin.outputs.tag }}
           path: .workflow-pin
-          # The skill was named house-style before the rename to dkj-brandbook, and the extension sat at
-          # plugins/dkj-policy/dkj-solutions/ before #3871 moved it under extensions/. A tag cut before
-          # either carries the page at the older path, so all four are fetched and the gate takes
-          # whichever exists.
+          # The skill was named house-style before the rename to dkj-brandbook, the extension sat at
+          # plugins/dkj-policy/dkj-solutions/ before #3871 moved it under extensions/, and the plugin and
+          # extension were named dkj-policy and dkj-solutions before #4209. A tag cut before any of those
+          # carries the page at an older path, so all are fetched and the gate takes whichever exists.
           sparse-checkout: |
+            plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook
             plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook
             plugins/dkj-policy/extensions/dkj-solutions/skills/house-style
             plugins/dkj-policy/dkj-solutions/skills/dkj-brandbook
@@ -104,10 +105,11 @@ jobs:
         env:
           CLAUDE_PROJECT_DIR: ${{ github.workspace }}
         run: |
-          $skill = @('extensions/dkj-solutions/skills/dkj-brandbook', 'extensions/dkj-solutions/skills/house-style',
-                     'dkj-solutions/skills/dkj-brandbook', 'dkj-solutions/skills/house-style') |
-            ForEach-Object { ".workflow-pin/plugins/dkj-policy/$_/SKILL.md" } |
+          $skill = @('dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook',
+                     'dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook', 'dkj-policy/extensions/dkj-solutions/skills/house-style',
+                     'dkj-policy/dkj-solutions/skills/dkj-brandbook', 'dkj-policy/dkj-solutions/skills/house-style') |
+            ForEach-Object { ".workflow-pin/plugins/$_/SKILL.md" } |
             Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
-          if (-not $skill) { $skill = '.workflow-pin/plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/SKILL.md' }
-          powershell -NoProfile -ExecutionPolicy Bypass -File .workflow-scripts/plugins/dkj-policy/extensions/dkj-solutions/scripts/lint/check-house-style.ps1 -SkillPath $skill
+          if (-not $skill) { $skill = '.workflow-pin/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook/SKILL.md' }
+          powershell -NoProfile -ExecutionPolicy Bypass -File .workflow-scripts/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/scripts/lint/check-house-style.ps1 -SkillPath $skill
           exit $LASTEXITCODE

@@ -10,7 +10,7 @@
     the real server on a free loopback port against this tree and asks it for the static files, a foreign Host, a cross-site request, a POST, a missing path, a dripping client and
     an oversized head. Group 3 serves the page from a fixture tree: a checkout with no upstream, one
     outside the scope root, and no check-consumers.ps1 at all -- and the four general routes that moved to
-    the general pages server (#3119, dkj-policy's since #3198): Admin's General card before and after a state file
+    the general pages server (#3119, dkj-repo-workflow's since #3198): Admin's General card before and after a state file
     names a server that answers, and the relayed answer or the 404 each of those routes gets (#3168).
 
     Pure ASCII (repo convention for .ps1).
@@ -21,8 +21,8 @@ $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $Server   = Join-Path $RepoRoot 'scripts\dashboard\serve-consumer-dashboard.ps1'
 . (Join-Path $RepoRoot 'scripts\lib\consumer-dashboard-lib.ps1')
 # The state file's reader and writer, which the server and these fixtures share (#3119).
-$PluginLib = Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib'
-$GeneralServer = Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\pages\serve-general-pages.ps1'
+$PluginLib = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib'
+$GeneralServer = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\pages\serve-general-pages.ps1'
 . (Join-Path $PluginLib 'general-pages-state.ps1')
 . (Join-Path $PluginLib 'loopback-server-lib.ps1')
 
@@ -333,7 +333,7 @@ Write-Host '-- group 1e: the skill pins a checksum for each canonical file' -For
 # nothing noticed. There is now one canonical copy, in the plugin (#3130), which the dashboard reads in place.
 # Its checksums are the release cut's to write (#3636): between cuts the table names the tag's bytes, not the
 # tree's, so this suite holds only that the table has a cell for each file.
-$skillPage = Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\extensions\dkj-solutions\skills\dkj-brandbook\SKILL.md') -Raw
+$skillPage = Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\skills\dkj-brandbook\SKILL.md') -Raw
 foreach ($file in 'house-style.css', 'house-theme.js') {
     $row = [regex]::Match($skillPage, '(?m)^\| `' + [regex]::Escape($file) + '` \|.*\| `([0-9a-f]{64})` \|\s*$')
     Assert-True $row.Success "the skill's table pins a sha256 for $file"
@@ -419,7 +419,7 @@ if ([System.Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) {
             # The brandbook app is retired (#3493): the product neither serves nor redirects it, and the house style's specimens are under Admin's /plugins.
             Assert-Equal 404 (Get-Status 'GET' '/brandbook' "localhost:$port") '/brandbook is not a page of the product'
             Assert-Equal 404 (Get-Status 'GET' '/brandbook/' "localhost:$port") 'and neither is /brandbook/'
-            Assert-Equal 404 (Get-Status 'GET' '/house-style' "localhost:$port") 'and no /house-style either: the house style is the dkj-policy plugin''s, under Admin''s /plugins (#3493, #3629)'
+            Assert-Equal 404 (Get-Status 'GET' '/house-style' "localhost:$port") 'and no /house-style either: the house style is the dkj-repo-workflow plugin''s, under Admin''s /plugins (#3493, #3629)'
             # Whose server this is: the general server's own question, answered the same way.
             $who = Get-Raw 'GET' '/whoami' "localhost:$port"
             Assert-True ($who -match 'HTTP/1.1 200' -and $who.EndsWith("`r`n`r`n" + (Get-DevPreviewRootHash -Root $RepoRoot))) '/whoami answers the hash of this root, as the general server does'
@@ -433,7 +433,7 @@ if ([System.Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) {
             Assert-True ((Get-Raw 'GET' '/refresh?page=//evil.example' "localhost:$port") -match 'Location: /\r') 'and to the index for a page outside its list'
             Assert-Equal 403 (Get-Status 'GET' '/refresh' "localhost:$port" "Sec-Fetch-Site: cross-site`r`n") 'a request another site makes is refused'
             # A HEAD answers like the GET would, real Content-Length included, and carries no body (#3161).
-            $cssLength = (Get-Item -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\assets\dkj-brandbook\house-style.css')).Length
+            $cssLength = (Get-Item -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\assets\dkj-brandbook\house-style.css')).Length
             $headRaw = Get-Raw 'HEAD' '/house-style.css' "localhost:$port"
             Assert-True ($headRaw -match "Content-Length: $cssLength\r" -and $headRaw.EndsWith("`r`n`r`n")) 'HEAD on a static file sends the real Content-Length and no body'
             $head404 = Get-Raw 'HEAD' '/nope' "localhost:$port"
@@ -474,18 +474,18 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
     $outside = Join-Path ([System.IO.Path]::GetTempPath()) "consumer-dashboard-outside-$PID-$([guid]::NewGuid().ToString('n'))"
     $group3Done = $false
     try {
-        New-Item -ItemType Directory -Force -Path (Join-Path $src 'scripts\lib'), (Join-Path $src 'scripts\dashboard'),(Join-Path $src 'plugins\dkj-policy\assets\dkj-brandbook'), (Join-Path $src 'consumers'), $noup, $outside | Out-Null
+        New-Item -ItemType Directory -Force -Path (Join-Path $src 'scripts\lib'), (Join-Path $src 'scripts\dashboard'),(Join-Path $src 'plugins\dkj-repo-workflow\assets\dkj-brandbook'), (Join-Path $src 'consumers'), $noup, $outside | Out-Null
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\consumer-dashboard-lib.ps1') (Join-Path $src 'scripts\lib\')
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\dev-pages-lib.ps1') (Join-Path $src 'scripts\lib\')
         # And the Docs coverage lib dev-pages-lib dot-sources beside itself (#3906), with the catalog it dot-sources.
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\docs-coverage-lib.ps1') (Join-Path $src 'scripts\lib\')
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\docs-coverage-catalog.ps1') (Join-Path $src 'scripts\lib\')
         # dev-pages-lib reads the plugins' libs from the plugin tree beside scripts/, and the server its state reader.
-        New-Item -ItemType Directory -Force -Path (Join-Path $src 'plugins\dkj-policy\apps\admin\lib') | Out-Null
-        Copy-Item (Join-Path $PluginLib '*.ps1') (Join-Path $src 'plugins\dkj-policy\apps\admin\lib\')
-        # And dkj-solutions' product layout, which the product's pages are drawn with since #3831.
-        New-Item -ItemType Directory -Force -Path (Join-Path $src 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib') | Out-Null
-        Copy-Item (Join-Path $RepoRoot 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\product-pages-lib.ps1') (Join-Path $src 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\')
+        New-Item -ItemType Directory -Force -Path (Join-Path $src 'plugins\dkj-repo-workflow\apps\admin\lib') | Out-Null
+        Copy-Item (Join-Path $PluginLib '*.ps1') (Join-Path $src 'plugins\dkj-repo-workflow\apps\admin\lib\')
+        # And dkj-repo-workflow-dkj' product layout, which the product's pages are drawn with since #3831.
+        New-Item -ItemType Directory -Force -Path (Join-Path $src 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\scripts\lib') | Out-Null
+        Copy-Item (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\scripts\lib\product-pages-lib.ps1') (Join-Path $src 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\scripts\lib\')
         Copy-Item $Server (Join-Path $src 'scripts\dashboard\')
         Set-Content -LiteralPath (Join-Path $src 'consumers\noup.json') -Encoding ASCII -Value '{ "repo": "Org/noup", "visibility": "private", "localCheckout": "../noup", "plugins": [] }'
         Set-Content -LiteralPath (Join-Path $src 'consumers\far.json') -Encoding ASCII -Value ('{ "repo": "Org/far", "visibility": "public", "localCheckout": "../../../' + (Split-Path -Leaf $outside) + '", "plugins": [] }')
@@ -619,19 +619,19 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
     $port4 = $null
     $group4Done = $false
     try {
-        New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'scripts\lib'), (Join-Path $fixture4 'scripts\dashboard'),(Join-Path $fixture4 'plugins\dkj-policy\assets\dkj-brandbook') | Out-Null
+        New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'scripts\lib'), (Join-Path $fixture4 'scripts\dashboard'),(Join-Path $fixture4 'plugins\dkj-repo-workflow\assets\dkj-brandbook') | Out-Null
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\consumer-dashboard-lib.ps1') (Join-Path $fixture4 'scripts\lib\')
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\dev-pages-lib.ps1') (Join-Path $fixture4 'scripts\lib\')
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\docs-coverage-lib.ps1') (Join-Path $fixture4 'scripts\lib\')
         Copy-Item (Join-Path $RepoRoot 'scripts\lib\docs-coverage-catalog.ps1') (Join-Path $fixture4 'scripts\lib\')
-        New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'plugins\dkj-policy\apps\admin\lib') | Out-Null
-        Copy-Item (Join-Path $PluginLib '*.ps1') (Join-Path $fixture4 'plugins\dkj-policy\apps\admin\lib\')
-        # And dkj-solutions' product layout (#3831).
-        New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib') | Out-Null
-        Copy-Item (Join-Path $RepoRoot 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\product-pages-lib.ps1') (Join-Path $fixture4 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\')
+        New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'plugins\dkj-repo-workflow\apps\admin\lib') | Out-Null
+        Copy-Item (Join-Path $PluginLib '*.ps1') (Join-Path $fixture4 'plugins\dkj-repo-workflow\apps\admin\lib\')
+        # And dkj-repo-workflow-dkj' product layout (#3831).
+        New-Item -ItemType Directory -Force -Path (Join-Path $fixture4 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\scripts\lib') | Out-Null
+        Copy-Item (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\scripts\lib\product-pages-lib.ps1') (Join-Path $fixture4 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\scripts\lib\')
         Copy-Item $Server (Join-Path $fixture4 'scripts\dashboard\')
         # The stylesheet is there and the theme script is not: a present and a missing static file side by side.
-        [System.IO.File]::WriteAllText((Join-Path $fixture4 'plugins\dkj-policy\assets\dkj-brandbook\house-style.css'), 'body{}')
+        [System.IO.File]::WriteAllText((Join-Path $fixture4 'plugins\dkj-repo-workflow\assets\dkj-brandbook\house-style.css'), 'body{}')
         & git -C $fixture4 init -q 2>$null
         & git -C $fixture4 -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m 'first' 2>$null
         $first = ([string](& git -C $fixture4 rev-parse HEAD)).Trim()
@@ -737,8 +737,8 @@ $rsRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('repo-session-' + [guid]:
 $rsAdmin = Join-Path $rsRoot 'org\admin'
 New-Item -ItemType Directory -Force -Path (Join-Path $rsAdmin 'consumers'), (Join-Path $rsAdmin 'scripts\lib'), (Join-Path $rsRoot 'org\dkj-lifehub') | Out-Null
 # repo-session.ps1 loads Admin's page lib, which loads the consumer lib and the plugin libs beside it
-# (dev-preview-rules.ps1 for the Product card's url rule, #3468; test-gate-lib.ps1, the Test gate's page, #3470; plugins-page-lib.ps1, whose description paragraphs the product's Plugins pages use; and dkj-solutions' product-pages-lib.ps1, the product layout, #3831).
-foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'scripts\lib\dev-pages-lib.ps1', 'scripts\lib\docs-coverage-lib.ps1', 'scripts\lib\docs-coverage-catalog.ps1', 'plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\dev-preview-rules.ps1', 'plugins\dkj-policy\apps\admin\lib\test-gate-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\plugins-page-lib.ps1', 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\product-pages-lib.ps1') {
+# (dev-preview-rules.ps1 for the Product card's url rule, #3468; test-gate-lib.ps1, the Test gate's page, #3470; plugins-page-lib.ps1, whose description paragraphs the product's Plugins pages use; and dkj-repo-workflow-dkj' product-pages-lib.ps1, the product layout, #3831).
+foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'scripts\lib\dev-pages-lib.ps1', 'scripts\lib\docs-coverage-lib.ps1', 'scripts\lib\docs-coverage-catalog.ps1', 'plugins\dkj-repo-workflow\apps\admin\lib\general-pages-lib.ps1', 'plugins\dkj-repo-workflow\apps\admin\lib\dev-preview-rules.ps1', 'plugins\dkj-repo-workflow\apps\admin\lib\test-gate-lib.ps1', 'plugins\dkj-repo-workflow\apps\admin\lib\plugins-page-lib.ps1', 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\scripts\lib\product-pages-lib.ps1') {
     $to = Join-Path $rsAdmin (Split-Path -Parent $lib)
     New-Item -ItemType Directory -Force -Path $to | Out-Null
     Copy-Item -LiteralPath (Join-Path $RepoRoot $lib) -Destination $to
@@ -779,14 +779,14 @@ $arRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('ai-radar-' + [guid]::New
 $arAdmin = Join-Path $arRoot 'org\admin'
 $arAi = Join-Path $arRoot 'org\dkj-lifehub\Brains\b\x\dkj-solutions\ai'
 New-Item -ItemType Directory -Force -Path (Join-Path $arAdmin 'consumers'), (Join-Path $arAi 'claude'), (Join-Path $arAi 'ecosysteem') | Out-Null
-foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\dev-preview-rules.ps1', 'plugins\dkj-policy\apps\admin\lib\test-gate-lib.ps1', 'plugins\dkj-policy\apps\admin\lib\plugins-page-lib.ps1', 'plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\product-pages-lib.ps1') {
+foreach ($lib in 'scripts\lib\consumer-dashboard-lib.ps1', 'plugins\dkj-repo-workflow\apps\admin\lib\general-pages-lib.ps1', 'plugins\dkj-repo-workflow\apps\admin\lib\dev-preview-rules.ps1', 'plugins\dkj-repo-workflow\apps\admin\lib\test-gate-lib.ps1', 'plugins\dkj-repo-workflow\apps\admin\lib\plugins-page-lib.ps1', 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\scripts\lib\product-pages-lib.ps1') {
     $to = Join-Path $arAdmin (Split-Path -Parent $lib)
     New-Item -ItemType Directory -Force -Path $to | Out-Null
     Copy-Item -LiteralPath (Join-Path $RepoRoot $lib) -Destination $to
 }
 Set-Content -LiteralPath (Join-Path $arAdmin 'consumers\dkj-lifehub.json') -Encoding UTF8 -Value '{ "repo": "DKJ-Solutions/dkj-lifehub", "visibility": "private", "localCheckout": ["../dkj-lifehub"] }'
 Set-Content -LiteralPath (Join-Path $arAi 'CORTEX.md') -Encoding UTF8 -Value "# AI`n`n### Not an item: the dossier's own example`n- **Onze setup:** <oordeel>"
-Set-Content -LiteralPath (Join-Path $arAi 'claude\CORTEX.md') -Encoding UTF8 -Value ("# Claude`n`n## Claude Code`n`n### Judged one`n`n- **Onze setup:** ``Hebben we``, plugins/dkj-policy/skills/x/`n`n" +
+Set-Content -LiteralPath (Join-Path $arAi 'claude\CORTEX.md') -Encoding UTF8 -Value ("# Claude`n`n## Claude Code`n`n### Judged one`n`n- **Onze setup:** ``Hebben we``, plugins/dkj-repo-workflow/skills/x/`n`n" +
     "### Open one`n`n- **Onze setup:** ``Te beoordelen```n`n## Modellen en API`n`n### No verdict yet`n`n- **Bron:** https://example.com")
 Set-Content -LiteralPath (Join-Path $arAi 'ecosysteem\CORTEX.md') -Encoding UTF8 -Value '# Ecosysteem'
 $arScript = Join-Path $RepoRoot 'scripts\dashboard\ai-radar.ps1'

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/hooks/companion-plugin-sessioncheck.ps1 -- the session check that reports
+    Tests for plugins/dkj-repo-workflow/hooks/companion-plugin-sessioncheck.ps1 -- the session check that reports
     a plugin enabled without the companion it requires (#4216).
 
 .DESCRIPTION
@@ -15,7 +15,7 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Hook     = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\companion-plugin-sessioncheck.ps1'
+$Hook     = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\companion-plugin-sessioncheck.ps1'
 # $PID and a guid in the fixture path: the test gate runs suites in parallel.
 $Fixture  = Join-Path ([System.IO.Path]::GetTempPath()) "companion-plugin-sessioncheck-$PID-$([guid]::NewGuid().ToString('n'))"
 
@@ -51,7 +51,7 @@ try {
     Assert-True ($r.Text.Trim() -eq '') 'both halves enabled is silent'
     Assert-True ($r.Code -eq 0) 'and exits 0'
 
-    $alone = New-Case -Label 'alone' -RepoJson '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }'
+    $alone = New-Case -Label 'alone' -RepoJson '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-repo-workflow@dkj-marketplace": true } }'
     $r = Invoke-Hook $alone
     Assert-True ($r.Text -match "\[ERROR\] 'dkj-subagents-alpha@dkj-marketplace' is enabled \(in \.claude/settings\.json\) but 'dkj-subagents-developers@dkj-marketplace' is not") 'the measured case (#4216): the core team alone is one [ERROR] naming the companion and the layer'
     Assert-True ($r.Text -match '"dkj-subagents-developers@dkj-marketplace": true') 'it prints the enabledPlugins line to paste'

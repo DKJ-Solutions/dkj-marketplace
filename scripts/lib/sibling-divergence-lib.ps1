@@ -17,7 +17,7 @@
     THE FAILURE IS NOT DRIFT BETWEEN A SOURCE AND A COPY, which is what check-consumer-drift.ps1
     already reports. It is two consumers independently building the same mechanism, each ahead of the
     other on different things, with nothing carrying either way. The measured instance is
-    scripts/task/prune-merged.ps1: inbound #815 asked for it centrally, dkj-policy 4.21.0 shipped it,
+    scripts/task/prune-merged.ps1: inbound #815 asked for it centrally, dkj-repo-workflow 4.21.0 shipped it,
     one consumer replaced its copy with a forwarder and the other still carried its own three weeks
     later. So "shipped centrally" and "used centrally" are different facts, and nothing was watching
     the gap between them.
@@ -155,7 +155,7 @@ function Group-SiblingConsumer {
         DECLARED, NEVER INFERRED. A group is read from the manifest's own 'siblingGroup' field, and a
         manifest without one is in no group and is never compared. Inferring the grouping -- from a
         shared plugin set, say, or a shared owner -- was the obvious alternative and is wrong for a
-        measurable reason: every consumer of this marketplace shares dkj-policy, so a plugin-set
+        measurable reason: every consumer of this marketplace shares dkj-repo-workflow, so a plugin-set
         inference puts life-hub in a group with a Shopify store and then reports a personal-life repo
         as missing a theme-archive mechanism. The grouping is a statement about INTENT (these two
         repos are meant to run the same floor), and intent is data somebody writes down.
@@ -354,7 +354,7 @@ function Get-ShippedScriptIndex {
         README.md and a SKILL.md, so a basename index over all files would answer "yes, shipped" for
         every README in every consumer -- a false positive on the single commonest filename in any
         repo. The .github/workflows templates are the same trap with the opposite cause: those are
-        MEANT to be copied verbatim into a consumer (the CI runners adopt-dkj-policy places are), so
+        MEANT to be copied verbatim into a consumer (the CI runners adopt-dkj-repo-workflow places are), so
         a consumer holding one is the mechanism working, not an adoption gap.
 
         A NAME CAN BE SHIPPED FROM MORE THAN ONE PLACE, so the value is a list rather than one site.

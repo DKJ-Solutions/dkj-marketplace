@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     The command half of #3605; the other half is the SessionStart prep hook
-    (plugins/dkj-policy/hooks/trunk-sync-sessionprep.ps1), which does the same for the checkout a
+    (plugins/dkj-repo-workflow/hooks/trunk-sync-sessionprep.ps1), which does the same for the checkout a
     session opens in. Both call Invoke-TrunkFastForward (trunk-sync-lib.ps1), so the safety conditions
     have one definition: on the trunk, no uncommitted change to a tracked file, not diverged, and the
     move is 'git merge --ff-only'. A checkout that fails one is skipped and says why; nothing is

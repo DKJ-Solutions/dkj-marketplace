@@ -51,7 +51,7 @@ try {
     # positive-only test would pass against a check that examines nothing at all.
     Write-Host "check 18: shared-script parameters vs. their skill" -ForegroundColor Cyan
     $parkSrc   = Join-Path $Fixture 'scripts\task\park-branch.ps1'
-    $parkSkill = Join-Path $Fixture 'plugins\dkj-policy\skills\park\SKILL.md'
+    $parkSkill = Join-Path $Fixture 'plugins\dkj-repo-workflow\skills\park\SKILL.md'
     New-Item -ItemType Directory -Path (Split-Path -Parent $parkSrc) -Force | Out-Null
     New-Item -ItemType Directory -Path (Split-Path -Parent $parkSkill) -Force | Out-Null
     # A real param block, so the AST reader is what is being exercised -- not a string the test planted.
@@ -487,8 +487,8 @@ try {
     { "name": "dkj-subagents-alpha",         "source": "./plugins/dkj-subagents/dkj-subagents-alpha" },
     { "name": "dkj-subagents-developers",    "source": "./plugins/dkj-subagents/dkj-subagents-developers" },
     { "name": "dkj-subagents-shopify",       "source": "./plugins/dkj-subagents/dkj-subagents-shopify" },
-    { "name": "dkj-policy", "source": "./plugins/dkj-policy" },
-    { "name": "bwj-development",              "source": "./plugins/dkj-policy/extensions/bwj-development" }
+    { "name": "dkj-repo-workflow", "source": "./plugins/dkj-repo-workflow" },
+    { "name": "dkj-repo-workflow-bwj",              "source": "./plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj" }
   ]
 }
 '@

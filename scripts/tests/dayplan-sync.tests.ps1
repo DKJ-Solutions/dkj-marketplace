@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/apps/admin/lib/dayplan-sync-lib.ps1 -- the day plan's shared copy (#3924): which repo it
+    Tests for plugins/dkj-repo-workflow/apps/admin/lib/dayplan-sync-lib.ps1 -- the day plan's shared copy (#3924): which repo it
     is shared through, the ASCII payload and the bounds on another machine's, the merge of one day's copies, and two
     machines planning, adding to and reading one day through a bare remote of the tests' own.
 
@@ -9,8 +9,8 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\dayplan-sync-lib.ps1')
-$Script = Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\pages\day-plan.ps1'
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\dayplan-sync-lib.ps1')
+$Script = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\pages\day-plan.ps1'
 
 $script:pass = 0
 $script:fail = 0

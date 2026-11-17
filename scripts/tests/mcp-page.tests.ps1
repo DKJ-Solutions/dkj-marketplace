@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/apps/admin/lib/mcp-page-lib.ps1 -- Admin's MCP connections page (#4173): reading
+    Tests for plugins/dkj-repo-workflow/apps/admin/lib/mcp-page-lib.ps1 -- Admin's MCP connections page (#4173): reading
     `claude mcp list`'s text into rows (source, host only, state), the cache file the page reads instead of running the
     health check, and the page itself.
 
@@ -9,9 +9,9 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1')
-. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\dev-preview-rules.ps1')
-. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\mcp-page-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\general-pages-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\dev-preview-rules.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\mcp-page-lib.ps1')
 
 $script:pass = 0
 $script:fail = 0

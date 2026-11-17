@@ -404,7 +404,7 @@ function Test-MainTouchedSince {
 # DO NOT DOT-SOURCE IT BACK IN. This file is DEPENDENCY-FREE ON PURPOSE, and the reason is in its registry
 # entry: the live-theme guard dot-sources it on every command inside a catch that returns no live theme id,
 # so anything this file pulls in is a way to silently disarm a guard over a revenue-serving theme. It would
-# also be a CROSS-PLUGIN dependency -- this file ships in dkj-subagents-shopify, git-porcelain-lib in dkj-policy
+# also be a CROSS-PLUGIN dependency -- this file ships in dkj-subagents-shopify, git-porcelain-lib in dkj-repo-workflow
 # and, since #1689, in dkj-subagents-shopify too -- which sync-main.ps1 rules out by name for merged-pr-lib:
 # separately versioned, separately installed, so a cross-plugin path breaks silently on a version mismatch.
 # sync-main.ps1 takes the lib directly and unguarded instead, exactly as it takes merged-pr-lib.ps1.
@@ -1099,7 +1099,7 @@ function ConvertTo-ConsoleStrippedText {
             count, so the one convention serves them all.
 
             SIX CATEGORIES AND NO EXCEPTIONS -- unlike ConvertTo-BacklogVisibleText (#2025,
-            bwj-development's backlog-page-rules.ps1), which keeps eight invisible code points an HTML
+            dkj-repo-workflow-bwj's backlog-page-rules.ps1), which keeps eight invisible code points an HTML
             page can afford to render (three bidi MARKS, two joiners) because an HTML element can be
             told a text direction and a console line cannot. That is why this is not a reuse of that
             function -- only of its LOOKUP; the policy differs; the code-point walk does not.

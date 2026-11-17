@@ -66,7 +66,7 @@ function New-Fixture {
         explicitly, the same fixture shape every other suite in this folder uses.
 
           (default)          a consumer: no .claude-plugin/marketplace.json at all;
-          -Source            the source of THIS workflow: a marketplace publishing 'dkj-policy';
+          -Source            the source of THIS workflow: a marketplace publishing 'dkj-repo-workflow';
           -PublishesOther    a repo that publishes plugins but NOT this workflow.
 
         THE THIRD SHAPE IS THE POINT OF ISSUE #998 (August 27, 2026) and did not exist before it. This
@@ -82,7 +82,7 @@ function New-Fixture {
     if (Test-Path -LiteralPath $dir) { Remove-Item -Recurse -Force -LiteralPath $dir }
     New-Item -ItemType Directory -Path $dir -Force | Out-Null
     if ($Source -or $PublishesOther) {
-        $plugin = if ($Source) { 'dkj-policy' } else { 'some-other-product' }
+        $plugin = if ($Source) { 'dkj-repo-workflow' } else { 'some-other-product' }
         $manifest = '{ "name": "fixture", "plugins": [ { "name": "' + $plugin + '", "source": "./x" } ] }'
         New-Item -ItemType Directory -Path (Join-Path $dir '.claude-plugin') -Force | Out-Null
         [System.IO.File]::WriteAllText((Join-Path $dir '.claude-plugin\marketplace.json'), $manifest, $Utf8NoBom)
@@ -108,20 +108,21 @@ function Test-ReturnsNormally {
     }
 }
 
-# BOTH FOLDER NAMES PASS, AND BOTH ARE ASSERTED (#886, August 26, 2026). The folder renamed
-# 'workflow-davekjohn/' -> 'contributing-davekjohn/'. The three asserts below it cover the OLD name and are
-# kept deliberately: they are what proves an unmigrated consumer's seams still resolve, and this guard
-# refuses with exit 1 rather than warning, so losing that tolerance would be a hard stop rather than a
-# nuisance.
-Assert-True (Test-ReturnsNormally $consumerDir 'dkj-policy/CHANGELOG.md' 'Get-ChangelogPath') `
+# ONLY THE CURRENT FOLDER NAME PASSES SINCE #4209 (owner's decision, November 17, 2026). Until then every
+# older name passed too (#886: 'workflow-davekjohn/' -> 'contributing-davekjohn/', and on through
+# 'dkj-policy/' and '.dkj/dkj-policy/'), so an unmigrated consumer's seams kept resolving. #4209 made the
+# folder rename a hard cut: a seam still naming an older folder is refused, and adopt-dkj-repo-workflow's
+# Part 1 moves the folder and repoints those seams. The two older names are asserted REFUSED, so a
+# reinstated tolerance fails a test rather than reading as a kindness.
+Assert-True (Test-ReturnsNormally $consumerDir '.dkj/dkj-repo-workflow/CHANGELOG.md' 'Get-ChangelogPath') `
     'consumer, in-folder path under the CURRENT folder name: passes'
-Assert-True (Test-ReturnsNormally $consumerDir 'dkj-policy' 'Get-ChangelogPath') `
-    'consumer, exact match "dkj-policy" with no trailing path: passes'
-Assert-True (Test-ReturnsNormally $consumerDir 'workflow-davekjohn/CHANGELOG.md' 'Get-ChangelogPath') `
-    'consumer, in-folder path under the PRE-RENAME folder name: still passes'
-Assert-True (Test-ReturnsNormally $consumerDir 'workflow-davekjohn' 'Get-ChangelogPath') `
-    'consumer, exact match "workflow-davekjohn" (PRE-RENAME) with no trailing path: still passes'
-Assert-True (Test-ReturnsNormally $consumerDir 'workflow-davekjohn\CHANGELOG.md' 'Get-ChangelogPath') `
+Assert-True (Test-ReturnsNormally $consumerDir '.dkj/dkj-repo-workflow' 'Get-ChangelogPath') `
+    'consumer, exact match ".dkj/dkj-repo-workflow" with no trailing path: passes'
+Assert-True (-not (Test-ReturnsNormally $consumerDir '.dkj/dkj-policy/CHANGELOG.md' 'Get-ChangelogPath')) `
+    'consumer, in-folder path under the PRE-#4209 folder name: refused since the hard cut'
+Assert-True (-not (Test-ReturnsNormally $consumerDir 'workflow-davekjohn' 'Get-ChangelogPath')) `
+    'consumer, exact match "workflow-davekjohn" (an older name) with no trailing path: refused since the hard cut'
+Assert-True (Test-ReturnsNormally $consumerDir '.dkj\dkj-repo-workflow\CHANGELOG.md' 'Get-ChangelogPath') `
     'consumer, backslash-separated in-folder path: passes (the \ -> / normalization works)'
 # THE SOURCE REPO IS NOT EXEMPT ANY MORE (issue #998, August 27, 2026), and this assert is the inversion
 # of the one that stood here. It read 'source repo, path outside the folder: still passes -- exempt
@@ -226,7 +227,7 @@ $r = Invoke-AssertChild $consumerDir 'README.md' 'Get-ChangelogPath'
 Assert-True ($r.Code -eq 1) 'consumer, path outside the folder: exits 1'
 Assert-True ($r.Flat -match 'Get-ChangelogPath') 'and the refusal names the seam'
 Assert-True ($r.Flat -match 'README\.md') 'and the offending path'
-Assert-True ($r.Flat -match 'dkj-policy') 'and the folder it should have resolved inside'
+Assert-True ($r.Flat -match 'dkj-repo-workflow') 'and the folder it should have resolved inside'
 Assert-True ($r.Flat -match "'CHANGELOG\.md'") `
     "and it names the one answer that WOULD have been accepted, so the reader is not left guessing"
 
@@ -287,19 +288,19 @@ Assert-True (@(Get-PreIsolationSeamPath -SeamName 'Get-SomethingNobodyDefined').
 # asserted here too, so "collapse them all for symmetry" fails a test rather than reading as tidying.
 Write-Host "seam-lib.ps1 -- the computed defaults: source vs consumer" -ForegroundColor Cyan
 
-# Both fixtures need the folder to exist, because Get-WorkflowFolderName prefers what is there.
-New-Item -ItemType Directory -Path (Join-Path $consumerDir 'dkj-policy') -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $sourceDir   'dkj-policy') -Force | Out-Null
+# Both fixtures carry the folder, as a real repo does; since #4209 the answer no longer depends on it.
+New-Item -ItemType Directory -Path (Join-Path $consumerDir '.dkj\dkj-repo-workflow') -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $sourceDir   '.dkj\dkj-repo-workflow') -Force | Out-Null
 
 $dfltChangelogSrc = Get-DefaultReleaseChangelogNotesRoot -RepoRoot $sourceDir
 $dfltChangelogCon = Get-DefaultReleaseChangelogNotesRoot -RepoRoot $consumerDir
-Assert-True ($dfltChangelogSrc -eq 'dkj-policy/releases/changelog') `
+Assert-True ($dfltChangelogSrc -eq '.dkj/dkj-repo-workflow/releases/changelog') `
     "the changelog notes root is inside the folder in a SOURCE repo: '$dfltChangelogSrc'"
 Assert-True ($dfltChangelogSrc -eq $dfltChangelogCon) `
     'and it is the SAME answer for a consumer -- #914 removed the source branch, it did not move it'
 
 $dfltGithubSrc = Get-DefaultReleaseGithubNotesRoot -RepoRoot $sourceDir
-Assert-True ($dfltGithubSrc -eq 'dkj-policy/releases/github') `
+Assert-True ($dfltGithubSrc -eq '.dkj/dkj-repo-workflow/releases/github') `
     "the GitHub-body root is inside the folder in a SOURCE repo too: '$dfltGithubSrc'"
 Assert-True ($dfltGithubSrc -eq (Get-DefaultReleaseGithubNotesRoot -RepoRoot $consumerDir)) `
     'and the same for a consumer, for the same reason'
@@ -316,9 +317,9 @@ Assert-True ($dfltGithubSrc -eq (Get-DefaultReleaseGithubNotesRoot -RepoRoot $co
 # that no branch remains, and a pair of literals would still pass if somebody reinstated a branch that
 # happened to compute the same two strings.
 foreach ($pair in @(
-        @{ Fn = 'Get-DefaultChangelogPath';             Want = 'dkj-policy/CHANGELOG.md' },
-        @{ Fn = 'Get-DefaultReleaseHistoryPath';        Want = 'dkj-policy/releases/history.md' },
-        @{ Fn = 'Get-DefaultReleaseInternalNotesRoot';  Want = 'dkj-policy/releases/internal' })) {
+        @{ Fn = 'Get-DefaultChangelogPath';             Want = '.dkj/dkj-repo-workflow/CHANGELOG.md' },
+        @{ Fn = 'Get-DefaultReleaseHistoryPath';        Want = '.dkj/dkj-repo-workflow/releases/history.md' },
+        @{ Fn = 'Get-DefaultReleaseInternalNotesRoot';  Want = '.dkj/dkj-repo-workflow/releases/internal' })) {
     $src = & $pair.Fn -RepoRoot $sourceDir
     $con = & $pair.Fn -RepoRoot $consumerDir
     Assert-True ($src -eq $pair.Want) "$($pair.Fn): a SOURCE repo gets the isolated answer '$src'"
@@ -333,7 +334,7 @@ foreach ($pair in @(
 # it arranges that folder by hand.
 Write-Host "seam-lib.ps1 -- Test-IsWorkflowSourceRepo means what its name says (issue #998)" -ForegroundColor Cyan
 Assert-True (Test-IsWorkflowSourceRepo -RepoRoot $sourceDir) `
-    'a marketplace publishing dkj-policy IS this workflow''s source'
+    'a marketplace publishing dkj-repo-workflow IS this workflow''s source'
 Assert-True (-not (Test-IsWorkflowSourceRepo -RepoRoot $consumerDir)) `
     'a repo with no marketplace at all is not'
 $otherDir = New-Fixture -Label 'publishes-other' -PublishesOther

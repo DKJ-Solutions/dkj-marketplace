@@ -79,7 +79,7 @@ $guardLib = Join-Path $PSScriptRoot '..\lib\source-repo-guard-lib.ps1'
 if (Test-Path -LiteralPath $guardLib -PathType Leaf) { . $guardLib; Assert-OwnCopy -ScriptPath $PSCommandPath }
 
 $Utf8 = New-Object System.Text.UTF8Encoding($false)
-$MarkerPrefix = '<!-- placed by dkj-policy scheduled-tasks: '
+$MarkerPrefix = '<!-- placed by dkj-repo-workflow scheduled-tasks: '
 
 function Read-TaskSource {
     # Splits a versioned task file into its frontmatter keys and its body. Returns $null when the file
@@ -107,7 +107,7 @@ function Get-PlacedSourceName {
     # The source task a placed SKILL.md names in its marker line, or '' when it carries none. Only a
     # marker on the LAST line counts, so a hand-written task that quotes the marker is not taken over.
     param([string]$Path)
-    $m = [regex]::Match([System.IO.File]::ReadAllText($Path, $Utf8), '\n<!-- placed by dkj-policy scheduled-tasks: (?<n>[a-z0-9-]+) -->\s*\z')
+    $m = [regex]::Match([System.IO.File]::ReadAllText($Path, $Utf8), '\n<!-- placed by dkj-repo-workflow scheduled-tasks: (?<n>[a-z0-9-]+) -->\s*\z')
     if ($m.Success) { return $m.Groups['n'].Value } else { return '' }
 }
 
@@ -115,7 +115,7 @@ function Get-PlacedSourceName {
 if (-not $TasksRoot) {
     foreach ($candidate in @(
             (Join-Path $PSScriptRoot '..\..\skills\scheduled-tasks\tasks'),                       # plugin mirror
-            (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\skills\scheduled-tasks\tasks'))) {   # source repo
+            (Join-Path $PSScriptRoot '..\..\plugins\dkj-repo-workflow\skills\scheduled-tasks\tasks'))) {   # source repo
         if (Test-Path -LiteralPath $candidate -PathType Container) { $TasksRoot = (Resolve-Path -LiteralPath $candidate).Path; break }
     }
 }

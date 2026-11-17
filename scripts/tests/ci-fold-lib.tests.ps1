@@ -292,7 +292,7 @@ Assert-Equal $true $v.Recovered 'a push-to-trunk workflow naming the fold script
 Assert-Equal 'fold-on-merge.yml' $v.Workflow '...and the verdict names it'
 Assert-Equal '' $v.Reason '...and states no reason, because there is nothing to explain'
 
-# THE NAME OF THE FILE IS NOT A CONDITION. A consumer may rename the runner; adopt-dkj-policy places it
+# THE NAME OF THE FILE IS NOT A CONDITION. A consumer may rename the runner; adopt-dkj-repo-workflow places it
 # under a name it does not promise forever. What cannot be renamed is the script it has to call.
 $renamed = Get-CiFoldRecoveryVerdict -Workflow @(New-Record 'trunk-housekeeping.yml' $foldRunner) -TrunkBranch 'main'
 Assert-Equal $true $renamed.Recovered 'a renamed runner still recovers the fold'
@@ -448,7 +448,7 @@ Assert-True (-not ($raw -cmatch '[^\x00-\x7F]')) 'ci-fold-lib.ps1 is pure ASCII'
 # Mirrored, so a consumer meets the same shape this repo does. shared-scripts.tests.ps1 owns the
 # byte-identity assert; this one is only that the registration exists at all.
 Assert-True ((Get-Content -LiteralPath (Join-Path $RepoRoot 'scripts\lib\shared-scripts-lib.ps1') -Raw) -match 'ci-fold-lib') 'ci-fold-lib is registered as a shared script'
-Assert-True (Test-Path -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\scripts\lib\ci-fold-lib.ps1')) '...and its plugin mirror is present'
+Assert-True (Test-Path -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\lib\ci-fold-lib.ps1')) '...and its plugin mirror is present'
 
 Write-Host ''
 Write-Host "Result: $script:pass pass, $script:fail fail." -ForegroundColor $(if ($script:fail -eq 0) { 'Green' } else { 'Red' })

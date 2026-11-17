@@ -74,7 +74,7 @@
     unguarded, exactly as it already takes merged-pr-lib.ps1 and native-capture-lib.ps1, with its own
     comment saying why neither went into sync-rules.ps1.
 
-    SO THIS FILE IS MIRRORED TWICE -- into dkj-policy for park-lib and fanout-lib, and into
+    SO THIS FILE IS MIRRORED TWICE -- into dkj-repo-workflow for park-lib and fanout-lib, and into
     dkj-subagents-shopify for sync-main -- on native-capture-lib's and merged-pr-lib's precedent. One file
     mirrored into both plugins rather than reached across from one to the other: they are separately
     versioned and separately installed, so a cross-plugin path is a dependency a version mismatch
@@ -347,7 +347,7 @@ function Get-GitEolOnlySplit {
         a rename moved a file -- neither is a line-ending artefact, so both go to Other without a diff.
         A diff that fails or cannot run also goes to Other: the safe direction is the existing verdict.
 
-        ITS OWN `& git` RATHER THAN Get-GitPorcelainStatus, because bwj-development's mirror of this file
+        ITS OWN `& git` RATHER THAN Get-GitPorcelainStatus, because dkj-repo-workflow-bwj's mirror of this file
         has no native-capture-lib beside it, and Invoke-NativeCapture is that lib's. The read keeps the
         two flags Get-GitPorcelainStatus documents (quotePath forced on, untracked per file) so both
         readings of one working copy list the same paths.

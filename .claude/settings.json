@@ -66,9 +66,9 @@
       "PowerShell(./scripts/release/cut-release.ps1*)",
       "PowerShell(./scripts/release/publish-to-business.ps1*)",
       "PowerShell(./scripts/release/ship-pr.ps1*)",
-      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File plugins/dkj-policy/apps/admin/pages/serve-general-pages.ps1:*)",
-      "PowerShell(powershell -NoProfile -ExecutionPolicy Bypass -File ./plugins/dkj-policy/apps/admin/pages/serve-general-pages.ps1:*)",
-      "PowerShell(./plugins/dkj-policy/apps/admin/pages/serve-general-pages.ps1:*)"
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File plugins/dkj-repo-workflow/apps/admin/pages/serve-general-pages.ps1:*)",
+      "PowerShell(powershell -NoProfile -ExecutionPolicy Bypass -File ./plugins/dkj-repo-workflow/apps/admin/pages/serve-general-pages.ps1:*)",
+      "PowerShell(./plugins/dkj-repo-workflow/apps/admin/pages/serve-general-pages.ps1:*)"
     ]
   },
   "statusLine": {
@@ -77,11 +77,11 @@
     "refreshInterval": 2
   },
   "enabledPlugins": {
-    "dkj-policy@dkj-marketplace": true,
+    "dkj-repo-workflow@dkj-marketplace": true,
     "dkj-subagents-alpha@dkj-marketplace": true,
     "dkj-subagents-developers@dkj-marketplace": true,
-    "bwj-development@dkj-marketplace": false,
-    "dkj-solutions@dkj-marketplace": true,
+    "dkj-repo-workflow-bwj@dkj-marketplace": false,
+    "dkj-repo-workflow-dkj@dkj-marketplace": true,
     "dkj-subagents-ecomm@dkj-marketplace": false,
     "dkj-subagents-lifehub@dkj-marketplace": false,
     "dkj-subagents-shopify@dkj-marketplace": false,

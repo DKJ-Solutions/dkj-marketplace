@@ -431,7 +431,7 @@ $title
 <!-- TODO (fill in after bootstrap): replace this placeholder with the repo lens of this
      specialist -- who he or she directs or serves in THIS repo and along which agreements:
      team and routing, pipelines and gatekeepers (safety rules, branch discipline,
-     and PR rule; the rules themselves are in the dkj-policy constitution the repo CLAUDE.md imports). The portable expertise remains in the
+     and PR rule; the rules themselves are in the dkj-repo-workflow constitution the repo CLAUDE.md imports). The portable expertise remains in the
      plugin persona; only repo-specific matters belong here. -->
 "@
     [System.IO.File]::WriteAllText($dest, ($content.TrimEnd() + "`n"), $Utf8NoBom)
@@ -754,7 +754,7 @@ function Get-RosterIgnoredIds {
 $repoConfigWorkflowPart = @'
 # --- The workflow plugin's half -------------------------------------------------------------------
 # These are read by the branch/release scripts (open-pr, fold-changelog, ship-pr, cut-release). They
-# are here because this repo enabled dkj-policy; without that plugin nothing
+# are here because this repo enabled dkj-repo-workflow; without that plugin nothing
 # reads them. Fill in the VUL-IN values below and remove the VUL-IN markers.
 
 # VUL-IN: GitHub repo hosting this repository (owner/name), e.g. 'DaveKJohn/my-repo'.
@@ -917,14 +917,14 @@ $repoConfigRosterPart = $repoConfigRosterPart.Replace('__SEAM_ROSTER_PATH__', $s
 # roster half is what every consumer needs, and writing a workflow half nobody reads is the defect being
 # repaired, so the safe direction is to leave it out and say so.
 # EVERY PRIOR NAME IS ACCEPTED WHILE CONSUMERS MIGRATE (#886, August 26, 2026; #1437, September 5, 2026).
-# The plugin was renamed 'workflow-davekjohn' -> 'contributing-davekjohn' -> 'dkj-policy', and this reader
+# The plugin was renamed 'workflow-davekjohn' -> 'contributing-davekjohn' -> 'dkj-repo-workflow', and this reader
 # is in the CORE team, which every
 # consumer enables and updates on its own schedule -- so a consumer can be on a core that knows the new
 # name while their settings still say an old one. Matching only the new name would then write the roster
 # half alone and say the pack is not enabled, which is the exact silent-degradation defect the paragraph
 # above describes as the thing being repaired. The old names are a migration allowance, not second
 # supported ids: each can go once every register entry has moved off it.
-$workflowPluginName  = 'dkj-policy'
+$workflowPluginName  = 'dkj-repo-workflow'
 $workflowPluginNames = @($workflowPluginName, 'contributing-davekjohn', 'workflow-davekjohn')
 # Which of those names this repo actually enabled, captured once: $hasWorkflowPack asks whether
 # there is one, and the settings proposal further down needs to know WHICH -- a consumer still on the
@@ -1221,8 +1221,8 @@ $settingsPath = Join-Path $claudeDir 'settings.json'
 # PowerShell rules take the same shape as Bash rules.
 #
 # AND THE WILDCARD IS NARROWED TO THE INSTALL PATH'S SHAPE, not the plugin name alone (inbound #2746).
-# The first form, '*dkj-policy*new-branch.ps1*', matched ANY path carrying the plugin's name --
-# including the dkj-policy/ folder that adopt-dkj-policy's Part 1 scaffolds in the consumer's own
+# The first form, '*dkj-repo-workflow*new-branch.ps1*', matched ANY path carrying the plugin's name --
+# including the dkj-policy/ folder that adopt-dkj-repo-workflow's Part 1 scaffolds in the consumer's own
 # root, so a PR placing a new-branch.ps1 there would run in the next session with no prompt and
 # -ExecutionPolicy Bypass. Every installed copy sits under '.claude/plugins/cache/' and runs from its
 # 'scripts/' folder, so those segments are literal too; a '*' between them rather than a separator
@@ -1283,7 +1283,7 @@ $allowJsonc
     @'
     // Empty on purpose: no workflow plugin is enabled here, so there is no scripted entry point to
     // permit -- this repo keeps the way of working it already had, and its commands are its own.
-    // The 'deny' half below still applies. Enable 'dkj-policy' and re-run
+    // The 'deny' half below still applies. Enable 'dkj-repo-workflow' and re-run
     // specialists-init, and this half is filled in with that workflow's entry points.
     "allow": [],
 '@

@@ -358,7 +358,7 @@ Assert-Equal $stepsBefore @(Get-BranchProgressFindings -Text $withProse).Count '
 # made to write and refresh them. Inbound #810 is what the arrangement still cost: the guidance was in the
 # file NEXT TO the one you write in. The merged document carries its own, so the reference is gone and this
 # assert is that it stays gone -- a directory nobody maintains is a directory that drifts.
-Assert-True (-not (Test-Path -LiteralPath (Join-Path $fixture 'dkj-policy\branch'))) 'the writer creates no branch/ directory -- the document carries its own guidance'
+Assert-True (-not (Test-Path -LiteralPath (Join-Path $fixture '.dkj\dkj-repo-workflow\branch'))) 'the writer creates no branch/ directory -- the document carries its own guidance'
 
 # AND THE GUIDANCE IS IN THE FILE A BRANCH ACTUALLY GETS, which is the half #810 reported. Asserted on one
 # of the blocks the report named rather than on "some comment exists": a document that kept the headings and
@@ -1771,7 +1771,7 @@ Assert-Equal 0 @(Get-BranchProgressFindings -Text $deployBlock).Count 'DEPLOY is
 $createBlock = if ($freshScaffold -match "(?ms)^$cycleSec\s+CREATE\s*`$(.*?)(?=^$cycleSec\s|\z)") { $Matches[1] } else { '' }
 Assert-True ($createBlock -match [regex]::Escape((Get-BranchFileWording).FirstStep)) 'the scaffolded step sits under CREATE'
 
-# CLOSING STEPS (#2655). bwj-development's preview question has to be the LAST step under CREATE so the
+# CLOSING STEPS (#2655). dkj-repo-workflow-bwj's preview question has to be the LAST step under CREATE so the
 # step-list gate holds the PR on it -- and nothing wrote it, so the gate held nothing. -ClosingSteps is what
 # writes it: open, after the first step, in the same phase, on a branch only.
 $previewQ = 'Is the change visible in the frontend / storefront?'
@@ -1874,7 +1874,7 @@ Assert-True ($bfp.OlderDeployment.EndsWith('branch-changelog.md')) 'and its entr
 # work right now: every branch open on the day of the rename has development-cycle.md and not
 # development.md. Asserted on the current folder, because that pair is the one that existed -- there was
 # never a workflow-davekjohn/development.md, the folder having been renamed the day before.
-Assert-True ($bfp.PriorNameFile.EndsWith('dkj-policy/development-cycle.md')) 'the pre-#963 filename is still named, under the CURRENT folder'
+Assert-True ($bfp.PriorNameFile.EndsWith('.dkj/dkj-repo-workflow/development-cycle.md')) 'the pre-#963 filename is still named, under the CURRENT folder'
 Assert-True ($bfp.PriorFolderFile.EndsWith('workflow-davekjohn/development-cycle.md')) 'and the pre-#886 folder still carries the pre-#963 filename, which is the pair that really existed'
 Assert-True (-not (@($bfp.PSObject.Properties.Value) -contains 'workflow-davekjohn/development.md')) 'and the pair that never existed is NOT in the table -- a name to read that nothing can have written'
 # THE PRE-#1437 FOLDER IS THE MIRROR IMAGE OF THAT LAST ONE (September 5, 2026). 'development.md' DID exist
@@ -2337,7 +2337,7 @@ $adminEntry = @(
     ''
     '### Pull Request'
     ''
-    'Plugins: dkj-policy'
+    'Plugins: dkj-repo-workflow'
     ''
     '[PR #1](https://example.test/1) - merged 2026-08-10'
 ) -join "`n"

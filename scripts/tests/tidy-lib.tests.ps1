@@ -301,7 +301,7 @@ Assert-Equal 'Lanes -- 1 acted on, 2 handed over, 3 left alone, of 6.' (Get-Tidy
 # --- 9. The extracted payload trees (#1812) -------------------------------------------------------
 Write-Host '-- 9. which extracted payload a record still points at --' -ForegroundColor Cyan
 
-$Tree = 'C:\Users\x\.claude\plugins\cache\mp\dkj-policy\4.33.0'
+$Tree = 'C:\Users\x\.claude\plugins\cache\mp\dkj-repo-workflow\4.33.0'
 
 $r = Get-PayloadTreeVerdict -Path $Tree -InstallPaths @($Tree)
 Assert-Equal 'loaded' $r.Class 'a tree an install record points at is the copy a session loads'
@@ -313,7 +313,7 @@ Assert-Equal 'loaded' $r.Class 'a trailing separator on the record side does not
 $r = Get-PayloadTreeVerdict -Path $Tree -InstallPaths @($Tree.ToUpperInvariant())
 Assert-Equal 'loaded' $r.Class 'and neither does a different casing'
 
-$r = Get-PayloadTreeVerdict -Path $Tree -InstallPaths @('C:\Users\x\.claude\plugins\cache\mp\dkj-policy\4.32.0')
+$r = Get-PayloadTreeVerdict -Path $Tree -InstallPaths @('C:\Users\x\.claude\plugins\cache\mp\dkj-repo-workflow\4.32.0')
 Assert-Equal 'ownerless' $r.Class 'a tree only a SIBLING version is pointed at is ownerless'
 Assert-True ($r.Reason -like '*has not marked it yet*') 'and an unmarked one says the sweep has not reached it'
 
@@ -349,8 +349,8 @@ Assert-Equal 1 @($r.HeldBy).Count 'and so is the live one'
 Write-Host '-- 9b. Get-AdminProcessVerdict --' -ForegroundColor Cyan
 
 $Cache = 'C:\Users\x\.claude\plugins\cache'
-$Live  = "$Cache\dkj-claude-plugins\dkj-policy\5.36.0"
-$Old   = "$Cache\dkj-claude-plugins\dkj-policy\5.34.0"
+$Live  = "$Cache\dkj-claude-plugins\dkj-repo-workflow\5.36.0"
+$Old   = "$Cache\dkj-claude-plugins\dkj-repo-workflow\5.34.0"
 $Procs = @{
     100 = @{ ParentId = 1;   Name = 'cmd.exe';        Ticks = 5000000000 }   # a session admin's cmd.exe
     200 = @{ ParentId = 300; Name = 'cmd.exe';        Ticks = 0 }            # a suite server's cmd.exe
@@ -368,7 +368,7 @@ $r = Get-AdminV "powershell -NoProfile -File `"$Live\apps\admin\pages\serve-gene
 Assert-Equal 'live' $r.Class 'the session admin from an installed version is live, though the hook that launched it has exited'
 $r = Get-AdminV "powershell -NoProfile -File `"$Old\apps\admin\pages\serve-general-pages.ps1`" -Port 4890" 100
 Assert-Equal 'stale' $r.Class 'an admin from a version no install record points at is stale'
-Assert-Equal 'plugin dkj-policy 5.34.0' $r.Where 'and the version is named'
+Assert-Equal 'plugin dkj-repo-workflow 5.34.0' $r.Where 'and the version is named'
 
 $r = Get-AdminV "powershell -File `"$Live\apps\admin\pages\dev-preview-watch.ps1`" -ProcessId 100 -StartTicks 5000000000" 1
 Assert-Equal 'live' $r.Class 'a watcher whose server is running is live'
@@ -376,19 +376,19 @@ $r = Get-AdminV "powershell -File `"$Live\apps\admin\pages\dev-preview-watch.ps1
 Assert-Equal 'orphan' $r.Class 'a watcher whose server pid now belongs to another process is an orphan'
 $r = Get-AdminV "powershell -File `"$Old\apps\admin\pages\dev-preview-watch.ps1`" -ProcessId 555 -StartTicks 1" 1
 Assert-Equal 'orphan' $r.Class 'a watcher whose server has ended is an orphan (the 5.34.0 case) -- ahead of stale'
-$r = Get-AdminV "powershell -File `"C:\r\plugins\dkj-policy\apps\admin\pages\dev-preview-watch.ps1`" -ProcessId 100 -StartTicks 5000000000 -OwnerId 777 -OwnerStartTicks 3" 1
+$r = Get-AdminV "powershell -File `"C:\r\plugins\dkj-repo-workflow\apps\admin\pages\dev-preview-watch.ps1`" -ProcessId 100 -StartTicks 5000000000 -OwnerId 777 -OwnerStartTicks 3" 1
 Assert-Equal 'orphan' $r.Class 'a watcher whose owner run has ended is an orphan (#3625)'
 
-$r = Get-AdminV 'powershell -File "C:\r\plugins\dkj-policy\apps\admin\pages\serve-general-pages.ps1" -Port 50098' 200
+$r = Get-AdminV 'powershell -File "C:\r\plugins\dkj-repo-workflow\apps\admin\pages\serve-general-pages.ps1" -Port 50098' 200
 Assert-Equal 'live' $r.Class 'a working-tree server whose suite launched it directly, and still runs, is live'
-$r = Get-AdminV 'powershell -File "C:\r\plugins\dkj-policy\apps\admin\pages\serve-general-pages.ps1" -Port 50099' 400
+$r = Get-AdminV 'powershell -File "C:\r\plugins\dkj-repo-workflow\apps\admin\pages\serve-general-pages.ps1" -Port 50099' 400
 Assert-Equal 'orphan' $r.Class 'a working-tree server whose launcher has ended, and no watcher, is an orphan'
 $r = Get-AdminV 'powershell -File "C:\r\x\serve-general-pages.ps1"' 4242
 Assert-Equal 'orphan' $r.Class 'and so is one whose parent is gone outright'
 
 # THE REAL SHAPE OF A SUITE'S SERVER (Victor's review): started THROUGH the hook, so its cmd.exe's parent --
 # the hook -- has exited while the suite still runs. Its watcher, tied to the suite, decides.
-$srv = 'powershell -NoProfile -ExecutionPolicy Bypass -File "C:\r\plugins\dkj-policy\apps\admin\pages\serve-general-pages.ps1" -Port 50100'
+$srv = 'powershell -NoProfile -ExecutionPolicy Bypass -File "C:\r\plugins\dkj-repo-workflow\apps\admin\pages\serve-general-pages.ps1" -Port 50100'
 $r = Get-AdminProcessVerdict -CommandLine $srv -ParentId 400 -Processes $Procs -InstallPaths @($Live) -CacheRoot $Cache -Watchers @{ 400 = 'live' }
 Assert-Equal 'live' $r.Class 'a hook-started suite server whose watcher is live is live, though its launcher has exited'
 $r = Get-AdminProcessVerdict -CommandLine $srv -ParentId 400 -Processes $Procs -InstallPaths @($Live) -CacheRoot $Cache -Watchers @{ 400 = 'orphan' }

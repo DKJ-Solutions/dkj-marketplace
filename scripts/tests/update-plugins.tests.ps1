@@ -380,7 +380,7 @@ function Invoke-UP {
 }
 
 $ID1 = 'dkj-subagents-alpha@ccs-fixture'
-$ID2 = 'dkj-policy@ccs-fixture'
+$ID2 = 'dkj-repo-workflow@ccs-fixture'
 
 try {
     Write-Host "== update-plugins.tests: scripts/task/update-plugins.ps1 ==" -ForegroundColor Cyan
@@ -742,8 +742,8 @@ try {
     Set-HereRecords -Case $c -Ids @($ID1, $old)
     $r = Invoke-UP -Repo $c.Repo -UserHome $c.Home -BinDir $c.Bin -ReceiptPath $c.Receipt
     Assert-CleanExit -Run $r -Label '24: exit 0 -- a retired id is not a failure'
-    Assert-Has   $r "$old -- renamed to bwj-development@ccs-fixture" '24: the retired id is named with its successor'
-    Assert-Has   $r 'claude plugin install bwj-development@ccs-fixture --scope project' '24: and the repair is the successor install'
+    Assert-Has   $r "$old -- renamed to dkj-repo-workflow-bwj@ccs-fixture" '24: the retired id is named with its successor'
+    Assert-Has   $r 'claude plugin install dkj-repo-workflow-bwj@ccs-fixture --scope project' '24: and the repair is the successor install'
     . (Join-Path $PSScriptRoot '..\lib\claude-md-import-lib.ps1')
     Assert-Has   $r (Get-RetiredExtensionRepair -Name 'dkj-policy-bwj' -Marketplace 'ccs-fixture') '24: and it is the lib''s one repair sentence (#3056)'
     Assert-Lacks $r "CLAUDE-SHIM-CALLED plugin update $old" '24: the retired id is never handed to the CLI'

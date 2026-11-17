@@ -936,7 +936,7 @@ If it is a checkout you still want, move it off the trunk yourself (git -C "$tru
 AND THERE IS A THIRD WAY OUT THIS REPO DOES NOT HAVE (issue #2087). Where a CI runner folds off a push
 to the trunk, this refusal does not fire at all: the merge happens and the runner folds. Here that read
 came back empty -- $($ciFold.Reason) -- so the fold is still this session's, and it needs the trunk.
-adopt-dkj-policy's CI floor places that runner.
+adopt-dkj-repo-workflow's CI floor places that runner.
 "@
     exit 1
 }
@@ -1418,7 +1418,7 @@ function Test-BranchEntryAlreadyFolded {
     #>
     param([Parameter(Mandatory)][string]$Branch)
     try {
-        # The folder is read off this tree (#3870): '.dkj/dkj-policy/' once a repo has moved, 'dkj-policy/' before.
+        # The folder is read off this tree (#3870): '.dkj/dkj-repo-workflow/' only since #4209's hard cut.
         $doc = [string](Get-BranchFilePaths -Branch $Branch -RepoRoot $repoRoot).File
         $onHead = (Invoke-NativeCapture -FilePath 'git' -DiscardStderr -Arguments @('cat-file', '-e', "HEAD:$doc")).ExitCode -eq 0
         if (-not $onHead) { return $false }
@@ -2656,7 +2656,7 @@ while ($true) {
     # moment it STARTS. A required workflow that has not yet created its check run is absent from that
     # set rather than pending in it, so a fast non-required check reporting first satisfies the watch
     # and it exits 0 with the required one still to come. Measured September 7, 2026 in a consumer
-    # (`dkj-policy` 4.31.0, BWJ-Development/smartwatchbanden PR #529): `.github/dependabot.yml` passed in
+    # (`dkj-repo-workflow` 4.31.0, BWJ-Development/smartwatchbanden PR #529): `.github/dependabot.yml` passed in
     # 1s, this step said "CI green" after 5s, and the merge came back `the base branch policy prohibits
     # the merge` while required `Shopify theme check` (2m1s) and `branch-entry` (31s) were both pending.
     # A plain `gh pr merge --merge` succeeded on the first try once they finished -- nothing was broken
@@ -3582,7 +3582,7 @@ $merge.Output | ForEach-Object { Write-Host $_ }
 # A NON-ZERO EXIT IS NOT PROOF THE MERGE DID NOT LAND (inbound #1916) -- the same doctrine claim-issue
 # already carries for its own write (its SKILL.md, "Every gh call is bounded"): a write that reached
 # the network and never reported back may have landed anyway. Measured in a consumer
-# (BWJ-Development/smartwatchbanden, dkj-policy 5.1.0): this exact call answered 'non-200 OK status
+# (BWJ-Development/smartwatchbanden, dkj-repo-workflow 5.1.0): this exact call answered 'non-200 OK status
 # code: 502 Bad Gateway', and PR #591 read back MERGED moments later -- with the fold never run,
 # because this line reported it as failed and stopped. Test-GhMutationTransient (pr-issues-lib.ps1)
 # tells a 5xx/transport failure like that apart from a 4xx, which is a real refusal from GitHub and
@@ -3724,7 +3724,7 @@ PR that is already queued is a no-op gh reports on its own terms.
     #
     # AND IT IS THE SAME READ STEP 0a MAKES, SINCE #2087, rather than a second one that can disagree with
     # it. This was `Test-Path` on the literal name .github/workflows/fold-on-merge.yml, which answers a
-    # narrower question than the one being asked: a consumer may rename that runner, and adopt-dkj-policy
+    # narrower question than the one being asked: a consumer may rename that runner, and adopt-dkj-repo-workflow
     # places it under that name without promising it forever, so the name-only test reads "nothing folds
     # here" on a repo that folds perfectly well. What cannot be renamed is the SCRIPT it has to call and
     # the trigger it has to carry, which is what Get-CiFoldRecoveryVerdict matches on. The verdict is
@@ -3739,7 +3739,7 @@ PR that is already queued is a no-op gh reports on its own terms.
         Write-Host '  Fold it by hand once the merge has landed:' -ForegroundColor Yellow
         Write-Host "    fold-changelog-entry.ps1 -Branch $($branchPaste.Token) -Commit -Push" -ForegroundColor Yellow
         if ($branchPaste.Note) { Write-Host $branchPaste.Note -ForegroundColor Yellow }
-        Write-Host '  And put the runner in place so the next ship does not need this -- run the adopt-dkj-policy' -ForegroundColor Yellow
+        Write-Host '  And put the runner in place so the next ship does not need this -- run the adopt-dkj-repo-workflow' -ForegroundColor Yellow
         Write-Host '  skill (Part 3, adopt-ci-floor.ps1), which places it and the rest of the CI floor.' -ForegroundColor Yellow
     }
     Write-Host "  Watch it land:  gh pr view $pr --repo $repo" -ForegroundColor DarkGray

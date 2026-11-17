@@ -19,17 +19,17 @@
                                    "OnInvoke":  2600,
                                    "Version":  "4.17.0"
                                },
-    "dkj-policy/adopt-config":  {
+    "dkj-repo-workflow/adopt-config":  {
                                             "AlwaysOn":  150,
                                             "OnInvoke":  1600,
                                             "Version":  "4.17.0"
                                         },
-    "dkj-policy/adopt-workflow-folder":  {
+    "dkj-repo-workflow/adopt-workflow-folder":  {
                                                      "AlwaysOn":  180,
                                                      "OnInvoke":  2900,
                                                      "Version":  "4.17.0"
                                                  },
-    "dkj-policy/check-branch-entry":  {
+    "dkj-repo-workflow/check-branch-entry":  {
                                                   "AlwaysOn":  170,
                                                   "OnInvoke":  1500,
                                                   "Version":  "4.17.0"
@@ -64,12 +64,12 @@
                                     "OnInvoke":  2400,
                                     "Version":  "4.17.0"
                                 },
-    "dkj-policy/release-notes-page":  {
+    "dkj-repo-workflow/release-notes-page":  {
                                                   "AlwaysOn":  240,
                                                   "OnInvoke":  3100,
                                                   "Version":  "4.17.0"
                                               },
-    "dkj-policy/ship-pr":  {
+    "dkj-repo-workflow/ship-pr":  {
                                        "AlwaysOn":  220,
                                        "OnInvoke":  7100,
                                        "Version":  "4.17.0"

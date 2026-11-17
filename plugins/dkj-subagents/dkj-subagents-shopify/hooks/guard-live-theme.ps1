@@ -268,7 +268,7 @@ $TEXT_TOOLS = @(
 # copy: two copies of one behaviour, free to drift, with the copy that drifts being whichever nobody
 # looks at.
 #
-# THE LIB IS MIRRORED INTO THIS PLUGIN rather than reached for in another one. dkj-policy and
+# THE LIB IS MIRRORED INTO THIS PLUGIN rather than reached for in another one. dkj-repo-workflow and
 # dkj-subagents-shopify are separately versioned and separately installed, and a Shopify consumer may
 # run this team without the workflow plugin -- so the registry carries a SECOND mirror of one source,
 # 'command-guard-lib-shopify' in Get-SharedScriptPairs, on native-capture-lib-shopify's precedent.

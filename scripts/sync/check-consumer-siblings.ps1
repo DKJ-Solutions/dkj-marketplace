@@ -14,7 +14,7 @@
     WHY IT IS WORTH A SCRIPT, measured 2026-09-11 in the two BWJ stores (#1869): of the 48 tooling
     paths they share, 47 have diverged, and the ONE that has not is a verbatim template this plugin
     ships. The load-bearing instance is scripts/task/prune-merged.ps1 -- inbound #815 asked for it
-    centrally, dkj-policy 4.21.0 shipped it, one store replaced its copy with a forwarder and the
+    centrally, dkj-repo-workflow 4.21.0 shipped it, one store replaced its copy with a forwarder and the
     other still carried its own 120-line version three weeks later. The inbound route worked; nothing
     propagated the result to the second consumer.
 

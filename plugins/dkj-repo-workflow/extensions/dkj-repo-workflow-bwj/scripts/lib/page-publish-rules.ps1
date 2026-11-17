@@ -1,0 +1,594 @@
+<#
+.SYNOPSIS
+    The decisions behind publishing a page to the shared BWJ pages worker -- which kinds exist, what
+    a path token is, which KV key a page lands on, which URL a colleague receives, and which of the
+    seam answers a store got wrong. Pure: no network, no filesystem, no repo-config.
+
+.DESCRIPTION
+    Dot-sourced by publish-page.ps1 beside it. Split out for the same reason sync-rules.ps1 and
+    theme-archive-rules.ps1 are: the script around these is all HTTP against somebody's Cloudflare
+    account, which a suite cannot reach, while the parts that can be WRONG are pure functions over a
+    kind, a token, four seam values and a byte count.
+
+    ISSUE #1977. The two BWJ stores must publish through ONE worker. dkj-repo-workflow's own worker cannot
+    be that one: build-release-notes-page.ps1 -Worker writes the page into the bundle as a literal
+    and `wrangler deploy` replaces the whole script, so whichever store deploys last erases the
+    other store's page while both runs report success. The shared worker carries no content -- the
+    pages sit in KV, one key per (kind, token) -- and these functions are the half of that design
+    that decides.
+
+    WHAT IS MECHANISM HERE AND WHAT IS DATA IN THE STORE. Everything in this file is mechanism and
+    is identical for both stores. The four seam values are the ACCOUNT's, and they are identical in
+    both stores too -- one account, one namespace, one worker, one origin. What actually differs per
+    store, and the only thing that does, is the PATH TOKEN per page: the token is what makes one
+    store's URL not the other store's URL, and it is why two stores can share a namespace without
+    being able to read or overwrite each other's pages by accident.
+
+    SO WHY IS THE ACCOUNT A SEAM AT ALL, if both answers are the same? Because this plugin ships from
+    a PUBLIC repository. An account id, a namespace id and a workers.dev origin written as literals
+    here would be published to everyone who can read the marketplace; answered in each private store
+    repo's own scripts/repo-config.ps1, they are not. The seam is a confidentiality boundary rather
+    than a configurability one, which is the opposite of Get-StorefrontMarkets one folder over.
+
+    THE API TOKEN IS NOT A SEAM AND MUST NEVER BECOME ONE. It is read from the environment
+    (CLOUDFLARE_API_TOKEN) by the script, never from a file in a repo and never from repo-config.
+    A seam answer is committed by construction, and a committed write token to a Cloudflare account
+    is a different class of thing from an id that only identifies one.
+
+    EVERY VALIDATOR REFUSES BY NAME rather than correcting or defaulting. A kind this worker does
+    not route, a token that is not 32 hex, an account id that is not an id: each of those produces a
+    page nobody can reach, or an API call against a namespace nobody meant, and both of those fail
+    in the same shape as success -- a green run and a 404 somebody else finds.
+
+    Pure ASCII (repo convention for .ps1).
+#>
+
+# The kinds the shared worker routes. KEPT IN STEP WITH worker/bwj-pages-worker.js BY HAND, and that
+# is a real seam between two languages: a kind added here and not there publishes to a key the
+# worker will never look up, which reads as a successful publish and a 404. The suite asserts the
+# two lists agree, which is the only thing that can hold them together.
+$script:BwjPageKinds = @(
+    [pscustomobject]@{
+        Kind  = 'notes'
+        What  = "the release notes, built by dkj-repo-workflow's build-release-notes-page.ps1 (without -Worker)"
+        Paged = $true
+    },
+    [pscustomobject]@{
+        Kind  = 'backlog'
+        What  = 'the minor backlog -- the open issues carrying the reach label, with their Asana tasks'
+        Paged = $false
+    }
+)
+
+# The address an admin serves the release notes at, and so the one the builder's links carry by default
+# (its own -LinkBase). publish-page maps it onto the worker's route -- see Convert-BwjPageLinks.
+$script:BwjNotesLinkBase = '/release-notes'
+
+# A release page's name, the one shape every check here uses: 'v' and a full x.y.z. The worker's ROUTE
+# carries the same digits, plus the short 'v2.39' it reads as '.0' -- a copy in another language, held
+# to this one by the suite. Anchor it with \z, never $, which also matches before a trailing newline.
+$script:BwjReleasePattern = 'v\d{1,6}\.\d{1,6}\.\d{1,6}'
+
+# Cloudflare's own value ceiling for a KV entry. Stated rather than discovered: the release-notes
+# page measured 352 KB when it was last built in the source repo, so a page that approaches this is
+# a page that has stopped being a page, and saying so before the upload beats a 413 from the API.
+$script:BwjPageMaxBytes = 25MB
+
+function Get-BwjPageKinds {
+    <# The kinds the shared worker routes, each with what it carries. #>
+    return $script:BwjPageKinds
+}
+
+function Get-BwjPageMaxBytes {
+    <# Cloudflare's ceiling on a single KV value, in bytes. #>
+    return $script:BwjPageMaxBytes
+}
+
+function Test-BwjPageKind {
+    <# Is this one of the kinds the shared worker routes? #>
+    param([string]$Kind)
+    if ([string]::IsNullOrWhiteSpace($Kind)) { return $false }
+    return ($script:BwjPageKinds.Kind -ccontains $Kind)
+}
+
+function Test-BwjPageKindPaged {
+    <#
+        Is this kind a SET of pages -- an index plus one page per release -- rather than one page (#3500)?
+        KEPT IN STEP WITH the worker's PAGED Set by hand, and the suite asserts the two agree.
+    #>
+    param([string]$Kind)
+    return [bool](@($script:BwjPageKinds | Where-Object { $_.Kind -ceq $Kind -and $_.Paged }).Count)
+}
+
+function Test-BwjPageRelease {
+    <#
+        Is this a release page's name -- 'v' and a full x.y.z? The worker's route also takes 'v2.39' and
+        reads it as 'v2.39.0', but a key is only ever written under the full version, because that is the
+        address the builder links to.
+    #>
+    param([string]$Release)
+    if ([string]::IsNullOrWhiteSpace($Release)) { return $false }
+    return ($Release -cmatch ('^' + $script:BwjReleasePattern + '\z'))
+}
+
+function Get-BwjNotesLinkBase {
+    <# The address the release-notes builder links to by default, '/release-notes'. #>
+    return $script:BwjNotesLinkBase
+}
+
+function Test-BwjPageToken {
+    <#
+        Is this a path token? Exactly 32 LOWERCASE hex characters -- the same shape dkj-repo-workflow's
+        worker uses, and the same shape bwj-pages-worker.js matches in its route. Uppercase is
+        refused rather than folded: the worker's regex is lowercase-only, so a token that differs
+        only in case builds a key nothing will ever look up.
+    #>
+    param([string]$Token)
+    if ([string]::IsNullOrWhiteSpace($Token)) { return $false }
+    return ($Token -cmatch '^[0-9a-f]{32}$')
+}
+
+function New-BwjPageToken {
+    <#
+        A fresh path token. DELIBERATELY CALLED FROM ONE PLACE ONLY -- publish-page.ps1 -InitToken:
+        a token invented on the fly does not mean "a new path", it means every link already sent
+        now 404s, while the publish reports success. Same doctrine as dkj-repo-workflow's page token.
+    #>
+    return [guid]::NewGuid().ToString('N')
+}
+
+function Get-BwjPageTokenFileName {
+    <# The file a kind's path token lives in, inside the page directory. #>
+    param([Parameter(Mandatory)][string]$Kind)
+    if (-not (Test-BwjPageKind -Kind $Kind)) {
+        throw "'$Kind' is not a kind this worker routes."
+    }
+    return "page-token-$Kind.txt"
+}
+
+function Find-BwjStrayPageToken {
+    <#
+        Every token file for THIS kind that sits somewhere in the tree other than where this run
+        expects it.
+
+        WHY IT LOOKS AT ALL -- and the answer is not general caution, it is one measured failure that
+        this design is exposed to by construction. The page directory is derived from the note root
+        and is gitignored: two good decisions that combine into one hazard. Rename or repoint the
+        folder holding the release documents and every TRACKED file travels with it, while the token
+        stays behind in a folder nothing points at any more -- `git mv` cannot see an ignored sibling,
+        so nothing reports the miss on the day it happens. What is left reads like rename debris, one
+        Remove-Item away from 404ing every link already sent. dkj-repo-workflow's own page learned this as
+        issue #1444, after its contributing-davekjohn/ -> dkj-policy/ rename left exactly that orphan.
+
+        AND IT IS WHAT MAKES -InitToken's REFUSAL MEAN WHAT IT SAYS. That guard reads the expected
+        path and nothing else, so after a move it finds no token and mints a second one happily --
+        the one act the whole design exists to prevent. "Is there a token SOMEWHERE" is the question
+        worth asking; "is there a token HERE" was only ever a cheap approximation of it.
+
+        A STORE REPO COMMITS ITS TOKENS, which weakens the hazard here and does not remove it. The
+        tracked copy survives a machine, so a moved folder is recoverable from git rather than gone --
+        but a run that mints a second token beside the first still 404s the live link, and recovering
+        afterwards means knowing which of the two was live. That is the same repair either way, and
+        the refusal is what makes it unnecessary.
+
+        SCOPED TO ONE KIND, deliberately. Every kind keeps its token in the same directory, so a
+        search over `page-token-*.txt` would report a sibling kind's perfectly correct token as a
+        stray -- on the very run that is minting the second kind for the first time.
+
+        .git is skipped: nothing writes a token there, and walking it is the expensive half of the
+        search. Cheap enough to sit on the two failure paths because that is the only place it runs.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Root,
+        [Parameter(Mandatory)][string]$Kind,
+        [Parameter(Mandatory)][string]$ExpectedPath
+    )
+    if (-not (Test-Path -LiteralPath $Root)) { return @() }
+    $hits = Get-ChildItem -LiteralPath $Root -Recurse -File -Filter (Get-BwjPageTokenFileName -Kind $Kind) -Force -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -ne $ExpectedPath -and $_.FullName -notlike '*\.git\*' }
+    return @($hits | ForEach-Object { $_.FullName })
+}
+
+function Get-BwjPageKvKey {
+    <#
+        The KV key a page lands on: '<kind>:<token>'. Both halves are validated first, because this
+        string is what the worker looks up and what the API call addresses -- an unvalidated one is
+        a key nobody reads and, in the API URL, a path segment somebody else chose.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Kind,
+        [Parameter(Mandatory)][string]$Token,
+        # One release's own page in a paged kind (#3500): the key becomes '<kind>:<token>/v<x.y.z>', the
+        # path the worker reads it under.
+        [string]$Release
+    )
+    if (-not (Test-BwjPageKind -Kind $Kind)) {
+        throw ("'$Kind' is not a kind this worker routes. The kinds are: " +
+               ($script:BwjPageKinds.Kind -join ', ') + ". Adding one means adding it here AND in " +
+               "worker/bwj-pages-worker.js, then redeploying -- a kind known to only one of the two " +
+               "publishes successfully to a key nothing ever serves.")
+    }
+    if (-not (Test-BwjPageToken -Token $Token)) {
+        throw ("The path token is not 32 lowercase hex characters: '$Token'. The worker's route " +
+               "matches nothing else, so a token of any other shape is a page no link can reach.")
+    }
+    if (-not $Release) { return "${Kind}:${Token}" }
+    if (-not (Test-BwjPageKindPaged -Kind $Kind)) {
+        throw "'$Kind' is one page, not a set: the worker serves no '/$Release' under it."
+    }
+    if (-not (Test-BwjPageRelease -Release $Release)) {
+        throw "'$Release' is not a release page's name -- 'v' and a full x.y.z, the address the builder links to."
+    }
+    return "${Kind}:${Token}/${Release}"
+}
+
+function Convert-BwjPageLinks {
+    <#
+        Pure: a built release-notes page with its links moved from the address an admin serves it at onto
+        the worker's route -- href="/release-notes" and href="/release-notes/v<x>" become
+        href="/notes/<token>" and href="/notes/<token>/v<x>" (#3500).
+
+        WHY HERE AND NOT IN THE BUILDER. The builder already takes -LinkBase, but its output directory is
+        the one Admin serves '/release-notes' from, and Admin rebuilds it only when an input is newer.
+        A build for the worker's address would leave Admin's cards pointing at '/notes/<token>' until the
+        next release. So the page is built once, for Admin, and the publish maps the one address it
+        knows onto the route it holds the token for. Only the attribute form the builder writes is
+        touched; a note body's own links are rendered from data on the client and never carry it.
+    #>
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Html,
+        [Parameter(Mandatory)][string]$FromBase,
+        [Parameter(Mandatory)][string]$ToBase
+    )
+    $from = [regex]::Escape($FromBase.TrimEnd('/'))
+    $to   = $ToBase.TrimEnd('/')
+    return [regex]::Replace($Html, ('href="' + $from + '(?=["/])'), { param($m) 'href="' + $to })
+}
+
+function Find-BwjDeadPageLinks {
+    <#
+        Pure: every site-absolute href in a page that the worker would NOT serve once this set is
+        published -- anything outside the route, or a release page the set does not carry. Empty means
+        every card leads somewhere (#3500, where every card led to a 404 while the publish reported
+        success). A link to another site, a fragment or a relative link is not this function's business.
+    #>
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Html,
+        [Parameter(Mandatory)][string]$Route,
+        [AllowEmptyCollection()][string[]]$Releases = @()
+    )
+    $route = $Route.TrimEnd('/')
+    $dead = New-Object System.Collections.Generic.List[string]
+    foreach ($m in [regex]::Matches($Html, 'href="(/(?!/)[^"]*)"')) {
+        $href = $m.Groups[1].Value.TrimEnd('/')
+        if ($href -ceq $route) { continue }
+        $page = [regex]::Match($href, '^' + [regex]::Escape($route) + '/(' + $script:BwjReleasePattern + ')\z')
+        if ($page.Success -and ($Releases -ccontains $page.Groups[1].Value)) { continue }
+        if (-not $dead.Contains($m.Groups[1].Value)) { $dead.Add($m.Groups[1].Value) }
+    }
+    # Unrolled, so an empty answer is no output at all: wrap the call in @( ).
+    return $dead.ToArray()
+}
+
+function Get-BwjPageUrl {
+    <# The link a colleague receives: <base>/<kind>/<token>. #>
+    param(
+        [Parameter(Mandatory)][string]$BaseUrl,
+        [Parameter(Mandatory)][string]$Kind,
+        [Parameter(Mandatory)][string]$Token
+    )
+    $null = Get-BwjPageKvKey -Kind $Kind -Token $Token
+    return ($BaseUrl.TrimEnd('/') + "/$Kind/$Token")
+}
+
+function Format-BwjPageCloseOut {
+    <#
+        The close-out line a verified publish prints, so the cut's receipt carries the link without
+        anybody looking it up (#2913, asked at smartwatchbanden v2.47.0, October 12, 2026). The receipt
+        prints itself from the script that ends the chain (#1884), and this is the one script that holds
+        the URL at the moment it has been proven to serve the page. '' for a kind that is no cut's
+        receipt: the backlog page is published on its own schedule.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Kind,
+        [Parameter(Mandatory)][string]$Url
+    )
+    if ($Kind -ne 'notes') { return '' }
+    return "Close-out: the cut's receipt ends with this link -- the release-notes page that goes to management: $Url"
+}
+
+function Get-BwjPageKvApiUrl {
+    <#
+        Cloudflare's KV value endpoint for one key. The key is escaped even though every key this
+        lib builds is already [a-z]+:[0-9a-f]{32} -- escaping what is provably safe costs nothing,
+        and the next caller to hand this an unvalidated key is the one it is written for.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$AccountId,
+        [Parameter(Mandatory)][string]$NamespaceId,
+        [Parameter(Mandatory)][string]$Key
+    )
+    return ("https://api.cloudflare.com/client/v4/accounts/$AccountId/storage/kv/namespaces/" +
+            "$NamespaceId/values/" + [uri]::EscapeDataString($Key))
+}
+
+function Test-BwjWranglerSession {
+    <#
+        Does `wrangler whoami` show a login that can publish to THIS account? $true only when it exited
+        0 AND its output names $AccountId (issue #2569).
+
+        THE EXIT CODE ALONE PROVES NOTHING. Measured on wrangler 4.142.0: whoami exits 0 whether or not
+        anybody is logged in, and a login is to a user who may hold several accounts. So the one
+        answer that settles it is the account id the seam names, printed in whoami's own account
+        table. A login to another account is a route to the wrong place, and it is refused here.
+    #>
+    param(
+        [AllowNull()][AllowEmptyString()][string]$WhoamiText,
+        [AllowNull()]$ExitCode,
+        [Parameter(Mandatory)][string]$AccountId
+    )
+    if ($null -eq $ExitCode -or [int]$ExitCode -ne 0) { return $false }
+    if ([string]::IsNullOrEmpty($WhoamiText)) { return $false }
+    if ($AccountId -cnotmatch '^[0-9a-f]{32}$') { return $false }
+    # Bounded, so the id inside a longer hex run is not a match.
+    return ($WhoamiText.ToLowerInvariant() -match ('(?<![0-9a-f])' + $AccountId + '(?![0-9a-f])'))
+}
+
+function Get-BwjPageWranglerArgs {
+    <#
+        The arguments after `npx --no-install` for one KV write or read through wrangler, the route
+        publish-page takes when CLOUDFLARE_API_TOKEN is absent and a wrangler login answers for the
+        account (issue #2569). 'put' writes the file at $Path, and 'get' reads the value back as RAW
+        BYTES: no --text, because --text decodes it as UTF-8 and the proof is a SHA-256 over the
+        bytes. Measured on 4.142.0 against a live notes page (September 28, 2026): stdout is the value
+        alone -- it opens '<!doctype html>', carries no banner, and ends '</html>\n' exactly as the
+        page template does, so no newline is appended either.
+
+        --remote IS ALWAYS PASSED. `kv key put/get --help` (4.142.0) lists --local and --remote with no
+        default shown, so the target is named rather than left to a version's default. A local write
+        would read back identical bytes and publish nothing, so the proof would pass on a page no URL
+        serves.
+    #>
+    param(
+        # 'delete' removes one key, for -RetireToken (#3506).
+        [Parameter(Mandatory)][ValidateSet('put', 'get', 'delete')][string]$Action,
+        [Parameter(Mandatory)][string]$Key,
+        [Parameter(Mandatory)][string]$NamespaceId,
+        [string]$Path
+    )
+    if ($Key -cnotmatch ('^[a-z]+:[0-9a-f]{32}(/' + $script:BwjReleasePattern + ')?\z')) { throw "Not a page key this lib builds: '$Key'." }
+    if ($NamespaceId -cnotmatch '^[0-9a-f]{32}$') { throw "Not a Cloudflare id: '$NamespaceId'." }
+    $a = @('wrangler', 'kv', 'key', $Action, $Key)
+    if ($Action -eq 'put') {
+        if ([string]::IsNullOrWhiteSpace($Path)) { throw "A 'put' needs the file to upload." }
+        $a += @('--path', $Path)
+    }
+    return @($a + @('--namespace-id', $NamespaceId, '--remote'))
+}
+
+# --- Retiring a token (#3506) ------------------------------------------------------------------------
+# A leaked link is only closed when the KEYS under its token are gone. A fresh token alone changes the
+# URL the next publish prints, and every '<kind>:<oldtoken>' key -- with a paged kind, every
+# '<kind>:<oldtoken>/v<x.y.z>' too -- goes on serving to whoever holds the old link.
+
+function Get-BwjPageKeyPrefix {
+    <#
+        The prefix every key of one token starts with: '<kind>:<token>'. Validated through
+        Get-BwjPageKvKey, because this string decides what a retirement deletes. A token is exactly 32
+        hex characters, so this prefix cannot reach a key of any other token.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Kind,
+        [Parameter(Mandatory)][string]$Token
+    )
+    return (Get-BwjPageKvKey -Kind $Kind -Token $Token)
+}
+
+function Select-BwjTokenKeys {
+    <#
+        Pure: of the key names a prefix listing returned, the ones that belong to this token -- the
+        index '<kind>:<token>' and, for a paged kind, '<kind>:<token>/v<x.y.z>'. Anything else is left
+        out, because a retirement deletes only keys this lib could have written; a listing is data off
+        the network, and its names are not trusted to be what the prefix asked for.
+    #>
+    param(
+        [AllowEmptyCollection()][string[]]$Names = @(),
+        [Parameter(Mandatory)][string]$Kind,
+        [Parameter(Mandatory)][string]$Token
+    )
+    $prefix  = [regex]::Escape((Get-BwjPageKeyPrefix -Kind $Kind -Token $Token))
+    $pattern = '^' + $prefix + '\z'
+    if (Test-BwjPageKindPaged -Kind $Kind) { $pattern = '^' + $prefix + '(/' + $script:BwjReleasePattern + ')?\z' }
+    return @($Names | Where-Object { $_ -cmatch $pattern } | Select-Object -Unique)
+}
+
+function Get-BwjPageWranglerListArgs {
+    <#
+        The arguments after `npx --no-install` for listing one token's keys through wrangler. --remote
+        for the same reason Get-BwjPageWranglerArgs passes it: a local listing finds nothing and would
+        report a leaked token as already clean.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Prefix,
+        [Parameter(Mandatory)][string]$NamespaceId
+    )
+    if ($Prefix -cnotmatch '^[a-z]+:[0-9a-f]{32}\z') { throw "Not a token prefix this lib builds: '$Prefix'." }
+    if ($NamespaceId -cnotmatch '^[0-9a-f]{32}$') { throw "Not a Cloudflare id: '$NamespaceId'." }
+    return @('wrangler', 'kv', 'key', 'list', '--prefix', $Prefix, '--namespace-id', $NamespaceId, '--remote')
+}
+
+function ConvertFrom-BwjWranglerKeyList {
+    <#
+        Pure: the key names in `wrangler kv key list` stdout, a JSON array of objects carrying 'name'.
+        Read from the first '[' to the last ']' so a line around the array does not break the parse.
+        Throws on anything that is not such an array: an unreadable listing must never read as "no keys
+        left", which is the answer that would let a leaked token look retired.
+    #>
+    param([AllowNull()][AllowEmptyString()][string]$Text)
+    $open  = if ($Text) { $Text.IndexOf('[') } else { -1 }
+    $close = if ($Text) { $Text.LastIndexOf(']') } else { -1 }
+    if ($open -lt 0 -or $close -lt $open) { throw "wrangler's key listing carried no JSON array: '$Text'" }
+    try { $items = @(ConvertFrom-Json -InputObject $Text.Substring($open, $close - $open + 1)) }
+    catch { throw "wrangler's key listing is not readable JSON: $($_.Exception.Message)" }
+    # Windows PowerShell 5.1 hands a JSON array back as ONE element holding the array; unroll it.
+    $items = @($items | ForEach-Object { $_ })
+    return @($items | ForEach-Object {
+        $n = $_.PSObject.Properties['name']
+        if ($null -eq $n) { throw "wrangler's key listing holds an entry without a name." }
+        [string]$n.Value
+    })
+}
+
+function Get-BwjPageKvKeysApiUrl {
+    <# Cloudflare's KV key-listing endpoint for one prefix, with the page cursor when there is one. #>
+    param(
+        [Parameter(Mandatory)][string]$AccountId,
+        [Parameter(Mandatory)][string]$NamespaceId,
+        [Parameter(Mandatory)][string]$Prefix,
+        [string]$Cursor
+    )
+    $url = ("https://api.cloudflare.com/client/v4/accounts/$AccountId/storage/kv/namespaces/" +
+            "$NamespaceId/keys?limit=1000&prefix=" + [uri]::EscapeDataString($Prefix))
+    if ($Cursor) { $url += '&cursor=' + [uri]::EscapeDataString($Cursor) }
+    return $url
+}
+
+function Resolve-BwjPagesConfig {
+    <#
+        Validate and normalise the store's Get-BwjPagesConfig answer. Returns an object carrying
+        Worker, AccountId, NamespaceId and BaseUrl; throws naming the key that is wrong.
+
+        ALL FOUR ARE REQUIRED, and none has a default. A default account id does not exist, and a
+        default worker name would point a publish at somebody else's deployment -- the one class of
+        wrong value here that is only discovered by the person who receives the link.
+    #>
+    param($Config)
+
+    if ($null -eq $Config) {
+        throw ("Get-BwjPagesConfig is not answered in this repo's scripts\repo-config.ps1. It states " +
+               "the shared BWJ pages worker: @{ Worker = '...'; AccountId = '<32 hex>'; " +
+               "NamespaceId = '<32 hex>'; BaseUrl = 'https://...' }. The SAME four values in both " +
+               "store repos -- that identity is what 'one worker for both stores' means. They are a " +
+               "seam rather than literals in the plugin because the plugin ships from a public " +
+               "repository and a store repo does not.")
+    }
+
+    $read = {
+        param($Key)
+        if ($Config -is [hashtable]) { return [string]$Config[$Key] }
+        $prop = $Config.PSObject.Properties[$Key]
+        if ($null -eq $prop) { return '' }
+        return [string]$prop.Value
+    }
+
+    $worker      = (& $read 'Worker').Trim()
+    $accountId   = (& $read 'AccountId').Trim()
+    $namespaceId = (& $read 'NamespaceId').Trim()
+    $baseUrl     = (& $read 'BaseUrl').Trim()
+
+    if ($worker -cnotmatch '^[a-z0-9][a-z0-9-]{0,62}$') {
+        throw ("Get-BwjPagesConfig's Worker is not a Cloudflare Worker name: '$worker'. Lowercase " +
+               "letters, digits and hyphens, starting with a letter or a digit.")
+    }
+    $ids = [ordered]@{ AccountId = $accountId; NamespaceId = $namespaceId }
+    foreach ($name in $ids.Keys) {
+        $value = $ids[$name]
+        if ($value -cnotmatch '^[0-9a-f]{32}$') {
+            throw ("Get-BwjPagesConfig's $name is not a Cloudflare id: '$value'. Both the account id " +
+                   "and the KV namespace id are 32 lowercase hex characters; read them off the " +
+                   "dashboard rather than from memory.")
+        }
+    }
+    if ($baseUrl -cnotmatch '^https://[A-Za-z0-9.-]+$') {
+        throw ("Get-BwjPagesConfig's BaseUrl is not the worker's origin: '$baseUrl'. It is a scheme " +
+               "and a host and nothing else -- no path, no query, no trailing slash -- because the " +
+               "path is this lib's to build. https is not negotiable: the token in the path IS the " +
+               "lock, and http puts it on the wire in clear.")
+    }
+
+    return [pscustomobject]@{
+        Worker      = $worker
+        AccountId   = $accountId
+        NamespaceId = $namespaceId
+        BaseUrl     = $baseUrl
+    }
+}
+
+function Get-BwjSha256Hex {
+    <# Pure: the SHA-256 of a string's UTF-8 bytes, as upper-case hex (Get-FileHash's spelling). #>
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Text)
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try { return (($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($Text)) | ForEach-Object { $_.ToString('X2') }) -join '') }
+    finally { $sha.Dispose() }
+}
+
+function Get-BwjPagePublishRecordPath {
+    <#
+        Where this machine keeps the record of what it last VERIFIED in one namespace (inbound #4160): under
+        the user's LocalApplicationData, never in the repo. A record in the repo would be committed beside
+        the token file, and its keys carry the token path, which is the only lock on the page. The file name
+        is a digest of the account and namespace, so it names neither. BWJ_PAGE_RECORD_DIR replaces the
+        base, which is how a test suite keeps its fixture publishes out of the user's own profile.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$AccountId,
+        [Parameter(Mandatory)][string]$NamespaceId,
+        [string]$Base = ''
+    )
+    if (-not $Base) { $Base = [string]$env:BWJ_PAGE_RECORD_DIR }
+    if (-not $Base) { $Base = [Environment]::GetFolderPath('LocalApplicationData') }
+    $name = (Get-BwjSha256Hex -Text "$AccountId/$NamespaceId").Substring(0, 24).ToLowerInvariant() + '.json'
+    return (Join-Path (Join-Path (Join-Path $Base 'dkj-repo-workflow') 'publish-page') $name)
+}
+
+function ConvertFrom-BwjPagePublishRecord {
+    <#
+        Pure: a record's JSON as a hashtable of key digest -> content SHA-256. Anything that is not that
+        shape is an EMPTY record, never an error: an unreadable record only costs a full upload.
+    #>
+    param([AllowEmptyString()][string]$Json)
+    $record = @{}
+    if (-not ([string]$Json).Trim()) { return $record }
+    try { $j = ConvertFrom-Json -InputObject $Json } catch { return $record }
+    if ($null -eq $j -or $j -isnot [System.Management.Automation.PSCustomObject]) { return $record }
+    foreach ($p in $j.PSObject.Properties) {
+        if ($p.Name -match '\A[0-9A-F]{64}\z' -and [string]$p.Value -match '\A[0-9A-F]{64}\z') { $record[$p.Name] = [string]$p.Value }
+    }
+    return $record
+}
+
+function Test-BwjPageUnchanged {
+    <#
+        Pure: may this page skip its upload (inbound #4160)? Only where this machine's record says it
+        VERIFIED exactly these bytes under exactly this key. The record is written after the SHA-256
+        read-back, never after an accepted upload, so a skip rests on the same proof an upload ends in.
+
+        MEASURED NOVEMBER 16, 2026, in a store's v3.1.0: 55 release pages plus the index, each uploaded and
+        read back through its own two npx processes on every publish, took more than five minutes -- while
+        only the new release's page and the index had changed.
+    #>
+    param(
+        [Parameter(Mandatory)][hashtable]$Record,
+        [Parameter(Mandatory)][string]$Key,
+        [Parameter(Mandatory)][string]$ContentHash
+    )
+    $digest = Get-BwjSha256Hex -Text $Key
+    return ($Record.ContainsKey($digest) -and $Record[$digest] -eq $ContentHash.ToUpperInvariant())
+}
+
+function Test-BwjPageSize {
+    <#
+        Is this page small enough for one KV value? Returns $true, or throws naming both numbers.
+        A refusal rather than a truncation: half a page is the failure that looks most like success.
+    #>
+    param([Parameter(Mandatory)][int64]$Bytes)
+    if ($Bytes -le 0) {
+        throw 'The page is empty (0 bytes). Publishing it would replace a good page with nothing.'
+    }
+    if ($Bytes -gt $script:BwjPageMaxBytes) {
+        throw ("The page is $([math]::Round($Bytes / 1MB, 1)) MB and Cloudflare's ceiling on one KV " +
+               "value is $([math]::Round($script:BwjPageMaxBytes / 1MB)) MB. A page this size has " +
+               "stopped being a page: check what the builder put in it before raising anything.")
+    }
+    return $true
+}

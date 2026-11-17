@@ -43,7 +43,7 @@ $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $Generator  = Join-Path $RepoRoot 'scripts\sync\build-config-blueprint.ps1'
 $Adopt      = Join-Path $RepoRoot 'scripts\task\adopt-config.ps1'
 $ContractLib = Join-Path $RepoRoot 'scripts\lib\script-contract-lib.ps1'
-$Artefact   = Join-Path $RepoRoot 'plugins\dkj-policy\blueprint\config-blueprint.json'
+$Artefact   = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\blueprint\config-blueprint.json'
 $Fixture    = Join-Path ([System.IO.Path]::GetTempPath()) "config-blueprint-test-fixture-$PID-$([guid]::NewGuid().ToString('n'))"
 
 $script:pass = 0
@@ -400,7 +400,7 @@ $answers = & {
 } $repoConfig
 Assert-Equal 'someone/their-repo' $answers.RepoName 'the consumer keeps its own repo name'
 Assert-Equal '.claude/specialists/SPECIALISTS.md' $answers.RosterPath 'an adopted function answers'
-Assert-Equal '.dkj/dkj-policy/releases/history.md' $answers.HistoryPath 'an adopted function answers (in the workflow folder since August 27, 2026, which reverses the August 19 answer: the durability worry that sent the list back to the repo root was answered by #885 making that folder permanent)'
+Assert-Equal '.dkj/dkj-repo-workflow/releases/history.md' $answers.HistoryPath 'an adopted function answers (in the workflow folder since August 27, 2026, which reverses the August 19 answer: the durability worry that sent the list back to the repo root was answered by #885 making that folder permanent)'
 Assert-Equal 'Chore' $answers.Fallback 'an adopted function answers'
 Assert-True ($null -ne $answers.BodyHolder -and $answers.BodyHolder.Length -gt 0) 'a function that sits below the shared assignment block still answers (extraction bug 2)'
 
@@ -472,10 +472,10 @@ try {
 #
 # AND THE MIRROR HAS NO SECOND ROUTE, which is what makes this assert worth its seconds rather than a
 # duplicate of the one above. The fallbacks are derived from plugin roots under $PSScriptRoot\..\..
-# and under $RepoRoot: from the mirror the first is plugins\dkj-policy\, which publishes no
+# and under $RepoRoot: from the mirror the first is plugins\dkj-repo-workflow\, which publishes no
 # marketplace, and the second is this fixture, which publishes nothing at all. Both yield zero roots,
 # so a pass here can only mean candidate 1 resolved.
-$mirrorAdopt = Join-Path $RepoRoot 'plugins\dkj-policy\scripts\task\adopt-config.ps1'
+$mirrorAdopt = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\task\adopt-config.ps1'
 Assert-True (Test-Path -LiteralPath $mirrorAdopt -PathType Leaf) 'the plugin mirror exists at the registered path'
 
 $mirrorFixture = Join-Path $Fixture '..\config-blueprint-test-mirror'

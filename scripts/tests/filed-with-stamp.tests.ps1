@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/extensions/bwj-development/hooks/filed-with-stamp.ps1 and its lib,
+    Tests for plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/hooks/filed-with-stamp.ps1 and its lib,
     scripts/lib/filed-with-rules.ps1 -- the PostToolUse hook that stamps a new store issue with the
     plugin versions the filing session ran (inbound #4220).
 
@@ -18,7 +18,7 @@
 #>
 $ErrorActionPreference = 'Continue'
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development'
+$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj'
 $Hook       = Join-Path $PluginRoot 'hooks\filed-with-stamp.ps1'
 $HooksJson  = Join-Path $PluginRoot 'hooks\hooks.json'
 
@@ -52,23 +52,23 @@ Assert-Equal '3,4' ((@(Get-CreatedIssueRef -Text @(Get-FiledWithResponseText -Va
 Assert-Equal 1 @(Get-CreatedIssueRef -Text @(Get-FiledWithResponseText -Value 'https://github.com/a/b/issues/5')).Count 'a bare string response too'
 
 $admin = '{"version":2,"plugins":{
-  "dkj-policy@dkj-marketplace":[{"scope":"project","projectPath":"C:\\repo\\store","version":"6.18.0"},{"scope":"project","projectPath":"C:\\repo\\other","version":"6.10.0"}],
-  "bwj-development@dkj-marketplace":[{"scope":"user","version":"6.17.0"}],
+  "dkj-repo-workflow@dkj-marketplace":[{"scope":"project","projectPath":"C:\\repo\\store","version":"6.18.0"},{"scope":"project","projectPath":"C:\\repo\\other","version":"6.10.0"}],
+  "dkj-repo-workflow-bwj@dkj-marketplace":[{"scope":"user","version":"6.17.0"}],
   "dkj-subagents-alpha@dkj-marketplace":[{"scope":"project","projectPath":"C:\\repo\\store","version":"6.18.0"},{"scope":"project","projectPath":"C:\\repo\\store\\","version":"6.16.0"}]
 }}' | ConvertFrom-Json
-Assert-Equal '6.18.0' (Get-FiledWithVersion -Admin $admin -Name 'dkj-policy' -ProjectDir 'c:\repo\store\') 'this checkout''s record, matched case-insensitively and without the trailing separator'
-Assert-Equal '6.17.0' (Get-FiledWithVersion -Admin $admin -Name 'bwj-development' -ProjectDir 'C:\repo\store') 'a pathless record where none names this checkout'
+Assert-Equal '6.18.0' (Get-FiledWithVersion -Admin $admin -Name 'dkj-repo-workflow' -ProjectDir 'c:\repo\store\') 'this checkout''s record, matched case-insensitively and without the trailing separator'
+Assert-Equal '6.17.0' (Get-FiledWithVersion -Admin $admin -Name 'dkj-repo-workflow-bwj' -ProjectDir 'C:\repo\store') 'a pathless record where none names this checkout'
 Assert-Equal '' (Get-FiledWithVersion -Admin $admin -Name 'dkj-subagents-alpha' -ProjectDir 'C:\repo\store') 'two disagreeing records are no one version'
-Assert-Equal '' (Get-FiledWithVersion -Admin $admin -Name 'dkj-policy' -ProjectDir 'C:\repo\gone') 'no record for this checkout is no version'
-Assert-Equal '' (Get-FiledWithVersion -Admin $null -Name 'dkj-policy' -ProjectDir 'C:\repo\store') 'nor is an unreadable file'
+Assert-Equal '' (Get-FiledWithVersion -Admin $admin -Name 'dkj-repo-workflow' -ProjectDir 'C:\repo\gone') 'no record for this checkout is no version'
+Assert-Equal '' (Get-FiledWithVersion -Admin $null -Name 'dkj-repo-workflow' -ProjectDir 'C:\repo\store') 'nor is an unreadable file'
 
-$v = [ordered]@{ 'dkj-policy' = '6.18.0'; 'bwj-development' = '' }
+$v = [ordered]@{ 'dkj-repo-workflow' = '6.18.0'; 'dkj-repo-workflow-bwj' = '' }
 $stamp = Get-FiledWithStamp -Versions $v
-Assert-Equal '<!-- filed-with: dkj-policy 6.18.0, bwj-development unknown -->' $stamp 'the stamp names each plugin, an unread version as unknown'
-Assert-Equal '<!-- filed-with: dkj-policy unknown -->' (Get-FiledWithStamp -Versions ([ordered]@{ 'dkj-policy' = '6.18 -->evil' })) 'a version that is not a version is not written into the body'
+Assert-Equal '<!-- filed-with: dkj-repo-workflow 6.18.0, dkj-repo-workflow-bwj unknown -->' $stamp 'the stamp names each plugin, an unread version as unknown'
+Assert-Equal '<!-- filed-with: dkj-repo-workflow unknown -->' (Get-FiledWithStamp -Versions ([ordered]@{ 'dkj-repo-workflow' = '6.18 -->evil' })) 'a version that is not a version is not written into the body'
 Assert-Equal "## Body`n`n$stamp" (Add-FiledWithStamp -Body "## Body`n`n" -Stamp $stamp) 'appended after one blank line'
 Assert-Equal $stamp (Add-FiledWithStamp -Body '' -Stamp $stamp) 'an empty body becomes the stamp'
-Assert-True ($null -eq (Add-FiledWithStamp -Body "x`n`n<!-- filed-with: dkj-policy 6.17.0 -->" -Stamp $stamp)) 'a stamped body is never stamped twice'
+Assert-True ($null -eq (Add-FiledWithStamp -Body "x`n`n<!-- filed-with: dkj-repo-workflow 6.17.0 -->" -Stamp $stamp)) 'a stamped body is never stamped twice'
 
 Assert-True ($script:KindLabelRepos -contains 'smartwatchbanden') 'the stores are stamped'
 Assert-True ($script:KindLabelRepos -notcontains 'dkj-marketplace') 'the source repo is not'

@@ -20,12 +20,12 @@
                                           dkj-subagents/subagent-shared/ (the source of the generated shared
                                           blocks) and the README/ADOPTION pages
         README.md, LICENSE                context for whoever opens the business repo
-        .dkj/dkj-policy/CHANGELOG.md         the changelog -- in the workflow folder since August 27, 2026 (.dkj/ since #3870)
+        .dkj/dkj-repo-workflow/CHANGELOG.md         the changelog -- in the workflow folder since August 27, 2026 (.dkj/ since #3870)
         .github/ISSUE_TEMPLATE/           the inbound path the docs link to
         .gitignore, .gitattributes        so a clone behaves the same
 
     WHAT DOES NOT. scripts/, .claude/, consumers/, CLAUDE.md, SECURITY.md, and the whole of
-    .dkj/dkj-policy/ EXCEPT its CHANGELOG.md -- which is named as its own published path above
+    .dkj/dkj-repo-workflow/ EXCEPT its CHANGELOG.md -- which is named as its own published path above
     rather than travelling with the folder. That is one file out of a maintainer's folder, and it is
     there because the changelog is context for whoever opens the business repo wherever this repo
     happens to keep it (August 27, 2026: it moved into that folder together with CONTRIBUTING.md and
@@ -42,7 +42,7 @@
     Excluded plugin folders are pruned after the copy and the manifest is rebuilt to match, so the two
     cannot disagree. A kind-directory left with no plugin in it (plugins/dkj-subagents/ and its README) is
     removed whole rather than published as a page describing plugins that are not there. It read
-    plugins/workflows/ until #1467 renamed that directory to plugins/dkj-policy/, which is a plugin root
+    plugins/workflows/ until #1467 renamed that directory to plugins/dkj-repo-workflow/, which is a plugin root
     rather than a kind directory and is therefore pruned as a plugin.
 
     THAT NOW ALSO GOVERNS subagent-shared/, and it is the one behaviour the August 17, 2026 move changed.
@@ -122,7 +122,7 @@
     Publishes the same set to a different target, for a second organisation.
 
 .EXAMPLE
-    ./scripts/release/publish-to-business.ps1 -TargetRepo OTHER-ORG/dev-plugins -Plugins dkj-subagents-alpha,dkj-policy -DryRun
+    ./scripts/release/publish-to-business.ps1 -TargetRepo OTHER-ORG/dev-plugins -Plugins dkj-subagents-alpha,dkj-repo-workflow -DryRun
 
     A different subset to a different target -- for an organisation that does have repositories.
 #>
@@ -177,7 +177,7 @@ $PublishedPaths = @(
     'plugins'
     'README.md'
     'LICENSE'
-    '.dkj/dkj-policy/CHANGELOG.md'
+    '.dkj/dkj-repo-workflow/CHANGELOG.md'
     '.github/ISSUE_TEMPLATE'
     '.gitignore'
     '.gitattributes'
@@ -427,11 +427,11 @@ function Select-PublishedPlugins {
     # that has been emptied of plugins is removed whole: a kind directory carries its own README about
     # what is in it, and a page describing plugins that are not there is worse than no page. It named
     # plugins/workflows/ until #1467; plugins/dkj-subagents/ is the one such directory left, since
-    # plugins/dkj-policy/ is a plugin root in its own right and is pruned by the loop above instead.
+    # plugins/dkj-repo-workflow/ is a plugin root in its own right and is pruned by the loop above instead.
     #
-    # ONE RISK THE NESTING ADDS, NAMED RATHER THAN GUARDED. Dropping 'dkj-policy' removes
-    # plugins/dkj-policy/ recursively and takes the ministry nested inside it along, even if
-    # 'bwj-development' is in $keep. That combination is incoherent -- a ministry requires its prime
+    # ONE RISK THE NESTING ADDS, NAMED RATHER THAN GUARDED. Dropping 'dkj-repo-workflow' removes
+    # plugins/dkj-repo-workflow/ recursively and takes the ministry nested inside it along, even if
+    # 'dkj-repo-workflow-bwj' is in $keep. That combination is incoherent -- a ministry requires its prime
     # ministry -- and Assert-MarketplaceIntegrity below throws on it by name, loudly, because the kept
     # source no longer resolves. So it cannot ship a silently broken tree, which is where a guard would
     # earn its place; build one the day it actually happens.

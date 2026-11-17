@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/extensions/bwj-development/hooks/guard-reach-reason.ps1 and its lib,
+    Tests for plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/hooks/guard-reach-reason.ps1 and its lib,
     scripts/lib/reach-reason-rules.ps1 -- the PreToolUse hook that refuses the reach label on an issue
     whose body does not say why (inbound #4057).
 
@@ -21,7 +21,7 @@
 #>
 $ErrorActionPreference = 'Continue'
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development'
+$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj'
 $Hook       = Join-Path $PluginRoot 'hooks\guard-reach-reason.ps1'
 $HooksJson  = Join-Path $PluginRoot 'hooks\hooks.json'
 $Fixture    = Join-Path ([System.IO.Path]::GetTempPath()) ('guard-reach-reason-' + [guid]::NewGuid().ToString('n'))

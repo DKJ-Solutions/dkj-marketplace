@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/apps/admin/lib/stopwatch-lib.ps1 -- the Stopwatch page of the dev server (#3315, #3323): the store, the
+    Tests for plugins/dkj-repo-workflow/apps/admin/lib/stopwatch-lib.ps1 -- the Stopwatch page of the dev server (#3315, #3323): the store, the
     hook's rules and the hook script itself, the model the page draws and the read-only page.
 
     Pure ASCII (repo convention for .ps1).
@@ -9,7 +9,7 @@ $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 . (Join-Path $RepoRoot 'scripts\lib\dev-pages-lib.ps1')
-. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\stopwatch-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\stopwatch-lib.ps1')
 . (Join-Path $RepoRoot 'scripts\lib\fixture-git-lib.ps1')
 
 $script:pass = 0
@@ -117,7 +117,7 @@ try {
     Assert-Equal 'it is not valid JSON' (Read-StopwatchStore -Path $store).Error 'a store that is not JSON is an error, so nothing writes over it'
 
     # The hook script itself, against stores of its own: the prompt arrives as JSON on stdin; silent, exit 0.
-    $hookScript = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\stopwatch-hook.ps1'
+    $hookScript = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\stopwatch-hook.ps1'
     $hookStore = Join-Path $dir 'hook\stopwatch.json'
     $out = '{"session_id":"s","prompt":"  Stopwatch: From the terminal\nand the rest"}' | & powershell -NoProfile -ExecutionPolicy Bypass -File $hookScript -Hook Prompt -StorePath $hookStore 2>&1
     $exit = $LASTEXITCODE
@@ -151,7 +151,7 @@ try {
 }
 
 Write-Host '-- one store per repo (#3470)' -ForegroundColor Cyan
-Assert-Equal 'dkj-claude-plugins' (Get-AdminRepoName -RepoRoot 'C:\src\dkj-solutions\dkj-claude-plugins') 'a checkout is named by its folder'
+Assert-Equal 'dkj-claude-plugins' (Get-AdminRepoName -RepoRoot 'C:\src\dkj-repo-workflow-dkj\dkj-claude-plugins') 'a checkout is named by its folder'
 Assert-Equal 'life-hub' (Get-AdminRepoName -RepoRoot 'C:\src\Life-Hub\') 'lowercased, a trailing slash ignored'
 Assert-Equal 'my-repo-x' (Get-AdminRepoName -RepoRoot 'C:\src\my repo&x') 'anything but a letter, digit, dot, dash or underscore becomes a dash'
 Assert-True ((Get-AdminRepoKey -RepoRoot 'C:\src\dkj-recipes') -cmatch '^dkj-recipes-[0-9a-f]{8}\z') 'its store key is the name and eight hex of a hash of its path'
@@ -288,7 +288,7 @@ try {
     Remove-Item -LiteralPath $shareRepo -Recurse -Force -ErrorAction SilentlyContinue} finally { $env:DKJ_STOPWATCH_SHARE = $savedShare }
 $lockPath = Join-Path ([System.IO.Path]::GetTempPath()) ('sw-lock-' + [guid]::NewGuid().ToString('N') + '.json')
 $held = Get-AdminTimingLock -StorePath $lockPath
-$other = Start-Job -ScriptBlock { param($lib, $p) . $lib; $m = Get-AdminTimingLock -StorePath $p -TimeoutMs 300; [bool]$m } -ArgumentList (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\stopwatch-lib.ps1'), $lockPath
+$other = Start-Job -ScriptBlock { param($lib, $p) . $lib; $m = Get-AdminTimingLock -StorePath $p -TimeoutMs 300; [bool]$m } -ArgumentList (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\stopwatch-lib.ps1'), $lockPath
 $otherGot = Receive-Job -Job $other -Wait -AutoRemoveJob
 Assert-True ($null -ne $held -and $otherGot -eq $false) 'while one hook holds a store''s lock, a second waits and does not get it'
 $held.ReleaseMutex(); $held.Dispose()
@@ -681,7 +681,7 @@ try {
     $cutPhases = Get-StopwatchTranscriptPhases -Events @(@{ Turns = @(); Tools = @($cutTool) }) -From (& $at 0) -To (& $at 100) -StepMarks @((& $cm 10 'lint'), (& $cm 40 'write'))
     Assert-Equal 'Cut: start=10;Cut: lint gate=30;Cut: notes, overview and version bumps=60' ((@($cutPhases.Phases) | ForEach-Object { "$($_.Name)=$([Math]::Round($_.Seconds))" }) -join ';') 'the window''s phases name a cut''s steps beside the cut'
     # The two sides of one contract: every step cut-release marks is a step the reader names, and the other way round.
-    $cutSource = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'plugins\dkj-policy\scripts\release\cut-release.ps1'))
+    $cutSource = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\release\cut-release.ps1'))
     $marked = @([regex]::Matches($cutSource, "Add-RunStepMark -Run 'cut-release' -Step '([a-z-]+)'") | ForEach-Object { $_.Groups[1].Value })
     $named = @($script:StopwatchCutStepPhases.Keys | Where-Object { $_ -ne 'before' })
     Assert-Equal ($named -join ',') ($marked -join ',') 'cut-release marks exactly the steps the Stopwatch names, in the order it runs them'
@@ -705,8 +705,8 @@ Assert-True ((ConvertTo-StopwatchLabel -Text ('x' * 200)).Length -eq 80 -and (Co
 Assert-Equal (Get-StopwatchPromptMarker -Prompt "stopwatch: `tRelease`tCut ") (ConvertTo-StopwatchLabel -Text "`tRelease`tCut ") 'a prepared label and the prompt marker normalise alike'
 $pdir = Join-Path ([System.IO.Path]::GetTempPath()) ('stopwatch-prep-' + [guid]::NewGuid().ToString('N'))
 try {
-    $pHook = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\stopwatch-hook.ps1'
-    $pPrep = Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\pages\stopwatch-prepare.ps1'
+    $pHook = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\stopwatch-hook.ps1'
+    $pPrep = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\pages\stopwatch-prepare.ps1'
     $ps = Join-Path $pdir 'a\stopwatch.json'
     $prep = { param([string[]]$a) $o = & powershell -NoProfile -ExecutionPolicy Bypass -File $pPrep -StorePath $ps -RepoRoot $RepoRoot @a 2>&1; $script:prepExit = $LASTEXITCODE; $o }
     $o = & $prep @('-Label', 'release cut')
@@ -782,7 +782,7 @@ Assert-True ($evilP -notmatch '<script>x</script>' -and $evilP -match '&lt;scrip
 $evilL = Format-StopwatchLabelPageHtml -Set (Find-StopwatchLabel -Model $evilM -Slug 'script-x-script') -StorePath 's'
 Assert-True ($evilL -notmatch '<script>x</script>' -and $evilL -match '&lt;script&gt;') 'and on its label page'
 # Through the router, over a temp store.
-. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\timing-pages.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\timing-pages.ps1')
 $rdir = Join-Path ([System.IO.Path]::GetTempPath()) ('stopwatch-route-' + [guid]::NewGuid().ToString('N'))
 try {
     $rs = Join-Path $rdir 'stopwatch.json'
@@ -840,7 +840,7 @@ try {
 }
 
 Write-Host '-- cut-release.ps1 starts the run (#3781)' -ForegroundColor Cyan
-foreach ($cut in 'scripts\release\cut-release.ps1', 'plugins\dkj-policy\scripts\release\cut-release.ps1') {
+foreach ($cut in 'scripts\release\cut-release.ps1', 'plugins\dkj-repo-workflow\scripts\release\cut-release.ps1') {
     $src = [System.IO.File]::ReadAllText((Join-Path $RepoRoot $cut))
     $call = $src.IndexOf('Start-StopwatchScriptRun -RepoRoot $repoRoot -Label $script:StopwatchReleaseLabel')
     $firstStep = $src.IndexOf("Add-RunStepMark -Run 'cut-release' -Step 'origin-check-before'")

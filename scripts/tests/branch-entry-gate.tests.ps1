@@ -47,7 +47,7 @@ function New-Consumer {
        and a branch NAME, which the caller passes. #>
     param([Parameter(Mandatory = $true)][string]$Label, [string]$RepoConfig = '')
     $dir = Join-Path ([System.IO.Path]::GetTempPath()) ("entrygate-$PID-$Label-" + [guid]::NewGuid().ToString('N').Substring(0, 6))
-    New-Item -ItemType Directory -Path (Join-Path $dir 'dkj-policy\branch') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $dir 'dkj-repo-workflow\branch') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $dir 'scripts\lib') -Force | Out-Null
     $script:trees += $dir
     if ($RepoConfig) {
@@ -255,7 +255,7 @@ try {
         $dir = New-Consumer -Label $Label
         New-Item -ItemType Directory -Path (Join-Path $dir '.claude-plugin') -Force | Out-Null
         [System.IO.File]::WriteAllText((Join-Path $dir '.claude-plugin\marketplace.json'),
-            "{ `"name`": `"fixture`", `"plugins`": [ { `"name`": `"dkj-policy`", `"source`": `"./x`" } ] }`n",
+            "{ `"name`": `"fixture`", `"plugins`": [ { `"name`": `"dkj-repo-workflow`", `"source`": `"./x`" } ] }`n",
             (New-Object System.Text.UTF8Encoding($false)))
         return $dir
     }
@@ -555,11 +555,11 @@ function Invoke-PlantedStep {
 
 $clean = Invoke-PlantedStep -Label 'clean' -Files @(
     '.claude/settings.json', '.claude/rules/plugins.md', 'scripts/cache/.claude-notes.md', 'dkj-policy/new-branch.ps1',
-    'plugins/dkj-policy/scripts/cache.ps1', '.claude-plugin/plugin.json') -Links @{ 'docs/link' = '120000' }
+    'plugins/dkj-repo-workflow/scripts/cache.ps1', '.claude-plugin/plugin.json') -Links @{ 'docs/link' = '120000' }
 Assert-True ($clean.Code -eq 0) "a repo with only near-misses passes (exit $($clean.Code))"
 
 $nonAscii = '.claude/plugins/cache/' + [char]0x00E9 + '/scripts/a.ps1'
-$hits = @('.claude/plugins/cache/dkj-policy/scripts/new-branch.ps1', 'a.claude-x/pluginsY/cacheZ/p/scripts/e.ps1',
+$hits = @('.claude/plugins/cache/dkj-repo-workflow/scripts/new-branch.ps1', 'a.claude-x/pluginsY/cacheZ/p/scripts/e.ps1',
           'up/.Claude/Plugins/Cache/p/Scripts/e.ps1')
 $planted = Invoke-PlantedStep -Label 'planted' -Files ($hits + @($nonAscii, 'dkj-policy/new-branch.ps1')) `
     -Links @{ 'sub/.claude' = '120000'; 'vendor/x.claude' = '160000' }

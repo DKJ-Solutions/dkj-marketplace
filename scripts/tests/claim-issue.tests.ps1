@@ -819,20 +819,20 @@ $corpusTitles = @{
     1857 = 'No suite ever EXECUTES a plugin-mirror copy of a shared script -- only the source copy, with the drift lint standing in for the rest'
     1858 = 'Format-ForConsole strips only the ASCII control range, so a bidi override in a title or a branch name still reaches the terminal'
     1865 = 'fixture-lib-deps scans only *.tests.ps1, so the shared lint fixture builder the four integrity suites use is invisible to it'
-    1870 = "The reach label goes portable: every dkj-policy consumer carries 'minor', the tier model applied to issues"
+    1870 = "The reach label goes portable: every dkj-repo-workflow consumer carries 'minor', the tier model applied to issues"
     1890 = "Updating a checkout's plugins is 1 + N commands per machine, and the CLI has no --all"
-    1895 = "dkj-policy ships no label ADOPTER: the prio set is prose in one family's page, and apply-vs-print is undecided"
+    1895 = "dkj-repo-workflow ships no label ADOPTER: the prio set is prose in one family's page, and apply-vs-print is undecided"
     1916 = 'open-pr and ship-pr report a 5xx on a MUTATION as a hard failure, while claim-issue documents the opposite doctrine for exactly that case'
     1931 = 'An absent exit code reads as a measured failure at ~270 comparison sites -- ExitCodeUnknown is reported but nothing consults it'
     1973 = 'Run parallel sessions with worktrees'
-    1976 = 'bwj-development: THEME-LIFECYCLE-portable.md claims both BWJ stores answer Get-ShopifyThemeDeleteMarker; smartwatchbanden deliberately does not'
-    1980 = 'dkj-policy: a committed artifact SOURCE records no published URL, so the next session republishes it as a NEW artifact and silently orphans its database'
+    1976 = 'dkj-repo-workflow-bwj: THEME-LIFECYCLE-portable.md claims both BWJ stores answer Get-ShopifyThemeDeleteMarker; smartwatchbanden deliberately does not'
+    1980 = 'dkj-repo-workflow: a committed artifact SOURCE records no published URL, so the next session republishes it as a NEW artifact and silently orphans its database'
     1988 = "update-plugins.ps1 fails on Windows: Invoke-NativeCapture's -Utf8/Start-Process arm resolves 'claude' to npm's extensionless POSIX shim"
-    1990 = 'SPECIALISTS.md still says bwj-development has no real work here, after the gate admitted this repo'
-    2012 = "bwj-development: 'ticket-work step' description still says BWJ's two Shopify store repos in three more docs"
-    2014 = "bwj-development: plugins/dkj-policy/README.md:98 still says 'three chapters' and 'Two skills'"
+    1990 = 'SPECIALISTS.md still says dkj-repo-workflow-bwj has no real work here, after the gate admitted this repo'
+    2012 = "dkj-repo-workflow-bwj: 'ticket-work step' description still says BWJ's two Shopify store repos in three more docs"
+    2014 = "dkj-repo-workflow-bwj: plugins/dkj-repo-workflow/README.md:98 still says 'three chapters' and 'Two skills'"
     2016 = $title2016
-    2017 = 'bwj-development: the seam list still says three seams in three documents, and the chapter-four count in one more'
+    2017 = 'dkj-repo-workflow-bwj: the seam list still says three seams in three documents, and the chapter-four count in one more'
     2018 = "claim-issue's parked-fix scan matches on the ISSUE NUMBER, so a branch named for the subject is invisible -- measured as a full duplicate implementation"
 }
 $corpusBranches = @{
@@ -2073,7 +2073,7 @@ $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Pa
 Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'needs -Reason to name its blocker as #<n> or a branch' -and $out -match 'nothing was read or written') 'run: an awaiting-pull park with no blocker refuses before anything is read'
 
 Write-Host 'Get-GoalTreeSkips -- a plan-goal tree is not a backlog (#3961)' -ForegroundColor Cyan
-. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\goals-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\goals-lib.ps1')
 function New-GoalNode { param([int]$N, [string]$State = 'OPEN', [object[]]$Subs = @()) [pscustomobject]@{ number = $N; title = "t$N"; url = ''; state = $State; assignees = @{ nodes = @() }; subIssues = @{ nodes = @($Subs) } } }
 # Goal 10: milestone 11 closed (task 12 left open), milestone 13 with tasks 14 (closed), 15 (Now), 16, and
 # milestone 17 with no tasks. Goal 20: its only milestone 21 has no tasks, so breaking it down is its Now.

@@ -28,7 +28,7 @@
     SO THE REFUSAL IS KEPT AND CONDITIONED ON THE RUNNER INSTEAD OF ON THE QUEUE. Where a push-to-trunk
     runner folds, a shipping session that cannot fold locally hands the fold over and says so; where
     none does, the refusal fires exactly as it always did. A consumer that never adopted the CI floor
-    (adopt-dkj-policy part 3 is optional and separate from enabling the plugin) is therefore unchanged
+    (adopt-dkj-repo-workflow part 3 is optional and separate from enabling the plugin) is therefore unchanged
     by this file, which is the property that let it be written at all.
 
     READ FROM DISK, NOT FROM A SEAM, AND THAT IS THE WHOLE SAFETY ARGUMENT. A repo-config declaration
@@ -337,7 +337,7 @@ function Get-CiFoldRecoveryVerdict {
         TWO CONDITIONS, BOTH REQUIRED, AND NEITHER IS THE FILE'S NAME. A workflow qualifies when it runs
         on a push to the trunk AND names the fold script. Matching on the name fold-on-merge.yml would
         be matching on a convention this workflow does not own: a consumer may rename it, and
-        adopt-dkj-policy places it under that name without promising it forever. What cannot be renamed
+        adopt-dkj-repo-workflow places it under that name without promising it forever. What cannot be renamed
         is the script it has to call.
 
         THE SCRIPT IS MATCHED BY FILENAME, NOT BY PATH. A consumer's runner checks this repository out

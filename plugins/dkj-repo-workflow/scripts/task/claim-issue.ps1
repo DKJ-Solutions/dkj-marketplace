@@ -1,0 +1,2318 @@
+<#
+.SYNOPSIS
+    Claim a GitHub issue for THIS checkout before any work on it starts -- under the account its
+    commits will name, and refusing where the issue is closed, missing, or already somebody else's.
+
+.DESCRIPTION
+    THE RULE THIS IMPLEMENTS ALREADY EXISTED; NOTHING PERFORMED IT. Chris's persona body ("Picking up
+    an issue -- claim it before you work it"), and a repo's own dkj-policy/CONTRIBUTING.md where it
+    still carries one (#2171 stopped scaffolding that page, September 20, 2026), both prescribe
+    `gh issue edit <n> --add-assignee @me`, and both leave it to a session to remember, to type, and
+    to read the result of. This script is that step, so that "fix issue 1234" cannot begin before the
+    tracker says who is on it.
+
+    WHY THE TRACKER IS WHERE THIS HAS TO HAPPEN. It is the only thing two sessions share. The same
+    owner may be running a second machine and a colleague may be working the same board; neither
+    session sees the other's branch or intent, so an unassigned issue is indistinguishable from an
+    untouched one -- which is how the same work gets built twice and discovered at the merge.
+
+    THREE THINGS THE DOCUMENTED ONE-LINER GETS WRONG, and each is a refusal below:
+
+      1. `@me` CAN NAME THE WRONG ACCOUNT. It resolves through the GitHub API, so it binds to whatever
+         gh is authenticated as -- while the branch a second session correlates the claim with carries
+         the git identity. Measured (issue #1315): gh acting as DaveKJohn on a checkout committing as
+         davekokbwj put the wrong account on #1314. This script never sends `@me`: it resolves the
+         account from both reads and claims by NAME, which is what check-git-identity.ps1's own report
+         already instructs. See Resolve-ClaimAccount.
+
+      2. IT SUCCEEDS SILENTLY ON A CLOSED ISSUE. So the claim gives a session every signal of having
+         taken ownership of work that is already finished. That is the case new-branch.ps1's stale-base
+         block records: a branch cut, committed, pushed and PR'd against an issue another session had
+         closed by a merged PR four minutes earlier. Nothing downstream catches it, because every gate
+         reads the branch and the branch is fine.
+
+      3. IT ADDS, SO IT NEVER TELLS YOU THE ISSUE IS TAKEN. `--add-assignee` on an issue somebody else
+         holds puts you beside them and reports success. Reading the claim is a separate command that
+         the rule names and nobody runs; here it is one step with the write.
+
+         AND WHEN IT IS TAKEN, WHO BY MATTERS (issue #2207). A holder that is a SECOND ACCOUNT
+         AUTHENTICATED IN GH ON THIS MACHINE is one person running two sessions -- the duplicate-work
+         hazard itself -- where the refusal's own words ("ask whoever holds it") describe a colleague
+         elsewhere. Measured September 20, 2026: the refusal fired correctly on #2197, was read as
+         stale bookkeeping by the operator's own other account, overridden, and the live session under
+         that account finished eight minutes later with a fuller measurement of the same issue. The
+         note is printed from the SAME `gh auth status` read the identity resolution above already
+         makes; see Get-LocalAccountHolders and Format-ConcurrentSessionNote.
+
+    AND ONE THING IT READS THAT NOTHING ELSE DOES: THE BRANCHES (issue #1853). All three signals a
+    session has at pickup -- the issue's state, its assignees, and any PR resolving it -- read exactly
+    the same whether the work is untouched or already done and PUSHED ON A PARKED BRANCH. Measured
+    September 11, 2026: #1847 was claimed correctly and repaired in full, while the identical repair sat
+    in a commit on origin/feat/1842-unify-prio-labels-bwj, which has no PR and never closed the issue.
+    So on a claim (and on a resume) this scans the commit messages OFF THE TRUNK for the issue number
+    and names the branch and the commit. It WARNS and never refuses: it cannot tell a fix from a
+    mention, and a claim that blocks costs the whole assignment (#1485).
+
+    IT WRITES ONE THING AND NOTHING ELSE. An assignee on one issue. No branch, no checkout, no commit,
+    no label, no comment -- opening the branch is new-branch.ps1's job and stays a separate decision,
+    because the branch name is a judgement about the work and this step has not read the work yet. The
+    scan above does not break that: `git fetch` and `git log` write nothing in the tree, and HEAD does
+    not move.
+
+    AND THERE IS A SECOND CLAIM IN HERE, FOR A SWEEP (-Tag, issue #2243). Where SEVERAL MACHINES work
+    one backlog at once, the assignee cannot be the claim on either half: two checkouts under one
+    account write the same name and neither can tell its own claim from the other's, and an assignee a
+    colleague put on their own ticket months ago is not somebody mid-flight. So -Tag claims with a
+    MARKER COMMENT carrying 'machine:checkout/account', writes the assignee beside it as the visible
+    signal, and settles a two-session race on the tracker's own timestamps -- earliest comment wins, and only the
+    losers release. The default mode is untouched by all of it: without -Tag this script behaves
+    exactly as it did, refusals and all. The lib section 'THE CLAIM TAG' carries the measurements.
+
+    THE VERDICT IS TESTED AND THE COMMANDS ARE NOT (scripts/lib/claim-issue-lib.ps1). Everything here
+    around the library calls is a gh or git round-trip a suite cannot run; the decisions are pure, so
+    they are where the refusals live -- and so are the scan's pattern, its two parses and its report.
+
+    Dual-context: run the root copy in this repo, the plugin mirror in a consumer.
+
+    Pure ASCII, per this repo's script-layer convention.
+
+.PARAMETER Issue
+    The issue to claim. Accepts a bare number (1234), a hash-prefixed one (#1234), or the issue's own
+    URL -- all three are what a person has in their hand at that moment, and requiring one spelling
+    would only teach the caller to strip characters this script can strip itself.
+
+.PARAMETER DryRun
+    Read and judge, write nothing. Prints the verdict it would act on, so a caller can see who holds
+    an issue without taking it.
+
+.PARAMETER Tag
+    Claim by TAG rather than by assignee -- the sweep mode (issue #2243). The tag is
+    'machine:checkout/account' -- the checkout a short hash of its root path (#2836), so two checkouts
+    on one machine claim apart -- written as a marker comment, and it is what a second session reads. The
+    assignee is still written beside it, as the tracker's own visible signal rather than as the claim.
+    Everything the default mode refuses on the assignee is unchanged OUTSIDE this switch: in tag mode a
+    foreign assignee is a NOTE, because an issue carrying the name of the colleague who owns the ticket
+    is not an issue somebody is mid-flight on.
+
+.PARAMETER Verify
+    With -Tag: read only. Answers whether THIS tag still holds the issue -- exit 0 when it does,
+    exit 1 when it does not. The resume step of a sweep turns on it, and it writes nothing.
+
+.PARAMETER Release
+    With -Tag: drop this tag's claim -- its marker comment and its assignee, and nothing else. The
+    losing side of a race runs it, and so does a session abandoning an issue it cannot finish.
+
+.PARAMETER TakeOver
+    With -Tag: take an issue another machine holds over to this one (issue #2387) -- deliberately,
+    visibly, and only where both halves of the 'held' refusal's reasoning are checked rather than
+    assumed: the holder is THIS SAME gh account on another machine, and exactly one branch for the issue
+    is on origin. It removes the holder's marker, claims under this tag through the ordinary path (marker,
+    assignee, read-back), leaves a comment naming the old tag, the new tag and the branch, and prints the
+    checkout. The old machine's -Verify then answers [NO]. A colleague's claim is refused outright.
+    An issue with NO marker and exactly one branch on origin is resumed the same way when every commit
+    on that branch off the trunk is authored under one of this checkout's names (issue #2394). "This
+    same account" also covers the accounts declared in DKJ_OWN_ACCOUNTS -- see Get-OwnAccountNames.
+
+.PARAMETER Parked
+    With -TakeOver: also move a CO-OWNER's claim, but only when the issue carries 'awaiting-review-dev'
+    (issue #3846). That label says the builder parked the branch for the owner's look, so nobody is
+    mid-flight on it -- the case the colleague refusal exists for (#2207). issues-sweep-reviews passes
+    it, because typing that command is an owner's word, and the repo's own facts may name several
+    owners. Without the label it refuses as 'not parked'; the branch preconditions still apply.
+
+.PARAMETER Park
+    With -Tag and -Reason: PARK the issue rather than build it (issue #3907). The run claims it exactly as
+    a plain -Tag claim does (the marker, the assignee, the read-back that settles a race), and only the
+    winner then adds this awaiting-* label, posts "Parked by a sweep: waiting on <Reason>", and releases
+    its own claim. A park is a tracker write like a claim. Measured November 8, 2026: four sweeps parked
+    the same issues within three minutes, each with a comment of its own, because a park took no claim
+    and so had no read-back to lose. A lost race now costs a claim and writes no label and no comment.
+
+.PARAMETER Reason
+    With -Park: what the issue waits on, the "<what>" of the parking comment. For awaiting-pull it names
+    the blocker as #<n> or a branch first, since that clause is what -Candidates' stale-park reading parses;
+    awaiting-pull-external names owner/repo#<n>, and awaiting-release-external owner/repo. A reason whose
+    clause names none of those is refused before anything is read (#3962), by the same parser.
+    A -Park awaiting-release-external on an issue whose one parking label is awaiting-pull-external is a MOVE
+    rather than a park on top of a park: the same edit lifts the old label (#4226).
+
+.PARAMETER Decider
+    With -Park and an awaiting-*-dev label: the GitHub login of the developer the issue waits on, when that
+    is not the repo's named owner (issue #4208). The parking comment then ends "Decider: @<login>.", the
+    owner sweeps put the issue only to that account, and -Candidates prints it beside the label. The
+    assignee is left alone: the sweep claim writes and removes it. Without -Decider the owner decides, as before.
+
+.PARAMETER ReleaseAll
+    With -Tag, and no issue number: release EVERY open issue this tag holds -- its own marker comments
+    and the assignee written beside them, and nothing else (issue #2395). The tidy-up before a PLANNED
+    device switch, so a sweep on the next machine does not read your own old tag as 'held'. DRY-RUN BY
+    DEFAULT: it lists what it would release and writes only with -Apply. Another tag's marker is never
+    touched, and a bare assignee with no marker of this tag is not a claim and stays. It is a
+    convenience, not the mechanism: -TakeOver already resumes from another machine with no prior
+    release, which is what covers the release forgotten on the departing machine.
+
+.PARAMETER Apply
+    With -ReleaseAll: actually release. Without it -ReleaseAll lists and writes nothing.
+
+.PARAMETER Candidates
+    List which open issues a sweep may pick up -- free, this tag's already, held by another tag, or
+    skipped with the reason, or 'stale-park' for an awaiting-pull issue whose blocker has landed (#3136),
+    or for an awaiting-pull-external / awaiting-release-external issue whose upstream release is out (#3572),
+    or for an awaiting-decision-dev / awaiting-decision-client issue with a 'Decision (' comment after its park (#4186).
+    'relabel' is an awaiting-pull-external issue whose upstream has merged but not yet been released: it waits on
+    a release now, and the line it prints moves it with -Park awaiting-release-external (#4226).
+    A plan-goal tree reads as skipped except each goal's Now task (#3961). Takes no issue number and WRITES NOTHING: choosing is a separate step from
+    claiming, because between the two a session may still find the issue is not this repo's work.
+
+.PARAMETER Marker
+    The marker names a claim is recognised by. The first is the one a claim WRITES; the rest are
+    predecessors a repo still has comments under. Default: 'claim-tag'. A comma list works under
+    powershell -File too (-Marker claim-tag,swb-lane): -File binds it as one string, and the script
+    splits it into names (#2358).
+
+.PARAMETER SkipLabel
+    With -Candidates: labels that park an issue with somebody else, so a sweep leaves it alone.
+    With an issue number: the labels that make the claim WARN that the issue is parked (#2518) --
+    it still claims, and the closing line points at the warning instead of "the work starts here".
+    Default on that route: 'awaiting-info-client', 'awaiting-decision-dev', 'awaiting-decision-client', 'awaiting-review-dev', 'awaiting-review-client', 'awaiting-pull', 'awaiting-pull-external', 'awaiting-action-external', 'awaiting-action-dev', 'awaiting-release', 'awaiting-release-external', 'awaiting-recurrences-first', 'awaiting-session-dev' and
+    'awaiting-recurrences', plus the former names 'awaiting-first-recurrence', 'awaiting-more-recurrences', 'needs-info', 'needs-decision', 'awaiting-decision', 'awaiting-recurrence', 'record',
+    'dossier', 'awaiting-owner-act' and 'awaiting-event' (#2683, #2723, #2741, #2890, #2896), the labels issues-sweep skips on -- blocked on the submitter, waiting on the
+    owner's choice (#2519), waiting on a review by eye from the dev or the client (#2977), waiting on another issue's pull request (#2757), waiting on an external event or date (#2784), waiting on an act only the owner performs (#2828), waiting on the next release (#2851),
+    waiting on a first
+    reproducible recurrence (#2587), and collecting instances
+    until a root cause is found (Dave, September 30, 2026).
+
+.PARAMETER SkipIssue
+    With -Candidates: issue numbers held out of this round by hand.
+
+.PARAMETER Limit
+    With -Candidates or -ReleaseAll: how many open issues to read. Default 100.
+
+.PARAMETER RootOverride
+    Repo root to resolve repo-config.ps1 in, for the test suite. A consumer never types this: the root
+    is resolved dual-context like every other shared script.
+
+.EXAMPLE
+    ./scripts/task/claim-issue.ps1 1234
+
+.EXAMPLE
+    ./scripts/task/claim-issue.ps1 '#1234' -DryRun
+
+.EXAMPLE
+    ./scripts/task/claim-issue.ps1 -Candidates -SkipLabel awaiting-info-client,awaiting-decision-dev,awaiting-decision-client,awaiting-review-dev,awaiting-review-client,awaiting-pull,awaiting-pull-external,awaiting-action-external,awaiting-action-dev,awaiting-release,awaiting-release-external,awaiting-recurrences-first,awaiting-session-dev,awaiting-recurrences,awaiting-first-recurrence,awaiting-more-recurrences,awaiting-more-info,needs-info,needs-decision,awaiting-decision,awaiting-recurrence,record,dossier,awaiting-owner-act,awaiting-event
+
+.EXAMPLE
+    ./scripts/task/claim-issue.ps1 1234 -Tag
+
+.EXAMPLE
+    ./scripts/task/claim-issue.ps1 1234 -Tag -Verify
+
+.EXAMPLE
+    ./scripts/task/claim-issue.ps1 1234 -Tag -TakeOver
+
+.EXAMPLE
+    ./scripts/task/claim-issue.ps1 1234 -Tag -TakeOver -Parked
+
+.EXAMPLE
+    ./scripts/task/claim-issue.ps1 -Tag -ReleaseAll -Apply
+#>
+[CmdletBinding(DefaultParameterSetName = 'Issue')]
+param(
+    [Parameter(Mandatory = $true, Position = 0, ParameterSetName = 'Issue')][string]$Issue,
+    [Parameter(ParameterSetName = 'Issue')]
+    [Parameter(ParameterSetName = 'ReleaseAll')][switch]$Tag,
+    [Parameter(ParameterSetName = 'Issue')][switch]$Verify,
+    [Parameter(ParameterSetName = 'Issue')][switch]$Release,
+    [Parameter(ParameterSetName = 'Issue')][switch]$TakeOver,
+    [Parameter(ParameterSetName = 'Issue')][switch]$Parked,
+    [Parameter(ParameterSetName = 'Issue')][string]$Park = '',
+    [Parameter(ParameterSetName = 'Issue')][string]$Reason = '',
+    [Parameter(ParameterSetName = 'Issue')][string]$Decider = '',
+    [Parameter(Mandatory = $true, ParameterSetName = 'Candidates')][switch]$Candidates,
+    [Parameter(ParameterSetName = 'Candidates')]
+    [Parameter(ParameterSetName = 'Issue')][string[]]$SkipLabel = @(),
+    # [string[]], not [int[]]: under -File an [int[]] reads '12,34' as the one number 1234 (a
+    # thousands separator), excluding an unrelated issue and neither of the two named (#2358).
+    [Parameter(ParameterSetName = 'Candidates')][string[]]$SkipIssue = @(),
+    [Parameter(ParameterSetName = 'Candidates')]
+    [Parameter(ParameterSetName = 'ReleaseAll')][int]$Limit = 100,
+    [Parameter(Mandatory = $true, ParameterSetName = 'ReleaseAll')][switch]$ReleaseAll,
+    [Parameter(ParameterSetName = 'ReleaseAll')][switch]$Apply,
+    [string[]]$Marker = @('claim-tag'),
+    [switch]$DryRun,
+    [string]$RootOverride = ''
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+$guardLib = Join-Path $PSScriptRoot '..\lib\source-repo-guard-lib.ps1'
+if (Test-Path -LiteralPath $guardLib -PathType Leaf) { . $guardLib; Assert-OwnCopy -ScriptPath $PSCommandPath }
+
+# Repo root -- dual context: a consumer running the shared plugin mirror gets it from
+# CLAUDE_PROJECT_DIR, a run inside this repo from git itself.
+# JUDGED (#1917): Resolve-RepoRootOrFail is check-report-lib's refusing sibling of Resolve-CheckRoot
+# -- same precedence, but it names git's exit code and stderr instead of dying on $null.Trim().
+. (Join-Path $PSScriptRoot '..\lib\check-report-lib.ps1')
+$repoRoot = Resolve-RepoRootOrFail -Override $RootOverride -ScriptName 'claim-issue.ps1' -OverrideName '-RootOverride'
+
+. (Join-Path $PSScriptRoot '..\lib\native-capture-lib.ps1')
+. (Join-Path $PSScriptRoot '..\lib\git-identity-lib.ps1')
+. (Join-Path $PSScriptRoot '..\lib\claim-issue-lib.ps1')
+# -File binds '-Marker a,b' as ONE literal element, so the list is split here, once, before any read,
+# write or self-invocation sees it (#2358). An empty result falls back to the documented default.
+$Marker = @(Split-ClaimMarkerNames -Marker $Marker)
+if ($Marker.Count -eq 0) { $Marker = @('claim-tag') }
+# -SkipLabel and -SkipIssue are lists behind the same -File binding, so they are split the same way;
+# an issue number that is not one is refused rather than dropped, since a skip that silently fails is
+# a held issue handed out.
+$SkipLabel = @(Split-CommaListArgument -Value $SkipLabel)
+# THE SINGLE-ISSUE ROUTE HONOURS THE SWEEP'S PARKING LABEL BY DEFAULT (issue #2518). issues-sweep passes
+# the same names on its own -SkipLabel command line; a person naming
+# one issue passes nothing, so without a default the route where somebody says "fix issue N" was the one
+# route blind to it. -Candidates keeps its empty default: the sweep names its labels itself. 'awaiting-decision-dev' ('awaiting-decision' until #2890, 'needs-decision' until #2741) joined in #2519: an issue waiting
+# on the owner's choice is parked just as surely, and 'needs-info' could not carry it -- in dkj-repo-workflow-bwj
+# that label means blocked on the SUBMITTER and moves the mirrored Asana card. 'awaiting-recurrence'
+# joined in #2587: an issue whose only remaining step is a first reproducible occurrence was picked up
+# four times in one day, each pickup finding nothing to build. 'record' joined on September 30, 2026
+# (Dave): a record waits on its next instance or its root cause, and no single repair closes it, so a
+# sweep that picks one up finds nothing to build either. It was named 'dossier' until #2683, and that
+# name stays in the list because a consumer's tracker keeps it until somebody renames it there.
+# #2723 (Dave, October 2, 2026) renamed the three purple waiting labels into one family --
+# 'needs-info' -> 'awaiting-more-info', 'awaiting-recurrence' -> 'awaiting-recurrences-first', 'record'
+# -> 'awaiting-recurrences' -- and every former name stays listed for the same reason.
+# #2741 (Dave, October 3, 2026) gave the parking label for an owner's choice the same purple and the name
+# 'awaiting-decision' ('needs-decision' until then), which stays listed as a former name too.
+# #2757 (Dave, October 3, 2026) added 'awaiting-pull': an issue waiting on another issue to land through a
+# pull request is parked just as surely. It is new, so it has no former name.
+# #2784 (Dave, October 3, 2026) added 'awaiting-action-external': an issue waiting on an external event or date (a
+# launch, a third party's release) has nothing to build until then. Named 'awaiting-event' until #2896.
+# #2828 (October 5, 2026) added 'awaiting-action-dev': an issue whose decision is made and whose only
+# remaining step is an act the owner performs (a live push, a release, a deletion). Named
+# 'awaiting-owner-act' until #2896 (Dave, October 7, 2026); both former names stay listed.
+# #2851 (Dave, October 6, 2026) added 'awaiting-release': an issue whose remaining work may only run in the
+# next release's cut or live step. Not the owner's act NOW, so not awaiting-action-dev. New, no former name.
+# #2890 (Dave, October 7, 2026) split 'awaiting-decision' in two: 'awaiting-decision-dev' is the same label under
+# a new name (a choice only the owner makes) and keeps 'awaiting-decision' and 'needs-decision' as former names;
+# 'awaiting-decision-client' is new (a choice from the client or requester outside the dev team), no former name.
+# #2977 added the pair 'awaiting-review-dev' and 'awaiting-review-client' (a look at a visible result, from the owner or from the client). New, no former names.
+# #2904 (October 9, 2026) renamed the recurrence pair: 'awaiting-first-recurrence' -> 'awaiting-recurrences-first',
+# 'awaiting-more-recurrences' -> 'awaiting-recurrences'; both former names stay listed.
+# #2917 (Dave, October 12, 2026) renamed 'awaiting-more-info' to 'awaiting-info-client', in the '-client' shape of
+# 'awaiting-decision-client': it waits on the requester. The former name stays listed.
+if ($PSCmdlet.ParameterSetName -eq 'Issue' -and -not $PSBoundParameters.ContainsKey('SkipLabel')) {
+    $SkipLabel = @('awaiting-info-client', 'awaiting-decision-dev', 'awaiting-decision-client', 'awaiting-review-dev', 'awaiting-review-client', 'awaiting-pull', 'awaiting-pull-external', 'awaiting-action-external', 'awaiting-action-dev', 'awaiting-release', 'awaiting-release-external', 'awaiting-recurrences-first', 'awaiting-session-dev', 'awaiting-recurrences',
+                   'awaiting-first-recurrence', 'awaiting-more-recurrences',
+                   'awaiting-more-info', 'needs-info', 'needs-decision', 'awaiting-decision', 'awaiting-recurrence', 'record', 'dossier', 'awaiting-owner-act', 'awaiting-event')
+}
+$skipIssueNumbers = @()
+foreach ($s in @(Split-CommaListArgument -Value $SkipIssue)) {
+    $n = $s.TrimStart('#')
+    if ($n -notmatch '^[0-9]+$') {
+        Write-Host "[ERROR] -SkipIssue '$(Format-ForConsole -Text $s)' is not an issue number." -ForegroundColor Red
+        exit 1
+    }
+    $skipIssueNumbers += [int]$n
+}
+# THE FETCH-ATTEMPT RECORD (issue #1860) -- the parked-fix scan's fetch runs through it, so an
+# unreachable remote is not waited out again by new-branch.ps1 seconds later.
+. (Join-Path $PSScriptRoot '..\lib\fetch-attempt-lib.ps1')
+
+# --- WHICH ISSUE ----------------------------------------------------------------------------------
+#
+# The three spellings a caller actually has: 1234, #1234, and the URL they just copied out of the
+# browser. A URL is reduced to its trailing path segment rather than pattern-matched against
+# github.com, because a self-hosted tracker is somebody else's host and the number is in the same
+# place either way.
+#
+# -Candidates HAS NO ISSUE, which is the whole of why it is its own parameter set: it asks WHICH issue
+# rather than about one, so a mandatory number there would be a value the caller cannot have yet.
+$number = ''
+# -ReleaseAll HAS NO ISSUE EITHER, for the mirror reason: it acts on every issue this tag holds. It is
+# refused without -Tag, like -Release -- and with -DryRun beside -Apply, since the two contradict and
+# guessing which was meant is guessing whether to write.
+if ($ReleaseAll) {
+    if (-not $Tag) {
+        Write-Host '[ERROR] -ReleaseAll only means something with -Tag -- nothing was read or written.' -ForegroundColor Red
+        Write-Host '        It drops this tag''s claim markers. The default mode claims by assignee and has no' -ForegroundColor Red
+        Write-Host '        claim of this session''s to release.' -ForegroundColor Red
+        exit 1
+    }
+    if ($Apply -and $DryRun) {
+        Write-Host '[ERROR] -Apply and -DryRun contradict each other -- name one. -ReleaseAll is a dry run unless -Apply.' -ForegroundColor Red
+        exit 1
+    }
+}
+if (-not $Candidates -and -not $ReleaseAll) {
+    $raw = $Issue.Trim().TrimStart('#')
+    if ($raw -match '/([0-9]+)/?$') { $raw = $Matches[1] }
+    if ($raw -notmatch '^[0-9]+$') {
+        Write-Host "[ERROR] '$Issue' is not an issue number." -ForegroundColor Red
+        Write-Host '        Give the number (1234), the number with a hash (#1234), or the issue URL.' -ForegroundColor Red
+        exit 1
+    }
+    $number = $raw
+
+    # -Verify and -Release are readings of a TAG claim, so neither means anything without one: the
+    # assignee path has no claim of this session's to verify or to drop. Refused rather than treated as
+    # -Tag, because guessing which mode was meant is how a release removes an assignee somebody else
+    # relies on.
+    if (($Verify -or $Release) -and -not $Tag) {
+        $named = if ($Verify -and $Release) { '-Verify and -Release' } elseif ($Verify) { '-Verify' } else { '-Release' }
+        Write-Host "[ERROR] $named only $(if ($Verify -and $Release) { 'mean' } else { 'means' }) something with -Tag -- nothing was read or written." -ForegroundColor Red
+        Write-Host '        They read and drop a TAG claim (the marker comment). The default mode claims by' -ForegroundColor Red
+        Write-Host '        assignee and has nothing of this session''s to verify or release.' -ForegroundColor Red
+        exit 1
+    }
+    if ($Verify -and $Release) {
+        Write-Host '[ERROR] -Verify and -Release are opposite acts -- name one.' -ForegroundColor Red
+        Write-Host '        -Verify reads and writes nothing; -Release drops this tag''s claim.' -ForegroundColor Red
+        exit 1
+    }
+    # -TakeOver IS A CLAIM, so it needs the tag it claims under and cannot sit beside the two acts that
+    # are not claims (#2387). Refused rather than guessed at, for the reason given above.
+    if ($TakeOver -and (-not $Tag -or $Verify -or $Release)) {
+        Write-Host '[ERROR] -TakeOver needs -Tag, and cannot be combined with -Verify or -Release -- nothing was read or written.' -ForegroundColor Red
+        Write-Host '        It hands a TAG claim over from another machine; -Verify reads and -Release drops one.' -ForegroundColor Red
+        exit 1
+    }
+    if ($Parked -and -not $TakeOver) {
+        Write-Host '[ERROR] -Parked only qualifies -TakeOver -- nothing was read or written.' -ForegroundColor Red
+        Write-Host '        It lets a take-over move a co-owner''s claim on an issue parked for review (#3846).' -ForegroundColor Red
+        exit 1
+    }
+    # -Park IS A CLAIM THAT ENDS IN A LABEL (issue #3907), so it takes the claim's own tag and nothing that
+    # reads or moves another claim. Refused before anything is read, like the two checks above.
+    if ($Park -or $Reason -or $Decider) {
+        # A DECIDER IS A DEVELOPER (#4208): it names whose answer a -dev park waits on, so it rides only on
+        # such a park, and it is posted on the tracker, so it is a login and nothing else.
+        if ($Decider -and (-not $Park -or $Park -notlike 'awaiting-*-dev' -or -not (Test-DeciderLogin -Login $Decider))) {
+            Write-Host '[ERROR] -Decider takes a GitHub login, and only with -Park and an awaiting-*-dev label -- nothing was read or written.' -ForegroundColor Red
+            Write-Host '        claim-issue.ps1 <n> -Tag -Park awaiting-decision-dev -Decider <login> -Reason "<login>''s choice of X"' -ForegroundColor Red
+            exit 1
+        }
+        if (-not $Tag -or $Verify -or $Release -or $TakeOver) {
+            Write-Host '[ERROR] -Park needs -Tag, and cannot be combined with -Verify, -Release or -TakeOver -- nothing was read or written.' -ForegroundColor Red
+            Write-Host '        It parks a free issue under a claim of this tag, so the claim''s read-back settles a race between sweeps.' -ForegroundColor Red
+            exit 1
+        }
+        # ONE OF THE LABELS THE SWEEPS SKIP (Victor, #3907): an awaiting-* name outside -SkipLabel would park
+        # the issue in name only, since -Candidates and the refusal below read that same list.
+        if (-not (Test-ParkLabel -Label $Park -Allowed $SkipLabel) -or -not $Reason.Trim()) {
+            Write-Host '[ERROR] -Park takes an awaiting-* label the sweeps skip, and -Reason the text of what it waits on -- nothing was read or written.' -ForegroundColor Red
+            Write-Host '        claim-issue.ps1 <n> -Tag -Park awaiting-decision-dev -Reason "the owner''s choice of X"' -ForegroundColor Red
+            exit 1
+        }
+        # A READABLE WAIT NAMES ITS BLOCKER (#3962): the clause -Candidates reads stale-park from, read here
+        # by the same parser, or the park never clears by itself.
+        if (-not (Test-ParkReasonNamesBlocker -Label $Park -Reason $Reason)) {
+            $need = switch ($Park) {
+                'awaiting-pull'          { '#<n> or a branch' }
+                'awaiting-pull-external' { 'owner/repo#<n>' }
+                default                  { 'owner/repo' }
+            }
+            Write-Host "[ERROR] -Park $Park needs -Reason to name its blocker as $need at the start of the clause -- nothing was read or written." -ForegroundColor Red
+            Write-Host "        That clause is what -Candidates reads to report stale-park; without it the park never clears (#3962)." -ForegroundColor Red
+            Write-Host "        claim-issue.ps1 <n> -Tag -Park $Park -Reason `"$need -- why`"" -ForegroundColor Red
+            exit 1
+        }
+    }
+}
+
+function Invoke-ClaimPark {
+    <#
+        -Park's writes, for a claim this tag holds (issue #3907): the label, the comment, and the release of the
+        claim, which runs on every path because a marker left behind holds the issue against every other
+        machine. Called after the race read-back named this tag the winner, and on 'already-yours'. -LabelsNow
+        is the issue's labels as last read: a parking label there means another session parked it after this
+        run's first read, so nothing is written but the release (Victor's residual race, #3907). Never returns.
+    #>
+    param([AllowEmptyCollection()][string[]]$LabelsNow = @(), [string]$RivalNote = '')
+    $releaseArgs = @{ Issue = $number; Tag = $true; Release = $true; Marker = $Marker }
+    if ($RootOverride) { $releaseArgs.RootOverride = $RootOverride }
+    $release = {
+        & $PSCommandPath @releaseArgs | Out-Host
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "[ERROR] this tag's claim on #$number could not be released -- it MAY STILL READ AS HELD. Run:" -ForegroundColor Red
+            Write-Host "          claim-issue.ps1 $number -Tag -Release" -ForegroundColor Red
+            return $false
+        }
+        return $true
+    }
+    $already = @(Select-ParkingLabels -Labels $LabelsNow -SkipLabel $SkipLabel)
+    # A MOVE (#4226): awaiting-pull-external -> awaiting-release-external lifts the old label in the same edit.
+    $moveFrom = Get-ParkMoveFrom -Park $Park -ParkingLabels $already
+    if ($already.Count -gt 0 -and -not $moveFrom) {
+        Write-Host "[REFUSED] #$number is already parked as '$(Format-ForConsole -Text $already[0])' -- nothing was parked; this tag's claim is released." -ForegroundColor Red
+        [void](& $release)
+        exit 1
+    }
+    $editArgs = @('--add-label', $Park)
+    if ($moveFrom) { $editArgs += @('--remove-label', $moveFrom) }
+    $labelEdit = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'edit', $number) + $repoArgs + $editArgs) -Utf8 `
+                                      -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    if (-not $labelEdit -or -not (Test-NativeExitMeasured -Capture $labelEdit) -or $labelEdit.ExitCode -ne 0) {
+        Write-Host "[ERROR] the label '$Park' did not land on #$number, so it is NOT parked; this tag's claim is released." -ForegroundColor Red
+        foreach ($line in @($labelEdit.Output)) { Write-Host "        $(Format-ForConsole -Text ([string]$line))" -ForegroundColor Red }
+        Write-Host '        If the tracker lacks the label, adopt-triage-labels prints the line that creates it.' -ForegroundColor Red
+        [void](& $release)
+        exit 1
+    }
+    $parkBody = Format-ParkComment -Reason $Reason -Decider $Decider
+    $parkNote = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'comment', $number) + $repoArgs + @('--body', $parkBody)) -Utf8 `
+                                     -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    $noteLanded = ($parkNote -and (Test-NativeExitMeasured -Capture $parkNote) -and $parkNote.ExitCode -eq 0)
+    $released = & $release
+    if (-not $noteLanded) {
+        # Single-quoted for PowerShell, with the quote doubled, so the line is safe to paste (Sebastian, #3907).
+        Write-Host "[WARNING] #$number is parked as '$Park', but its comment did not land. Say what it waits on by hand:" -ForegroundColor Yellow
+        Write-Host "            gh issue comment $number --body '$(Format-ForConsole -Text ($parkBody -replace "'", "''"))'" -ForegroundColor Yellow
+        exit 1
+    }
+    if (-not $released) { exit 1 }
+    $movedNote = if ($moveFrom) { " (moved from '$moveFrom')" } else { '' }
+    Write-Host "[OK] #$number parked by $($claimTag.Tag) as '$Park'$movedNote$RivalNote, and the claim released." -ForegroundColor Green
+    Write-Host "     $(Format-ForConsole -Text $parkBody)"
+    Write-Host '     Back to step 1: the next free number.'
+    Write-Host "     $($facts.url)"
+    exit 0
+}
+
+# --- WHICH REPO -----------------------------------------------------------------------------------
+#
+# Get-RepoName pins the tracker explicitly, which matters in a worktree or when the run starts from a
+# directory other than the checkout: gh would otherwise resolve the repo from the CURRENT directory,
+# and a claim landing on the wrong tracker is a silent failure of exactly the kind this script exists
+# to remove. Read defensively, like every other shared script reads repo-config.ps1 -- that file
+# belongs to the consumer, and a fault in it must not take this step down. Without it, gh's own
+# resolution stands and is said out loud.
+#
+# THE TRUNK NAME IS READ IN THE SAME BLOCK, from the same OPTIONAL seam (Get-TrunkBranchName), because
+# the parked-fix scan below needs it and 'main' is a consumer's answer rather than a constant. It is
+# deliberately NOT taken from entry-scaffold-lib.ps1's Get-BranchTrunkName, which is the same three
+# lines: that lib is thousands of lines long and this script currently dot-sources four small ones, so
+# pulling it in for one accessor would put the cost of the whole scaffolder on every claim.
+$repoName = ''
+$trunkBranch = 'main'
+$configPath = Join-Path $repoRoot 'scripts\repo-config.ps1'
+if (Test-Path -LiteralPath $configPath -PathType Leaf) {
+    try {
+        . $configPath
+        if (Test-FunctionDefined 'Get-RepoName') { $repoName = [string](Get-RepoName) }
+        if (Test-FunctionDefined 'Get-TrunkBranchName') {
+            $configuredTrunk = [string](Get-TrunkBranchName)
+            if ($configuredTrunk) { $trunkBranch = $configuredTrunk }
+        }
+    } catch {
+        $repoName = ''
+    }
+}
+$repoArgs = if ($repoName) { @('--repo', $repoName) } else { @() }
+
+$banner = if ($Candidates) { 'candidates' }
+          elseif ($ReleaseAll) { "-Tag -ReleaseAll$(if ($Apply) { ' -Apply' })" }
+          elseif ($Verify) { "#$number -Tag -Verify" }
+          elseif ($Release) { "#$number -Tag -Release" }
+          elseif ($TakeOver) { "#$number -Tag -TakeOver" }
+          elseif ($Tag) { "#$number -Tag" }
+          else { "#$number" }
+Write-Host "== claim-issue $banner$(if ($DryRun) {' -DryRun'}) -- $(if ($repoName) { $repoName } else { 'repo per gh (no Get-RepoName)' }) ==" -ForegroundColor Cyan
+
+# --- WHO THIS CHECKOUT IS -------------------------------------------------------------------------
+# ONE `gh auth status` READ, TWO QUESTIONS (issue #2207). Get-ActiveGhAccount used to make this
+# capture privately and discard every account but the active one, which is the fact the 'taken'
+# refusal below turned out to need: a holder that is a SECOND ACCOUNT AUTHENTICATED HERE is a
+# concurrent session on this machine rather than a colleague elsewhere. The records are read once and
+# passed on, so the signal costs no second process -- which is that issue's own scope note settled.
+$ghAccounts = @(Get-GhAuthAccounts)
+$identity = Resolve-ClaimAccount -GhAccount (Get-ActiveGhAccount -Accounts $ghAccounts) -GitUserName (Get-GitUserName -RepoRoot $repoRoot)
+# THE OTHER ACCOUNTS THIS PERSON WORKS UNDER, AS DECLARED (issue #2394) -- per user, never per repo;
+# Get-OwnAccountNames says why. They widen "self" for the parked-fix scan and for -TakeOver, and only by
+# the names listed.
+$ownAccounts = @(Get-OwnAccountNames -Value $env:DKJ_OWN_ACCOUNTS)
+if ($ownAccounts.Count -gt 0) {
+    Write-Host "  own accounts (DKJ_OWN_ACCOUNTS): $(Format-ForConsole -Text ($ownAccounts -join ', '))" -ForegroundColor DarkGray
+}
+
+if ($identity.Reason -eq 'split') {
+    # Not an error here, and deliberately not: check-git-identity.ps1 owns that report and the
+    # SessionStart hook has already made it. What this step owes the reader is which of the two names
+    # it is about to write, and why that is the git one.
+    Write-Host "  [split identity] gh acts as '$($identity.GhAccount)', git commits as '$($identity.GitUserName)'." -ForegroundColor Yellow
+    Write-Host "                   Claiming as '$($identity.Account)' -- the account the branch will name." -ForegroundColor Yellow
+}
+
+# --- WHICH TAG THIS SESSION CLAIMS UNDER (issue #2243) --------------------------------------------
+#
+# ONLY IN THE MODES THAT USE IT, so the default path pays for no environment read it does not need.
+#
+# THE ACCOUNT HALF IS THE GH ACCOUNT AND NOT $identity.Account, and the divergence is deliberate --
+# Get-ClaimTag's docstring carries the argument. In one line: the assignee answers WHO SHOULD OWN THIS
+# and is the git name, the tag answers WHAT A SECOND SESSION WILL READ AS THE AUTHOR OF MY COMMENT and
+# gh writes comments as the gh account. On a split checkout the two differ, and a tag disagreeing with
+# the metadata beside it is the ambiguity the tag exists to remove.
+$claimTag = $null
+if ($Tag -or $Candidates) {
+    # $env:COMPUTERNAME is Windows' answer; `hostname` is everyone else's. Read in that order rather
+    # than branched on the platform, because a cross-platform shell can carry both and the variable is
+    # the cheaper read.
+    $machineName = ''
+    if ($env:COMPUTERNAME) { $machineName = [string]$env:COMPUTERNAME }
+    if (-not $machineName) {
+        $hostCapture = Invoke-NativeCapture -FilePath 'hostname' -Arguments @() -Utf8 -DiscardStderr -TimeoutSeconds 10
+        if ($hostCapture -and (Test-NativeExitMeasured -Capture $hostCapture) -and $hostCapture.ExitCode -eq 0) {
+            $machineName = (@($hostCapture.Output) -join '').Trim()
+        }
+    }
+    # THE CHECKOUT IS PART OF THE TAG (#2836): two sweeps on one machine under one account, in two
+    # checkouts, otherwise write one tag and each reads the other's claim as 'mine'.
+    $claimTag = Get-ClaimTag -MachineName $machineName -Account $identity.GhAccount -Checkout $repoRoot
+
+    if (-not $claimTag.Complete) {
+        # REFUSED BEFORE ANY READ, because every mode below this line reasons about "mine" against
+        # "somebody else's" and an incomplete tag cannot tell them apart. Measured September 17, 2026
+        # (#701): three sessions of one round produced an identical or ambiguous string, and the
+        # read-back that is supposed to settle a race counts two identical strings as one.
+        $missing = switch ($claimTag.Missing) {
+            'machine' { 'this machine has no name ($env:COMPUTERNAME is empty and hostname did not answer)' }
+            'account' { 'gh names no active account here -- run: gh auth login' }
+            default   { 'neither this machine nor gh could be named' }
+        }
+        Write-Host "[ERROR] there is no complete claim tag to work under: $missing." -ForegroundColor Red
+        Write-Host '        A tag is machine:checkout/account, and BOTH halves carry weight: the machine tells two sessions' -ForegroundColor Red
+        Write-Host '        under one account apart, the account tells two machines under one name apart. Half a tag' -ForegroundColor Red
+        Write-Host '        reads like a claim and settles nothing.' -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "  tag: $($claimTag.Tag)"
+}
+
+# --- THE TWO WRITES THAT UNDO A TAG CLAIM ---------------------------------------------------------
+#
+# ONE WAY TO DELETE A MARKER, used by -Release, -ReleaseAll (#2395) and -TakeOver (#2387). Returns how
+# many of the given records could NOT be deleted, so every caller reports a partial delete the same way.
+# Defined up here, ahead of every mode, because -ReleaseAll acts before the per-issue read below.
+#
+# THE GRAPHQL MUTATION RATHER THAN THE REST ROUTE, because the id in hand is the node id
+# `gh issue view --json comments` returns ('IC_...'). REST wants the numeric database id, which would
+# mean a second read of the same comments to learn a number we already have an identifier for.
+function Remove-ClaimMarkerComments {
+    param([object[]]$Records)
+    $failedCount = 0
+    foreach ($record in @($Records)) {
+        if (-not $record.Id) { $failedCount++; continue }
+        $deleteArgs = @('api', 'graphql', '-f', 'query=mutation($id:ID!){deleteIssueComment(input:{id:$id}){clientMutationId}}', '-f', "id=$($record.Id)")
+        $del = Invoke-NativeCapture -FilePath 'gh' -Arguments $deleteArgs -Utf8 -DiscardStderr -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+        if (-not $del -or -not (Test-NativeExitMeasured -Capture $del) -or $del.ExitCode -ne 0) { $failedCount++ }
+    }
+    return $failedCount
+}
+
+# AND ONE WAY TO DROP THE ASSIGNEE A TAG CLAIM WROTE BESIDE ITS MARKER -- this checkout's own account,
+# never anybody else's. $true when gh answered 0; the callers decide what a failure costs.
+function Remove-ClaimAssignee {
+    param([string]$IssueNumber)
+    $unassign = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'edit', $IssueNumber) + $repoArgs + @('--remove-assignee', $identity.Account)) -Utf8 `
+                                     -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    return [bool]($unassign -and (Test-NativeExitMeasured -Capture $unassign) -and $unassign.ExitCode -eq 0)
+}
+
+# --- EVERY CLAIM OF THIS TAG, RELEASED (-ReleaseAll, issue #2395) ---------------------------------
+#
+# THE BOUND IS THE FEATURE. The owner first proposed wiping every marker and assignee before a device
+# switch; the red-team verdict was to build this instead. Other markers are other machines' and
+# colleagues' live claims, and in tag mode a foreign assignee is whose TICKET an issue is -- deleting
+# either recreates the duplicate-work hazard #2207 and #2243 closed, and cannot be undone. So
+# Get-OwnTagClaims returns only this tag's own records, and the assignee dropped is this checkout's own
+# and only where this tag's marker sits beside it.
+#
+# DRY-RUN UNLESS -Apply, the inverse of every other mode here, because this is the one write that
+# fans out over a whole backlog on a single command.
+#
+# A CONVENIENCE, NOT THE MECHANISM. -TakeOver resumes on another machine with no prior release, so a
+# release forgotten here costs nothing; this only keeps the next machine's -Candidates from reading
+# your own old tag as 'held' after a switch you planned.
+if ($ReleaseAll) {
+    $listArgs = @('issue', 'list') + $repoArgs + @('--state', 'open', '--limit', "$Limit", '--json', 'number,title,assignees,comments')
+    $ownList = Invoke-NativeCapture -FilePath 'gh' -Arguments $listArgs -Utf8 -DiscardStderr -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    if (-not $ownList -or -not (Test-NativeExitMeasured -Capture $ownList) -or $ownList.ExitCode -ne 0 -or $ownList.ShortRead) {
+        # AN UNREAD BACKLOG IS NOT ONE WITH NOTHING TO RELEASE, and saying "nothing held" here would send
+        # the operator off to the next machine with every marker still standing.
+        Write-Host '[ERROR] could not read the open issues -- nothing was judged or released.' -ForegroundColor Red
+        Write-Host '        Check gh (gh auth status) and run it again.' -ForegroundColor Red
+        exit 1
+    }
+    $ownJson = @($ownList.Output) -join "`n"
+    $held = @(Get-OwnTagClaims -Json $ownJson -Tag $claimTag.Tag -Account $identity.Account -Marker $Marker)
+    # A FULL PAGE MAY BE A TRUNCATED ONE: an issue past -Limit is never read, so its marker would stand
+    # while the run reports success.
+    # Two statements, not @($ownJson | ConvertFrom-Json): in 5.1 ConvertFrom-Json emits the array as ONE
+    # pipeline object, so wrapping the pipeline counts 1 whatever the payload holds -- and this warning
+    # could never fire (measured in review on a two-issue payload at -Limit 2).
+    $readCount = 0
+    try { $parsedList = $ownJson | ConvertFrom-Json; $readCount = @($parsedList).Count } catch { $readCount = 0 }
+    if ($readCount -ge $Limit) {
+        Write-Host "  [limit] read $readCount open issues, which is the -Limit -- older ones were not looked at. Raise -Limit to be sure." -ForegroundColor Yellow
+    }
+
+    if ($held.Count -eq 0) {
+        Write-Host "[OK] no open issue carries a claim of this tag ($($claimTag.Tag)) -- nothing to release." -ForegroundColor Green
+        exit 0
+    }
+    foreach ($h in $held) {
+        $assignNote = if ($h.Assigned) { ", assignee '$($identity.Account)'" } else { '' }
+        Write-Host ("  #{0,-6} {1} marker(s){2}  {3}" -f $h.Number, @($h.Records).Count, $assignNote, (Format-ForConsole -Text $h.Title))
+    }
+
+    if (-not $Apply) {
+        Write-Host "[DRY RUN] would release $($held.Count) issue(s) held by $($claimTag.Tag) -- only this tag's markers and this account's assignee. Nothing was written." -ForegroundColor Yellow
+        Write-Host "          Release them with: claim-issue.ps1 -Tag -ReleaseAll -Apply" -ForegroundColor Yellow
+        exit 0
+    }
+
+    $stillHeld = @()
+    foreach ($h in $held) {
+        $failedMarkers = Remove-ClaimMarkerComments -Records @($h.Records)
+        if ($failedMarkers -gt 0) { $stillHeld += $h.Number }
+        # The assignee's failure is a warning, as in -Release: the marker is the claim.
+        if ($h.Assigned -and -not (Remove-ClaimAssignee -IssueNumber ([string]$h.Number))) {
+            Write-Host "  [WARNING] the assignee '$($identity.Account)' could not be removed from #$($h.Number) -- the marker is what another session reads." -ForegroundColor Yellow
+        }
+    }
+    if ($stillHeld.Count -gt 0) {
+        Write-Host "[ERROR] $($stillHeld.Count) of $($held.Count) issue(s) MAY STILL READ AS HELD: #$($stillHeld -join ', #') -- a marker could not be deleted." -ForegroundColor Red
+        Write-Host '        Run this again; it only ever touches what this tag still holds.' -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "[OK] released $($held.Count) issue(s) held by $($claimTag.Tag) -- they are free for the next machine." -ForegroundColor Green
+    exit 0
+}
+
+# --- WHICH ISSUES ARE FREE (-Candidates) ----------------------------------------------------------
+#
+# IT WRITES NOTHING, AND THAT IS THE DESIGN RATHER THAN CAUTION. Choosing and claiming are two steps
+# because between them a session still has to ask whether the issue is this repo's work at all -- the
+# case the BWJ board measured on September 17, 2026 (#722), where four tickets were mirrored onto the
+# board and three of them belonged to a colleague's own experiment. A scan that claimed as it went
+# would have taken those three before anybody looked.
+if ($Candidates) {
+    $listArgs = @('issue', 'list') + $repoArgs + @('--state', 'open', '--limit', "$Limit", '--json', 'number,title,labels,comments')
+    $list = Invoke-NativeCapture -FilePath 'gh' -Arguments $listArgs -Utf8 -DiscardStderr -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    if (-not $list -or -not (Test-NativeExitMeasured -Capture $list) -or $list.ExitCode -ne 0 -or $list.ShortRead) {
+        # AN UNREADABLE BACKLOG IS NOT AN EMPTY ONE, and this is the one refusal this mode has. Read the
+        # other way round, a tracker that did not answer presents as "nothing is claimed" -- so a sweep
+        # would start claiming issues six machines are already holding.
+        Write-Host '[ERROR] could not read the open issues -- nothing was judged.' -ForegroundColor Red
+        Write-Host '        An unread backlog is not an empty one: every issue would look unclaimed, which is the' -ForegroundColor Red
+        Write-Host '        one wrong answer this mode must never give. Check gh (gh auth status) and run it again.' -ForegroundColor Red
+        exit 1
+    }
+
+    # NOT $candidates, AND THAT IS NOT A STYLE CHOICE. PowerShell variable names are CASE-INSENSITIVE,
+    # so `$candidates = ...` assigns to the SWITCH PARAMETER $Candidates two screens up -- which
+    # re-applies its [switch] transformation to an array and throws
+    # ArgumentTransformationMetadataException at the assignment, reported as "Cannot convert
+    # System.Object[] to SwitchParameter" AT THE CALL that produced the value. Measured while writing
+    # this (#2243): the message names a type mismatch in a call whose arguments are all correct, and
+    # the call is not where the fault is.
+    # THE REMOTE'S BRANCHES, READ ONCE FOR THE WHOLE BACKLOG (issue #2392). A marker is only written by
+    # a session that ran -Tag, so the tracker alone read 11 of 11 open issues as free while 9 had a live
+    # branch on origin -- and the claim's parked-fix scan then said so one issue at a time, after the
+    # write. The fetch goes through the seam the claim uses (#1860), best-effort for the same reason: a
+    # failed fetch leaves the refs already here, which is a smaller answer rather than a wrong one, and
+    # the note below says so. An unreadable listing does NOT refuse the run -- the tracker half is still
+    # true -- but it says out loud that 'free' then means only "no marker".
+    $branchNote = ''
+    $remoteBranches = @()
+    $sweepFetch = Invoke-RecordedRemoteFetch -RepoRoot $repoRoot -RecentFailureSeconds $RemoteFetchRecentFailureSeconds `
+                                             -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    if ("$($sweepFetch.Note)") { $branchNote = "the fetch did not refresh origin's branches ($($sweepFetch.Note)) -- they may be behind." }
+    $refList = Invoke-NativeCapture -FilePath 'git' -Utf8 -DiscardStderr -Arguments @('-C', $repoRoot, 'for-each-ref',
+        '--format=%(refname:short)%1f%(authorname)%1f%(committerdate:unix)', 'refs/remotes/origin')
+    if (-not $refList -or -not (Test-NativeExitMeasured -Capture $refList) -or $refList.ExitCode -ne 0 -or $refList.ShortRead) {
+        $branchNote = "origin's branches could not be listed, so 'free' below means only that no claim marker holds it."
+    } else {
+        $remoteBranches = @(Get-RemoteIssueBranches -Text (@($refList.Output) -join "`n") -Remote 'origin')
+    }
+
+    # A PLAN-GOAL TREE IS NOT A BACKLOG (#3961): its goal and milestones are containers, and of its tasks
+    # only the goal's Now is a step. The tree is read once, with the query the plan-goal skill and the
+    # Goals page read it with, and only when an open issue carries the goal label -- a repo with no goal
+    # pays nothing. Best-effort like the branch read: an unread tree leaves the label's own skip for the
+    # goal, says so, and the milestones and tasks read as before.
+    $goalSkips = @{}
+    $goalLabel = 'goal'
+    $goalsLib = @((Join-Path $PSScriptRoot '..\..\apps\admin\lib\goals-lib.ps1'),
+        (Join-Path $repoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\goals-lib.ps1')) |
+        Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+    if ($goalsLib) { . $goalsLib; $goalLabel = Get-GoalLabel }
+    $hasGoal = $false
+    try {
+        foreach ($i in (ConvertFrom-Json -InputObject (@($list.Output) -join "`n"))) {
+            if ($i -and @(Get-IssueLabelNames -Issue $i | Where-Object { $_ -ieq $goalLabel }).Count -gt 0) { $hasGoal = $true; break }
+        }
+    } catch { }
+    if ($hasGoal) {
+        $goalNote = ''
+        $goalRepo = "$repoName"
+        if (-not $goalRepo) {
+            $rv = Invoke-NativeCapture -FilePath 'gh' -Utf8 -DiscardStderr -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds `
+                -Arguments @('repo', 'view', '--json', 'nameWithOwner', '--jq', '.nameWithOwner')
+            if ($rv -and (Test-NativeExitMeasured -Capture $rv) -and $rv.ExitCode -eq 0) { $goalRepo = (@($rv.Output) -join '').Trim() }
+        }
+        if (-not $goalsLib) {
+            $goalNote = "goals-lib.ps1 was not found beside this script, so only the goal issues themselves read as containers."
+        } elseif ($goalRepo -notmatch '\A([^/\s]+)/([^/\s]+)\z') {
+            $goalNote = "the repo's owner/name is unknown, so only the goal issues themselves read as containers."
+        } else {
+            $gq = Invoke-NativeCapture -FilePath 'gh' -Utf8 -DiscardStderr -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds -Arguments @(
+                'api', 'graphql', '-f', ('query=' + (Get-GoalsGraphQuery)), '-f', ('owner=' + $Matches[1]), '-f', ('name=' + $Matches[2]), '-f', ('label=' + $goalLabel))
+            $goals = $null
+            if ($gq -and (Test-NativeExitMeasured -Capture $gq) -and $gq.ExitCode -eq 0 -and -not $gq.ShortRead) {
+                try { $goals = ConvertFrom-GoalsGraph -Data ((@($gq.Output) -join "`n") | ConvertFrom-Json) } catch { $goals = $null }
+            }
+            if ($null -eq $goals) {
+                $goalNote = "the plan-goal tree could not be read, so its milestones and tasks are judged as ordinary issues below."
+            } else {
+                # A parked Now lets the next task go free (#4101): the numbers this run skips by label.
+                $parkedNumbers = @()
+                try {
+                    $parkedNumbers = @(foreach ($i in (ConvertFrom-Json -InputObject (@($list.Output) -join "`n"))) {
+                        if ($i -and @(Select-ParkingLabels -Labels @(Get-IssueLabelNames -Issue $i) -SkipLabel $SkipLabel).Count -gt 0) { [int]$i.number }
+                    })
+                } catch { $parkedNumbers = @() }
+                # A Now another session is on lets the next task go free too (#4105): one pass without the
+                # map reads every 'held' and 'branch' verdict; Get-SweepCandidates is pure, so it costs no call.
+                $inFlightNumbers = @(Get-SweepCandidates -Json (@($list.Output) -join "`n") -Tag $claimTag.Tag `
+                                         -Marker $Marker -SkipLabel $SkipLabel -SkipIssue $skipIssueNumbers -Branches $remoteBranches `
+                                         -GoalLabel '' |
+                                     Where-Object { $_.Verdict -eq 'held' -or $_.Verdict -eq 'branch' } | ForEach-Object { [int]$_.Number })
+                $goalSkips = Get-GoalTreeSkips -Goals @($goals) -ParkedNumbers $parkedNumbers -InFlightNumbers $inFlightNumbers
+            }
+        }
+        if ($goalNote) { Write-Host "  [goal scan] $goalNote" -ForegroundColor Yellow }
+    }
+
+    $sweepList = @(Get-SweepCandidates -Json (@($list.Output) -join "`n") -Tag $claimTag.Tag `
+                                       -Marker $Marker -SkipLabel $SkipLabel -SkipIssue $skipIssueNumbers -Branches $remoteBranches `
+                                       -GoalSkips $goalSkips -GoalLabel $goalLabel)
+    # A PARK WHOSE WAIT HAS CLEARED (#3136). Nothing lifts 'awaiting-pull' when its blocker merges, so an
+    # issue parked on work that has since landed stayed 'skipped' by every sweep until a person noticed.
+    # This reads what the parking comment names and asks the tracker whether each has landed: a number
+    # closed (a pull request merged, not merely closed), a branch with a merged pull request. All landed
+    # reads 'stale-park'. Still nothing is written -- the sweep lifts the label, in the step the skill names.
+    # THE TWO EXTERNAL WAITS ARE READ THE SAME WAY (#3572), each by what clears it. 'awaiting-pull-external'
+    # clears when every `owner/repo#n` it names has landed AND that repo has published a release since:
+    # the upstream merge alone does not bring the work here. 'awaiting-release-external' clears when the
+    # `owner/repo` it names has published a release since the parking comment. What is left after either
+    # is this repo's own work -- taking the new copy, or telling the requester -- so the issue is free.
+    # The other parking labels wait on a person or on something no tracker records, and are not read.
+    $parkedPull = @($sweepList | Where-Object { $_.Verdict -eq 'skipped' -and $_.Reason -match "^label 'awaiting-(pull|pull-external|release-external)'" })
+    if ($parkedPull.Count -gt 0) {
+        $issuesByNumber = @{}
+        # Assigned before the loop: Windows PowerShell's ConvertFrom-Json emits a JSON array as ONE object,
+        # and only a variable holding it enumerates it.
+        try {
+            $parsedIssues = ConvertFrom-Json -InputObject (@($list.Output) -join "`n")
+            foreach ($i in $parsedIssues) { if ($i) { $issuesByNumber[[int]$i.number] = $i } }
+        } catch { }
+        $landedCache = @{}
+        # Kind 'issue' takes a bare number (this repo) or `owner/repo#n`, and answers the time it landed
+        # (merged_at, else closed_at, else $true) for a landed one, $false for one that has not, $null for an unread
+        # one. Kind 'release' takes `owner/repo` and answers its newest release's published_at, or $null.
+        # Kind 'branch' answers $true, $false or $null, as it always has.
+        $isLanded = {
+            param([string]$Kind, [string]$Ref)
+            $key = "$Kind`:$Ref"
+            if ($landedCache.ContainsKey($key)) { return $landedCache[$key] }
+            $answer = $null
+            if ($Kind -eq 'issue') {
+                $slug = if ($repoName) { $repoName } else { '{owner}/{repo}' }
+                $num = $Ref
+                if ($Ref -match '^(?<s>[^#]+)#(?<n>\d+)$') { $slug = $Matches['s']; $num = $Matches['n'] }
+                $q = Invoke-NativeCapture -FilePath 'gh' -Utf8 -DiscardStderr -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds `
+                    -Arguments @('api', "repos/$slug/issues/$num", '--jq', '[.state,(.pull_request|type),.pull_request.merged_at,.closed_at]|@tsv')
+                if ($q -and (Test-NativeExitMeasured -Capture $q) -and $q.ExitCode -eq 0) {
+                    # state, then 'object' for a pull request ('null' for an issue), then merged_at (empty
+                    # unless merged), then closed_at
+                    $parts = ((@($q.Output) -join '').TrimEnd("`r`n")) -split "`t"
+                    $hasLanded = ($parts[0] -eq 'closed' -and ($parts[1] -ne 'object' -or ($parts.Count -gt 2 -and $parts[2])))
+                    $answer = if (-not $hasLanded) { $false } elseif ($parts.Count -gt 2 -and $parts[2]) { $parts[2] } elseif ($parts.Count -gt 3 -and $parts[3]) { $parts[3] } else { $true }
+                }
+            } elseif ($Kind -eq 'release') {
+                # releases/latest skips drafts and pre-releases, and a repo that has never published one
+                # answers 404 -- unread, so the issue stays skipped.
+                $q = Invoke-NativeCapture -FilePath 'gh' -Utf8 -DiscardStderr -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds `
+                    -Arguments @('api', "repos/$Ref/releases/latest", '--jq', '[.tag_name,.published_at]|@tsv')
+                if ($q -and (Test-NativeExitMeasured -Capture $q) -and $q.ExitCode -eq 0) {
+                    $parts = ((@($q.Output) -join '').TrimEnd("`r`n")) -split "`t"
+                    if ($parts.Count -gt 1 -and $parts[1]) { $answer = @{ Tag = $parts[0]; Published = $parts[1] } }
+                }
+            } else {
+                $q = Invoke-NativeCapture -FilePath 'gh' -Utf8 -DiscardStderr -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds `
+                    -Arguments (@('pr', 'list') + $repoArgs + @('--head', $Ref, '--state', 'merged', '--json', 'number', '--jq', 'length'))
+                if ($q -and (Test-NativeExitMeasured -Capture $q) -and $q.ExitCode -eq 0) {
+                    $answer = ([int]((@($q.Output) -join '').Trim()) -gt 0)
+                }
+            }
+            $landedCache[$key] = $answer
+            return $answer
+        }
+        foreach ($c in $parkedPull) {
+            $issueObj = $issuesByNumber[[int]$c.Number]
+            $comments = if ($issueObj -and $issueObj.PSObject.Properties['comments']) { @($issueObj.comments) } else { @() }
+            $refs = Get-ParkingWaitReferences -Comments $comments
+            # Parked at filing (#4028): no comment names the wait, so read the body, one call for this issue alone.
+            if (-not ($refs.Issues.Count + $refs.Branches.Count + $refs.External.Count + $refs.Repos.Count)) {
+                $bq = Invoke-NativeCapture -FilePath 'gh' -Utf8 -DiscardStderr -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds `
+                    -Arguments (@('issue', 'view', "$($c.Number)") + $repoArgs + @('--json', 'body', '--jq', '.body'))
+                if ($bq -and (Test-NativeExitMeasured -Capture $bq) -and $bq.ExitCode -eq 0) {
+                    $refs = Get-ParkingWaitReferences -Comments $comments -Body ((@($bq.Output) -join "`n"))
+                }
+            }
+            $label = ([regex]::Match($c.Reason, "^label '([^']+)'")).Groups[1].Value
+            if ($label -eq 'awaiting-pull-external') {
+                if ($refs.External.Count -eq 0) {
+                    $c.Reason = "$($c.Reason); its parking comment names no owner/repo#<n>, so whether the wait has cleared is not read"
+                    continue
+                }
+                # Landed upstream, then a release of that repo published after the landing. The release is
+                # asked about only once the blocker has landed. A local #<n> or branch named beside it is
+                # read by neither half here, so it keeps the issue skipped rather than clearing unread.
+                $unlanded = @($refs.External | Where-Object { (& $isLanded 'issue' $_) -isnot [string] })
+                $pending = @($refs.External | Where-Object {
+                    $at = & $isLanded 'issue' $_
+                    if ($at -isnot [string]) { return $true }
+                    $rel = & $isLanded 'release' ($_ -replace '#\d+$', '')
+                    -not ($rel -and (Test-PublishedSince -Published $rel.Published -Since $at))
+                })
+                if ($refs.Issues.Count -eq 0 -and $refs.Branches.Count -eq 0) {
+                    if ($pending.Count -eq 0) {
+                        $c.Verdict = 'stale-park'
+                        $c.Reason = "label 'awaiting-pull-external', but what it waits on has merged and been released upstream: $($refs.External -join ', ')"
+                    } elseif ($unlanded.Count -eq 0) {
+                        # MERGED, NOT YET RELEASED (#4226): the wait is a release now, and the label says otherwise.
+                        $c.Verdict = 'relabel'
+                        $c.Reason = "label 'awaiting-pull-external', but what it waits on has merged upstream and waits on a release now: $(@($refs.External | ForEach-Object { $_ -replace '#\d+$', '' } | Select-Object -Unique) -join ', ')"
+                    }
+                }
+                continue
+            }
+            if ($label -eq 'awaiting-release-external') {
+                if ($refs.Repos.Count -eq 0 -or -not $refs.Since) {
+                    $c.Reason = "$($c.Reason); its parking comment names no owner/repo, so whether the wait has cleared is not read"
+                    continue
+                }
+                $released = @($refs.Repos | ForEach-Object {
+                    $rel = & $isLanded 'release' $_
+                    if ($rel -and (Test-PublishedSince -Published $rel.Published -Since $refs.Since)) { "$_ $($rel.Tag)" }
+                })
+                if ($released.Count -eq $refs.Repos.Count) {
+                    $c.Verdict = 'stale-park'
+                    $c.Reason = "label 'awaiting-release-external', but a release has been published since the park: $($released -join ', ')"
+                }
+                continue
+            }
+            $named = @(@($refs.Issues | ForEach-Object { @{ Kind = 'issue'; Ref = "$_"; Show = "#$_" } }) + @($refs.Branches | ForEach-Object { @{ Kind = 'branch'; Ref = $_; Show = $_ } }))
+            if ($named.Count -eq 0) {
+                $c.Reason = "$($c.Reason); neither a parking comment nor the body names a #<n> or branch after 'Parked: waiting on', so whether the wait has cleared is not read -- add that line as a comment to have it read"
+                continue
+            }
+            # An issue read answers its landing time rather than $true, so anything but $false/$null is landed.
+            $pending = @($named | Where-Object { $a = & $isLanded $_.Kind $_.Ref; $null -eq $a -or $a -eq $false } | ForEach-Object { $_.Show })
+            if ($pending.Count -eq 0) {
+                $c.Verdict = 'stale-park'
+                $c.Reason = "label 'awaiting-pull', but what it waits on has landed: $(@($named | ForEach-Object { $_.Show }) -join ', ')"
+            }
+        }
+    }
+
+    # A DECISION PARK WHOSE DECISION IS ON THE ISSUE (#4186). Nothing lifts 'awaiting-decision-client' when the
+    # client answers -- the answer arrives as a comment, often from a session without this plugin -- so the
+    # issue stayed skipped by every sweep. A 'Decision (' comment after the last parking comment reads
+    # 'stale-park'; the sweep lifts the label in its own step, and reads the decision before it builds.
+    # 'awaiting-decision-dev' is read the same way, for an answer posted outside issues-sweep-decisions.
+    $parkedDecision = @($sweepList | Where-Object { $_.Verdict -eq 'skipped' -and $_.Reason -match "^label 'awaiting-decision-(dev|client)'" })
+    if ($parkedDecision.Count -gt 0) {
+        $decisionIssues = @{}
+        try {
+            $parsedForDecision = ConvertFrom-Json -InputObject (@($list.Output) -join "`n")
+            foreach ($i in $parsedForDecision) { if ($i) { $decisionIssues[[int]$i.number] = $i } }
+        } catch { }
+        foreach ($c in $parkedDecision) {
+            $issueObj = $decisionIssues[[int]$c.Number]
+            $comments = if ($issueObj -and $issueObj.PSObject.Properties['comments']) { @($issueObj.comments) } else { @() }
+            $decided = Get-ParkDecisionAnswer -Comments $comments
+            if ($decided) {
+                $label = ([regex]::Match($c.Reason, "^label '([^']+)'")).Groups[1].Value
+                $by = if ($decided.Author) { " by $($decided.Author)" } else { '' }
+                $c.Verdict = 'stale-park'
+                $c.Reason = "label '$label', but a decision was posted after the park$by$(if ($decided.At) { " at $($decided.At)" }) -- read it before you build"
+            }
+        }
+    }
+
+    if ($branchNote) { Write-Host "  [branch scan] $(Format-ForConsole -Text $branchNote)" -ForegroundColor Yellow }
+    if ($sweepList.Count -eq 0) {
+        Write-Host '[OK] no open issues on this tracker.' -ForegroundColor Green
+        exit 0
+    }
+
+    foreach ($candidate in $sweepList) {
+        $line = "  #{0,-6} {1,-8} {2}" -f $candidate.Number, $candidate.Verdict, (Format-ForConsole -Text $candidate.Title)
+        $colour = switch ($candidate.Verdict) {
+            'free'    { 'Green' }
+            'mine'    { 'Cyan' }
+            'held'    { 'DarkGray' }
+            'branch'  { 'Yellow' }
+            'stale-park' { 'Yellow' }
+            'relabel' { 'Yellow' }
+            default   { 'DarkGray' }
+        }
+        Write-Host $line -ForegroundColor $colour
+        # THE REASON CAN CARRY A TAG SOMEBODY ELSE WROTE, so it is stripped like every other piece of
+        # foreign text this script prints -- a marker lives in an issue comment, which anybody with access
+        # to the tracker can write.
+        if ($candidate.Reason) { Write-Host "          $(Format-ForConsole -Text $candidate.Reason)" -ForegroundColor DarkGray }
+    }
+
+    $free = @($sweepList | Where-Object { $_.Verdict -eq 'free' })
+    $mine = @($sweepList | Where-Object { $_.Verdict -eq 'mine' })
+    $branched = @($sweepList | Where-Object { $_.Verdict -eq 'branch' })
+    Write-Host ''
+    Write-Host "[OK] $($free.Count) free, $($mine.Count) already this tag's, $($branched.Count) with a branch but no marker, $($sweepList.Count) open in total. Nothing was written." -ForegroundColor Green
+    if ($branched.Count -gt 0) {
+        # NOT FREE, AND NOT A REFUSAL EITHER. Somebody pushed work for it without -Tag; whether they are
+        # still on it is what the claim's parked-fix scan answers, with the author and age of every commit.
+        Write-Host "     'branch' is not free: somebody pushed work for it without a claim marker. Read that branch" -ForegroundColor Yellow
+        Write-Host '     (or ask its author) before claiming one of those.' -ForegroundColor Yellow
+    }
+    $stale = @($sweepList | Where-Object { $_.Verdict -eq 'stale-park' })
+    foreach ($s in $stale) {
+        # NAMED, NOT LIFTED: this mode writes nothing, so the unpark is the sweep's own step (#3136).
+        $sLabel = ([regex]::Match($s.Reason, "^label '([^']+)'")).Groups[1].Value
+        $sWhat = if ($sLabel -eq 'awaiting-pull') { 'has landed' } elseif ($sLabel -like 'awaiting-decision-*') { 'has been decided' } else { 'has been released' }
+        Write-Host "     #$($s.Number) waits on nothing any more -- unpark it, and it is free:" -ForegroundColor Yellow
+        Write-Host "       gh issue edit $($s.Number) --remove-label $sLabel" -ForegroundColor Yellow
+        Write-Host "       gh issue comment $($s.Number) --body `"Unparked: what it waited on $sWhat.`"" -ForegroundColor Yellow
+    }
+    foreach ($m in @($sweepList | Where-Object { $_.Verdict -eq 'relabel' })) {
+        # NAMED, NOT MOVED (#4226). One command swaps the label AND posts the dated parking comment the
+        # release-external stale-park reads; a hand swap with gh issue edit leaves a park that never clears.
+        $mRepos = ([regex]::Match($m.Reason, 'waits on a release now: (.+)$')).Groups[1].Value
+        Write-Host "     #$($m.Number) has merged upstream and waits on a release now -- move it, in one step:" -ForegroundColor Yellow
+        Write-Host "       claim-issue.ps1 $($m.Number) -Tag -Park awaiting-release-external -Reason `"$(Format-ForConsole -Text $mRepos)'s next release`"" -ForegroundColor Yellow
+    }
+    if ($free.Count -gt 0) {
+        # THE LOWEST NUMBER, NAMED RATHER THAN TAKEN. Oldest first is the only order six machines agree
+        # on without talking to each other, so two sessions starting together collide on ONE issue and
+        # then diverge -- and the collision is what the claim's read-back is for.
+        Write-Host "     Lowest free: #$($free[0].Number) -- claim it with: claim-issue.ps1 $($free[0].Number) -Tag" -ForegroundColor Green
+    }
+    exit 0
+}
+
+# --- WHAT THE TRACKER SAYS ------------------------------------------------------------------------
+#
+# -DiscardStderr because this output is parsed: gh writes its progress and its warnings to stderr, and
+# merged in they are not JSON. The failure branch below therefore says what it can from the exit code
+# rather than quoting gh, which is the trade native-capture-lib names.
+#
+# BOUNDED, LIKE EVERY OTHER NETWORK CALL IN THIS FAMILY (issue #1639). All three `gh` calls in this
+# script were unbounded while every sibling script bounded its own, and the cost lands hardest here:
+# the claim is the FIRST step of an issue-driven assignment (#1485), so a stall at this line is a
+# session that never starts, with nothing printed to say why. The failure mode is not hypothetical on
+# this surface -- #1628's measurement is a checkout where `gh` returned exit 1 intermittently while
+# working fine from the shell, minutes apart, in one session, and an intermittently-unhealthy `gh` is
+# exactly the shape that hangs rather than exits.
+# THE BODY IS ONE MORE FIELD ON A CALL ALREADY BEING MADE (issue #2064), and it is read for one
+# purpose: the paths the issue itself cites, which the sixth signal holds against the trunk. Nothing
+# else in this script reads it, and it is never printed -- an issue body is untrusted text of
+# unbounded length, so what leaves Get-IssuePathCitations is a bounded list of path-shaped tokens
+# rather than anything a reader sees verbatim.
+#
+# AND THE COMMENTS ARE ASKED FOR ONLY IN TAG MODE (issue #2243), where they ARE the claim. The default
+# path does not read them: they are unbounded text on a call every pickup makes, and a field nothing
+# downstream reads is payload bought for nothing.
+#
+# AND THE LABELS ARE ASKED FOR ON BOTH (issue #2518): a short list, and the one field that says an issue
+# is parked with somebody else -- which the sweep route has always honoured and this route never read.
+$viewFields = if ($Tag) { 'number,title,state,url,assignees,body,comments,labels' } else { 'number,title,state,url,assignees,body,labels' }
+$view = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'view', $number) + $repoArgs + @('--json', $viewFields)) -Utf8 -DiscardStderr `
+                             -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+# AND IT RE-ASKS ONCE WHEN THE EXIT CODE WAS NOT A MEASUREMENT (issue #1931, audited under #2081). This
+# is the ONE site in the audited family that re-asks rather than reporting the state as itself, and the
+# two conditions that make it sound are both met here and almost nowhere else:
+#
+#   IT IS IDEMPOTENT AND READ-ONLY. `gh issue view` changes nothing, so a second call cannot double
+#   anything -- the same test park-cycle.ps1's own re-ask was argued on (#2068), and the reason the lib
+#   cannot make this decision for every caller: it has no way to know that `git push` is not.
+#
+#   THE COST OF NOT ASKING IS THE WHOLE ASSIGNMENT. This is the first step of an issue-driven session
+#   (#1485). Every other site in this audit degrades to a skipped check or a stated unknown; here a
+#   non-answer means the session never starts, and it would say so by printing a list of three causes --
+#   the number does not exist, gh is not logged in, this account cannot see it -- not one of which can
+#   produce an unmeasurable exit code. The reader is sent to `gh auth status` over a race in
+#   Start-Process, which is the "confident wrong verdict" #1931 was filed about, at the sharpest site.
+#
+# ONCE, NOT IN A LOOP: the race is measured at roughly 1 in 300 fresh processes, so a single retry takes
+# the residue to about 1 in 90,000, and a loop would trade a rare wrong sentence for an unbounded wait.
+# A second unmeasurable read falls through to the branch below, which now names the state.
+#
+# AND IT DOES NOT RE-ASK A COMMAND THAT NEVER STARTED (issue #2234). An absent `gh` returns a capture
+# rather than throwing since that issue, and it sets ExitCodeUnknown on purpose -- so without this
+# second condition the guard above would fire on it, print "asking once more" about a race that did not
+# happen, and spend a second launch of a command that is not installed. Both halves of the argument for
+# the re-ask fail on it too: the retry is still idempotent, but it cannot answer, and the residue it
+# buys is 1 rather than 1 in 90,000. The branch below already names the state without a retry.
+if ($view -and (Test-NativeCommandStarted -Capture $view) -and -not (Test-NativeExitMeasured -Capture $view)) {
+    Write-Host "  [re-asking] gh's exit code came back unmeasurable reading #$number (issue #1931) -- asking once more." -ForegroundColor DarkGray
+    $view = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'view', $number) + $repoArgs + @('--json', $viewFields)) -Utf8 -DiscardStderr `
+                                 -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+}
+if (-not $view -or -not (Test-NativeExitMeasured -Capture $view) -or $view.ExitCode -ne 0) {
+    Write-Host "[ERROR] could not read issue #$number." -ForegroundColor Red
+    if ($view -and $view.TimedOut) {
+        # A STALL IS NOT ONE OF THE THREE BELOW, so it does not get their list. Each of those is a
+        # verdict gh reached and reported; this is gh reaching none, and sending a reader down a
+        # list of causes that cannot produce a hang is the bound announcing itself as the wrong thing.
+        Write-Host "        gh did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- see the [timeout] line above." -ForegroundColor Red
+        Write-Host '        That is a stall, not a verdict about the issue: nothing was read and nothing was claimed.' -ForegroundColor Red
+        Write-Host '        Check that gh is healthy here (gh auth status) and run this again -- it costs one read.' -ForegroundColor Red
+    } elseif ($view -and -not (Test-NativeCommandStarted -Capture $view)) {
+        # gh IS NOT INSTALLED HERE (issue #2234), and this arm sits ahead of the unmeasurable one
+        # because a not-started capture sets ExitCodeUnknown too -- absorbed there, it would have read
+        # as "unmeasurable twice in a row" and sent the reader to a race in Start-Process over a
+        # dependency that is simply absent. It also sits ahead of the three below for the reason the
+        # stall does: cause 2 says "gh is not logged in here -- run: gh auth status", which is a
+        # sentence that cannot be acted on when there is no gh to run it with.
+        #
+        # THE WHOLE SCRIPT USED TO DIE BEFORE REACHING ANY OF THIS. The read above threw, under this
+        # script's own $ErrorActionPreference = 'Stop', so the documented 'no account' refusal never
+        # printed on the one machine state it was written for.
+        Write-Host '        gh is not installed on this machine, or is not on PATH -- see the [not-started] line above.' -ForegroundColor Red
+        Write-Host '        Nothing was read and nothing was claimed. This is a fact about the machine, not about the issue.' -ForegroundColor Red
+        Write-Host '        Install the GitHub CLI (https://cli.github.com) and run this again.' -ForegroundColor Red
+    } elseif ($view -and -not (Test-NativeExitMeasured -Capture $view)) {
+        # THE SECOND UNMEASURABLE READ IN A ROW, which the re-ask above has already spent its one retry
+        # on. It belongs with the stall rather than with the three below for the same reason the stall
+        # does: each of those is a verdict gh reached, and this is gh reaching one this run could not
+        # read. Nothing was claimed, so re-running is free.
+        Write-Host "        gh's exit code came back unmeasurable twice in a row (issue #1931) -- see that issue for the race." -ForegroundColor Red
+        Write-Host '        That is a fact about this run, not a verdict about the issue: nothing was read and nothing was claimed.' -ForegroundColor Red
+        Write-Host '        Run this again -- it costs one read, and two in a row is rare enough to be worth reporting if it repeats.' -ForegroundColor Red
+    } else {
+        Write-Host '        Three things this is, in the order they are worth checking:' -ForegroundColor Red
+        Write-Host "          1. the number does not exist in $(if ($repoName) { $repoName } else { 'this repo' }), or names a pull request rather than an issue;" -ForegroundColor Red
+        Write-Host '          2. gh is not logged in here      -- run: gh auth status' -ForegroundColor Red
+        Write-Host '          3. this account cannot see it    -- a private repo it has no access to.' -ForegroundColor Red
+    }
+    exit 1
+}
+
+$viewJson = (@($view.Output) -join "`n")
+$facts = $null
+try {
+    $facts = $viewJson | ConvertFrom-Json
+} catch {
+    # THE REASON, NOT JUST THE SYMPTOM (issue #1679). This branch is also where a SHORT READ lands: the
+    # -Utf8 arm can answer 0 with a capture still being written, and a truncated JSON document does not
+    # parse -- so the verdict here is right (refuse, nothing claimed) while "gh returned something that
+    # is not JSON" sends the reader after gh instead of after their own machine. Named separately, and
+    # the re-run is only offered on the arm where it is the actual remedy.
+    if ($view.ShortRead) {
+        Write-Host "[ERROR] the read of issue #$number came back truncated -- nothing was claimed." -ForegroundColor Red
+        Write-Host '        gh exited 0, but its capture was still being written when this run read it, so what' -ForegroundColor Red
+        Write-Host '        arrived was not a whole JSON document. That is a fact about this run rather than' -ForegroundColor Red
+        Write-Host '        anything about the issue -- run this again and it normally settles.' -ForegroundColor Red
+    } else {
+        Write-Host "[ERROR] gh returned something that is not JSON for issue #$number -- nothing was claimed." -ForegroundColor Red
+    }
+    exit 1
+}
+
+# The logins come out of the JSON TEXT rather than off $facts, because the reading is where the 5.1
+# traps are and a lib function is the half a suite can hold. gh's exit code was checked above AND the
+# parse above succeeded, so an empty list here means unassigned rather than unanswered -- the second
+# half matters since #1679: a short read is what an exit code alone cannot rule out, and what rules it
+# out here is that a truncated document would not have parsed.
+$assignees = @(Get-AssigneeLogins -Json $viewJson)
+
+$title = Format-ForConsole -Text ([string]$facts.title)
+
+# THE FIFTH PICKUP SIGNAL'S INPUT (issue #2018), READ HERE WHILE $facts IS STILL IN HAND. Whether
+# there is anything worth comparing branch names against is known before any network call below, so a
+# title with no significant words (rare, but Get-SignificantWords -MinLength floors it) skips that
+# whole scan rather than fetching and listing branches for nothing.
+$titleWords = @(Get-SignificantWords -Text ([string]$facts.title))
+
+Write-Host "  #$($facts.number)  $($facts.state)  $title"
+if ($assignees.Count -gt 0) { Write-Host "  assignees: $($assignees -join ', ')" }
+
+# THE PARKING LABEL (issue #2518), read here while $facts is in hand and printed further down, beside
+# the other pickup verdicts, so a refusal (closed, taken) pays nothing for it.
+$parkingLabels = @(Select-ParkingLabels -Labels @(Get-IssueLabelNames -Issue $facts) -SkipLabel $SkipLabel)
+
+# --- MAY IT BE CLAIMED, BY THIS TAG (issue #2243) -------------------------------------------------
+#
+# THE TAG VERDICT REPLACES THE ASSIGNEE VERDICT AND DOES NOT SIT BESIDE IT. Both would refuse the
+# other's free issue: the assignee path refuses on the colleague's name a sweep must work past, and the
+# tag path refuses on a marker the assignee path cannot see. Running both means whichever is stricter
+# wins, and that is the assignee -- which is the behaviour -Tag exists to leave behind.
+#
+# IT IS MAPPED ONTO $verdict RATHER THAN BRANCHING AROUND EVERYTHING BELOW, so the parked-fix scan, the
+# prerequisite scan and the title-overlap scan all run in tag mode unchanged. Those are the signals
+# #1853, #2018 and #2064 added, and a sweep needs them at least as much as a pickup does: a branch
+# somebody parked months ago carries no claim marker at all, so the tag says free and the commit
+# messages say otherwise.
+$tagVerdict = $null
+$claimRecords = @()
+
+# --- A PULL REQUEST'S NUMBER IS REFUSED, AND THE ISSUE IT CLOSES IS NAMED (issue #2609) -------------
+#
+# Both verdicts refuse it; this prints the refusal once for both. The one extra read -- the PR's closing
+# references -- is spent only on this refusal, is bounded like every other gh call here, and costs
+# nothing but the hint when it does not answer: the refusal stands either way.
+function Write-PullRequestRefusal {
+    Write-Host "[REFUSED] #$number is a PULL REQUEST ($($facts.state)), not an issue -- nothing was claimed." -ForegroundColor Red
+    Write-Host '          gh issue view answers for a pull request''s number too, since the two share one counter,' -ForegroundColor Red
+    Write-Host '          so an [OK] here would have put an assignee on the pull request and claimed nothing real.' -ForegroundColor Red
+    $prView = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('pr', 'view', $number) + $repoArgs + @('--json', 'closingIssuesReferences')) -Utf8 -DiscardStderr `
+                                   -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    $closes = @()
+    if ($prView -and (Test-NativeExitMeasured -Capture $prView) -and $prView.ExitCode -eq 0 -and -not $prView.ShortRead) {
+        $closes = @(Get-ClosingIssueNumbers -Json (@($prView.Output) -join "`n"))
+    }
+    if ($closes.Count -gt 0) {
+        Write-Host "          It closes $(($closes | ForEach-Object { "#$_" }) -join ', ') -- if that is the issue you meant, run this again on that number." -ForegroundColor Red
+    } else {
+        Write-Host '          Run this again on the issue number you meant.' -ForegroundColor Red
+    }
+    Write-Host "          $($facts.url)" -ForegroundColor Red
+}
+
+$takeOverFrom = @()
+$takeOverAuthors = @()
+$takeOverBranch = ''
+if ($Tag) {
+    $claimRecords = @(Get-ClaimRecords -Json $viewJson -Marker $Marker)
+    $tagVerdict = Get-TagClaimVerdict -Tag $claimTag.Tag -State ([string]$facts.state) -Records $claimRecords -Url ([string]$facts.url)
+
+    if ($claimRecords.Count -gt 0) {
+        foreach ($record in $claimRecords) {
+            $mineMark = if ($record.Tag -ieq $claimTag.Tag) { ' (this session)' } else { '' }
+            # Stripped, all three: the tag and the author come out of a comment body, and the timestamp is
+            # printed beside them rather than trusted to be shaped like one.
+            Write-Host "  claim: $(Format-ForConsole -Text $record.Tag)$mineMark  $(Format-ForConsole -Text $record.CreatedAt)  by $(Format-ForConsole -Text $record.Author)" -ForegroundColor DarkGray
+        }
+    }
+
+    # -Verify IS A READING AND STOPS HERE. It is the resume step of a sweep: hours after the work was
+    # parked, an approval names a branch, and the question is whether THIS tag is the one that built it.
+    # Answering with an exit code rather than with prose is the point -- the caller is a script.
+    if ($Verify) {
+        if ($tagVerdict.Code -eq 'already-yours') {
+            Write-Host "[OK] #$number is held by this tag ($($claimTag.Tag)) -- resuming it is resuming your own work." -ForegroundColor Green
+            Write-Host "     $($facts.url)"
+            exit 0
+        }
+        $held = if (@($tagVerdict.Holders).Count -gt 0) { " -- it is held by $(Format-ForConsole -Text (@($tagVerdict.Holders) -join ', '))$(Format-ClaimHolderNote -Tag $claimTag.Tag -Holder @($tagVerdict.Holders)[0])" } else { ' -- nobody holds it' }
+        Write-Host "[NO] #$number is NOT held by this tag ($($claimTag.Tag))$held." -ForegroundColor Yellow
+        Write-Host '     Do not resume it. A branch built under another tag is another session''s work, and on this' -ForegroundColor Yellow
+        Write-Host '     machine it is indistinguishable from your own once it is checked out.' -ForegroundColor Yellow
+        Write-Host "     $($facts.url)" -ForegroundColor Yellow
+        exit 1
+    }
+
+    # -Release DROPS THIS TAG'S CLAIM AND NOTHING ELSE. The losing side of a race runs it, and so does a
+    # session giving an issue back. It removes only markers carrying THIS tag: a comment written by
+    # another session is another session's record, and deleting it would erase the claim that beat us.
+    if ($Release) {
+        $mineRecords = @($claimRecords | Where-Object { $_.Tag -ieq $claimTag.Tag })
+        if ($mineRecords.Count -eq 0) {
+            Write-Host "[OK] #$number carries no claim of this tag ($($claimTag.Tag)) -- nothing to release." -ForegroundColor Green
+            exit 0
+        }
+        if ($DryRun) {
+            Write-Host "[DRY RUN] would delete $($mineRecords.Count) claim comment(s) of '$($claimTag.Tag)' and remove the assignee. Nothing was written." -ForegroundColor Yellow
+            exit 0
+        }
+        $failed = Remove-ClaimMarkerComments -Records $mineRecords
+
+        # The assignee goes with it, and its failure is a WARNING rather than a stop: the marker is the
+        # claim, so an assignee left behind is untidy where a marker left behind is a held issue.
+        if ($assignees -contains $identity.Account) {
+            if (-not (Remove-ClaimAssignee -IssueNumber $number)) {
+                Write-Host "[WARNING] the assignee '$($identity.Account)' could not be removed from #$number." -ForegroundColor Yellow
+                Write-Host "          The claim itself is released -- the marker is what another session reads." -ForegroundColor Yellow
+            }
+        }
+
+        if ($failed -gt 0) {
+            Write-Host "[ERROR] $failed of $($mineRecords.Count) claim comment(s) could not be deleted -- #$number MAY STILL READ AS HELD." -ForegroundColor Red
+            Write-Host '        That is the direction that costs: a marker left behind parks the issue against every' -ForegroundColor Red
+            Write-Host '        other machine. Delete the comment by hand, or run this again.' -ForegroundColor Red
+            Write-Host "        $($facts.url)" -ForegroundColor Red
+            exit 1
+        }
+        Write-Host "[OK] #$number released by $($claimTag.Tag) -- it is free for the next machine." -ForegroundColor Green
+        Write-Host "     $($facts.url)"
+        exit 0
+    }
+
+    # A FOREIGN ASSIGNEE IS A NOTE HERE AND A REFUSAL THERE, and this is the whole inversion. Measured
+    # on the BWJ board, September 17, 2026: three of fourteen open issues carried the name of the
+    # colleague who owns the ticket, months old, on work that was the ordinary business of that round.
+    $foreignAssignees = @($assignees | Where-Object { $_ -ine $identity.Account })
+    if ($foreignAssignees.Count -gt 0) {
+        Write-Host "  [note] assigned to $($foreignAssignees -join ', ') -- in tag mode that is not a claim." -ForegroundColor DarkGray
+        Write-Host '         The marker comments above are. An assignee months old is whose TICKET this is.' -ForegroundColor DarkGray
+    }
+
+    # -TakeOver: A HELD ISSUE HANDED OVER, DELIBERATELY (issue #2387). Get-TakeOverVerdict carries the two
+    # preconditions and the measurement behind them; this block reads origin's branches for it, refuses
+    # on anything but 'take', and on 'take' removes the holder's marker and turns the verdict into
+    # 'free' -- so the claim itself is written by exactly the path every other claim takes, race
+    # read-back included. Anything that is not 'held' passes through to the switch below untouched.
+    if ($TakeOver) {
+        $heads = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'ls-remote', '--heads', 'origin') -Utf8 -DiscardStderr `
+                                      -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+        if (-not $heads -or -not (Test-NativeExitMeasured -Capture $heads) -or $heads.ExitCode -ne 0 -or $heads.ShortRead) {
+            # AN UNREAD REMOTE IS NOT A REMOTE WITHOUT THE BRANCH, and the branch is the precondition.
+            Write-Host "[ERROR] could not list origin's branches -- nothing was taken over." -ForegroundColor Red
+            Write-Host '        A take-over needs the issue''s branch provably on origin, and this run could not look.' -ForegroundColor Red
+            exit 1
+        }
+        $issueBranches = @(Get-IssueBranchNames -Text (@($heads.Output) -join "`n") -Issue ([int]$number))
+
+        # AN UNTAGGED ISSUE WITH ONE BRANCH IS JUDGED ON THAT BRANCH'S AUTHORS (issue #2394), so they are
+        # read here -- and only here: a held issue is judged on its marker, and a free one with no branch
+        # or several has nothing a single author list could settle. The fetch brings the branch's objects
+        # in (ls-remote named a sha this checkout may never have seen); the log reads the authors off the
+        # trunk, against origin's trunk where there is one so a stale local trunk cannot pass a landed
+        # colleague's commit off as part of the branch. A failed read leaves the list empty, which the
+        # verdict refuses as 'unknown-author' rather than reading as clean.
+        $branchAuthors = @()
+        $untagged = (Get-TagClaimVerdict -Tag $claimTag.Tag -State ([string]$facts.state) -Records $claimRecords -Url ([string]$facts.url)).Code -eq 'free'
+        if ($untagged -and $issueBranches.Count -eq 1) {
+            $only = $issueBranches[0]
+            # Through the one fetch seam (fetch-attempt-lib, #1860), narrowed to this branch. No
+            # -RecentFailureSeconds: a skipped retry refreshes nothing, and Fresh is what gates the read.
+            $fetchOne = Invoke-RecordedRemoteFetch -RepoRoot $repoRoot -Remote 'origin' -Refspec "+refs/heads/${only}:refs/remotes/origin/$only" `
+                                                   -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+            if ($fetchOne.Fresh) {
+                $trunkProbe = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'rev-parse', '--verify', '--quiet', "origin/$trunkBranch") -DiscardStderr
+                # The local-trunk fallback errs in the safe direction: a stale trunk only ADDS commits to
+                # the range, so it can refuse a take-over it need not have, never allow one it should not.
+                $baseRef = if ($trunkProbe -and $trunkProbe.ExitCode -eq 0) { "origin/$trunkBranch" } else { $trunkBranch }
+                $authorLog = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'log', '--format=%an', "$baseRef..origin/$only") -Utf8 -DiscardStderr
+                if ($authorLog -and (Test-NativeExitMeasured -Capture $authorLog) -and $authorLog.ExitCode -eq 0 -and -not $authorLog.ShortRead) {
+                    $branchAuthors = @(@($authorLog.Output) | Where-Object { $_ -and ([string]$_).Trim() })
+                }
+            }
+        }
+
+        $takeSelfNames = @($identity.GitUserName, $identity.Account, $claimTag.Account) + $ownAccounts
+        $take = Get-TakeOverVerdict -Tag $claimTag.Tag -State ([string]$facts.state) -Records $claimRecords -Url ([string]$facts.url) -Branches $issueBranches `
+                                    -OwnAccounts $ownAccounts -SelfNames $takeSelfNames -BranchAuthors $branchAuthors `
+                                    -Parked:$Parked -Labels @(@($facts.labels) | ForEach-Object { [string]$_.name })
+        $holderText = Format-ForConsole -Text (@($take.Holders) -join ', ')
+        switch ($take.Code) {
+            'free' {
+                Write-Host "[REFUSED] #$number is not held by anybody and has no branch on origin -- there is nothing to take over." -ForegroundColor Red
+                Write-Host "          Claim it the ordinary way: claim-issue.ps1 $number -Tag" -ForegroundColor Red
+                exit 1
+            }
+            'unknown-author' {
+                Write-Host "[REFUSED] #$number carries no claim marker, and the authors of $(Format-ForConsole -Text $take.Branch) could not be read -- nothing was taken over." -ForegroundColor Red
+                Write-Host '          An untagged branch is resumed on WHO WROTE IT, so an unread author list is not a clean one.' -ForegroundColor Red
+                Write-Host '          Check that origin is reachable (git fetch origin) and run this again.' -ForegroundColor Red
+                exit 1
+            }
+            'foreign-author' {
+                Write-Host "[REFUSED] #$number carries no claim marker, and $(Format-ForConsole -Text $take.Branch) has commits by $(Format-ForConsole -Text (@($take.Foreign) -join ', '))." -ForegroundColor Red
+                Write-Host '          Those are not this checkout''s names. If they are YOUR other accounts, declare them --' -ForegroundColor Red
+                Write-Host '          DKJ_OWN_ACCOUNTS=<login>,<login> in the env block of your own ~/.claude/settings.json --' -ForegroundColor Red
+                Write-Host '          and run this again. If they are a colleague''s, ask them: that is a conversation.' -ForegroundColor Red
+                Write-Host "          $($facts.url)" -ForegroundColor Red
+                exit 1
+            }
+            'take-untagged' {
+                $branchText = Format-ForConsole -Text $take.Branch
+                if ($DryRun) {
+                    Write-Host "[DRY RUN] would resume #$number on $branchText (untagged; commits by $(Format-ForConsole -Text (@($take.Authors) -join ', '))) under $($claimTag.Tag). Nothing was written." -ForegroundColor Yellow
+                    exit 0
+                }
+                Write-Host "  [take-over] $branchText carries no marker and every commit on it is yours; claiming under $($claimTag.Tag)." -ForegroundColor Yellow
+                $takeOverAuthors = @($take.Authors)
+                $takeOverBranch = [string]$take.Branch
+                $tagVerdict = [pscustomobject]@{ Action = 'claim'; Code = 'free'; Holders = @() }
+            }
+            'foreign-account' {
+                Write-Host "[REFUSED] #$number is held by $holderText -- a different account from this one ($($claimTag.Account))." -ForegroundColor Red
+                Write-Host '          Taking over your own issue from another of your machines is bookkeeping; taking over a' -ForegroundColor Red
+                Write-Host '          colleague''s is a conversation, and a switch cannot have one. Ask them to release it.' -ForegroundColor Red
+                Write-Host '          (A co-owner''s branch parked for review is the one exception: -TakeOver -Parked, #3846.)' -ForegroundColor Red
+                Write-Host "          $($facts.url)" -ForegroundColor Red
+                exit 1
+            }
+            'not-parked' {
+                Write-Host "[REFUSED] #$number is held by $holderText and does not carry 'awaiting-review-dev' -- nothing was taken over." -ForegroundColor Red
+                Write-Host '          -Parked moves a co-owner''s claim only on an issue parked for the owner''s look; without' -ForegroundColor Red
+                Write-Host '          that label the builder may still be mid-flight on it. Ask them to release it.' -ForegroundColor Red
+                Write-Host "          $($facts.url)" -ForegroundColor Red
+                exit 1
+            }
+            'no-branch' {
+                Write-Host "[REFUSED] #$number is held by $holderText and no branch for it is on origin -- nothing was taken over." -ForegroundColor Red
+                Write-Host '          The work may exist only on that machine. Push it from there (or release it there),' -ForegroundColor Red
+                Write-Host "          then run this again. Looked for: <prefix>/$number-<name>." -ForegroundColor Red
+                exit 1
+            }
+            'ambiguous-branch' {
+                Write-Host "[REFUSED] #$number has $(@($take.Branches).Count) branches on origin -- this run cannot say which one to resume:" -ForegroundColor Red
+                foreach ($b in @($take.Branches)) { Write-Host "            $(Format-ForConsole -Text $b)" -ForegroundColor Red }
+                Write-Host '          Delete or merge the ones that are spent, then run this again.' -ForegroundColor Red
+                exit 1
+            }
+            'take' {
+                $branchText = Format-ForConsole -Text $take.Branch
+                if ($DryRun) {
+                    Write-Host "[DRY RUN] would take #$number over from $holderText to $($claimTag.Tag), resuming $branchText. Nothing was written." -ForegroundColor Yellow
+                    exit 0
+                }
+                $failedTake = Remove-ClaimMarkerComments -Records @($take.Rivals)
+                if ($failedTake -gt 0) {
+                    Write-Host "[ERROR] $failedTake of $(@($take.Rivals).Count) marker(s) of $holderText could not be deleted -- #$number was NOT claimed." -ForegroundColor Red
+                    Write-Host '        It may now read as held by fewer tags than before, but it still reads as held. Run this again.' -ForegroundColor Red
+                    Write-Host "        $($facts.url)" -ForegroundColor Red
+                    exit 1
+                }
+                if (@($take.Colleagues).Count -gt 0) {
+                    Write-Host "  [take-over] parked for review: the claim of $(Format-ForConsole -Text (@($take.Colleagues) -join ', ')) moves for the owner's approval (#3846)." -ForegroundColor Yellow
+                }
+                Write-Host "  [take-over] removed the marker(s) of $holderText; claiming under $($claimTag.Tag)." -ForegroundColor Yellow
+                $takeOverFrom = @($take.Holders)
+                $takeOverBranch = [string]$take.Branch
+                $tagVerdict = [pscustomobject]@{ Action = 'claim'; Code = 'free'; Holders = @() }
+            }
+        }
+    }
+
+    switch ($tagVerdict.Code) {
+        'no-tag' {
+            # Unreachable in practice -- the tag was proven complete before any read -- and kept because
+            # the verdict has five codes and a switch that silently falls through one of them is how a
+            # later change gets a claim it never judged.
+            Write-Host '[ERROR] there is no tag to claim under -- nothing was written.' -ForegroundColor Red
+            exit 1
+        }
+        'pull-request' {
+            Write-PullRequestRefusal
+            exit 1
+        }
+        'closed' {
+            Write-Host "[REFUSED] issue #$number is $($facts.state) -- nothing was claimed." -ForegroundColor Red
+            Write-Host '          A sweep claiming closed work builds it again in full and finds out at the merge.' -ForegroundColor Red
+            Write-Host "          $($facts.url)" -ForegroundColor Red
+            exit 1
+        }
+        'held' {
+            Write-Host "[REFUSED] issue #$number is claimed by $(Format-ForConsole -Text (@($tagVerdict.Holders) -join ', ')) -- nothing was claimed." -ForegroundColor Red
+            Write-Host '          Another machine is mid-flight on it and its branch is somewhere this session cannot' -ForegroundColor Red
+            Write-Host '          see. Take the next free number instead -- claim-issue.ps1 -Candidates names it.' -ForegroundColor Red
+            Write-Host '          If the holder is THIS account on another machine and its branch is on origin, hand it' -ForegroundColor Red
+            Write-Host "          over deliberately instead: claim-issue.ps1 $number -Tag -TakeOver" -ForegroundColor Red
+            Write-Host "          $($facts.url)" -ForegroundColor Red
+            exit 1
+        }
+    }
+
+    # A FREE ISSUE WITH AN UNMARKED BRANCH ON ORIGIN IS NOT FREE (issue #3386). -Candidates reads that
+    # state as 'branch' (#2392), and this claim used to print [OK] over it whenever the branch's author was
+    # this account -- the parked-fix scan below raises NOT YOURS for a foreign author only. Measured
+    # October 24, 2026: a sweep claimed #3379 an hour after its -Candidates run, over a branch another
+    # session had pushed without a marker; that branch merged first and the sweep's PR was a duplicate.
+    # Same account is not same session, so the author is not asked: -TakeOver is the deliberate resume.
+    # Asked only on a fresh claim -- a take-over has already chosen its branch -- and a remote that
+    # cannot be listed is said and passed, as -Candidates passes it.
+    if ($tagVerdict.Code -eq 'free' -and -not $takeOverBranch) {
+        $freeHeads = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'ls-remote', '--heads', 'origin') -Utf8 -DiscardStderr `
+                                          -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+        if (-not $freeHeads -or -not (Test-NativeExitMeasured -Capture $freeHeads) -or $freeHeads.ExitCode -ne 0 -or $freeHeads.ShortRead) {
+            Write-Host "  [branch check skipped] origin's branches could not be listed, so no unmarked branch for #$number could be ruled out." -ForegroundColor DarkGray
+        } else {
+            $unmarked = @(Get-IssueBranchNames -Text (@($freeHeads.Output) -join "`n") -Issue ([int]$number))
+            if ($unmarked.Count -gt 0) {
+                Write-Host "[REFUSED] #$number carries no claim marker, but $(Format-ForConsole -Text ($unmarked -join ', ')) is on origin -- nothing was claimed." -ForegroundColor Red
+                Write-Host '          Somebody is working it without a marker, possibly another session under this same account.' -ForegroundColor Red
+                Write-Host '          Read that branch first. Take the next free number, or, where the branch is your own' -ForegroundColor Red
+                Write-Host "          work to resume, hand it over deliberately: claim-issue.ps1 $number -Tag -TakeOver" -ForegroundColor Red
+                Write-Host "          $($facts.url)" -ForegroundColor Red
+                exit 1
+            }
+        }
+    }
+
+    # MAPPED ONTO THE ASSIGNEE VERDICT'S VOCABULARY so that everything below reads one variable: 'claim'
+    # writes, 'skip' is a resume. The Others field carries the foreign assignees rather than the rival
+    # tags -- a rival tag refused above and never reaches here.
+    $verdict = [pscustomobject]@{
+        Action = if ($tagVerdict.Code -eq 'already-yours') { 'skip' } else { 'claim' }
+        Code   = $tagVerdict.Code
+        Others = $foreignAssignees
+    }
+}
+
+# --- MAY IT BE CLAIMED ----------------------------------------------------------------------------
+if (-not $Tag) {
+    $verdict = Get-ClaimVerdict -Account $identity.Account -State ([string]$facts.state) -Assignees $assignees -Url ([string]$facts.url)
+}
+
+# --- IS THE FIX ALREADY SITTING ON A BRANCH (issue #1853) -----------------------------------------
+#
+# THE FOURTH PICKUP SIGNAL, and the one none of the three above can carry. The verdict just reached
+# reads the issue's STATE and its ASSIGNEES; Get-TargetIssueWarnings, which new-branch.ps1 and
+# open-pr.ps1 both run, resolves an issue to a PULL REQUEST. Measured September 11, 2026: a session
+# claimed #1847 -- open, unassigned, correctly -- and wrote the fix, only for open-pr's remote-ahead
+# gate to show that the identical repair was already pushed on origin/feat/1842-unify-prio-labels-bwj
+# and said so in its own commit message. That branch is PARKED, so there was no PR to find and nothing
+# had closed the issue: all three signals read 'untouched'. The commit message is where a parked fix
+# announces itself and the only place it does.
+#
+# IT RUNS ONLY WHERE THERE IS SOMETHING TO SAVE, which is why it sits above the switch rather than
+# below it. 'claim' is the case #1853 measured; 'skip' is a RESUME, where it matters at least as much --
+# Chris's own body says resuming is picking up, and on a second machine the other session's branch is
+# the only trace there is. The two refusals below never reach it, so a closed or taken issue pays
+# nothing for a check whose answer it would not use.
+#
+# ADVISORY, NEVER A REFUSAL. An issue can be legitimately named in a commit on a branch that does not
+# fix it -- the run that produced this measurement saw open-pr warn about four such mentions, all
+# correct as context -- and a claim that blocks costs the whole assignment (#1485). Every failure below
+# is therefore a note and a carry-on, including the fetch's.
+#
+# ONE THING IT DOES CHANGE IS WHAT THIS SCRIPT SAYS LAST (#1878). Advisory is about the exit code and
+# the claim, not about the wording: a run that prints 'ASK THEM BEFORE YOU WRITE ANYTHING' and then
+# closes with 'the work starts here' has said both and settled neither, and the second line is the one
+# a session acts on. So the closing verdict below reads this flag.
+#
+# AND THE SIXTH SIGNAL READS THE SAME FLAG ONE AXIS OVER (#2064). A surfaced branch can be in your way
+# without being a rival, and the verdict above cannot say so: it asks who is mid-flight, not whether
+# your route runs through their branch. Same advisory bound, same effect on the closing line.
+$foreignParked = $false
+$prerequisiteFound = $false
+if ($verdict.Action -eq 'claim' -or $verdict.Action -eq 'skip') {
+    $scanPattern = Get-IssueMentionPattern -Issue ([int]$number)
+
+    # EVERY BRANCH THE TWO SCANS BELOW SURFACE, COLLECTED AS THEY GO (#2064). The sixth signal weighs
+    # exactly this set and nothing else: a branch neither scan had a reason to name is a branch the
+    # reader is not being pointed at, so measuring it would be noise bought with a git call.
+    $surfacedBranches = New-Object System.Collections.Generic.List[string]
+
+    # THE EXCLUSIONS ARE ESTABLISHED BEFORE THE NETWORK CALL, because they decide whether it is worth
+    # making. Without a trunk ref to subtract, `git log --all` reports every commit on the trunk that
+    # ever named this number -- which for a long-lived issue is its own repair, merged, and is exactly
+    # the noise that teaches a reader to skip this warning. So: no trunk ref, no scan.
+    $trunkRefs = @()
+    foreach ($ref in @($trunkBranch, "origin/$trunkBranch")) {
+        $probe = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'rev-parse', '--verify', '--quiet', $ref) -DiscardStderr
+        if ($probe -and $probe.ExitCode -eq 0) { $trunkRefs += $ref }
+    }
+
+    $headProbe = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'rev-parse', '--abbrev-ref', 'HEAD') -DiscardStderr
+    $currentBranch = if ($headProbe -and $headProbe.ExitCode -eq 0) { (@($headProbe.Output) -join '').Trim() } else { '' }
+    $excludeBranches = @($trunkBranch, "origin/$trunkBranch")
+    if ($currentBranch -and $currentBranch -ne 'HEAD') { $excludeBranches += @($currentBranch, "origin/$currentBranch") }
+
+    if ($trunkRefs.Count -gt 0 -and ($scanPattern -or $titleWords.Count -gt 0)) {
+        # THE FETCH IS THE ONLY NETWORK CALL THIS SCRIPT MAKES TO git, and it is the cost #1853 weighed
+        # this check against. It is `fetch --quiet` rather than `--all`: one remote's default refspec is
+        # what the scan reads, and a checkout with three remotes should not pay for two of them here.
+        # Bounded like every other network call in this family (#1639) and BEST-EFFORT -- a failure
+        # leaves the already-fetched refs in place, which is a smaller answer rather than a wrong one,
+        # and the note below says so instead of letting it read as a clean scan.
+        #
+        # AND A FAILURE OF IT IS NOT PAID FOR TWICE (issue #1860). Invoke-RecordedRemoteFetch is the seam
+        # new-branch.ps1 also fetches through, and the two land seconds apart by design: the claim is the
+        # OPENING of the work (#1485), so new-branch follows in the same turn. Against an unreachable
+        # remote that used to mean two full two-minute bounds back to back, at the one moment a session
+        # has nothing on screen yet to explain the wait; now the second call reports the first's failure.
+        #
+        # THE ORDINARY ~700ms IS STILL PAID TWICE, DELIBERATELY. A seam that also skipped on a recent
+        # SUCCESS would remove it, and new-branch.tests.ps1 cases (v) and (y1) refuse that: the probes it
+        # would let stand on a cached fetch are the ones that exist to see a push another session made
+        # seconds ago (#1139, #1439). A failed attempt refreshed nothing, so reporting it blinds nothing.
+        #
+        # THE ARGUMENT-LESS FORM IS KEPT, AND THE SEAM RESOLVES THE NAME ONLY FOR ITS RECORD. #1853's
+        # choice was git's default remote, not 'origin' by name, and a checkout whose default is
+        # something else must therefore match nothing rather than be assumed into this one's premise.
+        #
+        # NO -DiscardStderr, AND THAT IS THE CONVENTION RATHER THAN AN OVERSIGHT (#1313). A git call that
+        # talks to a remote writes ALL of its output to stderr, and git redacts the credential out of
+        # that line itself (transport_anonymize_url -- measured on 2.55.0). Nothing here parses the
+        # capture, so the flag would buy nothing and cost the reader git's own reason: exactly the trade
+        # #1313 declined for ship-pr's fetch, worktree-lane and prune-merged. The lines are printed under
+        # the note below, because keeping stderr and then never showing it is the same loss one step
+        # later. The two reads further down DO parse, so they keep the flag.
+        $fetch = Invoke-RecordedRemoteFetch -RepoRoot $repoRoot -RecentFailureSeconds $RemoteFetchRecentFailureSeconds `
+                                         -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+        $staleNote = "$($fetch.Note)"
+        $staleDetail = @(@($fetch.Output) | Where-Object { $_ -and ([string]$_).Trim() })
+        if (-not $staleNote) { $staleDetail = @() }
+
+        # FOUR FIELDS, AND THE TWO ADDED ONES ARE THE JUDGEMENT (#1878). %an and %at cost nothing --
+        # the same log call, the same walk -- and they carry the two facts the reader's decision
+        # actually turns on. Without them this block printed a sha and a subject, and the one commit
+        # shape a parked branch always has (a 'park:' scaffold) reads as empty: measured September 11,
+        # 2026, a session read exactly such a commit, found nothing in it, and built a second
+        # implementation of #1874 while its author's PR was minutes from opening.
+        if ($scanPattern) {
+            $logArgs = @('-C', $repoRoot, 'log', '--all', '-E', "--grep=$scanPattern", '--format=%H%x1f%an%x1f%at%x1f%s', '--not') + $trunkRefs
+            $scanLog = Invoke-NativeCapture -FilePath 'git' -Arguments $logArgs -Utf8 -DiscardStderr
+            if (-not $scanLog -or -not (Test-NativeExitMeasured -Capture $scanLog) -or $scanLog.ExitCode -ne 0 -or $scanLog.ShortRead) {
+                # THE UNMEASURABLE CODE GETS ITS OWN CLAUSE (issue #1931, audited under #2081), ahead of
+                # the exit-code one it was falling into: `$null -ne 0` is true, so the skip line read
+                # "it exited " with nothing after it. Skipping the scan is unchanged and is right -- it is
+                # a warning-only signal -- so what this buys is a reader who knows to run it again.
+                $why = if (-not $scanLog) { 'it could not be run at all' }
+                       elseif (-not (Test-NativeExitMeasured -Capture $scanLog)) { 'its exit code came back unmeasurable (issue #1931), so this run could not judge the read' }
+                       elseif ($scanLog.ShortRead) { 'its capture was still being written when it was read' }
+                       else { "it exited $($scanLog.ExitCode)" }
+                Write-Host "  [parked-fix scan skipped] git log for #$number was not readable -- $why." -ForegroundColor DarkGray
+            } else {
+                # THE CONTAINMENT LOOP IS BOUNDED, and the display cap in Format-ParkedFixReport does NOT
+                # bound it -- that one trims what is printed, after every commit has already paid for its own
+                # ancestry walk. Measured here on the review pass: `git branch -a --contains` costs ~30ms and
+                # a realistic parked branch matches 0-4 commits, so the ordinary run spends under 120ms; the
+                # worst case is a branch whose every subject carries the number (the convention is
+                # `fix(1853): ...`), which one issue in this repo's history reaches at 21.
+                #
+                # INVERTING THE LOOP WAS CONSIDERED AND DECLINED. Asking each branch which of ITS commits
+                # match -- one `git log <branch>` per branch -- is O(branches) instead of O(matches), and this
+                # repo carries 19 branches off the trunk against a handful of matches, so it makes the
+                # ordinary run four times slower to make the rare one faster. The ceiling costs nothing in
+                # the ordinary run and is what the rare one actually needs.
+                #
+                # NEWEST FIRST, because that is git log's own order and the newest commits are the ones whose
+                # branches are still live. The overflow is stated rather than swallowed -- a truncation a
+                # reader cannot see is the defect this whole check exists to remove, one layer in.
+                $maxContainmentReads = 25
+                $scanMatches = @(ConvertFrom-CommitScanLog -Text ((@($scanLog.Output) -join "`n")))
+                $resolved = @($scanMatches | Select-Object -First $maxContainmentReads)
+                if ($scanMatches.Count -gt $resolved.Count) {
+                    Write-Host "  [parked-fix scan] $($scanMatches.Count) commits name #$number off the trunk; the newest $($resolved.Count) were resolved to a branch." -ForegroundColor DarkGray
+                }
+                $findings = @()
+                foreach ($commit in $resolved) {
+                    $contains = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'branch', '-a', '--contains', $commit.Sha) -Utf8 -DiscardStderr
+                    # AUDITED UNDER #2081, WITH THE FOUR `-eq 0` READS BELOW IT (the trunk ls-tree, the
+                    # rev-list count, the per-branch ls-tree) AND LEFT AS THEY ARE. An unmeasurable exit
+                    # code (#1931) makes this `continue` and makes each of those keep its already-chosen
+                    # neutral value -- an empty $missingFromTrunk, an $ahead of -1, an empty $onlyThere --
+                    # every one of which the report renders as "not measured" rather than as a finding.
+                    # These signals warn and never refuse, so under-reporting is their safe direction and
+                    # a third state would buy a sentence about one commit inside a scan that already
+                    # states its own caps. Recorded as deliberate; that is this family's audited verdict.
+                    if (-not $contains -or $contains.ExitCode -ne 0) { continue }
+                    $branches = @(Get-ContainingBranchNames -Text ((@($contains.Output) -join "`n")) -Exclude $excludeBranches)
+                    if ($branches.Count -eq 0) { continue }
+                    # THE BRANCH NAME IS UNTRUSTED TEXT TOO, and it was the half that got printed raw. A
+                    # subject and a ref name come from the same place -- anyone who can push -- so both go
+                    # through the same filter, AFTER the exclusion above, which must compare the ref as git
+                    # spells it. git's own check-ref-format already refuses the C0 range in a ref, so this
+                    # strips nothing in practice today; it is here so that the one sanitiser this output has
+                    # covers every field of it, rather than leaving a second class of pushed text as the
+                    # exception a later widening would have to remember.
+                    # THE AUTHOR NAME IS THE THIRD FIELD OF PUSHED TEXT, so it goes through the same filter
+                    # as the other two. It is written by whoever made the commit -- git config user.name is
+                    # free text -- and #1878 put it on a line a session reads before deciding whether to
+                    # stop, which is exactly the position the sanitiser exists for.
+                    $findings += [pscustomobject]@{
+                        Sha         = $commit.Sha
+                        Author      = (Format-ForConsole -Text $commit.Author)
+                        AuthorEpoch = $commit.AuthorEpoch
+                        Subject     = (Format-ForConsole -Text $commit.Subject)
+                        Branches    = @($branches | ForEach-Object { Format-ForConsole -Text $_ })
+                        # THE SAME NAMES AS GIT SPELLS THEM, carried BESIDE the stripped copies rather
+                        # than instead of them (#2075). Branches is what the report prints and stays
+                        # stripped; GitBranches is what the sixth signal ASKS GIT ABOUT -- `rev-list
+                        # --count` and `ls-tree` -- and Format-ForConsole replaces each stripped
+                        # character with a SPACE, so a stripped name is a ref git does not have. Both
+                        # of those calls pass -DiscardStderr and are guarded on their exit code, so the
+                        # scan reported no dependency without printing or erroring: indistinguishable
+                        # from there being none, and only ever in the adversarial case the strip exists
+                        # for. Same seam the weighing loop below already draws for itself, where Branch
+                        # is stripped into the printed record and $branch is not.
+                        GitBranches = @($branches)
+                    }
+                }
+
+                # WHOSE COMMITS COUNT AS THIS CHECKOUT'S OWN. The git name first, because %an is what the
+                # scan read and the git name is what this checkout would have written; the claiming login
+                # second, so a split checkout (#1315) recognises itself under either. Test-SelfAuthored
+                # treats an empty list as 'no verdict', which is the honest answer on a checkout with no
+                # user.name configured.
+                # And the declared own accounts (#2394), so the owner's other machines read as self while
+                # an undeclared colleague still gets the NOT YOURS verdict.
+                $selfNames = @($identity.GitUserName, $identity.Account) + $ownAccounts
+                $parkedReport = @(Format-ParkedFixReport -Issue ([int]$number) -Findings $findings -SelfNames $selfNames)
+                foreach ($line in $parkedReport) {
+                    Write-Host "  $line" -ForegroundColor Yellow
+                }
+                # ASKED AGAIN RATHER THAN SCRAPED BACK OUT OF THE LINES ABOVE -- the closing verdict of this
+                # script has to agree with the block, and a regex over printed prose is how those two drift.
+                if (Get-ForeignParkedCommit -Findings $findings -SelfNames $selfNames) { $foreignParked = $true }
+                # The same records the report prints from, so the sixth signal weighs exactly what the
+                # reader was just pointed at -- a finding whose branches were all excluded is already gone.
+                # OFF GitBranches AND NOT Branches (#2075): same records, one field over. The sixth
+                # signal QUERIES these names rather than printing them, so it needs the spelling git
+                # has; "the records the report prints from" was right about WHICH records and wrong
+                # about which field of them.
+                foreach ($f in $findings) {
+                    foreach ($b in @(@($f.GitBranches) | Where-Object { $_ })) { $surfacedBranches.Add([string]$b) | Out-Null }
+                }
+            }
+        }
+
+        # THE FIFTH SIGNAL (#2018): EVERY BRANCH OFF THE TRUNK, MATCHED ON THE ISSUE'S TITLE, NOT ITS
+        # NUMBER. This runs whether or not the number-scan above found anything, and whether or not it
+        # even ran -- a branch named for the subject (see claim-issue-lib.ps1's own section header)
+        # carries no commit the scan above can match, on this claim or any future one, however long the
+        # branch grows. Same fetch as above ($fetch was already attempted), so this costs one more `git
+        # branch -a` and nothing more against the network.
+        if ($titleWords.Count -gt 0) {
+            $allBranchesCapture = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'branch', '-a') -Utf8 -DiscardStderr
+            if (-not $allBranchesCapture -or $allBranchesCapture.ExitCode -ne 0) {
+                Write-Host "  [title-overlap scan skipped] git branch -a was not readable." -ForegroundColor DarkGray
+            } else {
+                $allBranches = @(Get-ContainingBranchNames -Text ((@($allBranchesCapture.Output) -join "`n")) -Exclude $excludeBranches)
+                $overlaps = @(Get-TitleOverlapBranches -Title ([string]$facts.title) -Branches $allBranches)
+                # THE BRANCH NAME IS THE ONLY UNTRUSTED FIELD THIS BLOCK PRINTS, and it reached the
+                # terminal raw until #2069 -- the same class #1858 closed one signal up, off the same
+                # `git branch -a` text, reintroduced by a block written afterwards that never acquired
+                # the call. `git check-ref-format` enforces \p{Cc} and ACCEPTS \p{Cf}, so a branch
+                # fetched from origin can carry U+202E or a zero-width run into the one line whose
+                # whole job is to say which branch to go and read before writing anything.
+                #
+                # STRIPPED ON THE WAY OUT, NOT ON THE WAY IN, and that is what #2064 decided one block
+                # down rather than a preference: $overlaps feeds the sixth signal, which puts each name
+                # back to git (`rev-list --count`, `ls-tree`), so a name this strip has rewritten is a
+                # ref git does not have -- and the scan would report nothing where it should report a
+                # prerequisite, in exactly the adversarial case the strip exists for. The exclusion
+                # above needs the git spelling for the same reason. So the record keeps the ref as git
+                # wrote it and the REPORT gets a stripped copy: the same seam the weighing loop below
+                # draws, where Branch is stripped into the printed record and $branch is not.
+                # The `shares:` words need nothing -- Get-SignificantWords tokenizes on [^A-Za-z0-9]+,
+                # so nothing outside that class survives into them.
+                $safeOverlaps = @($overlaps | ForEach-Object {
+                    [pscustomobject]@{ Branch = (Format-ForConsole -Text ([string]$_.Branch)); SharedWords = @($_.SharedWords) }
+                })
+                $overlapReport = @(Format-TitleOverlapReport -Issue ([int]$number) -Title ([string]$facts.title) -Overlaps $safeOverlaps)
+                foreach ($line in $overlapReport) {
+                    Write-Host "  $line" -ForegroundColor Yellow
+                }
+                foreach ($o in $overlaps) { $surfacedBranches.Add([string]$o.Branch) | Out-Null }
+            }
+        }
+
+        # THE SIXTH SIGNAL (#2064): IS A SURFACED BRANCH A PREREQUISITE RATHER THAN A COMPETITOR? Every
+        # signal above asks who is mid-flight; this asks whether the route to the issue runs through
+        # somebody's unlanded branch. See the block comment above Get-IssuePathCitations for the
+        # measurement -- #2051's subject existed only on the branch the fourth signal had just named as
+        # a possible rival, and the ownership verdict pointed at the wrong question.
+        #
+        # IT COSTS NOTHING ON A QUIET CLAIM, which is the ordinary one: no branch surfaced, no git call
+        # made. Where something was surfaced the bill is one `rev-list --count` per branch plus ONE
+        # `ls-tree` on the trunk carrying every cited path at once -- and the per-branch `ls-tree` only
+        # for the paths the trunk turned out to lack, which is normally none. Trunk first is what keeps
+        # the ordinary shape at O(branches) instead of O(branches x paths).
+        if ($surfacedBranches.Count -gt 0) {
+            # THE REMOTE TRUNK WHERE THERE IS ONE, and that is a correctness choice rather than a
+            # preference: a local trunk sitting behind origin reports commits as unlanded that have in
+            # fact landed, which inflates a branch's weight in exactly the direction this signal must
+            # not err. $trunkRefs was probed above, in @(local, remote) order, so the remote is picked
+            # by name rather than by position.
+            $weighTrunk = if ($trunkRefs -contains "origin/$trunkBranch") { "origin/$trunkBranch" } else { [string]$trunkRefs[0] }
+
+            # A BOUND ON THE BRANCHES TOO, for the same reason the containment loop has one: a
+            # pathological issue can surface more branches than a reader will act on, and the overflow
+            # is stated rather than swallowed.
+            $maxWeighedBranches = 5
+            $allSurfaced = @($surfacedBranches | Select-Object -Unique)
+            $weighed = @($allSurfaced | Select-Object -First $maxWeighedBranches)
+            if ($allSurfaced.Count -gt $weighed.Count) {
+                Write-Host "  [branch-weight scan] $($allSurfaced.Count) branches were surfaced; the first $($weighed.Count) were weighed." -ForegroundColor DarkGray
+            }
+
+            # ONE MORE THAN WILL BE USED, so that a truncation here can be STATED like the other two
+            # in this block. The reader function returns paths rather than a record, and an extra
+            # element is the cheapest evidence that a ninth existed -- one regex pass over a string
+            # already in memory, no second git call, and no contract change for a pure function three
+            # suites hold. The notice says 'more than N' rather than a count, because that is exactly
+            # what a +1 probe measured: a cap a reader cannot see is the defect the parked-fix scan's
+            # own overflow line exists to remove, one layer in.
+            $maxCitedPaths = 8
+            $probedPaths = @(Get-IssuePathCitations -Text ([string]$facts.body) -MaxPaths ($maxCitedPaths + 1))
+            $citedPaths = @($probedPaths | Select-Object -First $maxCitedPaths)
+            if ($probedPaths.Count -gt $citedPaths.Count) {
+                Write-Host "  [branch-weight scan] #$number cites more than $maxCitedPaths paths; the first $maxCitedPaths were held against $weighTrunk." -ForegroundColor DarkGray
+            }
+            # WHICH OF THEM THE TRUNK ALREADY CARRIES -- one call, every path as its own pathspec.
+            # ls-tree answers by omission and exits 0 either way, so the verdict is which came back;
+            # where the call itself fails, $missingFromTrunk stays empty and the report falls to its
+            # weight-only ending rather than claiming a dependency it could not measure.
+            $missingFromTrunk = @()
+            if ($citedPaths.Count -gt 0) {
+                $trunkTree = Invoke-NativeCapture -FilePath 'git' -Arguments (@('-C', $repoRoot, 'ls-tree', $weighTrunk, '--') + $citedPaths) -Utf8 -DiscardStderr
+                if ($trunkTree -and $trunkTree.ExitCode -eq 0) {
+                    $onTrunk = @(Get-LsTreePaths -Text ((@($trunkTree.Output) -join "`n")))
+                    $trunkSet = [System.Collections.Generic.HashSet[string]]::new([string[]]$onTrunk, [System.StringComparer]::Ordinal)
+                    $missingFromTrunk = @($citedPaths | Where-Object { -not $trunkSet.Contains($_) })
+                }
+            }
+
+            $weights = @()
+            foreach ($branch in $weighed) {
+                $ahead = -1
+                $countCapture = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'rev-list', '--count', "$weighTrunk..$branch") -Utf8 -DiscardStderr
+                if ($countCapture -and $countCapture.ExitCode -eq 0) {
+                    $rawCount = ((@($countCapture.Output) -join '')).Trim()
+                    if ($rawCount -match '^\d+$') { $ahead = [int]$rawCount }
+                }
+                $onlyThere = @()
+                if ($missingFromTrunk.Count -gt 0) {
+                    $branchTree = Invoke-NativeCapture -FilePath 'git' -Arguments (@('-C', $repoRoot, 'ls-tree', $branch, '--') + $missingFromTrunk) -Utf8 -DiscardStderr
+                    if ($branchTree -and $branchTree.ExitCode -eq 0) {
+                        $onlyThere = @(Get-LsTreePaths -Text ((@($branchTree.Output) -join "`n")))
+                    }
+                }
+                $weights += [pscustomobject]@{
+                    # The branch name came off a pushed ref and is sanitised exactly like the other two
+                    # fields of pushed text this script prints; the paths came out of an issue body, and
+                    # Get-IssuePathCitations' character class is their bound.
+                    Branch    = (Format-ForConsole -Text $branch)
+                    Ahead     = $ahead
+                    OnlyThere = @($onlyThere | ForEach-Object { Format-ForConsole -Text $_ })
+                }
+            }
+
+            $prereqReport = @(Format-PrerequisiteReport -Issue ([int]$number) -Branches $weights `
+                                                        -CitedPathCount $citedPaths.Count -TrunkLabel $weighTrunk)
+            foreach ($line in $prereqReport) {
+                Write-Host "  $line" -ForegroundColor Yellow
+            }
+            if (@($weights | Where-Object { @(@($_.OnlyThere) | Where-Object { $_ }).Count -gt 0 }).Count -gt 0) {
+                $prerequisiteFound = $true
+            }
+        }
+
+        # PRINTED WHETHER OR NOT ANYTHING WAS FOUND, and that is the whole reason it is a separate line:
+        # "nothing names this issue" and "I could not refresh the refs I looked at" are different
+        # sentences, and merging them lets a failed fetch read as a clean scan.
+        if ($staleNote) {
+            Write-Host "  [parked-fix scan] $staleNote -- the branches read here may be behind origin." -ForegroundColor DarkGray
+            # git's own words, which is the whole reason stderr was kept above: "could not read from
+            # remote repository" and "Authentication failed" are what tell a reader whether this is
+            # their credentials or their network, and neither is derivable from the exit code.
+            foreach ($detail in $staleDetail) { Write-Host "                    $(Format-ForConsole -Text $detail)" -ForegroundColor DarkGray }
+        }
+    }
+}
+
+# --- IS IT PARKED WITH SOMEBODY ELSE (issue #2518) -------------------------------------------------
+#
+# A WARNING, NEVER A REFUSAL, on the bound every pickup signal here keeps (#1485): a label can be stale,
+# and a claim that blocks costs the whole assignment. Measured in a consumer, September 26, 2026: the
+# sweep route stopped on an issue ending in a choice for the owner, while this route claimed the same
+# kind of issue, printed "the work starts here", and the session chose between the options itself.
+# Only 'claim' and 'skip' reach it -- a closed or taken issue is not going to be worked either way.
+$parked = $false
+$parkingWaitKind = 'answer'
+if (($verdict.Action -eq 'claim' -or $verdict.Action -eq 'skip') -and $parkingLabels.Count -gt 0) {
+    $parked = $true
+    $parkingWaitKind = Get-ParkingWaitKind -Labels $parkingLabels
+    foreach ($line in @(Format-ParkingLabelNote -Issue ([int]$number) -Labels $parkingLabels)) {
+        Write-Host "  $line" -ForegroundColor Yellow
+    }
+    # AND AT MOST ONE OF THEM (issue #2938): the rule #2936 wrote down, read from the matches in hand.
+    $labelConflict = Format-ParkingLabelConflict -Labels $parkingLabels
+    if ($labelConflict) { Write-Host "  $labelConflict" -ForegroundColor Yellow }
+}
+
+switch ($verdict.Code) {
+    'no-account' {
+        Write-Host '[ERROR] gh names no active account here, so there is nobody to claim this as.' -ForegroundColor Red
+        Write-Host '        Run: gh auth login   (then run this again)' -ForegroundColor Red
+        Write-Host '        A claim exists to tell a second session whose work this is -- it cannot be made anonymously.' -ForegroundColor Red
+        exit 1
+    }
+    'pull-request' {
+        Write-PullRequestRefusal
+        exit 1
+    }
+    'closed' {
+        Write-Host "[REFUSED] issue #$number is $($facts.state) -- nothing was claimed." -ForegroundColor Red
+        Write-Host '          The one-liner in the docs would have succeeded here and told you nothing, which is the' -ForegroundColor Red
+        Write-Host '          most expensive way this step fails: work already done, built again in full, found at the' -ForegroundColor Red
+        Write-Host '          merge. If it is closed and still broken, REOPEN it first -- the reopening is the record' -ForegroundColor Red
+        Write-Host '          that the earlier repair did not hold, and this step is not the place to make it silently.' -ForegroundColor Red
+        Write-Host "          $($facts.url)" -ForegroundColor Red
+        exit 1
+    }
+    'taken' {
+        Write-Host "[REFUSED] issue #$number is already claimed by $($verdict.Others -join ', ') -- nothing was claimed." -ForegroundColor Red
+        if ($assignees -contains $identity.Account) {
+            Write-Host "          '$($identity.Account)' is on it too, and that is not evidence about what the other is" -ForegroundColor Red
+            Write-Host '          building: two people on one issue is the duplicate-work hazard, not a shared claim.' -ForegroundColor Red
+        }
+        # THE HOLDER MAY BE A SECOND ACCOUNT AUTHENTICATED ON THIS MACHINE (issue #2207). Printed
+        # ABOVE the "pick another issue, or ask whoever holds it" line on purpose: that line describes
+        # a colleague elsewhere, and where this note fires it is the sentence being corrected. The
+        # verdict, the exit code and the other verdicts are untouched -- this adds a reading, not a
+        # rule.
+        $localHolders = @(Get-LocalAccountHolders -Holders $verdict.Others -LocalAccounts $ghAccounts)
+        foreach ($line in @(Format-ConcurrentSessionNote -LocalHolders $localHolders -Account $identity.Account)) {
+            Write-Host "          $line" -ForegroundColor Yellow
+        }
+        Write-Host '          Pick another issue, or ask whoever holds it. There is deliberately no flag past this:' -ForegroundColor Red
+        Write-Host '          the way through is a conversation, and a switch cannot have one.' -ForegroundColor Red
+        Write-Host "          $($facts.url)" -ForegroundColor Red
+        exit 1
+    }
+    'already-yours' {
+        # A PARK OF AN ISSUE THIS TAG ALREADY HOLDS IS THE COMMON CASE, not a resume (Victor, #3907): a sweep
+        # claims at step 2, reads the issue, and finds it waits. Without this it printed "nothing to write",
+        # exited 0, and left the claim standing with no label.
+        if ($Park) { Invoke-ClaimPark -LabelsNow @(Get-IssueLabelNames -Issue $facts) }
+        # WHOSE IT IS DEPENDS ON WHICH CLAIM WAS MADE, and naming the wrong one here is how a sweep's
+        # resume goes to another session's branch: 'yours' under -Tag means this machine AND this
+        # account, where the assignee alone means the account on any machine.
+        $holderName = if ($Tag) { "tag $($claimTag.Tag)" } else { "'$($identity.Account)'" }
+        Write-Host "[OK] #$number is already yours ($holderName) -- nothing to write." -ForegroundColor Green
+        Write-Host '     A resume, then: read the branch and its document before you carry the work.' -ForegroundColor Green
+        # A RESUME IS WHERE THE PARKED-FIX VERDICT MATTERS MOST, not least: the other session's branch
+        # is already in this working copy, indistinguishable from your own, and the assignee field
+        # cannot name a machine. So the one line that points forward says which branch it means.
+        if ($foreignParked) {
+            Write-Host '     BUT NOT THAT BRANCH: somebody else pushed to one of them -- see the parked-fix' -ForegroundColor Yellow
+            Write-Host '     verdict above, and ask them before you carry it.' -ForegroundColor Yellow
+        }
+        # AND A RESUME IS WHERE AN ORDERING BITES HARDEST (#2064): the branch you are carrying may need
+        # somebody else's to land first, and nothing in this working copy says so -- the file the work
+        # needs is either there or it is not, and 'not there' reads as 'not written yet'.
+        if ($prerequisiteFound) {
+            Write-Host '     AND CHECK THE ORDER: a branch above carries a file this issue names and the trunk' -ForegroundColor Yellow
+            Write-Host '     does not -- see the prerequisite verdict before you carry this any further.' -ForegroundColor Yellow
+        }
+        if ($parked) {
+            # Per label (#4193): only a decision or information label owes an answer.
+            if ($parkingWaitKind -eq 'session') {
+                Write-Host '     AND IT IS PARKED FOR A SESSION: see the parking-label verdict above -- remove the' -ForegroundColor Yellow
+                Write-Host '     label when this is the session it waits on.' -ForegroundColor Yellow
+            } elseif ($parkingWaitKind -eq 'other') {
+                Write-Host '     AND IT IS PARKED: see the parking-label verdict above -- what it waits on comes' -ForegroundColor Yellow
+                Write-Host '     first, before you carry this any further.' -ForegroundColor Yellow
+            } else {
+                Write-Host '     AND IT IS PARKED: see the parking-label verdict above -- the answer is owed before' -ForegroundColor Yellow
+                Write-Host '     you carry this any further, and it is not yours to give.' -ForegroundColor Yellow
+            }
+        }
+        Write-Host "     $($facts.url)"
+        exit 0
+    }
+}
+
+# --- BUT A SWEEP'S CLAIM ON A PARKED ISSUE IS REFUSED (issue #3907) ---------------------------------
+#
+# The warning above stays a warning on the assignee route, for #2518's reason. A plain -Tag claim is the
+# sweep route, and the sweep route never claims a parked issue on purpose: -Candidates skips it, a decided
+# issue comes back with its label gone, and a review resume runs -Verify or -TakeOver -Parked, never this.
+# So a parked issue reaches here only through the race #3907 measured: free at step 1, parked by another
+# sweep before this claim. On November 8, 2026 that printed the PARKED warning and then "[OK] claimed",
+# twice, and both sessions had to release by hand. A label that has gone stale is lifted first, and the
+# claim then runs as usual.
+# A -Park that MOVES the issue's one parking label to its successor (#4226) is the exception: Invoke-ClaimPark
+# lifts the old label in the same edit.
+if ($parked -and $Tag -and -not $TakeOver -and $verdict.Action -eq 'claim' -and -not (Get-ParkMoveFrom -Park $Park -ParkingLabels $parkingLabels)) {
+    Write-Host "[REFUSED] #$number is already parked -- nothing was claimed$(if ($Park) { ' and nothing was parked' })." -ForegroundColor Red
+    Write-Host '          A sweep claims only a free issue, and a parking label means another session judged it' -ForegroundColor Red
+    Write-Host '          as waiting after this sweep''s step 1 read it. Take the next free number. If the label is' -ForegroundColor Red
+    Write-Host '          stale, lift it first and run this again:' -ForegroundColor Red
+    Write-Host "            gh issue edit $number --remove-label $(Format-ForConsole -Text (@($parkingLabels)[0]))" -ForegroundColor Red
+    Write-Host "          $($facts.url)" -ForegroundColor Red
+    exit 1
+}
+
+# --- CLAIM IT -------------------------------------------------------------------------------------
+if ($DryRun) {
+    $who = if ($Tag) { "tag $($claimTag.Tag) (a marker comment, and the assignee '$($identity.Account)' beside it)" } else { "'$($identity.Account)'" }
+    Write-Host "[DRY RUN] would claim #$number for $who. Nothing was written." -ForegroundColor Yellow
+    Write-Host "          $($facts.url)"
+    exit 0
+}
+
+# THE MARKER GOES FIRST, AND THE ORDER IS THE RACE RULE ITSELF (issue #2243). The winner is the
+# EARLIEST marker comment, so every step taken before writing it is time added to this session's own
+# timestamp -- writing the assignee first would hand the issue to a machine that started later.
+if ($Tag) {
+    $comment = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'comment', $number) + $repoArgs + @('--body', (Format-ClaimComment -Tag $claimTag.Tag -Marker @($Marker)[0]))) -Utf8 `
+                                    -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    if (-not $comment -or -not (Test-NativeExitMeasured -Capture $comment) -or $comment.ExitCode -ne 0) {
+        # THE SAME READING AS THE ASSIGNEE WRITE BELOW, for the same reason: a write that did not answer
+        # may be on the tracker. It stops rather than carrying on, and re-running is safe -- a marker
+        # that did land comes back as 'already-yours', which is a complete answer.
+        Write-Host "[ERROR] the claim comment on #$number did not land, so the issue is NOT claimed." -ForegroundColor Red
+        Write-Host '        The marker IS the claim in tag mode -- without it nothing on the tracker says this' -ForegroundColor Red
+        Write-Host '        machine is working here, and a second machine would take the same issue.' -ForegroundColor Red
+        Write-Host '        Run this again: a marker that did land comes back as already-yours.' -ForegroundColor Red
+        Write-Host "        $($facts.url)" -ForegroundColor Red
+        exit 1
+    }
+}
+
+$edit = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'edit', $number) + $repoArgs + @('--add-assignee', $identity.Account)) -Utf8 `
+                             -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+
+# IN TAG MODE THE ASSIGNEE IS NOT THE CLAIM, SO ITS FAILURE IS NOT A FAILED CLAIM (issue #2243). The
+# three branches below all stop, correctly, where the assignee IS the claim. Here the marker is already
+# on the tracker -- every other machine reads the issue as held -- and stopping now would leave a claim
+# standing with a session told it had none, which is the one state the two-writes order can produce and
+# the worst one to report wrongly. So it is a warning and the run carries on to the read-back.
+$assigneeLanded = ($edit -and (Test-NativeExitMeasured -Capture $edit) -and $edit.ExitCode -eq 0)
+if ($Tag -and -not $assigneeLanded) {
+    Write-Host "[WARNING] the claim marker landed on #$number but the assignee '$($identity.Account)' did not." -ForegroundColor Yellow
+    Write-Host '          The issue IS claimed -- the marker is what another machine reads. What is missing is the' -ForegroundColor Yellow
+    Write-Host '          tracker''s own visible signal, so the issue looks untouched in a list view.' -ForegroundColor Yellow
+    if ($identity.Split) {
+        Write-Host "          This checkout has a split identity, so the likely cause is that '$($identity.Account)'" -ForegroundColor Yellow
+        Write-Host "          cannot be assigned in this repo while gh acts as '$($identity.GhAccount)'." -ForegroundColor Yellow
+    }
+}
+if ($Tag -and $edit -and $edit.TimedOut) {
+    Write-Host "          (the assignee write did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- it may yet have landed)" -ForegroundColor Yellow
+}
+
+if (-not $Tag -and $edit -and $edit.TimedOut) {
+    # THE ONE PLACE A TIMEOUT IS NOT THE SAME AS A FAILURE, and it is split out above the branch below
+    # for that reason alone. Every other bounded call in this script only READS; this one WRITES, and a
+    # write that never answered may well have landed server-side. So the honest report is neither "the
+    # claim failed" (which the branch below would print, and which would be a claim about the tracker
+    # this run cannot make) nor an [OK].
+    #
+    # IT STILL STOPS, unlike the read-back's could-not-verify state further down. The difference is
+    # what has already been proven: there, the write returned 0 and only the confirmation was missing,
+    # so carrying on was the likelier-correct act. Here nothing about the write is known at all.
+    # RE-RUNNING IS SAFE AND IS THE WAY OUT: the pre-write read at the top would then report
+    # 'already-yours' if it did land, which is a complete answer, and claim it if it did not.
+    Write-Host "[ERROR] 'gh issue edit' did not answer within $NativeCaptureNetworkTimeoutSeconds seconds -- see the [timeout] line above." -ForegroundColor Red
+    Write-Host "        THIS RUN DOES NOT KNOW whether the claim landed: the write reached the network and never" -ForegroundColor Red
+    Write-Host '        reported back, so it may be on the tracker already. Treat the issue as UNCLAIMED until you' -ForegroundColor Red
+    Write-Host '        have looked, and run this again -- a claim that did land comes back as "already yours".' -ForegroundColor Red
+    Write-Host "          gh issue view $number --json assignees" -ForegroundColor Red
+    Write-Host "        $($facts.url)" -ForegroundColor Red
+    exit 1
+}
+if ($Tag -and $edit -and -not (Test-NativeCommandStarted -Capture $edit)) {
+    # THE $Tag HALF, beside the timeout parenthetical above it and for the same reason: under -Tag the
+    # marker comment has already landed, so a failed assignee write is a warning the run carries on
+    # from rather than a stop. What differs is only the sentence -- a write that never started is the
+    # one non-answer that IS known, so this one does not hedge about whether it may yet have landed.
+    Write-Host '          (the assignee write never ran -- gh is not on PATH here, issue #2234 -- so it did NOT land)' -ForegroundColor Yellow
+}
+
+if (-not $Tag -and $edit -and -not (Test-NativeCommandStarted -Capture $edit)) {
+    # A WRITE THAT NEVER STARTED IS THE ONE NON-ANSWER THAT *IS* KNOWN (issue #2234), which is why it
+    # sits ahead of the unmeasured arm below rather than inside it. Both other arms say "THIS RUN DOES
+    # NOT KNOW whether the claim landed -- it may be on the tracker already", and that is exactly right
+    # for a write that reached the network. It is exactly WRONG here: nothing was sent, because there was
+    # no process to send it. Absorbed below -- which the shared ExitCodeUnknown flag would do -- this
+    # script would tell a session to go and look on the tracker for a write that provably never left the
+    # machine, which is the same class of confident wrong verdict #1931 was filed about.
+    #
+    # NORMALLY UNREACHABLE, AND WRITTEN ANYWAY. The read at the top of this script now refuses on the
+    # same state, so an absent gh stops long before here; what this covers is gh disappearing between
+    # the two calls. The arm exists because the sentence's correctness must not depend on an upstream
+    # guard staying where it is -- that coupling is invisible from this block, which is where a later
+    # reader will be standing.
+    Write-Host '[ERROR] gh could not be started for the claim -- it is not on PATH here (issue #2234).' -ForegroundColor Red
+    Write-Host '        NOTHING WAS SENT, so unlike a stall this is not an unknown: the claim did not land, and' -ForegroundColor Red
+    Write-Host '        there is nothing to go and look for on the tracker. The issue is still unclaimed.' -ForegroundColor Red
+    Write-Host '        Install the GitHub CLI (https://cli.github.com) and run this again.' -ForegroundColor Red
+    Write-Host "        $($facts.url)" -ForegroundColor Red
+    exit 1
+}
+if (-not $Tag -and $edit -and -not (Test-NativeExitMeasured -Capture $edit)) {
+    # THE SECOND PLACE A NON-ANSWER IS NOT A FAILURE, and it is the block above one field over (issue
+    # #1931, audited under #2081). `$null -ne 0` is true, so an unmeasurable code took the arm below and
+    # printed "the claim failed -- #N is NOT yours" -- about a write that may be sitting on the tracker,
+    # and then went on to blame a split identity for it. That is the worst sentence this script can say
+    # wrongly: a session told the claim failed either stops, or claims again under another account.
+    #
+    # IT DOES NOT RE-ASK, unlike the READ at the top of this script. The re-ask there is sound precisely
+    # because `gh issue view` changes nothing; this is a write, and a write whose outcome is unknown is
+    # the one thing that must never be repeated blind. Re-running the SCRIPT is the way out, and it is
+    # safe for the reason the timeout arm above already gives: the pre-write read reports 'already yours'
+    # if it landed, which is a complete answer.
+    Write-Host "[ERROR] 'gh issue edit' ran but its exit code could not be measured (issue #1931)." -ForegroundColor Red
+    Write-Host '        THIS RUN DOES NOT KNOW whether the claim landed -- the write may be on the tracker already.' -ForegroundColor Red
+    Write-Host '        It is NOT evidence that the claim was refused, so do not re-claim under another account.' -ForegroundColor Red
+    Write-Host '        Look, then run this again -- a claim that did land comes back as "already yours".' -ForegroundColor Red
+    Write-Host "          gh issue view $number --json assignees" -ForegroundColor Red
+    Write-Host "        $($facts.url)" -ForegroundColor Red
+    exit 1
+}
+if (-not $Tag -and -not $assigneeLanded) {
+    Write-Host "[ERROR] the claim failed -- #$number is NOT yours." -ForegroundColor Red
+    foreach ($line in @($edit.Output)) { Write-Host "        $line" -ForegroundColor Red }
+    if ($identity.Split) {
+        Write-Host "        This checkout has a split identity, so the likely cause is that '$($identity.Account)'" -ForegroundColor Red
+        Write-Host "        (the account it COMMITS as) cannot be assigned in this repo, while gh acts as" -ForegroundColor Red
+        Write-Host "        '$($identity.GhAccount)'. Resolve the split rather than claiming as the other one:" -ForegroundColor Red
+        Write-Host '        check-git-identity.ps1 prints both ways out.' -ForegroundColor Red
+    }
+    exit 1
+}
+
+# --- WHO WON, IF TWO MACHINES CLAIMED AT ONCE (issue #2243) ---------------------------------------
+#
+# THE READ-BACK IN TAG MODE ANSWERS A DIFFERENT QUESTION FROM THE ONE BELOW, which is why it is its own
+# block and exits rather than falling through. Below, the question is whether the write landed. Here it
+# is WHO HOLDS THE ISSUE: two machines can both have written a marker in the same second, both
+# successfully, and the tracker's timestamps are the only record either of them can read the same way.
+#
+# AND IT NAMES THE WINNER RATHER THAN THE LOSER. The prompt this replaces said "if you see a claim that
+# is not yours, let go" -- under which both sessions let go and the issue is released by everybody who
+# wanted it. Resolve-ClaimRace picks the earliest marker, so exactly one session keeps it and the
+# others release. See its docstring for the tie-break.
+if ($Tag) {
+    $raceRead = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'view', $number) + $repoArgs + @('--json', 'comments,labels')) -Utf8 -DiscardStderr `
+                                     -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    $raceOk = [bool]($raceRead -and (Test-NativeExitMeasured -Capture $raceRead) -and $raceRead.ExitCode -eq 0 -and -not $raceRead.ShortRead)
+    if (-not $raceOk) {
+        # UNVERIFIED IS NOT LOST, and it does not release. The marker was written and gh accepted it, so
+        # the likeliest state by far is a claim that landed and a read that did not -- and releasing on
+        # a failed READ would hand back work this session is holding. It stops instead of carrying on,
+        # because carrying on means building on an unsettled race.
+        Write-Host "[WARNING] the claim was written, but the read-back of #$number did not answer." -ForegroundColor Yellow
+        Write-Host '          So this run cannot say whether a second machine claimed it in the same breath. Do not' -ForegroundColor Yellow
+        Write-Host '          start building yet -- run this again, or look:' -ForegroundColor Yellow
+        Write-Host "            claim-issue.ps1 $number -Tag -Verify" -ForegroundColor Yellow
+        Write-Host "          $($facts.url)" -ForegroundColor Yellow
+        exit 1
+    }
+
+    $race = Resolve-ClaimRace -Tag $claimTag.Tag -Records @(Get-ClaimRecords -Json (@($raceRead.Output) -join "`n") -Marker $Marker)
+
+    if ($race.Action -eq 'absent') {
+        Write-Host "[ERROR] gh accepted the claim comment, but no marker for $($claimTag.Tag) is on #$number." -ForegroundColor Red
+        Write-Host '        Treat the issue as UNCLAIMED. Nothing on the tracker says this machine is working here.' -ForegroundColor Red
+        Write-Host "        $($facts.url)" -ForegroundColor Red
+        exit 1
+    }
+
+    if ($race.Action -eq 'release') {
+        # THE LOSER RELEASES ITSELF, HERE, RATHER THAN LEAVING IT TO THE CALLER. A marker left behind
+        # parks the issue against every other machine, and the session that knows it lost is the only
+        # one that can tell the difference between its own marker and the winner's.
+        Write-Host "[RACE] #$number went to $(Format-ForConsole -Text $race.Winner) -- their marker is earlier than this one." -ForegroundColor Yellow
+        # A HASHTABLE SPLAT, NOT AN ARRAY (#2623). An array splat passes every element POSITIONALLY to a
+        # script, so the Tag switch's name arrived as a string in the second positional slot, which has no parameter --
+        # the release threw, and the losing marker and assignee stayed on the issue. Names bind by name.
+        $releaseArgs = @{ Issue = $number; Tag = $true; Release = $true; Marker = $Marker }
+        if ($RootOverride) { $releaseArgs.RootOverride = $RootOverride }
+        & $PSCommandPath @releaseArgs
+        Write-Host '       Nothing was lost: a claim, not work. Take the next free number --' -ForegroundColor Yellow
+        Write-Host '         claim-issue.ps1 -Candidates' -ForegroundColor Yellow
+        exit 1
+    }
+
+    $rivalNote = if (@($race.Rivals).Count -gt 0) { " (ahead of $(Format-ForConsole -Text (@($race.Rivals) -join ', ')))" } else { '' }
+    # -Park: THE WINNER LABELS, COMMENTS AND LETS GO (issue #3907), through Invoke-ClaimPark. Only after the
+    # read-back named this tag the winner, so a second sweep parking the same issue has already released
+    # itself above and written nothing; the labels come from that same read-back, so a park that landed
+    # while this run claimed is seen too.
+    if ($Park) {
+        $labelsNow = @()
+        try { $labelsNow = @(Get-IssueLabelNames -Issue ((@($raceRead.Output) -join "`n") | ConvertFrom-Json)) } catch { $labelsNow = @() }
+        Invoke-ClaimPark -LabelsNow $labelsNow -RivalNote $rivalNote
+    }
+
+    Write-Host "[OK] #$number claimed by $($claimTag.Tag)$rivalNote." -ForegroundColor Green
+    Write-Host "     $title"
+    if ($takeOverBranch) {
+        # THE RECORD A PERSON READS, written after the claim is settled so it never announces a handover
+        # the race read-back went on to reverse. Its failure is a warning: the claim is the marker.
+        $note = Format-HandoverComment -OldTags $takeOverFrom -NewTag $claimTag.Tag -Branch $takeOverBranch -Issue ([int]$number) -Authors $takeOverAuthors
+        $posted = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'comment', $number) + $repoArgs + @('--body', $note)) -Utf8 `
+                                       -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+        if (-not $posted -or -not (Test-NativeExitMeasured -Capture $posted) -or $posted.ExitCode -ne 0) {
+            Write-Host '[WARNING] the handover comment did not land -- the claim did. Say so on the issue by hand.' -ForegroundColor Yellow
+        }
+        $fromText = if ($takeOverFrom.Count -gt 0) { $takeOverFrom -join ', ' } else { "an untagged branch by $($takeOverAuthors -join ', ')" }
+        Write-Host "     Taken over from $(Format-ForConsole -Text $fromText). Resume the work where it is:" -ForegroundColor Green
+        Write-Host "       git fetch origin; git checkout $(Format-ForConsole -Text $takeOverBranch)" -ForegroundColor Green
+        Write-Host "     $($facts.url)"
+        exit 0
+    }
+    if ($foreignParked) {
+        Write-Host '     Read the issue -- then settle the branch named above BEFORE you open one of your own.' -ForegroundColor Yellow
+    } else {
+        Write-Host '     Read the issue, then open the branch (new-branch) -- in this same turn, without asking' -ForegroundColor Green
+        Write-Host '     whether to go on.' -ForegroundColor Green
+    }
+    Write-Host "     $($facts.url)"
+    exit 0
+}
+
+# --- READ THE CLAIM BACK --------------------------------------------------------------------------
+#
+# The write is not the proof. `--add-assignee` reports success for a login GitHub silently drops (a
+# non-collaborator on a repo that allows the edit), and an unverified claim is worse than none: the
+# session believes the tracker says something it does not. One extra read, at the one moment it
+# settles the question this whole script exists to answer.
+#
+# THREE STATES, NOT TWO (#1628, September 8, 2026). A single `$landed` boolean collapsed "the read
+# succeeded and the account is absent" -- the claim was refused -- into "the read never happened", and
+# then printed the first. Those are opposite facts: one says the tracker rejected the claim, the other
+# says THIS RUN DOES NOT KNOW, while the write it is checking returned 0. Measured claiming #1623 in
+# this repo: the message fired, named a cause it had not measured ("most often an account with no
+# write access"), and told the operator to treat the issue as UNCLAIMED -- and a plain `gh issue view`
+# on the same checkout, seconds later, showed the claim sitting there. The same session's `new-branch`
+# run printed 'could not ask gh which issues are open (exit 1)' minutes later, so gh was answering
+# intermittently and the second branch of the old `if` was being reported as the first. Note the
+# contrast that made it legible: `new-branch` names the exit code and says the check COULD NOT ASK.
+#
+# `-DiscardStderr` STAYS, so the could-not-verify line names the exit code rather than gh's own words:
+# Output is parsed as JSON here, and stderr mixed into it would break the parse to improve a message.
+$after = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'view', $number) + $repoArgs + @('--json', 'assignees')) -Utf8 -DiscardStderr `
+                              -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+# A SHORT READ IS NOT gh DISAGREEING (issue #1679). $readOk asked the exit code alone, and the -Utf8 arm
+# can answer 0 with an empty or truncated capture -- in which case $landed is false and the run took the
+# REFUSED branch below, printing "gh accepted the claim but '<account>' is not on #N ... Treat the issue
+# as UNCLAIMED" and exiting 1. That is a confident false negative on the step that OPENS every
+# issue-driven assignment (#1485), and its own comment says why it is wrong: it claims gh answered and
+# the account was not in the list it returned, when on a short read gh's answer never reached us.
+#
+# THE RIGHT BRANCH ALREADY EXISTS AND IS TWO BLOCKS DOWN. "Could not verify" is exactly this state, and
+# it deliberately does not block -- so folding ShortRead into $readOk needs no new verdict, no new
+# message and no new policy. #1679 filed this site in its group C on the ground that "the read-back
+# fails, which is the safe direction"; the read-back does not fail, it succeeds with nothing, which is
+# the whole reason the field had to exist.
+$readOk = [bool]($after -and $after.ExitCode -eq 0 -and -not $after.ShortRead)
+$landed = $readOk -and ((Get-AssigneeLogins -Json (@($after.Output) -join "`n")) -contains $identity.Account)
+
+if ($readOk -and -not $landed) {
+    # REFUSED -- measured rather than inferred: gh answered, and the account is not in the list it
+    # returned. This is the only state the old message was ever right about, and it is unchanged.
+    Write-Host "[ERROR] gh accepted the claim but '$($identity.Account)' is not on #$number." -ForegroundColor Red
+    Write-Host '        GitHub drops an assignee it will not accept without failing the command -- most often an' -ForegroundColor Red
+    Write-Host '        account with no write access to this repo. Treat the issue as UNCLAIMED.' -ForegroundColor Red
+    Write-Host "        $($facts.url)" -ForegroundColor Red
+    exit 1
+}
+
+if (-not $readOk) {
+    # COULD NOT VERIFY -- and it does NOT block, for the reason the claim step exists at all (#1485): a
+    # claim is the OPENING of the work, so a false stop here costs the whole assignment. Everything
+    # that guards against duplicate work has already succeeded -- the pre-write read answered and
+    # showed nobody else holding this issue, and `gh issue edit` returned 0 -- so by far the likelier
+    # state is a claim that landed and a read that did not. What this run cannot do is call that
+    # proven, so it says which of the two states it is in and hands over the command that settles it.
+    #
+    # THE TimedOut REASON IS REACHABLE NOW, AND #1628 LEFT ROOM FOR IT ON PURPOSE. This block used to
+    # carry the opposite note -- "no TimedOut branch, deliberately: this script passes no
+    # -TimeoutSeconds anywhere, so that field is always $false here and a branch on it would be a
+    # reason that can never print" -- which was exactly right on the day it was written and stopped
+    # being true the moment the three calls above were bounded (issue #1639). It is the one reason
+    # worth naming separately here, because a stall and an exit code point the reader at different
+    # things: an exit code means gh answered and disagreed, a timeout means the read never happened at
+    # all, and only the second says nothing whatever about the tracker's state.
+    #
+    # AND THE SHORT READ IS THE THIRD SUCH REASON (issue #1679), for the same argument one paragraph up
+    # rather than a new one: it is a read that did not happen, so it says nothing about the tracker
+    # either -- and unlike a stall it arrives at exit 0, so naming the exit code here would print
+    # "exited 0" as the reason the read-back failed. That is the misleading half; it must be named
+    # before the exit-code arm or it can never print.
+    #
+    # AND THE UNMEASURABLE EXIT CODE IS THE FOURTH (issue #1931, audited under #2081), by the same
+    # argument again: it is a read whose outcome this run could not judge, so it says nothing about the
+    # tracker -- and `$readOk` already excludes it, because that test is written `-eq 0` and `$null` is
+    # not. So the verdict was right and only the REASON was wrong: the arm below would have printed
+    # "exited " with nothing after it. It is named before that arm for exactly the reason the short read
+    # is, one paragraph up.
+    $why = if ($after -and $after.TimedOut) {
+        "did not answer within $NativeCaptureNetworkTimeoutSeconds seconds"
+    } elseif ($after -and $after.ShortRead) {
+        'exited 0 with its capture still being written, so what came back may be truncated'
+    } elseif ($after -and -not (Test-NativeExitMeasured -Capture $after)) {
+        # THE WORDING AVOIDS THE BARE WORD "exit" ON PURPOSE, and it is not squeamishness: this branch's
+        # own suite asserts that no `exit` STATEMENT appears in it, over the code with comments stripped
+        # -- the non-blocking promise #1485 turns on. A string carrying the word reads to that assert as
+        # the defect returning, and a test that a correct sentence can fail teaches the next author to
+        # write a worse one. "returned a code this run could not measure" says the same thing.
+        'returned a code this run could not measure (issue #1931), so the read-back could not be judged'
+    } elseif ($after) {
+        "exited $($after.ExitCode)"
+    } else {
+        'could not be run at all'
+    }
+    Write-Host "[WARNING] the claim was written and gh accepted it, but the read-back $why," -ForegroundColor Yellow
+    Write-Host "          so this run cannot confirm '$($identity.Account)' is on #$number. It most likely IS:" -ForegroundColor Yellow
+    Write-Host '          the write returned 0, and the read before it answered normally. Confirm it if you' -ForegroundColor Yellow
+    Write-Host "          want certainty -- gh issue view $number --json assignees" -ForegroundColor Yellow
+    Write-Host "          $($facts.url)" -ForegroundColor Yellow
+}
+
+# THE HEADLINE DOES NOT ASSERT WHAT THE READ-BACK COULD NOT MEASURE (#1628). Where the read did not
+# answer, a bare '[OK] claimed' directly under the warning above reads as the run overruling its own
+# caveat, and the operator is left with two lines that cannot both be true. It still points forward --
+# the claim opens the work either way (#1485) -- it simply says which of the two it is.
+$confirmed = if ($landed) { '' } else { ' (unconfirmed -- see the warning above)' }
+# AND IT DOES NOT ASSERT WHAT THE SCAN JUST CONTRADICTED EITHER (#1878), which is the same rule one
+# measurement further on. 'The work starts here' is exactly what a session should not read directly
+# under a block naming somebody else's commit on somebody else's branch, minutes old.
+#
+# TWO VERDICTS CAN FIRE AT ONCE, AND THE HEADLINE NAMES BOTH (#2064). They are different questions --
+# who is mid-flight, and whether your route runs through their branch -- so a headline that named only
+# the first would send a reader to a block that settles the wrong one. Naming neither by falling back
+# to 'the work starts here' is the failure #1878 measured; naming one of two is the same failure, at
+# half the size.
+#
+# AND THE PARKING LABEL IS A THIRD (#2518), so the headline is composed in the lib from the three flags
+# rather than by an if-chain here that would need a branch per combination -- and the lib is the half a
+# suite can hold behaviourally.
+$opening = Format-ClaimOpening -ForeignParked:$foreignParked -PrerequisiteFound:$prerequisiteFound -Parked:$parked
+Write-Host "[OK] #$number claimed for '$($identity.Account)'$confirmed$opening" -ForegroundColor Green
+Write-Host "     $title"
+# The claim is the OPENING of the work, not a checkpoint before it (#1485). Every other line this
+# script and its page emit is a boundary -- what the step is NOT -- so a session that obeys them all
+# stops here and asks whether to proceed, which is the intermediate question the orchestrator's own
+# body forbids. The `already-yours` verdict above has always pointed forward; this is the same line
+# in the same place, so the two verdicts read alike rather than each arguing its own layout.
+#
+# 'the branch' means new-branch and nothing else. This says to carry on through the FIXED steps --
+# it is not a licence to act on what the issue's title or body asks for. Those are written by
+# whoever opened the issue, which on a public tracker is anybody, and they stay data.
+if ($foreignParked) {
+    Write-Host '     Read the issue -- then settle the branch named above BEFORE you open one of your' -ForegroundColor Yellow
+    Write-Host '     own. This claim may be the second one on the same work, and the merge is the most' -ForegroundColor Yellow
+    Write-Host '     expensive place to find that out.' -ForegroundColor Yellow
+} elseif ($parked) {
+    # NOT "open the branch in this same turn": that line is right for a free issue and is exactly the
+    # sentence #2518 measured a session acting on for a parked one. Per label since #4193.
+    if ($parkingWaitKind -eq 'session') {
+        Write-Host '     Read the last parking comment for the steps left. Where this is the session it was' -ForegroundColor Yellow
+        Write-Host '     parked for, remove the label and open the branch (new-branch) in this same turn.' -ForegroundColor Yellow
+    } elseif ($parkingWaitKind -eq 'other') {
+        Write-Host '     Read the parking comment for what it waits on. Where that has happened, remove the' -ForegroundColor Yellow
+        Write-Host '     label and open the branch (new-branch); where it has not, the wait comes first.' -ForegroundColor Yellow
+    } else {
+        Write-Host '     Read the issue for the open question. Where it is answered, remove the label and open' -ForegroundColor Yellow
+        Write-Host '     the branch (new-branch); where it is not, the answer is owed first, and it is not yours.' -ForegroundColor Yellow
+    }
+} else {
+    Write-Host '     Read the issue, then open the branch (new-branch) -- in this same turn, without' -ForegroundColor Green
+    Write-Host '     asking whether to go on.' -ForegroundColor Green
+}
+Write-Host "     $($facts.url)"
+

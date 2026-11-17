@@ -1,10 +1,10 @@
 # The branch-entry gate AS A CONSUMER RUNS IT -- a reusable workflow (`on: workflow_call`), called from
-# the few-line .github/workflows/branch-entry.yml that adopt-dkj-policy's Part 1 places (issue #2422).
+# the few-line .github/workflows/branch-entry.yml that adopt-dkj-repo-workflow's Part 1 places (issue #2422).
 #
 # WHY THIS FILE AND NOT THIS REPO'S OWN branch-entry.yml. That one runs THIS tree's scripts/lint/ copy on
 # this tree's own pull requests, so a PR changing the check is judged by the check it changes. A consumer
 # has no such copy: it checks this repository out beside its own tree and runs the plugin mirror under
-# plugins/dkj-policy/. Two different subjects, so two files -- and this one is the only definition of the
+# plugins/dkj-repo-workflow/. Two different subjects, so two files -- and this one is the only definition of the
 # consumer's runner, where every consumer used to carry a full copy of it (~50 lines, half of it this
 # commentary) that the scaffolder wrote once and nothing ever corrected.
 #
@@ -41,7 +41,7 @@
 #
 # THE CALLER ALSO NEEDS `edited` IN ITS TRIGGER (issue #1710): `open-pr.ps1 -RefreshBody` repairs a drifted
 # section by editing the body with no push behind it, and without `edited` the check cannot look again.
-# Both halves are what adopt-dkj-policy's Part 1 places since #2429.
+# Both halves are what adopt-dkj-repo-workflow's Part 1 places since #2429.
 #
 # LINUX, UNDER PWSH 7 (issue #2616, after #2488): ubuntu-latest and `shell: pwsh`, because on a private
 # repo a Windows minute is billed above a Linux one. The shared scripts start children by the literal
@@ -91,7 +91,7 @@ jobs:
           HEAD_REF: ${{ github.head_ref }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File .workflow-scripts/plugins/dkj-policy/scripts/lint/check-branch-entry.ps1 -Branch $env:HEAD_REF -Pr $env:PR_NUMBER
+          powershell -NoProfile -ExecutionPolicy Bypass -File .workflow-scripts/plugins/dkj-repo-workflow/scripts/lint/check-branch-entry.ps1 -Branch $env:HEAD_REF -Pr $env:PR_NUMBER
           exit $LASTEXITCODE
 
       # THE PLANTED PLUGIN TREE (issue #2752, after #2746). specialists-init allows the workflow's entry
