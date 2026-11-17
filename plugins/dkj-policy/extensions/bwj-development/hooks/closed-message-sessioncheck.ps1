@@ -51,6 +51,13 @@
          build-backlog-page already lists these, but only when somebody runs it. An issue whose body
          names an Asana task in any form Resolve-AsanaTaskRef reads (one task or several) has a card and
          is left out. Read from finding 5's open-issue list, so it costs no gh call of its own.
+         Beside it (#4230), the same issues are held to the OTHER half of the label's contract: a body
+         with no 'Why <reach label>' section, as reach-reason-rules.ps1's Test-ReachReasonSection judges
+         it. guard-reach-reason (#4057) refuses such a call at creation, but it fails open by design (a
+         body built at run time, a body on stdin, gh slow or absent, an older install on the filing
+         machine), and nothing said so afterwards. Measured in smartwatchbanden, November 17, 2026:
+         #1398 and #1404 were filed with 'minor' and no section after the guard shipped, and only the
+         missing card was reported. The two lines are separate, because their repairs are.
       7. every OPEN issue carries exactly one of the kind labels 'bug', 'feature' or 'research' (#4219).
          guard-kind-label (#4197) holds the rule at creation, but it fails open by design (a label built at
          run time, a template, an editor) and a checkout that has not updated carries no guard at all, so
@@ -297,6 +304,26 @@ function Get-ReachWithoutCardFindings {
     return @($found | Sort-Object)
 }
 
+function Get-ReachWithoutReasonFindings {
+    <#
+        Pure (#4230): the numbers of the open issues that carry -ReachLabel and whose body has no
+        'Why <reach label>' section, ascending -- the section judged by reach-reason-rules.ps1's
+        Test-ReachReasonSection, the definition guard-reach-reason itself runs. An issue read without a
+        labels field carries no label, so it is never a finding.
+    #>
+    param($Issues, [string]$ReachLabel)
+    $found = @()
+    foreach ($i in @($Issues)) {
+        if (-not $i) { continue }
+        $names = Get-IssueLabelNames -Issue $i
+        if ($null -eq $names) { continue }
+        if (-not (@($names | Where-Object { $_ -ieq $ReachLabel }).Count)) { continue }
+        if (Test-ReachReasonSection -Body ([string]$i.body) -ReachLabel $ReachLabel) { continue }
+        $found += [int]$i.number
+    }
+    return @($found | Sort-Object)
+}
+
 try {
     $root = if ($RepoRootOverride) { $RepoRootOverride }
             elseif ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR }
@@ -409,6 +436,18 @@ try {
                     "'$($reach.Label)' with no Asana task linked: $(Format-IssueNumbers $bare). The label means a colleague " +
                     "follows the issue on the board, and none of these has a card there. Run the 'report-issue' skill's " +
                     "steps 2-3 for each, or take the label off where it was wrong.")
+            }
+
+            # FINDING 6b (#4230): the label -> reason direction, after the fact. guard-reach-reason (#4057)
+            # judges the call as it is made and fails open by design; this catches what slipped past it.
+            . (Join-Path $PSScriptRoot '..\scripts\lib\reach-reason-rules.ps1')
+            $unreasoned = @(Get-ReachWithoutReasonFindings -Issues $pullData.issues -ReachLabel $reach.Label)
+            if ($unreasoned.Count -gt 0) {
+                Write-Host ("[ERROR] bwj-development: $slug has $($unreasoned.Count) open issue(s) carrying the reach " +
+                    "label '$($reach.Label)' with no '## Why $($reach.Label)' section in the body: " +
+                    "$(Format-IssueNumbers $unreasoned). The section says why management or the commissioner would " +
+                    "notice, so the label can be checked afterwards. Add it to each body ('report-issue' step 1), or " +
+                    "take the label off where it was wrong.")
             }
         }
 
