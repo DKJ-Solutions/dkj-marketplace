@@ -39,19 +39,29 @@
 
 ### PLAN
 
+Issue #4248: `claim-issue.ps1 -Candidates` applied the default parking-label list only in the `Issue` parameter set (line 303, from #2518). The `issues-sweep` skill used to pass the list itself. #4233 dropped that line and said "pass none", so every parked issue read `free` and no `stale-park`/`relabel` printed. Verified on `main` at 1d0fc0a64 before claiming.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/task/claim-issue.ps1` (and its byte-identical plugin mirror): the default now applies in the `Candidates` set too. The comment that called the empty default deliberate, and the `.PARAMETER SkipLabel` help, now say why it changed.
 
 ### TEST
 
+- [x] `scripts/tests/claim-issue.tests.ps1`: the wiring assert follows the new condition. New behavioural asserts run the script's own default block under each parameter set: `-Candidates` with no `-SkipLabel` gets the list, and an `awaiting-pull` issue reads `skipped` through `Get-SweepCandidates`. An explicit `-SkipLabel` still wins, and `-ReleaseAll` gets no default. Suite: 740 passed, 0 failed.
+
 ### DEPLOY: fix/4248-candidates-default-skiplabel
 
-**Score:**
+`claim-issue -Candidates` skips parked issues again when no `-SkipLabel` is passed, which is how the `issues-sweep` skill has run it since #4233. In v7.0.0 every parked issue read `free`, and a cleared wait never showed as `stale-park`. The claim's own parking check was the only backstop.
+
+**Score:** 4
+
+A consumer running `issues-sweep` on v7.0.0 sees every parked issue offered as `free`, and the claim then refuses it. After this release, parked issues are skipped again and cleared waits print as `stale-park`.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+**Score:** N/A
 
 #### Pull Request
 

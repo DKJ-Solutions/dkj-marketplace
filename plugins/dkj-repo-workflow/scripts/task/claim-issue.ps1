@@ -174,7 +174,7 @@
     With -Candidates: labels that park an issue with somebody else, so a sweep leaves it alone.
     With an issue number: the labels that make the claim WARN that the issue is parked (#2518) --
     it still claims, and the closing line points at the warning instead of "the work starts here".
-    Default on that route: 'awaiting-info-client', 'awaiting-decision-dev', 'awaiting-decision-client', 'awaiting-review-dev', 'awaiting-review-client', 'awaiting-pull', 'awaiting-pull-external', 'awaiting-action-external', 'awaiting-action-dev', 'awaiting-release', 'awaiting-release-external', 'awaiting-recurrences-first', 'awaiting-session-dev' and
+    Default on both routes (on -Candidates since #4248): 'awaiting-info-client', 'awaiting-decision-dev', 'awaiting-decision-client', 'awaiting-review-dev', 'awaiting-review-client', 'awaiting-pull', 'awaiting-pull-external', 'awaiting-action-external', 'awaiting-action-dev', 'awaiting-release', 'awaiting-release-external', 'awaiting-recurrences-first', 'awaiting-session-dev' and
     'awaiting-recurrences', plus the former names 'awaiting-first-recurrence', 'awaiting-more-recurrences', 'needs-info', 'needs-decision', 'awaiting-decision', 'awaiting-recurrence', 'record',
     'dossier', 'awaiting-owner-act' and 'awaiting-event' (#2683, #2723, #2741, #2890, #2896), the labels issues-sweep skips on -- blocked on the submitter, waiting on the
     owner's choice (#2519), waiting on a review by eye from the dev or the client (#2977), waiting on another issue's pull request (#2757), waiting on an external event or date (#2784), waiting on an act only the owner performs (#2828), waiting on the next release (#2851),
@@ -270,7 +270,7 @@ $SkipLabel = @(Split-CommaListArgument -Value $SkipLabel)
 # THE SINGLE-ISSUE ROUTE HONOURS THE SWEEP'S PARKING LABEL BY DEFAULT (issue #2518). issues-sweep passes
 # the same names on its own -SkipLabel command line; a person naming
 # one issue passes nothing, so without a default the route where somebody says "fix issue N" was the one
-# route blind to it. -Candidates keeps its empty default: the sweep names its labels itself. 'awaiting-decision-dev' ('awaiting-decision' until #2890, 'needs-decision' until #2741) joined in #2519: an issue waiting
+# route blind to it. -Candidates takes the same default since #4248: it once kept an empty one because the sweep named its labels itself, and #4233 dropped that list from issues-sweep. 'awaiting-decision-dev' ('awaiting-decision' until #2890, 'needs-decision' until #2741) joined in #2519: an issue waiting
 # on the owner's choice is parked just as surely, and 'needs-info' could not carry it -- in dkj-repo-workflow-bwj
 # that label means blocked on the SUBMITTER and moves the mirrored Asana card. 'awaiting-recurrence'
 # joined in #2587: an issue whose only remaining step is a first reproducible occurrence was picked up
@@ -300,7 +300,7 @@ $SkipLabel = @(Split-CommaListArgument -Value $SkipLabel)
 # 'awaiting-more-recurrences' -> 'awaiting-recurrences'; both former names stay listed.
 # #2917 (Dave, October 12, 2026) renamed 'awaiting-more-info' to 'awaiting-info-client', in the '-client' shape of
 # 'awaiting-decision-client': it waits on the requester. The former name stays listed.
-if ($PSCmdlet.ParameterSetName -eq 'Issue' -and -not $PSBoundParameters.ContainsKey('SkipLabel')) {
+if ($PSCmdlet.ParameterSetName -in @('Issue', 'Candidates') -and -not $PSBoundParameters.ContainsKey('SkipLabel')) {
     $SkipLabel = @('awaiting-info-client', 'awaiting-decision-dev', 'awaiting-decision-client', 'awaiting-review-dev', 'awaiting-review-client', 'awaiting-pull', 'awaiting-pull-external', 'awaiting-action-external', 'awaiting-action-dev', 'awaiting-release', 'awaiting-release-external', 'awaiting-recurrences-first', 'awaiting-session-dev', 'awaiting-recurrences',
                    'awaiting-first-recurrence', 'awaiting-more-recurrences',
                    'awaiting-more-info', 'needs-info', 'needs-decision', 'awaiting-decision', 'awaiting-recurrence', 'record', 'dossier', 'awaiting-owner-act', 'awaiting-event')
