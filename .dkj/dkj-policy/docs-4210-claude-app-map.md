@@ -39,19 +39,35 @@
 
 ### PLAN
 
+Re-run the Claude App map's rule in `plugins/ADOPTION.md` over every item the marketplace ships and
+restate the table per plugin (#4210). The issue's claim that `dkj-subagents-ecomm` is left out of
+`Get-BusinessMarketplacePlugins` does not stand: `scripts/repo-config.ps1:157` names it, so the
+publication paragraph's "the four teams" was already true and is not changed.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Add test 3 to the rule (the craft itself is work on a checkout), with its provenance.
+- [x] Restate the verdict table per plugin: alpha (17 agent defs, 4 personas, skills, hook), lifehub,
+      ecomm, shopify; measured by listing each plugin's `subagents/`, `personas/`, `skills/` and
+      `hooks/hooks.json` and grepping for `.ps1`.
+- [x] Correct "two hooks" to the one hook `dkj-subagents-alpha` ships.
 
 ### TEST
 
+- [x] Docs only; the lint and test gates run in `ship-pr`.
+
 ### DEPLOY: docs/4210-claude-app-map
 
-**Score:**
+The Claude App map in [`ADOPTION.md`](../../plugins/ADOPTION.md#which-half-needs-a-repository--the-claude-app-map)
+counted 15 core agent defs and listed every persona as portable. It now reads per plugin, over all four
+teams, and its rule has a third test: a specialist whose craft is work on a checkout (Derek, Rendall,
+Sylvester, Liam, Sandra) is repo-bound even when no script is named (#4210).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+**Score:** N/A
 
 #### Pull Request
 
