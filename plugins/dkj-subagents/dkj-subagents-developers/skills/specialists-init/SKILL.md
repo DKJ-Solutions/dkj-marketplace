@@ -39,7 +39,7 @@ verify — grouped below as `0a` (acts 1 and 2), `0b` (acts 3 and 4) and `0c` (a
 oversight.** This skill carries `disable-model-invocation`: a session cannot start it, the `Skill` tool
 refuses, and the same flag keeps this page — including the `bootstrap.ps1` route documented further down
 — out of a model's context entirely, so it cannot even learn the skill exists. The owner types
-`/dkj-subagents-alpha:specialists-init`, and there is **no per-repo escape**: `skillOverrides` only ever
+`/dkj-subagents-developers:specialists-init`, and there is **no per-repo escape**: `skillOverrides` only ever
 restricts (there is no value meaning *"let the model invoke this after all"*), and it does not reach
 plugin skills at all. Settled on August 29, 2026 (inbound
 [#1096](https://github.com/DaveKJohn/claude-code-specialists/issues/1096)) against the alternative of
@@ -51,7 +51,7 @@ path as the only remaining move. Four places name the command **and the actor** 
 two SessionStart hooks — `roster-sessioncheck.ps1` (through `check-roster-sync.ps1`'s `[BOOTSTRAP]`
 line) and `script-contract-sessioncheck.ps1` (through `check-script-contract.ps1`'s) — plus
 `adopt-config.ps1`'s `[STOP]` and the `orchestrator` skill page. Each of them says
-`/dkj-subagents-alpha:specialists-init` in full and then says the repo owner has to type it.
+`/dkj-subagents-developers:specialists-init` in full and then says the repo owner has to type it.
 
 > **A runbook that describes itself as executable end to end by a session is wrong about this step**, and
 > that is worth stating once rather than rediscovering it in every testrun: adoption stops here until the

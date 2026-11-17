@@ -46,7 +46,7 @@ them, and this file points there
 separate and follows the user.** The per-layer detail and its deliberate exceptions are in
 [`language-layers.md`](language-layers.md), path-scoped so it loads only when you touch one of those
 layers; the system-wide norm is in
-[the technical writer's portable manual](../../plugins/dkj-subagents/dkj-subagents-alpha/manuals/specialist-06-16-manual.md#what-tessa-covers).
+[the technical writer's portable manual](../../plugins/dkj-subagents/dkj-subagents-developers/manuals/specialist-06-16-manual.md#what-tessa-covers).
 
 ### Repo citation — one owner name
 

@@ -58,7 +58,7 @@ and that route is better in two ways this skill cannot match: it loads Chris at 
 session rather than once you remember to ask, and it brings his **repo lens** with him — the routing
 table, the gatekeepers, the local agreements. This skill gives you the portable half only.
 
-So the order is: if you have a repo, adopt the family with `/dkj-subagents-alpha:specialists-init` and let the
+So the order is: if you have a repo, adopt the family with `/dkj-subagents-developers:specialists-init` and let the
 import do it. If you have no repo, or you are in a conversation that never loaded one, invoke this.
 
 **That command is the owner's to type, and this page is where you learn it — deliberately.**
@@ -69,7 +69,7 @@ usable form — the treatment [#734](https://github.com/DaveKJohn/claude-code-sp
 gave the shipping chain, arriving here late.
 
 **So the handover is the whole move**: say the repo has not been adopted, name
-`/dkj-subagents-alpha:specialists-init` in exactly that spelling, and stop. A form so you can hand it over,
+`/dkj-subagents-developers:specialists-init` in exactly that spelling, and stop. A form so you can hand it over,
 never a licence to get there some other way — the adoption writes the consumer's `CLAUDE.md`, which is
 the one file an owner should watch being changed, and reaching around the refusal to do it yourself is
 exactly what the refusal is for. Named here because this is the moment that temptation appears: inbound
@@ -96,7 +96,7 @@ owner, the close-out — was the one layer with no way in.
 
 The section above tells you that in a repo the import is the better route. True, and it is the one
 route a **model** cannot take: `specialists-init` is reserved for explicit user invocation, so the
-handover — name `/dkj-subagents-alpha:specialists-init`, say the repo has not been adopted, and stop — is the
+handover — name `/dkj-subagents-developers:specialists-init`, say the repo has not been adopted, and stop — is the
 whole move there. What this section adds is what happens in the window *before* that keystroke, which
 is the window a consumer session actually meets first.
 

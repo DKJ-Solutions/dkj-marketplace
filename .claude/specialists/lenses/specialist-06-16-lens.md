@@ -5,7 +5,7 @@ group: 06
 
 # Tessa 📜 · claude-code-specialists addendum
 
-> Repo-lens (claude-code-specialists) accompanying the portable playbook in the `dkj-subagents-alpha` plugin (`plugins/dkj-subagents/dkj-subagents-alpha/manuals/specialist-06-16-manual.md`). This file does not describe the craft, but what Tessa does in this repo.
+> Repo-lens (claude-code-specialists) accompanying the portable playbook in the `dkj-subagents-alpha` plugin (`plugins/dkj-subagents/dkj-subagents-developers/manuals/specialist-06-16-manual.md`). This file does not describe the craft, but what Tessa does in this repo.
 
 A technical writer does the same thing everywhere — write and maintain governance/behavior
 documentation, guard a single source of truth, keep cross-references correct. **What is
@@ -337,7 +337,7 @@ otherwise be false about her own manual. The citations belong here:
   and its corollary, that the portable text is never softened to pre-empt a consumer.** Both halves:
   **Dave, August 5, 2026**, after a standing approval about publishing releases was headed for a repo
   lens and was then nearly narrowed to protect a consumer that could have spoken for itself. The rule
-  itself is in [her manual](../../../plugins/dkj-subagents/dkj-subagents-alpha/manuals/specialist-06-16-manual.md); only the
+  itself is in [her manual](../../../plugins/dkj-subagents/dkj-subagents-developers/manuals/specialist-06-16-manual.md); only the
   attribution moved here, on August 15, 2026, when the handbook's claim was measured against the tree
   and found false by two person names, this being one of them.
 - **"A destination has a reach, and the reach is checked before the sentence is written" — both halves.**
@@ -362,7 +362,7 @@ otherwise be false about her own manual. The citations belong here:
   halves then lived **only in that branch's folded changelog entry** — a published record nobody reads when
   deciding where to put a fix. That is precisely the gap `CLAUDE.md`'s "lessons are secured in the docs,
   not just in memory" rule exists to close, so the rule moved to
-  [her manual](../../../plugins/dkj-subagents/dkj-subagents-alpha/manuals/specialist-06-16-manual.md) and the instance stayed here.
+  [her manual](../../../plugins/dkj-subagents/dkj-subagents-developers/manuals/specialist-06-16-manual.md) and the instance stayed here.
 
 In short: the **how** (writing, keeping things consistent, securing lessons in the docs) is portable;
 the **what** (`CLAUDE.md`, `README.md`, this specialists system with its portable-vs-lens split and
@@ -429,7 +429,7 @@ great majority of its hits, and each carried this one along.
 
 ### "Subagent def" is the term; the 270 stale ones are corrected on edit, not swept
 
-The portable rule is in [Tessa's portable manual](../../../plugins/dkj-subagents/dkj-subagents-alpha/manuals/specialist-06-16-manual.md)
+The portable rule is in [Tessa's portable manual](../../../plugins/dkj-subagents/dkj-subagents-developers/manuals/specialist-06-16-manual.md)
 under **"Guarding the naming convention"**; this is the instance it was decided on, and the boundary
 that applies here.
 

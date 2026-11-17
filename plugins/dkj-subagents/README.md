@@ -519,7 +519,7 @@ the **main loop**, not as subagents. A plugin *can* inject always-on main-loop c
 is **verified and deliberately not switched on**, because it changes every consumer's main loop from a
 version bump they did not read, and a second `agent`-setting plugin silently wins on load order
 ([issue #215](https://github.com/DaveKJohn/claude-code-specialists/issues/215); the same correction has
-been in [`specialists-init`'s page](dkj-subagents-alpha/skills/specialists-init/SKILL.md) since
+been in [`specialists-init`'s page](dkj-subagents-developers/skills/specialists-init/SKILL.md) since
 that decision, and this sentence was the copy it never reached). An intake conversation moreover
 requires direct back-and-forth with the client. They therefore
 deliberately have **no** agent def; their portable source lives in

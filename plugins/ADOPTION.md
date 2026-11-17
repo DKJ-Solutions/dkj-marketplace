@@ -128,7 +128,7 @@ claude plugin update dkj-subagents-alpha@dkj-marketplace --scope project
 **Step 0 above is six acts in order, and here is why there are six rather than a shorter guess** (inbound
 [#297](https://github.com/DaveKJohn/claude-code-specialists/issues/297)). This procedure used to be
 described at three entry points with three different counts — *four acts* on this page, *three acts* in
-[`specialists-init`](dkj-subagents/dkj-subagents-alpha/skills/specialists-init/SKILL.md#chicken-and-egg--step-0-is-done-by-the-user)
+[`specialists-init`](dkj-subagents/dkj-subagents-developers/skills/specialists-init/SKILL.md#chicken-and-egg--step-0-is-done-by-the-user)
 and *three steps* in an earlier version of this page — the same path, no step missing anywhere, three
 different numbers. A reader following it for the first time has the count as their only check on whether
 they skipped something, and three counts remove exactly that. Two of the three were also counting
@@ -828,7 +828,7 @@ cannot be removed cleanly; one import pointing at one directory can.
 
 **Built July 29, 2026** — the third item of the target shape below, and the half that could be built
 and tested without restructuring anything first.
-[`specialists-teardown`](dkj-subagents/dkj-subagents-alpha/skills/specialists-teardown/SKILL.md)
+[`specialists-teardown`](dkj-subagents/dkj-subagents-developers/skills/specialists-teardown/SKILL.md)
 is the bootstrap's mirror image: where `specialists-init` is strictly **additive** and never
 overwrites, the teardown is strictly **subtractive** and never deletes what the owner wrote.
 
