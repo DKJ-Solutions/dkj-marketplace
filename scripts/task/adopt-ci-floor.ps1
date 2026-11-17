@@ -262,8 +262,9 @@ $pluginDir  = "$sharedPath/plugins/dkj-repo-workflow/scripts"
 # later step of the same job; verify-resolved's job likewise holds issues: write for its whole length.
 # An action is pinned because of the JOB it runs in, not because of the line it sits on.
 #
-# repo-settings.yml, the read-only runner scaffolded below, is deliberately NOT pinned -- it holds
-# contents: read and no secret, and this repo's own copy of it is unpinned for that same reason.
+# repo-settings.yml, the read-only runner scaffolded below, does not pin the ACTION -- it holds
+# contents: read and no secret, and this repo's own copy of it is unpinned for that same reason. It
+# does pin the shared SCRIPTS since #4237, for a different reason: below.
 #
 # HOW THIS PIN GETS REFRESHED, which is the half a generated pin does not get for free. It is ONE
 # variable rather than four literals, and pin-parity.tests.ps1 asserts it still equals the SHA in this
@@ -272,7 +273,8 @@ $pluginDir  = "$sharedPath/plugins/dkj-repo-workflow/scripts"
 # quietly fall behind the floor this repo runs on itself.
 $checkoutPin = 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1'
 
-# THE SHARED SCRIPTS ARE PINNED TOO -- IN THE SAME THREE WRITE RUNNERS, AND ONLY THERE (issue #2333).
+# THE SHARED SCRIPTS ARE PINNED TOO -- IN THE THREE WRITE RUNNERS (issue #2333), AND SINCE #4237 IN THE
+# READ-ONLY ONE AS WELL (below).
 # Pinning the ACTION is half of the job. The second checkout in each of those runners fetches this
 # workflow's own scripts out of $sharedRepo and then EXECUTES them, in a job that holds FOLD_PUSH_TOKEN
 # (fold, merge-on-green) or issues: write (resolves). At ref: main, a change landing on the source
@@ -282,31 +284,22 @@ $checkoutPin = 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0
 # off this plugin's own plugin.json, and the tag is resolved to its commit SHA, because a tag can be
 # moved by the same account that could push a bad commit and a SHA cannot.
 #
-# THE READ-ONLY RUNNERS STAY ON ref: main, AND THE #1805 ARGUMENT IS WHY. branch-entry.yml and
-# repo-settings.yml hold no write scope and no secret, so tracking the tip costs them nothing worth
-# pinning against, and a pinned gate goes on enforcing a stale convention. That argument is right for
-# them and was never weighed against a credential (#1851); the pin goes exactly where the credential is.
+# THE READ-ONLY RUNNER IS PINNED TOO SINCE #4237, WHICH REVERSES #1805's CHOICE FOR IT. repo-settings.yml
+# holds no write scope and no secret, and #1805 kept it on main so a gate would not go on enforcing a
+# stale convention. The #4209 rename measured the other side of that trade: it moved every script path
+# on main a day before any release carried it, and every consumer runner on ref: main went red at once
+# while the pinned write runners kept working. A pin moves when the consumer adopts the release, which
+# is the moment its own tree takes the matching shape. So it takes the same ref the write runners take.
 #
 # A PIN HAS TO MOVE, AND THIS SCRIPT IS WHAT SAYS SO. It writes a runner once and never rewrites it, so
-# re-running it reports every existing write runner still on main or pinned behind the version running
-# now (section 2 below). Bumping it is editing one ref: line per file -- the value this run prints.
+# re-running it reports every existing runner still on main or pinned behind the version running now
+# (section 2 below). Bumping it is editing one ref: line per file -- the value this run prints.
 #
 # WHERE THE SHA CANNOT BE RESOLVED (offline, no git), THE TAG IS WRITTEN AND THE RUN SAYS SO. A tag is
 # weaker than a SHA and far stronger than main, and refusing the floor over it would leave the fold
 # unguarded instead. Where not even the version can be read, the runners fall back to main, loudly.
-function Get-ScaffoldingPluginVersion {
-    # Two layouts: the plugin mirror (scripts/task -> the plugin root, which holds .claude-plugin/) and
-    # this script's source copy (scripts/task -> the repo root, which holds plugins/dkj-repo-workflow/).
-    foreach ($rel in @('..\..\.claude-plugin\plugin.json', '..\..\plugins\dkj-repo-workflow\.claude-plugin\plugin.json')) {
-        $p = Join-Path $PSScriptRoot $rel
-        if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { continue }
-        try {
-            $v = [string]((Get-Content -LiteralPath $p -Raw | ConvertFrom-Json).version)
-            if ($v -match '^\d+\.\d+\.\d+$') { return $v }
-        } catch { }
-    }
-    return ''
-}
+# Get-ScaffoldingPluginVersion is release-pin-lib's, shared with adopt-workflow-folder (#4237).
+. (Join-Path $PSScriptRoot '..\lib\release-pin-lib.ps1')
 
 $writeRunnerVersion = Get-ScaffoldingPluginVersion
 $writeRunnerRef = $sharedRef
@@ -1023,15 +1016,15 @@ $repoSettingsRunner = @(
     '# non-admin endpoints would report every field as not-read and still exit 0 -- a detector reporting',
     '# success while checking nothing.',
     '#',
-    '# LEAST PRIVILEGE, AND READ-ONLY: contents: read is the whole permission. The checkout is UNPINNED --',
-    '# this job never holds a credential worth pinning against. Contrast the source repo''s OWN tree:',
-    '# fold-on-merge.yml and verify-resolved.yml (write-capable) are pinned; repo-settings.yml itself,',
-    '# branch-entry.yml and unfolded-entry.yml (read-only, like this job) are not. persist-credentials:',
-    '# false because this job never pushes.',
+    '# LEAST PRIVILEGE, AND READ-ONLY: contents: read is the whole permission. The checkout ACTION is',
+    '# unpinned -- this job never holds a credential worth pinning against. persist-credentials: false',
+    '# because this job never pushes.',
     '#',
-    '# The write runners adopt-ci-floor.ps1 places beside this one (fold, resolves, merge-on-green) pin',
-    '# both the action (#1904) and the shared scripts they fetch (#2333); this one pins neither, and',
-    '# tracks the scripts at main on the #1805 argument, because it holds nothing worth pinning against.',
+    '# THE SHARED SCRIPTS ARE PINNED TO A RELEASE, NOT main (#4237). A script path that moves on the',
+    '# source''s main reaches a runner on main before this repo has adopted the release that carries the',
+    '# move -- measured when the #4209 rename turned every such runner red at once. Move the pin when you',
+    '# update the dkj-repo-workflow plugin: re-running adopt-ci-floor.ps1 reports a runner pinned behind',
+    '# the version it came from.',
     '#',
     '# THE SECOND CHECKOUT reaches the check through the plugin''s own tree rather than a copy kept here,',
     '# so this repo shares one definition of "what GitHub-side drift looks like" with the workflow''s',
@@ -1079,7 +1072,7 @@ $repoSettingsRunner = @(
     '        uses: actions/checkout@v7',
     '        with:',
     ('          repository: ' + $sharedRepo),
-    ('          ref: ' + $sharedRef),
+    ('          ref: ' + $writeRunnerRef),
     ('          path: ' + $sharedPath),
     '',
     '      # THE SHIM (issue #2488): the shared script launches children by the literal name ''powershell'',',
@@ -1561,6 +1554,8 @@ $foldRunnerRel = '.github/workflows/fold-on-merge.yml'
 $mergeOnGreenRunnerRel = '.github/workflows/merge-on-green.yml'
 # THE THREE THAT HOLD A WRITE CREDENTIAL, and therefore the three whose shared scripts are pinned (#2333).
 $writeRunnerRels = @($foldRunnerRel, '.github/workflows/verify-resolved.yml', $mergeOnGreenRunnerRel)
+# THE READ-ONLY RUNNER, pinned since #4237 for a reason of its own, and read for that pin on a re-run.
+$repoSettingsRunnerRel = '.github/workflows/repo-settings.yml'
 
 function Write-WriteRunnerPinVerdict {
     <#
@@ -1573,7 +1568,7 @@ function Write-WriteRunnerPinVerdict {
         scaffolded before the #1769 rename still names the old one). A hand-edited file this cannot
         read is said to be unread, never judged clean.
     #>
-    param([string]$Rel, [string]$Text)
+    param([string]$Rel, [string]$Text, [switch]$ReadOnly)
 
     $m = [regex]::Match($Text, '(?m)^ {10}repository:\s*\S*/(?:dkj-marketplace|dkj-claude-plugins|claude-code-specialists)\s*$(?:\n {10}[^\n]*)*?\n {10}ref:[ \t]*(?<ref>[^\s#]+)[ \t]*(?:#[ \t]*(?<tag>\S+))?[ \t]*$')
     if (-not $m.Success) {
@@ -1590,8 +1585,15 @@ function Write-WriteRunnerPinVerdict {
             Write-Host '            [pin] it fetches the shared scripts at a SHA with no version beside it, so whether that is' -ForegroundColor DarkGray
             Write-Host '            behind this release could not be told.' -ForegroundColor DarkGray
         } else {
-            Write-Host "            [pin] it fetches the shared scripts at '$(Get-DisplayRef -Ref $ref)' -- a moving ref, beside a write credential" -ForegroundColor Yellow
-            Write-Host "            (#2333). Change that ref: line to $bump." -ForegroundColor Yellow
+            if ($ReadOnly) {
+                # NO CREDENTIAL HERE, SO THE REASON IS A DIFFERENT ONE (#4237): a script path moved on the
+                # source's main reaches this runner before this repo adopts the release carrying the move.
+                Write-Host "            [pin] it fetches the shared scripts at '$(Get-DisplayRef -Ref $ref)' -- a moving ref, so a script moved on the" -ForegroundColor Yellow
+                Write-Host "            source's main turns it red before you adopt that release (#4237). Change that ref: line to $bump." -ForegroundColor Yellow
+            } else {
+                Write-Host "            [pin] it fetches the shared scripts at '$(Get-DisplayRef -Ref $ref)' -- a moving ref, beside a write credential" -ForegroundColor Yellow
+                Write-Host "            (#2333). Change that ref: line to $bump." -ForegroundColor Yellow
+            }
         }
         return
     }
@@ -2014,6 +2016,12 @@ foreach ($t in $targets) {
                 Write-MergeOnGreenRedispatchVerdict -Text $existing
             }
             else { Write-RunnerGroupVerdict -Rel $t.Rel -Text $existing -TemplateText $t.Content }
+        }
+        # THE READ-ONLY RUNNER IS READ FOR ITS PIN TOO (#4237): one adopted before it was pinned is still
+        # on main, and this is the one moment anything says so.
+        elseif ($t.Rel -eq $repoSettingsRunnerRel) {
+            $existing = ([System.IO.File]::ReadAllText($abs)) -replace "`r`n", "`n"
+            Write-WriteRunnerPinVerdict -Rel $t.Rel -Text $existing -ReadOnly
         }
         continue
     }

@@ -24,8 +24,10 @@
 # that page pins, see below -- so a change of the skill's pin reaches every caller with no change on its
 # side.
 #
-# `scripts-ref` DEFAULTS TO main, for the reason reusable-branch-entry.yml states: a pinned gate keeps
-# enforcing the tag it was pinned at, while the copies it checks follow the skill.
+# `scripts-ref` DEFAULTS TO main, and the caller the dkj-brandbook skill gives still calls @main: a pinned
+# gate keeps enforcing the tag it was pinned at, while the copies it checks follow the skill. The two PR
+# gates adopt-workflow-folder places are pinned since #4237 (reusable-branch-entry.yml states why); this
+# one is not scaffolded by that command, and pinning it is a question of its own.
 #
 # LINUX, UNDER PWSH 7, with the same `powershell` shim as the other reusable gates (issue #2616).
 name: House style (reusable)

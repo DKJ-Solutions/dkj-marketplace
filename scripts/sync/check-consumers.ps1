@@ -110,8 +110,10 @@
          pinned at a release behind this tree's dkj-repo-workflow version -- gets an [INFO] naming the file,
          the line and the ref: line to change. #2333 pinned those checkouts in what adopt-ci-floor.ps1
          writes and reports a stale one when it is re-run; this is the half that reaches a consumer
-         nobody re-runs it in. The read-only runners are not judged, because they track main on
-         purpose (#1805). Same two routes as check 6.
+         nobody re-runs it in. A read-only runner or gate caller on a moving ref gets an [INFO] of its
+         own with the #4237 reason (a script moved on this repo's trunk reaches it before the consumer
+         adopts the release); a pin merely behind is not reported for it. #1805 kept them on main until
+         then. Same two routes as check 6.
       7. A LENS UNDER THE RETIRED SPELLING, WHICH NOTHING READS ANY MORE (#2591). Since #2292 emptied
          the Lens row's AlsoRead, no reader resolves '<g>-<id>-extension.md'. A consumer still holding
          one therefore has a specialist running without its repo lens, and nothing in that repo says so.
@@ -556,9 +558,12 @@ function Write-RunnerPinFinding {
         merge, with no release in between. This register already reads those files for check 6, so it is
         where the state becomes visible without anybody visiting.
 
-        ONLY A RUNNER HOLDING A CREDENTIAL IS JUDGED (Test-WorkflowHoldsWriteCredential). The read-only
-        runners stay on main on purpose (#1805), and reporting them would be this check calling the
-        scaffolder's own deliberate output a defect.
+        A READ-ONLY RUNNER IS JUDGED FOR A MOVING REF ONLY, AND FOR A REASON OF ITS OWN (#4237). They
+        stayed on main on purpose until then (#1805). The #4209 rename moved every script path on this
+        repo's trunk a day before any release carried it, and every consumer runner on main went red at
+        once, so both scaffolders now pin them too and a moving ref is worth naming. It is said with the
+        read-only reason, never the credential one, and a pin merely behind is not reported for them:
+        nothing runs beside it, and the layout floor below is about the write runners' fold.
 
         [INFO], NOT [ERROR], and the reason is the register's doctrine rather than a softening: an
         [ERROR] here means a runner red on every pull request, which a moving ref is not -- it works, and
@@ -581,12 +586,25 @@ function Write-RunnerPinFinding {
         [AllowNull()][object]$UsesDotFolder = $null
     )
 
-    if (-not (Test-WorkflowHoldsWriteCredential -WorkflowText $WorkflowText)) { return }
-    $pins = @(Get-SharedScriptPin -WorkflowText $WorkflowText -RepositoryName (@($ThisRepoName) + $ThisRepoRetiredNames) -CurrentVersion $WorkflowPluginVersion)
-    if ($pins.Count -eq 0) { return }
-
+    $repoNames = @($ThisRepoName) + $ThisRepoRetiredNames
     $wfName = Format-SafePathToken -Value $WorkflowName
     $suffix = if ($Where) { " ($Where)" } else { '' }
+
+    if (-not (Test-WorkflowHoldsWriteCredential -WorkflowText $WorkflowText)) {
+        $pinTo = if ($WorkflowPluginVersion) { "v$WorkflowPluginVersion" } else { 'a release tag of the dkj-repo-workflow plugin' }
+        foreach ($pin in @(Get-SharedScriptPin -WorkflowText $WorkflowText -RepositoryName $repoNames -CurrentVersion $WorkflowPluginVersion)) {
+            if ($pin.State -ne 'moving') { continue }
+            $shown = if ($pin.Ref) { "'$(Format-SafePathToken -Value $pin.Ref)'" } else { 'no ref: at all (the default branch)' }
+            Write-Info "$wfName line $($pin.Line) fetches this repo's scripts at $shown -- a moving ref, so a script moved on this repo's trunk turns it red before that consumer adopts the release carrying the move (#4237). Pin that ref: line to $pinTo ('adopt-ci-floor' prints the line to paste).$suffix"
+        }
+        foreach ($call in @(Get-SharedScriptReference -WorkflowText $WorkflowText -RepositoryName $repoNames)) {
+            if ($call.Kind -ne 'call' -or $call.Ref -match '^v?\d+\.\d+\.\d+$' -or $call.Ref -match '^[0-9a-fA-F]{40}$') { continue }
+            Write-Info "$wfName line $($call.Line) calls this repo's gate at @$(Format-SafePathToken -Value $call.Ref) -- a moving ref, so a script moved on this repo's trunk turns it red before that consumer adopts the release carrying the move (#4237). Call it at @$pinTo and pass the same value as 'with: scripts-ref:' ('adopt-workflow-folder' says so on a re-run).$suffix"
+        }
+        return
+    }
+    $pins = @(Get-SharedScriptPin -WorkflowText $WorkflowText -RepositoryName $repoNames -CurrentVersion $WorkflowPluginVersion)
+    if ($pins.Count -eq 0) { return }
     $target = if ($WorkflowPluginVersion) { "a release commit -- v$WorkflowPluginVersion is the current one ('adopt-ci-floor' prints the ref: line to paste)" } else { "a release commit of the dkj-repo-workflow plugin ('adopt-ci-floor' prints the ref: line to paste)" }
     foreach ($pin in $pins) {
         switch ($pin.State) {

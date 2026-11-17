@@ -1656,13 +1656,26 @@ try {
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-NotMatch 'holds a write credential' $r.Out 'write runner pinned at this release: no pin finding'
 
-    # 12s. A READ-ONLY runner on main -- silence. branch-entry.yml tracks main on purpose (#1805), and
-    #      every scenario in 12a-12n is this shape, so a check that fired here would have fired there.
+    # 12s. A READ-ONLY runner on main -- judged since #4237, with the read-only reason and never the
+    #      credential one: a script moved on this trunk turns it red before the consumer adopts a release.
     New-FixtureConsumer -ExtensionIds @('06-29')
-    New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-repo-workflow/scripts/lint/check-branch-entry.ps1'
+    New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-repo-workflow/scripts/lint/check-branch-entry.ps1' -Ref 'main'
     $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
-    Assert-NotMatch 'holds a write credential' $r.Out 'read-only runner on main: not judged'
+    Assert-NotMatch 'holds a write credential' $r.Out 'read-only runner on main: never given the credential reason'
+    Assert-Match "\[INFO\].*branch-entry\.yml line \d+ fetches this repo's scripts at 'main' -- a moving ref.*\(#4237\)" $r.Out 'read-only runner on main: an INFO with the read-only reason (#4237)'
+
+    # 12s2. A READ-ONLY CALLER of this repo's gate at @main -- the shape adopt-workflow-folder placed before
+    #       #4237. Same finding, worded for a call; and a caller pinned at a tag says nothing.
+    New-FixtureConsumer -ExtensionIds @('06-29')
+    $wfDir = Join-Path $Fixture '.github\workflows'
+    New-Item -ItemType Directory -Path $wfDir -Force | Out-Null
+    [System.IO.File]::WriteAllText((Join-Path $wfDir 'branch-entry.yml'), "on: pull_request`njobs:`n  branch-entry:`n    uses: DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-branch-entry.yml@main`n")
+    [System.IO.File]::WriteAllText((Join-Path $wfDir 'always-on-budget.yml'), "on: pull_request`njobs:`n  always-on-budget:`n    uses: DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-always-on-budget.yml@v1.2.3`n    with:`n      scripts-ref: v1.2.3`n")
+    $mf = New-FixtureManifest -Extensions @('06-29')
+    $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
+    Assert-Match "\[INFO\].*branch-entry\.yml line \d+ calls this repo's gate at @main -- a moving ref" $r.Out 'caller at @main: an INFO naming the call'
+    Assert-NotMatch "always-on-budget\.yml line \d+ calls this repo's gate" $r.Out 'caller pinned at a tag: no pin finding'
 
     # 12t. A SHA with no version beside it is pinned but undatable -- not called moving, not called behind.
     New-FixtureConsumer -ExtensionIds @('06-29')

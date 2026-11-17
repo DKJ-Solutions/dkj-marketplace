@@ -259,14 +259,16 @@ in silence. An exact branch name goes in a second seam, `Get-EntryGateExemptBran
 which adds to the prefixes rather than replacing them -- the deploy branch of a Git-connected live theme is
 the case it was built for (#3011).
 
-**The caller pins `@main` (and the reusable workflow `ref: main`) rather than a tag, and that is the one choice worth arguing** -- for this
-read-only gate; the write runners of Part 3 are pinned to a release instead, for the reason
-[given there](#the-write-runners-fetch-the-shared-scripts-at-a-release-not-at-main-issue-2333). A pinned
-gate keeps enforcing the shape it was pinned at -- and the entry's own path has moved twice, so a stale
-pin does not fail loudly, it fails the *wrong way*: refusing branches that do carry an entry at the
-current path. Tracking the tip means the gate follows the convention it enforces. Pin a tag instead if you
-would rather own the bump: name it in the caller's `uses:` line **and** pass it as `with: scripts-ref:`,
-so the runner and the script it runs come from one revision.
+**The caller pins the release you adopted from, in `uses:` and in `scripts-ref:` alike (#4237)** -- both
+gates, `@vX.Y.Z` plus `with: scripts-ref: vX.Y.Z`, the tag read off the plugin's own `plugin.json`. Both
+lines are needed because a called workflow cannot read its own `@ref`: without the input it would run a
+pinned runner around scripts at `main`. **Move both when you update the plugin**; a re-run of this command
+names a caller still on `@main`, and leaves the file as it is.
+
+**Until #4237 the caller tracked `@main`, and the argument for that is kept below because the trade it
+weighs is still the trade.** A pinned gate keeps enforcing the shape it was pinned at -- and the entry's own
+path has moved twice, so a stale pin does not fail loudly, it fails the *wrong way*: refusing branches that
+do carry an entry at the current path. Tracking the tip meant the gate followed the convention it enforced.
 
 **That argument was only ever half of the trade**
 ([#1805](https://github.com/DKJ-Solutions/claude-code-specialists/issues/1805)). It weighs the **entry's**
@@ -277,7 +279,14 @@ protects you from a stale convention and exposes you to a moved script, and only
 this page. Measured September 10, 2026: two consumer repos were red on **every** pull request, and
 neither had been noticed, because neither had opened one since the break.
 
-**The pin still stands, because the exposure is now covered at the other end.** The source repo's
+**The other half then happened a second time, foreseen and planned around, and the plan did not hold
+([#4237](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4237)).** The #4209 rename moved every
+script path on the source's `main` a day before any release carried it, and every consumer gate on `@main`
+went red at once, while the pinned write runners kept working. A pin moves when *you* adopt the release,
+which is the moment your own tree takes the matching shape -- so the stale-convention risk the old argument
+weighed is the smaller one, and the gates are pinned now.
+
+**The exposure is also covered at the other end.** The source repo's
 `check-consumers.ps1` reads the runners its registered consumers actually have and reports a path that
 tree no longer holds, naming where the script went; and its scaffolder suites derive the emitted path
 from the emitted file and assert it exists, so a move goes red on the day it lands. Neither could be
@@ -701,14 +710,15 @@ upstream, another genuinely new), because that commit carries work your trunk do
 
 ### The write runners fetch the shared scripts at a release, not at `main` (issue #2333)
 
-**Part 1's `ref: main` argument stops where the credential starts.** The fold, the resolves check and
+**Part 1's old `ref: main` argument always stopped where the credential starts.** The fold, the resolves check and
 merge-on-green each check out the plugin's scripts beside your tree and *execute* them, in a job holding
 `FOLD_PUSH_TOKEN` or `issues: write`. At `main`, anything landing on the source repo's trunk -- a bad
 merge, a compromised account -- would run beside those scopes in your repo on the next push, with no
 release in between. So those three check the scripts out at the **commit the release you adopted from was
 tagged at**, written as `ref: <sha> # v<version>`: the version comes off the plugin's own `plugin.json`,
-and the tag is resolved to a SHA because a tag can be moved and a SHA cannot. The read-only runners
-(branch-entry, repo-settings) keep `ref: main`, where the stale-convention argument above still holds.
+and the tag is resolved to a SHA because a tag can be moved and a SHA cannot. The read-only runner
+(repo-settings) takes the same ref since #4237, for the reason Part 1's gates are pinned: a script moved on
+the source's `main` must not reach your CI before you adopt the release carrying it.
 
 **The pin has to move, and this command is what says so.** It writes a runner once and never rewrites it,
 so re-running it reports every existing write runner that is still on `main` or pinned behind the version
