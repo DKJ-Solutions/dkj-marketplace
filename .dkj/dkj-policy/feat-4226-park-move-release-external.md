@@ -39,19 +39,29 @@
 
 ### PLAN
 
+- [x] Verify #4226 still stands: a merged-but-unreleased `awaiting-pull-external` issue reads plain `skipped`, a body-parked `awaiting-release-external` has no `Since`, and `-Park` refuses an issue that is already parked
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-ParkMoveFrom` in `claim-issue-lib.ps1`: the one known progression, `awaiting-pull-external` -> `awaiting-release-external`, and only as the issue's sole parking label
+- [x] `claim-issue.ps1`: `-Candidates` reads `relabel` and prints the move; `-Park` lifts the old label in the same edit; the parked-issue refusal lets a move through
+- [x] The plugin mirrors of both files, and the `issues-sweep` skill page
 
 ### TEST
 
+- [x] `claim-issue.tests.ps1`: 12 new asserts, 735 passed
+
 ### DEPLOY: feat/4226-park-move-release-external
 
-**Score:**
+`claim-issue -Candidates` now reads an `awaiting-pull-external` issue as `relabel` once everything it waits on has merged upstream but no release has followed: it waits on a release from then on, and the label said otherwise ([#4226](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4226)). The line it prints moves the issue in one step, `claim-issue.ps1 <n> -Tag -Park awaiting-release-external -Reason "<owner/repo>'s next release"`: `-Park` now lifts `awaiting-pull-external` in the same edit that adds its successor, and posts the dated parking comment the release-external stale-park reads. A hand swap with `gh issue edit` left a park that never cleared, because nothing dated it. Any other already-parked issue is refused by `-Park` as before.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A sweep in a consumer repo sees the merged-upstream wait named, with the paste-ready move, instead of an owner spotting the stale label by hand.
+
+**Score:** 2
 
 #### Pull Request
 

@@ -3411,3 +3411,34 @@ function Test-ParkReasonNamesBlocker {
     }
     return $true
 }
+
+function Get-ParkMoveFrom {
+    <#
+        .SYNOPSIS
+            The parking label a -Park to -Park may lift in the same edit, or '' when this is no move
+            (issue #4226).
+
+        .DESCRIPTION
+            ONE WAIT THAT TURNS INTO THE NEXT. An `awaiting-pull-external` issue whose upstream pull request has
+            merged is waiting on that repo's release from then on, and `awaiting-release-external` is the label
+            for that state. Swapping it by hand with `gh issue edit` left a park that never clears: a park
+            dated by no comment reads Since as '', and the release-external stale-park is not read without
+            it. Measured November 17, 2026, in a consumer. So the move is a -Park, which posts the dated
+            parking comment in the same step as the label swap.
+
+            ONLY A KNOWN PROGRESSION, and only when it is the issue's sole parking label: anything else is a
+            park on top of a park, which -Park keeps refusing (#3907).
+
+        .OUTPUTS
+            The label to lift, or ''.
+    #>
+    param(
+        [AllowNull()][AllowEmptyString()][string]$Park,
+        [AllowNull()][AllowEmptyCollection()][string[]]$ParkingLabels = @()
+    )
+    $moves = @{ 'awaiting-release-external' = 'awaiting-pull-external' }
+    $from = if ($Park -and $moves.ContainsKey([string]$Park)) { $moves[[string]$Park] } else { '' }
+    $now = @(@($ParkingLabels) | Where-Object { $_ })
+    if ($from -and $now.Count -eq 1 -and [string]$now[0] -eq $from) { return $from }
+    return ''
+}
