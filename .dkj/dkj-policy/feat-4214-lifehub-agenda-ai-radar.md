@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Issue #4214: move the last two local skills of a life-hub consumer, `agenda` and `ai-radar`, into
+`dkj-subagents-lifehub`, the same way `agenda-sync` (#4204) and `inbox-sweep` (#4206) moved, with every
+personal value read from Notion.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-subagents/dkj-subagents-lifehub/skills/agenda/SKILL.md`, generic: the owner, the
+  Agenda data source, its view and the language come from **Instellingen agenda-sync**, the page
+  `agenda-sync` already reads, so the consumer needs no second settings page.
+- [x] `plugins/dkj-subagents/dkj-subagents-lifehub/skills/ai-radar/SKILL.md`, generic: the AI dossier,
+  its child pages by role, the repo to compare prompts with and the language come from
+  **Instellingen ai-radar**; the dossier's own main page keeps defining the item format and verdicts.
+- [x] Astrid's manual names `agenda` beside `agenda-sync`; Ian's manual names `ai-radar`.
 
 ### TEST
 
+- [x] Neither skill carries a personal value: a scan for Notion IDs, the consumer's page names, a
+  person's name and an address finds nothing.
+
 ### DEPLOY: feat/4214-lifehub-agenda-ai-radar
 
-**Score:**
+A life hub gets two more skills: `/dkj-subagents-lifehub:agenda` walks the coming weeks of the Notion
+Agenda and proposes one action per date, and `/dkj-subagents-lifehub:ai-radar` collects Claude Code
+tips and updates into the hub's AI dossier without duplicates, both with the personal settings kept in
+the owner's own Notion ([#4214](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4214)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
