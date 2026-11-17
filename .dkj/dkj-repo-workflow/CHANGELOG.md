@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**2 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4234-fast-session-start · 20261117-171654Z
+
+The brand book's session check no longer re-reads every file at each session start. It keeps a per-file
+cache of what it found, and reads again only the files whose size or write time changed since the last start.
+On this repo that took the check from about 9 s to under 1 s on a warm start, and it was the slowest hook a
+session start waited for. The CI gate still reads every file.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A session in a repo with the brand book starts several seconds sooner after `/clear` or a new session, typically under 1 s for this check instead of 9 to 20 s.
+
+**Score:** 2
+
+#### Pull Request
+
+The brand book session check caches its scan, cutting about 8 s from a session start
+
+Plugins: dkj-repo-workflow-dkj
+
+[PR #4244](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4244)
+
+---
 
 ### DEPLOY: feat/4240-sweep-delegates-build · 20261117-170018Z
 
