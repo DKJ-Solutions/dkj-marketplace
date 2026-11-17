@@ -269,6 +269,7 @@
                                       "bwj-page-publish.tests.ps1",
                                       "bwj-test-lib.tests.ps1",
                                       "closed-message-sessioncheck.tests.ps1",
+                                      "filed-with-stamp.tests.ps1",
                                       "guard-asana-mirror.tests.ps1",
                                       "guard-kind-label.tests.ps1",
                                       "guard-reach-reason.tests.ps1",
