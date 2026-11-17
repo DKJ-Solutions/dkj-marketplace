@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**5 / 5 minor entries** <!-- pending-tally -->
+**6 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4251-part1-move-beside-branch-docs · 20261117-225213Z
+
+Part 1 of adopting the workflow now moves the old `.dkj/dkj-policy/` folder when the migration branch's own
+document already sits in `.dkj/dkj-repo-workflow/` (#4251). Before, it skipped the move and stopped on the
+seam check, so the 7.0.0 steps failed in the order the release note gives them. Its dry run no longer
+fails on the repos it exists for, and the branch document's line naming the folder links resolve from is
+repointed too.
+
+**Score:** 4
+
+#### What makes this deploy extra special
+
+A maintainer migrating to 7.0.0 can follow the note in order (branch first, then Part 1) without moving
+their branch document aside by hand.
+
+**Score:** 4
+
+#### Pull Request
+
+Part 1 moves .dkj/dkj-policy/ even when new-branch already created .dkj/dkj-repo-workflow/
+
+Plugins: dkj-repo-workflow
+
+[PR #4260](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4260)
+
+---
 
 ### DEPLOY: fix/4248-candidates-default-skiplabel · 20261117-202420Z
 
