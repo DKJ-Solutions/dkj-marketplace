@@ -2,7 +2,30 @@
 
 ## [Unreleased]
 
-**11 / 14 minor entries** <!-- pending-tally -->
+**11 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4222-restore-dated-plugin-names · 20261117-153843Z
+
+Inside this repo, dated history sentences in docs, comments and the consumer register name the
+plugin as it was called on that date again, instead of the names #4209 introduced.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+Restore the old plugin names in dated history sentences
+
+Plugins: dkj-repo-workflow, dkj-repo-workflow-bwj, dkj-repo-workflow-dkj, dkj-subagents-shopify
+
+[PR #4238](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4238)
+
+---
 
 ### DEPLOY: feat/4228-prune-orphan-branch-documents · 20261117-145142Z
 
