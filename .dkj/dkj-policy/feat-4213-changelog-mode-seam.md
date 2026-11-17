@@ -80,7 +80,8 @@ its work commits and nothing else: no `park:` commit at creation or after a turn
 the trunk after the merge. The branch document is still written for the session and still names and
 describes the PR, but it is never committed, and the PR body becomes the record. The entry gates, the CI
 `Branch entry` check and the unfolded-entry session check stand down. `cut-release` refuses and names the
-seam. Every other repo keeps the full route without changing anything
+seam. The trade-off: work in progress reaches `origin` only when `open-pr` pushes it, so until then it is
+not backed up. Every other repo keeps the full route without changing anything
 ([#4213](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4213)).
 
 **Score:** 3
