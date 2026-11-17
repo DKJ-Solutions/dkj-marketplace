@@ -73,5 +73,3 @@ caught at the next session start, as #1398 and #1404 in smartwatchbanden were no
 
 bwj-development: catch a reach label without its reason after the fact
 
-Plugins: bwj-development
-
