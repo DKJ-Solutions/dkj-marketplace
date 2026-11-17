@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**13 / 17 minor entries** <!-- pending-tally -->
+**14 / 18 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4236-runner-path-at-pin · 20261117-163238Z
+
+The register's check 6 (`check-consumers.ps1`, behind `consumer-sessioncheck`) now judges a runner
+whose shared-scripts checkout is pinned at the tree of that pin instead of at this repo's working copy
+(#4236). Before, five runners pinned at v6.12.0 in one consumer were reported as `[ERROR]` "does not
+exist here" after #4209 renamed the plugin folder on main, while every path existed at their pin, and
+the suggested new path would have broken them. A path missing at its pin is still an `[ERROR]`, now
+naming the ref and suggesting a location from that ref's tree. A pin this checkout cannot resolve is
+an `[INFO]`. Runners on a moving ref are judged as before.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+For the maintainer of a consumer: the session check no longer reports runners pinned to a release as
+broken when only main has moved, so it no longer points them at a repair that would break working
+runners. A genuinely missing path at the pin is still reported, with the ref named.
+
+**Score:** 3
+
+#### Pull Request
+
+consumer-sessioncheck judges a pinned runner's script path at its pin, not at main
+
+[PR #4242](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4242)
+
+---
 
 ### DEPLOY: feat/4233-issues-sweep-split · 20261117-162140Z
 
