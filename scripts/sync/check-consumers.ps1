@@ -508,8 +508,17 @@ function Write-RunnerPathFinding {
 
     $wfName = Format-SafePathToken -Value $WorkflowName
     $suffix = if ($Where) { " ($Where)" } else { '' }
-    foreach ($judged in @(Test-SharedScriptReference -Reference $refs -SourceRoot $RepoRoot)) {
+    # -AtPinnedRef (#4236): a pinned runner fetches its release's tree, so its paths are judged there;
+    # judged against main, five working runners in one consumer read as broken after #4209's rename.
+    foreach ($judged in @(Test-SharedScriptReference -Reference $refs -SourceRoot $RepoRoot -AtPinnedRef)) {
         if ($judged.Exists) { continue }
+
+        # A PIN THIS CHECKOUT CANNOT RESOLVE IS UNMEASURED, NOT MISSING: an [ERROR] here would be the
+        # false positive #4236 removed, arriving through a tag nobody fetched.
+        if ($judged.Unjudged) {
+            Write-Info "$wfName line $($judged.Line) runs '$(Format-SafePathToken -Value $judged.Path)' at '$(Format-SafePathToken -Value $judged.Ref)', which this checkout does not hold (git fetch --tags would bring a release tag) -- so whether that path exists there was not judged.$suffix"
+            continue
+        }
 
         # AN ESCAPING REFERENCE IS ITS OWN FINDING, and deliberately not phrased as a missing path:
         # nothing was looked up, because looking it up is what the lib refuses to do (it would answer
@@ -519,16 +528,18 @@ function Write-RunnerPathFinding {
             continue
         }
 
+        $at = if ($judged.AtRef) { " at '$(Format-SafePathToken -Value $judged.AtRef)', the ref that runner fetches" } else { ' here' }
         $where = if ($judged.MovedTo.Count -gt 0) {
-            "it is at $((@($judged.MovedTo) | ForEach-Object { Format-SafePathToken -Value $_ }) -join ' / ') now"
+            $state = if ($judged.AtRef) { 'at that ref' } else { 'now' }
+            "it is at $((@($judged.MovedTo) | ForEach-Object { Format-SafePathToken -Value $_ }) -join ' / ') $state"
         } else {
-            'no file of that name exists anywhere here, so it was removed rather than moved'
+            "no file of that name exists anywhere$at, so it was removed rather than moved"
         }
         # A CALL READS DIFFERENTLY FROM A CHECKOUT (#2422): the consumer names a reusable workflow of this
         # repo in `uses:` and checks nothing out, so "out of a checkout" would describe a step it has not got.
         $how = if ($judged.Kind -eq 'call') { 'calls the reusable workflow' } else { 'runs' }
         $from = if ($judged.Kind -eq 'call') { 'in this repo' } else { 'out of a checkout of this repo' }
-        Write-Failure "$wfName line $($judged.Line) $how '$(Format-SafePathToken -Value $judged.Path)' $from, and that path does not exist here -- $where. That runner is red on every pull request in this consumer until the path is corrected there; nothing in this repo can correct it from here.$suffix"
+        Write-Failure "$wfName line $($judged.Line) $how '$(Format-SafePathToken -Value $judged.Path)' $from, and that path does not exist$at -- $where. That runner is red on every pull request in this consumer until the path is corrected there; nothing in this repo can correct it from here.$suffix"
     }
 }
 

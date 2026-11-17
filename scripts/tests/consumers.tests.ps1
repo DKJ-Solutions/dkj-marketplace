@@ -43,6 +43,8 @@ $NestedFixtureRoot = Join-Path ([System.IO.Path]::GetTempPath()) "consumers-nest
 # states -- which is the whole subject of 14. So it sits BESIDE the repo, two levels up: inside the allowed
 # scope, outside the work tree (so 'git status' is untouched), and removed in the closing finally.
 $LensFixtureRoot = Join-Path (Resolve-Path -LiteralPath (Join-Path $RepoRoot '..\..')).Path "consumers-lens-fixture-$PID-$([guid]::NewGuid().ToString('n'))"
+# Scenario 12x's two-commit git repo, whose second commit moves a script (#4236).
+$PinRepo = Join-Path ([System.IO.Path]::GetTempPath()) "consumers-pin-repo-$PID-$([guid]::NewGuid().ToString('n'))"
 $PrevPath = $env:PATH
 
 $script:pass = 0
@@ -1706,6 +1708,63 @@ try {
         Assert-Match "\[INFO\].*pinned at v$([regex]::Escape($floor.Version)), behind" $r.Out 'at the layout floor after the move: the ordinary behind INFO'
     }
 
+    # --- 12x. Check 6 judges a PINNED path at its pin, not in the working tree (#4236) ---------------
+    # Measured: after #4209 renamed the plugin folder on main, five runners pinned at v6.12.0 were
+    # reported missing while every path existed at their pin -- and the suggested new path would have
+    # broken all five. A two-commit repo whose second commit moves the script is that shape in miniature.
+    New-Item -ItemType Directory -Force -Path (Join-Path $PinRepo 'plugins\old\scripts') | Out-Null
+    $gitId = @('-c', 'user.name=fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', '-c', 'core.autocrlf=false', '-c', 'core.safecrlf=false', '-c', 'init.defaultBranch=main')
+    & git @gitId -C $PinRepo init --quiet 2>$null | Out-Null
+    [System.IO.File]::WriteAllText((Join-Path $PinRepo 'plugins\old\scripts\run.ps1'), "'x'`n")
+    & git @gitId -C $PinRepo add -A 2>$null | Out-Null
+    & git @gitId -C $PinRepo commit --quiet -m one 2>$null | Out-Null
+    & git @gitId -C $PinRepo tag v1.2.3 2>$null | Out-Null
+    $oldSha = (& git -C $PinRepo rev-parse HEAD).Trim()
+    New-Item -ItemType Directory -Force -Path (Join-Path $PinRepo 'plugins\new\scripts') | Out-Null
+    & git @gitId -C $PinRepo mv plugins/old/scripts/run.ps1 plugins/new/scripts/run.ps1 2>$null | Out-Null
+    & git @gitId -C $PinRepo commit --quiet -m two 2>$null | Out-Null
+
+    $oldPath = 'plugins/old/scripts/run.ps1'
+    $mk = { param($Ref) [pscustomobject]@{ Path = $oldPath; Prefix = '.w'; Repository = 'o/r'; Line = 1; Kind = 'checkout'; Ref = $Ref } }
+
+    $j = @(Test-SharedScriptReference -Reference @(& $mk $oldSha) -SourceRoot $PinRepo -AtPinnedRef)[0]
+    Assert-Equal $true $j.Exists 'pinned SHA: a path that exists AT the pin is not missing, though main moved it'
+    $j = @(Test-SharedScriptReference -Reference @(& $mk 'v1.2.3') -SourceRoot $PinRepo -AtPinnedRef)[0]
+    Assert-Equal $true $j.Exists 'pinned tag: resolved as its release tag and judged there'
+    $j = @(Test-SharedScriptReference -Reference @(& $mk '1.2.3') -SourceRoot $PinRepo -AtPinnedRef)[0]
+    Assert-Equal $true $j.Exists 'bare version: read as the tag v1.2.3'
+    $j = @(Test-SharedScriptReference -Reference @(& $mk 'main') -SourceRoot $PinRepo -AtPinnedRef)[0]
+    Assert-Equal $false $j.Exists 'moving ref: still judged in the working tree, where the path is gone'
+    Assert-Equal 'plugins/new/scripts/run.ps1' (@($j.MovedTo) -join ',') 'moving ref: and the move is offered from the working tree'
+    $j = @(Test-SharedScriptReference -Reference @(& $mk $oldSha) -SourceRoot $PinRepo)[0]
+    Assert-Equal $false $j.Exists 'switch off: the scaffolder question (does it exist in THIS tree) is unchanged'
+
+    $newRef = [pscustomobject]@{ Path = 'plugins/new/scripts/run.ps1'; Prefix = '.w'; Repository = 'o/r'; Line = 1; Kind = 'checkout'; Ref = $oldSha }
+    $j = @(Test-SharedScriptReference -Reference @($newRef) -SourceRoot $PinRepo -AtPinnedRef)[0]
+    Assert-Equal $false $j.Exists 'pinned SHA: a path that exists only on main IS missing at the pin'
+    Assert-Equal $oldSha $j.AtRef 'pinned SHA: and the verdict names the ref it was judged at'
+    Assert-Equal 'plugins/old/scripts/run.ps1' (@($j.MovedTo) -join ',') 'pinned SHA: the suggestion comes from the pin tree, not from main'
+
+    $j = @(Test-SharedScriptReference -Reference @(& $mk 'fedcba9876543210fedcba9876543210fedcba98') -SourceRoot $PinRepo -AtPinnedRef)[0]
+    Assert-Equal $true $j.Unjudged 'unresolvable pin: unjudged, never reported as missing'
+
+    # End to end: a runner pinned at THIS tree's HEAD (present even in a shallow CI clone) naming a path
+    # HEAD does not hold is an [ERROR] worded at that ref, not "here".
+    $headSha = (& git -C $RepoRoot rev-parse HEAD).Trim()
+    New-FixtureConsumer -ExtensionIds @('06-29')
+    New-FixtureWorkflow -Name 'fold-on-merge.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-repo-workflow/scripts/release/no-such-script.ps1' -Ref $headSha
+    $mf = New-FixtureManifest -Extensions @('06-29')
+    $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
+    Assert-Match "does not exist at '$headSha', the ref that runner fetches" $r.Out 'pinned runner, missing at its pin: the ERROR names the ref'
+
+    # And a pin this checkout cannot resolve is [INFO], with no missing-path [ERROR].
+    New-FixtureConsumer -ExtensionIds @('06-29')
+    New-FixtureWorkflow -Name 'fold-on-merge.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-repo-workflow/scripts/release/no-such-script.ps1' -Ref 'fedcba9876543210fedcba9876543210fedcba98'
+    $mf = New-FixtureManifest -Extensions @('06-29')
+    $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
+    Assert-Match '\[INFO\].*which this checkout does not hold' $r.Out 'unresolvable pin end to end: an INFO'
+    Assert-NotMatch 'does not exist' $r.Out 'unresolvable pin end to end: no missing-path finding'
+
     # --- 13. Check 6b: -RemoteRunners reads an ABSENT consumer's runners over the API (#1808) ------
     # Check 6 reads the consumer's local checkout, so it inherited check 1: an absent consumer was
     # [SKIP] and its runners were not read at all -- and the consumers most likely to carry a stale
@@ -2077,6 +2136,7 @@ exit 1
     if (Test-Path -LiteralPath $FakeBin) { Remove-Item -Recurse -Force -LiteralPath $FakeBin -ErrorAction SilentlyContinue }
     if (Test-Path -LiteralPath $NestedFixtureRoot) { Remove-Item -Recurse -Force -LiteralPath $NestedFixtureRoot -ErrorAction SilentlyContinue }
     if (Test-Path -LiteralPath $LensFixtureRoot) { Remove-Item -Recurse -Force -LiteralPath $LensFixtureRoot -ErrorAction SilentlyContinue }
+    if (Test-Path -LiteralPath $PinRepo) { Remove-Item -Recurse -Force -LiteralPath $PinRepo -ErrorAction SilentlyContinue }
     Remove-Item -Path $GhCalls -Force -ErrorAction SilentlyContinue
     $env:PATH = $PrevPath
     foreach ($v in @('GH_CALL_LOG', 'GH_GRAPHQL_BODY', 'GH_GRAPHQL_EXIT', 'GH_AUTH_FAIL')) {

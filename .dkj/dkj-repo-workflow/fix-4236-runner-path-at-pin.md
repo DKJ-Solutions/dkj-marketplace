@@ -39,19 +39,41 @@
 
 ### PLAN
 
+Issue #4236: check 6 compared every runner path with this tree's working copy, ignoring the `ref:` the
+runner fetches, so pinned runners whose paths exist at their pin were reported missing after #4209.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `consumer-runner-lib.ps1`: references carry their `Ref`; `Test-SharedScriptReference -AtPinnedRef`
+  judges a pinned path (40-hex SHA or `vX.Y.Z`) with `git cat-file -e <ref>:<path>` and suggests moves
+  from that ref's tree; an unresolvable pin comes back `Unjudged`
+- [x] `check-consumers.ps1`: check 6 passes `-AtPinnedRef`, names the ref in the `[ERROR]`, and reports an
+  unresolvable pin as `[INFO]`, never as a missing path
 
 ### TEST
 
+- [x] `consumers.tests.ps1` scenario 12x: a two-commit fixture repo (SHA pin, tag pin, bare version,
+  moving ref, switch off, missing at the pin, unresolvable pin) plus two end-to-end runs; suite 442/0
+
 ### DEPLOY: fix/4236-runner-path-at-pin
 
-**Score:**
+The register's check 6 (`check-consumers.ps1`, behind `consumer-sessioncheck`) now judges a runner
+whose shared-scripts checkout is pinned at the tree of that pin instead of at this repo's working copy
+(#4236). Before, five runners pinned at v6.12.0 in one consumer were reported as `[ERROR]` "does not
+exist here" after #4209 renamed the plugin folder on main, while every path existed at their pin, and
+the suggested new path would have broken them. A path missing at its pin is still an `[ERROR]`, now
+naming the ref and suggesting a location from that ref's tree. A pin this checkout cannot resolve is
+an `[INFO]`. Runners on a moving ref are judged as before.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+For the maintainer of a consumer: the session check no longer reports runners pinned to a release as
+broken when only main has moved, so it no longer points them at a repair that would break working
+runners. A genuinely missing path at the pin is still reported, with the ref named.
+
+**Score:** 3
 
 #### Pull Request
 

@@ -102,6 +102,11 @@ Set-StrictMode -Version Latest
 # by the block walk below and by Get-SharedScriptReference, which reads `path:` out of the block it finds.
 $script:SharedCheckoutKeyPattern = '^(?<ind>[ \t]*)(?<key>repository|path):[ \t]*(?<q>["''])?(?<val>[^"''\r\n#]*?)(?(q)\k<q>)[ \t]*(#.*)?$'
 
+# The `ref:` key of the same block, with the `# vX.Y.Z` comment adopt-ci-floor writes beside a SHA. Shared
+# by Get-SharedScriptPin, which dates it, and Get-SharedScriptReference, which hands it to
+# Test-SharedScriptReference -AtPinnedRef so a pinned path is judged at its pin (#4236).
+$script:SharedCheckoutRefPattern = '^(?<ind>[ \t]*)ref:[ \t]*(?<q>["''])?(?<ref>[^"''\s#]*)(?(q)\k<q>)[ \t]*(?:#[ \t]*(?<tag>\S+))?'
+
 function Get-SharedCheckoutBlock {
     <#
         Every `with:` block in $Lines whose `repository:` names $RepositoryName, as
@@ -169,12 +174,13 @@ function Get-SharedScriptReference {
         Every path a workflow file reaches into $RepositoryName for: a script run out of a checkout of
         it, or -- since #2422 -- a reusable workflow of it called with `uses:`.
 
-        Returns one record per DISTINCT path: @{ Path; Prefix; Repository; Line; Kind }, where Path is
+        Returns one record per DISTINCT path: @{ Path; Prefix; Repository; Line; Kind; Ref }, where Path is
         repo-relative to that tree with forward slashes ('plugins/dkj-repo-workflow/scripts/...', or
         '.github/workflows/reusable-branch-entry.yml' for a call), Prefix is the local directory the
         step checks it out into ('' for a call, which checks nothing out), Repository is the owner/name
         as written (so a caller can name the owner the consumer cited), Line is the 1-based line of the
-        first reference, and Kind is 'checkout' or 'call'.
+        first reference, Kind is 'checkout' or 'call', and Ref is the ref that path is fetched at: the
+        `@<ref>` of a call, the `ref:` of the checkout block ('' where the block has none).
 
         Distinct by Path: fold-on-merge.yml names two scripts and would name one of them twice if a
         step retried it, and a reader wants one finding per broken path rather than one per mention.
@@ -223,6 +229,7 @@ function Get-SharedScriptReference {
             Repository = "$($c.Groups['owner'].Value)/$($c.Groups['name'].Value)"
             Line       = $i + 1
             Kind       = 'call'
+            Ref        = $c.Groups['ref'].Value
         }
     }
 
@@ -247,15 +254,21 @@ function Get-SharedScriptReference {
     # Both are now covered by their own scenarios in consumers.tests.ps1. The walk itself lives in
     # Get-SharedCheckoutBlock since #2337, shared with the ref reader.
     $prefixes = @{}
+    $prefixRefs = @{}
     foreach ($block in @(Get-SharedCheckoutBlock -Lines $lines -RepositoryName $RepositoryName)) {
+        $prefix = ''
+        $blockRef = ''
         for ($j = $block.First; $j -le $block.Last; $j++) {
+            $r = [regex]::Match($lines[$j], $script:SharedCheckoutRefPattern)
+            if ($r.Success -and $r.Groups['ind'].Value.Length -eq $block.Indent) { $blockRef = $r.Groups['ref'].Value; continue }
             $p = [regex]::Match($lines[$j], $script:SharedCheckoutKeyPattern)
             if (-not $p.Success -or $p.Groups['key'].Value -ne 'path') { continue }
             if ($p.Groups['ind'].Value.Length -ne $block.Indent) { continue }
-
-            $prefix = $p.Groups['val'].Value.Trim().TrimEnd('/', '\')
-            if ($prefix) { $prefixes[$prefix] = $block.Repository }
-            break
+            if (-not $prefix) { $prefix = $p.Groups['val'].Value.Trim().TrimEnd('/', '\') }
+        }
+        if ($prefix) {
+            $prefixes[$prefix] = $block.Repository
+            $prefixRefs[$prefix] = $blockRef
         }
     }
     if ($prefixes.Count -eq 0) { return @($found) }
@@ -277,6 +290,7 @@ function Get-SharedScriptReference {
                     Repository = $prefixes[$prefix]
                     Line       = $i + 1
                     Kind       = 'checkout'
+                    Ref        = $prefixRefs[$prefix]
                 }
             }
         }
@@ -334,10 +348,24 @@ function Test-SharedScriptReference {
         The recursive search runs ONLY on the failure path, so a clean consumer costs one Test-Path
         per reference. .git is excluded because a packed object tree holds no scripts and walking it
         is the whole cost of the walk.
+
+        -AtPinnedRef JUDGES A PINNED PATH AT ITS PIN, NOT IN THE WORKING TREE (#4236). A runner whose
+        checkout is pinned (`ref: <sha> # vX.Y.Z`, or a bare `vX.Y.Z` tag) fetches the tree of that
+        release, so whether the working tree still holds the path says nothing about whether the runner
+        works. Measured November 17, 2026: five pinned runners in one consumer were reported missing
+        after #4209 renamed the plugin folder on main, while every path existed at their pin -- and the
+        suggested repair, the new path, would have broken all five. So a pinned reference is looked up
+        with `git cat-file -e <ref>:<path>` in $SourceRoot, MovedTo is searched in that ref's tree, and
+        AtRef names the ref judged. A pin this checkout cannot resolve (a tag not fetched, a SHA it does
+        not hold) is returned with Unjudged = $true and Exists = $false: no measurement, so the caller
+        must not call the path missing. A moving ref (a branch, or no ref at all) is judged in the
+        working tree exactly as before. Off by default: the scaffolder suites ask whether the paths they
+        emit exist in THIS tree, which is the working tree's question whatever the pin says.
     #>
     param(
         [Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Reference,
-        [Parameter(Mandatory)][string]$SourceRoot
+        [Parameter(Mandatory)][string]$SourceRoot,
+        [switch]$AtPinnedRef
     )
 
     $rootFull = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath $SourceRoot).Path).TrimEnd('\', '/')
@@ -361,11 +389,25 @@ function Test-SharedScriptReference {
             $escapes = $true
         }
 
-        $exists = $false
-        if (-not $escapes) { $exists = Test-Path -LiteralPath $full -PathType Leaf }
+        $refValue = $(if ($ref.PSObject.Properties.Name -contains 'Ref') { [string]$ref.Ref } else { '' })
+        $pin = if ($AtPinnedRef -and -not $escapes) { Get-SharedScriptPinnedRevision -Ref $refValue } else { '' }
 
+        $exists = $false
+        $unjudged = $false
+        $atRef = ''
         $movedTo = @()
-        if (-not $exists -and -not $escapes) {
+        if ($pin) {
+            $atRef = $refValue
+            $lookup = Test-SharedScriptPathAtRevision -SourceRoot $rootFull -Revision $pin -Path $ref.Path
+            if ($null -eq $lookup) {
+                $unjudged = $true
+            } else {
+                $exists = $lookup.Exists
+                $movedTo = @($lookup.MovedTo)
+            }
+        } elseif (-not $escapes) { $exists = Test-Path -LiteralPath $full -PathType Leaf }
+
+        if (-not $pin -and -not $exists -and -not $escapes) {
             $leaf = Split-Path -Leaf $ref.Path
             $movedTo = @(
                 Get-ChildItem -LiteralPath $SourceRoot -Recurse -File -Filter $leaf -ErrorAction SilentlyContinue |
@@ -381,13 +423,66 @@ function Test-SharedScriptReference {
             Repository = $ref.Repository
             Line       = $ref.Line
             Kind       = $(if ($ref.PSObject.Properties.Name -contains 'Kind') { $ref.Kind } else { 'checkout' })
+            Ref        = $refValue
             Exists     = $exists
             Escapes    = $escapes
             MovedTo    = $movedTo
+            AtRef      = $atRef
+            Unjudged   = $unjudged
         }
     }
 
     return @($results)
+}
+
+function Get-SharedScriptPinnedRevision {
+    <#
+        The git revision a PINNED ref names, or '' for a moving one (#4236): a 40-hex SHA as written, and a
+        version (`vX.Y.Z` or `X.Y.Z`) as its release tag `vX.Y.Z`. A branch name, an empty ref and anything
+        else return ''. The value comes out of a consumer's workflow file, so only these two shapes ever
+        reach git -- nothing else written there is handed to a command line.
+    #>
+    param([AllowEmptyString()][AllowNull()][string]$Ref)
+
+    if ([string]::IsNullOrWhiteSpace($Ref)) { return '' }
+    if ($Ref -match '^[0-9a-fA-F]{40}$') { return $Ref.ToLowerInvariant() }
+    if ($Ref -match '^v?(?<v>\d+\.\d+\.\d+)$') { return "v$($Matches['v'])" }
+    return ''
+}
+
+function Test-SharedScriptPathAtRevision {
+    <#
+        Does $Path exist in $SourceRoot's git tree at $Revision, and where does a file of the same name
+        sit in that tree? Returns @{ Exists; MovedTo }, or $null where $Revision does not resolve to a
+        commit in this checkout -- no measurement, which the caller reports as unjudged (#4236).
+
+        LOCAL READS ONLY, AND NONE OF THEM THROWS. `git cat-file -e` and `git ls-tree` open this machine's
+        object store; a non-zero exit is an answer here, not a failure, so $ErrorActionPreference is
+        lowered for this scope -- under 'Stop' a native non-zero exit is promoted to a terminating error
+        despite `2>$null` (check-consumers.ps1 records the measurement at its origin probe).
+    #>
+    param(
+        [Parameter(Mandatory)][string]$SourceRoot,
+        [Parameter(Mandatory)][string]$Revision,
+        [Parameter(Mandatory)][string]$Path
+    )
+
+    $ErrorActionPreference = 'Continue'
+    $null = & git -C $SourceRoot rev-parse --verify --quiet "$Revision^{commit}" 2>$null
+    if ($LASTEXITCODE -ne 0) { return $null }
+
+    $null = & git -C $SourceRoot cat-file -e "${Revision}:$Path" 2>$null
+    if ($LASTEXITCODE -eq 0) { return [pscustomobject]@{ Exists = $true; MovedTo = @() } }
+
+    # Paths in this charset are ASCII ([\w./-]), so core.quotePath has nothing to quote and the decode
+    # question language-layers.md records does not arise.
+    $leaf = Split-Path -Leaf $Path
+    $movedTo = @(
+        & git -C $SourceRoot ls-tree -r --name-only $Revision 2>$null |
+            Where-Object { $_ -and ((Split-Path -Leaf $_) -eq $leaf) } |
+            Sort-Object -Property @{ Expression = { -not $_.StartsWith('plugins/') } }, @{ Expression = { $_ } }
+    )
+    return [pscustomobject]@{ Exists = $false; MovedTo = $movedTo }
 }
 
 function Test-WorkflowHoldsWriteCredential {
@@ -448,7 +543,7 @@ function Get-SharedScriptPin {
 
     if ([string]::IsNullOrWhiteSpace($WorkflowText)) { return @() }
     $lines = $WorkflowText -split "`r?`n"
-    $refPattern = '^(?<ind>[ \t]*)ref:[ \t]*(?<q>["''])?(?<ref>[^"''\s#]*)(?(q)\k<q>)[ \t]*(?:#[ \t]*(?<tag>\S+))?'
+    $refPattern = $script:SharedCheckoutRefPattern
 
     $current = $null
     if ($CurrentVersion -match '^v?(?<v>\d+\.\d+\.\d+)$') { $current = [version]$Matches['v'] }
