@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**12 / 16 minor entries** <!-- pending-tally -->
+**13 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4233-issues-sweep-split · 20261117-162140Z
+
+The `issues-sweep` skill page was split into a loop page and five pages beside it, and step 1 relies
+on `claim-issue`'s own `-SkipLabel` default (#4233).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A sweep now loads a 13.7 KB loop page instead of a 35 KB one (~12,200 tokens measured before; ~4,800
+estimated after, at the measured bytes-per-token of the old page), and that body is carried through
+every turn of the sweep. What applies only to one case (a `stale-park`, a refused claim, a lane, a
+park) sits on its own page beside it, read when that case comes up (#4233).
+
+**Score:** 2
+
+#### Pull Request
+
+issues-sweep: load only the step in hand
+
+Plugins: dkj-repo-workflow
+
+[PR #4241](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4241)
+
+---
 
 ### DEPLOY: fix/4235-restore-house-style-redirects · 20261117-160516Z
 
