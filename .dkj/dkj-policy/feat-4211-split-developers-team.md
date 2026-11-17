@@ -97,7 +97,7 @@ Nolan, Tessa), the skills `specialists-init`, `specialists-teardown` and `sync-r
 check moved to a new plugin, `dkj-subagents-developers`
 ([#4211](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4211)).
 
-**Every repo must enable the new plugin**, or a session there has nine specialists instead of nineteen and
+**Every repo must enable the new plugin**, or a session there has eleven specialists instead of twenty-one and
 no roster check. Add `"dkj-subagents-developers@dkj-marketplace": true` beside the core team in
 `.claude/settings.json`, then run `claude plugin install dkj-subagents-developers@dkj-marketplace --scope project`
 and restart. Lenses and roster rows need no change; the slash commands are now
