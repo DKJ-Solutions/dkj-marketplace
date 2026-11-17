@@ -936,7 +936,9 @@ is keyed **by version**, so a machine holds `dkj-policy/5.0.0` through `5.5.0` s
 -- it keeps working, it renders stale code, and nothing reports it. Copying the two scripts into your
 repo instead trades that for two live copies drifting at every release with no lint over them. The shim
 is the third answer: one file that never changes, resolving the payload at render time, so the path in
-your settings cannot go stale and the logic stays in the plugin where a release can reach it.
+your settings cannot go stale and the logic stays in the plugin where a release can reach it. A shim this
+command placed earlier that differs from the current one (the v7.0.0 rename of the plugin id it matches
+did that) is replaced on the next `-Apply`; a file at that path without its provenance line is kept (#4252).
 
 It reads `~/.claude/plugins/installed_plugins.json` itself rather than through the shared lib that
 already does, because that lib lives in the payload the shim is looking for. It prefers a record naming

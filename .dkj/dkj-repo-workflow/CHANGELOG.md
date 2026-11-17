@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**6 / 6 minor entries** <!-- pending-tally -->
+**7 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4252-refresh-stale-statusline-shim · 20261117-233935Z
+
+`adopt-statusline.ps1 -Apply` now replaces a progress-bar shim it placed before v7.0.0 (#4252). That shim
+looked for the old `dkj-policy` plugin id, so after the rename the progress bar went dark, and a re-run
+left the stale shim in place. A file at that path that this command did not place is still left alone,
+with the line that repairs it.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer whose progress bar went dark after 7.0.0 gets it back by re-running `adopt-statusline.ps1 -Apply`,
+without deleting the file by hand first.
+
+**Score:** 3
+
+#### Pull Request
+
+adopt-statusline refreshes a plugin-placed shim that differs from the current template
+
+Plugins: dkj-repo-workflow
+
+[PR #4261](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4261)
+
+---
 
 ### DEPLOY: fix/4251-part1-move-beside-branch-docs · 20261117-225213Z
 

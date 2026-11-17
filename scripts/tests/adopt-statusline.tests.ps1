@@ -196,6 +196,49 @@ $shimAfter = Get-Content -LiteralPath (Join-Path $root '.claude\statusline\dkj-p
 Assert-True ($shimBefore -ceq $shimAfter) 're-run: the shim is not rewritten'
 Assert-True ($res.Output -match '\[keep\]') 're-run: and the run says it kept what was there'
 
+# --- 6a. a stale plugin-placed shim is refreshed, a foreign file is not (#4252) -----------------------
+# Before v7.0.0 the shim matched 'dkj-policy@*' install ids. After the rename that id is gone, so the
+# old shim resolves nothing and the bar goes dark -- and a re-run said [keep] forever. The old-era shim
+# is the current template with the plugin name swapped back, which is exactly the shape that shipped.
+$root = New-FixtureRepo 'refresh-seed'
+$null = Invoke-Adopt -Root $root -Apply
+$currentShim = [System.IO.File]::ReadAllText((Join-Path $root '.claude\statusline\dkj-progress.ps1'))
+$oldShim = $currentShim -replace 'dkj-repo-workflow', 'dkj-policy'
+Assert-True ($oldShim -cne $currentShim) 'refresh fixture: the old-era shim differs from the current template'
+
+$root = New-FixtureRepo 'refresh'
+$refreshShim = Join-Path $root '.claude\statusline\dkj-progress.ps1'
+Write-Utf8 $refreshShim $oldShim
+$res = Invoke-Adopt -Root $root
+Assert-True ($res.Output -match '\[would refresh\]') 'stale shim: a dry run says it would refresh'
+Assert-True ([System.IO.File]::ReadAllText($refreshShim) -ceq $oldShim) 'stale shim: and a dry run leaves it as it was'
+$res = Invoke-Adopt -Root $root -Apply
+Assert-True ($res.ExitCode -eq 0) 'stale shim: -Apply exits 0'
+Assert-True ($res.Output -match '\[refresh\] \.claude/statusline/dkj-progress\.ps1') 'stale shim: -Apply says it refreshed'
+Assert-True ([System.IO.File]::ReadAllText($refreshShim) -ceq $currentShim) 'stale shim: and the file is now the current template'
+$res = Invoke-Adopt -Root $root -Apply
+Assert-True ($res.Output -match '\[keep\]' -and $res.Output -notmatch '\[refresh\]') 'stale shim: after the refresh a re-run keeps it'
+
+# CRLF alone is not a difference: the comparison normalizes line endings.
+$root = New-FixtureRepo 'identical-crlf'
+$crlfShim = Join-Path $root '.claude\statusline\dkj-progress.ps1'
+Write-Utf8 $crlfShim ($currentShim -replace "`n", "`r`n")
+$res = Invoke-Adopt -Root $root -Apply
+Assert-True ($res.Output -match '\[keep\]' -and $res.Output -notmatch 'refresh') 'identical shim (CRLF): kept, not refreshed'
+Assert-True ([System.IO.File]::ReadAllText($crlfShim) -ceq ($currentShim -replace "`n", "`r`n")) 'identical shim (CRLF): left byte for byte'
+
+# The repo's own file at that path, with no provenance line, is never replaced.
+$root = New-FixtureRepo 'foreign-shim'
+$foreignShim = Join-Path $root '.claude\statusline\dkj-progress.ps1'
+$foreignText = "# my own statusline`nWrite-Output 'mine'`n"
+Write-Utf8 $foreignShim $foreignText
+$res = Invoke-Adopt -Root $root -Apply
+Assert-True ($res.ExitCode -eq 0) 'foreign file: exits 0'
+Assert-True ([System.IO.File]::ReadAllText($foreignShim) -ceq $foreignText) 'foreign file: kept unchanged'
+Assert-True ($res.Output -match '\[keep\]' -and $res.Output -notmatch 'refresh') 'foreign file: reported [keep], never refreshed'
+Assert-True ($res.Output -match 'not the shim this command places') 'foreign file: the note says the bar may not render'
+Assert-True ($res.Output -match 'delete the file and re-run') 'foreign file: and names the repair'
+
 # --- 6b. additive means the BYTES, not only the keys (#2505) --------------------------------------
 # Case 5 asserts that every key survives, and it passed all along while the file around those keys was
 # re-serialised: Windows PowerShell 5.1's ConvertTo-Json column-pads every member and drops blank lines,
