@@ -229,7 +229,8 @@ try {
     $p = New-PullData -Label 'reach' -Issues $reachIssues
     $r = Invoke-Hook -Root $ok -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT' -Pulls $p
     Assert-True ($r.Text -match "\[ERROR\] bwj-development: BWJ-Development/smartwatchbanden has 2 open issue\(s\) carrying the reach label 'minor' with no Asana task linked: #1257, #1283\.") 'the measured case (#4053): reach-labelled issues with no card are reported, ascending, the label matched case-insensitively'
-    Assert-True ($r.Text -notmatch '#1224|#1300|#1301|#1302') 'an issue with a card, without the label, naming several tasks, or read without labels is left out'
+    $cardLine = @($r.Text -split "`n" | Where-Object { $_ -match 'with no Asana task linked' }) -join "`n"
+    Assert-True ($cardLine -notmatch '#1224|#1300|#1301|#1302') 'an issue with a card, without the label, naming several tasks, or read without labels is left out'
     Assert-True ($r.Text -notmatch 'Belgium|Klarna') 'and no issue body is printed'
     Assert-True ($r.Code -eq 0) 'the finding still exits 0'
 
@@ -252,6 +253,35 @@ try {
     $p = New-PullData -Label 'many' -Issues $many
     $r = Invoke-Hook -Root $ok -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT' -Pulls $p
     Assert-True (($r.Text -match 'has 17 open issue\(s\)') -and ($r.Text -match '#2015 and 2 more\.') -and ($r.Text -notmatch '#2016')) 'a long list names the first fifteen and counts the rest'
+
+    # A REACH-LABELLED ISSUE WITHOUT ITS REASON (#4230). The measured case: smartwatchbanden #1398 and #1404 were
+    # filed with 'minor' and no '## Why minor' section after guard-reach-reason shipped; #1398 had no card either,
+    # so both lines name it. A heading with nothing under it is not a reason, and a '###' heading in any case is.
+    $why = "Context.`n`n## Why minor`n`nThe commissioner sees the checkout break.`n"
+    $reasonIssues = @(
+        @{ number = 1404; body = $linked; labels = @(@{ name = 'minor' }, @{ name = 'bug' }) },
+        @{ number = 1398; body = 'No reason, no card.'; labels = @(@{ name = 'minor' }, @{ name = 'bug' }) },
+        @{ number = 1329; body = "$linked`n`n## Why minor`n`n## Steps`nx"; labels = @(@{ name = 'minor' }, @{ name = 'bug' }) },
+        @{ number = 1410; body = "$linked`n`n$why"; labels = @(@{ name = 'minor' }, @{ name = 'feature' }) },
+        @{ number = 1411; body = "$linked`n`n### why MINOR`nManagement asked for it."; labels = @(@{ name = 'Minor' }, @{ name = 'bug' }) },
+        @{ number = 1412; body = 'Developer-only.'; labels = @(@{ name = 'bug' }) },
+        @{ number = 1413; body = 'Read without labels.' })
+    $p = New-PullData -Label 'reason' -Issues $reasonIssues
+    $r = Invoke-Hook -Root $ok -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT' -Pulls $p
+    $reasonLine = @($r.Text -split "`n" | Where-Object { $_ -match "no '## Why minor' section" }) -join "`n"
+    Assert-True ($reasonLine -match "\[ERROR\] bwj-development: BWJ-Development/smartwatchbanden has 3 open issue\(s\) carrying the reach label 'minor' with no '## Why minor' section in the body: #1329, #1398, #1404\.") 'the measured case (#4230): reach-labelled issues with no reason are reported, ascending, an empty section included'
+    Assert-True ($reasonLine -notmatch '#1410|#1411|#1412|#1413') 'a written reason (## or ###, any case), no label, or no labels field is left out'
+    Assert-True ($r.Text -match "with no Asana task linked: #1398\.") 'and the missing card stays its own line'
+    Assert-True ($r.Text -notmatch 'commissioner sees|No reason, no card') 'and no issue body is printed'
+    Assert-True ($r.Code -eq 0) 'the finding still exits 0'
+
+    $p = New-PullData -Label 'tier-reason' -Issues @(
+        @{ number = 9; body = "$linked`n`n## Why minor`nx"; labels = @(@{ name = 'tier-1' }, @{ name = 'bug' }) },
+        @{ number = 10; body = "$linked`n`n## Why tier-1`nx"; labels = @(@{ name = 'tier-1' }, @{ name = 'bug' }) })
+    [System.IO.File]::WriteAllText((Join-Path $seamed 'scripts\repo-config.ps1'),
+        "function Get-ResolvesExemptMatchers { @() }`nfunction Get-ReachLabel { 'tier-1' }`n")
+    $r = Invoke-Hook -Root $seamed -Slug 'BWJ-Development/xoxowildhearts' -Secret 'ASANA_PAT' -Pulls $p
+    Assert-True (($r.Text -match "no '## Why tier-1' section in the body: #9\.") -and ($r.Text -notmatch '#10')) 'the section is named after the label Get-ReachLabel answers'
 
     # A KIND-LESS ISSUE, AFTER THE FACT (#4219). The measured case: smartwatchbanden #1390, #1391 and #1394 were
     # filed with no labels at all, the morning after guard-kind-label shipped, and none was added since.

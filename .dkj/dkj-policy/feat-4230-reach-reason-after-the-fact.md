@@ -39,21 +39,39 @@
 
 ### PLAN
 
+Inbound #4230: `guard-reach-reason` (#4057) fails open by design, and nothing caught a reach-labelled
+issue with no `## Why <reach label>` section afterwards. Extend finding 6 of
+`closed-message-sessioncheck` with the reason half, judged by the guard's own `Test-ReachReasonSection`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-ReachWithoutReasonFindings` in `closed-message-sessioncheck.ps1`, printed as its own line beside finding 6
+- [x] docstring, README hooks row, `report-issue` skill and `WORKFLOW-portable.md` name the new line
+- [x] suite cases: the measured case (#1329, #1398, #1404), an empty section, `###` in any case, the configured label
 
 ### TEST
 
+- [x] `closed-message-sessioncheck.tests.ps1`: 73 passed, 0 failed
+
 ### DEPLOY: feat/4230-reach-reason-after-the-fact
 
-**Score:**
+Inside this repo, `closed-message-sessioncheck` reads `reach-reason-rules.ps1` beside finding 6 and its
+suite gains the cases for the new line.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A store session now starts with an `[ERROR]` line naming every open issue that carries the reach label
+with no `## Why <reach label>` section in its body. An issue that slipped past `guard-reach-reason` -- a
+body built at run time, a body on stdin, `gh` unreachable, or a checkout that had not updated -- is
+caught at the next session start, as #1398 and #1404 in smartwatchbanden were not.
+
+**Score:** 3
 
 #### Pull Request
 
-closed-message-sessioncheck: list reach-labelled issues with no Why section
+bwj-development: catch a reach label without its reason after the fact
+
+Plugins: bwj-development
 
