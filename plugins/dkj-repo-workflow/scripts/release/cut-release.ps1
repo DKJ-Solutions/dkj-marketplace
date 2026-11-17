@@ -383,6 +383,14 @@ if ($absent.Count -gt 0) {
 # Get-SeamValue (issue #885, group A): this used to be a private copy defined below; it is now the one
 # definition every seam reader in this workflow shares. See seam-lib.ps1's synopsis for why.
 . (Join-Path $PSScriptRoot '..\lib\seam-lib.ps1')
+# NO CHANGELOG, NO RELEASE (issue #4213). A repo answering Get-ChangelogMode with 'none' keeps no
+# CHANGELOG.md for a cut to empty and no entries to write release notes from, so the cut refuses before it
+# touches anything, and names the seam so the way back is one line in scripts/repo-config.ps1.
+. (Join-Path $PSScriptRoot '..\lib\changelog-mode-lib.ps1')
+if (Test-ChangelogModeNone) {
+    Write-Error "cut-release refuses -- $(Get-ChangelogModeNoneNote) A release is cut from that changelog, so there is nothing to cut. Answer Get-ChangelogMode with 'fold' (or remove it) to use the release route again. Nothing was changed."
+    exit 1
+}
 # The live-push record and the rules the two documents apply to it (#2570, #2586), plus the quoted-path
 # decode for the per-entry diffs they read. Unguarded: a cut handed a record it cannot parse must fail at
 # load, not write a GitHub body that calls everything live.

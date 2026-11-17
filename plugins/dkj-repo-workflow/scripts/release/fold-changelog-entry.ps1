@@ -322,6 +322,16 @@ if ($repo -match 'VUL-IN') {
 # agree on, so it is the one read through the shared definition rather than a fourth private idiom.
 . (Join-Path $PSScriptRoot '..\lib\seam-lib.ps1')
 
+# NO CHANGELOG, NOTHING TO FOLD (issue #4213). Under Get-ChangelogMode 'none' the branch document is never
+# committed, so there is nothing on the trunk to fold and no CHANGELOG.md to fold it into; a fold commit
+# here would be the very 'fold:' commit that answer exists to remove. Exit 0, because the CI fold runners
+# call this after every merge and a repo that keeps no changelog is not a failed fold.
+. (Join-Path $PSScriptRoot '..\lib\changelog-mode-lib.ps1')
+if (Test-ChangelogModeNone) {
+    Write-Host "fold-changelog-entry: nothing to fold -- $(Get-ChangelogModeNoneNote)" -ForegroundColor DarkGray
+    exit 0
+}
+
 # THE CLOSE-OUT RECEIPT SHAPE (issue #1884), printed as this run's last line -- see closeout-lib.ps1
 # for why step 6 of the ritual got a mechanism after losing four times in prose. Guarded on
 # git-porcelain-lib's grounds: a consumer whose mirror predates this lib must not crash on load, and

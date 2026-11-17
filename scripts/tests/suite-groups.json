@@ -16,6 +16,7 @@
                        "guards":  "claim-issue, new-branch, worktree-lane and the parking that keeps a branch on origin until it has a PR",
                        "suites":  [
                                       "branch-document-path.tests.ps1",
+                                      "changelog-mode.tests.ps1",
                                       "branch-info.tests.ps1",
                                       "claim-issue.tests.ps1",
                                       "new-branch.tests.ps1",

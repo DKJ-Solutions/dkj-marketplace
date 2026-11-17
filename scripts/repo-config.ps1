@@ -1486,6 +1486,13 @@ function Get-DeclinedAdoptions {
     return @()
 }
 
+function Get-ChangelogMode {
+    <# 'fold': this repo's changelog has readers -- every plugin release is cut from it -- so it keeps the
+       full route (#4213). Stated rather than left to the default, because an unstated 'decide' reads as
+       unasked. #>
+    return 'fold'
+}
+
 # --- The dev-preview seam (dkj-repo-workflow since #3198, #2967; this repo's answer since #2976) ---------------
 
 function Get-DevPreview {

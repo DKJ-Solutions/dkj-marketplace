@@ -762,6 +762,14 @@ $info = Get-BranchInfo -Branch $branch
 # this is workflow machinery that travels with the script, not a repo answer -- the repo's answer is the
 # optional Get-ChangelogPath in its own repo-config.ps1, which is already loaded.
 . (Join-Path $PSScriptRoot '..\lib\seam-lib.ps1')
+# THE CHANGELOG MODE (issue #4213). Under Get-ChangelogMode 'none' the branch document is the session's
+# plan and this PR's body, never a changelog entry: the entry-content gates below stand down, and the
+# document is never committed (new-branch named it in .git/info/exclude).
+. (Join-Path $PSScriptRoot '..\lib\changelog-mode-lib.ps1')
+$changelogModeNone = Test-ChangelogModeNone
+if ($changelogModeNone) {
+    Write-Host "open-pr: $(Get-ChangelogModeNoneNote) The entry gates stand down; the document still names and describes this PR." -ForegroundColor DarkGray
+}
 
 # THE CLOSE-OUT RECEIPT SHAPE (issue #1884), printed as this run's last line -- see closeout-lib.ps1
 # for why step 6 of the ritual got a mechanism after losing four times in prose. Guarded on
@@ -1043,7 +1051,11 @@ Nothing was pushed and no PR was opened.
 # commit's bookkeeping subject, --reverse puts the oldest first, and the trunk is subtracted so a fresh
 # branch does not name itself after the trunk's last commit. A git that cannot answer leaves the words
 # empty and the refusal below carries the reason, which is the same tolerance every other read here has.
-if (-not $prTitle -and -not $existingPr -and (Get-BranchEntryExemptPrefix -Branch $branch)) {
+#
+# AND UNDER Get-ChangelogMode 'none' (issue #4213) EVERY BRANCH OWES NO ENTRY, so the same fallback applies:
+# the document is untracked and lives in the one working tree new-branch wrote it in, so a second worktree
+# of the branch has none, and the title must come from -Title or the branch's own first commit.
+if (-not $prTitle -and -not $existingPr -and ($changelogModeNone -or (Get-BranchEntryExemptPrefix -Branch $branch))) {
     # Get-BranchTrunkName rather than a fourth copy of the seam probe: entry-scaffold-lib is loaded
     # above and already owns this answer, which is the whole reason it stopped being written inline.
     $trunkName = Get-BranchTrunkName
@@ -1093,7 +1105,7 @@ if ($Title) {
     if ($existingPr) {
         Write-Warning "-Title is ignored since #506, and this branch already has a PR, which keeps its own title either way. Retitle with 'gh pr edit'."
     } elseif ($prTitleFromExemptBranch) {
-        Write-Host "-Title honoured: this branch's prefix owes no changelog entry, so there is no entry title for it to contradict (#1962). This PR will be called '$prTitle'." -ForegroundColor DarkGray
+        Write-Host "-Title honoured: this branch owes no changelog entry (its prefix, or Get-ChangelogMode 'none'), so there is no entry title for it to contradict (#1962). This PR will be called '$prTitle'." -ForegroundColor DarkGray
     } else {
         Write-Warning "-Title is ignored since #506 - the PR title comes from the entry's title section. This PR will be called '$prTitle'; edit that section (or 'gh pr edit' afterwards) if that is wrong."
     }
@@ -1579,7 +1591,10 @@ keep it in the gitignored sibling of the file it belongs to, where one exists
 # NOT -SkipLint-able and deliberately its own gate: it costs one read of a file already in hand, needs
 # no gh and no subprocess, and refusing it is a content decision rather than a tooling one. -Force is
 # the escape valve, for the rare entry that legitimately quotes the wording outside a fence.
-if (Test-Path -LiteralPath $entryPath) {
+#
+# NOT UNDER Get-ChangelogMode 'none' (issue #4213): every gate in this block guards what the fold will
+# publish into CHANGELOG.md, and that repo has no fold and no CHANGELOG.md for anything to reach.
+if ((Test-Path -LiteralPath $entryPath) -and -not $changelogModeNone) {
     # ONE READ FOR THE THREE GATES BELOW, for the reason the step-list gate further down gives for its own
     # single read: the entry gate asks whether there is an entry, the scaffold gate whether it has been
     # written and the shape gate whether the document around it still holds its form -- three questions
@@ -2320,9 +2335,17 @@ Two honest ways on, and neither is this flag:
 # the gates just read. The cheap gates all sit above here, so a run this script was going to refuse
 # anyway makes no commit.
 $docRels = @()
-foreach ($cand in @((Resolve-BranchFilePath -Kind Cycle -RepoRoot $repoRoot),
-                    $entryPath.Substring($repoRoot.Length).TrimStart('\', '/'),
-                    $alwaysOnBaselineRel)) {
+# UNDER Get-ChangelogMode 'none' (issue #4213) THE BRANCH DOCUMENT IS NEVER COMMITTED -- it is named in
+# .git/info/exclude, so `git status` would not report it anyway; dropping it here keeps that true where the
+# exclude line could not be written.
+$docCandidates = if ($changelogModeNone) {
+    @($alwaysOnBaselineRel)
+} else {
+    @((Resolve-BranchFilePath -Kind Cycle -RepoRoot $repoRoot),
+      $entryPath.Substring($repoRoot.Length).TrimStart('\', '/'),
+      $alwaysOnBaselineRel)
+}
+foreach ($cand in $docCandidates) {
     # Forward slashes, because these go to git; and only what exists, because Invoke-GitParkCommit's
     # own pathspec filter is the second half of the same rule. $entryPath may still be a legacy root
     # <SafeName>.md on a branch cut before the split, which is why it is asked for by variable rather
@@ -2882,7 +2905,9 @@ if ($existingPr) {
 # only when it has no commit of its own to be named after, so the remedy is a commit or -Title, not an entry.
 if (-not $prTitle) {
     $exemptPrefix = Get-BranchEntryExemptPrefix -Branch $branch
-    if ($exemptPrefix) {
+    if ($changelogModeNone) {
+        Write-Error ("open-pr cannot name this PR -- $(Get-ChangelogModeNoneNote) No branch document here names it, and the branch has no commit of its own off the trunk to be named after.`n`nCommit this branch's work and run again, or pass -Title. Do not write an entry: nothing reads one in this repo.")
+    } elseif ($exemptPrefix) {
         # An exact name from Get-EntryGateExemptBranches comes back as the branch itself (#3011).
         $exemptWhat = if ($exemptPrefix -eq $branch) { 'is an exempt branch name' } else { "carries the exempt prefix '$exemptPrefix'" }
         Write-Error ("open-pr cannot name this PR -- '$branch' $exemptWhat, so it owes no changelog entry, and it has no commit of its own off the trunk to be named after (#1962).`n`nCommit this branch's work and run again, or pass -Title, which IS honoured on an entry-exempt branch. Do not write an entry to satisfy the title: the branch is exempt precisely so that work this repo is mirroring rather than authoring stays out of CHANGELOG.md.")

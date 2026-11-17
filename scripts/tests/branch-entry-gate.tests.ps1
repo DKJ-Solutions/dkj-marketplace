@@ -599,7 +599,8 @@ Assert-True ($openPrSrc -match 'so it owes no changelog entry, and it has no com
     'the nameless-PR refusal has its own wording for an exempt branch, instead of demanding an entry it must not write'
 Assert-True ($openPrSrc -match "prTitleFromExemptBranch") `
     'and the run says which source the title came from, so the two cases are told apart in the output'
-Assert-True ($openPrSrc -match '\$prTitle -and -not \$existingPr -and \(Get-BranchEntryExemptPrefix') `
+# (#4213 widened the same condition to Get-ChangelogMode 'none', where every branch owes no entry.)
+Assert-True ($openPrSrc -match '\$prTitle -and -not \$existingPr -and \(\$changelogModeNone -or \(Get-BranchEntryExemptPrefix') `
     'and only where a PR still has to be named -- a resumed branch keeps its own title, so no git call is spent on one nothing reads'
 Assert-True ($openPrSrc -match '\$trunkName = Get-BranchTrunkName') `
     'the trunk comes from the shared helper rather than a fourth copy of the seam probe'

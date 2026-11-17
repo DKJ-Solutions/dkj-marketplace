@@ -636,7 +636,16 @@ $script:ContractRecords = @(
     @{ Lib = 'scripts\repo-config.ps1';     Function = 'Get-DeclinedAdoptions'; Scripts = @('check-script-contract');
        Adopt = 'decide'; AdoptWhy = "it states which parts of the floor THIS repo has decided against, which is a fact about one tree rather than a way of working. The source repo is the sharpest case for not copying it: all three file-placing adopters refuse there, for a reason no consumer shares -- it arranges its own runners by hand -- so shipping its answer would silence the advisory in every repo the advisory exists for";
        Optional = $true; Default = 'nothing is declined -- every adopt-* command with files missing from the tree is reported, and a repo that meant to skip one answers this seam to say so';
-       Returns = "an array of adopt-* command names this repo has deliberately not run, spelled as Get-AdoptionInventory spells them ('adopt-workflow-folder', 'adopt-ci-floor', 'adopt-statusline') and matched case-insensitively. An unknown name silences nothing and is not an error, so a typo shows up as the advisory still being printed rather than as a failure somewhere else" }
+       Returns = "an array of adopt-* command names this repo has deliberately not run, spelled as Get-AdoptionInventory spells them ('adopt-workflow-folder', 'adopt-ci-floor', 'adopt-statusline') and matched case-insensitively. An unknown name silences nothing and is not an error, so a typo shows up as the advisory still being printed rather than as a failure somewhere else" },
+    # THE LIGHTER ROUTE (issue #4213). Measured on a private consumer over 30 days: 459 of 830 commits (55%)
+    # were 'park:', 'fold:' or 'merge:', in a repo whose changelog nobody reads. 'decide', because whether a
+    # changelog has a reader is a fact about the organisation around a repo. The source STATES 'fold' (an
+    # unstated 'decide' reads as unasked), and its text in the blueprint is guidance only, never copied.
+    @{ Lib = 'scripts\repo-config.ps1';     Function = 'Get-ChangelogMode'; Scripts = @('new-branch', 'park-cycle', 'open-pr', 'ship-pr', 'fold-changelog-entry', 'cut-release', 'check-branch-entry', 'check-unfolded-entry');
+       Adopt = 'decide'; AdoptWhy = "it states whether anybody reads this repo's changelog, which is a fact about the organisation around the repo rather than a way of working. Copying a 'none' would silently drop the changelog, the fold and the release route from a repo that ships to readers, and copying the source's 'fold' would answer a question only the consumer can";
+       ViaLib = 'changelog-mode-lib';
+       Optional = $true; Default = "'fold' -- every branch keeps a document that is parked, gated and folded into CHANGELOG.md, and releases are cut from it";
+       Returns = "'fold' (the default) or 'none'. Under 'none' the repo keeps no changelog: new-branch still writes the branch document but names it in .git/info/exclude and never commits it, so there is no 'park:' commit; park-cycle parks nothing; open-pr's entry gates and the CI branch-entry check stand down, while the document still names and describes the PR; the fold stands down, so nothing lands on the trunk after the merge, and ship-pr removes the local document; check-unfolded-entry stays quiet; cut-release refuses, naming this seam. Any value other than 'none' reads as 'fold'" }
 )
 
 # --- Reachability: is a record's Lib in scope for the script that reads it? (inbound #580) ---------

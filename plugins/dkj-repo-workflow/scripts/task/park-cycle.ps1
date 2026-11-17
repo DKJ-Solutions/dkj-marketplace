@@ -296,6 +296,9 @@ function Write-CycleCollisionReport {
 # gate rather than composed a fourth time (issue #1450 extracted it; #1600 added this caller). What it
 # strips out of somebody else's %an and %s is the whole reason it is one definition -- see its header.
 . (Join-Path $PSScriptRoot '..\lib\remote-ahead-lib.ps1')
+# The changelog mode (issue #4213): under Get-ChangelogMode 'none' the document is never committed, so
+# this hook has nothing to park. A leaf, so the per-turn cost stays where it was.
+. (Join-Path $PSScriptRoot '..\lib\changelog-mode-lib.ps1')
 
 # THE RUN'S NETWORK DEADLINE (#1958), STARTED HERE AND NOT AT THE FIRST NETWORK CALL. What the hook's
 # ceiling bounds is the whole process, not the part of it that touches the network, so the local git
@@ -395,6 +398,13 @@ $trunk = if (Test-FunctionDefined 'Get-BranchTrunkName') {
 
 if ($branch -eq $trunk) {
     Write-CycleParkNote "on the trunk, where the fold removes this document by design."
+    exit 0
+}
+
+# UNDER Get-ChangelogMode 'none' (issue #4213) THE DOCUMENT IS NEVER COMMITTED -- new-branch named it in
+# .git/info/exclude -- so a park would be exactly the 'park:' commit that answer exists to remove.
+if (Test-ChangelogModeNone) {
+    Write-CycleParkNote (Get-ChangelogModeNoneNote)
     exit 0
 }
 

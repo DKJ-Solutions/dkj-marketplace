@@ -242,6 +242,8 @@ Copy-Item -LiteralPath $NewBranchSrc -Destination (Join-Path $fixture 'scripts\t
 Copy-Item -LiteralPath $BranchInfoSrc -Destination (Join-Path $fixture 'scripts\lib\branch-info.ps1') -Force
 Copy-Item -LiteralPath $LibSrc -Destination (Join-Path $fixture 'scripts\lib\entry-scaffold-lib.ps1') -Force
 Copy-Item -LiteralPath $SeamLibSrc -Destination (Join-Path $fixture 'scripts\lib\seam-lib.ps1') -Force
+# The changelog mode (issue #4213): new-branch.ps1 dot-sources it unconditionally.
+Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\changelog-mode-lib.ps1') -Destination (Join-Path $fixture 'scripts\lib\changelog-mode-lib.ps1') -Force
 Copy-Item -LiteralPath $NativeCaptureSrc -Destination (Join-Path $fixture 'scripts\lib\native-capture-lib.ps1') -Force
 Copy-Item -LiteralPath $RunProgressSrc -Destination (Join-Path $fixture 'scripts\lib\run-progress-lib.ps1') -Force
 # command-probe-lib.ps1 is a sibling of a sibling (#1729): the three libs above dot-source it for
