@@ -216,15 +216,15 @@ $expectedTriage = @{
     'prio-3' = @{ Color = 'E0321A'; Description = 'Priority 3 of 4 -- do this before the ordinary backlog' }
     'prio-4' = @{ Color = 'B60205'; Description = 'Priority 4 of 4 (highest) -- takes precedence over other work' }
     'awaiting-recurrences' = @{ Color = '5319E7'; Description = 'Collects every instance of one recurring problem until its root cause is fixed' }
-    'awaiting-decision-dev' = @{ Color = '5319E7'; Description = 'Waiting on the owner''s choice -- parks the issue so no session picks it up' }
+    'awaiting-decision-dev' = @{ Color = '5319E7'; Description = 'Waiting on a developer''s choice: the named decider, else the owner -- no session picks it up' }
     'awaiting-decision-client' = @{ Color = '5319E7'; Description = 'Waiting on the client''s choice -- parks the issue so no session picks it up' }
-    'awaiting-review-dev' = @{ Color = '5319E7'; Description = 'Waiting on the dev''s review by eye -- parks the issue so no session picks it up' }
+    'awaiting-review-dev' = @{ Color = '5319E7'; Description = 'Waiting on a developer''s look: the named decider, else the owner -- no session picks it up' }
     'awaiting-review-client' = @{ Color = '5319E7'; Description = 'Waiting on the client''s review by eye -- parks the issue so no session picks it up' }
     'awaiting-pull' = @{ Color = '5319E7'; Description = 'Waiting on another issue to land through a pull request -- parks the issue so no session picks it up' }
     'awaiting-pull-external' = @{ Color = '5319E7'; Description = 'Waiting on a pull request in another repo -- parks the issue so no session picks it up' }
     'awaiting-release-external' = @{ Color = '5319E7'; Description = 'Waiting on a release of another repo -- parks the issue so no session picks it up' }
     'awaiting-action-external' = @{ Color = '5319E7'; Description = 'Waiting on an external event or date -- parks the issue so no session picks it up' }
-    'awaiting-action-dev' = @{ Color = '5319E7'; Description = 'Waiting on an act only the owner performs -- parks the issue so no session picks it up' }
+    'awaiting-action-dev' = @{ Color = '5319E7'; Description = 'Waiting on a developer''s act: the named decider, else the owner -- no session picks it up' }
     'awaiting-release' = @{ Color = '5319E7'; Description = 'Waiting on the next release -- parks the issue so no session picks it up' }
     'awaiting-recurrences-first' = @{ Color = '5319E7'; Description = 'Waiting on a first reproducible recurrence -- parks the issue so no session picks it up' }
     'awaiting-session-dev' = @{ Color = '5319E7'; Description = 'Workable, but needs a dedicated session -- parks the issue so no sweep picks it up' }

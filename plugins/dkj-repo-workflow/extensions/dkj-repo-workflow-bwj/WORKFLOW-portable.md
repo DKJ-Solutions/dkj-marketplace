@@ -123,6 +123,12 @@ create on a repo it cannot name, and it lets them through with a warning. It doe
 the repair this page asks for. Nor does it judge an inbound issue on the plugin's source repo, which
 carries `feature-inbound` or `bug-inbound` instead.
 
+**What slips past the guard is caught at the next session start** (#4219). `closed-message-sessioncheck`
+lists every open issue on a store repo that carries none, or more than one, of the three, with the
+`gh issue edit` line that repairs it, so the guard's fail-open direction costs a delay rather than a loss.
+Measured in `smartwatchbanden` on November 17, 2026: #1390, #1391 and #1394 were filed with no labels the
+morning after the guard shipped, and nothing caught them afterwards.
+
 **`research` is the third kind, and there is no fourth** (Dave, October 14, 2026,
 [#3006](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3006)). A ticket that only measures,
 tests or gathers what a decision needs builds nothing, so `feature` misnamed it: measured on

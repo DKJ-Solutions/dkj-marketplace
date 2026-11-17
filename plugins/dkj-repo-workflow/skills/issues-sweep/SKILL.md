@@ -77,7 +77,7 @@ disagree you follow it and say so.
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/claim-issue.ps1" -Candidates -SkipLabel awaiting-info-client,awaiting-decision-dev,awaiting-decision-client,awaiting-review-dev,awaiting-review-client,awaiting-pull,awaiting-pull-external,awaiting-action-external,awaiting-action-dev,awaiting-release,awaiting-release-external,awaiting-recurrences-first,awaiting-session-dev,awaiting-recurrences,awaiting-first-recurrence,awaiting-more-recurrences,awaiting-more-info,needs-info,needs-decision,awaiting-decision,awaiting-recurrence,record,dossier,awaiting-owner-act,awaiting-event
 ```
 
-It prints every open issue as `free`, `mine`, `held`, `branch`, `stale-park` or `skipped` with the reason, and names
+It prints every open issue as `free`, `mine`, `held`, `branch`, `stale-park`, `relabel` or `skipped` with the reason, and names
 the lowest free number. `-SkipLabel` is the labels that park an issue with somebody else; `-SkipIssue`
 holds numbers out by hand. The last eleven are former names -- `needs-info` then `awaiting-more-info` became `awaiting-info-client` (#2917, October 12, 2026), `needs-decision` and then `awaiting-decision` became `awaiting-decision-dev`,
 `awaiting-recurrence` then `awaiting-first-recurrence` became `awaiting-recurrences-first`, `dossier` then `record` then `awaiting-more-recurrences` became
@@ -141,6 +141,14 @@ published a release since. `awaiting-release-external` clears once the `owner/re
 published a release after the parking comment was written. What is left after either is this repo's own
 work, so the issue is free.
 
+**Between the two, an `awaiting-pull-external` issue reads as `relabel`**
+([#4226](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4226)): every `owner/repo#n` it names has
+landed, and no release has followed yet, so it waits on a release now. Move it with the line the run prints,
+`claim-issue.ps1 <n> -Tag -Park awaiting-release-external -Reason "<owner/repo>'s next release"`, which lifts
+the old label in the same edit and posts the dated parking comment. **Never swap the label by hand**: measured
+November 17, 2026, a hand swap left a park dated by nothing, and `awaiting-release-external` is read only
+from a dated parking comment, so that park would never have cleared.
+
 **The two decision waits can read as `stale-park` too**
 ([#4186](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4186)). `awaiting-decision-dev` and
 `awaiting-decision-client` clear once a comment opening `Decision (` follows the last parking comment, written by
@@ -175,6 +183,13 @@ and before `-Park` it took no claim at all
 sweeps on one repo within three minutes parked the same issues, up to three comments each, and the
 verdicts differed in substance. A lost race now refuses with exit 1 and writes nothing. **Never park with
 a bare `gh issue edit` and `gh issue comment`**, because that pair is the race this closes.
+
+**A `-dev` wait on a developer who is not the owner names them with `-Decider <login>`** (#4208). The
+parking comment then ends `Decider: @<login>.`, `-Candidates` prints it beside the label, and
+`issues-sweep-decisions` and `issues-sweep-reviews` put the issue only to that account. It is accepted on
+`awaiting-decision-dev`, `awaiting-review-dev`, `awaiting-action-dev` and `awaiting-session-dev`. The
+assignee is not the carrier, because the claim writes it and the release removes it. Without `-Decider`
+the owner decides, as before.
 
 **And a verdict that settles an issue is building work, so it starts at step 2.** Evaluating an issue and
 closing it on that evaluation is not triage: claim it first. The same measurement had a sweep post an

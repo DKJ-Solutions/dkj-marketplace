@@ -125,6 +125,10 @@ parameters is the [`issues-sweep`](../issues-sweep/SKILL.md) skill; what they do
   directly. `<label>` must be an `awaiting-*` label in the skip list the sweeps read, and `<text>` is a short
   clause in your own words, never pasted tracker text. A lost race, and an issue that another session parked
   meanwhile, both refuse with exit 1 and write nothing. `issues-sweep` step 1 parks this way.
+  **`-Decider <login>`** (only with an `awaiting-*-dev` label) names the developer the issue waits on, when
+  that is not the owner ([#4208](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4208)). The
+  comment then ends `Decider: @<login>.`, `-Candidates` prints it beside the label, and the owner sweeps put
+  the issue only to that account. A value that is not a GitHub login is refused before anything is read.
   **A plain `-Tag` claim on an issue that is already parked refuses too**, where the assignee route only
   warns (#2518). A sweep claims only a free issue, so a stale label is lifted first.
 - **`DKJ_OWN_ACCOUNTS`** (environment variable, not a parameter) -- a comma list of the **other accounts

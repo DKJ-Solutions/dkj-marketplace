@@ -51,6 +51,15 @@
          build-backlog-page already lists these, but only when somebody runs it. An issue whose body
          names an Asana task in any form Resolve-AsanaTaskRef reads (one task or several) has a card and
          is left out. Read from finding 5's open-issue list, so it costs no gh call of its own.
+      7. every OPEN issue carries exactly one of the kind labels 'bug', 'feature' or 'research' (#4219).
+         guard-kind-label (#4197) holds the rule at creation, but it fails open by design (a label built at
+         run time, a template, an editor) and a checkout that has not updated carries no guard at all, so
+         a kind-less issue that slipped past it was never caught afterwards. Measured in smartwatchbanden,
+         November 17, 2026: #1390, #1391 and #1394 were filed with no labels the morning after the guard
+         shipped, and their timelines show none added since. This turns the guard's fail-open direction
+         into a delay rather than a loss. The kinds and the repos are kind-label-rules.ps1's, the
+         definitions the guard itself runs, and an issue read without a labels field is left out, as in
+         finding 6. Read from the same open-issue list, so it costs no gh call either.
     Anywhere else it is silent: dkj-marketplace runs the ticket chapter without either workflow.
 
     IT READS THE TREE AFTER THE TRUNK SYNC, NOT BESIDE IT (inbound #4041, November 13, 2026). This hook is
@@ -235,6 +244,41 @@ function Get-OpenAfterMergeFindings {
     return @($found.Values | Sort-Object Issue)
 }
 
+function Get-IssueLabelNames {
+    <# An issue's label names, trimmed; $null when the issue was read without a labels field (#4053, #4219). #>
+    param($Issue)
+    $prop = $Issue.PSObject.Properties['labels']
+    if (-not $prop -or $null -eq $prop.Value) { return $null }
+    return , @(@($prop.Value) | ForEach-Object { if ($_ -is [string]) { $_ } elseif ($_) { [string]$_.name } } |
+        Where-Object { $_ } | ForEach-Object { $_.Trim() })
+}
+
+function Format-IssueNumbers {
+    <# '#a, #b' for the first fifteen numbers, and ' and N more' for the rest. #>
+    param([int[]]$Numbers)
+    $shown = @($Numbers | Select-Object -First 15 | ForEach-Object { "#$_" })
+    $more = if ($Numbers.Count -gt $shown.Count) { " and $($Numbers.Count - $shown.Count) more" } else { '' }
+    return "$($shown -join ', ')$more"
+}
+
+function Get-KindLabelFindings {
+    <#
+        Pure (#4219): the open issues carrying none of -Kinds (None) and more than one (Several), each as
+        ascending numbers, the labels matched case-insensitively. An issue read without a labels field is
+        never a finding: its labels are unknown, not absent.
+    #>
+    param($Issues, [string[]]$Kinds)
+    $none = @(); $several = @()
+    foreach ($i in @($Issues)) {
+        if (-not $i) { continue }
+        $names = Get-IssueLabelNames -Issue $i
+        if ($null -eq $names) { continue }
+        $count = @($Kinds | Where-Object { $k = $_; @($names | Where-Object { $_ -ieq $k }).Count }).Count
+        if ($count -eq 0) { $none += [int]$i.number } elseif ($count -gt 1) { $several += [int]$i.number }
+    }
+    return [pscustomobject]@{ None = @($none | Sort-Object); Several = @($several | Sort-Object) }
+}
+
 function Get-ReachWithoutCardFindings {
     <#
         Pure (#4053): the numbers of the open issues that carry -ReachLabel and name no Asana task at all,
@@ -244,10 +288,9 @@ function Get-ReachWithoutCardFindings {
     $found = @()
     foreach ($i in @($Issues)) {
         if (-not $i) { continue }
-        $prop = $i.PSObject.Properties['labels']
-        if (-not $prop -or $null -eq $prop.Value) { continue }
-        $names = @(@($prop.Value) | ForEach-Object { if ($_ -is [string]) { $_ } elseif ($_) { [string]$_.name } })
-        if (-not (@($names | Where-Object { $_ -and $_.Trim() -ieq $ReachLabel }).Count)) { continue }
+        $names = Get-IssueLabelNames -Issue $i
+        if ($null -eq $names) { continue }
+        if (-not (@($names | Where-Object { $_ -ieq $ReachLabel }).Count)) { continue }
         if ((Resolve-AsanaTaskRef -IssueBody ([string]$i.body)).Source -ne 'none') { continue }
         $found += [int]$i.number
     }
@@ -362,12 +405,27 @@ try {
         if (-not $reach.ReadFailed) {
             $bare = @(Get-ReachWithoutCardFindings -Issues $pullData.issues -ReachLabel $reach.Label)
             if ($bare.Count -gt 0) {
-                $shown = @($bare | Select-Object -First 15 | ForEach-Object { "#$_" })
-                $more = if ($bare.Count -gt $shown.Count) { " and $($bare.Count - $shown.Count) more" } else { '' }
                 Write-Host ("[ERROR] dkj-repo-workflow-bwj: $slug has $($bare.Count) open issue(s) carrying the reach label " +
-                    "'$($reach.Label)' with no Asana task linked: $($shown -join ', ')$more. The label means a colleague " +
+                    "'$($reach.Label)' with no Asana task linked: $(Format-IssueNumbers $bare). The label means a colleague " +
                     "follows the issue on the board, and none of these has a card there. Run the 'report-issue' skill's " +
                     "steps 2-3 for each, or take the label off where it was wrong.")
+            }
+        }
+
+        # FINDING 7 (#4219): the kind label, after the fact. Its kinds and repos are guard-kind-label's own.
+        . (Join-Path $PSScriptRoot '..\scripts\lib\kind-label-rules.ps1')
+        if ($script:KindLabelRepos -contains $name) {
+            $kinds = Get-KindLabelFindings -Issues $pullData.issues -Kinds $script:KindLabels
+            $kindList = "'" + ($script:KindLabels -join "', '") + "'"
+            if ($kinds.None.Count -gt 0) {
+                Write-Host ("[ERROR] dkj-repo-workflow-bwj: $slug has $($kinds.None.Count) open issue(s) carrying none of the " +
+                    "kind labels $($kindList): $(Format-IssueNumbers $kinds.None). Every issue carries exactly one; " +
+                    "add it with 'gh issue edit <n> --add-label <kind>'.")
+            }
+            if ($kinds.Several.Count -gt 0) {
+                Write-Host ("[ERROR] dkj-repo-workflow-bwj: $slug has $($kinds.Several.Count) open issue(s) carrying more than " +
+                    "one of the kind labels $($kindList): $(Format-IssueNumbers $kinds.Several). Every issue carries " +
+                    "exactly one; take the others off with 'gh issue edit <n> --remove-label <kind>'.")
             }
         }
     }

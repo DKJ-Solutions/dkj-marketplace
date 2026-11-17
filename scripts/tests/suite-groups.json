@@ -164,6 +164,7 @@
                                       "closeout-gate.tests.ps1",
                                       "closeout-lib.tests.ps1",
                                       "command-guard-lib.tests.ps1",
+                                      "companion-plugin-sessioncheck.tests.ps1",
                                       "consumer-sessioncheck.tests.ps1",
                                       "consumer-prose-gate.tests.ps1",
                                       "cycle-autopark.tests.ps1",
@@ -181,7 +182,7 @@
                        "tips":  [
                                     "A session runs the installed plugin copy, not this tree, so a hook change reaches a session here only after a release."
                                 ],
-                       "split":  "the SessionStart checks (claude-home, consumer, consumer-prose, git-identity, release-freshness) and the trunk-sync prep step; the tool-use guards (command-guard-lib, guard-working-copy, background-run-lib, hook-fail-closed); the Stop hooks and the close-out (cycle-autopark, closeout-gate, closeout-lib); and the hook plumbing (hook-check-lib, hook-stdin-guard, session-cache-lib, sessioncheck-dispatch)."
+                       "split":  "the SessionStart checks (claude-home, companion-plugin, consumer, consumer-prose, git-identity, release-freshness) and the trunk-sync prep step; the tool-use guards (command-guard-lib, guard-working-copy, background-run-lib, hook-fail-closed); the Stop hooks and the close-out (cycle-autopark, closeout-gate, closeout-lib); and the hook plumbing (hook-check-lib, hook-stdin-guard, session-cache-lib, sessioncheck-dispatch)."
                    },
                    {
                        "key":  "adopt",
@@ -269,6 +270,7 @@
                                       "bwj-page-publish.tests.ps1",
                                       "bwj-test-lib.tests.ps1",
                                       "closed-message-sessioncheck.tests.ps1",
+                                      "filed-with-stamp.tests.ps1",
                                       "guard-asana-mirror.tests.ps1",
                                       "guard-kind-label.tests.ps1",
                                       "guard-reach-reason.tests.ps1",

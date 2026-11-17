@@ -89,7 +89,7 @@ function Get-SharedScriptPairs {
         @{
             Name   = 'check-roster-sync'
             Source = 'scripts\sync\check-roster-sync.ps1'
-            Plugin = 'dkj-subagents-alpha'
+            Plugin = 'dkj-subagents-developers'
             Skill  = 'sync-roster'
             # All three exist so the test suite can point the check at a fixture instead of the real
             # machine. A consumer never types them, and documenting them would invite someone to.
@@ -631,7 +631,7 @@ function Get-SharedScriptPairs {
             # THE REPARSE-POINT GUARD (#2533), checked before every write into a file a consumer already
             # has. A leaf with no dependencies, mirrored into each plugin that carries such a writer:
             # dkj-repo-workflow (adopt-workflow-folder, claude-md-import-lib), dkj-repo-workflow-bwj
-            # (claude-md-import-lib-bwj) and dkj-subagents-alpha (specialists-init's bootstrap.ps1).
+            # (claude-md-import-lib-bwj) and dkj-subagents-developers (specialists-init's bootstrap.ps1).
             Name    = 'write-target-lib'
             Source  = 'scripts\lib\write-target-lib.ps1'
             Plugin  = 'dkj-repo-workflow'
@@ -646,14 +646,14 @@ function Get-SharedScriptPairs {
         @{
             Name    = 'write-target-lib-alpha'
             Source  = 'scripts\lib\write-target-lib.ps1'
-            Plugin  = 'dkj-subagents-alpha'
+            Plugin  = 'dkj-subagents-developers'
             LibOnly = $true
         },
         @{
             # THE ONE FENCE TRACKER (#2536), Get-NextFenceState. A leaf with no dependencies, mirrored
             # into each plugin that carries a reader of it: dkj-repo-workflow (measure-context-lib, pr-body-lib,
             # pr-issues-lib, entry-scaffold-lib), dkj-repo-workflow-bwj (measure-context-lib-bwj) and
-            # dkj-subagents-alpha (check-roster-sync).
+            # dkj-subagents-developers (check-roster-sync).
             Name    = 'fence-lib'
             Source  = 'scripts\lib\fence-lib.ps1'
             Plugin  = 'dkj-repo-workflow'
@@ -668,7 +668,7 @@ function Get-SharedScriptPairs {
         @{
             Name    = 'fence-lib-alpha'
             Source  = 'scripts\lib\fence-lib.ps1'
-            Plugin  = 'dkj-subagents-alpha'
+            Plugin  = 'dkj-subagents-developers'
             LibOnly = $true
         },
         @{
@@ -693,7 +693,7 @@ function Get-SharedScriptPairs {
             # are the reason the other two readers guard instead (their own comments say which and why).
             Name    = 'repo-root-lib'
             Source  = 'scripts\lib\repo-root-lib.ps1'
-            Plugin  = 'dkj-subagents-alpha'
+            Plugin  = 'dkj-subagents-developers'
             LibOnly = $true
         },
         @{
@@ -711,7 +711,7 @@ function Get-SharedScriptPairs {
         @{
             Name    = 'check-report-lib'
             Source  = 'scripts\lib\check-report-lib.ps1'
-            Plugin  = 'dkj-subagents-alpha'
+            Plugin  = 'dkj-subagents-developers'
             LibOnly = $true
         },
         @{
@@ -919,7 +919,7 @@ function Get-SharedScriptPairs {
             # dkj-repo-workflow's cache would be a dependency a version mismatch breaks silently.
             Name    = 'hook-check-lib-alpha'
             Source  = 'scripts\lib\hook-check-lib.ps1'
-            Plugin  = 'dkj-subagents-alpha'
+            Plugin  = 'dkj-subagents-developers'
             LibOnly = $true
         },
         @{
@@ -1308,7 +1308,7 @@ function Get-SharedScriptPairs {
             # already does for the same caller.
             Name    = 'command-probe-lib-alpha'
             Source  = 'scripts\lib\command-probe-lib.ps1'
-            Plugin  = 'dkj-subagents-alpha'
+            Plugin  = 'dkj-subagents-developers'
             LibOnly = $true
         },
         @{
@@ -1874,7 +1874,7 @@ function Get-SharedScriptPairs {
             # a standing [ERROR] and a guard with a known hole in it.
             #
             # IT TRAVELS IN dkj-subagents-shopify RATHER THAN IN THE CORE TEAM, and that is the same call issue
-            # #776 argued from both directions: specialists-init is dkj-subagents-alpha's skill, so teaching it the
+            # #776 argued from both directions: specialists-init is dkj-subagents-developers' skill, so teaching it the
             # two Shopify seam functions would give the core team knowledge of an add-on it must not
             # depend on. The plugin that owns the guard owns the answer to the guard.
             Name   = 'adopt-shopify-floor'

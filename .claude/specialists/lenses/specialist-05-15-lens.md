@@ -5,7 +5,7 @@ group: 05
 
 # Sylvester ⚙️ · claude-code-specialists addendum
 
-> Repo-lens (claude-code-specialists) accompanying the portable playbook in the `dkj-subagents-alpha` plugin (`plugins/dkj-subagents/dkj-subagents-alpha/manuals/specialist-05-15-manual.md`). This file does not describe the craft, but what Sylvester does in this repo.
+> Repo-lens (claude-code-specialists) accompanying the portable playbook in the `dkj-subagents-alpha` plugin (`plugins/dkj-subagents/dkj-subagents-developers/manuals/specialist-05-15-manual.md`). This file does not describe the craft, but what Sylvester does in this repo.
 
 A system administrator does the same thing everywhere — manage the harness and the tooling the team
 works in: scripts, config, the safety guards. **What is repo-specific in claude-code-specialists is not
@@ -331,7 +331,7 @@ infrastructure.
     `Recorded`, `Where` and `Why`.
   - **It cannot cover the session about to cause the drift** (`allow_auto_merge` was enabled live against a
     record declaring `false`, #2265). So: read the declaration before proposing a GitHub-side setting change
-    (hard rule in [Sylvester's manual](../../../plugins/dkj-subagents/dkj-subagents-alpha/manuals/specialist-05-15-manual.md#sylvesters-hard-rules),
+    (hard rule in [Sylvester's manual](../../../plugins/dkj-subagents/dkj-subagents-developers/manuals/specialist-05-15-manual.md#sylvesters-hard-rules),
     #1843), and `ship-pr.ps1`'s CI-wait invitation is *derived* from `Get-ExpectedRepoSettings`, never
     asserted, so a consumer declaring nothing gets no line.
 
@@ -589,7 +589,7 @@ infrastructure.
 The **`simplify`** skill applies quality fixes (reuse, simplification, efficiency), and applying is the
 **author's** act, never the reviewer's: [Victor #19](specialist-06-19-lens.md) may report those findings
 and may not apply them, which is why the portable layer gives the skill to
-[Cody #13](../../../plugins/dkj-subagents/dkj-subagents-alpha/manuals/specialist-04-13-manual.md). Here
+[Cody #13](../../../plugins/dkj-subagents/dkj-subagents-developers/manuals/specialist-04-13-manual.md). Here
 the code is `scripts/**` and **those are Sylvester's**, so he runs the tidy pass over what he changed
 before the diff goes to review, and never over somebody else's change.
 
@@ -660,7 +660,7 @@ this repo's:
 **One rule per line, with the issue or PR that measured it — the narrative lives there, not here**
 ([#3208](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3208)). The generic PowerShell
 traps that already ship are in
-[the portable manual's trap list](../../../plugins/dkj-subagents/dkj-subagents-alpha/manuals/specialist-05-15-manual.md#fourteen-powershell-traps-that-produce-well-formed-wrong-output)
+[the portable manual's trap list](../../../plugins/dkj-subagents/dkj-subagents-developers/manuals/specialist-05-15-manual.md#fourteen-powershell-traps-that-produce-well-formed-wrong-output)
 and are only pointed at below.
 
 #### Editing files
@@ -677,7 +677,7 @@ and are only pointed at below.
   and read `git status` before staging** — the CLI's settings writer strips the blank lines that group
   `permissions.allow` ([#1774](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1774)). The rule,
   and why it has no gate, is in
-  [the manual's hard rules](../../../plugins/dkj-subagents/dkj-subagents-alpha/manuals/specialist-05-15-manual.md#sylvesters-hard-rules);
+  [the manual's hard rules](../../../plugins/dkj-subagents/dkj-subagents-developers/manuals/specialist-05-15-manual.md#sylvesters-hard-rules);
   it bites here often because this repo administers its own plugins.
 - **Run `claude plugin marketplace remove` from a throwaway directory**, never from a repo whose
   `.claude/settings.json` you want to keep: it empties that directory's `enabledPlugins` and

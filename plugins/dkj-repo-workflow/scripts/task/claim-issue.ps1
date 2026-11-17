@@ -133,6 +133,14 @@
     the blocker as #<n> or a branch first, since that clause is what -Candidates' stale-park reading parses;
     awaiting-pull-external names owner/repo#<n>, and awaiting-release-external owner/repo. A reason whose
     clause names none of those is refused before anything is read (#3962), by the same parser.
+    A -Park awaiting-release-external on an issue whose one parking label is awaiting-pull-external is a MOVE
+    rather than a park on top of a park: the same edit lifts the old label (#4226).
+
+.PARAMETER Decider
+    With -Park and an awaiting-*-dev label: the GitHub login of the developer the issue waits on, when that
+    is not the repo's named owner (issue #4208). The parking comment then ends "Decider: @<login>.", the
+    owner sweeps put the issue only to that account, and -Candidates prints it beside the label. The
+    assignee is left alone: the sweep claim writes and removes it. Without -Decider the owner decides, as before.
 
 .PARAMETER ReleaseAll
     With -Tag, and no issue number: release EVERY open issue this tag holds -- its own marker comments
@@ -151,6 +159,8 @@
     skipped with the reason, or 'stale-park' for an awaiting-pull issue whose blocker has landed (#3136),
     or for an awaiting-pull-external / awaiting-release-external issue whose upstream release is out (#3572),
     or for an awaiting-decision-dev / awaiting-decision-client issue with a 'Decision (' comment after its park (#4186).
+    'relabel' is an awaiting-pull-external issue whose upstream has merged but not yet been released: it waits on
+    a release now, and the line it prints moves it with -Park awaiting-release-external (#4226).
     A plan-goal tree reads as skipped except each goal's Now task (#3961). Takes no issue number and WRITES NOTHING: choosing is a separate step from
     claiming, because between the two a session may still find the issue is not this repo's work.
 
@@ -217,6 +227,7 @@ param(
     [Parameter(ParameterSetName = 'Issue')][switch]$Parked,
     [Parameter(ParameterSetName = 'Issue')][string]$Park = '',
     [Parameter(ParameterSetName = 'Issue')][string]$Reason = '',
+    [Parameter(ParameterSetName = 'Issue')][string]$Decider = '',
     [Parameter(Mandatory = $true, ParameterSetName = 'Candidates')][switch]$Candidates,
     [Parameter(ParameterSetName = 'Candidates')]
     [Parameter(ParameterSetName = 'Issue')][string[]]$SkipLabel = @(),
@@ -372,7 +383,14 @@ if (-not $Candidates -and -not $ReleaseAll) {
     }
     # -Park IS A CLAIM THAT ENDS IN A LABEL (issue #3907), so it takes the claim's own tag and nothing that
     # reads or moves another claim. Refused before anything is read, like the two checks above.
-    if ($Park -or $Reason) {
+    if ($Park -or $Reason -or $Decider) {
+        # A DECIDER IS A DEVELOPER (#4208): it names whose answer a -dev park waits on, so it rides only on
+        # such a park, and it is posted on the tracker, so it is a login and nothing else.
+        if ($Decider -and (-not $Park -or $Park -notlike 'awaiting-*-dev' -or -not (Test-DeciderLogin -Login $Decider))) {
+            Write-Host '[ERROR] -Decider takes a GitHub login, and only with -Park and an awaiting-*-dev label -- nothing was read or written.' -ForegroundColor Red
+            Write-Host '        claim-issue.ps1 <n> -Tag -Park awaiting-decision-dev -Decider <login> -Reason "<login>''s choice of X"' -ForegroundColor Red
+            exit 1
+        }
         if (-not $Tag -or $Verify -or $Release -or $TakeOver) {
             Write-Host '[ERROR] -Park needs -Tag, and cannot be combined with -Verify, -Release or -TakeOver -- nothing was read or written.' -ForegroundColor Red
             Write-Host '        It parks a free issue under a claim of this tag, so the claim''s read-back settles a race between sweeps.' -ForegroundColor Red
@@ -422,12 +440,16 @@ function Invoke-ClaimPark {
         return $true
     }
     $already = @(Select-ParkingLabels -Labels $LabelsNow -SkipLabel $SkipLabel)
-    if ($already.Count -gt 0) {
+    # A MOVE (#4226): awaiting-pull-external -> awaiting-release-external lifts the old label in the same edit.
+    $moveFrom = Get-ParkMoveFrom -Park $Park -ParkingLabels $already
+    if ($already.Count -gt 0 -and -not $moveFrom) {
         Write-Host "[REFUSED] #$number is already parked as '$(Format-ForConsole -Text $already[0])' -- nothing was parked; this tag's claim is released." -ForegroundColor Red
         [void](& $release)
         exit 1
     }
-    $labelEdit = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'edit', $number) + $repoArgs + @('--add-label', $Park)) -Utf8 `
+    $editArgs = @('--add-label', $Park)
+    if ($moveFrom) { $editArgs += @('--remove-label', $moveFrom) }
+    $labelEdit = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'edit', $number) + $repoArgs + $editArgs) -Utf8 `
                                       -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
     if (-not $labelEdit -or -not (Test-NativeExitMeasured -Capture $labelEdit) -or $labelEdit.ExitCode -ne 0) {
         Write-Host "[ERROR] the label '$Park' did not land on #$number, so it is NOT parked; this tag's claim is released." -ForegroundColor Red
@@ -436,7 +458,7 @@ function Invoke-ClaimPark {
         [void](& $release)
         exit 1
     }
-    $parkBody = Format-ParkComment -Reason $Reason
+    $parkBody = Format-ParkComment -Reason $Reason -Decider $Decider
     $parkNote = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'comment', $number) + $repoArgs + @('--body', $parkBody)) -Utf8 `
                                      -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
     $noteLanded = ($parkNote -and (Test-NativeExitMeasured -Capture $parkNote) -and $parkNote.ExitCode -eq 0)
@@ -448,7 +470,8 @@ function Invoke-ClaimPark {
         exit 1
     }
     if (-not $released) { exit 1 }
-    Write-Host "[OK] #$number parked by $($claimTag.Tag) as '$Park'$RivalNote, and the claim released." -ForegroundColor Green
+    $movedNote = if ($moveFrom) { " (moved from '$moveFrom')" } else { '' }
+    Write-Host "[OK] #$number parked by $($claimTag.Tag) as '$Park'$movedNote$RivalNote, and the claim released." -ForegroundColor Green
     Write-Host "     $(Format-ForConsole -Text $parkBody)"
     Write-Host '     Back to step 1: the next free number.'
     Write-Host "     $($facts.url)"
@@ -856,15 +879,22 @@ if ($Candidates) {
                 # Landed upstream, then a release of that repo published after the landing. The release is
                 # asked about only once the blocker has landed. A local #<n> or branch named beside it is
                 # read by neither half here, so it keeps the issue skipped rather than clearing unread.
+                $unlanded = @($refs.External | Where-Object { (& $isLanded 'issue' $_) -isnot [string] })
                 $pending = @($refs.External | Where-Object {
                     $at = & $isLanded 'issue' $_
                     if ($at -isnot [string]) { return $true }
                     $rel = & $isLanded 'release' ($_ -replace '#\d+$', '')
                     -not ($rel -and (Test-PublishedSince -Published $rel.Published -Since $at))
                 })
-                if ($pending.Count -eq 0 -and $refs.Issues.Count -eq 0 -and $refs.Branches.Count -eq 0) {
-                    $c.Verdict = 'stale-park'
-                    $c.Reason = "label 'awaiting-pull-external', but what it waits on has merged and been released upstream: $($refs.External -join ', ')"
+                if ($refs.Issues.Count -eq 0 -and $refs.Branches.Count -eq 0) {
+                    if ($pending.Count -eq 0) {
+                        $c.Verdict = 'stale-park'
+                        $c.Reason = "label 'awaiting-pull-external', but what it waits on has merged and been released upstream: $($refs.External -join ', ')"
+                    } elseif ($unlanded.Count -eq 0) {
+                        # MERGED, NOT YET RELEASED (#4226): the wait is a release now, and the label says otherwise.
+                        $c.Verdict = 'relabel'
+                        $c.Reason = "label 'awaiting-pull-external', but what it waits on has merged upstream and waits on a release now: $(@($refs.External | ForEach-Object { $_ -replace '#\d+$', '' } | Select-Object -Unique) -join ', ')"
+                    }
                 }
                 continue
             }
@@ -936,6 +966,7 @@ if ($Candidates) {
             'held'    { 'DarkGray' }
             'branch'  { 'Yellow' }
             'stale-park' { 'Yellow' }
+            'relabel' { 'Yellow' }
             default   { 'DarkGray' }
         }
         Write-Host $line -ForegroundColor $colour
@@ -964,6 +995,13 @@ if ($Candidates) {
         Write-Host "     #$($s.Number) waits on nothing any more -- unpark it, and it is free:" -ForegroundColor Yellow
         Write-Host "       gh issue edit $($s.Number) --remove-label $sLabel" -ForegroundColor Yellow
         Write-Host "       gh issue comment $($s.Number) --body `"Unparked: what it waited on $sWhat.`"" -ForegroundColor Yellow
+    }
+    foreach ($m in @($sweepList | Where-Object { $_.Verdict -eq 'relabel' })) {
+        # NAMED, NOT MOVED (#4226). One command swaps the label AND posts the dated parking comment the
+        # release-external stale-park reads; a hand swap with gh issue edit leaves a park that never clears.
+        $mRepos = ([regex]::Match($m.Reason, 'waits on a release now: (.+)$')).Groups[1].Value
+        Write-Host "     #$($m.Number) has merged upstream and waits on a release now -- move it, in one step:" -ForegroundColor Yellow
+        Write-Host "       claim-issue.ps1 $($m.Number) -Tag -Park awaiting-release-external -Reason `"$(Format-ForConsole -Text $mRepos)'s next release`"" -ForegroundColor Yellow
     }
     if ($free.Count -gt 0) {
         # THE LOWEST NUMBER, NAMED RATHER THAN TAKEN. Oldest first is the only order six machines agree
@@ -1893,7 +1931,9 @@ switch ($verdict.Code) {
 # sweep before this claim. On November 8, 2026 that printed the PARKED warning and then "[OK] claimed",
 # twice, and both sessions had to release by hand. A label that has gone stale is lifted first, and the
 # claim then runs as usual.
-if ($parked -and $Tag -and -not $TakeOver -and $verdict.Action -eq 'claim') {
+# A -Park that MOVES the issue's one parking label to its successor (#4226) is the exception: Invoke-ClaimPark
+# lifts the old label in the same edit.
+if ($parked -and $Tag -and -not $TakeOver -and $verdict.Action -eq 'claim' -and -not (Get-ParkMoveFrom -Park $Park -ParkingLabels $parkingLabels)) {
     Write-Host "[REFUSED] #$number is already parked -- nothing was claimed$(if ($Park) { ' and nothing was parked' })." -ForegroundColor Red
     Write-Host '          A sweep claims only a free issue, and a parking label means another session judged it' -ForegroundColor Red
     Write-Host '          as waiting after this sweep''s step 1 read it. Take the next free number. If the label is' -ForegroundColor Red

@@ -178,7 +178,7 @@ try {
     Write-Host "check 4 coverage -- a plugin-level document is IN the scan set, and counted once" -ForegroundColor Cyan
     $pluginDocTargets = @(
         @{ Rel = 'plugins\dkj-subagents\dkj-subagents-alpha\README.md';         Label = "a plugin's own README (plugin level, no shape rule matches it)" },
-        @{ Rel = 'plugins\dkj-subagents\dkj-subagents-alpha\scripts\README.md'; Label = 'a README in a plugin subdirectory that no shape rule reaches' }
+        @{ Rel = 'plugins\dkj-subagents\dkj-subagents-developers\scripts\README.md'; Label = 'a README in a plugin subdirectory that no shape rule reaches' }
     )
     # The dedupe witness: an agent def is gathered by the */agents/*.md payload rule AND by the recursive
     # plugins/ glob. One dead link in it must produce exactly one [link] finding. Counted on LINES carrying
@@ -204,7 +204,7 @@ try {
     # Removing them clears exactly those findings, so the assertions above are bound to these files rather
     # than to other noise this near-empty fixture produces.
     foreach ($pd in @($pluginDocTargets.Rel + $dupWitnessRel)) { Remove-Item -LiteralPath (Join-Path $Fixture $pd) -Force }
-    Remove-Item -LiteralPath (Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-alpha\scripts') -Recurse -Force
+    Remove-Item -LiteralPath (Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-developers\scripts') -Recurse -Force
     $b6 = Invoke-Integrity -FixtureRoot $Fixture
     Assert-True (-not ($b6.Out -match [regex]::Escape('.\plugins\dkj-subagents\dkj-subagents-alpha\README.md'))) `
         "plugin-doc scan: removing the plugin README clears its finding -- the report tracked the file, not the fixture"

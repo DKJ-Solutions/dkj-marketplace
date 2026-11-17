@@ -21,7 +21,7 @@
     it creates the target, wherever it points. The directory listing reports the entry itself.
 
     A LEAF WITH NO DEPENDENCIES, mirrored into every plugin that carries one of those writers --
-    dkj-repo-workflow, dkj-repo-workflow-bwj and dkj-subagents-alpha -- because a script may only dot-source a lib
+    dkj-repo-workflow, dkj-repo-workflow-bwj and dkj-subagents-developers -- because a script may only dot-source a lib
     that ships in its own plugin.
 
     Pure ASCII, per this repo's script-layer convention.

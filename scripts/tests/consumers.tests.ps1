@@ -223,8 +223,8 @@ try {
     $base = @('-SkipDrift', '-SkipVersions', '-UserHomeOverride', (Join-Path $Fixture 'no-user-home'))
 
     # --- 1. Happy path: everything present and enabled -> exit 0 -------------------------------------
-    New-FixtureConsumer -ExtensionIds @('06-16', '06-17')
-    $mf = New-FixtureManifest -Extensions @('06-16', '06-17')
+    New-FixtureConsumer -ExtensionIds @('06-29', '06-17')
+    $mf = New-FixtureManifest -Extensions @('06-29', '06-17')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'happy path: exit code 0'
     Assert-Match '\[OK\]\s+plugin is enabled' $r.Out 'happy path: enabled check OK'
@@ -232,17 +232,17 @@ try {
     Assert-NotMatch 'manifest synced at' $r.Out 'happy path: no more manifest-version INFO (register slimming)'
 
     # --- 1b. New layout: lenses on the plugin path -> same happy path -----------------------
-    New-FixtureConsumer -ExtensionIds @('06-16', '06-17') -Layout 'plugins'
-    $mf = New-FixtureManifest -Extensions @('06-16', '06-17')
+    New-FixtureConsumer -ExtensionIds @('06-29', '06-17') -Layout 'plugins'
+    $mf = New-FixtureManifest -Extensions @('06-29', '06-17')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'plugin path: exit code 0'
     Assert-Match 'all 2 registered extensions present' $r.Out 'plugin path: extensions OK'
 
     # --- 1c. Check 1b (#1821), arm 1: origin agrees with the manifest, HTTPS shape -> silent, ordinary
     #      verdicts still print. Covers the first of the two URL shapes the parse regex handles.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     Set-FixtureGitCheckout -OriginUrl 'https://github.com/acme-org/widgets.git'
-    $mf = New-FixtureManifest -Extensions @('06-16') -Repo 'acme-org/widgets'
+    $mf = New-FixtureManifest -Extensions @('06-29') -Repo 'acme-org/widgets'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'origin agrees (https): exit code 0'
     Assert-Match '\[OK\]\s+plugin is enabled' $r.Out 'origin agrees (https): ordinary verdicts still print'
@@ -253,9 +253,9 @@ try {
 
     # --- 1d. Check 1b, arm 1 again: SSH shape, no '.git' suffix -> same silent agreement -------------
     #      Nothing else pins that the parse handles this shape too.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     Set-FixtureGitCheckout -OriginUrl 'git@github.com:acme-org/widgets'
-    $mf = New-FixtureManifest -Extensions @('06-16') -Repo 'acme-org/widgets'
+    $mf = New-FixtureManifest -Extensions @('06-29') -Repo 'acme-org/widgets'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'origin agrees (ssh): exit code 0'
     Assert-Match '\[OK\]\s+plugin is enabled' $r.Out 'origin agrees (ssh): ordinary verdicts still print'
@@ -264,9 +264,9 @@ try {
     # --- 1d2. Check 1b, arm 1 again: the THIRD URL shape, 'ssh://git@github.com/...' -- a valid,
     #      not-rare remote shape the parse used to fall through on unasked (Victor's finding, #1821).
     #      1c/1d already pin the other two; this pins the parse on all three rather than two of three.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     Set-FixtureGitCheckout -OriginUrl 'ssh://git@github.com/acme-org/widgets.git'
-    $mf = New-FixtureManifest -Extensions @('06-16') -Repo 'acme-org/widgets'
+    $mf = New-FixtureManifest -Extensions @('06-29') -Repo 'acme-org/widgets'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'origin agrees (ssh://): exit code 0'
     Assert-Match '\[OK\]\s+plugin is enabled' $r.Out 'origin agrees (ssh://): ordinary verdicts still print'
@@ -280,9 +280,9 @@ try {
     #      is a register printing confident, true-about-the-folder, false-about-the-repo verdicts, and
     #      this is the regression guard that a future edit cannot quietly drop the 'continue' and
     #      still pass -- if it did, the two Assert-NotMatch below would fail.
-    New-FixtureConsumer -ExtensionIds @('06-16') -PluginEnabled $false
+    New-FixtureConsumer -ExtensionIds @('06-29') -PluginEnabled $false
     Set-FixtureGitCheckout -OriginUrl 'https://github.com/other-org/gadgets.git'
-    $mf = New-FixtureManifest -Extensions @('06-16') -Repo 'acme-org/widgets'
+    $mf = New-FixtureManifest -Extensions @('06-29') -Repo 'acme-org/widgets'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'origin mismatch: exit code 1'
     Assert-Match '\[ERROR\]' $r.Out 'origin mismatch: an ERROR is printed'
@@ -300,9 +300,9 @@ try {
     #      for -- and is reproduced here rather than contorted through New-StubWorkshop, because it is
     #      the one case that genuinely needs $ThisRepoSlug to equal the manifest's 'repo', which only
     #      this tree's own repo-config.ps1 can supply.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     Set-FixtureGitCheckout -OriginUrl 'https://github.com/DKJ-Solutions/claude-code-specialists.git'
-    $mf = New-FixtureManifest -Extensions @('06-16') -Repo 'DKJ-Solutions/dkj-marketplace'
+    $mf = New-FixtureManifest -Extensions @('06-29') -Repo 'DKJ-Solutions/dkj-marketplace'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'own rename history: exit code 0 (no false alarm)'
     Assert-Match '\[SKIP\]' $r.Out 'own rename history: a SKIP is printed'
@@ -321,8 +321,8 @@ try {
     #      New-FixtureConsumer's plain folder is never a git work tree, so every scenario ABOVE this
     #      one that never calls Set-FixtureGitCheckout already exercises this arm implicitly -- this
     #      scenario is what pins it explicitly, so it stays true on purpose rather than by accident.
-    New-FixtureConsumer -ExtensionIds @('06-16')
-    $mf = New-FixtureManifest -Extensions @('06-16') -Repo 'acme-org/widgets'
+    New-FixtureConsumer -ExtensionIds @('06-29')
+    $mf = New-FixtureManifest -Extensions @('06-29') -Repo 'acme-org/widgets'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'not a git work tree: exit code unchanged'
     Assert-Match "could not read this checkout's own git identity" $r.Out 'not a git work tree: names why the question could not be asked'
@@ -330,9 +330,9 @@ try {
     Assert-Match 'all 1 registered extensions present' $r.Out 'not a git work tree: extensions check still runs too'
 
     # --- 1h. Check 1b, arm 4 again: IS a work tree, but has no 'origin' remote ----------------------
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     Set-FixtureGitCheckout
-    $mf = New-FixtureManifest -Extensions @('06-16') -Repo 'acme-org/widgets'
+    $mf = New-FixtureManifest -Extensions @('06-29') -Repo 'acme-org/widgets'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'work tree, no origin: exit code unchanged'
     Assert-Match "could not read this checkout's own git identity" $r.Out 'work tree, no origin: same SKIP as no-git-at-all'
@@ -351,8 +351,8 @@ try {
     New-Item -ItemType Directory -Path $NestedFixtureRoot -Force | Out-Null
     Set-FixtureGitCheckout -At $NestedFixtureRoot -OriginUrl 'https://github.com/other-org/gadgets.git'
     $nestedCheckout = Join-Path $NestedFixtureRoot 'sub\consumer'
-    New-FixtureConsumer -ExtensionIds @('06-16') -Root $nestedCheckout
-    $mf = New-FixtureManifest -Extensions @('06-16') -Repo 'acme-org/widgets' -Root $nestedCheckout
+    New-FixtureConsumer -ExtensionIds @('06-29') -Root $nestedCheckout
+    $mf = New-FixtureManifest -Extensions @('06-29') -Repo 'acme-org/widgets' -Root $nestedCheckout
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $nestedCheckout))
     Assert-Equal 0 $r.Code 'nested, non-root, enclosing origin mismatches manifest: exit code 0 (no false alarm)'
     Assert-NotMatch "this checkout's 'origin' is" $r.Out 'nested, non-root, enclosing origin mismatches manifest: no arm-3 ERROR blaming the enclosing repo'
@@ -371,8 +371,8 @@ try {
     New-Item -ItemType Directory -Path $NestedFixtureRoot -Force | Out-Null
     Set-FixtureGitCheckout -At $NestedFixtureRoot -OriginUrl 'https://github.com/acme-org/widgets.git'
     $nestedCheckout = Join-Path $NestedFixtureRoot 'sub\consumer'
-    New-FixtureConsumer -ExtensionIds @('06-16') -Root $nestedCheckout
-    $mf = New-FixtureManifest -Extensions @('06-16') -Repo 'acme-org/widgets' -Root $nestedCheckout
+    New-FixtureConsumer -ExtensionIds @('06-29') -Root $nestedCheckout
+    $mf = New-FixtureManifest -Extensions @('06-29') -Repo 'acme-org/widgets' -Root $nestedCheckout
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $nestedCheckout))
     Assert-Equal 0 $r.Code 'nested, non-root, enclosing origin happens to match manifest: exit code 0'
     Assert-NotMatch "this checkout's 'origin' is" $r.Out 'nested, non-root, enclosing origin happens to match manifest: no arm-3 ERROR'
@@ -385,9 +385,9 @@ try {
     #      either way), but the remedy names the field as not a well-formed slug instead of building a
     #      URL from it. Made precise enough that reintroducing the raw string interpolation would fail
     #      it: the malformed value itself must never appear inside a 'remote set-url' line.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     Set-FixtureGitCheckout -OriginUrl 'https://github.com/acme-org/widgets.git'
-    $mf = New-FixtureManifest -Extensions @('06-16') -Repo 'fixture/consumer/../../etc'
+    $mf = New-FixtureManifest -Extensions @('06-29') -Repo 'fixture/consumer/../../etc'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'malformed manifest repo slug (arm 3): exit code 1'
     Assert-Match '\[ERROR\]' $r.Out 'malformed manifest repo slug (arm 3): the finding still fires'
@@ -397,11 +397,11 @@ try {
     Assert-NotMatch 'remote set-url origin https://github\.com/fixture' $r.Out 'malformed manifest repo slug (arm 3): the raw value is never composed into a remote set-url command'
 
     # --- 2. Registered extension is missing -> exit 1 ----------------------------------------
-    New-FixtureConsumer -ExtensionIds @('06-16')
-    $mf = New-FixtureManifest -Extensions @('06-16', '06-19')
+    New-FixtureConsumer -ExtensionIds @('06-29')
+    $mf = New-FixtureManifest -Extensions @('06-29', '02-09')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'missing extension: exit code 1'
-    Assert-Match '\[ERROR\].*06-19' $r.Out 'missing extension: ERROR names the id'
+    Assert-Match '\[ERROR\].*02-09' $r.Out 'missing extension: ERROR names the id'
     # inbound #203: the finding carries the consumer it is about. The session hook filters this output
     # down to the signal lines and drops the '== consumer: <repo>' headers, so two consumers on the
     # same outdated plugin version used to produce two identical, unattributable [ERROR] lines. This is
@@ -414,8 +414,8 @@ try {
     Assert-Match '\[ERROR\]\s+fixture/consumer / dkj-subagents-alpha@dkj-marketplace:' $r.Out 'missing extension: the ERROR line names the consumer AND the plugin block it belongs to'
 
     # --- 3. Plugin not enabled -> exit 1 --------------------------------------------------------
-    New-FixtureConsumer -ExtensionIds @('06-16') -PluginEnabled $false
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29') -PluginEnabled $false
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'plugin disabled: exit code 1'
     Assert-Match '\[ERROR\].*is NOT' $r.Out 'plugin disabled: ERROR message'
@@ -429,10 +429,10 @@ try {
     #     hooks -- literally true about settings.json, false about the session. The mirror image of the
     #     roster check's false green, from the identical blindness: same cause, opposite direction, so a
     #     reader who cross-referenced the two gates learned to trust neither.
-    New-FixtureConsumer -ExtensionIds @('06-16') -PluginEnabled $false
+    New-FixtureConsumer -ExtensionIds @('06-29') -PluginEnabled $false
     [System.IO.File]::WriteAllText((Join-Path $Fixture '.claude\settings.local.json'),
         '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true } }')
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'local-only enable: exit code 0 (no false alarm)'
     Assert-Match '\[OK\]\s+plugin is enabled in .*settings\.local\.json' $r.Out 'local-only enable: enabled, and the layer that says so is named'
@@ -441,16 +441,16 @@ try {
     # --- 3c. Both layers present, neither enables -> the verdict names BOTH -----------------------
     #     The point of the wording: a reader who disagrees with a "not enabled" finding needs to know
     #     which files were read before going to look for the enable somewhere else.
-    New-FixtureConsumer -ExtensionIds @('06-16') -PluginEnabled $false
+    New-FixtureConsumer -ExtensionIds @('06-29') -PluginEnabled $false
     [System.IO.File]::WriteAllText((Join-Path $Fixture '.claude\settings.local.json'), '{ "enabledPlugins": { } }')
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'both layers, neither enables: exit code 1'
     Assert-Match 'is NOT \(or no longer\) enabled in \.claude/settings\.json and \.claude/settings\.local\.json' $r.Out 'both layers: the ERROR names the whole chain it consulted'
 
     # --- 4. Checkout not present -> SKIP, exit 0 -----------------------------------------------
-    New-FixtureConsumer -ExtensionIds @('06-16')
-    $mf = New-FixtureManifest -Extensions @('06-16') -LocalCheckout 'nonexistent-fixture-path'
+    New-FixtureConsumer -ExtensionIds @('06-29')
+    $mf = New-FixtureManifest -Extensions @('06-29') -LocalCheckout 'nonexistent-fixture-path'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf))
     Assert-Equal 0 $r.Code 'missing checkout: exit code 0'
     Assert-Match '\[SKIP\]' $r.Out 'missing checkout: SKIP message'
@@ -461,8 +461,8 @@ try {
     #     them: that line is the only thing a reader gets, and a skip naming one candidate out of two
     #     reads as "the checkout is absent" when what actually happened is "this machine's layout is
     #     not in the register".
-    New-FixtureConsumer -ExtensionIds @('06-16')
-    $mf = New-FixtureManifest -Extensions @('06-16') -LocalCheckout @('nonexistent-fixture-path', 'also-nonexistent-fixture-path')
+    New-FixtureConsumer -ExtensionIds @('06-29')
+    $mf = New-FixtureManifest -Extensions @('06-29') -LocalCheckout @('nonexistent-fixture-path', 'also-nonexistent-fixture-path')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf))
     Assert-Equal 0 $r.Code 'candidate list, none present: exit code 0'
     Assert-Match '\[SKIP\]' $r.Out 'candidate list, none present: SKIP message'
@@ -473,36 +473,36 @@ try {
     #     The regression #1524 is made of: the first candidate missing must not end the consumer. '.'
     #     is used as the resolving one for the same reason case 6 below uses it -- it is the only path
     #     relative to the repo root that is guaranteed to exist wherever this suite runs.
-    $mf = New-FixtureManifest -Extensions @('06-16') -LocalCheckout @('nonexistent-fixture-path', '.')
+    $mf = New-FixtureManifest -Extensions @('06-29') -LocalCheckout @('nonexistent-fixture-path', '.')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf))
     Assert-NotMatch '\[SKIP\]' $r.Out 'candidate list, later one present: NOT skipped -- the first miss does not end the consumer'
     Assert-Match '== consumer: fixture/consumer' $r.Out 'candidate list, later one present: the consumer is actually checked'
 
     # --- 5. Unregistered extension of this plugin -> INFO, exit 0 ------------------------
-    New-FixtureConsumer -ExtensionIds @('06-16', '06-23')
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29', '06-30')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'unregistered: exit code 0 (INFO, not an error)'
-    Assert-Match "\[INFO\].*'06-23'" $r.Out 'unregistered: INFO names the id (first layer)'
+    Assert-Match "\[INFO\].*'06-30'" $r.Out 'unregistered: INFO names the id (first layer)'
 
     # --- 5b. Same INFO signal from the plugin path --------------------------------------------
-    New-FixtureConsumer -ExtensionIds @('06-16', '06-23') -Layout 'plugins'
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29', '06-30') -Layout 'plugins'
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'unregistered on plugin path: exit code 0'
-    Assert-Match "\[INFO\].*'06-23'" $r.Out 'unregistered on plugin path: INFO names the id'
+    Assert-Match "\[INFO\].*'06-30'" $r.Out 'unregistered on plugin path: INFO names the id'
 
     # --- 5d. Inventory drift in the session's OWN register -> non-counting [INVENTORY] --------------
     #     Found 2026-07-29: a deliberate run turned up eleven of these at once, six in the workshop's
     #     own entry (the lenses landed with PR #212, the inventory was never updated alongside). The
     #     finding is an [INFO], the hook shows only [ERROR], so nothing had surfaced it. -OnlyConsumer
     #     marks the fixture as the repo this run is "in", which is the case a reader can act on.
-    New-FixtureConsumer -ExtensionIds @('06-16', '06-23')
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29', '06-30')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture, '-OnlyConsumer', $Fixture))
     Assert-Match '\[INVENTORY\]' $r.Out 'own inventory drift: a non-counting [INVENTORY] marker is emitted for the hook'
-    Assert-Match "\[INVENTORY\].*06-23" $r.Out 'own inventory drift: the marker names the missing id'
-    Assert-Match "\[INFO\].*'06-23'" $r.Out 'own inventory drift: the [INFO] stays for the count and the deliberate run'
+    Assert-Match "\[INVENTORY\].*06-30" $r.Out 'own inventory drift: the marker names the missing id'
+    Assert-Match "\[INFO\].*'06-30'" $r.Out 'own inventory drift: the [INFO] stays for the count and the deliberate run'
     Assert-Match '1 info signal' $r.Out 'own inventory drift: [INVENTORY] is non-counting (still exactly 1 info signal)'
     Assert-Equal 0 $r.Code 'own inventory drift: exit 0 -- a behind-reality register is not a failure of the plugin install'
     # Same audience rule as [UNREGISTERED]: say plainly that nothing is broken, so the line reads as
@@ -515,10 +515,10 @@ try {
     #     checkout is then no longer the repo the run is in, so the [INFO] must still appear while the
     #     [INVENTORY] marker must not. Without this test the feature would look correct in 5d and
     #     quietly surface every consumer's bookkeeping at every session start.
-    New-FixtureConsumer -ExtensionIds @('06-16', '06-23')
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29', '06-30')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
-    Assert-Match "\[INFO\].*'06-23'" $r.Out "another repo's inventory drift: the [INFO] is still reported on a deliberate run"
+    Assert-Match "\[INFO\].*'06-30'" $r.Out "another repo's inventory drift: the [INFO] is still reported on a deliberate run"
     Assert-NotMatch '\[INVENTORY\]' $r.Out "another repo's inventory drift: NO [INVENTORY] marker -- it would be another machine's bookkeeping"
 
     # --- 5c. -OnlyConsumer without a manifest in the register -> INFO, exit 0 -----------------------
@@ -527,8 +527,8 @@ try {
     #     manifest checkout does not exist, so no manifest matches this consumer -> matched=0
     #     (regression: this used to be a bare Write-Host that did not count as an info signal,
     #     causing the hook to show "all consumers in sync").
-    New-FixtureConsumer -ExtensionIds @('06-16')
-    $mf = New-FixtureManifest -Extensions @('06-16') -LocalCheckout 'nonexistent-fixture-path'
+    New-FixtureConsumer -ExtensionIds @('06-29')
+    $mf = New-FixtureManifest -Extensions @('06-29') -LocalCheckout 'nonexistent-fixture-path'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-OnlyConsumer', $Fixture))
     Assert-Equal 0 $r.Code 'unregistered consumer: exit code 0 (INFO, no block)'
     Assert-Match '\[INFO\].*not registered' $r.Out 'unregistered consumer: not-registered signal'
@@ -584,8 +584,8 @@ try {
 
     # --- 7. Guardrails (Sean's advice): manifest fields are not blindly trusted -----------------
     # 7a. Absolute localCheckout path -> rejected, exit 1.
-    New-FixtureConsumer -ExtensionIds @('06-16')
-    $mf = New-FixtureManifest -Extensions @('06-16') -LocalCheckout 'C:\Windows'
+    New-FixtureConsumer -ExtensionIds @('06-29')
+    $mf = New-FixtureManifest -Extensions @('06-29') -LocalCheckout 'C:\Windows'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf))
     Assert-Equal 1 $r.Code 'absolute path: exit code 1'
     Assert-Match '\[ERROR\].*rejected' $r.Out 'absolute path: rejected message'
@@ -593,7 +593,7 @@ try {
     # 7a2. An absolute path ANYWHERE in a candidate list -> rejected, exit 1. The guardrail is on the
     #      field, not on its first element: a list whose second entry is absolute must not slip through
     #      because the first one happened to be relative and missing.
-    $mf = New-FixtureManifest -Extensions @('06-16') -LocalCheckout @('nonexistent-fixture-path', 'C:\Windows')
+    $mf = New-FixtureManifest -Extensions @('06-29') -LocalCheckout @('nonexistent-fixture-path', 'C:\Windows')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf))
     Assert-Equal 1 $r.Code 'absolute path in a candidate list: exit code 1'
     Assert-Match '\[ERROR\].*rejected' $r.Out 'absolute path in a candidate list: rejected message'
@@ -601,20 +601,20 @@ try {
     # 7a3. An EMPTY candidate list -> rejected, exit 1. A manifest naming no checkout at all is a
     #      malformed register entry, not a checkout that is absent here -- reporting it as [SKIP] would
     #      be the same false-absence sentence #1524 was filed about.
-    $mf = New-FixtureManifest -Extensions @('06-16') -LocalCheckout @()
+    $mf = New-FixtureManifest -Extensions @('06-29') -LocalCheckout @()
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf))
     Assert-Equal 1 $r.Code 'empty candidate list: exit code 1'
     Assert-Match '\[ERROR\].*no localCheckout path' $r.Out 'empty candidate list: rejected message names the missing field'
 
     # 7b. Path traversal outside the scope root -> rejected, exit 1. '..\..\..' resolved from
     #     the repo root always ends up above the scope root (= two levels above the repo root).
-    $mf = New-FixtureManifest -Extensions @('06-16') -LocalCheckout '..\..\..'
+    $mf = New-FixtureManifest -Extensions @('06-29') -LocalCheckout '..\..\..'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf))
     Assert-Equal 1 $r.Code 'path traversal: exit code 1'
     Assert-Match '\[ERROR\].*outside the allowed scope' $r.Out 'path traversal: scope message'
 
     # 7c. Plugin field with path characters -> rejected, exit 1.
-    $mf = New-FixtureManifest -Extensions @('06-16') -Plugin '..\..\evil@dkj-marketplace'
+    $mf = New-FixtureManifest -Extensions @('06-29') -Plugin '..\..\evil@dkj-marketplace'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'invalid plugin field: exit code 1'
     Assert-Match '\[ERROR\].*plugin field' $r.Out 'invalid plugin field: ERROR message'
@@ -630,8 +630,8 @@ try {
     $oldProfile = $env:USERPROFILE
     try {
         # 8a. Stale record (projectPath does not exist) -> no crash, INFO, exit 0.
-        New-FixtureConsumer -ExtensionIds @('06-16')
-        $mf = New-FixtureManifest -Extensions @('06-16')
+        New-FixtureConsumer -ExtensionIds @('06-29')
+        $mf = New-FixtureManifest -Extensions @('06-29')
         Set-FixtureAdmin '{ "version": 2, "plugins": { "dkj-subagents-alpha@dkj-marketplace": [ { "scope": "project", "projectPath": "C:\\does-not-exist-consumers-fixture", "installPath": "x", "version": "0.0.1" } ] } }'
         $env:USERPROFILE = $Fixture
         $r = Invoke-Ps $Script @('-SkipDrift', '-Manifest', $mf, '-ConsumerPathOverride', $Fixture)
@@ -716,8 +716,8 @@ try {
         #     silently loading or failing to load, so the loud reading would be a false alarm.
         #     Order matters: New-FixtureConsumer wipes $Fixture, and both the manifest and the
         #     administration live inside it, so they are rebuilt after it -- not before.
-        New-FixtureConsumer -ExtensionIds @('06-16') -PluginEnabled $false
-        $mf = New-FixtureManifest -Extensions @('06-16')
+        New-FixtureConsumer -ExtensionIds @('06-29') -PluginEnabled $false
+        $mf = New-FixtureManifest -Extensions @('06-29')
         Set-FixtureAdmin '{ "version": 2, "plugins": { } }'
         $r = Invoke-Ps $Script @('-SkipDrift', '-Manifest', $mf, '-ConsumerPathOverride', $Fixture)
         Assert-Match '\[INFO\].*no machine record for this consumer \(the install may run via a different machine\)' $r.Out 'not enabled, no record: the milder wording is kept'
@@ -728,8 +728,8 @@ try {
         #     would then have reported "no machine record for this consumer" -- a statement about absence,
         #     drawn from a file nothing could read. That is the exact species of claim #302 is about, one
         #     level down. The verdict is withheld and the file is named instead.
-        New-FixtureConsumer -ExtensionIds @('06-16')
-        $mf = New-FixtureManifest -Extensions @('06-16')
+        New-FixtureConsumer -ExtensionIds @('06-29')
+        $mf = New-FixtureManifest -Extensions @('06-29')
         Set-FixtureAdmin '{ "version": 2, "plugins": { oops'
         $r = Invoke-Ps $Script @('-SkipDrift', '-Manifest', $mf, '-ConsumerPathOverride', $Fixture)
         Assert-Equal 1 $r.Code 'unreadable administration: exit 1 -- the authority for this check could not be read'
@@ -756,7 +756,7 @@ try {
     #     this machine's own install record and marketplace clone happen to say (measured: it does,
     #     and un-pinned it read this dev checkout's real "behind" state).
     New-Item -ItemType Directory -Force -Path (Join-Path $HookHome '.claude\plugins') | Out-Null
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     $r = Invoke-HookIsolated -RepoDir $Fixture -HomeDir $HookHome -ScriptArgs @('-WorkshopPathOverride', (Join-Path $Fixture 'does-not-exist'))
     Assert-Equal 0 $r.Code 'hook without a workshop: exit code 0'
     Assert-Match 'register checks \(consumer registration, lens inventory, agent-def drift\) did not run' $r.Out 'hook without a workshop: the [UNREGISTERED] lesson of 2026-07-28 -- says the register checks did not run'
@@ -1116,8 +1116,8 @@ try {
     #      check and the doctrine contradicted each other and the doctrine was right, because this
     #      register records what a consumer HAS.
     Write-Host "a retired plugin id is an unmigrated consumer, not an invalid register" -ForegroundColor Cyan
-    New-FixtureConsumer -ExtensionIds @('06-16')
-    $mfOld = New-FixtureManifest -Extensions @('06-16') -Plugin 'specialists@dkj-marketplace'
+    New-FixtureConsumer -ExtensionIds @('06-29')
+    $mfOld = New-FixtureManifest -Extensions @('06-29') -Plugin 'specialists@dkj-marketplace'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mfOld, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'retired id: exit code 0 -- an unmigrated consumer does not fail the check'
     Assert-NotMatch '\[ERROR\]' $r.Out 'retired id: and raises no error at all'
@@ -1127,7 +1127,7 @@ try {
 
     #      The other two ways must still be errors -- separating them is only worth anything if the
     #      genuine faults keep their verdict.
-    $mfBad = New-FixtureManifest -Extensions @('06-16') -Plugin '../../etc/passwd@dkj-marketplace'
+    $mfBad = New-FixtureManifest -Extensions @('06-29') -Plugin '../../etc/passwd@dkj-marketplace'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mfBad, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'malformed id: still exits 1'
     Assert-Match '\[ERROR\]' $r.Out 'malformed id: still an error -- a register file defect is not a migration'
@@ -1144,9 +1144,9 @@ try {
         # 10b1. retired + enabled + NO install record -> the new [INFO] fires, states the consequence,
         #       and does NOT hand over a bare install command as the fix -- that command cannot work
         #       for an id the catalogue no longer declares.
-        New-FixtureConsumer -ExtensionIds @('06-16')
+        New-FixtureConsumer -ExtensionIds @('06-29')
         Set-FixtureEnabledPlugins -Ids @('specialists@claude-code-specialists')
-        $mfRetiredRec = New-FixtureManifest -Extensions @('06-16') -Plugin 'specialists@claude-code-specialists'
+        $mfRetiredRec = New-FixtureManifest -Extensions @('06-29') -Plugin 'specialists@claude-code-specialists'
         Set-FixtureAdmin '{ "version": 2, "plugins": { } }'
         $env:USERPROFILE = $Fixture
         $r = Invoke-Ps $Script @('-SkipDrift', '-Manifest', $mfRetiredRec, '-ConsumerPathOverride', $Fixture)
@@ -1182,9 +1182,9 @@ try {
 
     # 10b4. -SkipVersions -> the install administration is not read at all in that mode, so the new
     #       finding cannot fire regardless of what the (unread) administration would have said.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     Set-FixtureEnabledPlugins -Ids @('specialists@claude-code-specialists')
-    $mfRetiredSkip = New-FixtureManifest -Extensions @('06-16') -Plugin 'specialists@claude-code-specialists'
+    $mfRetiredSkip = New-FixtureManifest -Extensions @('06-29') -Plugin 'specialists@claude-code-specialists'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mfRetiredSkip, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code '-SkipVersions, retired+enabled: exit code 0'
     Assert-Match 'is not a plugin this marketplace declares any more' $r.Out '-SkipVersions, retired+enabled: the base retired INFO still fires'
@@ -1200,9 +1200,9 @@ try {
     #       session's own repo (Test-IsSessionRepo), the same scoping check 4's own promotion uses.
     $oldProfileNih = $env:USERPROFILE
     try {
-        New-FixtureConsumer -ExtensionIds @('06-16')
+        New-FixtureConsumer -ExtensionIds @('06-29')
         Set-FixtureEnabledPlugins -Ids @('specialists@claude-code-specialists')
-        $mfRetiredNih = New-FixtureManifest -Extensions @('06-16') -Plugin 'specialists@claude-code-specialists'
+        $mfRetiredNih = New-FixtureManifest -Extensions @('06-29') -Plugin 'specialists@claude-code-specialists'
         Set-FixtureAdmin '{ "version": 2, "plugins": { } }'
         $env:USERPROFILE = $Fixture
 
@@ -1230,9 +1230,9 @@ try {
     Write-Host "check 5 / [UNLISTED]: a plugin enabled here that the manifest's own list does not name" -ForegroundColor Cyan
 
     # 11a. Enabled, not listed -> a counting [INFO] naming it, exit 0 (informational, not a gate breach).
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     Set-FixtureEnabledPlugins -Ids @('dkj-subagents-alpha@dkj-marketplace', 'dkj-subagents-ecomm@dkj-marketplace')
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'unlisted plugin: exit code 0 (INFO, not an error)'
     Assert-Match "\[INFO\].*'dkj-subagents-ecomm@dkj-marketplace'.*does not name it" $r.Out 'unlisted plugin: INFO names the id the manifest never lists'
@@ -1250,18 +1250,18 @@ try {
     # 11c. An id naming a DIFFERENT marketplace is silently out of scope -- not this register's business
     #      to judge a catalogue it does not own. Checked with -OnlyConsumer too, the stronger claim: even
     #      when this IS the session repo, an out-of-scope id raises neither line.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     Set-FixtureEnabledPlugins -Ids @('dkj-subagents-alpha@dkj-marketplace', 'some-plugin@other-marketplace')
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture, '-OnlyConsumer', $Fixture))
     Assert-Equal 0 $r.Code 'different marketplace id: exit code 0'
     Assert-NotMatch 'some-plugin@other-marketplace' $r.Out 'different marketplace id: not mentioned anywhere -- not this register''s catalogue to judge'
     Assert-NotMatch '\[UNLISTED\]' $r.Out 'different marketplace id: no [UNLISTED] marker, even in the session repo'
 
     # 11d. An id with NO '@' at all cannot be attributed to any marketplace -- also silently excluded.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     Set-FixtureEnabledPlugins -Ids @('dkj-subagents-alpha@dkj-marketplace', 'no-at-sign-id')
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture, '-OnlyConsumer', $Fixture))
     Assert-Equal 0 $r.Code 'id without @: exit code 0'
     Assert-NotMatch 'no-at-sign-id' $r.Out 'id without @: not mentioned anywhere -- there is nothing to compare it against'
@@ -1269,8 +1269,8 @@ try {
 
     # 11e. Every enabled id is also named in the manifest's own list -> neither line, even in the
     #      session repo. The regression guard against this becoming a line every session start carries.
-    New-FixtureConsumer -ExtensionIds @('06-16')
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture, '-OnlyConsumer', $Fixture))
     Assert-NotMatch '\[UNLISTED\]' $r.Out 'fully listed: no [UNLISTED] marker'
     Assert-NotMatch 'does not name it' $r.Out 'fully listed: no unlisted-plugin INFO either'
@@ -1280,9 +1280,9 @@ try {
     #      existing 'retired' branch in the per-plugin loop rather than re-excluding by segment what that
     #      branch already treats as worth recording. 'specialists@dkj-marketplace' is the id case
     #      10 above already establishes as retired for this marketplace.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     Set-FixtureEnabledPlugins -Ids @('dkj-subagents-alpha@dkj-marketplace', 'specialists@dkj-marketplace')
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture, '-OnlyConsumer', $Fixture))
     Assert-Equal 0 $r.Code 'retired id, unlisted: exit code 0 (non-error)'
     Assert-Match "\[INFO\].*'specialists@dkj-marketplace'.*does not name it" $r.Out 'retired id, unlisted: the INFO reports it too'
@@ -1295,7 +1295,7 @@ try {
     #      different, pre-existing finding -- not this check speaking where it has nothing to read.
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
     New-Item -ItemType Directory -Path $Fixture -Force | Out-Null
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture, '-OnlyConsumer', $Fixture))
     Assert-Equal 1 $r.Code 'no settings file: still exit 1 (the pre-existing guardrail, not check 5)'
     Assert-Match '\[ERROR\].*no settings file found' $r.Out 'no settings file: the pre-existing guardrail still fires'
@@ -1307,9 +1307,9 @@ try {
     #      real plugin id, the same shape Test-PluginNameSlug rejects elsewhere in this file as malformed.
     #      Deliberately excluded, same as an id with no '@' at all (11d): there is no plugin name to write
     #      an 'add a plugins[] block for it' finding about. Checked with -OnlyConsumer, the stronger claim.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     Set-FixtureEnabledPlugins -Ids @('dkj-subagents-alpha@dkj-marketplace', '@dkj-marketplace')
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture, '-OnlyConsumer', $Fixture))
     Assert-Equal 0 $r.Code 'id with empty plugin name: exit code 0'
     Assert-NotMatch '\[UNLISTED\]' $r.Out 'id with empty plugin name: no [UNLISTED] marker'
@@ -1391,9 +1391,9 @@ try {
 
     # 12a. The current path -- silence, and nothing about it in the output. This is the case every
     #      healthy consumer is in, so a check that cannot stay quiet here is one nobody will keep.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-repo-workflow/scripts/lint/check-branch-entry.ps1'
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'current runner path: exit code 0'
     Assert-NotMatch 'does not exist here' $r.Out 'current runner path: no finding'
@@ -1401,9 +1401,9 @@ try {
     # 12b. The retired path -- an ERROR that names the file, the line, and where the script is NOW.
     #      The suggestion is asserted because it is the whole difference between a report and a repair:
     #      the reader is in a repo that does not contain this tree and cannot go looking.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/workflows/contributing-davekjohn/scripts/lint/check-branch-entry.ps1'
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'retired runner path: exit code 1 -- it counts as an error'
     Assert-Match 'branch-entry\.yml line \d+' $r.Out 'retired runner path: names the workflow file and the line'
@@ -1414,26 +1414,26 @@ try {
     #      2026 and a consumer scaffolded before that names the old owner, which still resolves through
     #      the transfer redirect. Matching owner/name would skip the file and report nothing -- the same
     #      silence this check exists to end, arriving through the guard itself.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DaveKJohn/claude-code-specialists' -ScriptPath 'plugins/workflows/contributing-davekjohn/scripts/lint/check-branch-entry.ps1'
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'old owner, retired path: still exit code 1'
     Assert-Match 'does not exist here' $r.Out 'old owner, retired path: still reported'
 
     # 12d. A checkout of somebody ELSE's repository is not this check's business, whatever path it runs.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'other.yml' -Repository 'someone/unrelated-repo' -ScriptPath 'plugins/workflows/contributing-davekjohn/scripts/lint/check-branch-entry.ps1'
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'another repository checked out: exit code 0'
     Assert-NotMatch 'does not exist here' $r.Out 'another repository checked out: no finding'
 
     # 12e. A script name that exists NOWHERE here reads as removed, not moved -- a different
     #      conversation, and the message has to be able to say so rather than trailing off.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/claude-code-specialists' -ScriptPath 'plugins/dkj-repo-workflow/scripts/lint/check-nothing-of-this-name.ps1'
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'unknown script name: exit code 1'
     Assert-Match 'removed rather than moved' $r.Out 'unknown script name: says removed rather than moved'
@@ -1444,9 +1444,9 @@ try {
     #      turns this check into an existence oracle for the maintainer's own disk, answered by whether
     #      an [ERROR] line appears, unattended, at every session start. It is reported as its own state
     #      rather than as a missing path, because nothing was looked up.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/claude-code-specialists' -ScriptPath '../../../../check-branch-entry.ps1'
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'traversing path: exit code 1 -- reported, never dropped'
     Assert-Match 'does not stay inside the checkout' $r.Out 'traversing path: named as escaping the checkout'
@@ -1459,9 +1459,9 @@ try {
     #      legal in an NTFS filename and the SessionStart hooks decide how loudly to surface a run by
     #      matching '[ERROR]' over its whole output -- so a file named like this would not merely look
     #      odd, it would be COUNTED. The finding itself must still fire.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'x[ERROR] forged.yml' -Repository 'DKJ-Solutions/claude-code-specialists' -ScriptPath 'plugins/workflows/contributing-davekjohn/scripts/lint/check-branch-entry.ps1'
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'bracketed filename: the real finding still fires'
     Assert-Match 'does not exist here' $r.Out 'bracketed filename: and it is the stale-path finding, not something else'
@@ -1473,16 +1473,16 @@ try {
     #      and both made the whole file read as carrying no reference at all. A false negative here is
     #      #1805 recurring one layer down, inside the detector built to close it, so each gets a
     #      scenario proving the finding still fires rather than a note saying it should.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/claude-code-specialists' -ScriptPath 'plugins/workflows/contributing-davekjohn/scripts/lint/check-branch-entry.ps1' -PathFirst
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'path: written above repository:: still exit code 1'
     Assert-Match 'does not exist here' $r.Out 'path: written above repository:: the stale path is still found'
 
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/claude-code-specialists' -ScriptPath 'plugins/workflows/contributing-davekjohn/scripts/lint/check-branch-entry.ps1' -Commented
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'trailing YAML comments: still exit code 1'
     Assert-Match 'does not exist here' $r.Out 'trailing YAML comments: the stale path is still found'
@@ -1498,9 +1498,9 @@ try {
     #      second assert on 12c: an owner transfer and a name change are separate acts, and a consumer
     #      can be behind on either, both, or neither. This one is behind on the name and current on the
     #      owner, which 12c cannot exercise.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/claude-code-specialists' -ScriptPath 'plugins/workflows/contributing-davekjohn/scripts/lint/check-branch-entry.ps1'
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'retired repo name: still exit code 1'
     Assert-Match 'does not exist here' $r.Out 'retired repo name: the stale path is still found'
@@ -1595,8 +1595,8 @@ try {
     # 12m. THE GATE. A consumer registered for the subagent teams only has no reason to hold these
     #      runners, and an [INFO] against it would be this register inventing an expectation that
     #      consumer never took on.
-    New-FixtureConsumer -ExtensionIds @('06-16')
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'workflow plugin not registered: exit code 0'
     Assert-NotMatch 'none of the runners' $r.Out 'workflow plugin not registered: not asked at all'
@@ -1621,49 +1621,49 @@ try {
     $pinScript = 'plugins/dkj-repo-workflow/scripts/release/fold-changelog-entry.ps1'
 
     # 12o. The pre-#2333 shape: a credential beside ref: main. [INFO], exit 0 -- it works, and is exposed.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'fold-on-merge.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath $pinScript -Credential
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'write runner on main: exit code 0 -- a state, not a red gate'
     Assert-Match "\[INFO\].*fold-on-merge\.yml line \d+ holds a write credential and fetches this repo's scripts at 'main' -- a moving ref" $r.Out 'write runner on main: an INFO naming the file, the line and the ref'
     Assert-Match "v$([regex]::Escape($pinVersion)) is the current one" $r.Out 'write runner on main: names the release to pin to'
 
     # 12p. NO ref: AT ALL is the default branch -- moving, and said as such rather than read as unknown.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'fold-on-merge.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath $pinScript -Credential -Ref ''
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Match 'no ref: at all \(the default branch\) -- a moving ref' $r.Out 'write runner with no ref: reported as moving'
 
     # 12q. Pinned, but at an older release -- behind, with both versions named.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'verify-resolved.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath $pinScript -Credential -Ref "$pinSha # v0.0.1"
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'write runner behind: exit code 0'
     Assert-Match "verify-resolved\.yml line \d+ .*pinned at v0\.0\.1, behind v$([regex]::Escape($pinVersion))" $r.Out 'write runner behind: names the pin and the current release'
     Assert-NotMatch 'a moving ref' $r.Out 'write runner behind: not called a moving ref'
 
     # 12r. Pinned at this release -- silence. The state adopt-ci-floor writes, so it must stay quiet.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'merge-on-green.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath $pinScript -Credential -Ref "$pinSha # v$pinVersion"
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-NotMatch 'holds a write credential' $r.Out 'write runner pinned at this release: no pin finding'
 
     # 12s. A READ-ONLY runner on main -- silence. branch-entry.yml tracks main on purpose (#1805), and
     #      every scenario in 12a-12n is this shape, so a check that fired here would have fired there.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-repo-workflow/scripts/lint/check-branch-entry.ps1'
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-NotMatch 'holds a write credential' $r.Out 'read-only runner on main: not judged'
 
     # 12t. A SHA with no version beside it is pinned but undatable -- not called moving, not called behind.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'fold-on-merge.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath $pinScript -Credential -Ref $pinSha
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-NotMatch 'holds a write credential' $r.Out 'bare SHA pin: no finding either way'
 
@@ -1677,19 +1677,19 @@ try {
     Assert-Equal $true ([version]$belowFloor -lt [version]$floor.Version) 'layout floor: the fixture pin really is below it'
 
     # 12u. Below the floor, consumer already on .dkj/dkj-repo-workflow/ -> [ERROR], non-zero exit.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-Item -ItemType Directory -Force -Path (Join-Path $Fixture '.dkj\dkj-repo-workflow') | Out-Null
     New-FixtureWorkflow -Name 'fold-on-merge.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath $pinScript -Credential -Ref "$pinSha # v$belowFloor"
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal $true ($r.Code -ne 0) 'below the layout floor after the move: a red register'
     Assert-Match "\[ERROR\].*fold-on-merge\.yml line \d+ .*pinned at v$([regex]::Escape($belowFloor)), below v$([regex]::Escape($floor.Version))" $r.Out 'below the layout floor after the move: an ERROR naming the pin and the floor'
     Assert-Match 'report OK' $r.Out 'below the layout floor after the move: says why -- the check fails green'
 
     # 12v. Below the floor, consumer still on the root folder -> the ordinary [INFO] behind.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     New-FixtureWorkflow -Name 'fold-on-merge.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath $pinScript -Credential -Ref "$pinSha # v$belowFloor"
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'below the layout floor, not moved: exit code 0'
     Assert-Match "\[INFO\].*pinned at v$([regex]::Escape($belowFloor)), behind" $r.Out 'below the layout floor, not moved: the ordinary behind INFO'
@@ -1697,10 +1697,10 @@ try {
 
     # 12w. At the floor, after the move -> behind is still only [INFO]: it reads the new folder.
     if ([version]$floor.Version -lt [version]$pinVersion) {
-        New-FixtureConsumer -ExtensionIds @('06-16')
+        New-FixtureConsumer -ExtensionIds @('06-29')
         New-Item -ItemType Directory -Force -Path (Join-Path $Fixture '.dkj\dkj-repo-workflow') | Out-Null
         New-FixtureWorkflow -Name 'fold-on-merge.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath $pinScript -Credential -Ref "$pinSha # v$($floor.Version)"
-        $mf = New-FixtureManifest -Extensions @('06-16')
+        $mf = New-FixtureManifest -Extensions @('06-29')
         $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
         Assert-Equal 0 $r.Code 'at the layout floor after the move: exit code 0'
         Assert-Match "\[INFO\].*pinned at v$([regex]::Escape($floor.Version)), behind" $r.Out 'at the layout floor after the move: the ordinary behind INFO'
@@ -1787,11 +1787,11 @@ exit 1
     #      all -- the script runs from consumer-sessioncheck.ps1 at every session start -- so it is
     #      asserted against the call log rather than trusted to the reading of an if. The [SKIP] also
     #      has to keep its original wording, because that sentence is true again when nothing is read.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     $env:GH_GRAPHQL_BODY = New-GraphQlAnswer -Files @(@{ Name = 'branch-entry.yml'; Text = $staleYml })
     Remove-Item Env:\GH_GRAPHQL_EXIT -ErrorAction SilentlyContinue
     Remove-Item Env:\GH_AUTH_FAIL -ErrorAction SilentlyContinue
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Absent -ManifestPath $mf
     Assert-Equal 0 $r.Code 'switch off: exit code 0'
     Assert-Match 'not present on this machine -- not checked' $r.Out 'switch off: the plain [SKIP] wording, unchanged'
@@ -1802,8 +1802,8 @@ exit 1
     #      longer holds is now an [ERROR], with the same wording and the same repair suggestion the
     #      local half gives -- plus the branch it was read from, because the reader cannot open the
     #      file to check which revision this is about.
-    New-FixtureConsumer -ExtensionIds @('06-16')
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Absent -ManifestPath $mf -Remote
     Assert-Equal 1 $r.Code 'remote read, stale path: exit code 1 -- it counts as an error'
     Assert-Match 'branch-entry\.yml line \d+' $r.Out 'remote read, stale path: names the workflow file and the line'
@@ -1816,9 +1816,9 @@ exit 1
     # 13c. A CURRENT PATH IS SILENT OVER THE NETWORK TOO. The healthy consumer is the common one, and a
     #      check that cannot stay quiet on a deliberate sweep of the whole register is one nobody runs
     #      twice.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     $env:GH_GRAPHQL_BODY = New-GraphQlAnswer -Files @(@{ Name = 'branch-entry.yml'; Text = $currentYml })
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Absent -ManifestPath $mf -Remote
     Assert-Equal 0 $r.Code 'remote read, current path: exit code 0'
     Assert-NotMatch 'does not exist here' $r.Out 'remote read, current path: no finding'
@@ -1827,10 +1827,10 @@ exit 1
     # 13c2. CHECK 6d RIDES THE SAME ROUTE (#2337). The consumers most likely to carry a pre-#2333
     #       ref: main are the ones nobody visits, so the pin finding has to reach them over the network
     #       too -- with the branch it was read from, like every remote finding.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     $foldYml = New-FixtureWorkflowText -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-repo-workflow/scripts/release/fold-changelog-entry.ps1' -Credential
     $env:GH_GRAPHQL_BODY = New-GraphQlAnswer -Files @(@{ Name = 'fold-on-merge.yml'; Text = $foldYml })
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Absent -ManifestPath $mf -Remote
     Assert-Equal 0 $r.Code 'remote read, write runner on main: exit code 0'
     Assert-Match "fold-on-merge\.yml line \d+ holds a write credential .*a moving ref.*read from main over the API" $r.Out 'remote read, write runner on main: the pin finding, naming the branch it read'
@@ -1838,11 +1838,11 @@ exit 1
     # 13c3. THE LAYOUT FLOOR OVER THE NETWORK (#4148) -- the four consumers measured were all ones
     #       nobody had checked out, so the escalation must reach this route. The folder is read in the
     #       same GraphQL call ('dot'); a response without that field stays unknown and never escalates.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     $oldPinYml = New-FixtureWorkflowText -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-repo-workflow/scripts/release/fold-changelog-entry.ps1' -Credential -Ref "0123456789abcdef0123456789abcdef01234567 # v5.18.0"
     $answer = New-GraphQlAnswer -Files @(@{ Name = 'fold-on-merge.yml'; Text = $oldPinYml })
     $env:GH_GRAPHQL_BODY = $answer -replace '"defaultBranchRef"', '"dot":{"__typename":"Tree"},"defaultBranchRef"'
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Absent -ManifestPath $mf -Remote
     Assert-Match '\[ERROR\].*fold-on-merge\.yml line \d+ .*pinned at v5\.18\.0, below v' $r.Out 'remote read, below the layout floor after the move: an ERROR'
     Assert-Match 'dotExpr=HEAD:\.dkj/dkj-repo-workflow' $r.Calls 'remote read: the folder was asked for in the same call'
@@ -1861,10 +1861,10 @@ exit 1
     #      gh. It must be a STATED not-checked: silence would be indistinguishable from 13c above, on a
     #      check whose entire subject is a breach nobody has noticed. The API's own sentence is quoted
     #      because 'gh exited 1' does not tell the reader whether to log in or to fix the register.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     $env:GH_GRAPHQL_BODY = New-GraphQlAnswer -NoRepository -ErrorMessage "Could not resolve to a Repository with the name 'fixture/consumer'."
     $env:GH_GRAPHQL_EXIT = '1'
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Absent -ManifestPath $mf -Remote
     Assert-Equal 0 $r.Code 'unreadable repo: exit code 0 -- our reach, not the consumer breaching anything'
     Assert-Match '\[INFO\].*could not be read' $r.Out 'unreadable repo: stated, not silent'
@@ -1876,9 +1876,9 @@ exit 1
     # 13e. NO .github/workflows AT ALL is silence, and deliberately not the third state: it is the same
     #      verdict the local half reaches when the directory is not there. The distinction is only
     #      available because the query asks in GraphQL -- over REST both this and 13d are an HTTP 404.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     $env:GH_GRAPHQL_BODY = New-GraphQlAnswer -NoWorkflowDir
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Absent -ManifestPath $mf -Remote
     Assert-Equal 0 $r.Code 'no workflows directory: exit code 0'
     Assert-NotMatch 'could not be read' $r.Out 'no workflows directory: NOT reported as unreadable -- the repo answered'
@@ -1888,12 +1888,12 @@ exit 1
     #      blob, and treating that null as an empty workflow would read as 'this file names no
     #      reference' -- the exact false negative the lib's header warns about, arriving through the
     #      transport instead of the parser. The OTHER file in the same repo must still be judged.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     $env:GH_GRAPHQL_BODY = New-GraphQlAnswer -Files @(
         @{ Name = 'unreadable.yml'; Text = $null },
         @{ Name = 'branch-entry.yml'; Text = $staleYml }
     )
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Absent -ManifestPath $mf -Remote
     Assert-Equal 1 $r.Code 'text-less blob: exit code 1 -- the second file is still judged'
     Assert-Match 'unreadable\.yml came back without text' $r.Out 'text-less blob: named as not judged'
@@ -1904,10 +1904,10 @@ exit 1
     #      the ordinary [SKIP] would answer a deliberate question with the silence it was typed to end.
     #      Asked ONCE per run rather than per consumer, because gh holding no credential is a property
     #      of the machine.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     $env:GH_AUTH_FAIL = '1'
     $env:GH_GRAPHQL_BODY = New-GraphQlAnswer -Files @(@{ Name = 'branch-entry.yml'; Text = $staleYml })
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Absent -ManifestPath $mf -Remote
     Assert-Equal 0 $r.Code 'gh not authenticated: exit code 0'
     Assert-Match "gh auth status' exited 1" $r.Out 'gh not authenticated: named, with what gh answered'
@@ -1923,10 +1923,10 @@ exit 1
     #      $PSHOME IS IN THERE BECAUSE Invoke-Ps CALLS 'powershell' BY BARE NAME: cutting PATH to the
     #      empty directory alone made this scenario fail on 'The term powershell is not recognized',
     #      which is the harness losing its own interpreter rather than the script meeting no gh.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     $noGhBin = Join-Path $Fixture 'no-gh-bin'
     New-Item -ItemType Directory -Path $noGhBin -Force | Out-Null
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $savedPath = $env:PATH
     $env:PATH = "$noGhBin;$PSHOME;$env:SystemRoot\System32"
     try { $r = Invoke-Absent -ManifestPath $mf -Remote } finally { $env:PATH = $savedPath }
@@ -1938,9 +1938,9 @@ exit 1
     #      repository -- the same data the localCheckout guardrails already refuse to trust -- and here
     #      it would become the owner and name of an API call. Held to GitHub's own shape, and refused
     #      without a single call being made.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     $env:GH_GRAPHQL_BODY = New-GraphQlAnswer -Files @(@{ Name = 'branch-entry.yml'; Text = $staleYml })
-    $mf = New-FixtureManifest -Extensions @('06-16') -Repo 'fixture/consumer/../../etc'
+    $mf = New-FixtureManifest -Extensions @('06-29') -Repo 'fixture/consumer/../../etc'
     $r = Invoke-Absent -ManifestPath $mf -Remote
     Assert-Equal 0 $r.Code 'malformed repo slug: exit code 0'
     Assert-Match 'not a valid GitHub owner/name slug' $r.Out 'malformed repo slug: named as rejected'
@@ -1951,8 +1951,8 @@ exit 1
     #      is asking about its own repo, whose checkout is present by definition -- so an absent one
     #      reached here is another consumer, and reading it would put a third party's findings into a
     #      session that asked about neither. The same reasoning the [SKIP] itself is suppressed under.
-    New-FixtureConsumer -ExtensionIds @('06-16')
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     Remove-Item -Path $GhCalls -Force -ErrorAction SilentlyContinue
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-RemoteRunners', '-OnlyConsumer', $Fixture))
     $onlyCalls = if (Test-Path -LiteralPath $GhCalls) { (Get-Content -LiteralPath $GhCalls -Raw) } else { '' }
@@ -1972,9 +1972,9 @@ exit 1
     #      their credential for something a re-run settles. The fake serves half a document at exit 0;
     #      ShortRead itself cannot be provoked from here, so what this pins is the SEPARATION -- the two
     #      causes must not share one sentence.
-    New-FixtureConsumer -ExtensionIds @('06-16')
+    New-FixtureConsumer -ExtensionIds @('06-29')
     $env:GH_GRAPHQL_BODY = '{"data":{"repository":{"defaultBranchRef":{"nam'
-    $mf = New-FixtureManifest -Extensions @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-29')
     $r = Invoke-Absent -ManifestPath $mf -Remote
     Assert-Equal 0 $r.Code 'unparseable answer: exit code 0'
     Assert-Match 'nothing this could parse as JSON' $r.Out 'unparseable answer: named as a parse failure'
@@ -1998,7 +1998,7 @@ exit 1
         param(
             [Parameter(Mandatory = $true)][string]$Path,
             [ValidateSet('written', 'retired', 'mixed', 'both')][string]$Spelling = 'written',
-            [string[]]$Id = @('06-16', '06-17'),
+            [string[]]$Id = @('06-29', '06-17'),
             [string[]]$Extra = @()
         )
         $extDir = Join-Path $Path '.claude\specialists\lenses'
@@ -2050,14 +2050,14 @@ exit 1
     $r = Invoke-Ps $Script ($base + @('-Manifest', (New-LensManifest -Repo 'fixture/retired' -Leaf 'retired')))
     Assert-Equal 1 $r.Code 'retired: exit code 1 -- a lens nobody reads is a real loss'
     Assert-Match '\[ERROR\].*2 lens file\(s\) under the retired spelling' $r.Out 'retired: counted as an error, with the number of files'
-    Assert-Match "e\.g\. '06-16-extension\.md'" $r.Out 'retired: it names one example rather than the whole list'
-    Assert-Match 'git mv 06-16-extension\.md specialist-06-16-lens\.md' $r.Out 'retired: and the rename that repairs it, composed from the table'
+    Assert-Match "e\.g\. '06-17-extension\.md'" $r.Out 'retired: it names one example rather than the whole list'
+    Assert-Match 'git mv 06-17-extension\.md specialist-06-17-lens\.md' $r.Out 'retired: and the rename that repairs it, composed from the table'
     Assert-Match 'fixture/retired' $r.Out 'retired: attributed to its consumer'
     Assert-NotMatch 'leftover' $r.Out 'retired: and not the leftover INFO -- nothing sits beside them'
 
     # --- 14c. A written lens for one id and a retired one for another -> the retired id is the error --
     $r = Invoke-Ps $Script ($base + @('-Manifest', (New-LensManifest -Repo 'fixture/mixed' -Leaf 'mixed')))
-    Assert-Equal 1 $r.Code 'mixed: exit code 1 -- the written lens of 06-16 does not cover 06-17'
+    Assert-Equal 1 $r.Code 'mixed: exit code 1 -- the written lens of 06-29 does not cover 06-17'
     Assert-Match "\[ERROR\].*1 lens file\(s\) under the retired spelling.*'06-17-extension\.md'" $r.Out 'mixed: exactly the unread one is reported'
 
     # --- 14d. Both spellings for the same id -> [INFO] only, because the current copy is what loads --

@@ -1,0 +1,18 @@
+{
+  "name": "dkj-subagents-developers",
+  "displayName": "Claude Specialists — the developers team (the repo-bound specialists)",
+  "description": "The Claude Specialists whose craft needs a repository: Derek the repository engineer and Rendall the release manager (voices of the main conversation), Sylvester the system administrator, Cody the app developer, Tycho the test engineer, Victor the code reviewer, Sebastian the security engineer, Ravi the refactoring specialist, Nolan the performance engineer and Tessa the technical writer. Requires dkj-subagents-alpha, the core team: every repo enables the two together, while the Claude App gets the core team alone, because nothing here works without a checkout. WHAT YOU GET: these specialists, the specialists-init skill that sets the team up in a repo, specialists-teardown that takes it out again, sync-roster that keeps the roster and the lenses in step with the enabled plugins, and one hook that only reports at the start of a session whether the team is complete. WHAT STAYS WITH YOUR REPO: its own rules (CLAUDE.md), what each specialist needs to know about your repo (a lens per specialist), and any safety hooks you want.",
+  "agents": [
+    "./subagents/specialist-04-13-subagent.md",
+    "./subagents/specialist-04-18-subagent.md",
+    "./subagents/specialist-05-15-subagent.md",
+    "./subagents/specialist-06-16-subagent.md",
+    "./subagents/specialist-06-19-subagent.md",
+    "./subagents/specialist-06-23-subagent.md",
+    "./subagents/specialist-06-24-subagent.md",
+    "./subagents/specialist-06-25-subagent.md"
+  ],
+  "version": "6.18.0",
+  "author": { "name": "DaveKJohn" },
+  "keywords": ["specialists", "team", "developers", "claude-code"]
+}

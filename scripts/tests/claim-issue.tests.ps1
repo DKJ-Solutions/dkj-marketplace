@@ -2017,6 +2017,31 @@ $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Pa
 Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'takes an awaiting-\* label') 'run: and a park without a reason'
 
 Write-Host ''
+# --- a -dev park names its decider (#4208) ---
+Assert-True ((Format-ParkComment -Reason 'the choice of X' -Decider 'alejandro-x') -ceq 'Parked by a sweep: waiting on the choice of X. Decider: @alejandro-x.') 'a decider is a sentence after the clause'
+Assert-True ((Format-ParkComment -Reason 'the choice of X' -Decider '@alejandro-x') -ceq 'Parked by a sweep: waiting on the choice of X. Decider: @alejandro-x.') 'with or without its @'
+Assert-True ((Format-ParkComment -Reason 'the choice of X' -Decider '') -ceq 'Parked by a sweep: waiting on the choice of X.') 'no decider leaves the comment as before'
+$deciderRefs = Get-ParkingWaitReferences -Comments @([pscustomobject]@{ body = (Format-ParkComment -Reason '#12''s pull request' -Decider 'some-dev') })
+Assert-True (@($deciderRefs.Issues).Count -eq 1) 'the decider sentence is outside the clause stale-park reads'
+Assert-True (Test-DeciderLogin -Login 'DaveKJohn') 'a login passes'
+Assert-True (Test-DeciderLogin -Login '@maikel-bwj') 'so does one with its @'
+Assert-True (-not (Test-DeciderLogin -Login 'a--b') -and -not (Test-DeciderLogin -Login '-ab') -and -not (Test-DeciderLogin -Login 'ab-')) 'a double, leading or trailing hyphen is refused'
+Assert-True (-not (Test-DeciderLogin -Login 'x y') -and -not (Test-DeciderLogin -Login '') -and -not (Test-DeciderLogin -Login ('a' * 40))) 'a space, nothing, or a 40-character name is refused'
+$older = [pscustomobject]@{ body = 'Parked by a sweep: waiting on X. Decider: @first-dev.'; createdAt = '2026-11-01T10:00:00Z' }
+$newer = [pscustomobject]@{ body = 'Parked by a sweep: waiting on X. Decider: @second-dev.'; createdAt = '2026-11-02T10:00:00Z' }
+Assert-True ((Get-ParkDecider -Comments @($older, $newer)) -ceq 'second-dev') 'the newest decider holds'
+Assert-True ((Get-ParkDecider -Comments @() -Body "Filed parked.`nDecider: @body-dev") -ceq 'body-dev') 'an issue parked at filing names it in its body'
+Assert-True ((Get-ParkDecider -Comments @([pscustomobject]@{ body = 'no clause'; createdAt = '2026-11-01T10:00:00Z' })) -ceq '') 'no clause means the owner'
+$candJson = '[{"number":7,"title":"t","labels":[{"name":"awaiting-decision-dev"}],"comments":[{"body":"Parked by a sweep: waiting on X. Decider: @second-dev.","createdAt":"2026-11-02T10:00:00Z"}]}]'
+$candRow = @(Get-SweepCandidates -Json $candJson -SkipLabel @('awaiting-decision-dev'))[0]
+Assert-True ($candRow.Verdict -eq 'skipped' -and $candRow.Reason -match "label 'awaiting-decision-dev'; decider @second-dev") '-Candidates names the decider beside a -dev label'
+Assert-True ($body -match "Format-ParkComment -Reason \`$Reason -Decider \`$Decider") 'the park posts the decider it was given'
+$out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-pull -Reason '#3 to land' -Decider 'some-dev' 2>&1 | Out-String
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-Decider takes a GitHub login, and only with -Park and an awaiting-\*-dev label') 'run: a decider on a non -dev park refuses before anything is read'
+$out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-decision-dev -Reason 'x' -Decider 'not a login' 2>&1 | Out-String
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-Decider takes a GitHub login') 'run: so does a decider that is not a login'
+
+Write-Host ''
 # --- a readable wait names its blocker (#3962) ---
 Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-pull' -Reason '#123''s pull request -- the tasks run in order') 'awaiting-pull: a #<n> at the start of the clause passes'
 Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-pull' -Reason 'feat/3126-x to land') 'awaiting-pull: so does a branch'
@@ -2028,6 +2053,22 @@ Assert-True (-not (Test-ParkReasonNamesBlocker -Label 'awaiting-pull-external' -
 Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-release-external' -Reason 'DKJ-Solutions/dkj-lifehub''s next release') 'awaiting-release-external: owner/repo passes'
 Assert-True (-not (Test-ParkReasonNamesBlocker -Label 'awaiting-release-external' -Reason 'the lifehub''s next release')) 'awaiting-release-external: a repo named in prose is refused'
 Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-decision-dev' -Reason 'the owner''s choice of X') 'a wait on a person needs no blocker'
+
+Write-Host ''
+# --- a merged-upstream wait moves to awaiting-release-external in one step (#4226) ---
+Assert-True ((Get-ParkMoveFrom -Park 'awaiting-release-external' -ParkingLabels @('awaiting-pull-external')) -ceq 'awaiting-pull-external') 'pull-external -> release-external is a move, and names the label to lift'
+Assert-True ((Get-ParkMoveFrom -Park 'awaiting-release-external' -ParkingLabels @()) -ceq '') 'an unparked issue is a plain park, not a move'
+Assert-True ((Get-ParkMoveFrom -Park 'awaiting-release-external' -ParkingLabels @('awaiting-pull-external', 'awaiting-decision-dev')) -ceq '') 'a second parking label beside it is not moved past'
+Assert-True ((Get-ParkMoveFrom -Park 'awaiting-pull-external' -ParkingLabels @('awaiting-release-external')) -ceq '') 'and the move runs one way only'
+Assert-True ((Get-ParkMoveFrom -Park 'awaiting-decision-dev' -ParkingLabels @('awaiting-pull')) -ceq '') 'any other pair is a park on top of a park'
+Assert-True ($fn -match 'Get-ParkMoveFrom -Park \$Park -ParkingLabels \$already' -and $fn -match '--remove-label'', \$moveFrom') 'the park lifts the old label in the same edit that adds the new one'
+Assert-True ($fn -match 'if \(\$already\.Count -gt 0 -and -not \$moveFrom\)') 'and refuses every other already-parked issue as before (#3907)'
+Assert-True ($body -match "-and -not \(Get-ParkMoveFrom -Park \`$Park -ParkingLabels \`$parkingLabels\)\)") 'the parked-issue refusal lets the move through to the claim'
+$movedRefs = Get-ParkingWaitReferences -Comments @([pscustomobject]@{ body = (Format-ParkComment -Reason 'DKJ-Solutions/dkj-marketplace''s next release'); createdAt = '2026-11-17T12:00:00Z' })
+Assert-True ((@($movedRefs.Repos) -join ',') -eq 'DKJ-Solutions/dkj-marketplace' -and $movedRefs.Since) 'the move''s comment names the repo AND dates the park, which is what the release-external stale-park needs'
+Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-release-external' -Reason 'DKJ-Solutions/dkj-marketplace, BWJ-Development/x''s next release') 'the reason -Candidates prints for two repos passes the blocker check'
+Assert-True ($cand -match "\`$c\.Verdict = 'relabel'" -and $cand -match '\$unlanded\.Count -eq 0') '-Candidates reads merged-but-unreleased as relabel, only once every blocker has landed'
+Assert-True ($cand -match '-Park awaiting-release-external -Reason') 'and prints the one-step move rather than a hand swap'
 $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-pull -SkipLabel awaiting-pull -Reason '. the earlier steps' 2>&1 | Out-String
 Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'needs -Reason to name its blocker as #<n> or a branch' -and $out -match 'nothing was read or written') 'run: an awaiting-pull park with no blocker refuses before anything is read'
 

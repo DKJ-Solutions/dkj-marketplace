@@ -138,14 +138,14 @@ function Get-BusinessMarketplaceRepo {
 # because it is not there -- the mechanism this repo already has, and the one that cannot be
 # misconfigured into offering the thing anyway.
 #
-# THE UNIT IS THE PLUGIN, NOT THE ITEM, AND THAT IS DELIBERATE. dkj-subagents-alpha ships three PowerShell
-# skills (specialists-init, specialists-teardown, sync-roster) and one SessionStart hook that a Claude
-# App user cannot run either. They travel anyway: the plugin published here has to be byte-identical to
-# the plugin released here, or its version number stops meaning one thing. Those four items are already
-# handled where they can be handled without forking the plugin -- the hook is inert in a plain Chat
-# session, and v4.9.0 (#672) made all three skills non-model-invocable and had each name its PowerShell
-# dependency in its own description, so the model cannot walk a user into one. Per-item filtering would
-# buy a little tidiness and cost the single-source-of-truth guarantee.
+# THE UNIT IS THE PLUGIN, NOT THE ITEM, AND THAT IS DELIBERATE. The plugin published here has to be
+# byte-identical to the plugin released here, or its version number stops meaning one thing, so an item
+# that cannot work in the Claude App is kept out by living in a plugin that does not travel. That is why
+# the base team is two plugins (#4211): dkj-subagents-alpha, the core team, works without a checkout and
+# travels; dkj-subagents-developers holds the specialists whose craft needs a repository, the three
+# PowerShell skills (specialists-init, specialists-teardown, sync-roster) and the roster hook, and is
+# left out here by not being named. Before that split those items travelled inside the core team, made
+# non-model-invocable (#672) so the model could not walk an App user into one.
 #
 # AN UNSTATED SEAM MEANS WHAT IT MEANT YESTERDAY. Absent, empty or $null answers "every plugin in the
 # manifest", which is what the script did before this function existed -- so a consumer that has never
@@ -1360,14 +1360,14 @@ $script:TriageLabels = @(
     [pscustomobject]@{ Name = 'prio-3'; Color = 'E0321A'; Description = 'Priority 3 of 4 -- do this before the ordinary backlog' }
     [pscustomobject]@{ Name = 'prio-4'; Color = 'B60205'; Description = 'Priority 4 of 4 (highest) -- takes precedence over other work' }
     [pscustomobject]@{ Name = 'awaiting-recurrences'; Color = '5319E7'; Description = 'Collects every instance of one recurring problem until its root cause is fixed' }
-    [pscustomobject]@{ Name = 'awaiting-decision-dev'; Color = '5319E7'; Description = 'Waiting on the owner''s choice -- parks the issue so no session picks it up' }
+    [pscustomobject]@{ Name = 'awaiting-decision-dev'; Color = '5319E7'; Description = 'Waiting on a developer''s choice: the named decider, else the owner -- no session picks it up' }
     [pscustomobject]@{ Name = 'awaiting-decision-client'; Color = '5319E7'; Description = 'Waiting on the client''s choice -- parks the issue so no session picks it up' }
-    [pscustomobject]@{ Name = 'awaiting-review-dev'; Color = '5319E7'; Description = 'Waiting on the dev''s review by eye -- parks the issue so no session picks it up' }
+    [pscustomobject]@{ Name = 'awaiting-review-dev'; Color = '5319E7'; Description = 'Waiting on a developer''s look: the named decider, else the owner -- no session picks it up' }
     [pscustomobject]@{ Name = 'awaiting-review-client'; Color = '5319E7'; Description = 'Waiting on the client''s review by eye -- parks the issue so no session picks it up' }
     [pscustomobject]@{ Name = 'awaiting-pull'; Color = '5319E7'; Description = 'Waiting on another issue to land through a pull request -- parks the issue so no session picks it up' }
     [pscustomobject]@{ Name = 'awaiting-pull-external'; Color = '5319E7'; Description = 'Waiting on a pull request in another repo -- parks the issue so no session picks it up' }
     [pscustomobject]@{ Name = 'awaiting-action-external'; Color = '5319E7'; Description = 'Waiting on an external event or date -- parks the issue so no session picks it up' }
-    [pscustomobject]@{ Name = 'awaiting-action-dev'; Color = '5319E7'; Description = 'Waiting on an act only the owner performs -- parks the issue so no session picks it up' }
+    [pscustomobject]@{ Name = 'awaiting-action-dev'; Color = '5319E7'; Description = 'Waiting on a developer''s act: the named decider, else the owner -- no session picks it up' }
     [pscustomobject]@{ Name = 'awaiting-release'; Color = '5319E7'; Description = 'Waiting on the next release -- parks the issue so no session picks it up' }
     [pscustomobject]@{ Name = 'awaiting-release-external'; Color = '5319E7'; Description = 'Waiting on a release of another repo -- parks the issue so no session picks it up' }
     [pscustomobject]@{ Name = 'awaiting-recurrences-first'; Color = '5319E7'; Description = 'Waiting on a first reproducible recurrence -- parks the issue so no session picks it up' }
@@ -1377,11 +1377,11 @@ $script:TriageLabels = @(
 function Get-TriageLabels {
     <# The canonical triage labels this workflow's consumers are invited to share -- the four
        priority rungs 'prio-1' (lowest) through 'prio-4' (highest), plus 'awaiting-recurrences', the kind label for
-       a collecting issue, and the twelve parking labels 'awaiting-decision-dev' (an issue awaiting the owner's
-       choice), 'awaiting-decision-client' (an issue awaiting a choice from the client or requester outside the
+       a collecting issue, and the twelve parking labels 'awaiting-decision-dev' (an issue awaiting a developer's
+       choice: the decider its parking comment names, else the owner, #4208), 'awaiting-decision-client' (an issue awaiting a choice from the client or requester outside the
        dev team), 'awaiting-review-dev' (an issue awaiting the dev's look at a visible result), 'awaiting-review-client' (an issue awaiting the client's look), 'awaiting-pull' (an issue awaiting another issue's pull request), 'awaiting-pull-external' (an issue awaiting a pull request outside this repo until its work is available here), 'awaiting-action-external' (an issue
-       awaiting an external event or date), 'awaiting-action-dev' (an issue awaiting an act only the owner
-       performs), 'awaiting-release' (an issue awaiting the next release), 'awaiting-release-external' (an issue awaiting a release of another repo), 'awaiting-recurrences-first' (an issue awaiting its first reproducible recurrence) and 'awaiting-session-dev' (a workable issue too large for one sweep turn, awaiting a dedicated session) -- as an array of objects with Name, Color and Description (the exact fields
+       awaiting an external event or date), 'awaiting-action-dev' (an issue awaiting a developer's act,
+       the named decider's or else the owner's), 'awaiting-release' (an issue awaiting the next release), 'awaiting-release-external' (an issue awaiting a release of another repo), 'awaiting-recurrences-first' (an issue awaiting its first reproducible recurrence) and 'awaiting-session-dev' (a workable issue too large for one sweep turn, awaiting a dedicated session) -- as an array of objects with Name, Color and Description (the exact fields
        a `gh label create` call needs). Read by adopt-triage-labels.ps1, which composes and prints the
        create command for whichever of them this repo's tracker is missing; it never creates a label
        itself. Optional in the script contract -- a consumer that has not answered this seam gets the

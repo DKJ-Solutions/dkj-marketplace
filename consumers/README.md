@@ -561,7 +561,7 @@ exceptions to the rule that plugins carry no hooks/skills — the full list is i
 [Sylvester's repo lens](../.claude/specialists/lenses/specialist-05-15-lens.md#what-lives-here-and-what-doesnt), and it has grown since
 this paragraph first named its two siblings — and shrank again on August 26, 2026: three SessionStart
 hooks (`consumer-sessioncheck` and `script-contract-sessioncheck` in `dkj-repo-workflow`,
-`roster-sessioncheck` in the core team), two Stop hooks (`cycle-autopark`, also
+`roster-sessioncheck` in the developers team, the core team's until #4211), two Stop hooks (`cycle-autopark`, also
 `dkj-repo-workflow` — the first hook here that *acts* instead of reporting, #900 — and `closeout-gate`, the
 first that *refuses*, #2050) plus the skill
 `specialists-init`. Mind the **version gate**: consumers only receive the

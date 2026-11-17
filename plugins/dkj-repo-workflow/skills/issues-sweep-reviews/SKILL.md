@@ -45,6 +45,11 @@ gh issue list --state open --label awaiting-review-dev --json number,title --lim
 
 An empty result is a complete answer: say so and stop.
 
+**An issue whose parking comment names another developer is not this pass's** (#4208). A park written
+with `claim-issue -Park -Decider <login>` ends `Decider: @<login>.`, and the newest such line holds.
+Where it names an account other than the one typing the command, the look is that developer's: hold the
+issue out and name its decider in the close-out. No `Decider:` line means the owner, as before.
+
 **Arguments narrow the pass and never widen it.** Issue numbers after the command
 (`/issues-sweep-reviews 3816 3820`) ship only those. `except <n> ...` ships all but those. A number that does
 not carry `awaiting-review-dev` is not approved by being named: report it and leave it alone.

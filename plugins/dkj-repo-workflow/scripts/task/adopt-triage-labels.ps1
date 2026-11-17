@@ -153,11 +153,11 @@ $builtInTriageLabels = @(
     # Not a rung: the kind label for a collecting issue (#2462) -- see Get-TriageLabels' own comment.
     [pscustomobject]@{ Name = 'awaiting-recurrences'; Color = '5319E7'; Description = 'Collects every instance of one recurring problem until its root cause is fixed' }
     # Not a rung either: the parking label for an issue awaiting the owner's choice (#2519; 'awaiting-decision' until #2890).
-    [pscustomobject]@{ Name = 'awaiting-decision-dev'; Color = '5319E7'; Description = 'Waiting on the owner''s choice -- parks the issue so no session picks it up' }
+    [pscustomobject]@{ Name = 'awaiting-decision-dev'; Color = '5319E7'; Description = 'Waiting on a developer''s choice: the named decider, else the owner -- no session picks it up' }
     # And the parking label for an issue awaiting a choice from the client or requester outside the dev team (#2890).
     [pscustomobject]@{ Name = 'awaiting-decision-client'; Color = '5319E7'; Description = 'Waiting on the client''s choice -- parks the issue so no session picks it up' }
     # And the two parking labels for an issue awaiting a review by eye: the dev's look at a visible result, and the client's or requester's (#2977).
-    [pscustomobject]@{ Name = 'awaiting-review-dev'; Color = '5319E7'; Description = 'Waiting on the dev''s review by eye -- parks the issue so no session picks it up' }
+    [pscustomobject]@{ Name = 'awaiting-review-dev'; Color = '5319E7'; Description = 'Waiting on a developer''s look: the named decider, else the owner -- no session picks it up' }
     [pscustomobject]@{ Name = 'awaiting-review-client'; Color = '5319E7'; Description = 'Waiting on the client''s review by eye -- parks the issue so no session picks it up' }
     # And the parking label for an issue waiting on another issue to land through a pull request (#2757).
     [pscustomobject]@{ Name = 'awaiting-pull'; Color = '5319E7'; Description = 'Waiting on another issue to land through a pull request -- parks the issue so no session picks it up' }
@@ -166,7 +166,7 @@ $builtInTriageLabels = @(
     # And the parking label for an issue waiting on an external event or date (#2784).
     [pscustomobject]@{ Name = 'awaiting-action-external'; Color = '5319E7'; Description = 'Waiting on an external event or date -- parks the issue so no session picks it up' }
     # And the parking label for an issue waiting on an act only the owner performs (#2828).
-    [pscustomobject]@{ Name = 'awaiting-action-dev'; Color = '5319E7'; Description = 'Waiting on an act only the owner performs -- parks the issue so no session picks it up' }
+    [pscustomobject]@{ Name = 'awaiting-action-dev'; Color = '5319E7'; Description = 'Waiting on a developer''s act: the named decider, else the owner -- no session picks it up' }
     # And the parking label for an issue waiting on the next release, whose cut lists it (#2851).
     [pscustomobject]@{ Name = 'awaiting-release'; Color = '5319E7'; Description = 'Waiting on the next release -- parks the issue so no session picks it up' }
     [pscustomobject]@{ Name = 'awaiting-release-external'; Color = '5319E7'; Description = 'Waiting on a release of another repo -- parks the issue so no session picks it up' }

@@ -94,7 +94,8 @@ gh issue create --repo <owner>/<repo> --title "<precise technical title>" --body
 **`hooks/guard-kind-label.ps1` refuses** a `gh issue create` on a store repo that carries none, or
 more than one, of the three kinds (#4197). Labels set in a template, the browser or an editor,
 labels built at run time, or a repo it cannot name pass with a warning. An inbound issue on the plugin's
-source repo is not judged.
+source repo is not judged. What slips through is listed by `closed-message-sessioncheck` at the next
+session start, with its repair line (#4219).
 
 **The reach label comes with its reason, written into the body** (#4057). Wherever the label goes on,
 the body carries this section, named after `Get-ReachLabel`'s answer:

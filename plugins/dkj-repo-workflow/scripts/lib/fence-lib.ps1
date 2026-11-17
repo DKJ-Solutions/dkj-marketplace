@@ -11,7 +11,7 @@
     alone -- a PR-body lib, the roster check -- does not pull a 36 KB measuring lib in with it.
 
     A LEAF WITH NO DEPENDENCIES, mirrored into every plugin that carries one of its readers --
-    dkj-repo-workflow, dkj-repo-workflow-bwj and dkj-subagents-alpha -- because a script may only dot-source a lib
+    dkj-repo-workflow, dkj-repo-workflow-bwj and dkj-subagents-developers -- because a script may only dot-source a lib
     that ships in its own plugin.
 
     Pure ASCII, per this repo's script-layer convention.
