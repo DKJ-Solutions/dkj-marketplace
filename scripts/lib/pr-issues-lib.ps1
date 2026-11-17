@@ -774,7 +774,7 @@ function Test-GhMutationTransient {
         is a real answer -- so it is deliberately NOT matched here and stays a hard failure in the
         caller, exactly as before.
 
-        Measured in a consumer (BWJ-Development/smartwatchbanden, dkj-policy 5.1.0, September 13, 2026):
+        Measured in a consumer (BWJ-Development/smartwatchbanden, dkj-repo-workflow 5.1.0, September 13, 2026):
         a `gh pr create` that answered 'GraphQL: Something went wrong while executing your query' and
         two more that answered 'HTTP 502: 502 Bad Gateway' had each actually created the PR; a
         `gh pr merge` that answered 'non-200 OK status code: 502 Bad Gateway' had actually merged it.
@@ -2063,7 +2063,7 @@ function Get-MergeBlockVerdict {
         defect #1549 reported: `gh pr checks --watch` watches the checks registered when it STARTS, so a
         fast non-required check reporting first exits 0 while the required one is still pending, and the
         script called CI green after 5s and was refused by the base-branch policy at the merge. Measured
-        in a consumer on September 7, 2026 (`dkj-policy` 4.31.0, BWJ-Development/smartwatchbanden PR
+        in a consumer on September 7, 2026 (`dkj-repo-workflow` 4.31.0, BWJ-Development/smartwatchbanden PR
         #529): required `Shopify theme check` pending at 0s and green at 2m1s, and a plain
         `gh pr merge` succeeded unchanged once it finished.
 
@@ -2873,7 +2873,7 @@ function ConvertTo-ConsoleStrippedText {
             count, so the one convention serves them all.
 
             SIX CATEGORIES AND NO EXCEPTIONS -- unlike ConvertTo-BacklogVisibleText (#2025,
-            bwj-development's backlog-page-rules.ps1), which keeps eight invisible code points an HTML
+            dkj-repo-workflow-bwj's backlog-page-rules.ps1), which keeps eight invisible code points an HTML
             page can afford to render (three bidi MARKS, two joiners) because an HTML element can be
             told a text direction and a console line cannot. That is why this is not a reuse of that
             function -- only of its LOOKUP; the policy differs; the code-point walk does not.

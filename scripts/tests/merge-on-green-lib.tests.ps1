@@ -175,7 +175,7 @@ foreach ($hit in @(
 }
 Assert-True (-not (Get-MergeOnGreenPrVerdict -Record (New-PrRecord -Files @('scripts\repo-config.ps1')) -MergeBlockVerdict (New-Green)).Eligible) `
     'a backslash spelling is the same path'
-Assert-True (Get-MergeOnGreenPrVerdict -Record (New-PrRecord -Files @('docs/scripts.md', 'plugins/dkj-policy/README.md')) -MergeBlockVerdict (New-Green) -GreenAgeMinutes 30).Eligible `
+Assert-True (Get-MergeOnGreenPrVerdict -Record (New-PrRecord -Files @('docs/scripts.md', 'plugins/dkj-repo-workflow/README.md')) -MergeBlockVerdict (New-Green) -GreenAgeMinutes 30).Eligible `
     'a path that merely NAMES scripts is not one -- the match is anchored on the directory'
 
 Write-Host ''
@@ -225,7 +225,7 @@ Assert-True (Get-MergeOnGreenPrVerdict -Record (New-PrRecord -Files @('../script
 foreach ($safeNow in @(
     'scripts/release/ship-pr.ps1',                          # ship-pr now runs from -TrustedRoot, not here
     'scripts/lib/gate-lib.ps1',                              # any other sibling lib, likewise
-    'plugins/dkj-policy/scripts/lib/merge-on-green-lib.ps1', # the plugin mirror of the same code
+    'plugins/dkj-repo-workflow/scripts/lib/merge-on-green-lib.ps1', # the plugin mirror of the same code
     '.github/workflows/merge-on-green.yml'                  # workflow_run runs the DEFAULT branch's copy anyway
 )) {
     $v = Get-MergeOnGreenPrVerdict -Record (New-PrRecord -Files @('README.md', $safeNow)) -MergeBlockVerdict (New-Green) -GreenAgeMinutes 30
@@ -238,13 +238,13 @@ foreach ($safeNow in @(
 # branch out in place, and git overwrites an ignored file on checkout. So a branch committing this path
 # replaces the trusted ship-pr.ps1 and runs it with the push token. This is a SAFETY refusal.
 foreach ($variant in @(
-    '.workflow-scripts/plugins/dkj-policy/scripts/release/ship-pr.ps1', # the overwrite #2553 reproduced
-    '.workflow-scripts/plugins/dkj-policy/scripts/ci/pick-merge-on-green.ps1',
+    '.workflow-scripts/plugins/dkj-repo-workflow/scripts/release/ship-pr.ps1', # the overwrite #2553 reproduced
+    '.workflow-scripts/plugins/dkj-repo-workflow/scripts/ci/pick-merge-on-green.ps1',
     '.Workflow-Scripts/x.ps1',                                         # case: same dir on windows-latest
     '.workflow-scripts\plugins\x.ps1',                                 # backslash separators
     './.workflow-scripts/x.ps1',                                       # a leading './'
     '.workflow-scripts',                                               # a FILE of that name
-    '.workflow-scripts./plugins/dkj-policy/scripts/release/ship-pr.ps1', # trailing dot: Win32 drops it (review)
+    '.workflow-scripts./plugins/dkj-repo-workflow/scripts/release/ship-pr.ps1', # trailing dot: Win32 drops it (review)
     '.workflow-scripts /x.ps1',                                        # trailing space, same folding
     '.workflow-scripts::$INDEX_ALLOCATION/x.ps1',                      # an NTFS stream suffix on the dir
     'WORKFL~1/plugins/x.ps1'                                           # an 8.3 short name

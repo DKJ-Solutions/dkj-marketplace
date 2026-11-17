@@ -207,7 +207,7 @@ $(if ($MastheadBody) { "function Get-ReleasePageMasthead { $MastheadBody }" } el
 |---|---|---|---|
 | [1.0.0](audience/1.x/1.0.0.md) | 2026-07-01 | Major | Older than any note |
 "@
-    $historyRel = if ($NoHistorySeam) { 'dkj-policy\releases\history.md' } else { 'releases\README.md' }
+    $historyRel = if ($NoHistorySeam) { 'dkj-repo-workflow\releases\history.md' } else { 'releases\README.md' }
     Write-FixtureFile (Join-Path $root $historyRel) $history
 
     $folder = { param($v) if ($Grouping -eq 'minor') { ($v.Split('.')[0..1] -join '.') } else { "$($v.Split('.')[0]).x" } }

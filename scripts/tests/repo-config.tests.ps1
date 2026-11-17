@@ -208,7 +208,7 @@ foreach ($l in $triageLabels) {
     Assert-True ($l.Description.Length -le 100) "Get-TriageLabels: '$($l.Name)' has a description GitHub accepts (at most 100 characters)"
 }
 # The exact values, held against a literal rather than merely "looks plausible" -- this IS the
-# canonical set every dkj-policy consumer is invited to copy, so a silent drift here silently changes
+# canonical set every dkj-repo-workflow consumer is invited to copy, so a silent drift here silently changes
 # what every future adopter receives.
 $expectedTriage = @{
     'prio-1' = @{ Color = 'FFA726'; Description = 'Priority 1 of 4 (lowest) -- nobody is waiting for it' }

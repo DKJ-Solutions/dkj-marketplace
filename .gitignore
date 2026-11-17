@@ -58,12 +58,12 @@ $RECYCLE.BIN/
 # points at any more, which is exactly what became of contributing-davekjohn/releases/page/ on
 # September 5, 2026 (#1444). build-release-notes-page.ps1 searches the tree before it refuses or mints
 # one, so an orphan is named instead of silently replaced; moving the folder is still yours to do.
-.dkj/dkj-policy/releases/page/
+.dkj/dkj-repo-workflow/releases/page/
 
 # THE RETIRED LIVE ISSUE DASHBOARD'S SCAFFOLDING (#2643, retired in #3872): the path token, the worker copy and the
 # wrangler.toml. The dashboard is gone, but the line stays: a machine that ever deployed it still holds the
 # token here, and this repo is public. Anchored, so it cannot swallow an unrelated dashboard/ folder elsewhere.
-/.dkj/dkj-policy/dashboard/
+/.dkj/dkj-repo-workflow/dashboard/
 
 # THE HARNESS WRITES THIS, NOT US (issue #1673). A dispatched agent's own worktree lands INSIDE the
 # repo at .claude/worktrees/agent-<id>, which is the harness's choice rather than this repo's -- there is
@@ -103,4 +103,4 @@ $RECYCLE.BIN/
 # THE PLUGIN EVAL RESULTS (#3896). `claude plugin eval` writes aggregate-result.json and report.html under
 # <eval dir>/results/<timestamp>/ on every run. They are one operator's local run, not part of the suite.
 # ANCHORED to the one eval dir this repo has, like the entries above.
-/plugins/dkj-policy/evals/results/
+/plugins/dkj-repo-workflow/evals/results/

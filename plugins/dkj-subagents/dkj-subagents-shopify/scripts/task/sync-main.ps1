@@ -95,7 +95,7 @@
     seam is what let that consumer delete its own wrapper around this script.
 
     WHY A LABEL SEAM RATHER THAN ROUTING THROUGH THE WORKFLOW PLUGIN'S open-pr.ps1, which would bring the
-    lint and test gates along with it: that would couple dkj-subagents-shopify to dkj-policy, and the
+    lint and test gates along with it: that would couple dkj-subagents-shopify to dkj-repo-workflow, and the
     merging path below deliberately uses nothing but 'gh' so a consumer on either workflow plugin, or on
     neither, gets the same behaviour. A seam keeps that property; a cross-plugin call does not. The gates
     are the cost of that choice and they are named here rather than quietly dropped: a repo that wants
@@ -153,7 +153,7 @@
                                       New-SyncPrBody composes, which names both halves and every path
                                       with its kind.
       Get-ShopifySyncLogPath          where this repo keeps its durable sync record, repo-root-relative
-                                      (e.g. '.dkj/bwj-development/SYNC-LOG.md'). Answered: every sync prepends an
+                                      (e.g. '.dkj/dkj-repo-workflow-bwj/SYNC-LOG.md'). Answered: every sync prepends an
                                       entry there and it rides in the branch's own commit. Default:
                                       unanswered, and then nothing is written -- keeping a log is the
                                       repo's policy, not a Shopify fact (inbound #1382).
@@ -345,7 +345,7 @@ if (Test-Path -LiteralPath $guardLib -PathType Leaf) { . $guardLib; Assert-OwnCo
 # revenue-serving theme. It never called the function, so it could simply lose it, and the dot-source lands
 # here instead.
 #
-# UNGUARDED, and mirrored into THIS plugin as well as dkj-policy -- both for the reasons the merged-pr block
+# UNGUARDED, and mirrored into THIS plugin as well as dkj-repo-workflow -- both for the reasons the merged-pr block
 # above states in full: a payload missing this file must fail at LOAD rather than fall through to a path that
 # is silently mis-decoded, which is inbound #821's failure exactly; and one file mirrored into both plugins
 # beats a cross-plugin path that a version mismatch breaks without a word.
@@ -475,7 +475,7 @@ $seam = & {
     if (Test-FunctionDefined 'Get-TrunkBranchName') { $answers.Trunk        = [string](Get-TrunkBranchName) }
     if (Test-FunctionDefined 'Get-PrMergeMethod') { $answers.MergeMethod  = [string](Get-PrMergeMethod) }
     # UNANSWERED MEANS NO LOG, and that is why this seam is not required (inbound #1382). Keeping a sync
-    # log is a repo's POLICY -- bwj-development's, for the two BWJ store repos -- while the machinery here is
+    # log is a repo's POLICY -- dkj-repo-workflow-bwj's, for the two BWJ store repos -- while the machinery here is
     # generic and reaches every Shopify consumer through a plugin update. A repo that never asked for the
     # record must not find a new file in its tree because it updated a plugin, so the default is silence.
     if (Test-FunctionDefined 'Get-ShopifySyncLogPath') { $answers.SyncLogPath  = [string](Get-ShopifySyncLogPath) }

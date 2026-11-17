@@ -252,13 +252,13 @@ $r = Invoke-Script -Dir $noNotes
 Assert-Equal 1 $r.Code 'no developer notes: exits 1 rather than writing a note with nothing in it'
 Assert-True ($r.Flat -match 'Developer notes not found') 'no developer notes: says what is missing'
 Assert-True ($r.Flat -match 'cut-release') 'no developer notes: names the script that produces them'
-Assert-True (-not (Test-Path (Join-Path $noNotes 'dkj-policy\releases\internal'))) 'no developer notes: nothing was created'
+Assert-True (-not (Test-Path (Join-Path $noNotes 'dkj-repo-workflow\releases\internal'))) 'no developer notes: nothing was created'
 Remove-Item -Recurse -Force -LiteralPath $noNotes -ErrorAction SilentlyContinue
 
 $existing = New-Fixture -Label 'existing' -NotesContent $notes
 $r = Invoke-Script -Dir $existing
 Assert-Equal 0 $r.Code 'first run: creates the skeleton'
-$intPath = Join-Path $existing 'dkj-policy\releases\internal\3.x\3.2.0.md'
+$intPath = Join-Path $existing 'dkj-repo-workflow\releases\internal\3.x\3.2.0.md'
 Assert-True (Test-Path -LiteralPath $intPath) 'first run: the note exists'
 # THE ASSERT THAT MATTERS MOST IN THIS FILE. Overwriting an edited note back to a skeleton destroys the
 # only content in the three tiers that cannot be regenerated from anything.
@@ -276,11 +276,11 @@ Write-Host "new-internal-note -- an invalid version is refused before any IO" -F
 $bad = New-Fixture -Label 'badver' -NotesContent $notes
 $r = Invoke-Script -Dir $bad -Version 'not-a-version'
 Assert-Equal 1 $r.Code 'a non X.Y.Z version exits 1'
-Assert-True (-not (Test-Path (Join-Path $bad 'dkj-policy\releases\internal'))) 'and wrote nothing'
+Assert-True (-not (Test-Path (Join-Path $bad 'dkj-repo-workflow\releases\internal'))) 'and wrote nothing'
 # A leading v is accepted: the tag form and the bare form are the same release.
 $r = Invoke-Script -Dir $bad -Version 'v3.2.0'
 Assert-Equal 0 $r.Code 'a leading v is accepted (tag form)'
-Assert-True (Test-Path (Join-Path $bad 'dkj-policy\releases\internal\3.x\3.2.0.md')) 'and lands under the bare number'
+Assert-True (Test-Path (Join-Path $bad 'dkj-repo-workflow\releases\internal\3.x\3.2.0.md')) 'and lands under the bare number'
 Remove-Item -Recurse -Force -LiteralPath $bad -ErrorAction SilentlyContinue
 
 # --- 2. The skeleton's shape ----------------------------------------------------------------------
@@ -288,7 +288,7 @@ Write-Host "new-internal-note -- the skeleton" -ForegroundColor Cyan
 $happy = New-Fixture -Label 'happy' -NotesContent $notes
 $r = Invoke-Script -Dir $happy
 Assert-Equal 0 $r.Code 'happy path: exit 0'
-$doc = [System.IO.File]::ReadAllText((Join-Path $happy 'dkj-policy\releases\internal\3.x\3.2.0.md'))
+$doc = [System.IO.File]::ReadAllText((Join-Path $happy 'dkj-repo-workflow\releases\internal\3.x\3.2.0.md'))
 Assert-True (Test-Line -Text $doc -Pattern '# Internal summary v3\.2\.0') 'the title names the version'
 Assert-True (Test-Line -Text $doc -Pattern '\*\*Date:\*\* 2026-08-03\\') 'the date is copied from the developer notes, and its line ends in a hard break'
 Assert-True (Test-Line -Text $doc -Pattern '\*\*Type:\*\* Minor\\') 'the type is copied too, with the same break'
@@ -343,7 +343,7 @@ Write-Host "new-internal-note -- notes without the metadata lines" -ForegroundCo
 $noMeta = New-Fixture -Label 'nometa' -NotesContent "# Release notes v3.2.0`n`nNo metadata lines here.`n`n### #1 $midDot A title $midDot Feat $midDot 2026-08-03`n`nBody.`n"
 $r = Invoke-Script -Dir $noMeta
 Assert-Equal 0 $r.Code 'missing metadata does not stop the run'
-$doc = [System.IO.File]::ReadAllText((Join-Path $noMeta 'dkj-policy\releases\internal\3.x\3.2.0.md'))
+$doc = [System.IO.File]::ReadAllText((Join-Path $noMeta 'dkj-repo-workflow\releases\internal\3.x\3.2.0.md'))
 Assert-True ($doc -match '\*\*Date:\*\* \(fill in\)') 'a missing date becomes a visible placeholder'
 Assert-True ($doc -match '\*\*Type:\*\* \(fill in\)') 'and so does a missing type'
 Assert-True ($r.Flat -match 'fill in the date by hand') 'and the run warns about it out loud'
@@ -360,7 +360,7 @@ Write-Host "new-internal-note -- BOTH spellings of the markdown hard break (inbo
 $hardBreak = New-Fixture -Label 'hardbreak' -NotesContent "# Release notes v3.2.0`n`n**Date:** 2026-08-03\`n**Type:** Minor\`n`n### #1 $midDot A title $midDot Feat $midDot 2026-08-03`n`nBody.`n"
 $r = Invoke-Script -Dir $hardBreak
 Assert-Equal 0 $r.Code 'a backslash hard break does not stop the run'
-$doc = [System.IO.File]::ReadAllText((Join-Path $hardBreak 'dkj-policy\releases\internal\3.x\3.2.0.md'))
+$doc = [System.IO.File]::ReadAllText((Join-Path $hardBreak 'dkj-repo-workflow\releases\internal\3.x\3.2.0.md'))
 # THE SOURCE'S BREAK MUST NOT REACH THE VALUE -- and since inbound #1101 this document ends those two
 # lines with a break of its OWN, so "no backslash anywhere on the line" is no longer the test. What the
 # regression would look like is a DOUBLE one: Get-MetaLine carries the source's '\' into the value, the
@@ -376,7 +376,7 @@ Write-Host "new-internal-note -- notes with no entries at all" -ForegroundColor 
 $noEntries = New-Fixture -Label 'noentries' -NotesContent "# Release notes v3.2.0`n`n**Date:** 2026-08-03  `n**Type:** Patch`n`nNothing structured here.`n"
 $r = Invoke-Script -Dir $noEntries
 Assert-Equal 0 $r.Code 'no entries does not stop the run'
-$doc = [System.IO.File]::ReadAllText((Join-Path $noEntries 'dkj-policy\releases\internal\3.x\3.2.0.md'))
+$doc = [System.IO.File]::ReadAllText((Join-Path $noEntries 'dkj-repo-workflow\releases\internal\3.x\3.2.0.md'))
 Assert-True ($doc -match 'no entries found') 'the list says so instead of being silently empty'
 Remove-Item -Recurse -Force -LiteralPath $noEntries -ErrorAction SilentlyContinue
 
@@ -388,8 +388,8 @@ $minorCfg = "function Get-ReleaseNotesGrouping { return 'minor' }`n"
 $perMinor = New-Fixture -Label 'perminor' -NotesDir '3.2' -NotesContent $notes -RepoConfig $minorCfg
 $r = Invoke-Script -Dir $perMinor
 Assert-Equal 0 $r.Code 'per-minor grouping: exit 0'
-Assert-True (Test-Path (Join-Path $perMinor 'dkj-policy\releases\internal\3.2\3.2.0.md')) 'per-minor grouping: the note lands in releases/internal/3.2/'
-Assert-True (-not (Test-Path (Join-Path $perMinor 'dkj-policy\releases\internal\3.x'))) 'per-minor grouping: and NOT in a 3.x folder'
+Assert-True (Test-Path (Join-Path $perMinor 'dkj-repo-workflow\releases\internal\3.2\3.2.0.md')) 'per-minor grouping: the note lands in releases/internal/3.2/'
+Assert-True (-not (Test-Path (Join-Path $perMinor 'dkj-repo-workflow\releases\internal\3.x'))) 'per-minor grouping: and NOT in a 3.x folder'
 Remove-Item -Recurse -Force -LiteralPath $perMinor -ErrorAction SilentlyContinue
 
 # --- 4. The wording seam (#410 class) -------------------------------------------------------------
@@ -407,7 +407,7 @@ function Get-InternalNoteWording {
 $translated = New-Fixture -Label 'nl' -NotesContent $notes -RepoConfig $nlCfg
 $r = Invoke-Script -Dir $translated
 Assert-Equal 0 $r.Code 'translated wording: exit 0'
-$doc = [System.IO.File]::ReadAllText((Join-Path $translated 'dkj-policy\releases\internal\3.x\3.2.0.md'))
+$doc = [System.IO.File]::ReadAllText((Join-Path $translated 'dkj-repo-workflow\releases\internal\3.x\3.2.0.md'))
 Assert-True (Test-Line -Text $doc -Pattern '# Interne samenvatting v3\.2\.0') 'the title is overridden'
 Assert-True (Test-Line -Text $doc -Pattern '\*\*Voor wie:\*\* werkgevers en management') 'the audience label AND its text are overridden'
 Assert-True (Test-Line -Text $doc -Pattern '## Wat er nu anders is') "the heading 'Wat er nu anders is' is overridden"
@@ -464,7 +464,7 @@ Body text.
 $tiered = New-Fixture -Label 'tiered' -NotesContent $tieredNotes
 $r = Invoke-Script -Dir $tiered
 Assert-Equal 0 $r.Code 'tiered notes: exit 0'
-$doc = [System.IO.File]::ReadAllText((Join-Path $tiered 'dkj-policy\releases\internal\3.x\3.2.0.md'))
+$doc = [System.IO.File]::ReadAllText((Join-Path $tiered 'dkj-repo-workflow\releases\internal\3.x\3.2.0.md'))
 Assert-True ($doc -match '- \[Feat\] A consumer-facing feature') 'tiered notes: a tier-2 entry is carried over -- the ladder is cumulative'
 Assert-True ($doc -match '- \[Fix\] A consumer-facing fix')      'tiered notes: and the second one in that tier'
 Assert-True ($doc -match '- \[Docs\] Something for colleagues')  'tiered notes: the tier-1 entry is carried over'
@@ -576,7 +576,7 @@ Chore
 $cur = New-Fixture -Label 'current-shape' -NotesContent $currentNotes -Version '3.6.0'
 $rc = Invoke-Script -Dir $cur -Version '3.6.0'
 Assert-Equal 0 $rc.Code 'current shape: exit 0'
-$curDoc = [System.IO.File]::ReadAllText((Join-Path $cur 'dkj-policy\releases\internal\3.x\3.6.0.md'))
+$curDoc = [System.IO.File]::ReadAllText((Join-Path $cur 'dkj-repo-workflow\releases\internal\3.x\3.6.0.md'))
 # The type comes from the '#### Type of change' SECTION now, not from a heading field.
 Assert-True ($curDoc -match '- \[Feat\] A consumer-facing feature') 'current shape: a tier-2 entry becomes a bullet, its type read from the Type section'
 Assert-True ($curDoc -match '- \[Fix\] A consumer-facing fix')      'current shape: and the second one in that tier'
@@ -670,7 +670,7 @@ Chore
 $flat = New-Fixture -Label 'flat-shape' -NotesContent $flatNotes -Version '3.7.0'
 $rf = Invoke-Script -Dir $flat -Version '3.7.0'
 Assert-Equal 0 $rf.Code 'flat shape: exit 0'
-$flatDoc = [System.IO.File]::ReadAllText((Join-Path $flat 'dkj-policy\releases\internal\3.x\3.7.0.md'))
+$flatDoc = [System.IO.File]::ReadAllText((Join-Path $flat 'dkj-repo-workflow\releases\internal\3.x\3.7.0.md'))
 Assert-True ($flatDoc -match '- \[Feat\] A consumer-facing feature') 'flat shape: the tier-2 entry becomes a bullet'
 Assert-True ($flatDoc -match '- \[Docs\] Something for colleagues')  'flat shape: and so does the tier-1 entry'
 Assert-True ($flatDoc -notmatch 'Repo-internal housekeeping') `
@@ -761,7 +761,7 @@ Chore
 $today = New-Fixture -Label 'today-shape' -NotesContent $todayNotes -Version '4.30.0' -NotesDir '4.x'
 $rt = Invoke-Script -Dir $today -Version '4.30.0'
 Assert-Equal 0 $rt.Code "today's shape: exit 0"
-$todayDoc = [System.IO.File]::ReadAllText((Join-Path $today 'dkj-policy\releases\internal\4.x\4.30.0.md'))
+$todayDoc = [System.IO.File]::ReadAllText((Join-Path $today 'dkj-repo-workflow\releases\internal\4.x\4.30.0.md'))
 Assert-True ($todayDoc -match '- \[Feat\] A consumer-facing feature') "today's shape: an H3 entry is still found -- the walk is level-agnostic"
 Assert-True ($todayDoc -match '- \[Docs\] Something for colleagues')  "today's shape: and so is the tier-1 one"
 Assert-True ($todayDoc -notmatch 'Repo-internal housekeeping') `
@@ -789,7 +789,7 @@ Assert-True ($noPairNotes -notmatch '\*\*(Date|Type):\*\*') 'no-pair fixture: th
 $noPair = New-Fixture -Label 'no-pair' -NotesContent $noPairNotes -Version '4.30.0' -NotesDir '4.x'
 $rn = Invoke-Script -Dir $noPair -Version '4.30.0'
 Assert-Equal 0 $rn.Code 'no pair: exit 0'
-$noPairDoc = [System.IO.File]::ReadAllText((Join-Path $noPair 'dkj-policy\releases\internal\4.x\4.30.0.md'))
+$noPairDoc = [System.IO.File]::ReadAllText((Join-Path $noPair 'dkj-repo-workflow\releases\internal\4.x\4.30.0.md'))
 Assert-True ($noPairDoc -match '\*\*Date:\*\* 2026-09-04\\') 'no pair: the date is read back out of the version heading, in ISO form'
 Assert-True ($noPairDoc -match '\*\*Type:\*\* Minor\\')      'no pair: and the type from the version number'
 Assert-True ($noPairDoc -notmatch '\(fill in\)')             'no pair: nothing is left as a placeholder'
@@ -800,7 +800,7 @@ $patchNotes = $noPairNotes -replace 'Version 4\.30\.0 \(Sep 04, 2026\)', 'Versio
 $patch = New-Fixture -Label 'no-pair-patch' -NotesContent $patchNotes -Version '4.30.2' -NotesDir '4.x'
 $rp = Invoke-Script -Dir $patch -Version '4.30.2'
 Assert-Equal 0 $rp.Code 'no pair, patch: exit 0'
-$patchDoc = [System.IO.File]::ReadAllText((Join-Path $patch 'dkj-policy\releases\internal\4.x\4.30.2.md'))
+$patchDoc = [System.IO.File]::ReadAllText((Join-Path $patch 'dkj-repo-workflow\releases\internal\4.x\4.30.2.md'))
 Assert-True ($patchDoc -match '\*\*Date:\*\* 2026-09-06\\') 'no pair, patch: the date follows the heading'
 Assert-True ($patchDoc -match '\*\*Type:\*\* Patch\\')      'no pair, patch: and a patch-shaped version reads as Patch'
 Remove-Item -Recurse -Force -LiteralPath $patch -ErrorAction SilentlyContinue
@@ -816,7 +816,7 @@ New-Item -ItemType Directory -Path (Join-Path $stated 'releases') -Force | Out-N
     $Utf8NoBom)
 $rs = Invoke-Script -Dir $stated -Version '4.30.0'
 Assert-Equal 0 $rs.Code 'stated type: exit 0'
-$statedDoc = [System.IO.File]::ReadAllText((Join-Path $stated 'dkj-policy\releases\internal\4.x\4.30.0.md'))
+$statedDoc = [System.IO.File]::ReadAllText((Join-Path $stated 'dkj-repo-workflow\releases\internal\4.x\4.30.0.md'))
 Assert-True ($statedDoc -match '\*\*Type:\*\* Patch\\') "stated type: the history row's Type wins over the version's shape"
 Remove-Item -Recurse -Force -LiteralPath $stated -ErrorAction SilentlyContinue
 
@@ -872,7 +872,7 @@ $r = Invoke-Script -Dir $allZero
 Assert-Equal 0 $r.Code 'all tier 0: exit 0 -- a thin release is not a failure'
 Assert-True ($r.Flat -match 'is tier 0') 'all tier 0: the warning says every entry was tier 0'
 Assert-True ($r.Flat -notmatch 'No entry titles found') 'all tier 0: and does NOT report it as a parse failure'
-$doc = [System.IO.File]::ReadAllText((Join-Path $allZero 'dkj-policy\releases\internal\3.x\3.2.0.md'))
+$doc = [System.IO.File]::ReadAllText((Join-Path $allZero 'dkj-repo-workflow\releases\internal\3.x\3.2.0.md'))
 Assert-True ($doc -match 'no entries found') 'all tier 0: the skeleton carries the fill-in-by-hand placeholder'
 Remove-Item -Recurse -Force -LiteralPath $allZero -ErrorAction SilentlyContinue
 
@@ -883,7 +883,7 @@ Write-Host "Untiered developer notes still carry everything" -ForegroundColor Cy
 $flat = New-Fixture -Label 'flat-still-works' -NotesContent "# Release notes v3.2.0`n`n**Date:** 2026-08-03`n**Type:** Patch`n`n## Maintenance`n`n### #1 $midDot An untiered entry $midDot Chore $midDot 2026-08-03`n`nBody.`n"
 $r = Invoke-Script -Dir $flat
 Assert-Equal 0 $r.Code 'untiered notes: exit 0'
-$doc = [System.IO.File]::ReadAllText((Join-Path $flat 'dkj-policy\releases\internal\3.x\3.2.0.md'))
+$doc = [System.IO.File]::ReadAllText((Join-Path $flat 'dkj-repo-workflow\releases\internal\3.x\3.2.0.md'))
 Assert-True ($doc -match '- \[Chore\] An untiered entry') 'untiered notes: every entry is carried over, tier filter or not'
 Remove-Item -Recurse -Force -LiteralPath $flat -ErrorAction SilentlyContinue
 

@@ -46,7 +46,7 @@ try {
     # the operator something to unpick: no branch, no document, and HEAD still where it started.
     $branchesS = ((& git -C $fixStale branch --list 'feat/cut-from-stale-v1') -join '').Trim()
     Assert-True (-not [bool]$branchesS) 'stale base: and NO branch was created -- the refusal is before the checkout'
-    $docS = Join-Path $fixStale (Join-Path 'dkj-policy' 'feat-cut-from-stale-v1.md')
+    $docS = Join-Path $fixStale (Join-Path 'dkj-repo-workflow' 'feat-cut-from-stale-v1.md')
     Assert-True (-not (Test-Path -LiteralPath $docS)) 'stale base: and no branch document was scaffolded either'
     $headS = ((& git -C $fixStale rev-parse --abbrev-ref HEAD) -join '').Trim()
     Assert-Equal 'main' $headS 'stale base: and HEAD is left exactly where the operator was standing'

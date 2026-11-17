@@ -19,7 +19,7 @@ $ErrorActionPreference = 'Stop'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $Script   = Join-Path $RepoRoot 'scripts\task\place-scheduled-tasks.ps1'
-$Shipped  = Join-Path $RepoRoot 'plugins\dkj-policy\skills\scheduled-tasks\tasks'
+$Shipped  = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\skills\scheduled-tasks\tasks'
 
 $script:pass  = 0
 $script:fail  = 0
@@ -71,7 +71,7 @@ try {
     Assert-True ($placed.StartsWith("---`nname: alpha-store1`ndescription: The alpha task.`n---`n")) 'frontmatter carries the Desktop task name and the description'
     Assert-True ($placed -notmatch 'schedule:|cron:|folder:|requires:') 'the print-only keys are not written to the placed file'
     Assert-True ($placed -match 'Do the alpha thing\.') 'the prompt body is written'
-    Assert-True ($placed -match '<!-- placed by dkj-policy scheduled-tasks: alpha -->') 'the marker names the source task'
+    Assert-True ($placed -match '<!-- placed by dkj-repo-workflow scheduled-tasks: alpha -->') 'the marker names the source task'
     Assert-True ($r.Text -match 'name:\s+alpha-store1' -and $r.Text -match 'custom cron: 7 14 \* \* 5' -and $r.Text -match "requires: the 'some-plugin' plugin") 'prints the registration: name, schedule, cron, requirement'
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $fx.Dir 'alpha'))) 'places nothing under the default name'
 
@@ -98,11 +98,11 @@ try {
 
     Write-Host 'Case 5: an orphan marker and an unmarked task are left untouched'
     $orphan = Join-Path $fx.Dir 'gone-task'; New-Item -ItemType Directory -Path $orphan -Force | Out-Null
-    $orphanText = "---`nname: gone-task`ndescription: x`n---`n`nold`n`n<!-- placed by dkj-policy scheduled-tasks: gone -->`n"
+    $orphanText = "---`nname: gone-task`ndescription: x`n---`n`nold`n`n<!-- placed by dkj-repo-workflow scheduled-tasks: gone -->`n"
     [System.IO.File]::WriteAllText((Join-Path $orphan 'SKILL.md'), $orphanText, $Utf8)
     $own = Join-Path $fx.Dir 'my-own-task'; New-Item -ItemType Directory -Path $own -Force | Out-Null
     # It even quotes the marker mid-file -- only a marker on the last line makes a copy ours.
-    $ownText = "---`nname: my-own-task`ndescription: mine`n---`n`nDo the alpha thing differently.`n<!-- placed by dkj-policy scheduled-tasks: alpha -->`nMy own last line.`n"
+    $ownText = "---`nname: my-own-task`ndescription: mine`n---`n`nDo the alpha thing differently.`n<!-- placed by dkj-repo-workflow scheduled-tasks: alpha -->`nMy own last line.`n"
     [System.IO.File]::WriteAllText((Join-Path $own 'SKILL.md'), $ownText, $Utf8)
     $r = Invoke-Place $fx @('-Apply')
     Assert-True ($r.Text -match 'orphan\s+gone-task') 'the orphan is reported'
@@ -137,7 +137,7 @@ try {
     # The default -TasksRoot ascends two levels, which is the repo root in the source copy and the
     # plugin root in the mirror (check mirror-depth). Each copy is run without -TasksRoot.
     $fx = New-Fixture 'depth'
-    $Mirror = Join-Path $RepoRoot 'plugins\dkj-policy\scripts\task\place-scheduled-tasks.ps1'
+    $Mirror = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\task\place-scheduled-tasks.ps1'
     $shippedNames = @(Get-ChildItem -LiteralPath $Shipped -Filter '*.md' -File | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_.Name) })
     foreach ($copy in @(@{ Label = 'the source copy'; Path = $Script }, @{ Label = 'the plugin mirror'; Path = $Mirror })) {
         Assert-True (Test-Path -LiteralPath $copy.Path -PathType Leaf) "$($copy.Label) exists"

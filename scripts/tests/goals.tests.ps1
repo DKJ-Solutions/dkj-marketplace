@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/apps/admin/lib/goals-lib.ps1 -- the Goals page and the plan-goal skill (#3816): the query,
+    Tests for plugins/dkj-repo-workflow/apps/admin/lib/goals-lib.ps1 -- the Goals page and the plan-goal skill (#3816): the query,
     the model read from GitHub's answer, the step to take Now and the ones Next, the "what now?" text, the plan a
     breakdown is filed from, and the page itself.
 
@@ -9,8 +9,8 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1')
-. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\goals-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\general-pages-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\goals-lib.ps1')
 
 $script:pass = 0
 $script:fail = 0
@@ -155,7 +155,7 @@ $pgSavedPath = $env:PATH
 try {
     $env:PATH = "$pgBin;$env:PATH"
     $env:PG_GH_LOG = $pgLog
-    $pgOut = (& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\pages\plan-goal.ps1') -PlanFile $pgPlan -Apply -Repo 'o/n' 2>&1 | Out-String)
+    $pgOut = (& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\pages\plan-goal.ps1') -PlanFile $pgPlan -Apply -Repo 'o/n' 2>&1 | Out-String)
     $pgExit = $LASTEXITCODE
 } finally {
     $env:PATH = $pgSavedPath

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for scripts/lib/closeout-gate-lib.ps1 and plugins/dkj-policy/hooks/closeout-gate.ps1 -- the
+    Tests for scripts/lib/closeout-gate-lib.ps1 and plugins/dkj-repo-workflow/hooks/closeout-gate.ps1 -- the
     close-out gate (issue #2050): the band, the marker, the verdict, and the hook that acts on them.
 
 .DESCRIPTION
@@ -32,7 +32,7 @@ $ErrorActionPreference = 'Stop'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $LibPath  = Join-Path $RepoRoot 'scripts\lib\closeout-gate-lib.ps1'
-$HookPath = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\closeout-gate.ps1'
+$HookPath = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\closeout-gate.ps1'
 
 $script:pass = 0
 $script:fail = 0
@@ -233,7 +233,7 @@ Assert-True (-not ($hookRaw -cmatch '[^\x00-\x7F]')) 'closeout-gate.ps1 is pure 
 
 # The hook is only a hook once hooks.json says so -- the same "defined but never called" trap
 # closeout-lib.tests.ps1 answers one layer down.
-$hooksJson = Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\hooks\hooks.json') -Raw
+$hooksJson = Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\hooks.json') -Raw
 Assert-True ($hooksJson -match 'closeout-gate\.ps1') 'the hook is registered in hooks.json'
 # -match over a COLLECTION filters rather than tests, so it hands back the matching commands and not a
 # bool. Counted instead, which also says how many Stop hooks name it -- one.
@@ -247,7 +247,7 @@ Assert-True ($closeoutLib -match 'closeout-gate-lib\.ps1') '...through a dot-sou
 Assert-True ($closeoutLib -match 'Test-Path -LiteralPath \$closeoutGateLib') '...and that dot-source is guarded, so an older mirror does not crash on load'
 
 Assert-True ((Get-Content -LiteralPath (Join-Path $RepoRoot 'scripts\lib\shared-scripts-lib.ps1') -Raw) -match 'closeout-gate-lib') 'closeout-gate-lib is registered as a shared script'
-Assert-True (Test-Path -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\scripts\lib\closeout-gate-lib.ps1')) '...and its plugin mirror is present'
+Assert-True (Test-Path -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\lib\closeout-gate-lib.ps1')) '...and its plugin mirror is present'
 Assert-True ((Get-Content -LiteralPath (Join-Path $RepoRoot 'scripts\lib\script-contract-lib.ps1') -Raw) -match 'Get-CloseOutGateBand') 'the seam is declared in the script contract'
 
 } finally {

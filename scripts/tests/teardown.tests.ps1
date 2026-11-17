@@ -71,7 +71,7 @@ function New-BootstrappedConsumer {
         if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
         New-Item -ItemType Directory -Path (Join-Path $Fixture '.claude') -Force | Out-Null
         [System.IO.File]::WriteAllText((Join-Path $Fixture '.claude\settings.json'),
-            '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }')
+            '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-repo-workflow@dkj-marketplace": true } }')
         $md = @('# CLAUDE.md - my own project', '', '## Conventions', '', '- Feature work goes on a branch.') + $ExtraClaudeMdLines
         [System.IO.File]::WriteAllLines((Join-Path $Fixture 'CLAUDE.md'), $md)
         $prevPlugin = $env:CLAUDE_PLUGIN_ROOT
@@ -519,7 +519,7 @@ function Get-LintScript { return `$script:LintScript }
     New-BootstrappedConsumer | Out-Null
     $pluginPayload = Join-Path $Plugin 'scripts'
     # RETARGETED AUGUST 8, 2026, and the two roles had to swap files. Since the branch/release scripts
-    # moved to dkj-policy, this plugin's payload is check-roster-sync.ps1 plus the
+    # moved to dkj-repo-workflow, this plugin's payload is check-roster-sync.ps1 plus the
     # lib it dot-sources -- so the collision case and the copied-correctly case can no longer share one
     # file. The operational script is now the wrapper's address, and the lib carries the copy assertions.
     $wrapper = Join-Path $Fixture 'scripts\sync\check-roster-sync.ps1'
@@ -543,7 +543,7 @@ function Get-LintScript { return `$script:LintScript }
     # scripts reach their siblings $PSScriptRoot-relative.
     Assert-True ($vendoredLib -like '*\scripts\lib\*') 'vendor: the tree structure the dot-sources depend on is preserved'
     # The cap is stated, not silent: a run listing four files must not read as "that was all of it".
-    Assert-True ($r.Out -match 'dkj-policy') 'vendor: names the pack whose scripts this run does NOT cover'
+    Assert-True ($r.Out -match 'dkj-repo-workflow') 'vendor: names the pack whose scripts this run does NOT cover'
     # THE SAFETY PROPERTY, same family as "an authored lens is kept".
     Assert-Equal $wrapperBefore ([System.IO.File]::ReadAllText($wrapper, [System.Text.Encoding]::UTF8)) "vendor: the consumer's own wrapper is NOT overwritten"
     Assert-True ($r.Out -match 'yours, not overwritten') 'vendor: the collision is reported, not silent'
@@ -698,7 +698,7 @@ function Get-LintScript { return `$script:LintScript }
     New-Item -ItemType Directory -Path (Join-Path $Fixture '.claude') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'scripts\lib') -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $Fixture '.claude\settings.json'),
-        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }')
+        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-repo-workflow@dkj-marketplace": true } }')
     # The consumer's OWN CLAUDE.md, which is also what triggers the report path that used to be broken:
     # this block only runs when a CLAUDE.md exists and does not yet carry the guard import.
     [System.IO.File]::WriteAllLines((Join-Path $Fixture 'CLAUDE.md'), @(
@@ -867,7 +867,7 @@ function Get-LintScript { return `$script:LintScript }
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
     New-Item -ItemType Directory -Path (Join-Path $Fixture '.claude') -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $Fixture '.claude\settings.json'),
-        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-policy@dkj-marketplace": true } }')
+        '{ "enabledPlugins": { "dkj-subagents-alpha@dkj-marketplace": true, "dkj-repo-workflow@dkj-marketplace": true } }')
     # Deliberately NO CLAUDE.md. That is the whole fixture.
     $prevPlugin = $env:CLAUDE_PLUGIN_ROOT
     $env:CLAUDE_PLUGIN_ROOT = $Plugin
@@ -899,7 +899,7 @@ function Get-LintScript { return `$script:LintScript }
         "September 23's first-pass second line -- 'add only facts' -- is in Legacy too"
 
     # THE NEW ROOT-PROSE GATE AGREES WITH THE SCAFFOLD IT JUDGES (#2374's second half, consumer-check-lib.ps1
-    # in the dkj-policy mirror): a freshly bootstrapped CLAUDE.md must read as imports-only under the same
+    # in the dkj-repo-workflow mirror): a freshly bootstrapped CLAUDE.md must read as imports-only under the same
     # gate check-consumer-prose.ps1 runs at session start, or the writer and the gate have drifted apart.
     #
     # THROUGH THE GATE SCRIPT, NOT THE RAW DETECTOR. Get-RootClaudeMdProseLines alone has no opinion about
@@ -974,7 +974,7 @@ function Get-LintScript { return `$script:LintScript }
     # said yes to a preview, applied it, and is told the repo stands free of the plugin while the
     # directory is still there.
     #
-    # THE FIXTURE IS THE COMMON CASE RATHER THAN A CONTRIVED ONE. Since #2186 a repo running dkj-policy
+    # THE FIXTURE IS THE COMMON CASE RATHER THAN A CONTRIVED ONE. Since #2186 a repo running dkj-repo-workflow
     # keeps its always-on baseline at .claude/specialists/always-on-baseline.json -- inside the seam
     # directory, placed by a different plugin -- so this arm is taken on every teardown in such a repo.
     # Before that it was close to unreachable, which is why the defect survived thirteen test rounds.

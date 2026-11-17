@@ -39,10 +39,10 @@
     change one, run the other.
 #>
 
-# The plugins' page parts: dkj-policy's shared head and escape, and dkj-solutions' product layout -- the site header and the
-# breadcrumb bar (#3831). This repo is their source, so they are read from its own tree, dkj-policy's first.
-. (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1')
-. (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\extensions\dkj-solutions\scripts\lib\product-pages-lib.ps1')
+# The plugins' page parts: dkj-repo-workflow's shared head and escape, and dkj-repo-workflow-dkj' product layout -- the site header and the
+# breadcrumb bar (#3831). This repo is their source, so they are read from its own tree, dkj-repo-workflow's first.
+. (Join-Path $PSScriptRoot '..\..\plugins\dkj-repo-workflow\apps\admin\lib\general-pages-lib.ps1')
+. (Join-Path $PSScriptRoot '..\..\plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\scripts\lib\product-pages-lib.ps1')
 
 function Get-ProductPages {
     <#
@@ -54,13 +54,13 @@ function Get-ProductPages {
         header's menu (Get-ProductMenu).
         Items are the sub-pages the home page lists under a page on a phone (Format-ProductHomeHtml), each
         @{ Href; Label }: the owner groups under Consumers, and under Plugins its two top-level entries -- the
-        dkj-subagents teams' group and dkj-policy, which carries the add-ons -- as /plugins lists them.
+        dkj-subagents teams' group and dkj-repo-workflow, which carries the add-ons -- as /plugins lists them.
     #>
     $groups = @(Get-DashboardOwnerGroups | ForEach-Object { @{ Href = '/consumers/' + $_.Key; Label = $_.Label } })
     @(
         @{ Href = '/consumers';  Label = 'Consumers';   Sub = 'Every repo that installs plugins from this marketplace, registered under consumers/ and checked by check-consumers.ps1 on this machine'; Icon = 'consumers'; Items = $groups }
         @{ Href = '/plugins';     Label = 'Plugins'; Sub = 'Every plugin this marketplace ships, its version and what it holds'; Icon = 'marketplace'
-            Items = @(@{ Href = '/plugins/dkj-subagents'; Label = 'dkj-subagents' }, @{ Href = '/plugins/dkj-policy'; Label = 'dkj-policy' }) }
+            Items = @(@{ Href = '/plugins/dkj-subagents'; Label = 'dkj-subagents' }, @{ Href = '/plugins/dkj-repo-workflow'; Label = 'dkj-repo-workflow' }) }
         # The ten opportunities a comparison of the Claude Code docs against this repo found, one page each (#3906).
         @{ Href = '/docs-coverage'; Label = 'Docs coverage'; Sub = 'Every Claude Code docs page and how this repo stands to it'; Icon = 'claude' }
         # The product's own Settings, last as on Admin (Maikel, November 4, 2026): its theme. No width, which is full
@@ -310,8 +310,8 @@ function Get-ConsumerOwnerGroup {
     param([AllowNull()][AllowEmptyString()][string]$Repo)
     $owner = if ($Repo -and $Repo.Contains('/')) { $Repo.Split('/')[0].ToLowerInvariant() } else { '' }
     switch ($owner) {
-        'bwj-development' { return 'bwj' }
-        'dkj-solutions'   { return 'dkj' }
+        'dkj-repo-workflow-bwj' { return 'bwj' }
+        'dkj-repo-workflow-dkj'   { return 'dkj' }
         default           { return 'other' }
     }
 }

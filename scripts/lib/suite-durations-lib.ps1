@@ -12,7 +12,7 @@
     test-suite-gate.tests.ps1 prints a table over its own fixtures that a naive grep mixes in -- so it
     moved here rather than being copied into a second script.
 
-    IT TRAVELS WITH record-suite-durations.ps1 (issue #3474), which ships in dkj-policy so a consumer
+    IT TRAVELS WITH record-suite-durations.ps1 (issue #3474), which ships in dkj-repo-workflow so a consumer
     can write its own suite-durations.json. Until then this lib was repo-only, on the ground that both
     callers read this repo's CI shape -- true of measure-suites.ps1, which reads the sharded
     `suites (<n>)` jobs and stays repo-local, and never of the row parser, which reads the table

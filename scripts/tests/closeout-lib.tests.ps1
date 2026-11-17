@@ -402,7 +402,7 @@ Assert-True (-not ($raw -cmatch '[^\x00-\x7F]')) 'closeout-lib.ps1 is pure ASCII
 # Mirrored, so a consumer meets the same shape this repo does. shared-scripts.tests.ps1 owns the
 # byte-identity assert; this one is only that the registration exists at all.
 Assert-True ((Get-Content -LiteralPath (Join-Path $RepoRoot 'scripts\lib\shared-scripts-lib.ps1') -Raw) -match "closeout-lib") 'closeout-lib is registered as a shared script'
-Assert-True (Test-Path -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\scripts\lib\closeout-lib.ps1')) '...and its plugin mirror is present'
+Assert-True (Test-Path -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\lib\closeout-lib.ps1')) '...and its plugin mirror is present'
 
 Write-Host ''
 Write-Host "Result: $script:pass pass, $script:fail fail." -ForegroundColor $(if ($script:fail -eq 0) { 'Green' } else { 'Red' })

@@ -155,17 +155,18 @@ if (Test-IsWorkflowSourceRepo -RepoRoot $repoRoot) {
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 $nl = "`n"
 
-# THE MOVE TO '.dkj/dkj-policy/' (#3870, November 7, 2026). A repo adopted before that day keeps its
-# folder under an older name, and every shared script still reads it there (Get-WorkflowFolderName walks
-# the old names), so nothing breaks while it stays. This run is where it moves: one 'git mv' of the whole
+# THE MOVE TO '.dkj/dkj-repo-workflow/' (#4209, November 17, 2026; '.dkj/dkj-policy/' since #3870). A repo
+# adopted before that day keeps its folder under an older name, and since #4209's hard cut NO shared script
+# reads it there any more (Find-LegacyWorkflowFolder is read by this move alone), so its gates find no
+# branch document until it has moved. This run is where it moves: one 'git mv' of the whole
 # folder, history and all, so the changelog, the release roots and any open branch document travel
 # together and no reader ever sees half of them in each place. Only where the new folder does not exist
 # yet -- a repo holding both is mid-move by hand, and moving onto it would merge two trees nobody has
 # compared. A dry run says what it would move and moves nothing, like every other step here.
 $currentFolderName = @(Get-WorkflowFolderNames)[0]
-$foundFolderName   = Get-WorkflowFolderName -RepoRoot $repoRoot
+$foundFolderName   = Find-LegacyWorkflowFolder -RepoRoot $repoRoot
 $currentFolderAbs  = Join-Path $repoRoot ($currentFolderName -replace '/', '\')
-if ($foundFolderName -ne $currentFolderName -and -not (Test-Path -LiteralPath $currentFolderAbs)) {
+if ($foundFolderName -and -not (Test-Path -LiteralPath $currentFolderAbs)) {
     $legacyAbs = Join-Path $repoRoot ($foundFolderName -replace '/', '\')
     if ($Apply) {
         $parentAbs = Split-Path -Path $currentFolderAbs -Parent
@@ -180,16 +181,16 @@ if ($foundFolderName -ne $currentFolderName -and -not (Test-Path -LiteralPath $c
         } else {
             Move-Item -LiteralPath $legacyAbs -Destination $currentFolderAbs
         }
-        Write-Host "  [moved]   $foundFolderName/ -> $currentFolderName/ (#3870): commit the move on a branch." -ForegroundColor Green
+        Write-Host "  [moved]   $foundFolderName/ -> $currentFolderName/ (#4209): commit the move on a branch." -ForegroundColor Green
     } else {
-        Write-Host "  [move]    $foundFolderName/ -> $currentFolderName/ (#3870) -- re-run with -Apply to move it." -ForegroundColor Yellow
+        Write-Host "  [move]    $foundFolderName/ -> $currentFolderName/ (#4209) -- re-run with -Apply to move it." -ForegroundColor Yellow
     }
     # AND THE PATHS THAT NAME IT MOVE WITH IT. A consumer that adopted the config states its seam answers
     # as literals -- $script:ChangelogPath = 'dkj-policy/CHANGELOG.md' -- copied from the source's own
     # answers, and a .gitignore line names the folder's generated pages. Moving the folder and leaving those
     # would point the fold at a changelog that is no longer there, so the same run repoints them: in
-    # repo-config.ps1 only a QUOTED path that starts with the old folder ('dkj-policy/...' or
-    # "dkj-policy/..."), and in .gitignore only a line that starts with it. Prose that merely mentions the
+    # repo-config.ps1 only a QUOTED path that starts with the old folder ('.dkj/dkj-policy/...' or
+    # ".dkj/dkj-policy/..."), and in .gitignore only a line that starts with it. Prose that merely mentions the
     # folder is left alone, because it is history rather than an address.
     $oldEsc = [regex]::Escape($foundFolderName)
     $rewrites = @(
@@ -253,7 +254,7 @@ if ($foundFolderName -ne $currentFolderName -and -not (Test-Path -LiteralPath $c
     if ($Apply) {
         # Read the folder and the repointed seams again, so everything below this point scaffolds into the
         # moved folder and names the paths the fold will actually use.
-        $foundFolderName = Get-WorkflowFolderName -RepoRoot $repoRoot
+        $foundFolderName = $currentFolderName
         if (Test-Path -LiteralPath $repoConfig -PathType Leaf) {
             try { . $repoConfig } catch { Write-Warning "scripts/repo-config.ps1 failed to reload ($(Format-SafeProseToken -Value $_.Exception.Message))." }
         }
@@ -343,7 +344,7 @@ $noteRootRelPath = ($noteRootRelPath -replace '\\', '/').TrimEnd('/')
 #
 # AND THAT IS HALF THE TRADE. The paragraph above weighs the ENTRY's path moving; it never weighed the
 # SCRIPT's own path moving, which is what happened -- plugins/workflows/contributing-davekjohn/ became
-# plugins/dkj-policy/, and every consumer scaffolded before the move kept naming the old path. Tracking
+# plugins/dkj-repo-workflow/, and every consumer scaffolded before the move kept naming the old path. Tracking
 # the tip protects a consumer from a stale convention and exposes them to a moved script. Measured
 # September 10, 2026 (#1805): two consumers red on every pull request, unnoticed because neither had
 # opened one since the September 5 move. (The report said August 3 and five weeks; the path they name
@@ -491,13 +492,13 @@ $changelogIntro = @(Get-ChangelogHeadLines)
 # In the released mirror, scripts/task/ sits under the plugin root and '..\..\templates' is the shipped
 # folder. In the source tree the same bytes also sit at the repo's own scripts/task/, where that path
 # points at a <repo>/templates that does not exist and the reference is one level deeper, under
-# plugins/dkj-policy/. Both hang off $PSScriptRoot and NEITHER off $repoRoot, which is the consuming
+# plugins/dkj-repo-workflow/. Both hang off $PSScriptRoot and NEITHER off $repoRoot, which is the consuming
 # repo being scaffolded -- a tree that by definition does not ship this plugin. Getting that wrong is
 # not a silent miss: the fallback simply never fires and the template is never placed, which is how
 # this pair was measured rather than reasoned.
 $prTemplateRef = @(
     (Join-Path $PSScriptRoot '..\..\templates\pull_request_template.md'),
-    (Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\templates\pull_request_template.md')
+    (Join-Path $PSScriptRoot '..\..\plugins\dkj-repo-workflow\templates\pull_request_template.md')
 ) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
 
 $prTemplateTargets = @()
@@ -510,7 +511,7 @@ if ($prTemplateRef) {
     # already broken, which is exactly the reader who cannot afford to be told half of what was tried.
     Write-Warning ("The shipped PR template reference could not be found -- .github/pull_request_template.md is not placed by this run.`n" +
         "  Looked for: $(Join-Path $PSScriptRoot '..\..\templates\pull_request_template.md')`n" +
-        "         and: $(Join-Path $PSScriptRoot '..\..\plugins\dkj-policy\templates\pull_request_template.md')`n" +
+        "         and: $(Join-Path $PSScriptRoot '..\..\plugins\dkj-repo-workflow\templates\pull_request_template.md')`n" +
         '  Everything else below is unaffected. Copy it by hand from the plugin''s templates/ folder, or open-pr builds PR bodies with no description at all.')
 }
 
@@ -692,7 +693,7 @@ if ($writeNoteRootSeam) {
 # file CLAUDE.md imports.
 #
 # THE WRITE ITSELF IS Add-ClaudeMdImportLine (claude-md-import-lib.ps1, #2532), shared with
-# bwj-development's adopt-extension-import.ps1 so the two adoptions cannot drift apart. It scans CLAUDE.md
+# dkj-repo-workflow-bwj's adopt-extension-import.ps1 so the two adoptions cannot drift apart. It scans CLAUDE.md
 # fence-aware (a line quoted in an example is neither "already there" nor a place to insert), inserts the
 # line directly above the first '@'-import -- the constitution names its own import first and a companion
 # extension on the line below it -- appends it when there is no import, and creates CLAUDE.md holding
@@ -707,12 +708,12 @@ $constitutionElsewhere = (Test-Path -LiteralPath $claudeMdPath -PathType Leaf) -
 # A LINE UNDER A RETIRED MARKETPLACE NAME IS REWRITTEN, like a retired extension line (#3883): it names a
 # clone that is gone, so it loads nothing, and Test-ConstitutionImported does not count it either.
 $constitutionAction = Add-ClaudeMdImportLine -Path $claudeMdPath -Root $repoRoot -Line $constitutionLine `
-    -ImportedPattern '^\s*@\S*/plugins/dkj-policy/CLAUDE\.md\s*$' `
+    -ImportedPattern '^\s*@\S*/plugins/dkj-repo-workflow/CLAUDE\.md\s*$' `
     -ReplacePattern (Get-RetiredConstitutionImportPattern) `
     -ImportedElsewhere:$constitutionElsewhere -Apply:$Apply
 
 switch ($constitutionAction) {
-    'kept'   { Write-Host '  [keep]     CLAUDE.md already imports the dkj-policy constitution -- left as it is' -ForegroundColor DarkGray }
+    'kept'   { Write-Host '  [keep]     CLAUDE.md already imports the dkj-repo-workflow constitution -- left as it is' -ForegroundColor DarkGray }
     'refused' { Write-Host "  [refused]  CLAUDE.md is a symlink or junction, so the constitution import was NOT written -- add it by hand: $constitutionLine" -ForegroundColor Yellow }
     'replace' { $verb = if ($Apply) { '[renamed]' } else { '[rename] ' }
                 Write-Host "  $verb  the constitution import in CLAUDE.md named a retired marketplace (#3883) -- now: $constitutionLine" -ForegroundColor Green }
@@ -725,11 +726,11 @@ switch ($constitutionAction) {
 }
 
 # --- The extension imports in CLAUDE.md (issue #2697) ----------------------------------------------
-# EVERY dkj-policy EXTENSION THIS REPO ENABLES gets its line too, directly below the constitution. An
-# extension (bwj-development, dkj-solutions, ...) is one more CLAUDE.md of rules, and dkj-solutions
+# EVERY dkj-repo-workflow EXTENSION THIS REPO ENABLES gets its line too, directly below the constitution. An
+# extension (dkj-repo-workflow-bwj, dkj-repo-workflow-dkj, ...) is one more CLAUDE.md of rules, and dkj-repo-workflow-dkj
 # ships no script at all -- so before this, its README asked for the line by hand and nothing wrote it.
 # The set is derived from the repo's OWN enables (RepoEnabledIds), the same reading check-consumer-prose
-# warns on, so the writer and the warning cannot disagree about which lines are owed. bwj-development's own
+# warns on, so the writer and the warning cannot disagree about which lines are owed. dkj-repo-workflow-bwj's own
 # adopt-extension-import.ps1 stays: both call Add-ClaudeMdImportLine, so whichever runs second keeps.
 $enabledExtensions = @()
 try {
@@ -741,7 +742,7 @@ foreach ($ext in $enabledExtensions) {
         (Test-ExtensionImported -Extension $ext -Documents @(Get-CheckProseCorpus -RepoRoot $repoRoot))
     $extAction = Add-ClaudeMdImportLine -Path $claudeMdPath -Root $repoRoot -Line $extLine `
         -ImportedPattern (Get-ExtensionImportPattern -Extension $ext) `
-        -AfterPattern '^\s*@\S*/plugins/dkj-policy/CLAUDE\.md\s*$' `
+        -AfterPattern '^\s*@\S*/plugins/dkj-repo-workflow/CLAUDE\.md\s*$' `
         -ReplacePattern (Get-RetiredExtensionImportPattern -Extension $ext) `
         -ImportedElsewhere:$extElsewhere -Apply:$Apply
     switch ($extAction) {

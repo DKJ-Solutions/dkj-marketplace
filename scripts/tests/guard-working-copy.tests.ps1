@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/hooks/guard-working-copy.ps1 -- the PreToolUse hook that refuses a
+    Tests for plugins/dkj-repo-workflow/hooks/guard-working-copy.ps1 -- the PreToolUse hook that refuses a
     dispatched subagent the git commands which discard the dispatching session's working copy.
 
 .DESCRIPTION
@@ -40,7 +40,7 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Guard    = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\guard-working-copy.ps1'
+$Guard    = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\guard-working-copy.ps1'
 # Fixture paths carry $PID: the test gate is a throttled PARALLEL scheduler, so two runs at one fixed
 # temp path tear down each other's tree mid-assert.
 $Fixture  = Join-Path ([System.IO.Path]::GetTempPath()) "guard-working-copy-$PID-$([guid]::NewGuid().ToString('n'))"

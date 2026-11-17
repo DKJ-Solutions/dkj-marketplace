@@ -445,7 +445,7 @@ function Get-PreviewPathRefusal {
        404s, and that URL is what the handover carries (inbound #3355, measured in a consumer on
        2026-10-23). A drive letter is the mangling's own fingerprint and cannot occur in a storefront
        path, so that is what is tested -- not a missing leading slash, which is a documented convenience.
-       bwj-development's market-urls lib refuses the same shape; that plugin is not reachable from here,
+       dkj-repo-workflow-bwj's market-urls lib refuses the same shape; that plugin is not reachable from here,
        so the one-line test is written out rather than depended on.
 
        Called BEFORE any CLI call, so a refused path costs nothing: refusing after the push would waste
@@ -507,7 +507,7 @@ function Get-PreviewHandoverNote {
 
        AND IT STAYS GENERIC, naming no repo and no workflow. What is true in every multi-market Shopify
        repo is that a wrapped column of 90-character URLs is not a handover and that the reviewer is on a
-       phone. What the handover IS instead is a house rule -- BWJ states it in bwj-development's
+       phone. What the handover IS instead is a house rule -- BWJ states it in dkj-repo-workflow-bwj's
        PREVIEW-HANDOVER-portable.md -- so this points at whatever the repo's own workflow says rather than
        at a page most consumers do not have.
 

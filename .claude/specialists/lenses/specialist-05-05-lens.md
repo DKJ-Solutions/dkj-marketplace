@@ -27,7 +27,7 @@ Every change starts with the right branch — this is Derek's canonical explanat
 **Step 1 — check the branch before you touch a single file.** Run `git status` + `git branch`.
 Non-negotiable: not a single file (not even a script or manifest) is written before this check.
 - **On `main`** → create the right branch first, then make changes. Never commit directly on `main`
-  (except the fold exception in [the safety rules](../../../plugins/dkj-policy/CLAUDE.md#safety-rules)).
+  (except the fold exception in [the safety rules](../../../plugins/dkj-repo-workflow/CLAUDE.md#safety-rules)).
 - **On a feature branch** → continue on that branch.
 
 **Step 2 — classify the work and name the branch.** Choose the prefix by type of work. The canonical
@@ -76,7 +76,7 @@ carries the type.
 
 Creating the branch and creating its changelog entry file are no longer two separate manual steps —
 **a branch is never entry-less.** `new-branch.ps1` checks out the branch (idempotently — running it
-again on an existing branch simply resumes it) and writes `.dkj/dkj-policy/<branch>.md` in the
+again on an existing branch simply resumes it) and writes `.dkj/dkj-repo-workflow/<branch>.md` in the
 same run — one document holding both jobs: the step phases, and the `### DEPLOY:` section that is the entry.
 It uses the name **exactly as given** — it does not complete a `-v<N>` suffix (see above), so a caller
 wrapping it for a branch whose name it does not own gets that name. **One script since August 7, 2026** —
@@ -92,7 +92,7 @@ two exceptions in [Opening a pull request](#opening-a-pull-request) below.
 
 **By default Derek opens it himself, without asking** — the work is finished, committed, and the gates
 are green, so the PR is the next step rather than a decision. The test is the one in
-[the safety rules](../../../plugins/dkj-policy/CLAUDE.md#never-directly-on-the-trunk--via-branch--pr): *does
+[the safety rules](../../../plugins/dkj-repo-workflow/CLAUDE.md#never-directly-on-the-trunk--via-branch--pr): *does
 the owner's own look add something the gates cannot?* Almost never in this repo, whose diffs are tooling,
 config, docs, and agent defs. He **stops and reports instead** for a **visible result** (a frontend,
 styling, rendered output, an Admin page — no gate proves that something looks right) or for
@@ -113,7 +113,7 @@ table above).
 [#506](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/506) +
 [#505](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/505)). The PR is called
 `<branch-type>: <the entry's Branch title>`, so the prefix mirrors the branch type by construction and the
-words are the ones already in the DEPLOY section of `.dkj/dkj-policy/<branch>.md`. `-Title` is still accepted and ignored, with a
+words are the ones already in the DEPLOY section of `.dkj/dkj-repo-workflow/<branch>.md`. `-Title` is still accepted and ignored, with a
 warning naming the title the entry gives.
 
 **That rule used to live in this very paragraph, and was violated five PRs in a row.** It read "the title
@@ -160,7 +160,7 @@ started.
 
 **The PR body fills itself in** via `open-pr.ps1` — simply leave out `-Body`. The script ticks the
 right "Type of change" box (from the branch prefix), fills "What does this change do?" with the
-description from the changelog entry (the DEPLOY section of `.dkj/dkj-policy/<branch>.md`), and ticks the two checklist items
+description from the changelog entry (the DEPLOY section of `.dkj/dkj-repo-workflow/<branch>.md`), and ticks the two checklist items
 it can honestly verify ("Changelog entry written" + "Requested by Dave"). The first is judged on the file
 actually **holding** an entry, not on its existing — a branch cut before August 23, 2026 carries the trunk's
 old empty copy, so a self-ticking box keyed on existence would tick for a branch that wrote nothing. Only
@@ -221,7 +221,7 @@ folding onto a trunk it was never tested against.
 
 **Two PRs cannot merge at the same time, and `CHANGELOG.md` is why.** Every branch's fold writes into the
 same file at the same place — the top of `## [Unreleased]` in
-[`.dkj/dkj-policy/CHANGELOG.md`](../../../.dkj/dkj-policy/CHANGELOG.md), newest to oldest — and it writes there
+[`.dkj/dkj-repo-workflow/CHANGELOG.md`](../../../.dkj/dkj-repo-workflow/CHANGELOG.md), newest to oldest — and it writes there
 *after* the merge, on `main`. Two folds racing each other break in the gap between the merge and the
 fold, which is the state nothing reports: the PR is already merged, the entry has not landed, and every
 gate stays green until a release trips over it.
@@ -349,7 +349,7 @@ revert PR away. The two kinds of change that stop and wait for the owner's word 
 that has to be judged by eye, and work that is **irreversible or outward-facing** (a release, a version
 bump, a tag, repo settings, or publishing beyond the normal PR flow) — are stated in
 [Opening a pull request](#opening-a-pull-request) above and in
-[the safety rules](../../../plugins/dkj-policy/CLAUDE.md#never-directly-on-the-trunk--via-branch--pr).
+[the safety rules](../../../plugins/dkj-repo-workflow/CLAUDE.md#never-directly-on-the-trunk--via-branch--pr).
 
 **The merge waits on one CI check and only one — and it is not the job either gate runs in.** Both gates
 run as CI in [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml) — on every PR and every push
@@ -376,7 +376,7 @@ which at 73 merged PRs in a week is **9h 45m** of session time (the same figure 
 **The condition is not optional, because step 5 checks out `main` in this tree.** So the next move after
 backgrounding a ship is either a **lane** — `worktree-lane.ps1 -Name`, the worktree is where you build
 and the primary checkout is where you ship, see
-[the `worktree-lane` skill](../../../plugins/dkj-policy/skills/worktree-lane/SKILL.md) — or nothing at
+[the `worktree-lane` skill](../../../plugins/dkj-repo-workflow/skills/worktree-lane/SKILL.md) — or nothing at
 all. A close-out that reads *"PR #N opened, shipping in the background"* is a finished assignment, not an
 open point. Anything else started in the primary gets `HEAD` pulled out from under it mid-branch, which
 is the hazard the step-list gate and the DEPLOY lock (both
@@ -388,7 +388,7 @@ the ship — `open-pr`'s lint and test gates — is the one step that reads the 
 minute or more, and a second command in the same checkout during that minute moves it under them:
 `new-branch.ps1` cutting a branch, `worktree-lane.ps1` moving the tree. Measured on
 [PR #1144](https://github.com/DKJ-Solutions/dkj-claude-plugins/pull/1144): one suite of 55 red inside the
-gate, green standalone on the same commit seconds later, because `.dkj/dkj-policy/<branch>.md` exists on the
+gate, green standalone on the same commit seconds later, because `.dkj/dkj-repo-workflow/<branch>.md` exists on the
 branch and not on the trunk and the suite walks every `*.md` under that folder. **No gate refuses this** —
 `open-pr` reports it instead: a red whose tree moved says it is not trustworthy, and a green whose tree
 moved is not recorded as gate evidence. Re-run the gate; do not go hunting the failure.
@@ -537,11 +537,11 @@ the trap is the shell's, not this repo's. What stays here is the local evidence:
 ### Branch & repo hygiene
 
 - Everything goes through a `feat/`/`fix/`/`docs/` branch + PR to `main` — **no direct
-  commits on `main`** except the fold exception in [the safety rules](../../../plugins/dkj-policy/CLAUDE.md#safety-rules).
+  commits on `main`** except the fold exception in [the safety rules](../../../plugins/dkj-repo-workflow/CLAUDE.md#safety-rules).
   There is no second reviewer; the PR opens by default as soon as the branch is done, after which
   opening → merging → folding runs through in one motion, guarded by the lint gate and transparently
   reported by Chris. Only the two exceptions in
-  [the safety rules](../../../plugins/dkj-policy/CLAUDE.md#never-directly-on-the-trunk--via-branch--pr) — a
+  [the safety rules](../../../plugins/dkj-repo-workflow/CLAUDE.md#never-directly-on-the-trunk--via-branch--pr) — a
   visible result, or irreversible/outward-facing work — stop and wait for the owner's word first. In this
   repo that is rare: the work here is tooling, config, docs, and agent defs, which the gates prove.
 - **A `-v<N>` suffix is optional and typed by hand**, never completed by `new-branch` (it did, until
@@ -601,7 +601,7 @@ the trap is the shell's, not this repo's. What stays here is the local evidence:
   remote delete stays the owner's manual act per the bullet above.
 - **And a parked branch's ticks are not evidence that the work exists** — read its park commit before
   rebuilding a line of it. The mechanism is portable and lives in
-  [`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md):
+  [`DEVELOPMENT-portable.md`](../../../plugins/dkj-repo-workflow/DEVELOPMENT-portable.md):
   every automatic park stamps a `Backing:` line saying how many steps are resolved, how much is committed
   on the branch besides the document, and how much is uncommitted in the working copy the park came from
   -- plus an explicit alarm where the plan reads as finished with nothing behind it. Repo-specific half:
@@ -650,7 +650,7 @@ the trap is the shell's, not this repo's. What stays here is the local evidence:
   `worktree-lane.ps1` (`-Name` to open, `-HandBack` to release the branch again) does both ends and
   never touches the primary's HEAD when opening; the portable half, the measurement, and the declined
   one-line alternative to `ship-pr.ps1` are in the
-  [`worktree-lane` skill](../../../plugins/dkj-policy/skills/worktree-lane/SKILL.md).
+  [`worktree-lane` skill](../../../plugins/dkj-repo-workflow/skills/worktree-lane/SKILL.md).
   Two things learned building it that are easy to rediscover the expensive way: pointing
   `CLAUDE_PROJECT_DIR` at another tree **breaks the source-repo guard**, correctly — that variable says
   which repo the session is on, and the tree one call writes to is `-RepoRoot`'s job (the #101
@@ -664,7 +664,7 @@ the trap is the shell's, not this repo's. What stays here is the local evidence:
   lane with a foreground ship saves nothing. The script now prints both at the moment it begins to wait,
   and the rule with its measurements is in
   [The merge does not wait](#the-merge-does-not-wait--and-nobody-sits-through-the-ci-check) above
-  and the [`ship-pr` skill](../../../plugins/dkj-policy/skills/ship-pr/SKILL.md#the-wait-runs-in-the-background-and-that-is-the-default).
+  and the [`ship-pr` skill](../../../plugins/dkj-repo-workflow/skills/ship-pr/SKILL.md#the-wait-runs-in-the-background-and-that-is-the-default).
   Two bigger shapes were named and declined there rather than overlooked; #985 stays open as their home.
 - **`main` moves under a long branch, and the green gate you ran proves nothing about the merged
   result.** The bullet above is about the *fold* and about two machines; this is the same collision
@@ -752,7 +752,7 @@ Behind *"Verify the stand against the repo, not against a handover text"* in
 [Chris's lens](specialist-01-01-lens.md#the-dave-rules): the mechanics and the history behind the two
 checklist items that are more than a single command.
 
-**`.dkj/dkj-policy/<branch>.md` sitting on the trunk is a silent half-state**, because that document exists
+**`.dkj/dkj-repo-workflow/<branch>.md` sitting on the trunk is a silent half-state**, because that document exists
 only while a branch is open. Since
 [#1270](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1270)
 `check-unfolded-entry.ps1` catches it automatically, but read it yourself too: a session that starts
@@ -820,7 +820,7 @@ the repo answers with one issue per ticket carrying that link — not a copy of 
 between the request and the code, gated on *do we know enough?* before a branch is opened, and **a ticket
 with open questions is not built**. `smartwatchbanden` is the worked example; the rules are portable and
 travel with the plugin, in
-[`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portable.md#ticket-work--the-layer-before-the-branch).
+[`CONTRIBUTING-portable.md`](../../../plugins/dkj-repo-workflow/CONTRIBUTING-portable.md#ticket-work--the-layer-before-the-branch).
 **It is described anyway** because the workflow ships this layer and the consumers running it do have
 that tracker — a route documented only as far as this repo happens to use it would leave them reading a
 route with a hole in it.
@@ -859,7 +859,7 @@ above — so an issue already names the prefix its branch will get. `feature` wa
 `enhancement` until Dave renamed it (October 3, 2026,
 [#2764](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2764)), and it is the name in every
 DKJ-Solutions consumer too (October 13, 2026,
-[#2961](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2961)): the `dkj-solutions`
+[#2961](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2961)): the `dkj-repo-workflow-dkj`
 extension's README states it, with the move for a tracker still on `enhancement`. Another
 organisation's tracker keeps whatever its own seam names. The rung it also carries is a separate
 axis: see [Issue labels](#issue-labels--every-issue-carries-a-priority) below.
@@ -890,7 +890,7 @@ discovered at the merge. A claim with no branch and no recent activity is a ques
 a locked door.
 
 **The step that performs it is
-[`claim-issue`](../../../plugins/dkj-policy/skills/claim-issue/SKILL.md)**, and it exists because this
+[`claim-issue`](../../../plugins/dkj-repo-workflow/skills/claim-issue/SKILL.md)**, and it exists because this
 rule was written down for as long as the workflow has and enforced by nothing — `gh issue edit <n>
 --add-assignee @me`, left to a session to remember, to type, and to read the result of. Measured here on
 September 5, 2026 ([#1456](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1456)): **0 of 67**
@@ -899,7 +899,7 @@ same repo. That report's own corrective action was *behavioural*; the skill is w
 and it does the three things the one-liner cannot — it never sends `@me` (see below), it **refuses on a
 closed issue**, which `--add-assignee` claims silently, and it **refuses one somebody else holds**, which
 `--add-assignee` joins. It writes one assignee and nothing else: the branch stays
-[`new-branch`](../../../plugins/dkj-policy/skills/new-branch/SKILL.md)'s, one step later.
+[`new-branch`](../../../plugins/dkj-repo-workflow/skills/new-branch/SKILL.md)'s, one step later.
 
 **`@me` writes whichever account `gh` holds, which is not always the one your commits will name.** It
 resolves through the GitHub API, while the branch a second session correlates the claim with carries the
@@ -922,7 +922,7 @@ anyway because a contributor reading a lens has no guarantee of having the plugi
 step that is only legible to an agent is not a route.
 
 Then the branch is opened over it, and the issue number goes in the DEPLOY body so the fold carries it
-into [`.dkj/dkj-policy/CHANGELOG.md`](../../../.dkj/dkj-policy/CHANGELOG.md) with the change that closed it — named
+into [`.dkj/dkj-repo-workflow/CHANGELOG.md`](../../../.dkj/dkj-repo-workflow/CHANGELOG.md) with the change that closed it — named
 with a closing keyword on the PR via `-Resolves`, per
 [Opening a pull request](#opening-a-pull-request) above.
 
@@ -957,7 +957,7 @@ September 19, 2026, [#2127](https://github.com/DKJ-Solutions/dkj-claude-plugins/
 *"Every issue filed here"* reads as a property of this tracker, and under that reading it binds a
 consumer's session filing inbound — which has no mechanism to obey it, and no reason to. The portable
 layer says so in its own words:
-[`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portable.md) states that
+[`CONTRIBUTING-portable.md`](../../../plugins/dkj-repo-workflow/CONTRIBUTING-portable.md) states that
 priority is an **offered** convention — *"nothing here reads it either"* — and that **exactly one**
 label is prescribed to a consumer, the reach label. A session filing inbound is running that layer's
 rules, not this one's. So an inbound issue arrives without a rung by design, and **gets one at triage
@@ -982,7 +982,7 @@ guess the triage pass already corrects today. The template covers the web form; 
 rule actually names is a free-form `gh issue create --label bug-inbound` (or `feature-inbound`), which
 no front matter can reach.
 
-That is the same rule `bwj-development` states for its own four buckets, where the Asana sweep removed
+That is the same rule `dkj-repo-workflow-bwj` states for its own four buckets, where the Asana sweep removed
 the other three as it set one until it was retired on October 5, 2026 — **and since September 11, 2026 it is the same four NAMES as well**
 (Dave, [#1842](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1842)), on the same four
 colour codes. `prio-1`…`prio-4` is one vocabulary across the whole family now.
@@ -1005,10 +1005,10 @@ are still worth knowing:
 
 1. **The BWJ names are not a convention, they are code** — which is exactly why the reversal arrived as
    an inbound issue rather than as a label rename somebody typed.
-   `plugins/dkj-policy/extensions/bwj-development/templates/asana-mirror.ps1` (retired October 5, 2026, with the
+   `plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/templates/asana-mirror.ps1` (retired October 5, 2026, with the
    whole sweep that set the labels) held them as a literal
    (`$script:PrioLabels`), `Get-PrioLabelForScore` returned those exact strings from a score band, and
-   `scripts/tests/bwj-development.tests.ps1` asserts every boundary from both sides. Unifying was an
+   `scripts/tests/dkj-repo-workflow-bwj.tests.ps1` asserts every boundary from both sides. Unifying was an
    edit to a shipped CI mechanism that runs daily against two live stores, a re-pinning of its suite,
    and a label rename on two live trackers.
 2. **The collision could never mis-file anything.** Measured on all three trackers with
@@ -1033,13 +1033,13 @@ after `feat/1685-prio-labels` merged, and #1842 reversed half of it two days aft
 interval is an argument — an owner changing their mind is a decision rather than a regression, and
 *"this was just settled"* states a fact about the calendar, not about the merits.
 
-**And the rule stays repo-local rather than moving into `dkj-policy`** (same decision, the issue's
+**And the rule stays repo-local rather than moving into `dkj-repo-workflow`** (same decision, the issue's
 second half). **Nothing in the workflow reads a priority**: searched across `scripts/`, `plugins/` and
 `.github/` on the day of the decision, `prio-` appears in no gate, no script and no runner here — only
 on the BWJ side, where a shipped script owns it. A portable version would therefore prescribe to every
 consumer a convention no gate enforces and nothing reads, which is the enforced-by-memory shape
 [#1665](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1665) was filed against, and it
-would owe `adopt-dkj-policy` a label-creation step for four labels the consumer never asked for. That
+would owe `adopt-dkj-repo-workflow` a label-creation step for four labels the consumer never asked for. That
 is worse than the prescription-a-consumer-cannot-follow trap of
 [#1540](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1540): here they *could* follow
 it and would gain nothing for it.
@@ -1081,7 +1081,7 @@ issue list with no command in it to fail. That is
 
 **Why the repair came from this side in September, and why #1842 then did the other half anyway.**
 Re-colouring BWJ's `low` was an edit to live labels in **two repos this one does not own**, and doing
-only the half that lives here — the hex codes `adopt-bwj-development`'s step 4 prescribes — would have
+only the half that lives here — the hex codes `adopt-dkj-repo-workflow-bwj`'s step 4 prescribes — would have
 left the fleet in a third state, since that skill is additive and never rewrites an existing label.
 Both halves belonged to one change and to Dave; moving **`prio-1`** instead was one `gh label edit` in
 the repo in front of you, and `006B75` was verified unused across all three trackers before it was
@@ -1130,7 +1130,7 @@ urgency in prose instead, and the rung is set here when the item is picked up �
 **Nothing enforces any of it, deliberately — the same shape as the inbound labels.** A gate would have
 to ask GitHub on every run, which puts the tracker on the critical path of a local check for a field
 only a person can fill in. So this is prose, exactly like the inbound route in
-[`CLAUDE.md`](../../../plugins/dkj-policy/CLAUDE.md#never-without-the-owners-explicit-permission), and the always-on half of it
+[`CLAUDE.md`](../../../plugins/dkj-repo-workflow/CLAUDE.md#never-without-the-owners-explicit-permission), and the always-on half of it
 lives in [Chris's lens](specialist-01-01-lens.md#the-dave-rules) so a session filing a finding reads it
 without loading this page. **What that costs is measured elsewhere in this very file**: the `chore/`
 prefix rule also held only in someone's head and was broken twelve times before anybody counted.
@@ -1167,22 +1167,22 @@ and never prescribed, and `adopt-triage-labels.ps1` prints the
 prefix did not change. The handling rule — comment
 instead of a new issue, `part of #<n>` instead of a keyword, close as completed only on the root-cause
 repair, close as not planned while it waits — is in
-[`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portable.md#1-new-issue-or-task--where-the-work-comes-from), and is not
+[`CONTRIBUTING-portable.md`](../../../plugins/dkj-repo-workflow/CONTRIBUTING-portable.md#1-new-issue-or-task--where-the-work-comes-from), and is not
 restated here.
 
 ### The parking labels — all set at filing: `awaiting-decision-dev` for the owner's choice, `awaiting-decision-client` for the client's, `awaiting-review-dev` / `awaiting-review-client` for a look at a result, `awaiting-pull` while another issue lands, `awaiting-pull-external` until another repo's work is available here, `awaiting-action-external` until a date, `awaiting-action-dev` until the owner acts, `awaiting-release` until the next cut, `awaiting-release-external` until another repo's, `awaiting-recurrences-first` once only evidence is owed, `awaiting-session-dev` until a session of its own
 
 **All thirteen `awaiting-*` labels, `awaiting-recurrences` included, go on in the same `gh issue create` as the `prio-N`**, not only `awaiting-decision-dev`
 ([#2796](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2796)); the rule is in
-[`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portable.md#1-new-issue-or-task--where-the-work-comes-from),
+[`CONTRIBUTING-portable.md`](../../../plugins/dkj-repo-workflow/CONTRIBUTING-portable.md#1-new-issue-or-task--where-the-work-comes-from),
 and Chris's lens carries it beside the `prio-N` and `minor` filing rules, where a session reads it at filing time.
 
 **`awaiting-decision-dev` (`5319E7`) parks an issue that ends in the owner's choice**, so neither `claim-issue <n>`
 nor a sweep treats it as work that is ready (Dave, September 26, 2026,
 [#2519](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2519)). It was named `awaiting-decision` until #2890 (October 7, 2026), when it was split in two and `dev` came to mean the owner alone, and `needs-decision` (`BFD4F2`) until #2741 (October 3, 2026), when it joined the purple `awaiting-*` family; both old names are still matched, and `adopt-triage-labels` prints the `gh label edit` rename. It is set in the same
-`gh issue create` as the `prio-N`, and it is not `awaiting-info-client` (`awaiting-more-info` until #2917, `needs-info` until #2723), which `bwj-development` reserves for
+`gh issue create` as the `prio-N`, and it is not `awaiting-info-client` (`awaiting-more-info` until #2917, `needs-info` until #2723), which `dkj-repo-workflow-bwj` reserves for
 *blocked on the submitter*. It ships in `Get-TriageLabels`, and the filing rule is in
-[`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portable.md#1-new-issue-or-task--where-the-work-comes-from).
+[`CONTRIBUTING-portable.md`](../../../plugins/dkj-repo-workflow/CONTRIBUTING-portable.md#1-new-issue-or-task--where-the-work-comes-from).
 
 **`awaiting-decision-client` (`5319E7`) parks an issue that ends in a choice that is not the owner's** (a colleague's QA sign-off, a business decision from the client or requester outside the dev team; Dave, October 7, 2026, [#2890](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2890)). `issues-sweep` and `issues-sweep-decisions` both skip it, where `issues-sweep-decisions` puts `awaiting-decision-dev` to the owner. It is not `awaiting-info-client`, which means blocked on information the submitter has not given. New, so no former name is matched for it.
 
@@ -1238,7 +1238,7 @@ nonetheless read about in a release note).
 **It is not this repo's own convention** — it is the tier model read on an issue instead of on a changelog
 entry, prescribed for every repo running this workflow
 ([#1870](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1870), Dave, September 11, 2026), and
-defined in [`RELEASES-portable.md`](../../../plugins/dkj-policy/RELEASES-portable.md#the-same-scale-on-an-issue--the-reach-label).
+defined in [`RELEASES-portable.md`](../../../plugins/dkj-repo-workflow/RELEASES-portable.md#the-same-scale-on-an-issue--the-reach-label).
 **Why this and not the prio axis, stated carefully, because the obvious version of the argument is
 wrong.** [#1686](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1686) half 2 kept the prio
 axis repo-local on the ground that *nothing in the workflow reads a priority*. The tempting reply is
@@ -1278,7 +1278,7 @@ and does not need to: `minor` is the default.
 
 **First, where these scripts live for everyone else.** The paths below are this repo's own
 `scripts/`, which stays the canonical source and is unchanged. What changed on August 8, 2026 is the
-**mirror**: every script in this section now travels in `dkj-policy`, the opt-in
+**mirror**: every script in this section now travels in `dkj-repo-workflow`, the opt-in
 pack, instead of in the core. So in a consuming repo Derek has this toolbox **only if that repo
 enabled the workflow** — and if it did not, he opens branches and PRs with plain `git` and `gh`,
 following that repo's own conventions. That is the intended outcome rather than a degraded one:
@@ -1288,7 +1288,7 @@ entitled to its own. Do not read a consumer without these scripts as misconfigur
 Derek prefers not to touch the git commands by hand. His toolbox:
 
 - `scripts/task/new-branch.ps1 -Name <branch-name> [-Title "…"] [-Intent "…"] [-NoPush]` — create (or
-  idempotently resume) the branch and, in the same move, write its `.dkj/dkj-policy/<branch>.md`.
+  idempotently resume) the branch and, in the same move, write its `.dkj/dkj-repo-workflow/<branch>.md`.
   `-Intent` records where you left off / what is next **as the opening paragraph of `PLAN`, without a
   heading** — above the phases until #908/#925 (August 26, 2026), which is the one region the preamble
   rule refuses, so the scaffolder wrote a document its own branch-entry gate rejected. Deliberately not in
@@ -1302,7 +1302,7 @@ Derek prefers not to touch the git commands by hand. His toolbox:
   [Step 3 above](#classifying-naming-and-creating-a-branch).
 - `scripts/task/park-cycle.ps1 [-Quiet] [-UnderHook] [-BudgetSeconds <n>]` — **Derek does not run this**, and it is here so he recognises its
   commits. A Stop hook (`cycle-autopark.ps1`) invokes it after every turn and it pushes
-  `.dkj/dkj-policy/<branch>.md`, and only that file, for the life of the branch — the plan
+  `.dkj/dkj-repo-workflow/<branch>.md`, and only that file, for the life of the branch — the plan
   and the phase state being what another device actually needs. **It stops PUSHING the moment a PR
   exists**, because the DEPLOY lock (#884) refuses the merge once that document diverges from what the PR
   published; a pusher that kept going would block every merge in the repo. Same reason its fail-safe runs

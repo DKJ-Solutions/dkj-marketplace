@@ -389,7 +389,7 @@ if ($absent.Count -gt 0) {
 . (Join-Path $PSScriptRoot '..\lib\live-record-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\git-porcelain-lib.ps1')
 # Which issues a PR carried, closed or only named (#3941) -- the audience note's task form reads the same set
-# bwj-development's notify-live reads, from the one file mirrored into both plugins.
+# dkj-repo-workflow-bwj's notify-live reads, from the one file mirrored into both plugins.
 . (Join-Path $PSScriptRoot '..\lib\pull-issue-lib.ps1')
 # The CI certificate and its wait (#1715, #2317), and the catch-up decision built on them (#3155): the
 # second origin check reads the main-push CI run through the same judging function open-pr uses.
@@ -526,7 +526,7 @@ function Get-ReleaseBuildHeldFiles([string]$Dir) {
 function Stop-OwnDevPreviewProduct {
     # The plugin tree carries the lib beside scripts/; the source repo's root copy reaches it under plugins/.
     $lib = @((Join-Path $PSScriptRoot '..\..\apps\admin\lib\dev-preview-rules.ps1'),
-        (Join-Path $repoRoot 'plugins\dkj-policy\apps\admin\lib\dev-preview-rules.ps1')) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+        (Join-Path $repoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\dev-preview-rules.ps1')) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
     if (-not $lib) { return @() }
     try {
         . $lib
@@ -984,7 +984,7 @@ function Invoke-TrunkCatchUp {
 # notes commit (#3400). The plugin tree carries the lib beside scripts/; the source repo's root copy reaches it
 # under plugins/. A missing lib, or any failure inside it, leaves the cut exactly as it was.
 $stopwatchLib = @((Join-Path $PSScriptRoot '..\..\apps\admin\lib\stopwatch-lib.ps1'),
-    (Join-Path $repoRoot 'plugins\dkj-policy\apps\admin\lib\stopwatch-lib.ps1')) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+    (Join-Path $repoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\stopwatch-lib.ps1')) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
 if ($stopwatchLib) {
     try {
         . $stopwatchLib
@@ -1732,7 +1732,7 @@ function Get-PullRequestCarriedIssues {
     <#
         The issues a merged PR carried, as { Number; Title; Body; Named; Solved } -- the ones it closed and
         the ones it only names (its head branch's number, a bare '#<n>' in its body), the same set
-        bwj-development's notify-live reads (Get-PullIssueCandidates, #3941). gh reads, bounded.
+        dkj-repo-workflow-bwj's notify-live reads (Get-PullIssueCandidates, #3941). gh reads, bounded.
 
         A NAMED NUMBER IS ASKED ABOUT, NOT TRUSTED. The issues endpoint answers a pull request too, so a
         number whose answer carries 'pull_request' is dropped, and a 404 (a '#<n>' copied from another

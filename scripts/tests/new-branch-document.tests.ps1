@@ -153,9 +153,9 @@ try {
     # ONE DOCUMENT, AND NO branch/ DIRECTORY AT ALL. The second half is the assert that would catch a
     # scaffolder still writing the retired pair beside the new file -- which would leave two entries for one
     # branch, the exact half-state the merge removes.
-    $wfDirFiles = @(Get-ChildItem -LiteralPath (Join-Path $fixtureBC '.dkj\dkj-policy') -Filter '*.md' -File)
+    $wfDirFiles = @(Get-ChildItem -LiteralPath (Join-Path $fixtureBC '.dkj\dkj-repo-workflow') -Filter '*.md' -File)
     Assert-Equal 1 $wfDirFiles.Count 'exactly one branch document, no duplicate per branch'
-    Assert-True (-not (Test-Path -LiteralPath (Join-Path $fixtureBC '.dkj\dkj-policy\branch'))) 'and no branch/ directory is created any more'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $fixtureBC '.dkj\dkj-repo-workflow\branch'))) 'and no branch/ directory is created any more'
 
     Write-Host "new-branch.ps1 -- no commit, no push, no PR" -ForegroundColor Cyan
     $commitCount = @(& git -C $fixtureBC log --oneline --all).Count

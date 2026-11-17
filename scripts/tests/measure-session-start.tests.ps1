@@ -34,7 +34,7 @@ $ErrorActionPreference = 'Stop'
 $RepoRoot = Resolve-RepoRootOrFail -From $PSScriptRoot -ScriptName 'measure-session-start.tests.ps1'
 $Lib      = Join-Path $RepoRoot 'scripts\lib\session-start-lib.ps1'
 $Script   = Join-Path $RepoRoot 'scripts\maintenance\measure-session-start.ps1'
-$RealTpl  = Join-Path $RepoRoot 'plugins\dkj-policy\skills\measure-session-start\session-start-template.html'
+$RealTpl  = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\skills\measure-session-start\session-start-template.html'
 
 . (Join-Path $RepoRoot 'scripts\lib\native-capture-lib.ps1')
 . $Lib
@@ -500,7 +500,7 @@ try {
 
     Write-Host ''
     Write-Host 'Resolve-PluginRequest' -ForegroundColor Cyan
-    $enabledSet = @('dkj-policy@dkj-marketplace', 'figma@claude-plugins-official')
+    $enabledSet = @('dkj-repo-workflow@dkj-marketplace', 'figma@claude-plugins-official')
     Assert-Equal 'figma@claude-plugins-official' ((Resolve-PluginRequest -Requested @('figma') -EnabledIds $enabledSet) -join ',') 'a bare name takes the marketplace it is enabled under'
     Assert-Equal 'nope@dkj-marketplace' ((Resolve-PluginRequest -Requested @('nope') -EnabledIds $enabledSet) -join ',') 'a name nothing enabled matches falls back to the literal marketplace'
     Assert-Equal 'a@other' ((Resolve-PluginRequest -Requested @('a@other') -EnabledIds $enabledSet) -join ',') 'a name with a marketplace is taken as it is'
@@ -602,7 +602,7 @@ try {
     Write-Host 'Plugin mirrors' -ForegroundColor Cyan
     foreach ($rel in @('lib\session-start-lib.ps1', 'maintenance\measure-session-start.ps1', 'lib\measure-skill-lib.ps1')) {
         $src = Join-Path $RepoRoot ('scripts\' + $rel)
-        $mir = Join-Path $RepoRoot ('plugins\dkj-policy\scripts\' + $rel)
+        $mir = Join-Path $RepoRoot ('plugins\dkj-repo-workflow\scripts\' + $rel)
         $same = (Test-Path -LiteralPath $mir) -and ([System.IO.File]::ReadAllText($src) -ceq [System.IO.File]::ReadAllText($mir))
         Assert-True $same "the plugin mirror of $rel is byte-identical to the source"
     }

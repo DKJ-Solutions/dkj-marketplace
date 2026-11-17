@@ -26,7 +26,7 @@
 
     ONE INPUT DECIDES BOTH, which is the whole argument for this file. Built twice, the two can disagree,
     and at v1.3.0 they did. So the record has one format, one parser and one "is this entry live" rule,
-    here, and both plugins that touch it -- dkj-subagents-shopify writes it, dkj-policy reads it -- carry
+    here, and both plugins that touch it -- dkj-subagents-shopify writes it, dkj-repo-workflow reads it -- carry
     this file as a byte-identical mirror.
     ------------------------------------------------------------------------------------------------
 
@@ -303,7 +303,7 @@ function Get-TaskMarkerId {
         The id an issue body's '<!-- <marker>: <id> -->' comment carries, '' when it has none.
 
     .DESCRIPTION
-        THE MARKER IS THE AUTHORITATIVE LINK (#2567, and bwj-development's WORKFLOW-portable.md, which
+        THE MARKER IS THE AUTHORITATIVE LINK (#2567, and dkj-repo-workflow-bwj's WORKFLOW-portable.md, which
         calls it that): report-issue writes it at filing, and build-backlog-page reads it back. A link
         in the issue's prose may point at a card that has since moved, so it is not
         read here. The id is held to letters, digits, '_' and '-', because it is spliced into a URL

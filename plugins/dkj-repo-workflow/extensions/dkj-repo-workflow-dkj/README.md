@@ -1,0 +1,115 @@
+# dkj-repo-workflow-dkj — DKJ-Solutions' codex
+
+The binding rules every DKJ-Solutions app shares, written once instead of rebuilt in each repo. It is
+the counterpart of `dkj-repo-workflow-bwj` (BWJ-Development's codex) for the other organisation: an
+**additive** add-on to `dkj-repo-workflow` that contradicts nothing that workflow decides, and that carries
+no specialists.
+
+## Chapters
+
+| Chapter | Where | What it holds |
+|---|---|---|
+| The brand book | [`skills/dkj-brandbook/`](skills/dkj-brandbook/SKILL.md) | The canonical brand book in `dkj-repo-workflow`'s [`assets/dkj-brandbook/`](https://github.com/DKJ-Solutions/dkj-marketplace/tree/main/plugins/dkj-repo-workflow/assets/dkj-brandbook/) (the design tokens, the twelve themes, the base stylesheet and the rules), this plugin's own [`assets/dkj-brandbook-product/`](assets/dkj-brandbook-product/README.md) (`house-product.css`, the mobile-first product layer a product page loads after the core, with its README, #3831), the skill with what a session needs before it fetches them, and the `check-house-style` gate that holds a repo to them; [`skills/figma-tokens/`](skills/figma-tokens/SKILL.md) checks the colour variables in the brand book's Figma file against the stylesheet and syncs them from it, one direction (#4038) |
+| The tracker labels | [below](#the-tracker-labels--feature-and-bug-in-every-repo) | `feat/` is labelled `feature` and `fix/` `bug`, in every DKJ-Solutions repo, and how a repo still on `enhancement` moves over |
+
+## The tracker labels — `feature` and `bug`, in every repo
+
+**Every DKJ-Solutions repo labels a `feat/` pull request `feature` and a `fix/` one `bug`, and files its
+issues under the same two names**, as the source tracker does (decided October 13, 2026,
+[#2961](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2961)). An issue is always a
+feature or a bug ([#2783](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2783)), and
+`feature` is GitHub's default `enhancement` renamed
+([#2764](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2764)). A `docs/` branch carries no
+label. The name used to be left to each repo's own branch table, and the `specialists-init` scaffold
+suggested `enhancement`, so the repos that copied it diverged from the source.
+
+**A repo whose `scripts/lib/branch-info.ps1` still maps `feat` to `enhancement` moves over in two steps,
+in this order.** `open-pr` refuses a label the tracker does not carry, so the tracker goes first:
+
+1. Rename the label on the tracker. A rename keeps it on every issue and PR that already carries it:
+   `gh label edit enhancement --name feature --color a2eeef --repo DKJ-Solutions/<repo>`
+2. Then point the table at it, `feat = @{ Label = 'feature'; Type = 'Feat' }`, in the repo's own
+   `scripts/lib/branch-info.ps1`, on an ordinary branch.
+
+Measured on October 13, 2026, five repos needed it: `dkj-brandbook`, `dkj-etf-tracker`,
+`djcylow-react`, `dkj-music-library` and `dkj-recipes`.
+
+Beside its chapters, the plugin ships one SessionStart hook (below). A hook is tooling the harness runs,
+not a rule a session has to follow, so it is no chapter and `CLAUDE.md` does not name it.
+
+## The house-style session check
+
+[`hooks/house-style-sessioncheck.ps1`](hooks/house-style-sessioncheck.ps1) runs the `check-house-style`
+gate at session start (`startup`, `resume`, `clear`) and reports what it finds: a vendored copy that is not
+the pinned one, a redefined house token or class, a retired token name, a colour a rule types or derives
+instead of reading a token, a font size a rule types instead of reading the type scale, a font weight a rule
+types instead of reading a house weight. It is read-only and never fails
+the session. In a repo with no brand book at all it prints one line saying there is nothing to check.
+The gate itself, its allowlist and the CI caller are on the
+[`dkj-brandbook` skill page](skills/dkj-brandbook/SKILL.md#the-gate-check-house-style)
+([#3035](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3035)).
+
+## Admin and the retired Brandbook
+
+**The dev-preview hook, Admin and the general pages server are `dkj-repo-workflow`'s**, since
+[#3198](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3198) (the owner's decision, October
+20, 2026): "General" means what every repo has, whichever organisation it belongs to, and BWJ-Development
+never enables this plugin. They are documented in
+[`dkj-repo-workflow`'s `apps/admin/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-repo-workflow/apps/admin/README.md), the `Get-DevPreview` seam included.
+Every page Admin machinery renders uses the brand book, in every repo, from the copy of this folder
+inside `dkj-repo-workflow`'s own payload.
+
+**No consumer Admin shows or serves the Brandbook**
+([#3475](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3475), the owner, October 25, 2026).
+From #3283 to #3493 the Brandbook app was the source repo's `brandbook/` React app, that repo's own product on
+its own product port, and from #3198 to #3475 this plugin also put a DKJ-Solutions card on the Admin of every
+repo that enabled it, and the general pages server answered `/brandbook` there with the build each release
+copied into `assets/brandbook/` (#3210). The Admin card and that route were taken off, and the release stopped
+building and shipping that folder ([#3477](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3477)).
+The app itself is retired ([#3493](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3493), the
+owner, October 26, 2026): `dkj-repo-workflow`'s `assets/dkj-brandbook/` is the one central place for DKJ styling, and a
+house-style change is judged by eye on its dkj-brandbook page, `specimens.html` in that folder, which every Admin that
+runs `dkj-repo-workflow` shows under Plugins (`/dev/plugins/dkj-repo-workflow/dkj-brandbook`, #3629, #3704).
+
+## The dev-preview hook
+
+Moved to `dkj-repo-workflow` in #3198: see [`dkj-repo-workflow`'s `apps/admin/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-repo-workflow/apps/admin/README.md#the-dev-preview-hook).
+
+## Who enables it
+
+**DKJ-Solutions repos only.** BWJ-Development has its own styling, so this plugin is never enabled in
+BWJ's repos. It requires `dkj-subagents-alpha` and `dkj-repo-workflow`. Its `plugin.json` declares
+`dkj-repo-workflow` under `dependencies`, without a version, so Claude Code installs `dkj-repo-workflow` with it
+and the release keeps its one lockstep `vX.Y.Z` tag (#3895).
+## Installing it in a DKJ-Solutions repo
+
+1. Refresh the marketplace clone first (`claude plugin marketplace update dkj-marketplace`). A stale
+   clone reports success with the previous version. Then enable the plugin in the repo's
+   `.claude/settings.json` (`"dkj-repo-workflow-dkj@dkj-marketplace": true`) and install it with
+   `claude plugin install dkj-repo-workflow-dkj@dkj-marketplace --scope project`.
+2. Run the `adopt-dkj-repo-workflow` skill's Part 1 (`adopt-workflow-folder.ps1 -Apply`). It writes the
+   extension import into the repo's `CLAUDE.md`, on the line directly below the `dkj-repo-workflow` import:
+   `@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/CLAUDE.md`
+
+That run writes the line for every `dkj-repo-workflow` extension the repo enables, so this plugin needs no
+adopt step of its own. While the line is missing, the `consumer-prose-sessioncheck` hook warns at
+session start ([#2697](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2697)).
+
+## In this source repo
+
+The plugin is enabled here since October 13, 2026
+([#2976](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2976)), first for the dev-preview hook
+and, since that moved to `dkj-repo-workflow` (#3198), for the house-style session check. This repo's Admin is
+described in [`dkj-repo-workflow`'s `apps/admin/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-repo-workflow/apps/admin/README.md#in-the-source-repo).
+Its Admin shows the dkj-brandbook page from the working tree (`/dev/plugins/dkj-repo-workflow/dkj-brandbook`), so a
+change shows here before the release that ships it; every other Admin that runs `dkj-repo-workflow` shows the released
+copy. The `house-style-css` CI gate checks the
+stylesheet itself.
+
+The brand book itself is maintained in this repo, in `plugins/dkj-repo-workflow/assets/dkj-brandbook/` (the core, which Admin
+renders from in every repo) and, since [#3831](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3831), the
+product layer in this plugin's `assets/dkj-brandbook-product/`, since
+[#3130](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3130) (October 18, 2026) moved it in
+from the `dkj-brandbook` repo (archived since; the name now belongs to the brand book here) and [#3531](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3531)
+(October 26, 2026) moved the files from this plugin into `dkj-repo-workflow`, whose Admin renders in them in every
+repo. The rule, the skill and the gate stay here. A consuming repo asks for a change through an inbound issue on this repo.

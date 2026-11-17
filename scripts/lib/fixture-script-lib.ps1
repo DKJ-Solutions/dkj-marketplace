@@ -13,7 +13,7 @@
     not carry a lib the script loads kills the child during LOAD -- before it writes anything at all. What
     the suite then reports is the absence of the document the script was supposed to write:
 
-        Kan een gedeelte van het pad ...\dkj-policy\feat-my-task-v1.md niet vinden
+        Kan een gedeelte van het pad ...\dkj-repo-workflow\feat-my-task-v1.md niet vinden
 
     Nothing in that names the absent lib, the dot-source, or load failure at all. Measured on the #1917
     branch (#1924), where six suites failed this way: fold-changelog 155 asserts red, prune-merged 73,

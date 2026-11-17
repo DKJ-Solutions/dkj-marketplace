@@ -176,7 +176,7 @@ function New-FixtureConsumer {
         [System.IO.File]::WriteAllText((Join-Path $root 'scripts\repo-config.ps1'), (($seamLines -join "`n") + "`n"))
     }
     if ($AsWorkflowSource) {
-        $manifest = '{ "name": "fixture", "plugins": [ { "name": "dkj-policy", "source": "./x" } ] }'
+        $manifest = '{ "name": "fixture", "plugins": [ { "name": "dkj-repo-workflow", "source": "./x" } ] }'
         New-Item -ItemType Directory -Path (Join-Path $root '.claude-plugin') -Force | Out-Null
         [System.IO.File]::WriteAllText((Join-Path $root '.claude-plugin\marketplace.json'), $manifest)
     }
@@ -384,19 +384,19 @@ try {
     # THE PATH IS THE WHOLE POINT OF THE SCAFFOLD. A runner calling 'scripts/release/...' would be the
     # SOURCE's path -- correct there, absent in every consumer -- and it would fail at the one moment
     # nobody is watching: on a push to the trunk, after a merge has already landed.
-    Assert-True ($fold -like '*.workflow-scripts/plugins/dkj-policy/scripts/lint/check-unfolded-entry.ps1*') `
+    Assert-True ($fold -like '*.workflow-scripts/plugins/dkj-repo-workflow/scripts/lint/check-unfolded-entry.ps1*') `
         'the fold runner calls the plugin mirror of check-unfolded-entry, not an in-repo path'
-    Assert-True ($fold -like '*.workflow-scripts/plugins/dkj-policy/scripts/release/fold-changelog-entry.ps1*') `
+    Assert-True ($fold -like '*.workflow-scripts/plugins/dkj-repo-workflow/scripts/release/fold-changelog-entry.ps1*') `
         'and the plugin mirror of fold-changelog-entry'
-    Assert-True ($verify -like '*.workflow-scripts/plugins/dkj-policy/scripts/release/verify-pushed-merges.ps1*') `
+    Assert-True ($verify -like '*.workflow-scripts/plugins/dkj-repo-workflow/scripts/release/verify-pushed-merges.ps1*') `
         'the resolves runner calls the plugin mirror of verify-pushed-merges'
-    Assert-True ($repoSettings -like '*.workflow-scripts/plugins/dkj-policy/scripts/lint/check-repo-settings.ps1*') `
+    Assert-True ($repoSettings -like '*.workflow-scripts/plugins/dkj-repo-workflow/scripts/lint/check-repo-settings.ps1*') `
         'the repo-settings runner calls the plugin mirror of check-repo-settings, not an in-repo path'
 
     # AND THE THREE ASSERTS ABOVE CANNOT CATCH A MOVE, which is why the four below exist (#1805). Each
     # of them compares the scaffolder's output against a literal copied out of that same scaffolder --
     # so they answer "does it still emit this string", never "is there a script at the other end". The
-    # path DID move here (plugins/workflows/contributing-davekjohn/ -> plugins/dkj-policy/), all three
+    # path DID move here (plugins/workflows/contributing-davekjohn/ -> plugins/dkj-repo-workflow/), all three
     # stayed green, and two consumers scaffolded before the move were red on every pull request for
     # five days. They are kept, because what they pin is real -- a runner naming the SOURCE's own
     # scripts/ path would be correct here and absent in every consumer -- and the derived asserts below
@@ -517,9 +517,9 @@ try {
     # sweep that reads the label. What it must get right is WHOSE tree it acts on: both scripts come out
     # of the plugin checkout, and both must judge the consumer's workspace.
     Write-Host '-- 2e. the merge-on-green runner reaches the plugin scripts and acts on THIS tree --' -ForegroundColor Cyan
-    Assert-True ($mergeOnGreen -like '*.workflow-scripts/plugins/dkj-policy/scripts/ci/pick-merge-on-green.ps1*') `
+    Assert-True ($mergeOnGreen -like '*.workflow-scripts/plugins/dkj-repo-workflow/scripts/ci/pick-merge-on-green.ps1*') `
         'the sweep calls the plugin mirror of pick-merge-on-green, not the source''s scripts/ci path'
-    Assert-True ($mergeOnGreen -like '*.workflow-scripts/plugins/dkj-policy/scripts/release/ship-pr.ps1 -TrustedRoot*-SkipLint -SkipTests*') `
+    Assert-True ($mergeOnGreen -like '*.workflow-scripts/plugins/dkj-repo-workflow/scripts/release/ship-pr.ps1 -TrustedRoot*-SkipLint -SkipTests*') `
         'and ships through the plugin mirror of ship-pr, with the local gates skipped on the green certificate'
     Assert-True ($mergeOnGreen -notmatch '(?m)CLAUDE_PROJECT_DIR: \$\{\{ github\.workspace \}\}\s*$') `
         'no step points a script at the bare workspace root, which holds no checkout any more (#2449)'
@@ -1330,7 +1330,7 @@ try {
     # release, and one already current -- which must stay silent.
     $pinDir = New-FixtureConsumer -Label 'pin-rerun'
     $null = Invoke-Adopt -Dir $pinDir -ScriptArgs @('-RulesJsonOverride', $rulesOff, '-Apply')
-    $pluginVersion = [string]((Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\.claude-plugin\plugin.json') -Raw | ConvertFrom-Json).version)
+    $pluginVersion = [string]((Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\.claude-plugin\plugin.json') -Raw | ConvertFrom-Json).version)
     $pinPath = @{
         'fold-on-merge.yml'   = 'main'
         'verify-resolved.yml' = '0123456789abcdef0123456789abcdef01234567 # v0.0.1'
@@ -1383,7 +1383,7 @@ try {
     # which a newer ref: pin cannot deliver because the picker defaults it to 0.
     Assert-True ($rPin.Flat -notlike '*`[settle`]*') 'a merge-on-green.yml whose picker carries -WaitForSettleSeconds draws no settle advisory'
     Assert-True ($rUnread.Flat -like '*its picker line could not be read*') 'a runner with no picker line is said to be unread, never judged clean (#3857)'
-    $pickerLine = "          powershell -NoProfile -ExecutionPolicy Bypass -File .workflow-scripts/plugins/dkj-policy/scripts/ci/pick-merge-on-green.ps1"
+    $pickerLine = "          powershell -NoProfile -ExecutionPolicy Bypass -File .workflow-scripts/plugins/dkj-repo-workflow/scripts/ci/pick-merge-on-green.ps1"
     [System.IO.File]::WriteAllText($mogPath, "name: Merge on green`n        run: |`n$pickerLine`n          exit `$LASTEXITCODE`n")
     $rSettle = Invoke-Adopt -Dir $pinDir -ScriptArgs @('-RulesJsonOverride', $rulesOff, '-Apply')
     Assert-True ($rSettle.Flat -like '*`[settle`] its picker runs without -WaitForSettleSeconds*') 'a pre-#3810 picker line is reported (#3857)'

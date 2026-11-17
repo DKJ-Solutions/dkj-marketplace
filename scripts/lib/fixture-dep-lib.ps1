@@ -388,7 +388,7 @@ function Get-FixtureCopiedScriptPath {
 
         AND THE SYMPTOM IS WHY IT WAS WORTH A MECHANISM RATHER THAN A HABIT. The script dies during load,
         before it writes anything, so what the suite reports is a MISSING FIXTURE DOCUMENT -- 'cannot find
-        part of the path ...\dkj-policy\feat-my-task-v1.md'. Nothing in that names the absent lib, so the
+        part of the path ...\dkj-repo-workflow\feat-my-task-v1.md'. Nothing in that names the absent lib, so the
         cost of the class is not the repair but the hour spent reading it backwards.
 
         A PATH, NOT A LEAF, unlike everything else in this lib -- see the pattern's own note. 'scripts/lib'

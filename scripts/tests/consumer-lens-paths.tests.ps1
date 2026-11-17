@@ -90,14 +90,14 @@ try {
     # Reachable ONLY through a -PluginNames candidate -- the pre-seam per-plugin layout
     # Get-LensDirCandidates composes from a plugin NAME, which is exactly what the guard stands in
     # front of.
-    $preSeamRel = ".claude/plugins/$(Get-LensFamily)/dkj-policy/specialist-05-15-lens.md"
+    $preSeamRel = ".claude/plugins/$(Get-LensFamily)/dkj-repo-workflow/specialist-05-15-lens.md"
     Set-Text -Dir $guardTree -Rel $preSeamRel -Text '# A pre-seam lens, reachable only through a PluginName candidate'
     # Reachable with NO -PluginNames at all -- added unconditionally from Get-SeamPaths, outside the
     # loop the guard sits in. This is what proves the degradation is narrow rather than total.
     $seamRel = '.claude/specialists/lenses/specialist-05-05-lens.md'
     Set-Text -Dir $guardTree -Rel $seamRel -Text '# A seam lens, reachable with no PluginNames at all'
 
-    $before = @(Get-ConsumerLensPaths -RepoRoot $guardTree -PluginNames @('dkj-policy'))
+    $before = @(Get-ConsumerLensPaths -RepoRoot $guardTree -PluginNames @('dkj-repo-workflow'))
     Assert-True (@($before | Where-Object { $_ -eq $preSeamRel }).Count -eq 1) `
         'with Test-PluginNameSlug present, the pre-seam candidate IS reached -- the fixture proves what the guard is about to remove'
     Assert-True (@($before | Where-Object { $_ -eq $seamRel }).Count -eq 1) `
@@ -108,7 +108,7 @@ try {
     # an otherwise fully loaded session, not asserted about code that never actually runs.
     Remove-Item function:Test-PluginNameSlug
     try {
-        $degraded = @(Get-ConsumerLensPaths -RepoRoot $guardTree -PluginNames @('dkj-policy'))
+        $degraded = @(Get-ConsumerLensPaths -RepoRoot $guardTree -PluginNames @('dkj-repo-workflow'))
         Assert-True (@($degraded | Where-Object { $_ -eq $preSeamRel }).Count -eq 0) `
             'with Test-PluginNameSlug undefined, the plugin name is EXCLUDED -- fail-closed, not the fail-open the first attempt shipped with'
         Assert-True (@($degraded | Where-Object { $_ -eq $seamRel }).Count -eq 1) `
@@ -119,7 +119,7 @@ try {
 
     Assert-True (Test-FunctionDefined 'Test-PluginNameSlug') `
         'Test-PluginNameSlug is restored before anything later in this process relies on it'
-    $restored = @(Get-ConsumerLensPaths -RepoRoot $guardTree -PluginNames @('dkj-policy'))
+    $restored = @(Get-ConsumerLensPaths -RepoRoot $guardTree -PluginNames @('dkj-repo-workflow'))
     Assert-True (@($restored | Where-Object { $_ -eq $preSeamRel }).Count -eq 1) `
         'restoring the function restores the pre-seam candidate -- the exclusion was live, not cached'
 
@@ -158,9 +158,9 @@ try {
     # must not produce a duplicated finding even with nothing to dedupe against but the function's own
     # fresh set.
     $dupTree = New-Tree -Label 'dup'
-    $dupRel = ".claude/plugins/$(Get-LensFamily)/dkj-policy/specialist-05-06-lens.md"
+    $dupRel = ".claude/plugins/$(Get-LensFamily)/dkj-repo-workflow/specialist-05-06-lens.md"
     Set-Text -Dir $dupTree -Rel $dupRel -Text '# reachable via one plugin name, given twice'
-    $dupOut = @(Get-ConsumerLensPaths -RepoRoot $dupTree -PluginNames @('dkj-policy', 'dkj-policy'))
+    $dupOut = @(Get-ConsumerLensPaths -RepoRoot $dupTree -PluginNames @('dkj-repo-workflow', 'dkj-repo-workflow'))
     Assert-True (@($dupOut | Where-Object { $_ -eq $dupRel }).Count -eq 1) `
         'a duplicated -PluginNames entry produces the path exactly once, not once per repetition'
 }

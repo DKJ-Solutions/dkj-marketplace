@@ -72,13 +72,13 @@ function Get-SharedScriptPairs {
         @{
             Name   = 'fold-changelog-entry'
             Source = 'scripts\release\fold-changelog-entry.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'fold-changelog'
         },
         @{
             Name   = 'open-pr'
             Source = 'scripts\release\open-pr.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'open-pr'
             # -SeamRoot is CI-runner machinery for issue #2437's trusted-tree ship, forwarded by
             # ship-pr.ps1's own -TrustedRoot (its own exemption, on ship-pr's registration below). Built
@@ -104,7 +104,7 @@ function Get-SharedScriptPairs {
             # scripts.
             Name   = 'check-script-contract'
             Source = 'scripts\sync\check-script-contract.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             # No skill, and none is wanted: this runs from a SessionStart hook and reports. Nobody
             # invokes it as a procedure, so there is no procedure to write down.
             Skill  = ''
@@ -122,7 +122,7 @@ function Get-SharedScriptPairs {
         @{
             Name   = 'new-branch'
             Source = 'scripts\task\new-branch.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'new-branch'
         },
         @{
@@ -131,13 +131,13 @@ function Get-SharedScriptPairs {
             # A repo-local copy would be a copy of the answer to a shared problem.
             Name   = 'worktree-lane'
             Source = 'scripts\task\worktree-lane.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'worktree-lane'
         },
         @{
             Name   = 'park-branch'
             Source = 'scripts\task\park-branch.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'park'
         },
         @{
@@ -152,7 +152,7 @@ function Get-SharedScriptPairs {
             # reach for this: the page carries disable-model-invocation, and the hook is what runs it.
             Name   = 'park-cycle'
             Source = 'scripts\task\park-cycle.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'park'
         },
         @{
@@ -161,7 +161,7 @@ function Get-SharedScriptPairs {
             # mechanism that will drift. Nothing in the plugin deleted a branch anywhere before this.
             Name   = 'prune-merged'
             Source = 'scripts\task\prune-merged.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'prune-merged'
         },
         @{
@@ -174,12 +174,12 @@ function Get-SharedScriptPairs {
             #
             # SHARED for the ordinary reason: it is a consumer's question far more than this repo's,
             # and the alternative is every consumer hand-deriving the same two reads. It reuses
-            # check-report-lib (already mirrored to dkj-policy as check-report-lib-workflow),
+            # check-report-lib (already mirrored to dkj-repo-workflow as check-report-lib-workflow),
             # plugin-tree-lib and native-capture-lib -- all plugin-carried already, so the payload
             # gains only this file.
             Name   = 'plugin-versions'
             Source = 'scripts\task\plugin-versions.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'plugin-versions'
             # Fixtures: a scratch repo root and a scratch ~/.claude home, so the suite can put a whole
             # install-record + marketplace-clone state in front of the script. A consumer never types
@@ -197,7 +197,7 @@ function Get-SharedScriptPairs {
             # payload this adds is this one file.
             Name   = 'update-plugins'
             Source = 'scripts\task\update-plugins.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'update-plugins'
             # Fixtures: a scratch repo root, a scratch ~/.claude home, and a fixture receipt script --
             # the last one so the suite is not required to make plugin-versions.ps1's own full
@@ -214,7 +214,7 @@ function Get-SharedScriptPairs {
             # prep hook, so the safety conditions have one definition.
             Name   = 'sync-trunk'
             Source = 'scripts\task\sync-trunk.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'sync-trunk'
             # Fixtures: a scratch repo root and a scratch ~/.claude home. A consumer never types either.
             SkillParamsExempt = @('RootOverride', 'UserHomeOverride')
@@ -227,7 +227,7 @@ function Get-SharedScriptPairs {
             # placed copy by its marker line. Reads only its own skill folder; carries no lib.
             Name   = 'place-scheduled-tasks'
             Source = 'scripts\task\place-scheduled-tasks.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'scheduled-tasks'
             # Fixtures: a scratch tasks folder and a scratch ~/.claude home. A consumer never types either.
             SkillParamsExempt = @('TasksRoot', 'UserHomeOverride')
@@ -243,7 +243,7 @@ function Get-SharedScriptPairs {
             # sync-trunk.ps1 and the trunk-sync-sessionprep hook both call Invoke-TrunkFastForward.
             Name    = 'trunk-sync-lib'
             Source  = 'scripts\lib\trunk-sync-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -270,7 +270,7 @@ function Get-SharedScriptPairs {
             # answers $null on every machine, always.
             Name   = 'check-policy-drift'
             Source = 'scripts\task\check-policy-drift.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'check-policy-drift'
             # A fixture root, plus an always-on root the suite can point at a scratch document tree.
             # A consumer never types either.
@@ -296,10 +296,10 @@ function Get-SharedScriptPairs {
             # procedure. Claude Code runs it, on its own clock, because .claude/settings.json names it
             # -- the same shape as a hook, one settings key over. What a person does invoke is the
             # command that WIRES it up, and that has a page: adopt-statusline below, Part 5 of
-            # 'adopt-dkj-policy'. A skill here would document a script no reader ever types.
+            # 'adopt-dkj-repo-workflow'. A skill here would document a script no reader ever types.
             Name   = 'show-progress'
             Source = 'scripts\task\show-progress.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = ''
             # Timeable with no arguments: it reads a directory of small JSON records and .git/HEAD as a
             # file, prints, and exits 0. Its own header makes costing no subprocess the point, so the
@@ -322,7 +322,7 @@ function Get-SharedScriptPairs {
             # because it merges to main and then commits directly to main.
             Name   = 'ship-pr'
             Source = 'scripts\release\ship-pr.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             # The gap declared here on August 4, 2026 is closed: the route the cut-release skill sends
             # the reader to ("the normal new-branch -> ship-pr route") now has a page. It documents
             # verify-resolved-issues too, which is why that entry points here rather than at one of
@@ -341,7 +341,7 @@ function Get-SharedScriptPairs {
             # and pr-issues-lib/native-capture-lib are both mirrored already.
             Name   = 'verify-resolved-issues'
             Source = 'scripts\release\verify-resolved-issues.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             # No skill of its own, and that is right: it IS ship-pr's step 6 and runs from there, so
             # whatever documents ship-pr documents this. That page now exists and carries a section for
             # running this step on its own, so the inherited gap is closed with ship-pr's rather than
@@ -361,7 +361,7 @@ function Get-SharedScriptPairs {
             # already mirrored beside it.
             Name   = 'verify-pushed-merges'
             Source = 'scripts\release\verify-pushed-merges.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             # No skill of its own, on verify-resolved-issues' reasoning exactly: it is a step of the ship
             # sequence relocated to a CI trigger, and nobody invokes it as a procedure. Its one caller is
             # a workflow file, which is the same call check-unfolded-entry gets.
@@ -376,7 +376,7 @@ function Get-SharedScriptPairs {
             # the part that made it unusable elsewhere -- moved into the seam as Get-MojibakePaths.
             Name   = 'fix-mojibake'
             Source = 'scripts\maintenance\fix-mojibake.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             # The gap declared here on August 4, 2026 is closed. It was mirrored because three repos had
             # each written their own copy -- three people needing it and none with a page to read -- and
             # that same argument is why the page had to follow the mirror rather than wait for someone to
@@ -392,7 +392,7 @@ function Get-SharedScriptPairs {
             # details` (the count_tokens API) rather than counting anything itself, so the figure it
             # reports is the authoritative one and not a second, disagreeing estimate.
             #
-            # IT TRAVELS IN dkj-policy, and the alternative was cheaper: a repo-level skill
+            # IT TRAVELS IN dkj-repo-workflow, and the alternative was cheaper: a repo-level skill
             # would cost every consumer nothing, since only the repo that AUTHORS skills ever runs
             # this. Dave chose the plugin on August 22, 2026 -- the standing portable-first rule for
             # ways of working, against a precisely known ~200 always-on tokens, and against
@@ -415,7 +415,7 @@ function Get-SharedScriptPairs {
             # skips is the deletions, which are prune-merged's and are timed in prune-merged's own row.
             Name   = 'tidy-machine'
             Source = 'scripts\maintenance\tidy-machine.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'tidy-machine'
             MeasureArgs = @('-DryRun')
             # Fixture seams, so the suite can drive the machine-wide lanes against a scratch tree. A
@@ -425,7 +425,7 @@ function Get-SharedScriptPairs {
         @{
             Name   = 'measure-skill'
             Source = 'scripts\maintenance\measure-skill.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'measure-skill'
             # A fixture root, so the suite can drive the script against a scratch tree. A consumer
             # never types it, and documenting it would invite someone to.
@@ -438,7 +438,7 @@ function Get-SharedScriptPairs {
             # scripts/tests/measure-skill.tests.ps1 against captured output.
             Name    = 'measure-skill-lib'
             Source  = 'scripts\lib\measure-skill-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -465,7 +465,7 @@ function Get-SharedScriptPairs {
             # pass 2 refuses to store.
             Name   = 'measure-always-on'
             Source = 'scripts\maintenance\measure-always-on.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'measure-skill'
         },
         @{
@@ -477,7 +477,7 @@ function Get-SharedScriptPairs {
             # scripts/tests/measure-always-on.tests.ps1.
             Name    = 'measure-context-lib'
             Source  = 'scripts\lib\measure-context-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -491,7 +491,7 @@ function Get-SharedScriptPairs {
             # script below and open-pr, which dot-sources it to name the baseline path it commits.
             Name    = 'always-on-budget-lib'
             Source  = 'scripts\lib\always-on-budget-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -516,7 +516,7 @@ function Get-SharedScriptPairs {
             # it was weighed against exactly that (Dave, September 17, 2026).
             Name   = 'measure-closeouts'
             Source = 'scripts\maintenance\measure-closeouts.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'measure-closeouts'
         },
         @{
@@ -527,7 +527,7 @@ function Get-SharedScriptPairs {
             # it costs no session anything until somebody types it.
             Name   = 'retro'
             Source = 'scripts\maintenance\retro.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'retro'
         },
         @{
@@ -538,7 +538,7 @@ function Get-SharedScriptPairs {
             # page, disable-model-invocation, so it costs no session anything until somebody types it.
             Name   = 'measure-decision-stops'
             Source = 'scripts\maintenance\measure-decision-stops.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'measure-decision-stops'
         },
         @{
@@ -552,7 +552,7 @@ function Get-SharedScriptPairs {
             # NO MeasureArgs: every run reads CI logs through gh, so its time is the network's.
             Name   = 'record-suite-durations'
             Source = 'scripts\maintenance\record-suite-durations.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'record-suite-durations'
         },
         @{
@@ -560,7 +560,7 @@ function Get-SharedScriptPairs {
             # caller is mirrored. measure-suites.ps1 shares it and stays repo-local.
             Name    = 'suite-durations-lib'
             Source  = 'scripts\lib\suite-durations-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -580,7 +580,7 @@ function Get-SharedScriptPairs {
             # reason measure-always-on declares none.
             Name   = 'measure-session-start'
             Source = 'scripts\maintenance\measure-session-start.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'measure-session-start'
         },
         @{
@@ -589,7 +589,7 @@ function Get-SharedScriptPairs {
             # fixture without a `claude` on the machine -- the same reason measure-skill-lib exists.
             Name    = 'session-start-lib'
             Source  = 'scripts\lib\session-start-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -607,40 +607,40 @@ function Get-SharedScriptPairs {
             # where it is, so there is no seam a consumer has to answer.
             Name    = 'consumer-check-lib'
             Source  = 'scripts\lib\consumer-check-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
             # THE CLAUDE.md IMPORT LINES AND THEIR ONE WRITER (#2532). Two mirrors, one per plugin with an
-            # adoption that writes a line: dkj-policy's adopt-workflow-folder.ps1 (the constitution, loaded
-            # through consumer-check-lib) and bwj-development's adopt-extension-import.ps1 (the extension).
+            # adoption that writes a line: dkj-repo-workflow's adopt-workflow-folder.ps1 (the constitution, loaded
+            # through consumer-check-lib) and dkj-repo-workflow-bwj's adopt-extension-import.ps1 (the extension).
             # Its writer loads measure-context-lib from its own directory, so that lib travels into
-            # bwj-development too (measure-context-lib-bwj below).
+            # dkj-repo-workflow-bwj too (measure-context-lib-bwj below).
             Name    = 'claude-md-import-lib'
             Source  = 'scripts\lib\claude-md-import-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
             Name    = 'claude-md-import-lib-bwj'
             Source  = 'scripts\lib\claude-md-import-lib.ps1'
-            Plugin  = 'bwj-development'
+            Plugin  = 'dkj-repo-workflow-bwj'
             LibOnly = $true
         },
         @{
             # THE REPARSE-POINT GUARD (#2533), checked before every write into a file a consumer already
             # has. A leaf with no dependencies, mirrored into each plugin that carries such a writer:
-            # dkj-policy (adopt-workflow-folder, claude-md-import-lib), bwj-development
+            # dkj-repo-workflow (adopt-workflow-folder, claude-md-import-lib), dkj-repo-workflow-bwj
             # (claude-md-import-lib-bwj) and dkj-subagents-alpha (specialists-init's bootstrap.ps1).
             Name    = 'write-target-lib'
             Source  = 'scripts\lib\write-target-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
             Name    = 'write-target-lib-bwj'
             Source  = 'scripts\lib\write-target-lib.ps1'
-            Plugin  = 'bwj-development'
+            Plugin  = 'dkj-repo-workflow-bwj'
             LibOnly = $true
         },
         @{
@@ -651,18 +651,18 @@ function Get-SharedScriptPairs {
         },
         @{
             # THE ONE FENCE TRACKER (#2536), Get-NextFenceState. A leaf with no dependencies, mirrored
-            # into each plugin that carries a reader of it: dkj-policy (measure-context-lib, pr-body-lib,
-            # pr-issues-lib, entry-scaffold-lib), bwj-development (measure-context-lib-bwj) and
+            # into each plugin that carries a reader of it: dkj-repo-workflow (measure-context-lib, pr-body-lib,
+            # pr-issues-lib, entry-scaffold-lib), dkj-repo-workflow-bwj (measure-context-lib-bwj) and
             # dkj-subagents-alpha (check-roster-sync).
             Name    = 'fence-lib'
             Source  = 'scripts\lib\fence-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
             Name    = 'fence-lib-bwj'
             Source  = 'scripts\lib\fence-lib.ps1'
-            Plugin  = 'bwj-development'
+            Plugin  = 'dkj-repo-workflow-bwj'
             LibOnly = $true
         },
         @{
@@ -673,10 +673,10 @@ function Get-SharedScriptPairs {
         },
         @{
             # Get-NextFenceState for claude-md-import-lib-bwj's writer (#2532); nothing else in
-            # bwj-development loads it.
+            # dkj-repo-workflow-bwj loads it.
             Name    = 'measure-context-lib-bwj'
             Source  = 'scripts\lib\measure-context-lib.ps1'
-            Plugin  = 'bwj-development'
+            Plugin  = 'dkj-repo-workflow-bwj'
             LibOnly = $true
         },
         @{
@@ -687,7 +687,7 @@ function Get-SharedScriptPairs {
             #
             # ITS READERS ARE THE THREE ROOT RESOLVERS, and they are already mirrored across exactly
             # these three plugins -- check-report-lib into all three, consumer-check-lib and
-            # source-repo-guard-lib into dkj-policy, source-repo-guard-lib into dkj-subagents-shopify.
+            # source-repo-guard-lib into dkj-repo-workflow, source-repo-guard-lib into dkj-subagents-shopify.
             # check-report-lib loads this one UNGUARDED at file scope, so a payload missing it would
             # fail on load rather than degrade: these three entries are what makes that safe, and they
             # are the reason the other two readers guard instead (their own comments say which and why).
@@ -699,7 +699,7 @@ function Get-SharedScriptPairs {
         @{
             Name    = 'repo-root-lib-workflow'
             Source  = 'scripts\lib\repo-root-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -732,7 +732,7 @@ function Get-SharedScriptPairs {
             # not assumed from the absence of a uniqueness assertion.
             Name    = 'check-report-lib-workflow'
             Source  = 'scripts\lib\check-report-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -758,7 +758,7 @@ function Get-SharedScriptPairs {
         @{
             Name    = 'native-capture-lib'
             Source  = 'scripts\lib\native-capture-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -775,7 +775,7 @@ function Get-SharedScriptPairs {
             # design #2101 recorded, and this is it being used rather than a change of mind.
             Name    = 'run-progress-lib'
             Source  = 'scripts\lib\run-progress-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -795,7 +795,7 @@ function Get-SharedScriptPairs {
             # takes its exempt-command set from its caller, so there is no seam a consumer answers.
             Name    = 'command-guard-lib'
             Source  = 'scripts\lib\command-guard-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -807,7 +807,7 @@ function Get-SharedScriptPairs {
             # lib instead of carrying the heredoc stripping, the here-string stripping, the
             # leading-command reader and the segment split itself -- which is where all of it was
             # learned, and which is why #1669 extracted it from that file in the first place. A plugin
-            # must not reach into another plugin's tree: dkj-policy and dkj-subagents-shopify are
+            # must not reach into another plugin's tree: dkj-repo-workflow and dkj-subagents-shopify are
             # separately versioned and separately installed, and a Shopify consumer may run this team
             # without the workflow plugin, so a cross-plugin dot-source is a dependency a version
             # mismatch breaks silently.
@@ -832,7 +832,7 @@ function Get-SharedScriptPairs {
             # above mirrors into the same directory.
             Name    = 'working-copy-guard-lib'
             Source  = 'scripts\lib\working-copy-guard-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -850,7 +850,7 @@ function Get-SharedScriptPairs {
             # than an inert one.
             Name    = 'background-run-lib'
             Source  = 'scripts\lib\background-run-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -861,7 +861,7 @@ function Get-SharedScriptPairs {
             # WHY dkj-subagents-shopify NEEDS ITS OWN COPY (inbound #1181, September 1, 2026): sync-main.ps1 became
             # a caller. Its five git network calls ran unguarded and unbounded -- the same hang #1179
             # measured, in the script that pushes a commit holding a third party's in-flight edits -- and
-            # the guard lives in this lib. dkj-subagents-shopify and dkj-policy are separately
+            # the guard lives in this lib. dkj-subagents-shopify and dkj-repo-workflow are separately
             # versioned and separately installed, and a Shopify consumer may run the first without the
             # second, so reaching into the workflow plugin's cache would be a dependency a version
             # mismatch breaks silently. sync-main.ps1's dot-source is UNGUARDED for the matching reason:
@@ -879,7 +879,7 @@ function Get-SharedScriptPairs {
             # WHY dkj-subagents-shopify NEEDS ITS OWN COPY: it is the entry above that needs it. The gate's
             # publish sites live in native-capture-lib.ps1, which is mirrored into this plugin too, and
             # their guarded dot-source resolves '..\lib\run-progress-lib.ps1' INSIDE the plugin the mirror
-            # landed in. Registered only for dkj-policy, a Shopify consumer running this team without the
+            # landed in. Registered only for dkj-repo-workflow, a Shopify consumer running this team without the
             # workflow plugin would keep the silent no-bar arm forever -- and a cross-plugin dot-source is
             # not the way out, for the reason the entry above states: the two are separately versioned and
             # separately installed, so that dependency breaks on a version mismatch without saying so.
@@ -907,7 +907,7 @@ function Get-SharedScriptPairs {
             # Each is written out in hook-check-lib.ps1's own header with what it measured.
             Name    = 'hook-check-lib'
             Source  = 'scripts\lib\hook-check-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -916,7 +916,7 @@ function Get-SharedScriptPairs {
             # mirrors, and why the name carries the plugin. roster-sessioncheck.ps1 is the caller here:
             # it is the one hook in this family that ships in the core team rather than in the workflow
             # plugin, and the two are separately versioned and separately installed, so reaching into
-            # dkj-policy's cache would be a dependency a version mismatch breaks silently.
+            # dkj-repo-workflow's cache would be a dependency a version mismatch breaks silently.
             Name    = 'hook-check-lib-alpha'
             Source  = 'scripts\lib\hook-check-lib.ps1'
             Plugin  = 'dkj-subagents-alpha'
@@ -931,7 +931,7 @@ function Get-SharedScriptPairs {
             # under). So its verdict is held for the life of the session instead, keyed on the
             # session_id the harness writes to the hook's stdin.
             #
-            # MIRRORED INTO dkj-policy ONLY, and only that, because consumer-sessioncheck.ps1 is its
+            # MIRRORED INTO dkj-repo-workflow ONLY, and only that, because consumer-sessioncheck.ps1 is its
             # one caller and ships there. A consumer's hook dot-sources it as a $PSScriptRoot sibling,
             # so a payload without it would find nothing -- which the hook handles by measuring, the
             # same way it did before this lib existed, but the pair is registered so that never
@@ -939,7 +939,7 @@ function Get-SharedScriptPairs {
             # a payload the harness sends and writes under temp.
             Name    = 'session-cache-lib'
             Source  = 'scripts\lib\session-cache-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -960,11 +960,11 @@ function Get-SharedScriptPairs {
             # second entry carries its plugin in its name; nothing about that needs restating.
             Name    = 'merged-pr-lib'
             Source  = 'scripts\lib\merged-pr-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
-            # The second mirror of merged-pr-lib. dkj-subagents-shopify and dkj-policy are separately
+            # The second mirror of merged-pr-lib. dkj-subagents-shopify and dkj-repo-workflow are separately
             # versioned and separately installed, and a Shopify consumer may run the first without the
             # second, so reaching into the workflow plugin's cache would be a dependency a version
             # mismatch breaks silently -- the same reason native-capture-lib is registered twice five
@@ -989,7 +989,7 @@ function Get-SharedScriptPairs {
             # without this lib present would now fail, which is why the list is kept current.
             Name    = 'seam-lib'
             Source  = 'scripts\lib\seam-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1004,7 +1004,7 @@ function Get-SharedScriptPairs {
             # directory, so there is no seam a consumer has to answer.
             Name    = 'gate-lib'
             Source  = 'scripts\lib\gate-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1014,7 +1014,7 @@ function Get-SharedScriptPairs {
             # argues that carve-out, and the two registrations below this file's readers state the
             # dependency-free property it respects).
             #
-            # MIRRORED INTO dkj-policy ONLY, because both mirrored readers ship there: gate-lib.ps1
+            # MIRRORED INTO dkj-repo-workflow ONLY, because both mirrored readers ship there: gate-lib.ps1
             # and session-cache-lib.ps1 dot-source it as a $PSScriptRoot sibling. The third reader,
             # scripts/sync/check-consumer-siblings.ps1, is source-only and travels nowhere.
             #
@@ -1040,13 +1040,13 @@ function Get-SharedScriptPairs {
             # string -- no seam, no path, no git, no network.
             Name    = 'hash-hex-lib'
             Source  = 'scripts\lib\hash-hex-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
             # THE PREP-DONE MARK, READ FROM A SECOND PLUGIN (inbound #4041, November 13, 2026).
-            # bwj-development's closed-message-sessioncheck.ps1 is its own SessionStart entry, so the
-            # harness runs it beside dkj-policy's dispatcher, and it read a store's .github/ and
+            # dkj-repo-workflow-bwj's closed-message-sessioncheck.ps1 is its own SessionStart entry, so the
+            # harness runs it beside dkj-repo-workflow's dispatcher, and it read a store's .github/ and
             # repo-config.ps1 before trunk-sync-sessionprep fast-forwarded them in: measured in
             # xoxowildhearts, two of three [ERROR]s were about files the same session start brought in.
             # It now waits for the dispatcher's mark, as dev-preview-sessionstart.ps1 does (#3657), so it
@@ -1055,13 +1055,13 @@ function Get-SharedScriptPairs {
             # before. hash-hex-lib-bwj below is its unguarded sibling, for the reason hash-hex-lib gives.
             Name    = 'session-cache-lib-bwj'
             Source  = 'scripts\lib\session-cache-lib.ps1'
-            Plugin  = 'bwj-development'
+            Plugin  = 'dkj-repo-workflow-bwj'
             LibOnly = $true
         },
         @{
             Name    = 'hash-hex-lib-bwj'
             Source  = 'scripts\lib\hash-hex-lib.ps1'
-            Plugin  = 'bwj-development'
+            Plugin  = 'dkj-repo-workflow-bwj'
             LibOnly = $true
         },
         @{
@@ -1081,7 +1081,7 @@ function Get-SharedScriptPairs {
             # and matches on a script name this workflow owns -- no seam, no git, no network.
             Name    = 'ci-fold-lib'
             Source  = 'scripts\lib\ci-fold-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1099,7 +1099,7 @@ function Get-SharedScriptPairs {
             # above. NO CONTRACT ROW: nothing in it is repo-owned.
             Name    = 'forward-lane-lib'
             Source  = 'scripts\lib\forward-lane-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1119,7 +1119,7 @@ function Get-SharedScriptPairs {
             # half of a handshake.
             Name    = 'merge-on-green-lib'
             Source  = 'scripts\lib\merge-on-green-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1135,7 +1135,7 @@ function Get-SharedScriptPairs {
             # requests), Get-RepoName off the consumer's own repo-config, every lib it loads mirrored.
             Name   = 'pick-merge-on-green'
             Source = 'scripts\ci\pick-merge-on-green.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             # No skill, on verify-pushed-merges' reasoning: its one caller is a workflow file.
             Skill  = ''
             # NO MeasureArgs: a bare run lists the tracker's armed pull requests, which is a network read
@@ -1163,7 +1163,7 @@ function Get-SharedScriptPairs {
             # invokes this as a procedure. The one command in its .SYNOPSIS answers it early.
             Name   = 'check-stranded-sweep'
             Source = 'scripts\lint\check-stranded-sweep.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = ''
             # A fixture root, so the suite (and the hook) can judge a tree other than the checkout.
             SkillParamsExempt = @('RootOverride')
@@ -1179,7 +1179,7 @@ function Get-SharedScriptPairs {
             # automatic caller (the SessionStart hook unshipped-pr-sessioncheck.ps1), no CI leg, no skill.
             Name   = 'check-unshipped-pr'
             Source = 'scripts\lint\check-unshipped-pr.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = ''
             SkillParamsExempt = @('RootOverride')
         },
@@ -1192,7 +1192,7 @@ function Get-SharedScriptPairs {
             # NO CONTRACT ROW: nothing in it is repo-owned -- the filter and the verdict are the caller's.
             Name    = 'pr-scan-lib'
             Source  = 'scripts\lib\pr-scan-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1219,7 +1219,7 @@ function Get-SharedScriptPairs {
             # a $PSScriptRoot sibling, so a consumer running the mirror would otherwise lose Get-TrunkGap.
             Name    = 'fetch-attempt-lib'
             Source  = 'scripts\lib\fetch-attempt-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1228,7 +1228,7 @@ function Get-SharedScriptPairs {
             # are: a consumer running the mirror would otherwise dot-source a file it does not have.
             Name    = 'remote-ahead-lib'
             Source  = 'scripts\lib\remote-ahead-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1243,7 +1243,7 @@ function Get-SharedScriptPairs {
             # implies the other.
             Name    = 'ref-print-lib'
             Source  = 'scripts\lib\ref-print-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1269,7 +1269,7 @@ function Get-SharedScriptPairs {
             # ConvertTo-ConsoleStrippedText rides along for the PR titles and entry prose it echoes.
             Name    = 'ref-print-lib-bwj'
             Source  = 'scripts\lib\ref-print-lib.ps1'
-            Plugin  = 'bwj-development'
+            Plugin  = 'dkj-repo-workflow-bwj'
             LibOnly = $true
         },
         @{
@@ -1280,16 +1280,16 @@ function Get-SharedScriptPairs {
             # would leave Test-FunctionDefined undefined in exactly the repos that never see this one.
             Name    = 'command-probe-lib'
             Source  = 'scripts\lib\command-probe-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
-            # THE WORKFLOW FOLDER'S NAME (#3870): '.dkj/dkj-policy' and the names it had before. A leaf with no
+            # THE WORKFLOW FOLDER'S NAME (#3870, #4209): '.dkj/dkj-repo-workflow', and the names it had before for the adopt step's move. A leaf with no
             # dependencies, mirrored because seam-lib and entry-scaffold-lib both dot-source it and a
             # consumer runs the mirror -- and so do Admin's release-notes route and measure-closeouts.
             Name    = 'workflow-folder-lib'
             Source  = 'scripts\lib\workflow-folder-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1325,7 +1325,7 @@ function Get-SharedScriptPairs {
             # and one mirror. Nothing in it is repo-owned, so no contract row follows.
             Name    = 'document-newline-lib'
             Source  = 'scripts\lib\document-newline-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1334,12 +1334,12 @@ function Get-SharedScriptPairs {
             # copy differing only in the file name. A leaf with no dependencies; mirrored because its caller is.
             Name    = 'stray-token-lib'
             Source  = 'scripts\lib\stray-token-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },        @{
             Name    = 'pr-issues-lib'
             Source  = 'scripts\lib\pr-issues-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1354,7 +1354,7 @@ function Get-SharedScriptPairs {
             # filesystem -- and its suite is built on asserting exact answers without a network.
             Name    = 'issue-state-lib'
             Source  = 'scripts\lib\issue-state-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1369,7 +1369,7 @@ function Get-SharedScriptPairs {
             # pure, so neither gains anything from the other's suite.
             Name    = 'pr-overlap-lib'
             Source  = 'scripts\lib\pr-overlap-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1378,7 +1378,7 @@ function Get-SharedScriptPairs {
             # above -- open-pr is mirrored and would otherwise dot-source a file the consumer does not have.
             Name    = 'pr-body-lib'
             Source  = 'scripts\lib\pr-body-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1393,7 +1393,7 @@ function Get-SharedScriptPairs {
             # is repo-owned, so no contract row follows.
             Name    = 'park-lib'
             Source  = 'scripts\lib\park-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1414,7 +1414,7 @@ function Get-SharedScriptPairs {
             # strings and prints), so no contract row follows.
             Name    = 'closeout-lib'
             Source  = 'scripts\lib\closeout-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1436,7 +1436,7 @@ function Get-SharedScriptPairs {
             # repo-owned, so a contract row DOES follow, unlike the entry above.
             Name    = 'closeout-gate-lib'
             Source  = 'scripts\lib\closeout-gate-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1456,7 +1456,7 @@ function Get-SharedScriptPairs {
             # characters -- so no contract row follows.
             Name    = 'git-porcelain-lib'
             Source  = 'scripts\lib\git-porcelain-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1478,27 +1478,27 @@ function Get-SharedScriptPairs {
         },
         @{
             # THE THIRD MIRROR (inbound #2509, September 26, 2026), on the precedent one entry up:
-            # bwj-development's prepare-release.ps1 reads a release's changed THEME paths out of git, and a
+            # dkj-repo-workflow-bwj's prepare-release.ps1 reads a release's changed THEME paths out of git, and a
             # theme is exactly where a path with a byte above 0x7F turns up. Without Convert-GitQuotedPath
             # that path reaches the push list mis-decoded by the console code page and matches nothing on
             # live. Mirrored rather than reached across, for that entry's reason: separately versioned
             # plugins, and a cross-plugin path breaks silently on a version mismatch.
             Name    = 'git-porcelain-lib-bwj'
             Source  = 'scripts\lib\git-porcelain-lib.ps1'
-            Plugin = 'bwj-development'
+            Plugin = 'dkj-repo-workflow-bwj'
             LibOnly = $true
         },
         @{
             # THE LIVE-PUSH RECORD (#2570, #2586, September 28, 2026): its format, its parser, and the
             # "is this entry live" rule. Its WRITER is live-preflight (dkj-subagents-shopify) and its READER
-            # is cut-release (dkj-policy), and the two documents the reader builds from it -- the GitHub
+            # is cut-release (dkj-repo-workflow), and the two documents the reader builds from it -- the GitHub
             # body and the audience note -- contradicted each other at a BWJ store's v1.3.0 because each had
             # decided "live" on its own. So the format is one file, mirrored into both plugins and held
             # byte-identical by check 8, rather than a writer and a parser that could disagree. Pure, and
             # dependency-free: nothing in it is repo-owned, so no contract row follows.
             Name    = 'live-record-lib'
             Source  = 'scripts\lib\live-record-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1509,31 +1509,31 @@ function Get-SharedScriptPairs {
             LibOnly = $true
         },
         @{
-            # A THIRD READER (#3176, October 19, 2026): bwj-development's notify-live, which holds an issue
+            # A THIRD READER (#3176, October 19, 2026): dkj-repo-workflow-bwj's notify-live, which holds an issue
             # whose PR changed a path the record marks 'hold' -- a theme file held back, or an app file whose
             # deploy did not run. Mirrored rather than reached across, on live-push-rules-bwj's reason, and
             # rather than re-parsed, on this file's own: one format, one "is this entry live" rule.
             Name    = 'live-record-lib-bwj'
             Source  = 'scripts\lib\live-record-lib.ps1'
-            Plugin = 'bwj-development'
+            Plugin = 'dkj-repo-workflow-bwj'
             LibOnly = $true
         },
         @{
             # WHICH ISSUES A PR CARRIED (#3941, November 9, 2026): the closing references plus the issues it
-            # only names. cut-release (dkj-policy) builds the audience note's task links from that set and
-            # notify-live (bwj-development) tells the same tasks the release is live; each used to decide it
+            # only names. cut-release (dkj-repo-workflow) builds the audience note's task links from that set and
+            # notify-live (dkj-repo-workflow-bwj) tells the same tasks the release is live; each used to decide it
             # on its own, and at a BWJ store's v2.51.0 cut the note dropped five tasks notify-live then told.
             # One file in both plugins, on live-record-lib's reason. Pure, nothing repo-owned.
             Name    = 'pull-issue-lib'
             Source  = 'scripts\lib\pull-issue-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
             # The same file, for notify-live. See the entry one up.
             Name    = 'pull-issue-lib-bwj'
             Source  = 'scripts\lib\pull-issue-lib.ps1'
-            Plugin = 'bwj-development'
+            Plugin = 'dkj-repo-workflow-bwj'
             LibOnly = $true
         },
         @{
@@ -1549,7 +1549,7 @@ function Get-SharedScriptPairs {
             # contract row follows.
             Name    = 'worktree-lib'
             Source  = 'scripts\lib\worktree-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1567,7 +1567,7 @@ function Get-SharedScriptPairs {
             # so no contract row follows.
             Name    = 'tidy-lib'
             Source  = 'scripts\lib\tidy-lib.ps1'
-            Plugin  = 'dkj-policy'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1578,7 +1578,7 @@ function Get-SharedScriptPairs {
             # empty document inside the release tag while the written version landed afterwards anyway.
             Name   = 'new-internal-note'
             Source = 'scripts\release\new-internal-note.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             # Documented inside the cut-release skill (step 2) rather than separately: it is a step of
             # cutting a release, and it cannot run before the cut has produced its input.
             Skill  = 'cut-release'
@@ -1590,7 +1590,7 @@ function Get-SharedScriptPairs {
             # that every cut retypes. Documented inside the cut-release skill, where both uploads are.
             Name   = 'upload-release-asset'
             Source = 'scripts\release\upload-release-asset.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'cut-release'
         },
         @{
@@ -1600,7 +1600,7 @@ function Get-SharedScriptPairs {
             # a drift guard that drifts. So it travels with both rather than living in either.
             Name    = 'entry-scaffold-lib'
             Source  = 'scripts\lib\entry-scaffold-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1611,7 +1611,7 @@ function Get-SharedScriptPairs {
             # mirror would otherwise load a file it does not have.
             Name    = 'script-contract-lib'
             Source  = 'scripts\lib\script-contract-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1624,17 +1624,17 @@ function Get-SharedScriptPairs {
             # THIS repo's libs to produce the artefact, so it is the source's own tool. A consumer running
             # it would generate a blueprint of itself and overwrite the one it adopts from.
             # SKILL-LEVEL MERGE, SEPTEMBER 5, 2026: this script and adopt-workflow-folder below now
-            # share ONE skill page, 'adopt-dkj-policy' -- Part 2 of it. The two scripts themselves are
+            # share ONE skill page, 'adopt-dkj-repo-workflow' -- Part 2 of it. The two scripts themselves are
             # untouched (different files, different tests, different behaviour); only the documenting
-            # page merged, for the same reason adopt-bwj-asana was renamed to adopt-dkj-policy-bwj (adopt-bwj-development since #2788)
+            # page merged, for the same reason adopt-bwj-asana was renamed to adopt-dkj-policy-bwj (adopt-dkj-repo-workflow-bwj since #2788)
             # earlier the same day: a name naming one plugin should not leave a sibling operation for
             # that plugin looking unrelated. check-plugin-integrity's skill-param check (18) already
             # supports several scripts sharing one Skill -- see verify-resolved-issues below, which has
             # shared ship-pr's page since before this merge.
             Name   = 'adopt-config'
             Source = 'scripts\task\adopt-config.ps1'
-            Plugin = 'dkj-policy'
-            Skill  = 'adopt-dkj-policy'
+            Plugin = 'dkj-repo-workflow'
+            Skill  = 'adopt-dkj-repo-workflow'
             # A test points the command at a fixture blueprint instead of the shipped one. A consumer
             # never types it, and documenting it would invite someone to.
             SkillParamsExempt = @('BlueprintPath')
@@ -1648,11 +1648,11 @@ function Get-SharedScriptPairs {
             # into a consumer's repo, so the folder that gathers everything portable arrives through
             # this command -- and check-script-contract reports at session start while it is missing.
             # Additive-only sibling of adopt-config: that one fills the seam libs, this one puts the
-            # folder down. Documented as Part 1 of 'adopt-dkj-policy' -- see the merge note above.
+            # folder down. Documented as Part 1 of 'adopt-dkj-repo-workflow' -- see the merge note above.
             Name   = 'adopt-workflow-folder'
             Source = 'scripts\task\adopt-workflow-folder.ps1'
-            Plugin = 'dkj-policy'
-            Skill  = 'adopt-dkj-policy'
+            Plugin = 'dkj-repo-workflow'
+            Skill  = 'adopt-dkj-repo-workflow'
             # THE RESOLUTION #1857 WAS FILED ABOUT. The shipped PR template reference is read from
             # '..\..\templates\pull_request_template.md' with a second candidate one level deeper for
             # the source copy -- so candidate 1 is the plugin root from the mirror and a
@@ -1686,8 +1686,8 @@ function Get-SharedScriptPairs {
             # is paid by every session in every consumer, and this operation is run about once per repo.
             Name   = 'adopt-ci-floor'
             Source = 'scripts\task\adopt-ci-floor.ps1'
-            Plugin = 'dkj-policy'
-            Skill  = 'adopt-dkj-policy'
+            Plugin = 'dkj-repo-workflow'
+            Skill  = 'adopt-dkj-repo-workflow'
             # A test points the command at a fixture rules payload instead of calling gh, which is the
             # only way to reach the queue-is-active arm without a network and a trunk. A consumer never
             # types it, and documenting it would invite someone to. SharedRefOverride is the same shape
@@ -1707,7 +1707,7 @@ function Get-SharedScriptPairs {
             #
             # IT PLACES A SHIM, NOT A PATH, AND THAT IS THE WHOLE DESIGN DECISION (Dave, September 18,
             # 2026). The obvious thing -- write today's plugin-cache path into settings.json -- fails in
-            # the worst available way: the cache is keyed BY VERSION (this machine holds dkj-policy 5.0.0
+            # the worst available way: the cache is keyed BY VERSION (this machine holds dkj-repo-workflow 5.0.0
             # through 5.5.0 side by side), so the next plugin update leaves the old payload on disk and
             # the statusline goes on rendering it. It keeps working, it renders stale code, and no check
             # reports it. Copying the two scripts into the consumer instead trades that for two live
@@ -1722,8 +1722,8 @@ function Get-SharedScriptPairs {
             # this run leaves it alone and prints the block instead.
             Name   = 'adopt-statusline'
             Source = 'scripts\task\adopt-statusline.ps1'
-            Plugin = 'dkj-policy'
-            Skill  = 'adopt-dkj-policy'
+            Plugin = 'dkj-repo-workflow'
+            Skill  = 'adopt-dkj-repo-workflow'
             # A test points the command at a fixture repo root, so a whole settings state can be put in
             # front of it. A consumer never types it. ONE SEAM, NOT THE USUAL TWO: this command never
             # reads the install administration -- resolving the payload is the shim's job at render
@@ -1744,7 +1744,7 @@ function Get-SharedScriptPairs {
             # NO SKILL, DELIBERATELY, AND FOR A DIFFERENT REASON THAN check-unfolded-entry's ABOVE. That
             # one has no skill because both its callers are automatic and nobody invokes it as a
             # procedure; this one genuinely is a procedure a person runs, but #1895 scoped OUT both of
-            # its obvious homes -- a new "Part 5" of the already-four-part adopt-dkj-policy skill, and a
+            # its obvious homes -- a new "Part 5" of the already-four-part adopt-dkj-repo-workflow skill, and a
             # skill page of its own -- as bigger than the issue asked for. Documented instead by its own
             # .SYNOPSIS run line, the shared-scripts table row below, and one sentence in
             # CONTRIBUTING-portable.md. A future issue that outgrows this may still give it one.
@@ -1756,7 +1756,7 @@ function Get-SharedScriptPairs {
             # canonical answer instead of conflicting with anything.
             Name   = 'adopt-triage-labels'
             Source = 'scripts\task\adopt-triage-labels.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             # Skill = '', so the parameter check (check 18) never runs for this entry -- there is no
             # skill page to hold -LabelJsonOverride against. See the comment above for why.
             Skill  = ''
@@ -1776,9 +1776,9 @@ function Get-SharedScriptPairs {
             # waits for Dave's own eye rather than merging on the gates.
             Name   = 'cut-release'
             Source = 'scripts\release\cut-release.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'cut-release'
-            # #3462: the dev-preview lib lives only under plugins/dkj-policy/apps/admin/, so the stop of the own product
+            # #3462: the dev-preview lib lives only under plugins/dkj-repo-workflow/apps/admin/, so the stop of the own product
             # probes it at both depths.
             MirrorRunExempt = 'both copies probe the Admin lib at both depths and resolve the same file, and a missing one only keeps the #3353 refusal, so a mirror run would only re-measure what the source run already did'
         },
@@ -1791,7 +1791,7 @@ function Get-SharedScriptPairs {
             # from the consumer's own root before calling in.
             Name    = 'release-lib'
             Source  = 'scripts\lib\release-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1802,7 +1802,7 @@ function Get-SharedScriptPairs {
             # argument for one source rather than for a second.
             Name   = 'build-release-notes-page'
             Source = 'scripts\release\build-release-notes-page.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'release-notes-page'
             # A fixture root, so the suite can build a page from a synthetic tree instead of this repo's
             # real notes. A consumer never types it.
@@ -1821,7 +1821,7 @@ function Get-SharedScriptPairs {
             # registry is for. Without it the mirror would build a page from a template it does not have.
             Name    = 'release-notes-page-template'
             Source  = 'scripts\release\release-notes-page-template.html'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1831,7 +1831,7 @@ function Get-SharedScriptPairs {
             # left the template rather than being copied into a second renderer.
             Name    = 'markdown-render'
             Source  = 'scripts\release\markdown-render.js'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1848,7 +1848,7 @@ function Get-SharedScriptPairs {
             # reader into every consumer session that has no marketplace.
             Name    = 'plugin-tree-lib'
             Source  = 'scripts\lib\plugin-tree-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1863,7 +1863,7 @@ function Get-SharedScriptPairs {
             # loaded yet.
             Name    = 'source-repo-guard-lib'
             Source  = 'scripts\lib\source-repo-guard-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1889,7 +1889,7 @@ function Get-SharedScriptPairs {
         @{
             # THE GUARD LIB HAS TO REACH dkj-subagents-shopify TOO, now that a shared script travels there. It only
             # ever fires from inside the copy a reader wrongly ran, so a version that stayed behind in
-            # dkj-policy's mirror could never fire for adopt-shopify-floor. Registered per plugin
+            # dkj-repo-workflow's mirror could never fire for adopt-shopify-floor. Registered per plugin
             # rather than per script for the same reason check-report-lib is: the pair names a destination,
             # and one destination cannot serve two.
             Name    = 'source-repo-guard-lib'
@@ -1912,7 +1912,7 @@ function Get-SharedScriptPairs {
             # exemption was.
             Name   = 'check-branch-entry'
             Source = 'scripts\lint\check-branch-entry.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'check-branch-entry'
             # A fixture root, so the suite can judge scratch trees. A consumer never types it.
             SkillParamsExempt = @('RootOverride')
@@ -1926,9 +1926,9 @@ function Get-SharedScriptPairs {
             # page, step 4, which is where that command is prescribed.
             Name   = 'check-release-note-form'
             Source = 'scripts\lint\check-release-note-form.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'cut-release'
-            # A fixture root, so the suite can judge scratch trees, and a fixture home, so whether dkj-solutions
+            # A fixture root, so the suite can judge scratch trees, and a fixture home, so whether dkj-repo-workflow-dkj
             # is enabled is the fixture's answer rather than the machine's (#3752). A consumer types neither.
             SkillParamsExempt = @('RootOverride', 'UserHomeOverride')
             # NO MeasureArgs, although it is read-only: measure-skill's canary holds that nothing behind
@@ -1948,7 +1948,7 @@ function Get-SharedScriptPairs {
             # reason -- a person who wants the answer early runs the one command in its .SYNOPSIS.
             Name   = 'check-unfolded-entry'
             Source = 'scripts\lint\check-unfolded-entry.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = ''
             # A fixture root, so the suite (and the hook) can judge a tree other than the checkout.
             SkillParamsExempt = @('RootOverride')
@@ -1973,7 +1973,7 @@ function Get-SharedScriptPairs {
             # the session hook puts it in front of them anyway.
             Name   = 'check-always-on-budget'
             Source = 'scripts\lint\check-always-on-budget.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = ''
             # A fixture root and a fixture always-on root, so the suite can put this in front of a tree
             # other than the checkout. A consumer never types either.
@@ -2020,7 +2020,7 @@ function Get-SharedScriptPairs {
             # answers it early.
             Name   = 'check-consumer-prose'
             Source = 'scripts\lint\check-consumer-prose.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = ''
             # A fixture root, plus an always-on root the suite can point at a scratch document tree.
             # A consumer never types either.
@@ -2036,7 +2036,7 @@ function Get-SharedScriptPairs {
             # automatic or already a skill.
             Name   = 'check-admin-processes'
             Source = 'scripts\lint\check-admin-processes.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = ''
             # Fixture seams; a consumer never types either.
             SkillParamsExempt = @('UserHomeOverride', 'ProcessTableJson')
@@ -2063,7 +2063,7 @@ function Get-SharedScriptPairs {
             # and nobody invokes it as a procedure. One command in its .SYNOPSIS answers it early.
             Name   = 'check-git-identity'
             Source = 'scripts\lint\check-git-identity.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = ''
             # A fixture root, plus the two identity overrides the suite needs to put this in front of
             # every state without a keyring or a git identity of its own.
@@ -2098,7 +2098,7 @@ function Get-SharedScriptPairs {
             # wants it before the next cron.
             Name   = 'check-repo-settings'
             Source = 'scripts\lint\check-repo-settings.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = ''
             # Four fixture-only overrides: the three payload files that stand in for a `gh api` call the
             # suite cannot make against a moving target, plus the root override that points the read at
@@ -2117,7 +2117,7 @@ function Get-SharedScriptPairs {
             # consumers -- with no backup, no error, and nothing anywhere that reported it. Its one
             # automatic caller is the SessionStart hook claude-home-sessioncheck.ps1.
             #
-            # IT TRAVELS IN dkj-policy with the other machine-fact session checks, and not in the team
+            # IT TRAVELS IN dkj-repo-workflow with the other machine-fact session checks, and not in the team
             # plugin whose roster check the damage actually broke. The subject is the plugin
             # administration itself, which is harness state rather than a roster: plugin-versions.ps1
             # -- the other script that reads it as its whole subject -- ships here too.
@@ -2130,7 +2130,7 @@ function Get-SharedScriptPairs {
             # nobody invokes it as a procedure. One command in its .SYNOPSIS answers it early.
             Name   = 'check-claude-home'
             Source = 'scripts\lint\check-claude-home.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = ''
             # The fixture home and the fixture's definition of "scratch", both of which the suite MUST
             # pass -- a suite for this check that used the real home would be the defect under test.
@@ -2150,7 +2150,7 @@ function Get-SharedScriptPairs {
             # acts on it, and on the two the one-liner cannot see -- a closed issue (which it claims
             # silently) and an issue somebody else holds (which it joins).
             #
-            # IT TRAVELS IN dkj-policy because a claim is tracker mechanics, which is that plugin's
+            # IT TRAVELS IN dkj-repo-workflow because a claim is tracker mechanics, which is that plugin's
             # subject: it sits with new-branch, open-pr and ship-pr, one step earlier in the same
             # sequence. Nothing in it is Shopify-specific or repo-specific -- Get-RepoName is read
             # defensively and gh's own resolution stands without it.
@@ -2160,9 +2160,9 @@ function Get-SharedScriptPairs {
             # typed leaves exactly that path open.
             Name   = 'claim-issue'
             Source = 'scripts\task\claim-issue.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'claim-issue'
-            # #3961: goals-lib lives only under plugins/dkj-policy/apps/admin/, so -Candidates probes it at both depths.
+            # #3961: goals-lib lives only under plugins/dkj-repo-workflow/apps/admin/, so -Candidates probes it at both depths.
             MirrorRunExempt = 'both copies probe goals-lib at both depths and resolve the same file, and a missing one only leaves the goal label''s own skip, which -Candidates says out loud, so a mirror run would only re-measure what the source run already did'
             # A fixture root, so the suite can point the repo-config read at a scratch tree. A consumer
             # never types it, and documenting it would invite someone to.
@@ -2184,7 +2184,7 @@ function Get-SharedScriptPairs {
             # one, check-git-identity.ps1 reporting it and new-branch.ps1 refusing on it.
             Name    = 'git-identity-lib'
             Source  = 'scripts\lib\git-identity-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -2194,7 +2194,7 @@ function Get-SharedScriptPairs {
             # are where all four refusals live. Pinned by scripts/tests/claim-issue.tests.ps1.
             Name    = 'claim-issue-lib'
             Source  = 'scripts\lib\claim-issue-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -2206,7 +2206,7 @@ function Get-SharedScriptPairs {
             # agent def holding Bash), and #1670's finding was that nothing anywhere DETECTED it, so a
             # repeat would be exactly as invisible as the first.
             #
-            # IT TRAVELS IN dkj-policy for the reason claim-issue does, and it is the same split: the
+            # IT TRAVELS IN dkj-repo-workflow for the reason claim-issue does, and it is the same split: the
             # RULE lives in the orchestrator's manual in dkj-subagents-alpha (Chris owes a reconciliation
             # step after a fan-out), the MECHANISM sits here with the other git mechanics -- new-branch,
             # park-cycle, prune-merged. Nothing in it knows what a specialist is.
@@ -2219,7 +2219,7 @@ function Get-SharedScriptPairs {
             # cheap to add, because the judgement it needs is already the shared lib below.
             Name   = 'check-fanout'
             Source = 'scripts\task\check-fanout.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             Skill  = 'check-fanout'
             # A fixture root, so the suite can put this script in front of throwaway repos -- including
             # the one where it reproduces the #1665 command for real. A caller never types it.
@@ -2238,7 +2238,7 @@ function Get-SharedScriptPairs {
             # Pinned by scripts/tests/fanout-lib.tests.ps1, which also drives the script end to end.
             Name    = 'fanout-lib'
             Source  = 'scripts\lib\fanout-lib.ps1'
-            Plugin = 'dkj-policy'
+            Plugin = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -2341,7 +2341,7 @@ function Get-SharedScriptPairs {
             # The theme archive (issue #1886 candidate 4, September 13, 2026). IT TRAVELS IN
             # dkj-subagents-shopify for the same reason sync-main and push-preview do: the plugin that
             # owns the live theme owns the estate around it. That is a DEPARTURE from the #1881
-            # ruling's default -- which sends what the two BWJ stores share to bwj-development -- and
+            # ruling's default -- which sends what the two BWJ stores share to dkj-repo-workflow-bwj -- and
             # the reason is that the ruling's axis is the wrong axis here. Archiving a theme is not a
             # BWJ practice, it is a Shopify one, and the two scripts already registered above ship
             # with exactly the same two readers.
@@ -2393,14 +2393,14 @@ function Get-SharedScriptPairs {
             # owns, what a backup is called, when a duplicate has finished filling, which backup rotates
             # out, and which previews a sweep may remove.
             #
-            # IT TRAVELS IN dkj-subagents-shopify RATHER THAN bwj-development, WHICH IS NOT WHERE THE
+            # IT TRAVELS IN dkj-subagents-shopify RATHER THAN dkj-repo-workflow-bwj, WHICH IS NOT WHERE THE
             # ISSUE ASKED FOR IT. The #1881 ruling sends what the two BWJ stores share to that plugin --
             # and names the exception this falls under in the same breath: dkj-subagents-shopify
             # 'already owns the theme mechanisms', and its own README says the chapters there are
             # 'policy, never mechanism'. Backing up a theme and sweeping an estate are Shopify craft,
             # not BWJ practice; any Shopify repo wants a verified backup and a prefix-keyed sweep. What
             # IS BWJ's is the policy that binds them to the cut and the live push, and that is a page in
-            # bwj-development -- THEME-LIFECYCLE-portable.md. Same split, and the same reasoning, as
+            # dkj-repo-workflow-bwj -- THEME-LIFECYCLE-portable.md. Same split, and the same reasoning, as
             # theme-archive-rules one entry up.
             #
             # PURE, AND THAT IS THE SAFETY PROPERTY RATHER THAN A STYLE. Two of the three mechanisms it
@@ -2425,7 +2425,7 @@ function Get-SharedScriptPairs {
             # IT TRAVELS IN dkj-subagents-shopify for the same reason theme-lifecycle-rules does, one
             # entry up: a live theme push is Shopify craft rather than BWJ practice -- any repo serving a
             # theme has to decide which of its changed files exist on one. What IS BWJ's is the policy
-            # binding this to their release day, and that stays a page in bwj-development.
+            # binding this to their release day, and that stays a page in dkj-repo-workflow-bwj.
             #
             # TWO SCRIPTS READ IT, WHICH IS WHY THE EIGHT DIRECTORIES LIVE HERE. sync-main.ps1 spelled
             # that set out itself until #2228 and the preflight needs exactly the same eight; two copies
@@ -2447,18 +2447,18 @@ function Get-SharedScriptPairs {
             LibOnly = $true
         },
         @{
-            # THE SAME RULES, MIRRORED A SECOND TIME -- into bwj-development, for prepare-release.ps1 (inbound
+            # THE SAME RULES, MIRRORED A SECOND TIME -- into dkj-repo-workflow-bwj, for prepare-release.ps1 (inbound
             # #2509, September 26, 2026). That script derives the push list days before release day, and
             # the issue asked for it to reuse the preflight's derivation rather than copy it. The plugin's
             # scripts may not reach a second plugin's libs -- a store forwards to them from the plugin
             # cache, where dkj-subagents-shopify's folder is not a sibling path anybody can rely on -- so
             # the reuse is a registered mirror: one source, held byte-identical in both plugins by check 8.
             #
-            # A MIRROR AND NOT A MOVE. The preflight still owns these rules, and nothing in bwj-development
+            # A MIRROR AND NOT A MOVE. The preflight still owns these rules, and nothing in dkj-repo-workflow-bwj
             # edits them; a change lands in scripts/lib/live-push-rules.ps1 and reaches both copies.
             Name    = 'live-push-rules-bwj'
             Source  = 'scripts\lib\live-push-rules.ps1'
-            Plugin  = 'bwj-development'
+            Plugin  = 'dkj-repo-workflow-bwj'
             LibOnly = $true
         },
         @{
@@ -2467,7 +2467,7 @@ function Get-SharedScriptPairs {
             # Shopify CLI call to this wrapper. Mirrored on live-push-rules-bwj's reason.
             Name    = 'shopify-cli-lib-bwj'
             Source  = 'scripts\lib\shopify-cli-lib.ps1'
-            Plugin  = 'bwj-development'
+            Plugin  = 'dkj-repo-workflow-bwj'
             LibOnly = $true
         },
         @{

@@ -1271,7 +1271,7 @@ function Get-RelativeLinkPath {
         Pure: the relative link from one repo-relative directory to a repo-relative file, both with
         forward slashes -- 'changelog/4.x/4.9.0.md' from 'dkj-policy/releases' to
         'dkj-policy/releases/changelog/4.x/4.9.0.md', and the same file reached from 'releases'
-        as '../dkj-policy/releases/changelog/4.x/4.9.0.md' -- which is the shape this repo's own
+        as '../dkj-repo-workflow/releases/changelog/4.x/4.9.0.md' -- which is the shape this repo's own
         overview rows have carried since #914.
 
         WHY IT EXISTS (August 14, 2026). cut-release.ps1 built the history-table row with
@@ -1673,7 +1673,7 @@ function Convert-EntryHeadingToTitle {
 # of Build-ReleaseNotes, an entry having been written at H3 since August 26, 2026. This function still
 # passed the literal 2, so release-lib held two answers to one question and the one left behind was the
 # stale one -- and its own test pinned that answer ("at ##"), which is why the repair could not reach
-# it. Measured before removing it: no caller anywhere in this repo or in the shipped dkj-policy
+# it. Measured before removing it: no caller anywhere in this repo or in the shipped dkj-repo-workflow
 # mirror, and releases/consumer/ does not exist here.
 #
 # AND WHY DELETED RATHER THAN LEVELLED, which is the choice #1370 left open. Levelling alone would have
@@ -2126,7 +2126,7 @@ function Get-ReleaseNoteHeadingFindings {
         A SEPARATE FUNCTION FROM Compare-ReleaseNoteForm, ON PURPOSE. That one compares a note with the form
         the generator drafts and adds no rule of its own; these two are the brand book's, a rule about how a
         heading reads, and they hold only where the brand book does -- the check script asks that question
-        (is dkj-solutions enabled here?) before it calls this. A repo outside DKJ-Solutions keeps its own
+        (is dkj-repo-workflow-dkj enabled here?) before it calls this. A repo outside DKJ-Solutions keeps its own
         styling and is never held to them.
 
         Measured on the v6.3.0 audience note: two headings carried a code span and five ran to 8-11 words,

@@ -45,7 +45,7 @@
         vector guard-live-theme's header names as the thing a permission rule cannot close, and it is
         closed here by splitting the body and matching its segments too, to a bounded depth.
 
-    THIS IS THE SOURCE COPY. The twins under plugins/dkj-policy/scripts/lib/ and
+    THIS IS THE SOURCE COPY. The twins under plugins/dkj-repo-workflow/scripts/lib/ and
     plugins/dkj-subagents/dkj-subagents-shopify/scripts/lib/ are its released mirrors, and the
     shared-scripts drift lint holds all three identical.
 

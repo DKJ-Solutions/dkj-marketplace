@@ -37,7 +37,7 @@
                     "branch-document-path.tests.ps1":  3.1,
                     "branch-entry-gate.tests.ps1":  72.1,
                     "branch-info.tests.ps1":  2.2,
-                    "bwj-development.tests.ps1":  75.2,
+                    "dkj-repo-workflow-bwj.tests.ps1":  75.2,
                     "bwj-extension-import.tests.ps1":  18.1,
                     "bwj-market-urls.tests.ps1":  10.4,
                     "bwj-page-publish.tests.ps1":  20.9,

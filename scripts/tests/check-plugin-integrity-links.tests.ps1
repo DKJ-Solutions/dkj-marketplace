@@ -134,12 +134,12 @@ try {
     # And the root form is asserted DEAD on the legacy file, which is the direction pin: a repair that
     # simply left $RepoRoot in place, or one that dropped the case altogether, fails one of the three.
     Write-Host "check 4 coverage -- an entry's links are judged where the text LANDS" -ForegroundColor Cyan
-    $entryDirFx = Join-Path $Fixture '.dkj\dkj-policy\branch'
+    $entryDirFx = Join-Path $Fixture '.dkj\dkj-repo-workflow\branch'
     New-Item -ItemType Directory -Path $entryDirFx -Force | Out-Null
     $entryFx    = Join-Path $entryDirFx 'branch-deployment.md'
     $progressFx = Join-Path $entryDirFx 'branch-cycle.md'
-    $devFx      = Join-Path $Fixture '.dkj\dkj-policy\development.md'
-    # 'consumers/README.md' exists in this fixture. From .dkj/dkj-policy/ -- where this fixture's
+    $devFx      = Join-Path $Fixture '.dkj\dkj-repo-workflow\development.md'
+    # 'consumers/README.md' exists in this fixture. From .dkj/dkj-repo-workflow/ -- where this fixture's
     # CHANGELOG.md resolves to since #3870 -- it is reached with two '../', and the bare root form is dead there.
     [System.IO.File]::WriteAllText($entryFx,
         "## Fixture entry`n`nSee [the consumers README](../../consumers/README.md), [the root form](consumers/README.md) and [nope]($deadLink).`n", $Utf8NoBom)
@@ -153,13 +153,13 @@ try {
     $b4 = Invoke-Integrity -FixtureRoot $Fixture
     Assert-True (-not ($b4.Out -match 'dead link ''\.\./\.\./consumers/README\.md''')) `
         'entry links: the link that reads correctly beside the changelog is NOT dead -- that is where the fold puts the text'
-    Assert-True (-not ($b4.Out -match [regex]::Escape('.\.dkj\dkj-policy\development.md'))) `
+    Assert-True (-not ($b4.Out -match [regex]::Escape('.\.dkj\dkj-repo-workflow\development.md'))) `
         "entry links: today's document is judged from its own directory, because the changelog sits there too"
     Assert-True ($b4.Out -match 'dead link ''consumers/README\.md''') `
         'entry links: the ROOT form IS dead on the legacy name -- the base is the changelog, not the repo root'
-    Assert-True ($b4.Out -match [regex]::Escape('.\.dkj\dkj-policy\branch\branch-deployment.md') -and $b4.Out -match [regex]::Escape($deadLink)) `
+    Assert-True ($b4.Out -match [regex]::Escape('.\.dkj\dkj-repo-workflow\branch\branch-deployment.md') -and $b4.Out -match [regex]::Escape($deadLink)) `
         'entry links: a genuinely dead link in the entry IS still reported -- the rebase is not a way out of the check'
-    Assert-True (-not ($b4.Out -match [regex]::Escape('.\dkj-policy\branch\branch-cycle.md'))) `
+    Assert-True (-not ($b4.Out -match [regex]::Escape('.\dkj-repo-workflow\branch\branch-cycle.md'))) `
         'entry links: the step list keeps the ordinary nested convention -- it never travels, so ../../ is correct there'
 
     Remove-Item -LiteralPath $entryFx, $progressFx, $devFx -Force

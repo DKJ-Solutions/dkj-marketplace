@@ -543,11 +543,11 @@ and `git status` silent.
    your next plugin update — silently, while still reading as covered. **What the rule keeps
    literal, around the wildcards, is the install path's shape** — `.claude`, `plugins`, `cache`, the
    plugin's name, `scripts`, the script — because the plugin's name alone also matched the
-   `.dkj/dkj-policy/` folder in your own root, where a pull request could place a script that then ran
+   `.dkj/dkj-repo-workflow/` folder in your own root, where a pull request could place a script that then ran
    unprompted ([#2746](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2746)). That
    **narrows** the rule; it does not pin a location. A plugin-shaped tree committed into your repo
    would still match, so it is stopped at the pull request instead. The branch-entry check that
-   `adopt-dkj-policy`'s Part 1 places fails any PR whose tree tracks a path of that shape
+   `adopt-dkj-repo-workflow`'s Part 1 places fails any PR whose tree tracks a path of that shape
    ([#2752](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2752)); where that check is
    missing or not required, review such a PR by eye. The `gh repo edit`
    rule is exact for the same reason: a trailing wildcard would also allow `--visibility`.
@@ -627,11 +627,11 @@ After the script:
    [#335](https://github.com/DaveKJohn/claude-code-specialists/issues/335) established the same reader
    model for the QUICKSTART fragment — *"the block is labelled `jsonc`, which suggests comments are
    fine"* — but its repair landed there and never reached the instruction that moves this file.
-3. **Write the governance.** The `CLAUDE.md` scaffold is bare. **Where `dkj-policy` is also installed,
+3. **Write the governance.** The `CLAUDE.md` scaffold is bare. **Where `dkj-repo-workflow` is also installed,
    do not fill this file in at all** — `CLAUDE.md` holds only the `@`-import line(s), and the safety
-   rules ship with that plugin; that plugin's own `adopt-dkj-policy` skill covers the import and where
+   rules ship with that plugin; that plugin's own `adopt-dkj-repo-workflow` skill covers the import and where
    this repo's own facts then go (an unscoped `.claude/rules/<name>.md`, never `CLAUDE.md` itself). Only
-   a repo running `dkj-subagents-alpha` **without** `dkj-policy` needs to write its own safety rules and
+   a repo running `dkj-subagents-alpha` **without** `dkj-repo-workflow` needs to write its own safety rules and
    working method directly into the scaffold (see an existing consumer as a model).
 4. **Enable auto-delete of merged branches (#163).** Turn on the GitHub repo setting
    *"Automatically delete head branches"* (`deleteBranchOnMerge: true`) — via the repo settings UI

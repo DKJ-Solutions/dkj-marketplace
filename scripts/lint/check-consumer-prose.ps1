@@ -4,10 +4,10 @@
     detectors over one corpus, read once -- a RETIRED name of the branch's development document (issue
     #1389), and an inverted declaration putting this repo's own 'CLAUDE.md' above the workflow's
     contributing page (issue #1415). Merged into one script by issue #1421. Two further [WARNING]-only
-    checks judge the root 'CLAUDE.md' file alone (issue #2374): whether it '@'-imports the dkj-policy
+    checks judge the root 'CLAUDE.md' file alone (issue #2374): whether it '@'-imports the dkj-repo-workflow
     constitution, and whether it carries prose beyond that -- and a third (issue #2444) warns where the
     root is imports-only but no unscoped '.claude/rules/*.md' carries the repo's facts -- and a fourth
-    (issue #2538) warns where the repo's own settings enable bwj-development but the closure does not import
+    (issue #2538) warns where the repo's own settings enable dkj-repo-workflow-bwj but the closure does not import
     that plugin's extension CLAUDE.md. All advisory; none moves the exit code.
 
 .DESCRIPTION
@@ -212,15 +212,15 @@ $inverted = @(Get-SupremacyDeclaration -RepoRoot $repoRoot -Documents $documents
 # walked closure -- an empty corpus is "no CLAUDE.md" or "no measure lib", and neither is this gap.
 if (@($documents).Count -gt 0 -and (Test-FunctionDefined 'Test-ConstitutionImported') -and
     -not (Test-ConstitutionImported -Documents $documents)) {
-    Write-Host '[WARNING] this repo''s CLAUDE.md does not import the dkj-policy constitution -- the rules it runs under.' -ForegroundColor Yellow
+    Write-Host '[WARNING] this repo''s CLAUDE.md does not import the dkj-repo-workflow constitution -- the rules it runs under.' -ForegroundColor Yellow
     Write-Host '          Add this line, and keep ONLY ''@''-import lines in CLAUDE.md beneath it:' -ForegroundColor Yellow
     Write-Host "            $(Get-ConstitutionImportLine)" -ForegroundColor Yellow
     Write-Host '          Move repo facts into an unscoped .claude/rules/<name>.md, and a specialist''s own' -ForegroundColor Yellow
     Write-Host '          repo-specific rules into its lens.' -ForegroundColor Yellow
 }
 
-# THE EXTENSION IMPORTS (#2538, #2697). The same gap one plugin over: a repo that enables a dkj-policy
-# extension (bwj-development, dkj-solutions, ...) but does not import its CLAUDE.md runs without that
+# THE EXTENSION IMPORTS (#2538, #2697). The same gap one plugin over: a repo that enables a dkj-repo-workflow
+# extension (dkj-repo-workflow-bwj, dkj-repo-workflow-dkj, ...) but does not import its CLAUDE.md runs without that
 # extension's chapters, and nothing said so. #2531 measured that a warning alone changed nothing for
 # weeks, which is why the adoption WRITES the line (#2532); this is the signal for the repo that enabled
 # the plugin and never ran it. One warning per missing extension, the set derived from the enabled ids
@@ -238,18 +238,18 @@ if (@($documents).Count -gt 0 -and (Test-FunctionDefined 'Test-ExtensionImported
     foreach ($ext in $extensions) {
         if (Test-ExtensionImported -Extension $ext -Documents $documents) { continue }
         Write-Host "[WARNING] this repo enables $ext, but its CLAUDE.md does not import the extension --" -ForegroundColor Yellow
-        Write-Host '          so its chapters are not in context. Run the adopt-dkj-policy skill: its' -ForegroundColor Yellow
+        Write-Host '          so its chapters are not in context. Run the adopt-dkj-repo-workflow skill: its' -ForegroundColor Yellow
         Write-Host '          adopt-workflow-folder.ps1 -Apply writes the line directly below the constitution import.' -ForegroundColor Yellow
         Write-Host "          Or add it by hand: $(Get-ExtensionImportLine -Extension $ext)" -ForegroundColor Yellow
     }
 }
 
-# THE RETIRED EXTENSION NAMES (#2788). dkj-policy-bwj became bwj-development and dkj-policy-dkjs became
-# dkj-solutions. A repo that adopted before the rename keeps both old names until it migrates: the
+# THE RETIRED EXTENSION NAMES (#2788). dkj-policy-bwj became dkj-repo-workflow-bwj and dkj-policy-dkjs became
+# dkj-repo-workflow-dkj. A repo that adopted before the rename keeps both old names until it migrates: the
 # enabledPlugins id, which the marketplace no longer declares, so nothing of the extension loads; and the
 # '@'-line, whose path the marketplace clone no longer has, so it imports nothing. Neither fails loudly,
 # so each gets a [WARNING] naming the current name. The same warning names an import at the depth #3871 retired
-# (.../dkj-policy/<name>/CLAUDE.md, before the extensions moved under extensions/), which loads nothing either. Same terms as the blocks above: never the exit code,
+# (.../dkj-repo-workflow/<name>/CLAUDE.md, before the extensions moved under extensions/), which loads nothing either. Same terms as the blocks above: never the exit code,
 # and wrapped so a malformed settings layer cannot take the SessionStart hook down.
 if (Test-FunctionDefined 'Get-RetiredPolicyExtensionNames') {
     $retiredExt = Get-RetiredPolicyExtensionNames

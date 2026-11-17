@@ -435,7 +435,7 @@ if ($contractLibs.Count -gt 0 -and $presentLibs.Count -eq 0) {
     # hooks that told a fresh consumer's model to "run that skill" while disable-model-invocation
     # forbids exactly that. Full reasoning at the twin site in check-roster-sync.ps1's [BOOTSTRAP]
     # marker; the short of it is that the refused model's next move is the absolute path into the
-    # plugin cache, and this line is where that temptation is created. The 'adopt-dkj-policy'
+    # plugin cache, and this line is where that temptation is created. The 'adopt-dkj-repo-workflow'
     # imperative further down is NOT the same case and stays as it is: that skill carries no flag.
     Write-Host ("  [BOOTSTRAP] this repo has none of the libs the shared workflow scripts expect (" + ($contractLibs -join ', ') + ") -- it has not been set up yet. Nothing is broken: those files are what /dkj-subagents-alpha:specialists-init puts down as scaffolds for you to fill in. That command must be TYPED by the repo owner, because the skill is reserved for explicit user invocation and an agent cannot start it. Until then this check reports nothing further, because every required function would otherwise be listed against a file that does not exist yet.") -ForegroundColor Yellow
     Write-CheckSummary
@@ -472,11 +472,11 @@ $foundWorkflowFolder = $workflowFolderNames | Where-Object {
 if (-not $foundWorkflowFolder) {
     Write-Failure ("the workflow folder '$($workflowFolderNames[0])/' does not exist in this repo -- the " +
         "changelog, the release roots and the branch documents live there, and the shared scripts read " +
-        "only that location. Run the 'adopt-dkj-policy' skill to scaffold it (dry-run by default, " +
+        "only that location. Run the 'adopt-dkj-repo-workflow' skill to scaffold it (dry-run by default, " +
         "additive, never overwrites).")
 } elseif ($foundWorkflowFolder -ne $workflowFolderNames[0]) {
     Write-Ok ("workflow folder: $foundWorkflowFolder/ exists -- a PRE-MOVE name, still read. Part 1 of the " +
-        "'adopt-dkj-policy' skill moves it to $($workflowFolderNames[0])/ in one git mv (#3870).")
+        "'adopt-dkj-repo-workflow' skill moves it to $($workflowFolderNames[0])/ in one git mv (#3870).")
 } else {
     Write-Ok "workflow folder: $foundWorkflowFolder/ exists."
 }

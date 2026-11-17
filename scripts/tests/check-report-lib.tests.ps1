@@ -1354,7 +1354,7 @@ Write-Host 'Slug allowlists -- case-sensitive, so a case-folded look-alike is re
 $kelvin = [string][char]0x212A
 Assert-True (-not (Test-PluginNameSlug -Name ('dkj-' + $kelvin))) 'Test-PluginNameSlug refuses a name carrying the Kelvin sign'
 Assert-True (-not (Test-PluginNameSlug -Name 'ABC')) '...and refuses upper case, which a lowercase slug check must'
-Assert-True (Test-PluginNameSlug -Name 'dkj-policy') '...and still admits a real plugin name'
+Assert-True (Test-PluginNameSlug -Name 'dkj-repo-workflow') '...and still admits a real plugin name'
 Assert-True (-not (Test-PluginMarketplaceSlug -Marketplace ('mar' + $kelvin + 'et'))) 'Test-PluginMarketplaceSlug refuses the Kelvin sign'
 Assert-True (Test-PluginMarketplaceSlug -Marketplace 'Dkj-Claude.Plugins_2') '...and still admits mixed-case ASCII'
 Assert-True (-not (Test-GitHubOwnerNameSlug -Slug ('DKJ-Solutions/' + $kelvin)).Ok) 'Test-GitHubOwnerNameSlug refuses a name carrying the Kelvin sign'

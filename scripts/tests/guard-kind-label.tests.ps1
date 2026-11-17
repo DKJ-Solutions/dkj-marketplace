@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/extensions/bwj-development/hooks/guard-kind-label.ps1 and its lib,
+    Tests for plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/hooks/guard-kind-label.ps1 and its lib,
     scripts/lib/kind-label-rules.ps1 -- the PreToolUse hook that refuses a gh issue create on a store
     repo carrying none, or several, of bug / feature / research (inbound #4197).
 
@@ -19,7 +19,7 @@
 #>
 $ErrorActionPreference = 'Continue'
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development'
+$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj'
 $Hook       = Join-Path $PluginRoot 'hooks\guard-kind-label.ps1'
 $HooksJson  = Join-Path $PluginRoot 'hooks\hooks.json'
 

@@ -97,7 +97,7 @@
 # THE SHA-256 RENDERING Get-SessionCacheFileName cuts a cache file name out of (issue #2058). A leaf
 # with no dependencies of its own, and loaded UNGUARDED: the file name cannot be composed without it,
 # so a payload missing this file must fail at LOAD rather than one call deeper, where the error would
-# no longer name what is absent. It is registered in the shared-scripts registry for dkj-policy, the
+# no longer name what is absent. It is registered in the shared-scripts registry for dkj-repo-workflow, the
 # plugin this file is mirrored into, so the mirror always carries it.
 . (Join-Path $PSScriptRoot 'hash-hex-lib.ps1')
 

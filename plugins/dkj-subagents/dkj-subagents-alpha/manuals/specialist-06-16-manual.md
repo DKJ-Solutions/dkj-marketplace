@@ -232,7 +232,7 @@ via a PR.
   reader does with the string -- **checks** it against a released artefact (a quotation: freeze it and
   mark it) or **reads** it for its shape (an illustration: keep it true).
   A third form is neither, and is left alone deliberately: **naming which release shipped something**
-  (*"`dkj-policy` 4.21.0 shipped it"*) uses today's name on purpose, because the name is how a reader
+  (*"`dkj-repo-workflow` 4.21.0 shipped it"*) uses today's name on purpose, because the name is how a reader
   identifies the thing now while the version identifies the release. It has two costs worth knowing.
   On disk that release sits under the name it had then, which is why a repo that renames keeps a layout
   table a reader can cross to. And an attribution is **indistinguishable from a swept quotation to any

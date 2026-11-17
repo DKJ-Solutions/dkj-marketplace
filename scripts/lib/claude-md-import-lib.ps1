@@ -4,28 +4,28 @@
     them there. Issue #2532, extracted from #2531's constitution-import write.
 
 .DESCRIPTION
-    THE LINES, ONE WRITER. adopt-workflow-folder.ps1 (dkj-policy) writes the constitution import and,
-    below it, the import of every dkj-policy extension the repo enables (#2697); bwj-development's
+    THE LINES, ONE WRITER. adopt-workflow-folder.ps1 (dkj-repo-workflow) writes the constitution import and,
+    below it, the import of every dkj-repo-workflow extension the repo enables (#2697); dkj-repo-workflow-bwj's
     adopt-extension-import.ps1 writes its own. All of them have the same shape and the same failure when
     missing: a consumer runs for weeks without the rules in context, because a warning or a step on a
     skill page changes nothing a session knows (#2531). Two copies of the insertion would drift, so
     Add-ClaudeMdImportLine is the one definition.
 
     A LIST, NOT A PREFIX (#2788). An extension is a plugin Get-PolicyExtensionList names, and its line,
-    its pattern and its detector are built from that name, so dkj-solutions needed no function of its
+    its pattern and its detector are built from that name, so dkj-repo-workflow-dkj needed no function of its
     own and the next extension will not either. Until #2788 an extension was any plugin named
     'dkj-policy-<slug>' (#2697). The extensions are named after their organisation now (dkj-policy-bwj
-    became bwj-development, dkj-policy-dkjs became dkj-solutions), so their names no longer share a
+    became dkj-repo-workflow-bwj, dkj-policy-dkjs became dkj-repo-workflow-dkj), so their names no longer share a
     shape. A new extension adds one entry to the list, and bwj-extension-import.tests.ps1 fails until
-    the list matches the plugins under plugins/dkj-policy/extensions/.
+    the list matches the plugins under plugins/dkj-repo-workflow/extensions/.
 
-    THE EXTENSIONS LIVE UNDER plugins/dkj-policy/extensions/ SINCE #3871 (Dave, November 7, 2026), so
-    the current line is '.../dkj-policy/extensions/<name>/CLAUDE.md'. A line at the old depth,
-    '.../dkj-policy/<name>/CLAUDE.md', names a path the marketplace clone no longer has: it is a retired
+    THE EXTENSIONS LIVE UNDER plugins/dkj-repo-workflow/extensions/ SINCE #3871 (Dave, November 7, 2026), so
+    the current line is '.../dkj-repo-workflow/extensions/<name>/CLAUDE.md'. A line at the old depth,
+    '.../dkj-repo-workflow/<name>/CLAUDE.md', names a path the marketplace clone no longer has: it is a retired
     line exactly like one under a retired name, and it is detected and rewritten the same way.
 
     THE RETIRED NAMES ARE MAPPED, NOT FORGOTTEN (#2788). A consumer that adopted before the rename still
-    enables the old id and still imports '.../dkj-policy/<old name>/CLAUDE.md', a path the marketplace
+    enables the old id and still imports '.../dkj-repo-workflow/<old name>/CLAUDE.md', a path the marketplace
     clone no longer has, so that import quietly loads nothing. Get-RetiredPolicyExtensionNames maps each
     old name to its current one: Get-PolicyExtensionNames reads an old id as its current extension,
     Add-ClaudeMdImportLine -ReplacePattern rewrites the old line in place, and check-consumer-prose
@@ -45,7 +45,7 @@
         closure, judged on the rows Get-AlwaysOnDocuments returns.
       * Add-ClaudeMdImportLine -- the fence-aware scan and the byte-preserving insert.
 
-    MIRRORED INTO dkj-policy AND bwj-development, because a script may only dot-source a lib that ships
+    MIRRORED INTO dkj-repo-workflow AND dkj-repo-workflow-bwj, because a script may only dot-source a lib that ships
     in its own plugin. consumer-check-lib.ps1 loads this file at file scope, so its callers keep
     reaching Get-ConstitutionImportLine and Test-ConstitutionImported through it as before.
 
@@ -62,22 +62,40 @@
 
 function Get-PolicyExtensionList {
     <#
-        The dkj-policy extensions, by name (#2788): every plugin under plugins/dkj-policy/extensions/ (#3871)
+        The dkj-repo-workflow extensions, by name (#2788): every plugin under plugins/dkj-repo-workflow/extensions/ (#3871)
         that extends the constitution with a CLAUDE.md of its own. A list, because the names stopped sharing
         a prefix when the extensions were named after their organisation. bwj-extension-import.tests.ps1
-        holds it equal to the plugin folders under plugins/dkj-policy/extensions/, so a new extension cannot
+        holds it equal to the plugin folders under plugins/dkj-repo-workflow/extensions/, so a new extension cannot
         ship without an entry.
     #>
-    return [string[]]@('bwj-development', 'dkj-solutions')
+    return [string[]]@('dkj-repo-workflow-bwj', 'dkj-repo-workflow-dkj')
 }
 
 function Get-RetiredPolicyExtensionNames {
     <#
-        Each retired extension name and the name it became (#2788). A consumer that adopted before the
-        rename still carries the old name in its settings and its CLAUDE.md until it migrates, so the old
-        name is mapped rather than dropped.
+        Each retired payload name and the name it became: the extensions #2788 renamed, and the plugin and
+        both extensions #4209 renamed (dkj-policy, bwj-development, dkj-solutions). A consumer that adopted
+        before a rename still carries the old name in its settings and its CLAUDE.md until it migrates, so
+        the old name is mapped rather than dropped. 'dkj-policy' maps to the workflow plugin itself, which
+        is no extension, so Get-PolicyExtensionNames drops it after mapping, and it only ever reaches the
+        repair sentence and the payload test.
     #>
-    return [ordered]@{ 'dkj-policy-bwj' = 'bwj-development'; 'dkj-policy-dkjs' = 'dkj-solutions' }
+    return [ordered]@{
+        'dkj-policy-bwj'  = 'dkj-repo-workflow-bwj'
+        'dkj-policy-dkjs' = 'dkj-repo-workflow-dkj'
+        'bwj-development' = 'dkj-repo-workflow-bwj'
+        'dkj-solutions'   = 'dkj-repo-workflow-dkj'
+        'dkj-policy'      = 'dkj-repo-workflow'
+    }
+}
+
+function Get-WorkflowPluginDirPattern {
+    <#
+        The regex alternation for the workflow plugin's directory in an import path: its current name and
+        the name #4209 retired. Only RETIRED-line readers use it; a current line names the current
+        directory alone.
+    #>
+    return '(?:dkj-repo-workflow|dkj-policy)'
 }
 
 function Get-RetiredExtensionRepair {
@@ -95,9 +113,9 @@ function Get-RetiredExtensionRepair {
 }
 
 function Test-DkjPolicyPayloadName {
-    <# Is this plugin directory name a dkj-policy payload: the plugin itself, an extension, or a retired extension name? #>
+    <# Is this plugin directory name a dkj-repo-workflow payload: the plugin itself, an extension, or a retired extension name? #>
     param([string]$Name)
-    if ($Name -ieq 'dkj-policy') { return $true }
+    if ($Name -ieq 'dkj-repo-workflow') { return $true }
     if (@(Get-PolicyExtensionList) -icontains $Name) { return $true }
     return [bool](@((Get-RetiredPolicyExtensionNames).Keys) -icontains $Name)
 }
@@ -127,18 +145,18 @@ function Get-DkjMarketplaceSegment {
 
 function Get-ConstitutionImportLine {
     <#
-        The '@'-line a consumer's CLAUDE.md carries to load the dkj-policy constitution (issue #2374):
+        The '@'-line a consumer's CLAUDE.md carries to load the dkj-repo-workflow constitution (issue #2374):
         one ABSOLUTE path into the marketplace clone, never into the version-pinned cache -- the same
         reasoning bootstrap.ps1's Get-DurablePersonaDir gives for the orchestrator import (an '@'-import
         takes no variable, and the cache directory is purged after an update).
     #>
     param([string]$LibDir = $PSScriptRoot)
-    return "@~/.claude/plugins/marketplaces/$(Get-DkjMarketplaceSegment -LibDir $LibDir)/plugins/dkj-policy/CLAUDE.md"
+    return "@~/.claude/plugins/marketplaces/$(Get-DkjMarketplaceSegment -LibDir $LibDir)/plugins/dkj-repo-workflow/CLAUDE.md"
 }
 
 function Test-PolicyExtensionName {
     <#
-        Is this the name of a dkj-policy extension, such as bwj-development or dkj-solutions (#2697,
+        Is this the name of a dkj-repo-workflow extension, such as dkj-repo-workflow-bwj or dkj-repo-workflow-dkj (#2697,
         #2788)? An extension extends the constitution with a CLAUDE.md of its own, which a repo enabling it
         imports directly below the constitution. Only a name on Get-PolicyExtensionList counts, matched
         case-sensitively, because the name is built into a line a hook prints. A retired name does not
@@ -150,7 +168,7 @@ function Test-PolicyExtensionName {
 
 function Get-PolicyExtensionNames {
     <#
-        The dkj-policy extensions among a list of plugin ids ('<name>@<marketplace>' or a bare name),
+        The dkj-repo-workflow extensions among a list of plugin ids ('<name>@<marketplace>' or a bare name),
         sorted and de-duplicated -- the set a repo has to import, derived from what it enables (#2697). A
         retired name counts as the extension it became (#2788): a consumer that has not migrated its
         settings yet still owes the CURRENT import line, because that is the one that loads.
@@ -164,36 +182,36 @@ function Get-PolicyExtensionNames {
 
 function Get-ExtensionImportLine {
     <#
-        The '@'-line that loads a dkj-policy extension of the constitution (#2374, #2697), which a repo
+        The '@'-line that loads a dkj-repo-workflow extension of the constitution (#2374, #2697), which a repo
         enabling that extension carries directly below the constitution import. Same absolute-clone form,
         same marketplace segment. Throws on a name Test-PolicyExtensionName refuses.
     #>
     param([Parameter(Mandatory)][string]$Extension, [string]$LibDir = $PSScriptRoot)
-    if (-not (Test-PolicyExtensionName $Extension)) { throw "not a dkj-policy extension name: '$Extension'" }
-    return "@~/.claude/plugins/marketplaces/$(Get-DkjMarketplaceSegment -LibDir $LibDir)/plugins/dkj-policy/extensions/$Extension/CLAUDE.md"
+    if (-not (Test-PolicyExtensionName $Extension)) { throw "not a dkj-repo-workflow extension name: '$Extension'" }
+    return "@~/.claude/plugins/marketplaces/$(Get-DkjMarketplaceSegment -LibDir $LibDir)/plugins/dkj-repo-workflow/extensions/$Extension/CLAUDE.md"
 }
 
 function Get-ExtensionImportPattern {
     <# The regex Add-ClaudeMdImportLine's -ImportedPattern takes for one extension's line, under any marketplace name. #>
     param([Parameter(Mandatory)][string]$Extension)
-    if (-not (Test-PolicyExtensionName $Extension)) { throw "not a dkj-policy extension name: '$Extension'" }
-    return "^\s*@\S*/dkj-policy/extensions/$Extension/CLAUDE\.md\s*$"
+    if (-not (Test-PolicyExtensionName $Extension)) { throw "not a dkj-repo-workflow extension name: '$Extension'" }
+    return "^\s*@\S*/dkj-repo-workflow/extensions/$Extension/CLAUDE\.md\s*$"
 }
 
 function Get-RetiredExtensionImportPattern {
     <#
         The regex for an '@'-line that still imports one extension at a RETIRED spelling, for
         Add-ClaudeMdImportLine's -ReplacePattern: under a retired name (#2788), at either depth, or under
-        its current name at the depth #3871 retired ('.../dkj-policy/<name>/CLAUDE.md'). It never matches
+        its current name at the depth #3871 retired ('.../dkj-repo-workflow/<name>/CLAUDE.md'). It never matches
         the current line, which carries 'extensions/' before the current name.
     #>
     param([Parameter(Mandatory)][string]$Extension)
-    if (-not (Test-PolicyExtensionName $Extension)) { throw "not a dkj-policy extension name: '$Extension'" }
+    if (-not (Test-PolicyExtensionName $Extension)) { throw "not a dkj-repo-workflow extension name: '$Extension'" }
     $retired = Get-RetiredPolicyExtensionNames
     $old = @($retired.Keys | Where-Object { $retired[$_] -ceq $Extension })
     $alts = @("$Extension")
     if ($old.Count -gt 0) { $alts += "(?:extensions/)?(?:$($old -join '|'))" }
-    return "^\s*@\S*/dkj-policy/(?:$($alts -join '|'))/CLAUDE\.md\s*$"
+    return "^\s*@\S*/$(Get-WorkflowPluginDirPattern)/(?:$($alts -join '|'))/CLAUDE\.md\s*$"
 }
 
 function Get-RetiredExtensionImports {
@@ -202,20 +220,22 @@ function Get-RetiredExtensionImports {
         Retired / Current / Path: under a retired name (#2788), at either depth, or under its current name
         at the depth #3871 retired. Such a row names a path the marketplace clone no longer has, so it
         loads nothing. Matched on the path tail, like Test-ExtensionImported. Retired is the spelling the
-        row used ('dkj-policy-dkjs', or 'dkj-solutions' at the old depth).
+        row used ('dkj-policy-dkjs', or 'dkj-repo-workflow-dkj' at the old depth).
     #>
     param([AllowNull()][AllowEmptyCollection()][object[]]$Documents)
     $retired = Get-RetiredPolicyExtensionNames
+    $dir = Get-WorkflowPluginDirPattern
     $found = foreach ($d in @($Documents)) {
         if ($null -eq $d) { continue }
         $path = ([string]$d.Path) -replace '\\', '/'
         foreach ($old in @($retired.Keys)) {
-            if ($path -imatch "/dkj-policy/(?:extensions/)?$old/CLAUDE\.md$") {
+            if (-not (Test-PolicyExtensionName $retired[$old])) { continue }
+            if ($path -imatch "/$dir/(?:extensions/)?$old/CLAUDE\.md$") {
                 [pscustomobject]@{ Retired = $old; Current = $retired[$old]; Path = [string]$d.Path }
             }
         }
         foreach ($ext in @(Get-PolicyExtensionList)) {
-            if ($path -imatch "/dkj-policy/$ext/CLAUDE\.md$") {
+            if ($path -imatch "/$dir/$ext/CLAUDE\.md$") {
                 [pscustomobject]@{ Retired = $ext; Current = $ext; Path = [string]$d.Path }
             }
         }
@@ -238,20 +258,24 @@ function Get-RetiredMarketplaceNames {
 
 function Get-RetiredConstitutionImportPattern {
     <#
-        The regex for a constitution '@'-line under a retired marketplace name, for Add-ClaudeMdImportLine's
-        -ReplacePattern (#3883), or '' when no name is retired. Such a line names a clone that is gone, so it
-        loads nothing -- the constitution's counterpart of Get-RetiredExtensionImportPattern.
+        The regex for a retired constitution '@'-line, for Add-ClaudeMdImportLine's -ReplacePattern: one
+        under a retired marketplace name (#3883), or one under the plugin directory #4209 retired
+        ('.../plugins/dkj-policy/CLAUDE.md', any marketplace). Such a line names a path the clone no longer
+        has, so it loads nothing -- the constitution's counterpart of Get-RetiredExtensionImportPattern.
     #>
     param([string]$LibDir = $PSScriptRoot)
+    $alts = @('[^/\s]+/plugins/dkj-policy')
     $names = @(Get-RetiredMarketplaceNames -LibDir $LibDir)
-    if ($names.Count -eq 0) { return '' }
-    return "^\s*@~/\.claude/plugins/marketplaces/(?:$(($names | ForEach-Object { [regex]::Escape($_) }) -join '|'))/plugins/dkj-policy/CLAUDE\.md\s*$"
+    if ($names.Count -gt 0) {
+        $alts += "(?:$(($names | ForEach-Object { [regex]::Escape($_) }) -join '|'))/plugins/$(Get-WorkflowPluginDirPattern)"
+    }
+    return "^\s*@~/\.claude/plugins/marketplaces/(?:$($alts -join '|'))/CLAUDE\.md\s*$"
 }
 
 function Test-ConstitutionImported {
     <#
-        Does this always-on closure '@'-import the dkj-policy constitution (issue #2374)? Matched on the
-        tail of the resolved path -- '.../plugins/dkj-policy/CLAUDE.md' -- so the absolute marketplace
+        Does this always-on closure '@'-import the dkj-repo-workflow constitution (issue #2374)? Matched on the
+        tail of the resolved path -- '.../plugins/dkj-repo-workflow/CLAUDE.md' -- so the absolute marketplace
         form, any marketplace name, and the source repo's relative form all count. A row that does NOT
         resolve (Exists = $false) still counts: the line is written, and a clone that has not refreshed
         yet is a lag the next 'claude plugin marketplace update' closes, not a missing import.
@@ -264,23 +288,23 @@ function Test-ConstitutionImported {
     foreach ($d in @($Documents)) {
         if ($null -eq $d) { continue }
         $path = ([string]$d.Path) -replace '\\', '/'
-        if ($path -notmatch '/plugins/dkj-policy/CLAUDE\.md$') { continue }
-        if ($path -imatch '/plugins/marketplaces/([^/]+)/plugins/dkj-policy/CLAUDE\.md$' -and $retired -icontains $Matches[1]) { continue }
+        if ($path -notmatch '/plugins/dkj-repo-workflow/CLAUDE\.md$') { continue }
+        if ($path -imatch '/plugins/marketplaces/([^/]+)/plugins/dkj-repo-workflow/CLAUDE\.md$' -and $retired -icontains $Matches[1]) { continue }
         return $true
     }
     return $false
 }
 
 function Test-ExtensionImported {
-    <# Test-ConstitutionImported's rule, for one extension's tail '.../dkj-policy/extensions/<extension>/CLAUDE.md' (#3871). #>
+    <# Test-ConstitutionImported's rule, for one extension's tail '.../dkj-repo-workflow/extensions/<extension>/CLAUDE.md' (#3871). #>
     param(
         [Parameter(Mandatory)][string]$Extension,
         [AllowNull()][AllowEmptyCollection()][object[]]$Documents
     )
-    if (-not (Test-PolicyExtensionName $Extension)) { throw "not a dkj-policy extension name: '$Extension'" }
+    if (-not (Test-PolicyExtensionName $Extension)) { throw "not a dkj-repo-workflow extension name: '$Extension'" }
     foreach ($d in @($Documents)) {
         if ($null -eq $d) { continue }
-        if ((([string]$d.Path) -replace '\\', '/') -imatch "/dkj-policy/extensions/$Extension/CLAUDE\.md$") { return $true }
+        if ((([string]$d.Path) -replace '\\', '/') -imatch "/dkj-repo-workflow/extensions/$Extension/CLAUDE\.md$") { return $true }
     }
     return $false
 }

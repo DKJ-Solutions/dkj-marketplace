@@ -220,19 +220,19 @@ try {
     Assert-True (-not ($ak9.Out -match '\[agents-key\] \.')) `
         'check 38: no key with every def under agents/ is the convention and is silent'
 
-    # 10. A NESTED PLUGIN ROOT IS NOT ITS PARENT'S CONTENT. plugins/dkj-policy/extensions/bwj-development really sits
-    #     inside plugins/dkj-policy in this repo, and neither ships a def today -- so nothing would fire
+    # 10. A NESTED PLUGIN ROOT IS NOT ITS PARENT'S CONTENT. plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj really sits
+    #     inside plugins/dkj-repo-workflow in this repo, and neither ships a def today -- so nothing would fire
     #     if this were wrong, which is precisely why it is exercised here rather than left to the tree.
     #     The marketplace is rewritten for this scenario and restored immediately after: every later
     #     assert in this suite reads it.
     $akMpPath = Join-Path $Fixture '.claude-plugin\marketplace.json'
     $akMpOrig = [System.IO.File]::ReadAllText($akMpPath, [System.Text.Encoding]::UTF8)
-    $akChildRoot = Join-Path $Fixture 'plugins\dkj-policy\extensions\bwj-development'
+    $akChildRoot = Join-Path $Fixture 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj'
     try {
         New-Item -ItemType Directory -Path (Join-Path $akChildRoot '.claude-plugin') -Force | Out-Null
         New-Item -ItemType Directory -Path (Join-Path $akChildRoot 'agents') -Force | Out-Null
         [System.IO.File]::WriteAllText((Join-Path $akChildRoot '.claude-plugin\plugin.json'),
-            "{ `"name`": `"bwj-development`", `"version`": `"0.0.1`" }`n", $Utf8NoBom)
+            "{ `"name`": `"dkj-repo-workflow-bwj`", `"version`": `"0.0.1`" }`n", $Utf8NoBom)
         # The child's def sits OUTSIDE its own agents/ dir on purpose: the child must be accused and the
         # parent must not. One file separates the two readings.
         New-Item -ItemType Directory -Path (Join-Path $akChildRoot 'subagents-stray') -Force | Out-Null
@@ -244,15 +244,15 @@ try {
   "plugins": [
     { "name": "dkj-subagents-alpha",         "source": "./plugins/dkj-subagents/dkj-subagents-alpha" },
     { "name": "dkj-subagents-shopify",       "source": "./plugins/dkj-subagents/dkj-subagents-shopify" },
-    { "name": "dkj-policy", "source": "./plugins/dkj-policy" },
-    { "name": "bwj-development", "source": "./plugins/dkj-policy/extensions/bwj-development" }
+    { "name": "dkj-repo-workflow", "source": "./plugins/dkj-repo-workflow" },
+    { "name": "dkj-repo-workflow-bwj", "source": "./plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj" }
   ]
 }
 '@), $Utf8NoBom)
         $ak10 = Invoke-Integrity -FixtureRoot $Fixture
-        Assert-True ($ak10.Out -match "\[agents-key\] \./plugins/dkj-policy/extensions/bwj-development.*declares no .agents. key|\[agents-key\] \.\\plugins\\dkj-policy\\extensions\\bwj-development.*declares no .agents. key") `
+        Assert-True ($ak10.Out -match "\[agents-key\] \./plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj.*declares no .agents. key|\[agents-key\] \.\\plugins\\dkj-repo-workflow\\extensions\\dkj-repo-workflow-bwj.*declares no .agents. key") `
             'check 38: the nested plugin is accused of its own stray def'
-        Assert-True (-not ($ak10.Out -match "\[agents-key\] \.[\\/]plugins[\\/]dkj-policy[\\/]\.claude-plugin")) `
+        Assert-True (-not ($ak10.Out -match "\[agents-key\] \.[\\/]plugins[\\/]dkj-repo-workflow[\\/]\.claude-plugin")) `
             'check 38: and its PARENT is not -- a nested root is not its parent content'
     } finally {
         [System.IO.File]::WriteAllText($akMpPath, $akMpOrig, $Utf8NoBom)
@@ -275,8 +275,8 @@ try {
     #     narrowing, the per-subject marker set, and the derivation that only admits a script some hook
     #     actually reads. A positive-only suite would pass against a check that reported everything.
     Write-Host "check 45: a verdict marker must open the line a hook-read check writes" -ForegroundColor Cyan
-    $mcHookDir   = Join-Path $Fixture 'plugins\dkj-policy\hooks'
-    $mcCheckDir  = Join-Path $Fixture 'plugins\dkj-policy\scripts\lint'
+    $mcHookDir   = Join-Path $Fixture 'plugins\dkj-repo-workflow\hooks'
+    $mcCheckDir  = Join-Path $Fixture 'plugins\dkj-repo-workflow\scripts\lint'
     New-Item -ItemType Directory -Path $mcHookDir -Force | Out-Null
     New-Item -ItemType Directory -Path $mcCheckDir -Force | Out-Null
     $mcHookPath   = Join-Path $mcHookDir 'mc-sessioncheck.ps1'

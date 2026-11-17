@@ -397,7 +397,7 @@ Assert-True ($probeOut -contains 'CLEARED')   'native-capture-lib: Clear-GatePro
 # shared line RESOLVES in the place it was copied to. A mirrored lib landing in the wrong plugin is
 # byte-perfect and still dead.
 foreach ($mirror in @(
-        'plugins\dkj-policy\scripts\lib\native-capture-lib.ps1',
+        'plugins\dkj-repo-workflow\scripts\lib\native-capture-lib.ps1',
         'plugins\dkj-subagents\dkj-subagents-shopify\scripts\lib\native-capture-lib.ps1')) {
     $full = Join-Path $RepoRoot $mirror
     Assert-True (Test-Path -LiteralPath (Join-Path (Split-Path -Parent $full) 'run-progress-lib.ps1')) `
@@ -421,11 +421,11 @@ Assert-True ($captureSource -match "Test-Path -LiteralPath \`$runProgressLib -Pa
 # THE STATUSLINE ITSELF IS MIRRORED, AND IT RESOLVES THE LIB AS A '..\lib\' SIBLING -- the other half of
 # the pair. Registered separately, so this asserts they actually landed in the same plugin rather than
 # trusting that two rows in one registry imply one destination.
-$showMirror = Join-Path $RepoRoot 'plugins\dkj-policy\scripts\task\show-progress.ps1'
+$showMirror = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\task\show-progress.ps1'
 Assert-True (Test-Path -LiteralPath $showMirror -PathType Leaf) `
-    'mirror: dkj-policy carries show-progress.ps1'
-Assert-True (Test-Path -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\scripts\lib\run-progress-lib.ps1')) `
-    'mirror: dkj-policy carries run-progress-lib.ps1 at the ..\lib\ path show-progress.ps1 dot-sources'
+    'mirror: dkj-repo-workflow carries show-progress.ps1'
+Assert-True (Test-Path -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\lib\run-progress-lib.ps1')) `
+    'mirror: dkj-repo-workflow carries run-progress-lib.ps1 at the ..\lib\ path show-progress.ps1 dot-sources'
 
 # AND IT RUNS FROM THE MIRROR'S OWN DEPTH, not merely compares byte-for-byte. show-progress.ps1 reaches
 # its lib through $PSScriptRoot, which is the one thing a content comparison cannot check -- the same

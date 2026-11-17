@@ -6333,7 +6333,7 @@ function Get-BranchFilePaths {
         # branch to offer; making it mandatory would have forced a branch lookup into callers that do not
         # need one. Every WRITER passes it.
         [string]$Branch = '',
-        # THE TREE WHOSE FOLDER IS NAMED (#3870). The folder moved to '.dkj/dkj-policy', and a repo that has
+        # THE TREE WHOSE FOLDER IS NAMED (#3870). The folder moved to '.dkj/dkj-policy' (and to '.dkj/dkj-repo-workflow' on #4209, a hard cut that ended the walk below), and a repo that has
         # not moved yet still holds 'dkj-policy/' -- so the directory is read off the tree, by the same walk
         # seam-lib.ps1 uses for the changelog. Omitted, it is read off the tree this process is standing in
         # (Get-BranchDocumentRepoRoot), which is the repo root for every script run the documented way.
@@ -6377,7 +6377,7 @@ function Get-BranchFilePaths {
         # committed as 'README.md'.
         # TWO OF THE THREE NO LONGER EXIST IN THE SOURCE REPO, AND ALL THREE STAY ON THE LIST (#2171 and
         # #2179, September 20, 2026, which retired that repo's own README.md and CONTRIBUTING.md here and
-        # stopped adopt-dkj-policy scaffolding either into a consumer). This list is about the NAME of a
+        # stopped adopt-dkj-repo-workflow scaffolding either into a consumer). This list is about the NAME of a
         # page this folder may hold, not about whether the repo in front of you currently holds one --
         # exactly the distinction Get-ReservedRootMd records one file over. Every consumer adopted before
         # that day still carries both, and they meet this change through a plugin update rather than by
@@ -6426,7 +6426,7 @@ function Get-BranchFilePaths {
         # open on November 7, 2026 is standing in. Only the per-branch name: every older shape under it was
         # retired before that folder existed (see Get-BranchFileLegacyNames). Empty where $dir IS that
         # folder -- a repo that has not moved yet -- because there the current rows above already name it.
-        PolicyFolderPerBranch         = if ($slug -and $dir -ne 'dkj-policy') { "dkj-policy/$slug.md" } else { '' }
+        PolicyFolderPerBranch         = if ($slug -and $dir -ne 'dkj-repo-workflow') { "dkj-policy/$slug.md" } else { '' }
         # THE PRE-#1437 FOLDER, read and never written -- 'contributing-davekjohn/', which every branch open
         # on September 5, 2026 is standing in, here and in every consumer. ContribFolder* mirrors the whole
         # set above one directory over, PER-BRANCH NAME INCLUDED, and that last part is what makes it
@@ -6482,7 +6482,7 @@ function Test-IsPerBranchDocumentPath {
     if ([string]::IsNullOrWhiteSpace($RelativePath)) { return $false }
     $paths = Get-BranchFilePaths
     # './' STRIPPED AS A PREFIX, NOT AS CHARACTERS (#3870): TrimStart('.', '/') also ate the leading dot of
-    # '.dkj/dkj-policy/...', so no document under the moved folder could ever match.
+    # '.dkj/dkj-repo-workflow/...', so no document under the moved folder could ever match.
     $norm  = (($RelativePath -replace '\\', '/') -replace '^(\./)+', '') -replace '^/+', ''
     $dir   = [string]$paths.Directory
     # The pattern is a filename glob; anchor it to the folder so a same-named file elsewhere in the tree is
@@ -6592,7 +6592,7 @@ function Get-BranchFileLegacyNames {
     $legacyKind = if ($Kind -eq 'File') { 'Cycle' } else { $Kind }
     # EMPTY ROWS ARE DROPPED HERE, NOT AT EACH CALLER (#3881, November 7, 2026). Several rows answer '' by
     # design -- the per-branch names without a branch, and PolicyFolderPerBranch in a repo that has not
-    # moved to '.dkj/dkj-policy' -- and a '' is a path no reader can open. new-branch.ps1 binds this list to
+    # moved to '.dkj/dkj-repo-workflow' -- and a '' is a path no reader can open. new-branch.ps1 binds this list to
     # a Mandatory [string[]] parameter, where AllowEmptyCollection does not cover an empty ELEMENT, so
     # every unmoved consumer had its branch created and its document never written. Filtering at the one
     # source protects every caller, including the next one to bind it to a typed parameter.
@@ -7115,7 +7115,7 @@ function Format-Development {
         # STEPS THAT CLOSE THE FIRST-STEP PHASE (#2655), written as open steps AFTER the scaffolded first
         # step -- so under CREATE, last, by default. The texts come from the repo's Get-BranchClosingSteps
         # seam, resolved in new-branch and passed in, for the same reason -LinkDestDirRel is: a lib that
-        # goes looking for repo-config is a lib that can read the wrong tree. bwj-development's preview
+        # goes looking for repo-config is a lib that can read the wrong tree. dkj-repo-workflow-bwj's preview
         # question is the case that produced it: PREVIEW-portable.md made that step the last one under
         # CREATE so the step-list gate would hold the PR on it, and nothing ever wrote it, so the gate held
         # nothing. Branch documents only -- the trunk copy is read as an example and carries no steps.
@@ -8514,7 +8514,7 @@ function Get-ConsumerLensPaths {
         PLUGIN NAMES AND EXCLUSION BOTH STAY AT THE CALL SITE, DELIBERATELY (#2199) -- they are the two
         real differences between the two callers and flattening either would lose it. The two callers
         derive -PluginNames differently: check-policy-drift.ps1 already has the enabled ids in RANK-1
-        order (dkj-policy first) and passes them straight through; Get-ConsumerProseDocuments derives its
+        order (dkj-repo-workflow first) and passes them straight through; Get-ConsumerProseDocuments derives its
         own via Get-EnabledPlugins, wrapped in try/catch so a malformed settings layer cannot take a
         SessionStart hook down. And they mean different things by "already accounted for": the report
         excludes an explicit list a different rank already printed ($consumerRels); the corpus excludes

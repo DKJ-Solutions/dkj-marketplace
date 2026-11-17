@@ -60,7 +60,7 @@ $brains = Join-Path $lifehub 'Brains'
 $dossiers = @()
 if (Test-Path -LiteralPath $brains -PathType Container) {
     $dossiers = @(Get-ChildItem -LiteralPath $brains -Recurse -Directory -Filter 'ai' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Parent.Name -eq 'dkj-solutions' -and (Test-Path -LiteralPath (Join-Path $_.FullName 'CORTEX.md') -PathType Leaf) })
+        Where-Object { $_.Parent.Name -eq 'dkj-repo-workflow-dkj' -and (Test-Path -LiteralPath (Join-Path $_.FullName 'CORTEX.md') -PathType Leaf) })
 }
 if ($dossiers.Count -ne 1) {
     Write-Output "[REFUSED] expected exactly one AI dossier (a folder dkj-solutions/ai with a CORTEX.md) under Brains/ in $lifehub, found $($dossiers.Count)."

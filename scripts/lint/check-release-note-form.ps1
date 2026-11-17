@@ -26,7 +26,7 @@
     cut-release skill's step 4 already prescribes before the release-notes commit, so the note is held to
     its form at exactly the moment it was hand-edited. Run it by hand whenever you want the answer early.
 
-    AND THE BRAND BOOK'S TWO HEADING RULES, IN A DKJ-SOLUTIONS REPO ONLY (#3752). Where dkj-solutions is
+    AND THE BRAND BOOK'S TWO HEADING RULES, IN A DKJ-SOLUTIONS REPO ONLY (#3752). Where dkj-repo-workflow-dkj is
     enabled, the same note's h1-h3 headings are also held to rules 7 and 8 of the dkj-brandbook README: no
     code span, five words at most (Get-ReleaseNoteHeadingFindings). These ARE rules of their own, the brand
     book's rather than the draft's, which is why they live in a separate function and print under their own
@@ -43,7 +43,7 @@
 
 .PARAMETER UserHomeOverride
     The home whose ~/.claude settings join the enable-state chain, for the test suite, so a fixture's answer
-    to "is dkj-solutions enabled?" never depends on the machine running it. A consumer never types this.
+    to "is dkj-repo-workflow-dkj enabled?" never depends on the machine running it. A consumer never types this.
 
 .EXAMPLE
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts/lint/check-release-note-form.ps1
@@ -126,14 +126,14 @@ $text = [System.IO.File]::ReadAllText($notePath, (New-Object System.Text.UTF8Enc
 $findings = @(Compare-ReleaseNoteForm -Text $text -Wording $wording -AudienceTier $tier)
 
 # THE BRAND BOOK'S HEADING RULES, WHERE THE BRAND BOOK HOLDS (#3752): a code span or more than five words in an
-# h1-h3 heading. Only in a repo that has dkj-solutions enabled -- the brand book reaches DKJ-Solutions only, and
+# h1-h3 heading. Only in a repo that has dkj-repo-workflow-dkj enabled -- the brand book reaches DKJ-Solutions only, and
 # a BWJ-Development repo runs this same gate under its own styling. An enable state that cannot be read is
 # treated as not enabled: this half then says nothing rather than holding a repo to a style it never took.
 $brandBook = $false
 if (Test-FunctionDefined 'Get-EnabledPlugins') {
     try {
         $brandBook = @(@((Get-EnabledPlugins -RepoRoot $repoRoot -UserHomeOverride $UserHomeOverride).Ids) |
-            Where-Object { $_ -like 'dkj-solutions@*' }).Count -gt 0
+            Where-Object { $_ -like 'dkj-repo-workflow-dkj@*' }).Count -gt 0
     } catch { $brandBook = $false }
 }
 $headingFindings = @(if ($brandBook) { Get-ReleaseNoteHeadingFindings -Text $text })

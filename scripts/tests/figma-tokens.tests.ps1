@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for the brand book's Figma mirror (#4038): plugins/dkj-policy/extensions/dkj-solutions/scripts/lib/
+    Tests for the brand book's Figma mirror (#4038): plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/scripts/lib/
     figma-tokens-lib.ps1 and the script beside it, scripts/task/figma-tokens.ps1.
 
 .DESCRIPTION
@@ -16,9 +16,9 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Plugin   = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\dkj-solutions'
+$Plugin   = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj'
 $Script   = Join-Path $Plugin 'scripts\task\figma-tokens.ps1'
-$Style    = Join-Path $RepoRoot 'plugins\dkj-policy\assets\dkj-brandbook\house-style.css'
+$Style    = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\assets\dkj-brandbook\house-style.css'
 
 . (Join-Path $Plugin 'scripts\lib\figma-tokens-lib.ps1')
 

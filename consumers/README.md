@@ -16,7 +16,7 @@ administration.
 claude-code-specialists works like a **Customer Data Platform**: all changes to shared plugin content
 (agent defs, manuals, persona bodies, skills) **land here first**, and are only then synced out to
 the connected repos — never the other way around (see the safety rules in
-[`plugins/dkj-policy/CLAUDE.md`](../plugins/dkj-policy/CLAUDE.md), which the repo's own
+[`plugins/dkj-repo-workflow/CLAUDE.md`](../plugins/dkj-repo-workflow/CLAUDE.md), which the repo's own
 [`CLAUDE.md`](../CLAUDE.md) imports). If an improvement nevertheless originates in a consumer, that
 is an **inbound signal**: the change is first brought back here and then synced out again.
 
@@ -159,7 +159,7 @@ be thorough about machines nobody uses.
   **It is DECLARED rather than inferred, and that is the whole design of the field**
   ([#1869](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1869)). Inferring the grouping —
   from a shared plugin set, say — is the obvious alternative and is wrong in a way no error message
-  would ever show: every consumer of this marketplace shares `dkj-policy`, so a plugin-set inference
+  would ever show: every consumer of this marketplace shares `dkj-repo-workflow`, so a plugin-set inference
   puts `life-hub` in a group with a Shopify store and then reports a personal-life repo as missing a
   theme-archive mechanism. The grouping is a statement about **intent** — *these two repos are meant to
   run the same floor* — and intent is something somebody writes down.
@@ -230,7 +230,7 @@ it.
 It is now reported, as an **`[INFO]`**, on both routes — the disk and, under `-RemoteRunners`, the
 network, where it replaces what used to be deliberate silence. `[INFO]` rather than `[ERROR]` is this
 register's own line, the same one drawn above for an unmigrated plugin id: the two halves of
-`adopt-dkj-policy` that place those runners are optional and separate from enabling the plugin, so
+`adopt-dkj-repo-workflow` that place those runners are optional and separate from enabling the plugin, so
 their absence is a **state that may be a decision**, while a runner naming a path this tree no longer
 has is red on every pull request with nobody able to learn it from their side. The finding says so and
 points at `notes` for recording a deliberate answer. Two bounds worth knowing: it is asked only of a
@@ -316,7 +316,7 @@ tooling layers (`scripts/`, `.github/`, `.claude/`) of the consumers that share 
 they share, **47 have diverged, and the one that has not is a verbatim template this marketplace
 ships**. The load-bearing instance is `scripts/task/prune-merged.ps1` — inbound
 [#815](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/815) asked for it centrally,
-`dkj-policy` 4.21.0 shipped it, one store replaced its copy with a forwarder on August 28 and the other
+`dkj-repo-workflow` 4.21.0 shipped it, one store replaced its copy with a forwarder on August 28 and the other
 still carried its own 120-line version three weeks later. **The inbound route worked; nothing
 propagated the result to the second consumer.** So *"shipped centrally"* and *"used centrally"* are
 different facts, and until now nothing was watching the gap between them.
@@ -416,9 +416,9 @@ structural path difference.
 
 ## The session check (automatic)
 
-The **`dkj-policy`** plugin carries a **SessionStart hook**
-([`hooks/hooks.json`](../plugins/dkj-policy/hooks/hooks.json) +
-[`consumer-sessioncheck.ps1`](../plugins/dkj-policy/hooks/consumer-sessioncheck.ps1)) that, when a
+The **`dkj-repo-workflow`** plugin carries a **SessionStart hook**
+([`hooks/hooks.json`](../plugins/dkj-repo-workflow/hooks/hooks.json) +
+[`consumer-sessioncheck.ps1`](../plugins/dkj-repo-workflow/hooks/consumer-sessioncheck.ps1)) that, when a
 session starts, locates the workshop checkout and runs the consumers check there.
 
 **It moved out of the core on August 8, 2026, and the reason is what this register is.** The check
@@ -560,9 +560,9 @@ which then lands here through the normal branch + PR flow. This hook is one of t
 exceptions to the rule that plugins carry no hooks/skills — the full list is in
 [Sylvester's repo lens](../.claude/specialists/lenses/specialist-05-15-lens.md#what-lives-here-and-what-doesnt), and it has grown since
 this paragraph first named its two siblings — and shrank again on August 26, 2026: three SessionStart
-hooks (`consumer-sessioncheck` and `script-contract-sessioncheck` in `dkj-policy`,
+hooks (`consumer-sessioncheck` and `script-contract-sessioncheck` in `dkj-repo-workflow`,
 `roster-sessioncheck` in the core team), two Stop hooks (`cycle-autopark`, also
-`dkj-policy` — the first hook here that *acts* instead of reporting, #900 — and `closeout-gate`, the
+`dkj-repo-workflow` — the first hook here that *acts* instead of reporting, #900 — and `closeout-gate`, the
 first that *refuses*, #2050) plus the skill
 `specialists-init`. Mind the **version gate**: consumers only receive the
 hook after a release bump plus `claude plugin marketplace update <marketplace>` and

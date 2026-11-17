@@ -216,7 +216,7 @@ function Get-SyncMergeCommits {
 
     .DESCRIPTION
         THE FIRST HALF OF SYNC PROVENANCE, and a lib function rather than a loop inside a script since
-        #2509: live-preflight.ps1 and bwj-development's prepare-release.ps1 both derive a push list, and
+        #2509: live-preflight.ps1 and dkj-repo-workflow-bwj's prepare-release.ps1 both derive a push list, and
         two copies of "which commits came in through a sync" are free to disagree about which files the
         push leaves out.
 
@@ -884,7 +884,7 @@ function Get-ThemeSweepOrder {
         -- while the runbook swept spent previews only AFTER that push. No backup without a free slot, no
         push without a backup. backup-live-theme already refuses a full store (Get-ThemeSlotVerdict, in
         theme-lifecycle-rules); this is the ORDER half, read by live-preflight on the day and by
-        bwj-development's prepare-release days ahead.
+        dkj-repo-workflow-bwj's prepare-release days ahead.
 
         NEAR COUNTS, NOT ONLY FULL. The backup takes one slot before it rotates the previous one out, and
         prepare-release runs days before the day, while preview pushes keep adding themes. So within

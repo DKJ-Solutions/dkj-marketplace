@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/apps/admin/lib/logbook-lib.ps1 -- the Logbook page of the dev server (#3364): the label, the hook's rules,
+    Tests for plugins/dkj-repo-workflow/apps/admin/lib/logbook-lib.ps1 -- the Logbook page of the dev server (#3364): the label, the hook's rules,
     the store's session list, the hook script itself against a fixture checkout, and the two pages.
 
     Pure ASCII (repo convention for .ps1).
@@ -9,7 +9,7 @@ $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 . (Join-Path $RepoRoot 'scripts\lib\dev-pages-lib.ps1')
-. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\logbook-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\logbook-lib.ps1')
 
 $script:pass = 0
 $script:fail = 0
@@ -79,13 +79,13 @@ try {
     # The hook script, against a fixture checkout of its own: the libs it loads, git on main, its own store and
     # its own run-progress directory. The payload arrives as JSON on stdin; silent, exit 0.
     $fx = Join-Path $dir 'checkout'
-    # The plugin's layout (#3470): the hook under hooks\, its libs under apps\admin\lib\ and dkj-policy's scripts\lib\.
-    $fxPlugin = Join-Path $fx 'plugins\dkj-policy'
+    # The plugin's layout (#3470): the hook under hooks\, its libs under apps\admin\lib\ and dkj-repo-workflow's scripts\lib\.
+    $fxPlugin = Join-Path $fx 'plugins\dkj-repo-workflow'
     New-Item -ItemType Directory -Path (Join-Path $fxPlugin 'hooks'), (Join-Path $fxPlugin 'apps\admin\lib'), (Join-Path $fxPlugin 'scripts\lib') -Force | Out-Null
-    foreach ($lib in 'logbook-lib.ps1', 'stopwatch-lib.ps1') { Copy-Item (Join-Path $RepoRoot "plugins\dkj-policy\apps\admin\lib\$lib") (Join-Path $fxPlugin 'apps\admin\lib\') }
-    foreach ($lib in 'run-progress-lib.ps1', 'command-probe-lib.ps1') { Copy-Item (Join-Path $RepoRoot "plugins\dkj-policy\scripts\lib\$lib") (Join-Path $fxPlugin 'scripts\lib\') }
-    foreach ($lib in 'run-progress-lib.ps1', 'workflow-folder-lib.ps1') { Copy-Item (Join-Path $RepoRoot "plugins\dkj-policy\scripts\lib\$lib") (Join-Path $fxPlugin 'scripts\lib\') }
-    Copy-Item (Join-Path $RepoRoot 'plugins\dkj-policy\hooks\logbook-hook.ps1') (Join-Path $fxPlugin 'hooks\')
+    foreach ($lib in 'logbook-lib.ps1', 'stopwatch-lib.ps1') { Copy-Item (Join-Path $RepoRoot "plugins\dkj-repo-workflow\apps\admin\lib\$lib") (Join-Path $fxPlugin 'apps\admin\lib\') }
+    foreach ($lib in 'run-progress-lib.ps1', 'command-probe-lib.ps1') { Copy-Item (Join-Path $RepoRoot "plugins\dkj-repo-workflow\scripts\lib\$lib") (Join-Path $fxPlugin 'scripts\lib\') }
+    foreach ($lib in 'run-progress-lib.ps1', 'workflow-folder-lib.ps1') { Copy-Item (Join-Path $RepoRoot "plugins\dkj-repo-workflow\scripts\lib\$lib") (Join-Path $fxPlugin 'scripts\lib\') }
+    Copy-Item (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\logbook-hook.ps1') (Join-Path $fxPlugin 'hooks\')
     & git -C $fx init -q -b main 2>$null
     & git -C $fx -c user.name=t -c user.email=t@example.invalid add -A 2>$null
     & git -C $fx -c user.name=t -c user.email=t@example.invalid commit -q -m 'first' 2>$null
@@ -178,7 +178,7 @@ Assert-Equal 'sw1-1|/issues-sweep #3392|0-600, o1|fix the thing|100-700, sw1-2|/
 Assert-True ($split[0].Session -eq 's1' -and $sw.Id -eq 'sw1' -and $sw.Label -eq '/issues-sweep') 'an issue keeps the sweep''s session, and the stored run is not changed'
 $going = $sw.Clone(); $going.End = $null
 Assert-Equal 'sw1-1|/issues-sweep #3392|0-600, sw1-2|/issues-sweep #3397|600-1800, sw1-3|/issues-sweep issue 3|1800-going' (& $shape (Split-LogbookSweepRuns -Runs @($going) -Folds @($folds[0], $folds[1]))) 'in a going sweep the issue in progress is going'
-Assert-Equal 'sw1-1|/dkj-policy:issues-sweep issue 1|0-600' (& $shape (Split-LogbookSweepRuns -Runs @(@{ Id = 'sw1'; Label = '/dkj-policy:issues-sweep'; Start = (& $at 0); End = (& $at 700) }) -Folds @(@{ At = (& $at 600); Issue = '' }))) 'the plugin-qualified command is a sweep too, and a fold that named no issue is numbered'
+Assert-Equal 'sw1-1|/dkj-repo-workflow:issues-sweep issue 1|0-600' (& $shape (Split-LogbookSweepRuns -Runs @(@{ Id = 'sw1'; Label = '/dkj-repo-workflow:issues-sweep'; Start = (& $at 0); End = (& $at 700) }) -Folds @(@{ At = (& $at 600); Issue = '' }))) 'the plugin-qualified command is a sweep too, and a fold that named no issue is numbered'
 Assert-Equal 'sw1-1|/sweep-issues issue 1|0-600' (& $shape (Split-LogbookSweepRuns -Runs @(@{ Id = 'sw1'; Label = '/sweep-issues'; Start = (& $at 0); End = (& $at 700) }) -Folds @(@{ At = (& $at 600); Issue = '' }))) 'a run recorded under the skill''s former name is still a sweep'
 Assert-Equal 'sw1|/issues-sweep-reviews|0-700' (& $shape (Split-LogbookSweepRuns -Runs @(@{ Id = 'sw1'; Label = '/issues-sweep-reviews'; Start = (& $at 0); End = (& $at 700) }) -Folds @(@{ At = (& $at 600); Issue = '' }))) 'a sibling skill whose name starts with the sweep''s is not a sweep'
 Assert-Equal 'sw1|/issues-sweep|0-1830' (& $shape (Split-LogbookSweepRuns -Runs @($sw) -Folds @(@{ At = (& $at 1900); Issue = '1' }))) 'a sweep with no fold inside it stays whole'

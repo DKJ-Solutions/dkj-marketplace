@@ -319,7 +319,7 @@ $pair = @($pairs | Where-Object { $_.Name -eq 'pr-overlap-lib' })
 Assert-Equal 1 $pair.Count 'the lib is registered as a shared script'
 if ($pair.Count -eq 1) {
     Assert-True ([bool]$pair[0].LibOnly) 'registered as LibOnly -- it is dot-sourced, it resolves no repo root of its own'
-    Assert-Equal 'dkj-policy' $pair[0].Plugin 'it travels in the workflow plugin, where open-pr.ps1 already does'
+    Assert-Equal 'dkj-repo-workflow' $pair[0].Plugin 'it travels in the workflow plugin, where open-pr.ps1 already does'
     Assert-True (Test-Path -LiteralPath $pair[0].MirrorPath) 'the plugin mirror exists'
     if (Test-Path -LiteralPath $pair[0].MirrorPath) {
         $srcText    = Get-NormalizedScriptContent -Path $pair[0].SourcePath

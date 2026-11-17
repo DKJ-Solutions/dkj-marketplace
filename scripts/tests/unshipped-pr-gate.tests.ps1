@@ -2,7 +2,7 @@
 .SYNOPSIS
     Regression tests for the unshipped-pull-request report (issue #2525): the check script
     scripts/lint/check-unshipped-pr.ps1 and the SessionStart hook
-    plugins/dkj-policy/hooks/unshipped-pr-sessioncheck.ps1.
+    plugins/dkj-repo-workflow/hooks/unshipped-pr-sessioncheck.ps1.
 
 .DESCRIPTION
     Dependency-free: no Pester needed, only PowerShell.
@@ -23,8 +23,8 @@ $ErrorActionPreference = 'Stop'
 
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $Script     = Join-Path $RepoRoot 'scripts\lint\check-unshipped-pr.ps1'
-$Hook       = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\unshipped-pr-sessioncheck.ps1'
-$HooksJson  = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\hooks.json'
+$Hook       = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\unshipped-pr-sessioncheck.ps1'
+$HooksJson  = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\hooks.json'
 
 $script:pass  = 0
 $script:fail  = 0

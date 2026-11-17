@@ -450,7 +450,7 @@ try {
         # AND NOTHING WAS TOUCHED -- the same three reads as (s) in new-branch-base.tests.ps1, for the same reason.
         $branchesY = ((& git -C $fixIdent branch --list 'fix/1867-cannot-commit-v1') -join '').Trim()
         Assert-True (-not [bool]$branchesY) 'no identity: and NO branch was created -- the refusal is before the checkout'
-        $docY = Join-Path $fixIdent (Join-Path 'dkj-policy' 'fix-1867-cannot-commit-v1.md')
+        $docY = Join-Path $fixIdent (Join-Path 'dkj-repo-workflow' 'fix-1867-cannot-commit-v1.md')
         Assert-True (-not (Test-Path -LiteralPath $docY)) 'no identity: and no branch document was scaffolded either'
         $headY = ((& git -C $fixIdent rev-parse --abbrev-ref HEAD) -join '').Trim()
         Assert-Equal 'main' $headY 'no identity: and HEAD is left exactly where the operator was standing'

@@ -569,7 +569,7 @@ Write-Host ''
 Write-Host 'The mirrors' -ForegroundColor Cyan
 
 foreach ($m in @(
-    @{ Path = 'plugins\dkj-policy\scripts\lib\ref-print-lib.ps1';      Label = 'dkj-policy (ship-pr)' },
+    @{ Path = 'plugins\dkj-repo-workflow\scripts\lib\ref-print-lib.ps1';      Label = 'dkj-repo-workflow (ship-pr)' },
     @{ Path = 'plugins\dkj-subagents\dkj-subagents-shopify\scripts\lib\ref-print-lib.ps1'; Label = 'dkj-subagents-shopify (sync-main)' }
 )) {
     $full = Join-Path $RepoRoot $m.Path

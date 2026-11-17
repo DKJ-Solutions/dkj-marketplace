@@ -264,7 +264,7 @@ try {
 $split = Get-GitEolOnlySplit -RepoRoot $notARepo
 Assert-True (-not $split.Known) 'outside a repository the split reports Known false, never a clean copy'
 
-foreach ($caller in @('scripts\task\live-preflight.ps1', 'plugins\dkj-policy\extensions\bwj-development\scripts\task\prepare-release.ps1')) {
+foreach ($caller in @('scripts\task\live-preflight.ps1', 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\scripts\task\prepare-release.ps1')) {
     $text = Get-Content -LiteralPath (Join-Path $RepoRoot $caller) -Raw
     Assert-True ($text -match 'Get-GitEolOnlySplit') "$(Split-Path -Leaf $caller) names EOL-only paths apart from uncommitted ones"
 }

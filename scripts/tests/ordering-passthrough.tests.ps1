@@ -174,7 +174,7 @@ Write-Host 'Every narrating child spawn in scripts/release/ routes to the host' 
 
 $releaseRoots = @(
     @{ Label = 'source'; Path = (Join-Path $RepoRoot 'scripts\release') },
-    @{ Label = 'plugin mirror'; Path = (Join-Path $RepoRoot 'plugins\dkj-policy\scripts\release') }
+    @{ Label = 'plugin mirror'; Path = (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\release') }
 )
 
 foreach ($root in $releaseRoots) {
@@ -216,7 +216,7 @@ Write-Host ''
 Write-Host 'The source and the plugin mirror carry the same repair' -ForegroundColor Cyan
 foreach ($name in @('ship-pr.ps1', 'cut-release.ps1', 'verify-pushed-merges.ps1')) {
     $a = Join-Path $RepoRoot "scripts\release\$name"
-    $b = Join-Path $RepoRoot "plugins\dkj-policy\scripts\release\$name"
+    $b = Join-Path $RepoRoot "plugins\dkj-repo-workflow\scripts\release\$name"
     if ((Test-Path -LiteralPath $a) -and (Test-Path -LiteralPath $b)) {
         $ca = (Get-Content -LiteralPath $a -Raw)
         $cb = (Get-Content -LiteralPath $b -Raw)

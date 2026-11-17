@@ -98,7 +98,7 @@
          non-adoption were indistinguishable to the register. Measured September 11, 2026:
          DaveKJohn/djcylow-react registers the full core-team adoption and names the workflow plugin,
          and its entire .github/workflows/ is one ci.yml. Reported as an [INFO], not an [ERROR], on the
-         line the register already draws for an unmigrated plugin id: both halves of adopt-dkj-policy
+         line the register already draws for an unmigrated plugin id: both halves of adopt-dkj-repo-workflow
          that place these runners are optional, so their absence is a state and may be a decision --
          which the finding says, pointing at the manifest's 'notes' for recording one. Gated on the
          manifest naming the workflow plugin (under any of its names), since nothing else scaffolds
@@ -107,7 +107,7 @@
          and, under -RemoteRunners, the network, where it replaces what used to be deliberate silence.
       6d. AND THE REF THOSE RUNNERS FETCH THIS TREE AT (#2337). A runner that holds a write credential
          (a repository secret, or a `write` permission) and checks this repo out at a moving ref -- or
-         pinned at a release behind this tree's dkj-policy version -- gets an [INFO] naming the file,
+         pinned at a release behind this tree's dkj-repo-workflow version -- gets an [INFO] naming the file,
          the line and the ref: line to change. #2333 pinned those checkouts in what adopt-ci-floor.ps1
          writes and reports a stale one when it is re-run; this is the half that reaches a consumer
          nobody re-runs it in. The read-only runners are not judged, because they track main on
@@ -214,11 +214,11 @@ $PluginRoots = @(Get-RepoPluginRoots -RepoRoot $RepoRoot)
 # The name half of the workflow plugin, under EVERY name it has carried -- the gate on check 6c (#1850).
 # That plugin is what scaffolds the three runners, so a manifest that does not name it describes a
 # consumer with no reason to hold them. The list is the same shape Get-MojibakePaths already keeps for
-# the folder that renamed alongside it ('workflow-davekjohn' -> 'contributing-davekjohn' -> 'dkj-policy'),
+# the folder that renamed alongside it ('workflow-davekjohn' -> 'contributing-davekjohn' -> 'dkj-repo-workflow'),
 # and it is kept here rather than in repo-config.ps1 on purpose: this is the REGISTER's knowledge about
 # manifests only this repo holds, not a seam a consumer configures. It only ever grows -- a name dropped
 # from it goes silent on precisely the consumer that has not migrated yet.
-$WorkflowPluginNames = @('dkj-policy', 'contributing-davekjohn', 'workflow-davekjohn')
+$WorkflowPluginNames = @('dkj-repo-workflow', 'contributing-davekjohn', 'workflow-davekjohn')
 
 # The release a write runner's shared-scripts pin is judged against, for check 6d (#2337): the workflow
 # plugin's own version in THIS checkout, which is the version adopt-ci-floor.ps1 pins to when it runs
@@ -226,7 +226,7 @@ $WorkflowPluginNames = @('dkj-policy', 'contributing-davekjohn', 'workflow-davek
 # needs no version -- and stays silent about a pinned one rather than calling it current.
 $WorkflowPluginVersion = ''
 try {
-    $wfPluginJson = Join-Path $RepoRoot 'plugins\dkj-policy\.claude-plugin\plugin.json'
+    $wfPluginJson = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\.claude-plugin\plugin.json'
     if (Test-Path -LiteralPath $wfPluginJson -PathType Leaf) {
         $v = [string]((Get-Content -LiteralPath $wfPluginJson -Raw -Encoding UTF8 | ConvertFrom-Json).version)
         if ($v -match '^\d+\.\d+\.\d+$') { $WorkflowPluginVersion = $v }
@@ -329,7 +329,7 @@ if ($RemoteRunners -and -not $OnlyConsumer) {
 }
 
 # THIS REPO'S OWN MARKETPLACE NAME, i.e. the segment after the '@' in an id like
-# 'dkj-policy@dkj-marketplace' (#1775). Needed by the per-consumer [UNLISTED] check further
+# 'dkj-repo-workflow@dkj-marketplace' (#1775). Needed by the per-consumer [UNLISTED] check further
 # down, which has to tell "an id this register is responsible for" from "an id naming a marketplace
 # this register has never heard of and has no business reporting on".
 #
@@ -576,7 +576,7 @@ function Write-RunnerPinFinding {
 
     $wfName = Format-SafePathToken -Value $WorkflowName
     $suffix = if ($Where) { " ($Where)" } else { '' }
-    $target = if ($WorkflowPluginVersion) { "a release commit -- v$WorkflowPluginVersion is the current one ('adopt-ci-floor' prints the ref: line to paste)" } else { "a release commit of the dkj-policy plugin ('adopt-ci-floor' prints the ref: line to paste)" }
+    $target = if ($WorkflowPluginVersion) { "a release commit -- v$WorkflowPluginVersion is the current one ('adopt-ci-floor' prints the ref: line to paste)" } else { "a release commit of the dkj-repo-workflow plugin ('adopt-ci-floor' prints the ref: line to paste)" }
     foreach ($pin in $pins) {
         switch ($pin.State) {
             'moving' {
@@ -603,7 +603,7 @@ function Write-RunnerAdoptionFinding {
         [INFO], NOT [ERROR], and that is the register's own settled doctrine rather than a softening.
         consumers/README.md already draws the line for the neighbouring case (a plugin id the
         marketplace no longer declares): "this consumer has not migrated, which is a state rather than
-        a defect". The two halves of adopt-dkj-policy that place these runners are optional and
+        a defect". The two halves of adopt-dkj-repo-workflow that place these runners are optional and
         separate from enabling the plugin, so an absent runner may be a decision somebody made. That is
         exactly why check 6 stays an [ERROR] and this does not: a runner naming a path this tree no
         longer has is red on every pull request in that consumer, with nobody able to learn it from
@@ -656,7 +656,7 @@ function Write-RunnerAdoptionFinding {
     }
     $partial = if ($verdict.Unreadable -gt 0) { " ($($verdict.Unreadable) of them could not be read and were not judged)" } else { '' }
 
-    Write-Info "this consumer names the workflow plugin in $ManifestName but $state$partial -- so none of the runners 'adopt-dkj-policy' places is running there: the branch-entry gate (part 1) fires on none of its pull requests, and the fold and the resolves verification (part 3) do not survive a merge no session observes. That may be deliberate -- both parts are optional and separate from enabling the plugin, and nothing here can tell a decision from an omission. If it is deliberate, say so in $ManifestName's 'notes'; if it is not, run the 'adopt-dkj-policy' skill in that repo. Only a checkout step naming this repository counts as a runner here, so this says nothing recognisable reaches into this tree rather than that nothing is there.$suffix"
+    Write-Info "this consumer names the workflow plugin in $ManifestName but $state$partial -- so none of the runners 'adopt-dkj-repo-workflow' places is running there: the branch-entry gate (part 1) fires on none of its pull requests, and the fold and the resolves verification (part 3) do not survive a merge no session observes. That may be deliberate -- both parts are optional and separate from enabling the plugin, and nothing here can tell a decision from an omission. If it is deliberate, say so in $ManifestName's 'notes'; if it is not, run the 'adopt-dkj-repo-workflow' skill in that repo. Only a checkout step naming this repository counts as a runner here, so this says nothing recognisable reaches into this tree rather than that nothing is there.$suffix"
 }
 
 # Test-GitHubOwnerNameSlug moved to scripts/lib/check-report-lib.ps1 (#1869): a third caller outside
@@ -1501,11 +1501,11 @@ foreach ($mf in $manifestFiles) {
     #
     # MEASURED (this branch, before this change): this repo's own consumers/claude-code-specialists.json
     # lists two plugin blocks ('dkj-team-alpha@...', a name the marketplace no longer declares, and
-    # 'dkj-policy@...'), while .claude/settings.json enables six ids. Running the unmodified script
+    # 'dkj-repo-workflow@...'), while .claude/settings.json enables six ids. Running the unmodified script
     # against that manifest prints exactly one line about the whole six: '[OK] plugin is enabled' for
-    # dkj-policy@, the one id that happens to appear, verbatim, in the manifest's own list. The other
+    # dkj-repo-workflow@, the one id that happens to appear, verbatim, in the manifest's own list. The other
     # five -- dkj-subagents-alpha@, dkj-subagents-ecomm@, dkj-subagents-lifehub@, dkj-subagents-shopify@
-    # and bwj-development@ -- produce no line whatsoever from the loop above; #1775 describes four of
+    # and dkj-repo-workflow-bwj@ -- produce no line whatsoever from the loop above; #1775 describes four of
     # those five as 'completely silent' and folds the fifth (dkj-subagents-alpha@) into 'one printed an
     # [INFO] because it carries a retired id', on the reading that the manifest's 'dkj-team-alpha@' entry
     # is that plugin's old name. That reading is about the underlying PLUGIN; this check compares ID
@@ -1597,7 +1597,7 @@ foreach ($mf in $manifestFiles) {
     # the consumer's tree and running a path into it -- branch-entry.yml, fold-on-merge.yml and
     # verify-resolved.yml. The dependency therefore points the wrong way: a path INTO this tree,
     # written into a file this tree cannot reach, by a scaffolder that runs once at adoption and never
-    # again. When plugins/workflows/contributing-davekjohn/ became plugins/dkj-policy/, every consumer
+    # again. When plugins/workflows/contributing-davekjohn/ became plugins/dkj-repo-workflow/, every consumer
     # scaffolded before the move kept naming the old path, and two of them were red on every pull
     # request without anyone noticing -- because neither had opened one since.
     #

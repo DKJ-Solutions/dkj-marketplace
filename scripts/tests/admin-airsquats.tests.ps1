@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/apps/admin/lib/airsquats-lib.ps1 -- the Admin banner's airsquats state, shared by every admin
+    Tests for plugins/dkj-repo-workflow/apps/admin/lib/airsquats-lib.ps1 -- the Admin banner's airsquats state, shared by every admin
     and every machine (#3438): the merge rule, the hours a poll counts, the API the banner asks, and one sync with
     the gist through a fake gh. The machine's file is a scratch folder (DKJ_ADMIN_STATE_DIR), and no child is started
     (DKJ_ADMIN_NO_SYNC).
@@ -10,7 +10,7 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\airsquats-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\airsquats-lib.ps1')
 
 $script:pass = 0
 $script:fail = 0

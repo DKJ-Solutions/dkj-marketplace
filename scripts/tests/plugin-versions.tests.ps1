@@ -1382,14 +1382,14 @@ try {
     # --- 38. #3055: a retired id is named as retired, not sent round a refresh -----------------------
     Write-Host "38. #3055: a retired plugin id -> 'retired', with its successor, never a refresh" -ForegroundColor Cyan
     $c = New-Case 'retired-id'
-    New-Clone -Dir $c.Clone -Version '4.32.0' -PluginNames @('bwj-development') | Out-Null
+    New-Clone -Dir $c.Clone -Version '4.32.0' -PluginNames @('dkj-repo-workflow-bwj') | Out-Null
     $old = 'dkj-policy-bwj@ccs-fixture'
     Set-Enabled -RepoDir $c.Repo -Ids @($old)
     Write-Admin -Path $c.Admin -Plugins @{ $old = @( (New-Rec -ProjectPath $c.Repo -Version '4.30.0' -Sha 'beefbeef') ) }
     $r = Invoke-PV -Repo $c.Repo -UserHome $c.Home
     Assert-Equal 0 $r.Code '38: exit 0'
-    Assert-Has   $r "retired -- 'dkj-policy-bwj' was renamed to 'bwj-development'" '38: the verdict names the successor'
-    Assert-Has   $r 'claude plugin install bwj-development@ccs-fixture --scope project' '38: the action is the successor install'
+    Assert-Has   $r "retired -- 'dkj-policy-bwj' was renamed to 'dkj-repo-workflow-bwj'" '38: the verdict names the successor'
+    Assert-Has   $r 'claude plugin install dkj-repo-workflow-bwj@ccs-fixture --scope project' '38: the action is the successor install'
     . (Join-Path $PSScriptRoot '..\lib\claude-md-import-lib.ps1')
     Assert-Has   $r (Get-RetiredExtensionRepair -Name 'dkj-policy-bwj' -Marketplace 'ccs-fixture') '38: and it is the lib''s one repair sentence (#3056)'
     Assert-Lacks $r 'claude plugin marketplace update' '38: no refresh is prescribed -- it cannot help'

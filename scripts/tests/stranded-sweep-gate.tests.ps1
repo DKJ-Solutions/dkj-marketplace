@@ -2,7 +2,7 @@
 .SYNOPSIS
     Regression tests for the stranded-armed-pull-request report (issue #2438): the check script
     scripts/lint/check-stranded-sweep.ps1 and the SessionStart hook
-    plugins/dkj-policy/hooks/stranded-sweep-sessioncheck.ps1.
+    plugins/dkj-repo-workflow/hooks/stranded-sweep-sessioncheck.ps1.
 
 .DESCRIPTION
     Dependency-free: no Pester needed, only PowerShell.
@@ -38,8 +38,8 @@ $ErrorActionPreference = 'Stop'
 
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $Script     = Join-Path $RepoRoot 'scripts\lint\check-stranded-sweep.ps1'
-$Hook       = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\stranded-sweep-sessioncheck.ps1'
-$HooksJson  = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\hooks.json'
+$Hook       = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\stranded-sweep-sessioncheck.ps1'
+$HooksJson  = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\hooks.json'
 
 $script:pass  = 0
 $script:fail  = 0
@@ -79,7 +79,7 @@ Assert-True (Test-Path -LiteralPath $Hook -PathType Leaf) 'stranded-sweep-sessio
 Write-Host ''
 Write-Host 'hooks.json registration' -ForegroundColor Cyan
 
-Assert-True (Test-Path -LiteralPath $HooksJson -PathType Leaf) 'plugins/dkj-policy/hooks/hooks.json exists'
+Assert-True (Test-Path -LiteralPath $HooksJson -PathType Leaf) 'plugins/dkj-repo-workflow/hooks/hooks.json exists'
 $hooksParsed = Get-Content -LiteralPath $HooksJson -Raw | ConvertFrom-Json
 $sessionStartHooks = @($hooksParsed.hooks.SessionStart | ForEach-Object { $_.hooks } | ForEach-Object { $_ })
 # Run through sessioncheck-dispatch.ps1 since #3472, which discovers every *-sessioncheck.ps1 beside it.

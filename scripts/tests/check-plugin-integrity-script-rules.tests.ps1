@@ -50,7 +50,7 @@ try {
 
     # --- Scenario 43: the SAME sentence about an UNFLAGGED skill passes ------------------------------
     #     The scenario that keeps this from being a phrasing rule. check-script-contract.ps1 names
-    #     'adopt-dkj-policy' with exactly this wording in the real tree and is correct to; a check
+    #     'adopt-dkj-repo-workflow' with exactly this wording in the real tree and is correct to; a check
     #     built as a grep for the phrasing would be born with that false finding.
     Write-Host "check 33 -- the same wording about an UNFLAGGED skill passes" -ForegroundColor Cyan
     $s43Lines = @(
@@ -158,7 +158,7 @@ try {
     #     this check in silence.
     Write-Host "check 33 -- history is not rewritten, so it is not a subject" -ForegroundColor Cyan
     [System.IO.File]::WriteAllText((Join-Path $Fixture 'CONTRIBUTING.md'), "# Contributing`n`nNothing here.`n", $Utf8NoBom)
-    $s50Path = Join-Path $Fixture 'dkj-policy\CHANGELOG.md'
+    $s50Path = Join-Path $Fixture 'dkj-repo-workflow\CHANGELOG.md'
     $s50Prev = if (Test-Path -LiteralPath $s50Path) { [System.IO.File]::ReadAllText($s50Path, [System.Text.Encoding]::UTF8) } else { $null }
     $s50Lines = @(
         '# Changelog'

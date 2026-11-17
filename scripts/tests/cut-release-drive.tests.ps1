@@ -287,28 +287,28 @@ $HistoryMajors
     # The file this repo's Get-ReleaseVersionPins names (#3133), so the verbatim seam has something to
     # repoint: four pinned URLs, and one under another prefix that the cut must leave alone. Each pinned URL
     # carries a stale sha256 cell, and the four files its Checksums names exist, LF-only (#3636; the product
-    # layer's house-product.css in dkj-solutions since #3831; the house font since #4075, a binary file).
+    # layer's house-product.css in dkj-repo-workflow-dkj since #3831; the house font since #4075, a binary file).
     $zeros = '0' * 64
-    Write-Utf8 (Join-Path $root 'plugins\dkj-policy\extensions\dkj-solutions\skills\dkj-brandbook\SKILL.md') @"
+    Write-Utf8 (Join-Path $root 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\skills\dkj-brandbook\SKILL.md') @"
 # A fixture pin page
 
-| ``house-style.css`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-policy/assets/dkj-brandbook/house-style.css`` | ``$zeros`` |
-| ``house-theme.js`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-policy/assets/dkj-brandbook/house-theme.js`` | ``$zeros`` |
-| ``house-product.css`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css`` | ``$zeros`` |
-| ``InterVariable.woff2`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-policy/assets/dkj-brandbook/InterVariable.woff2`` | ``$zeros`` |
+| ``house-style.css`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-repo-workflow/assets/dkj-brandbook/house-style.css`` | ``$zeros`` |
+| ``house-theme.js`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-repo-workflow/assets/dkj-brandbook/house-theme.js`` | ``$zeros`` |
+| ``house-product.css`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product/house-product.css`` | ``$zeros`` |
+| ``InterVariable.woff2`` | ``https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v$PluginVersion/plugins/dkj-repo-workflow/assets/dkj-brandbook/InterVariable.woff2`` | ``$zeros`` |
 https://raw.githubusercontent.com/DKJ-Solutions/other-repo/v0.1.0/a/file.css
 "@
-    $assets = Join-Path $root 'plugins\dkj-policy\assets\dkj-brandbook'
+    $assets = Join-Path $root 'plugins\dkj-repo-workflow\assets\dkj-brandbook'
     New-Item -ItemType Directory -Path $assets -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $assets 'house-style.css'), ":root { --x: 1; }`n")
     [System.IO.File]::WriteAllText((Join-Path $assets 'house-theme.js'), "// fixture`n")
     [System.IO.File]::WriteAllBytes((Join-Path $assets 'InterVariable.woff2'), [byte[]](0x77, 0x4F, 0x46, 0x32, 0x00, 0xFF))
-    $productAssets = Join-Path $root 'plugins\dkj-policy\extensions\dkj-solutions\assets\dkj-brandbook-product'
+    $productAssets = Join-Path $root 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\assets\dkj-brandbook-product'
     New-Item -ItemType Directory -Path $productAssets -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $productAssets 'house-product.css'), ".y { color: var(--x); }`n")
-    New-Item -ItemType Directory -Path (Join-Path $root '.dkj\dkj-policy\releases\audience\1.x') -Force | Out-Null
-    New-Item -ItemType Directory -Path (Join-Path $root '.dkj\dkj-policy\releases\changelog\1.x') -Force | Out-Null
-    New-Item -ItemType Directory -Path (Join-Path $root '.dkj\dkj-policy\releases\github\1.x') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $root '.dkj\dkj-repo-workflow\releases\audience\1.x') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $root '.dkj\dkj-repo-workflow\releases\changelog\1.x') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $root '.dkj\dkj-repo-workflow\releases\github\1.x') -Force | Out-Null
 
     # A git repo with NO remote: -NoPush is belt, this is braces.
     Push-Location $root
@@ -368,22 +368,22 @@ try {
     Assert-Equal '1.4.1' $v2 'happy path: the workflow plugin moved with it -- lockstep, not per plugin'
 
     # The version pins (#3133): every URL under the pinned prefix names the new tag, and nothing else moved.
-    $pinPage = Get-Content -LiteralPath (Join-Path $root 'plugins\dkj-policy\extensions\dkj-solutions\skills\dkj-brandbook\SKILL.md') -Raw
+    $pinPage = Get-Content -LiteralPath (Join-Path $root 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\skills\dkj-brandbook\SKILL.md') -Raw
     Assert-Equal 4 ([regex]::Matches($pinPage, 'dkj-marketplace/v1\.4\.1/')).Count 'happy path: all four pinned URLs name the tag the cut made'
     Assert-NotMatch 'dkj-marketplace/v1\.4\.0/' $pinPage 'happy path: no pinned URL is left on the old tag'
     Assert-Match 'other-repo/v0\.1\.0/' $pinPage 'happy path: a URL under another prefix is left alone'
-    Assert-Says 'repinned: plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/SKILL.md -> v1.4.1 (4 URL(s))' $r.Out 'happy path: the run says what it repinned'
+    Assert-Says 'repinned: plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook/SKILL.md -> v1.4.1 (4 URL(s))' $r.Out 'happy path: the run says what it repinned'
     Assert-NotMatch '\?\? .*SKILL\.md|M .*SKILL\.md' (Get-GitOut -Root $root -GitArgs @('status', '--porcelain')) 'happy path: the repinned page is inside the release commit'
     # The checksums (#3636): each cell beside a pinned URL is the sha256 of the bytes that tag serves.
     $sha = [System.Security.Cryptography.SHA256]::Create()
-    foreach ($pinned in 'assets\dkj-brandbook\house-style.css', 'assets\dkj-brandbook\house-theme.js', 'extensions\dkj-solutions\assets\dkj-brandbook-product\house-product.css', 'assets\dkj-brandbook\InterVariable.woff2') {
+    foreach ($pinned in 'assets\dkj-brandbook\house-style.css', 'assets\dkj-brandbook\house-theme.js', 'extensions\dkj-repo-workflow-dkj\assets\dkj-brandbook-product\house-product.css', 'assets\dkj-brandbook\InterVariable.woff2') {
         $leaf = Split-Path -Leaf $pinned
-        $want = ([System.BitConverter]::ToString($sha.ComputeHash([System.IO.File]::ReadAllBytes((Join-Path $root "plugins\dkj-policy\$pinned")))) -replace '-', '').ToLowerInvariant()
+        $want = ([System.BitConverter]::ToString($sha.ComputeHash([System.IO.File]::ReadAllBytes((Join-Path $root "plugins\dkj-repo-workflow\$pinned")))) -replace '-', '').ToLowerInvariant()
         Assert-Match ([regex]::Escape("/$leaf``") + '.*' + $want) $pinPage "happy path: the cut wrote the sha256 of $leaf beside its URL"
     }
     $sha.Dispose()
     Assert-NotMatch ('0' * 64) $pinPage 'happy path: no stale checksum cell is left'
-    Assert-Says 'checksummed: plugins/dkj-policy/assets/dkj-brandbook/house-style.css' $r.Out 'happy path: the run says what it checksummed'
+    Assert-Says 'checksummed: plugins/dkj-repo-workflow/assets/dkj-brandbook/house-style.css' $r.Out 'happy path: the run says what it checksummed'
 
     # The release build (#3210): built after the gates, copied into the plugin, and committed with the release.
     $shipped = Join-Path $root 'plugins\workflows\workflow-fixture\assets\app\index.html'
@@ -398,7 +398,7 @@ try {
 
     # The changelog note carries the entry that was folded away, which is the whole point of writing
     # it before emptying the file.
-    $notePath = Join-Path $root '.dkj\dkj-policy\releases\changelog\1.x\1.4.1.md'
+    $notePath = Join-Path $root '.dkj\dkj-repo-workflow\releases\changelog\1.x\1.4.1.md'
     Assert-True (Test-Path -LiteralPath $notePath) 'happy path: the changelog note was written at the grouped path'
     if (Test-Path -LiteralPath $notePath) {
         Assert-Match 'A fixture change' (Get-Content -LiteralPath $notePath -Raw) 'happy path: and it carries the entry the CHANGELOG lost'
@@ -457,7 +457,7 @@ try {
     $root4 = New-CutFixture -Name 'tier1' -AudienceTier 1 -EntryTopTier 1
     $r4 = Invoke-Cut -Root $root4 -Arguments @('-Bump', 'minor', '-NoPush', '-SkipLint', '-SkipTests')
     Assert-Equal 0 $r4.Code 'tier 1: the minor is earned by the tier-1 entry and the cut succeeds'
-    $note4 = Join-Path $root4 '.dkj\dkj-policy\releases\audience\1.x\1.5.0.md'
+    $note4 = Join-Path $root4 '.dkj\dkj-repo-workflow\releases\audience\1.x\1.5.0.md'
     Assert-True (Test-Path -LiteralPath $note4) 'tier 1: the hand-written note was drafted'
     if (Test-Path -LiteralPath $note4) {
         $n4 = Get-Content -LiteralPath $note4 -Raw
@@ -491,7 +491,7 @@ try {
     $root5 = New-CutFixture -Name 'tier2' -EntryTopTier 2
     $r5 = Invoke-Cut -Root $root5 -Arguments @('-Bump', 'minor', '-NoPush', '-SkipLint', '-SkipTests')
     Assert-Equal 0 $r5.Code 'tier 2: the minor is earned by the tier-2 entry and the cut succeeds'
-    $note5 = Join-Path $root5 '.dkj\dkj-policy\releases\audience\1.x\1.5.0.md'
+    $note5 = Join-Path $root5 '.dkj\dkj-repo-workflow\releases\audience\1.x\1.5.0.md'
     Assert-True (Test-Path -LiteralPath $note5) 'tier 2: the hand-written note was drafted'
     if (Test-Path -LiteralPath $note5) {
         $n5 = Get-Content -LiteralPath $note5 -Raw
@@ -513,7 +513,7 @@ try {
     # release the manifests have never heard of.
     Write-Host ""
     Write-Host "cut-release.ps1 -- a baseline that disagrees with the recorded release numbering refuses" -ForegroundColor Cyan
-    $recordedHistory = "#### 1.x`n`n| Version | Date | Type | Title |`n|---|---|---|---|`n| [1.9.9](../dkj-policy/releases/changelog/1.x/1.9.9.md) | 2026-08-20 | Patch | Recorded, but untagged and unbumped |`n"
+    $recordedHistory = "#### 1.x`n`n| Version | Date | Type | Title |`n|---|---|---|---|`n| [1.9.9](../dkj-repo-workflow/releases/changelog/1.x/1.9.9.md) | 2026-08-20 | Patch | Recorded, but untagged and unbumped |`n"
     $root6 = New-CutFixture -Name 'baseline' -HistoryMajors $recordedHistory
     $r6 = Invoke-Cut -Root $root6 -Arguments @('-Bump', 'patch', '-NoPush', '-SkipLint', '-SkipTests')
     Assert-True ($r6.Code -ne 0) 'baseline: refused with a non-zero exit'
@@ -536,7 +536,7 @@ try {
     $root7 = New-CutFixture -Name 'statedtype' -HistoryMajors $recordedHistory
     $r7 = Invoke-Cut -Root $root7 -Arguments @('-Version', '1.4.1', '-Type', 'patch', '-NoPush', '-SkipLint', '-SkipTests')
     Assert-Equal 0 $r7.Code 'stated type: the cut runs'
-    $note7 = Join-Path $root7 '.dkj\dkj-policy\releases\changelog\1.x\1.4.1.md'
+    $note7 = Join-Path $root7 '.dkj\dkj-repo-workflow\releases\changelog\1.x\1.4.1.md'
     Assert-True (Test-Path -LiteralPath $note7) 'stated type: the changelog note was written'
     if (Test-Path -LiteralPath $note7) {
         # THE NOTE CARRIES NO '**Type:**' LINE SINCE #2491, so the stated type's one record is the overview row
@@ -595,7 +595,7 @@ https://github.com/DaveKJohn/claude-code-specialists/pull/2
     $root9 = New-CutFixture -Name 'retraction' -EntryTopTier 2 -ExtraEntry $revertEntry
     $r9 = Invoke-Cut -Root $root9 -Arguments @('-Bump', 'minor', '-NoPush', '-SkipLint', '-SkipTests')
     Assert-Equal 0 $r9.Code 'retraction: the minor is still earned by the retracted entry''s own tier-2 declaration'
-    $note9 = Join-Path $root9 '.dkj\dkj-policy\releases\audience\1.x\1.5.0.md'
+    $note9 = Join-Path $root9 '.dkj\dkj-repo-workflow\releases\audience\1.x\1.5.0.md'
     Assert-True (Test-Path -LiteralPath $note9) 'retraction: the audience document was still drafted'
     if (Test-Path -LiteralPath $note9) {
         $n9 = Get-Content -LiteralPath $note9 -Raw
@@ -606,7 +606,7 @@ https://github.com/DaveKJohn/claude-code-specialists/pull/2
     }
     # THE RECORD KEEPS BOTH -- CHANGELOG.md's own history, folded into the changelog note, is untouched
     # by any of this: it is what reached the trunk, and both entries did.
-    $changelogNote9 = Join-Path $root9 '.dkj\dkj-policy\releases\changelog\1.x\1.5.0.md'
+    $changelogNote9 = Join-Path $root9 '.dkj\dkj-repo-workflow\releases\changelog\1.x\1.5.0.md'
     Assert-True (Test-Path -LiteralPath $changelogNote9) 'retraction: the changelog note (the record) was written'
     if (Test-Path -LiteralPath $changelogNote9) {
         $cn9 = Get-Content -LiteralPath $changelogNote9 -Raw
@@ -741,7 +741,7 @@ $cutSectH11 Pull Request
 
     $r11 = Invoke-Cut -Root $root11 -Arguments @('-Bump', 'patch', '-NoPush', '-SkipLint', '-SkipTests', '-LivePushRecord', $recordPath11)
     Assert-Equal 0 $r11.Code 'live-push record: the cut succeeds'
-    $body11Path = Join-Path $root11 '.dkj\dkj-policy\releases\github\1.x\1.4.1.md'
+    $body11Path = Join-Path $root11 '.dkj\dkj-repo-workflow\releases\github\1.x\1.4.1.md'
     Assert-True (Test-Path -LiteralPath $body11Path) 'live-push record: the GitHub body was written'
     if (Test-Path -LiteralPath $body11Path) {
         $b11 = Get-Content -LiteralPath $body11Path -Raw
@@ -863,7 +863,7 @@ $cutSectH11 Pull Request
     Write-Host ""
     Write-Host "cut-release.ps1 -- a missing version-pin file refuses before the first write" -ForegroundColor Cyan
     $root17 = New-CutFixture -Name 'pin-missing'
-    Remove-Item -LiteralPath (Join-Path $root17 'plugins\dkj-policy\extensions\dkj-solutions\skills\dkj-brandbook\SKILL.md')
+    Remove-Item -LiteralPath (Join-Path $root17 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\skills\dkj-brandbook\SKILL.md')
     Push-Location $root17
     try { Invoke-NativeCapture -FilePath 'git' -Arguments @('commit', '--quiet', '-am', 'fixture: drop the pin page') | Out-Null }
     finally { Pop-Location }
@@ -877,14 +877,14 @@ $cutSectH11 Pull Request
     # A checksummed file the page names on no line beside a sha256 refuses the same way (#3636): the cut
     # would otherwise have no cell to write, and the page would ship a stale checksum.
     $root17b = New-CutFixture -Name 'checksum-cell-missing'
-    $page17b = Join-Path $root17b 'plugins\dkj-policy\extensions\dkj-solutions\skills\dkj-brandbook\SKILL.md'
+    $page17b = Join-Path $root17b 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj\skills\dkj-brandbook\SKILL.md'
     Write-Utf8 $page17b (((Get-Content -LiteralPath $page17b -Raw) -split "`r?`n" | Where-Object { $_ -notmatch 'house-theme\.js' }) -join "`n")
     Push-Location $root17b
     try { Invoke-NativeCapture -FilePath 'git' -Arguments @('commit', '--quiet', '-am', 'fixture: drop a checksum row') | Out-Null }
     finally { Pop-Location }
     $r17b = Invoke-Cut -Root $root17b -Arguments @('-Bump', 'patch', '-NoPush', '-SkipLint', '-SkipTests')
     Assert-True ($r17b.Code -ne 0) 'checksum cell missing: refused with a non-zero exit'
-    Assert-Says "names 'plugins/dkj-policy/assets/dkj-brandbook/house-theme.js' beside a sha256 on 0 line(s)" $r17b.Out 'checksum cell missing: the refusal names the file and the count'
+    Assert-Says "names 'plugins/dkj-repo-workflow/assets/dkj-brandbook/house-theme.js' beside a sha256 on 0 line(s)" $r17b.Out 'checksum cell missing: the refusal names the file and the count'
     $v17b = (Get-Content -LiteralPath (Join-Path $root17b 'plugins\dkj-subagents\team-fixture\.claude-plugin\plugin.json') -Raw | ConvertFrom-Json).version
     Assert-Equal '1.4.0' $v17b 'checksum cell missing: nothing was written'
 

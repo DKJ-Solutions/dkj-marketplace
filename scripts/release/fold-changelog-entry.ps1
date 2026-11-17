@@ -733,7 +733,7 @@ if (-not $SkipTrunkCheck) {
         # loop, and do not give any refusal that CAN follow a partial fold this same code.
         #
         # AND THE CODE IS THE CONTRACT BECAUSE THE PROSE CANNOT BE. This script is mirrored into
-        # plugins/dkj-policy/scripts/release/ and reaches consumers by release, while the workflow that
+        # plugins/dkj-repo-workflow/scripts/release/ and reaches consumers by release, while the workflow that
         # reads it reaches them through adopt-ci-floor.ps1's template -- two independent boundaries
         # for one agreement. fold-on-merge.yml already matches two sentences out of these scripts'
         # stdout; a third, spanning both boundaries, is drift waiting to happen.

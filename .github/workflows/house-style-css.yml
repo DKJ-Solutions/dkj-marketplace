@@ -12,15 +12,15 @@ permissions:
 on:
   pull_request:
     paths:
-      - 'plugins/dkj-policy/assets/dkj-brandbook/**'
-      - 'plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/**'
+      - 'plugins/dkj-repo-workflow/assets/dkj-brandbook/**'
+      - 'plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product/**'
       - 'scripts/lint/house-style-css/**'
       - '.github/workflows/house-style-css.yml'
   push:
     branches: [main]
     paths:
-      - 'plugins/dkj-policy/assets/dkj-brandbook/**'
-      - 'plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/**'
+      - 'plugins/dkj-repo-workflow/assets/dkj-brandbook/**'
+      - 'plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product/**'
       - 'scripts/lint/house-style-css/**'
       - '.github/workflows/house-style-css.yml'
   merge_group:

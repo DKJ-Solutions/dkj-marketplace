@@ -961,11 +961,11 @@ function Get-CutOrderWarning {
             'BEFORE the promotion PR is merged. That makes it a ROLLBACK POINT for the promotion about to ' +
             'happen (the moment live-preflight takes it by default), not the baseline of WHAT SHIPPED that a ' +
             'backup at the cut would be. The order is still promote-then-cut; which moment holds the ' +
-            'release''s one backup is each store''s choice. See bwj-development/THEME-LIFECYCLE-portable.md.')
+            'release''s one backup is each store''s choice. See dkj-repo-workflow-bwj/THEME-LIFECYCLE-portable.md.')
     }
     return ('ORDER: the trunk has NOT been pushed to live yet, so this backup is being taken BEFORE ' +
         'the push. That makes it a ROLLBACK POINT for the push about to happen (the moment ' +
         'live-preflight takes it by default), not the baseline of WHAT SHIPPED that a backup at the ' +
         'cut would be. The order is still push-then-cut; which moment holds the release''s one backup ' +
-        'is each store''s choice. See bwj-development/THEME-LIFECYCLE-portable.md.')
+        'is each store''s choice. See dkj-repo-workflow-bwj/THEME-LIFECYCLE-portable.md.')
 }

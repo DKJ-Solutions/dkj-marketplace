@@ -26,7 +26,7 @@ them, and this file points there
   for every shareable subagent definition. One product, one repository, one marketplace, and lockstep
   versioning *within* it is correct: [Tessa's lens](../specialists/lenses/specialist-06-16-lens.md#one-product-one-repository).
 - **It consumes itself, with three of the seven plugins enabled** in
-  [`.claude/settings.json`](../settings.json): the core team, `dkj-policy` and `dkj-solutions`, the last
+  [`.claude/settings.json`](../settings.json): the core team, `dkj-repo-workflow` and `dkj-repo-workflow-dkj`, the last
   for the brand book and its session check (#2976, #3198; Admin's DKJ-Solutions card it also gave
   ended with #3475). The three add-on teams
   (Dave, September 30, 2026) and the BWJ extension, then `dkj-policy-bwj` (October 1), are set to `false`. That reverses the
@@ -65,7 +65,7 @@ The layout is in [Sylvester's lens](../specialists/lenses/specialist-05-15-lens.
 ### claude-code-specialists's safety implementation
 
 **These are facts about how this repo meets the constitution, not rules of their own.** The mechanics
-are on [`CONTRIBUTING-portable.md`](../../plugins/dkj-policy/CONTRIBUTING-portable.md). **Where this
+are on [`CONTRIBUTING-portable.md`](../../plugins/dkj-repo-workflow/CONTRIBUTING-portable.md). **Where this
 section and either plugin page disagree, the plugin page wins**, and the disagreement is a defect in
 this section.
 
@@ -82,12 +82,12 @@ this section.
   [the same lens](../specialists/lenses/specialist-05-15-lens.md#how-the-gate-checks-got-their-shape-and-the-measurements-behind-them-august-15-2026).
   **Read it before changing a check.**
 - **Three bounded exceptions land directly on `main`**, and read end to end they are one procedure:
-  1. The **fold commit** after a merge — bounded to `.dkj/dkj-policy/CHANGELOG.md` and the branch's
+  1. The **fold commit** after a merge — bounded to `.dkj/dkj-repo-workflow/CHANGELOG.md` and the branch's
      development document (named by its resolver, `Resolve-BranchFilePath`), which the same run removes.
   2. The **release commit**, only on explicit request — the lockstep version bump, the generated
      release notes, the changelog emptied to its intro, the builds `Get-ReleaseBuilds` names (none
      since #3477), and the tag `vX.Y.Z`. A major also takes two
-     preparation commits, bounded to the new section in `.dkj/dkj-policy/releases/history.md` and the assert
+     preparation commits, bounded to the new section in `.dkj/dkj-repo-workflow/releases/history.md` and the assert
      in `release-lib.tests.ps1` that pins the major.
   3. The **release-notes commit** after the tag — bounded to the hand-written documents of a cut that
      was actually asked for.

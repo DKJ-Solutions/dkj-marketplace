@@ -316,7 +316,7 @@ which is why the round-trip suite now carries an explicit *occupied consumer* sc
 it emptied — the lens trees, `.claude/specialists/`, `scripts/lib/`, `scripts/` — and keeps any that
 still holds a file this run does not remove. Keeping it is right; being silent about it was not, and
 until that issue the leftover arm was a bare `continue`, so the directory appeared in no marker and no
-count. The occupied consumer above is exactly where that bites, and a repo running `dkj-policy` keeps
+count. The occupied consumer above is exactly where that bites, and a repo running `dkj-repo-workflow` keeps
 its always-on baseline at `.claude/specialists/always-on-baseline.json`, inside the seam directory — so
 there the directory survives a teardown while the reader watches its files go.
 

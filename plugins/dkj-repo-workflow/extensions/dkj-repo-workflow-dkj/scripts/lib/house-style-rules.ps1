@@ -1,0 +1,759 @@
+<#
+.SYNOPSIS
+    The rules behind check-house-style (#3035): is every vendored copy of the brand book the copy the
+    dkj-brandbook skill pins, does the repo's own layer leave the house tokens and classes alone, and does
+    it still use a token name the brand book retired.
+
+.DESCRIPTION
+    WHY IT EXISTS. Measured October 15, 2026 across the DKJ-Solutions org, nothing checked a consumer's
+    copy: dkj-lifehub vendored a stylesheet matching no released tag, four repos had no copy and still
+    used the retired names, and this repo's own consumer dashboard used four tokens house-style-v3 no
+    longer defines (#3033). Without a gate the migration to one design system drifts again after it
+    lands, so this is phase 1 of that plan.
+
+    THE FIVE CHECKS, and the decisions behind their shape (owner, October 15, 2026, on #3035; the fourth
+    added by #3720, the fifth by #3778). An earlier fourth, `heading` (no h2 inside a card, Maikel, October 19, 2026, on
+    #3175), was retired by Maikel on October 24, 2026: an h2 may title a card.
+
+      1. pin      -- every tracked file named house-style.css, house-theme.js, house-product.css (the product
+                     layer, #3831) or InterVariable.woff2 (the house font, #4075) hashes to the sha256 the skill page pins. The copies are FOUND (a discovery over the tracked files), not
+                     declared, so no repo falls outside the gate by leaving a seam unfilled. A repo with
+                     no house-style.css at all is a finding too: a repo running this gate renders a UI.
+      2. redefine -- the repo's own layer defines no house token (`--x:`) and styles no house class as
+                     the subject of its own rule. The house set is read from the verified copy itself,
+                     so it follows the pinned tag without a second list to maintain.
+      3. retired  -- the repo's own layer neither defines nor reads (`var(--x)`) a token name the brand
+                     book retired.
+      4. colour   -- the repo's own layer types no colour code (#hex, rgb(), hsl()) and derives no colour
+                     (color-mix(), oklch(), `rgb(from ...)`) as the value of a colour property (#3720).
+                     A rule reads a colour only as a token (Maikel, November 1, 2026), and until this
+                     check that held only where the brand book is made (check-colour-literals.mjs in the
+                     source repo), not where it is used. A custom property's own value is NOT a finding:
+                     the README lets a repo add domain tokens, and a domain colour is one (an emotion
+                     palette, a hazard stripe). Only CSS property syntax is read, so a JS camelCase key
+                     (`backgroundColor:`) is not, and a named colour (`red`) is not a code.
+      5. type     -- the repo's own layer reads a font size only from the type scale (#3778): a `font-size`
+                     is `var(--text-*)` or a CSS-wide keyword, and a `font` shorthand types no size.
+                     Measured November 3, 2026 in dkj-lifehub: 14 typed sizes in 6 files under a gate that
+                     reported the brand book clean, while colour, which was gated, had none. A custom
+                     property's own value is free, as for colour: `--text-hero: 48px` is a domain step.
+                     A weight is read too (#3784, owner, November 3, 2026): a `font-weight` is one of the
+                     four house weights, `var(--font-weight-light|regular|bold|black)`, or a CSS-wide
+                     keyword, and a `font` shorthand types no weight. There is no semibold step and no
+                     domain weight: a typed 600 becomes the bold or the regular.
+
+    PATTERN GREP, NOT A PARSE. Checks 2 to 5 match patterns rather than parse CSS or SCSS: no runtime
+    dependency, and a bare Windows PowerShell 5.1 runs it. The price is the occasional false positive,
+    which the repo answers in its own allowlist (Get-HouseStyleAllowlist, below) with a reason per entry.
+
+    EMBEDDED CSS IS IN SCOPE. The grep runs over every tracked text file of the kinds a page is built in
+    (.py, .html, .js, .ps1 and the rest of Get-HouseStyleScanExtensions), not only .css/.scss, because
+    dkj-etf-tracker builds its page in a Python string and this repo builds its dashboard in PowerShell.
+    Markdown is not scanned: it is where these names are DOCUMENTED, and a rename table is not a use.
+
+    ONLY CSS CONTEXT COUNTS. A token is matched as a definition (`--x:`, also quoted as a JS key) or as
+    a read (`var(--x`), never as a bare word. `--page`, `--grid` and `--up` are also command-line
+    flags, and an argparse line naming one is not a stylesheet.
+
+    A CLASS COUNTS WHEN THE RULE RESTYLES IT EVERYWHERE. A house class is a finding where it is the
+    SUBJECT of a selector -- in the last compound -- and the selector names no class of the repo's own.
+    `.card`, `.card:hover` and `main .card` restyle every house card in the app. `.card .my-row` styles
+    the repo's row, and `.my-thing.card` or `.my-panel .card` place a house component inside a domain
+    one, so none of those is a finding: the consumer dashboard's `.cd-signals li .badge` nudges a badge
+    by a pixel in its own list, which is composition, not a second definition of the badge. In a brace
+    stylesheet the same holds for NESTING (#3694): a `.menu-item` rule nested in a `.my-card` rule
+    compiles to `.my-card .menu-item`, so the rules around a nested one are read with it. Measured in dkj-music-library, October 2026: five
+    nested house classes in one SCSS component read as app-wide, and turned green written out flat.
+
+    THE RETIRED NAMES are every token an earlier released tag defined (house-style-v1, -v2) and every
+    name in the `Was` column of the rename tables in assets/dkj-brandbook/README.md (assets/house-style/README.md before the rename) at the pinned tag, minus
+    every name that tag's stylesheet defines again (`--ink-2` was retired and is live again as an ink
+    step since October 20, 2026, when the twelve `--primary-*` steps split into paper and ink and were
+    retired themselves; and `--primary` and `--muted` are live again since October 21, 2026, when the seven ink
+    steps split into one primary, two greys and four text steps, #3235, and were retired in turn; and on November 1, 2026
+    --muted became --primary-muted, --cat-1..3 became --graph-1..3 and --paper-1..4 became --bg-1..4, so those old names are retired again). The rename tables
+    alone miss `--gain`, which v1 and v2 defined and v3 dropped
+    without a row. They are listed here rather than fetched, so the gate needs no network; a change to the
+    canonical copy in assets/dkj-brandbook/ that retires a name updates this list in the same change
+    (#3130), and the suite holds the list to that copy so a live name can never be listed as retired.
+
+    THE SOURCE REPO'S OWN COPY IS NOT A COPY (#3637). In DKJ-Solutions/dkj-marketplace the files under
+    plugins/dkj-repo-workflow/assets/dkj-brandbook/ are the canonical source, and between a house-style merge and
+    the next cut they run ahead of the tag that every install pins -- so holding them to that pin told
+    the session to revert merged work. There those two files skip check 1, still serve as the verified
+    stylesheet for check 2, and a note says when they differ from the pinned tag. Every other copy in
+    that repo, a demo nested in the same folder included, is held to the pin as anywhere else.
+
+    Pure ASCII (repo convention for .ps1). Tested by scripts/tests/check-house-style.tests.ps1 in the
+    source repo -- change one, run the other.
+#>
+
+Set-StrictMode -Version Latest
+
+function Get-HouseStyleRetiredTokens {
+    <# The token names the brand book retired, as of the tag the skill pins (v0.4.0). #>
+    return [string[]]@(
+        '--axis', '--bad', '--border', '--border-base', '--down', '--fg-2', '--fg-3', '--fg-4', '--gain', '--good', '--grid', '--grid-base',
+        '--ink', '--ink-1', '--ink-2', '--ink-3', '--ink-4', '--ink-5', '--ink-6', '--ink-7', '--loss', '--cat-1', '--cat-2', '--cat-3', '--done-3', '--muted', '--muted-inverse', '--paper-1', '--paper-2', '--paper-3', '--paper-4', '--neutral-1', '--neutral-2', '--neutral-3', '--neutral-4',
+        '--neutral-5', '--on-primary', '--on-warn', '--page', '--page-base', '--primary-1', '--primary-2',
+        '--primary-3', '--primary-4', '--primary-5', '--primary-6', '--primary-7', '--primary-8', '--primary-9',
+        '--primary-10', '--primary-11', '--primary-12', '--primary-ink',
+        '--primary-soft', '--prose-h1', '--prose-h2', '--prose-h3', '--radius-1-5', '--radius-2-5', '--radius-4', '--radius-lg', '--radius-md', '--radius-md-plus', '--radius-sm', '--radius-xs', '--status-mark', '--surface', '--surface-base', '--text-h0', '--text-h4', '--text-h5', '--text-h6', '--text-title', '--up', '--warn', '--warn-bg'
+    )
+}
+
+function Get-HouseStyleCopyNames {
+    <#
+        The leaf names a vendored copy carries. A renamed copy is not found, and is not a copy. house-product.css is
+        the product layer, in the dkj-repo-workflow-dkj plugin since the split (#3831): a product repo vendors it beside the
+        core, and an Admin-only repo does not. InterVariable.woff2 is the house family (#4070), vendored beside
+        house-style.css (#4075); a binary file, which check 1 hashes as bytes like the rest. Matched without regard
+        to case, as every name here is.
+    #>
+    return [string[]]@('house-style.css', 'house-theme.js', 'house-product.css', 'InterVariable.woff2')
+}
+
+function Get-HouseStylePinRequiredNames {
+    <#
+        The leaves a skill page must pin for its table to be complete. house-product.css is pinned where the page
+        names it and is not required, because a page read at a tag cut before the split (#3831) has no row for it,
+        and that page is still a complete pin of the two files it shipped.
+    #>
+    return [string[]]@('house-style.css', 'house-theme.js')
+}
+
+function Get-HouseStyleCanonicalDir {
+    <# Where the source repo keeps the canonical brand book, relative to its root (#3531). #>
+    return 'plugins/dkj-repo-workflow/assets/dkj-brandbook'
+}
+
+function Get-HouseStyleCanonicalPath {
+    <#
+        The source repo's canonical file for a leaf, relative to its root: the core under dkj-repo-workflow's
+        assets/dkj-brandbook/, the product layer under dkj-repo-workflow-dkj' assets/dkj-brandbook-product/ (#3831).
+    #>
+    param([Parameter(Mandatory)][string]$Leaf)
+    if ($Leaf -ceq 'house-product.css') { return 'plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product/house-product.css' }
+    # Check 1 passes a lowercased leaf, and the font's file name is mixed case (#4075).
+    if ($Leaf -ieq 'InterVariable.woff2') { return (Get-HouseStyleCanonicalDir) + '/InterVariable.woff2' }
+    return (Get-HouseStyleCanonicalDir) + '/' + $Leaf
+}
+
+function Get-HouseStyleSkillDirNames {
+    <# The skill's folder names under dkj-repo-workflow-dkj/skills/, current first: a page read at an older tag sits under the old one. #>
+    return [string[]]@('dkj-brandbook', 'house-style')
+}
+
+function Test-HouseStyleSourceRepo {
+    <#
+        Is this checkout the brand book's source: its marketplace manifest publishes dkj-repo-workflow-dkj, the
+        plugin whose skill page pins the copies. Read rather than counted, as seam-lib's
+        Test-IsWorkflowSourceRepo reads it -- a repo that publishes other plugins is still a consumer. An
+        unreadable manifest is $false: the careful answer is to judge every copy against the pin.
+    #>
+    param([Parameter(Mandatory)][string]$RepoRoot)
+    $manifest = Join-Path $RepoRoot '.claude-plugin/marketplace.json'
+    if (-not (Test-Path -LiteralPath $manifest -PathType Leaf)) { return $false }
+    try { $json = [System.IO.File]::ReadAllText($manifest, [System.Text.Encoding]::UTF8) | ConvertFrom-Json } catch { return $false }
+    if (-not $json -or -not ($json.PSObject.Properties.Name -contains 'plugins')) { return $false }
+    return [bool](@($json.plugins | Where-Object { $_ -and $_.PSObject.Properties.Name -contains 'name' -and $_.name -ceq 'dkj-repo-workflow-dkj' }).Count)
+}
+
+function Get-HouseStyleScanExtensions {
+    <# The file kinds checks 2 and 3 read: every kind a page or its styles is written in. #>
+    return [string[]]@(
+        '.css', '.scss', '.sass', '.less', '.styl', '.pcss',
+        '.html', '.htm', '.xhtml', '.svg',
+        '.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.jsx', '.tsx', '.vue', '.svelte', '.astro',
+        '.py', '.ps1', '.psm1', '.php', '.rb', '.erb',
+        '.liquid', '.njk', '.hbs', '.ejs', '.jinja', '.jinja2', '.j2', '.twig', '.cshtml', '.razor'
+    )
+}
+
+function Get-HouseStyleElementNames {
+    <#
+        The element names a type selector can match: HTML's and SVG's common ones. A word that is none
+        of them and carries no hyphen (a custom element's mark) is prose, not a selector (#3120).
+    #>
+    return [string[]]@(
+        'a', 'abbr', 'address', 'area', 'article', 'aside', 'audio', 'b', 'base', 'bdi', 'bdo', 'blockquote',
+        'body', 'br', 'button', 'canvas', 'caption', 'cite', 'code', 'col', 'colgroup', 'data', 'datalist',
+        'dd', 'del', 'details', 'dfn', 'dialog', 'div', 'dl', 'dt', 'em', 'embed', 'fieldset', 'figcaption',
+        'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr',
+        'html', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'link', 'main', 'map',
+        'mark', 'math', 'menu', 'meta', 'meter', 'nav', 'noscript', 'object', 'ol', 'optgroup', 'option',
+        'output', 'p', 'picture', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'script',
+        'search', 'section', 'select', 'slot', 'small', 'source', 'span', 'strong', 'style', 'sub',
+        'summary', 'sup', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time',
+        'title', 'tr', 'track', 'u', 'ul', 'var', 'video', 'wbr',
+        'svg', 'g', 'path', 'circle', 'rect', 'line', 'polyline', 'polygon', 'ellipse', 'text', 'tspan',
+        'defs', 'symbol', 'marker', 'pattern', 'image', 'stop', 'mask', 'clippath', 'lineargradient',
+        'radialgradient', 'foreignobject', 'use', 'filter', 'animate', 'center', 'font'
+    )
+}
+
+function Get-HouseStylePin {
+    <#
+        The pinned tag and the sha256 per file, read from the skill page's table -- the one place they
+        are written. Returns @{ Tag; Hashes = @{ '<leaf>' = '<sha256>' } }, or $null when the page
+        carries no complete table.
+        The URL path is read in every spelling it has had: plugins/dkj-repo-workflow/assets/dkj-brandbook/ since
+        the rename to dkj-brandbook, plugins/dkj-repo-workflow/assets/house-style/ from #3531 until then, and
+        plugins/dkj-policy/dkj-solutions/assets/house-style/ before that, which every page at an earlier tag
+        still carries -- and the reusable gate reads the page AT the pinned tag. The product layer's URL
+        has its own two depths: plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/ since #3871, and
+        plugins/dkj-policy/dkj-solutions/ before it.
+    #>
+    param([Parameter(Mandatory)][string]$SkillText)
+
+    $hashes = @{}
+    $tag = $null
+    foreach ($line in ($SkillText -split "`r?`n")) {
+        $m = [regex]::Match($line, '^\|\s*`(?<file>house-style\.css|house-theme\.js|house-product\.css|InterVariable\.woff2)`\s*\|\s*`(?<url>[^`]+)`\s*\|\s*`(?<sha>[0-9a-f]{64})`\s*\|')
+        if (-not $m.Success) { continue }
+        $hashes[$m.Groups['file'].Value] = $m.Groups['sha'].Value
+        $t = [regex]::Match($m.Groups['url'].Value, '/(?:dkj-marketplace|dkj-claude-plugins)/(?<tag>[^/]+)/plugins/dkj-repo-workflow/(?:(?:extensions/)?dkj-repo-workflow-dkj/)?assets/(?:dkj-brandbook-product|dkj-brandbook|house-style)/')
+        if ($t.Success) { $tag = $t.Groups['tag'].Value }
+    }
+    foreach ($name in (Get-HouseStylePinRequiredNames)) { if (-not $hashes.ContainsKey($name)) { return $null } }
+    return @{ Tag = $tag; Hashes = $hashes }
+}
+
+function Get-HouseStyleTagPin {
+    <#
+        The pin as the skill page reads AT the tag $Pin names, or $null when that page cannot be read, carries
+        no complete table, or names another tag (#3588). An install tracks main, so between a merge that
+        changes a house file and the cut, the installed page names the previous tag beside the new checksums,
+        and a consumer's copy of the released file fails it. The reusable gate already reads the page at the
+        tag (#3148); a local check cannot, since the marketplace clone carries no tags, so it fetches the page.
+        Callers ask only when a copy has failed the installed pin, so a clean session never touches the network.
+        $TagPageText stands in for the fetch (tests), and so does the file DKJ_HOUSE_STYLE_TAG_PAGE names, which
+        reaches the gate and the hook as child processes; a name with no file behind it reads as an unreadable page.
+    #>
+    param([Parameter(Mandatory)][hashtable]$Pin, [string]$TagPageText, [int]$TimeoutSec = 5)
+
+    if ($Pin.Tag -notmatch '^v\d+\.\d+\.\d+$') { return $null }
+    if (-not $PSBoundParameters.ContainsKey('TagPageText') -and $env:DKJ_HOUSE_STYLE_TAG_PAGE) {
+        if (-not (Test-Path -LiteralPath $env:DKJ_HOUSE_STYLE_TAG_PAGE -PathType Leaf)) { return $null }
+        $TagPageText = [System.IO.File]::ReadAllText($env:DKJ_HOUSE_STYLE_TAG_PAGE, [System.Text.Encoding]::UTF8)
+    } elseif (-not $PSBoundParameters.ContainsKey('TagPageText')) {
+        # The skill was named house-style until the rename to dkj-brandbook, the extension sat at
+        # plugins/dkj-policy/dkj-solutions/ until #3871 moved it under extensions/, and the plugin and the
+        # extension were dkj-policy and dkj-solutions until #4209, so a tag cut before any of those carries
+        # the page at an older path: try the current spelling first, then the older ones.
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+        foreach ($extDir in @('dkj-repo-workflow/extensions/dkj-repo-workflow-dkj', 'dkj-policy/extensions/dkj-solutions', 'dkj-policy/dkj-solutions')) {
+            foreach ($skillDir in (Get-HouseStyleSkillDirNames)) {
+                $url = "https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/$($Pin.Tag)/plugins/$extDir/skills/$skillDir/SKILL.md"
+                try {
+                    $TagPageText = [string](Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec $TimeoutSec -ErrorAction Stop).Content
+                    break
+                } catch { $TagPageText = $null }
+            }
+            if ($TagPageText) { break }
+        }
+    }
+    if (-not $TagPageText) { return $null }
+    $tagPin = Get-HouseStylePin -SkillText $TagPageText
+    if (-not $tagPin -or $tagPin.Tag -ne $Pin.Tag) { return $null }
+    return $tagPin
+}
+
+function Get-HouseStyleSha256 {
+    <#
+        The sha256 of a file's bytes, and -- where they differ -- of the same bytes with CRLF turned
+        into LF. The tag serves LF, and a Windows checkout under core.autocrlf rewrites a text file to
+        CRLF on disk without the commit changing, so that copy is still the pinned file.
+    #>
+    param([Parameter(Mandatory)][byte[]]$Bytes)
+
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $raw = ([System.BitConverter]::ToString($sha.ComputeHash($Bytes)) -replace '-', '').ToLowerInvariant()
+        $lf = New-Object System.Collections.Generic.List[byte] $Bytes.Length
+        for ($i = 0; $i -lt $Bytes.Length; $i++) {
+            if ($Bytes[$i] -eq 13 -and ($i + 1) -lt $Bytes.Length -and $Bytes[$i + 1] -eq 10) { continue }
+            $lf.Add($Bytes[$i])
+        }
+        $norm = ([System.BitConverter]::ToString($sha.ComputeHash($lf.ToArray())) -replace '-', '').ToLowerInvariant()
+        return [string[]]@($raw, $norm | Select-Object -Unique)
+    } finally { $sha.Dispose() }
+}
+
+function Get-HouseStyleDefinitions {
+    <#
+        The house tokens and classes, read from the text of a verified house-style.css:
+        @{ Tokens = string[]; Classes = string[] }. A token is any `--x:` the file defines; a class is
+        any `.x` in a selector prelude (an at-rule's prelude is not a selector).
+    #>
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$CssText)
+
+    $css = [regex]::Replace($CssText, '/\*[\s\S]*?\*/', ' ')
+    $tokens = @([regex]::Matches($css, '(?<![\w-])(--[A-Za-z0-9_-]+)\s*:') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+    $classes = New-Object System.Collections.Generic.HashSet[string]
+    foreach ($m in [regex]::Matches($css, '(?<=^|[{}])(?<pre>[^{}]+)\{')) {
+        $pre = $m.Groups['pre'].Value
+        $semi = $pre.LastIndexOf(';')
+        if ($semi -ge 0) { $pre = $pre.Substring($semi + 1) }
+        if ($pre.Trim().StartsWith('@')) { continue }
+        foreach ($c in [regex]::Matches($pre, '(?<![\w-])\.(-?[A-Za-z_][\w-]*)')) { [void]$classes.Add($c.Groups[1].Value) }
+    }
+    return @{ Tokens = [string[]]$tokens; Classes = [string[]]@($classes | Sort-Object) }
+}
+
+function New-HouseStyleLineMap {
+    <# The offsets of every newline in $Text, so a hit's line number is a binary search, not a walk. #>
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Text)
+    $map = New-Object System.Collections.Generic.List[int]
+    $i = $Text.IndexOf("`n")
+    while ($i -ge 0) { $map.Add($i); $i = $Text.IndexOf("`n", $i + 1) }
+    return , $map
+}
+
+function Get-HouseStyleLineNumber {
+    param([Parameter(Mandatory)][AllowEmptyCollection()][System.Collections.Generic.List[int]]$Map, [Parameter(Mandatory)][int]$Index)
+    $at = $Map.BinarySearch($Index)
+    if ($at -lt 0) { $at = -bnot $at }
+    return $at + 1
+}
+
+function Find-HouseStyleTokenHit {
+    <#
+        Every CSS-context occurrence of a name in $Names: a definition (`--x:`, also `'--x':`) and,
+        with -IncludeReads, a read (`var(--x`). Returns @{ Name; Kind = 'defines'|'reads'; Line }.
+    #>
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Text,
+        [Parameter(Mandatory)][AllowEmptyCollection()][string[]]$Names,
+        [switch]$IncludeReads
+    )
+
+    $set = New-Object System.Collections.Generic.HashSet[string] ([System.StringComparer]::Ordinal)
+    foreach ($n in $Names) { [void]$set.Add($n) }
+    if ($set.Count -eq 0) { return }
+    $map = New-HouseStyleLineMap -Text $Text
+
+    foreach ($m in [regex]::Matches($Text, '(?<![\w-])(?<name>--[A-Za-z0-9_-]+)[''"]?\s*:')) {
+        if ($set.Contains($m.Groups['name'].Value)) {
+            @{ Name = $m.Groups['name'].Value; Kind = 'defines'; Line = (Get-HouseStyleLineNumber -Map $map -Index $m.Index) }
+        }
+    }
+    if ($IncludeReads) {
+        foreach ($m in [regex]::Matches($Text, 'var\(\s*(?<name>--[A-Za-z0-9_-]+)(?![\w-])')) {
+            if ($set.Contains($m.Groups['name'].Value)) {
+                @{ Name = $m.Groups['name'].Value; Kind = 'reads'; Line = (Get-HouseStyleLineNumber -Map $map -Index $m.Index) }
+            }
+        }
+    }
+}
+
+function Find-HouseStyleClassHit {
+    <#
+        Every rule whose selector has a house class as its subject and names no class of the repo's own
+        anywhere. Returns @{ Name; Kind = 'styles'; Line }, one per selector. -Nesting reads a nested
+        rule together with the rules around it, for a stylesheet (#3694).
+    #>
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Text,
+        [Parameter(Mandatory)][AllowEmptyCollection()][string[]]$Classes,
+        [switch]$Nesting
+    )
+
+    $set = New-Object System.Collections.Generic.HashSet[string] ([System.StringComparer]::Ordinal)
+    foreach ($c in $Classes) { [void]$set.Add($c) }
+    if ($set.Count -eq 0) { return }
+    # Most files name no house class at all, and walking every `{` of a script is the expensive part
+    # (19s of 22s on this repo before this line), so one alternation decides first whether to walk.
+    $any = '(?<![\w''"-])\.(' + ((@($Classes) | Sort-Object Length -Descending | ForEach-Object { [regex]::Escape($_) }) -join '|') + ')(?![\w-])'
+    if (-not [regex]::IsMatch($Text, $any)) { return }
+    # An SCSS interpolation, `.a-#{$n}`, holds a brace pair that opens no rule (#3698). In a stylesheet
+    # it is written over with `x`s of the same length, so `.a-xxxx` reads as the domain class it is and
+    # a line number still lands where it did.
+    if ($Nesting) {
+        $Text = [regex]::Replace($Text, '#\{[^{}]*\}', [System.Text.RegularExpressions.MatchEvaluator] { param($i) $i.Value -replace '[^\n]', 'x' })
+    }
+    $map = New-HouseStyleLineMap -Text $Text
+    # A quote before the dot is a string such as querySelector('.card'), never a stylesheet selector.
+    # Nor is a dot before it -- an object spread, `...meta` -- or a `(` straight after the name, which
+    # is a method call such as `.sort(` and never CSS (#3040). `[x].card` and `:not(.a).card` are
+    # selectors, so a `]` or `)` before the dot stays allowed.
+    $classPattern = '(?<![\w''".-])\.(-?[A-Za-z_][\w-]*)(?![\w-]|\()'
+    # A comment inside a prelude -- `/* */`, or a whole line opened by `# ` or `//` (an id selector has
+    # no space after its `#`) -- is blanked to spaces, so a line number still lands where it did (#3120).
+    $comment = [regex]'(?m)/\*[\s\S]*?\*/|^[ \t]*(#(?=[ \t\r]|$)|//).*$'
+    $blank = [System.Text.RegularExpressions.MatchEvaluator] { param($c) $c.Value -replace '[^\n]', ' ' }
+    $elements = New-Object System.Collections.Generic.HashSet[string] ([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($e in (Get-HouseStyleElementNames)) { [void]$elements.Add($e) }
+
+    # One prelude, read: its findings, and whether it scopes what is nested inside it -- a selector list
+    # every member of which names a class of the repo's own. $InScope is that, inherited from outside.
+    $readPrelude = {
+        param($m, [bool]$InScope)
+        $pre = $comment.Replace($m.Groups['pre'].Value, $blank)
+        # SCSS's @at-root lifts what follows it out of every enclosing rule, so it is read unscoped.
+        $atRoot = [regex]::Match($pre, '^\s*@at-root\b')
+        if ($atRoot.Success) { $pre = (' ' * $atRoot.Length) + $pre.Substring($atRoot.Length); $InScope = $false }
+        if ($pre.Trim().StartsWith('@') -or -not $pre.Trim()) { return @{ Hits = @(); Scoped = $false; AtRoot = $atRoot.Success } }
+        # A SELECTOR LIST IS READ ALL OR NOTHING (#3485): every member of a real one is a selector, so one
+        # member that is not -- prose, or a call's unbalanced tail -- means the text before this `{` is no
+        # selector list, and none of its members is a finding. Read member by member, `the GitHub repo's
+        # facts, a .facts--row, not a card` in a script's string passed: `a` is an element name, so its
+        # middle member is selector-shaped, and whether it was reported hung on the paren balance of
+        # unrelated lines further along the same prelude.
+        $members = @()
+        $isList = $true
+        foreach ($selector in ($pre -split ',')) {
+            # Bracket and paren contents first: `[data-x='a b']` and `:is(.a .b)` hold spaces that are
+            # no combinator. Parens fold innermost-out, to `[]` so the next pass does not re-match them.
+            $flat = [regex]::Replace($selector, '\[[^\]]*\]', '[]')
+            do { $before = $flat; $flat = [regex]::Replace($flat, '\([^()]*\)', '[]') } while ($flat -ne $before)
+            # A paren left over is unbalanced, and a selector never is: `, OPTIONS).sort).toEqual(` is
+            # the tail of a call whose argument held an object literal (#3095).
+            if ($flat.IndexOfAny([char[]]'()') -ge 0) { $isList = $false; break }
+            $parts = @($flat.Trim() -split '[\s>+~]+' | Where-Object { $_ })
+            if ($parts.Count -eq 0) { continue }
+            # Prose before a comma is no selector (#3120): `in the house .grid-2, closed ...` in a string.
+            # Read on the subject's own line, after the last string quote (attribute values are folded
+            # already), so the code before a rule -- `css = """` -- is not read as part of it: a bare word
+            # there that names no element and carries no hyphen (a custom element's mark) is prose.
+            $sel = @(($flat -split "`n") | Where-Object { $_.Trim() })
+            $sel = if ($sel.Count) { $sel[-1] } else { '' }
+            $q = $sel.LastIndexOfAny([char[]]"'`"``")
+            if ($q -ge 0) { $sel = $sel.Substring($q + 1) }
+            $words = @($sel.Trim() -split '[\s>+~]+' | Where-Object { $_ -match '^[A-Za-z][A-Za-z0-9]*$' -and -not $elements.Contains($_) })
+            if ($words.Count) { $isList = $false; break }
+            $members += @{ Selector = $selector; Flat = $flat; Parts = $parts }
+        }
+        if (-not $isList) { return @{ Hits = @(); Scoped = $false; AtRoot = $atRoot.Success } }
+        $hits = @()
+        $scoped = [bool]$members.Count
+        foreach ($mb in $members) {
+            $selector = $mb.Selector; $flat = $mb.Flat; $parts = $mb.Parts
+            # A class of the repo's own anywhere in the selector scopes the rule to its own component.
+            # Counted without the quote rule: a page built in a string opens its first selector after a quote.
+            $own = @([regex]::Matches($flat, '(?<![\w.-])\.(-?[A-Za-z_][\w-]*)(?![\w-]|\()') | Where-Object { -not $set.Contains($_.Groups[1].Value) })
+            if (-not $own.Count) { $scoped = $false }
+            $house = @([regex]::Matches($parts[-1], $classPattern) | ForEach-Object { $_.Groups[1].Value } | Where-Object { $set.Contains($_) })
+            if ($house.Count -eq 0 -or $own.Count -or $InScope) { continue }
+            $at = $m.Index + $pre.IndexOf($selector.Trim())
+            $hits += @{ Name = ('.' + $house[0]); Kind = 'styles'; Line = (Get-HouseStyleLineNumber -Map $map -Index ([Math]::Max($m.Index, $at))) }
+        }
+        return @{ Hits = $hits; Scoped = $scoped; AtRoot = $atRoot.Success }
+    }
+
+    $preludes = [regex]::Matches($Text, '(?<=^|[{};])(?<pre>[^{};]+)\{')
+    if (-not $Nesting) {
+        foreach ($m in $preludes) { (& $readPrelude $m $false).Hits }
+        return
+    }
+    # NESTING (#3694). In SCSS, Less and native CSS nesting, a `.menu-item` rule inside a `.my-card` rule
+    # compiles to `.my-card .menu-item`, which is composition -- but its prelude alone reads app-wide.
+    # So the braces are walked with a stack, comments blanked first so a brace inside one is no rule, and
+    # a rule nested in a scoping rule is composition too. A house rule nested only in an element or an
+    # at-rule (`main`, `@media`) still restyles every card, and is still a finding.
+    # Only stylesheets get this walk: in a script, a brace in a string would leave the stack unbalanced.
+    $byBrace = @{}
+    foreach ($m in $preludes) { $byBrace[$m.Index + $m.Length - 1] = $m }
+    $stack = New-Object System.Collections.Generic.Stack[bool]
+    foreach ($b in [regex]::Matches($comment.Replace($Text, $blank), '[{}]')) {
+        if ($b.Value -eq '}') { if ($stack.Count) { [void]$stack.Pop() }; continue }
+        $inScope = [bool]($stack.Count -and $stack.Peek())
+        $scoped = $inScope
+        if ($byBrace.ContainsKey($b.Index)) {
+            $r = & $readPrelude $byBrace[$b.Index] $inScope
+            $r.Hits
+            $scoped = ($inScope -and -not $r.AtRoot) -or $r.Scoped
+        }
+        $stack.Push($scoped)
+    }
+}
+
+function Find-HouseStyleColourHit {
+    <#
+        Every declaration of a colour property whose value types or derives a colour (#3720): a colour code
+        (#hex, rgb(), rgba(), hsl(), hsla()) or a derived colour (color-mix(), the relative colour syntax,
+        oklch() and the other colour functions). Returns @{ Name; Kind = 'types'|'derives'; Property; Line },
+        one per declaration, naming the first colour in it.
+        A custom property is never matched: its value is a domain token, which the README lets a repo add.
+        A colour PROPERTY gates the match, not any `x:` -- `Text: #3720` in a script is an issue number.
+    #>
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Text)
+
+    # Comments are blanked to spaces, so a line number still lands where it did.
+    $Text = [regex]::Replace($Text, '(?m)/\*[\s\S]*?\*/|^[ \t]*//.*$', [System.Text.RegularExpressions.MatchEvaluator] { param($c) $c.Value -replace '[^\n]', ' ' })
+    $props = '(?:background|border|outline|text-decoration|column-rule)(?:-[a-z]+)*|color|fill|stroke|box-shadow|text-shadow|caret-color|accent-color|stop-color|flood-color|lighting-color|scrollbar-color|text-emphasis-color|-webkit-text-fill-color|-webkit-text-stroke-color'
+    # Nothing before the name that makes it part of a longer one: a hyphen (`--my-color:`), a `$` or `@`
+    # (an SCSS or Less variable), a dot or a word character.
+    $decl = '(?<![\w$@.-])(?<prop>' + $props + ')[''"]?\s*:\s*(?<val>[^;{}\r\n]*)'
+    $code = '(?<![\w&#]|url\(\s*)#[0-9a-fA-F]{3,8}(?![\w-])|\b(?:rgba?|hsla?)\((?!\s*from\b)'
+    $derived = '\b(?:color-mix|oklch|oklab|lab|lch|hwb|color)\(|\b(?:rgba?|hsla?)\(\s*from\b'
+    $map = $null
+    foreach ($m in [regex]::Matches($Text, $decl)) {
+        $val = $m.Groups['val'].Value
+        $d = [regex]::Match($val, $derived)
+        $c = [regex]::Match($val, $code)
+        if (-not $d.Success -and -not $c.Success) { continue }
+        if ($null -eq $map) { $map = New-HouseStyleLineMap -Text $Text }
+        $first = if ($d.Success -and (-not $c.Success -or $d.Index -lt $c.Index)) { $d } else { $c }
+        @{
+            Name = ($first.Value -split '\(')[0].ToLowerInvariant()
+            Kind = $(if ($first -eq $d) { 'derives' } else { 'types' })
+            Property = $m.Groups['prop'].Value
+            Line = (Get-HouseStyleLineNumber -Map $map -Index $m.Index)
+        }
+    }
+}
+
+function Find-HouseStyleTypeHit {
+    <#
+        Every declaration whose font size is not read from the type scale (#3778), or whose weight is not one
+        of the house weights (#3784): a `font-size` whose value is anything but `var(--text-*)` or a CSS-wide
+        keyword, a `font-weight` whose value is anything but `var(--font-weight-light|regular|bold|black)` or
+        a CSS-wide keyword, and a `font` shorthand that types a size (a length, a size keyword, or a
+        calc()/clamp()/min()/max()) or a weight (a number, `bold`, `bolder`, `lighter`). Returns @{ Name;
+        Kind = 'types' or 'weights'; Property; Line }, one per declaration, the size before the weight. Name
+        is the function's name for a computed value, else the value itself, so an allowlist entry can name
+        `16px` or `600`.
+        A custom property is never matched: `--text-hero: 48px` is a domain step on the scale, read with var().
+        A weight has no domain step: the owner chose the four house weights and no more (#3784).
+    #>
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Text)
+
+    # Comments are blanked to spaces, so a line number still lands where it did.
+    $Text = [regex]::Replace($Text, '(?m)/\*[\s\S]*?\*/|^[ \t]*//.*$', [System.Text.RegularExpressions.MatchEvaluator] { param($c) $c.Value -replace '[^\n]', ' ' })
+    # Nothing before the name that makes it part of a longer one (`--my-font-size:`, `$font-size:`, `.font`),
+    # and nothing after `font` but the colon: `font-family:` and the like are not read.
+    $decl = '(?<![\w$@.-])(?<prop>font-size|font-weight|font)(?![\w-])[''"]?\s*:\s*(?<val>[^;{}\r\n]*)'
+    $houseWeight = '^var\(\s*--font-weight-(?:light|regular|bold|black)\s*\)$'
+    $typedWeight = '(?<![\w.-])(?:[1-9]\d{0,2}|1000)(?![\w.%-])|(?<![\w-])(?:bold|bolder|lighter)(?![\w-])'
+    $wide = '^(?:inherit|initial|unset|revert|revert-layer)$'
+    $length = '(?<![\w.-])(?:\d*\.)?\d+(?:px|r?em|%|pt|pc|vw|vh|vmin|vmax|vi|vb|ch|ex|cap|ic|r?lh|cm|mm|in|q|cq[whib]|cqmin|cqmax)(?![\w-])'
+    $keyword = '(?<![\w-])(?:xx-small|x-small|small|medium|large|x-large|xx-large|xxx-large|larger|smaller)(?![\w-])'
+    $computed = '\b(?<fn>calc|clamp|min|max)\('
+    $map = $null
+    foreach ($m in [regex]::Matches($Text, $decl)) {
+        # A value inside a string ends at its closing quote; `!important` changes nothing about the size.
+        $val = ($m.Groups['val'].Value -replace '[''"`].*$', '' -replace '!\s*important', '').Trim()
+        if (-not $val -or $val -match $wide) { continue }
+        $name = $null; $kind = 'types'
+        if ($m.Groups['prop'].Value -eq 'font-size') {
+            if ($val -match '^var\(\s*--text-[A-Za-z0-9_-]+\s*\)$') { continue }
+            $fn = [regex]::Match($val, '^(?<fn>[A-Za-z-]+)\(')
+            $name = if ($fn.Success -and $fn.Groups['fn'].Value -ne 'var') { $fn.Groups['fn'].Value.ToLowerInvariant() } else { $val }
+        } elseif ($m.Groups['prop'].Value -eq 'font-weight') {
+            if ($val -match $houseWeight) { continue }
+            $kind = 'weights'
+            $fn = [regex]::Match($val, '^(?<fn>[A-Za-z-]+)\(')
+            $name = if ($fn.Success -and $fn.Groups['fn'].Value -ne 'var') { $fn.Groups['fn'].Value.ToLowerInvariant() } else { $val }
+        } else {
+            # The shorthand: var() reads and the line height after the slash say nothing about the size or weight.
+            $rest = [regex]::Replace($val, 'var\([^()]*\)', ' ')
+            $rest = [regex]::Replace($rest, '/\s*\S+', ' ')
+            $c = [regex]::Match($rest, $computed)
+            $s = [regex]::Match($rest, $length + '|' + $keyword)
+            $w = [regex]::Match($rest, $typedWeight)
+            if ($c.Success) { $name = $c.Groups['fn'].Value.ToLowerInvariant() }
+            elseif ($s.Success) { $name = $s.Value }
+            elseif ($w.Success) { $name = $w.Value; $kind = 'weights' }
+            else { continue }
+        }
+        if ($null -eq $map) { $map = New-HouseStyleLineMap -Text $Text }
+        @{ Name = $name; Kind = $kind; Property = $m.Groups['prop'].Value; Line = (Get-HouseStyleLineNumber -Map $map -Index $m.Index) }
+    }
+}
+
+function ConvertFrom-GitQuotedPathHs {
+    <#
+        One path line from `git -c core.quotePath=true ls-files`, decoded. Git quotes a path with a
+        non-ASCII byte as a C string with octal escapes, so the wire stays ASCII whatever the console
+        code page, and the bytes are decoded here as UTF-8.
+    #>
+    param([Parameter(Mandatory)][string]$Line)
+    if (-not ($Line.Length -ge 2 -and $Line.StartsWith('"') -and $Line.EndsWith('"'))) { return $Line }
+    $s = $Line.Substring(1, $Line.Length - 2)
+    $bytes = New-Object System.Collections.Generic.List[byte]
+    for ($i = 0; $i -lt $s.Length; $i++) {
+        $ch = $s[$i]
+        if ($ch -ne '\' -or ($i + 1) -ge $s.Length) { $bytes.Add([byte][int][char]$ch); continue }
+        $next = $s[$i + 1]
+        if (($i + 3) -lt $s.Length -and $s.Substring($i + 1, 3) -match '^[0-7]{3}$') {
+            $bytes.Add([Convert]::ToByte($s.Substring($i + 1, 3), 8)); $i += 3; continue
+        }
+        switch ($next) {
+            'n' { $bytes.Add(10) } 't' { $bytes.Add(9) } 'r' { $bytes.Add(13) }
+            default { $bytes.Add([byte][int][char]$next) }
+        }
+        $i++
+    }
+    return [System.Text.Encoding]::UTF8.GetString($bytes.ToArray())
+}
+
+function Get-HouseStyleTrackedFiles {
+    <# Every tracked file of the repo, as a forward-slash path relative to its root. #>
+    param([Parameter(Mandatory)][string]$RepoRoot)
+    $out = & git -C $RepoRoot -c core.quotePath=true ls-files 2>$null
+    if ($LASTEXITCODE -ne 0) { throw "git ls-files failed in $RepoRoot -- is it a git checkout?" }
+    return [string[]]@($out | Where-Object { $_ } | ForEach-Object { ConvertFrom-GitQuotedPathHs -Line $_ })
+}
+
+function Test-HouseStyleAllowed {
+    <# Is this finding answered by an allowlist entry: @{ Path = '<-like glob>'; Name = '<name or *>'; Reason } #>
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Name,
+        [AllowEmptyCollection()][object[]]$Allow = @()
+    )
+    foreach ($a in $Allow) {
+        $glob = [string]$a.Path
+        $nm = if ($a.ContainsKey('Name') -and $a.Name) { [string]$a.Name } else { '*' }
+        if ($Path -like $glob -and ($nm -eq '*' -or $nm -ceq $Name)) { return $true }
+    }
+    return $false
+}
+
+function ConvertTo-HouseStyleAllowlist {
+    <#
+        The repo's answer to Get-HouseStyleAllowlist, checked: @{ Ok; Entries; Problem }. Every entry
+        names a Path and a Reason -- an exception nobody can explain is one nobody can retire.
+    #>
+    param($Raw)
+    if ($null -eq $Raw) { return @{ Ok = $true; Entries = @(); Problem = $null } }
+    $entries = @()
+    foreach ($e in @($Raw)) {
+        if ($e -isnot [hashtable]) { return @{ Ok = $false; Entries = @(); Problem = 'every Get-HouseStyleAllowlist entry is a hashtable: @{ Path; Name; Reason }' } }
+        if (-not $e.ContainsKey('Path') -or [string]::IsNullOrWhiteSpace([string]$e.Path)) { return @{ Ok = $false; Entries = @(); Problem = 'a Get-HouseStyleAllowlist entry has no Path' } }
+        if (-not $e.ContainsKey('Reason') -or [string]::IsNullOrWhiteSpace([string]$e.Reason)) { return @{ Ok = $false; Entries = @(); Problem = "the Get-HouseStyleAllowlist entry for '$($e.Path)' has no Reason" } }
+        $entries += $e
+    }
+    return @{ Ok = $true; Entries = $entries; Problem = $null }
+}
+
+function Read-HouseStyleAllowlist {
+    <#
+        The repo's Get-HouseStyleAllowlist from its scripts/repo-config.ps1, checked by
+        ConvertTo-HouseStyleAllowlist. Read in a child scope with StrictMode off, the way the dev-preview
+        hook reads Get-DevPreview; a repo that states nothing has an empty allowlist.
+    #>
+    param([Parameter(Mandatory)][string]$RepoRoot)
+    # A forward slash: the CI runner is Linux, where a backslash is part of a file name.
+    $configPath = Join-Path $RepoRoot 'scripts/repo-config.ps1'
+    if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) { return (ConvertTo-HouseStyleAllowlist -Raw $null) }
+    $raw = & {
+        Set-StrictMode -Off
+        $null = . $args[0] 6>$null
+        if (@($ExecutionContext.InvokeCommand.GetCommands('Get-HouseStyleAllowlist', 'Function', $false)).Count) { ,@(Get-HouseStyleAllowlist 6>$null) }
+    } $configPath
+    return (ConvertTo-HouseStyleAllowlist -Raw $raw)
+}
+
+function Invoke-HouseStyleCheck {
+    <#
+        Run the five checks over a checkout. Returns
+        @{ Tag; Copies = @(@{ Path; Ok; Canonical }); Findings = @(@{ Check; Path; Line; Name; Text }); Allowed; Notes }.
+        $Files defaults to the checkout's tracked files; tests pass their own. $SourceRepo defaults to
+        Test-HouseStyleSourceRepo; a canonical copy is Ok whatever it hashes to (#3637).
+    #>
+    param(
+        [Parameter(Mandatory)][string]$RepoRoot,
+        [Parameter(Mandatory)][hashtable]$Pin,
+        [AllowEmptyCollection()][object[]]$Allow = @(),
+        [string[]]$Files,
+        [switch]$SourceRepo
+    )
+
+    if (-not $PSBoundParameters.ContainsKey('Files')) { $Files = Get-HouseStyleTrackedFiles -RepoRoot $RepoRoot }
+    $isSource = if ($PSBoundParameters.ContainsKey('SourceRepo')) { [bool]$SourceRepo } else { Test-HouseStyleSourceRepo -RepoRoot $RepoRoot }
+    $findings = New-Object System.Collections.Generic.List[object]
+    $notes = New-Object System.Collections.Generic.List[string]
+    $copies = @()
+    $allowed = 0
+    $copyNames = Get-HouseStyleCopyNames
+
+    # --- 1. pin --------------------------------------------------------------------------------------
+    $verifiedCss = $null
+    # The product layer's classes are house classes too (#3831): a repo that vendors house-product.css may not restyle them.
+    $verifiedProductCss = $null
+    $copyPaths = @($Files | Where-Object { $copyNames -contains ([System.IO.Path]::GetFileName($_)).ToLowerInvariant() })
+    foreach ($rel in $copyPaths) {
+        $leaf = ([System.IO.Path]::GetFileName($rel)).ToLowerInvariant()
+        $full = Join-Path $RepoRoot $rel
+        if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
+        $bytes = [System.IO.File]::ReadAllBytes($full)
+        $pinned = @(Get-HouseStyleSha256 -Bytes $bytes) -contains $Pin.Hashes[$leaf]
+        # The two files themselves, not the folder: a demo copy nested under it is still a copy.
+        $canonical = $isSource -and ($rel -ceq (Get-HouseStyleCanonicalPath -Leaf $leaf))
+        $copies += @{ Path = $rel; Ok = ($pinned -or $canonical); Canonical = $canonical }
+        if ($canonical) {
+            # The source is the stylesheet check 2 reads the house set from, ahead of any vendored copy.
+            if ($leaf -eq 'house-style.css') { $verifiedCss = [System.Text.Encoding]::UTF8.GetString($bytes) }
+            if ($leaf -eq 'house-product.css') { $verifiedProductCss = [System.Text.Encoding]::UTF8.GetString($bytes) }
+            if (-not $pinned) { $notes.Add("$rel is this repo's canonical copy and differs from $($Pin.Tag) -- not a finding; the next release cut updates the pin") }
+        } elseif ($pinned) {
+            if ($leaf -eq 'house-style.css' -and -not $verifiedCss) { $verifiedCss = [System.Text.Encoding]::UTF8.GetString($bytes) }
+            if ($leaf -eq 'house-product.css' -and -not $verifiedProductCss) { $verifiedProductCss = [System.Text.Encoding]::UTF8.GetString($bytes) }
+        } else {
+            $findings.Add(@{ Check = 'pin'; Path = $rel; Line = 0; Name = $leaf; Text = "is not the copy the dkj-brandbook skill pins at $($Pin.Tag) -- replace it with the file served at that tag, unchanged" })
+        }
+    }
+    if (-not @($copies | Where-Object { ([System.IO.Path]::GetFileName($_.Path)).ToLowerInvariant() -eq 'house-style.css' }).Count) {
+        $findings.Add(@{ Check = 'missing'; Path = '.'; Line = 0; Name = 'house-style.css'; Text = "no vendored house-style.css in the tracked files -- vendor the copy the dkj-brandbook skill pins at $($Pin.Tag)" })
+    }
+
+    # --- 2 and 3: the repo's own layer----------------------------------------------------------------
+    $houseTokens = @(); $houseClasses = @()
+    if ($verifiedCss) {
+        $defs = Get-HouseStyleDefinitions -CssText $verifiedCss
+        $houseTokens = $defs.Tokens; $houseClasses = $defs.Classes
+        if ($verifiedProductCss) {
+            $prod = Get-HouseStyleDefinitions -CssText $verifiedProductCss
+            $houseTokens = [string[]]@(@($houseTokens) + @($prod.Tokens) | Sort-Object -Unique)
+            $houseClasses = [string[]]@(@($houseClasses) + @($prod.Classes) | Sort-Object -Unique)
+        }
+    } else {
+        $notes.Add('check 2 (redefine) did not run: no verified house-style.css to read the house tokens and classes from')
+    }
+    $retired = Get-HouseStyleRetiredTokens
+    $exts = Get-HouseStyleScanExtensions
+    # The brace stylesheets, where a rule can nest inside another (.sass and .styl indent instead).
+    $nestingExts = @('.css', '.scss', '.less', '.pcss')
+    $copySet = @($copyPaths)
+    $skipped = 0
+
+    foreach ($rel in $Files) {
+        if ($copySet -contains $rel) { continue }
+        $ext = ([System.IO.Path]::GetExtension($rel)).ToLowerInvariant()
+        if ($exts -notcontains $ext) { continue }
+        $full = Join-Path $RepoRoot $rel
+        if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
+        if ((Get-Item -LiteralPath $full).Length -gt 2MB) { $skipped++; continue }
+        $text = [System.IO.File]::ReadAllText($full, [System.Text.Encoding]::UTF8)
+        if ($text.IndexOf([char]0) -ge 0) { $skipped++; continue }
+
+        $hits = @()
+        foreach ($h in @(Find-HouseStyleTokenHit -Text $text -Names $houseTokens)) {
+            $hits += @{ Check = 'redefine'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = "defines the house token $($h.Name) -- add a domain token under a name of its own, or fix the value at its source (plugins/dkj-repo-workflow/assets/dkj-brandbook/ in DKJ-Solutions/dkj-marketplace)" }
+        }
+        foreach ($h in @(Find-HouseStyleClassHit -Text $text -Classes $houseClasses -Nesting:($nestingExts -contains $ext))) {
+            $hits += @{ Check = 'redefine'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = "styles the house class $($h.Name) -- give the element a domain class of its own, or fix the class at its source (plugins/dkj-repo-workflow/assets/dkj-brandbook/ in DKJ-Solutions/dkj-marketplace)" }
+        }
+        foreach ($h in @(Find-HouseStyleTokenHit -Text $text -Names $retired -IncludeReads)) {
+            $hits += @{ Check = 'retired'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = "$($h.Kind) $($h.Name), a token name the brand book retired -- rename it per the rename tables in assets/dkj-brandbook/README.md at $($Pin.Tag) (assets/house-style/README.md at a tag before the rename)" }
+        }
+        foreach ($h in @(Find-HouseStyleColourHit -Text $text)) {
+            $what = if ($h.Kind -eq 'derives') { "derives a colour with $($h.Name)()" } else { "types the colour $($h.Name)" }
+            $hits += @{ Check = 'colour'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = "$($h.Property): $what -- a rule reads a colour only as a token: use a house token with var(), or add a domain token (--name: value) and read that" }
+        }
+        foreach ($h in @(Find-HouseStyleTypeHit -Text $text)) {
+            $text5 = if ($h.Kind -eq 'weights') { "$($h.Property): types the weight $($h.Name) -- a rule reads a font weight only as a house weight: use var(--font-weight-light|regular|bold|black); there is no semibold, so a 600 becomes the bold or the regular" }
+                else { "$($h.Property): types the size $($h.Name) -- a rule reads a font size only from the type scale: use var(--text-*), or add a domain step (--text-name: value) and read that" }
+            $hits += @{ Check = 'type'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = $text5 }
+        }
+        foreach ($f in $hits) {
+            if (Test-HouseStyleAllowed -Path $rel -Name $f.Name -Allow $Allow) { $allowed++ } else { $findings.Add($f) }
+        }
+    }
+
+    if ($skipped) { $notes.Add("checks 2 and 3 skipped $skipped file(s) over 2 MB or holding a NUL byte -- a bundle there is not read") }
+    # ToArray, not @(): Windows PowerShell 5.1 throws "argument types do not match" on @() over a List.
+    return @{ Tag = $Pin.Tag; Copies = $copies; Findings = $findings.ToArray(); Allowed = $allowed; Notes = $notes.ToArray() }
+}

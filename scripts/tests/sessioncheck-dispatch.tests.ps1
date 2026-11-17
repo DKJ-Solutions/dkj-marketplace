@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Regression tests for the SessionStart dispatcher plugins/dkj-policy/hooks/sessioncheck-dispatch.ps1
+    Regression tests for the SessionStart dispatcher plugins/dkj-repo-workflow/hooks/sessioncheck-dispatch.ps1
     (issue #3472): one hooks.json entry that runs every *-sessioncheck.ps1 beside it in one interpreter.
 
 .DESCRIPTION
@@ -19,8 +19,8 @@
 $ErrorActionPreference = 'Stop'
 
 $RepoRoot  = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Hook      = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\sessioncheck-dispatch.ps1'
-$HooksDir  = Join-Path $RepoRoot 'plugins\dkj-policy\hooks'
+$Hook      = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\sessioncheck-dispatch.ps1'
+$HooksDir  = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks'
 $HooksJson = Join-Path $HooksDir 'hooks.json'
 
 $script:pass  = 0
@@ -146,7 +146,7 @@ Write-Host ''
 Write-Host 'the hook payload reaches every check that reads it' -ForegroundColor Cyan
 # Three concurrent readers of stdin through the real lib. Without the dispatcher's handover only the
 # first reader got the payload (measured in review: one id, two empty).
-$cacheLib = Join-Path $RepoRoot 'plugins\dkj-policy\scripts\lib\session-cache-lib.ps1'
+$cacheLib = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\lib\session-cache-lib.ps1'
 $reader = ". '$cacheLib'`nWrite-Host ('{0}: id=' + (Get-HookSessionId))`n"
 $sid = [guid]::NewGuid().ToString()
 $stdinTree = New-Tree -Label stdin -Files @{
@@ -218,7 +218,7 @@ if ($r.Json) {
 # --- the prep-done mark (#3657) --------------------------------------------------------------------
 Write-Host ''
 Write-Host 'the prep-done mark the dev-preview hook waits for' -ForegroundColor Cyan
-. (Join-Path $RepoRoot 'plugins\dkj-policy\scripts\lib\session-cache-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\lib\session-cache-lib.ps1')
 $markTree = New-Tree -Label mark -Files @{ 'a-sessionprep.ps1' = "Write-Host 'a-prep: ran'`n" }
 $markCache = New-Tree -Label markcache
 $sid = 'c1b2c3d4-e5f6-4789-abcd-0123456789ab'

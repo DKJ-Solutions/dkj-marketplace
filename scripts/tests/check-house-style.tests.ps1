@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for the house-style gate (#3035): plugins/dkj-policy/extensions/dkj-solutions/scripts/lint/check-house-style.ps1,
+    Tests for the house-style gate (#3035): plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/scripts/lint/check-house-style.ps1,
     its rules in scripts/lib/house-style-rules.ps1 beside it, and the session check in hooks/.
 
 .DESCRIPTION
@@ -17,15 +17,15 @@
 # so the walk is declared (#4022): every kind Get-HouseStyleScanExtensions reads, the allowlist's seam, and the skill page
 # the pin is read from.
 # A guard below holds the list to that function.
-# gate-selection: walks *.css *.scss *.sass *.less *.styl *.pcss *.html *.htm *.xhtml *.svg *.js *.mjs *.cjs *.ts *.mts *.cts *.jsx *.tsx *.vue *.svelte *.astro *.py *.ps1 *.psm1 *.php *.rb *.erb *.liquid *.njk *.hbs *.ejs *.jinja *.jinja2 *.j2 *.twig *.cshtml *.razor repo-config.ps1 plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/*
+# gate-selection: walks *.css *.scss *.sass *.less *.styl *.pcss *.html *.htm *.xhtml *.svg *.js *.mjs *.cjs *.ts *.mts *.cts *.jsx *.tsx *.vue *.svelte *.astro *.py *.ps1 *.psm1 *.php *.rb *.erb *.liquid *.njk *.hbs *.ejs *.jinja *.jinja2 *.j2 *.twig *.cshtml *.razor repo-config.ps1 plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook/*
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Plugin   = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\dkj-solutions'
+$Plugin   = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-dkj'
 $Gate     = Join-Path $Plugin 'scripts\lint\check-house-style.ps1'
 $Hook     = Join-Path $Plugin 'hooks\house-style-sessioncheck.ps1'
 $Skill    = Join-Path $Plugin 'skills\dkj-brandbook\SKILL.md'
-$Vendored = Join-Path $RepoRoot 'plugins\dkj-policy\assets\dkj-brandbook'
+$Vendored = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\assets\dkj-brandbook'
 # $PID and a guid in the fixture path: the test gate runs suites in parallel.
 $Fixture  = Join-Path ([System.IO.Path]::GetTempPath()) "house-style-$PID-$([guid]::NewGuid().ToString('n'))"
 
@@ -53,54 +53,54 @@ Write-Host '-- group 1a: the pin, read from the skill page' -ForegroundColor Cya
 $pin = Get-HouseStylePin -SkillText ([System.IO.File]::ReadAllText($Skill))
 Assert-True ($null -ne $pin) 'the skill page carries a complete checksum table'
 # The tag is not written here: it moves with each change of the consumer URL pin, and a hard-coded copy
-# would turn every such pull request red. The README link is absolute since #3531: the README lives in dkj-policy,
-# outside the dkj-solutions plugin root a consumer installs.
+# would turn every such pull request red. The README link is absolute since #3531: the README lives in dkj-repo-workflow,
+# outside the dkj-repo-workflow-dkj plugin root a consumer installs.
 Assert-True ($pin.Tag -cmatch '^v\d+\.\d+\.\d+$') 'the tag is read from the fetch URL'
-Assert-True ([System.IO.File]::ReadAllText($Skill).Contains('](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/assets/dkj-brandbook/README.md)')) 'the skill links the README in dkj-policy absolutely, since a relative link leaves the dkj-solutions plugin root'
+Assert-True ([System.IO.File]::ReadAllText($Skill).Contains('](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-repo-workflow/assets/dkj-brandbook/README.md)')) 'the skill links the README in dkj-repo-workflow absolutely, since a relative link leaves the dkj-repo-workflow-dkj plugin root'
 Assert-True (Test-Path -LiteralPath (Join-Path $Vendored 'README.md')) 'the README the skill links exists in the plugin'
 # The canonical copy is NOT held to the pin here (#3636): between releases the pin names the tag's bytes, and a
 # branch that changes the stylesheet no longer hand-edits the cell -- the cut writes it from the blob it tags. So
 # what this suite holds is that the cut is told to: both files are under Checksums of the skill page's pin.
 . (Join-Path $RepoRoot 'scripts\repo-config.ps1')
-$skillPins = @(Get-ReleaseVersionPins | Where-Object { $_.Path -eq 'plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/SKILL.md' })
+$skillPins = @(Get-ReleaseVersionPins | Where-Object { $_.Path -eq 'plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook/SKILL.md' })
 Assert-Equal 1 $skillPins.Count 'the cut repoints the skill page (Get-ReleaseVersionPins)'
 foreach ($leaf in 'house-style.css', 'house-theme.js') {
-    Assert-True (@($skillPins | ForEach-Object { $_.Checksums }) -contains "plugins/dkj-policy/assets/dkj-brandbook/$leaf") "...and writes the checksum of the canonical $leaf beside its URL"
+    Assert-True (@($skillPins | ForEach-Object { $_.Checksums }) -contains "plugins/dkj-repo-workflow/assets/dkj-brandbook/$leaf") "...and writes the checksum of the canonical $leaf beside its URL"
 }
 Assert-True ($null -eq (Get-HouseStylePin -SkillText '| `house-style.css` | `x` | `aa` |')) 'a page without both rows is no pin'
-# A page at a tag before #3531 names the files under dkj-solutions/assets/, and the reusable gate reads the page AT that tag.
+# A page at a tag before #3531 names the files under dkj-repo-workflow-dkj/assets/, and the reusable gate reads the page AT that tag.
 $oldRow = '| `{0}` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v5.32.0/plugins/dkj-policy/dkj-solutions/assets/house-style/{0}` | `{1}` |'
 $oldPage = ($oldRow -f 'house-style.css', ('a' * 64)) + "`n" + ($oldRow -f 'house-theme.js', ('b' * 64))
 Assert-Equal 'v5.32.0' (Get-HouseStylePin -SkillText $oldPage).Tag 'a pin URL on the pre-#3531 path still yields its tag'
 # A page at a tag before the rename to dkj-brandbook names the files under assets/house-style/.
-$midRow = '| `{0}` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.1.0/plugins/dkj-policy/assets/house-style/{0}` | `{1}` |'
+$midRow = '| `{0}` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.1.0/plugins/dkj-repo-workflow/assets/house-style/{0}` | `{1}` |'
 $midPage = ($midRow -f 'house-style.css', ('a' * 64)) + "`n" + ($midRow -f 'house-theme.js', ('b' * 64))
 Assert-Equal 'v6.1.0' (Get-HouseStylePin -SkillText $midPage).Tag 'a pin URL on the pre-rename assets/house-style/ path still yields its tag'
 Assert-Equal 'dkj-brandbook,house-style' ((Get-HouseStyleSkillDirNames) -join ',') 'the page at a tag is looked for under the current skill folder first, then the pre-rename one'
 
 Write-Host '-- group 1b: the product layer, pinned beside the core (#3831)' -ForegroundColor Cyan
 Assert-True ($pin.Hashes.ContainsKey('house-product.css')) 'the skill page pins the product layer too'
-Assert-True (@($skillPins | ForEach-Object { $_.Checksums }) -contains 'plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css') '...and the cut writes the checksum of the canonical house-product.css beside its URL'
-$newRow = '| `{0}` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.0.0/plugins/dkj-policy/{2}/{0}` | `{1}` |'
-$newPage = ($newRow -f 'house-style.css', ('a' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-theme.js', ('b' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-product.css', ('c' * 64), 'dkj-solutions/assets/dkj-brandbook-product')
+Assert-True (@($skillPins | ForEach-Object { $_.Checksums }) -contains 'plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product/house-product.css') '...and the cut writes the checksum of the canonical house-product.css beside its URL'
+$newRow = '| `{0}` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.0.0/plugins/dkj-repo-workflow/{2}/{0}` | `{1}` |'
+$newPage = ($newRow -f 'house-style.css', ('a' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-theme.js', ('b' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-product.css', ('c' * 64), 'dkj-repo-workflow-dkj/assets/dkj-brandbook-product')
 $newPin = Get-HouseStylePin -SkillText $newPage
 Assert-True ($newPin.Tag -eq 'v7.0.0' -and $newPin.Hashes['house-product.css'] -eq ('c' * 64)) 'a page with the product row reads all three, and its tag'
 # THE PRODUCT ROW AT THE #3871 DEPTH: the extension moved under extensions/, so a page cut after the move
 # names the product layer there, and one cut before it at the old depth (the page above).
-$extPin = Get-HouseStylePin -SkillText (($newRow -f 'house-style.css', ('a' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-theme.js', ('b' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-product.css', ('c' * 64), 'extensions/dkj-solutions/assets/dkj-brandbook-product'))
+$extPin = Get-HouseStylePin -SkillText (($newRow -f 'house-style.css', ('a' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-theme.js', ('b' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-product.css', ('c' * 64), 'extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product'))
 Assert-True ($extPin.Tag -eq 'v7.0.0' -and $extPin.Hashes['house-product.css'] -eq ('c' * 64)) 'a page with the product row under extensions/ (#3871) reads all three, and its tag'
 $midPin = Get-HouseStylePin -SkillText $midPage
 Assert-True ($null -ne $midPin -and -not $midPin.Hashes.ContainsKey('house-product.css')) 'a page at a tag before the split, with no product row, is still a complete pin of the two files it shipped'
-Assert-True ($null -eq (Get-HouseStylePin -SkillText (($newRow -f 'house-style.css', ('a' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-product.css', ('c' * 64), 'dkj-solutions/assets/dkj-brandbook-product')))) 'the product row does not stand in for a missing core row'
-Assert-Equal 'plugins/dkj-policy/extensions/dkj-solutions/assets/dkj-brandbook-product/house-product.css' (Get-HouseStyleCanonicalPath -Leaf 'house-product.css') 'the source repo''s canonical product layer is the dkj-solutions plugin''s'
-Assert-Equal 'plugins/dkj-policy/assets/dkj-brandbook/house-theme.js' (Get-HouseStyleCanonicalPath -Leaf 'house-theme.js') 'and the core files stay dkj-policy''s'
+Assert-True ($null -eq (Get-HouseStylePin -SkillText (($newRow -f 'house-style.css', ('a' * 64), 'assets/dkj-brandbook') + "`n" + ($newRow -f 'house-product.css', ('c' * 64), 'dkj-repo-workflow-dkj/assets/dkj-brandbook-product')))) 'the product row does not stand in for a missing core row'
+Assert-Equal 'plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product/house-product.css' (Get-HouseStyleCanonicalPath -Leaf 'house-product.css') 'the source repo''s canonical product layer is the dkj-repo-workflow-dkj plugin''s'
+Assert-Equal 'plugins/dkj-repo-workflow/assets/dkj-brandbook/house-theme.js' (Get-HouseStyleCanonicalPath -Leaf 'house-theme.js') 'and the core files stay dkj-repo-workflow''s'
 
 Write-Host '-- group 1c: the house font, pinned beside the core (#4075)' -ForegroundColor Cyan
 Assert-True ($pin.Hashes.ContainsKey('InterVariable.woff2')) 'the skill page pins the house font'
-Assert-True (@($skillPins | ForEach-Object { $_.Checksums }) -contains 'plugins/dkj-policy/assets/dkj-brandbook/InterVariable.woff2') '...and the cut writes the checksum of the canonical InterVariable.woff2 beside its URL'
+Assert-True (@($skillPins | ForEach-Object { $_.Checksums }) -contains 'plugins/dkj-repo-workflow/assets/dkj-brandbook/InterVariable.woff2') '...and the cut writes the checksum of the canonical InterVariable.woff2 beside its URL'
 Assert-True ((Get-HouseStyleCopyNames) -contains 'intervariable.woff2') 'check 1 finds a vendored font whatever the case of its name'
 # Check 1 lowercases the leaf before it asks for the canonical path, and the canonical name is mixed case.
-Assert-Equal 'plugins/dkj-policy/assets/dkj-brandbook/InterVariable.woff2' (Get-HouseStyleCanonicalPath -Leaf 'intervariable.woff2') 'the canonical font keeps its mixed-case name, so the source repo''s own copy is read as canonical'
+Assert-Equal 'plugins/dkj-repo-workflow/assets/dkj-brandbook/InterVariable.woff2' (Get-HouseStyleCanonicalPath -Leaf 'intervariable.woff2') 'the canonical font keeps its mixed-case name, so the source repo''s own copy is read as canonical'
 $fontPin = Get-HouseStylePin -SkillText ($newPage + "`n" + ($newRow -f 'InterVariable.woff2', ('d' * 64), 'assets/dkj-brandbook'))
 Assert-True ($fontPin.Tag -eq 'v7.0.0' -and $fontPin.Hashes['intervariable.woff2'] -eq ('d' * 64)) 'a page with the font row reads it, under the lowercased leaf check 1 looks it up by'
 Assert-True (-not $newPin.Hashes.ContainsKey('InterVariable.woff2')) 'a page at a tag before #4075, with no font row, is still a complete pin'
@@ -301,7 +301,7 @@ try {
         $treeHash = @(Get-HouseStyleSha256 -Bytes ([System.IO.File]::ReadAllBytes((Join-Path $Vendored $leaf))))[-1]
         $realSkill = $realSkill.Replace($pin.Hashes[$leaf], $treeHash)
     }
-    # The product layer, in dkj-solutions since #3831, pinned to this tree's file the same way.
+    # The product layer, in dkj-repo-workflow-dkj since #3831, pinned to this tree's file the same way.
     $productCss = Join-Path $Plugin 'assets\dkj-brandbook-product\house-product.css'
     $realSkill = $realSkill.Replace($pin.Hashes['house-product.css'], @(Get-HouseStyleSha256 -Bytes ([System.IO.File]::ReadAllBytes($productCss)))[-1])
     $Skill = Join-Path $fxPlugin 'skills\dkj-brandbook\SKILL.md'
@@ -399,18 +399,18 @@ try {
 
     # #3637: in the source repo the canonical copy runs ahead of the pin between cuts, and is not a copy.
     $source = New-FixtureRepo 'source'
-    $canonDir = Join-Path $source 'plugins\dkj-policy\assets\dkj-brandbook'
+    $canonDir = Join-Path $source 'plugins\dkj-repo-workflow\assets\dkj-brandbook'
     New-Item -ItemType Directory -Force -Path $canonDir, (Join-Path $source '.claude-plugin') | Out-Null
     Copy-Item -LiteralPath (Join-Path $Vendored 'house-style.css'), (Join-Path $Vendored 'house-theme.js') -Destination $canonDir
     Add-Content -LiteralPath (Join-Path $canonDir 'house-style.css') -Value '/* merged since the cut */'
-    Set-Content -LiteralPath (Join-Path $source '.claude-plugin\marketplace.json') -Value '{ "plugins": [ { "name": "dkj-policy" }, { "name": "dkj-solutions" } ] }' -Encoding ascii
+    Set-Content -LiteralPath (Join-Path $source '.claude-plugin\marketplace.json') -Value '{ "plugins": [ { "name": "dkj-repo-workflow" }, { "name": "dkj-repo-workflow-dkj" } ] }' -Encoding ascii
     Set-Content -LiteralPath (Join-Path $source 'web\app.css') -Value '.card { color: red; }' -Encoding ascii
     Invoke-FixtureGitIn $source add -A
-    Assert-True (Test-HouseStyleSourceRepo -RepoRoot $source) 'a manifest publishing dkj-solutions is the source repo'
+    Assert-True (Test-HouseStyleSourceRepo -RepoRoot $source) 'a manifest publishing dkj-repo-workflow-dkj is the source repo'
     Assert-True (-not (Test-HouseStyleSourceRepo -RepoRoot $clean)) 'a repo without a manifest is not'
     $r = Invoke-Child $Gate $source 'RepoRoot'
     Assert-True ($r.Out -notmatch '\[pin\]') 'the source repo''s canonical copy, ahead of the pin, is no pin finding'
-    Assert-True ($r.Out -match '\[source\]   plugins/dkj-policy/assets/dkj-brandbook/house-style\.css' -and $r.Out -match 'house-style\.css is this repo''s canonical copy and differs from') '...it is named as the source, and as differing from the tag'
+    Assert-True ($r.Out -match '\[source\]   plugins/dkj-repo-workflow/assets/dkj-brandbook/house-style\.css' -and $r.Out -match 'house-style\.css is this repo''s canonical copy and differs from') '...it is named as the source, and as differing from the tag'
     Assert-True ($r.Out -notmatch 'house-theme\.js is this repo''s canonical copy') '...and a canonical file equal to the pin carries no note'
     Assert-True ($r.Code -eq 1 -and $r.Out -match '\[redefine\] web/app\.css:1 styles the house class \.card') '...and still serves check 2 as the verified stylesheet'
     Remove-Item -LiteralPath (Join-Path $source 'web\app.css')
@@ -422,7 +422,7 @@ try {
     Copy-Item -LiteralPath (Join-Path $canonDir 'house-style.css') -Destination $demo
     Invoke-FixtureGitIn $source add -A
     $r = Invoke-Child $Gate $source 'RepoRoot'
-    Assert-True ($r.Code -eq 1 -and $r.Out -match '\[pin\] plugins/dkj-policy/assets/dkj-brandbook/demo/house-style\.css') 'a copy nested under the canonical folder is a copy, not the source'
+    Assert-True ($r.Code -eq 1 -and $r.Out -match '\[pin\] plugins/dkj-repo-workflow/assets/dkj-brandbook/demo/house-style\.css') 'a copy nested under the canonical folder is a copy, not the source'
     Remove-Item -LiteralPath $demo -Recurse -Force
     Copy-Item -LiteralPath (Join-Path $canonDir 'house-style.css') -Destination (Join-Path $source 'web\house-style.css')
     Invoke-FixtureGitIn $source add -A
@@ -452,15 +452,15 @@ Assert-Equal 0 $r.Code 'this repo passes its own house-style gate'
 # The walk this self-run makes is declared at the top of this file (#4022); a kind the gate starts reading is a
 # change the local selection must select this suite for.
 $declared = [regex]::Match([System.IO.File]::ReadAllText($PSCommandPath), '(?m)^#[ \t]*gate-selection:[ \t]*walks[ \t]+(.+?)[ \t]*$').Groups[1].Value -split '\s+'
-$wanted = @(Get-HouseStyleScanExtensions | ForEach-Object { '*' + $_ }) + 'repo-config.ps1' + 'plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/*'
+$wanted = @(Get-HouseStyleScanExtensions | ForEach-Object { '*' + $_ }) + 'repo-config.ps1' + 'plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook/*'
 Assert-Equal (($wanted | Sort-Object) -join ' ') (($declared | Sort-Object) -join ' ') 'the declared walk scope is every kind the gate reads, plus the allowlist''s seam and the pin''s skill page'
 Assert-True (Test-HouseStyleSourceRepo -RepoRoot $RepoRoot) 'this repo is read as the house style''s source'
 
 # The reusable workflow reads the pin at the tag the page names (#3148), not at the ref it runs from.
 $wf = [System.IO.File]::ReadAllText((Join-Path $RepoRoot '.github\workflows\reusable-house-style.yml'))
 Assert-True ($wf -match 'ref: \$\{\{ steps\.pin\.outputs\.tag \}\}') 'the reusable gate checks out the skill page at the pinned tag'
-Assert-True ($wf -match "\.workflow-pin/plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook/SKILL\.md'" -and $wf -match 'check-house-style\.ps1 -SkillPath \$skill') '...and hands that page to the gate'
-Assert-True ($wf -match 'sparse-checkout: \|\s+plugins/dkj-policy/extensions/dkj-solutions/skills/dkj-brandbook\s+plugins/dkj-policy/extensions/dkj-solutions/skills/house-style') '...fetching the pre-rename skill folder too, since a tag cut before the rename carries the page there'
+Assert-True ($wf -match "\.workflow-pin/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook/SKILL\.md'" -and $wf -match 'check-house-style\.ps1 -SkillPath \$skill') '...and hands that page to the gate'
+Assert-True ($wf -match 'sparse-checkout: \|\s+plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/dkj-brandbook\s+plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/skills/house-style') '...fetching the pre-rename skill folder too, since a tag cut before the rename carries the page there'
 
 Write-Host ''
 # A broken fixture fails the run even when every assert passed (issue #1635).

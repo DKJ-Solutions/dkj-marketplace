@@ -279,7 +279,7 @@ earlier tables, which is the second half of the under-count):
 | `.claude/specialists/SPECIALISTS.md` (the seam) | 7,982 | ~2,600 | 3.12 |
 | **documents** | **113,793** | **~36,500** | |
 | `dkj-subagents-alpha` listing | — | 3,009 | **API-measured** |
-| `dkj-policy` listing | — | 2,317 | **API-measured** |
+| `dkj-repo-workflow` listing | — | 2,317 | **API-measured** |
 | **total** | | **~41,800** | range ~40,600–43,900 |
 
 **~41,800 tokens, not ~30,205.** The plugin listing has also *fallen* since v2.10.0 — 3,009 against the
@@ -346,7 +346,7 @@ in **both**, while the significance rubric (13 references), the `highlights/` re
 **The last one is this section**, and it is worth having on its own: the first two are a judgement about
 the governance document and the third is arithmetic. **The honest counter-argument to the second, kept
 beside it:** the growth these notes keep recording is
-[the repo's own rule](../../../plugins/dkj-policy/CLAUDE.md#general-working-practices) working as designed — lessons are
+[the repo's own rule](../../../plugins/dkj-repo-workflow/CLAUDE.md#general-working-practices) working as designed — lessons are
 secured in the docs — and moving the evidence does not stop it, it only redirects where it lands.
 
 ### The Claude Code best-practices page, held against this repo (August 14, 2026)
@@ -449,7 +449,7 @@ only while it says when each one was opened.
    inside the writing and nobody waited for. The gate share breaks down as 231s of suites inside the cut,
    200s of the same suites when the note's pull request opened, and 8m 36s of `lint-en-tests` on that pull
    request, which is **56%** of the release and the only place a real reduction can come from. The full table
-   is in [`releases/audience/4.x/4.4.0.md`](../../../.dkj/dkj-policy/releases/audience/4.x/4.4.0.md).
+   is in [`releases/audience/4.x/4.4.0.md`](../../../.dkj/dkj-repo-workflow/releases/audience/4.x/4.4.0.md).
 
    **Two cautions travel with the number, and they matter more than it does.** That release carried **two**
    entries against `v4.2.0`'s seven, so it measures the clock well and the writing gain not at all — less to
@@ -490,7 +490,7 @@ only while it says when each one was opened.
    | `teardown-protocol.tests.ps1` | extracts a `Where-Object` from the real `specialists-teardown/SKILL.md` and executes it — its own docstring says outright that rewriting the doc turns the suite red |
    | `script-contract.tests.ps1` | the real `cut-release/SKILL.md`, asserting its text contains `Get-LiveStage` |
    | `shared-scripts.tests.ps1` | copies the real `.github/pull_request_template.md` into a fixture and asserts every comment line was substituted and no checkbox survives |
-   | `release-lib.tests.ps1` | the real release list via `Get-ReleaseHistoryPath` -- `.dkj/dkj-policy/releases/history.md`, in the workflow folder since August 27, 2026 -- asserting the overview targets major `'4'` — the live pin `CLAUDE.md` already records |
+   | `release-lib.tests.ps1` | the real release list via `Get-ReleaseHistoryPath` -- `.dkj/dkj-repo-workflow/releases/history.md`, in the workflow folder since August 27, 2026 -- asserting the overview targets major `'4'` — the live pin `CLAUDE.md` already records |
 
    **Two findings worth keeping beside the number.** First, the counter-intuitive result is the one that
    most needed checking, and it held: `check-plugin-integrity.tests.ps1` — the lint-gate suite, which
@@ -545,7 +545,7 @@ only while it says when each one was opened.
    | minor / major (carries a document) | **14m 34s** | 231s suites in the cut · 200s the same suites at `open-pr` · **443s** median `lint-en-tests` on that pull request |
    | patch (no document, no pull request) | **3m 51s** | the 231s cut suites alone |
 
-   The two local legs are cited from [`releases/audience/4.x/4.4.0.md`](../../../.dkj/dkj-policy/releases/audience/4.x/4.4.0.md),
+   The two local legs are cited from [`releases/audience/4.x/4.4.0.md`](../../../.dkj/dkj-repo-workflow/releases/audience/4.x/4.4.0.md),
    which took them from git timestamps. **The 7m 48s CI run on the release commit is excluded** because it
    blocks nobody.
 
@@ -588,7 +588,7 @@ only while it says when each one was opened.
 
    **What batching buys and what it costs, on the same data.** The saving is simulated against the **real
    73 merge timestamps**; the delivery cost is *measured* as merge → next tag, because
-   [`RELEASES-portable.md`](../../../plugins/dkj-policy/RELEASES-portable.md#cutting-a-release) bumps
+   [`RELEASES-portable.md`](../../../plugins/dkj-repo-workflow/RELEASES-portable.md#cutting-a-release) bumps
    the version only at a cut, and a merge without a release is invisible to consumers. Today that latency is **mean 7.45h**, median 5.72h, p90 17.40h, max 25.29h.
 
    | cadence | releases | gate time /10 days | saves | mean latency | costs | per hour of latency |
@@ -635,7 +635,7 @@ only while it says when each one was opened.
      standing rule that removes the freedom to ship on demand. Had the ceiling been four hours a day the
      same table would have argued the other way — which is precisely why counting it first was worth doing.
    - **There was never a mechanism to change, only a habit.** A release happens on Dave's explicit request
-     ([`CLAUDE.md`](../../../plugins/dkj-policy/CLAUDE.md#never-without-the-owners-explicit-permission)), so the 16 releases in the
+     ([`CLAUDE.md`](../../../plugins/dkj-repo-workflow/CLAUDE.md#never-without-the-owners-explicit-permission)), so the 16 releases in the
      window were 16 requests. A cadence policy could only ever have been a self-imposed constraint on his
      own asking, plus a brief telling Rendall to propose fewer. Both were declined.
    - **The counterweight ran in the same direction, which is unusual and worth noting.** Batching would
@@ -1111,7 +1111,7 @@ than one machine's ordinary noise.
 meets this on day one — so neither stayed in this lens. The measurement discipline is a hard rule in
 Nolan's own manual (*"a gate figure names what it included and which machine produced it"*, the scope-and-machine
 sibling of the unit, sample, factor and copy rules), and the DEPLOY-section half is
-[`DEVELOPMENT-portable.md`](../../../plugins/dkj-policy/DEVELOPMENT-portable.md)
+[`DEVELOPMENT-portable.md`](../../../plugins/dkj-repo-workflow/DEVELOPMENT-portable.md)
 rule 8, because a figure written there folds into `CHANGELOG.md` and then into a release document. This
 section is the evidence they cite, which is this repo's convention for where a measurement lives.
 
@@ -1136,7 +1136,7 @@ it is a script change, this branch is documentation, and the fix wants a test.
 **The three figures themselves needed no repair.** They sit only in
 `dkj-policy/development-fix-ship-pr-stale-ci-certificate.md`, in its CREATE and TEST
 sections; `fold-changelog-entry.ps1` folds **only** DEPLOY and removes the document, so none of them
-reaches the trunk, and a grep over `scripts/`, `plugins/` and `.dkj/dkj-policy/` finds them
+reaches the trunk, and a grep over `scripts/`, `plugins/` and `.dkj/dkj-repo-workflow/` finds them
 nowhere else. The convention gap was the whole issue.
 
 ### Inside the invocation — where a plateau suite's time actually goes (September 3, 2026)

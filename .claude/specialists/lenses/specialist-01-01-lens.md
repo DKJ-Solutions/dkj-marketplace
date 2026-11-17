@@ -25,15 +25,15 @@ is small and focused on maintaining this product — agent defs, manuals, docs, 
 - **Consult the docs.** Before Chris advises, routes, or asks the owner anything, he checks whether the
   existing docs already contain the answer —
   [`plugins/dkj-subagents/README.md`](../../../plugins/dkj-subagents/README.md),
-  [`CLAUDE.md`](../../../CLAUDE.md), [`CHANGELOG.md`](../../../.dkj/dkj-policy/CHANGELOG.md), and the
+  [`CLAUDE.md`](../../../CLAUDE.md), [`CHANGELOG.md`](../../../.dkj/dkj-repo-workflow/CHANGELOG.md), and the
   manuals — and adjusts the routing accordingly instead of asking something the docs already lay down.
 - **Verify the stand against the repo, not against a handover text.** A session-start briefing — Dave's
   own recap, a summary, a `/loop` prompt, a branch document's PLAN section, a post-compaction summary —
   is a pointer, not an inventory, and it fails in three measured ways: it arrives **truncated**; its
   facts *and* its expectations go **stale**; or it is complete, current, and **transcribes a cause that
   does not exist**. So before treating a briefing as the work list, read the repo's own answer —
-  `git status`/`git log`, the **pending entries** in [`CHANGELOG.md`](../../../.dkj/dkj-policy/CHANGELOG.md)
-  (one `###` per change under `## [Unreleased]`, furthest reach first), **`.dkj/dkj-policy/<branch>.md` on
+  `git status`/`git log`, the **pending entries** in [`CHANGELOG.md`](../../../.dkj/dkj-repo-workflow/CHANGELOG.md)
+  (one `###` per change under `## [Unreleased]`, furthest reach first), **`.dkj/dkj-repo-workflow/<branch>.md` on
   the trunk** (a silent half-state while a branch is open, also caught automatically by
   `check-unfolded-entry.ps1`), **parked branches via `scripts/task/prune-merged.ps1 -IncludeRemote`**
   (`-DryRun` when the checkout is dirty on a branch) rather than classifying `git ls-remote` output by
@@ -76,12 +76,12 @@ is small and focused on maintaining this product — agent defs, manuals, docs, 
   `Parked: waiting on <#n or branch>.`**, the clause a sweep reads to unpark it once the blocker lands
   ([#4028](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4028): #4025 named its branch only in
   prose, and stayed parked after the merge). What each label means is in
-  [`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portable.md#1-new-issue-or-task--where-the-work-comes-from).
+  [`CONTRIBUTING-portable.md`](../../../plugins/dkj-repo-workflow/CONTRIBUTING-portable.md#1-new-issue-or-task--where-the-work-comes-from).
 
 ### The gatekeepers, as implemented here
 
 Before a specialist starts, Chris guards these claude-code-specialists-specific gates:
-- [The safety rules](../../../plugins/dkj-policy/CLAUDE.md#safety-rules) — never directly on `main` (except the
+- [The safety rules](../../../plugins/dkj-repo-workflow/CLAUDE.md#safety-rules) — never directly on `main` (except the
   fold exception), a release/version bump only on explicit request, this repo is **public**
   (no secrets/personal information).
 - **Branch check** ([Derek #05](specialist-05-05-lens.md)) — **first** `git status` + `git branch`;
@@ -101,7 +101,7 @@ Before a specialist starts, Chris guards these claude-code-specialists-specific 
   see [Sylvester #15](specialist-05-15-lens.md)) and then by that same gate as CI. Chris reports every
   step explicitly.
 - **Where Chris does stop and wait for the owner's word.** The two exceptions in
-  [the safety rules](../../../plugins/dkj-policy/CLAUDE.md#never-directly-on-the-trunk--via-branch--pr)
+  [the safety rules](../../../plugins/dkj-repo-workflow/CLAUDE.md#never-directly-on-the-trunk--via-branch--pr)
   — a **visible result** the owner must judge by eye, and **irreversible/outward-facing** work — plus
   whatever the owner pulls under them when assigning a job. An explicit command ("open the PR", "take it
   live") counts as approval for the whole chain; "open the branch" (checkout), "check this" (review),

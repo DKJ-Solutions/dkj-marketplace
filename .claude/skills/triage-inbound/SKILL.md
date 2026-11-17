@@ -39,7 +39,7 @@ just advice.
   repaired" and cites evidence against it — and the evidence is a different failure wearing the same
   name.** [#1499](https://github.com/DKJ-Solutions/claude-code-specialists/issues/1499), picked up
   September 6, 2026, the day it was filed. It reported that `fold-on-merge.yml` misreads
-  `.dkj/dkj-policy/CHANGELOG.md` as an unfolded dossier and fails every time it has something to fold, and it
+  `.dkj/dkj-repo-workflow/CHANGELOG.md` as an unfolded dossier and fails every time it has something to fold, and it
   ruled out the obvious close in its own words: *"Why this isn't the #1497 bug back again"*, on the
   ground that one of its three cited runs was **the merge of #1498 itself** — the push carrying the fix —
   *"and it fails with the identical symptom anyway"*. That is a well-formed argument, it names the right
@@ -206,7 +206,7 @@ just advice.
   URLs preserves a ~4,000-word hand-maintained mirror of a process half that no longer exists upstream —
   the exact cost #646 was filed to end — and it would drift again at the next rename. The remedy is to
   replace everything above the rule with a pointer to the plugin's page, which is what
-  `adopt-dkj-policy`'s Part 1 scaffolds. **What separates this from the first pattern:** #469 was repaired
+  `adopt-dkj-repo-workflow`'s Part 1 scaffolds. **What separates this from the first pattern:** #469 was repaired
   here, so verifying it *closed* it. Here nothing was repaired away — the defect is live, it is simply
   not ours, and the closure's whole value is telling the reporter which file to open and what to do that
   is not what they asked for.

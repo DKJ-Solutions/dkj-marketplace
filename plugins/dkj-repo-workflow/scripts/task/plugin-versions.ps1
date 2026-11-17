@@ -1,0 +1,1057 @@
+<#
+.SYNOPSIS
+    Per enabled plugin: the version installed IN THIS CHECKOUT against the version the local
+    marketplace clone would install, with a verdict on whether a plugin update is due. Runs in any
+    checkout on any machine, reads only, takes no arguments for the default view.
+
+.DESCRIPTION
+    ANSWERS A QUESTION NO EXISTING CHECK DOES: "is the plugin version this checkout loads the same as
+    the one the marketplace clone holds, and if not, which command closes the gap?" The consumer
+    session check goes inert on a plain consumer with no sibling source checkout: the HOOK
+    (consumer-sessioncheck.ps1) prints "no verified workshop checkout found -- check skipped" on its
+    own early-exit path and never reaches check-consumers.ps1, whose check 4 is the version
+    comparison that then never runs. So there is no version signal at all. Naming the hook rather
+    than the check matters: that string is the hook's, and grepping check-consumers.ps1 for it finds
+    nothing. This script needs only two things every consumer machine already has:
+
+      1. THE INSTALL RECORD -- ~/.claude/plugins/installed_plugins.json, the record whose projectPath
+         is this checkout, read via Get-InstallRecord. Its .version, .gitCommitSha and .scope are what
+         the session actually loaded. NOTHING IS PERSISTED by this script and nothing here writes that
+         file; the syncedVersion bookkeeping removed on July 20, 2026 is NOT reintroduced.
+
+      2. THE MARKETPLACE CLONE -- ~/.claude/plugins/marketplaces/<marketplace>/, a git clone present
+         on every machine that has added the marketplace. Its per-plugin
+         .claude-plugin/plugin.json .version and its git HEAD are readable with no dev checkout beside
+         it. THE CLONE ADVANCES ONLY ON `claude plugin marketplace update <marketplace>`, not on a
+         push or a merge -- so its plugin.json .version is cut-granular and its HEAD sha is the finer
+         truth. That is why the verdict prefers the sha and only falls back to the version.
+
+    THE VERDICT, per plugin:
+      - install sha == clone HEAD                -> up to date. The clone itself may still lag origin;
+                                                   `claude plugin marketplace update <marketplace>`
+                                                   refreshes it if you expect newer.
+      - install sha is an ANCESTOR of clone HEAD,
+        and the two version strings DIFFER          -> the clone is AHEAD of your install
+                                                   -> `claude plugin update <id> --scope <the scope it
+                                                      is installed at>` (#1986 -- read off the install
+                                                      record, never assumed to be 'project')
+      - install sha is an ANCESTOR of clone HEAD,
+        and both sides carry the SAME version       -> unreleased work in the clone, and NO command is
+                                                      handed over: `claude plugin update` arbitrates on
+                                                      the version string, so it reports success and
+                                                      moves nothing (measured, #1772). This is the
+                                                      ordinary state of any checkout between releases,
+                                                      so it is not counted as behind and is never an
+                                                      [ERROR] in -Brief.
+      - install sha exists but is NOT an ancestor of clone HEAD, or is unknown to the clone
+                                                -> your install is ahead, or the clone is stale
+                                                   -> `claude plugin marketplace update <marketplace>`
+      - no sha on one side                       -> the two versions are compared instead, and the
+                                                   line says a sha was not available
+      - a whole side is missing                  -> cannot determine, and the line says which side
+      - a retired id (Get-RetiredPolicyExtensionNames) the clone no longer lists, while its
+        successor is listed                     -> retired: no refresh brings it back -> enable the
+                                                   successor and `claude plugin install <successor>@<marketplace>
+                                                   --scope project` (#3055)
+      - a path-less record OLDER than this
+        checkout's own one, whatever the above  -> behind: a session can load the older record
+                                                   (#2442) -> `claude plugin update <id> --scope <the
+                                                   path-less record's scope>`, then restart
+
+    Every enabled plugin is listed even under lockstep, so a partial or split install state is
+    visible rather than hidden behind a single headline.
+
+    Dual-context: run the root copy in this repo, the plugin mirror in a consumer.
+    Pure ASCII, per this repo's script-layer convention.
+
+.PARAMETER RootOverride
+    Repo root to resolve the enable state and the install record against, for the test suite. A
+    consumer never types this: the root is resolved dual-context like every other shared script.
+
+.PARAMETER UserHomeOverride
+    The home directory that '~/.claude' hangs off, for the test suite -- so a fixture can point both
+    the install record and the marketplace clone at a scratch tree. A consumer never types this.
+
+.PARAMETER Brief
+    Emit one marker-prefixed line per plugin that has something to say, plus a [SUMMARY] tally, and
+    nothing else -- no header, no per-plugin block, no colour. This is the shape a SessionStart hook
+    can put in front of a session (#1591); a person reading the answer wants the default view.
+
+.PARAMETER Json
+    Emit the same rows as ONE line of JSON and nothing else, for Admin's Plugins page (#3482), so the
+    page shows this script's own verdict rather than a second reading of the same files. Every non-ASCII
+    character is escaped, so the console code page of the process reading it cannot garble a field.
+    Adds what only a page shows: each plugin's description and its marketplace's clone line, and whether
+    the install record's installPath is still on disk.
+
+.EXAMPLE
+    ./scripts/task/plugin-versions.ps1
+#>
+[CmdletBinding()]
+param(
+    [string]$RootOverride = '',
+    [string]$UserHomeOverride = '',
+    [switch]$Brief,
+    [switch]$Json
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+# The source-repo guard, wired the way every shared entry point wires it: a string literal names the
+# lib (so scripts/tests/source-repo-guard.tests.ps1 can see the guard is present) and Assert-OwnCopy
+# is called. It refuses a released copy run from inside the repo that maintains it.
+$guardLib = Join-Path $PSScriptRoot '..\lib\source-repo-guard-lib.ps1'
+if (Test-Path -LiteralPath $guardLib -PathType Leaf) { . $guardLib; Assert-OwnCopy -ScriptPath $PSCommandPath }
+
+# Repo root -- dual context: a consumer running the shared plugin mirror gets it from
+# CLAUDE_PROJECT_DIR, a run inside this repo from git itself. RootOverride is the test seam.
+# JUDGED (#1917): Resolve-RepoRootOrFail is check-report-lib's refusing sibling of Resolve-CheckRoot
+# -- same precedence, but it names git's exit code and stderr instead of dying on $null.Trim().
+. (Join-Path $PSScriptRoot '..\lib\check-report-lib.ps1')
+$repoRoot = Resolve-RepoRootOrFail -Override $RootOverride -ScriptName 'plugin-versions.ps1' -OverrideName '-RootOverride'
+
+. (Join-Path $PSScriptRoot '..\lib\plugin-tree-lib.ps1')
+. (Join-Path $PSScriptRoot '..\lib\native-capture-lib.ps1')
+. (Join-Path $PSScriptRoot '..\lib\claude-md-import-lib.ps1')
+
+# --- small helpers ------------------------------------------------------------------------------
+
+function Format-ShortSha {
+    param([AllowNull()][string]$Sha)
+    if (-not $Sha) { return '(none)' }
+    if ($Sha.Length -le 12) { return $Sha }
+    return $Sha.Substring(0, 12)
+}
+
+function Get-ValidatedSha {
+    # A git commit sha is 7-40 hex characters. $GitCommitSha comes from installed_plugins.json and is
+    # interpolated into 'git rev-parse'/'git merge-base' below -- shape-check it first (defense in
+    # depth; the CLI writes that file and neither subcommand exposes a transport flag, so the risk is
+    # low, but the check is cheap) and treat anything else as no sha at all, so the caller falls
+    # through to the version comparison rather than handing a malformed value to git.
+    param([AllowNull()][string]$Sha)
+    if ($Sha -and $Sha -match '^[0-9a-f]{7,40}$') { return $Sha }
+    return ''
+}
+
+function Invoke-CloneGit {
+    # git run inside the marketplace clone. -DiscardStderr because the caller reads the output: git's
+    # progress lines are not the answer. The exit code is what -is-ancestor / -verify are asked for.
+    param([Parameter(Mandatory)][string]$CloneDir, [Parameter(Mandatory)][string[]]$GitArgs)
+    return Invoke-NativeCapture -FilePath 'git' -Arguments (@('-C', $CloneDir) + $GitArgs) -DiscardStderr
+}
+
+function Resolve-Clone {
+    <#
+        Everything readable about one marketplace clone: its dir, whether it is there, its HEAD sha and
+        date, the last-fetch time, and every plugin.json .version it carries keyed by plugin name.
+        Never throws -- a missing or unparseable clone is an ordinary state a consumer can be in, and
+        the verdict layer reports it.
+    #>
+    param([Parameter(Mandatory)][string]$Marketplace, [AllowEmptyString()][string]$UserHome)
+
+    $dir = if ($UserHome) { Join-Path $UserHome (Join-Path '.claude' (Join-Path 'plugins' (Join-Path 'marketplaces' $Marketplace))) } else { '' }
+    $info = [pscustomobject]@{
+        Marketplace   = $Marketplace
+        Dir           = $dir
+        Exists        = [bool]($dir -and (Test-Path -LiteralPath $dir -PathType Container))
+        IsGit         = $false
+        # SHALLOW IS A SEPARATE FACT FROM 'IS A GIT REPO' (#2218). A depth-1 clone is a real git repo
+        # with a real HEAD and a real ancestry test -- one that can only ever answer "no" about any
+        # commit but HEAD, because there IS no other commit in it. The verdict layer needs to know
+        # which of the two it holds, so it can tell an absent commit from an unanswerable question.
+        IsShallow     = $false
+        Head          = ''
+        HeadDate      = ''
+        FetchTime     = ''
+        PluginVersion = @{}
+        # The plugin.json .description, keyed like PluginVersion; only -Json shows it.
+        PluginDescription = @{}
+        # DECLARED BUT NOT IN THIS CLONE: the plugins the manifest lists with a url source instead of a
+        # path. Their payload is fetched from elsewhere, so the clone holds no plugin.json for them and
+        # PluginVersion cannot carry them -- but they ARE listed, and the verdict below owes them a
+        # different sentence from a name the manifest has never heard of.
+        RemoteNames   = @{}
+        Error         = ''
+    }
+    if (-not $info.Exists) { return $info }
+
+    # A 'github'-source marketplace (this one) is cloned as a real git repo, so HEAD and ancestry are
+    # available. Claude Code also fetches some marketplaces as a plain tree with the source commit in
+    # a '.gcs-sha' file and no .git -- then the sha is still readable but there is no history to walk.
+    $info.IsGit = (Test-Path -LiteralPath (Join-Path $dir '.git') -PathType Container)
+    if ($info.IsGit) {
+        $h = Invoke-CloneGit -CloneDir $dir -GitArgs @('rev-parse', 'HEAD')
+        if ($h.ExitCode -eq 0) { $info.Head = (@($h.Output) -join "`n").Trim() }
+        $d = Invoke-CloneGit -CloneDir $dir -GitArgs @('log', '-1', '--format=%cI', 'HEAD')
+        if ($d.ExitCode -eq 0) { $info.HeadDate = (@($d.Output) -join "`n").Trim() }
+        # ONE CALL, WITH A FILE TEST BEHIND IT. 'rev-parse --is-shallow-repository' is the direct
+        # answer but only exists since git 2.15; '.git/shallow' is the file it reads and has marked a
+        # shallow clone for far longer. So an older git falls back to the file rather than answering
+        # 'not shallow' by default -- which is exactly the mis-reading this field exists to stop.
+        #
+        # AND THE FALLBACK COMPOSES ITS PATH SEGMENT BY SEGMENT, unlike the FETCH_HEAD read below,
+        # which spells its separator (Sebastian and Edith, independently, on this branch). The
+        # difference is what a wrong answer costs: a missed FETCH_HEAD drops one informational field
+        # off the clone line, while a missed '.git/shallow' makes a shallow clone read as DEEP --
+        # which is this branch's own bug, arriving through its own fallback. A fallback may fail
+        # closed; it may not fail open into the defect it sits behind. It is also the line this
+        # script's skill page points at when it promises that every path here is composed with
+        # Join-Path.
+        $sh = Invoke-CloneGit -CloneDir $dir -GitArgs @('rev-parse', '--is-shallow-repository')
+        if ($sh.ExitCode -eq 0) {
+            $info.IsShallow = ((@($sh.Output) -join "`n").Trim() -ieq 'true')
+        } else {
+            $info.IsShallow = (Test-Path -LiteralPath (Join-Path (Join-Path $dir '.git') 'shallow') -PathType Leaf)
+        }
+    }
+    if (-not $info.Head) {
+        $gcs = Join-Path $dir '.gcs-sha'
+        if (Test-Path -LiteralPath $gcs -PathType Leaf) {
+            try { $info.Head = (Get-Content -LiteralPath $gcs -Raw -Encoding UTF8).Trim() } catch { }
+        }
+    }
+
+    # Last-fetch time, cheaply: the mtime of .git/FETCH_HEAD. Absent on a clone that has never
+    # fetched since it was made -- then the field stays empty and the header omits it.
+    $fetchHead = Join-Path $dir '.git\FETCH_HEAD'
+    if (Test-Path -LiteralPath $fetchHead -PathType Leaf) {
+        try { $info.FetchTime = (Get-Item -LiteralPath $fetchHead).LastWriteTime.ToString('s') } catch { }
+    }
+
+    try {
+        foreach ($r in @(Get-RepoPluginRoots -RepoRoot $dir -IncludeRemote)) {
+            if (-not $r.IsLocal) { $info.RemoteNames[$r.Name] = $true; continue }
+            $v = ''
+            $desc = ''
+            if (Test-Path -LiteralPath $r.ManifestPath -PathType Leaf) {
+                try {
+                    $mj = Get-Content -LiteralPath $r.ManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+                    $v = [string](Get-JsonField $mj 'version')
+                    $desc = [string](Get-JsonField $mj 'description')
+                } catch { $v = '' }
+            }
+            $info.PluginVersion[$r.Name] = $v
+            $info.PluginDescription[$r.Name] = $desc
+        }
+    } catch {
+        $info.Error = $_.Exception.Message
+    }
+    return $info
+}
+
+function Compare-Version {
+    # Negative / zero / positive for a < b / a == b / a > b: exactly -1 / 0 / 1 from [version] where
+    # both sides parse, otherwise the raw ordinal string comparison, whose SIGN is the answer and
+    # whose magnitude is not. $null when either side is empty. Every caller tests the sign only, and
+    # a future one must too.
+    param([AllowEmptyString()][string]$A, [AllowEmptyString()][string]$B)
+    if (-not $A -or -not $B) { return $null }
+    $va = $null; $vb = $null
+    if ([version]::TryParse($A, [ref]$va) -and [version]::TryParse($B, [ref]$vb)) { return $va.CompareTo($vb) }
+    return [string]::CompareOrdinal($A, $B)
+}
+
+# --- read the two sides -----------------------------------------------------------------------
+
+# One fixture knob (-UserHomeOverride) controls all three reads that hang off '~/.claude': the enable
+# state's user layer, the install record, and the marketplace clone. In a real run it is '' and each
+# falls back to $env:USERPROFILE / $HOME.
+$enabled = Get-EnabledPlugins -RepoRoot $repoRoot -UserHomeOverride $UserHomeOverride
+$ids = @($enabled.Ids)
+
+function Write-PluginVersionsJson {
+    <#
+        -Json's one line (#3482): the rows, each clone consulted, and where the enable state was read. The
+        reader is a page that HTML-escapes every field, so nothing is sanitized here beyond the escape of
+        every non-ASCII character, which keeps the line readable under any console code page.
+    #>
+    param([AllowEmptyCollection()][object[]]$Rows = @(), [AllowEmptyCollection()][object[]]$Clones = @(), [string]$Consulted = '')
+    $o = [pscustomobject]@{
+        Root      = [string]$repoRoot
+        Consulted = $Consulted
+        Plugins   = @($Rows)
+        Clones    = @($Clones | ForEach-Object {
+            [pscustomobject]@{ Marketplace = [string]$_.Marketplace; Dir = [string]$_.Dir; Exists = [bool]$_.Exists
+                Head = [string]$_.Head; HeadDate = [string]$_.HeadDate; FetchTime = [string]$_.FetchTime; IsShallow = [bool]$_.IsShallow; Error = [string]$_.Error }
+        })
+    }
+    $text = $o | ConvertTo-Json -Compress -Depth 5
+    [Console]::Out.WriteLine([regex]::Replace($text, '[^\x00-\x7F]', { param($x) '\u{0:x4}' -f [int][char]$x.Value }))
+}
+
+if (-not $Brief -and -not $Json) {
+    # The header names the checkout being reported on, which is the first thing a person reading the
+    # default view needs and the last thing a session start does: -Brief is read by a hook that
+    # already knows which repo it is in, and an absolute path is the one thing worth not repeating
+    # into a session's context on every start.
+    Write-Host ""
+    Write-Host "plugin-versions -- $repoRoot" -ForegroundColor Cyan
+}
+
+if ($ids.Count -eq 0) {
+    if ($Json) {
+        Write-PluginVersionsJson -Consulted ([string]$enabled.Summary)
+        exit 0
+    }
+    if ($Brief) {
+        Write-Host "[INFO] no plugins are enabled for this checkout -- nothing to compare."
+        exit 0
+    }
+    Write-Host ""
+    Write-Host "No plugins are enabled for this checkout." -ForegroundColor Yellow
+    Write-Host "  Consulted: $($enabled.Summary)."
+    Write-Host "  Nothing to compare. Enable a plugin in .claude/settings.json and re-run."
+    exit 0
+}
+
+$userHome = Get-UserClaudeHome -UserHomeOverride $UserHomeOverride
+$install = Get-InstallRecord -RepoRoot $repoRoot -UserHomeOverride $UserHomeOverride
+
+$marketplaces = [string[]]@($ids | ForEach-Object { ($_ -split '@')[-1] } | Select-Object -Unique)
+if ($marketplaces.Count -gt 1) { [array]::Sort($marketplaces, [System.StringComparer]::Ordinal) }
+$clones = @{}
+foreach ($mp in $marketplaces) { $clones[$mp] = Resolve-Clone -Marketplace $mp -UserHome $userHome }
+
+# --- per plugin: build a row --------------------------------------------------------------------
+
+$rows = New-Object System.Collections.Generic.List[object]
+# Retired plugin name -> its successor (#3055), the map consumer-prose-sessioncheck already warns from.
+$retiredNames = Get-RetiredPolicyExtensionNames
+
+foreach ($id in $ids) {
+    $parts = $id -split '@'
+    $name = $parts[0]
+    $mp = $parts[-1]
+    $clone = $clones[$mp]
+
+    # IS THIS ID SAFE TO BUILD A PASTE-READY COMMAND OUT OF? (Sebastian, #1591; widened to every site
+    # by #1803.) An 'enabledPlugins' key is an arbitrary JSON string from a settings file -- this
+    # file's own -Brief comment already names it as exactly that value class (inbound #309) -- and the
+    # $action strings below embed it, and the $mp derived from it, raw into a `claude plugin ...` line
+    # shaped for pasting into a shell verbatim. Format-SafeProseToken, applied at emission, deliberately
+    # does NOT restrict the charset: its whole reason for existing is that an id charset "deletes most
+    # of a sentence", so it keeps the punctuation a shell reads. A ';', a backtick, a '$()', a '|' or an
+    # '&' in an id therefore survives into that line.
+    #
+    # THE DOCTRINE IS Get-PasteableRef's (#1594): where the value fails validation the command is
+    # WITHHELD and the reason is said, because a guard whose own output is the injection surface is
+    # worse than no guard. Get-PasteableRef itself cannot be the check here -- its allowlist has no
+    # '@', so it refuses every legitimate plugin id -- but the id's allowlist already exists in this
+    # tree: the slug pair either side of the '@' (Test-PluginNameSlug / Test-PluginMarketplaceSlug),
+    # which is exactly $idIsCommandSafe. $mp is judged on its own half, since a `marketplace update`
+    # line carries only that segment.
+    #
+    # #1803 SETTLED THE TWO DECISIONS #1591 SCOPED OUT. (1) Withhold, not sanitize: a sanitized id
+    # produces `claude plugin update <altered-id>`, a command that cannot work, so every redacted
+    # command is replaced wholesale by one sentence saying why -- the shape Get-PasteableRef's .Note
+    # has, and the shape the 'not-installed' branch already used since #1591. (2) The default view is
+    # held to the same rule: its per-row block below now sanitizes every emitted field exactly as
+    # -Brief does, because a person pasting from a terminal is the higher-stakes paste target, not a
+    # lower one, and a legitimate plugin id is a clean lowercase slug pair -- so the guard refuses
+    # nothing anybody here has ever wanted (the same "costs nothing real" argument #1594 made after
+    # measuring all 994 of this repo's PR head refs against its own allowlist).
+    $mpIsCommandSafe = Test-PluginMarketplaceSlug -Marketplace $mp
+    $idIsCommandSafe = (Test-PluginNameSlug -Name $name) -and $mpIsCommandSafe
+
+    # THE PASTE-SAFE STAND-INS. Every `claude plugin ...` string below is built from $idTok / $mpTok
+    # rather than $id / $mp; where the real value was withheld the token carries a '<...>' placeholder,
+    # which the redaction step after the verdict chain detects and turns into the withhold sentence.
+    # A well-formed id -- the overwhelming common case -- passes both checks and $idTok / $mpTok ARE
+    # $id / $mp, so nothing changes for it.
+    $idTok = if ($idIsCommandSafe) { $id } else { '<plugin-id>' }
+    $mpTok = if ($mpIsCommandSafe) { $mp } else { '<marketplace>' }
+
+    # THE SCOPE HALF OF EVERY `claude plugin update` LINE BELOW (#1986). It was the literal 'project'
+    # until then, and the CLI refuses a scope a plugin is not installed at -- so for a machine-wide
+    # install, or for the 'local' record a session start writes without running anything, this page
+    # handed the reader a command that cannot work and told them it was the repair. Get-PluginUpdateScope
+    # answers it from $install, which this run has already read, and returns one of four literals rather
+    # than the file's own string -- so no byte of installed_plugins.json reaches a pasted command.
+    #
+    # THE `claude plugin install` LINES ARE NOT BUILT FROM IT, deliberately. All three of them prescribe
+    # installing INTO THIS CHECKOUT, which is what 'project' means and what the reader is being told to
+    # do; they are not asking where the plugin already lives.
+    #
+    # THE .Note IS READ AS WELL AS THE .Scope (Victor, on this branch). Where the administration could
+    # not answer, the fallback is 'project' -- which is the same string a CONFIRMED project record
+    # produces, so the two are indistinguishable in the printed command. update-plugins.ps1 says so in a
+    # block of its own; here it belongs on the installed-here line, beside the field it is about.
+    $updScopeInfo = Get-PluginUpdateScope -InstallRecord $install -PluginId $id
+    $updScope = $updScopeInfo.Scope
+
+    $recs = @()
+    if ($install.RecordsById.ContainsKey($id)) { $recs = @($install.RecordsById[$id]) }
+    $pathless = @()
+    if ($install.PathlessById.ContainsKey($id)) { $pathless = @($install.PathlessById[$id]) }
+
+    # -- installed-here summary --
+    $instVer = ''
+    $instSha = ''
+    $instScope = ''
+    $instText = ''
+    if ($recs.Count -eq 1) {
+        $instVer = [string]$recs[0].Version
+        $instSha = Get-ValidatedSha ([string]$recs[0].GitCommitSha)
+        $instScope = [string]$recs[0].Scope
+        $instText = "$(if ($instVer) { $instVer } else { '(no version)' })  $(Format-ShortSha $instSha)  $(if ($instScope) { $instScope } else { '(no scope)' })"
+        # THE ONE ROW WHERE A FALLBACK CAN HIDE. Every `claude plugin update` line below is reached only
+        # with exactly one record for this checkout, so this is the only branch whose printed scope can
+        # be a guess -- and a scope string the CLI does not accept would otherwise be printed here, raw,
+        # beside an unexplained '--scope project' with nothing connecting the two.
+        if ($updScopeInfo.Note) { $instText = "$instText  -- $($updScopeInfo.Note)" }
+    } elseif ($recs.Count -gt 1) {
+        $shown = @($recs | ForEach-Object { "$($_.Version)/$(Format-ShortSha ([string]$_.GitCommitSha))/$($_.Scope)" })
+        $instText = "$($recs.Count) CONFLICTING records for this checkout: $($shown -join ' , ')"
+    } elseif ($pathless.Count -ge 1) {
+        $p0 = $pathless[0]
+        $instText = "no record for this checkout; a $($p0.Scope)-scope record not tied to a path exists ($($p0.Version) $(Format-ShortSha ([string]$p0.GitCommitSha)))"
+    } elseif (-not $install.Exists) {
+        $instText = "no install administration on this machine ($($install.Path))"
+    } elseif (-not $install.Readable) {
+        $instText = "install administration could not be read: $($install.Error)"
+    } else {
+        $instText = "no install record in this checkout (enabled declaratively only)"
+    }
+
+    # -- marketplace-clone summary --
+    $cloneVer = ''
+    $cloneText = ''
+    $cloneHasPlugin = $false
+    if (-not $clone.Dir) {
+        $cloneText = "cannot resolve ~/.claude (no USERPROFILE / HOME set)"
+    } elseif (-not $clone.Exists) {
+        $cloneText = "no marketplace clone at $($clone.Dir)"
+    } elseif ($clone.PluginVersion.ContainsKey($name)) {
+        $cloneHasPlugin = $true
+        $cloneVer = [string]$clone.PluginVersion[$name]
+        $cloneText = "$(if ($cloneVer) { $cloneVer } else { '(no version in plugin.json)' })  $(if ($clone.IsGit) { 'HEAD' } else { 'sha' }) $(Format-ShortSha $clone.Head)"
+    } elseif ($clone.Error) {
+        $cloneText = "the clone's marketplace.json could not be read: $($clone.Error)"
+    } elseif ($clone.RemoteNames.ContainsKey($name)) {
+        $cloneText = "'$name' is listed, but its source is a url -- the clone holds no copy of it"
+    } else {
+        $cloneText = "'$name' is not listed in the clone's marketplace.json"
+    }
+
+    # -- verdict --
+    $code = 'indeterminate'
+    $verdict = ''
+    $action = ''
+    if (-not $clone.Exists -or -not $clone.Dir) {
+        $verdict = "cannot determine -- no marketplace clone to compare against"
+        $action = "add it once: claude plugin marketplace add <owner>/<repo>"
+    } elseif (-not $cloneHasPlugin) {
+        # Every other 'the clone cannot answer' branch names the command that would repair it, and
+        # this one read as a dead end for want of one. TWO WAYS OF NOT ANSWERING SHARED ONE COMMAND
+        # UNTIL #1987, on the reasoning that a refresh is the right first move either way. It is not.
+        #
+        # THE ABSENT-PLUGIN HALF IS UNCHANGED and the reasoning above still holds for it: the manifest
+        # parsed, the plugin simply is not in it, and a plugin added upstream since the last refresh is
+        # exactly what a behind clone looks like.
+        #
+        # THE PARSE-FAILURE HALF IS NOT A STALENESS PROBLEM, and prescribing the staleness command
+        # there can be advice that provably cannot work. Measured September 14, 2026 on
+        # claude-plugins-official: the refresh had ALREADY run and succeeded seconds earlier, in step 1
+        # of the same update-plugins run, and the parse still failed -- because the fault is on this
+        # side. Windows PowerShell 5.1's ConvertFrom-Json folds object keys case-insensitively, and
+        # that manifest legitimately carries both '.c' and '.C' (an lspServers extension map). The file
+        # is valid JSON; no number of refreshes changes what 5.1 can represent, so the reader was sent
+        # round a loop that terminates only when they stop believing the tool.
+        #
+        # SO THE ADVICE SPLITS AGAIN, ONE LAYER DOWN, AND NAMES THE FILE EITHER WAY. Where the message
+        # is that duplicated-key shape the cause is known and is ours, so the refresh is ruled OUT by
+        # name rather than left as a thing to try. Where it is anything else the clone's copy may
+        # genuinely be damaged, and then the refresh is still the first move -- but the reader is told
+        # to look at the file first, because that is what separates the two.
+        #
+        # THE DISCRIMINATOR MATCHES AN EXCEPTION MESSAGE, WHICH IS NOT A CONTRACT (Victor, on this
+        # branch; verified live against this machine's 5.1, which says "contains the duplicated keys
+        # 'a' and 'A'."). That wording is undocumented as an interface and is localisable.
+        #
+        # AND THE LOCALISATION RISK IS MEASURED HERE RATHER THAN HYPOTHESISED. On this very machine,
+        # the OTHER parse failure in this same branch comes back in Dutch -- "Ongeldige JSON-primitieve:
+        # not." -- while the duplicated-keys message comes back in English, because the two are raised
+        # from different resource sets (the serializer's, which follows the OS language pack, and
+        # PowerShell's own). So one message in this code path is already localised on a machine where
+        # the match still works, which is as close to a live warning as this class gets.
+        #
+        # THE FAILURE IS DELIBERATELY GRACEFUL rather than guarded against: a wording change drops the
+        # row into the generic branch below, which names the file and offers the refresh as
+        # conditional -- weaker advice, never wrong advice. That is why this is a $clone.Error -match
+        # rather than a second parse attempt: there is no cheap way to ask 5.1 "was it the case fold?"
+        # that does not re-read the file, and the cost of being wrong here is one sentence of
+        # specificity.
+        if ($clone.Error) {
+            $verdict = "cannot determine -- the clone's marketplace.json could not be read"
+            # THE PATH IS BUILT FROM THE RAW $mp, so it is held to the same withhold rule as every
+            # command on this page (#1803): where the marketplace segment failed its slug check the
+            # placeholder goes in instead, and the redaction step below the verdict chain replaces this
+            # whole action with the withhold sentence. A path is not a command, but it is still a line
+            # printed for a person to act on, and the guard costs a legitimate marketplace nothing.
+            $manifestPath = if ($mpIsCommandSafe -and $clone.Dir) { Get-MarketplacePath -RepoRoot $clone.Dir } else { "<marketplace>'s .claude-plugin/marketplace.json" }
+            if ($clone.Error -match 'duplicated keys') {
+                $action = "NOT a stale clone, so a refresh cannot help: $manifestPath is valid JSON that this reader cannot represent -- Windows PowerShell 5.1 folds JSON keys case-insensitively and that file carries two keys differing only in case"
+            } else {
+                $action = "read $manifestPath first -- a refresh only helps if the clone's copy is damaged: claude plugin marketplace update $mpTok"
+            }
+        } elseif ($clone.RemoteNames.ContainsKey($name)) {
+            # THE THIRD WAY OF NOT ANSWERING, and it is a refusal of the refresh for the same reason as
+            # the parse-failure branch above rather than a variant of the absent one below. The manifest
+            # is current and the plugin is in it; what the clone does not hold is the plugin's PAYLOAD,
+            # because the entry declares a url source and Claude Code fetches that separately. Refreshing
+            # the clone re-reads the same manifest and changes nothing -- the third loop of this shape
+            # that this row has prescribed, after the two #1987 split apart.
+            #
+            # NO COMMAND IS OFFERED, deliberately, because there is nothing wrong to repair: this is the
+            # normal and permanent state of a url-sourced plugin, and the install record above the
+            # verdict is the only side that can speak about its version at all.
+            $verdict = "cannot determine -- '$name' is declared with a url source, so the clone holds no plugin.json to read a version from"
+            $action = "nothing to run -- this is permanent for a url-sourced plugin, not a stale clone; the installed version above is the only one there is"
+        } elseif ($retiredNames.Contains($name) -and $clone.PluginVersion.ContainsKey([string]$retiredNames[$name])) {
+            # A RETIRED NAME, AND THE FOURTH WAY OF NOT ANSWERING (#3055). The clone dropped the old
+            # name on purpose (#2788) and lists its successor, so the absent-plugin advice below -- a
+            # refresh -- is the one move that provably cannot help: update-plugins runs that refresh as
+            # its own step 1, and then prescribed it again in its step-3 receipt. The successor being
+            # in THIS clone is the condition, not the map alone, so the verdict is never a guess.
+            $successor = [string]$retiredNames[$name]
+            $code = 'retired'
+            $verdict = "retired -- '$name' was renamed to '$successor' (#2788), so no refresh brings it back and nothing of it loads"
+            $action = Get-RetiredExtensionRepair -Name $name -Marketplace $mpTok
+        } else {
+            $verdict = "cannot determine -- '$name' is not in the clone's marketplace.json"
+            $action = "refresh the clone and re-run: claude plugin marketplace update $mpTok"
+        }
+    } elseif ($recs.Count -gt 1) {
+        $verdict = "cannot determine -- this checkout has $($recs.Count) conflicting install records"
+        $action = "repair: claude plugin install $idTok --scope project"
+    } elseif ($recs.Count -eq 0) {
+        if ($pathless.Count -ge 1) {
+            $verdict = "cannot determine for this checkout -- only a path-less (machine-wide) record exists"
+            $action = "install here: claude plugin install $idTok --scope project"
+        } elseif (-not $install.Readable -and $install.Exists) {
+            # AN ADMINISTRATION THAT DOES NOT PARSE YIELDS NO RECORDS, WHICH IS NOT THE SAME FACT AS
+            # HOLDING NONE (Victor, on this branch; the doctrine is inbound #302's). Get-InstallRecord
+            # hands back empty RecordsById either way, so this branch is reachable with the file sitting
+            # right there unreadable -- and the row would then state, confidently, that the plugin is not
+            # installed and that installing it is the remedy. Neither is known. The $instText block above
+            # already draws this distinction correctly, so the two halves of one row contradicted each
+            # other.
+            #
+            # IT STAYS 'indeterminate', AND THAT IS THE POINT OF FIXING IT HERE. The row's code is what
+            # -Brief now reads for its [ERROR]/[INFO] split, so leaving this inside 'not-installed' would
+            # have promoted a wrong diagnosis to the loudest marker the tool has, carrying a command that
+            # does not address the actual fault -- exactly what that split's own rule forbids. An honest
+            # "I cannot tell" is worth more than a confident wrong answer, and unlike the wrong answer it
+            # is actionable.
+            #
+            # NO INSTALL COMMAND IS HANDED OVER, which is why the $action below is set per branch rather
+            # than once for all of them: the fault is the file, not a missing install, and
+            # check-claude-home.ps1 is what owns that file's health (it also keeps the snapshot this is
+            # restorable from, #1609).
+            $verdict = "cannot determine -- the install administration exists but could not be read ($($install.Error)), so no record for this checkout could be looked up either way"
+            $action = "repair the administration first, then re-run: scripts/lint/check-claude-home.ps1 reports on that file and keeps a snapshot beside it"
+        } else {
+            # ITS OWN CODE, BECAUSE IT IS THE ONE UNDETERMINED VERDICT THAT IS NOT BOOKKEEPING (#1802).
+            # Every other 'cannot determine' on this page reports something about a cache or an
+            # administration this checkout does not own -- which is the stated ground for keeping them
+            # all quiet in -Brief. This one reports that the settings say to load a plugin and the
+            # machine has no record of it here: the session is loading none of it, right now, in the
+            # checkout the reader is standing in. The rule -Brief states for an [ERROR] is "the only
+            # verdict a reader closes with a command here and now", and this is the sole indeterminate
+            # branch that hands one over -- the $action two lines down. Sharing 'indeterminate' meant
+            # that rule and this row's own contents disagreed.
+            $code = 'not-installed'
+            $verdict = "cannot determine -- not installed in this checkout (enabled declaratively only)"
+
+            # The install command is built from $idTok, so an id that is not a valid slug on both
+            # halves leaves a '<plugin-id>' placeholder here that the redaction step below the verdict
+            # chain replaces with the withhold sentence -- the same treatment every other command site
+            # now gets (#1803). The verdict still stands: whether the plugin is installed here is a
+            # separate question from whether its id can safely be pasted into a shell.
+            $action = "install here: claude plugin install $idTok --scope project"
+        }
+    } elseif ($instSha -and $clone.Head) {
+        if ($instSha -ieq $clone.Head) {
+            $code = 'match'
+            $verdict = "up to date -- your install is at the clone's HEAD"
+            $action = "the clone advances only on: claude plugin marketplace update $mpTok"
+        } elseif (-not $clone.IsGit) {
+            # A non-git marketplace fetch: the shas differ but there is no history to say which way.
+            # Fall back to the version comparison entirely.
+            $verCmp = Compare-Version -A $instVer -B $cloneVer
+            if ($null -ne $verCmp -and $verCmp -lt 0) {
+                $code = 'behind'
+                $verdict = "the clone is AHEAD of your install ($instVer -> $cloneVer); the clone is a non-git fetch so the commit history cannot confirm direction"
+                $action = "claude plugin update $idTok --scope $updScope"
+            } elseif ($null -ne $verCmp -and $verCmp -gt 0) {
+                $code = 'clone-behind'
+                $verdict = "your install ($instVer) is AHEAD of the clone ($cloneVer)"
+                $action = "claude plugin marketplace update $mpTok"
+            } else {
+                $verdict = "cannot determine -- versions match ($instVer) but the recorded shas differ and the clone is a non-git fetch with no history to compare"
+                $action = "claude plugin marketplace update $mpTok   (then: claude plugin update $idTok --scope $updScope)"
+            }
+        } else {
+            $existsInClone = (Invoke-CloneGit -CloneDir $clone.Dir -GitArgs @('rev-parse', '-q', '--verify', "$instSha^{commit}")).ExitCode -eq 0
+            if (-not $existsInClone -and $clone.IsShallow) {
+                # A SHALLOW CLONE CANNOT BE ASKED THIS QUESTION, AND ITS "NO" IS NOT EVIDENCE (#2218).
+                # 'claude plugin marketplace update' does not fast-forward the clone -- it prints
+                # "Replacing the existing marketplace clone..." and re-clones at DEPTH 1. A depth-1
+                # clone holds exactly one commit, so every install sha other than the current HEAD is
+                # absent from it BY CONSTRUCTION, whatever the install's real relation to the clone.
+                # The sibling branch below reads that absence as a fact about the two sides and
+                # concludes "the clone is stale, or your install predates a history rewrite" -- and
+                # both halves were measured false in the source repo on September 20, 2026, seconds
+                # after a refresh, on 6 of 7 plugins at the SAME version on both sides. Worse, the
+                # command it then prescribed is the one that produced the state, so the advice looped
+                # and could never clear itself.
+                #
+                # SO THE VERSION STRINGS ARBITRATE ALONE HERE, and the verdict says WHY it cannot say
+                # more. That is not a weaker answer than the ancestry: 'claude plugin update'
+                # arbitrates on the version string too (measured, #1772), so where the versions agree
+                # there is nothing for any command to close, and where they differ the direction they
+                # give is the same direction the ancestry would have given.
+                #
+                # WHAT IS DELIBERATELY NOT CLAIMED is the 'unreleased' verdict of the deep-clone
+                # branch below. That one states that the clone holds NEWER commits carrying the same
+                # version, which is an ancestry fact -- true here far more often than not, and
+                # unanswerable from a clone with one commit in it. Saying "versions match, ancestry
+                # unanswerable" is the whole of what this run knows.
+                $verCmp = Compare-Version -A $instVer -B $cloneVer
+                if ($null -ne $verCmp -and $verCmp -lt 0) {
+                    $code = 'behind'
+                    $verdict = "the clone is AHEAD of your install ($instVer -> $cloneVer); the clone is SHALLOW, so its history says nothing about your install's commit"
+                    $action = "claude plugin update $idTok --scope $updScope"
+                } elseif ($null -ne $verCmp -and $verCmp -gt 0) {
+                    $code = 'clone-behind'
+                    $verdict = "your install ($instVer) is AHEAD of the clone ($cloneVer) -- the clone is stale (it is also SHALLOW, so its history says nothing about your install's commit)"
+                    $action = "claude plugin marketplace update $mpTok"
+                } elseif ($null -ne $verCmp) {
+                    # SETTLED HERE, UNSETTLED IN THE NON-GIT SIBLING ABOVE, and the divergence is
+                    # deliberate (Victor, on this branch). The two states look identical from the
+                    # inside -- equal versions, differing shas, an ancestry nothing can read -- and
+                    # what tells them apart is what the next run would DO about it:
+                    #
+                    #   * a refresh of a non-git fetch can genuinely bring a newer tree, so
+                    #     'cannot determine' there leaves a real question open and points at a real
+                    #     command;
+                    #   * a refresh of a shallow clone re-clones it shallow, so the question cannot
+                    #     be reopened by anything the reader can run.
+                    #
+                    # AND THE SECOND IS UNIVERSAL AND PERMANENT: every consumer is in it after every
+                    # marketplace refresh, for every plugin. Reporting it as undetermined would put an
+                    # [INFO] on every plugin at every session start, in the most ordinary state there
+                    # is -- the noise the -Brief split exists to prevent, and the exact shape #1772
+                    # already had to unwind once.
+                    $code = 'ver-match'
+                    $verdict = "versions match ($instVer); the recorded shas differ, but the clone is SHALLOW -- it holds one commit, so its history says nothing about your install's commit"
+                    $action = "nothing to run -- the versions are equal, which is all 'claude plugin update' arbitrates on, and refreshing the clone re-clones it shallow again"
+                } else {
+                    # NO COMMAND HERE, and that is load-bearing rather than modest (Victor, on this
+                    # branch). The row keeps the 'indeterminate' default, and the -Brief split's own
+                    # rule is that an [ERROR] is "the only verdict a reader closes with a command here
+                    # and now" -- which the not-installed branch above cites as its whole ground for
+                    # having a code of its own. A command handed over from an indeterminate row would
+                    # make that sentence false elsewhere in this same file, for a state nothing can
+                    # repair from here anyway: the version this run could not read sits in a file it
+                    # only reads, and refreshing the clone re-clones it shallow again.
+                    $missingSide = if (-not $instVer) { 'no version recorded for your install' } else { "no version in the clone's plugin.json" }
+                    $verdict = "cannot determine -- the clone is SHALLOW, so its history says nothing about your install's commit, and $missingSide, so the version strings cannot arbitrate either"
+                    $action = "nothing to run -- refreshing the clone re-clones it shallow and changes nothing here; the missing version is what would have to become readable"
+                }
+            } elseif (-not $existsInClone) {
+                $verCmp = Compare-Version -A $instVer -B $cloneVer
+                if ($null -ne $verCmp -and $verCmp -lt 0) {
+                    $code = 'behind'
+                    $verdict = "your install ($instVer, $(Format-ShortSha $instSha)) is BEHIND the clone ($cloneVer) and its commit is not in the clone's history"
+                    $action = "claude plugin update $idTok --scope $updScope  (then re-run; if it still differs: claude plugin marketplace update $mpTok)"
+                } else {
+                    $code = 'clone-behind'
+                    $verdict = "your install ($(Format-ShortSha $instSha)) is not in the clone's history -- the clone is stale, or your install predates a history rewrite"
+                    $action = "claude plugin marketplace update $mpTok"
+                }
+            } else {
+                $anc = (Invoke-CloneGit -CloneDir $clone.Dir -GitArgs @('merge-base', '--is-ancestor', $instSha, 'HEAD')).ExitCode -eq 0
+                if ($anc) {
+                    # THE VERSION STRINGS DECIDE WHETHER THERE IS ANYTHING TO RUN, and until #1772 they
+                    # did not: the ancestry says the clone's commit is newer, and the action was set
+                    # unconditionally to `claude plugin update`. That command arbitrates on the VERSION
+                    # STRING, so where the two sides carry the same one it has nothing to compare and
+                    # exits successfully without moving the install -- measured September 10, 2026 in
+                    # the source repo, on dkj-repo-workflow and dkj-repo-workflow-bwj at 4.33.0 on both sides:
+                    # "already at the latest version (4.33.0)". The run then reported them as behind and
+                    # handed over a command that reports success and changes nothing, which is the worst
+                    # shape a report can have: it looks acted on.
+                    #
+                    # AND IT IS THE NORMAL STATE OF EVERY CHECKOUT BETWEEN RELEASES, not an edge case.
+                    # The clone tracks the source's trunk and advances on a marketplace refresh; an
+                    # install sits on the last release. So the gap is UNRELEASED WORK, and no command
+                    # here closes it -- the next release cut does. That is also why nothing is
+                    # prescribed: an uninstall + re-install WOULD cross the boundary, but it would put a
+                    # consumer on code no release has shipped, which is not what a staleness report
+                    # should be nudging anyone towards, and this run has not measured that it works.
+                    if ($instVer -and $cloneVer -and $instVer -ne $cloneVer) {
+                        $code = 'behind'
+                        $verdict = "the clone is AHEAD of your install ($instVer -> $cloneVer)"
+                        $action = "claude plugin update $idTok --scope $updScope"
+                    } elseif ($instVer -and $cloneVer -and $instVer -eq $cloneVer) {
+                        $code = 'unreleased'
+                        $verdict = "your install is on the released version $instVer and the clone holds newer commits carrying that same version -- unreleased work, so there is no version gap for a plugin update to close"
+                        $action = "nothing to run -- 'claude plugin update' arbitrates on the version string and reports success without moving the install (measured, #1772); this closes at the next release cut"
+                    } else {
+                        # A VERSION STRING MISSING ON EITHER SIDE, so the two cases above cannot be told
+                        # apart: the newer commit may or may not cross a release boundary. The old
+                        # wording claimed "same version string" here whenever the install had one, which
+                        # was a wrong statement when it was the CLONE's plugin.json that had none.
+                        $code = 'behind'
+                        $missingSide = if (-not $instVer) { 'no version recorded for your install' } else { "no version in the clone's plugin.json" }
+                        $verdict = "the clone is AHEAD of your install (newer commit; $missingSide, so whether that crosses a release boundary cannot be read from here)"
+                        $action = "claude plugin update $idTok --scope $updScope"
+                    }
+                } else {
+                    # Present in the clone's history but not an ancestor of HEAD -- reachable after a
+                    # history rewrite in the clone where the old object survives but is unreachable from
+                    # HEAD. Let the version strings arbitrate direction first, exactly like the
+                    # -not $existsInClone sibling branch above, rather than assuming unconditionally
+                    # that the install is ahead.
+                    $verCmp = Compare-Version -A $instVer -B $cloneVer
+                    if ($null -ne $verCmp -and $verCmp -lt 0) {
+                        $code = 'behind'
+                        $verdict = "the clone is AHEAD of your install ($instVer -> $cloneVer); your install's commit is in the clone's history but not an ancestor of HEAD (history rewrite?)"
+                        $action = "claude plugin update $idTok --scope $updScope"
+                    } else {
+                        $code = 'clone-behind'
+                        $verdict = "your install is AHEAD of the clone -- the clone is stale"
+                        $action = "claude plugin marketplace update $mpTok"
+                    }
+                }
+            }
+        }
+    } elseif ($instVer -and $cloneVer) {
+        $cmp = Compare-Version -A $instVer -B $cloneVer
+        if ($cmp -eq 0) {
+            $code = 'ver-match'
+            # This branch is reached whenever EITHER side lacks a sha (the outer test above is
+            # '$instSha -and $clone.Head'), so attribute the gap to whichever side actually has it.
+            if (-not $instSha -and -not $clone.Head) {
+                $verdict = "versions match ($instVer); neither the install record nor the clone has a commit sha to compare finer"
+            } elseif (-not $instSha) {
+                $verdict = "versions match ($instVer); no commit sha in the install record to compare finer"
+            } else {
+                $verdict = "versions match ($instVer); the marketplace clone has no HEAD commit to compare finer"
+            }
+            $action = "if you expect newer: claude plugin marketplace update $mpTok"
+        } elseif ($cmp -lt 0) {
+            $code = 'behind'
+            $verdict = "the clone is AHEAD of your install ($instVer -> $cloneVer)"
+            $action = "claude plugin update $idTok --scope $updScope"
+        } else {
+            $code = 'clone-behind'
+            $verdict = "your install ($instVer) is AHEAD of the clone ($cloneVer) -- the clone is stale"
+            $action = "claude plugin marketplace update $mpTok"
+        }
+    } else {
+        # NAME WHICHEVER OF THE FOUR FIELDS IS ACTUALLY ABSENT, per field and not per side. This
+        # branch is reached as soon as ONE field is missing on each side -- not both -- so a
+        # per-side 'both empty' test leaves reachable states with nothing to say: an install record
+        # carrying a version but no sha (every record written before GitCommitSha existed) against
+        # a clone carrying a HEAD but no readable plugin.json version printed a bare
+        # 'cannot determine -- ' with the reason missing. The row's Code and the summary counters
+        # were right throughout, which is why nothing else showed it. Found by Victor on the pickup
+        # of this branch; the asymmetric combination is pinned in the suite.
+        $missing = @()
+        if (-not $instVer)    { $missing += 'no version in the install record' }
+        if (-not $instSha)    { $missing += 'no commit sha in the install record' }
+        if (-not $cloneVer)   { $missing += "no version in the clone's plugin.json" }
+        if (-not $clone.Head) { $missing += 'no HEAD or sha on the clone side' }
+        $verdict = "cannot determine -- $($missing -join '; ')"
+    }
+
+    # A PATH-LESS RECORD OLDER THAN THIS CHECKOUT'S OWN ONE IS A SECOND INSTALL, AND IT CAN WIN (#2442).
+    # Every verdict above is about the ONE record naming this checkout; the path-less records were read
+    # only when that record was absent. Measured September 24, 2026 in a consumer: a project record at
+    # 5.7.0 beside a path-less user-scope record at 5.0.0, and the skill set the session loaded matched
+    # 5.0.0 exactly -- while this row said "versions match (5.7.0) -- nothing to run". WHICH record the
+    # harness prefers is inferred from that one match, not from documentation, so the sentence below says
+    # "can load", not "loads". Only an OLDER path-less record is flagged: a newer one cannot be the stale
+    # side, and where this checkout's record is itself behind, the verdict above already says so.
+    #
+    # THE SCOPE IN THE COMMAND IS ONE OF Get-PluginScopeNames' LITERALS, never the file's own string --
+    # the same rule Get-PluginUpdateScope keeps. A scope the CLI does not accept withholds the command.
+    if ($recs.Count -eq 1 -and $instVer -and $pathless.Count -ge 1) {
+        $shadow = $null
+        foreach ($p in $pathless) {
+            $cmp = Compare-Version -A ([string]$p.Version) -B $instVer
+            if ($null -ne $cmp -and $cmp -lt 0) { $shadow = $p; break }
+        }
+        if ($shadow) {
+            $rawScope = [string]$shadow.Scope
+            $sScope = @(Get-PluginScopeNames | Where-Object { $_ -ieq $rawScope }) | Select-Object -First 1
+            $sLabel = if ($sScope) { "$sScope-scope" } else { 'unrecognised-scope' }
+            $sVer = [string]$shadow.Version
+            $instText = "$instText  -- AND a path-less $sLabel record at $sVer"
+            $ownVerdict = $verdict
+            $ownAction = $action
+            $wasBehind = ($code -eq 'behind')
+            $code = 'behind'
+            $verdict = "a path-less $sLabel record at $sVer sits beside this checkout's record at $instVer, and a session can load the older one (measured, #2442); this checkout's own record: $ownVerdict"
+            if ($sScope) {
+                $action = "claude plugin update $idTok --scope $sScope, then restart the session"
+                if ($wasBehind -and $ownAction) { $action = "$action; this checkout's own record too: $ownAction" }
+            } else {
+                $action = "no paste-ready command -- the path-less record names a scope this CLI does not accept; update it at the scope it was installed at, then restart the session"
+            }
+        }
+    }
+
+    # THE WITHHOLD SENTENCE, applied once for whichever command site above fell back to a placeholder
+    # (#1803). $idTok / $mpTok carry '<plugin-id>' / '<marketplace>' exactly when the real value failed
+    # its slug check, so their presence in $action is the signal that a `claude plugin ...` line was
+    # redacted. The command is replaced wholesale rather than shown with the placeholder in it: a
+    # `claude plugin update <plugin-id>` is a line that cannot be run, and Get-PasteableRef's doctrine
+    # (#1594) is that a withheld command is named, not half-printed. The verdict is untouched -- what
+    # state the plugin is in is a separate question from whether its id is pasteable.
+    if ($action -match '<plugin-id>|<marketplace>') {
+        $action = "no paste-ready command -- the 'enabledPlugins' key is not a valid plugin id (bad slug); fix it in .claude/settings.json and re-run"
+    }
+
+    # Only -Json reports it: a record whose installPath is gone loads nothing, whatever its version says.
+    $instPath = if ($recs.Count -eq 1) { [string]$recs[0].InstallPath } else { '' }
+    $rows.Add([pscustomobject]@{
+        Id        = $id
+        Name      = $name
+        Marketplace = $mp
+        InstVersion = $instVer
+        InstSha   = $instSha
+        InstScope = $instScope
+        InstText  = $instText
+        InstallPathMissing = [bool]($instPath -and -not (Test-Path -LiteralPath $instPath -PathType Container))
+        CloneText = $cloneText
+        CloneVer  = $cloneVer
+        Description = $(if ($clone.PluginDescription.ContainsKey($name)) { [string]$clone.PluginDescription[$name] } else { '' })
+        Code      = $code
+        Verdict   = $verdict
+        Action    = $action
+    })
+}
+
+# --- summary line first, then the per-plugin blocks ------------------------------------------
+
+$good = @($rows | Where-Object { @('match', 'ver-match') -contains $_.Code })
+$behind = @($rows | Where-Object { @('behind', 'clone-behind') -contains $_.Code })
+# ITS OWN BUCKET, AND NOT FOLDED INTO EITHER NEIGHBOUR (#1772). It is not 'behind': nothing here
+# closes the gap, so counting it there means every checkout between releases is told to run a command
+# that does nothing. And it is not 'up to date' either: the clone genuinely holds newer commits, which
+# is the fact somebody reading this report came for.
+$unreleased = @($rows | Where-Object { $_.Code -eq 'unreleased' })
+# 'not-installed' RIDES IN THIS BUCKET FOR THE DEFAULT VIEW, on purpose (#1802). It is still a
+# 'cannot determine' line to a person reading the full report, so every sentence below that counts
+# undetermined rows keeps counting it and none of them had to be re-derived. What changed is only its
+# MARKER in -Brief, which splits it back out -- the severity question and the bucket question have
+# different answers, and conflating them is what would have made this a wider change than it is.
+$unknown = @($rows | Where-Object { @('indeterminate', 'not-installed') -contains $_.Code })
+# ITS OWN BUCKET TOO (#3055): not 'could not be determined' -- the verdict is certain -- and not
+# 'behind', since no update command moves a name the marketplace no longer declares.
+$retired = @($rows | Where-Object { $_.Code -eq 'retired' })
+$total = $rows.Count
+
+if ($Json) {
+    Write-PluginVersionsJson -Rows $rows.ToArray() -Clones @($marketplaces | ForEach-Object { $clones[$_] }) -Consulted ([string]$enabled.Summary)
+    exit 0
+}
+
+# --- brief mode: marker lines a session start can carry, and nothing else -----------------------
+
+if ($Brief) {
+    <#
+        WHY THIS IS A MODE AND NOT A SECOND SCRIPT (#1591). On a machine with no sibling source
+        checkout beside the consumer, consumer-sessioncheck.ps1 has nothing to delegate to --
+        check-consumers.ps1 is source-only and is not plugin-carried -- so the hook printed
+        'no verified workshop checkout found -- check skipped' and a session got no version signal at
+        all. That is the ordinary state of every consumer, not an edge case. This mode is what the
+        hook prints there: the same rows the default view builds, reduced to one line per plugin that
+        has something to say.
+
+        THE MARKER SPLIT IS #1591'S OWN INSTRUCTION, not a preference. Only an install that is BEHIND
+        its clone is an [ERROR], because it is the only verdict a reader closes with a command here
+        and now. A stale CLONE is real and is deliberately NOT an error: it is the state of a cache
+        this checkout does not own, it costs nothing until the next update, and a session start that
+        shouts about it teaches the reader to skim the marker that does matter. Everything
+        undetermined is [INFO] for the same reason -- 'cannot determine' reports this machine's
+        bookkeeping, not a defect in the plugin.
+
+        A PLUGIN THAT IS UP TO DATE EMITS NOTHING, and the [SUMMARY] line is what keeps that from
+        being ambiguous: it carries the count, so silence per plugin reads as 'up to date' rather
+        than as 'not examined'. Under lockstep that is most of the run, which is the whole cost
+        argument for a brief mode existing.
+    #>
+    $behindOnly = @($rows | Where-Object { $_.Code -eq 'behind' })
+    $staleClone = @($rows | Where-Object { $_.Code -eq 'clone-behind' })
+    # THE SECOND [ERROR] VERDICT, AND THE ONLY ONE ADDED SINCE #1591 SET THE SPLIT (#1802). It passes
+    # that split's own test rather than widening it: a plugin enabled here with no install record for
+    # this checkout is loading nothing, in this checkout, and the row carries the one command that
+    # repairs it. Everything the split deliberately keeps quiet is unchanged -- a stale clone is still
+    # [INFO], unreleased clone commits are still [INFO], and every remaining 'cannot determine' is
+    # still [INFO], because each of those is a fact about a cache or an administration this checkout
+    # does not own. This one is a fact about this checkout.
+    #
+    # WHAT IT CANNOT REACH, said plainly so nobody reads more into it than it does: a checkout where NO
+    # enabled plugin has a record loads no hooks either, so nothing invokes this mode there and no
+    # marker of any severity appears. That is the #1802 life-hub state, and it is structurally out of
+    # reach from inside the affected checkout -- the vantage point that can see it is
+    # check-consumers.ps1 in the source repo, walking the register. What this marker fixes is the
+    # PARTIAL case: some plugins loaded, one enabled and never installed, and until now the reader was
+    # told so at the quietest marker the tool has.
+    $notInstalled = @($rows | Where-Object { $_.Code -eq 'not-installed' })
+    # Undetermined MINUS the row just split out, so the summary's own parts stay disjoint and the
+    # tally still adds up to $total. $unknown itself keeps both codes for the default view above.
+    $undetermined = @($unknown | Where-Object { $_.Code -eq 'indeterminate' })
+    # 'unreleased' IS [INFO] BY THE SAME RULE AS A STALE CLONE, and it is the case that rule was
+    # written for without knowing it: the only verdict worth an [ERROR] is the one a reader closes
+    # with a command here and now, and this one has no command at all (#1772). Before the split it was
+    # an [ERROR] at every session start of every checkout sitting between two releases -- the loudest
+    # marker this tool has, on the most ordinary state a consumer can be in, prescribing a no-op.
+
+    # EVERY FIELD ON A BRIEF LINE IS SANITIZED, and this mode is where that stops being optional
+    # (Sebastian, on #1591). The default view above prints to a terminal somebody is reading; these
+    # lines are forwarded verbatim into a session's CONTEXT by consumer-sessioncheck, on the common
+    # consumer path, at every start and every compaction. Two of the three fields are not the tool's
+    # own words:
+    #
+    #   * Id is an 'enabledPlugins' KEY NAME -- an arbitrary JSON string from a settings file, which
+    #     check-report-lib's own docstring names as the value class Format-SafeToken was built for
+    #     (inbound #309);
+    #   * Verdict and Action embed the version strings read from a per-plugin plugin.json inside a
+    #     marketplace clone, which is a git clone of a THIRD-PARTY repository.
+    #
+    # A newline in any of them forges a line. That is not only a prompt-injection surface: the hook
+    # selects the tally by matching '[SUMMARY]', so a forged 'up to date' summary smuggled inside a
+    # 'behind' row's own text could SUPPRESS the real warning that a plugin needs updating. Sanitizing
+    # at the point of emission closes both, and the marker vocabulary stays the tool's alone.
+    #
+    # TWO DIFFERENT SIBLINGS, because the Id and the verdict are not the same kind of value and the
+    # id charset would wreck a sentence. Format-SuspectToken for the Id: it IS an id, so that charset
+    # is exactly right, and where sanitizing altered it the reader is TOLD -- otherwise a stripped id
+    # reads as a valid one, and the id is the half somebody would act on. Format-SafeProseToken for
+    # the verdict and the action, which are sentences: it strips control characters, collapses the
+    # whitespace (which is also what neutralizes U+2028/U+2029, per that lib's own note), and
+    # SUBSTITUTES square brackets rather than deleting them -- which is the pass that closes the
+    # suppression chain, because a forged '[SUMMARY] ... up to date' smuggled into a version string
+    # becomes '(SUMMARY) ... up to date' and no hook counts it as a marker.
+    foreach ($row in $rows) {
+        $safeId = Format-SuspectToken -Value ([string]$row.Id)
+        $safeVerdict = Format-SafeProseToken -Value ([string]$row.Verdict) -MaxLength 400
+        $safeAction = Format-SafeProseToken -Value ([string]$row.Action) -MaxLength 200
+        if (@('behind', 'not-installed') -contains $row.Code) {
+            $line = "[ERROR] ${safeId}: $safeVerdict"
+            if ($safeAction) { $line += " -- $safeAction" }
+            Write-Host $line
+        } elseif (@('clone-behind', 'unreleased', 'indeterminate') -contains $row.Code) {
+            Write-Host "[INFO] ${safeId}: $safeVerdict"
+        } elseif ($row.Code -eq 'retired') {
+            # [INFO], not [ERROR]: consumer-prose-sessioncheck already raises this at every session
+            # start as a [WARNING] with the same repair, so a second loud marker would only repeat it.
+            Write-Host "[INFO] ${safeId}: $safeVerdict -- $safeAction"
+        }
+        # 'match' / 'ver-match': nothing to say, and the summary below says how many.
+    }
+
+    $parts = @("$($behindOnly.Count) behind")
+    if ($notInstalled.Count -gt 0) { $parts += "$($notInstalled.Count) enabled but not installed here" }
+    if ($staleClone.Count -gt 0) { $parts += "$($staleClone.Count) ahead of a stale clone" }
+    if ($unreleased.Count -gt 0) { $parts += "$($unreleased.Count) on the released version with unreleased clone commits" }
+    if ($undetermined.Count -gt 0) { $parts += "$($undetermined.Count) undetermined" }
+    if ($retired.Count -gt 0) { $parts += "$($retired.Count) retired" }
+    $parts += "$($good.Count) up to date"
+    Write-Host "[SUMMARY] $total plugin(s) enabled here: $($parts -join ', ')."
+    exit 0
+}
+
+Write-Host ""
+if ($good.Count -eq $total) {
+    # $_.CloneVer is a version string read out of a per-plugin plugin.json inside a third-party
+    # marketplace clone, so it is sanitized before it reaches the line (#1803), on the same grounds as
+    # the -Brief verdict text.
+    $vers = @($rows | ForEach-Object { $_.CloneVer } | Where-Object { $_ } | Sort-Object -Unique | ForEach-Object { Format-SafeProseToken -Value ([string]$_) -MaxLength 60 })
+    if ($vers.Count -eq 1) {
+        Write-Host "All $total plugin(s) up to date on $($vers[0])." -ForegroundColor Green
+    } else {
+        Write-Host "All $total plugin(s) match their marketplace clone (clone versions: $($vers -join ', '))." -ForegroundColor Green
+    }
+} elseif ($unknown.Count -eq $total) {
+    # THE CONDITION IS 'ALL of them undetermined', not 'none behind' as it was until #1772. The old
+    # test let this sentence fire while some rows were confirmed up to date, and it then said "none
+    # confirmed up to date" at a run that had confirmed several. Pinning it to the all-undetermined
+    # case keeps the missing-clone hint, which is the useful half, and stops it lying about the rest.
+    Write-Host "$total plugin(s): none confirmed up to date and none confirmed behind -- $($unknown.Count) could not be determined (see below; a missing marketplace clone is the usual cause)." -ForegroundColor Yellow
+} elseif ($behind.Count -eq 0) {
+    $bits = @()
+    if ($good.Count -gt 0)       { $bits += "$($good.Count) up to date" }
+    if ($unreleased.Count -gt 0) { $bits += "$($unreleased.Count) on the released version, with unreleased commits in the clone" }
+    if ($unknown.Count -gt 0)    { $bits += "$($unknown.Count) could not be determined" }
+    if ($retired.Count -gt 0)    { $bits += "$($retired.Count) retired, enable the successor instead" }
+    Write-Host "$total plugin(s): $($bits -join ', ') -- nothing to update (see below)." -ForegroundColor Yellow
+} else {
+    $tailBits = @()
+    if ($unknown.Count -gt 0)    { $tailBits += "$($unknown.Count) could not be determined" }
+    if ($unreleased.Count -gt 0) { $tailBits += "$($unreleased.Count) on the released version, with unreleased commits in the clone" }
+    if ($retired.Count -gt 0)    { $tailBits += "$($retired.Count) retired, enable the successor instead" }
+    $tail = if ($tailBits.Count -gt 0) { " ($($tailBits -join '; '))" } else { "" }
+    Write-Host "$($behind.Count) of $total plugin(s) behind -- run the update command shown for each$tail." -ForegroundColor Yellow
+}
+
+# one line about each clone consulted. The marketplace label is the segment after the last '@' of an
+# untrusted settings key, and $c.Dir is a path built from it -- sanitized on the same #1803 grounds as
+# the per-plugin block below: Format-SuspectToken for the slug, Format-SafePathToken for the path (its
+# id-charset sibling would eat the drive letter and separators).
+foreach ($mp in $marketplaces) {
+    $c = $clones[$mp]
+    $mpLabel = Format-SuspectToken -Value ([string]$mp)
+    $dirLabel = Format-SafePathToken -Value ([string]$c.Dir) -MaxLength 400
+    if ($c.Exists) {
+        $bits = @("$(if ($c.IsGit) { 'HEAD' } else { 'sha' }) $(Format-ShortSha $c.Head)")
+        if ($c.HeadDate) { $bits += "committed $($c.HeadDate)" }
+        if ($c.FetchTime) { $bits += "last fetch $($c.FetchTime)" }
+        if (-not $c.IsGit) { $bits += "non-git fetch" }
+        # THE ONE BIT THAT EXPLAINS A VERDICT RATHER THAN DESCRIBING THE CLONE (#2218). Every row
+        # below that says "the clone is SHALLOW" is saying it about this clone, and without this the
+        # reader has no way to check that claim short of running git themselves -- while a reader who
+        # has just been told the ancestry is unanswerable is exactly the one who will want to.
+        if ($c.IsShallow) { $bits += "shallow clone" }
+        Write-Host "  clone '$mpLabel': $dirLabel  [$($bits -join ', ')]" -ForegroundColor DarkGray
+    } else {
+        Write-Host "  clone '$mpLabel': not present ($dirLabel)" -ForegroundColor DarkGray
+    }
+}
+
+# THE DEFAULT VIEW SANITIZES EVERY EMITTED FIELD, EXACTLY AS -Brief DOES (#1803). The -Brief block
+# above forwards its lines into a session's context, which is why it has always sanitized; the default
+# view prints to a terminal a person reads and pastes from, which #1803 settled is the higher-stakes
+# paste target, not a lower one. Id, InstText, CloneText and Verdict all interpolate the untrusted
+# plugin id (or the $name / version strings derived from the same settings key and from a third-party
+# marketplace clone), so a control or format character in any of them could repaint the terminal or
+# forge a line; Action additionally carries the paste-ready command, already placeholder-guarded on
+# the paste axis by $idTok / $mpTok above. Format-SuspectToken for the id (it IS an id, and it says so
+# when sanitizing changed it); Format-SafeProseToken for the four sentences.
+foreach ($row in $rows) {
+    Write-Host ""
+    Write-Host (Format-SuspectToken -Value ([string]$row.Id)) -ForegroundColor White
+    Write-Host ("  installed here     " + (Format-SafeProseToken -Value ([string]$row.InstText) -MaxLength 400))
+    Write-Host ("  marketplace clone  " + (Format-SafeProseToken -Value ([string]$row.CloneText) -MaxLength 400))
+    $vcolor = switch ($row.Code) {
+        'match'      { 'Green' }
+        'ver-match'  { 'Green' }
+        # Green because the colour answers "must I do something?" and the answer is no: the install is
+        # on the released version and no command here moves it. The verdict text carries the rest.
+        'unreleased' { 'Green' }
+        'behind'     { 'Yellow' }
+        default      { 'Yellow' }
+    }
+    Write-Host ("  verdict            " + (Format-SafeProseToken -Value ([string]$row.Verdict) -MaxLength 400)) -ForegroundColor $vcolor
+    if ($row.Action) { Write-Host ("                     -> " + (Format-SafeProseToken -Value ([string]$row.Action) -MaxLength 400)) -ForegroundColor $vcolor }
+}
+
+Write-Host ""
+exit 0

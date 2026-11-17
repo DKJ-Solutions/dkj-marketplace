@@ -307,22 +307,22 @@ function New-IntegrityFixture {
     # but it means adding a plugin means adding it here too.
     New-Item -ItemType Directory -Path (Join-Path $Fixture '.claude-plugin') -Force | Out-Null
     # THE WORKFLOW FOLDER, since issue #998 (August 27, 2026). This fixture publishes
-    # dkj-policy, so it IS this workflow's source -- and #998 retired the source branch from
+    # dkj-repo-workflow, so it IS this workflow's source -- and #998 retired the source branch from
     # Get-DefaultChangelogPath, so its changelog resolves to dkj-policy/CHANGELOG.md like
     # every other repo's. The three suites that write a changelog into this fixture write it there.
-    New-Item -ItemType Directory -Path (Join-Path $Fixture 'dkj-policy') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $Fixture 'dkj-repo-workflow') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-alpha\.claude-plugin') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-shopify\.claude-plugin') -Force | Out-Null
-    New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-policy\.claude-plugin') -Force | Out-Null
-    New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-policy\extensions\bwj-development\.claude-plugin') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-repo-workflow\.claude-plugin') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\.claude-plugin') -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $Fixture '.claude-plugin\marketplace.json'), (@'
 {
   "name": "fixture-marketplace",
   "plugins": [
     { "name": "dkj-subagents-alpha",         "source": "./plugins/dkj-subagents/dkj-subagents-alpha" },
     { "name": "dkj-subagents-shopify",       "source": "./plugins/dkj-subagents/dkj-subagents-shopify" },
-    { "name": "dkj-policy", "source": "./plugins/dkj-policy" },
-    { "name": "bwj-development",              "source": "./plugins/dkj-policy/extensions/bwj-development" }
+    { "name": "dkj-repo-workflow", "source": "./plugins/dkj-repo-workflow" },
+    { "name": "dkj-repo-workflow-bwj",              "source": "./plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj" }
   ]
 }
 '@), $Utf8NoBom)
@@ -334,13 +334,13 @@ function New-IntegrityFixture {
     # measured instance of that same failure, after workflow-default.
     [System.IO.File]::WriteAllText((Join-Path $Fixture 'plugins\dkj-subagents\dkj-subagents-shopify\.claude-plugin\plugin.json'),
         "{ `"name`": `"dkj-subagents-shopify`", `"version`": `"0.0.1`" }`n", $Utf8NoBom)
-    [System.IO.File]::WriteAllText((Join-Path $Fixture 'plugins\dkj-policy\.claude-plugin\plugin.json'),
-        "{ `"name`": `"dkj-policy`", `"version`": `"0.0.1`" }`n", $Utf8NoBom)
-    # bwj-development (then dkj-policy-bwj) joined the registry on September 26, 2026 (#2509), with its mirrors of live-push-rules,
+    [System.IO.File]::WriteAllText((Join-Path $Fixture 'plugins\dkj-repo-workflow\.claude-plugin\plugin.json'),
+        "{ `"name`": `"dkj-repo-workflow`", `"version`": `"0.0.1`" }`n", $Utf8NoBom)
+    # dkj-repo-workflow-bwj (then dkj-policy-bwj) joined the registry on September 26, 2026 (#2509), with its mirrors of live-push-rules,
     # git-porcelain-lib and ref-print-lib -- the third measured instance of the failure the paragraph above
     # names: 15 unrelated scenarios failed in one suite before this list grew with it.
-    [System.IO.File]::WriteAllText((Join-Path $Fixture 'plugins\dkj-policy\extensions\bwj-development\.claude-plugin\plugin.json'),
-        "{ `"name`": `"bwj-development`", `"version`": `"0.0.1`" }`n", $Utf8NoBom)
+    [System.IO.File]::WriteAllText((Join-Path $Fixture 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\.claude-plugin\plugin.json'),
+        "{ `"name`": `"dkj-repo-workflow-bwj`", `"version`": `"0.0.1`" }`n", $Utf8NoBom)
 
     Copy-Item -Path $IntegritySrc -Destination (Join-Path $Fixture 'scripts\lint\check-plugin-integrity.ps1') -Force
     Copy-Item -Path $AgentSharedLibSrc -Destination (Join-Path $Fixture 'scripts\lib\subagent-shared-lib.ps1') -Force
@@ -397,9 +397,9 @@ function New-IntegrityFixture {
 
     # The reference PR template check 24 holds, written from the same function the check compares against
     # -- never typed out here, for the reason stated at the dot-source above.
-    New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-policy\templates') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $Fixture 'plugins\dkj-repo-workflow\templates') -Force | Out-Null
     [System.IO.File]::WriteAllText(
-        (Join-Path $Fixture 'plugins\dkj-policy\templates\pull_request_template.md'),
+        (Join-Path $Fixture 'plugins\dkj-repo-workflow\templates\pull_request_template.md'),
         (((Get-PrTemplateReference) -join "`n") + "`n"), $Utf8NoBom)
 
     $skillAlphaMd = "---`nname: skill-alpha`ndescription: Fixture skill alpha.`n---`n`n# Skill Alpha`n"

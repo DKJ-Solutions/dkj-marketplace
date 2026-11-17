@@ -3114,7 +3114,7 @@ try {
         # A NON-ZERO EXIT IS NOT PROOF THE CREATE DID NOT LAND (inbound #1916) -- the same doctrine
         # claim-issue already carries for its own write (its SKILL.md, "Every gh call is bounded"): a
         # write that reached the network and never reported back may have landed anyway. Measured in a
-        # consumer (BWJ-Development/smartwatchbanden, dkj-policy 5.1.0): a create that answered
+        # consumer (BWJ-Development/smartwatchbanden, dkj-repo-workflow 5.1.0): a create that answered
         # 'GraphQL: Something went wrong while executing your query', and two more that answered
         # 'HTTP 502: 502 Bad Gateway', had each actually created the PR -- found only on the FOURTH run,
         # by 'PR #591 was already open'. Test-GhMutationTransient (pr-issues-lib.ps1) tells a 5xx/

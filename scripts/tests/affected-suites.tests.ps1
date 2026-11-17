@@ -119,7 +119,7 @@ try {
     Assert-Equal '' (ConvertTo-SuiteReference -Value 'see the README.md file') 'prose with spaces is no reference'
     Assert-Equal '' (ConvertTo-SuiteReference -Value '*.tests.ps1') 'neither is a wildcard'
     Assert-Equal 'release-lib' (ConvertTo-SuiteReference -Value 'release-lib') 'a bare kebab name is kept -- the form a list of lib names takes'
-    Assert-Equal 'plugins/dkj-policy/claude.md' (ConvertTo-SuiteReference -Value 'plugins\dkj-policy\CLAUDE.md') 'and the result is lower case'
+    Assert-Equal 'plugins/dkj-repo-workflow/claude.md' (ConvertTo-SuiteReference -Value 'plugins\dkj-repo-workflow\CLAUDE.md') 'and the result is lower case'
     Assert-Equal '.gitignore' (ConvertTo-SuiteReference -Value '.gitignore') 'a dotfile is a file (Victor: the first pattern dropped it)'
     Assert-Equal 'license' (ConvertTo-SuiteReference -Value 'LICENSE') 'and so is an extensionless name'
 

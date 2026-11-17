@@ -11,7 +11,7 @@
 .DESCRIPTION
     NAMED adopt-merge-queue.ps1 UNTIL SEPTEMBER 13, 2026 (#1903), AND THE OLD NAME IS GONE RATHER THAN
     FORWARDED. Nothing machine-side ever called it -- the one executable reference is the run line on
-    adopt-dkj-policy's Part 3 page, and that page ships in the same plugin release as this file, so the
+    adopt-dkj-repo-workflow's Part 3 page, and that page ships in the same plugin release as this file, so the
     two cannot disagree in a consumer's tree. A shim at the old path would need its own registry entry
     and its own test: two maintained names for one script, which is precisely the ambiguity the rename
     removes. A consumer who had automated the old path gets a loud file-not-found instead of a second
@@ -248,7 +248,7 @@ $trunk = Get-BranchTrunkName
 $sharedRepo = 'DKJ-Solutions/dkj-marketplace'
 $sharedRef  = 'main'
 $sharedPath = '.workflow-scripts'
-$pluginDir  = "$sharedPath/plugins/dkj-policy/scripts"
+$pluginDir  = "$sharedPath/plugins/dkj-repo-workflow/scripts"
 
 # ACTIONS/CHECKOUT IS PINNED BY SHA IN THE TWO WRITE-CAPABLE RUNNERS BELOW (issue #1904).
 # This repo's own .github/workflows/fold-on-merge.yml and verify-resolved.yml have carried this pin
@@ -296,8 +296,8 @@ $checkoutPin = 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0
 # unguarded instead. Where not even the version can be read, the runners fall back to main, loudly.
 function Get-ScaffoldingPluginVersion {
     # Two layouts: the plugin mirror (scripts/task -> the plugin root, which holds .claude-plugin/) and
-    # this script's source copy (scripts/task -> the repo root, which holds plugins/dkj-policy/).
-    foreach ($rel in @('..\..\.claude-plugin\plugin.json', '..\..\plugins\dkj-policy\.claude-plugin\plugin.json')) {
+    # this script's source copy (scripts/task -> the repo root, which holds plugins/dkj-repo-workflow/).
+    foreach ($rel in @('..\..\.claude-plugin\plugin.json', '..\..\plugins\dkj-repo-workflow\.claude-plugin\plugin.json')) {
         $p = Join-Path $PSScriptRoot $rel
         if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { continue }
         try {
@@ -342,7 +342,7 @@ if ($SharedRefOverride) {
 $writeRunnerPinComment = @(
     '      # THE SHARED SCRIPTS ARE PINNED TO A RELEASE, NOT ref: main (issue #2333). This job holds a write',
     '      # credential, and code fetched at the tip of another repository would run beside it with no',
-    '      # release in between. Move the pin when you update the dkj-policy plugin: re-running',
+    '      # release in between. Move the pin when you update the dkj-repo-workflow plugin: re-running',
     '      # adopt-ci-floor.ps1 reports a runner pinned behind the version it came from.'
 )
 
@@ -576,7 +576,7 @@ $ciSkeletonCheckName = if (Test-QuotedScalarSafe -Value $ciSkeletonDeclaredName)
 
 $ciSkeletonRunner = @(
     '# A minimal CI workflow, scaffolded because no workflow of this repo''s own triggered on pull_request',
-    '# (issue #1843; the dkj-policy PR gates do not count, #2677). Its only purpose is to give this repo something to require on the trunk, which is',
+    '# (issue #1843; the dkj-repo-workflow PR gates do not count, #2677). Its only purpose is to give this repo something to require on the trunk, which is',
     '# what switches ship-pr''s detect-and-rebase staleness guard on -- see this command''s own section 1:',
     '# with no required check named, that guard has no certificate to date and is simply off.',
     '#',
@@ -1582,7 +1582,7 @@ function Write-WriteRunnerPinVerdict {
     }
     $ref = $m.Groups['ref'].Value
     $tag = if ($m.Groups['tag'].Success) { $m.Groups['tag'].Value } else { $ref }
-    $bump = if ($writeRunnerPinState -eq 'unpinned') { 'a release commit of the dkj-policy plugin' } else { Get-DisplayRef -Ref $writeRunnerRef }
+    $bump = if ($writeRunnerPinState -eq 'unpinned') { 'a release commit of the dkj-repo-workflow plugin' } else { Get-DisplayRef -Ref $writeRunnerRef }
 
     $vm = [regex]::Match($tag, '^v?(?<v>\d+\.\d+\.\d+)$')
     if (-not $vm.Success) {
@@ -2047,7 +2047,7 @@ if ($writeRunnerCreated) {
         default    {
             Write-Host '  [pin]     this plugin''s version could not be read, so the write runners fetch the shared scripts' -ForegroundColor Yellow
             Write-Host '            at main -- the tip, beside a write credential (#2333). Replace their ref: lines with a' -ForegroundColor Yellow
-            Write-Host '            release commit of the dkj-policy plugin before you store FOLD_PUSH_TOKEN.' -ForegroundColor Yellow
+            Write-Host '            release commit of the dkj-repo-workflow plugin before you store FOLD_PUSH_TOKEN.' -ForegroundColor Yellow
         }
     }
 }

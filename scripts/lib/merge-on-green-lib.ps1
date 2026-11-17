@@ -345,7 +345,7 @@ function Get-MergeOnGreenExecutedPathHit {
         repo's shape at all. It is the path where the CONSUMER runner that adopt-ci-floor.ps1 scaffolded
         before #2449 checks the pinned plugin tree out, INSIDE its PAT-bearing workspace, before it runs
         `git checkout` of the picked branch in place -- and git overwrites an ignored file on checkout. So
-        in that shape a branch that commits `.workflow-scripts/plugins/dkj-policy/scripts/release/ship-pr.ps1`
+        in that shape a branch that commits `.workflow-scripts/plugins/dkj-repo-workflow/scripts/release/ship-pr.ps1`
         REPLACES the trusted copy, and the runner then executes the branch's copy while holding
         FOLD_PUSH_TOKEN. #2437 dropped this prefix together with the other three and v5.8.0 shipped
         without it, so this is a SAFETY refusal, not a currency one. The source repo has no such

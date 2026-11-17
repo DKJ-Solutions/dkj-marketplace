@@ -277,7 +277,7 @@ gives, for the same reason. A repo that has not answered that seam is a repo tha
 automatic theme delete, which is a decision rather than a gap.
 
 **What the standing approval covers, and its bounds**, is not decided here. BWJ states it in
-`bwj-development`'s `THEME-LIFECYCLE-portable.md`; another consumer states it wherever their own safety
+`dkj-repo-workflow-bwj`'s `THEME-LIFECYCLE-portable.md`; another consumer states it wherever their own safety
 rules live.
 
 ## The seams
@@ -304,7 +304,7 @@ tidy-up. **A seam whose answer authorises something else is not a shared fact.**
 
 ## The cut/push order, because it decides what the backup *means*
 
-This workflow runs **push, then cut** -- and [`cut-release`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/skills/cut-release/SKILL.md)
+This workflow runs **push, then cut** -- and [`cut-release`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-repo-workflow/skills/cut-release/SKILL.md)
 argues for it on this exact target type: a Shopify live theme has no locking, third parties edit it
 through the theme editor while you work, and a live push is per-file rather than wholesale. Cutting
 first risks a **stranded release** -- a tag and a Release describing a state no customer ever saw, which

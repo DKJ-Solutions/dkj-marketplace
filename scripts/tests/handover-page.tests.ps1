@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
-    Tests for the preview handover page (#3925): plugins/dkj-policy/scripts/lib/qr-lib.ps1 (the QR code drawn locally),
-    plugins/dkj-policy/apps/admin/lib/handover-page-lib.ps1 (the model, its page and its route), and bwj-development's
+    Tests for the preview handover page (#3925): plugins/dkj-repo-workflow/scripts/lib/qr-lib.ps1 (the QR code drawn locally),
+    plugins/dkj-repo-workflow/apps/admin/lib/handover-page-lib.ps1 (the model, its page and its route), and dkj-repo-workflow-bwj's
     scripts/task/build-handover-page.ps1 (the builder, end to end against a fixture store).
 
     THE QR HALF IS HELD TO PUBLISHED VECTORS, not to a decoder: the Reed-Solomon codewords of ISO/IEC 18004's worked
@@ -13,10 +13,10 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Admin = Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib'
+$Admin = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib'
 . (Join-Path $Admin 'general-pages-lib.ps1')
 . (Join-Path $Admin 'handover-page-lib.ps1')
-$Builder = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development\scripts\task\build-handover-page.ps1'
+$Builder = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\scripts\task\build-handover-page.ps1'
 
 $script:pass = 0
 $script:fail = 0
@@ -121,24 +121,24 @@ try {
     Remove-Item -LiteralPath $fix -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-Write-Host '-- finding dkj-policy from the extension (#3993)' -ForegroundColor Cyan
-. (Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development\scripts\lib\repo-root-lib.ps1')
+Write-Host '-- finding dkj-repo-workflow from the extension (#3993)' -ForegroundColor Cyan
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\scripts\lib\repo-root-lib.ps1')
 $marker = 'apps\admin\lib\handover-page-lib.ps1'
-Assert-Equal (Join-Path $RepoRoot 'plugins\dkj-policy') (Resolve-DkjPolicyRoot -From (Split-Path -Parent $Builder)) 'in the source tree the root is four levels up'
+Assert-Equal (Join-Path $RepoRoot 'plugins\dkj-repo-workflow') (Resolve-DkjPolicyRoot -From (Split-Path -Parent $Builder)) 'in the source tree the root is four levels up'
 $cache = Join-Path ([System.IO.Path]::GetTempPath()) ('handover-cache-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
 try {
-    $task = Join-Path $cache 'mk\bwj-development\6.13.0\scripts\task'
+    $task = Join-Path $cache 'mk\dkj-repo-workflow-bwj\6.13.0\scripts\task'
     [void](New-Item -ItemType Directory -Path $task -Force)
     foreach ($v in '6.12.0', '6.13.0', '6.9.0') {
-        [void](New-Item -ItemType Directory -Path (Join-Path $cache "mk\dkj-policy\$v\apps\admin\lib") -Force)
-        [System.IO.File]::WriteAllText((Join-Path $cache "mk\dkj-policy\$v\$marker"), '#')
+        [void](New-Item -ItemType Directory -Path (Join-Path $cache "mk\dkj-repo-workflow\$v\apps\admin\lib") -Force)
+        [System.IO.File]::WriteAllText((Join-Path $cache "mk\dkj-repo-workflow\$v\$marker"), '#')
     }
-    Assert-Equal (Join-Path $cache 'mk\dkj-policy\6.13.0') (Resolve-DkjPolicyRoot -From $task) 'in the install cache it is the sibling dkj-policy at this plugin''s own version'
-    Remove-Item -LiteralPath (Join-Path $cache 'mk\dkj-policy\6.13.0') -Recurse -Force
-    Assert-Equal (Join-Path $cache 'mk\dkj-policy\6.12.0') (Resolve-DkjPolicyRoot -From $task) 'without that version, the highest one present (by version, not by string)'
-    Remove-Item -LiteralPath (Join-Path $cache 'mk\dkj-policy') -Recurse -Force
+    Assert-Equal (Join-Path $cache 'mk\dkj-repo-workflow\6.13.0') (Resolve-DkjPolicyRoot -From $task) 'in the install cache it is the sibling dkj-repo-workflow at this plugin''s own version'
+    Remove-Item -LiteralPath (Join-Path $cache 'mk\dkj-repo-workflow\6.13.0') -Recurse -Force
+    Assert-Equal (Join-Path $cache 'mk\dkj-repo-workflow\6.12.0') (Resolve-DkjPolicyRoot -From $task) 'without that version, the highest one present (by version, not by string)'
+    Remove-Item -LiteralPath (Join-Path $cache 'mk\dkj-repo-workflow') -Recurse -Force
     $thrown = ''; try { [void](Resolve-DkjPolicyRoot -From $task) } catch { $thrown = $_.Exception.Message }
-    Assert-True ($thrown -match 'not found' -and $thrown.Contains($marker)) 'with no dkj-policy at all it refuses, naming what it looked for'
+    Assert-True ($thrown -match 'not found' -and $thrown.Contains($marker)) 'with no dkj-repo-workflow at all it refuses, naming what it looked for'
 } finally {
     Remove-Item -LiteralPath $cache -Recurse -Force -ErrorAction SilentlyContinue
 }

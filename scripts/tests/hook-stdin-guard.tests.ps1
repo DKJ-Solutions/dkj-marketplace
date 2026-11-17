@@ -47,7 +47,7 @@
     hooks.json -- into a CI log on a PUBLIC repository. Those prints now pass ref-print-lib.ps1's strip,
     dot-sourced at the head of this file for the reasons stated there, and group 4 is the counter-case
     that keeps the call from being a comment. The site is registered as entry 14 of the standing
-    print-site list in plugins/dkj-policy/skills/new-branch/SKILL.md.
+    print-site list in plugins/dkj-repo-workflow/skills/new-branch/SKILL.md.
 
     Pure ASCII (repo convention for .ps1).
 #>
@@ -293,7 +293,7 @@ function Invoke-HookWithEmptyStdin {
     return [pscustomobject]@{ Code = $p.ExitCode; Out = $out; Err = $err }
 }
 
-$gwc = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\guard-working-copy.ps1'
+$gwc = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\guard-working-copy.ps1'
 $glt = Join-Path $RepoRoot 'plugins\dkj-subagents\dkj-subagents-shopify\hooks\guard-live-theme.ps1'
 
 Assert-True (Test-Path -LiteralPath $gwc -PathType Leaf) 'guard-working-copy.ps1 is where this suite expects it'
@@ -439,12 +439,12 @@ Write-Host "-- group 4: this suite's own printed values pass the console strip (
 # SEAM: that this file loaded the lib rather than merely naming it in a comment, and that a path and a
 # label are not routed through each other's function -- which is the one thing this file decided and
 # nothing else can check.
-$rtlPath   = 'plugins/dkj-policy/hooks/' + [char]0x202E + 'nosj.skooh'
+$rtlPath   = 'plugins/dkj-repo-workflow/hooks/' + [char]0x202E + 'nosj.skooh'
 $zwspEvent = 'Pre' + [char]0x200B + 'ToolUse'
 
 Assert-Equal $false ((Get-DisplayPath -Path $rtlPath).Contains([char]0x202E)) 'a tracked path carrying U+202E RIGHT-TO-LEFT OVERRIDE does not reach the console -- the \p{Cf} class check-plugin-integrity.ps1 does NOT hold a tracked path to'
 Assert-Equal $false ((Get-DisplayRef -Ref $zwspEvent).Contains([char]0x200B)) 'nor does a hooks.json event key carrying a zero-width space -- and no lint has an opinion about a JSON key at all'
-Assert-Equal 'plugins/dkj-policy/hooks/ nosj.skooh' (Get-DisplayPath -Path $rtlPath) 'the PATH keeps its length and its spaces, because a path has to survive being read off the screen and typed back'
+Assert-Equal 'plugins/dkj-repo-workflow/hooks/ nosj.skooh' (Get-DisplayPath -Path $rtlPath) 'the PATH keeps its length and its spaces, because a path has to survive being read off the screen and typed back'
 Assert-Equal 'Pre ToolUse' (Get-DisplayRef -Ref $zwspEvent) 'while the LABEL collapses and trims -- the contract difference that is why these two values take two functions'
 
 Write-Host ""

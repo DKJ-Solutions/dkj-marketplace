@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/extensions/bwj-development/hooks/guard-stale-paste-block.ps1 and its lib,
+    Tests for plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/hooks/guard-stale-paste-block.ps1 and its lib,
     scripts/lib/stale-paste-block-rules.ps1 -- the PreToolUse hook that refuses to ship a pull request
     closing an issue whose go-live block predates the issue's last reopen (inbound #2968), and to close an
     Asana-linked issue as completed by hand while it carries no block for this round (inbound #3004).
@@ -10,7 +10,7 @@
       1. THE COMMAND PARSER, in-process: which shell commands ship a PR, and which issues they name.
          An invocation counts and a mention does not; -GatesOnly is not a ship.
       2. THE FRESHNESS JUDGEMENT the hook asks (Get-AsanaPasteBlockVerdict in asana-task-lib.ps1) is
-         asserted in bwj-development.tests.ps1 beside its copy in the closed-message template, so it
+         asserted in dkj-repo-workflow-bwj.tests.ps1 beside its copy in the closed-message template, so it
          is not repeated here.
       3. THE HOOK, as a process, against a FAKE gh.exe compiled into a temp directory and put first on
          the PATH. The fake answers 'repo view', 'pr view' and 'api graphql' (per issue number) from files,
@@ -31,7 +31,7 @@
 #>
 $ErrorActionPreference = 'Continue'
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development'
+$PluginRoot = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj'
 $Hook       = Join-Path $PluginRoot 'hooks\guard-stale-paste-block.ps1'
 $HooksJson  = Join-Path $PluginRoot 'hooks\hooks.json'
 

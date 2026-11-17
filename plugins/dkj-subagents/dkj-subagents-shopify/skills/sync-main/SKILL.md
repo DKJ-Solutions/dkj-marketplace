@@ -334,7 +334,7 @@ reports the paths and the PR it would open, and writes nothing. No sync log entr
 mode, because there is no sync branch to carry it.
 
 **The back-flow PR's head ref is the deploy branch itself** (`live`, not a `sync/` branch), so the entry
-gate of a repo on `dkj-policy` does not exempt it by prefix. #3011 adds the exemption for it.
+gate of a repo on `dkj-repo-workflow` does not exempt it by prefix. #3011 adds the exemption for it.
 
 **Why the default pattern carries a capital.** The two consumers that wrote this script spell their sync
 commits differently: one writes `sync: live theme drift <date>`, the other has written `Sync main with

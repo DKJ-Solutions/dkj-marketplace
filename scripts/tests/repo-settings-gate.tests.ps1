@@ -43,7 +43,7 @@ $ErrorActionPreference = 'Stop'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $Script   = Join-Path $RepoRoot 'scripts\lint\check-repo-settings.ps1'
-$Mirror   = Join-Path $RepoRoot 'plugins\dkj-policy\scripts\lint\check-repo-settings.ps1'
+$Mirror   = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\lint\check-repo-settings.ps1'
 $RealCfg  = Join-Path $RepoRoot 'scripts\repo-config.ps1'
 $Workflow = Join-Path $RepoRoot '.github\workflows\repo-settings.yml'
 

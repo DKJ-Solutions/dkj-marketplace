@@ -62,7 +62,7 @@
     Get-ShopifyThemeDeleteMarker and the command carries it. That default is an absolute refusal and
     this script does not work around it: unanswered, the removals are PRINTED for a person to run.
     What the standing approval covers, and its bounds, is stated in
-    bwj-development/THEME-LIFECYCLE-portable.md rather than assumed here.
+    dkj-repo-workflow-bwj/THEME-LIFECYCLE-portable.md rather than assumed here.
 
     WHICH STORE IT TALKS TO: Get-ShopifyThemeEstateStore, a seam of its own rather than
     Get-ShopifyStoreDomain. The reasoning is in backup-live-theme.ps1's header -- answering that other
@@ -111,7 +111,7 @@ if (Test-Path -LiteralPath $guardLib -PathType Leaf) { . $guardLib; Assert-OwnCo
 
 . (Join-Path $PSScriptRoot '..\lib\command-probe-lib.ps1')
 # INBOUND #2032's git reads (ls-remote, branch) go through the same guarded, bounded, non-interactive
-# capture every other git/gh call in this plugin uses -- NOT fetch-attempt-lib.ps1, which is dkj-policy
+# capture every other git/gh call in this plugin uses -- NOT fetch-attempt-lib.ps1, which is dkj-repo-workflow
 # payload only and would be a cross-plugin dependency a Shopify-only consumer does not have.
 . (Join-Path $PSScriptRoot '..\lib\native-capture-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\theme-lifecycle-rules.ps1')

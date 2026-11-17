@@ -71,13 +71,13 @@ Decision by Dave, August 3, 2026.
 
 ### The two pages the workflow folder used to carry, and why they are gone
 
-**`.dkj/dkj-policy/` holds no `README.md` and no `CONTRIBUTING.md` any more** (Dave,
+**`.dkj/dkj-repo-workflow/` holds no `README.md` and no `CONTRIBUTING.md` any more** (Dave,
 [#2171](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2171), September 20, 2026, carried
 out for this repo's own copies by
 [#2179](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2179)): *"deze twee bestanden in een
 consumer's repo maakt het alleen maar meer ingewikkeld en zorgt voor meer inconsistenties. Er is nu maar
 1 CONTRIBUTING waar de consumer naar kan kijken, en dat is wat in de plugin staat."* **It was two pull
-requests that landed hours apart**: PR #2178 stopped `adopt-dkj-policy` scaffolding either page into a
+requests that landed hours apart**: PR #2178 stopped `adopt-dkj-repo-workflow` scaffolding either page into a
 consumer, and PR #2179 removed this repo's own copies — *because otherwise the sentence "there is only
 one CONTRIBUTING" is false in the very repo that ships it.* A consumer adopted before that day still
 carries both pages and nothing deletes them; `adopt-workflow-folder.ps1` reports them as legacy and
@@ -91,7 +91,7 @@ the history: the branch-document mechanics, the pull-request gates and the seam-
 [Derek's](specialist-05-05-lens.md); the fold, the cut and the live-stage no-op are
 [Rendall's](specialist-05-06-lens.md); the self-consumption and plugin-update procedure is
 [Sylvester's](specialist-05-15-lens.md#updating-the-plugins--in-every-other-checkout-of-this-repo) too. The portable half was never in either page and did not move:
-it is [`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portable.md), and the
+it is [`CONTRIBUTING-portable.md`](../../../plugins/dkj-repo-workflow/CONTRIBUTING-portable.md), and the
 duplication between it and a per-repo restatement is what #2171 retired.
 
 **The page had a life worth recording, because the same shape will be proposed again.** It was two
@@ -232,7 +232,7 @@ answers that only the owning specialist has to keep true.
   weakened by this and must not be: a citation is auditable and a paraphrase is not, and this tree has
   scar tissue from measurements rewritten until nothing in them was checkable. What is bounded is the
   *excerpt*. The **repo name, the file and the line** are published as before — they are already in
-  `consumers/` and in the `bwj-development` skill — and they are what carries the provenance, so the
+  `consumers/` and in the `dkj-repo-workflow-bwj` skill — and they are what carries the provenance, so the
   quote itself shrinks to the characters the check, the count or the argument actually turns on.
   Everything the finding does not read is the consumer's own wording and stays in the consumer's own
   tree.
@@ -291,8 +291,8 @@ Both stay as they are; what follows is the note that was missing.
   moment a cell explains *why* rather than *what*, it is a second copy free to drift, and the
   measurement belongs in the owning lens.
 - **The "81 of 89" tier measurement**, in both
-  [`RELEASES-portable.md`](../../../plugins/dkj-policy/RELEASES-portable.md) and
-  [`CONTRIBUTING-portable.md`](../../../plugins/dkj-policy/CONTRIBUTING-portable.md).
+  [`RELEASES-portable.md`](../../../plugins/dkj-repo-workflow/RELEASES-portable.md) and
+  [`CONTRIBUTING-portable.md`](../../../plugins/dkj-repo-workflow/CONTRIBUTING-portable.md).
   This one is the weaker case and is recorded as such: it is a portable-vs-portable pair, both shipped,
   both hand-maintained, and it is a *number* rather than a rule — so a re-measurement has to be applied
   twice, which is exactly the failure the rule above says to avoid. It stays because the two documents
@@ -348,12 +348,12 @@ otherwise be false about her own manual. The citations belong here:
   `skillOverrides` states outright that plugin skills are not affected by it. **The other two failed on
   reach rather than on content**, and that is what turned the observation into a rule:
   - **Wrong plugin root.** Derek's and Rendall's portable personas were the natural owners of a chain
-    command, and they are `dkj-subagents-alpha` — a plugin that ships neither `dkj-policy`'s scripts nor a
+    command, and they are `dkj-subagents-alpha` — a plugin that ships neither `dkj-repo-workflow`'s scripts nor a
     dependency on it, so `${CLAUDE_PLUGIN_ROOT}` written there resolves into the wrong root.
-  - **Right owner, wrong reach.** `dkj-policy/CLAUDE.md` *is* the correct owner -- that page has
+  - **Right owner, wrong reach.** `dkj-repo-workflow/CLAUDE.md` *is* the correct owner -- that page has
     since merged into the folder's `CONTRIBUTING.md` (#886, August 26, 2026), and the argument reads the same
     against its successor -- and
-    `adopt-dkj-policy`'s Part 1 never overwrites — so the sentence would have reached new adopters only, while
+    `adopt-dkj-repo-workflow`'s Part 1 never overwrites — so the sentence would have reached new adopters only, while
     the reporter, who already had the folder, would never have seen it. The fix landed in
     `new-branch/SKILL.md` instead: plugin payload, replaced by an update, and the one skill in that chain
     deliberately left model-invocable.
@@ -435,7 +435,7 @@ that applies here.
 
 **The measurement**, taken September 19, 2026 with `git grep` against `origin/main` -- the ref is
 named because the first pass was run on a local trunk 11 commits behind and reported different
-figures -- outside the `.dkj/dkj-policy/releases/**`
+figures -- outside the `.dkj/dkj-repo-workflow/releases/**`
 historical carve-out: **270 occurrences of `agent def` / `agent-def` / `agent defs` across 87
 markdown files**, against **11** of `subagent def(inition)`, plus **195 lines** of the same in `.ps1`
 comments, docstrings and console output across 50 scripts.

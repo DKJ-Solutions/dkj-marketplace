@@ -215,7 +215,7 @@ demonstrated on this procedure, with nothing said.
 
 ## The live-push record it writes for the cut (#2570, #2586)
 
-**A green run writes a second thing beside the push command: the live-push record.** `dkj-policy`'s cut
+**A green run writes a second thing beside the push command: the live-push record.** `dkj-repo-workflow`'s cut
 builds two documents about the same release -- the GitHub Release body and the hand-written audience note
 -- and neither could see what the push actually carried, which is how a BWJ store's v1.3.0 listed a held-back
 fix as landed on the Release page, and a solved task as done while 21 files were still on live. One record,
@@ -229,7 +229,7 @@ the drift check withheld the command, because then the old version stays on live
 `not-a-theme-path` row gets no line at all -- it does not exist on a theme, so it cannot be live or held
 there. A file under `Get-ShopifyAppRoot` is the exception that does get a line: `live`, because the app
 deploy printed beside the record carries it (#3176). The format and the parser are one definition, in
-`scripts/lib/live-record-lib.ps1`, which this plugin, `dkj-policy` and `bwj-development` all carry as a
+`scripts/lib/live-record-lib.ps1`, which this plugin, `dkj-repo-workflow` and `dkj-repo-workflow-bwj` all carry as a
 byte-identical mirror.
 
 **Held a file back AFTER this ran? Edit the record, not the push command.** The decision to hold a file
@@ -244,7 +244,7 @@ notify-live.ps1 ... -LivePushRecord "<path this run printed>"
 
 **A failed write warns rather than refuses.** The push itself is still right; only the cut's two documents
 lose their input, and the cut says so when it runs without one. See the
-[`cut-release` skill](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-policy/skills/cut-release/SKILL.md#the-live-push-record--what-a-push-then-cut-repo-hands-to-the-cut-2570-2586)
+[`cut-release` skill](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-repo-workflow/skills/cut-release/SKILL.md#the-live-push-record--what-a-push-then-cut-repo-hands-to-the-cut-2570-2586)
 for what the cut does with it.
 
 ## The backup's moment moved, and that changed what it is for

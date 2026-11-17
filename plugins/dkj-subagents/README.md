@@ -1,7 +1,7 @@
 # The teams — who the specialists are
 
 **Every plugin in this directory is a team: a set of specialists a repo can enable.** Its sibling
-[`../dkj-policy/`](../dkj-policy/) holds the other kind of plugin, which answers a different question —
+[`../dkj-repo-workflow/`](../dkj-repo-workflow/) holds the other kind of plugin, which answers a different question —
 not *who* the specialists are, but *how* work moves through the repo. That split is the organising
 idea behind both directories, and it is argued in full below under
 [Teams and workflows — what's the difference?](#teams-and-workflows--whats-the-difference).
@@ -11,9 +11,9 @@ idea behind both directories, and it is argued in full below under
 sections was moved here faithfully rather than rewritten —
 dated decisions, measurements and issue numbers are kept as recorded. The other pieces of that root
 document went to [`../ADOPTION.md`](../ADOPTION.md) (consumption, the bootstrap path, removal,
-invocation, where this runs), `../dkj-policy/README.md` (versioning, the
+invocation, where this runs), `../dkj-repo-workflow/README.md` (versioning, the
 skills-design philosophy — retired in turn on October 2, 2026, its versioning now in
-[`../dkj-policy/RELEASES-portable.md`](../dkj-policy/RELEASES-portable.md#cutting-a-release)), [`../../.claude/specialists/lenses/specialist-06-16-lens.md`](../../.claude/specialists/lenses/specialist-06-16-lens.md)
+[`../dkj-repo-workflow/RELEASES-portable.md`](../dkj-repo-workflow/RELEASES-portable.md#cutting-a-release)), [`../../.claude/specialists/lenses/specialist-06-16-lens.md`](../../.claude/specialists/lenses/specialist-06-16-lens.md)
 (one product, one repository) and
 [`../../.claude/specialists/lenses/specialist-05-15-lens.md`](../../.claude/specialists/lenses/specialist-05-15-lens.md)
 (the repo layout).
@@ -39,12 +39,12 @@ invisible, since nobody reads both copies in one sitting.
 `dkj-subagents-alpha` is the foundation and belongs in every consuming repo. Each further team **adds
 specialists**, so enabling two of them raises no conflict — a Shopify store repo that is also a
 commercial webshop legitimately enables `dkj-subagents-shopify` and `dkj-subagents-ecomm` alongside the core. That is
-the property that separates this directory from `../dkj-policy/`: a team hands the repo more
+the property that separates this directory from `../dkj-repo-workflow/`: a team hands the repo more
 colleagues, while a workflow hands it an answer to a question that can only have one.
 
 **That used to read "where **at most one** plugin may be enabled at a time", and it had been false
 twice over.** [#886](https://github.com/DaveKJohn/claude-code-specialists/issues/886) retired the check
-that counted enabled workflows, and the BWJ extension (then `dkj-policy-bwj`, now `bwj-development`) has been a second enabled one since August 31,
+that counted enabled workflows, and the BWJ extension (then `dkj-policy-bwj`, now `dkj-repo-workflow-bwj`) has been a second enabled one since August 31,
 2026 — additive rather than competing, which is why it is safe. The distinction the sentence exists to
 draw survives: stacking teams is *free*, while a second way of working has to be shown not to answer a
 question the first one already answers.
@@ -72,7 +72,7 @@ unclassifiable name switches the check off for itself rather than merely reading
 **This page used to claim the two sides of that pairing were asymmetrical in different ways, and now
 they are asymmetrical in the same way.** It read *"a workflow is named `workflow-<name>` and lives under
 `plugins/workflows/`"*; since [#1467](https://github.com/DaveKJohn/claude-code-specialists/issues/1467)
-that directory is `plugins/dkj-policy/` and names the **government** rather than the kind, so only
+that directory is `plugins/dkj-repo-workflow/` and names the **government** rather than the kind, so only
 `*-policy` and `*-policy-*` are held to a location there — `workflow-*`, `contributing-*` and `*-codex`
 are still accepted as names and held to no directory at all. **The teams' half caught up to that same
 shape on September 9, 2026**
@@ -128,10 +128,10 @@ repo.** That split arrived on August 8, 2026, when the branch/release workflow m
 into a pack of its own — the packaging consequence of
 [the plugin serves the consumer's repo](#the-plugin-serves-the-consumers-repo), below. Read the table
 with that split in mind: `dkj-subagents-lifehub`, `dkj-subagents-shopify` and `dkj-subagents-ecomm` are
-add-on teams, `dkj-policy` is the one answer offered to the workflow question, and only the core team
+add-on teams, `dkj-repo-workflow` is the one answer offered to the workflow question, and only the core team
 is for everyone. **Teams stack** — a consuming repo enables `dkj-subagents-alpha` plus as many add-on
 teams as its domain calls for. **Workflows are opt-in** — a repo that enables none keeps the way of
-working it already had. There is one general workflow, `dkj-policy`, plus one deliberately narrow,
+working it already had. There is one general workflow, `dkj-repo-workflow`, plus one deliberately narrow,
 additive one — see below.
 
 **"At most one workflow" was a checked rule until August 26, 2026, and it is recorded here rather than
@@ -151,7 +151,7 @@ workflow is ever added here, nothing will notice both being enabled, so that day
 question again rather than finding the check gone.
 
 **That day came on August 31, 2026, and the question was answered rather than skipped:
-`bwj-development` is a deliberate second workflow.** It is safe alongside `dkj-policy`
+`dkj-repo-workflow-bwj` is a deliberate second workflow.** It is safe alongside `dkj-repo-workflow`
 because it is **additive and non-overlapping** — it extends only the *ticket-work* step that sits
 before a branch (how a discovered issue is filed and mirrored to Asana in BWJ's two Shopify store
 repos and, for ticket handling alone, this plugin's own source repo, admitted September 14, 2026,
@@ -166,14 +166,14 @@ these — nothing counts them, so adding one means making this call again on the
 (`[plugin-kind]`) in [`check-plugin-integrity.ps1`](../../scripts/lint/check-plugin-integrity.ps1) holds
 every published plugin to being a team or a way of working **by name**, and holds two of those name
 shapes to a directory as well: `dkj-subagents-*` under `plugins/dkj-subagents/`, and `*-policy` /
-`*-policy-*` under `plugins/dkj-policy/`. It used to say the hook counted a workflow by
+`*-policy-*` under `plugins/dkj-repo-workflow/`. It used to say the hook counted a workflow by
 the `workflow-` prefix and nothing else; now the teeth are internal — **the directory half is derived
 from the name**, so a plugin matching none of those shapes has its location held against nothing at all,
 and an unclassifiable name switches the check off for itself.
 
 **Since [#1467](https://github.com/DaveKJohn/claude-code-specialists/issues/1467) the remaining
 shapes — `workflow-*`, `contributing-*`, `*-codex` — are accepted by name and held to no location, and
-that is a real narrowing.** `plugins/workflows/` used to name the *kind*; it is `plugins/dkj-policy/` now
+that is a real narrowing.** `plugins/workflows/` used to name the *kind*; it is `plugins/dkj-repo-workflow/` now
 and names the **government**, so there is no directory left to send a stranger's `workflow-*` plugin to.
 Ordering one into this government would be worse than saying nothing, and refusing the name outright
 would make this family's renames somebody else's problem — so the shapes stay recognised and lose only
@@ -195,8 +195,8 @@ the directory rule rides along with the name, unaffected, exactly as this paragr
 | [`dkj-subagents-lifehub/`](dkj-subagents-lifehub/) | **An add-on team.** Five specialists for a personal information hub / brain-based knowledge repo (Astrid, Fiona, Hugo, Ian, Onyx). Deliberately domain-flavored: they know their repo and teammates by name. | Only a life-hub-style repo. |
 | [`dkj-subagents-shopify/`](dkj-subagents-shopify/) | **An add-on team.** Three specialists for a Shopify store repo (Liam · Liquid, Sandra · store management, Steven · configuration) plus four domain skills of its own (`adopt-shopify-floor`, `push-preview`, `start-task`, `sync-main`). Also deliberately domain-flavored. | Only a Shopify repo (e.g. smartwatchbanden). |
 | [`dkj-subagents-ecomm/`](dkj-subagents-ecomm/) | **An add-on team.** E-commerce specialists for a commercial webshop repo of any platform (Sergio · SEO, Craig · CRO, Sean · performance/SEA). Platform-agnostic, and complementary to a platform team rather than exclusive. | Any commercial webshop repo — including a Shopify repo alongside `dkj-subagents-shopify`. |
-| [`dkj-policy/`](../dkj-policy/) | **The workflow — a way of working, not a team.** DaveKJohn's own branch-and-entry model, packaged so a repo can *choose* it: the workflow skills (`new-branch`, `open-pr`, `ship-pr`, `fold-changelog`, `cut-release`, `park`, `fix-mojibake`, `adopt-dkj-policy` and the rest — the plugin's own README carries the full list), their shared scripts, the session hooks that belong to running this across several repos, and one Stop hook that keeps a branch's development document on `origin` (#900). Also ships a **config blueprint** — the source's own answers to the repo-owned seam, with the reasoning behind each — which `adopt-dkj-policy`'s Part 2 places or proposes (see below). Carries **no specialists** — it changes how the existing ones work, not who they are. | Only a repo that deliberately wants *this* way of working on top of its own. |
-| [`bwj-development/`](../dkj-policy/extensions/bwj-development/) | **A narrow, additive workflow.** BWJ's codex — the binding rules its two Shopify store repos operate under. Four chapters: **ticket handling** — a discovered issue is filed on GitHub first, mirrored to Asana as a colleague-friendly variant that lands in the board's `Filed` section; afterwards the `asana-closed-message` workflow a store copies posts on the task when the issue is closed, reopened or parked on hold, while the card moving and the reconciliation sweep of the old CI mirror stay retired, so a person moves the card and the plugin never resolves the task itself; and **the sync log** — a `sync/` branch is exempt from the changelog by design and owes `.dkj/bwj-development/SYNC-LOG.md` instead, written by `dkj-subagents-shopify`'s `sync-main.ps1`; and **the preview handover** — where a preview is owed, the handover is a pair per market, the preview beside the live control, whose URL pins the live theme id because `preview_theme_id` sets a cookie and the bare URL then keeps serving the preview, and that pair travels as one link to a published page with a QR code per market, never as a table of URLs a terminal wraps past selecting and a phone cannot scan; and **the theme lifecycle** — added September 13, 2026: the release cut backs the live theme up as a verified baseline and rotates the previous one out, and a live push is followed by a sweep of the spent preview themes this repo created, both keyed on a reserved name prefix so a theme somebody else created is never touched and the live theme is refused by id and by role. Skills (`report-issue`, `adopt-bwj-development`, `publish-page`, `build-backlog-page`, `golive-block`, `prepare-release`, `notify-live`), five hooks (the gate on the Asana create-task call by the reach label, the stale go-live block guard before a ship or close, the question before a reopen of an Asana-linked issue, the pickup check for an issue with no Asana link, and the closed-message session check), no specialists. Extends only the ticket-work step of `dkj-policy`, what a sync branch owes, what a preview handover contains and how it travels, and what the theme estate owes at a push and a cut; contradicts nothing it decides. | BWJ's two store repos for all four chapters, or this plugin's own source repo for ticket handling alone (admitted September 14, 2026, commit `b9b2a65a`); requires `dkj-subagents-alpha` **and** `dkj-policy` — the sync and theme-lifecycle chapters also expect `dkj-subagents-shopify`. |
+| [`dkj-policy/`](../dkj-repo-workflow/) | **The workflow — a way of working, not a team.** DaveKJohn's own branch-and-entry model, packaged so a repo can *choose* it: the workflow skills (`new-branch`, `open-pr`, `ship-pr`, `fold-changelog`, `cut-release`, `park`, `fix-mojibake`, `adopt-dkj-repo-workflow` and the rest — the plugin's own README carries the full list), their shared scripts, the session hooks that belong to running this across several repos, and one Stop hook that keeps a branch's development document on `origin` (#900). Also ships a **config blueprint** — the source's own answers to the repo-owned seam, with the reasoning behind each — which `adopt-dkj-repo-workflow`'s Part 2 places or proposes (see below). Carries **no specialists** — it changes how the existing ones work, not who they are. | Only a repo that deliberately wants *this* way of working on top of its own. |
+| [`dkj-repo-workflow-bwj/`](../dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/) | **A narrow, additive workflow.** BWJ's codex — the binding rules its two Shopify store repos operate under. Four chapters: **ticket handling** — a discovered issue is filed on GitHub first, mirrored to Asana as a colleague-friendly variant that lands in the board's `Filed` section; afterwards the `asana-closed-message` workflow a store copies posts on the task when the issue is closed, reopened or parked on hold, while the card moving and the reconciliation sweep of the old CI mirror stay retired, so a person moves the card and the plugin never resolves the task itself; and **the sync log** — a `sync/` branch is exempt from the changelog by design and owes `.dkj/dkj-repo-workflow-bwj/SYNC-LOG.md` instead, written by `dkj-subagents-shopify`'s `sync-main.ps1`; and **the preview handover** — where a preview is owed, the handover is a pair per market, the preview beside the live control, whose URL pins the live theme id because `preview_theme_id` sets a cookie and the bare URL then keeps serving the preview, and that pair travels as one link to a published page with a QR code per market, never as a table of URLs a terminal wraps past selecting and a phone cannot scan; and **the theme lifecycle** — added September 13, 2026: the release cut backs the live theme up as a verified baseline and rotates the previous one out, and a live push is followed by a sweep of the spent preview themes this repo created, both keyed on a reserved name prefix so a theme somebody else created is never touched and the live theme is refused by id and by role. Skills (`report-issue`, `adopt-dkj-repo-workflow-bwj`, `publish-page`, `build-backlog-page`, `golive-block`, `prepare-release`, `notify-live`), five hooks (the gate on the Asana create-task call by the reach label, the stale go-live block guard before a ship or close, the question before a reopen of an Asana-linked issue, the pickup check for an issue with no Asana link, and the closed-message session check), no specialists. Extends only the ticket-work step of `dkj-repo-workflow`, what a sync branch owes, what a preview handover contains and how it travels, and what the theme estate owes at a push and a cut; contradicts nothing it decides. | BWJ's two store repos for all four chapters, or this plugin's own source repo for ticket handling alone (admitted September 14, 2026, commit `b9b2a65a`); requires `dkj-subagents-alpha` **and** `dkj-repo-workflow` — the sync and theme-lifecycle chapters also expect `dkj-subagents-shopify`. |
 
 In short: **`dkj-subagents-alpha` is the foundation; everything else is optional, along two different axes.**
 `dkj-subagents-lifehub` and `dkj-subagents-shopify` describe what *kind* of repo it is, so a repo
@@ -208,7 +208,7 @@ consumer's repo lens); the add-on teams name their domain explicitly, because on
 enables them.
 
 **The workflow slot sits on neither team axis, and the plugin in it answers a different question than
-"what kind of repo is this".** `dkj-policy` carries an owner's name because it is *his* branch
+"what kind of repo is this".** `dkj-repo-workflow` carries an owner's name because it is *his* branch
 discipline, not a standard. A repo that adopts the specialists gets colleagues; it does not get somebody
 else's branch discipline along with them — and since August 26, 2026 that is true **by there being
 nothing in the slot to receive**, rather than by a `workflow-default` plugin standing in the slot to
@@ -225,7 +225,7 @@ Two of the plugins serve a **commercial webshop** and are built to work together
 - **`dkj-subagents-shopify`** — the *platform* layer: theme code, store management, configuration for a Shopify store.
 - **`dkj-subagents-ecomm`** — the platform-agnostic *disciplines* that any webshop needs: SEO, CRO, and performance/SEA.
 
-They sit on different axes — one is "which platform," the other is "which marketing disciplines" — so they complement rather than replace each other. A **Shopify** store repo typically enables **both**; a **non-Shopify** webshop enables just `dkj-subagents-ecomm`. The other plugins — `dkj-subagents-alpha` (the core team), `dkj-subagents-lifehub` and the workflow plugin `dkj-policy` — fall outside this e-commerce grouping. This is a reading aid, not a packaging change: every plugin is still enabled or disabled on its own.
+They sit on different axes — one is "which platform," the other is "which marketing disciplines" — so they complement rather than replace each other. A **Shopify** store repo typically enables **both**; a **non-Shopify** webshop enables just `dkj-subagents-ecomm`. The other plugins — `dkj-subagents-alpha` (the core team), `dkj-subagents-lifehub` and the workflow plugin `dkj-repo-workflow` — fall outside this e-commerce grouping. This is a reading aid, not a packaging change: every plugin is still enabled or disabled on its own.
 
 ## The plugin serves the consumer's repo
 
@@ -243,10 +243,10 @@ stand in opposite relations to a consumer's own rules:
 - **A team adapts to the repo it lands in.** `dkj-subagents-alpha` and the add-on teams describe a *craft*,
   and a craft that overrode its host would be worth less, not more — which is what the test question
   below is for.
-- **`dkj-policy` is adopted BY the consumer, and it wins — on the cycle, not on everything.** The
+- **`dkj-repo-workflow` is adopted BY the consumer, and it wins — on the cycle, not on everything.** The
   workflow's own page says so: *"where the two disagree, the workflow's page wins"* (Dave,
   August 14, 2026, in
-  [`CONTRIBUTING-portable.md`](../dkj-policy/CONTRIBUTING-portable.md)). The source repo's own
+  [`CONTRIBUTING-portable.md`](../dkj-repo-workflow/CONTRIBUTING-portable.md)). The source repo's own
   `.claude/rules/this-repo.md` restates it
   from the other side **with its scope attached**, and the scope is the half worth quoting: *"where the
   two disagree, the plugin's page wins. It does not replace anything below; it adds the workflow's own
@@ -260,7 +260,7 @@ stand in opposite relations to a consumer's own rules:
   nothing — so read it as evidence of which way the rule points, not as enforcement.
 
 **Opt-in is what reconciles the two, and it describes the INSTALL rather than the obedience.** Nobody
-is handed this way of working: `dkj-policy` is enabled by choice and absent by default, and the
+is handed this way of working: `dkj-repo-workflow` is enabled by choice and absent by default, and the
 enforcement moved out with it, so a repo that works differently is told nothing at session start. What
 installing it means is that the consumer has chosen to be governed by it — and from that moment the
 adaptation runs the other way, with the consumer's own page yielding on the cycle. The August 8
@@ -297,16 +297,16 @@ shipped alongside them was.
 [`scripts/repo-config.ps1`](../../scripts/repo-config.ps1) looks like the seam that makes the workflow
 adaptable, and its 19 functions genuinely do let a consumer change the trunk name, the merge method and
 the folder grouping. But those are *parameters* of a single changelog model, and the model itself is
-fixed in [`entry-scaffold-lib.ps1`](../dkj-policy/scripts/lib/entry-scaffold-lib.ps1). A consumer
+fixed in [`entry-scaffold-lib.ps1`](../dkj-repo-workflow/scripts/lib/entry-scaffold-lib.ps1). A consumer
 could tune our way of working; they could not have their own. And
-[`check-script-contract.ps1`](../dkj-policy/scripts/sync/check-script-contract.ps1) *enforces*
+[`check-script-contract.ps1`](../dkj-repo-workflow/scripts/sync/check-script-contract.ps1) *enforces*
 that they supply those functions — so a repo that worked differently was not adapted to. It was told at
 every session start that it was misconfigured.
 
 **What the packaging now does about it.** Both files named above are in the paths they are because the
 47% moved out on the same day: the workflow skills, their scripts, the two session hooks that audit a
 repo against this way of working, and the libs only those scripts read now ship as
-[`dkj-policy`](#teams-and-workflows--whats-the-difference) — enabled by choice, absent
+[`dkj-repo-workflow`](#teams-and-workflows--whats-the-difference) — enabled by choice, absent
 by default. The enforcement went with them, which is the half that mattered most: a repo that works
 differently is no longer told anything at session start, because the checker that had the opinion is
 not there. And `specialists-init` stops scaffolding what it cannot justify — a consumer without the
@@ -320,7 +320,7 @@ enforcement out fixed the repo that works differently; it left the repo that wor
 re-deriving twenty values by hand, because the checker only ever named the **fallback** a shared script
 uses — never what this repo chose, or why. The pack therefore ships a **config blueprint**: each seam
 function with the source's own text, comments and reasoning included, and a marker saying whether that
-answer is safe to take. The [`adopt-dkj-policy`](../dkj-policy/skills/adopt-dkj-policy/SKILL.md)
+answer is safe to take. The [`adopt-dkj-repo-workflow`](../dkj-repo-workflow/skills/adopt-dkj-repo-workflow/SKILL.md)
 skill's Part 2 reads it, **places** what states the shared way of working, and **proposes** — never places — what
 states what a repo *is*, in a document a person works through.
 
@@ -350,11 +350,11 @@ which the post itself compresses to **Agent = Model + Harness**:
 | **scaffold** — *"the behavior-defining layer around the model: system prompt, tool descriptions, how the model's responses get parsed, what it remembers across steps"* | **every plugin here** — the personas, the manuals, the agent defs, the skills |
 | **agent** | the **running session**: harness + model + this scaffold. Never a directory and never a file |
 | **subagent** — *"an agent called by another agent to handle a specific subtask"* | what a session spawns from a `subagents/*.md` definition |
-| **policy** — *"the behavior an agent follows: given any situation, it defines the probability of taking each possible action"* | what `dkj-policy` encodes, in prose instead of weights: work is finished → open a PR; a merge landed → fold the entry; a finding appears → file an issue |
+| **policy** — *"the behavior an agent follows: given any situation, it defines the probability of taking each possible action"* | what `dkj-repo-workflow` encodes, in prose instead of weights: work is finished → open a PR; a merge landed → fold the entry; a finding appears → file an issue |
 
 **The scaffold here has two halves, and they are the same two this page names in its own words.**
 `dkj-subagents-*` encodes **who acts** — the personas, their craft rules, their tool access.
-`dkj-policy` encodes **what follows** — given a situation in a repo, which action comes next. "Team" and
+`dkj-repo-workflow` encodes **what follows** — given a situation in a repo, which action comes next. "Team" and
 "workflow" are this repo's names for those halves, and they are deliberately not agent-anatomy terms:
 they answer *what does this give me*, which is the question somebody choosing a plugin actually has. The
 bridge is the point of the table above — **the workflow plugin is the policy half of the scaffold** — and
@@ -369,7 +369,7 @@ neither vocabulary has to give way to the other.
   structural sense, where it names a **subagent definition** under `agents/` and the main thread is
   called *the main conversation* instead. This repo means the structural sense wherever it writes *agent
   def*, and calls the running thing *the session*.
-- **`policy`** is an ML term of art in the source above and an ordinary English word in `dkj-policy`'s
+- **`policy`** is an ML term of art in the source above and an ordinary English word in `dkj-repo-workflow`'s
   name. Both readings land in the same place here, which is unusual and is the reason that name survived
   review: a document saying *in situation X, do Y* is a policy in either sense.
 
@@ -380,12 +380,12 @@ ship as subagents in `subagents/`, and four main-loop personas in `personas/`.
 ### Three plugin-id renames declined, one carried out (Dave, September 9, 2026)
 
 [#1697](https://github.com/DKJ-Solutions/claude-code-specialists/issues/1697) proposed carrying the
-anatomy into the plugin ids: `dkj-policy` → `dkj-agent`, `bwj-development` → `dkj-scaffold-bwj`, a new
+anatomy into the plugin ids: `dkj-repo-workflow` → `dkj-agent`, `dkj-repo-workflow-bwj` → `dkj-scaffold-bwj`, a new
 `dkj-scaffold-core`, and `dkj-teams`/`dkj-team-*` → `dkj-subagents`/`dkj-subagents-*`. Three of those
 were declined and the reasoning is recorded here, because it is the kind of proposal that arrives again:
 
 - **`dkj-agent` is the one name the source rules out.** *"A policy is not an agent. The policy defines
-  behavior; the agent is the full system that acts."* And `plugins/dkj-policy/**` ships no `agents/`
+  behavior; the agent is the full system that acts."* And `plugins/dkj-repo-workflow/**` ships no `agents/`
   directory at all, so the name would promise subagents the plugin does not carry — the exact failure it
   was meant to cure.
 - **`scaffold` cannot distinguish one plugin from another**, because on the definition above every
@@ -393,8 +393,8 @@ were declined and the reasoning is recorded here, because it is the kind of prop
   namespace — which `dkj-` and `@dkj-marketplace` already are. It would also collide with the two
   established senses listed above, in a tree that has spent real effort keeping them sharp.
 - **`dkj-scaffold-core` cannot reach its own content.** `${CLAUDE_PLUGIN_ROOT}` resolves per installed
-  plugin and does not cross plugin boundaries. `bwj-development` already demonstrates the consequence:
-  nested inside `plugins/dkj-policy/` on disk, it still has to cite `CONTRIBUTING-portable.md` by
+  plugin and does not cross plugin boundaries. `dkj-repo-workflow-bwj` already demonstrates the consequence:
+  nested inside `plugins/dkj-repo-workflow/` on disk, it still has to cite `CONTRIBUTING-portable.md` by
   absolute URL. Moving that page into a plugin of its own would break every same-directory link in the
   workflow's pages plus the skills and hooks that resolve through that variable.
 - **A plugin rename is not a `claude plugin update`.** It is uninstall, install under the new id, and a
@@ -412,7 +412,7 @@ on September 24, 2026; the release notes of that version carry it.
 
 What the three declined renames earned instead is this section and each plugin's `displayName` — the
 label a person reads when choosing what to install. Both were free there: none of those three ids
-changed, so `dkj-policy`, `bwj-development` and a would-be `dkj-scaffold-core` left no consumer anything
+changed, so `dkj-repo-workflow`, `dkj-repo-workflow-bwj` and a would-be `dkj-scaffold-core` left no consumer anything
 to migrate. The fourth id did change, and the paragraph above is its migration cost, not a footnote to
 this one.
 
@@ -733,7 +733,7 @@ between rows carry no backticked first cell and are passed over without a rule o
 
 **This is not check 8.** That one holds each mirror's *content* against its source, so it proves the
 file on disk is the right file. Nothing before this asked whether the page that tells a consumer
-*which files exist* still names them all — which is how `plugins/dkj-policy/scripts/README.md` went
+*which files exist* still names them all — which is how `plugins/dkj-repo-workflow/scripts/README.md` went
 stale against its own registry three times (three rows in August 2026, then the header and the
 destination split, then 21 rows in
 [#1486](https://github.com/DaveKJohn/claude-code-specialists/issues/1486)) while every gate stayed
@@ -765,7 +765,7 @@ reminder is what a derivation makes unnecessary.
    used to owe a `CHANGELOG.md` intro and a `RELEASE.md` card as well, and both were retired with the
    documents themselves.
 2. **The name, and where it sits.** `dkj-subagents-<name>` under `plugins/dkj-subagents/`, `<name>-policy-<ministry>`
-   under `plugins/dkj-policy/` — for a **team**, always the first; a **workflow** is the rare exception, see
+   under `plugins/dkj-repo-workflow/` — for a **team**, always the first; a **workflow** is the rare exception, see
    the diverging note at step 4 below. Since August 9, 2026 this is not a style preference, and since
    [#886](https://github.com/DaveKJohn/claude-code-specialists/issues/886) the reason is a different
    one: the prefix used to decide whether the core team's `workflow-sessioncheck` hook counted the

@@ -65,7 +65,7 @@ $ErrorActionPreference = 'Stop'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $Script   = Join-Path $RepoRoot 'scripts\lint\check-consumer-prose.ps1'
-$Hook     = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\consumer-prose-sessioncheck.ps1'
+$Hook     = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\consumer-prose-sessioncheck.ps1'
 . (Join-Path $RepoRoot 'scripts\lib\entry-scaffold-lib.ps1')
 . (Join-Path $RepoRoot 'scripts\lib\measure-context-lib.ps1')
 # check-report-lib carries the lens-discovery seams (Get-SeamPaths, Get-LensDirCandidates,
@@ -87,7 +87,7 @@ function Assert-True {
 function New-Tree {
     param([Parameter(Mandatory = $true)][string]$Label)
     $dir = Join-Path ([System.IO.Path]::GetTempPath()) ("consumerprose-$PID-$Label-" + [guid]::NewGuid().ToString('N').Substring(0, 6))
-    New-Item -ItemType Directory -Path (Join-Path $dir '.dkj\dkj-policy') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $dir '.dkj\dkj-repo-workflow') -Force | Out-Null
     $script:trees += $dir
     return $dir
 }
@@ -281,15 +281,15 @@ try {
     # The second measured instance, and the one #1380's detector missed: the folder's own contributor
     # page. It is NOT always-on, so it is in the set only because the lib names it.
     $retiredFolder = New-Tree -Label 'retiredfolder'
-    Set-Text -Dir $retiredFolder -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# Contributing`n`nWelke scripts wonen in de plugin: zie $retired."
+    Set-Text -Dir $retiredFolder -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# Contributing`n`nWelke scripts wonen in de plugin: zie $retired."
     $f = @(Get-Mentions -Dir $retiredFolder)
     Assert-True ($f.Count -eq 1 -and $f[0].Rel -eq "$($paths.Directory)/CONTRIBUTING.md") `
         'the workflow folder CONTRIBUTING.md is scanned with no CLAUDE.md present at all'
 
     # THE EXCLUSION THAT IS NOT OPTIONAL.
     $retiredArchive = New-Tree -Label 'retiredarchive'
-    Set-Text -Dir $retiredArchive -Rel '.dkj/dkj-policy/CHANGELOG.md' -Text "# Changelog`n`n### DEPLOY: old/branch`n`nRenamed $retired at the time."
-    Set-Text -Dir $retiredArchive -Rel '.dkj/dkj-policy/releases/history.md' -Text "Historic: $retired."
+    Set-Text -Dir $retiredArchive -Rel '.dkj/dkj-repo-workflow/CHANGELOG.md' -Text "# Changelog`n`n### DEPLOY: old/branch`n`nRenamed $retired at the time."
+    Set-Text -Dir $retiredArchive -Rel '.dkj/dkj-repo-workflow/releases/history.md' -Text "Historic: $retired."
     Assert-True ((Get-Mentions -Dir $retiredArchive).Count -eq 0) `
         'the changelog and releases/ are never read -- a folded entry correctly names the file of its day'
 
@@ -315,7 +315,7 @@ try {
     # One line, one repair: two different retired names on one line are two findings, the same name
     # twice on one line is two spans -- but no span is claimed twice.
     $retiredTwice = New-Tree -Label 'retiredtwice'
-    Set-Text -Dir $retiredTwice -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# C`n`nBoth $retired and $retired appear here."
+    Set-Text -Dir $retiredTwice -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# C`n`nBoth $retired and $retired appear here."
     $f = @(Get-Mentions -Dir $retiredTwice)
     Assert-True ($f.Count -eq 2 -and @($f | Where-Object { $_.Line -eq 3 }).Count -eq 2) `
         'the same retired name twice on one line -- two spans, both reported, neither doubled'
@@ -342,10 +342,10 @@ try {
     Assert-True ($f[0].Match -match 'wint') `
         'the Dutch verb is matched, and the match is reported so the finding names what fired'
 
-    # MEASURED INSTANCE 2 -- smartwatchbanden/dkj-policy/CONTRIBUTING.md:306, the same
+    # MEASURED INSTANCE 2 -- smartwatchbanden/dkj-repo-workflow/CONTRIBUTING.md:306, the same
     # inversion from the other side, on a page that is NOT always-on.
     $english = New-Tree -Label 'english'
-    Set-Text -Dir $english -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# Contributing`n`nSo when this page and ``CLAUDE.md`` disagree, **``CLAUDE.md`` wins.**"
+    Set-Text -Dir $english -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# Contributing`n`nSo when this page and ``CLAUDE.md`` disagree, **``CLAUDE.md`` wins.**"
     $f = @(Get-Declarations -Dir $english)
     Assert-True ($f.Count -eq 1 -and $f[0].Rel -eq "$($paths.Directory)/CONTRIBUTING.md") `
         'the folder CONTRIBUTING.md is scanned with no CLAUDE.md present at all'
@@ -355,28 +355,28 @@ try {
     # DIRECTION. The law stated CORRECTLY carries both terms and must NOT fire. This is the assert that
     # separates this detector from the co-occurrence design #1380 measured at 12.5% and declined.
     $correct = New-Tree -Label 'correct'
-    Set-Text -Dir $correct -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# Contributing`n`nThis page sits on top of ``CLAUDE.md``, and where they disagree, this page wins."
+    Set-Text -Dir $correct -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# Contributing`n`nThis page sits on top of ``CLAUDE.md``, and where they disagree, this page wins."
     Assert-True ((Get-Declarations -Dir $correct).Count -eq 0) `
         'the rank order stated CORRECTLY carries both terms and does not fire -- adjacency reads direction'
 
     # And the near miss on the same line: a clause between the two tokens ends the adjacency, because it
     # is a different claim.
     $between = New-Tree -Label 'between'
-    Set-Text -Dir $between -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# Contributing`n`nWhere ``CLAUDE.md``, which we treat as the floor, disagrees, the portable page wins."
+    Set-Text -Dir $between -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# Contributing`n`nWhere ``CLAUDE.md``, which we treat as the floor, disagrees, the portable page wins."
     Assert-True ((Get-Declarations -Dir $between).Count -eq 0) `
         'a whole clause between the two tokens is not adjacency -- no finding'
 
     # THE ONE SUPPRESSION, pinned by the instance that produced it: xoxowildhearts quoting the closing
     # line of a page it RETIRED, to explain why it removed it. Somebody else's words, reported.
     $quoted = New-Tree -Label 'quoted'
-    Set-Text -Dir $quoted -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# Contributing`n`nIts own closing line conceded the point: *`"when this page and ``CLAUDE.md`` disagree, ``CLAUDE.md`` wins.`"* It was retired."
+    Set-Text -Dir $quoted -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# Contributing`n`nIts own closing line conceded the point: *`"when this page and ``CLAUDE.md`` disagree, ``CLAUDE.md`` wins.`"* It was retired."
     Assert-True ((Get-Declarations -Dir $quoted).Count -eq 0) `
         'a hit sitting wholly inside a quotation span is suppressed -- a retired page being narrated'
 
     # ... and the suppression is a SPAN test, not a "this line contains a quote mark" test: an unquoted
     # declaration on a line that also carries an unrelated quotation still fires.
     $mixed = New-Tree -Label 'mixed'
-    Set-Text -Dir $mixed -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# Contributing`n`nWe call it the `"grondwet`" here: on any disagreement ``CLAUDE.md`` wins."
+    Set-Text -Dir $mixed -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# Contributing`n`nWe call it the `"grondwet`" here: on any disagreement ``CLAUDE.md`` wins."
     # @() BEFORE .Count, and it is load-bearing rather than style: PowerShell unwraps a single-element
     # array on return, and under Set-StrictMode -Version Latest '.Count' on the resulting scalar THROWS
     # rather than answering 1. Every assert here that expects exactly one finding wraps first for that
@@ -393,7 +393,7 @@ try {
     Write-Host 'Get-SupremacyDeclaration -- hard-wrapped prose'
 
     $wrapped = New-Tree -Label 'wrapped'
-    Set-Text -Dir $wrapped -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# C`n`nOn any real conflict between the two, ``CLAUDE.md```nwins, and the contributing page is simply wrong."
+    Set-Text -Dir $wrapped -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# C`n`nOn any real conflict between the two, ``CLAUDE.md```nwins, and the contributing page is simply wrong."
     $f = @(Get-Declarations -Dir $wrapped)
     Assert-True ($f.Count -eq 1 -and $f[0].Line -eq 3) `
         'a declaration hard-wrapped across two lines is found, and names the line it BEGINS on'
@@ -402,21 +402,21 @@ try {
     # It sits on one physical line today, so a line-scoped detector found it -- one re-wrap of that
     # paragraph would have emptied the gate with every test still green.
     $bq = New-Tree -Label 'blockquote'
-    Set-Text -Dir $bq -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# C`n`n> Bij tegenspraak wint`n> ``CLAUDE.md``."
+    Set-Text -Dir $bq -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# C`n`n> Bij tegenspraak wint`n> ``CLAUDE.md``."
     $f = @(Get-Declarations -Dir $bq)
     Assert-True ($f.Count -eq 1 -and $f[0].Line -eq 3) `
         "a wrapped BLOCKQUOTE declaration is found -- the '>' markers are stripped, not read as text"
 
     # The bound on the join: a paragraph break is where a unit ends, so a gap may not bridge one.
     $across = New-Tree -Label 'across'
-    Set-Text -Dir $across -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# C`n`nSomething about ``CLAUDE.md```n`nwins is a new paragraph here."
+    Set-Text -Dir $across -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# C`n`nSomething about ``CLAUDE.md```n`nwins is a new paragraph here."
     Assert-True ((Get-Declarations -Dir $across).Count -eq 0) `
         'adjacency does not bridge a blank line -- the paragraph is the largest unit joined'
 
     # ... and the suppression has to survive the join too, or widening the match would have re-admitted
     # the very false positive the quotation rule was built for.
     $qWrapped = New-Tree -Label 'qwrapped'
-    Set-Text -Dir $qWrapped -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# C`n`nIts closing line conceded: *`"when this page and ``CLAUDE.md```ndisagree, ``CLAUDE.md`` wins.`"* It was retired."
+    Set-Text -Dir $qWrapped -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# C`n`nIts closing line conceded: *`"when this page and ``CLAUDE.md```ndisagree, ``CLAUDE.md`` wins.`"* It was retired."
     Assert-True ((Get-Declarations -Dir $qWrapped).Count -eq 0) `
         'a quotation that itself wraps still suppresses -- the quote span is read on the joined unit'
 
@@ -429,22 +429,22 @@ try {
     Write-Host 'Get-SupremacyDeclaration -- list items'
 
     $stars = New-Tree -Label 'stars'
-    Set-Text -Dir $stars -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# C`n`n* Read the constitution in ``CLAUDE.md```n* wins arguments only when they cite the rank order."
+    Set-Text -Dir $stars -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# C`n`n* Read the constitution in ``CLAUDE.md```n* wins arguments only when they cite the rank order."
     Assert-True ((Get-Declarations -Dir $stars).Count -eq 0) `
         "two '*' bullets do not bridge into a declaration that exists in neither item"
 
     $dashes = New-Tree -Label 'dashes'
-    Set-Text -Dir $dashes -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# C`n`n- Read the constitution in ``CLAUDE.md```n- wins arguments only when they cite the rank order."
+    Set-Text -Dir $dashes -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# C`n`n- Read the constitution in ``CLAUDE.md```n- wins arguments only when they cite the rank order."
     Assert-True ((Get-Declarations -Dir $dashes).Count -eq 0) "'-' bullets do not bridge either"
 
     $numbered = New-Tree -Label 'numbered'
-    Set-Text -Dir $numbered -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# C`n`n1. Read the constitution in ``CLAUDE.md```n2. wins arguments only when they cite the rank order."
+    Set-Text -Dir $numbered -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# C`n`n1. Read the constitution in ``CLAUDE.md```n2. wins arguments only when they cite the rank order."
     Assert-True ((Get-Declarations -Dir $numbered).Count -eq 0) 'numbered items do not bridge either'
 
     # The other edge of the same rule: a real declaration INSIDE one bullet is still found, and so is one
     # that wraps within its own item -- the item is a unit, not a dead zone.
     $inBullet = New-Tree -Label 'inbullet'
-    Set-Text -Dir $inBullet -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# C`n`n* On any real conflict between the two, ``CLAUDE.md```n  wins outright.`n* Something else entirely."
+    Set-Text -Dir $inBullet -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# C`n`n* On any real conflict between the two, ``CLAUDE.md```n  wins outright.`n* Something else entirely."
     $f = @(Get-Declarations -Dir $inBullet)
     Assert-True ($f.Count -eq 1 -and $f[0].Line -eq 3) `
         'a declaration wrapped inside ONE bullet is still found, at the line it begins on'
@@ -452,7 +452,7 @@ try {
     # And the marker test must not catch bold at the start of a line -- '**text**' has no space after the
     # first '*', which is the whole difference between a bullet and emphasis.
     $boldStart = New-Tree -Label 'boldstart'
-    Set-Text -Dir $boldStart -Rel '.dkj/dkj-policy/CONTRIBUTING.md' -Text "# C`n`n**On any real conflict ``CLAUDE.md`` wins outright.**"
+    Set-Text -Dir $boldStart -Rel '.dkj/dkj-repo-workflow/CONTRIBUTING.md' -Text "# C`n`n**On any real conflict ``CLAUDE.md`` wins outright.**"
     Assert-True (@(Get-Declarations -Dir $boldStart).Count -eq 1) `
         "a line opening with '**bold**' is not read as a list item"
 
@@ -521,8 +521,8 @@ try {
     Write-Host 'Get-SupremacyDeclaration -- the shared exclusions'
 
     $supArchive = New-Tree -Label 'suparchive'
-    Set-Text -Dir $supArchive -Rel '.dkj/dkj-policy/CHANGELOG.md' -Text "# Changelog`n`n### DEPLOY: old/branch`n`nBack then ``CLAUDE.md`` wins was the rule."
-    Set-Text -Dir $supArchive -Rel '.dkj/dkj-policy/releases/history.md' -Text "Historic: ``CLAUDE.md`` wins."
+    Set-Text -Dir $supArchive -Rel '.dkj/dkj-repo-workflow/CHANGELOG.md' -Text "# Changelog`n`n### DEPLOY: old/branch`n`nBack then ``CLAUDE.md`` wins was the rule."
+    Set-Text -Dir $supArchive -Rel '.dkj/dkj-repo-workflow/releases/history.md' -Text "Historic: ``CLAUDE.md`` wins."
     Assert-True ((Get-Declarations -Dir $supArchive).Count -eq 0) `
         'the changelog and releases/ are never read -- a folded entry correctly states the rule of its day'
 
@@ -637,7 +637,7 @@ try {
     Assert-True ($r.Code -eq 1 -and ([regex]::Matches($r.Out, '\[ERROR\]')).Count -eq 2) `
         'a repo publishing ANOTHER product is a consumer of this workflow -- both detectors still judged, not skipped'
 
-    Set-Text -Dir $both -Rel '.claude-plugin/marketplace.json' -Text '{ "name": "fixture", "plugins": [ { "name": "dkj-policy" } ] }'
+    Set-Text -Dir $both -Rel '.claude-plugin/marketplace.json' -Text '{ "name": "fixture", "plugins": [ { "name": "dkj-repo-workflow" } ] }'
     $r = Invoke-Script -Dir $both
     Assert-True ($r.Code -eq 0 -and $r.Out -match 'publishes the workflow') `
         'a repo that publishes THIS workflow is skipped -- and the skip silences both detectors at once'
@@ -667,47 +667,47 @@ try {
     Write-Host 'constitution import (#2374)'
     . (Join-Path $RepoRoot 'scripts\lib\consumer-check-lib.ps1')
 
-    Assert-True ((Get-ConstitutionImportLine -LibDir 'C:\Users\x\.claude\plugins\cache\claude-code-specialists\dkj-policy\5.7.0\scripts\lib') -eq '@~/.claude/plugins/marketplaces/claude-code-specialists/plugins/dkj-policy/CLAUDE.md') `
+    Assert-True ((Get-ConstitutionImportLine -LibDir 'C:\Users\x\.claude\plugins\cache\claude-code-specialists\dkj-repo-workflow\5.7.0\scripts\lib') -eq '@~/.claude/plugins/marketplaces/claude-code-specialists/plugins/dkj-repo-workflow/CLAUDE.md') `
         'the marketplace segment is read off a cache-shaped location -- a pre-rename consumer gets ITS clone name'
-    Assert-True ((Get-ConstitutionImportLine -LibDir 'C:\Users\x\.claude\plugins\cache\[ERROR] forged name\dkj-policy\5.7.0\scripts\lib') -eq '@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-policy/CLAUDE.md') `
+    Assert-True ((Get-ConstitutionImportLine -LibDir 'C:\Users\x\.claude\plugins\cache\[ERROR] forged name\dkj-repo-workflow\5.7.0\scripts\lib') -eq '@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-repo-workflow/CLAUDE.md') `
         'a marketplace segment that is not a plain slug is never printed -- the canonical name stands in'
-    Assert-True ((Get-ConstitutionImportLine -LibDir (Join-Path $RepoRoot 'scripts\lib')) -eq '@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-policy/CLAUDE.md') `
+    Assert-True ((Get-ConstitutionImportLine -LibDir (Join-Path $RepoRoot 'scripts\lib')) -eq '@~/.claude/plugins/marketplaces/dkj-marketplace/plugins/dkj-repo-workflow/CLAUDE.md') `
         'anywhere else the canonical marketplace name is used'
 
     # $clean carries no import: the gap is WARNED, and the exit code the two detectors own is untouched.
     $r = Invoke-Script -Dir $clean
-    Assert-True ($r.Code -eq 0 -and $r.Out -match '\[WARNING\] this repo''s CLAUDE\.md does not import the dkj-policy constitution' -and
-                 $r.Out -match [regex]::Escape('/plugins/dkj-policy/CLAUDE.md')) `
+    Assert-True ($r.Code -eq 0 -and $r.Out -match '\[WARNING\] this repo''s CLAUDE\.md does not import the dkj-repo-workflow constitution' -and
+                 $r.Out -match [regex]::Escape('/plugins/dkj-repo-workflow/CLAUDE.md')) `
         'no import -- a [WARNING] carrying the paste-ready line, and still exit 0'
 
     # The absolute line, unresolved on this machine: the written line is what counts, not the clone.
     # Imports-only content (#2374 superseded): a trailing fact sentence here would now also trip the
     # root-prose [WARNING] below, which is a different rule from the one this fixture exists to pin.
     $imported = New-Tree -Label 'constimported'
-    Set-Text -Dir $imported -Rel 'CLAUDE.md' -Text "# Consumer`n`n@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-policy/CLAUDE.md"
+    Set-Text -Dir $imported -Rel 'CLAUDE.md' -Text "# Consumer`n`n@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-repo-workflow/CLAUDE.md"
     $rows = @(Get-AlwaysOnRows -Dir $imported)
     Assert-True (Test-ConstitutionImported -Documents $rows) `
         'an absolute import counts even where the clone has not refreshed yet (Exists = false)'
     $r = Invoke-Script -Dir $imported
-    Assert-True ($r.Code -eq 0 -and $r.Out -notmatch 'does not import the dkj-policy constitution' -and $r.Out -match '\[OK\]') `
+    Assert-True ($r.Code -eq 0 -and $r.Out -notmatch 'does not import the dkj-repo-workflow constitution' -and $r.Out -match '\[OK\]') `
         'import present -- no import warning, the ordinary [OK]'
 
     Assert-True (-not (Test-ConstitutionImported -Documents @())) 'an empty closure imports nothing'
 
     # A RETIRED MARKETPLACE NAME DOES NOT COUNT (#3883): that clone is gone for good, not lagging --
     # unless the lib itself still runs from under that name.
-    $retiredRow = [pscustomobject]@{ Path = 'C:\Users\x\.claude\plugins\marketplaces\dkj-claude-plugins\plugins\dkj-policy\CLAUDE.md'; Exists = $false }
+    $retiredRow = [pscustomobject]@{ Path = 'C:\Users\x\.claude\plugins\marketplaces\dkj-claude-plugins\plugins\dkj-repo-workflow\CLAUDE.md'; Exists = $false }
     Assert-True (-not (Test-ConstitutionImported -Documents @($retiredRow))) `
         'an import under a retired marketplace name does not count as the constitution'
-    Assert-True (Test-ConstitutionImported -Documents @($retiredRow) -LibDir 'C:\Users\x\.claude\plugins\cache\dkj-claude-plugins\dkj-policy\6.0.0\scripts\lib') `
+    Assert-True (Test-ConstitutionImported -Documents @($retiredRow) -LibDir 'C:\Users\x\.claude\plugins\cache\dkj-claude-plugins\dkj-repo-workflow\6.0.0\scripts\lib') `
         'but it does where the running lib still sits under that name'
-    $cssRow = [pscustomobject]@{ Path = 'C:\Users\x\.claude\plugins\marketplaces\claude-code-specialists\plugins\dkj-policy\CLAUDE.md'; Exists = $false }
+    $cssRow = [pscustomobject]@{ Path = 'C:\Users\x\.claude\plugins\marketplaces\claude-code-specialists\plugins\dkj-repo-workflow\CLAUDE.md'; Exists = $false }
     Assert-True (Test-ConstitutionImported -Documents @($cssRow)) `
         'claude-code-specialists is not retired -- the business publication still ships under it'
 
     $r = Invoke-Hook -Dir $clean
-    Assert-True ($r.Code -eq 0 -and $r.Out -match 'no inverted supremacy declaration' -and $r.Out -match 'does not import the dkj-policy constitution' -and
-                 $r.Out -match [regex]::Escape('/plugins/dkj-policy/CLAUDE.md')) `
+    Assert-True ($r.Code -eq 0 -and $r.Out -match 'no inverted supremacy declaration' -and $r.Out -match 'does not import the dkj-repo-workflow constitution' -and
+                 $r.Out -match [regex]::Escape('/plugins/dkj-repo-workflow/CLAUDE.md')) `
         'the hook forwards the warning and its paste-ready line beside the clean line, still exit 0'
     $r = Invoke-Hook -Dir $imported
     Assert-True ($r.Code -eq 0 -and $r.Out -notmatch 'does not import') `
@@ -716,27 +716,27 @@ try {
     # Both at once: $retiredRoot carries a restatement and no import. The [ERROR] keeps exit 1, and the
     # warning rides along in the same report -- through the script and through the hook.
     $r = Invoke-Script -Dir $retiredRoot
-    Assert-True ($r.Code -eq 1 -and $r.Out -match '\[ERROR\]' -and $r.Out -match 'does not import the dkj-policy constitution') `
+    Assert-True ($r.Code -eq 1 -and $r.Out -match '\[ERROR\]' -and $r.Out -match 'does not import the dkj-repo-workflow constitution') `
         'an [ERROR] and the import [WARNING] together -- both printed, and the exit code is the detector''s'
     $r = Invoke-Hook -Dir $retiredRoot
-    Assert-True ($r.Code -eq 0 -and $r.Out -match 'contradicts the plugin' -and $r.Out -match 'does not import the dkj-policy constitution') `
+    Assert-True ($r.Code -eq 0 -and $r.Out -match 'contradicts the plugin' -and $r.Out -match 'does not import the dkj-repo-workflow constitution') `
         'the hook forwards the warning inside the [ERROR] report as well, still exit 0'
 
     # --- the extension import (#2538) --------------------------------------------------------------
-    # Warned only where the repo's OWN settings enable bwj-development and the closure does not import the
+    # Warned only where the repo's OWN settings enable dkj-repo-workflow-bwj and the closure does not import the
     # extension. Every fixture imports the constitution, so the only warning in play is this one.
     Write-Host ''
     Write-Host 'extension import (#2538)'
-    $constLine = "@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-policy/CLAUDE.md"
-    $extLine = "@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-policy/extensions/bwj-development/CLAUDE.md"
-    $bwjSettings = '{ "enabledPlugins": { "dkj-policy@dkj-marketplace": true, "bwj-development@dkj-marketplace": true } }'
+    $constLine = "@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-repo-workflow/CLAUDE.md"
+    $extLine = "@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/CLAUDE.md"
+    $bwjSettings = '{ "enabledPlugins": { "dkj-repo-workflow@dkj-marketplace": true, "dkj-repo-workflow-bwj@dkj-marketplace": true } }'
 
     $bwjMissing = New-Tree -Label 'bwjmissing'
     Set-Text -Dir $bwjMissing -Rel 'CLAUDE.md' -Text "# Consumer`n`n$constLine"
     Set-Text -Dir $bwjMissing -Rel '.claude/settings.json' -Text $bwjSettings
     $r = Invoke-Script -Dir $bwjMissing
-    Assert-True ($r.Code -eq 0 -and $r.Out -match '\[WARNING\] this repo enables bwj-development, but its CLAUDE\.md does not import the extension' -and
-                 $r.Out -match 'adopt-workflow-folder\.ps1' -and $r.Out -match [regex]::Escape('/plugins/dkj-policy/extensions/bwj-development/CLAUDE.md')) `
+    Assert-True ($r.Code -eq 0 -and $r.Out -match '\[WARNING\] this repo enables dkj-repo-workflow-bwj, but its CLAUDE\.md does not import the extension' -and
+                 $r.Out -match 'adopt-workflow-folder\.ps1' -and $r.Out -match [regex]::Escape('/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/CLAUDE.md')) `
         'bwj enabled, no extension import -- a [WARNING] naming the adopter and the paste-ready line, still exit 0'
     $r = Invoke-Hook -Dir $bwjMissing
     Assert-True ($r.Code -eq 0 -and $r.Out -match 'does not import the extension') `
@@ -758,35 +758,35 @@ try {
 
     $bwjOff = New-Tree -Label 'bwjoff'
     Set-Text -Dir $bwjOff -Rel 'CLAUDE.md' -Text "# Consumer`n`n$constLine"
-    Set-Text -Dir $bwjOff -Rel '.claude/settings.json' -Text '{ "enabledPlugins": { "dkj-policy@dkj-marketplace": true, "bwj-development@dkj-marketplace": false } }'
+    Set-Text -Dir $bwjOff -Rel '.claude/settings.json' -Text '{ "enabledPlugins": { "dkj-repo-workflow@dkj-marketplace": true, "dkj-repo-workflow-bwj@dkj-marketplace": false } }'
     $r = Invoke-Script -Dir $bwjOff
     Assert-True ($r.Code -eq 0 -and $r.Out -notmatch 'does not import the extension') `
-        'bwj-development present but disabled -- no warning'
+        'dkj-repo-workflow-bwj present but disabled -- no warning'
 
     $bwjBadJson = New-Tree -Label 'bwjbadjson'
     Set-Text -Dir $bwjBadJson -Rel 'CLAUDE.md' -Text "# Consumer`n`n$constLine"
-    Set-Text -Dir $bwjBadJson -Rel '.claude/settings.json' -Text '{ "enabledPlugins": { "bwj-development@dkj-marketplace": true, } '
+    Set-Text -Dir $bwjBadJson -Rel '.claude/settings.json' -Text '{ "enabledPlugins": { "dkj-repo-workflow-bwj@dkj-marketplace": true, } '
     $r = Invoke-Script -Dir $bwjBadJson
     Assert-True ($r.Code -eq 0 -and $r.Out -notmatch 'does not import the extension' -and $r.Out -match '\[OK\]') `
         'an unparseable settings.json is not an enable and does not take the check down'
 
-    # Any dkj-policy extension, not bwj alone (#2697): one warning per enabled extension whose line is
+    # Any dkj-repo-workflow extension, not bwj alone (#2697): one warning per enabled extension whose line is
     # missing, and none for an extension that is imported.
-    $dkjsLine = "@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-policy/extensions/dkj-solutions/CLAUDE.md"
-    $bothSettings = '{ "enabledPlugins": { "dkj-policy@dkj-marketplace": true, "bwj-development@dkj-marketplace": true, "dkj-solutions@dkj-marketplace": true } }'
+    $dkjsLine = "@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/CLAUDE.md"
+    $bothSettings = '{ "enabledPlugins": { "dkj-repo-workflow@dkj-marketplace": true, "dkj-repo-workflow-bwj@dkj-marketplace": true, "dkj-repo-workflow-dkj@dkj-marketplace": true } }'
     $dkjsMissing = New-Tree -Label 'dkjsmissing'
     Set-Text -Dir $dkjsMissing -Rel 'CLAUDE.md' -Text "# Consumer`n`n$constLine"
-    Set-Text -Dir $dkjsMissing -Rel '.claude/settings.json' -Text '{ "enabledPlugins": { "dkj-policy@dkj-marketplace": true, "dkj-solutions@dkj-marketplace": true } }'
+    Set-Text -Dir $dkjsMissing -Rel '.claude/settings.json' -Text '{ "enabledPlugins": { "dkj-repo-workflow@dkj-marketplace": true, "dkj-repo-workflow-dkj@dkj-marketplace": true } }'
     $r = Invoke-Script -Dir $dkjsMissing
-    Assert-True ($r.Code -eq 0 -and $r.Out -match '\[WARNING\] this repo enables dkj-solutions, but its CLAUDE\.md does not import the extension' -and
-                 $r.Out -match [regex]::Escape('/plugins/dkj-policy/extensions/dkj-solutions/CLAUDE.md') -and $r.Out -notmatch 'enables bwj-development') `
+    Assert-True ($r.Code -eq 0 -and $r.Out -match '\[WARNING\] this repo enables dkj-repo-workflow-dkj, but its CLAUDE\.md does not import the extension' -and
+                 $r.Out -match [regex]::Escape('/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/CLAUDE.md') -and $r.Out -notmatch 'enables dkj-repo-workflow-bwj') `
         'dkjs enabled, no extension import -- a [WARNING] for dkjs, with its line, and none for bwj'
 
     $bothOneMissing = New-Tree -Label 'bothonemissing'
     Set-Text -Dir $bothOneMissing -Rel 'CLAUDE.md' -Text "# Consumer`n`n$constLine`n$extLine"
     Set-Text -Dir $bothOneMissing -Rel '.claude/settings.json' -Text $bothSettings
     $r = Invoke-Script -Dir $bothOneMissing
-    Assert-True ($r.Code -eq 0 -and $r.Out -match 'enables dkj-solutions, but' -and $r.Out -notmatch 'enables bwj-development, but') `
+    Assert-True ($r.Code -eq 0 -and $r.Out -match 'enables dkj-repo-workflow-dkj, but' -and $r.Out -notmatch 'enables dkj-repo-workflow-bwj, but') `
         'two extensions enabled, bwj imported -- warned for dkjs alone'
 
     $bothImported = New-Tree -Label 'bothimported'
@@ -800,11 +800,11 @@ try {
     # A consumer that adopted before the rename (#2788): it still enables dkj-policy-bwj and still imports
     # the old path. Both are named, with the current name, and neither touches the exit code.
     $retiredBwj = New-Tree -Label 'retiredbwj'
-    $oldBwjLine = "@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-policy/dkj-policy-bwj/CLAUDE.md"
+    $oldBwjLine = "@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-repo-workflow/dkj-policy-bwj/CLAUDE.md"
     Set-Text -Dir $retiredBwj -Rel 'CLAUDE.md' -Text "# Consumer`n`n$constLine`n$oldBwjLine"
-    Set-Text -Dir $retiredBwj -Rel '.claude/settings.json' -Text '{ "enabledPlugins": { "dkj-policy@dkj-marketplace": true, "dkj-policy-bwj@dkj-marketplace": true } }'
+    Set-Text -Dir $retiredBwj -Rel '.claude/settings.json' -Text '{ "enabledPlugins": { "dkj-repo-workflow@dkj-marketplace": true, "dkj-policy-bwj@dkj-marketplace": true } }'
     $r = Invoke-Script -Dir $retiredBwj
-    Assert-True ($r.Code -eq 0 -and $r.Out -match '\[WARNING\] this repo enables dkj-policy-bwj, a retired name -- the extension is bwj-development now') `
+    Assert-True ($r.Code -eq 0 -and $r.Out -match '\[WARNING\] this repo enables dkj-policy-bwj, a retired name -- the extension is dkj-repo-workflow-bwj now') `
         'a retired enabled id -- a [WARNING] naming the current extension'
     # The repair is the lib's one sentence (#3056), so this check cannot word it apart from plugin-versions
     # and update-plugins.
@@ -812,9 +812,9 @@ try {
     Assert-True ($r.Out.Contains((Get-RetiredExtensionRepair -Name 'dkj-policy-bwj' -Marketplace 'dkj-marketplace'))) `
         'a retired enabled id -- the repair is the shared sentence, with the marketplace from settings'
     Assert-True ($r.Out -match '\[WARNING\] CLAUDE\.md imports the dkj-policy-bwj extension at a retired name or path' -and
-                 $r.Out -match [regex]::Escape('/plugins/dkj-policy/extensions/bwj-development/CLAUDE.md')) `
+                 $r.Out -match [regex]::Escape('/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/CLAUDE.md')) `
         'a retired import line -- a [WARNING] with the current line'
-    Assert-True ($r.Out -match 'enables bwj-development, but its CLAUDE\.md does not import the extension') `
+    Assert-True ($r.Out -match 'enables dkj-repo-workflow-bwj, but its CLAUDE\.md does not import the extension') `
         'and the retired id still owes the current import, so the missing-line warning fires too'
 
     # --- the root-prose rule (#2374, superseded September 23, 2026) --------------------------------
@@ -917,9 +917,9 @@ try {
     # THE TWO WARNINGS ARE INDEPENDENT: a root that imports the constitution correctly but still
     # carries prose gets ONLY the root-prose warning, never the import one.
     $importedWithProse = New-Tree -Label 'importedwithprose'
-    Set-Text -Dir $importedWithProse -Rel 'CLAUDE.md' -Text "# CLAUDE.md`n`n@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-policy/CLAUDE.md`n`nThis repo is public."
+    Set-Text -Dir $importedWithProse -Rel 'CLAUDE.md' -Text "# CLAUDE.md`n`n@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-repo-workflow/CLAUDE.md`n`nThis repo is public."
     $r = Invoke-Script -Dir $importedWithProse
-    Assert-True ($r.Code -eq 0 -and $r.Out -notmatch 'does not import the dkj-policy constitution' -and $r.Out -match 'root CLAUDE\.md carries 1 line') `
+    Assert-True ($r.Code -eq 0 -and $r.Out -notmatch 'does not import the dkj-repo-workflow constitution' -and $r.Out -match 'root CLAUDE\.md carries 1 line') `
         'the constitution-import warning stays silent once the line is present -- only the prose warning fires'
 
     # Exit-code semantics are untouched: an [ERROR] detector still exits 1 with the prose warning riding
@@ -968,7 +968,7 @@ try {
         'imports-only root and no rule -- a [WARNING], exit 0'
 
     $withRule = New-Tree -Label 'factsrule'
-    Set-Text -Dir $withRule -Rel 'CLAUDE.md' -Text "# Consumer`n`n@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-policy/CLAUDE.md"
+    Set-Text -Dir $withRule -Rel 'CLAUDE.md' -Text "# Consumer`n`n@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-repo-workflow/CLAUDE.md"
     Set-Text -Dir $withRule -Rel '.claude/rules/this-repo.md' -Text "# This repo`n`nThe trunk is main."
     Assert-True (Test-UnscopedRulePresent -Documents @(Get-AlwaysOnRows -Dir $withRule)) `
         'an unscoped rule file is seen on the walked closure'
@@ -978,7 +978,7 @@ try {
 
     # A paths:-scoped rule is gone on every turn that does not touch its files, so it is no home for facts.
     $scopedOnly = New-Tree -Label 'factsscoped'
-    Set-Text -Dir $scopedOnly -Rel 'CLAUDE.md' -Text "# Consumer`n`n@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-policy/CLAUDE.md"
+    Set-Text -Dir $scopedOnly -Rel 'CLAUDE.md' -Text "# Consumer`n`n@~/.claude/plugins/marketplaces/no-such-mkt-$PID/plugins/dkj-repo-workflow/CLAUDE.md"
     Set-Text -Dir $scopedOnly -Rel '.claude/rules/scripts.md' -Text "---`npaths:`n  - `"scripts/**`"`n---`n`n# Scripts only"
     $r = Invoke-Script -Dir $scopedOnly
     Assert-True ($r.Code -eq 0 -and $r.Out -match [regex]::Escape($factsMsg)) `

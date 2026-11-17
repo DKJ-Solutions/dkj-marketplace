@@ -2,7 +2,7 @@
 .SYNOPSIS
     Regression tests for the trunk fast-forward (issue #3605): Invoke-TrunkFastForward
     (scripts/lib/trunk-sync-lib.ps1), its entry point scripts/task/sync-trunk.ps1, and the SessionStart
-    prep hook plugins/dkj-policy/hooks/trunk-sync-sessionprep.ps1.
+    prep hook plugins/dkj-repo-workflow/hooks/trunk-sync-sessionprep.ps1.
 
 .DESCRIPTION
     Dependency-free: no Pester needed, only PowerShell and git.
@@ -20,8 +20,8 @@ $ErrorActionPreference = 'Stop'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $Script   = Join-Path $RepoRoot 'scripts\task\sync-trunk.ps1'
-$Hook     = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\trunk-sync-sessionprep.ps1'
-$Dispatch = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\sessioncheck-dispatch.ps1'
+$Hook     = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\trunk-sync-sessionprep.ps1'
+$Dispatch = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\sessioncheck-dispatch.ps1'
 . (Join-Path $RepoRoot 'scripts\lib\native-capture-lib.ps1')
 . (Join-Path $RepoRoot 'scripts\lib\trunk-sync-lib.ps1')
 
@@ -200,7 +200,7 @@ $homeDir = Join-Path $a.Base 'home'
 $pluginsDir = Join-Path $homeDir '.claude\plugins'
 New-Item -ItemType Directory -Path $pluginsDir -Force | Out-Null
 $records = @{
-    'dkj-policy@dkj-marketplace' = @(
+    'dkj-repo-workflow@dkj-marketplace' = @(
         @{ scope = 'project'; projectPath = $a.Session },
         @{ scope = 'project'; projectPath = $b.Session },
         @{ scope = 'project'; projectPath = (Join-Path $a.Base 'vanished') }

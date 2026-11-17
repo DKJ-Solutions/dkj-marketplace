@@ -1,5 +1,5 @@
 # The always-on budget gate AS A CONSUMER RUNS IT -- a reusable workflow (`on: workflow_call`), called
-# from the few-line .github/workflows/always-on-budget.yml that adopt-dkj-policy's Part 1 places
+# from the few-line .github/workflows/always-on-budget.yml that adopt-dkj-repo-workflow's Part 1 places
 # (issue #2422). A PR may not grow what every session pays before a single assignment is given:
 # CLAUDE.md plus everything it '@'-imports (issue #2037).
 #
@@ -66,5 +66,5 @@ jobs:
         env:
           CLAUDE_PROJECT_DIR: ${{ github.workspace }}
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File .workflow-scripts/plugins/dkj-policy/scripts/lint/check-always-on-budget.ps1
+          powershell -NoProfile -ExecutionPolicy Bypass -File .workflow-scripts/plugins/dkj-repo-workflow/scripts/lint/check-always-on-budget.ps1
           exit $LASTEXITCODE

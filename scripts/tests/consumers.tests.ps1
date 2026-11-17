@@ -20,7 +20,7 @@ $ErrorActionPreference = 'Stop'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $Script   = Join-Path $RepoRoot 'scripts\sync\check-consumers.ps1'
-$Hook     = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\consumer-sessioncheck.ps1'
+$Hook     = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\consumer-sessioncheck.ps1'
 $Fixture  = Join-Path ([System.IO.Path]::GetTempPath()) "consumers-test-fixture-$PID-$([guid]::NewGuid().ToString('n'))"
 # A scratch '~/.claude' for the isolated hook calls (9a/9e) -- no marketplace clone, no install
 # administration, so plugin-versions.ps1's fallback lands deterministically on "indeterminate"
@@ -1068,7 +1068,7 @@ try {
     #     scenarios: a whole plugin block the register never named is a different situation, with a
     #     different fix, from "not registered at all" or "an extension list is behind".
     $stub = New-StubWorkshop -Name 'stub-unlisted' -ExitCode 0 -OutputLines @(
-        "  [INFO]  DKJ-Solutions/claude-code-specialists / dkj-policy@dkj-marketplace: plugin 'dkj-subagents-ecomm@dkj-marketplace' is enabled in .claude/settings.json but this manifest's 'plugins' list does not name it -- it was never looped over above, so nothing about it was checked here (no extension check, no version check). Add a plugins[] block for it to dkj-marketplace.json, in the same change that enabled it, or remove the enable if that was not intended.",
+        "  [INFO]  DKJ-Solutions/claude-code-specialists / dkj-repo-workflow@dkj-marketplace: plugin 'dkj-subagents-ecomm@dkj-marketplace' is enabled in .claude/settings.json but this manifest's 'plugins' list does not name it -- it was never looped over above, so nothing about it was checked here (no extension check, no version check). Add a plugins[] block for it to dkj-marketplace.json, in the same change that enabled it, or remove the enable if that was not intended.",
         "  [UNLISTED] this repo has 1 plugin(s) enabled that its own entry in the consumer register does not list (dkj-subagents-ecomm@dkj-marketplace) -- add a plugins[] block for each to dkj-marketplace.json, in the same change that enabled it. Nothing is broken: the register's view of this repo is simply behind reality.",
         'Summary: 0 error(s), 1 info signal(s).'
     )
@@ -1392,7 +1392,7 @@ try {
     # 12a. The current path -- silence, and nothing about it in the output. This is the case every
     #      healthy consumer is in, so a check that cannot stay quiet here is one nobody will keep.
     New-FixtureConsumer -ExtensionIds @('06-16')
-    New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-policy/scripts/lint/check-branch-entry.ps1'
+    New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-repo-workflow/scripts/lint/check-branch-entry.ps1'
     $mf = New-FixtureManifest -Extensions @('06-16')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'current runner path: exit code 0'
@@ -1408,7 +1408,7 @@ try {
     Assert-Equal 1 $r.Code 'retired runner path: exit code 1 -- it counts as an error'
     Assert-Match 'branch-entry\.yml line \d+' $r.Out 'retired runner path: names the workflow file and the line'
     Assert-Match 'plugins/workflows/contributing-davekjohn/scripts/lint/check-branch-entry\.ps1' $r.Out 'retired runner path: quotes the path it found'
-    Assert-Match 'it is at plugins/dkj-policy/scripts/lint/check-branch-entry\.ps1' $r.Out 'retired runner path: offers the PUBLISHED copy first, not this repo own scripts/ path'
+    Assert-Match 'it is at plugins/dkj-repo-workflow/scripts/lint/check-branch-entry\.ps1' $r.Out 'retired runner path: offers the PUBLISHED copy first, not this repo own scripts/ path'
 
     # 12c. The OLD OWNER still counts. This repo moved from DaveKJohn to DKJ-Solutions on September 2,
     #      2026 and a consumer scaffolded before that names the old owner, which still resolves through
@@ -1432,7 +1432,7 @@ try {
     # 12e. A script name that exists NOWHERE here reads as removed, not moved -- a different
     #      conversation, and the message has to be able to say so rather than trailing off.
     New-FixtureConsumer -ExtensionIds @('06-16')
-    New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/claude-code-specialists' -ScriptPath 'plugins/dkj-policy/scripts/lint/check-nothing-of-this-name.ps1'
+    New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/claude-code-specialists' -ScriptPath 'plugins/dkj-repo-workflow/scripts/lint/check-nothing-of-this-name.ps1'
     $mf = New-FixtureManifest -Extensions @('06-16')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 1 $r.Code 'unknown script name: exit code 1'
@@ -1513,16 +1513,16 @@ try {
     # registers the full core-team adoption and whose entire .github/workflows/ is one ci.yml.
     #
     # THE FIXTURE MANIFEST HAS TO NAME THE WORKFLOW PLUGIN, because that is the gate: the runners come
-    # from adopt-dkj-policy, so a consumer registered for the subagent teams alone is not asked. 12m is
+    # from adopt-dkj-repo-workflow, so a consumer registered for the subagent teams alone is not asked. 12m is
     # that gate's own scenario, and it is the one that keeps every scenario ABOVE this block silent --
     # each of them writes the default manifest, which names dkj-subagents-alpha only.
-    $wfPlugin = 'dkj-policy@dkj-marketplace'
+    $wfPlugin = 'dkj-repo-workflow@dkj-marketplace'
 
     # 12j. ADOPTED -- silence. The case every healthy consumer is in, asserted first for the same
     #      reason 12a is: a check that cannot stay quiet here is one nobody keeps.
     New-FixtureConsumer -ExtensionIds @()
     Set-FixtureEnabledPlugins -Ids @($wfPlugin)
-    New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-policy/scripts/lint/check-branch-entry.ps1'
+    New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-repo-workflow/scripts/lint/check-branch-entry.ps1'
     $mf = New-FixtureManifest -Extensions @() -Plugin $wfPlugin
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'adopted consumer: exit code 0'
@@ -1568,11 +1568,11 @@ try {
 
     # 12k. WORKFLOWS, BUT NOT ONE OF THEM CHECKS THIS REPOSITORY OUT. This is djcylow-react's shape,
     #      and before #1850 it was indistinguishable from 12j. [INFO] and exit 0, not [ERROR]: both
-    #      halves of adopt-dkj-policy are optional, so this is a state that may be a decision -- the
+    #      halves of adopt-dkj-repo-workflow are optional, so this is a state that may be a decision -- the
     #      register's own doctrine for an unmigrated plugin id, one check over.
     New-FixtureConsumer -ExtensionIds @()
     Set-FixtureEnabledPlugins -Ids @($wfPlugin)
-    New-FixtureWorkflow -Name 'ci.yml' -Repository 'someone/unrelated-repo' -ScriptPath 'plugins/dkj-policy/scripts/lint/check-branch-entry.ps1'
+    New-FixtureWorkflow -Name 'ci.yml' -Repository 'someone/unrelated-repo' -ScriptPath 'plugins/dkj-repo-workflow/scripts/lint/check-branch-entry.ps1'
     $mf = New-FixtureManifest -Extensions @() -Plugin $wfPlugin
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'unadopted consumer: exit code 0 -- a state, not a defect'
@@ -1615,10 +1615,10 @@ try {
     # #2333 pinned the shared-scripts checkout of the three runners that hold a credential, and made a
     # re-run of adopt-ci-floor report a stale one. A consumer nobody re-runs it in stays on ref: main
     # beside FOLD_PUSH_TOKEN; this is the register saying so. The version it judges against is this
-    # tree's own dkj-policy plugin.json, read here the same way so the suite survives every release.
-    $pinVersion = [string]((Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-policy\.claude-plugin\plugin.json') -Raw | ConvertFrom-Json).version)
+    # tree's own dkj-repo-workflow plugin.json, read here the same way so the suite survives every release.
+    $pinVersion = [string]((Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\.claude-plugin\plugin.json') -Raw | ConvertFrom-Json).version)
     $pinSha = '0123456789abcdef0123456789abcdef01234567'
-    $pinScript = 'plugins/dkj-policy/scripts/release/fold-changelog-entry.ps1'
+    $pinScript = 'plugins/dkj-repo-workflow/scripts/release/fold-changelog-entry.ps1'
 
     # 12o. The pre-#2333 shape: a credential beside ref: main. [INFO], exit 0 -- it works, and is exposed.
     New-FixtureConsumer -ExtensionIds @('06-16')
@@ -1655,7 +1655,7 @@ try {
     # 12s. A READ-ONLY runner on main -- silence. branch-entry.yml tracks main on purpose (#1805), and
     #      every scenario in 12a-12n is this shape, so a check that fired here would have fired there.
     New-FixtureConsumer -ExtensionIds @('06-16')
-    New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-policy/scripts/lint/check-branch-entry.ps1'
+    New-FixtureWorkflow -Name 'branch-entry.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-repo-workflow/scripts/lint/check-branch-entry.ps1'
     $mf = New-FixtureManifest -Extensions @('06-16')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-NotMatch 'holds a write credential' $r.Out 'read-only runner on main: not judged'
@@ -1668,7 +1668,7 @@ try {
     Assert-NotMatch 'holds a write credential' $r.Out 'bare SHA pin: no finding either way'
 
     # --- 12u-12w. Check 6d's LAYOUT FLOOR (#4148) ---------------------------------------------------
-    # A pin below the release that moved the workflow folder to .dkj/dkj-policy/ looks in the old place
+    # A pin below the release that moved the workflow folder to .dkj/dkj-repo-workflow/ looks in the old place
     # and reports OK -- measured: fold-on-merge at v5.18.0 went green twice over an unfolded entry. In a
     # consumer that has moved, that is an [ERROR]; in one that has not, the old pin still reads it right.
     . (Join-Path $RepoRoot 'scripts\lib\consumer-runner-lib.ps1')
@@ -1676,9 +1676,9 @@ try {
     $belowFloor = '5.18.0'
     Assert-Equal $true ([version]$belowFloor -lt [version]$floor.Version) 'layout floor: the fixture pin really is below it'
 
-    # 12u. Below the floor, consumer already on .dkj/dkj-policy/ -> [ERROR], non-zero exit.
+    # 12u. Below the floor, consumer already on .dkj/dkj-repo-workflow/ -> [ERROR], non-zero exit.
     New-FixtureConsumer -ExtensionIds @('06-16')
-    New-Item -ItemType Directory -Force -Path (Join-Path $Fixture '.dkj\dkj-policy') | Out-Null
+    New-Item -ItemType Directory -Force -Path (Join-Path $Fixture '.dkj\dkj-repo-workflow') | Out-Null
     New-FixtureWorkflow -Name 'fold-on-merge.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath $pinScript -Credential -Ref "$pinSha # v$belowFloor"
     $mf = New-FixtureManifest -Extensions @('06-16')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
@@ -1698,7 +1698,7 @@ try {
     # 12w. At the floor, after the move -> behind is still only [INFO]: it reads the new folder.
     if ([version]$floor.Version -lt [version]$pinVersion) {
         New-FixtureConsumer -ExtensionIds @('06-16')
-        New-Item -ItemType Directory -Force -Path (Join-Path $Fixture '.dkj\dkj-policy') | Out-Null
+        New-Item -ItemType Directory -Force -Path (Join-Path $Fixture '.dkj\dkj-repo-workflow') | Out-Null
         New-FixtureWorkflow -Name 'fold-on-merge.yml' -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath $pinScript -Credential -Ref "$pinSha # v$($floor.Version)"
         $mf = New-FixtureManifest -Extensions @('06-16')
         $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
@@ -1781,7 +1781,7 @@ exit 1
     }
 
     $staleYml   = New-FixtureWorkflowText -Repository 'DKJ-Solutions/claude-code-specialists' -ScriptPath 'plugins/workflows/contributing-davekjohn/scripts/lint/check-branch-entry.ps1'
-    $currentYml = New-FixtureWorkflowText -Repository 'DKJ-Solutions/claude-code-specialists' -ScriptPath 'plugins/dkj-policy/scripts/lint/check-branch-entry.ps1'
+    $currentYml = New-FixtureWorkflowText -Repository 'DKJ-Solutions/claude-code-specialists' -ScriptPath 'plugins/dkj-repo-workflow/scripts/lint/check-branch-entry.ps1'
 
     # 13a. THE DEFAULT IS OFF, AND NOT ONE CALL IS MADE. This is the reason the feature is a switch at
     #      all -- the script runs from consumer-sessioncheck.ps1 at every session start -- so it is
@@ -1807,7 +1807,7 @@ exit 1
     $r = Invoke-Absent -ManifestPath $mf -Remote
     Assert-Equal 1 $r.Code 'remote read, stale path: exit code 1 -- it counts as an error'
     Assert-Match 'branch-entry\.yml line \d+' $r.Out 'remote read, stale path: names the workflow file and the line'
-    Assert-Match 'it is at plugins/dkj-policy/scripts/lint/check-branch-entry\.ps1' $r.Out 'remote read, stale path: same repair suggestion as the local half'
+    Assert-Match 'it is at plugins/dkj-repo-workflow/scripts/lint/check-branch-entry\.ps1' $r.Out 'remote read, stale path: same repair suggestion as the local half'
     Assert-Match 'read from main over the API' $r.Out 'remote read, stale path: says which branch it judged'
     Assert-Match 'no checkout of this consumer is on this machine' $r.Out 'remote read, stale path: and why it read the API rather than the disk'
     Assert-Match 'graphql' $r.Calls 'remote read, stale path: the call was actually made'
@@ -1828,7 +1828,7 @@ exit 1
     #       ref: main are the ones nobody visits, so the pin finding has to reach them over the network
     #       too -- with the branch it was read from, like every remote finding.
     New-FixtureConsumer -ExtensionIds @('06-16')
-    $foldYml = New-FixtureWorkflowText -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-policy/scripts/release/fold-changelog-entry.ps1' -Credential
+    $foldYml = New-FixtureWorkflowText -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-repo-workflow/scripts/release/fold-changelog-entry.ps1' -Credential
     $env:GH_GRAPHQL_BODY = New-GraphQlAnswer -Files @(@{ Name = 'fold-on-merge.yml'; Text = $foldYml })
     $mf = New-FixtureManifest -Extensions @('06-16')
     $r = Invoke-Absent -ManifestPath $mf -Remote
@@ -1839,13 +1839,13 @@ exit 1
     #       nobody had checked out, so the escalation must reach this route. The folder is read in the
     #       same GraphQL call ('dot'); a response without that field stays unknown and never escalates.
     New-FixtureConsumer -ExtensionIds @('06-16')
-    $oldPinYml = New-FixtureWorkflowText -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-policy/scripts/release/fold-changelog-entry.ps1' -Credential -Ref "0123456789abcdef0123456789abcdef01234567 # v5.18.0"
+    $oldPinYml = New-FixtureWorkflowText -Repository 'DKJ-Solutions/dkj-marketplace' -ScriptPath 'plugins/dkj-repo-workflow/scripts/release/fold-changelog-entry.ps1' -Credential -Ref "0123456789abcdef0123456789abcdef01234567 # v5.18.0"
     $answer = New-GraphQlAnswer -Files @(@{ Name = 'fold-on-merge.yml'; Text = $oldPinYml })
     $env:GH_GRAPHQL_BODY = $answer -replace '"defaultBranchRef"', '"dot":{"__typename":"Tree"},"defaultBranchRef"'
     $mf = New-FixtureManifest -Extensions @('06-16')
     $r = Invoke-Absent -ManifestPath $mf -Remote
     Assert-Match '\[ERROR\].*fold-on-merge\.yml line \d+ .*pinned at v5\.18\.0, below v' $r.Out 'remote read, below the layout floor after the move: an ERROR'
-    Assert-Match 'dotExpr=HEAD:\.dkj/dkj-policy' $r.Calls 'remote read: the folder was asked for in the same call'
+    Assert-Match 'dotExpr=HEAD:\.dkj/dkj-repo-workflow' $r.Calls 'remote read: the folder was asked for in the same call'
 
     $env:GH_GRAPHQL_BODY = $answer -replace '"defaultBranchRef"', '"dot":null,"defaultBranchRef"'
     $r = Invoke-Absent -ManifestPath $mf -Remote

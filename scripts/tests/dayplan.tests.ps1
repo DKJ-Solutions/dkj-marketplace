@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/apps/admin/lib/dayplan-lib.ps1 and plugins/dkj-policy/apps/admin/pages/day-plan.ps1 -- the day plan
+    Tests for plugins/dkj-repo-workflow/apps/admin/lib/dayplan-lib.ps1 and plugins/dkj-repo-workflow/apps/admin/pages/day-plan.ps1 -- the day plan
     (#3859): reading a proposed plan, the 6-8 h band that Paula holds both ways, the measured pace, matching the plan
     against GitHub's finished work, the carry-over, the texts, and the script's refusals and day file.
 
@@ -9,8 +9,8 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\dayplan-lib.ps1')
-$Script = Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\pages\day-plan.ps1'
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\dayplan-lib.ps1')
+$Script = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\pages\day-plan.ps1'
 
 $script:pass = 0
 $script:fail = 0
@@ -112,8 +112,8 @@ $wt = Format-DayPlanWeekText -Week $wk -Prs 7 -Issues 3
 Assert-True ($wt -match 'Mon 02' -and $wt -match 'not closed' -and $wt -match '7 PR\(s\) merged, 3 issue\(s\) closed' -and $wt -match 'reached on 0 of 2') 'the week shows each day, the totals, and how often the goal was reached'
 
 Write-Host '-- the Today page (#3860)' -ForegroundColor Cyan
-. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\general-pages-lib.ps1')
-. (Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib\today-page-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\general-pages-lib.ps1')
+. (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib\today-page-lib.ps1')
 $now = [datetime]'2026-11-07T12:00'
 $pageDay = [pscustomobject]@{ date = '2026-11-07'; goal = 'Ship <it>'; notToday = @('Spotify'); overrides = @([pscustomobject]@{ at = 'start'; reason = 'short day' }); close = $null
     items = @((& $item 'Script' 3 'go' 'o/r#1'), (& $item 'Page <b>' 2 'plan' ''), ([pscustomobject]@{ title = 'Review'; hours = 1; mode = 'go'; ref = ''; added = $true })) }

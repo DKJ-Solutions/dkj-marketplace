@@ -35,8 +35,8 @@ $ErrorActionPreference = 'Stop'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $Script   = Join-Path $RepoRoot 'scripts\lint\check-git-identity.ps1'
-$Hook     = Join-Path $RepoRoot 'plugins\dkj-policy\hooks\git-identity-sessioncheck.ps1'
-$Mirror   = Join-Path $RepoRoot 'plugins\dkj-policy\scripts\lint\check-git-identity.ps1'
+$Hook     = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\git-identity-sessioncheck.ps1'
+$Mirror   = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\lint\check-git-identity.ps1'
 
 $script:pass  = 0
 $script:fail  = 0

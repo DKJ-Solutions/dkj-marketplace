@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/apps/admin/lib/progress-lib.ps1 -- the Progress page (#4004): a milestone's kind
+    Tests for plugins/dkj-repo-workflow/apps/admin/lib/progress-lib.ps1 -- the Progress page (#4004): a milestone's kind
     from its labels, the team's numbers from the Logbook's runs, and the page itself.
 
     Pure ASCII (repo convention for .ps1).
@@ -8,7 +8,7 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$lib = Join-Path $RepoRoot 'plugins\dkj-policy\apps\admin\lib'
+$lib = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\apps\admin\lib'
 . (Join-Path $lib 'general-pages-lib.ps1')
 . (Join-Path $lib 'stopwatch-lib.ps1')
 . (Join-Path $lib 'goals-lib.ps1')

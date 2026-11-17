@@ -692,8 +692,8 @@ exit __EXIT__
 
     # --- 16. the mirror carries Invoke-WorkflowGates too ------------------------------------------
     Write-Host "`n== 16. the function travels to the plugin mirror ==" -ForegroundColor Cyan
-    $mirrorLibPath    = Join-Path $RepoRoot 'plugins\dkj-policy\scripts\lib\gate-lib.ps1'
-    $mirrorOpenPrPath = Join-Path $RepoRoot 'plugins\dkj-policy\scripts\release\open-pr.ps1'
+    $mirrorLibPath    = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\lib\gate-lib.ps1'
+    $mirrorOpenPrPath = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\release\open-pr.ps1'
     Assert-True (Test-Path -LiteralPath $mirrorLibPath) 'the mirrored gate-lib.ps1 exists'
     Assert-True (Test-Path -LiteralPath $mirrorOpenPrPath) 'the mirrored open-pr.ps1 exists'
     if ((Test-Path -LiteralPath $mirrorLibPath) -and (Test-Path -LiteralPath $mirrorOpenPrPath)) {
@@ -1166,7 +1166,7 @@ exit __EXIT__
     Assert-Equal 0 (@(Get-ReleaseNoteTreeRoots -RepoRoot $rN)).Count 'with neither seam defined the resolver returns nothing to hold anything to'
     function Get-ReleaseNoteRoot { return 'dkj-policy/releases/audience/' }
     Assert-Equal 'dkj-policy/releases/audience' (@(Get-ReleaseNoteTreeRoots -RepoRoot $rN))[0] 'a trailing slash is normalised away, so the caller never has to'
-    function Get-ReleaseInternalNotesRoot { return 'dkj-policy\releases\internal' }
+    function Get-ReleaseInternalNotesRoot { return 'dkj-repo-workflow\releases\internal' }
     $bothRoots = @(Get-ReleaseNoteTreeRoots -RepoRoot $rN)
     Assert-Equal 2 $bothRoots.Count 'both seams are read when both are defined'
     Assert-True ($bothRoots -contains 'dkj-policy/releases/internal') 'and a backslashed answer is forward-slashed, so it matches what git reports'

@@ -231,7 +231,7 @@ be one edit away from printing the authorised command; not reading it is what ma
 rather than merely forbidden.
 
 Every one of them is read through `Get-Command`, so **this plugin depends on no workflow plugin at all**: a
-repo on `dkj-policy` and a repo on none get identical behaviour. That includes
+repo on `dkj-repo-workflow` and a repo on none get identical behaviour. That includes
 the branch-name flattening `push-preview` needs — Shopify rejects a theme name containing `/`, so the
 branch name is taken from `Get-BranchInfo`'s `SafeName` where the repo has it and falls back to replacing
 `/` with `-`, which is the same answer.

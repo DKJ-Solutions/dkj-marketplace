@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Tests for plugins/dkj-policy/extensions/bwj-development/hooks/closed-message-sessioncheck.ps1 -- the session check
+    Tests for plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/hooks/closed-message-sessioncheck.ps1 -- the session check
     that reports a store whose asana-closed-message copy is missing, stale, or has no ASANA_PAT (#2871),
     a store config that states no Get-ResolvesExemptMatchers (#2959), and an Asana-linked issue still open
     after its -NoResolves pull request merged (#3945).
@@ -17,8 +17,8 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot  = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Hook      = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development\hooks\closed-message-sessioncheck.ps1'
-$Templates = Join-Path $RepoRoot 'plugins\dkj-policy\extensions\bwj-development\templates'
+$Hook      = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\hooks\closed-message-sessioncheck.ps1'
+$Templates = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\templates'
 # $PID and a guid in the fixture path: the test gate runs suites in parallel.
 $Fixture   = Join-Path ([System.IO.Path]::GetTempPath()) "closed-message-sessioncheck-$PID-$([guid]::NewGuid().ToString('n'))"
 
@@ -84,7 +84,7 @@ try {
 
     $none = New-Store -Label 'none'
     $r = Invoke-Hook -Root $none -Slug 'BWJ-Development/smartwatchbanden' -Secret 'CLAUDE_CODE_OATH_TOKEN'
-    Assert-True ($r.Text -match '\[ERROR\] bwj-development: BWJ-Development/smartwatchbanden has no \.github/workflows/asana-closed-message\.yml and \.github/scripts/asana-closed-message\.ps1') 'the measured case (#2871): both files missing is one finding naming both'
+    Assert-True ($r.Text -match '\[ERROR\] dkj-repo-workflow-bwj: BWJ-Development/smartwatchbanden has no \.github/workflows/asana-closed-message\.yml and \.github/scripts/asana-closed-message\.ps1') 'the measured case (#2871): both files missing is one finding naming both'
     Assert-True ($r.Text -match 'has no ASANA_PAT secret') 'and the missing secret is its own finding'
     Assert-True ($r.Code -eq 0) 'a finding still exits 0'
 
@@ -97,7 +97,7 @@ try {
     $noPrio = New-Store -Label 'no-prio' -Copy
     Remove-Item -LiteralPath (Join-Path $noPrio '.github\workflows\asana-prio-label.yml'), (Join-Path $noPrio '.github\scripts\asana-prio-label.ps1')
     $r = Invoke-Hook -Root $noPrio -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT'
-    Assert-True ($r.Text -match '\[ERROR\] bwj-development: BWJ-Development/smartwatchbanden has no \.github/workflows/asana-prio-label\.yml and \.github/scripts/asana-prio-label\.ps1') 'a store missing only the prio pair is reported, naming that pair'
+    Assert-True ($r.Text -match '\[ERROR\] dkj-repo-workflow-bwj: BWJ-Development/smartwatchbanden has no \.github/workflows/asana-prio-label\.yml and \.github/scripts/asana-prio-label\.ps1') 'a store missing only the prio pair is reported, naming that pair'
     Assert-True ($r.Text -notmatch 'asana-closed-message') 'and the closed-message pair, which is in place, is not named'
     Assert-True ($r.Code -eq 0) 'a finding still exits 0'
 
@@ -111,7 +111,7 @@ try {
     $noOs = New-Store -Label 'no-open-section' -Copy
     Remove-Item -LiteralPath (Join-Path $noOs '.github\workflows\asana-open-section.yml'), (Join-Path $noOs '.github\scripts\asana-open-section.ps1')
     $r = Invoke-Hook -Root $noOs -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT'
-    Assert-True ($r.Text -match '\[ERROR\] bwj-development: BWJ-Development/smartwatchbanden has no \.github/workflows/asana-open-section\.yml and \.github/scripts/asana-open-section\.ps1') 'smartwatchbanden missing the open-section pair is reported'
+    Assert-True ($r.Text -match '\[ERROR\] dkj-repo-workflow-bwj: BWJ-Development/smartwatchbanden has no \.github/workflows/asana-open-section\.yml and \.github/scripts/asana-open-section\.ps1') 'smartwatchbanden missing the open-section pair is reported'
     Assert-True ($r.Text -notmatch 'asana-closed-message|asana-prio-label') 'and the pairs in place are not named'
     $r = Invoke-Hook -Root $noOs -Slug 'BWJ-Development/xoxowildhearts' -Secret 'ASANA_PAT'
     Assert-True ($r.Text.Trim() -eq '') 'xoxowildhearts, which did not decide it, is never asked for the open-section pair'
@@ -125,7 +125,7 @@ try {
     [System.IO.File]::WriteAllText((Join-Path $noSeam 'scripts\repo-config.ps1'),
         "function Get-RepoName { 'BWJ-Development/xoxowildhearts' }`n# function Get-ResolvesExemptMatchers { @() }`n")
     $r = Invoke-Hook -Root $noSeam -Slug 'BWJ-Development/xoxowildhearts' -Secret 'ASANA_PAT'
-    Assert-True ($r.Text -match '\[ERROR\] bwj-development: BWJ-Development/xoxowildhearts states no Get-ResolvesExemptMatchers') 'the measured case (#2959): a store config without the seam is reported'
+    Assert-True ($r.Text -match '\[ERROR\] dkj-repo-workflow-bwj: BWJ-Development/xoxowildhearts states no Get-ResolvesExemptMatchers') 'the measured case (#2959): a store config without the seam is reported'
     Assert-True ($r.Text -match 'step 2 proposes the two matchers') 'and the finding names the adopt step that proposes it'
     Assert-True (@($r.Text -split "`n" | Where-Object { $_ -match '\[ERROR\]' }).Count -eq 1) 'a commented-out definition does not count, and nothing else is blamed'
     Assert-True ($r.Code -eq 0) 'a finding still exits 0'
@@ -183,7 +183,7 @@ try {
         -Merged @(@{ number = 1144; headRefName = 'fix/1126-cart-badge'; body = $declared; mergedAt = $recent }) `
         -Issues @(@{ number = 1126; body = $linked })
     $r = Invoke-Hook -Root $ok -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT' -Pulls $pulls
-    Assert-True ($r.Text -match '\[ERROR\] bwj-development: BWJ-Development/smartwatchbanden#1126 links an Asana task and is still open, though PR #1144') 'the measured case (#3945): an Asana-linked issue open after its -NoResolves PR merged is reported'
+    Assert-True ($r.Text -match '\[ERROR\] dkj-repo-workflow-bwj: BWJ-Development/smartwatchbanden#1126 links an Asana task and is still open, though PR #1144') 'the measured case (#3945): an Asana-linked issue open after its -NoResolves PR merged is reported'
     Assert-True ($r.Text -match 'closes when its PR lands') 'and the finding states the rule'
     Assert-True ($r.Text -notmatch 'Ships #1126') 'and prints no PR body'
     Assert-True ($r.Code -eq 0) 'a finding still exits 0'
@@ -227,7 +227,7 @@ try {
         @{ number = 1302; body = 'Read without labels.' })
     $p = New-PullData -Label 'reach' -Issues $reachIssues
     $r = Invoke-Hook -Root $ok -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT' -Pulls $p
-    Assert-True ($r.Text -match "\[ERROR\] bwj-development: BWJ-Development/smartwatchbanden has 2 open issue\(s\) carrying the reach label 'minor' with no Asana task linked: #1257, #1283\.") 'the measured case (#4053): reach-labelled issues with no card are reported, ascending, the label matched case-insensitively'
+    Assert-True ($r.Text -match "\[ERROR\] dkj-repo-workflow-bwj: BWJ-Development/smartwatchbanden has 2 open issue\(s\) carrying the reach label 'minor' with no Asana task linked: #1257, #1283\.") 'the measured case (#4053): reach-labelled issues with no card are reported, ascending, the label matched case-insensitively'
     Assert-True ($r.Text -notmatch '#1224|#1300|#1301|#1302') 'an issue with a card, without the label, naming several tasks, or read without labels is left out'
     Assert-True ($r.Text -notmatch 'Belgium|Klarna') 'and no issue body is printed'
     Assert-True ($r.Code -eq 0) 'the finding still exits 0'
@@ -283,7 +283,7 @@ try {
     Assert-True ($text -match "has 1 open issue\(s\) carrying the reach label 'minor' with no Asana task linked: #1127\.") 'and the live path reads each issue''s labels list (#4053)'
 
     # THE TREE IS READ AFTER THE TRUNK SYNC (#4041). The measured case: the files arrive in the same session
-    # start's fast-forward, which dkj-policy's dispatcher runs beside this hook and marks done in the session
+    # start's fast-forward, which dkj-repo-workflow's dispatcher runs beside this hook and marks done in the session
     # cache. The hook starts on a tree that lacks them; they land, then the mark, and nothing may be blamed.
     . (Join-Path $RepoRoot 'scripts\lib\session-cache-lib.ps1')
     $cacheRoot = Join-Path $Fixture 'session-cache'

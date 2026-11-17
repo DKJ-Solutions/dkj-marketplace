@@ -65,7 +65,7 @@ function ConvertTo-ConsoleStrippedText {
             count, so the one convention serves them all.
 
             SIX CATEGORIES AND NO EXCEPTIONS -- unlike ConvertTo-BacklogVisibleText (#2025,
-            bwj-development's backlog-page-rules.ps1), which keeps eight invisible code points an HTML
+            dkj-repo-workflow-bwj's backlog-page-rules.ps1), which keeps eight invisible code points an HTML
             page can afford to render (three bidi MARKS, two joiners) because an HTML element can be
             told a text direction and a console line cannot. That is why this is not a reuse of that
             function -- only of its LOOKUP; the policy differs; the code-point walk does not.
@@ -147,7 +147,7 @@ function Format-ForConsole {
             title is evidence that must not be re-spaced; Get-DisplayPath answers the all-stripped case
             with '(no printable path)', the wrong noun for an issue title.
 
-            A FOURTH COPY LIVED OUTSIDE THE LIBS until October 5, 2026: the bwj-development template
+            A FOURTH COPY LIVED OUTSIDE THE LIBS until October 5, 2026: the dkj-repo-workflow-bwj template
             asana-mirror.ps1, which shipped standalone into a consumer's .github/scripts/ (#2019) and
             was retired with its workflow. What the remaining copies may not do is DISAGREE, so
             pr-issues.tests.ps1 compares the four in scripts/lib.

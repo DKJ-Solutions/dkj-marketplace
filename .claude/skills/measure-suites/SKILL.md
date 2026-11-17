@@ -23,7 +23,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/maintenance/measure-
 # before/after, with families
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/maintenance/measure-suites.ps1 `
   -BaselineRunId <before-ids> -RunId <after-ids> `
-  -Family 'integrity=check-plugin-integrity-*,bwj=bwj-*;bwj-development.tests.ps1'
+  -Family 'integrity=check-plugin-integrity-*,bwj=bwj-*;dkj-repo-workflow-bwj.tests.ps1'
 ```
 
 **Take PR runs.** Both trunk pushes a ship leaves behind normally skip the suites -- the `fold:` push by
@@ -62,7 +62,7 @@ slowest suites and the pool total. Use `measure-suites` to look, and this script
 The two share one parser (`scripts/lib/suite-durations-lib.ps1`), so they cannot disagree about which
 rows count. Why the file is only ever refreshed from CI runs is in the script's own docstring.
 
-**That script and its lib ship in `dkj-policy`** since
+**That script and its lib ship in `dkj-repo-workflow`** since
 [#3474](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3474), documented for consumers on the
 plugin's `record-suite-durations` skill page, which also states the CI contract it reads. `measure-suites`
 stays here. Its `-Machine` is kept from the file when omitted, so a refresh here needs no new value.

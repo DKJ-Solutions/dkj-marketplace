@@ -15,14 +15,14 @@
             repository: DKJ-Solutions/dkj-marketplace
             ref: main
             path: .workflow-scripts
-        - run: powershell ... -File .workflow-scripts/plugins/dkj-policy/scripts/lint/check-branch-entry.ps1
+        - run: powershell ... -File .workflow-scripts/plugins/dkj-repo-workflow/scripts/lint/check-branch-entry.ps1
 
     That is deliberate and stays: there is ONE definition of the entry gate, of the fold and of the
     resolves check in this system, and a vendored copy would be a second one, free to drift. The cost
     is a dependency pointing the wrong way -- a path INTO this tree, written into a file this tree
     cannot reach, by a scaffolder that runs once at adoption and never again.
 
-    So when `plugins/workflows/contributing-davekjohn/` became `plugins/dkj-policy/`, every consumer
+    So when `plugins/workflows/contributing-davekjohn/` became `plugins/dkj-repo-workflow/`, every consumer
     scaffolded before the move kept naming the old path. Measured September 10, 2026 (#1805):
     `DaveKJohn/thumbnail-generator` and `DaveKJohn/life-hub` were red on every pull request, and
     neither had been noticed, because neither repo had opened one since the break.
@@ -33,7 +33,7 @@
 
         2026-08-20  A   plugins/workflows/workflow-davekjohn/scripts/lint/check-branch-entry.ps1
         2026-08-26  R   -> plugins/workflows/contributing-davekjohn/scripts/lint/check-branch-entry.ps1
-        2026-09-05  R   -> plugins/workflows/dkj-policy/... -> plugins/dkj-policy/...
+        2026-09-05  R   -> plugins/workflows/dkj-policy/... -> plugins/dkj-repo-workflow/...
 
     So the gate did not exist at all until August 20, the path they name existed only from August 26,
     and it stopped resolving on September 5 -- FIVE DAYS before the measurement, not five weeks.
@@ -43,7 +43,7 @@
     Recorded here rather than only in the issue because a citation is what makes a measurement
     auditable, and this one would have shipped to every consumer on the strength of sounding worse.
 
-    THE `ref: main` PIN IS NOT THE DEFECT, AND WAS NOT WHAT WENT UNARGUED. adopt-dkj-policy/SKILL.md
+    THE `ref: main` PIN IS NOT THE DEFECT, AND WAS NOT WHAT WENT UNARGUED. adopt-dkj-repo-workflow/SKILL.md
     argues the pin by name: a pinned tag keeps enforcing the shape it was pinned at, and the ENTRY's
     own path has moved twice, so a stale pin does not fail loudly -- it refuses branches that do carry
     an entry at the current path. That is right, and this lib does not reopen it. What the argument
@@ -52,7 +52,7 @@
     is why the pin can stay.
 
     AND THE TESTS DID NOT CATCH IT BECAUSE THEY PINNED THE LITERAL. adopt-ci-floor.tests.ps1
-    asserted `$fold -like '*.workflow-scripts/plugins/dkj-policy/scripts/...*'` -- that the scaffolder
+    asserted `$fold -like '*.workflow-scripts/plugins/dkj-repo-workflow/scripts/...*'` -- that the scaffolder
     EMITS that string. Moving the script in this tree leaves that assertion green: it compares the
     emitted text against itself. The two callers of this lib close both ends of that:
 
@@ -170,7 +170,7 @@ function Get-SharedScriptReference {
         it, or -- since #2422 -- a reusable workflow of it called with `uses:`.
 
         Returns one record per DISTINCT path: @{ Path; Prefix; Repository; Line; Kind }, where Path is
-        repo-relative to that tree with forward slashes ('plugins/dkj-policy/scripts/...', or
+        repo-relative to that tree with forward slashes ('plugins/dkj-repo-workflow/scripts/...', or
         '.github/workflows/reusable-branch-entry.yml' for a call), Prefix is the local directory the
         step checks it out into ('' for a call, which checks nothing out), Repository is the owner/name
         as written (so a caller can name the owner the consumer cited), Line is the 1-based line of the
@@ -317,7 +317,7 @@ function Test-SharedScriptReference {
 
         THE SUGGESTION IS THE POINT OF THE CHECK, not a
         courtesy. "This path no longer exists here" leaves the reader to find out what replaced it in
-        a tree they may not have; "it is at plugins/dkj-policy/scripts/lint/check-branch-entry.ps1
+        a tree they may not have; "it is at plugins/dkj-repo-workflow/scripts/lint/check-branch-entry.ps1
         now" is a repair they can paste. Where the name matches nothing, MovedTo is empty and the
         script was removed rather than moved -- which is a different conversation and reads as one.
 
@@ -503,17 +503,21 @@ function Get-SharedScriptLayoutFloor {
         trunk" and finished green, while the merged branch's document sat on the trunk unfolded. A gate
         that fails GREEN is a gate nobody learns about until a release cut misses the entry.
 
-        THE FLOOR ONLY BITES WHERE THE CONSUMER HAS MOVED. A consumer still on the root dkj-policy/ folder
-        is read correctly by an old pin, so there the pin stays an ordinary "behind". The caller decides
-        that from the consumer's tree; this function only names the line.
+        THE FLOOR ONLY BITES WHERE THE CONSUMER HAS MOVED. A consumer still on an older folder is read
+        correctly by an old pin, so there the pin stays an ordinary "behind". The caller decides that from
+        the consumer's tree; this function only names the line.
 
-        RAISE IT WHEN A RELEASE MOVES A PATH THE PINNED RUNNERS READ. One record, not a table, because
-        one layout move has happened; a second one is the moment to make it a list.
+        RAISE IT WHEN A RELEASE MOVES A PATH THE PINNED RUNNERS READ. #4209 is the second move:
+        .dkj/dkj-policy/ became .dkj/dkj-repo-workflow/, as a hard cut, so a runner pinned below the release
+        that ships it reads the old folder and fails green in the same way. Still one record rather than a
+        table: under the hard cut every consumer moves to the newest folder, and a floor naming an older
+        folder would bite nobody. The version is '6.19.0' whether that release is cut as a minor or as
+        7.0.0, because every tag at or above it carries #4209 either way.
     #>
     return [pscustomobject]@{
-        Version = '6.10.0'
-        Folder  = '.dkj/dkj-policy'
-        Issue   = '#3870'
+        Version = '6.19.0'
+        Folder  = '.dkj/dkj-repo-workflow'
+        Issue   = '#4209'
     }
 }
 
@@ -574,7 +578,7 @@ function Test-ConsumerRunnerAdoption {
         partially-read set can say so.
 
         WHETHER AN ABSENT RUNNER IS A DEFECT IS NOT THIS FUNCTION'S QUESTION, and deliberately so: the
-        two halves of adopt-dkj-policy that place these runners are optional and separate from enabling
+        two halves of adopt-dkj-repo-workflow that place these runners are optional and separate from enabling
         the plugin, so a consumer may have decided against them. What was wrong was that nobody could
         tell either way from here. This reports the state; the caller decides what to call it.
     #>

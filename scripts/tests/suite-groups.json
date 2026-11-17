@@ -259,11 +259,11 @@
                    {
                        "key":  "bwj",
                        "title":  "The BWJ extension",
-                       "guards":  "bwj-development: its hooks, the market URLs, the pages worker and the shared test harness it ships",
+                       "guards":  "dkj-repo-workflow-bwj: its hooks, the market URLs, the pages worker and the shared test harness it ships",
                        "suites":  [
                                       "asana-link-pickupcheck.tests.ps1",
                                       "backlog-page-build.tests.ps1",
-                                      "bwj-development.tests.ps1",
+                                      "dkj-repo-workflow-bwj.tests.ps1",
                                       "bwj-extension-import.tests.ps1",
                                       "bwj-market-urls.tests.ps1",
                                       "bwj-page-publish.tests.ps1",
@@ -275,7 +275,7 @@
                                       "guard-stale-paste-block.tests.ps1"
                                   ],
                        "tips":  [
-                                    "bwj-development is not enabled in this repo, but its suites still run on every PR here, because this repo is its source."
+                                    "dkj-repo-workflow-bwj is not enabled in this repo, but its suites still run on every PR here, because this repo is its source."
                                 ]
                    },
                    {
@@ -327,7 +327,7 @@
                                       "write-target-lib.tests.ps1"
                                   ],
                        "tips":  [
-                                    "native-capture-lib.ps1 also ships as plugin mirrors in dkj-policy and dkj-subagents-shopify; change the copy in scripts/lib and keep the mirrors identical."
+                                    "native-capture-lib.ps1 also ships as plugin mirrors in dkj-repo-workflow and dkj-subagents-shopify; change the copy in scripts/lib and keep the mirrors identical."
                                 ],
                        "split":  "console output and escaping (check-report-lib, ref-print-lib, the exception and wording guards, run-progress); git and native-command capture (git-porcelain-lib, native-capture, fetch-attempt, command-probe-lib); and the repo root, config and seams (repo-config, repo-root-lib, seam-lib, source-repo-guard and the consumer libs)."
                    }
