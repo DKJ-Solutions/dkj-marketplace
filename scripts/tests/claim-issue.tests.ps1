@@ -1608,7 +1608,29 @@ Assert-True ((Format-ClaimOpening -ForeignParked -PrerequisiteFound -Parked) -ma
 
 # THE WIRING: read on the view, defaulted on the single-issue route, and handed to the headline.
 Assert-True ($body -match "else \{ 'number,title,state,url,assignees,body,labels' \}") 'the default-route issue read asks for the labels'
-Assert-True ($body -match "ParameterSetName -eq 'Issue' -and -not \`$PSBoundParameters\.ContainsKey\('SkipLabel'\)") 'the single-issue route defaults its skip list only when none was passed'
+Assert-True ($body -match "ParameterSetName -in @\('Issue', 'Candidates'\) -and -not \`$PSBoundParameters\.ContainsKey\('SkipLabel'\)") 'the single-issue route and -Candidates default their skip list only when none was passed (#4248)'
+# -CANDIDATES WITHOUT -SKIPLABEL SKIPS A PARKED ISSUE (#4248). #4233 dropped the explicit list from the
+# issues-sweep skill, and the default was then applied on the Issue set only, so every parked issue read
+# 'free' and no stale-park ever printed. The script's own default block is run here under each set.
+$claimAstDefault = [System.Management.Automation.Language.Parser]::ParseInput($body, [ref]$null, [ref]$null)
+$defaultIf = @($claimAstDefault.FindAll({ param($n) $n -is [System.Management.Automation.Language.IfStatementAst] -and $n.Clauses[0].Item1.Extent.Text -match 'ContainsKey\(''SkipLabel''\)' }, $true))
+Assert-True ($defaultIf.Count -eq 1) 'the skip-list default is one findable if-block'
+$runDefault = {
+    param([string]$Set, [hashtable]$Bound, [string[]]$Given)
+    # $PSCmdlet and $PSBoundParameters are typed automatic variables, so the block reads plain ones instead.
+    $ParameterSetName = $Set
+    $SkipLabel = $Given
+    . ([scriptblock]::Create(($defaultIf[0].Extent.Text -replace '\$PSCmdlet\.ParameterSetName', '$ParameterSetName' -replace '\$PSBoundParameters', '$Bound')))
+    , @($SkipLabel)
+}
+$candDefault = & $runDefault 'Candidates' @{} @()
+Assert-True ($candDefault -contains 'awaiting-pull' -and $candDefault -contains 'awaiting-decision-dev') '-Candidates with no -SkipLabel gets the parking-label default'
+$candParked = @(Get-SweepCandidates -Json '[{"number":8,"title":"t","labels":[{"name":"awaiting-pull"}],"comments":[]}]' -SkipLabel $candDefault)
+Assert-True ($candParked.Count -eq 1 -and $candParked[0].Verdict -eq 'skipped' -and $candParked[0].Reason -match "^label 'awaiting-pull'") 'and an awaiting-pull issue reads skipped, not free -- so the stale-park read can run on it'
+$candGiven = & $runDefault 'Candidates' @{ SkipLabel = @('x') } @('x')
+Assert-True ($candGiven.Count -eq 1 -and $candGiven[0] -eq 'x') 'an explicit -SkipLabel on -Candidates still wins over the default'
+$releaseAll = & $runDefault 'ReleaseAll' @{} @()
+Assert-True ($releaseAll.Count -eq 0) 'and -ReleaseAll, which reads no labels, gets no default'
 Assert-True ($body -match "\`$SkipLabel = @\('awaiting-info-client', 'awaiting-decision-dev', 'awaiting-decision-client', 'awaiting-review-dev', 'awaiting-review-client', 'awaiting-pull', 'awaiting-pull-external', 'awaiting-action-external', 'awaiting-action-dev', 'awaiting-release', 'awaiting-release-external', 'awaiting-recurrences-first', 'awaiting-session-dev', 'awaiting-recurrences',\s+'awaiting-first-recurrence', 'awaiting-more-recurrences',\s+'awaiting-more-info', 'needs-info', 'needs-decision', 'awaiting-decision', 'awaiting-recurrence', 'record', 'dossier', 'awaiting-owner-act', 'awaiting-event'\)") 'and the default is the labels issues-sweep skips on -- blocked on the submitter, waiting on the owner (#2519) or the client (#2890), waiting on a first recurrence (#2587), and a record (September 30, 2026), under their current names (#2723, #2917) and every former one'
 Assert-True ($body -match 'Select-ParkingLabels -Labels @\(Get-IssueLabelNames -Issue \$facts\) -SkipLabel \$SkipLabel') 'the view''s labels are held against the skip list'
 Assert-True ($body -match '\$opening\s*=\s*Format-ClaimOpening[^\r\n]*-Parked:\$parked') 'and the headline is told when the issue is parked'
