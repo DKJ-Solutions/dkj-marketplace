@@ -646,19 +646,99 @@ function Read-HouseStyleAllowlist {
     return (ConvertTo-HouseStyleAllowlist -Raw $raw)
 }
 
+function Get-HouseStyleCachePath {
+    <#
+        Where the session-start hook keeps its scan cache for a checkout (#4234): the temp directory, one
+        file per repo root. Outside the tree, so no repo has to ignore it, and losing it costs one full scan.
+        DKJ_HOUSE_STYLE_CACHE_DIR names another directory (tests, which keep it inside their fixture).
+    #>
+    param([Parameter(Mandatory)][string]$RepoRoot)
+    $base = if ($env:DKJ_HOUSE_STYLE_CACHE_DIR) { $env:DKJ_HOUSE_STYLE_CACHE_DIR } else { Join-Path ([System.IO.Path]::GetTempPath()) 'dkj-house-style-cache' }
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $id = ([System.BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($RepoRoot.ToLowerInvariant()))) -replace '-', '').Substring(0, 16).ToLowerInvariant()
+    } finally { $sha.Dispose() }
+    return (Join-Path $base "$id.json")
+}
+
+function Get-HouseStyleCacheKey {
+    <#
+        Everything a file's hits depend on besides the file itself: this lib's own text (the rules), the
+        pinned tag (it is in a finding's text), and the house and retired names the checks match.
+    #>
+    param(
+        [Parameter(Mandatory)][hashtable]$Pin,
+        [AllowEmptyCollection()][string[]]$Tokens = @(),
+        [AllowEmptyCollection()][string[]]$Classes = @(),
+        [AllowEmptyCollection()][string[]]$Retired = @()
+    )
+    $libFile = ${function:Get-HouseStyleCacheKey}.File
+    $lib = if ($libFile -and (Test-Path -LiteralPath $libFile -PathType Leaf)) { [System.IO.File]::ReadAllText($libFile) } else { '' }
+    $text = @($lib, $Pin.Tag, (@($Tokens) -join ','), (@($Classes) -join ','), (@($Retired) -join ',')) -join "`n"
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try { return ([System.BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($text))) -replace '-', '').ToLowerInvariant() }
+    finally { $sha.Dispose() }
+}
+
+function Read-HouseStyleScanCache {
+    <#
+        The cache at $Path as @{ '<rel>' = @{ Stamp; Skip; Hits } }, or an empty table when the file is
+        missing, unreadable, or was written under another key. A cache that cannot be read is no cache.
+    #>
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$Key)
+    $table = @{}
+    try {
+        if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $table }
+        $doc = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+        if (-not $doc -or [string]$doc.Key -cne $Key) { return $table }
+        foreach ($e in @($doc.Files)) {
+            if (-not $e) { continue }
+            $hits = @(foreach ($h in @($e.H)) {
+                if ($h) { @{ Check = [string]$h.Check; Path = [string]$h.Path; Line = [int]$h.Line; Name = [string]$h.Name; Text = [string]$h.Text } }
+            })
+            $table[[string]$e.P] = @{ Stamp = [string]$e.S; Skip = [bool]$e.K; Hits = $hits }
+        }
+    } catch { return @{} }
+    return $table
+}
+
+function Write-HouseStyleScanCache {
+    <#
+        Writes $Entries under $Key to $Path through a temp file, so a reader never meets half a cache. A
+        failed write is silent: the cache only saves time, and the next run scans in full.
+    #>
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$Key, [Parameter(Mandatory)][hashtable]$Entries)
+    try {
+        $files = foreach ($rel in ($Entries.Keys | Sort-Object)) {
+            $e = $Entries[$rel]
+            [ordered]@{ P = $rel; S = $e.Stamp; K = [bool]$e.Skip; H = @($e.Hits) }
+        }
+        $json = [ordered]@{ Key = $Key; Files = @($files) } | ConvertTo-Json -Depth 5 -Compress
+        $dir = Split-Path -Parent $Path
+        if (-not (Test-Path -LiteralPath $dir)) { $null = New-Item -ItemType Directory -Path $dir -Force }
+        $tmp = "$Path.$PID.tmp"
+        [System.IO.File]::WriteAllText($tmp, $json, (New-Object System.Text.UTF8Encoding $false))
+        if (Test-Path -LiteralPath $Path) { Remove-Item -LiteralPath $Path -Force }
+        Move-Item -LiteralPath $tmp -Destination $Path -Force
+    } catch { }
+}
+
 function Invoke-HouseStyleCheck {
     <#
         Run the five checks over a checkout. Returns
         @{ Tag; Copies = @(@{ Path; Ok; Canonical }); Findings = @(@{ Check; Path; Line; Name; Text }); Allowed; Notes }.
         $Files defaults to the checkout's tracked files; tests pass their own. $SourceRepo defaults to
         Test-HouseStyleSourceRepo; a canonical copy is Ok whatever it hashes to (#3637).
+        $CachePath (the session-start hook only, #4234) reuses a file's hits from the last run while its size
+        and write time are unchanged; the gate never passes it, so CI always reads every file.
     #>
     param(
         [Parameter(Mandatory)][string]$RepoRoot,
         [Parameter(Mandatory)][hashtable]$Pin,
         [AllowEmptyCollection()][object[]]$Allow = @(),
         [string[]]$Files,
-        [switch]$SourceRepo
+        [switch]$SourceRepo,
+        [string]$CachePath
     )
 
     if (-not $PSBoundParameters.ContainsKey('Files')) { $Files = Get-HouseStyleTrackedFiles -RepoRoot $RepoRoot }
@@ -716,18 +796,49 @@ function Invoke-HouseStyleCheck {
     $exts = Get-HouseStyleScanExtensions
     # The brace stylesheets, where a rule can nest inside another (.sass and .styl indent instead).
     $nestingExts = @('.css', '.scss', '.less', '.pcss')
-    $copySet = @($copyPaths)
+    $copySet = New-Object System.Collections.Generic.HashSet[string] ([System.StringComparer]::Ordinal)
+    foreach ($c in $copyPaths) { [void]$copySet.Add($c) }
+    $extSet = New-Object System.Collections.Generic.HashSet[string] ([System.StringComparer]::Ordinal)
+    foreach ($e in $exts) { [void]$extSet.Add($e) }
     $skipped = 0
 
+    # THE SESSION-START CACHE (#4234). Only the hook passes -CachePath; the gate always reads every file.
+    # A file whose size and write time match the last run gives back the hits it gave then, so a start
+    # where nothing changed reads no file at all. The key covers everything else a hit depends on.
+    $cacheKey = $null; $cacheIn = @{}; $cacheOut = @{}; $dirty = $false
+    if ($CachePath) {
+        $cacheKey = Get-HouseStyleCacheKey -Pin $Pin -Tokens $houseTokens -Classes $houseClasses -Retired $retired
+        $cacheIn = Read-HouseStyleScanCache -Path $CachePath -Key $cacheKey
+    }
+
     foreach ($rel in $Files) {
-        if ($copySet -contains $rel) { continue }
+        if ($copySet.Contains($rel)) { continue }
         $ext = ([System.IO.Path]::GetExtension($rel)).ToLowerInvariant()
-        if ($exts -notcontains $ext) { continue }
+        if (-not $extSet.Contains($ext)) { continue }
         $full = Join-Path $RepoRoot $rel
-        if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
-        if ((Get-Item -LiteralPath $full).Length -gt 2MB) { $skipped++; continue }
+        $info = New-Object System.IO.FileInfo $full
+        if (-not $info.Exists) { continue }
+        $stamp = "$($info.Length)|$($info.LastWriteTimeUtc.Ticks)"
+        if ($cacheIn.ContainsKey($rel) -and $cacheIn[$rel].Stamp -ceq $stamp) {
+            $entry = $cacheIn[$rel]
+            if ($CachePath) { $cacheOut[$rel] = $entry }
+            if ($entry.Skip) { $skipped++; continue }
+            foreach ($f in $entry.Hits) {
+                if (Test-HouseStyleAllowed -Path $rel -Name $f.Name -Allow $Allow) { $allowed++ } else { $findings.Add($f) }
+            }
+            continue
+        }
+        if ($info.Length -gt 2MB) {
+            $skipped++
+            if ($CachePath) { $cacheOut[$rel] = @{ Stamp = $stamp; Skip = $true; Hits = @() }; $dirty = $true }
+            continue
+        }
         $text = [System.IO.File]::ReadAllText($full, [System.Text.Encoding]::UTF8)
-        if ($text.IndexOf([char]0) -ge 0) { $skipped++; continue }
+        if ($text.IndexOf([char]0) -ge 0) {
+            $skipped++
+            if ($CachePath) { $cacheOut[$rel] = @{ Stamp = $stamp; Skip = $true; Hits = @() }; $dirty = $true }
+            continue
+        }
 
         $hits = @()
         foreach ($h in @(Find-HouseStyleTokenHit -Text $text -Names $houseTokens)) {
@@ -748,11 +859,14 @@ function Invoke-HouseStyleCheck {
                 else { "$($h.Property): types the size $($h.Name) -- a rule reads a font size only from the type scale: use var(--text-*), or add a domain step (--text-name: value) and read that" }
             $hits += @{ Check = 'type'; Path = $rel; Line = $h.Line; Name = $h.Name; Text = $text5 }
         }
+        if ($CachePath) { $cacheOut[$rel] = @{ Stamp = $stamp; Skip = $false; Hits = $hits }; $dirty = $true }
         foreach ($f in $hits) {
             if (Test-HouseStyleAllowed -Path $rel -Name $f.Name -Allow $Allow) { $allowed++ } else { $findings.Add($f) }
         }
     }
 
+    # Written only when it changed: an unchanged checkout pays the read and nothing else.
+    if ($CachePath -and ($dirty -or $cacheOut.Count -ne $cacheIn.Count)) { Write-HouseStyleScanCache -Path $CachePath -Key $cacheKey -Entries $cacheOut }
     if ($skipped) { $notes.Add("checks 2 and 3 skipped $skipped file(s) over 2 MB or holding a NUL byte -- a bundle there is not read") }
     # ToArray, not @(): Windows PowerShell 5.1 throws "argument types do not match" on @() over a List.
     return @{ Tag = $Pin.Tag; Copies = $copies; Findings = $findings.ToArray(); Allowed = $allowed; Notes = $notes.ToArray() }

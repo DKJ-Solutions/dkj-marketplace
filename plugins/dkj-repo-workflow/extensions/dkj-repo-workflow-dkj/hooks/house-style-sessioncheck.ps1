@@ -72,10 +72,13 @@ if (-not $pin) { Write-Output "${name}: skipped -- the dkj-brandbook skill page 
 $allow = Read-HouseStyleAllowlist -RepoRoot $root
 if (-not $allow.Ok) { Write-Output "${name}: [WARN] scripts/repo-config.ps1: $(ConvertTo-SessionSafe $allow.Problem) -- the check did not run."; exit 0 }
 
-$result = Invoke-HouseStyleCheck -RepoRoot $root -Pin $pin -Allow $allow.Entries
+# The scan cache (#4234): an unchanged file gives back its hits from the last start instead of being
+# read again. Measured on this repo, 602 files: ~8.7 s scanned in full, the bulk of every session start.
+$cache = Get-HouseStyleCachePath -RepoRoot $root
+$result = Invoke-HouseStyleCheck -RepoRoot $root -Pin $pin -Allow $allow.Entries -CachePath $cache
 if (@($result.Findings | Where-Object { $_.Check -eq 'pin' }).Count) {
     $tagPin = Get-HouseStyleTagPin -Pin $pin
-    if ($tagPin) { $result = Invoke-HouseStyleCheck -RepoRoot $root -Pin $tagPin -Allow $allow.Entries }
+    if ($tagPin) { $result = Invoke-HouseStyleCheck -RepoRoot $root -Pin $tagPin -Allow $allow.Entries -CachePath $cache }
 }
 $findings = @($result.Findings)
 $onlyMissing = ($findings.Count -eq 1 -and $findings[0].Check -eq 'missing' -and -not @($result.Copies).Count)
@@ -97,7 +100,8 @@ $lines = @("${name}: [WARN] $($findings.Count) finding(s) against the brand book
 $shown = 5
 foreach ($f in ($findings | Select-Object -First $shown)) {
     $where = ConvertTo-SessionSafe $(if ($f.Line) { "$($f.Path):$($f.Line)" } else { $f.Path })
-    $lines += "  [$($f.Check)] $where $($f.Text)"
+    # Check and Text can come from the scan cache on disk (#4234), so they are made session-safe like the place.
+    $lines += "  [$(ConvertTo-SessionSafe $f.Check 20)] $where $(ConvertTo-SessionSafe $f.Text 400)"
 }
 if ($findings.Count -gt $shown) { $lines += "  ... and $($findings.Count - $shown) more." }
 $lines += '  The full list: run the dkj-repo-workflow-dkj plugin''s scripts/lint/check-house-style.ps1 from the repo root (the dkj-brandbook skill names it).'

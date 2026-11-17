@@ -39,19 +39,41 @@
 
 ### PLAN
 
+#4234 guessed that the PR and consumer scans in `sessioncheck-dispatch` carry the session-start tail. Measured
+per hook from the transcripts' `hook_success` attachments (120 sessions), they do not: the dispatcher's p95 is
+7.4 s and it never passed 10 s. The tail is the brand book check (median 9.2 s, p95 19.2 s) and the dev-preview
+hook (p95 10.9 s). Profiled on this repo, the brand book check spends ~8.7 s reading and pattern-matching 602
+tracked files (25 MB); the tag-page fetch is 0.8 s and only runs on a pin finding. So this branch caches that
+scan per file, for the session-start hook only. The dev-preview tail is split out to #4243.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Invoke-HouseStyleCheck -CachePath`: a file whose size and write time match the last run gives back its hits from the cache; the key covers the lib's own text, the pinned tag and the house and retired names
+- [x] `Get-HouseStyleCachePath`, `Get-HouseStyleCacheKey`, `Read-HouseStyleScanCache`, `Write-HouseStyleScanCache`: the cache lives in the temp directory, one file per repo root, written through a temp file and only when something changed; an unreadable cache is no cache
+- [x] `house-style-sessioncheck.ps1` passes the cache; `check-house-style.ps1` (the CI gate) does not, so CI always reads every file
+- [x] The scan loop uses one `FileInfo` per file and hash sets for the copy and extension lookups
 
 ### TEST
 
+- [x] `check-house-style.tests.ps1`: 182 passed, 0 failed, including new asserts: the cached scan equals the full one, an unchanged file's hits come from the cache, a changed file is read again, another key and a broken cache are ignored
+- [x] Measured on this repo: the hook 9.1 s cold, 0.78 / 0.74 s warm, output identical
+
 ### DEPLOY: fix/4234-fast-session-start
 
-**Score:**
+The brand book's session check no longer re-reads every file at each session start. It keeps a per-file
+cache of what it found, and reads again only the files whose size or write time changed since the last start.
+On this repo that took the check from about 9 s to under 1 s on a warm start, and it was the slowest hook a
+session start waited for. The CI gate still reads every file.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A session in a repo with the brand book starts several seconds sooner after `/clear` or a new session, typically under 1 s for this check instead of 9 to 20 s.
+
+**Score:** 2
 
 #### Pull Request
+
+The brand book session check caches its scan, cutting about 8 s from a session start
 
