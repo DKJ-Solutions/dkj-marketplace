@@ -195,6 +195,8 @@ function New-Fixture {
     # command-probe-lib.ps1 is a sibling of a sibling (#1729): the three libs above dot-source it for
     # Test-FunctionDefined, so the fixture owes it exactly as it owes ref-print-lib.
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\command-probe-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\command-probe-lib.ps1') -Force
+    # The changelog mode (issue #4213): every script that parks, gates, folds or cuts loads it.
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\changelog-mode-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\changelog-mode-lib.ps1') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\workflow-folder-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\workflow-folder-lib.ps1') -Force
     # repo-root-lib.ps1 likewise (#2115): park-cycle.ps1 resolves its repo root through
     # Get-GitTopLevelPath. It dot-sources this one BY NAME rather than inheriting it -- unlike

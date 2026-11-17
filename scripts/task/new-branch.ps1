@@ -315,6 +315,9 @@ if (-not (Test-Path -LiteralPath $branchInfoPath)) {
 # cut-release, fold-changelog-entry and adopt-workflow-folder all read it: the computed
 # default needs a repo root, and a lib that goes looking for one can find the wrong tree.
 . (Join-Path $PSScriptRoot '..\lib\seam-lib.ps1')
+# THE CHANGELOG MODE (issue #4213): under Get-ChangelogMode 'none' the document is written but never
+# committed -- see the creation push below.
+. (Join-Path $PSScriptRoot '..\lib\changelog-mode-lib.ps1')
 
 # THE NATIVE-COMMAND CAPTURE HELPER, dot-sourced HERE rather than inside the push block where it sat until
 # inbound #1046. Two callers now need it and the first one runs long before the push: the stale-base check
@@ -1409,7 +1412,17 @@ if ($Park) {
     # whether their run behaved differently from the one beside it.
     Write-Host "new-branch: -Park is the default since #900 -- the switch is accepted and changes nothing." -ForegroundColor DarkGray
 }
-if ($NoPush) {
+# UNDER Get-ChangelogMode 'none' (issue #4213) THERE IS NOTHING TO PARK. The document is this session's
+# plan and the PR body's source, not a record, so it is named in this clone's .git/info/exclude and never
+# committed: no 'park:' commit here, none from park-cycle after a turn, and nothing for a fold to remove
+# from the trunk. The branch first reaches origin when open-pr pushes it.
+if (Test-ChangelogModeNone) {
+    if (Add-BranchDocumentLocalExclude -RepoRoot $repoRoot -RelPath $cycleRel) {
+        Write-Host "new-branch: $(Get-ChangelogModeNoneNote) '$cycleRel' stays local and uncommitted (named in .git/info/exclude); no park commit, nothing pushed." -ForegroundColor DarkGray
+    } else {
+        Write-Warning "new-branch: $(Get-ChangelogModeNoneNote) But .git/info/exclude could not be resolved, so '$cycleRel' is merely uncommitted -- do not stage it."
+    }
+} elseif ($NoPush) {
     Write-Host "new-branch: -NoPush -- branch and document are local only, nothing is on origin." -ForegroundColor Yellow
 } else {
     # ONE IMPLEMENTATION SINCE #507 (August 7, 2026). These four steps used to be written out here as

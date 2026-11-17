@@ -220,6 +220,15 @@ if ($Branch -eq $trunk) {
     exit 0
 }
 
+# --- No changelog at all (issue #4213) ---------------------------------------------------------------
+# A repo answering Get-ChangelogMode with 'none' never commits a branch document, so there is nothing on
+# the branch for this gate to read -- and nothing a missing one would cost, because nothing folds.
+. (Join-Path $PSScriptRoot '..\lib\changelog-mode-lib.ps1')
+if (Test-ChangelogModeNone) {
+    Write-Host "[OK] '$Branch' owes no entry: $(Get-ChangelogModeNoneNote)"
+    exit 0
+}
+
 # --- Exempt prefixes -------------------------------------------------------------------------------
 # THE RULE LIVES IN entry-scaffold-lib SINCE #1962, not here. It used to be this script's own -- the
 # seam, the default and the prefix split, inline -- and open-pr.ps1 knew nothing about it, so this gate

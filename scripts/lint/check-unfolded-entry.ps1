@@ -180,6 +180,18 @@ if (Test-Path -LiteralPath $seamLib -PathType Leaf) { . $seamLib }
 
 . (Join-Path $PSScriptRoot '..\lib\entry-scaffold-lib.ps1')
 
+# NO CHANGELOG, NOTHING TO FOLD (issue #4213). A repo answering Get-ChangelogMode with 'none' never commits
+# a branch document, so none can be stranded on its trunk. Guarded like the two libs above, so a cached
+# mirror that predates this lib still answers its original question.
+$changelogModeLib = Join-Path $PSScriptRoot '..\lib\changelog-mode-lib.ps1'
+if (Test-Path -LiteralPath $changelogModeLib -PathType Leaf) {
+    . $changelogModeLib
+    if (Test-ChangelogModeNone) {
+        Write-Host "[OK] no unfolded changelog entry on the trunk -- $(Get-ChangelogModeNoneNote)"
+        exit 0
+    }
+}
+
 # $Branch is passed through as-is, empty included. Get-UnfoldedTrunkEntry resolves HEAD itself, with
 # its own try/catch -- so this script needs no git call and does not fall over on a fixture tree that
 # is not a checkout (the SessionStart hook's case). An empty current branch excludes nothing, and
