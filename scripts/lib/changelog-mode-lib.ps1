@@ -35,6 +35,8 @@
 #>
 
 . (Join-Path $PSScriptRoot 'command-probe-lib.ps1')
+# Get-DocumentNewline (#1832): the exclude file's own newline style, read in one place.
+. (Join-Path $PSScriptRoot 'document-newline-lib.ps1')
 
 function Get-ChangelogModeName {
     <#
@@ -116,7 +118,7 @@ function Add-BranchDocumentLocalExclude {
     if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
     $raw = if (Test-Path -LiteralPath $excludePath) { [System.IO.File]::ReadAllText($excludePath) } else { '' }
     if (@($raw -split "`r?`n") -contains $line) { return $true }
-    $nl = if ($raw.Contains("`r`n")) { "`r`n" } else { "`n" }
+    $nl = Get-DocumentNewline -Content $raw
     $prefix = if ($raw.Length -gt 0 -and -not $raw.EndsWith("`n")) { $nl } else { '' }
     [System.IO.File]::AppendAllText($excludePath, $prefix + $line + $nl, (New-Object System.Text.UTF8Encoding($false)))
     return $true
