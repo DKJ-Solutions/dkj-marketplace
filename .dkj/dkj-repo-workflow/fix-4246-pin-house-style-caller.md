@@ -39,9 +39,18 @@
 
 ### PLAN
 
+#4237 pinned the read-only consumer runners to the adopted release, but left the house-style caller
+that the dkj-brandbook skill gives on `@main`. Pin it as well: `@vX.Y.Z` plus `scripts-ref: vX.Y.Z`.
+The release cut writes both tags beside the checksum table's tag, so they are never edited by hand. The
+cut's version pins only reached `<Prefix>vX.Y.Z/`, so a pin entry gets an optional `Refs` list of
+prefixes after which a bare tag is repointed.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [ ] `cut-release.ps1` (source and plugin mirror): optional `Refs` on a version pin, validated in the preflight and rewritten at the bump
+- [ ] `repo-config.ps1` and its blueprint text: the dkj-brandbook pin names the caller's two refs
+- [ ] The skill page's caller and `reusable-house-style.yml`'s header: pinned, with the reason
+- [ ] Tests: the caller and the table name the same release; a Ref is rewritten, and a missing one refuses the cut
 
 ### TEST
 
