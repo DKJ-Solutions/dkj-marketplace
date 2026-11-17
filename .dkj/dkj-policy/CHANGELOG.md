@@ -2,7 +2,42 @@
 
 ## [Unreleased]
 
-**2 / 5 minor entries** <!-- pending-tally -->
+**3 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4211-split-developers-team · 20261117-110234Z
+
+The core team is now two plugins. `dkj-subagents-alpha` keeps the specialists who work anywhere (Chris,
+Bianca, Paula, Priya, Rebecca, Vera, Gwen, Uma, Edith, Marlowe, Auden) and is what the Claude App gets. The
+specialists whose craft needs a repository (Derek, Rendall, Sylvester, Cody, Tycho, Victor, Sebastian, Ravi,
+Nolan, Tessa), the skills `specialists-init`, `specialists-teardown` and `sync-roster`, and the roster session
+check moved to a new plugin, `dkj-subagents-developers`
+([#4211](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4211)).
+
+**Every repo must enable the new plugin**, or a session there has eleven specialists instead of twenty-one and
+no roster check. Add `"dkj-subagents-developers@dkj-marketplace": true` beside the core team in
+`.claude/settings.json`, then run `claude plugin install dkj-subagents-developers@dkj-marketplace --scope project`
+and restart. Lenses and roster rows need no change; the slash commands are now
+`/dkj-subagents-developers:specialists-init`, `/dkj-subagents-developers:sync-roster` and
+`/dkj-subagents-developers:specialists-teardown`.
+
+**Score:** 5
+
+#### What makes this deploy extra special
+
+The Claude App now offers only specialists who can work without a repository: the PowerShell skills and the
+roster hook no longer travel with the core team.
+
+**Score:** 3
+
+#### Pull Request
+
+Split dkj-subagents-alpha into a portable core team and a repo-only developers team
+
+Plugins: bwj-development, dkj-policy, dkj-subagents-alpha, dkj-subagents-developers, dkj-subagents-shopify
+
+[PR #4218](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4218)
+
+---
 
 ### DEPLOY: feat/4208-park-decider · 20261117-104330Z
 
