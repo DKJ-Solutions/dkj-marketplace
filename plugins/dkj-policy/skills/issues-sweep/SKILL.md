@@ -77,7 +77,7 @@ disagree you follow it and say so.
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/claim-issue.ps1" -Candidates -SkipLabel awaiting-info-client,awaiting-decision-dev,awaiting-decision-client,awaiting-review-dev,awaiting-review-client,awaiting-pull,awaiting-pull-external,awaiting-action-external,awaiting-action-dev,awaiting-release,awaiting-release-external,awaiting-recurrences-first,awaiting-session-dev,awaiting-recurrences,awaiting-first-recurrence,awaiting-more-recurrences,awaiting-more-info,needs-info,needs-decision,awaiting-decision,awaiting-recurrence,record,dossier,awaiting-owner-act,awaiting-event
 ```
 
-It prints every open issue as `free`, `mine`, `held`, `branch`, `stale-park` or `skipped` with the reason, and names
+It prints every open issue as `free`, `mine`, `held`, `branch`, `stale-park`, `relabel` or `skipped` with the reason, and names
 the lowest free number. `-SkipLabel` is the labels that park an issue with somebody else; `-SkipIssue`
 holds numbers out by hand. The last eleven are former names -- `needs-info` then `awaiting-more-info` became `awaiting-info-client` (#2917, October 12, 2026), `needs-decision` and then `awaiting-decision` became `awaiting-decision-dev`,
 `awaiting-recurrence` then `awaiting-first-recurrence` became `awaiting-recurrences-first`, `dossier` then `record` then `awaiting-more-recurrences` became
@@ -140,6 +140,14 @@ the branch is never read, because a body citing numbers is not a statement of wh
 published a release since. `awaiting-release-external` clears once the `owner/repo` its clause names has
 published a release after the parking comment was written. What is left after either is this repo's own
 work, so the issue is free.
+
+**Between the two, an `awaiting-pull-external` issue reads as `relabel`**
+([#4226](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4226)): every `owner/repo#n` it names has
+landed, and no release has followed yet, so it waits on a release now. Move it with the line the run prints,
+`claim-issue.ps1 <n> -Tag -Park awaiting-release-external -Reason "<owner/repo>'s next release"`, which lifts
+the old label in the same edit and posts the dated parking comment. **Never swap the label by hand**: measured
+November 17, 2026, a hand swap left a park dated by nothing, and `awaiting-release-external` is read only
+from a dated parking comment, so that park would never have cleared.
 
 **The two decision waits can read as `stale-park` too**
 ([#4186](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4186)). `awaiting-decision-dev` and

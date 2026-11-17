@@ -2053,6 +2053,22 @@ Assert-True (-not (Test-ParkReasonNamesBlocker -Label 'awaiting-pull-external' -
 Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-release-external' -Reason 'DKJ-Solutions/dkj-lifehub''s next release') 'awaiting-release-external: owner/repo passes'
 Assert-True (-not (Test-ParkReasonNamesBlocker -Label 'awaiting-release-external' -Reason 'the lifehub''s next release')) 'awaiting-release-external: a repo named in prose is refused'
 Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-decision-dev' -Reason 'the owner''s choice of X') 'a wait on a person needs no blocker'
+
+Write-Host ''
+# --- a merged-upstream wait moves to awaiting-release-external in one step (#4226) ---
+Assert-True ((Get-ParkMoveFrom -Park 'awaiting-release-external' -ParkingLabels @('awaiting-pull-external')) -ceq 'awaiting-pull-external') 'pull-external -> release-external is a move, and names the label to lift'
+Assert-True ((Get-ParkMoveFrom -Park 'awaiting-release-external' -ParkingLabels @()) -ceq '') 'an unparked issue is a plain park, not a move'
+Assert-True ((Get-ParkMoveFrom -Park 'awaiting-release-external' -ParkingLabels @('awaiting-pull-external', 'awaiting-decision-dev')) -ceq '') 'a second parking label beside it is not moved past'
+Assert-True ((Get-ParkMoveFrom -Park 'awaiting-pull-external' -ParkingLabels @('awaiting-release-external')) -ceq '') 'and the move runs one way only'
+Assert-True ((Get-ParkMoveFrom -Park 'awaiting-decision-dev' -ParkingLabels @('awaiting-pull')) -ceq '') 'any other pair is a park on top of a park'
+Assert-True ($fn -match 'Get-ParkMoveFrom -Park \$Park -ParkingLabels \$already' -and $fn -match '--remove-label'', \$moveFrom') 'the park lifts the old label in the same edit that adds the new one'
+Assert-True ($fn -match 'if \(\$already\.Count -gt 0 -and -not \$moveFrom\)') 'and refuses every other already-parked issue as before (#3907)'
+Assert-True ($body -match "-and -not \(Get-ParkMoveFrom -Park \`$Park -ParkingLabels \`$parkingLabels\)\)") 'the parked-issue refusal lets the move through to the claim'
+$movedRefs = Get-ParkingWaitReferences -Comments @([pscustomobject]@{ body = (Format-ParkComment -Reason 'DKJ-Solutions/dkj-marketplace''s next release'); createdAt = '2026-11-17T12:00:00Z' })
+Assert-True ((@($movedRefs.Repos) -join ',') -eq 'DKJ-Solutions/dkj-marketplace' -and $movedRefs.Since) 'the move''s comment names the repo AND dates the park, which is what the release-external stale-park needs'
+Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-release-external' -Reason 'DKJ-Solutions/dkj-marketplace, BWJ-Development/x''s next release') 'the reason -Candidates prints for two repos passes the blocker check'
+Assert-True ($cand -match "\`$c\.Verdict = 'relabel'" -and $cand -match '\$unlanded\.Count -eq 0') '-Candidates reads merged-but-unreleased as relabel, only once every blocker has landed'
+Assert-True ($cand -match '-Park awaiting-release-external -Reason') 'and prints the one-step move rather than a hand swap'
 $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-pull -SkipLabel awaiting-pull -Reason '. the earlier steps' 2>&1 | Out-String
 Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'needs -Reason to name its blocker as #<n> or a branch' -and $out -match 'nothing was read or written') 'run: an awaiting-pull park with no blocker refuses before anything is read'
 
