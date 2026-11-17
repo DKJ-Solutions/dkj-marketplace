@@ -39,19 +39,38 @@
 
 ### PLAN
 
+Inbound #4252, measured in a consumer's v7.0.0 migration: a shim placed before the rename matches
+`dkj-policy@*` install records, which no longer exist, so the progress bar goes dark, and a re-run of
+`adopt-statusline.ps1 -Apply` kept it as `[keep]`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Refresh an existing shim that carries this command's provenance line but differs from the current
+  template (`[refresh]` / `[would refresh]`); keep an identical one, and keep a file without the
+  provenance line with a note and the repair line.
+- [x] Mirror into `plugins/dkj-repo-workflow/`, correct the "never rewritten" comments, one sentence in
+  the adopt skill, three new cases in `adopt-statusline.tests.ps1`.
 
 ### TEST
 
+- [x] `adopt-statusline.tests.ps1` standalone: all 90 asserts pass, the refresh, keep and foreign-file
+  cases among them. The full gate runs in `ship-pr`.
+
 ### DEPLOY: fix/4252-refresh-stale-statusline-shim
 
-**Score:**
+`adopt-statusline.ps1 -Apply` now replaces a progress-bar shim it placed before v7.0.0 (#4252). That shim
+looked for the old `dkj-policy` plugin id, so after the rename the progress bar went dark, and a re-run
+left the stale shim in place. A file at that path that this command did not place is still left alone,
+with the line that repairs it.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer whose progress bar went dark after 7.0.0 gets it back by re-running `adopt-statusline.ps1 -Apply`,
+without deleting the file by hand first.
+
+**Score:** 3
 
 #### Pull Request
 

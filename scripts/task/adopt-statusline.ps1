@@ -27,9 +27,11 @@
       - Copy show-progress.ps1 and run-progress-lib.ps1 into the repo. Simplest, and it trades the
         staleness for two live copies drifting at every release with no lint over them -- which is
         the duplication the whole shared-scripts mechanism (#81) exists to prevent.
-      - A SHIM: one small file that never changes, which resolves the CURRENT payload at run time and
-        hands over to it. The path in settings.json is stable because the shim is stable; the logic
-        stays in the plugin and travels by release like everything else.
+      - A SHIM: one small file that does not change at a plain version bump, which resolves the CURRENT
+        payload at run time and hands over to it. The path in settings.json is stable because the shim
+        is stable; the logic stays in the plugin and travels by release like everything else. It does
+        change when the plugin id it matches is renamed (dkj-policy -> dkj-repo-workflow, v7.0.0), and
+        then a re-run replaces a plugin-placed shim that differs from the current one (#4252).
 
     WHAT THE SHIM RESOLVES, AND WHY IT READS THE JSON ITSELF. It cannot dot-source check-report-lib's
     Get-InstallRecord, because that lib lives in the payload the shim is trying to find. So it reads
@@ -144,9 +146,12 @@ $settingsReparse = Get-WriteTargetReparsePoint -Path $settingsAbs -Root $repoRoo
 # hook commands beside it. (CLAUDE_PLUGIN_ROOT is not even exported -- see the header.)
 $statusLineCommand = 'powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PROJECT_DIR}/' + $shimRel + '"'
 
-# THE SHIM. Written once and never rewritten -- see the header for why that is the property the whole
-# design turns on. It carries its own provenance line, so a reader who finds it in a repo can tell
-# what put it there and which issue to read.
+# THE SHIM. It is the half that does not need updating at a plain version bump -- see the header for why
+# that is the property the whole design turns on. It is NOT immutable, though (#4252): it matches the
+# plugin by NAME, so a rename of that name changes the shim itself, and a plugin-placed shim that differs
+# from this template is refreshed below. It carries its own provenance line, so a reader who finds it in
+# a repo can tell what put it there and which issue to read -- and so this command can tell its own
+# file from the repo's.
 $shim = @'
 <#
     dkj-repo-workflow statusline shim -- placed by adopt-statusline.ps1 (issue #2103). DO NOT EDIT.
@@ -263,14 +268,38 @@ if (-not $Apply) {
 Write-Host ''
 
 # --- 1. the shim ---------------------------------------------------------------------------------
-# Additive, like every file this family places: one that is already there is left exactly as it is,
-# whatever it contains. A re-run therefore finds nothing to do, which is what makes running this again
-# after a plugin update harmless -- and correct, since the shim is the half that never needs updating.
+# Additive, like every file this family places, with ONE bounded exception (#4252). A file that is
+# already there is left exactly as it is when it is the current shim (a re-run finds nothing to do, which
+# keeps running this after a plugin update harmless) or when it is the repo's own (no provenance line).
+# A file carrying this command's provenance line but differing from the current template is a stale
+# plugin-placed shim: before v7.0.0 it matched 'dkj-policy@*' ids, which no longer exist after the
+# rename, so it resolved nothing and the bar went dark while every re-run said [keep]. It is refreshed.
+$shimWrite = $false
+$shimCurrent = ($shim -replace "`r`n", "`n")
 if ($shimReparse) {
     Write-Host "  [refused] $shimRel -- reached through a symlink or junction ($shimReparse), so writing it would land outside the repo; place it by hand" -ForegroundColor Yellow
 } elseif (Test-Path -LiteralPath $shimAbs -PathType Leaf) {
-    Write-Host "  [keep]  $shimRel -- already here, left untouched"
+    $shimExisting = ([System.IO.File]::ReadAllText($shimAbs) -replace "`r`n", "`n")
+    if ($shimExisting -ceq $shimCurrent) {
+        Write-Host "  [keep]  $shimRel -- already here, left untouched"
+    } elseif ($shimExisting -match 'statusline shim -- placed by adopt-statusline\.ps1') {
+        if ($Apply) {
+            $shimWrite = $true
+            Write-Host "  [refresh] $shimRel -- placed by an earlier version of this command, replaced with the current one (#4252)" -ForegroundColor Green
+        } else {
+            Write-Host "  [would refresh] $shimRel -- placed by an earlier version of this command, replaced with the current one (#4252)" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "  [keep]  $shimRel -- already here, left untouched"
+        Write-Host '          It is not the shim this command places, so the progress bar may not render.' -ForegroundColor Yellow
+        Write-Host '          To have it replaced: delete the file and re-run with -Apply.' -ForegroundColor Yellow
+    }
 } elseif ($Apply) {
+    $shimWrite = $true
+} else {
+    Write-Host "  [would write] $shimRel"
+}
+if ($shimWrite) {
     $shimDir = Split-Path -Parent $shimAbs
     if (-not (Test-Path -LiteralPath $shimDir -PathType Container)) {
         New-Item -ItemType Directory -Path $shimDir -Force | Out-Null
@@ -278,10 +307,9 @@ if ($shimReparse) {
     # BOM-less UTF-8, and the file is pure ASCII anyway: Set-Content -Encoding utf8 writes a BOM in
     # Windows PowerShell 5.1, and a BOM in front of a script is the sort of thing that reads fine here
     # and breaks something three tools downstream.
-    [System.IO.File]::WriteAllText($shimAbs, ($shim -replace "`r`n", "`n"), (New-Object System.Text.UTF8Encoding($false)))
-    Write-Host "  [write] $shimRel" -ForegroundColor Green
-} else {
-    Write-Host "  [would write] $shimRel"
+    $shimIsNew = -not (Test-Path -LiteralPath $shimAbs -PathType Leaf)
+    [System.IO.File]::WriteAllText($shimAbs, $shimCurrent, (New-Object System.Text.UTF8Encoding($false)))
+    if ($shimIsNew) { Write-Host "  [write] $shimRel" -ForegroundColor Green }
 }
 
 # --- 2. the settings key -------------------------------------------------------------------------
