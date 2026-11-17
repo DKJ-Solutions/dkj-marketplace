@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**10 / 13 minor entries** <!-- pending-tally -->
+**11 / 14 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4228-prune-orphan-branch-documents · 20261117-145142Z
+
+`prune-merged` (and so `tidy-machine`) gained step 4e and `changelog-mode-lib.ps1` the function behind
+it; a repo answering `'fold'` has no such exclude lines, so the step stays silent there.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+In a repo that answers `Get-ChangelogMode` with `'none'`, `prune-merged` now removes a local branch
+document and its `.git/info/exclude` line once the branch is gone locally and on the remote (#4228).
+Before, a ship that stopped early (merge queue, a held merge, a failure after the merge) left both
+behind for good. It prevents a failure that has not happened yet: an exclude file growing one line
+per such branch.
+
+**Score:** 1
+
+#### Pull Request
+
+prune-merged sweeps orphaned 'none' branch documents and their exclude lines
+
+Plugins: dkj-repo-workflow
+
+[PR #4232](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4232)
+
+---
 
 ### DEPLOY: feat/4209-rename-dkj-repo-workflow · 20261117-142821Z
 
