@@ -176,6 +176,13 @@ sweeps on one repo within three minutes parked the same issues, up to three comm
 verdicts differed in substance. A lost race now refuses with exit 1 and writes nothing. **Never park with
 a bare `gh issue edit` and `gh issue comment`**, because that pair is the race this closes.
 
+**A `-dev` wait on a developer who is not the owner names them with `-Decider <login>`** (#4208). The
+parking comment then ends `Decider: @<login>.`, `-Candidates` prints it beside the label, and
+`issues-sweep-decisions` and `issues-sweep-reviews` put the issue only to that account. It is accepted on
+`awaiting-decision-dev`, `awaiting-review-dev`, `awaiting-action-dev` and `awaiting-session-dev`. The
+assignee is not the carrier, because the claim writes it and the release removes it. Without `-Decider`
+the owner decides, as before.
+
 **And a verdict that settles an issue is building work, so it starts at step 2.** Evaluating an issue and
 closing it on that evaluation is not triage: claim it first. The same measurement had a sweep post an
 evaluation and close an issue while another tag held its claim and was writing the same verdict on a

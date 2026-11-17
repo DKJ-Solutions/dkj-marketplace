@@ -2981,6 +2981,14 @@ function Get-SweepCandidates {
             if ($hit.Count -gt 0) {
                 $verdict = 'skipped'
                 $reason = "label '$($hit[0])'"
+                # WHICH DEVELOPER (#4208): a -dev park that names its decider says so here, so the owner
+                # sweeps -- and a person reading this list -- see whose answer it waits on.
+                if ([string]$hit[0] -like 'awaiting-*-dev') {
+                    $issueComments = if ($issue.PSObject.Properties['comments']) { @($issue.comments) } else { @() }
+                    $issueBody = if ($issue.PSObject.Properties['body']) { [string]$issue.body } else { '' }
+                    $decider = Get-ParkDecider -Comments $issueComments -Body $issueBody
+                    if ($decider) { $reason = "$reason; decider @$decider" }
+                }
                 $conflict = Format-ParkingLabelConflict -Labels $hit
                 if ($conflict) { $reason = "$reason; $conflict" }
             } elseif ($GoalSkips.ContainsKey($number)) {
@@ -3317,15 +3325,58 @@ function Format-ParkComment {
             body always carries it exactly once: a reason that already opens with "waiting on" is not given
             a second one. A trailing full stop is added where the reason has none.
 
+            WHICH DEVELOPER, WHEN IT IS NOT THE OWNER (#4208). -Decider appends "Decider: @<login>." as a
+            sentence of its own, after the clause ends, so the stale-park reading never sees it. The owner
+            sweeps read it with Get-ParkDecider; the assignee stays free for the sweep claim, which writes
+            and removes it.
+
         .OUTPUTS
             The comment body, a single string.
     #>
-    param([Parameter(Mandatory = $true)][string]$Reason)
+    param([Parameter(Mandatory = $true)][string]$Reason, [AllowNull()][AllowEmptyString()][string]$Decider = '')
     # ONE LINE (Sebastian, #3907): a reason pasted with line breaks would post a comment of several paragraphs.
     $r = ($Reason -replace '\s+', ' ').Trim()
     $r = $r -replace '^(?i:waiting on)\s+', ''
     if ($r -notmatch '[.!?]\z') { $r += '.' }
-    return 'Parked by a sweep: waiting on ' + $r
+    $body = 'Parked by a sweep: waiting on ' + $r
+    $d = ([string]$Decider).Trim() -replace '^@', ''
+    if ($d) { $body += " Decider: @$d." }
+    return $body
+}
+
+function Test-DeciderLogin {
+    <#
+        .SYNOPSIS
+            Whether -Decider is a GitHub login (issue #4208): letters, digits and single inner hyphens, at most
+            39 characters, with or without a leading '@'. Anything else is refused before anything is read,
+            because the value is posted on the tracker and read back by the owner sweeps.
+    #>
+    param([AllowNull()][AllowEmptyString()][string]$Login)
+    $l = ([string]$Login).Trim() -replace '^@', ''
+    return ($l.Length -le 39 -and $l -cmatch '^[A-Za-z0-9](?:-?[A-Za-z0-9])*\z')
+}
+
+function Get-ParkDecider {
+    <#
+        .SYNOPSIS
+            The developer a -dev park waits on (issue #4208): the login in the newest "Decider: @<login>" a
+            comment carries, else the one in the issue body (an issue parked at filing has no parking
+            comment, #4028), else '' -- which means the repo's named owner, as before #4208.
+
+        .DESCRIPTION
+            The owner sweeps (issues-sweep-decisions, issues-sweep-reviews) put an issue only to the session
+            whose account is its decider. Newest first, because a re-park names the decider that holds now.
+    #>
+    param([AllowNull()][object[]]$Comments = @(), [AllowNull()][AllowEmptyString()][string]$Body = '')
+    $pattern = '(?m)\bDecider:\s*@([A-Za-z0-9](?:-?[A-Za-z0-9]){0,38})\b'
+    $ordered = @(@($Comments) | Where-Object { $_ } | Sort-Object -Property @{ Expression = { [string]$_.createdAt } } -Descending)
+    foreach ($c in $ordered) {
+        $m = [regex]::Match([string]$c.body, $pattern)
+        if ($m.Success) { return $m.Groups[1].Value }
+    }
+    $m = [regex]::Match([string]$Body, $pattern)
+    if ($m.Success) { return $m.Groups[1].Value }
+    return ''
 }
 
 function Test-ParkReasonNamesBlocker {
