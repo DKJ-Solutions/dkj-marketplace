@@ -2,7 +2,30 @@
 
 ## [Unreleased]
 
-**1 / 2 minor entries** <!-- pending-tally -->
+**1 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4210-claude-app-map · 20261117-100824Z
+
+The Claude App map in [`ADOPTION.md`](../../plugins/ADOPTION.md#which-half-needs-a-repository--the-claude-app-map)
+counted 15 core agent defs and listed every persona as portable. It now reads per plugin, over all four
+teams, and its rule has a third test: a specialist whose craft is work on a checkout (Derek, Rendall,
+Sylvester, Liam, Sandra) is repo-bound even when no script is named (#4210).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A correction to a reference map; nothing a user of the plugins runs or installs changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+ADOPTION.md's Claude App map restated per plugin
+
+[PR #4212](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4212)
+
+---
 
 ### DEPLOY: feat/4206-lifehub-inbox-sweep · 20261116-222127Z
 
