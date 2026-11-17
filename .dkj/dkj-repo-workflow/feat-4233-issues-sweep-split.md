@@ -39,19 +39,46 @@
 
 ### PLAN
 
+#4233: `/usage` put 32% of a week's local usage on `issues-sweep`. Measured with `measure-skill`
+(installed v6.18.0): always-on **0** (`disable-model-invocation`), on-invoke **~12,200** tokens. The
+body stays in context for every turn of a sweep's loop, so the lever is the on-invoke body. Of the
+issue's three options: split by step (done), move mechanics into the scripts (done where the script
+already had it: `-SkipLabel`'s default is the exact list step 1 typed out), and a cheaper `model:`
+(not done here -- a sweep builds and judges in the main loop, so a model downgrade is a quality
+trade for the owner; filed as #4240).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Split `issues-sweep/SKILL.md` (35,051 B) by when each part is needed: the loop stays (13,697 B,
+  -61%); the step-1 states and goal-tree reading move to `candidates.md`, parking to `parking.md`, the
+  claim's refusals / `-TakeOver` / `-ReleaseAll` / tag parts to `claiming.md`, lane mode to
+  `lane-mode.md`, and the measurements behind steps 4, 5 and the close-out to `why.md`. Text moved
+  verbatim; the loop page carries a table naming when to read each page.
+- [x] Step 1 runs `claim-issue.ps1 -Candidates` bare: its `-SkipLabel` default is the same 25-label
+  list (pinned by `claim-issue.tests.ps1`), so the page no longer types it out.
+- [x] `claim-issue/SKILL.md`'s sentence on how the sweep chooses names the default instead.
 
 ### TEST
 
+- [x] No text lost: every sentence of the old page (248) is present in the new set of pages, bar 15
+  deliberate rewordings, each read by hand.
+- [x] Every relative link on the six pages resolves.
+
 ### DEPLOY: feat/4233-issues-sweep-split
 
-**Score:**
+The `issues-sweep` skill page was split into a loop page and five pages beside it, and step 1 relies
+on `claim-issue`'s own `-SkipLabel` default (#4233).
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A sweep now loads a 13.7 KB loop page instead of a 35 KB one (~12,200 tokens measured before; ~4,800
+estimated after, at the measured bytes-per-token of the old page), and that body is carried through
+every turn of the sweep. What applies only to one case (a `stale-park`, a refused claim, a lane, a
+park) sits on its own page beside it, read when that case comes up (#4233).
+
+**Score:** 2
 
 #### Pull Request
 
