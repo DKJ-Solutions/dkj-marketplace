@@ -121,9 +121,11 @@ function Resolve-PluginsPageRequest {
         #3629, which BWJ-Development never enables), or $null for a path that is none of these. Section is '' on the
         specimens' overview and the section's slug on /dev/plugins/dkj-repo-workflow/dkj-brandbook/<section>, one page per section
         (#3563); whether a section of that slug exists is the page's question. The page took the brand book's name
-        (#3704), as the product's had: both older addresses, /dev/plugins/dkj-repo-workflow-dkj/house-style[/<section>] and
-        /dev/plugins/dkj-repo-workflow/house-style[/<section>], return @{ Redirect = '<the same page under dkj-brandbook>' }, so
-        a link to either still lands. The name is held to a plugin slug, so nothing else reaches a lookup; whether a plugin of that name is
+        (#3704), as the product's had: both older addresses, /dev/plugins/dkj-solutions/house-style[/<section>] and
+        /dev/plugins/dkj-policy/house-style[/<section>], return @{ Redirect = '<the same page under dkj-brandbook>' }, so
+        a link to either still lands. So do the page's own address before the plugin took its name (#4209),
+        /dev/plugins/dkj-policy/dkj-brandbook[/<section>], and the two house-style addresses under the new plugin
+        names (#4235): a released Admin still links the first. The name is held to a plugin slug, so nothing else reaches a lookup; whether a plugin of that name is
         enabled is the page's question (a 404 when not).
     #>
     param([AllowEmptyString()][string]$Path = '')
@@ -132,7 +134,8 @@ function Resolve-PluginsPageRequest {
     if ($Path -cmatch '^/dev/plugins/dkj-repo-workflow/dkj-brandbook(?:/([a-z][a-z-]{0,39}))?/?$') {
         return @{ Name = 'dkj-repo-workflow'; Page = 'dkj-brandbook'; Section = [string]$Matches[1] }
     }
-    if ($Path -cmatch '^/dev/plugins/(?:dkj-repo-workflow|dkj-repo-workflow-dkj)/house-style(?:/([a-z][a-z-]{0,39}))?/?$') {
+    if ($Path -cmatch '^/dev/plugins/(?:dkj-policy|dkj-solutions|dkj-repo-workflow|dkj-repo-workflow-dkj)/house-style(?:/([a-z][a-z-]{0,39}))?/?$' -or
+        $Path -cmatch '^/dev/plugins/dkj-policy/dkj-brandbook(?:/([a-z][a-z-]{0,39}))?/?$') {
         return @{ Redirect = '/dev/plugins/dkj-repo-workflow/dkj-brandbook' + $(if ($Matches[1]) { '/' + $Matches[1] }) }
     }
     # One specialist, skill or hook the plugin ships, on a landing page of its own (Dave, November 3, 2026).

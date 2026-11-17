@@ -53,8 +53,9 @@
       /dev/plugins/dkj-repo-workflow/dkj-brandbook[/<section>]
                       the brand book's specimens (assets/dkj-brandbook/specimens.html, read per request): a card per
                       section, and each section's own page (Split-HouseStyleSpecimens, #3563); a slug no section has
-                      is a 404. The older /dev/plugins/dkj-repo-workflow-dkj/house-style[/<section>] (#3629) and
-                      /dev/plugins/dkj-repo-workflow/house-style[/<section>] (#3704) are a 301 to it.
+                      is a 404. The older /dev/plugins/dkj-solutions/house-style[/<section>] (#3629),
+                      /dev/plugins/dkj-policy/house-style[/<section>] (#3704) and
+                      /dev/plugins/dkj-policy/dkj-brandbook[/<section>] (#4209, #4235) are a 301 to it.
       /dev/stopwatch, /dev/stopwatch/<label>[/<run>], /dev/logbook, /dev/logbook/<slug>
                       this repo's timing stores on this machine (%LOCALAPPDATA%\dkj-claude-plugins\repos\<repo>\),
                       which the plugin's UserPromptSubmit and Stop hooks write, and the session transcripts under
