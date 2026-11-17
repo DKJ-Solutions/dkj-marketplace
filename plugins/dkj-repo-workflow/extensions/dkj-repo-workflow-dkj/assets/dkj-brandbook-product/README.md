@@ -332,7 +332,7 @@ consumer to need it: a page of 7,797 words in three sections stayed one column u
 ### The site header, above the bar
 
 **An app may open with a site header, and the breadcrumb bar then stands right under it** (owner, October
-22, 2026). **Every Admin page carried it until #3831** (the dkj-repo-workflow plugin's Admin server drew it on the home page and
+22, 2026). **Every Admin page carried it until #3831** (the dkj-policy plugin's Admin server drew it on the home page and
 every general page of every repo, with the repo's name and `admin` after it): **Admin's pages no longer do**, because the
 desktop shell's bar and side navigation replace it ([Two layers][core-two-layers]), and `dkj-repo-workflow` ships no code
 that draws it. A product's pages carry it, drawn by `Format-SiteHeaderHtml` in `product-pages-lib.ps1`; an app without

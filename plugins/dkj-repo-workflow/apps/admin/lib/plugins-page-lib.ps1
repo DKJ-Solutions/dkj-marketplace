@@ -117,7 +117,7 @@ function Resolve-PluginsPageRequest {
     <#
         Which Plugins page -Path asks for: @{ Name = ''; Page = '' } for the overview on /dev/plugins, @{ Name = '<plugin>';
         Page = '' } for one plugin's page on /dev/plugins/<plugin>, @{ Name = 'dkj-repo-workflow'; Page = 'dkj-brandbook' } for
-        the brand book's specimens under the plugin whose files they document (#3493; under dkj-repo-workflow-dkj until
+        the brand book's specimens under the plugin whose files they document (#3493; under dkj-solutions until
         #3629, which BWJ-Development never enables), or $null for a path that is none of these. Section is '' on the
         specimens' overview and the section's slug on /dev/plugins/dkj-repo-workflow/dkj-brandbook/<section>, one page per section
         (#3563); whether a section of that slug exists is the page's question. The page took the brand book's name

@@ -759,7 +759,7 @@ function Get-ReleaseVersionPins {
 }
 
 # The builds cut-release ships (#3210): none. The brandbook/ app's build was the one entry, copied into the
-# dkj-repo-workflow-dkj plugin for consumer Admin servers to serve at /brandbook/; once no consumer admin served it (#3475), the cut
+# dkj-solutions plugin for consumer Admin servers to serve at /brandbook/; once no consumer admin served it (#3475), the cut
 # stopped paying npm ci and a build for a folder nothing read (#3477). An empty list is a valid answer, and the
 # literal keeps its two-line shape because cut-release-drive.tests.ps1's fixture rewrites it by that shape. A build
 # added here again runs its commands with --ignore-scripts on npm: no dependency's install script runs in the shell
@@ -1206,7 +1206,7 @@ function Get-ExpectedRepoSettings {
 #
 # THE GAP. `.claude/specialists/lenses/specialist-01-01-lens.md` already prescribes a priority label on
 # every issue filed HERE -- 'prio-1' (lowest) through 'prio-4' (highest) -- but until now that scale
-# was prose in one family's page and `dkj-repo-workflow` itself knew none of it. #1895 (split from #1843)
+# was prose in one family's page and `dkj-policy` itself knew none of it. #1895 (split from #1843)
 # asked three questions, and Dave answered all three on September 12, 2026:
 #
 #   1. Apply or print?  PRINT. adopt-triage-labels.ps1 composes the exact `gh label create` a person

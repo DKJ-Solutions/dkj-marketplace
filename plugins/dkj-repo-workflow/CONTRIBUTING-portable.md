@@ -1320,7 +1320,7 @@ above it (Dave, August 14, 2026; narrowed by issue #2171, September 20, 2026):
   plugin is absent: a fresh checkout, a teardown, a contributor who installed nothing. Normally that is
   your root `CONTRIBUTING.md`;
 - `dkj-policy/CONTRIBUTING.md` is a **workflow layer some repos still carry, and none gets any more.**
-  `adopt-dkj-repo-workflow`'s Part 1 scaffolded it until #2171: two pages in a consumer's own tree only made
+  `adopt-dkj-policy`'s Part 1 scaffolded it until #2171: two pages in a consumer's own tree only made
   that repo more complicated and produced more inconsistency than they removed. **There is one
   `CONTRIBUTING` for a consumer to read now, and it is this page** — what your repo answers for itself
   goes into your specialist lens instead. A repo that adopted before that day and kept the page it was

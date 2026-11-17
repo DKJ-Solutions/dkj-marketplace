@@ -361,7 +361,7 @@ try {
 
     # --- 3. Additive: a re-run never overwrites what somebody wrote --------------------------------
     # RETARGETED TWICE IN ONE DAY, WHICH IS THE POINT WORTH KEEPING. It pinned
-    # dkj-repo-workflow\CONTRIBUTING.md until #2171 and dkj-repo-workflow\releases\README.md until #2196, and each
+    # dkj-policy\CONTRIBUTING.md until #2171 and dkj-policy\releases\README.md until #2196, and each
     # time for the same reason: the file it named stopped being scaffolder output, so it could no
     # longer stand for "a file the scaffold placed and a re-run must leave alone". Their own coverage
     # is in the legacy-report section below. dkj-repo-workflow\CHANGELOG.md is the last file this command

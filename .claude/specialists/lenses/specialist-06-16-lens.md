@@ -77,7 +77,7 @@ out for this repo's own copies by
 [#2179](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2179)): *"deze twee bestanden in een
 consumer's repo maakt het alleen maar meer ingewikkeld en zorgt voor meer inconsistenties. Er is nu maar
 1 CONTRIBUTING waar de consumer naar kan kijken, en dat is wat in de plugin staat."* **It was two pull
-requests that landed hours apart**: PR #2178 stopped `adopt-dkj-repo-workflow` scaffolding either page into a
+requests that landed hours apart**: PR #2178 stopped `adopt-dkj-policy` scaffolding either page into a
 consumer, and PR #2179 removed this repo's own copies — *because otherwise the sentence "there is only
 one CONTRIBUTING" is false in the very repo that ships it.* A consumer adopted before that day still
 carries both pages and nothing deletes them; `adopt-workflow-folder.ps1` reports them as legacy and

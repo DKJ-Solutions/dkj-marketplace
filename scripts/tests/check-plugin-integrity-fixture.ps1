@@ -343,7 +343,7 @@ function New-IntegrityFixture {
         "{ `"name`": `"dkj-subagents-shopify`", `"version`": `"0.0.1`" }`n", $Utf8NoBom)
     [System.IO.File]::WriteAllText((Join-Path $Fixture 'plugins\dkj-repo-workflow\.claude-plugin\plugin.json'),
         "{ `"name`": `"dkj-repo-workflow`", `"version`": `"0.0.1`" }`n", $Utf8NoBom)
-    # dkj-repo-workflow-bwj (then dkj-policy-bwj) joined the registry on September 26, 2026 (#2509), with its mirrors of live-push-rules,
+    # bwj-development (then dkj-policy-bwj) joined the registry on September 26, 2026 (#2509), with its mirrors of live-push-rules,
     # git-porcelain-lib and ref-print-lib -- the third measured instance of the failure the paragraph above
     # names: 15 unrelated scenarios failed in one suite before this list grew with it.
     [System.IO.File]::WriteAllText((Join-Path $Fixture 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\.claude-plugin\plugin.json'),

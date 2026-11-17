@@ -198,7 +198,7 @@ function Get-HouseStylePin {
         are written. Returns @{ Tag; Hashes = @{ '<leaf>' = '<sha256>' } }, or $null when the page
         carries no complete table.
         The URL path is read in every spelling it has had: plugins/dkj-repo-workflow/assets/dkj-brandbook/ since
-        the rename to dkj-brandbook, plugins/dkj-repo-workflow/assets/house-style/ from #3531 until then, and
+        the rename to dkj-brandbook, plugins/dkj-policy/assets/house-style/ from #3531 until then, and
         plugins/dkj-policy/dkj-solutions/assets/house-style/ before that (and the plugin and extension were dkj-policy and dkj-solutions until #4209, which the pattern reads too), which every page at an earlier tag
         still carries -- and the reusable gate reads the page AT the pinned tag. The product layer's URL
         has its own two depths: plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/ since #3871, and

@@ -253,7 +253,7 @@ function Assert-BottomBarHasMenu {
 
 function Format-ProductPageHtml {
     <#
-        A product's whole page around -Body (#3540; moved here from dkj-repo-workflow's Format-GeneralPageHtml in #3831): the
+        A product's whole page around -Body (#3540; moved here from dkj-policy's Format-GeneralPageHtml in #3831): the
         house site header with -Brand (the app's name) and -BrandTag (the word after it) linking -AdminHref, -Menu as its
         menu, then the breadcrumb bar from -HomeLabel through -ParentCrumbs to -Title, and the page column. No general
         banner: the banner is Admin's alone (Dave, November 4, 2026). Without -Brand there is no header, and the
@@ -343,7 +343,7 @@ function Format-ProductPageHtml {
 
 function Format-ProductHomeHeadHtml {
     <#
-        The top of a product's home page on '/' (#3540; moved here from dkj-repo-workflow's Format-RepoHomeHeadHtml in
+        The top of a product's home page on '/' (#3540; moved here from dkj-policy's Format-RepoHomeHeadHtml in
         #3831): the site header with -Brand and -BrandTag, -Menu as its menu (the home page sits under none of its
         items), the breadcrumb bar with its one crumb, -HomeLabel, and the opening of <main>. Under a site header there
         is no intro: the header names the product, and the page goes straight to its sections (owner, October 22,

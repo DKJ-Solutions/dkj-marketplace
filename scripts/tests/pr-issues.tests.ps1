@@ -1213,7 +1213,7 @@ Assert-True $vTwoBad.Blocked 'and it blocks'
 # This function already computed which required checks had not concluded and only ever handed it to the
 # caller as prose inside Reason. The one caller that had to ACT on it -- ship-pr's green path, deciding
 # whether a green `--watch` exit really means every required check finished -- had no field to read, and
-# so read nothing. Measured September 7, 2026 in a consumer (`dkj-repo-workflow` 4.31.0,
+# so read nothing. Measured September 7, 2026 in a consumer (`dkj-policy` 4.31.0,
 # BWJ-Development/smartwatchbanden PR #529): `.github/dependabot.yml` passed in 1s, ship-pr called CI
 # green after 5s, and the merge was refused by the base branch policy while required `Shopify theme
 # check` (2m1s) was still pending.

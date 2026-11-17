@@ -32,10 +32,10 @@ with its text (Maikel, November 3, 2026; `Get-AdminRulePages`, a `Bare` section)
 `description:` frontmatter key, and the file's `# ` title where it has none. Claude Code reads only `paths:` there.
 That covers
 BWJ-Development's repos too. Until [#3198](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3198)
-(the owner's decision, October 20, 2026) all of this shipped with `dkj-repo-workflow-dkj`, which BWJ-Development
+(the owner's decision, October 20, 2026) all of this shipped with `dkj-solutions`, which BWJ-Development
 never enables, so a General page reached only the DKJ-Solutions repos. **"General" means what every repo
 has, whichever organisation it belongs to**, so the machinery moved here. The DKJ-Solutions card and its
-Brandbook stayed in [`dkj-repo-workflow-dkj`](../../extensions/dkj-repo-workflow-dkj/README.md) until #3475 took them off every consumer
+Brandbook stayed in [`dkj-solutions`](../../extensions/dkj-repo-workflow-dkj/README.md) until #3475 took them off every consumer
 Admin (below).
 
 | Part | Where |
@@ -88,7 +88,7 @@ after them on a product page and never alone ([#3831](https://github.com/DKJ-Sol
 ([#3475](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3475), the owner, October 25, 2026). The
 Brandbook app was a product of `dkj-claude-plugins`, shown only there on its own product port (#3283), and
 that app is retired (#3493). On every Admin `/brandbook` is a plain 404 and the home page has no Brand book
-card. Until #3475, a repo enabling `dkj-repo-workflow-dkj` got both (#3198, #3270).
+card. Until #3475, a repo enabling `dkj-solutions` got both (#3198, #3270).
 
 ## Admin and the product
 
@@ -282,7 +282,7 @@ names the checkout), started hidden and detached.
 
 **It serves no Brandbook, in any repo** ([#3475](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3475),
 the owner, October 25, 2026). From #3198 to #3475 a DKJ-Solutions repo's server served a fifth page, the
-Brandbook app's build from `dkj-repo-workflow-dkj/assets/brandbook/`, under `/brandbook/`. The route went with #3475, and the app itself with #3493: no repo has a Brand book to
+Brandbook app's build from `dkj-solutions/assets/brandbook/`, under `/brandbook/`. The route went with #3475, and the app itself with #3493: no repo has a Brand book to
 show. The brand book's own specimens are a page under Plugins instead, on `/dev/plugins/dkj-repo-workflow/dkj-brandbook`, its card named dkj-brandbook as the product's is (#3704),
 in every repo that runs Admin, BWJ-Development's included ([#3629](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3629));
 the older `/dev/plugins/dkj-repo-workflow-dkj/house-style` and `/dev/plugins/dkj-repo-workflow/house-style` redirect there.

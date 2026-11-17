@@ -22,7 +22,7 @@
     THEY RENDER IN THE HOUSE STYLE IN EVERY REPO, BWJ-Development's included. They are this plugin's own
     tooling, not a repo's product, so they keep one look wherever they run; the stylesheet and theme script
     are read from this plugin's own assets/dkj-brandbook/ (Get-HouseStyleDir), which every install of
-    dkj-repo-workflow carries; they sat in the dkj-repo-workflow-dkj extension's folder until #3531.
+    dkj-repo-workflow carries; they sat in the dkj-solutions extension's folder until #3531.
 
     NOTHING HERE IS A REPO'S. Every value that is the repo's -- its name, its issue links
     and the notes it holds -- arrives as a parameter, and the lib depends on no other lib of any repo:

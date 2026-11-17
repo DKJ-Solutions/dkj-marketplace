@@ -42,7 +42,7 @@
     Excluded plugin folders are pruned after the copy and the manifest is rebuilt to match, so the two
     cannot disagree. A kind-directory left with no plugin in it (plugins/dkj-subagents/ and its README) is
     removed whole rather than published as a page describing plugins that are not there. It read
-    plugins/workflows/ until #1467 renamed that directory to plugins/dkj-repo-workflow/, which is a plugin root
+    plugins/workflows/ until #1467 renamed that directory to plugins/dkj-policy/, which is a plugin root
     rather than a kind directory and is therefore pruned as a plugin.
 
     THAT NOW ALSO GOVERNS subagent-shared/, and it is the one behaviour the August 17, 2026 move changed.

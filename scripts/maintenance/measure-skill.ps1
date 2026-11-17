@@ -33,7 +33,7 @@
         this line said until #1812: measured September 10, 2026 (CLI 2.1.267), the command reported
         Skills (17) for dkj-repo-workflow while the clone's copy of that same version carried 18.
         AND IT IS NOT NECESSARILY THE COPY THIS CHECKOUT LOADS, which is what this line said until #2670.
-        The command takes no project path, and measured October 1, 2026 it priced dkj-repo-workflow at 5.11.0
+        The command takes no project path, and measured October 1, 2026 it priced dkj-policy at 5.11.0
         from a checkout whose install record pins 5.9.0 (and, earlier that day, at 5.10.0 against a
         record of 5.8.0) -- a copy other than the recorded one, measured both times as the newest version
         on the machine. So the report

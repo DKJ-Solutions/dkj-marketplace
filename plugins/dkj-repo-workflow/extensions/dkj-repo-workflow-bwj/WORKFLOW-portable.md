@@ -433,7 +433,7 @@ board's numbered sections, ran a daily reconciliation sweep, synced the task's `
 labels and posted a placeholder backstop block on the issue. Dave retired all of it that morning, and the
 same day brought back **the closed message** (#2818), and the next day **the reopened message** beside it
 (#2854); the on-hold message followed (#2902). All three are the `asana-closed-message` workflow, copied into each store, and since October 26,
-2026 into `phone-factory` too (#3518), by `adopt-dkj-repo-workflow-bwj`, and it needs `ASANA_PAT` only. **The prio sync came back on October 12, 2026
+2026 into `phone-factory` too (#3518), by `adopt-bwj-development`, and it needs `ASANA_PAT` only. **The prio sync came back on October 12, 2026
 (#2945) as a second, separate copied workflow, `asana-prio-label`** (step 5). In practice:
 
 - **Closing an issue as completed** posts one comment on the linked task: the automation's header, the

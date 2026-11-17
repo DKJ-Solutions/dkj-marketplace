@@ -73,7 +73,7 @@ runs `dkj-repo-workflow` shows under Plugins (`/dev/plugins/dkj-repo-workflow/dk
 
 ## The dev-preview hook
 
-Moved to `dkj-repo-workflow` in #3198: see [`dkj-repo-workflow`'s `apps/admin/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-repo-workflow/apps/admin/README.md#the-dev-preview-hook).
+Moved to `dkj-policy` (now `dkj-repo-workflow`) in #3198: see [`dkj-repo-workflow`'s `apps/admin/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-repo-workflow/apps/admin/README.md#the-dev-preview-hook).
 
 ## Who enables it
 
@@ -99,7 +99,7 @@ session start ([#2697](https://github.com/DKJ-Solutions/dkj-claude-plugins/issue
 
 The plugin is enabled here since October 13, 2026
 ([#2976](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2976)), first for the dev-preview hook
-and, since that moved to `dkj-repo-workflow` (#3198), for the house-style session check. This repo's Admin is
+and, since that moved to `dkj-policy` (#3198), for the house-style session check. This repo's Admin is
 described in [`dkj-repo-workflow`'s `apps/admin/README.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-repo-workflow/apps/admin/README.md#in-the-source-repo).
 Its Admin shows the dkj-brandbook page from the working tree (`/dev/plugins/dkj-repo-workflow/dkj-brandbook`), so a
 change shows here before the release that ships it; every other Admin that runs `dkj-repo-workflow` shows the released
@@ -111,5 +111,5 @@ renders from in every repo) and, since [#3831](https://github.com/DKJ-Solutions/
 product layer in this plugin's `assets/dkj-brandbook-product/`, since
 [#3130](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3130) (October 18, 2026) moved it in
 from the `dkj-brandbook` repo (archived since; the name now belongs to the brand book here) and [#3531](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3531)
-(October 26, 2026) moved the files from this plugin into `dkj-repo-workflow`, whose Admin renders in them in every
+(October 26, 2026) moved the files from this plugin into `dkj-policy`, whose Admin renders in them in every
 repo. The rule, the skill and the gate stay here. A consuming repo asks for a change through an inbound issue on this repo.
