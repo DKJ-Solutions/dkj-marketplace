@@ -359,7 +359,7 @@ $noteRootRelPath = ($noteRootRelPath -replace '\\', '/').TrimEnd('/')
 # only existed from August 26, so the break is five DAYS old -- the whole timeline is in
 # consumer-runner-lib.ps1's header, with the git log it comes off.)
 #
-# THE PIN STAYS, AND THE EXPOSURE IS COVERED AT THE OTHER END -- because it cannot be covered here. This
+# THE MAIN-TRACKING COVERED ITS EXPOSURE AT THE OTHER END, AND THAT COVER STANDS -- because it cannot be covered here. This
 # command writes the path once, at adoption, and nothing rewrites it afterwards, so no change made in
 # this file can reach a repo that adopted in August. What can: check-consumers.ps1's check 6, which
 # reads the runners a registered consumer actually has and reports a path this tree no longer holds; and
@@ -371,8 +371,9 @@ $noteRootRelPath = ($noteRootRelPath -replace '\\', '/').TrimEnd('/')
 # check and then wrote the runner around it -- runner, both checkouts, the path, the ref and half a page
 # of commentary -- into every consumer, once, where nothing corrected it afterwards. So the runner is a
 # reusable workflow in the source now (.github/workflows/reusable-branch-entry.yml, `on: workflow_call`)
-# and what lands here is the trigger and one `uses:` line. The `ref: main` argument travels with it
-# unchanged: the caller names `@main`, and the reusable workflow checks the scripts out at `main` too.
+# and what lands here is the trigger and one `uses:` line. The ref argument travels with it, reversed
+# since #4237: the caller names `@vX.Y.Z`, passes the same tag as `scripts-ref`, and the reusable workflow
+# checks the scripts out at that tag.
 # check-consumers' check 6 still sees the consumer, because consumer-runner-lib reads a `uses:` of a
 # workflow in this repo as a reference into this tree, exactly as it reads a checkout step.
 #
@@ -587,7 +588,9 @@ foreach ($t in $targets) {
         # looks at it again: a caller adopted on @main stays there until somebody is told. Advisory.
         if ($gateCallerRels -contains $t.Rel -and $gateRef -ne 'main') {
             $existing = [System.IO.File]::ReadAllText($abs)
-            if ($existing -match '(?m)^\s*uses:\s*\S+/\.github/workflows/reusable-[\w-]+\.yml@main\s*$') {
+            # Quoted or with a trailing comment, and only a call into THIS repo under any name it has
+            # carried -- a third party's reusable workflow on @main is not ours to pin (review on #4237).
+            if ($existing -match '(?m)^\s*uses:\s*["'']?[\w.-]+/(?:dkj-marketplace|dkj-claude-plugins|claude-code-specialists)/\.github/workflows/reusable-[\w-]+\.ya?ml@main["'']?\s*(?:#.*)?$') {
                 Write-Host "            [pin] it calls the gate at @main, so a script moved on the source's main turns it red" -ForegroundColor Yellow
                 Write-Host "            before you adopt that release (#4237). Change @main to @$gateRef and add" -ForegroundColor Yellow
                 Write-Host "            'with: scripts-ref: $gateRef' under it." -ForegroundColor Yellow

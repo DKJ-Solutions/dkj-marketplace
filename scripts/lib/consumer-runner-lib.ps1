@@ -490,7 +490,7 @@ function Test-WorkflowHoldsWriteCredential {
         Does this workflow hold something worth pinning its shared scripts against (#2337)? True where
         it reads a repository secret other than GITHUB_TOKEN, or grants any `write` permission.
 
-        THE PIN GOES WHERE THE CREDENTIAL IS, AND SO DOES THIS CHECK. #2333 pinned the shared-scripts
+        THE CREDENTIAL DECIDES WHICH REASON CHECK 6d GIVES, AND THIS TEST IS WHAT DECIDES IT. #2333 pinned the shared-scripts
         checkout of exactly the three runners that hold one (fold-on-merge: FOLD_PUSH_TOKEN,
         verify-resolved: issues: write, merge-on-green: FOLD_PUSH_TOKEN) and left branch-entry,
         unfolded-entry and repo-settings on ref: main on the #1805 argument: they hold nothing, and a

@@ -273,7 +273,8 @@ $pluginDir  = "$sharedPath/plugins/dkj-repo-workflow/scripts"
 # quietly fall behind the floor this repo runs on itself.
 $checkoutPin = 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1'
 
-# THE SHARED SCRIPTS ARE PINNED TOO -- IN THE SAME THREE WRITE RUNNERS, AND ONLY THERE (issue #2333).
+# THE SHARED SCRIPTS ARE PINNED TOO -- IN THE THREE WRITE RUNNERS (issue #2333), AND SINCE #4237 IN THE
+# READ-ONLY ONE AS WELL (below).
 # Pinning the ACTION is half of the job. The second checkout in each of those runners fetches this
 # workflow's own scripts out of $sharedRepo and then EXECUTES them, in a job that holds FOLD_PUSH_TOKEN
 # (fold, merge-on-green) or issues: write (resolves). At ref: main, a change landing on the source

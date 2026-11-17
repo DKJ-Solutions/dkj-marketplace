@@ -110,8 +110,10 @@
          pinned at a release behind this tree's dkj-repo-workflow version -- gets an [INFO] naming the file,
          the line and the ref: line to change. #2333 pinned those checkouts in what adopt-ci-floor.ps1
          writes and reports a stale one when it is re-run; this is the half that reaches a consumer
-         nobody re-runs it in. The read-only runners are not judged, because they track main on
-         purpose (#1805). Same two routes as check 6.
+         nobody re-runs it in. A read-only runner or gate caller on a moving ref gets an [INFO] of its
+         own with the #4237 reason (a script moved on this repo's trunk reaches it before the consumer
+         adopts the release); a pin merely behind is not reported for it. #1805 kept them on main until
+         then. Same two routes as check 6.
       7. A LENS UNDER THE RETIRED SPELLING, WHICH NOTHING READS ANY MORE (#2591). Since #2292 emptied
          the Lens row's AlsoRead, no reader resolves '<g>-<id>-extension.md'. A consumer still holding
          one therefore has a specialist running without its repo lens, and nothing in that repo says so.

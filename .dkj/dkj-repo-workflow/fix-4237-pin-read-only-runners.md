@@ -58,6 +58,8 @@ went red. Pin the read-only runners to the release a consumer adopts, as the wri
 - [x] The three reusable workflows' `scripts-ref` commentary, the adopt skill page and Sylvester's lens
   updated; the default stays `main` only so callers placed before this still start
 - [x] Filed #4246: the house-style caller the dkj-brandbook skill gives still calls `@main`
+- [x] Review fixes: Edith's stale sentences (check 6d header, both scaffolders' headings, the lens), Victor's
+  narrow `@main` re-run match (now quoted/commented, and only this repo's calls)
 
 ### TEST
 
@@ -69,12 +71,11 @@ went red. Pin the read-only runners to the release a consumer adopts, as the wri
 Both adoption scaffolders now pin every CI runner they place to the dkj-repo-workflow release they came
 from (#4237). The branch-entry and always-on-budget callers from `adopt-workflow-folder` call
 `@vX.Y.Z` and pass `scripts-ref: vX.Y.Z`. The repo-settings runner from `adopt-ci-floor` fetches the
-shared scripts at the release's commit, as the write runners have since #2333. This reverses #1805's
+shared scripts at the same release, as the write runners have since #2333. This reverses #1805's
 choice to keep the read-only runners on main. The #4209 rename moved every script path on main a day
-before any release carried it, and every consumer runner on `ref: main` went red at once. A re-run of
-either scaffolder names a runner still on main without touching it, and the register's check 6d
-reports one as an `[INFO]`. The new `release-pin-lib.ps1` holds the version read that both scaffolders
-share.
+before any release carried it, and every consumer runner on `ref: main` went red at once. Internally,
+the register's check 6d reports a read-only runner still on main as an `[INFO]`, and the new
+`release-pin-lib.ps1` holds the version read both scaffolders share.
 
 **Score:** 2
 
