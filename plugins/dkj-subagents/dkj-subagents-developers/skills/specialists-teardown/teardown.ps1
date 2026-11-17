@@ -833,7 +833,7 @@ if ((Split-Path $ownPayload -Leaf) -match '^\d+\.\d+\.\d+') {
 }
 $payloadRoots = @($payloadRoots | Sort-Object -Unique)
 $knownNames = @()
-foreach ($srcDir in @(foreach ($root in $payloadRoots) { foreach ($dir in @('subagents', 'agents', 'personas')) { Join-Path $root $dir } })) {
+foreach ($srcDir in @(foreach ($payloadRoot in $payloadRoots) { foreach ($dir in @('subagents', 'agents', 'personas')) { Join-Path $payloadRoot $dir } })) {
     if (-not (Test-Path -LiteralPath $srcDir)) { continue }
     foreach ($f in @(Get-ChildItem -LiteralPath $srcDir -Filter '*.md' -File -ErrorAction SilentlyContinue)) {
         $txt = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)
