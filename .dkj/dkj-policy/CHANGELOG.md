@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**8 / 11 minor entries** <!-- pending-tally -->
+**9 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4230-reach-reason-after-the-fact · 20261117-132020Z
+
+Inside this repo, `closed-message-sessioncheck` reads `reach-reason-rules.ps1` beside finding 6 and its
+suite gains the cases for the new line.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+A store session now starts with an `[ERROR]` line naming every open issue that carries the reach label
+with no `## Why <reach label>` section in its body. An issue that slipped past `guard-reach-reason` -- a
+body built at run time, a body on stdin, `gh` unreachable, or a checkout that had not updated -- is
+caught at the next session start, as #1398 and #1404 in smartwatchbanden were not.
+
+**Score:** 3
+
+#### Pull Request
+
+bwj-development: catch a reach label without its reason after the fact
+
+Plugins: bwj-development
+
+[PR #4231](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4231)
+
+---
 
 ### DEPLOY: feat/4213-changelog-mode-seam · 20261117-124945Z
 
