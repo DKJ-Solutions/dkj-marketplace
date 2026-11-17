@@ -55,13 +55,11 @@ Issue #4248: `claim-issue.ps1 -Candidates` applied the default parking-label lis
 
 **Score:** 4
 
+#### What makes this deploy extra special
+
 A consumer running `issues-sweep` on v7.0.0 sees every parked issue offered as `free`, and the claim then refuses it. After this release, parked issues are skipped again and cleared waits print as `stale-park`.
 
 **Score:** 3
-
-#### What makes this deploy extra special
-
-**Score:** N/A
 
 #### Pull Request
 
