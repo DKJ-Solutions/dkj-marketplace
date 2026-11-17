@@ -110,7 +110,9 @@ is tier 0. If you cannot name who notices the defect, that is the answer, and th
 **`hooks/guard-reach-reason.ps1` refuses** a `gh issue create` or `gh issue edit` that adds the reach
 label on an admitted repo while the body the call leaves has no such section. It judges `--body` or
 `--body-file` where the call passes one, and the issue's current body otherwise. Where it cannot read the
-body, it lets the call through with a warning.
+body, it lets the call through with a warning. What slips past it is named at the next session start:
+`closed-message-sessioncheck` lists the open issues that carry the reach label with no such section
+([#4230](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4230)).
 
 **Never set `CRO`.** That label was retired on October 7, 2026
 ([#2869](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2869)): an issue raised by the CRO

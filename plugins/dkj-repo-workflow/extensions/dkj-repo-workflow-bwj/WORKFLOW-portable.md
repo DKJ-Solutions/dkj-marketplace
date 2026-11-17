@@ -192,7 +192,10 @@ why. "Visible on the storefront" alone does not answer it, because the test is w
 the **defect**. An issue that gains the label later gets the section in the same move. **The plugin's
 `guard-reach-reason` hook holds this**: it refuses a `gh issue create` or `gh issue edit` that adds the
 reach label on an admitted repo where the body the call leaves has no such section, and lets a body it
-cannot read through with a warning.
+cannot read through with a warning. **What slips past the hook is caught at the next session start**
+([#4230](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4230)): measured in `smartwatchbanden`
+on November 17, 2026, #1398 and #1404 carried `minor` with no section after the hook shipped, so
+`closed-message-sessioncheck` now lists every open issue that carries the reach label without one.
 
 #### The CRO label -- retired
 
