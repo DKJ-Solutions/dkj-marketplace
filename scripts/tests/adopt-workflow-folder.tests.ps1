@@ -889,6 +889,61 @@ try {
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $cDk '.dkj\dkj-policy'))) 'move .dkj/dkj-policy: the old dot folder is gone (#4209)'
     Assert-Equal $dkChangelog ([System.IO.File]::ReadAllText((Join-Path $cDk '.dkj\dkj-repo-workflow\CHANGELOG.md'))) 'move .dkj/dkj-policy: the changelog arrived in .dkj/dkj-repo-workflow/ byte for byte (#4209)'
 
+    # THE MOVE INTO A FOLDER NEW-BRANCH ALREADY CREATED (#4251). The 7.0.0 migration runs on a branch, and
+    # new-branch writes the branch document into '.dkj/dkj-repo-workflow/' before this part runs, so the new
+    # folder exists and holds only that document. The move must proceed anyway, and the dry run must not die
+    # on the seams it has not repointed yet.
+    $guideLine = 'Relative links in that text resolve FROM `.dkj/dkj-policy/`, where `CHANGELOG.md` sits --'
+    function New-BranchDocFixture {
+        param([string]$Label, [switch]$WithForeignItem)
+        $r = New-FixtureConsumer -Label $Label
+        New-Item -ItemType Directory -Path (Join-Path $r '.dkj\dkj-policy\releases') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $r '.dkj\dkj-repo-workflow') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $r 'scripts') -Force | Out-Null
+        [System.IO.File]::WriteAllText((Join-Path $r '.dkj\dkj-policy\CHANGELOG.md'), "# Changelog`n`nOld history.`n")
+        [System.IO.File]::WriteAllText((Join-Path $r '.dkj\dkj-policy\releases\history.md'), "# History`n")
+        [System.IO.File]::WriteAllText((Join-Path $r '.dkj\dkj-repo-workflow\fix-4251-x.md'), "# Branch`n$guideLine`nnot from this directory.`n")
+        [System.IO.File]::WriteAllText((Join-Path $r 'scripts\repo-config.ps1'),
+            "`$script:ChangelogPath = '.dkj/dkj-policy/CHANGELOG.md'`nfunction Get-ChangelogPath { `$script:ChangelogPath }`n" +
+            "`$script:HistoryPath = '.dkj/dkj-policy/releases/history.md'`nfunction Get-ReleaseHistoryPath { `$script:HistoryPath }`n")
+        if ($WithForeignItem) { [System.IO.File]::WriteAllText((Join-Path $r '.dkj\dkj-repo-workflow\CHANGELOG.md'), "# Changelog`n") }
+        return $r
+    }
+
+    Write-Host "adopt-workflow-folder -- move into a folder holding only a branch document (#4251)" -ForegroundColor Cyan
+    $cBd = New-BranchDocFixture -Label 'move-into-existing'
+    $rBdDry = Invoke-Adopt -Dir $cBd
+    Assert-Equal 0 $rBdDry.Code 'move into existing: the dry run exits 0, not 1 on the seam asserts'
+    Assert-Match '\[move\]\s+\.dkj/dkj-policy/ -> \.dkj/dkj-repo-workflow/' $rBdDry.Flat 'move into existing: the dry run reports the move'
+    Assert-Match '\[repoint\]\s+scripts/repo-config\.ps1: 2 path' $rBdDry.Flat 'move into existing: and the seam repoints it would make'
+    Assert-Match '\[repoint\]\s+\.dkj/dkj-repo-workflow/fix-4251-x\.md: 1 guidance line' $rBdDry.Flat 'move into existing: and the guidance line of the branch document'
+    Assert-True (Test-Path -LiteralPath (Join-Path $cBd '.dkj\dkj-policy\CHANGELOG.md')) 'move into existing: the dry run moved nothing'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $cBd '.dkj\dkj-repo-workflow\CHANGELOG.md'))) 'move into existing: and wrote nothing into the new folder'
+
+    $rBd = Invoke-Adopt -Dir $cBd -ScriptArgs @('-Apply')
+    Assert-Equal 0 $rBd.Code 'move into existing: -Apply exits 0'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $cBd '.dkj\dkj-policy'))) 'move into existing: the legacy folder is gone'
+    Assert-Equal "# Changelog`n`nOld history.`n" ([System.IO.File]::ReadAllText((Join-Path $cBd '.dkj\dkj-repo-workflow\CHANGELOG.md'))) 'move into existing: the changelog arrived byte for byte'
+    Assert-True (Test-Path -LiteralPath (Join-Path $cBd '.dkj\dkj-repo-workflow\releases\history.md')) 'move into existing: the subfolder arrived too'
+    Assert-True (Test-Path -LiteralPath (Join-Path $cBd '.dkj\dkj-repo-workflow\fix-4251-x.md')) 'move into existing: the branch document is kept'
+    $bdCfg = [System.IO.File]::ReadAllText((Join-Path $cBd 'scripts\repo-config.ps1'))
+    Assert-Match "ChangelogPath = '\.dkj/dkj-repo-workflow/CHANGELOG\.md'" $bdCfg 'move into existing: the seam is repointed'
+    $bdDoc = [System.IO.File]::ReadAllText((Join-Path $cBd '.dkj\dkj-repo-workflow\fix-4251-x.md'))
+    Assert-Match 'resolve FROM `\.dkj/dkj-repo-workflow/`, where' $bdDoc 'move into existing: the guidance line names the new folder'
+    Assert-True ($bdDoc -notmatch 'dkj-policy') 'move into existing: and no old folder name is left in the branch document'
+
+    Write-Host "adopt-workflow-folder -- a new folder holding more than branch documents keeps the skip (#4251)" -ForegroundColor Cyan
+    $cBx = New-BranchDocFixture -Label 'move-skip-foreign' -WithForeignItem
+    $rBx = Invoke-Adopt -Dir $cBx -ScriptArgs @('-Apply')
+    Assert-Match '\[skip\]\s+\.dkj/dkj-policy/ not moved' $rBx.Flat 'skip: the run says why nothing moved'
+    Assert-True (Test-Path -LiteralPath (Join-Path $cBx '.dkj\dkj-policy\CHANGELOG.md')) 'skip: the legacy folder is untouched'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $cBx '.dkj\dkj-repo-workflow\releases'))) 'skip: and nothing was merged into the new folder'
+    $cBs = New-BranchDocFixture -Label 'move-skip-subdir'
+    New-Item -ItemType Directory -Path (Join-Path $cBs '.dkj\dkj-repo-workflow\releases') -Force | Out-Null
+    $rBs = Invoke-Adopt -Dir $cBs -ScriptArgs @('-Apply')
+    Assert-Match '\[skip\]\s+\.dkj/dkj-policy/ not moved' $rBs.Flat 'skip: a subdirectory in the new folder also keeps the skip'
+    Assert-True (Test-Path -LiteralPath (Join-Path $cBs '.dkj\dkj-policy\CHANGELOG.md')) 'skip: the legacy folder is untouched there too'
+
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }
 }

@@ -39,19 +39,40 @@
 
 ### PLAN
 
+Inbound #4251, measured in a consumer's v7.0.0 migration: `new-branch` creates `.dkj/dkj-repo-workflow/`
+before Part 1 runs, so `adopt-workflow-folder.ps1` skipped the move and died on the seam asserts; its dry
+run died the same way, and the branch document kept a guidance line naming the old folder.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Move the legacy folder's children into a new folder that holds only branch documents; keep the skip,
+  now announced as `[skip]`, for anything else in it.
+- [x] Assert a dry run's seams against the paths the move would leave behind.
+- [x] Repoint the ``FROM `<old>/` `` guidance token in the moved folder's branch documents.
+- [x] Mirror the script into `plugins/dkj-repo-workflow/`, one sentence in the adopt skill, three new
+  cases in `adopt-workflow-folder.tests.ps1`.
 
 ### TEST
 
+- [x] `adopt-workflow-folder.tests.ps1` standalone: all 207 asserts pass, the new apply, dry-run and
+  skip cases among them. The full gate runs in `ship-pr`.
+
 ### DEPLOY: fix/4251-part1-move-beside-branch-docs
 
-**Score:**
+Part 1 of adopting the workflow now moves the old `.dkj/dkj-policy/` folder when the migration branch's own
+document already sits in `.dkj/dkj-repo-workflow/` (#4251). Before, it skipped the move and stopped on the
+seam check, so the 7.0.0 steps failed in the order the release note gives them. Its dry run no longer
+fails on the repos it exists for, and the branch document's line naming the folder links resolve from is
+repointed too.
+
+**Score:** 4
 
 #### What makes this deploy extra special
 
-**Score:**
+A maintainer migrating to 7.0.0 can follow the note in order (branch first, then Part 1) without moving
+their branch document aside by hand.
+
+**Score:** 4
 
 #### Pull Request
 
