@@ -44,10 +44,10 @@ always pins the release that carries the bytes its checksums name.
 
 | File | Fetch from | sha256 |
 |---|---|---|
-| `house-style.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.18.0/plugins/dkj-repo-workflow/assets/dkj-brandbook/house-style.css` | `ea9190222f5a93b52012cdd7c8431689830cea114c65cad70ed4de95fe4f1e5f` |
-| `house-theme.js` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.18.0/plugins/dkj-repo-workflow/assets/dkj-brandbook/house-theme.js` | `c1e15beca3c764a18033909e417306e8eefd264f1c8a1bd189dcf34452404e6a` |
-| `house-product.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.18.0/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product/house-product.css` | `3dc56f1f4a005a08bae03f47c69d28b48ccadb09c5eb6ae6dac78baf676084ce` |
-| `InterVariable.woff2` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v6.18.0/plugins/dkj-repo-workflow/assets/dkj-brandbook/InterVariable.woff2` | `693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3` |
+| `house-style.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.0.0/plugins/dkj-repo-workflow/assets/dkj-brandbook/house-style.css` | `d319be0d396c5cde4d83b440938e3e456a4a43e58ed45b2a0e82c44f2361c25c` |
+| `house-theme.js` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.0.0/plugins/dkj-repo-workflow/assets/dkj-brandbook/house-theme.js` | `c1e15beca3c764a18033909e417306e8eefd264f1c8a1bd189dcf34452404e6a` |
+| `house-product.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.0.0/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product/house-product.css` | `65930afb00237c398648aedeb618d4867ca66a39f79a66468fbbe7bf928e9638` |
+| `InterVariable.woff2` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.0.0/plugins/dkj-repo-workflow/assets/dkj-brandbook/InterVariable.woff2` | `693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3` |
 
 **A product page vendors and links all three files, `house-style.css` first and `house-product.css` after it**
 (the product file is never loaded alone), with `house-theme.js` where the app lets the user pick a theme. **An
