@@ -394,7 +394,7 @@ Assert-True ($res.Output -match 'PAYLOAD-REACHED') `
 
 # --- 10. two records for this repo: the NEWEST wins, not the first enumerated ---------------------
 # THE CASE THIS REPO'S OWN HISTORY PRODUCES. An id is '<plugin>@<marketplace>', and the marketplace
-# half was renamed on September 10, 2026 -- which leaves a stale 'dkj-repo-workflow@<old>' record sitting
+# half was renamed on September 10, 2026 -- which leaves a stale 'dkj-policy@<old>' record sitting
 # beside the current one, both naming this repo. check-report-lib's Get-InstallRecord documents that
 # pair as real and hands back ALL matches so a caller can see the disagreement; the shim cannot do
 # that, because its contract is to print nothing and never report. So it has to RESOLVE the tie, and

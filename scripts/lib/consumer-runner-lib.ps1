@@ -33,7 +33,7 @@
 
         2026-08-20  A   plugins/workflows/workflow-davekjohn/scripts/lint/check-branch-entry.ps1
         2026-08-26  R   -> plugins/workflows/contributing-davekjohn/scripts/lint/check-branch-entry.ps1
-        2026-09-05  R   -> plugins/workflows/dkj-policy/... -> plugins/dkj-repo-workflow/...
+        2026-09-05  R   -> plugins/workflows/dkj-policy/... -> plugins/dkj-policy/...
 
     So the gate did not exist at all until August 20, the path they name existed only from August 26,
     and it stopped resolving on September 5 -- FIVE DAYS before the measurement, not five weeks.

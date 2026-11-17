@@ -10,7 +10,7 @@
     why the sibling check reported them as ALIASED and no grep in either repo would ever have found
     the other.
 
-    IT IS dkj-subagents-shopify AND NOT dkj-repo-workflow-bwj, WHICH IS A DEPARTURE FROM THE #1881 RULING'S
+    IT IS dkj-subagents-shopify AND NOT bwj-development, WHICH IS A DEPARTURE FROM THE #1881 RULING'S
     DEFAULT AND NOT FROM ITS REASONING. That ruling sends what the two stores share to dkj-repo-workflow-bwj
     unless it is obviously universal, and its test for the exception is a demonstrated reader outside
     the two stores. This bullet does not need that test, because the ruling's axis is the wrong axis

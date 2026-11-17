@@ -582,7 +582,7 @@ Write-Host 'The stray-token search -- #1444 lesson, ported from the sibling scri
 # THE HAZARD THIS GUARDS, in one move: the page directory is derived from the note root and is
 # gitignored, so repointing that folder leaves the token behind where nothing points at it. A guard
 # that asks "is there a token HERE" then finds nothing and mints a second one happily -- which 404s
-# every link already sent, while reporting success. dkj-repo-workflow's own page learned this as #1444; the
+# every link already sent, while reporting success. dkj-policy's own page learned this as #1444; the
 # new script derives its directory from the identical seam, so it inherits the identical hazard.
 $strayDir = Join-Path $Fixture 'old-releases\page'
 New-Item -ItemType Directory -Path $strayDir -Force | Out-Null

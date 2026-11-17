@@ -39,19 +39,43 @@
 
 ### PLAN
 
+Fixes #4222. #4209's bulk rename put the new plugin names into sentences that describe a past
+state or event. The 393 candidate lines (git diff -U0 df007c969^1 df007c969, a new name beside an
+issue below #4209 or a 2026 date) were judged one by one. The rule applied:
+
+- **A past event or a dated measurement gets the name it had then** (#2788's precedent): "moved into
+  `dkj-policy` with #3531", "`dkj-policy` 4.31.0 on September 7", "until #3475 `dkj-solutions`".
+- **A present-tense statement with a provenance citation keeps the current name**: "in
+  `dkj-repo-workflow` since #3470", "every repo that runs `dkj-repo-workflow` (#3643)". The plugin is
+  the same entity under a new name, so "its files sit in X since #3531" is true as written.
+- **Paths that are links, code values and test-assert strings stay as they are**, so nothing resolves
+  or matches differently.
+- **The consumer register's notes go back wholesale**: they state "the sentences above keep the
+  names they were WRITTEN with, per #952", which the rename broke.
+
+Out of scope and filed: #4235, the older house-style redirect patterns were renamed too, so the
+comments that describe them are left matching that code until it is repaired.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Restore the old name on 64 dated lines (54 files) and in 8 targeted phrases.
 
 ### TEST
 
+- [x] The gates and suites through ship-pr.
+
 ### DEPLOY: fix/4222-restore-dated-plugin-names
 
-**Score:**
+Inside this repo, dated history sentences in docs, comments and the consumer register name the
+plugin as it was called on that date again, instead of the names #4209 introduced.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 

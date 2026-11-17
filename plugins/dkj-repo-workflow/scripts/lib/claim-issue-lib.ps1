@@ -147,7 +147,7 @@ function Format-ForConsole {
             title is evidence that must not be re-spaced; Get-DisplayPath answers the all-stripped case
             with '(no printable path)', the wrong noun for an issue title.
 
-            A FOURTH COPY LIVED OUTSIDE THE LIBS until October 5, 2026: the dkj-repo-workflow-bwj template
+            A FOURTH COPY LIVED OUTSIDE THE LIBS until October 5, 2026: the bwj-development template
             asana-mirror.ps1, which shipped standalone into a consumer's .github/scripts/ (#2019) and
             was retired with its workflow. What the remaining copies may not do is DISAGREE, so
             pr-issues.tests.ps1 compares the four in scripts/lib.

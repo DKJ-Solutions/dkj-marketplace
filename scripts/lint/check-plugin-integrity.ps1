@@ -3383,7 +3383,7 @@ Write-Coverage -Category 'skill-command' -Checked $skillCmdChecked `
 # THE DIRECTORY NO LONGER NAMES THE KIND, AND ONLY THE POLICY FAMILY HAS A DIRECTORY RULE LEFT
 # (#1467, September 5, 2026). plugins/workflows/ used to hold the KIND -- a way of working -- with the
 # rest of the name saying whose it is, and Dave kept that directory name through #886 (decision A on that
-# issue). #1467 renamed it to plugins/dkj-repo-workflow/ and lifted the prime ministry's own files to its root,
+# issue). #1467 renamed it to plugins/dkj-policy/ and lifted the prime ministry's own files to its root,
 # so the directory now names the GOVERNMENT: 'dkj-repo-workflow' at plugins\dkj-repo-workflow, and every other ministry
 # one level inside it ('dkj-repo-workflow-bwj' at plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj). That is what the anchored
 # '^plugins\\dkj-repo-workflow($|\\)' below says, and the '($|\\)' is load-bearing rather than tidy: a bare
@@ -3853,7 +3853,7 @@ Write-Coverage -Category 'import' -Checked $importScanFiles.Count `
 # wrong instrument for a document that claims to list every skill of ONE plugin:
 #
 #   * its canonical set is repo-wide -- built from Get-PluginSubdirs over every published plugin -- so a
-#     span in plugins/dkj-repo-workflow/README.md (retired October 2, 2026), which enumerated the 16 that
+#     span in plugins/dkj-policy/README.md (retired October 2, 2026), which enumerated the 16 that
 #     plugin shipped, would report the team plugins' skills as 'missing';
 #   * every backtick-quoted token inside its span is a claimed name, which is why its own author
 #     condition is 'wrap tightly'. That table is two columns and three of its rows carry a backticked

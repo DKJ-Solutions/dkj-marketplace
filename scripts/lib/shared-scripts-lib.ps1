@@ -1636,7 +1636,7 @@ function Get-SharedScriptPairs {
             # SKILL-LEVEL MERGE, SEPTEMBER 5, 2026: this script and adopt-workflow-folder below now
             # share ONE skill page, 'adopt-dkj-repo-workflow' -- Part 2 of it. The two scripts themselves are
             # untouched (different files, different tests, different behaviour); only the documenting
-            # page merged, for the same reason adopt-bwj-asana was renamed to adopt-dkj-policy-bwj (adopt-dkj-repo-workflow-bwj since #2788)
+            # page merged, for the same reason adopt-bwj-asana was renamed to adopt-dkj-policy-bwj (adopt-bwj-development since #2788)
             # earlier the same day: a name naming one plugin should not leave a sibling operation for
             # that plugin looking unrelated. check-plugin-integrity's skill-param check (18) already
             # supports several scripts sharing one Skill -- see verify-resolved-issues below, which has

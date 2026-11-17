@@ -2656,7 +2656,7 @@ while ($true) {
     # moment it STARTS. A required workflow that has not yet created its check run is absent from that
     # set rather than pending in it, so a fast non-required check reporting first satisfies the watch
     # and it exits 0 with the required one still to come. Measured September 7, 2026 in a consumer
-    # (`dkj-repo-workflow` 4.31.0, BWJ-Development/smartwatchbanden PR #529): `.github/dependabot.yml` passed in
+    # (`dkj-policy` 4.31.0, BWJ-Development/smartwatchbanden PR #529): `.github/dependabot.yml` passed in
     # 1s, this step said "CI green" after 5s, and the merge came back `the base branch policy prohibits
     # the merge` while required `Shopify theme check` (2m1s) and `branch-entry` (31s) were both pending.
     # A plain `gh pr merge --merge` succeeded on the first try once they finished -- nothing was broken

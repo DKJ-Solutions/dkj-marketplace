@@ -17,7 +17,7 @@
     THE FAILURE IS NOT DRIFT BETWEEN A SOURCE AND A COPY, which is what check-consumer-drift.ps1
     already reports. It is two consumers independently building the same mechanism, each ahead of the
     other on different things, with nothing carrying either way. The measured instance is
-    scripts/task/prune-merged.ps1: inbound #815 asked for it centrally, dkj-repo-workflow 4.21.0 shipped it,
+    scripts/task/prune-merged.ps1: inbound #815 asked for it centrally, dkj-policy 4.21.0 shipped it,
     one consumer replaced its copy with a forwarder and the other still carried its own three weeks
     later. So "shipped centrally" and "used centrally" are different facts, and nothing was watching
     the gap between them.

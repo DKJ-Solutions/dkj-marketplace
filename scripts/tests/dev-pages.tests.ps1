@@ -3,7 +3,7 @@
     Tests for scripts/lib/dev-pages-lib.ps1 -- Admin and the test-gate page of the dev server
     (#3097) -- and for the plugin libs it reuses: plugins/dkj-repo-workflow/apps/admin/lib/general-pages-lib.ps1 -- the page
     shell, the number formats and the three general pages (SessionStart, Issues, Release notes) that
-    moved there in #3119, and to dkj-repo-workflow in #3198. Pure: the servers that serve them are
+    moved there in #3119, and to dkj-policy in #3198. Pure: the servers that serve them are
     exercised by consumer-dashboard.tests.ps1 and dev-preview-sessionstart.tests.ps1.
 
     Pure ASCII (repo convention for .ps1).

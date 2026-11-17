@@ -277,8 +277,9 @@ own), so an install on that channel silently yields an older plugin version. If 
 update the marketplace registration (a marketplace update) or re-add it under `dkj-marketplace` — a
 fresh install should always use `DKJ-Solutions/dkj-marketplace`.
 
-**The two `dkj-repo-workflow` extensions were renamed** on October 4, 2026
-([#2788](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2788)): `dkj-policy-bwj` is
+**The two `dkj-policy` extensions were renamed** on October 4, 2026
+([#2788](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2788)), to `bwj-development` and `dkj-solutions`, and again on
+November 17, 2026 (#4209): `dkj-policy-bwj` is now
 `dkj-repo-workflow-bwj` and `dkj-policy-dkjs` is `dkj-repo-workflow-dkj`. The marketplace no longer declares the old
 ids, so a repo that enabled one loads nothing of it until it migrates. Nothing fails loudly, and the
 session-start check warns once for each old name. Migrating takes three steps, run from the repo's root:

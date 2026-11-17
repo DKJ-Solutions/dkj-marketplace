@@ -13,8 +13,8 @@ every repo, BWJ-Development's included
 ([#3531](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3531), October 26, 2026). The **rule**
 that a DKJ-Solutions app starts from it stays in the `dkj-repo-workflow-dkj` plugin, whose `dkj-brandbook` skill
 points here and pins the files. It spent October 13 to 18, 2026 in the `dkj-brandbook` repo, came back
-into `dkj-repo-workflow-dkj` with [#3130](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3130), and
-moved one level up into `dkj-repo-workflow` with #3531. **A session or a build
+into `dkj-solutions` with [#3130](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3130), and
+moved one level up into `dkj-policy` with #3531. **A session or a build
 fetches a tagged release, never `main`** (owner's decision on
 [dkj-brandbook#3](https://github.com/DKJ-Solutions/dkj-brandbook/issues/3), October 13, 2026):
 `house-theme.js` is executable and runs with the origin of every page it is inlined into, and `main` is a

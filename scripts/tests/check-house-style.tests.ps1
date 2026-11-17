@@ -68,7 +68,7 @@ foreach ($leaf in 'house-style.css', 'house-theme.js') {
     Assert-True (@($skillPins | ForEach-Object { $_.Checksums }) -contains "plugins/dkj-repo-workflow/assets/dkj-brandbook/$leaf") "...and writes the checksum of the canonical $leaf beside its URL"
 }
 Assert-True ($null -eq (Get-HouseStylePin -SkillText '| `house-style.css` | `x` | `aa` |')) 'a page without both rows is no pin'
-# A page at a tag before #3531 names the files under dkj-repo-workflow-dkj/assets/, and the reusable gate reads the page AT that tag.
+# A page at a tag before #3531 names the files under dkj-solutions/assets/, and the reusable gate reads the page AT that tag.
 $oldRow = '| `{0}` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v5.32.0/plugins/dkj-policy/dkj-solutions/assets/house-style/{0}` | `{1}` |'
 $oldPage = ($oldRow -f 'house-style.css', ('a' * 64)) + "`n" + ($oldRow -f 'house-theme.js', ('b' * 64))
 Assert-Equal 'v5.32.0' (Get-HouseStylePin -SkillText $oldPage).Tag 'a pin URL on the pre-#3531 path still yields its tag'

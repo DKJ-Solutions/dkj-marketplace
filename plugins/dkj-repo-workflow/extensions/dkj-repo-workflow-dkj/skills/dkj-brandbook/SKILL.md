@@ -17,7 +17,7 @@ the breadcrumb bar. The core files lived in the
 `dkj-brandbook` repo (archived since; this skill took its name later) from October 13, 2026 until
 [#3130](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3130) (October 18, 2026) moved them
 into this plugin, and [#3531](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3531)
-(October 26, 2026) moved the files one level up into `dkj-repo-workflow`. On October 31, 2026 the skill and its folder were renamed from
+(October 26, 2026) moved the files one level up into `dkj-policy`. On October 31, 2026 the skill and its folder were renamed from
 `house-style` to `dkj-brandbook` (Maikel). **The files kept their names**: `house-style.css`, `house-theme.js`,
 the house tokens and classes, `check-house-style` and its session check, so no copy in a consuming repo has to
 change. Admin and the General pages of

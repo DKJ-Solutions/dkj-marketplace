@@ -369,7 +369,7 @@ function Get-InstalledVersionForRepo {
 
         IT IS NOT THE VERSION `claude plugin details` PRICES, and that is why both callers read it (#2670).
         The details command takes no project path, and it does not price the copy the record pins:
-        measured October 1, 2026, it priced dkj-repo-workflow at 5.10.0 for a checkout whose record said 5.8.0, and
+        measured October 1, 2026, it priced dkj-policy at 5.10.0 for a checkout whose record said 5.8.0, and
         later the same day at 5.11.0 when run from a checkout whose record said 5.9.0. So a caller that wants
         to say what a session HERE pays compares the two, rather than assuming they agree.
 
@@ -459,7 +459,7 @@ function Get-PayloadDirForPlugin {
         if ($hit.Count -eq 1) { return [pscustomobject]@{ Dir = $hit[0].InstallPath; Version = $hit[0].Version; Exact = $true } }
     }
     # THE CACHE BY VERSION NEXT, before settling for an install record of another version. Measured
-    # October 1, 2026: `claude plugin details` priced dkj-repo-workflow at 5.10.0 while this checkout's install
+    # October 1, 2026: `claude plugin details` priced dkj-policy at 5.10.0 while this checkout's install
     # record said 5.8.0, and 5.10.0 was sitting in the cache -- so the rows being split are the cache
     # copy's, and its SKILL.md files are the ones that say which of them are loaded.
     $cached = @()

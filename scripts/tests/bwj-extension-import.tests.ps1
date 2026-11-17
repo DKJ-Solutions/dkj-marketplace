@@ -96,7 +96,7 @@ try {
         [pscustomobject]@{ Path = 'C:\h\.claude\plugins\marketplaces\m\plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\CLAUDE.md' }))
     Assert-Equal 'dkj-policy-bwj>dkj-repo-workflow-bwj' (($retiredRows | ForEach-Object { "$($_.Retired)>$($_.Current)" }) -join '|') `
         'Get-RetiredExtensionImports finds the retired row only, with the name it became'
-    # THE DEPTH #3871 RETIRED. Before the move an extension sat at plugins/dkj-repo-workflow/<name>/, so a consumer
+    # THE DEPTH #3871 RETIRED. Before the move an extension sat at plugins/dkj-policy/<name>/, so a consumer
     # that adopted then imports a path the clone no longer has: it is a retired line like a retired name.
     Assert-True ('@~/.claude/plugins/marketplaces/m/plugins/dkj-policy/dkj-solutions/CLAUDE.md' -match (Get-RetiredExtensionImportPattern -Extension 'dkj-repo-workflow-dkj')) `
         'the retired-line pattern matches the current name at the old depth (#3871)'

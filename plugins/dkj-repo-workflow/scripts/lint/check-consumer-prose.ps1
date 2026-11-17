@@ -244,8 +244,8 @@ if (@($documents).Count -gt 0 -and (Test-FunctionDefined 'Test-ExtensionImported
     }
 }
 
-# THE RETIRED EXTENSION NAMES (#2788). dkj-policy-bwj became dkj-repo-workflow-bwj and dkj-policy-dkjs became
-# dkj-repo-workflow-dkj. A repo that adopted before the rename keeps both old names until it migrates: the
+# THE RETIRED EXTENSION NAMES (#2788). dkj-policy-bwj became bwj-development and dkj-policy-dkjs became
+# dkj-solutions (dkj-repo-workflow-bwj and dkj-repo-workflow-dkj since #4209). A repo that adopted before the rename keeps both old names until it migrates: the
 # enabledPlugins id, which the marketplace no longer declares, so nothing of the extension loads; and the
 # '@'-line, whose path the marketplace clone no longer has, so it imports nothing. Neither fails loudly,
 # so each gets a [WARNING] naming the current name. The same warning names an import at the depth #3871 retired

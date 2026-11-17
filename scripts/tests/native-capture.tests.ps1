@@ -2006,7 +2006,7 @@ foreach ($af in $auditFiles) {
 # AND the branch document's absence turn the verdict; anything else keeps the "fold is owed" refusal.
 # 95 -> 96: serve-consumer-dashboard.ps1's $q (`gh issue list`, -Utf8 because issue titles are rendered), 60 s
 # bound. An unmeasured exit, a non-zero one or a short read is a ReadError on the Issues page, never a blank one.
-# 96 -> 95 (#3119): serve-consumer-dashboard.ps1's $q is gone with the Issues page, which moved to the dkj-repo-workflow-dkj
+# 96 -> 95 (#3119): serve-consumer-dashboard.ps1's $q is gone with the Issues page, which moved to the dkj-solutions
 # plugin's general pages server (scripts/pages/serve-general-pages.ps1). That server bounds its gh and git calls with
 # a process helper of its own, because the plugin depends on no lib of dkj-repo-workflow, so no site is added here.
 # 95 -> 97 (#3136): claim-issue.ps1's two stale-park reads in -Candidates, `gh api repos/<slug>/issues/<n>` and
