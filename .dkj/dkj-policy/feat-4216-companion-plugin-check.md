@@ -39,19 +39,39 @@
 
 ### PLAN
 
+#4216: after #4211 a consumer that enables `dkj-subagents-alpha` without `dkj-subagents-developers` loses
+ten specialists, and the roster check that would say so moved with them. A read-only session check in
+`dkj-policy` reports it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `plugins/dkj-policy/hooks/companion-plugin-sessioncheck.ps1`: reads the settings chain through
+  `Get-EnabledPlugins` and reports `[ERROR]` per enabled plugin whose companion (same marketplace) is not
+  enabled, with the `enabledPlugins` line and the install command. The dispatcher discovers it by name.
+- [x] `scripts/tests/companion-plugin-sessioncheck.tests.ps1`: silent when both are on, one finding when the
+  core team is alone, `false` counts as off, the fork's marketplace, the user layer, an unparseable file.
 
 ### TEST
 
+- [x] The new suite passes standalone (14/14); the hook is silent in this repo, which enables both.
+- [x] The full gate runs in `ship-pr`.
+
 ### DEPLOY: feat/4216-companion-plugin-check
 
-**Score:**
+A repo that enables the core team (`dkj-subagents-alpha`) without the developers team
+(`dkj-subagents-developers`) now hears it at session start: `companion-plugin-sessioncheck` prints an
+`[ERROR]` with the `enabledPlugins` line to add and the `claude plugin install ... --scope project` command
+([#4216](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4216)). Before, the split in #4211 left such
+a repo with eleven specialists and no word about it.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+The check that would have reported the gap shipped inside the plugin that was missing; this one lives in the
+workflow plugin, which nearly every repo enables. A repo without `dkj-policy` stays uncovered.
+
+**Score:** 2
 
 #### Pull Request
 
