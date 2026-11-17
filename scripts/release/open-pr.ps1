@@ -762,6 +762,14 @@ $info = Get-BranchInfo -Branch $branch
 # this is workflow machinery that travels with the script, not a repo answer -- the repo's answer is the
 # optional Get-ChangelogPath in its own repo-config.ps1, which is already loaded.
 . (Join-Path $PSScriptRoot '..\lib\seam-lib.ps1')
+# THE CHANGELOG MODE (issue #4213). Under Get-ChangelogMode 'none' the branch document is the session's
+# plan and this PR's body, never a changelog entry: the entry-content gates below stand down, and the
+# document is never committed (new-branch named it in .git/info/exclude).
+. (Join-Path $PSScriptRoot '..\lib\changelog-mode-lib.ps1')
+$changelogModeNone = Test-ChangelogModeNone
+if ($changelogModeNone) {
+    Write-Host "open-pr: $(Get-ChangelogModeNoneNote) The entry gates stand down; the document still names and describes this PR." -ForegroundColor DarkGray
+}
 
 # THE CLOSE-OUT RECEIPT SHAPE (issue #1884), printed as this run's last line -- see closeout-lib.ps1
 # for why step 6 of the ritual got a mechanism after losing four times in prose. Guarded on
@@ -1579,7 +1587,10 @@ keep it in the gitignored sibling of the file it belongs to, where one exists
 # NOT -SkipLint-able and deliberately its own gate: it costs one read of a file already in hand, needs
 # no gh and no subprocess, and refusing it is a content decision rather than a tooling one. -Force is
 # the escape valve, for the rare entry that legitimately quotes the wording outside a fence.
-if (Test-Path -LiteralPath $entryPath) {
+#
+# NOT UNDER Get-ChangelogMode 'none' (issue #4213): every gate in this block guards what the fold will
+# publish into CHANGELOG.md, and that repo has no fold and no CHANGELOG.md for anything to reach.
+if ((Test-Path -LiteralPath $entryPath) -and -not $changelogModeNone) {
     # ONE READ FOR THE THREE GATES BELOW, for the reason the step-list gate further down gives for its own
     # single read: the entry gate asks whether there is an entry, the scaffold gate whether it has been
     # written and the shape gate whether the document around it still holds its form -- three questions
@@ -2320,9 +2331,17 @@ Two honest ways on, and neither is this flag:
 # the gates just read. The cheap gates all sit above here, so a run this script was going to refuse
 # anyway makes no commit.
 $docRels = @()
-foreach ($cand in @((Resolve-BranchFilePath -Kind Cycle -RepoRoot $repoRoot),
-                    $entryPath.Substring($repoRoot.Length).TrimStart('\', '/'),
-                    $alwaysOnBaselineRel)) {
+# UNDER Get-ChangelogMode 'none' (issue #4213) THE BRANCH DOCUMENT IS NEVER COMMITTED -- it is named in
+# .git/info/exclude, so `git status` would not report it anyway; dropping it here keeps that true where the
+# exclude line could not be written.
+$docCandidates = if ($changelogModeNone) {
+    @($alwaysOnBaselineRel)
+} else {
+    @((Resolve-BranchFilePath -Kind Cycle -RepoRoot $repoRoot),
+      $entryPath.Substring($repoRoot.Length).TrimStart('\', '/'),
+      $alwaysOnBaselineRel)
+}
+foreach ($cand in $docCandidates) {
     # Forward slashes, because these go to git; and only what exists, because Invoke-GitParkCommit's
     # own pathspec filter is the second half of the same rule. $entryPath may still be a legacy root
     # <SafeName>.md on a branch cut before the split, which is why it is asked for by variable rather

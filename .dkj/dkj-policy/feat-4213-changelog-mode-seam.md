@@ -39,19 +39,51 @@
 
 ### PLAN
 
+#### The shape
+
+One `decide` seam, `Get-ChangelogMode` (`'fold'` default, `'none'`), read through a new leaf lib
+`changelog-mode-lib.ps1`. It is a leaf, not part of seam-lib, because park-cycle runs after every turn.
+Under `'none'` the branch document is written but never committed: it is named in the clone's
+`.git/info/exclude`, so there is nothing to park and nothing for a fold to remove. That is what keeps the
+other stand-downs small.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/lib/changelog-mode-lib.ps1`: the resolver, the stand-down sentence, and the exclude helpers; registered as a shared lib and mirrored
+- [x] The contract record (`decide`, ViaLib `changelog-mode-lib`), the blueprint rebuilt, and this repo stating `'fold'`
+- [x] new-branch: no park commit under `'none'`, the document excluded locally
+- [x] park-cycle (the autopark hook) parks nothing
+- [x] open-pr: the entry gates and the document commit stand down; the document still names and describes the PR
+- [x] check-branch-entry and check-unfolded-entry stand down with an `[OK]`
+- [x] fold-changelog-entry exits 0 with nothing to fold; ship-pr removes the local document and its exclude line after the merge
+- [x] cut-release refuses, naming the seam
+- [x] CONTRIBUTING-portable.md: the lighter route described under the Fold step
 
 ### TEST
 
+- [x] `changelog-mode.tests.ps1` (38 asserts): the resolver, the exclude helpers, and a consumer answering `'none'` end to end -- one-file change, no `park:`/`fold:` commit on the trunk, quiet gates, cut refused
+- [x] script-contract suite: the record count is 50, and this repo states the seam
+- [x] The fixtures that copy libs one at a time now copy the new lib; new-branch, park-cycle, fold, worktree-lane, park-branch, prune-merged and internal-note suites green
+
 ### DEPLOY: feat/4213-changelog-mode-seam
 
-**Score:**
+Inside this repo, a new leaf lib (`changelog-mode-lib.ps1`) and one contract record (now fifty) carry
+the seam. This repo states `'fold'`, and the fixtures that copy libs one by one now copy the new lib too.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+A repo whose changelog nobody reads can now drop the ceremony around it. Add
+`function Get-ChangelogMode { 'none' }` to `scripts/repo-config.ps1`, and from then on a branch carries
+its work commits and nothing else: no `park:` commit at creation or after a turn, and no `fold:` commit on
+the trunk after the merge. The branch document is still written for the session and still names and
+describes the PR, but it is never committed, and the PR body becomes the record. The entry gates, the CI
+`Branch entry` check and the unfolded-entry session check stand down. `cut-release` refuses and names the
+seam. Every other repo keeps the full route without changing anything
+([#4213](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4213)).
+
+**Score:** 3
 
 #### Pull Request
 

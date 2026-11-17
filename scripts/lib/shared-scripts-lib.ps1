@@ -993,6 +993,16 @@ function Get-SharedScriptPairs {
             LibOnly = $true
         },
         @{
+            # The changelog mode (issue #4213): Get-ChangelogModeName reads the optional
+            # Get-ChangelogMode seam, and under 'none' the branch document is kept out of every commit.
+            # A leaf of its own rather than part of seam-lib, because park-cycle reads it after every
+            # turn and does not pay seam-lib's load.
+            Name    = 'changelog-mode-lib'
+            Source  = 'scripts\lib\changelog-mode-lib.ps1'
+            Plugin = 'dkj-policy'
+            LibOnly = $true
+        },
+        @{
             # Gate evidence (August 16, 2026): what the gates proved, and against which exact working
             # state. Mirrored because open-pr.ps1 dot-sources it as a $PSScriptRoot sibling, and the
             # redundancy it removes -- ship-pr calling open-pr, which re-gates a commit nothing has

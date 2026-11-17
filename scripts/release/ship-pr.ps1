@@ -554,6 +554,10 @@ if (-not (Test-Path -LiteralPath $configPath)) {
 # changelog is, which is half of the two-path bound a fold commit has to fit inside. Same plugin-payload
 # sibling and the same unguarded dot-source open-pr.ps1 and fold-changelog-entry.ps1 already use for it.
 . (Join-Path $PSScriptRoot '..\lib\seam-lib.ps1')
+# The changelog mode (issue #4213): under Get-ChangelogMode 'none' the fold below is a no-op (the fold
+# script stands down itself) and step 5n removes the uncommitted branch document after the merge.
+. (Join-Path $PSScriptRoot '..\lib\changelog-mode-lib.ps1')
+$changelogModeNone = Test-ChangelogModeNone
 # For every printed remedy below that puts the branch name into a command the reader runs verbatim
 # (issue #1594): Get-PasteableRef decides whether the name may go in at all, and supplies the placeholder
 # plus the explaining line when it may not. Same plugin-payload sibling and the same unguarded
@@ -4343,6 +4347,34 @@ if (-not $foldDeferredToCi -and -not $foldTree -and -not $shipTreeIsPrimary) {
             # name anyway -- so this says it once, here, where it is cheapest to act on.
             Write-Warning "this tree is still on 'main' and is not the primary checkout, so it holds the trunk for the whole clone. Move it off: git -C `"$repoRoot`" checkout $($branchPaste.Token)"
             if ($branchPaste.Note) { Write-Warning $branchPaste.Note }
+        }
+    }
+}
+
+# --- Step 5n: no changelog, so the branch document goes with the branch (issue #4213) -------------
+#
+# Under Get-ChangelogMode 'none' the document was never committed -- new-branch named it in
+# .git/info/exclude -- so the merge carried nothing of it, the fold above stood down, and nothing lands on
+# the trunk after the merge. What is left is the local file and its exclude line, both this run's to remove
+# now that the PR body holds the record. Best-effort: a file that cannot be removed is said, never fatal.
+#
+# RESOLVED AGAINST THE WORKING TREE, NOT THE BRANCH'S COMMIT the way $shipProgressRel is: the commit never
+# carried this document, so that reader finds nothing here by design.
+if ($changelogModeNone) {
+    $noneDocRel = $null
+    try { $noneDocRel = [string](Resolve-BranchFilePath -Kind Cycle -RepoRoot $repoRoot -Branch $branch) } catch { $noneDocRel = $null }
+    if ($noneDocRel) {
+        $noneDocPath = Join-Path $repoRoot ($noneDocRel -replace '/', '\')
+        try {
+            $noneDocText = if (Test-Path -LiteralPath $noneDocPath -PathType Leaf) { [System.IO.File]::ReadAllText($noneDocPath) } else { $null }
+            # Only THIS branch's document: the resolver falls back to a path that merely exists.
+            if ($noneDocText -and (Get-BranchFileDeclaredBranch -Text $noneDocText) -eq $branch) {
+                Remove-Item -LiteralPath $noneDocPath -Force
+                Write-Host "ship-pr: no changelog in this repo (Get-ChangelogMode 'none') -- removed the local branch document '$noneDocRel'; the PR body is the record." -ForegroundColor DarkGray
+            }
+            Remove-BranchDocumentLocalExclude -RepoRoot $repoRoot -RelPath $noneDocRel
+        } catch {
+            Write-Warning "ship-pr: could not remove the local branch document '$noneDocRel' -- delete it by hand; nothing on the trunk depends on it."
         }
     }
 }
