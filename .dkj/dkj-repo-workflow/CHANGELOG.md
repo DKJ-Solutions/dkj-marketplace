@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**7 / 7 minor entries** <!-- pending-tally -->
+**8 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4253-complete-7-0-0-must-do-list · 20261117-235125Z
+
+The v7.0.0 release note now lists every step a migration needs (#4253): refreshing the marketplace clone,
+rewriting `permissions.allow` patterns, repointing all seven CI runners, re-adopting `Get-MojibakePaths`,
+updating the core team past 6.x, the statusline shim, the Part 1 ordering workaround, and who updates the
+consumer register. It no longer says lenses need no change: two lens headers point at a moved persona body
+and have to be corrected by hand.
+
+**Score:** 4
+
+#### What makes this deploy extra special
+
+A maintainer migrating a repo can follow the note alone and finish, rather than finding eight more
+steps through failures.
+
+**Score:** 4
+
+#### Pull Request
+
+The 7.0.0 release note's must-do list names every step a migration needs
+
+[PR #4262](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4262)
+
+---
 
 ### DEPLOY: fix/4252-refresh-stale-statusline-shim · 20261117-233935Z
 
