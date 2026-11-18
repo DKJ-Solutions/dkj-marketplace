@@ -2592,7 +2592,14 @@ function Invoke-WorkflowGates {
         # Lint gate: catch invalid manifests/frontmatter/dead links before they land on the trunk. The lint
         # script is repo-specific (via repo-config); errors block. -SkipLint deliberately skips the gate.
         if (-not $SkipLint) {
-            $lintPath = Join-Path $RepoRoot (Get-LintScript)
+            # A ROOTED Get-LintScript is used as it is (#4314): a store answers it with Resolve-PluginScript,
+            # so its lint gate runs the plugin's own lint script and needs no repo-relative forwarder. Such a
+            # script lives outside the repo and lints the tree it is started in, so it starts in $RepoRoot;
+            # a repo-relative one keeps starting where the caller stands, as it always has.
+            $lintSeam = [string](Get-LintScript)
+            $lintRooted = [System.IO.Path]::IsPathRooted($lintSeam)
+            $lintPath = if ($lintRooted) { $lintSeam } else { Join-Path $RepoRoot $lintSeam }
+            $lintCwd  = if ($lintRooted) { $RepoRoot } else { (Get-Location).Path }
             if (Test-Path $lintPath) {
                 if (Test-GateEvidence -RepoRoot $RepoRoot -Gate 'lint' -Fingerprint $gateFingerprint) {
                     Write-Host "lint gate: already proved against this exact tree -- skipped." -ForegroundColor DarkGray
@@ -2631,7 +2638,7 @@ function Invoke-WorkflowGates {
                     Publish-LintGateProgress -StartedUtc ([datetime]::UtcNow)
                     $lintRun = Start-Process -FilePath 'powershell' `
                         -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + $lintPath + '"')) `
-                        -NoNewWindow -Wait -PassThru -WorkingDirectory (Get-Location).Path
+                        -NoNewWindow -Wait -PassThru -WorkingDirectory $lintCwd
                     $lintStopwatch.Stop()
                     Clear-LintGateProgress
                     # Invariant-culture format, for the reason Format-GateSeconds (native-capture-lib.ps1)

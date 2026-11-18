@@ -429,9 +429,10 @@ if ($SkipGates) {
         # changes is that the run SAYS so instead of printing 'exited ' with the number missing.
         $gateFailed = @()
         if ($lintScript) {
-            $lintPath = Join-Path $repoRoot $lintScript
+            # A rooted answer (a plugin's lint script, via Resolve-PluginScript) is used as it is (#4314).
+            $lintPath = if ([System.IO.Path]::IsPathRooted($lintScript)) { $lintScript } else { Join-Path $repoRoot $lintScript }
             if (-not (Test-Path -LiteralPath $lintPath -PathType Leaf)) {
-                $gateFailed += "Get-LintScript names '$lintScript', which is not a file in this repo"
+                $gateFailed += "Get-LintScript names '$lintScript', which is not a file"
             } else {
                 Write-Host "  running the lint gate ($lintScript)..."
                 $lint = Invoke-NativeCapture -FilePath 'powershell' -Arguments @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $lintPath) -TimeoutSeconds 1800
