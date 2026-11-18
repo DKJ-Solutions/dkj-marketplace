@@ -86,6 +86,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 . (Join-Path $PSScriptRoot '..\lib\command-probe-lib.ps1')
+. (Join-Path $PSScriptRoot '..\lib\check-report-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\fetch-failure.ps1')
 . (Join-Path $PSScriptRoot '..\lib\which-theme-rules.ps1')
 
@@ -94,7 +95,6 @@ if ($PSCmdlet.ParameterSetName -ne 'Url') {
     # The seam is read in a child scope with StrictMode off and inside a try, as this plugin's other
     # scripts read repo-config.ps1: the file belongs to the consumer, so a fault in it must degrade to
     # "unanswered" rather than take this script down.
-    . (Join-Path $PSScriptRoot '..\lib\check-report-lib.ps1')
     $repoRoot = Resolve-RepoRootOrFail -Override $RootOverride -ScriptName 'which-theme.ps1' -OverrideName '-RootOverride'
     $repoRoot = ([string]$repoRoot).Trim() -replace '/', '\'
     $markets = @(& {
@@ -113,7 +113,7 @@ try {
     $rows = @(Get-ProbeTargets -Url $Url -Path $Path -Markets $markets)
 }
 catch {
-    Write-Host "REFUSED: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "REFUSED: $(Format-SafeProseToken -Value $_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 
