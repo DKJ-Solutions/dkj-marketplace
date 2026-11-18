@@ -3105,8 +3105,10 @@ function Get-ParkingWaitReferences {
         # could otherwise append "parked, waiting on cli/cli#1" and turn the issue stale-park. A comment
         # without the field (a fixture) is read as before.
         if ($c.PSObject.Properties['authorAssociation'] -and [string]$c.authorAssociation -notin @('OWNER', 'MEMBER', 'COLLABORATOR')) { continue }
-        $body = if ($c.PSObject.Properties['body']) { [string]$c.body } else { '' }
-        $m = [regex]::Match($body, '(?is)\bparked\b.*?\bwaiting on\b(?<w>.*)')
+        # NOT `$body` (#4310): PowerShell names are case-insensitive, so that overwrote -Body, and an issue
+        # parked at filing that later got any comment read its last comment instead of its body.
+        $commentText = if ($c.PSObject.Properties['body']) { [string]$c.body } else { '' }
+        $m = [regex]::Match($commentText, '(?is)\bparked\b.*?\bwaiting on\b(?<w>.*)')
         if ($m.Success) {
             $clause = $m.Groups['w'].Value
             # PowerShell 7's ConvertFrom-Json hands a date back as [datetime], 5.1 as the ISO string.

@@ -39,19 +39,30 @@
 
 ### PLAN
 
+Issue #4310: a sweep run right after the v7.1.0 cut printed #4274 as `skipped` under `awaiting-release`, though everything its parking clause named had shipped in that release.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `claim-issue.ps1 -Candidates` reads this repo's own `awaiting-release` as `stale-park` once every local `#<n>` its parking clause names has landed and this repo's newest release was published after the latest landing (or after the dated parking comment when none is named). Unread stays `skipped`.
+- [x] `Get-ParkingWaitReferences`: the comment loop's `$body` overwrote the `-Body` parameter (PowerShell names are case-insensitive), so an issue parked at filing that later got any comment read that comment instead of its body. Renamed to `$commentText`.
+- [x] Both plugin mirrors (`plugins/dkj-repo-workflow/scripts/task/claim-issue.ps1`, `.../lib/claim-issue-lib.ps1`) held byte-identical.
 
 ### TEST
 
+- [x] `claim-issue.tests.ps1`: a non-parking comment beside a body clause still yields the body's `#4269`; source asserts that `-Candidates` reads `awaiting-release` against this repo's own release, anchored on the latest landing. Suite: 743 passed, 0 failed.
+- [x] Live against the tracker: `-Candidates` now prints `#4274 stale-park -- label 'awaiting-release', but v7.1.0 has been published after #4269 landed`, with the unpark lines.
+
 ### DEPLOY: fix/4310-stale-park-awaiting-release
 
-**Score:**
+An issue parked as `awaiting-release` now comes back by itself on the first sweep after the release that carries what it waited on: `-Candidates` reads it as `stale-park` and prints the unpark line, the way the other waits already did. An issue parked at filing that later picked up an ordinary comment had its own parking clause silently ignored by every wait reading; that is fixed too.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
