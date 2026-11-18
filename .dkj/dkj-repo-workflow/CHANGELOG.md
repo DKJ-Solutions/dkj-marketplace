@@ -2,7 +2,38 @@
 
 ## [Unreleased]
 
-**26 / 30 minor entries** <!-- pending-tally -->
+**27 / 31 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4289-live-direct-writes-in-shopify · 20261118-165945Z
+
+Ships the `live-direct-writes` skill in `dkj-subagents-shopify`. On a schedule, it reads the branch a
+Git-connected live theme deploys from. A `shopify[bot]` commit whose body carries `Changed by:` is a CLI
+push or a code-editor save that bypassed the branch flow. The check opens one issue labelled
+`live-direct-write` for every set of new ones it finds. `adopt-shopify-floor` now places the workflow
+that runs it, but only in a store that answers `Get-ShopifyLiveDeployBranch`. The workflow is pinned to
+the plugin's release, so it runs once a release that contains this script exists. Closes
+[#4289](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4289).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Git-connected store gets a signal for the one route to its live theme that no guard can stop: a push
+from a shell that never loaded the harness. Re-run `adopt-shopify-floor` to place the check. A store that
+already runs its own copy keeps it: the label and the dedupe marker are unchanged, so passing its current
+floor as `-LiveDirectWritesSince` means nothing gets reported twice.
+
+**Score:** 3
+
+#### Pull Request
+
+Move live-direct-writes and its workflow into dkj-subagents-shopify
+
+Plugins: dkj-subagents-shopify
+
+[PR #4304](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4304)
+
+---
 
 ### DEPLOY: fix/4301-sync-summary-renamed-section · 20261118-160931Z
 
