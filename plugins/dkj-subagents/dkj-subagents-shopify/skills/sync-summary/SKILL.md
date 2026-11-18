@@ -34,8 +34,9 @@ Per theme area (sections, templates, snippets, layout, blocks, assets, locales, 
 changed, removed and renamed, then **what to look at**:
 
 - **A removed section a template still points at.** The failure: a section removed live while a template
-  keeps naming it. The page returns HTTP 200 and renders nothing, and nothing errors. A removal nothing
-  points at is reported as a clean removal.
+  keeps naming it. The page returns HTTP 200 and renders nothing, and nothing errors. A **renamed**
+  section counts too: its old name is gone just as a deleted one's is (#4301). A removal nothing points
+  at is reported as a clean removal.
 - **New sections** -- work nobody requested through this repo.
 - **`config/settings_data.json` changed** -- switches somebody turned in the editor, not code.
 - **Removed templates** -- a page layout is gone.

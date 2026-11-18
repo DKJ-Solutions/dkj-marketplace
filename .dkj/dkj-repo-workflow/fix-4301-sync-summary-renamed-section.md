@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Closes #4301. `sync-summary`'s removed-section check read only status `D` rows; a section renamed in a
+sync arrives as `R<score>\told\tnew`, and `ConvertFrom-SyncSummaryNameStatus` kept only the new path, so
+a template still naming the old section name was never flagged. Verified in the code before repairing.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `ConvertFrom-SyncSummaryNameStatus` keeps the old path of a rename or copy as `OldPath`.
+- [x] `Get-SyncSummaryFindings` treats a renamed section's old name as gone, unless the rename keeps the
+  name inside `sections/`; the message names the new name.
+- [x] The skill page says a renamed section counts.
 
 ### TEST
 
+- [x] `shopify-sync-summary.tests.ps1`: unit asserts for the parser and four rename cases, and a fixture
+  repo with a real `git mv`-style rename whose old name a template still references. 102 passed, 0
+  failed; against the unfixed lib the 8 new asserts fail.
+
 ### DEPLOY: fix/4301-sync-summary-renamed-section
 
-**Score:**
+`sync-summary` now flags a section that a sync **renamed** while a template still points at its old
+name, the same way it flags a deleted one: such a page returns HTTP 200 and renders nothing. Until now
+only deletions were checked, so a rename slipped through as if nothing had gone.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: `sync-summary` has not been released yet, so this lands in the same release that first ships it and
+no store repo ever runs the version with the gap.
+
+**Score:** N/A
 
 #### Pull Request
 
