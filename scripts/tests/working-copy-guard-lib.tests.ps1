@@ -339,7 +339,7 @@ Assert-TrunkCommit 'git commit -m'                         'a -m with no value' 
 Assert-TrunkCommit 'git commit -- -m "fold: x"'            'after -- nothing is an option'      -Refused
 
 # -F: the file's first line is the subject, read when the file exists.
-$msgDir = Join-Path ([System.IO.Path]::GetTempPath()) "wcg-msg-$PID"
+$msgDir = Join-Path ([System.IO.Path]::GetTempPath()) "wcg-msg-$PID-$([guid]::NewGuid().ToString('n'))"
 New-Item -ItemType Directory -Force -Path $msgDir | Out-Null
 try {
     Set-Content -LiteralPath (Join-Path $msgDir 'ok.txt') -Value @('', 'fold: feat/x changelog (#1)', '', 'body') -Encoding Ascii
