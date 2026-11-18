@@ -39,19 +39,42 @@
 
 ### PLAN
 
+#4314 (inbound): `Get-LintScript` could only name a file inside the repo, because the gate joined it onto
+the repo root, so a store kept a repo-relative forwarder just to run the plugin's `lint-brain.ps1`.
+Verified before repairing: `lint-brain` resolves its root from the directory it starts in, so the only
+thing in the way was the `Join-Path`. Chosen repair, smaller than either of the issue's two directions: a
+rooted answer is used as it is, and no new seam shape or template file is needed.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `gate-lib.ps1` (`Invoke-WorkflowGates`): a rooted `Get-LintScript` is used as it is, and that child starts in `$RepoRoot`; a repo-relative one behaves exactly as before
+- [x] `cut-release.ps1` and `live-preflight.ps1`: the same rooted-path rule at their own lint call sites
+- [x] `script-contract-lib.ps1`: the seam's `Returns` text names both shapes; the config blueprint rebuilt from it
+- [x] `dkj-repo-workflow-bwj` README: how a store answers the seam with `Resolve-PluginScript` and drops its forwarder
+- [x] mirrors rebuilt with `build-shared-scripts.ps1`
 
 ### TEST
 
+- [x] `gate-lib.tests.ps1` case 15d-rooted: a lint script OUTSIDE the fixture repo, named by a rooted path, runs in the repo root, passes, and records the lint evidence
+- [x] the full gate runs in `ship-pr`
+
 ### DEPLOY: fix/4314-lint-script-rooted-path
 
-**Score:**
+A repo's `Get-LintScript` may now return a rooted path. `open-pr`, `ship-pr`, `cut-release` and
+`live-preflight` use it as it is instead of joining it onto the repo root, and the lint gate starts that
+script in the repo root. This is what lets a store point its gate at the plugin's own `lint-brain.ps1`
+(through `Resolve-PluginScript`) and drop the forwarder it kept only so the gate had a repo-relative
+file to name. A repo-relative answer behaves exactly as before.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A maintainer of a store repo running the BWJ extension: one forwarder file fewer, and the
+`dkj-repo-workflow-bwj` README now shows the three-line `Get-LintScript` that replaces it. Every other
+consumer is unaffected.
+
+**Score:** 2
 
 #### Pull Request
 

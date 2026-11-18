@@ -509,6 +509,21 @@ try {
     Assert-True (Test-GateEvidence -RepoRoot $r15pass -Gate 'lint') 'and records the lint pass'
     Assert-True (-not (Test-GateEvidence -RepoRoot $r15pass -Gate 'tests')) 'but -SkipTests records no test evidence -- the escape valve proves nothing about the tree'
 
+    # 15d-rooted. A ROOTED Get-LintScript IS USED AS IT IS (#4314). A store answers the seam with
+    # Resolve-PluginScript, i.e. a full path into the plugin cache, and the old Join-Path turned that
+    # into '<repo>\C:\...', which Test-Path missed, so the gate was skipped with a warning. The script
+    # lives OUTSIDE the fixture repo here, and it passes only when it runs in the repo root, because
+    # that is the root a plugin lint script (lint-brain) lints when it is given no -Path.
+    $r15rooted    = New-GitFixture
+    $r15rootedLib = New-GitFixture
+    Set-FixtureFile -Dir $r15rooted -Name 'rooted-marker.txt' -Content "x`n"
+    Set-FixtureFile -Dir $r15rootedLib -Name 'plugin-lint.ps1' -Content "if (Test-Path -LiteralPath 'rooted-marker.txt') { exit 0 } else { exit 1 }`n"
+    $savedLintScript = $script:FixtureLintScript
+    $script:FixtureLintScript = Join-Path $r15rootedLib 'plugin-lint.ps1'
+    Assert-True (Invoke-WorkflowGates -RepoRoot $r15rooted -SkipTests -Context 'test' -FailureConsequence 'x' 2>$null) 'a rooted Get-LintScript outside the repo runs, in the repo root, and passes'
+    Assert-True (Test-GateEvidence -RepoRoot $r15rooted -Gate 'lint') 'and records the lint pass rather than skipping the gate'
+    $script:FixtureLintScript = $savedLintScript
+
     # 15d-clock. THE LINT GATE PRINTS ITS OWN WALL-CLOCK (issue #1319). Without it a "the full gate
     # cost ~Ys" figure has a number for the test half ("all N suites passed in Xs") and nothing for
     # the lint half. Captured off the information stream (6>&1); the boolean the function returns
