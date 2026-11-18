@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**18 / 20 minor entries** <!-- pending-tally -->
+**19 / 21 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4282-asana-move-own-board · 20261118-112815Z
+
+When an issue closes with its result block, or is reopened, the BWJ Asana workflow now moves the linked
+card even when the task also sits on another team's board: it moves the card on the repo's own board,
+the one `Get-AsanaProjectGid` names, and leaves the other boards alone. Before, any second board made the
+move a skip, so the message arrived while the card stayed in its old column. The daily open-section sweep
+follows the same rule. A task on several boards none of which is the repo's own is still left where it is.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Tickets from other teams, which normally live on a second board, now follow their message into review
+like every other ticket.
+
+**Score:** 2
+
+#### Pull Request
+
+Asana card moves use the repo's own board when a task is on several boards
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4285](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4285)
+
+---
 
 ### DEPLOY: feat/4273-lint-brain-bwj · 20261118-111441Z
 
