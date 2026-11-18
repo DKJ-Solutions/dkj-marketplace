@@ -68,6 +68,7 @@ the store copies is step 3 (#4274).
 
 - [x] `bwj-lint-brain.tests.ps1`: 149 passed, 0 failed
 - [x] `check-plugin-integrity.ps1`: 0 errors, after the suite moved to the fixture-git helpers
+- [x] `fence-lib.tests.ps1`'s tree guard refused the stores' plain fence toggle (#2536). All five sites now read the fence through `fence-lib.ps1` (`-AnyIndent`, the indent the stores accepted), and both suites are green again
 
 ### DEPLOY: feat/4273-lint-brain-bwj
 

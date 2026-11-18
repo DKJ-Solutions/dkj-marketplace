@@ -110,6 +110,9 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 . (Join-Path $PSScriptRoot '..\lib\repo-root-lib.ps1')
+# The house fence tracker (CommonMark, any indent), never a plain toggle: a four-backtick block
+# wrapping a three-backtick example must not close at the inner fence.
+. (Join-Path $PSScriptRoot '..\lib\fence-lib.ps1')
 
 # --- Repo root ------------------------------------------------------------------------------------
 $RepoRoot = Resolve-BwjRepoRoot -Override $Path
@@ -215,11 +218,11 @@ function Get-FileHeadingSlugs {
     $slugs = New-Object System.Collections.Generic.List[string]
     if ((Test-Path -LiteralPath $FilePath -PathType Leaf) -and ($FilePath -match '\.md$')) {
         $lines = @(Get-Content -LiteralPath $FilePath -Encoding UTF8)
-        $inFence = $false
+        $fence = ''
         $counts = @{}
         foreach ($line in $lines) {
-            if ($line -match '^\s*(```|~~~)') { $inFence = -not $inFence; continue }
-            if ($inFence) { continue }
+            $was = Resolve-FenceState -Line $line -Fence $fence; $fence = Get-NextFenceState -Line $line -Fence $fence -AnyIndent
+            if ($was -or $fence) { continue }
             if ($line -match '^(#{1,6})\s+(.+?)\s*#*\s*$') {
                 $base = ConvertTo-GithubSlug -Text $Matches[2]
                 # GitHub disambiguates a repeated heading with -1, -2, ... on the later ones.
@@ -252,7 +255,7 @@ function Test-MarkdownLinksInFile {
     if (Test-UnderRoots -RelPath $relFile -Roots $script:Seams.Frozen) { return }
 
     $lines = @(Get-Content -LiteralPath $File.FullName -Encoding UTF8)
-    $inFence = $false
+    $fence = ''
 
     # Matched over the whole file, not line by line, so a link whose text wraps still counts. Fenced
     # lines are BLANKED rather than dropped, so a line number stays its own index. The target may not
@@ -260,8 +263,8 @@ function Test-MarkdownLinksInFile {
     # half a document.
     $scan = New-Object string[] $lines.Count
     for ($i = 0; $i -lt $lines.Count; $i++) {
-        if ($lines[$i] -match '^\s*(```|~~~)') { $inFence = -not $inFence; $scan[$i] = ''; continue }
-        $scan[$i] = if ($inFence) { '' } else { $lines[$i] }
+        $was = Resolve-FenceState -Line $lines[$i] -Fence $fence; $fence = Get-NextFenceState -Line $lines[$i] -Fence $fence -AnyIndent
+        $scan[$i] = if ($was -or $fence) { '' } else { $lines[$i] }
     }
     $joined = $scan -join "`n"
     $lineStart = New-Object int[] $lines.Count
@@ -439,11 +442,12 @@ function Test-ExecPolicyFlagInMarkdown {
     )
     $relFile = Get-RelativePath $File.FullName
     $lines = @(Get-Content -LiteralPath $File.FullName -Encoding UTF8)
-    $inFence = $false
+    $fence = ''
     for ($i = 0; $i -lt $lines.Count; $i++) {
         $line = $lines[$i]
-        if ($line -match '^\s*(```|~~~)') { $inFence = -not $inFence; continue }
-        if (-not $inFence) { continue }
+        # The fence BODY only: the opener and the closer are delimiters, not content.
+        $was = Resolve-FenceState -Line $line -Fence $fence; $fence = Get-NextFenceState -Line $line -Fence $fence -AnyIndent
+        if (-not ($was -and $fence)) { continue }
         if ($line -match $script:ExecPolicyPattern) {
             Add-Finding -List $ErrorList -File $relFile -Line ($i + 1) `
                 -Message ("'-NoProfile ... -File' with no '-ExecutionPolicy Bypass' between them -- on a " +
@@ -512,11 +516,11 @@ function Test-StaleVersionClaimInFile {
     if (Test-UnderRoots -RelPath $relFile -Roots $script:Seams.Records) { return }
 
     $lines = @(Get-Content -LiteralPath $File.FullName -Encoding UTF8)
-    $inFence = $false
+    $fence = ''
     for ($i = 0; $i -lt $lines.Count; $i++) {
         $line = $lines[$i]
-        if ($line -match '^\s*(```|~~~)') { $inFence = -not $inFence; continue }
-        if ($inFence) { continue }
+        $was = Resolve-FenceState -Line $line -Fence $fence; $fence = Get-NextFenceState -Line $line -Fence $fence -AnyIndent
+        if ($was -or $fence) { continue }
         if ($line -match '^\s*>') { continue }          # a blockquote is a record
         if ($line -notmatch $script:BoldVersionLiteral) { continue }
 
@@ -622,12 +626,12 @@ function Test-BlockquoteLazyContinuation {
     )
     $relFile = Get-RelativePath $File.FullName
     $lines = @(Get-Content -LiteralPath $File.FullName -Encoding UTF8)
-    $inFence = $false
+    $fence = ''
 
     for ($i = 0; $i -lt $lines.Count - 1; $i++) {
         $line = $lines[$i]
-        if ($line -match '^\s*(```|~~~)') { $inFence = -not $inFence; continue }
-        if ($inFence) { continue }
+        $was = Resolve-FenceState -Line $line -Fence $fence; $fence = Get-NextFenceState -Line $line -Fence $fence -AnyIndent
+        if ($was -or $fence) { continue }
 
         # Only a '>' line WITH content keeps a paragraph open; a bare '>' already ended it.
         if ($line -notmatch '^ {0,3}>') { continue }
