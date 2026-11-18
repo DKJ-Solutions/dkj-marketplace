@@ -6,7 +6,9 @@
 # issue), closes as not planned under an awaiting-* label (the header and the on-hold line, #2902,
 # #3494), or is reopened (the header and the reopened line). A completed close that carries a block
 # also moves the card into the board's InReview section (#3248); a reopen moves it into InDevelopment and
-# marks a completed task incomplete (#3562). It never completes a task or writes a label. The closed message (Dave, October 5, 2026, #2818) and the reopened
+# marks a completed task incomplete (#3562). It never completes a task or writes an Asana label. A
+# completed close that carries NO block labels the GitHub issue 'result-owed' (#4267), so the result
+# message the requester was promised is tracked where a session check reads it. The closed message (Dave, October 5, 2026, #2818) and the reopened
 # message (October 6, #2854) are the two parts of the retired asana-mirror workflow that came back.
 # The file keeps its
 # closed-message name so a re-adopt replaces it rather than landing a second copy beside it. See
@@ -21,7 +23,9 @@ on:
 
 permissions:
   contents: read
-  # READ: the script reads the issue's comments for the go-live block, and writes nothing on GitHub. It
+  # WRITE for one call only (#4267): a completed close without a block puts the 'result-owed' label on the
+  # issue (POST .../issues/<n>/labels), the one GitHub write the script makes. Otherwise it READS: the
+  # script reads the issue's comments for the go-live block. It
   # reads them through REST (gh api .../issues/<n>/comments), which this scope covers; the GraphQL read
   # it replaced answered nothing on the runner (#2875). It reads the issue's events the same way, to
   # tell a block from before the last reopen from one for this round (#2968); the issue events endpoint
@@ -30,7 +34,7 @@ permissions:
   # permission (gh api .../collaborators/<login>/permission, #2907). GitHub's docs name no scope for that
   # endpoint, so whether this token may read it is measured on the first such run, not assumed: a refused
   # read is logged with gh's error, and the closed message goes out saying the result message follows (#3004).
-  issues: read
+  issues: write
 
 # One group per issue, closes and reopens together, so their messages post in order and a running post
 # is never killed half way. A group holds one running and one pending run, and a newer arrival drops the

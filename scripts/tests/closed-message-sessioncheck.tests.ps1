@@ -54,10 +54,13 @@ function New-Store {
 
 function New-PullData {
     <# Finding 5's three gh reads as a fixture file (#3945). Empty by default, so no case calls gh. #>
-    param([string]$Label, $Merged = @(), $Open = @(), $Issues = @())
+    param([string]$Label, $Merged = @(), $Open = @(), $Issues = @(), $Owed = $null)
     New-Item -ItemType Directory -Force -Path $Fixture | Out-Null
     $path = Join-Path $Fixture "pulls-$Label.json"
-    $json = ConvertTo-Json -Depth 5 -InputObject @{ merged = @($Merged); open = @($Open); issues = @($Issues) }
+    $data = @{ merged = @($Merged); open = @($Open); issues = @($Issues) }
+    # 'owed' only where a case passes it, so the fixtures written before #4267 stay covered too.
+    if ($null -ne $Owed) { $data.owed = @($Owed) }
+    $json = ConvertTo-Json -Depth 5 -InputObject $data
     [System.IO.File]::WriteAllText($path, $json)
     return $path
 }
@@ -305,6 +308,17 @@ try {
     $r = Invoke-Hook -Root $ok -Slug 'DKJ-Solutions/dkj-marketplace' -Secret 'ASANA_PAT' -Pulls $p
     Assert-True ($r.Text.Trim() -eq '') 'and the source repo, whose inbound issues carry no kind, is never asked'
 
+    # FINDING 8 (#4267): a closed issue the closed message labelled result-owed. The measured case is
+    # smartwatchbanden#1212, closed without a block, whose owed result message nothing tracked.
+    $p = New-PullData -Label 'owed' -Owed @(@{ number = 1212 }, @{ number = 1180 })
+    $r = Invoke-Hook -Root $ok -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT' -Pulls $p
+    Assert-True ($r.Text -match "\[ERROR\] dkj-repo-workflow-bwj: BWJ-Development/smartwatchbanden has 2 closed issue\(s\) labelled 'result-owed': #1180, #1212\.") 'the measured case (#4267): closed result-owed issues are reported, ascending'
+    Assert-True ($r.Text -match '-ByHand -Story <gid> -Post, which takes the label off') 'and the finding names the route that settles it'
+    Assert-True ($r.Code -eq 0) 'the finding still exits 0'
+    $p = New-PullData -Label 'owed-none' -Owed @()
+    $r = Invoke-Hook -Root $ok -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT' -Pulls $p
+    Assert-True ($r.Text.Trim() -eq '') 'no owed issue is silent'
+
     # THE LIVE gh PATH (#3996): -PullDataOverride parses one object, so it never took Get-PullData's
     # per-list parse, where PS 5.1's ConvertFrom-Json wrapped each list as ONE element and the [int] cast
     # threw on every store session start. A stand-in gh.cmd first on PATH serves lists of TWO, the shape
@@ -320,7 +334,9 @@ try {
     [System.IO.File]::WriteAllText((Join-Path $fakeGh 'issues.json'),
         (ConvertTo-Json -Depth 5 -InputObject @(@{ number = 1126; body = $linked; labels = @(@{ name = 'minor' }, @{ name = 'feature' }) },
             @{ number = 1127; body = 'no task'; labels = @(@{ name = 'minor' }, @{ name = 'bug' }) })))
+    [System.IO.File]::WriteAllText((Join-Path $fakeGh 'owed.json'), (ConvertTo-Json -Depth 5 -InputObject @(@{ number = 1212 }, @{ number = 1213 })))
     [System.IO.File]::WriteAllText((Join-Path $fakeGh 'gh.cmd'), ("@echo off`r`n" +
+        "if `"%6`"==`"closed`" (type `"%~dp0owed.json`" & exit /b 0)`r`n" +
         "if `"%1`"==`"issue`" (type `"%~dp0issues.json`" & exit /b 0)`r`n" +
         "if `"%6`"==`"merged`" (type `"%~dp0merged.json`" & exit /b 0)`r`n" +
         "type `"%~dp0open.json`"`r`nexit /b 0`r`n"))
@@ -335,6 +351,7 @@ try {
     Assert-True ($text -notmatch 'skipped due to an error') 'the live gh path parses lists of two without throwing (#3996)'
     Assert-True ($text -match 'xoxowildhearts#1126 links') 'and reports the open-after-merge issue it read'
     Assert-True ($text -match "has 1 open issue\(s\) carrying the reach label 'minor' with no Asana task linked: #1127\.") 'and the live path reads each issue''s labels list (#4053)'
+    Assert-True ($text -match "has 2 closed issue\(s\) labelled 'result-owed': #1212, #1213\.") 'and the live path reads the closed result-owed issues as their own list (#4267)'
 
     # THE TREE IS READ AFTER THE TRUNK SYNC (#4041). The measured case: the files arrive in the same session
     # start's fast-forward, which dkj-repo-workflow's dispatcher runs beside this hook and marks done in the session

@@ -173,6 +173,11 @@ holds** (the requester always gets a message), and the hand route is visible on 
 **after** the hand-written message is on the task. `-Story` is optional, digits only, and only valid
 with `-ByHand`.
 
+**It is also how an owed result message is settled** (#4267). A close as completed without a block
+tells the task that the result message follows, and labels the issue `result-owed`; the session check
+lists such closed issues. Write the result message on the task, then run the line above on the closed
+issue: the record goes on, and the label comes off.
+
 The record counts only for this round and only from a trusted author, like every other block. One
 posted before the issue's last reopen is held back, so the next close posts as usual. A comment from
 outside the repo cannot silence a close. The record refuses `-Research`, `-Measure`, `-ProseFile`,

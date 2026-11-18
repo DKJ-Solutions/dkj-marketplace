@@ -1009,7 +1009,16 @@ if ($postCode -ne 0) {
 }
 Write-Host "[OK] Block posted on $targetRef." -ForegroundColor Green
 if ($ByHandArg) {
-    Write-Host "     Now close the issue as completed. The closed message reads this record and posts nothing -- the hand-written message on the task is the one the requester gets." -ForegroundColor DarkGray
+    # THE OWED RESULT MESSAGE IS SETTLED HERE (#4267): a close without a block labels its issue
+    # 'result-owed', and the hand-written message this record stands for is that debt paid. A 404 means
+    # the label was never on the issue, which is the common case, so only a removal is reported.
+    $owedLabel = Get-ResultOwedLabel
+    $prevEap = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try { & gh api -X DELETE "repos/$StoreRepo/issues/$issueNumber/labels/$owedLabel" 2>$null | Out-Null; $unlabelCode = $LASTEXITCODE }
+    finally { $ErrorActionPreference = $prevEap }
+    if ($unlabelCode -eq 0) { Write-Host "     The '$owedLabel' label is off ${targetRef}: the result message it recorded as owed is on the task." -ForegroundColor DarkGray }
+    Write-Host "     Close the issue as completed if it is still open. The closed message reads this record and posts nothing -- the hand-written message on the task is the one the requester gets." -ForegroundColor DarkGray
 } elseif ($asanaLink -eq 'linked') {
     Write-Host "     Now close the issue as completed. The closed message carries the block into the Asana task -- no paste needed." -ForegroundColor DarkGray
 } elseif ($asanaLink -eq 'unchecked') {

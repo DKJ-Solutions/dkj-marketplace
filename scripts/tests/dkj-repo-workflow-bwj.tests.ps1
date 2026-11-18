@@ -1450,6 +1450,7 @@ $cmSamples = @(
     'none at all')
 $cmLibRefs   = @($cmSamples | ForEach-Object { $r = Resolve-AsanaTaskRef -IssueBody $_; "$($r.Gid)|$($r.Source)" })
 $cmLibMarker = Get-AsanaPasteBlockMarker
+$cmLibOwed   = Get-ResultOwedLabel
 $cmTemplate  = Join-Path $PluginRoot 'templates\asana-closed-message.ps1'
 . $cmTemplate
 
@@ -1544,7 +1545,8 @@ Assert-True ($cmHtml.Contains("`n`n<strong>WAT ER NU ANDERS IS</strong>`n`n")) '
 Assert-Equal '<a href="https://x.invalid/?a=1&amp;b=2">t</a> en <strong>vet</strong> &amp; meer' (ConvertTo-AsanaStoryHtml -Markdown '[t](https://x.invalid/?a=1&b=2) en **vet** & meer') 'Markdown links and bold convert, and everything else is escaped'
 $cmBare = New-ClosedMessageHtml -IssueRef 'o/r#1'
 Assert-True ($cmBare -cnotmatch '<strong>[A-Z ]+</strong>') 'with no block no section goes out'
-Assert-True ($cmBare.EndsWith("It can be reopened anytime when something is still not working as expected.`n`nThe result message for this round follows.</body>")) 'and never the closed line alone: it says the result message follows (#3004)'
+Assert-True ($cmBare.EndsWith("is now <strong>closed</strong>: the result message for this round follows.</body>")) 'and never the closed line alone: it says the result message follows (#3004), in the closed line itself (#4267)'
+Assert-True ($cmBare -notmatch 'in review|reopened anytime') 'and it claims no review the card is not moved into, and invites no reopen of a result nobody has seen (#4267)'
 [void][xml]$cmBare
 
 # THE RESEARCH FORM (#3004): a research block's sections under the research closed line.
@@ -1625,7 +1627,7 @@ $cmR = Resolve-DoneSectionName -Gid '123' -Code '4' -Get $cmGetFail
 Assert-True ($cmR.Name -eq '' -and $cmR.Why -eq 'the task could not be read') 'a failed read names no section and never throws'
 Assert-Equal 'the repo states no Completed stage in Get-AsanaStageMap' (Resolve-DoneSectionName -Gid '123' -Code '' -Get $cmGetOk).Why 'no code, no read'
 Assert-Equal "Is anything still unclear? Leave a comment on this task. No more questions? Move the task to '4. Done' and mark it as complete." (Get-ClosedMessageAsk -DoneSection '4. Done') 'the closing ask, word for word from Maikel''s reference story'
-Assert-True ((New-ClosedMessageHtml -IssueRef 'o/r#1' -Research).Contains('reopened anytime') -and (New-ClosedMessageHtml -IssueRef 'o/r#1' -Research).Contains('follows')) 'a research close that carries no block falls back to the result form, saying the message follows'
+Assert-True ((New-ClosedMessageHtml -IssueRef 'o/r#1' -Research) -notmatch 'reopened anytime|Nothing has changed' -and (New-ClosedMessageHtml -IssueRef 'o/r#1' -Research).Contains('follows')) 'a research close that carries no block falls back to the pending form, saying the message follows (#4267)'
 Assert-Equal $rbBlock (Select-SessionPasteBlockBody -Bodies @('talk', $rbBlock, 'more talk')) 'the selection hands back the whole newest block, so its research marker can be read'
 Assert-True ((New-ClosedMessageHtml -IssueRef 'o/r&x#1') -match '&amp;') 'a character XML reserves is escaped, so Asana is never sent a malformed body'
 Assert-Throws { New-AsanaCommentRequest -Gid '123; rm -rf /' -Html '<body/>' } 'a non-numeric GID never reaches a request URL'
@@ -1787,7 +1789,7 @@ Assert-True ($cmYml -match 'types:\s*\[closed,\s*reopened\]') 'the workflow runs
 Assert-True ($cmYml -notmatch '(?m)^\s*(schedule|workflow_dispatch|pull_request|push):') 'with no schedule, manual or other trigger -- and the types line above names no label event'
 Assert-True ($cmYml -match 'github\.event\.action' -and $cmYml -match '-Event \$env:ISSUE_EVENT') 'it hands the event to the script, which picks the message'
 Assert-True ($cmYml -match 'secrets\.ASANA_PAT' -and $cmYml -notmatch 'GH_PROJECT_TOKEN|ASANA_PROJECT_GID') 'and needs ASANA_PAT alone'
-Assert-True ($cmYml -match 'issues:\s*read') 'and only reads issues on GitHub'
+Assert-True ($cmYml -match 'issues:\s*write' -and $cmYml -notmatch 'contents:\s*write|pull-requests:') 'and writes on GitHub only to issues -- the result-owed label (#4267)'
 Assert-True ($cmYml -match 'state_reason') 'it hands the close reason to the script, which decides'
 Assert-True ($cmYml -match 'ISSUE_LABELS:\s*\$\{\{\s*toJSON\(github\.event\.issue\.labels\.\*\.name\)\s*\}\}') 'and the labels as JSON, which make a not-planned close the on-hold message (#2902)'
 Assert-True ($cmYml -match 'persist-credentials:\s*false') 'the checkout leaves no token behind'
@@ -1869,7 +1871,12 @@ Assert-True (-not (Test-SupersededEvent -Event 'reopened' -State 'open') -and -n
 Assert-True (-not (Test-SupersededEvent -Event 'reopened' -State '') -and -not (Test-SupersededEvent -Event 'closed' -State '')) 'and an unknown state supersedes nothing, so a failed read posts as before'
 $stPending = New-ClosedMessageHtml -IssueRef 'o/r#7'
 [void][xml]$stPending
-Assert-True ($stPending.Contains("is now <strong>closed</strong>: this Asana task is now in review.`nIt can be reopened anytime when something is still not working as expected.`n`nThe result message for this round follows.</body>")) 'the pending close is the closed line and one sentence under it'
+Assert-True ($stPending.Contains("is now <strong>closed</strong>: the result message for this round follows.</body>")) 'the pending close is the closed line alone, saying the result message follows (#4267)'
+Assert-True ((New-ClosedMessageHtml -IssueRef 'o/r#7' -BlockSections 'TE BEKIJKEN OP').Contains('this Asana task is now in review.')) 'and a close with a block keeps the review intro'
+Assert-Equal $cmLibOwed (Get-ResultOwedLabel) 'the template''s owed label is the lib''s, so the session check reads the label the workflow writes (#4267)'
+Assert-Equal 'api|-X|POST|repos/o/r/issues/7/labels|-f|labels[]=result-owed' ((Get-AddLabelApiArgs -IssueRef 'o/r#7' -Label 'result-owed') -join '|') 'the label is added through REST, one label (#4267)'
+Assert-Throws { Get-AddLabelApiArgs -IssueRef 'o/r#1;x' -Label 'result-owed' } 'and an IssueRef that is not owner/repo#<n> never reaches that gh call'
+Assert-Throws { Get-AddLabelApiArgs -IssueRef 'o/r#1' -Label 'a b' } 'nor a label that is not a plain name'
 Assert-True (-not ($stPending -cmatch '<strong>[A-Z ]+</strong>')) 'with no block'
 Assert-True (-not (New-ClosedMessageHtml -IssueRef 'o/r#7' -BlockSections 'TE BEKIJKEN OP').Contains('follows')) 'and never beside a block, which it would contradict'
 Assert-True ([System.IO.File]::ReadAllText($cmTemplate) -notmatch 'ResultPending') 'the switch is gone: every close without a block says the result follows (#3004)'
@@ -1882,6 +1889,10 @@ function gh {
     $script:stGhCalls += ,($a -join ' ')
     $global:LASTEXITCODE = 0
     if ($a[1] -like '*/comments') { $script:stComments; return }
+    if ($a[2] -eq 'POST' -and $a[3] -like '*/labels') {
+        if ($script:stLabelFail) { Write-Error 'HTTP 403: Resource not accessible by integration'; $global:LASTEXITCODE = 1 }
+        return
+    }
     if ($a[1] -like '*/events') {
         if ($script:stEventsFail) { Write-Error 'HTTP 403: Resource not accessible by integration'; $global:LASTEXITCODE = 1; return }
         $script:stEvents
@@ -1910,7 +1921,7 @@ function Invoke-RestMethod {
     }
     $script:stPosted = [System.Text.Encoding]::UTF8.GetString($Body)
 }
-$script:stCardSection = '2. In Progress'; $script:stMoves = @(); $script:stMoveFail = $false; $script:stTaskCompleted = $false; $script:stUnticks = @()
+$script:stCardSection = '2. In Progress'; $script:stMoves = @(); $script:stMoveFail = $false; $script:stLabelFail = $false; $script:stTaskCompleted = $false; $script:stUnticks = @()
 $stConfig = Join-Path ([System.IO.Path]::GetTempPath()) "st-repo-config-$([Guid]::NewGuid().ToString('N')).ps1"
 [System.IO.File]::WriteAllText($stConfig, "function Get-AsanaStageMap {`n    return @{ Completed = '4' }`n}`n")
 $script:RepoConfigPath = $stConfig
@@ -1930,10 +1941,11 @@ $stNew = New-StLine $stBlock2 $stT3
 
 $stRun = Invoke-StMain -Comments @($stOld) -Events @()
 Assert-True ($stRun.Body.Contains('round-1') -and $stRun.Body.Contains('TE BEKIJKEN OP')) 'never reopened: the block is carried, as before'
+Assert-True (-not @($stRun.Calls | Where-Object { $_ -like '*/labels*' }).Count) 'and a close that carries its block writes no label (#4267)'
 Assert-True (-not $stRun.Body.Contains('follows')) 'with no pending sentence'
 $stRun = Invoke-StMain -Comments @($stOld) -Events @($stT2)
 Assert-True (-not $stRun.Body.Contains('round-1') -and -not $stRun.Body.Contains('TE BEKIJKEN OP')) 'reopened after the block: the stale block is NOT carried (#2968)'
-Assert-True ($stRun.Body.Contains('The result message for this round follows.') -and $stRun.Body.Contains('is now <strong>closed</strong>')) 'the closed line goes out, with the sentence that this round''s result follows'
+Assert-True ($stRun.Body.Contains('is now <strong>closed</strong>: the result message for this round follows.')) 'the closed line goes out, saying this round''s result follows (#4267)'
 Assert-True ($stRun.Log -match 'predates its last reopen') 'and the log says why'
 $stRun = Invoke-StMain -Comments @($stOld, $stNew) -Events @($stT1, $stT2)
 Assert-True ($stRun.Body.Contains('round-2') -and -not $stRun.Body.Contains('round-1') -and -not $stRun.Body.Contains('follows')) 'a block posted after the last reopen is carried: round 2''s, and not round 1''s'
@@ -1943,6 +1955,11 @@ Assert-True ($stRun.Log -match 'could not be read: gh exited 1: .*403' -and $stR
 $stRun = Invoke-StMain -Comments @((New-StLine 'just talk' $stT1)) -Events @($stT2)
 Assert-True (-not @($stRun.Calls | Where-Object { $_ -like '*/events' }).Count) 'an issue with no block costs no events read'
 Assert-True ($stRun.Body.Contains('follows')) 'and the closed line is never sent alone: the result message follows (#3004, smartwatchbanden#943)'
+Assert-True (@($stRun.Calls | Where-Object { $_ -eq 'api -X POST repos/o/r/issues/7/labels -f labels[]=result-owed' }).Count -eq 1 -and $stRun.Log -match "labelled 'result-owed'") 'and the issue is labelled result-owed, so the owed message is tracked (#4267, smartwatchbanden#1212)'
+$script:stLabelFail = $true
+$stRun = Invoke-StMain -Comments @((New-StLine 'just talk' $stT1)) -Events @()
+$script:stLabelFail = $false
+Assert-True ($stRun.Body.Contains('follows') -and $stRun.Log -match "NOT labelled 'result-owed': gh exited 1: .*403") 'a refused label is logged with gh''s error, and the message has still gone out'
 $stRun = Invoke-StMain -Comments @((New-StLine $rbBlock $stT1)) -Events @()
 Assert-True ($stRun.Body.Contains('Nothing has changed. Read the outcome below.') -and $stRun.Body.Contains('<strong>OUTCOME</strong>')) 'a research block is carried under the research closed line (#3004, #3017)'
 Assert-True ($stRun.Body.Contains("Move the task to '4. Done' and mark it as complete.")) 'and the ask names the done section the repo''s stage map and the task''s board agree on (#3017)'
