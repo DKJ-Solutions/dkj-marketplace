@@ -239,6 +239,22 @@ function Get-SharedScriptPairs {
             MeasureArgs = @()
         },
         @{
+            # Centralized from a consumer copy (inbound #4287): writes the branch development document
+            # onto a Dependabot PR's own branch so the PR passes the branch-entry gate, which stays as
+            # it is. It reads the PR with gh, checks the branch out, merges the trunk in, has new-branch
+            # write the document, inserts the three bump questions and commits only that document.
+            Name   = 'dependabot-entry'
+            Source = 'scripts\task\dependabot-entry.ps1'
+            Plugin = 'dkj-repo-workflow'
+            Skill  = 'dependabot-entry'
+            # A test seam: the PR JSON gh would print, so the suite reaches the refusals without a
+            # network. A consumer never types it, and documenting it would invite someone to.
+            SkillParamsExempt = @('PrJson')
+            # The suite runs both copies against a fixture repo.
+            MirrorRun = 'dependabot-entry.tests.ps1'
+            # No MeasureArgs: it mutates the checked-out repo and pushes, so there is no read-only form to time.
+        },
+        @{
             # The one definition of "fast-forward only where it cannot touch anybody's work" (#3605):
             # sync-trunk.ps1 and the trunk-sync-sessionprep hook both call Invoke-TrunkFastForward.
             Name    = 'trunk-sync-lib'
@@ -2022,6 +2038,22 @@ function Get-SharedScriptPairs {
             SkillParamsExempt = @('RootOverride', 'RootDocument')
             # Timeable with no arguments: it walks the always-on closure and reports. A bare run writes
             # nothing -- the write is behind -Record and -Raise, neither of which is passed here.
+            MeasureArgs = @()
+        },
+        @{
+            # The CRLF-under-eol=lf index gate (issue #4288, born in a consumer's own copy after #4144: an
+            # EOL-only modification made ship-pr trip at its fast-forward). open-pr runs it before the push
+            # as a sibling, so the copy that runs in a consumer is this mirror; a consumer may also run it
+            # as a CI step.
+            #
+            # NO SKILL, on check-unfolded-entry's reasoning: every caller is automatic (a gate, a CI step)
+            # and the one command in its .SYNOPSIS answers it early for whoever wants it.
+            Name   = 'check-eol'
+            Source = 'scripts\lint\check-eol.ps1'
+            Plugin = 'dkj-repo-workflow'
+            Skill  = ''
+            # A fixture root, so the suite can judge a scratch repo. Read-only: a bare run only reads the index.
+            SkillParamsExempt = @('RootOverride')
             MeasureArgs = @()
         },
         @{
