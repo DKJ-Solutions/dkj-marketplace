@@ -874,7 +874,7 @@ try {
     # #3884: the template's first-line comment follows the move; the body below it is the repo's own.
     $mvTplAfter = [System.IO.File]::ReadAllText((Join-Path $cMv '.github\pull_request_template.md'))
     Assert-Match '\A<!-- Filled from the DEPLOY section of \.dkj/dkj-repo-workflow/<branch>\.md' $mvTplAfter 'move: the PR template comment is repointed'
-    Assert-Match 'Our notes on dkj-policy/ stay\.' $mvTplAfter 'move: and the template body below it is left as written'
+    Assert-Match 'Our notes on dkj-policy/ stay\.' $mvTplAfter 'move: and prose in the template body is left as written (#3884; #4257 moves addresses only)'
     Assert-Match '\[repoint\]\s+\.github/pull_request_template\.md' $rMvDry.Flat 'move: the dry run names the template repoint'
     Assert-Match '\[exists\]\s+\.dkj/dkj-repo-workflow/CHANGELOG\.md' $rMv.Out 'move: and the scaffold that follows reads the moved folder'
 
@@ -943,6 +943,52 @@ try {
     $rBs = Invoke-Adopt -Dir $cBs -ScriptArgs @('-Apply')
     Assert-Match '\[skip\]\s+\.dkj/dkj-policy/ not moved' $rBs.Flat 'skip: a subdirectory in the new folder also keeps the skip'
     Assert-True (Test-Path -LiteralPath (Join-Path $cBs '.dkj\dkj-policy\CHANGELOG.md')) 'skip: the legacy folder is untouched there too'
+
+    # #4257: a '!' negation line moves with its ignore line, and the PR template is repointed everywhere.
+    Write-Host "adopt-workflow-folder -- negation lines and every template occurrence (#4257)" -ForegroundColor Cyan
+    $cNg = New-FixtureConsumer -Label 'move-negation'
+    New-Item -ItemType Directory -Path (Join-Path $cNg '.dkj\dkj-policy') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $cNg '.github') -Force | Out-Null
+    [System.IO.File]::WriteAllText((Join-Path $cNg '.dkj\dkj-policy\CHANGELOG.md'), "# Changelog`n")
+    [System.IO.File]::WriteAllText((Join-Path $cNg '.gitignore'),
+        "/.dkj/dkj-policy/releases/page/*`n!.dkj/dkj-policy/releases/page/page-token-notes.txt`nnode_modules/`n")
+    [System.IO.File]::WriteAllText((Join-Path $cNg '.github\pull_request_template.md'),
+        "<!-- Filled from the DEPLOY section of .dkj/dkj-policy/<branch>.md. -->`n`n- [ ] ``.dkj/dkj-policy/<branch>.md`` carries this branch's DEPLOY section`n")
+    $null = Invoke-Adopt -Dir $cNg -ScriptArgs @('-Apply')
+    $ngIgnore = [System.IO.File]::ReadAllText((Join-Path $cNg '.gitignore'))
+    Assert-Match '(?m)^/\.dkj/dkj-repo-workflow/releases/page/\*' $ngIgnore 'negation: the ignore line is repointed'
+    Assert-Match '(?m)^!\.dkj/dkj-repo-workflow/releases/page/page-token-notes\.txt' $ngIgnore 'negation: and so is the ! exception under it'
+    $ngTpl = [System.IO.File]::ReadAllText((Join-Path $cNg '.github\pull_request_template.md'))
+    Assert-True ($ngTpl -notmatch 'dkj-policy') 'template: the first comment AND the checklist line are repointed'
+    Assert-Match '(?m)^- \[ \] `\.dkj/dkj-repo-workflow/<branch>\.md` carries' $ngTpl 'template: the checklist line names the new folder once, not doubled'
+
+    # #4255: a repo ALREADY on the current folder, whose template still names an older one.
+    Write-Host "adopt-workflow-folder -- a stale template with no move pending (#4255)" -ForegroundColor Cyan
+    $cSt = New-FixtureConsumer -Label 'stale-template'
+    New-Item -ItemType Directory -Path (Join-Path $cSt '.dkj\dkj-repo-workflow') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $cSt '.github') -Force | Out-Null
+    $stOld = "<!-- Filled from the DEPLOY section of dkj-policy/<branch>.md, heading and all. Paste it starting at its '## DEPLOY:' line. -->`n`nBody.`n"
+    $stPath = Join-Path $cSt '.github\pull_request_template.md'
+    [System.IO.File]::WriteAllText($stPath, $stOld)
+    $rStDry = Invoke-Adopt -Dir $cSt
+    Assert-Match '\[repoint\]\s+\.github/pull_request_template\.md' $rStDry.Flat 'stale template: the dry run reports the repoint'
+    Assert-Equal $stOld ([System.IO.File]::ReadAllText($stPath)) 'stale template: and the dry run writes nothing'
+    $rSt = Invoke-Adopt -Dir $cSt -ScriptArgs @('-Apply')
+    Assert-Match '\[repointed\]\s+\.github/pull_request_template\.md' $rSt.Flat 'stale template: -Apply reports it'
+    $stNew = [System.IO.File]::ReadAllText($stPath)
+    Assert-Match 'section of \.dkj/dkj-repo-workflow/<branch>\.md,' $stNew 'stale template: the folder is the current one'
+    Assert-Match "'### DEPLOY:'" $stNew 'stale template: and the heading level is current'
+    Assert-Match 'Body\.' $stNew 'stale template: the body is untouched'
+
+    # A template that is already current: no repoint line, no change.
+    $cCu = New-FixtureConsumer -Label 'current-template'
+    New-Item -ItemType Directory -Path (Join-Path $cCu '.github') -Force | Out-Null
+    $cuTpl = "<!-- Filled from the DEPLOY section of .dkj/dkj-repo-workflow/<branch>.md. Starts at its '### DEPLOY:' line. -->`n"
+    $cuPath = Join-Path $cCu '.github\pull_request_template.md'
+    [System.IO.File]::WriteAllText($cuPath, $cuTpl)
+    $rCu = Invoke-Adopt -Dir $cCu -ScriptArgs @('-Apply')
+    Assert-True ($rCu.Flat -notmatch 'repoint(ed)?\]\s+\.github/pull_request_template\.md') 'current template: no repoint line'
+    Assert-Equal $cuTpl ([System.IO.File]::ReadAllText($cuPath)) 'current template: unchanged'
 
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }
