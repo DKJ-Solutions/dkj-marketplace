@@ -126,6 +126,7 @@ an absent link is a fact rather than an oversight.
 | `lib/pull-issue-lib.ps1` | which issues a merged PR carried: its closing references plus the issues it only names (head branch, body), and whether a named one closed as completed. Read by `cut-release` for the audience note's task links; mirrored into `dkj-repo-workflow-bwj`, whose `notify-live` reads the same set (#3941) | none — dot-sourced lib |
 | `lib/entry-scaffold-lib.ps1` | the one definition of the entry format, read by the script that writes it and the gates that refuse it | none — dot-sourced lib |
 | `lib/plugin-tree-lib.ps1` | which plugins this repo publishes and where each folder sits | none — dot-sourced lib |
+| `lib/plugin-payload-lib.ps1` | the one plugin-payload locator (`Resolve-PluginScript`, `Get-PluginRoot`, the prior-name table) a consumer's forwarder dot-sources | none — dot-sourced lib |
 | `lib/script-contract-lib.ps1` | the contract registry the check above reads | none — dot-sourced lib |
 | `lib/pr-body-lib.ps1` | composes and refreshes the PR body from the entry | none — dot-sourced lib |
 | `lib/pr-issues-lib.ps1` | reads the issues a PR declares it closes | none — dot-sourced lib |

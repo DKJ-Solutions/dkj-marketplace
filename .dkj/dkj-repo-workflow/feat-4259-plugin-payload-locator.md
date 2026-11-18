@@ -39,19 +39,52 @@
 
 ### PLAN
 
+Step 1 of 3 of #4259. The two BWJ store repos each carry their own `scripts/lib/plugin-scripts.ps1`, a
+locator for the plugin payload with the plugin names hard-coded, and the two copies have diverged. One of
+them is still on the pre-v7 names. Every plugin rename was therefore a code change in two private copies.
+This branch ships the locator in the plugin. Step 2 moves the shared store scripts into
+`dkj-repo-workflow-bwj`, and step 3 swaps the forwarder into the stores after the release.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/lib/plugin-payload-lib.ps1`, mirrored into `dkj-repo-workflow` and `dkj-repo-workflow-bwj`.
+  It is the union of the two store copies: the more correct one as the base (path normalisation, the
+  worktree candidate, `Get-PluginProjectRegistration`), plus `Get-PluginResolution` without its store-local
+  loader probe. Function and parameter names are unchanged, so call sites and permission entries keep
+  working.
+- [x] `Get-PluginPriorNames` is the one table of retired plugin ids. `Get-RetiredPolicyExtensionNames` in
+  `claude-md-import-lib.ps1` now derives from it instead of stating a second copy.
+- [x] `templates/plugin-scripts-forwarder.ps1`: the bootstrap a consumer copies to
+  `scripts/lib/plugin-scripts.ps1`. It finds the installed plugin and dot-sources the lib.
+- [x] Registered in `shared-scripts-lib.ps1`, with a row in the plugin's `scripts/README.md`.
 
 ### TEST
 
+- [x] `plugin-payload-lib.tests.ps1`: 135 passed, 0 failed (the lib on fixtures, the forwarder in child
+  processes with a scratch profile).
+- [x] `build-shared-scripts -Check` in sync; `check-plugin-integrity` and `check-script-contract` 0 errors;
+  `shared-scripts`, `template-selfcontained`, `consumer-prose-gate`, `bwj-extension-import`,
+  `update-plugins` and `plugin-versions` suites green.
+- [x] The derived retired-name map is read only by exact lookup or by an anchored regex, so its new key
+  order changes no result. It costs about 18 ms per call.
+
 ### DEPLOY: feat/4259-plugin-payload-locator
 
-**Score:**
+`dkj-repo-workflow` now ships the plugin-payload locator (`scripts/lib/plugin-payload-lib.ps1`) and a
+forwarder template (`templates/plugin-scripts-forwarder.ps1`) for consumers that run plugin scripts from
+their own scripts (#4259). A consumer that replaces its own `scripts/lib/plugin-scripts.ps1` with the
+template keeps every `Resolve-PluginScript` call site. A later plugin rename then reaches it with the
+release, instead of as a code change in the repo. The retired-name map the import checks use now derives
+from the same table.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A store repo can drop its own diverged locator for a few-line forwarder, so the next plugin rename is a
+version bump there rather than a migration.
+
+**Score:** 2
 
 #### Pull Request
 
