@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**4 / 4 minor entries** <!-- pending-tally -->
+**4 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4310-stale-park-awaiting-release · 20261118-211126Z
+
+An issue parked as `awaiting-release` now comes back by itself on the first sweep after the release that carries what it waited on: `-Candidates` reads it as `stale-park` and prints the unpark line, the way the other waits already did. An issue parked at filing that later picked up an ordinary comment had its own parking clause silently ignored by every wait reading; that is fixed too.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+claim-issue -Candidates reads a cleared awaiting-release as stale-park
+
+Plugins: dkj-repo-workflow
+
+[PR #4311](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4311)
+
+---
 
 ### DEPLOY: feat/4320-move-data-to-onedrive · 20261118-204716Z
 
