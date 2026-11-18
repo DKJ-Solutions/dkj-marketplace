@@ -2697,7 +2697,34 @@ while ($true) {
         } catch {
             $pendingRequired = @()
         }
-        if ($pendingRequired.Count -eq 0) { $lostWatchNote = ''; break }
+        # A CANCELLED REQUIRED RECORD IS NOT A GREEN ONE (#4315, the mirror image of #3331). gh counts a
+        # `cancel` bucket as skipped, so `--watch --required` exits 0 on it, and Get-MergeBlockVerdict
+        # reads it as concluded, so it is not in $pendingRequired either -- and this loop broke out with
+        # "every REQUIRED check is green" about a run the concurrency group had cancelled, straight into a
+        # merge the ruleset refused. Measured on PR #4311, November 18, 2026: a resumed ship, a second
+        # `pull_request` run on the same head, the first one cancelled with its `lint-en-tests`. The
+        # forward lap already waits this out (Wait-ForwardedCertificate); this ordinary wait never asked.
+        # So it asks the same function the same question: the cancelled ids become the run set to look
+        # past, the wait goes on until the superseding run has answered, and the loop re-enters the watch
+        # so that answer -- green OR red -- reaches the ordinary verdict below. A timeout refuses.
+        if ($pendingRequired.Count -eq 0) {
+            $cancelledRequired = @()
+            try { $cancelledRequired = @(Get-CancelledCheckRunIds -ChecksJson $checkFactsJson -Names $requiredWaitNames) } catch { $cancelledRequired = @() }
+            if ($cancelledRequired.Count -eq 0) { $lostWatchNote = ''; break }
+
+            if ($watchAttempt -ge $maxWatchAttempts) {
+                Write-Error "The required check's run $($cancelledRequired -join ', ') was CANCELLED and no run has replaced it after $maxWatchAttempts watch attempts -- NOT merged (#4315). Nothing has failed: re-run ship-pr once a run on this head has finished, or merge manually once it is green."
+                exit 1
+            }
+            Write-Host "ship-pr: the watch went green on a CANCELLED required run ($($cancelledRequired -join ', ')) -- waiting for the run that superseded it (#4315)." -ForegroundColor DarkYellow
+            $superseded = Wait-ForwardedCertificate -Pr "$pr" -Repo $repo -PreviousRunIds $cancelledRequired `
+                -RequiredNames $requiredWaitNames -PollSeconds $PollSeconds
+            if ($null -eq $superseded) {
+                Write-Error "The required check's run $($cancelledRequired -join ', ') was CANCELLED and no superseding run finished in time -- NOT merged (#4315). Re-run ship-pr once a run on this head has finished."
+                exit 1
+            }
+            continue
+        }
 
         if ($watchAttempt -ge $maxWatchAttempts) {
             $has = if ($pendingRequired.Count -eq 1) { 'has' } else { 'have' }
