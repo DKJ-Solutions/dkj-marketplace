@@ -187,7 +187,7 @@ function Invoke-DayPlanSearch {
             # -Utf8: gh writes UTF-8, and a plain & would decode it through the console code page, turning an
             # accented title or an emoji into the wrong characters before it ever reaches a plan (Victor, #3860).
             $res = Invoke-NativeCapture -FilePath 'gh' -Arguments $ghArgs -Utf8 -DiscardStderr
-            if ($res.ExitCode -ne 0) { throw "gh api graphql exited $($res.ExitCode) reading the PRs of $a" }
+            if (-not (Test-NativeExitMeasured -Capture $res) -or $res.ExitCode -ne 0) { throw "gh api graphql failed ($(Get-NativeExitLabel -Capture $res)) reading the PRs of $a" }
             $page = (@($res.Output) -join "`n") | ConvertFrom-Json
             $nodes = @($page.data.search.nodes | Where-Object { $_ -and $_.number })
             $prs += @(ConvertFrom-DayPlanSearch -Json (ConvertTo-Json -InputObject @($nodes) -Depth 6) -Kind 'pr')
@@ -195,7 +195,7 @@ function Invoke-DayPlanSearch {
             $after = if ($page.data.search.pageInfo.hasNextPage) { [string]$page.data.search.pageInfo.endCursor } else { $null }
         } while ($after -and $read -lt $Limit)
         $res = Invoke-NativeCapture -FilePath 'gh' -Arguments @('search', 'issues', '--assignee', $a, '--closed', $since, '--json', $fields, '--limit', [string]$Limit) -Utf8 -DiscardStderr
-        if ($res.ExitCode -ne 0) { throw "gh search issues exited $($res.ExitCode) for $a" }
+        if (-not (Test-NativeExitMeasured -Capture $res) -or $res.ExitCode -ne 0) { throw "gh search issues failed ($(Get-NativeExitLabel -Capture $res)) for $a" }
         $issues += @(ConvertFrom-DayPlanSearch -Json (@($res.Output) -join "`n") -Kind 'issue')
     }
     $prs = @($prs | Sort-Object ref -Unique)

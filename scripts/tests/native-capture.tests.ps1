@@ -51,8 +51,9 @@
     Pure ASCII (repo convention for .ps1) -- the em-dash under test is built from its code point.
 #>
 
-# What this suite's live-tree walks read (#3309): the scripts under scripts/.
-# gate-selection: walks scripts/*.ps1
+# What this suite's live-tree walks read (#3309): the scripts under scripts/, and since #4307 every plugin
+# script too, which the bounded-site audit now scans.
+# gate-selection: walks scripts/*.ps1 plugins/*.ps1
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\native-capture-lib.ps1')
 
@@ -1791,20 +1792,53 @@ $auditExempt = @{
     'task\claim-issue.ps1|allBranchesCapture' = 'same scan, same direction -- it prints "title-overlap scan skipped" with no number'
     'release\ship-pr.ps1|diffRead'     = 'fail-closed: the commit stays COUNTED in the staleness verdict, so a third state would be a no-op'
     'task\park-cycle.ps1|prList'       = 'repaired on fix/2068-park-cycle-unknown-exit-code, which is the worked instance #2081 was split out of'
+    'plugins\dkj-repo-workflow\hooks\release-freshness-sessioncheck.ps1|cap' = 'fail-safe by design (#4307): any ls-remote that did not answer a measured 0 -- unmeasured, failed, timed out or short -- ends the hook with exit 0 and no line, so no verdict is ever printed from a read it could not judge'
     'ci\get-merge-suite-skip.ps1|diffRead' = 'the SAME site as ship-pr.ps1''s own diffRead one row up, re-derived after the merge instead of before it (#2303): an unreadable diff leaves the commit COUNTED in the staleness verdict, the identical fail-closed direction'
 }
 
-$auditFiles = Get-ChildItem -Path $auditRoot -Recurse -Filter *.ps1 |
-    Where-Object { $_.FullName.Replace([char]92, '/') -notmatch '/tests/' -and $_.Name -ne 'native-capture-lib.ps1' }
+$auditFiles = @(Get-ChildItem -Path $auditRoot -Recurse -Filter *.ps1 |
+    Where-Object { $_.FullName.Replace([char]92, '/') -notmatch '/tests/' -and $_.Name -ne 'native-capture-lib.ps1' })
+
+# THE PLUGINS ARE SCANNED TOO (#4307). This walk used to stop at scripts/, so a bounded site in a plugin-only
+# script (measure-buybox.ps1, #4290) was never counted and never judged; a plugin script was audited only by
+# the accident of a mirror under scripts/. The plugin side is every plugins/**/*.ps1 outside /tests/ -- the
+# scripts folders, the hooks and the admin pages alike, since a bounded capture is as unjudged in a hook as
+# in a task script.
+# MIRRORS ARE DROPPED BY CONTENT, not by the registry: a plugin file whose bytes (SHA256, line endings NOT
+# normalised, so a line-ending-only difference audits the copy on its own) are identical to some file the scripts/ walk already holds is the same code counted once, and one that differs
+# from its source is not a mirror at all and is audited on its own. Content answers it in one pass with no
+# dependence on the registry in shared-scripts-lib.ps1 (which maps SOME plugin files to sources, and would
+# need its own parse to be read here); it also cannot call a drifted copy a mirror.
+$pluginsRoot = Join-Path (Split-Path -Parent $auditRoot) 'plugins'
+$sourceHashes = @{}
+foreach ($sf in $auditFiles) {
+    $sourceHashes[(Get-FileHash -LiteralPath $sf.FullName -Algorithm SHA256).Hash] = $true
+}
+$pluginFiles = @()
+$pluginMirrorsSkipped = 0
+if (Test-Path -LiteralPath $pluginsRoot) {
+    foreach ($pf in (Get-ChildItem -Path $pluginsRoot -Recurse -Filter *.ps1 |
+            Where-Object { $_.FullName.Replace([char]92, '/') -notmatch '/tests/' -and $_.Name -ne 'native-capture-lib.ps1' })) {
+        $ph = (Get-FileHash -LiteralPath $pf.FullName -Algorithm SHA256).Hash
+        if ($sourceHashes.ContainsKey($ph)) { $pluginMirrorsSkipped++; continue }
+        $pluginFiles += $pf
+    }
+}
+$repoRootDir = Split-Path -Parent $auditRoot
 
 $boundedTotal = 0
 $unguarded = @()
-foreach ($af in $auditFiles) {
+foreach ($af in (@($auditFiles) + @($pluginFiles))) {
     $atok = $null; $aerr = $null
     $aast = [System.Management.Automation.Language.Parser]::ParseFile($af.FullName, [ref]$atok, [ref]$aerr)
     if ($aerr -and $aerr.Count) { continue }
     # The exemption keys are written with a backslash, so the key is too, whatever this OS lists (#2488).
-    $rel = $af.FullName.Substring($auditRoot.Length + 1).Replace('/', [string][char]92)
+    # A plugin file is keyed relative to the REPO ROOT ('plugins\...|var'), a scripts/ file relative to scripts/.
+    $rel = if ($af.FullName.StartsWith($auditRoot + [string][char]92) -or $af.FullName.StartsWith($auditRoot + '/')) {
+        $af.FullName.Substring($auditRoot.Length + 1).Replace('/', [string][char]92)
+    } else {
+        $af.FullName.Substring($repoRootDir.Length + 1).Replace('/', [string][char]92)
+    }
 
     # Which capture variables in this file come off a BOUNDED call.
     $boundedVars = @{}
@@ -2065,8 +2099,15 @@ foreach ($af in $auditFiles) {
 # 118 -> 119 (#4168): sync-main.ps1's Complete-SyncPullRequest reads the trunk's rules once (`gh api .../rules/branches/<trunk>`) for the required checks.
 # 119 -> 122 (#4287): dependabot-entry.ps1's $read (`gh pr view --json`, -Utf8 at the default bound), the $why re-read that keeps gh's stderr for the refusal text, and Invoke-GitHere's $res (every git call). $read and Get-CommitCount's $res are judged by Test-NativeExitMeasured before their exit code, and every unmeasured or non-zero answer is a refusal that changes nothing; $why is only read for its text.
 # 122 -> 123 (#4289): adopt-shopify-floor.ps1's Resolve-SharedScriptsRef $ls (`git ls-remote` for the release tag the live-direct-writes workflow pins). Only a POSITIVE `-eq 0` reads it, and any other answer falls back to writing the tag instead of a SHA, which the run reports. It is never read into a refusal.
-# 123 -> 123 (#4290): dkj-subagents-shopify's measure-buybox.ps1 adds a bounded site ($run, `node measure-buybox.harness.js`, -Utf8 and bounded at the settle wait plus 120s), but this audit walks scripts/ only and that script lives in the plugin alone, so the count does not move. The site is audited by hand all the same: Test-NativeCommandStarted is asked first (node absent is a REFUSAL, never a skip), a timeout is its own failure, and the exit code is judged only after Test-NativeExitMeasured, so an unmeasured or non-zero answer, or a zero with no JSON line, fails the measurement and never reads as a met requirement.
-Assert-Equal 123 $boundedTotal 'the parser still counts 123 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
+# 123 -> 123 (#4290): dkj-subagents-shopify's measure-buybox.ps1 adds a bounded site ($run, `node measure-buybox.harness.js`, -Utf8 and bounded at the settle wait plus 120s). It was not counted then, because this audit walked scripts/ only (#4307); it is counted now. Test-NativeCommandStarted is asked first (node absent is a REFUSAL, never a skip), a timeout is its own failure, and the exit code is judged only after Test-NativeExitMeasured, so an unmeasured or non-zero answer, or a zero with no JSON line, fails the measurement and never reads as a met requirement.
+# 123 -> 129 (#4307): the audit now also walks plugins/**/*.ps1 (outside /tests/), dropping any file byte-identical (line endings normalised) to a scripts/ file, so mirrors count once. Six plugin-only sites appear: day-plan.ps1's two `gh` reads in Invoke-DayPlanSearch (both `$res`) -- REPAIRED, they judged `-ne 0` with no Test-NativeExitMeasured and now throw naming Get-NativeExitLabel; consumer-sessioncheck.ps1's `$cap` (the engine's -Brief run) -- already judged: TimedOut/ShortRead first, the code copied to `$vcode` and printed through the degraded line; release-freshness-sessioncheck.ps1's `$cap` (`git ls-remote --tags`) -- EXEMPT, fail-safe (anything but a measured 0 exits 0 and prints nothing); live-direct-writes.ps1's Invoke-GhChecked `$r` -- REPAIRED, started/timeout/short-read were judged but the code was not asked Test-NativeExitMeasured and now is, throwing with Get-NativeExitLabel; measure-buybox.ps1's `$run` -- already measured, see above.
+Assert-Equal 129 $boundedTotal 'the parser still counts 129 bounded Invoke-NativeCapture sites (scripts/ plus plugin-only files) outside tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
+# THE SCAN HAS TO REACH THE PLUGINS (#4307), or the count above is a count of scripts/ alone again. Plugin-only
+# files must be walked, and the mirrors dropped (a scan that kept them would double the total).
+Assert-True ($pluginFiles.Count -gt 0) 'the audit walks plugin-only files, not scripts/ alone (#4307)'
+Assert-True (@($pluginFiles | Where-Object { $_.Name -eq 'measure-buybox.ps1' }).Count -eq 1) 'the audit sees measure-buybox.ps1, the plugin-only script that exposed the gap (#4307)'
+Assert-True ($pluginMirrorsSkipped -gt 0) 'byte-identical plugin mirrors of scripts/ are dropped rather than counted twice (#4307)'
+Assert-True (@($pluginFiles | Where-Object { $sourceHashes.ContainsKey((Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash) }).Count -eq 0) 'no audited plugin file is a mirror of a scripts/ file (#4307)'
 Assert-Equal 0 $unguarded.Count `
     ('every bounded capture judged with a NEGATIVE exit-code test either asks Test-NativeExitMeasured/Get-NativeExitLabel about THAT capture or is exempt with a reason (#2081)' +
      $(if ($unguarded.Count) { ' -- unguarded: ' + ($unguarded -join ' | ') } else { '' }))
@@ -2076,7 +2117,7 @@ Assert-Equal 0 $unguarded.Count `
 # removing. Each entry has to still name a bounded capture in the file it names.
 foreach ($k in $auditExempt.Keys) {
     $parts = $k -split '\|'
-    Assert-True (Test-Path -LiteralPath (Join-Path $auditRoot $parts[0])) "the exemption for `$$($parts[1]) still names a file that exists: $($parts[0])"
+    Assert-True (Test-Path -LiteralPath (Join-Path $(if ($parts[0] -like 'plugins*') { $repoRootDir } else { $auditRoot }) $parts[0])) "the exemption for `$$($parts[1]) still names a file that exists: $($parts[0])"
 }
 if ($script:fail -eq 0) {
     Write-Host "Result: $($script:pass) pass, 0 fail." -ForegroundColor Green
