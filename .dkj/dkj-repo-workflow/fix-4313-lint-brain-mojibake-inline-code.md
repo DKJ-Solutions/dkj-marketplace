@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Inbound #4313: `dkj-repo-workflow-bwj`'s `lint-brain.ps1` category B flagged a mojibake pair that a
+store's release record QUOTES in an inline code span to describe the repair it made, while
+`fix-mojibake.ps1` reports nothing to repair on the same bytes. Verified against the source:
+`Test-MojibakeInFile` matched the raw line, with no inline-code handling, where category A already
+skips a match inside backticks.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Test-MojibakeInFile` removes inline code spans from a `*.md` line before matching, so the rest
+  of the line is still checked; `.ps1` lines are left as they are, since a backtick there is
+  PowerShell's escape character. The help text for B says so.
+- [x] `bwj-lint-brain.tests.ps1`: a quoted pair passes, and its twin (a pair beside the quoted span)
+  is still an error.
 
 ### TEST
 
+- [x] The suite and the lint gate run under `ship-pr`.
+
 ### DEPLOY: fix/4313-lint-brain-mojibake-inline-code
 
-**Score:**
+`lint-brain`'s mojibake check (category B) no longer flags a mangled sequence that a Markdown file
+quotes inside an inline code span, the same reading category A gives a bare reference in backticks
+(#4313). A mangled sequence elsewhere on the same line is still caught.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A BWJ store whose release records document a mojibake repair, such as a line naming the garbled
+sequence it replaced, no longer has a red lint gate on correct history. Until now the only way to
+turn it green was to delete the example.
+
+**Score:** 3
 
 #### Pull Request
 
