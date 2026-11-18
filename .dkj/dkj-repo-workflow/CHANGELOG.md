@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**20 / 22 minor entries** <!-- pending-tally -->
+**21 / 23 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4288-eol-gate · 20261118-115621Z
+
+`open-pr` now refuses a branch whose git index carries a file with CRLF while `.gitattributes` pins it to
+`eol=lf`, and prints the one-line repair (`git add --renormalize -- <paths>`). The check is
+`scripts/lint/check-eol.ps1`, shared through the `dkj-repo-workflow` mirror and runnable as a CI step, so a
+consumer's own copy can go (#4288).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer on Windows whose `.gitattributes` pins LF no longer meets an EOL-only modification at `ship-pr`'s
+fast-forward (#4144): `open-pr` catches the CRLF blob before the push, with the repair line printed.
+
+**Score:** 2
+
+#### Pull Request
+
+Ship the CRLF-under-eol=lf index check as a shared gate
+
+Plugins: dkj-repo-workflow
+
+[PR #4296](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4296)
+
+---
 
 ### DEPLOY: feat/4286-trunk-commit-guard · 20261118-114449Z
 
