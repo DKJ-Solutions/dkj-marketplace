@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**19 / 21 minor entries** <!-- pending-tally -->
+**20 / 22 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4286-trunk-commit-guard · 20261118-114449Z
+
+`guard-working-copy` now refuses a `git commit` made while HEAD is on the trunk, in every thread, unless
+the subject is one of the constitution's bounded direct commits (`fold:`, `release:`, `release-prep:`,
+`release-notes:`). Before this, "never directly on the trunk" was prose only, outside one store that
+built its own guard. The rule fails open whenever it cannot tell the branch or the trunk
+([#4286](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4286)).
+
+**Score:** 4
+
+#### What makes this deploy extra special
+
+A consumer's session that tries to commit straight on the trunk is now stopped and pointed at
+`new-branch`, where it used to land the commit and fail only at push time, or not at all.
+
+**Score:** 3
+
+#### Pull Request
+
+Refuse a commit on the trunk in guard-working-copy, outside the fold and release subjects
+
+Plugins: dkj-repo-workflow
+
+[PR #4294](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4294)
+
+---
 
 ### DEPLOY: fix/4282-asana-move-own-board · 20261118-112815Z
 
