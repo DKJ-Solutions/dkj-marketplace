@@ -39,21 +39,46 @@
 
 ### PLAN
 
+Step 1 of 3 of [#4290](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4290) (owner decision
+2026-11-18: all the storefront checks move to `dkj-subagents-shopify`). `check-jsonld` moves on the pattern
+of #4289's steps. Its market URLs come from the same `Get-StorefrontMarkets` seam that `which-theme` reads,
+and that reader is now factored into one shared lib. `check-sitemap` and `measure-buybox` follow on their
+own branches, so this branch ships with `-NoResolves`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/task/check-jsonld.ps1` and `scripts/lib/check-jsonld-rules.ps1` in the shopify plugin, in English.
+  The fetch moves from `curl.exe` to `Invoke-WebRequest`, so a failure goes through `fetch-failure`.
+- [x] `scripts/lib/storefront-markets-lib.ps1`, the one reader of the market seam, now used by
+  `which-theme` as well, and `scripts/lib/comma-list.ps1` (`Expand-CommaList`)
+- [x] `which-theme` splits `-Path` on commas, as `check-jsonld` does. Under `powershell -File`, a
+  list arrives as one string.
+- [x] `skills/check-jsonld/SKILL.md`, the README row, and `scripts/tests/shopify-check-jsonld.tests.ps1` in `suite-groups.json`
 
 ### TEST
 
+- [x] `shopify-check-jsonld` 68/0, `shopify-which-theme` 58/0, `exception-message-guard` 18/0
+- [x] `check-plugin-integrity.ps1` 0 errors
+- [x] The full gate runs in `ship-pr`
+
 ### DEPLOY: feat/4290-check-jsonld-in-shopify
 
-**Score:**
+Ships the `check-jsonld` skill in `dkj-subagents-shopify`. It validates the JSON-LD structured data a
+storefront serves per market, and can do so on a preview theme. The markets come from the store's
+`Get-StorefrontMarkets` seam. `which-theme` now reads that seam through the same lib. It also accepts
+`-Path '/a,/b'` from `powershell -File`, which used to arrive as a single path. Step 1 of
+[#4290](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4290).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify store on the plugin can check its structured data before and after a theme change without
+keeping its own copy of the script. A preview check now carries the full preview parameters, so it no
+longer drops back to live after the first redirect.
+
+**Score:** 2
 
 #### Pull Request
 
 Move check-jsonld into dkj-subagents-shopify
-

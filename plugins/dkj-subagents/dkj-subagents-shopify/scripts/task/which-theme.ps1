@@ -89,27 +89,23 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\check-report-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\fetch-failure.ps1')
 . (Join-Path $PSScriptRoot '..\lib\which-theme-rules.ps1')
+. (Join-Path $PSScriptRoot '..\lib\storefront-markets-lib.ps1')
+. (Join-Path $PSScriptRoot '..\lib\comma-list.ps1')
 
 $markets = @()
 if ($PSCmdlet.ParameterSetName -ne 'Url') {
-    # The seam is read in a child scope with StrictMode off and inside a try, as this plugin's other
-    # scripts read repo-config.ps1: the file belongs to the consumer, so a fault in it must degrade to
-    # "unanswered" rather than take this script down.
+    # The seam is read by the plugin's one reader, storefront-markets-lib.ps1, which check-jsonld shares
+    # (#4290): a fault in the consumer's repo-config.ps1 degrades to "unanswered", never to a crash.
     $repoRoot = Resolve-RepoRootOrFail -Override $RootOverride -ScriptName 'which-theme.ps1' -OverrideName '-RootOverride'
-    $repoRoot = ([string]$repoRoot).Trim() -replace '/', '\'
-    $markets = @(& {
-        Set-StrictMode -Off
-        $configPath = Join-Path $args[0] 'scripts\repo-config.ps1'
-        if (Test-Path -LiteralPath $configPath -PathType Leaf) {
-            try { . $configPath } catch { }
-        }
-        if (Test-FunctionDefined 'Get-StorefrontMarkets') { return @(Get-StorefrontMarkets) }
-    } $repoRoot)
+    $markets = @(Get-StorefrontMarketRows -RepoRoot ([string]$repoRoot))
 }
 
 try {
     # @() keeps .Count valid for a single page in Windows PowerShell 5.1, where an unrolled single
     # object has no .Count and the summary count would print empty.
+    # -Path is split on commas after the fact: under powershell -File, '/a,/b' binds as ONE string (#4290).
+    # -Url and the fingerprints are not, because a URL or a piece of markup may itself carry a comma.
+    if ($PSCmdlet.ParameterSetName -ne 'Url') { $Path = @(Expand-CommaList -Value $Path) }
     $rows = @(Get-ProbeTargets -Url $Url -Path $Path -Markets $markets)
 }
 catch {
