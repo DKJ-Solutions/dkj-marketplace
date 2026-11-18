@@ -19,6 +19,7 @@
                                       "changelog-mode.tests.ps1",
                                       "branch-info.tests.ps1",
                                       "claim-issue.tests.ps1",
+                                      "dependabot-entry.tests.ps1",
                                       "new-branch.tests.ps1",
                                       "new-branch-base.tests.ps1",
                                       "new-branch-document.tests.ps1",
