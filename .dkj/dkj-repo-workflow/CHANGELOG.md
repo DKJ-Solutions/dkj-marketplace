@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**9 / 9 minor entries** <!-- pending-tally -->
+**10 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4255-repoint-every-folder-path · 20261118-005435Z
+
+Part 1 of adopting the workflow now repoints every old folder path that addresses the workflow folder
+(#4255, #4257). That means a `.gitignore` exception line beside its ignore line, and every path in the PR
+template, whichever older folder name it carries, even in a repo that moved earlier. Before, a negation
+line kept excepting a folder that was gone, and a template could keep naming a folder two moves old.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer migrating to 7.x no longer has to delete its PR template and re-run Part 1, or fix a
+`.gitignore` exception by hand.
+
+**Score:** 3
+
+#### Pull Request
+
+Part 1 repoints every old folder path in the PR template and .gitignore
+
+Plugins: dkj-repo-workflow
+
+[PR #4264](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4264)
+
+---
 
 ### DEPLOY: fix/4254-gate-reports-text-lg · 20261118-001918Z
 
