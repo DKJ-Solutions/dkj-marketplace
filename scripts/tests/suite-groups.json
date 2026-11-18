@@ -271,6 +271,7 @@
                                       "backlog-page-build.tests.ps1",
                                       "dkj-repo-workflow-bwj.tests.ps1",
                                       "bwj-extension-import.tests.ps1",
+                                      "bwj-lint-brain.tests.ps1",
                                       "bwj-market-urls.tests.ps1",
                                       "bwj-theme-check-gate.tests.ps1",
                                       "bwj-theme-refs.tests.ps1",
