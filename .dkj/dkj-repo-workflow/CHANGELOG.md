@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**11 / 11 minor entries** <!-- pending-tally -->
+**12 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4258-show-merge-on-green-wake-list · 20261118-020506Z
+
+`adopt-ci-floor` now prints which workflows wake the merge-on-green sweep when it places that runner
+(#4258). It also warns when Part 1's `branch-entry.yml` or `always-on-budget.yml` is missing, because
+the sweep then does not wake on them. The 7.0.0 note's repair says to run Part 1 first. Before, a run in
+the wrong order shortened the trigger list without a word, and merges only came later on the schedule.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A maintainer re-placing CI runners sees the trigger list it chose and is told when it is short.
+
+**Score:** 2
+
+#### Pull Request
+
+adopt-ci-floor shows the workflows merge-on-green wakes on, and warns when Part 1's gates are missing
+
+Plugins: dkj-repo-workflow
+
+[PR #4266](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4266)
+
+---
 
 ### DEPLOY: docs/4256-revendor-with-the-pin · 20261118-013229Z
 
