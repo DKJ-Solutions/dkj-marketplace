@@ -2220,40 +2220,6 @@ if ($overlapDiff.ExitCode -ne 0) {
     }
 }
 
-# --- EOL gate: no CRLF in the index under an eol=lf pin (issues #4288, #4144) -----------------------
-#
-# THE FINDING IT COMES OFF. An `eol=lf` pin in .gitattributes only normalises what git itself writes, so a
-# commit made by a tool that writes blobs raw still puts CRLF in the index. Every checkout then shows the
-# file as modified, a checkout of it cannot make it clean, and ship-pr tripped over that EOL-only
-# modification at its fast-forward (#4144). Consumers each carried their own copy of this check; #4288
-# ships the one shared copy, so it runs here, before the push, where the repair is one line.
-#
-# GUARDED ON THE SCRIPT EXISTING, like the always-on gate below: a consumer running a plugin mirror built
-# before this check shipped has no such file, and a missing gate must degrade to the behaviour that
-# preceded it. Start-Process AND NOT `& powershell`, on the reasoning gate-lib.ps1 records for the lint gate.
-$eolCheck = Join-Path $PSScriptRoot '..\lint\check-eol.ps1'
-if (Test-Path -LiteralPath $eolCheck -PathType Leaf) {
-    $eolRun = Start-Process -FilePath 'powershell' `
-        -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + $eolCheck + '"')) `
-        -NoNewWindow -Wait -PassThru -WorkingDirectory $repoRoot
-    if ($eolRun.ExitCode -ne 0) {
-        if ($Force) {
-            Write-Warning "EOL gate: the index carries CRLF under an eol=lf pin, but -Force was given -- every checkout will show those files as modified."
-        } else {
-            Write-Error @"
-EOL gate: the index carries CRLF in a file that .gitattributes pins to eol=lf - nothing pushed, no PR opened.
-
-The gate's own output above names the files and prints the repair:
-  git add --renormalize -- <paths>
-Run it, commit the result with this branch, then run again.
-
--Force pushes anyway. It is the right answer only for a gate that is wrong about this repo.
-"@
-            exit 1
-        }
-    }
-}
-
 # --- Always-on budget gate: this branch may not grow what every session pays (issue #2037) --------
 #
 # THE FINDING IT COMES OFF. The always-on document path -- CLAUDE.md plus everything it '@'-imports --
@@ -2325,6 +2291,40 @@ Two honest ways on, and neither is this flag:
     if (Test-Path -LiteralPath $alwaysOnLib -PathType Leaf) {
         . $alwaysOnLib
         $alwaysOnBaselineRel = ((Get-AlwaysOnBaselinePath -RepoRoot $repoRoot).Substring($repoRoot.Length).TrimStart('\', '/'))
+    }
+}
+
+# --- EOL gate: no CRLF in the index under an eol=lf pin (issues #4288, #4144) -----------------------
+#
+# THE FINDING IT COMES OFF. An `eol=lf` pin in .gitattributes only normalises what git itself writes, so a
+# commit made by a tool that writes blobs raw still puts CRLF in the index. Every checkout then shows the
+# file as modified, a checkout of it cannot make it clean, and ship-pr tripped over that EOL-only
+# modification at its fast-forward (#4144). Consumers each carried their own copy of this check; #4288
+# ships the one shared copy, so it runs here, before the push, where the repair is one line.
+#
+# GUARDED ON THE SCRIPT EXISTING, like the always-on gate above: a consumer running a plugin mirror built
+# before this check shipped has no such file, and a missing gate must degrade to the behaviour that
+# preceded it. Start-Process AND NOT `& powershell`, on the reasoning gate-lib.ps1 records for the lint gate.
+$eolCheck = Join-Path $PSScriptRoot '..\lint\check-eol.ps1'
+if (Test-Path -LiteralPath $eolCheck -PathType Leaf) {
+    $eolRun = Start-Process -FilePath 'powershell' `
+        -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + $eolCheck + '"')) `
+        -NoNewWindow -Wait -PassThru -WorkingDirectory $repoRoot
+    if ($eolRun.ExitCode -ne 0) {
+        if ($Force) {
+            Write-Warning "EOL gate: the index carries CRLF under an eol=lf pin, but -Force was given -- every checkout will show those files as modified."
+        } else {
+            Write-Error @"
+EOL gate: the index carries CRLF in a file that .gitattributes pins to eol=lf - nothing pushed, no PR opened.
+
+The gate's own output above names the files and prints the repair:
+  git add --renormalize -- <paths>
+Run it, commit the result with this branch, then run again.
+
+-Force pushes anyway. It is the right answer only for a gate that is wrong about this repo.
+"@
+            exit 1
+        }
     }
 }
 

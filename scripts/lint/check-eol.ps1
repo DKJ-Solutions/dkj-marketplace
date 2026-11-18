@@ -65,6 +65,9 @@ function Get-CrlfUnderLfPin {
 
 if ($MyInvocation.InvocationName -eq '.') { return }
 
+$guardLib = Join-Path $PSScriptRoot '..\lib\source-repo-guard-lib.ps1'
+if (Test-Path -LiteralPath $guardLib -PathType Leaf) { . $guardLib; Assert-OwnCopy -ScriptPath $PSCommandPath }
+
 . (Join-Path $PSScriptRoot '..\lib\check-report-lib.ps1')
 $eolScope = Resolve-CheckRoot -Override $RootOverride
 if (-not $eolScope.Path) {
