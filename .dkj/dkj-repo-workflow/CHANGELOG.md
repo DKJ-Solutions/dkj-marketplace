@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**15 / 16 minor entries** <!-- pending-tally -->
+**16 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4277-lifehub-inherit-mcp-tools · 20261118-101902Z
+
+The lifehub subagents (Ian, Onyx, Astrid, Fiona, Hugo) now inherit the session's connector tools through
+a `disallowedTools:` denylist instead of a file-only `tools:` allowlist, so they can read and file in a
+knowledge base that lives behind a connector such as Notion. Shell access stays denied to all five, and
+writing stays denied to the three that only deliver material. The integrity gate's tool-block check now
+counts an inherited tool as held, so a tools-less subagent def cannot pick up Bash without the
+working-copy boundary.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A lifehub user whose brain lives in Notion can hand filing to Ian or Onyx as subagents again, instead of
+the work falling back to the main loop.
+
+**Score:** 3
+
+#### Pull Request
+
+Lifehub subagents inherit connector tools through a denylist instead of a file-only allowlist
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4280](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4280)
+
+---
 
 ### DEPLOY: feat/4271-start-task-bwj · 20261118-100659Z
 
