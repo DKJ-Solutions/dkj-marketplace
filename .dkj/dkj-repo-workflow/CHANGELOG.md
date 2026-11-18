@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**22 / 24 minor entries** <!-- pending-tally -->
+**23 / 25 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4291-asana-move-task · 20261118-121804Z
+
+`dkj-repo-workflow-bwj` ships a `move-asana-task` skill. It moves an issue's Asana task to a section of
+the repo's own board, named by stage code, with a dry run, and resolves the section by the same rule as
+the CI runners. Before this, only one store had such a script
+([#4291](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4291)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A session in either BWJ store can move a card on request without a raw Asana API call, which auto mode
+refuses. It does so without picking a different section than the CI runners would.
+
+**Score:** 3
+
+#### Pull Request
+
+Ship a manual move-Asana-task-to-stage script in dkj-repo-workflow-bwj
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4297](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4297)
+
+---
 
 ### DEPLOY: feat/4287-dependabot-entry · 20261118-120436Z
 
