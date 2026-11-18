@@ -65,6 +65,99 @@
                                         "seconds":  0.524
                                     }
                                 ]
+                 },
+                 {
+                     "id":  "20261117-163750-3b1b",
+                     "label":  "release cut",
+                     "start":  "2026-11-17T16:37:50.813Z",
+                     "end":  "2026-11-18T10:07:40.229Z",
+                     "sessions":  7,
+                     "phases":  [
+                                    {
+                                        "name":  "Ship: checks before the PR",
+                                        "seconds":  6.418
+                                    },
+                                    {
+                                        "name":  "Ship: local gates and opening the PR",
+                                        "seconds":  484.886
+                                    },
+                                    {
+                                        "name":  "Ship: CI wait",
+                                        "seconds":  640.235
+                                    },
+                                    {
+                                        "name":  "Ship: forwarded head, re-certified",
+                                        "seconds":  776.777
+                                    },
+                                    {
+                                        "name":  "Ship: merge",
+                                        "seconds":  7.766
+                                    },
+                                    {
+                                        "name":  "Ship: fold and close-out",
+                                        "seconds":  16.491
+                                    },
+                                    {
+                                        "name":  "Cut: start",
+                                        "seconds":  3.164
+                                    },
+                                    {
+                                        "name":  "Cut: origin check and guardrails",
+                                        "seconds":  126.292
+                                    },
+                                    {
+                                        "name":  "Cut: lint gate",
+                                        "seconds":  57.302
+                                    },
+                                    {
+                                        "name":  "Cut: test gate",
+                                        "seconds":  347.427
+                                    },
+                                    {
+                                        "name":  "Cut: origin check after the gates",
+                                        "seconds":  0.872
+                                    },
+                                    {
+                                        "name":  "Cut: release builds",
+                                        "seconds":  0.002
+                                    },
+                                    {
+                                        "name":  "Cut: notes, overview and version bumps",
+                                        "seconds":  1.493
+                                    },
+                                    {
+                                        "name":  "Cut: commit and tag",
+                                        "seconds":  0.203
+                                    },
+                                    {
+                                        "name":  "Cut: push",
+                                        "seconds":  5.303
+                                    },
+                                    {
+                                        "name":  "Local gates and tests",
+                                        "seconds":  0.826
+                                    },
+                                    {
+                                        "name":  "Subagents",
+                                        "seconds":  544.071
+                                    },
+                                    {
+                                        "name":  "Branch and claim",
+                                        "seconds":  37.951
+                                    },
+                                    {
+                                        "name":  "Other tool calls",
+                                        "seconds":  126.33
+                                    },
+                                    {
+                                        "name":  "Claude thinking and writing",
+                                        "seconds":  753.698
+                                    },
+                                    {
+                                        "name":  "Waiting on you",
+                                        "seconds":  59051.907
+                                    }
+                                ]
                  }
              ],
     "hidden":  [
