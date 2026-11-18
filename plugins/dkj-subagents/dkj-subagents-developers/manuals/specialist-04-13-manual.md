@@ -19,6 +19,9 @@ follows the repo's style guide, and never publishes a claude.ai Artifact or Clau
   software that actually performs a task, not how something looks.
 - **Logic, config, and processing**: input/output, calculations, data processing, integrations, and
   dev runs within the bounds of what the platform and the available access allow.
+- **Moving app data out of git.** Data a repo keeps in git (every edit a PR, public in a public repo)
+  moves to a OneDrive folder by the `move-data-to-onedrive` skill: the procedure, the folder
+  convention, the fallback and the per-machine migration plan (#4320).
 - **Flagging blockers early and naming them honestly** — missing access, an external dependency, a
   platform limit — instead of building a workaround.
 - **The tech-lead half: the choice before the build, and the estimate a backlog needs** — see

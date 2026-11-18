@@ -39,19 +39,36 @@
 
 ### PLAN
 
+#4320 (feature-inbound) left three choices to this repo; the sweep took the recommended ones: the skill
+goes in `dkj-subagents-developers` (the work is a code change in the consuming repo), Cody owns it, it is
+one procedure-only skill, and `%OneDrive%\<org>\<repo>\<data-name>\` is the house folder convention.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `skills/move-data-to-onedrive/SKILL.md` in `dkj-subagents-developers`: the six measured steps, the folder convention, the migration plan and the trade-offs
+- [x] listed where the plugin's skills are listed: `plugin.json`, `marketplace.json`, `plugins/dkj-subagents/README.md`, Cody's manual
 
 ### TEST
 
+- [x] the full gate runs in `ship-pr` (the integrity check covers the new skill's frontmatter and links)
+
 ### DEPLOY: feat/4320-move-data-to-onedrive
 
-**Score:**
+A new skill in the developers team, `move-data-to-onedrive`, carried by Cody: it moves app data a repo
+keeps in git (every edit a branch and a PR, and public in a public repo) into
+`%OneDrive%\<org>\<repo>\<data-name>\`. Its six steps were measured on one repo's move: keep a binary
+store local, resolve the folder in code with an override and an in-repo fallback, point the tests at a
+temp folder, remove the data from git, migrate one machine at a time, and name the trade-offs.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A maintainer whose repo keeps editable data in git gets the procedure as a skill instead of working it out
+by hand, including the two traps that cost the first move: `.env.local` splitting the dev server from
+the scripts, and a test overwriting the real OneDrive data.
+
+**Score:** 3
 
 #### Pull Request
 

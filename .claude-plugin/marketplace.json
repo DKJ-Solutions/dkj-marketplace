@@ -11,7 +11,7 @@
     {
       "name": "dkj-subagents-developers",
       "source": "./plugins/dkj-subagents/dkj-subagents-developers",
-      "description": "The developers team — the specialists whose craft needs a repository (Derek, Rendall, Sylvester, Cody, Tycho, Victor, Sebastian, Ravi, Nolan, Tessa) and the skills that set the team up in one (specialists-init, specialists-teardown, sync-roster). Every consuming repo enables this beside dkj-subagents-alpha; the Claude App does not get it. Requires dkj-subagents-alpha."
+      "description": "The developers team — the specialists whose craft needs a repository (Derek, Rendall, Sylvester, Cody, Tycho, Victor, Sebastian, Ravi, Nolan, Tessa) and the skills that set the team up in one (specialists-init, specialists-teardown, sync-roster, move-data-to-onedrive). Every consuming repo enables this beside dkj-subagents-alpha; the Claude App does not get it. Requires dkj-subagents-alpha."
     },
     {
       "name": "dkj-subagents-lifehub",
