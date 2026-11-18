@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**30 / 34 minor entries** <!-- pending-tally -->
+**30 / 35 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4307-native-capture-audit-plugins · 20261118-190453Z
+
+The bounded-native-call audit now covers plugin-only scripts, not just the repo's `scripts/` folder.
+Widening it found two real gaps, now repaired:
+- Admin's day-plan search could fail with a blank exit code.
+- `live-direct-writes` could report an unmeasured `gh` exit as a number.
+
+Both now say plainly when the exit code could not be measured. Fixes
+[#4307](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4307).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+Widen native-capture's bounded-site audit to plugin-only scripts
+
+Plugins: dkj-repo-workflow, dkj-subagents-shopify
+
+[PR #4309](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4309)
+
+---
 
 ### DEPLOY: feat/4290-measure-buybox-in-shopify · 20261118-182610Z
 
