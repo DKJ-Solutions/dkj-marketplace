@@ -806,8 +806,11 @@ if ($Candidates) {
     # the upstream merge alone does not bring the work here. 'awaiting-release-external' clears when the
     # `owner/repo` it names has published a release since the parking comment. What is left after either
     # is this repo's own work -- taking the new copy, or telling the requester -- so the issue is free.
+    # THIS REPO'S OWN 'awaiting-release' IS READ THE SAME WAY (#4310): every local #<n> the clause names has
+    # landed AND this repo has published a release after the latest landing -- or, naming none, after the
+    # parking comment. Measured November 18, 2026: #4274 stayed skipped by the sweep run right after v7.1.0.
     # The other parking labels wait on a person or on something no tracker records, and are not read.
-    $parkedPull = @($sweepList | Where-Object { $_.Verdict -eq 'skipped' -and $_.Reason -match "^label 'awaiting-(pull|pull-external|release-external)'" })
+    $parkedPull = @($sweepList | Where-Object { $_.Verdict -eq 'skipped' -and $_.Reason -match "^label 'awaiting-(pull|pull-external|release|release-external)'" })
     if ($parkedPull.Count -gt 0) {
         $issuesByNumber = @{}
         # Assigned before the loop: Windows PowerShell's ConvertFrom-Json emits a JSON array as ONE object,
@@ -895,6 +898,28 @@ if ($Candidates) {
                         $c.Verdict = 'relabel'
                         $c.Reason = "label 'awaiting-pull-external', but what it waits on has merged upstream and waits on a release now: $(@($refs.External | ForEach-Object { $_ -replace '#\d+$', '' } | Select-Object -Unique) -join ', ')"
                     }
+                }
+                continue
+            }
+            if ($label -eq 'awaiting-release') {
+                # The anchor is the latest landing of what the clause names, else the parking comment's date.
+                # Anything unread or unlanded keeps it skipped, the bound every wait here keeps.
+                $anchor = $refs.Since
+                if ($refs.Issues.Count -gt 0) {
+                    $landedAt = @($refs.Issues | ForEach-Object { & $isLanded 'issue' "$_" })
+                    if (@($landedAt | Where-Object { $_ -isnot [string] }).Count -gt 0) { continue }
+                    $anchor = @($landedAt | Sort-Object { [DateTimeOffset]::Parse($_, [Globalization.CultureInfo]::InvariantCulture) })[-1]
+                }
+                if (-not $anchor) {
+                    $c.Reason = "$($c.Reason); its parking clause names no #<n> and no comment dates the park, so whether the release is out is not read"
+                    continue
+                }
+                $ownRepo = if ($repoName) { $repoName } else { '{owner}/{repo}' }
+                $rel = & $isLanded 'release' $ownRepo
+                if ($rel -and (Test-PublishedSince -Published $rel.Published -Since $anchor)) {
+                    $what = if ($refs.Issues.Count -gt 0) { " after $(@($refs.Issues | ForEach-Object { "#$_" }) -join ', ') landed" } else { ' since the park' }
+                    $c.Verdict = 'stale-park'
+                    $c.Reason = "label 'awaiting-release', but $($rel.Tag) has been published$what"
                 }
                 continue
             }

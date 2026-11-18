@@ -1678,6 +1678,10 @@ $rBoth = Get-ParkingWaitReferences -Comments @([pscustomobject]@{ body = 'Parked
 Assert-True (($rBoth.Issues -join ',') -eq '2') 'a parking comment outranks the body, as the newer word'
 $rProse = Get-ParkingWaitReferences -Comments @() -Body 'Branch `feat/x` rebuilt the shell; bring both files over once the branch lands (#4025).'
 Assert-True ($rProse.Issues.Count -eq 0 -and $rProse.Branches.Count -eq 0) 'a body without the parking clause yields nothing, so prose citing numbers never clears a wait'
+# #4310: a comment that does not park must not overwrite -Body (a case-insensitive $body loop variable did).
+# Measured: #4274, parked at filing, gained two ordinary comments and its body's #4269 was never read.
+$rLater = Get-ParkingWaitReferences -Comments @([pscustomobject]@{ body = 'A note on step 3, citing #4270.'; authorAssociation = 'MEMBER' }) -Body 'Parked: waiting on the release that carries #4269 and the step-2 issues.'
+Assert-True (($rLater.Issues -join ',') -eq '4269') 'parked at filing, a later non-parking comment leaves the body''s clause readable (#4310)'
 $cand = Get-Content -LiteralPath (Join-Path $repoRoot 'scripts\task\claim-issue.ps1') -Raw
 Assert-True ($cand -match "'--json', 'body'" -and $cand -match '-Body ') '-Candidates fetches the body only for a park no comment names, and hands it over (#4028)'
 Assert-True ($cand -match "Verdict = 'stale-park'" -and $cand -match '--remove-label \$sLabel') '-Candidates reads a cleared park as stale-park and prints the unpark line for the label it read'
@@ -1715,7 +1719,10 @@ $rPlant = Get-ParkingWaitReferences -Comments @(
     [pscustomobject]@{ body = 'Parked by a sweep: waiting on o/r#5.'; authorAssociation = 'MEMBER' },
     [pscustomobject]@{ body = 'Parked: waiting on cli/cli#1.'; authorAssociation = 'NONE' })
 Assert-True (($rPlant.External -join ',') -eq 'o/r#5') 'a parking comment from somebody without a hand on the repo is not read, so it cannot clear the wait'
-Assert-True ($cand -match "awaiting-\(pull\|pull-external\|release-external\)")'-Candidates reads both external waits beside awaiting-pull'
+Assert-True ($cand -match "awaiting-\(pull\|pull-external\|release\|release-external\)")'-Candidates reads both external waits and this repo''s own awaiting-release beside awaiting-pull'
+# #4310: this repo's own awaiting-release clears on this repo's release after what the clause names landed
+Assert-True ($cand -match "if \(\`$label -eq 'awaiting-release'\)" -and $cand -match "& \`$isLanded 'release' \`$ownRepo") '-Candidates reads awaiting-release against this repo''s own newest release (#4310)'
+Assert-True ($cand -match 'Test-PublishedSince -Published \$rel\.Published -Since \$anchor') 'and the release must come after the latest landing, or the park when nothing is named'
 
 Assert-True ($parkArm -match 'Format-ParkingLabelConflict -Labels \$parkingLabels') 'the single-issue route reads the pair inside the parking arm, from the matches already in hand'
 
