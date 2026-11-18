@@ -53,6 +53,9 @@
     write-target-lib.ps1 (#2533) and measure-context-lib.ps1 (Get-NextFenceState, #2534) from its own
     directory, inside the function, so loading this file costs nothing and defines nothing else.
 
+    A THIRD, FOR THE RETIRED-NAME MAP: Get-RetiredPolicyExtensionNames loads plugin-payload-lib.ps1 the same
+    way and derives its map from that lib's prior-name table, the one place the rename history is stated.
+
     Dot-source it $PSScriptRoot-relative:
 
         . (Join-Path $PSScriptRoot 'claude-md-import-lib.ps1')
@@ -74,19 +77,29 @@ function Get-PolicyExtensionList {
 function Get-RetiredPolicyExtensionNames {
     <#
         Each retired payload name and the name it became: the extensions #2788 renamed, and the plugin and
-        both extensions #4209 renamed (dkj-policy, bwj-development, dkj-solutions). A consumer that adopted
-        before a rename still carries the old name in its settings and its CLAUDE.md until it migrates, so
-        the old name is mapped rather than dropped. 'dkj-policy' maps to the workflow plugin itself, which
-        is no extension, so Get-PolicyExtensionNames drops it after mapping, and it only ever reaches the
-        repair sentence and the payload test.
+        both extensions #4209 renamed (dkj-policy, bwj-development, dkj-solutions), and the older names
+        before those. A consumer that adopted before a rename still carries the old name in its settings
+        and its CLAUDE.md until it migrates, so the old name is mapped rather than dropped. 'dkj-policy'
+        maps to the workflow plugin itself, which is no extension, so Get-PolicyExtensionNames drops it
+        after mapping, and it only ever reaches the repair sentence and the payload test.
+
+        DERIVED, NOT STATED. This map used to be a hand-written second copy of history that the plugin
+        locator also needs (which ids a plugin was called before), and two statements of one fact drift.
+        The single source is Get-PluginPriorNames in plugin-payload-lib.ps1 (current id -> retired ids);
+        this flips it to retired -> current for the workflow plugin and its extensions, and leaves out the
+        team plugins, which are no concern of a constitution import. The lib is loaded INSIDE this
+        function, so its functions live in this call's scope and loading this file still defines nothing
+        else.
     #>
-    return [ordered]@{
-        'dkj-policy-bwj'  = 'dkj-repo-workflow-bwj'
-        'dkj-policy-dkjs' = 'dkj-repo-workflow-dkj'
-        'bwj-development' = 'dkj-repo-workflow-bwj'
-        'dkj-solutions'   = 'dkj-repo-workflow-dkj'
-        'dkj-policy'      = 'dkj-repo-workflow'
+    . (Join-Path $PSScriptRoot 'plugin-payload-lib.ps1')
+    $family = @('dkj-repo-workflow') + @(Get-PolicyExtensionList)
+    $table  = Get-PluginPriorNames
+    $map    = [ordered]@{}
+    foreach ($current in @($table.Keys)) {
+        if ($family -notcontains $current) { continue }
+        foreach ($old in @($table[$current])) { $map[$old] = $current }
     }
+    return $map
 }
 
 function Get-WorkflowPluginDirPattern {

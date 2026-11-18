@@ -1870,6 +1870,30 @@ function Get-SharedScriptPairs {
             LibOnly = $true
         },
         @{
+            # THE ONE PLUGIN-PAYLOAD LOCATOR (#4259): where is dkj-repo-workflow installed, and which script
+            # inside it do I run. Consumer repos used to carry their own diverged plugin-scripts.ps1 with the
+            # plugin names hard-coded, so every rename was a code change in each; now their copy is the
+            # forwarder in templates/plugin-scripts-forwarder.ps1, which finds this lib and dot-sources it.
+            # It also holds the ONE prior-name table (current id -> retired ids): claude-md-import-lib's
+            # retired-name map is derived from it and loads it inside Get-RetiredPolicyExtensionNames, which
+            # is why it travels into dkj-repo-workflow-bwj too (below).
+            #
+            # DEPENDENCY-FREE, like plugin-tree-lib and source-repo-guard-lib and for the same reason: it is
+            # dot-sourced before anything has resolved where anything is, so it can rely on nothing loaded.
+            Name    = 'plugin-payload-lib'
+            Source  = 'scripts\lib\plugin-payload-lib.ps1'
+            Plugin  = 'dkj-repo-workflow'
+            LibOnly = $true
+        },
+        @{
+            # The same lib for claude-md-import-lib-bwj, which derives its retired-name map from it. A lib may
+            # only dot-source a sibling that ships in its own plugin.
+            Name    = 'plugin-payload-lib-bwj'
+            Source  = 'scripts\lib\plugin-payload-lib.ps1'
+            Plugin  = 'dkj-repo-workflow-bwj'
+            LibOnly = $true
+        },
+        @{
             # The source-repo guard (August 12, 2026). IT HAS TO TRAVEL, and that is the whole reason it is
             # a pair rather than a source-only helper: the guard fires from inside the copy a reader
             # wrongly ran, so one that stayed behind in this tree could never fire. Eleven entry points

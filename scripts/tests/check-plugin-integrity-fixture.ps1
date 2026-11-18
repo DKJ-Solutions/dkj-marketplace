@@ -399,6 +399,8 @@ function New-IntegrityFixture {
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\fence-lib.ps1') -Destination (Join-Path $Fixture 'scripts\lib\fence-lib.ps1') -Force
     # claude-md-import-lib.ps1 likewise (#2788): the plugin-kind check reads Get-PolicyExtensionList from it.
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\claude-md-import-lib.ps1') -Destination (Join-Path $Fixture 'scripts\lib\claude-md-import-lib.ps1') -Force
+# And the lib its retired-name map is derived from (#4259): Get-RetiredPolicyExtensionNames loads it.
+Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\plugin-payload-lib.ps1') -Destination (Join-Path $Fixture 'scripts\lib\plugin-payload-lib.ps1') -Force
     # and the lib it dot-sources inside Add-ClaudeMdImportLine (measure-context-lib.ps1 is copied above).
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\write-target-lib.ps1') -Destination (Join-Path $Fixture 'scripts\lib\write-target-lib.ps1') -Force
 
