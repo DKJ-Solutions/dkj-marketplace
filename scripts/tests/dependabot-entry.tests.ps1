@@ -34,6 +34,19 @@ function New-DepFixture {
     param([Parameter(Mandatory = $true)][string]$Label)
     $dir = New-Fixture -Label $Label
     Copy-Item -LiteralPath $DepSrc -Destination (Join-Path $dir 'scripts\task\dependabot-entry.ps1') -Force
+    # new-branch-fixture's New-Fixture already places these; they are named here too because this script's own load-time closure is what the fixture-lib-deps gate reads (#1693).
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\check-report-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\check-report-lib.ps1') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\entry-scaffold-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\entry-scaffold-lib.ps1') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\native-capture-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\native-capture-lib.ps1') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\repo-root-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\repo-root-lib.ps1') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\command-probe-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\command-probe-lib.ps1') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\document-newline-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\document-newline-lib.ps1') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\fence-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\fence-lib.ps1') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\fetch-attempt-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\fetch-attempt-lib.ps1') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\ref-print-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\ref-print-lib.ps1') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\workflow-folder-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\workflow-folder-lib.ps1') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\lib\run-progress-lib.ps1') -Destination (Join-Path $dir 'scripts\lib\run-progress-lib.ps1') -Force
+
     Add-FixtureRepoConfig -Dir $dir -RepoName 'example/fixture'
     # Committed, so the tree is clean when the script starts.
     Invoke-FixtureGitIn $dir add -A

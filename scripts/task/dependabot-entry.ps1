@@ -138,7 +138,7 @@ function Get-CommitCount {
     param([string]$Range)
     $res = Invoke-GitHere -GitArgs @('rev-list', '--count', $Range) -Utf8
     $text = (@($res.Output) -join '').Trim()
-    if ($res.ExitCode -ne 0 -or $text -notmatch '^\d+$') {
+    if (-not (Test-NativeExitMeasured -Capture $res) -or $res.ExitCode -ne 0 -or $text -notmatch '^\d+$') {
         Stop-Run "Could not count the commits in '$Range'; do both refs exist?"
     }
     return [int]$text
@@ -211,7 +211,7 @@ if ($PrJson) {
     if ($ghRepo) { $ghArgs += @('--repo', $ghRepo) }
     $ghArgs += @('--json', 'number,title,headRefName,state,author,isCrossRepository')
     $read = Invoke-NativeCapture -FilePath 'gh' -Arguments $ghArgs -Utf8 -DiscardStderr
-    if ($read.ExitCode -ne 0) {
+    if (-not (Test-NativeExitMeasured -Capture $read) -or $read.ExitCode -ne 0) {
         # Re-ask with stderr kept, so the refusal can carry gh's own reason (no auth, no such PR, ...).
         $why = Invoke-NativeCapture -FilePath 'gh' -Arguments $ghArgs -Utf8
         Stop-Run "Could not read PR #$PullRequest with gh (repo: $(if ($ghRepo) { $ghRepo } else { 'per gh' })).`n  gh said: $((@($why.Output) -join ' ').Trim())"
