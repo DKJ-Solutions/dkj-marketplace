@@ -239,6 +239,22 @@ function Get-SharedScriptPairs {
             MeasureArgs = @()
         },
         @{
+            # Centralized from a consumer copy (inbound #4287): writes the branch development document
+            # onto a Dependabot PR's own branch so the PR passes the branch-entry gate, which stays as
+            # it is. It reads the PR with gh, checks the branch out, merges the trunk in, has new-branch
+            # write the document, inserts the three bump questions and commits only that document.
+            Name   = 'dependabot-entry'
+            Source = 'scripts\task\dependabot-entry.ps1'
+            Plugin = 'dkj-repo-workflow'
+            Skill  = 'dependabot-entry'
+            # A test seam: the PR JSON gh would print, so the suite reaches the refusals without a
+            # network. A consumer never types it, and documenting it would invite someone to.
+            SkillParamsExempt = @('PrJson')
+            # The suite runs both copies against a fixture repo.
+            MirrorRun = 'dependabot-entry.tests.ps1'
+            # No MeasureArgs: it mutates the checked-out repo and pushes, so there is no read-only form to time.
+        },
+        @{
             # The one definition of "fast-forward only where it cannot touch anybody's work" (#3605):
             # sync-trunk.ps1 and the trunk-sync-sessionprep hook both call Invoke-TrunkFastForward.
             Name    = 'trunk-sync-lib'
