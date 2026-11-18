@@ -32,7 +32,9 @@
 
     B. MOJIBAKE (error). UTF-8 punctuation written through a CP1252 assumption, which is what Windows
        PowerShell 5.1's Set-Content does by default. Only character PAIRS that cannot occur in real prose
-       are matched, so accented text passes untouched.
+       are matched, so accented text passes untouched. In *.md a pair inside an inline code span is
+       quoted, not written (a record describing a mojibake repair), and is skipped like A's bare
+       references; the rest of that line is still checked.
 
     C. THE -ExecutionPolicy Bypass CONVENTION (error). A 'powershell' invocation with '-NoProfile' and
        '-File' but no '-ExecutionPolicy' between them cannot run on a machine with the default
@@ -408,10 +410,17 @@ function Test-MojibakeInFile {
     )
     $relFile = Get-RelativePath $File.FullName
     $lines = @(Get-Content -LiteralPath $File.FullName -Encoding UTF8)
+    $isMarkdown = $File.Extension -eq '.md'
 
     for ($i = 0; $i -lt $lines.Count; $i++) {
         $line = $lines[$i]
         if ([string]::IsNullOrEmpty($line)) { continue }
+
+        # In Markdown, a sequence inside an inline code span is being QUOTED -- a release record naming
+        # the mojibake it repaired -- not written, the same reading category A gives a bare reference
+        # in backticks (#4313). The span is removed before matching, so mojibake elsewhere on the same
+        # line is still caught. Not in a .ps1, where a backtick is PowerShell's escape character.
+        if ($isMarkdown) { $line = $line -replace '`[^`]*`', '' }
 
         # One finding per line per shape: four findings for one mangled line teaches a reader to skim.
         if ($line.Contains($script:MojibakePunct)) {
