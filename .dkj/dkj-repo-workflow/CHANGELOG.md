@@ -2,7 +2,42 @@
 
 ## [Unreleased]
 
-**28 / 32 minor entries** <!-- pending-tally -->
+**29 / 33 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4290-check-sitemap-in-shopify · 20261118-174948Z
+
+Ships the `check-sitemap` skill in `dkj-subagents-shopify`. It reports a storefront's sitemap layout for
+each market:
+- which sub-sitemap holds a URL
+- the URLs listed twice
+- with `-Catalog`, the products, collections and pages the store serves that its sitemap leaves out
+
+The markets come from the `Get-StorefrontMarkets` seam. A store that runs its markets as locale prefixes
+on one domain is read from that domain's single sitemap. Step 2 of
+[#4290](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4290).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store adopting this in place of its own copy gets two repairs:
+- An accented handle is no longer reported as missing from the sitemap, because sitemap paths are now
+  percent-decoded before the comparison.
+- A catalogue list cut off at the 25,000 ceiling is skipped with a notice instead of counted as a finding.
+
+`-Market` now defaults to every market.
+
+**Score:** 2
+
+#### Pull Request
+
+Move check-sitemap into dkj-subagents-shopify
+
+Plugins: dkj-subagents-shopify
+
+[PR #4306](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4306)
+
+---
 
 ### DEPLOY: feat/4290-check-jsonld-in-shopify · 20261118-172427Z
 
