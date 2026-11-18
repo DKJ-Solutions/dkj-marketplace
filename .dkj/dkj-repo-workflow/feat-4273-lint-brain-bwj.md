@@ -39,19 +39,50 @@
 
 ### PLAN
 
+Step 2 of #4259 for the documentation linter. Both BWJ stores carry a diverged `lint-brain.ps1`, its Stop
+hook `lint-changed-hook.ps1` and a suite. Reconcile them into one copy in `dkj-repo-workflow-bwj`. Removing
+the store copies is step 3 (#4274).
+
+#### Reconciliation, per behaviour (A = the store with the blockquote check, B = the store with the mojibake check)
+
+- **Link and anchor matching**: from B. It matches the whole file, so a link whose text wraps over two lines is caught. A's per-line regex sees neither half.
+- **Bare `<file>.md#<anchor>` references**: from B (A lacks it).
+- **Frozen release records exempt from the link checks**: B's rule, with the roots now read from the scanned repo's `Get-ReleaseChangelogNotesRoot` / `Get-ReleaseGithubNotesRoot` seams instead of a hard-coded folder path. With no seam there is no exemption, which is the loud direction.
+- **Mojibake, the `-ExecutionPolicy` flag (markdown and `.ps1` help), stale version claims**: from B (A lacks them). The record documents come from the five workflow seams, each probed on its own, because B's single try lost all five when one function was missing.
+- **Blockquote lazy continuation** (an ERROR): from A (B lacks it).
+- **README index gaps, with the gitignore filter**: from A, but opt-in (`Get-LintBrainOptions` returning `IndexGaps = $true`). B had rejected it as red on arrival.
+- **The `tests/` table check**: from B, but opt-in (`TestTable`). It holds a repo to a promise that repo never made.
+- **Category letters**: the two stores' letters collided, so they are merged. B's are kept (A links, B mojibake, C exec-policy, D version, E tests table), and A's checks move to F (blockquote) and G (index gaps).
+- **`-Quiet` and the hook**: `-Quiet` follows A (findings plus a summary line, `PASS|FAIL: n error(s) (A: 1, F: 1), m warning(s).`). The hook reads every error category from that line in one run. A counted only A+E, while B re-ran the lint and named only dead links. The hook stays fail-soft and never blocks.
+- **Repo root and config**: read from the scanned repo through `Resolve-BwjRepoRoot`, not from `$PSScriptRoot`, because the script now lives in the plugin. The hook finds the lint as its sibling.
+- **`plugin-floor.ps1`'s loader probe**: it does not move. It belongs to the B store's `plugin-scripts.ps1`, not to the lint, which only names `Get-PluginResolution` in one message. That message now points at `plugin-payload-lib.ps1`.
+- **Hook registration**: not added to `hooks/hooks.json`. Both stores still register their own copy, so a second registration would run it twice. Step 3 moves it (noted on #4274).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `dkj-repo-workflow-bwj/scripts/maintenance/lint-brain.ps1` and `lint-changed-hook.ps1`, the union of both store copies, in English and ASCII, with no store literals
+- [x] `scripts/tests/bwj-lint-brain.tests.ps1`, the union of both store suites plus the cases the merge created, registered in `suite-groups.json`
+- [x] a row in the extension README's "What ships under it today"
 
 ### TEST
 
+- [x] `bwj-lint-brain.tests.ps1`: 149 passed, 0 failed
+- [x] `check-plugin-integrity.ps1`: 0 errors, after the suite moved to the fixture-git helpers
+
 ### DEPLOY: feat/4273-lint-brain-bwj
 
-**Score:**
+The BWJ store maintainers get one documentation linter in `dkj-repo-workflow-bwj`, in place of two diverged
+copies, and with it each store gains the other store's checks. Nothing changes for them yet: they keep running
+their own copy until step 3 (#4274) switches them over. That step needs `Get-LintBrainOptions` in each store to
+switch on the check that store already ran.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
