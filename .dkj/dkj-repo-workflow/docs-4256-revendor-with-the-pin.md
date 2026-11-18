@@ -39,19 +39,35 @@
 
 ### PLAN
 
+Inbound #4256: moving `house-style.yml` to `@v7.0.0`, as the 7.0.0 note says, turns the brand-book gate
+red in a repo that vendors the brand book. The gate holds those copies to v7.0.0's checksums, and they
+differ from 6.x only in two comment lines of the rename.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The 7.0.0 note's runner step: re-vendor `house-style.css` and `house-product.css` from the same tag,
+  in the same change.
+- [x] The `dkj-brandbook` skill's CI-gate paragraph says the caller and the copies move together, and why.
 
 ### TEST
 
+- [x] Read back: both pages name the same two files and the same tag, and the skill's existing
+  "moves its caller when it takes a new copy" now states the converse as well.
+
 ### DEPLOY: docs/4256-revendor-with-the-pin
 
-**Score:**
+The 7.0.0 note and the brand-book skill now say that a repo vendoring the brand book re-vendors
+`house-style.css` and `house-product.css` from the same tag it pins the gate to, in the same change
+(#4256). Moving the pin alone turns the gate red, even where the copies differ only in a comment.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A DKJ-Solutions repo with a vendored brand book takes the 7.0.0 pin in one green change, instead of
+finding the second half on a red check.
+
+**Score:** 3
 
 #### Pull Request
 

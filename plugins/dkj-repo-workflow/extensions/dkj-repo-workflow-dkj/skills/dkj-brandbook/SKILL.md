@@ -257,8 +257,11 @@ jobs:
 ```
 
 Both tags name the release whose brand book the repo adopts, the one in the checksum table above. The release cut
-writes them beside the table's tag, never by hand, and a repo moves its caller when it takes a new copy: a
-source-side move on `main` no longer reaches its CI first
+writes them beside the table's tag, never by hand, and a repo moves its caller when it takes a new copy,
+**in the same change and never one without the other**: the gate holds the vendored files to that tag's
+checksums, so a caller moved alone turns red even where the two copies differ only in a comment
+([#4256](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4256)). A source-side move on `main` no
+longer reaches its CI first
 ([#4246](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4246), as #4237 did for the other read-only gates).
 
 **At session start**, the plugin's `house-style-sessioncheck` hook runs the same checks and reports them.
