@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**3 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4313-lint-brain-mojibake-inline-code · 20261118-203202Z
+
+`lint-brain`'s mojibake check (category B) no longer flags a mangled sequence that a Markdown file
+quotes inside an inline code span, the same reading category A gives a bare reference in backticks
+(#4313). A mangled sequence elsewhere on the same line is still caught.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A BWJ store whose release records document a mojibake repair, such as a line naming the garbled
+sequence it replaced, no longer has a red lint gate on correct history. Until now the only way to
+turn it green was to delete the example.
+
+**Score:** 3
+
+#### Pull Request
+
+lint-brain category B skips mojibake quoted inside inline code
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4316](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4316)
+
+---
 
 ### DEPLOY: fix/4314-lint-script-rooted-path · 20261118-201748Z
 

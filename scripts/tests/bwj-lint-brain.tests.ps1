@@ -365,6 +365,18 @@ $r = Invoke-Lint $t
 Assert-Equal 0 $r.Code 'real accented prose and a real em dash pass'
 Assert-NoMatch -Text $r.Text -Needle 'Mojibake U+' -Name 'with no finding (the section heading says Mojibake on every run, a finding carries code points)'
 
+# #4313: a record that QUOTES the mojibake it repaired, in an inline code span, is not mojibake.
+$t = New-Tree @{ 'a.md' = "# Title`n`nShown as ``$moji`` instead of a dash. Fixed.`n" }
+$r = Invoke-Lint $t
+Assert-Equal 0 $r.Code 'mojibake quoted inside an inline code span is not a finding (#4313)'
+Assert-NoMatch -Text $r.Text -Needle 'Mojibake U+' -Name 'and carries no B finding'
+
+# Its twin: the span is removed, not the line, so mojibake beside a quoted span is still caught.
+$t = New-Tree @{ 'a.md' = "# Title`n`nShown as ``$moji`` and also $moji here.`n" }
+$r = Invoke-Lint $t
+Assert-Equal 1 $r.Code 'mojibake outside the span on the same line is still an error'
+Assert-Match -Text $r.Text -Needle 'Mojibake U+00E2 U+20AC' -Name 'with its B finding'
+
 # ---------------------------------------------------------------------------------------------------
 Write-SuiteHeader 'bwj lint-brain C: the -ExecutionPolicy Bypass convention'
 $t = New-Tree @{ 'a.md' = "# Title`n`n" + '```sh' + "`npowershell -NoProfile -File scripts/task/start.ps1 -Name docs/x`n" + '```' + "`n" }
