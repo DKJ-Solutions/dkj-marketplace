@@ -2,7 +2,37 @@
 
 ## [Unreleased]
 
-**25 / 28 minor entries** <!-- pending-tally -->
+**26 / 29 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4289-sync-summary-in-shopify · 20261118-152601Z
+
+Ships the `sync-summary` skill in `dkj-subagents-shopify`. It turns a live-drift sync commit, or a range
+such as the live branch against the trunk, into a short report. The report lists what changed per theme
+area, and flags removed sections a template still references, new sections nobody asked for, and
+theme-editor setting changes. `-SinceTrunk` builds the range from `Get-ShopifyLiveDeployBranch`. Sync
+commits are recognised by `Get-ShopifySyncReferencePattern`, the same pattern `sync-main` uses. Step 2 of
+[#4289](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4289).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store that kept its own copy can drop it. One thing changes: a sync commit is now recognised by the
+`sync-main` pattern (`^[Ss]ync` by default), which is narrower than the store copy's pattern. Some
+subjects only mention third-party edits, without starting with "sync". To keep matching those, answer
+`Get-ShopifySyncReferencePattern`.
+
+**Score:** 2
+
+#### Pull Request
+
+Move sync-summary into dkj-subagents-shopify
+
+Plugins: dkj-subagents-shopify
+
+[PR #4302](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4302)
+
+---
 
 ### DEPLOY: feat/4289-which-theme-in-shopify · 20261118-150111Z
 
