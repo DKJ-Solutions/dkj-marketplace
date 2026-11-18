@@ -595,6 +595,19 @@ try {
     # THE WAKE LIST IS READ OFF THE TREE: the fixture's own ci.yml is `name: CI`.
     Assert-True ($mergeOnGreen -match '(?m)^\s+workflows:\s*\["CI"\]\s*$') `
         'workflow_run names this repo''s own pull_request workflow, read off its top-level name:'
+    # #4258: the list it chose is printed, and Part 1's two gate callers missing from the tree is said.
+    Assert-True ($rApply.Flat -like '*`[wake`]*merge-on-green.yml wakes on: "CI"*') 'the run prints the workflow_run list it chose (#4258)'
+    Assert-True ($rApply.Flat -like '*branch-entry.yml and .github/workflows/always-on-budget.yml not in this tree*') 'and names Part 1''s gate callers it did not find (#4258)'
+
+    # AND WITH THEM IN THE TREE, they are on the list and nothing is said about them.
+    $part1Dir = New-FixtureConsumer -Label 'part1-callers'
+    foreach ($pc in @(@{ F = 'branch-entry.yml'; N = 'Branch entry' }, @{ F = 'always-on-budget.yml'; N = 'Always-on budget' })) {
+        [System.IO.File]::WriteAllText((Join-Path $part1Dir ".github\workflows\$($pc.F)"), "name: $($pc.N)`non:`n  pull_request:`njobs: {}`n")
+    }
+    $rPart1 = Invoke-Adopt -Dir $part1Dir -ScriptArgs @('-RulesJsonOverride', $rulesOff, '-Apply')
+    $part1Mog = [System.IO.File]::ReadAllText((Join-Path $part1Dir '.github\workflows\merge-on-green.yml'))
+    Assert-True ($part1Mog -match '(?m)^\s+workflows:\s*\["Always-on budget", "Branch entry", "CI"\]\s*$') 'with Part 1''s callers present, both wake the sweep'
+    Assert-True ($rPart1.Flat -notlike '*not in this tree, so the sweep does not wake on them*') 'and no missing-caller warning is printed (#4258)'
     Assert-True ($rApply.Flat -like '*Pull requests: Read and write*') 'and the run names the extra token scope the merge needs'
 
     # A PULL_REQUEST WORKFLOW WITH NO TOP-LEVEL name: IS NOT GUESSED AT. GitHub then names it after its

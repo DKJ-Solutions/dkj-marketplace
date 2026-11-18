@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Inbound #4258: `adopt-ci-floor` reads `merge-on-green.yml`'s `workflow_run` list off the pull-request
+workflows present when it runs (verified at `adopt-ci-floor.ps1:1109`). Run before Part 1 re-placed
+`branch-entry.yml` and `always-on-budget.yml`, it silently dropped both from the list.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] When it places `merge-on-green.yml`, the run prints a `[wake]` line with the list it chose. It warns,
+  with the order that repairs it, when Part 1's two gate callers are not in the tree.
+- [x] The 7.0.0 note's delete-and-re-run repair says to run Part 1 first.
+- [x] Mirror, and two cases in `adopt-ci-floor.tests.ps1`: callers missing (warned), callers present (both
+  on the list, no warning).
 
 ### TEST
 
+- [x] `adopt-ci-floor.tests.ps1` standalone: 338 passed, 0 failed.
+
 ### DEPLOY: fix/4258-show-merge-on-green-wake-list
 
-**Score:**
+`adopt-ci-floor` now prints which workflows wake the merge-on-green sweep when it places that runner
+(#4258). It also warns when Part 1's `branch-entry.yml` or `always-on-budget.yml` is missing, because
+the sweep then does not wake on them. The 7.0.0 note's repair says to run Part 1 first. Before, a run in
+the wrong order shortened the trigger list without a word, and merges only came later on the schedule.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A maintainer re-placing CI runners sees the trigger list it chose and is told when it is short.
+
+**Score:** 2
 
 #### Pull Request
 
