@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**12 / 12 minor entries** <!-- pending-tally -->
+**13 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4267-closed-message-result-owed · 20261118-085932Z
+
+An Asana task whose GitHub issue closes without a go-live block no longer reads "this Asana task is now
+in review" while its card stays in progress (#4267). The closed line now says the result message for
+this round follows. The issue is labelled `result-owed`, the store's session check lists such closed
+issues, and `build-golive-block -ByHand -Post` takes the label off once the result message is on the
+task. Before, the run log was the only record of that debt, and smartwatchbanden#1212's went unpaid
+until the requester asked. A store takes it by re-copying the `asana-closed-message` template; the
+workflow now needs `issues: write`.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A promised result message can no longer be forgotten in silence: every session in the store names it
+until it is written.
+
+**Score:** 2
+
+#### Pull Request
+
+asana-closed-message without a block: track the owed result message, and stop claiming review
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4268](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4268)
+
+---
 
 ### DEPLOY: fix/4258-show-merge-on-green-wake-list · 20261118-020506Z
 
