@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**14 / 14 minor entries** <!-- pending-tally -->
+**14 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4272-check-theme-refs-in-bwj · 20261118-095347Z
+
+`dkj-repo-workflow-bwj` now ships the theme-reference check and the theme-check gate shape check. The
+two BWJ stores used to keep separately diverged copies of each. Every behaviour where the two copies
+differed is now settled in one place and covered by this repo's suites, so a fix reaches both stores
+through a release ([#4272](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4272), part of
+[#4259](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4259)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A BWJ store maintainer gets the scripts, but nothing changes for them until the store swaps its copy
+for a forwarder (#4274).
+
+**Score:** N/A
+
+#### Pull Request
+
+Move check-theme-refs and its gate into dkj-repo-workflow-bwj
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4276](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4276)
+
+---
 
 ### DEPLOY: feat/4259-plugin-payload-locator · 20261118-091702Z
 
