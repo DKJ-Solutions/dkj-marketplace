@@ -39,21 +39,53 @@
 
 ### PLAN
 
+Step 3 of 3 of [#4290](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4290). The owner's
+decision splits `measure-buybox` in two:
+- **Moves to the plugin:** the measuring mechanism, the node harness with its viewport emulation.
+- **Stays in the store:** the theme's selectors and the expectation, read through one new seam,
+  `Get-ShopifyBuyBox`.
+
+This closes #4290. A gap in the native-capture audit's scope, found here, is filed as #4307.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/task/measure-buybox.ps1`, `scripts/task/measure-buybox.harness.js` and
+  `scripts/lib/measure-buybox-rules.ps1` in the shopify plugin, in English. The harness hard-codes no
+  theme selector.
+- [x] The `Get-ShopifyBuyBox` seam: `BoxSelector` and `AtcSelector` are required. `BlockSelectors`,
+  `StickySelector`, `MobileMaxWidth` and the `AtcMaxTop`/`AtWidth` expectation are optional. A verdict is
+  given only when the measured width equals `AtWidth`.
+- [x] The `node` call is bounded, and a missing `node` is a refusal. It is audited by hand in
+  `native-capture.tests.ps1`, because the counter does not see plugin-only scripts (#4307).
+- [x] `skills/measure-buybox/SKILL.md`, the README row and seam table, and `scripts/tests/shopify-measure-buybox.tests.ps1` in `suite-groups.json`
 
 ### TEST
 
+- [x] `shopify-measure-buybox` 91/0, including an end-to-end run with a stand-in `node` and `node --check` on the harness
+- [x] `native-capture` 355/0, `exception-message-guard` 18/0, and the other shopify suites green
+- [x] `check-plugin-integrity.ps1` 0 errors
+- [x] The full gate runs in `ship-pr`
+
 ### DEPLOY: feat/4290-measure-buybox-in-shopify
 
-**Score:**
+Ships the `measure-buybox` skill in `dkj-subagents-shopify`. It measures where the add-to-cart button
+sits in a product page's buy box on a really emulated viewport. Resizing a window or framing the page
+silently measures the wrong width, so it uses headless Chrome with DevTools device emulation instead. It
+always prints the width it actually measured at. The theme's selectors and the store's expectation come
+from the new `Get-ShopifyBuyBox` seam. With an expectation it prints PASS or FAIL; without one it only
+measures. It needs node 22.7 or newer. Closes
+[#4290](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4290).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A store can track a buy-box layout requirement, such as "the add-to-cart button within N px at 390 px
+wide", as a measured number instead of a judgement by eye. To do that, it answers `Get-ShopifyBuyBox` in
+`scripts/repo-config.ps1`.
+
+**Score:** 2
 
 #### Pull Request
 
 Move measure-buybox's mechanism into dkj-subagents-shopify
-
