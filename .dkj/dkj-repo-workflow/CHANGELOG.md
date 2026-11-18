@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**24 / 26 minor entries** <!-- pending-tally -->
+**24 / 27 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4292-invoke-native-lib · 20261118-124207Z
+
+The BWJ go-live block builder (`build-golive-block`) no longer stops with an error when `gh` or `git` is
+missing from the machine. It now reports that call as failed, as `notify-live` and `prepare-release`
+already did. The three scripts now share one copy of the helper that runs `gh` and `git`, so a later fix
+to that helper reaches all three at once.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+One Invoke-Native lib for the dkj-repo-workflow-bwj task scripts
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4298](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4298)
+
+---
 
 ### DEPLOY: fix/4293-kind-label-repo-heredoc · 20261118-122917Z
 
