@@ -304,6 +304,18 @@ $t = New-Tree ($rec + $cfg)
 $r = Invoke-Lint $t
 Assert-Equal 0 $r.Code 'a dead LINK and a dead bare reference in a frozen record are both exempt'
 
+# #4312: every v7 consumer keeps its records under the dot-folder .dkj/, and the normaliser once stripped
+# that dot, so no record there was ever exempt. A leading './' is still stripped.
+$dotRec = @{
+    '.dkj/flow/CHANGELOG.md'                    = "# Changelog`n"
+    '.dkj/flow/releases/changelog/1.x/1.2.0.md' = "# v1.2.0`n`nRetired [the page](../../../CONTRIBUTING.md).`n`nIt moved out of CONTRIBUTING.md#some-rule when it went.`n"
+    '.dkj/flow/releases/github/1.x/1.2.0.md'    = "# v1.2.0`n`nSee [the page](../../../CONTRIBUTING.md).`n"
+}
+$dotCfg = @{ 'scripts/repo-config.ps1' = (Get-ConfigText).Replace("'docs/workflow/CHANGELOG.md'", "'.dkj/flow/CHANGELOG.md'").Replace("'docs/workflow/releases/changelog'", "'.dkj/flow/releases/changelog'").Replace("'docs/workflow/releases/github'", "'./.dkj/flow/releases/github'") }
+$t = New-Tree ($dotRec + $dotCfg)
+$r = Invoke-Lint $t
+Assert-Equal 0 $r.Code 'a frozen record under a dot-folder root (.dkj/, and ./.dkj/) is exempt too'
+
 $hand = @{
     'docs/workflow/CHANGELOG.md'                       = "# Changelog`n"
     'docs/workflow/releases/history.md'                = "# Releases`n`nSee [the page](../CONTRIBUTING.md).`n"
