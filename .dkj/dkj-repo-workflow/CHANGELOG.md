@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**13 / 13 minor entries** <!-- pending-tally -->
+**14 / 14 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4259-plugin-payload-locator · 20261118-091702Z
+
+`dkj-repo-workflow` now ships the plugin-payload locator (`scripts/lib/plugin-payload-lib.ps1`) and a
+forwarder template (`templates/plugin-scripts-forwarder.ps1`) for consumers that run plugin scripts from
+their own scripts (#4259). A consumer that replaces its own `scripts/lib/plugin-scripts.ps1` with the
+template keeps every `Resolve-PluginScript` call site. A later plugin rename then reaches it with the
+release, instead of as a code change in the repo. The retired-name map the import checks use now derives
+from the same table.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store repo can drop its own diverged locator for a few-line forwarder, so the next plugin rename is a
+version bump there rather than a migration.
+
+**Score:** 2
+
+#### Pull Request
+
+Ship the plugin-payload locator in dkj-repo-workflow, so a store's plugin-scripts.ps1 becomes a forwarder
+
+Plugins: dkj-repo-workflow, dkj-repo-workflow-bwj
+
+[PR #4269](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4269)
+
+---
 
 ### DEPLOY: fix/4267-closed-message-result-owed · 20261118-085932Z
 
