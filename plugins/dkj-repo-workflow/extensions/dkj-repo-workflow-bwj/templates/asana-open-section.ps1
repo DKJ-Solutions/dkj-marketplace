@@ -26,7 +26,9 @@
       - never a COMPLETED task;
       - never one in the NeedsInfo section while the issue carries the map's NeedsInfoLabel (or
         awaiting-info-client, the family's current name for it): that card waits on its requester;
-      - never a task on several boards, nor one whose board has no single section with the Filed code.
+      - never a task on several boards none of which is the repo's own (Get-AsanaProjectGid, #4282: where it
+        is among them, only that board's card is judged), nor one whose board has no single section with
+        the Filed code.
 
     So on a board whose Filed shares the code of Requests and NeedsInfo ('1. Todo', the default on both
     store boards), there is no earlier section and the sweep moves nothing. It acts only on a board that
@@ -220,17 +222,42 @@ function Get-SectionCode {
     return ''
 }
 
+function Get-RepoProjectGid {
+    <#
+        Pure: the Asana project the repo's Get-AsanaProjectGid names -- its own board -- read from the TEXT
+        of scripts/repo-config.ps1 as Get-RepoStageCode reads the stage map, or '' where the file names
+        none (#4282). Only a numeric GID of six digits or more is read, and a comment does not count.
+    #>
+    param([AllowEmptyString()][string]$ConfigText = '')
+    $start = [regex]::Match([string]$ConfigText, '(?im)^\s*function\s+Get-AsanaProjectGid\b')
+    if (-not $start.Success) { return '' }
+    $body = $ConfigText.Substring($start.Index + $start.Length)
+    $next = [regex]::Match($body, '(?im)^\s*function\s+')
+    if ($next.Success) { $body = $body.Substring(0, $next.Index) }
+    $body = [regex]::Replace($body, '(?s)<#.*?#>', '')
+    $body = [regex]::Replace($body, '(?m)#.*$', '')
+    $m = [regex]::Match($body, '(?<![\w.-])[''"]?([0-9]{6,})[''"]?(?![\w.-])')
+    if ($m.Success) { return $m.Groups[1].Value }
+    return ''
+}
+
 function Read-AsanaTaskBoard {
     <#
         The task's board as both card writes judge it (#3248, #3562): its memberships (Project,
         SectionName), whether it is Completed, and -- where it is on exactly one board -- that board's
         sections (Gid, Name). Ok is $false, with Why, wherever a read failed; it never throws. -Get is the
         read, injectable as in Resolve-DoneSectionName.
+
+        ON SEVERAL BOARDS, THE REPO'S OWN ONE DECIDES (#4282): where -HomeProject (Get-AsanaProjectGid) is
+        among the task's boards, only that membership is kept, so a task a colleague also keeps on their
+        team's board still moves on the repo's. Where it is not among them, every membership stays and the
+        judge skips the move as before: which card the requester looks at is then a guess.
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Gid,
         [string]$Pat = '',
-        [scriptblock]$Get = $null
+        [scriptblock]$Get = $null,
+        [AllowEmptyString()][string]$HomeProject = ''
     )
     $fail = { param($why) [pscustomobject]@{ Ok = $false; Why = $why; Memberships = @(); Sections = @(); Completed = $false } }
     if ($Gid -notmatch '\A[0-9]+\z') { return (& $fail 'the task GID is not numeric') }
@@ -241,6 +268,10 @@ function Read-AsanaTaskBoard {
     $memberships = @(@($task.data.memberships) | Where-Object { ([string]$_.project.gid) -match '\A[0-9]+\z' } |
         ForEach-Object { [pscustomobject]@{ Project = [string]$_.project.gid; SectionName = [string]$_.section.name } })
     $boards = @($memberships | ForEach-Object { $_.Project } | Select-Object -Unique)
+    if ($boards.Count -gt 1 -and $HomeProject -and $boards -contains $HomeProject) {
+        $memberships = @($memberships | Where-Object { $_.Project -eq $HomeProject })
+        $boards = @($HomeProject)
+    }
     $sections = @()
     if ($boards.Count -eq 1) {
         try {
@@ -395,6 +426,7 @@ function Invoke-OpenSectionSweep {
     if ($Repo -notmatch '\A[^\s#/]+/[^\s#/]+\z') { throw "Repo '$Repo' is not 'owner/repo'." }
     $config = Read-RepoConfigText
     $codes = Read-StageCodes -ConfigText $config
+    $homeBoard = Get-RepoProjectGid -ConfigText $config
     if (-not $codes['Filed']) {
         Write-Host 'The repo states no Filed stage in Get-AsanaStageMap (scripts/repo-config.ps1) -- nothing to keep cards in, so the sweep did nothing.'
         return
@@ -422,7 +454,7 @@ function Invoke-OpenSectionSweep {
         $ref = Resolve-AsanaTaskRef -IssueBody ([string]$i.body)
         if (-not $ref.Gid) { continue }
         $linked++
-        $board = Read-AsanaTaskBoard -Gid $ref.Gid -Pat $AsanaPat
+        $board = Read-AsanaTaskBoard -Gid $ref.Gid -Pat $AsanaPat -HomeProject $homeBoard
         if (-not $board.Ok) {
             $unread++
             Write-Host "  $Repo#$($i.number): skipped -- $($board.Why)."

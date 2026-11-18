@@ -2,7 +2,87 @@
 
 ## [Unreleased]
 
-**18 / 20 minor entries** <!-- pending-tally -->
+**21 / 23 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4288-eol-gate · 20261118-115621Z
+
+`open-pr` now refuses a branch whose git index carries a file with CRLF while `.gitattributes` pins it to
+`eol=lf`, and prints the one-line repair (`git add --renormalize -- <paths>`). The check is
+`scripts/lint/check-eol.ps1`, shared through the `dkj-repo-workflow` mirror and runnable as a CI step, so a
+consumer's own copy can go (#4288).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer on Windows whose `.gitattributes` pins LF no longer meets an EOL-only modification at `ship-pr`'s
+fast-forward (#4144): `open-pr` catches the CRLF blob before the push, with the repair line printed.
+
+**Score:** 2
+
+#### Pull Request
+
+Ship the CRLF-under-eol=lf index check as a shared gate
+
+Plugins: dkj-repo-workflow
+
+[PR #4296](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4296)
+
+---
+
+### DEPLOY: feat/4286-trunk-commit-guard · 20261118-114449Z
+
+`guard-working-copy` now refuses a `git commit` made while HEAD is on the trunk, in every thread, unless
+the subject is one of the constitution's bounded direct commits (`fold:`, `release:`, `release-prep:`,
+`release-notes:`). Before this, "never directly on the trunk" was prose only, outside one store that
+built its own guard. The rule fails open whenever it cannot tell the branch or the trunk
+([#4286](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4286)).
+
+**Score:** 4
+
+#### What makes this deploy extra special
+
+A consumer's session that tries to commit straight on the trunk is now stopped and pointed at
+`new-branch`, where it used to land the commit and fail only at push time, or not at all.
+
+**Score:** 3
+
+#### Pull Request
+
+Refuse a commit on the trunk in guard-working-copy, outside the fold and release subjects
+
+Plugins: dkj-repo-workflow
+
+[PR #4294](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4294)
+
+---
+
+### DEPLOY: fix/4282-asana-move-own-board · 20261118-112815Z
+
+When an issue closes with its result block, or is reopened, the BWJ Asana workflow now moves the linked
+card even when the task also sits on another team's board: it moves the card on the repo's own board,
+the one `Get-AsanaProjectGid` names, and leaves the other boards alone. Before, any second board made the
+move a skip, so the message arrived while the card stayed in its old column. The daily open-section sweep
+follows the same rule. A task on several boards none of which is the repo's own is still left where it is.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Tickets from other teams, which normally live on a second board, now follow their message into review
+like every other ticket.
+
+**Score:** 2
+
+#### Pull Request
+
+Asana card moves use the repo's own board when a task is on several boards
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4285](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4285)
+
+---
 
 ### DEPLOY: feat/4273-lint-brain-bwj · 20261118-111441Z
 

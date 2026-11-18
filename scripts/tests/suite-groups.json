@@ -99,6 +99,7 @@
                        "guards":  "check-plugin-integrity and the sync checks open-pr runs before the suites: links, roster, manifests, shared scripts, the always-on budget",
                        "suites":  [
                                       "always-on-budget.tests.ps1",
+                                      "check-eol.tests.ps1",
                                       "check-house-style.tests.ps1",
                                       "check-plugin-integrity-branch-document.tests.ps1",
                                       "check-plugin-integrity-commands.tests.ps1",
