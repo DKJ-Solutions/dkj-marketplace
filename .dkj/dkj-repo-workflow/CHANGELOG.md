@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**26 / 29 minor entries** <!-- pending-tally -->
+**26 / 30 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4301-sync-summary-renamed-section · 20261118-160931Z
+
+`sync-summary` now flags a section that a sync **renamed** while a template still points at its old
+name, the same way it flags a deleted one: such a page returns HTTP 200 and renders nothing. Until now
+only deletions were checked, so a rename slipped through as if nothing had gone.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A: `sync-summary` has not been released yet, so this lands in the same release that first ships it and
+no store repo ever runs the version with the gap.
+
+**Score:** N/A
+
+#### Pull Request
+
+sync-summary flags a renamed section a template still references
+
+Plugins: dkj-subagents-shopify
+
+[PR #4303](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4303)
+
+---
 
 ### DEPLOY: feat/4289-sync-summary-in-shopify · 20261118-152601Z
 
