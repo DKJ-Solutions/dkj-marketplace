@@ -2,7 +2,37 @@
 
 ## [Unreleased]
 
-**29 / 33 minor entries** <!-- pending-tally -->
+**30 / 34 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4290-measure-buybox-in-shopify · 20261118-182610Z
+
+Ships the `measure-buybox` skill in `dkj-subagents-shopify`. It measures where the add-to-cart button
+sits in a product page's buy box on a really emulated viewport. Resizing a window or framing the page
+silently measures the wrong width, so it uses headless Chrome with DevTools device emulation instead. It
+always prints the width it actually measured at. The theme's selectors and the store's expectation come
+from the new `Get-ShopifyBuyBox` seam. With an expectation it prints PASS or FAIL; without one it only
+measures. It needs node 22.7 or newer. Closes
+[#4290](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4290).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store can track a buy-box layout requirement, such as "the add-to-cart button within N px at 390 px
+wide", as a measured number instead of a judgement by eye. To do that, it answers `Get-ShopifyBuyBox` in
+`scripts/repo-config.ps1`.
+
+**Score:** 2
+
+#### Pull Request
+
+Move measure-buybox's mechanism into dkj-subagents-shopify
+
+Plugins: dkj-subagents-shopify
+
+[PR #4308](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4308)
+
+---
 
 ### DEPLOY: feat/4290-check-sitemap-in-shopify · 20261118-174948Z
 
