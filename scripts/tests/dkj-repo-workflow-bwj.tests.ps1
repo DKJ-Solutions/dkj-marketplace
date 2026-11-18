@@ -1667,6 +1667,17 @@ Assert-Equal '' (Select-ReviewMoveSection -Memberships @([pscustomobject]@{ Proj
 Assert-Equal '5' (Get-RepoStageCode -ConfigText "function Get-AsanaStageMap { @{`nInReview = 5`nCompleted = 7`n} }" -Stage 'InReview') 'the InReview code is read from the same map, as text'
 $cmGetMove = { param($Uri) if ($Uri -like '*/tasks/*') { @{ data = @{ memberships = @(@{ project = @{ gid = '77' }; section = @{ name = '2. In Progress' } }) } } } else { @{ data = @(@{ gid = '303'; name = '3. Waiting for review' }, @{ gid = '304'; name = '4. Done' }) } } }
 Assert-Equal '303' (Resolve-ReviewMoveSection -Gid '123' -InReviewCode '3' -CompletedCode '4' -Get $cmGetMove).SectionGid 'resolved through the task''s board and the section it sits in'
+# ON SEVERAL BOARDS THE REPO'S OWN ONE DECIDES (#4282): smartwatchbanden#1439's task sat on the repo's board
+# and on a team board without stage codes, and the card stayed put.
+$cmGetTwo = { param($Uri) if ($Uri -like '*/tasks/*') { @{ data = @{ completed = $false; memberships = @(@{ project = @{ gid = '880000' }; section = @{ name = 'Techniek' } }, @{ project = @{ gid = '770000' }; section = @{ name = '2. In Progress' } }) } } } elseif ($Uri -like '*/projects/770000/*') { @{ data = @(@{ gid = '302'; name = '2. In Progress' }, @{ gid = '303'; name = '3. Waiting for review' }, @{ gid = '304'; name = '4. Done' }) } } else { throw 'only the home board is read' } }
+Assert-Equal '303' (Resolve-ReviewMoveSection -Gid '123' -InReviewCode '3' -CompletedCode '4' -HomeProject '770000' -Get $cmGetTwo).SectionGid 'a task on two boards moves on the repo''s own board'
+$cmTwo = Resolve-ReviewMoveSection -Gid '123' -InReviewCode '3' -CompletedCode '4' -Get $cmGetTwo
+Assert-True ($cmTwo.SectionGid -eq '' -and $cmTwo.Why -eq 'the task is on 2 boards, not one') 'without a home board it is still a guess, so no move'
+Assert-Equal '' (Resolve-ReviewMoveSection -Gid '123' -InReviewCode '3' -CompletedCode '4' -HomeProject '990000' -Get $cmGetTwo).SectionGid 'nor where the home board is not among the task''s boards'
+Assert-Equal '302' (Resolve-ReopenCardWrites -Gid '123' -InDevelopmentCode '2' -HomeProject '770000' -Get { param($Uri) if ($Uri -like '*/tasks/*') { @{ data = @{ completed = $true; memberships = @(@{ project = @{ gid = '880000' }; section = @{ name = 'Techniek' } }, @{ project = @{ gid = '770000' }; section = @{ name = '4. Done' } }) } } } else { @{ data = @(@{ gid = '302'; name = '2. In Progress' }, @{ gid = '304'; name = '4. Done' }) } } }).SectionGid 'and the reopen moves it on the repo''s own board too'
+Assert-Equal '1207000000000001' (Get-RepoProjectGid -ConfigText "function Get-AsanaProjectGid {`n    # 999999999 is the old board`n    '1207000000000001'`n}`nfunction Get-Other { '555555555' }") 'the home board is read from Get-AsanaProjectGid as text, not from a comment or the next function'
+Assert-Equal '' (Get-RepoProjectGid -ConfigText "function Get-AsanaProjectGid { '<the Asana project>' }") 'and is empty where it names no GID'
+Assert-Equal '' (Get-RepoProjectGid -ConfigText '') 'or where there is no seam file'
 $cmMoveF = Resolve-ReviewMoveSection -Gid '123' -InReviewCode '3' -CompletedCode '4' -Get $cmGetFail
 Assert-True ($cmMoveF.SectionGid -eq '' -and $cmMoveF.Why -eq 'the task could not be read') 'a failed read is a skipped move and never throws'
 $cmMove = New-AsanaMoveRequest -Gid '123' -SectionGid '303'
@@ -2205,7 +2216,7 @@ foreach ($fn in @('Get-AsanaGidsFromText', 'Get-AsanaHeaderRowText', 'Resolve-As
 foreach ($fn in @('Invoke-GhCapture', 'ConvertFrom-IssueListJson')) {
     Assert-Equal (Get-FunctionSourceText -Path $plTemplate -Name $fn) (Get-FunctionSourceText -Path $osTemplate -Name $fn) "the open-section template's $fn equals asana-prio-label.ps1's"
 }
-foreach ($fn in @('Get-RepoStageCode', 'Get-SectionCode', 'Read-AsanaTaskBoard', 'New-AsanaMoveRequest', 'Invoke-AsanaWrite', 'Read-RepoConfigText')) {
+foreach ($fn in @('Get-RepoStageCode', 'Get-SectionCode', 'Get-RepoProjectGid', 'Read-AsanaTaskBoard','New-AsanaMoveRequest', 'Invoke-AsanaWrite', 'Read-RepoConfigText')) {
     Assert-Equal (Get-FunctionSourceText -Path $cmTemplate -Name $fn) (Get-FunctionSourceText -Path $osTemplate -Name $fn) "the open-section template's $fn equals asana-closed-message.ps1's"
 }
 . $osTemplate

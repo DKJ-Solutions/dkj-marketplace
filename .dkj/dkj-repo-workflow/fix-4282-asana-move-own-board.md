@@ -39,19 +39,41 @@
 
 ### PLAN
 
+#4282: `asana-closed-message` skipped the InReview move (and the reopen's InDevelopment move) whenever the
+task sat on more than one Asana board -- measured on smartwatchbanden#1439, a task on the repo's own board
+and on the SEO team's. The repo's own board is the one `Get-AsanaProjectGid` names, so on several boards
+only that membership is judged; where it is not among them the move is still skipped. The open-section
+sweep shares the board read (a held-equal copy) and gets the same rule.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-RepoProjectGid`: reads the GID from `Get-AsanaProjectGid` in `scripts/repo-config.ps1` as text, never run, like the stage map.
+- [x] `Read-AsanaTaskBoard -HomeProject`: on several boards, keeps only the repo's own membership when it is among them.
+- [x] `Resolve-ReviewMoveSection` and `Resolve-ReopenCardWrites` pass it through; `asana-open-section.ps1` takes both copied helpers and passes it in its sweep.
+- [x] Header docs of both templates name the new rule.
 
 ### TEST
 
+- [x] `scripts/tests/dkj-repo-workflow-bwj.tests.ps1`: a two-board task moves on the home board (review and reopen), stays put without a home board or with one not among its boards, the GID reader ignores comments and the next function; the copy-equality list includes `Get-RepoProjectGid` -- 1068 asserts pass.
+- [x] The full gate runs in `ship-pr`.
+
 ### DEPLOY: fix/4282-asana-move-own-board
 
-**Score:**
+When an issue closes with its result block, or is reopened, the BWJ Asana workflow now moves the linked
+card even when the task also sits on another team's board: it moves the card on the repo's own board,
+the one `Get-AsanaProjectGid` names, and leaves the other boards alone. Before, any second board made the
+move a skip, so the message arrived while the card stayed in its old column. The daily open-section sweep
+follows the same rule. A task on several boards none of which is the repo's own is still left where it is.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Tickets from other teams, which normally live on a second board, now follow their message into review
+like every other ticket.
+
+**Score:** 2
 
 #### Pull Request
 
+Asana card moves use the repo's own board when a task is on several boards
