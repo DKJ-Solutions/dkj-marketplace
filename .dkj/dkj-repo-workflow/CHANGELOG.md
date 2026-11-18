@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**18 / 19 minor entries** <!-- pending-tally -->
+**18 / 20 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4273-lint-brain-bwj · 20261118-111441Z
+
+The BWJ store maintainers get one documentation linter in `dkj-repo-workflow-bwj`, in place of two diverged
+copies, and with it each store gains the other store's checks. Nothing changes for them yet: they keep running
+their own copy until step 3 (#4274) switches them over. That step needs `Get-LintBrainOptions` in each store to
+switch on the check that store already ran.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+N/A
+
+**Score:** N/A
+
+#### Pull Request
+
+Move lint-brain and lint-changed-hook into dkj-repo-workflow-bwj, reconciled from both store copies
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4283](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4283)
+
+---
 
 ### DEPLOY: feat/4279-agenda-tasks-card · 20261118-110236Z
 
