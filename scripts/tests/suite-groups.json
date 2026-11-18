@@ -303,6 +303,7 @@
                                       "merged-pr-lib.tests.ps1",
                                       "push-preview.tests.ps1",
                                       "shopify-cli.tests.ps1",
+                                      "shopify-which-theme.tests.ps1",
                                       "shopify-floor-sessioncheck.tests.ps1",
                                       "sync-main.tests.ps1",
                                       "sync-rules.tests.ps1",
