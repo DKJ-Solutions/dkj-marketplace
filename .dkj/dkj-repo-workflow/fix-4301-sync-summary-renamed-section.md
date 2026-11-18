@@ -75,5 +75,3 @@ no store repo ever runs the version with the gap.
 
 sync-summary flags a renamed section a template still references
 
-Plugins: dkj-subagents-shopify
-
