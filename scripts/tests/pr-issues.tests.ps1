@@ -2890,6 +2890,12 @@ Assert-True ($shipText -like '*if ($watchNarrowed -and $requiredFactsJson) {*') 
 Assert-True ($shipText -like '*if (-not $watchNarrowed) {*') 'and so is step 8, so it cannot re-report a wait that already covered everything'
 Assert-True ($shipText -notlike '*if ($requiredWaitNames.Count -eq 0) {*') 'nothing downstream reads the ruleset answer as though it were the watch''s behaviour'
 
+# A GREEN WATCH ON A CANCELLED REQUIRED RUN IS NOT GREEN (#4315). gh exits 0 on a `cancel` bucket and the
+# verdict reads it as concluded, so the step-3 loop may break out only once no required record reads
+# cancelled -- and otherwise waits for the superseding run the way the forward lap does (#3331).
+Assert-True ($shipText -match '(?s)if \(\$pendingRequired\.Count -eq 0\) \{\s*\$cancelledRequired = @\(\).*?Get-CancelledCheckRunIds -ChecksJson \$checkFactsJson -Names \$requiredWaitNames.*?if \(\$cancelledRequired\.Count -eq 0\) \{ \$lostWatchNote = ''''; break \}') 'the green watch breaks out only when no required record reads cancelled (#4315)'
+Assert-True ($shipText -match '(?s)\$superseded = Wait-ForwardedCertificate -Pr "\$pr" -Repo \$repo -PreviousRunIds \$cancelledRequired.*?if \(\$null -eq \$superseded\) \{.*?exit 1\s*\}\s*continue') 'and otherwise waits for the superseding run, refusing on a timeout and re-entering the watch on an answer'
+
 # THE MODE MAY NARROW MID-RUN BUT NEVER WIDEN. A required workflow that had not created its check run
 # when the ruleset could not be read is found one watch later; an empty re-reading is not evidence
 # that the ruleset requires nothing, and widening on it would undo the fix invisibly.

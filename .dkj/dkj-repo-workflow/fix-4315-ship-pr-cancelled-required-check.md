@@ -39,19 +39,48 @@
 
 ### PLAN
 
+#4315: on PR #4311 a resumed ship printed "every REQUIRED check is green" about a `lint-en-tests` run
+that the concurrency group had cancelled, then met a merge the ruleset refused.
+
+#### The reason, verified against the code
+
+The issue points at the cancelled-record guard at `ship-pr.ps1:1852`. That guard sits in
+`Wait-ForwardedCertificate`, which only step 3b's forward lap enters, so it never ran here. The
+ordinary step-3 loop is where the run went through. gh counts a `cancel` bucket as skipped, so
+`gh pr checks --watch --required` exits 0. `Get-MergeBlockVerdict` reads the cancelled record as
+concluded, so `UnfinishedRequired` is empty, and the loop broke out on the green line.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] In step 3's watch loop, a green watch with no unfinished required check now asks
+  `Get-CancelledCheckRunIds` too. On a cancelled required record it waits for the superseding run
+  through `Wait-ForwardedCertificate`, with the cancelled ids as the run set to look past. It then
+  re-enters the watch, so the new run's answer, green or red, reaches the ordinary verdict. A
+  timeout, or a cancelled record on the last watch attempt, refuses without merging.
+- [x] The plugin mirror `plugins/dkj-repo-workflow/scripts/release/ship-pr.ps1` is kept
+  byte-identical.
+- [x] `pr-issues.tests.ps1` pins both halves structurally.
 
 ### TEST
 
+- [x] The suites and the lint gate run under `ship-pr`.
+
 ### DEPLOY: fix/4315-ship-pr-cancelled-required-check
 
-**Score:**
+`ship-pr`'s CI wait no longer reads a cancelled required check as green (#4315). When the watch
+ends on a required run that the concurrency group cancelled, it now waits for the run that replaced
+it, the way the forward lap already did (#3331). Without that, it attempted a merge the ruleset
+refused.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A ship whose PR got a second `pull_request` run on the same head no longer ends red, with
+"NOT merged, NOT folded", on a branch that was fine. It now waits for the run that counts and
+merges on its answer.
+
+**Score:** 2
 
 #### Pull Request
 
