@@ -68,6 +68,12 @@ a sentence of finding.
 finding is filed is not licence to skip filing it. Into the nearest issue the session can already file,
 cited the same way — and that is still shape A, not a fourth shape for *"needs your word"*.
 
+**Whether a tracker is reachable is answered by a read, and a refused `gh issue` is not an absent
+tracker.** In a Claude Code cloud session `gh issue create`/`list` is refused because GraphQL is
+unavailable, `gh auth status` can read invalid until the repo is attached, and the REST form
+(`gh api repos/<owner>/<repo>/issues`) works: the passage with the commands is in the `orchestrator`
+skill page, "Filing where GraphQL is refused" (#4278).
+
 **Why the close-out is a receipt.** The reasoning already has a durable home a terminal does not: the
 branch document, the changelog entry, the pull request body, the issues filed. Retelling it writes it a
 second time where nobody can search. *That the session can be cleared* is the one fact no PR carries,

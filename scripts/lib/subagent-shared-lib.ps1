@@ -109,6 +109,48 @@ function Get-AgentDefTools {
     return @()
 }
 
+function Get-AgentDefDisallowedTools {
+    <#
+        The tools an agent def's frontmatter REMOVES from what it inherits, as a string array, or an
+        EMPTY array when it has no 'disallowedTools:' line.
+
+        WHY THIS EXISTS (issue #4277). A subagent def with a 'tools:' allowlist gets exactly those tools;
+        one WITHOUT it inherits every built-in and MCP tool, minus whatever 'disallowedTools:' names. The
+        lifehub defs moved from an allowlist to 'disallowedTools:' so that they reach MCP tools (the
+        Notion connector), and Get-AgentDefTools then returns an empty array for them -- which would read
+        as "holds no tool" and silently drop them out of the Bash -> working-copy-boundary obligation.
+        The caller (check 36) therefore treats a tools-less SUBAGENT def as holding every tool that
+        this function does not name.
+
+        Same frontmatter-anchored, single-line parsing as Get-AgentDefTools, and for the same reason: a
+        body that quotes a 'disallowedTools:' line must not answer for the file.
+    #>
+    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Content)
+
+    $normalized = $Content -replace "`r`n", "`n"
+    if ($normalized -notmatch '(?s)\A---\n(.*?)\n---(\n|\z)') { return @() }
+    $frontmatter = $Matches[1]
+    foreach ($line in ($frontmatter -split "`n")) {
+        if ($line -match '^disallowedTools:\s*(.+)$') {
+            return @($Matches[1] -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+        }
+    }
+    return @()
+}
+
+function Test-AgentDefHoldsTool {
+    <#
+        Whether a SUBAGENT def holds $Tool: named in its 'tools:' allowlist, or -- with no 'tools:' line --
+        inherited, i.e. not named in 'disallowedTools:' (issue #4277). Only call it for subagent defs:
+        a persona carries no tools line either, and is not a subagent, so it never inherits anything.
+    #>
+    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Content, [Parameter(Mandatory = $true)][string]$Tool)
+
+    $declared = @(Get-AgentDefTools -Content $Content)
+    if ($declared.Count -gt 0) { return ($declared -contains $Tool) }
+    return (@(Get-AgentDefDisallowedTools -Content $Content) -notcontains $Tool)
+}
+
 function Format-SharedBeginSentinel {
     <#
         The one canonical BEGIN sentinel, so its wording has a single source instead of 178 hand-typed
