@@ -39,6 +39,13 @@
 
 ### PLAN
 
+#4292: `Invoke-Native` was defined three times in the extension's task scripts, and the copies had
+diverged. `build-golive-block.ps1` returned raw `Output` and had no catch, so a missing `gh` or `git`
+threw `CommandNotFoundException` instead of returning a failed call. `notify-live.ps1` returned stringified
+`Lines`, and `prepare-release.ps1` returned trimmed `Lines` with blank lines dropped. The three move into
+one lib that keeps every caller's shape: `Output`, `Lines` and `Code`, plus `-Compact` for the trimmed
+form. The catch now applies to all three, because that is the more correct behaviour.
+
 ### CREATE
 
 - [ ] TODO: the first step of this branch
