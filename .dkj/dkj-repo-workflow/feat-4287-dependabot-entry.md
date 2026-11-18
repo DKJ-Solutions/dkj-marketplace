@@ -39,19 +39,33 @@
 
 ### PLAN
 
+- [x] Read the consumer copy (453 lines, Dutch, stale on the folder move) and the plugin seams it should stand on (#4287).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/task/dependabot-entry.ps1` and its byte-identical mirror in `dkj-repo-workflow`, rewritten in English on the plugin's own libs (`Resolve-RepoRootOrFail`, `Invoke-NativeCapture`, `Resolve-BranchFilePath`, `Split-Development`, `Get-DevelopmentEntryPattern`).
+- [x] Registered in `Get-SharedScriptPairs` with skill `dependabot-entry` and the test seam `-PrJson` exempt.
+- [x] Skill page, a row in the plugin's `scripts/README.md`, the Chat-available list in `ADOPTION.md`.
 
 ### TEST
 
+- [x] `dependabot-entry.tests.ps1`: every refusal, a full run against a moved trunk, a rerun, a local branch ahead of origin, `-NoPush`, and both copies -- 35 asserts green; `shared-scripts.tests.ps1` and the lint gate green.
+
 ### DEPLOY: feat/4287-dependabot-entry
 
-**Score:**
+`dkj-repo-workflow` now ships `dependabot-entry` (#4287): it writes the branch development document
+onto a Dependabot PR's own branch, so the PR passes the branch-entry gate. It refuses a PR that is not
+open, comes from a fork or is not Dependabot's, never touches a local branch ahead of origin, merges the
+current trunk in, and leaves the three questions a bump owes (where the package enters, why it is worth
+taking, what the audit said) in the DEPLOY section for a person to answer. The gate itself stays as it is.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A repo with Dependabot no longer needs its own copy of this script to get a bump past the entry gate.
+
+**Score:** 2
 
 #### Pull Request
 
