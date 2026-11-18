@@ -57,6 +57,20 @@ Assert-Equal 'unchecked' (Get-Verdict "gh issue create --web") 'nor one set in t
 Assert-Equal 'refuse'    (Get-Verdict "gh issue create --template x --label bug,research") 'but two kinds on the command line are refused even then'
 Assert-Equal 'pass'      (Get-Verdict "gh issue edit 12 --add-label minor") 'an edit is not judged'
 
+# #4293, measured in a store checkout: a repo passed through a shell variable, and a heredoc body quoting a call.
+$c = @(Get-GhIssueLabelCall -Command 'R=DKJ-Solutions/dkj-marketplace; gh issue create -R $R --label feature-inbound --body x')
+Assert-Equal 1 $c.Count 'a create with -R $R is one call'
+Assert-True ($c[0].RepoUnknown -and $c[0].Repo -eq '') 'and its repo is unknown, not empty-and-trusted (#4293)'
+$c = @(Get-GhIssueLabelCall -Command "gh issue create --repo BWJ-Development/smartwatchbanden --label bug --body x")
+Assert-True (-not $c[0].RepoUnknown) 'a literal repo is not unknown'
+$heredoc = "cat > b.md <<'EOF'`nThe refused call was: gh issue create -R `$R --label feature-inbound`nEOF`ngh issue create --repo DKJ-Solutions/dkj-marketplace --label bug-inbound --body-file b.md"
+$c = @(Get-GhIssueLabelCall -Command $heredoc)
+Assert-Equal 1 $c.Count 'a call quoted inside a heredoc body is data, not a second call (#4293)'
+Assert-Equal 'DKJ-Solutions/dkj-marketplace' $c[0].Repo 'and the real call keeps its repo'
+Assert-Equal 1 @(Get-GhIssueLabelCall -Command "cat <<-EOF > b.md`n`tgh issue create --title x`n`tEOF`ngh issue create --title y").Count 'a <<- heredoc with a tab-indented terminator is stripped too'
+Assert-Equal 1 @(Get-GhIssueLabelCall -Command "bash <<EOF`ngh issue create --label bug --body x`nEOF").Count 'but a heredoc an interpreter reads is a script, and its call counts'
+Assert-Equal 2 @(Get-GhIssueLabelCall -Command "gh issue create --title a`ngh issue create --title b").Count 'and with no heredoc, every line is read as before'
+
 Assert-True ($script:KindLabelRepos -contains 'smartwatchbanden') 'the stores are judged'
 Assert-True ($script:KindLabelRepos -notcontains 'dkj-marketplace') 'the source repo is not: inbound issues there carry feature-inbound or bug-inbound'
 Assert-True ($script:KindLabelRepos -notcontains 'dkj-claude-plugins') 'nor its old name'
@@ -97,6 +111,14 @@ $r = Invoke-Hook "gh issue edit 1283 $store --add-label minor"
 Assert-Equal 0 $r.Code 'an edit passes'
 $r = Invoke-Hook "echo 'gh issue create' > notes.txt"
 Assert-Equal 0 $r.Code 'a mention passes'
+
+# #4293: neither measured command may be judged against the checkout's own repo.
+$r = Invoke-Hook 'R=DKJ-Solutions/dkj-marketplace; gh issue create -R $R --label feature-inbound --body x'
+Assert-Equal 0 $r.Code 'a repo given as a variable passes (#4293)'
+Assert-True ($r.Text -match 'repo given as a variable' -and $r.Text -match 'did NOT judge it') 'with the warning that it was not judged'
+$r = Invoke-Hook "cat > b.md <<'EOF'`nrun: gh issue create -R `$R --label feature-inbound`nEOF`ngh issue create --repo DKJ-Solutions/dkj-marketplace --label bug-inbound --body-file b.md"
+Assert-Equal 0 $r.Code 'a heredoc body quoting a create is not judged as one (#4293)'
+Assert-True ($r.Text.Trim() -eq '') 'silently: the real call names the source repo'
 
 Write-Host '== 3. the registration =='
 $hooks = Get-Content -Raw -LiteralPath $HooksJson | ConvertFrom-Json

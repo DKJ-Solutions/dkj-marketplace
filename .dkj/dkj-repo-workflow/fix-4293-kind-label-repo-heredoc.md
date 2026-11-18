@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Inbound #4293, both causes verified in `reach-reason-rules.ps1`: `Get-GhIssueLabelCall` blanked a non-literal
+`--repo` to `''`, which every hook reads as "fall back to the checkout's repo"; and its tokeniser had no notion
+of a heredoc, so a call quoted in a body read as a second call. Repair it in the one parser both guards share.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-GhIssueLabelCall` returns `RepoUnknown` for a `--repo`/`-R` value that is not a literal owner/name
+- [x] it strips heredoc bodies first (`Remove-ShellHeredocBody`): not when an interpreter reads the heredoc, and not when the opener sits inside a quoted string (`--body "$(cat <<'EOF' ...)"`, whose body is the text gh receives)
+- [x] `guard-kind-label` and `guard-reach-reason` read `RepoUnknown` as "repo unknown, not judged" instead of the checkout's repo
 
 ### TEST
 
+- [x] `guard-kind-label.tests.ps1`: 47 passed, including both measured commands from #4293 at lib and hook level
+- [x] `guard-reach-reason.tests.ps1` 58, `guard-stale-paste-block.tests.ps1` 156, `filed-with-stamp.tests.ps1` 31: all green
+
 ### DEPLOY: fix/4293-kind-label-repo-heredoc
 
-**Score:**
+The BWJ issue guards no longer judge an issue create against the checkout's own repo when the target repo is
+passed through a shell variable (`-R $R`): the target counts as unknown, and the create passes with the
+not-judged warning. A `gh issue create` quoted inside a heredoc body is no longer read as a second call
+(#4293).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+In a store checkout, filing an inbound issue on the plugin's source repo with `-R $R`, or with a body written
+through a heredoc that quotes a command, is no longer refused as "carries none of the kind labels".
+
+**Score:** 3
 
 #### Pull Request
 

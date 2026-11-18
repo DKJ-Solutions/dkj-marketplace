@@ -37,6 +37,39 @@
 
 . (Join-Path $PSScriptRoot 'stale-paste-block-rules.ps1')
 
+function Remove-ShellHeredocBody {
+    <#
+        Pure: -Text with every heredoc body removed, opener line kept, terminator line dropped. A heredoc
+        body is data -- written to a file or fed to a command as stdin -- so nothing in it runs (#4293).
+        Unless an interpreter consumes it ('bash <<EOF', 'python - <<EOF', 'eval'): then the body IS a
+        script, and the whole text is returned untouched. The bwj twin of command-guard-lib.ps1's
+        Remove-HeredocBodies in dkj-repo-workflow, which a hook of this extension cannot load: an
+        extension's hooks reach only the libs beside them.
+    #>
+    param([AllowEmptyString()][string]$Text = '')
+
+    if ($Text -notmatch '<<') { return $Text }
+    $out = New-Object System.Collections.Generic.List[string]
+    $terminator = $null
+    foreach ($line in ($Text -split "`r?`n")) {
+        if ($null -ne $terminator) {
+            if ($line.Trim() -ceq $terminator) { $terminator = $null }
+            continue
+        }
+        $out.Add($line)
+        # An opener looks like:  <<EOF | <<-EOF | <<'EOF' | <<"EOF"  -- but not a here-string (<<<).
+        $m = [regex]::Match($line, '(?<!<)<<-?\s*(?:''([^'']+)''|"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))')
+        if (-not $m.Success) { continue }
+        $before = $line.Substring(0, $m.Index)
+        # An opener inside an open quote (--body "$(cat <<'EOF' ... EOF)") is part of a string: that body is
+        # the text gh receives, the tokeniser already keeps it as one quoted token, and it stays.
+        if ((($before.Length - $before.Replace('"', '').Length) % 2) -eq 1 -or (($before.Length - $before.Replace('''', '').Length) % 2) -eq 1) { continue }
+        if ($before -match '(^|[;&|(]|\s)(bash|sh|zsh|dash|ksh|pwsh|powershell|python3?|node|perl|ruby|eval|source)(\.exe)?\b') { return $Text }
+        $terminator = ($m.Groups[1].Value + $m.Groups[2].Value + $m.Groups[3].Value)
+    }
+    return ($out -join "`n")
+}
+
 function Get-ReachLabelInvocation {
     <#
         Pure: the gh issue create / edit calls in -Command that put -ReachLabel on an issue, in
@@ -58,9 +91,17 @@ function Get-GhIssueLabelCall {
         --template, --recover, --web or --editor -- | 'none'), Body (the inline text), BodyFile (the path)
         and BodyDynamic ($true where the inline text holds a '$' or opens with '(', so it is built at run
         time and is not what gh receives). The one parser both guard-reach-reason and guard-kind-label
-        read the command with (#4197).
+        read the command with (#4197). RepoUnknown is $true where --repo/-R was given but is not a literal
+        owner/name (a shell variable such as '$R', a backtick or a '%'): Repo is then '', and a caller must
+        treat the target as unknown rather than fall back to the checkout's own repo (#4293).
+
+        HEREDOC BODIES ARE STRIPPED BEFORE THE COMMAND IS READ (#4293): a body written with <<'EOF' is data,
+        so a 'gh issue create' quoted inside it is not a call. Where an interpreter reads the heredoc (bash
+        <<EOF), the body is a script and nothing is stripped.
     #>
     param([AllowEmptyString()][string]$Command = '')
+
+    $Command = Remove-ShellHeredocBody -Text $Command
 
     $valueFlags = @{
         create = @('--assignee', '-a', '--body', '-b', '--body-file', '-F', '--label', '-l', '--milestone', '-m',
@@ -127,7 +168,8 @@ function Get-GhIssueLabelCall {
                 }
             }
         }
-        if ($repo -and $repo -notmatch '\A[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9._-]+\z') { $repo = '' }
+        $repoUnknown = $false
+        if ($repo -and $repo -notmatch '\A[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9._-]+\z') { $repo = ''; $repoUnknown = $true }
         $dynamic = $false
         if ($source -eq 'inline') {
             $body = ($body -replace '`r`n', "`n") -replace '`n', "`n"
@@ -137,7 +179,7 @@ function Get-GhIssueLabelCall {
         }
         $found.Add([pscustomobject]@{
             Kind = $kind; Labels = @($labels.ToArray()); LabelsDynamic = $labelsDynamic
-            Numbers = @($numbers.ToArray()); Repo = $repo
+            Numbers = @($numbers.ToArray()); Repo = $repo; RepoUnknown = $repoUnknown
             BodySource = $source; Body = $body; BodyFile = $bodyFile; BodyDynamic = $dynamic
         })
     }

@@ -81,7 +81,9 @@ $refused = @()
 $unchecked = @()
 foreach ($c in $calls) {
     $nwo = [string]$c.Repo
-    if (-not $nwo) {
+    # A --repo given as a variable is unknown, never the checkout's own repo (#4293): left empty, it reads
+    # as 'repo unknown' below.
+    if (-not $nwo -and -not $c.RepoUnknown) {
         if ($null -eq $currentRepo) {
             $currentRepo = ''
             $leftMs = [int]($deadline - [DateTime]::UtcNow).TotalMilliseconds
