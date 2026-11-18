@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**17 / 18 minor entries** <!-- pending-tally -->
+**18 / 19 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4279-agenda-tasks-card · 20261118-110236Z
+
+`/agenda` now turns an action the owner accepts into a card in their Tasks database, with a deadline and
+a relation to the Agenda row. A second run finds that card and creates no duplicate
+([#4279](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4279)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A life-hub owner gets a trackable card per recurring date once their settings page names the Tasks
+database and its relation. Without those settings nothing changes.
+
+**Score:** 3
+
+#### Pull Request
+
+agenda skill: turn an accepted action into a Tasks card linked to its Agenda row
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4284](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4284)
+
+---
 
 ### DEPLOY: fix/4278-rest-filing-fallback · 20261118-103225Z
 
