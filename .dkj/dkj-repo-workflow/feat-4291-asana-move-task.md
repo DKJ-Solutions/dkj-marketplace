@@ -39,19 +39,47 @@
 
 ### PLAN
 
+Inbound #4291: one store carries a manual "move this Asana task to stage N" script, and the other store
+lacks it. It ships in `dkj-repo-workflow-bwj` and resolves the section by the same rule the CI runners
+use.
+
+- **The section rule is in one lib**, `asana-section-lib.ps1`. The CI templates cannot dot-source it,
+  because they are copied into a consumer's `.github/scripts/`. So the suites hold the templates' copies
+  of `Get-SectionCode` and `New-AsanaMoveRequest` equal to the lib's, run over one table of section
+  names. The lib takes the template's rule, not the store's: the store's copy upper-cased the code and
+  returned `$null`, so the two rules differed. Case folds only in the lookup.
+- **Only the repo's own board (#4282).** A task that is not on the board `Get-AsanaProjectGid` names is
+  skipped, because `addTask` would otherwise add it to a board it was never on.
+- **What it reuses:** the CI runners' `Resolve-AsanaTaskRef`, `Invoke-AsanaGhBounded` and
+  `Resolve-BwjRepoRoot`. The task link is read from the issue body only, as the runners read it. The
+  store copy also read comments.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/lib/asana-section-lib.ps1`, `scripts/task/move-asana-task.ps1` and the `move-asana-task` skill, plus a README row
+- [x] Equality holds between the lib and both templates, in `dkj-repo-workflow-bwj.tests.ps1` and the new suite
+- [x] Store task GIDs and issue numbers that the store copy carried are replaced with made-up ones (public repo)
 
 ### TEST
 
+- [x] `bwj-asana-move-task.tests.ps1` 57 passed; `dkj-repo-workflow-bwj.tests.ps1` 1072 passed; `test-suite-gate.tests.ps1` 349 passed; `check-plugin-integrity` 0 errors.
+- [x] The full gate runs in `ship-pr`.
+
 ### DEPLOY: feat/4291-asana-move-task
 
-**Score:**
+`dkj-repo-workflow-bwj` ships a `move-asana-task` skill. It moves an issue's Asana task to a section of
+the repo's own board, named by stage code, with a dry run, and resolves the section by the same rule as
+the CI runners. Before this, only one store had such a script
+([#4291](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4291)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A session in either BWJ store can move a card on request without a raw Asana API call, which auto mode
+refuses. It does so without picking a different section than the CI runners would.
+
+**Score:** 3
 
 #### Pull Request
 
