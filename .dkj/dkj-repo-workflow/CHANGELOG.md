@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**23 / 25 minor entries** <!-- pending-tally -->
+**24 / 26 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4293-kind-label-repo-heredoc · 20261118-122917Z
+
+The BWJ issue guards no longer judge an issue create against the checkout's own repo when the target repo is
+passed through a shell variable (`-R $R`): the target counts as unknown, and the create passes with the
+not-judged warning. A `gh issue create` quoted inside a heredoc body is no longer read as a second call
+(#4293).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+In a store checkout, filing an inbound issue on the plugin's source repo with `-R $R`, or with a body written
+through a heredoc that quotes a command, is no longer refused as "carries none of the kind labels".
+
+**Score:** 3
+
+#### Pull Request
+
+guard-kind-label: a non-literal --repo is unknown, and heredoc bodies are not commands
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4299](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4299)
+
+---
 
 ### DEPLOY: feat/4291-asana-move-task · 20261118-121804Z
 
