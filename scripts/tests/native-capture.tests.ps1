@@ -2063,7 +2063,8 @@ foreach ($af in $auditFiles) {
 # before its exit code and an unread walk prints 'no hint'; $blob only by a POSITIVE `-eq 0` after the same test, so
 # a revision it could not read is left out of a HINT, never read into a verdict -- the conflict refuses either way.
 # 118 -> 119 (#4168): sync-main.ps1's Complete-SyncPullRequest reads the trunk's rules once (`gh api .../rules/branches/<trunk>`) for the required checks.
-Assert-Equal 119 $boundedTotal 'the parser still counts 119 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
+# 119 -> 122 (#4287): dependabot-entry.ps1's $read (`gh pr view --json`, -Utf8 at the default bound), the $why re-read that keeps gh's stderr for the refusal text, and Invoke-GitHere's $res (every git call). $read and Get-CommitCount's $res are judged by Test-NativeExitMeasured before their exit code, and every unmeasured or non-zero answer is a refusal that changes nothing; $why is only read for its text.
+Assert-Equal 122 $boundedTotal 'the parser still counts 122 bounded Invoke-NativeCapture sites outside scripts/tests/ -- a new one is not a failure, but it has to be audited and this number moved deliberately'
 Assert-Equal 0 $unguarded.Count `
     ('every bounded capture judged with a NEGATIVE exit-code test either asks Test-NativeExitMeasured/Get-NativeExitLabel about THAT capture or is exempt with a reason (#2081)' +
      $(if ($unguarded.Count) { ' -- unguarded: ' + ($unguarded -join ' | ') } else { '' }))
