@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**27 / 31 minor entries** <!-- pending-tally -->
+**28 / 32 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4290-check-jsonld-in-shopify · 20261118-172427Z
+
+Ships the `check-jsonld` skill in `dkj-subagents-shopify`. It validates the JSON-LD structured data a
+storefront serves per market, and can do so on a preview theme. The markets come from the store's
+`Get-StorefrontMarkets` seam. `which-theme` now reads that seam through the same lib. It also accepts
+`-Path '/a,/b'` from `powershell -File`, which used to arrive as a single path. Step 1 of
+[#4290](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4290).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A Shopify store on the plugin can check its structured data before and after a theme change without
+keeping its own copy of the script. A preview check now carries the full preview parameters, so it no
+longer drops back to live after the first redirect.
+
+**Score:** 2
+
+#### Pull Request
+
+Move check-jsonld into dkj-subagents-shopify
+
+Plugins: dkj-subagents-shopify
+
+[PR #4305](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4305)
+
+---
 
 ### DEPLOY: feat/4289-live-direct-writes-in-shopify · 20261118-165945Z
 
