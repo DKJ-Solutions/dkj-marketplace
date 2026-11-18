@@ -7,7 +7,7 @@ description: >
   as Ian has placed a new node (dossier/note/emotion) that needs to be hung into the network:
   laying NEURON links (strong/weak), guarding topology, preventing orphan neurons. Touches no content
   itself — only the threads.
-tools: Read, Write, Edit, Grep, Glob
+disallowedTools: Bash, PowerShell, NotebookEdit
 model: sonnet
 maxTurns: 80
 color: purple

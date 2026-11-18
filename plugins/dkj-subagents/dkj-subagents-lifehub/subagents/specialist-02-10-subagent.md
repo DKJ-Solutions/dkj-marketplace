@@ -6,7 +6,7 @@ description: >
   Personal Assistant of life-hub. Use for the daily calendar & appointments, official documents
   (municipality/contracts/insurance), correspondence, and administration. Delivers material
   (overview/summary/action items) — Ian files it in the brain.
-tools: Read, Grep, Glob, Skill
+disallowedTools: Bash, PowerShell, Write, Edit, NotebookEdit
 model: sonnet
 maxTurns: 60
 color: teal
