@@ -181,6 +181,10 @@ theme-editor, code-editor and app saves straight onto the branch. Answer `Get-Sh
 with the branch name (e.g. `live`) and three steps change. The rest, the backup included, stay as they
 are:
 
+(The preflight guards the promotion you make on purpose. The one made around it -- a CLI push or a code-editor
+save that reaches the deploy branch directly -- is what [`live-direct-writes`](../live-direct-writes/SKILL.md) reads
+afterwards, on a schedule.)
+
 | # | step | in connected mode |
 |---|---|---|
 | 3 | **push list** | still derived from the range, because the record says which of its files went live. No path is printed in a command, so the paste-safety refusal does not apply, and a range with no theme file is a note: step 6 decides whether there is anything to promote. |

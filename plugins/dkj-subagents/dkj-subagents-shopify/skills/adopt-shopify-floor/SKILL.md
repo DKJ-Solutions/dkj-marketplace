@@ -1,6 +1,6 @@
 ---
 name: adopt-shopify-floor
-description: Place dkj-subagents-shopify's operational floor in this repo, in one move -- the live-theme guard's seam (which theme is live), a starter theme-check config that is green on arrival in a real theme, and the CI workflow that runs it on every PR. Use this right after enabling or refreshing dkj-subagents-shopify, since a plugin install writes nothing into a repo, and whenever the Shopify floor session check reports that the guard has not been told which theme is live. Strictly additive and dry-run by default; it never overwrites anything.
+description: Place dkj-subagents-shopify's operational floor in this repo, in one move -- the live-theme guard's seam (which theme is live), a starter theme-check config that is green on arrival in a real theme, the CI workflow that runs it on every PR, and -- where the live theme is Git-connected -- the scheduled check for direct file writes to it. Use this right after enabling or refreshing dkj-subagents-shopify, since a plugin install writes nothing into a repo, and whenever the Shopify floor session check reports that the guard has not been told which theme is live. Strictly additive and dry-run by default; it never overwrites anything.
 ---
 
 # adopt-shopify-floor -- the floor arrives with the plugin, the answers do not
@@ -22,6 +22,9 @@ written by hand before the floor shipped at all (inbound
 scripts/repo-config.ps1              the Shopify seam block, APPENDED (the file must already exist)
 .theme-check.yml                     a starter config: Liquid + JSON syntax, green on arrival
 .github/workflows/theme-check.yml    theme-check on every PR into main
+.github/workflows/live-direct-writes.yml
+                                     the scheduled live-direct-writes check -- ONLY where the live theme
+                                     is Git-connected (Get-ShopifyLiveDeployBranch is answered)
 ```
 
 ## Run it
@@ -48,6 +51,9 @@ own plugin cache instead, so the easy route is to ask for the skill rather than 
 | `-Apply` | write the files. Without it the command is a dry run that prints the plan and touches nothing -- the same default `adopt-config.ps1` and `adopt-workflow-folder.ps1` use. |
 | `-LiveThemeId` | the live theme's **numeric** id. Given, the seam function is written *answered* and the session check goes quiet because the guard is genuinely armed. Omitted, the block is written commented out and the check keeps reporting -- see below for why that is the right way round. Find the id with `shopify theme list --store <your-store>.myshopify.com`; it is the one marked `[live]`. |
 | `-StoreDomain` | the store the **pre-task sync** pulls from, e.g. `your-store.myshopify.com`. Given, `Get-ShopifyStoreDomain` is written *answered* and the [`sync-main`](../sync-main/SKILL.md) skill works on its first run. Omitted, it is written commented out like the theme id, and `sync-main` refuses rather than guessing which store to read. |
+| `-LiveDirectWritesSince` | where the [`live-direct-writes`](../live-direct-writes/SKILL.md) check starts reporting: a UTC date (`2026-11-18`) or date and time. Default: the moment of placement, so a store is not handed its whole history in one issue. A store that already runs the check passes the floor it was using. |
+
+**The live-direct-writes workflow is placed only where the store answers `Get-ShopifyLiveDeployBranch`** (#4289). The check reads the commits Shopify's bot writes onto the live deploy branch; a store whose live theme is pushed with the CLI has no such branch, so a workflow there would schedule a check of nothing and the file is simply not placed (the run says so). The seam is read from `scripts/repo-config.ps1` as it stands when you run the command, so answer the seam first and run again. The deploy branch and the floor are written into the workflow at placement, and the workflow fetches the plugin's script from the marketplace repo at the release this command came from -- the mechanism `adopt-dkj-repo-workflow`'s CI floor uses, see [the `live-direct-writes` page](../live-direct-writes/SKILL.md#how-the-schedule-runs-it).
 
 **The seam block carries the pre-task sync's answers too** (inbound
 [#787](https://github.com/DaveKJohn/claude-code-specialists/issues/787)). `sync-main` is the higher-risk

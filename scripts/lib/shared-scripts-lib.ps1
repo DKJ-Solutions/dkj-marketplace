@@ -1942,7 +1942,7 @@ function Get-SharedScriptPairs {
             # A fixture root, so the suite can adopt into a scratch tree instead of a real Shopify repo --
             # and so the marketplace refusal can be bypassed in a repo that is one. A consumer never types
             # it, and documenting it would invite someone to.
-            SkillParamsExempt = @('RootOverride')
+            SkillParamsExempt = @('RootOverride', 'SharedRefOverride')
         },
         @{
             # THE GUARD LIB HAS TO REACH dkj-subagents-shopify TOO, now that a shared script travels there. It only
