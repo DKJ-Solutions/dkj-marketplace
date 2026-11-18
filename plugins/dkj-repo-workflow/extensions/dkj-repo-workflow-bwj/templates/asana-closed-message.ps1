@@ -26,7 +26,8 @@
     stay wherever a person left it. Never on a by-hand close, a close without a block, a not-planned close
     or a reopen; never out of the Completed section, because a card the requester ticked off early is not
     pulled backwards; and silently skipped, with the message kept, wherever the task is on several boards
-    or its board has no single section with that code (Select-ReviewMoveSection). It is no sweep and no
+    none of which is the repo's own (Get-AsanaProjectGid, #4282: where it is among them, only that
+    board's card is judged), or its board has no single section with that code (Select-ReviewMoveSection). It is no sweep and no
     stage mirror: nothing else in the retired asana-mirror came back with it.
 
     THE REOPEN'S CARD WRITES (#3562). A reopen that posts the reopened message then moves the task into
@@ -35,8 +36,8 @@
     now back in development' and the card used to stay in review or done until somebody dragged and
     unticked it by hand (phone-factory#3, measured twice). Unlike the review move this one DOES come out
     of Completed: a reopen is exactly the case where the done card is wrong. The move is skipped, with the
-    message and the untick kept, wherever the task is on several boards or its board has no single
-    section with that code (Select-ReopenCardWrites). The untick is the one exception to 'the plugin
+    message and the untick kept, wherever the task is on several boards none of which is the repo's own
+    (as above, #4282) or its board has no single section with that code (Select-ReopenCardWrites). The untick is the one exception to 'the plugin
     never ticks a task off', and only in the direction of completed: false -- never true.
 
     THE FILE KEEPS ITS 'closed-message' NAME ON PURPOSE. A store holds it at a fixed path, and adopt
@@ -196,7 +197,8 @@
     ASANA_PAT also makes the two reads a research close needs for its done section (#3017): the task's
     board memberships, then that board's sections -- and the same two the one move needs (#3248), with
     the section the task sits in, and the reopen's writes (#3562), with whether the task is completed
-    (Read-AsanaTaskBoard). Nothing else is read from Asana.
+    (Read-AsanaTaskBoard). Nothing else is read from Asana. The repo's own board is the GID its
+    Get-AsanaProjectGid names, read as text from scripts/repo-config.ps1 (Get-RepoProjectGid, #4282).
 
     The script runs its main flow only when invoked directly; dot-sourcing it loads the pure helpers and
     does nothing else, which is how the suite exercises them.
@@ -1384,17 +1386,42 @@ function Select-ReviewMoveSection {
     return [pscustomobject]@{ SectionGid = [string]$hits[0].Gid; Why = "found by code $InReviewCode" }
 }
 
+function Get-RepoProjectGid {
+    <#
+        Pure: the Asana project the repo's Get-AsanaProjectGid names -- its own board -- read from the TEXT
+        of scripts/repo-config.ps1 as Get-RepoStageCode reads the stage map, or '' where the file names
+        none (#4282). Only a numeric GID of six digits or more is read, and a comment does not count.
+    #>
+    param([AllowEmptyString()][string]$ConfigText = '')
+    $start = [regex]::Match([string]$ConfigText, '(?im)^\s*function\s+Get-AsanaProjectGid\b')
+    if (-not $start.Success) { return '' }
+    $body = $ConfigText.Substring($start.Index + $start.Length)
+    $next = [regex]::Match($body, '(?im)^\s*function\s+')
+    if ($next.Success) { $body = $body.Substring(0, $next.Index) }
+    $body = [regex]::Replace($body, '(?s)<#.*?#>', '')
+    $body = [regex]::Replace($body, '(?m)#.*$', '')
+    $m = [regex]::Match($body, '(?<![\w.-])[''"]?([0-9]{6,})[''"]?(?![\w.-])')
+    if ($m.Success) { return $m.Groups[1].Value }
+    return ''
+}
+
 function Read-AsanaTaskBoard {
     <#
         The task's board as both card writes judge it (#3248, #3562): its memberships (Project,
         SectionName), whether it is Completed, and -- where it is on exactly one board -- that board's
         sections (Gid, Name). Ok is $false, with Why, wherever a read failed; it never throws. -Get is the
         read, injectable as in Resolve-DoneSectionName.
+
+        ON SEVERAL BOARDS, THE REPO'S OWN ONE DECIDES (#4282): where -HomeProject (Get-AsanaProjectGid) is
+        among the task's boards, only that membership is kept, so a task a colleague also keeps on their
+        team's board still moves on the repo's. Where it is not among them, every membership stays and the
+        judge skips the move as before: which card the requester looks at is then a guess.
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Gid,
         [string]$Pat = '',
-        [scriptblock]$Get = $null
+        [scriptblock]$Get = $null,
+        [AllowEmptyString()][string]$HomeProject = ''
     )
     $fail = { param($why) [pscustomobject]@{ Ok = $false; Why = $why; Memberships = @(); Sections = @(); Completed = $false } }
     if ($Gid -notmatch '\A[0-9]+\z') { return (& $fail 'the task GID is not numeric') }
@@ -1405,6 +1432,10 @@ function Read-AsanaTaskBoard {
     $memberships = @(@($task.data.memberships) | Where-Object { ([string]$_.project.gid) -match '\A[0-9]+\z' } |
         ForEach-Object { [pscustomobject]@{ Project = [string]$_.project.gid; SectionName = [string]$_.section.name } })
     $boards = @($memberships | ForEach-Object { $_.Project } | Select-Object -Unique)
+    if ($boards.Count -gt 1 -and $HomeProject -and $boards -contains $HomeProject) {
+        $memberships = @($memberships | Where-Object { $_.Project -eq $HomeProject })
+        $boards = @($HomeProject)
+    }
     $sections = @()
     if ($boards.Count -eq 1) {
         try {
@@ -1428,10 +1459,11 @@ function Resolve-ReviewMoveSection {
         [AllowEmptyString()][string]$InReviewCode = '',
         [AllowEmptyString()][string]$CompletedCode = '',
         [string]$Pat = '',
-        [scriptblock]$Get = $null
+        [scriptblock]$Get = $null,
+        [AllowEmptyString()][string]$HomeProject = ''
     )
     if (-not $InReviewCode) { return (Select-ReviewMoveSection -InReviewCode '') }
-    $board = Read-AsanaTaskBoard -Gid $Gid -Pat $Pat -Get $Get
+    $board = Read-AsanaTaskBoard -Gid $Gid -Pat $Pat -Get $Get -HomeProject $HomeProject
     if (-not $board.Ok) { return [pscustomobject]@{ SectionGid = ''; Why = $board.Why } }
     return (Select-ReviewMoveSection -Memberships $board.Memberships -Sections $board.Sections -InReviewCode $InReviewCode -CompletedCode $CompletedCode)
 }
@@ -1479,9 +1511,10 @@ function Resolve-ReopenCardWrites {
         [Parameter(Mandatory = $true)][string]$Gid,
         [AllowEmptyString()][string]$InDevelopmentCode = '',
         [string]$Pat = '',
-        [scriptblock]$Get = $null
+        [scriptblock]$Get = $null,
+        [AllowEmptyString()][string]$HomeProject = ''
     )
-    $board = Read-AsanaTaskBoard -Gid $Gid -Pat $Pat -Get $Get
+    $board = Read-AsanaTaskBoard -Gid $Gid -Pat $Pat -Get $Get -HomeProject $HomeProject
     if (-not $board.Ok) { return [pscustomobject]@{ SectionGid = ''; MoveWhy = $board.Why; Untick = $false; UntickWhy = $board.Why } }
     return (Select-ReopenCardWrites -Memberships $board.Memberships -Sections $board.Sections -InDevelopmentCode $InDevelopmentCode -Completed $board.Completed)
 }
@@ -1666,7 +1699,9 @@ function Invoke-Main {
         # 'this Asana task is now back in development', and the card stayed in review or done, ticked off,
         # until somebody dragged and unticked it (phone-factory#3). Only after the message went out, and a
         # skipped or refused write is logged while the run still exits 0, as the review move's is.
-        $back = Resolve-ReopenCardWrites -Gid $decision.Gid -InDevelopmentCode (Get-RepoStageCode -ConfigText (Read-RepoConfigText) -Stage 'InDevelopment') -Pat $AsanaPat
+        $reopenConfig = Read-RepoConfigText
+        $back = Resolve-ReopenCardWrites -Gid $decision.Gid -InDevelopmentCode (Get-RepoStageCode -ConfigText $reopenConfig -Stage 'InDevelopment') `
+            -HomeProject (Get-RepoProjectGid -ConfigText $reopenConfig) -Pat $AsanaPat
         if ($back.SectionGid) {
             $moved = Invoke-AsanaWrite -Request (New-AsanaMoveRequest -Gid $decision.Gid -SectionGid $back.SectionGid) -Pat $AsanaPat
             if ($moved.Ok) { Write-Host "The card was moved to the InDevelopment section ($($back.MoveWhy))." }
@@ -1707,7 +1742,7 @@ function Invoke-Main {
     # out; a card left where it was is repaired by a person dragging it.
     if ($sections) {
         $target = Resolve-ReviewMoveSection -Gid $decision.Gid -InReviewCode (Get-RepoStageCode -ConfigText $configText -Stage 'InReview') `
-            -CompletedCode (Get-RepoStageCode -ConfigText $configText) -Pat $AsanaPat
+            -CompletedCode (Get-RepoStageCode -ConfigText $configText) -HomeProject (Get-RepoProjectGid -ConfigText $configText) -Pat $AsanaPat
         if (-not $target.SectionGid) {
             Write-Host "The card was NOT moved: $($target.Why)."
             return
