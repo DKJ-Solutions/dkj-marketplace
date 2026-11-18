@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**21 / 23 minor entries** <!-- pending-tally -->
+**22 / 24 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4287-dependabot-entry · 20261118-120436Z
+
+`dkj-repo-workflow` now ships `dependabot-entry` (#4287): it writes the branch development document
+onto a Dependabot PR's own branch, so the PR passes the branch-entry gate. It refuses a PR that is not
+open, comes from a fork or is not Dependabot's, never touches a local branch ahead of origin, merges the
+current trunk in, and leaves the three questions a bump owes (where the package enters, why it is worth
+taking, what the audit said) in the DEPLOY section for a person to answer. The gate itself stays as it is.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A repo with Dependabot no longer needs its own copy of this script to get a bump past the entry gate.
+
+**Score:** 2
+
+#### Pull Request
+
+Ship dependabot-entry in dkj-repo-workflow, so a Dependabot PR meets the branch-entry gate
+
+Plugins: dkj-repo-workflow
+
+[PR #4295](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4295)
+
+---
 
 ### DEPLOY: feat/4288-eol-gate · 20261118-115621Z
 
