@@ -466,3 +466,5 @@ risk is in the queries and not in the policy: the policy is one sentence, while 
 these bytes"* has to answer correctly **for a path the trunk deleted** -- and that is the case both
 hand-written implementations got wrong, the second time by writing `--` inline into a native call where it
 never reaches git.
+
+**Reading what a sync captured** is [`sync-summary`](../sync-summary/SKILL.md): per theme area what third parties added, changed and removed, and what to look at -- a removed section a template still points at above all.

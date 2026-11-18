@@ -39,21 +39,44 @@
 
 ### PLAN
 
+Step 2 of [#4289](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4289): `sync-summary` moves into
+`dkj-subagents-shopify` beside `sync-main`, on the pattern of #4300. The store facts come from existing
+seams: `Get-ShopifySyncReferencePattern`, `Get-TrunkBranchName` and `Get-ShopifyLiveDeployBranch`. It
+ships with `-NoResolves` because `live-direct-writes` still follows. A rename gap carried over from the
+source is filed as #4301.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/task/sync-summary.ps1` and `scripts/lib/sync-summary-rules.ps1` in the shopify plugin, in English
+- [x] `skills/sync-summary/SKILL.md`, a pointer from `sync-main`'s page, and the README row
+- [x] `scripts/tests/shopify-sync-summary.tests.ps1`, registered in `suite-groups.json`
 
 ### TEST
 
+- [x] The new suite: 92 passed, 0 failed. It includes a run against a temporary git repo.
+- [x] `exception-message-guard.tests.ps1` 18/0, `check-plugin-integrity.ps1` 0 errors
+- [x] The full gate runs in `ship-pr`
+
 ### DEPLOY: feat/4289-sync-summary-in-shopify
 
-**Score:**
+Ships the `sync-summary` skill in `dkj-subagents-shopify`. It turns a live-drift sync commit, or a range
+such as the live branch against the trunk, into a short report. The report lists what changed per theme
+area, and flags removed sections a template still references, new sections nobody asked for, and
+theme-editor setting changes. `-SinceTrunk` builds the range from `Get-ShopifyLiveDeployBranch`. Sync
+commits are recognised by `Get-ShopifySyncReferencePattern`, the same pattern `sync-main` uses. Step 2 of
+[#4289](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4289).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A store that kept its own copy can drop it. One thing changes: a sync commit is now recognised by the
+`sync-main` pattern (`^[Ss]ync` by default), which is narrower than the store copy's pattern. Some
+subjects only mention third-party edits, without starting with "sync". To keep matching those, answer
+`Get-ShopifySyncReferencePattern`.
+
+**Score:** 2
 
 #### Pull Request
 
 Move sync-summary into dkj-subagents-shopify
-
