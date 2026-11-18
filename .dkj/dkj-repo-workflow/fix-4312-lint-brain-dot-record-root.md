@@ -39,19 +39,34 @@
 
 ### PLAN
 
+Inbound #4312: `Read-LintBrainSeams` normalised every record-root seam with `TrimStart('.', '/')`, which
+strips the dot of `.dkj/`, so no record under the v7 workflow folder ever matched `Test-UnderRoots`.
+Strip a leading `./` only, and pin it with a dot-folder case.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `lint-brain.ps1` (`dkj-repo-workflow-bwj`): the normaliser strips a leading `./` run and then `/`, never a bare dot
+- [x] `bwj-lint-brain.tests.ps1`: a case whose seams name `.dkj/...` and `./.dkj/...` frozen roots
 
 ### TEST
 
+- [x] The new case is red with the fix stashed and green with it; the suite passes all 151 asserts
+
 ### DEPLOY: fix/4312-lint-brain-dot-record-root
 
-**Score:**
+The shared `lint-brain` (`dkj-repo-workflow-bwj`) no longer strips the leading dot of a record-root
+seam, so frozen release records under `.dkj/` are exempt again, as its header promises (#4312). A suite
+case with a dot-folder root pins it; every earlier fixture used `docs/workflow/`, which is why it slipped.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A BWJ store that points its lint gate at the plugin's `lint-brain` no longer goes red on its own frozen
+release history under `.dkj/dkj-repo-workflow/releases/`, so its `open-pr`/`ship-pr` lint gate passes
+without `-SkipLint`.
+
+**Score:** 3
 
 #### Pull Request
 
