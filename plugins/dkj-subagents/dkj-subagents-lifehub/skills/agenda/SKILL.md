@@ -15,7 +15,10 @@ PR: content in Notion is visible and reversible at once (#4214). Where
 Everything personal lives in the owner's private Notion, never in this public plugin. This skill reads
 the same database as `agenda-sync`, so it reads the same settings: search Notion for the page titled
 **Instellingen agenda-sync** and take from it the **owner**, the **Agenda data source** and the **view**
-that shows every row, and the **language** rows are written in.
+that shows every row, and the **language** rows are written in. For step 3's task cards it also reads
+the **Tasks data source**, the **relation on Tasks** that points at an Agenda row, and that relation's
+**back-relation on Agenda** (#4279). These three are optional. Without them, step 3 creates no card and
+says so in one line.
 
 **No settings page, or no Notion connector: stop and say so in one line.** Never guess a database.
 
@@ -61,6 +64,16 @@ to Notion at once, without asking first:
   Datum, Jaarlijks, Wie and where known Vooraf (dagen), Dossier and Notitie. A row with a time or a
   place belongs in Google Calendar first; that is `agenda-sync`'s, so say so rather than writing both.
 - **A present idea, or what was given:** in that row's `Notitie`, or on the person's dossier page.
+- **An accepted action becomes a card in Tasks** (#4279). When the owner accepts the action proposed in
+  step 2, create one page in the Tasks data source the settings name. Its title is the action, in the
+  language the settings name. Its deadline is the action's moment. Its relation (the one the settings
+  name) points at the Agenda row. Take the property names from the Tasks data source's own schema, and
+  never assume them. The Agenda holds the rhythm, and Tasks holds one card per occurrence.
+  **Check for a duplicate first, so a second run does not create the card again.** The Agenda row's
+  back-relation is already in step 1's fetch, so read the cards it lists. When one of them has a deadline
+  inside this occurrence's span (from the date minus Vooraf (dagen) up to the date itself), create
+  nothing, and name the existing card instead. A card for last year's occurrence of a yearly date falls
+  outside that span, so it does not count.
 
 ## 4. Move a passed yearly date on
 

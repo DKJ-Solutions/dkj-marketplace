@@ -2,7 +2,57 @@
 
 ## [Unreleased]
 
-**16 / 17 minor entries** <!-- pending-tally -->
+**18 / 19 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4279-agenda-tasks-card · 20261118-110236Z
+
+`/agenda` now turns an action the owner accepts into a card in their Tasks database, with a deadline and
+a relation to the Agenda row. A second run finds that card and creates no duplicate
+([#4279](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4279)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A life-hub owner gets a trackable card per recurring date once their settings page names the Tasks
+database and its relation. Without those settings nothing changes.
+
+**Score:** 3
+
+#### Pull Request
+
+agenda skill: turn an accepted action into a Tasks card linked to its Agenda row
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4284](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4284)
+
+---
+
+### DEPLOY: fix/4278-rest-filing-fallback · 20261118-103225Z
+
+The orchestrator skill page now cites the live repo name, and says how to file where `gh issue create`
+is refused because GraphQL is unavailable (a Claude Code cloud session): through `gh api` against the
+REST endpoints, after checking reachability with a REST read rather than `gh auth status`.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A cloud session that finds something to report can now file it inbound instead of concluding there is no
+tracker.
+
+**Score:** 2
+
+#### Pull Request
+
+A session where GitHub GraphQL is refused files through the REST form, and the orchestrator skill cites the live repo name
+
+Plugins: dkj-subagents-alpha
+
+[PR #4281](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4281)
+
+---
 
 ### DEPLOY: fix/4277-lifehub-inherit-mcp-tools · 20261118-101902Z
 
