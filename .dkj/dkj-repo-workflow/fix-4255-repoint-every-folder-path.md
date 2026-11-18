@@ -39,19 +39,40 @@
 
 ### PLAN
 
+Inbound #4255 and #4257 both report Part 1's repoint table (`adopt-workflow-folder.ps1`) as too narrow,
+so one branch takes both. The PR template was repointed only from the folder FOUND, and only on its first
+line, so a template naming an older folder or a second path stayed stale. The `.gitignore` pattern also
+refused a `!` negation line.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `.gitignore`: a `!` negation line moves with its ignore line.
+- [x] PR template: repointed on every Part 1 run, from every legacy folder name. That covers the opening
+  comment, plus a backticked path or link target below it, and the old `'## DEPLOY:'` becomes
+  `'### DEPLOY:'`. Prose stays as written, as #3884 decided: the delegated build had extended the rewrite
+  to prose, and that was narrowed back to addresses on review.
+- [x] Mirror, one sentence in the adopt skill, and four new cases plus the #3884 prose assert in
+  `adopt-workflow-folder.tests.ps1`.
 
 ### TEST
 
+- [x] `adopt-workflow-folder.tests.ps1` standalone: all 219 asserts pass.
+
 ### DEPLOY: fix/4255-repoint-every-folder-path
 
-**Score:**
+Part 1 of adopting the workflow now repoints every old folder path that addresses the workflow folder
+(#4255, #4257). That means a `.gitignore` exception line beside its ignore line, and every path in the PR
+template, whichever older folder name it carries, even in a repo that moved earlier. Before, a negation
+line kept excepting a folder that was gone, and a template could keep naming a folder two moves old.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer migrating to 7.x no longer has to delete its PR template and re-run Part 1, or fix a
+`.gitignore` exception by hand.
+
+**Score:** 3
 
 #### Pull Request
 

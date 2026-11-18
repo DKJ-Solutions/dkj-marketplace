@@ -131,8 +131,10 @@ before it. Since the rename of this plugin they read `.dkj/dkj-repo-workflow/` a
 not moved finds no branch document and its gates go wrong until it does. Only this part still reads the
 older names, to find what it moves. **Running this part with `-Apply` moves it**: one `git mv` of the whole folder, so the changelog, the release roots and
 any open branch document travel together, plus a repoint of the quoted paths in your
-`scripts/repo-config.ps1` and of the `.gitignore` lines that start with the old folder. Prose that only
-mentions the old name is left alone. It moves nothing when `.dkj/dkj-repo-workflow/` already holds anything but branch documents, and it still moves when `new-branch` has already created that folder with only branch documents in it (#4251), repointing the guidance line in those documents. The
+`scripts/repo-config.ps1`, of the `.gitignore` lines (and `!` exceptions) that start with the old folder,
+and of every older folder path in `.github/pull_request_template.md` that is an address (its opening
+comment, a backticked path, a link target), which it also does when no move is pending (#4255, #4257).
+Prose that only mentions the old name is left alone. It moves nothing when `.dkj/dkj-repo-workflow/` already holds anything but branch documents, and it still moves when `new-branch` has already created that folder with only branch documents in it (#4251), repointing the guidance line in those documents. The
 dry run lists what it would move. Commit the result on a branch like any other change.
 
 ### Run it

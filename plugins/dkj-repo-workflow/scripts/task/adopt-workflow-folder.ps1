@@ -254,12 +254,11 @@ if ($movePending) {
         # address. Measured in dkj-lifehub (PR #657, November 7, 2026): rewriting a comment that records an
         # earlier seam value made it claim a past value that was never set.
         @{ Rel = 'scripts/repo-config.ps1'; Pattern = "(['" + '"' + "])$oldEsc[/\\]"; Replace = "`${1}$currentFolderName/"; CodeOnly = $true },
-        @{ Rel = '.gitignore';              Pattern = "(?m)^(/?)$oldEsc/";            Replace = "`${1}$currentFolderName/" },
-        # The PR template's FIRST-LINE comment names the branch document by its folder (#3884), and the
-        # scaffold below never overwrites an existing template, so a moved repo kept saying
-        # 'dkj-policy/<branch>.md' -- measured in all six consumers moved on November 7, 2026. Only the
-        # opening '<!--' line is touched; the rest of a hand-edited template is the repo's own.
-        @{ Rel = '.github/pull_request_template.md'; Pattern = "\A(<!--[^\r\n]*?)(?<![\w./-])$oldEsc/"; Replace = "`${1}$currentFolderName/" }
+        # An optional '!' before the path (#4257): a negation line ('!.dkj/dkj-policy/releases/page/x.txt') is
+        # the exception to an ignore line that moves, and left behind it would except a path that is gone.
+        @{ Rel = '.gitignore';              Pattern = "(?m)^(!?/?)$oldEsc/";          Replace = "`${1}$currentFolderName/" }
+        # The PR template is NOT here: it is repointed once, after this block, whether or not a move is
+        # pending (#4255).
     )
     foreach ($rw in $rewrites) {
         $abs = Join-Path $repoRoot ($rw.Rel -replace '/', '\')
@@ -335,6 +334,46 @@ if ($movePending) {
         $foundFolderName = $currentFolderName
         if (Test-Path -LiteralPath $repoConfig -PathType Leaf) {
             try { . $repoConfig } catch { Write-Warning "scripts/repo-config.ps1 failed to reload ($(Format-SafeProseToken -Value $_.Exception.Message))." }
+        }
+    }
+}
+
+# THE PR TEMPLATE NAMES THE BRANCH DOCUMENT BY ITS FOLDER (#3884), and the scaffold below never overwrites
+# an existing template, so a moved repo kept saying 'dkj-policy/<branch>.md' -- measured in all six
+# consumers moved on November 7, 2026. It is repointed on EVERY run of this part, move or no move (#4255):
+# a repo that moved from the root folder to '.dkj/dkj-policy/' earlier keeps a template naming the OLDER
+# 'dkj-policy/', and the folder found now is no longer the folder the template names. So it is built from
+# every legacy name, not from the one found, and it reaches every ADDRESS in the file rather than the
+# first comment alone (#4257: a checklist line names the document too). A name preceded by a path
+# character is part of a longer path ('.dkj/dkj-policy/' holds 'dkj-policy/'), so the alternation lists the
+# longest name first and the lookbehind refuses to start inside one. The old comment's '## DEPLOY:' is the
+# heading before the DEPLOY section moved to level three; the current template says '### DEPLOY:'.
+$prtAbs = Join-Path $repoRoot '.github\pull_request_template.md'
+if (Test-Path -LiteralPath $prtAbs -PathType Leaf) {
+    $prtNames = @(Get-LegacyWorkflowFolderNames | Sort-Object -Property Length -Descending | ForEach-Object { [regex]::Escape($_) })
+    # WHERE, NOT JUST WHAT: an ADDRESS, never prose. The first-line '<!--' comment is the scaffold's own
+    # line, so any occurrence in it moves; below it only a path that OPENS a backtick span or a link target
+    # ('`dkj-policy/<branch>.md`', '](dkj-policy/...') is an address. Prose that merely mentions the
+    # folder is the repo's own, as #3884 decided, and stays as written.
+    $prtAlt     = "(?:" + ($prtNames -join '|') + ")/"
+    $prtPattern = "(?<![\w./-])$prtAlt"
+    $prtAddress = "(?<=``|\]\()$prtAlt"
+    $prtText    = [System.IO.File]::ReadAllText($prtAbs)
+    $prtSplit   = [regex]::Match($prtText, '\A(<!--[^\r\n]*)([\s\S]*)\z')
+    if ($prtSplit.Success) { $prtHead = $prtSplit.Groups[1].Value; $prtBody = $prtSplit.Groups[2].Value } else { $prtHead = ''; $prtBody = $prtText }
+    $prtCount   = ([regex]::Matches($prtHead, $prtPattern)).Count + ([regex]::Matches($prtBody, $prtAddress)).Count
+    $prtNew     = [regex]::Replace($prtHead, $prtPattern, "$currentFolderName/") + [regex]::Replace($prtBody, $prtAddress, "$currentFolderName/")
+    $prtDeploy  = "'## DEPLOY:'"
+    if ($prtNew.Contains($prtDeploy)) {
+        $prtCount += ($prtNew.Split(@($prtDeploy), [System.StringSplitOptions]::None).Count - 1)
+        $prtNew    = $prtNew.Replace($prtDeploy, "'### DEPLOY:'")
+    }
+    if ($prtCount -gt 0) {
+        if ($Apply) {
+            [System.IO.File]::WriteAllText($prtAbs, $prtNew, $Utf8NoBom)
+            Write-Host "  [repointed] .github/pull_request_template.md: $prtCount path(s) to $currentFolderName/ (#3884, #4255, #4257)." -ForegroundColor Green
+        } else {
+            Write-Host "  [repoint] .github/pull_request_template.md: $prtCount path(s) to $currentFolderName/ (#3884, #4255, #4257)." -ForegroundColor Yellow
         }
     }
 }
