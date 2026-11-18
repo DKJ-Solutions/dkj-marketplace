@@ -6,7 +6,7 @@ description: >
   Lifestyle coach of life-hub. Use for nutrition, exercise, sleep, and habits — translates them
   into concrete, achievable steps. Strictly no medical diagnoses or treatment advice; refers to a
   physician as soon as things get medical. Delivers material — Ian places it.
-tools: Read, Grep, Glob, WebSearch, WebFetch, Skill
+disallowedTools: Bash, PowerShell, Write, Edit, NotebookEdit
 model: sonnet
 maxTurns: 80
 color: red

@@ -270,6 +270,27 @@ try {
     $noBash = $folded -replace ', Bash', ''
     Assert-True (@(Get-AgentDefTools -Content $noBash) -notcontains 'Bash') 'and a def without the tool is not obliged'
 
+    # #4277: a SUBAGENT def with no 'tools:' line inherits every tool except those 'disallowedTools:' names
+    # (the lifehub defs moved to it to reach MCP tools), so the obligation must follow the inheritance.
+    $inheritNoBash = "---`nname: fixture`ndisallowedTools: Bash, PowerShell, NotebookEdit`nmodel: sonnet`n---`n`nBody.`n"
+    Assert-True (-not (Test-AgentDefHoldsTool -Content $inheritNoBash -Tool 'Bash')) 'no tools line + disallowedTools naming Bash: no obligation'
+    Assert-True (@(Get-AgentDefDisallowedTools -Content $inheritNoBash) -contains 'PowerShell') 'the whole disallowedTools list is read'
+    $inheritAll = "---`nname: fixture`nmodel: sonnet`n---`n`nBody.`n"
+    Assert-True (Test-AgentDefHoldsTool -Content $inheritAll -Tool 'Bash') 'no tools line and no disallowedTools: inherits Bash, so obliged'
+    $inheritWrite = "---`nname: fixture`ndisallowedTools: Write, Edit`n---`n"
+    Assert-True (Test-AgentDefHoldsTool -Content $inheritWrite -Tool 'Bash') 'disallowedTools not naming Bash: still inherits Bash, so obliged'
+    Assert-True (-not (Test-AgentDefHoldsTool -Content $noBash -Tool 'Bash')) 'an allowlist without Bash stays unobliged'
+    $bodyDisallow = "---`nname: fixture`ndisallowedTools: Write`n---`n`ndisallowedTools: Bash`n"
+    Assert-True (Test-AgentDefHoldsTool -Content $bodyDisallow -Tool 'Bash') 'a disallowedTools line in the BODY is not read'
+    # Personas stay unaffected: they are not subagent defs, so the gate never walks them (its $agentDefs is
+    # the '\subagents\' set), whatever their frontmatter lacks.
+    Assert-Equal 0 @($realPersonas | Where-Object { $_.FullName -match '\\subagents\\' }).Count 'no persona sits in the subagent-def set the check walks'
+    # The real lifehub defs hold no Bash: either they name it in disallowedTools or they would be obliged.
+    foreach ($f in @($realAgents | Where-Object { $_.FullName -match 'dkj-subagents-lifehub' })) {
+        $lt = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)
+        Assert-True (-not (Test-AgentDefHoldsTool -Content $lt -Tool 'Bash')) "$($f.Name) does not inherit Bash"
+    }
+
     # A persona is unaffected without an exemption -- it carries no tools line at all. Asserted on the
     # real personas rather than a fixture, because the claim in Ravi's lens (specialist-06-24-lens.md) is about them.
     $personaWithTools = @($realPersonas | Where-Object {
@@ -282,7 +303,7 @@ try {
     $obligedMissing = @()
     foreach ($f in $realAgents) {
         $text = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)
-        if (@(Get-AgentDefTools -Content $text) -notcontains 'Bash') { continue }
+        if (-not (Test-AgentDefHoldsTool -Content $text -Tool 'Bash')) { continue }
         $obligedDefs += $f.Name
         if ($text -notmatch 'BEGIN shared:working-copy-boundary') { $obligedMissing += $f.Name }
     }
