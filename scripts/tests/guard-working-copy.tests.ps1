@@ -40,6 +40,7 @@
 $ErrorActionPreference = 'Continue'
 
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
+. (Join-Path $PSScriptRoot '..\lib\fixture-git-lib.ps1')
 $Guard    = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\hooks\guard-working-copy.ps1'
 # Fixture paths carry $PID: the test gate is a throttled PARALLEL scheduler, so two runs at one fixed
 # temp path tear down each other's tree mid-assert.
@@ -189,11 +190,76 @@ try {
     Assert-True ($r.Out -match "owner's explicit permission")      'and names the constitution rule it enforces'
     Assert-True ($r.Out -match 'run it\s+themselves')              'and says the owner runs it themselves'
     Assert-True ($r.Out -notmatch 'This checkout belongs to')      'and is not the subagent working-copy text'
+
+    Write-Host ""
+    Write-Host "-- group 7: never directly on the trunk, refused on EVERY thread (#4286)" -ForegroundColor Cyan
+
+    # Throwaway repos, built outside the project so no other session's `git add -A` can sweep them up. One
+    # on its trunk, one on a branch, one detached. 'main' is named explicitly: the machine's default may be
+    # 'master', which the rule (correctly) does not know as a trunk without origin/HEAD.
+    $trunkRepo  = Join-Path $Fixture 'on-trunk'
+    $branchRepo = Join-Path $Fixture 'on-branch'
+    $detachRepo = Join-Path $Fixture 'detached'
+    foreach ($repo in @($trunkRepo, $branchRepo, $detachRepo)) {
+        New-Item -ItemType Directory -Force -Path $repo | Out-Null
+        Invoke-FixtureGitIn $repo init -q -b main
+        Invoke-FixtureGitIn $repo -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m 'init'
+    }
+    Invoke-FixtureGitIn $branchRepo checkout -q -b feat/x
+    Invoke-FixtureGitIn $detachRepo checkout -q --detach
+    Assert-Equal 'main'   (("$(& git -C $trunkRepo branch --show-current)").Trim()) 'the trunk fixture is on main'
+    Assert-Equal 'feat/x' (("$(& git -C $branchRepo branch --show-current)").Trim()) 'the branch fixture is on a branch'
+
+    # The payload's cwd is where the command starts, so the hook reads that repo's HEAD itself.
+    $bad = 'git commit -m "fix: cart totals"'
+    Assert-Equal 2 (Invoke-Guard (New-Payload -Command $bad -Cwd $trunkRepo)).Code                    'the main thread may not commit on the trunk'
+    Assert-Equal 2 (Invoke-Guard (New-Payload -Command $bad -Cwd $trunkRepo -AgentId 'a1')).Code      'nor a subagent'
+    Assert-Equal 2 (Invoke-Guard (New-Payload -Command 'git commit -am "wip"' -Cwd $trunkRepo)).Code  'a -am commit'
+    Assert-Equal 2 (Invoke-Guard (New-Payload -Command 'git commit' -Cwd $trunkRepo)).Code            'a commit with no message (the editor)'
+    foreach ($subject in @('fold: feat/x changelog (#1)', 'release: v1.0.0', 'release-prep: open the 1.x section', 'release-notes: v1.0.0')) {
+        Assert-Equal 0 (Invoke-Guard (New-Payload -Command "git commit -m `"$subject`"" -Cwd $trunkRepo)).Code "the trunk allows: $subject"
+    }
+    Assert-Equal 0 (Invoke-Guard (New-Payload -Command $bad -Cwd $branchRepo)).Code                   'any commit passes on a branch'
+    Assert-Equal 0 (Invoke-Guard (New-Payload -Command $bad -Cwd $detachRepo)).Code                   'and on a detached HEAD (fails open)'
+    Assert-Equal 0 (Invoke-Guard (New-Payload -Command $bad -Cwd (Join-Path $Fixture 'not-there'))).Code 'and where the directory is not there'
+    Assert-Equal 0 (Invoke-Guard (New-Payload -Command $bad -Cwd $Fixture)).Code                       'and where the cwd is not a repo'
+
+    # Which repo: -C and cd outrank the cwd, in both directions.
+    Assert-Equal 2 (Invoke-Guard (New-Payload -Command "git -C `"$trunkRepo`" commit -m `"fix: x`"" -Cwd $branchRepo)).Code `
+        '-C to the trunk checkout is refused from a branch cwd'
+    Assert-Equal 0 (Invoke-Guard (New-Payload -Command "git -C `"$branchRepo`" commit -m `"fix: x`"" -Cwd $trunkRepo)).Code `
+        '-C to a branch checkout passes from a trunk cwd'
+    Assert-Equal 2 (Invoke-Guard (New-Payload -Command "cd `"$trunkRepo`" && git commit -m `"fix: x`"" -Cwd $branchRepo)).Code `
+        'a cd to the trunk checkout is refused'
+
+    # A trunk that origin/HEAD names, which is not 'main'.
+    $masterRepo = Join-Path $Fixture 'on-master'
+    New-Item -ItemType Directory -Force -Path $masterRepo | Out-Null
+    Invoke-FixtureGitIn $masterRepo init -q -b trunk2
+    Invoke-FixtureGitIn $masterRepo -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m 'init'
+    Assert-Equal 0 (Invoke-Guard (New-Payload -Command $bad -Cwd $masterRepo)).Code 'a branch that is neither main nor origin/HEAD is not read as the trunk'
+    Invoke-FixtureGitIn $masterRepo update-ref refs/remotes/origin/trunk2 HEAD
+    Invoke-FixtureGitIn $masterRepo symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/trunk2
+    Assert-Equal 2 (Invoke-Guard (New-Payload -Command $bad -Cwd $masterRepo)).Code 'but one origin/HEAD names is'
+
+    # Commands that are not a commit are not read.
+    foreach ($cmd in @('git status --short', 'git log --grep=commit', 'git commit --dry-run', 'echo "git commit -m x"')) {
+        Assert-Equal 0 (Invoke-Guard (New-Payload -Command $cmd -Cwd $trunkRepo)).Code "not a trunk commit: $cmd"
+    }
+
+    $r = Invoke-Guard (New-Payload -Command $bad -Cwd $trunkRepo)
+    Assert-True ($r.Out -match 'BLOCKED \(guard-working-copy\)')   'the refusal is marked as this guard'
+    Assert-True ($r.Out -match 'never directly on the trunk')       'and names the constitution rule'
+    Assert-True ($r.Out -match 'fold:')                             'and the allowed prefixes'
+    Assert-True ($r.Out -match 'new-branch')                        'and the way forward'
+    Assert-True ($r.Out -notmatch 'This checkout belongs to')       'and is not the subagent working-copy text'
 } finally {
     Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue
 }
 
 Write-Host ""
 Write-Host "Summary: $script:pass passed, $script:fail failed" -ForegroundColor $(if ($script:fail -eq 0) { 'Green' } else { 'Red' })
-if ($script:fail -gt 0) { exit 1 }
+$fixtureBroken = Write-FixtureGitSummary -Subject 'the working-copy guard hook'
+if ($fixtureBroken) { Write-Host "FAILED: every assert passed, but $(Get-FixtureGitFailureCount) fixture git command(s) did not." -ForegroundColor Red }
+if ($script:fail -gt 0 -or $fixtureBroken) { exit 1 }
 exit 0

@@ -10,8 +10,12 @@
 
     Supplies Get-WorkingCopyViolation (the whole judgement, pure) and the pieces under it --
     Get-GitInvocation, Test-HasFlag, Remove-TokenQuotes -- and Get-SafetyRuleViolation, the
-    constitution's force-push and hard-reset rule for every thread, built on the same pieces (#3901). It dot-sources command-guard-lib.ps1 from its
-    own directory for the false-positive machinery.
+    constitution's force-push and hard-reset rule for every thread, built on the same pieces (#3901), and
+    Get-TrunkCommitViolation, the constitution's "never directly on the trunk" for every thread (#4286): a
+    `git commit` while the targeted repo's HEAD is on its trunk is refused unless its subject starts with
+    fold:, release:, release-prep: or release-notes:, the subjects of the three bounded trunk exceptions.
+    It fails open on every doubt (not a repo, detached HEAD, trunk unknown). It dot-sources
+    command-guard-lib.ps1 from its own directory for the false-positive machinery.
 
     WHY THE JUDGEMENT IS SPLIT OFF FROM THE HOOK (issue #1669). Same reason fanout-lib.ps1 states for
     its own split: the judgement can then be tested, and MEASURED, without a payload and a process per
@@ -228,6 +232,17 @@ function Test-PathInside {
     return $true
 }
 
+function Get-SegmentCdTarget {
+    <# The directory a segment changes into (`cd`, `chdir`, `Set-Location`, `sl`, `pushd`), still quoted as
+       written, or '' when the segment is not a directory change. Shared by the project-scope rule and the
+       trunk-commit rule (#4286), so the two cannot disagree about what a `cd` is. #>
+    param([string]$Segment)
+
+    $m = [regex]::Match([string]$Segment, '(?i)^\s*(?:cd|chdir|set-location|sl|pushd)\s+(?:-LiteralPath\s+|-Path\s+)?("[^"]*"|''[^'']*''|[^\s;|&]+)')
+    if ($m.Success) { return $m.Groups[1].Value }
+    return ''
+}
+
 function Test-CommandLeavesProject {
     <#
     .SYNOPSIS
@@ -278,8 +293,8 @@ function Test-CommandLeavesProject {
     foreach ($segment in (Split-CommandSegments $Command)) {
         $s = $segment.Trim()
         if (-not $s) { continue }
-        $m = [regex]::Match($s, '^\s*(?:cd|chdir|set-location|sl|pushd)\s+(?:-LiteralPath\s+|-Path\s+)?("[^"]*"|''[^'']*''|[^\s;|&]+)')
-        if ($m.Success) { $targets.Add($m.Groups[1].Value) }
+        $cdTarget = Get-SegmentCdTarget $s
+        if ($cdTarget) { $targets.Add($cdTarget) }
     }
 
     # No `cd` at all: the answer is wherever the tool was already standing.
@@ -523,6 +538,267 @@ function Get-SafetyRuleViolation {
                     return @{ Sub = 'reset'; Segment = $segment; Reason = $resetReason }
                 }
             }
+        }
+    }
+
+    return $null
+}
+
+# ---------------------------------------------------------------------------------------------------
+# THE TRUNK-COMMIT RULE (#4286): the constitution's "never directly on the trunk", as a refusal.
+# ---------------------------------------------------------------------------------------------------
+
+# The subjects the three bounded trunk exceptions write: the fold commit ('fold:'), the release commit
+# ('release:'), the major's two preparation commits ('release-prep:') and the release-notes commit, which
+# older releases wrote as 'release-notes:' and newer ones as a 'release: vX.Y.Z release notes' subject
+# (so it is covered by 'release:'). Measured from this repo's first-parent history when the rule was written:
+# every direct trunk commit uses exactly these; 'park:' commits happen on branches only, and a merge commit
+# comes from GitHub. Case-sensitive on purpose, like the other flag comparisons in this file.
+$script:TrunkCommitSubjectPattern = '^(?:fold|release|release-prep|release-notes):'
+
+function Get-GuardGitLine {
+    <# One trimmed line of a git read in $Dir, or '' when git is missing, fails or answers nothing. Never
+       throws: the caller fails OPEN on '' (this is a refusal in every consumer, so a wrong one blocks work). #>
+    param([string]$Dir, [string[]]$GitArgs)
+
+    $ErrorActionPreference = 'Continue'
+    try {
+        $out = & git -C $Dir @GitArgs 2>$null
+        if ($LASTEXITCODE -ne 0) { return '' }
+        return ("$(@($out) | Where-Object { "$_".Trim() } | Select-Object -First 1)").Trim()
+    } catch { return '' }
+}
+
+function Get-TrunkCommitRepoFacts {
+    <#
+        The two facts the trunk-commit rule needs about the repo a commit targets: @{ Branch; Trunk }, or
+        $null when either cannot be established (not a repo, git unreadable, a detached HEAD, a directory
+        that is not there). $null means ALLOW: the rule fails open on every doubt.
+
+        THE TRUNK IS READ THE WAY trunk-sync-lib.ps1 reads it (Invoke-TrunkFastForward): origin/HEAD's
+        short name, else 'main'. entry-scaffold-lib's Get-BranchTrunkName adds a consumer seam on top of
+        'main' (Get-TrunkBranchName in scripts/repo-config.ps1), but it lives in an 8000-line lib that a
+        hook firing on every commit must not load, and the seam would run consumer code inside a refusal.
+        A consumer whose trunk is neither origin/HEAD's nor 'main' is therefore simply not covered, which
+        is the fail-open direction.
+    #>
+    param([string]$Dir)
+
+    $d = if ($Dir) { $Dir } else { (Get-Location).Path }
+    if (-not (Test-Path -LiteralPath $d -PathType Container)) { return $null }
+
+    $branch = Get-GuardGitLine -Dir $d -GitArgs @('symbolic-ref', '--quiet', '--short', 'HEAD')
+    if (-not $branch) { return $null }
+
+    $trunk = (Get-GuardGitLine -Dir $d -GitArgs @('symbolic-ref', '--quiet', '--short', 'refs/remotes/origin/HEAD')) -replace '^origin/', ''
+    if (-not $trunk) { $trunk = 'main' }
+    return @{ Branch = $branch; Trunk = $trunk }
+}
+
+function Remove-CommitTokenQuotes {
+    <# Quotes out of one token, wherever they sit: `"fold: x"`, `-m"fold: x"` and `--message="fold: x"` all
+       reach git as the same value. An unterminated quote runs to the end of the token. #>
+    param([string]$Token)
+    $eval = [System.Text.RegularExpressions.MatchEvaluator]{ param($m) $m.Groups[1].Value + $m.Groups[2].Value }
+    return [regex]::Replace([string]$Token, '"([^"]*)"?|''([^'']*)''?', $eval)
+}
+
+function Get-CommitMessageSource {
+    <#
+        Where does this `git commit` take its message from? Returns @{ Kind; Value } with Kind one of
+          'subject'    -m / --message: Value is the first -m's text (git's subject);
+          'file'       -F / --file alone: Value is the path;
+          'none'       no message option at all (git would open an editor, or reuse the amended message);
+          'unreadable' a source the command text does not show: -C/-c/--reuse-message/--reedit-message,
+                       --fixup/--squash, -t/--template, or -F together with -m (git's own answer is not
+                       one a guard should guess at).
+
+        THE OPTION WALK IS GIT'S, NOT A SEARCH FOR '-m'. A short cluster is read left to right and the
+        first value-taking letter (m F C c t) swallows the rest of the cluster as its value, so `-nm` is
+        no-verify plus a message, while `-Fm "fold: x"` is a message FILE named 'm' and `-cm "fold: x"`
+        reuses a commit -- both are NOT the subject a lazy `-m` search would credit. S and u take the
+        rest of the cluster as an optional value, so `-umm` carries no message. Long options may be
+        abbreviated to a unique prefix, and every abbreviation of a source option counts as that option
+        (an ambiguous one fails towards 'unreadable'). The first -m is the subject: `-m wip -m "fold: x"`
+        is a 'wip' commit with a paragraph. These are the edge cases a store-side guard this rule was
+        modelled on measured; the parser is this lib's own.
+    #>
+    param([string]$After)
+
+    $tokens = @([regex]::Matches([string]$After, '(?:"[^"]*(?:"|$)|''[^'']*(?:''|$)|[^\s"''])+') | ForEach-Object { Remove-CommitTokenQuotes $_.Value })
+
+    $haveM = $false; $firstM = $null; $haveFile = $false; $file = $null; $foreign = $false
+    $i = 0
+    while ($i -lt $tokens.Count) {
+        $t = [string]$tokens[$i]; $i++
+        if ($t -ceq '--') { break }
+
+        if ($t -cmatch '^--') {
+            $parts = $t -split '=', 2
+            $name = $parts[0]
+            $val = $null
+            if ($parts.Count -eq 2) { $val = $parts[1] }
+            if ($name.Length -ge 3 -and '--message'.StartsWith($name, [System.StringComparison]::Ordinal)) {
+                if ($null -eq $val -and $i -lt $tokens.Count) { $val = [string]$tokens[$i]; $i++ }
+                if (-not $haveM) { $haveM = $true; $firstM = $val }
+            } elseif ($name.Length -ge 5 -and '--file'.StartsWith($name, [System.StringComparison]::Ordinal)) {
+                if ($null -eq $val -and $i -lt $tokens.Count) { $val = [string]$tokens[$i]; $i++ }
+                $haveFile = $true; $file = $val
+            } elseif ($name.Length -ge 4) {
+                foreach ($long in @('--reuse-message', '--reedit-message', '--fixup', '--squash', '--template')) {
+                    if ($long.StartsWith($name, [System.StringComparison]::Ordinal)) { $foreign = $true }
+                }
+            }
+            continue
+        }
+
+        if ($t -cmatch '^-[A-Za-z]') {
+            for ($k = 1; $k -lt $t.Length; $k++) {
+                $c = $t[$k]
+                if ('mFCct'.IndexOf($c) -ge 0) {
+                    $val = $t.Substring($k + 1)
+                    if ($val.Length -eq 0) {
+                        if ($i -lt $tokens.Count) { $val = [string]$tokens[$i]; $i++ } else { $val = $null }
+                    }
+                    if ($c -ceq 'm') { if (-not $haveM) { $haveM = $true; $firstM = $val } }
+                    elseif ($c -ceq 'F') { $haveFile = $true; $file = $val }
+                    else { $foreign = $true }
+                    break
+                }
+                if ('Su'.IndexOf($c) -ge 0) { break }
+            }
+        }
+    }
+
+    if ($foreign) { return @{ Kind = 'unreadable'; Value = '' } }
+    if ($haveM -and $haveFile) { return @{ Kind = 'unreadable'; Value = '' } }
+    if ($haveFile) { return @{ Kind = 'file'; Value = [string]$file } }
+    if ($haveM) { return @{ Kind = 'subject'; Value = [string]$firstM } }
+    return @{ Kind = 'none'; Value = '' }
+}
+
+function Get-FirstLineAfterSegment {
+    <# The first non-empty line of the raw command AFTER the line that holds $Segment -- the subject of a
+       heredoc or a PowerShell here-string that the segment only OPENS (a `$(cat <<` substitution, `-m @'`).
+       The segment pipeline strips those bodies, so the text has to come from the raw command. '' when it
+       cannot be found. #>
+    param([string]$Raw, [string]$Segment)
+
+    $seg = [string]$Segment
+    $idx = $Raw.IndexOf($seg, [System.StringComparison]::Ordinal)
+    if ($idx -lt 0) { $seg = $seg.TrimEnd(); $idx = $Raw.IndexOf($seg, [System.StringComparison]::Ordinal) }
+    if ($idx -lt 0) { return '' }
+    $tail = $Raw.Substring($idx + $seg.Length)
+    $m = [regex]::Match($tail, '^[^\r\n]*\r?\n(?:[ \t]*\r?\n)*[ \t]*([^\r\n]*)')
+    if ($m.Success) { return $m.Groups[1].Value.Trim() }
+    return ''
+}
+
+function Get-TrunkCommitViolation {
+    <#
+    .SYNOPSIS
+        The constitution's "never directly on the trunk": a `git commit` run while the repo it targets has
+        its HEAD on the trunk is refused unless its subject starts with fold:, release:, release-prep: or
+        release-notes: -- the three bounded exceptions, which are recognised by subject because nothing
+        else about a commit says which kind it is. Returns $null, or @{ Sub; Reason; Segment }.
+
+    .DESCRIPTION
+        PURE UP TO ONE INJECTED READ. -ResolveFacts is called with the directory a commit targets and
+        returns @{ Branch; Trunk } or $null (default: Get-TrunkCommitRepoFacts, which reads git). A suite
+        passes its own, so every case is a string and a hashtable. $null, an empty Branch (detached HEAD)
+        or a branch that is not the trunk means ALLOW -- every doubt fails open, because this is a new
+        refusal in every consumer and a wrong refusal blocks work. Only a file given by `-F` is read from
+        disk.
+
+        THE SAME PARSING AS THE OTHER RULES IN THIS FILE: only a segment LED by git counts, at git's own
+        subcommand position, so `echo "git commit -m x"` or a commit message that names the rule is not
+        refused. WHICH REPO is read from the invocation's own `-C <path>`, else from the last `cd` /
+        `Set-Location` / `pushd` before it in the same command, else -Cwd; `--git-dir` / `--work-tree`
+        or a directory that cannot be resolved means allow.
+
+        THE SUBJECT, per Get-CommitMessageSource: the first -m (or --message=) is read, however it is
+        quoted or bundled (`-am`, `-nm`, `-m"fold: x"`); `-F <file>` reads the file's first line when
+        the file exists (relative to the target directory); a heredoc or here-string that only opens in
+        the segment (a `$(cat <<` substitution, `-m @'`) reads the first line after it from the raw
+        command; a message source the text does not show (a variable, `-F -`, `-C`, `--fixup`) and a
+        commit with NO message (the editor, or `--amend --no-edit`) are refused on the trunk, because a
+        trunk commit with no readable allowed subject is not one the rule can let through. `--dry-run`
+        commits nothing and passes.
+
+        RESIDUAL LIMITS, STATED: a `git commit` inside a script FILE the command runs (the fold script
+        makes the fold commit itself) is not visible, which is also why the exceptions are not in the way;
+        a wrapper in front of git (`env`, `sudo`, `time`) and a git alias are not read, as for the other
+        rules; and the subject is the guard's reading of the command text, not of the commit git then
+        writes, so the rule stops a careless commit on the trunk, not a determined one.
+    #>
+    param([string]$Command, [string]$Cwd = '', [scriptblock]$ResolveFacts = $null)
+
+    if (-not $Command) { return $null }
+    if ($Command -notmatch '(?i)commit') { return $null }
+
+    $dir = ''
+    if ($Cwd) { $dir = Resolve-GuardPath -Path $Cwd -Base ''; if (-not $dir) { $dir = $null } }
+
+    foreach ($segment in (Get-GuardSegments -Command $Command -TextTools $script:WcTextTools)) {
+        $cd = Get-SegmentCdTarget $segment
+        if ($cd) {
+            if ($null -ne $dir) { $r = Resolve-GuardPath -Path $cd -Base $dir; $dir = if ($r) { $r } else { $null } }
+            continue
+        }
+
+        $git = Get-GitInvocation $segment
+        if ($null -eq $git -or $git.Sub -ne 'commit') { continue }
+
+        # Where git is told to run, from the text BEFORE the subcommand (a `-C` after it is a commit
+        # option). --git-dir / --work-tree name a repo this rule does not read: allow.
+        $cm = [regex]::Match($segment, '(?:^|\s)commit(?=\s|$)')
+        if (-not $cm.Success) { continue }
+        $before = $segment.Substring(0, $cm.Index)
+        $after = $segment.Substring($cm.Index + $cm.Length)
+        if ($before -match '(?:^|\s)(?:--git-dir|--work-tree)\b') { continue }
+
+        $target = $dir
+        foreach ($c in [regex]::Matches($before, '(?:^|\s)-C\s+("[^"]*"|''[^'']*''|\S+)')) {
+            if ($null -eq $target) { break }
+            $r = Resolve-GuardPath -Path $c.Groups[1].Value -Base $target
+            $target = if ($r) { $r } else { $null }
+        }
+        if ($null -eq $target) { continue }
+
+        if ($after -match '(?:^|\s)--dry-run(?=\s|$)') { continue }
+
+        $facts = if ($ResolveFacts) { & $ResolveFacts $target } else { Get-TrunkCommitRepoFacts -Dir $target }
+        if ($null -eq $facts -or -not $facts.Branch -or -not $facts.Trunk) { continue }
+        if ($facts.Branch -cne $facts.Trunk) { continue }
+
+        $src = Get-CommitMessageSource -After $after
+        $subject = $null
+        $why = ''
+        switch ($src.Kind) {
+            'subject' {
+                $v = [string]$src.Value
+                if ($v -match '^@$' -or $v -match '<<') { $subject = Get-FirstLineAfterSegment -Raw $Command -Segment $segment }
+                elseif ($v -match '^\$' -or $v.Contains('`')) { $why = 'its message comes from a variable or a command substitution' }
+                else { $subject = ($v -split '\r?\n')[0] }
+            }
+            'file' {
+                $f = Resolve-GuardPath -Path ([string]$src.Value) -Base $target
+                if ($f -and (Test-Path -LiteralPath $f -PathType Leaf)) {
+                    $line = Get-Content -LiteralPath $f -TotalCount 20 -ErrorAction SilentlyContinue | Where-Object { "$_".Trim() } | Select-Object -First 1
+                    if ($line) { $subject = [string]$line }
+                }
+                if ($null -eq $subject) { $why = 'its message file cannot be read' }
+            }
+            'none' { $why = 'it has no -m message, so git would open an editor or reuse the amended one' }
+            default { $why = 'its message comes from a source the command text does not show' }
+        }
+
+        if ($null -ne $subject -and ($subject.TrimStart() -cmatch $script:TrunkCommitSubjectPattern)) { continue }
+
+        $shown = if ($null -ne $subject -and $subject.Trim()) { "the subject '" + $subject.Trim() + "'" } elseif ($why) { "no readable subject (" + $why + ")" } else { 'an empty subject' }
+        return @{
+            Sub = 'commit'; Segment = $segment
+            Reason = "``git commit`` on the trunk ('$($facts.Trunk)') with $shown. The constitution says never directly on the trunk, always via a branch and a pull request; only the fold, release, release-prep and release-notes commits land here, and they are recognised by a subject starting with ``fold:``, ``release:``, ``release-prep:`` or ``release-notes:``. Open a branch first (the ``new-branch`` skill) and commit there."
         }
     }
 
