@@ -65,7 +65,7 @@ import do it. If you have no repo, or you are in a conversation that never loade
 `specialists-init` is reserved for explicit user invocation: the `Skill` tool refuses you, and the same
 reservation keeps its page out of your context entirely, so you cannot learn the command from it. This
 page carries no such reservation, which makes it the one place upstream of that step able to hand you a
-usable form — the treatment [#734](https://github.com/DaveKJohn/claude-code-specialists/issues/734)
+usable form — the treatment [#734](https://github.com/DKJ-Solutions/dkj-marketplace/issues/734)
 gave the shipping chain, arriving here late.
 
 **So the handover is the whole move**: say the repo has not been adopted, name
@@ -73,8 +73,8 @@ gave the shipping chain, arriving here late.
 never a licence to get there some other way — the adoption writes the consumer's `CLAUDE.md`, which is
 the one file an owner should watch being changed, and reaching around the refusal to do it yourself is
 exactly what the refusal is for. Named here because this is the moment that temptation appears: inbound
-[#1093](https://github.com/DaveKJohn/claude-code-specialists/issues/1093) /
-[#1096](https://github.com/DaveKJohn/claude-code-specialists/issues/1096), measured in the testrun-2
+[#1093](https://github.com/DKJ-Solutions/dkj-marketplace/issues/1093) /
+[#1096](https://github.com/DKJ-Solutions/dkj-marketplace/issues/1096), measured in the testrun-2
 adoption on August 29, 2026, where this line said *"run `specialists-init`"* and left a model told to
 act with nothing it could act on.
 
@@ -84,11 +84,11 @@ A plugin *can* put itself in the main loop: a root `settings.json` with an `agen
 its own agents as the main thread. That was verified and is deliberately **not** switched on — it would
 change every consumer's main loop through a version bump they did not read, and a second `agent`-setting
 plugin silently wins on load order ([issue
-#215](https://github.com/DaveKJohn/claude-code-specialists/issues/215)).
+#215](https://github.com/DKJ-Solutions/dkj-marketplace/issues/215)).
 
 A skill is the opposite of that trade: nothing happens until somebody asks for it, and what they get is
 one conversation's worth. Measured in a session with no repo at all, inbound
-[#669](https://github.com/DaveKJohn/claude-code-specialists/issues/669) B1: all twenty-one subagents
+[#669](https://github.com/DKJ-Solutions/dkj-marketplace/issues/669) B1: all twenty-one subagents
 were callable and produced usable work, while the coordination layer — the classification, the named
 owner, the close-out — was the one layer with no way in.
 
@@ -108,7 +108,7 @@ The two are different acts, and only the first is the owner's to authorise.
 least equipped and finds the most worth reporting, and it has none of Chris's judgment rules, because
 those live in his body and in the specialists' own — and neither is in context yet. Three were measured
 absent from one pre-bootstrap run, with three different outcomes
-([#1094](https://github.com/DaveKJohn/claude-code-specialists/issues/1094)):
+([#1094](https://github.com/DKJ-Solutions/dkj-marketplace/issues/1094)):
 
 | rule | what happened without it |
 |---|---|
@@ -120,4 +120,24 @@ The third is the sharpest, and it is why the answer is *load the whole body* rat
 missing sentence*: that session was already filing well, and a refusal phrased as authority still
 stopped it. Which rule goes missing next is not predictable from the three that did, so the door is the
 repair and a hand-picked sentence is not — inbound
-[#1107](https://github.com/DaveKJohn/claude-code-specialists/issues/1107).
+[#1107](https://github.com/DKJ-Solutions/dkj-marketplace/issues/1107).
+
+## Filing where GraphQL is refused — the REST form, and how to tell there is a tracker
+
+**Where `gh issue create` or `gh issue list` is refused with *"GitHub GraphQL is not available from
+Claude Code sessions"* (Claude Code cloud sessions), file through the REST API instead.** The refusal
+is about the transport, not about your right to file:
+
+```text
+gh api repos/<owner>/<repo>/issues -X POST -f title=... -F body=@<file> -f "labels[]=<label>"
+gh api "repos/<owner>/<repo>/issues?state=open"
+gh api -X GET search/issues -f q="repo:<owner>/<repo> <terms>"
+```
+
+The first files, the second lists, the third searches (search the tracker before you file, as always).
+
+**Whether a tracker is reachable is answered by trying a REST read, not by `gh auth status`**: in a
+cloud session the token reads as invalid until the repo is attached, and then works. Attach the repo
+under its **live** name (`DKJ-Solutions/dkj-marketplace` for this one); attaching a retired name
+succeeds, and every API call then fails on the redirect. Measured in
+[#4278](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4278).
