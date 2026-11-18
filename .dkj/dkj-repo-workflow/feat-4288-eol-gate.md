@@ -39,19 +39,35 @@
 
 ### PLAN
 
+Inbound #4288: a consumer carried its own `check-eol.ps1`; ship one shared copy and run it from `open-pr`
+before the push, so no consumer grows its own.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/lint/check-eol.ps1` plus its byte-identical mirror in `dkj-repo-workflow`, registered in `shared-scripts-lib.ps1`
+- [x] `open-pr.ps1` (both copies) runs it before the push, guarded on the script existing; `-Force` downgrades it to a warning
+- [x] one row in the scripts README, one bullet in `CONTRIBUTING-portable.md`'s gate list
 
 ### TEST
 
+- [x] `scripts/tests/check-eol.tests.ps1`: 16 passed, including a scratch repo with a CRLF blob under an `eol=lf` pin (exit 1) and a run outside a repo (exit 2)
+- [x] the script against this repo: `[OK]`, 1261 files read; `check-plugin-integrity` 0 errors; `shared-scripts.tests.ps1` green; mirrors in sync
+
 ### DEPLOY: feat/4288-eol-gate
 
-**Score:**
+`open-pr` now refuses a branch whose git index carries a file with CRLF while `.gitattributes` pins it to
+`eol=lf`, and prints the one-line repair (`git add --renormalize -- <paths>`). The check is
+`scripts/lint/check-eol.ps1`, shared through the `dkj-repo-workflow` mirror and runnable as a CI step, so a
+consumer's own copy can go (#4288).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer on Windows whose `.gitattributes` pins LF no longer meets an EOL-only modification at `ship-pr`'s
+fast-forward (#4144): `open-pr` catches the CRLF blob before the push, with the repair line printed.
+
+**Score:** 2
 
 #### Pull Request
 
