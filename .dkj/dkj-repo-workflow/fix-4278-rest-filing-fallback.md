@@ -39,19 +39,34 @@
 
 ### PLAN
 
+#4278, measured in a Claude Code cloud session: `gh issue create`/`list` is refused there (GraphQL
+unavailable), the REST form works, `gh auth status` reads invalid until the repo is attached, and the
+orchestrator skill page cited the retired repo name a no-repo session would attach first.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `skills/orchestrator/SKILL.md`: seven `DaveKJohn/claude-code-specialists` links now cite `DKJ-Solutions/dkj-marketplace`; new section "Filing where GraphQL is refused" with the REST file/list/search lines and how to tell a tracker is reachable.
+- [x] Chris's manual: a pointer to that section beside the filing-inward passage.
+- [~] The other `gh issue create` citations stay: they run in desktop sessions, where GraphQL works.
 
 ### TEST
 
+- [x] Docs only; the full gate runs in `ship-pr`.
+
 ### DEPLOY: fix/4278-rest-filing-fallback
 
-**Score:**
+The orchestrator skill page now cites the live repo name, and says how to file where `gh issue create`
+is refused because GraphQL is unavailable (a Claude Code cloud session): through `gh api` against the
+REST endpoints, after checking reachability with a REST read rather than `gh auth status`.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A cloud session that finds something to report can now file it inbound instead of concluding there is no
+tracker.
+
+**Score:** 2
 
 #### Pull Request
 
