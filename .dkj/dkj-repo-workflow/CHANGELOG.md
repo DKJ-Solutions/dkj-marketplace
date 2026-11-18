@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**8 / 8 minor entries** <!-- pending-tally -->
+**9 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4254-gate-reports-text-lg · 20261118-001918Z
+
+The house-style gate now reports `--text-lg` as a retired token (#4254). It was retired on November 1, 2026
+for `--text-h3`, but the gate never listed it, so a page reading it passed while its text fell back to
+the inherited size. A test now holds the gate's list to the brand book's rename tables.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions app that still reads `--text-lg` gets a `[retired]` finding naming the line, instead of
+quietly losing its size.
+
+**Score:** 3
+
+#### Pull Request
+
+The house-style gate reports --text-lg as a retired token
+
+Plugins: dkj-repo-workflow-dkj
+
+[PR #4263](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4263)
+
+---
 
 ### DEPLOY: docs/4253-complete-7-0-0-must-do-list · 20261117-235125Z
 
