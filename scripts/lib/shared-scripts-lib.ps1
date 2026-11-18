@@ -2025,6 +2025,22 @@ function Get-SharedScriptPairs {
             MeasureArgs = @()
         },
         @{
+            # The CRLF-under-eol=lf index gate (issue #4288, born in a consumer's own copy after #4144: an
+            # EOL-only modification made ship-pr trip at its fast-forward). open-pr runs it before the push
+            # as a sibling, so the copy that runs in a consumer is this mirror; a consumer may also run it
+            # as a CI step.
+            #
+            # NO SKILL, on check-unfolded-entry's reasoning: every caller is automatic (a gate, a CI step)
+            # and the one command in its .SYNOPSIS answers it early for whoever wants it.
+            Name   = 'check-eol'
+            Source = 'scripts\lint\check-eol.ps1'
+            Plugin = 'dkj-repo-workflow'
+            Skill  = ''
+            # A fixture root, so the suite can judge a scratch repo. Read-only: a bare run only reads the index.
+            SkillParamsExempt = @('RootOverride')
+            MeasureArgs = @()
+        },
+        @{
             # The consumer-prose check: TWO detectors over ONE corpus, read once (issue #1421). It was two
             # registry rows, two mirrored scripts and two hooks for one day -- #1389's retired-name grep
             # and #1415's supremacy-declaration grep, the two narrow literal greps the prose-contract
