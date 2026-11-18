@@ -13,11 +13,30 @@
     items are the ones both existing consumers wrote by hand before the floor shipped at all
     (inbound #769): a theme-check config and the CI workflow over it.
 
-    WHAT IT PLACES, three things, all additive:
+    WHAT IT PLACES, three things, all additive, and a fourth where the store has a live deploy branch:
 
       scripts/repo-config.ps1            the Shopify seam block APPENDED (the file must already exist)
       .theme-check.yml                   a starter config, created when absent
       .github/workflows/theme-check.yml  theme-check on every PR into main, created when absent
+      .github/workflows/live-direct-writes.yml
+                                         the scheduled live-direct-writes check (#4289), created when
+                                         absent AND ONLY WHERE Get-ShopifyLiveDeployBranch IS ANSWERED
+                                         in scripts/repo-config.ps1: a store whose live theme is pushed
+                                         with the CLI has no deploy branch for Shopify's bot to write to,
+                                         so there is nothing for the check to read.
+
+    THE FOURTH FILE IS A RUNNER, NOT A COPY OF THE CHECK. It follows adopt-ci-floor's write runners: a
+    second actions/checkout fetches DKJ-Solutions/dkj-marketplace beside the store's tree and runs the
+    plugin's own scripts/task/live-direct-writes.ps1 from it, so there is one definition of the check and
+    a fix reaches the store through a pin, not through a re-copy. The checkout is pinned to the commit of
+    the release this script came from (`ref: <sha> # vX.Y.Z`, the SHA resolved from the tag, because a
+    tag can be moved and a SHA cannot) and so is actions/checkout itself, because the job holds
+    `issues: write` and runs fetched code beside it. Where the tag cannot be resolved the tag is written
+    and the run says so; where not even the version can be read, `main` is, loudly. THE DEPLOY BRANCH AND
+    THE FLOOR ARE BAKED IN AT PLACEMENT, as adopt-ci-floor bakes in the trunk: the branch is read from the
+    seam now, the floor is the time of placement (so a store starts reporting from the day it adopts the
+    check, not with its whole history in one issue). Moving either later is editing one line of the
+    workflow file. This command never rewrites a file that exists, so re-run nothing: edit it.
 
     THE SEAM BLOCK IS COMMENTED OUT UNLESS -LiveThemeId SAYS OTHERWISE, and that is the one design
     decision in here worth reading. A stub returning 'VUL-IN' is WORSE than an absent function: the
@@ -76,6 +95,15 @@
     the theme id, and sync-main refuses rather than guessing which store to read -- its own -Store
     parameter gets you through one run.
 
+.PARAMETER LiveDirectWritesSince
+    Where the live-direct-writes check starts reporting, as a UTC date (2026-11-18) or date and time
+    (2026-11-18T00:00:00Z). Default: now, so a store adopting the check is not handed its whole history in
+    one issue. A store that already runs the check passes the floor it was using.
+
+.PARAMETER SharedRefOverride
+    The ref the live-direct-writes workflow checks the shared scripts out at, for the test suite, which has
+    no network to resolve a tag with. A consumer never types this.
+
 .PARAMETER RootOverride
     Repo root to operate on, for the test suite. A consumer never types this: the root is resolved
     dual-context like every other shared script.
@@ -91,6 +119,8 @@ param(
     [switch]$Apply,
     [string]$LiveThemeId = '',
     [string]$StoreDomain = '',
+    [string]$LiveDirectWritesSince = '',
+    [string]$SharedRefOverride = '',
     [string]$RootOverride = ''
 )
 
@@ -114,7 +144,9 @@ if (Test-Path -LiteralPath $guardLib -PathType Leaf) { . $guardLib; Assert-OwnCo
 # JUDGED (#1917): Resolve-RepoRootOrFail is check-report-lib's refusing sibling of Resolve-CheckRoot
 # -- same precedence, but it names git's exit code and stderr instead of dying on $null.Trim().
 . (Join-Path $PSScriptRoot '..\lib\check-report-lib.ps1')
-$repoRoot = Resolve-RepoRootOrFail -Override $RootOverride -ScriptName 'adopt-shopify-floor.ps1' -OverrideName '-RootOverride'
+# Invoke-NativeCapture, for the one network read below: the tag of the release this script came from.
+. (Join-Path $PSScriptRoot '..\lib\native-capture-lib.ps1')
+$repoRoot =Resolve-RepoRootOrFail -Override $RootOverride -ScriptName 'adopt-shopify-floor.ps1' -OverrideName '-RootOverride'
 
 # A repo that publishes plugins is the floor's SOURCE, not a Shopify store: it has no theme, so a
 # .theme-check.yml and a theme-check workflow there would be lint over nothing. Same one-file test
@@ -343,6 +375,139 @@ jobs:
           token: ${{ github.token }}
 '@
 
+# --- The live-direct-writes workflow (#4289) --------------------------------------------------------
+# THE MECHANISM IS adopt-ci-floor's, NOT A NEW ONE: a consumer's runner has no plugin cache, so the job
+# checks the plugin's source repo out beside the store's tree and runs the script from there. This job
+# holds `issues: write` (it opens one issue), so it takes the write runners' two pins: the ACTION by
+# SHA (the same literal adopt-ci-floor writes; the parity assert in adopt-shopify-floor.tests.ps1 holds
+# it equal to this repo's own fold-on-merge.yml) and the SCRIPTS at the commit of the release this
+# script came from. See adopt-ci-floor.ps1 for the full argument (#2333, #4237).
+$sharedRepo  = 'DKJ-Solutions/dkj-marketplace'
+$sharedPath  = '.workflow-scripts'
+$pluginName  = 'dkj-subagents-shopify'
+$checkoutPin = 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1'
+
+function Get-ShopifyPluginVersion {
+    # This plugin's own version, off its plugin.json: the mirror layout (two levels up is the plugin
+    # root) or the source layout (the plugin sits under plugins/). '' when neither yields a version.
+    foreach ($rel in @('..\..\.claude-plugin\plugin.json', "..\..\plugins\dkj-subagents\$pluginName\.claude-plugin\plugin.json")) {
+        $p = Join-Path $PSScriptRoot $rel
+        if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { continue }
+        try {
+            $v = [string]((Get-Content -LiteralPath $p -Raw | ConvertFrom-Json).version)
+            if ($v -match '^\d+\.\d+\.\d+$') { return $v }
+        } catch { }
+    }
+    return ''
+}
+
+function Resolve-SharedScriptsRef {
+    # The ref the runner fetches the shared scripts at, and how firmly it is pinned: 'override' (tests),
+    # 'sha' (the release's commit), 'tag' (the tag only, offline), 'unpinned' (main, no version read).
+    param([string]$Override)
+    if ($Override) { return [pscustomobject]@{ Ref = $Override; State = 'override'; Tag = '' } }
+    $version = Get-ShopifyPluginVersion
+    if (-not $version) { return [pscustomobject]@{ Ref = 'main'; State = 'unpinned'; Tag = '' } }
+    $tag = "v$version"
+    $ls = Invoke-NativeCapture -FilePath 'git' -DiscardStderr -TimeoutSeconds $script:NativeCaptureNetworkTimeoutSeconds -Arguments @('ls-remote', "https://github.com/$sharedRepo.git", "refs/tags/$tag", "refs/tags/$tag^{}")
+    $sha = ''
+    if ($ls.ExitCode -eq 0) {
+        # An annotated tag answers twice: the tag object, and the commit it points at under '^{}'. The
+        # commit is the one actions/checkout can take as a ref, so the peeled line wins when present.
+        foreach ($line in @($ls.Output)) {
+            $m = [regex]::Match([string]$line, '^(?<sha>[0-9a-f]{40})\s+refs/tags/(?<tag>\S+)$')
+            if (-not $m.Success) { continue }
+            if ($m.Groups['tag'].Value -eq "$tag^{}") { $sha = $m.Groups['sha'].Value; break }
+            if ($m.Groups['tag'].Value -eq $tag) { $sha = $m.Groups['sha'].Value }
+        }
+    }
+    if ($sha) { return [pscustomobject]@{ Ref = "$sha # $tag"; State = 'sha'; Tag = $tag } }
+    return [pscustomobject]@{ Ref = $tag; State = 'tag'; Tag = $tag }
+}
+
+function Get-LiveDirectWritesWorkflow {
+    param([string]$Branch, [string]$Since, [string]$ScriptsRef)
+    $template = @'
+# Flags a direct FILE write to the live theme -- a CLI theme push or an admin code-editor save -- that
+# reached the `@@BRANCH@@` branch outside the promotion and the hotfix lane, and opens one issue for it.
+# Placed by dkj-subagents-shopify's adopt-shopify-floor (#4289). It is this repo's workflow now.
+#
+# WHY A SCHEDULE. Every guard on the live theme is session-side or git-side; a `shopify theme push
+# --allow-live` from a shell that loaded none of this repo's harness passes all of them, and the only
+# trace is the shopify[bot] commit on `@@BRANCH@@` afterwards. This reads that trace. The script it runs,
+# live-direct-writes.ps1 in the dkj-subagents-shopify plugin, says which commit shape counts and why.
+#
+# NO push TRIGGER ON `@@BRANCH@@`, on purpose: a push-triggered workflow runs from the file in the PUSHED
+# branch, and this file lives on the default branch until the next promotion. A schedule always runs from
+# the default branch, so it works from the merge on. Every six hours keeps the Actions minutes small.
+#
+# NOT A REQUIRED CHECK: it judges no PR. A new issue carrying the `live-direct-write` label is the signal.
+#
+# TWO VALUES WERE BAKED IN WHEN THIS FILE WAS PLACED, and each is one line to change here: the branch the
+# live theme deploys from (Get-ShopifyLiveDeployBranch in scripts/repo-config.ps1 -- change both together),
+# and `-Since`, the time before which a commit is not reported. Lower it to have older writes reported.
+#
+# LEAST PRIVILEGE: contents: read for the history, issues: write for the one issue (and the label once).
+# The job runs a script fetched from another repository beside that write scope, so the SCRIPTS and the
+# ACTION are pinned to a release, not to a branch tip (see adopt-ci-floor's #2333). Move the `ref:` pin
+# when you update the dkj-subagents-shopify plugin.
+name: Live direct writes
+
+permissions:
+  contents: read
+  issues: write
+
+on:
+  schedule:
+    - cron: '41 */6 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: live-direct-writes
+  cancel-in-progress: false
+
+jobs:
+  live-direct-writes:
+    runs-on: ubuntu-latest
+    # 10 minutes (issue #2296): a scheduled job nobody waits on would otherwise spend GitHub's six-hour
+    # default, holding a write scope.
+    timeout-minutes: 10
+    steps:
+      # The history it reads, from the deploy branch: every commit, no file contents.
+      - uses: @@CHECKOUT@@
+        with:
+          ref: @@BRANCH@@
+          path: live-history
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: .github
+          persist-credentials: false
+
+      - name: Fetch the shared workflow scripts
+        uses: @@CHECKOUT@@
+        with:
+          repository: @@SHARED_REPO@@
+          ref: @@SCRIPTS_REF@@
+          path: @@SHARED_PATH@@
+
+      # THE SHIM (issue #2488): the shared scripts launch children by the literal name 'powershell', and
+      # ubuntu-latest has only 'pwsh'; one symlink resolves them all.
+      - name: Make 'powershell' resolve to pwsh
+        shell: bash
+        run: sudo ln -sf "$(command -v pwsh)" /usr/local/bin/powershell
+
+      - name: Report shopify[bot] file writes on the live branch that no issue names yet
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File @@SHARED_PATH@@/plugins/dkj-subagents/@@PLUGIN@@/scripts/task/live-direct-writes.ps1 -RepoPath live-history -Ref HEAD -Since '@@SINCE@@'
+          exit $LASTEXITCODE
+'@
+    $text = $template.Replace('@@BRANCH@@', $Branch).Replace('@@SINCE@@', $Since).Replace('@@SCRIPTS_REF@@', $ScriptsRef).Replace('@@CHECKOUT@@', $checkoutPin).Replace('@@SHARED_REPO@@', $sharedRepo).Replace('@@SHARED_PATH@@', $sharedPath).Replace('@@PLUGIN@@', $pluginName)
+    return $text
+}
+
 # --- Plan -----------------------------------------------------------------------------------------
 Write-Host ''
 Write-Host 'adopt-shopify-floor -- the guard''s seams, a theme-check starter, and the CI gate' -ForegroundColor Cyan
@@ -391,6 +556,48 @@ foreach ($f in @(
     }
     Write-Host "  [create] $($f.Rel) -- $($f.What)" -ForegroundColor Green
     $plan += @{ Rel = $f.Rel; Mode = 'create'; Content = (($f.Content -replace "`r`n", "`n") + "`n") }
+}
+
+# The live-direct-writes workflow (#4289), only where the live theme has a deploy branch. The seam is read
+# the way every seam here is read: in a child scope, StrictMode off, inside a try, because the file is the
+# consumer's and a fault in it must degrade to "unanswered" rather than take this command down. It is
+# read from the file as it stands NOW, so a seam this very run appends is not counted: answer
+# Get-ShopifyLiveDeployBranch, then re-run.
+$ldwRel = '.github\workflows\live-direct-writes.yml'
+$deployBranch = & {
+    Set-StrictMode -Off
+    $answer = ''
+    if (Test-Path -LiteralPath $args[0] -PathType Leaf) {
+        try {
+            . $args[0]
+            if (Test-FunctionDefined 'Get-ShopifyLiveDeployBranch') { $answer = ([string](Get-ShopifyLiveDeployBranch)).Trim() }
+        } catch { }
+    }
+    return $answer
+} $configPath
+$ldwSinceGiven = ([string]$LiveDirectWritesSince).Trim()
+$ldwState = 'plan'
+if (Test-Path -LiteralPath (Join-Path $repoRoot $ldwRel) -PathType Leaf) {
+    $ldwState = 'exists'
+    Write-Host "  [skip]   $ldwRel -- already exists, left exactly as it is" -ForegroundColor DarkGray
+}
+elseif (-not $deployBranch) {
+    $ldwState = 'no-branch'
+    Write-Host "  [skip]   $ldwRel -- Get-ShopifyLiveDeployBranch is not answered, so the live theme is pushed with the CLI and there is no deploy branch to read" -ForegroundColor DarkGray
+}
+elseif ($deployBranch -notmatch '^(?!-)[A-Za-z0-9._/-]+$') {
+    $ldwState = 'bad-branch'
+    Write-Host "  [STOP]   $ldwRel -- Get-ShopifyLiveDeployBranch is not a plain branch name (letters, digits, . _ / -), so it is not written into a workflow" -ForegroundColor Yellow
+}
+elseif ($ldwSinceGiven -and $ldwSinceGiven -notmatch '^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}Z)?$') {
+    $ldwState = 'bad-since'
+    Write-Host "  [STOP]   $ldwRel -- -LiveDirectWritesSince is not a UTC date (2026-11-18) or date and time (2026-11-18T00:00:00Z)" -ForegroundColor Yellow
+}
+else {
+    $ldwSince = if ($ldwSinceGiven) { $ldwSinceGiven } else { [DateTime]::UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", [System.Globalization.CultureInfo]::InvariantCulture) }
+    $ldwPin = Resolve-SharedScriptsRef -Override $SharedRefOverride
+    Write-Host "  [create] $ldwRel -- the scheduled check for direct file writes to the live theme, on $deployBranch, reporting from $ldwSince" -ForegroundColor Green
+    $plan += @{ Rel = $ldwRel; Mode = 'create'; Content = (((Get-LiveDirectWritesWorkflow -Branch $deployBranch -Since $ldwSince -ScriptsRef $ldwPin.Ref) -replace "`r`n", "`n") + "`n") }
 }
 
 if ($plan.Count -eq 0) {
@@ -446,6 +653,15 @@ if (([string]$StoreDomain).Trim()) {
 else {
     Write-Host 'The pre-task sync (the sync-main skill) needs one more answer before it runs: uncomment'
     Write-Host 'Get-ShopifyStoreDomain with your store. It refuses rather than guessing which store to pull.'
+}
+if ($ldwState -eq 'plan') {
+    Write-Host ''
+    Write-Host "The live-direct-writes workflow is placed ($ldwRel), reporting from $ldwSince."
+    switch ($ldwPin.State) {
+        'sha'      { Write-Host "Its scripts are pinned to the release this command came from ($($ldwPin.Tag)). Move that ref: line when you update the plugin." }
+        'tag'      { Write-Host "NOTE: the tag $($ldwPin.Tag) could not be resolved to a commit (git ls-remote did not answer), so the tag itself is written. A tag can be moved and a SHA cannot -- replace the ref: line with the commit once you have a network." -ForegroundColor Yellow }
+        'unpinned' { Write-Host 'NOTE: this plugin''s version could not be read, so the scripts are fetched from main -- the tip, beside a write scope. Replace the ref: line with a release tag''s commit.' -ForegroundColor Yellow }
+    }
 }
 Write-Host ''
 Write-Host 'ONE THING TO READ BEFORE YOUR FIRST PULL FROM LIVE: the CLI rewrites line endings, so a pull'

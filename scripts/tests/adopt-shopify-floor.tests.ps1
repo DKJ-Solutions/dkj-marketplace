@@ -65,12 +65,15 @@ function New-ConsumerRepo {
 
 function Invoke-Adopt {
     <# Returns the printed output plus the exit code. Invoked as a child process, as a consumer runs it. #>
-    param([string]$Root, [switch]$Apply, [string]$LiveThemeId = '')
+    param([string]$Root, [switch]$Apply, [string]$LiveThemeId = '', [string]$Since = '')
     # Deliberately NOT named $args: that is an automatic variable inside a function, and assigning it
     # works right up until somebody adds a splat or a nested call and cannot see why.
     $argv = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $Script, '-RootOverride', $Root)
     if ($Apply) { $argv += '-Apply' }
     if ($LiveThemeId) { $argv += @('-LiveThemeId', $LiveThemeId) }
+    if ($Since) { $argv += @('-LiveDirectWritesSince', $Since) }
+    # No network in this suite: the pin the workflow carries is handed in, never resolved.
+    $argv += @('-SharedRefOverride', 'abc123 # v9.9.9')
     $out = & powershell @argv 2>&1
     return [pscustomobject]@{ Code = $LASTEXITCODE; Out = (($out | ForEach-Object { "$_" }) -join "`n") }
 }
@@ -170,6 +173,55 @@ try {
     $r = Invoke-Adopt -Root $tuned -Apply
     Assert-Equal "extends: theme-check:recommended`n" (Get-Content -LiteralPath (Join-Path $tuned '.theme-check.yml') -Raw) 'an existing .theme-check.yml is left exactly as it is, however strict it happens to be'
     Assert-True ($r.Out -match 'already exists') 'and the skip is reported rather than passed over in silence'
+
+    # --- the live-direct-writes workflow (#4289) --------------------------------------------------
+    # PLACED ONLY WHERE THE LIVE THEME HAS A DEPLOY BRANCH. A CLI-push store has no branch for the bot to
+    # write to, so a workflow there would schedule a check of nothing; the absence is the default.
+    Write-Host "live-direct-writes -- placed only where Get-ShopifyLiveDeployBranch is answered" -ForegroundColor Cyan
+    $ldwRel = '.github\workflows\live-direct-writes.yml'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $plain $ldwRel))) 'no deploy branch answered: no live-direct-writes workflow'
+    Assert-True ($r.Out -notmatch 'live-direct-writes workflow is placed') 'no deploy branch answered: and the report does not claim one'
+    $r = Invoke-Adopt -Root $plain
+    Assert-True ($r.Out -match 'live-direct-writes\.yml -- Get-ShopifyLiveDeployBranch is not answered') 'no deploy branch answered: the skip names the seam, so nobody wonders'
+
+    $git = New-ConsumerRepo -Label 'gitconnected' -ConfigBody ($seedConfig + "`nfunction Get-ShopifyLiveDeployBranch { return 'live' }`n")
+    $r = Invoke-Adopt -Root $git -Since '2026-11-18'
+    Assert-True ($r.Out -match '\[create\].*live-direct-writes\.yml') 'deploy branch answered: the dry run announces the workflow'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $git $ldwRel))) 'deploy branch answered: and the dry run wrote nothing'
+    $r = Invoke-Adopt -Root $git -Apply -Since '2026-11-18'
+    $ldw = Get-Content -LiteralPath (Join-Path $git $ldwRel) -Raw
+    Assert-True ($ldw -match '(?m)^\s+ref: live$') 'workflow: reads the history of the branch the seam names'
+    Assert-True ($ldw -match "-Since '2026-11-18'") 'workflow: carries the floor it was given'
+    Assert-True ($ldw -match 'repository: DKJ-Solutions/dkj-marketplace') 'workflow: fetches the scripts from the plugin source repo -- adopt-ci-floor''s mechanism'
+    Assert-True ($ldw -match '(?m)^\s+ref: abc123 # v9\.9\.9$') 'workflow: the scripts are pinned to the release ref it was handed'
+    Assert-True ($ldw -match 'plugins/dkj-subagents/dkj-subagents-shopify/scripts/task/live-direct-writes\.ps1') 'workflow: runs the plugin''s own script, not a copy'
+    Assert-True ($ldw -match '(?m)^\s+issues: write$' -and $ldw -match '(?m)^\s+contents: read$') 'workflow: least privilege -- read the history, write the one issue'
+    Assert-True ($ldw -match 'cron:') 'workflow: scheduled'
+    Assert-True ($ldw -notmatch '(?m)^\s+push:') 'workflow: no push trigger (it would run the file from the pushed branch)'
+    Assert-True ($ldw -notmatch '@@') 'workflow: no template token left unfilled'
+    Assert-True ($ldw -notmatch 'actions/checkout@v\d') 'workflow: the job holds a write scope, so actions/checkout is pinned by SHA'
+    $foldPin = [regex]::Match((Get-Content -LiteralPath (Join-Path $RepoRoot '.github\workflows\fold-on-merge.yml') -Raw), 'actions/checkout@[0-9a-f]{40} # v[0-9.]+').Value
+    Assert-True ($foldPin -and $ldw.Contains($foldPin)) 'workflow: the checkout pin is the one this repo''s own write runner carries'
+    Assert-True ($r.Out -match 'pinned|could not be resolved|NOTE' -or $r.Out -match 'live-direct-writes workflow is placed') 'apply: the closing report says the workflow was placed'
+    $firstBytes = $ldw
+    $r = Invoke-Adopt -Root $git -Apply -Since '2030-01-01'
+    Assert-Equal $firstBytes (Get-Content -LiteralPath (Join-Path $git $ldwRel) -Raw) 're-run: an existing workflow is left exactly as it is, a different floor does not overwrite it'
+
+    $noSince = New-ConsumerRepo -Label 'nosince' -ConfigBody ($seedConfig + "`nfunction Get-ShopifyLiveDeployBranch { return 'release/live' }`n")
+    $null = Invoke-Adopt -Root $noSince -Apply
+    $ldw2 = Get-Content -LiteralPath (Join-Path $noSince $ldwRel) -Raw
+    Assert-True ($ldw2 -match "-Since '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z'") 'no floor given: the time of placement is baked in, so the store is not handed its whole history'
+    Assert-True ($ldw2 -match '(?m)^\s+ref: release/live$') 'a branch name with a slash is written as it is'
+
+    $badBranch = New-ConsumerRepo -Label 'badbranch' -ConfigBody ($seedConfig + "`nfunction Get-ShopifyLiveDeployBranch { return 'live; echo pwned' }`n")
+    $r = Invoke-Adopt -Root $badBranch -Apply
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $badBranch $ldwRel))) 'a branch name that is not plain is never written into a workflow'
+    Assert-True ($r.Out -match 'not a plain branch name') 'and the refusal says why'
+
+    $badSince = New-ConsumerRepo -Label 'badsince' -ConfigBody ($seedConfig + "`nfunction Get-ShopifyLiveDeployBranch { return 'live' }`n")
+    $r = Invoke-Adopt -Root $badSince -Apply -Since "2026-11-18' ; echo pwned"
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $badSince $ldwRel))) 'a floor that is not a UTC date is never written into a workflow'
+    Assert-True ($r.Out -match 'LiveDirectWritesSince is not a UTC date') 'and the refusal names the parameter'
 
     # --- not a bootstrap --------------------------------------------------------------------------
     # A MISSING SEAM LIB IS SOMEBODY ELSE'S JOB, and the interesting half is that the other two files
