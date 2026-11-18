@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**4 / 5 minor entries** <!-- pending-tally -->
+**5 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4315-ship-pr-cancelled-required-check · 20261118-212955Z
+
+`ship-pr`'s CI wait no longer reads a cancelled required check as green (#4315). When the watch
+ends on a required run that the concurrency group cancelled, it now waits for the run that replaced
+it, the way the forward lap already did (#3331). Without that, it attempted a merge the ruleset
+refused.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A ship whose PR got a second `pull_request` run on the same head no longer ends red, with
+"NOT merged, NOT folded", on a branch that was fine. It now waits for the run that counts and
+merges on its answer.
+
+**Score:** 2
+
+#### Pull Request
+
+ship-pr waits for the superseding run when a green watch leaves a required check cancelled
+
+Plugins: dkj-repo-workflow
+
+[PR #4319](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4319)
+
+---
 
 ### DEPLOY: fix/4310-stale-park-awaiting-release · 20261118-211126Z
 
