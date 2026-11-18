@@ -62,6 +62,8 @@ $refused = @()
 $unchecked = @()
 foreach ($c in $calls) {
     $nwo = [string]$c.Repo
+    # A --repo given as a variable names a repo this hook cannot read: unknown, never the checkout's (#4293).
+    if ($c.RepoUnknown) { $unchecked += 'a new issue (repo given as a variable)'; continue }
     if (-not $nwo) {
         if ($null -eq $currentRepo) {
             $currentRepo = ''
