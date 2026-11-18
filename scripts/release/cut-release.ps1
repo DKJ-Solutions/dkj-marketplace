@@ -1502,9 +1502,10 @@ if ($CatchUpCertifiedSha) {
 if (Test-FunctionDefined 'Add-RunStepMark') { [void](Add-RunStepMark -Run 'cut-release' -Step 'lint') }
 if (-not $SkipLint -and -not $catchUpCertified) {
     $lintRel  = Get-SeamValue -Name 'Get-LintScript' -Default 'scripts\lint\check-plugin-integrity.ps1'
-    $lintPath = Join-Path $repoRoot $lintRel
+    # A rooted answer (a plugin's lint script, via Resolve-PluginScript) is used as it is (#4314).
+    $lintPath = if ([System.IO.Path]::IsPathRooted([string]$lintRel)) { [string]$lintRel } else { Join-Path $repoRoot $lintRel }
     if (-not (Test-Path -LiteralPath $lintPath)) {
-        Write-Error "the lint gate '$lintRel' does not exist in the repo root ($repoRoot) -- release aborted. Point Get-LintScript in scripts\repo-config.ps1 at this repo's lint script, or run with -SkipLint to cut without a gate."
+        Write-Error "the lint gate '$lintRel' does not exist (resolved against the repo root $repoRoot) -- release aborted. Point Get-LintScript in scripts\repo-config.ps1 at this repo's lint script, or run with -SkipLint to cut without a gate."
         exit 1
     }
     Write-Host "lint gate: integrity check for the release ($lintRel)..." -ForegroundColor Cyan

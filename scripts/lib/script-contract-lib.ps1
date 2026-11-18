@@ -129,7 +129,7 @@ $script:ContractRecords = @(
     # ran without one. Both routes now ask this function, which is the point of having it.
     @{ Lib = 'scripts\repo-config.ps1';     Function = 'Get-LintScript';  Scripts = @('open-pr', 'cut-release');
        Adopt = 'decide'; AdoptWhy = 'it names a file that exists only in this repo. Every consumer has its own lint, and a cut REFUSES when the file named here is absent -- so a copied value turns the gate into a blocker';
-       Returns = 'the repo-root-relative path to the lint script that runs before a PR and before a release cut; a release refuses to cut when the file it names is absent, since a gate that skips itself is not a gate' },
+       Returns = 'the path to the lint script that runs before a PR and before a release cut: repo-root-relative, or rooted for a plugin''s own lint script (Resolve-PluginScript, #4314); a release refuses to cut when the file it names is absent, since a gate that skips itself is not a gate' },
     # THE TEST GATE'S OWN SEAM (inbound #644, August 13, 2026). The gate globbed scripts\tests\*.tests.ps1
     # and nothing else, while both callers call it "all test suites green" -- an overstatement in any repo
     # whose stack is not all PowerShell (the reporting consumer: 4 PowerShell suites beside 605 Vitest
