@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**3 / 3 minor entries** <!-- pending-tally -->
+**4 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4320-move-data-to-onedrive · 20261118-204716Z
+
+A new skill in the developers team, `move-data-to-onedrive`, carried by Cody: it moves app data a repo
+keeps in git (every edit a branch and a PR, and public in a public repo) into
+`%OneDrive%\<org>\<repo>\<data-name>\`. Its six steps were measured on one repo's move: keep a binary
+store local, resolve the folder in code with an override and an in-repo fallback, point the tests at a
+temp folder, remove the data from git, migrate one machine at a time, and name the trade-offs.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A maintainer whose repo keeps editable data in git gets the procedure as a skill instead of working it out
+by hand, including the two traps that cost the first move: `.env.local` splitting the dev server from
+the scripts, and a test overwriting the real OneDrive data.
+
+**Score:** 3
+
+#### Pull Request
+
+A move-data-to-onedrive skill in dkj-subagents-developers: app data out of git into a OneDrive folder
+
+Plugins: dkj-subagents-developers
+
+[PR #4321](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4321)
+
+---
 
 ### DEPLOY: fix/4313-lint-brain-mojibake-inline-code · 20261118-203202Z
 
