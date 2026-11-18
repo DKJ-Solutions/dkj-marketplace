@@ -2043,6 +2043,22 @@ foreach ($t in $targets) {
         Write-Host "  $marker $($t.Rel) -- $($t.What)" -ForegroundColor $colour
     }
 }
+# WHAT WAKES THE SWEEP IS SAID OUT LOUD (#4258). The workflow_run list is read off the pull_request
+# workflows in this tree AT THIS MOMENT, so a run made while Part 1's two gate callers were deleted (the
+# delete-and-re-run repair for stale pins) placed a list without them, and nothing said so: the schedule
+# still sweeps, only later, and a diff against the old file reads like template drift.
+if ($mergeOnGreenRunnerCreated) {
+    $wakeShown = if ($mogWakeNames.Count -gt 0) { ($mogWakeNames | ForEach-Object { '"' + $_ + '"' }) -join ', ' } else { '(none -- the schedule alone carries the sweep)' }
+    Write-Host "  [wake]    merge-on-green.yml wakes on: $wakeShown" -ForegroundColor DarkGray
+    $part1Missing = @(@('.github/workflows/branch-entry.yml', '.github/workflows/always-on-budget.yml') | Where-Object {
+        -not (Test-Path -LiteralPath (Join-Path $repoRoot ($_ -replace '/', '\')) -PathType Leaf)
+    })
+    if ($part1Missing.Count -gt 0) {
+        Write-Host "            $($part1Missing -join ' and ') not in this tree, so the sweep does not wake on them." -ForegroundColor Yellow
+        Write-Host '            Part 1 (adopt-workflow-folder.ps1 -Apply) places them: run it first, then delete' -ForegroundColor Yellow
+        Write-Host '            merge-on-green.yml and re-run this with -Apply (#4258).' -ForegroundColor Yellow
+    }
+}
 if ($writeRunnerCreated) {
     switch ($writeRunnerPinState) {
         'sha'      { Write-Host "  [pin]     the write runners fetch the shared scripts at $writeRunnerRef -- this plugin's own release." -ForegroundColor DarkGray }
