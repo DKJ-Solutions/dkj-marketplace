@@ -305,6 +305,7 @@
                                       "shopify-cli.tests.ps1",
                                       "shopify-which-theme.tests.ps1",
                                       "shopify-check-jsonld.tests.ps1",
+                                      "shopify-check-sitemap.tests.ps1",
                                       "shopify-sync-summary.tests.ps1",
                                       "shopify-live-direct-writes.tests.ps1",
                                       "shopify-floor-sessioncheck.tests.ps1",
