@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**24 / 27 minor entries** <!-- pending-tally -->
+**25 / 28 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4289-which-theme-in-shopify · 20261118-150111Z
+
+Ships the `which-theme` skill in `dkj-subagents-shopify` and puts `fetch-failure` in its script lib. The
+skill reports which theme id and name a storefront URL actually serves. You can add `-MustContain` or
+`-MustNotContain` fingerprints to tell a cached copy from a fresh one. When a fetch fails, it prints
+the status, `x-request-id`, UTC time and URL. Before this, only one store repo had the script. First
+step of [#4289](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4289).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A Shopify store on the plugin can now check which theme a page really serves without keeping its own
+copy of the script. `-Url` works straight away. `-Path` needs the store to answer
+`Get-StorefrontMarkets` in `scripts/repo-config.ps1`, the seam the BWJ extension already reads, so a
+store that has answered it once is covered for both.
+
+**Score:** 2
+
+#### Pull Request
+
+Move which-theme and fetch-failure into dkj-subagents-shopify
+
+Plugins: dkj-subagents-shopify
+
+[PR #4300](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4300)
+
+---
 
 ### DEPLOY: fix/4292-invoke-native-lib · 20261118-124207Z
 
