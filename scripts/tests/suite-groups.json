@@ -198,6 +198,7 @@
                                       "config-blueprint.tests.ps1",
                                       "orchestrator-skill.tests.ps1",
                                       "pin-parity.tests.ps1",
+                                      "plugin-payload-lib.tests.ps1",
                                       "sync-roster.tests.ps1",
                                       "teardown.tests.ps1",
                                       "teardown-protocol.tests.ps1",

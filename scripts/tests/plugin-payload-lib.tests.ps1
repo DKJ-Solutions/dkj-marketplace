@@ -33,6 +33,7 @@ $ErrorActionPreference = 'Stop'
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 . (Join-Path $PSScriptRoot '..\lib\fixture-git-lib.ps1')
 . (Join-Path $RepoRoot 'scripts\lib\native-capture-lib.ps1')
+. (Join-Path $RepoRoot 'scripts\lib\command-probe-lib.ps1')
 
 $LibPath       = Join-Path $RepoRoot 'scripts\lib\plugin-payload-lib.ps1'
 $MirrorPath    = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\scripts\lib\plugin-payload-lib.ps1'
@@ -79,7 +80,7 @@ $leak = & {
     $map = Get-RetiredPolicyExtensionNames
     [pscustomobject]@{
         Map    = $map
-        Leaked = [bool](Get-Command -Name 'Get-PluginRoot' -ErrorAction SilentlyContinue)
+        Leaked = Test-FunctionDefined 'Get-PluginRoot'
     }
 }
 Assert-False $leak.Leaked 'the locator functions live in the call scope of Get-RetiredPolicyExtensionNames only'
@@ -143,7 +144,7 @@ function Get-UnresolvedCall {
         ForEach-Object { $_.Name })
     $called = @($ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.CommandAst] }, $true) |
         ForEach-Object { $_.GetCommandName() } | Where-Object { $_ -and $_ -like '*-*' } | Sort-Object -Unique)
-    return ,@($called | Where-Object { $defined -notcontains $_ -and -not (Get-Command -Name $_ -ErrorAction SilentlyContinue) })
+    return ,@($called | Where-Object { $defined -notcontains $_ -and -not $ExecutionContext.SessionState.InvokeCommand.GetCmdlet($_) })
 }
 foreach ($f in @($LibPath, $ForwarderPath)) {
     $unresolved = Get-UnresolvedCall -Path $f
