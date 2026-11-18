@@ -2219,6 +2219,12 @@ foreach ($fn in @('Invoke-GhCapture', 'ConvertFrom-IssueListJson')) {
 foreach ($fn in @('Get-RepoStageCode', 'Get-SectionCode', 'Get-RepoProjectGid', 'Read-AsanaTaskBoard','New-AsanaMoveRequest', 'Invoke-AsanaWrite', 'Read-RepoConfigText')) {
     Assert-Equal (Get-FunctionSourceText -Path $cmTemplate -Name $fn) (Get-FunctionSourceText -Path $osTemplate -Name $fn) "the open-section template's $fn equals asana-closed-message.ps1's"
 }
+# #4291: the move-asana-task lib holds its section rule and its move request equal to the templates' copies.
+$secLib = Join-Path $PluginRoot 'scripts\lib\asana-section-lib.ps1'
+foreach ($fn in @('Get-SectionCode', 'New-AsanaMoveRequest')) {
+    Assert-True ($null -ne (Get-FunctionSourceText -Path $secLib -Name $fn)) "asana-section-lib.ps1 defines $fn"
+    Assert-Equal (Get-FunctionSourceText -Path $cmTemplate -Name $fn) (Get-FunctionSourceText -Path $secLib -Name $fn) "asana-section-lib.ps1's $fn equals asana-closed-message.ps1's"
+}
 . $osTemplate
 
 # THE STAGE MAP, read as text: smartwatchbanden's measured map with its local Filed = '2' (#4056).
