@@ -4810,13 +4810,14 @@ $toolBlockFindings = 0
 foreach ($def in @($agentDefs)) {
     $raw = [System.IO.File]::ReadAllText($def.FullName, [System.Text.Encoding]::UTF8)
     $rel = $def.FullName.Replace($RepoRoot, '.')
-    $declaredTools = @(Get-AgentDefTools -Content $raw)
+    # $agentDefs holds subagent defs only (the personas are not in it), so a def with no 'tools:' line
+    # INHERITS every tool except those 'disallowedTools:' names (#4277) -- Test-AgentDefHoldsTool.
     foreach ($tool in $toolBlockMap.Keys) {
-        if ($declaredTools -notcontains $tool) { continue }
+        if (-not (Test-AgentDefHoldsTool -Content $raw -Tool $tool)) { continue }
         $toolBlockObliged++
         $blockName = $toolBlockMap[$tool]
         if ($raw -notmatch [regex]::Escape("<!-- BEGIN shared:$blockName")) {
-            Add-Error ("[tool-block] ${rel}: names '$tool' in its tools line but carries no" +
+            Add-Error ("[tool-block] ${rel}: holds '$tool' (named in its tools line, or inherited: no tools line and not in disallowedTools) but carries no" +
                 " 'shared:$blockName' block. That block is placed by CAPABILITY rather than by craft" +
                 " (.claude/specialists/lenses/specialist-06-24-lens.md says why), so holding the tool is what obliges it. Add the" +
                 " sentinel pair and run scripts/agents/build-agent-defs.ps1.")

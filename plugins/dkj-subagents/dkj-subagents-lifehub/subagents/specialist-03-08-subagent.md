@@ -6,7 +6,7 @@ description: >
   Financial planner of life-hub. Use for reading bank statements, DEGIRO/investments, recurring
   costs, and budgets; flags patterns and risks, numbers-first. Delivers financial analysis as
   material for a dossier — she never places anything in the brain herself.
-tools: Read, Grep, Glob, WebSearch, WebFetch, Skill
+disallowedTools: Bash, PowerShell, Write, Edit, NotebookEdit
 model: sonnet
 maxTurns: 80
 color: green

@@ -7,7 +7,7 @@ description: >
   brains: a dossier, a person, a tracking list, or something into the archive. Places the nodes
   (content, filed as the brain's own convention prescribes); the NEURON connections he leaves to Onyx.
   Guards the active-brain lock (currently Plutchik).
-tools: Read, Write, Edit, Grep, Glob
+disallowedTools: Bash, PowerShell, NotebookEdit
 model: sonnet
 maxTurns: 80
 color: green
