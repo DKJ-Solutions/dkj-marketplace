@@ -265,6 +265,9 @@
                        "guards":  "dkj-repo-workflow-bwj: its hooks, the market URLs, the pages worker and the shared test harness it ships",
                        "suites":  [
                                       "asana-link-pickupcheck.tests.ps1",
+                                      "branch-base.tests.ps1",
+                                      "machine-preflight.tests.ps1",
+                                      "start-task.tests.ps1",
                                       "backlog-page-build.tests.ps1",
                                       "dkj-repo-workflow-bwj.tests.ps1",
                                       "bwj-extension-import.tests.ps1",

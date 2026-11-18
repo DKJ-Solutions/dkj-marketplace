@@ -317,6 +317,7 @@ matched, so the sibling check could see the pair only as `ALIASED`
 | [`golive-block`](skills/golive-block/SKILL.md) | the work is shipped and the issue is about to close -- writes the paste-ready block with its go-live half: where the result can be seen, the next release day, and the live URL per market |
 | [`prepare-release`](skills/prepare-release/SKILL.md) | release day is coming up -- stages it days ahead, read-only: the trunk's readiness, what is pending and the bump it makes, scores worth a second look, the theme push list by `live-preflight`'s own rules, an early drift read, the go-live obligations out of entry prose, the open pull requests, and the release-day runbook |
 | [`notify-live`](skills/notify-live/SKILL.md) | a release has just gone live, after the push and the cut -- tells the Asana task of every issue the release carried, and was told "visible with the release", that it is live now; a dry run until `-Post` |
+| [`start-task`](skills/start-task/SKILL.md) | a store task starts -- cuts the branch through the shared `new-branch`, after refusing a missing Shopify CLI, a `sync/` or `dependabot/` name, an unknown prefix, a quote in the title and a base that is not the trunk; creates no preview theme |
 
 <!-- /skills:plugin -->
 
