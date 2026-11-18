@@ -321,6 +321,7 @@ matched, so the sibling check could see the pair only as `ALIASED`
 | [`prepare-release`](skills/prepare-release/SKILL.md) | release day is coming up -- stages it days ahead, read-only: the trunk's readiness, what is pending and the bump it makes, scores worth a second look, the theme push list by `live-preflight`'s own rules, an early drift read, the go-live obligations out of entry prose, the open pull requests, and the release-day runbook |
 | [`notify-live`](skills/notify-live/SKILL.md) | a release has just gone live, after the push and the cut -- tells the Asana task of every issue the release carried, and was told "visible with the release", that it is live now; a dry run until `-Post` |
 | [`start-task`](skills/start-task/SKILL.md) | a store task starts -- cuts the branch through the shared `new-branch`, after refusing a missing Shopify CLI, a `sync/` or `dependabot/` name, an unknown prefix, a quote in the title and a base that is not the trunk; creates no preview theme |
+| [`move-asana-task`](skills/move-asana-task/SKILL.md) | an issue's Asana card (or a task GID) has to change section -- moves it to the section with a given stage code on the repo's own board only, found by the same code rule the CI runners use; has a dry run |
 
 <!-- /skills:plugin -->
 
