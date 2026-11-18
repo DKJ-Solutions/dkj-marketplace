@@ -39,19 +39,35 @@
 
 ### PLAN
 
+Inbound #4279: the `agenda` skill proposes one action per date, but that proposal never becomes trackable
+work. Step 3 now turns an accepted action into a Tasks card linked to its Agenda row, and checks for a
+duplicate first. The database and relation names come from the settings page, never from the plugin.
+
+The duplicate check reads the Agenda row's back-relation, which step 1's view-mode fetch already holds,
+rather than querying Tasks. That spends no SQL or rows quota, the reason step 1 uses view mode.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `skills/agenda/SKILL.md`: step 0 reads three optional settings, and step 3 creates the card with its duplicate check
 
 ### TEST
 
+- [x] Skill text only, with no script behind it. The full gate (integrity and links) runs in `ship-pr`.
+
 ### DEPLOY: feat/4279-agenda-tasks-card
 
-**Score:**
+`/agenda` now turns an action the owner accepts into a card in their Tasks database, with a deadline and
+a relation to the Agenda row. A second run finds that card and creates no duplicate
+([#4279](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4279)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A life-hub owner gets a trackable card per recurring date once their settings page names the Tasks
+database and its relation. Without those settings nothing changes.
+
+**Score:** 3
 
 #### Pull Request
 
