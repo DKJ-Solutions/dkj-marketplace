@@ -1,7 +1,8 @@
 <#
 .SYNOPSIS
     PreToolUse hook: stops a DISPATCHED SUBAGENT from running the git commands that discard the
-    working copy it was dispatched into, and stops EVERY thread from a force push or a hard reset.
+    working copy it was dispatched into, and stops EVERY thread from a force push, a hard reset or a
+    commit directly on the trunk.
 
 .DESCRIPTION
     THE SECOND RULE CAME LATER (#3901, November 8, 2026). The constitution names `git push --force` and
@@ -10,6 +11,19 @@
     judges it, for the main thread as well, before the agent_id gate below. The main thread's fast path
     therefore has two string tests rather than one. On the main thread the bash wrapper in hooks.json
     still fails OPEN when PowerShell cannot start, as it always did there.
+
+    THE THIRD RULE (#4286). The constitution says never directly on the trunk, via branch + PR, except
+    three bounded commits (the fold, the release and the release-notes commit). Nothing enforced it.
+    Get-TrunkCommitViolation, in the same lib and asked at the same place for every thread, refuses
+    (exit 2) a `git commit` run while the repo it targets has HEAD on its trunk, unless the commit's
+    subject starts with fold:, release:, release-prep: or release-notes: -- the subjects those commits
+    write. The target is `git -C <path>`, else a `cd` earlier in the command, else the payload's cwd. THE
+    HOOK DOES THE GIT READS (branch, origin/HEAD) and the rule FAILS OPEN on every doubt: not a repo, a
+    detached HEAD, git unreadable, a trunk it cannot name. A wrong refusal here blocks work in every
+    consumer, so only a plain 'HEAD is on the trunk' refuses. The commit's own message is read from the
+    command text; a script that commits (the fold script) is not visible and is not the rule's concern.
+    The same string pre-gate applies: a payload that does not name git and one of push, reset or commit
+    leaves before any lib is loaded.
 
     Everything below this paragraph is the subagent rule, as first written.
 
@@ -129,15 +143,16 @@ if ([Console]::IsInputRedirected) { $raw = [Console]::In.ReadToEnd() }
 # WHAT THE FIELD MEANS is still stated in exactly one place, Get-HookCommandPayload, and that is what
 # decides. This is a fast path in front of it, not a second opinion.
 #
-# AND A SECOND STRING TEST, FOR THE ONE RULE THAT HOLDS ON EVERY THREAD (#3901): the constitution's force
-# push and hard reset. Only a payload naming git AND push or reset pays the lib load on the main thread;
-# the rest of the 89% still leaves here. Like the first test, it can only err towards more work.
+# AND A SECOND STRING TEST, FOR THE RULES THAT HOLD ON EVERY THREAD (#3901, #4286): the constitution's force
+# push and hard reset, and its no-commit-on-the-trunk. Only a payload naming git AND push, reset or commit
+# pays the lib load on the main thread; the rest of the 89% still leaves here. Like the first test, it can
+# only err towards more work.
 #
 # NO \b IN IT, and that is measured rather than tidied (review of #3901): $raw is JSON, where a newline
 # before `git` is the two characters `\n`, so `\bgit` finds no boundary after that `n` and a multi-line
 # command walked past the rule. A bare substring cannot lose a boundary to escaping.
 $isSubagentCall = $raw -match '"agent_id"\s*:'
-$mayBreakSafetyRule = ($raw -match '(?i)git') -and ($raw -match '(?i)push|reset')
+$mayBreakSafetyRule = ($raw -match '(?i)git') -and ($raw -match '(?i)push|reset|commit')
 if (-not $isSubagentCall -and -not $mayBreakSafetyRule) { exit 0 }
 
 # $PSScriptRoot-relative, so it resolves the same in the source tree, in the plugin mirror and in a
@@ -180,6 +195,24 @@ if ($null -ne $safety) {
         '',
         '  WRITING THE RULE INTO A FILE through a script piped into an interpreter? Text that a command',
         "  executes is judged as a command. Use the harness's Edit/Write tool instead."
+    ) -join "`n")
+    exit 2
+}
+
+# THE TRUNK-COMMIT RULE, ALSO BEFORE THE GATE (#4286): "never directly on the trunk" binds every thread. The
+# lib reads the repo's branch and trunk itself (Get-TrunkCommitRepoFacts) and fails open on every doubt, so
+# the only commands refused are commits made while HEAD is on the trunk without an allowed subject.
+$commitCwd = if ($payload.Cwd) { $payload.Cwd } elseif ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR } else { '' }
+$trunkCommit = Get-TrunkCommitViolation -Command $payload.Command -Cwd $commitCwd
+if ($null -ne $trunkCommit) {
+    [Console]::Error.WriteLine("BLOCKED (guard-working-copy): $($trunkCommit.Reason)")
+    [Console]::Error.WriteLine(@(
+        '  This is the constitution rule, not a preference: work lands on a branch and reaches the trunk through',
+        '  a pull request. The fold, release, release-prep and release-notes commits are the only direct ones,',
+        '  and a commit made by their own scripts is not blocked. Do not rephrase the subject to get past this',
+        '  check on a commit that is not one of them.',
+        '',
+        '  TO FIX: open a branch with the `new-branch` skill, commit there, and let the pull request carry it.'
     ) -join "`n")
     exit 2
 }

@@ -39,19 +39,54 @@
 
 ### PLAN
 
+Inbound #4286: nothing in the plugin enforced the constitution's "never directly on the trunk". One
+store had built its own 955-line hook for it.
+
+- **Rule 2 ships** (refuse a commit while HEAD is on the trunk). It goes into `guard-working-copy`'s
+  every-thread safety block next to #3901's force-push and hard-reset rule, so no new hook entry is
+  needed. The allowed subjects are `fold:`, `release:`, `release-prep:` and `release-notes:`, the only
+  direct trunk subjects this repo's first-parent history shows.
+- **Rule 3 (a notice on every prompt while on the trunk) is declined.** In this workflow the trunk is
+  where a checkout rests between assignments, because `ship-pr` returns there, so the notice would fire
+  on almost every prompt.
+- **Rule 4 (the store's `live` branch) stays in the store**, as the issue proposes: the branch and its
+  marker are store facts.
+- **The rule fails open on every doubt**: detached HEAD, not a repo, git unreadable, `--git-dir` or
+  `--work-tree`, or a trunk it cannot name. It reads the trunk as origin/HEAD, else `main`, the same
+  fallback `trunk-sync-lib` uses. It does not load `Get-BranchTrunkName`, which would pull an 8,000-line
+  lib and a consumer seam into every commit's refusal path.
+- **A subject the guard cannot read is refused on the trunk**: an editor, `$var`, `-F -`, `--amend
+  --no-edit`, or `-C`/`--fixup`. A commit made inside a script, such as the fold or the cut, is not
+  visible to a hook and is not its concern.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-TrunkCommitViolation` and its helpers in `working-copy-guard-lib.ps1`, with the mirror byte-identical
+- [x] `guard-working-copy.ps1` asks it before the `agent_id` gate. The pre-gate now also admits `commit`
+- [x] `Get-SegmentCdTarget` extracted and shared with the project-scope rule. It is now case-insensitive, so a capitalised `Set-Location` is seen
+- [x] The scripts README row names the new rule
 
 ### TEST
 
+- [x] `working-copy-guard-lib.tests.ps1` 217 passed; `guard-working-copy.tests.ps1` 85 passed, with temp-repo fixtures; `hook-fail-closed` and `shared-scripts` green; `check-plugin-integrity` 0 errors.
+- [x] The full gate runs in `ship-pr`.
+
 ### DEPLOY: feat/4286-trunk-commit-guard
 
-**Score:**
+`guard-working-copy` now refuses a `git commit` made while HEAD is on the trunk, in every thread, unless
+the subject is one of the constitution's bounded direct commits (`fold:`, `release:`, `release-prep:`,
+`release-notes:`). Before this, "never directly on the trunk" was prose only, outside one store that
+built its own guard. The rule fails open whenever it cannot tell the branch or the trunk
+([#4286](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4286)).
+
+**Score:** 4
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer's session that tries to commit straight on the trunk is now stopped and pointed at
+`new-branch`, where it used to land the commit and fail only at push time, or not at all.
+
+**Score:** 3
 
 #### Pull Request
 

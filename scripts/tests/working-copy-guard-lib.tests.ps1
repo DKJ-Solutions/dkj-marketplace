@@ -263,6 +263,159 @@ Assert-Safety 'git commit -m "never git push --force"' 'a commit message naming 
 Assert-Safety 'grep -rn "reset --hard" plugins/'       'nor is a grep for it'
 Assert-Safety ''                                       'an empty command is no violation'
 
+# ---------------------------------------------------------------------------------------------------
+Write-Host ""
+Write-Host "-- group 8: never directly on the trunk, except the three bounded commits (#4286)" -ForegroundColor Cyan
+
+# Pure judgement: the repo facts are injected, so no case needs a repo. A fixed fake table keyed by the
+# directory a commit targets; anything not in it is 'unknown' (fail open).
+$script:TrunkFacts = {
+    param($Dir)
+    switch -Wildcard ($Dir) {
+        'C:\work\onmain'   { return @{ Branch = 'main'; Trunk = 'main' } }
+        'C:\work\onbranch' { return @{ Branch = 'feat/x'; Trunk = 'main' } }
+        'C:\work\detached' { return $null }
+        'C:\work\master'   { return @{ Branch = 'master'; Trunk = 'master' } }
+        default            { return $null }
+    }
+}
+function Assert-TrunkCommit {
+    param([string]$Command, [string]$Name, [string]$Cwd = 'C:\work\onmain', [switch]$Refused)
+    $v = Get-TrunkCommitViolation -Command $Command -Cwd $Cwd -ResolveFacts $script:TrunkFacts
+    $got = $null -ne $v
+    if ($got -eq [bool]$Refused) { $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green }
+    elseif ($got) { $script:fail++; Write-Host "  [FAIL] $Name`n         expected allow, refused: $($v.Reason)" -ForegroundColor Red }
+    else { $script:fail++; Write-Host "  [FAIL] $Name`n         expected a refusal, got none" -ForegroundColor Red }
+}
+
+# The four subjects the bounded exceptions write pass on the trunk.
+Assert-TrunkCommit 'git commit -m "fold: feat/x changelog (#12)"'      'fold: passes'
+Assert-TrunkCommit 'git commit -m "release: v7.1.0"'                   'release: passes'
+Assert-TrunkCommit 'git commit -m "release-prep: open the 7.x section"' 'release-prep: passes'
+Assert-TrunkCommit 'git commit -m "release-notes: v6.1.0"'             'the historical release-notes: passes'
+Assert-TrunkCommit "git commit -m 'fold: x'"                           'single quotes pass'
+Assert-TrunkCommit 'git commit --message="fold: x"'                    '--message= passes'
+Assert-TrunkCommit 'git commit --message "fold: x"'                    '--message <value> passes'
+Assert-TrunkCommit 'git commit -nm "fold: x"'                          'a bundled -nm passes'
+Assert-TrunkCommit 'git commit -m"fold: x"'                            'an attached -m"..." passes'
+Assert-TrunkCommit 'git commit -m "fold: x" -m "body; with & chars"'   'a later -m is a paragraph, not the subject'
+Assert-TrunkCommit 'git add -A && git commit -m "fold: x" 2>&1'        'a chain with a redirect passes'
+
+# Everything else is refused on the trunk.
+Assert-TrunkCommit 'git commit -m "fix: cart totals"'      'a fix: subject is refused'          -Refused
+Assert-TrunkCommit 'git commit -am "wip"'                  '-am is refused'                     -Refused
+Assert-TrunkCommit 'git commit -m "park: feat/x"'          'park: belongs on a branch'          -Refused
+Assert-TrunkCommit 'git commit -m "Fold: x"'               'the prefix is case-sensitive'       -Refused
+Assert-TrunkCommit 'git commit -m "folder: x"'             'a prefix of another word is no match' -Refused
+Assert-TrunkCommit 'git commit -m "x fold: y"'             'the prefix must START the subject'  -Refused
+Assert-TrunkCommit 'git add . ; git commit -m "docs: x"'   'a later segment is judged'          -Refused
+Assert-TrunkCommit 'echo done && git commit -m "fix: x"'   'and so is one after a harmless command' -Refused
+Assert-TrunkCommit 'git commit -m "fold: x" && git commit -m "fix: y"' 'one allowed commit does not cover the next' -Refused
+Assert-TrunkCommit '& git commit -m "fix: x"'              'the PowerShell call operator is git-led' -Refused
+Assert-TrunkCommit 'git commit --amend -m "fix: x"'        'an amend with a bad new subject'    -Refused
+Assert-TrunkCommit 'git commit --amend -m "fold: x"'       'an amend with an allowed new subject passes' -Refused:$false
+Assert-TrunkCommit 'git commit --amend --no-edit'          'an amend that keeps the old message has no readable subject' -Refused
+Assert-TrunkCommit 'git commit --amend'                    'an amend through the editor'        -Refused
+
+# The first -m is the subject, and the foreign message sources are not the subject.
+Assert-TrunkCommit 'git commit -m wip -m "fold: x"'        'a wip subject with a fold: paragraph is a wip commit' -Refused
+Assert-TrunkCommit 'git commit -m wip --message="release: v9"' 'and the long form too'          -Refused
+Assert-TrunkCommit 'git commit -mwip -m "fold: x"'         'an attached first -m'               -Refused
+Assert-TrunkCommit 'git commit --mess wip -m "fold: x"'    'an abbreviated --message'           -Refused
+Assert-TrunkCommit 'git commit "-m" wip -m "fold: x"'      'a quoted -m'                        -Refused
+Assert-TrunkCommit 'git commit -Fm "fold: x"'              '-Fm is a message FILE named m'      -Refused
+Assert-TrunkCommit 'git commit -cm "fold: x"'              '-cm reuses a commit'                -Refused
+Assert-TrunkCommit 'git commit -umm "fold: x"'             '-umm carries a mode, not a message' -Refused
+Assert-TrunkCommit 'git commit -m=fold:x'                  '-m=v is the value =v'               -Refused
+Assert-TrunkCommit 'git commit -C HEAD -m "fold: x"'       '-C reuses a message'                -Refused
+Assert-TrunkCommit 'git commit --fixup=HEAD -m "fold: x"'  '--fixup writes its own subject'     -Refused
+Assert-TrunkCommit 'git commit --reuse-message=HEAD'       '--reuse-message'                    -Refused
+Assert-TrunkCommit 'git commit -F msg.txt -m "fold: x"'    '-F beside -m is not guessed at'     -Refused
+Assert-TrunkCommit 'git commit -m "$msg"'                  'a variable message is unreadable'   -Refused
+Assert-TrunkCommit 'git commit -m "$(date)"'               'a command substitution is unreadable' -Refused
+Assert-TrunkCommit 'git commit'                            'no message at all (the editor)'     -Refused
+Assert-TrunkCommit 'git commit -a'                         'a commit with only flags'           -Refused
+Assert-TrunkCommit 'git commit -m'                         'a -m with no value'                 -Refused
+Assert-TrunkCommit 'git commit -- -m "fold: x"'            'after -- nothing is an option'      -Refused
+
+# -F: the file's first line is the subject, read when the file exists.
+$msgDir = Join-Path ([System.IO.Path]::GetTempPath()) "wcg-msg-$PID"
+New-Item -ItemType Directory -Force -Path $msgDir | Out-Null
+try {
+    Set-Content -LiteralPath (Join-Path $msgDir 'ok.txt') -Value @('', 'fold: feat/x changelog (#1)', '', 'body') -Encoding Ascii
+    Set-Content -LiteralPath (Join-Path $msgDir 'bad.txt') -Value @('fix: something', 'body') -Encoding Ascii
+    Set-Content -LiteralPath (Join-Path $msgDir 'blank.txt') -Value @('', '  ') -Encoding Ascii
+    $facts = { param($d) @{ Branch = 'main'; Trunk = 'main' } }
+    function Assert-TrunkCommitIn {
+        param([string]$Command, [string]$Name, [switch]$Refused)
+        $v = Get-TrunkCommitViolation -Command $Command -Cwd $msgDir -ResolveFacts $facts
+        if (($null -ne $v) -eq [bool]$Refused) { $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green }
+        else { $script:fail++; Write-Host "  [FAIL] $Name" -ForegroundColor Red }
+    }
+    Assert-TrunkCommitIn 'git commit -F ok.txt'                          '-F reads the first non-empty line: allowed'
+    Assert-TrunkCommitIn "git commit --file=ok.txt"                      '--file= too'
+    Assert-TrunkCommitIn ('git commit -F "' + (Join-Path $msgDir 'ok.txt') + '"') 'an absolute quoted path'
+    Assert-TrunkCommitIn 'git commit -F bad.txt'                         '-F with a bad subject'              -Refused
+    Assert-TrunkCommitIn 'git commit -F missing.txt'                     '-F with a file that is not there'   -Refused
+    Assert-TrunkCommitIn 'git commit -F blank.txt'                       '-F with an empty file'              -Refused
+    Assert-TrunkCommitIn 'git commit -F -'                               '-F - (stdin) is unreadable'         -Refused
+} finally {
+    Remove-Item -Recurse -Force -LiteralPath $msgDir -ErrorAction SilentlyContinue
+}
+
+# A heredoc or here-string that only OPENS in the segment: the subject is the first line after it.
+$nl = "`n"
+Assert-TrunkCommit ('git commit -m "$(cat <<' + "'EOF'" + $nl + 'fold: feat/x changelog (#9)' + $nl + $nl + 'body' + $nl + 'EOF' + $nl + ')"') `
+    'a heredoc subject that is allowed passes'
+Assert-TrunkCommit ('git commit -m "$(cat <<' + "'EOF'" + $nl + 'fix: something' + $nl + 'EOF' + $nl + ')"') `
+    'a heredoc subject that is not is refused' -Refused
+Assert-TrunkCommit ('git commit -m "$(cat <<EOF' + $nl + 'fold: x' + $nl + 'EOF' + $nl + ')"') `
+    'an unquoted heredoc opener reads the same way'
+Assert-TrunkCommit ('git add -A' + $nl + 'git commit -m "$(cat <<' + "'EOF'" + $nl + 'release: v1.2.3' + $nl + 'EOF' + $nl + ')"') `
+    'a heredoc after another line'
+Assert-TrunkCommit ("git commit -m @'" + $nl + 'fold: x' + $nl + "'@") 'a PowerShell here-string subject that is allowed'
+Assert-TrunkCommit ("git commit -m @'" + $nl + 'wip' + $nl + "'@") 'and one that is not'  -Refused
+Assert-TrunkCommit ('git commit -m "$(cat <<' + "'EOF'" + $nl + 'EOF' + $nl + ')"') 'an empty heredoc has no subject' -Refused
+
+# On a branch, and wherever the rule cannot be sure, any commit passes.
+Assert-TrunkCommit 'git commit -m "fix: anything"'  'any subject on a branch'                       -Cwd 'C:\work\onbranch'
+Assert-TrunkCommit 'git commit'                     'even the editor on a branch'                  -Cwd 'C:\work\onbranch'
+Assert-TrunkCommit 'git commit -m "fix: x"'         'a detached HEAD or non-repo (facts unknown)'  -Cwd 'C:\work\detached'
+Assert-TrunkCommit 'git commit -m "fix: x"'         'a directory the facts do not know'            -Cwd 'C:\work\nowhere'
+Assert-TrunkCommit 'git commit -m "fix: x"'         'no cwd at all and unknown facts' -Cwd ''
+Assert-TrunkCommit 'git commit -m "fix: x"'         'a trunk that is not main (master) is judged as the trunk' -Cwd 'C:\work\master' -Refused
+
+# Which repo: -C and cd, in either direction.
+Assert-TrunkCommit 'git -C C:\work\onbranch commit -m "fix: x"'  '-C to a branch checkout overrides a trunk cwd'
+Assert-TrunkCommit 'git -C C:\work\onmain commit -m "fix: x"'    '-C to a trunk checkout overrides a branch cwd'  -Cwd 'C:\work\onbranch' -Refused
+Assert-TrunkCommit 'git -C "C:\work\onmain" commit -m "fix: x"'  'a quoted -C'                                      -Cwd 'C:\work\onbranch' -Refused
+Assert-TrunkCommit 'git -C ..\onmain commit -m "fix: x"'         'a relative -C resolves against the cwd'            -Cwd 'C:\work\onbranch' -Refused
+Assert-TrunkCommit 'git -C C:\work\onbranch commit -m "fold: x"' 'an allowed subject passes either way'
+Assert-TrunkCommit 'cd C:\work\onbranch && git commit -m "fix: x"' 'a cd to a branch checkout'
+Assert-TrunkCommit 'cd C:\work\onmain && git commit -m "fix: x"'   'a cd to a trunk checkout'  -Cwd 'C:\work\onbranch' -Refused
+Assert-TrunkCommit 'Set-Location C:\work\onmain; git commit -m "fix: x"' 'Set-Location is a cd'   -Cwd 'C:\work\onbranch' -Refused
+Assert-TrunkCommit 'git --git-dir=C:\other\.git commit -m "fix: x"' '--git-dir names a repo the rule does not read'
+Assert-TrunkCommit 'git commit -C HEAD'                           'a -C AFTER commit is a commit option, not a directory' -Refused
+
+# Not a commit, or not a git command: untouched.
+Assert-TrunkCommit 'git status --short'                           'status is not a commit'
+Assert-TrunkCommit 'git log --grep=commit'                        'a log that names commit'
+Assert-TrunkCommit 'git commit-tree HEAD^{tree}'                  'commit-tree is another subcommand'
+Assert-TrunkCommit 'git commit --dry-run'                         '--dry-run commits nothing'
+Assert-TrunkCommit 'echo "git commit -m x"'                       'an echo that names a commit'
+Assert-TrunkCommit 'grep -rn "git commit" plugins/'               'a grep for it'
+Assert-TrunkCommit 'git push origin feat/x'                       'a push is another rule'
+Assert-TrunkCommit 'gh pr create --title "fix: commit"'           'a non-git command naming commit'
+Assert-TrunkCommit ''                                              'an empty command'
+Assert-TrunkCommit ('cat > note.md <<' + "'EOF'" + $nl + 'git commit -m "fix: x"' + $nl + 'EOF') 'a heredoc body that writes the rule is data'
+
+# The wording a refusal carries.
+$r = Get-TrunkCommitViolation -Command 'git commit -m "fix: x"' -Cwd 'C:\work\onmain' -ResolveFacts $script:TrunkFacts
+foreach ($needle in @('never directly on the trunk', 'fold:', 'release:', 'release-prep:', 'release-notes:', 'new-branch', "'main'", "subject 'fix: x'")) {
+    if ($r.Reason.Contains($needle)) { $script:pass++; Write-Host "  [PASS] the refusal names: $needle" -ForegroundColor Green }
+    else { $script:fail++; Write-Host "  [FAIL] the refusal does not name: $needle`n         $($r.Reason)" -ForegroundColor Red }
+}
+
 Write-Host ""
 Write-Host "Summary: $script:pass passed, $script:fail failed" -ForegroundColor $(if ($script:fail -eq 0) { 'Green' } else { 'Red' })
 if ($script:fail -gt 0) { exit 1 }
