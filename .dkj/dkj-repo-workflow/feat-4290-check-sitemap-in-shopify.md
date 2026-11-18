@@ -39,21 +39,50 @@
 
 ### PLAN
 
+Step 2 of 3 of [#4290](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4290): `check-sitemap` moves
+into `dkj-subagents-shopify` on the pattern of #4305. It shares that step's market reader, comma splitting
+and fetch-failure evidence. `measure-buybox` follows, so this branch ships with `-NoResolves`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/task/check-sitemap.ps1` and `scripts/lib/check-sitemap-rules.ps1` in the shopify plugin, in English.
+  The fetch is `Invoke-WebRequest` on one shared session and keeps the 429 backoff.
+- [x] `Select-MarketRows` moves to `storefront-markets-lib.ps1`, which holds the single definition for both checks
+- [x] Markets that share a domain (locale prefixes) share one `sitemap.xml`. Each sub-sitemap's locale is
+  attributed to the market whose `PathPrefix` names it.
+- [x] `skills/check-sitemap/SKILL.md`, the README row, and `scripts/tests/shopify-check-sitemap.tests.ps1` in `suite-groups.json`
 
 ### TEST
 
+- [x] `shopify-check-sitemap` 99/0, `shopify-check-jsonld` 68/0, `shopify-which-theme` 58/0, `exception-message-guard` green
+- [x] `check-plugin-integrity.ps1` 0 errors
+- [x] The full gate runs in `ship-pr`
+
 ### DEPLOY: feat/4290-check-sitemap-in-shopify
 
-**Score:**
+Ships the `check-sitemap` skill in `dkj-subagents-shopify`. It reports a storefront's sitemap layout for
+each market:
+- which sub-sitemap holds a URL
+- the URLs listed twice
+- with `-Catalog`, the products, collections and pages the store serves that its sitemap leaves out
+
+The markets come from the `Get-StorefrontMarkets` seam. A store that runs its markets as locale prefixes
+on one domain is read from that domain's single sitemap. Step 2 of
+[#4290](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4290).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A store adopting this in place of its own copy gets two repairs:
+- An accented handle is no longer reported as missing from the sitemap, because sitemap paths are now
+  percent-decoded before the comparison.
+- A catalogue list cut off at the 25,000 ceiling is skipped with a notice instead of counted as a finding.
+
+`-Market` now defaults to every market.
+
+**Score:** 2
 
 #### Pull Request
 
 Move check-sitemap into dkj-subagents-shopify
-

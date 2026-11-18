@@ -1,10 +1,11 @@
 <#
 .SYNOPSIS
-    The pure rules behind check-jsonld.ps1 (#4290): target-shape checks, market filtering, JSON-LD
+    The pure rules behind check-jsonld.ps1 (#4290): target-shape checks, JSON-LD
     block extraction and the per-type findings. No network, no repo access.
 
 .DESCRIPTION
-    Dot-source this file (after which-theme-rules.ps1 for Get-MarketRowValue). Split out of the script
+    Dot-source this file. Market selection (-Market) lives in storefront-markets-lib.ps1, shared with
+    check-sitemap. Split out of the script
     because the script fetches pages and a suite must not reach a store, so everything that can be
     wrong without a network lives here, where scripts/tests/shopify-check-jsonld.tests.ps1 measures it.
 
@@ -28,27 +29,6 @@ function Get-TargetShapeErrors {
     )
     return @($Value | Where-Object {
             if ($Kind -eq 'Path') { -not $_.StartsWith('/') } else { $_ -notmatch '^https?://' }
-        })
-}
-
-function Select-MarketRows {
-    <#
-    .SYNOPSIS
-        The market rows named in -Market (case-insensitive, by the row's Market label), in the order
-        the store lists them; every row when -Market is empty. Throws on a name the store does not list.
-    #>
-    param([object[]]$Markets, [string[]]$Market)
-    $rows = @($Markets | Where-Object { $_ })
-    if (-not $Market -or @($Market).Count -eq 0) { return $rows }
-    $known = @($rows | ForEach-Object { [string](Get-MarketRowValue -Row $_ -Name 'Market') })
-    foreach ($m in $Market) {
-        if (-not ($known | Where-Object { $_ -ieq $m })) {
-            throw "Unknown market '$m'. The store's Get-StorefrontMarkets lists: $($known -join ', ')."
-        }
-    }
-    return @($rows | Where-Object {
-            $label = [string](Get-MarketRowValue -Row $_ -Name 'Market')
-            @($Market | Where-Object { $_ -ieq $label }).Count -gt 0
         })
 }
 
