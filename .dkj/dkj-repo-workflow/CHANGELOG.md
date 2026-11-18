@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**16 / 17 minor entries** <!-- pending-tally -->
+**17 / 18 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4278-rest-filing-fallback · 20261118-103225Z
+
+The orchestrator skill page now cites the live repo name, and says how to file where `gh issue create`
+is refused because GraphQL is unavailable (a Claude Code cloud session): through `gh api` against the
+REST endpoints, after checking reachability with a REST read rather than `gh auth status`.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A cloud session that finds something to report can now file it inbound instead of concluding there is no
+tracker.
+
+**Score:** 2
+
+#### Pull Request
+
+A session where GitHub GraphQL is refused files through the REST form, and the orchestrator skill cites the live repo name
+
+Plugins: dkj-subagents-alpha
+
+[PR #4281](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4281)
+
+---
 
 ### DEPLOY: fix/4277-lifehub-inherit-mcp-tools · 20261118-101902Z
 
