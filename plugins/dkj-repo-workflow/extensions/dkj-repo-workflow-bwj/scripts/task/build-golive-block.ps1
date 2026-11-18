@@ -354,6 +354,7 @@ $RootArg     = $RootOverride
 # Get-AsanaTaskCoClaimants, the pickup hook's own one-task-one-issue rule (#2928), asked again at the close (#3182).
 . (Join-Path $PSScriptRoot '..\lib\asana-pickup-rules.ps1')
 . (Join-Path $PSScriptRoot '..\lib\repo-root-lib.ps1')
+. (Join-Path $PSScriptRoot '..\lib\native-command-lib.ps1')
 
 $repoRoot = Resolve-BwjRepoRoot -Override $RootArg
 
@@ -385,23 +386,6 @@ if (-not $PSBoundParameters.ContainsKey('Language') -and (Test-Path -LiteralPath
         throw "Get-GoLiveBlockLanguage in scripts/repo-config.ps1 answers '$seamLanguage'; it must be 'nl' or 'en'."
     }
     $LanguageArg = $seamLanguage
-}
-
-function Invoke-Native {
-    <# A native command whose stderr and exit code are read rather than thrown on. '2>$null' under
-       EAP=Stop turns every stderr line into a terminating error, which is the trap repo-root-lib.ps1
-       documents; the same try/finally shape is used here, and the repo-wide guard in
-       scripts/tests/shared-scripts.tests.ps1 exonerates it. #>
-    param([Parameter(Mandatory = $true)][scriptblock]$Command)
-    $prev = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    try {
-        $out  = & $Command 2>$null
-        $code = $LASTEXITCODE
-    } finally {
-        $ErrorActionPreference = $prev
-    }
-    return [pscustomobject]@{ Output = @($out); Code = $code }
 }
 
 # --- Which issue, on which repo ---------------------------------------------------------------------

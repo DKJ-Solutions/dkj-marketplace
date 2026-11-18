@@ -117,6 +117,7 @@ $ReleaseDayArg = $ReleaseDay; $PatternArg = @($ObligationPattern); $OutFileArg =
 . (Join-Path $PSScriptRoot '..\lib\prepare-release-rules.ps1')
 # The Shopify CLI wrapper, for the theme count (#4157); a registered mirror (shopify-cli-lib-bwj).
 . (Join-Path $PSScriptRoot '..\lib\shopify-cli-lib.ps1')
+. (Join-Path $PSScriptRoot '..\lib\native-command-lib.ps1')
 
 $repoRoot = Resolve-BwjRepoRoot -Override $RootArg
 # gh resolves its repo from the CURRENT directory, so a run started elsewhere -- or through -RootOverride
@@ -155,34 +156,13 @@ function Get-Seam {
     try { return (& $Name) } catch { Write-Warning "$Name threw $($_.Exception.GetType().Name) -- call it directly to see the error."; return $Default }
 }
 
-function Invoke-Native {
-    <# A native command whose stderr and exit code are read rather than thrown on -- the try/finally
-       shape repo-root-lib.ps1 documents, which the repo-wide redirect guard exonerates.
-       AND A CATCH, because a MISSING executable is not an exit code: it throws CommandNotFoundException,
-       which would take the run down at the first gh call instead of reporting that step as skipped --
-       measured by this branch's copy edit. It comes back as a failed call (-1) with no output. #>
-    param([Parameter(Mandatory = $true)][scriptblock]$Command)
-    $prev = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    $out = @()
-    try {
-        $out  = & $Command 2>$null
-        $code = $LASTEXITCODE
-    } catch {
-        $code = -1
-    } finally {
-        $ErrorActionPreference = $prev
-    }
-    return [pscustomobject]@{ Lines = @(@($out) | ForEach-Object { "$_".Trim() } | Where-Object { $_ }); Code = $code }
-}
-
 function Invoke-Git {
     <# git with core.quotePath forced on, so a path above 0x7F crosses the pipe as ASCII and is decoded
        here (Convert-GitQuotedPath) rather than by the console code page -- the class
        .claude/rules/language-layers.md measured in sync-main. #>
     param([Parameter(Mandatory = $true)][string[]]$Arguments)
     $a = @('-C', $repoRoot, '-c', 'core.quotePath=true') + $Arguments
-    return Invoke-Native { & git @a }
+    return Invoke-Native -Compact { & git @a }
 }
 
 $store = ([string]$StoreArg).Trim()
@@ -270,7 +250,7 @@ if ($changelogDir -and (Test-Path -LiteralPath $changelogDir -PathType Container
 # THE HEAD'S CHECK RUNS. The required check is a branch-protection fact this script cannot read without
 # admin rights, so it reads every check run on the head and asks for all of them to have succeeded.
 $repoName = ([string](Get-Seam 'Get-RepoName')).Trim()
-if (-not $repoName) { $repoName = @((Invoke-Native { gh repo view --json nameWithOwner -q .nameWithOwner }).Lines) | Select-Object -First 1 }
+if (-not $repoName) { $repoName = @((Invoke-Native -Compact { gh repo view --json nameWithOwner -q .nameWithOwner }).Lines) | Select-Object -First 1 }
 $headSha = @((Invoke-Git @('rev-parse', 'HEAD')).Lines) | Select-Object -First 1
 $checkNote = ''
 if (-not $repoName -or -not $headSha) {
@@ -279,7 +259,7 @@ if (-not $repoName -or -not $headSha) {
     # THE JQ FILTER CARRIES NO DOUBLE QUOTE, DELIBERATELY (inbound #3144). Windows PowerShell 5.1 strips an
     # embedded '"' from a native argument, so '(.conclusion // "")' reached gh split into three arguments and
     # every run on 5.1 read as "gh missing". @tsv already renders a null conclusion as an empty field.
-    $runs = Invoke-Native { gh api "repos/$repoName/commits/$headSha/check-runs" --jq '.check_runs[] | [.name, .status, .conclusion] | @tsv' }
+    $runs = Invoke-Native -Compact { gh api "repos/$repoName/commits/$headSha/check-runs" --jq '.check_runs[] | [.name, .status, .conclusion] | @tsv' }
     if ($runs.Code -eq -1) {
         $checkNote = 'check runs could not be read (gh is not installed, or not on PATH)'
     } elseif ($runs.Code -ne 0) {
@@ -545,7 +525,7 @@ Write-Host '[7/8] open work -- pull requests that could still ride along' -Foreg
 $prArgs = @('pr', 'list', '--state', 'open', '--base', $trunk, '--json', 'number,title,headRefName,isDraft',
             '--jq', '.[] | [.number, .headRefName, .isDraft, .title] | @tsv')
 if ($repoName) { $prArgs += @('--repo', $repoName) }
-$prs = Invoke-Native { & gh @prArgs }
+$prs = Invoke-Native -Compact { & gh @prArgs }
 if ($prs.Code -ne 0) {
     Add-Step -Name 'open work' -State 'skip' -Detail 'open pull requests could not be read (gh missing, logged out, or offline).'
 } else {
@@ -568,7 +548,7 @@ Write-Host '[8/8] runbook -- the day, in order' -ForegroundColor Cyan
 $notesUrl = ''
 if (@($ExecutionContext.InvokeCommand.GetCommands('Get-BwjPagesConfig', 'Function', $false)).Count -gt 0) {
     $publishPage = Join-Path $PSScriptRoot 'publish-page.ps1'
-    $chk = Invoke-Native { & powershell -NoProfile -ExecutionPolicy Bypass -File $publishPage -Kind notes -CheckAuth -RootOverride $repoRoot }
+    $chk = Invoke-Native -Compact { & powershell -NoProfile -ExecutionPolicy Bypass -File $publishPage -Kind notes -CheckAuth -RootOverride $repoRoot }
     foreach ($l in $chk.Lines) { if ($l -match '^url\s*:\s*(https://\S+)$') { $notesUrl = $Matches[1] } }
     if ($chk.Code -eq 0) {
         Add-Step -Name 'release-notes page' -State 'ready' -Detail "the page can be published, and its shareable link is $(if ($notesUrl) { ConvertTo-ConsoleStrippedText -Text $notesUrl } else { '(not printed)' })."

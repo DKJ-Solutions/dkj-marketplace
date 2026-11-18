@@ -119,6 +119,7 @@ $RepoArg = $Repo; $PatArg = $AsanaPat; $RootArg = $RootOverride; $RecordArg = $L
 . (Join-Path $PSScriptRoot '..\lib\asana-task-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\golive-block-rules.ps1')
 . (Join-Path $PSScriptRoot '..\lib\live-message-rules.ps1')
+. (Join-Path $PSScriptRoot '..\lib\native-command-lib.ps1')
 
 $repoRoot = Resolve-BwjRepoRoot -Override $RootArg
 # gh resolves its repo from the CURRENT directory, so a run started elsewhere would read another repo.
@@ -139,24 +140,6 @@ if (Test-Path -LiteralPath $configPath -PathType Leaf) {
     try { . $configPath } catch { Write-Warning "scripts/repo-config.ps1 threw $($_.Exception.GetType().Name) while being read -- dot-source it directly to see the error." }
     Set-StrictMode -Version Latest
     $repoRoot = $resolvedRoot
-}
-
-function Invoke-Native {
-    <# A native command whose stderr and exit code are read rather than thrown on -- the try/finally shape
-       prepare-release.ps1 uses, with its catch for a missing executable. #>
-    param([Parameter(Mandatory = $true)][scriptblock]$Command)
-    $prev = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    $out = @()
-    try {
-        $out  = & $Command 2>$null
-        $code = $LASTEXITCODE
-    } catch {
-        $code = -1
-    } finally {
-        $ErrorActionPreference = $prev
-    }
-    return [pscustomobject]@{ Lines = @(@($out) | ForEach-Object { "$_" }); Code = $code }
 }
 
 # Per Asana failure kind (Get-AsanaFailureVerdict, #4147): the issue numbers it hit. Only 'transient' is
