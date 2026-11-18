@@ -289,6 +289,21 @@ forwarder that dot-sources this one out of the plugin cache, resolved through th
 because every suite already dot-sources `test-lib.ps1` from its own folder: the forwarder costs one file
 and no suite changes.
 
+**Adopting the documentation linter needs no forwarder** (#4314). The lint gate (`open-pr`, `ship-pr`,
+`cut-release`, `live-preflight`) uses a **rooted** `Get-LintScript` as it is, and starts the plugin's
+script in the repo root, which is the tree `lint-brain.ps1` lints when it is given no `-Path`. So the
+store answers the seam in `scripts/repo-config.ps1` with the plugin's own path and deletes its
+`scripts/maintenance/lint-brain.ps1`:
+
+```powershell
+function Get-LintScript {
+    . (Join-Path $PSScriptRoot 'lib\plugin-scripts.ps1')
+    Resolve-PluginScript -Plugin 'dkj-repo-workflow-bwj' -RelativePath 'scripts\maintenance\lint-brain.ps1'
+}
+```
+
+A repo-relative answer still resolves against the repo root, exactly as before.
+
 **Adopting the market URL builder** is the same forwarder shape, and it keeps whichever file name that
 store's callers already use -- `market-domains.ps1` in one repo, `market-urls.ps1` in the other. Two
 things beside the forwarder are real work rather than a rename, and both are named in the lib's own

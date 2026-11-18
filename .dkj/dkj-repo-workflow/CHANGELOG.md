@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**2 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4314-lint-script-rooted-path · 20261118-201748Z
+
+A repo's `Get-LintScript` may now return a rooted path. `open-pr`, `ship-pr`, `cut-release` and
+`live-preflight` use it as it is instead of joining it onto the repo root, and the lint gate starts that
+script in the repo root. This is what lets a store point its gate at the plugin's own `lint-brain.ps1`
+(through `Resolve-PluginScript`) and drop the forwarder it kept only so the gate had a repo-relative
+file to name. A repo-relative answer behaves exactly as before.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A maintainer of a store repo running the BWJ extension: one forwarder file fewer, and the
+`dkj-repo-workflow-bwj` README now shows the three-line `Get-LintScript` that replaces it. Every other
+consumer is unaffected.
+
+**Score:** 2
+
+#### Pull Request
+
+Get-LintScript may name a rooted path, so a store points its lint gate at the plugin's lint-brain
+
+Plugins: dkj-repo-workflow, dkj-repo-workflow-bwj, dkj-subagents-shopify
+
+[PR #4318](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4318)
+
+---
 
 ### DEPLOY: fix/4312-lint-brain-dot-record-root · 20261118-200346Z
 
