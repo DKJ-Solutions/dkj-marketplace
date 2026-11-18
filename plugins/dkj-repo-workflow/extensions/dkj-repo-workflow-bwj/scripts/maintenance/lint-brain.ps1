@@ -152,7 +152,9 @@ function Read-LintBrainSeams {
             # A function probe that does not parse the name as a wildcard (the repo-wide idiom).
             $defined = { param($Name) [bool](@($ExecutionContext.InvokeCommand.GetCommands($Name, 'Function', $false)).Count) }
             $read = { param($Name) if (& $defined $Name) { $v = & $Name; if ($v) { return [string]$v } }; return '' }
-            $norm = { param($p) if ($p) { (($p -replace '\\', '/').ToLowerInvariant().Trim().TrimStart('.', '/').TrimEnd('/')) } else { '' } }
+            # Strip a leading './' only, never a bare leading dot: TrimStart('.') turned '.dkj/...' into
+            # 'dkj/...', so no record under a dot-folder ever matched (#4312).
+            $norm = { param($p) if ($p) { ((($p -replace '\\', '/').ToLowerInvariant().Trim() -replace '^(\./)+', '').TrimStart('/').TrimEnd('/')) } else { '' } }
 
             $changelogNotes = & $norm (& $read 'Get-ReleaseChangelogNotesRoot')
             $githubNotes    = & $norm (& $read 'Get-ReleaseGithubNotesRoot')
