@@ -39,21 +39,47 @@
 
 ### PLAN
 
+First step of [#4289](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4289) (owner decision
+2026-11-18: all three scripts move to `dkj-subagents-shopify`, each its own build). This branch moves
+`which-theme` and the `fetch-failure` helper it needs; `sync-summary` and `live-direct-writes` follow
+on their own branches, so it ships with `-NoResolves`. `fetch-failure` lands in the plugin lib so the
+#4290 checks reuse it. Markets come from the store's own `Get-StorefrontMarkets` seam, read directly,
+so the shopify plugin takes no dependency on the BWJ extension.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/lib/fetch-failure.ps1` in the shopify plugin, translated to English, behaviour unchanged
+- [x] `scripts/lib/which-theme-rules.ps1` with the pure, testable logic (URL building, served-theme
+  extraction, bot-protection detection, fingerprints, market rows)
+- [x] `scripts/task/which-theme.ps1` and `skills/which-theme/SKILL.md`
+- [x] README: the skill row and the `Get-StorefrontMarkets` seam
+- [x] `scripts/tests/shopify-which-theme.tests.ps1`, registered in `suite-groups.json`
 
 ### TEST
 
+- [x] The new suite: 58 passed, 0 failed, no network
+- [x] `check-plugin-integrity.ps1`: 0 errors
+- [x] The full gate runs in `ship-pr`
+
 ### DEPLOY: feat/4289-which-theme-in-shopify
 
-**Score:**
+Ships the `which-theme` skill in `dkj-subagents-shopify` and puts `fetch-failure` in its script lib. The
+skill reports which theme id and name a storefront URL actually serves. You can add `-MustContain` or
+`-MustNotContain` fingerprints to tell a cached copy from a fresh one. When a fetch fails, it prints
+the status, `x-request-id`, UTC time and URL. Before this, only one store repo had the script. First
+step of [#4289](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4289).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify store on the plugin can now check which theme a page really serves without keeping its own
+copy of the script. `-Url` works straight away. `-Path` needs the store to answer
+`Get-StorefrontMarkets` in `scripts/repo-config.ps1`, the seam the BWJ extension already reads, so a
+store that has answered it once is covered for both.
+
+**Score:** 2
 
 #### Pull Request
 
 Move which-theme and fetch-failure into dkj-subagents-shopify
-

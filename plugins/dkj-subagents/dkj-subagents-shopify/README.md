@@ -15,6 +15,7 @@ not advice.
 | `archive-theme` | the backup that makes removing a spent preview theme recoverable: a verified local copy plus a **committed receipt**. It never removes a theme — see below |
 | `theme-lifecycle` | keeps the theme estate from filling up: one verified backup of the live theme with the previous one rotated out, and a dry-run-by-default sweep of the spent preview themes this repo created. Both are keyed on a name prefix this repo wrote, so a theme somebody else created is never in the delete set |
 | `live-preflight` | the step between a merged trunk and a live push: it derives the push list from the range, runs the drift check over it, takes one verified backup as the rollback point, and prints the push command. It never runs the push and never writes the authorisation marker |
+| `which-theme` | read-only: which theme id and name a storefront URL actually serves, with fingerprints (`-MustContain` / `-MustNotContain`) to tell a cached copy from a fresh one, and the evidence (status, `x-request-id`, UTC time, URL) when a fetch fails. Its `-Path` reads the store's own `Get-StorefrontMarkets` seam (below) ([#4289](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4289)) |
 | `check-shop-connector` | before the first claude.ai Shopify connector call, confirms the connector is bound to **this** repo's store rather than the one another session switched it to, and on a mismatch names the remedy (`/mcp`, then `switch-shop`). It never switches itself |
 | `carry-theme-translations` | before a person publishes a **different** theme as live (a cutover, a restore), carries the store's per-theme content translations over to the incoming theme through the connector and verifies that none are missing. They live in the store, not in git, so no push or Git connection brings them along |
 | `hooks/guard-live-theme.ps1` | **the floor** — a `PreToolUse` guard on the live theme |
@@ -193,6 +194,12 @@ the live theme id and the trunk from the two tables above:
 |---|---|---|
 | `Get-ShopifyPreviewUrls` | one URL on the store's own domain | the preview URL(s) printed after a push. Answer it in a **multi-market** store to get one per market or locale. |
 | `Get-ShopifyThemePrefix` | `dkj-` | the reserved prefix on every theme these scripts create (previews and backups), e.g. `'mystore-'` gives `mystore-main` ([#3952](https://github.com/DKJ-Solutions/dkj-marketplace/issues/3952)). Lowercase letters, digits and hyphens, ending in `-`, at most 25 characters; anything else is refused. `push-preview`, the sweep and the backup all read it, and `dkj-` stays recognised as this repo's after a move, so no existing theme is orphaned or duplicated. See [`theme-lifecycle`](skills/theme-lifecycle/SKILL.md#the-prefix-is-the-stores-own-3952). |
+
+**And one belongs to the storefront check** (`which-theme`), which reads no other seam:
+
+| function | default | what it decides |
+|---|---|---|
+| `Get-StorefrontMarkets` | *(none)* | the store's markets, one row each with `Market`, `Domain` (a bare host, no scheme or trailing slash) and optional `PathPrefix` (`''` or e.g. `/de`), as hashtables or objects, in display order. Needed only for `-Path`: the URL is `https://<Domain><PathPrefix><path>`. Unanswered, `-Path` refuses and names `-Url`, which always works. Same name and row shape the BWJ extension documents, so a store that answers it once serves both. |
 
 **That one is a seam because the market table genuinely is per-store, and the rest of the job is not.** One
 consumer runs a single domain with locale-prefixed paths (`/`, `/en`, `/de`, `/nl-gb`, …); another runs five
