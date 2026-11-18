@@ -14,7 +14,7 @@
     back separately, as its own workflow, asana-prio-label (#2945). One card move came back too, the
     narrowest one (#3248, Maikel, October 21, 2026): see THE ONE CARD MOVE below; and its reopen-side
     mirror (#3562, Dave, October 27, 2026): see THE REOPEN'S CARD WRITES below. Everything else stays
-    retired, and nothing in this file can complete a task or write a label: the three writes it knows how
+    retired, and nothing in this file can complete a task or write an Asana label: the three writes it knows how
     to build are a comment (New-AsanaCommentRequest), a move (New-AsanaMoveRequest) and an untick
     (New-AsanaUncompleteRequest), which only ever sets completed to false, and all three are sent by
     one function (Invoke-AsanaWrite).
@@ -91,8 +91,13 @@
         beside it is what the block exists to prevent. The block carries Get-AsanaHandBlockMarker beside
         its own. Only a trusted author's block for this round counts, as for every other form, so one
         from before the last reopen is held back and the close posts as usual.
-      - A close as completed that CARRIES NO BLOCK, for any reason: the header, the closed line, and one
-        sentence under them -- 'The result message for this round follows.' NEVER THE CLOSED LINE ALONE
+      - A close as completed that CARRIES NO BLOCK, for any reason: the header and the closed line, whose
+        tail says 'the result message for this round follows.' in place of 'this Asana task is now in
+        review.' (#4267): the card is not moved without a block (#3248), so 'in review' sat above a card
+        still in progress (smartwatchbanden#1212). The issue is then labelled Get-ResultOwedLabel
+        ('result-owed'), the one GitHub write this file makes, so the debt is visible where a session reads
+        it: closed-message-sessioncheck lists such issues, and build-golive-block -ByHand -Post takes the
+        label off once the message is on the task. NEVER THE CLOSED LINE ALONE
         (Maikel, October 14, 2026, #3004): 'with this automation there must always be an explanation of
         how to view the result', and a bare 'is now closed' told the requester of
         smartwatchbanden#943 that the work was done and nothing about where its result was. The
@@ -302,8 +307,12 @@ function Get-ClosedMessageIntroTail {
         English on every board, and the go-live block's own closed line says the same words. A close as
         not planned under any other awaiting-* label is parked rather than cancelled (-Parked, #3494): the
         reason 'not enough information' would be false there, so its intro names no reason.
+        A completed close that carries NO block (-Pending, #4267) says the result message follows instead
+        of 'in review': there is nothing to review yet, and the card is not moved (#3248), so 'in review'
+        sat above a card still in progress (smartwatchbanden#1212).
     #>
-    param([switch]$Cancelled, [switch]$Parked)
+    param([switch]$Cancelled, [switch]$Parked, [switch]$Pending)
+    if ($Pending) { return ': the result message for this round follows.' }
     if ($Parked) { return ': this Asana task is on hold, and will be reopened when the work can pick up again.' }
     if ($Cancelled) { return ': this Asana task has been cancelled, because there is not enough information to start development.' }
     return ': this Asana task is now in review.'
@@ -505,13 +514,15 @@ function New-ClosedMessageHtml {
         under it where -BlockSections carries any. Only <body>, <a>, <strong> and, in the research form,
         <ul> and <li>, all on Asana's allow-list for a story.
 
-        WITHOUT SECTIONS, ONE SENTENCE SAYS THE RESULT MESSAGE FOLLOWS (#3004), in the closed line's own
-        style -- never the closed line alone, which tells the requester the work is done and nothing about
-        how to see it. It began as the close whose only block describes an EARLIER round (#2968); it is
-        now every close that carries no block. Never beside a block, which it would contradict.
+        WITHOUT SECTIONS, THE CLOSED LINE ITSELF SAYS THE RESULT MESSAGE FOLLOWS (#3004, #4267) -- never
+        the closed line alone, which tells the requester the work is done and nothing about how to see it.
+        It began as the close whose only block describes an EARLIER round (#2968); it is now every close
+        that carries no block. It REPLACES 'in review' rather than standing under it (#4267): without a
+        block the card is not moved (#3248), so the two statements contradicted each other on the task.
+        No reopen line either: there is no result yet to find wrong. Never beside a block.
 
-        EVERY FORM OPENS WITH THE SAME INTRO, AND ONLY THE LINE UNDER IT DIFFERS (#3069): the task goes
-        on to review whichever form this is (Get-ClosedMessageIntroTail, Get-ClosedMessageSecondLine).
+        EVERY FORM WITH A BLOCK OPENS WITH THE SAME INTRO, AND ONLY THE LINE UNDER IT DIFFERS (#3069): the
+        task goes on to review whichever form this is (Get-ClosedMessageIntroTail, Get-ClosedMessageSecondLine).
 
         -Research (#3004, its form #3017's, its second line #3069's): the block is a research block, so
         the line under the intro says nothing changed instead of inviting a reopen, the outcome's bullets
@@ -549,8 +560,9 @@ function New-ClosedMessageHtml {
     $fixed    = $AlreadyFixed -and [bool]$BlockSections -and -not $measure
     $research = $Research -and [bool]$BlockSections -and -not $measure -and -not $fixed
     $after    = $AfterRelease -and [bool]$BlockSections -and -not $measure -and -not $fixed
-    $second   = Get-ClosedMessageSecondLine -Research:$research -AfterRelease:$after -Measure:$measure -AlreadyFixed:$fixed
-    $html     = "<body>$(& $esc (Get-ClosedMessageHeader))`n`nGitHub issue <a href=`"$(& $esc $url)`">$(& $esc $IssueRef)</a> is now <strong>closed</strong>$(& $esc (Get-ClosedMessageIntroTail))$(if ($second) { "`n$(& $esc $second)" })"
+    $pending  = -not $BlockSections
+    $second   = if ($pending) { '' } else { Get-ClosedMessageSecondLine -Research:$research -AfterRelease:$after -Measure:$measure -AlreadyFixed:$fixed }
+    $html     = "<body>$(& $esc (Get-ClosedMessageHeader))`n`nGitHub issue <a href=`"$(& $esc $url)`">$(& $esc $IssueRef)</a> is now <strong>closed</strong>$(& $esc (Get-ClosedMessageIntroTail -Pending:$pending))$(if ($second) { "`n$(& $esc $second)" })"
     if ($measure) {
         $html += "`n`n" + (ConvertTo-AsanaStoryHtml -Markdown $BlockSections -Lists) + "`n" + (& $esc (Get-ClosedMessageMeasureAsk -DoneSection $DoneSection))
     } elseif ($fixed) {
@@ -558,7 +570,6 @@ function New-ClosedMessageHtml {
     } elseif ($research) {
         $html += "`n`n" + (ConvertTo-AsanaStoryHtml -Markdown $BlockSections -Lists) + "`n" + (& $esc (Get-ClosedMessageAsk -DoneSection $DoneSection))
     } elseif ($BlockSections) { $html += "`n`n" + (ConvertTo-AsanaStoryHtml -Markdown $BlockSections) }
-    else { $html += "`n`n" + (& $esc 'The result message for this round follows.') }
     return $html + '</body>'
 }
 
@@ -1183,6 +1194,31 @@ function Test-SupersededEvent {
     return $now -eq 'open'
 }
 
+function Get-ResultOwedLabel {
+    <#
+        The label a completed close WITHOUT a block puts on its issue (#4267): the closed message told the
+        requester the result message follows, and the task's assignee owes it. The run log used to be the
+        only record of that debt, so it went silently unpaid (smartwatchbanden#1212).
+        closed-message-sessioncheck lists the closed issues carrying it, and build-golive-block -ByHand
+        -Post takes it off once the message is on the task. Pure. A copy of asana-task-lib.ps1's function
+        of this name.
+    #>
+    return 'result-owed'
+}
+
+function Get-AddLabelApiArgs {
+    <#
+        Pure: the gh arguments that put one label on the issue (#4267) -- REST, 'POST
+        repos/<owner>/<repo>/issues/<n>/labels', which 'issues: write' covers. GitHub creates a label the
+        repo does not have yet, so a store needs no setup step for it.
+    #>
+    param([Parameter(Mandatory = $true)][string]$IssueRef, [Parameter(Mandatory = $true)][string]$Label)
+
+    if ($Label -notmatch '\A[a-z0-9-]+\z') { throw "Label '$Label' is not a plain label name." }
+    if ($IssueRef -notmatch '\A([^\s#/]+)/([^\s#/]+)#([0-9]+)\z') { throw "IssueRef '$IssueRef' is not 'owner/repo#<n>'." }
+    return @('api', '-X', 'POST', "repos/$($Matches[1])/$($Matches[2])/issues/$($Matches[3])/labels", '-f', "labels[]=$Label")
+}
+
 function Get-ClosedMessageBlockPhrase {
     <#
         Pure: the half of the final log line that says what happened to the block. The cases are kept
@@ -1650,6 +1686,16 @@ function Invoke-Main {
     }
     $with = Get-ClosedMessageBlockPhrase -Sections $sections -ReadOk $read.Ok -Dropped $dropped -Held $held -Research $research -Measure $measure -AlreadyFixed $alreadyFixed
     Write-Host "Asana task $($decision.Gid) told: $IssueRef is closed, $with ($($decision.Why)). The task was NOT completed -- that is the requester's call."
+
+    # THE OWED RESULT MESSAGE IS RECORDED ON THE ISSUE (#4267): the run log was its only record, so
+    # smartwatchbanden#1212's went unpaid until the requester asked. A label a session check reads, set only
+    # after the message went out; a refused write is logged and the run still exits 0, like a refused move.
+    if (-not $sections) {
+        $owedLabel = Get-ResultOwedLabel
+        $labelled = Invoke-GhCapture -GhArgs (Get-AddLabelApiArgs -IssueRef $IssueRef -Label $owedLabel)
+        if ($labelled.ExitCode -eq 0) { Write-Host "The issue was labelled '$owedLabel', so a session check lists it until the result message is on the task." }
+        else { Write-Host "The issue was NOT labelled '$owedLabel': gh exited $($labelled.ExitCode): $($labelled.Error)" }
+    }
 
     # THE CARD FOLLOWS THE MESSAGE INTO REVIEW (#3248, Maikel, October 21, 2026): the intro says 'this Asana
     # task is now in review', and the card stayed wherever a person last left it. One move, on this one

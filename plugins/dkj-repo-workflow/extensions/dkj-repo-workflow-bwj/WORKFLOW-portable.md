@@ -914,8 +914,11 @@ the machine marker tried first and unconditionally. The second matcher is a lead
 by hand -- `Fill in the link below and paste the block into the Asana task` -- quoted here so a block can
 be written by hand. The backstop that used to post a placeholder-only block on a close with no block on it is
 retired with the mirror (Dave, October 5, 2026) and did not come back: an issue closed without a block
-has none, and its closed message goes out with the header, the closed line and the sentence that the
-result message follows (#3004). So does one whose newest block predates the issue's last reopen, and one
+has none, and its closed message goes out with the header and a closed line that says the result message
+follows (#3004) -- in place of *"this Asana task is now in review"*, because without a block the card is not
+moved (#4267). The issue is then labelled `result-owed`, so the debt is visible: the
+`closed-message-sessioncheck` lists closed issues carrying it until the assignee writes the result message
+on the task and records it with `build-golive-block -ByHand -Story <gid> -Post`, which takes the label off. So does one whose newest block predates the issue's last reopen, and one
 whose reopen could not be read (#2968, the bullets under *Closing an issue as completed*). So does one whose
 comments the workflow could not read (it reads them through REST, `gh api .../issues/<n>/comments`), and
 its run log then says the read failed, with gh's exit code and error, rather than that no block was on
@@ -988,7 +991,8 @@ on named events only.** `report-issue` creates the card in `Filed` and reads the
 **A close as completed that carries this round's go-live, research, measurement or already-fixed block
 moves the card into `InReview`** (#3248, Maikel, October 21, 2026), after the closed message has posted,
 because that message tells the requester the task is now in review. It is never made on a `-ByHand` close,
-a close without a block, a not-planned close or a reopen, and it never takes a card out of `Completed`.
+a close without a block (whose closed line says the result message follows instead of *in review*, #4267),
+a not-planned close or a reopen, and it never takes a card out of `Completed`.
 Where the task is on several boards, or its board has no single section with the `InReview` code, it is
 skipped and the message still posts. **A reopen moves the card into `InDevelopment`, and marks the task
 incomplete where it is completed** (#3562, Dave, October 27, 2026), after the reopened message has

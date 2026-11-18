@@ -180,6 +180,17 @@ function Get-AsanaHandBlockMarker {
     return '<!-- asana-paste-block-kind: by-hand -->'
 }
 
+function Get-ResultOwedLabel {
+    <#
+        The label asana-closed-message puts on an issue closed as completed WITHOUT a block (#4267): the
+        closed message told the requester the result message follows, and the task's assignee owes it.
+        closed-message-sessioncheck lists the closed issues carrying it; build-golive-block -ByHand -Post
+        takes it off once the message is on the task. Pure. A copy of it lives in
+        templates/asana-closed-message.ps1.
+    #>
+    return 'result-owed'
+}
+
 function Get-AsanaReleaseBlockMarker {
     <#
         The second marker build-golive-block.ps1 puts on a result block that names a PLANNED release day

@@ -67,6 +67,13 @@
          into a delay rather than a loss. The kinds and the repos are kind-label-rules.ps1's, the
          definitions the guard itself runs, and an issue read without a labels field is left out, as in
          finding 6. Read from the same open-issue list, so it costs no gh call either.
+      8. no CLOSED issue carries Get-ResultOwedLabel ('result-owed', #4267). asana-closed-message puts it on
+         an issue closed as completed without a go-live block, whose closed message told the requester
+         'the result message for this round follows'; the task's assignee owes that message, and the run
+         log used to be the debt's only record. Measured on smartwatchbanden#1212, closed November 17,
+         2026 with the GitHub close button: the requester asked a day later what went wrong.
+         build-golive-block -ByHand -Post takes the label off once the message is on the task. One gh
+         read beside finding 5's three; a repo without the label answers an empty list.
     Anywhere else it is silent: dkj-marketplace runs the ticket chapter without either workflow.
 
     IT READS THE TREE AFTER THE TRUNK SYNC, NOT BESIDE IT (inbound #4041, November 13, 2026). This hook is
@@ -196,17 +203,24 @@ function Wait-TrunkSyncPrep {
 }
 
 function Get-PullData {
-    <# Finding 5's three reads as @{ merged; open; issues }, or $null when any of them fails. #>
+    <#
+        Findings 5-8's four reads as @{ merged; open; issues; owed }, or $null when any of them fails. An
+        override file without 'owed' (written before #4267) reads as no owed issues.
+    #>
     param([string]$Slug, [string]$Override)
     if ($Override) {
         if ($Override -eq $Unreadable) { return $null }
-        return ([System.IO.File]::ReadAllText($Override) | ConvertFrom-Json)
+        $fixture = [System.IO.File]::ReadAllText($Override) | ConvertFrom-Json
+        if (-not ($fixture.PSObject.Properties.Name -contains 'owed')) { $fixture | Add-Member -NotePropertyName owed -NotePropertyValue @() }
+        return $fixture
     }
     if (-not (Get-Command gh -ErrorAction SilentlyContinue)) { return $null }
     $reads = [ordered]@{
         merged = @('pr', 'list', '--repo', $Slug, '--state', 'merged', '--limit', '30', '--json', 'number,headRefName,body,mergedAt')
         open   = @('pr', 'list', '--repo', $Slug, '--state', 'open', '--limit', '100', '--json', 'headRefName')
         issues = @('issue', 'list', '--repo', $Slug, '--state', 'open', '--limit', '300', '--json', 'number,body,labels')
+        # Finding 8 (#4267). A label the repo does not have yet answers an empty list with exit 0.
+        owed   = @('issue', 'list', '--repo', $Slug, '--state', 'closed', '--label', 'result-owed', '--limit', '50', '--json', 'number')
     }
     $data = @{}
     foreach ($k in $reads.Keys) {
@@ -466,6 +480,19 @@ try {
                     "one of the kind labels $($kindList): $(Format-IssueNumbers $kinds.Several). Every issue carries " +
                     "exactly one; take the others off with 'gh issue edit <n> --remove-label <kind>'.")
             }
+        }
+
+        # FINDING 8 (#4267): a result message the requester was promised and never got. asana-closed-message
+        # labels a completed close without a block, and the run log used to be the debt's only record
+        # (smartwatchbanden#1212, closed November 17, 2026: the requester asked a day later).
+        $owedLabel = Get-ResultOwedLabel
+        $owed = @(@($pullData.owed) | Where-Object { $null -ne $_ -and $_.PSObject.Properties.Name -contains 'number' } |
+            ForEach-Object { [int]$_.number } | Sort-Object -Unique)
+        if ($owed.Count -gt 0) {
+            Write-Host ("[ERROR] dkj-repo-workflow-bwj: $slug has $($owed.Count) closed issue(s) labelled '$owedLabel': " +
+                "$(Format-IssueNumbers $owed). Each closed without a go-live block, so the Asana task was told 'the result " +
+                "message for this round follows', and the task's assignee still owes it. Write it on the task, then " +
+                "record it with the 'golive-block' skill's -ByHand -Story <gid> -Post, which takes the label off.")
         }
     }
 } catch {

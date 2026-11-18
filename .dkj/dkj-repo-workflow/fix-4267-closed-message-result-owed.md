@@ -39,21 +39,48 @@
 
 ### PLAN
 
+#### Scope (#4267)
+
+Both halves of the inbound report hold on the tree: the no-block branch of `asana-closed-message`
+said "now in review" while #3248 deliberately moves the card only on a close with a block, and the
+owed result message was recorded in the run log alone. Chosen repair: the no-block closed line says
+the result message follows instead of claiming review (keeps #3248's narrow move), and the issue is
+labelled `result-owed`, listed by `closed-message-sessioncheck` (finding 8) and taken off by
+`build-golive-block -ByHand -Post`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Template: the no-block closed line says the result message follows, no review claim, no reopen line
+- [x] Template + yml: label `result-owed` on a completed close without a block (`issues: write`)
+- [x] Lib: `Get-ResultOwedLabel`, held equal to the template's copy
+- [x] Session check finding 8: closed issues carrying `result-owed`
+- [x] `build-golive-block -ByHand -Post` takes the label off
+- [x] Docs: WORKFLOW-portable, golive-block skill, the template and hook headers
 
 ### TEST
 
+- [x] `dkj-repo-workflow-bwj.tests.ps1`: 1055 asserts green (pending form, label call, refused label, parity)
+- [x] `closed-message-sessioncheck.tests.ps1`: 78 green (finding 8 on the fixture and on the live gh path)
+
 ### DEPLOY: fix/4267-closed-message-result-owed
 
-**Score:**
+An Asana task whose GitHub issue closes without a go-live block no longer reads "this Asana task is now
+in review" while its card stays in progress (#4267). The closed line now says the result message for
+this round follows. The issue is labelled `result-owed`, the store's session check lists such closed
+issues, and `build-golive-block -ByHand -Post` takes the label off once the result message is on the
+task. Before, the run log was the only record of that debt, and smartwatchbanden#1212's went unpaid
+until the requester asked. A store takes it by re-copying the `asana-closed-message` template; the
+workflow now needs `issues: write`.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A promised result message can no longer be forgotten in silence: every session in the store names it
+until it is written.
+
+**Score:** 2
 
 #### Pull Request
 
 asana-closed-message without a block: track the owed result message, and stop claiming review
-
