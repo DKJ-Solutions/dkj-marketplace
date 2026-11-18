@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**10 / 10 minor entries** <!-- pending-tally -->
+**11 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4256-revendor-with-the-pin · 20261118-013229Z
+
+The 7.0.0 note and the brand-book skill now say that a repo vendoring the brand book re-vendors
+`house-style.css` and `house-product.css` from the same tag it pins the gate to, in the same change
+(#4256). Moving the pin alone turns the gate red, even where the copies differ only in a comment.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A DKJ-Solutions repo with a vendored brand book takes the 7.0.0 pin in one green change, instead of
+finding the second half on a red check.
+
+**Score:** 3
+
+#### Pull Request
+
+Moving the house-style gate's pin re-vendors the brand book at the same tag
+
+Plugins: dkj-repo-workflow-dkj
+
+[PR #4265](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4265)
+
+---
 
 ### DEPLOY: fix/4255-repoint-every-folder-path · 20261118-005435Z
 
