@@ -88,6 +88,8 @@ Assert-Equal 3 $rows.Count 'blank and tab-less lines are skipped'
 Assert-Equal 'A' $rows[0].Status 'status letter'
 Assert-Equal 'R' $rows[2].Status 'R100 reads as R'
 Assert-Equal 'snippets/x.liquid' $rows[2].Path 'a rename keeps its new path'
+Assert-Equal 'old/x.liquid' $rows[2].OldPath 'and its old path (#4301)'
+Assert-Equal '' $rows[0].OldPath 'a non-rename has no old path'
 
 Write-Group '6. ConvertFrom-SyncSummaryRange and the -Commit guard'
 $r = ConvertFrom-SyncSummaryRange 'origin/main...origin/live'
@@ -140,6 +142,19 @@ Assert-Equal 0 @(Get-SyncSummaryFindings -Files @([pscustomobject]@{ Status = 'M
 $f2 = @(Get-SyncSummaryFindings -Files @([pscustomobject]@{ Status = 'D'; Path = 'sections/x.liquid' }))
 Assert-Equal 'removed-section-clean' $f2[0].Kind 'no lookup given: nothing points at it'
 
+# #4301: a renamed section's OLD name is gone just as a deleted one's is.
+$renLookup = { param($n) if ($n -eq 'promo-hero') { @('templates/page.hero.json') } else { @() } }
+$f3 = @(Get-SyncSummaryFindings -Files @([pscustomobject]@{ Status = 'R'; Path = 'sections/hero-v2.liquid'; OldPath = 'sections/promo-hero.liquid' }) -ReferenceLookup $renLookup)
+Assert-Equal 'removed-section-referenced' $f3[0].Kind 'a renamed section a template still names is an alert'
+Assert-True ($f3[0].Message -match "'promo-hero' was renamed to 'hero-v2'") 'it names the old and the new name'
+Assert-True ($f3[0].Detail -contains 'templates/page.hero.json') 'and the template'
+$f4 = @(Get-SyncSummaryFindings -Files @([pscustomobject]@{ Status = 'R'; Path = 'sections/hero-v2.liquid'; OldPath = 'sections/promo-hero.liquid' }))
+Assert-Equal 'removed-section-clean' $f4[0].Kind 'a rename nothing points at is a clean removal'
+$f5 = @(Get-SyncSummaryFindings -Files @([pscustomobject]@{ Status = 'R'; Path = 'sections/promo-hero.liquid'; OldPath = 'sections/old/promo-hero.liquid' }) -ReferenceLookup $renLookup)
+Assert-Equal 0 $f5.Count 'a rename that keeps the section name raises nothing'
+$f6 = @(Get-SyncSummaryFindings -Files @([pscustomobject]@{ Status = 'R'; Path = 'snippets/promo-hero.liquid'; OldPath = 'sections/promo-hero.liquid' }) -ReferenceLookup $renLookup)
+Assert-Equal 'removed-section-referenced' $f6[0].Kind 'a section moved out of sections/ is gone as a section'
+
 # --- The script, against a throw-away repo ----------------------------------------------------
 Write-Group '10. the script against a fixture repo'
 $Fixture = Join-Path ([System.IO.Path]::GetTempPath()) "sync-summary-fixture-$PID-$([guid]::NewGuid().ToString('n'))"
@@ -172,6 +187,8 @@ try {
     Write-FixtureFile 'templates/page.promo.json' '{ "sections": { "main": { "type": "old-banner" } } }'
     Write-FixtureFile 'templates/page.gone.json' '{ "sections": { "main": { "type": "kept" } } }'
     Write-FixtureFile 'config/settings_data.json' '{ "a": 1 }'
+    Write-FixtureFile 'sections/promo-hero.liquid' ('{% comment %} the promo hero section, long enough for rename detection {% endcomment %}' + "`n" + ('<div class="hero">{{ section.settings.title }}</div>' + "`n") * 5)
+    Write-FixtureFile 'templates/page.hero.json' '{ "sections": { "main": { "type": "promo-hero" } } }'
     Invoke-FixtureGit @('add', '-A') | Out-Null
     Invoke-FixtureGit @('commit', '-q', '-m', 'feat: the theme') | Out-Null
     Invoke-FixtureGit @('branch', '-M', 'main') | Out-Null
@@ -180,6 +197,7 @@ try {
     Remove-Item -LiteralPath (Join-Path $Fixture 'sections/old-banner.liquid')
     Remove-Item -LiteralPath (Join-Path $Fixture 'sections/orphan.liquid')
     Remove-Item -LiteralPath (Join-Path $Fixture 'templates/page.gone.json')
+    Move-Item -LiteralPath (Join-Path $Fixture 'sections/promo-hero.liquid') -Destination (Join-Path $Fixture 'sections/hero-v2.liquid')
     Write-FixtureFile 'sections/brand-new.liquid' 'new'
     Write-FixtureFile 'config/settings_data.json' '{ "a": 2 }'
     Invoke-FixtureGit @('add', '-A') | Out-Null
@@ -198,6 +216,8 @@ try {
     Assert-True ($r.Out -match "Section 'old-banner' was removed, but these template") 'the still-referenced section is flagged'
     Assert-True ($r.Out -match 'templates/page\.promo\.json') 'with the template that points at it'
     Assert-True ($r.Out -match "Section 'orphan' was removed and no template") 'an unreferenced removal is a clean one'
+    Assert-True ($r.Out -match "Section 'promo-hero' was renamed to 'hero-v2', but these template") 'a renamed section a template still names is flagged (#4301)'
+    Assert-True ($r.Out -match 'templates/page\.hero\.json') 'with the template that still names the old name'
     Assert-True ($r.Out -match '1 new section\(s\)') 'the new section is counted'
     Assert-True ($r.Out -match 'Theme editor settings changed: settings_data\.json') 'settings are flagged'
     Assert-True ($r.Out -match '1 template\(s\) removed') 'the removed template is flagged'

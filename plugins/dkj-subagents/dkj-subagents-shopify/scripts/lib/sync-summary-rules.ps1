@@ -104,9 +104,11 @@ function ConvertFrom-SyncSummaryLog {
 function ConvertFrom-SyncSummaryNameStatus {
     <#
     .SYNOPSIS
-        Rows (Status = first letter, Path = the LAST tab field, i.e. the new name of a rename) out of
-        'git diff|show --name-status' lines. Paths are decoded with Convert-GitQuotedPath where that is
-        loaded, because the script asks git for ASCII-quoted paths (language-layers.md, the READING rule).
+        Rows (Status = first letter, Path = the LAST tab field, i.e. the new name of a rename, OldPath =
+        the old name of a rename or copy, '' otherwise) out of 'git diff|show --name-status' lines. Paths
+        are decoded with Convert-GitQuotedPath where that is loaded, because the script asks git for
+        ASCII-quoted paths (language-layers.md, the READING rule). OldPath is kept because a renamed
+        section's old name is gone just as a deleted one's is (#4301).
     #>
     param([object[]]$Lines)
     $rows = New-Object System.Collections.ArrayList
@@ -116,8 +118,12 @@ function ConvertFrom-SyncSummaryNameStatus {
         $parts = ([string]$line) -split "`t"
         if ($parts.Count -lt 2) { continue }
         $path = $parts[$parts.Count - 1]
-        if ($decode) { $path = Convert-GitQuotedPath $path }
-        $null = $rows.Add([pscustomobject]@{ Status = $parts[0].Substring(0, 1); Path = $path })
+        $old = if ($parts.Count -ge 3) { $parts[1] } else { '' }
+        if ($decode) {
+            $path = Convert-GitQuotedPath $path
+            if ($old) { $old = Convert-GitQuotedPath $old }
+        }
+        $null = $rows.Add([pscustomobject]@{ Status = $parts[0].Substring(0, 1); Path = $path; OldPath = $old })
     }
     return @($rows)
 }
@@ -191,7 +197,8 @@ function Get-SyncSummaryFindings {
                          owns the git call; here it is a parameter so the checks run without a repo.
 
         Kinds, in the order they are reported:
-          removed-section-referenced  a section is gone and a template still names it (Level 'alert')
+          removed-section-referenced  a section is gone -- deleted, or renamed away from its old name --
+                                      and a template still names it (Level 'alert')
           removed-section-clean       a section is gone and nothing points at it (Level 'info', NOT a
                                       finding: it does not count towards "something to look at")
           new-section                 sections nobody asked for in this repo ('new')
@@ -206,21 +213,36 @@ function Get-SyncSummaryFindings {
     $out = New-Object System.Collections.ArrayList
     $rows = @($Files)
 
-    $removedSections = @($rows | Where-Object { $_.Status -eq 'D' -and (Get-SyncSummaryAreaOf $_.Path) -eq 'sections' } |
-        ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_.Path) })
-    foreach ($s in $removedSections) {
+    # A section's name is gone when it is deleted, and equally when it is renamed (status R, #4301): a
+    # template still naming the OLD name fails the same way. A rename that keeps the name inside sections/
+    # (only the extension or the case of a directory moved) leaves the name in place and is not counted.
+    $removedSections = New-Object System.Collections.ArrayList
+    foreach ($r in $rows) {
+        if ($r.Status -eq 'D' -and (Get-SyncSummaryAreaOf $r.Path) -eq 'sections') {
+            $null = $removedSections.Add([pscustomobject]@{ Name = [System.IO.Path]::GetFileNameWithoutExtension($r.Path); NewName = '' })
+        }
+        elseif ($r.Status -eq 'R' -and $r.PSObject.Properties['OldPath'] -and $r.OldPath -and (Get-SyncSummaryAreaOf $r.OldPath) -eq 'sections') {
+            $oldName = [System.IO.Path]::GetFileNameWithoutExtension($r.OldPath)
+            $newName = [System.IO.Path]::GetFileNameWithoutExtension($r.Path)
+            if ((Get-SyncSummaryAreaOf $r.Path) -eq 'sections' -and $newName -ceq $oldName) { continue }
+            $null = $removedSections.Add([pscustomobject]@{ Name = $oldName; NewName = $(if ((Get-SyncSummaryAreaOf $r.Path) -eq 'sections') { $newName } else { ([string]$r.Path) -replace '\\', '/' }) })
+        }
+    }
+    foreach ($rs in $removedSections) {
+        $s = $rs.Name
+        $how = if ($rs.NewName) { "was renamed to '{0}'" -f $rs.NewName } else { 'was removed' }
         $hits = @()
         if ($ReferenceLookup) { $hits = @(& $ReferenceLookup $s | Where-Object { $_ }) }
         if ($hits.Count) {
             $null = $out.Add([pscustomobject]@{
                 Kind = 'removed-section-referenced'; Level = 'alert'
-                Message = ("Section '{0}' was removed, but these template(s) still point at it:" -f $s)
+                Message = ("Section '{0}' {1}, but these template(s) still point at the old name:" -f $s, $how)
                 Detail = @(@($hits | Select-Object -First 6) + 'Such a page still returns HTTP 200 but does not render the section.')
             })
         } else {
             $null = $out.Add([pscustomobject]@{
                 Kind = 'removed-section-clean'; Level = 'info'
-                Message = ("Section '{0}' was removed and no template points at it any more -- a clean removal." -f $s)
+                Message = ("Section '{0}' {1} and no template points at the old name any more -- a clean removal." -f $s, $how)
                 Detail = @()
             })
         }
