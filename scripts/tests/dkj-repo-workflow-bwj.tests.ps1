@@ -72,6 +72,7 @@ foreach ($rel in @('README.md', 'WORKFLOW-portable.md', 'SYNC-LOG-portable.md', 
                    'scripts\task\prepare-release.ps1',
                    'skills\notify-live\SKILL.md', 'scripts\lib\live-message-rules.ps1', 'scripts\lib\live-record-lib.ps1', 'scripts\lib\pull-issue-lib.ps1',
                    'scripts\task\notify-live.ps1',
+                   'skills\start-task\SKILL.md', 'scripts\task\start-task.ps1', 'scripts\lib\branch-base.ps1', 'scripts\lib\machine-preflight.ps1',
                    'scripts\lib\asana-task-lib.ps1')) {
     Assert-True (Test-Path -LiteralPath (Join-Path $PluginRoot $rel)) "ships $rel"
 }
@@ -113,7 +114,7 @@ Assert-True (-not (Test-Path -LiteralPath (Join-Path $PluginRoot 'agents'))) 'ca
 Assert-True (-not (Test-Path -LiteralPath (Join-Path $PluginRoot 'manuals'))) 'carries no manuals/ (workflow rule)'
 
 # skill folder name matches its frontmatter name:
-foreach ($skill in @('report-issue', 'adopt-dkj-repo-workflow-bwj', 'golive-block', 'prepare-release', 'notify-live')) {
+foreach ($skill in @('report-issue', 'adopt-dkj-repo-workflow-bwj', 'golive-block', 'prepare-release', 'notify-live', 'start-task')) {
     $txt = Get-Content -LiteralPath (Join-Path $PluginRoot "skills\$skill\SKILL.md") -Raw
     $nm  = [regex]::Match($txt, '(?m)^name:\s*(\S+)\s*$')
     Assert-Equal $skill $nm.Groups[1].Value "skill '$skill' frontmatter name matches its folder"
