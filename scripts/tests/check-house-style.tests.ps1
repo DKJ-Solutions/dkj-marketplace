@@ -276,6 +276,16 @@ Write-Host '-- group 2: the retired names, held to the pinned copy' -ForegroundC
 $defs = Get-HouseStyleDefinitions -CssText ([System.IO.File]::ReadAllText((Join-Path $Vendored 'house-style.css')))
 $live = @(Get-HouseStyleRetiredTokens | Where-Object { $defs.Tokens -contains $_ })
 Assert-Equal '' ($live -join ' ') 'no retired name is defined by the pinned stylesheet'
+# AND THE OTHER DIRECTION (#4254): every token a rename table in the README marks retired is on the list.
+# '--text-lg' was retired on November 1, 2026 and never listed, so a consumer reading it passed the gate
+# while its text fell back to the inherited size. A table row's FIRST cell is the old name.
+$retiredInReadme = @($(foreach ($row in [System.IO.File]::ReadAllLines((Join-Path $Vendored 'README.md'))) {
+    if ($row -notmatch '^\|' -or $row -notmatch 'retired') { continue }
+    [regex]::Matches(($row -split '\|')[1], '--[\w-]+') | ForEach-Object { $_.Value }
+}) | Where-Object { $defs.Tokens -notcontains $_ } | Sort-Object -Unique)
+$unlisted = @($retiredInReadme | Where-Object { @(Get-HouseStyleRetiredTokens) -notcontains $_ })
+Assert-Equal '' ($unlisted -join ' ') 'every token a README rename table retires is on the retired list'
+Assert-True (@(Get-HouseStyleRetiredTokens) -contains '--text-lg') '--text-lg, retired on November 1, 2026, is on the list (#4254)'
 Assert-True ($defs.Tokens -contains '--primary' -and $defs.Classes -contains 'card' -and $defs.Classes -contains 'btn--primary') 'the house tokens and classes are read from the copy'
 Assert-True ($defs.Classes -notcontains 'media') 'an at-rule contributes no class'
 
