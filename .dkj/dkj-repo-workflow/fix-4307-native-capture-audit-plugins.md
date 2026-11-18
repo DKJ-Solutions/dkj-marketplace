@@ -39,21 +39,51 @@
 
 ### PLAN
 
+[#4307](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4307): the bounded-site audit in
+`native-capture.tests.ps1` scanned only `scripts/`, so a bounded `Invoke-NativeCapture` in a plugin-only
+script was never counted or judged. This branch widens the scan to every plugin `.ps1`, drops
+byte-identical mirrors by hash, and audits each site that newly appears.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The audit scans `scripts/` plus every `plugins/**/*.ps1` outside `/tests/`. A plugin file
+  byte-identical to a `scripts/` file is a mirror and is counted once. Plugin exemption keys are
+  relative to the repo root.
+- [x] Six newly counted sites, each audited. The count moves from 123 to 129, with one audit line:
+  - The two `day-plan.ps1` search reads and `live-direct-writes.ps1`'s `Invoke-GhChecked` judged a
+    non-zero exit without asking whether it was measured. They are repaired with
+    `Test-NativeExitMeasured` and `Get-NativeExitLabel`.
+  - `release-freshness-sessioncheck.ps1` is exempt as a deliberate fail-safe.
+  - `consumer-sessioncheck.ps1` and `measure-buybox.ps1` were already judged.
+- [x] Asserts that the scan includes plugin files and skips mirrors, so it cannot silently fall back
+  to `scripts/` alone
+- [x] A red-case test for each repaired guard. One of them caught a doubled "exit exit 1" in the repair's
+  own wording, which is fixed.
 
 ### TEST
 
+- [x] `native-capture` 360/0, `dayplan` 83/0, `shopify-live-direct-writes` 56/0, `exception-message-guard` 18/0
+- [x] `check-plugin-integrity.ps1` 0 errors
+- [x] The full gate runs in `ship-pr`
+
 ### DEPLOY: fix/4307-native-capture-audit-plugins
 
-**Score:**
+The bounded-native-call audit now covers plugin-only scripts, not just the repo's `scripts/` folder.
+Widening it found two real gaps, now repaired:
+- Admin's day-plan search could fail with a blank exit code.
+- `live-direct-writes` could report an unmeasured `gh` exit as a number.
+
+Both now say plainly when the exit code could not be measured. Fixes
+[#4307](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4307).
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 
 Widen native-capture's bounded-site audit to plugin-only scripts
-

@@ -207,6 +207,47 @@ try {
     Remove-Item -LiteralPath $state -Recurse -Force -ErrorAction SilentlyContinue
 }
 
+
+Write-Host '-- Invoke-DayPlanSearch judges an UNMEASURED exit (#4307)' -ForegroundColor Cyan
+# day-plan.ps1 is a script with a main body, so its two functions are lifted out of its own text by the parser
+# and defined here; Invoke-NativeCapture is then stubbed to hand back a capture whose exit code .NET could not
+# measure (ExitCode $null, ExitCodeUnknown $true) -- the race #1931 measured, which `$null -ne 0` reads as a
+# failure but with a blank number in the sentence.
+. (Join-Path $RepoRoot 'scripts\lib\native-capture-lib.ps1')
+$dpTok = $null; $dpErr = $null
+$dpAst = [System.Management.Automation.Language.Parser]::ParseFile($Script, [ref]$dpTok, [ref]$dpErr)
+foreach ($dpName in 'Get-SinceStamp', 'Invoke-DayPlanSearch') {
+    $dpFn = $dpAst.Find({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq $dpName }, $true)
+    Assert-True ($null -ne $dpFn) "day-plan.ps1 still defines $dpName"
+    if ($dpFn) { . ([scriptblock]::Create($dpFn.Extent.Text)) }
+}
+$unmeasuredCap = [pscustomobject]@{ Output = @(); ExitCode = $null; TimedOut = $false; ShortRead = $false; ExitCodeUnknown = $true; NotStarted = $false }
+$emptyPageCap  = [pscustomobject]@{ Output = @('{"data":{"search":{"nodes":[],"pageInfo":{"hasNextPage":false}}}}'); ExitCode = 0; TimedOut = $false; ShortRead = $false; ExitCodeUnknown = $false; NotStarted = $false }
+$dpLabel = Get-NativeExitLabel -Capture $unmeasuredCap
+$script:dpCalls = 0; $script:dpPlan = @()
+function Invoke-NativeCapture {
+    param([string]$FilePath, [string[]]$Arguments, [switch]$Utf8, [switch]$DiscardStderr, $TimeoutSeconds)
+    $answer = $script:dpPlan[$script:dpCalls]
+    $script:dpCalls++
+    return $answer
+}
+$script:dpPlan = @($unmeasuredCap)
+$dpMsg = ''
+try { Invoke-DayPlanSearch -From (Get-Date) -Authors @('someone') | Out-Null } catch { $dpMsg = [string]$_.Exception.Message }
+Assert-True ($dpMsg -like '*graphql failed*') 'an unmeasured exit on the PR read throws'
+Assert-True ($dpMsg.Contains($dpLabel)) 'the PR read names the exit with Get-NativeExitLabel'
+Assert-True ($dpMsg -notmatch '\(exit\s*\)') 'and never prints a blank code'
+$script:dpCalls = 0; $script:dpPlan = @($emptyPageCap, $unmeasuredCap)
+$dpMsg = ''
+try { Invoke-DayPlanSearch -From (Get-Date) -Authors @('someone') | Out-Null } catch { $dpMsg = [string]$_.Exception.Message }
+Assert-True ($dpMsg -like '*search issues failed*') 'an unmeasured exit on the issue read throws'
+Assert-True ($dpMsg.Contains($dpLabel)) 'the issue read names the exit with Get-NativeExitLabel'
+Assert-True ($dpMsg -notmatch '\(exit\s*\)') 'and never prints a blank code there either'
+$script:dpCalls = 0; $script:dpPlan = @($emptyPageCap, [pscustomobject]@{ Output = @('[]'); ExitCode = 0; TimedOut = $false; ShortRead = $false; ExitCodeUnknown = $false; NotStarted = $false })
+$dpOk = $null
+try { $dpOk = Invoke-DayPlanSearch -From (Get-Date) -Authors @('someone') } catch { $dpOk = $null }
+Assert-True ($null -ne $dpOk -and @($dpOk.Prs).Count -eq 0 -and @($dpOk.Issues).Count -eq 0) 'control: two measured zero reads return an empty result'
+Remove-Item Function:\Invoke-NativeCapture
 Write-Host ''
 Write-Host "dayplan: $script:pass passed, $script:fail failed"
 if ($script:fail) { exit 1 }

@@ -214,6 +214,34 @@ finally {
     Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue
 }
 
+Write-Group 'Invoke-GhChecked judges an UNMEASURED exit (#4307)'
+# The script runs its work on load, so the one function is lifted out of its text by the parser and defined
+# here, with Invoke-NativeCapture stubbed to a capture whose exit code could not be measured.
+. (Join-Path $RepoRoot 'scripts\lib\native-capture-lib.ps1')
+$ghTok = $null; $ghErr = $null
+$ghAst = [System.Management.Automation.Language.Parser]::ParseFile($Script, [ref]$ghTok, [ref]$ghErr)
+$ghFn = $ghAst.Find({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Invoke-GhChecked' }, $true)
+Assert-True ($null -ne $ghFn) 'live-direct-writes.ps1 still defines Invoke-GhChecked'
+if ($ghFn) { . ([scriptblock]::Create($ghFn.Extent.Text)) }
+$ghUnmeasured = [pscustomobject]@{ Output = @(); ExitCode = $null; TimedOut = $false; ShortRead = $false; ExitCodeUnknown = $true; NotStarted = $false }
+$ghMeasuredOk = [pscustomobject]@{ Output = @('[]'); ExitCode = 0; TimedOut = $false; ShortRead = $false; ExitCodeUnknown = $false; NotStarted = $false }
+$ghMeasuredBad = [pscustomobject]@{ Output = @(); ExitCode = 1; TimedOut = $false; ShortRead = $false; ExitCodeUnknown = $false; NotStarted = $false }
+$ghLabel = Get-NativeExitLabel -Capture $ghUnmeasured
+$script:ghAnswer = $ghUnmeasured
+function Invoke-NativeCapture { param([string]$FilePath, [string[]]$Arguments, [switch]$DiscardStderr, $TimeoutSeconds) return $script:ghAnswer }
+$ghMsg = ''
+try { Invoke-GhChecked -GhArgs @('label', 'list') -What 'gh label list' | Out-Null } catch { $ghMsg = [string]$_.Exception.Message }
+Assert-True ($ghMsg -like 'gh label list failed*') 'an unmeasured exit throws'
+Assert-True ($ghMsg.Contains($ghLabel)) 'and names the exit with Get-NativeExitLabel'
+Assert-True ($ghMsg -notmatch '\(exit\s*\)') 'and never prints a blank code'
+$script:ghAnswer = $ghMeasuredBad
+$ghMsg = ''
+try { Invoke-GhChecked -GhArgs @('label', 'list') -What 'gh label list' | Out-Null } catch { $ghMsg = [string]$_.Exception.Message }
+Assert-True ($ghMsg -like '*(exit 1)*') 'control: a measured non-zero exit still names its number'
+$script:ghAnswer = $ghMeasuredOk
+Assert-Equal '[]' (Invoke-GhChecked -GhArgs @('label', 'list') -What 'gh label list') 'control: a measured zero returns the output'
+Remove-Item Function:\Invoke-NativeCapture
+
 Write-Host ""
 # A broken fixture is said before the verdict and fails the run (issue #1635).
 $fixtureBroken = Write-FixtureGitSummary -Subject 'live-direct-writes.ps1'

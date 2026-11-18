@@ -86,7 +86,7 @@ function Invoke-GhChecked {
     if (-not (Test-NativeCommandStarted $r)) { throw "gh is not available, so $What could not run." }
     if ($r.TimedOut) { throw "$What timed out." }
     if ($r.ShortRead) { throw "$What was read short." }
-    if ($r.ExitCode -ne 0) { throw "$What failed (exit $($r.ExitCode))." }
+    if (-not (Test-NativeExitMeasured -Capture $r) -or $r.ExitCode -ne 0) { throw "$What failed ($(Get-NativeExitLabel -Capture $r))." }
     return (@($r.Output) -join "`n")
 }
 
