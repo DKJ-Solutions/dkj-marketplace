@@ -48,17 +48,34 @@ form. The catch now applies to all three, because that is the more correct behav
 
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] New `extensions/dkj-repo-workflow-bwj/scripts/lib/native-command-lib.ps1` with the one
+      `Invoke-Native` (`Output`, `Lines`, `Code`, and `-Compact`), keeping the try/catch/finally shape
+      that the redirect guard exonerates.
+- [x] `build-golive-block.ps1`, `notify-live.ps1` and `prepare-release.ps1` dot-source it and lose their
+      local copies. Every call in prepare-release passes `-Compact`, so its trimmed `Lines` are unchanged.
+- [x] Tests in `scripts/tests/dkj-repo-workflow-bwj.tests.ps1`: no local definition left, the lib is
+      dot-sourced, a missing executable returns `-1`, stderr does not throw, and `-Compact` against the
+      default.
 
 ### TEST
 
+- [x] `dkj-repo-workflow-bwj.tests.ps1` passes 1084/1084, and `shared-scripts.tests.ps1` passes
+      1299/1299, so the redirect guard accepts the lib. The full gate runs in ship-pr.
+
 ### DEPLOY: fix/4292-invoke-native-lib
 
-**Score:**
+The BWJ go-live block builder (`build-golive-block`) no longer stops with an error when `gh` or `git` is
+missing from the machine. It now reports that call as failed, as `notify-live` and `prepare-release`
+already did. The three scripts now share one copy of the helper that runs `gh` and `git`, so a later fix
+to that helper reaches all three at once.
+
+**Score:** 1
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
+
+**Score:** N/A
 
 #### Pull Request
 

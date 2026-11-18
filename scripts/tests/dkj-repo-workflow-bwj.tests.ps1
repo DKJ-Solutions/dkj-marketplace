@@ -2286,6 +2286,35 @@ Assert-True ($osYml -match '(?m)^\s*timeout-minutes:\s*\d+' -and $osYml -match '
 Assert-Equal 'ASANA_PAT' (@([regex]::Matches($osYml, 'secrets\.([A-Za-z0-9_]+)') | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique) -join ',') 'ASANA_PAT is the only secret'
 Assert-True ([regex]::Match($osYml, '(?ms)^\s*run:\s*\|\s*\r?\n(.*)\z').Groups[1].Value -notmatch '\$\{\{') 'and no expression is interpolated inside run:'
 
+
+# --- Invoke-Native, one definition (#4292) ----------------------------------------------------------
+Write-Host "`n-- the shared Invoke-Native lib (#4292) --" -ForegroundColor Cyan
+$nativeLibPath = Join-Path $PluginRoot 'scripts\lib\native-command-lib.ps1'
+Assert-True (Test-Path -LiteralPath $nativeLibPath) 'native-command-lib.ps1 ships in the extension'
+foreach ($nativeScript in @('build-golive-block.ps1', 'notify-live.ps1', 'prepare-release.ps1')) {
+    $nativeText = [IO.File]::ReadAllText((Join-Path $PluginRoot "scripts\task\$nativeScript"))
+    Assert-True (-not ($nativeText -match '(?m)^\s*function Invoke-Native\b')) "$nativeScript no longer defines Invoke-Native"
+    Assert-True ($nativeText -match [regex]::Escape("'..\lib\native-command-lib.ps1'")) "$nativeScript dot-sources native-command-lib.ps1"
+}
+$prText = [IO.File]::ReadAllText((Join-Path $PluginRoot 'scripts\task\prepare-release.ps1'))
+Assert-Equal 0 ([regex]::Matches($prText, 'Invoke-Native \{').Count) 'every Invoke-Native call in prepare-release.ps1 passes -Compact'
+. $nativeLibPath
+$nativeMissing = Invoke-Native { & 'definitely-not-an-installed-command-4292' --version }
+Assert-Equal -1 $nativeMissing.Code 'a missing executable comes back as Code -1'
+Assert-Equal 0 @($nativeMissing.Lines).Count 'a missing executable has no Lines'
+# -EncodedCommand: Windows PowerShell 5.1 mangles embedded double quotes in a native argument.
+$encode = { param($Text) [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($Text)) }
+$errCmd = & $encode '[Console]::Error.WriteLine(''boom''); [Console]::Out.WriteLine(''kept''); exit 3'
+$rawCmd = & $encode 'Write-Output ''  a  ''; Write-Output ''''; Write-Output ''b'''
+$nativeErr = Invoke-Native { & powershell -NoProfile -EncodedCommand $errCmd }
+Assert-Equal 3 $nativeErr.Code 'stderr does not throw and the exit code is read'
+Assert-Equal 'kept' (@($nativeErr.Lines) -join '|') 'stderr is dropped and stdout kept'
+Assert-Equal 'kept' (@($nativeErr.Output) -join '|') 'Output carries the raw stdout'
+$nativeRaw = Invoke-Native { & powershell -NoProfile -EncodedCommand $rawCmd }
+Assert-Equal 3 @($nativeRaw.Lines).Count 'by default blank lines are kept'
+Assert-Equal '  a  ' $nativeRaw.Lines[0] 'by default lines are not trimmed'
+$nativeCompact = Invoke-Native -Compact { & powershell -NoProfile -EncodedCommand $rawCmd }
+Assert-Equal 'a|b' (@($nativeCompact.Lines) -join '|') '-Compact trims and drops blank lines'
 # --- done ---------------------------------------------------------------------------------------
 Write-Host ""
 if (Write-FixtureGitSummary -Subject 'build-golive-block.ps1') { $script:fail++ }
