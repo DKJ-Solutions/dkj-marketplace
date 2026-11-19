@@ -7,7 +7,7 @@ description: >-
   markdown in a private repository. The worker holds no page content of its own: the pages sit in
   KV, one key per kind and token, which is what lets two repos deploy the same worker without
   either one erasing the other's page. It publishes an existing file and never builds one, and it
-  verifies by reading the bytes back rather than by believing the upload.
+  verifies by reading the bytes back and by fetching the public URL, rather than by believing the upload.
 disable-model-invocation: true
 ---
 
@@ -39,8 +39,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 ```
 
 It reads the built page out of the page directory, checks it against Cloudflare's KV value ceiling,
-uploads it under this repo's own path token, **reads the value back and compares SHA-256**, and
-prints the link. For `-Kind notes` it then prints a `Close-out:` line carrying that link, and **the cut's
+uploads it under this repo's own path token, **reads the value back and compares SHA-256**, **fetches
+the public URL and compares again**, and prints the link. For `-Kind notes` it then prints a `Close-out:` line carrying that link, and **the cut's
 receipt ends with it**: it is the page that goes to management, so nobody has to look the URL up
 afterwards ([#2913](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2913)).
 
@@ -227,14 +227,20 @@ fails naming both hashes when they differ. That is the automatable half of the l
 `build-release-notes-page.ps1` states one layer up — *verify the bytes the URL serves, never the
 deploy command's output* — and it settles the question the upload's `"success": true` cannot.
 
-Two limits it does not pretend to cover:
+**Then it checks what the URL serves** ([#4323](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4323)),
+because KV holding the right bytes is not the link serving them: an edge that held the previous page can go
+on serving it for up to a minute. Unless `-NoVerifyServed`, every page of the set (the skipped ones too)
+is fetched from its **public** address, `<route>` for the index and `<route>/v<x.y.z>` for a release page,
+with a `?v=<random>` cache-buster the worker ignores and no auth header, and the bytes are compared
+with the ones uploaded (the link-rewritten, BOM-less copy, not the raw build). A page that differs,
+errors or 404s is fetched again every 10 s for up to a minute; the run exits 0 only when every URL serves
+exactly what was published, and otherwise fails naming each page and its last state (HTTP status or
+hash mismatch). KV then already holds the right bytes, so the cause is edge propagation or a worker or
+route problem: **do not send the link yet**, and run the publish again (unchanged pages are skipped by the
+record, so it repeats the check only).
 
-- **KV is eventually consistent.** An edge that already held the previous page can go on serving it
-  for up to a minute. A stale first read is therefore **not** a failed publish — the read-back has
-  already settled that — so fetch again before concluding anything from one request.
-- **It proves what KV holds, not what the URL serves.** Those are the same thing while the worker is
-  deployed and bound to the namespace the seam names, which is exactly what `-EmitWorker`'s two
-  drift warnings are about.
+- **A green run means the link can be sent.** Only `-NoVerifyServed` leaves the URL unchecked, and the
+  script then says so and tells you to fetch it before sending the link.
 
 **A page this machine already verified is not uploaded again**
 ([#4160](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4160)). After each read-back the script
@@ -259,6 +265,7 @@ once. Pass `-All` when a key was changed or deleted in KV from somewhere else.
 | `-ShowUrl` | print this kind's link and stop |
 | `-CheckAuth` | print the link, then prove a route to KV (the token or the login below) and stop; `prepare-release` runs it days ahead (#4155) |
 | `-DryRun` | resolve the seam, read the page, name the key and the URL — upload nothing |
+| `-NoVerifyServed` | skip the served-bytes check, which otherwise runs by default after the upload (#4323) |
 | `-All` | upload every page, whatever this machine's record of the last verified publish says |
 | `-RootOverride <path>` | the repo root, when the run does not start inside the checkout |
 
