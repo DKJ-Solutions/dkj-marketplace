@@ -684,7 +684,9 @@ function Get-FirstLineAfterSegment {
        cannot be found. #>
     param([string]$Raw, [string]$Segment)
 
-    $seg = [string]$Segment
+    # A quote-aware segment can span lines (the quote that opens the heredoc substitution closes on a
+    # later line): the opener is on its first line, which is what the raw command is searched for.
+    $seg = ([string]$Segment -split '\r?\n')[0]
     $idx = $Raw.IndexOf($seg, [System.StringComparison]::Ordinal)
     if ($idx -lt 0) { $seg = $seg.TrimEnd(); $idx = $Raw.IndexOf($seg, [System.StringComparison]::Ordinal) }
     if ($idx -lt 0) { return '' }
@@ -716,6 +718,10 @@ function Get-TrunkCommitViolation {
         `Set-Location` / `pushd` before it in the same command, else -Cwd; `--git-dir` / `--work-tree`
         or a directory that cannot be resolved means allow.
 
+        TWO READINGS OF THE COMMAND (#4330): the segments are judged from the plain split and then from
+        a quote-aware split (Split-CommandSegmentsQuoteAware), and the first violation from either is
+        returned, so `git -c user.name="a;b" commit -m wip` cannot hide behind a quoted separator.
+
         THE SUBJECT, per Get-CommitMessageSource: the first -m (or --message=) is read, however it is
         quoted or bundled (`-am`, `-nm`, `-m"fold: x"`); `-F <file>` reads the file's first line when
         the file exists (relative to the target directory); a heredoc or here-string that only opens in
@@ -736,69 +742,74 @@ function Get-TrunkCommitViolation {
     if (-not $Command) { return $null }
     if ($Command -notmatch '(?i)commit') { return $null }
 
-    $dir = ''
-    if ($Cwd) { $dir = Resolve-GuardPath -Path $Cwd -Base ''; if (-not $dir) { $dir = $null } }
+    # Two readings (#4330): the plain split, and a quote-aware one, because a separator inside a quoted
+    # value (`git -c user.name="a;b" commit`) cuts the plain split in the wrong place. The first
+    # violation from either wins; the directory tracking restarts per reading.
+    foreach ($quoteAware in @($false, $true)) {
+        $dir = ''
+        if ($Cwd) { $dir = Resolve-GuardPath -Path $Cwd -Base ''; if (-not $dir) { $dir = $null } }
 
-    foreach ($segment in (Get-GuardSegments -Command $Command -TextTools $script:WcTextTools)) {
-        $cd = Get-SegmentCdTarget $segment
-        if ($cd) {
-            if ($null -ne $dir) { $r = Resolve-GuardPath -Path $cd -Base $dir; $dir = if ($r) { $r } else { $null } }
-            continue
-        }
-
-        $git = Get-GitInvocation $segment
-        if ($null -eq $git -or $git.Sub -ne 'commit') { continue }
-
-        # Where git is told to run, from the text BEFORE the subcommand (a `-C` after it is a commit
-        # option). --git-dir / --work-tree name a repo this rule does not read: allow.
-        $cm = [regex]::Match($segment, '(?:^|\s)commit(?=\s|$)')
-        if (-not $cm.Success) { continue }
-        $before = $segment.Substring(0, $cm.Index)
-        $after = $segment.Substring($cm.Index + $cm.Length)
-        if ($before -match '(?:^|\s)(?:--git-dir|--work-tree)\b') { continue }
-
-        $target = $dir
-        foreach ($c in [regex]::Matches($before, '(?:^|\s)-C\s+("[^"]*"|''[^'']*''|\S+)')) {
-            if ($null -eq $target) { break }
-            $r = Resolve-GuardPath -Path $c.Groups[1].Value -Base $target
-            $target = if ($r) { $r } else { $null }
-        }
-        if ($null -eq $target) { continue }
-
-        if ($after -match '(?:^|\s)--dry-run(?=\s|$)') { continue }
-
-        $facts = if ($ResolveFacts) { & $ResolveFacts $target } else { Get-TrunkCommitRepoFacts -Dir $target }
-        if ($null -eq $facts -or -not $facts.Branch -or -not $facts.Trunk) { continue }
-        if ($facts.Branch -cne $facts.Trunk) { continue }
-
-        $src = Get-CommitMessageSource -After $after
-        $subject = $null
-        $why = ''
-        switch ($src.Kind) {
-            'subject' {
-                $v = [string]$src.Value
-                if ($v -match '^@$' -or $v -match '<<') { $subject = Get-FirstLineAfterSegment -Raw $Command -Segment $segment }
-                elseif ($v -match '^\$' -or $v.Contains('`')) { $why = 'its message comes from a variable or a command substitution' }
-                else { $subject = ($v -split '\r?\n')[0] }
+        foreach ($segment in (Get-GuardSegments -Command $Command -TextTools $script:WcTextTools -QuoteAware:$quoteAware)) {
+            $cd = Get-SegmentCdTarget $segment
+            if ($cd) {
+                if ($null -ne $dir) { $r = Resolve-GuardPath -Path $cd -Base $dir; $dir = if ($r) { $r } else { $null } }
+                continue
             }
-            'file' {
-                $f = Resolve-GuardPath -Path ([string]$src.Value) -Base $target
-                if ($f -and (Test-Path -LiteralPath $f -PathType Leaf)) {
-                    $line = Get-Content -LiteralPath $f -TotalCount 20 -ErrorAction SilentlyContinue | Where-Object { "$_".Trim() } | Select-Object -First 1
-                    if ($line) { $subject = [string]$line }
+
+            $git = Get-GitInvocation $segment
+            if ($null -eq $git -or $git.Sub -ne 'commit') { continue }
+
+            # Where git is told to run, from the text BEFORE the subcommand (a `-C` after it is a commit
+            # option). --git-dir / --work-tree name a repo this rule does not read: allow.
+            $cm = [regex]::Match($segment, '(?:^|\s)commit(?=\s|$)')
+            if (-not $cm.Success) { continue }
+            $before = $segment.Substring(0, $cm.Index)
+            $after = $segment.Substring($cm.Index + $cm.Length)
+            if ($before -match '(?:^|\s)(?:--git-dir|--work-tree)\b') { continue }
+
+            $target = $dir
+            foreach ($c in [regex]::Matches($before, '(?:^|\s)-C\s+("[^"]*"|''[^'']*''|\S+)')) {
+                if ($null -eq $target) { break }
+                $r = Resolve-GuardPath -Path $c.Groups[1].Value -Base $target
+                $target = if ($r) { $r } else { $null }
+            }
+            if ($null -eq $target) { continue }
+
+            if ($after -match '(?:^|\s)--dry-run(?=\s|$)') { continue }
+
+            $facts = if ($ResolveFacts) { & $ResolveFacts $target } else { Get-TrunkCommitRepoFacts -Dir $target }
+            if ($null -eq $facts -or -not $facts.Branch -or -not $facts.Trunk) { continue }
+            if ($facts.Branch -cne $facts.Trunk) { continue }
+
+            $src = Get-CommitMessageSource -After $after
+            $subject = $null
+            $why = ''
+            switch ($src.Kind) {
+                'subject' {
+                    $v = [string]$src.Value
+                    if ($v -match '^@$' -or $v -match '<<') { $subject = Get-FirstLineAfterSegment -Raw $Command -Segment $segment }
+                    elseif ($v -match '^\$' -or $v.Contains('`')) { $why = 'its message comes from a variable or a command substitution' }
+                    else { $subject = ($v -split '\r?\n')[0] }
                 }
-                if ($null -eq $subject) { $why = 'its message file cannot be read' }
+                'file' {
+                    $f = Resolve-GuardPath -Path ([string]$src.Value) -Base $target
+                    if ($f -and (Test-Path -LiteralPath $f -PathType Leaf)) {
+                        $line = Get-Content -LiteralPath $f -TotalCount 20 -ErrorAction SilentlyContinue | Where-Object { "$_".Trim() } | Select-Object -First 1
+                        if ($line) { $subject = [string]$line }
+                    }
+                    if ($null -eq $subject) { $why = 'its message file cannot be read' }
+                }
+                'none' { $why = 'it has no -m message, so git would open an editor or reuse the amended one' }
+                default { $why = 'its message comes from a source the command text does not show' }
             }
-            'none' { $why = 'it has no -m message, so git would open an editor or reuse the amended one' }
-            default { $why = 'its message comes from a source the command text does not show' }
-        }
 
-        if ($null -ne $subject -and ($subject.TrimStart() -cmatch $script:TrunkCommitSubjectPattern)) { continue }
+            if ($null -ne $subject -and ($subject.TrimStart() -cmatch $script:TrunkCommitSubjectPattern)) { continue }
 
-        $shown = if ($null -ne $subject -and $subject.Trim()) { "the subject '" + $subject.Trim() + "'" } elseif ($why) { "no readable subject (" + $why + ")" } else { 'an empty subject' }
-        return @{
-            Sub = 'commit'; Segment = $segment
-            Reason = "``git commit`` on the trunk ('$($facts.Trunk)') with $shown. The constitution says never directly on the trunk, always via a branch and a pull request; only the fold, release, release-prep and release-notes commits land here, and they are recognised by a subject starting with ``fold:``, ``release:``, ``release-prep:`` or ``release-notes:``. Open a branch first (the ``new-branch`` skill) and commit there."
+            $shown = if ($null -ne $subject -and $subject.Trim()) { "the subject '" + $subject.Trim() + "'" } elseif ($why) { "no readable subject (" + $why + ")" } else { 'an empty subject' }
+            return @{
+                Sub = 'commit'; Segment = $segment
+                Reason = "``git commit`` on the trunk ('$($facts.Trunk)') with $shown. The constitution says never directly on the trunk, always via a branch and a pull request; only the fold, release, release-prep and release-notes commits land here, and they are recognised by a subject starting with ``fold:``, ``release:``, ``release-prep:`` or ``release-notes:``. Open a branch first (the ``new-branch`` skill) and commit there."
+            }
         }
     }
 

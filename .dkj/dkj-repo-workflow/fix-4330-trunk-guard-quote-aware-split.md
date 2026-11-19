@@ -39,19 +39,44 @@
 
 ### PLAN
 
+Inbound #4330: `Split-CommandSegments` splits on a raw `;`, `&&` or `|` with no notion of quotes, so
+`git -c user.name="a;b" commit -m wip` reached `Get-TrunkCommitViolation` as two halves, neither a
+commit led by git, and was allowed on the trunk. The fix: judge a second, quote-aware reading beside
+the plain one. A refusal in either reading refuses the commit. This is the approach the reporting
+consumer used locally.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Split-CommandSegmentsQuoteAware` in `command-guard-lib.ps1`, and a `-QuoteAware` switch on
+  `Get-GuardSegments` that is off by default, so guard-live-theme and the other working-copy rules are
+  unchanged. Both mirrors resynced.
+- [x] `Get-TrunkCommitViolation` judges both readings, with the directory tracking restarted per
+  reading. `Get-FirstLineAfterSegment` searches for a segment's first line only, because a quote-aware
+  segment can span lines (the heredoc-subject case). The `working-copy-guard-lib.ps1` mirror resynced.
 
 ### TEST
 
+- [x] New cases: the quoted `a;b` and `a&&b` commits are refused, a `fold:` subject with a quoted `;`
+  is allowed, and the wrapper form is still refused. The splitter cases: two segments quote-aware, and
+  three plain, which is unchanged.
+- [x] Run standalone: `command-guard-lib` 43/0, `working-copy-guard-lib` 221/0, `guard-working-copy`
+  85/0. The full gate is `ship-pr`'s.
+
 ### DEPLOY: fix/4330-trunk-guard-quote-aware-split
 
-**Score:**
+The trunk-commit guard no longer lets a quoted separator split a commit in two (#4330).
+`git -c user.name="a;b" commit -m wip` on the trunk was allowed, because the command was split at the
+`;` inside the quotes. The guard now also reads the command quote-aware and refuses when either
+reading refuses.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer can drop its own quote-aware trunk guard and rely on the plugin's without reopening this
+form. The `-c "user.name=a b"` and quoted-`&&` variants are closed too.
+
+**Score:** 2
 
 #### Pull Request
 
