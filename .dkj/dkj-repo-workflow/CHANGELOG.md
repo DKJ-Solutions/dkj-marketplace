@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**3 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/git-content-sessioncheck · 20261119-142738Z
+
+A new SessionStart check in the `dkj-repo-workflow-dkj` extension, `git-content-sessioncheck`, names
+every tracked folder that holds only content files (`.md`, `.json`, `.csv` and the like) and was touched
+by 10 or more commits in the last 90 days: data that keeps paying the branch + PR toll, against the "what
+belongs in git" rule. Tooling folders and test material are never named. A folder kept in git on purpose
+goes in `Get-GitContentAllowlist` in the repo's `scripts/repo-config.ps1`, with its reason. Measured over
+the six DKJ-Solutions app repos, it names exactly the two folders a hand audit found, in 0.1 to 1.6
+seconds per repo.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Every DKJ-Solutions repo now says at session start when notes or data in it keep going through pull
+requests, so the slowdown is seen before it costs weeks.
+
+**Score:** 3
+
+#### Pull Request
+
+Session check reports content folders that pay the PR toll without being code
+
+Plugins: dkj-repo-workflow-dkj
+
+[PR #4334](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4334)
+
+---
 
 ### DEPLOY: fix/4330-trunk-guard-quote-aware-split · 20261119-141245Z
 
