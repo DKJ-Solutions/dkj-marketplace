@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**3 / 3 minor entries** <!-- pending-tally -->
+**4 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4332-ci-read-content-stays-in-git · 20261119-144449Z
+
+The "what belongs in git" chapter of the `dkj-repo-workflow-dkj` extension now names its one
+exception (#4332). Content a deployed build reads in CI, such as an Astro content collection, stays in
+git or moves to a store the build can reach, because CI has no OneDrive.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A session applying the rule in a repo with a CI-built site no longer moves the content that site
+deploys from out of git, which would have published a site without it.
+
+**Score:** 2
+
+#### Pull Request
+
+The what-belongs-in-git rule keeps content a deployed build reads in CI
+
+Plugins: dkj-repo-workflow-dkj
+
+[PR #4335](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4335)
+
+---
 
 ### DEPLOY: feat/git-content-sessioncheck · 20261119-142738Z
 
