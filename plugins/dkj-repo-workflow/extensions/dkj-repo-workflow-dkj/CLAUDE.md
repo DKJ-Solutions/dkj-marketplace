@@ -41,7 +41,10 @@ moved there by the `move-data-to-onedrive` skill of `dkj-subagents-developers`. 
 Under doubt, ask whether changing it changes what the app *does*. If it only changes what the app
 *shows*, it is data. **The one exception is content a deployed build reads in CI** (an Astro content
 collection, for example). It stays in git, or moves to a store that build can reach, because CI has no
-OneDrive and moving it would deploy a site without it (#4332).
+OneDrive and moving it would deploy a site without it (#4332). The `git-content-sessioncheck` hook
+names, at every session start, the content folders that keep paying that toll. A folder kept in git on
+purpose, that exception included, goes in `Get-GitContentAllowlist` with its reason (this plugin's
+README).
 
 **This plugin reaches DKJ-Solutions only.** BWJ-Development has its own styling, so this extension is
 never enabled there.
