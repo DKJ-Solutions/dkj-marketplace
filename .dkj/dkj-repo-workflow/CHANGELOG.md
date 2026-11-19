@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**5 / 6 minor entries** <!-- pending-tally -->
+**6 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4323-publish-page-verify-served · 20261119-093046Z
+
+A BWJ store's `publish-page.ps1` now fetches the public URL of every page it published, with a
+cache-buster, and exits 0 only when the URL serves exactly the uploaded bytes, retrying every 10 s for
+up to a minute. Before, it proved only what KV held and told the caller to fetch the link by hand, so a
+store wrapped that fetch in a script of its own; that wrapper can now go. `-NoVerifyServed` skips the
+check. Closes #4323.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A green publish now means the release-notes link can be sent; a stale edge or a misbound worker fails
+the run instead of reaching management.
+
+**Score:** 3
+
+#### Pull Request
+
+publish-page verifies what the URL serves
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4324](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4324)
+
+---
 
 ### DEPLOY: fix/4315-ship-pr-cancelled-required-check · 20261118-212955Z
 
