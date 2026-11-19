@@ -2,7 +2,38 @@
 
 ## [Unreleased]
 
-**4 / 4 minor entries** <!-- pending-tally -->
+**5 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4329-deploy-branch-promotion-guard · 20261119-150542Z
+
+`guard-live-theme` rule 5 now gates every route onto the branch a Git-connected live theme deploys from
+(`Get-ShopifyLiveDeployBranch`), not only a `git push`: a `gh pr create` or `gh pr edit` with that branch
+as base, a writing `gh api` call on it (ref create, move, rename, protection, merges), and a local commit,
+merge, cherry-pick, revert, am, rebase or pull while it is checked out. Each needs the existing live-push
+marker (`Get-ShopifyLivePushMarker`); no new seam. `gh pr merge` stays ungated, because the PR's base was
+gated when it was opened. This reverses the #3014 ruling that left the promotion PR ungated. Where HEAD
+cannot be told (`cd` earlier in the command, `--git-dir`, two `-C`), a local write is refused rather than
+guessed.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Shopify repo whose live theme deploys from a Git branch now has every route onto that branch guarded by
+the plugin, with one marker. Opening the promotion PR from a session needs the marker, and smartwatchbanden
+can delete its own local hook and suite once it takes this version.
+
+**Score:** 3
+
+#### Pull Request
+
+guard-live-theme gates every route onto a Git-connected deploy branch
+
+Plugins: dkj-subagents-shopify
+
+[PR #4336](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4336)
+
+---
 
 ### DEPLOY: docs/4332-ci-read-content-stays-in-git · 20261119-144449Z
 
