@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**6 / 7 minor entries** <!-- pending-tally -->
+**7 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4325-trunk-prompt-notice · 20261119-110908Z
+
+Every repo running `dkj-repo-workflow` now gets a one-line notice in the session on each prompt made
+while HEAD is on the trunk, naming the skill that opens a branch (`new-branch`, or `start-task` where
+the BWJ extension is enabled). The session starts on the trunk after every finished assignment, and
+until now only prose reminded it to branch first. A consumer that wired this notice itself can drop its
+local hook. Closes #4325.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+The reminder arrives before the first edit instead of the trunk-commit guard catching it afterwards.
+
+**Score:** 2
+
+#### Pull Request
+
+UserPromptSubmit notice when HEAD is on the trunk
+
+Plugins: dkj-repo-workflow
+
+[PR #4327](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4327)
+
+---
 
 ### DEPLOY: feat/4323-publish-page-verify-served · 20261119-093046Z
 
