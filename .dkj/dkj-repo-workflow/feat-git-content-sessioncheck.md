@@ -49,7 +49,7 @@ signal as a SessionStart hook keeps finding them without anybody asking.
 - [x] Sylvester: `Get-GitContentAllowlist` in this repo's `scripts/repo-config.ps1` (plugins, marketplace manifest, baselines)
 - [x] Tycho: `git-content-sessioncheck.tests.ps1` (10 asserts), registered in `suite-groups.json`
 - [x] Tessa: the extension's `CLAUDE.md` chapter and README name the hook and the allowlist
-- [ ] Victor: code review of the diff
+- [x] Victor: code review of the diff. One real finding repaired: a non-ASCII path came back quoted by git, so its extension read `.md"` and the folder was invisible (now unquoted, and asserted). Also the thresholds now come from the result rather than a fixed string, and the `plugins*` glob became `plugins` + `plugins/*`.
 
 ### TEST
 
