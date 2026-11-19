@@ -12,7 +12,9 @@ description: >-
 Data a repo keeps in git has two costs: every edit travels as a branch + PR, and in a public repo the
 data is public. This is the procedure for moving the text data to OneDrive. It was measured in
 DKJ-Solutions/dkj-music-library PR #175, which moved `data/library/export/*.ndjson` (about 12,500
-tracks). Owner: Cody (#13); recorded in #4320.
+tracks). Owner: Cody (#13); recorded in #4320. In a DKJ-Solutions repo, *which* data moves is decided
+by the "what belongs in git" chapter of the `dkj-repo-workflow-dkj` extension's `CLAUDE.md`; this page
+is the how.
 
 ## The folder convention
 
