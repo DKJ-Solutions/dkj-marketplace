@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**1 / 1 minor entry** <!-- pending-tally -->
+**2 / 2 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4330-trunk-guard-quote-aware-split · 20261119-141245Z
+
+The trunk-commit guard no longer lets a quoted separator split a commit in two (#4330).
+`git -c user.name="a;b" commit -m wip` on the trunk was allowed, because the command was split at the
+`;` inside the quotes. The guard now also reads the command quote-aware and refuses when either
+reading refuses.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A consumer can drop its own quote-aware trunk guard and rely on the plugin's without reopening this
+form. The `-c "user.name=a b"` and quoted-`&&` variants are closed too.
+
+**Score:** 2
+
+#### Pull Request
+
+The trunk-commit guard reads a quoted separator as a split
+
+Plugins: dkj-repo-workflow, dkj-subagents-shopify
+
+[PR #4333](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4333)
+
+---
 
 ### DEPLOY: docs/git-holds-code-not-data · 20261119-125308Z
 
