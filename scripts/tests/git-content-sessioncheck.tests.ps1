@@ -71,7 +71,7 @@ try {
     Assert-True (-not $bad.Ok -and $bad.Problem -match 'no Reason') 'an entry without a Reason is refused'
 
     Write-Host 'hook'
-    $plain = Join-Path ([System.IO.Path]::GetTempPath()) ("gitcontent-$PID-nogit")
+    $plain = Join-Path ([System.IO.Path]::GetTempPath()) ("gitcontent-$PID-nogit-" + [guid]::NewGuid().ToString('N').Substring(0, 6))
     New-Item -ItemType Directory -Path $plain -Force | Out-Null
     $script:trees += $plain
     $r = Invoke-Hook $plain
