@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Record which content belongs in git in every DKJ-Solutions repo, so data the owner edits as a user of an
+app is kept out of the branch + PR cycle from the start rather than moved out after it has slowed a repo
+down. The how already exists (`move-data-to-onedrive`, #4320); this is the what.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Tessa: a third chapter, "what belongs in git", in the `dkj-repo-workflow-dkj` extension's `CLAUDE.md`
+- [x] Tessa: `move-data-to-onedrive` names that chapter as the rule deciding which data moves
+- [x] Edith: copy edit of both changes
 
 ### TEST
 
 ### DEPLOY: docs/git-holds-code-not-data
 
-**Score:**
+Every DKJ-Solutions repo now has a written rule for what belongs in git. Git carries what decides how an
+app works: code, config, tests and their fixtures, and the docs about that code. Content the owner keeps
+up as a user of the app (dossiers, notes, exports, personal data) lives in OneDrive, because each edit to
+it would otherwise pay the full branch, PR and CI cycle. The rule is a chapter of the
+`dkj-repo-workflow-dkj` extension's `CLAUDE.md`, with two quick tests: work a developers-team specialist
+builds or tests belongs in git, and work only a core-team specialist does most likely does not. The
+`move-data-to-onedrive` skill now points at it as the rule deciding which data moves.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Sessions in every DKJ-Solutions repo now steer data that is edited as a user out of git, so updating a
+dossier or a note no longer waits on a pull request.
+
+**Score:** 3
 
 #### Pull Request
 

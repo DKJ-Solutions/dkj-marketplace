@@ -6,7 +6,7 @@ DKJ-Solutions, and it never overrides it** (Dave, issue
 with `dkj-repo-workflow-dkj` installed imports it on the line directly below the `dkj-repo-workflow` import. Where
 the two ever speak to the same question, `dkj-repo-workflow` wins.
 
-It adds two chapters. The first is the tracker labels: **a `feat/` pull request and a new feature issue
+It adds three chapters. The first is the tracker labels: **a `feat/` pull request and a new feature issue
 carry `feature`, a fix carries `bug`, and never `enhancement`**, in every DKJ-Solutions repo (#2961).
 How a repo still on `enhancement` moves over is in this plugin's README.
 
@@ -30,6 +30,16 @@ The second is the brand book, with two rules:
   and take the new copy once it has been released and the `dkj-brandbook` skill points at it. Only the
   repo's own domain layer (its own tokens, components and theme pair) is edited locally. **In
   `dkj-marketplace` itself this rule does not apply**: the change is made in `plugins/dkj-repo-workflow/assets/dkj-brandbook/` (the product layer: `plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product/`).
+
+The third is **what belongs in git** (November 19, 2026). Git carries what decides how an app works:
+code, config, tests and their fixtures, and the docs about that code. Content the owner keeps up as a
+*user* of the app (dossiers, notes, exports, a library, personal data) stays out of git, because every
+edit to it would pay the whole branch, PR and CI cycle before it lands. It lives in OneDrive instead,
+moved there by the `move-data-to-onedrive` skill of `dkj-subagents-developers`. Two quick tests: work a
+`dkj-subagents-developers` specialist builds or tests belongs in git, and work only a
+`dkj-subagents-alpha` specialist does (research, writing, planning, analysis) most likely does not.
+Under doubt, ask whether changing it changes what the app *does*. If it only changes what the app
+*shows*, it is data.
 
 **This plugin reaches DKJ-Solutions only.** BWJ-Development has its own styling, so this extension is
 never enabled there.
