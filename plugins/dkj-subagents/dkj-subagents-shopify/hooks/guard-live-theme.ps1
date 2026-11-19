@@ -25,9 +25,12 @@
          theme is live. It does not wait for
          --allow-mutations, which can come from the environment. A file it cannot read or place, and a
          command substitution, are refused.
-      5. a 'git push' to the branch a GIT-CONNECTED live theme deploys from (#3014) -- unless the command
-         carries the live-push marker. Only where the repo answers Get-ShopifyLiveDeployBranch; rule 5's
-         block below says what counts as aimed at that branch, and what is deliberately not gated.
+      5. every route onto the branch a GIT-CONNECTED live theme deploys from (#3014, widened by #4329) --
+         a 'git push' to it, a 'gh pr create' or 'gh pr edit' with that branch as its base, a writing
+         'gh api' call on it, and a local commit, merge, cherry-pick, revert, am, rebase or pull while it
+         is checked out -- unless the command carries the live-push marker. Only where the repo answers
+         Get-ShopifyLiveDeployBranch; rule 5's block below says what counts as aimed at that branch, and
+         what stays ungated ('gh pr merge').
 
     WHY hooks.json WRAPS THIS FILE IN A SHELL COMMAND (issue #2217). Everything above is what this script
     decides once it RUNS. When PowerShell cannot start at all -- out of memory, a failed type
@@ -148,8 +151,10 @@
                                  also leaves the capability off: see the note beside $DELETE_MARKER.
       Get-ShopifyLiveDeployBranch  the branch a Git-connected live theme deploys from (#2998). Absent or
                                  '' -- the default, the CLI push -- rule 5 does not exist. Answered with
-                                 a plain branch name, a 'git push' to that branch needs the live-push
-                                 marker. Anything that is not a plain branch name counts as no answer.
+                                 a plain branch name, every route onto that branch (a 'git push', a
+                                 promotion PR opened or edited against it, a writing 'gh api' call, a local
+                                 write while it is checked out) needs the live-push marker. Anything that
+                                 is not a plain branch name counts as no answer.
 
     AUTHORISING THE DELIBERATE LIVE PUSH. Add the marker as a shell comment to that exact push
     command: '... --allow-live # LIVE-PUSH-AUTHORIZED'. It is a comment in both shells, so it changes
@@ -450,12 +455,35 @@ function Get-StoreExecuteText([string]$Command) {
 # that branch. Rules 1 to 4 never see it, and without this rule the GitHub ruleset on the branch is the
 # only rail.
 #
-# WHAT IS GATED, AND WHAT IS DELIBERATELY NOT (Maikel, October 15, 2026, on #3014). The ordinary route
-# is a promotion PR from the trunk into the deploy branch, and the deploy ruleset already requires a PR,
-# so 'gh pr merge' is NOT gated: that would add a confirm step to every promotion and buy nothing the
-# ruleset does not already hold. What IS gated is the push that goes AROUND the PR -- credentials that
-# carry a ruleset bypass reach live with it, silently. The live-push marker authorises one, exactly as
-# it authorises a deliberate 'shopify theme push --allow-live'.
+# EVERY ROUTE ONTO THE DEPLOY BRANCH NEEDS THE MARKER (the owner's decision on #4329, November 19, 2026,
+# reversing the #3014 ruling of October 15, 2026 that left the promotion-PR route deliberately ungated).
+# The first cut gated only the push that goes around the PR, on the reasoning that the deploy ruleset
+# already requires a PR and a confirm step on every promotion buys nothing. It left three more ways onto
+# the branch open: the promotion PR itself, a ref moved through 'gh api', and a local commit made while
+# the branch is checked out. Each of them ends in a live deploy, so each is gated, by the one marker the
+# push already uses -- no second seam. The accepted cost is a marker on every promotion PR, which the
+# one consumer with a Git-connected live theme already writes. 'gh pr merge' STAYS UNGATED: the PR's
+# base was gated when the PR was created or edited, so the merge is the second half of a promotion that
+# was already authorised, and gating it too would be the confirm-on-every-merge the ruleset replaces.
+# The live-push marker authorises one command, exactly as it authorises a deliberate
+# 'shopify theme push --allow-live'.
+#
+# THE FOUR SHAPES, each read from a segment of the list built below:
+#   - 'git push' to the branch -- the next paragraph;
+#   - 'gh pr create' or 'gh pr edit' whose base ('--base', '--base=', '-B', '-Bvalue') is the branch,
+#     in any quoting, with or without 'refs/heads/', or is a value the shell still expands;
+#   - 'gh api' with a writing method -- an explicit POST, PUT, PATCH or DELETE, or the implicit POST that
+#     -f, -F, --field, --raw-field or --input make when no method is given (an explicit GET stays a read)
+#     -- whose endpoint is 'git/refs/heads/<branch>' or 'branches/<branch>' (any sub-path: /rename,
+#     /protection), or one of whose fields 'ref=', 'base=', 'branch=' or 'new_name=' names the branch
+#     (a 'git/refs' create, a 'merges' call, a pull request's base, a rename). A body read from --input
+#     cannot be seen, so a body-carrying endpoint ('git/refs', 'merges', '/rename') with --input counts as
+#     aimed, as does an endpoint or field value the shell expands;
+#   - a LOCAL WRITE -- 'git commit', 'merge', 'cherry-pick', 'revert', 'am', 'rebase', 'pull' (it merges)
+#     -- while HEAD is the branch. ONE plain 'git -C <dir>' is read in <dir>, because sessions use it
+#     routinely; otherwise the same 'elsewhere' rule as the push reads it: a second or expanded '-C', a
+#     '--git-dir', a directory change earlier in the command or a HEAD that cannot be read counts as
+#     being on the branch, for these write subcommands only. Read-only git passes.
 #
 # WHAT COUNTS AS AIMED AT THE BRANCH, read from a segment whose git subcommand is 'push':
 #   - a refspec whose destination is the branch: 'live', 'main:live', '+HEAD:refs/heads/live', ':live';
@@ -477,16 +505,21 @@ function Get-StoreExecuteText([string]$Command) {
 # THE RESIDUAL LIMITS, STATED: a push from inside a script file, a git alias or a remote.<name>.push
 # config that maps a push onto the branch (an alias given with 'git -c' on the line itself IS caught),
 # a seam answer that is not a plain branch name (it switches the rule off as unanswered, silently --
-# the live id's placeholder precedent, and sync-main refuses such a value loudly), a ref moved
-# through 'gh api', and the
+# the live id's placeholder precedent, and sync-main refuses such a value loudly), and the
 # hooks.json fail-closed path, which refuses only a payload naming a Shopify theme -- that wrapper
 # cannot know the deploy branch, and widening it to every 'git push' would refuse ordinary pushes in
 # every consumer on a machine where PowerShell will not start.
 # HEAD IS READ WHERE THE COMMAND STARTS -- the payload's cwd, which for a worktree lane is the lane and
 # not the project root -- and from the project root only when the payload carries no cwd.
-function Get-CurrentBranchName {
+function Get-CurrentBranchName([string]$Dir) {
     $where = $repoRoot
     if ($hookPayload -and $hookPayload.Cwd -and (Test-Path -LiteralPath $hookPayload.Cwd -PathType Container)) { $where = $hookPayload.Cwd }
+    # A 'git -C <dir>' write is read where it lands (#4329): <dir> resolved against the same start point.
+    if ($Dir) {
+        $target = if ([System.IO.Path]::IsPathRooted($Dir)) { $Dir } else { Join-Path $where $Dir }
+        if (-not (Test-Path -LiteralPath $target -PathType Container)) { return $null }
+        $where = $target
+    }
     try {
         $out = & git -C $where symbolic-ref --short -q HEAD 2>$null
         if ($LASTEXITCODE -ne 0) { return $null }
@@ -550,8 +583,152 @@ function Test-PushTargetsDeployBranch([string]$Segment, [bool]$ChangesDir) {
     return ($head.ToLower() -eq $deploy)
 }
 
+# THE OTHER THREE SHAPES (#4329) READ THE SAME TOKENS THE SAME WAY: every quote character dropped, a '#'
+# token ending the arguments, the program found wherever it stands in the segment.
+function Get-SegmentTokens([string]$Segment) {
+    return @([regex]::Matches($Segment, '"[^"]*"|''[^'']*''|\S+') | ForEach-Object { $_.Value -replace '["'']', '' })
+}
+
+# THE ARGUMENTS AFTER THE FIRST TOKEN THAT IS THE NAMED PROGRAM ('git', 'gh'; a path or '.exe' still counts),
+# up to a '#' comment. $null when the program is not in the segment.
+function Get-ProgramArguments([string[]]$Tokens, [string]$Program) {
+    $i = 0
+    while ($i -lt $Tokens.Count -and (($Tokens[$i] -replace '.*[\\/]', '') -replace '\.exe$', '').ToLower() -ne $Program) { $i++ }
+    if ($i -ge $Tokens.Count) { return $null }
+    $args2 = @()
+    for ($j = $i + 1; $j -lt $Tokens.Count; $j++) {
+        if ($Tokens[$j].StartsWith('#')) { break }
+        $args2 += $Tokens[$j]
+    }
+    return , $args2
+}
+
+# A VALUE NAMES THE DEPLOY BRANCH when, with 'refs/heads/' or 'heads/' dropped, it equals it ignoring case,
+# or when the shell still has to expand it ($B, $(...), a backtick), which cannot be read from here.
+function Test-ValueNamesDeployBranch([string]$Value) {
+    if ($Value -match '[$`()]') { return $true }
+    return (($Value.Trim() -replace '^(refs/)?heads/', '').ToLower() -eq $DEPLOY_BRANCH.ToLower())
+}
+
+# 'gh pr create' / 'gh pr edit' whose base is the deploy branch: --base v, --base=v, -B v, -Bv, -B=v.
+function Test-PrBaseIsDeployBranch([string[]]$Tokens) {
+    $a = Get-ProgramArguments $Tokens 'gh'
+    if ($null -eq $a) { return $false }
+    $pos = @($a | Where-Object { -not $_.StartsWith('-') } | Select-Object -First 3)
+    $isPr = $false
+    for ($k = 0; $k -lt $pos.Count - 1; $k++) {
+        if ($pos[$k].ToLower() -eq 'pr') { $isPr = $pos[$k + 1].ToLower() -in @('create', 'edit'); break }
+    }
+    if (-not $isPr) { return $false }
+    for ($j = 0; $j -lt $a.Count; $j++) {
+        $t = $a[$j]
+        $value = $null
+        if ($t -match '^(?i)--base=(.*)$') { $value = $Matches[1] }
+        elseif ($t -ceq '-B' -or $t -ieq '--base') { if ($j + 1 -lt $a.Count) { $value = $a[$j + 1]; $j++ } }
+        elseif ($t -cmatch '^-B=?(.+)$') { $value = $Matches[1] }
+        if ($null -ne $value -and (Test-ValueNamesDeployBranch $value)) { return $true }
+    }
+    return $false
+}
+
+# 'gh api' with a WRITING method whose endpoint or fields name the deploy branch.
+function Test-ApiWritesDeployBranch([string[]]$Tokens) {
+    $a = Get-ProgramArguments $Tokens 'gh'
+    if ($null -eq $a) { return $false }
+    # 'gh' then 'api' as the first non-flag word (a global '-R repo' may stand between them).
+    $k = 0
+    while ($k -lt $a.Count -and $a[$k].StartsWith('-')) { $k++ }
+    if ($k -ge $a.Count -or $a[$k].ToLower() -ne 'api') {
+        if (-not ($a.Count -ge 3 -and $a[0] -ceq '-R' -and $a[2].ToLower() -eq 'api')) { return $false }
+        $k = 2
+    }
+    $method = $null
+    $hasField = $false
+    $hasInput = $false
+    $fields = @()
+    $endpoint = $null
+    $withValue = @('-H', '--header', '-q', '--jq', '-t', '--template', '--hostname', '--cache', '-p', '--preview', '-R', '--repo')
+    for ($j = $k + 1; $j -lt $a.Count; $j++) {
+        $t = $a[$j]
+        if ($t -ceq '-X' -or $t -ieq '--method') { if ($j + 1 -lt $a.Count) { $method = $a[$j + 1]; $j++ }; continue }
+        if ($t -match '^(?i)--method=(.*)$') { $method = $Matches[1]; continue }
+        if ($t -cmatch '^-X=?(.+)$') { $method = $Matches[1]; continue }
+        if ($t -ceq '-f' -or $t -ceq '-F' -or $t -ieq '--field' -or $t -ieq '--raw-field') {
+            $hasField = $true
+            if ($j + 1 -lt $a.Count) { $fields += $a[$j + 1]; $j++ }
+            continue
+        }
+        if ($t -cmatch '^-[fF]=?(.+)$') { $hasField = $true; $fields += $Matches[1]; continue }
+        if ($t -match '^(?i)--(field|raw-field)=(.*)$') { $hasField = $true; $fields += $Matches[2]; continue }
+        if ($t -ieq '--input') { $hasInput = $true; if ($j + 1 -lt $a.Count) { $j++ }; continue }
+        if ($t -match '^(?i)--input=') { $hasInput = $true; continue }
+        if ($t -in $withValue) { $j++; continue }
+        if ($t.StartsWith('-')) { continue }
+        if ($null -eq $endpoint) { $endpoint = $t }
+    }
+    if ($null -eq $endpoint) { return $false }
+    $writes = if ($method) { $method.ToUpper() -in @('POST', 'PUT', 'PATCH', 'DELETE') } else { $hasField -or $hasInput }
+    if (-not $writes) { return $false }
+
+    $d = [regex]::Escape($DEPLOY_BRANCH)
+    $ep = ($endpoint -replace '^/+', '').ToLower()
+    # An endpoint the shell still expands cannot be read: fail towards checking, as the push rule does.
+    if ($ep -match '[$`()]') { return $true }
+    if ($ep -match "(^|/)git/refs/heads/$d(/|\?|$)") { return $true }
+    if ($ep -match "(^|/)branches/$d(/|\?|$)") { return $true }
+    foreach ($f in $fields) {
+        if ($f -match '^(?i)(ref|base|branch|new_name)=(.*)$' -and (Test-ValueNamesDeployBranch $Matches[2])) { return $true }
+    }
+    # A body read from --input cannot be seen, so the endpoints that carry the branch in it count as aimed.
+    if ($hasInput -and $ep -match '(^|/)(git/refs|merges)(\?|$)|/rename(\?|$)') { return $true }
+    return $false
+}
+
+# GIT, READ FOR A LOCAL WRITE: the subcommand (empty when an alias hides it) and whether the repo moved.
+function Test-LocalWriteOnDeployBranch([string]$Segment, [bool]$ChangesDir) {
+    $tokens = Get-SegmentTokens $Segment
+    $i = 0
+    while ($i -lt $tokens.Count -and (($tokens[$i] -replace '.*[\\/]', '') -replace '\.exe$', '').ToLower() -ne 'git') { $i++ }
+    if ($i -ge $tokens.Count) { return $false }
+    $i++
+    $elsewhere = $ChangesDir
+    $alias = $false
+    # ONE plain 'git -C <dir>' is READ rather than refused: sessions reach for -C routinely, and the HEAD
+    # in <dir> answers the question. A second -C, a --git-dir or --work-tree, or a value the shell still
+    # expands cannot be placed, and stays 'elsewhere'.
+    $cDirs = @()
+    while ($i -lt $tokens.Count -and $tokens[$i].StartsWith('-')) {
+        $t = $tokens[$i]
+        if ($t -ceq '-C' -and ($i + 1) -lt $tokens.Count) { $cDirs += $tokens[$i + 1] }
+        if ($t -match '^--(git-dir|work-tree)') { $elsewhere = $true }
+        if ($t -ceq '-c' -and ($i + 1) -lt $tokens.Count -and $tokens[$i + 1] -match '^(?i)alias\.') { $alias = $true }
+        if ($t -in @('-C', '-c', '--git-dir', '--work-tree', '--namespace')) { $i += 2; continue }
+        $i++
+    }
+    $sub = if ($i -lt $tokens.Count -and -not $tokens[$i].StartsWith('#')) { $tokens[$i].ToLower() } else { '' }
+    if (-not $alias -and $sub -notin @('commit', 'merge', 'cherry-pick', 'revert', 'am', 'rebase', 'pull')) { return $false }
+    if ($cDirs.Count -gt 1 -or ($cDirs.Count -eq 1 -and $cDirs[0] -match '[$`()*]')) { $elsewhere = $true }
+    if ($elsewhere) { return $true }
+    $head = if ($cDirs.Count -eq 1) { Get-CurrentBranchName $cDirs[0] } else { Get-CurrentBranchName }
+    if (-not $head) { return $true }
+    return ($head.ToLower() -eq $DEPLOY_BRANCH.ToLower())
+}
+
 # DEGRADED (no lib), the payload is raw JSON and no segment is led by 'git', so the parse above cannot
 # run. Failing towards checking then means any payload holding a 'git ... push' needs the marker.
+# AND THE SAME FOR THE TWO GH ROUTES (#4329): a payload holding 'gh pr create|edit' with a base flag, or a
+# 'gh api' that names the deploy branch, needs the marker while the segments cannot be read. The local
+# writes are not read degraded: they need HEAD, and the push rule's degraded refusal is the precedent.
+if ($DEPLOY_BRANCH -and -not $libLoaded -and -not $authorised) {
+    $dEsc = [regex]::Escape($DEPLOY_BRANCH)
+    if ($cmd -match '(?i)\bgh\b.*?\bpr\s+(create|edit)\b.*?(--base\b|(?-i:-B))') {
+        Deny "a 'gh pr create' or 'gh pr edit' with a base is blocked while this guard runs degraded: this repo's live theme deploys from '$DEPLOY_BRANCH', and without command-guard-lib.ps1 the base cannot be read. Reinstall or update the dkj-subagents-shopify plugin, or add the marker '# $MARKER' if this IS the deliberate promotion."
+    }
+    if ($cmd -match '(?i)\bgh\b.*?\bapi\b' -and $cmd -match "(?i)(?<![A-Za-z0-9._-])$dEsc(?![A-Za-z0-9._-])") {
+        Deny "a 'gh api' call naming '$DEPLOY_BRANCH' is blocked while this guard runs degraded: this repo's live theme deploys from that branch, and without command-guard-lib.ps1 the method and target cannot be read. Reinstall or update the dkj-subagents-shopify plugin, or add the marker '# $MARKER' if this IS the deliberate call."
+    }
+}
+
 if ($DEPLOY_BRANCH -and -not $libLoaded -and $cmd -match '(?i)\bgit\b[^\r\n]*\bpush\b' -and -not $authorised) {
     Deny "a 'git push' is blocked while this guard runs degraded: this repo's live theme deploys from '$DEPLOY_BRANCH', and without command-guard-lib.ps1 the push target cannot be read. Reinstall or update the dkj-subagents-shopify plugin, or add the marker '# $MARKER' if this IS the deliberate direct push."
 }
@@ -567,6 +744,27 @@ if ($DEPLOY_BRANCH -and $libLoaded) {
             continue
         }
         Deny "a 'git push' to '$DEPLOY_BRANCH' is blocked: this repo's live theme deploys from that branch (Get-ShopifyLiveDeployBranch), so the push IS a live deploy, made around the promotion PR the deploy ruleset requires. Promote through that PR instead. If this IS the deliberate direct push this repo's own rules describe, add the marker '# $MARKER' to this exact command."
+    }
+
+    # THE OTHER THREE ROUTES (#4329), over the same segment list: gh segments are in it too, because
+    # 'gh' is not a text tool. Each is refused unless the one live-push marker is on the command.
+    foreach ($segment in $gitSegments) {
+        if (-not $segment.Trim()) { continue }
+        $tokens = Get-SegmentTokens $segment
+        $route = $null
+        if (Test-PrBaseIsDeployBranch $tokens) {
+            $route = "a 'gh pr create' or 'gh pr edit' with base '$DEPLOY_BRANCH' is blocked: this repo's live theme deploys from that branch (Get-ShopifyLiveDeployBranch), so opening or retargeting a pull request onto it is the first half of a live deploy."
+        } elseif (Test-ApiWritesDeployBranch $tokens) {
+            $route = "a writing 'gh api' call on '$DEPLOY_BRANCH' is blocked: this repo's live theme deploys from that branch (Get-ShopifyLiveDeployBranch), so creating, moving, renaming, protecting or merging into it through the API is a live deploy."
+        } elseif ($segment -match '(?i)\b(commit|merge|cherry-pick|revert|am|rebase|pull)\b' -and (Test-LocalWriteOnDeployBranch $segment $changesDir)) {
+            $route = "a local write (commit, merge, cherry-pick, revert, am, rebase or pull) is blocked while '$DEPLOY_BRANCH' is checked out, or while that cannot be told (git -C, --git-dir, a directory change, an unreadable HEAD): this repo's live theme deploys from that branch (Get-ShopifyLiveDeployBranch), so a commit made on it is a live deploy once pushed."
+        }
+        if (-not $route) { continue }
+        if ($authorised) {
+            [Console]::Error.WriteLine("guard-live-theme: route onto the deploy branch '$DEPLOY_BRANCH' allowed (authorisation marker present).")
+            continue
+        }
+        Deny "$route Promotion is a live deploy, whichever route it takes. If this IS the deliberate promotion this repo's own rules describe, add the marker '# $MARKER' to this exact command."
     }
 }
 
