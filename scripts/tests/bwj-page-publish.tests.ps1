@@ -187,12 +187,22 @@ Assert-Equal 0 @(Find-BwjDeadPageLinks -Html '<a href="#top">t</a><a href="v1.ht
 Assert-Equal "https://p.workers.dev/notes/$HexA" (Get-BwjPageUrl -BaseUrl 'https://p.workers.dev' -Kind 'notes' -Token $HexA) 'the URL is the origin plus the route'
 Assert-Equal "https://p.workers.dev/notes/$HexA" (Get-BwjPageUrl -BaseUrl 'https://p.workers.dev/' -Kind 'notes' -Token $HexA) '...and a trailing slash on the origin costs nothing'
 
+# THE SERVED-BYTES CHECK'S ADDRESS (#4323): the public URL plus a cache-buster the worker ignores.
+Assert-Equal "https://p.workers.dev/notes/${HexA}?v=abc123" (Get-BwjServedCheckUrl -Url "https://p.workers.dev/notes/$HexA" -Buster 'abc123') 'the served check appends ?v=<buster> to a bare URL'
+Assert-Equal "https://p.workers.dev/notes/${HexA}?a=1&v=abc123" (Get-BwjServedCheckUrl -Url "https://p.workers.dev/notes/${HexA}?a=1" -Buster 'abc123') '...and &v=<buster> where the URL already has a query'
+Assert-Equal "https://p.workers.dev/notes/$HexA/v1.0.0?v=x" (Get-BwjServedCheckUrl -Url "https://p.workers.dev/notes/$HexA/v1.0.0" -Buster 'x') '...for a release page as well'
+Assert-True ($route.IsMatch((([uri](Get-BwjServedCheckUrl -Url "https://p.workers.dev/notes/$HexA/v1.0.0" -Buster 'x')).AbsolutePath))) '...and the worker routes on the pathname alone, so the buster does not change what is served'
+
 # THE CUT'S CLOSE-OUT CARRIES THE NOTES LINK (#2913), printed on both verified exit paths, never on -DryRun.
 $coUrl = "https://p.workers.dev/notes/$HexA"
 Assert-True ((Format-BwjPageCloseOut -Kind 'notes' -Url $coUrl) -like "Close-out:*$coUrl") 'a verified notes publish prints the close-out line ending in the URL'
 Assert-Equal '' (Format-BwjPageCloseOut -Kind 'backlog' -Url $coUrl) 'the backlog page is no cut''s receipt, so it prints none'
 $ppSrc = Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\scripts\task\publish-page.ps1') -Raw
 Assert-Equal 1 ([regex]::Matches($ppSrc, 'Format-BwjPageCloseOut -Kind \$Kind -Url \$url')).Count 'one verified exit path, shared by wrangler and the KV API, prints it'
+Assert-True ($ppSrc -match '\[switch\]\$NoVerifyServed') '-NoVerifyServed is a parameter of publish-page (#4323)'
+Assert-True ($ppSrc -match 'Get-BwjServedCheckUrl' -and $ppSrc -match 'if \(\$NoVerifyServed\)') 'the served-bytes check exists in publish-page and the switch gates it, so it is on by default'
+Assert-True ($ppSrc -notmatch 'Authorization[^
+]*\$servedPath' -and $ppSrc -match '-OutFile \$servedPath') 'the served fetch is a plain request to the public URL, carrying no auth header'
 
 $apiUrl = Get-BwjPageKvApiUrl -AccountId $HexA -NamespaceId $HexB -Key "notes:$HexA"
 Assert-True ($apiUrl -like "https://api.cloudflare.com/client/v4/accounts/$HexA/storage/kv/namespaces/$HexB/values/*") 'the API URL addresses the account and the namespace by id'
@@ -382,6 +392,9 @@ function Invoke-WranglerRoute {
         $a = @('-Kind', 'notes')
         if ($HtmlPath) { $a += @('-Html', $HtmlPath) }
         if ($ScriptArgs.Count) { $a = $ScriptArgs }
+        # The fixture's origin is not a live worker, so the served-bytes check (#4323) is switched off here; it
+        # is ignored by the runs that never reach it (-RetireToken and the like).
+        $a += '-NoVerifyServed'
         return (Invoke-PublishPage -ScriptArgs $a -RecordDir $RecordDir)
     } finally {
         foreach ($n in $saved.Keys) { [Environment]::SetEnvironmentVariable($n, $saved[$n], 'Process') }

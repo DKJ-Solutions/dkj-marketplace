@@ -281,6 +281,24 @@ function Get-BwjPageUrl {
     return ($BaseUrl.TrimEnd('/') + "/$Kind/$Token")
 }
 
+function Get-BwjServedCheckUrl {
+    <#
+        Pure: the address the served-bytes check fetches (inbound #4323) -- the page's own public URL with a
+        cache-buster query, so a fetch cannot be answered from a cache that already holds the previous page.
+        '?v=<buster>', or '&v=<buster>' where the URL already carries a query.
+
+        THE WORKER IGNORES THE QUERY. worker/bwj-pages-worker.js routes on the pathname only
+        (ROUTE.exec(new URL(request.url).pathname)), so '?v=...' reaches the same KV key as the bare URL and
+        the check proves what the link a person receives serves.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Url,
+        [Parameter(Mandatory)][string]$Buster
+    )
+    $sep = if ($Url.Contains('?')) { '&' } else { '?' }
+    return ($Url + $sep + 'v=' + [uri]::EscapeDataString($Buster))
+}
+
 function Format-BwjPageCloseOut {
     <#
         The close-out line a verified publish prints, so the cut's receipt carries the link without

@@ -44,10 +44,12 @@
 
     IT VERIFIES BY READING THE VALUE BACK, not by believing the upload's own response. That is the
     same lesson dkj-repo-workflow's page carries one layer up -- "verify the bytes the URL serves, never
-    the deploy command's output" -- applied where it can actually be automated. Two honest limits:
-    the read-back proves the write reached KV, and KV is eventually consistent, so an edge that
-    already held the old value may keep serving it for up to a minute; and a reader who wants to
-    know what the URL serves still has to fetch the URL.
+    the deploy command's output" -- applied where it can actually be automated. The read-back proves the
+    write reached KV, and KV is eventually consistent, so an edge that already held the old value may
+    keep serving it for up to a minute. THAT HALF IS CHECKED TOO (#4323): unless -NoVerifyServed, the
+    run then fetches every page's public URL (cache-buster, no auth header), compares the bytes with
+    the ones uploaded, and retries every 10 s for up to a minute. It exits 0 only when the URL serves
+    exactly the published page, so a green run means the link can be sent.
 
     THE NOTES ARE A SET OF PAGES, NOT ONE (#3500). The builder writes an index of cards and, in a
     folder named after it, one page per release, and every card links to its release's own page. So
@@ -105,6 +107,13 @@
     page whose bytes this machine already verified under the same key is skipped (#4160); -All is for
     a key that was changed or deleted in KV from somewhere else.
 
+.PARAMETER NoVerifyServed
+    Skip the served-bytes check (#4323). By default, after the upload and its KV read-back, every page of
+    the set -- the skipped ones too -- is fetched from its PUBLIC url with a cache-buster and compared
+    byte for byte with what was uploaded, every 10 s for up to a minute, and the run fails unless the url
+    serves exactly the published page. Meaningless with -DryRun, -ShowUrl, -CheckAuth, -InitToken,
+    -RetireToken and -EmitWorker, which never reach it, and ignored there.
+
 .PARAMETER RootOverride
     The repo root, when this is not run from inside the checkout.
 
@@ -129,6 +138,7 @@ param(
     [switch]$CheckAuth,
     [switch]$DryRun,
     [switch]$All,
+    [switch]$NoVerifyServed,
     [string]$RootOverride
 )
 
@@ -546,12 +556,19 @@ if (Test-BwjPageKindPaged -Kind $Kind) {
                    "address the build links to with -LinkBase (the builder's own -LinkBase).")
         }
         $pageKey = if ($isIndex) { $key } else { Get-BwjPageKvKey -Kind $Kind -Token $token -Release $f.BaseName }
-        $uploads.Add([pscustomobject]@{ Key = $pageKey; From = $f.FullName; Text = $text; Path = $null })
+        # Url: the public address the served-bytes check fetches -- '<route>' for the index, '<route>/v<x.y.z>'
+        # for a release page, the shape the worker's ROUTE takes. ContentHash is filled in the upload loop.
+        $pageUrl = if ($isIndex) { $url } else { $url + '/' + $f.BaseName }
+        $uploads.Add([pscustomobject]@{ Key = $pageKey; From = $f.FullName; Text = $text; Path = $null; Url = $pageUrl; ContentHash = $null })
     }
 } else {
     if ($LinkBase) { throw "-LinkBase applies to a set of pages, and '$Kind' is one page: there are no links to map." }
-    $uploads.Add([pscustomobject]@{ Key = $key; From = $Html; Text = $null; Path = $Html })
+    $uploads.Add([pscustomobject]@{ Key = $key; From = $Html; Text = $null; Path = $Html; Url = $url; ContentHash = $null })
 }
+
+# The served-bytes check's pace (#4323): script-level so a change is one line, not a parameter nobody sets.
+$servedIntervalSeconds = 10
+$servedDeadlineSeconds = 60
 
 $totalBytes = 0
 foreach ($u in $uploads) {
@@ -683,6 +700,9 @@ try {
             [System.IO.File]::WriteAllText($u.Path, $u.Text, $Utf8NoBom)
         }
         $contentHash = (Get-FileHash -LiteralPath $u.Path -Algorithm SHA256).Hash
+        # Kept on the upload, set for a skipped page too: the stage folder is gone after this loop and the
+        # served-bytes check (#4323) still compares what each URL serves with these bytes.
+        $u.ContentHash = $contentHash
         if (Test-BwjPageUnchanged -Record $record -Key $u.Key -ContentHash $contentHash) { $skipped++; continue }
         # A line per page: through a wrangler login each one is two npx calls, so a long history runs for
         # minutes, and a failure names its key while this line shows which ones already landed.
@@ -705,11 +725,72 @@ if ($skipped -gt 0) {
     Write-Host "  skipped  : $skipped page(s) this machine already verified with these exact bytes (-All uploads them anyway)" -ForegroundColor DarkGray
 }
 
+# --- What the public URL serves (#4323) ---------------------------------------------------------------
+# THE READ-BACK ABOVE PROVES KV, NOT THE URL. An edge that still holds the previous page, a worker bound
+# to another namespace, or a route that 404s all pass the read-back, and a store consumer wrapped this
+# fetch around the publish locally because nothing shared did it (#4323). So every
+# page in the set -- the skipped ones too, because the URL must serve them whatever this machine's record
+# says -- is fetched from its public address with a cache-buster and compared byte for byte with what was
+# uploaded (the link-rewritten, BOM-less bytes, never the raw build). A page that differs, answers an
+# error or 404s is fetched again every $servedIntervalSeconds until $servedDeadlineSeconds are up.
+if ($NoVerifyServed) {
+    Write-Host "  served   : not checked (-NoVerifyServed) -- fetch the URL before sending the link" -ForegroundColor Yellow
+} else {
+    $servedPath = Join-Path ([System.IO.Path]::GetTempPath()) ("bwj-page-served-" + [guid]::NewGuid().ToString('N') + '.tmp')
+    try {
+        $pending = New-Object System.Collections.Generic.List[object]
+        foreach ($u in $uploads) { $pending.Add($u) }
+        $lastState = @{}
+        $deadline = (Get-Date).AddSeconds($servedDeadlineSeconds)
+        while ($true) {
+            $stillWrong = New-Object System.Collections.Generic.List[object]
+            foreach ($u in $pending) {
+                $state = $null
+                Remove-Item -LiteralPath $servedPath -Force -ErrorAction SilentlyContinue
+                try {
+                    # No Authorization header: this is the public URL, as a reader reaches it. -UseBasicParsing
+                    # for the same reason the read-back above gives -- the body is a whole HTML page.
+                    Invoke-WebRequest -Method Get -Uri (Get-BwjServedCheckUrl -Url $u.Url -Buster ([guid]::NewGuid().ToString('N'))) `
+                                      -OutFile $servedPath -UseBasicParsing -TimeoutSec 60 | Out-Null
+                    $served = (Get-FileHash -LiteralPath $servedPath -Algorithm SHA256).Hash
+                    if ($served -ne $u.ContentHash) {
+                        $state = "different bytes (SHA-256 $served against $($u.ContentHash))"
+                    }
+                } catch {
+                    # Read defensively under StrictMode: only a web exception carries a Response.
+                    $status = $null
+                    $resp = $_.Exception.PSObject.Properties['Response']
+                    if ($null -ne $resp -and $null -ne $resp.Value) { try { $status = [int]$resp.Value.StatusCode } catch { } }
+                    $state = if ($status) { "HTTP $status" } else { "no answer ($($_.Exception.Message))" }
+                }
+                if ($state) { $lastState[$u.Url] = $state; $stillWrong.Add($u) }
+            }
+            $pending = $stillWrong
+            if ($pending.Count -eq 0) { break }
+            if ((Get-Date).AddSeconds($servedIntervalSeconds) -gt $deadline) {
+                $lines = ($pending | ForEach-Object { "  - $($_.Url): $($lastState[$_.Url])" }) -join "`n"
+                throw ("$($pending.Count) page(s) still differ from what was published after $servedDeadlineSeconds s:`n$lines`n" +
+                       "KV already holds the right bytes (the read-back above proved it), so this is edge propagation or a " +
+                       "worker or route problem, not a failed upload. Do NOT send the link yet. Run the publish again " +
+                       "(pages this machine already verified are skipped, so it only repeats the check) " +
+                       "once the cause is cleared; -NoVerifyServed skips this check.")
+            }
+            Write-Host "  waiting  : $($pending.Count) page(s) not served yet, fetching again in $servedIntervalSeconds s" -ForegroundColor DarkGray
+            Start-Sleep -Seconds $servedIntervalSeconds
+        }
+    } finally {
+        # Reported rather than swallowed, for the same reason as the read-back's copy: the page is private.
+        Remove-Item -LiteralPath $servedPath -Force -ErrorAction SilentlyContinue
+        if (Test-Path -LiteralPath $servedPath) {
+            Write-Warning ("A copy of the served page could not be removed and is still at " +
+                           "$servedPath. Delete it: this page is not public, and that directory is.")
+        }
+    }
+    Write-Host "  served   : the URL serves the same bytes, $($uploads.Count) page(s) (SHA-256 matches)" -ForegroundColor Green
+}
+
 Write-Host ""
 Write-Host "  $url" -ForegroundColor Cyan
-Write-Host "  KV is eventually consistent: an edge that already held the previous page can keep serving" -ForegroundColor DarkGray
-Write-Host "  it for up to a minute. A stale first read is not a failed publish -- the read-back above" -ForegroundColor DarkGray
-Write-Host "  already settled that -- so fetch again before concluding anything from one request." -ForegroundColor DarkGray
 Write-Host "  The path is the ONLY lock on this page: no login, anyone with the link can read." -ForegroundColor DarkGray
 $closeOut = Format-BwjPageCloseOut -Kind $Kind -Url $url
 if ($closeOut) { Write-Host ""; Write-Host $closeOut -ForegroundColor Cyan }

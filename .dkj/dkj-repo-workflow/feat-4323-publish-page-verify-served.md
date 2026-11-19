@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Inbound #4323: `publish-page.ps1` proved what KV holds but left the fetch of the public URL to the
+caller, so a store consumer wrapped build-publish-verify locally. Of the issue's two directions, the
+served check goes into `publish-page.ps1` itself, on by default: every caller gets it, and no second
+step has to know about the page set.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-BwjServedCheckUrl` in `page-publish-rules.ps1`: the public URL plus a cache-buster query (the worker routes on pathname only).
+- [x] `publish-page.ps1`: after the KV read-back, fetch every page of the set (skipped ones too) from its public URL, compare SHA-256 with the uploaded bytes, retry every 10 s for up to 60 s, throw naming each page still wrong; `-NoVerifyServed` opts out.
+- [x] The `publish-page` skill page and the extension README describe the served check instead of the KV-only limit.
 
 ### TEST
 
+- [x] `scripts/tests/bwj-page-publish.tests.ps1`: asserts for the helper (bare URL, URL with a query, release URL, the worker's ROUTE still matching a buster URL) and structural asserts for the switch and the unauthenticated fetch; 221 pass, 0 fail. The end-to-end wrangler fixtures pass `-NoVerifyServed`, since their origin is fake.
+- [x] `check-plugin-integrity.ps1`: 0 errors.
+- [~] The fetch-and-retry loop itself has not run against a real or fake HTTPS origin; the first real run is the next store publish. Dropped as a gate step: no local HTTPS origin exists in the suites.
+
 ### DEPLOY: feat/4323-publish-page-verify-served
 
-**Score:**
+A BWJ store's `publish-page.ps1` now fetches the public URL of every page it published, with a
+cache-buster, and exits 0 only when the URL serves exactly the uploaded bytes, retrying every 10 s for
+up to a minute. Before, it proved only what KV held and told the caller to fetch the link by hand, so a
+store wrapped that fetch in a script of its own; that wrapper can now go. `-NoVerifyServed` skips the
+check. Closes #4323.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A green publish now means the release-notes link can be sent; a stale edge or a misbound worker fails
+the run instead of reaching management.
+
+**Score:** 3
 
 #### Pull Request
 
