@@ -39,19 +39,38 @@
 
 ### PLAN
 
+Inbound #4326 asked for two things. The first, the forwarder's behavioural test in the source, already
+stands: `scripts/tests/plugin-payload-lib.tests.ps1` cases F1-F10 (#4259) cover the install record, the
+cache fallback, the clone, the English no-plugin error and the repo-root default. The second is still
+missing: nothing reports a consumer's `scripts/lib/plugin-scripts.ps1` that has drifted from the
+template, so each store keeps an equality assert of its own. That is this branch.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `hooks/forwarder-drift-sessioncheck.ps1`: picked up by the session-check dispatcher by name; compares the repo's `scripts/lib/plugin-scripts.ps1` with the plugin's `templates/plugin-scripts-forwarder.ps1` (BOM and CRLF/LF ignored), prints `[WARN]` with the copy-over fix when they differ, one quiet line otherwise. Read-only, always exit 0.
+- [x] `scripts/tests/suite-groups.json`: the new suite in the `hooks` group.
 
 ### TEST
 
+- [x] `scripts/tests/forwarder-drift-sessioncheck.tests.ps1`: 8 pass -- no forwarder, identical, CRLF copy, BOM copy, differing copy, missing template, nonexistent root, the shipped template path.
+- [x] `sessioncheck-dispatch` 59/0, `hook-stdin-guard` 65/0, `hook-fail-closed` 51/0, `dev-pages` 829/0; `check-plugin-integrity.ps1` 0 errors.
+
 ### DEPLOY: feat/4326-forwarder-drift-sessioncheck
 
-**Score:**
+A new session check reports, at every session start, when a repo's `scripts/lib/plugin-scripts.ps1`
+differs from the forwarder template the installed `dkj-repo-workflow` ships, and names the one-line fix.
+Line endings and a BOM do not count as a difference. A consumer that kept its own test asserting the
+copy equals the template can drop it; the forwarder's behaviour was already tested in the source
+(#4259). Closes #4326.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Prevents a store's forwarder silently drifting from the template once its local equality test is gone --
+a failure that has not happened, but whose only guard so far lived in each store separately.
+
+**Score:** 1
 
 #### Pull Request
 
