@@ -49,6 +49,18 @@ The gate itself, its allowlist and the CI caller are on the
 [`dkj-brandbook` skill page](skills/dkj-brandbook/SKILL.md#the-gate-check-house-style)
 ([#3035](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3035)).
 
+## The git-content session check
+
+[`hooks/git-content-sessioncheck.ps1`](hooks/git-content-sessioncheck.ps1) makes the "what belongs in
+git" chapter of this plugin's `CLAUDE.md` visible at session start. It names every tracked folder that
+holds only content files (`.md`, `.json`, `.ndjson`, `.csv`, `.txt`, `.yaml`) and was touched by 10 or
+more commits in the last 90 days, which is data paying the branch + PR toll. Tooling folders and test
+material are never named. A folder a repo keeps in git on purpose, such as content a deployed build reads
+in CI, goes in `Get-GitContentAllowlist` in its `scripts/repo-config.ps1`, each entry `@{ Path; Reason }`
+with `Path` a `-like` glob. It is read-only and never fails the session. The rules and the measurement
+behind the thresholds are in
+[`scripts/lib/git-content-rules.ps1`](scripts/lib/git-content-rules.ps1).
+
 ## Admin and the retired Brandbook
 
 **The dev-preview hook, Admin and the general pages server are `dkj-repo-workflow`'s**, since

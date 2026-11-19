@@ -9,6 +9,12 @@
             "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/hooks/house-style-sessioncheck.ps1\"",
             "timeout": 120,
             "statusMessage": "dkj-repo-workflow-dkj: checking the brand book..."
+          },
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/hooks/git-content-sessioncheck.ps1\"",
+            "timeout": 60,
+            "statusMessage": "dkj-repo-workflow-dkj: checking what is in git..."
           }
         ]
       }

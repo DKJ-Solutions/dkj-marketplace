@@ -1539,3 +1539,16 @@ function Get-HouseStyleAllowlist {
         @{ Path = 'scripts/tests/dev-pages.tests.ps1'; Name = '.site-header__action'; Reason = 'the same #4128 pattern' }
     )
 }
+
+function Get-GitContentAllowlist {
+    <# What git-content-sessioncheck may leave alone here, each with its reason. In this repo the Markdown
+       and JSON ARE the product: the plugins ship as their manuals, personas, skills and manifests, so a
+       content-only folder under them is code by the rule's own test -- changing it changes what the
+       plugins do. #>
+    @(
+        @{ Path = 'plugins';                      Reason = 'the plugins this marketplace ships: their manuals, personas, skills and manifests are the product' }
+        @{ Path = 'plugins/*';                    Reason = 'the same, every folder under it' }
+        @{ Path = '.claude-plugin';               Reason = 'the marketplace manifest, read by every install' }
+        @{ Path = 'scripts/maintenance/baselines'; Reason = 'measurement baselines the maintenance scripts compare against' }
+    )
+}
