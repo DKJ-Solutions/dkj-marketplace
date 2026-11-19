@@ -179,6 +179,7 @@
                                       "release-freshness-sessioncheck.tests.ps1",
                                       "sessioncheck-dispatch.tests.ps1",
                                       "session-cache-lib.tests.ps1",
+                                      "trunk-notice-hook.tests.ps1",
                                       "trunk-sync.tests.ps1",
                                       "working-copy-guard-lib.tests.ps1"
                                   ],

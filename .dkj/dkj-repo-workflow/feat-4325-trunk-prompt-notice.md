@@ -39,19 +39,38 @@
 
 ### PLAN
 
+Inbound #4325: a store consumer carries a local `UserPromptSubmit` hook (rule 3 of a 955-line guard)
+that prints, on every prompt made on the trunk, that HEAD is there and names the branch-start skill. No
+plugin shipped it (the 7.1.0 prompt hooks are the Stopwatch and Logbook recorders only). Ship it in
+`dkj-repo-workflow`, trunk from `Get-TrunkBranchName`, skill chosen by whether the BWJ extension is
+enabled.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `hooks/trunk-notice-hook.ps1`: reads the trunk from the repo-config seam (default `main`), asks git for the branch, and on the trunk prints one line naming `dkj-repo-workflow:new-branch`, or `dkj-repo-workflow-bwj:start-task` where `.claude/settings.json` / `settings.local.json` enable the BWJ extension. Always exits 0, prints nothing off the trunk, on a detached HEAD or outside a repo.
+- [x] `hooks/hooks.json`: wired as the third `UserPromptSubmit` command.
+- [x] `scripts/tests/suite-groups.json`: the new suite in the `hooks` group.
 
 ### TEST
 
+- [x] `scripts/tests/trunk-notice-hook.tests.ps1`: 20 pass, 0 fail -- on/off trunk, a `develop` seam, BWJ enabled / disabled / overridden locally / malformed settings, empty and unparseable stdin, non-git directory, prompt never echoed, hooks.json wiring.
+- [x] `hook-fail-closed` 51/0, `hook-stdin-guard` 65/0, `sessioncheck-dispatch` 58/0, `dev-pages` 829/0; `check-plugin-integrity.ps1` 0 errors.
+
 ### DEPLOY: feat/4325-trunk-prompt-notice
 
-**Score:**
+Every repo running `dkj-repo-workflow` now gets a one-line notice in the session on each prompt made
+while HEAD is on the trunk, naming the skill that opens a branch (`new-branch`, or `start-task` where
+the BWJ extension is enabled). The session starts on the trunk after every finished assignment, and
+until now only prose reminded it to branch first. A consumer that wired this notice itself can drop its
+local hook. Closes #4325.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+The reminder arrives before the first edit instead of the trunk-commit guard catching it afterwards.
+
+**Score:** 2
 
 #### Pull Request
 
