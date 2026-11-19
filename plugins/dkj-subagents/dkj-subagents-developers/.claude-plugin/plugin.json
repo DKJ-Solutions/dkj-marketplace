@@ -12,7 +12,7 @@
     "./subagents/specialist-06-24-subagent.md",
     "./subagents/specialist-06-25-subagent.md"
   ],
-  "version": "7.1.0",
+  "version": "7.2.0",
   "author": { "name": "DaveKJohn" },
   "keywords": ["specialists", "team", "developers", "claude-code"]
 }
