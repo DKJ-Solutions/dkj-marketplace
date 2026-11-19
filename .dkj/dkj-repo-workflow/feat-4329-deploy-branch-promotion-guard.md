@@ -39,19 +39,40 @@
 
 ### PLAN
 
+Carry out the owner's decision on #4329 (November 19, 2026), which reverses the #3014 ruling: rule 5 of
+`guard-live-theme.ps1` gates every route onto a Git-connected deploy branch with the one live-push
+marker, so smartwatchbanden can delete its 720-line local hook.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Sylvester: rule 5 widened in `guard-live-theme.ps1` -- `gh pr create/edit --base <deploy>`, writing `gh api` calls on the branch, and local commit/merge/cherry-pick/revert/am/rebase/pull while HEAD is on it; degraded-path refusals for the two gh routes; header, seam and rule-block comments rewritten; README row and live-preflight SKILL row updated
+- [x] Review (main loop): one plain `git -C <dir>` is now read in `<dir>` instead of refused outright, matching the consumer hook, since sessions use `-C` routinely
 
 ### TEST
 
+- [x] `guard-live-theme.tests.ps1`: 411 passed, 0 failed (new section for #4329, plus four `-C` asserts)
+- [x] `check-plugin-integrity.ps1`: 0 errors (run by the subagent before the `-C` edit; ship-pr reruns the full gate)
+
 ### DEPLOY: feat/4329-deploy-branch-promotion-guard
 
-**Score:**
+`guard-live-theme` rule 5 now gates every route onto the branch a Git-connected live theme deploys from
+(`Get-ShopifyLiveDeployBranch`), not only a `git push`: a `gh pr create` or `gh pr edit` with that branch
+as base, a writing `gh api` call on it (ref create, move, rename, protection, merges), and a local commit,
+merge, cherry-pick, revert, am, rebase or pull while it is checked out. Each needs the existing live-push
+marker (`Get-ShopifyLivePushMarker`); no new seam. `gh pr merge` stays ungated, because the PR's base was
+gated when it was opened. This reverses the #3014 ruling that left the promotion PR ungated. Where HEAD
+cannot be told (`cd` earlier in the command, `--git-dir`, two `-C`), a local write is refused rather than
+guessed.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify repo whose live theme deploys from a Git branch now has every route onto that branch guarded by
+the plugin, with one marker. Opening the promotion PR from a session needs the marker, and smartwatchbanden
+can delete its own local hook and suite once it takes this version.
+
+**Score:** 3
 
 #### Pull Request
 

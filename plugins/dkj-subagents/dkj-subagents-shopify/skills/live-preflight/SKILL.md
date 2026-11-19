@@ -189,7 +189,7 @@ afterwards, on a schedule.)
 |---|---|---|
 | 3 | **push list** | still derived from the range, because the record says which of its files went live. No path is printed in a command, so the paste-safety refusal does not apply, and a range with no theme file is a note: step 6 decides whether there is anything to promote. |
 | 6 | **promotion** and **write-back**, instead of drift | the promotion refuses while the deploy branch holds live edits the trunk lacks (`git diff trunk...deploy`, three dots), because the cut would then describe a theme that is not the live one, so land the back-flow PR first. It also refuses when the two trees are the same, since there is nothing to promote. The write-back reads GitHub's rule-suite log for the deploy branch and refuses on a rejected push. |
-| 8 | **the promotion PR** | the `gh pr create --base <deploy> --head <trunk>` that opens it, never run from here. **Merging it is what goes live**, and that stays a person's act. |
+| 8 | **the promotion PR** | the `gh pr create --base <deploy> --head <trunk>` that opens it, never run from here. **Merging it is what goes live**, and that stays a person's act. A session that does run it needs the live-push marker on that command, because the guard gates every route onto the deploy branch, the PR included (#4329). |
 
 **Why the rule-suite log.** When the deploy branch's ruleset rejects the Shopify bot's write-back, the
 edit stays on the live theme and never reaches the branch, and nothing on the Shopify side says so

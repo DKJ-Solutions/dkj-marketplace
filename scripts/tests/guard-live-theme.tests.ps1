@@ -752,6 +752,151 @@ function Get-ShopifyLiveDeployBranch { return 'live' }
     Assert-Equal 0 (Invoke-DegradedGuard -Command 'git push origin main:live # LIVE-PUSH-AUTHORIZED' -Root $conn).Code 'no lib: and the marker still authorises it'
     Assert-Equal 0 (Invoke-DegradedGuard -Command 'git push origin main' -Root $configured).Code 'no lib, seam unanswered: a git push is untouched'
 
+    # --- rule 5, the other routes onto the deploy branch (#4329) --------------------------------------
+    # The owner reversed #3014's "the promotion PR is deliberately ungated": a PR based on the deploy
+    # branch, a writing gh api call on it and a local write while it is checked out each need the marker.
+    Write-Host "rule 5 -- the promotion PR, gh api and local writes onto the deploy branch (#4329)" -ForegroundColor Cyan
+    $c2 = New-FixtureRepo -Label 'conn-routes' -ConfigBody $deployCfg
+    Invoke-FixtureGitIn $c2 init -q
+    Invoke-FixtureGitIn $c2 symbolic-ref HEAD refs/heads/main
+    $mk5 = '# LIVE-PUSH-AUTHORIZED'
+
+    $routeBlocked = @(
+        @{ n = 'pr create --base live';               c = 'gh pr create --base live --head main --title x' },
+        @{ n = 'pr create --base=live';               c = 'gh pr create --base=live --title x' },
+        @{ n = 'pr create -B live';                   c = 'gh pr create -B live --title x' },
+        @{ n = 'pr create -Blive';                    c = 'gh pr create -Blive --title x' },
+        @{ n = 'pr create -B=live';                   c = 'gh pr create -B=live' },
+        @{ n = 'pr create quoted value';              c = 'gh pr create --base "live" --title x' },
+        @{ n = 'pr create single-quoted =value';      c = "gh pr create --base='live'" },
+        @{ n = 'pr create refs/heads/live';           c = 'gh pr create --base refs/heads/live' },
+        @{ n = 'pr create different case';            c = 'gh pr create --base LIVE' },
+        @{ n = 'pr edit --base live';                 c = 'gh pr edit 12 --base live' },
+        @{ n = 'pr create base from a variable';      c = 'gh pr create --base $B' },
+        @{ n = 'pr create base from a substitution';  c = 'gh pr create --base $(echo live)' },
+        @{ n = 'pr create base in backticks';         c = 'gh pr create --base `echo live`' },
+        @{ n = 'pr create after another command';     c = 'git status && gh pr create --base live' },
+        @{ n = 'pr create wrapped in bash -c';        c = 'bash -c "gh pr create --base live"' },
+        @{ n = 'api POST git/refs/heads/live';        c = 'gh api -X POST repos/o/r/git/refs/heads/live' },
+        @{ n = 'api PATCH git/refs/heads/live';       c = 'gh api --method PATCH repos/o/r/git/refs/heads/live -f sha=abc' },
+        @{ n = 'api -XDELETE';                        c = 'gh api -XDELETE repos/o/r/git/refs/heads/live' },
+        @{ n = 'api --method=put, lowercase';         c = 'gh api --method=put repos/o/r/git/refs/heads/live' },
+        @{ n = 'api git/refs with ref= field';        c = 'gh api repos/o/r/git/refs -f ref=refs/heads/live -f sha=abc' },
+        @{ n = 'api git/refs with bare-name ref';     c = 'gh api repos/o/r/git/refs --raw-field ref=live -f sha=abc' },
+        @{ n = 'api branches/live/rename';            c = 'gh api -X POST repos/o/r/branches/live/rename -f new_name=old' },
+        @{ n = 'api branches/live/protection PUT';    c = 'gh api -X PUT repos/o/r/branches/live/protection --input p.json' },
+        @{ n = 'api rename onto the deploy name';     c = 'gh api repos/o/r/branches/main/rename -f new_name=live' },
+        @{ n = 'api merges with base=live';           c = 'gh api repos/o/r/merges -f base=live -f head=main' },
+        @{ n = 'api implicit POST, branch= field';    c = 'gh api repos/o/r/anything --field branch=live' },
+        @{ n = 'api pulls PATCH base=live';           c = 'gh api -X PATCH repos/o/r/pulls/3 -f base=live' },
+        @{ n = 'api --input on git/refs';             c = 'gh api repos/o/r/git/refs --input body.json' },
+        @{ n = 'api field value from a variable';     c = 'gh api repos/o/r/git/refs -f ref=$R' },
+        @{ n = 'api path with a leading slash';       c = 'gh api -X DELETE /repos/o/r/git/refs/heads/Live' }
+    )
+    foreach ($case in $routeBlocked) {
+        Assert-Equal 2 (Invoke-Guard -Command $case.c -Root $c2) "deploy route blocked: $($case.n)"
+        Assert-Equal 0 (Invoke-Guard -Command "$($case.c) $mk5" -Root $c2) "deploy route authorised by the marker: $($case.n)"
+    }
+
+    $routeAllowed = @(
+        @{ n = 'pr create --base main';               c = 'gh pr create --base main --title x' },
+        @{ n = 'pr create with no base';              c = 'gh pr create --title "go live" --body "live"' },
+        @{ n = 'pr create base that only contains it'; c = 'gh pr create --base feat/live-preview' },
+        @{ n = 'pr edit title only';                  c = 'gh pr edit 12 --title "promote to live"' },
+        @{ n = 'pr merge stays ungated';              c = 'gh pr merge 12 --merge' },
+        @{ n = 'pr merge --admin on the deploy PR';   c = 'gh pr merge 12 --merge --admin' },
+        @{ n = 'pr view';                             c = 'gh pr view 12 --json baseRefName' },
+        @{ n = 'api GET branches/live';               c = 'gh api repos/o/r/branches/live' },
+        @{ n = 'api explicit GET with a field';       c = 'gh api -X GET repos/o/r/branches/live -f per_page=1' },
+        @{ n = 'api GET git/refs/heads/live';         c = 'gh api repos/o/r/git/refs/heads/live' },
+        @{ n = 'api write on branches/main/...';      c = 'gh api -X POST repos/o/r/branches/main/rename -f new_name=trunk' },
+        @{ n = 'api write on git/refs/heads/main';    c = 'gh api -X PATCH repos/o/r/git/refs/heads/main -f sha=abc' },
+        @{ n = 'api create ref for another branch';   c = 'gh api repos/o/r/git/refs -f ref=refs/heads/feat/x -f sha=abc' },
+        @{ n = 'api branch that only starts with it'; c = 'gh api -X DELETE repos/o/r/git/refs/heads/live2' },
+        @{ n = 'api issue comment mentioning live';   c = 'gh api repos/o/r/issues/1/comments -f body="push to live"' },
+        @{ n = 'a mention in echo';                   c = 'echo "gh pr create --base live"' },
+        @{ n = 'a mention in a heredoc';              c = "cat > notes.md <<'EOF'${LF}gh pr create --base live${LF}gh api -X DELETE repos/o/r/git/refs/heads/live${LF}EOF" },
+        @{ n = 'a mention in a grep';                 c = "grep -n 'gh pr create --base live' docs/*.md" },
+        @{ n = 'a mention after the comment mark';    c = 'gh pr create --base main # --base live' },
+        @{ n = 'gh issue create naming it';           c = 'gh issue create --title "pr create --base live"' }
+    )
+    foreach ($case in $routeAllowed) { Assert-Equal 0 (Invoke-Guard -Command $case.c -Root $c2) "deploy route allowed: $($case.n)" }
+
+    # Local writes while HEAD is the deploy branch. HEAD is main here, so every one passes first.
+    $localWrites = @('git commit -m x', 'git commit --amend --no-edit', 'git merge main', 'git cherry-pick abc', 'git revert abc', 'git am p.patch', 'git rebase main', 'git pull')
+    foreach ($w in $localWrites) { Assert-Equal 0 (Invoke-Guard -Command $w -Root $c2) "local write on HEAD=main passes: $w" }
+    Invoke-FixtureGitIn $c2 symbolic-ref HEAD refs/heads/live
+    foreach ($w in $localWrites) {
+        Assert-Equal 2 (Invoke-Guard -Command $w -Root $c2) "local write on HEAD=live blocked: $w"
+        Assert-Equal 0 (Invoke-Guard -Command "$w $mk5" -Root $c2) "local write on HEAD=live authorised by the marker: $w"
+    }
+    foreach ($r in @('git status', 'git log --oneline', 'git diff', 'git fetch origin', 'git checkout main', 'git branch -a', 'git merge-base main live', 'git stash list', 'git add -A')) {
+        Assert-Equal 0 (Invoke-Guard -Command $r -Root $c2) "read-only or non-writing git on HEAD=live passes: $r"
+    }
+    Assert-Equal 2 (Invoke-Guard -Command 'git status && git commit -m x' -Root $c2) 'local write on HEAD=live: after a harmless command'
+    Assert-Equal 2 (Invoke-Guard -Command 'git -c user.name=x commit -m x' -Root $c2) 'local write on HEAD=live: with -c config in front'
+    Assert-Equal 0 (Invoke-Guard -Command 'echo "git commit -m x"' -Root $c2) 'local write: a mention in echo is not a commit'
+    Assert-Equal 0 (Invoke-Guard -Command 'git grep -n commit' -Root $c2) 'local write: git grep is not a commit'
+    Invoke-FixtureGitIn $c2 symbolic-ref HEAD refs/heads/main
+    # 'Elsewhere' makes HEAD unknowable, so the write subcommands are refused even on a clean trunk.
+    Assert-Equal 2 (Invoke-Guard -Command 'git -C x commit -m y' -Root $c2) 'local write: git -C x commit is refused, HEAD cannot be told'
+    Assert-Equal 2 (Invoke-Guard -Command 'git --git-dir=x/.git merge main' -Root $c2) 'local write: --git-dir merge is refused'
+    Assert-Equal 2 (Invoke-Guard -Command 'cd sub && git commit -m y' -Root $c2) 'local write: after a cd the commit is refused'
+    Assert-Equal 0 (Invoke-Guard -Command 'cd sub && git status' -Root $c2) 'local write: but a read after a cd passes'
+    Assert-Equal 0 (Invoke-Guard -Command 'git -C x commit -m y # LIVE-PUSH-AUTHORIZED' -Root $c2) 'local write: git -C x commit with the marker passes'
+    # No readable HEAD: refused for the write subcommands, passes for a read.
+    $c3 = New-FixtureRepo -Label 'conn-routes-nogit' -ConfigBody $deployCfg
+    Assert-Equal 2 (Invoke-Guard -Command 'git commit -m x' -Root $c3) 'local write: HEAD cannot be read -> refused'
+    Assert-Equal 0 (Invoke-Guard -Command 'git status' -Root $c3) 'local write: HEAD cannot be read, a read still passes'
+
+    # HEAD is read from the payload cwd: a lane on a work branch commits while the project root sits on live.
+    Invoke-FixtureGitIn $c2 symbolic-ref HEAD refs/heads/live
+    Invoke-FixtureGitIn $lane symbolic-ref HEAD refs/heads/feat/y
+    $prevDir = $env:CLAUDE_PROJECT_DIR
+    $env:CLAUDE_PROJECT_DIR = $c2
+    try {
+        (& $cwdPayload 'git commit -m x' $lane) | & powershell -NoProfile -ExecutionPolicy Bypass -File $Guard 2>&1 | Out-Null
+        Assert-Equal 0 $LASTEXITCODE 'local write: a commit from a lane on a work branch passes, though the project root sits on the deploy branch'
+    } finally {
+        if ($null -eq $prevDir) { Remove-Item Env:\CLAUDE_PROJECT_DIR -ErrorAction SilentlyContinue } else { $env:CLAUDE_PROJECT_DIR = $prevDir }
+    }
+
+    # One plain 'git -C <dir>' is read where it lands rather than refused: the root sits on live here.
+    Assert-Equal 0 (Invoke-Guard -Command "git -C `"$lane`" commit -m x" -Root $c2) 'local write: git -C into a checkout on a work branch passes, though the root sits on the deploy branch'
+    Invoke-FixtureGitIn $lane symbolic-ref HEAD refs/heads/live
+    Assert-Equal 2 (Invoke-Guard -Command "git -C `"$lane`" commit -m x" -Root $c2) 'local write: git -C into a checkout ON the deploy branch is blocked'
+    Invoke-FixtureGitIn $lane symbolic-ref HEAD refs/heads/feat/y
+    Assert-Equal 2 (Invoke-Guard -Command "git -C `"$lane`" -C sub commit -m x" -Root $c2) 'local write: two -C cannot be placed and is refused'
+    Assert-Equal 2 (Invoke-Guard -Command 'git -C $D commit -m x' -Root $c2) 'local write: a -C the shell expands is refused'
+
+    # The seam unanswered, a placeholder, or no config: none of this exists.
+    $unans = New-FixtureRepo -Label 'conn-routes-unanswered' -ConfigBody "function Get-ShopifyLiveThemeId { return '$LIVE' }"
+    Invoke-FixtureGitIn $unans init -q
+    Invoke-FixtureGitIn $unans symbolic-ref HEAD refs/heads/live
+    foreach ($c in @('gh pr create --base live', 'gh pr edit 3 --base live', 'gh api -X POST repos/o/r/git/refs/heads/live', 'gh api repos/o/r/git/refs -f ref=refs/heads/live', 'git commit -m x', 'git merge main', 'git -C x commit -m y')) {
+        Assert-Equal 0 (Invoke-Guard -Command $c -Root $unans) "seam unanswered: not gated: $c"
+        Assert-Equal 0 (Invoke-Guard -Command $c -Root $connPlaceholder) "seam placeholder: not gated: $c"
+    }
+
+    # A configured marker narrows these routes exactly as it narrows the push.
+    Assert-Equal 2 (Invoke-Guard -Command 'gh pr create --base live # LIVE-PUSH-AUTHORIZED' -Root $connNarrow) 'deploy route: the default marker no longer authorises where the repo names its own'
+    Assert-Equal 0 (Invoke-Guard -Command 'gh pr create --base live # SWB-LIVE-PUSH-AUTHORIZED' -Root $connNarrow) 'deploy route: the repo marker authorises'
+
+    # The refusal names the branch, says why, and says how to authorise.
+    $refusal = Get-GuardRefusal -Command 'gh pr create --base live' -Root $c2
+    Assert-True ($refusal -match "'live'") 'deploy route: the refusal names the deploy branch'
+    Assert-True ($refusal -match 'live deploy') 'deploy route: and says the promotion is a live deploy'
+    Assert-True ($refusal -match '# LIVE-PUSH-AUTHORIZED') 'deploy route: and tells how to authorise'
+
+    # Degraded (no lib): a PR with a base, or a gh api naming the deploy branch, needs the marker.
+    Assert-Equal 2 (Invoke-DegradedGuard -Command 'gh pr create --base main' -Root $conn).Code 'no lib: gh pr create with a base is blocked -- the base cannot be read'
+    Assert-Equal 2 (Invoke-DegradedGuard -Command 'gh pr edit 3 -B main' -Root $conn).Code 'no lib: gh pr edit -B is blocked too'
+    Assert-Equal 0 (Invoke-DegradedGuard -Command 'gh pr create --base main # LIVE-PUSH-AUTHORIZED' -Root $conn).Code 'no lib: and the marker authorises it'
+    Assert-Equal 0 (Invoke-DegradedGuard -Command 'gh pr create --title x' -Root $conn).Code 'no lib: a PR with no base flag passes'
+    Assert-Equal 2 (Invoke-DegradedGuard -Command 'gh api -X POST repos/o/r/git/refs/heads/live' -Root $conn).Code 'no lib: gh api naming the deploy branch is blocked'
+    Assert-Equal 0 (Invoke-DegradedGuard -Command 'gh api repos/o/r/branches/main' -Root $conn).Code 'no lib: gh api not naming it passes'
+    Assert-Equal 0 (Invoke-DegradedGuard -Command 'gh pr create --base live' -Root $unans).Code 'no lib, seam unanswered: gh is untouched'
+
     # --- group 10: an authorised live push carries only what the trunk holds (#3758) --------------
     # Measured in a consumer: two UNMERGED pull requests went to live with '--only' and the marker, and
     # live then held work the trunk did not. The marker says somebody meant to push to live; this group
