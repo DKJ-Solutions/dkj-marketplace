@@ -338,6 +338,12 @@ Assert-TrunkCommit 'git commit -a'                         'a commit with only f
 Assert-TrunkCommit 'git commit -m'                         'a -m with no value'                 -Refused
 Assert-TrunkCommit 'git commit -- -m "fold: x"'            'after -- nothing is an option'      -Refused
 
+# A separator inside a quoted value must not hide the commit (#4330): the quote-aware reading refuses it.
+Assert-TrunkCommit 'git -c user.name="a;b" commit -m wip'             'a quoted ; in a -c value does not hide the commit'  -Refused
+Assert-TrunkCommit 'git -c "user.name=a&&b" commit -m wip'            'a quoted && in a -c value does not hide the commit' -Refused
+Assert-TrunkCommit "git -c user.name='a;b' commit -m `"fold: x`""     'a quoted ; with a fold: subject still passes'
+Assert-TrunkCommit 'powershell -Command "git commit -m wip; git status"' 'a wrapper body is still judged'                    -Refused
+
 # -F: the file's first line is the subject, read when the file exists.
 $msgDir = Join-Path ([System.IO.Path]::GetTempPath()) "wcg-msg-$PID-$([guid]::NewGuid().ToString('n'))"
 New-Item -ItemType Directory -Force -Path $msgDir | Out-Null

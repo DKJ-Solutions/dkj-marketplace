@@ -67,6 +67,16 @@ function Test-Reaches {
 
 Write-Host "== command-guard-lib ==" -ForegroundColor Cyan
 
+# The quote-aware split (#4330): a separator inside quotes does not cut; the default split is unchanged.
+$qa = @(Split-CommandSegmentsQuoteAware 'a "b;c" d; e')
+Assert-Equal 2 $qa.Count 'quote-aware: a quoted ; keeps one segment, the real ; splits'
+Assert-Equal 'a "b;c" d' $qa[0] 'quote-aware: first segment keeps the quoted span'
+Assert-Equal ' e' $qa[1] 'quote-aware: second segment'
+$plain = @(Get-GuardSegments -Command 'a "b;c" d; e' -TextTools $TextTools)
+Assert-Equal 3 $plain.Count 'Get-GuardSegments without the switch still splits inside quotes'
+$qg = @(Get-GuardSegments -Command 'a "b;c" d; e' -TextTools $TextTools -QuoteAware)
+Assert-Equal 2 $qg.Count 'Get-GuardSegments -QuoteAware uses the quote-aware split'
+
 Write-Host ""
 Write-Host "-- group 1: the payload contract" -ForegroundColor Cyan
 

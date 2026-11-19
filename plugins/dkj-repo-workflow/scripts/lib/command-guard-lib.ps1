@@ -10,7 +10,7 @@
 
     Supplies Get-HookCommandPayload (the stdin contract), Get-GuardSegments (the whole pipeline) and
     the pieces under it -- Remove-HeredocBodies, Remove-HereStringBodies, Test-CommandExecutesText,
-    Get-LeadingCommand, Split-CommandSegments, Get-InterpreterScriptBody.
+    Get-LeadingCommand, Split-CommandSegments, Split-CommandSegmentsQuoteAware (#4330), Get-InterpreterScriptBody.
 
     WHY THIS EXISTS RATHER THAN A SECOND GUARD LEARNING IT AGAIN (issue #1669). This repo already
     ships a PreToolUse command guard -- dkj-subagents-shopify's guard-live-theme.ps1 -- and its header
@@ -239,6 +239,52 @@ function Split-CommandSegments {
     return [regex]::Split($Text, '(?:\|\||&&|[;|\r\n])')
 }
 
+function Split-CommandSegmentsQuoteAware {
+    <# Like Split-CommandSegments, but a separator (||, &&, ;, |, CR, LF) inside a single- or double-quoted
+       span does not split (#4330: `git -c user.name="a;b" commit` is ONE segment). Inside double quotes a
+       backslash escapes the next character, so \" does not close the span. An unclosed quote runs to the
+       end of the text, which keeps the rest together -- the caller judges this reading AND the plain one. #>
+    param([string]$Text)
+
+    if (-not $Text) { return @() }
+    $out = New-Object System.Collections.Generic.List[string]
+    $sb = New-Object System.Text.StringBuilder
+    $quote = [char]0
+    $i = 0
+    $n = $Text.Length
+    while ($i -lt $n) {
+        $c = $Text[$i]
+        if ($quote -ne [char]0) {
+            [void]$sb.Append($c)
+            if ($quote -eq '"' -and $c -eq '\' -and ($i + 1) -lt $n) {
+                $i++
+                [void]$sb.Append($Text[$i])
+            } elseif ($c -eq $quote) {
+                $quote = [char]0
+            }
+            $i++
+            continue
+        }
+        if ($c -eq '"' -or $c -eq "'") {
+            $quote = $c
+            [void]$sb.Append($c)
+            $i++
+            continue
+        }
+        $two = if (($i + 1) -lt $n) { $Text.Substring($i, 2) } else { '' }
+        if ($two -eq '||' -or $two -eq '&&') {
+            $out.Add($sb.ToString()); [void]$sb.Clear(); $i += 2; continue
+        }
+        if ($c -eq ';' -or $c -eq '|' -or $c -eq "`r" -or $c -eq "`n") {
+            $out.Add($sb.ToString()); [void]$sb.Clear(); $i++; continue
+        }
+        [void]$sb.Append($c)
+        $i++
+    }
+    $out.Add($sb.ToString())
+    return $out.ToArray()
+}
+
 function Get-InterpreterScriptBody {
     <#
     .SYNOPSIS
@@ -300,13 +346,18 @@ function Get-GuardSegments {
         -Command ..."') and the bound exists because a crafted string could otherwise nest without
         end; a hook has a timeout and must return.
 
+        -QuoteAware (#4330) splits with Split-CommandSegmentsQuoteAware at every level, so a separator
+        inside a quoted value does not cut the command. Off by default; a caller that must not be
+        evaded by quoting judges both readings.
+
         Returns the segments to match. A caller matches its own patterns against each; everything the
         pipeline has exempted is simply absent.
     #>
     param(
         [string]$Command,
         [Parameter(Mandatory = $true)][string[]]$TextTools,
-        [int]$MaxDepth = 2
+        [int]$MaxDepth = 2,
+        [switch]$QuoteAware
     )
 
     if (-not $Command) { return @() }
@@ -323,7 +374,8 @@ function Get-GuardSegments {
         $current = $pending[0]
         $pending.RemoveAt(0)
 
-        foreach ($segment in (Split-CommandSegments $current.Text)) {
+        $split = if ($QuoteAware) { Split-CommandSegmentsQuoteAware $current.Text } else { Split-CommandSegments $current.Text }
+        foreach ($segment in $split) {
             if (-not $segment.Trim()) { continue }
 
             # A wrapper is expanded BEFORE the exemption is considered, so an interpreter that also
