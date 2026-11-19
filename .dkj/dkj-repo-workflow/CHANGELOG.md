@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**7 / 8 minor entries** <!-- pending-tally -->
+**8 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4326-forwarder-drift-sessioncheck · 20261119-113429Z
+
+A new session check reports, at every session start, when a repo's `scripts/lib/plugin-scripts.ps1`
+differs from the forwarder template the installed `dkj-repo-workflow` ships, and names the one-line fix.
+Line endings and a BOM do not count as a difference. A consumer that kept its own test asserting the
+copy equals the template can drop it; the forwarder's behaviour was already tested in the source
+(#4259). Closes #4326.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Prevents a store's forwarder silently drifting from the template once its local equality test is gone --
+a failure that has not happened, but whose only guard so far lived in each store separately.
+
+**Score:** 1
+
+#### Pull Request
+
+Session check reports a plugin-scripts forwarder that differs from the template
+
+Plugins: dkj-repo-workflow
+
+[PR #4328](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4328)
+
+---
 
 ### DEPLOY: feat/4325-trunk-prompt-notice · 20261119-110908Z
 
