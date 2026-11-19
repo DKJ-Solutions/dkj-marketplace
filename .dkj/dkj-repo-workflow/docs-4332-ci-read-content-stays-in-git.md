@@ -39,19 +39,35 @@
 
 ### PLAN
 
+#4332: the extension's "what belongs in git" doubt test classes `recipes/*.md` in dkj-recipes as data.
+But it is an Astro content collection that `deploy.yml` builds in CI, so moving it to OneDrive would
+deploy a site with no recipes. The rule needs the exception stated once, so each session does not have
+to work it out.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] One added clause in `plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/CLAUDE.md`:
+  content a deployed build reads in CI stays in git, or moves to a store that build can reach. The
+  `move-data-to-onedrive` skill defers to this chapter for *which* data moves, so it needs no edit.
 
 ### TEST
 
+- [x] A docs-only change; `ship-pr`'s gate runs the lint and the always-on budget.
+
 ### DEPLOY: docs/4332-ci-read-content-stays-in-git
 
-**Score:**
+The "what belongs in git" chapter of the `dkj-repo-workflow-dkj` extension now names its one
+exception (#4332). Content a deployed build reads in CI, such as an Astro content collection, stays in
+git or moves to a store the build can reach, because CI has no OneDrive.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A session applying the rule in a repo with a CI-built site no longer moves the content that site
+deploys from out of git, which would have published a site without it.
+
+**Score:** 2
 
 #### Pull Request
 
