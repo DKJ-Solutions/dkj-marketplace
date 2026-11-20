@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Inbound #4339: the BWJ filing side (WORKFLOW-portable ch. 1, `report-issue`) files act-only findings
+that the #3059 close rule then removes. Verified on the tree: ch. 1 listed "a decision that is not yours
+to make" as a filed finding, and `research` covered "decision" tickets. Bring filing in line with one
+test used at both ends: will a file in this repo change?
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `WORKFLOW-portable.md` ch. 1: the filing test (yes now / yes after an outside act, filed already parked / no, no issue), with Maikel's November 4 statement and the measurement; `research` narrowed to research a session carries out
+- [x] `report-issue/SKILL.md`: description and step 1 carry the filing test; the create takes the `awaiting-*` label where it waits from the start
+- [x] `guard-kind-label.ps1`: the refusal's `research` line matches, and names the filing test
 
 ### TEST
 
+- [x] Gates run by `ship-pr` (docs and one console string; no behaviour change)
+
 ### DEPLOY: fix/4339-bwj-file-only-repo-changing-work
 
-**Score:**
+In a BWJ store repo a finding is filed on GitHub only when a file in the repo will change because of
+it, now or after an act outside the repo; one that waits from the start is filed already parked with
+its `awaiting-*` label, and an act-only finding or someone else's decision goes to Asana instead. This
+is the #3059 close rule asked at filing, so sweeps stop spending turns on issues with nothing to build
+([#4339](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4339)).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A BWJ session running `report-issue` no longer files an outside act or a decision that is not its own
+as a GitHub issue, and files a waiting one with its parking label at creation. Measured in
+smartwatchbanden: 21 of one filer's 26 sweep-parked issues waited on an outside act or an open choice,
+and every label came from a later sweep.
+
+**Score:** 3
 
 #### Pull Request
 

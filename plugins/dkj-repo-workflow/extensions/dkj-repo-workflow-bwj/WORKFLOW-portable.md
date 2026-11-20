@@ -69,9 +69,29 @@ own record.
 ### 1. GitHub first -- GitHub is the source of truth
 
 A real issue found in a BWJ store repo -- a bug, a broken customer-facing behaviour, a stale or wrong
-doc, a decision that is not yours to make -- is **filed on GitHub first**, in the repo it was found
-in. Full technical detail; repo and code jargon are fine, because the reader is whoever picks the
-work up.
+doc -- is **filed on GitHub first**, in the repo it was found in, **when a file in that repo will
+change because of it, now or after an act outside the repo**. Full technical detail; repo and code
+jargon are fine, because the reader is whoever picks the work up.
+
+**The filing test is the close test, asked at the other end: will a file in this repo change?**
+([#4339](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4339)). An issue stays open only
+while it will still change code (the act-only close rule, #3059, in step 4 below), so filing an issue that never will only hands the next sweep
+an issue to close. Maikel stated the filing half on November 4, 2026: *"we maken alleen een github
+issue aan als er code aangepast moet worden om het asana taak te kunnen sluiten"*.
+
+- **Yes, now** -- file it on GitHub as below.
+- **Yes, but only after something outside the repo happens** (an act in the Shopify admin, GTM or
+  another repo; a decision somebody else owns) -- file it on GitHub **already parked**: its
+  `awaiting-*` label on the `gh issue create` itself, with the act or the decider named in the body.
+  Write access granted, a promotion run, an upstream fix landed: each still leaves a file to change
+  afterwards, so each is an issue.
+- **No** -- an act outside the repo, or a decision that is not yours and changes no file -- **no
+  GitHub issue**. Where a colleague has to pick it up, it goes to them as an Asana task; a decision
+  goes to whoever owns it, there.
+
+Measured in smartwatchbanden on November 20, 2026: of the 26 issues one filer had parked by sweeps, 14
+waited on an act outside the repo and 7 on a choice the body itself left open. The `awaiting-*` label
+came from a later sweep every time, never at filing, so each cost a sweep turn to find nothing to build.
 
 **And it is written in English -- the title as much as the body** (Dave, September 11, 2026,
 [#1875](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1875)). Every consumer of
@@ -112,7 +132,7 @@ So every label goes on the `gh issue create` itself.
 
 | label | what it carries | how |
 |---|---|---|
-| **`bug`, `feature` or `research`** | the kind | **always exactly one of the three.** `--label feature` for something new being added, `--label bug` for something that exists and has to change, `--label research` for a research, test or decision ticket that changes nothing on the store. A doc finding is a `bug` or a `feature`: a missing page is a `feature`, a wrong one a `bug` |
+| **`bug`, `feature` or `research`** | the kind | **always exactly one of the three.** `--label feature` for something new being added, `--label bug` for something that exists and has to change, `--label research` for research or a test a session carries out in the repo, which changes nothing on the store. A decision that is not ours, or an act outside the repo, is no issue at all (the filing test above). A doc finding is a `bug` or a `feature`: a missing page is a `feature`, a wrong one a `bug` |
 | **the reach label** | how far the issue reaches | one `--label`, and only where it reaches the audience tier. Absence is the answer for tier 0 and is not a missing field. Its **name** is `Get-ReachLabel`'s, default `minor` -- see below |
 
 **The plugin's `guard-kind-label` hook holds the kind** (#4197). It refuses a `gh issue create` on a
@@ -135,6 +155,8 @@ tests or gathers what a decision needs builds nothing, so `feature` misnamed it:
 smartwatchbanden#943, a test of whether the Shopify GitHub app can write past a ruleset, filed as a
 `feature`. Its close gets the research closed line (#3004). **Pick it only where nothing on the store
 will change**: a ticket that researches first and then builds is a `feature` or a `bug` from the start.
+**And only where a session does the research**: the decision it feeds, once it is somebody else's to
+take, goes to them in Asana rather than staying open here (#4339).
 
 **There is no `documentation` label** (Dave, October 3, 2026,
 [#2783](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2783)). Until then an issue with
