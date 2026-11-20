@@ -115,9 +115,13 @@ Take the `^{}` line where there are two -- that is the commit, and the other is 
 `actions/checkout` cannot take as a ref. **A SHA, not the tag**: the job holds `ASANA_PAT`, and a tag can
 be moved where a commit cannot (adopt-ci-floor's #2333 reasoning, the same one `live-direct-writes.yml`
 follows). Where `ls-remote` does not answer, write the tag and say so; the session check accepts it, and
-the maintainer replaces it with the commit later. **Updating the plugin later is that one line again**:
-move `ref:` to the new release's commit and tag. The session check compares the rest of the file against
-the template and ignores the `ref:` value, so a pin is never reported as a stale copy.
+the maintainer replaces it with the commit later. **Updating the plugin later is usually that one line
+again**: move `ref:` to the new release's commit and tag. The session check compares the rest of the file
+against the template and ignores the `ref:` value, so a pin is never reported as a stale copy. **Where it
+reports the rest as differing, copy the template again and keep your `ref:` line**: a release can change
+what the job fetches. Since #4366 the `sparse-checkout` fetches `scripts/lib` beside `scripts/ci`, because
+the scripts load the shared libs there, so a workflow placed before that release and moved to a later
+`ref:` alone stops with a message naming exactly this.
 
 If a workflow file already exists at the target, **stop and diff** rather than overwriting: report the
 difference and let the maintainer decide -- with one exception, the migration below. **Both in `smartwatchbanden` and

@@ -1441,8 +1441,9 @@ Assert-True ($pageStep -ne '') 'the preview page still states the step in its ow
 Assert-Equal $pageStep $seamStep 'the adopt skill proposes Get-BranchClosingSteps with exactly the words the preview page prescribes'
 
 # --- the closed message (scripts/ci/asana-closed-message.ps1, #2818) --------------------------------
-# LAST IN THE SUITE ON PURPOSE: dot-sourcing the template redefines the lib helpers it carries copies of,
-# so the lib's own answers are taken first and held against the copies after.
+# LAST IN THE SUITE ON PURPOSE: dot-sourcing the script loads asana-section-lib.ps1 again (#4366) and
+# defines its own helpers beside it, so the lib's own answers are taken first and held against what is
+# loaded after.
 Write-Host "`n-- the closed message template (#2818) --" -ForegroundColor Cyan
 $cmSamples = @(
     "Body`n<!-- asana-task: 1234 -->",
@@ -1641,7 +1642,11 @@ Assert-True ($cmReq.Body -match '"html_text"') 'posted as html_text'
 # no label, no other event.
 $cmSrc = [System.IO.File]::ReadAllText($cmTemplate)
 Assert-True ($cmSrc -notmatch "completed\s*=\s*\`$true|addProject|removeProject|gh issue edit|gh label") 'the template carries no completion, board change or label write'
-Assert-Equal 1 ([regex]::Matches($cmSrc, '/sections/[^"]*addTask')).Count 'and the one section write is the addTask New-AsanaMoveRequest builds'
+# The addTask request is built in asana-section-lib.ps1 since #4366, so the script names no section URL
+# of its own: every section write it makes goes through New-AsanaMoveRequest, and the lib builds one.
+Assert-Equal 0 ([regex]::Matches($cmSrc, '/sections/[^"]*addTask')).Count 'and the template builds no section write of its own'
+Assert-Equal 1 ([regex]::Matches([System.IO.File]::ReadAllText((Join-Path $PluginRoot 'scripts\lib\asana-section-lib.ps1')), '/sections/[^"]*addTask')).Count 'the one section write is the addTask New-AsanaMoveRequest builds in asana-section-lib.ps1'
+Assert-True ($cmSrc -notmatch 'Invoke-AsanaTaskMove|Invoke-AsanaSend') 'and the template never calls the lib''s own move or send: its writes go through Invoke-AsanaWrite'
 Assert-Equal 1 ([regex]::Matches($cmSrc, 'completed\s*=\s*\$(true|false)')).Count 'and the one completed write is the false New-AsanaUncompleteRequest builds (#3562)'
 # THE STRUCTURAL HALF (code review): ONE HTTP write site, and everything it sends a pure builder made.
 Assert-Equal 1 ([regex]::Matches($cmSrc, '(?m)^\s*Invoke-RestMethod\b')).Count 'the template has exactly one HTTP write site, inside Invoke-AsanaWrite'
@@ -1816,6 +1821,11 @@ foreach ($n in @('asana-closed-message', 'asana-prio-label', 'asana-open-section
     Assert-True ($y -match '(?m)^\s*repository:\s*DKJ-Solutions/dkj-marketplace\s*$' -and $y -match '(?m)^\s*ref:\s*@@SCRIPTS_REF@@\s*$') "$n.yml fetches the plugin source at the pin placeholder"
     Assert-True ($y -match "\.workflow-scripts/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/scripts/ci/$n\.ps1") "$n.yml runs scripts/ci/$n.ps1 from that checkout"
     Assert-True (Test-Path -LiteralPath (Join-Path $PluginRoot "scripts\ci\$n.ps1")) "and that script ships"
+    # The block's entries are the lines indented deeper than the key itself; the next key ends it.
+    $sparse = [regex]::Match($y, '(?m)^([ \t]*)sparse-checkout:[ \t]*\|[ \t]*\r?\n((?:\1[ \t]+\S[^\r\n]*\r?\n)+)').Groups[2].Value
+    $sparseDirs = @($sparse -split '\r?\n' | ForEach-Object { $_.Trim() } | Where-Object { $_ } | Sort-Object)
+    Assert-Equal 'plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/scripts/ci,plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/scripts/lib' ($sparseDirs -join ',') `
+        "$n.yml fetches scripts/lib beside scripts/ci, and nothing else (#4366: the script loads its lib)"
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $PluginRoot "templates\$n.ps1"))) "and templates\$n.ps1 no longer ships, so nothing invites a copy"
     $uses = @([regex]::Matches($y, '(?m)^\s*(?:-\s*)?uses:\s*(\S+)') | ForEach-Object { $_.Groups[1].Value })
     Assert-True ($uses.Count -ge 1 -and -not @($uses | Where-Object { $_ -notmatch '@[0-9a-f]{40}$' }).Count) "$n.yml pins every action by SHA -- it holds ASANA_PAT beside a fetched script"
@@ -2121,8 +2131,8 @@ Assert-True ($null -eq $c.Add -and @($c.Remove).Count -eq 0) 'a label outside th
 $c = Get-PrioLabelChange -Label 'prio-2' -Current @()
 Assert-Equal 'prio-2' $c.Add 'an issue with no labels at all gets the label'
 
-# THE COPIED HELPERS EQUAL THEIR SOURCE. The function text is taken by AST from each file, minus its
-# leading help comment, because the copies carry their own 'a copy of ...' sentence there.
+# THE HELPERS THAT REMAIN COPIES EQUAL THEIR SOURCE. The function text is taken by AST from each file,
+# minus its leading help comment, because the copies carry their own 'a copy of ...' sentence there.
 function Get-FunctionSourceText {
     param([string]$Path, [string]$Name)
     $tokens = $null; $errs = $null
@@ -2132,22 +2142,41 @@ function Get-FunctionSourceText {
     $text = $fn.Extent.Text -replace "`r`n", "`n"
     return ([regex]::Replace($text, '(?s)<#.*?#>', '', 1) -replace '\s+', ' ').Trim()
 }
-$plLib = Join-Path $PluginRoot 'scripts\lib\asana-task-lib.ps1'
-foreach ($fn in @('Get-AsanaGidsFromText', 'Get-AsanaHeaderRowText', 'Resolve-AsanaTaskRef')) {
-    $mine = Get-FunctionSourceText -Path $plTemplate -Name $fn
-    Assert-True ($null -ne $mine) "the prio template defines $fn"
-    Assert-Equal (Get-FunctionSourceText -Path $plLib -Name $fn) $mine "$fn equals asana-task-lib.ps1's, apart from its help comment"
-    Assert-Equal (Get-FunctionSourceText -Path $cmTemplate -Name $fn) $mine "and equals asana-closed-message.ps1's"
-}
 $plGh = Get-FunctionSourceText -Path $plTemplate -Name 'Invoke-GhCapture'
 Assert-True ($null -ne $plGh) 'the prio template defines Invoke-GhCapture'
 Assert-Equal (Get-FunctionSourceText -Path $cmTemplate -Name 'Invoke-GhCapture') $plGh 'Invoke-GhCapture equals asana-closed-message.ps1''s'
-# #2968: the freshness judgement is copied into the template as well, and held equal to the lib's.
-foreach ($fn in @('ConvertTo-AsanaInstant', 'Test-AsanaPasteBlockBody', 'Get-AsanaPasteBlockVerdict', 'Get-PasteBlockSections', 'Get-AsanaResearchBlockMarker', 'Get-AsanaReleaseBlockMarker', 'Get-AsanaMeasureBlockMarker', 'Get-AsanaHandBlockMarker', 'Get-AsanaAlreadyFixedBlockMarker')) {
-    $mine = Get-FunctionSourceText -Path $cmTemplate -Name $fn
-    Assert-True ($null -ne $mine) "the closed-message template defines $fn"
-    Assert-Equal (Get-FunctionSourceText -Path $plLib -Name $fn) $mine "$fn equals asana-task-lib.ps1's, apart from its help comment"
+
+# THE SHARED HELPERS ARE LOADED, NOT COPIED (#4366). Every store runs the pinned workflow, whose
+# sparse-checkout fetches scripts/lib beside scripts/ci, so each CI script dot-sources its lib and
+# defines NONE of the functions the libs it loads define: a copy that came back would shadow the lib's
+# definition silently, which is the drift the copy-equality pins used to hold off.
+function Get-DefinedFunctionNames {
+    param([string]$Path)
+    $tokens = $null; $errs = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$tokens, [ref]$errs)
+    return @($ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $false) | ForEach-Object { $_.Name })
 }
+$ciLibFns = @{}
+foreach ($lib in @('ref-print-lib', 'asana-task-lib', 'asana-section-lib')) {
+    $ciLibFns[$lib] = Get-DefinedFunctionNames -Path (Join-Path $PluginRoot "scripts\lib\$lib.ps1")
+    Assert-True ($ciLibFns[$lib].Count -ge 1) "$lib.ps1 defines functions to hold the CI scripts against"
+}
+$ciLoads = [ordered]@{
+    'asana-closed-message' = @('asana-section-lib', @('ref-print-lib', 'asana-task-lib', 'asana-section-lib'))
+    'asana-open-section'   = @('asana-section-lib', @('ref-print-lib', 'asana-task-lib', 'asana-section-lib'))
+    'asana-prio-label'     = @('asana-task-lib', @('ref-print-lib', 'asana-task-lib'))
+}
+foreach ($n in $ciLoads.Keys) {
+    $ciPath = Join-Path $PluginRoot "scripts\ci\$n.ps1"
+    $ciSrc  = [System.IO.File]::ReadAllText($ciPath)
+    $lib    = $ciLoads[$n][0]
+    Assert-True ($ciSrc -match [regex]::Escape("Join-Path `$PSScriptRoot '../lib/$lib.ps1'") -and $ciSrc -match '(?m)^\. \$asanaLibPath\s*$') "$n.ps1 dot-sources ../lib/$lib.ps1"
+    $own = Get-DefinedFunctionNames -Path $ciPath
+    $dupes = @($ciLoads[$n][1] | ForEach-Object { $ciLibFns[$_] } | Where-Object { $own -contains $_ } | Sort-Object -Unique)
+    Assert-Equal '' ($dupes -join ', ') "$n.ps1 defines none of the functions its libs define"
+}
+Assert-True ([bool](Get-Command Read-AsanaTaskScore -ErrorAction SilentlyContinue)) 'the prio script''s own task read is Read-AsanaTaskScore'
+Assert-True ([System.IO.File]::ReadAllText($plTemplate) -notmatch 'function Get-AsanaTaskState') 'and it no longer shadows the lib''s Get-AsanaTaskState'
 # #3070: the live message escapes its html_text by the closed message's rule, copied because the template ships standalone.
 Assert-Equal (Get-FunctionSourceText -Path $cmTemplate -Name 'ConvertTo-AsanaXmlText') (Get-FunctionSourceText -Path (Join-Path $PluginRoot 'scripts\lib\live-message-rules.ps1') -Name 'ConvertTo-AsanaXmlText') `
     'live-message-rules.ps1''s ConvertTo-AsanaXmlText equals the closed-message template''s, apart from its help comment'
@@ -2223,21 +2252,14 @@ $osYmlPath  = Join-Path $PluginRoot 'templates\asana-open-section.yml'
 foreach ($rel in @('templates\asana-open-section.yml', 'scripts\ci\asana-open-section.ps1')) {
     Assert-True (Test-Path -LiteralPath (Join-Path $PluginRoot $rel)) "ships $rel"
 }
-# THE COPIED HELPERS EQUAL THEIR SOURCE (read before loading, so nothing loaded can mask a drift).
-foreach ($fn in @('Get-AsanaGidsFromText', 'Get-AsanaHeaderRowText', 'Resolve-AsanaTaskRef')) {
-    Assert-Equal (Get-FunctionSourceText -Path $plLib -Name $fn) (Get-FunctionSourceText -Path $osTemplate -Name $fn) "the open-section template's $fn equals asana-task-lib.ps1's"
-}
+# THE HELPERS NO LIB HOLDS ARE STILL COPIES, AND EQUAL THEIR SOURCE (read before loading, so nothing
+# loaded can mask a drift). The matchers, the section rule and the move request are loaded from
+# asana-section-lib.ps1 since #4366, which the block above the prio section holds.
 foreach ($fn in @('Invoke-GhCapture', 'ConvertFrom-IssueListJson')) {
     Assert-Equal (Get-FunctionSourceText -Path $plTemplate -Name $fn) (Get-FunctionSourceText -Path $osTemplate -Name $fn) "the open-section template's $fn equals asana-prio-label.ps1's"
 }
-foreach ($fn in @('Get-RepoStageCode', 'Get-SectionCode', 'Get-RepoProjectGid', 'Read-AsanaTaskBoard','New-AsanaMoveRequest', 'Invoke-AsanaWrite', 'Read-RepoConfigText')) {
+foreach ($fn in @('Get-RepoStageCode', 'Get-RepoProjectGid', 'Read-AsanaTaskBoard', 'Invoke-AsanaWrite', 'Read-RepoConfigText')) {
     Assert-Equal (Get-FunctionSourceText -Path $cmTemplate -Name $fn) (Get-FunctionSourceText -Path $osTemplate -Name $fn) "the open-section template's $fn equals asana-closed-message.ps1's"
-}
-# #4291: the move-asana-task lib holds its section rule and its move request equal to the templates' copies.
-$secLib = Join-Path $PluginRoot 'scripts\lib\asana-section-lib.ps1'
-foreach ($fn in @('Get-SectionCode', 'New-AsanaMoveRequest')) {
-    Assert-True ($null -ne (Get-FunctionSourceText -Path $secLib -Name $fn)) "asana-section-lib.ps1 defines $fn"
-    Assert-Equal (Get-FunctionSourceText -Path $cmTemplate -Name $fn) (Get-FunctionSourceText -Path $secLib -Name $fn) "asana-section-lib.ps1's $fn equals asana-closed-message.ps1's"
 }
 . $osTemplate
 

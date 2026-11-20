@@ -60,11 +60,11 @@
     per workspace. A task living in a project that does not carry the field has no such field, and reads
     as unscored.
 
-    SELF-CONTAINED, AND THAT IS WHY THE HELPERS ARE COPIES. This file shipped into a consumer's
-    .github/scripts/ until #4351, where no plugin lib exists, and it stays self-contained while a store
-    may still run an older copy, so the three matchers and Invoke-GhCapture are copied
-    from asana-closed-message.ps1 (the matchers originate in dkj-repo-workflow-bwj's
-    scripts/lib/asana-task-lib.ps1) rather than loaded. The score and label functions are copied back
+    THE MATCHERS ARE LOADED (#4366). The three matchers come from dkj-repo-workflow-bwj's
+    scripts/lib/asana-task-lib.ps1, fetched by the workflow's sparse-checkout beside scripts/ci.
+    Invoke-GhCapture, which no lib holds, is still copied from asana-closed-message.ps1. The task read
+    is Read-AsanaTaskScore, named apart from the lib's Get-AsanaTaskState because it answers a
+    different shape (Task, Failed, Status). The score and label functions are copied back
     from the retired asana-mirror.ps1.
 
     THE TASK IT READS is the one the issue body's marker names, and whoever can edit the body can point
@@ -102,69 +102,21 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# The shared helpers load from this plugin's own libs (#4366): the workflow's pinned checkout fetches
+# scripts/lib beside scripts/ci. A workflow placed before #4366 fetches scripts/ci alone, so a missing
+# lib stops the run with a message that names the fix, rather than on the first missing command.
+$asanaLibPath = Join-Path $PSScriptRoot '../lib/asana-task-lib.ps1'
+if (-not (Test-Path -LiteralPath $asanaLibPath)) {
+    throw "The shared Asana lib '../lib/asana-task-lib.ps1' is missing beside this script. The workflow's sparse-checkout must fetch dkj-repo-workflow-bwj/scripts/lib as well as scripts/ci (#4366): copy the workflow from the plugin's templates/ again and keep its ref: line."
+}
+. $asanaLibPath
+
 $script:AsanaApiBase = 'https://app.asana.com/api/1.0'
 
 # The four prio labels, low to high. EXACTLY ONE of these belongs on a scored issue, which is what
 # Set-IssuePrioLabel enforces by removing the other three. Named once so the mapping and the enforcer
 # cannot drift apart.
 $script:PrioLabels = @('prio-1', 'prio-2', 'prio-3', 'prio-4')
-
-function Get-AsanaGidsFromText {
-    <#
-        Pure: the distinct task GIDs of every Asana task URL in a piece of text, in first-seen order.
-        Both URL shapes Asana hands out are read; a URL that names no task contributes nothing.
-        A copy of asana-task-lib.ps1's function of this name.
-    #>
-    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text)
-
-    $gids = @()
-    foreach ($m in [regex]::Matches($Text, 'https://app\.asana\.com/[^\s)>\]]*')) {
-        $url = $m.Value
-        $t = [regex]::Match($url, '/task/([0-9]+)')
-        if (-not $t.Success) { $t = [regex]::Match($url, '^https://app\.asana\.com/0/[0-9]+/([0-9]+)') }
-        if ($t.Success) { $gids += $t.Groups[1].Value }
-    }
-    return @($gids | Select-Object -Unique)
-}
-
-function Get-AsanaHeaderRowText {
-    <#
-        Pure: the contents of an imported ticket's '| **Asana** | ... |' header row, or ''. A copy of
-        asana-task-lib.ps1's function of this name.
-    #>
-    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$IssueBody)
-
-    $m = [regex]::Match($IssueBody, '(?m)^\|\s*\*{0,2}Asana\*{0,2}\s*\|(.*)$')
-    if (-not $m.Success) { return '' }
-    return $m.Groups[1].Value
-}
-
-function Resolve-AsanaTaskRef {
-    <#
-        Pure: which Asana task an issue body belongs to -- Gid (or $null), Source ('marker' |
-        'header-row' | 'sole-url' | 'ambiguous' | 'none') and Candidates. Non-numeric content never
-        matches, so it can never reach a request URL. A copy of asana-task-lib.ps1's function of this name.
-    #>
-    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$IssueBody)
-
-    $marker = [regex]::Match($IssueBody, '<!--\s*asana-task:\s*([0-9]+)\s*-->')
-    if ($marker.Success) {
-        return [pscustomobject]@{ Gid = $marker.Groups[1].Value; Source = 'marker'; Candidates = @($marker.Groups[1].Value) }
-    }
-
-    $row = Get-AsanaHeaderRowText -IssueBody $IssueBody
-    if ($row) {
-        $rowGids = @(Get-AsanaGidsFromText -Text $row)
-        if ($rowGids.Count -ge 1) {
-            return [pscustomobject]@{ Gid = $rowGids[0]; Source = 'header-row'; Candidates = $rowGids }
-        }
-    }
-
-    $all = @(Get-AsanaGidsFromText -Text $IssueBody)
-    if ($all.Count -eq 1) { return [pscustomobject]@{ Gid = $all[0]; Source = 'sole-url'; Candidates = $all } }
-    if ($all.Count -gt 1) { return [pscustomobject]@{ Gid = $null; Source = 'ambiguous'; Candidates = $all } }
-    return [pscustomobject]@{ Gid = $null; Source = 'none'; Candidates = @() }
-}
 
 function Invoke-GhCapture {
     <#
@@ -268,7 +220,7 @@ function Get-AsanaReadOutcome {
     return 'failed'
 }
 
-function Get-AsanaTaskState {
+function Read-AsanaTaskScore {
     <#
         Read a task's custom fields. Returns Task (the task, or $null), Failed and Status. A failed read
         is reported with its HTTP status only, never Asana's message, and never thrown, so one bad ticket
@@ -386,7 +338,7 @@ function Resolve-IssueScoreLabel {
     if (-not $ref.Gid) {
         return [pscustomobject]@{ Label = $null; ReadFailed = $false; Why = 'no Asana task is linked from the issue -- labels left alone.' }
     }
-    $read = Get-AsanaTaskState -Gid $ref.Gid -Pat $Pat
+    $read = Read-AsanaTaskScore -Gid $ref.Gid -Pat $Pat
     if ($read.Failed) {
         return [pscustomobject]@{ Label = $null; ReadFailed = $true; Why = "task $($ref.Gid) could not be read (HTTP $(if ($read.Status) { $read.Status } else { 'status unknown' })) -- labels left alone, run failed." }
     }

@@ -147,13 +147,14 @@
     imported ticket; exactly one Asana task URL anywhere else. Several different tasks is 'ambiguous'
     and skipped: this script never guesses which ticket an issue belongs to.
 
-    SELF-CONTAINED, AND THAT IS WHY THE HELPERS ARE COPIES. This file shipped into a consumer's
-    .github/scripts/ until #4351, where no plugin lib exists, so the matchers and the block's marker are
-    copied from dkj-repo-workflow-bwj's scripts/lib/asana-task-lib.ps1 rather than loaded from it. It now
-    runs from a checkout of the plugin source, so it could load the lib; it still does not, because a
-    store whose workflow is not yet migrated may run an older copy of this file beside it.
-    scripts/tests/dkj-repo-workflow-bwj.tests.ps1 holds each copy equal to its source, and holds this file to
-    dot-sourcing nothing.
+    THE SHARED HELPERS ARE LOADED, NOT COPIED (#4366). The matchers, the block's markers and freshness
+    judgement, the section rule and the move request come from dkj-repo-workflow-bwj's
+    scripts/lib/asana-section-lib.ps1, which loads asana-task-lib.ps1 and ref-print-lib.ps1 in turn.
+    This file shipped into a consumer's .github/scripts/ until #4351 and carried copies of them then; it
+    runs from a pinned checkout of the plugin source now, whose sparse-checkout fetches scripts/lib
+    beside scripts/ci, and no store keeps a copied script any more. A workflow placed before #4366
+    fetches scripts/ci alone, and the run then stops on a message naming that, rather than on a missing
+    command.
 
     WHOSE TEXT IT FORWARDS (security review, #2818). The block is taken only from a comment whose author
     is the repo's OWNER, a MEMBER or a COLLABORATOR (Test-TrustedCommentAuthor): anyone else who can
@@ -235,64 +236,16 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# The shared helpers load from this plugin's own libs (#4366): the workflow's pinned checkout fetches
+# scripts/lib beside scripts/ci. A workflow placed before #4366 fetches scripts/ci alone, so a missing
+# lib stops the run with a message that names the fix, rather than on the first missing command.
+$asanaLibPath = Join-Path $PSScriptRoot '../lib/asana-section-lib.ps1'
+if (-not (Test-Path -LiteralPath $asanaLibPath)) {
+    throw "The shared Asana lib '../lib/asana-section-lib.ps1' is missing beside this script. The workflow's sparse-checkout must fetch dkj-repo-workflow-bwj/scripts/lib as well as scripts/ci (#4366): copy the workflow from the plugin's templates/ again and keep its ref: line."
+}
+. $asanaLibPath
+
 $script:AsanaApiBase = 'https://app.asana.com/api/1.0'
-
-function Get-AsanaGidsFromText {
-    <#
-        Pure: the distinct task GIDs of every Asana task URL in a piece of text, in first-seen order.
-        Both URL shapes Asana hands out are read; a URL that names no task contributes nothing.
-        A copy of asana-task-lib.ps1's function of this name.
-    #>
-    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text)
-
-    $gids = @()
-    foreach ($m in [regex]::Matches($Text, 'https://app\.asana\.com/[^\s)>\]]*')) {
-        $url = $m.Value
-        $t = [regex]::Match($url, '/task/([0-9]+)')
-        if (-not $t.Success) { $t = [regex]::Match($url, '^https://app\.asana\.com/0/[0-9]+/([0-9]+)') }
-        if ($t.Success) { $gids += $t.Groups[1].Value }
-    }
-    return @($gids | Select-Object -Unique)
-}
-
-function Get-AsanaHeaderRowText {
-    <#
-        Pure: the contents of an imported ticket's '| **Asana** | ... |' header row, or ''. A copy of
-        asana-task-lib.ps1's function of this name.
-    #>
-    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$IssueBody)
-
-    $m = [regex]::Match($IssueBody, '(?m)^\|\s*\*{0,2}Asana\*{0,2}\s*\|(.*)$')
-    if (-not $m.Success) { return '' }
-    return $m.Groups[1].Value
-}
-
-function Resolve-AsanaTaskRef {
-    <#
-        Pure: which Asana task an issue body belongs to -- Gid (or $null), Source ('marker' |
-        'header-row' | 'sole-url' | 'ambiguous' | 'none') and Candidates. Non-numeric content never
-        matches, so it can never reach a request URL. A copy of asana-task-lib.ps1's function of this name.
-    #>
-    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$IssueBody)
-
-    $marker = [regex]::Match($IssueBody, '<!--\s*asana-task:\s*([0-9]+)\s*-->')
-    if ($marker.Success) {
-        return [pscustomobject]@{ Gid = $marker.Groups[1].Value; Source = 'marker'; Candidates = @($marker.Groups[1].Value) }
-    }
-
-    $row = Get-AsanaHeaderRowText -IssueBody $IssueBody
-    if ($row) {
-        $rowGids = @(Get-AsanaGidsFromText -Text $row)
-        if ($rowGids.Count -ge 1) {
-            return [pscustomobject]@{ Gid = $rowGids[0]; Source = 'header-row'; Candidates = $rowGids }
-        }
-    }
-
-    $all = @(Get-AsanaGidsFromText -Text $IssueBody)
-    if ($all.Count -eq 1) { return [pscustomobject]@{ Gid = $all[0]; Source = 'sole-url'; Candidates = $all } }
-    if ($all.Count -gt 1) { return [pscustomobject]@{ Gid = $null; Source = 'ambiguous'; Candidates = $all } }
-    return [pscustomobject]@{ Gid = $null; Source = 'none'; Candidates = @() }
-}
 
 function Get-ClosedMessageHeader {
     <#
@@ -403,39 +356,6 @@ function New-ClosedMessage {
     )
     $second = Get-ClosedMessageSecondLine -Research:$Research -AfterRelease:$AfterRelease -Measure:$Measure -AlreadyFixed:$AlreadyFixed
     return ((@((Get-ClosedMessageHeader), '', "GitHub issue $IssueRef is now closed$(Get-ClosedMessageIntroTail)") + @($second | Where-Object { $_ })) -join "`n")
-}
-
-function Get-PasteBlockSections {
-    <#
-        Pure: the sections of a go-live block -- the text between its two '---' rules, minus the
-        lines this message composes itself (the header and the closed line). '' when there is no block.
-        The header is dropped by SHAPE (the first non-blank line, opening with an em dash), so a block
-        posted under an older header is carried without it too.
-        THE CLOSED LINE CAN RUN ON TO A SECOND LINE (#3069): the intro, then the line that tells the
-        forms apart, with no blank line between them. That line is the message's own as well, so it is
-        dropped with the intro -- unless it is a section heading, which a block written before #3069
-        never had directly under its one-line closed line, but a hand-typed one might.
-    #>
-    param([AllowEmptyString()][string]$Body)
-
-    $lines = @(([string]$Body) -split "`r?`n")
-    $rules = @(for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i].Trim() -eq '---') { $i } })
-    if ($rules.Count -lt 2 -or ($rules[1] - $rules[0]) -lt 2) { return '' }
-    $inner = @($lines[($rules[0] + 1)..($rules[1] - 1)])
-
-    $dash = [string][char]0x2014
-    $at = 0
-    while ($at -lt $inner.Count -and -not $inner[$at].Trim()) { $at++ }
-    if ($at -lt $inner.Count -and $inner[$at].TrimStart().StartsWith($dash)) {
-        $at++
-        while ($at -lt $inner.Count -and -not $inner[$at].Trim()) { $at++ }
-        if ($at -lt $inner.Count -and $inner[$at].StartsWith('GitHub issue ')) {
-            $at++
-            if ($at -lt $inner.Count -and $inner[$at].Trim() -and $inner[$at] -cnotmatch '^[A-Z][A-Z /]*[A-Z]$') { $at++ }
-        }
-    }
-    $rest = @(if ($at -lt $inner.Count) { $inner[$at..($inner.Count - 1)] })
-    return (($rest -join "`n").Trim())
 }
 
 function ConvertTo-AsanaXmlText {
@@ -640,129 +560,6 @@ function New-OnHoldMessageHtml {
     $url   = "https://github.com/$($parts[0])/issues/$($parts[1])"
     $ask   = if ($Parked) { '' } else { "`n$(& $esc (Get-OnHoldSecondLine))" }
     return "<body>$(& $esc (Get-ClosedMessageHeader))`n`nGitHub issue <a href=`"$(& $esc $url)`">$(& $esc $IssueRef)</a> is now <strong>closed</strong>$(& $esc (Get-ClosedMessageIntroTail -Cancelled -Parked:$Parked))$ask</body>"
-}
-
-function Get-AsanaPasteBlockMarker {
-    <#
-        Pure: the machine marker build-golive-block.ps1 puts on the comment carrying the block. A copy
-        of asana-task-lib.ps1's function of this name.
-    #>
-    return '<!-- asana-paste-block -->'
-}
-
-function Get-AsanaResearchBlockMarker {
-    <#
-        Pure: the second marker build-golive-block.ps1 -Research puts on a research block (#3004). A copy
-        of asana-task-lib.ps1's function of this name.
-    #>
-    return '<!-- asana-paste-block-kind: research -->'
-}
-
-function Get-AsanaMeasureBlockMarker {
-    <#
-        Pure: the second marker build-golive-block.ps1 -Measure puts on a measurement block (#3179). A copy
-        of asana-task-lib.ps1's function of this name.
-    #>
-    return '<!-- asana-paste-block-kind: measure -->'
-}
-
-function Get-AsanaAlreadyFixedBlockMarker {
-    <#
-        Pure: the second marker build-golive-block.ps1 -AlreadyFixed puts on a block for a ticket an
-        earlier release had already fixed (#3242). A copy of asana-task-lib.ps1's function of this name.
-    #>
-    return '<!-- asana-paste-block-kind: already-fixed -->'
-}
-
-function Get-AsanaHandBlockMarker {
-    <#
-        Pure: the second marker build-golive-block.ps1 -ByHand puts on a block recording a closed message
-        posted by hand on the task (#3183). A copy of asana-task-lib.ps1's function of this name.
-    #>
-    return '<!-- asana-paste-block-kind: by-hand -->'
-}
-
-function Get-AsanaReleaseBlockMarker {
-    <#
-        Pure: the second marker build-golive-block.ps1 puts on a result block that names a planned
-        release day rather than -LiveSince (#3069). A copy of asana-task-lib.ps1's function of this name.
-    #>
-    return '<!-- asana-paste-block-kind: after-release -->'
-}
-
-function ConvertTo-AsanaInstant {
-    <#
-        Pure: a GitHub timestamp as a UTC [datetime], or $null when it is empty or does not parse. Takes
-        the ISO string ('2026-10-13T08:15:00Z') or a [datetime] -- Windows PowerShell 5.1's
-        ConvertFrom-Json already turns such a string into a LOCAL-kind datetime, so both shapes are
-        normalised to UTC before anything is compared (#2968). A copy of
-        asana-task-lib.ps1's function of this name.
-    #>
-    param($Value)
-
-    if ($null -eq $Value) { return $null }
-    if ($Value -is [datetime]) { return $Value.ToUniversalTime() }
-    $text = ([string]$Value).Trim()
-    if (-not $text) { return $null }
-    $parsed = [datetime]::MinValue
-    $styles = [System.Globalization.DateTimeStyles]::AdjustToUniversal -bor [System.Globalization.DateTimeStyles]::AssumeUniversal
-    if ([datetime]::TryParse($text, [System.Globalization.CultureInfo]::InvariantCulture, $styles, [ref]$parsed)) { return $parsed }
-    return $null
-}
-
-function Test-AsanaPasteBlockBody {
-    <#
-        Pure: is this comment body a go-live block the closed message would CARRY? The marker, and
-        sections Get-PasteBlockSections finds that are not empty and hold no '[ADD LINK]' placeholder --
-        exactly the predicate Select-SessionPasteBlockSections picks a block by (#2968). It is ONE
-        predicate on purpose: a freshness check that accepted a comment the selection then skipped (a
-        marker with two adjacent rules, a header-only block) would call the issue fresh while the
-        message carried the older round's block, which is the failure #2968 measured.
-        A copy of asana-task-lib.ps1's function of this name.
-    #>
-    param([AllowEmptyString()][string]$Body)
-
-    if (-not ([string]$Body).Contains((Get-AsanaPasteBlockMarker))) { return $false }
-    $sections = Get-PasteBlockSections -Body $Body
-    return [bool]($sections -and -not $sections.Contains('[ADD LINK]'))
-}
-
-function Get-AsanaPasteBlockVerdict {
-    <#
-        Pure: is the block the closed message would carry still the right one, judged against the
-        issue's most recent reopen (#2968)? -Comments are objects with Body and CreatedAt in the order
-        GitHub returns them (oldest first); -LastReopenedAt is the timestamp of the latest 'reopened'
-        event, or $null where the issue was never reopened. THE COMMENT JUDGED IS THE ONE THE SELECTION
-        PICKS: the last comment, in that order, that Test-AsanaPasteBlockBody accepts.
-
-          'none'         no comment carries a block -- nothing to be stale.
-          'not-reopened' a block exists and the issue was never reopened.
-          'fresh'        that block was posted AFTER the last reopen: it belongs to this round.
-          'stale'        it is at or before the last reopen: it describes an earlier round, which is what
-                         #2968 measured carried into the Asana task as this round's result.
-          'unknown'      a time that cannot be parsed, so no judgement is made; the caller decides.
-
-        STRICTLY NEWER IS FRESH, AND AN EQUAL SECOND IS STALE: GitHub stamps to the second, and the wrong
-        answer to a tie must be the one the caller can repair (a refusal with its fix on one line, a
-        delayed message), never the one that sends old information on as new.
-        A copy of asana-task-lib.ps1's function of this name.
-    #>
-    param(
-        [AllowEmptyCollection()][object[]]$Comments = @(),
-        $LastReopenedAt = $null
-    )
-
-    $chosen = $null
-    foreach ($c in @($Comments)) {
-        if (Test-AsanaPasteBlockBody -Body ([string]$c.Body)) { $chosen = $c }
-    }
-    if ($null -eq $chosen) { return 'none' }
-    if ($null -eq $LastReopenedAt) { return 'not-reopened' }
-    $reopen = ConvertTo-AsanaInstant -Value $LastReopenedAt
-    $at     = ConvertTo-AsanaInstant -Value $chosen.CreatedAt
-    if ($null -eq $reopen -or $null -eq $at) { return 'unknown' }
-    if ($at -gt $reopen) { return 'fresh' }
-    return 'stale'
 }
 
 function Select-SessionPasteBlockBody {
@@ -1200,18 +997,6 @@ function Test-SupersededEvent {
     return $now -eq 'open'
 }
 
-function Get-ResultOwedLabel {
-    <#
-        The label a completed close WITHOUT a block puts on its issue (#4267): the closed message told the
-        requester the result message follows, and the task's assignee owes it. The run log used to be the
-        only record of that debt, so it went silently unpaid (smartwatchbanden#1212).
-        closed-message-sessioncheck lists the closed issues carrying it, and build-golive-block -ByHand
-        -Post takes it off once the message is on the task. Pure. A copy of asana-task-lib.ps1's function
-        of this name.
-    #>
-    return 'result-owed'
-}
-
 function Get-AddLabelApiArgs {
     <#
         Pure: the gh arguments that put one label on the issue (#4267) -- REST, 'POST
@@ -1340,17 +1125,6 @@ function Resolve-DoneSectionName {
     $name = Select-DoneSectionName -Names $names -Code $Code
     if ($name) { return [pscustomobject]@{ Name = $name; Why = "found by code $Code" } }
     return [pscustomobject]@{ Name = ''; Why = "no single section with code $Code on the task's board" }
-}
-
-function Get-SectionCode {
-    <#
-        Pure: a section name's code -- the text before its first '.', as Get-AsanaStageMap reads a board
-        ('3. Waiting for review' is '3') -- or '' for a section without one.
-    #>
-    param([AllowEmptyString()][string]$Name = '')
-    $m = [regex]::Match([string]$Name, '^\s*([0-9]+[A-Za-z]?)\.')
-    if ($m.Success) { return $m.Groups[1].Value }
-    return ''
 }
 
 function Select-ReviewMoveSection {
@@ -1521,25 +1295,6 @@ function Resolve-ReopenCardWrites {
     $board = Read-AsanaTaskBoard -Gid $Gid -Pat $Pat -Get $Get -HomeProject $HomeProject
     if (-not $board.Ok) { return [pscustomobject]@{ SectionGid = ''; MoveWhy = $board.Why; Untick = $false; UntickWhy = $board.Why } }
     return (Select-ReopenCardWrites -Memberships $board.Memberships -Sections $board.Sections -InDevelopmentCode $InDevelopmentCode -Completed $board.Completed)
-}
-
-function New-AsanaMoveRequest {
-    <#
-        Pure: the POST that moves a task into a section of its board (#3248) -- the second write this
-        script can build, beside the comment. A non-numeric task or section GID is refused before it can
-        reach a URL.
-    #>
-    param(
-        [Parameter(Mandatory = $true)][string]$Gid,
-        [Parameter(Mandatory = $true)][string]$SectionGid
-    )
-    if ($Gid -notmatch '\A[0-9]+\z') { throw "Refusing to build a request for a non-numeric task GID: '$Gid'." }
-    if ($SectionGid -notmatch '\A[0-9]+\z') { throw "Refusing to build a request for a non-numeric section GID: '$SectionGid'." }
-    [pscustomobject]@{
-        Method = 'POST'
-        Uri    = "$script:AsanaApiBase/sections/$SectionGid/addTask"
-        Body   = (ConvertTo-Json @{ data = @{ task = $Gid } } -Compress -Depth 5)
-    }
 }
 
 function New-AsanaUncompleteRequest {
