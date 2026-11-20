@@ -1,8 +1,9 @@
 <#
 .SYNOPSIS
     Keep the Asana task of every OPEN GitHub issue out of the sections that come before the board's
-    Filed section: a daily sweep moves such a card into Filed. Copied into a BWJ store repo as
-    .github/scripts/asana-open-section.ps1 and driven by .github/workflows/asana-open-section.yml.
+    Filed section: a daily sweep moves such a card into Filed. Driven by a BWJ store's
+    .github/workflows/asana-open-section.yml, which runs it from a SHA-pinned checkout of
+    DKJ-Solutions/dkj-marketplace (#4351); the store keeps no copy of this file.
 
 .DESCRIPTION
     WHY THIS EXISTS (#4056, Dave, November 13, 2026). The owner's rule: while its GitHub issue exists and
@@ -59,8 +60,9 @@
     Filed code, are said and end the run without failing it: the session check reports a store with no
     secret.
 
-    SELF-CONTAINED, AND THAT IS WHY THE HELPERS ARE COPIES. This file ships into a consumer's
-    .github/scripts/, where no plugin lib exists. The matchers come from asana-task-lib.ps1, the listing
+    SELF-CONTAINED, AND THAT IS WHY THE HELPERS ARE COPIES. This file shipped into a consumer's
+    .github/scripts/ until #4351, where no plugin lib exists, and it stays self-contained while a store
+    may still run an older copy. The matchers come from asana-task-lib.ps1, the listing
     parse and Invoke-GhCapture from asana-prio-label.ps1, the stage-map reader, the board read, the move
     and the write from asana-closed-message.ps1. scripts/tests/dkj-repo-workflow-bwj.tests.ps1 holds each copy
     equal to its source.
@@ -75,7 +77,8 @@ param(
     # 'owner/repo'.
     [string]$Repo = $env:GITHUB_REPOSITORY,
     [string]$AsanaPat = $env:ASANA_PAT,
-    # The repo's seam file, read as text. Empty: the checkout's own scripts/repo-config.ps1.
+    # The repo's seam file, read as text. Empty: scripts/repo-config.ps1 under the working directory,
+    # which on the runner is the store's own checkout (#4351). The workflow passes it explicitly.
     [string]$RepoConfigPath = ''
 )
 
@@ -327,10 +330,10 @@ function Invoke-AsanaWrite {
 
 function Read-RepoConfigText {
     <#
-        The TEXT of the repo's seam file, or '' where there is none -- -RepoConfigPath, else the checkout's
-        own scripts/repo-config.ps1 two levels above this script. Read, never run (#3017).
+        The TEXT of the repo's seam file, or '' where there is none -- -RepoConfigPath, else
+        scripts/repo-config.ps1 under the working directory (#4351). Read, never run (#3017).
     #>
-    $configPath = if ($RepoConfigPath) { $RepoConfigPath } else { Join-Path $PSScriptRoot '../../scripts/repo-config.ps1' }
+    $configPath = if ($RepoConfigPath) { $RepoConfigPath } else { Join-Path (Get-Location).ProviderPath 'scripts/repo-config.ps1' }
     if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) { return '' }
     return [System.IO.File]::ReadAllText((Resolve-Path -LiteralPath $configPath).ProviderPath)
 }

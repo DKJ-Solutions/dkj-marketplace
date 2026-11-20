@@ -41,8 +41,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 It reads the built page out of the page directory, checks it against Cloudflare's KV value ceiling,
 uploads it under this repo's own path token, **reads the value back and compares SHA-256**, **fetches
 the public URL and compares again**, and prints the link. For `-Kind notes` it then prints a `Close-out:` line carrying that link, and **the cut's
-receipt ends with it**: it is the page that goes to management, so nobody has to look the URL up
+receipt carries it**: it is the page that goes to management, so nobody has to look the URL up
 afterwards ([#2913](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2913)).
+
+**At the close of a cut it is the main link, given first** -- before the local Admin page and before
+the GitHub release URL ([#4347](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4347)). The
+audience notes are what the owner wants to read, far more than the GitHub release; measured at
+smartwatchbanden v3.1.0 (November 16, 2026), sessions kept closing with the other two. **Share it only
+from a publish that verified**: the `Close-out:` line prints only after the public URL has been fetched
+and compared, so it is the proof that the new version is the one being served. A run that stopped
+before that line has nothing to share yet.
 
 **It does not build the page.** Building stays somebody else's step:
 

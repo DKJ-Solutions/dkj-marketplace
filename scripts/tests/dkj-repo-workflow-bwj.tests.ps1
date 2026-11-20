@@ -11,7 +11,8 @@
     The asana-mirror CI workflow (templates/asana-mirror.yml and .ps1) was retired on October 5, 2026;
     the helpers that survived live in scripts/lib/asana-task-lib.ps1 and are exercised by dot-sourcing
     it. Section 1 asserts those templates no longer ship. The closed message came back the same day as
-    templates/asana-closed-message.yml and .ps1 (#2818), exercised by dot-sourcing that template.
+    templates/asana-closed-message.yml and scripts/ci/asana-closed-message.ps1 (#2818; the script moved
+    out of templates/ in #4351), exercised by dot-sourcing that script.
 
     Pure ASCII (repo convention for .ps1).
 #>
@@ -82,7 +83,7 @@ foreach ($rel in @('README.md', 'WORKFLOW-portable.md', 'SYNC-LOG-portable.md', 
 Assert-True (-not (Test-Path -LiteralPath (Join-Path $PluginRoot 'templates\asana-mirror.yml'))) 'templates\asana-mirror.yml no longer ships'
 Assert-True (-not (Test-Path -LiteralPath (Join-Path $PluginRoot 'templates\asana-mirror.ps1'))) 'templates\asana-mirror.ps1 no longer ships'
 # THE CLOSED MESSAGE CAME BACK, AND ONLY IT (#2818, Dave, October 5, 2026): one workflow, one script.
-foreach ($rel in @('templates\asana-closed-message.yml', 'templates\asana-closed-message.ps1')) {
+foreach ($rel in @('templates\asana-closed-message.yml', 'scripts\ci\asana-closed-message.ps1')) {
     Assert-True (Test-Path -LiteralPath (Join-Path $PluginRoot $rel)) "ships $rel"
 }
 
@@ -1439,7 +1440,7 @@ $seamStep = if ($adoptPage -match "function Get-BranchClosingSteps \{ @\('([^']+
 Assert-True ($pageStep -ne '') 'the preview page still states the step in its own fenced line'
 Assert-Equal $pageStep $seamStep 'the adopt skill proposes Get-BranchClosingSteps with exactly the words the preview page prescribes'
 
-# --- the closed message (templates/asana-closed-message.ps1, #2818) --------------------------------
+# --- the closed message (scripts/ci/asana-closed-message.ps1, #2818) --------------------------------
 # LAST IN THE SUITE ON PURPOSE: dot-sourcing the template redefines the lib helpers it carries copies of,
 # so the lib's own answers are taken first and held against the copies after.
 Write-Host "`n-- the closed message template (#2818) --" -ForegroundColor Cyan
@@ -1452,7 +1453,7 @@ $cmSamples = @(
 $cmLibRefs   = @($cmSamples | ForEach-Object { $r = Resolve-AsanaTaskRef -IssueBody $_; "$($r.Gid)|$($r.Source)" })
 $cmLibMarker = Get-AsanaPasteBlockMarker
 $cmLibOwed   = Get-ResultOwedLabel
-$cmTemplate  = Join-Path $PluginRoot 'templates\asana-closed-message.ps1'
+$cmTemplate  = Join-Path $PluginRoot 'scripts\ci\asana-closed-message.ps1'
 . $cmTemplate
 
 Assert-Equal ($cmLibRefs -join ';') (@($cmSamples | ForEach-Object { $r = Resolve-AsanaTaskRef -IssueBody $_; "$($r.Gid)|$($r.Source)" }) -join ';') `
@@ -1807,6 +1808,19 @@ Assert-True ($cmYml -match 'ISSUE_LABELS:\s*\$\{\{\s*toJSON\(github\.event\.issu
 Assert-True ($cmYml -match 'persist-credentials:\s*false') 'the checkout leaves no token behind'
 Assert-True ($cmYml -notmatch '-IssueBody') 'and the body reaches the script through the environment, not the command line'
 
+# THE SCRIPTS ARE FETCHED, NOT COPIED (#4351): each workflow runs its script from a pinned checkout of the
+# plugin's source repo, which the store fills in at placement, and nothing runs from .github/scripts/.
+foreach ($n in @('asana-closed-message', 'asana-prio-label', 'asana-open-section')) {
+    $y = [System.IO.File]::ReadAllText((Join-Path $PluginRoot "templates\$n.yml"))
+    Assert-True ($y -notmatch '\.github/scripts/') "$n.yml runs nothing from .github/scripts/"
+    Assert-True ($y -match '(?m)^\s*repository:\s*DKJ-Solutions/dkj-marketplace\s*$' -and $y -match '(?m)^\s*ref:\s*@@SCRIPTS_REF@@\s*$') "$n.yml fetches the plugin source at the pin placeholder"
+    Assert-True ($y -match "\.workflow-scripts/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/scripts/ci/$n\.ps1") "$n.yml runs scripts/ci/$n.ps1 from that checkout"
+    Assert-True (Test-Path -LiteralPath (Join-Path $PluginRoot "scripts\ci\$n.ps1")) "and that script ships"
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $PluginRoot "templates\$n.ps1"))) "and templates\$n.ps1 no longer ships, so nothing invites a copy"
+    $uses = @([regex]::Matches($y, '(?m)^\s*(?:-\s*)?uses:\s*(\S+)') | ForEach-Object { $_.Groups[1].Value })
+    Assert-True ($uses.Count -ge 1 -and -not @($uses | Where-Object { $_ -notmatch '@[0-9a-f]{40}$' }).Count) "$n.yml pins every action by SHA -- it holds ASANA_PAT beside a fetched script"
+}
+
 # A BLOCK FROM BEFORE THE LAST REOPEN IS NOT CARRIED (#2968), and neither is one whose reopen could not be
 # read. xoxowildhearts#414 closed after round 1, was reopened, and was closed again by round 2's PR: the
 # second closed message carried round 1's block. The pure verdict is asserted first, then Invoke-Main
@@ -2051,13 +2065,13 @@ Remove-Item -LiteralPath $stConfig -ErrorAction SilentlyContinue
 $Event = 'closed'
 Remove-Item Function:\gh, Function:\Invoke-RestMethod, Function:\New-StLine, Function:\Invoke-StMain, Function:\New-StComment
 
-# --- the prio label sync (templates/asana-prio-label.ps1, #2945) ----------------------------------
+# --- the prio label sync (scripts/ci/asana-prio-label.ps1, #2945) ----------------------------------
 # AFTER the closed-message section on purpose: both templates carry copies of the same helpers, and the
 # copy-equality pins below compare the two files' source text, not what is loaded.
 Write-Host "`n-- the prio label template (#2945) --" -ForegroundColor Cyan
-$plTemplate = Join-Path $PluginRoot 'templates\asana-prio-label.ps1'
+$plTemplate = Join-Path $PluginRoot 'scripts\ci\asana-prio-label.ps1'
 $plYmlPath  = Join-Path $PluginRoot 'templates\asana-prio-label.yml'
-foreach ($rel in @('templates\asana-prio-label.yml', 'templates\asana-prio-label.ps1')) {
+foreach ($rel in @('templates\asana-prio-label.yml', 'scripts\ci\asana-prio-label.ps1')) {
     Assert-True (Test-Path -LiteralPath (Join-Path $PluginRoot $rel)) "ships $rel"
 }
 . $plTemplate
@@ -2202,11 +2216,11 @@ Assert-True ($plRun -ne '') 'the run block was found'
 Assert-True ($plRun -notmatch '\$\{\{') 'and no expression is interpolated inside run:'
 Assert-True ($plYml -notmatch '-IssueBody') 'the body is never on the command line'
 
-# --- the open-section sweep (templates/asana-open-section.ps1, #4056) ------------------------------
+# --- the open-section sweep (scripts/ci/asana-open-section.ps1, #4056) ------------------------------
 Write-Host "`n-- the open-section template (#4056) --" -ForegroundColor Cyan
-$osTemplate = Join-Path $PluginRoot 'templates\asana-open-section.ps1'
+$osTemplate = Join-Path $PluginRoot 'scripts\ci\asana-open-section.ps1'
 $osYmlPath  = Join-Path $PluginRoot 'templates\asana-open-section.yml'
-foreach ($rel in @('templates\asana-open-section.yml', 'templates\asana-open-section.ps1')) {
+foreach ($rel in @('templates\asana-open-section.yml', 'scripts\ci\asana-open-section.ps1')) {
     Assert-True (Test-Path -LiteralPath (Join-Path $PluginRoot $rel)) "ships $rel"
 }
 # THE COPIED HELPERS EQUAL THEIR SOURCE (read before loading, so nothing loaded can mask a drift).

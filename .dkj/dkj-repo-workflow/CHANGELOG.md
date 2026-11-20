@@ -2,7 +2,63 @@
 
 ## [Unreleased]
 
-**17 / 17 minor entries** <!-- pending-tally -->
+**19 / 19 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4347-notes-page-main-link · 20261120-122017Z
+
+`publish-page -Kind notes` now closes with a line that names the audience-notes page as the cut's main
+link, to be given first, before the local Admin page and the GitHub release URL, and as the copy the
+public page was just proven to serve. The skill says the same
+([#4347](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4347)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+At the close of a BWJ cut the owner gets the release-notes page they read first, not the GitHub release
+or a local Admin link.
+
+**Score:** 2
+
+#### Pull Request
+
+Release close-out: the published audience-notes page is the main link, verified served
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4363](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4363)
+
+---
+
+### DEPLOY: feat/4351-asana-scripts-from-pinned-checkout · 20261120-115339Z
+
+The three Asana workflows of `dkj-repo-workflow-bwj` (`asana-closed-message`, `asana-prio-label`,
+`asana-open-section`) no longer ship their script for a store to copy. A store keeps only the workflow
+file, which checks out `DKJ-Solutions/dkj-marketplace` at a pinned commit and runs the script from
+`dkj-repo-workflow-bwj/scripts/ci/`, the way the rest of the CI floor already does. The adopt skill
+places the workflow with that pin and migrates a store off its `.github/scripts/asana-*.ps1` copies, and
+the session check now ignores the pin and reports a copy left behind.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+For a BWJ store, a fix to the closed message, the prio-label sync or the open-section sweep now reaches
+the store by moving one `ref:` line, instead of re-copying up to 1,800 lines of script per workflow. Each
+store needs one migration after taking this release: the session check names the copies until
+`adopt-dkj-repo-workflow-bwj` step 1 has replaced the workflows and removed them.
+
+**Score:** 4
+
+#### Pull Request
+
+The three Asana workflows fetch their script from a pinned dkj-marketplace checkout
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4367](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4367)
+
+---
 
 ### DEPLOY: feat/4338-open-issues-sessioncheck · 20261120-114206Z
 

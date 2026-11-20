@@ -143,7 +143,7 @@ function Get-AsanaResearchBlockMarker {
         #3069's: 'Nothing has changed. Read the outcome below.', the outcome as a list, and the closing
         ask) instead of the reopen line, which promises a result that can be 'not working as
         expected'. It sits beside the block's own marker, outside the
-        rules, for the same reason that one does. A copy of it lives in templates/asana-closed-message.ps1.
+        rules, for the same reason that one does. A copy of it lives in scripts/ci/asana-closed-message.ps1.
     #>
     return '<!-- asana-paste-block-kind: research -->'
 }
@@ -153,7 +153,7 @@ function Get-AsanaMeasureBlockMarker {
         The second marker build-golive-block.ps1 -Measure puts on a block whose result is a number the
         requester measures again (#3179). Pure. The closed message reads it to write the measurement form
         instead of the reopen line or the research form, and to close with the measurement ask. A copy
-        of it lives in templates/asana-closed-message.ps1.
+        of it lives in scripts/ci/asana-closed-message.ps1.
     #>
     return '<!-- asana-paste-block-kind: measure -->'
 }
@@ -163,7 +163,7 @@ function Get-AsanaAlreadyFixedBlockMarker {
         The second marker build-golive-block.ps1 -AlreadyFixed puts on a block for a ticket an earlier
         release had already fixed (#3242): verified, and nothing changed in this round. Pure. The closed
         message reads it to say so under the intro instead of the reopen line or 'Nothing has changed', and
-        to close with the already-fixed ask. A copy of it lives in templates/asana-closed-message.ps1.
+        to close with the already-fixed ask. A copy of it lives in scripts/ci/asana-closed-message.ps1.
     #>
     return '<!-- asana-paste-block-kind: already-fixed -->'
 }
@@ -175,7 +175,7 @@ function Get-AsanaHandBlockMarker {
         automation does not have, and the workflow must not post its own beside it. Pure. The closed
         message reads it and posts nothing; the close guard accepts the block like any other, so the
         guard's intent -- the requester always gets a message -- holds, and the hand route is visible on
-        the issue. A copy of it lives in templates/asana-closed-message.ps1.
+        the issue. A copy of it lives in scripts/ci/asana-closed-message.ps1.
     #>
     return '<!-- asana-paste-block-kind: by-hand -->'
 }
@@ -186,7 +186,7 @@ function Get-ResultOwedLabel {
         closed message told the requester the result message follows, and the task's assignee owes it.
         closed-message-sessioncheck lists the closed issues carrying it; build-golive-block -ByHand -Post
         takes it off once the message is on the task. Pure. A copy of it lives in
-        templates/asana-closed-message.ps1.
+        scripts/ci/asana-closed-message.ps1.
     #>
     return 'result-owed'
 }
@@ -198,7 +198,7 @@ function Get-AsanaReleaseBlockMarker {
         closed message reads it to say so under its intro instead of implying the requester can look
         now; a block without it -- a -LiveSince block, or one posted before #3069 -- keeps the plain
         reopen line. It sits beside the block's own marker, outside the rules, for the same reason that
-        one does. A copy of it lives in templates/asana-closed-message.ps1.
+        one does. A copy of it lives in scripts/ci/asana-closed-message.ps1.
     #>
     return '<!-- asana-paste-block-kind: after-release -->'
 }
@@ -217,7 +217,7 @@ function ConvertTo-AsanaInstant {
         the ISO string ('2026-10-13T08:15:00Z') or a [datetime] -- Windows PowerShell 5.1's
         ConvertFrom-Json already turns such a string into a LOCAL-kind datetime, so both shapes are
         normalised to UTC before anything is compared (#2968). A copy of it lives in
-        templates/asana-closed-message.ps1.
+        scripts/ci/asana-closed-message.ps1.
     #>
     param($Value)
 
@@ -235,7 +235,7 @@ function Get-PasteBlockSections {
     <#
         Pure: the sections of a go-live block -- the text between its two '---' rules, minus the
         lines this message composes itself (the header and the closed line). '' when there is no block.
-        A copy of templates/asana-closed-message.ps1's function of this name (#2968): the hook and
+        A copy of scripts/ci/asana-closed-message.ps1's function of this name (#2968): the hook and
         build-golive-block.ps1 judge a block by the same sections the closed message carries.
         The header is dropped by SHAPE (the first non-blank line, opening with an em dash), so a block
         posted under an older header is carried without it too.
@@ -274,7 +274,7 @@ function Test-AsanaPasteBlockBody {
         predicate on purpose: a freshness check that accepted a comment the selection then skipped (a
         marker with two adjacent rules, a header-only block) would call the issue fresh while the
         message carried the older round's block, which is the failure #2968 measured.
-        A copy of it lives in templates/asana-closed-message.ps1.
+        A copy of it lives in scripts/ci/asana-closed-message.ps1.
     #>
     param([AllowEmptyString()][string]$Body)
 
@@ -301,7 +301,7 @@ function Get-AsanaPasteBlockVerdict {
         STRICTLY NEWER IS FRESH, AND AN EQUAL SECOND IS STALE: GitHub stamps to the second, and the wrong
         answer to a tie must be the one the caller can repair (a refusal with its fix on one line, a
         delayed message), never the one that sends old information on as new.
-        A copy of it lives in templates/asana-closed-message.ps1.
+        A copy of it lives in scripts/ci/asana-closed-message.ps1.
     #>
     param(
         [AllowEmptyCollection()][object[]]$Comments = @(),

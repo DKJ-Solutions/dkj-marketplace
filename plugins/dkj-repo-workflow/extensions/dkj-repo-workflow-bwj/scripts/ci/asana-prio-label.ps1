@@ -1,8 +1,9 @@
 <#
 .SYNOPSIS
     Carry the Asana task's Prio-Score onto the GitHub issue as ONE prio-N label (prio-1 lowest, prio-4
-    highest). Copied into a BWJ store repo as .github/scripts/asana-prio-label.ps1 and driven by
-    .github/workflows/asana-prio-label.yml, on an issue being opened or edited and on a daily sweep.
+    highest). Driven by a BWJ store's .github/workflows/asana-prio-label.yml, which runs it from a
+    SHA-pinned checkout of DKJ-Solutions/dkj-marketplace (#4351), on an issue being opened or edited and
+    on a daily sweep; the store keeps no copy of this file.
 
 .DESCRIPTION
     THE PART OF THE RETIRED MIRROR THAT CAME BACK (#2945). The asana-mirror workflow was retired on
@@ -59,8 +60,9 @@
     per workspace. A task living in a project that does not carry the field has no such field, and reads
     as unscored.
 
-    SELF-CONTAINED, AND THAT IS WHY THE HELPERS ARE COPIES. This file ships into a consumer's
-    .github/scripts/, where no plugin lib exists, so the three matchers and Invoke-GhCapture are copied
+    SELF-CONTAINED, AND THAT IS WHY THE HELPERS ARE COPIES. This file shipped into a consumer's
+    .github/scripts/ until #4351, where no plugin lib exists, and it stays self-contained while a store
+    may still run an older copy, so the three matchers and Invoke-GhCapture are copied
     from asana-closed-message.ps1 (the matchers originate in dkj-repo-workflow-bwj's
     scripts/lib/asana-task-lib.ps1) rather than loaded. The score and label functions are copied back
     from the retired asana-mirror.ps1.

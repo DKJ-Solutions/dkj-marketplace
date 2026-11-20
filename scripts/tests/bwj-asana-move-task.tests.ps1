@@ -7,8 +7,8 @@
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/bwj-asana-move-task.tests.ps1
 
     WHAT IT HOLDS:
-      1. ONE SECTION RULE. The CI templates cannot dot-source the lib (they ship standalone into a
-         consumer's .github/scripts/), so each carries a copy of Get-SectionCode. The copies' bodies are
+      1. ONE SECTION RULE. The CI scripts (scripts/ci/, run from a pinned checkout since #4351) stay
+         self-contained and do not dot-source the lib, so each carries a copy of Get-SectionCode. The copies' bodies are
          run here beside the lib's over one table of section names, so a manual move and an automated
          move cannot pick different sections. (dkj-repo-workflow-bwj.tests.ps1 holds the texts equal.)
       2. THE RESOLUTION: a code never hits a longer code ('2' is not '2B'), none or several throw.
@@ -65,7 +65,7 @@ function Get-TemplateSectionCode {
 }
 $table = @('2. In Progress', '1C. Waiting', ' 3.x', 'No code', '10. Done', '1c. todo', '2B. Blocked', '2 In Progress', '', '.5. odd', 'A. letter first', '4.')
 foreach ($tpl in @('asana-closed-message.ps1', 'asana-open-section.ps1')) {
-    $file = Join-Path $ExtRoot "templates\$tpl"
+    $file = Join-Path $ExtRoot "scripts\ci\$tpl"
     foreach ($name in $table) {
         Assert-Equal (Get-SectionCode -Name $name) (Get-TemplateSectionCode -TemplateFile $file -Name $name) "$tpl and the lib read '$name' alike"
     }
