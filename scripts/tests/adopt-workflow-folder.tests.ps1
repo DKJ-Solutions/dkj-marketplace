@@ -990,6 +990,51 @@ try {
     Assert-True ($rCu.Flat -notmatch 'repoint(ed)?\]\s+\.github/pull_request_template\.md') 'current template: no repoint line'
     Assert-Equal $cuTpl ([System.IO.File]::ReadAllText($cuPath)) 'current template: unchanged'
 
+
+    # --- THE LIVE BRANCH IN THE BRANCH-ENTRY CALLER (#4374) ---------------------------------------
+    # A hotfix lane ships PRs to the live deploy branch; a caller on `branches: [main]` never judged them.
+    # Declared -> listed (branch-entry only); undeclared -> main only; an unusable answer -> main only, said.
+    function Add-LiveAnswer([string]$Dir, [string]$Answer) {
+        $cfgPath = Join-Path $Dir 'scripts\repo-config.ps1'
+        [System.IO.File]::AppendAllText($cfgPath, "function Get-ShopifyLiveDeployBranch { '$Answer' }`n")
+    }
+    $lvOk = New-FixtureConsumer -Label 'live-ok' -WithRepoConfig
+    Add-LiveAnswer $lvOk 'live'
+    $null = Invoke-Adopt -Dir $lvOk -ScriptArgs @('-Apply')
+    $lvEntry = [System.IO.File]::ReadAllText((Join-Path $lvOk '.github\workflows\branch-entry.yml'))
+    $lvBudget = [System.IO.File]::ReadAllText((Join-Path $lvOk '.github\workflows\always-on-budget.yml'))
+    Assert-True ($lvEntry -match '(?m)^    branches: \[main, live\]\s*$') 'live branch declared: the branch-entry caller lists main and live'
+    Assert-True ($lvEntry -like '*#4374*') 'live branch declared: the caller says why the live branch is there'
+    Assert-True ($lvBudget -match '(?m)^    branches: \[main\]\s*$') 'live branch declared: the always-on budget caller stays main only'
+
+    $lvNone = New-FixtureConsumer -Label 'live-none' -WithRepoConfig
+    $null = Invoke-Adopt -Dir $lvNone -ScriptArgs @('-Apply')
+    $lvNoneText = [System.IO.File]::ReadAllText((Join-Path $lvNone '.github\workflows\branch-entry.yml'))
+    Assert-True ($lvNoneText -match '(?m)^    branches: \[main\]\s*$') 'no live branch declared: main only'
+    Assert-True ($lvNoneText -notlike '*#4374*') 'no live branch declared: no live-branch comment'
+
+    foreach ($bad in @('VUL-IN', 'refs/heads/live', '--upload-pack=x', 'live; echo pwned', 'main')) {
+        $lvBad = New-FixtureConsumer -Label 'live-bad' -WithRepoConfig
+        Add-LiveAnswer $lvBad $bad
+        $rBad = Invoke-Adopt -Dir $lvBad -ScriptArgs @('-Apply')
+        $badText = [System.IO.File]::ReadAllText((Join-Path $lvBad '.github\workflows\branch-entry.yml'))
+        Assert-True ($badText -match '(?m)^    branches: \[main\]\s*$') "unusable live answer '$bad': main only"
+        Assert-True ($rBad.Flat.Contains('not a usable live branch name')) "unusable live answer '$bad': the run says why"
+    }
+
+    # An existing caller is REPORTED when its list lacks the declared live branch, and never rewritten.
+    $lvOld = New-FixtureConsumer -Label 'live-existing' -WithRepoConfig
+    $null = Invoke-Adopt -Dir $lvOld -ScriptArgs @('-Apply')
+    $lvOldPath = Join-Path $lvOld '.github\workflows\branch-entry.yml'
+    $lvOldBefore = [System.IO.File]::ReadAllText($lvOldPath)
+    Add-LiveAnswer $lvOld 'live'
+    $rLvOld = Invoke-Adopt -Dir $lvOld
+    Assert-True ($rLvOld.Flat.Contains('Change the line to: branches: [main, live]')) 'existing caller without the live branch: the run reports the line to add'
+    Assert-Equal $lvOldBefore ([System.IO.File]::ReadAllText($lvOldPath)) 'existing caller without the live branch: the file is left exactly as it was'
+    $null = Invoke-Adopt -Dir $lvOk -ScriptArgs @()
+    $rLvOk = Invoke-Adopt -Dir $lvOk
+    Assert-True ($rLvOk.Flat -notlike '*Change the line to*') 'existing caller already listing the live branch: nothing reported'
+
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }
 }

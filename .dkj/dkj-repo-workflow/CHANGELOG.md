@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**3 / 3 minor entries** <!-- pending-tally -->
+**4 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4374-branch-entry-live-lane · 20261120-172256Z
+
+`adopt-workflow-folder` now reads `Get-ShopifyLiveDeployBranch` and, where it answers a plain branch name,
+writes it into the branch-entry caller's trigger beside `main`; an existing caller missing it is reported
+with the line to add (#4374).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A Shopify consumer that ships hotfix PRs straight to its live branch now gets the branch-entry gate on
+those PRs too. Before, a malformed DEPLOY section could land on live unjudged, flow back to the trunk and
+turn fold-on-merge red on every later merge. An already-adopted repo is told the one line to change when it
+re-runs Part 1 of `adopt-dkj-repo-workflow`.
+
+**Score:** 3
+
+#### Pull Request
+
+Branch-entry gate also runs on PRs to the live deploy branch
+
+Plugins: dkj-repo-workflow
+
+[PR #4376](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4376)
+
+---
 
 ### DEPLOY: feat/4371-dossier-wordcount · 20261120-145046Z
 
