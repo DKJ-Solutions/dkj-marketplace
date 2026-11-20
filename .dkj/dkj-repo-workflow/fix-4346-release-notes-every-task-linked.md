@@ -41,19 +41,40 @@
 
 The cut records the release's resolved Asana tasks; the release-note-form gate refuses a note that does not link every one
 
+The parking comment's four steps: (1) the cut records the expected tasks where the release-notes step can
+read them; (2) `check-release-note-form.ps1` refuses unless every expected link is in the newest note; (3)
+the cut-release and prepare-release pages brief a writer with that list; (4) tests.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `release-lib.ps1`: the task record -- `Get-ReleaseTaskRecordPath`, `ConvertTo-ReleaseTaskRecord`, `Read-ReleaseTaskRecord` (throws on a broken record, never reads it as empty), `Get-ReleaseNoteMissingTasks`
+- [x] `cut-release.ps1`: writes `<X.Y.Z>.tasks.json` beside the task-form draft, refuses to overwrite one, and its follow-up lines say to keep every link and brief a writer with the file
+- [x] `check-release-note-form.ps1`: a `[TASKS]` finding per missing link, exit 1
+- [x] Docs: cut-release skill (step 2 and step 4), prepare-release skill, BWJ `WORKFLOW-portable.md`
+- [x] Plugin mirrors of the three scripts updated byte-for-byte
 
 ### TEST
 
+- [x] `release-note-form.tests.ps1`: sections 9 and 10, 56 passed, 0 failed
+- [x] The gates via open-pr
+
 ### DEPLOY: fix/4346-release-notes-every-task-linked
 
-**Score:**
+A cut that drafts the audience note as solved tasks (`Get-ReleaseNoteTaskLink`) now writes the tasks it
+drafted from beside the note as `<X.Y.Z>.tasks.json`. The release-notes gate (`open-pr -GatesOnly
+-NoteTreeOnly`, through `check-release-note-form.ps1`) refuses the note under `[TASKS]` until it links
+every one, and names each missing URL. Rewording the items is still fine. Dropping a link is not. The
+cut-release and prepare-release pages now say to brief a writer with that file.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A store that publishes task-form release notes can no longer ship a note that lost its task links. A
+consumer's v3.1.0 went out twice that way. The gate stops it before the release-notes commit, and the
+cut's follow-up lines name the file to brief a writer with.
+
+**Score:** 3
 
 #### Pull Request
 

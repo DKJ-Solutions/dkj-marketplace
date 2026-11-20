@@ -684,6 +684,13 @@ the last two only checkable with the live-push record `live-preflight` writes (s
 [`live-preflight` skill](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-subagents/dkj-subagents-shopify/skills/live-preflight/SKILL.md#the-live-push-record-it-writes-for-the-cut-2570-2586)),
 which is why a store answering this seam passes that record to every cut.
 
+**Every task the cut drafted keeps its link in the published note, and that is counted rather than
+trusted** ([#4346](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4346)). The cut writes the
+tasks beside the note as `<X.Y.Z>.tasks.json`, and the release-notes gate (`open-pr -GatesOnly
+-NoteTreeOnly`) refuses the note until it links every one. A writer finishing the note is briefed with
+that file. A store's note went out twice without its links, once because the draft was replaced with
+prose and once because a writer was told to take the links from the entries, which carry none.
+
 **In a Git-connected store, going live is merging the promotion PR** (trunk into the deploy branch,
 `Get-ShopifyLiveDeployBranch`; #2998). That merge is a person's act and waits for the owner's word exactly
 as a push does, so "live" in the go-live block and in the owner's three rules means *in a merged

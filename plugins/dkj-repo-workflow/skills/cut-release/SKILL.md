@@ -400,6 +400,13 @@ a release for a missing timestamp would be ceremony rather than a guard.
    those paths is held. Everything left out of a task-form or entries-form section is named, and why, in
    a `<!-- LEFT OUT ... -->` comment — see the live-push record below.
 
+   **Every solved task keeps its link, and that is counted** (#4346). The cut writes the tasks it drafted
+   from beside the note as `<X.Y.Z>.tasks.json`, and step 4's gate refuses the note under `[TASKS]` until
+   it carries every one of those links. Rewrite each item's words freely, but never replace the drafted
+   items with prose that drops a link. **A writer subagent is briefed with that file**, never with "take
+   the links from the entries": the entries carry no task links. Twice a store's note went out without its
+   links that way.
+
    **The note's FORM is this plugin's, and one seam changes it**
    ([#2802](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2802)). The form is what
    `cut-release.ps1` drafts: the title line, the `Date` / `Type` / `For whom` labels, and the section
@@ -585,7 +592,8 @@ a release for a missing timestamp would be ceremony rather than a guard.
    being finished here and the one the next writer copies. **Where `dkj-repo-workflow-dkj` is enabled, the same run
    also holds the note's `h1`-`h3` headings to the brand book's rules 7 and 8** (#3752): no code span, and
    five words at most. It prints those under `[HEADING]`, apart from form drift. A repo outside DKJ-Solutions
-   is not held to them. To check another note, pass `-Path <note>`:
+   is not held to them. **Where the cut wrote a task record beside the note, the same run also refuses a
+   missing task link** (#4346), under `[TASKS]`, naming each missing URL. To check another note, pass `-Path <note>`:
 
    ```powershell
    powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/lint/check-release-note-form.ps1" -Path <note root>/<dir>/<X.Y.Z>.md
