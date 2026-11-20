@@ -817,6 +817,15 @@ foreach ($c in $clearCases) {
 Assert-True ($shipRaw -match 'Get-ShipClearanceVerdict -Pr \$pr') 'ship-pr.ps1 asks Get-ShipClearanceVerdict before the wait'
 Assert-True ($shipRaw -match '(?s)if \(-not \$clearance\.Clearable\) \{\s*Write-Host "  So leave this one running and carry on in a SECOND terminal') `
     'ship-pr.ps1 prints the second-terminal advice only where the clearance was withheld'
+# -HandOff (issue #4355): a Clearable verdict exits 0 BEFORE the CI watch; a withheld one never exits.
+Assert-True ($shipRaw -match '\[switch\]\$HandOff') 'ship-pr.ps1 declares -HandOff'
+$handOffAt = $shipRaw.IndexOf('if ($HandOff -and $clearance.Clearable) {')
+$handOffEnd = if ($handOffAt -ge 0) { $shipRaw.IndexOf('if ($HandOff) {', $handOffAt) } else { -1 }
+$handOffBlock = if ($handOffEnd -gt $handOffAt) { $shipRaw.Substring($handOffAt, $handOffEnd - $handOffAt) } else { '' }
+Assert-True ($handOffBlock -match 'exit 0') 'ship-pr.ps1 -HandOff with a clearable verdict exits 0'
+Assert-True ($handOffAt -ge 0 -and $handOffAt -lt $shipRaw.IndexOf('gh pr checks', $handOffAt)) 'ship-pr.ps1 -HandOff exits before the CI watch'
+$notHandingBlock = if ($handOffEnd -ge 0) { $shipRaw.Substring($handOffEnd, 400) } else { '' }
+Assert-True ($notHandingBlock -match 'NOT handing off' -and $notHandingBlock -notmatch 'exit') 'ship-pr.ps1 -HandOff with a withheld clearance says so and does not exit'
 
 Write-Host ''
 Write-Host 'Get-ShipClearanceForecast -- will the run become clearable, said before the gates? (issue #3554)' -ForegroundColor Cyan

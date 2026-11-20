@@ -2,7 +2,59 @@
 
 ## [Unreleased]
 
-**13 / 13 minor entries** <!-- pending-tally -->
+**15 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4346-release-notes-every-task-linked · 20261120-110808Z
+
+A cut that drafts the audience note as solved tasks (`Get-ReleaseNoteTaskLink`) now writes the tasks it
+drafted from beside the note as `<X.Y.Z>.tasks.json`. The release-notes gate (`open-pr -GatesOnly
+-NoteTreeOnly`, through `check-release-note-form.ps1`) refuses the note under `[TASKS]` until it links
+every one, and names each missing URL. Rewording the items is still fine. Dropping a link is not. The
+cut-release and prepare-release pages now say to brief a writer with that file.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A store that publishes task-form release notes can no longer ship a note that lost its task links. A
+consumer's v3.1.0 went out twice that way. The gate stops it before the release-notes commit, and the
+cut's follow-up lines name the file to brief a writer with.
+
+**Score:** 3
+
+#### Pull Request
+
+Audience release notes: every resolved Asana task linked, counted before the commit
+
+Plugins: dkj-repo-workflow, dkj-repo-workflow-bwj
+
+[PR #4364](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4364)
+
+---
+
+### DEPLOY: feat/4355-ship-pr-handoff · 20261120-105817Z
+
+`ship-pr.ps1` gains `-HandOff`; `issues-sweep` step 5 uses it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+An `issues-sweep` no longer waits out CI after each shipped issue: `ship-pr -HandOff` leaves an armed PR
+to merge-on-green and the sweep goes on to the next issue in the same turn. Where the PR cannot be handed
+off safely, ship-pr says why and waits as before.
+
+**Score:** 4
+
+#### Pull Request
+
+ship-pr -HandOff: a sweep hands an armed PR to merge-on-green and goes on
+
+Plugins: dkj-repo-workflow
+
+[PR #4358](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4358)
+
+---
 
 ### DEPLOY: docs/4348-bwj-out-of-repo-fix-closes · 20261120-104622Z
 
