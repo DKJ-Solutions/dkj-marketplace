@@ -32,6 +32,11 @@ spell the plugin cache path out.
 **Where `Get-ShopifyLiveDeployBranch` names a branch, the live theme deploys from it** and steps 3, 6
 and 8 change -- see [the Git-connected mode](#the-git-connected-mode-2998-3009) below.
 
+**A refusal or surprise here is filed when it happens, with its measured cost.** A cause in this
+repo is filed in this repo, and a cause in the shared scripts goes inbound to the plugin's source. The
+rule in full is in `dkj-repo-workflow`'s `cut-release` skill, *A blocker during a release is filed the
+moment it happens* (#4345).
+
 ## The app deploy (#3174)
 
 **Where `Get-ShopifyAppRoot` names the folder of a Shopify app the store also ships** (a discount
