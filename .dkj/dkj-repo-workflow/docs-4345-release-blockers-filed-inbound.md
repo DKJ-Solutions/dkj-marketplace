@@ -39,19 +39,39 @@
 
 ### PLAN
 
+#### One source, three pointers
+
+The rule is written once, as a section of `cut-release` (the release checklist every repo has).
+`prepare-release`, `live-preflight` and `ship-pr` each carry a short pointer to it, because those are
+the pages a release loads at the moment a blocker happens. The promotion has no skill of its own, so
+`cut-release`'s section names it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `cut-release` SKILL.md: new section *A blocker during a release is filed the moment it happens*,
+  covering when, where (local vs inbound, decided by where the cause sits), and why (#4143, #4144).
+- [x] Pointers in `prepare-release` (bwj), `live-preflight` (shopify) and `ship-pr`.
 
 ### TEST
 
+- [x] `ship-pr`'s gate (integrity, links, suites) runs on the PR.
+
 ### DEPLOY: docs/4345-release-blockers-filed-inbound
 
-**Score:**
+The release skills now say that every blocker or surprise during a release is filed the moment it
+happens, with its measured cost (round trips, manual steps, minutes). It is not saved for the end of the
+cut. A cause in the shared scripts goes inbound to the plugin's source, even when it surfaced in a
+consumer. The rule sits in `cut-release`, and `prepare-release`, `live-preflight` and `ship-pr` point to
+it. It was moved out of a per-machine memory note under #4341.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer running a release is told to file a shared-script blocker inbound right away. Before this,
+such a blocker reached the source days later, as #4143 and #4144 did after a v3.1.0 cut.
+
+**Score:** 2
 
 #### Pull Request
 
