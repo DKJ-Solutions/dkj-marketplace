@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Closes #4371. Points 1-3 of the issue's proposed shape are built. Point 4 (a scheduled daily sweep) was
+optional, and is covered by the skill's manual recount mode instead of a schedule.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `count-words.ps1` in a new lifehub skill `dossier-wordcount`: the one counting rule
+- [x] The skill page: settings from the owner's Notion (`Instellingen dossier-wordcount`), mode 1 after a write, mode 2 recount
+- [x] Ian's manual and agent def: a dossier write ends with its recount
+- [x] `inbox-sweep`, `ai-radar` and `agenda` call it after a dossier write
 
 ### TEST
 
+- [x] `scripts/tests/dossier-wordcount.tests.ps1`: 17 asserts green
+- [x] `check-plugin-integrity.ps1`: 0 errors
+
 ### DEPLOY: feat/4371-dossier-wordcount
 
-**Score:**
+A new lifehub skill, `dossier-wordcount`, with one shared counter script and its test suite. Ian's
+manual and agent def, and the three skills that write into a dossier, now end a dossier write with it.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A dossier's word-count property in a life hub now follows the page: Ian, `inbox-sweep`, `ai-radar` and
+`agenda` recount it after every write into a dossier, and name a page that crosses the owner's split
+threshold. The property name and the threshold come from a settings page in the owner's Notion
+(`Instellingen dossier-wordcount`), which the owner creates once. A recount mode catches edits made by
+hand in Notion.
+
+**Score:** 3
 
 #### Pull Request
 
