@@ -2046,6 +2046,30 @@ $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Pa
 Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'takes an awaiting-\* label') 'run: and a park without a reason'
 
 Write-Host ''
+# --- an extension that closes an act-only issue refuses its park (#4340) ---
+$bwjIds = @('dkj-repo-workflow@dkj-marketplace', 'dkj-repo-workflow-bwj@dkj-marketplace')
+Assert-True (Test-ParkClosedByExtension -Label 'awaiting-action-dev' -EnabledIds $bwjIds) 'awaiting-action-dev in a repo enabling the BWJ extension is a close, not a park'
+Assert-True (-not (Test-ParkClosedByExtension -Label 'awaiting-action-dev' -EnabledIds @('dkj-repo-workflow@dkj-marketplace', 'dkj-repo-workflow-dkj@dkj-marketplace'))) 'without that extension the core parks it'
+Assert-True (-not (Test-ParkClosedByExtension -Label 'awaiting-decision-dev' -EnabledIds $bwjIds)) 'every other label parks, extension or not'
+Assert-True (-not (Test-ParkClosedByExtension -Label 'awaiting-action-dev' -EnabledIds @()) -and -not (Test-ParkClosedByExtension -Label 'awaiting-action-dev' -EnabledIds $null)) 'no enabled ids parks'
+Assert-True (-not (Test-ParkClosedByExtension -Label 'awaiting-action-dev' -EnabledIds @('dkj-repo-workflow-bwj-extra@x'))) 'a longer name is not the extension'
+$bwjRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("claim-bwj-" + [guid]::NewGuid().ToString('N'))
+try {
+    New-Item -ItemType Directory -Path (Join-Path $bwjRoot '.claude') -Force | Out-Null
+    & git -C $bwjRoot init -q 2>$null | Out-Null
+    Assert-True ($LASTEXITCODE -eq 0) 'fixture: the BWJ fixture repo initialises'
+    Set-Content -LiteralPath (Join-Path $bwjRoot '.claude\settings.json') -Encoding ascii -Value '{ "enabledPlugins": { "dkj-repo-workflow@dkj-marketplace": true, "dkj-repo-workflow-bwj@dkj-marketplace": true } }'
+    $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-action-dev -Reason 'the owner''s live push' -RootOverride $bwjRoot 2>&1 | Out-String
+    Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'CLOSES an act-only issue' -and $out -match 'does any step still change a file' -and $out -match '-StillChangesCode') 'run: a BWJ repo refuses an act-only park before anything is read, and names the question and both routes'
+} finally {
+    Remove-Item -LiteralPath $bwjRoot -Recurse -Force -ErrorAction SilentlyContinue
+}
+$out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-decision-dev -Reason 'x' -StillChangesCode 2>&1 | Out-String
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-StillChangesCode only answers a -Park awaiting-action-dev') 'run: -StillChangesCode on another label refuses'
+$out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -StillChangesCode 2>&1 | Out-String
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-StillChangesCode only answers') 'run: and without a park at all'
+
+Write-Host ''
 # --- a -dev park names its decider (#4208) ---
 Assert-True ((Format-ParkComment -Reason 'the choice of X' -Decider 'alejandro-x') -ceq 'Parked by a sweep: waiting on the choice of X. Decider: @alejandro-x.') 'a decider is a sentence after the clause'
 Assert-True ((Format-ParkComment -Reason 'the choice of X' -Decider '@alejandro-x') -ceq 'Parked by a sweep: waiting on the choice of X. Decider: @alejandro-x.') 'with or without its @'

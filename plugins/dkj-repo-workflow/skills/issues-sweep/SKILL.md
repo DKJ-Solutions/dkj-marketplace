@@ -80,8 +80,9 @@ workable but too large for one sweep turn is parked as `awaiting-session-dev`, w
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/claim-issue.ps1" <n> -Tag -Park <awaiting-label> -Reason "<what>"
 ```
 
-Which label, what `<what>` must name (`#<n>` or a branch first, for `awaiting-pull`), `-Decider`, and why
-`-SkipIssue` is not a park: [`parking.md`](parking.md). **A verdict that settles an issue is building
+Which label, what `<what>` must name (`#<n>` or a branch first, for `awaiting-pull`), `-Decider`, why
+`-SkipIssue` is not a park, and why an act-only issue in a repo enabling `dkj-repo-workflow-bwj` is closed
+rather than parked (#4340): [`parking.md`](parking.md). **A verdict that settles an issue is building
 work**, so it starts at step 2.
 
 ### 2. Claim it

@@ -2,7 +2,64 @@
 
 ## [Unreleased]
 
-**6 / 6 minor entries** <!-- pending-tally -->
+**8 / 8 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4341-no-auto-memory-notes · 20261120-094036Z
+
+The constitution's rule on lessons learned went from "secured in the docs, not just in memory" to
+**never in memory**: no auto-memory notes at all, because a note lives on one machine under one
+account and no other person on the team ever reads it. That was measured the same day on a consumer,
+where a filing rule the owner decided in a memory note never reached a colleague's sessions. The rule
+names the switch, `"autoMemoryEnabled": false` in `.claude/settings.json`, and this repo now sets it.
+The technical writer's manual and Chris's lens now say the same.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer reading the next release's constitution is told to keep no memory notes and how to switch
+auto memory off. Until `adopt-dkj-repo-workflow` places the key (still open on #4341), a consumer sets
+it by hand.
+
+**Score:** 2
+
+#### Pull Request
+
+No auto-memory notes: lessons go upstream or into the repo lens
+
+Plugins: dkj-repo-workflow, dkj-subagents-developers
+
+[PR #4349](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4349)
+
+---
+
+### DEPLOY: fix/4340-bwj-sweep-closes-act-only · 20261120-092809Z
+
+`claim-issue -Park awaiting-action-dev` now refuses in a repo whose own settings enable
+`dkj-repo-workflow-bwj`. That extension closes an act-only issue as completed with a research block
+instead of parking it (#3059, #3062), and its sweeps kept parking such issues anyway (four measured on
+smartwatchbanden). The refusal asks the extension's question, *does any step still change a file in the
+repo?*, and prints the close route for a no. For a yes, `-StillChangesCode` lets the park through.
+`issues-sweep`'s `parking.md` now gives the rule its own section ([#4340](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4340)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A BWJ sweep closes what the extension says to close, so the open issues and the In Progress column show
+only work that can still be built. Repos without the extension see no change.
+
+**Score:** 3
+
+#### Pull Request
+
+issues-sweep closes act-only issues where the BWJ extension says so
+
+Plugins: dkj-repo-workflow
+
+[PR #4352](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4352)
+
+---
 
 ### DEPLOY: fix/4339-bwj-file-only-repo-changing-work · 20261120-091520Z
 

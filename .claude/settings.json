@@ -1,4 +1,5 @@
 {
+  "autoMemoryEnabled": false,
   "env": {
     "DKJ_RUN_STEP_LOG": "1",
     "DKJ_STOPWATCH_SHARE": "1"
