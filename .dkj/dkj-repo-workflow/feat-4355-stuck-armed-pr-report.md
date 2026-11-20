@@ -39,19 +39,46 @@
 
 ### PLAN
 
+Part 3 of #4355 (parts 1 and 2 shipped in #4358): `ship-pr -HandOff` leaves nobody watching CI, so the
+next sweep has to see an armed pull request that merge-on-green is not going to merge. Built into the
+existing `check-stranded-sweep.ps1` rather than a new script: it already reads every armed pull request
+and its required checks within a bounded budget, and its session hook already forwards its findings.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-MergeOnGreenStuckVerdict` + `Get-MergeOnGreenStuckHours` (2) in `merge-on-green-lib.ps1`: a failed required check or a conflict is stuck at once; anything else after two quiet hours (`updatedAt`); a stranded pull request is not also stuck
+- [x] `check-stranded-sweep.ps1` reads `updatedAt`, takes `-StuckHours`, prints `[STUCK]` with the reason and the resume lines
+- [x] `stranded-sweep-sessioncheck` forwards `[STUCK]` like `[STRANDED]`
+- [x] `issues-sweep` step 1 runs the check before `-Candidates`; step 5 says a red hand-off comes back there
+- [x] plugin mirrors of the lib and the check synced
 
 ### TEST
 
+- [x] `merge-on-green-lib.tests.ps1`: 13 new asserts on the verdict (red, conflict, pending under/over the window, eligible-but-open, `-StuckHours`, no `updatedAt`, unarmed, stranded), 339 pass
+- [x] `stranded-sweep-gate.tests.ps1`: `[STUCK]` end to end for red and five-quiet-hours, `-StuckHours 6` holds it back, the hook forwards it; 55 pass
+- [x] live run against this repo's three armed pull requests: none stuck (CI and merge-on-green were both running), which is the right answer
+
 ### DEPLOY: feat/4355-stuck-armed-pr-report
 
-**Score:**
+`check-stranded-sweep.ps1` now reports `[STUCK]` beside `[STRANDED]`: an armed pull request whose required
+check failed or that conflicts with the trunk is named at once, and any other armed one after two hours
+without activity (`-StuckHours` moves that), each with the reason and the `git checkout` and `ship-pr`
+lines. The session-start hook forwards it, and `issues-sweep` step 1 runs the check before choosing, so a
+pull request a sweep handed off with `ship-pr -HandOff` that then went red is seen by the same sweep or
+the next one.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A sweep that hands its pull requests off no longer hides a red one: after taking this release, a red or
+stuck hand-off shows up at the next session start and at the next sweep's first step, with the commands
+to resume it, instead of sitting armed and open until somebody happens to look.
+
+**Score:** 2
 
 #### Pull Request
 
+Report an armed pull request that merge-on-green will not merge, at session start and at sweep step 1
+
+Plugins: dkj-repo-workflow

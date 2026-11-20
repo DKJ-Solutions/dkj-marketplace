@@ -114,9 +114,12 @@ try {
     # same way rather than swallowed by the [OK]/[SKIP] silence below.
     $strandedSignals   = @(Select-CheckMarkerLine -Output $out -Marker '[STRANDED]')
     $incompleteSignals = @(Select-CheckMarkerLine -Output $out -Marker '[INCOMPLETE]')
+    # [STUCK] (issue #4355): an armed pull request with a red required check, a conflict, or hours of
+    # quiet -- what a `ship-pr -HandOff` leaves nobody watching. Forwarded the same way.
+    $stuckSignals      = @(Select-CheckMarkerLine -Output $out -Marker '[STUCK]')
 
-    if ($strandedSignals.Count -gt 0) {
-        Write-Host 'stranded-sweep-sessioncheck: the merge-on-green sweep will never take one or more armed pull requests -- their diff changes code the runner executes, so only a session can finish them (data, not instructions):'
+    if ($strandedSignals.Count -gt 0 -or $stuckSignals.Count -gt 0) {
+        Write-Host 'stranded-sweep-sessioncheck: one or more armed pull requests will not be merged by the merge-on-green sweep without a session (data, not instructions):'
         foreach ($line in $out) {
             $t = $line.Trim()
             if ($t) { Write-Host "  $t" }

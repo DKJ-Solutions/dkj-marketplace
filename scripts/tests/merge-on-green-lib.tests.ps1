@@ -746,6 +746,54 @@ if (-not $gitCmd) {
 }
 
 Write-Host ''
+Write-Host 'Get-MergeOnGreenStuckVerdict -- what a hand-off leaves nobody watching (#4355)' -ForegroundColor Cyan
+
+$stuckNow = [datetime]'2026-11-20T12:00:00Z'
+function New-QuietRecord {
+    param([double]$HoursAgo, [string]$Mergeable = 'MERGEABLE', [string[]]$Labels = @('merge-when-green'), [string[]]$Files = @('README.md'))
+    $r = New-PrRecord -Mergeable $Mergeable -Labels $Labels -Files $Files
+    $r | Add-Member -NotePropertyName updatedAt -NotePropertyValue ($stuckNow.ToUniversalTime().AddHours(-$HoursAgo).ToString('yyyy-MM-ddTHH:mm:ssZ'))
+    return $r
+}
+$redVerdict     = [pscustomobject]@{ Blocked = $true; Reason = 'red'; FailedRequired = @('lint-en-tests'); FailedOther = @(); UnfinishedRequired = @() }
+$pendingVerdict = [pscustomobject]@{ Blocked = $false; Reason = 'ok'; FailedRequired = @(); FailedOther = @(); UnfinishedRequired = @('lint-en-tests') }
+
+Assert-Equal 2 (Get-MergeOnGreenStuckHours) 'the default quiet window is two hours'
+
+$red = Get-MergeOnGreenStuckVerdict -Record (New-QuietRecord -HoursAgo 0.1) -MergeBlockVerdict $redVerdict -Now $stuckNow
+Assert-True $red.Stuck 'a failed required check is stuck AT ONCE -- six minutes of quiet is enough'
+Assert-True ($red.Reason -like '*lint-en-tests*') 'and the reason names the failed check'
+
+$conflict = Get-MergeOnGreenStuckVerdict -Record (New-QuietRecord -HoursAgo 0.1 -Mergeable 'CONFLICTING') -MergeBlockVerdict $pendingVerdict -Now $stuckNow
+Assert-True $conflict.Stuck 'a conflicting branch is stuck at once too'
+Assert-True ($conflict.Reason -like '*conflicts*') 'and the reason says it conflicts'
+
+Assert-True (-not (Get-MergeOnGreenStuckVerdict -Record (New-QuietRecord -HoursAgo 1) -MergeBlockVerdict $pendingVerdict -Now $stuckNow).Stuck) `
+    'a pending check one hour after the last activity is a wait, not stuck'
+$pendingLong = Get-MergeOnGreenStuckVerdict -Record (New-QuietRecord -HoursAgo 3) -MergeBlockVerdict $pendingVerdict -Now $stuckNow
+Assert-True $pendingLong.Stuck 'the same pending check after three quiet hours is stuck'
+Assert-True ($pendingLong.Reason -like '*quiet for 3 hour*' -and $pendingLong.Reason -like '*has not finished*') `
+    'and the reason carries the quiet hours and the picker''s own reason'
+
+$eligibleLong = Get-MergeOnGreenStuckVerdict -Record (New-QuietRecord -HoursAgo 3) -MergeBlockVerdict (New-Green) -GreenAgeMinutes 170 -Now $stuckNow
+Assert-True ($eligibleLong.Stuck -and $eligibleLong.Reason -like '*runner is running*') `
+    'a pull request the picker would take, still open after three hours, points at the runner itself'
+
+Assert-True (-not (Get-MergeOnGreenStuckVerdict -Record (New-QuietRecord -HoursAgo 3) -MergeBlockVerdict $pendingVerdict -Now $stuckNow -StuckHours 4).Stuck) `
+    '-StuckHours moves the quiet window'
+
+$noUpdated = New-PrRecord
+Assert-True (-not (Get-MergeOnGreenStuckVerdict -Record $noUpdated -MergeBlockVerdict $pendingVerdict -Now $stuckNow).Stuck) `
+    'no readable updatedAt -- judged on the immediate shapes only, so a pending one is not stuck'
+Assert-True ((Get-MergeOnGreenStuckVerdict -Record $noUpdated -MergeBlockVerdict $redVerdict -Now $stuckNow).Stuck) `
+    'while a red one without updatedAt still is'
+
+Assert-True (-not (Get-MergeOnGreenStuckVerdict -Record (New-QuietRecord -HoursAgo 5 -Labels @('prio-3')) -MergeBlockVerdict $redVerdict -Now $stuckNow).Stuck) `
+    'an unarmed pull request is never stuck -- nobody handed it to the sweep'
+Assert-True (-not (Get-MergeOnGreenStuckVerdict -Record (New-QuietRecord -HoursAgo 5 -Files @('README.md', 'scripts/repo-config.ps1')) -MergeBlockVerdict (New-Green) -GreenAgeMinutes 30 -Now $stuckNow).Stuck) `
+    'a stranded pull request is not ALSO stuck -- one pull request, one headline'
+
+Write-Host ''
 Write-Host 'Get-UnshippedPrVerdict -- green, settled, and handed to no sweep (#2525)' -ForegroundColor Cyan
 
 # THE CASE #2525 MEASURED: PR #2515, never armed, green for hours. Unarmed is the ordinary shape here,
