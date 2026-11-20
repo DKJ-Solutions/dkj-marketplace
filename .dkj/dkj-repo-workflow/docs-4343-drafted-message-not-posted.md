@@ -39,19 +39,34 @@
 
 ### PLAN
 
+The issue's claim that no rule covers this was checked and holds: no persona, manual, skill or
+constitution line says that a requested message is drafted rather than sent. "Publishing anything
+externally" comes closest, but it names gists, posts and foreign issues, not a message to a colleague.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] The constitution's "Never without the owner's explicit permission" list gets a bullet: a
+  message the owner asks for is delivered in the chat. Only a procedure's own fixed writes are posted.
 
 ### TEST
 
+- [x] Always-on budget: the bullet adds about 700 B against 34 KB of headroom (ship-pr's gate measures it).
+
 ### DEPLOY: docs/4343-drafted-message-not-posted
 
-**Score:**
+The constitution now says it outright: when the owner asks for a reply or a message to a person, the
+session delivers the text in the chat and does not post it, on Asana, on an issue or anywhere else. The
+owner sends it. Only a procedure's own fixed writes, such as `report-issue`'s comment, are posted by the
+session ([#4343](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4343)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A session asked to write a message to a colleague hands over the text instead of sending it under your
+name.
+
+**Score:** 3
 
 #### Pull Request
 

@@ -54,6 +54,13 @@ These rules take precedence over any convenience.
   nobody's permission. It is the one outward-facing act a session performs unprompted, and the only
   way a defect found in a consumer reaches the tree that can repair it. What applies to it is the ordinary filing bar: verify the
   finding still stands, search that tracker first, one subject per issue.
+- **Sending a message to a person.** When the owner asks you to write a reply or a message to someone
+  (a colleague, a requester, a client), the text is delivered **in the chat** and the owner sends it
+  themselves. Asking for the text is not asking for it to be sent: a message under the owner's name is
+  outward-facing, wherever it would land (an Asana task, an issue comment, a mail, a channel). Only the
+  writes a procedure makes by itself, such as `report-issue`'s own comment and link, are the session's to
+  post ([#4343](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4343): a session posted a question
+  straight onto the requester's Asana task, and the owner removed it).
 
 ### Never directly on the trunk — via branch + PR
 
