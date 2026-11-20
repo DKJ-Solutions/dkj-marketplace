@@ -2175,7 +2175,7 @@ foreach ($n in $ciLoads.Keys) {
     $dupes = @($ciLoads[$n][1] | ForEach-Object { $ciLibFns[$_] } | Where-Object { $own -contains $_ } | Sort-Object -Unique)
     Assert-Equal '' ($dupes -join ', ') "$n.ps1 defines none of the functions its libs define"
 }
-Assert-True ([bool](Get-Command Read-AsanaTaskScore -ErrorAction SilentlyContinue)) 'the prio script''s own task read is Read-AsanaTaskScore'
+Assert-True (Test-Path -LiteralPath 'function:Read-AsanaTaskScore') 'the prio script''s own task read is Read-AsanaTaskScore'
 Assert-True ([System.IO.File]::ReadAllText($plTemplate) -notmatch 'function Get-AsanaTaskState') 'and it no longer shadows the lib''s Get-AsanaTaskState'
 # #3070: the live message escapes its html_text by the closed message's rule, copied because the template ships standalone.
 Assert-Equal (Get-FunctionSourceText -Path $cmTemplate -Name 'ConvertTo-AsanaXmlText') (Get-FunctionSourceText -Path (Join-Path $PluginRoot 'scripts\lib\live-message-rules.ps1') -Name 'ConvertTo-AsanaXmlText') `
