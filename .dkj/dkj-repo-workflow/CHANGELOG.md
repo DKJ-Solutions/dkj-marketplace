@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**8 / 8 minor entries** <!-- pending-tally -->
+**9 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4337-sweep-author-filter · 20261120-094923Z
+
+`claim-issue.ps1 -Candidates` and `Get-SweepCandidates` gain `-Author`; the sweep pages name it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a repo two people share, `issues-sweep` can now sweep only the issues your own sessions filed:
+`claim-issue.ps1 -Candidates -Author @me` reads every other issue as `skipped`, and
+`issues-sweep-decisions` walks only your own decisions with `--author @me`. Without the flag nothing changes.
+
+**Score:** 3
+
+#### Pull Request
+
+issues-sweep: an -Author filter on claim-issue -Candidates
+
+Plugins: dkj-repo-workflow
+
+[PR #4353](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4353)
+
+---
 
 ### DEPLOY: docs/4341-no-auto-memory-notes · 20261120-094036Z
 
