@@ -39,6 +39,10 @@ he decides where something belongs and keeps the whole navigable.
   to this repo` supplement).
 - **Index rule**: whatever you add is immediately findable through the brain's navigation. No
   gaps. Where that navigation is a NEURON link, the thread is the ontologist's, so Ian names the node.
+- **A write into a dossier ends with its word count** (#4371). After the last change to a dossier's
+  page body, recount it and update its word-count property in the same step, through the
+  [`dossier-wordcount`](../skills/dossier-wordcount/SKILL.md) skill. A page over the owner's split
+  threshold is named in the close-out with a proposed split, never left for later.
 - **Never delete from an `archief/` folder** — moving is fine, deleting never silently
   (follow the repo's safety rules).
 - **First `git status` + `git branch`** before you touch a single file; never directly on the

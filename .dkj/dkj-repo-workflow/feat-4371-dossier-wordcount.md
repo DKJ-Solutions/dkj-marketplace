@@ -1,4 +1,4 @@
-## feat/4371-dossier-wordcount
+﻿## feat/4371-dossier-wordcount
 
 > **How this file is read.** A step is `- [ ]` until it is resolved -- `- [x]` done, or
 > `- [~]` dropped with the reason, which exists so nobody ticks a box for work they did not do.
@@ -51,7 +51,7 @@ optional, and is covered by the skill's manual recount mode instead of a schedul
 
 ### TEST
 
-- [x] `scripts/tests/dossier-wordcount.tests.ps1`: 17 asserts green
+- [x] `scripts/tests/dossier-wordcount.tests.ps1`: 24 asserts green, after Victor's review (prose comparisons were eaten as tags) and Edith's copy edit
 - [x] `check-plugin-integrity.ps1`: 0 errors
 
 ### DEPLOY: feat/4371-dossier-wordcount
