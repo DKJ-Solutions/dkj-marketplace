@@ -113,6 +113,16 @@ parameters is the [`issues-sweep`](../issues-sweep/SKILL.md) skill; what they do
   that never ran `-Tag` leaves only its branch. There the check is **who wrote the branch**: exactly one
   branch on origin, and every commit on it off the trunk authored under one of this checkout's names.
   One foreign author refuses, and so does an author list that could not be read.
+- **`-ApprovedBy "<who, when or where>"`** (default route only) -- a takeover a **person approved**
+  (#4344), e.g. `-ApprovedBy "maikel-bwj, 2026-11-20 in chat"`. It turns the one refusal "somebody else holds
+  it" (a foreign assignee or a co-assignment) into a takeover that **removes the previous assignee in the same
+  step**: one `gh issue edit` adds this account and removes the others, one comment says
+  `Taken over from @<prev> by @<me> -- approved by <text>.`, and the read-back confirms the previous
+  assignee is gone (a leftover is a `[WARNING]` with the line that removes it). It records the talk and does
+  not replace it: use it only after the approval was given, never to get past a refusal. A closed issue, a pull
+  request and a missing account stay refused; an unassigned or already-yours issue claims as usual. It is
+  refused beside `-Tag`, `-Verify`, `-Release`, `-TakeOver`, `-Parked` and `-Park`, and when empty; `-DryRun`
+  prints what it would do. Not `-TakeOver`, which moves this account's own tag claim between machines.
 - **`-Parked`** (with `-TakeOver`) -- also move a **co-owner's** claim, and only when the issue carries
   `awaiting-review-dev` (#3846). That label says the builder parked the branch for the owner's look, so
   nobody is still working on it, which is the case the colleague refusal guards (#2207).

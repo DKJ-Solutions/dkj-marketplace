@@ -2095,6 +2095,40 @@ $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Pa
 Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-Decider takes a GitHub login') 'run: so does a decider that is not a login'
 
 Write-Host ''
+# --- an approved takeover (#4344) ---
+$vTaken  = Get-ClaimVerdict -Account 'me' -State 'OPEN' -Assignees @('prev') -Url 'https://github.com/o/r/issues/5'
+$vCo     = Get-ClaimVerdict -Account 'me' -State 'OPEN' -Assignees @('me', 'prev') -Url 'https://github.com/o/r/issues/5'
+$vClosed = Get-ClaimVerdict -Account 'me' -State 'CLOSED' -Assignees @('prev') -Url 'https://github.com/o/r/issues/5'
+$vPr     = Get-ClaimVerdict -Account 'me' -State 'OPEN' -Assignees @('prev') -Url 'https://github.com/o/r/pull/5'
+$vNoAcct = Get-ClaimVerdict -Account '' -State 'OPEN' -Assignees @('prev') -Url 'https://github.com/o/r/issues/5'
+$vFree   = Get-ClaimVerdict -Account 'me' -State 'OPEN' -Assignees @() -Url 'https://github.com/o/r/issues/5'
+$vMine   = Get-ClaimVerdict -Account 'me' -State 'OPEN' -Assignees @('me') -Url 'https://github.com/o/r/issues/5'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vTaken -ApprovedBy 'maikel-bwj, 2026-11-20 in chat') -ceq 'takeover') 'approved: a foreign assignee becomes a takeover'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vCo -ApprovedBy 'x') -ceq 'takeover') 'approved: so does a co-assignment'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vTaken -ApprovedBy '') -ceq 'refuse') 'no approval: the foreign assignee stays refused'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vTaken -ApprovedBy '   ') -ceq 'refuse') 'a whitespace approval is no approval'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vClosed -ApprovedBy 'x') -ceq 'refuse') 'approved: a closed issue stays refused'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vPr -ApprovedBy 'x') -ceq 'refuse') 'approved: a pull request stays refused'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vNoAcct -ApprovedBy 'x') -ceq 'refuse') 'approved: no account stays refused'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vFree -ApprovedBy 'x') -ceq 'claim') 'approved: an unassigned issue is a normal claim'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vMine -ApprovedBy 'x') -ceq 'claim') 'approved: an issue already mine is a normal claim'
+Assert-True ((@($vCo.Others) -join ',') -ceq 'prev') 'the takeover removes the others and never this account'
+$tkComment = Format-TakeoverComment -Previous @('prev', 'second') -Account 'me' -ApprovedBy "maikel-bwj,`n2026-11-20 in chat."
+Assert-True ($tkComment -ceq 'Taken over from @prev, @second by @me -- approved by maikel-bwj, 2026-11-20 in chat.') 'the takeover comment is one line naming both sides and the approval'
+Assert-True ((Format-TakeoverComment -Previous @('@prev') -Account 'me' -ApprovedBy ("a" + [char]27 + "[31mb")) -notmatch [char]27) 'the approval text is stripped of control characters before it is posted'
+Assert-True ((Format-TakeoverComment -Previous @('prev') -Account 'me' -ApprovedBy ('z' * 500)).Length -lt 260) 'a very long approval is cut'
+Assert-True (@(Get-TakeoverRemainders -Previous @('Prev', 'second') -Now @('me', 'prev')).Count -eq 1) 'read-back: a previous assignee still there is found, case-insensitively'
+Assert-True (@(Get-TakeoverRemainders -Previous @('prev') -Now @('me')).Count -eq 0) 'read-back: a complete takeover has no remainders'
+$out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -ApprovedBy '   ' 2>&1 | Out-String
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-ApprovedBy needs the record of the approval' -and $out -match 'nothing was read or written') 'run: an empty -ApprovedBy refuses before anything is read'
+foreach ($beside in @('-Tag', '-Tag -Verify', '-Tag -Release', '-Tag -TakeOver')) {
+    $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 @($beside -split ' ') -ApprovedBy 'x, today' 2>&1 | Out-String
+    Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-ApprovedBy only belongs to the default' -and $out -match 'nothing was read or written') "run: -ApprovedBy beside $beside refuses before anything is read"
+}
+$out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-pull -Reason '#3 to land' -ApprovedBy 'x, today' 2>&1 | Out-String
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-ApprovedBy only belongs to the default') 'run: -ApprovedBy beside -Park refuses'
+
+Write-Host ''
 # --- a readable wait names its blocker (#3962) ---
 Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-pull' -Reason '#123''s pull request -- the tasks run in order') 'awaiting-pull: a #<n> at the start of the clause passes'
 Assert-True (Test-ParkReasonNamesBlocker -Label 'awaiting-pull' -Reason 'feat/3126-x to land') 'awaiting-pull: so does a branch'

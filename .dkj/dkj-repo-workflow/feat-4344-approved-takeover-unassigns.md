@@ -39,19 +39,42 @@
 
 ### PLAN
 
+The issue's premise was checked and holds. The default route refuses an issue assigned to another
+account (`Get-ClaimVerdict`'s 'taken'), and `-TakeOver` only moves this account's own tag claim. The
+guard's intent ("the way past it is talking to whoever holds it, which a flag cannot do") is kept: the
+new flag records that talk and does not replace it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `-ApprovedBy "<who, when or where>"` on the default route: 'taken' (a foreign assignee or a
+  co-assignment) becomes a takeover. One `gh issue edit` adds this account and removes the previous
+  assignee(s), a comment says who approved it, and the read-back warns, with the line to run, if a
+  previous assignee is still there. Refused when empty or beside a tag-mode or park parameter. Closed,
+  pull-request and no-account refusals stay refused. `-DryRun` prints the takeover.
+- [x] Lib: `Get-ClaimTakeoverMode`, `Format-TakeoverComment`, `Get-TakeoverRemainders`; `Get-ClaimVerdict`'s
+  docstring names the valve. Mirrored with `build-shared-scripts.ps1`; the claim-issue skill names the parameter.
 
 ### TEST
 
+- [x] `claim-issue.tests.ps1`: the verdict-to-mode mapping for every code, the comment format, the
+  remainders, and the up-front refusals. 773 passed, 0 failed. The gh write path itself is not run by a
+  test, since no test may reach the tracker.
+
 ### DEPLOY: feat/4344-approved-takeover-unassigns
 
-**Score:**
+`claim-issue <n> -ApprovedBy "<who, when>"` takes over an issue another account holds once a person
+has approved it. It adds you and removes the previous assignee in the same edit, then comments who
+approved it, so the issue never shows two assignees side by side. Without the flag, the refusal stands as before
+([#4344](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4344)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+Taking over a colleague's issue after they said "take it" is now one command that also unassigns them,
+instead of a refusal and two hand edits.
+
+**Score:** 3
 
 #### Pull Request
 
