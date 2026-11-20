@@ -145,6 +145,7 @@ The six steps, stopping on the first failure:
 |---|---|
 | `-Title` | **Accepted and ignored** since [#506](https://github.com/DaveKJohn/claude-code-specialists/issues/506). The PR title comes from the entry's `Branch title` section; passing one here forwards it to `open-pr`, which warns and names the title the entry actually gives. |
 | `-NoMerge` | Open the PR and stop — no CI wait, no merge, no fold. The same as calling `open-pr` directly, but convenient when scripting. |
+| `-HandOff` | Exit right after the clearance line, once the PR is armed and the checkout is on the trunk: merge-on-green merges and fold-on-merge folds it ([#4355](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4355)). Not clearable (or with `-NoMerge`, which arms nothing), it says why and watches CI as usual, so a hand-off never strands a PR. |
 | `-Resolves` | Passed through to `open-pr`: the issues this PR closes, **as a string** (`"331,332"`). Step 6 verifies them. |
 | `-NoResolves` | Passed through to `open-pr`: declare that this PR closes no issue. Needed **once per branch**, not once per command: since [#1912](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1912) `open-pr` records the answer in the PR body, so this script's step 1 — which re-runs `open-pr` — reads it back instead of refusing. |
 | `-SkipLint` | Passed through to `open-pr`: skip the lint gate. An escape valve. |

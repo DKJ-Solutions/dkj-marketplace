@@ -39,19 +39,37 @@
 
 ### PLAN
 
+Issue #4355, parts 1 and 2: a sweep stops sitting through CI once its PR is armed. Part 3 (the next
+sweep reports an armed PR that stays unmerged, e.g. on a red check) stays open on the issue.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `ship-pr.ps1 -HandOff` (and its plugin mirror): at the clearance line, a Clearable verdict closes
+  the CI progress bar, prints the receipt and exits 0; merge-on-green merges and fold-on-merge folds. Not
+  Clearable, it says so and watches CI as before, so a hand-off never strands a PR.
+- [x] `issues-sweep` step 5 ships with `-HandOff` and goes straight to step 7; its close-out lists a
+  handed-off PR as "armed, merges via merge-on-green". `ship-pr` skill page documents the switch.
 
 ### TEST
 
+- [x] `merge-on-green-lib.tests.ps1`: four source-text asserts (switch declared; the Clearable block
+  exits 0 before the CI watch; the not-clearable block does not exit). Green, as are
+  `native-capture.tests.ps1` and `check-plugin-integrity.ps1`.
+- [x] This branch is shipped with `-HandOff` itself, the first live run.
+
 ### DEPLOY: feat/4355-ship-pr-handoff
 
-**Score:**
+`ship-pr.ps1` gains `-HandOff`; `issues-sweep` step 5 uses it.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+An `issues-sweep` no longer waits out CI after each shipped issue: `ship-pr -HandOff` leaves an armed PR
+to merge-on-green and the sweep goes on to the next issue in the same turn. Where the PR cannot be handed
+off safely, ship-pr says why and waits as before.
+
+**Score:** 4
 
 #### Pull Request
 
