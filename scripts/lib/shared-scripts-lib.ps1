@@ -1359,6 +1359,16 @@ function Get-SharedScriptPairs {
             LibOnly = $true
         },
         @{
+            # THE SETTINGS-MEMBER INSERT (issue #4341, extracted from adopt-statusline's #2505 insert). Reads a
+            # settings file as bytes and adds ONE top-level member as text, every other byte kept. Two callers:
+            # adopt-statusline (Part 5) and adopt-auto-memory (Part 6); auto-memory-sessioncheck reads with it.
+            # A leaf apart from Get-DocumentNewline, which every caller loads first.
+            Name    = 'settings-member-lib'
+            Source  = 'scripts\lib\settings-member-lib.ps1'
+            Plugin  = 'dkj-repo-workflow'
+            LibOnly = $true
+        },
+        @{
             # THE DOCUMENT-NEWLINE READING (issue #1832). A leaf with no dependencies of its own, like
             # ref-print-lib and command-probe-lib above, which is what makes it safe for the two libs
             # that dot-source it to load it first. It is mirrored because those two are:
@@ -1778,6 +1788,21 @@ function Get-SharedScriptPairs {
             SkillParamsExempt = @('RootOverride')
             # Timeable with no arguments: the default is a dry run that writes nothing and makes no
             # network call at all.
+            MeasureArgs = @()
+        },
+        @{
+            # The auto-memory switch (issue #4341), Part 6 of adopt-dkj-repo-workflow. Adds
+            # "autoMemoryEnabled": false to the consumer's committed .claude/settings.json, because the
+            # constitution keeps lessons in the docs and the harness writes memory notes by default whatever
+            # the rule says. Strictly additive through settings-member-lib; an existing value is never
+            # replaced. Not refused in the source repo: there is no local original to collide with.
+            Name   = 'adopt-auto-memory'
+            Source = 'scripts\task\adopt-auto-memory.ps1'
+            Plugin = 'dkj-repo-workflow'
+            Skill  = 'adopt-dkj-repo-workflow'
+            # A test points the command at a fixture repo root. A consumer never types it.
+            SkillParamsExempt = @('RootOverride')
+            # Timeable with no arguments: the default is a dry run that writes nothing.
             MeasureArgs = @()
         },
         @{
