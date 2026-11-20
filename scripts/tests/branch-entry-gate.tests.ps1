@@ -184,6 +184,80 @@ try {
     Assert-True ($r.Code -eq 0) 'written: a filled-in entry passes'
     Assert-True ($r.Out -match 'carries a written entry') 'written: and says which file it read'
 
+    # --- A folder beside the document (#4375) ---------------------------------------------------------
+    # The fold removes only the document, so a file this branch adds under '<doc-stem>/' would outlive it.
+    # These need a real git history (the gate reads the branch's diff against the trunk's merge-base), so
+    # each fixture is a repo with a trunk commit and a branch cut from it.
+    Write-Host ''
+    Write-Host 'a folder beside the document'
+
+    function New-SiblingFixture {
+        param([string]$Label, [string[]]$Extra = @(), [string[]]$TrunkExtra = @())
+        $dir = New-Consumer -Label $Label
+        Invoke-FixtureGitIn $dir init -q -b main
+        Invoke-FixtureGitIn $dir config user.email 'fixture@example.invalid'
+        Invoke-FixtureGitIn $dir config user.name 'fixture'
+        Invoke-FixtureGitIn $dir config commit.gpgsign false
+        [System.IO.File]::WriteAllText((Join-Path $dir 'README.md'), 'x')
+        $preRel = (Resolve-BranchFilePath -Kind Deployment -RepoRoot $dir -Branch 'feat/thing') -replace '\\', '/'
+        foreach ($e in $TrunkExtra) {
+            $full = Join-Path $dir ((($preRel -replace '\.md$', '') + '/' + $e) -replace '/', '\')
+            New-Item -ItemType Directory -Path (Split-Path -Parent $full) -Force | Out-Null
+            [System.IO.File]::WriteAllText($full, 'x')
+        }
+        Invoke-FixtureGitIn $dir add -A
+        Invoke-FixtureGitIn $dir commit -q -m 'trunk'
+        Invoke-FixtureGitIn $dir checkout -q -b feat/thing
+        # The document at the PER-BRANCH path every real branch gets, not Set-Entry's shared name: the
+        # folder beside it is named after the document's stem.
+        $entryLines = Format-EntryBlock -Branch 'feat/thing' -Type 'Feat' `
+            -Description 'The thing now does the thing.' -Body 'The thing now does the thing.' `
+            -ImpactRows @([pscustomobject]@{ Tier = 0; Score = 2; Why = 'Maintainers notice it.' })
+        $docRel = $preRel
+        $docFull = Join-Path $dir ($docRel -replace '/', '\')
+        New-Item -ItemType Directory -Path (Split-Path -Parent $docFull) -Force | Out-Null
+        [System.IO.File]::WriteAllText($docFull, (($entryLines -join "`n") + "`n"), (New-Object System.Text.UTF8Encoding($false)))
+        foreach ($e in $Extra) {
+            $full = Join-Path $dir (($docRel -replace '\.md$', '') + '/' + $e)
+            if ($e -like '@*') { $full = Join-Path $dir ($e.Substring(1) -replace '/', '\') }
+            New-Item -ItemType Directory -Path (Split-Path -Parent $full) -Force | Out-Null
+            [System.IO.File]::WriteAllText($full, 'x')
+        }
+        Invoke-FixtureGitIn $dir add -A
+        Invoke-FixtureGitIn $dir commit -q -m 'branch work'
+        return @{ Dir = $dir; DocRel = $docRel }
+    }
+
+    $sib = New-SiblingFixture -Label 'sib-shot' -Extra @('shot.png')
+    $r = Invoke-Gate -Dir $sib.Dir -Branch 'feat/thing'
+    Assert-True ($r.Code -eq 1 -and $r.Out -match '4375' -and $r.Out -match 'shot\.png') 'sibling folder: a branch adding <doc-stem>/shot.png is refused, naming the file and #4375'
+    Assert-True ($r.Out -match 'PR or the issue') 'sibling folder: and says where review evidence belongs'
+
+    $sibDoc = New-SiblingFixture -Label 'sib-doc'
+    $r = Invoke-Gate -Dir $sibDoc.Dir -Branch 'feat/thing'
+    Assert-True ($r.Code -eq 0 -and $r.Out -match 'carries a written entry') 'sibling folder: a branch touching only its document passes'
+
+    $sibOther = New-SiblingFixture -Label 'sib-other' -Extra @('@' + (($sibDoc.DocRel -split '/')[0..(@($sibDoc.DocRel -split '/').Count - 2)] -join '/') + '/other-page.md')
+    $r = Invoke-Gate -Dir $sibOther.Dir -Branch 'feat/thing'
+    Assert-True ($r.Code -eq 0) 'sibling folder: another file in the workflow folder is not refused'
+
+    # Untracked and uncommitted counts too: this is what open-pr's local half judges before the commit.
+    $sibWt = New-SiblingFixture -Label 'sib-wt'
+    $wtFull = Join-Path $sibWt.Dir ((($sibWt.DocRel -replace '\.md$', '') + '/late.png') -replace '/', '\')
+    New-Item -ItemType Directory -Path (Split-Path -Parent $wtFull) -Force | Out-Null
+    [System.IO.File]::WriteAllText($wtFull, 'x')
+    $r = Invoke-Gate -Dir $sibWt.Dir -Branch 'feat/thing'
+    Assert-True ($r.Code -eq 1 -and $r.Out -match 'late\.png') 'sibling folder: an untracked file under the folder is refused too'
+
+    # A deleted path is not refused: the trunk carries the folder, the branch removes it.
+    $sibDel = New-SiblingFixture -Label 'sib-del' -TrunkExtra @('old.png')
+    $oldRel = (($sibDel.DocRel -replace '\.md$', '') + '/old.png')
+    Invoke-FixtureGitIn $sibDel.Dir rm -q --cached $oldRel
+    Invoke-FixtureGitIn $sibDel.Dir commit -q -m 'remove'
+    Remove-Item -LiteralPath (Join-Path $sibDel.Dir ($oldRel -replace '/', '\')) -Force
+    $r = Invoke-Gate -Dir $sibDel.Dir -Branch 'feat/thing'
+    Assert-True ($r.Code -eq 0) 'sibling folder: a path the branch deletes is not refused'
+
     # AN EMPTY SCORE IS NOT AN UNSETTLED ONE, which is worth pinning because it is counter-intuitive and
     # it is what the hand-written gates got wrong. A tier section whose Score line is blank carries no
     # number, so the entry's REACH is tier 0 -- a complete, legitimate answer that owes nothing
@@ -602,6 +676,8 @@ Assert-True ($openPrSrc -match "prTitleFromExemptBranch") `
 # (#4213 widened the same condition to Get-ChangelogMode 'none', where every branch owes no entry.)
 Assert-True ($openPrSrc -match '\$prTitle -and -not \$existingPr -and \(\$changelogModeNone -or \(Get-BranchEntryExemptPrefix') `
     'and only where a PR still has to be named -- a resumed branch keeps its own title, so no git call is spent on one nothing reads'
+Assert-True ($openPrSrc -match 'Get-BranchSiblingFolderFindings -RepoRoot \$repoRoot -EntryRel \$entryRel') `
+    'open-pr runs the same sibling-folder check as the gate, so the local half refuses before the push (#4375)'
 Assert-True ($openPrSrc -match '\$trunkName = Get-BranchTrunkName') `
     'the trunk comes from the shared helper rather than a fourth copy of the seam probe'
 Assert-True ($openPrSrc -match 'if \(Get-PrTitlePrefixFinding -Prefix \$exemptPrefix -TitleWords \$titleWords\) \{ \$exemptPrefix = '''' \}') `

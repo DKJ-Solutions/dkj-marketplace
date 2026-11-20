@@ -1725,6 +1725,17 @@ deletes the file it names - so this is the moment it can still be read. Shipping
         }
     }
 
+    # Sibling-folder gate (#4375): a file this branch adds under '<doc-stem>/', beside its document, would
+    # outlive the fold, which removes only the document. The same function and wording as check-branch-entry
+    # in CI. Not -Force-able: the fold may not widen to clean it, so nothing downstream could.
+    $siblingHits = @(Get-BranchSiblingFolderFindings -RepoRoot $repoRoot -EntryRel $entryRel)
+    if ($siblingHits.Count -gt 0) {
+        $siblingText = @(Get-SiblingFolderRefusalLines -EntryRel $entryRel -Paths $siblingHits)
+        $siblingDetail = (@($siblingText | Select-Object -Skip 1 | ForEach-Object { "  $_" })) -join "`n"
+        Write-Error "sibling-folder gate: $($siblingText[0]) Nothing pushed, no PR opened.`n$siblingDetail"
+        exit 1
+    }
+
     # Step-list gate (Dave, August 5-6, 2026): "pas als alle punten zijn afgevinkt kan de branch met een PR
     # gemergd worden". The branch's step list must have nothing unresolved left in it.
     #

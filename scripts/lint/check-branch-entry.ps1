@@ -58,6 +58,10 @@
 
     Exit 0 when the entry is written or the branch is exempt; exit 1 with an actionable message otherwise.
 
+    ALSO REFUSED (#4375): a file the branch adds or modifies under a folder named after its own branch
+    document ('<workflow folder>/<doc-stem>/...'). The fold removes only the document, so such a folder
+    would stay on the trunk unreferenced; review evidence belongs in the PR or the issue.
+
     SEAM IT READS, from the consumer's own scripts/repo-config.ps1, probed with Get-Command like every
     other optional knob:
 
@@ -331,6 +335,18 @@ if ($scaffoldFindings.Count -gt 0) {
     Write-Host '        wrote that is still standing, or -- for a tier -- an answer written one line too'
     Write-Host '        low. The guidance comments do not count as an answer: the fold strips them, so a'
     Write-Host '        section that looks filled in on the branch lands in the changelog empty.'
+    exit 1
+}
+
+# --- A folder beside the document (#4375) -----------------------------------------------------------
+# The fold removes only the document, so anything this branch adds under '<doc-stem>/' would stay on the
+# trunk unreferenced. Refused here, where the fold may not widen to clean it. The function and its text are
+# entry-scaffold-lib's, shared with open-pr.
+$siblingHits = @(Get-BranchSiblingFolderFindings -RepoRoot $repoRoot -EntryRel $entryRel)
+if ($siblingHits.Count -gt 0) {
+    $siblingText = @(Get-SiblingFolderRefusalLines -EntryRel $entryRel -Paths $siblingHits)
+    Write-Host "[ERROR] $($siblingText[0])" -ForegroundColor Red
+    foreach ($l in ($siblingText | Select-Object -Skip 1)) { Write-Host "        $l" -ForegroundColor Red }
     exit 1
 }
 

@@ -39,21 +39,39 @@
 
 ### PLAN
 
+Inbound #4375: a folder beside a branch document (`<doc-stem>/`, review screenshots in the measured case)
+survives the fold, which removes only the document. Verified in `fold-changelog-entry.ps1`. The fold is a
+bounded trunk exception (CHANGELOG.md and the document), so it is not widened; the folder is refused
+before the merge instead, at the branch-entry gate.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `entry-scaffold-lib.ps1`: `Get-BranchSiblingFolderFindings` (paths added or modified under `<doc-stem>/`, against the merge-base with the trunk, or HEAD^1 on a PR merge commit) and `Get-SiblingFolderRefusalLines`, one wording for both gates
+- [x] `check-branch-entry.ps1` (CI) and `open-pr.ps1` (local) refuse such a branch; not `-Force`-able
+- [x] Both branch-entry runners fetch depth 2, so the CI half has the PR's base to diff against
+- [x] The check-branch-entry skill page lists the new refusal; root mirrors kept byte-identical
 
 ### TEST
 
+- [x] `branch-entry-gate.tests.ps1`: folder file refused, document-only passes, other workflow-folder file passes, untracked refused, deleted passes, open-pr call pinned -- 92/92
+- [x] The HEAD^1 fallback checked by hand on a merge-commit fixture with no trunk ref: the folder file is found
+
 ### DEPLOY: fix/4375-branch-doc-sibling-folder
 
-**Score:**
+The branch-entry gate, in `open-pr` and in CI, refuses a branch that adds files under a folder named after
+its own branch document, which the fold would leave on the trunk (#4375).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A branch that commits review screenshots or other files beside its branch document is now stopped at
+`open-pr` and by the Branch entry check, with the files named and where they belong instead (the PR or the
+issue). Before, the folder slipped past every gate and stayed on the trunk after the merge until somebody
+noticed it.
+
+**Score:** 2
 
 #### Pull Request
 
 Branch-entry gate refuses files in a folder beside the branch document
-

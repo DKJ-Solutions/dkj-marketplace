@@ -60,6 +60,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        # DEPTH 2 (#4375): the merge commit and its two parents, so the sibling-folder check in
+        # check-branch-entry.ps1 can diff the PR against its base (HEAD^1). At depth 1 it read nothing.
+        with:
+          fetch-depth: 2
 
       # THE SHIM (issue #2488): the scripts launch children by the literal name `powershell`, and
       # ubuntu-latest has only `pwsh`. It runs before the first pwsh step.
