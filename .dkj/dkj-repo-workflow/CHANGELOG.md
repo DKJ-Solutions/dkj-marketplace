@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**11 / 11 minor entries** <!-- pending-tally -->
+**12 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4345-release-blockers-filed-inbound · 20261120-103209Z
+
+The release skills now say that every blocker or surprise during a release is filed the moment it
+happens, with its measured cost (round trips, manual steps, minutes). It is not saved for the end of the
+cut. A cause in the shared scripts goes inbound to the plugin's source, even when it surfaced in a
+consumer. The rule sits in `cut-release`, and `prepare-release`, `live-preflight` and `ship-pr` point to
+it. It was moved out of a per-machine memory note under #4341.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A consumer running a release is told to file a shared-script blocker inbound right away. Before this,
+such a blocker reached the source days later, as #4143 and #4144 did after a v3.1.0 cut.
+
+**Score:** 2
+
+#### Pull Request
+
+Release skills: file each release blocker the moment it happens, with its measured cost
+
+Plugins: dkj-repo-workflow, dkj-repo-workflow-bwj, dkj-subagents-shopify
+
+[PR #4359](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4359)
+
+---
 
 ### DEPLOY: feat/4344-approved-takeover-unassigns · 20261120-101846Z
 

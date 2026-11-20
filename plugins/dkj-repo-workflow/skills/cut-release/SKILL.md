@@ -39,6 +39,25 @@ than one that says nothing.
 — as a checklist, rather than generalizing the workshop's own release script. Matches the issue's own
 words: *"not automation, but a checklist that imposes itself."*
 
+## A blocker during a release is filed the moment it happens (#4345)
+
+**Every blocker or surprise during a release is filed when it happens, with its measured cost.** That
+covers a refused gate, a manual step, an extra round trip, or a script that needed a hand-run remedy.
+Each one is filed in the same minute, not at the end of the cut. The cost is stated as a number: the
+round trips, the manual steps, the minutes. This holds through every release skill:
+`prepare-release`, `live-preflight`, `ship-pr`, this checklist and the promotion.
+
+**Where it goes depends on where the cause sits**, not on where it surfaced. A cause in this repo's own
+code or config stays in this repo's tracker. A cause in the shared scripts or skills goes **inbound** to
+the plugin's source repo (`bug-inbound` or `feature-inbound`), because only the source can repair it.
+Where it is unclear, the cause is shared. A local issue that is really about a shared script gets its
+inbound twin before the cut goes on, and the two cite each other.
+
+Why: during a consumer's v3.1.0 cut, a CRLF block was filed only in that consumer's tracker while the
+cause sat in the shared scripts. It reached the source days later (#4143, #4144). The persona's general
+"a finding becomes an issue" did not fire in the middle of a release, so the rule is written into the
+pages a release actually loads.
+
 ## What the skill does
 
 **Two scripts ARE mirrored now** (this line said the opposite until August 3, 2026): `cut-release.ps1`
