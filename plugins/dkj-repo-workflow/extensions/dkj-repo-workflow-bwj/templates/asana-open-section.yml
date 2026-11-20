@@ -1,5 +1,7 @@
-# Copied from dkj-repo-workflow-bwj/templates/asana-open-section.yml into
-# .github/workflows/asana-open-section.yml, beside .github/scripts/asana-open-section.ps1.
+# Placed from dkj-repo-workflow-bwj/templates/asana-open-section.yml into
+# .github/workflows/asana-open-section.yml. The script it runs is NOT copied (#4351): it is fetched
+# from DKJ-Solutions/dkj-marketplace at the pinned ref below, so a fix reaches this repo by moving that
+# one line.
 #
 # Keeps the Asana task of every OPEN issue out of the sections that come before the board's Filed
 # section (#4056, Dave, November 13, 2026): a card a person dragged back into an earlier section while its
@@ -15,7 +17,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  # READ: the script file and the repo's own scripts/repo-config.ps1, whose stage map it reads as text.
+  # READ: the repo's own scripts/repo-config.ps1, whose stage map it reads as text.
   contents: read
   # READ: the open issues and their labels. Nothing is written on GitHub.
   issues: read
@@ -31,10 +33,21 @@ jobs:
     # A job with no timeout-minutes runs to GitHub's six-hour default (#2296), holding ASANA_PAT.
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # The job needs the script and the seam file and nothing else from git, so the token is not
-          # left in .git/config.
+          # The job needs the seam file and nothing else from git, so the token is not left in
+          # .git/config.
+          persist-credentials: false
+
+      # The script itself, from the plugin's source repo at the release this file was placed from
+      # (#4351). Pinned by SHA because the job holds ASANA_PAT; move the ref: line when the plugin updates.
+      - name: Fetch the shared Asana script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: DKJ-Solutions/dkj-marketplace
+          ref: @@SCRIPTS_REF@@
+          path: .workflow-scripts
+          sparse-checkout: plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/scripts/ci
           persist-credentials: false
 
       - name: Move the card of an open issue that sits before Filed into Filed
@@ -43,4 +56,4 @@ jobs:
           ASANA_PAT: ${{ secrets.ASANA_PAT }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          ./.github/scripts/asana-open-section.ps1
+          & "$env:GITHUB_WORKSPACE/.workflow-scripts/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/scripts/ci/asana-open-section.ps1" -RepoConfigPath "$env:GITHUB_WORKSPACE/scripts/repo-config.ps1"

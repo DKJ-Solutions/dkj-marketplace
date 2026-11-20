@@ -112,6 +112,7 @@ $repoRoot = Resolve-RepoRootOrFail -Override $RootOverride -ScriptName 'adopt-st
 # publishes some other product is not turned away here.
 . (Join-Path $PSScriptRoot '..\lib\seam-lib.ps1')
 . (Join-Path $PSScriptRoot '..\lib\document-newline-lib.ps1')
+. (Join-Path $PSScriptRoot '..\lib\settings-member-lib.ps1')
 if (Test-IsWorkflowSourceRepo -RepoRoot $repoRoot) {
     Write-Host 'REFUSED: this repo publishes this workflow, so it is its source rather than a consumer.' -ForegroundColor Red
     Write-Host 'The source runs scripts/task/show-progress.ps1 from its own tree by a repo-relative path.'
@@ -314,74 +315,24 @@ if ($shimWrite) {
 
 # --- 2. the settings key -------------------------------------------------------------------------
 # REFUSE-AND-PRINT, NEVER REPLACE. statusLine is singular per settings file -- see the header.
-$existingSettings = $null
-$settingsReadable = $true
-$settingsText     = ''
-$settingsHadBom   = $false
-if (Test-Path -LiteralPath $settingsAbs -PathType Leaf) {
-    try {
-        # BYTES, so a BOM can be written back exactly as it was found -- the insert below promises to
-        # leave everything it did not add alone, and a BOM is part of everything.
-        $bytes = [System.IO.File]::ReadAllBytes($settingsAbs)
-        $settingsHadBom = ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)
-        $offset = $(if ($settingsHadBom) { 3 } else { 0 })
-        $settingsText = (New-Object System.Text.UTF8Encoding($false)).GetString($bytes, $offset, $bytes.Length - $offset)
-        if ($settingsText.Trim()) { $existingSettings = $settingsText | ConvertFrom-Json }
-    } catch {
-        $settingsReadable = $false
-    }
-}
-
-function Get-MemberNames {
-    <# The top-level member names of a parsed settings object -- none for $null and for '{}'. Callers
-       wrap the call in @(), since a function returning @() hands back $null. Not
-       '.PSObject.Properties.Name': under StrictMode that member enumeration THROWS on an object with
-       no properties, which crashed -Apply on an empty settings file (#2505). #>
-    param($Object)
-    if ($null -eq $Object) { return @() }
-    return @($Object.PSObject.Properties | ForEach-Object { $_.Name })
-}
-
-function ConvertTo-JsonStringBody {
-    <# The body of a JSON string literal for $Value: backslash and double quote escaped, nothing else.
-       One definition for both writers -- the insert below and the block printed for placing by hand --
-       because the printed block once interpolated the command raw, and its inner quotes made it a block
-       that broke the settings file it was pasted into (#2849). #>
-    param([string]$Value)
-    return ($Value -replace '\\', '\\') -replace '"', '\"'
-}
+# Read through settings-member-lib (#4341): bytes, so a BOM is written back exactly as it was found.
+$settingsFile     = Read-SettingsFile -Path $settingsAbs
+$existingSettings = $settingsFile.Parsed
+$settingsReadable = $settingsFile.Readable
+$settingsText     = $settingsFile.Text
+$settingsHadBom   = $settingsFile.HadBom
 
 function Add-StatusLineMember {
-    <# Insert the statusLine member into a settings file's TEXT, before the root object's closing brace,
-       and return the new text -- or $null where the text has no closing brace to insert before.
-
-       Everything that was there stays byte for byte (#2505): the member is written in the file's own
-       indent unit (read off its first member, two spaces where there is none) and its own line ending,
-       and the text after the closing brace -- a trailing newline, or none -- is kept as found. The
-       caller has already parsed the text, so the last '}' in it IS the root's: valid JSON ends there. #>
+    <# The statusLine member, inserted through settings-member-lib's Add-SettingsMember (#2505, #4341). #>
     param([AllowEmptyString()][string]$Text, [string]$Command, [int]$Interval)
-    $close = $Text.LastIndexOf('}')
-    if ($close -lt 0) { return $null }
-    $eol  = Get-DocumentNewline -Content $Text
-    $unit = '  '
-    # A bare '{' line followed by the first member is the ordinary shape. Where the first member shares
-    # the '{' line, the first indented member line elsewhere is the next-best reading of the file's unit.
-    $first = [regex]::Match($Text, '^\s*\{[ \t]*\r?\n([ \t]+)"')
-    if (-not $first.Success) { $first = [regex]::Match($Text, '(?m)^([ \t]+)"') }
-    if ($first.Success) { $unit = $first.Groups[1].Value }
-    $head = $Text.Substring(0, $close).TrimEnd()
-    $tail = $Text.Substring($close)
-    # An empty root ends its head in the '{' itself; anything else ends in a member, which takes a comma.
-    $sep  = $(if ($head.EndsWith('{')) { '' } else { ',' })
-    $cmd  = ConvertTo-JsonStringBody -Value $Command
-    $member = @(
-        "$unit`"statusLine`": {"
-        "$unit$unit`"type`": `"command`","
-        "$unit$unit`"command`": `"$cmd`","
-        "$unit$unit`"refreshInterval`": $Interval"
-        "$unit}"
-    ) -join $eol
-    return ($head + $sep + $eol + $member + $eol + $tail)
+    $cmd = ConvertTo-JsonStringBody -Value $Command
+    return Add-SettingsMember -Text $Text -MemberLines @(
+        '"statusLine": {'
+        "`t`"type`": `"command`","
+        "`t`"command`": `"$cmd`","
+        "`t`"refreshInterval`": $Interval"
+        '}'
+    )
 }
 
 # refreshInterval IS IN SECONDS, NOT MILLISECONDS (#2163). This carried 2000 until September 19, 2026,
@@ -408,7 +359,7 @@ if (-not $settingsReadable) {
 }
 
 $hasStatusLine = $false
-if (@(Get-MemberNames $existingSettings) -contains 'statusLine') { $hasStatusLine = $true }
+if (@(Get-SettingsMemberNames $existingSettings) -contains 'statusLine') { $hasStatusLine = $true }
 
 if ($settingsReparse) {
     Write-Host "  [refused] $settingsRel -- reached through a symlink or junction ($settingsReparse), so it was NOT changed:" -ForegroundColor Yellow
@@ -433,12 +384,12 @@ if ($settingsReparse) {
     # PARSED BACK BEFORE IT IS WRITTEN. The insert is text surgery on somebody else's file, so what it
     # produced has to be the same keys plus statusLine -- anything else means the surgery misread the
     # file, and then the honest outcome is the original left alone and the block printed.
-    $before = @(Get-MemberNames $existingSettings)
+    $before = @(Get-SettingsMemberNames $existingSettings)
     $verified = $false
     if ($newText) {
         try {
             $parsed = $newText | ConvertFrom-Json
-            $after  = @(Get-MemberNames $parsed)
+            $after  = @(Get-SettingsMemberNames $parsed)
             $verified = ("$($parsed.statusLine.command)" -ceq $statusLineCommand) -and
                         ($after.Count -eq $before.Count + 1) -and
                         (@($before | Where-Object { $after -notcontains $_ }).Count -eq 0)

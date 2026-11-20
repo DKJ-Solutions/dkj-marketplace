@@ -1,12 +1,12 @@
 ---
 name: adopt-dkj-repo-workflow
-description: Adopt the dkj-repo-workflow workflow in a consuming repo, in five independent parts that can run in any order or alone. Part 1 scaffolds the workflow's own folder -- .dkj/dkj-repo-workflow/, moving an older root dkj-policy/ there -- the releases root with this repo's release answers, the branch-entry CI gate, the always-on budget CI gate that holds every PR to not growing what every session pays before a single assignment is given, and the PR template open-pr fills in; use this right after installing the plugin, or when the script-contract session check reports the folder missing, since an install alone writes nothing into the repo. Part 2 adopts the source repo's workflow configuration from the shipped blueprint -- placing the values that state the shared way of working into this repo's own seam libs, and proposing the rest for a person to answer; use this after specialists-init has laid down scripts/repo-config.ps1 and scripts/lib/branch-info.ps1, or whenever the script-contract check reports functions this repo has never configured. Part 3 builds the CI floor -- it places the runners that keep the fold and the resolves verification alive across a merge the shipping session never observes (a merge queue, or the GitHub UI merge button), places a scheduled runner that checks whether a GitHub-side repo setting still matches what this repo declares, and reports whether a required status check exists at all, which is the certificate ship-pr dates its staleness guard from; use it after installing the plugin, when ship-pr says the staleness guard is off because no required check is known, when a merge landed and nothing folded, or when a repo setting may have drifted. A merge queue is optional and is not this workflow policy: most repos cannot have one, so a missing queue is reported as the ordinary state rather than as a gap. Part 4 puts the one issue label this workflow prescribes on the tracker -- the reach label, minor by default, which is the tier model read on an issue instead of on a changelog entry; use it after installing the plugin, or when a filing fails because the label does not exist. Part 5 wires up the statusLine that draws the progress bar for the long runs this workflow backgrounds -- the gates and ship-pr's CI wait, which stream no stdout anywhere visible; use it after installing the plugin, or when a backgrounded run leaves the session looking idle. statusLine is a settings key, so no plugin component can place it. Parts 1 to 3 and part 5 are strictly additive and dry-run by default; none overwrites anything, and part 4 is a person's gh call rather than a script.
+description: Adopt the dkj-repo-workflow workflow in a consuming repo, in six independent parts that can run in any order or alone. Part 1 scaffolds the workflow's own folder -- .dkj/dkj-repo-workflow/, moving an older root dkj-policy/ there -- the releases root with this repo's release answers, the branch-entry CI gate, the always-on budget CI gate that holds every PR to not growing what every session pays before a single assignment is given, and the PR template open-pr fills in; use this right after installing the plugin, or when the script-contract session check reports the folder missing, since an install alone writes nothing into the repo. Part 2 adopts the source repo's workflow configuration from the shipped blueprint -- placing the values that state the shared way of working into this repo's own seam libs, and proposing the rest for a person to answer; use this after specialists-init has laid down scripts/repo-config.ps1 and scripts/lib/branch-info.ps1, or whenever the script-contract check reports functions this repo has never configured. Part 3 builds the CI floor -- it places the runners that keep the fold and the resolves verification alive across a merge the shipping session never observes (a merge queue, or the GitHub UI merge button), places a scheduled runner that checks whether a GitHub-side repo setting still matches what this repo declares, and reports whether a required status check exists at all, which is the certificate ship-pr dates its staleness guard from; use it after installing the plugin, when ship-pr says the staleness guard is off because no required check is known, when a merge landed and nothing folded, or when a repo setting may have drifted. A merge queue is optional and is not this workflow policy: most repos cannot have one, so a missing queue is reported as the ordinary state rather than as a gap. Part 4 puts the one issue label this workflow prescribes on the tracker -- the reach label, minor by default, which is the tier model read on an issue instead of on a changelog entry; use it after installing the plugin, or when a filing fails because the label does not exist. Part 5 wires up the statusLine that draws the progress bar for the long runs this workflow backgrounds -- the gates and ship-pr's CI wait, which stream no stdout anywhere visible; use it after installing the plugin, or when a backgrounded run leaves the session looking idle. statusLine is a settings key, so no plugin component can place it. Part 6 switches Claude Code auto memory off (autoMemoryEnabled false in .claude/settings.json), because lessons go in the docs and never in memory; use it after installing the plugin, or when the auto-memory session check reports the key missing. Parts 1 to 3, 5 and 6 are strictly additive and dry-run by default; none overwrites anything, and part 4 is a person's gh call rather than a script.
 ---
 
 # adopt-dkj-repo-workflow -- scaffold the folder, place the config seams, build the CI floor
 
 An install writes nothing into your repo: it clones the plugin into your cache, and that is all. This
-command is the five things that actually place `dkj-repo-workflow` on your side, and they are independent of
+command is the six things that actually place `dkj-repo-workflow` on your side, and they are independent of
 each other -- run them in any order, or run only the one you need:
 
 - **Part 1** creates the workflow's own root folder and its CI gate.
@@ -17,11 +17,13 @@ each other -- run them in any order, or run only the one you need:
 - **Part 4** puts the one issue label this workflow prescribes on your tracker.
 - **Part 5** wires up the statusLine that draws a progress bar for the long runs this workflow
   backgrounds, which otherwise print to nobody.
+- **Part 6** switches Claude Code's auto memory off for the repo, because lessons go in the docs and
+  never in memory.
 
-No part depends on another having run. Parts 1 to 3 and Part 5 are dry-run by default and never
-overwrite a file that already exists. One of them makes a bounded write **into** an existing file
-without replacing anything: Part 5 adds one key to `.claude/settings.json` -- refusing where that key
-is already there, since there is only one of it. See its rules below.
+No part depends on another having run. Parts 1 to 3, 5 and 6 are dry-run by default and never
+overwrite a file that already exists. Two of them make a bounded write **into** an existing file
+without replacing anything: Parts 5 and 6 each add one key to `.claude/settings.json`, and leave the key
+alone where it is already there. See their rules below.
 
 ## A part you already ran can GAIN a step, and your session says so
 
@@ -1007,3 +1009,49 @@ not to make this one lie about which payload it is rendering.
 **This part is refused in the repo that publishes this workflow.** That repo runs the statusline script
 from its own tree by a repo-relative path, and a shim there would resolve an install record to find the
 payload it is itself the source of.
+
+## Part 6 -- auto memory off
+
+**Lessons are kept in the docs, never in memory** -- the constitution's rule since #4341 (Maikel,
+November 20, 2026). Claude Code's auto memory is **on by default** and writes
+`~/.claude/projects/<project>/memory/` whatever a rule says: notes on one machine, under one account,
+that nobody else on the team ever sees. Measured the day the rule was made, one consumer checkout held 12
+of them, one a filing rule the owner had decided two weeks earlier that never reached the shared docs, so
+a colleague's sessions kept breaking it. The rule alone does not stop the harness; this setting does.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/adopt-auto-memory.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/adopt-auto-memory.ps1" -Apply
+```
+
+It adds `"autoMemoryEnabled": false` to `.claude/settings.json`. **Commit the file**: the committed
+setting is what reaches every checkout and every person. A user-level setting or
+`CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` switches it off for one machine only, which is the very property that
+made the notes a problem.
+
+**The same insert as Part 5**, through the shared `settings-member-lib`: the member is added as text
+before the closing brace, in the file's own indent and line ending, a BOM kept, and the result parsed back
+before anything is written. A file that does not parse is refused with exit 1 and left byte for byte. **An
+existing `autoMemoryEnabled` is never replaced**: `false` is nothing to do, and any other value is
+reported and left for a person to change, since a value somebody wrote is theirs.
+
+**Not refused in the repo that publishes this workflow**: there is no local original to collide with, and
+the source carries the key itself.
+
+### The notes already written -- the auto-memory session check
+
+Switching auto memory off writes no new notes and removes none. **`auto-memory-sessioncheck`** reports,
+at every session start, in every repo with this plugin:
+
+- `.claude/settings.json` without `"autoMemoryEnabled": false` (missing, another value, or a file that
+  does not parse), naming this part as the fix;
+- every non-empty note in **this checkout's** memory folder, by name, with the migration: a lesson about
+  shared behaviour is filed inbound on the plugin's source repo, a fact about this repo alone goes in its
+  own lens or facts rule, and then the note is deleted, `MEMORY.md` (the index) last.
+
+The list repeats until the folder is empty, because a migration nobody is reminded of does not happen.
+A note's **content** is never printed -- the person reads the file -- and its name is stripped of
+brackets and control characters before it reaches session context. **What it cannot see**: an
+`autoMemoryDirectory` setting that moves the notes elsewhere, and other checkouts of the same repo, which
+each report in their own sessions. Nothing here is declinable through `Get-DeclinedAdoptions`: the switch
+is the constitution's, not a part a repo may opt out of.

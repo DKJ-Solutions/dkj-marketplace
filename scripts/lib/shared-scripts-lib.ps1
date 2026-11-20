@@ -1197,6 +1197,19 @@ function Get-SharedScriptPairs {
             # over the network rather than a timeable unit of work.
         },
         @{
+            # THE OPEN-ISSUES NUDGE (issue #4338): how many open issues THIS gh account opened in the repo,
+            # and how to sweep only those (claim-issue -Candidates -Author @me, #4337). Sessions file
+            # findings as issues and close out with a one-line receipt a person who does not know the
+            # workflow never notices. Same posture as check-stranded-sweep above on every axis: advisory,
+            # one bounded gh read, fails quiet, one automatic caller (the SessionStart hook
+            # open-issues-sessioncheck.ps1), no CI leg, no skill.
+            Name   = 'check-open-issues'
+            Source = 'scripts\lint\check-open-issues.ps1'
+            Plugin = 'dkj-repo-workflow'
+            Skill  = ''
+            SkillParamsExempt = @('RootOverride')
+        },
+        @{
             # THE UNSHIPPED-PR REPORT (issue #2525): the sibling of check-stranded-sweep above, for the
             # pull request that row cannot see -- green, settled, authored by this account, and NOT armed,
             # so no sweep will ever merge it. A ship that dies before arming, or a repo with no sweep at
@@ -1343,6 +1356,16 @@ function Get-SharedScriptPairs {
             Name    = 'command-probe-lib-alpha'
             Source  = 'scripts\lib\command-probe-lib.ps1'
             Plugin  = 'dkj-subagents-developers'
+            LibOnly = $true
+        },
+        @{
+            # THE SETTINGS-MEMBER INSERT (issue #4341, extracted from adopt-statusline's #2505 insert). Reads a
+            # settings file as bytes and adds ONE top-level member as text, every other byte kept. Two callers:
+            # adopt-statusline (Part 5) and adopt-auto-memory (Part 6); auto-memory-sessioncheck reads with it.
+            # A leaf apart from Get-DocumentNewline, which every caller loads first.
+            Name    = 'settings-member-lib'
+            Source  = 'scripts\lib\settings-member-lib.ps1'
+            Plugin  = 'dkj-repo-workflow'
             LibOnly = $true
         },
         @{
@@ -1765,6 +1788,21 @@ function Get-SharedScriptPairs {
             SkillParamsExempt = @('RootOverride')
             # Timeable with no arguments: the default is a dry run that writes nothing and makes no
             # network call at all.
+            MeasureArgs = @()
+        },
+        @{
+            # The auto-memory switch (issue #4341), Part 6 of adopt-dkj-repo-workflow. Adds
+            # "autoMemoryEnabled": false to the consumer's committed .claude/settings.json, because the
+            # constitution keeps lessons in the docs and the harness writes memory notes by default whatever
+            # the rule says. Strictly additive through settings-member-lib; an existing value is never
+            # replaced. Not refused in the source repo: there is no local original to collide with.
+            Name   = 'adopt-auto-memory'
+            Source = 'scripts\task\adopt-auto-memory.ps1'
+            Plugin = 'dkj-repo-workflow'
+            Skill  = 'adopt-dkj-repo-workflow'
+            # A test points the command at a fixture repo root. A consumer never types it.
+            SkillParamsExempt = @('RootOverride')
+            # Timeable with no arguments: the default is a dry run that writes nothing.
             MeasureArgs = @()
         },
         @{

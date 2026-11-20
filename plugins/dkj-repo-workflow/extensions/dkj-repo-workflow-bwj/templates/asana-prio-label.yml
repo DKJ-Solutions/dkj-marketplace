@@ -1,5 +1,7 @@
-# Copied from dkj-repo-workflow-bwj/templates/asana-prio-label.yml into
-# .github/workflows/asana-prio-label.yml, beside .github/scripts/asana-prio-label.ps1.
+# Placed from dkj-repo-workflow-bwj/templates/asana-prio-label.yml into
+# .github/workflows/asana-prio-label.yml. The script it runs is NOT copied (#4351): it is fetched from
+# DKJ-Solutions/dkj-marketplace at the pinned ref below, so a fix reaches this repo by moving that one
+# line. Nothing from this repo's own tree is read, so it is not checked out.
 #
 # Carries the Asana task's Prio-Score onto the GitHub issue as ONE prio-N label (prio-1 lowest, prio-4
 # highest) -- the one part of the retired asana-mirror workflow (#2804) that writes to GitHub, brought
@@ -40,9 +42,15 @@ jobs:
     # A job with no timeout-minutes runs to GitHub's six-hour default (#2296), holding ASANA_PAT.
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      # The script itself, from the plugin's source repo at the release this file was placed from
+      # (#4351). Pinned by SHA because the job holds ASANA_PAT; move the ref: line when the plugin updates.
+      - name: Fetch the shared Asana script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # The job needs the script file and nothing else from git, so the token is not left in .git/config.
+          repository: DKJ-Solutions/dkj-marketplace
+          ref: @@SCRIPTS_REF@@
+          path: .workflow-scripts
+          sparse-checkout: plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/scripts/ci
           persist-credentials: false
 
       - name: Give the issue the prio label its Asana task's Prio-Score names
@@ -57,7 +65,7 @@ jobs:
         run: |
           # GITHUB_EVENT_NAME is set by the runner. An issue event labels that one issue; a schedule or a manual dispatch sweeps every open one.
           if ($env:GITHUB_EVENT_NAME -eq 'issues') {
-            ./.github/scripts/asana-prio-label.ps1 -Mode event -IssueRef $env:ISSUE_REF
+            & "$env:GITHUB_WORKSPACE/.workflow-scripts/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/scripts/ci/asana-prio-label.ps1" -Mode event -IssueRef $env:ISSUE_REF
           } else {
-            ./.github/scripts/asana-prio-label.ps1 -Mode sweep
+            & "$env:GITHUB_WORKSPACE/.workflow-scripts/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/scripts/ci/asana-prio-label.ps1" -Mode sweep
           }

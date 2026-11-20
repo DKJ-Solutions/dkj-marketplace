@@ -2,7 +2,89 @@
 
 ## [Unreleased]
 
-**15 / 15 minor entries** <!-- pending-tally -->
+**18 / 18 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4351-asana-scripts-from-pinned-checkout · 20261120-115339Z
+
+The three Asana workflows of `dkj-repo-workflow-bwj` (`asana-closed-message`, `asana-prio-label`,
+`asana-open-section`) no longer ship their script for a store to copy. A store keeps only the workflow
+file, which checks out `DKJ-Solutions/dkj-marketplace` at a pinned commit and runs the script from
+`dkj-repo-workflow-bwj/scripts/ci/`, the way the rest of the CI floor already does. The adopt skill
+places the workflow with that pin and migrates a store off its `.github/scripts/asana-*.ps1` copies, and
+the session check now ignores the pin and reports a copy left behind.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+For a BWJ store, a fix to the closed message, the prio-label sync or the open-section sweep now reaches
+the store by moving one `ref:` line, instead of re-copying up to 1,800 lines of script per workflow. Each
+store needs one migration after taking this release: the session check names the copies until
+`adopt-dkj-repo-workflow-bwj` step 1 has replaced the workflows and removed them.
+
+**Score:** 4
+
+#### Pull Request
+
+The three Asana workflows fetch their script from a pinned dkj-marketplace checkout
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4367](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4367)
+
+---
+
+### DEPLOY: feat/4338-open-issues-sessioncheck · 20261120-114206Z
+
+New `open-issues-sessioncheck` and its check script `check-open-issues.ps1`.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every session now starts by telling you how many open issues your own account has filed in the repo,
+with the one command that sweeps only those. Issues your sessions filed no longer pile up unseen for
+somebody else to clear. It stays silent when you have none.
+
+**Score:** 3
+
+#### Pull Request
+
+open-issues-sessioncheck: tell a person how many open issues their own account filed
+
+Plugins: dkj-repo-workflow
+
+[PR #4361](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4361)
+
+---
+
+### DEPLOY: feat/4341-auto-memory-off-in-consumers · 20261120-112130Z
+
+`adopt-dkj-repo-workflow` gained a Part 6, `adopt-auto-memory.ps1`, which adds `"autoMemoryEnabled": false`
+to `.claude/settings.json` the way Part 5 adds its key: as text, every other byte kept, and an existing
+value never replaced. A new `auto-memory-sessioncheck` reports at every session start where the key is
+missing, and lists this checkout's memory notes by name until each is filed inbound or moved into the
+repo's lens. The settings insert both parts use now lives in one shared lib.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+After taking this release, a consumer's session start says whether its repo still lets Claude Code write
+memory notes and names the notes already there, so the rule from #4349 is something the setup enforces
+and points at, rather than something a person has to remember. One command switches it off.
+
+**Score:** 3
+
+#### Pull Request
+
+Adopt switches auto memory off, and a session check reports leftover memory notes
+
+Plugins: dkj-repo-workflow
+
+[PR #4365](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4365)
+
+---
 
 ### DEPLOY: fix/4346-release-notes-every-task-linked · 20261120-110808Z
 

@@ -8,10 +8,13 @@ description: >-
   exist, report the board's numbered sections so the Filed section report-issue writes to can be
   found, write the BWJ extension import into CLAUDE.md, and scaffold chapter two's
   .dkj/dkj-repo-workflow-bwj/SYNC-LOG.md with its masthead (moving an older root dkj-repo-workflow-bwj/ there), ready for the first sync branch. In the two store
-  repos it also copies the asana-closed-message and asana-prio-label workflows into .github/ (in
-  smartwatchbanden the asana-open-section sweep too), in phone-factory asana-closed-message alone, and names the one repo secret they need, ASANA_PAT.
-  Strictly additive and dry-run by default; it never overwrites an existing file, only adds the one
-  import line to CLAUDE.md, and it renames nothing on the board.
+  repos it also places the asana-closed-message and asana-prio-label workflows in .github/workflows/ (in
+  smartwatchbanden the asana-open-section sweep too), in phone-factory asana-closed-message alone, each
+  pinned to the release it was placed from, and names the one repo secret they need, ASANA_PAT.
+  Additive and dry-run by default, with ONE reported migration: a store still running the copied
+  .github/scripts/asana-*.ps1 gets those workflows replaced and the copies removed (#4351). Otherwise it
+  never overwrites an existing file, only adds the one import line to CLAUDE.md, and it renames nothing
+  on the board.
   Run this right after enabling the plugin, or when report-issue reports the Asana config seam
   missing.
 ---
@@ -20,13 +23,14 @@ description: >-
 
 An install writes nothing into your repo. This command places what `dkj-repo-workflow-bwj` needs on your
 side, across both chapters: the config functions the skill reads, the labels, and chapter two's
-`SYNC-LOG.md` scaffold (step 7). **In the two store repos it copies two CI workflows into `.github/`**:
+`SYNC-LOG.md` scaffold (step 7). **In the two store repos it places two CI workflows in `.github/workflows/`**:
 `asana-closed-message`, the closed message on the Asana task (#2818) and, since #2854, the reopened
 message beside it, and `asana-prio-label`, the Prio-Score -> `prio-N` label sync (#2945). They are the
 parts of the retired asana-mirror mechanism that came back (Dave, October 5, 6 and 12, 2026).
-**In `smartwatchbanden` it also copies `asana-open-section`**, the daily sweep that keeps an open
+**In `smartwatchbanden` it also places `asana-open-section`**, the daily sweep that keeps an open
 issue's card out of the sections before `Filed` (#4056, Dave, November 13, 2026). **In `phone-factory`
-it copies `asana-closed-message` alone** (#3518).
+it places `asana-closed-message` alone** (#3518). Only the workflow file is placed: the script each one
+runs is fetched from a SHA-pinned checkout of `DKJ-Solutions/dkj-marketplace` (#4351).
 
 ## 0 -- establish that this repo is a permitted adoption target
 
@@ -84,29 +88,48 @@ the check rather than the verdict -- so the check still runs here. It now return
 and the difference between the two runs is not the guard but the decision behind it, which is on the
 record above.
 
-## 1 -- copy the closed, on-hold and reopened messages and the prio-label sync into `.github/` (the two store repos, and the first pair in `phone-factory`)
+## 1 -- place the closed, on-hold and reopened messages and the prio-label sync in `.github/workflows/` (the two store repos, and the first workflow in `phone-factory`)
 
-GitHub only runs a workflow from a repo's own `.github/`, so these are copied, not imported:
+GitHub only runs a workflow from a repo's own `.github/`, so the **workflow** is copied. The **script**
+it runs is not: each workflow checks `DKJ-Solutions/dkj-marketplace` out beside the store's tree at a
+pinned commit and runs `plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/scripts/ci/<name>.ps1`
+from there, the way the CI floor's other runners already do (#4351). A fix to a script then reaches a
+store by moving one `ref:` line, instead of a re-copied script of up to 1,800 lines that nothing kept
+from drifting.
 
 | from this plugin | to your repo |
 |---|---|
 | `templates/asana-closed-message.yml` | `.github/workflows/asana-closed-message.yml` |
-| `templates/asana-closed-message.ps1` | `.github/scripts/asana-closed-message.ps1` |
 | `templates/asana-prio-label.yml` | `.github/workflows/asana-prio-label.yml` |
-| `templates/asana-prio-label.ps1` | `.github/scripts/asana-prio-label.ps1` |
 | `templates/asana-open-section.yml` | `.github/workflows/asana-open-section.yml` (smartwatchbanden) |
-| `templates/asana-open-section.ps1` | `.github/scripts/asana-open-section.ps1` (smartwatchbanden) |
 
-Copy them verbatim. If a file already exists at the target, **stop and diff** rather than overwriting:
-report the difference and let the maintainer decide. **All four in `smartwatchbanden` and
-`xoxowildhearts`** (#2818, #2945); **the two `asana-closed-message` files alone in `phone-factory`**,
+**Copy each verbatim except one line: replace `@@SCRIPTS_REF@@` with the commit of the release you are
+running, and its tag as a comment** (`ref: <40-hex sha> # vX.Y.Z`). The version is this plugin's own
+(`plugin-versions` prints it); the commit is what the tag points at:
+
+```bash
+git ls-remote https://github.com/DKJ-Solutions/dkj-marketplace.git "refs/tags/vX.Y.Z" "refs/tags/vX.Y.Z^{}"
+```
+
+Take the `^{}` line where there are two -- that is the commit, and the other is the tag object, which
+`actions/checkout` cannot take as a ref. **A SHA, not the tag**: the job holds `ASANA_PAT`, and a tag can
+be moved where a commit cannot (adopt-ci-floor's #2333 reasoning, the same one `live-direct-writes.yml`
+follows). Where `ls-remote` does not answer, write the tag and say so; the session check accepts it, and
+the maintainer replaces it with the commit later. **Updating the plugin later is that one line again**:
+move `ref:` to the new release's commit and tag. The session check compares the rest of the file against
+the template and ignores the `ref:` value, so a pin is never reported as a stale copy.
+
+If a workflow file already exists at the target, **stop and diff** rather than overwriting: report the
+difference and let the maintainer decide -- with one exception, the migration below. **Both in `smartwatchbanden` and
+`xoxowildhearts`** (#2818, #2945); **`asana-closed-message` alone in `phone-factory`**,
 whose owner decided to adopt that workflow on October 26, 2026
 ([BWJ-Development/phone-factory#15](https://github.com/BWJ-Development/phone-factory/issues/15),
 [#3518](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/3518)); `asana-prio-label` was not
 decided there. **The two `asana-open-section` files in `smartwatchbanden` alone**, where it was asked for
 (#4056); `xoxowildhearts` has not decided it. The source repo adopts this plugin for ticket handling alone, and neither workflow was
-asked for there. Wherever a pair is copied, the plugin's `closed-message-sessioncheck` hook reports at
-every session start when one of that pair's files is missing or differs from the template, and when
+asked for there. Wherever a workflow is placed, the plugin's `closed-message-sessioncheck` hook reports at
+every session start when it is missing or differs from the template (its `ref:` pin aside), when a
+copied `.github/scripts/asana-*.ps1` is still there (#4351), and when
 `ASANA_PAT` (step 3) is absent ([#2871](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2871)),
 or step 2's `Get-ResolvesExemptMatchers` is not stated ([#2959](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2959)).
 
@@ -121,9 +144,9 @@ header and the reopened line (#2854). A completed close that carries a block als
 section `Get-AsanaStageMap` gives `InReview` (#3248), and a reopen moves it into the `InDevelopment` section
 and marks a completed task incomplete (#3562). It makes no other move and never completes a task. A store that
 already holds the two `asana-closed-message` files from an earlier version gets the stop-and-diff above:
-the difference is the reopen trigger (#2854) or the on-hold message and its labels hand-off (#2902), and
-taking it is the maintainer's call. Each pair goes together (workflow and script of the same name): a new
-script under an old workflow receives no labels and stays silent on a not-planned close, as before. The
+the difference is the reopen trigger (#2854), the on-hold message and its labels hand-off (#2902), or
+the pinned fetch (#4351), and taking it is the maintainer's call -- the last one through the migration
+above. The
 behaviour is
 in [`WORKFLOW-portable.md`, step 4](../../WORKFLOW-portable.md#4-write-the-go-live-block-then-close-the-github-issue----the-closed-message-carries-it-into-asana).
 The `asana-prio-label` pair reads the linked task's `Prio-Score` and sets one `prio-N` label on the issue
@@ -132,6 +155,24 @@ when it is opened or edited and in a daily sweep; its behaviour is in
 The `asana-open-section` pair sweeps every open issue once a day and moves a card that sits before
 `Filed` into `Filed`; it moves nothing on a board whose `Filed` shares the inbox section. Its behaviour is
 in `WORKFLOW-portable.md`, step 6.
+
+**The migration off the copied scripts (#4351) -- the one place this skill replaces and removes.** A
+store that adopted before #4351 holds `.github/scripts/asana-<name>.ps1` beside a workflow that runs it
+from there. For each such pair this step, with the maintainer's go-ahead on the dry run:
+
+1. **replaces** `.github/workflows/asana-<name>.yml` with the template, pin filled in as above;
+2. **removes** `.github/scripts/asana-<name>.ps1` (`git rm`), and `.github/scripts/` itself where it is
+   then empty;
+3. **reports** both, per file, in the dry run and again after the write.
+
+It is a migration rather than an overwrite because both halves are the plugin's own files, never the
+store's: the session check has reported any difference from the template at every session start since
+#2871, so a store that kept a local edit has been told so all along. **Where the old workflow differs
+from its OLD template in more than the script path -- a local edit, not a stale copy -- stop and diff
+as above instead**, because that difference is the maintainer's to keep or drop. Do the two halves in
+one commit: a new workflow beside an old script is harmless (the script is simply no longer run), but an
+old workflow without its script fails at its next trigger. Until the migration, the session check reports
+each copy left behind.
 
 **A repo that adopted before October 5, 2026 still has `asana-mirror.yml` and `asana-mirror.ps1`**, which
 the plugin no longer maintains: report them to the maintainer, who can delete

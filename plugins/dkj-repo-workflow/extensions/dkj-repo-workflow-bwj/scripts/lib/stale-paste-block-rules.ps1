@@ -23,7 +23,7 @@
     further. Out of reach, on purpose: pwsh -Command "..." and any other string that is itself a command
     line, values taken from $env or a variable, a script reached through an alias or a wrapper, and
     deliberate obfuscation. A ship that slips past is not lost: the workflow's own check at the close
-    (templates/asana-closed-message.ps1) is the backstop.
+    (scripts/ci/asana-closed-message.ps1) is the backstop.
 
     WHAT IT RECOGNISES. A QUOTE-AWARE TOKENISER splits the command into segments at an unquoted ';', '&&',
     '||', '|', a lone '&' that is not the call operator, or a newline, and drops an unquoted '# comment'.
