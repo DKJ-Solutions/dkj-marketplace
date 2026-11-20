@@ -9,7 +9,8 @@
 .DESCRIPTION
     WHY THIS EXISTS (inbound #2871, October 7, 2026). The closed and reopened messages on the Asana task
     are posted by a CI workflow the store COPIES from templates/ (adopt-dkj-repo-workflow-bwj step 1), because
-    GitHub runs a workflow only from the repo's own .github/. A copy is the one delivery a plugin update
+    GitHub runs a workflow only from the repo's own .github/. Since #4351 only the workflow is copied: the
+    script it runs is fetched from a SHA-pinned dkj-marketplace checkout. A copy is the one delivery a plugin update
     cannot make: measured in BWJ-Development/smartwatchbanden, the two files had never been copied and
     the repo had no ASANA_PAT, so from the retirement of asana-mirror (#2804) onwards neither message
     posted there, and nothing said so until a reopen went unanswered. The same gap opens again after
@@ -20,11 +21,12 @@
     stores (smartwatchbanden, xoxowildhearts) take both workflows, and phone-factory takes
     asana-closed-message alone (#3518, adopted there by its owner in phone-factory#15 on October 26, 2026;
     asana-prio-label was not decided there):
-      1. .github/workflows/asana-closed-message.yml and .github/scripts/asana-closed-message.ps1 exist,
-         and, in the two stores, so do the asana-prio-label.yml / asana-prio-label.ps1 pair beside them
-         (#2945), and in smartwatchbanden the asana-open-section pair (#4056), each pair reported on its
-         own line with what its absence costs;
-      2. each is identical to its template, line endings aside -- git may check a file out with CRLF;
+      1. .github/workflows/asana-closed-message.yml exists, and, in the two stores, so does
+         asana-prio-label.yml beside it (#2945), and in smartwatchbanden asana-open-section.yml (#4056),
+         each reported on its own line with what its absence costs;
+      2. each is identical to its template, line endings and the shared-scripts 'ref:' pin aside -- git
+         may check a file out with CRLF, and the pin names the release it was placed from (#4351). Beside
+         it, a .github/scripts/asana-*.ps1 copy the pre-#4351 workflow ran is reported as left behind;
       3. an ASANA_PAT secret is visible to the repo, as a repo secret or an organisation secret;
       4. scripts/repo-config.ps1 defines Get-ResolvesExemptMatchers (#2959) -- the seam dkj-repo-workflow's
          resolves gate reads to refuse `Closes #<n>` on an Asana-linked issue (#2120). Without it a merge
@@ -92,7 +94,7 @@
     IT NEVER BLOCKS. Always exit 0, and silent when everything is in place, like every session check in
     this family. A finding is an [ERROR] line because that is what the family forwards to the transcript.
 
-    Read-only: it reads four files, four templates, scripts/repo-config.ps1 as TEXT for finding 4, the
+    Read-only: it reads up to three workflows, their templates, three retired script paths, scripts/repo-config.ps1 as TEXT for finding 4, the
     origin URL and (through gh) two secret NAME lists, two pull-request lists and the open issues. The one
     exception to reading the config as text is finding 6's reach label, read through asana-mirror-gate's
     Get-ProjectReachLabel -- the definition guard-asana-mirror and asana-link-pickupcheck already run on
@@ -103,7 +105,7 @@
     (For tests) The repo root to check instead of CLAUDE_PROJECT_DIR or the working directory.
 
 .PARAMETER TemplateRootOverride
-    (For tests) The folder holding the two templates instead of ${CLAUDE_PLUGIN_ROOT}/templates.
+    (For tests) The folder holding the workflow templates instead of ${CLAUDE_PLUGIN_ROOT}/templates.
 
 .PARAMETER RepoSlugOverride
     (For tests) 'owner/name' instead of the one read from the origin URL.
@@ -180,6 +182,17 @@ function Get-VisibleSecretNames {
 function Get-NormalizedText {
     param([string]$Path)
     return ([System.IO.File]::ReadAllText($Path) -replace "`r`n", "`n")
+}
+
+function Get-PinNeutralText {
+    <#
+        A workflow's text with the shared-scripts pin taken out (#4351): the template carries
+        'ref: @@SCRIPTS_REF@@', a placed copy carries 'ref: <sha> # vX.Y.Z' (or a bare tag, or main where
+        the release could not be read), and only that line may differ. Any other 'ref:' line is compared
+        as it stands.
+    #>
+    param([string]$Path)
+    return ((Get-NormalizedText $Path) -replace '(?m)^([ \t]*ref:)[ \t]*(?:@@SCRIPTS_REF@@|[0-9a-f]{40}(?:[ \t]*#[^\n]*)?|v\d+\.\d+\.\d+|main)[ \t]*$', '$1 <pin>')
 }
 
 function Wait-TrunkSyncPrep {
@@ -361,20 +374,20 @@ try {
            Effect = 'closing or reopening an issue posts nothing on its Asana task'
            StaleEffect = 'the Asana task gets an outdated closed, on-hold or reopened message'
            Pairs = @(
-               @{ Repo = '.github/workflows/asana-closed-message.yml'; Template = 'asana-closed-message.yml' },
-               @{ Repo = '.github/scripts/asana-closed-message.ps1';   Template = 'asana-closed-message.ps1' }) },
+               @{ Repo = '.github/workflows/asana-closed-message.yml'; Template = 'asana-closed-message.yml' })
+           Retired = '.github/scripts/asana-closed-message.ps1' },
         @{ Name = 'asana-prio-label'; Repos = $StoreRepos
            Effect = "an issue's prio label is never set from its Asana task's Prio-Score"
            StaleEffect = "an issue's prio label may be set from its Asana task's Prio-Score by outdated rules"
            Pairs = @(
-               @{ Repo = '.github/workflows/asana-prio-label.yml'; Template = 'asana-prio-label.yml' },
-               @{ Repo = '.github/scripts/asana-prio-label.ps1';   Template = 'asana-prio-label.ps1' }) },
+               @{ Repo = '.github/workflows/asana-prio-label.yml'; Template = 'asana-prio-label.yml' })
+           Retired = '.github/scripts/asana-prio-label.ps1' },
         @{ Name = 'asana-open-section'; Repos = $OpenSectionRepos
            Effect = "an open issue's Asana card dragged back before the Filed section is never put back"
            StaleEffect = "an open issue's Asana card may be moved by outdated rules"
            Pairs = @(
-               @{ Repo = '.github/workflows/asana-open-section.yml'; Template = 'asana-open-section.yml' },
-               @{ Repo = '.github/scripts/asana-open-section.ps1';   Template = 'asana-open-section.ps1' }) }
+               @{ Repo = '.github/workflows/asana-open-section.yml'; Template = 'asana-open-section.yml' })
+           Retired = '.github/scripts/asana-open-section.ps1' }
     ) | Where-Object { $_.Repos -contains $name })
     foreach ($g in $groups) {
         $missing = @()
@@ -386,12 +399,22 @@ try {
             # A template missing from the plugin install is that install's problem, not this repo's: no
             # comparison, and no line blaming the store for it.
             if (-not (Test-Path -LiteralPath $templateFile -PathType Leaf)) { continue }
-            if ((Get-NormalizedText $repoFile) -cne (Get-NormalizedText $templateFile)) { $stale += $p.Repo }
+            # The pin line is the store's own (#4351): the template cannot know which release it was placed from.
+            if ((Get-PinNeutralText $repoFile) -cne (Get-PinNeutralText $templateFile)) { $stale += $p.Repo }
+        }
+
+        # The script the workflow used to run from the store's own tree (#4351). A placed workflow fetches it
+        # from the plugin's source repo instead, so a copy left behind is run by nothing -- or, beside a
+        # workflow not yet migrated, it is the outdated copy that workflow still runs.
+        if (Test-Path -LiteralPath (Join-Path $root $g.Retired) -PathType Leaf) {
+            Write-Host ("[ERROR] dkj-repo-workflow-bwj: $slug still has $($g.Retired), a copy the $($g.Name) workflow " +
+                "no longer runs -- it fetches the script from a pinned dkj-marketplace checkout. " +
+                "$remedy (step 1 replaces the workflow and removes the copy).")
         }
 
         if ($missing.Count -gt 0) {
             Write-Host ("[ERROR] dkj-repo-workflow-bwj: $slug has no $($missing -join ' and '), so $($g.Effect). " +
-                "$remedy (step 1 copies the files).")
+                "$remedy (step 1 places the workflow).")
         }
         if ($stale.Count -gt 0) {
             Write-Host ("[ERROR] dkj-repo-workflow-bwj: $($stale -join ' and ') in $slug differs from the template " +

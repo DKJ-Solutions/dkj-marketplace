@@ -35,19 +35,23 @@ function Assert-True {
 }
 
 function New-Store {
-    <# A store checkout: -Copy places both templates, -Crlf writes them with CRLF, -Stale edits the script. #>
-    param([string]$Label, [switch]$Copy, [switch]$Crlf, [switch]$Stale)
+    <#
+        A store checkout: -Copy places the three workflows with their pin filled in as adopt step 1 does
+        (#4351), -Crlf writes them with CRLF, -Stale edits the closed-message workflow, -Pin names the pin,
+        and -Legacy also leaves the .github/scripts/ copies the pre-#4351 workflows ran.
+    #>
+    param([string]$Label, [switch]$Copy, [switch]$Crlf, [switch]$Stale, [switch]$Legacy,
+          [string]$Pin = '0123456789abcdef0123456789abcdef01234567 # v7.3.0')
     $root = Join-Path $Fixture $Label
     New-Item -ItemType Directory -Force -Path (Join-Path $root '.github\workflows'), (Join-Path $root '.github\scripts') | Out-Null
-    if ($Copy) {
-        foreach ($p in @(@('asana-closed-message.yml', '.github\workflows'), @('asana-closed-message.ps1', '.github\scripts'),
-                         @('asana-prio-label.yml', '.github\workflows'), @('asana-prio-label.ps1', '.github\scripts'),
-                         @('asana-open-section.yml', '.github\workflows'), @('asana-open-section.ps1', '.github\scripts'))) {
-            $text = [System.IO.File]::ReadAllText((Join-Path $Templates $p[0])) -replace "`r`n", "`n"
+    foreach ($n in @('asana-closed-message', 'asana-prio-label', 'asana-open-section')) {
+        if ($Copy) {
+            $text = ([System.IO.File]::ReadAllText((Join-Path $Templates "$n.yml")) -replace "`r`n", "`n").Replace('@@SCRIPTS_REF@@', $Pin)
             if ($Crlf) { $text = $text -replace "`n", "`r`n" }
-            if ($Stale -and $p[0] -like '*.ps1') { $text += "`n# an older copy`n" }
-            [System.IO.File]::WriteAllText((Join-Path (Join-Path $root $p[1]) $p[0]), $text)
+            if ($Stale -and $n -eq 'asana-closed-message') { $text += "`n# an older copy`n" }
+            [System.IO.File]::WriteAllText((Join-Path $root ".github\workflows\$n.yml"), $text)
         }
+        if ($Legacy) { [System.IO.File]::WriteAllText((Join-Path $root ".github\scripts\$n.ps1"), "# the copy a pre-#4351 workflow ran`n") }
     }
     return $root
 }
@@ -88,34 +92,54 @@ try {
 
     $none = New-Store -Label 'none'
     $r = Invoke-Hook -Root $none -Slug 'BWJ-Development/smartwatchbanden' -Secret 'CLAUDE_CODE_OATH_TOKEN'
-    Assert-True ($r.Text -match '\[ERROR\] dkj-repo-workflow-bwj: BWJ-Development/smartwatchbanden has no \.github/workflows/asana-closed-message\.yml and \.github/scripts/asana-closed-message\.ps1') 'the measured case (#2871): both files missing is one finding naming both'
+    Assert-True ($r.Text -match '\[ERROR\] dkj-repo-workflow-bwj: BWJ-Development/smartwatchbanden has no \.github/workflows/asana-closed-message\.yml, so') 'the measured case (#2871): a missing workflow is reported'
+    Assert-True ($r.Text -notmatch 'has no [^\n]*\.github/scripts/') 'and no script copy is asked for any more (#4351)'
     Assert-True ($r.Text -match 'has no ASANA_PAT secret') 'and the missing secret is its own finding'
     Assert-True ($r.Code -eq 0) 'a finding still exits 0'
 
     $stale = New-Store -Label 'stale' -Copy -Stale
     $r = Invoke-Hook -Root $stale -Slug 'BWJ-Development/xoxowildhearts' -Secret 'ASANA_PAT'
-    Assert-True ($r.Text -match '\.github/scripts/asana-closed-message\.ps1 in BWJ-Development/xoxowildhearts differs from the template') 'a copy that differs from the template is reported'
-    Assert-True ($r.Text -notmatch 'workflows/asana-closed-message\.yml in') 'and only the file that differs is named'
+    Assert-True ($r.Text -match '\.github/workflows/asana-closed-message\.yml in BWJ-Development/xoxowildhearts differs from the template') 'a workflow that differs from the template is reported'
+    Assert-True ($r.Text -notmatch 'asana-prio-label') 'and only the file that differs is named'
+
+    # THE PIN (#4351): the ref: line names the release a store placed from, and only that line may differ.
+    foreach ($pin in @('fedcba9876543210fedcba9876543210fedcba98 # v7.2.0', 'v7.2.0', 'main')) {
+        $pinned = New-Store -Label ('pin-' + ($pin -replace '[^a-z0-9]', '')) -Copy -Pin $pin
+        $r = Invoke-Hook -Root $pinned -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT'
+        Assert-True ($r.Text.Trim() -eq '') "a workflow pinned to '$pin' is not stale"
+    }
+    $badPin = New-Store -Label 'pin-bad' -Copy -Pin 'some-branch'
+    $r = Invoke-Hook -Root $badPin -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT'
+    Assert-True ($r.Text -match 'asana-closed-message\.yml in BWJ-Development/smartwatchbanden differs') 'a ref: that is no release pin is not waved through'
+
+    # THE RETIRED COPIES (#4351): a .github/scripts/ copy left behind is reported per workflow.
+    $legacy = New-Store -Label 'legacy' -Copy -Legacy
+    $r = Invoke-Hook -Root $legacy -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT'
+    foreach ($n in @('asana-closed-message', 'asana-prio-label', 'asana-open-section')) {
+        Assert-True ($r.Text -match "still has \.github/scripts/$n\.ps1, a copy the $n workflow no longer runs") "a left-behind $n.ps1 is reported"
+    }
+    $r = Invoke-Hook -Root $legacy -Slug 'BWJ-Development/phone-factory' -Secret 'ASANA_PAT'
+    Assert-True ($r.Text -match 'asana-closed-message\.ps1' -and $r.Text -notmatch 'asana-prio-label|asana-open-section') 'phone-factory is asked only about the closed-message copy'
 
     # THE PRIO PAIR (#2945): reported on its own line, and the closed-message pair is not blamed for it.
     $noPrio = New-Store -Label 'no-prio' -Copy
-    Remove-Item -LiteralPath (Join-Path $noPrio '.github\workflows\asana-prio-label.yml'), (Join-Path $noPrio '.github\scripts\asana-prio-label.ps1')
+    Remove-Item -LiteralPath (Join-Path $noPrio '.github\workflows\asana-prio-label.yml')
     $r = Invoke-Hook -Root $noPrio -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT'
-    Assert-True ($r.Text -match '\[ERROR\] dkj-repo-workflow-bwj: BWJ-Development/smartwatchbanden has no \.github/workflows/asana-prio-label\.yml and \.github/scripts/asana-prio-label\.ps1') 'a store missing only the prio pair is reported, naming that pair'
+    Assert-True ($r.Text -match '\[ERROR\] dkj-repo-workflow-bwj: BWJ-Development/smartwatchbanden has no \.github/workflows/asana-prio-label\.yml, so') 'a store missing only the prio workflow is reported, naming it'
     Assert-True ($r.Text -notmatch 'asana-closed-message') 'and the closed-message pair, which is in place, is not named'
     Assert-True ($r.Code -eq 0) 'a finding still exits 0'
 
     $stalePrio = New-Store -Label 'stale-prio' -Copy
-    [System.IO.File]::AppendAllText((Join-Path $stalePrio '.github\scripts\asana-prio-label.ps1'), "`n# an older copy`n")
+    [System.IO.File]::AppendAllText((Join-Path $stalePrio '.github\workflows\asana-prio-label.yml'), "`n# an older copy`n")
     $r = Invoke-Hook -Root $stalePrio -Slug 'BWJ-Development/xoxowildhearts' -Secret 'ASANA_PAT'
-    Assert-True ($r.Text -match '\.github/scripts/asana-prio-label\.ps1 in BWJ-Development/xoxowildhearts differs from the template') 'a prio script that differs from the template is reported'
-    Assert-True ($r.Text -notmatch 'asana-closed-message' -and $r.Text -notmatch 'workflows/asana-prio-label\.yml in') 'and only that file is named'
+    Assert-True ($r.Text -match '\.github/workflows/asana-prio-label\.yml in BWJ-Development/xoxowildhearts differs from the template') 'a prio workflow that differs from the template is reported'
+    Assert-True ($r.Text -notmatch 'asana-closed-message') 'and only that file is named'
 
     # THE OPEN-SECTION PAIR (#4056): asked of smartwatchbanden alone.
     $noOs = New-Store -Label 'no-open-section' -Copy
-    Remove-Item -LiteralPath (Join-Path $noOs '.github\workflows\asana-open-section.yml'), (Join-Path $noOs '.github\scripts\asana-open-section.ps1')
+    Remove-Item -LiteralPath (Join-Path $noOs '.github\workflows\asana-open-section.yml')
     $r = Invoke-Hook -Root $noOs -Slug 'BWJ-Development/smartwatchbanden' -Secret 'ASANA_PAT'
-    Assert-True ($r.Text -match '\[ERROR\] dkj-repo-workflow-bwj: BWJ-Development/smartwatchbanden has no \.github/workflows/asana-open-section\.yml and \.github/scripts/asana-open-section\.ps1') 'smartwatchbanden missing the open-section pair is reported'
+    Assert-True ($r.Text -match '\[ERROR\] dkj-repo-workflow-bwj: BWJ-Development/smartwatchbanden has no \.github/workflows/asana-open-section\.yml, so') 'smartwatchbanden missing the open-section workflow is reported'
     Assert-True ($r.Text -notmatch 'asana-closed-message|asana-prio-label') 'and the pairs in place are not named'
     $r = Invoke-Hook -Root $noOs -Slug 'BWJ-Development/xoxowildhearts' -Secret 'ASANA_PAT'
     Assert-True ($r.Text.Trim() -eq '') 'xoxowildhearts, which did not decide it, is never asked for the open-section pair'
@@ -164,12 +188,12 @@ try {
     # PHONE-FACTORY (#3518): adopted asana-closed-message alone, so that pair, the secret and the seam are
     # checked there, and the prio pair, which was not decided there, never is.
     $r = Invoke-Hook -Root $none -Slug 'BWJ-Development/phone-factory' -Secret 'CLAUDE_CODE_OATH_TOKEN'
-    Assert-True ($r.Text -match 'phone-factory has no \.github/workflows/asana-closed-message\.yml and \.github/scripts/asana-closed-message\.ps1') 'phone-factory without the closed-message pair is reported'
+    Assert-True ($r.Text -match 'phone-factory has no \.github/workflows/asana-closed-message\.yml, so') 'phone-factory without the closed-message workflow is reported'
     Assert-True ($r.Text -match 'phone-factory has no ASANA_PAT secret, so the asana-closed-message workflow cannot post on the Asana task\.') 'and its missing secret names the closed-message workflow alone'
     Assert-True ($r.Text -notmatch 'asana-prio-label') 'and the prio pair is never asked of it'
 
     $pf = New-Store -Label 'phone-factory' -Copy
-    Remove-Item -LiteralPath (Join-Path $pf '.github\workflows\asana-prio-label.yml'), (Join-Path $pf '.github\scripts\asana-prio-label.ps1')
+    Remove-Item -LiteralPath (Join-Path $pf '.github\workflows\asana-prio-label.yml')
     $r = Invoke-Hook -Root $pf -Slug 'BWJ-Development/phone-factory' -Secret 'ASANA_PAT'
     Assert-True ($r.Text.Trim() -eq '') 'phone-factory with the closed-message pair and the secret is silent'
 

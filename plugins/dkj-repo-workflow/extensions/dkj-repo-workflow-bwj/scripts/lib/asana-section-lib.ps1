@@ -7,8 +7,9 @@
     ONE PLACE FOR "A SECTION'S CODE". A section is named by its CODE, the text before its leading '.'
     ('2' for '2. In Progress', '1C' for '1C. Waiting'). The CI runner templates (asana-closed-message,
     asana-open-section) resolve sections the same way, and a manual move and an automated move must
-    never pick different sections. The templates cannot dot-source this file: they are copied into a
-    consumer's .github/scripts/, where no plugin lib exists, so each carries its own copy of
+    never pick different sections. The CI scripts (scripts/ci/) do not dot-source this file: they were
+    copied into a consumer's .github/scripts/ until #4351, and stay self-contained while a store may still
+    run an older copy, so each carries its own copy of
     Get-SectionCode and New-AsanaMoveRequest. scripts/tests/dkj-repo-workflow-bwj.tests.ps1 holds those
     copies equal to this file's, and scripts/tests/bwj-asana-move-task.tests.ps1 runs both Get-SectionCode
     over one table of section names, so they cannot drift.

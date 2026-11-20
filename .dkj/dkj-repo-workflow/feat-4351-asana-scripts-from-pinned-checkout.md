@@ -41,21 +41,62 @@
 
 A store keeps only the thin .github/workflows/asana-*.yml; the scripts run from a SHA-pinned checkout of the plugin source, so a fix reaches a store by a one-line pin bump instead of a re-copied 2,725-line script.
 
+#### Decisions
+
+- **Thin callers, not a `reusable-asana-*.yml`.** The seven other CI-floor runners a store holds
+  (`live-direct-writes`, `fold-on-merge`, ...) already check `dkj-marketplace` out at a SHA pin and run a
+  script from it, so the trio now reads the same. A reusable workflow would add files under this repo's
+  own `.github/workflows/` and a `secrets:` hand-off for `ASANA_PAT`, for no gain over that pattern.
+- **`template-selfcontained.tests.ps1` intent kept.** It exists because a CI-run script loads no plugin
+  lib (#1556). The moved scripts still run as one file, so the suite now walks `scripts/ci/asana-*.ps1`
+  too, and the scripts stay self-contained: a store not yet migrated runs its old copy beside them.
+- **The scripts move to `dkj-repo-workflow-bwj/scripts/ci/`**, the folder name `dkj-repo-workflow` already
+  uses for a CI-run script, so `templates/` holds only what a store copies.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Moved `templates/asana-{closed-message,open-section,prio-label}.ps1` to `scripts/ci/`; their config
+      fallback is now the working directory's `scripts/repo-config.ps1` (the workflow passes it explicitly).
+- [x] The three `templates/asana-*.yml` fetch the plugin source with a SHA-pinned `actions/checkout` at
+      `ref: @@SCRIPTS_REF@@` (sparse, the `scripts/ci` folder) and run the script from there; prio-label no
+      longer checks out the store at all, since it reads nothing from it.
+- [x] `closed-message-sessioncheck` compares only the workflow, ignoring the `ref:` pin, and reports a
+      `.github/scripts/asana-*.ps1` copy left behind.
+- [x] `adopt-dkj-repo-workflow-bwj` step 1 places the workflow with its pin (how to resolve the SHA) and
+      carries the one reported migration: replace the workflow and `git rm` the copy, in one commit.
+- [x] Comments in `asana-task-lib`, `asana-section-lib`, `live-message-rules`, `stale-paste-block-rules`,
+      `guard-stale-paste-block` and the plugin README point at the new path.
 
 ### TEST
 
+- [x] `closed-message-sessioncheck.tests.ps1` -- 87 passed: pins (SHA + tag, bare tag, `main`) are not
+      stale, a non-release ref is, and a left-behind copy is reported per workflow and per repo reach.
+- [x] `dkj-repo-workflow-bwj.tests.ps1` -- 1106 passed, including the new asserts that each workflow
+      runs nothing from `.github/scripts/`, fetches at the placeholder, and pins every action by SHA.
+- [x] `bwj-asana-move-task.tests.ps1` -- 57 passed; `template-selfcontained.tests.ps1` -- 15 passed,
+      now covering the three CI scripts.
+- [x] `check-plugin-integrity.ps1` -- 0 errors.
+
 ### DEPLOY: feat/4351-asana-scripts-from-pinned-checkout
 
-**Score:**
+The three Asana workflows of `dkj-repo-workflow-bwj` (`asana-closed-message`, `asana-prio-label`,
+`asana-open-section`) no longer ship their script for a store to copy. A store keeps only the workflow
+file, which checks out `DKJ-Solutions/dkj-marketplace` at a pinned commit and runs the script from
+`dkj-repo-workflow-bwj/scripts/ci/`, the way the rest of the CI floor already does. The adopt skill
+places the workflow with that pin and migrates a store off its `.github/scripts/asana-*.ps1` copies, and
+the session check now ignores the pin and reports a copy left behind.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+For a BWJ store, a fix to the closed message, the prio-label sync or the open-section sweep now reaches
+the store by moving one `ref:` line, instead of re-copying up to 1,800 lines of script per workflow. Each
+store needs one migration after taking this release: the session check names the copies until
+`adopt-dkj-repo-workflow-bwj` step 1 has replaced the workflows and removed them.
+
+**Score:** 4
 
 #### Pull Request
 
 The three Asana workflows fetch their script from a pinned dkj-marketplace checkout
-
