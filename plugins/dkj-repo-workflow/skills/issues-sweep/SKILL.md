@@ -55,10 +55,17 @@ disagree you follow it and say so.
 ### 1. Choose -- and it writes nothing
 
 ```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/lint/check-stranded-sweep.ps1"
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/claim-issue.ps1" -Candidates
 ```
 
-It prints every open issue as `free`, `mine`, `held`, `branch`, `stale-park`, `relabel` or `skipped` with
+**The first line reads the armed pull requests (#4355).** A hand-off at step 5 leaves nobody watching CI,
+so `[STUCK]` names one with a failed required check or a conflict at once, and any other after two hours of
+quiet; `[STRANDED]` names one the runner never takes. Each comes with its `git checkout` and `ship-pr`
+lines. One this sweep shipped is repaired before a new issue is taken; another session's is named in the
+close-out, not taken over.
+
+The second prints every open issue as `free`, `mine`, `held`, `branch`, `stale-park`, `relabel` or `skipped` with
 the reason, and names the lowest free number. `-SkipLabel` defaults to every label that parks an issue with
 somebody else, former names included, so pass none; `-SkipIssue` holds numbers out by hand.
 `-Author @me` judges only issues your own sessions filed, the rest read `skipped` (#4337): in a tracker two people share, each sweeps what their own sessions opened.
@@ -161,7 +168,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 
 **`-HandOff` (#4355)** ends the run once the PR is armed and the checkout is on the trunk: merge-on-green merges
 and fold-on-merge folds it, so go straight to step 7 in the same turn. Where it cannot hand off it says why and
-watches CI as usual.
+watches CI as usual. A hand-off that goes red comes back at step 1 as `[STUCK]`.
 
 **`-Resolves <n>` is not optional here** -- a bare `ship-pr` is refused on a sweep branch (#2376). Where
 the branch is only one step of a larger issue -- the issue stays open for the next step -- pass

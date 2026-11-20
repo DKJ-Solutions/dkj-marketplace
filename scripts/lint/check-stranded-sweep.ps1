@@ -11,6 +11,11 @@
     sweep, forever -- and that decline is visible only in the sweep's own CI log. The pull request stays
     labelled and green, so it READS as owned. Measured on PR #2433, September 24, 2026.
 
+    AND SINCE ISSUE #4355 IT REPORTS [STUCK] TOO. `ship-pr -HandOff` exits once a pull request is armed,
+    so nobody watches its CI. Get-MergeOnGreenStuckVerdict (same lib) reports an armed pull request
+    whose required check failed or that conflicts at once, and any other armed one after -StuckHours of
+    quiet. issues-sweep step 1 runs this script, so a sweep sees a hand-off of its own that went wrong.
+
     ONE PURE FUNCTION DOES THE JUDGING, REUSED RATHER THAN RESTATED: Get-MergeOnGreenStrandedVerdict in
     merge-on-green-lib.ps1 -- the same lib pick-merge-on-green.ps1 already dot-sources, holding the one
     spelling of the arming label, the executed-path rule and the settle window. The `gh` reads that
@@ -88,6 +93,11 @@
     spent, no further armed pull request is judged and the run says so via an `[INCOMPLETE]` marker
     rather than silently reporting on only the ones it reached (issue #2438).
 
+.PARAMETER StuckHours
+    (Optional) how many hours an armed pull request may sit without activity before it is reported as
+    [STUCK] (issue #4355). Default: Get-MergeOnGreenStuckHours (2). A failed required check or a conflict
+    is reported at once, whatever this says.
+
 .EXAMPLE
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts/lint/check-stranded-sweep.ps1
 #>
@@ -95,7 +105,8 @@
 param(
     [string]$RootOverride = '',
     [int]$TimeoutSeconds = 15,
-    [int]$MaxElapsedSeconds = 90
+    [int]$MaxElapsedSeconds = 90,
+    [double]$StuckHours = -1
 )
 
 Set-StrictMode -Version Latest
@@ -162,6 +173,7 @@ $configPath = if ($repoRoot) { Join-Path $repoRoot 'scripts\repo-config.ps1' } e
 if ($configPath -and (Test-Path -LiteralPath $configPath -PathType Leaf)) { . $configPath }
 
 $label = Get-MergeOnGreenArmLabel
+if ($StuckHours -lt 0) { $StuckHours = Get-MergeOnGreenStuckHours }
 
 # THE SAME REPO NAME RESOLUTION pick-merge-on-green.ps1 uses (issue #2329's dual-context lesson): this
 # repo's own seam first, GITHUB_REPOSITORY otherwise. A session hook has neither in the source repo's own
@@ -178,11 +190,15 @@ if (-not $repo) {
 # checkout token live in Invoke-BoundedPrScan. What is this check's own is the filter (the arming label),
 # the verdict, and the prose. The --json fields are the picker's plus 'title', which only this check prints.
 $scan = Invoke-BoundedPrScan -Repo $repo -ListFilter @('--label', $label) `
-    -JsonFields 'number,headRefName,headRefOid,title,isDraft,mergeable,labels,isCrossRepository,files,changedFiles' `
+    -JsonFields 'number,headRefName,headRefOid,title,isDraft,mergeable,labels,isCrossRepository,files,changedFiles,updatedAt' `
     -TimeoutSeconds $TimeoutSeconds -MaxElapsedSeconds $MaxElapsedSeconds -Judge {
         param($Record, $MergeBlockVerdict, $GreenAgeMinutes)
         $verdict = Get-MergeOnGreenStrandedVerdict -Record $Record -MergeBlockVerdict $MergeBlockVerdict -GreenAgeMinutes $GreenAgeMinutes -Label $label
-        if ($verdict.Stranded) { return @{} }
+        if ($verdict.Stranded) { return @{ Kind = 'Stranded' } }
+        # STUCK (issue #4355): a hand-off leaves nobody watching CI, so a red check, a conflict or a
+        # runner that never fires has to be reported by the next session -- and by a sweep's step 1.
+        $stuck = Get-MergeOnGreenStuckVerdict -Record $Record -MergeBlockVerdict $MergeBlockVerdict -GreenAgeMinutes $GreenAgeMinutes -StuckHours $StuckHours -Label $label
+        if ($stuck.Stuck) { return @{ Kind = 'Stuck'; Reason = ($stuck.Reason -replace '[^\x20-\x7E]', '?') } }
         return $null
     }
 
@@ -207,11 +223,26 @@ if ($scan.Total -eq 0) {
 # that claim. JudgedCount + UnjudgedCount always equals Total, so the two together say exactly what was
 # actually checked.
 $incompleteLine = Get-PrScanIncompleteLine -Scan $scan -Noun 'armed' -MaxElapsedSeconds $MaxElapsedSeconds
-$stranded = @($scan.Findings)
+$stranded  = @($scan.Findings | Where-Object { $_.Kind -eq 'Stranded' })
+$stuckOnes = @($scan.Findings | Where-Object { $_.Kind -eq 'Stuck' })
 
+if ($stranded.Count -eq 0 -and $stuckOnes.Count -eq 0) {
+    if ($incompleteLine) { Write-Host $incompleteLine }
+    else { Write-Host "[OK] $($scan.Total) armed pull request(s), none stranded on the executed-path reason, none stuck." }
+    exit 0
+}
+
+if ($stuckOnes.Count -gt 0) {
+    Write-Host "[STUCK] $($stuckOnes.Count) armed pull request(s) merge-on-green has not merged and will not without a session -- a red check, a conflict, or a runner that is not running:"
+    foreach ($s in ($stuckOnes | Sort-Object { [int]$_.Number })) {
+        $titlePart = if ($s.Title) { " -- $($s.Title)" } else { '' }
+        Write-Host "  #$($s.Number) ($($s.Branch))$titlePart"
+        Write-Host "    why: $($s.Reason)"
+        Get-PrScanResumeLines -Finding $s -RepoRoot $repoRoot | ForEach-Object { Write-Host $_ }
+    }
+}
 if ($stranded.Count -eq 0) {
     if ($incompleteLine) { Write-Host $incompleteLine }
-    else { Write-Host "[OK] $($scan.Total) armed pull request(s), none stranded on the executed-path reason." }
     exit 0
 }
 

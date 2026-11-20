@@ -44,10 +44,10 @@ always pins the release that carries the bytes its checksums name.
 
 | File | Fetch from | sha256 |
 |---|---|---|
-| `house-style.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.2.0/plugins/dkj-repo-workflow/assets/dkj-brandbook/house-style.css` | `d319be0d396c5cde4d83b440938e3e456a4a43e58ed45b2a0e82c44f2361c25c` |
-| `house-theme.js` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.2.0/plugins/dkj-repo-workflow/assets/dkj-brandbook/house-theme.js` | `c1e15beca3c764a18033909e417306e8eefd264f1c8a1bd189dcf34452404e6a` |
-| `house-product.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.2.0/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product/house-product.css` | `65930afb00237c398648aedeb618d4867ca66a39f79a66468fbbe7bf928e9638` |
-| `InterVariable.woff2` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.2.0/plugins/dkj-repo-workflow/assets/dkj-brandbook/InterVariable.woff2` | `693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3` |
+| `house-style.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.3.0/plugins/dkj-repo-workflow/assets/dkj-brandbook/house-style.css` | `d319be0d396c5cde4d83b440938e3e456a4a43e58ed45b2a0e82c44f2361c25c` |
+| `house-theme.js` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.3.0/plugins/dkj-repo-workflow/assets/dkj-brandbook/house-theme.js` | `c1e15beca3c764a18033909e417306e8eefd264f1c8a1bd189dcf34452404e6a` |
+| `house-product.css` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.3.0/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-dkj/assets/dkj-brandbook-product/house-product.css` | `65930afb00237c398648aedeb618d4867ca66a39f79a66468fbbe7bf928e9638` |
+| `InterVariable.woff2` | `https://raw.githubusercontent.com/DKJ-Solutions/dkj-marketplace/v7.3.0/plugins/dkj-repo-workflow/assets/dkj-brandbook/InterVariable.woff2` | `693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3` |
 
 **A product page vendors and links all three files, `house-style.css` first and `house-product.css` after it**
 (the product file is never loaded alone), with `house-theme.js` where the app lets the user pick a theme. **An
@@ -251,9 +251,9 @@ permissions:
   contents: read
 jobs:
   house-style:
-    uses: DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-house-style.yml@v7.2.0
+    uses: DKJ-Solutions/dkj-marketplace/.github/workflows/reusable-house-style.yml@v7.3.0
     with:
-      scripts-ref: v7.2.0
+      scripts-ref: v7.3.0
 ```
 
 Both tags name the release whose brand book the repo adopts, the one in the checksum table above. The release cut

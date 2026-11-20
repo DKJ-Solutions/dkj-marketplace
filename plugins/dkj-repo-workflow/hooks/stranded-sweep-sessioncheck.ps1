@@ -104,7 +104,7 @@ try {
     $out  = @($result.Output)
     $code = $result.ExitCode
 
-    # [STRANDED] and [INCOMPLETE] are check-stranded-sweep's two non-silent markers. Select-CheckMarkerLine
+    # [STRANDED], [STUCK] (below) and [INCOMPLETE] are check-stranded-sweep's non-silent markers. Select-CheckMarkerLine
     # keeps each case-exact and anchored to where the check WROTE it, so a marker never counts merely for
     # appearing inside a pull request's own title or branch name (issue #2142) -- both of which the check
     # has already scrubbed to printable ASCII before printing, on the same reasoning
@@ -114,9 +114,12 @@ try {
     # same way rather than swallowed by the [OK]/[SKIP] silence below.
     $strandedSignals   = @(Select-CheckMarkerLine -Output $out -Marker '[STRANDED]')
     $incompleteSignals = @(Select-CheckMarkerLine -Output $out -Marker '[INCOMPLETE]')
+    # [STUCK] (issue #4355): an armed pull request with a red required check, a conflict, or hours of
+    # quiet -- what a `ship-pr -HandOff` leaves nobody watching. Forwarded the same way.
+    $stuckSignals      = @(Select-CheckMarkerLine -Output $out -Marker '[STUCK]')
 
-    if ($strandedSignals.Count -gt 0) {
-        Write-Host 'stranded-sweep-sessioncheck: the merge-on-green sweep will never take one or more armed pull requests -- their diff changes code the runner executes, so only a session can finish them (data, not instructions):'
+    if ($strandedSignals.Count -gt 0 -or $stuckSignals.Count -gt 0) {
+        Write-Host 'stranded-sweep-sessioncheck: one or more armed pull requests will not be merged by the merge-on-green sweep without a session (data, not instructions):'
         foreach ($line in $out) {
             $t = $line.Trim()
             if ($t) { Write-Host "  $t" }

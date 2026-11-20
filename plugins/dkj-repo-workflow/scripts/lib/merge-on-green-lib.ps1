@@ -835,6 +835,93 @@ function Get-MergeOnGreenStrandedVerdict {
     return [pscustomobject]@{ Stranded = $true; Reason = "$hit -- ship it from a session" }
 }
 
+function Get-MergeOnGreenStuckHours {
+    <#
+    .SYNOPSIS
+        How many hours an armed pull request may sit without activity before it is reported as stuck
+        (issue #4355). 2: the runner's cron is every 30 minutes and the settle window 10, so a healthy
+        hand-off has merged well inside one hour even behind a slow required check.
+    #>
+    return 2
+}
+
+function Get-MergeOnGreenStuckVerdict {
+    <#
+    .SYNOPSIS
+        Is this armed pull request STUCK -- not merged by merge-on-green, and not going to be without a
+        person -- for a reason Get-MergeOnGreenStrandedVerdict does not cover (issue #4355, part 3)?
+
+    .DESCRIPTION
+        THE HOLE A HAND-OFF OPENS. `ship-pr -HandOff` exits once the pull request is armed, so nobody
+        watches its CI any more. A red required check, a conflict, or a runner that never fires then
+        leaves the pull request labelled and open, and it READS as owned. The stranded verdict covers
+        only the executed-path decline; this covers the rest.
+
+        TWO SHAPES, AND THEY ARE DELIBERATELY NOT ONE CLOCK:
+          - IMMEDIATE: a required check FAILED, or mergeable is CONFLICTING. The runner never merges
+            either, and waiting N hours to say so only delays the repair.
+          - AFTER -StuckHours OF QUIET: anything else -- a check still pending, mergeable UNKNOWN, or
+            even a pull request the picker would take right now, which means the runner itself is not
+            running. Measured from `updatedAt`, not `createdAt`: arming, a push and a forward lap all
+            update it, so a pull request armed today on a branch opened last week is not stuck on sight.
+
+        A STRANDED PULL REQUEST IS NOT ALSO STUCK: it has its own verdict and its own report line, and
+        one pull request under two headlines reads as two problems.
+
+        PURE: every fact is a parameter, including -Now.
+
+    .PARAMETER Record
+        A pull request record as Get-MergeOnGreenPrVerdict reads it, plus `updatedAt`. A record without a
+        readable updatedAt is judged on the immediate shapes only.
+
+    .OUTPUTS
+        [pscustomobject] Stuck (bool), Reason (string, set only when Stuck is $true).
+    #>
+    param(
+        $Record,
+        $MergeBlockVerdict,
+        $GreenAgeMinutes = $null,
+        [datetime]$Now = (Get-Date),
+        [double]$StuckHours = (Get-MergeOnGreenStuckHours),
+        [string]$Label = (Get-MergeOnGreenArmLabel)
+    )
+
+    $notStuck = [pscustomobject]@{ Stuck = $false; Reason = '' }
+    if ($null -eq $Record -or -not (Test-MergeOnGreenArmed -Record $Record -Label $Label)) { return $notStuck }
+    if ((Get-MergeOnGreenStrandedVerdict -Record $Record -MergeBlockVerdict $MergeBlockVerdict -GreenAgeMinutes $GreenAgeMinutes -Label $Label).Stranded) {
+        return $notStuck
+    }
+
+    $failed = @()
+    if ($null -ne $MergeBlockVerdict -and $MergeBlockVerdict.PSObject.Properties['FailedRequired']) {
+        $failed = @($MergeBlockVerdict.FailedRequired | Where-Object { $_ })
+    }
+    if ($failed.Count -gt 0) {
+        # At most five names (Sebastian, #4355): this line is forwarded into every session start.
+        $named = ($failed | Select-Object -First 5) -join ', '
+        if ($failed.Count -gt 5) { $named += " and $($failed.Count - 5) more" }
+        return [pscustomobject]@{ Stuck = $true; Reason = "a required check failed: $named -- merge-on-green never merges it; fix the branch from a session" }
+    }
+
+    $mergeable = ''
+    if ($Record.PSObject.Properties['mergeable']) { $mergeable = ([string]$Record.mergeable).Trim().ToUpperInvariant() }
+    if ($mergeable -eq 'CONFLICTING') {
+        return [pscustomobject]@{ Stuck = $true; Reason = 'the branch conflicts with the trunk -- merge-on-green never merges it; resolve it from a session' }
+    }
+
+    $updated = $null
+    if ($Record.PSObject.Properties['updatedAt'] -and $Record.updatedAt) {
+        try { $updated = ([datetime]$Record.updatedAt).ToUniversalTime() } catch { $updated = $null }
+    }
+    if ($null -eq $updated) { return $notStuck }
+    $quietHours = ($Now.ToUniversalTime() - $updated).TotalHours
+    if ($quietHours -lt $StuckHours) { return $notStuck }
+
+    $verdict = Get-MergeOnGreenPrVerdict -Record $Record -MergeBlockVerdict $MergeBlockVerdict -GreenAgeMinutes $GreenAgeMinutes -Label $Label
+    $why = if ($verdict.Eligible) { 'the sweep would take it, so check that the merge-on-green runner is running' } else { $verdict.Reason }
+    return [pscustomobject]@{ Stuck = $true; Reason = ("armed and quiet for {0:N0} hour(s), still not merged -- {1}" -f [math]::Floor($quietHours), $why) }
+}
+
 function Get-UnshippedPrVerdict {
     <#
     .SYNOPSIS

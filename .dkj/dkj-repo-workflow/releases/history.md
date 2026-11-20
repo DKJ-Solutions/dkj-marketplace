@@ -4,6 +4,7 @@
 
 | Version | Date | Type | Title |
 |---|---|---|---|
+| [7.3.0](audience/7.x/7.3.0.md) | 2026-11-20 | Minor | Minor release |
 | [7.2.0](audience/7.x/7.2.0.md) | 2026-11-19 | Minor | Minor release |
 | [7.1.0](audience/7.x/7.1.0.md) | 2026-11-18 | Minor | Minor release |
 | [7.0.0](audience/7.x/7.0.0.md) | 2026-11-17 | Major | The workflow plugin becomes dkj-repo-workflow, the developers team splits off the core team, and issues-sweep loads only the step in hand |
