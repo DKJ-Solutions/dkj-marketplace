@@ -2,7 +2,59 @@
 
 ## [Unreleased]
 
-**9 / 9 minor entries** <!-- pending-tally -->
+**11 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4344-approved-takeover-unassigns · 20261120-101846Z
+
+`claim-issue <n> -ApprovedBy "<who, when>"` takes over an issue another account holds once a person
+has approved it. It adds you and removes the previous assignee in the same edit, then comments who
+approved it, so the issue never shows two assignees side by side. Without the flag, the refusal stands as before
+([#4344](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4344)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Taking over a colleague's issue after they said "take it" is now one command that also unassigns them,
+instead of a refusal and two hand edits.
+
+**Score:** 3
+
+#### Pull Request
+
+claim-issue: an approved takeover removes the previous assignee in the same step
+
+Plugins: dkj-repo-workflow
+
+[PR #4360](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4360)
+
+---
+
+### DEPLOY: docs/4343-drafted-message-not-posted · 20261120-100318Z
+
+The constitution now says it outright: when the owner asks for a reply or a message to a person, the
+session delivers the text in the chat and does not post it, on Asana, on an issue or anywhere else. The
+owner sends it. Only a procedure's own fixed writes, such as `report-issue`'s comment, are posted by the
+session ([#4343](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4343)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A session asked to write a message to a colleague hands over the text instead of sending it under your
+name.
+
+**Score:** 3
+
+#### Pull Request
+
+A requested message to a person is drafted in chat, never posted by the session
+
+Plugins: dkj-repo-workflow
+
+[PR #4357](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4357)
+
+---
 
 ### DEPLOY: feat/4337-sweep-author-filter · 20261120-094923Z
 

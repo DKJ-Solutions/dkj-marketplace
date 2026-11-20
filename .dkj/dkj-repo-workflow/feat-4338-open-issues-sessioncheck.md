@@ -53,7 +53,7 @@ account opened, and how to sweep only those (`-Author @me`, #4337).
 ### TEST
 
 - [x] `open-issues-gate.tests.ps1` (27 asserts: count, cap, zero, failed read, unparseable, no account,
-  no gh, forged marker, crashing and missing check); `native-capture` count 130 -> 131 with the reason;
+  no gh, forged marker, crashing and missing check); `native-capture` count 131 -> 132 (after #4344 took 131 on main) with the reason;
   `source-repo-guard`, `shared-scripts`, `sessioncheck-dispatch` and the integrity check green.
 - [x] Live in this repo: `10 open issue(s) were opened by <login> -- sweep only your own with
   /dkj-repo-workflow:issues-sweep -Author @me (#4337).`
