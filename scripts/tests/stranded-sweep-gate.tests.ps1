@@ -156,7 +156,8 @@ function Invoke-Check {
         # (22 lanes) that launch alone can outrun 15s -- the list read then times out into [SKIP], or a
         # checks read into [INCOMPLETE], and an [OK] assert goes red for a race the tree had no part in.
         # No case here tests the per-call timeout, so this suite has no reason to be exposed to it.
-        [int]$TimeoutSeconds = 120
+        [int]$TimeoutSeconds = 120,
+        [double]$StuckHours = -1
     )
     $prevEap = $ErrorActionPreference
     try {
@@ -170,6 +171,7 @@ function Invoke-Check {
         if ($PrChecksFail) { $env:GH_FAKE_PR_CHECKS_FAIL = '1' } else { Remove-Item Env:\GH_FAKE_PR_CHECKS_FAIL -ErrorAction SilentlyContinue }
         $scriptArgs = @('-RootOverride', $Dir, '-TimeoutSeconds', $TimeoutSeconds)
         if ($MaxElapsedSeconds -ge 0) { $scriptArgs += @('-MaxElapsedSeconds', $MaxElapsedSeconds) }
+        if ($StuckHours -ge 0) { $scriptArgs += @('-StuckHours', $StuckHours) }
         $out = & $PowershellExe -NoProfile -ExecutionPolicy Bypass -File $Script @scriptArgs 2>&1
         return @{ Out = ($out | Out-String); Code = $LASTEXITCODE }
     } finally {
@@ -339,6 +341,32 @@ try {
     Assert-True ($r.Out -match '\[INCOMPLETE\]') 'it is reported as [INCOMPLETE] instead'
     Assert-True ($r.Out -match 'judged 0 of 3') 'naming the right judged/total split -- a zero budget judges nothing'
     Assert-True ($r.Out -match '3 not checked') 'and the right unjudged count'
+
+    # --- STUCK: what a ship-pr -HandOff leaves nobody watching (issue #4355) ----------------------------
+    Write-Host ''
+    Write-Host 'check-stranded-sweep.ps1 -- [STUCK] for a red, conflicting or long-quiet armed pull request (#4355)' -ForegroundColor Cyan
+
+    $redChecksJson = '[{"name":"lint-en-tests","bucket":"fail","state":"FAILURE","completedAt":"2026-11-20T09:00:00Z"}]'
+    $stuckRed = New-Tree -Label 'stuck-red' -WithFlow
+    $r = Invoke-Check -Dir $stuckRed -Path "$fakeBin;$prevPath" -Account 'tester' -Repo 'fake/repo' `
+        -PrListJson $OrdinaryPrJson -PrChecksJson $redChecksJson
+    Assert-True ($r.Code -eq 0 -and $r.Out -match '\[STUCK\]') 'an armed pull request with a failed required check -- [STUCK], exit 0'
+    Assert-True ($r.Out -match '#77' -and $r.Out -match 'why: a required check failed: lint-en-tests') 'naming the pull request and the failed check'
+    Assert-True ($r.Out -match 'git checkout docs/77-x' -and $r.Out -match 'ship-pr\.ps1') 'with the resume lines'
+    Assert-True ($r.Out -notmatch '\[OK\]' -and $r.Out -notmatch '\[STRANDED\]') 'and neither [OK] nor [STRANDED]'
+
+    $quietTs = (Get-Date).ToUniversalTime().AddHours(-5).ToString('yyyy-MM-ddTHH:mm:ssZ')
+    $quietPrJson = $OrdinaryPrJson -replace '"changedFiles":1\}', "`"changedFiles`":1,`"updatedAt`":`"$quietTs`"}"
+    $pendingChecksJson = '[{"name":"lint-en-tests","bucket":"pending","state":"IN_PROGRESS","completedAt":"0001-01-01T00:00:00Z"}]'
+    $stuckQuiet = New-Tree -Label 'stuck-quiet' -WithFlow
+    $r = Invoke-Check -Dir $stuckQuiet -Path "$fakeBin;$prevPath" -Account 'tester' -Repo 'fake/repo' `
+        -PrListJson $quietPrJson -PrChecksJson $pendingChecksJson
+    Assert-True ($r.Out -match '\[STUCK\]' -and $r.Out -match 'quiet for 5 hour') 'a pending check after five quiet hours -- [STUCK], with the hours'
+
+    $notYet = New-Tree -Label 'stuck-not-yet' -WithFlow
+    $r = Invoke-Check -Dir $notYet -Path "$fakeBin;$prevPath" -Account 'tester' -Repo 'fake/repo' `
+        -PrListJson $quietPrJson -PrChecksJson $pendingChecksJson -StuckHours 6
+    Assert-True ($r.Out -match '\[OK\]' -and $r.Out -notmatch '\[STUCK\]') '-StuckHours 6 -- the same five quiet hours are still a wait'
 } finally {
     $env:PATH = $prevPath
     $env:GITHUB_REPOSITORY = $prevGithubRepo
@@ -413,6 +441,15 @@ $r = Invoke-Hook -CheckScriptOverride $incompleteStub -Dir $hookFixture
 Assert-True ($r.Code -eq 0 -and $r.Out -match 'stranded-sweep-sessioncheck:' -and $r.Out -match '\[INCOMPLETE\]') `
     'the check reports [INCOMPLETE] -- the hook forwards it too, not silent, exit 0'
 Assert-True ($r.Out -match 'judged 1 of 3') 'and the line is forwarded verbatim, judged/total count included'
+
+$stuckStub = New-StubCheck -Dir $hookFixture -Name 'stuck' -ExitCode 0 -Body @'
+[STUCK] 1 armed pull request(s) merge-on-green has not merged and will not without a session -- a red check, a conflict, or a runner that is not running:
+  #77 (docs/77-x)
+    why: a required check failed: lint-en-tests
+'@
+$r = Invoke-Hook -CheckScriptOverride $stuckStub -Dir $hookFixture
+Assert-True ($r.Code -eq 0 -and $r.Out -match 'stranded-sweep-sessioncheck:' -and $r.Out -match '\[STUCK\]' -and $r.Out -match 'lint-en-tests') `
+    'the check reports [STUCK] -- the hook forwards it verbatim, exit 0 (#4355)'
 
 $crashStub = New-StubCheck -Dir $hookFixture -Name 'crash' -Body '' -ExitCode 3
 $r = Invoke-Hook -CheckScriptOverride $crashStub -Dir $hookFixture
