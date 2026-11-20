@@ -294,8 +294,12 @@ function Get-ClaimVerdict {
 
               3. SOMEBODY ELSE HOLDS IT. The tracker is the only thing two sessions share -- the same
                  owner on a second machine, a colleague on the same board -- so an assignee that is
-                 not this checkout's own account stops the work. Not a judgement call and no valve:
-                 the way past it is talking to whoever holds it, which a flag cannot do.
+                 not this checkout's own account stops the work. Not a judgement call and the verdict
+                 itself has no valve: the way past it is talking to whoever holds it, which a flag
+                 cannot do. The one valve is -ApprovedBy (issue #4344), and it records that talk rather
+                 than replacing it: Get-ClaimTakeoverMode turns this refusal (and only this one) into a
+                 takeover when a person's approval is named, and the takeover then removes the previous
+                 assignee in the same step, so two assignees never sit side by side.
 
                  A CO-ASSIGNMENT STOPS IT TOO, including one this account is part of. Two people on
                  one issue is exactly the duplicate-work hazard the claim rule exists for, and being
@@ -361,6 +365,92 @@ function Get-ClaimVerdict {
         return [pscustomobject]@{ Action = 'skip'; Code = 'already-yours'; Others = $others }
     }
     return [pscustomobject]@{ Action = 'claim'; Code = 'open-unassigned'; Others = $others }
+}
+
+function Get-ClaimTakeoverMode {
+    <#
+        .SYNOPSIS
+            What -ApprovedBy does with a Get-ClaimVerdict result (issue #4344): 'takeover', 'claim' or 'refuse'.
+
+        .DESCRIPTION
+            THE ONE REFUSAL THAT HAS A PERSON BEHIND IT. The 'taken' verdict says somebody else holds the
+            issue and that the way past is a conversation. When that conversation has happened -- the
+            holder or an owner said "take it over" -- there was no way to act on it: the claim stayed
+            refused, and the session added itself by hand, leaving two assignees and nobody clearly
+            holding the work (owner, 2026-09-29: the previous assignee is to be unassigned in the same
+            step). So with an approval named, 'taken' alone becomes a takeover.
+
+            EVERY OTHER REFUSAL STAYS ONE. 'closed', 'pull-request' and 'no-account' are not about who
+            holds the issue, so no approval of a takeover speaks to them. With no approval the verdict is
+            passed through unchanged ('refuse' stays 'refuse'). An already-yours or open-unassigned issue
+            has nothing to take over: it proceeds as a normal claim, and the caller says so in one line.
+
+        .PARAMETER Verdict
+            Get-ClaimVerdict's result (Action, Code).
+
+        .PARAMETER ApprovedBy
+            The record of the approval. Empty or whitespace means none was given.
+
+        .OUTPUTS
+            'takeover' | 'claim' | 'refuse' -- 'claim' covers a skip too, as the verdict's own Action says.
+    #>
+    param([Parameter(Mandatory = $true)][object]$Verdict, [AllowNull()][AllowEmptyString()][string]$ApprovedBy = '')
+
+    $approved = [bool](([string]$ApprovedBy).Trim())
+    if ($Verdict.Action -eq 'refuse') {
+        if ($approved -and $Verdict.Code -eq 'taken') { return 'takeover' }
+        return 'refuse'
+    }
+    return 'claim'
+}
+
+function Format-TakeoverComment {
+    <#
+        .SYNOPSIS
+            The one comment an approved takeover posts (issue #4344): "Taken over from @a, @b by @me --
+            approved by <ApprovedBy>."
+
+        .DESCRIPTION
+            ONE LINE, AND THE APPROVAL TEXT IS A PERSON'S WORDS. It is whatever the caller typed, so it is
+            collapsed to a single line, stripped of control and format characters by Format-ForConsole (the
+            same helper everything this script prints from foreign text goes through), cut at 200
+            characters, and given a closing full stop where it has none. The logins come from the tracker
+            and are prefixed with '@' once.
+
+        .OUTPUTS
+            The comment body, a single string.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$Previous,
+        [Parameter(Mandatory = $true)][string]$Account,
+        [Parameter(Mandatory = $true)][string]$ApprovedBy
+    )
+    $who = (@($Previous) | ForEach-Object { '@' + (([string]$_).Trim() -replace '^@', '') }) -join ', '
+    $a = Format-ForConsole -Text (([string]$ApprovedBy -replace '\s+', ' ').Trim())
+    if ($a.Length -gt 200) { $a = $a.Substring(0, 200).TrimEnd() }
+    $a = $a.TrimEnd('.')
+    return "Taken over from $who by @$Account -- approved by $a."
+}
+
+function Get-TakeoverRemainders {
+    <#
+        .SYNOPSIS
+            Which of the previous assignees are still on the issue after a takeover's write (issue #4344).
+
+        .DESCRIPTION
+            THE READ-BACK'S SECOND HALF. A takeover is complete only when this account is on the issue AND
+            the previous ones are gone; GitHub can drop one half of a combined edit without failing the
+            command, so the remainders are measured from the read-back, case-insensitively.
+
+        .OUTPUTS
+            The previous logins still assigned, as a string array (empty when the takeover is complete).
+    #>
+    param(
+        [AllowNull()][AllowEmptyCollection()][string[]]$Previous = @(),
+        [AllowNull()][AllowEmptyCollection()][string[]]$Now = @()
+    )
+    $nowSet = @(@($Now) | Where-Object { $_ } | ForEach-Object { ([string]$_).ToLowerInvariant() })
+    return @(@($Previous) | Where-Object { $_ -and ($nowSet -contains ([string]$_).ToLowerInvariant()) })
 }
 
 function Test-PullRequestUrl {
