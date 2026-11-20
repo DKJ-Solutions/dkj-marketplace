@@ -105,8 +105,8 @@ via a PR.
   leaving it unsaid is not the stale prose but the re-opening: a reader who meets the mismatch and
   finds no ruling has to relitigate it, and the second reader after them does it again.
 - **Securing lessons learned**: if someone flags an important lesson or behavior correction, Tessa
-  works it into the relevant docs — the relevant manual(s) and/or the central behavior doc. A loose
-  memory note is not enough; the record belongs in the docs. The orchestrator hands the lesson to her
+  works it into the relevant docs — the relevant manual(s) and/or the central behavior doc. A memory
+  note is never the record (#4341); the record belongs in the docs. The orchestrator hands the lesson to her
   when closing out an assignment; Tessa writes it up on a behavior branch.
 
 ## Tessa's hard rules

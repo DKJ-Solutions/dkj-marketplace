@@ -39,19 +39,43 @@
 
 ### PLAN
 
+#### Scope: the first step of #4341
+
+#4341 asks for three things: the rule, the harness switch placed by `adopt-dkj-repo-workflow` plus a
+session check, and a migration of existing notes. This branch takes the rule and switches auto memory
+off in this repo's own settings. The adopt key, the session check and the migration stay on #4341
+(`-NoResolves`).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Constitution, "Lessons learned...": from "not just in memory" to an outright no-memory rule,
+  with the reason (a note lives on one machine and one account) and the `autoMemoryEnabled` switch.
+- [x] The two restatements brought in line: the technical writer's portable manual and Chris's lens
+  chain line.
+- [x] `.claude/settings.json`: `"autoMemoryEnabled": false`, so this repo's own sessions stop writing notes.
 
 ### TEST
 
+- [x] `ship-pr`'s gate (integrity, script contract, roster, suites, always-on budget) runs on the PR.
+
 ### DEPLOY: docs/4341-no-auto-memory-notes
 
-**Score:**
+The constitution's rule on lessons learned went from "secured in the docs, not just in memory" to
+**never in memory**: no auto-memory notes at all, because a note lives on one machine under one
+account and no other person on the team ever reads it. That was measured the same day on a consumer,
+where a filing rule the owner decided in a memory note never reached a colleague's sessions. The rule
+names the switch, `"autoMemoryEnabled": false` in `.claude/settings.json`, and this repo now sets it.
+The technical writer's manual and Chris's lens now say the same.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A consumer reading the next release's constitution is told to keep no memory notes and how to switch
+auto memory off. Until `adopt-dkj-repo-workflow` places the key (still open on #4341), a consumer sets
+it by hand.
+
+**Score:** 2
 
 #### Pull Request
 

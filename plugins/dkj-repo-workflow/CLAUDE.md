@@ -85,10 +85,13 @@ size it was granted at.
 
 ## General working practices
 
-- **Lessons learned are secured in the docs, not just in memory.** When a session learns something
-  that must hold next time, it goes into the layer that owns the rule. Where the lesson is about the
-  shared system, that layer is the plugin's source, reached through the inbound route. Where it is
-  about this repo alone, it goes in the repo's own lens. A memory note alone is too noncommittal.
+- **Lessons learned are secured in the docs, never in memory** (Maikel, November 20, 2026, #4341). When a
+  session learns something that must hold next time, it goes into the layer that owns the rule. Where
+  the lesson is about the shared system, that layer is the plugin's source, reached through the inbound
+  route. Where it is about this repo alone, it goes in the repo's own lens. **No auto-memory notes at
+  all**, not even beside the docs: a note lives on one machine under one account, so every other person
+  on the team never sees it, and a rule kept there reaches nobody. Auto memory is switched off with
+  `"autoMemoryEnabled": false` in the repo's `.claude/settings.json`.
 - **A reported finding's *reason* is verified before it is repaired, not just its symptom.** A report
   says what went wrong and why, and the *why* is an inference by someone looking from the outside. Read
   the code, doc or output that would have to be true for that explanation to hold. A fix built on an
