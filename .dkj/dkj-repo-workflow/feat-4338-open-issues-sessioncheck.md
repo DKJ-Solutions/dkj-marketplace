@@ -39,19 +39,38 @@
 
 ### PLAN
 
+Issue #4338: a session check that tells the person at the keyboard how many open issues their own gh
+account opened, and how to sweep only those (`-Author @me`, #4337).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/lint/check-open-issues.ps1` (+ plugin mirror, registry row in `shared-scripts-lib.ps1`,
+  scripts README row): one bounded `gh issue list --author @me` read, the login from the keyring;
+  `[OK]` at zero, `[SKIP]` and exit 0 on every failure, the count capped at `-Limit` and shown as `N+`.
+- [x] `hooks/open-issues-sessioncheck.ps1`: thin hook in the shape of `stranded-sweep-sessioncheck`,
+  discovered by the dispatcher by name; silent at zero and on a skip.
 
 ### TEST
 
+- [x] `open-issues-gate.tests.ps1` (27 asserts: count, cap, zero, failed read, unparseable, no account,
+  no gh, forged marker, crashing and missing check); `native-capture` count 130 -> 131 with the reason;
+  `source-repo-guard`, `shared-scripts`, `sessioncheck-dispatch` and the integrity check green.
+- [x] Live in this repo: `10 open issue(s) were opened by <login> -- sweep only your own with
+  /dkj-repo-workflow:issues-sweep -Author @me (#4337).`
+
 ### DEPLOY: feat/4338-open-issues-sessioncheck
 
-**Score:**
+New `open-issues-sessioncheck` and its check script `check-open-issues.ps1`.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Every session now starts by telling you how many open issues your own account has filed in the repo,
+with the one command that sweeps only those. Issues your sessions filed no longer pile up unseen for
+somebody else to clear. It stays silent when you have none.
+
+**Score:** 3
 
 #### Pull Request
 

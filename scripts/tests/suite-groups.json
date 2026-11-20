@@ -143,6 +143,7 @@
                                       "fixture-lib-deps.tests.ps1",
                                       "fixture-script-lib.tests.ps1",
                                       "merge-queue-prereq.tests.ps1",
+                                      "open-issues-gate.tests.ps1",
                                       "repo-settings-gate.tests.ps1",
                                       "stranded-sweep-gate.tests.ps1",
                                       "suite-durations-lib.tests.ps1",

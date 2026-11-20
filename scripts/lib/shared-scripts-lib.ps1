@@ -1197,6 +1197,19 @@ function Get-SharedScriptPairs {
             # over the network rather than a timeable unit of work.
         },
         @{
+            # THE OPEN-ISSUES NUDGE (issue #4338): how many open issues THIS gh account opened in the repo,
+            # and how to sweep only those (claim-issue -Candidates -Author @me, #4337). Sessions file
+            # findings as issues and close out with a one-line receipt a person who does not know the
+            # workflow never notices. Same posture as check-stranded-sweep above on every axis: advisory,
+            # one bounded gh read, fails quiet, one automatic caller (the SessionStart hook
+            # open-issues-sessioncheck.ps1), no CI leg, no skill.
+            Name   = 'check-open-issues'
+            Source = 'scripts\lint\check-open-issues.ps1'
+            Plugin = 'dkj-repo-workflow'
+            Skill  = ''
+            SkillParamsExempt = @('RootOverride')
+        },
+        @{
             # THE UNSHIPPED-PR REPORT (issue #2525): the sibling of check-stranded-sweep above, for the
             # pull request that row cannot see -- green, settled, authored by this account, and NOT armed,
             # so no sweep will ever merge it. A ship that dies before arming, or a repo with no sweep at
