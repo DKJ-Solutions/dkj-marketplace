@@ -2,7 +2,37 @@
 
 ## [Unreleased]
 
-**17 / 17 minor entries** <!-- pending-tally -->
+**18 / 18 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4351-asana-scripts-from-pinned-checkout · 20261120-115339Z
+
+The three Asana workflows of `dkj-repo-workflow-bwj` (`asana-closed-message`, `asana-prio-label`,
+`asana-open-section`) no longer ship their script for a store to copy. A store keeps only the workflow
+file, which checks out `DKJ-Solutions/dkj-marketplace` at a pinned commit and runs the script from
+`dkj-repo-workflow-bwj/scripts/ci/`, the way the rest of the CI floor already does. The adopt skill
+places the workflow with that pin and migrates a store off its `.github/scripts/asana-*.ps1` copies, and
+the session check now ignores the pin and reports a copy left behind.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+For a BWJ store, a fix to the closed message, the prio-label sync or the open-section sweep now reaches
+the store by moving one `ref:` line, instead of re-copying up to 1,800 lines of script per workflow. Each
+store needs one migration after taking this release: the session check names the copies until
+`adopt-dkj-repo-workflow-bwj` step 1 has replaced the workflows and removed them.
+
+**Score:** 4
+
+#### Pull Request
+
+The three Asana workflows fetch their script from a pinned dkj-marketplace checkout
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4367](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4367)
+
+---
 
 ### DEPLOY: feat/4338-open-issues-sessioncheck · 20261120-114206Z
 
