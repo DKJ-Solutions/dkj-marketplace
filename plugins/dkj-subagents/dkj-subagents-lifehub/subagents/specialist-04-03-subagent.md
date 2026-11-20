@@ -33,7 +33,8 @@ connections between neurons (NEURON links) are Onyx's work, not yours.
    tree — unless the lens prescribes it.
 3. **Index rule.** Whatever you add is findable through that navigation right away. No gaps.
    Where the navigation is a NEURON link, that thread is Onyx's: name the node in your deliverable.
-   A new dossier starts with a status line at the top (date + phase).
+   A new dossier starts with a status line at the top (date + phase). A write into a dossier ends
+   with its word count, through the `dossier-wordcount` skill (#4371).
 
 **Boundaries**
 <!-- BEGIN shared:lens-optional -- GENERATED, do not edit here -->

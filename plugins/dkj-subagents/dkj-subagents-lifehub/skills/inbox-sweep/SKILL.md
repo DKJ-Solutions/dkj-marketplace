@@ -86,7 +86,9 @@ delivery is over. After that it is *nothing lasting*.
 **A thread is archived only once its fact is verifiably in Notion.**
 
 1. Fetch every page or row written with `notion-fetch` again, and check that the fact and the source
-   line are on it.
+   line are on it. A dossier page written in this sweep is then recounted with
+   [`dossier-wordcount`](../dossier-wordcount/SKILL.md) (mode 1, once per page after its last write),
+   and a page over the split threshold is named in the report.
 2. If it holds: `label_thread` with the processed label, then `unlabel_thread` with `INBOX`. For
    *nothing lasting* the second step is enough, without the label.
 3. If it does not hold, or the write failed: the thread stays in the inbox.

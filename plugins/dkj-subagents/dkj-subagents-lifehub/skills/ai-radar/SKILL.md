@@ -72,5 +72,7 @@ look at the owner's own setup, which is a separate pass the main page describes.
 
 - **Check what you wrote:** fetch the changed pages again and confirm *last processed* moved and no
   item stands twice.
+- **Recount every changed dossier page** with [`dossier-wordcount`](../dossier-wordcount/SKILL.md)
+  (mode 1), and name a page over the split threshold in the summary.
 - **The summary is short:** per source how many new items and how many additions, and the new items'
   names. A source that could not be read is named.

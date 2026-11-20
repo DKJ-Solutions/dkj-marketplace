@@ -63,7 +63,9 @@ to Notion at once, without asking first:
 - **A new date:** a new Agenda row (`notion-create-pages` with the data source as parent), with Wat,
   Datum, Jaarlijks, Wie and where known Vooraf (dagen), Dossier and Notitie. A row with a time or a
   place belongs in Google Calendar first; that is `agenda-sync`'s, so say so rather than writing both.
-- **A present idea, or what was given:** in that row's `Notitie`, or on the person's dossier page.
+- **A present idea, or what was given:** in that row's `Notitie`, or on the person's dossier page. A
+  write to a dossier page ends with its recount through
+  [`dossier-wordcount`](../dossier-wordcount/SKILL.md) (mode 1).
 - **An accepted action becomes a card in Tasks** (#4279). When the owner accepts the action proposed in
   step 2, create one page in the Tasks data source the settings name. Its title is the action, in the
   language the settings name. Its deadline is the action's moment. Its relation (the one the settings
