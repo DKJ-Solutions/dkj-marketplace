@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**6 / 6 minor entries** <!-- pending-tally -->
+**7 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4340-bwj-sweep-closes-act-only · 20261120-092809Z
+
+`claim-issue -Park awaiting-action-dev` now refuses in a repo whose own settings enable
+`dkj-repo-workflow-bwj`. That extension closes an act-only issue as completed with a research block
+instead of parking it (#3059, #3062), and its sweeps kept parking such issues anyway (four measured on
+smartwatchbanden). The refusal asks the extension's question, *does any step still change a file in the
+repo?*, and prints the close route for a no. For a yes, `-StillChangesCode` lets the park through.
+`issues-sweep`'s `parking.md` now gives the rule its own section ([#4340](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4340)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A BWJ sweep closes what the extension says to close, so the open issues and the In Progress column show
+only work that can still be built. Repos without the extension see no change.
+
+**Score:** 3
+
+#### Pull Request
+
+issues-sweep closes act-only issues where the BWJ extension says so
+
+Plugins: dkj-repo-workflow
+
+[PR #4352](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4352)
+
+---
 
 ### DEPLOY: fix/4339-bwj-file-only-repo-changing-work · 20261120-091520Z
 
