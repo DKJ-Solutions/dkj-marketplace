@@ -3317,6 +3317,29 @@ function Test-ParkLabel {
     return (@(@($Allowed) | Where-Object { [string]$_ -ceq $Label }).Count -gt 0)
 }
 
+function Test-ParkClosedByExtension {
+    <#
+        .SYNOPSIS
+            Whether -Park awaiting-action-dev is a park an enabled extension replaces with a close (issue #4340).
+
+        .DESCRIPTION
+            The core parks an act-only issue under awaiting-action-dev and permits an extension to close it
+            instead (#3062); dkj-repo-workflow-bwj does, under its one question "does any step still change a
+            file in the repo?" (#3059). Sweeps in BWJ repos parked such issues anyway, because the permission
+            sat in prose the park step never read (measured on smartwatchbanden, November 20, 2026: #1431,
+            #1426, #1451 and #1118 parked while their own park comments said no repo file was left to change).
+
+            -EnabledIds is the '<name>@<marketplace>' list Get-EnabledPlugins returns. Only the current label
+            is matched, because -Park takes the current family only (Test-ParkLabel).
+
+        .OUTPUTS
+            $true when the label is awaiting-action-dev and an enabled id is dkj-repo-workflow-bwj; else $false.
+    #>
+    param([AllowNull()][AllowEmptyString()][string]$Label, [AllowNull()][string[]]$EnabledIds = @())
+    if ([string]$Label -cne 'awaiting-action-dev') { return $false }
+    return (@(@($EnabledIds) | Where-Object { [string]$_ -like 'dkj-repo-workflow-bwj@*' }).Count -gt 0)
+}
+
 function Format-ParkComment {
     <#
         .SYNOPSIS

@@ -39,19 +39,48 @@
 
 ### PLAN
 
+#### The reason, verified
+
+The issue says the sweep and `parking.md` never mention the extension's close. Half true:
+`parking.md` named it in one sentence, filed under "What `<what>` names", with neither the #3059
+question nor the close form. SKILL.md step 1 never pointed to it. And nothing in `claim-issue -Park`
+stopped the park, so the repair goes into the script rather than adding more prose.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Test-ParkClosedByExtension` in `claim-issue-lib.ps1`: true for `awaiting-action-dev` when an
+  enabled id is `dkj-repo-workflow-bwj@*`.
+- [x] `claim-issue.ps1 -Park awaiting-action-dev` refuses in a repo whose OWN settings enable that
+  extension (`RepoEnabledIds`, so a user-level enable on one machine does not change the repo's parks).
+  It asks the #3059 question and prints both routes. `-StillChangesCode` is the yes, and it is refused
+  beside any other label. An unreadable settings chain fails open.
+- [x] Mirrored with `build-shared-scripts.ps1`.
+- [x] Docs: `parking.md` gets its own section (question, close form, measurement); SKILL.md step 1
+  points there; the claim-issue skill names `-StillChangesCode`.
 
 ### TEST
 
+- [x] `claim-issue.tests.ps1`: five unit asserts on `Test-ParkClosedByExtension` and three runs (a
+  fixture repo enabling the extension refuses the park and names the question and both routes;
+  `-StillChangesCode` refuses on another label and without a park). 751 passed, 0 failed.
+
 ### DEPLOY: fix/4340-bwj-sweep-closes-act-only
 
-**Score:**
+`claim-issue -Park awaiting-action-dev` now refuses in a repo whose own settings enable
+`dkj-repo-workflow-bwj`. That extension closes an act-only issue as completed with a research block
+instead of parking it (#3059, #3062), and its sweeps kept parking such issues anyway (four measured on
+smartwatchbanden). The refusal asks the extension's question, *does any step still change a file in the
+repo?*, and prints the close route for a no. For a yes, `-StillChangesCode` lets the park through.
+`issues-sweep`'s `parking.md` now gives the rule its own section ([#4340](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4340)).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A BWJ sweep closes what the extension says to close, so the open issues and the In Progress column show
+only work that can still be built. Repos without the extension see no change.
+
+**Score:** 3
 
 #### Pull Request
 
