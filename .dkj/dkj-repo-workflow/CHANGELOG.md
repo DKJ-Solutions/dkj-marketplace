@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**5 / 5 minor entries** <!-- pending-tally -->
+**6 / 6 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4339-bwj-file-only-repo-changing-work · 20261120-091520Z
+
+In a BWJ store repo a finding is filed on GitHub only when a file in the repo will change because of
+it, now or after an act outside the repo; one that waits from the start is filed already parked with
+its `awaiting-*` label, and an act-only finding or someone else's decision goes to Asana instead. This
+is the #3059 close rule asked at filing, so sweeps stop spending turns on issues with nothing to build
+([#4339](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4339)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A BWJ session running `report-issue` no longer files an outside act or a decision that is not its own
+as a GitHub issue, and files a waiting one with its parking label at creation. Measured in
+smartwatchbanden: 21 of one filer's 26 sweep-parked issues waited on an outside act or an open choice,
+and every label came from a later sweep.
+
+**Score:** 3
+
+#### Pull Request
+
+bwj: file on GitHub only what will change a repo file, already parked where it waits
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4350](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4350)
+
+---
 
 ### DEPLOY: feat/4329-deploy-branch-promotion-guard · 20261119-150542Z
 

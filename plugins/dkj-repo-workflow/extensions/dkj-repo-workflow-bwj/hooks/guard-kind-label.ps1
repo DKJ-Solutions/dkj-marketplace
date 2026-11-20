@@ -95,7 +95,8 @@ if ($refused.Count -eq 0) { exit 0 }
     '  Pick one (report-issue step 1, #2783, #3006):',
     '    --label feature   something new being added',
     '    --label bug       something that exists and has to change',
-    '    --label research  a research, test or decision ticket that changes nothing on the store',
+    '    --label research  research or a test a session carries out, changing nothing on the store',
+    '  A finding that changes no file in this repo is no issue at all (report-issue, #4339).',
     '  A doc finding is a bug or a feature: a missing page is a feature, a wrong one a bug.'
 ) -join "`n")
 exit 2
