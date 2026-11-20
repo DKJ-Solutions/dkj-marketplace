@@ -2,7 +2,60 @@
 
 ## [Unreleased]
 
-**7 / 7 minor entries** <!-- pending-tally -->
+**9 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4337-sweep-author-filter · 20261120-094923Z
+
+`claim-issue.ps1 -Candidates` and `Get-SweepCandidates` gain `-Author`; the sweep pages name it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a repo two people share, `issues-sweep` can now sweep only the issues your own sessions filed:
+`claim-issue.ps1 -Candidates -Author @me` reads every other issue as `skipped`, and
+`issues-sweep-decisions` walks only your own decisions with `--author @me`. Without the flag nothing changes.
+
+**Score:** 3
+
+#### Pull Request
+
+issues-sweep: an -Author filter on claim-issue -Candidates
+
+Plugins: dkj-repo-workflow
+
+[PR #4353](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4353)
+
+---
+
+### DEPLOY: docs/4341-no-auto-memory-notes · 20261120-094036Z
+
+The constitution's rule on lessons learned went from "secured in the docs, not just in memory" to
+**never in memory**: no auto-memory notes at all, because a note lives on one machine under one
+account and no other person on the team ever reads it. That was measured the same day on a consumer,
+where a filing rule the owner decided in a memory note never reached a colleague's sessions. The rule
+names the switch, `"autoMemoryEnabled": false` in `.claude/settings.json`, and this repo now sets it.
+The technical writer's manual and Chris's lens now say the same.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A consumer reading the next release's constitution is told to keep no memory notes and how to switch
+auto memory off. Until `adopt-dkj-repo-workflow` places the key (still open on #4341), a consumer sets
+it by hand.
+
+**Score:** 2
+
+#### Pull Request
+
+No auto-memory notes: lessons go upstream or into the repo lens
+
+Plugins: dkj-repo-workflow, dkj-subagents-developers
+
+[PR #4349](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4349)
+
+---
 
 ### DEPLOY: fix/4340-bwj-sweep-closes-act-only · 20261120-092809Z
 

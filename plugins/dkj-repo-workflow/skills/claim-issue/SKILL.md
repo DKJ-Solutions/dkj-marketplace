@@ -157,7 +157,7 @@ parameters is the [`issues-sweep`](../issues-sweep/SKILL.md) skill; what they do
   `<prefix>/<n>-<name>` branch on origin names, with its author and age -- read from one fetch and one
   `git for-each-ref` for the whole backlog, because a session working without `-Tag` leaves no marker
   ([#2392](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2392)). `-SkipLabel` names the labels that park an issue with
-  somebody else, `-SkipIssue` the numbers held out by hand, `-Limit` how many to read (100).
+  somebody else, `-SkipIssue` the numbers held out by hand, `-Author <login|@me>` skips every issue another account opened (#4337), `-Limit` how many to read (100).
 - **`-Marker`** -- the marker name a claim is written under (`claim-tag`), plus any predecessors a repo
   still has claim comments under, which are **read and never written**. A comma list
   (`-Marker claim-tag,swb-lane`) is split into names, because `powershell -File` binds it as **one**

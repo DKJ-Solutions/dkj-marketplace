@@ -3009,6 +3009,12 @@ function Get-SweepCandidates {
         .PARAMETER SkipIssue
             Issue numbers held out of this round by hand.
 
+        .PARAMETER Author
+            A login (#4337): every open issue NOT opened by it reads 'skipped' with the reason
+            'not authored by <login>', compared case-insensitively. An issue whose payload carries no
+            author cannot be shown to be the login's, so it reads the same. Empty (the default) filters
+            nothing. A number held out by hand keeps its own reason; this check comes before the labels.
+
         .PARAMETER Branches
             Get-RemoteIssueBranches' records (issue #2392). An issue no marker holds but a branch on the
             remote names reads 'branch', not 'free': somebody worked it without -Tag, and a marker is not
@@ -3037,6 +3043,7 @@ function Get-SweepCandidates {
         [AllowNull()][string[]]$Marker = @('claim-tag'),
         [AllowNull()][string[]]$SkipLabel = @(),
         [AllowNull()][int[]]$SkipIssue = @(),
+        [string]$Author = '',
         [AllowNull()][object[]]$Branches = @(),
         [AllowNull()][hashtable]$GoalSkips = @{},
         [string]$GoalLabel = 'goal',
@@ -3050,6 +3057,7 @@ function Get-SweepCandidates {
 
     $skipLabels = @(@($SkipLabel) | Where-Object { $_ -and ([string]$_).Trim() } | ForEach-Object { ([string]$_).Trim() })
     $skipIssues = @(@($SkipIssue) | Where-Object { $_ })
+    $authorLogin = if ($Author) { $Author.Trim() } else { '' }
 
     $out = New-Object System.Collections.Generic.List[object]
     foreach ($issue in @(@($parsed) | Where-Object { $_ })) {
@@ -3062,10 +3070,14 @@ function Get-SweepCandidates {
         $verdict = 'free'
         $holder = ''
         $reason = ''
+        $issueAuthor = if ($issue.PSObject.Properties['author'] -and $issue.author -and $issue.author.PSObject.Properties['login']) { [string]$issue.author.login } else { '' }
 
         if ($skipIssues -contains $number) {
             $verdict = 'skipped'
             $reason = 'held out of this round by number'
+        } elseif ($authorLogin -and $issueAuthor -ine $authorLogin) {
+            $verdict = 'skipped'
+            $reason = "not authored by $authorLogin"
         } else {
             $hit = @(Select-ParkingLabels -Labels $labels -SkipLabel $skipLabels)
             if ($hit.Count -gt 0) {
