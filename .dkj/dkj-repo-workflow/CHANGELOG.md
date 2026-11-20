@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**12 / 12 minor entries** <!-- pending-tally -->
+**13 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4348-bwj-out-of-repo-fix-closes · 20261120-104622Z
+
+In a BWJ store repo, an issue whose fix lives in a colleague's project now closes as not planned, with a
+note on where the fix lives and whose it is, instead of being parked `awaiting-pull-external`. A blocker in a repo the team
+runs, such as a `dkj-marketplace` release, still parks as before. The core's label section points to the
+exception ([#4348](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4348)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store's open issues no longer collect waits on code the team cannot change.
+
+**Score:** 2
+
+#### Pull Request
+
+bwj: a fix in code the team does not own closes as not planned; a blocker in a repo the team runs still parks
+
+Plugins: dkj-repo-workflow, dkj-repo-workflow-bwj
+
+[PR #4362](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4362)
+
+---
 
 ### DEPLOY: docs/4345-release-blockers-filed-inbound · 20261120-103209Z
 
