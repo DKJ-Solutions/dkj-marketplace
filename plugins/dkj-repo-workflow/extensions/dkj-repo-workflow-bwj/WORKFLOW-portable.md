@@ -375,6 +375,17 @@ an empty one -- an empty field says *unknown*, a wrong one says *this* -- and th
 authoritative to the colleague looking at it. GitHub stays leading here as everywhere above: the
 card is corrected to match the issue, never the issue to match the card.
 
+#### Progress goes in a comment; the description is written once
+
+**The task description is the stable card** -- *What is wrong*, *Where*, *How urgent*, *Tracked on
+GitHub* -- **written once, and afterwards only corrected where it states something wrong**
+([#4342](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4342)). Everything that happens after
+the card is written goes on the task as a **comment**: a new measurement, a status change, a reply from
+an outside party, a finding that narrows the cause. A comment notifies the task's followers and carries
+its own date; an edited description does neither, so a colleague cannot see what changed, or when.
+Maikel, September 28, 2026 (smartwatchbanden#787): rewriting the description on every new finding was
+*"heel onhandig"*. Such a comment takes the first line the next rule asks for.
+
 #### A comment an agent writes on a task says so in its FIRST line
 
 **No agent writes a comment on an Asana task unless its very first line says it is an automated

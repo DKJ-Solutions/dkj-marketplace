@@ -270,7 +270,7 @@ function New-LiveMessageHtml {
 function ConvertTo-AsanaXmlText {
     <#
         Pure: text made safe for Asana html_text -- the C0 controls XML forbids dropped, then &, <, > and
-        " escaped. The same rule as templates/asana-closed-message.ps1's function of this name, which
+        " escaped. The same rule as scripts/ci/asana-closed-message.ps1's function of this name, which
         ships standalone and so cannot be loaded from here.
     #>
     param([AllowEmptyString()][string]$Text)

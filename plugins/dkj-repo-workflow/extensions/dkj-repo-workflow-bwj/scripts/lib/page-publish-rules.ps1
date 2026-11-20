@@ -306,13 +306,18 @@ function Format-BwjPageCloseOut {
         prints itself from the script that ends the chain (#1884), and this is the one script that holds
         the URL at the moment it has been proven to serve the page. '' for a kind that is no cut's
         receipt: the backlog page is published on its own schedule.
+
+        IT IS THE MAIN LINK, NOT ONE OF THREE (#4347, the owner at smartwatchbanden v3.1.0, November 16,
+        2026): the audience notes are what the owner reads, far more than the GitHub release, and sessions
+        kept closing with the local Admin page or the release URL instead. So the line says where it goes --
+        first, before both -- and that it is the served copy, which the fetch above has just proven.
     #>
     param(
         [Parameter(Mandatory)][string]$Kind,
         [Parameter(Mandatory)][string]$Url
     )
     if ($Kind -ne 'notes') { return '' }
-    return "Close-out: the cut's receipt ends with this link -- the release-notes page that goes to management: $Url"
+    return "Close-out: this is the cut's MAIN link -- give it FIRST, before the local Admin page and the GitHub release URL; the public page now serves this version (fetched and compared): $Url"
 }
 
 function Get-BwjPageKvApiUrl {

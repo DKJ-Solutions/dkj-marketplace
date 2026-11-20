@@ -391,6 +391,9 @@ $guardExempt = @(
     # SessionStart: unshipped-pr-sessioncheck (#2525) -- check-stranded-sweep's sibling, exempt for the
     # identical reason: the hook runs the released copy from '${CLAUDE_PLUGIN_ROOT}/scripts/lint/'.
     'scripts\lint\check-unshipped-pr.ps1',
+    # SessionStart: open-issues-sessioncheck (#4338) -- check-stranded-sweep's reason: the hook runs the
+    # released copy from '${CLAUDE_PLUGIN_ROOT}/scripts/lint/', and the script reads the tracker, not this tree.
+    'scripts\lint\check-open-issues.ps1',
     # SessionStart: triage-labels-sessioncheck (#3882). check-stranded-sweep's reason: the hook runs the
     # released copy from '${CLAUDE_PLUGIN_ROOT}/scripts/task/', and the script reads the TRACKER's labels,
     # not this tree, so a released copy answers what this one does. It is also typed by hand -- the one

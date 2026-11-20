@@ -9,7 +9,8 @@
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/template-selfcontained.tests.ps1
 
     WHY A TEMPLATE AND NOT EVERY SCRIPT. A template is copied wholesale into a consumer's .github/
-    and run there by CI. It dot-sources none of this repo's libraries -- it cannot, because none of
+    and run there by CI -- and dkj-repo-workflow-bwj's scripts/ci/asana-*.ps1, which a store's CI runs
+    as one file from a pinned checkout (#4351), are held to the same rule. It dot-sources none of this repo's libraries -- it cannot, because none of
     them travel with it -- so a call to a helper it does not define is unresolvable by construction.
     Every other .ps1 here loads scripts/lib/*, and flagging their imported functions would be noise.
 
@@ -155,6 +156,15 @@ try {
 # --- every template this repo ships --------------------------------------------------------------
 $templates = @(Get-ChildItem -Path (Join-Path $RepoRoot 'plugins') -Recurse -Filter '*.ps1' -File |
     Where-Object { $_.DirectoryName -like '*\templates' } | Sort-Object FullName)
+
+# AND THE BWJ CI SCRIPTS (#4351). The three Asana scripts left templates/ for scripts/ci/ when a store
+# stopped copying them and started fetching them from a pinned checkout. They are still run as one file
+# by a runner with no plugin lib loaded, so the defect class this suite exists for still applies, and
+# leaving them out would have dropped the very files #1556 was measured on.
+$bwjCi = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\scripts\ci'
+$ciScripts = @(Get-ChildItem -Path $bwjCi -Filter 'asana-*.ps1' -File -ErrorAction SilentlyContinue | Sort-Object FullName)
+Assert-True ($ciScripts.Count -ge 3) "the BWJ CI scripts are found ($($ciScripts.Count))"
+$templates += $ciScripts
 
 # The glob is asserted, not assumed. A templates/ folder that is renamed or moved would otherwise turn
 # this whole suite into a no-op that keeps reporting green.

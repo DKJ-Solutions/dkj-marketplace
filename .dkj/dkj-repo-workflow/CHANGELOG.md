@@ -2,7 +2,112 @@
 
 ## [Unreleased]
 
-**16 / 16 minor entries** <!-- pending-tally -->
+**20 / 20 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4342-bwj-asana-progress-in-comments · 20261120-123814Z
+
+BWJ step 2 now says where progress goes on an Asana task: each new measurement, status change or
+outside reply is a comment, and the description stays the stable card, corrected only where it states
+something wrong ([#4342](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4342)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Colleagues following a BWJ Asana task are notified of each new finding and can see when it came,
+instead of a description rewritten in place with no notification.
+
+**Score:** 2
+
+#### Pull Request
+
+bwj: Asana progress goes in comments; the task description is written once and only corrected
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4356](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4356)
+
+---
+
+### DEPLOY: feat/4347-notes-page-main-link · 20261120-122017Z
+
+`publish-page -Kind notes` now closes with a line that names the audience-notes page as the cut's main
+link, to be given first, before the local Admin page and the GitHub release URL, and as the copy the
+public page was just proven to serve. The skill says the same
+([#4347](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4347)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+At the close of a BWJ cut the owner gets the release-notes page they read first, not the GitHub release
+or a local Admin link.
+
+**Score:** 2
+
+#### Pull Request
+
+Release close-out: the published audience-notes page is the main link, verified served
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4363](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4363)
+
+---
+
+### DEPLOY: feat/4351-asana-scripts-from-pinned-checkout · 20261120-115339Z
+
+The three Asana workflows of `dkj-repo-workflow-bwj` (`asana-closed-message`, `asana-prio-label`,
+`asana-open-section`) no longer ship their script for a store to copy. A store keeps only the workflow
+file, which checks out `DKJ-Solutions/dkj-marketplace` at a pinned commit and runs the script from
+`dkj-repo-workflow-bwj/scripts/ci/`, the way the rest of the CI floor already does. The adopt skill
+places the workflow with that pin and migrates a store off its `.github/scripts/asana-*.ps1` copies, and
+the session check now ignores the pin and reports a copy left behind.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+For a BWJ store, a fix to the closed message, the prio-label sync or the open-section sweep now reaches
+the store by moving one `ref:` line, instead of re-copying up to 1,800 lines of script per workflow. Each
+store needs one migration after taking this release: the session check names the copies until
+`adopt-dkj-repo-workflow-bwj` step 1 has replaced the workflows and removed them.
+
+**Score:** 4
+
+#### Pull Request
+
+The three Asana workflows fetch their script from a pinned dkj-marketplace checkout
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4367](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4367)
+
+---
+
+### DEPLOY: feat/4338-open-issues-sessioncheck · 20261120-114206Z
+
+New `open-issues-sessioncheck` and its check script `check-open-issues.ps1`.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every session now starts by telling you how many open issues your own account has filed in the repo,
+with the one command that sweeps only those. Issues your sessions filed no longer pile up unseen for
+somebody else to clear. It stays silent when you have none.
+
+**Score:** 3
+
+#### Pull Request
+
+open-issues-sessioncheck: tell a person how many open issues their own account filed
+
+Plugins: dkj-repo-workflow
+
+[PR #4361](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4361)
+
+---
 
 ### DEPLOY: feat/4341-auto-memory-off-in-consumers · 20261120-112130Z
 

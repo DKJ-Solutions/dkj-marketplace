@@ -11,7 +11,7 @@
     was built, and PR #426 merged and closed it again -- and the second closed message carried round 1's
     block, because the session had built the right block (with -OutFile) but posted it only after the
     merge. The block is read at the close, so by then the mistake had already reached the requester.
-    This hook is the layer before the merge; the workflow's own check (templates/asana-closed-message.ps1)
+    This hook is the layer before the merge; the workflow's own check (scripts/ci/asana-closed-message.ps1)
     is the backstop for a merge this hook never sees -- the GitHub merge button, a merge queue.
 
     THE CLOSE GUARD, INBOUND #3004, MEASURED IN BWJ-Development/smartwatchbanden#943. A research ticket

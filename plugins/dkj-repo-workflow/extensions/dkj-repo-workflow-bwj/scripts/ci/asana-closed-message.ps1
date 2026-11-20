@@ -2,8 +2,9 @@
 .SYNOPSIS
     Post the closed message on the Asana task a GitHub issue belongs to when that issue closes as
     completed, the on-hold message when it is parked as not planned under an awaiting-* label, and the
-    reopened message when it is reopened. Copied into a BWJ store repo as
-    .github/scripts/asana-closed-message.ps1 and driven by .github/workflows/asana-closed-message.yml.
+    reopened message when it is reopened. Driven by a BWJ store's .github/workflows/asana-closed-message.yml,
+    which runs it from a SHA-pinned checkout of DKJ-Solutions/dkj-marketplace (#4351); the store keeps no
+    copy of this file.
 
 .DESCRIPTION
     THE TWO MESSAGES THAT CAME BACK. The asana-mirror workflow was retired on October 5, 2026, whole
@@ -146,9 +147,11 @@
     imported ticket; exactly one Asana task URL anywhere else. Several different tasks is 'ambiguous'
     and skipped: this script never guesses which ticket an issue belongs to.
 
-    SELF-CONTAINED, AND THAT IS WHY THE HELPERS ARE COPIES. This file ships into a consumer's
-    .github/scripts/, where no plugin lib exists, so the matchers and the block's marker are copied
-    from dkj-repo-workflow-bwj's scripts/lib/asana-task-lib.ps1 rather than loaded from it.
+    SELF-CONTAINED, AND THAT IS WHY THE HELPERS ARE COPIES. This file shipped into a consumer's
+    .github/scripts/ until #4351, where no plugin lib exists, so the matchers and the block's marker are
+    copied from dkj-repo-workflow-bwj's scripts/lib/asana-task-lib.ps1 rather than loaded from it. It now
+    runs from a checkout of the plugin source, so it could load the lib; it still does not, because a
+    store whose workflow is not yet migrated may run an older copy of this file beside it.
     scripts/tests/dkj-repo-workflow-bwj.tests.ps1 holds each copy equal to its source, and holds this file to
     dot-sourcing nothing.
 
@@ -224,8 +227,9 @@ param(
     [string]$IssueLabels = $env:ISSUE_LABELS,
     [string]$AsanaPat = $env:ASANA_PAT,
     # The repo's seam file, read as TEXT for the Completed stage code a research close names its done
-    # section by (#3017). Empty means the checkout's own, two levels above this script, resolved in
-    # Invoke-Main: $PSScriptRoot is empty in a param default when the file is dot-sourced from a prompt.
+    # section by (#3017). Empty means scripts/repo-config.ps1 under the working directory, which on the
+    # runner is the store's own checkout (#4351: this file no longer sits inside that checkout). The
+    # workflow passes it explicitly.
     [string]$RepoConfigPath = ''
 )
 
@@ -1579,10 +1583,10 @@ function Invoke-AsanaWrite {
 
 function Read-RepoConfigText {
     <#
-        The TEXT of the repo's seam file, or '' where there is none -- -RepoConfigPath, else the checkout's
-        own scripts/repo-config.ps1 two levels above this script. Read, never run (#3017).
+        The TEXT of the repo's seam file, or '' where there is none -- -RepoConfigPath, else
+        scripts/repo-config.ps1 under the working directory (#4351). Read, never run (#3017).
     #>
-    $configPath = if ($RepoConfigPath) { $RepoConfigPath } else { Join-Path $PSScriptRoot '../../scripts/repo-config.ps1' }
+    $configPath = if ($RepoConfigPath) { $RepoConfigPath } else { Join-Path (Get-Location).ProviderPath 'scripts/repo-config.ps1' }
     if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) { return '' }
     return [System.IO.File]::ReadAllText((Resolve-Path -LiteralPath $configPath).ProviderPath)
 }
