@@ -1559,6 +1559,16 @@ Assert-True ((@($c | Where-Object { $_.Number -eq 3 })[0]).Verdict -eq 'skipped'
 Assert-True ((@($c | Where-Object { $_.Number -eq 3 })[0]).Reason -match 'needs-info') 'with the label named -- "nothing to do" while six issues are hidden tells the operator nothing'
 Assert-True ((@($c | Where-Object { $_.Number -eq 1 })[0]).Verdict -eq 'skipped') 'a number held out by hand is skipped'
 
+# -Author (#4337): an issue another account opened is skipped with the reason; case does not matter
+$authJson = '[{"number":1,"title":"mine","labels":[],"comments":[],"author":{"login":"Dave-X"}},{"number":2,"title":"theirs","labels":[],"comments":[],"author":{"login":"other"}},{"number":3,"title":"no author field","labels":[],"comments":[]}]'
+$ca = @(Get-SweepCandidates -Json $authJson -Author 'dave-x')
+Assert-True ((@($ca | Where-Object { $_.Number -eq 1 })[0]).Verdict -eq 'free') '-Author: an issue by that account is free, compared case-insensitively'
+Assert-True ((@($ca | Where-Object { $_.Number -eq 2 })[0]).Verdict -eq 'skipped') '-Author: an issue by another account is skipped'
+Assert-True ((@($ca | Where-Object { $_.Number -eq 2 })[0]).Reason -eq 'not authored by dave-x') '-Author: with the reason naming the login'
+Assert-True ((@($ca | Where-Object { $_.Number -eq 3 })[0]).Verdict -eq 'skipped') '-Author: a payload with no author cannot be shown to be theirs'
+$cn = @(Get-SweepCandidates -Json $authJson)
+Assert-True (@($cn | Where-Object { $_.Verdict -eq 'free' }).Count -eq 3) 'no -Author filters nothing'
+
 $cLegacy = @(Get-SweepCandidates -Json '[{"number":4,"title":"t","labels":[],"comments":[{"id":"IC_4","createdAt":"z","author":{"login":"m"},"body":"<!-- swb-lane: OLD/m -->"}]}]' -Tag 'HOST-A/dave' -Marker @('claim-tag','swb-lane'))
 Assert-True ($cLegacy[0].Verdict -eq 'held') 'a predecessor marker still holds an issue where the repo names it'
 
