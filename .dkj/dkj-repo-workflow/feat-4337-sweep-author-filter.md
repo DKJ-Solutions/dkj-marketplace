@@ -57,6 +57,8 @@ Issue #4337: in a tracker two people share, each person sweeps only what their o
 
 - [x] `claim-issue.tests.ps1`: five new asserts (other author skipped with the reason, own author free
   case-insensitively, missing author skipped, no `-Author` filters nothing); 748 passed, 0 failed.
+- [x] `native-capture.tests.ps1` caught the new bounded `gh api user` site; audited (measured before
+  its exit code, every failure an `[ERROR]` and exit 1) and the count moved 129 -> 130 with the reason.
 - [x] Live: `-Candidates -Author @me` lists the backlog as before; `-Author nobody-here` skips all 12
   open issues with `not authored by nobody-here`.
 
