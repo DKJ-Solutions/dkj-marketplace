@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**18 / 18 minor entries** <!-- pending-tally -->
+**19 / 19 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4347-notes-page-main-link · 20261120-122017Z
+
+`publish-page -Kind notes` now closes with a line that names the audience-notes page as the cut's main
+link, to be given first, before the local Admin page and the GitHub release URL, and as the copy the
+public page was just proven to serve. The skill says the same
+([#4347](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4347)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+At the close of a BWJ cut the owner gets the release-notes page they read first, not the GitHub release
+or a local Admin link.
+
+**Score:** 2
+
+#### Pull Request
+
+Release close-out: the published audience-notes page is the main link, verified served
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4363](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4363)
+
+---
 
 ### DEPLOY: feat/4351-asana-scripts-from-pinned-checkout · 20261120-115339Z
 
