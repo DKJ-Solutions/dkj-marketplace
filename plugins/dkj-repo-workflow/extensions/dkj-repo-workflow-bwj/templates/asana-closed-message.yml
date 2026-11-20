@@ -1,5 +1,7 @@
-# Copied from dkj-repo-workflow-bwj/templates/asana-closed-message.yml into
-# .github/workflows/asana-closed-message.yml, beside .github/scripts/asana-closed-message.ps1.
+# Placed from dkj-repo-workflow-bwj/templates/asana-closed-message.yml into
+# .github/workflows/asana-closed-message.yml. The script it runs is NOT copied (#4351): it is fetched
+# from DKJ-Solutions/dkj-marketplace at the pinned ref below, so a fix reaches this repo by moving that
+# one line.
 #
 # Posts ONE comment on the Asana task a GitHub issue belongs to, when that issue closes as completed
 # (the automation's header, the closed line, and the go-live block the shipping session left on the
@@ -53,9 +55,21 @@ jobs:
     # A job with no timeout-minutes runs to GitHub's six-hour default (#2296), holding ASANA_PAT.
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # The job needs the script file and nothing else from git, so the token is not left in .git/config.
+          # The job needs scripts/repo-config.ps1 (read as text) and nothing else from git, so the token
+          # is not left in .git/config.
+          persist-credentials: false
+
+      # The script itself, from the plugin's source repo at the release this file was placed from
+      # (#4351). Pinned by SHA because the job holds ASANA_PAT; move the ref: line when the plugin updates.
+      - name: Fetch the shared Asana script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: DKJ-Solutions/dkj-marketplace
+          ref: @@SCRIPTS_REF@@
+          path: .workflow-scripts
+          sparse-checkout: plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/scripts/ci
           persist-credentials: false
 
       - name: Tell the Asana task the issue is closed or reopened
@@ -72,7 +86,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           # The body is read from ISSUE_BODY by the script itself, not passed as an argument.
-          ./.github/scripts/asana-closed-message.ps1 `
+          & "$env:GITHUB_WORKSPACE/.workflow-scripts/plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/scripts/ci/asana-closed-message.ps1" `
+            -RepoConfigPath "$env:GITHUB_WORKSPACE/scripts/repo-config.ps1" `
             -IssueRef $env:ISSUE_REF `
             -Event $env:ISSUE_EVENT `
             -StateReason $env:STATE_REASON
