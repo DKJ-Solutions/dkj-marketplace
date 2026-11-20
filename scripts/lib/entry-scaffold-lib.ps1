@@ -6050,6 +6050,99 @@ $script:BranchFileDefaults = [ordered]@{
     # empty -- which is what that sentence was trying to describe.
 }
 
+function Get-BranchSiblingFolderFindings {
+    <#
+        The paths this branch ADDS or MODIFIES inside a folder named after its own branch document -- the
+        '<workflow folder>/<doc-stem>/' folder beside '<workflow folder>/<doc-stem>.md' (#4375).
+
+        WHY IT IS REFUSED. The fold removes the branch document and nothing else, and it may not widen:
+        the fold commit is a bounded trunk exception limited to CHANGELOG.md and that one document. So a
+        folder beside the document (review screenshots were the measured case) survives the merge as an
+        unreferenced tree on the trunk. The refusal sits here, before the merge, because the fold cannot
+        carry the cleanup. Evidence of a review belongs in the PR or the issue, not in the tree.
+
+        NARROW ON PURPOSE. Only a path under that one folder counts; CHANGELOG.md, release files and the
+        contributing pages in the workflow folder are not touched by it, and a DELETED path is not a
+        finding (--diff-filter=AM), so a branch can remove a folder it inherited.
+
+        WHAT IS READ is what differs between HEAD's merge-base with the trunk (origin's ref first, the
+        local one second, as Get-UnfoldedTrunkEntries does) and the working tree, plus untracked files:
+        the same reading the affected-suite selection takes, so the local gate and CI agree. In CI the
+        checkout is the PR's shallow merge commit with no trunk ref, so the base is read as HEAD^1 (the
+        runner fetches depth 2 for it) and the diff is the PR's own. Where no base can be read at all
+        nothing is reported -- a gate that cannot tell must not accuse.
+
+        Returns the repo-relative paths, forward slashes, as a string array (empty where none).
+    #>
+    param(
+        [Parameter(Mandatory)][string]$RepoRoot,
+        # The branch document's repo-relative path (what Resolve-BranchFilePath answers, or its legacy form).
+        [Parameter(Mandatory)][string]$EntryRel
+    )
+    $rel = ($EntryRel -replace '\\', '/').TrimStart('/')
+    if ($rel -notmatch '\.md$') { return @() }
+    $folder = $rel.Substring(0, $rel.Length - 3) + '/'
+
+    # 'Continue' for this function only: the #107 pitfall -- under a caller's 'Stop', Windows PowerShell
+    # 5.1 turns a native command's stderr into a throw despite 2>$null.
+    $ErrorActionPreference = 'Continue'
+    $trunk = Get-BranchTrunkName
+    $mb = ''
+    foreach ($ref in @("refs/remotes/origin/$trunk", "refs/heads/$trunk")) {
+        try {
+            $m = (& git -C $RepoRoot merge-base HEAD $ref 2>$null)
+            if ($LASTEXITCODE -eq 0 -and $m) { $mb = ([string]@($m)[0]).Trim(); break }
+        } catch { }
+    }
+    # A PULL REQUEST CHECKOUT IN CI has no trunk ref at all: it is the PR's merge commit, shallow. Its
+    # first parent IS the base the PR merges into, so where HEAD has a second parent, HEAD^1 is the
+    # merge-base this function wants (the runner fetches depth 2 for exactly this, #4375).
+    if (-not $mb) {
+        try {
+            $null = (& git -C $RepoRoot rev-parse --verify --quiet 'HEAD^2' 2>$null)
+            if ($LASTEXITCODE -eq 0) {
+                $m = (& git -C $RepoRoot rev-parse --verify --quiet 'HEAD^1' 2>$null)
+                if ($LASTEXITCODE -eq 0 -and $m) { $mb = ([string]@($m)[0]).Trim() }
+            }
+        } catch { }
+    }
+    if (-not $mb) { return @() }
+
+    $listed = @()
+    try {
+        # core.quotePath=true holds the wire to ASCII; Convert-GitQuotedPath decodes it.
+        $d = @(& git -C $RepoRoot -c core.quotePath=true diff --name-only --no-renames --diff-filter=AM $mb 2>$null)
+        if ($LASTEXITCODE -ne 0) { return @() }
+        $u = @(& git -C $RepoRoot -c core.quotePath=true ls-files --others --exclude-standard 2>$null)
+        if ($LASTEXITCODE -ne 0) { return @() }
+        $listed = @($d) + @($u)
+    } catch { return @() }
+
+    $hits = New-Object System.Collections.Generic.List[string]
+    foreach ($line in $listed) {
+        $p = "$line".Trim()
+        if (-not $p) { continue }
+        if ($p.StartsWith('"') -and (Test-FunctionDefined 'Convert-GitQuotedPath')) { $p = Convert-GitQuotedPath -Path $p }
+        if ($p.StartsWith($folder, [System.StringComparison]::OrdinalIgnoreCase)) { $hits.Add($p) | Out-Null }
+    }
+    return @($hits.ToArray() | Sort-Object -Unique)
+}
+
+function Get-SiblingFolderRefusalLines {
+    <# The refusal text for Get-BranchSiblingFolderFindings, one composer for check-branch-entry and
+       open-pr so the two gates cannot word the same defect differently (#4375). #>
+    param([Parameter(Mandatory)][string]$EntryRel, [Parameter(Mandatory)][string[]]$Paths)
+    $folder = (($EntryRel -replace '\\', '/') -replace '\.md$', '') + '/'
+    $lines = New-Object System.Collections.Generic.List[string]
+    $lines.Add("this branch adds files under '$folder', a folder named after its own branch document:") | Out-Null
+    foreach ($p in ($Paths | Select-Object -First 10)) { $lines.Add("  - $p") | Out-Null }
+    if ($Paths.Count -gt 10) { $lines.Add("  ... and $($Paths.Count - 10) more") | Out-Null }
+    $lines.Add('Review evidence (screenshots and the like) belongs in the PR or the issue, not in the tree.') | Out-Null
+    $lines.Add('The fold removes only the document, so that folder would stay on the trunk unreferenced (#4375).') | Out-Null
+    $lines.Add('Take the files out of the branch (git rm -r --cached, or delete them) and attach them to the PR.') | Out-Null
+    return $lines.ToArray()
+}
+
 function Get-BranchTrunkName {
     <#
         The trunk this repo merges into, 'main' unless the consumer says otherwise via an OPTIONAL

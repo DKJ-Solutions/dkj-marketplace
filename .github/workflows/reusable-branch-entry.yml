@@ -67,6 +67,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        # DEPTH 2 (#4375): the merge commit and its two parents, so the sibling-folder check in
+        # check-branch-entry.ps1 can diff the PR against its base (HEAD^1). At depth 1 it read nothing.
+        with:
+          fetch-depth: 2
 
       - name: Fetch the shared workflow scripts
         uses: actions/checkout@v7
