@@ -897,7 +897,10 @@ function Get-MergeOnGreenStuckVerdict {
         $failed = @($MergeBlockVerdict.FailedRequired | Where-Object { $_ })
     }
     if ($failed.Count -gt 0) {
-        return [pscustomobject]@{ Stuck = $true; Reason = "a required check failed: $($failed -join ', ') -- merge-on-green never merges it; fix the branch from a session" }
+        # At most five names (Sebastian, #4355): this line is forwarded into every session start.
+        $named = ($failed | Select-Object -First 5) -join ', '
+        if ($failed.Count -gt 5) { $named += " and $($failed.Count - 5) more" }
+        return [pscustomobject]@{ Stuck = $true; Reason = "a required check failed: $named -- merge-on-green never merges it; fix the branch from a session" }
     }
 
     $mergeable = ''

@@ -104,7 +104,7 @@ try {
     $out  = @($result.Output)
     $code = $result.ExitCode
 
-    # [STRANDED] and [INCOMPLETE] are check-stranded-sweep's two non-silent markers. Select-CheckMarkerLine
+    # [STRANDED], [STUCK] (below) and [INCOMPLETE] are check-stranded-sweep's non-silent markers. Select-CheckMarkerLine
     # keeps each case-exact and anchored to where the check WROTE it, so a marker never counts merely for
     # appearing inside a pull request's own title or branch name (issue #2142) -- both of which the check
     # has already scrubbed to printable ASCII before printing, on the same reasoning
