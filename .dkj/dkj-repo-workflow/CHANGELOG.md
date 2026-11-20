@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**3 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4371-dossier-wordcount · 20261120-145046Z
+
+A new lifehub skill, `dossier-wordcount`, with one shared counter script and its test suite. Ian's
+manual and agent def, and the three skills that write into a dossier, now end a dossier write with it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A dossier's word-count property in a life hub now follows the page: Ian, `inbox-sweep`, `ai-radar` and
+`agenda` recount it after every write into a dossier, and name a page that crosses the owner's split
+threshold. The property name and the threshold come from a settings page in the owner's Notion
+(`Instellingen dossier-wordcount`), which the owner creates once. A recount mode catches edits made by
+hand in Notion.
+
+**Score:** 3
+
+#### Pull Request
+
+lifehub: keep a dossier's word count in sync after every write
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4373](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4373)
+
+---
 
 ### DEPLOY: feat/4366-asana-ci-scripts-load-libs · 20261120-141838Z
 
