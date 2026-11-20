@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**16 / 16 minor entries** <!-- pending-tally -->
+**17 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4338-open-issues-sessioncheck · 20261120-114206Z
+
+New `open-issues-sessioncheck` and its check script `check-open-issues.ps1`.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Every session now starts by telling you how many open issues your own account has filed in the repo,
+with the one command that sweeps only those. Issues your sessions filed no longer pile up unseen for
+somebody else to clear. It stays silent when you have none.
+
+**Score:** 3
+
+#### Pull Request
+
+open-issues-sessioncheck: tell a person how many open issues their own account filed
+
+Plugins: dkj-repo-workflow
+
+[PR #4361](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4361)
+
+---
 
 ### DEPLOY: feat/4341-auto-memory-off-in-consumers · 20261120-112130Z
 
