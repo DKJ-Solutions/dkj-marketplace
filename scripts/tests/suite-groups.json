@@ -219,11 +219,12 @@
                    {
                        "key":  "tools",
                        "title":  "Machine upkeep and measuring",
-                       "guards":  "the tools a session runs on request: tidy-machine, prune-merged, the plugin updates, the scheduled-task placement, the consumer and sibling checks, and the measure skills",
+                       "guards":  "the tools a session runs on request: tidy-machine, prune-merged, the plugin updates, the scheduled-task placement, the consumer and sibling checks, the measure skills, and the life hub's dossier word counter",
                        "suites":  [
                                       "check-consumer-siblings.tests.ps1",
                                       "closeout-measure.tests.ps1",
                                       "consumers.tests.ps1",
+                                      "dossier-wordcount.tests.ps1",
                                       "fanout-lib.tests.ps1",
                                       "find-specialist-mentions.tests.ps1",
                                       "measure-always-on.tests.ps1",
