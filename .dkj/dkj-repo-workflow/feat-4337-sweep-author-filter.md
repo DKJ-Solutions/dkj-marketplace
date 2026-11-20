@@ -39,19 +39,40 @@
 
 ### PLAN
 
+Issue #4337: in a tracker two people share, each person sweeps only what their own sessions filed. An
+`-Author <login|@me>` filter on `claim-issue.ps1 -Candidates`; every issue another account opened reads
+`skipped` with the reason `not authored by <login>`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-SweepCandidates` (`scripts/lib/claim-issue-lib.ps1` and its plugin mirror) takes `-Author`:
+  case-insensitive, an issue without an author field is skipped too, `-SkipIssue` keeps precedence.
+- [x] `claim-issue.ps1 -Candidates -Author` (and mirror): `@me` resolved once via `gh api user`, an
+  unresolvable `@me` is an `[ERROR]` and exit 1; the list reads `author`. The goal tree's in-flight pass
+  deliberately takes no `-Author`, so another session's work still holds its goal's Now.
+- [x] One line each in `issues-sweep`, `issues-sweep-decisions` (`--author @me` on its `gh issue list`)
+  and the `claim-issue` skill's parameter list.
 
 ### TEST
 
+- [x] `claim-issue.tests.ps1`: five new asserts (other author skipped with the reason, own author free
+  case-insensitively, missing author skipped, no `-Author` filters nothing); 748 passed, 0 failed.
+- [x] Live: `-Candidates -Author @me` lists the backlog as before; `-Author nobody-here` skips all 12
+  open issues with `not authored by nobody-here`.
+
 ### DEPLOY: feat/4337-sweep-author-filter
 
-**Score:**
+`claim-issue.ps1 -Candidates` and `Get-SweepCandidates` gain `-Author`; the sweep pages name it.
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+In a repo two people share, `issues-sweep` can now sweep only the issues your own sessions filed:
+`claim-issue.ps1 -Candidates -Author @me` reads every other issue as `skipped`, and
+`issues-sweep-decisions` walks only your own decisions with `--author @me`. Without the flag nothing changes.
+
+**Score:** 3
 
 #### Pull Request
 

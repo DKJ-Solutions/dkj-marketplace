@@ -185,6 +185,12 @@
 .PARAMETER SkipIssue
     With -Candidates: issue numbers held out of this round by hand.
 
+.PARAMETER Author
+    With -Candidates: only issues opened by this login are judged; every other open issue reads 'skipped'
+    with the reason 'not authored by <login>' (compared case-insensitively). '@me' is the account gh acts
+    as (gh api user); an unresolvable '@me' is an [ERROR], never an unfiltered list. Why (#4337): in a
+    tracker two people share, each person's sessions file issues the other should not sweep without context.
+
 .PARAMETER Limit
     With -Candidates or -ReleaseAll: how many open issues to read. Default 100.
 
@@ -234,6 +240,7 @@ param(
     # [string[]], not [int[]]: under -File an [int[]] reads '12,34' as the one number 1234 (a
     # thousands separator), excluding an unrelated issue and neither of the two named (#2358).
     [Parameter(ParameterSetName = 'Candidates')][string[]]$SkipIssue = @(),
+    [Parameter(ParameterSetName = 'Candidates')][string]$Author = '',
     [Parameter(ParameterSetName = 'Candidates')]
     [Parameter(ParameterSetName = 'ReleaseAll')][int]$Limit = 100,
     [Parameter(Mandatory = $true, ParameterSetName = 'ReleaseAll')][switch]$ReleaseAll,
@@ -696,7 +703,20 @@ if ($ReleaseAll) {
 # board and three of them belonged to a colleague's own experiment. A scan that claimed as it went
 # would have taken those three before anybody looked.
 if ($Candidates) {
-    $listArgs = @('issue', 'list') + $repoArgs + @('--state', 'open', '--limit', "$Limit", '--json', 'number,title,labels,comments')
+    # -Author @me IS RESOLVED HERE, ONCE (#4337): Get-SweepCandidates is pure and takes a login. A failed
+    # resolution refuses the run -- an author filter that silently filters nothing hands out every issue.
+    $authorLogin = "$Author".Trim()
+    if ($authorLogin -eq '@me') {
+        $me = Invoke-NativeCapture -FilePath 'gh' -Utf8 -DiscardStderr -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds `
+            -Arguments @('api', 'user', '--jq', '.login')
+        $authorLogin = if ($me -and (Test-NativeExitMeasured -Capture $me) -and $me.ExitCode -eq 0 -and -not $me.ShortRead) { (@($me.Output) -join '').Trim() } else { '' }
+        if (-not $authorLogin) {
+            Write-Host "[ERROR] could not resolve -Author @me (gh api user) -- nothing was judged." -ForegroundColor Red
+            Write-Host '        An author filter that silently filters nothing would hand out every issue. Check gh (gh auth status), or name the login.' -ForegroundColor Red
+            exit 1
+        }
+    }
+    $listArgs = @('issue', 'list') + $repoArgs + @('--state', 'open', '--limit', "$Limit", '--json', 'number,title,labels,comments,author')
     $list = Invoke-NativeCapture -FilePath 'gh' -Arguments $listArgs -Utf8 -DiscardStderr -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
     if (-not $list -or -not (Test-NativeExitMeasured -Capture $list) -or $list.ExitCode -ne 0 -or $list.ShortRead) {
         # AN UNREADABLE BACKLOG IS NOT AN EMPTY ONE, and this is the one refusal this mode has. Read the
@@ -783,6 +803,7 @@ if ($Candidates) {
                 } catch { $parkedNumbers = @() }
                 # A Now another session is on lets the next task go free too (#4105): one pass without the
                 # map reads every 'held' and 'branch' verdict; Get-SweepCandidates is pure, so it costs no call.
+                # NO -Author HERE (#4337): work somebody else's session has in flight still holds its goal's Now.
                 $inFlightNumbers = @(Get-SweepCandidates -Json (@($list.Output) -join "`n") -Tag $claimTag.Tag `
                                          -Marker $Marker -SkipLabel $SkipLabel -SkipIssue $skipIssueNumbers -Branches $remoteBranches `
                                          -GoalLabel '' |
@@ -794,7 +815,7 @@ if ($Candidates) {
     }
 
     $sweepList = @(Get-SweepCandidates -Json (@($list.Output) -join "`n") -Tag $claimTag.Tag `
-                                       -Marker $Marker -SkipLabel $SkipLabel -SkipIssue $skipIssueNumbers -Branches $remoteBranches `
+                                       -Marker $Marker -SkipLabel $SkipLabel -SkipIssue $skipIssueNumbers -Author $authorLogin -Branches $remoteBranches `
                                        -GoalSkips $goalSkips -GoalLabel $goalLabel)
     # A PARK WHOSE WAIT HAS CLEARED (#3136). Nothing lifts 'awaiting-pull' when its blocker merges, so an
     # issue parked on work that has since landed stayed 'skipped' by every sweep until a person noticed.
