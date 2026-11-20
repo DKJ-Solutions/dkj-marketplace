@@ -353,6 +353,10 @@ by the one-label rule above, and moves to `awaiting-pull` once that root wait cl
   repo's own work from there.
   Plain `awaiting-pull` keeps its meaning: same repo, off at the merge. Both pickup routes skip it, and
   `claim-issue <n>` warns on it. It is a new label, so no former name is matched for it.
+  **An extension may close instead, where the other repo's code is not the team's own.**
+  `dkj-repo-workflow-bwj` closes an issue as not planned when its fix lives in a colleague's project.
+  A blocker in a repo the team runs still parks under this label
+  ([#4348](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4348)).
 
 **`awaiting-action-external` parks an issue that waits on an external event or date** (a launch, a third party's
 release; [#2784](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2784), Dave, October 3, 2026).
