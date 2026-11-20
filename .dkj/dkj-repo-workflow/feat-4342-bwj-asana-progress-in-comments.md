@@ -39,19 +39,31 @@
 
 ### PLAN
 
+Inbound #4342: BWJ step 2 says how an agent's Asana comment opens, but not where progress goes.
+Verified absent from `WORKFLOW-portable.md`. Moved out of a session-memory note (#4341).
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `WORKFLOW-portable.md` step 2: a `####` rule -- progress is a comment, the description is the stable card written once and only corrected
 
 ### TEST
 
+- [x] Gates run by `ship-pr` (one doc paragraph, no behaviour change)
+
 ### DEPLOY: feat/4342-bwj-asana-progress-in-comments
 
-**Score:**
+BWJ step 2 now says where progress goes on an Asana task: each new measurement, status change or
+outside reply is a comment, and the description stays the stable card, corrected only where it states
+something wrong ([#4342](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4342)).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+Colleagues following a BWJ Asana task are notified of each new finding and can see when it came,
+instead of a description rewritten in place with no notification.
+
+**Score:** 2
 
 #### Pull Request
 
