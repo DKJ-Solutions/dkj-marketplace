@@ -2,7 +2,35 @@
 
 ## [Unreleased]
 
-**15 / 15 minor entries** <!-- pending-tally -->
+**16 / 16 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4341-auto-memory-off-in-consumers · 20261120-112130Z
+
+`adopt-dkj-repo-workflow` gained a Part 6, `adopt-auto-memory.ps1`, which adds `"autoMemoryEnabled": false`
+to `.claude/settings.json` the way Part 5 adds its key: as text, every other byte kept, and an existing
+value never replaced. A new `auto-memory-sessioncheck` reports at every session start where the key is
+missing, and lists this checkout's memory notes by name until each is filed inbound or moved into the
+repo's lens. The settings insert both parts use now lives in one shared lib.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+After taking this release, a consumer's session start says whether its repo still lets Claude Code write
+memory notes and names the notes already there, so the rule from #4349 is something the setup enforces
+and points at, rather than something a person has to remember. One command switches it off.
+
+**Score:** 3
+
+#### Pull Request
+
+Adopt switches auto memory off, and a session check reports leftover memory notes
+
+Plugins: dkj-repo-workflow
+
+[PR #4365](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4365)
+
+---
 
 ### DEPLOY: fix/4346-release-notes-every-task-linked · 20261120-110808Z
 

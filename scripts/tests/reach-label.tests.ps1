@@ -90,15 +90,15 @@ Assert-True ($adopt -match 'management and the commissioner notice it') `
     'Part 4 carries the tier-1 wording'
 Assert-True ($adopt -match 'subscribers of this service notice it') `
     'Part 4 carries the tier-2 wording'
-# THE COUNT IN THE FRONTMATTER, PINNED LITERALLY AND ON PURPOSE. It reads 'three' -> 'four' -> 'five'
+# THE COUNT IN THE FRONTMATTER, PINNED LITERALLY AND ON PURPOSE. It reads 'three' -> 'four' -> 'five' -> 'six'
 # in this assert's own history, once per part added, and each time it is this line that catches the
 # half-done edit -- a new part appended to the body while the description above it still counts the old
 # number. That description is always-on text in every consumer session, so it is the one place the
 # drift is paid for everywhere rather than read by whoever opens the page. #2103 is the third time:
 # Part 5 went in, the intro was corrected, the frontmatter was not, and this assert is what said so.
-Assert-True ($adopt -match 'five independent parts') `
-    'the frontmatter counts five parts, not four'
-Assert-True ($adopt -match '##\s+Part 5') `
+Assert-True ($adopt -match 'six independent parts') `
+    'the frontmatter counts six parts, not five (#4341 added Part 6)'
+Assert-True ($adopt -match '##\s+Part 6') `
     'and the body carries the part that count is claiming'
 
 # --- the seam is in the contract, optional, and defaulted to minor -------------------------------
