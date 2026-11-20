@@ -2,7 +2,36 @@
 
 ## [Unreleased]
 
-**20 / 20 minor entries** <!-- pending-tally -->
+**21 / 21 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4355-stuck-armed-pr-report · 20261120-125655Z
+
+`check-stranded-sweep.ps1` now reports `[STUCK]` beside `[STRANDED]`: an armed pull request whose required
+check failed or that conflicts with the trunk is named at once, and any other armed one after two hours
+without activity (`-StuckHours` moves that), each with the reason and the `git checkout` and `ship-pr`
+lines. The session-start hook forwards it, and `issues-sweep` step 1 runs the check before choosing, so a
+pull request a sweep handed off with `ship-pr -HandOff` that then went red is seen by the same sweep or
+the next one.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A sweep that hands its pull requests off no longer hides a red one: after taking this release, a red or
+stuck hand-off shows up at the next session start and at the next sweep's first step, with the commands
+to resume it, instead of sitting armed and open until somebody happens to look.
+
+**Score:** 2
+
+#### Pull Request
+
+Report an armed pull request that merge-on-green will not merge, at session start and at sweep step 1
+
+Plugins: dkj-repo-workflow
+
+[PR #4368](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4368)
+
+---
 
 ### DEPLOY: feat/4342-bwj-asana-progress-in-comments · 20261120-123814Z
 
