@@ -2057,6 +2057,7 @@ $bwjRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("claim-bwj-" + [guid]::N
 try {
     New-Item -ItemType Directory -Path (Join-Path $bwjRoot '.claude') -Force | Out-Null
     & git -C $bwjRoot init -q 2>$null | Out-Null
+    Assert-True ($LASTEXITCODE -eq 0) 'fixture: the BWJ fixture repo initialises'
     Set-Content -LiteralPath (Join-Path $bwjRoot '.claude\settings.json') -Encoding ascii -Value '{ "enabledPlugins": { "dkj-repo-workflow@dkj-marketplace": true, "dkj-repo-workflow-bwj@dkj-marketplace": true } }'
     $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-action-dev -Reason 'the owner''s live push' -RootOverride $bwjRoot 2>&1 | Out-String
     Assert-True ($LASTEXITCODE -eq 1 -and $out -match 'CLOSES an act-only issue' -and $out -match 'does any step still change a file' -and $out -match '-StillChangesCode') 'run: a BWJ repo refuses an act-only park before anything is read, and names the question and both routes'
