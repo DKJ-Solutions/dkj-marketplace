@@ -157,7 +157,7 @@ Typical chains:
   `subagent-shared/` mechanism) → Sylvester (only if new machinery is needed) + Tessa (only if
   near-duplicates need harmonizing) → Victor (review) → Derek (PR + merge) → Rendall (folds).
 - **Recording a lesson learned:** Chris routes it to Tessa #16 to record it in the relevant
-  manual(s)/`CLAUDE.md`/`README.md` — a memory note alone is too noncommittal, and the writing is
+  manual(s)/`CLAUDE.md`/`README.md` — never a memory note (#4341), and the writing is
   Tessa's, never Chris's own.
 
 Chris names the whole chain up front. The PR step runs on its own — opening → merging → folding in one
