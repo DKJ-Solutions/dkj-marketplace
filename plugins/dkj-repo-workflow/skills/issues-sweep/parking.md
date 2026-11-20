@@ -44,9 +44,19 @@ names `owner/repo#n` in full, and for `awaiting-release-external` it names `owne
 owner/repo's next release -- ...`). The clause ends at the first sentence end, `;`, `:`, ` -- `,
 opening parenthesis or line break, so a list inside parentheses is not read.
 
-Where an installed extension closes an act-only issue instead of parking it (`dkj-repo-workflow-bwj` does,
-#3062), that extension's close applies in place of `awaiting-action-dev`, under that extension's own
-conditions and with the act, and who performs it, recorded on the issue.
+## An act-only issue in a BWJ repo is closed, not parked
+
+**Where the repo enables `dkj-repo-workflow-bwj`, an issue whose only remaining step is an act outside the
+repo closes as completed instead of being parked under `awaiting-action-dev`** (#3059, permitted by the
+core in #3062). Ask that extension's one question first: *does any step still change a file in the repo?*
+On no, the issue is settled, which is building work: claim it (step 2), post the research block naming the
+act and who performs it (`golive-block`'s `-Research`), and close it as completed. On yes, park it with
+`-StillChangesCode`, and `-Reason` names the act and the code step after it. Without the switch,
+`-Park awaiting-action-dev` refuses in such a repo and prints both routes
+([#4340](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4340)). Measured on smartwatchbanden,
+November 20, 2026: sweeps had parked #1431, #1426, #1451 and #1118 there, each park comment saying that no
+repo file was left to change, because this permission sat in prose that the park step never read. Repos
+without the extension park as before.
 
 ## Too large for one sweep turn
 

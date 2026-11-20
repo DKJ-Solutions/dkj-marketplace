@@ -142,6 +142,12 @@
     owner sweeps put the issue only to that account, and -Candidates prints it beside the label. The
     assignee is left alone: the sweep claim writes and removes it. Without -Decider the owner decides, as before.
 
+.PARAMETER StillChangesCode
+    With -Park awaiting-action-dev, in a repo that enables dkj-repo-workflow-bwj: the "yes" to that
+    extension's question "does any step still change a file in the repo?" (#3059). Without it such a park is
+    refused, because the extension closes an act-only issue as completed with a research block instead of
+    parking it (#3062, #4340). Repos without the extension park as before and never need it.
+
 .PARAMETER ReleaseAll
     With -Tag, and no issue number: release EVERY open issue this tag holds -- its own marker comments
     and the assignee written beside them, and nothing else (issue #2395). The tidy-up before a PLANNED
@@ -234,6 +240,7 @@ param(
     [Parameter(ParameterSetName = 'Issue')][string]$Park = '',
     [Parameter(ParameterSetName = 'Issue')][string]$Reason = '',
     [Parameter(ParameterSetName = 'Issue')][string]$Decider = '',
+    [Parameter(ParameterSetName = 'Issue')][switch]$StillChangesCode,
     [Parameter(Mandatory = $true, ParameterSetName = 'Candidates')][switch]$Candidates,
     [Parameter(ParameterSetName = 'Candidates')]
     [Parameter(ParameterSetName = 'Issue')][string[]]$SkipLabel = @(),
@@ -390,7 +397,12 @@ if (-not $Candidates -and -not $ReleaseAll) {
     }
     # -Park IS A CLAIM THAT ENDS IN A LABEL (issue #3907), so it takes the claim's own tag and nothing that
     # reads or moves another claim. Refused before anything is read, like the two checks above.
-    if ($Park -or $Reason -or $Decider) {
+    if ($Park -or $Reason -or $Decider -or $StillChangesCode) {
+        # -StillChangesCode is the answer to the act-only question below (#4340), so it rides on that park only.
+        if ($StillChangesCode -and $Park -cne 'awaiting-action-dev') {
+            Write-Host '[ERROR] -StillChangesCode only answers a -Park awaiting-action-dev -- nothing was read or written.' -ForegroundColor Red
+            exit 1
+        }
         # A DECIDER IS A DEVELOPER (#4208): it names whose answer a -dev park waits on, so it rides only on
         # such a park, and it is posted on the tracker, so it is a login and nothing else.
         if ($Decider -and (-not $Park -or $Park -notlike 'awaiting-*-dev' -or -not (Test-DeciderLogin -Login $Decider))) {
@@ -409,6 +421,24 @@ if (-not $Candidates -and -not $ReleaseAll) {
             Write-Host '[ERROR] -Park takes an awaiting-* label the sweeps skip, and -Reason the text of what it waits on -- nothing was read or written.' -ForegroundColor Red
             Write-Host '        claim-issue.ps1 <n> -Tag -Park awaiting-decision-dev -Reason "the owner''s choice of X"' -ForegroundColor Red
             exit 1
+        }
+        # AN EXTENSION MAY CLOSE WHAT THE CORE PARKS (#4340): dkj-repo-workflow-bwj closes an act-only issue
+        # as completed instead of parking it under awaiting-action-dev (#3059, permitted by #3062). The
+        # question is asked here, at the park, because the prose permission was not read at the park: BWJ
+        # sweeps parked four such issues. -StillChangesCode is the "yes" to it -- a step left that changes a
+        # repo file, waiting on the owner's act first -- and the park then runs as before. An unreadable
+        # settings chain does not block a park: this is an accident guard, and the core parks by default.
+        if ($Park -ceq 'awaiting-action-dev' -and -not $StillChangesCode) {
+            $enabledIds = @()
+            try { $enabledIds = @((Get-EnabledPlugins -RepoRoot $repoRoot).RepoEnabledIds) } catch { $enabledIds = @() }
+            if (Test-ParkClosedByExtension -Label $Park -EnabledIds $enabledIds) {
+                Write-Host '[ERROR] this repo enables dkj-repo-workflow-bwj, which CLOSES an act-only issue instead of parking it (#3059, #3062) -- nothing was read or written.' -ForegroundColor Red
+                Write-Host '        Answer one question first: does any step still change a file in this repo?' -ForegroundColor Red
+                Write-Host '        No  -> claim it (claim-issue.ps1 <n> -Tag), post the research block naming the act and who performs it' -ForegroundColor Red
+                Write-Host '               (golive-block: build-golive-block.ps1 -Issue <n> -Research -ProseFile <file with [outcome]> -Post), then close it as completed.' -ForegroundColor Red
+                Write-Host "        Yes -> park it as asked: claim-issue.ps1 <n> -Tag -Park awaiting-action-dev -StillChangesCode -Reason `"<the act> -- <the code step after it>`"" -ForegroundColor Red
+                exit 1
+            }
         }
         # A READABLE WAIT NAMES ITS BLOCKER (#3962): the clause -Candidates reads stale-park from, read here
         # by the same parser, or the park never clears by itself.

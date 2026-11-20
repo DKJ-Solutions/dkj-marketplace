@@ -129,6 +129,11 @@ parameters is the [`issues-sweep`](../issues-sweep/SKILL.md) skill; what they do
   that is not the owner ([#4208](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4208)). The
   comment then ends `Decider: @<login>.`, `-Candidates` prints it beside the label, and the owner sweeps put
   the issue only to that account. A value that is not a GitHub login is refused before anything is read.
+  **`-Park awaiting-action-dev` is refused in a repo whose own settings enable `dkj-repo-workflow-bwj`**
+  ([#4340](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4340)): that extension closes an
+  act-only issue as completed with a research block instead of parking it (#3059, #3062). The refusal asks
+  its one question, *does any step still change a file in the repo?*, and prints both routes. On a yes,
+  **`-StillChangesCode`** answers it and the park runs as before. It is refused beside any other label.
   **A plain `-Tag` claim on an issue that is already parked refuses too**, where the assignee route only
   warns (#2518). A sweep claims only a free issue, so a stale label is lifted first.
 - **`DKJ_OWN_ACCOUNTS`** (environment variable, not a parameter) -- a comma list of the **other accounts
