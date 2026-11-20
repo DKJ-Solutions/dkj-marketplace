@@ -80,5 +80,3 @@ to resume it, instead of sitting armed and open until somebody happens to look.
 #### Pull Request
 
 Report an armed pull request that merge-on-green will not merge, at session start and at sweep step 1
-
-Plugins: dkj-repo-workflow
