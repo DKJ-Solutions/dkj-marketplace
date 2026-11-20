@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**19 / 19 minor entries** <!-- pending-tally -->
+**20 / 20 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4342-bwj-asana-progress-in-comments · 20261120-123814Z
+
+BWJ step 2 now says where progress goes on an Asana task: each new measurement, status change or
+outside reply is a comment, and the description stays the stable card, corrected only where it states
+something wrong ([#4342](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4342)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Colleagues following a BWJ Asana task are notified of each new finding and can see when it came,
+instead of a description rewritten in place with no notification.
+
+**Score:** 2
+
+#### Pull Request
+
+bwj: Asana progress goes in comments; the task description is written once and only corrected
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4356](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4356)
+
+---
 
 ### DEPLOY: feat/4347-notes-page-main-link · 20261120-122017Z
 
