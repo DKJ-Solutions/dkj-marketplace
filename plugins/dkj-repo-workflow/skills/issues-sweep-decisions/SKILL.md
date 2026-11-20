@@ -51,6 +51,7 @@ gh issue list --state open --label needs-decision        --json number,title --l
 
 `awaiting-decision` was the label's name until #2890 (October 7, 2026) and `needs-decision` until #2741 (October 3, 2026), listed because a tracker keeps an
 old name until somebody renames it there. An empty result on all is a complete answer: say so and stop.
+To walk only the decisions on issues your own sessions filed, add `--author @me` to each call (#4337).
 
 ### 1. Read each one -- and check that the decision is still open
 

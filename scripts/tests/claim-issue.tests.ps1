@@ -1559,6 +1559,16 @@ Assert-True ((@($c | Where-Object { $_.Number -eq 3 })[0]).Verdict -eq 'skipped'
 Assert-True ((@($c | Where-Object { $_.Number -eq 3 })[0]).Reason -match 'needs-info') 'with the label named -- "nothing to do" while six issues are hidden tells the operator nothing'
 Assert-True ((@($c | Where-Object { $_.Number -eq 1 })[0]).Verdict -eq 'skipped') 'a number held out by hand is skipped'
 
+# -Author (#4337): an issue another account opened is skipped with the reason; case does not matter
+$authJson = '[{"number":1,"title":"mine","labels":[],"comments":[],"author":{"login":"Dave-X"}},{"number":2,"title":"theirs","labels":[],"comments":[],"author":{"login":"other"}},{"number":3,"title":"no author field","labels":[],"comments":[]}]'
+$ca = @(Get-SweepCandidates -Json $authJson -Author 'dave-x')
+Assert-True ((@($ca | Where-Object { $_.Number -eq 1 })[0]).Verdict -eq 'free') '-Author: an issue by that account is free, compared case-insensitively'
+Assert-True ((@($ca | Where-Object { $_.Number -eq 2 })[0]).Verdict -eq 'skipped') '-Author: an issue by another account is skipped'
+Assert-True ((@($ca | Where-Object { $_.Number -eq 2 })[0]).Reason -eq 'not authored by dave-x') '-Author: with the reason naming the login'
+Assert-True ((@($ca | Where-Object { $_.Number -eq 3 })[0]).Verdict -eq 'skipped') '-Author: a payload with no author cannot be shown to be theirs'
+$cn = @(Get-SweepCandidates -Json $authJson)
+Assert-True (@($cn | Where-Object { $_.Verdict -eq 'free' }).Count -eq 3) 'no -Author filters nothing'
+
 $cLegacy = @(Get-SweepCandidates -Json '[{"number":4,"title":"t","labels":[],"comments":[{"id":"IC_4","createdAt":"z","author":{"login":"m"},"body":"<!-- swb-lane: OLD/m -->"}]}]' -Tag 'HOST-A/dave' -Marker @('claim-tag','swb-lane'))
 Assert-True ($cLegacy[0].Verdict -eq 'held') 'a predecessor marker still holds an issue where the repo names it'
 
@@ -2093,6 +2103,40 @@ $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Pa
 Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-Decider takes a GitHub login, and only with -Park and an awaiting-\*-dev label') 'run: a decider on a non -dev park refuses before anything is read'
 $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-decision-dev -Reason 'x' -Decider 'not a login' 2>&1 | Out-String
 Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-Decider takes a GitHub login') 'run: so does a decider that is not a login'
+
+Write-Host ''
+# --- an approved takeover (#4344) ---
+$vTaken  = Get-ClaimVerdict -Account 'me' -State 'OPEN' -Assignees @('prev') -Url 'https://github.com/o/r/issues/5'
+$vCo     = Get-ClaimVerdict -Account 'me' -State 'OPEN' -Assignees @('me', 'prev') -Url 'https://github.com/o/r/issues/5'
+$vClosed = Get-ClaimVerdict -Account 'me' -State 'CLOSED' -Assignees @('prev') -Url 'https://github.com/o/r/issues/5'
+$vPr     = Get-ClaimVerdict -Account 'me' -State 'OPEN' -Assignees @('prev') -Url 'https://github.com/o/r/pull/5'
+$vNoAcct = Get-ClaimVerdict -Account '' -State 'OPEN' -Assignees @('prev') -Url 'https://github.com/o/r/issues/5'
+$vFree   = Get-ClaimVerdict -Account 'me' -State 'OPEN' -Assignees @() -Url 'https://github.com/o/r/issues/5'
+$vMine   = Get-ClaimVerdict -Account 'me' -State 'OPEN' -Assignees @('me') -Url 'https://github.com/o/r/issues/5'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vTaken -ApprovedBy 'maikel-bwj, 2026-11-20 in chat') -ceq 'takeover') 'approved: a foreign assignee becomes a takeover'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vCo -ApprovedBy 'x') -ceq 'takeover') 'approved: so does a co-assignment'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vTaken -ApprovedBy '') -ceq 'refuse') 'no approval: the foreign assignee stays refused'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vTaken -ApprovedBy '   ') -ceq 'refuse') 'a whitespace approval is no approval'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vClosed -ApprovedBy 'x') -ceq 'refuse') 'approved: a closed issue stays refused'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vPr -ApprovedBy 'x') -ceq 'refuse') 'approved: a pull request stays refused'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vNoAcct -ApprovedBy 'x') -ceq 'refuse') 'approved: no account stays refused'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vFree -ApprovedBy 'x') -ceq 'claim') 'approved: an unassigned issue is a normal claim'
+Assert-True ((Get-ClaimTakeoverMode -Verdict $vMine -ApprovedBy 'x') -ceq 'claim') 'approved: an issue already mine is a normal claim'
+Assert-True ((@($vCo.Others) -join ',') -ceq 'prev') 'the takeover removes the others and never this account'
+$tkComment = Format-TakeoverComment -Previous @('prev', 'second') -Account 'me' -ApprovedBy "maikel-bwj,`n2026-11-20 in chat."
+Assert-True ($tkComment -ceq 'Taken over from @prev, @second by @me -- approved by maikel-bwj, 2026-11-20 in chat.') 'the takeover comment is one line naming both sides and the approval'
+Assert-True ((Format-TakeoverComment -Previous @('@prev') -Account 'me' -ApprovedBy ("a" + [char]27 + "[31mb")) -notmatch [char]27) 'the approval text is stripped of control characters before it is posted'
+Assert-True ((Format-TakeoverComment -Previous @('prev') -Account 'me' -ApprovedBy ('z' * 500)).Length -lt 260) 'a very long approval is cut'
+Assert-True (@(Get-TakeoverRemainders -Previous @('Prev', 'second') -Now @('me', 'prev')).Count -eq 1) 'read-back: a previous assignee still there is found, case-insensitively'
+Assert-True (@(Get-TakeoverRemainders -Previous @('prev') -Now @('me')).Count -eq 0) 'read-back: a complete takeover has no remainders'
+$out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -ApprovedBy '   ' 2>&1 | Out-String
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-ApprovedBy needs the record of the approval' -and $out -match 'nothing was read or written') 'run: an empty -ApprovedBy refuses before anything is read'
+foreach ($beside in @('-Tag', '-Tag -Verify', '-Tag -Release', '-Tag -TakeOver')) {
+    $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 @($beside -split ' ') -ApprovedBy 'x, today' 2>&1 | Out-String
+    Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-ApprovedBy only belongs to the default' -and $out -match 'nothing was read or written') "run: -ApprovedBy beside $beside refuses before anything is read"
+}
+$out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script 12 -Tag -Park awaiting-pull -Reason '#3 to land' -ApprovedBy 'x, today' 2>&1 | Out-String
+Assert-True ($LASTEXITCODE -eq 1 -and $out -match '-ApprovedBy only belongs to the default') 'run: -ApprovedBy beside -Park refuses'
 
 Write-Host ''
 # --- a readable wait names its blocker (#3962) ---

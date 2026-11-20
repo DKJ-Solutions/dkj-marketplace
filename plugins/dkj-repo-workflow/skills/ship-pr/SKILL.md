@@ -33,6 +33,11 @@ That distinction matters more here than for `open-pr`, because this script does 
 merges and then commits directly to the main branch. Running it is the whole movement, not the first
 step of one.
 
+**On a release branch, a blocker this run meets is filed when it happens, with its measured cost.** A
+cause in this repo is filed in this repo, and a cause in the shared scripts goes inbound to the plugin's
+source. The rule in full is in `cut-release`'s *A blocker during a release is filed the moment it
+happens* (#4345).
+
 ## What the skill does
 
 Run the shared script from the **root of the consuming repo**, on the branch you want to ship:

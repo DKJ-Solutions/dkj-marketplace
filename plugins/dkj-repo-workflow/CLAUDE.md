@@ -54,6 +54,13 @@ These rules take precedence over any convenience.
   nobody's permission. It is the one outward-facing act a session performs unprompted, and the only
   way a defect found in a consumer reaches the tree that can repair it. What applies to it is the ordinary filing bar: verify the
   finding still stands, search that tracker first, one subject per issue.
+- **Sending a message to a person.** When the owner asks you to write a reply or a message to someone
+  (a colleague, a requester, a client), the text is delivered **in the chat** and the owner sends it
+  themselves. Asking for the text is not asking for it to be sent: a message under the owner's name is
+  outward-facing, wherever it would land (an Asana task, an issue comment, a mail, a channel). Only the
+  writes a procedure makes by itself, such as `report-issue`'s own comment and link, are the session's to
+  post ([#4343](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4343): a session posted a question
+  straight onto the requester's Asana task, and the owner removed it).
 
 ### Never directly on the trunk — via branch + PR
 
@@ -85,10 +92,13 @@ size it was granted at.
 
 ## General working practices
 
-- **Lessons learned are secured in the docs, not just in memory.** When a session learns something
-  that must hold next time, it goes into the layer that owns the rule. Where the lesson is about the
-  shared system, that layer is the plugin's source, reached through the inbound route. Where it is
-  about this repo alone, it goes in the repo's own lens. A memory note alone is too noncommittal.
+- **Lessons learned are secured in the docs, never in memory** (Maikel, November 20, 2026, #4341). When a
+  session learns something that must hold next time, it goes into the layer that owns the rule. Where
+  the lesson is about the shared system, that layer is the plugin's source, reached through the inbound
+  route. Where it is about this repo alone, it goes in the repo's own lens. **No auto-memory notes at
+  all**, not even beside the docs: a note lives on one machine under one account, so every other person
+  on the team never sees it, and a rule kept there reaches nobody. Auto memory is switched off with
+  `"autoMemoryEnabled": false` in the repo's `.claude/settings.json`.
 - **A reported finding's *reason* is verified before it is repaired, not just its symptom.** A report
   says what went wrong and why, and the *why* is an inference by someone looking from the outside. Read
   the code, doc or output that would have to be true for that explanation to hold. A fix built on an

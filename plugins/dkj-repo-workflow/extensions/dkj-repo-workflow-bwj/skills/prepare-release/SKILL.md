@@ -20,6 +20,10 @@ get me ready now"*. Answering that meant reading five lens sections and running 
 ([#2509](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2509)). This skill is that
 sequence as one read-only run.
 
+**A blocker or surprise met here is filed when it happens, with its measured cost.** A cause in this
+repo is filed in this repo, and a cause in the shared scripts goes inbound to the plugin's source. The
+rule in full is in `cut-release`'s *A blocker during a release is filed the moment it happens* (#4345).
+
 ## What the skill does
 
 Run the shared script from the **root of the store repo**, on the trunk:

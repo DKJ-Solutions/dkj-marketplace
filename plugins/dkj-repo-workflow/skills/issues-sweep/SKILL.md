@@ -61,6 +61,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 It prints every open issue as `free`, `mine`, `held`, `branch`, `stale-park`, `relabel` or `skipped` with
 the reason, and names the lowest free number. `-SkipLabel` defaults to every label that parks an issue with
 somebody else, former names included, so pass none; `-SkipIssue` holds numbers out by hand.
+`-Author @me` judges only issues your own sessions filed, the rest read `skipped` (#4337): in a tracker two people share, each sweeps what their own sessions opened.
 
 - **`branch` is not free** -- somebody pushed work for it without a marker. Read that branch first.
 - **`stale-park` and `relabel` are waits that have cleared**: run the lines the output prints. **Never swap
