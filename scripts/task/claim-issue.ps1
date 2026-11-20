@@ -113,6 +113,18 @@
     on that branch off the trunk is authored under one of this checkout's names (issue #2394). "This
     same account" also covers the accounts declared in DKJ_OWN_ACCOUNTS -- see Get-OwnAccountNames.
 
+.PARAMETER ApprovedBy
+    A takeover a PERSON approved (issue #4344): who approved it and when or where, e.g.
+    "maikel-bwj, 2026-11-20 in chat". Default route only (refused beside -Tag, -Verify, -Release, -TakeOver,
+    -Parked, -Park, -Reason, -Decider and -StillChangesCode, and when empty). It turns the one refusal "somebody
+    else holds it" -- a foreign assignee or a co-assignment -- into a takeover: ONE 'gh issue edit' adds this
+    account and removes every other assignee, one comment says "Taken over from @<prev> by @<me> -- approved
+    by <ApprovedBy>.", and the read-back confirms this account is on the issue and the previous ones are gone
+    (a leftover is a [WARNING] with the line that removes it). It records the talk and does not replace it:
+    closed, pull-request and no-account refusals stay refusals. On an issue that is already yours or unassigned
+    there is nothing to take over and it claims as usual. -DryRun prints what it would do. It is not
+    -TakeOver, which moves this account's own tag claim between machines.
+
 .PARAMETER Parked
     With -TakeOver: also move a CO-OWNER's claim, but only when the issue carries 'awaiting-review-dev'
     (issue #3846). That label says the builder parked the branch for the owner's look, so nobody is
@@ -241,6 +253,7 @@ param(
     [Parameter(ParameterSetName = 'Issue')][string]$Reason = '',
     [Parameter(ParameterSetName = 'Issue')][string]$Decider = '',
     [Parameter(ParameterSetName = 'Issue')][switch]$StillChangesCode,
+    [Parameter(ParameterSetName = 'Issue')][string]$ApprovedBy = '',
     [Parameter(Mandatory = $true, ParameterSetName = 'Candidates')][switch]$Candidates,
     [Parameter(ParameterSetName = 'Candidates')]
     [Parameter(ParameterSetName = 'Issue')][string[]]$SkipLabel = @(),
@@ -389,6 +402,23 @@ if (-not $Candidates -and -not $ReleaseAll) {
         Write-Host '[ERROR] -TakeOver needs -Tag, and cannot be combined with -Verify or -Release -- nothing was read or written.' -ForegroundColor Red
         Write-Host '        It hands a TAG claim over from another machine; -Verify reads and -Release drops one.' -ForegroundColor Red
         exit 1
+    }
+    # -ApprovedBy IS THE DEFAULT ROUTE'S VALVE (#4344): it turns "somebody else holds it" into a takeover
+    # that removes the previous assignee, and the tag modes have no assignee-refusal to turn. Refused before
+    # anything is read, like the checks around it; an empty value is refused too, because an approval that
+    # names nobody is the flag without the conversation it records.
+    if ($PSBoundParameters.ContainsKey('ApprovedBy')) {
+        if (-not $ApprovedBy.Trim()) {
+            Write-Host '[ERROR] -ApprovedBy needs the record of the approval (who, and when or where) -- nothing was read or written.' -ForegroundColor Red
+            Write-Host '        claim-issue.ps1 <n> -ApprovedBy "maikel-bwj, 2026-11-20 in chat"' -ForegroundColor Red
+            exit 1
+        }
+        if ($Tag -or $Verify -or $Release -or $TakeOver -or $Parked -or $Park -or $Reason -or $Decider -or $StillChangesCode) {
+            Write-Host '[ERROR] -ApprovedBy only belongs to the default (assignee) claim -- nothing was read or written.' -ForegroundColor Red
+            Write-Host '        It takes over an issue another ACCOUNT holds, on a person''s approval (#4344). The tag modes' -ForegroundColor Red
+            Write-Host '        have their own -TakeOver, which moves this account''s own claim between machines.' -ForegroundColor Red
+            exit 1
+        }
     }
     if ($Parked -and -not $TakeOver) {
         Write-Host '[ERROR] -Parked only qualifies -TakeOver -- nothing was read or written.' -ForegroundColor Red
@@ -1545,6 +1575,22 @@ if (-not $Tag) {
     $verdict = Get-ClaimVerdict -Account $identity.Account -State ([string]$facts.state) -Assignees $assignees -Url ([string]$facts.url)
 }
 
+# AN APPROVED TAKEOVER (#4344): with -ApprovedBy, the 'taken' refusal -- and only it -- becomes a claim that
+# also removes the previous assignee(s). The verdict is rewritten to Action 'claim' with its own Code, so the
+# scans and warnings below that read "claim or skip" run exactly as for any claim, and the switch has no
+# 'taken' arm to hit. An issue that is already yours or unassigned has nothing to take over and says so.
+$takeoverPrevious = @()
+if ($ApprovedBy.Trim()) {
+    $takeoverMode = Get-ClaimTakeoverMode -Verdict $verdict -ApprovedBy $ApprovedBy
+    if ($takeoverMode -eq 'takeover') {
+        $takeoverPrevious = @($verdict.Others)
+        $verdict = [pscustomobject]@{ Action = 'claim'; Code = 'approved-takeover'; Others = $verdict.Others }
+        Write-Host "  approved takeover from $(Format-ForConsole -Text ($takeoverPrevious -join ', ')) -- approved by $(Format-ForConsole -Text $ApprovedBy)" -ForegroundColor Yellow
+    } elseif ($takeoverMode -eq 'claim') {
+        Write-Host "  -ApprovedBy given, but #$number has no other assignee to take over from -- claiming as usual." -ForegroundColor DarkGray
+    }
+}
+
 # --- IS THE FIX ALREADY SITTING ON A BRANCH (issue #1853) -----------------------------------------
 #
 # THE FOURTH PICKUP SIGNAL, and the one none of the three above can carry. The verdict just reached
@@ -2022,7 +2068,11 @@ if ($parked -and $Tag -and -not $TakeOver -and $verdict.Action -eq 'claim' -and 
 # --- CLAIM IT -------------------------------------------------------------------------------------
 if ($DryRun) {
     $who = if ($Tag) { "tag $($claimTag.Tag) (a marker comment, and the assignee '$($identity.Account)' beside it)" } else { "'$($identity.Account)'" }
-    Write-Host "[DRY RUN] would claim #$number for $who. Nothing was written." -ForegroundColor Yellow
+    if ($takeoverPrevious.Count -gt 0) {
+        Write-Host "[DRY RUN] would take #$number over for ${who}: add it and remove $(Format-ForConsole -Text ($takeoverPrevious -join ', ')) in one edit, then comment. Nothing was written." -ForegroundColor Yellow
+    } else {
+        Write-Host "[DRY RUN] would claim #$number for $who. Nothing was written." -ForegroundColor Yellow
+    }
     Write-Host "          $($facts.url)"
     exit 0
 }
@@ -2046,7 +2096,11 @@ if ($Tag) {
     }
 }
 
-$edit = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'edit', $number) + $repoArgs + @('--add-assignee', $identity.Account)) -Utf8 `
+# AN APPROVED TAKEOVER ADDS AND REMOVES IN THE SAME EDIT (#4344): one call, so there is no moment with two
+# assignees, and a failed call leaves the issue as it was.
+$editArgs = @('--add-assignee', $identity.Account)
+if ($takeoverPrevious.Count -gt 0) { $editArgs += @('--remove-assignee', ($takeoverPrevious -join ',')) }
+$edit = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'edit', $number) + $repoArgs + $editArgs) -Utf8 `
                              -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
 
 # IN TAG MODE THE ASSIGNEE IS NOT THE CLAIM, SO ITS FAILURE IS NOT A FAILED CLAIM (issue #2243). The
@@ -2275,7 +2329,8 @@ $after = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'view', $num
 # fails, which is the safe direction"; the read-back does not fail, it succeeds with nothing, which is
 # the whole reason the field had to exist.
 $readOk = [bool]($after -and $after.ExitCode -eq 0 -and -not $after.ShortRead)
-$landed = $readOk -and ((Get-AssigneeLogins -Json (@($after.Output) -join "`n")) -contains $identity.Account)
+$afterLogins = if ($readOk) { @(Get-AssigneeLogins -Json (@($after.Output) -join "`n")) } else { @() }
+$landed = $readOk -and ($afterLogins -contains $identity.Account)
 
 if ($readOk -and -not $landed) {
     # REFUSED -- measured rather than inferred: gh answered, and the account is not in the list it
@@ -2344,6 +2399,29 @@ if (-not $readOk) {
 # caveat, and the operator is left with two lines that cannot both be true. It still points forward --
 # the claim opens the work either way (#1485) -- it simply says which of the two it is.
 $confirmed = if ($landed) { '' } else { ' (unconfirmed -- see the warning above)' }
+
+# THE TAKEOVER'S COMMENT AND ITS SECOND READ-BACK HALF (#4344). The comment says why the previous assignee
+# is gone, so it is posted once the claim is on the tracker; its failure is a warning with the line to run,
+# because the takeover itself landed. A previous assignee still present in the read-back is a warning too:
+# GitHub can drop half of a combined edit without failing it, and two assignees is the state this exists to end.
+if ($takeoverPrevious.Count -gt 0) {
+    $takeoverBody = Format-TakeoverComment -Previous $takeoverPrevious -Account $identity.Account -ApprovedBy $ApprovedBy
+    $takeoverPosted = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('issue', 'comment', $number) + $repoArgs + @('--body', $takeoverBody)) -Utf8 `
+                                           -TimeoutSeconds $NativeCaptureNetworkTimeoutSeconds
+    if (-not $takeoverPosted -or -not (Test-NativeExitMeasured -Capture $takeoverPosted) -or $takeoverPosted.ExitCode -ne 0) {
+        Write-Host "[WARNING] #$number was taken over, but the comment saying why did not land. Post it by hand:" -ForegroundColor Yellow
+        Write-Host "            gh issue comment $number --body '$($takeoverBody -replace "'", "''")'" -ForegroundColor Yellow
+    } else {
+        Write-Host "  $takeoverBody" -ForegroundColor DarkGray
+    }
+    if ($readOk) {
+        $remainders = @(Get-TakeoverRemainders -Previous $takeoverPrevious -Now $afterLogins)
+        if ($remainders.Count -gt 0) {
+            Write-Host "[WARNING] $(Format-ForConsole -Text ($remainders -join ', ')) is still assigned to #$number -- the removal did not land. Remove it by hand:" -ForegroundColor Yellow
+            Write-Host "            gh issue edit $number --remove-assignee $(Format-ForConsole -Text ($remainders -join ','))" -ForegroundColor Yellow
+        }
+    }
+}
 # AND IT DOES NOT ASSERT WHAT THE SCAN JUST CONTRADICTED EITHER (#1878), which is the same rule one
 # measurement further on. 'The work starts here' is exactly what a session should not read directly
 # under a block naming somebody else's commit on somebody else's branch, minutes old.
