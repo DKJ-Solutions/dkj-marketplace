@@ -196,6 +196,9 @@ Assert-True ($route.IsMatch((([uri](Get-BwjServedCheckUrl -Url "https://p.worker
 # THE CUT'S CLOSE-OUT CARRIES THE NOTES LINK (#2913), printed on both verified exit paths, never on -DryRun.
 $coUrl = "https://p.workers.dev/notes/$HexA"
 Assert-True ((Format-BwjPageCloseOut -Kind 'notes' -Url $coUrl) -like "Close-out:*$coUrl") 'a verified notes publish prints the close-out line ending in the URL'
+# AND IT SAYS IT IS THE MAIN LINK, FIRST, BEFORE ADMIN AND THE RELEASE URL (#4347).
+$coLine = Format-BwjPageCloseOut -Kind 'notes' -Url $coUrl
+Assert-True ($coLine -match 'MAIN link' -and $coLine -match 'FIRST' -and $coLine -match 'Admin' -and $coLine -match 'GitHub release') 'the notes close-out names itself the main link, given before the Admin page and the GitHub release URL'
 Assert-Equal '' (Format-BwjPageCloseOut -Kind 'backlog' -Url $coUrl) 'the backlog page is no cut''s receipt, so it prints none'
 $ppSrc = Get-Content -LiteralPath (Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\scripts\task\publish-page.ps1') -Raw
 Assert-Equal 1 ([regex]::Matches($ppSrc, 'Format-BwjPageCloseOut -Kind \$Kind -Url \$url')).Count 'one verified exit path, shared by wrangler and the KV API, prints it'
