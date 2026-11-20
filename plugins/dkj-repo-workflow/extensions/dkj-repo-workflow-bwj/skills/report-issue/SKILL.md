@@ -5,8 +5,9 @@ description: >-
   its labels: bug, feature or research, and the reach label), then -- only where the issue carries the reach label -- a
   colleague-facing Asana task, cross-linked both ways. Use this in a repo that runs the BWJ procedure -- smartwatchbanden or xoxowildhearts
   (whichever org), the plugin's own source repo dkj-marketplace, or phone-factory -- whenever a real finding
-  needs tracking: a bug, a broken customer-facing behaviour, a stale doc, a decision that is
-  not yours to make. The Asana card lands in the board's `Filed` section -- tracked on GitHub now --
+  needs tracking and a file in the repo will change because of it, now or after an act outside the
+  repo: a bug, a broken customer-facing behaviour, a stale doc. An act outside the repo, or a decision
+  that is not yours and changes no file, is no GitHub issue (#4339). The Asana card lands in the board's `Filed` section -- tracked on GitHub now --
   because the board's sections are the cycle's stages. The GitHub issue always gets created
   even if Asana is unreachable, so the source-of-truth guarantee holds. Nothing here resolves a ticket
   and nothing downstream does either: closing the GitHub issue as completed posts one closed message on
@@ -77,18 +78,32 @@ Apply the `dkj-subagents-alpha` filing bar in full: verify the finding still sta
 or output behind it; search the tracker for a duplicate, closed issues included (`gh issue list --state all
 --label awaiting-recurrences-first` and `--label awaiting-recurrences`: a parked recurrence may be closed as
 not planned, and a match is reopened rather than filed beside); one subject per issue; state what you
-measured versus inferred. Then file it **classified** -- every label on the create itself, never left
-for a later pass:
+measured versus inferred.
+
+**Then the filing test -- will a file in this repo change because of it?** It is the act-only close
+rule (#3059) asked at filing, and the reasoning is in
+[`WORKFLOW-portable.md`](../../WORKFLOW-portable.md#1-github-first----github-is-the-source-of-truth)
+([#4339](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4339)):
+
+- **Yes, now** -- file it below.
+- **Yes, after an act outside the repo or a decision somebody else owns** -- file it below **already
+  parked**: add its `awaiting-*` label to the same create (`awaiting-action-external`,
+  `awaiting-decision-client`, ...) and name the act or the decider in the body, so no sweep spends a
+  turn finding out there is nothing to build yet.
+- **No** -- stop: no GitHub issue. Where a colleague has to act or decide, that goes to them as an Asana
+  task, outside this skill.
+
+Then file it **classified** -- every label on the create itself, never left for a later pass:
 
 ```bash
 gh issue create --repo <owner>/<repo> --title "<precise technical title>" --body "<full detail>" \
-  --label <bug | feature | research> [--label "<reach label>"]
+  --label <bug | feature | research> [--label "<reach label>"] [--label <awaiting-*>]
 # gh prints the new issue's URL; its last segment is <n>
 ```
 
 | what to set | how to decide it |
 |---|---|
-| the kind (`--label bug`, `--label feature` or `--label research`) | **always exactly one of the three** (#2783, #3006): **`feature`** for something new being added, **`bug`** for something that exists and has to change, **`research`** for a research, test or decision ticket that changes nothing on the store. A doc finding is a `bug` or a `feature` -- a missing page is a `feature`, a wrong one a `bug`. A ticket that researches first and then builds is not `research`. There is no fourth kind and no `documentation` label |
+| the kind (`--label bug`, `--label feature` or `--label research`) | **always exactly one of the three** (#2783, #3006): **`feature`** for something new being added, **`bug`** for something that exists and has to change, **`research`** for research or a test a session carries out in the repo, which changes nothing on the store (a decision that is not ours is no issue: the filing test above). A doc finding is a `bug` or a `feature` -- a missing page is a `feature`, a wrong one a `bug`. A ticket that researches first and then builds is not `research`. There is no fourth kind and no `documentation` label |
 | the reach label (`Get-ReachLabel`, default `minor`) | **only** where management or the commissioner would notice it. The test is whether that reader notices the **defect**, not whether the file renders to them: a customer-facing template with a developer-only defect is tier 0, and a build script whose breakage stops a release the business is waiting on is not. **In doubt, leave it off.** Where you set it, the body carries the `## Why <reach label>` section below, which answers that test in words |
 
 **`hooks/guard-kind-label.ps1` refuses** a `gh issue create` on a store repo that carries none, or
