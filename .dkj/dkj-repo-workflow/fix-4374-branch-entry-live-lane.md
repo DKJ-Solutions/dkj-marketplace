@@ -39,21 +39,39 @@
 
 ### PLAN
 
+Inbound #4374: the branch-entry caller that adopt-workflow-folder scaffolds triggers on `branches: [main]`
+only, so in a Shopify consumer with a hotfix lane the gate never ran on PRs to the live deploy branch.
+Verified in the tree: the template literal in `adopt-workflow-folder.ps1`, and `check-branch-entry.ps1`
+judges the head branch's document with no assumption about the base, so the trigger is the whole gap.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `adopt-workflow-folder.ps1` (plugin copy and root mirror): read `Get-ShopifyLiveDeployBranch` from the consumer's repo-config in a child scope; a plain, non-placeholder name other than `main` joins the branch-entry caller as `branches: [main, <live>]`, with a #4374 comment; an unusable answer leaves `main` only and the run says why
+- [x] An existing branch-entry caller whose `branches:` line lacks the declared live branch is reported with the line to add, never rewritten
+- [x] The adopt skill page states the second trigger branch
+- [x] `check-branch-entry.ps1` and `reusable-branch-entry.yml` read: no base filter, no change needed
 
 ### TEST
 
+- [x] `adopt-workflow-folder.tests.ps1`: live branch declared, not declared, five unusable answers, existing caller with and without the live branch -- 237 asserts, 0 failed; the full gate runs in ship-pr
+
 ### DEPLOY: fix/4374-branch-entry-live-lane
 
-**Score:**
+`adopt-workflow-folder` now reads `Get-ShopifyLiveDeployBranch` and, where it answers a plain branch name,
+writes it into the branch-entry caller's trigger beside `main`; an existing caller missing it is reported
+with the line to add (#4374).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify consumer that ships hotfix PRs straight to its live branch now gets the branch-entry gate on
+those PRs too. Before, a malformed DEPLOY section could land on live unjudged, flow back to the trunk and
+turn fold-on-merge red on every later merge. An already-adopted repo is told the one line to change when it
+re-runs Part 1 of `adopt-dkj-repo-workflow`.
+
+**Score:** 3
 
 #### Pull Request
 
 Branch-entry gate also runs on PRs to the live deploy branch
-

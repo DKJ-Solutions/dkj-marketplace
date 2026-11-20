@@ -517,6 +517,39 @@ $noteRootRelPath = ($noteRootRelPath -replace '\\', '/').TrimEnd('/')
 . (Join-Path $PSScriptRoot '..\lib\release-pin-lib.ps1')
 $gateRef = Get-ScaffoldingReleaseTag
 
+# THE LIVE BRANCH IS A SECOND BASE FOR THE BRANCH-ENTRY CALLER (#4374). A Shopify consumer with a hotfix
+# lane ships branches as PRs to its live deploy branch (the name Get-ShopifyLiveDeployBranch answers in
+# scripts/repo-config.ps1) and only later flows live back to the trunk. A caller on `branches: [main]`
+# never ran on those PRs, so a malformed DEPLOY section landed on the live branch unjudged, rode the
+# back-flow onto the trunk, and turned the fold red on every later merge. The gate itself judges the HEAD
+# branch's own document and assumes no base (check-branch-entry.ps1), so the trigger is the whole fix.
+#
+# ONLY THE BRANCH-ENTRY CALLER, because the always-on budget gate holds what every session pays and that
+# is measured against the trunk. The seam is read in a child scope, StrictMode off, inside a try, because
+# the file is the consumer's and a fault in it must degrade to "unanswered". The check is the plain-name
+# one adopt-shopify-floor applies before it writes the answer into a workflow (letters, digits, . _ / -,
+# no leading '-'), plus the answers that would be wrong here: a VUL-IN placeholder, a refs/ spelling, '..',
+# and the trunk itself, which is already listed. Read from the file as it stands NOW, so a seam this very
+# run appends is not counted: answer it, then re-run. The trunk stays the literal 'main', as it has been.
+$liveBranch = ''
+$liveBranchNote = ''
+$liveAnswer = & {
+    Set-StrictMode -Off
+    $answer = ''
+    if (Test-Path -LiteralPath $args[0] -PathType Leaf) {
+        try {
+            . $args[0]
+            if (Test-FunctionDefined 'Get-ShopifyLiveDeployBranch') { $answer = ([string](Get-ShopifyLiveDeployBranch)).Trim() }
+        } catch { }
+    }
+    return $answer
+} $repoConfig
+if ($liveAnswer) {
+    if ($liveAnswer -notmatch '^(?!-)[A-Za-z0-9._/-]+$' -or $liveAnswer -match 'VUL-IN' -or $liveAnswer -match '^refs/' -or $liveAnswer.Contains('..') -or $liveAnswer -ceq 'main') {
+        $liveBranchNote = "Get-ShopifyLiveDeployBranch answers '$(Format-SafeProseToken -Value $liveAnswer)', which is not a usable live branch name (a plain name other than main, no VUL-IN placeholder, no refs/ prefix), so the branch-entry caller lists main only"
+    } else { $liveBranch = $liveAnswer }
+}
+
 $entryGateWorkflow = @(
     '# Every PR into the trunk carries a WRITTEN changelog entry.',
     '#',
@@ -549,6 +582,21 @@ $entryGateWorkflow = @(
     '    with:',
     ('      scripts-ref: ' + $gateRef)
 )
+
+# The live branch joins the caller's trigger, with the reason beside it (#4374). Inserted by position, so
+# a caller without a live branch stays byte-for-byte what it was.
+if ($liveBranch) {
+    $entryGateWorkflow = @($entryGateWorkflow | ForEach-Object { $_ -replace '^    branches: \[main\]$', "    branches: [main, $liveBranch]" })
+    $pinAt = [array]::IndexOf($entryGateWorkflow, ($entryGateWorkflow | Where-Object { $_ -like '# PINNED TO A RELEASE*' } | Select-Object -First 1))
+    $liveComment = @(
+        "# THE LIVE BRANCH IS LISTED TOO (#4374): this repo ships hotfix PRs straight to '$liveBranch'",
+        '# (Get-ShopifyLiveDeployBranch in scripts/repo-config.ps1) and they flow back to the trunk only later.',
+        '# Without it here the gate never ran on those PRs, and a malformed DEPLOY section reached the trunk',
+        '# and turned the fold red on every later merge. Change the two together.',
+        '#'
+    )
+    $entryGateWorkflow = @($entryGateWorkflow[0..($pinAt - 1)]) + $liveComment + @($entryGateWorkflow[$pinAt..($entryGateWorkflow.Count - 1)])
+}
 
 # THE SECOND PR GATE THIS COMMAND PLACES (issue #2037): a PR may not grow what every session pays before
 # a single assignment is given -- CLAUDE.md plus everything it '@'-imports.
@@ -697,6 +745,7 @@ $targets = @(
 # --- Place (or list) ------------------------------------------------------------------------------
 Write-Host "== adopt-workflow-folder -- $repoRoot ==" -ForegroundColor Cyan
 if (-not $Apply) { Write-Host '  DRY RUN -- nothing is written. Re-run with -Apply to place the files below.' -ForegroundColor Yellow }
+if ($liveBranchNote) { Write-Host "  [live branch] $liveBranchNote (#4374)." -ForegroundColor Yellow }
 
 $created = 0
 $kept = 0
@@ -718,6 +767,17 @@ foreach ($t in $targets) {
         Write-Host "  [exists]  $($t.Rel) -- left as it is" -ForegroundColor DarkGray
         # AN EXISTING GATE CALLER IS READ FOR ITS PIN (#4237), because this is the only moment anything
         # looks at it again: a caller adopted on @main stays there until somebody is told. Advisory.
+        # AND FOR THE LIVE BRANCH (#4374): an existing branch-entry caller whose `branches:` line does not
+        # name the declared live branch never runs on hotfix PRs. Reported with the line to add, never
+        # rewritten -- this command is strictly additive.
+        if ($liveBranch -and $t.Rel -eq '.github/workflows/branch-entry.yml') {
+            $liveExisting = [System.IO.File]::ReadAllText($abs)
+            $liveLine = [regex]::Match($liveExisting, '(?m)^\s*branches:\s*\[([^\]]*)\]')
+            if ($liveLine.Success -and (($liveLine.Groups[1].Value -split ',' | ForEach-Object { $_.Trim().Trim('"', "'") }) -notcontains $liveBranch)) {
+                Write-Host "            [live branch] its branches: list does not name '$liveBranch', so the gate never runs on PRs to the live branch (#4374)." -ForegroundColor Yellow
+                Write-Host "            Change the line to: branches: [$($liveLine.Groups[1].Value.Trim()), $liveBranch]" -ForegroundColor Yellow
+            }
+        }
         if ($gateCallerRels -contains $t.Rel -and $gateRef -ne 'main') {
             $existing = [System.IO.File]::ReadAllText($abs)
             # Quoted or with a trailing comment, and only a call into THIS repo under any name it has

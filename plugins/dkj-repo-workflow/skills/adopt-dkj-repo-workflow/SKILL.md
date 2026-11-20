@@ -231,6 +231,12 @@ called job), and its check reports as **`<job> / <job>`** (`branch-entry / branc
 only if you make it a required check. **A repo adopted before this change keeps its full copy** -- this
 part never overwrites a file. To take the caller, delete that file and re-run Part 1.
 
+**The branch-entry caller triggers on the trunk and, where one is declared, the live branch**
+([#4374](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4374)). A repo whose `scripts/repo-config.ps1`
+answers `Get-ShopifyLiveDeployBranch` with a plain branch name gets `branches: [main, <live>]`, so hotfix PRs
+to the live branch meet the gate too; an unusable answer (a `VUL-IN` placeholder, `refs/...`, `main`) leaves
+`main` only and the run says why. An existing caller is reported with the line to add, never rewritten.
+
 **The branch-entry caller also holds the DEPLOY lock**
 ([#2429](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2429)). The runner passes the PR
 number, so it refuses a DEPLOY section that changed after the PR opened. That is the half of the lock a PR
