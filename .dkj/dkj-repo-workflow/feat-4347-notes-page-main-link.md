@@ -39,19 +39,36 @@
 
 ### PLAN
 
+Inbound #4347: at a BWJ cut's close the published audience-notes page is the main link, before the
+local Admin page and the GitHub release URL, and it is shared only once the served copy is verified.
+Verified: `publish-page.ps1` already fetches the public URL and compares before printing `Close-out:`;
+the line and the skill only said the receipt "ends with" it.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `page-publish-rules.ps1` `Format-BwjPageCloseOut`: the line names itself the main link, given first, and the served copy as verified
+- [x] `publish-page/SKILL.md`: the main-link rule and why, and share only from a run that printed the line
+- [x] `bwj-page-publish.tests.ps1`: an assert pins the main-link wording
 
 ### TEST
 
+- [x] `bwj-page-publish.tests.ps1` standalone: 222 pass, 0 fail; the full gate is `ship-pr`'s
+
 ### DEPLOY: feat/4347-notes-page-main-link
 
-**Score:**
+`publish-page -Kind notes` now closes with a line that names the audience-notes page as the cut's main
+link, to be given first, before the local Admin page and the GitHub release URL, and as the copy the
+public page was just proven to serve. The skill says the same
+([#4347](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4347)).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+At the close of a BWJ cut the owner gets the release-notes page they read first, not the GitHub release
+or a local Admin link.
+
+**Score:** 2
 
 #### Pull Request
 
