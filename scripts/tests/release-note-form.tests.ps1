@@ -164,6 +164,54 @@ try {
     Assert-True ($r.Exit -eq 1 -and $r.Text -match '\[HEADING\]' -and $r.Text -match 'rule 7' -and $r.Text -notmatch '\[DRIFT\]') 'with it enabled the same note is refused under [HEADING], and its form is not called drift'
     Set-Note -Dir $t5 -Version '1.1.0' -Text (New-Draft)
     Assert-True ((Invoke-Check -Root $t5).Exit -eq 0) 'and the newest note is the only one judged: a clean 1.1.0 passes over the older 1.0.0'
+
+    Write-Host "`n== 9. every solved task the record lists is linked (#4346) ==" -ForegroundColor Cyan
+    $u1 = 'https://app.asana.com/0/1/1201'
+    $u2 = 'https://app.asana.com/0/1/1202'
+    $taskList = @([pscustomobject]@{ Title = 'Checkout fixed'; Url = $u1 }, [pscustomobject]@{ Title = 'Menu "tidied" <x>'; Url = $u2 })
+    Assert-True ((Get-ReleaseTaskRecordPath -NotePath 'notes/1.x/2.3.0.md') -eq 'notes/1.x/2.3.0.tasks.json') 'the record sits beside its note, named after it'
+    $recText = ConvertTo-ReleaseTaskRecord -Version '2.3.0' -Items $taskList
+    $back = @(Read-ReleaseTaskRecord -Text $recText)
+    Assert-True ($back.Count -eq 2 -and $back[0].Url -eq $u1 -and $back[1].Title -eq 'Menu "tidied" <x>') 'a record round-trips: two tasks, urls and titles intact'
+    $one = @(Read-ReleaseTaskRecord -Text (ConvertTo-ReleaseTaskRecord -Version '2.3.0' -Items @($taskList[0])))
+    Assert-True ($one.Count -eq 1 -and $one[0].Url -eq $u1) 'a one-task record is still a list of one'
+    Assert-True (@(Read-ReleaseTaskRecord -Text (ConvertTo-ReleaseTaskRecord -Version '2.3.0' -Items @())).Count -eq 0) 'an empty record reads as no tasks'
+    foreach ($bad in @('not json', '{ "version": "2.3.0" }', '{ "tasks": [ { "title": "x", "url": "http://plain.test/1" } ] }', '{ "tasks": [ { "title": "x", "url": "javascript:alert(1)" } ] }')) {
+        $threw = $false; try { Read-ReleaseTaskRecord -Text $bad | Out-Null } catch { $threw = $true }
+        Assert-True $threw "a broken record throws rather than reading as empty: $bad"
+    }
+    $linked = (New-Draft) -replace 'It works now\.', "It works now. [Task]($u1) and [the menu]($u2)."
+    Assert-True (@(Get-ReleaseNoteMissingTasks -Text $linked -Tasks $taskList).Count -eq 0) 'a note carrying both urls misses nothing, whatever the link text'
+    $miss = @(Get-ReleaseNoteMissingTasks -Text ((New-Draft) -replace 'It works now\.', "[Task]($u1)") -Tasks $taskList)
+    Assert-True ($miss.Count -eq 1 -and $miss[0].Url -eq $u2) 'a note dropping one link names exactly that task'
+    Assert-True (@(Get-ReleaseNoteMissingTasks -Text ((New-Draft) -replace 'It works now\.', "$($u1)0") -Tasks @($taskList[1])).Count -eq 1) 'another task''s url is not mistaken for this one'
+
+    $t6 = New-Tree -Label 'tasks'
+    $recAbs = Join-Path $t6 'notes\1.x\1.0.0.tasks.json'
+    [System.IO.File]::WriteAllText($recAbs, $recText, (New-Object System.Text.UTF8Encoding $false))
+    Set-Note -Dir $t6 -Version '1.0.0' -Text $linked
+    $r = Invoke-Check -Root $t6
+    Assert-True ($r.Exit -eq 0 -and $r.Text -match 'links all 2 solved task') "a note linking every recorded task passes and says how many (exit $($r.Exit))"
+    Set-Note -Dir $t6 -Version '1.0.0' -Text (New-Draft)
+    $r = Invoke-Check -Root $t6
+    Assert-True ($r.Exit -eq 1 -and $r.Text -match '\[TASKS\]' -and $r.Text -match [regex]::Escape($u1) -and $r.Text -match [regex]::Escape($u2)) 'the drafted form rewritten as prose without links is refused, naming each missing url'
+    Assert-True ($r.Text -notmatch '\[DRIFT\]') 'and its form is not called drift -- the two are separate findings'
+    [System.IO.File]::WriteAllText($recAbs, '{ broken', (New-Object System.Text.UTF8Encoding $false))
+    $r = Invoke-Check -Root $t6
+    Assert-True ($r.Exit -eq 1 -and $r.Text -match 'could not be read') 'an unreadable record is refused, never read as no tasks'
+    Remove-Item -LiteralPath $recAbs -Force
+    Assert-True ((Invoke-Check -Root $t6).Exit -eq 0) 'a note with no record is not judged for links -- an older release, or the entries form'
+    Set-Note -Dir $t6 -Version '1.1.0' -Text (New-Draft)
+    [System.IO.File]::WriteAllText($recAbs, $recText, (New-Object System.Text.UTF8Encoding $false))
+    Assert-True ((Invoke-Check -Root $t6).Exit -eq 0) 'only the newest note''s record is held: 1.0.0''s does not judge 1.1.0'
+
+    Write-Host "`n== 10. the cut writes the record beside the task-form draft (#4346) ==" -ForegroundColor Cyan
+    foreach ($copy in @('scripts/release/cut-release.ps1', 'plugins/dkj-repo-workflow/scripts/release/cut-release.ps1')) {
+        $src = [System.IO.File]::ReadAllText((Join-Path $RepoRoot $copy))
+        Assert-True ($src.Contains('$taskRecordItems = @($items)')) "$copy keeps the drafted task items as the record's list"
+        Assert-True ($src -match 'ConvertTo-ReleaseTaskRecord -Version \$new -Items \$taskRecordItems') "$copy writes the record from that list"
+        Assert-True ($src.Contains('$plannedFiles += @($taskRecordRelPath)')) "$copy refuses to overwrite an existing record, like the note beside it"
+    }
 } finally {
     foreach ($d in $script:trees) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue }
 }
