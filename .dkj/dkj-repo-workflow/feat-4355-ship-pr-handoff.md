@@ -55,6 +55,8 @@ sweep reports an armed PR that stays unmerged, e.g. on a red check) stays open o
 - [x] `merge-on-green-lib.tests.ps1`: four source-text asserts (switch declared; the Clearable block
   exits 0 before the CI watch; the not-clearable block does not exit). Green, as are
   `native-capture.tests.ps1` and `check-plugin-integrity.ps1`.
+- [x] `closeout-lib.tests.ps1` caught the new receipt ending; ship-pr's ending count moved 2 -> 3 with
+  the reason.
 - [x] This branch is shipped with `-HandOff` itself, the first live run.
 
 ### DEPLOY: feat/4355-ship-pr-handoff
