@@ -39,19 +39,35 @@
 
 ### PLAN
 
+The decision was recorded on #4348 (split by owner), so this branch writes it down where both
+statements are read.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `dkj-repo-workflow-bwj`'s `WORKFLOW-portable.md`, beside the #3059 act-only close: a fix in code
+  the team does not own closes as not planned, with a note on where it lives and whose it is, and nobody
+  chases the colleague. A blocker in a repo the team runs still parks.
+- [x] The core's `CONTRIBUTING-portable.md`, at `awaiting-pull-external`: an extension may close instead,
+  and the pointer names the BWJ rule.
 
 ### TEST
 
+- [x] Documentation only; ship-pr's lint gate checks links and the always-on budget.
+
 ### DEPLOY: docs/4348-bwj-out-of-repo-fix-closes
 
-**Score:**
+In a BWJ store repo, an issue whose fix lives in a colleague's project now closes as not planned, with a
+note on where the fix lives and whose it is, instead of being parked `awaiting-pull-external`. A blocker in a repo the team
+runs, such as a `dkj-marketplace` release, still parks as before. The core's label section points to the
+exception ([#4348](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4348)).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A store's open issues no longer collect waits on code the team cannot change.
+
+**Score:** 2
 
 #### Pull Request
 
