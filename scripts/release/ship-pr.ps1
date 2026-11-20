@@ -292,6 +292,15 @@
 .PARAMETER NoMerge
     Open the PR and stop (do not wait for CI, merge, or fold).
 
+.PARAMETER HandOff
+    Hand the rest of the run to the merge-on-green runner instead of sitting through CI (issue #4355).
+    Where the clearance verdict is Clearable (the PR is armed, the runner exists, the sweep would not
+    refuse the PR, -NoMerge is off and the checkout is back on the trunk), print a short receipt and exit 0
+    right before the CI watch: merge-on-green merges and fold-on-merge folds once the required check is
+    green (#3442). Where it is NOT Clearable the run says which fact is unmet and carries on with the
+    ordinary watch, so a hand-off never strands a PR. Combined with -NoMerge nothing is armed, so the
+    verdict is not Clearable and the switch has no effect; it is not refused.
+
 .PARAMETER SkipStaleCheck
     Escape valve for the step-3b certificate-staleness check (issue #1292): merge even though 'main'
     has gained a commit since the run that certified this PR was created, OR that check could not be
@@ -399,6 +408,8 @@ param(
     [string]$BypassNote = '',
     [switch]$Force,
     [switch]$NoMerge,
+    # Exit at the clearance line, leaving merge and fold to merge-on-green. See .PARAMETER HandOff.
+    [switch]$HandOff,
     [switch]$SkipStaleCheck,
     [int]$PollSeconds = 15,
     [string]$Resolves = '',
@@ -2206,6 +2217,22 @@ $clearance = Get-ShipClearanceVerdict -Pr $pr -NoMerge ([bool]$NoMerge) -Armed $
     -SweepRefusal $script:SweepRefusal -TreeOnTrunk $treeOnTrunk
 Write-Host "ship-pr: waiting for the CI check(s) on PR #$pr..." -ForegroundColor Cyan
 Write-Host "ship-pr: $($clearance.Line)" -ForegroundColor $(if ($clearance.Clearable) { 'Green' } else { 'Yellow' })
+# -HandOff (issue #4355): a Clearable verdict means the rest of this run is somebody else's clock, so a
+# sweep leaves here rather than sitting through CI. Not Clearable, it says why and watches as usual: a
+# hand-off must never strand a PR. The CI bar is closed first, as the wait's own end closes it.
+if ($HandOff -and $clearance.Clearable) {
+    if (Test-FunctionDefined 'Complete-RunProgress') {
+        try { [void](Complete-RunProgress -Id (Get-RunProgressId -Name 'ship-pr-ci')) } catch { }
+    }
+    Write-Host "ship-pr: -HandOff -- PR #$pr is armed; merge-on-green merges it and fold-on-merge folds it once the required check is green. Not waiting here." -ForegroundColor Green
+    if (Test-FunctionDefined 'Write-CloseOutReceipt') {
+        Write-CloseOutReceipt -Cite "PR #$pr (armed, merges via merge-on-green)" -Bypass (Get-GateBypassNote -SkipLint:$SkipLint -SkipTests:$SkipTests)
+    }
+    exit 0
+}
+if ($HandOff) {
+    Write-Host "ship-pr: -HandOff given but NOT handing off -- the clearance is withheld (see above), so this run watches CI itself." -ForegroundColor Yellow
+}
 Write-Host "  Nothing here needs YOU -- background this run and the wait costs nothing." -ForegroundColor DarkGray
 if (-not $clearance.Clearable) {
     Write-Host "  So leave this one running and carry on in a SECOND terminal -- do not quit the harness." -ForegroundColor DarkGray
