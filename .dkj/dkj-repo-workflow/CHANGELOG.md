@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**10 / 10 minor entries** <!-- pending-tally -->
+**11 / 11 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4344-approved-takeover-unassigns · 20261120-101846Z
+
+`claim-issue <n> -ApprovedBy "<who, when>"` takes over an issue another account holds once a person
+has approved it. It adds you and removes the previous assignee in the same edit, then comments who
+approved it, so the issue never shows two assignees side by side. Without the flag, the refusal stands as before
+([#4344](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4344)).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Taking over a colleague's issue after they said "take it" is now one command that also unassigns them,
+instead of a refusal and two hand edits.
+
+**Score:** 3
+
+#### Pull Request
+
+claim-issue: an approved takeover removes the previous assignee in the same step
+
+Plugins: dkj-repo-workflow
+
+[PR #4360](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4360)
+
+---
 
 ### DEPLOY: docs/4343-drafted-message-not-posted · 20261120-100318Z
 
