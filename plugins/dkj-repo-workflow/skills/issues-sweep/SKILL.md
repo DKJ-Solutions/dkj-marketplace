@@ -156,8 +156,12 @@ ARGUE that it renders, which is itself the doubt -- then:
 intermediate question: open, merge, fold.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/release/ship-pr.ps1" -Resolves <n>
+powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scripts/release/ship-pr.ps1" -Resolves <n> -HandOff
 ```
+
+**`-HandOff` (#4355)** ends the run once the PR is armed and the checkout is on the trunk: merge-on-green merges
+and fold-on-merge folds it, so go straight to step 7 in the same turn. Where it cannot hand off it says why and
+watches CI as usual.
 
 **`-Resolves <n>` is not optional here** -- a bare `ship-pr` is refused on a sweep branch (#2376). Where
 the branch is only one step of a larger issue -- the issue stays open for the next step -- pass
@@ -206,7 +210,7 @@ for step 7, not as the end of the assignment.
 them in one pass; a decided issue comes back here as `free`. What it skipped as `awaiting-decision-client` is nobody's half here: it waits on the client or requester, and neither skill walks it. **Nor does either walk `awaiting-review-dev` or `awaiting-review-client`** (#2977): those wait on a look at a result, not on a choice, and the look is the owner's or the client's to give. Where the owner gives it for the whole pile at once, `issues-sweep-reviews` runs step 6 for every `awaiting-review-dev` issue in one pass; only the owner types it.
 
 **The sweep closes out once, after the loop**, in the ordinary receipt shape: the PR number of each issue
-it shipped, each branch it parked for the owner's eye with the `git checkout <branch>` line and, each on
+it shipped (each handed-off one as "armed, merges via merge-on-green"), each branch it parked for the owner's eye with the `git checkout <branch>` line and, each on
 a line of its own, the URL of every page it changed as a markdown link `[<label>](<url>)` (#3819, #3954), the number and label of each it parked as waiting, and the number of each it held out, with a clause
 for why.
 
