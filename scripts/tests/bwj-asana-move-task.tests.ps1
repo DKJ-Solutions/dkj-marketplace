@@ -7,10 +7,10 @@
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/bwj-asana-move-task.tests.ps1
 
     WHAT IT HOLDS:
-      1. ONE SECTION RULE. The CI scripts (scripts/ci/, run from a pinned checkout since #4351) stay
-         self-contained and do not dot-source the lib, so each carries a copy of Get-SectionCode. The copies' bodies are
-         run here beside the lib's over one table of section names, so a manual move and an automated
-         move cannot pick different sections. (dkj-repo-workflow-bwj.tests.ps1 holds the texts equal.)
+      1. ONE SECTION RULE. The CI scripts (scripts/ci/) dot-source this lib since #4366, so a manual
+         move and an automated move read a section's code through the same Get-SectionCode. Held here
+         by asserting no CI script defines a Get-SectionCode of its own, beside the lib's own answers
+         below.
       2. THE RESOLUTION: a code never hits a longer code ('2' is not '2B'), none or several throw.
       3. THE MOVE, driven with injected -Get and -Send: it writes only for a task on the repo's own
          board (#4282), never on a dry run, and reports a refused write.
@@ -52,23 +52,15 @@ Assert-True (Test-Path -LiteralPath $ScriptPath) 'and scripts/task/move-asana-ta
 Assert-True (Test-Path -LiteralPath (Join-Path $ExtRoot 'skills\move-asana-task\SKILL.md')) 'and the skill that carries the script'
 . $LibPath
 
-# --- 1. the templates' Get-SectionCode against the lib's, over one table --------------------------------
-function Get-TemplateSectionCode {
-    param([string]$TemplateFile, [string]$Name)
+# --- 1. one section rule: the CI scripts load it rather than carry a copy (#4366) -----------------------
+foreach ($ci in @('asana-closed-message.ps1', 'asana-open-section.ps1')) {
+    $file = Join-Path $ExtRoot "scripts\ci\$ci"
     $tokens = $null; $errs = $null
-    $ast = [System.Management.Automation.Language.Parser]::ParseFile($TemplateFile, [ref]$tokens, [ref]$errs)
-    $fn = $ast.Find({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Get-SectionCode' }, $true)
-    if (-not $fn) { throw "no Get-SectionCode in $TemplateFile" }
-    $inner = $fn.Body.Extent.Text.Trim()
-    $inner = $inner.Substring(1, $inner.Length - 2)
-    return (& ([scriptblock]::Create($inner)) -Name $Name)
-}
-$table = @('2. In Progress', '1C. Waiting', ' 3.x', 'No code', '10. Done', '1c. todo', '2B. Blocked', '2 In Progress', '', '.5. odd', 'A. letter first', '4.')
-foreach ($tpl in @('asana-closed-message.ps1', 'asana-open-section.ps1')) {
-    $file = Join-Path $ExtRoot "scripts\ci\$tpl"
-    foreach ($name in $table) {
-        Assert-Equal (Get-SectionCode -Name $name) (Get-TemplateSectionCode -TemplateFile $file -Name $name) "$tpl and the lib read '$name' alike"
-    }
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($file, [ref]$tokens, [ref]$errs)
+    $own = $ast.Find({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Get-SectionCode' }, $true)
+    Assert-True ($null -eq $own) "$ci defines no Get-SectionCode of its own"
+    $src = [System.IO.File]::ReadAllText($file)
+    Assert-True ($src.Contains("Join-Path `$PSScriptRoot '../lib/asana-section-lib.ps1'") -and $src -match '(?m)^\. \$asanaLibPath\s*$') "and dot-sources the lib's"
 }
 Assert-Equal '1C' (Get-SectionCode -Name '1C. Waiting') 'a digit plus a letter is one code'
 Assert-Equal '3' (Get-SectionCode -Name ' 3.x') 'leading space tolerated'

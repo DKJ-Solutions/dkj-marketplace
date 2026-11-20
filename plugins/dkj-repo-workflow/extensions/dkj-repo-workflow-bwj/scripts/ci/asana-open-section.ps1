@@ -60,12 +60,12 @@
     Filed code, are said and end the run without failing it: the session check reports a store with no
     secret.
 
-    SELF-CONTAINED, AND THAT IS WHY THE HELPERS ARE COPIES. This file shipped into a consumer's
-    .github/scripts/ until #4351, where no plugin lib exists, and it stays self-contained while a store
-    may still run an older copy. The matchers come from asana-task-lib.ps1, the listing
-    parse and Invoke-GhCapture from asana-prio-label.ps1, the stage-map reader, the board read, the move
-    and the write from asana-closed-message.ps1. scripts/tests/dkj-repo-workflow-bwj.tests.ps1 holds each copy
-    equal to its source.
+    THE SHARED HELPERS ARE LOADED (#4366). The matchers, the section rule and the move request come
+    from dkj-repo-workflow-bwj's scripts/lib/asana-section-lib.ps1 (which loads asana-task-lib.ps1), fetched
+    by the workflow's sparse-checkout beside scripts/ci. What no lib holds yet is still copied: the
+    listing parse and Invoke-GhCapture from asana-prio-label.ps1, the stage-map reader, the board read
+    and the write from asana-closed-message.ps1, and scripts/tests/dkj-repo-workflow-bwj.tests.ps1 holds
+    each of those copies equal to its source.
 
     The script runs its main flow only when invoked directly; dot-sourcing it loads the pure helpers and
     does nothing else, which is how the suite exercises them.
@@ -84,6 +84,15 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# The shared helpers load from this plugin's own libs (#4366): the workflow's pinned checkout fetches
+# scripts/lib beside scripts/ci. A workflow placed before #4366 fetches scripts/ci alone, so a missing
+# lib stops the run with a message that names the fix, rather than on the first missing command.
+$asanaLibPath = Join-Path $PSScriptRoot '../lib/asana-section-lib.ps1'
+if (-not (Test-Path -LiteralPath $asanaLibPath)) {
+    throw "The shared Asana lib '../lib/asana-section-lib.ps1' is missing beside this script. The workflow's sparse-checkout must fetch dkj-repo-workflow-bwj/scripts/lib as well as scripts/ci (#4366): copy the workflow from the plugin's templates/ again and keep its ref: line."
+}
+. $asanaLibPath
+
 $script:AsanaApiBase = 'https://app.asana.com/api/1.0'
 
 # The cycle, in order. A section code is EARLIER than Filed only when every stage the map gives it is
@@ -93,63 +102,6 @@ $script:StageOrder = @('Requests', 'NeedsInfo', 'Filed', 'InDevelopment', 'InRev
 # The family's current name for the needs-info label, honoured beside whatever the map names.
 $script:NeedsInfoLabelDefault = 'awaiting-info-client'
 
-
-function Get-AsanaGidsFromText {
-    <#
-        Pure: the distinct task GIDs of every Asana task URL in a piece of text, in first-seen order.
-        Both URL shapes Asana hands out are read; a URL that names no task contributes nothing.
-        A copy of asana-task-lib.ps1's function of this name.
-    #>
-    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text)
-
-    $gids = @()
-    foreach ($m in [regex]::Matches($Text, 'https://app\.asana\.com/[^\s)>\]]*')) {
-        $url = $m.Value
-        $t = [regex]::Match($url, '/task/([0-9]+)')
-        if (-not $t.Success) { $t = [regex]::Match($url, '^https://app\.asana\.com/0/[0-9]+/([0-9]+)') }
-        if ($t.Success) { $gids += $t.Groups[1].Value }
-    }
-    return @($gids | Select-Object -Unique)
-}
-
-function Get-AsanaHeaderRowText {
-    <#
-        Pure: the contents of an imported ticket's '| **Asana** | ... |' header row, or ''. A copy of
-        asana-task-lib.ps1's function of this name.
-    #>
-    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$IssueBody)
-
-    $m = [regex]::Match($IssueBody, '(?m)^\|\s*\*{0,2}Asana\*{0,2}\s*\|(.*)$')
-    if (-not $m.Success) { return '' }
-    return $m.Groups[1].Value
-}
-
-function Resolve-AsanaTaskRef {
-    <#
-        Pure: which Asana task an issue body belongs to -- Gid (or $null), Source ('marker' |
-        'header-row' | 'sole-url' | 'ambiguous' | 'none') and Candidates. Non-numeric content never
-        matches, so it can never reach a request URL. A copy of asana-task-lib.ps1's function of this name.
-    #>
-    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$IssueBody)
-
-    $marker = [regex]::Match($IssueBody, '<!--\s*asana-task:\s*([0-9]+)\s*-->')
-    if ($marker.Success) {
-        return [pscustomobject]@{ Gid = $marker.Groups[1].Value; Source = 'marker'; Candidates = @($marker.Groups[1].Value) }
-    }
-
-    $row = Get-AsanaHeaderRowText -IssueBody $IssueBody
-    if ($row) {
-        $rowGids = @(Get-AsanaGidsFromText -Text $row)
-        if ($rowGids.Count -ge 1) {
-            return [pscustomobject]@{ Gid = $rowGids[0]; Source = 'header-row'; Candidates = $rowGids }
-        }
-    }
-
-    $all = @(Get-AsanaGidsFromText -Text $IssueBody)
-    if ($all.Count -eq 1) { return [pscustomobject]@{ Gid = $all[0]; Source = 'sole-url'; Candidates = $all } }
-    if ($all.Count -gt 1) { return [pscustomobject]@{ Gid = $null; Source = 'ambiguous'; Candidates = $all } }
-    return [pscustomobject]@{ Gid = $null; Source = 'none'; Candidates = @() }
-}
 
 function Invoke-GhCapture {
     <#
@@ -214,17 +166,6 @@ function Get-RepoStageCode {
     return ''
 }
 
-function Get-SectionCode {
-    <#
-        Pure: a section name's code -- the text before its first '.', as Get-AsanaStageMap reads a board
-        ('3. Waiting for review' is '3') -- or '' for a section without one.
-    #>
-    param([AllowEmptyString()][string]$Name = '')
-    $m = [regex]::Match([string]$Name, '^\s*([0-9]+[A-Za-z]?)\.')
-    if ($m.Success) { return $m.Groups[1].Value }
-    return ''
-}
-
 function Get-RepoProjectGid {
     <#
         Pure: the Asana project the repo's Get-AsanaProjectGid names -- its own board -- read from the TEXT
@@ -283,25 +224,6 @@ function Read-AsanaTaskBoard {
         $sections = @(@($read.data) | ForEach-Object { [pscustomobject]@{ Gid = [string]$_.gid; Name = [string]$_.name } })
     }
     return [pscustomobject]@{ Ok = $true; Why = ''; Memberships = $memberships; Sections = $sections; Completed = ($task.data.completed -eq $true) }
-}
-
-function New-AsanaMoveRequest {
-    <#
-        Pure: the POST that moves a task into a section of its board (#3248) -- the second write this
-        script can build, beside the comment. A non-numeric task or section GID is refused before it can
-        reach a URL.
-    #>
-    param(
-        [Parameter(Mandatory = $true)][string]$Gid,
-        [Parameter(Mandatory = $true)][string]$SectionGid
-    )
-    if ($Gid -notmatch '\A[0-9]+\z') { throw "Refusing to build a request for a non-numeric task GID: '$Gid'." }
-    if ($SectionGid -notmatch '\A[0-9]+\z') { throw "Refusing to build a request for a non-numeric section GID: '$SectionGid'." }
-    [pscustomobject]@{
-        Method = 'POST'
-        Uri    = "$script:AsanaApiBase/sections/$SectionGid/addTask"
-        Body   = (ConvertTo-Json @{ data = @{ task = $Gid } } -Compress -Depth 5)
-    }
 }
 
 function Invoke-AsanaWrite {

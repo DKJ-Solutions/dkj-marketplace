@@ -7,12 +7,10 @@
     ONE PLACE FOR "A SECTION'S CODE". A section is named by its CODE, the text before its leading '.'
     ('2' for '2. In Progress', '1C' for '1C. Waiting'). The CI runner templates (asana-closed-message,
     asana-open-section) resolve sections the same way, and a manual move and an automated move must
-    never pick different sections. The CI scripts (scripts/ci/) do not dot-source this file: they were
-    copied into a consumer's .github/scripts/ until #4351, and stay self-contained while a store may still
-    run an older copy, so each carries its own copy of
-    Get-SectionCode and New-AsanaMoveRequest. scripts/tests/dkj-repo-workflow-bwj.tests.ps1 holds those
-    copies equal to this file's, and scripts/tests/bwj-asana-move-task.tests.ps1 runs both Get-SectionCode
-    over one table of section names, so they cannot drift.
+    never pick different sections. Both CI scripts (scripts/ci/) dot-source this file since #4366, from
+    the pinned checkout whose sparse-checkout fetches scripts/lib beside them, so there is one
+    Get-SectionCode and one New-AsanaMoveRequest. scripts/tests/dkj-repo-workflow-bwj.tests.ps1 and
+    scripts/tests/bwj-asana-move-task.tests.ps1 hold them to defining no copy of their own.
 
     ONE BOARD ONLY (#4282). A task can sit on several boards, and adding it to a section of a board it
     is not on would put it there. Invoke-AsanaTaskMove therefore moves a task only when it is a member

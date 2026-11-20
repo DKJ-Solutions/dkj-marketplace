@@ -271,7 +271,7 @@ function ConvertTo-AsanaXmlText {
     <#
         Pure: text made safe for Asana html_text -- the C0 controls XML forbids dropped, then &, <, > and
         " escaped. The same rule as scripts/ci/asana-closed-message.ps1's function of this name, which
-        ships standalone and so cannot be loaded from here.
+        that script defines itself because it does not load this lib.
     #>
     param([AllowEmptyString()][string]$Text)
     $clean = [regex]::Replace([string]$Text, '[\x00-\x08\x0B\x0C\x0E-\x1F]', '')

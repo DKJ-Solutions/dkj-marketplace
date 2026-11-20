@@ -9,10 +9,16 @@
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/template-selfcontained.tests.ps1
 
     WHY A TEMPLATE AND NOT EVERY SCRIPT. A template is copied wholesale into a consumer's .github/
-    and run there by CI -- and dkj-repo-workflow-bwj's scripts/ci/asana-*.ps1, which a store's CI runs
-    as one file from a pinned checkout (#4351), are held to the same rule. It dot-sources none of this repo's libraries -- it cannot, because none of
+    and run there by CI. It dot-sources none of this repo's libraries -- it cannot, because none of
     them travel with it -- so a call to a helper it does not define is unresolvable by construction.
     Every other .ps1 here loads scripts/lib/*, and flagging their imported functions would be noise.
+
+    AND THE BWJ CI SCRIPTS, WITH THE LIBS THEY LOAD. dkj-repo-workflow-bwj's scripts/ci/asana-*.ps1 run
+    from a pinned checkout (#4351) whose sparse-checkout fetches scripts/lib beside them, and since
+    #4366 each dot-sources its lib from there. They stay in this suite, because the sweep half of a
+    script is still the half no event run reaches: what the libs they load define is counted as
+    defined (-AlsoDefinedIn, resolved by following each Join-Path $PSScriptRoot '<file>.ps1' they
+    name), and nothing else is.
 
     WHAT IT COST TO NOT HAVE THIS, inbound #1556. A rename in fa3a4e55 turned Get-IssueClosure into
     Get-IssueLinkState and updated the event call site but not the sweep's, and the sweep is the half
@@ -71,7 +77,11 @@ function Get-UnresolvedTemplateCall {
         not parse returns $null, which the caller reports as its own failure rather than as zero
         findings.
     #>
-    param([Parameter(Mandatory = $true)][string]$Path)
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        # Files the script loads at run time; what they define counts as defined (#4366).
+        [string[]]$AlsoDefinedIn = @()
+    )
 
     $errors = $null
     $ast = [System.Management.Automation.Language.Parser]::ParseFile(
@@ -81,6 +91,12 @@ function Get-UnresolvedTemplateCall {
     $defined = @($ast.FindAll({
         param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true) |
         ForEach-Object { $_.Name })
+    foreach ($lib in $AlsoDefinedIn) {
+        $libAst = [System.Management.Automation.Language.Parser]::ParseFile($lib, [ref]$null, [ref]$null)
+        $defined += @($libAst.FindAll({
+            param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true) |
+            ForEach-Object { $_.Name })
+    }
 
     $commands = @($ast.FindAll({
         param($n) $n -is [System.Management.Automation.Language.CommandAst] }, $true))
@@ -105,6 +121,29 @@ function Get-UnresolvedTemplateCall {
         $guarded -notcontains $_ -and
         -not (Get-Command -Name $_ -ErrorAction SilentlyContinue)
     })
+}
+
+function Get-LoadedLibClosure {
+    <#
+        Every file a script names as Join-Path $PSScriptRoot '<relative>.ps1' -- the shape both a direct
+        '. (Join-Path ...)' and a path held in a variable and then dot-sourced take -- followed into each
+        named file in turn. Returns full paths; a named file that does not exist is returned too, so the
+        caller can report it rather than count it as nothing to load.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Path)
+    $seen = New-Object System.Collections.Generic.List[string]
+    $queue = New-Object System.Collections.Generic.Queue[string]
+    $queue.Enqueue((Resolve-Path -LiteralPath $Path).Path)
+    while ($queue.Count -gt 0) {
+        $file = $queue.Dequeue()
+        if (-not (Test-Path -LiteralPath $file)) { continue }
+        $dir = Split-Path -Parent $file
+        foreach ($m in [regex]::Matches([System.IO.File]::ReadAllText($file), "Join-Path \`$PSScriptRoot '([^']+\.ps1)'")) {
+            $full = [System.IO.Path]::GetFullPath((Join-Path $dir ($m.Groups[1].Value -replace '/', '\')))
+            if (-not $seen.Contains($full)) { $seen.Add($full); $queue.Enqueue($full) }
+        }
+    }
+    return ,@($seen)
 }
 
 Write-Host "== template-selfcontained ==" -ForegroundColor Cyan
@@ -149,6 +188,25 @@ try {
     Set-Content -LiteralPath $broken -Encoding ASCII -Value 'function Oops { '
     Assert-True ($null -eq (Get-UnresolvedTemplateCall -Path $broken)) `
         'a file that does not parse returns $null, so it can never read as zero findings'
+
+    $libDir = Join-Path $tmp 'lib'
+    New-Item -ItemType Directory -Path $libDir -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $libDir 'inner.ps1') -Encoding ASCII -Value 'function Get-InnerHelper { }'
+    Set-Content -LiteralPath (Join-Path $libDir 'outer.ps1') -Encoding ASCII -Value @(
+        ". (Join-Path `$PSScriptRoot 'inner.ps1')"
+        'function Get-OuterHelper { }')
+    $loads = Join-Path $tmp 'loads.ps1'
+    Set-Content -LiteralPath $loads -Encoding ASCII -Value @(
+        "`$lib = Join-Path `$PSScriptRoot 'lib/outer.ps1'"
+        '. $lib'
+        'Get-OuterHelper; Get-InnerHelper; Get-VanishedHelper')
+    $closure = Get-LoadedLibClosure -Path $loads
+    Assert-Equal 'inner.ps1,outer.ps1' (@($closure | ForEach-Object { Split-Path -Leaf $_ } | Sort-Object) -join ',') `
+        'the loaded-lib closure follows a lib into the lib it loads (#4366)'
+    Assert-Equal 'Get-VanishedHelper' ((Get-UnresolvedTemplateCall -Path $loads -AlsoDefinedIn $closure) -join ',') `
+        'what the loaded libs define is resolved, and a call nothing defines is still reported'
+    Assert-Equal 'Get-InnerHelper,Get-OuterHelper,Get-VanishedHelper' ((Get-UnresolvedTemplateCall -Path $loads) -join ',') `
+        'and without -AlsoDefinedIn the same calls are unresolved, so the closure is what resolves them'
 } finally {
     Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue
 }
@@ -157,10 +215,10 @@ try {
 $templates = @(Get-ChildItem -Path (Join-Path $RepoRoot 'plugins') -Recurse -Filter '*.ps1' -File |
     Where-Object { $_.DirectoryName -like '*\templates' } | Sort-Object FullName)
 
-# AND THE BWJ CI SCRIPTS (#4351). The three Asana scripts left templates/ for scripts/ci/ when a store
-# stopped copying them and started fetching them from a pinned checkout. They are still run as one file
-# by a runner with no plugin lib loaded, so the defect class this suite exists for still applies, and
-# leaving them out would have dropped the very files #1556 was measured on.
+# AND THE BWJ CI SCRIPTS (#4351, #4366). The three Asana scripts left templates/ for scripts/ci/ when a
+# store stopped copying them and started fetching them from a pinned checkout, and since #4366 they load
+# the bwj libs fetched beside them. The defect class this suite exists for still applies -- a renamed
+# helper the sweep alone calls -- so they stay, held against their own definitions plus their libs'.
 $bwjCi = Join-Path $RepoRoot 'plugins\dkj-repo-workflow\extensions\dkj-repo-workflow-bwj\scripts\ci'
 $ciScripts = @(Get-ChildItem -Path $bwjCi -Filter 'asana-*.ps1' -File -ErrorAction SilentlyContinue | Sort-Object FullName)
 Assert-True ($ciScripts.Count -ge 3) "the BWJ CI scripts are found ($($ciScripts.Count))"
@@ -172,7 +230,14 @@ Assert-True ($templates.Count -ge 1) "at least one shipped template is found ($(
 
 foreach ($t in $templates) {
     $rel = $t.FullName.Substring($RepoRoot.Length + 1).Replace('\', '/')
-    $unresolved = Get-UnresolvedTemplateCall -Path $t.FullName
+    $alsoDefined = @()
+    if ($t.DirectoryName -eq $bwjCi) {
+        $alsoDefined = Get-LoadedLibClosure -Path $t.FullName
+        $missing = @($alsoDefined | Where-Object { -not (Test-Path -LiteralPath $_) })
+        Assert-Equal '' ($missing -join ', ') "$($t.Name) loads only libs that exist"
+        $alsoDefined = @($alsoDefined | Where-Object { Test-Path -LiteralPath $_ })
+    }
+    $unresolved = Get-UnresolvedTemplateCall -Path $t.FullName -AlsoDefinedIn $alsoDefined
     # `$null -eq`, never `$null -ne`: with a COLLECTION on the left, PowerShell's comparison operators
     # filter instead of comparing, so `$null -ne @()` yields an empty array -- which is $false, and a
     # clean template would report itself as unparseable.

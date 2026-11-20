@@ -32,5 +32,5 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/scrip
 - **A code that matches no section, or several, stops the run** before anything moves.
 - An issue with no single Asana link is skipped and said so.
 
-The section rule lives in `scripts/lib/asana-section-lib.ps1`; the CI templates carry copies that the
-suites hold equal to it. This script is maintained in the source repo; do not modify it locally.
+The section rule lives in `scripts/lib/asana-section-lib.ps1`, and the CI scripts load that same file
+(#4366), so a manual move and an automated move pick the same section. This script is maintained in the source repo; do not modify it locally.

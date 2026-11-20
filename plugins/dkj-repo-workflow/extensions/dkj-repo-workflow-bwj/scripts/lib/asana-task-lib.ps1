@@ -13,8 +13,9 @@
     build-backlog-page.ps1 and build-golive-block.ps1 used to dot-source the whole CI template for these
     few pure helpers; with the template gone they live here, beside the other libs those two scripts
     already load. Nothing in this file writes to Asana: Get-AsanaTaskState only reads. The go-live block
-    reaches the Asana task through the asana-closed-message CI workflow (#2818), whose template carries
-    its own copies of the matchers and the marker below, because it ships standalone.
+    reaches the Asana task through the asana-closed-message CI workflow (#2818), whose script loads the
+    matchers and the marker below from this file (through asana-section-lib.ps1, #4366), as
+    asana-open-section and asana-prio-label do.
 
     Console text goes through ConvertTo-ConsoleStrippedText from ref-print-lib.ps1, dot-sourced below,
     rather than a private copy: the template carried its own copy only because it shipped standalone
