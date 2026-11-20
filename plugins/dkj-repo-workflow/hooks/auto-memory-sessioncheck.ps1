@@ -22,12 +22,15 @@
          rule (this repo alone), then delete the note. The list repeats at every session start until the
          directory is empty, which is the point -- a migration nobody is reminded of does not happen.
 
-    WHAT IT CANNOT SEE: an autoMemoryDirectory setting that moves the notes elsewhere, and other
-    checkouts of the same repo (each has its own project directory and reports in its own sessions).
+    WHAT IT CANNOT SEE -- the folder is found on a best-effort reading of Claude Code's layout: an
+    autoMemoryDirectory setting or a CLAUDE_CONFIG_DIR that moves the notes elsewhere, the shortened and
+    hashed name Claude Code gives a very long checkout path, and other checkouts of the same repo (each
+    has its own project directory and reports in its own sessions). Any of those reads as "no notes".
 
     A note's NAME is foreign text forwarded into session context, so it is stripped of whitespace runs,
     control characters and brackets before it is printed, as every sibling check strips (#2271). A note's
-    CONTENT is never printed: it is somebody's own text, and the person reads the file.
+    CONTENT is never read, let alone printed: any non-empty file counts, and the person reads the file.
+    Names are capped at 80 characters and the list at 20, so a planted folder cannot flood the context.
 
     The script ALWAYS ends with exit 0 -- a session start must never strand here.
 
@@ -45,15 +48,27 @@ param(
 
 Set-StrictMode -Version Latest
 
-function Format-NoteName([string]$Text) {
-    return ((((($Text) -replace '\s+', ' ') -replace '\p{C}', '') -replace '\[', '(') -replace '\]', ')').Trim()
+function Format-NoteName([string]$Text, [int]$Max = 80) {
+    $s = ((((($Text) -replace '\s+', ' ') -replace '\p{C}', '') -replace '\[', '(') -replace '\]', ')').Trim()
+    if ($s.Length -gt $Max) { $s = $s.Substring(0, $Max) + '...' }
+    return $s
+}
+
+function Get-NoteFiles([string]$Dir) {
+    # Recursion by hand, so a junction or symlink inside memory/ is never entered.
+    foreach ($item in @(Get-ChildItem -LiteralPath $Dir -Force -ErrorAction SilentlyContinue)) {
+        if ($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) { continue }
+        if ($item.PSIsContainer) { Get-NoteFiles -Dir $item.FullName }
+        elseif ($item.Length -gt 0) { $item }
+    }
 }
 
 try {
     $root = if ($RepoRootOverride) { $RepoRootOverride }
             elseif ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR }
             else { (Get-Location).Path }
-    $root = $root.TrimEnd('\', '/')
+    # A drive root keeps its separator ('C:\' encodes as 'C--'); anything else loses a trailing one.
+    if ($root -notmatch '^[A-Za-z]:[\\/]$') { $root = $root.TrimEnd('\', '/') }
 
     $userHome = if ($UserHomeOverride) { $UserHomeOverride }
                 elseif ($env:USERPROFILE) { $env:USERPROFILE }
@@ -78,9 +93,9 @@ try {
         $project   = $root -replace '[^A-Za-z0-9]', '-'
         $memoryDir = Join-Path $userHome (Join-Path '.claude\projects' (Join-Path $project 'memory'))
         if (Test-Path -LiteralPath $memoryDir -PathType Container) {
-            $notes = @(Get-ChildItem -LiteralPath $memoryDir -File -Recurse -Force -ErrorAction SilentlyContinue |
-                Where-Object { $_.Length -gt 0 -and ([System.IO.File]::ReadAllText($_.FullName)).Trim() } |
-                Sort-Object FullName)
+            # NO CONTENT READ AND NO REPARSE POINT FOLLOWED (security review): a non-empty file counts, so a
+            # huge or locked note cannot stall or sink the check, and the walk stays inside memory/.
+            $notes = @(Get-NoteFiles -Dir $memoryDir | Sort-Object FullName)
         }
     }
 
@@ -99,11 +114,13 @@ try {
         Write-Host '         Fix: Part 6 of the adopt-dkj-repo-workflow skill (adopt-auto-memory.ps1 -Apply), then commit the file.'
     }
     if ($notes.Count -gt 0) {
-        Write-Host "  [WARN] this checkout holds $($notes.Count) memory note(s) only this machine can see, in $memoryDir :"
-        foreach ($n in $notes) {
+        Write-Host "  [WARN] this checkout holds $($notes.Count) memory note(s) only this machine can see, in $(Format-NoteName $memoryDir 400) :"
+        $shown = 20
+        foreach ($n in @($notes | Select-Object -First $shown)) {
             $rel = $n.FullName.Substring($memoryDir.Length).TrimStart('\', '/')
             Write-Host ('           - ' + (Format-NoteName $rel))
         }
+        if ($notes.Count -gt $shown) { Write-Host "           ... and $($notes.Count - $shown) more." }
         Write-Host '         Move each one: a lesson about shared behaviour is filed inbound on the plugin source repo,'
         Write-Host '         a fact about this repo alone goes in its own lens or facts rule. Then delete the note;'
         Write-Host '         MEMORY.md is only the index and goes last. This line repeats until the folder is empty.'

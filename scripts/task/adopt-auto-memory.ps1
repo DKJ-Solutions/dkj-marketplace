@@ -102,7 +102,7 @@ if ($names -contains $key) {
 }
 
 if ($settingsReparse) {
-    Write-Host "  [refused] $settingsRel -- reached through a symlink or junction ($settingsReparse), so it was NOT changed:" -ForegroundColor Yellow
+    Write-Host "  [refused] $settingsRel -- reached through a symlink or junction ($(Format-SafePathToken -Value "$settingsReparse")), so it was NOT changed:" -ForegroundColor Yellow
     Write-Host '            writing it would land outside the repo. The member to add by hand:'
     Write-Host ''
     Write-Host $block
@@ -119,6 +119,7 @@ if (-not $Apply) {
 }
 
 # A missing or blank file is an empty object, so a new file comes out of the same insert as an existing one.
+# This literal is the one place that knows what an empty root looks like; the insert reads its LF off it.
 $baseText = $(if ($null -ne $settings.Parsed) { $settings.Text } else { "{`n}`n" })
 $newText  = Add-SettingsMember -Text $baseText -MemberLines @("`"$key`": false")
 

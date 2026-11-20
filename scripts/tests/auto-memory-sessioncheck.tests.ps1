@@ -59,11 +59,11 @@ try {
     $r = Invoke-Hook $c
     Assert-True ($r.Code -eq 0 -and $r.Out -match 'auto memory is off' -and $r.Out -notmatch '\[WARN\]') 'off and no notes -- one quiet line, exit 0'
 
-    # off, empty memory dir -> still quiet (an empty folder is not a note)
+    # off, memory dir with only an empty file -> still quiet (content is never read; a 0-byte file is not a note)
     $d = Get-MemoryDir $c
-    [System.IO.File]::WriteAllText((Join-Path $d 'MEMORY.md'), "  `n")
+    [System.IO.File]::WriteAllText((Join-Path $d 'MEMORY.md'), '')
     $r = Invoke-Hook $c
-    Assert-True ($r.Out -notmatch '\[WARN\]') 'a blank MEMORY.md is not a note'
+    Assert-True ($r.Out -notmatch '\[WARN\]') 'an empty MEMORY.md is not a note'
 
     # key missing -> [WARN] naming Part 6
     $c = New-Case
@@ -101,6 +101,17 @@ try {
     Assert-True ($r.Out -match 'odd \(x\)\.md' -and $r.Out -notmatch 'odd \[x\]') 'notes -- brackets in a name are stripped, so no marker can form'
     Assert-True ($r.Out -match 'filed inbound' -and $r.Out -match 'lens') 'notes -- the migration is named'
     Assert-True ($r.Out -notmatch 'does not set') 'notes with the key off -- no switch warning'
+
+    # a planted folder cannot flood the context: 20 names listed, the rest counted, long names capped
+    $c = New-Case
+    Set-Settings $c "{ `"autoMemoryEnabled`": false }"
+    $d = Get-MemoryDir $c
+    1..25 | ForEach-Object { [System.IO.File]::WriteAllText((Join-Path $d ('n{0:D2}.md' -f $_)), 'x') }
+    [System.IO.File]::WriteAllText((Join-Path $d ('a' + ('y' * 90) + '.md')), 'x')
+    $r = Invoke-Hook $c
+    $listed = @($r.Out -split "`n" | Where-Object { $_ -match '^\s+- ' }).Count
+    Assert-True ($r.Out -match 'holds 26 memory note' -and $listed -eq 20 -and $r.Out -match 'and 6 more') 'many notes -- 20 listed, the rest counted'
+    Assert-True ($r.Out -match ('a' + ('y' * 79) + '\.\.\.') -and $r.Out -notmatch ('y' * 85)) 'a long name is capped at 80 characters'
 
     # nonexistent root -> exit 0
     $c = New-Case

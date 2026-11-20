@@ -52,7 +52,8 @@ function Get-SettingsMemberNames {
        '.PSObject.Properties.Name': under StrictMode that member enumeration THROWS on an object with
        no properties, which crashed -Apply on an empty settings file (#2505). #>
     param($Object)
-    if ($null -eq $Object) { return @() }
+    # A non-object root (an array, a scalar) has no members: its PSObject properties are Count, Length...
+    if ($null -eq $Object -or $Object -is [array] -or $Object -is [ValueType] -or $Object -is [string]) { return @() }
     return @($Object.PSObject.Properties | ForEach-Object { $_.Name })
 }
 

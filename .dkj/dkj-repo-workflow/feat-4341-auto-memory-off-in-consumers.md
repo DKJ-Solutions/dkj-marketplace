@@ -58,7 +58,7 @@ two parts share one copy of the byte-preserving insert rather than two.
 
 ### TEST
 
-- [x] `adopt-auto-memory.tests.ps1` (new, 10 asserts) and `auto-memory-sessioncheck.tests.ps1` (new, 12 asserts) pass
+- [x] `adopt-auto-memory.tests.ps1` (new, 10 asserts) and `auto-memory-sessioncheck.tests.ps1` (new, 14 asserts) pass
 - [x] `adopt-statusline.tests.ps1` passes after the extraction (90 asserts)
 - [x] `reach-label.tests.ps1` pins the frontmatter count at six parts and passes
 - [x] Run against a real consumer checkout: the check listed its 3 notes and the missing key
