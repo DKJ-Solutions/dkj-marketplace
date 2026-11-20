@@ -305,7 +305,7 @@ Assert-True ($measureText -notmatch "ChainEndingScripts = '") '...and no longer 
 # closes out with its own receipt -- exactly as real an ending as the other two, and just as silent
 # without one.
 $endingCounts = @{
-    'scripts\release\ship-pr.ps1'              = 2
+    'scripts\release\ship-pr.ps1'              = 3   # the -HandOff exit at the clearance line is the third ending (#4355)
     'scripts\release\open-pr.ps1'              = 3
     'scripts\release\fold-changelog-entry.ps1' = 2
 }

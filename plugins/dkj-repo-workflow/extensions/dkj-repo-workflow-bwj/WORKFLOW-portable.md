@@ -556,6 +556,15 @@ same day brought back **the closed message** (#2818), and the next day **the reo
   parked and treated alike, and #945 was closed by mistake and reopened. #946 shows the line is not always
   obvious, because its runbook is mostly store acts but one step swaps the live theme id in
   `scripts/repo-config.ps1` and its tests.
+- **A fix that lives in code the team does not own closes as not planned** (smartwatchbanden#994,
+  October 20, 2026: *"Er is maar 1 bron van waarheid en dat is deze repo. Alle andere code is niet
+  relevant."*; split by owner in [#4348](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4348),
+  November 20, 2026). Where the repair belongs in a colleague's project, the issue is neither fixed nor
+  tracked here. It closes as not planned, with a note on where the fix lives and whose it is, and the
+  session does not chase the colleague. **A blocker in a repo the team does run** (a `dkj-marketplace`
+  release or pull request, another store the same owners cut) **still parks** as `awaiting-pull-external`
+  or `awaiting-release-external`, as the core's `CONTRIBUTING-portable.md` prescribes, because that wait
+  ends in work this repo picks up. The test is whose code it is, not which repo it is in.
 - **A close by hand is guarded too** (#3004). The `guard-stale-paste-block` PreToolUse hook also reads
   `gh issue close`. It refuses a completed close of an issue whose body links one Asana task while that
   issue carries no block posted since its last reopen, and the refusal names both blocks' commands and

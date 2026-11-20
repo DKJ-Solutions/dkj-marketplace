@@ -2,7 +2,83 @@
 
 ## [Unreleased]
 
-**11 / 11 minor entries** <!-- pending-tally -->
+**14 / 14 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4355-ship-pr-handoff · 20261120-105817Z
+
+`ship-pr.ps1` gains `-HandOff`; `issues-sweep` step 5 uses it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+An `issues-sweep` no longer waits out CI after each shipped issue: `ship-pr -HandOff` leaves an armed PR
+to merge-on-green and the sweep goes on to the next issue in the same turn. Where the PR cannot be handed
+off safely, ship-pr says why and waits as before.
+
+**Score:** 4
+
+#### Pull Request
+
+ship-pr -HandOff: a sweep hands an armed PR to merge-on-green and goes on
+
+Plugins: dkj-repo-workflow
+
+[PR #4358](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4358)
+
+---
+
+### DEPLOY: docs/4348-bwj-out-of-repo-fix-closes · 20261120-104622Z
+
+In a BWJ store repo, an issue whose fix lives in a colleague's project now closes as not planned, with a
+note on where the fix lives and whose it is, instead of being parked `awaiting-pull-external`. A blocker in a repo the team
+runs, such as a `dkj-marketplace` release, still parks as before. The core's label section points to the
+exception ([#4348](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4348)).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store's open issues no longer collect waits on code the team cannot change.
+
+**Score:** 2
+
+#### Pull Request
+
+bwj: a fix in code the team does not own closes as not planned; a blocker in a repo the team runs still parks
+
+Plugins: dkj-repo-workflow, dkj-repo-workflow-bwj
+
+[PR #4362](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4362)
+
+---
+
+### DEPLOY: docs/4345-release-blockers-filed-inbound · 20261120-103209Z
+
+The release skills now say that every blocker or surprise during a release is filed the moment it
+happens, with its measured cost (round trips, manual steps, minutes). It is not saved for the end of the
+cut. A cause in the shared scripts goes inbound to the plugin's source, even when it surfaced in a
+consumer. The rule sits in `cut-release`, and `prepare-release`, `live-preflight` and `ship-pr` point to
+it. It was moved out of a per-machine memory note under #4341.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A consumer running a release is told to file a shared-script blocker inbound right away. Before this,
+such a blocker reached the source days later, as #4143 and #4144 did after a v3.1.0 cut.
+
+**Score:** 2
+
+#### Pull Request
+
+Release skills: file each release blocker the moment it happens, with its measured cost
+
+Plugins: dkj-repo-workflow, dkj-repo-workflow-bwj, dkj-subagents-shopify
+
+[PR #4359](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4359)
+
+---
 
 ### DEPLOY: feat/4344-approved-takeover-unassigns · 20261120-101846Z
 
