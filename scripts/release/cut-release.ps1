@@ -1821,6 +1821,7 @@ $cutNote = ($consumerBumps -contains $bumpType)
 # and it is live (none of those paths is held). The last two are only testable with a record; without one
 # (a repo with no live stage, or -NoLivePushRecord) the marker is the whole test.
 $taskItems = $null
+$taskRecordItems = @()
 if ($cutNote -and $taskLink) {
     $items = @()
     $seenTask = @{}
@@ -1858,6 +1859,9 @@ if ($cutNote -and $taskLink) {
         }
     }
     $taskItems = Format-ReleaseTaskItems -Items $items -Label $taskLink.Label -EntryLevel (Get-EntryHeadingLevel)
+    # THE SAME ITEMS, KEPT AS A LIST (#4346): written beside the note as its task record, which the form gate
+    # holds the finished note to -- the draft may be rewritten, the count of links may not shrink.
+    $taskRecordItems = @($items)
 } elseif ($unknownEntries.Count -gt 0) {
     foreach ($e in @($audienceEntries | Where-Object { $unknownEntries -contains $_ })) {
         $leftOut += "$(Get-EntryNoteName -EntryText $e) -- KEPT, but its merge commit was not found, so check by hand that it is live"
@@ -1923,6 +1927,8 @@ $bodyContent = Build-GitHubReleaseBody -Entries $entries -Version $new -Title $T
 
 $plannedFiles = @($notesRelPath, $bodyRelPath)
 if ($cutNote) { $plannedFiles += @($noteRelPath) }
+$taskRecordRelPath = Get-ReleaseTaskRecordPath -NotePath $noteRelPath
+if ($cutNote -and $taskRecordItems.Count -gt 0) { $plannedFiles += @($taskRecordRelPath) }
 foreach ($rel in $plannedFiles) {
     if (Test-Path -LiteralPath (Join-Path $repoRoot ($rel -replace '/', '\'))) {
         Write-Error "$rel already exists. Nothing was written."
@@ -2061,6 +2067,12 @@ if ($cutNote) {
     Write-Utf8NoBom -Path $noteAbs -Content $noteContent
     $sectionCount = if ($audienceEntries.Count -gt 0) { 'audience section' } else { "header only -- no entry reached tier $audienceTier" }
     Write-Host "  created: $noteRelPath (draft -- $sectionCount)" -ForegroundColor DarkGray
+    # THE TASK RECORD (#4346), only where the section was drafted as solved tasks and found any: the list the
+    # release-notes gate counts the finished note's links against.
+    if ($taskRecordItems.Count -gt 0) {
+        Write-Utf8NoBom -Path (Join-Path $repoRoot ($taskRecordRelPath -replace '/', '\')) -Content (ConvertTo-ReleaseTaskRecord -Version $new -Items $taskRecordItems)
+        Write-Host "  created: $taskRecordRelPath (the $($taskRecordItems.Count) solved task(s) the note must link)" -ForegroundColor DarkGray
+    }
 }
 
 # --- Bump plugin versions (regex on the version line -- preserves the JSON formatting) -----------
@@ -2185,6 +2197,11 @@ function Write-FollowUpSteps {
     if ($null -ne $taskItems) {
         Write-Host "      the audience section is a DRAFT of solved tasks (titled from their issues -- rewrite each in plain words);"
         Write-Host "      what it left out, and why, is in the comment beneath its heading."
+        if ($taskRecordItems.Count -gt 0) {
+            # #4346: the rewrite keeps every link. A writer subagent is handed this file, not told "links from the entries".
+            Write-Host "      KEEP EVERY TASK LINK: $taskRecordRelPath lists the $($taskRecordItems.Count) task(s) this release solved, and"
+            Write-Host "      open-pr -GatesOnly -NoteTreeOnly refuses the note until it links every one. Brief a writer with that file."
+        }
     } elseif ($audienceEntries.Count -gt 0) {
         Write-Host "      the audience section is a DRAFT (the tier-$audienceTier entries, in the words their authors wrote for a reviewer)."
     } else {
