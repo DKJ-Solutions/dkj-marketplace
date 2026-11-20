@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**4 / 4 minor entries** <!-- pending-tally -->
+**5 / 5 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4375-branch-doc-sibling-folder · 20261120-174529Z
+
+The branch-entry gate, in `open-pr` and in CI, refuses a branch that adds files under a folder named after
+its own branch document, which the fold would leave on the trunk (#4375).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A branch that commits review screenshots or other files beside its branch document is now stopped at
+`open-pr` and by the Branch entry check, with the files named and where they belong instead (the PR or the
+issue). Before, the folder slipped past every gate and stayed on the trunk after the merge until somebody
+noticed it.
+
+**Score:** 2
+
+#### Pull Request
+
+Branch-entry gate refuses files in a folder beside the branch document
+
+Plugins: dkj-repo-workflow
+
+[PR #4377](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4377)
+
+---
 
 ### DEPLOY: fix/4374-branch-entry-live-lane · 20261120-172256Z
 
