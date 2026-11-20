@@ -41,19 +41,45 @@
 
 Steps 2-4 of #4341: adopt places autoMemoryEnabled false; a session check reports a missing key or a non-empty memory dir and lists the notes.
 
+#### Design
+
+Step 1 (the constitution rule, this repo's own key) landed in #4349. This branch is the rest: Part 6 of
+`adopt-dkj-repo-workflow` places the key, and a session check reports both a missing key and the notes
+already written. The settings insert Part 5 carried inline moved to a shared `settings-member-lib`, so the
+two parts share one copy of the byte-preserving insert rather than two.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/lib/settings-member-lib.ps1`: `Read-SettingsFile`, `Get-SettingsMemberNames`, `ConvertTo-JsonStringBody`, `Add-SettingsMember`, extracted from `adopt-statusline.ps1`
+- [x] `adopt-statusline.ps1` reads and inserts through the lib; behaviour unchanged
+- [x] `scripts/task/adopt-auto-memory.ps1` (Part 6): adds `"autoMemoryEnabled": false`, dry run by default, never replaces an existing value
+- [x] `hooks/auto-memory-sessioncheck.ps1`: reports a missing or non-false key, and lists this checkout's memory notes by name with the migration
+- [x] Registered in `Get-SharedScriptPairs`, mirrors built, `scripts/README.md` rows, Part 6 on the adopt skill page and its frontmatter count
 
 ### TEST
 
+- [x] `adopt-auto-memory.tests.ps1` (new, 10 asserts) and `auto-memory-sessioncheck.tests.ps1` (new, 12 asserts) pass
+- [x] `adopt-statusline.tests.ps1` passes after the extraction (90 asserts)
+- [x] `reach-label.tests.ps1` pins the frontmatter count at six parts and passes
+- [x] Run against a real consumer checkout: the check listed its 3 notes and the missing key
+
 ### DEPLOY: feat/4341-auto-memory-off-in-consumers
 
-**Score:**
+`adopt-dkj-repo-workflow` gained a Part 6, `adopt-auto-memory.ps1`, which adds `"autoMemoryEnabled": false`
+to `.claude/settings.json` the way Part 5 adds its key: as text, every other byte kept, and an existing
+value never replaced. A new `auto-memory-sessioncheck` reports at every session start where the key is
+missing, and lists this checkout's memory notes by name until each is filed inbound or moved into the
+repo's lens. The settings insert both parts use now lives in one shared lib.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+After taking this release, a consumer's session start says whether its repo still lets Claude Code write
+memory notes and names the notes already there, so the rule from #4349 is something the setup enforces
+and points at, rather than something a person has to remember. One command switches it off.
+
+**Score:** 3
 
 #### Pull Request
 
