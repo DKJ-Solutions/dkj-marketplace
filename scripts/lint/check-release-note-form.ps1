@@ -32,6 +32,10 @@
     book's rather than the draft's, which is why they live in a separate function and print under their own
     [HEADING] label. The same newest-note-only answer covers them: older notes are records.
 
+    AND EVERY SOLVED TASK LINKED (#4346). Where the cut drafted the audience section as solved tasks, it wrote
+    the list beside the note as '<X.Y.Z>.tasks.json' (ConvertTo-ReleaseTaskRecord), and the note must carry the
+    link of every task on it -- printed under [TASKS]. A writer rewords the items; the count of links holds.
+
     Exit 0 when the form matches, or when there is no note to judge. Exit 1 with one line per difference.
     Pure ASCII, per this repo's script-layer convention.
 
@@ -138,9 +142,37 @@ if (Test-FunctionDefined 'Get-EnabledPlugins') {
 }
 $headingFindings = @(if ($brandBook) { Get-ReleaseNoteHeadingFindings -Text $text })
 
-if ($findings.Count -eq 0 -and $headingFindings.Count -eq 0) {
-    Write-Host "[OK] $noteRel has the form cut-release drafts for this repo."
+# EVERY SOLVED TASK LINKED (#4346). Where the cut drafted the audience section as solved tasks it wrote the list
+# beside the note ('<X.Y.Z>.tasks.json'); the finished note must carry every link on it. A note with no record is
+# not judged here: an older release, or a repo that drafts from its entries. A record that cannot be read is a
+# finding, never an empty list.
+$taskFindings = @()
+$recordPath = Get-ReleaseTaskRecordPath -NotePath $notePath
+$recordRel = Get-ReleaseTaskRecordPath -NotePath $noteRel
+$expectedTasks = 0
+if (Test-Path -LiteralPath $recordPath -PathType Leaf) {
+    try {
+        $tasks = @(Read-ReleaseTaskRecord -Text ([System.IO.File]::ReadAllText($recordPath, (New-Object System.Text.UTF8Encoding $false))))
+        $expectedTasks = $tasks.Count
+        foreach ($t in @(Get-ReleaseNoteMissingTasks -Text $text -Tasks $tasks)) {
+            $title = Format-SafeProseToken -Value (([string]$t.Title) -replace '[\r\n]+', ' ')
+            $taskFindings += "no link to $(Format-SafeProseToken -Value $t.Url) ($title)"
+        }
+    } catch {
+        $taskFindings += "$recordRel could not be read: $(Format-SafeProseToken -Value $_.Exception.Message)"
+    }
+}
+
+if ($findings.Count -eq 0 -and $headingFindings.Count -eq 0 -and $taskFindings.Count -eq 0) {
+    $taskClause = if ($expectedTasks -gt 0) { ", and links all $expectedTasks solved task(s) its record lists" } else { '' }
+    Write-Host "[OK] $noteRel has the form cut-release drafts for this repo$taskClause."
     exit 0
+}
+if ($taskFindings.Count -gt 0) {
+    Write-Host "[TASKS] $noteRel does not link every task this release solved ($recordRel):" -ForegroundColor Red
+    foreach ($f in $taskFindings) { Write-Host "  - $f" -ForegroundColor Red }
+    Write-Host ('  Every solved task keeps its link, however the item around it is reworded (#4346). Put each missing ' +
+        'link back -- the cut''s draft has them -- rather than editing the record.') -ForegroundColor Yellow
 }
 if ($findings.Count -gt 0) {
     Write-Host "[DRIFT] $noteRel differs from the form cut-release drafts for this repo:" -ForegroundColor Red

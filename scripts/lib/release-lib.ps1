@@ -2307,3 +2307,69 @@ function Resolve-ReleaseNoteTaskLink {
     if (-not $label) { $label = 'Task' }
     return [pscustomobject]@{ Marker = $marker; Url = $url; Label = $label }
 }
+
+# --- The task record: what the audience note must link, written by the cut (#4346) ------------------------
+# THE DRAFT WAS NOT ENOUGH. cut-release drafts one item per solved task (#2586), and a store's note still went
+# out twice without its links: the session replaced the draft with prose, and a writer briefed "links from the
+# entries only" had none to copy (a consumer's v3.1.0, November 16, 2026). The draft is a suggestion a writer
+# may rewrite; the LIST of tasks it was drafted from is a fact, and a fact can be counted. So the cut writes
+# that list beside the note as '<X.Y.Z>.tasks.json', and check-release-note-form.ps1 -- run by
+# open-pr -GatesOnly -NoteTreeOnly before the release-notes commit -- refuses a note that does not carry every
+# task's link. The file is JSON rather than markdown so no reader of the note tree (they all filter *.md)
+# mistakes it for a note, and it sits in that tree so the release-notes commit stays inside its bound.
+
+function Get-ReleaseTaskRecordPath {
+    <# The task record's path for a note's path: '<dir>/<X.Y.Z>.md' -> '<dir>/<X.Y.Z>.tasks.json' (#4346). #>
+    param([Parameter(Mandatory)][string]$NotePath)
+    return ([regex]::Replace($NotePath, '\.md$', '') + '.tasks.json')
+}
+
+function ConvertTo-ReleaseTaskRecord {
+    <#
+        The task record's text (#4346): the version and one { title; url } per task the audience section was
+        drafted from -- the same items Format-ReleaseTaskItems rendered. The title is the issue's, kept so a
+        refusal can name the task; it is never rendered from here.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Version,
+        [AllowNull()][AllowEmptyCollection()][object[]]$Items = @()
+    )
+    $tasks = @(foreach ($it in @($Items)) {
+        if ($null -eq $it) { continue }
+        [ordered]@{ title = ((([string]$it.Title) -replace '[\r\n\t]+', ' ')).Trim(); url = [string]$it.Url }
+    })
+    $record = [ordered]@{ version = $Version; tasks = $tasks }
+    return (ConvertTo-Json -InputObject $record -Depth 4)
+}
+
+function Read-ReleaseTaskRecord {
+    <#
+        The tasks a record lists, as { Title; Url } (#4346). THROWS on a record that is not one: unparseable
+        JSON, no 'tasks' list, or a url that is not https. A broken record must not read as an empty one, because
+        an empty list passes the check -- the silent-pass shape this record exists to remove.
+    #>
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Text)
+    try { $j = ConvertFrom-Json -InputObject $Text } catch { throw "the task record is not valid JSON: $($_.Exception.Message)" }
+    if ($null -eq $j -or -not ($j.PSObject.Properties.Name -contains 'tasks')) { throw "the task record has no 'tasks' list." }
+    $out = @()
+    foreach ($t in @($j.tasks)) {
+        if ($null -eq $t) { continue }
+        $url = ([string]$t.url).Trim()
+        if ($url -notmatch '^https://[\x21-\x7E]+$') { throw "the task record lists a url that is not an https link: '$($url -replace '[^\x20-\x7E]', '?')'." }
+        $out += [pscustomobject]@{ Title = [string]$t.title; Url = $url }
+    }
+    return @($out)
+}
+
+function Get-ReleaseNoteMissingTasks {
+    <#
+        The tasks whose link the note's text does not carry (#4346) -- an ordinal substring test on the url, so a
+        writer may word the link text and the sentence around it as they like, but cannot drop the link.
+    #>
+    param(
+        [AllowNull()][AllowEmptyString()][string]$Text,
+        [AllowNull()][AllowEmptyCollection()][object[]]$Tasks = @()
+    )
+    $body = [string]$Text
+    return @(@($Tasks) | Where-Object { $null -ne $_ -and $body.IndexOf([string]$_.Url, [System.StringComparison]::Ordinal) -lt 0 })
+}
