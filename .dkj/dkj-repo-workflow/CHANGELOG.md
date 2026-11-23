@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**8 / 8 minor entries** <!-- pending-tally -->
+**9 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4427-merge-on-green-unknown-reread · 20261123-113615Z
+
+The merge-on-green sweep no longer gives up when it wakes right after a merge and GitHub is still
+computing mergeability: it waits a minute and reads the armed pull requests once more (#4427).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+On a repo with several armed pull requests, each merge no longer costs an extra wait before the next one
+is picked up. It is on by default, so a consumer gets it with the release, without editing its workflow.
+
+**Score:** 2
+
+#### Pull Request
+
+merge-on-green: re-read once when every armed PR reads mergeable UNKNOWN right after a merge
+
+Plugins: dkj-repo-workflow
+
+[PR #4435](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4435)
+
+---
 
 ### DEPLOY: docs/4410-tip-check-image-tips · 20261123-112440Z
 
