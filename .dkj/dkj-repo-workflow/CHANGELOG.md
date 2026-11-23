@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**9 / 9 minor entries** <!-- pending-tally -->
+**10 / 10 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4413-option-comparison-criteria · 20261123-115226Z
+
+Rebecca's manual now says that an option comparison names its criteria before it scores, gives each
+option's main risk, opportunity cost and long-term consequence, and ends with the recommended option and
+the criterion that decided it (#4413).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A comparison from the research specialist shows what it weighed, so the requester can disagree with a
+criterion instead of only with the verdict.
+
+**Score:** 2
+
+#### Pull Request
+
+Rebecca's manual: an option comparison names its criteria up front and weighs risk and opportunity cost
+
+Plugins: dkj-subagents-alpha
+
+[PR #4419](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4419)
+
+---
 
 ### DEPLOY: fix/4427-merge-on-green-unknown-reread · 20261123-113615Z
 
