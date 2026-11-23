@@ -41,9 +41,9 @@
 
 ### CREATE
 
-- [x] The shipped `ai-radar` skill (`dkj-subagents-lifehub`) gains mode 3, the judging pass: collect the
-  unjudged items in Notion, hold each against the repo the settings page names, write the verdict on the
-  item, and file a gap in the shared plugins with its public core only.
+- [~] A judging mode in the shipped `ai-radar` skill -- dropped: #4382 builds the judging half as
+  `tip-check` in `dkj-subagents-alpha`, as its issue asks, and edits the same lines of `ai-radar/SKILL.md`.
+  A second judging procedure would duplicate it (PR #4389 closed for that reason).
 - [x] Retired the repo-local `.claude/skills/ai-radar/` and `scripts/dashboard/ai-radar.ps1`, which read a
   `Brains/` folder the life hub no longer has, and their fixture block in `consumer-dashboard.tests.ps1`.
 
@@ -54,21 +54,19 @@
 
 ### DEPLOY: fix/4381-ai-radar-judging-notion
 
-The judging pass of the AI radar moves into the shipped `ai-radar` skill of `dkj-subagents-lifehub` as its
-third mode, reading the items where they now live, in Notion. The repo-local skill and
-`scripts/dashboard/ai-radar.ps1`, which still looked for a `Brains/` folder, are retired (#4381).
+The repo-local `ai-radar` skill and `scripts/dashboard/ai-radar.ps1` are retired: they read the AI radar
+from a `Brains/` folder in the life hub checkout that no longer exists, since the radar moved to Notion. The
+judging half lands as `tip-check` in `dkj-subagents-alpha` (#4382), so this is one step of #4381.
 
-**Score:** 2
+**Score:** 1
 
 #### What makes this deploy extra special
 
-"Go through the AI radar" works again for a life hub kept in Notion. The skill finds the items still waiting
-for a verdict, holds each against the owner's own plugin repo, and writes the verdict on the item. The
-old local route refused, because the folder it read no longer exists.
+Only this repo carried the local skill and script, so nothing a plugin user takes changes.
 
-**Score:** 3
+**Score:** N/A
 
 #### Pull Request
 
-ai-radar: the judging pass moves into the shipped skill, reading the radar in Notion
+ai-radar: retire the repo-local radar that reads a Brains/ folder
 
