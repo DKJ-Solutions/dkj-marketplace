@@ -52,6 +52,7 @@
 - [x] Restore the group 9 assert that two `Assert-Equal` calls on one line had silently swallowed
 - [x] `ci.yml`: six shards, with the re-pricing written beside the matrix; the selection test's
   `-ShardCount` assert no longer pins a number (ci-shard.tests.ps1 holds matrix and count together)
+- [x] The new suites join their siblings' groups in `suite-groups.json`, and the `check-script-contract`  mirror declaration names the suite that now runs section 14
 
 ### TEST
 

@@ -122,6 +122,7 @@
                                       "param-binding-strictness.tests.ps1",
                                       "roster-sync.tests.ps1",
                                       "script-contract.tests.ps1",
+                                      "script-contract-tables.tests.ps1",
                                       "shared-scripts.tests.ps1",
                                       "subagent-shared.tests.ps1"
                                   ],
@@ -305,6 +306,7 @@
                        "suites":  [
                                       "adopt-shopify-floor.tests.ps1",
                                       "guard-live-theme.tests.ps1",
+                                      "guard-live-theme-deploy.tests.ps1",
                                       "live-push-rules.tests.ps1",
                                       "live-record-lib.tests.ps1",
                                       "merged-pr-lib.tests.ps1",
