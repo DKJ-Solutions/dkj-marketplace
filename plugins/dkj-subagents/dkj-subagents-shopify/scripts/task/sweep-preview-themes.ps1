@@ -250,7 +250,10 @@ if (-not $Execute) { Write-Host '   DRY RUN (the default): every verdict is repo
 if ($ownPreview)   { Write-Host "   sparing this branch's own preview: '$ownPreview'" }
 Write-Host "   sparing $($livingPreviewNames.Count) preview(s) of branch(es) still alive (local or on origin)"
 
-$list = Invoke-ShopifyCli -Arguments @('theme', 'list', '--store', $store, '--json') -Quiet -DiscardStderr
+# BOUNDED (#4393): an expired login makes this read wait silently on a device-code login it hides.
+$list = Invoke-ShopifyCli -Arguments @('theme', 'list', '--store', $store, '--json') -Quiet -DiscardStderr -TimeoutSeconds 60
+$loginNote = Get-ShopifyLoginNote -Result $list -Store $store -TimeoutSeconds 60
+if ($loginNote) { Write-Error "shopify theme list failed: $loginNote"; exit 1 }
 if ($list.ExitCode -ne 0) { Write-Error 'shopify theme list failed.'; exit 1 }
 $parsed = $null
 try { $parsed = ($list.Output | Out-String) | ConvertFrom-Json } catch {

@@ -174,6 +174,12 @@ try {
     $threw = $false
     try { Invoke-ShopifyCli -Arguments @('0', 'plain') -TimeoutSeconds 5 | Out-Null } catch { $threw = $true }
     Assert-True $threw '-TimeoutSeconds without -Quiet is refused'
+
+    # Get-ShopifyLoginNote (#4393): the one sentence every bounded theme-list read prints.
+    Assert-Equal '' (Get-ShopifyLoginNote -Result $fast -Store 's.myshopify.com' -TimeoutSeconds 60) 'a clean bounded read carries no login note'
+    Assert-Equal '' (Get-ShopifyLoginNote -Result $null -Store 's.myshopify.com' -TimeoutSeconds 60) 'no result carries no login note'
+    Assert-True ((Get-ShopifyLoginNote -Result $login -Store 's.myshopify.com' -TimeoutSeconds 60) -match '^Shopify CLI not logged in -- run ''shopify theme list --store s\.myshopify\.com''') 'a login diagnostic is named as a login, with the read to run by hand'
+    Assert-True ((Get-ShopifyLoginNote -Result $slow -Store 's.myshopify.com' -TimeoutSeconds 5) -match 'timed out after 5 s \(an expired login is the usual cause\)') 'a plain timeout names its bound and the usual cause'
 }
 finally {
     $env:SHOPIFY_STUB_PIDFILE = $null
