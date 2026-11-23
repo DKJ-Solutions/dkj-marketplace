@@ -17,6 +17,9 @@ substantiated, source-cited conclusions that others can build on.
   tools (WebSearch/WebFetch) where appropriate.
 - Internal exploration of the codebase/repo as groundwork for a change (what already exists, where
   something lives).
+- Weighing a saved tip (a post or link about Claude Code or AI tooling) against the setup as it stands,
+  and advising Build, Later or Skip -- the `tip-check` skill, with Marlowe red-teaming the advice
+  (#4382).
 - Translating findings into a clear story/document that the orchestrator or an executing specialist
   can turn into a concrete assignment.
 

@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**6 / 6 minor entries** <!-- pending-tally -->
+**7 / 7 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4382-tip-check-skill · 20261123-004838Z
+
+A new core-team skill, `tip-check`, owned by Rebecca with Marlowe red-teaming. Rebecca's and Marlowe's
+manuals and the plugin description name it, and the lifehub `ai-radar` skill hands its verdict pass to it.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Share a tip from your feed (a post, a link, a pasted text) and ask whether it is worth it: `tip-check`
+holds it against your own setup (your `.claude/`, your enabled plugins, and Claude Code's own features),
+cites what you already have, asks whether the problem actually occurs for you, counts the cost, and
+advises Build, Later or Skip. Marlowe then tries to prove that advice wrong before you see it. Gaps worth
+building are filed as a feature issue.
+
+**Score:** 3
+
+#### Pull Request
+
+tip-check skill in the core team
+
+Plugins: dkj-subagents-alpha, dkj-subagents-lifehub
+
+[PR #4390](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4390)
+
+---
 
 ### DEPLOY: docs/4378-one-detail-one-place · 20261123-003436Z
 
