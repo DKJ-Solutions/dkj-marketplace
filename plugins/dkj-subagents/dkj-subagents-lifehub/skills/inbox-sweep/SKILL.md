@@ -62,6 +62,11 @@ processed as they decided, and the label comes off. Without a new decision it st
 | Post about AI or Claude | A newsletter, tip or link about Claude or AI | the AI-collection skill from the settings, otherwise Ian | The AI dossier |
 | Nothing lasting | Advertising, a newsletter, a shipping or order confirmation without a date or money that still counts later | nobody | Nothing |
 
+**A task card's deadline and SMART fields are the mail's or the owner's, never the sweep's** (#4399, the
+rule in [Ian's manual](../../manuals/specialist-04-03-manual.md)): a date the thread states, or nothing,
+and SMART answers only where the thread or the owner gives them. An empty field is correct; a derived
+one is not.
+
 A thread can carry two kinds (a sports club: a drinks evening **and** a sign-up). Process each part to
 its own destination; the thread is archived only once every part stands.
 
