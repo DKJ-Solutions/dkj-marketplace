@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**13 / 14 minor entries** <!-- pending-tally -->
+**14 / 15 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4386-stopwatch-start-triggers · 20261123-035437Z
+
+A Stopwatch run now starts in three ways: the `stopwatch:` first line, the slash command
+`/dkj-repo-workflow:stopwatch-start <label>`, or an imperative phrase in the owner's own words such as
+"use the stopwatch", "time this" or "gebruik de stopwatch" (#4386). Pasted text and a sentence about the
+stopwatch start nothing.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+Asking for the stopwatch the way you would say it ("prepare a release, use the stopwatch") now times
+that assignment. Before, it started nothing, and the only fix was another prompt that began with
+`stopwatch:`.
+
+**Score:** 3
+
+#### Pull Request
+
+Stopwatch: start a run from a slash command or a plain-language phrase
+
+Plugins: dkj-repo-workflow
+
+[PR #4398](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4398)
+
+---
 
 ### DEPLOY: fix/4393-bounded-theme-list-reads · 20261123-031809Z
 
