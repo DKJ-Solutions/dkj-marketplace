@@ -506,8 +506,20 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
         $probe = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Loopback, 0)
         $probe.Start(); $genPort3 = $probe.LocalEndpoint.Port; $probe.Stop()
         $env:DKJ_GENERAL_PAGES_PORTS = [string]$genPort3
-        $proc3 = Start-Process -FilePath 'powershell' -PassThru -WindowStyle Hidden -ArgumentList @(
-            '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$(Join-Path $src 'scripts\dashboard\serve-consumer-dashboard.ps1')`"", '-Port', $port3)
+        # A STUB gh, first on the server's PATH (#3932): it fails at once, the way an unauthenticated gh does. The real
+        # one took 16.5 s inside this server on CI (its Server-Timing: gh;dur=16517, the rest ~120 ms) against 69 ms
+        # from the test process a moment later, and pushed the overview past the receive timeout in 3 of 4 runs.
+        # Locally a logged-in gh also put the real DKJ-Solutions repos on a fixture page. The GitHub read is not what
+        # this group tests, so the fixture holds no external binary at all.
+        $stubBin = Join-Path $fixture 'bin'
+        New-Item -ItemType Directory -Force -Path $stubBin | Out-Null
+        Set-Content -LiteralPath (Join-Path $stubBin 'gh.cmd') -Encoding ASCII -Value '@exit /b 4'
+        $realPath = $env:PATH
+        $env:PATH = $stubBin + ';' + $realPath
+        try {
+            $proc3 = Start-Process -FilePath 'powershell' -PassThru -WindowStyle Hidden -ArgumentList @(
+                '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$(Join-Path $src 'scripts\dashboard\serve-consumer-dashboard.ps1')`"", '-Port', $port3)
+        } finally { $env:PATH = $realPath }
         try {
             # Asserted on its own, so a recurrence says whether the server never came up or the page did not
             # come back -- the question #3038 could not answer from four asserts failing together.
@@ -520,31 +532,14 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
             $repoLinks = @([regex]::Matches($page, 'href="(/consumers/other/[A-Za-z0-9._-]+)"') | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique)
             $repoPages = (@($repoLinks | ForEach-Object { if ($up) { Get-Raw 'GET' $_ "localhost:$port3" '' $port3 } }) -join "`n")
             $missing = if ($up) { Get-Raw 'GET' '/consumers/other/no-such-repo' "localhost:$port3" '' $port3 } else { '' }
-            # DIAGNOSTIC (#3932, PR #4437): the overview timed out at 15 s in 3 of 4 CI runs on the six-shard layout and
-            # answers in about 0.1 s locally. Longer wait and an always-printed timing, plus the server's three costly steps
-            # timed from here on CI, so a run says which step is slow. Removed again once #3932 names the cause.
-            $overviewPage = if ($up) { Get-Raw 'GET' '/consumers' "localhost:$port3" '' $port3 -TimeoutMs 90000 } else { '' }
+            $overviewPage = if ($up) { Get-Raw 'GET' '/consumers' "localhost:$port3" '' $port3 } else { '' }
             $overviewWhy = $script:RawWhy
-            # The server times each step it ran into a Server-Timing header, which names the slow one (#3932).
+            # The server times each step it ran into a Server-Timing header, which named the slow one in #3932.
             $pageTiming = if ($page -match '(?m)^Server-Timing: ([^\r\n]*)') { $Matches[1] } else { '(none)' }
             $overviewTiming = if ($overviewPage -match '(?m)^Server-Timing: ([^\r\n]*)') { $Matches[1] } else { '(none)' }
-            Write-Host "  [TIMING #3932] $overviewWhy"
-            Write-Host "  [TIMING #3932] server steps: /consumers/other $pageTiming; /consumers $overviewTiming"
-            Assert-True ($overviewTiming -match '(^|, )gh;dur=\d+, scan;dur=\d+, cards;dur=\d+, page;dur=\d+$') 'the overview names each step it ran and its time in a Server-Timing header (#3932)' $overviewTiming
+            Assert-True ($overviewTiming -match '(^|, )gh;dur=\d+, scan;dur=\d+, cards;dur=\d+, page;dur=\d+$') 'the overview names each step it ran and its time in a Server-Timing header (#3932)' "$overviewWhy; $overviewTiming"
             Assert-True ($pageTiming -match '^register;dur=\d+, page;dur=\d+$') 'and a group page names the register read it ran first' $pageTiming
-            if ($env:CI) {
-                $gs = [Diagnostics.Stopwatch]::StartNew()
-                $null = & gh api graphql -f 'query=query { viewer { login } }' 2>&1; $ghExit = $LASTEXITCODE
-                $ghMs = $gs.ElapsedMilliseconds; $gs.Restart()
-                $null = & git --no-optional-locks -c core.fsmonitor=false -C $noup remote get-url origin 2>&1
-                $remoteExit = $LASTEXITCODE
-                $null = & git --no-optional-locks -c core.fsmonitor=false -C $noup status --porcelain 2>&1
-                $statusExit = $LASTEXITCODE
-                $gitMs = $gs.ElapsedMilliseconds; $gs.Restart()
-                $null = & powershell -NoProfile -ExecutionPolicy Bypass -Command 'exit 0' 2>&1
-                $psMs = $gs.ElapsedMilliseconds
-                Write-Host "  [TIMING #3932] from the test process: gh api graphql $ghMs ms (exit $ghExit), two git calls $gitMs ms (exits $remoteExit/$statusExit), a bare powershell child $psMs ms"
-            }
+            Assert-True ($overviewPage -match 'GitHub could not be read') 'the fixture server reads GitHub through the stub gh, which fails at once, so the page says so (#3932)' "$overviewWhy; $overviewTiming"
             Assert-True ($page -match 'HTTP/1.1 200') 'the page is served with a checkout that has no upstream' $pageWhy
             Assert-True ($repoLinks.Count -ge 1 -and $repoPages -match 'HTTP/1.1 200' -and $repoPages -notmatch 'HTTP/1.1 404') 'every repo the group page links has a page of its own (#4113)'
             Assert-True ($missing -match 'HTTP/1.1 404') 'a repo no group member is named for is a 404, never an empty page'
