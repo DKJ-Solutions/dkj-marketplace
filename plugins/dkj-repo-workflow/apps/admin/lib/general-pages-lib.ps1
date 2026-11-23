@@ -657,7 +657,7 @@ function Get-GeneralPages {
         @{ Href = '/dev/sessionstart';  Label = 'SessionStart';  Sub = 'The always-on path every session loads before its first turn'; Icon = 'sessionstart'; Group = '/dev/performance/context' },
         # Every repo's since #3470 (the owner, October 25, 2026): the source repo's own pages until then.
         @{ Href = '/dev/test-gate';     Label = 'Test gate';     Sub = 'What each test suite costs on CI'; Icon = 'test-gate'; GitHub = $true },
-        @{ Href = '/dev/stopwatch';     Label = 'Stopwatch';     Sub = 'How long an assignment takes, timed from a stopwatch: prompt, or from the start of a release cut, to back on the trunk, with the transcript phases'; Icon = 'stopwatch'; Group = '/dev/clock' },
+        @{ Href = '/dev/stopwatch';     Label = 'Stopwatch';     Sub = 'How long an assignment takes, timed from a stopwatch: prompt, the stopwatch-start command or a use the stopwatch phrase, or from the start of a release cut, to back on the trunk, with the transcript phases'; Icon = 'stopwatch'; Group = '/dev/clock' },
         @{ Href = '/dev/logbook';       Label = 'Logbook';       Sub = 'Every assignment of a clean session, timed by itself: first prompt to back on the trunk, with the transcript phases'; Icon = 'logbook'; Group = '/dev/clock' },
         # #3482: plugin-versions' verdict per enabled plugin, so a problem with one is visible from Admin.
         # The MCP servers a session can reach (#4173), on the Claude page beside Rules, Skills and Specialists.

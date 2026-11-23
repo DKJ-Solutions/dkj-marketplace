@@ -9,13 +9,17 @@
     THE PAGE ONLY SHOWS. It has no button and the server takes no POST for it. The runs are written by two Claude Code
     hooks, this plugin's hooks/stopwatch-hook.ps1, which call Invoke-StopwatchHookEvent here:
 
-      - A prompt whose first line begins with `stopwatch:` (any case, leading whitespace allowed) starts an Auto
-        run at once, labelled with the rest of that line (Get-StopwatchPromptMarker; "Assignment" when empty),
-        with the checkout's HEAD as its StartHead. It is the only way a run starts from a prompt (a prepared card,
-        below, has no run behind it; the first prompt carrying its label starts the run on that card). The one other
+      - A prompt starts an Auto run at once, in three ways (Get-StopwatchPromptStart, #4386), tried in this order and
+        all through one start path: (1) its first line begins with `stopwatch:` (any case, leading whitespace
+        allowed), labelled with the rest of that line (Get-StopwatchPromptMarker; "Assignment" when empty); (2) it
+        begins with the slash command `/dkj-repo-workflow:stopwatch-start <label>` (or `/stopwatch-start`); (3) it
+        says in the owner's own words, imperatively, to use the stopwatch ("use the stopwatch", "time this",
+        "gebruik de stopwatch"), outside any pasted block. The checkout's HEAD is the run's StartHead. Those are the
+        ways a prompt starts a run (a prepared card, below, has no run behind it; the first prompt carrying its
+        label starts the run on that card). The one other
         start is a script's own: cut-release.ps1 starts a `release cut` run when it begins, unless a run is already
         going (Start-StopwatchScriptRun, #3781), so every release cut is timed whether or not anybody asked.
-        A run still going when a marked prompt arrives is DISCARDED and the new one starts: a run that never
+        A run still going when a prompt that starts a run arrives is DISCARDED and the new one starts: a run that never
         reached the trunk would otherwise block every later measurement, and the page has no button left to
         discard it.
       - A Stop hook ends the running run once the checkout is on the trunk, clean, with HEAD moved off StartHead.
@@ -543,7 +547,8 @@ function ConvertTo-StopwatchLabel {
 
 function Get-StopwatchPromptMarker {
     <#
-        The label a prompt asks a run under, or $null when it carries no marker (#3323): the first line of -Prompt
+        The label a prompt asks a run under with the `stopwatch:` marker, or $null when it carries none (#3323; the
+        slash command and the owner's phrase are Get-StopwatchPromptStart's, #4386): the first line of -Prompt
         begins, after any leading whitespace, with `stopwatch:` in any case. The label is the rest of that line,
         control characters as spaces, trimmed and cut to the label maximum; empty becomes "Assignment".
         A prompt that is a paste arrives wrapped, its first line Claude Code's `<pasted_content id="hhhh">` (#3336),
@@ -558,6 +563,75 @@ function Get-StopwatchPromptMarker {
     return $label
 }
 
+function Get-StopwatchPromptSlashStart {
+    <#
+        The label a slash-command prompt asks a run under (#4386), or $null: the prompt begins, after any leading
+        whitespace, with `/dkj-repo-workflow:stopwatch-start` or `/stopwatch-start`, in any case. The label is the
+        rest of that line; with nothing left, the prompt's next non-empty line; with nothing at all, "Assignment".
+        Normalised as a marker label is.
+    #>
+    param([AllowEmptyString()][string]$Prompt = '')
+    $opts = [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline
+    $m = [regex]::Match($Prompt.TrimStart(), '^/(?:dkj-repo-workflow:)?stopwatch-start(?=\s|$)([^' + [char]13 + [char]10 + ']*)(.*)$', $opts)
+    if (-not $m.Success) { return $null }
+    $label = ConvertTo-StopwatchLabel -Text $m.Groups[1].Value
+    if (-not $label) {
+        foreach ($line in ($m.Groups[2].Value -split '\r?\n')) {
+            $label = ConvertTo-StopwatchLabel -Text $line
+            if ($label) { break }
+        }
+    }
+    if (-not $label) { $label = 'Assignment' }
+    return $label
+}
+
+# The owner's imperative phrases (#4386), English and Dutch. A phrase counts only where a clause begins (the start of
+# the line, or after . ! ? ; : , or and/en/then/please/graag), so a sentence ABOUT the stopwatch ("make sure I can
+# start the stopwatch in other ways") starts nothing. "with the stopwatch" / "met de stopwatch" is the one phrase that
+# also counts at the end of a clause ("prepare a release with the stopwatch").
+$script:StopwatchPhraseTail = '(?:\s+(?:for|during|on)\s+this\s+(?:prompt|one|assignment|task)|\s+voor\s+deze\s+(?:prompt|opdracht|taak))?'
+$script:StopwatchPhraseCore = '(?:(?:please\s+)?(?:use|start|begin)\s+the\s+stopwatch|time\s+this(?:\s+(?:prompt|assignment|task|one))?|(?:graag\s+)?gebruik\s+(?:voor\s+deze\s+(?:prompt|opdracht|taak)\s+)?de\s+stopwatch|start\s+de\s+stopwatch|zet\s+de\s+stopwatch\s+aan|stopwatch\s+aan)'
+$script:StopwatchPhraseRegex = '(?:(?:^|[.!?;:,]\s*|\b(?:and|en|then|dan|please|graag)\s+)' + $script:StopwatchPhraseCore + $script:StopwatchPhraseTail + '(?=[\s.!,;:]|$)|\s*\b(?:with\s+the|met\s+de)\s+stopwatch' + $script:StopwatchPhraseTail + '(?=\s*(?:[.!,;]|$)))'
+
+function Get-StopwatchPromptPhraseStart {
+    <#
+        The label a prompt asks a run under by saying so in the owner's own words (#4386), or $null. Text inside a
+        `<pasted_content ...>...</pasted_content>` block is ignored (the reverse of the marker, #3336: a pasted text
+        talking about the stopwatch is not the owner asking for one). The phrase is looked for in the first non-empty
+        line that is left; the label is that line with the phrase and its joining punctuation removed, normalised as
+        a marker label is ("Assignment" when nothing is left). A prepared label (-PreparedLabels) that appears in the
+        text, in any case, wins over that, so a card prepared ahead lands its run.
+    #>
+    param([AllowEmptyString()][string]$Prompt = '', [AllowEmptyCollection()][string[]]$PreparedLabels = @())
+    $ri = [Text.RegularExpressions.RegexOptions]::IgnoreCase
+    $text = [regex]::Replace($Prompt, '<pasted_content\b[^>]*>.*?(?:</pasted_content[^>]*>|\z)', '', ($ri -bor [Text.RegularExpressions.RegexOptions]::Singleline))
+    $first = ''
+    foreach ($line in ($text -split '\r?\n')) { if ($line.Trim()) { $first = $line.Trim(); break } }
+    if (-not $first) { return $null }
+    if (-not [regex]::IsMatch($first, $script:StopwatchPhraseRegex, $ri)) { return $null }
+    foreach ($pl in @($PreparedLabels | Where-Object { $_ } | Sort-Object { $_.Length } -Descending)) {
+        if ($text.IndexOf([string]$pl, [StringComparison]::OrdinalIgnoreCase) -ge 0) { return [string]$pl }
+    }
+    $rest = [regex]::Replace($first, $script:StopwatchPhraseRegex, ' ', $ri)
+    $rest = ($rest -replace '\s{2,}', ' ').Trim().Trim(' ', '.', ',', ';', ':', '!', '-').Trim()
+    $label = ConvertTo-StopwatchLabel -Text $rest
+    if (-not $label) { $label = 'Assignment' }
+    return $label
+}
+
+function Get-StopwatchPromptStart {
+    <#
+        The label a prompt starts a run under, by any of the three ways (#4386), or $null: the `stopwatch:` marker
+        (Get-StopwatchPromptMarker), else the slash command (Get-StopwatchPromptSlashStart), else the owner's phrase
+        (Get-StopwatchPromptPhraseStart), in that order.
+    #>
+    param([AllowEmptyString()][string]$Prompt = '', [AllowEmptyCollection()][string[]]$PreparedLabels = @())
+    $label = Get-StopwatchPromptMarker -Prompt $Prompt
+    if ($null -ne $label) { return $label }
+    $label = Get-StopwatchPromptSlashStart -Prompt $Prompt
+    if ($null -ne $label) { return $label }
+    return (Get-StopwatchPromptPhraseStart -Prompt $Prompt -PreparedLabels $PreparedLabels)
+}
 function ConvertFrom-StopwatchCommitLog {
     <#
         The commits Invoke-StopwatchHookEvent -Commits reads (#3400), from the lines of
@@ -575,9 +649,11 @@ function ConvertFrom-StopwatchCommitLog {
 function Invoke-StopwatchHookEvent {
     <#
         What a Claude Code hook does to the store (#3323), decided without git or a clock so every rule is tested.
-        -Hook Prompt: a -Prompt marked `stopwatch:` (Get-StopwatchPromptMarker) starts a run at -Now under its
+        -Hook Prompt: a -Prompt that starts a run (the `stopwatch:` marker, the stopwatch-start slash command or the
+        owner's phrase, Get-StopwatchPromptStart, #4386; -PreparedLabels lets a prepared card's label win for the
+        phrase) starts a run at -Now under its
         label with -Head as its StartHead, and DISCARDS a run still going (it would otherwise block every later
-        measurement); any other prompt does nothing, and so does a marked one with an empty -Head, since a run
+        measurement); any other prompt does nothing, and so does one that starts a run with an empty -Head, since a run
         without a StartHead could never stop by itself. -Hook Stop: the running run ends at -Now only when it is
         Auto, -Branch is -Trunk, -Clean (git status --porcelain was empty) and -Head is not the run's StartHead,
         taken as work that landed (it proves HEAD moved, not that anything was merged); otherwise nothing.
@@ -588,7 +664,7 @@ function Invoke-StopwatchHookEvent {
         prescribes, because a cut moves HEAD at the fast-forward and again at the release commit, minutes before
         it is done. A commit counts from the second the run started in, since a committer time has no fraction.
         $null (the hook could not read git) leaves the HEAD test alone: a timing aid that never stops is worse.
-        Returns Runs and Changed (write only when set).
+        Returns Runs and Changed (write only when set), and Label, the label a Prompt started a run under.
     #>
     param(
         [Parameter(Mandatory = $true)][ValidateSet('Prompt', 'Stop')][string]$Hook,
@@ -599,16 +675,17 @@ function Invoke-StopwatchHookEvent {
         [string]$Head = '',
         [string]$Trunk = 'main',
         [AllowEmptyString()][string]$Prompt = '',
-        [AllowEmptyCollection()][object[]]$Commits = $null
+        [AllowEmptyCollection()][object[]]$Commits = $null,
+        [AllowEmptyCollection()][string[]]$PreparedLabels = @()
     )
     $runs = @($Runs | Where-Object { $_ })
     $running = @($runs | Where-Object { -not $_.End }) | Select-Object -Last 1
     $same = @{ Runs = $runs; Changed = $false }
     if ($Hook -eq 'Prompt') {
-        $label = Get-StopwatchPromptMarker -Prompt $Prompt
+        $label = Get-StopwatchPromptStart -Prompt $Prompt -PreparedLabels $PreparedLabels
         if ($null -eq $label -or -not $Head) { return $same }
         $kept = @($runs | Where-Object { $_.End })
-        return @{ Runs = @($kept + @(New-StopwatchRun -Label $label -Now $Now -StartHead $Head)); Changed = $true }
+        return @{ Runs = @($kept + @(New-StopwatchRun -Label $label -Now $Now -StartHead $Head)); Changed = $true; Label = $label }
     }
     if (-not $running -or -not $running.Auto -or -not $running.StartHead) { return $same }
     if ($Branch -cne $Trunk -or -not $Clean -or -not $Head -or $Head -ceq $running.StartHead) { return $same }
@@ -1409,7 +1486,7 @@ function Format-StopwatchLabelCard {
     $time = if ($Set.Prepared -and -not @($Set.Groups).Count) { '<span class="sw-time">Ready, not started</span>' }
             elseif (-not @($Set.Groups).Count) { '<span class="sw-time">No run yet</span>' }
             else { Format-StopwatchCardTime -Group $Set.Groups[0] -Now $Now }
-    $sub = if ($Set.Prepared -and -not @($Set.Groups).Count) { 'Ready, not started: no clock is running. Start it by sending a prompt whose first line is <code>stopwatch: ' + (& $e $Set.Title) + '</code>.' }
+    $sub = if ($Set.Prepared -and -not @($Set.Groups).Count) { 'Ready, not started: no clock is running. Start it by sending a prompt whose first line is <code>stopwatch: ' + (& $e $Set.Title) + '</code>, or with <code>/dkj-repo-workflow:stopwatch-start</code>, or by saying &quot;use the stopwatch&quot; in the prompt.' }
            else { 'From the prompt <code>stopwatch: ' + (& $e $Set.Title) + '</code> until ' + $stop + '.' }
     # -AsRow: the same values as Admin's row (Format-AdminLinkTableHtml, #3830).
     if ($AsRow) { return @{ Href = ('/dev/stopwatch/' + $Set.Slug); Label = (Get-StopwatchShortTitle $Set.Title); SubHtml = $sub; ValueHtml = $time; Class = 'sw-card' } }
@@ -1571,7 +1648,7 @@ function Format-StopwatchPageHtml {
         'Not shared with this repo''s other machines: a label is the first line of a prompt, so a repo opts in with <code>DKJ_STOPWATCH_SHARE=1</code> in the env block of its <code>.claude/settings.json</code>. '
     }
     $note = if ($FooterNote) { $FooterNote } else { 'Kept on this machine in <code>' + (& $e $StorePath) + '</code>, outside the checkout, so a run never dirties the tree it is timing. ' + $shareNote +
-        'A prompt whose first line begins with <code>stopwatch:</code> starts a run in a session of this checkout, labelled with the rest of that line, and discards a run still going; ' +
+        'A prompt whose first line begins with <code>stopwatch:</code>, or that begins with <code>/dkj-repo-workflow:stopwatch-start</code>, or that says &quot;use the stopwatch&quot; in the owner' + [char]39 + 's own words, starts a run in a session of this checkout, labelled with the rest of that line, and discards a run still going; ' +
         'a Stop hook ends it once Claude is back on the trunk, clean, with HEAD moved since the start (that suggests the work landed; it does not prove it). Both are the dkj-repo-workflow plugin''s <code>hooks/stopwatch-hook.ps1</code>. ' +
         'Built by its <code>apps/admin/lib/stopwatch-lib.ps1</code>.' }
     # Bare, with no lead (the owner, October 24, 2026): the overview's h1 names it, the Logbook's breadcrumb does, and the footer says
@@ -1608,7 +1685,7 @@ function Format-StopwatchLabelPageHtml {
     }
     # A pinned label before its first run (Get-StopwatchOverviewSets): one line saying so, where the runs will stand.
     if (-not @($Set.Groups).Count) {
-        $none = if ($Set.Prepared) { 'Ready, not started: no clock is running. Start it by sending a prompt whose first line is <code>stopwatch: ' + (& $e $Set.Title) + '</code>; the run lands here.' } else { 'No run yet. The first one sets the baseline for this label.' }
+        $none = if ($Set.Prepared) { 'Ready, not started: no clock is running. Start it by sending a prompt whose first line is <code>stopwatch: ' + (& $e $Set.Title) + '</code>, or with <code>/dkj-repo-workflow:stopwatch-start</code>, or by saying &quot;use the stopwatch&quot; in the prompt; the run lands here.' } else { 'No run yet. The first one sets the baseline for this label.' }
         [void]$body.AppendLine('<section class="card sw-card"><p class="sw-instruction">' + $none + '</p></section>')
     }
     # A pinned label's prompt to copy and its steps stand here, on its page, each under an h2 of its own above the one

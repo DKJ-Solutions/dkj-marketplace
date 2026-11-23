@@ -6,7 +6,7 @@
 .DESCRIPTION
     THE STOPWATCH'S MACHINERY WITH ANOTHER TRIGGER. The store format, the model, the transcript phases and both pages
     are stopwatch-lib.ps1's, beside this file, which this file loads; what is the Logbook's own is when a run starts and
-    stops, its store, and the words on its pages. The Stopwatch times what a prompt marks with `stopwatch:`; the
+    stops, its store, and the words on its pages. The Stopwatch times what a prompt asks for with `stopwatch:`, the stopwatch-start command or a phrase; the
     Logbook times every session, so the two never compete for a run.
 
     THE RULES (Invoke-LogbookHookEvent, called by the hooks of this plugin's hooks/logbook-hook.ps1), as the owner chose
