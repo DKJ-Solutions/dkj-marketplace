@@ -213,11 +213,15 @@ function Get-DkjReposModel {
     $started = Get-Date
     $ErrorActionPreference = 'Continue'   # the same 5.1 stderr trap as in Invoke-DashboardGit
     $raw = $null
+    # The GitHub read and the checkout scan are timed apart, for the overview's Server-Timing header (#3932).
+    $sw = [Diagnostics.Stopwatch]::StartNew()
     try { $raw = & gh api graphql -f ('query=' + (Get-DkjRepoQuery)) -f 'owner=DKJ-Solutions' 2>$null } catch { $raw = $null }
     $query = ConvertFrom-DkjRepoQuery -Json $(if ($LASTEXITCODE -eq 0 -and $raw) { ($raw -join "`n") } else { '' })
+    $ghMs = $sw.ElapsedMilliseconds; $sw.Restart()
     $checkouts = @(Find-DkjCheckouts -ParentDir (Split-Path -Parent $root) -Owner 'DKJ-Solutions')
+    $scanMs = $sw.ElapsedMilliseconds
     return @{ Query = $query; Checkouts = $checkouts; At = Get-Date
-              Meta = @{ GeneratedAt = $started.ToString('yyyy-MM-dd HH:mm:ss'); Seconds = ((Get-Date) - $started).TotalSeconds } }
+              Meta = @{ GeneratedAt = $started.ToString('yyyy-MM-dd HH:mm:ss'); Seconds = ((Get-Date) - $started).TotalSeconds; GhMs = $ghMs; ScanMs = $scanMs } }
 }
 
 function Get-DocsCoverageModel {
@@ -419,10 +423,19 @@ try {
             if ($path -cmatch '^/consumers(?:/(dkj|bwj|other))?\z') {
                 # The overview with one card per owner group, or one group's own page (owner, October 26, 2026).
                 $group = [string]$Matches[1]
-                if ($null -eq $cache -or ((Get-Date) - $cache.At).TotalSeconds -ge $CacheSeconds) { $cache = Get-DashboardModel }
+                # Each step this request actually ran, timed for a Server-Timing header (#3932): the overview took 13 s
+                # on CI against 0.1 s locally, and only the server can say which step that was. Invisible on the page.
+                $timing = New-Object System.Collections.Generic.List[string]
+                $sw = [Diagnostics.Stopwatch]::StartNew()
+                if ($null -eq $cache -or ((Get-Date) - $cache.At).TotalSeconds -ge $CacheSeconds) { $cache = Get-DashboardModel; $timing.Add("register;dur=$($sw.ElapsedMilliseconds)") }
+                $sw.Restart()
                 if ($group -eq 'dkj') {
                     # The DKJ group's page is a card per DKJ repo, each opening its own page (Maikel, October 28, 2026).
-                    if ($null -eq $dkjCache -or ((Get-Date) - $dkjCache.At).TotalSeconds -ge $CacheSeconds) { $dkjCache = Get-DkjReposModel }
+                    if ($null -eq $dkjCache -or ((Get-Date) - $dkjCache.At).TotalSeconds -ge $CacheSeconds) {
+                        $dkjCache = Get-DkjReposModel
+                        $timing.Add("gh;dur=$($dkjCache.Meta.GhMs)"); $timing.Add("scan;dur=$($dkjCache.Meta.ScanMs)")
+                    }
+                    $sw.Restart()
                     $dkjConsumers = @($cache.Consumers | Where-Object { (Get-ConsumerOwnerGroup ([string]$_.Repo)) -eq 'dkj' })
                     $html = Format-DkjReposPageHtml -Query $dkjCache.Query -Checkouts $dkjCache.Checkouts -Consumers $dkjConsumers -Meta $dkjCache.Meta -CheckMeta $cache.Meta
                     # A failed read of GitHub is shown once and not kept, so the next request asks again (Victor, #3231).
@@ -431,14 +444,20 @@ try {
                     $html = Format-ConsumerDashboardHtml -Consumers $cache.Consumers -Meta $cache.Meta -Group $group
                 } else {
                     # The overview holds the DKJ group's own cards under its DKJ h2, an h3 each (Maikel, October 30, 2026).
-                    if ($null -eq $dkjCache -or ((Get-Date) - $dkjCache.At).TotalSeconds -ge $CacheSeconds) { $dkjCache = Get-DkjReposModel }
+                    if ($null -eq $dkjCache -or ((Get-Date) - $dkjCache.At).TotalSeconds -ge $CacheSeconds) {
+                        $dkjCache = Get-DkjReposModel
+                        $timing.Add("gh;dur=$($dkjCache.Meta.GhMs)"); $timing.Add("scan;dur=$($dkjCache.Meta.ScanMs)")
+                    }
+                    $sw.Restart()
                     $dkjConsumers = @($cache.Consumers | Where-Object { (Get-ConsumerOwnerGroup ([string]$_.Repo)) -eq 'dkj' })
                     $cards = Format-DkjRepoCardsHtml -Query $dkjCache.Query -Checkouts $dkjCache.Checkouts -Consumers $dkjConsumers -Heading 3
+                    $timing.Add("cards;dur=$($sw.ElapsedMilliseconds)"); $sw.Restart()
                     $notice = if ($dkjCache.Query.Error) { '<p class="msg--warn" role="alert">GitHub could not be read: ' + (ConvertTo-DashboardText $dkjCache.Query.Error) + '. The DKJ checkouts on this machine are shown without their issues.</p>' } else { '' }
                     $html = Format-ConsumerDashboardHtml -Consumers $cache.Consumers -Meta $cache.Meta -DkjCardsHtml $cards -Style (Get-DkjRepoCardStyle) -NoticeHtml $notice
                     if ($dkjCache.Query.Error) { $dkjCache = $null }
                 }
-                Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($html)) -Method $method
+                $timing.Add("page;dur=$($sw.ElapsedMilliseconds)")
+                Send-LoopbackResponse $stream 200 'OK' 'text/html; charset=utf-8' ($utf8.GetBytes($html)) @{ 'Server-Timing' = ($timing -join ', ') } -Method $method
                 continue
             }
             if ($path -cmatch '^/consumers/dkj/([A-Za-z0-9._-]+)\z') {
