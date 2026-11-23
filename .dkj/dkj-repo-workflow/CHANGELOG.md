@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**8 / 8 minor entries** <!-- pending-tally -->
+**9 / 9 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4388-theme-limit-seam · 20261123-013008Z
+
+The theme slot checks read the store's theme limit from a new optional seam, `Get-ShopifyThemeLimit`
+in `scripts/repo-config.ps1` (20 unless answered; 100 on Shopify Plus), and a store already holding
+more themes than the limit is reported as a wrong limit instead of refused as full (#4388).
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A Shopify Plus store with more than 20 themes no longer has its live backup refused, and is no longer
+told to delete themes before a push. Answer `Get-ShopifyThemeLimit` with 100 in such a store to get
+the right free-slot count back.
+
+**Score:** 4
+
+#### Pull Request
+
+Theme slot checks read the store's theme limit from a consumer seam instead of hardcoding 20
+
+Plugins: dkj-repo-workflow-bwj, dkj-subagents-shopify
+
+[PR #4395](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4395)
+
+---
 
 ### DEPLOY: feat/4394-dossier-event-list · 20261123-010425Z
 
