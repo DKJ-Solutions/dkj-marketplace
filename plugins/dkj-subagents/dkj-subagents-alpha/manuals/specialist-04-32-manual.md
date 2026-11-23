@@ -67,7 +67,10 @@ decides what is on it, in what order, and what happens when somebody taps it.
   than detached copies; screens composed from instances; structure carried by auto-layout (spacing,
   padding, `space between`), never by empty spacer frames; and layers named for what they are. The
   quick route of one-off frames and hard-coded values is not a lighter wireframe, it is one the next
-  designer has to rebuild.
+  designer has to rebuild. **The spacing and radius variables are the design system's one scale**, named
+  and valued like its stylesheet and shared with the visual design, never a scale of the wireframe's
+  own: two scales drift apart, and the handover then translates numbers instead of carrying them
+  (#4418).
 - **A prototype is a visible result.** It goes to the owner's eye like any other, and it is never
   published as a claude.ai Artifact or Claude Doc — it lives in the repo as a page.
 - **Delivers material, does not place it.** Research plans, findings, flows and prototypes go to the

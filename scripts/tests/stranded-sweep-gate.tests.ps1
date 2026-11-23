@@ -119,6 +119,11 @@ if ($args -contains 'pr' -and $args -contains 'list') {
 }
 if ($args -contains 'pr' -and $args -contains 'checks') {
     if ($env:GH_FAKE_PR_CHECKS_FAIL) { exit 1 }
+    if ($env:GH_FAKE_PR_CHECKS_NOT_REPORTED) {
+        # gh's own words and exit code while CI has not created the required check yet (#4424).
+        [Console]::Error.WriteLine("no required checks reported on the 'docs/77-x' branch")
+        exit 1
+    }
     Write-Output $env:GH_FAKE_PR_CHECKS_JSON
     exit 0
 }
@@ -148,6 +153,7 @@ function Invoke-Check {
         [switch]$PrListFail,
         [string]$PrChecksJson = '[]',
         [switch]$PrChecksFail,
+        [switch]$PrChecksNotReported,
         # -1 means "do not pass -MaxElapsedSeconds at all", so the script's own default (90) applies --
         # a caller that wants the budget behaviour under test passes a real value (issue #2438).
         [int]$MaxElapsedSeconds = -1,
@@ -169,6 +175,7 @@ function Invoke-Check {
         if ($PrListFail) { $env:GH_FAKE_PR_LIST_FAIL = '1' } else { Remove-Item Env:\GH_FAKE_PR_LIST_FAIL -ErrorAction SilentlyContinue }
         $env:GH_FAKE_PR_CHECKS_JSON = $PrChecksJson
         if ($PrChecksFail) { $env:GH_FAKE_PR_CHECKS_FAIL = '1' } else { Remove-Item Env:\GH_FAKE_PR_CHECKS_FAIL -ErrorAction SilentlyContinue }
+        if ($PrChecksNotReported) { $env:GH_FAKE_PR_CHECKS_NOT_REPORTED = '1' } else { Remove-Item Env:\GH_FAKE_PR_CHECKS_NOT_REPORTED -ErrorAction SilentlyContinue }
         $scriptArgs = @('-RootOverride', $Dir, '-TimeoutSeconds', $TimeoutSeconds)
         if ($MaxElapsedSeconds -ge 0) { $scriptArgs += @('-MaxElapsedSeconds', $MaxElapsedSeconds) }
         if ($StuckHours -ge 0) { $scriptArgs += @('-StuckHours', $StuckHours) }
@@ -179,7 +186,7 @@ function Invoke-Check {
         $env:PATH = $prevPath
         $env:GITHUB_REPOSITORY = $prevGithubRepo
         Remove-Item Env:\GH_FAKE_ACCOUNT, Env:\GH_FAKE_PR_LIST_JSON, Env:\GH_FAKE_PR_CHECKS_JSON -ErrorAction SilentlyContinue
-        Remove-Item Env:\GH_FAKE_PR_LIST_FAIL, Env:\GH_FAKE_PR_CHECKS_FAIL -ErrorAction SilentlyContinue
+        Remove-Item Env:\GH_FAKE_PR_LIST_FAIL, Env:\GH_FAKE_PR_CHECKS_FAIL, Env:\GH_FAKE_PR_CHECKS_NOT_REPORTED -ErrorAction SilentlyContinue
     }
 }
 
@@ -328,6 +335,26 @@ try {
     Assert-True ($r.Out -match '\[INCOMPLETE\]') `
         'and the run reports [INCOMPLETE], not [OK] -- it never actually judged this pull request'
     Assert-True ($r.Out -match 'judged 0 of 1') 'naming the honest split: the one armed pull request was never judged'
+    Assert-True ($r.Out -match '1 whose required-check read failed') 'and naming the cause that hit, not both causes as an "or" (#4424)'
+    Assert-True ($r.Out -match 'a rerun reads them the same way') 'with the remedy for a failed read -- a rerun does not help, so it does not say so'
+
+    # --- NOT REPORTED YET is an answer, not a failed read (issue #4424) ---------------------------------
+    Write-Host ''
+    Write-Host 'check-stranded-sweep.ps1 -- "no required checks reported" is judged as pending, never unjudged (#4424)' -ForegroundColor Cyan
+
+    $notReported = New-Tree -Label 'not-reported' -WithFlow
+    $r = Invoke-Check -Dir $notReported -Path "$fakeBin;$prevPath" -Account 'tester' -Repo 'fake/repo' `
+        -PrListJson $OrdinaryPrJson -PrChecksNotReported
+    Assert-True ($r.Code -eq 0 -and $r.Out -match '\[OK\]' -and $r.Out -notmatch '\[INCOMPLETE\]') `
+        'a required check CI has not created yet -- judged (as pending), [OK], no [INCOMPLETE]'
+
+    $nrQuietTs = (Get-Date).ToUniversalTime().AddHours(-5).ToString('yyyy-MM-ddTHH:mm:ssZ')
+    $nrQuietJson = $OrdinaryPrJson -replace '"changedFiles":1\}', "`"changedFiles`":1,`"updatedAt`":`"$nrQuietTs`"}"
+    $notReportedQuiet = New-Tree -Label 'not-reported-quiet' -WithFlow
+    $r = Invoke-Check -Dir $notReportedQuiet -Path "$fakeBin;$prevPath" -Account 'tester' -Repo 'fake/repo' `
+        -PrListJson $nrQuietJson -PrChecksNotReported
+    Assert-True ($r.Out -match '\[STUCK\]' -and $r.Out -match 'no required check has been reported') `
+        'and a required check that never appears in five quiet hours -- [STUCK], saying so (it used to go unjudged forever)'
 
     # --- THE TOTAL BUDGET: a tiny -MaxElapsedSeconds against several armed pull requests (issue #2438) --
     Write-Host ''
@@ -341,6 +368,7 @@ try {
     Assert-True ($r.Out -match '\[INCOMPLETE\]') 'it is reported as [INCOMPLETE] instead'
     Assert-True ($r.Out -match 'judged 0 of 3') 'naming the right judged/total split -- a zero budget judges nothing'
     Assert-True ($r.Out -match '3 not checked') 'and the right unjudged count'
+    Assert-True ($r.Out -match '3 past the 0s scan budget' -and $r.Out -match 'run this again') 'naming the budget as the cause, with the rerun remedy (#4424)'
 
     # --- STUCK: what a ship-pr -HandOff leaves nobody watching (issue #4355) ----------------------------
     Write-Host ''
