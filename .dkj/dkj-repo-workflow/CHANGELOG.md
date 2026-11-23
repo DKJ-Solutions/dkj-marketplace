@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**12 / 12 minor entries** <!-- pending-tally -->
+**12 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4381-ai-radar-judging-notion · 20261123-022200Z
+
+The repo-local `ai-radar` skill and `scripts/dashboard/ai-radar.ps1` are retired: they read the AI radar
+from a `Brains/` folder in the life hub checkout that no longer exists, since the radar moved to Notion. The
+judging half lands as `tip-check` in `dkj-subagents-alpha` (#4382), so this is one step of #4381.
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+Only this repo carried the local skill and script, so nothing a plugin user takes changes.
+
+**Score:** N/A
+
+#### Pull Request
+
+ai-radar: retire the repo-local radar that reads a Brains/ folder
+
+[PR #4391](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4391)
+
+---
 
 ### DEPLOY: feat/4379-dossier-newest-first · 20261123-021017Z
 
