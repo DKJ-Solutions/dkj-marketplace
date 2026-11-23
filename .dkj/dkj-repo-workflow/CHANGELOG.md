@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**16 / 16 minor entries** <!-- pending-tally -->
+**17 / 17 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4428-safe-issue-body-append · 20261123-133515Z
+
+Adding the reach label to an issue that is already filed no longer flattens its body on PowerShell.
+[`report-issue`](../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/skills/report-issue/SKILL.md)
+now has `gh` write the current body to a file, appends the `## Why` section to that file and passes it
+back with `--body-file`, where it used to rebuild the body as a PowerShell string, which joined every
+line with a space. Step 3's Asana link is appended the same way (#4428).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store session that adds the reach label afterwards keeps the issue's headings, paragraphs and
+`filed-with` marker intact, so nobody has to repair the body by hand.
+
+**Score:** 2
+
+#### Pull Request
+
+report-issue appends to an issue body without flattening it on PowerShell
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4433](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4433)
+
+---
 
 ### DEPLOY: fix/4426-reach-test-seo-defects · 20261123-132051Z
 
