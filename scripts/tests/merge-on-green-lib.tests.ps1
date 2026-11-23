@@ -618,23 +618,29 @@ Assert-True ($flowRaw -match 'cancel-in-progress:\s*false') 'an in-flight sweep 
 Write-Host ''
 Write-Host 'Two separate checkouts, neither carrying a persisted token (issue #2437)' -ForegroundColor Cyan
 
-# TWO actions/checkout STEPS, ONE PER TREE -- not one checkout switched in place, which is the exact
-# shape #2338 was measured on.
-$checkoutCount = @([regex]::Matches($flowRaw, 'uses:\s*actions/checkout@')).Count
-Assert-True ($checkoutCount -eq 2) "exactly two actions/checkout steps ($checkoutCount found)"
+# TWO actions/checkout STEPS IN THE SHIP JOB, ONE PER TREE -- not one checkout switched in place, which is
+# the exact shape #2338 was measured on. Since #4440 the pick and the merged-result check are jobs of their
+# own, each with one checkout, so the count is taken on the ship job's block and on the file separately.
+$shipJobMatch = [regex]::Match($flowRaw, '(?ms)^  merge-on-green:\s*\n.*?(?=^  [A-Za-z][\w-]*:\s*$|\z)')
+Assert-True $shipJobMatch.Success 'the ship job (merge-on-green) is found as its own block'
+$shipJob = $shipJobMatch.Value
+$checkoutCount = @([regex]::Matches($shipJob, 'uses:\s*actions/checkout@')).Count
+Assert-True ($checkoutCount -eq 2) "exactly two actions/checkout steps in the ship job ($checkoutCount found)"
+$fileCheckoutCount = @([regex]::Matches($flowRaw, 'uses:\s*actions/checkout@')).Count
+Assert-True ($fileCheckoutCount -eq 4) "four actions/checkout steps in the file: pick, merged-result, and the ship job's two ($fileCheckoutCount found)"
 Assert-True ($flowRaw -match "path:\s*trusted-main") 'the trunk is checked out into its own directory'
 Assert-True ($flowRaw -match "path:\s*pr-branch") 'the PR head is checked out into a SEPARATE directory'
 # NEITHER TREE PERSISTS A CREDENTIAL TO DISK -- both checkouts opt out, so a git config on either tree
 # never carries a static, on-disk copy of any token. Anchored to the start of the LINE so a comment
 # merely discussing "persist-credentials: false" is not counted as a second YAML key.
 $persistFalseCount = @([regex]::Matches($flowRaw, '(?m)^\s+persist-credentials:\s*false\s*$')).Count
-Assert-True ($persistFalseCount -eq 2) "both checkouts set persist-credentials: false ($persistFalseCount found)"
+Assert-True ($persistFalseCount -eq $fileCheckoutCount) "every checkout sets persist-credentials: false ($persistFalseCount of $fileCheckoutCount)"
 Assert-True ($flowRaw -notmatch "with:\s*\n\s*ref:\s*main\s*\n\s*token:") `
     'the trusted-trunk checkout does not pair a static FOLD_PUSH_TOKEN with an on-disk persisted credential'
 # THE PR'S OWN HEAD IS NAMED BY THE PICKER'S OUTPUT, IN A with: FIELD (a parameter to the checkout
 # action, not text folded into a shell body) -- the ${{ }}-in-run: hazard the file's own comments warn
 # about does not apply to a `with:` input.
-Assert-True ($flowRaw -match "ref:\s*\`$\{\{\s*steps\.pick\.outputs\.branch\s*\}\}") `
+Assert-True ($shipJob -match "ref:\s*\`$\{\{\s*needs\.pick\.outputs\.branch\s*\}\}") `
     'the PR branch checkout''s ref: comes from the picker''s own output'
 # THE PUSH CREDENTIAL IS EPHEMERAL (environment-only), not a second persisted one.
 Assert-True ($flowRaw -match 'GIT_CONFIG_COUNT') 'the ship step supplies an ephemeral git credential rather than a second persisted one'
@@ -691,11 +697,39 @@ Write-Host 'Neither checkout step is handed a token: (Tycho #18, item 1)' -Foreg
 # EVERY actions/checkout STEP'S OWN BLOCK, generically -- not just the two named ones above, so a THIRD
 # checkout added later is covered without anyone extending this list.
 $checkoutBlocks = @([regex]::Matches($flowRaw, '(?ms)uses:\s*actions/checkout@.*?(?=\r?\n\s{6}- name:|\z)'))
-Assert-True ($checkoutBlocks.Count -eq 2) "exactly two actions/checkout steps found ($($checkoutBlocks.Count))"
+Assert-True ($checkoutBlocks.Count -eq $fileCheckoutCount) "every actions/checkout step is found as a block ($($checkoutBlocks.Count))"
 foreach ($cb in $checkoutBlocks) {
     $pathMatch = [regex]::Match($cb.Value, 'path:\s*(\S+)')
     $label = if ($pathMatch.Success) { $pathMatch.Groups[1].Value } else { '(unnamed)' }
     Assert-True ($cb.Value -notmatch '(?m)^\s+token:\s') "the '$label' checkout's with: block carries no token: input"
+}
+
+Write-Host ''
+Write-Host 'The merged-result job: token-free, docs-only, and read by the ship only as a verdict (issue #4440)' -ForegroundColor Cyan
+
+$mrJobMatch = [regex]::Match($flowRaw, '(?ms)^  merged-result:\s*\n.*?(?=^  [A-Za-z][\w-]*:\s*$|\z)')
+Assert-True $mrJobMatch.Success 'the merged-result job is found as its own block'
+$mrJob = $mrJobMatch.Value
+# A SEPARATE JOB IS A SEPARATE RUNNER: a step beside the ship could rewrite trusted-main on the shared disk.
+Assert-True ($shipJob -notmatch 'check-plugin-integrity\.ps1|check-always-on-budget\.ps1') 'the ship job runs neither cross-file check itself'
+Assert-True ($mrJob -notmatch 'secrets\.') 'the merged-result job references no secret'
+Assert-True ($mrJob -match '(?m)^    permissions:\s*\n\s+contents: read\s*\n\s+outputs:') 'and its token is narrowed to contents: read and nothing else'
+Assert-True ($mrJob -match '(?m)^    needs: pick\s*$') 'it runs after the pick'
+Assert-True ($mrJob -match 'ref:\s*\$\{\{\s*needs\.pick\.outputs\.sha\s*\}\}') 'it checks out the picked COMMIT, not the branch name'
+Assert-True ($mrJob -match 'PICKED_SHA:\s*\$\{\{\s*needs\.pick\.outputs\.sha\s*\}\}' -and $mrJob -notmatch '(?m)^\s+run:.*\$\{\{') 'the SHA reaches the shell through env:, never through ${{ }} in run:'
+# NOTHING THE PR WROTE AS CODE RUNS: the non-.md refusal comes before the merge and before either check.
+$mdAt = $mrJob.IndexOf("EndsWith('.md'"); $mergeAt = $mrJob.IndexOf('merge --no-edit'); $lintAt = $mrJob.IndexOf('-File scripts/lint/check-plugin-integrity.ps1')
+Assert-True ($mdAt -gt 0 -and $mdAt -lt $mergeAt -and $mergeAt -lt $lintAt) 'a PR touching any non-.md path is answered skip before anything is merged or run'
+Assert-True ($mrJob -match '-File scripts/lint/check-always-on-budget\.ps1') 'and both cross-file checks run on the merged result'
+# A BOM ON THE FIRST KEY WOULD TURN EVERY PASS INTO NO VERDICT: Windows PowerShell's Out-File utf8 writes one.
+Assert-True ($mrJob -notmatch '\|\s*Out-File' -and $mrJob -match 'UTF8Encoding \$false') 'its outputs are written without a BOM'
+Assert-True ($mrJob -match 'verdict=\$Verdict' -and $mrJob -match 'head=\$env:PICKED_SHA' -and $mrJob -match 'main=\$main') 'it hands over the verdict and the SHA pair it was reached on'
+
+Assert-True ($shipJob -match '(?m)^    needs: \[pick, merged-result\]\s*$') 'the ship job waits for both'
+Assert-True ($shipJob -match '(?m)^    if: \$\{\{ !cancelled\(\) && needs\.pick\.result == ''success'' && needs\.pick\.outputs\.picked == ''true'' \}\}\s*$') `
+    'and is not held by a failed or skipped merged-result job -- no verdict is a lap, not a stalled merge'
+foreach ($k in @('verdict', 'head', 'main')) {
+    Assert-True ($shipStep -match ("DKJ_MERGED_RESULT_$($k.ToUpper()):\s*\`$\{\{\s*needs\.merged-result\.outputs\.$k\s*\}\}")) "the Ship it step hands ship-pr the merged-result $k through env:"
 }
 
 Write-Host ''

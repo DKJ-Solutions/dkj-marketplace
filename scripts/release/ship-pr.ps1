@@ -350,7 +350,8 @@
     ONE FURTHER DISCOUNT (#4432). A PR whose own diff is docs-only (every path ends in .md) and shares no
     file with the non-fold commits 'main' gained keeps its certificate without a lap, once
     check-plugin-integrity and check-always-on-budget pass on a local merge of 'main' into the PR head
-    (throwaway worktree). Anything else falls through to the lap.
+    (throwaway worktree). Anything else falls through to the lap. Under -TrustedRoot those checks are not
+    run here: merge-on-green.yml's token-free job runs them and this run reads its verdict (#4440).
 
     0 RESTORES THE OLD BEHAVIOUR -- refuse on the first stale reading and print the remedy -- and the
     refusal then says so, rather than implying the laps ran out.
@@ -1997,7 +1998,8 @@ function Invoke-MergedResultChecks {
 
     # NEVER UNDER -TrustedRoot (#2452). This spawns scripts from a tree built out of the PR head -- what the
     # lint gate already does in a session's own checkout, and exactly what the token-bearing unattended run
-    # must not do. There the discount is off and the lap applies; step 3b asks first, this is the backstop.
+    # must not do. There step 3b reads merge-on-green.yml's token-free verdict instead (#4440) and never
+    # calls this; the return below is the backstop.
     if ($TrustedRoot) { return [pscustomobject]@{ Passed = $false; Reason = 'an unattended (-TrustedRoot) run does not run the merged-result checks (#2452)' } }
 
     $wt = Join-Path ([System.IO.Path]::GetTempPath()) ('ship-pr-merged-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
@@ -3286,9 +3288,14 @@ certificate anyway.
             # ~10 min of CI; check-plugin-integrity is ~2 min measured (114 s on 2026-11-23). Under merge-on-green
             # five of seven armed PRs were docs-only and each paid a lap after every other merge. Anything that
             # fails or cannot run falls through to the lap/refusal below unchanged.
-            if ($staleVerdict.Stale -and $TrustedRoot) {
-                Write-Host "  stale-CI check: the docs-only discount (issue #4432) does not apply to an unattended -TrustedRoot run (#2452) -- the normal forward lap applies." -ForegroundColor DarkGray
-            } elseif ($staleVerdict.Stale) {
+            #
+            # UNDER -TrustedRoot THE CHECKS ARE NOT RUN HERE, THEY ARE READ (issue #4440). The token-bearing
+            # unattended process must not spawn the merged tree's scripts (#2452), so merge-on-green.yml runs
+            # them in a separate job that holds no token and hands over a verdict through three DKJ_MERGED_RESULT_*
+            # variables. The eligibility read stays here, in the trusted code, so a verdict can only ever discount
+            # a PR this run itself judged docs-only and disjoint; and Test-MergedResultVerdict accepts it only for
+            # this exact PR head and this exact 'main' tip. No verdict (a consumer runner, a skipped job) is a lap.
+            if ($staleVerdict.Stale) {
                 $docsSkipNow = (@($staleVerdict.Commits) -join ',')
                 if ($docsSkipKey -ne $docsSkipNow) {
                     $docsSkipKey = $docsSkipNow
@@ -3296,6 +3303,12 @@ certificate anyway.
                     $docsElig = Get-DisjointDocsVerdict -Pr "$pr" -Commits @($staleVerdict.Commits)
                     if (-not $docsElig.Eligible) {
                         $docsSkipResult.Reason = "not eligible for the docs-only discount -- $($docsElig.Reason)"
+                    } elseif ($TrustedRoot) {
+                        $mainTipRead = Invoke-NativeCapture -FilePath 'git' -DiscardStderr -Arguments @('rev-parse', 'origin/main')
+                        $mainTip = if ($mainTipRead.ExitCode -eq 0) { "$(@($mainTipRead.Output | Where-Object { $_ -and "$_".Trim() }) | Select-Object -First 1)".Trim() } else { '' }
+                        $handed = Test-MergedResultVerdict -Verdict "$env:DKJ_MERGED_RESULT_VERDICT" -VerdictHead "$env:DKJ_MERGED_RESULT_HEAD" `
+                            -VerdictMain "$env:DKJ_MERGED_RESULT_MAIN" -HeadSha $docsElig.HeadSha -MainSha $mainTip
+                        if ($handed.Passed) { $docsSkipResult.Skip = $true } else { $docsSkipResult.Reason = "$($handed.Reason) (unattended run, issue #4440)" }
                     } else {
                         Write-Host "  stale-CI check: docs-only PR, disjoint from the $($staleVerdict.Count) gained commit(s) -- running the cross-file checks on the merged result (issue #4432)..." -ForegroundColor DarkGray
                         $docsChecks = Invoke-MergedResultChecks -HeadSha $docsElig.HeadSha

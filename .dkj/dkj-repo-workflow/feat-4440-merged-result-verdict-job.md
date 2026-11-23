@@ -39,19 +39,55 @@
 
 ### PLAN
 
+Issue #4440, decision (a) by the owner: give the unattended merge-on-green run (`-TrustedRoot`) the #4432
+docs-only lap discount by running the two cross-file checks in a separate, token-free job of
+`merge-on-green.yml`, and let ship-pr read only its verdict.
+
+#### Why a separate JOB, not a step
+
+A step in the ship job would share the runner disk with `trusted-main`, so code it ran could rewrite the
+scripts the token-bearing step runs next. A job is its own virtual machine, so the pick moves into its own
+job and both later jobs read it through `needs:`.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `merge-on-green.yml`: three jobs before the redispatch -- `pick`, `merged-result` (no secret,
+  `contents: read`, Windows like the CI lint leg; answers `skip` for any non-`.md` path before merging or
+  running anything, else merges `origin/main` and runs both checks, then writes verdict + head + main
+  without a BOM), and the ship job, which waits for both but is not held by a failed or skipped
+  `merged-result`
+- [x] `Test-MergedResultVerdict` in `pr-issues-lib.ps1` (pure, fails closed: only `pass`, only 40-hex
+  SHAs, only the exact head and `main` tip)
+- [x] ship-pr step 3b: under `-TrustedRoot`, keep the trusted eligibility read and accept the handed-over
+  verdict instead of skipping the discount outright; `Invoke-MergedResultChecks` stays unreachable there
+- [x] ship-pr SKILL.md paragraph on the unattended half
 
 ### TEST
 
+- [x] `pr-issues.tests.ps1`: 13 asserts on `Test-MergedResultVerdict` plus the step 3b wiring
+- [x] `merge-on-green-lib.tests.ps1`: the #2338 two-checkout guard rescoped to the ship job; new guards
+  that the merged-result job holds no secret, checks out the picked SHA, refuses non-`.md` before merging,
+  writes no BOM, and that the ship step receives the three values through `env:` (371 pass)
+- [x] Proved the merged-result step's body for real, extracted verbatim from the YAML: on a docs-only
+  commit three behind `main` it merged and both checks passed (`verdict=pass`, correct SHAs); on a commit
+  touching `scripts/repo-config.ps1` it answered `skip` before running anything. That run caught a BOM
+  from `Out-File -Encoding utf8` that would have turned every pass into no verdict.
+- [x] native-capture and trusted-tree-seam suites unchanged and green
+
 ### DEPLOY: feat/4440-merged-result-verdict-job
 
-**Score:**
+The unattended merge-on-green run now gets the #4432 docs-only lap discount too. `merge-on-green.yml`
+picks in its own job, then runs `check-plugin-integrity` and `check-always-on-budget` on `main` merged
+into the picked head in a separate job that holds no token and never runs a PR's non-Markdown change. The
+ship job hands that job's verdict to ship-pr, and step 3b under `-TrustedRoot` accepts it only for a PR
+its own trusted code judged docs-only and disjoint, and only for the exact head and `main` tip the
+verdict names. No verdict, a failed check or a moved `main` is the ordinary forward lap. A consumer's
+runner has no such job, so nothing changes there. (#4440)
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A
 
-#### Pull Request
-
+**Score:** 0
