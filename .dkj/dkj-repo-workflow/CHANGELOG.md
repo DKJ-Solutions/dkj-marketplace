@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**12 / 12 minor entries** <!-- pending-tally -->
+**13 / 13 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4415-tip-check-manual-outcome · 20261123-123536Z
+
+`tip-check` now weighs sharpening an existing specialist's manual as an outcome. A tip that adds a
+better question or habit to a manual is a Build of a manual line, not a Skip (#4415).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A tip that improves how a specialist already works is no longer thrown away as "we have it". It
+comes back as a concrete manual line to file.
+
+**Score:** 2
+
+#### Pull Request
+
+tip-check: sharpening an existing manual is an outcome too
+
+Plugins: dkj-subagents-alpha
+
+[PR #4421](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4421)
+
+---
 
 ### DEPLOY: docs/4414-paula-stop-doing · 20261123-122049Z
 
