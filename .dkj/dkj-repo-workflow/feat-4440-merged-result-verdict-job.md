@@ -97,4 +97,4 @@ runner has no such job, so nothing changes there. (#4440)
 
 N/A
 
-**Score:** 0
+**Score:** N/A
