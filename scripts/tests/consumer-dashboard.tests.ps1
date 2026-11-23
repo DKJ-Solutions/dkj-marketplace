@@ -525,7 +525,13 @@ if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT -a
             # timed from here on CI, so a run says which step is slow. Removed again once #3932 names the cause.
             $overviewPage = if ($up) { Get-Raw 'GET' '/consumers' "localhost:$port3" '' $port3 -TimeoutMs 90000 } else { '' }
             $overviewWhy = $script:RawWhy
+            # The server times each step it ran into a Server-Timing header, which names the slow one (#3932).
+            $pageTiming = if ($page -match '(?m)^Server-Timing: ([^\r\n]*)') { $Matches[1] } else { '(none)' }
+            $overviewTiming = if ($overviewPage -match '(?m)^Server-Timing: ([^\r\n]*)') { $Matches[1] } else { '(none)' }
             Write-Host "  [TIMING #3932] $overviewWhy"
+            Write-Host "  [TIMING #3932] server steps: /consumers/other $pageTiming; /consumers $overviewTiming"
+            Assert-True ($overviewTiming -match '(^|, )gh;dur=\d+, scan;dur=\d+, cards;dur=\d+, page;dur=\d+$') 'the overview names each step it ran and its time in a Server-Timing header (#3932)' $overviewTiming
+            Assert-True ($pageTiming -match '^register;dur=\d+, page;dur=\d+$') 'and a group page names the register read it ran first' $pageTiming
             if ($env:CI) {
                 $gs = [Diagnostics.Stopwatch]::StartNew()
                 $null = & gh api graphql -f 'query=query { viewer { login } }' 2>&1; $ghExit = $LASTEXITCODE

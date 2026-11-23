@@ -39,19 +39,35 @@
 
 ### PLAN
 
+#3932: on CI the Consumers overview took 13 s (once past the 15 s receive timeout) where it takes about 0.1 s
+locally, and the external calls timed from the test process were cheap. Only the server can say which of its
+steps spent the time, so it now says so per request.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-DkjReposModel` times the GitHub read and the checkout scan apart, in its Meta (`GhMs`, `ScanMs`)
+- [x] the `/consumers` routes send a `Server-Timing` header naming each step that request ran: register, gh, scan, cards, page
+- [x] `consumer-dashboard.tests.ps1` prints both pages' Server-Timing on its `[TIMING #3932]` line and asserts the header's shape
 
 ### TEST
 
+- [x] `consumer-dashboard.tests.ps1` locally: 257 passed, 0 failed; locally `gh;dur=1083` of a 1199 ms overview
+- [x] lint + all suites via `open-pr.ps1`
+
 ### DEPLOY: fix/3932-overview-server-timing
 
-**Score:**
+The product's Consumers pages now send a `Server-Timing` header naming each step a request ran and how long it
+took: the register check, the GitHub read, the checkout scan, the cards and the page. The page itself does not
+change. The group-3 test prints it on its `[TIMING #3932]` line, so the next CI run of
+`consumer-dashboard.tests.ps1` says which step made the overview take 13 s on CI (#3932).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: a diagnostic header on a local developer page, read by this repo's own test.
+
+**Score:** N/A
 
 #### Pull Request
 
