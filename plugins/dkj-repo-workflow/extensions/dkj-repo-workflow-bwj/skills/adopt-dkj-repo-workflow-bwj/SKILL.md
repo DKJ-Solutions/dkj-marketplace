@@ -242,6 +242,12 @@ function Get-AsanaPrioFieldGid { $null }
 # unassigned. A colleague's existing task that report-issue moves keeps its own assignee.
 function Get-AsanaDefaultAssignee { $null }
 
+# Who follows a task report-issue CREATES when the finding touches an area (#4442), so the colleague who
+# owns that area sees it from the start. A hashtable keyed seo / ux / cro, each value one Asana user GID
+# or an array of GIDs; an area left out adds nobody. Optional: $null (the default) adds no followers.
+# Example: @{ seo = '1200000000000001'; cro = @('1200000000000001', '1200000000000002') }
+function Get-AsanaReviewFollowers { $null }
+
 # The NAME GitHub stores for the reach label. The axis itself is fixed and portable -- defined in
 # RELEASES-portable.md -- and only the string is this repo's to choose. Optional: 'minor' is the
 # default, so a store whose label is already called that never writes this function at all. Answer it

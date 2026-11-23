@@ -45,6 +45,9 @@ rather than by this page**: the reach-label gate in step 2 below. The full rule 
   (#4054). Optional, `$null` by default, and then step 2 sets no score.
 - Read `Get-AsanaDefaultAssignee` from the same file too -- the user GID a task this procedure
   creates is assigned to. Optional, `$null` by default, and then step 2 assigns nobody.
+- Read `Get-AsanaReviewFollowers` from the same file too -- a hashtable keyed `seo`, `ux`, `cro`, each
+  value one user GID or an array of them (#4442). Optional, `$null` by default, and then step 1 judges
+  no area and step 2 adds no followers.
 - Read **`Get-ReachLabel`** from the same file -- **the name GitHub stores for the reach label**, which
   every command below writes rather than a literal. Optional, and `minor` is the default since
   [#1870](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/1870) -- which is a CHANGE of
@@ -128,6 +131,16 @@ label on an admitted repo while the body the call leaves has no such section. It
 body, it lets the call through with a warning. What slips past it is named at the next session start:
 `closed-message-sessioncheck` lists the open issues that carry the reach label with no such section
 ([#4230](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4230)).
+
+**Where `Get-AsanaReviewFollowers` is answered, also judge the area here** (#4442), so step 2 uses it
+one step old and never re-reads it. Zero, one or several apply; the finding touches:
+
+- **`seo`** -- search, navigation, the home page, product or collection templates, page titles, meta,
+  structured data, URLs or indexability.
+- **`ux`** and **`cro`** -- checkout or cart flow, or something customer-facing met on every visit
+  (the header, the home page, search, navigation). These usually come together.
+
+It is a judgement, so it is not a label and no guard checks it. Where the seam is `$null`, judge nothing.
 
 **Never set `CRO`.** That label was retired on October 7, 2026
 ([#2869](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2869)): an issue raised by the CRO
@@ -314,6 +327,14 @@ assignee had to be assigned by hand afterwards, and the owner asked for every ne
 him. **It applies only to a task this procedure creates.** A colleague's own ticket moved into `Filed`
 below keeps the assignee it has, because reassigning it takes the ticket off the desk of the person
 who filed it. Where the seam is `$null` -- the default -- assign nobody and say nothing.
+
+**Where `Get-AsanaReviewFollowers` returns a hashtable and step 1 named one or more areas, pass the union
+of those areas' GIDs, deduplicated, as `followers` (a comma-separated string) on the same `create task`
+call** (#4442), so the colleague who owns SEO or CRO is on the card before anything goes live. An area
+the hashtable leaves out adds nobody. **It applies only to a task this procedure creates**: a ticket that
+came from Asana keeps the followers it has. `guard-asana-mirror` does not check it, because the area is a
+judgement a guard cannot verify. Followers see the task early; nothing waits for their OK. Where the seam
+is `$null` -- the default -- add nobody and say nothing.
 
 **Put it straight into the `Filed` section** -- the board's sections are the cycle's stages, and
 `Filed` means *tracked on GitHub now*. Read `Get-AsanaStageMap` from `scripts/repo-config.ps1` for the

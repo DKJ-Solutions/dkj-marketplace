@@ -389,6 +389,12 @@ skill needs to know which workspace and project a mirrored task lands in:
   ([#2877](https://github.com/DKJ-Solutions/dkj-claude-plugins/issues/2877)). **Optional**, `$null` by
   default, which creates the task unassigned. A colleague's own task that the procedure moves keeps
   its assignee.
+- `Get-AsanaReviewFollowers` -- a hashtable keyed by area (`seo`, `ux`, `cro`), each value one Asana user
+  GID or an array of them, so the colleague who owns an area is a follower of a task `report-issue`
+  **creates** from the start, when the finding touches that area
+  ([#4442](https://github.com/DKJ-Solutions/dkj-marketplace/issues/4442)). **Optional**, `$null` by
+  default, which adds nobody; an area the map leaves out adds nobody. Followers only make sure the
+  colleague sees it early: the build does not wait for their OK. A colleague's own task keeps its followers.
 - `Get-ReachLabel` -- **the name GitHub stores for the reach label**, and the one function in this list
   that says nothing about Asana. The axis it carries is fixed and portable, defined for every repo running this workflow in
   [`RELEASES-portable.md`](https://github.com/DKJ-Solutions/dkj-marketplace/blob/main/plugins/dkj-repo-workflow/RELEASES-portable.md#the-same-scale-on-an-issue--the-reach-label)
