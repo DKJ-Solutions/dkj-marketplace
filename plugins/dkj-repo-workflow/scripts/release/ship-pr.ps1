@@ -347,6 +347,11 @@
     genuinely fresh, by re-testing this branch against the trunk as it now stands. -SkipStaleCheck is
     still the only way to merge on an old certificate.
 
+    ONE FURTHER DISCOUNT (#4432). A PR whose own diff is docs-only (every path ends in .md) and shares no
+    file with the non-fold commits 'main' gained keeps its certificate without a lap, once
+    check-plugin-integrity and check-always-on-budget pass on a local merge of 'main' into the PR head
+    (throwaway worktree). Anything else falls through to the lap.
+
     0 RESTORES THE OLD BEHAVIOUR -- refuse on the first stale reading and print the remedy -- and the
     refusal then says so, rather than implying the laps ran out.
 
@@ -1924,6 +1929,114 @@ function Get-FoldExemptCommits {
     return $exempt
 }
 
+function Get-DisjointDocsVerdict {
+    <#
+    .SYNOPSIS
+        Issue #4432's eligibility read: is the PR docs-only AND disjoint from the files the COUNTED gained
+        commits changed? Returns Eligible, Reason and HeadSha. Reads git only; fails closed (not eligible).
+
+    .DESCRIPTION
+        THE GIT HALF OF Test-DisjointDocsOnlyCertificate, which holds the decision. Shared by step 3a (this
+        alone, no local checks) and step 3b (this, then Invoke-MergedResultChecks), so the two cannot
+        answer differently -- the same reason Get-FoldExemptCommits is lifted out. The PR head is read from
+        GitHub's own pull ref, which is the head the certificate and the merge are about.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][string]$Pr,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$Commits
+    )
+
+    $no = { param($why) [pscustomobject]@{ Eligible = $false; Reason = $why; HeadSha = '' } }
+    try {
+        if (@($Commits).Count -eq 0) { return (& $no 'no counted commits to compare') }
+        $fetchHead = Invoke-NativeCapture -FilePath 'git' -DiscardStderr -Arguments @('fetch', 'origin', "refs/pull/$Pr/head", '--quiet')
+        if ($fetchHead.ExitCode -ne 0) { return (& $no 'the PR head could not be fetched') }
+        $headRead = Invoke-NativeCapture -FilePath 'git' -DiscardStderr -Arguments @('rev-parse', 'FETCH_HEAD')
+        $head = @($headRead.Output | Where-Object { $_ -and "$_".Trim() }) | Select-Object -First 1
+        if ($headRead.ExitCode -ne 0 -or -not $head) { return (& $no 'the PR head could not be resolved') }
+        $head = "$head".Trim()
+        $baseRead = Invoke-NativeCapture -FilePath 'git' -DiscardStderr -Arguments @('merge-base', 'origin/main', $head)
+        $base = @($baseRead.Output | Where-Object { $_ -and "$_".Trim() }) | Select-Object -First 1
+        if ($baseRead.ExitCode -ne 0 -or -not $base) { return (& $no 'no merge base with origin/main') }
+
+        # -Utf8: these paths are DATA that get compared (issue #907). -M so a rename names both sides.
+        $prDiff = Invoke-NativeCapture -Utf8 -FilePath 'git' -DiscardStderr -Arguments @('-c', 'core.quotePath=false', 'diff', '--name-status', '-M', "$base".Trim(), $head)
+        if (-not (Test-NativeExitMeasured -Capture $prDiff) -or $prDiff.ExitCode -ne 0) { return (& $no 'the PR diff could not be read') }
+        $prPaths = @(Get-NameStatusPaths -Lines @($prDiff.Output))
+
+        # PER COMMIT AGAINST ITS FIRST PARENT, not `git show`: a merge commit shows an EMPTY diff there, and
+        # an empty read must never look like "touches nothing". A commit that will not read ends it all.
+        $gainedPaths = @()
+        foreach ($sha in $Commits) {
+            $one = "$sha".Trim()
+            $d = Invoke-NativeCapture -Utf8 -FilePath 'git' -DiscardStderr -Arguments @('-c', 'core.quotePath=false', 'diff', '--name-status', '-M', "$one^1", $one)
+            if (-not (Test-NativeExitMeasured -Capture $d) -or $d.ExitCode -ne 0) { return (& $no "the diff of gained commit $one could not be read") }
+            $gainedPaths += @(Get-NameStatusPaths -Lines @($d.Output))
+        }
+        $v = Test-DisjointDocsOnlyCertificate -PrPaths $prPaths -GainedPaths $gainedPaths
+        return [pscustomobject]@{ Eligible = [bool]$v.Eligible; Reason = [string]$v.Reason; HeadSha = $head }
+    } catch {
+        return (& $no 'the eligibility read failed')
+    }
+}
+
+function Invoke-MergedResultChecks {
+    <#
+    .SYNOPSIS
+        Issue #4432: merge origin/main into the PR head in a throwaway detached worktree and run the cheap
+        cross-file checks there. Returns Passed and Reason. Anything that cannot run is NOT passed.
+
+    .DESCRIPTION
+        WHY LOCAL: a docs-only PR that shares no file with the gained commits can still break a link INTO a
+        file they moved, or tip the always-on budget -- exactly what the CI lap would have caught. Those two
+        checks are the cross-file ones; check-plugin-integrity takes ~2 minutes measured locally (114 s on
+        2026-11-23), still far below a ~10 min CI lap. Both report failure by exit code (0 / 1).
+        The worktree is always removed, in the finally.
+    #>
+    param([Parameter(Mandatory = $true)][string]$HeadSha)
+
+    # NEVER UNDER -TrustedRoot (#2452). This spawns scripts from a tree built out of the PR head -- what the
+    # lint gate already does in a session's own checkout, and exactly what the token-bearing unattended run
+    # must not do. There the discount is off and the lap applies; step 3b asks first, this is the backstop.
+    if ($TrustedRoot) { return [pscustomobject]@{ Passed = $false; Reason = 'an unattended (-TrustedRoot) run does not run the merged-result checks (#2452)' } }
+
+    $wt = Join-Path ([System.IO.Path]::GetTempPath()) ('ship-pr-merged-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+    $priorCwd = [Environment]::CurrentDirectory
+    try {
+        $add = Invoke-NativeCapture -FilePath 'git' -DiscardStderr -Arguments @('worktree', 'add', '--detach', $wt, $HeadSha)
+        if ($add.ExitCode -ne 0) { return [pscustomobject]@{ Passed = $false; Reason = 'the throwaway worktree could not be created' } }
+        $merge = Invoke-NativeCapture -FilePath 'git' -DiscardStderr -Arguments @(
+            '-C', $wt, '-c', 'user.name=ship-pr', '-c', 'user.email=ship-pr@localhost', '-c', 'commit.gpgsign=false',
+            'merge', '--no-edit', 'origin/main')
+        if ($merge.ExitCode -ne 0) { return [pscustomobject]@{ Passed = $false; Reason = "origin/main does not merge cleanly into the PR head" } }
+
+        [Environment]::CurrentDirectory = $wt
+        $checks = @(
+            @{ Name = 'check-plugin-integrity'; Args = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $wt 'scripts\lint\check-plugin-integrity.ps1')) },
+            @{ Name = 'check-always-on-budget'; Args = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $wt 'scripts\lint\check-always-on-budget.ps1'), '-RootOverride', $wt) }
+        )
+        foreach ($c in $checks) {
+            $r = Invoke-NativeCapture -FilePath 'powershell' -DiscardStderr -TimeoutSeconds 900 -Arguments @($c.Args)
+            if ($r.TimedOut -or -not (Test-NativeExitMeasured -Capture $r) -or $r.ExitCode -ne 0) {
+                @($r.Output) | Where-Object { $_ -and "$_".Trim() } | Select-Object -Last 4 | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray }
+                return [pscustomobject]@{ Passed = $false; Reason = "$($c.Name) did not pass on the merged result" }
+            }
+        }
+        return [pscustomobject]@{ Passed = $true; Reason = '' }
+    } catch {
+        return [pscustomobject]@{ Passed = $false; Reason = 'the merged-result checks could not run' }
+    } finally {
+        [Environment]::CurrentDirectory = $priorCwd
+        try {
+            if (Test-Path -LiteralPath $wt) {
+                [void](Invoke-NativeCapture -FilePath 'git' -DiscardStderr -Arguments @('worktree', 'remove', '--force', $wt))
+                if (Test-Path -LiteralPath $wt) { Remove-Item -LiteralPath $wt -Recurse -Force -ErrorAction SilentlyContinue }
+                [void](Invoke-NativeCapture -FilePath 'git' -DiscardStderr -Arguments @('worktree', 'prune'))
+            }
+        } catch { }
+    }
+}
+
 function Get-EarlyStaleReading {
     <#
     .SYNOPSIS
@@ -1943,7 +2056,8 @@ function Get-EarlyStaleReading {
         [AllowEmptyString()][string]$ChecksJson = '',
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$RequiredNames,
         [AllowEmptyString()][string]$LastTrunk = '',
-        [Parameter(Mandatory = $true)][string]$Repo
+        [Parameter(Mandatory = $true)][string]$Repo,
+        [string]$Pr = ''
     )
 
     # A READING THAT COULD NOT BE TAKEN KEEPS -LastTrunk, so the next poll asks again rather than treating
@@ -1985,6 +2099,16 @@ function Get-EarlyStaleReading {
         if ($log.ExitCode -ne 0) { return $moved }
         $gained = @($log.Output | Where-Object { $_ -and "$_".Trim() })
         $verdict = Get-StaleCertificateVerdict -NewMainCommits $gained -ExemptCommits @(Get-FoldExemptCommits -Commits $gained)
+        # ISSUE #4432: THE SECOND DISCOUNT, ELIGIBILITY ONLY. A docs-only PR disjoint from every counted gained
+        # commit is not worth an early forward; step 3b owns the decision (it adds the local cross-file checks
+        # on the merged result, which this poll deliberately does not run). A read that fails leaves $verdict
+        # stale, i.e. the early forward as before.
+        if ($verdict.Stale -and $Pr -and -not $TrustedRoot) {
+            $disjoint = Get-DisjointDocsVerdict -Pr $Pr -Commits @($verdict.Commits)
+            if ($disjoint.Eligible) {
+                $verdict = Get-StaleCertificateVerdict -NewMainCommits $gained -ExemptCommits $gained
+            }
+        }
         return [pscustomobject]@{ Trunk = $tip; RunIds = $runIds; Verdict = $verdict }
     } catch {
         return $none
@@ -2491,7 +2615,7 @@ if (-not $SkipStaleCheck -and $MaxForwardLaps -gt 0 -and $requiredWaitNames.Coun
         $earlyRead = $null
         if ($earlyUnfinished -gt 0) {
             $earlyRead = Get-EarlyStaleReading -ChecksJson $earlyFacts.Checks -RequiredNames $requiredWaitNames `
-                -LastTrunk $earlyLastTrunk -Repo $repo
+                -LastTrunk $earlyLastTrunk -Repo $repo -Pr "$pr"
             $earlyLastTrunk = $earlyRead.Trunk
         }
         $earlyVerdict = if ($earlyRead) { $earlyRead.Verdict } else { $null }
@@ -3038,6 +3162,9 @@ if ($SkipStaleCheck) {
         # $forwardLapsUsed IS NOT RESET HERE: it was set before step 3a, and a lap spent there is one of
         # this budget's.
         $forwardSituation = 'stale'
+        # The #4432 local checks run once per gained-commit set, not once per loop pass (cache key = the SHAs).
+        $docsSkipKey = ''
+        $docsSkipResult = $null
         while ($true) {
             $staleRunIds = @(Get-RequiredCheckRunIds -ChecksJson $checkFactsJson -Names $staleCheckNames)
             if ($staleRunIds.Count -eq 0) {
@@ -3153,6 +3280,35 @@ certificate anyway.
             $staleVerdict = Get-StaleCertificateVerdict -NewMainCommits $newMainCommits -ExemptCommits $foldExemptCommits
             if ($staleVerdict.ExemptCount -gt 0) {
                 Write-Host "  stale-CI check: $($staleVerdict.ExemptCount) of $($newMainCommits.Count) commit(s) 'main' gained are fold commits (changelog + branch document only) -- discounted (issue #1592)." -ForegroundColor DarkGray
+            }
+            # THE SECOND DISCOUNT (issue #4432): a docs-only PR sharing no file with what 'main' gained keeps its
+            # certificate, provided the cheap cross-file checks pass on the MERGED result, run locally. A lap is
+            # ~10 min of CI; check-plugin-integrity is ~2 min measured (114 s on 2026-11-23). Under merge-on-green
+            # five of seven armed PRs were docs-only and each paid a lap after every other merge. Anything that
+            # fails or cannot run falls through to the lap/refusal below unchanged.
+            if ($staleVerdict.Stale -and $TrustedRoot) {
+                Write-Host "  stale-CI check: the docs-only discount (issue #4432) does not apply to an unattended -TrustedRoot run (#2452) -- the normal forward lap applies." -ForegroundColor DarkGray
+            } elseif ($staleVerdict.Stale) {
+                $docsSkipNow = (@($staleVerdict.Commits) -join ',')
+                if ($docsSkipKey -ne $docsSkipNow) {
+                    $docsSkipKey = $docsSkipNow
+                    $docsSkipResult = [pscustomobject]@{ Skip = $false; Reason = '' }
+                    $docsElig = Get-DisjointDocsVerdict -Pr "$pr" -Commits @($staleVerdict.Commits)
+                    if (-not $docsElig.Eligible) {
+                        $docsSkipResult.Reason = "not eligible for the docs-only discount -- $($docsElig.Reason)"
+                    } else {
+                        Write-Host "  stale-CI check: docs-only PR, disjoint from the $($staleVerdict.Count) gained commit(s) -- running the cross-file checks on the merged result (issue #4432)..." -ForegroundColor DarkGray
+                        $docsChecks = Invoke-MergedResultChecks -HeadSha $docsElig.HeadSha
+                        if ($docsChecks.Passed) { $docsSkipResult.Skip = $true } else { $docsSkipResult.Reason = $docsChecks.Reason }
+                    }
+                }
+                if ($docsSkipResult.Skip) {
+                    Write-Host "  stale-CI check: $($staleVerdict.Count) gained commit(s) share no file with this docs-only PR, and the cross-file checks passed on the merged result -- certificate holds without a forward lap (issue #4432)." -ForegroundColor DarkGray
+                    break
+                }
+                if ($docsSkipResult.Reason) {
+                    Write-Host "  stale-CI check: $($docsSkipResult.Reason) -- the normal forward lap applies." -ForegroundColor DarkGray
+                }
             }
             if ($staleVerdict.Stale) {
                 # SUBSTRING GUARDED BY LENGTH, not assumed. -DiscardStderr above makes a non-SHA line in
