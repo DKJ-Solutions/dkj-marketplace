@@ -39,19 +39,39 @@
 
 ### PLAN
 
+Inbound #4401: `sync-main -ReconcileBase` reported "changes no file" while its restore commit re-normalised
+a CRLF blob to LF. Verified cause: the restore ran `git checkout <trunk> -- <paths>` (blobs into the index
+verbatim) and then `git commit -- <paths>`, which re-stages those paths from the working copy through the
+clean filter -- under `core.autocrlf=true` a CRLF blob comes back as LF.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `scripts/task/sync-main.ps1` (and its plugin mirror): the restore commits the index with no pathspec
+  (the tree is held clean before the write, so the index holds only these paths), then asserts
+  `git diff --quiet <trunk> HEAD` and refuses to push a branch that would change a file.
+- [x] `scripts/tests/sync-main.tests.ps1`: a `recbase/crlf` case -- a CRLF blob committed with autocrlf off,
+  the run with it on; red on the old script, green on the new.
 
 ### TEST
 
+- [x] `sync-main.tests.ps1` standalone: the new assert failed on the old script (1 of 197) and passes on the fix.
+
 ### DEPLOY: fix/4401-reconcile-base-crlf
 
-**Score:**
+`sync-main -ReconcileBase` now restores the trunk's blobs byte for byte: its "put the trunk content back"
+commit no longer re-stages the paths through the working copy, so a file stored with CRLF in a repo with
+`core.autocrlf=true` and no `.gitattributes` stops coming back as LF. The run also checks that the
+branch's tree equals the trunk's before it pushes, so "changes no file" is measured rather than assumed
+(#4401).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A Shopify store's maintainer running `-ReconcileBase` on Windows no longer gets a whole-file
+line-ending diff on the trunk from a branch that claims to change nothing.
+
+**Score:** 2
 
 #### Pull Request
 
