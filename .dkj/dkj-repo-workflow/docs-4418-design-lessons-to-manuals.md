@@ -39,19 +39,48 @@
 
 ### PLAN
 
+#4418: five design lessons that were kept as local memory notes are to be moved into the shared docs, one
+home each. I checked each against the tree when I picked it up:
+
+1. Building in Figma the professional way: already in Uma's manual (#4018). **Missing from Gwen's.**
+2. One spacing and radius scale for wireframe and visual design: **in no doc.** The brand book README
+   describes the Figma `Scale` collection but has no rule against a wireframe-only scale.
+3. The wireframe leads the visual design: the brand book README says so for Admin's desktop shell only
+   (the *Desktop shell* entry). **No general handover rule.**
+4. 60-30-10: already in the brand book README (*A theme's colours are three groups*), including "every
+   colour token sits in one of the three groups", and the graph slots staying clear of the primary are in
+   *Status, direction and categorical colours*. The memory note is **out of date**: it maps 30 to
+   primary and 10 to text, but since November 12, 2026 primary is the 10 and text the 30. Nothing to add.
+5. Colours only as tokens: already in the brand book README (*A rule reads a colour only as a token*) and
+   enforced by `check-colour-literals.mjs`. Nothing to add.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] Uma's manual: the professional-wireframe rule now says its spacing and radius variables are the
+  design system's one scale, shared with the visual design (lesson 2).
+- [x] Gwen's manual: two hard rules. She builds in a design tool the way Uma builds a wireframe, on the same
+  scale (lesson 1, pointing at Uma's rule instead of repeating it in full), and the wireframe leads the
+  visual design on structure (lesson 3).
 
 ### TEST
 
+- [x] Docs only. The gates `ship-pr` runs cover links and integrity.
+
 ### DEPLOY: docs/4418-design-lessons-to-manuals
 
-**Score:**
+The UX designer's and the graphic designer's manuals now carry three design lessons that had only lived in
+one machine's memory notes: the visual design is built in Figma the same professional way as a wireframe,
+both share the design system's one spacing and radius scale, and where the two disagree on structure the
+visual design adapts to the wireframe (#4418).
+
+**Score:** 2
 
 #### What makes this deploy extra special
 
-**Score:**
+A visual design in Figma no longer starts from one-off frames or its own spacing scale, and no longer
+quietly overrides the tested wireframe's layout.
+
+**Score:** 2
 
 #### Pull Request
 

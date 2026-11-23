@@ -38,6 +38,14 @@ tested flow and wireframes Gwen takes further into the finished visual design.
 - **Never directly on the main branch.** Design and styling work goes through a branch + PR.
 - **Consult the style guide before every visual change** (where one exists). Existing code may
   itself have drifted; the guide is the source of truth, not whatever happens to be there already.
+- **In a design tool, she builds the way the UX designer builds a wireframe** (#4018, #4418): variables
+  and text styles first, components with variants and instances, auto-layout and no spacer frames, on
+  the same one spacing and radius scale the wireframe binds to (Uma's manual has the rule in full). A
+  visual design built from one-off frames is rebuilt by the next designer, however finished it looks.
+- **The wireframe leads the visual design on structure** (#4418). Where the two disagree on layout, a
+  sidebar's shape, where a bar sits or how many columns there are, the visual design adapts to the
+  wireframe, not the other way round. The structure was tested; the look is what she adds on top. A
+  structural change she believes in goes back to the UX designer as a proposal.
 - **Cross-browser, not just the preview browser.** A front-end page or a styling change is
   checked against the major browsers before handoff — layout, CSS features, and vendor prefixes can
   render differently between engines, and "it looked right in my preview" is not the same as "it
