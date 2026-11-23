@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**19 / 20 minor entries** <!-- pending-tally -->
+**20 / 21 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4442-asana-review-followers · 20261123-143125Z
+
+`report-issue` can now put the colleague who owns SEO, UX or CRO on a mirrored Asana task from the
+moment it is created, when the finding touches their area. A new optional seam in
+`scripts/repo-config.ps1`, `Get-AsanaReviewFollowers`, maps `seo`, `ux` and `cro` to Asana user
+GIDs; step 1 judges which areas a finding touches and step 2 passes those users as `followers` on the
+same `create task` call. Left at `$null`, nothing changes.
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+For a store team, a change to search, navigation, templates or checkout now reaches the SEO/CRO owner
+before it is built rather than after it is live, once the seam is answered.
+
+**Score:** 3
+
+#### Pull Request
+
+report-issue: add the SEO/UX/CRO reviewer as a follower on the Asana task when a finding touches their area
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4443](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4443)
+
+---
 
 ### DEPLOY: feat/4432-disjoint-docs-skip-lap · 20261123-141728Z
 
