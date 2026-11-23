@@ -2,7 +2,33 @@
 
 ## [Unreleased]
 
-**3 / 3 minor entries** <!-- pending-tally -->
+**4 / 4 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4417-deliverable-done-check · 20261123-102338Z
+
+The UX designer, graphic designer, long-form writer, project planner and data analyst now each have a
+"What finished looks like" list in their manual, per kind of job, and check their deliverable against it
+before handing it back; an item they could not meet is named as open in the handback (#4417).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A wireframe, page, draft, plan or dashboard from one of these five specialists arrives self-checked, so
+the first look at it is no longer where a missing flow, an unsourced claim or an invented deadline is
+found (as with the first wireframe in #4002).
+
+**Score:** 2
+
+#### Pull Request
+
+Producing specialists check their deliverable against a "what finished looks like" list
+
+Plugins: dkj-subagents-alpha
+
+[PR #4423](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4423)
+
+---
 
 ### DEPLOY: fix/4403-cut-release-backflow-merges · 20261123-101305Z
 
