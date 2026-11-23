@@ -998,6 +998,34 @@ function Get-ShopifyLiveDeployBranch { return 'live' }
     # Degraded, the push cannot be read, so the marker alone no longer authorises it.
     Assert-Equal 2 (Invoke-DegradedGuard -Command "$push --only assets/x.css $mk" -Root $m).Code 'no lib: an authorised live push is refused -- what it carries cannot be read'
 
+    # --- rule 6: the go-live command (#4402) -----------------------------------------------------------
+    # One marker on the go-live line authorises the whole release; without it the line is refused, in a
+    # Git-connected repo and in one with no seams at all. Naming the file in a text tool is not running it.
+    Write-Host "rule 6 -- the go-live command (#4402)" -ForegroundColor Cyan
+    $gl = 'powershell -NoProfile -ExecutionPolicy Bypass -File "C:/x/dkj-repo-workflow-bwj/7.4.0/scripts/task/go-live.ps1" -Version 3.2.0 -AppDeploy'
+    $bare = New-FixtureRepo -Label 'golive-bare'
+    foreach ($root in @($conn, $bare)) {
+        $label = if ($root -eq $conn) { 'connected' } else { 'no seams' }
+        Assert-Equal 2 (Invoke-Guard -Command $gl -Root $root) "go-live ($label): refused without the marker"
+        Assert-Equal 0 (Invoke-Guard -Command "$gl # SWB-LIVE-PUSH-AUTHORIZED" -Root $root) "go-live ($label): allowed with the marker on the line"
+    }
+    $glBlocked = @(
+        @{ n = 'a call operator and a quoted path'; c = "& 'C:\x\scripts\task\go-live.ps1' -Version 3.2.0 -SkipAppDeploy" },
+        @{ n = 'a relative path';                    c = '.\scripts\task\go-live.ps1 -Version 3.2.0' },
+        @{ n = 'after a semicolon';                  c = "cd C:\repo; $gl" },
+        @{ n = 'inside a bash -c wrapper';           c = "bash -c `"$($gl -replace '"', '')`"" }
+    )
+    foreach ($case in $glBlocked) { Assert-Equal 2 (Invoke-Guard -Command $case.c -Root $conn) "go-live blocked: $($case.n)" }
+    $glMentions = @(
+        @{ n = 'reading the script';          c = 'Get-Content scripts/task/go-live.ps1' },
+        @{ n = 'grepping for it';             c = 'grep -n Stop-GoLive go-live.ps1' },
+        @{ n = 'staging it in git';           c = 'git add plugins/x/scripts/task/go-live.ps1' },
+        @{ n = 'a heredoc body naming it';    c = "cat > notes.md <<'EOF'${LF}run go-live.ps1 -AppDeploy${LF}EOF" },
+        @{ n = 'a different script name';     c = 'powershell -File scripts/task/go-live-check.ps1' }
+    )
+    foreach ($case in $glMentions) { Assert-Equal 0 (Invoke-Guard -Command $case.c -Root $conn) "go-live mention passes: $($case.n)" }
+    Assert-True ((Get-GuardRefusal -Command $gl -Root $conn) -match '-AppDeploy or -SkipAppDeploy') 'go-live refusal names the app-deploy switch'
+
     # And the rest of rule 3 is untouched: a preview push is not measured at all.
     [System.IO.File]::WriteAllText($css, "body { color: blue; }`n", $Utf8NoBom)
     Assert-Equal 0 (Invoke-Guard -Command 'shopify theme push --store x.myshopify.com --theme 987654321 --only assets/x.css' -Root $m) 'untouched: a preview push of unmerged work'

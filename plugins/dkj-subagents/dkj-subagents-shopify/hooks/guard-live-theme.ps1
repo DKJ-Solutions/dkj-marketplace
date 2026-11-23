@@ -31,6 +31,10 @@
          is checked out -- unless the command carries the live-push marker. Only where the repo answers
          Get-ShopifyLiveDeployBranch; rule 5's block below says what counts as aimed at that branch, and
          what stays ungated ('gh pr merge').
+      6. the go-live command (#4402) -- a line that runs dkj-repo-workflow-bwj's go-live.ps1, which
+         promotes, deploys the app and cuts the release inside a script this guard cannot read. Refused
+         unless the command carries the live-push marker: that one marker is the owner's word for the
+         whole release.
 
     WHY hooks.json WRAPS THIS FILE IN A SHELL COMMAND (issue #2217). Everything above is what this script
     decides once it RUNS. When PowerShell cannot start at all -- out of memory, a failed type
@@ -766,6 +770,30 @@ if ($DEPLOY_BRANCH -and $libLoaded) {
         }
         Deny "$route Promotion is a live deploy, whichever route it takes. If this IS the deliberate promotion this repo's own rules describe, add the marker '# $MARKER' to this exact command."
     }
+}
+
+# --- Rule 6: the go-live command (#4402) -------------------------------------------------------------
+# go-live.ps1 (dkj-repo-workflow-bwj) runs release day end to end: it opens and merges the promotion PR,
+# runs the app deploy and cuts the release. Every one of those acts happens INSIDE the script, where this
+# guard cannot see -- so the script's own command line is the one place the authorisation can be read,
+# and it is read here. The owner's decision on #4402 (November 23, 2026): ONE marker on the go-live line
+# authorises the whole chain for one release, visibly, in the transcript. Without it the line is refused,
+# in every repo, because the chain it starts is a live deploy whether the store pushes or promotes.
+#
+# WHAT COUNTS: a segment that names 'go-live.ps1' as a word -- a path ending in it, quoted or not, run by
+# 'powershell -File', '&' or a bare call. The segment list is $segments, so a text tool leading the
+# segment (cat, grep, git, Get-Content) is handling the name, not running it, and passes, as do heredoc and
+# here-string bodies. Degraded, the whole payload is the segment, which refuses any mention: towards checking.
+#
+# THE RESIDUAL LIMIT, STATED: a script path held in a variable ('& $p') never shows the name, the same
+# limit rule 3 states for a command in a variable.
+foreach ($segment in $segments) {
+    if ($segment -notmatch '(?i)(^|[\s\\/"''&(=])go-live\.ps1(?=$|[\s"'';)|&])') { continue }
+    if ($authorised) {
+        [Console]::Error.WriteLine('guard-live-theme: go-live allowed (authorisation marker present) -- it promotes, deploys the app as its line says, and cuts the release.')
+        continue
+    }
+    Deny "the go-live command is blocked: it takes a release live end to end -- the promotion PR opened and merged, the app deployed or held, the release cut -- and none of those steps can be seen by this guard once the script runs. The owner's word for this release is the marker '# $MARKER' on this exact command line, together with -AppDeploy or -SkipAppDeploy."
 }
 
 # --- Rule 3's second half: an authorised live push carries only what the trunk holds (#3758) -------

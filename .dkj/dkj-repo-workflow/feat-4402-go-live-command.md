@@ -39,19 +39,45 @@
 
 ### PLAN
 
+Built on the owner's decision recorded on #4402 (November 23, 2026): one marker on the go-live line,
+which guard-live-theme learns to read; the app deploy inside that word as a required -AppDeploy /
+-SkipAppDeploy switch. Home: dkj-repo-workflow-bwj, beside prepare-release and notify-live, because the
+chain crosses the Shopify team (preflight), the workflow (cut) and this extension (notify).
+Scope: a Git-connected store only; a CLI-push store is refused and keeps live-preflight's printed push.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] guard-live-theme rule 6: a line running go-live.ps1 needs the live-push marker
+- [x] live-preflight -ResultPath: the outcome as JSON, so go-live carries on from the same facts (source + mirror)
+- [x] go-live-rules.ps1: step order, app-deploy switch, check states, verify paths, hash compare, record hold rewrite, resume line
+- [x] go-live.ps1: preflight -> promote -> checks -> merge -> verify -> app -> cut -> notify, stop at the first refusal, -ResumeFrom past the merge
+- [x] docs: the go-live skill page, the extension README row, live-preflight's page
 
 ### TEST
 
+- [x] bwj-go-live.tests.ps1: 41 pass
+- [x] guard-live-theme.tests.ps1: 425 pass, rule 6 included
+- [x] check-plugin-integrity: 0 errors
+
 ### DEPLOY: feat/4402-go-live-command
 
-**Score:**
+New `go-live` skill in dkj-repo-workflow-bwj, with a rules lib and a suite; `guard-live-theme` gains a
+rule 6; `live-preflight` gains `-ResultPath` (#4402).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+In a store whose live theme deploys from a Git-connected branch, release day is one command once the
+owner has given the word: `go-live -Version X.Y.Z -AppDeploy` (or `-SkipAppDeploy`) with the store's
+live-push marker on that line. It runs the preflight, opens and merges the promotion PR after its
+required checks pass, polls the live theme until every promoted file matches the trunk by content hash,
+deploys the app or writes `hold` for it into the live-push record, cuts the release and tells the tasks,
+and stops at the first refusal with a line to resume from. Before, each of those steps was printed and
+handed back to a person; the promotion alone took three attempts to get past the guards. The live guard
+now refuses a go-live line without the marker.
+
+**Score:** 4
 
 #### Pull Request
 
