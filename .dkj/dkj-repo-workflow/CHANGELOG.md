@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
-**2 / 2 minor entries** <!-- pending-tally -->
+**3 / 3 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4403-cut-release-backflow-merges · 20261123-101305Z
+
+`cut-release -LivePushRecord` now finds the merge commit of a branch that reached `main` through a
+back-flow from the deploy branch (the hotfix lane), instead of reporting it as unknown (#4403). The
+first-parent line is still read first. For an entry it misses, the cut reads the range's full merge
+history once, and the live-push record decides that entry's state as for any other.
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+In a Git-connected store that ships hotfixes through `live`, a cut with a live-push record no longer
+warns about every hotfix-lane entry and no longer drops them from the drafted audience note. A
+smartwatchbanden cut measured 19 warnings and 7 dropped entries, all re-checked by hand.
+
+**Score:** 3
+
+#### Pull Request
+
+cut-release finds entry merges behind a back-flow from the deploy branch
+
+Plugins: dkj-repo-workflow, dkj-repo-workflow-bwj, dkj-subagents-shopify
+
+[PR #4408](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4408)
+
+---
 
 ### DEPLOY: fix/4401-reconcile-base-crlf · 20261123-095821Z
 
