@@ -53,7 +53,8 @@ re-read the tracker once after a short wait, before the existing settle wait.
 
 ### TEST
 
-- [x] `merge-on-green-lib.tests.ps1`: 350 pass, 0 fail -- new asserts for the marker, the wait function and the wiring
+- [x] `merge-on-green-lib.tests.ps1`: 351 pass, 0 fail -- new asserts for the marker, the wait function and the wiring
+- [x] Review: Victor #19 found the picker rebuilt each verdict without copying `MergeableUnknown`, so the re-read could never fire -- fixed and pinned by an assert; Sebastian #23: no findings
 
 ### DEPLOY: fix/4427-merge-on-green-unknown-reread
 

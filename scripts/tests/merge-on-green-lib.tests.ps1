@@ -966,6 +966,10 @@ Assert-Equal 0 (Get-MergeOnGreenUnknownWaitSeconds -Verdicts @($redOne, $waitOne
 Assert-Equal 0 (Get-MergeOnGreenUnknownWaitSeconds -Verdicts @($unkOne) -CapSeconds 0) 'cap 0 switches it off'
 Assert-Equal 0 (Get-MergeOnGreenUnknownWaitSeconds -Verdicts @() -CapSeconds 60) 'nothing armed waits for nothing'
 
+# WIRED: the picker rebuilds each verdict into an entry of its own, so the marker must be copied across,
+# exactly as SettleRemainingMinutes is -- measured in review: without the copy the re-read never fired.
+Assert-True ($pickRaw -match "verdict\.PSObject\.Properties\['MergeableUnknown'\]" -and $pickRaw -match 'NotePropertyName MergeableUnknown') `
+    'the picker copies MergeableUnknown from the verdict onto the entry it hands the wait function'
 # WIRED: the re-read is on by default and comes before the settle wait.
 Assert-True ($pickRaw -match '\[int\]\$WaitForUnknownSeconds = 60') 'the picker re-reads on UNKNOWN by default'
 Assert-True ($pickRaw.IndexOf('Get-MergeOnGreenUnknownWaitSeconds -Verdicts') -lt $pickRaw.IndexOf('Get-MergeOnGreenSettleWaitSeconds -Verdicts')) `

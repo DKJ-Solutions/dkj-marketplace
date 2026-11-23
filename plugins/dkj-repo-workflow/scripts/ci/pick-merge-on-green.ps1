@@ -197,6 +197,10 @@ foreach ($record in $armed) {
     if ($verdict.PSObject.Properties['SettleRemainingMinutes']) {
         $entry | Add-Member -NotePropertyName SettleRemainingMinutes -NotePropertyValue $verdict.SettleRemainingMinutes
     }
+    # Carried through for the UNKNOWN re-read (#4427); without it Get-MergeOnGreenUnknownWaitSeconds sees none.
+    if ($verdict.PSObject.Properties['MergeableUnknown']) {
+        $entry | Add-Member -NotePropertyName MergeableUnknown -NotePropertyValue $verdict.MergeableUnknown
+    }
     $verdicts += $entry
 }
 
