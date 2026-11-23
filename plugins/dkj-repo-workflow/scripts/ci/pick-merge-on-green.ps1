@@ -36,13 +36,25 @@
     -WaitForSettleSeconds, a sweep that picks nothing because of that window alone waits the remainder
     out and judges the tracker once more.
 
+    AND THE SAME HOLDS FOR mergeable UNKNOWN (#4427). A sweep woken within seconds of a merge reads every
+    armed pull request as UNKNOWN while GitHub recomputes mergeability, so it re-reads the tracker once
+    after -WaitForUnknownSeconds before it gives up. That re-read comes first, because a pull request that
+    clears UNKNOWN may then be refused by the settle window, which the settle wait still covers.
+
 .PARAMETER WaitForSettleSeconds
     The most this run may wait for a settle window to pass before its one second look. 0 (the default)
     never waits, so a local or test run returns at once; the workflow passes the cap it can afford.
+
+.PARAMETER WaitForUnknownSeconds
+    How long to wait before the one re-read when nothing is eligible and at least one armed pull request
+    read mergeable UNKNOWN. ON by default (60), unlike the settle wait: it only fires right after a
+    merge, it is bounded at one minute, and a consumer then gets it through the release without editing
+    its workflow line. 0 switches it off.
 #>
 [CmdletBinding()]
 param(
-    [int]$WaitForSettleSeconds = 0
+    [int]$WaitForSettleSeconds = 0,
+    [int]$WaitForUnknownSeconds = 60
 )
 
 $ErrorActionPreference = 'Stop'
@@ -199,6 +211,15 @@ return $verdicts
 }
 
 $verdicts = @(Invoke-PickPass)
+
+# THE UNKNOWN RE-READ (#4427): only when nothing is eligible and GitHub was still computing mergeability
+# for at least one armed pull request, and only once.
+$unknownWait = Get-MergeOnGreenUnknownWaitSeconds -Verdicts $verdicts -CapSeconds $WaitForUnknownSeconds
+if ($unknownWait -gt 0) {
+    Write-Host "merge-on-green: nothing eligible yet and GitHub is still computing mergeability -- waiting $unknownWait s, then judging the tracker once more"
+    Start-Sleep -Seconds $unknownWait
+    $verdicts = @(Invoke-PickPass)
+}
 
 # THE ONE WAIT (#3807): only when nothing is eligible and the settle window is what refused, and only once.
 # A second refusal is left to the next wake, so a run can never wait longer than the cap.
