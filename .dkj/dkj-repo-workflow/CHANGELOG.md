@@ -2,7 +2,31 @@
 
 ## [Unreleased]
 
-**11 / 11 minor entries** <!-- pending-tally -->
+**12 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: docs/4414-paula-stop-doing · 20261123-122049Z
+
+Paula's manual now has her name the highest-leverage items first in any plan she proposes and ask one
+question, *what do we stop or drop to make room?*, and `day-plan`'s morning proposal does the same (#4414).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A morning plan from `day-plan` now opens with the items that matter most and asks what to drop, so the
+day is not filled only by adding work.
+
+**Score:** 2
+
+#### Pull Request
+
+Paula's planning asks what to stop doing, not only what to add
+
+Plugins: dkj-repo-workflow, dkj-subagents-alpha
+
+[PR #4420](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4420)
+
+---
 
 ### DEPLOY: feat/4402-go-live-command · 20261123-120723Z
 
