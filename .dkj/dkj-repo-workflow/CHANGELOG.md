@@ -2,7 +2,144 @@
 
 ## [Unreleased]
 
-**15 / 15 minor entries** <!-- pending-tally -->
+**19 / 20 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4432-disjoint-docs-skip-lap · 20261123-141728Z
+
+Under merge-on-green every merge voided the certificate of every other armed PR, and each then paid a
+full CI forward lap (~10 min), even when the PR touched only `.md` files that none of the new trunk
+commits touched. Step 3b now discounts that case: when the PR's diff is docs-only (every path `.md`)
+and shares no file with the counted (non-fold) commits `main` gained, ship-pr merges `main` into the PR
+head in a throwaway worktree and runs `check-plugin-integrity` and `check-always-on-budget` there (~2
+min). Green, the certificate holds and the merge goes ahead without a lap; anything that fails or cannot
+run falls through to the lap unchanged. Step 3a no longer early-forwards such a PR. The discount applies
+only to a run in a session's own checkout: the unattended merge-on-green run (`-TrustedRoot`) keeps the
+lap, because it may not spawn scripts from a PR-derived tree (#2452); that half is #4440. (#4432)
+
+**Score:** 3
+
+#### What makes this deploy extra special
+
+A session that ships a docs-only pull request with `ship-pr` no longer waits a full CI cycle each time
+another merge lands first. The local cross-file checks on the merged result take about two minutes.
+
+**Score:** 3
+
+#### Pull Request
+
+ship-pr step 3b: skip the forward lap for a docs-only PR disjoint from the trunk's new commits, after local cross-file checks
+
+Plugins: dkj-repo-workflow
+
+[PR #4441](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4441)
+
+---
+
+### DEPLOY: fix/4436-go-live-ask-prompt · 20261123-140324Z
+
+A `go-live.ps1` line carrying the live-push marker is no longer let through by `guard-live-theme` on the
+marker alone: the guard returns a confirmation request, so Claude Code asks the person before the
+promotion, the app deploy and the release cut run. The marker is a comment a session can write itself,
+and on this one line it authorised three outward acts at once. Without the marker the line is still
+refused; an ordinary live push or promotion keeps its marker-only rule
+([`go-live`](../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/skills/go-live/SKILL.md),
+#4436).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+Release day now ends in one question the store owner answers themselves, which the session cannot
+answer for them.
+
+**Score:** 2
+
+#### Pull Request
+
+guard-live-theme asks the person before a go-live, instead of allowing on the marker alone
+
+Plugins: dkj-repo-workflow-bwj, dkj-subagents-shopify
+
+[PR #4439](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4439)
+
+---
+
+### DEPLOY: fix/4429-refresh-suite-durations · 20261123-134921Z
+
+`scripts/tests/suite-durations.json` holds a measured CI duration for all 208 suites again, read from
+three pull-request runs of November 23, 2026, where 40 suites added since November 17 had none and
+were packed into the CI shards blind (#4429).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+The file is this repo's own CI packing hint and ships to nobody who installs the plugins.
+
+**Score:** N/A
+
+#### Pull Request
+
+suite-durations.json refreshed from three current CI runs
+
+[PR #4434](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4434)
+
+---
+
+### DEPLOY: fix/4428-safe-issue-body-append · 20261123-133515Z
+
+Adding the reach label to an issue that is already filed no longer flattens its body on PowerShell.
+[`report-issue`](../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/skills/report-issue/SKILL.md)
+now has `gh` write the current body to a file, appends the `## Why` section to that file and passes it
+back with `--body-file`, where it used to rebuild the body as a PowerShell string, which joined every
+line with a space. Step 3's Asana link is appended the same way (#4428).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store session that adds the reach label afterwards keeps the issue's headings, paragraphs and
+`filed-with` marker intact, so nobody has to repair the body by hand.
+
+**Score:** 2
+
+#### Pull Request
+
+report-issue appends to an issue body without flattening it on PowerShell
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4433](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4433)
+
+---
+
+### DEPLOY: fix/4426-reach-test-seo-defects · 20261123-132051Z
+
+A store session filing a measured SEO defect on indexed live pages (a missing H1, a wrong canonical,
+broken structured data, a page that cannot be indexed) now gives it the reach label and names the
+store's SEO team in `## Why <reach label>`, instead of reading it as developer-only and filing it tier
+0 without an Asana card. [`report-issue`](../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/skills/report-issue/SKILL.md)
+and [`WORKFLOW-portable.md`](../../plugins/dkj-repo-workflow/extensions/dkj-repo-workflow-bwj/WORKFLOW-portable.md)
+name the case (#4426).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A store's SEO defects on live pages now reach its Asana board and business worklist consistently,
+instead of depending on whether the SEO team's question happened to be in the session's context.
+
+**Score:** 2
+
+#### Pull Request
+
+report-issue's reach test names measured SEO defects on indexed live pages
+
+Plugins: dkj-repo-workflow-bwj
+
+[PR #4431](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4431)
+
+---
 
 ### DEPLOY: fix/4424-stranded-sweep-incomplete · 20261123-130628Z
 

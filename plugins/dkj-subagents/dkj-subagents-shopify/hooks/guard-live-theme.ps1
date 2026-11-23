@@ -33,8 +33,9 @@
          what stays ungated ('gh pr merge').
       6. the go-live command (#4402) -- a line that runs dkj-repo-workflow-bwj's go-live.ps1, which
          promotes, deploys the app and cuts the release inside a script this guard cannot read. Refused
-         unless the command carries the live-push marker: that one marker is the owner's word for the
-         whole release.
+         unless the command carries the live-push marker, and even WITH it the guard does not allow: it
+         returns permissionDecision 'ask', so Claude Code puts the go-live to the person (#4436). The
+         marker is a comment the session can write itself; the confirmation prompt is not.
 
     WHY hooks.json WRAPS THIS FILE IN A SHELL COMMAND (issue #2217). Everything above is what this script
     decides once it RUNS. When PowerShell cannot start at all -- out of memory, a failed type
@@ -394,6 +395,18 @@ function Deny([string]$msg) {
     [Console]::Error.WriteLine("BLOCKED (guard-live-theme): $msg")
     [Console]::Error.WriteLine($AUTHORING_NOTE)
     exit 2
+}
+
+# Set by rule 6 when an authorised go-live line is seen (#4436). Every ALLOW exit goes through
+# Exit-Allow, so a later rule can still refuse the same command with exit 2, and only a command that
+# passes everything turns into the person's confirmation prompt rather than a silent allow.
+$script:GoLiveAsk = $null
+function Exit-Allow {
+    if ($script:GoLiveAsk) {
+        $out = @{ hookEventName = 'PreToolUse'; permissionDecision = 'ask'; permissionDecisionReason = $script:GoLiveAsk }
+        [Console]::Out.WriteLine((@{ hookSpecificOutput = $out } | ConvertTo-Json -Compress))
+    }
+    exit 0
 }
 
 # --- Rule 4: an Admin GraphQL theme write through 'shopify store execute' (#2881) ------------------
@@ -814,8 +827,14 @@ foreach ($segment in $goLiveSegments) {
     $goLiveHits += $segment
 }
 if ($scan -match '(?i)\$\([^)]*go-live\.ps1|<\([^)]*go-live\.ps1|`[^`\r\n]*go-live\.ps1[^`\r\n]*`') { $goLiveHits += 'substitution' }
+# THE MARKER IS NOT THE LAST WORD HERE (#4436). It is a shell comment, so the session can compose it
+# itself, and on this one line it authorises three outward acts at once. So an authorised go-live is
+# not allowed but ASKED: Exit-Allow returns permissionDecision 'ask' and Claude Code puts the line to
+# the person. The marker stays required -- without it the line is refused before anybody is asked.
+# Rules 3 and 5 keep marker-only: each authorises one push or one promotion the transcript shows.
 if ($goLiveHits.Count -gt 0 -and $authorised) {
-    [Console]::Error.WriteLine('guard-live-theme: go-live allowed (authorisation marker present) -- it promotes, deploys the app as its line says, and cuts the release.')
+    [Console]::Error.WriteLine('guard-live-theme: go-live carries the marker -- asking the person before it runs (#4436).')
+    $script:GoLiveAsk = "go-live takes this release live end to end: it opens and merges the promotion PR, deploys the app or holds it as the line says, and cuts the release. The marker on the line is a comment the session can write itself, so confirm here that you, the owner, want this release live now (#4436)."
 } elseif ($goLiveHits.Count -gt 0) {
     Deny "the go-live command is blocked: it takes a release live end to end -- the promotion PR opened and merged, the app deployed or held, the release cut -- and none of those steps can be seen by this guard once the script runs. The owner's word for this release is the marker '# $MARKER' on this exact command line, together with -AppDeploy or -SkipAppDeploy."
 }
@@ -999,7 +1018,7 @@ foreach ($segment in $segments) {
         if ($DELETE_MARKER) {
             if ($deleteAuthorised) {
                 [Console]::Error.WriteLine("guard-live-theme: theme delete allowed (delete marker present).")
-                exit 0
+                Exit-Allow
             }
             Deny "a theme delete needs this repo's own authorisation. Confirm the theme is spent -- its work merged and, if it was ever pushed, already live -- then add the marker '# $DELETE_MARKER' to this exact command. The live theme is refused even with it."
         }
@@ -1070,4 +1089,4 @@ foreach ($segment in $segments) {
     }
 }
 
-exit 0
+Exit-Allow

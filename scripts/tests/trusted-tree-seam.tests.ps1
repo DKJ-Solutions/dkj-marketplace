@@ -385,6 +385,8 @@ $script:ExecAllowances = @(
         Reason = 'spawns each *.tests.ps1 suite, and each Get-TestCommands line, inside the test gate, which -TrustedRoot force-skips' }
     [pscustomobject]@{ File = 'gate-lib.ps1'; Function = 'Invoke-WorkflowGates'; Kind = 'unresolved-spawn'; Count = 1
         Reason = 'spawns the lint script off $RepoRoot inside the lint gate, which -TrustedRoot force-skips' }
+    [pscustomobject]@{ File = 'ship-pr.ps1'; Function = 'Invoke-MergedResultChecks'; Kind = 'unresolved-spawn'; Count = 3
+        Reason = 'spawns check-plugin-integrity and check-always-on-budget from a throwaway merged worktree for the #4432 docs-only discount -- a gate run in a session''s own checkout; the function returns before any spawn under -TrustedRoot, and step 3b never calls it there' }
 )
 
 function Get-EnclosingFunctionName {
