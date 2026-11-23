@@ -39,19 +39,42 @@
 
 ### PLAN
 
+Inbound #4404, the issue's option 1, built the way #3958 built the owner's look: the branch document's
+closing step (`Get-BranchClosingSteps`) answered "not visible" never reached the PR body, so a consumer's
+Preview check went red and `ship-pr` merged anyway, eleven times. The other half of option 1 (tick "no
+theme file" when the diff touches no theme directory) needs the consumer's theme directories, which the
+shared script does not know; the consumer's own CI keeps judging that case.
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `Get-ClosingStepNotVisibleAnswer` in `pr-body-lib.ps1`: reads the closing step under CREATE and
+  returns the reason for `- [~] <step> <reason>` or `- [x] <step> No -- <reason>`, '' otherwise.
+- [x] `open-pr`: an optional `Get-PrNotVisiblePattern` seam names the template box; the reason ticks it on
+  a new PR, an open PR and a supplied `-Body`, reusing `Set-PrOwnerLookAnswer`.
+- [x] The seam is listed with the other optional Pr seams (`check-script-contract.ps1`, `bootstrap.ps1`)
+  and documented in the `open-pr` skill.
 
 ### TEST
 
+- [x] `pr-body.tests.ps1`: 11 new asserts on the parser (each answer shape, every separator, ticked
+  without No, reasonless No, open, missing, under another section). The suite passes; the full gate runs in
+  `ship-pr`.
+
 ### DEPLOY: fix/4404-closing-step-answer-to-pr-box
 
-**Score:**
+`open-pr` now carries the branch document's answer to the repo's closing step into the PR body: where
+that step is answered "not visible" (`- [~] <reason>`, or `- [x] ... No -- <reason>`) and the repo names
+its template box with the new optional `Get-PrNotVisiblePattern` seam, that box is ticked with the reason
+(#4404).
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+A store repo that names its "nothing a visitor can see" box once no longer gets a red Preview check on a
+change the branch already judged invisible, so it is no longer ticked by hand after the merge.
+
+**Score:** 3
 
 #### Pull Request
 
