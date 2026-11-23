@@ -39,21 +39,46 @@
 
 ### PLAN
 
+- [x] Time both suites per section on a workstation, and cut each at the boundary that balances it
+  (guard-live-theme 147s -> 74s / 72s; script-contract 187s -> 106s / 81s)
+- [x] Check that the second half reads no state the first half creates; rebuild what it does use
+
 ### CREATE
 
-- [ ] TODO: the first step of this branch
+- [x] `guard-live-theme-fixture.ps1` + `guard-live-theme.tests.ps1` (groups 1-9, rule 5's #3014 push)
+  + `guard-live-theme-deploy.tests.ps1` (rule 5's #4329 routes, group 10)
+- [x] `script-contract-fixture.ps1` + `script-contract.tests.ps1` (sections 1-12h)
+  + `script-contract-tables.tests.ps1` (sections 14-15)
+- [x] Restore the group 9 assert that two `Assert-Equal` calls on one line had silently swallowed
+- [x] `ci.yml`: six shards, with the re-pricing written beside the matrix; the selection test's
+  `-ShardCount` assert no longer pins a number (ci-shard.tests.ps1 holds matrix and count together)
 
 ### TEST
 
+- [x] guard-live-theme: 220 + 192 = 412 asserts (411 before, plus the restored one), all green
+- [x] script-contract: 451 + 65 = 516 asserts, the same as before, all green
+- [x] ci-shard, ci-suite-selection-lib and affected-suites suites green
+
 ### DEPLOY: feat/4430-split-heavy-suites
 
-**Score:**
+The two heaviest test suites no longer pin a CI shard each, and CI runs on six shards instead of five.
+`guard-live-theme.tests.ps1` (465s in CI) and `script-contract.tests.ps1` (429s) each took about as long as
+an ideal shard on their own, so the packer could not balance around them. Both are now two suites over a
+shared fixture file (`guard-live-theme-deploy.tests.ps1` and `script-contract-tables.tests.ps1` are the new
+halves), cut where measured time balances, with every assert preserved. That puts the heaviest file at
+about 274s, under the ~382s work bound over 24 lanes, so the sixth shard the #2304 note priced and
+declined at 141 suites now pays: about 76s off the bound for about 20s of provisioning. The split also
+restored one assert in the guard's group 9 that had never run, because it shared a line with another.
+
+**Score:** 3
 
 #### What makes this deploy extra special
 
-**Score:**
+N/A: this repo's own CI and test suites, which no consumer runs or installs.
+
+**Score:** N/A
 
 #### Pull Request
 
-Split the two heaviest test suites so neither pins a CI shard
+Split the two heaviest test suites and run CI on six shards
 
