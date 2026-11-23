@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
-**17 / 17 minor entries** <!-- pending-tally -->
+**17 / 18 minor entries** <!-- pending-tally -->
+
+### DEPLOY: fix/4429-refresh-suite-durations · 20261123-134921Z
+
+`scripts/tests/suite-durations.json` holds a measured CI duration for all 208 suites again, read from
+three pull-request runs of November 23, 2026, where 40 suites added since November 17 had none and
+were packed into the CI shards blind (#4429).
+
+**Score:** 1
+
+#### What makes this deploy extra special
+
+The file is this repo's own CI packing hint and ships to nobody who installs the plugins.
+
+**Score:** N/A
+
+#### Pull Request
+
+suite-durations.json refreshed from three current CI runs
+
+[PR #4434](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4434)
+
+---
 
 ### DEPLOY: fix/4428-safe-issue-body-append · 20261123-133515Z
 
