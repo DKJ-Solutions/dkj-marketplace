@@ -2,7 +2,32 @@
 
 ## [Unreleased]
 
-**11 / 11 minor entries** <!-- pending-tally -->
+**12 / 12 minor entries** <!-- pending-tally -->
+
+### DEPLOY: feat/4379-dossier-newest-first · 20261123-021017Z
+
+Ian (04-03) now writes newest first inside a dossier: an update goes at the top of the heading it belongs
+to, a new heading above the older ones, and a source line names the newest mail or message first.
+`inbox-sweep`, `ai-radar` and `agenda` insert that way instead of appending (#4379).
+
+**Score:** 2
+
+#### What makes this deploy extra special
+
+A life hub owner opening a dossier now finds its latest state at the top instead of at the bottom of a
+growing page, for every update Ian or the lifehub skills write from the next release on.
+
+**Score:** 3
+
+#### Pull Request
+
+dkj-subagents-lifehub: newest first inside a dossier
+
+Plugins: dkj-subagents-lifehub
+
+[PR #4385](https://github.com/DKJ-Solutions/dkj-marketplace/pull/4385)
+
+---
 
 ### DEPLOY: fix/4384-bounded-theme-count · 20261123-015525Z
 
